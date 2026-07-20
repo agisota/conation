@@ -1283,7 +1283,7 @@ export function PopupPreview(
 ) {
   return (
     <div
-      class="select-none w-80 text-ink"
+      class="select-none w-80 text-ink menu-open-animation"
       onMouseEnter={props.mouseEnter}
       onMouseLeave={props.mouseLeave}
     >
