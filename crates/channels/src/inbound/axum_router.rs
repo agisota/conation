@@ -1926,6 +1926,8 @@ pub struct ApiChannelMessage {
     edited_at: Option<DateTime<Utc>>,
     /// When the message was soft-deleted.
     deleted_at: Option<DateTime<Utc>>,
+    /// Link-preview URLs the sender removed from this message.
+    suppressed_preview_urls: Vec<String>,
     /// Thread metadata and preview.
     thread: ApiThreadInfo,
     /// Reactions on this message.
@@ -1950,6 +1952,7 @@ impl From<ChannelMessage> for ApiChannelMessage {
             updated_at: m.updated_at,
             edited_at: m.edited_at,
             deleted_at: m.deleted_at,
+            suppressed_preview_urls: m.suppressed_preview_urls,
             thread: ApiThreadInfo::from(m.thread),
             reactions: m
                 .reactions
@@ -1995,6 +1998,8 @@ pub struct ApiChannelContextMessage {
     edited_at: Option<DateTime<Utc>>,
     /// When the message was soft-deleted.
     deleted_at: Option<DateTime<Utc>>,
+    /// Link-preview URLs the sender removed from this message.
+    suppressed_preview_urls: Vec<String>,
 }
 
 impl From<ChannelContextMessage> for ApiChannelContextMessage {
@@ -2014,6 +2019,7 @@ impl From<ChannelContextMessage> for ApiChannelContextMessage {
             updated_at: message.updated_at,
             edited_at: message.edited_at,
             deleted_at: message.deleted_at,
+            suppressed_preview_urls: message.suppressed_preview_urls,
         }
     }
 }
@@ -2152,6 +2158,8 @@ pub struct ApiThreadReply {
     updated_at: DateTime<Utc>,
     /// When the reply was edited.
     edited_at: Option<DateTime<Utc>>,
+    /// Link-preview URLs the sender removed from this reply.
+    suppressed_preview_urls: Vec<String>,
     /// Reactions on this reply.
     reactions: Vec<ApiCountedReaction>,
     /// Attachments on this reply.
@@ -2172,6 +2180,7 @@ impl From<ThreadReply> for ApiThreadReply {
             created_at: r.created_at,
             updated_at: r.updated_at,
             edited_at: r.edited_at,
+            suppressed_preview_urls: r.suppressed_preview_urls,
             reactions: r
                 .reactions
                 .into_iter()
