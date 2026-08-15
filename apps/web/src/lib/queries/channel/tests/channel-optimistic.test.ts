@@ -64,7 +64,7 @@ function createPaginatedMessage(
     updated_at: createdAt,
     deleted_at: undefined,
     edited_at: undefined,
-    suppressed_preview_urls: [],
+    suppress_link_previews: false,
     attachments: [],
     reactions: [],
     thread: {
@@ -88,7 +88,7 @@ function createThreadReply(
     created_at: createdAt,
     updated_at: createdAt,
     edited_at: undefined,
-    suppressed_preview_urls: [],
+    suppress_link_previews: false,
     attachments: [],
     reactions: [],
     ...overrides,

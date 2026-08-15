@@ -67,6 +67,25 @@ describe('extractUnfurlableUrls', () => {
     ).toEqual(['https://example.com/docs']);
   });
 
+  it('keeps balanced parens inside markdown link targets', () => {
+    expect(
+      extractUnfurlableUrls(
+        'see [wiki](https://en.wikipedia.org/wiki/Foo_(bar)) too'
+      )
+    ).toEqual(['https://en.wikipedia.org/wiki/Foo_(bar)']);
+  });
+
+  it('caps in document order across link syntaxes', () => {
+    const mLink =
+      '<m-link>{"url":"https://example.com/last","text":"x","title":""}</m-link>';
+    const content = `https://example.com/1 https://example.com/2 https://example.com/3 ${mLink}`;
+    expect(extractUnfurlableUrls(content)).toEqual([
+      'https://example.com/1',
+      'https://example.com/2',
+      'https://example.com/3',
+    ]);
+  });
+
   it('strips trailing punctuation from bare URLs but keeps balanced parens', () => {
     expect(extractUnfurlableUrls('read https://example.com/a.')).toEqual([
       'https://example.com/a',
@@ -123,6 +142,10 @@ describe('extractUnfurlableUrls', () => {
     ).toEqual([]);
     expect(extractUnfurlableUrls('https://macro.com/pricing')).toEqual([
       'https://macro.com/pricing',
+    ]);
+    // Only the /app segment is internal, not every /app-prefixed path.
+    expect(extractUnfurlableUrls('https://macro.com/apple-launch')).toEqual([
+      'https://macro.com/apple-launch',
     ]);
   });
 
@@ -227,7 +250,7 @@ describe('LinkPreviews', () => {
     expect(container.querySelector('[data-message-link-previews]')).toBeNull();
   });
 
-  it('lets the sender remove a preview for everyone', async () => {
+  it('lets the sender remove previews for everyone', async () => {
     const user = userEvent.setup({ skipHover: true });
     const url = 'https://example.com/hide-me';
     unfurlResults.set(url, {
@@ -241,7 +264,7 @@ describe('LinkPreviews', () => {
     expect(first.container.querySelector('[data-link-preview]')).not.toBeNull();
 
     await user.click(
-      first.getByRole('button', { name: 'Remove link preview' })
+      first.getByRole('button', { name: 'Remove link previews' })
     );
     // Hidden immediately (optimistic) and persisted to the message.
     expect(first.container.querySelector('[data-link-preview]')).toBeNull();
@@ -249,7 +272,6 @@ describe('LinkPreviews', () => {
     expect(suppressMutate.mock.calls[0]?.[0]).toEqual({
       channelID: 'channel-1',
       messageID: 'message-1',
-      suppressedPreviewUrls: [url],
     });
     first.unmount();
 
@@ -266,14 +288,15 @@ describe('LinkPreviews', () => {
     });
 
     const { container, queryByRole } = renderPreviews(url, {
+      id: 'message-not-mine',
       sender_id: 'user-2',
     });
 
     expect(container.querySelector('[data-link-preview]')).not.toBeNull();
-    expect(queryByRole('button', { name: 'Remove link preview' })).toBeNull();
+    expect(queryByRole('button', { name: 'Remove link previews' })).toBeNull();
   });
 
-  it('renders no card for URLs the sender suppressed', () => {
+  it('renders no cards for a message whose sender removed previews', () => {
     const url = 'https://example.com/suppressed';
     unfurlResults.set(url, {
       type: 'success',
@@ -282,10 +305,11 @@ describe('LinkPreviews', () => {
     });
 
     const { container } = renderPreviews(url, {
-      suppressed_preview_urls: [url],
+      id: 'message-suppressed',
+      suppress_link_previews: true,
     });
 
-    expect(container.querySelector('[data-link-preview]')).toBeNull();
+    expect(container.querySelector('[data-message-link-previews]')).toBeNull();
   });
 
   it('renders nothing when the global preference is off', () => {
@@ -298,7 +322,9 @@ describe('LinkPreviews', () => {
 
     setShowLinkPreviews(false);
     try {
-      const { container } = renderPreviews(url);
+      // Unique id: 'message-1' was locally hidden by the remove test above,
+      // which would mask a regression in the preference gate.
+      const { container } = renderPreviews(url, { id: 'message-pref-off' });
       expect(
         container.querySelector('[data-message-link-previews]')
       ).toBeNull();

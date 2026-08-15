@@ -19,7 +19,7 @@ function createMessage(
     updated_at: createdAt,
     sender: senderFromStorageId(senderId),
     sender_id: senderId,
-    suppressed_preview_urls: [],
+    suppress_link_previews: false,
     attachments: [],
     reactions: [],
     thread: {

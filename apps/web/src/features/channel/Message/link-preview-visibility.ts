@@ -13,35 +13,30 @@ export const [showLinkPreviews, setShowLinkPreviews] = makePersisted(
 /** Cap so a long-lived client can't grow the hidden list unboundedly. */
 const MAX_HIDDEN_ENTRIES = 500;
 
-/** Newest-last `messageId|url` keys of previews the user hid on this client. */
+/**
+ * Newest-last message ids whose previews were hidden on this client. Acts as
+ * the optimistic layer for the sender's server-side "remove preview".
+ */
 const [hiddenPreviews, setHiddenPreviews] = makePersisted(
   createSignal<string[]>([]),
   { name: 'channel.hiddenLinkPreviews' }
 );
 
-function hiddenKey(messageId: string, url: string): string {
-  return `${messageId}|${url}`;
+/** Whether this message's previews were hidden on this client (reactive). */
+export function isLinkPreviewHidden(messageId: string): boolean {
+  return hiddenPreviews().includes(messageId);
 }
 
-/** Whether the user hid this message's preview of `url` (reactive). */
-export function isLinkPreviewHidden(messageId: string, url: string): boolean {
-  return hiddenPreviews().includes(hiddenKey(messageId, url));
-}
-
-/**
- * Hides one link preview on one message, persisted per client. Hiding is
- * local-only: unlike Slack's sender-side "remove preview" it does not affect
- * what other participants see.
- */
-export function hideLinkPreview(messageId: string, url: string): void {
-  const key = hiddenKey(messageId, url);
+/** Hides a message's link previews locally, ahead of server confirmation. */
+export function hideLinkPreview(messageId: string): void {
   setHiddenPreviews((prev) =>
-    [...prev.filter((entry) => entry !== key), key].slice(-MAX_HIDDEN_ENTRIES)
+    [...prev.filter((entry) => entry !== messageId), messageId].slice(
+      -MAX_HIDDEN_ENTRIES
+    )
   );
 }
 
 /** Undo a local hide (rollback when the server-side removal fails). */
-export function unhideLinkPreview(messageId: string, url: string): void {
-  const key = hiddenKey(messageId, url);
-  setHiddenPreviews((prev) => prev.filter((entry) => entry !== key));
+export function unhideLinkPreview(messageId: string): void {
+  setHiddenPreviews((prev) => prev.filter((entry) => entry !== messageId));
 }

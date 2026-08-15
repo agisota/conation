@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            UPDATE comms_messages\n            SET\n                updated_at = NOW(),\n                edited_at = NOW(),\n                deleted_at = CASE\n                    WHEN $2 = false AND (content IS NULL OR content ~ '^[\\s]*$') THEN NOW()\n                    ELSE deleted_at\n                END\n            WHERE id = $1\n            RETURNING\n                id,\n                channel_id,\n                sender_id,\n                triggered_by_user_id,\n                content,\n                created_at,\n                updated_at,\n                thread_id,\n                edited_at::timestamptz AS \"edited_at?\",\n                deleted_at::timestamptz AS \"deleted_at?\",\n                suppressed_preview_urls\n            ",
+  "query": "\n            SELECT\n                m.id,\n                m.channel_id,\n                m.sender_id,\n                m.triggered_by_user_id,\n                m.content,\n                m.created_at,\n                m.updated_at,\n                m.edited_at::timestamptz AS \"edited_at?\",\n                m.deleted_at::timestamptz AS \"deleted_at?\",\n                m.suppress_link_previews\n            FROM comms_messages m\n            WHERE m.id = COALESCE(\n                (SELECT thread_id FROM comms_messages WHERE id = $1 AND channel_id = $2),\n                $1\n            )\n            AND m.channel_id = $2\n            AND m.thread_id IS NULL\n            ",
   "describe": {
     "columns": [
       {
@@ -40,29 +40,24 @@
       },
       {
         "ordinal": 7,
-        "name": "thread_id",
-        "type_info": "Uuid"
-      },
-      {
-        "ordinal": 8,
         "name": "edited_at?",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 9,
+        "ordinal": 8,
         "name": "deleted_at?",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 10,
-        "name": "suppressed_preview_urls",
-        "type_info": "TextArray"
+        "ordinal": 9,
+        "name": "suppress_link_previews",
+        "type_info": "Bool"
       }
     ],
     "parameters": {
       "Left": [
         "Uuid",
-        "Bool"
+        "Uuid"
       ]
     },
     "nullable": [
@@ -73,11 +68,10 @@
       false,
       false,
       false,
-      true,
       null,
       null,
       false
     ]
   },
-  "hash": "2b683c02132a68c02cd65ded71a11cbb942c71048255aaa3d149b4a566fa85d5"
+  "hash": "b68d3aafec6fc2168db61f16ffe08629b9f5e21073b8b2598c1a78d8b4f47219"
 }

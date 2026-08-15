@@ -8,7 +8,9 @@ const CODE_FENCE_RE = /```[\s\S]*?(```|$)/g;
 const INLINE_CODE_RE = /`[^`\n]*`/g;
 const M_LINK_RE = /<m-link>([\s\S]*?)<\/m-link>/g;
 const MENTION_TAG_RE = /<(m-[a-z-]+)>[\s\S]*?<\/\1>/g;
-const MD_LINK_RE = /\[[^\]]*\]\((https?:\/\/[^\s)]+)\)/g;
+// Target may contain balanced parens (wiki-style `..._(disambiguation)`).
+const MD_LINK_RE =
+  /\[[^\]]*\]\((https?:\/\/[^\s()]+(?:\([^\s()]*\)[^\s()]*)*)\)/g;
 const BARE_URL_RE = /https?:\/\/[^\s<>]+/g;
 
 const MACRO_HOSTS = new Set(['macro.com', 'www.macro.com', 'dev.macro.com']);
@@ -17,7 +19,9 @@ const MACRO_HOSTS = new Set(['macro.com', 'www.macro.com', 'dev.macro.com']);
 function isInternalAppUrl(url: URL): boolean {
   const isMacroHost =
     MACRO_HOSTS.has(url.hostname) || url.origin === getWebOrigin();
-  return isMacroHost && url.pathname.startsWith('/app');
+  return (
+    isMacroHost && (url.pathname === '/app' || url.pathname.startsWith('/app/'))
+  );
 }
 
 /**
@@ -53,6 +57,25 @@ function parseMLinkUrl(payload: string): string | undefined {
   }
 }
 
+type Candidate = { index: number; url: string };
+
+/**
+ * Replaces every match with same-length whitespace so later passes cannot
+ * re-match inside it while all offsets stay in original-string coordinates.
+ */
+function blankOut(
+  text: string,
+  re: RegExp,
+  onMatch?: (group: string, offset: number) => void
+): string {
+  return text.replace(re, (match, group: string, ...rest) => {
+    // Offset precedes the full-string arg; group count varies per regex.
+    const offset = rest.at(-2) as number;
+    onMatch?.(group, typeof offset === 'number' ? offset : 0);
+    return ' '.repeat(match.length);
+  });
+}
+
 /**
  * Extracts the URLs in a message body eligible for a rich link preview, in
  * document order: the editor's `<m-link>` nodes, markdown-link targets, and
@@ -60,34 +83,29 @@ function parseMLinkUrl(payload: string): string | undefined {
  * pointing back into the app. Deduped, capped at {@link MAX_LINK_PREVIEWS}.
  */
 export function extractUnfurlableUrls(content: string): string[] {
-  const stripped = content
-    .replace(CODE_FENCE_RE, ' ')
-    .replace(INLINE_CODE_RE, ' ');
+  const candidates: Candidate[] = [];
 
-  const candidates: string[] = [];
-  const withoutMLinks = stripped.replace(M_LINK_RE, (_, payload: string) => {
+  let text = blankOut(content, CODE_FENCE_RE);
+  text = blankOut(text, INLINE_CODE_RE);
+  text = blankOut(text, M_LINK_RE, (payload, index) => {
     const url = parseMLinkUrl(payload);
-    if (url) candidates.push(url);
-    return ' ';
+    if (url) candidates.push({ index, url });
   });
-  const withoutMentions = withoutMLinks.replace(MENTION_TAG_RE, ' ');
-  const withoutMdLinks = withoutMentions.replace(
-    MD_LINK_RE,
-    (_, url: string) => {
-      candidates.push(url);
-      return ' ';
-    }
-  );
-  for (const match of withoutMdLinks.match(BARE_URL_RE) ?? []) {
-    candidates.push(trimBareUrl(match));
+  text = blankOut(text, MENTION_TAG_RE);
+  text = blankOut(text, MD_LINK_RE, (url, index) => {
+    candidates.push({ index, url });
+  });
+  for (const match of text.matchAll(BARE_URL_RE)) {
+    candidates.push({ index: match.index, url: trimBareUrl(match[0]) });
   }
+  candidates.sort((a, b) => a.index - b.index);
 
   const seen = new Set<string>();
   const urls: string[] = [];
-  for (const candidate of candidates) {
+  for (const { url } of candidates) {
     let parsed: URL;
     try {
-      parsed = new URL(candidate);
+      parsed = new URL(url);
     } catch {
       continue;
     }
@@ -95,7 +113,7 @@ export function extractUnfurlableUrls(content: string): string[] {
     if (isInternalAppUrl(parsed)) continue;
     if (seen.has(parsed.href)) continue;
     seen.add(parsed.href);
-    urls.push(candidate);
+    urls.push(url);
     if (urls.length >= MAX_LINK_PREVIEWS) break;
   }
   return urls;
@@ -108,12 +126,4 @@ export function extractUnfurlableUrls(content: string): string[] {
 export function shouldRenderUnfurl(unfurl: GetUnfurlResponse): boolean {
   if (unfurl.description || unfurl.image_url) return true;
   return Boolean(unfurl.title) && unfurl.title !== unfurl.url;
-}
-
-export function extractDomain(url: string): string {
-  try {
-    return new URL(url).hostname.replace(/^www\./, '');
-  } catch {
-    return url;
-  }
 }

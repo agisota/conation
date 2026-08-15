@@ -348,8 +348,8 @@ export function replaceTopLevelMessageStateInChannelMessages(
     editedAt: string | null | undefined;
     updatedAt: string;
     attachments: ApiMessageAttachment[];
-    /** Omitted = leave the message's suppressed previews unchanged. */
-    suppressedPreviewUrls?: string[];
+    /** Omitted = leave the message's preview suppression unchanged. */
+    suppressLinkPreviews?: boolean;
   }
 ): ChannelMessagesData | undefined {
   if (!data) return data;
@@ -362,8 +362,8 @@ export function replaceTopLevelMessageStateInChannelMessages(
           edited_at: nextState.editedAt ?? undefined,
           updated_at: nextState.updatedAt,
           attachments: nextState.attachments,
-          suppressed_preview_urls:
-            nextState.suppressedPreviewUrls ?? message.suppressed_preview_urls,
+          suppress_link_previews:
+            nextState.suppressLinkPreviews ?? message.suppress_link_previews,
         }
       : message
   );
@@ -538,8 +538,8 @@ export function replaceThreadReplyStateInChannelMessages(
     editedAt: string | null | undefined;
     updatedAt: string;
     attachments: ApiMessageAttachment[];
-    /** Omitted = leave the reply's suppressed previews unchanged. */
-    suppressedPreviewUrls?: string[];
+    /** Omitted = leave the reply's preview suppression unchanged. */
+    suppressLinkPreviews?: boolean;
   }
 ): ChannelMessagesData | undefined {
   if (!data) return data;
@@ -556,8 +556,8 @@ export function replaceThreadReplyStateInChannelMessages(
         edited_at: nextState.editedAt ?? undefined,
         updated_at: nextState.updatedAt,
         attachments: nextState.attachments,
-        suppressed_preview_urls:
-          nextState.suppressedPreviewUrls ?? reply.suppressed_preview_urls,
+        suppress_link_previews:
+          nextState.suppressLinkPreviews ?? reply.suppress_link_previews,
       };
     });
 
@@ -748,8 +748,8 @@ export function replaceTopLevelMessageStateInChannelMessagesByIds(
     editedAt: string | null | undefined;
     updatedAt: string;
     attachments: ApiMessageAttachment[];
-    /** Omitted = leave the message's suppressed previews unchanged. */
-    suppressedPreviewUrls?: string[];
+    /** Omitted = leave the message's preview suppression unchanged. */
+    suppressLinkPreviews?: boolean;
   }
 ): ApiChannelMessage[] | undefined {
   if (!data) return data;
@@ -761,8 +761,8 @@ export function replaceTopLevelMessageStateInChannelMessagesByIds(
           edited_at: nextState.editedAt ?? undefined,
           updated_at: nextState.updatedAt,
           attachments: nextState.attachments,
-          suppressed_preview_urls:
-            nextState.suppressedPreviewUrls ?? message.suppressed_preview_urls,
+          suppress_link_previews:
+            nextState.suppressLinkPreviews ?? message.suppress_link_previews,
         }
       : message
   );

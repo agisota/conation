@@ -12087,7 +12087,7 @@
           "content",
           "created_at",
           "updated_at",
-          "suppressed_preview_urls"
+          "suppress_link_previews"
         ],
         "properties": {
           "channel_id": {
@@ -12127,12 +12127,9 @@
             "type": "string",
             "description": "Sender user id."
           },
-          "suppressed_preview_urls": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Link-preview URLs the sender removed from this message."
+          "suppress_link_previews": {
+            "type": "boolean",
+            "description": "Whether the sender hid this message's link previews for everyone."
           },
           "thread_id": {
             "type": ["string", "null"],
@@ -12304,7 +12301,7 @@
           "content",
           "created_at",
           "updated_at",
-          "suppressed_preview_urls",
+          "suppress_link_previews",
           "thread",
           "reactions",
           "attachments"
@@ -12361,12 +12358,9 @@
             "type": "string",
             "description": "Sender user id."
           },
-          "suppressed_preview_urls": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Link-preview URLs the sender removed from this message."
+          "suppress_link_previews": {
+            "type": "boolean",
+            "description": "Whether the sender hid this message's link previews for everyone."
           },
           "thread": {
             "$ref": "#/components/schemas/ApiThreadInfo",
@@ -12861,7 +12855,7 @@
           "content",
           "created_at",
           "updated_at",
-          "suppressed_preview_urls",
+          "suppress_link_previews",
           "reactions",
           "attachments"
         ],
@@ -12907,12 +12901,9 @@
             "type": "string",
             "description": "Sender user id."
           },
-          "suppressed_preview_urls": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Link-preview URLs the sender removed from this reply."
+          "suppress_link_previews": {
+            "type": "boolean",
+            "description": "Whether the sender hid this reply's link previews for everyone."
           },
           "updated_at": {
             "type": "string",
@@ -20651,12 +20642,9 @@
             "type": ["string", "null"],
             "description": "Optional optimistic-update nonce."
           },
-          "suppressed_preview_urls": {
-            "type": ["array", "null"],
-            "items": {
-              "type": "string"
-            },
-            "description": "Optional replacement set of link-preview URLs removed from the\nmessage (\"remove preview\"); `None` leaves it unchanged."
+          "suppress_link_previews": {
+            "type": ["boolean", "null"],
+            "description": "Optionally sets whether link previews on this message are hidden\nfor everyone (\"remove preview\"); `None` leaves it unchanged."
           }
         }
       },

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT\n                id,\n                thread_id AS \"thread_id!\",\n                sender_id,\n                triggered_by_user_id,\n                content,\n                created_at,\n                updated_at,\n                edited_at::timestamptz AS \"edited_at?\",\n                suppressed_preview_urls\n            FROM comms_messages\n            WHERE thread_id = $1\n              AND deleted_at IS NULL\n            ORDER BY created_at ASC, id ASC\n            ",
+  "query": "\n            SELECT\n                id,\n                thread_id AS \"thread_id!\",\n                sender_id,\n                triggered_by_user_id,\n                content,\n                created_at,\n                updated_at,\n                edited_at::timestamptz AS \"edited_at?\",\n                suppress_link_previews\n            FROM comms_messages\n            WHERE thread_id = $1\n              AND deleted_at IS NULL\n            ORDER BY created_at ASC, id ASC\n            ",
   "describe": {
     "columns": [
       {
@@ -45,8 +45,8 @@
       },
       {
         "ordinal": 8,
-        "name": "suppressed_preview_urls",
-        "type_info": "TextArray"
+        "name": "suppress_link_previews",
+        "type_info": "Bool"
       }
     ],
     "parameters": {
@@ -66,5 +66,5 @@
       false
     ]
   },
-  "hash": "01738f001534b71871949bb24e7bd8b7812a1f1acdf51de8352676d3b9db717b"
+  "hash": "b03ba71a2a473c5a382496b97d683dffd368ff3fa20fda688ba90e18f4bb7d87"
 }

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT\n                id,\n                channel_id,\n                thread_id,\n                sender_id,\n                triggered_by_user_id,\n                content,\n                created_at,\n                updated_at,\n                edited_at::timestamptz AS \"edited_at?\",\n                deleted_at::timestamptz AS \"deleted_at?\",\n                suppressed_preview_urls\n            FROM comms_messages\n            WHERE id = $1 AND channel_id = $2\n            ",
+  "query": "\n            SELECT\n                id,\n                channel_id,\n                thread_id,\n                sender_id,\n                triggered_by_user_id,\n                content,\n                created_at,\n                updated_at,\n                edited_at::timestamptz AS \"edited_at?\",\n                deleted_at::timestamptz AS \"deleted_at?\",\n                suppress_link_previews\n            FROM comms_messages\n            WHERE channel_id = $1\n              AND (created_at, id) > ($2, $3)\n            ORDER BY created_at ASC, id ASC\n            LIMIT $4\n            ",
   "describe": {
     "columns": [
       {
@@ -55,14 +55,16 @@
       },
       {
         "ordinal": 10,
-        "name": "suppressed_preview_urls",
-        "type_info": "TextArray"
+        "name": "suppress_link_previews",
+        "type_info": "Bool"
       }
     ],
     "parameters": {
       "Left": [
         "Uuid",
-        "Uuid"
+        "Timestamptz",
+        "Uuid",
+        "Int8"
       ]
     },
     "nullable": [
@@ -79,5 +81,5 @@
       false
     ]
   },
-  "hash": "2f8cce24488f2234523e25307043007970015e5dcd5fdce97c5d8f89b3cdf8e9"
+  "hash": "c0ad0d6c832e033de68fc5304d8ce29327e6e9c19df83261bac78d8c24614010"
 }

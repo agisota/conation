@@ -141,7 +141,7 @@ function makeOptimisticTopLevelMessage(
     updated_at: now,
     deleted_at: undefined,
     edited_at: undefined,
-    suppressed_preview_urls: [],
+    suppress_link_previews: false,
     attachments,
     reactions: [],
     thread: {
@@ -165,7 +165,7 @@ function makeOptimisticThreadReply(
     created_at: now,
     updated_at: now,
     edited_at: undefined,
-    suppressed_preview_urls: [],
+    suppress_link_previews: false,
     attachments,
     reactions: [],
   };
@@ -413,14 +413,12 @@ export function rollbackUpdateChannelMessage(
 type SuppressLinkPreviewParams = {
   channelID: string;
   messageID: string;
-  /** Replacement set of suppressed preview URLs for the message. */
-  suppressedPreviewUrls: string[];
 };
 
 /**
- * Mutation to remove link previews from a message for every participant
- * (sender-only; Slack's "remove preview"). The caller is expected to hide the
- * preview locally for instant feedback and undo on error.
+ * Mutation to remove a message's link previews for every participant
+ * (sender-only; Discord's suppress-embeds model). The caller is expected to
+ * hide the previews locally for instant feedback and undo on error.
  */
 export function useSuppressLinkPreviewMutation(
   callbacks?: MutationCallbacks<
@@ -438,7 +436,7 @@ export function useSuppressLinkPreviewMutation(
           await storageServiceClient.patchMessage({
             channel_id: vars.channelID,
             message_id: vars.messageID,
-            suppressed_preview_urls: vars.suppressedPreviewUrls,
+            suppress_link_previews: true,
           })
       );
     },

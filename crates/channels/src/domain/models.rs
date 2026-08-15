@@ -158,8 +158,8 @@ pub struct ChannelMessage {
     pub edited_at: Option<DateTime<Utc>>,
     /// When the message was soft-deleted (if ever).
     pub deleted_at: Option<DateTime<Utc>>,
-    /// Link-preview URLs the sender removed from this message.
-    pub suppressed_preview_urls: Vec<String>,
+    /// Whether the sender hid this message's link previews for everyone.
+    pub suppress_link_previews: bool,
     /// Thread metadata and preview replies.
     pub thread: ThreadInfo,
     /// Aggregated reactions on this message.
@@ -236,8 +236,8 @@ pub struct ThreadReply {
     pub updated_at: DateTime<Utc>,
     /// When the reply was edited (if ever).
     pub edited_at: Option<DateTime<Utc>>,
-    /// Link-preview URLs the sender removed from this reply.
-    pub suppressed_preview_urls: Vec<String>,
+    /// Whether the sender hid this reply's link previews for everyone.
+    pub suppress_link_previews: bool,
     /// Aggregated reactions on this reply.
     pub reactions: Vec<CountedReaction>,
     /// Attachments on this reply.
@@ -381,8 +381,8 @@ pub struct ChannelContextMessage {
     pub edited_at: Option<DateTime<Utc>>,
     /// When the message was soft-deleted.
     pub deleted_at: Option<DateTime<Utc>>,
-    /// Link-preview URLs the sender removed from this message.
-    pub suppressed_preview_urls: Vec<String>,
+    /// Whether the sender hid this message's link previews for everyone.
+    pub suppress_link_previews: bool,
 }
 
 /// A reference to an attachment entity originating from a channel message.
@@ -453,8 +453,8 @@ pub struct TopLevelMessageRow {
     pub edited_at: Option<DateTime<Utc>>,
     /// Deleted timestamp.
     pub deleted_at: Option<DateTime<Utc>>,
-    /// Link-preview URLs the sender removed from this message.
-    pub suppressed_preview_urls: Vec<String>,
+    /// Whether the sender hid this message's link previews for everyone.
+    pub suppress_link_previews: bool,
 }
 
 /// Combined thread statistics and preview replies from a single query.
@@ -487,8 +487,8 @@ pub struct ThreadReplyRow {
     pub updated_at: DateTime<Utc>,
     /// Edited timestamp.
     pub edited_at: Option<DateTime<Utc>>,
-    /// Link-preview URLs the sender removed from this reply.
-    pub suppressed_preview_urls: Vec<String>,
+    /// Whether the sender hid this reply's link previews for everyone.
+    pub suppress_link_previews: bool,
 }
 
 /// Type of channel.
@@ -980,10 +980,10 @@ pub struct PatchMessageRequest {
     pub attachment_ids_to_delete: Option<Vec<String>>,
     /// Attachments to add.
     pub attachments_to_add: Option<Vec<NewChannelAttachment>>,
-    /// Optional replacement set of link-preview URLs removed from the
-    /// message ("remove preview"); `None` leaves it unchanged.
+    /// Optionally sets whether link previews on this message are hidden
+    /// for everyone ("remove preview"); `None` leaves it unchanged.
     #[serde(default)]
-    pub suppressed_preview_urls: Option<Vec<String>>,
+    pub suppress_link_previews: Option<bool>,
     /// Optional optimistic-update nonce.
     pub nonce: Option<String>,
     /// Internal notification policy for this patch.
@@ -1075,8 +1075,8 @@ pub struct MutatedMessage {
     pub edited_at: Option<DateTime<Utc>>,
     /// Deleted timestamp.
     pub deleted_at: Option<DateTime<Utc>>,
-    /// Link-preview URLs the sender removed from this message.
-    pub suppressed_preview_urls: Vec<String>,
+    /// Whether the sender hid this message's link previews for everyone.
+    pub suppress_link_previews: bool,
 }
 
 /// Persisted attachment returned by mutation operations.
