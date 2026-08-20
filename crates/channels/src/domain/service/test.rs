@@ -29,7 +29,6 @@ use std::{
 fn make_row(id: Uuid, minutes_ago: i64) -> TopLevelMessageRow {
     let now = Utc::now();
     TopLevelMessageRow {
-        suppress_link_previews: false,
         id,
         channel_id: Uuid::nil(),
         sender_id: "user_1".into(),
@@ -100,7 +99,6 @@ async fn returns_messages_with_thread_info() {
     let latest_reply = Utc::now();
 
     let reply_row = ThreadReplyRow {
-        suppress_link_previews: false,
         id: reply_id,
         thread_id: parent_id,
         sender_id: "user_2".into(),
@@ -201,7 +199,6 @@ async fn attaches_bot_profiles_to_bot_authored_messages() {
     conation_ai_row.sender_id = unseeded_bot.into_storage_id().to_string();
 
     let reply_row = ThreadReplyRow {
-        suppress_link_previews: false,
         id: Uuid::new_v4(),
         thread_id: parent_id,
         sender_id: seeded_bot.into_storage_id().to_string(),
@@ -318,7 +315,6 @@ impl FakeMutationRepo {
     fn new(channel_id: Uuid, sender: &str) -> Self {
         let now = Utc::now();
         let message = MutatedMessage {
-            suppress_link_previews: false,
             id: Uuid::new_v4(),
             channel_id,
             thread_id: None,
@@ -810,14 +806,17 @@ impl ChannelRepo for FakeMutationRepo {
         Ok(state.message.clone())
     }
 
-    async fn set_message_suppress_link_previews(
+    async fn remove_link_preview(
         &self,
         _channel_id: Uuid,
         _message_id: Uuid,
-        suppress: bool,
+        url: String,
     ) -> Result<MutatedMessage, Self::Err> {
         let mut state = self.state.lock().unwrap();
-        state.message.suppress_link_previews = suppress;
+        state.message.content = crate::domain::link_preview::remove_link_preview_from_content(
+            &state.message.content,
+            &url,
+        );
         Ok(state.message.clone())
     }
 
@@ -1339,7 +1338,7 @@ async fn bot_patch_message_derives_replacement_mentions_from_content() {
         channel_id,
         message_id,
         PatchMessageRequest {
-            suppress_link_previews: None,
+            remove_preview_url: None,
             content: Some("final answer".to_string()),
             mentions: None,
             attachment_ids_to_delete: None,
@@ -1378,7 +1377,7 @@ async fn patch_message_content_emits_message_changed_event_to_channel_participan
         channel_id,
         message_id,
         PatchMessageRequest {
-            suppress_link_previews: None,
+            remove_preview_url: None,
             content: Some("edited".to_string()),
             mentions: None,
             attachment_ids_to_delete: None,
@@ -1419,11 +1418,20 @@ async fn patch_message_content_emits_message_changed_event_to_channel_participan
     );
 }
 
+const PREVIEW_TEST_URL: &str = "https://example.com/article";
+
+fn m_link_message_content() -> String {
+    format!(
+        r#"look at <m-link>{{"url":"{PREVIEW_TEST_URL}","text":"{PREVIEW_TEST_URL}","title":""}}</m-link>"#
+    )
+}
+
 #[tokio::test]
-async fn patch_message_suppress_link_previews_emits_message_changed_without_edit() {
+async fn patch_message_remove_preview_url_emits_message_changed_without_edit() {
     let channel_id = Uuid::new_v4();
     let repo = FakeMutationRepo::new(channel_id, "macro|sender@test.com");
     let message_id = repo.state.lock().unwrap().message.id;
+    repo.state.lock().unwrap().message.content = m_link_message_content();
     let events = FakeEvents::default();
     let svc = mutation_service(
         repo.clone(),
@@ -1437,7 +1445,7 @@ async fn patch_message_suppress_link_previews_emits_message_changed_without_edit
         channel_id,
         message_id,
         PatchMessageRequest {
-            suppress_link_previews: Some(true),
+            remove_preview_url: Some(PREVIEW_TEST_URL.to_string()),
             content: None,
             mentions: None,
             attachment_ids_to_delete: None,
@@ -1460,21 +1468,22 @@ async fn patch_message_suppress_link_previews_emits_message_changed_without_edit
     else {
         panic!("expected MessageChanged event, got {:?}", emitted[0]);
     };
-    assert!(message.suppress_link_previews);
+    assert!(message.content.contains("\"preview\":false"));
     assert_eq!(nonce.as_deref(), Some("suppress-nonce"));
     assert!(posted_notification.is_none());
 
     let state = repo.state.lock().unwrap();
-    // Not a content edit: nothing patched, no channel bump.
+    // Not a content EDIT: the ordinary patch path never ran, no channel bump.
     assert_eq!(state.patched_content, None);
     assert!(state.touched_channel_ids.is_empty());
 }
 
 #[tokio::test]
-async fn patch_message_suppress_link_previews_rejected_for_non_sender_member() {
+async fn patch_message_remove_preview_url_rejected_for_non_sender_member() {
     let channel_id = Uuid::new_v4();
     let repo = FakeMutationRepo::new(channel_id, "macro|sender@test.com");
     let message_id = repo.state.lock().unwrap().message.id;
+    repo.state.lock().unwrap().message.content = m_link_message_content();
     let svc = mutation_service(
         repo.clone(),
         FakeEvents::default(),
@@ -1488,7 +1497,7 @@ async fn patch_message_suppress_link_previews_rejected_for_non_sender_member() {
             channel_id,
             message_id,
             PatchMessageRequest {
-                suppress_link_previews: Some(true),
+                remove_preview_url: Some(PREVIEW_TEST_URL.to_string()),
                 content: None,
                 mentions: None,
                 attachment_ids_to_delete: None,
@@ -1501,7 +1510,15 @@ async fn patch_message_suppress_link_previews_rejected_for_non_sender_member() {
         .unwrap_err();
 
     assert!(matches!(err, ChannelMutationErr::Unauthorized(_)));
-    assert!(!repo.state.lock().unwrap().message.suppress_link_previews);
+    assert!(
+        !repo
+            .state
+            .lock()
+            .unwrap()
+            .message
+            .content
+            .contains("\"preview\":false")
+    );
 }
 
 #[tokio::test]
@@ -1521,7 +1538,7 @@ async fn patch_message_attachment_only_touches_channel_once() {
         channel_id,
         message_id,
         PatchMessageRequest {
-            suppress_link_previews: None,
+            remove_preview_url: None,
             content: None,
             mentions: None,
             attachment_ids_to_delete: None,
@@ -1560,7 +1577,7 @@ async fn patch_message_content_and_attachments_touch_channel_once() {
         channel_id,
         message_id,
         PatchMessageRequest {
-            suppress_link_previews: None,
+            remove_preview_url: None,
             content: Some("edited".to_string()),
             mentions: None,
             attachment_ids_to_delete: None,
@@ -1600,7 +1617,7 @@ async fn patch_message_without_content_or_attachment_changes_does_not_touch_chan
         channel_id,
         message_id,
         PatchMessageRequest {
-            suppress_link_previews: None,
+            remove_preview_url: None,
             content: None,
             mentions: None,
             attachment_ids_to_delete: None,
@@ -1634,7 +1651,7 @@ async fn patch_message_propagates_channel_touch_errors() {
             channel_id,
             message_id,
             PatchMessageRequest {
-                suppress_link_previews: None,
+                remove_preview_url: None,
                 content: Some("edited".to_string()),
                 mentions: None,
                 attachment_ids_to_delete: None,
@@ -1690,7 +1707,7 @@ async fn patch_message_notify_as_posted_adds_notification_context_for_channel_pa
         channel_id,
         message_id,
         PatchMessageRequest {
-            suppress_link_previews: None,
+            remove_preview_url: None,
             content: Some("final answer".to_string()),
             mentions: None,
             attachment_ids_to_delete: None,
@@ -1755,7 +1772,7 @@ async fn patch_of_deleted_message_is_not_found() {
             channel_id,
             message_id,
             PatchMessageRequest {
-                suppress_link_previews: None,
+                remove_preview_url: None,
                 content: Some("late reply".to_string()),
                 mentions: None,
                 attachment_ids_to_delete: None,
@@ -2163,7 +2180,6 @@ async fn thread_replies_message_not_found() {
 async fn thread_replies_resolve_and_hydrate() {
     let parent = make_row(Uuid::new_v4(), 0);
     let reply_1 = ThreadReplyRow {
-        suppress_link_previews: false,
         id: Uuid::new_v4(),
         thread_id: parent.id,
         sender_id: "macro|user-a@test.com".into(),
@@ -2174,7 +2190,6 @@ async fn thread_replies_resolve_and_hydrate() {
         edited_at: None,
     };
     let reply_2 = ThreadReplyRow {
-        suppress_link_previews: false,
         id: Uuid::new_v4(),
         thread_id: parent.id,
         sender_id: "macro|user-b@test.com".into(),

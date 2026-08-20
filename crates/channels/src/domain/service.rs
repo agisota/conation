@@ -185,7 +185,6 @@ where
                                 created_at: r.created_at,
                                 updated_at: r.updated_at,
                                 edited_at: r.edited_at,
-                                suppress_link_previews: r.suppress_link_previews,
                                 reactions: reactions.get(&r.id).cloned().unwrap_or_default(),
                                 attachments: attachments.get(&r.id).cloned().unwrap_or_default(),
                             })
@@ -204,7 +203,6 @@ where
                     updated_at: row.updated_at,
                     edited_at: row.edited_at,
                     deleted_at: row.deleted_at,
-                    suppress_link_previews: row.suppress_link_previews,
                     thread: ThreadInfo {
                         reply_count: td.map_or(0, |td| td.reply_count),
                         latest_reply_at: td.and_then(|td| td.latest_reply_at),
@@ -250,7 +248,6 @@ where
                 created_at: row.created_at,
                 updated_at: row.updated_at,
                 edited_at: row.edited_at,
-                suppress_link_previews: row.suppress_link_previews,
                 reactions: reactions.get(&row.id).cloned().unwrap_or_default(),
                 attachments: attachments.get(&row.id).cloned().unwrap_or_default(),
             })
@@ -740,7 +737,7 @@ where
             mentions: replacement_mentions,
             attachment_ids_to_delete,
             attachments_to_add,
-            suppress_link_previews,
+            remove_preview_url,
             nonce,
             notification_policy,
         } = req;
@@ -784,17 +781,15 @@ where
             .await?;
         }
 
-        // Applied before any content patch so the content patch's returned
-        // message already carries the new suppression state.
-        if let Some(suppress) = suppress_link_previews {
+        // Applied before any content patch: a replacement body would clobber
+        // the rewrite anyway, and its own MessageChanged carries the result.
+        if let Some(url) = remove_preview_url {
             let message = self
                 .repo
-                .set_message_suppress_link_previews(channel_id, message_id, suppress)
+                .remove_link_preview(channel_id, message_id, url)
                 .await
                 .map_err(|e| ChannelMutationErr::Repo(e.into()))?;
 
-            // A content patch below dispatches its own MessageChanged with the
-            // same suppression state; only a suppression-only patch needs one.
             if content.is_none() {
                 let channel_participants = self
                     .repo

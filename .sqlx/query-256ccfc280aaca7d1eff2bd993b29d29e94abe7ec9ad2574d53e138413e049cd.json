@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            INSERT INTO comms_messages (id, channel_id, sender_id, triggered_by_user_id, content, thread_id)\n            VALUES ($1, $2, $3, $4, $5, $6)\n            RETURNING\n                id,\n                channel_id,\n                sender_id,\n                triggered_by_user_id,\n                content,\n                created_at,\n                updated_at,\n                thread_id,\n                edited_at::timestamptz AS \"edited_at?\",\n                deleted_at::timestamptz AS \"deleted_at?\",\n                suppress_link_previews\n            ",
+  "query": "\n            UPDATE comms_messages\n            SET\n                updated_at = NOW(),\n                edited_at = NOW(),\n                deleted_at = CASE\n                    WHEN $2 = false AND (content IS NULL OR content ~ '^[\\s]*$') THEN NOW()\n                    ELSE deleted_at\n                END\n            WHERE id = $1\n            RETURNING\n                id,\n                channel_id,\n                sender_id,\n                triggered_by_user_id,\n                content,\n                created_at,\n                updated_at,\n                thread_id,\n                edited_at::timestamptz AS \"edited_at?\",\n                deleted_at::timestamptz AS \"deleted_at?\"\n            ",
   "describe": {
     "columns": [
       {
@@ -52,21 +52,12 @@
         "ordinal": 9,
         "name": "deleted_at?",
         "type_info": "Timestamptz"
-      },
-      {
-        "ordinal": 10,
-        "name": "suppress_link_previews",
-        "type_info": "Bool"
       }
     ],
     "parameters": {
       "Left": [
         "Uuid",
-        "Uuid",
-        "Text",
-        "Text",
-        "Text",
-        "Uuid"
+        "Bool"
       ]
     },
     "nullable": [
@@ -79,9 +70,8 @@
       false,
       true,
       null,
-      null,
-      false
+      null
     ]
   },
-  "hash": "4fd66a0f07d7a3411c4e8d108afbf1608563178ad011fcd771ca785bec6081a2"
+  "hash": "256ccfc280aaca7d1eff2bd993b29d29e94abe7ec9ad2574d53e138413e049cd"
 }

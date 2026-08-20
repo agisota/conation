@@ -401,7 +401,6 @@ mod tests {
 
     fn reply(seconds: i64) -> ThreadReply {
         ThreadReply {
-            suppress_link_previews: false,
             id: Uuid::new_v4(),
             sender_id: "macro|reply@example.com".to_string(),
             triggered_by: None,
@@ -418,7 +417,6 @@ mod tests {
     fn message_with_thread(reply_count: i64, preview: Vec<ThreadReply>) -> ChannelMessage {
         let id = Uuid::new_v4();
         ChannelMessage {
-            suppress_link_previews: false,
             id,
             channel_id: Uuid::new_v4(),
             sender_id: "macro|sender@example.com".to_string(),

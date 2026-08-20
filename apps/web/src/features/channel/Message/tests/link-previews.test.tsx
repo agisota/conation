@@ -7,6 +7,8 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { LinkPreviews } from '../LinkPreviews';
 import {
+  hideLinkPreview,
+  isLinkPreviewHidden,
   setShowLinkPreviews,
   showLinkPreviews,
 } from '../link-preview-visibility';
@@ -51,7 +53,7 @@ vi.mock('@core/context/user', () => ({
 }));
 
 vi.mock('@queries/channel/message', () => ({
-  useSuppressLinkPreviewMutation: () => ({ mutate: suppressMutate }),
+  useRemoveLinkPreviewMutation: () => ({ mutate: suppressMutate }),
 }));
 
 describe('extractUnfurlableUrls', () => {
@@ -125,6 +127,16 @@ describe('extractUnfurlableUrls', () => {
       '<m-link>{"url":"https://example.com/from-editor","text":"https://example.com/from-editor","title":""}</m-link>';
     expect(extractUnfurlableUrls(`check out ${mLink}`)).toEqual([
       'https://example.com/from-editor',
+    ]);
+  });
+
+  it('skips m-links whose preview the sender removed', () => {
+    const removed =
+      '<m-link>{"url":"https://example.com/removed","text":"x","title":"","preview":false}</m-link>';
+    const kept =
+      '<m-link>{"url":"https://example.com/kept","text":"x","title":""}</m-link>';
+    expect(extractUnfurlableUrls(`${removed} and ${kept}`)).toEqual([
+      'https://example.com/kept',
     ]);
   });
 
@@ -250,7 +262,7 @@ describe('LinkPreviews', () => {
     expect(container.querySelector('[data-message-link-previews]')).toBeNull();
   });
 
-  it('lets the sender remove previews for everyone', async () => {
+  it('lets the sender remove a preview for everyone', async () => {
     const user = userEvent.setup({ skipHover: true });
     const url = 'https://example.com/hide-me';
     unfurlResults.set(url, {
@@ -264,19 +276,36 @@ describe('LinkPreviews', () => {
     expect(first.container.querySelector('[data-link-preview]')).not.toBeNull();
 
     await user.click(
-      first.getByRole('button', { name: 'Remove link previews' })
+      first.getByRole('button', { name: 'Remove link preview' })
     );
-    // Hidden immediately (optimistic) and persisted to the message.
+    // Hidden immediately (optimistic) while the server rewrites the content.
     expect(first.container.querySelector('[data-link-preview]')).toBeNull();
     expect(suppressMutate).toHaveBeenCalledTimes(1);
     expect(suppressMutate.mock.calls[0]?.[0]).toEqual({
       channelID: 'channel-1',
       messageID: 'message-1',
+      url,
     });
     first.unmount();
 
     const second = renderPreviews(url, { sender_id: 'user-1' });
     expect(second.container.querySelector('[data-link-preview]')).toBeNull();
+  });
+
+  it('clears the optimistic hide once the rewritten content arrives', () => {
+    const url = 'https://example.com/confirmed';
+    unfurlResults.set(url, {
+      type: 'success',
+      data: { url, title: 'Confirmed' },
+      _createdAt: new Date(),
+    });
+    hideLinkPreview('message-confirmed', url);
+
+    const removed = `<m-link>{"url":"${url}","text":"${url}","title":"","preview":false}</m-link>`;
+    const { container } = renderPreviews(removed, { id: 'message-confirmed' });
+
+    expect(container.querySelector('[data-link-preview]')).toBeNull();
+    expect(isLinkPreviewHidden('message-confirmed', url)).toBe(false);
   });
 
   it('offers no remove button on messages the user did not send', () => {
@@ -293,10 +322,10 @@ describe('LinkPreviews', () => {
     });
 
     expect(container.querySelector('[data-link-preview]')).not.toBeNull();
-    expect(queryByRole('button', { name: 'Remove link previews' })).toBeNull();
+    expect(queryByRole('button', { name: 'Remove link preview' })).toBeNull();
   });
 
-  it('renders no cards for a message whose sender removed previews', () => {
+  it('renders no card for a link whose preview the sender removed', () => {
     const url = 'https://example.com/suppressed';
     unfurlResults.set(url, {
       type: 'success',
@@ -304,10 +333,8 @@ describe('LinkPreviews', () => {
       _createdAt: new Date(),
     });
 
-    const { container } = renderPreviews(url, {
-      id: 'message-suppressed',
-      suppress_link_previews: true,
-    });
+    const removed = `<m-link>{"url":"${url}","text":"${url}","title":"","preview":false}</m-link>`;
+    const { container } = renderPreviews(removed, { id: 'message-suppressed' });
 
     expect(container.querySelector('[data-message-link-previews]')).toBeNull();
   });

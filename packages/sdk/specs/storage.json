@@ -12086,8 +12086,7 @@
           "sender",
           "content",
           "created_at",
-          "updated_at",
-          "suppress_link_previews"
+          "updated_at"
         ],
         "properties": {
           "channel_id": {
@@ -12126,10 +12125,6 @@
           "sender_id": {
             "type": "string",
             "description": "Sender user id."
-          },
-          "suppress_link_previews": {
-            "type": "boolean",
-            "description": "Whether the sender hid this message's link previews for everyone."
           },
           "thread_id": {
             "type": ["string", "null"],
@@ -12301,7 +12296,6 @@
           "content",
           "created_at",
           "updated_at",
-          "suppress_link_previews",
           "thread",
           "reactions",
           "attachments"
@@ -12357,10 +12351,6 @@
           "sender_id": {
             "type": "string",
             "description": "Sender user id."
-          },
-          "suppress_link_previews": {
-            "type": "boolean",
-            "description": "Whether the sender hid this message's link previews for everyone."
           },
           "thread": {
             "$ref": "#/components/schemas/ApiThreadInfo",
@@ -12855,7 +12845,6 @@
           "content",
           "created_at",
           "updated_at",
-          "suppress_link_previews",
           "reactions",
           "attachments"
         ],
@@ -12900,10 +12889,6 @@
           "sender_id": {
             "type": "string",
             "description": "Sender user id."
-          },
-          "suppress_link_previews": {
-            "type": "boolean",
-            "description": "Whether the sender hid this reply's link previews for everyone."
           },
           "updated_at": {
             "type": "string",
@@ -20642,9 +20627,9 @@
             "type": ["string", "null"],
             "description": "Optional optimistic-update nonce."
           },
-          "suppress_link_previews": {
-            "type": ["boolean", "null"],
-            "description": "Optionally sets whether link previews on this message are hidden\nfor everyone (\"remove preview\"); `None` leaves it unchanged."
+          "remove_preview_url": {
+            "type": ["string", "null"],
+            "description": "Optionally removes the rich preview of one link for every participant\nby setting `preview: false` on the matching link node(s) in the\ncontent, server-side. Not a content edit: `edited_at` is untouched."
           }
         }
       },

@@ -19,7 +19,6 @@ export function discussionCommentToMessageData(
         ? comment.updatedAt
         : null,
     attachments: [],
-    suppress_link_previews: false,
     reactions: [],
   };
 }
@@ -41,7 +40,6 @@ export function discussionCommentToApiChannelMessage(
         ? comment.updatedAt
         : null,
     attachments: [],
-    suppress_link_previews: false,
     reactions: [],
     channel_id: '',
     thread: {

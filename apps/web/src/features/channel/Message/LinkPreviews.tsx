@@ -4,7 +4,7 @@ import { useUnfurl } from '@core/signal/unfurl';
 import { extractDomain, openExternalUrl } from '@core/util/url';
 import GlobeIcon from '@phosphor/globe-simple.svg';
 import XIcon from '@phosphor/x.svg';
-import { useSuppressLinkPreviewMutation } from '@queries/channel/message';
+import { useRemoveLinkPreviewMutation } from '@queries/channel/message';
 import { proxyResource } from '@service-unfurl/client';
 import type { GetUnfurlResponse } from '@service-unfurl/generated/schemas/getUnfurlResponse';
 import { cn } from '@ui';
@@ -18,6 +18,7 @@ import {
 } from 'solid-js';
 import { useMessage } from './context';
 import {
+  hiddenUrlsForMessage,
   hideLinkPreview,
   isLinkPreviewHidden,
   showLinkPreviews,
@@ -71,7 +72,7 @@ function LinkPreviewCard(props: {
         <Show when={props.onHide}>
           <button
             type="button"
-            aria-label="Remove link previews"
+            aria-label="Remove link preview"
             class="shrink-0 rounded p-0.5 text-ink-extra-muted opacity-0 hover:text-ink focus-visible:opacity-100 group-hover/preview:opacity-100 touch:opacity-100"
             onClick={props.onHide}
           >
@@ -139,48 +140,48 @@ type LinkPreviewsProps = {
 
 /**
  * Slack-style rich previews for external links in the message body, rendered
- * below the content. Previews pop in once the unfurl service responds;
- * links with no usable metadata, and messages whose sender removed previews,
- * render nothing.
+ * below the content. Previews pop in once the unfurl service responds; links
+ * with no usable metadata, and links whose sender removed the preview
+ * (`preview: false` on the link node), render nothing.
  */
 export function LinkPreviews(props: LinkPreviewsProps) {
   const message = useMessage();
   const userId = useUserId();
-  const suppressPreviews = useSuppressLinkPreviewMutation();
-  const urls = createMemo(() => {
-    if (
-      !showLinkPreviews() ||
-      message().deleted_at ||
-      message().suppress_link_previews ||
-      isLinkPreviewHidden(message().id)
-    ) {
-      return [];
-    }
-    return extractUnfurlableUrls(message().content ?? '');
-  });
+  const removePreview = useRemoveLinkPreviewMutation();
+  // Extraction already drops `preview: false` links; the local hidden set is
+  // the optimistic layer covering the gap until rewritten content arrives.
+  const previewable = createMemo(() =>
+    message().deleted_at ? [] : extractUnfurlableUrls(message().content ?? '')
+  );
+  const urls = createMemo(() =>
+    showLinkPreviews()
+      ? previewable().filter((url) => !isLinkPreviewHidden(message().id, url))
+      : []
+  );
 
-  // Discord's suppress-embeds model: only the sender gets the ×, and it
-  // removes every preview on the message for every participant. The local
-  // hide is the optimistic layer, rolled back if the server rejects it.
-  const removeForEveryone = () => {
+  // Sender-only, per link: the server sets `preview: false` on the matching
+  // link node, hiding the card for every participant.
+  const removeForEveryone = (url: string) => {
     const messageId = message().id;
     const channelId = props.channelId;
     if (!channelId) return;
-    hideLinkPreview(messageId);
-    suppressPreviews.mutate(
-      { channelID: channelId, messageID: messageId },
-      { onError: () => unhideLinkPreview(messageId) }
+    hideLinkPreview(messageId, url);
+    removePreview.mutate(
+      { channelID: channelId, messageID: messageId, url },
+      { onError: () => unhideLinkPreview(messageId, url) }
     );
   };
   const canRemove = () =>
     props.channelId !== undefined && isOwnMessage(message(), userId());
 
-  // Once the server-confirmed suppression reaches the cache, the optimistic
-  // entry is redundant — drop it so it can't shadow a future unsuppress.
+  // Once the rewritten content lands in the cache, extraction no longer
+  // yields the URL and the optimistic entry is redundant — drop it so it
+  // cannot shadow a future re-enable of the preview.
   createEffect(() => {
-    const { id, suppress_link_previews } = message();
-    if (suppress_link_previews && isLinkPreviewHidden(id)) {
-      unhideLinkPreview(id);
+    const id = message().id;
+    const live = new Set(previewable());
+    for (const url of hiddenUrlsForMessage(id)) {
+      if (!live.has(url)) unhideLinkPreview(id, url);
     }
   });
 
@@ -196,7 +197,7 @@ export function LinkPreviews(props: LinkPreviewsProps) {
           {(url) => (
             <LinkPreview
               url={url}
-              onRemove={canRemove() ? removeForEveryone : undefined}
+              onRemove={canRemove() ? () => removeForEveryone(url) : undefined}
             />
           )}
         </For>

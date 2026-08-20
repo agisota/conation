@@ -13,8 +13,6 @@ export type MessageData = {
   deleted_at?: string | null;
   edited_at?: string | null;
   thread_id?: string | null;
-  /** Whether the sender hid this message's link previews for everyone. */
-  suppress_link_previews?: boolean;
   attachments: ApiMessageAttachment[];
   reactions: ApiCountedReaction[];
 };

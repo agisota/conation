@@ -287,7 +287,6 @@ fn context_message(
 ) -> ChannelContextMessage {
     let now = Utc::now();
     ChannelContextMessage {
-        suppress_link_previews: false,
         id,
         channel_id,
         thread_id: None,
@@ -305,7 +304,6 @@ fn context_message(
 fn thread_reply(id: Uuid, sender_id: &str, content: &str) -> ThreadReply {
     let now = Utc::now();
     ThreadReply {
-        suppress_link_previews: false,
         id,
         sender_id: sender_id.to_string(),
         bot_profile: None,
@@ -358,7 +356,6 @@ fn bot_event(
             edited_at: None,
             deleted_at: None,
             triggered_by: None,
-            suppress_link_previews: false,
         },
         reply_thread_id: thread_id.unwrap_or(trigger_id),
         requesting_user: user_id(sender_email),

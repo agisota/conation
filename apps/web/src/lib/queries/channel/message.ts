@@ -141,7 +141,6 @@ function makeOptimisticTopLevelMessage(
     updated_at: now,
     deleted_at: undefined,
     edited_at: undefined,
-    suppress_link_previews: false,
     attachments,
     reactions: [],
     thread: {
@@ -165,7 +164,6 @@ function makeOptimisticThreadReply(
     created_at: now,
     updated_at: now,
     edited_at: undefined,
-    suppress_link_previews: false,
     attachments,
     reactions: [],
   };
@@ -410,37 +408,40 @@ export function rollbackUpdateChannelMessage(
   });
 }
 
-type SuppressLinkPreviewParams = {
+type RemoveLinkPreviewParams = {
   channelID: string;
   messageID: string;
+  /** The link whose preview is being removed. */
+  url: string;
 };
 
 /**
- * Mutation to remove a message's link previews for every participant
- * (sender-only; Discord's suppress-embeds model). The caller is expected to
- * hide the previews locally for instant feedback and undo on error.
+ * Mutation to remove one link's rich preview for every participant
+ * (sender-only). The server rewrites the matching link node in the content
+ * to carry `preview: false`; the caller is expected to hide the card locally
+ * for instant feedback and undo on error.
  */
-export function useSuppressLinkPreviewMutation(
+export function useRemoveLinkPreviewMutation(
   callbacks?: MutationCallbacks<
     MessageResponse,
     Error,
-    SuppressLinkPreviewParams,
+    RemoveLinkPreviewParams,
     void
   >
 ) {
   return useMutation(() => ({
     gcTime: 0,
-    mutationFn: async (vars: SuppressLinkPreviewParams) => {
+    mutationFn: async (vars: RemoveLinkPreviewParams) => {
       return await throwOnErr(
         async () =>
           await storageServiceClient.patchMessage({
             channel_id: vars.channelID,
             message_id: vars.messageID,
-            suppress_link_previews: true,
+            remove_preview_url: vars.url,
           })
       );
     },
-    ...withCallbacks<MessageResponse, Error, SuppressLinkPreviewParams, void>(
+    ...withCallbacks<MessageResponse, Error, RemoveLinkPreviewParams, void>(
       {
         onError(error) {
           console.error('failed to remove link preview', error);

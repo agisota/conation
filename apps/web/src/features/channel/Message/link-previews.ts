@@ -47,11 +47,14 @@ function trimBareUrl(url: string): string {
 }
 
 /** The JSON payload inside an `<m-link>` tag (the editor's link node). */
-type MLinkPayload = { url?: string };
+type MLinkPayload = { url?: string; preview?: boolean };
 
+/** Returns the payload's URL, or undefined for unparseable payloads and
+ * links whose preview the sender removed (`preview: false`). */
 function parseMLinkUrl(payload: string): string | undefined {
   try {
-    return (JSON.parse(payload) as MLinkPayload).url;
+    const parsed = JSON.parse(payload) as MLinkPayload;
+    return parsed.preview === false ? undefined : parsed.url;
   } catch {
     return undefined;
   }

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            UPDATE comms_messages\n            SET\n                updated_at = NOW(),\n                edited_at = NOW(),\n                deleted_at = CASE\n                    WHEN $2 = false AND (content IS NULL OR content ~ '^[\\s]*$') THEN NOW()\n                    ELSE deleted_at\n                END\n            WHERE id = $1\n            RETURNING\n                id,\n                channel_id,\n                sender_id,\n                triggered_by_user_id,\n                content,\n                created_at,\n                updated_at,\n                thread_id,\n                edited_at::timestamptz AS \"edited_at?\",\n                deleted_at::timestamptz AS \"deleted_at?\",\n                suppress_link_previews\n            ",
+  "query": "\n            UPDATE comms_messages\n            SET content = $1, updated_at = NOW(), edited_at = NOW()\n            WHERE id = $2 AND channel_id = $3\n            RETURNING\n                id,\n                channel_id,\n                sender_id,\n                triggered_by_user_id,\n                content,\n                created_at,\n                updated_at,\n                thread_id,\n                edited_at::timestamptz AS \"edited_at?\",\n                deleted_at::timestamptz AS \"deleted_at?\"\n            ",
   "describe": {
     "columns": [
       {
@@ -52,17 +52,13 @@
         "ordinal": 9,
         "name": "deleted_at?",
         "type_info": "Timestamptz"
-      },
-      {
-        "ordinal": 10,
-        "name": "suppress_link_previews",
-        "type_info": "Bool"
       }
     ],
     "parameters": {
       "Left": [
+        "Text",
         "Uuid",
-        "Bool"
+        "Uuid"
       ]
     },
     "nullable": [
@@ -75,9 +71,8 @@
       false,
       true,
       null,
-      null,
-      false
+      null
     ]
   },
-  "hash": "d5ac856ad1d716cf4c3dc7c8c7be01f6e36c582a737941bcbf24f3575a71187d"
+  "hash": "17c240f6a460b4c63a40f0ab96f8d756f2001fb03c1e389dabb596d95359ed94"
 }

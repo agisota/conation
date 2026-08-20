@@ -29,8 +29,6 @@ export interface ApiChannelContextMessage {
   sender: ApiMessageSender;
   /** Sender user id. */
   sender_id: string;
-  /** Whether the sender hid this message's link previews for everyone. */
-  suppress_link_previews: boolean;
   /** Parent thread id for replies. */
   thread_id?: ApiChannelContextMessageThreadId;
   /** When the message was last updated. */

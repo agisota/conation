@@ -59,7 +59,6 @@ function segmentToApiChannelMessage(
     sender_id: s.speakerId,
     created_at: s.startedAt,
     updated_at: s.startedAt,
-    suppress_link_previews: false,
     attachments: [],
     reactions: [],
     thread: { preview: [], reply_count: 0 },

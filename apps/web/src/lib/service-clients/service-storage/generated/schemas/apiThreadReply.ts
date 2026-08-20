@@ -30,8 +30,6 @@ export interface ApiThreadReply {
   sender: ApiMessageSender;
   /** Sender user id. */
   sender_id: string;
-  /** Whether the sender hid this reply's link previews for everyone. */
-  suppress_link_previews: boolean;
   /** When the reply was last updated. */
   updated_at: string;
 }

@@ -150,8 +150,6 @@ export function replaceThreadReplyState(
     editedAt: string | null | undefined;
     updatedAt: string;
     attachments: ApiMessageAttachment[];
-    /** Omitted = leave the reply's preview suppression unchanged. */
-    suppressLinkPreviews?: boolean;
   }
 ): Array<ApiThreadReply> | undefined {
   if (!data) return data;
@@ -166,8 +164,6 @@ export function replaceThreadReplyState(
       edited_at: nextState.editedAt ?? undefined,
       updated_at: nextState.updatedAt,
       attachments: nextState.attachments,
-      suppress_link_previews:
-        nextState.suppressLinkPreviews ?? reply.suppress_link_previews,
     };
   });
 

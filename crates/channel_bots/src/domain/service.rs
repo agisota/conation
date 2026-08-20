@@ -320,11 +320,11 @@ where
                 event.channel_id,
                 message_id,
                 PatchMessageRequest {
+                    remove_preview_url: None,
                     content: Some(reply),
                     mentions: None,
                     attachment_ids_to_delete: None,
                     attachments_to_add: None,
-                    suppress_link_previews: None,
                     nonce: None,
                     notification_policy: PatchMessageNotificationPolicy::NotifyAsPostedMessage,
                 },

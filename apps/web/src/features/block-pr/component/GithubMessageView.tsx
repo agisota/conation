@@ -107,12 +107,8 @@ function toThreadRowMessage(
   return {
     ...message,
     channel_id: '',
-<<<<<<< HEAD
     content: message.content ?? '',
-    suppressed_preview_urls: [],
-=======
     suppress_link_previews: false,
->>>>>>> 2b1cf6b4f6 (chg)
     sender: {
       type: 'bot',
       id: `github:${login}`,

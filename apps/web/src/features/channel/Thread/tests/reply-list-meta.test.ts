@@ -15,7 +15,6 @@ function createReply(
     updated_at: createdAt,
     sender: senderFromStorageId(senderId),
     sender_id: senderId,
-    suppress_link_previews: false,
     attachments: [],
     reactions: [],
   };
