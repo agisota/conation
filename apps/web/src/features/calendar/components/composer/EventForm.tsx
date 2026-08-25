@@ -34,9 +34,20 @@ export interface EventFormProps {
   disabled?: boolean;
   pending: boolean;
   class?: string;
+  /**
+   * Hides the built-in Cancel/submit footer so a host can render its own
+   * controls (e.g. the channel input's event face). Submission then goes
+   * through the controller's `submitValues` or the form's Enter handling.
+   */
+  hideFooter?: boolean;
+  /** Overrides the title autofocus; defaults to autofocusing on create. */
+  autofocusTitle?: boolean;
+  /** Observes the title input, e.g. to refocus when a host face activates. */
+  titleInputRef?: (el: HTMLInputElement) => void;
   onCalendarChange?: (calendarId: string, color: string) => void;
   onDirtyChange?: (dirty: boolean) => void;
-  onCancel: () => void;
+  /** Discards the form. Unused when the footer is hidden. */
+  onCancel?: () => void;
   onSubmit: (
     values: EventEditorSubmitValues,
     scope?: CalendarUpdateScope
@@ -152,6 +163,7 @@ export function EventForm(props: EventFormProps) {
             </div>
 
             <input
+              ref={props.titleInputRef}
               type="text"
               value={state().title}
               onInput={(event) =>
@@ -159,7 +171,7 @@ export function EventForm(props: EventFormProps) {
               }
               placeholder={t('calendar.event.new')}
               aria-label={t('calendar.event.form.title.label')}
-              autofocus={!isEdit()}
+              autofocus={props.autofocusTitle ?? !isEdit()}
               disabled={fieldIsDisabled('title')}
               class="h-9 w-full bg-transparent px-2 text-lg font-semibold leading-snug text-ink outline-none placeholder:text-ink-placeholder"
             />
@@ -257,7 +269,12 @@ export function EventForm(props: EventFormProps) {
         </Show>
       </div>
 
-      <div class="flex shrink-0 items-center justify-end gap-3">
+      <div
+        class={cn(
+          'flex shrink-0 items-center justify-end gap-3',
+          props.hideFooter && 'hidden'
+        )}
+      >
         <Show when={props.showRecurringEditNotice}>
           <div
             role="radiogroup"
@@ -285,7 +302,7 @@ export function EventForm(props: EventFormProps) {
           variant="ghost"
           class="rounded-lg"
           disabled={formIsDisabled()}
-          onClick={props.onCancel}
+          onClick={() => props.onCancel?.()}
         >
           {t('common.cancel')}
         </Button>

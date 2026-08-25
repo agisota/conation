@@ -7,6 +7,7 @@ import {
   useUpdateCalendarEventMutation,
 } from '@queries/calendar/mutations';
 import type { CalendarUpdateScope } from '@service-email/client';
+import type { CalendarEvent as CalendarEventEntity } from '@service-email/generated/schemas/calendarEvent';
 import { type Accessor, createMemo } from 'solid-js';
 import {
   calendarEventToEditorInitialValues,
@@ -28,6 +29,8 @@ const EDIT_DISABLED_FIELDS = {
 interface UseEventEditorProps {
   event: Accessor<CalendarEvent | undefined>;
   onSaved: () => void;
+  /** Fires with the created entity when a create (not an edit) succeeds. */
+  onCreated?: (event: CalendarEventEntity) => void;
 }
 
 /** Shared create/edit query and mutation orchestration for any editor shell. */
@@ -79,7 +82,10 @@ export function useEventEditor(props: UseEventEditorProps) {
   });
 
   const create = useCreateCalendarEventMutation({
-    onSuccess: props.onSaved,
+    onSuccess: (event) => {
+      props.onCreated?.(event);
+      props.onSaved();
+    },
     onError: (error) => {
       toast.failure(t('calendar.event.toast.createFailed'), {
         subtext: error.message,
