@@ -13,6 +13,7 @@ import {
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import { useBlockAliasedName, useBlockId, useBlockName } from '@core/block';
 import { EntityIcon } from '@core/component/EntityIcon';
+import { EntityReferencesSection } from '@core/component/EntityReferencesSection';
 import { openDocument } from '@core/component/LexicalMarkdown/component/core/BlockLink';
 import { ProgressMeter } from '@core/component/LexicalMarkdown/component/status/Progress';
 import { Wordcount } from '@core/component/LexicalMarkdown/component/status/Wordcount';
@@ -22,7 +23,6 @@ import {
   REMOVE_PINNED_PROPERTY_COMMAND,
 } from '@core/component/LexicalMarkdown/plugins';
 import { Notifications } from '@core/component/Notifications';
-import { References } from '@core/component/References';
 import { UserIcon } from '@core/component/UserIcon';
 import {
   ENABLE_HISTORY_COMPONENT,
@@ -41,7 +41,6 @@ import {
   getDefaultPinnedProperties,
   SYSTEM_PROPERTY_IDS,
 } from '@property/constants';
-import { useAttachmentReferencesQuery } from '@queries/storage/attachment-references';
 import { useDocumentMetadataQuery } from '@queries/storage/document-metadata';
 import {
   type GithubPullRequestWithDetails,
@@ -149,7 +148,7 @@ export function MarkdownSidePanelSections(
       />
       <GithubSectionConditional documentId={blockId} isTask={isTask()} />
       <NotificationsSectionConditional entity={entity()} />
-      <ReferencesSectionConditional documentId={blockId} />
+      <EntityReferencesSection entityId={blockId} order={33} />
       <Show when={isTask()}>
         <TaskDuplicateMatchesSidePanelSection />
       </Show>
@@ -598,38 +597,6 @@ function NotificationsSectionConditional(props: { entity: Entity }) {
             entity={props.entity}
             notificationSource={notificationSource}
           />
-        </div>
-      </SidePanel.Section>
-    </Show>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// References Section (conditional)
-// ─────────────────────────────────────────────────────────────────────────────
-
-function ReferencesSectionConditional(props: { documentId: string }) {
-  const references = useAttachmentReferencesQuery(
-    () => props.documentId,
-    () => 'document'
-  );
-
-  const count = createMemo(() => references.data?.length ?? 0);
-
-  return (
-    <Show when={count() > 0}>
-      <SidePanel.Section
-        id="references"
-        title={
-          <SidePanel.CountTitle
-            label={t('markdown.sidePanel.references')}
-            count={count()}
-          />
-        }
-        order={33}
-      >
-        <div class="text-xs">
-          <References documentId={props.documentId} />
         </div>
       </SidePanel.Section>
     </Show>
