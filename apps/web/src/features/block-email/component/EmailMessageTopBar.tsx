@@ -41,7 +41,7 @@ interface Recipient {
   email?: string | null;
 }
 
-function formatFullDate(date: DateValue): string {
+export function formatFullDate(date: DateValue): string {
   return formatDateTime(new Date(date), {
     weekday: 'long',
     year: 'numeric',
