@@ -30,6 +30,9 @@ interface MessageContainerProps {
   isFocused: boolean;
   isTarget: boolean;
   isExpanded: boolean;
+  flushTop?: boolean;
+  flushBottom?: boolean;
+  showBottomBorder?: boolean;
   markdownDomRef?: (ref: HTMLDivElement) => void | HTMLDivElement;
 }
 
@@ -213,6 +216,7 @@ export function MessageContainer(props: MessageContainerProps) {
         <CollapsedMessage
           message={props.message}
           isFocused={props.isFocused}
+          showBottomBorder={props.showBottomBorder}
           onClick={handleExpand}
           onFocus={() => {
             if (props.message.db_id) {
@@ -226,13 +230,15 @@ export function MessageContainer(props: MessageContainerProps) {
       <div class="shrink-0 flex justify-center w-full">
         <div class="macro-message-width macro-message-padding w-full">
           <div
-            class="relative rounded-lg overflow-hidden p-4 border"
+            class="relative overflow-hidden p-4 border macro-thread-card-outdent"
             style={{ '--user-icon-width': '1rem' }}
             classList={{
-              'bg-accent border-transparent': props.isTarget,
-              'bg-active border-edge': !props.isTarget && props.isFocused,
-              'bg-ink-muted/4 border-transparent':
-                !props.isTarget && !props.isFocused,
+              'border-edge': props.isTarget || props.isFocused,
+              'border-edge-muted': !props.isTarget && !props.isFocused,
+              'bg-list-highlighted': props.isFocused && !isTouchDevice(),
+              'hover:bg-list-hover': !props.isFocused && !isTouchDevice(),
+              'macro-thread-card-flush-top': props.flushTop,
+              'macro-thread-card-flush-bottom': props.flushBottom,
             }}
             data-message-body-id={props.message.db_id}
             tabIndex={0}
