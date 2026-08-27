@@ -417,7 +417,15 @@ function EmailContent(props: EmailViewProps) {
         context.messages.setExpandedBodyId(focusedId, false);
         return true;
       }
-      return false;
+
+      context.messages.setFocused(undefined);
+      if (
+        activeEl instanceof HTMLElement &&
+        activeEl.closest(`[data-message-body-id="${CSS.escape(focusedId)}"]`)
+      ) {
+        activeEl.blur();
+      }
+      return true;
     },
     hotkeyToken: TOKENS.email.cancelReply,
     hide: true,
