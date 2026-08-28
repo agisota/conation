@@ -42,9 +42,13 @@ import { registerEmailHotkeys } from '../util/emailHotkeys';
 import { isPersonalMessage } from '../util/isPersonalMessage';
 import type { ReplyType } from '../util/replyType';
 import {
+  hiddenMessagesControl,
+  hiddenMessagesFollowsShownIndex,
+  hiddenMessagesPrecedesShownIndex,
   isTruncatedMiddleMessage,
   isUnreadMessage,
   messageElement,
+  nearestDelta,
   nextShownChronologicalIndex,
   pageThenAdvanceDelta,
   prevShownChronologicalIndex,
@@ -155,6 +159,24 @@ function EmailContent(props: EmailViewProps) {
     }
   };
 
+  const [hiddenChipFocused, setHiddenChipFocused] = createSignal(false);
+
+  const leaveHiddenChip = () => {
+    setHiddenChipFocused(false);
+    const list = untrack(context.messagesListRef);
+    const button = list ? hiddenMessagesControl(list) : undefined;
+    if (button && document.activeElement === button) {
+      button.blur();
+      blockElement()?.focus({ preventScroll: true });
+    }
+  };
+
+  createEffect(() => {
+    if (context.messages.focusedID()) {
+      untrack(leaveHiddenChip);
+    }
+  });
+
   /**
    * Performs scrolling to a message and updates focus.
    */
@@ -188,6 +210,7 @@ function EmailContent(props: EmailViewProps) {
     }
 
     if (opts.focus) {
+      leaveHiddenChip();
       context.messages.setFocused(messageId);
     }
 
@@ -239,7 +262,10 @@ function EmailContent(props: EmailViewProps) {
   createEffect(
     on(
       () => context.thread()?.db_id,
-      () => setUserOpenedMiddle(false)
+      () => {
+        setUserOpenedMiddle(false);
+        leaveHiddenChip();
+      }
     )
   );
 
@@ -259,12 +285,39 @@ function EmailContent(props: EmailViewProps) {
     return false;
   });
 
+  const focusHiddenMessages = () => {
+    const list = untrack(context.messagesListRef);
+    if (!list) return false;
+    const button = hiddenMessagesControl(list);
+    if (!button) return false;
+    context.messages.setFocused(undefined);
+    setHiddenChipFocused(true);
+    const delta = nearestDelta(list, button);
+    if (delta !== 0) {
+      setIsScrollingToMessage(true);
+      list.scrollBy({ top: delta, behavior: 'smooth' });
+      setTimeout(() => setIsScrollingToMessage(false), SCROLL_ANIMATION_MS);
+    }
+    return true;
+  };
+
   const navigateMessage = createCallback((dir: 'prev' | 'next') => {
     const messages = context.messages.list();
     const list = context.messagesListRef();
     if (!messages?.length || !list) return false;
 
     const currentFocusedId = context.messages.focusedID();
+    const showMiddle = showMiddleMessages();
+
+    if (hiddenChipFocused()) {
+      const target =
+        dir === 'next' ? messages[messages.length - 2] : messages[0];
+      if (!target?.db_id) return false;
+      return performScrollToMessage(target.db_id, {
+        behavior: 'smooth',
+        focus: true,
+      });
+    }
 
     if (currentFocusedId) {
       const focusedEl = messageElement(list, messages, currentFocusedId);
@@ -294,7 +347,6 @@ function EmailContent(props: EmailViewProps) {
     );
     if (currentIndex < 0) return false;
 
-    const showMiddle = showMiddleMessages();
     const targetIndex =
       dir === 'next'
         ? nextShownChronologicalIndex(currentIndex, messages.length, showMiddle)
@@ -307,9 +359,30 @@ function EmailContent(props: EmailViewProps) {
     if (targetIndex === null) {
       if (
         dir === 'next' &&
+        hiddenMessagesFollowsShownIndex(
+          currentIndex,
+          messages.length,
+          showMiddle
+        )
+      ) {
+        return focusHiddenMessages();
+      }
+      if (
+        dir === 'prev' &&
+        hiddenMessagesPrecedesShownIndex(
+          currentIndex,
+          messages.length,
+          showMiddle
+        )
+      ) {
+        return focusHiddenMessages();
+      }
+      if (
+        dir === 'next' &&
         currentIndex === messages.length - 1 &&
         markdownDomRef
       ) {
+        leaveHiddenChip();
         context.messages.setFocused(undefined);
         markdownDomRef.focus();
         return true;
@@ -421,6 +494,13 @@ function EmailContent(props: EmailViewProps) {
     hotkey: 'enter',
     description: () => t('blockEmail.hotkeys.replyToMessage'),
     keyDownHandler: () => {
+      if (hiddenChipFocused()) {
+        const list = untrack(context.messagesListRef);
+        hiddenMessagesControl(list ?? document.body)?.click();
+        leaveHiddenChip();
+        return true;
+      }
+
       const focusedId = context.messages.focusedID();
       const target = getHotkeyTarget();
 
@@ -462,6 +542,11 @@ function EmailContent(props: EmailViewProps) {
         activeEl?.getAttribute('contenteditable') === 'true'
       ) {
         return false;
+      }
+
+      if (hiddenChipFocused()) {
+        leaveHiddenChip();
+        return true;
       }
 
       const focusedId = context.messages.focusedID();
@@ -665,7 +750,15 @@ function EmailContent(props: EmailViewProps) {
                     title={props.title}
                     underScrollsBottom={!replyInputInFlow()}
                     showMiddleMessages={showMiddleMessages()}
-                    onOpenMiddle={() => setUserOpenedMiddle(true)}
+                    hiddenChipFocused={hiddenChipFocused()}
+                    onHiddenChipFocus={() => {
+                      context.messages.setFocused(undefined);
+                      setHiddenChipFocused(true);
+                    }}
+                    onOpenMiddle={() => {
+                      leaveHiddenChip();
+                      setUserOpenedMiddle(true);
+                    }}
                   />
                   <CustomScrollbar scrollContainer={context.messagesListRef} />
                 </div>
