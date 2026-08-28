@@ -52,6 +52,7 @@ import {
   nextShownChronologicalIndex,
   pageThenAdvanceDelta,
   prevShownChronologicalIndex,
+  scrollToListStartDelta,
   revealMessageAfterLayout,
   type ScrollAlign,
   scrollToMessage,
@@ -385,6 +386,17 @@ function EmailContent(props: EmailViewProps) {
         leaveHiddenChip();
         context.messages.setFocused(undefined);
         markdownDomRef.focus();
+        return true;
+      }
+      if (dir === 'prev' && currentIndex === 0) {
+        const startDelta = scrollToListStartDelta(list);
+        if (startDelta !== 0) {
+          setIsScrollingToMessage(true);
+          list.scrollBy({ top: startDelta, behavior: 'smooth' });
+          setTimeout(() => setIsScrollingToMessage(false), SCROLL_ANIMATION_MS);
+          return true;
+        }
+        context.messages.setFocused(undefined);
         return true;
       }
       return true;
