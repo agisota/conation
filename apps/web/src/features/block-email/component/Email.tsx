@@ -495,9 +495,25 @@ function EmailContent(props: EmailViewProps) {
     description: () => t('blockEmail.hotkeys.replyToMessage'),
     keyDownHandler: () => {
       if (hiddenChipFocused()) {
-        const list = untrack(context.messagesListRef);
-        hiddenMessagesControl(list ?? document.body)?.click();
-        leaveHiddenChip();
+        const messages = untrack(context.messages.list);
+        const nextIndex = nextShownChronologicalIndex(
+          0,
+          messages.length,
+          true
+        );
+        const nextId =
+          nextIndex !== null ? messages[nextIndex]?.db_id : undefined;
+        setUserOpenedMiddle(true);
+        if (!nextId) {
+          leaveHiddenChip();
+          return true;
+        }
+        context.messages.setFocused(nextId);
+        revealMessageAfterLayout(
+          nextId,
+          messages,
+          untrack(context.messagesListRef)
+        );
         return true;
       }
 
