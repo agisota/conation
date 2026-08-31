@@ -5,6 +5,7 @@ import { EmailInput } from '@block-email/component/EmailInput';
 import { EmailMessageBody } from '@block-email/component/EmailMessageBody';
 import { EmailMessageTopBar } from '@block-email/component/EmailMessageTopBar';
 import { getSenderMacroId } from '@block-email/util/emailUser';
+import { revealMessageAfterLayout } from '@block-email/util/scrollToMessage';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import { FloatingInputLoader } from '@core/component/FloatingInputLoader';
 import { ImageGalleryPreview } from '@core/component/ImageGalleryPreview';
@@ -27,7 +28,6 @@ interface MessageContainerProps {
   isFirstMessage: boolean;
   isLastMessage: boolean;
   isFocused: boolean;
-  isTarget: boolean;
   isExpanded: boolean;
   markdownDomRef?: (ref: HTMLDivElement) => void | HTMLDivElement;
 }
@@ -199,10 +199,15 @@ export function MessageContainer(props: MessageContainerProps) {
   };
 
   const handleExpand = () => {
-    if (props.message.db_id) {
-      context.messages.setExpandedBodyId(props.message.db_id, true);
-      context.messages.setFocused(props.message.db_id);
-    }
+    const messageId = props.message.db_id;
+    if (!messageId) return;
+    context.messages.setExpandedBodyId(messageId, true);
+    context.messages.setFocused(messageId);
+    revealMessageAfterLayout(
+      messageId,
+      context.messages.list(),
+      context.messagesListRef()
+    );
   };
 
   return (
@@ -225,18 +230,19 @@ export function MessageContainer(props: MessageContainerProps) {
       <div class="shrink-0 flex justify-center w-full">
         <div class="macro-message-width macro-message-padding w-full">
           <div
-            class="relative rounded-lg overflow-hidden p-4 border"
+            class="relative p-4 border bg-message rounded-lg"
             style={{ '--user-icon-width': '1rem' }}
             classList={{
-              'bg-accent border-transparent': props.isTarget,
-              'bg-active border-edge': !props.isTarget && props.isFocused,
-              'bg-ink-muted/4 border-transparent':
-                !props.isTarget && !props.isFocused,
+              'border-edge': props.isFocused,
+              'border-edge-muted': !props.isFocused,
+              'z-1': props.isFocused,
+              'shadow-md': props.isFocused,
+              'shadow-drop-shadow': props.isFocused,
             }}
             data-message-body-id={props.message.db_id}
             tabIndex={0}
           >
-            <div class="flex flex-col min-w-0 gap-2">
+            <div class="flex flex-col min-w-0 gap-2 overflow-hidden">
               <EmailMessageTopBar
                 message={props.message}
                 focused={props.isFocused}

@@ -16,7 +16,6 @@ import {
   getRecipientDisplayName,
   getSenderDisplayName,
 } from '../util/emailUser';
-import { useEmailContext } from './EmailContext';
 import { EmailUserTooltip } from './EmailUserTooltip';
 import { type EmailMessageAction, MessageActions } from './MessageActions';
 
@@ -39,7 +38,7 @@ interface Recipient {
   email?: string | null;
 }
 
-function formatFullDate(date: DateValue): string {
+export function formatFullDate(date: DateValue): string {
   return new Date(date)
     .toLocaleString('en-US', {
       weekday: 'long',
@@ -176,12 +175,10 @@ function HeaderTopRow(props: {
   ]);
 
   return (
-    <div class="flex flex-row w-full items-center justify-between gap-2 text-xs min-w-0">
-      <div class="flex flex-row items-center gap-1.5 min-w-0">
+    <div class="flex flex-row w-full min-w-0 flex-1 items-center gap-2 text-sm">
+      <div class="flex flex-row items-center gap-1.5 min-w-0 flex-1">
         <EmailUserTooltip recipient={props.message.from}>
-          <span class="text-ink font-medium cursor-default">
-            {props.senderName}
-          </span>
+          <span class="text-ink font-medium">{props.senderName}</span>
         </EmailUserTooltip>
         <span class="text-ink-extra-muted/60 truncate">
           to{' '}
@@ -190,13 +187,6 @@ function HeaderTopRow(props: {
             currentUserEmail={props.currentUserEmail}
           />
         </span>
-        <Show when={props.message.internal_date_ts}>
-          <Tooltip label={formatFullDate(props.message.internal_date_ts!)}>
-            <span class="text-xs text-ink-extra-muted/60 tabular-nums cursor-default shrink-0">
-              {formatShortDate(props.message.internal_date_ts!)}
-            </span>
-          </Tooltip>
-        </Show>
         <div
           classList={{
             'opacity-0': !props.isHovering && !props.isExpanded,
@@ -237,6 +227,16 @@ function HeaderTopRow(props: {
           hiddenActions={props.hiddenActions}
         />
       </div>
+      <Show when={props.message.internal_date_ts}>
+        <Tooltip
+          as="span"
+          label={formatFullDate(props.message.internal_date_ts!)}
+        >
+          <span class="text-ink-extra-muted/60 tabular-nums shrink-0">
+            {formatShortDate(props.message.internal_date_ts!)}
+          </span>
+        </Tooltip>
+      </Show>
     </div>
   );
 }
@@ -244,43 +244,17 @@ function HeaderTopRow(props: {
 export function EmailMessageTopBar(props: EmailMessageTopBarProps) {
   const [isHovering, setIsHovering] = createSignal(false);
   const userEmail = useEmail();
-  const context = useEmailContext();
 
-  // Wraps setExpandedHeader with scroll compensation.
-  // The message list uses flex-col-reverse, so expanding the header
-  // shifts content above upward. This adjusts scrollTop to keep the
-  // visual position stable.
-  const toggleExpandedHeader = (expanded: boolean) => {
-    const scrollContainer = context.messagesListRef();
-    if (!scrollContainer) {
-      props.setExpandedHeader(expanded);
-      return;
-    }
-    const prevScrollHeight = scrollContainer.scrollHeight;
-    const prevScrollTop = scrollContainer.scrollTop;
-    props.setExpandedHeader(expanded);
-    requestAnimationFrame(() => {
-      const delta = scrollContainer.scrollHeight - prevScrollHeight;
-      scrollContainer.scrollTop = prevScrollTop - delta;
-    });
-  };
+  const senderName = () => getSenderDisplayName(props.message, userEmail());
 
-  const senderName = createMemo(() =>
-    getSenderDisplayName(props.message, userEmail())
-  );
-
-  const shouldIgnoreClick = (target: Element) =>
-    target.localName === 'button' ||
-    target.localName === 'svg' ||
-    target.localName === 'path' ||
-    target.tagName === 'SPAN' ||
-    target.closest('[role="tooltip"]');
-
-  const handleClick = (e: MouseEvent) => {
+  const handleHeaderClick = (e: MouseEvent) => {
     const id = props.message.db_id;
     if (id) props.setFocusedMessageId(id);
-    if (shouldIgnoreClick(e.target as Element)) return;
-    if (id) props.setExpandedBodyId(id, !props.isBodyExpanded());
+    const target = e.target;
+    if (target instanceof Element && target.closest('[data-button], a[href]')) {
+      return;
+    }
+    if (id) props.setExpandedBodyId(id, false);
   };
 
   return (
@@ -289,16 +263,15 @@ export function EmailMessageTopBar(props: EmailMessageTopBarProps) {
       style={{ 'min-height': 'var(--user-icon-width)' }}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
-      onClick={handleClick}
     >
       <Show when={props.isBodyExpanded()}>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2" onClick={handleHeaderClick}>
           {props.avatar}
           <HeaderTopRow
             senderName={senderName()}
             isHovering={isHovering()}
             isExpanded={props.expandedHeader()}
-            onToggle={() => toggleExpandedHeader(!props.expandedHeader())}
+            onToggle={() => props.setExpandedHeader(!props.expandedHeader())}
             message={props.message}
             focused={props.focused}
             setShowReply={props.setShowReply}

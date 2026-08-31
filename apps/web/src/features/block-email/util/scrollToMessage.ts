@@ -1,4 +1,195 @@
-import type { ApiMessage } from '@service-email/generated/schemas';
+import { match } from 'ts-pattern';
+
+export type ScrollAlign = 'start' | 'end' | 'nearest';
+export type NavDirection = 'prev' | 'next';
+
+export type OpenTargetMessage = {
+  db_id?: string | null;
+  labels: Array<{ provider_label_id?: string | null }>;
+};
+
+export function isUnreadMessage(message: OpenTargetMessage): boolean {
+  return message.labels.some((label) => label.provider_label_id === 'UNREAD');
+}
+
+/** Oldest, penultimate, and newest stay visible. Hide the rest when length > 3. */
+export function isTruncatedMiddleMessage(
+  chronologicalIndex: number,
+  length: number
+): boolean {
+  return (
+    length > 3 && chronologicalIndex > 0 && chronologicalIndex < length - 2
+  );
+}
+
+export function truncatedMiddleCount(length: number): number {
+  return length > 3 ? length - 3 : 0;
+}
+
+export function hiddenMessagesControl(
+  container: HTMLElement
+): HTMLButtonElement | undefined {
+  const el = container.querySelector('[data-hidden-messages]');
+  return el instanceof HTMLButtonElement ? el : undefined;
+}
+
+export function threadMessageIsExpanded(args: {
+  chronologicalIndex: number;
+  listLength: number;
+  expansionOverride?: boolean;
+  isUnread: boolean;
+  hasDraft: boolean;
+}): boolean {
+  if (args.expansionOverride === false) return false;
+  if (args.expansionOverride === true) return true;
+  return (
+    args.chronologicalIndex === args.listLength - 1 ||
+    args.isUnread ||
+    args.hasDraft
+  );
+}
+
+export function alignmentDelta(
+  container: HTMLElement,
+  element: HTMLElement,
+  align: ScrollAlign
+): number {
+  const containerBox = container.getBoundingClientRect();
+  const elementBox = element.getBoundingClientRect();
+  return match(align)
+    .with('end', () => elementBox.bottom - containerBox.bottom)
+    .with('start', () => elementBox.top - containerBox.top)
+    .with('nearest', () => nearestDelta(container, element))
+    .exhaustive();
+}
+
+export function messageElement(
+  container: HTMLElement,
+  messages: Array<{ db_id?: string | null }>,
+  messageId: string
+): HTMLElement | undefined {
+  if (!messages.some((message) => message.db_id === messageId))
+    return undefined;
+  const el = container.querySelector(
+    `[data-message-body-id="${CSS.escape(messageId)}"]`
+  );
+  return el instanceof HTMLElement ? el : undefined;
+}
+
+export function alignElementInContainer(
+  container: HTMLElement,
+  element: HTMLElement,
+  align: ScrollAlign,
+  behavior: ScrollBehavior = 'auto'
+): void {
+  const nativeBehavior: ScrollBehavior =
+    behavior === 'instant' ? 'auto' : behavior;
+  container.scrollBy({
+    top: alignmentDelta(container, element, align),
+    behavior: nativeBehavior,
+  });
+}
+
+/** Scroll only if the card does not intersect the viewport. */
+export function nearestDelta(
+  container: HTMLElement,
+  element: HTMLElement
+): number {
+  const containerBox = container.getBoundingClientRect();
+  const elementBox = element.getBoundingClientRect();
+  if (elementBox.bottom <= containerBox.top + 1) {
+    return alignmentDelta(container, element, 'start');
+  }
+  if (elementBox.top >= containerBox.bottom - 1) {
+    return alignmentDelta(container, element, 'end');
+  }
+  return 0;
+}
+
+/** Keep a card in view after it grows. Prefer scrolling down. */
+export function revealDelta(
+  container: HTMLElement,
+  element: HTMLElement
+): number {
+  const containerBox = container.getBoundingClientRect();
+  const elementBox = element.getBoundingClientRect();
+  if (elementBox.height >= containerBox.height) {
+    return alignmentDelta(container, element, 'start');
+  }
+  if (elementBox.top < containerBox.top) {
+    return alignmentDelta(container, element, 'start');
+  }
+  if (elementBox.bottom > containerBox.bottom) {
+    return alignmentDelta(container, element, 'end');
+  }
+  return 0;
+}
+
+/** Page the focused card if it still overflows. 0 means advance to the next card. */
+export function pageThenAdvanceDelta(
+  container: HTMLElement,
+  element: HTMLElement,
+  dir: NavDirection
+): number {
+  const containerBox = container.getBoundingClientRect();
+  const elementBox = element.getBoundingClientRect();
+  const page = containerBox.height;
+  return match(dir)
+    .with('next', () => {
+      const overflow = elementBox.bottom - containerBox.bottom;
+      if (overflow <= 1) return 0;
+      return Math.min(overflow, page);
+    })
+    .with('prev', () => {
+      const overflow = containerBox.top - elementBox.top;
+      if (overflow <= 1) return 0;
+      return -Math.min(overflow, page);
+    })
+    .exhaustive();
+}
+
+/** Remaining scroll to the thread title. 0 means the list is already at the top. */
+export function scrollToListStartDelta(container: HTMLElement): number {
+  return container.scrollTop > 1 ? -container.scrollTop : 0;
+}
+
+export function revealMessageInView(
+  messageId: string,
+  messages: Array<{ db_id?: string | null }>,
+  container: HTMLElement,
+  behavior: ScrollBehavior = 'smooth'
+): void {
+  const element = messageElement(container, messages, messageId);
+  if (!element) return;
+  const top = revealDelta(container, element);
+  if (top === 0) return;
+  const nativeBehavior: ScrollBehavior =
+    behavior === 'instant' ? 'auto' : behavior;
+  container.scrollBy({ top, behavior: nativeBehavior });
+}
+
+/** Older pages insert above. Keep the card you were reading on screen. */
+export function adjustScrollAfterPrepend(
+  container: HTMLElement,
+  previousScrollHeight: number,
+  previousScrollTop: number
+): void {
+  if (previousScrollTop <= 0) return;
+  const delta = container.scrollHeight - previousScrollHeight;
+  if (delta > 0) container.scrollTop = previousScrollTop + delta;
+}
+
+export function revealMessageAfterLayout(
+  messageId: string,
+  messages: Array<{ db_id?: string | null }>,
+  container: HTMLElement | undefined | null,
+  behavior: ScrollBehavior = 'smooth'
+): void {
+  if (!container) return;
+  requestAnimationFrame(() => {
+    revealMessageInView(messageId, messages, container, behavior);
+  });
+}
 
 /**
  * Scrolls to a message by its ID within a messages container
@@ -10,63 +201,19 @@ import type { ApiMessage } from '@service-email/generated/schemas';
  */
 export function scrollToMessage(
   messageId: string,
-  messages: ApiMessage[],
+  messages: Array<{ db_id?: string | null }>,
   messagesContainer: HTMLElement,
   {
     behavior = 'smooth',
-    reversed = false,
-  }: { behavior?: ScrollBehavior; reversed?: boolean }
+    align = 'start',
+  }: {
+    behavior?: ScrollBehavior;
+    align?: ScrollAlign;
+  } = {}
 ): boolean {
-  let messageIndex = messages.findIndex((m) => m.db_id === messageId);
+  const targetElement = messageElement(messagesContainer, messages, messageId);
+  if (!targetElement) return false;
 
-  if (reversed) {
-    messageIndex = messages.length - 1 - messageIndex;
-  }
-
-  if (messageIndex < 0) {
-    return false;
-  }
-
-  const targetElement = messagesContainer.children[messageIndex];
-
-  if (!targetElement) {
-    return false;
-  }
-
-  targetElement.scrollIntoView({
-    behavior,
-    block: 'start',
-  });
-
+  alignElementInContainer(messagesContainer, targetElement, align, behavior);
   return true;
-}
-
-/**
- * Scrolls to the last message in the thread
- * @param messagesContainer - The DOM container holding the message elements
- * @param behavior - Scroll behavior ('smooth' | 'instant' | 'auto')
- */
-function _scrollToLastMessage(
-  messagesContainer: HTMLDivElement,
-  behavior: ScrollBehavior | 'instant' = 'instant'
-): void {
-  const nativeBehavior: ScrollBehavior =
-    behavior === 'instant' ? 'auto' : behavior;
-  const lastChild = messagesContainer.children[
-    messagesContainer.children.length - 1
-  ] as HTMLElement | undefined;
-
-  if (!lastChild) return;
-  // Align the last child to the bottom of the nearest scrolling container
-  lastChild.scrollIntoView({ behavior: nativeBehavior, block: 'start' });
-}
-
-/**
- * Gets the last message ID from a thread
- * @param messages - Array of messages in the current thread
- * @returns The db_id of the last message, or undefined if no messages
- */
-function _getLastMessageId(messages: ApiMessage[]): string | undefined {
-  const lastMessage = messages[messages.length - 1];
-  return lastMessage?.db_id?.toString();
 }

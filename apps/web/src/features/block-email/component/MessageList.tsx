@@ -2,26 +2,29 @@ import { useEmailContext } from '@block-email/component/EmailContext';
 import { isScrollingToMessage } from '@block-email/signal/scrollState';
 import { StaticMarkdownContext } from '@core/component/LexicalMarkdown/component/core/StaticMarkdown';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
-import { cn } from '@ui';
+import { Key } from '@solid-primitives/keyed';
+import { Button, cn } from '@ui';
 import {
   createEffect,
   createMemo,
   createSelector,
-  Index,
   onCleanup,
   Show,
 } from 'solid-js';
+import {
+  adjustScrollAfterPrepend,
+  isTruncatedMiddleMessage,
+  isUnreadMessage,
+  threadMessageIsExpanded,
+  truncatedMiddleCount,
+} from '../util/scrollToMessage';
+import { EmailParticipants } from './EmailParticipants';
 import { EmailThreadTitle } from './EmailThreadTitle';
 import { MessageContainer } from './MessageContainer';
-
-// Fraction of the list height reserved below the newest message so it rests
-// toward the middle of the view instead of pinned to the bottom edge.
-const LAST_MESSAGE_REST_FRACTION = 0.4;
 
 interface MessageListProps {
   initialLoadComplete: boolean;
   markdownDomRef?: (ref: HTMLDivElement) => void | HTMLDivElement;
-  onScrollPositionChange?: (scrollFromTop: number) => void;
   title?: string;
   /**
    * Full-frame mobile: when nothing is in flow below the list (the collapsed
@@ -29,6 +32,10 @@ interface MessageListProps {
    * inset in-scroll so the last message rests above the floating chrome.
    */
   underScrollsBottom?: boolean;
+  showMiddleMessages: boolean;
+  hiddenChipFocused: boolean;
+  onHiddenChipFocus: () => void;
+  onOpenMiddle: () => void;
 }
 
 export function MessageList(props: MessageListProps) {
@@ -38,27 +45,19 @@ export function MessageList(props: MessageListProps) {
     context.messages.focusedID,
     (a, b) => !!a && !!b && a === b
   );
-  const isTargetSelector = createSelector(
-    context.messages.targetMessageID,
-    (a, b) => a === b
+  const hiddenCount = createMemo(() =>
+    truncatedMiddleCount(context.messages.list().length)
   );
-
-  // Since the list is bottom-anchored (col-reverse), extra bottom padding is
-  // the only way to let the newest message rest above the bottom edge. A
-  // thread that fills the screen gets its oldest messages pushed above the
-  // fold (still one scroll away) — the newest message resting at a
-  // consistent height wins over keeping the whole thread in view.
   createEffect(() => {
     const list = context.messagesListRef();
-    if (!list || isTouchDevice()) return;
-    const observer = new ResizeObserver(() => {
-      list.style.setProperty(
-        '--thread-bottom-pad',
-        `${Math.round(list.clientHeight * LAST_MESSAGE_REST_FRACTION)}px`
-      );
-      // Lets the inline composer cap its height to the visible thread area
+    if (!list) return;
+
+    const applyHeight = () => {
       list.style.setProperty('--thread-height', `${list.clientHeight}px`);
-    });
+    };
+
+    applyHeight();
+    const observer = new ResizeObserver(applyHeight);
     observer.observe(list);
     onCleanup(() => observer.disconnect());
   });
@@ -66,72 +65,90 @@ export function MessageList(props: MessageListProps) {
   return (
     <div
       class={cn(
-        'pt-1 pb-[calc(1.5rem+var(--thread-bottom-pad,0px))] w-full flex flex-col-reverse items-center overflow-y-scroll overflow-x-hidden scrollbar-hidden text-sm gap-1.5',
-        // In-scroll top inset: messages rest below the floating split chrome
-        // but under-scroll it.
+        'pt-1 pb-6 w-full flex flex-col items-center gap-2 overflow-y-scroll overflow-x-hidden [overflow-anchor:none] scrollbar-hidden text-sm',
         'touch:pt-[calc(var(--mobile-content-inset-top,0)+0.5rem)]',
         props.underScrollsBottom &&
           'touch:pb-[calc(var(--mobile-content-inset-bottom,0)+1.5rem)]'
       )}
       ref={context.registerMessagesList}
       onscroll={(e) => {
-        // Since the list is reversed, calculate scroll from visual top
-        const scrollFromTop =
-          e.currentTarget.scrollHeight +
-          e.currentTarget.scrollTop -
-          e.currentTarget.clientHeight;
+        const list = e.currentTarget;
+        const scrollFromTop = list.scrollTop;
 
-        props.onScrollPositionChange?.(scrollFromTop);
-
-        // Don't load more if we're programmatically scrolling to a message
         if (getIsScrollingToMessage() || !props.initialLoadComplete) return;
 
-        const threshold = 300;
-        const isNearBeginning = scrollFromTop <= threshold;
-
         if (
-          isNearBeginning &&
+          scrollFromTop <= 300 &&
           !context.query.isFetching() &&
           context.query.hasMore()
         ) {
-          context.query.fetchNextPage();
+          const previousScrollHeight = list.scrollHeight;
+          const previousScrollTop = list.scrollTop;
+          void Promise.resolve(context.query.fetchNextPage()).then(() => {
+            requestAnimationFrame(() => {
+              adjustScrollAfterPrepend(
+                list,
+                previousScrollHeight,
+                previousScrollTop
+              );
+            });
+          });
         }
       }}
     >
+      <Show when={props.title}>
+        <div class="shrink-0 w-full flex justify-center">
+          <div
+            class={cn(
+              'macro-message-width macro-message-padding w-full',
+              isTouchDevice() ? 'pt-6 pb-3' : 'pt-12 pb-2.5'
+            )}
+          >
+            <EmailThreadTitle
+              title={props.title ?? ''}
+              copyReveal={isTouchDevice() ? 'always' : 'hover'}
+              class={isTouchDevice() ? 'text-xl pt-1 pb-0' : 'text-2xl pb-1.5'}
+            />
+            <Show when={!isTouchDevice()}>
+              <EmailParticipants />
+            </Show>
+          </div>
+        </div>
+      </Show>
       <StaticMarkdownContext>
-        {/* We use Index because the index of the messages should always be stable and
-          only the value changes. This also helps prevent nested inputs from rerendering
-        */}
-        <Index each={context.messages.list().toReversed()}>
-          {(message, index) => {
-            // We need the index as if the list was not reversed
+        {/* Key by db_id so prepends and refetches keep per-row state. */}
+        <Key each={context.messages.list()} by="db_id">
+          {(message) => {
+            const chronologicalIndex = createMemo(() =>
+              context.messages
+                .list()
+                .findIndex((item) => item.db_id === message().db_id)
+            );
             const normalizedIndex = createMemo(() => {
-              const listLength = context.messages.list().length;
-
-              const normalized = listLength - 1 - index;
-
               // The element at the 0th index isn't actually the first message
               // if there is more data to load so we return -1 so that `isFirstMessage`
               // evaluates to false. This fixes an issue with the "first" message' full
               // html to show in `EmailMessageBody`
-              if (normalized === 0 && context.query.hasMore()) {
+              if (chronologicalIndex() === 0 && context.query.hasMore()) {
                 return -1;
               }
 
-              return normalized;
+              return chronologicalIndex();
             });
 
             const isLastMessage = createMemo(() => {
               return (
-                normalizedIndex() === (context.messages.list().length ?? 0) - 1
+                chronologicalIndex() ===
+                (context.messages.list().length ?? 0) - 1
               );
             });
-
-            const isNewMessage = createMemo(() => {
+            const hideMiddle = createMemo(() => {
               return (
-                message().labels.find(
-                  (l) => l.provider_label_id === 'UNREAD'
-                ) !== undefined
+                !props.showMiddleMessages &&
+                isTruncatedMiddleMessage(
+                  chronologicalIndex(),
+                  context.messages.list().length
+                )
               );
             });
 
@@ -146,46 +163,67 @@ export function MessageList(props: MessageListProps) {
 
             const isExpanded = createMemo(() => {
               const messageID = message().db_id;
-
               if (!messageID) return false;
-              const manuallyExpanded =
-                context.messages.isBodyExpanded(messageID);
-
-              return (
-                manuallyExpanded ||
-                isLastMessage() ||
-                isNewMessage() ||
-                hasDraft()
-              );
+              return threadMessageIsExpanded({
+                chronologicalIndex: chronologicalIndex(),
+                listLength: context.messages.list().length,
+                expansionOverride: context.messages.expandedBodyIds[messageID],
+                isUnread: isUnreadMessage(message()),
+                hasDraft: hasDraft(),
+              });
             });
 
             return (
-              <MessageContainer
-                isFirstMessage={normalizedIndex() === 0}
-                isLastMessage={isLastMessage()}
-                isFocused={isFocusedSelector(message().db_id ?? undefined)}
-                isTarget={isTargetSelector(message().db_id ?? undefined)}
-                message={message()}
-                isExpanded={isExpanded()}
-                markdownDomRef={
-                  isLastMessage() ? props.markdownDomRef : undefined
-                }
-              />
+              <>
+                <Show when={!hideMiddle()}>
+                  <MessageContainer
+                    isFirstMessage={normalizedIndex() === 0}
+                    isLastMessage={isLastMessage()}
+                    isFocused={isFocusedSelector(message().db_id ?? undefined)}
+                    message={message()}
+                    isExpanded={isExpanded()}
+                    markdownDomRef={
+                      isLastMessage() ? props.markdownDomRef : undefined
+                    }
+                  />
+                </Show>
+                <Show
+                  when={
+                    chronologicalIndex() === 0 &&
+                    !props.showMiddleMessages &&
+                    hiddenCount() > 0
+                  }
+                >
+                  <div class="shrink-0 w-full flex justify-center">
+                    <div class="macro-message-width macro-message-padding w-full">
+                      <div class="relative flex h-6 items-center justify-center">
+                        <span
+                          aria-hidden="true"
+                          class="absolute inset-x-0 top-1/2 border-t border-edge-muted"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          class={cn(
+                            'relative bg-panel px-2 text-xs font-medium text-ink-muted outline-none',
+                            props.hiddenChipFocused && 'bg-active text-ink'
+                          )}
+                          data-hidden-messages
+                          onFocus={() => props.onHiddenChipFocus()}
+                          onClick={() => props.onOpenMiddle()}
+                        >
+                          Show {hiddenCount()} hidden{' '}
+                          {hiddenCount() === 1 ? 'message' : 'messages'}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </Show>
+              </>
             );
           }}
-        </Index>
+        </Key>
       </StaticMarkdownContext>
-      <Show when={isTouchDevice() && props.title}>
-        <div class="shrink-0 w-full flex justify-center pb-3">
-          <div class="macro-message-width macro-message-padding w-full">
-            <EmailThreadTitle
-              title={props.title ?? ''}
-              copyReveal="always"
-              class="text-xl pt-1 pb-0"
-            />
-          </div>
-        </div>
-      </Show>
     </div>
   );
 }

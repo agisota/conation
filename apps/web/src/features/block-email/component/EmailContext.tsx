@@ -817,40 +817,19 @@ export function EmailProvider(props: FlowProps<{ threadID: string }>) {
     HTMLDivElement | undefined
   >(undefined);
 
-  let containerFilled = false;
   const isContainerFilled = () => {
     const messageList = messagesListRef();
     const containerRef = messagesContainerRef();
 
-    // Skip if dependencies not ready
     if (
       !messageList ||
       !containerRef ||
-      !untrack(() => threadQuery.data)?.db_id
+      !untrack(() => threadQuery.data)?.db_id ||
+      threadQuery.isFetching
     ) {
-      containerFilled = false;
       return false;
     }
 
-    // Skip if still loading or already filled
-    if (threadQuery.isFetching || containerFilled) {
-      return containerFilled;
-    }
-
-    const messageListHeight = messageList.getBoundingClientRect().height;
-    const containerHeight = containerRef.getBoundingClientRect().height;
-
-    // Load more if container isn't filled
-    if (
-      messageListHeight < containerHeight &&
-      threadQuery.hasNextPage &&
-      !threadQuery.isFetching
-    ) {
-      threadQuery.fetchNextPage();
-      containerFilled = false;
-      return false;
-    }
-    containerFilled = true;
     return true;
   };
 
@@ -876,31 +855,7 @@ export function EmailProvider(props: FlowProps<{ threadID: string }>) {
   };
 
   const onExpandMessageBody = (messageID: string, expanded: boolean) => {
-    const listContainer = messagesListRef();
-
-    const lastScrollPosition = listContainer?.scrollTop;
-    const lastScrollHeight = listContainer?.scrollHeight;
-
     setExpandedMessageBodyIds(messageID, expanded);
-
-    if (
-      !listContainer ||
-      lastScrollPosition == null ||
-      lastScrollHeight == null
-    )
-      return;
-
-    // Maintain the scroll position when expansion changes
-    queueMicrotask(() => {
-      const lastPos = lastScrollHeight + lastScrollPosition;
-      const currentPos = listContainer.scrollHeight + listContainer.scrollTop;
-
-      // List is reversed, we need a negative value to maintain scroll
-      // position
-      const diff = lastPos - currentPos;
-
-      messagesListRef()?.scrollBy({ top: diff });
-    });
   };
 
   // When the provider unmounts (user navigates away), clear the thread query
