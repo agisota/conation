@@ -1,4 +1,4 @@
-import { openExternalUrl } from '@core/util/url';
+import { extractDomain, openExternalUrl } from '@core/util/url';
 import CaretDown from '@phosphor/caret-down.svg';
 import CaretRight from '@phosphor/caret-right.svg';
 import GlobeIcon from '@phosphor/globe-simple.svg';
@@ -8,15 +8,6 @@ import type { GetUnfurlResponse } from '@service-unfurl/generated/schemas/getUnf
 import { cn } from '@ui';
 import { createSignal, For, Show } from 'solid-js';
 import { createStore } from 'solid-js/store';
-
-function extractDomain(url: string) {
-  try {
-    const address = new URL('', url);
-    return address.hostname;
-  } catch {
-    return url;
-  }
-}
 
 const [badLinks, setBadLinks] = createStore<Record<string, true>>({});
 type UnfurlLinkProps = {
