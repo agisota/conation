@@ -3862,11 +3862,18 @@ export type DocumentCreatedMetadata = {
  * Metadata for [`DocumentTopicEvent::Deleted`].
  */
 export type DocumentDeletedMetadata = {
+    /**
+     * Who mechanically deleted the document. Absent on events published
+     * before attribution, and on user-receipt writes (ingest then uses
+     * [`Self::actor_user_id`]).
+     */
+    actor?: string | null;
     actor_user_id?: null | MacroUserIdStr;
     /**
      * The id of the deleted document.
      */
     document_id: string;
+    on_behalf_of?: null | MacroUserIdStr;
     /**
      * Project the document belonged to, when any.
      */
@@ -4222,6 +4229,11 @@ export type DocumentSubType = 'task' | 'snippet' | 'skill';
  */
 export type DocumentSyncContentUpdatedMetadata = {
     /**
+     * Who mechanically changed the content. Absent on events published
+     * before attribution, and on human-only collab sessions.
+     */
+    actor?: string | null;
+    /**
      * The id of the live-collab document whose content changed.
      */
     document_id: string;
@@ -4233,6 +4245,7 @@ export type DocumentSyncContentUpdatedMetadata = {
      * File type of the sync document (markdown today).
      */
     file_type: FileType;
+    on_behalf_of?: null | MacroUserIdStr;
 };
 
 /**
@@ -4308,6 +4321,12 @@ export type DocumentTopicEvent = {
  * Metadata for [`DocumentTopicEvent::Updated`].
  */
 export type DocumentUpdatedMetadata = {
+    /**
+     * Who mechanically updated the document. Absent on events published
+     * before attribution, and on user-receipt writes (ingest then uses
+     * [`Self::actor_user_id`]).
+     */
+    actor?: string | null;
     actor_user_id?: null | MacroUserIdStr;
     /**
      * The id of the updated document.
@@ -4318,6 +4337,7 @@ export type DocumentUpdatedMetadata = {
      */
     document_name?: string | null;
     file_type?: null | FileTypeUpdate;
+    on_behalf_of?: null | MacroUserIdStr;
     /**
      * The owner of the document.
      */
