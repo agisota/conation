@@ -2,6 +2,7 @@ import { useMessageActionDrawer } from '@channel/Mobile/message-action-drawer-co
 import { touchHandler } from '@core/directive/touchHandler';
 import type { IUser } from '@core/user/types';
 import TrashIcon from '@icon/square-trash.svg';
+import { t } from '@app/lib/i18n';
 import { type Accessor, type JSX, Match, Show, Switch } from 'solid-js';
 import type { MessageEditor } from '../Channel/create-message-editor';
 import { MessageEditorContent } from '../Channel/InlineMessageEditor';
@@ -100,7 +101,7 @@ function DeletedMessageLayout() {
         placement="content"
         class="ph-no-capture flex min-h-(--user-icon-width) items-center"
       >
-        <p class="text-sm text-ink-muted italic">This message was deleted.</p>
+        <p class="text-sm text-ink-muted italic">{t('chat.message.deleted')}</p>
       </Message.Slot>
     </Message.Layout>
   );
