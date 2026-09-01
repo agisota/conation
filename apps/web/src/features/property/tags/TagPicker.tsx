@@ -1,4 +1,5 @@
 import { useSplitLayout } from '@components/app/split-layout/layout';
+import { t } from '@app/lib/i18n';
 import { useSplitPanel } from '@components/app/split-layout/layoutUtils';
 import { Popover } from '@kobalte/core/popover';
 import CircleDashedEmpty from '@phosphor/circle-dashed.svg';
@@ -92,7 +93,7 @@ export function TagPicker(props: TagPickerProps) {
   );
   const [createSuccessHandler, setCreateSuccessHandler] =
     createSignal<CreateTagSuccessHandler>();
-  let saveAndClose: (() => Promise<void>) | undefined;
+  let saveAndClose: (() =>{t('auto.promise')}<void>) | undefined;
   let triggerRef: HTMLButtonElement | undefined;
 
   const restoreFocusToTrigger = () => {
@@ -185,7 +186,7 @@ function TagPickerBodyOwner(props: {
   onOpenEditEditor: (
     mode: Extract<TagEditorDialogMode, { type: 'edit' }>
   ) => void;
-  registerSave: (handler: (() => Promise<void>) | undefined) => void;
+  registerSave: (handler: (() =>{t('auto.promise')}<void>) | undefined) => void;
   createSuccessHandler: () => CreateTagSuccessHandler | undefined;
   onEditorClose: () => void;
   withClickBlock: boolean;
@@ -240,7 +241,7 @@ export function TagPickerPopover(props: {
   const [createSuccessHandler, setCreateSuccessHandler] =
     createSignal<CreateTagSuccessHandler>();
   const currentTeamQuery = useCurrentTeamQuery();
-  let saveAndClose: (() => Promise<void>) | undefined;
+  let saveAndClose: (() =>{t('auto.promise')}<void>) | undefined;
 
   const handleOpenChange = (value: boolean) => {
     if (value) {
@@ -310,7 +311,7 @@ function TagPickerBody(props: {
   onOpenEditEditor: (
     mode: Extract<TagEditorDialogMode, { type: 'edit' }>
   ) => void;
-  registerSave: (handler: (() => Promise<void>) | undefined) => void;
+  registerSave: (handler: (() =>{t('auto.promise')}<void>) | undefined) => void;
   suppressInitialOutsideEvents: boolean;
   withClickBlock?: boolean;
 }) {
@@ -815,9 +816,7 @@ function TagPickerBody(props: {
                           >
                             <CircleDashedEmpty class="size-3 shrink-0 text-ink-extra-muted" />
                             <div class="min-w-0 flex-1 text-left">
-                              <p class="truncate text-ink-muted">
-                                Clear all tags
-                              </p>
+                              <p class="truncate text-ink-muted">{t('auto.clear_all_tags')}</p>
                             </div>
                           </DropdownSelectableRow>
                         </div>
@@ -1015,7 +1014,7 @@ function CreateTagFlow(props: {
                 <Show
                   when={props.pending && props.selectedScopeIndex === index()}
                 >
-                  <span class="text-xs text-ink-muted">Creating...</span>
+                  <span class="text-xs text-ink-muted">{t('auto.creating')}</span>
                 </Show>
               </DropdownSelectableRow>
             )}

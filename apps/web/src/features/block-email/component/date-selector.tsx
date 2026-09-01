@@ -345,9 +345,7 @@ export const DateSelector = (props: DateSelectorProps) => {
                   <Show
                     when={searchQuery().trim()}
                     fallback={
-                      <div class="text-center py-2 text-ink-muted text-sm">
-                        Enter a date or duration
-                      </div>
+                      <div class="text-center py-2 text-ink-muted text-sm">{t('auto.enter_a_date_or_duration')}</div>
                     }
                   >
                     <div class="text-center py-2 text-ink-muted text-sm">
@@ -360,9 +358,7 @@ export const DateSelector = (props: DateSelectorProps) => {
             </div>
             <Show when={props.withTime}>
               <div class="px-2 py-1.5 border-t border-edge-muted">
-                <label class="flex items-center justify-between text-sm">
-                  Time
-                  <input
+                <label class="flex items-center justify-between text-sm">{t('auto.time')}<input
                     type="time"
                     value={
                       selectedDate()
@@ -376,7 +372,7 @@ export const DateSelector = (props: DateSelectorProps) => {
             </Show>
             <div class="px-2 py-1.5 border-t border-edge-muted">
               <div class="text-xs text-ink-muted">
-                <span>Use queries like </span>
+                <span>{t('auto.use_queries_like')}</span>
                 <code class="bg-active px-1">3d</code>,{' '}
                 <code class="bg-active px-1">1w</code>,{' '}
                 <code class="bg-active px-1">feb 17</code>, or{' '}
@@ -416,9 +412,7 @@ const CurrentValueDisplay = (props: CurrentValueDisplayProps) => {
           onPointerDown={(e: PointerEvent) => e.preventDefault()}
           onClick={props.onClear}
           class="text-xs text-ink-muted hover:text-ink underline"
-        >
-          Clear
-        </button>
+        >{t('auto.clear')}</button>
       </div>
     </div>
   );

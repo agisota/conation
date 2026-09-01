@@ -1,4 +1,5 @@
 import { LoadingBlock } from '@core/component/LoadingBlock';
+import { t } from '@app/lib/i18n';
 import { PcNoiseGrid } from '@core/component/PcNoiseGrid';
 import { ThrownResultError } from '@core/util/result';
 import LogoIcon from '@icon/macro-logo.svg';
@@ -99,18 +100,14 @@ function InvalidInviteLink() {
 
   return (
     <div class="w-full flex flex-col items-center gap-4 text-center">
-      <h2 class="text-lg font-medium text-ink">Invalid Invite Link</h2>
-      <p class="text-sm text-ink-muted">
-        This channel invitation is invalid or no longer available.
-      </p>
+      <h2 class="text-lg font-medium text-ink">{t('auto.invalid_invite_link')}</h2>
+      <p class="text-sm text-ink-muted">{t('auto.this_channel_invitation_is_inv')}</p>
       <Button
         variant="outline"
         size="md"
         class="w-full rounded-xs"
         onClick={() => navigate('/')}
-      >
-        Go to Home
-      </Button>
+      >{t('auto.go_to_home')}</Button>
     </div>
   );
 }
@@ -127,9 +124,7 @@ function UnauthenticatedView(props: { onLogin: () => void }) {
         size="md"
         class="w-full rounded-xs"
         onClick={props.onLogin}
-      >
-        Sign In to Continue
-      </Button>
+      >{t('auto.sign_in_to_continue')}</Button>
     </div>
   );
 }
@@ -139,21 +134,15 @@ function JoinConfirmation(props: { onJoin: () => void }) {
     <div class="flex flex-col items-center gap-6 text-center w-full">
       <div class="flex flex-col gap-2">
         <h2 class="flex items-center justify-center gap-2 text-lg font-medium text-ink">
-          <UsersThreeIcon class="size-5" />
-          Join Channel
-        </h2>
-        <p class="text-sm text-ink-muted">
-          Confirm that you want to join this channel.
-        </p>
+          <UsersThreeIcon class="size-5" />{t('auto.join_channel')}</h2>
+        <p class="text-sm text-ink-muted">{t('auto.confirm_that_you_want_to_join_')}</p>
       </div>
       <Button
         variant="outline"
         size="md"
         class="w-full rounded-xs"
         onClick={props.onJoin}
-      >
-        Join Channel
-      </Button>
+      >{t('auto.join_channel')}</Button>
     </div>
   );
 }
@@ -161,7 +150,7 @@ function JoinConfirmation(props: { onJoin: () => void }) {
 function ServerError(props: { onRetry: () => void }) {
   return (
     <div class="w-full flex flex-col items-center gap-4 text-center">
-      <h2 class="text-lg font-medium text-ink">Unable to Join Channel</h2>
+      <h2 class="text-lg font-medium text-ink">{t('auto.unable_to_join_channel')}</h2>
       <p class="text-sm text-ink-muted">
         Something went wrong while joining the channel. Please try again.
       </p>

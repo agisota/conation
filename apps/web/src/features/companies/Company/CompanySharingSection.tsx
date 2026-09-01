@@ -89,7 +89,7 @@ export function CompanySharingSection(props: { company?: CrmCompanyEntity }) {
                   class={cn(TOGGLE_BUTTON_CLASS)}
                 >
                   <InlineCheckbox checked={isShared()} />
-                  <span class="whitespace-nowrap">Visible in CRM</span>
+                  <span class="whitespace-nowrap">{t('auto.visible_in_crm')}</span>
                 </button>
                 <p class="text-ink-muted leading-5">
                   Shows this company in your team's CRM lists and search. Hide
@@ -113,7 +113,7 @@ export function CompanySharingSection(props: { company?: CrmCompanyEntity }) {
                 )}
               >
                 <InlineCheckbox checked={isSyncing()} />
-                <span class="whitespace-nowrap">Sync Emails</span>
+                <span class="whitespace-nowrap">{t('auto.sync_emails')}</span>
               </button>
               <p class="text-ink-muted leading-5">
                 Lets everyone on your team see each other's emails with this

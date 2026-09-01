@@ -108,9 +108,7 @@ export const BulkRenameEntitiesView = (props: {
         <Dialog.CloseButton as={Button} variant="ghost" size="icon-sm">
           <CloseIcon />
         </Dialog.CloseButton>
-        <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">
-          Rename
-        </Dialog.Title>
+        <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">{t('auto.rename')}</Dialog.Title>
       </div>
 
       <div class="p-2 border-b border-edge-muted">
@@ -202,9 +200,7 @@ export const BulkRenameEntitiesView = (props: {
             variant="outline"
             class="rounded-xs"
             onClick={finishEditing}
-          >
-            Rename
-          </Button>
+          >{t('auto.rename')}</Button>
         </div>
       </div>
     </>

@@ -118,7 +118,7 @@ async function uploadPendingShareAttachment(options: {
   file: PendingShareFile;
   tracker: InputAttachmentTracker;
   uploadPendingShareFile:
-    | ((args: UploadPendingShareFileArgs) => Promise<void>)
+    | ((args: UploadPendingShareFileArgs) =>{t('auto.promise')}<void>)
     | undefined;
   isActive: () => boolean;
 }) {
@@ -194,9 +194,7 @@ function ShareSheetHeaderActions(props: {
           event.preventDefault();
           props.handleSend();
         }}
-      >
-        Send
-      </Button>
+      >{t('auto.send')}</Button>
     </div>
   );
 }
@@ -205,9 +203,7 @@ function ShareSheetComposerError(_props: { error: unknown }) {
   return (
     <div class="macro-message-width flex min-h-32 w-full flex-col items-center justify-center gap-2 rounded-[5px] border border-edge-muted bg-surface px-4 py-6 text-center">
       <p class="text-sm text-ink">Couldn&apos;t load the composer.</p>
-      <p class="text-xs text-ink-muted">
-        Close the sheet and try sharing again.
-      </p>
+      <p class="text-xs text-ink-muted">{t('auto.close_the_sheet_and_try_sharin')}</p>
     </div>
   );
 }
@@ -405,7 +401,7 @@ function IosShareSheetComposer(props: {
           handleCancel={props.handleCancel}
           handleSend={handleHeaderSend}
         />
-        <MobileDrawer.Label>Recipients</MobileDrawer.Label>
+        <MobileDrawer.Label>{t('auto.recipients')}</MobileDrawer.Label>
         <MobileDrawer.Section>
           <div class="shrink-0 p-2">
             <RecipientSelector<'user' | 'contact' | 'channel'>

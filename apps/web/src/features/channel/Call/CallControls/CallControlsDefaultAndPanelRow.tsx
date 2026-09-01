@@ -1,4 +1,5 @@
 import PhoneDisconnect from '@icon/wide-call-disconnect.svg';
+import { t } from '@app/lib/i18n';
 import { DropdownMenu } from '@kobalte/core/dropdown-menu';
 import Gear from '@phosphor/gear.svg';
 import Microphone from '@phosphor/microphone.svg';
@@ -83,17 +84,17 @@ function BackgroundEffectSelector() {
   return (
     <>
       <Dropdown.Group>
-        <Dropdown.GroupLabel>Background</Dropdown.GroupLabel>
+        <Dropdown.GroupLabel>{t('auto.background')}</Dropdown.GroupLabel>
         <Dropdown.Item
           closeOnSelect={false}
           onSelect={() => handleChange('none')}
         >
-          <span class="flex-1 truncate">None</span>
+          <span class="flex-1 truncate">{t('auto.none')}</span>
           <SingleSelectCheck active={currentEffectValue() === 'none'} />
         </Dropdown.Item>
       </Dropdown.Group>
       <Dropdown.Group>
-        <Dropdown.GroupLabel>Blur</Dropdown.GroupLabel>
+        <Dropdown.GroupLabel>{t('auto.blur')}</Dropdown.GroupLabel>
         <For each={['light', 'medium', 'heavy'] as const}>
           {(intensity) => {
             const value = `blur-${intensity}`;
@@ -112,7 +113,7 @@ function BackgroundEffectSelector() {
       </Dropdown.Group>
       <Show when={BACKGROUND_IMAGES.length}>
         <Dropdown.Group>
-          <Dropdown.GroupLabel>Image</Dropdown.GroupLabel>
+          <Dropdown.GroupLabel>{t('auto.image')}</Dropdown.GroupLabel>
           <For each={BACKGROUND_IMAGES}>
             {(bg) => {
               const value = `image-${bg.id}`;
@@ -246,12 +247,12 @@ export function CallControlsDefaultAndPanelRow(
               />
             </Dropdown.Group>
             <Dropdown.Group>
-              <Dropdown.GroupLabel>Audio processing</Dropdown.GroupLabel>
+              <Dropdown.GroupLabel>{t('auto.audio_processing')}</Dropdown.GroupLabel>
               <Dropdown.Item
                 closeOnSelect={false}
                 onSelect={() => void callCtx.toggleNoiseSuppression()}
               >
-                <span class="flex-1 truncate">Noise suppression</span>
+                <span class="flex-1 truncate">{t('auto.noise_suppression')}</span>
                 <SingleSelectCheck
                   active={callCtx.noiseSuppressionMode() !== 'off'}
                 />

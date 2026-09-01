@@ -1341,9 +1341,7 @@ const SoupViewListContent = (props: SoupViewListProps) => {
                   }
                 >
                   <div class="flex items-center gap-2 p-3 text-xs text-ink-muted touch:mt-(--mobile-content-inset-top) touch:mb-(--mobile-content-inset-bottom)">
-                    <Spinner class="size-3 animate-spin" />
-                    Searching...
-                  </div>
+                    <Spinner class="size-3 animate-spin" />{t('auto.searching')}</div>
                 </Match>
                 <Match when={showEmptyState()}>
                   <div
@@ -1432,7 +1430,7 @@ const SoupViewListContent = (props: SoupViewListProps) => {
                             <>
                               <Show when={i() === 0 && featuredCount() > 0}>
                                 <SoupSectionHeader>
-                                  <span class="truncate">Featured Results</span>
+                                  <span class="truncate">{t('auto.featured_results')}</span>
                                 </SoupSectionHeader>
                               </Show>
                               <Show
@@ -1441,7 +1439,7 @@ const SoupViewListContent = (props: SoupViewListProps) => {
                                 }
                               >
                                 <SoupSectionHeader>
-                                  <span class="truncate">More Results</span>
+                                  <span class="truncate">{t('auto.more_results')}</span>
                                 </SoupSectionHeader>
                               </Show>
 
@@ -1513,9 +1511,7 @@ const SoupViewListContent = (props: SoupViewListProps) => {
                                               fetchNextGroupPage(group().key);
                                             }}
                                           >
-                                            <CaretDownIcon class="size-2.5" />
-                                            Load More
-                                          </Button>
+                                            <CaretDownIcon class="size-2.5" />{t('auto.load_more')}</Button>
                                         </Show>
                                       </div>
                                     );

@@ -93,12 +93,12 @@ function AddServerForm(props: {
     >
       <Panel depth={2} class="rounded-xl">
         <Panel.Header class="px-6">
-          <span class="text-ink text-sm font-semibold">Add MCP Server</span>
+          <span class="text-ink text-sm font-semibold">{t('auto.add_mcp_server')}</span>
         </Panel.Header>
         <Panel.Body class="p-6 flex flex-col gap-5">
           <div class="flex flex-col gap-4">
             <label class="flex flex-col gap-1.5">
-              <span class="text-xs text-ink-muted">Name</span>
+              <span class="text-xs text-ink-muted">{t('auto.name')}</span>
               <input
                 type="text"
                 class="settings-input w-full"
@@ -115,7 +115,7 @@ function AddServerForm(props: {
               />
             </label>
             <label class="flex flex-col gap-1.5">
-              <span class="text-xs text-ink-muted">URL</span>
+              <span class="text-xs text-ink-muted">{t('auto.url')}</span>
               <input
                 type="url"
                 class="settings-input w-full"
@@ -275,9 +275,7 @@ function ServerRow(props: { server: ServerResponse }) {
     >
       <Show when={!props.server.authenticated}>
         <Show when={connectionFailed()}>
-          <span class="text-xs text-failure whitespace-nowrap">
-            Last attempt failed
-          </span>
+          <span class="text-xs text-failure whitespace-nowrap">{t('auto.last_attempt_failed')}</span>
         </Show>
         <Button
           variant="accent"
@@ -415,16 +413,12 @@ export function IntegrationsSection() {
           depth={3}
           onClick={() => setShowAddDialog(true)}
         >
-          <PlusIcon class="size-4" />
-          Add server
-        </Button>
+          <PlusIcon class="size-4" />{t('auto.add_server')}</Button>
       }
     >
       <Show when={serversQuery.isError}>
         <SettingsCard>
-          <div class="px-6 py-8 text-center text-sm text-ink-muted">
-            Failed to load integrations.
-            <Button
+          <div class="px-6 py-8 text-center text-sm text-ink-muted">{t('auto.failed_to_load_integrations')}<Button
               variant="outline"
               size="sm"
               depth={3}

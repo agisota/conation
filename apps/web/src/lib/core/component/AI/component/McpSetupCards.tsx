@@ -1,4 +1,5 @@
 import CaretRight from '@phosphor-icons/core/bold/caret-right-bold.svg?component-solid';
+import { t } from '@app/lib/i18n';
 import CheckIcon from '@phosphor-icons/core/bold/check-bold.svg?component-solid';
 import ClipboardIcon from '@phosphor-icons/core/bold/clipboard-bold.svg?component-solid';
 import { Button, cn } from '@ui';
@@ -58,14 +59,10 @@ function CollapsibleCard(props: {
             >
               {isCopied() ? (
                 <>
-                  <CheckIcon class="size-3.5" />
-                  Copied
-                </>
+                  <CheckIcon class="size-3.5" />{t('auto.copied')}</>
               ) : (
                 <>
-                  <ClipboardIcon class="size-3.5" />
-                  Copy
-                </>
+                  <ClipboardIcon class="size-3.5" />{t('auto.copy')}</>
               )}
             </Button>
           </div>

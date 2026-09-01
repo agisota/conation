@@ -166,9 +166,7 @@ export function PipedreamIntegrationsSection() {
     >
       <Show when={serversQuery.isError}>
         <SettingsCard>
-          <div class="px-6 py-8 text-center text-sm text-ink-muted">
-            Failed to load integrations.
-            <Button
+          <div class="px-6 py-8 text-center text-sm text-ink-muted">{t('auto.failed_to_load_integrations')}<Button
               variant="outline"
               size="sm"
               depth={3}
@@ -217,9 +215,7 @@ export function PipedreamIntegrationsSection() {
           </For>
 
           <Show when={catalogQuery.isFetching && browseResults().length === 0}>
-            <div class="px-6 py-6 text-center text-sm text-ink-muted">
-              Loading connectors...
-            </div>
+            <div class="px-6 py-6 text-center text-sm text-ink-muted">{t('auto.loading_connectors')}</div>
           </Show>
 
           <Show

@@ -1,4 +1,5 @@
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import { PcNoiseGrid } from '@core/component/PcNoiseGrid';
 import LogoIcon from '@icon/macro-logo.svg';
 import { A } from '@solidjs/router';
@@ -62,19 +63,15 @@ export default function MobileWebWelcome(props: MobileWebWelcomeProps) {
           <button
             type="submit"
             class="w-full px-3 py-2.5 text-lg font-bold rounded-xs bg-accent text-surface border-none"
-          >
-            Sign Up
-          </button>
+          >{t('auto.sign_up')}</button>
         </form>
 
-        <p class="text-sm text-ink/50 mt-20">Already have an account?</p>
+        <p class="text-sm text-ink/50 mt-20">{t('auto.already_have_an_account')}</p>
         <A
           href="/login"
           onClick={() => analytics.track('login_from_onboarding')}
           class="w-full px-3 py-2.5 text-lg rounded-xs flex items-center justify-between gap-2 border border-edge-muted bg-transparent text-ink/50 hover:bg-hover/60"
-        >
-          Login
-        </A>
+        >{t('auto.login')}</A>
       </div>
     </div>
   );

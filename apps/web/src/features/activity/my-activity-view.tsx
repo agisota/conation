@@ -38,7 +38,7 @@ export function MyActivityView() {
   return (
     <div class="@container/u-list flex size-full flex-col">
       <SplitHeaderLeft>
-        <span class="font-semibold text-sm">Activity</span>
+        <span class="font-semibold text-sm">{t('auto.activity')}</span>
       </SplitHeaderLeft>
       <StaticMarkdownContext>
         <div class="min-h-0 flex-1 overflow-y-auto py-1">

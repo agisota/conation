@@ -1,4 +1,5 @@
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { isNativeMobilePlatform } from '@core/mobile/isNativeMobilePlatform';
 import {
@@ -82,15 +83,13 @@ export function Notifications() {
             label="Inbox"
             description="Always on for types you have not muted"
           >
-            <span class="text-sm text-ink-muted">Always on</span>
+            <span class="text-sm text-ink-muted">{t('auto.always_on')}</span>
           </SettingsRow>
           <Show
             when={platformSettings.isSupported && platformSettings}
             fallback={
               <SettingsRow label={pushLabel} description={pushDescription}>
-                <span class="text-sm text-ink-muted">
-                  Not supported on this device
-                </span>
+                <span class="text-sm text-ink-muted">{t('auto.not_supported_on_this_device')}</span>
               </SettingsRow>
             }
           >
@@ -171,9 +170,7 @@ export function Notifications() {
                     type="button"
                     class="text-sm text-ink-muted hover:text-ink"
                     onClick={() => unmuteEntity(item)}
-                  >
-                    Unmute
-                  </button>
+                  >{t('auto.unmute')}</button>
                 </SettingsRow>
               )}
             </For>

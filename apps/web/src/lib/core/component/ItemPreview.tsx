@@ -140,7 +140,7 @@ function ButtonNoAccess(props: StatusDisplayProps) {
       <div class={cn(DEFAULT_ICON_CLASS, props.iconClass)}>
         <EyeSlash class="text-ink-muted size-3.5" />
       </div>
-      <div class={cn(DEFAULT_TEXT_CLASS, props.textClass)}>No Access</div>
+      <div class={cn(DEFAULT_TEXT_CLASS, props.textClass)}>{t('auto.no_access')}</div>
     </div>
   );
 }
@@ -151,7 +151,7 @@ function InlineNoAccess() {
       <span class="relative top-[0.125em] inline-flex size-[1em] shrink-0">
         <EyeSlash class="size-[1em] text-ink-muted" />
       </span>
-      <span class="text-ink-muted">No Access</span>
+      <span class="text-ink-muted">{t('auto.no_access')}</span>
     </span>
   );
 }
@@ -168,7 +168,7 @@ function ButtonDeleted(props: StatusDisplayProps) {
       <div class={cn(DEFAULT_ICON_CLASS, props.iconClass)}>
         <TrashSimple class="text-ink-muted size-3.5" />
       </div>
-      <div class={cn(DEFAULT_TEXT_CLASS, props.textClass)}>Deleted</div>
+      <div class={cn(DEFAULT_TEXT_CLASS, props.textClass)}>{t('auto.deleted')}</div>
     </div>
   );
 }
@@ -179,7 +179,7 @@ function InlineDeleted() {
       <span class="relative top-[0.125em] inline-flex size-[1em] shrink-0">
         <TrashSimple class="size-[1em] text-ink-muted" />
       </span>
-      <span class="text-ink-muted">Deleted</span>
+      <span class="text-ink-muted">{t('auto.deleted')}</span>
     </span>
   );
 }

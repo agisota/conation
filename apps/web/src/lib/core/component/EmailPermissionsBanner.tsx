@@ -1,4 +1,5 @@
 import { useAddInboxFlow } from '@core/email-link';
+import { t } from '@app/lib/i18n';
 import Caution from '@phosphor/warning.svg';
 import { Button } from '@ui';
 
@@ -10,16 +11,14 @@ export function EmailPermissionsBanner() {
       <div class="flex items-center gap-4">
         <Caution class="size-8 shrink-0" />
         <div class="flex flex-wrap flex-1 min-w-0 gap-2">
-          <div class="text-sm shrink-0">No email account connected.</div>
+          <div class="text-sm shrink-0">{t('auto.no_email_account_connected')}</div>
           <span class="grow" />
           <Button
             variant="accent"
             size="sm"
             class="px-4"
             onClick={() => void startAddInbox()}
-          >
-            Connect Gmail
-          </Button>
+          >{t('auto.connect_gmail')}</Button>
         </div>
       </div>
     </div>

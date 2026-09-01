@@ -3,6 +3,7 @@ import {
   StaticMarkdownContext,
 } from '@core/component/LexicalMarkdown/component/core/StaticMarkdown';
 import { channelTheme } from '@core/component/LexicalMarkdown/theme';
+import { t } from '@app/lib/i18n';
 import { type Component, Match, Show, Switch } from 'solid-js';
 import type { MagicChipActivity, MagicChipPresentation } from './presentation';
 
@@ -106,9 +107,7 @@ const SettledAnswer: Component<{
       onMouseDown={(event) => event.preventDefault()}
       onClick={props.onOpen}
       disabled={!props.onOpen}
-    >
-      Open session
-    </button>
+    >{t('auto.open_session')}</button>
   </div>
 );
 

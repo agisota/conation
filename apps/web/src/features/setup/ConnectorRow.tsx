@@ -1,4 +1,5 @@
 import type { FeaturedMcpServer } from '@core/component/AI/constant/mcpServers';
+import { t } from '@app/lib/i18n';
 import ArrowUpRightIcon from '@phosphor/arrow-up-right.svg';
 import SpinnerIcon from '@phosphor/spinner-gap.svg';
 import { cn, Layer } from '@ui';
@@ -46,17 +47,13 @@ export function ConnectorRow(props: {
         <span class="ml-auto shrink-0">
           <Switch
             fallback={
-              <span class="flex items-center gap-1 text-xs font-medium text-ink-muted group-hover:text-ink">
-                Connect
-                <ArrowUpRightIcon class="size-3 shrink-0" />
+              <span class="flex items-center gap-1 text-xs font-medium text-ink-muted group-hover:text-ink">{t('auto.connect')}<ArrowUpRightIcon class="size-3 shrink-0" />
               </span>
             }
           >
             <Match when={props.authenticated}>
               <span class="flex items-center gap-1.5 text-xs text-ink-muted">
-                <StatusDot state="connected" />
-                Connected
-              </span>
+                <StatusDot state="connected" />{t('auto.connected')}</span>
             </Match>
             <Match when={busy()}>
               <span class="flex items-center gap-1.5 text-xs text-ink-muted">

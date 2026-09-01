@@ -1,4 +1,5 @@
 import { joinChannelCall } from '@channel/Call/join-channel-call';
+import { t } from '@app/lib/i18n';
 import { openChannelCallTab } from '@channel/Call/open-channel-call-tab';
 import type { SidebarState } from '@components/app/app-sidebar/sidebar';
 import { ContextMenuContent, MenuItem } from '@core/component/ContextMenu';
@@ -199,7 +200,7 @@ export function SidebarActiveCallWidget(props: {
           class={cn('size-full flex flex-col justify-center', props.class)}
         >
           <header class="text-xs font-medium text-ink-muted whitespace-nowrap p-2">
-            <h1>Incoming call</h1>
+            <h1>{t('auto.incoming_call')}</h1>
           </header>
 
           <div class="flex-1 w-full">

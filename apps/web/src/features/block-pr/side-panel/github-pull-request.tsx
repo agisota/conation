@@ -1,4 +1,5 @@
 import { SidePanel } from '@components/app/side-panel/SidePanel';
+import { t } from '@app/lib/i18n';
 import ArrowSquareOut from '@phosphor/arrow-square-out.svg';
 import CheckCircle from '@phosphor/check-circle.svg';
 import Circle from '@phosphor/circle.svg';
@@ -224,7 +225,7 @@ export function GithubPullRequestChecksContent(props: {
   return (
     <Show
       when={checks().length > 0}
-      fallback={<div class="text-ink-placeholder">No checks</div>}
+      fallback={<div class="text-ink-placeholder">{t('auto.no_checks')}</div>}
     >
       <div class="flex flex-col gap-1 text-xs">
         <div class="text-xs text-ink-muted">

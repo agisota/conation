@@ -1,4 +1,5 @@
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import { registerHotkey } from '@core/hotkey/hotkeys';
 import { TOKENS } from '@core/hotkey/tokens';
 import EyeIcon from '@phosphor-icons/core/regular/eye.svg?component-solid';
@@ -73,7 +74,7 @@ export function PreviewButton(
         >
           {isController() ? <EyeSlashIcon /> : <EyeIcon />}
           <Show when={!props.hideLabel}>
-            <span>Preview</span>
+            <span>{t('auto.preview')}</span>
           </Show>
         </Button>
       </Tooltip>

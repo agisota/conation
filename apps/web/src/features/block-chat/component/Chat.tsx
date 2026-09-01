@@ -1,4 +1,5 @@
 import type { SendBuilder } from '@block-chat/blockClient';
+import { t } from '@app/lib/i18n';
 import { TopBar } from '@block-chat/component/TopBar';
 import type { ChatData } from '@block-chat/definition';
 import { pendingLocationParamsSignal } from '@block-chat/signal/pendingLocationParams';
@@ -333,7 +334,7 @@ function ChatInner(props: {
       </Show>
       <Show when={showStreamDebug()}>
         <div class="px-2 py-1 bg-surface border-b border-edge text-ink font-mono text-sm">
-          <Show when={chat.stream()} fallback={<div>No active stream</div>}>
+          <Show when={chat.stream()} fallback={<div>{t('auto.no_active_stream')}</div>}>
             {(stream) => (
               <div class="flex gap-x-4">
                 <span>chunks: {stream().data().length}</span>

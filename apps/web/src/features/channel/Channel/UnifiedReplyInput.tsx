@@ -1,4 +1,5 @@
 import { Show } from 'solid-js';
+import { t } from '@app/lib/i18n';
 import { InputFlag } from '../Input';
 import type { MessageData } from '../Message';
 import { SenderName } from '../Message/SenderName';
@@ -41,8 +42,7 @@ export function UnifiedReplyInput(props: {
             fallback="Replying to thread"
           >
             {(target) => (
-              <>
-                Replying to <SenderName message={target} />
+              <>{t('auto.replying_to')}<SenderName message={target} />
               </>
             )}
           </Show>

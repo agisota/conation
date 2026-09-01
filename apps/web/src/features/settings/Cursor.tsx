@@ -90,7 +90,7 @@ export function CursorCard() {
       <SettingsRow
         label={
           <span class="flex items-center gap-2">
-            <span>API key</span>
+            <span>{t('auto.api_key')}</span>
             <Show when={registered()}>
               <StatusDot state="connected" label="Connected" />
             </Show>
@@ -98,7 +98,7 @@ export function CursorCard() {
         }
         description={
           <Switch fallback="Paste a key from Cursor's dashboard. Macro stores it encrypted and never shows it again.">
-            <Match when={registered()}>Stored encrypted.</Match>
+            <Match when={registered()}>{t('auto.stored_encrypted')}</Match>
           </Switch>
         }
       >

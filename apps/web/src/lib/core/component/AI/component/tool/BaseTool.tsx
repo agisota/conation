@@ -1,4 +1,5 @@
 import type { Component, JSX } from 'solid-js';
+import { t } from '@app/lib/i18n';
 import { Show } from 'solid-js';
 import { Tool } from './Tool';
 import { type RenderContext, useToolError } from './ToolRenderer';
@@ -26,7 +27,7 @@ function BaseToolCall(props: ToolCallProps) {
       <Tool.Row
         align={props.align}
         icon={props.icon}
-        trailing={error ? <span class="text-ink">Failed</span> : undefined}
+        trailing={error ? <span class="text-ink">{t('auto.failed')}</span> : undefined}
       >
         {props.children}
       </Tool.Row>

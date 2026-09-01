@@ -1,4 +1,5 @@
 import CheckIcon from '@phosphor/check.svg';
+import { t } from '@app/lib/i18n';
 import { cn, Layer } from '@ui';
 import {
   type Component,
@@ -234,7 +235,7 @@ export function ContinueButton(props: ContinueButtonProps) {
       >
         <Hotkey shortcut="cmd" />
         <span>+</span>
-        <span>Enter</span>
+        <span>{t('auto.enter')}</span>
       </span>*/}
     </button>
   );

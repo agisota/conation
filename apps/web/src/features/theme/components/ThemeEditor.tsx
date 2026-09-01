@@ -1,4 +1,5 @@
 import XIcon from '@phosphor/x.svg';
+import { t } from '@app/lib/i18n';
 import { Button, Layer } from '@ui';
 import { ThemeTokenEditor } from './ThemeTokenEditor';
 
@@ -46,9 +47,7 @@ export function ThemeEditor(props: {
           <ThemeTokenEditor />
         </div>
         <div class="flex justify-end">
-          <Button variant="outline" size="sm" onClick={props.onSave}>
-            Save theme
-          </Button>
+          <Button variant="outline" size="sm" onClick={props.onSave}>{t('auto.save_theme')}</Button>
         </div>
       </div>
     </Layer>

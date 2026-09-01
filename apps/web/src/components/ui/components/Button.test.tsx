@@ -121,9 +121,7 @@ describe('Button', () => {
 
   it('does not leak custom props and preserves CTA inline styles', () => {
     render(() => (
-      <Button variant="cta" noTouchResize style={{ color: 'rgb(1, 2, 3)' }}>
-        Continue
-      </Button>
+      <Button variant="cta" noTouchResize style={{ color: 'rgb(1, 2, 3)' }}>{t('auto.continue')}</Button>
     ));
 
     const button = screen.getByRole('button', { name: 'Continue' });

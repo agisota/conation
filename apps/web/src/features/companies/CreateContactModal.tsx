@@ -137,10 +137,8 @@ export function CreateContactModal() {
 
             <div class="flex flex-col gap-4">
               <div class="flex items-center gap-2 px-2">
-                <Dialog.Title class="sr-only">Add a contact</Dialog.Title>
-                <label for="new-contact-name" class="sr-only">
-                  Name
-                </label>
+                <Dialog.Title class="sr-only">{t('auto.add_a_contact')}</Dialog.Title>
+                <label for="new-contact-name" class="sr-only">{t('auto.name')}</label>
                 <UserPlusIcon
                   aria-hidden="true"
                   class="size-5 shrink-0 text-ink-placeholder"
@@ -165,9 +163,7 @@ export function CreateContactModal() {
                 <label
                   for="new-contact-email"
                   class="text-xs font-medium text-ink-muted"
-                >
-                  Email
-                </label>
+                >{t('auto.email')}</label>
                 <div class="flex h-9 w-full items-center rounded-lg border border-edge-muted focus-within:border-edge">
                   <input
                     id="new-contact-email"

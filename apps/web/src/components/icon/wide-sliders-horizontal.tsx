@@ -1,4 +1,5 @@
 import { createUniqueId } from 'solid-js';
+import { t } from '@app/lib/i18n';
 
 export const AnimatedSlidersHorizontalIcon = (props: {
   triggerAnimation?: boolean;
@@ -17,7 +18,7 @@ export const AnimatedSlidersHorizontalIcon = (props: {
       overflow="visible"
       class={`animated-sliders-horizontal-icon ${props.triggerAnimation ? 'animating' : ''} ${props.class ?? ''}`}
     >
-      {/*<title>Animated sliders horizontal icon</title>*/}
+      {/*<title>{t('auto.animated_sliders_horizontal_ic')}</title>*/}
       <style>{`
         @keyframes slide-right {
           0%, 100% { translate: 0; }

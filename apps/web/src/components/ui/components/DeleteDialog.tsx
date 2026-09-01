@@ -73,8 +73,7 @@ export function DeleteDialog(props: DeleteDialogProps) {
                 <label
                   for={confirmationInputId}
                   class="text-sm leading-5 text-ink-muted"
-                >
-                  Type <span class="font-medium text-ink">{phrase()}</span> to
+                >{t('auto.type')}<span class="font-medium text-ink">{phrase()}</span> to
                   confirm.
                 </label>
                 <input

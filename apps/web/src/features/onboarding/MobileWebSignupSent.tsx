@@ -1,4 +1,5 @@
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import { MOBILE_WEB_SIGNUP_LEAD_VALUE } from '@app/lib/analytics/leadValues';
 import { PcNoiseGrid } from '@core/component/PcNoiseGrid';
 import { getWebOrigin } from '@core/util/webOrigin';
@@ -50,9 +51,7 @@ export default function MobileWebSignupSent(props: Props) {
 
       <div class="flex flex-col items-start gap-4 w-full max-w-md mx-auto mt-6">
         <LogoIcon class="size-16 text-accent self-center" />
-        <h2 class="text-3xl font-semibold text-ink mt-3">
-          Macro is better on desktop.
-        </h2>
+        <h2 class="text-3xl font-semibold text-ink mt-3">{t('auto.macro_is_better_on_desktop')}</h2>
         <p class="text-base text-ink/60 mt-4">
           We sent a link to your inbox - open it on your computer for the full
           Macro experience.
@@ -64,9 +63,7 @@ export default function MobileWebSignupSent(props: Props) {
             window.location.href = getWebOrigin();
           }}
           class="w-full px-3 py-2.5 text-lg font-bold rounded-xs bg-accent text-surface border-none mt-16"
-        >
-          Back to Home
-        </button>
+        >{t('auto.back_to_home')}</button>
       </div>
     </div>
   );

@@ -54,9 +54,7 @@ export function LoadMoreButton(props: {
           <>
             <Spinner class="size-3.5 animate-spin" />{t('common.loading')}</>
         }
-      >
-        Load More
-      </Show>
+      >{t('auto.load_more')}</Show>
     </Button>
   );
 }

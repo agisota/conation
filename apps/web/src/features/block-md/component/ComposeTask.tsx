@@ -303,9 +303,7 @@ export function ComposeTaskTitleEditor(props: {
         portalScope={props.portalScope}
       />
       <Show when={showPlaceholder()}>
-        <div class="pointer-events-none absolute top-1.5 text-xl font-medium text-ink-placeholder">
-          New task
-        </div>
+        <div class="pointer-events-none absolute top-1.5 text-xl font-medium text-ink-placeholder">{t('auto.new_task')}</div>
       </Show>
     </div>
   );
@@ -814,9 +812,7 @@ export function ComposeTask(props: ComposeTaskProps) {
             variant="outline"
             depth={3}
             class="bg-surface px-3"
-          >
-            Clear Draft
-          </Button>
+          >{t('auto.clear_draft')}</Button>
         </Show>
         <Show when={splitPanel?.handle.isPopover()}>
           <Button
@@ -976,9 +972,7 @@ export function ComposeTask(props: ComposeTaskProps) {
             variant={title().trim().length === 0 ? 'ghost' : 'accent'}
             depth={3}
             class="gap-3 rounded-lg border-0"
-          >
-            Create Task
-            <Hotkey shortcut="cmd+enter" theme="current" />
+          >{t('auto.create_task')}<Hotkey shortcut="cmd+enter" theme="current" />
           </Button>
         </div>
       </div>

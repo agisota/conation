@@ -67,9 +67,7 @@ function CreateMenu() {
                 await handleFileUpload(files, false);
               });
             }}
-          >
-            Upload file
-          </MobileTouchMenu.Item>
+          >{t('auto.upload_file')}</MobileTouchMenu.Item>
           {/* Labels key the rows: 'Message' and 'Channel' share a
               blockName. */}
           <For each={blocks()}>
@@ -91,7 +89,7 @@ function CreateMenu() {
             }}
           </For>
           <MobileTouchMenu.Separator />
-          <MobileTouchMenu.Footer>Create</MobileTouchMenu.Footer>
+          <MobileTouchMenu.Footer>{t('auto.create')}</MobileTouchMenu.Footer>
         </MobileTouchMenu.Content>
       </MobileTouchMenu>
     </MobileDockIsland>
@@ -170,9 +168,7 @@ function MoreViewsMenu(props: {
           active={settingsOpen()}
           animateIcon={false}
           onSelect={toggleSettings}
-        >
-          Settings
-        </MobileTouchMenu.Item>
+        >{t('auto.settings')}</MobileTouchMenu.Item>
         <MobileTouchMenu.Separator />
         {/* Rows render top → bottom ending at the thumb: reverse the shared
             canonical order so Inbox lands nearest it. */}
@@ -190,7 +186,7 @@ function MoreViewsMenu(props: {
           )}
         </For>
         <MobileTouchMenu.Separator />
-        <MobileTouchMenu.Footer>Views</MobileTouchMenu.Footer>
+        <MobileTouchMenu.Footer>{t('auto.views')}</MobileTouchMenu.Footer>
       </MobileTouchMenu.Content>
     </MobileTouchMenu>
   );

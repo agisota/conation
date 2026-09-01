@@ -3,6 +3,7 @@ import {
   scrollToFocusedInput,
 } from '@components/app/mobile/MobileDrawer';
 import { pressPulse } from '@components/app/mobile/pressPulse';
+import { t } from '@app/lib/i18n';
 import { ScrollIndicators } from '@core/component/VerticalScrollIndicators';
 import { Accordion } from '@kobalte/core/accordion';
 import ChevronDownIcon from '@phosphor/caret-down.svg';
@@ -181,7 +182,7 @@ function MultiFacetContent(props: { facet: MultiFacet }) {
           }}
         </For>
         <Show when={filteredOptions().length === 0}>
-          <div class="px-4 py-2 text-sm text-ink-muted">No results</div>
+          <div class="px-4 py-2 text-sm text-ink-muted">{t('auto.no_results')}</div>
         </Show>
       </div>
     </>
@@ -293,7 +294,7 @@ export const MobileSearchFilterDrawer = (props: { class?: string }) => {
               onFocusIn={(e) => scrollToFocusedInput(e)}
               class="overflow-y-auto scrollbar-hidden h-full pb-1"
             >
-              <MobileDrawer.Label>Filters</MobileDrawer.Label>
+              <MobileDrawer.Label>{t('auto.filters')}</MobileDrawer.Label>
               <Accordion multiple collapsible defaultValue={['type']}>
                 <For each={facets()}>
                   {(facet) => <FacetSection facet={facet} />}
@@ -310,9 +311,7 @@ export const MobileSearchFilterDrawer = (props: { class?: string }) => {
                 size="sm"
                 class="min-h-10 rounded-lg bg-active!"
               >
-                <XIcon class="size-3!" />
-                Clear all
-              </Button>
+                <XIcon class="size-3!" />{t('auto.clear_all')}</Button>
             </div>
           </Show>
         </MobileDrawer.Content>

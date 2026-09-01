@@ -186,21 +186,15 @@ export function BotCreate(props: { channelId?: string; onBack: () => void }) {
           disabled={pending()}
           onClick={leave}
         >
-          <CaretLeftIcon />
-          Back to bots
-        </Button>
+          <CaretLeftIcon />{t('auto.back_to_bots')}</Button>
         <Show when={stage() !== 'ready'}>
           <header class="flex items-center gap-3">
             <div class="flex size-10 shrink-0 items-center justify-center rounded-xl border border-edge-muted bg-ink/[0.025] text-ink-muted">
               <RobotIcon class="size-5" />
             </div>
             <div class="min-w-0">
-              <h1 class="text-lg font-semibold tracking-[-0.01em]">
-                Create a bot
-              </h1>
-              <p class="mt-0.5 text-sm text-ink-muted">
-                Give an integration a profile and a secure channel webhook.
-              </p>
+              <h1 class="text-lg font-semibold tracking-[-0.01em]">{t('auto.create_a_bot')}</h1>
+              <p class="mt-0.5 text-sm text-ink-muted">{t('auto.give_an_integration_a_profile_')}</p>
             </div>
           </header>
         </Show>
@@ -256,17 +250,15 @@ export function BotCreate(props: { channelId?: string; onBack: () => void }) {
             >
               <div class="flex items-center justify-between gap-4">
                 <div class="min-w-0">
-                  <div class="text-sm font-medium text-ink">Team bot</div>
-                  <p class="mt-0.5 text-xs text-ink-muted">
-                    Share this bot with your team and let it use team scope.
-                  </p>
+                  <div class="text-sm font-medium text-ink">{t('auto.team_bot')}</div>
+                  <p class="mt-0.5 text-xs text-ink-muted">{t('auto.share_this_bot_with_your_team_')}</p>
                 </div>
                 <ToggleSwitch
                   size="md"
                   checked={teamOwned()}
                   disabled={currentTeamQuery.isLoading || !canCreateTeamBot()}
                   onChange={setTeamOwned}
-                  label={<span>Create as a team bot</span>}
+                  label={<span>{t('auto.create_as_a_team_bot')}</span>}
                   labelClass="sr-only"
                 />
               </div>
@@ -283,8 +275,7 @@ export function BotCreate(props: { channelId?: string; onBack: () => void }) {
               title="Channels"
               description="Add the bot now to get ready-to-use webhook URLs."
             >
-              <label class="mb-1.5 block text-xs font-medium">
-                Add to channels <span class="text-ink-muted">· optional</span>
+              <label class="mb-1.5 block text-xs font-medium">{t('auto.add_to_channels')}<span class="text-ink-muted">· optional</span>
               </label>
               <ChannelMultiSelect
                 channelIds={selectedChannelIds()}
@@ -297,14 +288,10 @@ export function BotCreate(props: { channelId?: string; onBack: () => void }) {
             </BotFormSection>
 
             <div class="flex items-center justify-between gap-4 pt-1">
-              <p class="text-xs text-ink-muted">
-                A webhook token is generated automatically.
-              </p>
+              <p class="text-xs text-ink-muted">{t('auto.a_webhook_token_is_generated_a')}</p>
               <div class="flex shrink-0 gap-2">
                 <Button type="button" variant="ghost" size="sm" onClick={leave}>{t('common.cancel')}</Button>
-                <Button type="submit" variant="cta" size="sm">
-                  Create bot
-                </Button>
+                <Button type="submit" variant="cta" size="sm">{t('auto.create_bot')}</Button>
               </div>
             </div>
           </form>
@@ -315,9 +302,7 @@ export function BotCreate(props: { channelId?: string; onBack: () => void }) {
             <LoadingSpinner class="size-16 p-4" />
             <div>
               <div class="text-sm font-medium">Creating your bot…</div>
-              <div class="mt-1 text-xs text-ink-muted">
-                Setting up its profile, channels, and webhook token.
-              </div>
+              <div class="mt-1 text-xs text-ink-muted">{t('auto.setting_up_its_profile_channel')}</div>
             </div>
           </div>
         </Show>

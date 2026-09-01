@@ -29,7 +29,7 @@ export function CompanyContactsSection(props: {
     >
       <Show
         when={contacts().length > 0}
-        fallback={<div class="text-sm text-ink-muted">No contacts yet.</div>}
+        fallback={<div class="text-sm text-ink-muted">{t('auto.no_contacts_yet')}</div>}
       >
         <div class="flex flex-col gap-2">
           <input
@@ -42,7 +42,7 @@ export function CompanyContactsSection(props: {
           <Show
             when={filtered().length > 0}
             fallback={
-              <div class="text-sm text-ink-muted">No matching contacts.</div>
+              <div class="text-sm text-ink-muted">{t('auto.no_matching_contacts')}</div>
             }
           >
             <div

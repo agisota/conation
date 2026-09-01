@@ -1,4 +1,5 @@
 import { type Component, createSignal, type ParentProps, Show } from 'solid-js';
+import { t } from '@app/lib/i18n';
 import { Dynamic } from 'solid-js/web';
 import { cn } from '../utils/classname';
 import { NavRow } from './NavRow';
@@ -6,7 +7,7 @@ import { NavRow } from './NavRow';
 /*
 <SideNav>
   <SideNav.Group label="General">
-    <SideNav.Item icon={SomeIcon} active onSelect={() => {}}>Account</SideNav.Item>
+    <SideNav.Item icon={SomeIcon} active onSelect={() => {}}>{t('auto.account')}</SideNav.Item>
   </SideNav.Group>
 </SideNav>
 */

@@ -1,4 +1,5 @@
 import { useSplitLayout } from '@components/app/split-layout/layout';
+import { t } from '@app/lib/i18n';
 import { useSplitPanel } from '@components/app/split-layout/layoutUtils';
 import { ContextMenuContent, MenuItem } from '@core/component/ContextMenu';
 import { ContextMenu } from '@kobalte/core/context-menu';
@@ -143,7 +144,7 @@ export function TagsRow(props: {
         when={props.canEdit}
         fallback={
           <Show when={docTags.appliedTags().length === 0}>
-            <span class="text-ink-extra-muted">No tags</span>
+            <span class="text-ink-extra-muted">{t('auto.no_tags')}</span>
           </Show>
         }
       >
@@ -159,7 +160,7 @@ export function TagsRow(props: {
               triggerLabel="Add tags"
             >
               <PlusIcon class="size-3" />
-              <span>Add tags</span>
+              <span>{t('auto.add_tags')}</span>
             </TagPicker>
           </Match>
           <Match when={true}>

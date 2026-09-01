@@ -1,4 +1,5 @@
 import { toast } from '@core/component/Toast/Toast';
+import { t } from '@app/lib/i18n';
 import {
   Combobox,
   type ComboboxRootItemComponentProps,
@@ -138,9 +139,7 @@ export function BotInviteSelect(props: {
               <Show
                 when={availableBots().length > 0}
                 fallback={
-                  <div class="px-3 py-5 text-center text-xs text-ink-muted">
-                    No bots available to invite
-                  </div>
+                  <div class="px-3 py-5 text-center text-xs text-ink-muted">{t('auto.no_bots_available_to_invite')}</div>
                 }
               >
                 <Combobox.Listbox class="max-h-64 overflow-y-auto" />

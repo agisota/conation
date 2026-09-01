@@ -45,7 +45,7 @@ function ListCompaniesToolResponse(props: ListCompaniesResponse) {
     <Tool.List>
       <Show
         when={props.companies.length > 0}
-        fallback={<Tool.ListItem>No matching CRM companies.</Tool.ListItem>}
+        fallback={<Tool.ListItem>{t('auto.no_matching_crm_companies')}</Tool.ListItem>}
       >
         <For each={props.companies}>
           {(company) => <CompanyRow company={company} />}
@@ -77,9 +77,7 @@ const listCompaniesHandler = createToolRenderer({
         }
       >
         <div class="flex min-w-0 flex-1 items-center justify-between gap-3 overflow-hidden">
-          <span class="min-w-0 truncate">
-            List CRM companies
-            <Show when={ctx.tool.data.search}>
+          <span class="min-w-0 truncate">{t('auto.list_crm_companies')}<Show when={ctx.tool.data.search}>
               {(search) => <> matching "{search()}"</>}
             </Show>
             <Show when={ctx.tool.data.stage}>
@@ -170,9 +168,7 @@ const getCompanyHandler = createToolRenderer({
         }
       >
         <div class="flex min-w-0 flex-1 items-center justify-between gap-3 overflow-hidden">
-          <span class="min-w-0 truncate">
-            Read CRM company
-            <Show when={ctx.response?.data.name}>
+          <span class="min-w-0 truncate">{t('auto.read_crm_company')}<Show when={ctx.response?.data.name}>
               {(name) => <> {name()}</>}
             </Show>
           </span>

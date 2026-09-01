@@ -63,7 +63,7 @@ export function ImportCard(props: {
           <div class="flex flex-wrap items-center gap-x-1.5 gap-y-1 rounded-lg border border-edge-muted bg-surface px-3 py-2.5 text-[13px] text-ink-muted">
             <Show when={props.connected}>
               <StatusDot state="connected" />
-              <span class="font-medium text-ink">Connected</span>
+              <span class="font-medium text-ink">{t('auto.connected')}</span>
               <span>—</span>
             </Show>
             {props.status}

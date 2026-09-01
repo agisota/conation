@@ -226,9 +226,7 @@ export function EventForm(props: EventFormProps) {
 
       <div class="flex shrink-0 items-center justify-end gap-3">
         <Show when={props.showRecurringEditNotice}>
-          <p class="mr-auto text-xs text-ink-extra-muted">
-            Changes apply to all occurrences
-          </p>
+          <p class="mr-auto text-xs text-ink-extra-muted">{t('auto.changes_apply_to_all_occurrenc')}</p>
         </Show>
         <Button
           type="button"

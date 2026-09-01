@@ -3,6 +3,7 @@
  */
 
 import type { Link } from '@service-email/generated/schemas';
+import { t } from '@app/lib/i18n';
 import { fireEvent, render, screen } from '@solidjs/testing-library';
 import { createSignal, Show } from 'solid-js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -56,9 +57,7 @@ function RecycledRowInboxConsumer() {
             linkId: 'secondary-inbox',
           })
         }
-      >
-        Recycle row
-      </button>
+      >{t('auto.recycle_row')}</button>
     </>
   );
 }

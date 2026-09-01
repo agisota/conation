@@ -1,4 +1,5 @@
 import { createUniqueId } from 'solid-js';
+import { t } from '@app/lib/i18n';
 
 export const AnimatedFolderIcon = (props: {
   triggerAnimation?: boolean;
@@ -19,7 +20,7 @@ export const AnimatedFolderIcon = (props: {
       overflow="visible"
       class={`animated-folder-icon ${props.triggerAnimation ? 'animating' : ''} ${props.class ?? ''}`}
     >
-      {/*<title>Animated folder icon</title>*/}
+      {/*<title>{t('auto.animated_folder_icon')}</title>*/}
       <style>{`
         .animated-folder-icon {
           .paper, .folder {

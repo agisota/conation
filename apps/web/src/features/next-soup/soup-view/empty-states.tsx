@@ -1,4 +1,5 @@
 import { DOCS_BASE } from '@app/constants/docs-links';
+import { t } from '@app/lib/i18n';
 import type { ListView } from '@app/constants/list-views';
 import {
   type CreatableName,
@@ -87,9 +88,7 @@ const FALLBACK_CONTENT: Partial<Record<ListView, FallbackContent>> = {
     description: (
       <>
         See recordings, transcriptions and summaries of your Macro calls.
-        <br />
-        Calls are available to agents.
-      </>
+        <br />{t('auto.calls_are_available_to_agents')}</>
     ),
     documentationUrl: `${DOCS_BASE}/product/calls`,
   },
@@ -227,9 +226,7 @@ export function EmptyState(props: {
                     <>
                       Low-priority items like newsletters and notifications
                       collect here.
-                      <br />
-                      Nothing to clear right now.
-                    </>
+                      <br />{t('auto.nothing_to_clear_right_now')}</>
                   ),
                 }
               : tab === 'all'

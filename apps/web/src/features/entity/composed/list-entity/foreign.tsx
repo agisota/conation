@@ -1,4 +1,5 @@
 import { Popover } from '@kobalte/core/popover';
+import { t } from '@app/lib/i18n';
 import ArrowSquareOut from '@phosphor/arrow-square-out.svg';
 import ChatCircle from '@phosphor/chat-circle.svg';
 import Check from '@phosphor/check.svg';
@@ -311,7 +312,7 @@ function GithubPullRequestChecksPopover(props: {
             <div class="flex flex-col items-center gap-2 px-4 py-6 text-center">
               <CircleDashed class="size-6 text-ink-extra-muted" />
               <div class="flex flex-col gap-1">
-                <div class="text-sm font-medium text-ink">No checks yet</div>
+                <div class="text-sm font-medium text-ink">{t('auto.no_checks_yet')}</div>
                 <div class="max-w-56 text-xs text-ink-extra-muted">
                   GitHub has not reported any check runs for this pull request.
                 </div>

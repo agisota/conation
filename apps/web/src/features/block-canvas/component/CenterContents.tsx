@@ -1,4 +1,5 @@
 import { createCallback } from '@solid-primitives/rootless';
+import { t } from '@app/lib/i18n';
 import { createMemo, onMount } from 'solid-js';
 import { useToolManager } from '../signal/toolManager';
 import {
@@ -88,8 +89,6 @@ export function CenterContents() {
       }}
       ref={ref}
       on:click={handler}
-    >
-      Scroll to content
-    </div>
+    >{t('auto.scroll_to_content')}</div>
   );
 }

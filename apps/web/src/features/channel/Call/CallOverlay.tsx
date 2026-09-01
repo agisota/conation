@@ -1,4 +1,5 @@
 import { useSplitPanel } from '@components/app/split-layout/layoutUtils';
+import { t } from '@app/lib/i18n';
 import { UserIcon } from '@core/component/UserIcon';
 import { useAuthor, useUserId } from '@core/context/user';
 import { useProfilePictureUrl } from '@core/signal/profilePicture';
@@ -134,10 +135,8 @@ function LocalParticipantTile(props: {
 
       <MutedMicrophoneBadge muted={props.isAudioMuted} label="You are muted" />
 
-      <Show when={props.isConnecting} fallback={<VideoTag>You</VideoTag>}>
-        <div class="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-surface/70 text-ink-muted text-xs">
-          Connecting...
-        </div>
+      <Show when={props.isConnecting} fallback={<VideoTag>{t('auto.you')}</VideoTag>}>
+        <div class="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-surface/70 text-ink-muted text-xs">{t('auto.connecting')}</div>
       </Show>
     </ParticipantTileWrapper>
   );
@@ -290,7 +289,7 @@ export function CallOverlay(props: { onLeave: () => void }) {
               <div class="relative size-full">
                 <TrackView track={localScreenTrack()} fit="contain" />
 
-                <VideoTag>Your screen</VideoTag>
+                <VideoTag>{t('auto.your_screen')}</VideoTag>
               </div>
             </Show>
             <For each={remoteScreenShares()}>
@@ -374,7 +373,7 @@ export function CallOverlay(props: { onLeave: () => void }) {
             >
               <InlineCheckbox checked={callCtx.isSharedWithTeam()} />
               <Show when={!isMediumNarrow()}>
-                <span class="whitespace-nowrap">Share with team</span>
+                <span class="whitespace-nowrap">{t('auto.share_with_team')}</span>
               </Show>
             </button>
           </Tooltip>

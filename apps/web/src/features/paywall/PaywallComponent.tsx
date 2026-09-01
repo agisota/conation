@@ -1,4 +1,5 @@
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import { useHasPaidAccess } from '@core/auth';
 import { type PaywallKey, PaywallMessages } from '@core/constant/PaywallState';
 import { useUserId } from '@core/context/user';
@@ -11,7 +12,7 @@ import { Button, Tooltip } from '@ui';
 import { createMemo, For, Show } from 'solid-js';
 
 export interface PaywallProps {
-  cb: () => Promise<void> | void;
+  cb: () =>{t('auto.promise')}<void> | void;
   handleGuest?: () => void;
   isOnboarding?: boolean;
   errorKey?: PaywallKey | null;
@@ -108,9 +109,7 @@ const PaywallComponent = (props: PaywallProps) => {
       <div class="grid grid-cols-1 gap-6 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] p-6 sm:px-8 sm:pt-8 sm:pb-4">
         <section class="flex flex-col gap-4">
           <div class="flex flex-col gap-2">
-            <h2 class="text-2xl text-ink font-semibold">
-              Unlock Premium features
-            </h2>
+            <h2 class="text-2xl text-ink font-semibold">{t('auto.unlock_premium_features')}</h2>
             <p class="text-sm text-ink-extra-muted">
               {paywallMetadata()?.description ??
                 'Upgrade your workspace with more AI power, team collaboration, and room to grow.'}
@@ -135,7 +134,7 @@ const PaywallComponent = (props: PaywallProps) => {
         <section class="h-full flex flex-col gap-3">
           <div class="flex flex-1 flex-col gap-4 rounded-lg bg-active p-4">
             <div class="flex flex-col">
-              <h3 class="text-sm text-ink">Premium features</h3>
+              <h3 class="text-sm text-ink">{t('auto.premium_features')}</h3>
             </div>
             <PremiumFeatures />
           </div>
@@ -162,9 +161,7 @@ const PaywallComponent = (props: PaywallProps) => {
             depth={3}
             class="rounded-full sm:w-auto px-3 py-1.5"
             onClick={props.cb}
-          >
-            Dismiss
-          </Button>
+          >{t('auto.dismiss')}</Button>
           <Show
             when={upgradeDisabled()}
             fallback={

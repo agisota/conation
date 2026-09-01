@@ -136,9 +136,7 @@ export function EntityLoadGate<Data>(props: EntityLoadGateProps<Data>) {
     <Suspense fallback={<LoadingBlock />}>
       <Switch
         fallback={
-          <div class="flex flex-col items-center justify-center h-full text-lg">
-            Sorry, an unexpected error has occurred.
-          </div>
+          <div class="flex flex-col items-center justify-center h-full text-lg">{t('auto.sorry_an_unexpected_error_has_')}</div>
         }
       >
         <Match when={error() === 'UNAUTHORIZED' || error() === 'FORBIDDEN'}>

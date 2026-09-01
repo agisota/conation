@@ -1,4 +1,5 @@
 import { useSplitLayout } from '@components/app/split-layout/layout';
+import { t } from '@app/lib/i18n';
 import { UserIcon } from '@core/component/UserIcon';
 import { idToEmail } from '@core/user';
 
@@ -33,9 +34,7 @@ export function CallRecordingParticipantsSection(props: {
 
   return (
     <section class="flex flex-col gap-3">
-      <h3 class="text-sm font-semibold text-ink">
-        Participants
-        <span class="ml-1.5 text-ink-muted font-normal tabular-nums">
+      <h3 class="text-sm font-semibold text-ink">{t('auto.participants')}<span class="ml-1.5 text-ink-muted font-normal tabular-nums">
           {participants().length}
         </span>
       </h3>

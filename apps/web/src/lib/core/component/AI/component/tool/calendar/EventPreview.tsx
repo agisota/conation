@@ -1,4 +1,5 @@
 import type { CalendarGridHandle } from '@app/features/calendar/components/CalendarGrid';
+import { t } from '@app/lib/i18n';
 import { CalendarGridSkeleton } from '@app/features/calendar/components/CalendarGridSkeleton';
 import type { CalendarEventFormController } from '@app/features/calendar/components/composer/create-calendar-event-form-controller';
 import { useCalendarOccurrenceData } from '@app/features/calendar/hooks/use-calendar-occurrence-data';
@@ -310,9 +311,7 @@ export function CalendarToolEventPreview(props: CalendarToolEventPreviewProps) {
                         class="rounded-lg px-2"
                         onClick={goToEvent}
                       >
-                        <CalendarIcon class="size-3.5" />
-                        Go to event
-                      </Button>
+                        <CalendarIcon class="size-3.5" />{t('auto.go_to_event')}</Button>
                     </Show>
                     <Button
                       variant="ghost"

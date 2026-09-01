@@ -44,12 +44,10 @@ export function QueuedPromptList(props: QueuedPromptListProps) {
                   {firstLine(prompt.markdown)}
                 </span>
                 <Show when={sending()}>
-                  <span class="shrink-0 text-xs text-ink-extra-muted">
-                    Sending
-                  </span>
+                  <span class="shrink-0 text-xs text-ink-extra-muted">{t('auto.sending')}</span>
                 </Show>
                 <Show when={failed()}>
-                  <span class="shrink-0 text-xs text-ink">Failed</span>
+                  <span class="shrink-0 text-xs text-ink">{t('auto.failed')}</span>
                   <Button
                     variant="ghost"
                     size="icon-xs"

@@ -1,4 +1,5 @@
 import { EmailAttachmentPill } from '@block-email/component/AttachmentPill';
+import { t } from '@app/lib/i18n';
 import type { DraftFormAttachment } from '@block-email/component/createEmailFormState';
 import { MacroSignatureButton } from '@block-email/component/MacroSignatureButton';
 import { addUserMentionToCc } from '@block-email/util/mentionToCc';
@@ -156,7 +157,7 @@ export function ComposeBody(props: {
           }}
         >
           <div class={cn('absolute inset-0', !isDragging() && 'hidden')}>
-            <FileDropOverlay>Drop file(s) to attach</FileDropOverlay>
+            <FileDropOverlay>{t('auto.drop_file_s_to_attach')}</FileDropOverlay>
           </div>
 
           <Scroll>

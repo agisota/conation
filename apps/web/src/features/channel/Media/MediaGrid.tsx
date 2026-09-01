@@ -1,4 +1,5 @@
 import { constrainImageDimensions } from '@conation/lexical-core/utils/media';
+import { t } from '@app/lib/i18n';
 import ExpandIcon from '@phosphor/arrows-out-simple.svg';
 import { Button, cn } from '@ui';
 import { createMemo, createSignal, For, Match, Show, Switch } from 'solid-js';
@@ -110,9 +111,7 @@ function MessageVideoTile(props: { item: MediaItem; onOpen: () => void }) {
                 event.stopPropagation();
                 setIsInlinePlaying(true);
               }}
-            >
-              Play inline
-            </button>
+            >{t('auto.play_inline')}</button>
           </>
         }
       >

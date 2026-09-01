@@ -1,4 +1,5 @@
 import KeyIcon from '@phosphor/key.svg';
+import { t } from '@app/lib/i18n';
 import { Button } from '@ui';
 import { For, Show } from 'solid-js';
 import { BotFormSection } from './BotFormSection';
@@ -27,17 +28,13 @@ export function BotWebhooksSection(props: BotWebhooksSectionProps) {
           size="sm"
           onClick={props.onNewToken}
         >
-          <KeyIcon />
-          New token
-        </Button>
+          <KeyIcon />{t('auto.new_token')}</Button>
       }
     >
       <Show
         when={props.channels.length > 0}
         fallback={
-          <p class="text-xs text-ink-muted">
-            Add this bot to a channel to get a webhook URL.
-          </p>
+          <p class="text-xs text-ink-muted">{t('auto.add_this_bot_to_a_channel_to_g')}</p>
         }
       >
         <div class="flex flex-col gap-4">

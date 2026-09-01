@@ -1,4 +1,5 @@
 import clickOutside from '@core/directive/clickOutside';
+import { t } from '@app/lib/i18n';
 import { useCanEdit } from '@core/signal/permissions';
 import { $isEquationNode } from '@conation/lexical-core';
 import Check from '@phosphor/check-circle.svg';
@@ -228,7 +229,7 @@ export function FloatingEquationMenu() {
         use:clickOutside={() => resetMenu()}
       >
         <div class="flex flex-col gap-3">
-          <h3 class="text-sm font-medium text-ink">LaTeX Expression</h3>
+          <h3 class="text-sm font-medium text-ink">{t('auto.latex_expression')}</h3>
           <div class="flex flex-col items-start gap-4">
             <div class="w-full grow">
               {inline() ? (
@@ -253,7 +254,7 @@ export function FloatingEquationMenu() {
                 />
               )}
             </div>
-            <h3 class="text-sm font-medium text-ink">Rendered LaTeX</h3>
+            <h3 class="text-sm font-medium text-ink">{t('auto.rendered_latex')}</h3>
             <div class="min-h-12 max-h-40 w-full p-2 border border-edge rounded-md bg-edge overflow-auto">
               <Equation equation={equation()} inline={inline()} />
             </div>
@@ -266,9 +267,7 @@ export function FloatingEquationMenu() {
                   class="size-4 rounded"
                   checked={inline()}
                   onChange={toggleInlineMode}
-                />
-                Inline equation
-              </label>
+                />{t('auto.inline_equation')}</label>
             </Show>
             <Tooltip label="Apply changes">
               <button

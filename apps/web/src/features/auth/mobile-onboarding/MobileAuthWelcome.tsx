@@ -1,4 +1,5 @@
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import { PcNoiseGrid } from '@core/component/PcNoiseGrid';
 import LogoIcon from '@icon/macro-logo.svg';
 import { useNavigate } from '@solidjs/router';
@@ -38,23 +39,19 @@ export function MobileAuthWelcome() {
         <Surface depth={1}>
           <div class="flex flex-col items-center gap-2 py-10">
             <LogoIcon class="size-20 text-ink" />
-            <div class="text-lg font-medium">Welcome to Macro</div>
+            <div class="text-lg font-medium">{t('auto.welcome_to_macro')}</div>
           </div>
           <div class="flex flex-col gap-3 px-8 pb-8">
             <Button
               variant="strong"
               size="xl"
               onClick={() => navigate('/onboarding')}
-            >
-              Create new account
-            </Button>
+            >{t('auto.create_new_account')}</Button>
             <Button
               size="xl"
               class="border border-edge-muted"
               onClick={() => navigate('/login')}
-            >
-              Log into existing account
-            </Button>
+            >{t('auto.log_into_existing_account')}</Button>
           </div>
         </Surface>
       </div>

@@ -1,4 +1,5 @@
 import { MarkdownTextarea } from '@core/component/LexicalMarkdown/component/core/MarkdownTextarea';
+import { t } from '@app/lib/i18n';
 import type { ItemMention } from '@core/component/LexicalMarkdown/plugins/mentions/mentionsPlugin';
 import XIcon from '@phosphor/x.svg';
 import { Button, cn, SendButton } from '@ui';
@@ -151,7 +152,7 @@ export function NewReplyInput(props: {
               props.setEditing(true);
             }}
           >
-            <p class="mt-1.5">Reply...</p>
+            <p class="mt-1.5">{t('auto.reply')}</p>
           </div>
         }
       >

@@ -1,4 +1,5 @@
 import { EntityIcon } from '@core/component/EntityIcon';
+import { t } from '@app/lib/i18n';
 import { INSERT_MEDIA_COMMAND } from '@core/component/LexicalMarkdown/plugins';
 import {
   blockAcceptsFileExtension,
@@ -155,7 +156,7 @@ export function MediaSelector(props: MediaSelectorProps) {
                   }}
                 >
                   <UploadSimple class="size-3.5 shrink-0" />
-                  <span class="text-sm font-medium">Upload file</span>
+                  <span class="text-sm font-medium">{t('auto.upload_file')}</span>
                 </div>
               </div>
               <div class="w-full max-h-80 overflow-y-auto overflow-x-hidden">

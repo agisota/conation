@@ -1,4 +1,5 @@
 import { Popover } from '@kobalte/core/popover';
+import { t } from '@app/lib/i18n';
 import { Slider } from '@kobalte/core/slider';
 import { Tabs } from '@kobalte/core/tabs';
 import { cn, Layer } from '@ui';
@@ -430,7 +431,7 @@ export function ColorPickerPopover(props: {
                 aria-label="Alpha"
                 class="flex items-center gap-3"
               >
-                <span class="w-10 text-xs text-ink-muted">Alpha</span>
+                <span class="w-10 text-xs text-ink-muted">{t('auto.alpha')}</span>
                 <Slider.Track
                   class="relative h-3 flex-1 rounded-full border border-edge-muted theme-alpha-track"
                   style={{

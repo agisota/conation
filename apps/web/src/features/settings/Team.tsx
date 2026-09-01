@@ -307,9 +307,7 @@ function InviteEmailsInput(props: {
         disabled={!canAddRow()}
         onClick={addRow}
       >
-        <PlusIcon class="size-4" />
-        Add another
-      </Button>
+        <PlusIcon class="size-4" />{t('auto.add_another')}</Button>
     </div>
   );
 }
@@ -654,14 +652,12 @@ function CreateTeamDialog(props: { open: boolean; onClose: () => void }) {
           <Dialog.CloseButton as={Button} variant="ghost" size="icon-sm">
             <XIcon />
           </Dialog.CloseButton>
-          <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">
-            Create Team
-          </Dialog.Title>
+          <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">{t('auto.create_team')}</Dialog.Title>
         </Panel.Header>
         <Panel.Body class="p-3 flex flex-col gap-3">
           <div class="flex flex-col gap-1">
             <div class="flex items-center justify-between">
-              <label class="text-sm text-ink-muted">Team name</label>
+              <label class="text-sm text-ink-muted">{t('auto.team_name')}</label>
               <span class={cn('text-xs', charCountColor())}>
                 {teamName().length}/{TEAM_NAME_MAX_LENGTH}
               </span>
@@ -681,9 +677,7 @@ function CreateTeamDialog(props: { open: boolean; onClose: () => void }) {
             </Show>
           </div>
           <div class="flex flex-col gap-1">
-            <label class="text-sm text-ink-muted">
-              Invite members (optional)
-            </label>
+            <label class="text-sm text-ink-muted">{t('auto.invite_members_optional')}</label>
             <InviteEmailsInput
               invites={invites()}
               onChange={setInvites}
@@ -730,7 +724,7 @@ function EmptyTeamState() {
             <div class="size-12 rounded-full bg-accent/10 flex items-center justify-center mb-4">
               <UsersIcon class="size-6 text-accent" />
             </div>
-            <h3 class="text-sm font-medium text-ink mb-1">No team yet</h3>
+            <h3 class="text-sm font-medium text-ink mb-1">{t('auto.no_team_yet')}</h3>
             <p class="text-xs text-ink-muted max-w-xs mb-4">
               Create a team to collaborate with others and manage access
               together.
@@ -740,9 +734,7 @@ function EmptyTeamState() {
               class="rounded-xs"
               onClick={() => setShowCreateModal(true)}
             >
-              <PlusIcon class="size-4" />
-              Create Team
-            </Button>
+              <PlusIcon class="size-4" />{t('auto.create_team')}</Button>
           </div>
         </SettingsCard>
       </SettingsSection>
@@ -1161,9 +1153,7 @@ function TeamManagement(props: {
               class="rounded-xs"
               onClick={() => setShowDeleteTeamModal(true)}
             >
-              <TrashIcon class="size-4" />
-              Delete Team
-            </Button>
+              <TrashIcon class="size-4" />{t('auto.delete_team')}</Button>
           </Show>
         }
       >
@@ -1276,8 +1266,7 @@ function TeamManagement(props: {
             <SettingsRow
               label="GitHub autolink"
               description={
-                <>
-                  Use <code>{props.teamSlug}-</code> as the reference prefix in
+                <>{t('auto.use')}<code>{props.teamSlug}-</code> as the reference prefix in
                   GitHub, then paste this target URL.
                 </>
               }
@@ -1289,9 +1278,7 @@ function TeamManagement(props: {
                 class="rounded-xs"
                 onClick={handleCopyGithubAutolinkUrl}
               >
-                <CopyIcon class="size-4" />
-                Copy target URL
-              </Button>
+                <CopyIcon class="size-4" />{t('auto.copy_target_url')}</Button>
             </SettingsRow>
 
             <Show when={isAdminOrOwner()}>
@@ -1372,9 +1359,7 @@ function TeamManagement(props: {
                   target="_blank"
                   rel="noopener noreferrer"
                   class="inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-sm font-medium text-ink-muted outline-none transition-colors hover:bg-ink/4 hover:text-ink focus-visible:bg-ink/6"
-                >
-                  Configure app
-                  <ArrowUpRightIcon class="size-3.5 opacity-70" />
+                >{t('auto.configure_app')}<ArrowUpRightIcon class="size-3.5 opacity-70" />
                 </a>
               </Show>
             </IntegrationRow>
@@ -1393,9 +1378,7 @@ function TeamManagement(props: {
                 class="rounded-xs"
                 onClick={() => setShowInviteModal(true)}
               >
-                <PlusIcon class="size-4" />
-                Invite
-              </Button>
+                <PlusIcon class="size-4" />{t('auto.invite')}</Button>
             </Show>
           }
         >
@@ -1507,9 +1490,7 @@ function TeamManagement(props: {
             <Dialog.CloseButton as={Button} variant="ghost" size="icon-sm">
               <XIcon />
             </Dialog.CloseButton>
-            <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">
-              Delete Team
-            </Dialog.Title>
+            <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">{t('auto.delete_team')}</Dialog.Title>
           </Panel.Header>
           <Panel.Body class="p-3 flex flex-col gap-3">
             <p>
@@ -1565,9 +1546,7 @@ function TeamManagement(props: {
             <Dialog.CloseButton as={Button} variant="ghost" size="icon-sm">
               <XIcon />
             </Dialog.CloseButton>
-            <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">
-              Remove Member
-            </Dialog.Title>
+            <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">{t('auto.remove_member')}</Dialog.Title>
           </Panel.Header>
           <Panel.Body class="p-3 flex flex-col gap-3">
             <p>
@@ -1608,9 +1587,7 @@ function TeamManagement(props: {
             <Dialog.CloseButton as={Button} variant="ghost" size="icon-sm">
               <XIcon />
             </Dialog.CloseButton>
-            <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">
-              Cancel Invitation
-            </Dialog.Title>
+            <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">{t('auto.cancel_invitation')}</Dialog.Title>
           </Panel.Header>
           <Panel.Body class="p-3 flex flex-col gap-3">
             <p>
@@ -1623,9 +1600,7 @@ function TeamManagement(props: {
                 class="rounded-xs"
                 disabled={deleteInviteMutation.isPending}
                 onClick={() => setShowCancelInviteModal(null)}
-              >
-                Keep
-              </Button>
+              >{t('auto.keep')}</Button>
               <Button
                 variant="danger"
                 class="rounded-xs"
@@ -1650,9 +1625,7 @@ function TeamManagement(props: {
             <Dialog.CloseButton as={Button} variant="ghost" size="icon-sm">
               <XIcon />
             </Dialog.CloseButton>
-            <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">
-              Invite to Team
-            </Dialog.Title>
+            <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">{t('auto.invite_to_team')}</Dialog.Title>
           </Panel.Header>
 
           <Panel.Body class="p-3 flex flex-col gap-3">

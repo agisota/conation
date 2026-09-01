@@ -1,4 +1,5 @@
 import { LIST_VIEW_DOCS_URL } from '@app/constants/docs-links';
+import { t } from '@app/lib/i18n';
 import { useSettingsState } from '@core/constant/SettingsState';
 import ArrowUpRightIcon from '@phosphor/arrow-up-right.svg';
 import AtIcon from '@phosphor/at.svg';
@@ -20,7 +21,7 @@ export function ChatTipsSection() {
   return (
     <section>
       <div class="mb-2 flex items-center px-1">
-        <span class="text-sm text-ink-muted">Tips</span>
+        <span class="text-sm text-ink-muted">{t('auto.tips')}</span>
       </div>
       <div class="flex flex-col gap-2">
         <SetupRow
@@ -32,8 +33,7 @@ export function ChatTipsSection() {
           icon={<PaperPlaneTiltIcon class="size-4" />}
           title="Send in the background"
           desc={
-            <>
-              Press <Hotkey shortcut="meta+enter" theme="subtle" /> to send and
+            <>{t('auto.press')}<Hotkey shortcut="meta+enter" theme="subtle" /> to send and
               get notified when the AI responds
             </>
           }

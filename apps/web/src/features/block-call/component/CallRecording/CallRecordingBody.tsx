@@ -1,4 +1,5 @@
 import { AskMacroButton } from '@app/features/chat/ChatWithAgentButton';
+import { t } from '@app/lib/i18n';
 import { SidePanel } from '@components/app/side-panel';
 import { useBlockId } from '@core/block';
 import { CustomScrollbar } from '@core/component/CustomScrollbar';
@@ -182,7 +183,7 @@ export function CallRecordingBody(props: {
                     )}
                   </Show>
                   <Show when={record().isActive}>
-                    <span class="text-success font-medium">In progress</span>
+                    <span class="text-success font-medium">{t('auto.in_progress')}</span>
                   </Show>
                 </div>
               </header>
@@ -194,7 +195,7 @@ export function CallRecordingBody(props: {
               <Show when={record().recordingUrl}>
                 {(url) => (
                   <section class="flex flex-col gap-3">
-                    <h3 class="text-sm font-semibold text-ink">Recording</h3>
+                    <h3 class="text-sm font-semibold text-ink">{t('auto.recording')}</h3>
                     <div class="overflow-hidden rounded border border-edge-muted/50">
                       <CallRecordingVideo
                         url={url()}
@@ -209,7 +210,7 @@ export function CallRecordingBody(props: {
 
               <Show when={hasTranscripts()}>
                 <section class="flex flex-col gap-3">
-                  <h3 class="text-sm font-semibold text-ink">Transcript</h3>
+                  <h3 class="text-sm font-semibold text-ink">{t('auto.transcript')}</h3>
                   <div class="flex flex-col max-h-[min(600px,60vh)] overflow-hidden rounded border border-edge-muted/50">
                     <CallTranscript
                       transcript={record().transcript}

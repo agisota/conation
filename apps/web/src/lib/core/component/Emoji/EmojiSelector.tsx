@@ -1,4 +1,5 @@
 import { cn } from '@ui';
+import { t } from '@app/lib/i18n';
 import type { JSX } from 'solid-js';
 import {
   createEffect,
@@ -200,9 +201,7 @@ export function EmojiSelector(props: EmojiPickerProps): JSX.Element {
         </Match>
         <Match when={filteredEmojis() !== undefined}>
           <div class="mt-2">
-            <span class="pl-1 text-ink-extra-muted text-xs">
-              Search Results
-            </span>
+            <span class="pl-1 text-ink-extra-muted text-xs">{t('auto.search_results')}</span>
           </div>
 
           <div style={gridStyle()}>

@@ -1,4 +1,5 @@
 import { UserIcon } from '@core/component/UserIcon';
+import { t } from '@app/lib/i18n';
 import { isMobileWidth } from '@core/mobile/mobileWidth';
 import { idToDisplayName } from '@core/user';
 import { type DateValue, formatDate } from '@core/util/date';
@@ -13,9 +14,7 @@ import { CommentsContext } from './Thread';
 // SCUFFED: how should we define these tag colors?
 const NewTag = () => {
   return (
-    <div class="py-0.5 px-1.5 rounded ml-1 bg-[oklch(0.962_0.059_95.617)] text-[oklch(0.555_0.163_48.998)] text-xs">
-      New
-    </div>
+    <div class="py-0.5 px-1.5 rounded ml-1 bg-[oklch(0.962_0.059_95.617)] text-[oklch(0.555_0.163_48.998)] text-xs">{t('auto.new')}</div>
   );
 };
 

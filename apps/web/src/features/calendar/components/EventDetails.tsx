@@ -1,4 +1,5 @@
 import { UserIcon, type UserIconProps } from '@core/component/UserIcon';
+import { t } from '@app/lib/i18n';
 import { ScrollIndicators } from '@core/component/VerticalScrollIndicators';
 import {
   emailToMacroId,
@@ -196,10 +197,10 @@ function CalendarAttendeeItem(props: {
     attendee.isOrganizer || attendee.isOptional ? (
       <>
         <Show when={attendee.isOrganizer}>
-          <span>Organizer</span>
+          <span>{t('auto.organizer')}</span>
         </Show>
         <Show when={attendee.isOptional}>
-          <span>Optional</span>
+          <span>{t('auto.optional')}</span>
         </Show>
       </>
     ) : undefined;

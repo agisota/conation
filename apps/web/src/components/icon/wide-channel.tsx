@@ -30,7 +30,7 @@ export const AnimatedChannelIcon = (props: {
       overflow="visible"
       class={`animated-channel-icon ${props.triggerAnimation ? 'animating' : ''} ${props.class ?? ''}`}
     >
-      {/*<title>Channel icon</title>*/}
+      {/*<title>{t('auto.channel_icon')}</title>*/}
       <style>{`
         /* Each line eases out to its peak (ease-out), then reconverges with a slight
            overshoot past rest before settling (easeOutBack). */

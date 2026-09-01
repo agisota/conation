@@ -1,4 +1,5 @@
 import { CodeNode } from '@lexical/code';
+import { t } from '@app/lib/i18n';
 import type { CommentNode, ElementName } from '@conation/lexical-core';
 import {
   $getId,
@@ -261,9 +262,7 @@ function Selection(props: { selection?: SelectionRenderable; class?: string }) {
             props.class,
             selectionColors['noSelection']
           )}
-        >
-          No Selection
-        </div>
+        >{t('auto.no_selection')}</div>
       }
     >
       {(selection) => (
@@ -428,20 +427,18 @@ export function LexicalStateDebugger(props: {
       </div>
       <div class="flex flex-col w-1/2 border-l border-edge overflow-hidden">
         <div class="flex items-center justify-between px-2 py-1 border-b border-edge shrink-0">
-          <span class="text-ink-extra-muted">JSON state</span>
+          <span class="text-ink-extra-muted">{t('auto.json_state')}</span>
           <button
             type="button"
             class="border border-edge rounded-sm px-2 py-0.5 hover:bg-edge active:brightness-75"
             onClick={() => navigator.clipboard.writeText(jsonState())}
-          >
-            Copy
-          </button>
+          >{t('auto.copy')}</button>
         </div>
         <pre class="flex-1 overflow-auto p-2 text-xs select-all">
           {jsonState()}
         </pre>
         <div class="flex flex-col space-y-1 border-t border-edge p-2 shrink-0">
-          <span class="text-ink-extra-muted">Import JSON</span>
+          <span class="text-ink-extra-muted">{t('auto.import_json')}</span>
           <textarea
             class="bg-surface border border-edge rounded-sm p-1 text-xs h-16 resize-none"
             placeholder='{"root":{"children":[...]}}'
@@ -459,9 +456,7 @@ export function LexicalStateDebugger(props: {
                 console.error('Failed to parse editor state JSON:', e);
               }
             }}
-          >
-            Import
-          </button>
+          >{t('auto.import')}</button>
         </div>
       </div>
     </div>

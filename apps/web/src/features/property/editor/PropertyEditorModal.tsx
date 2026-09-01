@@ -1,4 +1,5 @@
 import { toast } from '@core/component/Toast/Toast';
+import { t } from '@app/lib/i18n';
 import { registerHotkey, useHotkeyDOMScope } from '@core/hotkey/hotkeys';
 import type { IUser } from '@core/user';
 import { idToDisplayName, idToEmail } from '@core/user/util';
@@ -553,9 +554,7 @@ function PropertyList(props: {
     <Show
       when={rowCount() > 0}
       fallback={
-        <CommandMenuEmptyState>
-          No matching properties found
-        </CommandMenuEmptyState>
+        <CommandMenuEmptyState>{t('auto.no_matching_properties_found')}</CommandMenuEmptyState>
       }
     >
       <CommandMenuList
@@ -581,7 +580,7 @@ function PropertyList(props: {
             <Match when={row.type === 'tags'}>
               <TagIcon class="size-4 text-ink-muted opacity-50" />
               <div class="flex-1 text-left flex">
-                <p class="text-sm font-medium">Tags</p>
+                <p class="text-sm font-medium">{t('auto.tags')}</p>
               </div>
             </Match>
             <Match when={row.type === 'property' && row.property}>
@@ -1137,7 +1136,7 @@ function TagAssignmentEditor(props: {
   return (
     <Show
       when={!tagsQuery.isLoading}
-      fallback={<CommandMenuEmptyState>Loading tags...</CommandMenuEmptyState>}
+      fallback={<CommandMenuEmptyState>{t('auto.loading_tags')}</CommandMenuEmptyState>}
     >
       <Show
         when={rowCount() > 0}
@@ -1168,9 +1167,7 @@ function TagAssignmentEditor(props: {
             <Switch>
               <Match when={row.type === 'clear'}>
                 <CircleDashedEmpty class="size-4 text-ink-muted opacity-50" />
-                <span class="min-w-0 flex-1 truncate text-ink-muted">
-                  Clear all tags
-                </span>
+                <span class="min-w-0 flex-1 truncate text-ink-muted">{t('auto.clear_all_tags')}</span>
               </Match>
               <Match when={row.type === 'create'}>
                 <TagIcon class="size-4 text-ink-muted opacity-50" />
@@ -1355,9 +1352,7 @@ function PropertyValueEditor(props: {
         />
       </Match>
       <Match when={propertyType() === 'LINK'}>
-        <div class="p-4 text-center text-ink-muted">
-          Link editing not yet implemented
-        </div>
+        <div class="p-4 text-center text-ink-muted">{t('auto.link_editing_not_yet_implement')}</div>
       </Match>
     </Switch>
   );
@@ -1582,7 +1577,7 @@ function SelectPropertyEditor(props: {
     <Show
       when={rows().length > 0}
       fallback={
-        <CommandMenuEmptyState>No matching options found</CommandMenuEmptyState>
+        <CommandMenuEmptyState>{t('auto.no_matching_options_found')}</CommandMenuEmptyState>
       }
     >
       <CommandMenuList
@@ -2155,9 +2150,7 @@ function DatePropertyEditor(props: {
           <Show
             when={props.searchValue().trim()}
             fallback={
-              <CommandMenuEmptyState>
-                Enter a date or duration
-              </CommandMenuEmptyState>
+              <CommandMenuEmptyState>{t('auto.enter_a_date_or_duration')}</CommandMenuEmptyState>
             }
           >
             <CommandMenuEmptyState>
@@ -2189,7 +2182,7 @@ function DatePropertyEditor(props: {
 
       <div class="p-4 border-t border-edge-muted">
         <div class="text-xs text-ink-muted">
-          <span>Use queries like </span>
+          <span>{t('auto.use_queries_like')}</span>
           <code class="bg-active px-1">3d</code>,{' '}
           <code class="bg-active px-1">1w</code>,{' '}
           <code class="bg-active px-1">feb 17</code>, or{' '}

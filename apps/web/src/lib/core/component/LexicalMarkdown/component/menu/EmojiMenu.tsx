@@ -1,4 +1,5 @@
 import { resolveEmoji, useEmojiData } from '@core/component/Emoji/emojis';
+import { t } from '@app/lib/i18n';
 import { recordEmojiUsage } from '@core/component/Emoji/emojiUsage';
 import { type PortalScope, ScopedPortal } from '@core/component/ScopedPortal';
 import clickOutside from '@core/directive/clickOutside';
@@ -282,7 +283,7 @@ export function EmojiMenu(props: EmojiMenuProps) {
               <Show
                 when={emojiOptions().length > 0}
                 fallback={
-                  <div class="px-2 text text-ink-muted">No results</div>
+                  <div class="px-2 text text-ink-muted">{t('auto.no_results')}</div>
                 }
               >
                 <VList

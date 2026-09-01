@@ -1,4 +1,5 @@
 import { GOOGLE_GMAIL_IDP } from '@core/auth/email';
+import { t } from '@app/lib/i18n';
 import IconGoogle from '@icon/macro-google.svg';
 import { useNavigate } from '@solidjs/router';
 import { Button } from '@ui';
@@ -17,9 +18,7 @@ export function OnboardingCreateAccount() {
   return (
     <div class="flex flex-col gap-6">
       <div class="flex flex-col gap-4">
-        <h1 class="text-2xl font-semibold tracking-tight text-ink">
-          Welcome to Macro
-        </h1>
+        <h1 class="text-2xl font-semibold tracking-tight text-ink">{t('auto.welcome_to_macro')}</h1>
         <p class="text-sm/relaxed text-ink-muted">
           Connect a Gmail account to start syncing your emails, contacts, and
           attachments.
@@ -36,16 +35,12 @@ export function OnboardingCreateAccount() {
           size="xl"
           onClick={() => startSsoLogin(GOOGLE_GMAIL_IDP)}
         >
-          <IconGoogle class="size-5" />
-          Connect Gmail
-        </Button>
+          <IconGoogle class="size-5" />{t('auto.connect_gmail')}</Button>
         <button
           type="button"
           class="self-start pt-4 text-xs text-ink-muted/70 underline hover:text-ink/70"
           onClick={() => navigate('/signup')}
-        >
-          Create account without connecting email
-        </button>
+        >{t('auto.create_account_without_connect')}</button>
       </div>
     </div>
   );

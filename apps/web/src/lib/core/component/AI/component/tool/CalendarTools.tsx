@@ -1,4 +1,5 @@
 import type { CalendarBlockEventTime } from '@block-calendar/calendar-range';
+import { t } from '@app/lib/i18n';
 import CalendarBlank from '@phosphor-icons/core/regular/calendar-blank.svg';
 import CalendarDots from '@phosphor-icons/core/regular/calendar-dots.svg';
 import CalendarPlus from '@phosphor-icons/core/regular/calendar-plus.svg';
@@ -261,9 +262,9 @@ export const deleteCalendarEventHandler = createToolRenderer({
   render: (ctx) => (
     <BaseTool icon={CalendarX} renderContext={ctx.renderContext} type="call">
       <div class="flex min-w-0 flex-1 items-center justify-between gap-3 overflow-hidden">
-        <span class="min-w-0 truncate">Delete calendar event</span>
+        <span class="min-w-0 truncate">{t('auto.delete_calendar_event')}</span>
         <Show when={ctx.response}>
-          <span class="shrink-0 text-xs text-ink-extra-muted">Deleted</span>
+          <span class="shrink-0 text-xs text-ink-extra-muted">{t('auto.deleted')}</span>
         </Show>
       </div>
     </BaseTool>
@@ -313,7 +314,7 @@ export const listCalendarEventsHandler = createToolRenderer({
         }
       >
         <div class="flex min-w-0 flex-1 items-center justify-between gap-3 overflow-hidden">
-          <span class="min-w-0 truncate">List calendar events</span>
+          <span class="min-w-0 truncate">{t('auto.list_calendar_events')}</span>
           <Tool.ResultToggle
             expanded={isExpanded()}
             onToggle={() => setIsExpanded((expanded) => !expanded)}
@@ -380,7 +381,7 @@ export const listCalendarsHandler = createToolRenderer({
         }
       >
         <div class="flex min-w-0 flex-1 items-center justify-between gap-3 overflow-hidden">
-          <span class="min-w-0 truncate">List calendars</span>
+          <span class="min-w-0 truncate">{t('auto.list_calendars')}</span>
           <Tool.ResultToggle
             expanded={isExpanded()}
             onToggle={() => setIsExpanded((expanded) => !expanded)}

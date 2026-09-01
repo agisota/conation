@@ -1,4 +1,5 @@
 import { SplitHeaderLeft } from '@components/app/split-layout/components/SplitHeader';
+import { t } from '@app/lib/i18n';
 import { StaticSplitLabel } from '@components/app/split-layout/components/SplitLabel';
 import { type Component, createSignal, For, Show } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
@@ -244,7 +245,7 @@ export default function IconGallery() {
             </div>
             {/* Custom color option */}
             <div class="mt-1.5 flex items-center gap-1.5">
-              <span class="text-xxs text-ink-muted">Custom</span>
+              <span class="text-xxs text-ink-muted">{t('auto.custom')}</span>
               <label
                 class="relative size-2.5 rounded-[1px] transition-transform hover:scale-125"
                 classList={{
@@ -292,15 +293,13 @@ export default function IconGallery() {
             <button
               onClick={triggerAllAnimations}
               class="border border-ink bg-transparent px-2 py-1 text-xxs text-ink hover:opacity-70"
-            >
-              Trigger All Animations
-            </button>
+            >{t('auto.trigger_all_animations')}</button>
           </div>
         </div>
 
         {/* Icons with animated versions */}
         <h2 class="mb-3 flex items-center gap-3 text-xs font-semibold text-ink">
-          <span>Icons with animations</span>
+          <span>{t('auto.icons_with_animations')}</span>
           <span class="h-px flex-1 bg-edge-muted" />
         </h2>
         <div class="mb-6 flex flex-wrap gap-3">
@@ -382,7 +381,7 @@ export default function IconGallery() {
 
         {/* Static-only icons */}
         <h2 class="mb-3 flex items-center gap-3 text-xs font-semibold text-ink">
-          <span>Static only icons</span>
+          <span>{t('auto.static_only_icons')}</span>
           <span class="h-px flex-1 bg-edge-muted" />
         </h2>
         <div class="flex flex-wrap gap-3">

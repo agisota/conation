@@ -32,7 +32,7 @@ type LightboxProps = {
   // Used for the download filename
   imageId: Accessor<string>;
   // Optional pre-fetched blob override (e.g. DSS images). Falls back to fetching `src`.
-  getBlob?: () => Promise<Blob | undefined>;
+  getBlob?: () =>{t('auto.promise')}<Blob | undefined>;
   // Gallery navigation. Passing either enables swipe (mobile) + arrow key (desktop) support.
   // Pass undefined for a direction when that navigation is unavailable (first/last image).
   onPrevious?: () => void;

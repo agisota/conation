@@ -73,9 +73,7 @@ export const InviteModal = () => {
           <Dialog.CloseButton as={Button} variant="ghost" size="icon-sm">
             <CloseIcon />
           </Dialog.CloseButton>
-          <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">
-            Invite
-          </Dialog.Title>
+          <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">{t('auto.invite')}</Dialog.Title>
         </Panel.Header>
 
         <Panel.Body scroll class="p-3 flex flex-col gap-3">

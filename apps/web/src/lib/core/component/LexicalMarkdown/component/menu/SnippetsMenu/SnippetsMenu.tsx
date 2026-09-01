@@ -1,4 +1,5 @@
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import { type PortalScope, ScopedPortal } from '@core/component/ScopedPortal';
 import type { EntityItem } from '@core/context/quickAccess';
 import clickOutside from '@core/directive/clickOutside';
@@ -206,9 +207,7 @@ function SnippetsMenuInner(props: SnippetsMenuProps) {
             depth={2}
             class="pt-2 pb-1.5 shadow-lg shadow-drop-shadow rounded-xl"
           >
-            <div class="px-3.5 pb-1 text-xs font-medium text-ink-muted">
-              Snippets
-            </div>
+            <div class="px-3.5 pb-1 text-xs font-medium text-ink-muted">{t('auto.snippets')}</div>
             <Show
               when={filteredSnippets().length > 0}
               fallback={

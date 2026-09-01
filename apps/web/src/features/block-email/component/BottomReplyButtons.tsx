@@ -1,4 +1,5 @@
 import { FloatRegionOrInline } from '@components/app/mobile/float-regions/FloatRegion';
+import { t } from '@app/lib/i18n';
 import { inboxIconProps } from '@core/component/inboxIcon';
 import { UserIcon } from '@core/component/UserIcon';
 import { useEmail } from '@core/context/user';
@@ -95,7 +96,7 @@ export function BottomReplyButtons(props: { lastMessage: ApiMessage }) {
               showTooltip={false}
               suppressClick
             />
-            <span class="truncate">Reply...</span>
+            <span class="truncate">{t('auto.reply')}</span>
           </button>
         </div>
       }

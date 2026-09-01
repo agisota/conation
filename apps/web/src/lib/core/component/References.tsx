@@ -1,4 +1,5 @@
 import { navigateToChannelMessage } from '@block-channel/utils/link';
+import { t } from '@app/lib/i18n';
 import { useGlobalBlockOrchestrator } from '@components/app/GlobalAppState';
 import { SidePanel } from '@components/app/side-panel';
 import { useSplitLayout } from '@components/app/split-layout/layout';
@@ -291,9 +292,7 @@ export function References(props: ReferenceProps) {
     <Show
       when={sortedReferences().length > 0}
       fallback={
-        <div class="py-8 text-ink-muted text-sm text-center">
-          No references found
-        </div>
+        <div class="py-8 text-ink-muted text-sm text-center">{t('auto.no_references_found')}</div>
       }
     >
       <SidePanel.Card>
@@ -323,9 +322,7 @@ export function References(props: ReferenceProps) {
               );
             }
             return (
-              <div class="px-3 py-2 text-xs text-failure">
-                Unknown reference type
-              </div>
+              <div class="px-3 py-2 text-xs text-failure">{t('auto.unknown_reference_type')}</div>
             );
           }}
         </For>

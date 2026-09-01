@@ -3,6 +3,7 @@ import {
   useBlockEntityCommands,
 } from '@app/features/next-soup/actions';
 import { globalSplitManager } from '@app/signal/splitLayout';
+import { t } from '@app/lib/i18n';
 import { URL_PARAMS } from '@block-channel/constants';
 import { convertTargetMessage } from '@block-channel/utils/target-message';
 import { ChannelAttachmentsTab } from '@channel/Attachments/ChannelAttachmentsTab';
@@ -106,9 +107,7 @@ type ChannelPropsTargetMessage = Pick<
 function CallTabLabel() {
   return (
     <span class="flex items-center gap-1.5">
-      <span class="size-1.5 rounded-full bg-success animate-pulse" />
-      Call
-    </span>
+      <span class="size-1.5 rounded-full bg-success animate-pulse" />{t('auto.call')}</span>
   );
 }
 

@@ -448,7 +448,7 @@ export function ReminderComposerModal() {
             <Match when={step() === 'repeat'}>
               {/* Not an input: the repeat picker is controls, not a query, so
                   the header states what is being answered instead. */}
-              <span class="px-2 text-base text-ink-muted">How often?</span>
+              <span class="px-2 text-base text-ink-muted">{t('auto.how_often')}</span>
             </Match>
           </Switch>
         </CommandMenuShell.Header>
@@ -619,9 +619,7 @@ function DescriptionStep(props: {
         class="ml-auto gap-3 rounded-lg border-0"
         disabled={props.disabled}
         onClick={props.onContinue}
-      >
-        Continue
-        <Hotkey shortcut="enter" theme="current" />
+      >{t('auto.continue')}<Hotkey shortcut="enter" theme="current" />
       </Button>
     </CommandMenuShell.Footer>
   );
@@ -818,7 +816,7 @@ function WhenList(props: {
 
       <div class="p-4 border-t border-edge-muted flex items-center gap-4">
         <div class="text-xs text-ink-muted">
-          <span>Use queries like </span>
+          <span>{t('auto.use_queries_like')}</span>
           <code class="bg-active px-1">3d</code>,{' '}
           <code class="bg-active px-1">1w</code>,{' '}
           <code class="bg-active px-1">feb 17</code>,{' '}
@@ -924,9 +922,7 @@ function RepeatStep(props: {
 
         <div class="flex items-center gap-2">
           <Show when={props.parts().frequency === 'month'}>
-            <label class="flex items-center gap-2 text-sm text-ink-muted">
-              Day
-              <input
+            <label class="flex items-center gap-2 text-sm text-ink-muted">{t('auto.day')}<input
                 type="number"
                 min="1"
                 max="31"
@@ -957,9 +953,7 @@ function RepeatStep(props: {
           class="ml-auto gap-3 rounded-lg border-0"
           disabled={!isValid()}
           onClick={props.onSubmit}
-        >
-          Set reminder
-          <Hotkey shortcut="enter" theme="current" />
+        >{t('auto.set_reminder')}<Hotkey shortcut="enter" theme="current" />
         </Button>
       </CommandMenuShell.Footer>
     </>

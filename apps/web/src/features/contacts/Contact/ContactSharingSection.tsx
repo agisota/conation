@@ -53,7 +53,7 @@ export function ContactSharingSection(props: { contact?: CrmContactResponse }) {
                 class={cn(TOGGLE_BUTTON_CLASS)}
               >
                 <InlineCheckbox checked={isShared()} />
-                <span class="whitespace-nowrap">Visible in CRM</span>
+                <span class="whitespace-nowrap">{t('auto.visible_in_crm')}</span>
               </button>
               <p class="text-ink-muted leading-5">
                 Shows this contact in their company's contact list. Hide

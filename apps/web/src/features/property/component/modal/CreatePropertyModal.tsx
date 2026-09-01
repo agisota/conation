@@ -59,7 +59,7 @@ type Option<T> = {
 };
 
 type OptionInputProps<T extends string | number> = {
-  options: () => Option<T>[];
+  options: () =>{t('auto.option')}<T>[];
   type: 'string' | 'number';
   onRemove: (id: string) => void;
   onUpdate: (id: string, value: T) => void;
@@ -247,7 +247,7 @@ export const CreatePropertyModal: Component<CreatePropertyModalProps> = (
   });
 
   const removeOption = <T extends string | number>(
-    options: () => Option<T>[],
+    options: () =>{t('auto.option')}<T>[],
     setOptions: (options: Option<T>[]) => void,
     optionId: string,
     defaultValue: T
@@ -259,7 +259,7 @@ export const CreatePropertyModal: Component<CreatePropertyModalProps> = (
   };
 
   const updateOption = <T extends string | number>(
-    options: () => Option<T>[],
+    options: () =>{t('auto.option')}<T>[],
     setOptions: (options: Option<T>[]) => void,
     optionId: string,
     value: T,
@@ -272,7 +272,7 @@ export const CreatePropertyModal: Component<CreatePropertyModalProps> = (
   };
 
   const hasDuplicateOptions = <T extends string | number>(
-    options: () => Option<T>[]
+    options: () =>{t('auto.option')}<T>[]
   ): boolean => {
     const values = options().map((opt) =>
       typeof opt.value === 'string' ? opt.value.trim() : opt.value
@@ -551,9 +551,7 @@ export const CreatePropertyModal: Component<CreatePropertyModalProps> = (
           <Dialog.Title
             as="span"
             class="min-w-0 flex-1 truncate text-sm font-semibold text-ink-extra-muted"
-          >
-            Create property
-          </Dialog.Title>
+          >{t('auto.create_property')}</Dialog.Title>
           <Dialog.CloseButton
             as={Button}
             variant="ghost"
@@ -781,9 +779,7 @@ export const CreatePropertyModal: Component<CreatePropertyModalProps> = (
                     Creating
                   </>
                 }
-              >
-                Create
-                <Hotkey shortcut="cmd+enter" theme="current" />
+              >{t('auto.create')}<Hotkey shortcut="cmd+enter" theme="current" />
               </Show>
             </Button>
           </div>

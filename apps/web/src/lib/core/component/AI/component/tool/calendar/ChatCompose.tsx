@@ -1,4 +1,5 @@
 import { createCalendarEventFormController } from '@app/features/calendar/components/composer/create-calendar-event-form-controller';
+import { t } from '@app/lib/i18n';
 import { EventForm } from '@app/features/calendar/components/composer/EventForm';
 import type { EventEditorSubmitValues } from '@app/features/calendar/components/composer/event-form-model';
 import { DEFAULT_CALENDAR_SOURCE } from '@app/features/calendar/types';
@@ -107,7 +108,7 @@ function CalendarChatComposeFallback() {
         aria-busy="true"
         class="flex min-h-64 animate-pulse flex-col gap-6 rounded-xl border border-edge-muted bg-surface p-4 shadow-sm"
       >
-        <span class="sr-only">Loading calendar editor</span>
+        <span class="sr-only">{t('auto.loading_calendar_editor')}</span>
 
         <div class="flex flex-col gap-4">
           <div class="flex items-center gap-2">
@@ -329,9 +330,7 @@ function CalendarChatComposeContent(props: CalendarChatComposeProps) {
           class="flex min-h-80 max-h-128 min-w-0 flex-col gap-3 rounded-xl border border-edge-muted bg-surface p-4 text-ink shadow-sm"
         >
           <Show when={showOwnerDisabledMessage()}>
-            <p class="text-xs text-ink-extra-muted/60">
-              Only the chat owner can create or edit this calendar event.
-            </p>
+            <p class="text-xs text-ink-extra-muted/60">{t('auto.only_the_chat_owner_can_create')}</p>
           </Show>
           <Show when={props.streamLocked && !showOwnerDisabledMessage()}>
             <p class="text-xs text-ink-extra-muted/60">
@@ -355,9 +354,7 @@ function CalendarChatComposeContent(props: CalendarChatComposeProps) {
         </div>
         <ErrorBoundary
           fallback={
-            <div class="flex h-96 items-center justify-center rounded-xl border border-edge-muted bg-surface p-4 text-center text-xs text-ink-muted shadow-sm">
-              Calendar preview unavailable.
-            </div>
+            <div class="flex h-96 items-center justify-center rounded-xl border border-edge-muted bg-surface p-4 text-center text-xs text-ink-muted shadow-sm">{t('auto.calendar_preview_unavailable')}</div>
           }
         >
           <CalendarToolEventPreview

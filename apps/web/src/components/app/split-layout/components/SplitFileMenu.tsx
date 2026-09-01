@@ -316,7 +316,7 @@ function MobileRender(
                   {/* With a views group leading the drawer, title the action
                       sections to set the two apart. */}
                   <Show when={sections().length > 0}>
-                    <MobileDrawer.Label>Actions</MobileDrawer.Label>
+                    <MobileDrawer.Label>{t('auto.actions')}</MobileDrawer.Label>
                   </Show>
                 </>
               )}

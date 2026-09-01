@@ -1,4 +1,5 @@
 import type { JSX } from 'solid-js';
+import { t } from '@app/lib/i18n';
 import { createEffect, createSignal, onCleanup, onMount, Show } from 'solid-js';
 
 export function CallRecordingVideo(props: {
@@ -156,9 +157,7 @@ export function CallRecordingVideo(props: {
             rel="noopener noreferrer"
             download=""
             class="mt-2 inline-flex font-medium text-alert-ink underline underline-offset-2 hover:text-alert-ink/80"
-          >
-            Open or download recording
-          </a>
+          >{t('auto.open_or_download_recording')}</a>
         </div>
       </Show>
     </div>

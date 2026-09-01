@@ -1,4 +1,5 @@
 import type { IHighlight } from '@block-pdf/model/Highlight';
+import { t } from '@app/lib/i18n';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import { useIsAuthenticated } from '@core/auth';
 import { useBlockId } from '@core/block';
@@ -339,7 +340,7 @@ export function PDFPopup(props: PDFPopupProps) {
                       >
                         <NotesIcon class="size-3 text-note" />
                       </Show>
-                      <p>Edit in Notes</p>
+                      <p>{t('auto.edit_in_notes')}</p>
                     </button>
                   </div>
                   <div class="w-fit">

@@ -1,4 +1,5 @@
 import { useChannelTab } from '@channel/Channel/ChannelTabContext';
+import { t } from '@app/lib/i18n';
 import { UserGroup } from '@core/component/UserGroup';
 import { getDisplayName, tryMacroId } from '@core/user';
 import PhoneIcon from '@icon/wide-call.svg';
@@ -69,7 +70,7 @@ function JoinCallEmptyState(props: {
           showTooltip
         />
         <div class="flex flex-col items-center gap-1">
-          <h2 class="text-lg font-semibold">Call in progress</h2>
+          <h2 class="text-lg font-semibold">{t('auto.call_in_progress')}</h2>
           <ParticipantNamesLine ids={participantIds()} />
         </div>
       </div>
@@ -142,15 +143,11 @@ export function ChannelCallTab(props: {
             onClick={handleRetry}
             disabled={call.isJoining()}
             class="rounded-lg bg-surface-2 px-4 py-2 text-sm text-ink hover:bg-surface-3 transition-colors disabled:opacity-50 disabled:pointer-events-none"
-          >
-            Try again
-          </button>
+          >{t('auto.try_again')}</button>
         </div>
       </Match>
       <Match when={props.pendingJoin?.()}>
-        <div class="flex size-full items-center justify-center text-ink-muted">
-          Joining call...
-        </div>
+        <div class="flex size-full items-center justify-center text-ink-muted">{t('auto.joining_call')}</div>
       </Match>
     </Switch>
   );

@@ -1,4 +1,5 @@
 import { toast } from '@core/component/Toast/Toast';
+import { t } from '@app/lib/i18n';
 import CheckIcon from '@phosphor/check.svg';
 import CopyIcon from '@phosphor/copy.svg';
 import { Button } from '@ui';
@@ -44,9 +45,7 @@ export function CredentialField(props: {
           onClick={copy}
         >
           <Show when={copied()} fallback={<CopyIcon />}>
-            <CheckIcon />
-            Copied
-          </Show>
+            <CheckIcon />{t('auto.copied')}</Show>
         </Button>
       </div>
     </div>

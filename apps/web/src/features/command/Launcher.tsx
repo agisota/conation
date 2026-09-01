@@ -1,4 +1,5 @@
 import { startPendingSession } from '@app/features/block-agent/context/pending-session';
+import { t } from '@app/lib/i18n';
 import { openStandaloneReminderComposer } from '@app/features/reminders/reminder-composer';
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
 import { setAutomationComposerOpen } from '@block-automation/component';
@@ -164,7 +165,7 @@ function matchesLauncherSearch(item: CreatableBlock, query: string) {
 
 const createBlock = async (spec: {
   blockName: BlockName | BlockAlias;
-  createFn: () => Promise<string | undefined>;
+  createFn: () =>{t('auto.promise')}<string | undefined>;
   loading?: boolean;
   shouldInsert?: boolean;
   /** Active creation span; registered by document id after creation. */
@@ -1004,7 +1005,7 @@ export const LauncherInner = (props: LauncherInnerProps) => {
             fallback={
               <div class="min-w-0 flex flex-1 items-center gap-2 text-ink-muted">
                 <PlusIcon class="size-4 shrink-0 text-ink-extra-muted" />
-                <h1 class="truncate text-base font-normal">Create New</h1>
+                <h1 class="truncate text-base font-normal">{t('auto.create_new')}</h1>
               </div>
             }
           >
@@ -1077,16 +1078,12 @@ export const LauncherInner = (props: LauncherInnerProps) => {
               <div class="flex border border-edge-muted text-xxs rounded-md items-center px-1.5 py-px font-normal">
                 <Hotkey shortcut={navDownHotkey.hotkey()} class="space-x-1" />
               </div>
-            </div>
-            Navigate
-          </span>
+            </div>{t('auto.navigate')}</span>
           <CommandMenuHotkeyHint
             hotkey={<Hotkey shortcut={confirmHotkey.hotkey()} />}
             label="Create"
           />
-          <span class="hidden touch:hidden md:flex items-center gap-1">
-            Hold
-            <span class="relative inline-flex place-items-center">
+          <span class="hidden touch:hidden md:flex items-center gap-1">{t('auto.hold')}<span class="relative inline-flex place-items-center">
               <span
                 ref={shiftRippleRef}
                 class="shift-ripple absolute inset-0 rounded-sm border border-accent pointer-events-none opacity-0"
@@ -1101,9 +1098,7 @@ export const LauncherInner = (props: LauncherInnerProps) => {
               >
                 {getNormalizedKeyString({ shortcut: 'shift' })}
               </span>
-            </span>
-            New split
-          </span>
+            </span>{t('auto.new_split')}</span>
         </CommandMenuShell.Footer>
       </CommandMenuShell>
     </div>

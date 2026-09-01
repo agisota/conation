@@ -92,10 +92,10 @@ function DetailsSectionContent(props: { record: Accessor<CallRecord> }) {
         <SidePanel.Pill>
           <Show
             when={record().isActive}
-            fallback={<span class="truncate text-ink-muted">Ended</span>}
+            fallback={<span class="truncate text-ink-muted">{t('auto.ended')}</span>}
           >
             <span class="size-2 rounded-full bg-success shrink-0" />
-            <span class="truncate text-success font-medium">In progress</span>
+            <span class="truncate text-success font-medium">{t('auto.in_progress')}</span>
           </Show>
         </SidePanel.Pill>
       </SidePanel.Row>
@@ -191,7 +191,7 @@ function SharingSectionContent(props: { record: Accessor<CallRecord> }) {
         )}
       >
         <InlineCheckbox checked={isShared()} />
-        <span class="whitespace-nowrap">Share with team</span>
+        <span class="whitespace-nowrap">{t('auto.share_with_team')}</span>
       </button>
       <p class="text-ink-muted leading-5">
         Lets everyone on your team view and search this call's transcript and AI

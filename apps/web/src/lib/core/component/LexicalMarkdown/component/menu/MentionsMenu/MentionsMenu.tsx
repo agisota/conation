@@ -1,4 +1,5 @@
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import { globalSplitManager } from '@app/signal/splitLayout';
 import type { BlockName } from '@core/block';
 import { useMaybeBlockId, useMaybeBlockName } from '@core/block';
@@ -598,7 +599,7 @@ function MentionsMenuInner(props: MentionsMenuProps) {
                 <Show
                   when={controller.combinedItems().length > 0}
                   fallback={
-                    <div class="px-2 text-ink-extra-muted">No results</div>
+                    <div class="px-2 text-ink-extra-muted">{t('auto.no_results')}</div>
                   }
                 >
                   <div>
@@ -662,14 +663,12 @@ function MentionsMenuInner(props: MentionsMenuProps) {
                     >
                       <div class="p-0.5 px-1 -my-2 bg-surface text-ink border border-edge-muted rounded-xs text-xs">
                         ←
-                      </div>
-                      Back to everything
-                    </button>
+                      </div>{t('auto.back_to_everything')}</button>
                   </div>
                 </div>
               </Show>
               <Show when={controller.combinedItems().length === 0}>
-                <div class="px-2 text-ink-extra-muted">No results</div>
+                <div class="px-2 text-ink-extra-muted">{t('auto.no_results')}</div>
               </Show>
               <VirtualizedItemList
                 items={controller.combinedItems()}

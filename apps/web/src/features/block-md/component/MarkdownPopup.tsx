@@ -1,4 +1,5 @@
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
+import { t } from '@app/lib/i18n';
 import { applyAiOps } from '@block-md/ai-edit/applyAiOps';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import { useIsAuthenticated } from '@core/auth';
@@ -543,9 +544,7 @@ export function MarkdownPopup(props: {
                   if (converted) setPopupVisible(false);
                 }}
               >
-                <GridIcon class="size-4" />
-                Table
-              </Button>
+                <GridIcon class="size-4" />{t('auto.table')}</Button>
             )}
           </Show>
           <Button
@@ -566,9 +565,7 @@ export function MarkdownPopup(props: {
             <Dynamic
               component={locationCopied() ? CheckIcon : LinkIcon}
               class={locationCopied() ? 'text-success-ink size-4' : 'size-4'}
-            />
-            Share
-          </Button>
+            />{t('auto.share')}</Button>
         </div>
 
         <Show when={inlineAiEditing().enabled && canEdit()}>
@@ -632,9 +629,7 @@ export function MarkdownPopup(props: {
 
         <Show when={!completion() && completionType() === 'rewrite'}>
           <div class="flex flex-col border-t border-edge mt-1 pt-2 w-full">
-            <p class="text-ink-muted font-medium pt-1 pl-3 text-sm">
-              How would you like this text rewritten?
-            </p>
+            <p class="text-ink-muted font-medium pt-1 pl-3 text-sm">{t('auto.how_would_you_like_this_text_r')}</p>
             <div class="flex flex-row items-center space-x-2 w-full px-2">
               <textarea
                 class="resize-none rounded-xs w-full p-2 my-3 text-sm max-h-[800px] overflow-hidden border border-edge bg-hover"
@@ -739,7 +734,7 @@ export function MarkdownPopup(props: {
                             {' '}
                             <PencilIcon class="size-3" />{' '}
                           </Show>{' '}
-                          <p>Accept Changes</p>{' '}
+                          <p>{t('auto.accept_changes')}</p>{' '}
                         </button>{' '}
                       </div>
                     </Show>
@@ -756,7 +751,7 @@ export function MarkdownPopup(props: {
                         >
                           <NotesIcon class="size-3 text-note" />
                         </Show>
-                        <p>Edit in Notes</p>
+                        <p>{t('auto.edit_in_notes')}</p>
                       </button>
                     </div>
                     <div class="w-fit">

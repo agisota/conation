@@ -1,4 +1,5 @@
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
+import { t } from '@app/lib/i18n';
 import type { EmailFormRecipients } from '@block-email/component/createEmailFormState';
 import {
   createEmailFormState,
@@ -921,16 +922,12 @@ export function EmailCompose(props: EmailComposeProps) {
                     }
                     leaveCompose();
                   }}
-                >
-                  Delete Draft
-                </button>
+                >{t('auto.delete_draft')}</button>
                 <button
                   type="button"
                   class="w-full bg-surface px-3 py-3.5 text-sm font-medium text-center"
                   onClick={leaveCompose}
-                >
-                  Save Draft
-                </button>
+                >{t('auto.save_draft')}</button>
               </MobileDrawer.Section>
             </MobileDrawer.Content>
           </MobileDrawer.Portal>

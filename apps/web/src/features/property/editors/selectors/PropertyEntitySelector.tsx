@@ -45,7 +45,7 @@ import type { EntitySelectorConfig, PinnedOption } from './types';
 
 type EntityInputProps = {
   config: EntitySelectorConfig;
-  selectedOptions: () => Set<string>;
+  selectedOptions: () =>{t('auto.set')}<string>;
   setSelectedOptions: (
     options: Set<string>,
     entityInfo?: { id: string; entity_type: string }[]

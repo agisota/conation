@@ -1,4 +1,5 @@
 import { SERVER_HOSTS } from '@core/constant/servers';
+import { t } from '@app/lib/i18n';
 import { platformFetch } from '@core/util/platformFetch';
 import { WebsocketConnectionState } from '@conation/collaboration/websocket';
 import { connectionGatewayClient } from '@service-connection/client';
@@ -132,7 +133,7 @@ export default function HttpStreamDebug() {
   return (
     <div class="size-full overflow-auto p-4">
       <div class="max-w-5xl mx-auto space-y-4">
-        <h1 class="text-lg font-medium">HTTP Stream Debug</h1>
+        <h1 class="text-lg font-medium">{t('auto.http_stream_debug')}</h1>
 
         {/* Connection Status */}
         <div class="flex items-center gap-2">
@@ -154,7 +155,7 @@ export default function HttpStreamDebug() {
         {/* Form */}
         <div class="space-y-3 p-4 border border-edge rounded-lg">
           <div>
-            <div class="block text-sm mb-1">Message</div>
+            <div class="block text-sm mb-1">{t('auto.message')}</div>
             <textarea
               value={messageContent()}
               onInput={(e) => setMessageContent(e.currentTarget.value)}
@@ -180,9 +181,7 @@ export default function HttpStreamDebug() {
                 setIsStreaming(false);
               }}
               variant="outline"
-            >
-              Reset
-            </Button>
+            >{t('auto.reset')}</Button>
           </div>
         </div>
 
@@ -212,20 +211,16 @@ export default function HttpStreamDebug() {
           {/* Response (left) */}
           <div class="flex-1 space-y-2">
             <div class="flex items-center justify-between">
-              <span class="text-sm font-medium">Response</span>
+              <span class="text-sm font-medium">{t('auto.response')}</span>
               <Show when={isStreaming()}>
-                <span class="text-sm text-accent animate-pulse">
-                  Streaming...
-                </span>
+                <span class="text-sm text-accent animate-pulse">{t('auto.streaming')}</span>
               </Show>
             </div>
             <div class="border border-edge rounded-lg max-h-96 overflow-auto">
               <Show
                 when={responseText()}
                 fallback={
-                  <div class="p-4 text-center text-sm text-ink-muted">
-                    No response yet. Send a message to start streaming.
-                  </div>
+                  <div class="p-4 text-center text-sm text-ink-muted">{t('auto.no_response_yet_send_a_message')}</div>
                 }
               >
                 <div class="p-3 text-sm whitespace-pre-wrap">
@@ -242,18 +237,14 @@ export default function HttpStreamDebug() {
                 Chunks ({chunks().length})
               </span>
               <Show when={isStreaming()}>
-                <span class="text-sm text-accent animate-pulse">
-                  Receiving...
-                </span>
+                <span class="text-sm text-accent animate-pulse">{t('auto.receiving')}</span>
               </Show>
             </div>
             <div class="border border-edge rounded-lg max-h-96 overflow-auto">
               <Show
                 when={chunks().length > 0}
                 fallback={
-                  <div class="p-4 text-center text-sm text-ink-muted">
-                    No chunks yet. Send a message to start streaming.
-                  </div>
+                  <div class="p-4 text-center text-sm text-ink-muted">{t('auto.no_chunks_yet_send_a_message_t')}</div>
                 }
               >
                 <For each={chunks()}>

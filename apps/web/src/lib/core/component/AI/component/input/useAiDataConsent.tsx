@@ -47,7 +47,7 @@ export function useAiDataConsentGate() {
                     <CloseIcon />
                   </Button>
                 </Dialog.CloseButton>
-                <Dialog.Title>AI Data Sharing</Dialog.Title>
+                <Dialog.Title>{t('auto.ai_data_sharing')}</Dialog.Title>
               </div>
             </div>
             <div class="p-3">
@@ -58,9 +58,7 @@ export function useAiDataConsentGate() {
               </p>
               <div class="flex justify-end mt-4 gap-2">
                 <Button variant="outline" onClick={denyConsent}>{t('common.cancel')}</Button>
-                <Button variant="outline" onClick={grantConsent}>
-                  Accept
-                </Button>
+                <Button variant="outline" onClick={grantConsent}>{t('auto.accept')}</Button>
               </div>
             </div>
           </div>

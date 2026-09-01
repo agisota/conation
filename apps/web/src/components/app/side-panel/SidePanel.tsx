@@ -1,4 +1,5 @@
 import { usePreference } from '@app/preferences/use-preference';
+import { t } from '@app/lib/i18n';
 import { Resize, ResizeZoneContext } from '@core/component/Resize/Resize';
 import { TOKENS } from '@core/hotkey/tokens';
 import { isMobile } from '@core/mobile/isMobile';
@@ -232,9 +233,7 @@ function SidePanelLayoutInner(
                   class="gap-2 px-2 text-ink-muted"
                   onClick={() => props.setIsOpen(false)}
                 >
-                  <ArrowLeft class="size-4" />
-                  Back to content
-                </Button>
+                  <ArrowLeft class="size-4" />{t('auto.back_to_content')}</Button>
               </div>
               <SidePanelOutlet
                 sections={props.sections}

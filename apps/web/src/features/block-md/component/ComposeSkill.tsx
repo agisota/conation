@@ -177,9 +177,7 @@ function ComposeSkillTitleEditor(props: {
         }}
       />
       <Show when={showPlaceholder()}>
-        <div class="pointer-events-none absolute top-1.5 text-xl font-medium text-ink-placeholder">
-          New skill
-        </div>
+        <div class="pointer-events-none absolute top-1.5 text-xl font-medium text-ink-placeholder">{t('auto.new_skill')}</div>
       </Show>
     </div>
   );
@@ -434,9 +432,7 @@ export function ComposeSkill(props: ComposeSkillProps) {
           variant={title().trim().length === 0 ? 'ghost' : 'accent'}
           depth={3}
           class="gap-3 rounded-lg border-0"
-        >
-          Create Skill
-          <Hotkey shortcut="cmd+enter" theme="current" />
+        >{t('auto.create_skill')}<Hotkey shortcut="cmd+enter" theme="current" />
         </Button>
       </div>
     </div>

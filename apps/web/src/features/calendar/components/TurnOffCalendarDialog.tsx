@@ -44,9 +44,7 @@ export function TurnOffCalendarDialog(props: {
     >
       <Panel depth={2} class="rounded-xl">
         <Panel.Header class="px-6">
-          <Dialog.Title class="text-ink text-sm font-semibold">
-            Turn off calendar
-          </Dialog.Title>
+          <Dialog.Title class="text-ink text-sm font-semibold">{t('auto.turn_off_calendar')}</Dialog.Title>
         </Panel.Header>
         <Panel.Body class="p-6 font-sans flex flex-col gap-3">
           <Dialog.Description class="text-ink-muted text-sm/tight font-normal">
@@ -58,9 +56,7 @@ export function TurnOffCalendarDialog(props: {
           </Dialog.Description>
           <div class="pt-3 justify-end items-center gap-3 inline-flex">
             <Button variant="outline" depth={3} onClick={props.onClose}>{t('common.cancel')}</Button>
-            <Button variant="danger" depth={3} onClick={confirm}>
-              Turn off
-            </Button>
+            <Button variant="danger" depth={3} onClick={confirm}>{t('auto.turn_off')}</Button>
           </div>
         </Panel.Body>
       </Panel>

@@ -1,4 +1,5 @@
 import { buildConfig } from '@core/component/LexicalMarkdown/builder/MarkdownConfigBuilder';
+import { t } from '@app/lib/i18n';
 import { MarkdownShell } from '@core/component/LexicalMarkdown/builder/MarkdownShell';
 import { createSignal, onCleanup } from 'solid-js';
 import { MockAppChrome } from '../components/MockAppChrome';
@@ -70,7 +71,7 @@ function MarkdownMentionsDemo(props: LessonContentProps) {
   return (
     <MockAppChrome scopeId={props.scopeId}>
       <div class="portal-scope h-full flex flex-col px-8 py-6">
-        <h1 class="text-3xl font-semibold text-ink mb-4">Daily Note</h1>
+        <h1 class="text-3xl font-semibold text-ink mb-4">{t('auto.daily_note')}</h1>
         <MarkdownShell
           class="flex-1 min-h-0 cursor-text"
           config={config}

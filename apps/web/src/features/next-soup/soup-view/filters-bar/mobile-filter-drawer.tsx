@@ -1,4 +1,5 @@
 import type { ListView } from '@app/constants/list-views';
+import { t } from '@app/lib/i18n';
 import { isListViewID } from '@app/constants/list-views';
 import {
   type FilterContext,
@@ -369,9 +370,7 @@ export const MobileFilterDrawer = (props: {
               >
                 {/* Sort section */}
                 <Show when={sortOptions().length > 0}>
-                  <MobileDrawer.Label id="sort-section-label">
-                    Sort
-                  </MobileDrawer.Label>
+                  <MobileDrawer.Label id="sort-section-label">{t('auto.sort')}</MobileDrawer.Label>
                   <MobileDrawer.Section
                     role="radiogroup"
                     aria-labelledby="sort-section-label"
@@ -418,9 +417,7 @@ export const MobileFilterDrawer = (props: {
                       showInboxSection()
                     }
                   >
-                    <MobileDrawer.Label class="pt-4">
-                      Filters
-                    </MobileDrawer.Label>
+                    <MobileDrawer.Label class="pt-4">{t('auto.filters')}</MobileDrawer.Label>
                   </Show>
 
                   <Show when={showInboxSection()}>
@@ -436,7 +433,7 @@ export const MobileFilterDrawer = (props: {
                             scrollAccordionItemToTop(e, scrollRef())
                           }
                         >
-                          <span class="font-medium">Inboxes</span>
+                          <span class="font-medium">{t('auto.inboxes')}</span>
                           <div class="flex items-center gap-2">
                             <Show when={inboxFilter() !== undefined}>
                               <span class="group-data-expanded:hidden size-4 flex items-center justify-center rounded-full bg-accent text-surface text-xxs font-medium leading-none">
@@ -520,7 +517,7 @@ export const MobileFilterDrawer = (props: {
                             <span class="size-4 flex items-center justify-center shrink-0">
                               <PlusIcon class="size-4 text-ink-muted" />
                             </span>
-                            <span class="flex-1 truncate">Add inbox</span>
+                            <span class="flex-1 truncate">{t('auto.add_inbox')}</span>
                           </button>
                         </Show>
                       </Accordion.Content>
@@ -618,7 +615,7 @@ export const MobileFilterDrawer = (props: {
                             scrollAccordionItemToTop(e, scrollRef())
                           }
                         >
-                          <span class="font-medium">Assignee</span>
+                          <span class="font-medium">{t('auto.assignee')}</span>
                           <div class="flex items-center gap-2">
                             <Show when={assigneeFilter().length > 0}>
                               <span class="group-data-expanded:hidden size-4 flex items-center justify-center rounded-full bg-accent text-surface text-xxs font-medium leading-none">
@@ -687,9 +684,7 @@ export const MobileFilterDrawer = (props: {
                         </div>
 
                         <Show when={filteredAssigneeOptions().length === 0}>
-                          <div class="px-4 py-2 text-sm text-ink-muted">
-                            No results
-                          </div>
+                          <div class="px-4 py-2 text-sm text-ink-muted">{t('auto.no_results')}</div>
                         </Show>
                       </Accordion.Content>
                     </MobileDrawer.Section>
@@ -708,7 +703,7 @@ export const MobileFilterDrawer = (props: {
                             scrollAccordionItemToTop(e, scrollRef())
                           }
                         >
-                          <span class="font-medium">Created by</span>
+                          <span class="font-medium">{t('auto.created_by')}</span>
                           <div class="flex items-center gap-2">
                             <Show when={createdByIds().length > 0}>
                               <span class="group-data-expanded:hidden size-4 flex items-center justify-center rounded-full bg-accent text-surface text-xxs font-medium leading-none">
@@ -775,9 +770,7 @@ export const MobileFilterDrawer = (props: {
                           </For>
                         </div>
                         <Show when={filteredCreatedByOptions().length === 0}>
-                          <div class="px-4 py-2 text-sm text-ink-muted">
-                            No results
-                          </div>
+                          <div class="px-4 py-2 text-sm text-ink-muted">{t('auto.no_results')}</div>
                         </Show>
                       </Accordion.Content>
                     </MobileDrawer.Section>
@@ -805,9 +798,7 @@ export const MobileFilterDrawer = (props: {
                     size="sm"
                     class="min-h-10 rounded-lg bg-active!"
                   >
-                    <XIcon class="size-3!" />
-                    Clear all
-                  </Button>
+                    <XIcon class="size-3!" />{t('auto.clear_all')}</Button>
                 </div>
               </div>
             </Show>

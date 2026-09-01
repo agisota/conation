@@ -1,4 +1,5 @@
 import { useSplitLayout } from '@components/app/split-layout/layout';
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { getDisplayName, tryMacroId } from '@core/user';
 import { Popover } from '@kobalte/core/popover';
@@ -18,9 +19,7 @@ export function InCallRosterListSection(props: {
 }) {
   return (
     <>
-      <div class="rounded-t-md border-b border-edge px-2 py-2.5 text-xs font-medium text-accent">
-        In this call
-      </div>
+      <div class="rounded-t-md border-b border-edge px-2 py-2.5 text-xs font-medium text-accent">{t('auto.in_this_call')}</div>
       <div class="max-h-64 overflow-y-auto p-1">
         <Show
           when={props.members.length > 0}
@@ -105,7 +104,7 @@ export function InCallParticipantNameRow(props: {
       />
       <span class="truncate text-sm text-ink">{label()}</span>
       <Show when={props.member.kind === 'local'}>
-        <span class="ml-auto text-xs text-ink-muted shrink-0">You</span>
+        <span class="ml-auto text-xs text-ink-muted shrink-0">{t('auto.you')}</span>
       </Show>
     </div>
   );

@@ -3,6 +3,7 @@ import {
   useCanvasFileDrop,
 } from '@block-canvas/signal/fileDrop';
 import { useRenderState } from '@block-canvas/store/RenderState';
+import { t } from '@app/lib/i18n';
 import { vec2 } from '@block-canvas/util/vector2';
 import { EntityIcon } from '@core/component/EntityIcon';
 import { FileDropOverlay } from '@core/component/FileDropOverlay';
@@ -155,9 +156,7 @@ export function MediaSelector() {
           >
             <Show when={isDragging()}>
               <FileDropOverlay valid={true}>
-                <div class="font-mono">
-                  Drop any file here to add it to your canvas
-                </div>
+                <div class="font-mono">{t('auto.drop_any_file_here_to_add_it_t')}</div>
               </FileDropOverlay>
             </Show>
             <Dropdown.Item closeOnSelect={false}>
@@ -196,7 +195,7 @@ export function MediaSelector() {
               <Show
                 when={userMediaFiles().length > 0}
                 fallback={
-                  <div class="p-4 text-sm text-center">No media found.</div>
+                  <div class="p-4 text-sm text-center">{t('auto.no_media_found')}</div>
                 }
               >
                 <VList

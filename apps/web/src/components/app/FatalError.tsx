@@ -1,4 +1,5 @@
 import { Telemetry } from '@conation/observability';
+import { t } from '@app/lib/i18n';
 
 import ResetIcon from '@phosphor/arrow-clockwise.svg';
 import HomeIcon from '@phosphor/house.svg';
@@ -20,9 +21,7 @@ export function FatalError(props: FatalErrorProps) {
       <Surface depth={2} class="rounded-xl bg-surface">
         <div class="p-6 sm:p-8 font-sans">
           <div class="text-center">
-            <h1 class="text-ink text-lg/7 font-semibold mb-4">
-              Something went terribly wrong
-            </h1>
+            <h1 class="text-ink text-lg/7 font-semibold mb-4">{t('auto.something_went_terribly_wrong')}</h1>
 
             <Show when={props.error} keyed>
               {(error) => (
@@ -46,8 +45,7 @@ export function FatalError(props: FatalErrorProps) {
                   window.location.href = window.location.origin + '/app';
                 }}
               >
-                <HomeIcon class="size-4" /> Home
-              </Button>
+                <HomeIcon class="size-4" />{t('auto.home')}</Button>
               <Button variant="outline" onClick={props.reset}>
                 <ResetIcon class="size-4" /> Try Again
               </Button>

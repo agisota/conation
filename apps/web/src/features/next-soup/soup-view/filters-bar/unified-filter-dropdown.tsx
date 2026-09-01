@@ -511,7 +511,7 @@ const ReadStatusSubmenu = (props: {
   return (
     <Dropdown.Sub>
       <Dropdown.SubTrigger>
-        <span class="text-ink">Status</span>
+        <span class="text-ink">{t('auto.status')}</span>
         <CaretRightIcon class="size-3 text-ink-muted" />
       </Dropdown.SubTrigger>
 
@@ -955,7 +955,7 @@ export const UnifiedFilterDropdown = (
                 >
                   <FilterIcon />
                   <Show when={!props.hideLabel}>
-                    <span>Filter</span>
+                    <span>{t('auto.filter')}</span>
                   </Show>
                 </Dropdown.Trigger>
               </Tooltip>

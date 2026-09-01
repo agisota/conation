@@ -36,9 +36,7 @@ export function CreateBotTokenDialog(props: {
     >
       <Panel depth={2} active class="rounded-xl text-ink">
         <Panel.Header class="px-5">
-          <Dialog.Title class="text-sm font-semibold">
-            New webhook token
-          </Dialog.Title>
+          <Dialog.Title class="text-sm font-semibold">{t('auto.new_webhook_token')}</Dialog.Title>
           <div class="ml-auto">
             <Button
               variant="ghost"
@@ -76,9 +74,7 @@ export function CreateBotTokenDialog(props: {
                   fallback={({ mint, isPending }) => (
                     <>
                       <label class="flex flex-col gap-1.5">
-                        <span class="text-xs font-medium text-ink">
-                          Token label
-                        </span>
+                        <span class="text-xs font-medium text-ink">{t('auto.token_label')}</span>
                         <input
                           autofocus
                           value={label()}
@@ -91,9 +87,7 @@ export function CreateBotTokenDialog(props: {
                             if (event.key === 'Enter') mint();
                           }}
                         />
-                        <span class="text-xs text-ink-muted">
-                          Use a label that describes where this token is used.
-                        </span>
+                        <span class="text-xs text-ink-muted">{t('auto.use_a_label_that_describes_whe')}</span>
                       </label>
                       <div class="flex justify-end gap-2 border-t border-edge-muted pt-4">
                         <Button variant="ghost" size="sm" onClick={close}>{t('common.cancel')}</Button>
@@ -110,13 +104,9 @@ export function CreateBotTokenDialog(props: {
                   )}
                   afterToken={
                     <>
-                      <div class="rounded-lg border border-alert/30 bg-alert-bg px-3 py-2.5 text-xs text-alert-ink">
-                        Store this token somewhere secure before closing.
-                      </div>
+                      <div class="rounded-lg border border-alert/30 bg-alert-bg px-3 py-2.5 text-xs text-alert-ink">{t('auto.store_this_token_somewhere_sec')}</div>
                       <div class="flex justify-end border-t border-edge-muted pt-4">
-                        <Button variant="cta" size="sm" onClick={close}>
-                          Done
-                        </Button>
+                        <Button variant="cta" size="sm" onClick={close}>{t('auto.done')}</Button>
                       </div>
                     </>
                   }

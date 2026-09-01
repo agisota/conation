@@ -460,12 +460,12 @@ export default function DocumentWherePlayground() {
   return (
     <div class="flex h-full flex-col bg-surface text-ink">
       <header class="flex h-10 shrink-0 items-center border-edge-muted border-b px-4">
-        <div class="text-sm font-medium">Document AST Playground</div>
+        <div class="text-sm font-medium">{t('auto.document_ast_playground')}</div>
       </header>
       <div class="grid min-h-0 flex-1 grid-cols-[420px_1fr] overflow-hidden">
         <aside class="flex min-h-0 flex-col gap-4 border-edge-muted border-r p-4">
           <section class="space-y-2">
-            <div class="text-sm font-medium">Endpoint</div>
+            <div class="text-sm font-medium">{t('auto.endpoint')}</div>
             <SegmentedControl
               class="w-full"
               size="sm"
@@ -479,7 +479,7 @@ export default function DocumentWherePlayground() {
           </section>
 
           <section class="space-y-3">
-            <div class="text-sm font-medium">Expression shape</div>
+            <div class="text-sm font-medium">{t('auto.expression_shape')}</div>
             <select
               class="w-full rounded-sm border border-edge-muted bg-surface p-1.5 text-sm outline-none focus:border-accent"
               value={expressionMode()}
@@ -487,17 +487,15 @@ export default function DocumentWherePlayground() {
                 setExpressionMode(event.currentTarget.value as ExpressionMode)
               }
             >
-              <option value="or">OR selected clauses</option>
-              <option value="and">AND selected clauses</option>
-              <option value="nested-md">
-                OR selected, grouping markdown subtypes
-              </option>
-              <option value="not-selected">NOT selected clauses</option>
+              <option value="or">{t('auto.or_selected_clauses')}</option>
+              <option value="and">{t('auto.and_selected_clauses')}</option>
+              <option value="nested-md">{t('auto.or_selected_grouping_markdown_')}</option>
+              <option value="not-selected">{t('auto.not_selected_clauses')}</option>
             </select>
           </section>
 
           <section class="space-y-2">
-            <div class="text-sm font-medium">Examples</div>
+            <div class="text-sm font-medium">{t('auto.examples')}</div>
             <div class="grid grid-cols-1 gap-1">
               <For each={EXAMPLES}>
                 {(example) => (
@@ -515,7 +513,7 @@ export default function DocumentWherePlayground() {
           </section>
 
           <section class="min-h-0 space-y-3 overflow-auto">
-            <div class="text-sm font-medium">Document clauses</div>
+            <div class="text-sm font-medium">{t('auto.document_clauses')}</div>
             <div class="grid grid-cols-2 gap-2">
               <For each={FILTER_TOKENS}>
                 {(token) => (
@@ -543,7 +541,7 @@ export default function DocumentWherePlayground() {
           </section>
 
           <section class="space-y-2">
-            <div class="text-sm font-medium">Custom include fields</div>
+            <div class="text-sm font-medium">{t('auto.custom_include_fields')}</div>
             <input
               class="w-full rounded-sm border border-edge-muted bg-surface p-1.5 text-sm outline-none focus:border-accent"
               placeholder="document ids, comma separated"
@@ -579,7 +577,7 @@ export default function DocumentWherePlayground() {
           </section>
 
           <section class="space-y-2">
-            <div class="text-sm font-medium">Limit</div>
+            <div class="text-sm font-medium">{t('auto.limit')}</div>
             <input
               class="w-24 rounded-sm border border-edge-muted bg-surface p-1 text-sm outline-none focus:border-accent"
               type="number"
@@ -593,17 +591,13 @@ export default function DocumentWherePlayground() {
           </section>
 
           <section class="flex gap-2">
-            <Button variant="outline" size="sm" onClick={loadJsonFromControls}>
-              Edit JSON
-            </Button>
+            <Button variant="outline" size="sm" onClick={loadJsonFromControls}>{t('auto.edit_json')}</Button>
             <Button
               variant="cta"
               size="sm"
               disabled={loading()}
               onClick={() => run()}
-            >
-              Run
-            </Button>
+            >{t('auto.run')}</Button>
           </section>
 
           <Show when={useJson()}>

@@ -97,7 +97,7 @@ export function EventRsvpSection(props: {
   return (
     <Show when={canRespond()}>
       <div class="border-edge-muted flex items-center gap-3 border-t bg-active px-4 py-2.5 text-sm text-ink-muted sm:text-xs">
-        <span>Going?</span>
+        <span>{t('auto.going')}</span>
         <div class="ml-auto flex shrink-0 gap-3 lg:gap-2">
           <For each={RSVP_OPTIONS}>
             {(option) => (
@@ -127,9 +127,7 @@ export function EventRsvpSection(props: {
             <Dialog.CloseButton as={Button} variant="ghost" size="icon-sm">
               <CloseIcon />
             </Dialog.CloseButton>
-            <Dialog.Title as="span" class="m-0 p-0 text-sm font-medium">
-              RSVP to recurring event
-            </Dialog.Title>
+            <Dialog.Title as="span" class="m-0 p-0 text-sm font-medium">{t('auto.rsvp_to_recurring_event')}</Dialog.Title>
           </Panel.Header>
           <Panel.Body class="flex flex-col gap-3 p-3">
             <div class="flex max-w-80 flex-col gap-2 text-sm text-ink-muted">

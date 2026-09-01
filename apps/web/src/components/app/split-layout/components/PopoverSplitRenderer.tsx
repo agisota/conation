@@ -1,4 +1,5 @@
 import { SoupContextProvider } from '@app/features/next-soup/soup-context';
+import { t } from '@app/lib/i18n';
 import clickOutside from '@core/directive/clickOutside';
 import { registerHotkey, useHotkeyDOMScope } from '@core/hotkey/hotkeys';
 import { Dialog, Panel } from '@ui';
@@ -28,7 +29,7 @@ type PopoverSplitData = {
 };
 
 export function PopoverSplitRenderer(props: {
-  popovers: () => Map<string, PopoverSplitData>;
+  popovers: () =>{t('auto.map')}<string, PopoverSplitData>;
   onClosePopover?: (id: string) => void;
 }) {
   const activePopovers = createMemo(() =>

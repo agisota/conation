@@ -1,4 +1,5 @@
 import { DropdownMenu } from '@kobalte/core/dropdown-menu';
+import { t } from '@app/lib/i18n';
 import Gear from '@phosphor/gear.svg';
 import Microphone from '@phosphor/microphone.svg';
 import MicrophoneSlash from '@phosphor/microphone-slash.svg';
@@ -91,12 +92,12 @@ export function CallControlsPanelSmallRow() {
 
             <MenuDivider />
 
-            <MenuLabel>Audio processing</MenuLabel>
+            <MenuLabel>{t('auto.audio_processing')}</MenuLabel>
             <Dropdown.Item
               closeOnSelect={false}
               onSelect={() => void callCtx.toggleNoiseSuppression()}
             >
-              <span class="flex-1 truncate">Noise suppression</span>
+              <span class="flex-1 truncate">{t('auto.noise_suppression')}</span>
               <span class="text-xs text-ink-muted">
                 {noiseSuppressionModeLabel()}
               </span>
@@ -147,7 +148,7 @@ export function CallControlsPanelSmallRow() {
               onSelect={() => void handleToggleShareWithTeam()}
             >
               <InlineCheckbox checked={callCtx.isSharedWithTeam()} />
-              <span class="flex-1 truncate">Share with team</span>
+              <span class="flex-1 truncate">{t('auto.share_with_team')}</span>
             </Dropdown.Item>
           </Dropdown.Group>
         </Dropdown.Content>

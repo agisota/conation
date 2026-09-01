@@ -8,6 +8,7 @@
  */
 
 import { For } from 'solid-js';
+import { t } from '@app/lib/i18n';
 import type { AnsweredQuestion } from './types';
 
 export interface QuestionAnswersProps {
@@ -25,7 +26,7 @@ export function QuestionAnswers(props: QuestionAnswersProps) {
               {item.answers.length > 0 ? (
                 item.answers.join(', ')
               ) : (
-                <span class="text-ink-placeholder">No answer</span>
+                <span class="text-ink-placeholder">{t('auto.no_answer')}</span>
               )}
             </div>
           </div>

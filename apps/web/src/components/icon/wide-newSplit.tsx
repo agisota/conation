@@ -1,4 +1,5 @@
 import { createUniqueId } from 'solid-js';
+import { t } from '@app/lib/i18n';
 
 export const AnimatedNewSplitIcon = (props: {
   triggerAnimation?: boolean;
@@ -19,7 +20,7 @@ export const AnimatedNewSplitIcon = (props: {
       xmlns="http://www.w3.org/2000/svg"
       class={`animated-new-split-icon ${props.triggerAnimation ? 'animating' : ''} ${props.class ?? ''}`}
     >
-      {/*<title>Animated new split icon</title>*/}
+      {/*<title>{t('auto.animated_new_split_icon')}</title>*/}
       <defs>
         {/*
           Covering mask: white = show, black = hide. The black rect starts at x=9

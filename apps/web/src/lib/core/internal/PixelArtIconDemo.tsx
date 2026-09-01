@@ -427,9 +427,7 @@ function GlyphGrid(props: GlyphGridProps) {
           <button
             class="font-mono text-xs underline"
             onClick={props.sortAlphabetically}
-          >
-            Sort Alhpa
-          </button>
+          >{t('auto.sort_alhpa')}</button>
         </div>
         <Button
           variant="outline"
@@ -437,15 +435,14 @@ function GlyphGrid(props: GlyphGridProps) {
             props.onNewGlyph();
           }}
         >
-          <Plus /> New Icon
-        </Button>
+          <Plus />{t('auto.new_icon')}</Button>
       </div>
 
       <Show
         when={props.glyphs.length > 0}
         fallback={
           <div class="flex flex-col items-center justify-center h-64 text-ink-muted">
-            <div class="text-sm mb-2">No icons yet</div>
+            <div class="text-sm mb-2">{t('auto.no_icons_yet')}</div>
             <div class="text-sm">Click "New Icon" to create your first one</div>
           </div>
         }
@@ -796,7 +793,7 @@ function GlyphEditor(props: GlyphEditorProps) {
           use:clickOutside={() => props.onClose()}
         >
           <div class="p-2 border-b border-edge flex items-center justify-between">
-            <h2 class="font-mono text-xs">Editor</h2>
+            <h2 class="font-mono text-xs">{t('auto.editor')}</h2>
             <Button variant="ghost" size="icon-md" onClick={props.onClose}>
               <X />
             </Button>
@@ -894,18 +891,14 @@ function GlyphEditor(props: GlyphEditorProps) {
                 <div>
                   <div class="flex flex-row items-center w-full justify-start gap-6 mb-4">
                     <div class="flex gap-2 flex-col text-ink-muted">
-                      <span class="flex items-center gap-2 text-xs">
-                        Symmetry X
-                      </span>
+                      <span class="flex items-center gap-2 text-xs">{t('auto.symmetry_x')}</span>
                       <ToggleSwitch
                         checked={symmetryX()}
                         onChange={() => setSymmetryX((prev) => !prev)}
                       />
                     </div>
                     <div class="flex gap-2 flex-col text-ink-muted">
-                      <span class="flex items-center gap-2 text-xs">
-                        Symmetry Y
-                      </span>
+                      <span class="flex items-center gap-2 text-xs">{t('auto.symmetry_y')}</span>
                       <ToggleSwitch
                         checked={symmetryY()}
                         onChange={() => setSymmetryY((prev) => !prev)}
@@ -916,15 +909,13 @@ function GlyphEditor(props: GlyphEditorProps) {
 
                 <div class="grid grid-cols-2 gap-2 mb-4">
                   <Button variant="outline" onClick={clearAll}>
-                    <Erase /> Clear Grid
-                  </Button>
+                    <Erase />{t('auto.clear_grid')}</Button>
                   <Button variant="outline" onClick={fillAll}>
-                    <Fill /> Fill Grid
-                  </Button>
+                    <Fill />{t('auto.fill_grid')}</Button>
                 </div>
 
                 <div class="space-y-2 mb-4">
-                  <h4 class="font-mono text-xs text-ink-muted">Transforms</h4>
+                  <h4 class="font-mono text-xs text-ink-muted">{t('auto.transforms')}</h4>
                   <div class="flex gap-2">
                     <Button
                       variant="outline"
@@ -1052,20 +1043,16 @@ function GlyphSidebar(props: GlyphSidebarProps) {
         />
 
         <div class="mt-6 space-y-2">
-          <h4 class="font-mono text-xs text-ink-muted">Batch Operations</h4>
+          <h4 class="font-mono text-xs text-ink-muted">{t('auto.batch_operations')}</h4>
           <div class="grid grid-cols-1 gap-2">
             <Button variant="outline" onClick={props.onExportAll}>
-              <Copy /> Export to Clipboard
-            </Button>
+              <Copy />{t('auto.export_to_clipboard')}</Button>
             <Button variant="outline" onClick={props.onImportAll}>
-              <Upload /> Import from Clipboard
-            </Button>
+              <Upload />{t('auto.import_from_clipboard')}</Button>
             <Button variant="outline" onClick={props.onCopyAllSVGs}>
-              <Copy /> Copy SVGs
-            </Button>
+              <Copy />{t('auto.copy_svgs')}</Button>
             <Button variant="outline" onClick={props.onDownloadAllSVGs}>
-              <Download /> Download SVGs
-            </Button>
+              <Download />{t('auto.download_svgs')}</Button>
           </div>
         </div>
       </div>
@@ -1075,9 +1062,7 @@ function GlyphSidebar(props: GlyphSidebarProps) {
       <Show
         when={props.selectedGlyph}
         fallback={
-          <div class="text-ink-muted text-sm">
-            Select a glyph from the grid to view details
-          </div>
+          <div class="text-ink-muted text-sm">{t('auto.select_a_glyph_from_the_grid_t')}</div>
         }
       >
         <h3 class="font-mono text-sm text-ink mb-2">[ Inspector ]</h3>
@@ -1111,7 +1096,7 @@ function GlyphSidebar(props: GlyphSidebarProps) {
           {/* SVG Output */}
           <Show when={svgString()}>
             <div class="space-y-2">
-              <h3 class="font-mono text-ink-muted text-sm">Generated SVG</h3>
+              <h3 class="font-mono text-ink-muted text-sm">{t('auto.generated_svg')}</h3>
               <div class="p-4 rounded-xs bg-message overflow-x-auto max-h-96">
                 <pre class="text-xs font-mono whitespace-pre-wrap text-ink-muted">
                   {svgString()}
@@ -1125,8 +1110,7 @@ function GlyphSidebar(props: GlyphSidebarProps) {
                     navigator.clipboard.writeText(svgString() || '')
                   }
                 >
-                  <Copy /> Copy Svg
-                </Button>
+                  <Copy />{t('auto.copy_svg')}</Button>
                 <Button
                   variant="ghost"
                   onClick={() => {
@@ -1152,7 +1136,7 @@ function GlyphSidebar(props: GlyphSidebarProps) {
           {/* Base64 Data */}
           <Show when={props.selectedGlyph}>
             <div class="space-y-2">
-              <h3 class="font-mono text-ink-muted text-sm">Base64 Data</h3>
+              <h3 class="font-mono text-ink-muted text-sm">{t('auto.base64_data')}</h3>
               <div class="p-3 bg-message rounded-xs overflow-x-auto max-h-32">
                 <pre class="text-xs font-mono whitespace-pre-wrap text-ink-muted">
                   {props.selectedGlyph?.data}
@@ -1168,8 +1152,7 @@ function GlyphSidebar(props: GlyphSidebarProps) {
                     )
                   }
                 >
-                  <Copy /> Copy Base64
-                </Button>
+                  <Copy />{t('auto.copy_base64')}</Button>
               </div>
             </div>
           </Show>
@@ -1385,7 +1368,7 @@ export default function PixelArtIconDemo() {
   return (
     <div class="flex flex-col size-full overflow-hidden">
       <Bar
-        left={<div class="p-2 text-sm w-2xl truncate">Icon Editor</div>}
+        left={<div class="p-2 text-sm w-2xl truncate">{t('auto.icon_editor')}</div>}
         center={<div></div>}
       />
 

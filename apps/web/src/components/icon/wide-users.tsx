@@ -16,7 +16,7 @@ export const AnimatedUsersIcon = (props: {
       overflow="visible"
       class={`animated-users-icon ${props.triggerAnimation ? 'animating' : ''} ${props.class ?? ''}`}
     >
-      {/*<title>Animated users icon</title>*/}
+      {/*<title>{t('auto.animated_users_icon')}</title>*/}
       <style>{`
         @keyframes users-head-bounce {
           0% { transform: translateY(0); }

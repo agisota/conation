@@ -169,9 +169,7 @@ function Rows(props: {
     <Show
       when={entities().length > 0}
       fallback={
-        <div class={cn('px-3 py-6 text-center text-sm', TEXT.tertiary)}>
-          No items.
-        </div>
+        <div class={cn('px-3 py-6 text-center text-sm', TEXT.tertiary)}>{t('auto.no_items')}</div>
       }
     >
       <CollapsibleList

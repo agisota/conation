@@ -1,4 +1,5 @@
 import { ItemPreview } from '@core/component/ItemPreview';
+import { t } from '@app/lib/i18n';
 import FolderPlus from '@phosphor-icons/core/regular/folder-plus.svg';
 import { Show, Suspense } from 'solid-js';
 import { BaseTool } from './BaseTool';
@@ -8,8 +9,7 @@ const handler = createToolRenderer({
   name: 'CreateProject',
   render: (ctx) => (
     <BaseTool icon={FolderPlus} renderContext={ctx.renderContext} type="call">
-      <div class="min-w-0 flex-1">
-        Create folder <span class="text-ink">{ctx.tool.data.projectName}</span>
+      <div class="min-w-0 flex-1">{t('auto.create_folder')}<span class="text-ink">{ctx.tool.data.projectName}</span>
         <Show when={ctx.response}>
           {(response) => (
             <>

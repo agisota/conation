@@ -1,4 +1,5 @@
 import { useBlockId } from '@core/block';
+import { t } from '@app/lib/i18n';
 import { FileTypeChip } from '@core/component/FileTypeChip';
 import { blockMetadataSignal } from '@core/signal/load';
 import { useCanEdit } from '@core/signal/permissions';
@@ -123,7 +124,7 @@ export function CodeFileTypeChip() {
                   )}
                 </For>
                 <Show when={filteredFileTypes().length === 0}>
-                  <div class="px-2 py-1 text-xs text-ink-muted">No results</div>
+                  <div class="px-2 py-1 text-xs text-ink-muted">{t('auto.no_results')}</div>
                 </Show>
               </div>
             </Popover.Content>

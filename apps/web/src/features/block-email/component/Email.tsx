@@ -1,4 +1,5 @@
 import { AskMacroButton } from '@app/features/chat/ChatWithAgentButton';
+import { t } from '@app/lib/i18n';
 import { EmailCompose } from '@block-email/component/compose/Compose';
 import {
   EmailProvider,
@@ -814,7 +815,7 @@ function EmailTaskButton(props: { onClick: () => void }) {
       class="gap-1.5 rounded-full border border-edge-muted px-2 text-ink-extra-muted"
     >
       <AnimatedTaskIcon triggerAnimation={hovering()} />
-      <span class="text-xs font-semibold">Task</span>
+      <span class="text-xs font-semibold">{t('auto.task')}</span>
     </Button>
   );
 }

@@ -1,4 +1,5 @@
 import { openAddInboxDialog } from '@app/features/inbox/AddInboxDialog';
+import { t } from '@app/lib/i18n';
 import { useSoupView } from '@app/features/next-soup/soup-view/soup-view-context';
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
 import { CollapsibleHeaderItem } from '@components/app/split-layout/components/CollapsibleItem';
@@ -97,7 +98,7 @@ export function InboxSelector() {
     >
       <TrayIcon />
       <Show when={!buttonProps.hideLabel}>
-        <span class="truncate">Connect another email</span>
+        <span class="truncate">{t('auto.connect_another_email')}</span>
       </Show>
     </Button>
   );

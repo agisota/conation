@@ -1,4 +1,5 @@
 import { Checkbox as KobalteCheckbox } from '@kobalte/core/checkbox';
+import { t } from '@app/lib/i18n';
 import CheckIcon from '@phosphor/check.svg';
 import MinusIcon from '@phosphor/minus.svg';
 import type { ComponentProps } from 'solid-js';
@@ -8,9 +9,7 @@ import { cn } from '../utils/classname';
 /*
 <Checkbox checked={...} onChange={...}>
   <Checkbox.Control />
-</Checkbox>
-
-A bare <Checkbox.Control /> renders its own <Checkbox.Indicator /> with a
+</Checkbox>{t('auto.a_bare')}<Checkbox.Control /> renders its own <Checkbox.Indicator /> with a
 check (or minus for indeterminate). Override by passing children:
 
 <Checkbox.Control>

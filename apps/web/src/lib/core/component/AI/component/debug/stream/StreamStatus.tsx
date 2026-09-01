@@ -1,4 +1,5 @@
 import type { ChatMessageStream } from '@service-connection/stream';
+import { t } from '@app/lib/i18n';
 import { cn } from '@ui';
 import { Match, Switch } from 'solid-js';
 
@@ -13,9 +14,7 @@ export function StreamStatus(props: Props) {
       <Switch>
         <Match when={props.stream()}>
           {(stream) => (
-            <div>
-              Stream state
-              <div class="flex items-center space-x-2">
+            <div>{t('auto.stream_state')}<div class="flex items-center space-x-2">
                 <span> chunks: {stream().data().length}</span>
               </div>
               <div class="flex items-center space-x-2">
@@ -26,7 +25,7 @@ export function StreamStatus(props: Props) {
           )}
         </Match>
         <Match when={!props.stream()}>
-          <div>No Stream</div>
+          <div>{t('auto.no_stream')}</div>
         </Match>
       </Switch>
     </div>

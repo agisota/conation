@@ -1,4 +1,5 @@
 import RefreshIcon from '@phosphor/arrow-clockwise.svg';
+import { t } from '@app/lib/i18n';
 import WarningIcon from '@phosphor/warning.svg';
 import { Button } from '@ui';
 import {
@@ -56,9 +57,7 @@ function HomeSectionError(props: HomeSectionErrorProps) {
               class="w-fit bg-surface"
               onClick={props.reset}
             >
-              <RefreshIcon class="size-3.5" />
-              Try again
-            </Button>
+              <RefreshIcon class="size-3.5" />{t('auto.try_again')}</Button>
             <Button
               variant="ghost"
               size="sm"

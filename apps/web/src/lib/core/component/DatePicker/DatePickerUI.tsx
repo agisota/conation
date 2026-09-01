@@ -1,4 +1,5 @@
 import CaretLeft from '@phosphor/caret-left.svg';
+import { t } from '@app/lib/i18n';
 import CaretRight from '@phosphor/caret-right.svg';
 import CheckIcon from '@phosphor/check.svg';
 import { endOfDay } from 'date-fns/endOfDay';
@@ -294,7 +295,7 @@ export function DatePickerUI(props: DatePickerUIProps) {
       <Show when={pickerMode() === 'year'}>
         {/* Year picker */}
         <div class="mb-3">
-          <div class="font-semibold text-center">Select Year</div>
+          <div class="font-semibold text-center">{t('auto.select_year')}</div>
         </div>
 
         <div class="h-64 overflow-y-auto">

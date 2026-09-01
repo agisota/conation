@@ -1,4 +1,5 @@
 import { internalDrag } from '@core/directive/internalDragState';
+import { t } from '@app/lib/i18n';
 
 false && internalDrag;
 
@@ -344,9 +345,7 @@ export function MarkdownImage(props: ImageDecoratorProps) {
 
         <Show when={uploading() && state() !== 'error'}>
           <div class="absolute flex gap-2 top-2 left-2 justify-center items-center p-2">
-            <Spinner />
-            Saving Image...
-          </div>
+            <Spinner />{t('auto.saving_image')}</div>
         </Show>
 
         <Show

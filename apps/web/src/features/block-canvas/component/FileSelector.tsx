@@ -3,6 +3,7 @@ import {
   type EntityWithValidIcon,
 } from '@core/component/EntityIcon';
 import { OldMenu } from '@core/component/OldMenu';
+import { t } from '@app/lib/i18n';
 import { blockAcceptedFileExtensionSet } from '@core/constant/allBlocks';
 import { onKeyDownClick, onKeyUpClick } from '@core/util/click';
 import FileText from '@phosphor-icons/core/regular/file-text.svg?component-solid';
@@ -106,7 +107,7 @@ export function FileSelector() {
               <Show
                 when={userFiles().length > 0}
                 fallback={
-                  <div class="p-4 text-center text-sm">No files found.</div>
+                  <div class="p-4 text-center text-sm">{t('auto.no_files_found')}</div>
                 }
               >
                 <VList

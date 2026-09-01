@@ -1,4 +1,5 @@
 import { CollabProvider } from '@core/component/LexicalMarkdown/collaboration/CollabProvider';
+import { t } from '@app/lib/i18n';
 import { DecoratorRenderer } from '@core/component/LexicalMarkdown/component/core/DecoratorRenderer';
 import { EmojiMenu } from '@core/component/LexicalMarkdown/component/menu/EmojiMenu';
 import { MentionsMenu } from '@core/component/LexicalMarkdown/component/menu/MentionsMenu';
@@ -253,9 +254,7 @@ export function CollabMdSurface(props: CollabMdSurfaceProps) {
           )}
         </Show>
         <Show when={session.connectionError()}>
-          <div class="text-alert-ink p-2 bg-alert-bg w-full border-alert/30 border mb-2">
-            Failed to connect to this surface.
-          </div>
+          <div class="text-alert-ink p-2 bg-alert-bg w-full border-alert/30 border mb-2">{t('auto.failed_to_connect_to_this_surf')}</div>
         </Show>
         <div class="relative" ref={editorContainerRef}>
           <div

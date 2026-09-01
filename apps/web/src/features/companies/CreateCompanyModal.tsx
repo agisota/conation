@@ -113,10 +113,8 @@ export function CreateCompanyModal() {
 
             <div class="flex flex-col gap-4">
               <div class="flex items-center gap-2 px-2">
-                <Dialog.Title class="sr-only">Create a company</Dialog.Title>
-                <label for="new-company-name" class="sr-only">
-                  Name
-                </label>
+                <Dialog.Title class="sr-only">{t('auto.create_a_company')}</Dialog.Title>
+                <label for="new-company-name" class="sr-only">{t('auto.name')}</label>
                 <BuildingsIcon
                   aria-hidden="true"
                   class="size-5 shrink-0 text-ink-placeholder"
@@ -141,9 +139,7 @@ export function CreateCompanyModal() {
                 <label
                   for="new-company-domain"
                   class="text-xs font-medium text-ink-muted"
-                >
-                  Domain
-                </label>
+                >{t('auto.domain')}</label>
                 <input
                   id="new-company-domain"
                   type="text"
@@ -161,9 +157,7 @@ export function CreateCompanyModal() {
                   }
                   class="h-9 w-full rounded-lg border border-edge-muted bg-transparent px-3 text-sm text-ink outline-none placeholder:text-ink-placeholder focus:border-edge"
                 />
-                <span class="text-xs text-ink-extra-muted">
-                  Emails with this domain will be linked to the company.
-                </span>
+                <span class="text-xs text-ink-extra-muted">{t('auto.emails_with_this_domain_will_b')}</span>
               </div>
             </div>
 

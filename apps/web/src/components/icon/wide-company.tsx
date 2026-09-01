@@ -1,4 +1,5 @@
 import { createUniqueId } from 'solid-js';
+import { t } from '@app/lib/i18n';
 
 export const AnimatedCompanyIcon = (props: {
   triggerAnimation?: boolean;
@@ -20,7 +21,7 @@ export const AnimatedCompanyIcon = (props: {
       overflow="visible"
       class={`animated-company-icon ${props.triggerAnimation ? 'animating' : ''} ${props.class ?? ''}`}
     >
-      {/*<title>Animated company icon</title>*/}
+      {/*<title>{t('auto.animated_company_icon')}</title>*/}
       <style>{`
         .animated-company-icon {
           .building-center, #${maskId} .mask-center { transform-origin: 9px 6px; }

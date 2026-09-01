@@ -1,4 +1,5 @@
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
+import { t } from '@app/lib/i18n';
 import { EmailAttachmentPill } from '@block-email/component/AttachmentPill';
 import type { DraftFormAttachment } from '@block-email/component/createEmailFormState';
 import { EmailDateSelector } from '@block-email/component/email-date-selector';
@@ -1778,9 +1779,7 @@ export function BaseInput(props: {
                 <div class="min-w-0 w-full">
                   <div class="flex items-center gap-2 min-w-0 border-b border-edge-muted">
                     <div class="flex items-center gap-2 min-w-0 flex-1 py-3">
-                      <div class="w-14 shrink-0 text-sm text-ink-placeholder">
-                        From
-                      </div>
+                      <div class="w-14 shrink-0 text-sm text-ink-placeholder">{t('auto.from')}</div>
                       <FromInboxSelector
                         pill
                         class="min-w-0"
@@ -1811,9 +1810,7 @@ export function BaseInput(props: {
                             setShowBcc(true);
                             queueMicrotask(() => bccRef()?.focus());
                           }}
-                        >
-                          Bcc
-                        </Button>
+                        >{t('auto.bcc')}</Button>
                       </Show>
                     </div>
                   </div>
@@ -1887,9 +1884,7 @@ export function BaseInput(props: {
                       dragState={recipientDragState}
                       onDrop={handleRecipientDrop}
                     >
-                      <div class="w-14 shrink-0 text-sm text-ink-placeholder">
-                        Bcc
-                      </div>
+                      <div class="w-14 shrink-0 text-sm text-ink-placeholder">{t('auto.bcc')}</div>
                       <RecipientSelector<EmailRecipient['kind']>
                         openOnFocus={false}
                         class="min-w-0 bg-transparent rounded-none! [&_input]:ml-0!"
@@ -1920,7 +1915,7 @@ export function BaseInput(props: {
                 props.isEditingExisting || props.newMessage ? 'flex' : 'hidden'
               )}
             >
-              <div class="text-sm min-w-16 pl-4">Subject</div>
+              <div class="text-sm min-w-16 pl-4">{t('auto.subject')}</div>
               <input
                 type="text"
                 class="flex-1 text-sm bg-transparent outline-none border-0 px-3 py-1"
@@ -2145,7 +2140,7 @@ export function BaseInput(props: {
           <div
             class={cn('absolute size-full inset-0', !isDragging() && 'hidden')}
           >
-            <FileDropOverlay>Drop file(s) to attach</FileDropOverlay>
+            <FileDropOverlay>{t('auto.drop_file_s_to_attach')}</FileDropOverlay>
           </div>
           <MarkdownShell
             config={editorConfig}

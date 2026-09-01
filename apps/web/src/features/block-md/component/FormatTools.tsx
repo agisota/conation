@@ -1,4 +1,5 @@
 import { markdownBlockErrorSignal } from '@block-md/signal/error';
+import { t } from '@app/lib/i18n';
 import {
   INSERT_HORIZONTAL_RULE_COMMAND,
   NODE_TRANSFORM,
@@ -1029,7 +1030,7 @@ export function FormatTools(props: { withinPopup?: boolean }) {
                       disabled={buttonIsDisabled()}
                     >
                       <Quote class="size-4 shrink-0" />
-                      <span class="flex-1 truncate">Block Quote</span>
+                      <span class="flex-1 truncate">{t('auto.block_quote')}</span>
                     </Dropdown.Item>
                   </Dropdown.Group>
                   <Dropdown.Group>
@@ -1044,7 +1045,7 @@ export function FormatTools(props: { withinPopup?: boolean }) {
                       disabled={buttonIsDisabled()}
                     >
                       <Minus class="size-4 shrink-0" />
-                      <span class="flex-1 truncate">Divider</span>
+                      <span class="flex-1 truncate">{t('auto.divider')}</span>
                     </Dropdown.Item>
                     <Dropdown.Item
                       onSelect={() => {
@@ -1054,12 +1055,12 @@ export function FormatTools(props: { withinPopup?: boolean }) {
                       disabled={buttonIsDisabled()}
                     >
                       <MathIcon class="size-4 shrink-0" />
-                      <span class="flex-1 truncate">Equation</span>
+                      <span class="flex-1 truncate">{t('auto.equation')}</span>
                     </Dropdown.Item>
                     <Dropdown.Sub>
                       <Dropdown.SubTrigger disabled={buttonIsDisabled()}>
                         <Grid class="size-4 shrink-0" />
-                        <span class="flex-1 truncate">Table</span>
+                        <span class="flex-1 truncate">{t('auto.table')}</span>
                         <CaretRight class="size-3.5" />
                       </Dropdown.SubTrigger>
                       <Dropdown.SubContent>

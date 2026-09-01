@@ -1,4 +1,5 @@
 import { CREATE_MENU_COMMAND_SCOPE } from '@app/constants/hotkeys';
+import { t } from '@app/lib/i18n';
 import { useCreateMenuBlocks } from '@app/features/command/Launcher';
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
 import { useHotkeyInterceptor } from '@app/signal/hotkeyRoot';
@@ -90,9 +91,7 @@ export const SidebarCreateMenu = (props: {
             <div class="size-4 shrink-0">
               <PlusIcon class="size-4" />
             </div>
-            <span class="whitespace-nowrap group-data-[slim=true]/sidebar:hidden">
-              Create
-            </span>
+            <span class="whitespace-nowrap group-data-[slim=true]/sidebar:hidden">{t('auto.create')}</span>
             <Show when={open()}>
               <div class="text-xxs text-ink-extra-muted/50 rounded-sm ml-auto border border-ink/5 px-1.5 py-px -my-1 group-data-[slim=true]/sidebar:hidden">
                 <Hotkey

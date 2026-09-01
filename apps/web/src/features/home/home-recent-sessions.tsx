@@ -1,4 +1,5 @@
 import { QUERY_FILTERS_BASE } from '@app/features/next-soup/filters/query-filters';
+import { t } from '@app/lib/i18n';
 import { globalSplitManager } from '@app/signal/splitLayout';
 import { useSplitPanel } from '@components/app/split-layout/layoutUtils';
 import { EntityIcon } from '@core/component/EntityIcon';
@@ -62,7 +63,7 @@ function RecentSessionsContent(props: { limit?: number }) {
     <Show when={sessions().length > 0}>
       <section>
         <div class="mb-2 flex items-center px-1">
-          <span class="text-sm text-ink-muted">Recent sessions</span>
+          <span class="text-sm text-ink-muted">{t('auto.recent_sessions')}</span>
         </div>
         <div class="flex flex-col gap-2">
           <For each={sessions()}>

@@ -1,4 +1,5 @@
 import { CopyAvailabilityButton } from '@app/features/calendar/availability/CopyAvailabilityButton';
+import { t } from '@app/lib/i18n';
 import {
   type CalendarPageId,
   useCalendarPager,
@@ -133,9 +134,7 @@ export function Header() {
                     label="Go to today"
                     hotkey={TOKENS.calendar.period.today}
                     onClick={calendarPager.navigateToToday}
-                  >
-                    Today
-                  </Button>
+                  >{t('auto.today')}</Button>
                 </Show>
               }
             >
@@ -163,9 +162,7 @@ export function Header() {
                 class="rounded-lg px-2"
                 onClick={() => openEventComposer()}
               >
-                <PlusIcon class="size-3.5" />
-                New event
-              </Button>
+                <PlusIcon class="size-3.5" />{t('auto.new_event')}</Button>
               <PeriodSelector isNarrow={sidePanel?.isNarrow()} />
               <div class="flex shrink-0 items-center gap-1">
                 <Button

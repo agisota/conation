@@ -50,11 +50,11 @@ function ThemeDebug() {
   return (
     <div class="size-full overflow-auto p-6">
       <div class="flex flex-col gap-8 max-w-6xl mx-auto">
-        <h1 class="text-2xl font-bold text-ink">Theme Debug</h1>
+        <h1 class="text-2xl font-bold text-ink">{t('auto.theme_debug')}</h1>
 
         {/* Panel Depths Section */}
         <section class="flex flex-col gap-4">
-          <h2 class="text-xl font-semibold text-ink">Panel Depths (0-4)</h2>
+          <h2 class="text-xl font-semibold text-ink">{t('auto.panel_depths_0_4')}</h2>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <For each={[0, 1, 2, 3, 4] as const}>
               {(depth) => (
@@ -73,17 +73,17 @@ function ThemeDebug() {
           </div>
 
           {/* Nested panels to show depth hierarchy */}
-          <h3 class="text-lg font-medium text-ink mt-4">Nested Panel Depths</h3>
+          <h3 class="text-lg font-medium text-ink mt-4">{t('auto.nested_panel_depths')}</h3>
           <Panel depth={0} class="bg-surface p-4">
-            <p class="text-xs text-ink-muted mb-2">Depth 0</p>
+            <p class="text-xs text-ink-muted mb-2">{t('auto.depth_0')}</p>
             <Panel depth={1} class="bg-surface p-4">
-              <p class="text-xs text-ink-muted mb-2">Depth 1</p>
+              <p class="text-xs text-ink-muted mb-2">{t('auto.depth_1')}</p>
               <Panel depth={2} class="bg-surface p-4">
-                <p class="text-xs text-ink-muted mb-2">Depth 2</p>
+                <p class="text-xs text-ink-muted mb-2">{t('auto.depth_2')}</p>
                 <Panel depth={3} class="bg-surface p-4">
-                  <p class="text-xs text-ink-muted mb-2">Depth 3</p>
+                  <p class="text-xs text-ink-muted mb-2">{t('auto.depth_3')}</p>
                   <Panel depth={4} class="bg-surface p-4">
-                    <p class="text-xs text-ink-muted">Depth 4 (innermost)</p>
+                    <p class="text-xs text-ink-muted">{t('auto.depth_4_innermost')}</p>
                   </Panel>
                 </Panel>
               </Panel>
@@ -93,7 +93,7 @@ function ThemeDebug() {
 
         {/* Active Panels */}
         <section class="flex flex-col gap-4">
-          <h2 class="text-xl font-semibold text-ink">Active Panels</h2>
+          <h2 class="text-xl font-semibold text-ink">{t('auto.active_panels')}</h2>
           <p class="text-sm text-ink-muted">
             Panels with the `active` prop show the active focus ring.
           </p>
@@ -107,9 +107,7 @@ function ThemeDebug() {
                     </span>
                   </Panel.Header>
                   <Panel.Body class="p-4">
-                    <p class="text-sm text-ink-muted">
-                      Active panel using its layer-relative surface
-                    </p>
+                    <p class="text-sm text-ink-muted">{t('auto.active_panel_using_its_layer_r')}</p>
                   </Panel.Body>
                 </Panel>
               )}
@@ -119,8 +117,8 @@ function ThemeDebug() {
 
         {/* Text Sizes Section */}
         <section class="flex flex-col gap-4">
-          <h2 class="text-xl font-semibold text-ink">Text Sizes</h2>
-          <p class="text-sm text-ink-muted">Major text sizes from xs to 2xl.</p>
+          <h2 class="text-xl font-semibold text-ink">{t('auto.text_sizes')}</h2>
+          <p class="text-sm text-ink-muted">{t('auto.major_text_sizes_from_xs_to_2x')}</p>
 
           <Panel depth={1}>
             <Panel.Body class="p-4">
@@ -142,7 +140,7 @@ function ThemeDebug() {
 
         {/* Ink Variants Section */}
         <section class="flex flex-col gap-4">
-          <h2 class="text-xl font-semibold text-ink">Ink Color Variants</h2>
+          <h2 class="text-xl font-semibold text-ink">{t('auto.ink_color_variants')}</h2>
           <p class="text-sm text-ink-muted">
             Text colors from ink (primary) to ink-placeholder (lowest contrast).
           </p>
@@ -170,9 +168,7 @@ function ThemeDebug() {
           <h2 class="text-xl font-semibold text-ink">
             Text Size × Ink Variant Matrix
           </h2>
-          <p class="text-sm text-ink-muted">
-            All combinations of text sizes and ink variants.
-          </p>
+          <p class="text-sm text-ink-muted">{t('auto.all_combinations_of_text_sizes')}</p>
 
           <Panel depth={1}>
             <Panel.Body scroll class="max-h-96">
@@ -220,7 +216,7 @@ function ThemeDebug() {
 
         {/* Button Variants Section */}
         <section class="flex flex-col gap-4">
-          <h2 class="text-xl font-semibold text-ink">Button Variants</h2>
+          <h2 class="text-xl font-semibold text-ink">{t('auto.button_variants')}</h2>
           <p class="text-sm text-ink-muted">
             All button variants: ghost, outline, accent, strong, danger, and
             CTA.
@@ -243,9 +239,7 @@ function ThemeDebug() {
                             </Button>
                           )}
                         </For>
-                        <Button variant={variant} disabled>
-                          Disabled
-                        </Button>
+                        <Button variant={variant} disabled>{t('auto.disabled')}</Button>
                       </div>
                     </div>
                   )}
@@ -283,9 +277,7 @@ function ThemeDebug() {
                               </span>
                               <div class="flex flex-wrap items-end gap-4">
                                 <div class="flex flex-col items-start gap-1.5">
-                                  <span class="text-xs text-ink-extra-muted">
-                                    Icon only
-                                  </span>
+                                  <span class="text-xs text-ink-extra-muted">{t('auto.icon_only')}</span>
                                   <Button
                                     variant={variant}
                                     size={size}
@@ -296,21 +288,15 @@ function ThemeDebug() {
                                   </Button>
                                 </div>
                                 <div class="flex flex-col items-start gap-1.5">
-                                  <span class="text-xs text-ink-extra-muted">
-                                    Text only
-                                  </span>
-                                  <Button variant={variant} size={size}>
-                                    Button
-                                  </Button>
+                                  <span class="text-xs text-ink-extra-muted">{t('auto.text_only')}</span>
+                                  <Button variant={variant} size={size}>{t('auto.button')}</Button>
                                 </div>
                                 <div class="flex flex-col items-start gap-1.5">
                                   <span class="text-xs text-ink-extra-muted">
                                     Icon + text
                                   </span>
                                   <Button variant={variant} size={size}>
-                                    <PlusIcon />
-                                    Button
-                                  </Button>
+                                    <PlusIcon />{t('auto.button')}</Button>
                                 </div>
                               </div>
                             </div>
@@ -327,7 +313,7 @@ function ThemeDebug() {
 
         {/* Badge variants and sizes */}
         <section class="flex flex-col gap-4">
-          <h2 class="text-xl font-semibold text-ink">Badge Variants</h2>
+          <h2 class="text-xl font-semibold text-ink">{t('auto.badge_variants')}</h2>
           <p class="text-sm text-ink-muted">
             Ghost and outline badges share the Button sm, md, and lg size
             definitions.
@@ -358,14 +344,10 @@ function ThemeDebug() {
                     <Badge variant="outline" size="sm">
                       <span class="inline-flex size-[1em] items-center justify-center rounded-full bg-snippet text-surface-4">
                         <CheckIcon aria-hidden="true" class="size-[0.65em]" />
-                      </span>
-                      Completed
-                      <CaretDownIcon aria-hidden="true" />
+                      </span>{t('auto.completed')}<CaretDownIcon aria-hidden="true" />
                     </Badge>
                     <Badge variant="outline" size="sm">
-                      <CellSignalHighIcon aria-hidden="true" />
-                      High
-                      <CaretDownIcon aria-hidden="true" />
+                      <CellSignalHighIcon aria-hidden="true" />{t('auto.high')}<CaretDownIcon aria-hidden="true" />
                     </Badge>
                   </div>
                 </div>
@@ -383,13 +365,9 @@ function ThemeDebug() {
                                 variant="{variant}"
                               </span>
                               <div class="flex flex-wrap items-center gap-2">
+                                <Badge variant={variant} size={size}>{t('auto.badge')}</Badge>
                                 <Badge variant={variant} size={size}>
-                                  Badge
-                                </Badge>
-                                <Badge variant={variant} size={size}>
-                                  <PlusIcon />
-                                  Badge
-                                </Badge>
+                                  <PlusIcon />{t('auto.badge')}</Badge>
                               </div>
                             </div>
                           )}
@@ -405,12 +383,8 @@ function ThemeDebug() {
 
         {/* Buttons at Different Depths */}
         <section class="flex flex-col gap-4">
-          <h2 class="text-xl font-semibold text-ink">
-            Buttons at Panel Depths
-          </h2>
-          <p class="text-sm text-ink-muted">
-            Buttons can specify a depth prop for proper layering.
-          </p>
+          <h2 class="text-xl font-semibold text-ink">{t('auto.buttons_at_panel_depths')}</h2>
+          <p class="text-sm text-ink-muted">{t('auto.buttons_can_specify_a_depth_pr')}</p>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <For each={[1, 2, 3, 4] as const}>
@@ -423,18 +397,10 @@ function ThemeDebug() {
                   </Panel.Header>
                   <Panel.Body class="p-4">
                     <div class="flex flex-wrap gap-2">
-                      <Button variant="ghost" depth={depth}>
-                        Ghost
-                      </Button>
-                      <Button variant="outline" depth={depth}>
-                        Base
-                      </Button>
-                      <Button variant="accent" depth={depth}>
-                        Active
-                      </Button>
-                      <Button variant="danger" depth={depth}>
-                        Danger
-                      </Button>
+                      <Button variant="ghost" depth={depth}>{t('auto.ghost')}</Button>
+                      <Button variant="outline" depth={depth}>{t('auto.base')}</Button>
+                      <Button variant="accent" depth={depth}>{t('auto.active')}</Button>
+                      <Button variant="danger" depth={depth}>{t('auto.danger')}</Button>
                     </div>
                   </Panel.Body>
                 </Panel>
@@ -445,14 +411,12 @@ function ThemeDebug() {
 
         {/* Full Example Card */}
         <section class="flex flex-col gap-4">
-          <h2 class="text-xl font-semibold text-ink">Complete Card Example</h2>
-          <p class="text-sm text-ink-muted">
-            A complete panel with header, body, and footer.
-          </p>
+          <h2 class="text-xl font-semibold text-ink">{t('auto.complete_card_example')}</h2>
+          <p class="text-sm text-ink-muted">{t('auto.a_complete_panel_with_header_b')}</p>
 
           <Panel depth={2}>
             <Panel.Header class="px-4">
-              <span class="text-sm font-semibold text-ink">Card Title</span>
+              <span class="text-sm font-semibold text-ink">{t('auto.card_title')}</span>
             </Panel.Header>
             <Panel.Body class="p-4">
               <p class="text-base text-ink mb-2">{LOREM_SHORT}</p>
@@ -460,9 +424,7 @@ function ThemeDebug() {
             </Panel.Body>
             <Panel.Footer class="px-4 justify-end gap-2">
               <Button variant="ghost" size="sm">{t('common.cancel')}</Button>
-              <Button variant="accent" size="sm">
-                Confirm
-              </Button>
+              <Button variant="accent" size="sm">{t('auto.confirm')}</Button>
             </Panel.Footer>
           </Panel>
         </section>

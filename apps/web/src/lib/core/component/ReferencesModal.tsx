@@ -1,4 +1,5 @@
 import { SplitDrawer } from '@components/app/split-layout/components/SplitDrawer';
+import { t } from '@app/lib/i18n';
 import { useDrawerControl } from '@components/app/split-layout/components/SplitDrawerContext';
 import clickOutside from '@core/directive/clickOutside';
 import Quotes from '@phosphor/quotes.svg';
@@ -41,9 +42,7 @@ export function ReferencesDrawer(props: {
   const title = () => {
     if (!props.documentName) return 'References';
     return (
-      <>
-        References
-        <span class="text-ink-extra-muted">
+      <>{t('auto.references')}<span class="text-ink-extra-muted">
           {' - '}
           {props.documentName}
         </span>
@@ -91,9 +90,7 @@ function _ReferencesModal(props: ReferencesModalProps) {
   const title = () => {
     if (!props.documentName) return 'References';
     return (
-      <>
-        References
-        <span class="text-ink-extra-muted">
+      <>{t('auto.references')}<span class="text-ink-extra-muted">
           {' - '}
           {props.documentName}
         </span>

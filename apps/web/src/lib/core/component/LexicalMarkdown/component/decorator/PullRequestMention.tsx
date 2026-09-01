@@ -1,4 +1,5 @@
 import { useSplitLayout } from '@components/app/split-layout/layout';
+import { t } from '@app/lib/i18n';
 import { HoverCard } from '@core/component/HoverCard';
 import { openInNewSplitForMention } from '@core/util/openInNewSplit';
 import { useSplitNavigationHandler } from '@core/util/useSplitNavigationHandler';
@@ -351,9 +352,7 @@ function PullRequestPreviewCard(props: {
       <Surface depth={3} class="rounded-xl shadow-lg shadow-drop-shadow">
         <Suspense
           fallback={
-            <div class="p-3 flex items-center justify-center text-sm text-ink-muted">
-              Fetching PR...
-            </div>
+            <div class="p-3 flex items-center justify-center text-sm text-ink-muted">{t('auto.fetching_pr')}</div>
           }
         >
           <PullRequestPreviewBody
@@ -474,7 +473,7 @@ export function PullRequestMention(props: PullRequestMentionDecoratorProps) {
           >
             <Suspense
               fallback={
-                <span class="text-ink-placeholder">Fetching PR...</span>
+                <span class="text-ink-placeholder">{t('auto.fetching_pr')}</span>
               }
             >
               <PullRequestMentionContent {...props} />

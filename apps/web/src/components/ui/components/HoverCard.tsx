@@ -1,4 +1,5 @@
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
+import { t } from '@app/lib/i18n';
 import type { Placement } from '@floating-ui/dom';
 import { Tooltip as KobalteTooltip } from '@kobalte/core/tooltip';
 import { createSignal, type JSX, type ParentProps, Show } from 'solid-js';
@@ -22,8 +23,8 @@ type HoverCardProps = ParentProps<{
 
 /**
  * @example
- * <HoverCard content={<span>Tooltip text</span>}>
- *   <button>Hover me</button>
+ * <HoverCard content={<span>{t('auto.tooltip_text')}</span>}>
+ *   <button>{t('auto.hover_me')}</button>
  * </HoverCard>
  */
 export function HoverCard(props: HoverCardProps) {

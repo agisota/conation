@@ -4,6 +4,7 @@ import {
   CREATE_MENU_COMMAND_SCOPE,
 } from '@app/constants/hotkeys';
 import { type CategoryFilter, CommandState } from '@app/features/command';
+import { t } from '@app/lib/i18n';
 import {
   CREATABLE_BLOCKS,
   createMenuOpen,
@@ -423,9 +424,7 @@ export default function GlobalShortcuts() {
     },
     runWithInputFocused: true,
     displayComponent: () => (
-      <div class="flex items-center gap-2">
-        System preference
-        <Show when={systemResolvedTheme()}>
+      <div class="flex items-center gap-2">{t('auto.system_preference')}<Show when={systemResolvedTheme()}>
           {(theme) => <ThemeChips theme={theme()} size="sm" />}
         </Show>
       </div>

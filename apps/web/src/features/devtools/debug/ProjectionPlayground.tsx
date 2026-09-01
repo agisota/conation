@@ -1,4 +1,5 @@
 import { createAIProjection } from '@queries/ai/projection';
+import { t } from '@app/lib/i18n';
 import type { Expiry } from '@service-cognition/generated/schemas/expiry';
 import type { RefreshCadence } from '@service-cognition/generated/schemas/refreshCadence';
 import { createConnectionWebsocketEffect } from '@service-connection/websocket';
@@ -104,7 +105,7 @@ export default function ProjectionPlayground() {
   return (
     <div class="flex h-full flex-col bg-surface text-ink">
       <header class="flex h-10 shrink-0 items-center border-edge-muted border-b px-4">
-        <div class="text-sm font-medium">AI Projection Playground</div>
+        <div class="text-sm font-medium">{t('auto.ai_projection_playground')}</div>
         <div class="ml-auto text-ink-muted text-xs">
           POST /ai-projections · gateway `ai_projection_updated`
         </div>
@@ -112,7 +113,7 @@ export default function ProjectionPlayground() {
       <div class="grid min-h-0 flex-1 grid-cols-[380px_1fr] overflow-hidden">
         <aside class="flex min-h-0 flex-col gap-4 overflow-auto border-edge-muted border-r p-4">
           <section class="space-y-2">
-            <div class="text-sm font-medium">Projection id</div>
+            <div class="text-sm font-medium">{t('auto.projection_id')}</div>
             <input
               class="w-full rounded-sm border border-edge-muted bg-surface p-1.5 text-sm outline-none focus:border-accent"
               value={id()}
@@ -125,7 +126,7 @@ export default function ProjectionPlayground() {
           </section>
 
           <section class="space-y-2">
-            <div class="text-sm font-medium">Prompt</div>
+            <div class="text-sm font-medium">{t('auto.prompt')}</div>
             <textarea
               class="min-h-24 w-full rounded-sm border border-edge-muted bg-surface p-1.5 text-sm outline-none focus:border-accent"
               value={prompt()}
@@ -134,7 +135,7 @@ export default function ProjectionPlayground() {
           </section>
 
           <section class="space-y-2">
-            <div class="text-sm font-medium">Output</div>
+            <div class="text-sm font-medium">{t('auto.output')}</div>
             <SegmentedControl
               class="w-full"
               size="sm"
@@ -153,7 +154,7 @@ export default function ProjectionPlayground() {
           </section>
 
           <section class="space-y-2">
-            <div class="text-sm font-medium">Model</div>
+            <div class="text-sm font-medium">{t('auto.model')}</div>
             <SegmentedControl
               class="w-full"
               size="sm"
@@ -174,13 +175,11 @@ export default function ProjectionPlayground() {
                 onInput={(event) => setCustomModel(event.currentTarget.value)}
               />
             </Show>
-            <div class="text-ink-muted text-xs">
-              Unroutable ids silently fall back to the server default.
-            </div>
+            <div class="text-ink-muted text-xs">{t('auto.unroutable_ids_silently_fall_b')}</div>
           </section>
 
           <section class="space-y-2">
-            <div class="text-sm font-medium">Request behavior</div>
+            <div class="text-sm font-medium">{t('auto.request_behavior')}</div>
             <button
               type="button"
               class="flex w-full items-center gap-2 text-left text-sm hover:bg-hover"
@@ -231,17 +230,13 @@ export default function ProjectionPlayground() {
               size="sm"
               disabled={projection.query.isFetching}
               onClick={() => projection.query.refetch()}
-            >
-              Send request
-            </Button>
+            >{t('auto.send_request')}</Button>
             <Button
               variant="cta"
               size="sm"
               disabled={busy()}
               onClick={() => void regenerate()}
-            >
-              Force regenerate
-            </Button>
+            >{t('auto.force_regenerate')}</Button>
           </section>
         </aside>
 
@@ -273,7 +268,7 @@ export default function ProjectionPlayground() {
           </Show>
 
           <section class="space-y-2">
-            <div class="text-sm font-medium">Result</div>
+            <div class="text-sm font-medium">{t('auto.result')}</div>
             <Show
               when={dataDisplay() !== undefined}
               fallback={
@@ -291,7 +286,7 @@ export default function ProjectionPlayground() {
           </section>
 
           <section class="space-y-2">
-            <div class="text-sm font-medium">Raw response</div>
+            <div class="text-sm font-medium">{t('auto.raw_response')}</div>
             <pre class="overflow-auto rounded-sm border border-edge-muted bg-surface p-3 text-xs">
               {projection.query.data
                 ? JSON.stringify(projection.query.data, null, 2)

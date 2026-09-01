@@ -1,4 +1,5 @@
 import Plus from '@phosphor/plus.svg';
+import { t } from '@app/lib/i18n';
 import XIcon from '@phosphor/x.svg';
 import { Button, cn, Dropdown, Layer } from '@ui';
 import { createSignal, For, Show } from 'solid-js';
@@ -58,7 +59,7 @@ export function SoupActiveFiltersBar(props: SoupActiveFiltersBarProps) {
                 tooltip="Clear active filters"
               >
                 <XIcon />
-                <span class="hidden @min-[300px]/split:inline">Clear all</span>
+                <span class="hidden @min-[300px]/split:inline">{t('auto.clear_all')}</span>
               </Button>
             </div>
           </div>

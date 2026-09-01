@@ -1,4 +1,5 @@
 import { toast } from '@core/component/Toast/Toast';
+import { t } from '@app/lib/i18n';
 import { debouncedDependent } from '@core/util/debounce';
 
 import { Dialog } from '@kobalte/core/dialog';
@@ -323,9 +324,7 @@ export function MarkdownVideo(props: VideoDecoratorProps) {
 
         <Show when={uploading() && state() !== 'error'}>
           <div class="absolute flex gap-2 top-2 left-2 justify-center items-center p-2">
-            <Spinner />
-            Saving Video...
-          </div>
+            <Spinner />{t('auto.saving_video')}</div>
         </Show>
 
         <Show

@@ -1,4 +1,5 @@
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
+import { t } from '@app/lib/i18n';
 import { UserIcon } from '@core/component/UserIcon';
 import { hasValidHotkey } from '@core/hotkey/utils';
 import { Entity, type EntityData } from '@entity';
@@ -177,8 +178,7 @@ function SearchDisplay(props: { item: SearchItem }) {
       <div class="size-5 flex items-center justify-center text-ink-muted shrink-0">
         <SearchIcon class="size-4" />
       </div>
-      <span class="truncate text-ink">
-        Search for <span class="text-ink">“{props.item.query}”</span>
+      <span class="truncate text-ink">{t('auto.search_for')}<span class="text-ink">“{props.item.query}”</span>
       </span>
     </div>
   );
@@ -190,8 +190,7 @@ function AskAiDisplay(props: { item: AskAiItem }) {
       <div class="size-5 flex items-center justify-center text-ink-muted shrink-0">
         <WideStar class="size-4" />
       </div>
-      <span class="truncate text-ink">
-        Ask AI about <span class="text-ink">“{props.item.query}”</span>
+      <span class="truncate text-ink">{t('auto.ask_ai_about')}<span class="text-ink">“{props.item.query}”</span>
       </span>
     </div>
   );

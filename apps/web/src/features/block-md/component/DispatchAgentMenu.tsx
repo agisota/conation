@@ -1,4 +1,5 @@
 import { openMacroMcpSetupModal } from '@app/features/integrations/mcp-setup/MacroMcpSetupModal';
+import { t } from '@app/lib/i18n';
 import type { SplitFileMenuAction } from '@components/app/split-layout/context';
 import { useBlockId } from '@core/block';
 import { editorStateAsMarkdown } from '@core/component/LexicalMarkdown/utils';
@@ -281,7 +282,7 @@ export function DispatchAgentButton(
             }}
           >
             <GitBranch class="size-4 shrink-0" />
-            <span class="flex-1 truncate">Copy branch name</span>
+            <span class="flex-1 truncate">{t('auto.copy_branch_name')}</span>
           </Dropdown.Item>
           <Dropdown.Item
             onSelect={() => {
@@ -290,11 +291,11 @@ export function DispatchAgentButton(
             }}
           >
             <PlugIcon class="size-4 shrink-0" />
-            <span class="flex-1 truncate">MCP setup instructions</span>
+            <span class="flex-1 truncate">{t('auto.mcp_setup_instructions')}</span>
           </Dropdown.Item>
         </Dropdown.Group>
         <Dropdown.Group>
-          <Dropdown.GroupLabel>Open in</Dropdown.GroupLabel>
+          <Dropdown.GroupLabel>{t('auto.open_in')}</Dropdown.GroupLabel>
           <For each={PLATFORM_ACTIONS}>
             {(action) => (
               <Dropdown.Item

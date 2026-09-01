@@ -1,4 +1,5 @@
 import { useChannelName } from '@core/context/channels';
+import { t } from '@app/lib/i18n';
 import EyeIcon from '@phosphor-icons/core/regular/eye.svg';
 import {
   addDays,
@@ -117,8 +118,7 @@ export const readChannelMessagesHandler = createToolRenderer({
       >
         <div class="flex min-w-0 flex-1 flex-col gap-1">
           <div class="flex min-w-0 items-center justify-between gap-3 overflow-hidden">
-            <span class="min-w-0 truncate">
-              Read messages in <span class="text-ink">{channelName()}</span>
+            <span class="min-w-0 truncate">{t('auto.read_messages_in')}<span class="text-ink">{channelName()}</span>
             </span>
             {ctx.response && (
               <span class="shrink-0 whitespace-nowrap text-xs text-ink-extra-muted">
@@ -143,8 +143,7 @@ export const readChannelMessageContextHandler = createToolRenderer({
     return (
       <BaseTool type="call" icon={EyeIcon} renderContext={ctx.renderContext}>
         <div class="flex min-w-0 flex-1 items-center justify-between gap-3 overflow-hidden">
-          <span class="min-w-0 truncate">
-            Read <span class="text-ink">{channelName()}</span> message context
+          <span class="min-w-0 truncate">{t('auto.read')}<span class="text-ink">{channelName()}</span> message context
           </span>
         </div>
       </BaseTool>
@@ -161,8 +160,7 @@ export const readChannelThreadHandler = createToolRenderer({
     return (
       <BaseTool type="call" icon={EyeIcon} renderContext={ctx.renderContext}>
         <div class="flex min-w-0 flex-1 items-center justify-between gap-3 overflow-hidden">
-          <span class="min-w-0 truncate">
-            Read <span class="text-ink">{channelName()}</span> thread
+          <span class="min-w-0 truncate">{t('auto.read')}<span class="text-ink">{channelName()}</span> thread
           </span>
           {ctx.response && (
             <span class="shrink-0 whitespace-nowrap text-xs text-ink-extra-muted">

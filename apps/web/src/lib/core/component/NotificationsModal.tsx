@@ -1,4 +1,5 @@
 import { SplitDrawer } from '@components/app/split-layout/components/SplitDrawer';
+import { t } from '@app/lib/i18n';
 import { useDrawerControl } from '@components/app/split-layout/components/SplitDrawerContext';
 import clickOutside from '@core/directive/clickOutside';
 import type { Entity } from '@core/types';
@@ -68,9 +69,7 @@ export function NotificationsDrawer(props: {
     () => notifications().filter((n) => !n.viewed_at).length
   );
   const title = () => (
-    <>
-      Notifications
-      <span class="text-ink-extra-muted">
+    <>{t('auto.notifications')}<span class="text-ink-extra-muted">
         {unreadCount() > 0 ? ` - ${unreadCount()} unread` : ''}
       </span>
     </>

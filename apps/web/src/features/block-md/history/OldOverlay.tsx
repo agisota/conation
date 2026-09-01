@@ -1,4 +1,5 @@
 import { useSplitLayout } from '@components/app/split-layout/layout';
+import { t } from '@app/lib/i18n';
 import { useBlockId } from '@core/block';
 import { toast } from '@core/component/Toast/Toast';
 import { useBlockDocumentName } from '@core/util/currentBlockDocumentName';
@@ -50,9 +51,7 @@ export function OldOverlay() {
           <Hotkey shortcut="escape" theme="current" /> to exit.
         </span>
         <Button variant="outline" size="sm" onClick={history.exit}>
-          <XIcon />
-          Exit
-        </Button>
+          <XIcon />{t('auto.exit')}</Button>
         <Button
           variant="accent"
           size="sm"

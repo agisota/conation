@@ -6,6 +6,7 @@ import {
   soupItemMatchesTagFilter,
 } from '@app/constants/list-views';
 import { SearchState } from '@app/features/command/mobile/mobileSearchState';
+import { t } from '@app/lib/i18n';
 import {
   createSoupState,
   type GroupMeta,
@@ -121,7 +122,7 @@ type DataSource<T> = {
    * Full refresh (e.g. mobile pull-to-refresh): invalidate every soup query
    * plus notification state. Resolves once the active refetches settle.
    */
-  refresh: () => Promise<void>;
+  refresh: () =>{t('auto.promise')}<void>;
 };
 
 type SoupViewInitializeOptions = {
@@ -182,7 +183,7 @@ interface SoupViewContextValues {
   readFilter: Accessor<ReadFilter>;
   setReadFilter: Setter<ReadFilter>;
   groupByField: Accessor<GroupByField | undefined>;
-  fetchNextGroupPage: (groupKey: string) => Promise<void>;
+  fetchNextGroupPage: (groupKey: string) =>{t('auto.promise')}<void>;
   isFetchingGroupPage: (groupKey: string) => boolean;
   hasNextGroupPage: (groupKey: string) => boolean;
 }

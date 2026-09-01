@@ -1,4 +1,5 @@
 import { formatDateAndTime } from '@entity';
+import { t } from '@app/lib/i18n';
 import BellSimple from '@phosphor-icons/core/regular/bell-simple.svg';
 import Check from '@phosphor-icons/core/regular/check.svg';
 import Trash from '@phosphor-icons/core/regular/trash.svg';
@@ -117,7 +118,7 @@ const listRemindersHandler = createToolRenderer({
       >
         <div class="flex min-w-0 flex-1 flex-col gap-1">
           <div class="flex min-w-0 items-center justify-between gap-3 overflow-hidden">
-            <span class="min-w-0 truncate">Read reminders</span>
+            <span class="min-w-0 truncate">{t('auto.read_reminders')}</span>
             <Tool.ResultToggle
               expanded={isExpanded()}
               onToggle={() => setIsExpanded((expanded) => !expanded)}

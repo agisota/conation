@@ -1,4 +1,5 @@
 import { useHandleFileUpload } from '@app/util/handleFileUpload';
+import { t } from '@app/lib/i18n';
 import { useMaybeBlockId, useMaybeBlockName } from '@core/block';
 import { fileSelector } from '@core/directive/fileSelector';
 import { folderSelector } from '@core/directive/folderSelector';
@@ -36,9 +37,7 @@ export function FolderDropZone() {
               },
             }}
             class="border-0 bg-transparent p-0 font-[inherit] text-inherit underline"
-          >
-            Upload files
-          </button>{' '}
+          >{t('auto.upload_files')}</button>{' '}
           /{' '}
           <button
             type="button"
@@ -48,9 +47,7 @@ export function FolderDropZone() {
               },
             }}
             class="border-0 bg-transparent p-0 font-[inherit] text-inherit underline"
-          >
-            Upload folders
-          </button>
+          >{t('auto.upload_folders')}</button>
         </p>
       </div>
     </Show>

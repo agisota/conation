@@ -1,4 +1,5 @@
 import clickOutside from '@core/directive/clickOutside';
+import { t } from '@app/lib/i18n';
 import { cn } from '@ui';
 import { createEffect, createSignal, on, Show } from 'solid-js';
 import { INPUT_CLASS, isValidTime } from './automationUtils';
@@ -179,9 +180,7 @@ export function AutomationTimePicker(props: {
               type="button"
               class="ml-auto px-2 py-1 border border-accent/30 bg-accent/10 text-accent rounded-sm text-sm hover:bg-accent/20"
               onClick={() => setOpen(false)}
-            >
-              Done
-            </button>
+            >{t('auto.done')}</button>
           </div>
         </div>
       </Show>

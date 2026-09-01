@@ -179,10 +179,8 @@ export function CreateChannelModal() {
 
             <div class="flex flex-col gap-4">
               <div class="flex items-center gap-2 px-2">
-                <Dialog.Title class="sr-only">Create a channel</Dialog.Title>
-                <label for="new-channel-name" class="sr-only">
-                  Name
-                </label>
+                <Dialog.Title class="sr-only">{t('auto.create_a_channel')}</Dialog.Title>
+                <label for="new-channel-name" class="sr-only">{t('auto.name')}</label>
                 <HashIcon
                   aria-hidden="true"
                   class="size-5 shrink-0 text-ink-placeholder"
@@ -205,12 +203,8 @@ export function CreateChannelModal() {
 
               <div class="flex flex-col gap-2 px-2">
                 <div class="flex items-center gap-2">
-                  <span class="text-xs font-medium text-ink-muted">
-                    Invite people
-                  </span>
-                  <span class="rounded-full bg-ink/5 px-1.5 py-0.5 text-xxs font-medium text-ink-extra-muted">
-                    Optional
-                  </span>
+                  <span class="text-xs font-medium text-ink-muted">{t('auto.invite_people')}</span>
+                  <span class="rounded-full bg-ink/5 px-1.5 py-0.5 text-xxs font-medium text-ink-extra-muted">{t('auto.optional')}</span>
                 </div>
                 <RecipientSelector<'user' | 'contact'>
                   options={recipientOptions}
@@ -221,9 +215,7 @@ export function CreateChannelModal() {
                 <Show when={channelType() === 'team' && autoJoinTeam()}>
                   <div class="mt-2 flex flex-col gap-2">
                     <div class="flex items-center gap-1">
-                      <span class="text-xs font-medium text-ink-muted">
-                        Included team members
-                      </span>
+                      <span class="text-xs font-medium text-ink-muted">{t('auto.included_team_members')}</span>
                       <span class="text-xs text-ink-extra-muted">
                         ({teamMembers().length})
                       </span>
@@ -264,9 +256,7 @@ export function CreateChannelModal() {
 
             <div class="flex shrink-0 items-center justify-end gap-3 px-2">
               <Show when={channelType() === 'private'}>
-                <p class="mr-auto text-xs text-ink-extra-muted">
-                  Only people you invite can see this channel.
-                </p>
+                <p class="mr-auto text-xs text-ink-extra-muted">{t('auto.only_people_you_invite_can_see')}</p>
               </Show>
               <Show when={channelType() === 'team' && team()}>
                 <div class="mr-auto flex items-center gap-1.5">

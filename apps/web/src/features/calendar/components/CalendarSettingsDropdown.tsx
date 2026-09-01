@@ -1,4 +1,5 @@
 import { MobileDrawer } from '@components/app/mobile/MobileDrawer';
+import { t } from '@app/lib/i18n';
 import { isMobile } from '@core/mobile/isMobile';
 import CaretRightIcon from '@phosphor/caret-right.svg';
 import CheckIcon from '@phosphor/check.svg';
@@ -131,7 +132,7 @@ function DesktopCalendarSettings(props: {
       <Dropdown.Content class="w-60 max-w-[calc(100vw-1rem)]">
         <Show when={controls.showCalendarVisibility()}>
           <Dropdown.Group>
-            <Dropdown.GroupLabel>Calendars</Dropdown.GroupLabel>
+            <Dropdown.GroupLabel>{t('auto.calendars')}</Dropdown.GroupLabel>
             <For each={calendarView.sources()}>
               {(source) => (
                 <Dropdown.CheckboxItem
@@ -154,20 +155,18 @@ function DesktopCalendarSettings(props: {
         </Show>
 
         <Dropdown.Group>
-          <Dropdown.GroupLabel>Display</Dropdown.GroupLabel>
+          <Dropdown.GroupLabel>{t('auto.display')}</Dropdown.GroupLabel>
           <Dropdown.CheckboxItem
             checked={calendarView.displaySettings.showWeekends}
             closeOnSelect={false}
             onChange={controls.changeShowWeekends}
           >
-            <span class="flex-1 truncate">Show weekends</span>
+            <span class="flex-1 truncate">{t('auto.show_weekends')}</span>
           </Dropdown.CheckboxItem>
 
           <Dropdown.Sub>
             <Dropdown.SubTrigger>
-              <span class="min-w-0 flex-1 truncate text-xs text-ink-muted">
-                Week starts on
-              </span>
+              <span class="min-w-0 flex-1 truncate text-xs text-ink-muted">{t('auto.week_starts_on')}</span>
               <span class="text-sm font-medium text-ink">
                 {controls.weekStartLabel()}
               </span>
@@ -203,9 +202,7 @@ function DesktopCalendarSettings(props: {
 
           <Dropdown.Sub>
             <Dropdown.SubTrigger>
-              <span class="min-w-0 flex-1 truncate text-xs text-ink-muted">
-                Time format
-              </span>
+              <span class="min-w-0 flex-1 truncate text-xs text-ink-muted">{t('auto.time_format')}</span>
               <span class="text-sm font-medium text-ink">
                 {controls.timeFormatLabel()}
               </span>
@@ -237,7 +234,7 @@ function DesktopCalendarSettings(props: {
 
         <Show when={controls.turnOffItems().length > 0}>
           <Dropdown.Group>
-            <Dropdown.GroupLabel>Calendar access</Dropdown.GroupLabel>
+            <Dropdown.GroupLabel>{t('auto.calendar_access')}</Dropdown.GroupLabel>
             <For each={controls.turnOffItems()}>
               {(item) => (
                 <Dropdown.Item
@@ -292,7 +289,7 @@ function MobileCalendarSettings(props: { controls: CalendarSettingsControls }) {
           <MobilePeriodControls onSelect={() => setOpen(false)} />
 
           <Show when={controls.showCalendarVisibility()}>
-            <MobileDrawer.Label>Calendars</MobileDrawer.Label>
+            <MobileDrawer.Label>{t('auto.calendars')}</MobileDrawer.Label>
             <MobileDrawer.Section class="flex shrink-0 flex-col">
               <For each={calendarView.sources()}>
                 {(source) => (
@@ -318,7 +315,7 @@ function MobileCalendarSettings(props: { controls: CalendarSettingsControls }) {
             <div class="mt-4" />
           </Show>
 
-          <MobileDrawer.Label>Display</MobileDrawer.Label>
+          <MobileDrawer.Label>{t('auto.display')}</MobileDrawer.Label>
           <MobileDrawer.Section class="flex shrink-0 flex-col">
             <Checkbox
               as="label"
@@ -326,12 +323,12 @@ function MobileCalendarSettings(props: { controls: CalendarSettingsControls }) {
               onChange={controls.changeShowWeekends}
               class={DRAWER_ROW_CLASS}
             >
-              <span class="min-w-0 flex-1 truncate">Show weekends</span>
+              <span class="min-w-0 flex-1 truncate">{t('auto.show_weekends')}</span>
               <Checkbox.Control />
             </Checkbox>
           </MobileDrawer.Section>
 
-          <MobileDrawer.Label class="pt-4">Week starts on</MobileDrawer.Label>
+          <MobileDrawer.Label class="pt-4">{t('auto.week_starts_on')}</MobileDrawer.Label>
           <MobileDrawer.Section class="flex shrink-0 flex-col">
             <For each={WEEK_START_OPTIONS}>
               {(option) => (
@@ -357,7 +354,7 @@ function MobileCalendarSettings(props: { controls: CalendarSettingsControls }) {
             </For>
           </MobileDrawer.Section>
 
-          <MobileDrawer.Label class="pt-4">Time format</MobileDrawer.Label>
+          <MobileDrawer.Label class="pt-4">{t('auto.time_format')}</MobileDrawer.Label>
           <MobileDrawer.Section class="flex shrink-0 flex-col">
             <For each={TIME_FORMAT_OPTIONS}>
               {(option) => (
@@ -384,9 +381,7 @@ function MobileCalendarSettings(props: { controls: CalendarSettingsControls }) {
           </MobileDrawer.Section>
 
           <Show when={controls.turnOffItems().length > 0}>
-            <MobileDrawer.Label class="pt-4">
-              Calendar access
-            </MobileDrawer.Label>
+            <MobileDrawer.Label class="pt-4">{t('auto.calendar_access')}</MobileDrawer.Label>
             <MobileDrawer.Section class="mb-3 flex shrink-0 flex-col">
               <For each={controls.turnOffItems()}>
                 {(item) => (

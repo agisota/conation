@@ -1,4 +1,5 @@
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import { useEmail } from '@core/context/user';
 import { idToDisplayName } from '@core/user/util';
 import CheckIcon from '@phosphor/check.svg';
@@ -127,9 +128,7 @@ function InvitesPanel(props: {
               class="ml-auto shrink-0"
               disabled={joinTeam.isPending}
               onClick={() => joinTeam.mutate({ teamInviteId: invite.id })}
-            >
-              Join
-            </Button>
+            >{t('auto.join')}</Button>
           </div>
         )}
       </For>
@@ -243,9 +242,7 @@ function TeamForm(props: {
           exactly when the field needs explaining. */}
       <div class="flex items-center gap-1.5">
         <div class="flex min-w-0 flex-1 flex-col gap-1.5">
-          <label for="team-name" class="text-xs text-ink-muted">
-            Team name
-          </label>
+          <label for="team-name" class="text-xs text-ink-muted">{t('auto.team_name')}</label>
           <FormInput
             id="team-name"
             // An example, not "Team name" again — the label says that.
@@ -308,9 +305,7 @@ function TeamForm(props: {
         class="self-center text-ink-muted"
         onClick={addEmptyInvite}
       >
-        <Plus class="size-4" />
-        Add another teammate
-      </Button>
+        <Plus class="size-4" />{t('auto.add_another_teammate')}</Button>
 
       <ContinueButton
         label={

@@ -1,4 +1,5 @@
 import { createMethodRegistration } from '@core/orchestrator';
+import { t } from '@app/lib/i18n';
 import { blockHandleSignal } from '@core/signal/load';
 import { useSearchParams } from '@solidjs/router';
 import {
@@ -27,7 +28,7 @@ type ResolvedParams<T extends ParamSchema> = {
  * consumers.
  */
 type ParamsContextValue = {
-  getParam: (param: string) => Accessor<string | undefined>;
+  getParam: (param: string) =>{t('auto.accessor')}<string | undefined>;
 };
 
 const ParamsContext = createContext<ParamsContextValue>({

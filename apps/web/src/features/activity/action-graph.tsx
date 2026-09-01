@@ -1,4 +1,5 @@
 import type { ActivityOverview } from '@queries/activity/graphql/overview';
+import { t } from '@app/lib/i18n';
 import { cn, Layer, Tooltip } from '@ui';
 import { format } from 'date-fns';
 import { createMemo, For, type JSX } from 'solid-js';
@@ -99,13 +100,13 @@ function ActionGraphHeader(props: { total: number }) {
 function IntensityLegend() {
   return (
     <div class="ml-auto flex shrink-0 items-center gap-1 text-ink-extra-muted">
-      <span>Fewer</span>
+      <span>{t('auto.fewer')}</span>
       <For each={[0, 1, 2, 3, 4] as const}>
         {(level) => (
           <span class={`size-2.5 rounded-[3px] ${INTENSITY_CLASS[level]}`} />
         )}
       </For>
-      <span>More</span>
+      <span>{t('auto.more')}</span>
     </div>
   );
 }

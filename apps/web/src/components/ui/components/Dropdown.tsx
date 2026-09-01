@@ -1,4 +1,5 @@
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
+import { t } from '@app/lib/i18n';
 import { DropdownMenu as KobalteDropdownMenu } from '@kobalte/core/dropdown-menu';
 import CheckIcon from '@phosphor/check.svg';
 import { type ComponentProps, onCleanup, splitProps } from 'solid-js';
@@ -12,7 +13,7 @@ import { Surface, type SurfaceProps } from './Surface';
 
 /*
 <Dropdown>
-  <Dropdown.Trigger>Filter</Dropdown.Trigger>
+  <Dropdown.Trigger>{t('auto.filter')}</Dropdown.Trigger>
   <Dropdown.Content>
     <Dropdown.Group>
       <Dropdown.Item></Dropdown.Item>

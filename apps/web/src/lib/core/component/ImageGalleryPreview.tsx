@@ -1,4 +1,5 @@
 import { internalDrag } from '@core/directive/internalDragState';
+import { t } from '@app/lib/i18n';
 
 false && internalDrag;
 
@@ -153,13 +154,13 @@ export const ImageGalleryPreview: Component<ImageGalleryPreviewProps> = (
                             onSelect={() => copyToClipboardById(image.id)}
                           >
                             <ClipboardIcon class="size-4 shrink-0" />
-                            <span class="flex-1 truncate">Copy image</span>
+                            <span class="flex-1 truncate">{t('auto.copy_image')}</span>
                           </Dropdown.Item>
                           <Dropdown.Item
                             onSelect={() => downloadImageById(image.id)}
                           >
                             <DownloadIcon class="size-4 shrink-0" />
-                            <span class="flex-1 truncate">Download image</span>
+                            <span class="flex-1 truncate">{t('auto.download_image')}</span>
                           </Dropdown.Item>
                         </Dropdown.Group>
                         <Show when={props.onDelete}>
@@ -170,7 +171,7 @@ export const ImageGalleryPreview: Component<ImageGalleryPreviewProps> = (
                               }
                             >
                               <TrashIcon class="size-4 shrink-0" />
-                              <span class="flex-1 truncate">Delete image</span>
+                              <span class="flex-1 truncate">{t('auto.delete_image')}</span>
                             </Dropdown.Item>
                           </Dropdown.Group>
                         </Show>

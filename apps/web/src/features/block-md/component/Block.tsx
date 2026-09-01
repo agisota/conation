@@ -1,4 +1,5 @@
 import { useBlockEntityCommands } from '@app/features/next-soup/actions';
+import { t } from '@app/lib/i18n';
 import { useGlobalNotificationSource } from '@components/app/GlobalAppState';
 import { SidePanel } from '@components/app/side-panel';
 import { useBlockId } from '@core/block';
@@ -71,7 +72,7 @@ function startSnapshotIngest(
   parentSpan: Span | undefined,
   source: SnapshotSource,
   loroManager: MarkdownLoroManager,
-  ingest: () => Promise<SnapshotResult>
+  ingest: () =>{t('auto.promise')}<SnapshotResult>
 ): void {
   parentSpan?.event('doc.snapshot.attempt', {
     'snapshot.source': source,

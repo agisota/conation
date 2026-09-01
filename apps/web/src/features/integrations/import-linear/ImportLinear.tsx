@@ -1,4 +1,5 @@
 import { toast } from '@core/component/Toast/Toast';
+import { t } from '@app/lib/i18n';
 import { useContacts } from '@core/user';
 import { createTask } from '@core/util/create';
 import { parseCsv } from '@core/util/csv';
@@ -200,7 +201,7 @@ export default function ImportLinear() {
     <div class="flex flex-col size-full">
       <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
         <div class="flex items-center justify-between">
-          <div class="text-lg font-medium text-ink">Import Linear CSV</div>
+          <div class="text-lg font-medium text-ink">{t('auto.import_linear_csv')}</div>
           <Button
             variant="outline"
             onClick={() => {
@@ -211,15 +212,13 @@ export default function ImportLinear() {
               setProgress({ type: 'idle' });
               setAssigneeMapping(reconcile({}));
             }}
-          >
-            Clear
-          </Button>
+          >{t('auto.clear')}</Button>
         </div>
 
         <div class="flex flex-col gap-2">
-          <label class="text-sm text-ink-muted">CSV file</label>
+          <label class="text-sm text-ink-muted">{t('auto.csv_file')}</label>
           <label class="inline-flex items-center gap-2 px-4 py-2 bg-accent text-accent-contrast font-medium rounded-md hover:bg-accent-hover transition-colors w-fit">
-            <span>Choose File</span>
+            <span>{t('auto.choose_file')}</span>
             <input
               type="file"
               accept=".csv,text/csv"
@@ -245,7 +244,7 @@ export default function ImportLinear() {
 
             <Show when={uniqueAssignees().length > 0}>
               <div class="flex flex-col gap-2">
-                <div class="text-sm font-medium text-ink">Assignee mapping</div>
+                <div class="text-sm font-medium text-ink">{t('auto.assignee_mapping')}</div>
                 <div class="text-xs text-ink-muted">
                   Linear assignees that don’t match your contacts will import as
                   unassigned unless you map them here.
@@ -267,7 +266,7 @@ export default function ImportLinear() {
                             setAssigneeMapping(assignee, e.currentTarget.value)
                           }
                         >
-                          <option value="">Unassigned</option>
+                          <option value="">{t('auto.unassigned')}</option>
                           <For each={contactOptions()}>
                             {(o) => <option value={o.id}>{o.label}</option>}
                           </For>
@@ -290,9 +289,9 @@ export default function ImportLinear() {
               <table class="w-full text-sm">
                 <thead class="bg-hover">
                   <tr class="text-left">
-                    <th class="p-2">Row</th>
-                    <th class="p-2">Title</th>
-                    <th class="p-2">Warnings</th>
+                    <th class="p-2">{t('auto.row')}</th>
+                    <th class="p-2">{t('auto.title')}</th>
+                    <th class="p-2">{t('auto.warnings')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -325,7 +324,7 @@ export default function ImportLinear() {
 
         <Show when={createdIds().length > 0}>
           <div class="flex flex-col gap-2">
-            <div class="text-sm font-medium text-ink">Created tasks</div>
+            <div class="text-sm font-medium text-ink">{t('auto.created_tasks')}</div>
             <div class="flex flex-col gap-1">
               <For each={createdIds()}>
                 {(id) => (
@@ -345,9 +344,7 @@ export default function ImportLinear() {
       </div>
 
       <div class="border-t border-edge p-4 flex items-center gap-3 shrink-0">
-        <Button onClick={runImport} disabled={!canImport()}>
-          Import tasks
-        </Button>
+        <Button onClick={runImport} disabled={!canImport()}>{t('auto.import_tasks')}</Button>
         <Show when={runningProgress()}>
           {(p) => (
             <div class="text-sm text-ink-muted">

@@ -1,4 +1,5 @@
 import { type PortalScope, ScopedPortal } from '@core/component/ScopedPortal';
+import { t } from '@app/lib/i18n';
 import clickOutside from '@core/directive/clickOutside';
 import { fuzzyFilter } from '@core/util/fuzzy';
 import { useIsKeyPressActive } from '@core/util/useIsKeyPressActive';
@@ -268,7 +269,7 @@ export function ActionMenu(props: {
       <Show
         when={filteredItems().length > 0}
         fallback={
-          <div class="px-2 text text-ink-muted text-sm">No results</div>
+          <div class="px-2 text text-ink-muted text-sm">{t('auto.no_results')}</div>
         }
       >
         <For each={filteredItems()}>

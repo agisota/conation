@@ -1,4 +1,5 @@
 import { cn } from '@ui';
+import { t } from '@app/lib/i18n';
 import { For } from 'solid-js';
 
 import type { PrRef } from '../util/prKey';
@@ -53,7 +54,7 @@ export function PrTimelineSkeleton() {
     <section class="mt-8">
       <div class="flex items-center gap-2 pt-2">
         <div class="w-6 border-t border-edge-muted" />
-        <span class="px-2 text-xs">Discussion</span>
+        <span class="px-2 text-xs">{t('auto.discussion')}</span>
         <div class="flex-1 border-t border-edge-muted" />
       </div>
       <div class="py-2">

@@ -1,4 +1,5 @@
 import { createUniqueId } from 'solid-js';
+import { t } from '@app/lib/i18n';
 
 export const AnimatedSignalIcon = (props: {
   triggerAnimation?: boolean;
@@ -15,7 +16,7 @@ export const AnimatedSignalIcon = (props: {
       xmlns="http://www.w3.org/2000/svg"
       class={`animated-signal-icon ${props.triggerAnimation ? 'animating' : ''} ${props.class ?? ''}`}
     >
-      {/*<title>Animated signal icon</title>*/}
+      {/*<title>{t('auto.animated_signal_icon')}</title>*/}
       <style>{`
         @keyframes move-left {
           0% {

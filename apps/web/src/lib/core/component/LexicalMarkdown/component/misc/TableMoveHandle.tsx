@@ -1,4 +1,5 @@
 import { mdStore } from '@block-md/signal/markdownBlockData';
+import { t } from '@app/lib/i18n';
 import { ScopedPortal } from '@core/component/ScopedPortal';
 import clickOutside from '@core/directive/clickOutside';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
@@ -598,7 +599,7 @@ export function TableMoveHandle() {
                     onClick={() => runMenuAction(() => $unmergeCell())}
                   >
                     <CornersOutIcon class="size-4" />
-                    <span class="text-xs">Split cell</span>
+                    <span class="text-xs">{t('auto.split_cell')}</span>
                   </button>
                 </Show>
               </div>

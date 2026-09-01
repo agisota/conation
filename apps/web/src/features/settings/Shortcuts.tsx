@@ -1,4 +1,5 @@
 import { IS_MAC } from '@core/constant/isMac';
+import { t } from '@app/lib/i18n';
 import { cn, Hotkey, ToggleSwitch } from '@ui';
 import {
   enableScreencastHotkeys,
@@ -1065,7 +1066,7 @@ export function Shortcuts() {
       title="Keyboard shortcuts"
       actions={
         <div class="flex items-center gap-2">
-          <span class="text-sm text-ink-muted">Screencast keys</span>
+          <span class="text-sm text-ink-muted">{t('auto.screencast_keys')}</span>
           <ToggleSwitch
             size="md"
             onChange={setEnableScreencastHotkeys}

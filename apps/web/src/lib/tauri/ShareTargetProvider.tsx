@@ -1,4 +1,5 @@
 import { convertFileSrc, invoke } from '@tauri-apps/api/core';
+import { t } from '@app/lib/i18n';
 import { listen } from '@tauri-apps/api/event';
 import type { OsType } from '@tauri-apps/plugin-os';
 import {
@@ -107,8 +108,8 @@ async function uploadPendingShareFile(
 
 interface ShareTargetContextValue {
   pendingShareFiles: Accessor<PendingShareFile[]>;
-  uploadPendingShareFile: (args: UploadPendingShareFileArgs) => Promise<void>;
-  clearPendingShareFiles: () => Promise<void>;
+  uploadPendingShareFile: (args: UploadPendingShareFileArgs) =>{t('auto.promise')}<void>;
+  clearPendingShareFiles: () =>{t('auto.promise')}<void>;
 }
 
 const ShareTargetContext = createContext<ShareTargetContextValue | undefined>(

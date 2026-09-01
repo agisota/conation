@@ -8,6 +8,7 @@ import {
   type SoupState,
 } from '@app/features/next-soup/create-soup-state';
 import { createHotkeyGroup, registerHotkey } from '@core/hotkey/hotkeys';
+import { t } from '@app/lib/i18n';
 import { AnimatedPlusIcon } from '@icon/wide-plus';
 import { Dialog } from '@kobalte/core/dialog';
 import {
@@ -109,8 +110,7 @@ function CreateEntityContent(props: LessonContentProps) {
       tabIndex={0}
       class="flex flex-col gap-8 outline-none onboarding-stagger"
     >
-      <p class="mt-2">
-        The <strong>Create Launcher</strong> lets you create Macro Editor
+      <p class="mt-2">{t('auto.the')}<strong>{t('auto.create_launcher')}</strong> lets you create Macro Editor
         quickly, from anywhere.
       </p>
       <div class="flex flex-col gap-3">

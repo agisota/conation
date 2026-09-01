@@ -1,4 +1,5 @@
 import { SplitHeaderLeft } from '@components/app/split-layout/components/SplitHeader';
+import { t } from '@app/lib/i18n';
 import { StaticSplitLabel } from '@components/app/split-layout/components/SplitLabel';
 import { toast } from '@core/component/Toast/Toast';
 import type { CollectionNode } from '@kobalte/core';
@@ -219,15 +220,13 @@ export default function ThemeEdit3() {
           />
 
           <Button variant="outline" size="md" onClick={copyTheme}>
-            <ClipboardIcon class="size-4" />
-            Copy full theme JSON
-          </Button>
+            <ClipboardIcon class="size-4" />{t('auto.copy_full_theme_json')}</Button>
         </div>
       </div>
 
       <main class="mx-auto max-w-6xl px-6 py-8">
         <div class="mb-5">
-          <h2 class="text-base font-medium">Color tokens</h2>
+          <h2 class="text-base font-medium">{t('auto.color_tokens')}</h2>
           <p class="mt-1 max-w-2xl text-xs leading-relaxed text-ink-muted">
             Pick a color to make it custom, or compose it from another raw token
             with link, mix, and alpha controls. Every change updates the active

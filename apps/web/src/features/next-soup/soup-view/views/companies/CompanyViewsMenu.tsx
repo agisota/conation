@@ -199,16 +199,16 @@ export function CompanyViewsMenu(props: { hideLabel?: boolean } = {}) {
       >
         <StackIcon />
         <Show when={!props.hideLabel}>
-          <span>Views</span>
+          <span>{t('auto.views')}</span>
         </Show>
       </Dropdown.Trigger>
 
       <Dropdown.Content class="w-64 shadow-menu">
         <Dropdown.Group>
-          <Dropdown.GroupLabel>My views</Dropdown.GroupLabel>
+          <Dropdown.GroupLabel>{t('auto.my_views')}</Dropdown.GroupLabel>
           <For
             each={personal.views()}
-            fallback={<EmptyViewsHint>No saved views</EmptyViewsHint>}
+            fallback={<EmptyViewsHint>{t('auto.no_saved_views')}</EmptyViewsHint>}
           >
             {(view) => (
               <SavedViewRow
@@ -228,10 +228,10 @@ export function CompanyViewsMenu(props: { hideLabel?: boolean } = {}) {
         </Dropdown.Group>
 
         <Dropdown.Group>
-          <Dropdown.GroupLabel>Team views</Dropdown.GroupLabel>
+          <Dropdown.GroupLabel>{t('auto.team_views')}</Dropdown.GroupLabel>
           <For
             each={team.views()}
-            fallback={<EmptyViewsHint>No team views</EmptyViewsHint>}
+            fallback={<EmptyViewsHint>{t('auto.no_team_views')}</EmptyViewsHint>}
           >
             {(view) => (
               <SavedViewRow
@@ -313,7 +313,7 @@ export function CompanyViewsMenu(props: { hideLabel?: boolean } = {}) {
             onSelect={() => copyShareLink(captureCurrentView())}
           >
             <LinkIcon class="size-3.5 shrink-0 text-ink-muted" />
-            <span class="flex-1 truncate">Copy link to current view</span>
+            <span class="flex-1 truncate">{t('auto.copy_link_to_current_view')}</span>
           </Dropdown.Item>
         </Dropdown.Group>
       </Dropdown.Content>
@@ -356,7 +356,7 @@ export function CompanyDisplayMenu() {
           {/* Column visibility only applies to the list. */}
           <Show when={viewMode() === 'list'}>
             <Dropdown.Group>
-              <Dropdown.GroupLabel>List columns</Dropdown.GroupLabel>
+              <Dropdown.GroupLabel>{t('auto.list_columns')}</Dropdown.GroupLabel>
               <For
                 each={Object.keys(CRM_LIST_COLUMN_LABELS) as CrmListColumnId[]}
               >
@@ -388,7 +388,7 @@ export function CompanyDisplayMenu() {
                 }
                 closeOnSelect={false}
               >
-                <span class="flex-1 truncate">Show hidden companies</span>
+                <span class="flex-1 truncate">{t('auto.show_hidden_companies')}</span>
               </Dropdown.CheckboxItem>
             </Dropdown.Group>
           </Show>

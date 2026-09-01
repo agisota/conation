@@ -1,4 +1,5 @@
 import { LoadingBlock } from '@core/component/LoadingBlock';
+import { t } from '@app/lib/i18n';
 import { PcNoiseGrid } from '@core/component/PcNoiseGrid';
 import { getDisplayName, tryMacroId } from '@core/user';
 import LogoIcon from '@icon/macro-logo.svg';
@@ -160,18 +161,14 @@ function NoInviteId() {
   const navigate = useNavigate();
   return (
     <div class="w-full flex flex-col items-center gap-4 text-center">
-      <h2 class="text-lg font-medium text-ink">Invalid Invite Link</h2>
-      <p class="text-sm text-ink-muted">
-        This invite link appears to be invalid or incomplete.
-      </p>
+      <h2 class="text-lg font-medium text-ink">{t('auto.invalid_invite_link')}</h2>
+      <p class="text-sm text-ink-muted">{t('auto.this_invite_link_appears_to_be')}</p>
       <Button
         variant="outline"
         size="md"
         class="w-full rounded-xs"
         onClick={() => navigate('/')}
-      >
-        Go to Home
-      </Button>
+      >{t('auto.go_to_home')}</Button>
     </div>
   );
 }
@@ -191,9 +188,7 @@ function UnauthenticatedView(props: { onLogin: () => void }) {
         size="md"
         class="w-full rounded-xs"
         onClick={props.onLogin}
-      >
-        Sign In to Continue
-      </Button>
+      >{t('auto.sign_in_to_continue')}</Button>
     </div>
   );
 }
@@ -216,9 +211,7 @@ function AlreadyOnTeam(props: { teamName: string }) {
         size="md"
         class="w-full rounded-xs"
         onClick={() => navigate('/')}
-      >
-        Go to Home
-      </Button>
+      >{t('auto.go_to_home')}</Button>
     </div>
   );
 }
@@ -227,7 +220,7 @@ function InviteNotFound() {
   const navigate = useNavigate();
   return (
     <div class="w-full flex flex-col items-center gap-4 text-center">
-      <h2 class="text-lg font-medium text-ink">Invite Not Found</h2>
+      <h2 class="text-lg font-medium text-ink">{t('auto.invite_not_found')}</h2>
       <p class="text-sm text-ink-muted">
         This invitation may have already been accepted, expired, or was sent to
         a different email address.
@@ -237,9 +230,7 @@ function InviteNotFound() {
         size="md"
         class="w-full rounded-xs"
         onClick={() => navigate('/')}
-      >
-        Go to Home
-      </Button>
+      >{t('auto.go_to_home')}</Button>
     </div>
   );
 }

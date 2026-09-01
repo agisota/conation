@@ -1,4 +1,5 @@
 import { globalSplitManager } from '@app/signal/splitLayout';
+import { t } from '@app/lib/i18n';
 import type { SplitHandle } from '@components/app/split-layout/layoutManager';
 import { DEFAULT_MODEL } from '@core/component/AI/constant';
 import { setPendingSendData } from '@core/component/AI/signal/pendingSend';
@@ -143,7 +144,7 @@ export function ChatWithAgentButton(props: { entity: ChatWithAgentEntity }) {
       class="bg-surface"
     >
       <AnimatedStarIcon triggerAnimation={hovering()} />
-      <span class="text-xs">Chat</span>
+      <span class="text-xs">{t('auto.chat')}</span>
     </Button>
   );
 }
@@ -162,7 +163,7 @@ export function AskMacroButton(props: { entity: ChatWithAgentEntity }) {
       class="gap-1.5 rounded-full border border-edge-muted px-2"
     >
       <AnimatedStarIcon triggerAnimation={hovering()} />
-      <span class="text-xs font-medium">Ask Macro</span>
+      <span class="text-xs font-medium">{t('auto.ask_macro')}</span>
     </Button>
   );
 }

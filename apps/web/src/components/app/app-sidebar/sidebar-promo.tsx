@@ -1,4 +1,5 @@
 import ClockIcon from '@phosphor/clock.svg';
+import { t } from '@app/lib/i18n';
 import XIcon from '@phosphor/x.svg';
 import { Button, cn, Layer } from '@ui';
 import { createSignal, onCleanup, onMount, Show } from 'solid-js';
@@ -180,9 +181,7 @@ export const SidebarPromoHint = (props: SidebarPromoHintProps) => {
                   </Button>
                 )}
               </Show>
-              <Button variant="cta" size="sm" onClick={props.onDone}>
-                Got it
-              </Button>
+              <Button variant="cta" size="sm" onClick={props.onDone}>{t('auto.got_it')}</Button>
             </div>
           </div>
         </div>

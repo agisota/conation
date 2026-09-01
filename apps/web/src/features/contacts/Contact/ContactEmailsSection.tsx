@@ -35,7 +35,7 @@ export function ContactEmailsSection(props: { contact?: CrmContactResponse }) {
   return (
     <div class="flex flex-col gap-2">
       <div class="flex items-center justify-between gap-2">
-        <h2 class="text-sm font-medium text-ink-muted">Emails</h2>
+        <h2 class="text-sm font-medium text-ink-muted">{t('auto.emails')}</h2>
         <div class="flex items-center gap-2.5">
           <TabsInset
             list={[

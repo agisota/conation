@@ -42,7 +42,7 @@ function shouldShowNativeSessionVerificationFallback(
 }
 
 function SessionVerificationFallback(props: {
-  onRetry: () => Promise<unknown>;
+  onRetry: () =>{t('auto.promise')}<unknown>;
 }) {
   const [retrying, setRetrying] = createSignal(false);
 
@@ -57,7 +57,7 @@ function SessionVerificationFallback(props: {
 
   return (
     <div class="flex flex-col items-center justify-center gap-4 size-full text-ink-muted">
-      <p class="text-sm">Unable to connect. Please check your network.</p>
+      <p class="text-sm">{t('auto.unable_to_connect_please_check')}</p>
       <Button
         class="mt-2"
         disabled={retrying()}

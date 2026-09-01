@@ -1,4 +1,5 @@
 import type { SystemSortOption } from '@app/features/next-soup/soup-view/sort-options';
+import { t } from '@app/lib/i18n';
 import { useSoupView } from '@app/features/next-soup/soup-view/soup-view-context';
 import { useCrmDisplayOptions } from '@companies/crm/display-options';
 import { useListLayout } from '@entity/composed/list-entity/shared';
@@ -76,9 +77,7 @@ function CompanyListHeader(props: { class?: string }) {
       }}
     >
       <div style={{ 'grid-area': 'indicator' }} />
-      <div style={{ 'grid-area': 'content' }} class="truncate">
-        Customer
-      </div>
+      <div style={{ 'grid-area': 'content' }} class="truncate">{t('auto.customer')}</div>
       <For each={visibleColumns()}>
         {(col) => (
           <div
@@ -102,7 +101,7 @@ function CompanyListHeader(props: { class?: string }) {
             activeSort()?.id === 'updated_at' && 'text-ink'
           )}
         >
-          <span class="truncate">Last Interaction</span>
+          <span class="truncate">{t('auto.last_interaction')}</span>
           <ArrowDownIcon
             class={cn(
               'size-3 shrink-0 transition-transform',

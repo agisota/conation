@@ -1,4 +1,5 @@
 import { SidePanel } from '@components/app/side-panel/SidePanel';
+import { t } from '@app/lib/i18n';
 import { useIsAuthenticated } from '@core/auth';
 import type { BlockAlias, BlockName } from '@core/block';
 import { PopupPreview } from '@core/component/DocumentPreview';
@@ -91,7 +92,7 @@ export function EntityTagsSection(props: EntityTagsSectionProps) {
         <Show
           when={isAuthenticated() !== false && !tagsQuery.isError}
           fallback={
-            <span class="text-xs text-ink-extra-muted">Tags unavailable</span>
+            <span class="text-xs text-ink-extra-muted">{t('auto.tags_unavailable')}</span>
           }
         >
           <Suspense fallback={<SidePanel.Loading />}>
@@ -306,7 +307,7 @@ export function EntityPropertiesSection(props: EntityPropertiesSectionProps) {
             }
           >
             <div class="mb-2 flex items-center gap-3">
-              <span class="text-ink-muted">Tags</span>
+              <span class="text-ink-muted">{t('auto.tags')}</span>
               <TagsRow
                 entityId={props.entityId}
                 entityType={props.entityType}
@@ -378,7 +379,7 @@ function AddPinnedPropertyButton() {
       class="m-px rounded-full"
     >
       <Plus class="size-3" />
-      <span>Add property</span>
+      <span>{t('auto.add_property')}</span>
     </Button>
   );
 }
@@ -881,7 +882,7 @@ function EntityCollectionPropertyBody(props: {
         <div class="mt-2 flex flex-wrap gap-1.5">
           <For
             each={entities()}
-            fallback={<span class="text-ink-extra-muted">Empty</span>}
+            fallback={<span class="text-ink-extra-muted">{t('auto.empty')}</span>}
           >
             {(entityRef) => (
               <NonUserEntityChip

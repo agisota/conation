@@ -1,4 +1,5 @@
 import { Billing } from '@app/features/settings/Billing';
+import { t } from '@app/lib/i18n';
 import { Bots } from '@app/features/settings/Bots';
 import { PillTabs } from '@components/app/mobile/PillTabs';
 import { HeaderIsland } from '@components/app/split-layout/components/HeaderIsland';
@@ -223,7 +224,7 @@ export function SettingsPanel(props: SettingsPanelProps) {
       class="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs text-ink-extra-muted cursor-default hover:bg-ink/4 hover:text-ink-muted"
     >
       <CaretLeftIcon class="size-4 shrink-0" />
-      <span class="whitespace-nowrap">Back to app</span>
+      <span class="whitespace-nowrap">{t('auto.back_to_app')}</span>
     </button>
   );
 
@@ -268,9 +269,7 @@ export function SettingsPanel(props: SettingsPanelProps) {
           >
             <HeaderIsland>
               <div class="h-full flex gap-3 items-center">
-                <h1 class="font-semibold text-ink select-none text-sm shrink-0">
-                  Settings
-                </h1>
+                <h1 class="font-semibold text-ink select-none text-sm shrink-0">{t('auto.settings')}</h1>
               </div>
             </HeaderIsland>
             {/* When the sidebar collapses, tab selection moves into the split's
@@ -344,7 +343,7 @@ export function SettingsPanel(props: SettingsPanelProps) {
                 class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-ink-extra-muted cursor-default hover:bg-ink/3 hover:text-ink"
               >
                 <SignOutIcon class="size-4 shrink-0" />
-                <span class="whitespace-nowrap">Log out</span>
+                <span class="whitespace-nowrap">{t('auto.log_out')}</span>
               </button>
             </div>
           </SideNav>

@@ -126,7 +126,7 @@ export function OnboardingInbox() {
 
   return (
     <div class="flex flex-col gap-4">
-      <h1 class="text-2xl font-semibold tracking-tight text-ink">The Inbox</h1>
+      <h1 class="text-2xl font-semibold tracking-tight text-ink">{t('auto.the_inbox')}</h1>
       <p class="text-sm/relaxed text-ink/60">
         Swipe an email left to mark it done, or press and hold for more actions.
       </p>

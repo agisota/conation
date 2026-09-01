@@ -90,9 +90,7 @@ function TagListSection(props: {
           class="rounded-xs"
           onClick={() => props.onCreate(props.scope)}
         >
-          <PlusIcon class="size-4" />
-          New tag
-        </Button>
+          <PlusIcon class="size-4" />{t('auto.new_tag')}</Button>
       }
     >
       <SettingsCard>
@@ -324,9 +322,7 @@ export function Tags() {
           depth={3}
           onClick={() => openCreate('user')}
         >
-          <PlusIcon class="size-4" />
-          New tag
-        </Button>
+          <PlusIcon class="size-4" />{t('auto.new_tag')}</Button>
       }
     >
       <TagListSection

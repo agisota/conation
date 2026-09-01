@@ -315,7 +315,7 @@ function LinkSharingControls(props: LinkSharingControlsProps) {
       <Show when={scope() !== 'NONE'}>
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="flex items-center gap-2 text-ink-muted">
-            <span>Access level</span>
+            <span>{t('auto.access_level')}</span>
             <ShareOptions
               permissions={props.linkShareAccessLevel ?? 'view'}
               hideNoAccess={true}
@@ -324,7 +324,7 @@ function LinkSharingControls(props: LinkSharingControlsProps) {
           </div>
           <Button variant="outline" onClick={props.copyLink}>
             <CopyIcon class="size-4" />
-            <span>Copy Link</span>
+            <span>{t('auto.copy_link')}</span>
           </Button>
         </div>
       </Show>
@@ -425,9 +425,7 @@ function MobileShareDrawer(props: MobileShareDrawerProps) {
                   (forwardRef()?.getSelectedOptions().length ?? 0) === 0
                 }
                 onClick={() => forwardRef()?.handleSubmit()}
-              >
-                Share
-              </Button>
+              >{t('auto.share')}</Button>
             </Show>
           </div>
           <div class="shrink-0 h-9 border-b border-edge-muted px-3 mb-2">
@@ -1251,9 +1249,7 @@ export function ShareTrigger(props: { copyLink?: () => void }) {
             }
           }}
         >
-          <IconShared />
-          Share
-        </Button>
+          <IconShared />{t('auto.share')}</Button>
       </Tooltip>
 
       <ButtonGroup.Divider />

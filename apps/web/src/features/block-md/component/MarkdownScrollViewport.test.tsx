@@ -3,6 +3,7 @@
  */
 
 import { render } from '@solidjs/testing-library';
+import { t } from '@app/lib/i18n';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Scroll } from '../../../components/ui/components/Scroll';
 
@@ -21,7 +22,7 @@ describe('Markdown scroll viewport', () => {
     const setScrollRef = vi.fn<(element: HTMLDivElement) => void>();
 
     const { container } = render(() => (
-      <Scroll scrollRef={setScrollRef}>Content</Scroll>
+      <Scroll scrollRef={setScrollRef}>{t('auto.content')}</Scroll>
     ));
 
     expect(setScrollRef).toHaveBeenCalledOnce();

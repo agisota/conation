@@ -46,9 +46,7 @@ export function createDeleteMessageConfirmation(
           <Dialog.CloseButton as={Button} variant="ghost" size="icon-sm">
             <CloseIcon />
           </Dialog.CloseButton>
-          <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">
-            Delete message
-          </Dialog.Title>
+          <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">{t('auto.delete_message')}</Dialog.Title>
         </div>
 
         <div class="p-3 flex flex-col gap-3">

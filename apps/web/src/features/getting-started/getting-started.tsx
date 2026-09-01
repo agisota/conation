@@ -1,4 +1,5 @@
 import { DOCS_BASE } from '@app/constants/docs-links';
+import { t } from '@app/lib/i18n';
 import { HomeBackfillProgress } from '@app/features/home/home-backfill-progress';
 import { InteractiveOnboardingModal } from '@app/features/onboarding/InteractiveOnboardingModal';
 import { useSplitLayout } from '@components/app/split-layout/layout';
@@ -286,9 +287,7 @@ function GettingStartedContent() {
         <div class="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 pb-6 pt-6">
           <header class="px-1">
             <h1 class="text-xl font-semibold text-ink">Getting Started</h1>
-            <p class="text-sm text-ink-muted">
-              A few actions to get the most out of Macro.
-            </p>
+            <p class="text-sm text-ink-muted">{t('auto.a_few_actions_to_get_the_most_')}</p>
           </header>
           {/* Renders nothing once no inbox is importing. */}
           <HomeBackfillProgress />
@@ -314,7 +313,7 @@ function GettingStartedContent() {
 
 function GettingStartedSection(props: {
   section: GettingStartedSectionConfig;
-  activate: (action: GettingStartedAction) => Promise<void>;
+  activate: (action: GettingStartedAction) =>{t('auto.promise')}<void>;
   isComplete: (action: GettingStartedAction) => boolean;
   sectionProgress: (section: GettingStartedSectionConfig) => {
     completed: number;

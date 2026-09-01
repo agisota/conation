@@ -1,4 +1,5 @@
 import { ScopedPortal } from '@core/component/ScopedPortal';
+import { t } from '@app/lib/i18n';
 import { TOKENS } from '@core/hotkey/tokens';
 import type { EntityData } from '@entity';
 import CloseIcon from '@phosphor-icons/core/regular/x.svg?component-solid';
@@ -35,7 +36,7 @@ export const EntitySelectionToolbarModal = (
               class="p-1 pl-2 rounded-md bg-surface"
               depth={3}
             >
-              <span>Actions</span>
+              <span>{t('auto.actions')}</span>
               <Hotkey token={TOKENS.global.commandMenu} theme="subtle" />
             </Button>
             <Button
@@ -44,7 +45,7 @@ export const EntitySelectionToolbarModal = (
               class="p-1 pl-2 rounded-md bg-surface"
               depth={3}
             >
-              <span>Clear</span>
+              <span>{t('auto.clear')}</span>
               <Hotkey shortcut="escape" theme="subtle" />
             </Button>
           </div>

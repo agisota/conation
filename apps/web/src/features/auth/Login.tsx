@@ -1,4 +1,5 @@
 import { OnboardingFlow } from '@app/features/setup/flow/OnboardingFlow';
+import { t } from '@app/lib/i18n';
 import { NoiseBackground } from '@app/features/setup/flow/shared';
 import { useOnboardingV4Flag } from '@app/features/setup/flow/useOnboardingV4Flag';
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
@@ -128,9 +129,7 @@ function LoginPicker(props: {
         autofocus
         onClick={() => startSsoLogin(GOOGLE_GMAIL_IDP)}
       >
-        <IconGoogle class="size-fit" />
-        Continue with Google
-      </Button>
+        <IconGoogle class="size-fit" />{t('auto.continue_with_google')}</Button>
 
       <Show when={showApple}>
         <Button
@@ -139,9 +138,7 @@ function LoginPicker(props: {
           class="bg-surface"
           onClick={() => startSsoLogin('Apple')}
         >
-          <IconApple class="size-fit" />
-          Continue with Apple
-        </Button>
+          <IconApple class="size-fit" />{t('auto.continue_with_apple')}</Button>
       </Show>
 
       <Button
@@ -149,9 +146,7 @@ function LoginPicker(props: {
         size="xl"
         class="bg-surface"
         onClick={continueWithEmail}
-      >
-        Continue with email
-      </Button>
+      >{t('auto.continue_with_email')}</Button>
     </div>
   );
 }
@@ -276,9 +271,7 @@ function EmailFormNew(props: {
         size="xl"
         type="submit"
         disabled={submission.pending}
-      >
-        Continue
-        <ArrowRight class="size-5" />
+      >{t('auto.continue')}<ArrowRight class="size-5" />
       </Button>
       <Button
         variant="outline"
@@ -286,9 +279,7 @@ function EmailFormNew(props: {
         class="bg-surface"
         onClick={props.onBack}
       >
-        <ArrowLeft class="size-5" />
-        Back to sign in
-      </Button>
+        <ArrowLeft class="size-5" />{t('auto.back_to_sign_in')}</Button>
     </form>
   );
 }
@@ -457,9 +448,7 @@ function VerifyFormNew(props: {
         size="xl"
         type="submit"
         disabled={submission.pending || code().length !== 6 || !email()}
-      >
-        Verify
-        <ArrowRight class="size-5" />
+      >{t('auto.verify')}<ArrowRight class="size-5" />
       </Button>
       <Button
         variant="outline"
@@ -467,9 +456,7 @@ function VerifyFormNew(props: {
         class="bg-surface"
         onClick={props.onBack}
       >
-        <ArrowLeft class="size-5" />
-        Change email
-      </Button>
+        <ArrowLeft class="size-5" />{t('auto.change_email')}</Button>
     </form>
   );
 }
@@ -627,12 +614,8 @@ export function Login(props: { signupMode?: boolean }) {
               <Show when={!virtualKeyboardVisible()}>
                 <div class="flex flex-col gap-1.5">
                   <LogoIcon class="mb-2 size-9 text-accent" />
-                  <h1 class="font-semibold tracking-tight text-ink text-2xl">
-                    Welcome to Macro
-                  </h1>
-                  <p class="text-sm text-ink-muted">
-                    The open source workspace
-                  </p>
+                  <h1 class="font-semibold tracking-tight text-ink text-2xl">{t('auto.welcome_to_macro')}</h1>
+                  <p class="text-sm text-ink-muted">{t('auto.the_open_source_workspace')}</p>
                 </div>
               </Show>
 

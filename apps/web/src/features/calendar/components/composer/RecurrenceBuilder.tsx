@@ -1,4 +1,5 @@
 import { RadioGroup } from '@kobalte/core/radio-group';
+import { t } from '@app/lib/i18n';
 import { Button, Select } from '@ui';
 import { addMonths, format } from 'date-fns';
 import { createMemo, For, Show } from 'solid-js';
@@ -89,7 +90,7 @@ export function RecurrenceBuilder(props: RecurrenceBuilderProps) {
 
       <div class="flex flex-wrap items-start gap-4">
         <div class="flex flex-col gap-2">
-          <span class="text-ink-extra-muted">Repeat every</span>
+          <span class="text-ink-extra-muted">{t('auto.repeat_every')}</span>
           <div class="flex min-w-0 flex-wrap items-center gap-2">
             <input
               type="number"
@@ -130,7 +131,7 @@ export function RecurrenceBuilder(props: RecurrenceBuilderProps) {
 
         <Show when={props.value.frequency === 'WEEKLY'}>
           <div class="flex flex-col gap-2">
-            <span class="text-ink-extra-muted">Repeat on</span>
+            <span class="text-ink-extra-muted">{t('auto.repeat_on')}</span>
             <div class="flex flex-wrap items-center gap-1.5">
               <For each={WEEKDAY_CODES}>
                 {(code) => (
@@ -156,7 +157,7 @@ export function RecurrenceBuilder(props: RecurrenceBuilderProps) {
       </div>
 
       <div class="flex flex-col gap-2">
-        <span class="text-ink-extra-muted">Ends</span>
+        <span class="text-ink-extra-muted">{t('auto.ends')}</span>
         <RadioGroup
           value={props.value.ends.kind}
           onChange={changeEndsKind}
@@ -174,12 +175,8 @@ export function RecurrenceBuilder(props: RecurrenceBuilderProps) {
               <RadioGroup.ItemControl class="flex size-4 shrink-0 items-center justify-center rounded-full border border-edge data-checked:border-accent">
                 <RadioGroup.ItemIndicator class="size-2 rounded-full bg-accent" />
               </RadioGroup.ItemControl>
-              <RadioGroup.ItemLabel class="shrink-0 font-medium text-ink">
-                Never
-              </RadioGroup.ItemLabel>
-              <span class="text-ink-extra-muted">
-                The event repeats indefinitely.
-              </span>
+              <RadioGroup.ItemLabel class="shrink-0 font-medium text-ink">{t('auto.never')}</RadioGroup.ItemLabel>
+              <span class="text-ink-extra-muted">{t('auto.the_event_repeats_indefinitely')}</span>
             </div>
           </RadioGroup.Item>
 
@@ -222,9 +219,7 @@ export function RecurrenceBuilder(props: RecurrenceBuilderProps) {
               <RadioGroup.ItemControl class="flex size-4 shrink-0 items-center justify-center rounded-full border border-edge data-checked:border-accent">
                 <RadioGroup.ItemIndicator class="size-2 rounded-full bg-accent" />
               </RadioGroup.ItemControl>
-              <RadioGroup.ItemLabel class="shrink-0 font-medium text-ink">
-                After
-              </RadioGroup.ItemLabel>
+              <RadioGroup.ItemLabel class="shrink-0 font-medium text-ink">{t('auto.after')}</RadioGroup.ItemLabel>
               <input
                 type="number"
                 min="1"

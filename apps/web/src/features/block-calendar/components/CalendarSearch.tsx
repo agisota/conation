@@ -1,4 +1,5 @@
 import { useCalendarView } from '@app/features/calendar/components/CalendarViewContext';
+import { t } from '@app/lib/i18n';
 import { useCalendarSearchUiFlag } from '@app/features/calendar/hooks/use-calendar-ui-flag';
 import type { CalendarTimeFormat } from '@app/features/calendar/types';
 import { parseLocalDate } from '@app/features/calendar/utils/calendar-date';
@@ -203,9 +204,7 @@ export function CalendarSearch() {
                       <Show
                         when={results().length > 0}
                         fallback={
-                          <div class="px-2 py-3 text-center text-xs text-ink-muted">
-                            No events found
-                          </div>
+                          <div class="px-2 py-3 text-center text-xs text-ink-muted">{t('auto.no_events_found')}</div>
                         }
                       >
                         <For each={results()}>

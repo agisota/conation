@@ -8,16 +8,16 @@ import { render } from 'solid-js/web';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('./AccessErrorViews/Gone', () => ({
-  default: () => <div>Gone</div>,
+  default: () => <div>{t('auto.gone')}</div>,
 }));
 vi.mock('./AccessErrorViews/NotFound', () => ({
-  default: () => <div>Not found</div>,
+  default: () => <div>{t('auto.not_found')}</div>,
 }));
 vi.mock('./AccessErrorViews/Unauthorized', () => ({
-  default: () => <div>Unauthorized</div>,
+  default: () => <div>{t('auto.unauthorized')}</div>,
 }));
 vi.mock('./LoadingBlock', () => ({
-  LoadingBlock: () => <div>Loading</div>,
+  LoadingBlock: () => <div>{t('auto.loading')}</div>,
 }));
 
 // A real signal so components reacting to connectivity changes re-run.
@@ -48,7 +48,7 @@ function renderGate<Data>(result: EntityLoadResult<Data>): HTMLElement {
   const disposeRender = render(
     () => (
       <EntityLoadGate result={result}>
-        <div>Loaded</div>
+        <div>{t('auto.loaded')}</div>
       </EntityLoadGate>
     ),
     container
@@ -96,7 +96,7 @@ describe('EntityLoadGate', () => {
     let childMounted = false;
     const Child = () => {
       childMounted = true;
-      return <div>Loaded</div>;
+      return <div>{t('auto.loaded')}</div>;
     };
     const container = document.createElement('div');
     document.body.appendChild(container);
@@ -218,7 +218,7 @@ describe('EntityLoadGate', () => {
           }}
           onRetry={onRetry}
         >
-          <div>Loaded</div>
+          <div>{t('auto.loaded')}</div>
         </EntityLoadGate>
       ),
       container
@@ -251,7 +251,7 @@ describe('EntityLoadGate', () => {
           }}
           onRetry={onRetry}
         >
-          <div>Loaded</div>
+          <div>{t('auto.loaded')}</div>
         </EntityLoadGate>
       ),
       container
@@ -283,7 +283,7 @@ describe('EntityLoadGate', () => {
           }}
           onRetry={onRetry}
         >
-          <div>Loaded</div>
+          <div>{t('auto.loaded')}</div>
         </EntityLoadGate>
       ),
       container
@@ -313,7 +313,7 @@ describe('EntityLoadGate', () => {
           }}
           onRetry={onRetry}
         >
-          <div>Loaded</div>
+          <div>{t('auto.loaded')}</div>
         </EntityLoadGate>
       ),
       container
@@ -344,7 +344,7 @@ describe('EntityLoadGate', () => {
           }}
           onRetry={onRetry}
         >
-          <div>Loaded</div>
+          <div>{t('auto.loaded')}</div>
         </EntityLoadGate>
       ),
       container

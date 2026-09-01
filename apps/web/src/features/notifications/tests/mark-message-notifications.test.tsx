@@ -1,4 +1,5 @@
 import type { NotificationSource } from '@notifications/notification-source';
+import { t } from '@app/lib/i18n';
 import type { UnifiedNotification } from '@notifications/types';
 import { render, waitFor } from '@solidjs/testing-library';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -62,7 +63,7 @@ describe('MarkMessageNotifications', () => {
   it('marks every document mention from the mounted channel message as read', async () => {
     render(() => (
       <MarkMessageNotifications messageId="message-1" channelId="channel-1">
-        <span>Message</span>
+        <span>{t('auto.message')}</span>
       </MarkMessageNotifications>
     ));
 
@@ -85,7 +86,7 @@ describe('MarkMessageNotifications', () => {
     try {
       render(() => (
         <MarkMessageNotifications messageId="message-1" channelId="channel-1">
-          <span>Message</span>
+          <span>{t('auto.message')}</span>
         </MarkMessageNotifications>
       ));
 

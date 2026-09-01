@@ -9,6 +9,7 @@ import type {
   EventInput,
 } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
+import { t } from '@app/lib/i18n';
 import interactionPlugin from '@fullcalendar/interaction';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import {
@@ -352,7 +353,7 @@ export function CalendarGrid(props: CalendarGridProps) {
           ) {
             return (
               <div class="calendar-event-selection-preview flex h-full min-w-0 flex-col overflow-hidden px-1 py-0.5 text-xs leading-tight">
-                <span class="truncate font-semibold">New event</span>
+                <span class="truncate font-semibold">{t('auto.new_event')}</span>
                 <Show when={renderProps.timeText}>
                   <span class="truncate">{renderProps.timeText}</span>
                 </Show>

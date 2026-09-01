@@ -108,9 +108,7 @@ function HistoryList(props: { records: HistoryRecord[]; isPending: boolean }) {
             <div class="px-3 py-8 text-center text-xs text-ink-muted">{t('common.loading')}</div>
           }
         >
-          <div class="px-3 py-8 text-center text-xs text-ink-muted">
-            No runs yet.
-          </div>
+          <div class="px-3 py-8 text-center text-xs text-ink-muted">{t('auto.no_runs_yet')}</div>
         </Show>
       }
     >
@@ -284,9 +282,7 @@ export function Automation() {
             <div class="flex size-full items-center justify-center text-xs text-ink-muted">{t('common.loading')}</div>
           }
         >
-          <div class="flex size-full items-center justify-center text-xs text-ink-muted">
-            Automation not found.
-          </div>
+          <div class="flex size-full items-center justify-center text-xs text-ink-muted">{t('auto.automation_not_found')}</div>
         </Show>
       }
     >
@@ -366,9 +362,7 @@ export function Automation() {
                   class="cursor-default"
                   disabled={runNowMutation.isPending || isRunning()}
                   onClick={() => runNowMutation.mutate({ scheduleId })}
-                >
-                  Run Now
-                </Button>
+                >{t('auto.run_now')}</Button>
                 <Button
                   variant="outline"
                   size="sm"
@@ -389,7 +383,7 @@ export function Automation() {
                       <span class="text-ink-extra-muted">
                         <Show
                           when={d().enabled && schedule()?.next_run_at}
-                          fallback={<>Paused</>}
+                          fallback={<>{t('auto.paused')}</>}
                         >
                           {(nextRunAt) => (
                             <>Next run {formatDateAndTime(nextRunAt())}</>
@@ -399,15 +393,13 @@ export function Automation() {
                     }
                   >
                     <span class="flex items-center justify-end gap-1.5 text-accent">
-                      <span class="size-1.5 animate-pulse rounded-full bg-accent" />
-                      Running
-                    </span>
+                      <span class="size-1.5 animate-pulse rounded-full bg-accent" />{t('auto.running')}</span>
                   </Show>
                 </div>
               </div>
 
               <div class="grid gap-1.5">
-                <h1 class="text-sm font-semibold">Instructions</h1>
+                <h1 class="text-sm font-semibold">{t('auto.instructions')}</h1>
                 <AutomationPromptEditor
                   initialValue={d().prompt}
                   onChange={(markdown) =>
@@ -420,7 +412,7 @@ export function Automation() {
               </div>
 
               <div>
-                <h1 class="text-sm font-semibold">Schedule</h1>
+                <h1 class="text-sm font-semibold">{t('auto.schedule')}</h1>
                 <p class="mt-0.5 text-xs text-ink-muted">{currentSummary()}</p>
               </div>
 
@@ -450,9 +442,7 @@ export function Automation() {
 
               <Show when={d().frequency === 'week'}>
                 <div class="grid gap-1.5">
-                  <label class="text-xs font-medium text-ink-muted cursor-default">
-                    Days
-                  </label>
+                  <label class="text-xs font-medium text-ink-muted cursor-default">{t('auto.days')}</label>
                   <div class="flex flex-wrap gap-1">
                     <For each={WEEKDAY_OPTIONS}>
                       {(option) => {
@@ -494,9 +484,7 @@ export function Automation() {
 
               <Show when={d().frequency === 'month'}>
                 <div class="grid gap-1.5">
-                  <label class="text-xs font-medium text-ink-muted cursor-default">
-                    Day of Month
-                  </label>
+                  <label class="text-xs font-medium text-ink-muted cursor-default">{t('auto.day_of_month')}</label>
                   <input
                     type="number"
                     min="1"
@@ -514,9 +502,7 @@ export function Automation() {
               </Show>
 
               <div class="grid gap-1.5">
-                <label class="text-xs font-medium text-ink-muted cursor-default">
-                  Time
-                </label>
+                <label class="text-xs font-medium text-ink-muted cursor-default">{t('auto.time')}</label>
                 <AutomationTimePicker
                   value={d().time}
                   onChange={(value) =>
@@ -538,9 +524,7 @@ export function Automation() {
             </div>
 
             <div class="flex min-h-0 flex-1 flex-col">
-              <div class="border-b border-edge-muted px-3 py-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                History
-              </div>
+              <div class="border-b border-edge-muted px-3 py-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">{t('auto.history')}</div>
               <HistoryList
                 records={history()}
                 isPending={historyQuery.isPending}

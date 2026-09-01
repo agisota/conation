@@ -76,7 +76,7 @@ export function GitHubCard() {
       <SettingsRow
         label={
           <span class="flex items-center gap-2">
-            <span>Account</span>
+            <span>{t('auto.account')}</span>
             <Show when={connectionState()}>
               {(state) => (
                 <StatusDot state={state()} label={connectionLabel()} />
@@ -146,9 +146,7 @@ export function GitHubCard() {
             target="_blank"
             rel="noopener noreferrer"
             class="inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-sm font-medium text-ink-muted outline-none transition-colors hover:bg-ink/4 hover:text-ink focus-visible:bg-ink/6"
-          >
-            Configure app
-            <ArrowUpRightIcon class="size-3.5 opacity-70" />
+          >{t('auto.configure_app')}<ArrowUpRightIcon class="size-3.5 opacity-70" />
           </a>
         </Show>
       </SettingsRow>

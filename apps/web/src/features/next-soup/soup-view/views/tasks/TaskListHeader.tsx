@@ -1,4 +1,5 @@
 import type { SystemSortOption } from '@app/features/next-soup/soup-view/sort-options';
+import { t } from '@app/lib/i18n';
 import { useSoupView } from '@app/features/next-soup/soup-view/soup-view-context';
 import { useListLayout } from '@entity/composed/list-entity/shared';
 import StatusInProgress from '@icon/square-task-in-progress-circle.svg';
@@ -81,9 +82,7 @@ function TaskListHeader(props: { class?: string }) {
       }}
     >
       <div style={{ 'grid-area': 'indicator' }} />
-      <div style={{ 'grid-area': 'content' }} class="truncate">
-        Task
-      </div>
+      <div style={{ 'grid-area': 'content' }} class="truncate">{t('auto.task')}</div>
       <For each={TASK_GRID_COLUMNS}>
         {(col) => {
           const sortKey = COLUMN_SORT_KEYS[col.id];

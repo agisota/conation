@@ -1,4 +1,5 @@
 import { toast } from '@core/component/Toast/Toast';
+import { t } from '@app/lib/i18n';
 import { useIsAuthenticated } from '@core/context/user';
 import { useAddInboxFlow } from '@core/email-link';
 import { getNativeMobilePlatform } from '@core/util/platform';
@@ -103,9 +104,7 @@ export function OnboardingConnectAccounts() {
 
   return (
     <div class="h-full flex flex-col gap-6 justify-between">
-      <h1 class="text-2xl font-semibold tracking-tight text-ink">
-        Connect More Accounts
-      </h1>
+      <h1 class="text-2xl font-semibold tracking-tight text-ink">{t('auto.connect_more_accounts')}</h1>
       <div>
         <div class="flex flex-col gap-2">
           <Button
@@ -115,9 +114,7 @@ export function OnboardingConnectAccounts() {
             disabled={!isAuthenticated()}
             onClick={() => void addInbox()}
           >
-            <IconGoogle class="size-5" />
-            Connect Another Gmail
-          </Button>
+            <IconGoogle class="size-5" />{t('auto.connect_another_gmail')}</Button>
           <p class="text-sm/relaxed text-ink-muted">
             Connect multiple accounts to see all your emails in one inbox.
           </p>
@@ -138,15 +135,13 @@ export function OnboardingConnectAccounts() {
             <GithubIcon class="size-5" />
             {githubLinked() ? 'GitHub Connected' : 'Connect GitHub'}
           </Button>
-          <p class="text-sm/relaxed text-ink-muted">
-            Connect GitHub account to see pull requests in your inbox.
-          </p>
+          <p class="text-sm/relaxed text-ink-muted">{t('auto.connect_github_account_to_see_')}</p>
         </div>
       </div>
 
       <Show when={hasConnectedAccounts()}>
         <div>
-          <h1 class="pb-2">Connected Accounts</h1>
+          <h1 class="pb-2">{t('auto.connected_accounts')}</h1>
           <div class="flex flex-col overflow-hidden rounded-lg border border-edge-muted">
             <For each={linksQuery.data?.links ?? []}>
               {(link) => (

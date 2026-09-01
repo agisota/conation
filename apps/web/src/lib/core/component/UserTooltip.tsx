@@ -1,4 +1,5 @@
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
+import { t } from '@app/lib/i18n';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import { toast } from '@core/component/Toast/Toast';
 import {
@@ -134,16 +135,12 @@ export function UserTooltip(props: UserTooltipProps) {
           <div class="p-1.5 flex flex-col gap-0.5">
             <Show when={props.email}>
               {(email) => (
-                <CopyActionItem value={email()} toastMessage="Email copied">
-                  Copy email
-                </CopyActionItem>
+                <CopyActionItem value={email()} toastMessage="Email copied">{t('auto.copy_email')}</CopyActionItem>
               )}
             </Show>
             <Show when={copyableName(props.displayName, props.email)}>
               {(name) => (
-                <CopyActionItem value={name()} toastMessage="Name copied">
-                  Copy name
-                </CopyActionItem>
+                <CopyActionItem value={name()} toastMessage="Name copied">{t('auto.copy_name')}</CopyActionItem>
               )}
             </Show>
             <Show when={crmFlag().enabled ? props.email : undefined}>
@@ -161,9 +158,7 @@ export function UserTooltip(props: UserTooltipProps) {
             </Show>
             <Show when={canTreatAsUser()}>
               <ActionItem onClick={openTaskComposer}>
-                <WideTask class="size-3.5" />
-                Assign task
-              </ActionItem>
+                <WideTask class="size-3.5" />{t('auto.assign_task')}</ActionItem>
             </Show>
           </div>
         </Show>
@@ -201,9 +196,7 @@ function OpenContactAction(props: { email: string; onClose?: () => void }) {
     <Show when={crmEnabled() ? contactQuery.data : undefined}>
       {(contact) => (
         <ActionItem onClick={(e) => openContact(e, contact().id)}>
-          <WideContact class="size-3.5" />
-          Open contact
-        </ActionItem>
+          <WideContact class="size-3.5" />{t('auto.open_contact')}</ActionItem>
       )}
     </Show>
   );

@@ -1,4 +1,5 @@
 import Check from '@phosphor-icons/core/regular/check.svg';
+import { t } from '@app/lib/i18n';
 import List from '@phosphor-icons/core/regular/list.svg';
 import type { ListNotifications as ListNotificationsTool } from '@service-cognition/generated/tools/types';
 import { Show } from 'solid-js';
@@ -73,7 +74,7 @@ const listNotificationsHandler = createToolRenderer({
       >
         <div class="flex min-w-0 flex-1 flex-col gap-1">
           <div class="flex min-w-0 items-center justify-between gap-3 overflow-hidden">
-            <span class="min-w-0 truncate">Read notifications</span>
+            <span class="min-w-0 truncate">{t('auto.read_notifications')}</span>
             <Show when={statusText()}>
               {(text) => (
                 <span class="shrink-0 whitespace-nowrap text-xs text-ink-extra-muted">
@@ -94,8 +95,7 @@ const listNotificationsHandler = createToolRenderer({
 const markNotificationsSeenHandler = createToolRenderer({
   name: 'MarkNotificationsSeen',
   render: (ctx) => (
-    <BaseTool icon={Check} renderContext={ctx.renderContext} type="call">
-      Mark <span class="text-ink">{ctx.tool.data.notificationIds.length}</span>{' '}
+    <BaseTool icon={Check} renderContext={ctx.renderContext} type="call">{t('auto.mark')}<span class="text-ink">{ctx.tool.data.notificationIds.length}</span>{' '}
       notification{ctx.tool.data.notificationIds.length === 1 ? '' : 's'} seen
     </BaseTool>
   ),
@@ -104,8 +104,7 @@ const markNotificationsSeenHandler = createToolRenderer({
 const markNotificationsDoneHandler = createToolRenderer({
   name: 'MarkNotificationsDone',
   render: (ctx) => (
-    <BaseTool icon={Check} renderContext={ctx.renderContext} type="call">
-      Mark <span class="text-ink">{ctx.tool.data.notificationIds.length}</span>{' '}
+    <BaseTool icon={Check} renderContext={ctx.renderContext} type="call">{t('auto.mark')}<span class="text-ink">{ctx.tool.data.notificationIds.length}</span>{' '}
       notification{ctx.tool.data.notificationIds.length === 1 ? '' : 's'}{' '}
       {ctx.tool.data.done ? 'done' : 'not done'}
     </BaseTool>

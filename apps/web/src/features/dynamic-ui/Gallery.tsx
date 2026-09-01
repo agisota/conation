@@ -1,4 +1,5 @@
 import { StaticMarkdownContext } from '@core/component/LexicalMarkdown/component/core/StaticMarkdown';
+import { t } from '@app/lib/i18n';
 import { aiChatTheme } from '@core/component/LexicalMarkdown/theme';
 import { ErrorBoundary, For, Suspense } from 'solid-js';
 import type { View, Widget } from './schema';
@@ -283,9 +284,7 @@ function GalleryBody() {
       <div class="size-full overflow-auto bg-surface">
         <div class="mx-auto flex w-full max-w-3xl flex-col gap-8 p-6">
           <header class="flex flex-col gap-1">
-            <h1 class="text-ink text-xl font-semibold">
-              Dynamic UI — Widget Gallery
-            </h1>
+            <h1 class="text-ink text-xl font-semibold">{t('auto.dynamic_ui_widget_gallery')}</h1>
             <p class="text-ink-muted text-sm">
               Every widget rendered from a hand-written schema fixture (no AI).
               The same shapes the <code>compose_view</code> tool will emit.
@@ -293,7 +292,7 @@ function GalleryBody() {
           </header>
 
           <section class="flex flex-col gap-3">
-            <h2 class="text-ink text-base font-semibold">Catalog</h2>
+            <h2 class="text-ink text-base font-semibold">{t('auto.catalog')}</h2>
             <div class="flex flex-col gap-3">
               <For each={CATALOG}>
                 {(entry) => (
@@ -306,7 +305,7 @@ function GalleryBody() {
           </section>
 
           <section class="flex flex-col gap-4">
-            <h2 class="text-ink text-base font-semibold">Composed views</h2>
+            <h2 class="text-ink text-base font-semibold">{t('auto.composed_views')}</h2>
             <For each={COMPOSED}>
               {(view) => (
                 <div class="rounded-lg border border-edge-muted p-4">

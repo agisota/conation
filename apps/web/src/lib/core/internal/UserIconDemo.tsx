@@ -1,4 +1,5 @@
 import { UserGroup } from '@core/component/UserGroup';
+import { t } from '@app/lib/i18n';
 import { UserIcon } from '@core/component/UserIcon';
 import { seedMockDisplayNames } from '@core/user/displayName';
 import User from '@phosphor-icons/core/regular/user.svg?component-solid';
@@ -168,7 +169,7 @@ export default function UserIconDemo() {
                 maxUsers={3}
                 suppressClick
               />
-              <span class="text-sm text-ink">Some content here</span>
+              <span class="text-sm text-ink">{t('auto.some_content_here')}</span>
             </div>
           </div>
 
@@ -184,7 +185,7 @@ export default function UserIconDemo() {
                 maxUsers={3}
                 suppressClick
               />
-              <span class="text-sm text-ink">Some content here</span>
+              <span class="text-sm text-ink">{t('auto.some_content_here')}</span>
             </div>
           </div>
         </div>
@@ -200,9 +201,7 @@ export default function UserIconDemo() {
               maxUsers={3}
               suppressClick
             />
-            <span class="text-sm text-ink">
-              Active row with matching separator
-            </span>
+            <span class="text-sm text-ink">{t('auto.active_row_with_matching_separ')}</span>
           </div>
 
           <div class="flex items-center gap-2 px-3 py-2 rounded bg-hover [--avatar-group-separator:var(--color-hover)] border border-edge-muted">
@@ -212,9 +211,7 @@ export default function UserIconDemo() {
               maxUsers={3}
               suppressClick
             />
-            <span class="text-sm text-ink">
-              Hover row with matching separator
-            </span>
+            <span class="text-sm text-ink">{t('auto.hover_row_with_matching_separa')}</span>
           </div>
         </div>
       </Section>

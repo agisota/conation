@@ -579,7 +579,7 @@ const SidebarSectionMenu = (props: {
     </Dropdown.Trigger>
     <Dropdown.Content class="w-56 shadow-menu">
       <Dropdown.Group>
-        <Dropdown.GroupLabel>Customize</Dropdown.GroupLabel>
+        <Dropdown.GroupLabel>{t('auto.customize')}</Dropdown.GroupLabel>
         <For each={props.options}>
           {(option) => (
             <Dropdown.CheckboxItem
@@ -635,9 +635,7 @@ const TryCard = (props: {
     <section aria-label="Quick Start" class="relative group/try-card w-full">
       <div class="rounded-lg border border-ink-muted/8 bg-ink-muted/2.5 overflow-hidden">
         <header class="flex items-center gap-2 min-w-0 px-2.5 py-1.5 border-b border-ink-muted/8">
-          <h3 class="flex-1 min-w-0 text-xs font-medium text-ink leading-tight m-0">
-            Quick Start
-          </h3>
+          <h3 class="flex-1 min-w-0 text-xs font-medium text-ink leading-tight m-0">{t('auto.quick_start')}</h3>
           <Button
             variant="ghost"
             class="shrink-0 size-5 rounded-sm p-0 [&_svg]:size-3"
@@ -958,7 +956,7 @@ const SidebarSettingsWidget = (props: SidebarSettingsWidgetProps) => {
             <span class="size-5 flex items-center justify-center text-ink-extra-muted">
               ⌘
             </span>
-            <span class="flex-1 text-ink">Command menu</span>
+            <span class="flex-1 text-ink">{t('auto.command_menu')}</span>
             <Hotkey
               token={TOKENS.global.commandMenu}
               theme="subtle"
@@ -972,7 +970,7 @@ const SidebarSettingsWidget = (props: SidebarSettingsWidgetProps) => {
             <span class="size-5 flex items-center justify-center">
               <GearIcon class="size-4 shrink-0 text-ink-extra-muted" />
             </span>
-            <span class="flex-1 text-ink">Settings</span>
+            <span class="flex-1 text-ink">{t('auto.settings')}</span>
             <Hotkey
               token={TOKENS.global.toggleSettings}
               theme="subtle"
@@ -986,7 +984,7 @@ const SidebarSettingsWidget = (props: SidebarSettingsWidgetProps) => {
             <span class="size-5 flex items-center justify-center">
               <SignOutIcon class="size-4 shrink-0" />
             </span>
-            <span>Log out</span>
+            <span>{t('auto.log_out')}</span>
           </Dropdown.Item>
         </Dropdown.Group>
       </Dropdown.Content>

@@ -1,4 +1,5 @@
 import '../PdfViewer/pdf_viewer.css';
+import { t } from '@app/lib/i18n';
 
 import type { PDFViewer } from '@block-pdf/PdfViewer';
 import { ZOOM_MAX, ZOOM_MIN } from '@block-pdf/PdfViewer/zoom';
@@ -671,9 +672,7 @@ export function Document() {
           }}
           onMouseUp={selectionHandler}
           onTouchEnd={selectionHandler}
-        >
-          This is where the document should go!
-        </div>
+        >{t('auto.this_is_where_the_document_sho')}</div>
         <InnerDocument />
         <Show when={!isNestedBlock}>
           <ViewerPopupProvider isPopup>

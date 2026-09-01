@@ -107,8 +107,7 @@ function TagHoverContent(props: {
             onClick={() => onFilterByTag()(props.tag.optionId)}
           >
             <FilterIcon class="size-3.5 shrink-0 text-ink-muted" />
-            <span class={hoverMenuLabelClass}>
-              Filter by <span class="font-medium">{props.tag.label}</span>
+            <span class={hoverMenuLabelClass}>{t('auto.filter_by')}<span class="font-medium">{props.tag.label}</span>
             </span>
           </button>
         )}
@@ -364,9 +363,7 @@ export function InlineTagsPill(props: {
             <Match when={tags().length === 0}>
               <span class="inline-flex min-w-0 items-center gap-1.5 opacity-50">
                 <CircleDashedEmpty class="size-3 shrink-0" />
-                <span class="min-w-0 truncate @max-2xl/u-list:hidden">
-                  Tags
-                </span>
+                <span class="min-w-0 truncate @max-2xl/u-list:hidden">{t('auto.tags')}</span>
               </span>
             </Match>
             <Match when={tags().length === 1 && first()}>

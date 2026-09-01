@@ -1,4 +1,5 @@
 import XIcon from '@phosphor/x.svg';
+import { t } from '@app/lib/i18n';
 import { Show } from 'solid-js';
 import { cn } from '../utils/classname';
 
@@ -22,17 +23,13 @@ export function FilteredHiddenBanner(props: FilteredHiddenBannerProps) {
       )}
     >
       <Show when={showMessage()}>
-        <span class="text-sm text-ink-muted">
-          Some items are hidden by filters
-        </span>
+        <span class="text-sm text-ink-muted">{t('auto.some_items_are_hidden_by_filte')}</span>
       </Show>
       <button
         type="button"
         onClick={props.onClearFilters}
         class="inline-flex items-center gap-1.5 text-sm font-medium text-ink hover:text-accent transition-colors"
-      >
-        Clear Filters
-        <XIcon class="size-3.5" />
+      >{t('auto.clear_filters')}<XIcon class="size-3.5" />
       </button>
     </div>
   );

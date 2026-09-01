@@ -1,4 +1,5 @@
 import { joinChannelCall } from '@channel/Call/join-channel-call';
+import { t } from '@app/lib/i18n';
 import { RecipientSelector } from '@core/component/RecipientSelector';
 import { toast } from '@core/component/Toast/Toast';
 import { useCombinedRecipients } from '@core/signal/useCombinedRecipient';
@@ -85,7 +86,7 @@ export function NewCallButton() {
         onClick={() => setIsOpen(true)}
       >
         <PlusCircleIcon class="size-3.5 text-accent" />
-        <span>Call</span>
+        <span>{t('auto.call')}</span>
       </Button>
       <Dialog
         open={isOpen()}
@@ -102,9 +103,7 @@ export function NewCallButton() {
                 <Dialog.CloseButton as={Button} variant="ghost" size="icon-sm">
                   <XIcon />
                 </Dialog.CloseButton>
-                <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">
-                  New Call
-                </Dialog.Title>
+                <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">{t('auto.new_call')}</Dialog.Title>
               </div>
               <div class="flex flex-col p-4 gap-4">
                 <RecipientSelector<'user' | 'contact' | 'channel'>

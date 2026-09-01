@@ -3,6 +3,7 @@ import {
   StaticMarkdownContext,
 } from '@core/component/LexicalMarkdown/component/core/StaticMarkdown';
 import { aiChatTheme } from '@core/component/LexicalMarkdown/theme';
+import { t } from '@app/lib/i18n';
 import type { CallRecord } from '@service-storage/generated/schemas/callRecord';
 import type { Accessor } from 'solid-js';
 import { createMemo, Show } from 'solid-js';
@@ -29,7 +30,7 @@ export function CallRecordingSummarySection(props: {
   return (
     <Show when={shouldShow()}>
       <section class="flex flex-col gap-3">
-        <h3 class="text-sm font-semibold text-ink">Summary</h3>
+        <h3 class="text-sm font-semibold text-ink">{t('auto.summary')}</h3>
         <Show
           when={summary()}
           fallback={

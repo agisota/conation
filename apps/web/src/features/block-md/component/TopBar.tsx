@@ -4,6 +4,7 @@ import {
   openChatWithAgent,
 } from '@app/features/chat/ChatWithAgentButton';
 import { useDownloadDocumentAsMarkdownText } from '@block-md/signal/save';
+import { t } from '@app/lib/i18n';
 import {
   type BlockTool,
   ResponsiveBlockToolbar,
@@ -207,9 +208,7 @@ export function TopBar(props: { name?: Accessor<string | undefined> } = {}) {
       <SplitHeaderLeft>
         <BlockItemSplitLabel name={name} />
         <Show when={isSkill}>
-          <span class="ml-1.5 inline-flex shrink-0 items-center self-center rounded-sm bg-hover px-1.5 py-0.5 text-[10px] font-medium leading-none text-ink-muted">
-            Skill
-          </span>
+          <span class="ml-1.5 inline-flex shrink-0 items-center self-center rounded-sm bg-hover px-1.5 py-0.5 text-[10px] font-medium leading-none text-ink-muted">{t('auto.skill')}</span>
         </Show>
       </SplitHeaderLeft>
 

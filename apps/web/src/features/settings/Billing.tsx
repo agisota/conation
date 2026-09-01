@@ -1,4 +1,5 @@
 import type { PlanTier } from '@app/features/paywall/plans';
+import { t } from '@app/lib/i18n';
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
 import { useHasPaidAccess } from '@core/auth';
 import { PERMISSION_IDS } from '@core/constant/permissions';
@@ -111,15 +112,11 @@ export const Billing = () => {
               <div class="flex flex-col gap-1">
                 <div class="flex items-center gap-2">
                   <h2 class="text-lg font-medium text-ink">
-                    <Show when={!hasPaid()} fallback={'Premium plan'}>
-                      Free plan
-                    </Show>
+                    <Show when={!hasPaid()} fallback={'Premium plan'}>{t('auto.free_plan')}</Show>
                   </h2>
 
                   <Layer depth={3}>
-                    <span class="text-xs text-ink-muted px-1.5 py-0.25 border border-edge-muted rounded-md bg-active">
-                      Current
-                    </span>
+                    <span class="text-xs text-ink-muted px-1.5 py-0.25 border border-edge-muted rounded-md bg-active">{t('auto.current')}</span>
                   </Layer>
                 </div>
                 <Switch>
@@ -156,9 +153,7 @@ export const Billing = () => {
                   depth={2}
                   variant="outline"
                   onClick={handleManage}
-                >
-                  Manage
-                </Button>
+                >{t('auto.manage')}</Button>
               </Show>
             </header>
             <ul class="border-t border-t-edge-muted pt-4 flex flex-wrap gap-4 text-sm text-ink-muted">
@@ -180,7 +175,7 @@ export const Billing = () => {
             <section class="flex flex-col gap-4 p-4">
               <header class="flex items-center gap-2">
                 <div class="flex flex-col">
-                  <h2 class="text-lg font-medium text-ink">Premium</h2>
+                  <h2 class="text-lg font-medium text-ink">{t('auto.premium')}</h2>
                   <p class="text-ink-extra-muted text-xs">
                     $40 per seat / month
                   </p>
@@ -191,9 +186,7 @@ export const Billing = () => {
                   depth={2}
                   variant="cta"
                   onClick={handleCheckout}
-                >
-                  Upgrade now
-                </Button>
+                >{t('auto.upgrade_now')}</Button>
               </header>
               <ul class="border-t border-t-edge-muted pt-4 flex flex-wrap gap-4 text-sm text-ink-muted">
                 <PlanFeatures tier="premium" />

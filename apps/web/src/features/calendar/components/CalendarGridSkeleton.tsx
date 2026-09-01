@@ -1,4 +1,5 @@
 import { For, Show } from 'solid-js';
+import { t } from '@app/lib/i18n';
 
 const SKELETON_TIME_ROWS = Array.from({ length: 12 });
 
@@ -21,7 +22,7 @@ export function CalendarGridSkeleton(props: {
       aria-busy="true"
       class="flex size-full min-w-0 min-h-0 animate-pulse flex-col overflow-hidden bg-surface"
     >
-      <span class="sr-only">Loading calendar</span>
+      <span class="sr-only">{t('auto.loading_calendar')}</span>
 
       <Show when={props.showDayHeader !== false}>
         <div

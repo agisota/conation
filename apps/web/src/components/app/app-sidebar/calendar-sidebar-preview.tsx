@@ -1,4 +1,5 @@
 import { useOpenEventComposer } from '@app/features/block-calendar/components/use-open-event-composer';
+import { t } from '@app/lib/i18n';
 import {
   CALENDAR_BLOCK_ID,
   type CalendarBlockProps,
@@ -154,9 +155,7 @@ function EventSummary(props: {
           class="rounded-lg bg-surface px-2"
           data-calendar-event-target-navigation
           onClick={props.onViewInCalendar}
-        >
-          Open
-          <ArrowRightIcon class="size-4" />
+        >{t('auto.open')}<ArrowRightIcon class="size-4" />
         </Button>
       </div>
       <div class="flex flex-col gap-2 px-3 pb-3 pt-2">
@@ -341,7 +340,7 @@ function PreviewContent(props: { dropdownMount?: HTMLElement }) {
                 <Dropdown.Group>
                   <Dropdown.Sub>
                     <Dropdown.SubTrigger>
-                      <span class="min-w-0 flex-1 truncate">Calendars</span>
+                      <span class="min-w-0 flex-1 truncate">{t('auto.calendars')}</span>
                       <CaretRightIcon class="size-3 shrink-0 text-ink-muted" />
                     </Dropdown.SubTrigger>
                     <Dropdown.SubContent
@@ -376,7 +375,7 @@ function PreviewContent(props: { dropdownMount?: HTMLElement }) {
 
                   <Dropdown.Sub>
                     <Dropdown.SubTrigger>
-                      <span class="min-w-0 flex-1 truncate">Time format</span>
+                      <span class="min-w-0 flex-1 truncate">{t('auto.time_format')}</span>
                       <span class="text-xs text-ink-muted">
                         {timeFormat() === '12-hour' ? '12-hour' : '24-hour'}
                       </span>

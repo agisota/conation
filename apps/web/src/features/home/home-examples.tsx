@@ -1,4 +1,5 @@
 import { useChatInputContext } from '@core/component/AI/context';
+import { t } from '@app/lib/i18n';
 import { isMobile } from '@core/mobile/isMobile';
 import { AnimatedEmailIcon } from '@icon/wide-email';
 import { AnimatedFileMdIcon } from '@icon/wide-fileMd';
@@ -49,7 +50,7 @@ export function HomeExamples(props: { preferences: HomePreferences }) {
     <Show when={!isMobile() && !props.preferences.isDismissed('examples')}>
       <section>
         <div class="mb-2 flex items-center justify-between px-1">
-          <span class="text-sm text-ink-muted">Examples</span>
+          <span class="text-sm text-ink-muted">{t('auto.examples')}</span>
           <button
             type="button"
             class="rounded-md p-1 text-ink-extra-muted transition-colors hover:bg-hover hover:text-ink-muted"

@@ -1,4 +1,5 @@
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import { useUserId } from '@core/context/user';
 import { useAddInboxFlow } from '@core/email-link';
 import GmailIcon from '@icon/mcp-gmail.svg';
@@ -125,9 +126,7 @@ export function EmailStep(props: {
                   {link.email_address}
                 </span>
                 <span class="ml-auto flex shrink-0 items-center gap-1.5 text-xs text-ink-muted">
-                  <StatusDot state="connected" />
-                  Connected
-                </span>
+                  <StatusDot state="connected" />{t('auto.connected')}</span>
               </div>
             </Layer>
           )}
@@ -154,9 +153,7 @@ export function EmailStep(props: {
                   <Show
                     when={connecting() === slot}
                     fallback={
-                      <span class="flex items-center gap-1 text-xs font-medium text-ink-muted group-hover:text-ink">
-                        Connect
-                        <ArrowUpRightIcon class="size-3 shrink-0" />
+                      <span class="flex items-center gap-1 text-xs font-medium text-ink-muted group-hover:text-ink">{t('auto.connect')}<ArrowUpRightIcon class="size-3 shrink-0" />
                       </span>
                     }
                   >

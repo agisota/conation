@@ -1,4 +1,5 @@
 import { isValidTeamTaskSlug } from '@app/features/settings/teamSlug';
+import { t } from '@app/lib/i18n';
 import { useIsAuthenticated } from '@core/auth';
 import { LoadingBlock } from '@core/component/LoadingBlock';
 import { setPostLoginRedirect } from '@core/util/postLoginRedirect';
@@ -86,14 +87,10 @@ function TaskRouteError(props: { notFound: boolean; onRetry?: () => void }) {
             variant="outline"
             size="sm"
             onClick={() => navigate('/tasks')}
-          >
-            Go to tasks
-          </Button>
+          >{t('auto.go_to_tasks')}</Button>
           <Show when={!props.notFound && props.onRetry}>
             {(onRetry) => (
-              <Button variant="outline" size="sm" onClick={onRetry()}>
-                Try again
-              </Button>
+              <Button variant="outline" size="sm" onClick={onRetry()}>{t('auto.try_again')}</Button>
             )}
           </Show>
         </div>

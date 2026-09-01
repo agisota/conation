@@ -1,4 +1,5 @@
 import HashIcon from '@phosphor/hash.svg';
+import { t } from '@app/lib/i18n';
 import CheckCircleIcon from '@phosphor-icons/core/assets/fill/check-circle-fill.svg?component-solid';
 import type { Bot } from '@service-storage/generated/schemas/bot';
 import { Button, Surface } from '@ui';
@@ -22,10 +23,8 @@ export function BotCreationResult(props: {
           <CheckCircleIcon class="size-5" />
         </div>
         <div class="min-w-0">
-          <h1 class="text-lg font-semibold tracking-[-0.01em]">Bot created</h1>
-          <p class="mt-0.5 text-sm text-ink-muted">
-            Copy the credentials now. The token is shown only once.
-          </p>
+          <h1 class="text-lg font-semibold tracking-[-0.01em]">{t('auto.bot_created')}</h1>
+          <p class="mt-0.5 text-sm text-ink-muted">{t('auto.copy_the_credentials_now_the_t')}</p>
         </div>
       </header>
 
@@ -105,9 +104,7 @@ export function BotCreationResult(props: {
       </div>
 
       <div class="mt-8 flex justify-end border-t border-edge-muted pt-4">
-        <Button type="button" variant="cta" size="sm" onClick={props.onDone}>
-          Done
-        </Button>
+        <Button type="button" variant="cta" size="sm" onClick={props.onDone}>{t('auto.done')}</Button>
       </div>
     </div>
   );

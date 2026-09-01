@@ -1,4 +1,5 @@
 import { useChannelsContext } from '@core/context/channels';
+import { t } from '@app/lib/i18n';
 import {
   Combobox,
   type ComboboxRootItemComponentProps,
@@ -107,9 +108,7 @@ export function ChannelMultiSelect(props: {
           <Show
             when={options().length > 0}
             fallback={
-              <div class="px-2 py-5 text-center text-xs text-ink-muted">
-                No available channels
-              </div>
+              <div class="px-2 py-5 text-center text-xs text-ink-muted">{t('auto.no_available_channels')}</div>
             }
           >
             <Combobox.Listbox class="max-h-56 overflow-y-auto" />

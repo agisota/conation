@@ -1,4 +1,5 @@
 import { createUniqueId } from 'solid-js';
+import { t } from '@app/lib/i18n';
 
 export const AnimatedInboxIcon = (props: {
   triggerAnimation?: boolean;
@@ -19,7 +20,7 @@ export const AnimatedInboxIcon = (props: {
       overflow="visible"
       class={`animated-inbox-icon ${props.triggerAnimation ? 'animating' : ''} ${props.class ?? ''}`}
     >
-      {/*<title>Animated inbox icon</title>*/}
+      {/*<title>{t('auto.animated_inbox_icon')}</title>*/}
       <style>{`
         .animated-inbox-icon {
           .left-bar, .right-bar {

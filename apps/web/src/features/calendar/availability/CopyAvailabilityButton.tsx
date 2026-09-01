@@ -1,4 +1,5 @@
 import { toast } from '@core/component/Toast/Toast';
+import { t } from '@app/lib/i18n';
 import { writeClipboardData } from '@core/util/dataTransfer';
 import CalendarCheckIcon from '@phosphor/calendar-check.svg';
 import CaretRightIcon from '@phosphor/caret-right.svg';
@@ -115,7 +116,7 @@ export function CopyAvailabilityButton(props: { class?: string }) {
         <Dropdown placement="bottom-start">
           <Dropdown.Trigger class="gap-1.5 bg-transparent px-2 hover:bg-ink/[0.04]">
             <CalendarCheckIcon class="size-3.5 shrink-0" />
-            <span class="truncate text-xs font-medium">Copy availability</span>
+            <span class="truncate text-xs font-medium">{t('auto.copy_availability')}</span>
           </Dropdown.Trigger>
           <Dropdown.Content class="min-w-40">
             <Dropdown.Group>
@@ -144,20 +145,18 @@ export function CopyAvailabilityButton(props: { class?: string }) {
           </Dropdown.Trigger>
           <Dropdown.Content class="w-56 max-w-[calc(100vw-1rem)]">
             <Dropdown.Group>
-              <Dropdown.GroupLabel>Availability</Dropdown.GroupLabel>
+              <Dropdown.GroupLabel>{t('auto.availability')}</Dropdown.GroupLabel>
               <Dropdown.CheckboxItem
                 checked={settings().excludeWeekends}
                 closeOnSelect={false}
                 onChange={setExcludeWeekends}
               >
-                <span class="flex-1 truncate">Exclude weekends</span>
+                <span class="flex-1 truncate">{t('auto.exclude_weekends')}</span>
               </Dropdown.CheckboxItem>
 
               <Dropdown.Sub>
                 <Dropdown.SubTrigger>
-                  <span class="min-w-0 flex-1 truncate text-xs text-ink-muted">
-                    Start time
-                  </span>
+                  <span class="min-w-0 flex-1 truncate text-xs text-ink-muted">{t('auto.start_time')}</span>
                   <span class="text-sm font-medium text-ink">
                     {startTimeLabel()}
                   </span>
@@ -176,9 +175,7 @@ export function CopyAvailabilityButton(props: { class?: string }) {
 
               <Dropdown.Sub>
                 <Dropdown.SubTrigger>
-                  <span class="min-w-0 flex-1 truncate text-xs text-ink-muted">
-                    End time
-                  </span>
+                  <span class="min-w-0 flex-1 truncate text-xs text-ink-muted">{t('auto.end_time')}</span>
                   <span class="text-sm font-medium text-ink">
                     {endTimeLabel()}
                   </span>

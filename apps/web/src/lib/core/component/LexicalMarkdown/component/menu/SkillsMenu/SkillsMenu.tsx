@@ -1,4 +1,5 @@
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import type {
   ComposeSkillProps,
   ComposeSkillSuccess,
@@ -269,9 +270,7 @@ function SkillsMenuInner(props: SkillsMenuProps) {
             depth={2}
             class="pt-2 pb-1.5 shadow-lg shadow-drop-shadow rounded-xl"
           >
-            <div class="px-3.5 pb-1 text-xs font-medium text-ink-muted">
-              Skills
-            </div>
+            <div class="px-3.5 pb-1 text-xs font-medium text-ink-muted">{t('auto.skills')}</div>
             <Show
               when={skills().length > 0}
               fallback={
@@ -320,9 +319,7 @@ function SkillsMenuInner(props: SkillsMenuProps) {
                 <div class="mr-2 flex items-center">
                   <PlusIcon class="size-4 text-ink-muted" />
                 </div>
-                <span class="text-ink text-xs sm:text-sm font-medium">
-                  New skill
-                </span>
+                <span class="text-ink text-xs sm:text-sm font-medium">{t('auto.new_skill')}</span>
               </div>
             </div>
           </Surface>

@@ -1,4 +1,5 @@
 import { MediaGrid } from '@channel/Media/MediaGrid';
+import { t } from '@app/lib/i18n';
 import { MediaViewerDialog } from '@channel/Media/MediaViewerDialog';
 import type { MediaItem } from '@channel/Media/media-items';
 import { createElementSize } from '@solid-primitives/resize-observer';
@@ -61,9 +62,7 @@ export function MediaGallery(props: {
       <Show
         when={hasMedia()}
         fallback={
-          <div class="px-6 py-3 text-sm text-ink-subtle">
-            No photos or videos in this channel yet.
-          </div>
+          <div class="px-6 py-3 text-sm text-ink-subtle">{t('auto.no_photos_or_videos_in_this_ch')}</div>
         }
       >
         <div class="flex min-h-0 flex-1 flex-col px-6 py-2">

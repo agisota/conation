@@ -1,4 +1,5 @@
 import { INSERT_TABLE_COMMAND } from '@lexical/table';
+import { t } from '@app/lib/i18n';
 import { createCallback } from '@solid-primitives/rootless';
 import { Button } from '@ui';
 import { createSignal, Index, type ParentProps } from 'solid-js';
@@ -165,9 +166,7 @@ export function TableInsert(
           variant="outline"
           disabled={!rows() || !cols()}
           onClick={() => handleInsertTable(rows() ?? 0, cols() ?? 0)}
-        >
-          Insert Table
-        </Button>
+        >{t('auto.insert_table')}</Button>
       </div>
     </div>
   );

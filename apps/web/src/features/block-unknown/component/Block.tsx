@@ -1,4 +1,5 @@
 import { FileSidePanelSections, SidePanel } from '@components/app/side-panel';
+import { t } from '@app/lib/i18n';
 import { DocumentBlockContainer } from '@core/component/DocumentBlockContainer';
 import { toast } from '@core/component/Toast/Toast';
 import { useShareDialogContext } from '@core/component/TopBar/ShareButton';
@@ -63,12 +64,10 @@ const Unknown = () => {
 
         <div class="flex flex-row gap-2 items-center">
           <Button variant="accent" onClick={shareCtx.open}>
-            <ShareFat class="size-4" /> Share
-          </Button>
+            <ShareFat class="size-4" />{t('auto.share')}</Button>
 
           <Button variant="accent" onClick={downloadDocument}>
-            <DownloadSimple class="size-4" /> Download
-          </Button>
+            <DownloadSimple class="size-4" />{t('auto.download')}</Button>
         </div>
       </div>
     </div>

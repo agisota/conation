@@ -1,4 +1,5 @@
 import { type PortalScope, ScopedPortal } from '@core/component/ScopedPortal';
+import { t } from '@app/lib/i18n';
 import clickOutside from '@core/directive/clickOutside';
 import PlusIcon from '@phosphor/plus.svg';
 import { TagDot } from '@property/tags/TagDot';
@@ -430,7 +431,7 @@ export function TagsMenu(props: {
                   <Show
                     when={items().length > 0 || showCreateRow()}
                     fallback={
-                      <div class="px-3 py-1 text-ink-extra-muted">No tags</div>
+                      <div class="px-3 py-1 text-ink-extra-muted">{t('auto.no_tags')}</div>
                     }
                   >
                     <TagMenuItems
@@ -630,9 +631,7 @@ function CreateTagFlow(props: {
                   <Show
                     when={props.pending && props.selectedScopeIndex === index()}
                   >
-                    <span class="shrink-0 text-xs text-ink-muted">
-                      Creating...
-                    </span>
+                    <span class="shrink-0 text-xs text-ink-muted">{t('auto.creating')}</span>
                   </Show>
                 </button>
               </ScrollIntoViewOnSelect>

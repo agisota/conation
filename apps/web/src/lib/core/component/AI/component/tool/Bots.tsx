@@ -117,7 +117,7 @@ const listBotsHandler = createToolRenderer({
         }
       >
         <div class="flex min-w-0 flex-1 items-center justify-between gap-3">
-          <span>List manageable bots</span>
+          <span>{t('auto.list_manageable_bots')}</span>
           <Tool.ResultToggle
             expanded={expanded()}
             onToggle={() => setExpanded((value) => !value)}
@@ -308,7 +308,7 @@ const getBotWebhooksHandler = createToolRenderer({
         }
       >
         <div class="flex min-w-0 flex-1 items-center justify-between gap-3">
-          <span>Get bot webhooks</span>
+          <span>{t('auto.get_bot_webhooks')}</span>
           <Tool.ResultToggle
             expanded={expanded()}
             onToggle={() => setExpanded((value) => !value)}

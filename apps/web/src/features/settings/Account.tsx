@@ -254,16 +254,12 @@ function ProfilePictureRow(props: { userId: string }) {
               <Dropdown.Content class="w-48">
                 <Dropdown.Group>
                   <Dropdown.Item onSelect={pickProfilePicture}>
-                    <IconUpload class="size-4" />
-                    Upload new picture
-                  </Dropdown.Item>
+                    <IconUpload class="size-4" />{t('auto.upload_new_picture')}</Dropdown.Item>
                   <Dropdown.Item
                     class="text-failure"
                     onSelect={() => setShowRemoveConfirmModal(true)}
                   >
-                    <TrashIcon class="size-4" />
-                    Remove picture
-                  </Dropdown.Item>
+                    <TrashIcon class="size-4" />{t('auto.remove_picture')}</Dropdown.Item>
                 </Dropdown.Group>
               </Dropdown.Content>
             </Dropdown>
@@ -278,14 +274,10 @@ function ProfilePictureRow(props: { userId: string }) {
       >
         <Panel depth={2} class="rounded-xl">
           <Panel.Header class="px-6">
-            <Dialog.Title class="text-ink text-sm font-semibold">
-              Remove profile picture
-            </Dialog.Title>
+            <Dialog.Title class="text-ink text-sm font-semibold">{t('auto.remove_profile_picture')}</Dialog.Title>
           </Panel.Header>
           <Panel.Body class="p-6 font-sans flex flex-col gap-3">
-            <Dialog.Description class="text-ink-muted text-sm/tight font-normal">
-              Remove your current profile picture?
-            </Dialog.Description>
+            <Dialog.Description class="text-ink-muted text-sm/tight font-normal">{t('auto.remove_your_current_profile_pi')}</Dialog.Description>
             <div class="pt-3 justify-end items-center gap-3 inline-flex">
               <Button
                 variant="outline"
@@ -475,9 +467,7 @@ export function Account() {
                 depth={4}
                 onClick={() => logout()}
               >
-                <SignOutIcon class="size-4" />
-                Log out
-              </Button>
+                <SignOutIcon class="size-4" />{t('auto.log_out')}</Button>
             </div>
           </SettingsCard>
         </SettingsSection>
@@ -496,9 +486,7 @@ export function Account() {
                 resetDeleteFlow();
                 setShowDeleteModal(true);
               }}
-            >
-              Delete Account
-            </Button>
+            >{t('auto.delete_account')}</Button>
           </SettingsRow>
         </SettingsCard>
       </SettingsSection>
@@ -513,9 +501,7 @@ export function Account() {
       >
         <Panel depth={2} class="rounded-xl">
           <Panel.Header class="px-6">
-            <Dialog.Title class="text-ink text-sm font-semibold">
-              Delete Account
-            </Dialog.Title>
+            <Dialog.Title class="text-ink text-sm font-semibold">{t('auto.delete_account')}</Dialog.Title>
           </Panel.Header>
           <Panel.Body class="p-6 font-sans flex flex-col gap-3">
             <Dialog.Description class="text-ink-muted text-sm/tight font-normal">
@@ -540,7 +526,7 @@ export function Account() {
                     )
                   }
                 >
-                  <option value="">Select a reason</option>
+                  <option value="">{t('auto.select_a_reason')}</option>
                   <For each={ACCOUNT_DELETION_REASON_OPTIONS}>
                     {(option) => (
                       <option value={option.value}>{option.label}</option>
@@ -588,9 +574,7 @@ export function Account() {
                   setShowDeleteConfirmModal(true);
                   setShowDeleteModal(false);
                 }}
-              >
-                Continue
-              </Button>
+              >{t('auto.continue')}</Button>
             </div>
           </Panel.Body>
         </Panel>
@@ -606,9 +590,7 @@ export function Account() {
       >
         <Panel depth={2} class="rounded-xl">
           <Panel.Header class="px-6">
-            <Dialog.Title class="text-ink text-sm font-semibold">
-              Are you absolutely sure?
-            </Dialog.Title>
+            <Dialog.Title class="text-ink text-sm font-semibold">{t('auto.are_you_absolutely_sure')}</Dialog.Title>
           </Panel.Header>
           <Panel.Body class="p-6 font-sans flex flex-col gap-3">
             <Dialog.Description class="text-ink-muted text-sm/tight font-normal">
@@ -690,7 +672,7 @@ function NotificationSettings(props: {
 function NotificationNotSupported() {
   return (
     <Row label="Notifications">
-      <span class="text-sm text-ink-muted">Not supported on this device</span>
+      <span class="text-sm text-ink-muted">{t('auto.not_supported_on_this_device')}</span>
     </Row>
   );
 }
@@ -701,7 +683,7 @@ function NameInput(props: {
   value?: string;
   placeholder?: string;
   /** Returns whether the save succeeded so we can show status / revert. */
-  onSave: (value: string) => Promise<boolean>;
+  onSave: (value: string) =>{t('auto.promise')}<boolean>;
 }) {
   const [inputValue, setInputValue] = createSignal(props.value ?? '');
   const [isFocused, setIsFocused] = createSignal(false);

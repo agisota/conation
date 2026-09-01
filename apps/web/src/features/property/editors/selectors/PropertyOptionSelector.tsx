@@ -1,4 +1,5 @@
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
+import { t } from '@app/lib/i18n';
 import { useKeyPressed } from '@core/util/useKeyPressed';
 import CircleDashedEmpty from '@phosphor/circle-dashed.svg';
 import SearchIcon from '@phosphor/magnifying-glass.svg';
@@ -157,9 +158,9 @@ type SelectOptionsProps = {
   options: SelectableOption[];
   isLoading: boolean;
   error: string | null;
-  selectedOptions: () => Set<string>;
+  selectedOptions: () =>{t('auto.set')}<string>;
   onToggleOption: (value: string) => void;
-  onAddOption?: (value: string) => Promise<void>;
+  onAddOption?: (value: string) =>{t('auto.promise')}<void>;
   /** When provided, renders a "no value" item at the top of the list. */
   clearOption?: { label: string; onClear: () => void };
   onClose?: () => void;
@@ -353,7 +354,7 @@ export const PropertyOptionSelector = (props: SelectOptionsProps) => {
           <div class="w-5 h-5 animate-spin">
             <LoadingSpinner />
           </div>
-          <span class="ml-2 text-ink-muted">Loading options...</span>
+          <span class="ml-2 text-ink-muted">{t('auto.loading_options')}</span>
         </div>
       }
     >
@@ -380,9 +381,7 @@ export const PropertyOptionSelector = (props: SelectOptionsProps) => {
                 <Show
                   when={isValidNewOption() && props.onAddOption}
                   fallback={
-                    <div class="text-center py-6 text-ink-muted">
-                      No options available
-                    </div>
+                    <div class="text-center py-6 text-ink-muted">{t('auto.no_options_available')}</div>
                   }
                 >
                   <div class="p-1">
@@ -401,9 +400,7 @@ export const PropertyOptionSelector = (props: SelectOptionsProps) => {
                 <Show
                   when={selectableItems().length > 0}
                   fallback={
-                    <div class="text-center py-4 text-ink-muted">
-                      No options match your search
-                    </div>
+                    <div class="text-center py-4 text-ink-muted">{t('auto.no_options_match_your_search')}</div>
                   }
                 >
                   <For each={selectableItems()}>

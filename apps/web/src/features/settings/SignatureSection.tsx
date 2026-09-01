@@ -168,9 +168,7 @@ export function SignatureSection(props: { link: EmailLink }) {
         fallback={
           <div class="flex flex-col items-center gap-1.5 rounded-lg border border-dashed border-edge-muted px-3 py-6 text-center">
             <SignatureIcon class="size-5 text-ink-muted" />
-            <p class="text-sm text-ink-muted">
-              Update your signature on desktop.
-            </p>
+            <p class="text-sm text-ink-muted">{t('auto.update_your_signature_on_deskt')}</p>
           </div>
         }
       >

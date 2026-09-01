@@ -1,4 +1,5 @@
 import { LoadingSpinner } from '@core/component/LoadingSpinner';
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { useChannelsContext } from '@core/context/channels';
 import CaretLeftIcon from '@phosphor/caret-left.svg';
@@ -184,9 +185,7 @@ export function BotDetail(props: { botId: string; onBack: () => void }) {
             disabled={pending()}
             onClick={leave}
           >
-            <CaretLeftIcon />
-            Back to bots
-          </Button>
+            <CaretLeftIcon />{t('auto.back_to_bots')}</Button>
           <Show
             when={initialized() && botQuery.data}
             fallback={
@@ -267,9 +266,7 @@ export function BotDetail(props: { botId: string; onBack: () => void }) {
                     onChange={setChannelIds}
                     disabled={saving()}
                   />
-                  <p class="mt-2 text-xs text-ink-muted">
-                    Each assigned channel has a separate webhook URL.
-                  </p>
+                  <p class="mt-2 text-xs text-ink-muted">{t('auto.each_assigned_channel_has_a_se')}</p>
                 </BotFormSection>
 
                 <BotWebhooksSection

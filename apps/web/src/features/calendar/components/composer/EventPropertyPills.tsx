@@ -1,4 +1,5 @@
 import { UserIcon } from '@core/component/UserIcon';
+import { t } from '@app/lib/i18n';
 import { type IUser, idToEmail, recipientEntityMapper } from '@core/user';
 import { Popover } from '@kobalte/core/popover';
 import BellSimpleIcon from '@phosphor/bell-simple.svg';
@@ -145,13 +146,11 @@ function ReadOnlyEventComposerGuestsPill(props: EventComposerGuestsPillProps) {
       <Popover.Portal>
         <Layer depth={3}>
           <Popover.Content class="z-action-menu w-72 max-w-[calc(100vw-1rem)] rounded-xl border border-edge bg-menu p-1.5 text-sm shadow-menu menu-open-animation">
-            <Popover.Title class="sr-only">Event guests</Popover.Title>
+            <Popover.Title class="sr-only">{t('auto.event_guests')}</Popover.Title>
             <Show
               when={props.selected.length > 0}
               fallback={
-                <p class="px-2 py-4 text-center text-sm text-ink-muted">
-                  No guests
-                </p>
+                <p class="px-2 py-4 text-center text-sm text-ink-muted">{t('auto.no_guests')}</p>
               }
             >
               <div class="flex max-h-64 flex-col overflow-y-auto">
@@ -346,7 +345,7 @@ export function EventComposerLocationPill(
               queueMicrotask(() => input?.focus());
             }}
           >
-            <Popover.Title class="sr-only">Event location</Popover.Title>
+            <Popover.Title class="sr-only">{t('auto.event_location')}</Popover.Title>
             <input
               ref={input}
               type="text"
@@ -559,7 +558,7 @@ export function EventComposerRemindersPill(
       </Tooltip>
       <Select.Content class="w-56 p-0">
         <div class="flex items-center justify-between border-edge-muted border-b px-3 py-2 text-xs text-ink-muted">
-          <span>Choose reminders</span>
+          <span>{t('auto.choose_reminders')}</span>
           <span
             aria-label={`${props.usedSlots} of ${REMINDER_OVERRIDES_MAX} notifications selected`}
           >

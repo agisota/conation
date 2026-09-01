@@ -1,4 +1,5 @@
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
+import { t } from '@app/lib/i18n';
 import { SidePanel } from '@components/app/side-panel';
 import { useBlockId } from '@core/block';
 import { DocumentMention } from '@core/component/LexicalMarkdown/component/decorator/DocumentMention';
@@ -44,7 +45,7 @@ export function TaskDuplicateMatchPill() {
               title="Possible duplicate tasks"
             >
               <WarningIcon class="size-3 shrink-0" />
-              <span class="truncate">Possible duplicate</span>
+              <span class="truncate">{t('auto.possible_duplicate')}</span>
               <CaretDownIcon class="size-3 shrink-0 text-current/70" />
             </Dropdown.Trigger>
             <Dropdown.Content class="max-w-[calc(100vw-24px)]">
@@ -185,9 +186,7 @@ function DismissDuplicateButton(props: { onDismiss: () => void }) {
       size="sm"
       class="h-6 shrink-0 px-2 text-xs"
       onClick={props.onDismiss}
-    >
-      Dismiss
-    </Button>
+    >{t('auto.dismiss')}</Button>
   );
 }
 
@@ -199,9 +198,7 @@ function DismissAllButton(props: { onDismissAll: () => void }) {
       size="sm"
       class="mt-1 w-fit text-xs"
       onClick={props.onDismissAll}
-    >
-      Dismiss all
-    </Button>
+    >{t('auto.dismiss_all')}</Button>
   );
 }
 

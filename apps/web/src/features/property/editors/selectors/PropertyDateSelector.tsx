@@ -179,9 +179,7 @@ export const PropertyDateSelector = (props: DateSelectorProps) => {
                     when={searchQuery().trim()}
                     fallback={
                       <Show when={!hasClear()}>
-                        <div class="text-center py-2 text-ink-muted text-sm">
-                          Enter a date or duration
-                        </div>
+                        <div class="text-center py-2 text-ink-muted text-sm">{t('auto.enter_a_date_or_duration')}</div>
                       </Show>
                     }
                   >
@@ -234,13 +232,11 @@ export const PropertyDateSelector = (props: DateSelectorProps) => {
                 >
                   <div class="flex items-center gap-2 flex-1 min-w-0">
                     <div class="flex-1 min-w-0">
-                      <p class="truncate">Custom date...</p>
+                      <p class="truncate">{t('auto.custom_date')}</p>
                     </div>
                   </div>
                   <div class="flex items-center gap-2 shrink-0">
-                    <span class="text-xs text-ink-muted">
-                      Pick from calendar
-                    </span>
+                    <span class="text-xs text-ink-muted">{t('auto.pick_from_calendar')}</span>
                   </div>
                 </div>
                 <Show when={hasClear()}>
@@ -258,7 +254,7 @@ export const PropertyDateSelector = (props: DateSelectorProps) => {
                     }}
                   >
                     <div class="flex items-center gap-2 flex-1 min-w-0">
-                      <p class="truncate text-ink-muted">Clear date</p>
+                      <p class="truncate text-ink-muted">{t('auto.clear_date')}</p>
                     </div>
                   </div>
                 </Show>
@@ -269,7 +265,7 @@ export const PropertyDateSelector = (props: DateSelectorProps) => {
           {/* Help text */}
           <div class="shrink-0 px-2 py-1.5 border-t border-edge-muted">
             <div class="text-xs text-ink-muted">
-              <span>Use queries like </span>
+              <span>{t('auto.use_queries_like')}</span>
               <code class="bg-active px-1">3d</code>,{' '}
               <code class="bg-active px-1">1w</code>,{' '}
               <code class="bg-active px-1">feb 17</code>, or{' '}

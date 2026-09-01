@@ -1,4 +1,5 @@
 import { createTabLeaderSignal } from '@core/cross-tab/tab-leader';
+import { t } from '@app/lib/i18n';
 import { makePersisted } from '@solid-primitives/storage';
 import {
   type Accessor,
@@ -19,16 +20,16 @@ type NotGranted = 'not-granted';
 /// the context provider value which provides an interface wherein downstream consumers can interact with
 // this platforms Notifcation implementation
 export interface PlatformNotificationInterface {
-  requestPermission: () => Promise<NotificationPermission>;
-  getCurrentPermission: () => Promise<NotificationPermission>;
+  requestPermission: () =>{t('auto.promise')}<NotificationPermission>;
+  getCurrentPermission: () =>{t('auto.promise')}<NotificationPermission>;
   showNotification: (
     data: PlatformNotificationData
-  ) => Promise<PlatformNotificationHandle | NotGranted>;
-  unregisterNotifications: () => Promise<void>;
+  ) =>{t('auto.promise')}<PlatformNotificationHandle | NotGranted>;
+  unregisterNotifications: () =>{t('auto.promise')}<void>;
 }
 
 export type CreateAppNotificationInterface = (
-  setDisabled: () => Promise<void>
+  setDisabled: () =>{t('auto.promise')}<void>
 ) => PlatformNotificationInterface;
 
 export type NotificationUnsupported = 'not-supported';
@@ -40,7 +41,7 @@ const ELECTION_NAMESPACE = 'notification-provider';
 // unregistration is an application detail and isn't actually part of the browser notification api
 // which Iis why it is passed in
 function createDefaultBrowserInterface(
-  unregisterNotifications: () => Promise<void>
+  unregisterNotifications: () =>{t('auto.promise')}<void>
 ): PlatformNotificationInterface | NotificationUnsupported {
   if (!('Notification' in window)) return 'not-supported';
 
@@ -114,11 +115,11 @@ type UserSetting = 'allowed' | UiDisabled;
 
 export interface PlatformNotificationState {
   permission: Accessor<NotificationPermission | UiDisabled>;
-  requestPermission: () => Promise<NotificationPermission>;
-  unregisterNotification: () => Promise<void>;
+  requestPermission: () =>{t('auto.promise')}<NotificationPermission>;
+  unregisterNotification: () =>{t('auto.promise')}<void>;
   showNotification: (
     data: PlatformNotificationData
-  ) => Promise<PlatformNotificationHandle | NotGranted | UiDisabled>;
+  ) =>{t('auto.promise')}<PlatformNotificationHandle | NotGranted | UiDisabled>;
 }
 
 const NotificationStateContext = createContext<

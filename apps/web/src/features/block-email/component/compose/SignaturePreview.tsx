@@ -1,4 +1,5 @@
 import { isMobile } from '@core/mobile/isMobile';
+import { t } from '@app/lib/i18n';
 import { interceptMailtoLinks } from '@core/util/interceptMailtoLinks';
 import InfoIcon from '@phosphor/info.svg';
 import CaretDownIcon from '@phosphor-icons/core/regular/caret-down.svg?component-solid';
@@ -70,9 +71,7 @@ export function SignaturePreview(props: {
             <CaretDownIcon
               class="size-3 transition-transform"
               classList={{ '-rotate-90': !expanded() }}
-            />
-            Signature
-          </button>
+            />{t('auto.signature')}</button>
           {/* Hover-only guidance; hidden on mobile where tooltips never show
               (Settings still points mobile users to desktop). */}
           <Show when={!isMobile()}>

@@ -1,4 +1,5 @@
 import { Message } from '@channel/Message';
+import { t } from '@app/lib/i18n';
 import { Thread } from '@channel/Thread/Thread';
 import { CustomScrollbar } from '@core/component/CustomScrollbar';
 import { formatVideoTimestamp } from '@core/util/duration';
@@ -333,9 +334,7 @@ export function CallTranscript(props: {
           <Show when={!props.hideHeader}>
             <div class="isolate flex items-center gap-2 sticky top-0 bg-surface z-10 px-4 py-2 @[860px]:py-4 border-b border-edge-muted/50">
               <Subtitles class="size-4 text-ink shrink-0" />
-              <p class="font-semibold text-ink select-none text-sm shrink-0">
-                Transcript
-              </p>
+              <p class="font-semibold text-ink select-none text-sm shrink-0">{t('auto.transcript')}</p>
             </div>
           </Show>
 
@@ -402,7 +401,7 @@ export function CallTranscript(props: {
               setIsActiveRowInView(true);
             }}
           >
-            <span class="relative z-user-highlight">Sync to video time</span>
+            <span class="relative z-user-highlight">{t('auto.sync_to_video_time')}</span>
           </button>
         </div>
       </Show>

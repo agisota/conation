@@ -1,4 +1,5 @@
 import { SoupSectionHeader } from '@app/features/next-soup/soup-view/section-header';
+import { t } from '@app/lib/i18n';
 import { openDocument } from '@core/component/LexicalMarkdown/component/core/BlockLink';
 import { useSplitNavigationHandler } from '@core/util/useSplitNavigationHandler';
 import { usePropertyEntityDisplay } from '@property/hooks';
@@ -23,11 +24,11 @@ export function TopEntities(props: {
 }) {
   return (
     <section class="min-w-0" aria-label="Most active">
-      <SoupSectionHeader>Most active</SoupSectionHeader>
+      <SoupSectionHeader>{t('auto.most_active')}</SoupSectionHeader>
       <Show
         when={props.entities.length > 0}
         fallback={
-          <p class="px-2 py-2 text-ink-muted text-sm">No entities yet.</p>
+          <p class="px-2 py-2 text-ink-muted text-sm">{t('auto.no_entities_yet')}</p>
         }
       >
         <For each={props.entities}>

@@ -1,4 +1,5 @@
 import { analytics } from '@app/lib/analytics';
+import { t } from '@app/lib/i18n';
 import { useChannelTab } from '@channel/Channel/ChannelTabContext';
 import { useChannelName, useChannelType } from '@core/context/channels';
 import { isMobile } from '@core/mobile/isMobile';
@@ -85,9 +86,7 @@ export function ChannelCallButton(props: { channelId: string }) {
           tone: 'success' as const,
           confirmLabel: (
             <>
-              <PhoneIcon class="size-5" />
-              Start call
-            </>
+              <PhoneIcon class="size-5" />{t('auto.start_call')}</>
           ),
         }),
         { owner }

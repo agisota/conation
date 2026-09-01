@@ -1,4 +1,5 @@
 import { SUPPORTED_ATTACHMENT_EXTENSIONS } from '@core/component/AI/constant';
+import { t } from '@app/lib/i18n';
 import { useChatInputContext } from '@core/component/AI/context';
 import {
   useChatAttachableHistory,
@@ -284,7 +285,7 @@ export function ChatAttachMenu(props: ChatAttachMenuProps) {
                 when={rankedHistory().length > 0}
                 fallback={
                   <div class="p-2 w-full flex-col justify-center items-center">
-                    <p class="text-sm text-ink-muted">No results</p>
+                    <p class="text-sm text-ink-muted">{t('auto.no_results')}</p>
                   </div>
                 }
               >

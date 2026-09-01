@@ -277,9 +277,7 @@ export function EmailCard() {
       >
         <Panel depth={2} class="rounded-xl">
           <Panel.Header class="px-6">
-            <Dialog.Title class="text-ink text-sm font-semibold">
-              Remove inbox
-            </Dialog.Title>
+            <Dialog.Title class="text-ink text-sm font-semibold">{t('auto.remove_inbox')}</Dialog.Title>
           </Panel.Header>
           <Panel.Body class="p-6 font-sans flex flex-col gap-3">
             <Dialog.Description class="text-ink-muted text-sm/tight font-normal">
@@ -393,11 +391,9 @@ function DisabledPrimaryRow(props: { email: string; onEnable: () => void }) {
           <Chip label="Primary" />
           <Chip label="Disabled" />
         </div>
-        <span class="text-xs text-ink-muted">Sync disabled</span>
+        <span class="text-xs text-ink-muted">{t('auto.sync_disabled')}</span>
       </div>
-      <Button variant="outline" size="sm" depth={3} onClick={props.onEnable}>
-        Enable
-      </Button>
+      <Button variant="outline" size="sm" depth={3} onClick={props.onEnable}>{t('auto.enable')}</Button>
     </div>
   );
 }
@@ -470,9 +466,7 @@ function InboxRow(props: {
                   props.hasCompletedBackfill
                 }
               >
-                <span class="text-xs text-ink-muted">
-                  Initial sync complete
-                </span>
+                <span class="text-xs text-ink-muted">{t('auto.initial_sync_complete')}</span>
               </Match>
             </Switch>
           </Show>
@@ -505,9 +499,7 @@ function InboxRow(props: {
               depth={3}
               onClick={props.onReconnect}
               aria-label={`Reconnect ${props.link.email_address}`}
-            >
-              Reconnect
-            </Button>
+            >{t('auto.reconnect')}</Button>
           </Show>
           {/* Its own consent flow, since Reconnect asks for the Gmail scopes
               only. Shown alongside Reconnect rather than after it: this
@@ -522,9 +514,7 @@ function InboxRow(props: {
               depth={3}
               onClick={props.onEnableCalendar}
               aria-label={`Enable calendar for ${props.link.email_address}`}
-            >
-              Enable calendar
-            </Button>
+            >{t('auto.enable_calendar')}</Button>
           </Show>
           {/* Only the owner sees this: turning calendar off deletes the
               inbox's calendar data, which a delegate must not do. Offered

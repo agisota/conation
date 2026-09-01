@@ -1,4 +1,5 @@
 import './MobileTouchMenu.css';
+import { t } from '@app/lib/i18n';
 import { hapticImpact } from '@core/mobile/haptics';
 import { ICON_ANIMATION_DURATION_MS } from '@icon/animation';
 import { createElementSize } from '@solid-primitives/resize-observer';
@@ -106,9 +107,9 @@ function MobileTouchMenuButton(props: MobileTouchMenuButtonProps) {
  * <MobileTouchMenu>
  *   <MobileTouchMenu.Trigger icon={CaretUpIcon} />
  *   <MobileTouchMenu.Content>
- *     <MobileTouchMenu.Item id="settings" onSelect={…}>Settings</MobileTouchMenu.Item>
+ *     <MobileTouchMenu.Item id="settings" onSelect={…}>{t('auto.settings')}</MobileTouchMenu.Item>
  *     <MobileTouchMenu.Separator />
- *     <MobileTouchMenu.Footer>Views</MobileTouchMenu.Footer>
+ *     <MobileTouchMenu.Footer>{t('auto.views')}</MobileTouchMenu.Footer>
  *   </MobileTouchMenu.Content>
  * </MobileTouchMenu>
  * ```

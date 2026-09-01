@@ -1,4 +1,5 @@
 import CheckIcon from '@phosphor-icons/core/bold/check-bold.svg?component-solid';
+import { t } from '@app/lib/i18n';
 import ClipboardIcon from '@phosphor-icons/core/bold/clipboard-bold.svg?component-solid';
 import { Button } from '@ui';
 import { For } from 'solid-js';
@@ -13,13 +14,9 @@ export function AiChatEmptyState() {
       <div class="flex flex-col gap-4">
         <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div class="min-w-0">
-            <div class="mb-2 inline-flex items-center rounded-xs border border-accent/20 bg-accent/10 px-2 py-1 text-xs text-accent">
-              Macro MCP
-            </div>
-            <h2 class="text-xl/tight">Connect AI to Macro</h2>
-            <p class="mt-2 max-w-[56ch] text-sm/6 text-ink-muted">
-              Use macro with your favorite AI chat client or code editor
-            </p>
+            <div class="mb-2 inline-flex items-center rounded-xs border border-accent/20 bg-accent/10 px-2 py-1 text-xs text-accent">{t('auto.macro_mcp')}</div>
+            <h2 class="text-xl/tight">{t('auto.connect_ai_to_macro')}</h2>
+            <p class="mt-2 max-w-[56ch] text-sm/6 text-ink-muted">{t('auto.use_macro_with_your_favorite_a')}</p>
           </div>
         </div>
 
@@ -37,14 +34,10 @@ export function AiChatEmptyState() {
                   >
                     {copiedKey() === item.key ? (
                       <>
-                        <CheckIcon class="size-3.5" />
-                        Copied
-                      </>
+                        <CheckIcon class="size-3.5" />{t('auto.copied')}</>
                     ) : (
                       <>
-                        <ClipboardIcon class="size-3.5" />
-                        Copy
-                      </>
+                        <ClipboardIcon class="size-3.5" />{t('auto.copy')}</>
                     )}
                   </Button>
                 </div>
@@ -58,9 +51,7 @@ export function AiChatEmptyState() {
 
         <div class="overflow-hidden rounded-md border border-edge-muted bg-surface/70">
           <div class="flex items-center justify-between gap-3 border-b border-edge-muted px-4 py-2">
-            <span class="text-sm text-ink-muted">
-              Or configure in your favorite IDE
-            </span>
+            <span class="text-sm text-ink-muted">{t('auto.or_configure_in_your_favorite_')}</span>
             <div class="flex items-center gap-3">
               <span class="text-xs text-ink-muted">
                 Paste under `mcpServers`
@@ -73,14 +64,10 @@ export function AiChatEmptyState() {
               >
                 {copiedKey() === 'json' ? (
                   <>
-                    <CheckIcon class="size-3.5" />
-                    Copied
-                  </>
+                    <CheckIcon class="size-3.5" />{t('auto.copied')}</>
                 ) : (
                   <>
-                    <ClipboardIcon class="size-3.5" />
-                    Copy
-                  </>
+                    <ClipboardIcon class="size-3.5" />{t('auto.copy')}</>
                 )}
               </Button>
             </div>

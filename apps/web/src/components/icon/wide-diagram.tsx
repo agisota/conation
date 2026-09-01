@@ -1,4 +1,5 @@
 import { createUniqueId } from 'solid-js';
+import { t } from '@app/lib/i18n';
 
 export const AnimatedDiagramIcon = (props: {
   triggerAnimation?: boolean;
@@ -19,7 +20,7 @@ export const AnimatedDiagramIcon = (props: {
       overflow="visible"
       class={`animated-diagram-icon ${props.triggerAnimation ? 'animating' : ''} ${props.class ?? ''}`}
     >
-      {/*<title>Animated diagram icon</title>*/}
+      {/*<title>{t('auto.animated_diagram_icon')}</title>*/}
       <style>{`
         .animated-diagram-icon {
           .left-node, .right-node, .center-node, .left-arm, .right-arm {

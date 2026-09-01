@@ -1,4 +1,5 @@
 import type { BlockTool } from '@components/app/ResponsiveBlockToolbar';
+import { t } from '@app/lib/i18n';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import type { BlockAlias, BlockName } from '@core/block';
 import { EntityIcon } from '@core/component/EntityIcon';
@@ -32,7 +33,7 @@ type CreateBlockSpec = {
   hotkeyToken: HotkeyToken;
   icon: Component;
   loading?: boolean;
-  createFn: (projectId: string) => Promise<string>;
+  createFn: (projectId: string) =>{t('auto.promise')}<string>;
   params?: ObjectLike;
 };
 
@@ -154,7 +155,7 @@ function makeCreateBlock({
 }: Pick<ReturnType<typeof useSplitLayout>, 'replaceSplit' | 'insertSplit'>) {
   return async (spec: {
     blockName: BlockName | BlockAlias;
-    createFn: () => Promise<string>;
+    createFn: () =>{t('auto.promise')}<string>;
     loading?: boolean;
     params?: Record<string, unknown>;
   }) => {
@@ -329,9 +330,7 @@ export function ProjectCreateMenu(props: { id: string }) {
           class="bg-surface py-3"
           depth={2}
         >
-          <CirclePlus />
-          Create
-          <CaretDown />
+          <CirclePlus />{t('auto.create')}<CaretDown />
         </Dropdown.Trigger>
       </div>
       <MenuContent projectId={props.id} />

@@ -113,7 +113,7 @@ function MobileForwardToChannelLayout(
             <div
               class={`flex flex-col text-sm ${!props.canSendAsGroup() ? 'text-ink-disabled/50' : ''}`}
             >
-              <span class="font-medium">Send As Group Message</span>
+              <span class="font-medium">{t('auto.send_as_group_message')}</span>
               <span
                 class={`text-xs mt-0.5 ${!props.canSendAsGroup() ? 'text-ink-disabled/50' : 'text-ink-muted'}`}
               >
@@ -179,7 +179,7 @@ interface ForwardToChannelProps {
   projectId?: string;
   name: string;
   ref?: (ref: {
-    getSelectedOptions: () => WithCustomUserInput<
+    getSelectedOptions: () =>{t('auto.withcustomuserinput')}<
       'user' | 'contact' | 'channel'
     >[];
     setSubmitAccessLevel: (level: AccessLevel | null) => void;
@@ -576,7 +576,7 @@ export function ForwardToChannel(props: ForwardToChannelProps) {
                       !canSendAsGroup() && 'text-ink-disabled/50'
                     )}
                   >
-                    <span class="font-medium">Send As Group Message</span>
+                    <span class="font-medium">{t('auto.send_as_group_message')}</span>
                     <span
                       class={cn(
                         'text-xs mt-0.5',
@@ -612,9 +612,7 @@ export function ForwardToChannel(props: ForwardToChannelProps) {
                     }
                   }}
                 >
-                  <PaperPlaneTilt class="size-4" />
-                  Share
-                  <Hotkey shortcut="cmd+enter" theme="current" />
+                  <PaperPlaneTilt class="size-4" />{t('auto.share')}<Hotkey shortcut="cmd+enter" theme="current" />
                 </Button>
               </div>
             </div>

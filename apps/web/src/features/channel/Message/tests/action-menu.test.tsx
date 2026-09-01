@@ -3,6 +3,7 @@
  */
 
 import { fireEvent, render } from '@solidjs/testing-library';
+import { t } from '@app/lib/i18n';
 import { describe, expect, it, vi } from 'vitest';
 import { ActionMenu } from '../ActionMenu';
 import { Root } from '../Root';
@@ -72,7 +73,7 @@ describe('ActionMenu', () => {
   it('mounts while focus is within the message', () => {
     const { container } = render(() => (
       <Root message={message} actions={{ onReact: () => undefined }}>
-        <button type="button">Message control</button>
+        <button type="button">{t('auto.message_control')}</button>
         <ActionMenu />
       </Root>
     ));

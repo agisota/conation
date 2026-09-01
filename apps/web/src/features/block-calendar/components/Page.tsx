@@ -155,9 +155,7 @@ function CalendarPageDataStatus(props: { data: CalendarOccurrenceData }) {
             when={!props.data.occurrencesQuery.isError}
             fallback={
               <div class="flex max-w-sm flex-col items-center gap-3">
-                <div class="text-sm font-semibold text-ink">
-                  Calendar unavailable
-                </div>
+                <div class="text-sm font-semibold text-ink">{t('auto.calendar_unavailable')}</div>
                 <p class="text-xs text-ink-muted">
                   We couldn’t load your calendar events. Try again.
                 </p>
@@ -180,9 +178,7 @@ function CalendarPageDataStatus(props: { data: CalendarOccurrenceData }) {
 
       <Show when={showLoading()}>
         <div class="absolute top-2 left-2 z-10 flex items-center gap-1.5 rounded-full border border-edge-muted bg-surface px-2.5 py-1 text-xs text-ink-muted shadow-menu">
-          <SpinnerIcon class="size-3 animate-spin" />
-          Loading
-        </div>
+          <SpinnerIcon class="size-3 animate-spin" />{t('auto.loading')}</div>
       </Show>
 
       <Show
@@ -195,9 +191,7 @@ function CalendarPageDataStatus(props: { data: CalendarOccurrenceData }) {
         }
       >
         <div class="absolute right-2 bottom-2 z-10 flex items-center gap-1.5 rounded-full border border-edge-muted bg-surface px-2.5 py-1 text-xs text-ink-muted shadow-menu">
-          <SpinnerIcon class="size-3 animate-spin" />
-          Syncing
-        </div>
+          <SpinnerIcon class="size-3 animate-spin" />{t('auto.syncing')}</div>
       </Show>
     </>
   );

@@ -2,6 +2,7 @@ import CorvuCalendar, {
   type RootSingleProps as CorvuCalendarRootSingleProps,
 } from '@corvu/calendar';
 import ArrowDownIcon from '@phosphor/arrow-down.svg';
+import { t } from '@app/lib/i18n';
 import ArrowUpIcon from '@phosphor/arrow-up.svg';
 import CaretDownIcon from '@phosphor/caret-down.svg';
 import CaretLeftIcon from '@phosphor/caret-left.svg';
@@ -469,9 +470,7 @@ export function CalendarMonthMenu(props: CalendarMonthMenuProps) {
               }
               focusIndex(todayIndex());
             }}
-          >
-            Go To Today
-          </Button>
+          >{t('auto.go_to_today')}</Button>
         </div>
       </Show>
 
@@ -499,9 +498,7 @@ export function CalendarMonthMenu(props: CalendarMonthMenuProps) {
               fallback={<ArrowDownIcon aria-hidden="true" class="size-3" />}
             >
               <ArrowUpIcon aria-hidden="true" class="size-3" />
-            </Show>
-            Today
-          </button>
+            </Show>{t('auto.today')}</button>
         </div>
       </Show>
     </div>

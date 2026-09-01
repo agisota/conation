@@ -1,4 +1,5 @@
 import { clamp } from '@block-canvas/util/math';
+import { t } from '@app/lib/i18n';
 import { LoadErrors } from '@core/block';
 import { CircleSpinner } from '@core/component/CircleSpinner';
 import { staticFileIdEndpoint } from '@core/constant/servers';
@@ -76,9 +77,7 @@ function ErrorMessage(props: {
             />
             {!tooSmall() ? (
               <div class={textColor}>
-                Unauthorized: <br />
-                Invalid permissions
-              </div>
+                Unauthorized: <br />{t('auto.invalid_permissions')}</div>
             ) : null}
           </div>
         </Match>

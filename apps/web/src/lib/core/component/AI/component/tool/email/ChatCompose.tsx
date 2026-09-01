@@ -1,4 +1,5 @@
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
+import { t } from '@app/lib/i18n';
 import {
   ComposeLayout,
   EmailComposeToolbar,
@@ -437,9 +438,7 @@ export function ComposeTool(props: ComposeToolProps) {
           )}
           header={
             showOwnerDisabledMessage() ? (
-              <div class="text-xs text-ink-extra-muted/60">
-                Only the chat owner can send or edit this email.
-              </div>
+              <div class="text-xs text-ink-extra-muted/60">{t('auto.only_the_chat_owner_can_send_o')}</div>
             ) : (
               props.header
             )

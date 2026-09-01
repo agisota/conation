@@ -1,4 +1,5 @@
 import { DOCS_BASE } from '@app/constants/docs-links';
+import { t } from '@app/lib/i18n';
 import { LIST_VIEW_PATHS } from '@app/constants/list-views';
 import { globalSplitManager } from '@app/signal/splitLayout';
 import { useGlobalNotificationSource } from '@components/app/GlobalAppState';
@@ -131,14 +132,12 @@ export function RecommendedSection() {
   return (
     <section>
       <div class="mb-2 flex items-center justify-between px-1">
-        <span class="text-sm text-ink-muted">Recommended</span>
+        <span class="text-sm text-ink-muted">{t('auto.recommended')}</span>
         <button
           type="button"
           class="text-xs text-ink-extra-muted transition-colors hover:text-ink-muted"
           onClick={() => navigate(LIST_VIEW_PATHS.inbox)}
-        >
-          Show all
-        </button>
+        >{t('auto.show_all')}</button>
       </div>
       <div class="flex flex-col gap-2">
         <Switch>
@@ -155,20 +154,14 @@ export function RecommendedSection() {
           <Match when={view().kind === 'error'}>
             <div class="group flex w-full items-center gap-3.5 rounded-xl border border-edge-muted bg-active px-4 py-3 text-left">
               <div class="min-w-0 flex-1">
-                <div class="text-sm font-medium text-ink">
-                  Recommendations are unavailable
-                </div>
-                <div class="text-xs text-ink-muted">
-                  Check your connection and try again.
-                </div>
+                <div class="text-sm font-medium text-ink">{t('auto.recommendations_are_unavailabl')}</div>
+                <div class="text-xs text-ink-muted">{t('auto.check_your_connection_and_try_')}</div>
               </div>
               <button
                 type="button"
                 class="shrink-0 text-sm text-accent hover:text-accent/80"
                 onClick={retry}
-              >
-                Try again
-              </button>
+              >{t('auto.try_again')}</button>
             </div>
           </Match>
           <Match when={view().kind === 'items'}>
@@ -189,17 +182,13 @@ export function RecommendedSection() {
               onClick={() => openSettings('Email')}
             >
               <div class="min-w-0 flex-1">
-                <div class="truncate text-sm font-medium text-ink">
-                  Connect your inbox
-                </div>
+                <div class="truncate text-sm font-medium text-ink">{t('auto.connect_your_inbox')}</div>
                 <div class="truncate text-xs text-ink-muted">
                   Macro reads & triages your email in seconds
                 </div>
               </div>
               <span class="flex shrink-0 items-center gap-2 text-sm text-accent">
-                <span class="size-1.5 rounded-full bg-accent" />
-                Connect
-              </span>
+                <span class="size-1.5 rounded-full bg-accent" />{t('auto.connect')}</span>
               <ChevronRightIcon class="size-4 shrink-0 text-ink-extra-muted" />
             </button>
           </Match>
@@ -242,7 +231,7 @@ export function GettingStartedSection(props: { preferences: HomePreferences }) {
     <Show when={!isMobile() && !props.preferences.isDismissed('setup')}>
       <section>
         <div class="mb-2 flex items-center justify-between px-1">
-          <span class="text-sm text-ink-muted">Getting started</span>
+          <span class="text-sm text-ink-muted">{t('auto.getting_started')}</span>
           <button
             type="button"
             class="rounded-md p-1 text-ink-extra-muted transition-colors hover:bg-hover hover:text-ink-muted"
@@ -326,9 +315,7 @@ function RecommendedRow(props: {
             props.onOpen();
           }}
           aria-label={`Open ${props.item.title}`}
-        >
-          Open
-        </button>
+        >{t('auto.open')}</button>
       </div>
     </div>
   );

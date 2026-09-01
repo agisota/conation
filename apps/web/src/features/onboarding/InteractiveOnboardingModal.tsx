@@ -1,4 +1,5 @@
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import { globalSplitManager } from '@app/signal/splitLayout';
 import MacroLogo from '@core/component/MacroLogo';
 import { isMobile } from '@core/mobile/isMobile';
@@ -78,36 +79,26 @@ function StartScreen(props: { onStart: () => void; onSkip: () => void }) {
           fallback={
             <>
               <div class="flex flex-col gap-2">
-                <h3 class="text-3xl font-semibold text-ink">
-                  Tutorial unavailable on mobile
-                </h3>
-                <p class="text-base text-ink/60 text-balance">
-                  Try the tutorial on web for the best interactive experience.
-                </p>
+                <h3 class="text-3xl font-semibold text-ink">{t('auto.tutorial_unavailable_on_mobile')}</h3>
+                <p class="text-base text-ink/60 text-balance">{t('auto.try_the_tutorial_on_web_for_th')}</p>
               </div>
               <div class="w-full max-w-xs flex flex-col gap-2 pt-2">
-                <Button variant="cta" size="xl" onClick={props.onSkip}>
-                  Continue
-                  <ArrowRightIcon />
+                <Button variant="cta" size="xl" onClick={props.onSkip}>{t('auto.continue')}<ArrowRightIcon />
                 </Button>
               </div>
             </>
           }
         >
           <div class="flex flex-col gap-2">
-            <h3 class="text-3xl font-semibold text-ink">Welcome to Macro</h3>
+            <h3 class="text-3xl font-semibold text-ink">{t('auto.welcome_to_macro')}</h3>
             <p class="text-base text-ink/60 text-balance">
               Take a quick tour of Macro’s core features.
             </p>
           </div>
           <div class="w-full max-w-xs flex flex-col gap-2 pt-2">
-            <Button variant="cta" size="xl" onClick={props.onStart}>
-              Play tutorial
-              <ArrowRightIcon />
+            <Button variant="cta" size="xl" onClick={props.onStart}>{t('auto.play_tutorial')}<ArrowRightIcon />
             </Button>
-            <Button variant="ghost" size="xl" onClick={props.onSkip}>
-              Skip tutorial
-            </Button>
+            <Button variant="ghost" size="xl" onClick={props.onSkip}>{t('auto.skip_tutorial')}</Button>
           </div>
         </Show>
       </div>
@@ -131,9 +122,7 @@ function EndScreen(props: { onFinish: () => void; onReplay: () => void }) {
             Let’s go
             <ArrowRightIcon />
           </Button>
-          <Button variant="ghost" size="xl" onClick={props.onReplay}>
-            Replay tutorial
-          </Button>
+          <Button variant="ghost" size="xl" onClick={props.onReplay}>{t('auto.replay_tutorial')}</Button>
         </div>
       </div>
     </div>
@@ -162,9 +151,7 @@ function ModalFooter(props: { lesson: LessonState }) {
             variant="ghost"
             size="xl"
             onClick={onboarding.handleSkipLesson}
-          >
-            Skip lesson
-          </Button>
+          >{t('auto.skip_lesson')}</Button>
           <Button
             ref={onboarding.setContinueButtonRef}
             variant="cta"

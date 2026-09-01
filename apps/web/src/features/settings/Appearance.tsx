@@ -1,4 +1,5 @@
 import { toast } from '@core/component/Toast/Toast';
+import { t } from '@app/lib/i18n';
 import { DropdownMenu as KobalteDropdownMenu } from '@kobalte/core/dropdown-menu';
 import CheckIcon from '@phosphor/check.svg';
 import ClipboardIcon from '@phosphor/clipboard.svg';
@@ -415,13 +416,13 @@ function InterfaceThemeSelect(props: {
             <div class="max-h-64 overflow-y-auto bg-surface">
               <Show when={defaults().length > 0}>
                 <Dropdown.Group>
-                  <Dropdown.GroupLabel>Default</Dropdown.GroupLabel>
+                  <Dropdown.GroupLabel>{t('auto.default')}</Dropdown.GroupLabel>
                   <For each={defaults()}>{(theme) => themeItem(theme)}</For>
                 </Dropdown.Group>
               </Show>
               <Show when={customs().length > 0}>
                 <Dropdown.Group>
-                  <Dropdown.GroupLabel>Custom</Dropdown.GroupLabel>
+                  <Dropdown.GroupLabel>{t('auto.custom')}</Dropdown.GroupLabel>
                   <For each={customs()}>
                     {(theme) => themeItem(theme, true)}
                   </For>
@@ -441,9 +442,7 @@ function InterfaceThemeSelect(props: {
                 onFocus={clearThemePreview}
               >
                 <span class="flex items-center gap-2 text-ink-muted">
-                  <PlusIcon class="size-4" />
-                  New theme
-                </span>
+                  <PlusIcon class="size-4" />{t('auto.new_theme')}</span>
               </Dropdown.Item>
             </Dropdown.Group>
           </Layer>
@@ -549,7 +548,7 @@ function ActiveThemeSelect(props: {
                 <span class="flex min-w-0 flex-1 items-center gap-2">
                   <ThemeChips theme={systemTheme()} size="sm" />
                   <span class="flex min-w-0 flex-col">
-                    <span class="truncate">System preference</span>
+                    <span class="truncate">{t('auto.system_preference')}</span>
                     <span class="text-xs text-ink-extra-muted">
                       Currently {systemMode() === 'dark' ? 'Dark' : 'Light'}
                     </span>

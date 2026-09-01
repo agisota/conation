@@ -22,7 +22,7 @@ export function CompanyMetadataSection(props: { company?: CrmCompanyEntity }) {
           <Field label="Domains">
             <For
               each={company().domains}
-              fallback={<span class="text-ink-muted">None</span>}
+              fallback={<span class="text-ink-muted">{t('auto.none')}</span>}
             >
               {(domain) => <div class="truncate">{domain.domain}</div>}
             </For>
@@ -32,7 +32,7 @@ export function CompanyMetadataSection(props: { company?: CrmCompanyEntity }) {
           <Field label="Last interaction">
             <Show
               when={company().updatedAt}
-              fallback={<span class="text-ink-muted">None</span>}
+              fallback={<span class="text-ink-muted">{t('auto.none')}</span>}
             >
               {(ts) => <span>{formatDateAndTime(ts())}</span>}
             </Show>

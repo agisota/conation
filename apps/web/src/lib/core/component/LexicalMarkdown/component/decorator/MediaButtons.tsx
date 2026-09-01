@@ -115,7 +115,7 @@ export function MediaButtons(props: MediaButtonsProps) {
                     }}
                   >
                     <ArrowsOut class="size-4 shrink-0" />
-                    <span class="flex-1 truncate">View full screen</span>
+                    <span class="flex-1 truncate">{t('auto.view_full_screen')}</span>
                   </Dropdown.Item>
                 </Show>
                 <Show when={props.newTab && !isMobile()}>
@@ -126,7 +126,7 @@ export function MediaButtons(props: MediaButtonsProps) {
                     }}
                   >
                     <NewTab class="size-4 shrink-0" />
-                    <span class="flex-1 truncate">Open in new tab</span>
+                    <span class="flex-1 truncate">{t('auto.open_in_new_tab')}</span>
                   </Dropdown.Item>
                 </Show>
               </Dropdown.Group>

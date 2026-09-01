@@ -3,6 +3,7 @@
  * language selector.
  */
 import { isInBlock, useIsNestedBlock } from '@core/block';
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { ENABLE_SVG_PREVIEW } from '@core/constant/featureFlags';
 import { Switch } from '@kobalte/core/switch';
@@ -246,7 +247,7 @@ export function CodeBoxAccessory(props: {
           <div class="flex items-center h-full">
             <Show when={showPreviewToggle()}>
               <div class="flex items-center gap-2 mr-2">
-                <div class="text-xs text-ink-extra-muted/50">Preview</div>
+                <div class="text-xs text-ink-extra-muted/50">{t('auto.preview')}</div>
                 <Switch
                   checked={isPreviewMode()}
                   onChange={(enabled) => {
@@ -323,9 +324,7 @@ function SvgPreview(props: { svgContent: () => string; overlay?: boolean }) {
     const content = props.svgContent();
     if (!content.trim()) {
       return (
-        <div class="flex items-center justify-center h-full text-ink-extra-muted/50 text-sm">
-          No SVG content
-        </div>
+        <div class="flex items-center justify-center h-full text-ink-extra-muted/50 text-sm">{t('auto.no_svg_content')}</div>
       );
     }
 
@@ -337,9 +336,7 @@ function SvgPreview(props: { svgContent: () => string; overlay?: boolean }) {
       ) {
         setError('Content does not appear to be valid SVG');
         return (
-          <div class="flex items-center justify-center h-full text-failure text-sm">
-            Invalid SVG content
-          </div>
+          <div class="flex items-center justify-center h-full text-failure text-sm">{t('auto.invalid_svg_content')}</div>
         );
       }
       const sanitizedContent = sanitizeSvg(content);
@@ -434,7 +431,7 @@ export const StaticCodeBoxAccessory = (props: {
         <div class="flex gap-2 items-center">
           <Show when={showPreviewToggle()}>
             <div class="flex items-center gap-2">
-              <div class={cn('text-xs', textColor())}>Preview</div>
+              <div class={cn('text-xs', textColor())}>{t('auto.preview')}</div>
               <Switch checked={isPreviewMode()} onChange={setIsPreviewMode}>
                 <Switch.Input class="sr-only" />
                 <Switch.Control class="inline-flex h-4 w-8 hover:ring hover:ring-edge rounded-full border-2 border-transparent transition-colors bg-edge focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 data-checked:bg-accent">

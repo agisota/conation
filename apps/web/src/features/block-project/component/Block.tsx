@@ -1,4 +1,5 @@
 import { useBlockEntityCommands } from '@app/features/next-soup/actions';
+import { t } from '@app/lib/i18n';
 import {
   createSoupState,
   type SoupState,
@@ -114,7 +115,7 @@ const Block: Component = () => {
       >
         <ModalsProvider>
           <Show when={isDragging() && !isSpecialProject}>
-            <FileDropOverlay>Upload to this folder</FileDropOverlay>
+            <FileDropOverlay>{t('auto.upload_to_this_folder')}</FileDropOverlay>
           </Show>
           <SidePanel.Layout defaultOpen={false}>
             <Show when={!isSpecialProject}>

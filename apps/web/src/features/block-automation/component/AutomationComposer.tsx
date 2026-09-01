@@ -149,9 +149,7 @@ export function AutomationComposer() {
         <div class="*:max-h-[75vh]">
           <div class="flex cursor-default flex-col text-ink">
             <div class="flex items-center justify-between border-b border-edge-muted px-3 py-2">
-              <Dialog.Title class="m-0 p-0 text-sm font-semibold">
-                New Automation
-              </Dialog.Title>
+              <Dialog.Title class="m-0 p-0 text-sm font-semibold">{t('auto.new_automation')}</Dialog.Title>
               <Dialog.CloseButton as={Button} variant="ghost" size="icon-sm">
                 &times;
               </Dialog.CloseButton>
@@ -159,9 +157,7 @@ export function AutomationComposer() {
 
             <div class="grid max-h-[70vh] gap-3 overflow-y-auto p-3">
               <div class="grid gap-1.5">
-                <label class="text-xs font-medium text-ink-muted cursor-default">
-                  Name
-                </label>
+                <label class="text-xs font-medium text-ink-muted cursor-default">{t('auto.name')}</label>
                 <input
                   class={INPUT_CLASS}
                   placeholder="e.g. Morning standup summary"
@@ -176,9 +172,7 @@ export function AutomationComposer() {
               </div>
 
               <div class="grid gap-1.5">
-                <label class="text-xs font-medium text-ink-muted cursor-default">
-                  Instructions
-                </label>
+                <label class="text-xs font-medium text-ink-muted cursor-default">{t('auto.instructions')}</label>
                 <AutomationPromptEditor
                   initialValue={initialPrompt()}
                   onChange={(markdown) =>
@@ -192,7 +186,7 @@ export function AutomationComposer() {
 
               <div class="grid gap-3 border border-edge-muted rounded-sm p-3">
                 <div>
-                  <p class="text-sm font-semibold">Schedule</p>
+                  <p class="text-sm font-semibold">{t('auto.schedule')}</p>
                   <p class="mt-0.5 text-xs text-ink-muted">
                     {currentSummary()}
                   </p>
@@ -219,9 +213,7 @@ export function AutomationComposer() {
 
                 <Show when={draft().frequency === 'week'}>
                   <div class="grid gap-1.5">
-                    <label class="text-xs font-medium text-ink-muted cursor-default">
-                      Days
-                    </label>
+                    <label class="text-xs font-medium text-ink-muted cursor-default">{t('auto.days')}</label>
                     <div class="flex flex-wrap gap-1">
                       <For each={WEEKDAY_OPTIONS}>
                         {(option) => {
@@ -258,9 +250,7 @@ export function AutomationComposer() {
 
                 <Show when={draft().frequency === 'month'}>
                   <div class="grid gap-1.5">
-                    <label class="text-xs font-medium text-ink-muted cursor-default">
-                      Day of Month
-                    </label>
+                    <label class="text-xs font-medium text-ink-muted cursor-default">{t('auto.day_of_month')}</label>
                     <input
                       type="number"
                       min="1"
@@ -278,9 +268,7 @@ export function AutomationComposer() {
                 </Show>
 
                 <div class="grid gap-1.5">
-                  <label class="text-xs font-medium text-ink-muted cursor-default">
-                    Time
-                  </label>
+                  <label class="text-xs font-medium text-ink-muted cursor-default">{t('auto.time')}</label>
                   <AutomationTimePicker
                     value={draft().time}
                     onChange={(value) =>

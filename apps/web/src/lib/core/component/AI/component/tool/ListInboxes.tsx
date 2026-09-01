@@ -1,4 +1,5 @@
 import Tray from '@phosphor-icons/core/regular/tray.svg';
+import { t } from '@app/lib/i18n';
 import type { NamedTool } from '@service-cognition/generated/tools/tool';
 import { createSignal, For } from 'solid-js';
 import { BaseTool } from './BaseTool';
@@ -58,7 +59,7 @@ const handler = createToolRenderer({
         }
       >
         <div class="flex min-w-0 flex-1 items-center justify-between gap-3 overflow-hidden">
-          <span class="min-w-0 truncate">List inboxes</span>
+          <span class="min-w-0 truncate">{t('auto.list_inboxes')}</span>
           <Tool.ResultToggle
             expanded={isExpanded()}
             onToggle={() => setIsExpanded((expanded) => !expanded)}

@@ -28,9 +28,7 @@ export function ShareInboxConflictDialog(props: {
     >
       <Panel depth={2} class="rounded-xl">
         <Panel.Header class="px-6">
-          <Dialog.Title class="text-ink text-sm font-semibold">
-            Share this inbox?
-          </Dialog.Title>
+          <Dialog.Title class="text-ink text-sm font-semibold">{t('auto.share_this_inbox')}</Dialog.Title>
         </Panel.Header>
         <Panel.Body class="p-6 font-sans flex flex-col gap-3">
           <Dialog.Description class="text-ink-muted text-sm/tight font-normal">
@@ -44,9 +42,7 @@ export function ShareInboxConflictDialog(props: {
               depth={3}
               onClick={() => props.onCancel()}
             >{t('common.cancel')}</Button>
-            <Button variant="accent" depth={3} onClick={() => props.onShare()}>
-              Share inbox
-            </Button>
+            <Button variant="accent" depth={3} onClick={() => props.onShare()}>{t('auto.share_inbox')}</Button>
           </div>
         </Panel.Body>
       </Panel>

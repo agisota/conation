@@ -1,4 +1,5 @@
 import type { CodeFileExtension } from '@block-code/util/languageSupport';
+import { t } from '@app/lib/i18n';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import { asFileType } from '@core/component/AI/util/attachment';
 import { EntityIcon } from '@core/component/EntityIcon';
@@ -132,19 +133,19 @@ function InlineTextEditorResult(props: {
           props.content.type === 'text_editor_code_execution_tool_result_error'
         }
       >
-        <span class="text-failure">Failed</span>
+        <span class="text-failure">{t('auto.failed')}</span>
       </Match>
       <Match
         when={props.content.type === 'text_editor_code_execution_view_result'}
       >
-        <span class="text-ink-extra-muted">Viewed file</span>
+        <span class="text-ink-extra-muted">{t('auto.viewed_file')}</span>
       </Match>
       <Match
         when={
           props.content.type === 'text_editor_code_execution_str_replace_result'
         }
       >
-        <span class="text-ink-extra-muted">Edit applied</span>
+        <span class="text-ink-extra-muted">{t('auto.edit_applied')}</span>
       </Match>
     </Switch>
   );
@@ -206,7 +207,7 @@ const handler = createToolRenderer({
   render: (ctx) => (
     <BaseTool icon={Terminal} renderContext={ctx.renderContext} type="call">
       <div class="flex min-w-0 flex-1 items-center justify-between gap-3 overflow-hidden">
-        <span class="min-w-0 truncate">Uploaded code</span>
+        <span class="min-w-0 truncate">{t('auto.uploaded_code')}</span>
         <Show when={ctx.response}>
           {(response) => (
             <div class="shrink-0">

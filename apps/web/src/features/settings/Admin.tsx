@@ -1,4 +1,5 @@
 import { useSoupFilterPersistence } from '@app/features/next-soup/use-soup-filter-persistence';
+import { t } from '@app/lib/i18n';
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
 import {
   clearAllDebugSettings,
@@ -53,9 +54,7 @@ export function Admin() {
           depth={3}
           disabled={!hasActiveSettings()}
           onClick={clearAllDebugSettings}
-        >
-          Reset all
-        </Button>
+        >{t('auto.reset_all')}</Button>
       }
     >
       <Show when={soupFilterPersistenceFlag().enabled}>

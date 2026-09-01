@@ -586,9 +586,7 @@ export const BulkMoveToProjectView = (props: {
                   class="flex w-full items-center gap-2 px-2 py-1.5 text-sm text-ink-muted hover:bg-hover hover:text-ink"
                   onClick={startCreatingFolder}
                 >
-                  <FolderPlusIcon class="size-4 shrink-0" />
-                  New folder
-                </button>
+                  <FolderPlusIcon class="size-4 shrink-0" />{t('auto.new_folder')}</button>
               }
             >
               <div class="flex items-center gap-2 px-2 py-1">
@@ -620,9 +618,7 @@ export const BulkMoveToProjectView = (props: {
                   class="rounded-xs shrink-0"
                   disabled={!newFolderName().trim() || isSavingFolder()}
                   onClick={submitNewFolder}
-                >
-                  Create
-                </Button>
+                >{t('auto.create')}</Button>
                 <Button
                   size="icon-sm"
                   variant="ghost"
@@ -645,9 +641,7 @@ export const BulkMoveToProjectView = (props: {
             class="rounded-xs"
             onClick={finishEditing}
             disabled={!selectedProject()}
-          >
-            Move
-          </Button>
+          >{t('auto.move')}</Button>
         </div>
       </div>
     </div>

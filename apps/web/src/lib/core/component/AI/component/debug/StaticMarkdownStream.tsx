@@ -7,6 +7,7 @@ import {
   StaticMarkdownContext,
 } from '@core/component/LexicalMarkdown/component/core/StaticMarkdown';
 import { aiChatTheme } from '@core/component/LexicalMarkdown/theme';
+import { t } from '@app/lib/i18n';
 import PlayIcon from '@phosphor-icons/core/regular/play.svg?component-solid';
 import StopIcon from '@phosphor-icons/core/regular/stop.svg?component-solid';
 import TrashIcon from '@phosphor-icons/core/regular/trash.svg?component-solid';
@@ -191,7 +192,7 @@ export default function StaticMarkdownStreamDebug() {
       <div class="mx-auto flex w-full max-w-7xl flex-col gap-4 p-4">
         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-edge-muted pb-3">
           <div>
-            <h1 class="text-base font-semibold">Static Markdown Stream</h1>
+            <h1 class="text-base font-semibold">{t('auto.static_markdown_stream')}</h1>
             <div class="text-xs text-ink-muted">
               {renderedText().length.toLocaleString()} /{' '}
               {sourceText().length.toLocaleString()} chars · {rawChunks()} raw
@@ -205,31 +206,23 @@ export default function StaticMarkdownStreamDebug() {
               onClick={startStream}
               disabled={isStreaming()}
             >
-              <PlayIcon />
-              Stream
-            </Button>
+              <PlayIcon />{t('auto.stream')}</Button>
             <Button
               variant="outline"
               size="sm"
               onClick={stopRun}
               disabled={!isStreaming()}
             >
-              <StopIcon />
-              Stop
-            </Button>
+              <StopIcon />{t('auto.stop')}</Button>
             <Button variant="ghost" size="sm" onClick={resetOutput}>
-              <TrashIcon />
-              Reset
-            </Button>
+              <TrashIcon />{t('auto.reset')}</Button>
           </div>
         </div>
 
         <div class="grid min-h-[72vh] grid-cols-1 gap-4 xl:grid-cols-[minmax(360px,0.9fr)_minmax(480px,1.1fr)]">
           <div class="flex min-h-0 flex-col gap-3">
             <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <label class="flex flex-col gap-1 text-xs text-ink-muted">
-                Chunk min
-                <input
+              <label class="flex flex-col gap-1 text-xs text-ink-muted">{t('auto.chunk_min')}<input
                   value={chunkMin()}
                   type="number"
                   min="1"
@@ -240,9 +233,7 @@ export default function StaticMarkdownStreamDebug() {
                   class="h-8 rounded-sm border border-edge-muted bg-transparent px-2 text-sm text-ink outline-none focus:border-accent"
                 />
               </label>
-              <label class="flex flex-col gap-1 text-xs text-ink-muted">
-                Chunk max
-                <input
+              <label class="flex flex-col gap-1 text-xs text-ink-muted">{t('auto.chunk_max')}<input
                   value={chunkMax()}
                   type="number"
                   min="1"
@@ -253,9 +244,7 @@ export default function StaticMarkdownStreamDebug() {
                   class="h-8 rounded-sm border border-edge-muted bg-transparent px-2 text-sm text-ink outline-none focus:border-accent"
                 />
               </label>
-              <label class="flex flex-col gap-1 text-xs text-ink-muted">
-                Delay min ms
-                <input
+              <label class="flex flex-col gap-1 text-xs text-ink-muted">{t('auto.delay_min_ms')}<input
                   value={delayMin()}
                   type="number"
                   min="0"
@@ -266,9 +255,7 @@ export default function StaticMarkdownStreamDebug() {
                   class="h-8 rounded-sm border border-edge-muted bg-transparent px-2 text-sm text-ink outline-none focus:border-accent"
                 />
               </label>
-              <label class="flex flex-col gap-1 text-xs text-ink-muted">
-                Delay max ms
-                <input
+              <label class="flex flex-col gap-1 text-xs text-ink-muted">{t('auto.delay_max_ms')}<input
                   value={delayMax()}
                   type="number"
                   min="0"
@@ -283,14 +270,12 @@ export default function StaticMarkdownStreamDebug() {
 
             <div class="flex min-h-0 flex-1 flex-col gap-2">
               <div class="flex items-center justify-between">
-                <span class="text-sm font-medium">Input</span>
+                <span class="text-sm font-medium">{t('auto.input')}</span>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setSourceText(SAMPLE_TEXT)}
-                >
-                  Sample
-                </Button>
+                >{t('auto.sample')}</Button>
               </div>
               <textarea
                 value={sourceText()}
@@ -303,7 +288,7 @@ export default function StaticMarkdownStreamDebug() {
 
           <div class="flex min-h-0 flex-col gap-3">
             <div class="flex items-center justify-between">
-              <div class="text-sm font-medium">Rendered Output</div>
+              <div class="text-sm font-medium">{t('auto.rendered_output')}</div>
               <div class="flex items-center gap-2 text-xs text-ink-muted">
                 <span
                   class={cn(
@@ -318,9 +303,7 @@ export default function StaticMarkdownStreamDebug() {
               <Show
                 when={renderedText().length > 0}
                 fallback={
-                  <div class="text-sm text-ink-muted">
-                    Paste text and start the stream.
-                  </div>
+                  <div class="text-sm text-ink-muted">{t('auto.paste_text_and_start_the_strea')}</div>
                 }
               >
                 <StaticMarkdownContext theme={aiChatTheme}>

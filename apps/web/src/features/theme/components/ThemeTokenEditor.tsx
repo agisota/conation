@@ -1,4 +1,5 @@
 import type { CollectionNode } from '@kobalte/core';
+import { t } from '@app/lib/i18n';
 import { Collapsible } from '@kobalte/core/collapsible';
 import { Select } from '@kobalte/core/select';
 import CaretDownIcon from '@phosphor/caret-down.svg';
@@ -535,10 +536,8 @@ function RampEditor(props: { tokens: readonly string[] }) {
     <div class="border-b border-edge-muted bg-inset/50 px-4 py-4">
       <div class="mb-4 flex flex-wrap items-center gap-4">
         <div class="mr-auto">
-          <div class="text-xs font-medium text-ink">Ramp editor</div>
-          <div class="text-[11px] text-ink-extra-muted">
-            Drag a stop to attach it to the sRGB interpolation.
-          </div>
+          <div class="text-xs font-medium text-ink">{t('auto.ramp_editor')}</div>
+          <div class="text-[11px] text-ink-extra-muted">{t('auto.drag_a_stop_to_attach_it_to_th')}</div>
         </div>
         <Checkbox
           as="label"
@@ -547,7 +546,7 @@ function RampEditor(props: { tokens: readonly string[] }) {
           class="flex items-center gap-2 text-xs text-ink-muted"
         >
           <Checkbox.Control />
-          <span>Overwrite custom stops</span>
+          <span>{t('auto.overwrite_custom_stops')}</span>
         </Checkbox>
       </div>
 
@@ -559,9 +558,7 @@ function RampEditor(props: { tokens: readonly string[] }) {
             onChange={(value) => updateLiveThemeColorToken(from(), value)}
           />
           <div class="min-w-0">
-            <div class="text-[10px] uppercase tracking-wide text-ink-extra-muted">
-              From
-            </div>
+            <div class="text-[10px] uppercase tracking-wide text-ink-extra-muted">{t('auto.from')}</div>
             <code class="text-xs text-ink-muted">{from()}</code>
           </div>
         </div>

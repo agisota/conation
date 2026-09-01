@@ -1,4 +1,5 @@
 import { MobileDrawer } from '@components/app/mobile/MobileDrawer';
+import { t } from '@app/lib/i18n';
 import { type HotkeyToken, TOKENS } from '@core/hotkey/tokens';
 import CalendarIcon from '@phosphor/calendar-blank.svg';
 import CaretDownIcon from '@phosphor/caret-down.svg';
@@ -182,7 +183,7 @@ export function PeriodSelector(props: { isNarrow?: boolean }) {
             <Dropdown.Sub>
               <Dropdown.SubTrigger>
                 <CalendarIcon class="size-3.5 text-ink-muted" />
-                <span class="flex-1">Go to date</span>
+                <span class="flex-1">{t('auto.go_to_date')}</span>
                 <CaretRightIcon class="size-3 text-ink-muted" />
               </Dropdown.SubTrigger>
               <Dropdown.SubContent class="w-72 max-w-[calc(100vw-1rem)]">
@@ -204,7 +205,7 @@ export function MobilePeriodControls(props: { onSelect: () => void }) {
 
   return (
     <>
-      <MobileDrawer.Label>Period</MobileDrawer.Label>
+      <MobileDrawer.Label>{t('auto.period')}</MobileDrawer.Label>
       <MobileDrawer.Section class="flex shrink-0 flex-col">
         <For each={CALENDAR_VIEWS}>
           {(view) => (

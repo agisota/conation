@@ -1,4 +1,5 @@
 import { UnfurlLink } from '@core/component/Link';
+import { t } from '@app/lib/i18n';
 import { ScopedPortal } from '@core/component/ScopedPortal';
 import { toast } from '@core/component/Toast/Toast';
 import clickOutside from '@core/directive/clickOutside';
@@ -511,8 +512,7 @@ export function FloatingLinkMenu(props: {
               tooltip="Apply link changes"
               disabled={!pendingLinkInfo()?.url && !pendingLinkInfo()?.linkText}
             >
-              <Check /> Apply
-            </Button>
+              <Check />{t('auto.apply')}</Button>
           </div>
         </MenuWrapper>
       </Match>

@@ -1,4 +1,5 @@
 import { buildChatEditor } from '@core/component/AI/component/input/buildChatEditor';
+import { t } from '@app/lib/i18n';
 import type { ChatSendInput } from '@core/component/AI/component/input/buildRequest';
 import { MODEL_PRETTYNAME, MODEL_PROVIDER } from '@core/component/AI/constant';
 import { Model } from '@core/component/AI/types';
@@ -101,12 +102,8 @@ function ChatInputBoxInner() {
     <Item label="Chat input - not connected to backend">
       <div class="size-full">
         <div class="flex gap-2 py-2">
-          <Button onClick={() => input.setIsGenerating(true)} variant="accent">
-            Generate
-          </Button>
-          <Button onClick={() => input.setIsGenerating(false)} variant="accent">
-            Stop
-          </Button>
+          <Button onClick={() => input.setIsGenerating(true)} variant="accent">{t('auto.generate')}</Button>
+          <Button onClick={() => input.setIsGenerating(false)} variant="accent">{t('auto.stop')}</Button>
         </div>
         <ChatInput
           editor={editor}
@@ -188,9 +185,7 @@ function StreamMessagesInner() {
           setStream(poemStream);
           chat.setStream(poemStream);
         }}
-      >
-        Stream
-      </button>
+      >{t('auto.stream')}</button>
       <StreamStatus stream={stream} />
       {/* Must be height-bounded (max-h + overflow): ChatMessages sizes a child
           to the scroll container's own height, so an unbounded container grows
@@ -471,9 +466,7 @@ function ProviderFailureDemoBody(props: {
             if (e.key === 'Enter') send();
           }}
         />
-        <Button variant="accent" onClick={send}>
-          Send
-        </Button>
+        <Button variant="accent" onClick={send}>{t('auto.send')}</Button>
       </div>
     </Item>
   );
@@ -678,9 +671,7 @@ function TableStreamInner() {
   return (
     <Item col label="Table stream with controls">
       <div class="flex gap-x-2 items-center">
-        <Button onClick={startStream} variant="accent">
-          Stream
-        </Button>
+        <Button onClick={startStream} variant="accent">{t('auto.stream')}</Button>
         <Button onClick={() => setIsPaused((p) => !p)} variant="accent">
           {isPaused() ? 'Resume' : 'Pause'}
         </Button>
@@ -689,17 +680,13 @@ function TableStreamInner() {
             type="checkbox"
             checked={isSlow()}
             onChange={(e) => setIsSlow(e.currentTarget.checked)}
-          />
-          Slow mode
-        </label>
+          />{t('auto.slow_mode')}</label>
         <label class="flex items-center gap-x-1 text-xs">
           <input
             type="checkbox"
             checked={showRaw()}
             onChange={(e) => setShowRaw(e.currentTarget.checked)}
-          />
-          Raw
-        </label>
+          />{t('auto.raw')}</label>
         <Button
           variant="accent"
           onClick={() => {
@@ -708,9 +695,7 @@ function TableStreamInner() {
             chat.setMessages([]);
             chat.setStream(undefined);
           }}
-        >
-          Reset
-        </Button>
+        >{t('auto.reset')}</Button>
       </div>
       <StreamStatus stream={stream} />
       {showRaw() ? (

@@ -629,7 +629,7 @@ export function CommandMenuInner(props: {
           <Show
             when={filteredItems().length > 0}
             fallback={
-              <CommandMenuEmptyState>No results found</CommandMenuEmptyState>
+              <CommandMenuEmptyState>{t('auto.no_results_found')}</CommandMenuEmptyState>
             }
           >
             <VirtualizedCommandList
@@ -655,9 +655,7 @@ export function CommandMenuInner(props: {
             <div class="flex border border-edge-muted text-xxs rounded-md items-center px-1.5 py-px font-normal">
               <Hotkey shortcut={navDownHotkey.hotkey()} class="space-x-1" />
             </div>
-          </div>
-          Navigate
-        </span>
+          </div>{t('auto.navigate')}</span>
 
         <Switch>
           <Match when={isInCommandScope()}>

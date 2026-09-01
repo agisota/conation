@@ -1,4 +1,5 @@
 import { createSoupState } from '@app/features/next-soup/create-soup-state';
+import { t } from '@app/lib/i18n';
 import { AnimatedEmailIcon } from '@icon/wide-email';
 import { createEffect, createSignal } from 'solid-js';
 import { MockAppChrome } from '../components/MockAppChrome';
@@ -22,9 +23,8 @@ function SidebarNavContent(props: LessonContentProps) {
   return (
     <div class="flex flex-col gap-8 onboarding-stagger">
       <div class="mt-2 text-ink-muted text-base">
-        <p>Use the sidebar to quickly jump between views.</p>
-        <p>
-          Try navigating to <strong>Emails</strong>.
+        <p>{t('auto.use_the_sidebar_to_quickly_jum')}</p>
+        <p>{t('auto.try_navigating_to')}<strong>{t('auto.emails')}</strong>.
         </p>
       </div>
       <div class="flex flex-col gap-2">

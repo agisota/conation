@@ -1,4 +1,5 @@
 import { isPlatform } from '@core/util/platform';
+import { t } from '@app/lib/i18n';
 import { useNotificationSettings } from '@notifications/notification-settings';
 import { useIsAuthenticated } from '@queries/auth';
 import { Button, Dialog, Surface } from '@ui';
@@ -30,16 +31,12 @@ export function IosPushNotificationModal() {
         <Surface depth={2}>
           <div class="*:max-h-[75vh]">
             <div class="flex flex-col gap-4 px-4 py-6">
-              <Dialog.Title class="text-lg font-semibold text-ink">
-                Enable Push Notifications
-              </Dialog.Title>
+              <Dialog.Title class="text-lg font-semibold text-ink">{t('auto.enable_push_notifications')}</Dialog.Title>
               <Dialog.Description class="text-sm text-ink-extra-muted">
                 Get notified about new messages, mentions, comments, and emails.
               </Dialog.Description>
               <div class="flex gap-2 w-full justify-end pt-2">
-                <Dialog.CloseButton class="text-sm text-ink-muted hover:text-ink px-3 py-1.5">
-                  Later
-                </Dialog.CloseButton>
+                <Dialog.CloseButton class="text-sm text-ink-muted hover:text-ink px-3 py-1.5">{t('auto.later')}</Dialog.CloseButton>
                 <Button
                   variant="accent"
                   size="sm"
@@ -51,9 +48,7 @@ export function IosPushNotificationModal() {
                       console.error('Failed to enable notifications:', error);
                     }
                   }}
-                >
-                  Enable
-                </Button>
+                >{t('auto.enable')}</Button>
               </div>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import { useSplitLayout } from '@components/app/split-layout/layout';
+import { t } from '@app/lib/i18n';
 import { EntityIcon } from '@core/component/EntityIcon';
 import { ItemPreview } from '@core/component/ItemPreview';
 import CaretRight from '@phosphor/caret-right.svg';
@@ -157,7 +158,7 @@ function SentEmailResponse(props: {
           messageId={props.messageId}
           toolCallId={props.toolCallId}
           readOnly
-          header={<div class="text-xs text-ink-extra-muted/60">Email sent</div>}
+          header={<div class="text-xs text-ink-extra-muted/60">{t('auto.email_sent')}</div>}
         />
       </div>
     </details>
@@ -224,9 +225,7 @@ const handler = createToolRenderer({
             />
           </Match>
           <Match when={response() === 'Rejected'}>
-            <BaseTool renderContext={ctx.renderContext} type="response">
-              Email send rejected
-            </BaseTool>
+            <BaseTool renderContext={ctx.renderContext} type="response">{t('auto.email_send_rejected')}</BaseTool>
           </Match>
           <Match when={sentResponse}>
             <SentEmailResponse

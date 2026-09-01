@@ -313,7 +313,7 @@ function SnippetSharingSectionContent(props: { documentId: string }) {
         )}
       >
         <InlineCheckbox checked={isShared()} />
-        <span class="whitespace-nowrap">Share with team</span>
+        <span class="whitespace-nowrap">{t('auto.share_with_team')}</span>
       </button>
       <p class="text-ink-muted leading-5">
         Lets everyone on your team insert this snippet from the ; menu and edit
@@ -513,7 +513,7 @@ function StatsSectionContent() {
     <Show
       when={md.wordcountStats}
       fallback={
-        <div class="text-ink-muted text-xs py-2">No stats available</div>
+        <div class="text-ink-muted text-xs py-2">{t('auto.no_stats_available')}</div>
       }
     >
       {(stats) => (

@@ -3,6 +3,7 @@ import {
   openChatWithMessageReplacingSplit,
 } from '@app/features/chat/ChatWithAgentButton';
 import { useSplitPanelOrThrow } from '@components/app/split-layout/layoutUtils';
+import { t } from '@app/lib/i18n';
 import { registerHotkey } from '@core/hotkey/hotkeys';
 import { TOKENS } from '@core/hotkey/tokens';
 import { Button, Hotkey } from '@ui';
@@ -52,7 +53,7 @@ export function SearchAskAiButton() {
       disabled={isAsking()}
       onClick={askAi}
     >
-      <span class="font-medium">Ask AI</span>
+      <span class="font-medium">{t('auto.ask_ai')}</span>
       <Hotkey shortcut={askAiHotkey.hotkey()} theme="subtle" />
     </Button>
   );

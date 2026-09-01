@@ -136,9 +136,7 @@ function EveryoneElseDeclinedNotice(props: {
           <ExclamationIcon class="size-3" />
         </span>
         <div class="flex min-w-0 flex-col gap-4">
-          <div role="status" class="font-medium text-ink">
-            Everyone else declined this event
-          </div>
+          <div role="status" class="font-medium text-ink">{t('auto.everyone_else_declined_this_ev')}</div>
           <Show when={props.canModify}>
             <div class="flex justify-end gap-1">
               <Button
@@ -152,9 +150,7 @@ function EveryoneElseDeclinedNotice(props: {
                 size="sm"
                 class="rounded-lg"
                 onClick={props.onReschedule}
-              >
-                Reschedule
-              </Button>
+              >{t('auto.reschedule')}</Button>
             </div>
           </Show>
         </div>
@@ -342,27 +338,21 @@ function DeleteEventDialog(
               name="delete-scope"
               checked={scope() === 'this_event'}
               onChange={() => setScope('this_event')}
-            />
-            This event
-          </label>
+            />{t('auto.this_event')}</label>
           <label class="flex items-center gap-2">
             <input
               type="radio"
               name="delete-scope"
               checked={scope() === 'this_and_following'}
               onChange={() => setScope('this_and_following')}
-            />
-            This and following events
-          </label>
+            />{t('auto.this_and_following_events')}</label>
           <label class="flex items-center gap-2">
             <input
               type="radio"
               name="delete-scope"
               checked={scope() === 'all'}
               onChange={() => setScope('all')}
-            />
-            All events
-          </label>
+            />{t('auto.all_events')}</label>
         </div>
       </Show>
     </DeleteDialog>

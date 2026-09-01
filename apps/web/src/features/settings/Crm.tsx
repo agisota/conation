@@ -172,9 +172,7 @@ function CrmEnablementSection() {
                     size="sm"
                     class="rounded-xs"
                     disabled
-                  >
-                    Admins only
-                  </Button>
+                  >{t('auto.admins_only')}</Button>
                 </span>
               </Tooltip>
             }
@@ -206,9 +204,7 @@ function CrmEnablementSection() {
             <Dialog.CloseButton as={Button} variant="ghost" size="icon-sm">
               <XIcon />
             </Dialog.CloseButton>
-            <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">
-              Enable CRM
-            </Dialog.Title>
+            <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">{t('auto.enable_crm')}</Dialog.Title>
           </Panel.Header>
           <Panel.Body class="p-3 flex flex-col gap-3">
             <p>
@@ -266,13 +262,11 @@ function CrmEnablementSection() {
         onConfirm={handleDisable}
         onClose={() => setShowDisableModal(false)}
       >
-        <p>
-          Disabling the CRM <span class="font-medium">permanently purges</span>{' '}
+        <p>{t('auto.disabling_the_crm')}<span class="font-medium">permanently purges</span>{' '}
           your team's CRM data — companies, contacts, and their history.
           Re-enabling later lets you backfill again or start fresh.
         </p>
-        <p class="text-sm text-ink-muted">
-          Type <span class="font-medium text-ink">{DISABLE_CRM_PHRASE}</span> to
+        <p class="text-sm text-ink-muted">{t('auto.type')}<span class="font-medium text-ink">{DISABLE_CRM_PHRASE}</span> to
           confirm.
         </p>
         <input
@@ -296,9 +290,7 @@ function NoTeamState() {
     <SettingsPage title="CRM">
       <SettingsSection>
         <SettingsCard>
-          <div class="px-6 py-8 text-center text-sm text-ink-muted">
-            Join or create a team to set up the CRM.
-          </div>
+          <div class="px-6 py-8 text-center text-sm text-ink-muted">{t('auto.join_or_create_a_team_to_set_u')}</div>
         </SettingsCard>
       </SettingsSection>
     </SettingsPage>

@@ -140,11 +140,11 @@ export function PasteNode(props: PasteNodeDecoratorProps) {
                 <Dropdown.Group>
                   <Dropdown.Item onSelect={copyText}>
                     <Copy class="size-4 shrink-0" />
-                    <span class="flex-1 truncate">Copy</span>
+                    <span class="flex-1 truncate">{t('auto.copy')}</span>
                   </Dropdown.Item>
                   <Dropdown.Item onSelect={convertToText}>
                     <TextT class="size-4 shrink-0" />
-                    <span class="flex-1 truncate">Convert to text</span>
+                    <span class="flex-1 truncate">{t('auto.convert_to_text')}</span>
                   </Dropdown.Item>
                 </Dropdown.Group>
                 <Dropdown.Group>

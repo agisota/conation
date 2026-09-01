@@ -1,4 +1,5 @@
 import { buildChannelMessageListMeta } from '@channel/Channel/message-list-meta';
+import { t } from '@app/lib/i18n';
 import type { InputSnapshot } from '@channel/Input/types';
 import type { ChannelMessageListMeta } from '@channel/Message/list-meta';
 import { Message } from '@channel/Message/Message';
@@ -137,7 +138,7 @@ export function Discussion() {
           ) : (
             <CaretRight class="size-3" />
           )}
-          <span class="text-xs">Discussion</span>
+          <span class="text-xs">{t('auto.discussion')}</span>
         </button>
         <div class="flex-1 border-t border-edge-muted" />
       </div>

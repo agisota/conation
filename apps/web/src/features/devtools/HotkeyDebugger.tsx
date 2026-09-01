@@ -1,4 +1,5 @@
 import { SplitHeaderLeft } from '@components/app/split-layout/components/SplitHeader';
+import { t } from '@app/lib/i18n';
 import { StaticSplitLabel } from '@components/app/split-layout/components/SplitLabel';
 import { activeScope, hotkeyScopeTree, pressedKeys } from '@core/hotkey/state';
 import type { HotkeyCommand, ValidHotkey } from '@core/hotkey/types';
@@ -133,14 +134,12 @@ export default function HotkeyDebugger() {
         <table class="w-full border-collapse">
           <thead class="sticky top-0 z-10 bg-surface">
             <tr class="text-left text-xxs uppercase tracking-wide text-ink-muted">
-              <th class="border-b border-edge px-3 py-2 font-normal">Lvl</th>
-              <th class="border-b border-edge px-3 py-2 font-normal">Scope</th>
-              <th class="border-b border-edge px-3 py-2 font-normal">
-                Description
-              </th>
-              <th class="border-b border-edge px-3 py-2 font-normal">Hotkey</th>
-              <th class="border-b border-edge px-3 py-2 font-normal">Token</th>
-              <th class="border-b border-edge px-3 py-2 font-normal">Flags</th>
+              <th class="border-b border-edge px-3 py-2 font-normal">{t('auto.lvl')}</th>
+              <th class="border-b border-edge px-3 py-2 font-normal">{t('auto.scope')}</th>
+              <th class="border-b border-edge px-3 py-2 font-normal">{t('auto.description')}</th>
+              <th class="border-b border-edge px-3 py-2 font-normal">{t('auto.hotkey')}</th>
+              <th class="border-b border-edge px-3 py-2 font-normal">{t('auto.token')}</th>
+              <th class="border-b border-edge px-3 py-2 font-normal">{t('auto.flags')}</th>
             </tr>
           </thead>
           <tbody>

@@ -1,4 +1,5 @@
 import { useSplitLayout } from '@components/app/split-layout/layout';
+import { t } from '@app/lib/i18n';
 import { useChannel, useChannelType } from '@core/context/channels';
 import { useUserId } from '@core/context/user';
 import { idToEmail } from '@core/user';
@@ -146,7 +147,7 @@ export function ChannelParticipantsTab(props: {
       <div class="max-w-200 size-full flex flex-col gap-2">
         <Panel depth={2} class="min-h-0 flex-1 overflow-hidden text-ink">
           <Panel.Header class="justify-between gap-2 px-6">
-            <div class="text-sm font-semibold">Participants</div>
+            <div class="text-sm font-semibold">{t('auto.participants')}</div>
             <Show when={channelType() === ChannelType.private}>
               <ChannelJoinLinkButton channelId={props.channelId} />
             </Show>

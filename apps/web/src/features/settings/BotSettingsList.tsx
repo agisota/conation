@@ -1,4 +1,5 @@
 import { BotAvatar } from '@channel/Bots/BotAvatar';
+import { t } from '@app/lib/i18n';
 import { LoadingSpinner } from '@core/component/LoadingSpinner';
 import BotIcon from '@icon/wide-bot.svg';
 import CaretRightIcon from '@phosphor/caret-right.svg';
@@ -69,9 +70,7 @@ export function BotSettingsList(props: {
       description="Create webhook-powered teammates and connect them to channels."
       actions={
         <Button variant="cta" size="sm" onClick={props.onCreate}>
-          <PlusIcon />
-          Create bot
-        </Button>
+          <PlusIcon />{t('auto.create_bot')}</Button>
       }
     >
       <SettingsSection
@@ -94,9 +93,7 @@ export function BotSettingsList(props: {
                   <div class="flex size-11 items-center justify-center rounded-xl bg-accent-bg text-accent">
                     <BotIcon class="size-6" />
                   </div>
-                  <div class="mt-3 text-sm font-medium text-ink">
-                    Create your first bot
-                  </div>
+                  <div class="mt-3 text-sm font-medium text-ink">{t('auto.create_your_first_bot')}</div>
                   <div class="mt-1 max-w-80 text-xs text-ink-muted">
                     Bots post to channels through a secure webhook and can be
                     mentioned like any other participant.
@@ -107,9 +104,7 @@ export function BotSettingsList(props: {
                     size="sm"
                     onClick={props.onCreate}
                   >
-                    <PlusIcon />
-                    Create bot
-                  </Button>
+                    <PlusIcon />{t('auto.create_bot')}</Button>
                 </div>
               }
             >

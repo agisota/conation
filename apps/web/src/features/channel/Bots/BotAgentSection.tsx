@@ -1,4 +1,5 @@
 import { ToggleSwitch } from '@ui';
+import { t } from '@app/lib/i18n';
 import { Show } from 'solid-js';
 import { useChatV3AgentsFlag } from '../use-chat-v3-agents-flag';
 import { BotFormSection } from './BotFormSection';
@@ -22,17 +23,15 @@ export function BotAgentSection(props: {
       >
         <div class="flex items-center justify-between gap-4">
           <div class="min-w-0">
-            <div class="text-sm font-medium text-ink">Agent Harness</div>
-            <p class="mt-0.5 text-xs text-ink-muted">
-              This bot manages an agent harness like Codex or Hermes
-            </p>
+            <div class="text-sm font-medium text-ink">{t('auto.agent_harness')}</div>
+            <p class="mt-0.5 text-xs text-ink-muted">{t('auto.this_bot_manages_an_agent_harn')}</p>
           </div>
           <ToggleSwitch
             size="md"
             checked={props.checked}
             disabled={props.disabled}
             onChange={props.onChange}
-            label={<span>Make this bot a coding agent</span>}
+            label={<span>{t('auto.make_this_bot_a_coding_agent')}</span>}
             labelClass="sr-only"
           />
         </div>
@@ -44,9 +43,7 @@ export function BotAgentSection(props: {
               href="https://docs.macro.com/AI/bring-your-own"
               target="_blank"
               rel="noopener noreferrer"
-            >
-              Connecting an agent? View setup guide
-            </a>
+            >{t('auto.connecting_an_agent_view_setup')}</a>
           </div>
         </Show>
       </BotFormSection>

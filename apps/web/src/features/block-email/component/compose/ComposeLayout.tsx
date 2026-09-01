@@ -1,4 +1,5 @@
 import { CircleSpinner } from '@core/component/CircleSpinner';
+import { t } from '@app/lib/i18n';
 import { registerHotkey, useHotkeyDOMScope } from '@core/hotkey/hotkeys';
 import { TOKENS } from '@core/hotkey/tokens';
 import { isMobile } from '@core/mobile/isMobile';
@@ -200,9 +201,7 @@ export function ComposeLayout(props: {
                 fallback={
                   <div class="flex gap-1 items-center">
                     <CircleSpinner class="size-4 animate-spin" />
-                    <span class="text-ink-extra-muted/50 text-xs">
-                      Processing...
-                    </span>
+                    <span class="text-ink-extra-muted/50 text-xs">{t('auto.processing')}</span>
                   </div>
                 }
               >
@@ -243,9 +242,7 @@ export function ComposeLayout(props: {
                 class="rounded-lg"
                 onClick={() => setShowBcc(true)}
                 disabled={ctx.disabled()}
-              >
-                Bcc
-              </Button>
+              >{t('auto.bcc')}</Button>
             </Show>
           </div>
         </div>

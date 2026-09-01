@@ -1,4 +1,5 @@
 import { type PortalScope, ScopedPortal } from '@core/component/ScopedPortal';
+import { t } from '@app/lib/i18n';
 import clickOutside from '@core/directive/clickOutside';
 import { useIsKeyPressActive } from '@core/util/useIsKeyPressActive';
 import { cn, Surface } from '@ui';
@@ -197,13 +198,11 @@ export function AgentCommandsMenu(props: AgentCommandsMenuProps) {
             depth={2}
             class="pt-2 pb-1.5 shadow-lg shadow-drop-shadow rounded-xl"
           >
-            <div class="px-3.5 pb-1 text-xs font-medium text-ink-muted">
-              Commands
-            </div>
+            <div class="px-3.5 pb-1 text-xs font-medium text-ink-muted">{t('auto.commands')}</div>
             <Show
               when={filteredCommands().length > 0}
               fallback={
-                <div class="px-3.5 pb-1 text-ink-extra-muted">No results</div>
+                <div class="px-3.5 pb-1 text-ink-extra-muted">{t('auto.no_results')}</div>
               }
             >
               <div

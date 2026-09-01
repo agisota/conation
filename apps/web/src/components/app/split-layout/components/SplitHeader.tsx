@@ -527,9 +527,7 @@ export function SplitHeader(props: {
                   data-split-header-drop-overlay
                 >
                   <div class="max-w-[min(28rem,calc(100%-3rem))] min-w-0 bg-surface border border-edge rounded-lg shadow-lg shadow-drop-shadow px-4 py-3 flex items-center gap-2 text-sm text-ink">
-                    <span class="shrink-0 text-ink-muted">
-                      Open in this split
-                    </span>
+                    <span class="shrink-0 text-ink-muted">{t('auto.open_in_this_split')}</span>
                   </div>
                 </div>
               </Show>

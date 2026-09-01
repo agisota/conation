@@ -1,4 +1,5 @@
 import { createElementSize } from '@solid-primitives/resize-observer';
+import { t } from '@app/lib/i18n';
 import { cn } from '@ui/utils/classname';
 import {
   createContext,
@@ -256,7 +257,7 @@ type PanelProps = {
  *   collapsed={() => sidebarCollapsed()}
  *   hidden={() => sidebarHidden()}
  * >
- *   <div>Sidebar content</div>
+ *   <div>{t('auto.sidebar_content')}</div>
  * </Resize.Panel>
  *
  * // Hidden panels are temporarily removed from layout but stay registered

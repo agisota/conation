@@ -1,4 +1,5 @@
 import { createUniqueId } from 'solid-js';
+import { t } from '@app/lib/i18n';
 
 export const AnimatedSearchIcon = (props: {
   triggerAnimation?: boolean;
@@ -16,7 +17,7 @@ export const AnimatedSearchIcon = (props: {
       overflow="visible"
       class={`animated-search-icon ${props.triggerAnimation ? 'animating' : ''} ${props.class ?? ''}`}
     >
-      {/*<title>Animated search icon</title>*/}
+      {/*<title>{t('auto.animated_search_icon')}</title>*/}
       <defs>
         {/* Clip path for the reflection - matches the glass circle */}
         <clipPath id={clipId}>

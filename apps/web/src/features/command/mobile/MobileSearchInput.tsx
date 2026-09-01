@@ -1,4 +1,5 @@
 import { openChatWithMessage } from '@app/features/chat/ChatWithAgentButton';
+import { t } from '@app/lib/i18n';
 import { pressPulse } from '@components/app/mobile/pressPulse';
 import {
   useForegroundMobileView,
@@ -55,9 +56,7 @@ export function MobileAskAiButton() {
         hapticImpact('light');
       }}
       onClick={() => submitAskAi()}
-    >
-      Ask AI
-    </button>
+    >{t('auto.ask_ai')}</button>
   );
 }
 

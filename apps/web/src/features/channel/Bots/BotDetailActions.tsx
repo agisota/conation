@@ -1,4 +1,5 @@
 import TrashIcon from '@phosphor/trash.svg';
+import { t } from '@app/lib/i18n';
 import { Button } from '@ui';
 
 type BotDetailActionsProps = {
@@ -19,9 +20,7 @@ export function BotDetailActions(props: BotDetailActionsProps) {
         disabled={props.pending}
         onClick={props.onDelete}
       >
-        <TrashIcon />
-        Delete bot
-      </Button>
+        <TrashIcon />{t('auto.delete_bot')}</Button>
       <div class="flex items-center gap-2">
         <Button
           type="button"
@@ -29,9 +28,7 @@ export function BotDetailActions(props: BotDetailActionsProps) {
           size="sm"
           disabled={props.pending}
           onClick={props.onBack}
-        >
-          Back
-        </Button>
+        >{t('auto.back')}</Button>
         <Button
           type="submit"
           variant="cta"

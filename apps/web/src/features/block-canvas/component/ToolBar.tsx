@@ -3,6 +3,7 @@ import {
   EdgeConnectionStyles,
 } from '@block-canvas/model/CanvasModel';
 import { useCachedStyle } from '@block-canvas/signal/cachedStyle';
+import { t } from '@app/lib/i18n';
 import { useToolManager } from '@block-canvas/signal/toolManager';
 import { useIsNestedBlock } from '@core/block';
 import { ScopedPortal } from '@core/component/ScopedPortal';
@@ -68,7 +69,7 @@ const ConnectorTypeSubMenu = (props: {
             }}
           >
             <ConnectorStraightArrows class="size-4 shrink-0" />
-            <span class="flex-1 truncate">Connector</span>
+            <span class="flex-1 truncate">{t('auto.connector')}</span>
             <Hotkey
               token={TOKENS.canvas.line.straight}
               class="text-ink-muted"
@@ -81,7 +82,7 @@ const ConnectorTypeSubMenu = (props: {
             }}
           >
             <ConnectorBezierArrows class="size-4 shrink-0" />
-            <span class="flex-1 truncate">Flow Connector</span>
+            <span class="flex-1 truncate">{t('auto.flow_connector')}</span>
             <Hotkey
               token={TOKENS.canvas.line.flow}
               class="text-ink-muted"
@@ -94,7 +95,7 @@ const ConnectorTypeSubMenu = (props: {
             }}
           >
             <ConnectorSteppedArrows class="size-4 shrink-0" />
-            <span class="flex-1 truncate">Bent Connector</span>
+            <span class="flex-1 truncate">{t('auto.bent_connector')}</span>
             <Hotkey
               token={TOKENS.canvas.line.bent}
               class="text-ink-muted"
