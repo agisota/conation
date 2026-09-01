@@ -3,7 +3,7 @@ import {
   reminderDescriptionForReference,
   scheduleFromRow,
 } from '@app/features/reminders/reminder-schedule';
-import { ENABLE_REMINDERS } from '@core/constant/featureFlags';
+import { enableReminders, isFeatureEnabled } from '@core/constant/featureFlags';
 import type { EntityData, ReminderEntity } from '@entity';
 import {
   getCachedItemPreview,
@@ -39,7 +39,7 @@ function fallbackDescriptionFor(entity: ReminderEntity): string | undefined {
  */
 export const makeEditReminderAction = () => {
   const canExecute = (entity: EntityData): boolean =>
-    ENABLE_REMINDERS() && entity.type === 'reminder';
+    isFeatureEnabled(enableReminders) && entity.type === 'reminder';
 
   const execute = (entities: EntityData[]) => {
     const [entity] = entities;

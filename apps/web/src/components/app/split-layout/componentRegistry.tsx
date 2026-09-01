@@ -29,8 +29,9 @@ import { useIsAuthenticated } from '@core/auth';
 import { LoadingBlock } from '@core/component/LoadingBlock';
 import {
   DEV_MODE_ENV,
-  ENABLE_CRM,
-  ENABLE_REMINDERS,
+  enableCrm,
+  enableReminders,
+  isFeatureEnabled,
   LOCAL_ONLY,
 } from '@core/constant/featureFlags';
 import { useUserContext } from '@core/context/user';
@@ -269,7 +270,7 @@ registerComponent(
   withAuth(() => {
     // Registered even when the flag is closed so a bookmarked /reminders or a
     // restored split recovers to the inbox instead of an empty split.
-    if (!ENABLE_REMINDERS()) {
+    if (!isFeatureEnabled(enableReminders)) {
       return <RedirectSplit to={{ type: 'component', id: 'inbox' }} />;
     }
     usePageViewTracking('reminders');
@@ -418,7 +419,7 @@ registerComponent(
   withAuth(() => {
     // Registered even when the CRM feature is off so direct navigation /
     // restored splits redirect instead of throwing in resolveComponent.
-    if (!ENABLE_CRM()) {
+    if (!isFeatureEnabled(enableCrm)) {
       return <RedirectSplit to={{ type: 'component', id: 'inbox' }} />;
     }
     usePageViewTracking('companies');
