@@ -1,11 +1,11 @@
 use super::*;
 
 #[test]
-fn defaults_to_english_without_a_header() {
-    assert_eq!(negotiate_accept_language(None), SupportedLocale::English);
+fn defaults_to_russian_without_a_header() {
+    assert_eq!(negotiate_accept_language(None), SupportedLocale::Russian);
     assert_eq!(
         negotiate_accept_language(Some("")),
-        SupportedLocale::English
+        SupportedLocale::Russian
     );
 }
 
@@ -66,7 +66,7 @@ fn skips_unsupported_ranges_before_a_supported_one() {
 }
 
 #[test]
-fn malformed_unsupported_and_wildcard_values_fall_back_to_english() {
+fn malformed_unsupported_and_wildcard_values_fall_back_to_russian() {
     for value in [
         "ru;q=1.1",
         "ru;q=0.1234",
@@ -78,17 +78,17 @@ fn malformed_unsupported_and_wildcard_values_fall_back_to_english() {
     ] {
         assert_eq!(
             negotiate_accept_language(Some(value)),
-            SupportedLocale::English,
+            SupportedLocale::Russian,
             "value: {value}"
         );
     }
 }
 
 #[test]
-fn wildcard_uses_english_as_the_server_default() {
+fn wildcard_uses_russian_as_the_server_default() {
     assert_eq!(
         negotiate_accept_language(Some("*;q=0.9, ru;q=0.8")),
-        SupportedLocale::English
+        SupportedLocale::Russian
     );
     assert_eq!(
         negotiate_accept_language(Some("ru;q=0.9, *;q=0.8")),

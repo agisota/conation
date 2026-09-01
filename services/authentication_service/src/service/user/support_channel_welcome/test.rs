@@ -35,16 +35,32 @@ fn user_id(email: &str) -> MacroUserIdStr<'static> {
 
 const NEW_USER_MENTION: &str = "<m-user-mention>{\"userId\":\"macro|new.user@example.com\",\"email\":\"new.user@example.com\"}</m-user-mention>";
 
+#[test]
+fn exposes_the_conation_support_team_used_by_signup() {
+    let support_team = SupportTeam::conation_default().unwrap();
+
+    assert_eq!(
+        support_team
+            .participants()
+            .map(|user_id| user_id.as_ref().to_string()),
+        [
+            "macro|tars@conation.dev",
+            "macro|pythia@conation.dev",
+            "macro|ramzan.kadyrov@conation.dev",
+        ]
+    );
+}
+
 fn expected_welcome() -> String {
     format!(
         concat!(
-            "Hey {new_user},\n",
+            "Привет, {new_user}!\n",
             "\n",
-            "Welcome to Conation, we're excited for you to try it out.\n",
+            "Добро пожаловать в Conation! Мы рады, что вы с нами.\n",
             "\n",
-            "This is your own personal support Channel, with <m-user-mention>{{\"userId\":\"macro|jacob@macro.com\",\"email\":\"jacob@macro.com\"}}</m-user-mention> (ceo) and <m-user-mention>{{\"userId\":\"macro|teo@macro.com\",\"email\":\"teo@macro.com\"}}</m-user-mention> (cto) and me (julia).\n",
+            "Это ваш личный канал поддержки. Здесь вам помогут <m-user-mention>{{\"userId\":\"macro|tars@conation.dev\",\"email\":\"tars@conation.dev\"}}</m-user-mention> (генеральный директор), <m-user-mention>{{\"userId\":\"macro|ramzan.kadyrov@conation.dev\",\"email\":\"ramzan.kadyrov@conation.dev\"}}</m-user-mention> (технический директор) и я.\n",
             "\n",
-            "If you have any feedback or find any bugs let us know here.",
+            "Если у вас появятся вопросы, предложения или вы найдёте ошибку — напишите нам здесь.",
         ),
         new_user = NEW_USER_MENTION,
     )
@@ -59,6 +75,7 @@ async fn posts_the_welcome_message() {
         &gateway,
         &channel_id.to_string(),
         user_id("new.user@example.com"),
+        &SupportTeam::conation_default().unwrap(),
     )
     .await
     .unwrap();
@@ -69,7 +86,10 @@ async fn posts_the_welcome_message() {
     };
 
     assert_eq!(welcome.channel_id, channel_id);
-    assert_eq!(welcome.actor.as_user(), Some(&user_id("julia@macro.com")));
+    assert_eq!(
+        welcome.actor.as_user(),
+        Some(&user_id("pythia@conation.dev"))
+    );
     assert_eq!(welcome.request.content, expected_welcome());
     assert_eq!(
         welcome.request.mentions,
@@ -89,10 +109,14 @@ async fn posts_the_welcome_message() {
 async fn rejects_an_invalid_channel_id_without_posting() {
     let gateway = RecordingGateway::default();
 
-    let error =
-        post_support_channel_welcome(&gateway, "not-a-uuid", user_id("new.user@example.com"))
-            .await
-            .unwrap_err();
+    let error = post_support_channel_welcome(
+        &gateway,
+        "not-a-uuid",
+        user_id("new.user@example.com"),
+        &SupportTeam::conation_default().unwrap(),
+    )
+    .await
+    .unwrap_err();
 
     assert_eq!(
         error.downcast_current_context::<&str>().copied(),

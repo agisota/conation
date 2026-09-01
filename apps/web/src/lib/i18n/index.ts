@@ -7,7 +7,7 @@ export const SUPPORTED_LOCALES = ['en', 'ru'] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
 
 export const SOURCE_LOCALE: Locale = 'en';
-export const DEFAULT_LOCALE: Locale = SOURCE_LOCALE;
+export const DEFAULT_LOCALE: Locale = 'ru';
 export const LOCALE_STORAGE_KEY = 'conation-locale';
 
 type MessageCatalog = Record<string, string>;
@@ -21,7 +21,7 @@ function normalizeLocale(value: string | null | undefined): Locale | undefined {
   return SUPPORTED_LOCALES.find((locale) => locale === language);
 }
 
-/** Resolves stored and browser locale preferences in priority order. */
+/** Resolves explicit locale preferences in priority order. */
 export function resolveLocale(
   preferences: readonly (string | null | undefined)[]
 ): Locale {
@@ -40,11 +40,9 @@ function detectLocale(): Locale {
     // Storage can be unavailable in privacy-restricted webviews.
   }
 
-  const browserLocales =
-    typeof navigator === 'undefined'
-      ? []
-      : [navigator.language, ...(navigator.languages ?? [])];
-  return resolveLocale([storedLocale, ...browserLocales]);
+  // Conation is Russian-first. New profiles start in Russian regardless of
+  // the operating-system locale; an explicit in-product selection persists.
+  return resolveLocale([storedLocale]);
 }
 
 const [locale, setLocaleSignal] = createSignal<Locale>(detectLocale());

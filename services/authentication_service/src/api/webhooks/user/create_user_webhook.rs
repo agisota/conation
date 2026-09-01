@@ -16,7 +16,9 @@ use crate::{
     rate_limit_config::RATE_LIMIT_CONFIG,
 };
 use authentication_service::service::user::create_user::create_user;
-use authentication_service::service::user::support_channel_welcome::post_support_channel_welcome;
+use authentication_service::service::user::support_channel_welcome::{
+    SupportTeam, post_support_channel_welcome,
+};
 use channels::domain::{
     models::{ChannelType, CreateChannelRequest, Sender},
     ports::ChannelService,
@@ -32,11 +34,8 @@ use model_entity::EntityType;
 use std::collections::HashSet;
 use teams::domain::team_repo::TeamService;
 
-/// Support team members added to every new user's Conation support channel.
-const MACRO_SUPPORT_EMAILS: [&str; 3] = ["jacob@macro.com", "julia@macro.com", "teo@macro.com"];
-
 fn support_channel_name<T: AsRef<str>>(email: &Email<T>) -> String {
-    format!("Conation Support x {}", email.local_part())
+    format!("Поддержка Conation — {}", email.local_part())
 }
 
 /// Name the identity provider gave us, as (first, last).
@@ -377,17 +376,17 @@ async fn create_user_webhook(ctx: &ApiContext, req: FusionAuthUserWebhook) -> an
                 }
             };
 
-            let participants = match MACRO_SUPPORT_EMAILS
-                .into_iter()
-                .map(MacroUserIdStr::try_from_email)
-                .collect::<Result<HashSet<_>, _>>()
-            {
-                Ok(participants) => participants,
+            let support_team = match SupportTeam::conation_default() {
+                Ok(support_team) => support_team,
                 Err(e) => {
                     tracing::error!(error=?e, "unable to parse support user ids for support channel");
                     return;
                 }
             };
+            let participants = support_team
+                .participants()
+                .into_iter()
+                .collect::<HashSet<_>>();
 
             let channel = match channel_service
                 .create_channel(
@@ -418,9 +417,14 @@ async fn create_user_webhook(ctx: &ApiContext, req: FusionAuthUserWebhook) -> an
                 tracing::error!(error=?e, channel_id=%channel.id, %email, "failed to favorite Conation support channel");
             }
 
-            let _ = post_support_channel_welcome(channel_service.as_ref(), &channel.id, owner_id)
-                .await
-                .inspect_err(|e| {
+            let _ = post_support_channel_welcome(
+                channel_service.as_ref(),
+                &channel.id,
+                owner_id,
+                &support_team,
+            )
+            .await
+            .inspect_err(|e| {
                 tracing::error!(error=?e, channel_id=%channel.id, %email, "failed to post Conation support welcome message");
             });
         }

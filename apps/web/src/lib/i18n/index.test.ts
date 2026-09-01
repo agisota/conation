@@ -28,10 +28,11 @@ describe('i18n locale ownership', () => {
     setLocale('en');
   });
 
-  test('resolves stored/browser preferences and falls back to English', () => {
+  test('resolves explicit preferences and falls back to Russian', () => {
     expect(resolveLocale(['ru-RU', 'en-US'])).toBe('ru');
     expect(resolveLocale(['de-DE', 'en-GB'])).toBe('en');
     expect(resolveLocale(['de-DE'])).toBe(DEFAULT_LOCALE);
+    expect(DEFAULT_LOCALE).toBe('ru');
   });
 
   test('persists selection and synchronizes the document language', () => {
@@ -112,19 +113,11 @@ describe('ICU messages and locale formatting', () => {
   test('uses Russian forms in shared previews and activity results', () => {
     setLocale('ru');
 
-    expect(t('channel.thread.moreReplies', { count: 1 })).toBe(
-      'Ещё 1 ответ'
-    );
-    expect(t('channel.thread.moreReplies', { count: 2 })).toBe(
-      'Ещё 2 ответа'
-    );
-    expect(t('channel.thread.moreReplies', { count: 5 })).toBe(
-      'Ещё 5 ответов'
-    );
+    expect(t('channel.thread.moreReplies', { count: 1 })).toBe('Ещё 1 ответ');
+    expect(t('channel.thread.moreReplies', { count: 2 })).toBe('Ещё 2 ответа');
+    expect(t('channel.thread.moreReplies', { count: 5 })).toBe('Ещё 5 ответов');
     expect(t('editor.wordcount.words', { count: 21 })).toBe('слово');
-    expect(t('core.itemPreview.attendees', { count: 5 })).toBe(
-      '5 участников'
-    );
+    expect(t('core.itemPreview.attendees', { count: 5 })).toBe('5 участников');
     expect(
       t('ai.tools.activity.resultCount', {
         count: 5,
