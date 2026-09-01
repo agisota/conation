@@ -1089,6 +1089,7 @@ export const storageServiceClient = {
       });
     },
   },
+
   async getUsersHistory() {
     return (await dssFetch<{ data: Item[] }>(`/history`)).map((result) => ({
       data: result.data,
@@ -1730,6 +1731,7 @@ export const storageServiceClient = {
         ]);
     }
   },
+
   async getJobProcessingResult<T extends ProcessingResultType>(params: {
     jobId: string;
     documentId: string;
@@ -2315,6 +2317,7 @@ export const storageServiceClient = {
       ).map((result) => result.data);
     },
   },
+
   async getDeletedItems() {
     return (
       await dssFetch<TypedSuccessResponse>('/recents/deleted', {
@@ -2397,6 +2400,7 @@ export const storageServiceClient = {
       });
     },
   },
+
   reminders: {
     async createReminder(params: CreateReminderRequest) {
       return await dssFetch<Reminder>('/reminders', {
@@ -2431,6 +2435,7 @@ export const storageServiceClient = {
       return await dssFetch(`/reminders/${id}`, { method: 'DELETE' });
     },
   },
+
   async editThread(params) {
     const { threadId, ...body } = params;
 
@@ -2441,23 +2446,27 @@ export const storageServiceClient = {
       })
     ).map((result) => result.data);
   },
+
   async createCompany(body: CreateCrmCompanyRequest) {
     return await dssFetch<CrmCompanyResponse>('/crm/companies', {
       method: 'POST',
       body: JSON.stringify(body),
     });
   },
+
   async getCompany({ companyId }: { companyId: string }) {
     return await dssFetch<CrmCompanyResponse>(`/crm/companies/${companyId}`, {
       method: 'GET',
     });
   },
+
   async getCompanyContacts({ companyId }: { companyId: string }) {
     return await dssFetch<CrmContactResponse[]>(
       `/crm/companies/${companyId}/contacts`,
       { method: 'GET' }
     );
   },
+
   async createContact({
     companyId,
     ...body
@@ -2470,11 +2479,13 @@ export const storageServiceClient = {
       }
     );
   },
+
   async getContact({ contactId }: { contactId: string }) {
     return await dssFetch<CrmContactResponse>(`/crm/contacts/${contactId}`, {
       method: 'GET',
     });
   },
+
   async getContactByEmail({
     email,
     signal,
@@ -2485,6 +2496,7 @@ export const storageServiceClient = {
       { method: 'GET', signal }
     );
   },
+
   async setContactName({
     contactId,
     ...body
@@ -2494,6 +2506,7 @@ export const storageServiceClient = {
       body: JSON.stringify(body),
     });
   },
+
   async setContactHidden({
     contactId,
     hidden,
@@ -2506,6 +2519,7 @@ export const storageServiceClient = {
       body: JSON.stringify({ hidden }),
     });
   },
+
   async setCompanyName({
     companyId,
     ...body
@@ -2515,6 +2529,7 @@ export const storageServiceClient = {
       body: JSON.stringify(body),
     });
   },
+
   async setCompanyHidden({
     companyId,
     hidden,
@@ -2527,6 +2542,7 @@ export const storageServiceClient = {
       body: JSON.stringify({ hidden }),
     });
   },
+
   async setEmailSync({
     companyId,
     emailSync,
@@ -2539,17 +2555,20 @@ export const storageServiceClient = {
       body: JSON.stringify({ email_sync: emailSync }),
     });
   },
+
   async getCrmTeamSettings() {
     return await dssFetch<CrmTeamSettingsResponse>('/crm/settings', {
       method: 'GET',
     });
   },
+
   async updateCrmTeamSettings(body: UpdateCrmTeamSettingsRequest) {
     return await dssFetch<CrmTeamSettingsResponse>('/crm/settings', {
       method: 'PUT',
       body: JSON.stringify(body),
     });
   },
+
   crmComments: {
     async list({
       entityType,
