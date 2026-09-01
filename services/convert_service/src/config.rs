@@ -2,9 +2,9 @@ use std::sync::LazyLock;
 
 use anyhow::Context;
 use database_env_vars::DatabaseUrl;
-use macro_auth::InternalApiKey;
-pub use macro_env::Environment;
-use macro_env_var::env_vars;
+use conation_auth::InternalApiKey;
+pub use conation_env::Environment;
+use conation_env_var::env_vars;
 
 /// The path to the LibreOffice binary
 pub static LOK_PATH: LazyLock<String> = LazyLock::new(|| {
@@ -35,14 +35,14 @@ env_vars! {
 /// populate the Docker container
 ///
 /// See `.env.sample` in document-storage-service root for details.
-#[derive(macro_config::MacroConfig)]
+#[derive(conation_config::MacroConfig)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Config {
     /// The queue max messages per poll
-    #[macro_config_default(5)]
+    #[conation_config_default(5)]
     pub queue_max_messages: i32,
     /// The queue wait time seconds
-    #[macro_config_default(5)]
+    #[conation_config_default(5)]
     pub queue_wait_time_seconds: i32,
 
     /// The path to the LibreOffice binary
@@ -59,10 +59,10 @@ pub struct Config {
     pub web_socket_response_lambda: WebSocketResponseLambda,
 
     /// The port to listen for HTTP requests on.
-    #[macro_config_default(8080)]
+    #[conation_config_default(8080)]
     pub port: usize,
     /// The environment we are in
-    #[macro_config_default(Environment::new_or_prod())]
+    #[conation_config_default(Environment::new_or_prod())]
     pub environment: Environment,
 
     /// The internal api key
@@ -71,7 +71,7 @@ pub struct Config {
 
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
-        macro_config::ConfigLoader::load::<Config>()
+        conation_config::ConfigLoader::load::<Config>()
             .context("failed to load convert service config")
     }
 }

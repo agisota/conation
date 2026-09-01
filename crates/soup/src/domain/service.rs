@@ -34,7 +34,7 @@ use frecency::domain::{
     ports::FrecencyQueryService,
 };
 use item_filters::ast::{EntityFilterAst, channel::ChannelLiteral, email::EmailLiteral};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::EntityType;
 use models_pagination::{
     Base64Str, Cursor, CursorVal, Frecency, FrecencyValue, Identify, PaginateOn, Paginated, Query,
@@ -551,7 +551,7 @@ where
                 .collect(),
         )
         .map(|tree| GetChannelsRequest {
-            macro_id: user.clone(),
+            conation_id: user.clone(),
             limit: Some(channel_ids.len() as u32),
             include_frecency: false,
             query: Query::Sort(SimpleSortMethod::UpdatedAt, Some(tree)),
@@ -569,7 +569,7 @@ where
             // candidate that fails hydration is lost from the page.
             view: PreviewView::StandardLabel(PreviewViewStandardLabel::All),
             link_ids: link_ids.clone(),
-            macro_id: user.clone(),
+            conation_id: user.clone(),
             limit: Some(email_ids.len() as u32),
             query: Query::Sort(SimpleSortMethod::UpdatedAt, Some(tree)),
             include_frecency: false,

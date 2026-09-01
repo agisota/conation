@@ -3,8 +3,8 @@
 use agent_session::domain::model::AgentSessionId;
 use bot_id::BotId;
 use channels::domain::broker_events::ChannelMessagePostedMetadata;
-use macro_event_broker::{Event, MacroEvent, TopicEvent};
-use macro_event_topics::MacroAgentSessionsTopic;
+use conation_event_broker::{Event, MacroEvent, TopicEvent};
+use conation_event_topics::MacroAgentSessionsTopic;
 use serde::{Deserialize, Serialize};
 
 #[cfg(test)]

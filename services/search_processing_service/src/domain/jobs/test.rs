@@ -17,7 +17,7 @@ const LOCAL_ENDPOINT: &str = "http://127.0.0.1:8000";
 
 async fn try_jobs() -> Option<BackfillJobs> {
     // Build the DynamoDB client config directly via the SDK's own builder
-    // — `aws-config` is wrapped by `macro_aws_config` workspace-wide, but
+    // — `aws-config` is wrapped by `conation_aws_config` workspace-wide, but
     // we need a per-client endpoint override that the wrapper doesn't
     // expose, so use the SDK builder here and skip `aws-config` entirely.
     let config = aws_sdk_dynamodb::config::Builder::new()

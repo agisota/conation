@@ -422,17 +422,17 @@ async fn seed(args: SeedArgs, ctx: SeedCliContext) -> anyhow::Result<()> {
         println!("Using existing email link {id} ({:?})", link.email_address);
         id
     } else {
-        let macro_id =
-            macro_user_id::user_id::MacroUserIdStr::try_from_email(&seed_data.email_address)
+        let conation_id =
+            conation_user_id::user_id::MacroUserIdStr::try_from_email(&seed_data.email_address)
                 .context("failed to create macro user id from email")?;
-        let email_str = macro_user_id::email::EmailStr::try_from(seed_data.email_address.clone())
+        let email_str = conation_user_id::email::EmailStr::try_from(seed_data.email_address.clone())
             .context("failed to parse email address")?;
 
         let is_primary =
-            models_email::email::service::link::Link::derive_is_primary(&macro_id, &email_str);
+            models_email::email::service::link::Link::derive_is_primary(&conation_id, &email_str);
         let link = models_email::email::service::link::Link {
             id: Uuid::now_v7(),
-            macro_id,
+            conation_id,
             fusionauth_user_id: seed_data.user_id.clone(),
             email_address: email_str,
             provider: seed_data.provider,

@@ -49,7 +49,7 @@ pub async fn bulk_patch_sent_notification_event_item_ids(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use macro_db_migrator::MACRO_DB_MIGRATIONS;
+    use conation_db_migrator::MACRO_DB_MIGRATIONS;
     use sqlx::{Pool, Postgres};
 
     #[sqlx::test(

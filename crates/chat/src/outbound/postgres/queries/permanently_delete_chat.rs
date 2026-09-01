@@ -40,7 +40,7 @@ pub(crate) async fn permanently_delete_chat(
 
     sqlx::query!(
         r#"DELETE FROM "entity_access" WHERE "entity_id" = $1 AND "entity_type" = $2"#,
-        macro_uuid::string_to_uuid(chat_id).unwrap(),
+        conation_uuid::string_to_uuid(chat_id).unwrap(),
         EntityType::Chat.as_ref(),
     )
     .execute(tx.as_mut())

@@ -11,7 +11,7 @@ use entity_mutation::{
     RenameEntity, RestoreEntity, TrashEntity, UpdateEntitySharePolicy,
     capability::MoveEntityRequest,
 };
-use macro_event_broker::MacroEventBroker;
+use conation_event_broker::MacroEventBroker;
 use model::project::{BasicProject, request::PatchProjectRequestV2};
 use model_entity::{Entity, EntityType};
 use models_permissions::share_permission::UpdateSharePermissionRequestV2;

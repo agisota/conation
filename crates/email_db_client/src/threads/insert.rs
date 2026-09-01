@@ -161,7 +161,7 @@ pub async fn insert_blank_thread(
     link_id: Uuid,
 ) -> anyhow::Result<Uuid> {
     let thread = thread::Thread {
-        db_id: macro_uuid::generate_uuid_v7(),
+        db_id: conation_uuid::generate_uuid_v7(),
         provider_id: Some(thread_provider_id.to_string()),
         link_id,
         inbox_visible: false,

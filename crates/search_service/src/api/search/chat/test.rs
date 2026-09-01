@@ -1,5 +1,5 @@
 use super::*;
-use macro_db_client::chat::get::ChatHistoryInfo;
+use conation_db_client::chat::get::ChatHistoryInfo;
 use models_opensearch::SearchEntityType;
 use opensearch_client::search::model::Highlight;
 use sqlx::types::chrono;
@@ -28,9 +28,9 @@ fn create_test_response(
     }
 }
 
-fn create_chat_history(chat_id: &str) -> macro_db_client::chat::get::ChatHistoryInfo {
+fn create_chat_history(chat_id: &str) -> conation_db_client::chat::get::ChatHistoryInfo {
     let now = chrono::Utc::now();
-    macro_db_client::chat::get::ChatHistoryInfo {
+    conation_db_client::chat::get::ChatHistoryInfo {
         item_id: chat_id.to_string(),
         created_at: now,
         updated_at: now,
@@ -61,7 +61,7 @@ fn test_single_chat_with_content() {
     let now = chrono::Utc::now();
     chat_histories.insert(
         "11111111-1111-1111-1111-111111111111".to_string(),
-        macro_db_client::chat::get::ChatHistoryInfo {
+        conation_db_client::chat::get::ChatHistoryInfo {
             item_id: "11111111-1111-1111-1111-111111111111".to_string(),
             created_at: now,
             updated_at: now,
@@ -375,7 +375,7 @@ fn test_chat_history_deleted() {
     let mut chat_histories = HashMap::new();
     chat_histories.insert(
         "11111111-1111-1111-1111-111111111111".to_string(),
-        macro_db_client::chat::get::ChatHistoryInfo {
+        conation_db_client::chat::get::ChatHistoryInfo {
             item_id: "11111111-1111-1111-1111-111111111111".to_string(),
             created_at: now,
             updated_at: now,

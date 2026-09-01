@@ -8,7 +8,7 @@ use crate::domain::{
     },
     team_repo::{TeamMembersService, TeamRepository},
 };
-use macro_user_id::{
+use conation_user_id::{
     cowlike::CowLike,
     email::{Email, ReadEmailParts},
     lowercased::Lowercase,
@@ -96,7 +96,7 @@ impl TeamRepositoryImpl {
     ) -> Result<Team, sqlx::Error> {
         let mut transaction = self.pool.begin().await?;
 
-        let id = macro_uuid::generate_uuid_v7();
+        let id = conation_uuid::generate_uuid_v7();
 
         let team = sqlx::query!(
             r#"
@@ -211,7 +211,7 @@ impl TeamMembersService for TeamRepositoryImpl {
         >,
     ) -> Result<TeamMembers, TeamError> {
         let team_id =
-            macro_uuid::string_to_uuid(&entity_access_receipt.entity().entity_id).unwrap();
+            conation_uuid::string_to_uuid(&entity_access_receipt.entity().entity_id).unwrap();
 
         let members = self.get_team_by_id(&team_id).await?.members;
         let invited = self.get_team_invites(&team_id).await?;
@@ -258,7 +258,7 @@ impl TeamRepository for TeamRepositoryImpl {
             r#"
             SELECT mu.has_trialed
             FROM "User" u
-            INNER JOIN macro_user mu ON mu.id = u.macro_user_id
+            INNER JOIN conation_user mu ON mu.id = u.conation_user_id
             WHERE u.id = $1
             "#,
         )
@@ -382,14 +382,14 @@ impl TeamRepository for TeamRepositoryImpl {
             .map(|email| email.as_ref().to_string())
             .collect();
 
-        let macro_user_ids: Vec<String> = invites
+        let conation_user_ids: Vec<String> = invites
             .iter()
             .map(|email| format!("macro|{}", email.as_ref()))
             .collect();
 
         let team_invite_ids: Vec<uuid::Uuid> = invites
             .iter()
-            .map(|_| macro_uuid::generate_uuid_v7())
+            .map(|_| conation_uuid::generate_uuid_v7())
             .collect();
 
         let mut transaction = self.pool.begin().await?;
@@ -422,7 +422,7 @@ impl TeamRepository for TeamRepositoryImpl {
         invited_by.as_ref(),
         &team_invite_ids[..],
         &email_strings[..],
-        &macro_user_ids[..],
+        &conation_user_ids[..],
     )
     .map(|r| (r.id, r.team_id, r.email))
     .fetch_all(&mut *transaction)
@@ -478,7 +478,7 @@ impl TeamRepository for TeamRepositoryImpl {
             .map(|email| email.as_ref().to_string())
             .collect();
 
-        let macro_user_ids: Vec<String> = invites
+        let conation_user_ids: Vec<String> = invites
             .iter()
             .map(|email| format!("macro|{}", email.as_ref()))
             .collect();
@@ -500,7 +500,7 @@ impl TeamRepository for TeamRepositoryImpl {
             "#,
             team_id,
             &email_strings[..],
-            &macro_user_ids[..],
+            &conation_user_ids[..],
         )
         .fetch_all(&self.pool)
         .await?;

@@ -61,7 +61,7 @@ fn linear_task_content_degrades_without_optional_fields() {
 }
 
 #[test]
-fn linear_status_and_priority_map_onto_macro_labels() {
+fn linear_status_and_priority_map_onto_conation_labels() {
     assert_eq!(map_linear_status("Backlog"), Some("Not Started"));
     assert_eq!(map_linear_status("Todo"), Some("Not Started"));
     assert_eq!(map_linear_status("In Progress"), Some("In Progress"));
@@ -515,7 +515,7 @@ End."#;
 }
 
 #[test]
-fn notion_enhanced_markdown_becomes_macro_markdown() {
+fn notion_enhanced_markdown_becomes_conation_markdown() {
     let input = r#"<details color="Gray">
 <summary>Coming in Q2 (starts <mention-date start="2024-04-01"/>)</summary>
 	### Revamp Java PDF Parser
@@ -588,7 +588,7 @@ fn notion_database_heavy_pages_are_detected() {
 }
 
 #[test]
-fn notion_tables_become_rectangular_macro_pipe_tables() {
+fn notion_tables_become_rectangular_conation_pipe_tables() {
     let input = r#"<table fit-page-width="true" header-row="true">
 <colgroup>
 <col width="379">

@@ -25,11 +25,11 @@ use axum::response::IntoResponse;
 use chat::domain::events::{ChatCreatedMetadata, ChatMacroEvent};
 use chat::domain::ports::MessageService;
 use futures::StreamExt;
-use macro_auth::headers::AccessTokenExtractor;
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use macro_db_client::dcs::create_chat;
-use macro_event_broker::MacroEventBroker;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_auth::headers::AccessTokenExtractor;
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_db_client::dcs::create_chat;
+use conation_event_broker::MacroEventBroker;
+use conation_user_id::user_id::MacroUserIdStr;
 use memory::domain::MemoryService;
 use model_entity::{Entity, EntityType};
 use models_permissions::share_permission::SharePermissionV2;
@@ -136,7 +136,7 @@ impl IntoResponse for ChatMessageError {
         (status = 403, description = "Forbidden"),
     )
 )]
-#[tracing::instrument(skip(state, model_access, user, bearer, request), fields(chat_id=?request.chat_id, user_id = %user.authorization.user.macro_user_id, attachment_ids=?request.attachments.as_ref().map(|a| a.iter().map(|att| att.entity_id.as_ref()).collect::<Vec<_>>()).unwrap_or_default()), ret, err)]
+#[tracing::instrument(skip(state, model_access, user, bearer, request), fields(chat_id=?request.chat_id, user_id = %user.authorization.user.conation_user_id, attachment_ids=?request.attachments.as_ref().map(|a| a.iter().map(|att| att.entity_id.as_ref()).collect::<Vec<_>>()).unwrap_or_default()), ret, err)]
 pub async fn send_chat_message(
     State(state): State<ApiContext>,
     model_access: DcsChatModelAccess,
@@ -147,7 +147,7 @@ pub async fn send_chat_message(
     Box::pin(send_chat_message_inner(
         state,
         model_access,
-        user.authorization.user.macro_user_id.clone(),
+        user.authorization.user.conation_user_id.clone(),
         bearer,
         request,
     ))
@@ -409,7 +409,7 @@ async fn create_new_chat(
         project_id: None,
     });
     drop(
-        ctx.macro_event_broker
+        ctx.conation_event_broker
             .send_event(&event)
             .inspect_err(|error| {
                 tracing::error!(error = ?error, "failed to schedule chat event");
@@ -544,7 +544,7 @@ fn stream_and_save_message(
 
         let rig_messages = agent::to_rig_messages(&request);
         let usage_ctx = ai_usage::UsageContext::new(ai_usage::AiFeature::Chat, user_id.clone())
-            .with_entity(macro_uuid::string_to_uuid(&chat_id).ok());
+            .with_entity(conation_uuid::string_to_uuid(&chat_id).ok());
         // Carry the feature on the context so tool-spawned subagents attribute to it.
         let mut tool_context = tool_context;
         tool_context.usage_context = usage_ctx.clone();

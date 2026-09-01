@@ -5,7 +5,7 @@ mod test;
 
 use std::collections::HashSet;
 
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use sqlx::PgPool;
 
 use crate::domain::{
@@ -60,7 +60,7 @@ impl GithubSyncRepo for PgGithubSyncRepo {
         let short_ids: Vec<String> = task_ids.iter().map(|t| t.short_uuid.clone()).collect();
         let ids: Vec<uuid::Uuid> = short_ids
             .iter()
-            .map(|_| macro_uuid::generate_uuid_v7())
+            .map(|_| conation_uuid::generate_uuid_v7())
             .collect();
         // Full-UUID document ids used to look up each task's owning team;
         // an unconvertible short UUID simply matches no team_task row.
@@ -182,7 +182,7 @@ impl GithubSyncRepo for PgGithubSyncRepo {
     }
 
     #[tracing::instrument(skip(self), err)]
-    async fn get_macro_ids_by_github_user_ids(
+    async fn get_conation_ids_by_github_user_ids(
         &self,
         github_user_ids: &[String],
     ) -> Result<std::collections::HashMap<String, Vec<String>>, Self::Err> {
@@ -192,7 +192,7 @@ impl GithubSyncRepo for PgGithubSyncRepo {
 
         let rows = sqlx::query!(
             r#"
-            SELECT github_user_id, macro_id
+            SELECT github_user_id, conation_id
             FROM github_links
             WHERE github_user_id = ANY($1::text[])
             "#,
@@ -207,14 +207,14 @@ impl GithubSyncRepo for PgGithubSyncRepo {
             links
                 .entry(row.github_user_id)
                 .or_default()
-                .push(row.macro_id);
+                .push(row.conation_id);
         }
 
         Ok(links)
     }
 
     #[tracing::instrument(skip(self), err)]
-    async fn get_macro_ids_by_github_logins(
+    async fn get_conation_ids_by_github_logins(
         &self,
         github_logins: &[String],
     ) -> Result<std::collections::HashMap<String, Vec<String>>, Self::Err> {
@@ -228,7 +228,7 @@ impl GithubSyncRepo for PgGithubSyncRepo {
             .collect();
         let rows = sqlx::query!(
             r#"
-            SELECT LOWER(github_username) AS "login!", macro_id
+            SELECT LOWER(github_username) AS "login!", conation_id
             FROM github_links
             WHERE LOWER(github_username) = ANY($1::text[])
             "#,
@@ -240,21 +240,21 @@ impl GithubSyncRepo for PgGithubSyncRepo {
         let mut links: std::collections::HashMap<String, Vec<String>> =
             std::collections::HashMap::new();
         for row in rows {
-            links.entry(row.login).or_default().push(row.macro_id);
+            links.entry(row.login).or_default().push(row.conation_id);
         }
 
         Ok(links)
     }
 
     #[tracing::instrument(skip(self), err)]
-    async fn get_user_team_ids(&self, macro_id: &str) -> Result<Vec<uuid::Uuid>, Self::Err> {
+    async fn get_user_team_ids(&self, conation_id: &str) -> Result<Vec<uuid::Uuid>, Self::Err> {
         let team_ids = sqlx::query_scalar!(
             r#"
             SELECT team_id
             FROM team_user
             WHERE user_id = $1
             "#,
-            macro_id,
+            conation_id,
         )
         .fetch_all(&self.pool)
         .await?;

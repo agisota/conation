@@ -1,0 +1,27 @@
+[package]
+edition = "2024"
+exclude = ["examples/"]
+name = "conation_auth"
+publish = false
+version = "0.1.0"
+
+[features]
+testing = []
+
+[dependencies]
+anyhow = { workspace = true }
+axum = { workspace = true }
+axum-extra = { workspace = true, features = ["cookie", "typed-header"] }
+cookie = { workspace = true }
+jsonwebtoken = { workspace = true }
+conation_env = { path = "../conation_env" }
+conation_env_var = { path = "../conation_env_var" }
+conation_user_id = { path = "../conation_user_id" }
+rand = { workspace = true }
+remote_env_var = { path = "../remote_env_var" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true, features = ["macros"] }
+tracing = { workspace = true }
+workspace-hack = { version = "0.1", path = "../workspace-hack" }

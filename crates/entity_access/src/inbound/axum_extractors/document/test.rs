@@ -18,16 +18,16 @@ use axum::{
     http::{Request, StatusCode, header},
     response::IntoResponse,
 };
-use macro_authorization::{
+use conation_authorization::{
     BOT_SCOPE_HEADER, BOT_TOKEN_HEADER, BotActingUserClaims, BotAuthentication, BotScope,
     INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_USER_ID_HEADER, InternalIdentityClaims,
     MacroAuthorizationError, MacroAuthorizationService, MacroAuthorizationState,
 };
 #[allow(deprecated)]
-use macro_authorization::{
+use conation_authorization::{
     LEGACY_DSS_INTERNAL_API_KEY_HEADER, LEGACY_DSS_INTERNAL_MACRO_USER_ID_HEADER,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model::document::DocumentBasic;
 use model_user::UserContext;
 use rootcause::Report;
@@ -156,7 +156,7 @@ fn owner_scoped_bot_authentication() -> BotAuthentication {
         .acting_user
         .as_mut()
         .expect("user-scoped bot should have an acting user");
-    acting_user.macro_user_id =
+    acting_user.conation_user_id =
         MacroUserIdStr::parse_from_str(OWNER_ID).expect("owner id should be valid");
     acting_user.user_context = user_context(OWNER_ID);
     authentication

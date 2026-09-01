@@ -11,7 +11,7 @@ use axum::Json;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use models_permissions::share_permission::access_level::AccessLevel;
 use serde::{Deserialize, Serialize};
 use std::fmt;
@@ -68,7 +68,7 @@ impl IntoResponse for StopChatStreamError {
         (status = 403, description = "Forbidden", body = StopChatStreamError),
     )
 )]
-#[tracing::instrument(skip(state, user), fields(chat_id = %request.chat_id, stream_id = %request.stream_id, user_id = %user.authorization.user.macro_user_id), err)]
+#[tracing::instrument(skip(state, user), fields(chat_id = %request.chat_id, stream_id = %request.stream_id, user_id = %user.authorization.user.conation_user_id), err)]
 pub async fn stop_chat_stream(
     State(state): State<ApiContext>,
     user: MacroAuthorizationExtractor<DcsAuthorizationService, UserOrInternal>,
@@ -76,7 +76,7 @@ pub async fn stop_chat_stream(
 ) -> Result<Json<StopChatStreamResponse>, StopChatStreamError> {
     let access = chat_permissions::chat_access(
         &state,
-        &user.authorization.user.macro_user_id,
+        &user.authorization.user.conation_user_id,
         &request.chat_id,
         request.stream_id.clone(),
     )

@@ -1,16 +1,16 @@
-import type { LoroManager } from '@macro-inc/collaboration/collab/manager';
-import { createLoroManager } from '@macro-inc/collaboration/collab/manager';
-import type { RawUpdate } from '@macro-inc/collaboration/collab/shared';
+import type { LoroManager } from '@conation/collaboration/collab/manager';
+import { createLoroManager } from '@conation/collaboration/collab/manager';
+import type { RawUpdate } from '@conation/collaboration/collab/shared';
 import {
   IDBSnapshotStore,
   LORO_SNAPSHOT_DB_NAME,
-} from '@macro-inc/collaboration/collab/snapshot-store';
-import type { LiveSyncSource } from '@macro-inc/collaboration/collab/source';
+} from '@conation/collaboration/collab/snapshot-store';
+import type { LiveSyncSource } from '@conation/collaboration/collab/source';
 import {
   BrowserWALStore,
   LORO_WAL_DB_NAME,
-} from '@macro-inc/collaboration/collab/wal';
-import { MARKDOWN_LORO_SCHEMA } from '@macro-inc/lexical-core/markdown-loro-schema';
+} from '@conation/collaboration/collab/wal';
+import { MARKDOWN_LORO_SCHEMA } from '@conation/lexical-core/markdown-loro-schema';
 import { storageServiceClient } from '@service-storage/client';
 import type { CollabSurfaceResponse } from '@service-storage/service';
 import { createCollabSurfaceSource } from '@service-sync/source';

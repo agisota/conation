@@ -2,21 +2,25 @@ set positional-arguments
 
 # Freeze Docker Compose resources across checkouts/worktrees. Local setup is
 # single-instance by design; do not derive resource names from the directory.
-export COMPOSE_PROJECT_NAME := "macro"
+export COMPOSE_PROJECT_NAME := "conation"
 
 compose := "docker compose --project-directory . -f docker/docker-compose.yml"
 database_compose := "docker compose -f docker/docker-compose-databases.yml"
+selfhost_compose := "docker compose -f docker/docker-compose.yml -f docker/docker-compose.selfhost.yml"
 
 # Creates global networks that are shared across docker-compose files
 create_networks:
   docker network create databases 2>/dev/null || true -- db network
   docker network create auth 2>/dev/null || true -- fusionauth network
-  docker volume create macro_postgres_data 2>/dev/null || true
-  docker volume create macro_redis_data 2>/dev/null || true
-  docker volume create macro_opensearch_data 2>/dev/null || true
-  docker volume create macro_kafka_data 2>/dev/null || true
+  docker volume create conation_postgres_data 2>/dev/null || true
+  docker volume create conation_redis_data 2>/dev/null || true
+  docker volume create conation_opensearch_data 2>/dev/null || true
+  docker volume create conation_kafka_data 2>/dev/null || true
   docker volume create fusionauth_db_data 2>/dev/null || true
   docker volume create fusionauth_config 2>/dev/null || true
+  docker volume create conation_minio_data 2>/dev/null || true
+  docker volume create conation_stalwart_data 2>/dev/null || true
+  docker volume create conation_caddy_data 2>/dev/null || true
   echo "docker networks and volumes created"
 
 get_environment CONFIG="lcl":
@@ -47,7 +51,7 @@ docker_up *ARGS:
 # Reset and seed deterministic data used by local E2E tests.
 local-e2e-seed:
   just run_dbs -d
-  -just crates/macro_db_client/drop_db -y -f
+  -just crates/conation_db_client/drop_db -y -f
   just initialize_dbs
   just tooling/seed_cli/local-e2e-smoke
 
@@ -130,13 +134,14 @@ import 'tooling/just/local_stack.just'
 import 'tooling/just/xtask.just'
 import 'tooling/just/check.just'
 import 'tooling/just/rust.just'
+import 'tooling/just/selfhost.just'
 
 # Sets up local database
 setup_local_dbs:
   # run dbs detached
   just run_dbs -d
-  just crates/macro_db_client/create_db
-  just crates/macro_db_client/migrate_db
+  just crates/conation_db_client/create_db
+  just crates/conation_db_client/migrate_db
   @echo "Local databases initialized"
   {{ database_compose }} stop
 

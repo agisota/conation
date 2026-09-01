@@ -7,8 +7,8 @@ use axum::{Extension, Json, extract};
 use entity_access::domain::models::EntityPermission;
 use entity_access::inbound::axum_extractors::ProjectBodyAccessLevelExtractorV2;
 use entity_access::inbound::axum_extractors::ThreadAccessLevelExtractor;
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use macro_db_client::share_permission::edit::edit_thread_permission;
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_db_client::share_permission::edit::edit_thread_permission;
 use model::response::{
     ErrorResponse, GenericErrorResponse, GenericSuccessResponse, SuccessResponse,
 };
@@ -48,7 +48,7 @@ pub struct PatchThreadRequestV2 {
             (status = 500, body=GenericErrorResponse),
     )
 )]
-#[tracing::instrument(skip(ctx, user, project, thread_access), fields(user_id=?user.authorization.user.macro_user_id))]
+#[tracing::instrument(skip(ctx, user, project, thread_access), fields(user_id=?user.authorization.user.conation_user_id))]
 pub async fn edit_thread_handler(
     thread_access: ThreadAccessLevelExtractor<
         OwnerAccessLevel,
@@ -107,7 +107,7 @@ pub async fn edit_thread_handler(
 
         edit_thread_permission(
             &mut tx,
-            &macro_uuid::string_to_uuid(&thread_id).unwrap(),
+            &conation_uuid::string_to_uuid(&thread_id).unwrap(),
             &thread_context.share_permission_id,
             &share_permission,
         )

@@ -6,7 +6,7 @@ use ai_toolset::{
 };
 use attachment::FormattedParts;
 use entity_access_management::domain::models::EntityAccessManagementError;
-use macro_event_broker::{EventBrokerError, MacroEvent};
+use conation_event_broker::{EventBrokerError, MacroEvent};
 use model::chat::Chat;
 
 use super::*;

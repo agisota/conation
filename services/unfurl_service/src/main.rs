@@ -9,7 +9,7 @@ use ::unfurl::{
 };
 use anyhow::Context;
 use config::Config;
-use macro_entrypoint::MacroEntrypoint;
+use conation_entrypoint::MacroEntrypoint;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

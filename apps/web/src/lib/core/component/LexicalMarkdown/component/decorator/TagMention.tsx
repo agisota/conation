@@ -7,7 +7,7 @@ import {
   SKIP_DOM_SELECTION_TAG,
   SKIP_SCROLL_INTO_VIEW_TAG,
   type TagMentionDecoratorProps,
-} from '@macro-inc/lexical-core';
+} from '@conation/lexical-core';
 import { TagDot } from '@property/tags/TagDot';
 import { navigateToTag } from '@property/tags/tagNavigation';
 import { useTagsQuery } from '@queries/properties/tags';

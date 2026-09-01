@@ -3,7 +3,7 @@ use axum::{
     extract::{Path, State},
 };
 use entity_access::domain::{models::ViewAccessLevel, ports::EntityAccessService};
-use macro_authorization::MacroAuthorizationService;
+use conation_authorization::MacroAuthorizationService;
 use model_error_response::ErrorResponse;
 use serde::Deserialize;
 use utoipa::ToSchema;

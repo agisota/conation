@@ -1,6 +1,6 @@
 // Small utility to generate a sample connections message to send to the SQS service
 use contacts::domain::models::messages::ContactsNodes;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use std::{collections::HashSet, env};
 
 fn print_contacts_message(users: HashSet<MacroUserIdStr<'static>>) {

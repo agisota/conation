@@ -17,12 +17,12 @@ use entity_access::domain::{
     },
     ports::EntityAccessService,
 };
-use macro_authorization::{
+use conation_authorization::{
     INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_USER_ID_HEADER, InternalIdentityClaims,
     MacroAuthorizationError, MacroAuthorizationRejection, MacroAuthorizationService,
     MacroAuthorizationState,
 };
-use macro_user_id::{
+use conation_user_id::{
     email::Email,
     lowercased::Lowercase,
     user_id::{MacroUserId, MacroUserIdStr},

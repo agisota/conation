@@ -28,7 +28,7 @@ pub enum AgentError {
     MalformedModel(String),
     /// Expected env var
     #[error(transparent)]
-    EnvVar(#[from] macro_env_var::VarNameErr),
+    EnvVar(#[from] conation_env_var::VarNameErr),
     /// Provider client error
     #[error(transparent)]
     ProviderClientError(#[from] rig_core::client::ProviderClientError),

@@ -62,7 +62,7 @@ async fn routes_the_sandboxed_bot_to_the_sandbox() {
 /// So is a user-owned bot, which is what an `@claude` deployment serves.
 #[tokio::test]
 async fn routes_an_owned_bot_to_the_sandbox() {
-    let owned = BotId::new_from_uuid(macro_uuid::Uuid::from_u128(0x0000_1234));
+    let owned = BotId::new_from_uuid(conation_uuid::Uuid::from_u128(0x0000_1234));
     let (id, sessions) = sessions_with(owned);
     let containers = RoutedContainers::new(unreachable_sandbox(), None, sessions);
 

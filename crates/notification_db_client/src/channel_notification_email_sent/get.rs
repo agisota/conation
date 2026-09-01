@@ -17,7 +17,7 @@ pub async fn get_channel_notification_email_sent_bulk(
     user_ids: &[String],
 ) -> anyhow::Result<HashMap<String, ChannelNotificationEmailSent>> {
     let channel_id =
-        macro_uuid::string_to_uuid(channel_id).context("could not convert channel_id to uuid")?;
+        conation_uuid::string_to_uuid(channel_id).context("could not convert channel_id to uuid")?;
 
     let result: Vec<ChannelNotificationEmailSent> = sqlx::query_as!(
         ChannelNotificationEmailSent,
@@ -50,7 +50,7 @@ pub async fn get_channel_notification_email_sent_bulk_by_channel_ids(
 ) -> anyhow::Result<HashSet<String>> {
     let channel_ids = channel_ids
         .iter()
-        .map(|channel_id| macro_uuid::string_to_uuid(channel_id).unwrap())
+        .map(|channel_id| conation_uuid::string_to_uuid(channel_id).unwrap())
         .collect::<Vec<Uuid>>();
 
     let result: Vec<Uuid> = sqlx::query!(
@@ -78,7 +78,7 @@ pub async fn get_channel_notification_email_sent_bulk_by_channel_ids(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use macro_db_migrator::MACRO_DB_MIGRATIONS;
+    use conation_db_migrator::MACRO_DB_MIGRATIONS;
     use sqlx::{Pool, Postgres};
 
     #[sqlx::test(

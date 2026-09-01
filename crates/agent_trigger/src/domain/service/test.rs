@@ -6,10 +6,10 @@ use agent_session::domain::ports::MockAgentSessionRepo;
 use channel_sender::ChannelSender;
 use channels::domain::models::{ChannelType, SimpleMention};
 use chrono::Utc;
-use macro_event_broker::MacroEvent;
-use macro_user_id::cowlike::CowLike;
-use macro_user_id::user_id::MacroUserIdStr;
-use macro_uuid::Uuid;
+use conation_event_broker::MacroEvent;
+use conation_user_id::cowlike::CowLike;
+use conation_user_id::user_id::MacroUserIdStr;
+use conation_uuid::Uuid;
 
 use crate::domain::broker_events::{
     AgentTriggerTopicEvent, ExistingAgentSessionEvent, NewAgentSessionEvent,

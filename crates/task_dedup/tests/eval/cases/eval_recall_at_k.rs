@@ -19,7 +19,7 @@ use crate::util::harness::{EVAL_CONCURRENCY, build_service, openai_key};
 use crate::util::metrics::{fmt_ratio, recall_at_k};
 use crate::util::seed::{EVAL_OWNER, seed_documents};
 use futures::StreamExt;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use sqlx::PgPool;
 use task_dedup::outbound::postgres::PgTaskVectorDb;
 use task_dedup::{EmbeddingMarkdown, TaskDedupConfig};

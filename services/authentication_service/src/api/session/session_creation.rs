@@ -32,7 +32,7 @@ pub async fn handler(
     cookies: Cookies,
 ) -> Result<Response, Response> {
     let session_code = generate_session_code();
-    ctx.macro_cache_client
+    ctx.conation_cache_client
         .set_mobile_login_session(&session_code, &token_context.refresh_token)
         .await
         .map_err(|e| {

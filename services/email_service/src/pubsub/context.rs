@@ -16,7 +16,7 @@ use crm::outbound::apollo_resolver::ApolloCompanyMetadataResolver;
 use crm::outbound::companies_repo::CompaniesRepositoryImpl;
 use crm::outbound::unfurl_resolver::UnfurlCompanyMetadataResolver;
 use document_storage_service_client::DocumentStorageServiceClient;
-use macro_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
+use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
 use notification::domain::service::SqsNotificationIngress;
 use notification::outbound::queue::SqsQueue;
 use sqlx::PgPool;
@@ -57,7 +57,7 @@ impl CalendarBackfillServices {
     pub fn new(
         db: PgPool,
         redis_client: RedisClient,
-        macro_event_broker: PubSubEventBroker,
+        conation_event_broker: PubSubEventBroker,
     ) -> Self {
         let repository = PgCalendarRepository::new(db);
         Self {
@@ -71,7 +71,7 @@ impl CalendarBackfillServices {
                     RedisCalendarRequestGate::new(redis_client),
                 ),
                 repository.clone(),
-                macro_event_broker,
+                conation_event_broker,
                 calendar_watch_config(),
             )),
             google_failure: Arc::new(GoogleCalendarBackfillFailureService::new(repository)),
@@ -86,7 +86,7 @@ pub fn calendar_watch_config() -> Option<GoogleWatchConfig> {
     // A variable set to an empty string must count as unset: a blank token
     // would verify blank-header webhook requests.
     let read = |name| {
-        macro_env_var::maybe_read_env(name)
+        conation_env_var::maybe_read_env(name)
             .map(|value| value.trim().to_owned())
             .filter(|value| !value.is_empty())
     };
@@ -142,7 +142,7 @@ pub struct PubSubContext {
     pub dss_client: DocumentStorageServiceClient,
     pub system_properties_service: Arc<SystemPropertiesServiceImpl<PgSystemPropertiesRepository>>,
     pub crm_service: CrmServiceType,
-    pub macro_event_broker: PubSubEventBroker,
+    pub conation_event_broker: PubSubEventBroker,
     pub notifications_enabled: bool,
     pub calendar_sync_enabled: bool,
     pub retry_worker: bool,

@@ -5,7 +5,7 @@
 mod http_delivery_test;
 
 use super::http_validator::{
-    EndpointValidationError, ReqwestWebhookValidationClient, is_reserved_macro_header,
+    EndpointValidationError, ReqwestWebhookValidationClient, is_reserved_conation_header,
     signature_header, validate_resolved_endpoint_url,
 };
 use crate::domain::{
@@ -103,7 +103,7 @@ fn delivery_headers(
     if webhook
         .headers
         .keys()
-        .any(|name| is_reserved_macro_header(name))
+        .any(|name| is_reserved_conation_header(name))
     {
         return Err("reserved Macro headers cannot be overridden");
     }

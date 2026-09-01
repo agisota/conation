@@ -1,7 +1,7 @@
 //! Kafka consumer example for the `macro.channels` topic.
 //!
 //! Connects with the same `KAFKA_BROKERS` env var and environment-driven
-//! transport as [`macro_event_broker::KafkaEventPublisher`] (plaintext for
+//! transport as [`conation_event_broker::KafkaEventPublisher`] (plaintext for
 //! `ENVIRONMENT=local`, TLS + SASL/OAUTHBEARER with MSK IAM otherwise),
 //! subscribes to the [`ChannelMacroEvent`] topic and prints every channel event
 //! it receives.
@@ -26,14 +26,14 @@
 use anyhow::Context as _;
 use channels::domain::broker_events::{ChannelMacroEvent, ChannelTopicEvent};
 use kafka_util::{GroupName, KafkaEventConsumer};
-use macro_event_broker::{
+use conation_event_broker::{
     KafkaConsumerAdapter, MacroEvent as _, MacroEventCollection as _, MacroEventConsumerService,
 };
 use rdkafka::consumer::CommitMode;
 use rdkafka::message::Message;
 use tokio::sync::mpsc;
 
-macro_env_var::env_var! {
+conation_env_var::env_var! {
     struct ConsumerEnvVars {
         KafkaBrokers,
     }
@@ -50,7 +50,7 @@ impl GroupName for ChannelsConsumerGroup {
 /// Bounded capacity of the channel between the poll loop and the processor.
 const CHANNEL_CAPACITY: usize = 128;
 
-macro_event_broker::declare_topics!(DeclaredMacroEvent: ChannelMacroEvent);
+conation_event_broker::declare_topics!(DeclaredMacroEvent: ChannelMacroEvent);
 
 type ChannelsKafkaAdapter = KafkaConsumerAdapter<ChannelsConsumerGroup, DeclaredMacroEvent>;
 type ChannelsConsumerService = MacroEventConsumerService<DeclaredMacroEvent, ChannelsKafkaAdapter>;
@@ -104,7 +104,7 @@ async fn process_events(mut events: mpsc::Receiver<ReceivedEvent>) {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // Surface tracing from macro_event_broker (e.g. MSK IAM token refreshes)
+    // Surface tracing from conation_event_broker (e.g. MSK IAM token refreshes)
     // and librdkafka's internal connection/auth logs (bridged from the `log`
     // crate). Tune with RUST_LOG, e.g. RUST_LOG=debug for librdkafka detail.
     tracing_subscriber::fmt()

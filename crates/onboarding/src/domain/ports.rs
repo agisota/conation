@@ -1,7 +1,7 @@
 //! Ports (traits) the onboarding domain depends on.
 
 use super::models::OnboardingRow;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use thiserror::Error;
 
 /// Errors surfaced by the onboarding service and repository.

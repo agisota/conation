@@ -1,4 +1,4 @@
-import { type Span, Telemetry } from '@macro-inc/observability';
+import { type Span, Telemetry } from '@conation/observability';
 import type { LoroDoc } from 'loro-crdt';
 
 const documentSpans = new Map<string, Span>();

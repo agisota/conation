@@ -164,13 +164,13 @@ fn transform_external_url(mut url: Url) -> Url {
         remaining,
     }) = serde_qs::from_str(query).log_err()
     {
-        let Ok(macro_scheme) = MacroScheme::from_url(&cb) else {
+        let Ok(conation_scheme) = MacroScheme::from_url(&cb) else {
             return url;
         };
 
         url.set_query(Some(
             serde_qs::to_string(&MacroCallbackQuery {
-                original_url: macro_scheme,
+                original_url: conation_scheme,
                 remaining,
             })
             .expect("serialization should not fail")

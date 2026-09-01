@@ -10,12 +10,12 @@ use axum::{
 };
 use chrono::{TimeZone, Utc};
 use http_body_util::BodyExt;
-use macro_authorization::{
+use conation_authorization::{
     INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_USER_ID_HEADER, InternalAuthConfig, JwtValidator,
     MacroAuthorizationError, MacroAuthorizationServiceImpl, MacroAuthorizationState,
     ValidatedIdentity,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use models_pagination::Base64Str;
 use rootcause::Report;
 use tower::ServiceExt;
@@ -72,7 +72,7 @@ impl ChannelListService for FakeChannelListService {
         let (cursor_id, _) = request.query.vals();
         let limit = request.limit.map_or(usize::MAX, |limit| limit as usize);
         self.tracker.record(ServiceCall::GetChannels {
-            user_id: request.macro_id.to_string(),
+            user_id: request.conation_id.to_string(),
             limit: request.limit,
             cursor_id: cursor_id.copied(),
         });
@@ -133,7 +133,7 @@ fn test_router_with_channels(
             api_key: VALID_INTERNAL_KEY.to_string(),
             default_user_id: default_user_id.map(str::to_owned),
         },
-        macro_authorization::NoBotAuthorizer,
+        conation_authorization::NoBotAuthorizer,
     );
     let state = ChannelListRouterState::new(
         list_service,

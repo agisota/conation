@@ -13,7 +13,7 @@ use axum::{
     http::{HeaderValue, StatusCode},
     response::{IntoResponse, Response},
 };
-use macro_auth::middleware::decode_jwt::decode_macro_access_token_allow_expired;
+use conation_auth::middleware::decode_jwt::decode_conation_access_token_allow_expired;
 use maud::{DOCTYPE, Markup, html};
 use model::response::ErrorResponse;
 use referral::domain::{models::ReferralCode, ports::ReferralService};
@@ -106,7 +106,7 @@ pub async fn handler(
     };
 
     let write_db = async |code: &SessionCode| {
-        ctx.macro_cache_client
+        ctx.conation_cache_client
             .set_mobile_login_session(code.0.as_str(), &refresh_token)
             .await
             .inspect_err(|e| {
@@ -142,7 +142,7 @@ pub async fn handler(
 
     tracing::trace!("redirect url {redirect_url}");
 
-    let decoded_user_id = decode_macro_access_token_allow_expired(&access_token, &ctx.jwt_args);
+    let decoded_user_id = decode_conation_access_token_allow_expired(&access_token, &ctx.jwt_args);
 
     if let Some(state) = state.as_ref()
         && let Some(referral_code) = state.referral_code.as_ref()
@@ -165,7 +165,7 @@ pub async fn handler(
 
     if let Ok(user_id) = decoded_user_id.as_ref() {
         append_signed_up_param_if_new_user(
-            &ctx.macro_cache_client,
+            &ctx.conation_cache_client,
             user_id.email_str(),
             &mut redirect_url,
         )

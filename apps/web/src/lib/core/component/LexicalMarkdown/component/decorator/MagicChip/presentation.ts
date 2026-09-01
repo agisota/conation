@@ -1,4 +1,4 @@
-import type { MagicChipStatus } from '@macro-inc/lexical-core';
+import type { MagicChipStatus } from '@conation/lexical-core';
 import type {
   FoldedMessage,
   MessagePart,

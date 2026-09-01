@@ -1,8 +1,8 @@
 use anyhow::Context;
-use macro_auth::InternalApiKey;
-pub use macro_env::Environment;
-use macro_env_var::{env_vars, maybe_env_vars};
-use macro_service_urls::LexicalServiceUrl;
+use conation_auth::InternalApiKey;
+pub use conation_env::Environment;
+use conation_env_var::{env_vars, maybe_env_vars};
+use conation_service_urls::LexicalServiceUrl;
 
 env_vars! {
     pub struct DatabaseUrl;
@@ -77,7 +77,7 @@ fn parse_u64(name: &str, raw_value: Option<&str>, default: u64) -> anyhow::Resul
 }
 
 /// The configuration parameters for the application.
-#[derive(macro_config::MacroConfig)]
+#[derive(conation_config::MacroConfig)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Config {
     /// The connection URL for the Postgres database this application should use.
@@ -92,7 +92,7 @@ pub struct Config {
     pub database_url_readonly: DatabaseUrlReadonly,
 
     /// The port to listen for HTTP requests on.
-    #[macro_config_default(8080)]
+    #[conation_config_default(8080)]
     pub port: usize,
 
     /// Whether calendar events are written to the search index. Off by default
@@ -100,18 +100,18 @@ pub struct Config {
     /// exists: an upsert against a missing index would otherwise be
     /// auto-created with a dynamic mapping, which is not the mapping this
     /// service expects. Enable only after the create-indices run.
-    #[macro_config_default(false)]
+    #[conation_config_default(false)]
     pub calendar_search_enabled: bool,
 
     /// The queue max messages per poll
-    #[macro_config_default(10)]
+    #[conation_config_default(10)]
     pub queue_max_messages: i32,
     /// The queue wait time seconds
-    #[macro_config_default(20)]
+    #[conation_config_default(20)]
     pub queue_wait_time_seconds: i32,
 
     /// The environment we are in
-    #[macro_config_default(Environment::new_or_prod())]
+    #[conation_config_default(Environment::new_or_prod())]
     pub environment: Environment,
 
     /// The URL for the Opensearch instance
@@ -128,11 +128,11 @@ pub struct Config {
     pub kafka_brokers: KafkaBrokers,
 
     /// The number of workers to spawn
-    #[macro_config_default(10)]
+    #[conation_config_default(10)]
     pub worker_count: u8,
 
     /// The URL for the Lexical service
-    #[macro_config_default(LexicalServiceUrl::unwrap_new().to_string())]
+    #[conation_config_default(LexicalServiceUrl::unwrap_new().to_string())]
     pub lexical_service_url: String,
 
     /// DB page size used when backfilling call records.
@@ -165,7 +165,7 @@ pub struct Config {
 
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
-        macro_config::ConfigLoader::load::<Config>().context("failed to load config")
+        conation_config::ConfigLoader::load::<Config>().context("failed to load config")
     }
 
     pub fn backfill_page_sizes(&self) -> anyhow::Result<BackfillPageSizes> {

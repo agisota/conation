@@ -16,7 +16,7 @@
 use crate::util::corpus::{full_text, load_corpus};
 use crate::util::harness::{EVAL_CONCURRENCY, openai_key};
 use futures::StreamExt;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use sqlx::PgPool;
 use task_dedup::domain::ports::TaskDuplicateJudge;
 use task_dedup::eval::PairCase;

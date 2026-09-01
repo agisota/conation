@@ -11,6 +11,7 @@ import { isTouchDevice } from '@core/mobile/isTouchDevice';
 import { getPlatform, isTauri } from '@core/util/platform';
 import { platformFetch } from '@core/util/platformFetch';
 import { initMonochromeIcons } from '@ui/utils/monochromeIcons';
+import { initI18n } from './lib/i18n';
 import { ErrorBoundary, render } from 'solid-js/web';
 import { FatalError } from './components/app/FatalError';
 import { Root } from './routes/Root';
@@ -33,6 +34,7 @@ if (isTauri()) {
 
 initializeLexical();
 initMonochromeIcons();
+initI18n();
 
 const renderApp = () => {
   const root = document.getElementById('root');

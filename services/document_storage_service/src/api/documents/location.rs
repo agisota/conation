@@ -1,7 +1,7 @@
 use crate::api::context::ApiContext;
 use crate::api::context::{AuthorizationService, EntityAccessService};
 use entity_access::inbound::axum_extractors::DocumentAccessExtractor;
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use models_permissions::share_permission::access_level::ViewAccessLevel;
 use rayon::prelude::*;
 use std::{
@@ -49,7 +49,7 @@ static DOCUMENT_DOES_NOT_EXIST: &str = "document does not exist in s3";
         (status = 500, body=GenericErrorResponse),
     )
 )]
-#[tracing::instrument(skip(state, user, document_context, _access_level), fields(user_id=?user.authorization.user.macro_user_id))]
+#[tracing::instrument(skip(state, user, document_context, _access_level), fields(user_id=?user.authorization.user.conation_user_id))]
 pub async fn get_location_handler(
     _access_level: DocumentAccessExtractor<
         ViewAccessLevel,
@@ -104,7 +104,7 @@ pub async fn get_location_handler(
         .header("Cache-Control", format!("max-age={}", max_age))
         .header(
             "X-custom-response-uuid",
-            macro_uuid::generate_uuid_v7().to_string(),
+            conation_uuid::generate_uuid_v7().to_string(),
         ) // this is used to verify if a response is cached between requests
         .body(Body::from(serde_json::to_vec(&response_data).unwrap()))
         .unwrap()
@@ -168,12 +168,12 @@ pub(in crate::api::documents) async fn get_versioned_url(
     let document_version_id = match document_version_id {
         Some(v) if !is_static => v,
         _ if is_static => {
-            macro_db_client::document::get_document_version_id(&state.db, document_id)
+            conation_db_client::document::get_document_version_id(&state.db, document_id)
                 .await?
                 .0
         }
         _ => {
-            macro_db_client::document::get_latest_document_version_id(&state.db, document_id)
+            conation_db_client::document::get_latest_document_version_id(&state.db, document_id)
                 .await?
                 .0
         }
@@ -217,10 +217,10 @@ async fn get_docx_urls(
     let start_shas = std::time::Instant::now();
     // Get all shas
     let shas: Vec<String> = if let Some(document_version_id) = document_version_id {
-        macro_db_client::document::document_shas::get_document_shas(&state.db, document_version_id)
+        conation_db_client::document::document_shas::get_document_shas(&state.db, document_version_id)
             .await?
     } else {
-        macro_db_client::document::document_shas::get_document_shas_by_document_id(
+        conation_db_client::document::document_shas::get_document_shas_by_document_id(
             &state.db,
             document_id,
         )
@@ -328,7 +328,7 @@ pub(in crate::api::documents) fn get_presigned_url(
 ) -> anyhow::Result<String> {
     let constructed_url = format!("{}/{}", cloudfront_distribution_url, key);
 
-    let signed_url = if !macro_aws_config::is_local_aws() {
+    let signed_url = if !conation_aws_config::is_local_aws() {
         get_signed_url(&constructed_url, options)?
     } else {
         constructed_url

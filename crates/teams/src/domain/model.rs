@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 
 use chrono::{DateTime, Utc};
-use macro_user_id::{email::Email, lowercased::Lowercase, user_id::MacroUserIdStr};
+use conation_user_id::{email::Email, lowercased::Lowercase, user_id::MacroUserIdStr};
 use models_permissions::share_permission::LinkShare;
 use roles_and_permissions::domain::model::UserRolesAndPermissionsError;
 

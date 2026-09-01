@@ -1,4 +1,4 @@
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 

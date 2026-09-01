@@ -8,12 +8,12 @@ version = "0.1.0"
 ai_tools = ["dep:ai_toolset", "dep:async-trait", "dep:schemars", "dep:tracing"]
 consumer = [
   "dep:kafka_util",
-  "dep:macro_event_broker",
+  "dep:conation_event_broker",
   "dep:rdkafka",
   "dep:rootcause",
   "dep:tokio",
   "dep:tracing",
-  "macro_event_broker/outbound",
+  "conation_event_broker/outbound",
 ]
 default = ["consumer", "outbound"]
 outbound = ["dep:sqlx", "dep:tracing"]
@@ -25,8 +25,8 @@ channel_sender = { path = "../channel_sender" }
 chrono = { workspace = true }
 chrono-tz = { workspace = true }
 kafka_util = { path = "../kafka_util", optional = true }
-macro_event_broker = { path = "../macro_event_broker", default-features = false, optional = true }
-macro_user_id = { path = "../macro_user_id" }
+conation_event_broker = { path = "../conation_event_broker", default-features = false, optional = true }
+conation_user_id = { path = "../conation_user_id" }
 model-entity = { path = "../model-entity" }
 rdkafka = { workspace = true, optional = true }
 readonly = { workspace = true }
@@ -42,5 +42,5 @@ uuid = { workspace = true }
 workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
-macro_db_migrator = { path = "../macro_db_migrator" }
+conation_db_migrator = { path = "../conation_db_migrator" }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread", "test-util"] }

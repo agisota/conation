@@ -42,7 +42,7 @@ pub async fn parse_and_upsert_message_contacts(
     let addresses_to_upsert: Vec<ContactPhotoless> = unique_addresses_map
         .into_iter()
         .map(|(email_address, name)| ContactPhotoless {
-            id: macro_uuid::generate_uuid_v7(),
+            id: conation_uuid::generate_uuid_v7(),
             link_id,
             email_address,
             name,

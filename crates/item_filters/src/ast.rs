@@ -79,7 +79,7 @@ pub enum ExpandErr {
     Uuid(#[from] uuid::Error),
     /// invalid macro user id
     #[error(transparent)]
-    MacroIdErr(#[from] macro_user_id::error::ParseErr),
+    MacroIdErr(#[from] conation_user_id::error::ParseErr),
     /// unknown document sub type
     #[error(transparent)]
     DocumentSubTypeErr(#[from] strum::ParseError),

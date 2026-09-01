@@ -5,7 +5,7 @@ use lambda_runtime::tracing;
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
-    macro_entrypoint::MacroEntrypoint::default().init();
+    conation_entrypoint::MacroEntrypoint::default().init();
     tracing::trace!("initiating local document upload finalizer worker");
 
     let context = Arc::new(AppContext::from_env().await?);

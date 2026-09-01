@@ -6,12 +6,12 @@ use axum::http::header::{AUTHORIZATION, COOKIE};
 use axum::http::{Request, StatusCode};
 use http_body_util::BodyExt;
 use jsonwebtoken::{Algorithm, EncodingKey, Header};
-use macro_auth::middleware::decode_jwt::{JwtValidationArgs, MacroAccessToken};
-use macro_authorization::{
+use conation_auth::middleware::decode_jwt::{JwtValidationArgs, MacroAccessToken};
+use conation_authorization::{
     InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationServiceImpl,
     MacroAuthorizationState,
 };
-use macro_env::Environment;
+use conation_env::Environment;
 use serde_json::{Value, json};
 use tower::ServiceExt;
 
@@ -29,7 +29,7 @@ fn test_context() -> ApiContext {
             api_key: TEST_INTERNAL_API_KEY.to_string(),
             default_user_id: None,
         },
-        macro_authorization::NoBotAuthorizer,
+        conation_authorization::NoBotAuthorizer,
     );
 
     ApiContext {
@@ -47,9 +47,9 @@ fn access_token(expiration: usize) -> String {
         iss: String::new(),
         email: "image-proxy-test@example.com".to_string(),
         fusion_user_id: "test-fusion-user".to_string(),
-        macro_user_id: TEST_USER_ID.to_string(),
-        macro_organization_id: None,
-        root_macro_id: None,
+        conation_user_id: TEST_USER_ID.to_string(),
+        conation_organization_id: None,
+        root_conation_id: None,
     };
     let mut header = Header::new(Algorithm::HS256);
     header.kid = Some("test-access-token".to_string());

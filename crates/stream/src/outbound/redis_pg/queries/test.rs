@@ -10,7 +10,7 @@ fn stream_id(entity_id: &str, stream: &str) -> StreamId {
     }
 }
 
-#[sqlx::test(migrations = "../macro_db_client/migrations")]
+#[sqlx::test(migrations = "../conation_db_client/migrations")]
 async fn test_insert_and_get(pool: PgPool) {
     let id_a = stream_id("entity_1", "stream_a");
     let id_b = stream_id("entity_1", "stream_b");
@@ -24,7 +24,7 @@ async fn test_insert_and_get(pool: PgPool) {
     assert!(keys.contains(&id_b.to_string()));
 }
 
-#[sqlx::test(migrations = "../macro_db_client/migrations")]
+#[sqlx::test(migrations = "../conation_db_client/migrations")]
 async fn test_insert_conflict_is_noop(pool: PgPool) {
     let id = stream_id("entity_1", "stream_a");
 
@@ -36,7 +36,7 @@ async fn test_insert_conflict_is_noop(pool: PgPool) {
     assert_eq!(keys.len(), 1);
 }
 
-#[sqlx::test(migrations = "../macro_db_client/migrations")]
+#[sqlx::test(migrations = "../conation_db_client/migrations")]
 async fn test_delete(pool: PgPool) {
     let id_a = stream_id("entity_1", "stream_a");
     let id_b = stream_id("entity_1", "stream_b");
@@ -50,13 +50,13 @@ async fn test_delete(pool: PgPool) {
     assert_eq!(keys, vec![id_b.to_string()]);
 }
 
-#[sqlx::test(migrations = "../macro_db_client/migrations")]
+#[sqlx::test(migrations = "../conation_db_client/migrations")]
 async fn test_delete_nonexistent_is_noop(pool: PgPool) {
     let id = stream_id("entity_1", "does_not_exist");
     delete_active_stream(&pool, &id).await.unwrap();
 }
 
-#[sqlx::test(migrations = "../macro_db_client/migrations")]
+#[sqlx::test(migrations = "../conation_db_client/migrations")]
 async fn test_get_empty(pool: PgPool) {
     let keys = get_active_stream_keys(&pool, "no_such_entity")
         .await
@@ -64,7 +64,7 @@ async fn test_get_empty(pool: PgPool) {
     assert!(keys.is_empty());
 }
 
-#[sqlx::test(migrations = "../macro_db_client/migrations")]
+#[sqlx::test(migrations = "../conation_db_client/migrations")]
 async fn test_get_filters_by_entity(pool: PgPool) {
     let id_1 = stream_id("entity_1", "stream_a");
     let id_2 = stream_id("entity_2", "stream_b");
@@ -79,7 +79,7 @@ async fn test_get_filters_by_entity(pool: PgPool) {
     assert_eq!(keys_2, vec![id_2.to_string()]);
 }
 
-#[sqlx::test(migrations = "../macro_db_client/migrations")]
+#[sqlx::test(migrations = "../conation_db_client/migrations")]
 async fn test_full_lifecycle(pool: PgPool) {
     let id_a = stream_id("entity_1", "stream_a");
     let id_b = stream_id("entity_1", "stream_b");

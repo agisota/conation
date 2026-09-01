@@ -20,8 +20,8 @@ use item_filters::{
         project::ProjectLiteral,
     },
 };
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
-use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use model_entity::EntityType;
 use models_pagination::Identify;
 use models_pagination::{Frecency, PaginateOn, Query, SimpleSortMethod};
@@ -31,7 +31,7 @@ use std::collections::HashSet;
 use std::sync::Arc;
 use uuid::Uuid;
 
-macro_rules! unwrap_enum {
+conation_rules! unwrap_enum {
     // Base case: single variant
     ($value:expr, $variant:path) => {
         match $value {
@@ -57,7 +57,7 @@ macro_rules! unwrap_enum {
 // 2 items have no viewing history, so they should be last in the response when sorting by viewed_at
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("mixed_items_expanded")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -158,7 +158,7 @@ async fn test_viewed_at_orders_nulls_last(pool: Pool<Postgres>) -> anyhow::Resul
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("mixed_items_expanded")
     )
 )]
@@ -229,7 +229,7 @@ async fn test_get_user_items_expanded_cursor(pool: Pool<Postgres>) -> anyhow::Re
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("sorting_expanded_items")
     )
 )]
@@ -341,7 +341,7 @@ async fn test_expanded_generic_sorting_methods(pool: Pool<Postgres>) -> anyhow::
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("mixed_items_expanded")
     )
 )]
@@ -397,7 +397,7 @@ async fn test_expanded_soup_by_ids(pool: Pool<Postgres>) {
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("mixed_items_expanded")
     )
 )]
@@ -438,7 +438,7 @@ async fn it_should_be_empty(pool: Pool<Postgres>) {
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("no_frecency_items")
     )
 )]
@@ -504,7 +504,7 @@ async fn test_no_frecency_expanded_filters_out_frecency_items(
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("no_frecency_items")
     )
 )]
@@ -602,7 +602,7 @@ async fn test_no_frecency_expanded_sorting_methods(pool: Pool<Postgres>) -> anyh
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("no_frecency_items")
     )
 )]
@@ -698,7 +698,7 @@ async fn test_no_frecency_expanded_cursor_pagination(pool: Pool<Postgres>) -> an
 
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("mixed_items_expanded")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -740,7 +740,7 @@ async fn empty_ast_returns_same_as_static_query(db: PgPool) {
 // Test filtering by document file type
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -812,7 +812,7 @@ async fn test_filter_by_document_file_type(db: PgPool) -> anyhow::Result<()> {
 // Test filtering by specific document IDs
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -892,7 +892,7 @@ async fn test_filter_by_document_ids(db: PgPool) -> anyhow::Result<()> {
 // Test filtering by project ID (documents)
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -964,7 +964,7 @@ async fn test_filter_documents_by_project_id(db: PgPool) -> anyhow::Result<()> {
 // Test filtering chats by project ID
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -1036,7 +1036,7 @@ async fn test_filter_chats_by_project_id(db: PgPool) -> anyhow::Result<()> {
 // Test filtering by specific chat IDs
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -1113,7 +1113,7 @@ async fn test_filter_by_chat_ids(db: PgPool) -> anyhow::Result<()> {
 // Test filtering projects by specific project IDs
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -1196,7 +1196,7 @@ async fn test_filter_by_project_ids(db: PgPool) -> anyhow::Result<()> {
 // Test filtering projects by specific project IDs with include_root=true
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -1260,7 +1260,7 @@ async fn test_filter_by_project_ids_include_root(db: PgPool) -> anyhow::Result<(
 // have a NULL parentId, so the negated equality must not drop them.
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -1319,7 +1319,7 @@ async fn test_negated_project_id_filter_includes_root_projects(db: PgPool) -> an
 // Test combined filters across multiple entity types
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -1416,7 +1416,7 @@ async fn test_combined_entity_filters(db: PgPool) -> anyhow::Result<()> {
 // Test filtering by multiple criteria on documents (AND logic)
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -1503,7 +1503,7 @@ async fn test_multiple_filter_criteria_documents(db: PgPool) -> anyhow::Result<(
 // Test that inaccessible items are filtered out
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -1568,7 +1568,7 @@ async fn test_filters_respect_access_control(db: PgPool) -> anyhow::Result<()> {
 // Test filtering by owner
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -1635,7 +1635,7 @@ async fn test_filter_by_owner(db: PgPool) -> anyhow::Result<()> {
 // Test filtering for non-existent items returns empty
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -1697,7 +1697,7 @@ async fn test_filter_non_existent_items(db: PgPool) -> anyhow::Result<()> {
 // Test cursor-based pagination with document filters
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -1811,7 +1811,7 @@ async fn test_cursor_pagination_with_document_filter(db: PgPool) -> anyhow::Resu
 // Test cursor-based pagination with multiple entity filters
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -1910,7 +1910,7 @@ async fn test_cursor_pagination_with_combined_filters(db: PgPool) -> anyhow::Res
 // Test cursor pagination maintains filter consistency across pages
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -2015,7 +2015,7 @@ async fn test_cursor_pagination_filter_consistency(db: PgPool) -> anyhow::Result
 // Test cursor pagination with empty filter results on subsequent pages
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -2107,7 +2107,7 @@ async fn test_cursor_pagination_with_single_item_filter(db: PgPool) -> anyhow::R
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("no_frecency_items")
     )
 )]
@@ -2251,7 +2251,7 @@ async fn test_dynamic_query_with_ast_and_frecency_exclusion(
 //   standalone doc: not a task (important)
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -2378,7 +2378,7 @@ async fn test_filter_documents_by_importance(db: PgPool) -> anyhow::Result<()> {
 // importance=false short-circuits to match nothing (1=0)
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -2478,7 +2478,7 @@ async fn test_filter_chats_by_importance(db: PgPool) -> anyhow::Result<()> {
 // importance=false short-circuits to match nothing (1=0)
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -2583,7 +2583,7 @@ async fn test_filter_projects_by_importance(db: PgPool) -> anyhow::Result<()> {
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("soup_items_with_properties")
     )
 )]
@@ -2695,7 +2695,7 @@ fn uuid(s: &str) -> Uuid {
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("expanded_cursor_soup_exhaustive")
     )
 )]
@@ -2728,7 +2728,7 @@ async fn test_exhaustive_deleted_items_excluded(pool: Pool<Postgres>) -> anyhow:
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("expanded_cursor_soup_exhaustive")
     )
 )]
@@ -2766,7 +2766,7 @@ async fn test_exhaustive_access_control_excludes_isolated(
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("expanded_cursor_soup_exhaustive")
     )
 )]
@@ -2800,7 +2800,7 @@ async fn test_exhaustive_user_isolation(pool: Pool<Postgres>) -> anyhow::Result<
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("expanded_cursor_soup_exhaustive")
     )
 )]
@@ -2857,7 +2857,7 @@ async fn test_exhaustive_deep_hierarchy_access(pool: Pool<Postgres>) -> anyhow::
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("expanded_cursor_soup_exhaustive")
     )
 )]
@@ -2924,7 +2924,7 @@ async fn test_exhaustive_task_completion_status(pool: Pool<Postgres>) -> anyhow:
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("expanded_cursor_soup_exhaustive")
     )
 )]
@@ -2980,7 +2980,7 @@ async fn test_exhaustive_sort_updated_at(pool: Pool<Postgres>) -> anyhow::Result
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("expanded_cursor_soup_exhaustive")
     )
 )]
@@ -3038,7 +3038,7 @@ async fn test_exhaustive_sort_created_at(pool: Pool<Postgres>) -> anyhow::Result
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("expanded_cursor_soup_exhaustive")
     )
 )]
@@ -3098,7 +3098,7 @@ async fn test_exhaustive_sort_viewed_at(pool: Pool<Postgres>) -> anyhow::Result<
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("expanded_cursor_soup_exhaustive")
     )
 )]
@@ -3170,7 +3170,7 @@ async fn test_exhaustive_sort_viewed_updated(pool: Pool<Postgres>) -> anyhow::Re
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("expanded_cursor_soup_exhaustive")
     )
 )]
@@ -3234,7 +3234,7 @@ async fn test_exhaustive_paginate_one_at_a_time(pool: Pool<Postgres>) -> anyhow:
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("expanded_cursor_soup_exhaustive")
     )
 )]
@@ -3304,7 +3304,7 @@ async fn test_exhaustive_paginate_all_sort_methods(pool: Pool<Postgres>) -> anyh
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("expanded_cursor_soup_exhaustive")
     )
 )]
@@ -3331,7 +3331,7 @@ async fn test_exhaustive_limit_larger_than_total(pool: Pool<Postgres>) -> anyhow
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("expanded_cursor_soup_exhaustive")
     )
 )]
@@ -3372,7 +3372,7 @@ async fn test_exhaustive_standalone_items_have_no_project(
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("expanded_cursor_soup_exhaustive")
     )
 )]
@@ -3417,7 +3417,7 @@ async fn test_exhaustive_hierarchy_project_ids(pool: Pool<Postgres>) -> anyhow::
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("expanded_cursor_soup_exhaustive")
     )
 )]
@@ -3473,7 +3473,7 @@ async fn test_exhaustive_viewed_at_values(pool: Pool<Postgres>) -> anyhow::Resul
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("expanded_cursor_soup_exhaustive")
     )
 )]
@@ -3510,7 +3510,7 @@ async fn test_exhaustive_document_fields(pool: Pool<Postgres>) -> anyhow::Result
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("expanded_cursor_soup_exhaustive")
     )
 )]
@@ -3598,7 +3598,7 @@ async fn dyn_fetch(
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("dynamic_query_exhaustive")
     )
 )]
@@ -3658,7 +3658,7 @@ async fn test_dyn_sort_updated_at(db: PgPool) -> anyhow::Result<()> {
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("dynamic_query_exhaustive")
     )
 )]
@@ -3718,7 +3718,7 @@ async fn test_dyn_sort_created_at(db: PgPool) -> anyhow::Result<()> {
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("dynamic_query_exhaustive")
     )
 )]
@@ -3779,7 +3779,7 @@ async fn test_dyn_sort_viewed_at(db: PgPool) -> anyhow::Result<()> {
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("dynamic_query_exhaustive")
     )
 )]
@@ -3841,7 +3841,7 @@ async fn test_dyn_sort_viewed_updated(db: PgPool) -> anyhow::Result<()> {
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("dynamic_query_exhaustive")
     )
 )]
@@ -3874,7 +3874,7 @@ async fn test_dyn_deleted_items_excluded(db: PgPool) -> anyhow::Result<()> {
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("dynamic_query_exhaustive")
     )
 )]
@@ -3911,7 +3911,7 @@ async fn test_dyn_access_control_excludes_isolated(db: PgPool) -> anyhow::Result
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("dynamic_query_exhaustive")
     )
 )]
@@ -3947,7 +3947,7 @@ async fn test_dyn_user_isolation(db: PgPool) -> anyhow::Result<()> {
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("dynamic_query_exhaustive")
     )
 )]
@@ -4005,7 +4005,7 @@ async fn test_dyn_filter_doc_by_owner(db: PgPool) -> anyhow::Result<()> {
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("dynamic_query_exhaustive")
     )
 )]
@@ -4051,7 +4051,7 @@ async fn test_dyn_filter_doc_by_project(db: PgPool) -> anyhow::Result<()> {
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("dynamic_query_exhaustive")
     )
 )]
@@ -4106,7 +4106,7 @@ async fn test_dyn_filter_multiple_file_types(db: PgPool) -> anyhow::Result<()> {
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("dynamic_query_exhaustive")
     )
 )]
@@ -4169,7 +4169,7 @@ async fn test_dyn_filter_notification_done_false(db: PgPool) -> anyhow::Result<(
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("dynamic_query_exhaustive")
     )
 )]
@@ -4227,7 +4227,7 @@ async fn test_dyn_filter_notification_done_and_seen_false(db: PgPool) -> anyhow:
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("dynamic_query_exhaustive")
     )
 )]
@@ -4286,7 +4286,7 @@ async fn test_dyn_task_include_cbm_atm_nc_bypasses_document_filters(
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("dynamic_query_exhaustive")
     )
 )]
@@ -4356,7 +4356,7 @@ async fn test_dyn_task_completion_status(db: PgPool) -> anyhow::Result<()> {
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("dynamic_query_exhaustive")
     )
 )]
@@ -4416,7 +4416,7 @@ async fn test_dyn_document_fields(db: PgPool) -> anyhow::Result<()> {
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("dynamic_query_exhaustive")
     )
 )]
@@ -4493,7 +4493,7 @@ async fn test_dyn_paginate_one_at_a_time(db: PgPool) -> anyhow::Result<()> {
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("dynamic_query_exhaustive")
     )
 )]
@@ -4590,7 +4590,7 @@ async fn test_dyn_paginate_with_filters(db: PgPool) -> anyhow::Result<()> {
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("dynamic_query_exhaustive")
     )
 )]
@@ -4637,7 +4637,7 @@ async fn test_dyn_exclude_frecency(db: PgPool) -> anyhow::Result<()> {
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("dynamic_query_exhaustive")
     )
 )]
@@ -4691,7 +4691,7 @@ async fn test_dyn_exclude_frecency_all_sort_methods(db: PgPool) -> anyhow::Resul
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("dynamic_query_exhaustive")
     )
 )]
@@ -4740,7 +4740,7 @@ async fn test_dyn_all_types_filtered_to_empty(db: PgPool) -> anyhow::Result<()> 
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("dynamic_query_exhaustive")
     )
 )]
@@ -4804,7 +4804,7 @@ async fn test_all_filter_types_combined(db: PgPool) -> anyhow::Result<()> {
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("soup_items_with_properties")
     )
 )]
@@ -4858,7 +4858,7 @@ async fn test_property_filter_by_select_option(db: Pool<Postgres>) -> anyhow::Re
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("soup_items_with_properties")
     )
 )]
@@ -4912,7 +4912,7 @@ async fn test_property_filter_by_status_completed(db: Pool<Postgres>) -> anyhow:
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("soup_items_with_properties")
     )
 )]
@@ -4973,7 +4973,7 @@ async fn test_property_filter_multiple_and(db: Pool<Postgres>) -> anyhow::Result
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("soup_items_with_properties")
     )
 )]
@@ -5015,7 +5015,7 @@ async fn test_property_filter_no_match(db: Pool<Postgres>) -> anyhow::Result<()>
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("soup_items_with_properties")
     )
 )]
@@ -5072,7 +5072,7 @@ async fn test_property_filter_multiple_options_or(db: Pool<Postgres>) -> anyhow:
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("soup_items_with_properties")
     )
 )]
@@ -5130,7 +5130,7 @@ async fn test_property_filter_without_entity_type(db: Pool<Postgres>) -> anyhow:
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("soup_items_with_properties")
     )
 )]
@@ -5194,7 +5194,7 @@ async fn test_property_filter_scoped_entity_type(db: Pool<Postgres>) -> anyhow::
 // Test filtering documents by sub_type = task
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -5259,7 +5259,7 @@ async fn test_dyn_filter_by_document_sub_type_task(db: PgPool) -> anyhow::Result
 // Test filtering documents by sub_type combined with file_type
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -5349,7 +5349,7 @@ async fn document_ids_for_phase0_membership_filter(
 // Documents tab before soup-flat-v2 introduces equivalent local facts.
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests", "soup_projection_phase0")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -5457,7 +5457,7 @@ async fn production_documents_presets_have_authoritative_membership(
 
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -5551,7 +5551,7 @@ async fn projection_hydration_carries_attachment_state_from_flat_and_by_id_rows(
 // Test filtering documents by is_email_attachment = true (only email attachments)
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -5621,7 +5621,7 @@ async fn test_dyn_filter_is_email_attachment_true(db: PgPool) -> anyhow::Result<
 // Test filtering documents by is_email_attachment = false (only non-email attachments)
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -5684,7 +5684,7 @@ async fn test_dyn_filter_is_email_attachment_false(db: PgPool) -> anyhow::Result
 // Test filtering documents by NOT sub_type = task (excludes tasks, includes non-tasks with NULL sub_type)
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -5816,7 +5816,7 @@ async fn run_and_count(
 
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -5852,7 +5852,7 @@ async fn test_date_filter_document_created_at_gt(db: PgPool) -> anyhow::Result<(
 
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -5888,7 +5888,7 @@ async fn test_date_filter_document_created_at_lt(db: PgPool) -> anyhow::Result<(
 
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -5924,7 +5924,7 @@ async fn test_date_filter_chat_created_at_gt(db: PgPool) -> anyhow::Result<()> {
 
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -5961,7 +5961,7 @@ async fn test_date_filter_project_created_at_gt(db: PgPool) -> anyhow::Result<()
 // document / createdAt / AND(gt, lt)
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -6006,7 +6006,7 @@ async fn test_date_filter_document_created_at_range(db: PgPool) -> anyhow::Resul
 // document / updatedAt / gt
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -6038,7 +6038,7 @@ async fn test_date_filter_document_updated_at_gt(db: PgPool) -> anyhow::Result<(
 // document / updatedAt / lt
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -6069,7 +6069,7 @@ async fn test_date_filter_document_updated_at_lt(db: PgPool) -> anyhow::Result<(
 // document / updatedAt / AND(gt, lt)
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -6109,7 +6109,7 @@ async fn test_date_filter_document_updated_at_range(db: PgPool) -> anyhow::Resul
 // chat / createdAt / lt
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -6144,7 +6144,7 @@ async fn test_date_filter_chat_created_at_lt(db: PgPool) -> anyhow::Result<()> {
 // chat / createdAt / AND(gt, lt)
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -6185,7 +6185,7 @@ async fn test_date_filter_chat_created_at_range(db: PgPool) -> anyhow::Result<()
 // chat / updatedAt / gt
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -6219,7 +6219,7 @@ async fn test_date_filter_chat_updated_at_gt(db: PgPool) -> anyhow::Result<()> {
 // chat / updatedAt / AND(gt, lt)
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -6259,7 +6259,7 @@ async fn test_date_filter_chat_updated_at_range(db: PgPool) -> anyhow::Result<()
 // project / createdAt / lt
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -6294,7 +6294,7 @@ async fn test_date_filter_project_created_at_lt(db: PgPool) -> anyhow::Result<()
 // project / createdAt / AND(gt, lt)
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -6338,7 +6338,7 @@ async fn test_date_filter_project_created_at_range(db: PgPool) -> anyhow::Result
 // project / updatedAt / gt
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -6372,7 +6372,7 @@ async fn test_date_filter_project_updated_at_gt(db: PgPool) -> anyhow::Result<()
 // project / updatedAt / AND(gt, lt)
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -6484,7 +6484,7 @@ async fn run_notification_filter(
 
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -6574,7 +6574,7 @@ async fn test_notification_optimization_preserves_access_control(db: PgPool) -> 
 
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("entity_filter_tests")
     ),
     migrator = "MACRO_DB_MIGRATIONS"

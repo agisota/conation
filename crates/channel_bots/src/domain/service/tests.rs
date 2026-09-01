@@ -11,7 +11,7 @@ use channels::domain::ports::{
     ChannelAttachmentsPage, ChannelMessagesErr, ChannelMessagesQueryResult, ChannelService,
 };
 use chrono::Utc;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use models_pagination::{CreatedAt, Query};
 use uuid::Uuid;
 
@@ -553,7 +553,7 @@ async fn inferred_thread_prompt_does_not_claim_a_mention() {
     let channel_id = Uuid::new_v4();
     let parent_id = Uuid::new_v4();
     let trigger_id = Uuid::new_v4();
-    let macro_ai = bot_id::MACRO_AI_BOT_ID.into_storage_id().to_string();
+    let conation_ai = bot_id::MACRO_AI_BOT_ID.into_storage_id().to_string();
 
     let channels = Arc::new(TestChannelService {
         around_args: Mutex::new(None),
@@ -564,7 +564,7 @@ async fn inferred_thread_prompt_does_not_claim_a_mention() {
             "notifications are broken",
         )],
         thread_replies: vec![
-            thread_reply(Uuid::new_v4(), &macro_ai, "what is broken exactly?"),
+            thread_reply(Uuid::new_v4(), &conation_ai, "what is broken exactly?"),
             thread_reply(trigger_id, "macro|alice@example.com", "it fires twice"),
         ],
     });

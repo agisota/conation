@@ -16,9 +16,9 @@ use crate::{
 use anyhow::Context;
 use config::{Config, Environment};
 use lexical_client::LexicalClient;
-use macro_authorization::{InternalAuthConfig, MacroAuthorizationState, NoopMacroAuthJwtValidator};
-use macro_entrypoint::MacroEntrypoint;
-use macro_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
+use conation_authorization::{InternalAuthConfig, MacroAuthorizationState, NoopMacroAuthJwtValidator};
+use conation_entrypoint::MacroEntrypoint;
+use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
 use opensearch_client::OpensearchClient;
 #[cfg(feature = "pdf")]
 use rust_embed::RustEmbed;
@@ -152,15 +152,15 @@ async fn main() -> anyhow::Result<()> {
             api_key: config.internal_api_key.to_string(),
             default_user_id: None,
         },
-        macro_authorization::NoBotAuthorizer,
+        conation_authorization::NoBotAuthorizer,
     )));
 
-    let aws_config = macro_aws_config::get_macro_aws_config().await;
-    let search_event_queue = macro_queues::SearchEventQueue::new();
+    let aws_config = conation_aws_config::get_conation_aws_config().await;
+    let search_event_queue = conation_queues::SearchEventQueue::new();
     let sqs_client = sqs_client::SQS::new(aws_sdk_sqs::Client::new(&aws_config))
         .search_event_queue(&search_event_queue);
 
-    let s3_client = Arc::new(s3_client::S3::new(macro_aws_config::s3_client().await));
+    let s3_client = Arc::new(s3_client::S3::new(conation_aws_config::s3_client().await));
 
     let (min_connections, max_connections): (u32, u32) = match config.environment {
         Environment::Production => (5, 50),
@@ -220,7 +220,7 @@ async fn main() -> anyhow::Result<()> {
 
     let shutdown_token = CancellationToken::new();
     let event_broker_tracker = TaskTracker::new();
-    let macro_event_broker = MacroEventBrokerService::new(
+    let conation_event_broker = MacroEventBrokerService::new(
         KafkaEventPublisher::new(config.kafka_brokers.as_ref())
             .context("failed to create kafka event publisher")?,
         event_broker_tracker.clone(),
@@ -294,7 +294,7 @@ async fn main() -> anyhow::Result<()> {
             config: Arc::new(config),
             backfill_service,
             backfill_jobs,
-            macro_event_broker,
+            conation_event_broker,
         },
         shutdown_token.clone(),
     )

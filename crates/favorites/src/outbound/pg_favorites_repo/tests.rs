@@ -1,6 +1,6 @@
 use cowlike::CowLike;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::EntityType;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -16,18 +16,18 @@ fn user(id: &str) -> MacroUserIdStr<'_> {
 }
 
 async fn insert_user(pool: &PgPool, id: &str) {
-    let macro_user_id = Uuid::now_v7();
+    let conation_user_id = Uuid::now_v7();
     sqlx::query(
-        r#"INSERT INTO macro_user (id, username, email, stripe_customer_id) VALUES ($1, $2, $2, $2)"#,
+        r#"INSERT INTO conation_user (id, username, email, stripe_customer_id) VALUES ($1, $2, $2, $2)"#,
     )
-    .bind(macro_user_id)
+    .bind(conation_user_id)
     .bind(id)
     .execute(pool)
     .await
-    .expect("macro_user should insert");
-    sqlx::query(r#"INSERT INTO "User" (id, email, macro_user_id) VALUES ($1, $1, $2)"#)
+    .expect("conation_user should insert");
+    sqlx::query(r#"INSERT INTO "User" (id, email, conation_user_id) VALUES ($1, $1, $2)"#)
         .bind(id)
-        .bind(macro_user_id)
+        .bind(conation_user_id)
         .execute(pool)
         .await
         .expect("user should insert");

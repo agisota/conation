@@ -16,7 +16,7 @@ use axum::{
     response::{IntoResponse, Response},
     routing::{get, patch, post, put},
 };
-use macro_authorization::{
+use conation_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
 };
 use serde::{Deserialize, Serialize};
@@ -416,7 +416,7 @@ where
     let event = state
         .service
         .create_event(
-            user.authorization.user.macro_user_id.as_ref(),
+            user.authorization.user.conation_user_id.as_ref(),
             request.email_link_id,
             request.calendar_id,
             draft,
@@ -455,7 +455,7 @@ where
 {
     let calendars = state
         .service
-        .list_visible_calendars(user.authorization.user.macro_user_id.as_ref())
+        .list_visible_calendars(user.authorization.user.conation_user_id.as_ref())
         .await?;
     Ok(Json(ListCalendarsResponse { calendars }))
 }
@@ -531,7 +531,7 @@ where
     let event = state
         .service
         .update_event(
-            user.authorization.user.macro_user_id.as_ref(),
+            user.authorization.user.conation_user_id.as_ref(),
             event_id,
             patch,
             scope,
@@ -588,7 +588,7 @@ where
     state
         .service
         .delete_event(
-            user.authorization.user.macro_user_id.as_ref(),
+            user.authorization.user.conation_user_id.as_ref(),
             event_id,
             scope,
         )
@@ -638,7 +638,7 @@ where
     let event = state
         .service
         .respond_to_event(
-            user.authorization.user.macro_user_id.as_ref(),
+            user.authorization.user.conation_user_id.as_ref(),
             event_id,
             request.response,
             scope,

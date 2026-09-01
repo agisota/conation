@@ -2,7 +2,7 @@ use rmcp::RoleClient;
 use rmcp::model::{ClientInfo, Implementation};
 use rmcp::service::RunningService;
 
-pub use macro_user_id::user_id::MacroUserIdStr;
+pub use conation_user_id::user_id::MacroUserIdStr;
 
 /// Our MCP client publishes this name to servers on-connect.
 pub const MCP_CLIENT_NAME: &str = "Macro";

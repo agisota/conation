@@ -6,7 +6,7 @@ import {
   $convertPasteToText,
   $isPasteNode,
   type PasteNodeDecoratorProps,
-} from '@macro-inc/lexical-core';
+} from '@conation/lexical-core';
 import Copy from '@phosphor/copy.svg';
 import DotsThree from '@phosphor/list.svg';
 import TextT from '@phosphor/text-t.svg';

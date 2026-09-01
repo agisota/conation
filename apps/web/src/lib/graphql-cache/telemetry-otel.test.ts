@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const span = vi.hoisted(() => ({ setAttr: vi.fn(), end: vi.fn() }));
 const anonymousSpan = vi.hoisted(() => vi.fn(() => span));
 
-vi.mock('@macro-inc/observability', () => ({
+vi.mock('@conation/observability', () => ({
   Telemetry: { anonymousSpan },
 }));
 

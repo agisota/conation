@@ -5,7 +5,7 @@ use axum::extract::{Json, Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::response::Response;
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 
 #[derive(serde::Deserialize)]
 pub struct Params {

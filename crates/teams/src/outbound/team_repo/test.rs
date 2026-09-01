@@ -1,5 +1,5 @@
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_user_id::user_id::MacroUserIdStr;
 use sqlx::{Pool, Postgres, Row};
 
 ///! Tests for the team_repo implementation for teams
@@ -34,7 +34,7 @@ async fn test_get_stripe_customer_id(pool: Pool<Postgres>) -> anyhow::Result<()>
     fixtures(path = "../../../fixtures", scripts("teams"))
 )]
 async fn test_has_user_trialed(pool: Pool<Postgres>) -> anyhow::Result<()> {
-    sqlx::query("UPDATE macro_user SET has_trialed = FALSE WHERE email = 'user4@user.com'")
+    sqlx::query("UPDATE conation_user SET has_trialed = FALSE WHERE email = 'user4@user.com'")
         .execute(&pool)
         .await?;
 
@@ -63,7 +63,7 @@ async fn test_get_team_subscription_id(pool: Pool<Postgres>) -> anyhow::Result<(
     let team_repo = TeamRepositoryImpl::new(pool);
 
     let subscription_id = team_repo
-        .get_team_subscription_id(&macro_uuid::string_to_uuid(
+        .get_team_subscription_id(&conation_uuid::string_to_uuid(
             "11111111-1111-1111-1111-111111111111",
         )?)
         .await?;
@@ -74,7 +74,7 @@ async fn test_get_team_subscription_id(pool: Pool<Postgres>) -> anyhow::Result<(
     );
 
     let subscription_id = team_repo
-        .get_team_subscription_id(&macro_uuid::string_to_uuid(
+        .get_team_subscription_id(&conation_uuid::string_to_uuid(
             "22222222-2222-2222-2222-222222222222",
         )?)
         .await?;
@@ -82,7 +82,7 @@ async fn test_get_team_subscription_id(pool: Pool<Postgres>) -> anyhow::Result<(
     assert!(subscription_id.is_none());
 
     let err = team_repo
-        .get_team_subscription_id(&macro_uuid::string_to_uuid(
+        .get_team_subscription_id(&conation_uuid::string_to_uuid(
             "63333333-3333-3333-3333-333333333333",
         )?)
         .await
@@ -101,7 +101,7 @@ async fn test_get_team_subscription_id(pool: Pool<Postgres>) -> anyhow::Result<(
 async fn test_get_team_payment_status(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool.clone());
 
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
 
     let paying = team_repo.get_team_payment_status(&team_id).await?;
     assert!(!paying);
@@ -120,7 +120,7 @@ async fn test_get_team_payment_status(pool: Pool<Postgres>) -> anyhow::Result<()
     let paying = team_repo.get_team_payment_status(&team_id).await?;
     assert!(paying);
 
-    let missing_team_id = macro_uuid::string_to_uuid("63333333-3333-3333-3333-333333333333")?;
+    let missing_team_id = conation_uuid::string_to_uuid("63333333-3333-3333-3333-333333333333")?;
     let err = team_repo
         .get_team_payment_status(&missing_team_id)
         .await
@@ -138,7 +138,7 @@ async fn test_get_team_payment_status(pool: Pool<Postgres>) -> anyhow::Result<()
 )]
 async fn test_get_team_enterprise_status(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool.clone());
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
 
     let enterprise = team_repo.get_team_enterprise_status(&team_id).await?;
     assert!(!enterprise);
@@ -150,7 +150,7 @@ async fn test_get_team_enterprise_status(pool: Pool<Postgres>) -> anyhow::Result
     let enterprise = team_repo.get_team_enterprise_status(&team_id).await?;
     assert!(enterprise);
 
-    let missing_team_id = macro_uuid::string_to_uuid("63333333-3333-3333-3333-333333333333")?;
+    let missing_team_id = conation_uuid::string_to_uuid("63333333-3333-3333-3333-333333333333")?;
     let error = team_repo
         .get_team_enterprise_status(&missing_team_id)
         .await
@@ -400,7 +400,7 @@ async fn test_invite_users_to_team(pool: Pool<Postgres>) -> anyhow::Result<()> {
 
     let user_id = MacroUserIdStr::parse_from_str("macro|user@user.com")?;
 
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
 
     let invites = vec![Email::parse_from_str("new@macro.com")?.lowercase()];
     let invites = non_empty::NonEmpty::new(invites.as_slice())?;
@@ -433,7 +433,7 @@ async fn test_invite_users_to_team(pool: Pool<Postgres>) -> anyhow::Result<()> {
 )]
 async fn test_get_new_invites_filters_existing_invites(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool);
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
 
     let invites = vec![
         Email::parse_from_str("invite@macro.com")?.lowercase(),
@@ -457,7 +457,7 @@ async fn test_get_new_invites_filters_existing_team_members(
     pool: Pool<Postgres>,
 ) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool);
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
 
     let invites = vec![
         Email::parse_from_str("user2@user.com")?.lowercase(),
@@ -481,15 +481,15 @@ async fn test_get_new_invites_keeps_invites_scoped_to_team(
     pool: Pool<Postgres>,
 ) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool.clone());
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
-    let other_team_id = macro_uuid::string_to_uuid("22222222-2222-2222-2222-222222222222")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let other_team_id = conation_uuid::string_to_uuid("22222222-2222-2222-2222-222222222222")?;
 
     sqlx::query!(
         r#"
         INSERT INTO team_invite (id, team_id, email, team_role, invited_by, created_at, last_sent_at)
         VALUES ($1, $2, 'other-team-only@macro.com', 'member', 'macro|user4@user.com', NOW(), NOW())
         "#,
-        macro_uuid::generate_uuid_v7(),
+        conation_uuid::generate_uuid_v7(),
         other_team_id,
     )
     .execute(&pool)
@@ -515,7 +515,7 @@ async fn test_get_new_invites_keeps_invites_scoped_to_team(
 async fn test_invite_existing_user_within_rate_limit(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool);
     let user_id = MacroUserIdStr::parse_from_str("macro|user@user.com")?;
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
 
     // invite@macro.com already has an invite with last_sent_at = NOW() in the fixture
     let invites = vec![Email::parse_from_str("invite@macro.com")?.lowercase()];
@@ -540,7 +540,7 @@ async fn test_invite_existing_user_within_rate_limit(pool: Pool<Postgres>) -> an
 async fn test_invite_existing_user_after_rate_limit(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool.clone());
     let user_id = MacroUserIdStr::parse_from_str("macro|user@user.com")?;
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
 
     // Push last_sent_at back 10 minutes so the rate limit window has passed
     sqlx::query!(
@@ -572,7 +572,7 @@ async fn test_invite_existing_user_after_rate_limit(pool: Pool<Postgres>) -> any
 async fn test_invite_mix_new_and_existing(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool.clone());
     let user_id = MacroUserIdStr::parse_from_str("macro|user@user.com")?;
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
 
     // Push existing invite past the rate limit window
     sqlx::query!(
@@ -610,7 +610,7 @@ async fn test_invite_mix_new_and_existing(pool: Pool<Postgres>) -> anyhow::Resul
 async fn test_reinvite_updates_last_sent_at(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool.clone());
     let user_id = MacroUserIdStr::parse_from_str("macro|user@user.com")?;
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
 
     // Push past rate limit
     sqlx::query!(
@@ -652,7 +652,7 @@ async fn test_reinvite_updates_last_sent_at(pool: Pool<Postgres>) -> anyhow::Res
 async fn test_resend_without_mark_sent_stays_eligible(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool.clone());
     let user_id = MacroUserIdStr::parse_from_str("macro|user@user.com")?;
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
 
     // Push past rate limit
     sqlx::query!(
@@ -690,8 +690,8 @@ async fn test_resend_without_mark_sent_stays_eligible(pool: Pool<Postgres>) -> a
 )]
 async fn test_mark_invites_sent(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool.clone());
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
-    let invite_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let invite_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
 
     // Push last_sent_at back so it's past the rate limit
     sqlx::query!(
@@ -740,7 +740,7 @@ async fn test_mark_invites_sent(pool: Pool<Postgres>) -> anyhow::Result<()> {
 async fn test_remove_user_from_team(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool);
 
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
 
     let user_id = MacroUserIdStr::parse_from_str("macro|user2@user.com")?;
 
@@ -778,12 +778,12 @@ async fn test_remove_user_from_team(pool: Pool<Postgres>) -> anyhow::Result<()> 
 async fn test_get_team_invite_by_id(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool);
 
-    let invite_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let invite_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
     let team_invite = team_repo.get_team_invite_by_id(&invite_id).await?;
 
     assert_eq!(team_invite.email.as_ref(), "invite@macro.com");
 
-    let invite_id = macro_uuid::string_to_uuid("33333333-3333-3333-3333-333333333333")?;
+    let invite_id = conation_uuid::string_to_uuid("33333333-3333-3333-3333-333333333333")?;
     let err = team_repo
         .get_team_invite_by_id(&invite_id)
         .await
@@ -801,13 +801,13 @@ async fn test_get_team_invite_by_id(pool: Pool<Postgres>) -> anyhow::Result<()> 
 )]
 async fn test_delete_team_invite(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool);
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
 
     // delete invite that exists
     team_repo
         .delete_team_invite(
             &team_id,
-            &macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?,
+            &conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?,
         )
         .await?;
 
@@ -815,7 +815,7 @@ async fn test_delete_team_invite(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let err = team_repo
         .delete_team_invite(
             &team_id,
-            &macro_uuid::string_to_uuid("33333333-3333-3333-3333-333333333333")?,
+            &conation_uuid::string_to_uuid("33333333-3333-3333-3333-333333333333")?,
         )
         .await
         .err()
@@ -834,7 +834,7 @@ async fn test_delete_team_invite(pool: Pool<Postgres>) -> anyhow::Result<()> {
 async fn test_update_team_subscription(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool.clone());
 
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
 
     let subscription_id = stripe::SubscriptionId::from_str("sub_1")?;
 
@@ -865,7 +865,7 @@ async fn test_update_team_subscription(pool: Pool<Postgres>) -> anyhow::Result<(
 async fn test_update_team_payment_status(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool.clone());
 
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
 
     team_repo.update_team_payment_status(&team_id, true).await?;
 
@@ -899,7 +899,7 @@ async fn test_update_team_payment_status(pool: Pool<Postgres>) -> anyhow::Result
 
     assert!(!row.paying);
 
-    let missing_team_id = macro_uuid::string_to_uuid("63333333-3333-3333-3333-333333333333")?;
+    let missing_team_id = conation_uuid::string_to_uuid("63333333-3333-3333-3333-333333333333")?;
     let err = team_repo
         .update_team_payment_status(&missing_team_id, true)
         .await
@@ -918,7 +918,7 @@ async fn test_update_team_payment_status(pool: Pool<Postgres>) -> anyhow::Result
 async fn test_delete_team(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool.clone());
 
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
     let team_source_id = team_id.to_string();
     let other_team_source_id = "22222222-2222-2222-2222-222222222222";
 
@@ -1003,7 +1003,7 @@ async fn test_delete_team(pool: Pool<Postgres>) -> anyhow::Result<()> {
 async fn test_get_all_team_members(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool);
 
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
 
     let members = team_repo.get_all_team_members(&team_id).await?;
 
@@ -1032,7 +1032,7 @@ async fn test_get_all_team_members(pool: Pool<Postgres>) -> anyhow::Result<()> {
 async fn test_accept_team_invite(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool);
 
-    let team_invite_id = macro_uuid::string_to_uuid("22222222-2222-2222-2222-222222222222")?;
+    let team_invite_id = conation_uuid::string_to_uuid("22222222-2222-2222-2222-222222222222")?;
 
     let user_id = MacroUserIdStr::parse_from_str("macro|user3@user.com")?;
 
@@ -1044,7 +1044,7 @@ async fn test_accept_team_invite(pool: Pool<Postgres>) -> anyhow::Result<()> {
     assert_eq!(team_member.user_id.as_ref(), "macro|user3@user.com");
     assert_eq!(team_member.role, TeamRole::Member);
 
-    let team_invite_id = macro_uuid::string_to_uuid("33333333-3333-3333-3333-333333333333")?;
+    let team_invite_id = conation_uuid::string_to_uuid("33333333-3333-3333-3333-333333333333")?;
     let err = team_repo
         .accept_team_invite(&team_invite_id, &user_id)
         .await
@@ -1063,8 +1063,8 @@ async fn test_accept_team_invite(pool: Pool<Postgres>) -> anyhow::Result<()> {
 async fn test_rollback_accept_team_invite(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool.clone());
 
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
-    let team_invite_id = macro_uuid::string_to_uuid("22222222-2222-2222-2222-222222222222")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_invite_id = conation_uuid::string_to_uuid("22222222-2222-2222-2222-222222222222")?;
     let user_id = MacroUserIdStr::parse_from_str("macro|user3@user.com")?;
 
     let accepted_invite = team_repo
@@ -1120,7 +1120,7 @@ async fn test_rollback_accept_team_invite(pool: Pool<Postgres>) -> anyhow::Resul
 async fn test_rollback_remove_user_from_team(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool.clone());
 
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
     let user_id = MacroUserIdStr::parse_from_str("macro|user2@user.com")?;
 
     team_repo
@@ -1178,7 +1178,7 @@ async fn test_is_user_member_of_team(pool: Pool<Postgres>) -> anyhow::Result<()>
 async fn test_get_team_members(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool);
 
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
 
     let members = team_repo.get_team_members(&team_id).await?;
 
@@ -1203,7 +1203,7 @@ async fn test_get_team_members(pool: Pool<Postgres>) -> anyhow::Result<()> {
     fixtures(path = "../../../fixtures", scripts("teams"))
 )]
 async fn test_bump_seat_count_positive(pool: Pool<Postgres>) -> anyhow::Result<()> {
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
 
     let mut transaction = pool.begin().await?;
     TeamRepositoryImpl::bump_seat_count(&mut transaction, &team_id, 2).await?;
@@ -1223,7 +1223,7 @@ async fn test_bump_seat_count_positive(pool: Pool<Postgres>) -> anyhow::Result<(
     fixtures(path = "../../../fixtures", scripts("teams"))
 )]
 async fn test_bump_seat_count_negative(pool: Pool<Postgres>) -> anyhow::Result<()> {
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
 
     let mut transaction = pool.begin().await?;
     TeamRepositoryImpl::bump_seat_count(&mut transaction, &team_id, -1).await?;
@@ -1245,11 +1245,11 @@ async fn test_bump_seat_count_negative(pool: Pool<Postgres>) -> anyhow::Result<(
 async fn test_get_team_seat_count(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool);
 
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
     let seat_count = team_repo.get_team_seat_count(&team_id).await?;
     assert_eq!(seat_count, 3);
 
-    let missing_team_id = macro_uuid::string_to_uuid("63333333-3333-3333-3333-333333333333")?;
+    let missing_team_id = conation_uuid::string_to_uuid("63333333-3333-3333-3333-333333333333")?;
     let err = team_repo
         .get_team_seat_count(&missing_team_id)
         .await
@@ -1267,7 +1267,7 @@ async fn test_get_team_seat_count(pool: Pool<Postgres>) -> anyhow::Result<()> {
 async fn test_get_team_plan(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool);
 
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
 
     let plan = team_repo.get_team_plan(&team_id).await?;
     assert_eq!(plan, None);
@@ -1279,7 +1279,7 @@ async fn test_get_team_plan(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let plan = team_repo.get_team_plan(&team_id).await?;
     assert_eq!(plan, Some(TeamPlan::SeriesA));
 
-    let missing_team_id = macro_uuid::string_to_uuid("63333333-3333-3333-3333-333333333333")?;
+    let missing_team_id = conation_uuid::string_to_uuid("63333333-3333-3333-3333-333333333333")?;
     let err = team_repo
         .get_team_plan(&missing_team_id)
         .await
@@ -1297,7 +1297,7 @@ async fn test_get_team_plan(pool: Pool<Postgres>) -> anyhow::Result<()> {
 async fn test_patch_team_plan(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool.clone());
 
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
 
     team_repo.patch_team_plan(&team_id, TeamPlan::Seed).await?;
 
@@ -1321,7 +1321,7 @@ async fn test_patch_team_plan(pool: Pool<Postgres>) -> anyhow::Result<()> {
     .await?;
     assert_eq!(row.plan, "growth");
 
-    let missing_team_id = macro_uuid::string_to_uuid("63333333-3333-3333-3333-333333333333")?;
+    let missing_team_id = conation_uuid::string_to_uuid("63333333-3333-3333-3333-333333333333")?;
     let err = team_repo
         .patch_team_plan(&missing_team_id, TeamPlan::Idea)
         .await
@@ -1340,7 +1340,7 @@ async fn test_get_team_by_id_hydrates_enterprise_status(
     pool: Pool<Postgres>,
 ) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool.clone());
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
 
     sqlx::query!("UPDATE team SET enterprise = TRUE WHERE id = $1", &team_id)
         .execute(&pool)
@@ -1363,7 +1363,7 @@ async fn test_get_user_teams_hydrates_enterprise_status(
     pool: Pool<Postgres>,
 ) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool.clone());
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
     let user_id = MacroUserIdStr::parse_from_str("macro|user@user.com")?;
 
     sqlx::query!("UPDATE team SET enterprise = TRUE WHERE id = $1", &team_id)
@@ -1389,7 +1389,7 @@ async fn test_patch_team_normalizes_slug_to_screaming_snake_case(
     pool: Pool<Postgres>,
 ) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool.clone());
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
     let req = PatchTeamRequest {
         name: Some("New Name".to_string()),
         slug: Some("my-team  slug".to_string()),
@@ -1418,7 +1418,7 @@ async fn test_patch_team_rejects_invalid_slug_without_updating_name(
     pool: Pool<Postgres>,
 ) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool.clone());
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
     let req = PatchTeamRequest {
         name: Some("Should Not Apply".to_string()),
         slug: Some("bad.slug".to_string()),
@@ -1446,7 +1446,7 @@ async fn test_patch_team_rejects_invalid_slug_without_updating_name(
 )]
 async fn test_patch_team_rejects_too_long_slug(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool);
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
     let req = PatchTeamRequest {
         name: None,
         slug: Some("THIS_SLUG_IS_WAY_TOO_LONG".to_string()),
@@ -1467,7 +1467,7 @@ async fn test_patch_team_rejects_too_long_slug(pool: Pool<Postgres>) -> anyhow::
 )]
 async fn test_patch_team_default_link_share_round_trip(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool);
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
 
     // Existing teams default to TEAM via the column default.
     let team = team_repo.get_team_by_id(&team_id).await?;
@@ -1516,7 +1516,7 @@ async fn test_patch_team_default_link_share_round_trip(pool: Pool<Postgres>) -> 
 async fn test_get_team_member(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool);
 
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
 
     // Get existing member
     let user_id = MacroUserIdStr::parse_from_str("macro|user2@user.com")?;
@@ -1553,7 +1553,7 @@ async fn test_get_team_member(pool: Pool<Postgres>) -> anyhow::Result<()> {
 async fn test_patch_team_user_role(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool);
 
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
     let user_id = MacroUserIdStr::parse_from_str("macro|user2@user.com")?;
 
     // Promote to Admin
@@ -1592,7 +1592,7 @@ async fn test_patch_team_user_role(pool: Pool<Postgres>) -> anyhow::Result<()> {
 async fn test_toggle_auto_join_domain(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool.clone());
 
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
 
     // First toggle sets the domain of the team owner (macro|user@user.com).
     let domain = team_repo.toggle_auto_join_domain(&team_id).await?;
@@ -1630,14 +1630,14 @@ async fn test_toggle_auto_join_domain(pool: Pool<Postgres>) -> anyhow::Result<()
 async fn test_toggle_auto_join_domain_rejects_generic_domain(
     pool: Pool<Postgres>,
 ) -> anyhow::Result<()> {
-    let team_id = macro_uuid::string_to_uuid("33333333-3333-3333-3333-333333333333")?;
+    let team_id = conation_uuid::string_to_uuid("33333333-3333-3333-3333-333333333333")?;
     sqlx::query(
-        "INSERT INTO macro_user (id, username, email, stripe_customer_id) VALUES ('a5555555-5555-5555-5555-555555555555', 'owner@gmail.com', 'owner@gmail.com', 'cus_gmail_owner')",
+        "INSERT INTO conation_user (id, username, email, stripe_customer_id) VALUES ('a5555555-5555-5555-5555-555555555555', 'owner@gmail.com', 'owner@gmail.com', 'cus_gmail_owner')",
     )
     .execute(&pool)
     .await?;
     sqlx::query(
-        r#"INSERT INTO "User" (id, email, name, macro_user_id) VALUES ('macro|owner@gmail.com', 'owner@gmail.com', 'Gmail Owner', 'a5555555-5555-5555-5555-555555555555')"#,
+        r#"INSERT INTO "User" (id, email, name, conation_user_id) VALUES ('macro|owner@gmail.com', 'owner@gmail.com', 'Gmail Owner', 'a5555555-5555-5555-5555-555555555555')"#,
     )
     .execute(&pool)
     .await?;
@@ -1679,7 +1679,7 @@ async fn test_toggle_auto_join_domain_rejects_generic_domain(
 async fn test_toggle_auto_join_domain_missing_team(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool);
 
-    let missing_team_id = macro_uuid::string_to_uuid("63333333-3333-3333-3333-333333333333")?;
+    let missing_team_id = conation_uuid::string_to_uuid("63333333-3333-3333-3333-333333333333")?;
     let err = team_repo
         .toggle_auto_join_domain(&missing_team_id)
         .await
@@ -1698,7 +1698,7 @@ async fn test_toggle_auto_join_domain_missing_team(pool: Pool<Postgres>) -> anyh
 async fn test_get_team_id_by_domain(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool.clone());
 
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
 
     // No team has an auto-join domain yet.
     let found = team_repo
@@ -1735,7 +1735,7 @@ async fn test_get_team_id_by_domain(pool: Pool<Postgres>) -> anyhow::Result<()> 
 async fn test_add_user_to_team(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let team_repo = TeamRepositoryImpl::new(pool.clone());
 
-    let team_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+    let team_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
     let user_id = MacroUserIdStr::parse_from_str("macro|user3@user.com")?;
 
     let seat_count_before = team_repo.get_team_seat_count(&team_id).await?;

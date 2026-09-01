@@ -60,7 +60,7 @@ pub async fn handler(
         })?;
 
         let passwordless_code = ctx
-            .macro_cache_client
+            .conation_cache_client
             .get_passwordless_login_code(&email)
             .await
             .map_err(|e| {
@@ -96,7 +96,7 @@ pub async fn handler(
     if !params.contains_key("email") {
         tracing::trace!("no email param provided, performing additional verification");
         let email = passwordless_response.user.email.to_lowercase();
-        let passwordless_code = ctx.macro_cache_client.get_passwordless_login_code(&email).await.map_err(|e| {
+        let passwordless_code = ctx.conation_cache_client.get_passwordless_login_code(&email).await.map_err(|e| {
             tracing::error!(error=?e, email=%passwordless_response.user.email, "unable to get passwordless login code");
             (StatusCode::INTERNAL_SERVER_ERROR, "unable to get passwordless login code").into_response()
         })?;
@@ -114,31 +114,31 @@ pub async fn handler(
 
     // remove the users passwordless login rate limits
     tokio::spawn({
-        let macro_cache_client = ctx.macro_cache_client.clone();
+        let conation_cache_client = ctx.conation_cache_client.clone();
         let email = passwordless_response.user.email.clone();
         async move {
-            let _ = macro_cache_client
+            let _ = conation_cache_client
                 .delete_passwordless_rate_limit(&email)
                 .await
                 .inspect_err(|e| {
                     tracing::error!(error=?e, "unable to delete passwordless rate limit");
                 });
 
-            let _ = macro_cache_client
+            let _ = conation_cache_client
                 .delete_passwordless_daily_rate_limit(&email)
                 .await
                 .inspect_err(|e| {
                     tracing::error!(error=?e, "unable to delete passwordless daily rate limit");
                 });
 
-            let _ = macro_cache_client
+            let _ = conation_cache_client
                 .delete_code_rate_limit(&email)
                 .await
                 .inspect_err(|e| {
                     tracing::error!(error=?e, "unable to delete login code rate limit");
                 });
 
-            let _ = macro_cache_client
+            let _ = conation_cache_client
                 .delete_daily_code_rate_limit(&email)
                 .await
                 .inspect_err(|e| {
@@ -162,7 +162,7 @@ pub async fn handler(
     match url::Url::parse(&redirect_uri) {
         Ok(mut url) => {
             append_signed_up_param_if_new_user(
-                &ctx.macro_cache_client,
+                &ctx.conation_cache_client,
                 &passwordless_response.user.email.to_lowercase(),
                 &mut url,
             )

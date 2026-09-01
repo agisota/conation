@@ -1,11 +1,11 @@
 use anyhow::Context;
-use macro_env_var::env_vars;
+use conation_env_var::env_vars;
 
 /// Holds all configuration loaded from environment variables.
 pub struct Config {
     pub sfs_url: String,
     pub internal_auth_key: String,
-    pub macro_ids: String,
+    pub conation_ids: String,
     pub database_url: String,
     pub upload_concurrency: usize,
     pub fusionauth_api_key: String,
@@ -42,7 +42,7 @@ impl Config {
             internal_auth_key: InternalAuthKey::new()
                 .context("INTERNAL_AUTH_KEY not set")?
                 .to_string(),
-            macro_ids: MacroIds::new().context("MACRO_IDS not set")?.to_string(),
+            conation_ids: MacroIds::new().context("MACRO_IDS not set")?.to_string(),
             database_url: DatabaseUrl::new()
                 .context("DATABASE_URL not set")?
                 .to_string(),

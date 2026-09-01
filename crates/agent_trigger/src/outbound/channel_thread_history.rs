@@ -3,7 +3,7 @@
 use agent_session::domain::error::{AgentSessionError, Result};
 use channel_sender::ChannelSender;
 use channels::domain::ports::ChannelRepo;
-use macro_uuid::Uuid;
+use conation_uuid::Uuid;
 
 use crate::domain::service::ThreadHistory;
 use crate::domain::thread_window::ThreadMessage;

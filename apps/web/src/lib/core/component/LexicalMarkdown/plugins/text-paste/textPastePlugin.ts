@@ -6,7 +6,7 @@ import {
 } from '@core/block';
 import { isValidMacroAppHostname } from '@core/util/macroAppUrl';
 import { mergeRegister } from '@lexical/utils';
-import { $createPasteNode, PasteNode } from '@macro-inc/lexical-core';
+import { $createPasteNode, PasteNode } from '@conation/lexical-core';
 import { convertThemev2v3 } from '@theme/utils/themeMigrations';
 import {
   parseThemeV2Json,

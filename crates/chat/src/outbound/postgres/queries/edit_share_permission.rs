@@ -93,7 +93,7 @@ async fn edit_share_permission(
 
         entity_access_db_utils::update_entity_access_channel_share_permissions(
             tx,
-            &macro_uuid::string_to_uuid(chat_id).unwrap(),
+            &conation_uuid::string_to_uuid(chat_id).unwrap(),
             EntityType::Chat,
             channel_share_permissions,
         )

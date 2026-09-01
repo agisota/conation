@@ -14,7 +14,7 @@ ai_tools = [
 axum = [
   "dep:axum",
   "dep:axum-extra",
-  "dep:macro_authorization",
+  "dep:conation_authorization",
   "dep:model-error-response",
   "dep:utoipa",
   "entity_access/axum",
@@ -30,7 +30,7 @@ outbound = [
   "dep:dynamodb_client",
   "dep:entity_access_db_utils",
   "dep:hex",
-  "dep:macro_sha_count_client",
+  "dep:conation_sha_count_client",
   "dep:share_permission_db_utils",
   "dep:sqlx",
   "dep:sqs_client",
@@ -59,13 +59,13 @@ entity_access_management = { path = "../entity_access_management", default-featu
   "outbound",
   "ports",
 ], optional = true }
-macro_aws_config = { path = "../macro_aws_config", features = ["s3"] }
-macro_env_var = { path = "../macro_env_var" }
-macro_event_broker = { path = "../macro_event_broker", default-features = false }
-macro_event_topics = { path = "../macro_event_topics" }
+conation_aws_config = { path = "../conation_aws_config", features = ["s3"] }
+conation_env_var = { path = "../conation_env_var" }
+conation_event_broker = { path = "../conation_event_broker", default-features = false }
+conation_event_topics = { path = "../conation_event_topics" }
 entity_mutation = { path = "../entity_mutation" }
-macro_user_id = { path = "../macro_user_id" }
-macro_uuid = { path = "../macro_uuid" }
+conation_user_id = { path = "../conation_user_id" }
+conation_uuid = { path = "../conation_uuid" }
 model = { path = "../model" }
 model-entity = { path = "../model-entity" }
 models_bulk_upload = { path = "../models_bulk_upload" }
@@ -84,7 +84,7 @@ schemars = { workspace = true, optional = true }
 # Axum dependencies
 axum = { workspace = true, optional = true }
 axum-extra = { workspace = true, optional = true }
-macro_authorization = { path = "../macro_authorization", optional = true, default-features = false, features = [
+conation_authorization = { path = "../conation_authorization", optional = true, default-features = false, features = [
   "axum",
 ] }
 model-error-response = { path = "../model-error-response", optional = true }
@@ -99,7 +99,7 @@ documents = { path = "../documents", default-features = false, optional = true }
 dynamodb_client = { path = "../dynamodb_client", optional = true }
 entity_access_db_utils = { path = "../entity_access_db_utils", optional = true }
 hex = { workspace = true, optional = true }
-macro_sha_count_client = { path = "../macro_sha_count_client", optional = true }
+conation_sha_count_client = { path = "../conation_sha_count_client", optional = true }
 share_permission_db_utils = { path = "../share_permission_db_utils", optional = true }
 sqlx = { workspace = true, optional = true }
 sqs_client = { path = "../sqs_client", default-features = false, features = [
@@ -113,9 +113,9 @@ aws-sdk-sqs = { workspace = true }
 dotenvy = { workspace = true }
 http-body-util = { workspace = true }
 kafka_util = { path = "../kafka_util" }
-macro_db_migrator = { path = "../macro_db_migrator" }
+conation_db_migrator = { path = "../conation_db_migrator" }
 # Examples need the Kafka adapter (outbound); the library itself only uses ports.
-macro_event_broker = { path = "../macro_event_broker" }
+conation_event_broker = { path = "../conation_event_broker" }
 mockall = { workspace = true }
 rdkafka = { workspace = true }
 model_user = { path = "../model_user" }

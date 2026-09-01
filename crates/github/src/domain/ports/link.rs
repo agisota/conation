@@ -6,7 +6,7 @@ use crate::domain::models::{
     EnrichedGithubPullRequest, GithubAccessToken, GithubError, GithubExchangeTokenResponse,
     GithubLink, GithubPullRequestDetails, GithubPullRequestRef, GithubUserInfo,
 };
-use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId};
+use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId};
 
 /// Repository for accessing github link data from the database.
 ///
@@ -20,7 +20,7 @@ pub trait GithubRepo: Send + Sync + 'static {
     /// Gets the github link by the macro user id
     fn get_github_link_by_user_id<'a>(
         &self,
-        macro_user_id: &MacroUserId<Lowercase<'a>>,
+        conation_user_id: &MacroUserId<Lowercase<'a>>,
     ) -> impl Future<Output = Result<GithubLink, Self::Err>> + Send;
 
     /// Gets the github link by the github user id

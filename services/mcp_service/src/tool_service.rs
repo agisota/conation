@@ -1,6 +1,6 @@
 use crate::markdown_images::{MarkdownImageResolver, tool_result_with_images};
 use ai_toolset::{AsyncToolCollection, RequestContext, ToolSet};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use rmcp::{
     handler::server::ServerHandler,
     model::{

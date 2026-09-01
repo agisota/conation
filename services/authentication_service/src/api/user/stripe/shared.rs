@@ -14,7 +14,7 @@ use utoipa::ToSchema;
 #[derive(Debug, Error)]
 pub enum StripeOperationError {
     #[error("Failed to parse user id")]
-    ParseId(#[from] macro_user_id::error::ParseErr),
+    ParseId(#[from] conation_user_id::error::ParseErr),
     #[error("Internal server error")]
     DbErr(#[from] sqlx::Error),
     #[error("User does not have a stripe id")]

@@ -41,7 +41,7 @@ const REBUILD_ATTEMPTS: usize = 4;
 /// unset dials, and the task serving the connection clears it on the way out,
 /// so "set" always means "somebody is serving, or about to be".
 pub struct Runtime {
-    macro_api: MacroApi,
+    conation_api: MacroApi,
     harness: Harness,
     live: Arc<AtomicBool>,
 }
@@ -49,9 +49,9 @@ pub struct Runtime {
 impl Runtime {
     /// A runtime that dials with the given credentials and spawns the given
     /// harness.
-    pub fn new(macro_api: MacroApi, harness: Harness) -> Self {
+    pub fn new(conation_api: MacroApi, harness: Harness) -> Self {
         Self {
-            macro_api,
+            conation_api,
             harness,
             live: Arc::new(AtomicBool::new(false)),
         }
@@ -69,8 +69,8 @@ impl Runtime {
             return Ok(());
         }
 
-        let url = self.macro_api.gateway_url();
-        let channel = match dial(&self.macro_api, &url, dial_strategy()).await {
+        let url = self.conation_api.gateway_url();
+        let channel = match dial(&self.conation_api, &url, dial_strategy()).await {
             Ok(channel) => channel,
             Err(error) => {
                 self.live.store(false, Ordering::Release);
@@ -81,7 +81,7 @@ impl Runtime {
         tokio::spawn(serve(
             url,
             channel,
-            self.macro_api.clone(),
+            self.conation_api.clone(),
             self.harness.clone(),
             Arc::clone(&self.live),
         ));
@@ -96,7 +96,7 @@ impl Runtime {
 async fn serve(
     gateway_url: String,
     channel: RuntimeChannel,
-    macro_api: MacroApi,
+    conation_api: MacroApi,
     harness: Harness,
     live: Arc<AtomicBool>,
 ) {
@@ -107,7 +107,7 @@ async fn serve(
         Ok(()) => tracing::info!("harness bridge ended"),
         Err(error) => {
             tracing::warn!(error = ?error, "harness bridge ended with an error");
-            rebuild(&gateway_url, &macro_api, &harness).await;
+            rebuild(&gateway_url, &conation_api, &harness).await;
         }
     }
     live.store(false, Ordering::Release);
@@ -115,11 +115,11 @@ async fn serve(
 
 /// Dial and serve again, as one retried operation: ending cleanly stops it, as
 /// does a gateway verdict no retry can change.
-async fn rebuild(gateway_url: &str, macro_api: &MacroApi, harness: &Harness) {
+async fn rebuild(gateway_url: &str, conation_api: &MacroApi, harness: &Harness) {
     let outcome = RetryIf::start(
         rebuild_strategy(),
         || async {
-            let channel = dial(macro_api, gateway_url, dial_strategy())
+            let channel = dial(conation_api, gateway_url, dial_strategy())
                 .await
                 .map_err(ServeError::Dial)?;
             tracing::info!("harness bridge restarting");
@@ -160,13 +160,13 @@ fn worth_rebuilding(error: &ServeError) -> bool {
 
 /// Dial the gateway, retrying on the failures a retry can fix.
 async fn dial(
-    macro_api: &MacroApi,
+    conation_api: &MacroApi,
     gateway_url: &str,
     strategy: impl IntoIterator<Item = Duration>,
 ) -> Result<RuntimeChannel, tungstenite::Error> {
     RetryIf::start(
         strategy,
-        || link::dial(gateway_url, &macro_api.bot_token, &macro_api.bot_scope),
+        || link::dial(gateway_url, &conation_api.bot_token, &conation_api.bot_scope),
         worth_redialing,
     )
     .await

@@ -52,14 +52,14 @@ fn every_queue_is_bound() {
 fn webhook_fifo_queue_uses_a_full_url_override() {
     let queue = QUEUES
         .iter()
-        .find(|queue| queue.name == macro_queues::WebhookEventQueue::LOCAL)
+        .find(|queue| queue.name == conation_queues::WebhookEventQueue::LOCAL)
         .expect("webhook event queue is cataloged");
 
     assert!(queue.name.ends_with(".fifo"));
     assert_eq!(queue.bindings.len(), 1);
     assert_eq!(
         queue.bindings[0].0,
-        macro_queues::WebhookEventQueue::OVERRIDE_ENV_VAR_NAME
+        conation_queues::WebhookEventQueue::OVERRIDE_ENV_VAR_NAME
     );
     assert!(matches!(queue.bindings[0].1, QueueForm::Url));
     assert_eq!(

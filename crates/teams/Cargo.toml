@@ -19,7 +19,7 @@ ai_tools = [
 ]
 axum = [
   "dep:axum",
-  "dep:macro_authorization",
+  "dep:conation_authorization",
   "dep:model-error-response",
   "dep:model_user",
   "dep:utoipa",
@@ -30,7 +30,7 @@ axum = [
 backfill_binary = [
   "channels/outbound",
   "dep:database_env_vars",
-  "dep:macro_entrypoint",
+  "dep:conation_entrypoint",
   "outbound",
   "ports",
 ]
@@ -66,14 +66,14 @@ chrono = { workspace = true }
 channels = { path = "../channels", default-features = false, features = ["ports"] }
 contacts = { path = "../contacts", default-features = false, optional = true }
 database_env_vars = { path = "../database_env_vars", optional = true }
-macro_authorization = { path = "../macro_authorization", optional = true, default-features = false, features = [
+conation_authorization = { path = "../conation_authorization", optional = true, default-features = false, features = [
   "axum",
 ] }
-macro_entrypoint = { path = "../macro_entrypoint", optional = true }
-macro_event_broker = { path = "../macro_event_broker", default-features = false }
-macro_event_topics = { path = "../macro_event_topics" }
-macro_user_id = { path = "../macro_user_id" }
-macro_uuid = { path = "../macro_uuid" }
+conation_entrypoint = { path = "../conation_entrypoint", optional = true }
+conation_event_broker = { path = "../conation_event_broker", default-features = false }
+conation_event_topics = { path = "../conation_event_topics" }
+conation_user_id = { path = "../conation_user_id" }
+conation_uuid = { path = "../conation_uuid" }
 models_permissions = { path = "../models_permissions" }
 non_empty = { path = "../non_empty" }
 roles_and_permissions = { path = "../roles_and_permissions", default-features = false, features = [
@@ -113,7 +113,7 @@ url = { workspace = true, optional = true }
 workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
-macro_db_migrator = { path = "../macro_db_migrator" }
+conation_db_migrator = { path = "../conation_db_migrator" }
 models_pagination = { path = "../models_pagination" }
 rootcause = { workspace = true }
 serde_json = { workspace = true }

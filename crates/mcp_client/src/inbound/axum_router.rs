@@ -9,7 +9,7 @@ use axum::{
     response::IntoResponse,
     routing::{delete, get, post, put},
 };
-use macro_authorization::{
+use conation_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
 };
 use model_error_response::ErrorResponse;
@@ -288,7 +288,7 @@ where
     let user = &authorization.authorization.user;
     let records = state
         .store
-        .list(&user.macro_user_id)
+        .list(&user.conation_user_id)
         .await
         .map_err(anyhow::Error::from)?;
 
@@ -324,7 +324,7 @@ where
 {
     let user = &authorization.authorization.user;
     let record = McpServerRecord {
-        user_id: user.macro_user_id.clone(),
+        user_id: user.conation_user_id.clone(),
         url: body.url,
         server_name: body.server_name,
         credentials: None,
@@ -372,7 +372,7 @@ where
     let user = &authorization.authorization.user;
     let mut record = state
         .store
-        .load(&user.macro_user_id, &body.url)
+        .load(&user.conation_user_id, &body.url)
         .await
         .map_err(anyhow::Error::from)?
         .ok_or(McpHandlerErr::NotFound)?;
@@ -421,7 +421,7 @@ where
     let user = &authorization.authorization.user;
     state
         .store
-        .delete(&user.macro_user_id, &params.url)
+        .delete(&user.conation_user_id, &params.url)
         .await
         .map_err(anyhow::Error::from)?;
 
@@ -455,7 +455,7 @@ where
     let user = &authorization.authorization.user;
     let authorization_url = state
         .oauth
-        .start_authorization(&user.macro_user_id, &body.server_url, &body.server_name)
+        .start_authorization(&user.conation_user_id, &body.server_url, &body.server_name)
         .await?;
 
     Ok(Json(StartAuthResponse { authorization_url }))

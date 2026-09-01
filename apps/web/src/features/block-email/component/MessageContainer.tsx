@@ -13,7 +13,7 @@ import { UserIcon, type UserIconProps } from '@core/component/UserIcon';
 import { VideoPreview } from '@core/component/VideoPreview';
 import { fileTypeToBlockName } from '@core/constant/allBlocks';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
-import { Telemetry } from '@macro-inc/observability';
+import { Telemetry } from '@conation/observability';
 import { refetchSoupEntity } from '@queries/soup/cache';
 import { emailClient } from '@service-email/client';
 import type { ApiMessage, Attachment } from '@service-email/generated/schemas';

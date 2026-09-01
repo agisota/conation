@@ -1,6 +1,6 @@
-#[macro_export]
+#[conation_export]
 /// A tuple struct with a [`NonEmpty`] collection and some helper methods
-macro_rules! non_empty_collection {
+conation_rules! non_empty_collection {
     (
         $(#[$meta:meta])*
         $vis:vis struct $name:ident $(<$lt:lifetime>)? ($item:ty);

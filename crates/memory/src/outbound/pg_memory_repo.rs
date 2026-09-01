@@ -2,8 +2,8 @@
 mod test;
 
 use crate::domain::{Memory, MemoryRepo, Result, ports::MemoryRecord};
-use macro_user_id::user_id::MacroUserIdStr;
-use macro_uuid::Uuid;
+use conation_user_id::user_id::MacroUserIdStr;
+use conation_uuid::Uuid;
 use sqlx::PgPool;
 
 #[derive(Clone)]
@@ -19,7 +19,7 @@ impl PgMemoryRepo {
 
 impl MemoryRepo for PgMemoryRepo {
     async fn save_memory(&self, memory: &Memory, user: MacroUserIdStr<'_>) -> Result<Uuid> {
-        let id = macro_uuid::generate_uuid_v7();
+        let id = conation_uuid::generate_uuid_v7();
         let row = sqlx::query!(
             r#"
             INSERT INTO memory (id, user_id, memory)

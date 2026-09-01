@@ -7,14 +7,14 @@ version = "0.1.0"
 [dependencies]
 anyhow = { workspace = true }
 aws-sdk-sqs = { workspace = true }
-macro_aws_config = { path = "../../crates/macro_aws_config" }
+conation_aws_config = { path = "../../crates/conation_aws_config" }
 aws_lambda_events = { workspace = true, features = ["eventbridge"] }
 chrono = { workspace = true }
 lambda_runtime = { workspace = true }
-macro_entrypoint = { path = "../../crates/macro_entrypoint" }
-macro_env = { path = "../../crates/macro_env" }
-macro_env_var = { path = "../../crates/macro_env_var" }
-macro_queues = { path = "../../crates/macro_queues" }
+conation_entrypoint = { path = "../../crates/conation_entrypoint" }
+conation_env = { path = "../../crates/conation_env" }
+conation_env_var = { path = "../../crates/conation_env_var" }
+conation_queues = { path = "../../crates/conation_queues" }
 models_email = { path = "../../crates/models_email" }
 sqlx = { workspace = true }
 sqs_client = { path = "../../crates/sqs_client" }
@@ -26,4 +26,4 @@ workspace-hack = { version = "0.1", path = "../../crates/workspace-hack" }
 ignored = []
 
 [dev-dependencies]
-macro_db_migrator = { path = "../../crates/macro_db_migrator" }
+conation_db_migrator = { path = "../../crates/conation_db_migrator" }

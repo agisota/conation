@@ -26,8 +26,8 @@ use agent_session::domain::ports::{
 use agent_session::domain::service::AgentSessionServiceImpl;
 use agent_session::testing::InMemoryAgentSessionRepo;
 use bot_id::BotId;
-use macro_user_id::user_id::MacroUserIdStr;
-use macro_uuid::Uuid;
+use conation_user_id::user_id::MacroUserIdStr;
+use conation_uuid::Uuid;
 
 use super::AgentHarnessService;
 use crate::domain::error::HarnessError;
@@ -55,11 +55,11 @@ fn staff_sender() -> MacroUserIdStr<'static> {
 }
 
 fn open_command() -> OpenSession {
-    let thread_id = macro_uuid::generate_uuid_v7();
+    let thread_id = conation_uuid::generate_uuid_v7();
     OpenSession {
-        bot_id: BotId::new_from_uuid(macro_uuid::generate_uuid_v7()),
+        bot_id: BotId::new_from_uuid(conation_uuid::generate_uuid_v7()),
         origin: MentionOrigin {
-            channel_id: macro_uuid::generate_uuid_v7(),
+            channel_id: conation_uuid::generate_uuid_v7(),
             thread_id,
             message_id: thread_id,
             sender: sender(),
@@ -75,9 +75,9 @@ fn forward_message(content: &str) -> DeliverAction {
         content,
         Some(sender()),
         Some(AnnounceOrigin {
-            channel_id: macro_uuid::Uuid::from_u128(0xf0),
-            thread_id: macro_uuid::Uuid::from_u128(0xf1),
-            message_id: macro_uuid::Uuid::from_u128(0xf2),
+            channel_id: conation_uuid::Uuid::from_u128(0xf0),
+            thread_id: conation_uuid::Uuid::from_u128(0xf1),
+            message_id: conation_uuid::Uuid::from_u128(0xf2),
         }),
     )
 }
@@ -1187,7 +1187,7 @@ async fn a_prompt_through_control_resumes_a_disconnected_session() {
 fn open_external_request(workspace: &str) -> OpenExternalAgentSession {
     OpenExternalAgentSession {
         instructions: None,
-        bot_id: BotId::new_from_uuid(macro_uuid::generate_uuid_v7()),
+        bot_id: BotId::new_from_uuid(conation_uuid::generate_uuid_v7()),
         workspace: workspace.to_owned(),
         repo_url: None,
         owner: sender(),
@@ -1527,9 +1527,9 @@ async fn an_external_open_with_a_mention_announces_as_the_sessions_bot() {
     let mut request = open_external_request("/srv/agent");
     let bot = request.bot_id;
     request.thread = Some(agent_session::domain::ports::SessionThread {
-        channel_id: macro_uuid::Uuid::from_u128(0xC1),
-        thread_id: macro_uuid::Uuid::from_u128(0xC2),
-        message_id: macro_uuid::Uuid::from_u128(0xC2),
+        channel_id: conation_uuid::Uuid::from_u128(0xC1),
+        thread_id: conation_uuid::Uuid::from_u128(0xC2),
+        message_id: conation_uuid::Uuid::from_u128(0xC2),
         content: "@opencode fix the flaky test".to_owned(),
     });
 
@@ -1546,7 +1546,7 @@ async fn an_external_open_with_a_mention_announces_as_the_sessions_bot() {
     assert_eq!(announced[0].bot_id, bot);
     assert_eq!(
         announced[0].origin_channel_id,
-        macro_uuid::Uuid::from_u128(0xC1)
+        conation_uuid::Uuid::from_u128(0xC1)
     );
     assert_eq!(
         announced[0].prompted_content,
@@ -1572,9 +1572,9 @@ async fn an_external_prompt_announce_posts_into_the_observed_origin() {
             crate::domain::model::AnnouncePrompt {
                 bot_id: bot,
                 origin: AnnounceOrigin {
-                    channel_id: macro_uuid::Uuid::from_u128(0xAA),
-                    thread_id: macro_uuid::Uuid::from_u128(0xAB),
-                    message_id: macro_uuid::Uuid::from_u128(0xAC),
+                    channel_id: conation_uuid::Uuid::from_u128(0xAA),
+                    thread_id: conation_uuid::Uuid::from_u128(0xAB),
+                    message_id: conation_uuid::Uuid::from_u128(0xAC),
                 },
                 content: "follow-up from the channel".to_owned(),
                 sender: sender(),
@@ -1589,11 +1589,11 @@ async fn an_external_prompt_announce_posts_into_the_observed_origin() {
     assert_eq!(announced[0].bot_id, bot);
     assert_eq!(
         announced[0].origin_channel_id,
-        macro_uuid::Uuid::from_u128(0xAA)
+        conation_uuid::Uuid::from_u128(0xAA)
     );
     assert_eq!(
         announced[0].origin_thread_id,
-        macro_uuid::Uuid::from_u128(0xAB)
+        conation_uuid::Uuid::from_u128(0xAB)
     );
     assert_eq!(announced[0].prompted_content, "follow-up from the channel");
 }
@@ -1610,11 +1610,11 @@ async fn an_announce_whose_bot_does_not_own_the_session_is_dropped() {
         .announce_external_prompt(
             session.id,
             crate::domain::model::AnnouncePrompt {
-                bot_id: BotId::new_from_uuid(macro_uuid::generate_uuid_v7()),
+                bot_id: BotId::new_from_uuid(conation_uuid::generate_uuid_v7()),
                 origin: AnnounceOrigin {
-                    channel_id: macro_uuid::Uuid::from_u128(0xAA),
-                    thread_id: macro_uuid::Uuid::from_u128(0xAB),
-                    message_id: macro_uuid::Uuid::from_u128(0xAC),
+                    channel_id: conation_uuid::Uuid::from_u128(0xAA),
+                    thread_id: conation_uuid::Uuid::from_u128(0xAB),
+                    message_id: conation_uuid::Uuid::from_u128(0xAC),
                 },
                 content: "not yours".to_owned(),
                 sender: sender(),

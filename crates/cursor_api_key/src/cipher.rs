@@ -114,17 +114,17 @@ pub struct EncryptedCursorApiKey {
 /// Encrypts and decrypts a user's Cursor API key.
 #[async_trait::async_trait]
 pub trait CursorApiKeyCipher: Send + Sync {
-    /// Encrypt `key` so that only `macro_user_id` can decrypt it.
+    /// Encrypt `key` so that only `conation_user_id` can decrypt it.
     async fn encrypt(
         &self,
-        macro_user_id: &str,
+        conation_user_id: &str,
         key: CursorApiKey,
     ) -> Result<EncryptedCursorApiKey, CursorApiKeyCipherError>;
 
-    /// Decrypt a key belonging to `macro_user_id`.
+    /// Decrypt a key belonging to `conation_user_id`.
     async fn decrypt(
         &self,
-        macro_user_id: &str,
+        conation_user_id: &str,
         encrypted: &EncryptedCursorApiKey,
     ) -> Result<CursorApiKey, CursorApiKeyCipherError>;
 }
@@ -200,10 +200,10 @@ where
 {
     async fn encrypt(
         &self,
-        macro_user_id: &str,
+        conation_user_id: &str,
         key: CursorApiKey,
     ) -> Result<EncryptedCursorApiKey, CursorApiKeyCipherError> {
-        let owner = KeyOwner::new(macro_user_id)?;
+        let owner = KeyOwner::new(conation_user_id)?;
         let (key_ciphertext, kms_key_id) = self
             .kms
             .encrypt(owner.encryption_context(), key.expose().as_bytes())
@@ -217,7 +217,7 @@ where
 
     async fn decrypt(
         &self,
-        macro_user_id: &str,
+        conation_user_id: &str,
         encrypted: &EncryptedCursorApiKey,
     ) -> Result<CursorApiKey, CursorApiKeyCipherError> {
         // Checked before the KMS call: a version this build cannot read is our
@@ -227,7 +227,7 @@ where
                 encrypted.encryption_version,
             ));
         }
-        let owner = KeyOwner::new(macro_user_id)?;
+        let owner = KeyOwner::new(conation_user_id)?;
         let plaintext = self
             .kms
             .decrypt(
@@ -248,16 +248,16 @@ where
 /// slightly different ways in two places — a context that differs by whitespace
 /// or case is a row nothing can ever decrypt again.
 struct KeyOwner {
-    macro_user_id: String,
+    conation_user_id: String,
 }
 
 impl KeyOwner {
-    fn new(macro_user_id: &str) -> Result<Self, CursorApiKeyCipherError> {
-        let macro_user_id = macro_user_id.trim().to_owned();
-        if macro_user_id.is_empty() || macro_user_id.contains('\0') {
+    fn new(conation_user_id: &str) -> Result<Self, CursorApiKeyCipherError> {
+        let conation_user_id = conation_user_id.trim().to_owned();
+        if conation_user_id.is_empty() || conation_user_id.contains('\0') {
             return Err(CursorApiKeyCipherError::MalformedOwner);
         }
-        Ok(Self { macro_user_id })
+        Ok(Self { conation_user_id })
     }
 
     /// The context KMS requires to match on decrypt.
@@ -272,7 +272,7 @@ impl KeyOwner {
                 "macro:encryption-version".to_owned(),
                 ENCRYPTION_VERSION.to_string(),
             ),
-            ("macro:user-id".to_owned(), self.macro_user_id.clone()),
+            ("macro:user-id".to_owned(), self.conation_user_id.clone()),
         ])
     }
 }

@@ -16,8 +16,8 @@ use bytes::Bytes;
 use http::header::{self, HeaderMap, HeaderName};
 use http::{HeaderValue, Method};
 use http_body_util::combinators::UnsyncBoxBody;
-use macro_user_id::email::ReadEmailParts;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::email::ReadEmailParts;
+use conation_user_id::user_id::MacroUserIdStr;
 use rand::RngCore;
 use sha2::{Digest, Sha256};
 use std::fmt;
@@ -209,7 +209,7 @@ const STAFF_EMAIL_DOMAIN: &str = "macro.com";
 /// trust, "owned by somebody @macro.com" is the whole admission policy. In
 /// the domain rather than deployment configuration so it cannot be switched
 /// off by an unset env var.
-pub fn is_macro_staff(user: &MacroUserIdStr<'_>) -> bool {
+pub fn is_conation_staff(user: &MacroUserIdStr<'_>) -> bool {
     user.email_part().domain_part() == STAFF_EMAIL_DOMAIN
 }
 

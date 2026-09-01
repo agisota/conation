@@ -1,6 +1,6 @@
 use super::*;
 
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use sqlx::{Pool, Postgres};
 
 fn test_user(email: &str) -> MacroUserIdStr<'static> {

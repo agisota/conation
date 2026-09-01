@@ -26,13 +26,13 @@ lexical_client = { path = "../lexical_client" }
 dashmap = { workspace = true }
 futures = { workspace = true }
 kafka_util = { path = "../kafka_util" }
-macro_env_var = { path = "../macro_env_var" }
+conation_env_var = { path = "../conation_env_var" }
 pipedream_mcp = { path = "../pipedream_mcp" }
-macro_event_broker = { path = "../macro_event_broker", features = ["outbound"] }
-macro_authorization = { path = "../macro_authorization", features = ["axum"] }
-macro_tower_layers = { path = "../macro_tower_layers" }
-macro_user_id = { path = "../macro_user_id" }
-macro_uuid = { path = "../macro_uuid" }
+conation_event_broker = { path = "../conation_event_broker", features = ["outbound"] }
+conation_authorization = { path = "../conation_authorization", features = ["axum"] }
+conation_tower_layers = { path = "../conation_tower_layers" }
+conation_user_id = { path = "../conation_user_id" }
+conation_uuid = { path = "../conation_uuid" }
 reqwest = { workspace = true }
 rootcause = { workspace = true }
 rustls = { workspace = true }

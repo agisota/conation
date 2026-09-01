@@ -13,15 +13,15 @@ export const stack = pulumi.getStack();
 
 export const config = new pulumi.Config();
 
-export const MACRO_ORG_NAME = 'macro-inc';
+export const MACRO_ORG_NAME = 'conation-dev';
 
 export const RDS_PORT = 5432;
 
-export const PULUMI_AUTHORIZER_STACK = 'macro-authorizer-lambda';
+export const PULUMI_AUTHORIZER_STACK = 'conation-authorizer-lambda';
 
 export const SERVICE_NAME = 'doc-storage';
 
-export const BASE_DOMAIN = 'macro.com';
+export const BASE_DOMAIN = 'conation.dev';
 
 export const SERVICE_DOMAIN_NAME = `cloud-storage${
   stack === 'dev' ? '-dev' : ''

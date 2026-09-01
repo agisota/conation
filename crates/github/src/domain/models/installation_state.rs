@@ -2,7 +2,7 @@
 
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use hmac::{Hmac, Mac};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 use uuid::Uuid;
@@ -16,7 +16,7 @@ type HmacSha256 = Hmac<Sha256>;
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct InstallationState {
     /// The Macro user who began the installation flow.
-    pub macro_user_id: MacroUserIdStr<'static>,
+    pub conation_user_id: MacroUserIdStr<'static>,
     /// The team to associate with the installation, or `None` for a personal installation.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub team_id: Option<Uuid>,

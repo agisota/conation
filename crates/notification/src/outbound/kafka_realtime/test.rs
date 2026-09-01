@@ -1,10 +1,10 @@
 use std::sync::{Arc, Mutex};
 
 use chrono::Utc;
-use macro_event_broker::{
+use conation_event_broker::{
     EventBrokerError, EventPublisher, MacroEvent, MacroEventBrokerService, Spawner,
 };
-use macro_event_topics::Topic;
+use conation_event_topics::Topic;
 use model_entity::EntityType;
 use serde::ser::Error as _;
 use uuid::Uuid;

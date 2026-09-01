@@ -1,4 +1,4 @@
-use macro_user_id::email::Email;
+use conation_user_id::email::Email;
 use model::authentication::webhooks::User as FusionAuthWebhookUser;
 
 use super::{identity_provider_name, support_channel_name};

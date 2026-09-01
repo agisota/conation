@@ -4,7 +4,7 @@
 //! joining user and their teammates without depending on a particular queue or
 //! contacts service implementation.
 
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use std::convert::Infallible;
 
 /// Enqueues contact connections created when a user joins a team.

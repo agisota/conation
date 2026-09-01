@@ -1,11 +1,11 @@
 use anyhow::Context;
-use macro_env_var::env_vars;
+use conation_env_var::env_vars;
 
 /// Holds all configuration loaded from environment variables.
 pub struct Config {
     /// Comma-separated macro IDs to backfill. When unset, every user with an
     /// email link is processed.
-    pub macro_ids: Option<String>,
+    pub conation_ids: Option<String>,
     pub database_url: String,
     /// Number of users processed concurrently. Defaults to 10, capped at 50
     /// to bound DB connection usage.
@@ -31,7 +31,7 @@ impl Config {
         };
 
         Ok(Self {
-            macro_ids: MacroIds::new().ok().map(|v| v.to_string()),
+            conation_ids: MacroIds::new().ok().map(|v| v.to_string()),
             database_url: DatabaseUrl::new()
                 .context("DATABASE_URL not set")?
                 .to_string(),

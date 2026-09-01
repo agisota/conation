@@ -9,7 +9,7 @@ async-graphql = { workspace = true, features = ["dataloader"] }
 chrono = { workspace = true }
 entity_access = { path = "../entity_access", default-features = false }
 graphql_common = { path = "../graphql_common" }
-macro_user_id = { path = "../macro_user_id" }
+conation_user_id = { path = "../conation_user_id" }
 model-entity = { path = "../model-entity" }
 models_properties = { path = "../models_properties" }
 properties = { path = "../properties", default-features = false, features = [

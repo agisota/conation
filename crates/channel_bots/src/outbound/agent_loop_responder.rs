@@ -6,7 +6,7 @@ use agent::{AgentLoop, StreamPart, to_rig_messages};
 use ai_tools::{AiToolSet, ToolServiceContext, ToolSetWithPrompt};
 use async_trait::async_trait;
 use futures::StreamExt;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 
 use crate::domain::ports::AgentResponder;
 

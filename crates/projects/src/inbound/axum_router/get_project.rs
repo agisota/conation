@@ -5,7 +5,7 @@ use entity_access::{
     domain::{models::ViewAccessLevel, ports::EntityAccessService},
     inbound::axum_extractors::ProjectAccessLevelExtractor,
 };
-use macro_authorization::{MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal};
 use model::project::response::{GetProjectContentResponse, GetProjectResponse};
 
 use super::ProjectRouterState;
@@ -24,7 +24,7 @@ use crate::domain::{models::ProjectError, ports::ProjectService};
 )]
 #[tracing::instrument(
     skip(state, user, access),
-    fields(user_id = ?user.authorization.user.macro_user_id),
+    fields(user_id = ?user.authorization.user.conation_user_id),
     err
 )]
 pub async fn get_project_handler<T, Svc, Auth>(
@@ -58,7 +58,7 @@ where
 )]
 #[tracing::instrument(
     skip(state, user, access),
-    fields(user_id = ?user.authorization.user.macro_user_id),
+    fields(user_id = ?user.authorization.user.conation_user_id),
     err
 )]
 pub async fn get_project_content_handler<T, Svc, Auth>(

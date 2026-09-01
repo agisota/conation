@@ -7,8 +7,8 @@ use item_filters::ast::{
     EntityFilterAst, calendar_event::CalendarEventLiteral, chat::ChatLiteral,
     document::DocumentLiteral,
 };
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
-use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use models_grouping::date_bucket_sql_key;
 use models_grouping::{GroupingConfig, date_bucket_order};
 use models_pagination::{Identify, Query, SimpleSortMethod};
@@ -62,7 +62,7 @@ fn property_join_includes_definition_id() {
 
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("mixed_items_expanded")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -142,7 +142,7 @@ async fn property_grouping_uses_canonical_task_entity_type(
 
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("mixed_items_expanded")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -195,7 +195,7 @@ async fn test_grouped_by_entity_type(pool: Pool<Postgres>) -> anyhow::Result<()>
 
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("mixed_items_expanded")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -238,7 +238,7 @@ async fn test_grouped_by_project(pool: Pool<Postgres>) -> anyhow::Result<()> {
 
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("mixed_items_expanded")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -307,7 +307,7 @@ async fn test_grouped_single_group_filter(pool: Pool<Postgres>) -> anyhow::Resul
 
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("mixed_items_expanded")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -324,7 +324,7 @@ async fn tagged_calendar_event_participates_in_grouped_property_soup(
     sqlx::query!(
         r#"
         INSERT INTO email_links (
-            id, macro_id, fusionauth_user_id, email_address, provider
+            id, conation_id, fusionauth_user_id, email_address, provider
         )
         VALUES ($1, $2, $2, 'calendar-grouping@example.com', 'GMAIL')
         "#,
@@ -411,7 +411,7 @@ async fn tagged_calendar_event_participates_in_grouped_property_soup(
 /// ("UNION types text and boolean cannot be matched").
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("mixed_items_expanded")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -456,7 +456,7 @@ async fn grouped_soup_runs_when_chat_arm_excluded(pool: Pool<Postgres>) -> anyho
 /// "UNION types text and bigint cannot be matched".
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("mixed_items_expanded")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -501,7 +501,7 @@ async fn grouped_soup_runs_when_document_arm_excluded(pool: Pool<Postgres>) -> a
 /// hand-numbered user id, failing with "operator does not exist: text = uuid".
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("mixed_items_expanded")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -547,7 +547,7 @@ async fn grouped_soup_runs_when_calendar_arm_excluded(pool: Pool<Postgres>) -> a
 /// it survives this query's hand-numbered parameters.
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("mixed_items_expanded")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -562,7 +562,7 @@ async fn grouped_soup_renders_bind_bearing_calendar_literals(
     sqlx::query!(
         r#"
         INSERT INTO email_links (
-            id, macro_id, fusionauth_user_id, email_address, provider
+            id, conation_id, fusionauth_user_id, email_address, provider
         )
         VALUES ($1, $2, $2, 'calendar-binds-soup@example.com', 'GMAIL')
         "#,
@@ -649,7 +649,7 @@ async fn grouped_soup_renders_bind_bearing_calendar_literals(
 
 #[sqlx::test(
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("mixed_items_expanded")
     ),
     migrator = "MACRO_DB_MIGRATIONS"
@@ -666,7 +666,7 @@ async fn grouped_soup_filters_calendar_events_by_notification_done(
     sqlx::query!(
         r#"
         INSERT INTO email_links (
-            id, macro_id, fusionauth_user_id, email_address, provider
+            id, conation_id, fusionauth_user_id, email_address, provider
         )
         VALUES ($1, $2, $2, 'calendar-notif-soup@example.com', 'GMAIL')
         "#,

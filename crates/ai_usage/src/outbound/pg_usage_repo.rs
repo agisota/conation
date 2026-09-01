@@ -6,7 +6,7 @@ mod test;
 use crate::domain::{
     AiFeature, CompletionUsage, Price, Result, Usage, UsageApiParams, UsageError, UsageRepo,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use sqlx::PgPool;
 
 /// Postgres-backed [`UsageRepo`].
@@ -24,7 +24,7 @@ impl PgUsageRepo {
 
 impl UsageRepo for PgUsageRepo {
     async fn insert_usage(&self, usage: &CompletionUsage) -> Result<()> {
-        let id = macro_uuid::generate_uuid_v7();
+        let id = conation_uuid::generate_uuid_v7();
         let (per_in, per_out, total) = match &usage.cost.price {
             Some(p) => (
                 Some(p.price_per_million_in),

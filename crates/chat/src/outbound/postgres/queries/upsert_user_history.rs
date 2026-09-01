@@ -1,6 +1,6 @@
 //! Upsert a chat entry in the user's history.
 
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use sqlx::{Postgres, Transaction};
 
 /// Record that the user accessed this chat in their history.

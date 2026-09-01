@@ -17,11 +17,11 @@ use entity_access::domain::models::{
     ViewAccessLevel,
 };
 use graphql_common::GraphqlRequestParts;
-use macro_authorization::{
+use conation_authorization::{
     INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_USER_ID_HEADER, InternalIdentityClaims,
     MacroAuthorizationError, MacroAuthorizationService, MacroAuthorizationState,
 };
-use macro_user_id::{
+use conation_user_id::{
     email::EmailStr,
     lowercased::Lowercase,
     user_id::{MacroUserId, MacroUserIdStr},
@@ -299,13 +299,13 @@ fn test_email_err() -> EmailErr {
 impl EmailUserService for CountingEmailService {
     async fn get_user_email_labels(
         &self,
-        macro_id: MacroUserIdStr<'static>,
+        conation_id: MacroUserIdStr<'static>,
     ) -> Result<Vec<LinkLabel>, EmailErr> {
         self.user_label_calls.fetch_add(1, Ordering::SeqCst);
         self.user_catalog_identities
             .lock()
             .expect("user catalog identities lock")
-            .push(macro_id);
+            .push(conation_id);
         Ok(vec![LinkLabel {
             id: Uuid::from_u128(501),
             link_id: Uuid::from_u128(502),
@@ -320,16 +320,16 @@ impl EmailUserService for CountingEmailService {
 
     async fn get_user_email_links(
         &self,
-        macro_id: MacroUserIdStr<'static>,
+        conation_id: MacroUserIdStr<'static>,
     ) -> Result<Vec<UserEmailLink>, EmailErr> {
         self.user_link_calls.fetch_add(1, Ordering::SeqCst);
         self.user_catalog_identities
             .lock()
             .expect("user catalog identities lock")
-            .push(macro_id);
+            .push(conation_id);
         Ok(vec![UserEmailLink {
             id: Uuid::from_u128(502),
-            macro_id: MacroUserIdStr::try_from_email("owner@example.com").unwrap(),
+            conation_id: MacroUserIdStr::try_from_email("owner@example.com").unwrap(),
             email_address: EmailStr::try_from("inbox@example.com".to_owned()).unwrap(),
             photo_url: Some("https://example.com/inbox.png".to_owned()),
             provider: UserProvider::Gmail,
@@ -356,24 +356,24 @@ impl EmailService for CountingEmailService {
         Err(test_email_err())
     }
 
-    async fn get_link_by_auth_id_and_macro_id(
+    async fn get_link_by_auth_id_and_conation_id(
         &self,
         _auth_id: &str,
-        _macro_id: MacroUserIdStr<'_>,
+        _conation_id: MacroUserIdStr<'_>,
     ) -> Result<Option<Link>, EmailErr> {
         Err(test_email_err())
     }
 
-    async fn get_link_by_macro_id(
+    async fn get_link_by_conation_id(
         &self,
-        _macro_id: MacroUserIdStr<'_>,
+        _conation_id: MacroUserIdStr<'_>,
     ) -> Result<Option<Link>, EmailErr> {
         Err(test_email_err())
     }
 
-    async fn get_inboxes_for_macro_id(
+    async fn get_inboxes_for_conation_id(
         &self,
-        _macro_id: MacroUserIdStr<'_>,
+        _conation_id: MacroUserIdStr<'_>,
     ) -> Result<Vec<Link>, EmailErr> {
         self.inbox_calls.fetch_add(1, Ordering::SeqCst);
         Ok(Vec::new())
@@ -381,7 +381,7 @@ impl EmailService for CountingEmailService {
 
     async fn get_owned_link_for_thread(
         &self,
-        _macro_id: MacroUserIdStr<'_>,
+        _conation_id: MacroUserIdStr<'_>,
         _thread_id: Uuid,
     ) -> Result<Option<Link>, EmailErr> {
         Err(test_email_err())
@@ -439,19 +439,19 @@ impl EmailService for CountingEmailService {
 
     async fn mark_thread_seen(
         &self,
-        macro_id: MacroUserIdStr<'static>,
+        conation_id: MacroUserIdStr<'static>,
         thread_id: Uuid,
     ) -> Result<(), EmailErr> {
         self.seen_mutation_calls
             .lock()
             .expect("seen mutation calls lock")
-            .push((macro_id, thread_id));
+            .push((conation_id, thread_id));
         Ok(())
     }
 
     async fn update_thread_labels_for_user(
         &self,
-        macro_id: MacroUserIdStr<'static>,
+        conation_id: MacroUserIdStr<'static>,
         thread_id: Uuid,
         label_id: Uuid,
         add: bool,
@@ -459,7 +459,7 @@ impl EmailService for CountingEmailService {
         self.label_mutation_calls
             .lock()
             .expect("label mutation calls lock")
-            .push((macro_id, thread_id, label_id, add));
+            .push((conation_id, thread_id, label_id, add));
         Ok(UpdateThreadLabelsResult {
             successful_ids: Vec::new(),
             failed_ids: Vec::new(),

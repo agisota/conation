@@ -1,8 +1,8 @@
 use crate::outbound::pg_soup_repo::unexpanded::{
     by_cursor::unexpanded_generic_cursor_soup, by_ids::unexpanded_soup_by_ids,
 };
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
-use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use model_entity::EntityType;
 use models_pagination::Identify;
 use models_pagination::{PaginateOn, Query, SimpleSortMethod};
@@ -15,7 +15,7 @@ use uuid::Uuid;
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("simple_items")
     )
 )]
@@ -98,7 +98,7 @@ async fn test_unexpanded_generic_sorting_methods(pool: Pool<Postgres>) -> anyhow
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("mixed_items_unexpanded")
     )
 )]
@@ -215,7 +215,7 @@ async fn test_unexpanded_generic_mixed_types_sorting(pool: Pool<Postgres>) -> an
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("mixed_items_unexpanded_history")
     )
 )]
@@ -285,7 +285,7 @@ async fn test_get_user_items_unexpanded_cursor(pool: Pool<Postgres>) -> anyhow::
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("mixed_items_unexpanded")
     )
 )]
@@ -329,7 +329,7 @@ async fn test_unexpanded_soup_by_ids(pool: Pool<Postgres>) {
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("mixed_items_unexpanded")
     )
 )]
@@ -362,7 +362,7 @@ async fn it_should_be_empty(pool: Pool<Postgres>) {
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("simple_items")
     )
 )]
@@ -405,7 +405,7 @@ async fn test_unexpanded_soup_by_ids_simple(pool: Pool<Postgres>) {
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("mixed_items_unexpanded_history")
     )
 )]
@@ -442,7 +442,7 @@ async fn test_unexpanded_soup_by_ids_access_control(pool: Pool<Postgres>) -> any
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(
-        path = "../../../../../macro_db_client/fixtures",
+        path = "../../../../../conation_db_client/fixtures",
         scripts("tasks_with_is_completed")
     )
 )]

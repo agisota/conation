@@ -14,7 +14,7 @@ agent-client-protocol = { workspace = true }
 agent = { path = "../agent" }
 ai_usage = { path = "../ai_usage" }
 dashmap = { workspace = true }
-macro_uuid = { path = "../macro_uuid" }
+conation_uuid = { path = "../conation_uuid" }
 mockall = { workspace = true, optional = true }
 agent_fold = { path = "../agent_fold" }
 agent_runtime_protocol = { path = "../agent_runtime_protocol", features = ["utoipa"] }
@@ -28,11 +28,11 @@ entity_access = { path = "../entity_access", default-features = false, features 
 entity_access_db_utils = { path = "../entity_access_db_utils" }
 model-entity = { path = "../model-entity" }
 clap = { workspace = true }
-macro_authorization = { path = "../macro_authorization", default-features = false, features = [
+conation_authorization = { path = "../conation_authorization", default-features = false, features = [
   "axum",
 ] }
-macro_service_urls = { path = "../macro_service_urls" }
-macro_user_id =  { path = "../macro_user_id", features = ["sqlx"] }
+conation_service_urls = { path = "../conation_service_urls" }
+conation_user_id =  { path = "../conation_user_id", features = ["sqlx"] }
 utoipa = { workspace = true }
 rootcause = { workspace = true }
 sqlx = { workspace = true }
@@ -53,7 +53,7 @@ bot_id = { path = "../bot_id", features = ["test-utils"] }
 non_empty = { path = "../non_empty" }
 agent_fold = { path = "../agent_fold", features = ["test-utils"] }
 axum = { workspace = true, features = ["ws"] }
-macro_db_migrator = { path = "../macro_db_migrator" }
+conation_db_migrator = { path = "../conation_db_migrator" }
 tokio = { workspace = true, features = ["fs", "io-std", "io-util", "macros", "net", "rt-multi-thread", "time"] }
 tokio-tungstenite = { workspace = true }
 tower = { workspace = true, features = ["util"] }

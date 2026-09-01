@@ -13,7 +13,7 @@ pub async fn handle_docx_unzip_failure(
     function_name: &str,
     document_id: &str,
 ) -> anyhow::Result<()> {
-    let result = macro_db_client::docx_unzip::get_job_for_docx_upload(&db, document_id).await?;
+    let result = conation_db_client::docx_unzip::get_job_for_docx_upload(&db, document_id).await?;
 
     if let Some((job_id, job_type)) = result {
         tracing::trace!(document_id=?document_id, "docx unzip failed");

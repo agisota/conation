@@ -11,14 +11,14 @@ use crate::{
     },
 };
 use entity_mutation::EntityMutationActor;
-use macro_event_broker::MacroEventBroker;
-use macro_sha_count_client::Redis;
+use conation_event_broker::MacroEventBroker;
+use conation_sha_count_client::Redis;
 use model_entity::{Entity, EntityType};
 use models_permissions::share_permission::UpdateSharePermissionRequestV2;
 use sqlx::PgPool;
 
 /// Wrap a legacy client failure as an internal lifecycle error.
-macro_rules! internal {
+conation_rules! internal {
     ($error:expr) => {
         LifecycleError::Internal(rootcause::report!($error).into())
     };
@@ -63,7 +63,7 @@ impl<B: MacroEventBroker> EntityLifecycleService for DssEntityLifecycleAdapter<B
         // middleware's get-or-create so a first-time share succeeds. The
         // caller has already proven Owner access, so the thread exists.
         let permission =
-            macro_middleware::cloud_storage::thread::ensure_thread_exists::insert_thread_share_permissions(
+            conation_middleware::cloud_storage::thread::ensure_thread_exists::insert_thread_share_permissions(
                 &self.db,
                 &entity.entity_id,
             )
@@ -72,7 +72,7 @@ impl<B: MacroEventBroker> EntityLifecycleService for DssEntityLifecycleAdapter<B
         let thread_id = uuid::Uuid::parse_str(&entity.entity_id)
             .map_err(|error| LifecycleError::InvalidInput(format!("invalid thread id: {error}")))?;
         let mut transaction = self.db.begin().await.map_err(|error| internal!(error))?;
-        macro_db_client::share_permission::edit::edit_thread_permission(
+        conation_db_client::share_permission::edit::edit_thread_permission(
             &mut transaction,
             &thread_id,
             &permission.share_permission_id,
@@ -92,10 +92,10 @@ impl<B: MacroEventBroker> EntityLifecycleService for DssEntityLifecycleAdapter<B
         _actor: &EntityMutationActor,
         entity: &Entity<'static>,
     ) -> Result<Vec<Entity<'static>>, LifecycleError> {
-        let document = macro_db_client::document::get_basic_document(&self.db, &entity.entity_id)
+        let document = conation_db_client::document::get_basic_document(&self.db, &entity.entity_id)
             .await
             .map_err(row_error)?;
-        macro_db_client::document::revert_delete::revert_delete_document(
+        conation_db_client::document::revert_delete::revert_delete_document(
             &self.db,
             &entity.entity_id,
             document.project_id.as_deref(),
@@ -114,11 +114,11 @@ impl<B: MacroEventBroker> EntityLifecycleService for DssEntityLifecycleAdapter<B
         _actor: &EntityMutationActor,
         entity: &Entity<'static>,
     ) -> Result<Vec<Entity<'static>>, LifecycleError> {
-        let document = macro_db_client::document::get_basic_document(&self.db, &entity.entity_id)
+        let document = conation_db_client::document::get_basic_document(&self.db, &entity.entity_id)
             .await
             .map_err(row_error)?;
         if document.file_type.as_deref() == Some("docx") {
-            let bom_parts = macro_db_client::document::get_bom_parts(&self.db, &entity.entity_id)
+            let bom_parts = conation_db_client::document::get_bom_parts(&self.db, &entity.entity_id)
                 .await
                 .map_err(|error| internal!(error))?;
             self.redis
@@ -128,7 +128,7 @@ impl<B: MacroEventBroker> EntityLifecycleService for DssEntityLifecycleAdapter<B
                 .await
                 .map_err(|error| internal!(error))?;
         }
-        macro_db_client::document::delete_document(&self.db, &entity.entity_id)
+        conation_db_client::document::delete_document(&self.db, &entity.entity_id)
             .await
             .map_err(|error| internal!(error))?;
         comms_db_client::entity_mentions::delete_entity_mentions_by_source(

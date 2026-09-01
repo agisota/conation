@@ -1,7 +1,7 @@
 use channels::outbound::channel_name::batch_resolve_channel_names;
 use indexmap::IndexMap;
 use item_filters::CallStatus;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use models_properties::{EntityReference, EntityType};
 use models_search::call_record::{
     CallRecordMetadata, CallRecordSearchResponseItem, CallRecordSearchResponseItemWithMetadata,
@@ -38,7 +38,7 @@ pub(in crate::api::search) async fn enrich_call_records(
         .collect();
 
     let metadata_rows =
-        macro_db_client::call_record::get::get_call_records_metadata(&ctx.db, user_id, &call_ids)
+        conation_db_client::call_record::get::get_call_records_metadata(&ctx.db, user_id, &call_ids)
             .await
             .map_err(SearchError::InternalError)?;
 

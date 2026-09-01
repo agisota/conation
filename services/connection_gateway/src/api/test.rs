@@ -8,10 +8,10 @@ use axum::{
     routing::{get, post},
 };
 use http_body_util::BodyExt;
-use macro_auth::middleware::decode_jwt::JwtValidationArgs;
+use conation_auth::middleware::decode_jwt::JwtValidationArgs;
 #[allow(deprecated)]
-use macro_authorization::LEGACY_DSS_INTERNAL_API_KEY_HEADER;
-use macro_authorization::{
+use conation_authorization::LEGACY_DSS_INTERNAL_API_KEY_HEADER;
+use conation_authorization::{
     INTERNAL_API_KEY_HEADER, InternalAuthConfig, InternalOnly, MacroAuthJwtValidator,
     MacroAuthorizationExtractor, MacroAuthorizationServiceImpl, MacroAuthorizationState,
 };
@@ -72,7 +72,7 @@ fn test_state() -> TestState {
             api_key: TEST_INTERNAL_API_KEY.to_string(),
             default_user_id: None,
         },
-        macro_authorization::NoBotAuthorizer,
+        conation_authorization::NoBotAuthorizer,
     );
 
     TestState {

@@ -7,8 +7,8 @@ use anyhow::Context;
 use aws_lambda_events::sqs::SqsEvent;
 use handler::handler;
 use lambda_runtime::{Error, LambdaEvent, run, service_fn, tracing};
-use macro_entrypoint::MacroEntrypoint;
-use macro_env_var::env_vars;
+use conation_entrypoint::MacroEntrypoint;
+use conation_env_var::env_vars;
 use sqlx::postgres::PgPoolOptions;
 
 env_vars! {
@@ -31,11 +31,11 @@ async fn main() -> Result<(), Error> {
             .context("could not connect to db")?,
     );
 
-    let document_delete_queue = macro_queues::DocumentDeleteQueue::new();
-    let chat_delete_queue = macro_queues::ChatDeleteQueue::new();
+    let document_delete_queue = conation_queues::DocumentDeleteQueue::new();
+    let chat_delete_queue = conation_queues::ChatDeleteQueue::new();
 
     let sqs_client = sqs_client::SQS::new(aws_sdk_sqs::Client::new(
-        &macro_aws_config::get_macro_aws_config().await,
+        &conation_aws_config::get_conation_aws_config().await,
     ))
     .document_delete_queue(document_delete_queue.as_ref())
     .chat_delete_queue(chat_delete_queue.as_ref());

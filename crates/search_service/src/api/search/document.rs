@@ -1,6 +1,6 @@
 use crate::api::search::simple::SearchError;
 use indexmap::IndexMap;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use models_opensearch::SearchEntityType;
 use models_properties::{EntityReference, EntityType};
 use models_search::SearchHighlight;
@@ -37,7 +37,7 @@ pub(in crate::api::search) async fn enrich_documents(
 
     // Fetch document metadata from database
     let document_histories =
-        macro_db_client::document::get_document_history::get_document_history_info(
+        conation_db_client::document::get_document_history::get_document_history_info(
             &ctx.db,
             user_id,
             &document_ids,
@@ -97,7 +97,7 @@ pub fn construct_search_result(
     search_results: Vec<opensearch_client::search::model::SearchHit>,
     document_histories: HashMap<
         String,
-        macro_db_client::document::get_document_history::DocumentHistoryInfo,
+        conation_db_client::document::get_document_history::DocumentHistoryInfo,
     >,
     properties_map: HashMap<String, Vec<SoupProperty>>,
     search_term: Option<&str>,

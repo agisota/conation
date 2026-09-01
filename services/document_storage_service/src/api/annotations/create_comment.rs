@@ -13,9 +13,9 @@ use axum::{
 };
 use connection_gateway_client::ConnectionGatewayClient;
 use entity_access::domain::models::{EntityAccessReceipt, ViewAccessLevel};
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use macro_db_client::annotations::create_comment::create_document_comment;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_db_client::annotations::create_comment::create_document_comment;
+use conation_user_id::user_id::MacroUserIdStr;
 use model::{
     annotations::{
         AnnotationIncrementalUpdate, Mentions,
@@ -66,7 +66,7 @@ pub async fn create_comment_handler(
     Path(Params { document_id }): Path<Params>,
     Json(req): Json<CreateCommentRequest>,
 ) -> Result<Response, Response> {
-    let user_id = user.authorization.user.macro_user_id.to_string();
+    let user_id = user.authorization.user.conation_user_id.to_string();
     if document_context.deleted_at.is_some() {
         return Err((
             StatusCode::BAD_REQUEST,
@@ -81,7 +81,7 @@ pub async fn create_comment_handler(
             if let Some(comment) = res.comment_thread.comments.last() {
                 let sender_id: Option<MacroUserIdStr<'static>> = user_id.clone().try_into().ok();
                 let sender_profile_picture_url =
-                    macro_db_client::user::update_profile_picture::get_profile_pictures(
+                    conation_db_client::user::update_profile_picture::get_profile_pictures(
                         &db,
                         &vec![user_id.clone()],
                     )
@@ -174,7 +174,7 @@ pub async fn create_comment_handler(
                     let mention_recipients: Vec<MacroUserIdStr<'_>> =
                         recipients.mention_recipients.iter().cloned().collect();
 
-                    let _ = macro_db_client::share_on_mention::share_link_shared_document_with_mentioned_users(
+                    let _ = conation_db_client::share_on_mention::share_link_shared_document_with_mentioned_users(
                         &db,
                         &document_id,
                         &mention_recipients,

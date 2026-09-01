@@ -64,7 +64,7 @@ where
     Router::new()
         .route("/health", get(health))
         .route("/mcp/{slug}", any(mcp_handler::<Service>))
-        .route("/mcp-macro", any(macro_mcp_handler::<Service>))
+        .route("/mcp-macro", any(conation_mcp_handler::<Service>))
         .route(
             "/git/{*path}",
             get(git_handler::<Service>).post(git_handler::<Service>),
@@ -101,7 +101,7 @@ where
 /// with no name shared between the built-in server and the owner's connected
 /// apps, no connected app can collide with it.
 #[tracing::instrument(skip_all, err)]
-async fn macro_mcp_handler<Service>(
+async fn conation_mcp_handler<Service>(
     State(state): State<EgressRouterState<Service>>,
     request: Request,
 ) -> Result<Response, EgressError>

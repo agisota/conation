@@ -3,7 +3,7 @@
 use std::collections::HashSet;
 
 use futures::future::join_all;
-use macro_user_id::cowlike::CowLike;
+use conation_user_id::cowlike::CowLike;
 use notification::domain::models::SendNotificationRequestBuilder;
 use notification::domain::service::NotificationIngress;
 use sqlx::{Pool, Postgres};

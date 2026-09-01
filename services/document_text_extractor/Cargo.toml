@@ -13,7 +13,7 @@ macos = []
 agent = { path = "../../crates/agent" }
 anyhow = { workspace = true }
 aws-sdk-s3 = { workspace = true }
-macro_aws_config = { path = "../../crates/macro_aws_config", features = ["s3"] }
+conation_aws_config = { path = "../../crates/conation_aws_config", features = ["s3"] }
 aws_lambda_events = { workspace = true, features = [
   "eventbridge",
   "s3",
@@ -21,8 +21,8 @@ aws_lambda_events = { workspace = true, features = [
 ] }
 chrono = { workspace = true }
 lambda_runtime = { workspace = true }
-macro_entrypoint = { path = "../../crates/macro_entrypoint" }
-macro_env_var = { path = "../../crates/macro_env_var" }
+conation_entrypoint = { path = "../../crates/conation_entrypoint" }
+conation_env_var = { path = "../../crates/conation_env_var" }
 mockall = { workspace = true }
 model = { path = "../../crates/model" }
 s3_key = { path = "../../crates/s3_key" }

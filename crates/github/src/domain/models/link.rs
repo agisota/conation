@@ -1,6 +1,6 @@
 //! Domain models for github link operations (OAuth and account linking).
 
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use serde::Deserialize;
 
 /// Github access token
@@ -32,7 +32,7 @@ pub struct GithubLink {
     /// Unique ID for this link
     pub id: uuid::Uuid,
     /// Macro user ID
-    pub macro_id: MacroUserIdStr<'static>,
+    pub conation_id: MacroUserIdStr<'static>,
     /// FusionAuth user ID
     pub fusionauth_user_id: uuid::Uuid,
     /// GitHub username

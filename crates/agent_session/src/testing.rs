@@ -14,8 +14,8 @@ use crate::domain::ports::{AgentSessionLogRepo, AgentSessionRealtime, AgentSessi
 use agent_client_protocol::schema::v1::SessionId;
 use agent_runtime_protocol::domain::schema::v0::ToServerMessage;
 use bots::domain::models::BotId;
-use macro_user_id::user_id::MacroUserIdStr;
-use macro_uuid::Uuid;
+use conation_user_id::user_id::MacroUserIdStr;
+use conation_uuid::Uuid;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
@@ -406,7 +406,7 @@ pub fn test_agent_session(id: AgentSessionId) -> AgentSession {
     AgentSession {
         id,
         name: DEFAULT_AGENT_SESSION_NAME.to_owned(),
-        owner_id: macro_user_id::user_id::MacroUserIdStr::try_from_email("owner@example.com")
+        owner_id: conation_user_id::user_id::MacroUserIdStr::try_from_email("owner@example.com")
             .expect("valid macro user id"),
         thread_id: None,
         thread_channel_id: None,

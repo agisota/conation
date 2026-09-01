@@ -15,12 +15,12 @@ use entity_access::domain::{
     ports::EntityAccessService,
 };
 #[allow(deprecated)]
-use macro_authorization::{
+use conation_authorization::{
     INTERNAL_API_KEY_HEADER, InternalAuthConfig, JwtValidator, LEGACY_DSS_INTERNAL_API_KEY_HEADER,
     MacroAuthorizationError, MacroAuthorizationExtractor, MacroAuthorizationServiceImpl,
     MacroAuthorizationState, UserOrInternal, ValidatedIdentity,
 };
-use macro_user_id::{
+use conation_user_id::{
     lowercased::Lowercase,
     user_id::{MacroUserId, MacroUserIdStr},
 };
@@ -250,7 +250,7 @@ fn authorization_state() -> MacroAuthorizationState<TestAuthorizationService> {
             api_key: INTERNAL_API_KEY.to_string(),
             default_user_id: Some(DEFAULT_INTERNAL_USER_ID.to_string()),
         },
-        macro_authorization::NoBotAuthorizer,
+        conation_authorization::NoBotAuthorizer,
     );
     MacroAuthorizationState::new(Arc::new(service))
 }
@@ -273,7 +273,7 @@ fn test_router(entity_access_service: FakeEntityAccessService) -> Router {
 async fn required_auth_handler(
     authorization: MacroAuthorizationExtractor<TestAuthorizationService, UserOrInternal>,
 ) -> String {
-    authorization.authorization.user.macro_user_id.to_string()
+    authorization.authorization.user.conation_user_id.to_string()
 }
 
 async fn team_handler(

@@ -10,13 +10,13 @@ use axum::{
     response::{IntoResponse, Response},
 };
 #[allow(deprecated)]
-use macro_authorization::LEGACY_DSS_INTERNAL_API_KEY_HEADER;
-use macro_authorization::{
+use conation_authorization::LEGACY_DSS_INTERNAL_API_KEY_HEADER;
+use conation_authorization::{
     BOT_SCOPE_HEADER, BOT_TOKEN_HEADER, BotActingUserClaims, BotAuthentication, BotScope,
     INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_USER_ID_HEADER, InternalIdentityClaims,
     MacroAuthorizationError, MacroAuthorizationService, MacroAuthorizationState,
 };
-use macro_user_id::{
+use conation_user_id::{
     lowercased::Lowercase,
     user_id::{MacroUserId, MacroUserIdStr},
 };

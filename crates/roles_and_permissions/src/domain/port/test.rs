@@ -1,7 +1,7 @@
 ///! Tests for the port logic for roles and permissions
 use super::*;
 
-use macro_user_id::email::ReadEmailParts;
+use conation_user_id::email::ReadEmailParts;
 
 #[derive(Debug, Clone, Default)]
 struct MockUserRepository {}

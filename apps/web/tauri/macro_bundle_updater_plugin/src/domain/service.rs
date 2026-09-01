@@ -1200,7 +1200,7 @@ mod tests {
         fn new(network_type: &str) -> Self {
             Self::with_update_dir_and_native_build(
                 network_type,
-                std::env::temp_dir().join("macro_bundle_updater_plugin_tests"),
+                std::env::temp_dir().join("conation_bundle_updater_plugin_tests"),
                 0,
             )
         }

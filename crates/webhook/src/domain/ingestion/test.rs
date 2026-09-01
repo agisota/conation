@@ -30,7 +30,7 @@ use entity_access::domain::models::{
     AccessLevel, BotAccessScope, BotId, CallChannelInfo, EntityAccessReceipt, EntityPermission,
     RequiredPermission, TeamRole, UserTeamInfo,
 };
-use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId};
+use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId};
 use serde_json::Value;
 use std::{
     collections::BTreeMap,

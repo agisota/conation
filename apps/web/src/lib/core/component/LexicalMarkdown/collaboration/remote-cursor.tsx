@@ -5,9 +5,9 @@ import {
   type Awareness,
   isAwarenessWithSelection,
   type PeerAwareness,
-} from '@macro-inc/collaboration/collab/awareness';
-import type { LoroManager } from '@macro-inc/collaboration/collab/manager';
-import type { NodeIdMappings } from '@macro-inc/lexical-core';
+} from '@conation/collaboration/collab/awareness';
+import type { LoroManager } from '@conation/collaboration/collab/manager';
+import type { NodeIdMappings } from '@conation/lexical-core';
 import { cn } from '@ui';
 import { $getNodeByKey, $isTextNode, type LexicalEditor } from 'lexical';
 import {

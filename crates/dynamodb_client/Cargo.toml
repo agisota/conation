@@ -10,7 +10,7 @@ local = []
 [dependencies]
 anyhow = { workspace = true }
 aws-sdk-dynamodb = { workspace = true }
-macro_aws_config = { path = "../macro_aws_config" }
+conation_aws_config = { path = "../conation_aws_config" }
 chrono = { workspace = true }
 models_bulk_upload = { path = "../models_bulk_upload" }
 s3_key = { path = "../s3_key" }

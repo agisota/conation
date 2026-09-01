@@ -9,10 +9,10 @@ ai_toolset = { path = "../ai_toolset" }
 anyhow.workspace = true
 axum.workspace = true
 futures.workspace = true
-macro_authorization = { path = "../macro_authorization", default-features = false, features = [
+conation_authorization = { path = "../conation_authorization", default-features = false, features = [
   "axum",
 ] }
-macro_user_id = { path = "../macro_user_id" }
+conation_user_id = { path = "../conation_user_id" }
 model-error-response = { path = "../model-error-response" }
 reqwest.workspace = true
 url.workspace = true

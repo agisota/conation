@@ -25,14 +25,14 @@ use github::outbound::github_auth_client::GithubAuthImpl;
 use github::outbound::github_oauth_client::GithubOauthImpl;
 use github::outbound::pg_github_repo::PgGithubRepo;
 use loops_client::LoopsClient;
-use macro_auth::{InternalApiKey, middleware::decode_jwt::JwtValidationArgs};
-use macro_authorization::{
+use conation_auth::{InternalApiKey, middleware::decode_jwt::JwtValidationArgs};
+use conation_authorization::{
     MacroAuthJwtValidator, MacroAuthorizationServiceImpl, MacroAuthorizationState,
 };
-use macro_cache_client::MacroCache;
-use macro_env::Environment;
-use macro_env_var::env_var;
-use macro_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
+use conation_cache_client::MacroCache;
+use conation_env::Environment;
+use conation_env_var::env_var;
+use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
 use native_app_service::{domain::service::NativeAppServiceImpl, outbound::DefaultBundleFetcher};
 use notification::outbound::queue::SqsQueue;
 use notification::{
@@ -117,7 +117,7 @@ pub(crate) struct ApiContext {
     pub microsoft_token_cipher: Option<Arc<dyn MicrosoftTokenCipher>>,
     /// Encrypts users' Cursor API keys.
     pub cursor_api_key_cipher: Arc<dyn CursorApiKeyCipher>,
-    pub macro_cache_client: Arc<MacroCache>,
+    pub conation_cache_client: Arc<MacroCache>,
     pub stripe_client: Arc<stripe::Client>,
     pub document_storage_service_client:
         Arc<document_storage_service_client::DocumentStorageServiceClient>,
@@ -172,7 +172,7 @@ pub struct MacroApiTokenContext {
     /// The issuer of the macro-api-token
     pub issuer: MacroApiTokenIssuer,
     /// The macro api token private key used to sign macro-api tokens
-    pub macro_api_token_private_key: LocalOrRemoteSecret<MacroApiTokenPrivateSecretKey>,
+    pub conation_api_token_private_key: LocalOrRemoteSecret<MacroApiTokenPrivateSecretKey>,
     /// The token expiry duration in seconds
     pub expiry_seconds: usize,
 }

@@ -1,6 +1,6 @@
 use axum::{Json, extract::State};
 use entity_access::domain::ports::EntityAccessService;
-use macro_authorization::{MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal};
 
 use crate::domain::{
     model::{CreateTeamError, Team},
@@ -39,13 +39,13 @@ pub async fn handler<T: TeamService, Eas: EntityAccessService, Auth: MacroAuthor
     // linked when the owner has one, but is no longer required to create.
     let subscription_id = state
         .service
-        .is_user_premium(&user.macro_user_id)
+        .is_user_premium(&user.conation_user_id)
         .await
         .map_err(|e| CreateTeamError::StorageLayerError(e.into()))?;
 
     let team = state
         .service
-        .create_team(&user.macro_user_id, &req.name, subscription_id.as_ref())
+        .create_team(&user.conation_user_id, &req.name, subscription_id.as_ref())
         .await?;
 
     Ok(Json(team))

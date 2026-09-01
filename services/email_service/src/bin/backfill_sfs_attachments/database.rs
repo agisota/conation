@@ -19,14 +19,14 @@ pub async fn create_db_pool(database_url: &str, min_connections: u32) -> anyhow:
 #[allow(clippy::disallowed_methods, reason = "legacy code. fix later")]
 pub async fn fetch_sfs_attachments(
     db: &sqlx::Pool<sqlx::Postgres>,
-    macro_id: &str,
+    conation_id: &str,
 ) -> anyhow::Result<Vec<AttachmentUploadMetadata>> {
     let query = format!(
         r#"
         WITH link AS (
             SELECT id
             FROM public.email_links
-            WHERE macro_id = $1
+            WHERE conation_id = $1
             LIMIT 1
         )
         SELECT
@@ -54,7 +54,7 @@ pub async fn fetch_sfs_attachments(
         ATTACHMENT_MIME_TYPE_FILTERS_WITH_MEDIA
     );
 
-    let rows = sqlx::query(&query).bind(macro_id).fetch_all(db).await?;
+    let rows = sqlx::query(&query).bind(conation_id).fetch_all(db).await?;
 
     let attachments = rows
         .into_iter()

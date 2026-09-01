@@ -1,16 +1,16 @@
 use super::*;
 use crate::links::get::fetch_link_by_id;
 use crate::links::insert::upsert_link;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
-use macro_user_id::email::EmailStr;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_user_id::email::EmailStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use models_email::email::service::link::{Link, UserProvider};
 use sqlx::{Pool, Postgres};
 
 async fn insert_test_link(pool: &Pool<Postgres>, email: &str) -> anyhow::Result<Uuid> {
     let link = Link {
-        id: macro_uuid::generate_uuid_v7(),
-        macro_id: MacroUserIdStr::try_from(format!("macro|{email}"))?,
+        id: conation_uuid::generate_uuid_v7(),
+        conation_id: MacroUserIdStr::try_from(format!("macro|{email}"))?,
         fusionauth_user_id: "22222222-2222-2222-2222-222222222222".to_string(),
         email_address: EmailStr::try_from(email.to_string())?,
         provider: UserProvider::Gmail,
@@ -78,7 +78,7 @@ async fn update_sync_status_skips_row_when_already_set(pool: Pool<Postgres>) -> 
 async fn set_needs_reauth_on_missing_link_is_not_a_transition(
     pool: Pool<Postgres>,
 ) -> anyhow::Result<()> {
-    let missing = macro_uuid::generate_uuid_v7();
+    let missing = conation_uuid::generate_uuid_v7();
     assert!(!set_link_needs_reauth(&pool, missing).await?);
     Ok(())
 }

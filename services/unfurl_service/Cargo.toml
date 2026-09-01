@@ -27,10 +27,10 @@ bytes = { workspace = true }
 futures = { workspace = true }
 http = { workspace = true }
 http-body-util = { workspace = true }
-macro_config = { path = "../../crates/macro_config" }
-macro_cors = { path = "../../crates/macro_cors" }
-macro_entrypoint = { path = "../../crates/macro_entrypoint" }
-macro_env = { path = "../../crates/macro_env" }
+conation_config = { path = "../../crates/conation_config" }
+conation_cors = { path = "../../crates/conation_cors" }
+conation_entrypoint = { path = "../../crates/conation_entrypoint" }
+conation_env = { path = "../../crates/conation_env" }
 reqwest = { workspace = true, features = ["stream"] }
 scraper = { workspace = true }
 serde = { workspace = true }

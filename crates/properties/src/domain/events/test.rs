@@ -1,5 +1,5 @@
-use macro_event_broker::{Event, MacroEvent};
-use macro_event_topics::{MacroPropertiesTopic, Topic};
+use conation_event_broker::{Event, MacroEvent};
+use conation_event_topics::{MacroPropertiesTopic, Topic};
 use serde_json::{Value, json};
 
 use super::*;
@@ -224,7 +224,7 @@ fn topic_events(
     ]
 }
 
-fn macro_events() -> Vec<(PropertyMacroEvent, &'static str)> {
+fn conation_events() -> Vec<(PropertyMacroEvent, &'static str)> {
     topic_events(Some(user_id("macro|editor@acme.com")))
         .into_iter()
         .map(|(event, _)| match event {
@@ -284,7 +284,7 @@ fn every_variant_has_exact_json_envelope() {
 
 #[test]
 fn every_variant_round_trips() {
-    for (original, expected_key) in macro_events() {
+    for (original, expected_key) in conation_events() {
         let payload = serde_json::to_vec(original.event()).expect("serializable event");
         let decoded =
             PropertyMacroEvent::decode(original.key(), &payload).expect("decodable event");
@@ -298,7 +298,7 @@ fn every_variant_round_trips() {
 
 #[test]
 fn constructors_use_exact_bare_keys_topic_and_schema_version() {
-    for (event, expected_key) in macro_events() {
+    for (event, expected_key) in conation_events() {
         assert_eq!(event.key(), expected_key);
         assert_eq!(event.topic(), "macro.properties");
         assert_eq!(event.event().schema_version, 1);

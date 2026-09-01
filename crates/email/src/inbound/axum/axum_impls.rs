@@ -12,11 +12,11 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use axum_extra::extract::Cached;
-use macro_authorization::{
+use conation_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationRejection, MacroAuthorizationService,
     MacroAuthorizationState, UserOrInternal,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use std::sync::Arc;
 use std::{marker::PhantomData, str::FromStr};
 use thiserror::Error;
@@ -120,7 +120,7 @@ impl IntoResponse for EmailLinkErr {
 /// Resolve the single inbox a mutating request targets from the caller's owned
 /// `links`. With an `X-Email-Link-Id` value, the matching owned link is used
 /// (404 when it isn't one of theirs). Without a header, the caller's primary
-/// inbox is used — their own `is_primary` link. The `macro_id` guard matters:
+/// inbox is used — their own `is_primary` link. The `conation_id` guard matters:
 /// the links list includes delegated inboxes, which are primary for *their*
 /// account. A caller with no primary inbox (e.g. it was removed) must name an
 /// inbox explicitly.
@@ -136,7 +136,7 @@ fn resolve_target_link(
             .ok_or(EmailLinkErr::NotFound),
         None => links
             .into_iter()
-            .find(|link| link.is_primary && &link.macro_id == caller)
+            .find(|link| link.is_primary && &link.conation_id == caller)
             .ok_or(EmailLinkErr::NoInboxSelected),
     }
 }
@@ -172,11 +172,11 @@ where
                 .extract_with_state(state)
                 .await
                 .map_err(EmailLinkErr::Authorization)?;
-        let macro_user_id = authorization.authorization.user.macro_user_id.clone();
-        let caller = macro_user_id.clone();
+        let conation_user_id = authorization.authorization.user.conation_user_id.clone();
+        let caller = conation_user_id.clone();
         let links = <EmailRouterState<U>>::from_ref(state)
             .inner
-            .get_inboxes_for_macro_id(macro_user_id)
+            .get_inboxes_for_conation_id(conation_user_id)
             .await?;
         let link = resolve_target_link(links, header_link_id, &caller)?;
         Ok(Self(link, PhantomData))
@@ -184,7 +184,7 @@ where
 }
 
 /// Extractor that resolves *every* inbox the caller can read — their own inboxes
-/// plus any delegated/shared inboxes reachable via `macro_user_links`. Read
+/// plus any delegated/shared inboxes reachable via `conation_user_links`. Read
 /// endpoints fan out over all returned links. A caller with no inboxes yields an
 /// empty `Vec` (and hence empty results) rather than a 404 — the union over zero
 /// inboxes is empty, not missing.
@@ -212,10 +212,10 @@ where
                 .extract_with_state(state)
                 .await
                 .map_err(EmailLinkErr::Authorization)?;
-        let macro_user_id = authorization.authorization.user.macro_user_id.clone();
+        let conation_user_id = authorization.authorization.user.conation_user_id.clone();
         let links = <EmailRouterState<U>>::from_ref(state)
             .inner
-            .get_inboxes_for_macro_id(macro_user_id)
+            .get_inboxes_for_conation_id(conation_user_id)
             .await?;
         Ok(Self(links, PhantomData))
     }

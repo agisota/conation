@@ -6,7 +6,7 @@ mod test;
 use std::sync::Arc;
 
 use documents::domain::events::{DocumentMacroEvent, DocumentPurgedMetadata};
-use macro_event_broker::MacroEventBroker;
+use conation_event_broker::MacroEventBroker;
 
 use crate::domain::ports::ProjectSearchIndexer;
 

@@ -18,7 +18,7 @@ chrono = { workspace = true, features = ["serde"] }
 cowlike = { path = "../cowlike" }
 filter_ast = { path = "../filter_ast" }
 item_filters = { path = "../item_filters" }
-macro_user_id = { path = "../macro_user_id" }
+conation_user_id = { path = "../conation_user_id" }
 mockall = { workspace = true, optional = true }
 model-entity = { path = "../model-entity" }
 num-traits = { version = "0.2" }
@@ -36,7 +36,7 @@ workspace-hack = { version = "0.1", path = "../workspace-hack" }
 [dev-dependencies]
 cool_asserts = "2"
 item_filters = { path = "../item_filters", features = ["mock"] }
-macro_db_migrator = { path = "../macro_db_migrator" }
+conation_db_migrator = { path = "../conation_db_migrator" }
 rand = { workspace = true }
 serde_json = { workspace = true }
 uuid = { workspace = true }

@@ -34,7 +34,7 @@ import {
   createPeerIdValidator,
   InlineSearchNode,
   peerIdPlugin,
-} from '@macro-inc/lexical-core';
+} from '@conation/lexical-core';
 import { onElementConnect } from '@solid-primitives/lifecycle';
 import type { LexicalEditor } from 'lexical';
 import {

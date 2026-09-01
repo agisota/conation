@@ -26,14 +26,14 @@ use crate::domain::{
 /// are notified of mentions out of process via the `channel.mentioned`
 /// webhook event instead (see the `webhook` crate).
 pub struct BotTriggerRouter<C, R, D> {
-    macro_ai: Arc<MacroAiHandler<C, R>>,
+    conation_ai: Arc<MacroAiHandler<C, R>>,
     detector: Arc<D>,
 }
 
 impl<C, R, D> Clone for BotTriggerRouter<C, R, D> {
     fn clone(&self) -> Self {
         Self {
-            macro_ai: self.macro_ai.clone(),
+            conation_ai: self.conation_ai.clone(),
             detector: self.detector.clone(),
         }
     }
@@ -48,7 +48,7 @@ where
     /// Create a router with the built-in system bots registered.
     pub fn new(channels: Arc<C>, responder: Arc<R>, detector: Arc<D>) -> Self {
         Self {
-            macro_ai: Arc::new(MacroAiHandler::new(channels, responder)),
+            conation_ai: Arc::new(MacroAiHandler::new(channels, responder)),
             detector,
         }
     }
@@ -88,7 +88,7 @@ where
 
             // System bots are defined in code — no database lookup required.
             if invocation.bot_id == bot_id::MACRO_AI_BOT_ID {
-                if let Err(err) = self.macro_ai.handle(&event).await {
+                if let Err(err) = self.conation_ai.handle(&event).await {
                     tracing::error!(error=?err, bot_id = %invocation.bot_id, "system bot handler failed");
                 }
             } else {

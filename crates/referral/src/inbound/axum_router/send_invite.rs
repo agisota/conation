@@ -6,11 +6,11 @@ use axum::http::StatusCode;
 use axum::{Json, extract::State};
 use axum_extra::extract::Cached;
 use ip_extractor::ClientIp;
-use macro_authorization::{
+use conation_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationRejection, MacroAuthorizationService,
     MacroAuthorizationState, UserOrInternal,
 };
-use macro_user_id::email::EmailStr;
+use conation_user_id::email::EmailStr;
 use rate_limit::inbound::RateLimitExtractable;
 use rate_limit::{RateLimitConfig, RateLimitKey};
 use serde::Deserialize;
@@ -55,7 +55,7 @@ pub async fn post_referral_invite_handler<
     let user = authorization.authorization.user;
     let () = state
         .service
-        .send_referral_invite(user.macro_user_id.clone(), recipient)
+        .send_referral_invite(user.conation_user_id.clone(), recipient)
         .await?;
 
     Ok(StatusCode::NO_CONTENT)
@@ -80,7 +80,7 @@ where
 
     fn key(&self) -> rate_limit::RateLimitKey {
         RateLimitKey::builder(&"per-user-referral")
-            .append(&self.0.authorization.user.macro_user_id.as_ref())
+            .append(&self.0.authorization.user.conation_user_id.as_ref())
             .finish()
     }
 }

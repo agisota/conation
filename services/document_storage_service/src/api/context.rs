@@ -61,7 +61,7 @@ use favorites::{
     domain::service::FavoritesServiceImpl, inbound::axum_router::FavoritesRouterState,
     outbound::pg_favorites_repo::PgFavoritesRepo,
 };
-use macro_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
+use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
 
 use collab_surface::{
     domain::service::CollabSurfaceServiceImpl, inbound::axum_router::CollabSurfaceRouterState,
@@ -76,12 +76,12 @@ use frecency::{domain::services::FrecencyQueryServiceImpl, outbound::postgres::F
 use github::domain::service::GithubSyncServiceImpl;
 use github::outbound::github_sync_client::GithubSyncClientImpl;
 use github::outbound::pg_github_sync_repo::PgGithubSyncRepo;
-use macro_auth::middleware::decode_jwt::JwtValidationArgs;
-use macro_authorization::{
+use conation_auth::middleware::decode_jwt::JwtValidationArgs;
+use conation_authorization::{
     MacroAuthJwtValidator, MacroAuthorizationServiceImpl, MacroAuthorizationState,
 };
-use macro_env_var::env_var;
-use macro_sha_count_client::Redis;
+use conation_env_var::env_var;
+use conation_sha_count_client::Redis;
 use notification::domain::service::SqsNotificationIngress;
 use notification::outbound::queue::SqsQueue;
 use opensearch_client::OpensearchClient;
@@ -261,7 +261,7 @@ impl TaskPropertiesPort for TaskPropertiesAdapter {
     ) -> anyhow::Result<()> {
         use properties::PropertiesService as _;
 
-        let user_id = macro_user_id::user_id::MacroUserIdStr::parse_from_str(user_id)?;
+        let user_id = conation_user_id::user_id::MacroUserIdStr::parse_from_str(user_id)?;
 
         let entity_access_receipt = self
             .entity_access_service
@@ -505,7 +505,7 @@ pub(crate) struct ApiContext {
     pub reminders_state: DssRemindersState,
     pub collab_surface_state: DssCollabSurfaceState,
     pub foreign_entity_state: DssForeignEntityState,
-    pub macro_event_broker: DssEventBroker,
+    pub conation_event_broker: DssEventBroker,
     pub sqs_client: Arc<sqs_client::SQS>,
     pub contacts_ingress: Arc<SqsContactsIngress<SqsContactsQueue>>,
     pub notification_ingress_service: Arc<NotificationIngressType>,

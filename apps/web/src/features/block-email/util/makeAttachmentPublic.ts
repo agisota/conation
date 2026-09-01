@@ -1,7 +1,7 @@
 import { analytics } from '@app/lib/analytics';
 import { toast } from '@core/component/Toast/Toast';
 
-import { Telemetry } from '@macro-inc/observability';
+import { Telemetry } from '@conation/observability';
 
 import { storageServiceClient } from '@service-storage/client';
 

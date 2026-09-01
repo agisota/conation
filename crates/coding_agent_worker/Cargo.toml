@@ -23,9 +23,9 @@ bot_id = { path = "../bot_id" }
 bots = { path = "../bots", default-features = false }
 clap = { workspace = true }
 dashmap = { workspace = true }
-macro_event_broker = { path = "../macro_event_broker", default-features = false }
-macro_user_id = { path = "../macro_user_id" }
-macro_uuid = { path = "../macro_uuid" }
+conation_event_broker = { path = "../conation_event_broker", default-features = false }
+conation_user_id = { path = "../conation_user_id" }
+conation_uuid = { path = "../conation_uuid" }
 reqwest = { workspace = true }
 rootcause = { workspace = true }
 # The gateway dial is `wss` on every deployment but a local stack, and

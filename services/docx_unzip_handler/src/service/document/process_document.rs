@@ -31,7 +31,7 @@ pub async fn process(
 
     // Get docx upload job for job id using document id
     tracing::trace!("getting docx upload job");
-    let job = macro_db_client::docx_unzip::get_job_for_docx_upload(
+    let job = conation_db_client::docx_unzip::get_job_for_docx_upload(
         &ctx.db,
         &document_key_parts.document_id,
     )
@@ -41,7 +41,7 @@ pub async fn process(
         job_id
     } else {
         tracing::warn!("no job id found. making a new uuid");
-        macro_uuid::generate_uuid_v7().to_string()
+        conation_uuid::generate_uuid_v7().to_string()
     };
 
     // send convert message
@@ -80,7 +80,7 @@ pub async fn process(
 
     tracing::trace!("document retrieved");
 
-    if let Err(e) = macro_db_client::docx_unzip::update_uploaded_status(
+    if let Err(e) = conation_db_client::docx_unzip::update_uploaded_status(
         &ctx.db,
         &document_key_parts.document_id,
     )
@@ -131,7 +131,7 @@ pub async fn process(
         })
         .collect();
 
-    macro_db_client::docx_unzip::save_bom_parts_to_db(
+    conation_db_client::docx_unzip::save_bom_parts_to_db(
         &ctx.db,
         &save_bom_parts,
         document_key_parts.document_bom_id,

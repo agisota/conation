@@ -1,5 +1,5 @@
 {
-  "name": "@macro-inc/lexical-core",
+  "name": "@conation/lexical-core",
   "version": "0.2.2",
   "description": "Core lexical types, nodes, and utilities for. Includes custom nodes (CommentNode, ImageNode, EquationNode, etc.), plugins (nodeIdPlugin, peerIdPlugin), and markdown transformers for Lexical editor.",
   "main": "index.ts",

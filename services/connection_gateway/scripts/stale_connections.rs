@@ -1,7 +1,7 @@
 //! This entrypoint is used to periodically clean up stale connections from the db
 use aws_sdk_dynamodb::types::AttributeValue;
 use chrono::{DateTime, Utc};
-use macro_env_var::maybe_env_vars;
+use conation_env_var::maybe_env_vars;
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -114,7 +114,7 @@ impl ConnectionInfo {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize AWS config
-    let config = macro_aws_config::get_macro_aws_config().await;
+    let config = conation_aws_config::get_conation_aws_config().await;
     let client = aws_sdk_dynamodb::Client::new(&config);
 
     // Get table name from environment variable or command line argument

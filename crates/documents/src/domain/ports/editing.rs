@@ -1,6 +1,6 @@
 //! Port definition for the AI editing worker.
 
-use macro_sync_service_jwt::DocumentPermissionToken;
+use conation_sync_service_jwt::DocumentPermissionToken;
 use std::future::Future;
 
 /// Result returned by a successful edit operation.

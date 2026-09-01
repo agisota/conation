@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "macro",
+  "productName": "conation",
   "version": "../../package.json",
-  "identifier": "com.macro.app.prod",
+  "identifier": "dev.conation.app",
   "build": {
     "frontendDist": "../../dist",
     "devUrl": "http://localhost:3000",
@@ -18,7 +18,7 @@
   "app": {
     "windows": [
       {
-        "title": "Macro",
+        "title": "Conation",
         "width": 800,
         "height": 600,
         "resizable": true,
@@ -60,24 +60,24 @@
       "mobile": [
         {
           "scheme": [
-            "macro"
+            "conation"
           ],
           "appLink": false
         },
         {
-          "host": "macro.com",
+          "host": "conation.dev",
           "pathPrefix": [
             "/app"
           ]
         },
         {
-          "host": "dev.macro.com",
+          "host": "dev.conation.dev",
           "pathPrefix": [
             "/app"
           ]
         },
         {
-          "host": "staging.macro.com",
+          "host": "staging.conation.dev",
           "pathPrefix": [
             "/app"
           ]
@@ -85,7 +85,7 @@
       ],
       "desktop": {
         "schemes": [
-          "macro"
+          "conation"
         ]
       }
     }

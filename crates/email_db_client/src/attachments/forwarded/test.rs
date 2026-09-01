@@ -3,7 +3,7 @@ use crate::attachments::forwarded::{
     fetch_forwarded_attachments_in_bulk, insert_forwarded_attachment,
 };
 use anyhow::Result;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use sqlx::types::Uuid;
 use sqlx::{Pool, Postgres};
 

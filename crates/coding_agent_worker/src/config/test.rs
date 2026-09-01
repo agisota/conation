@@ -8,7 +8,7 @@ fn the_example_config_parses() {
     assert_eq!(config.harness.command, "opencode");
     assert_eq!(config.harness.args, vec!["acp"]);
     assert_eq!(config.server.port, 8790);
-    assert_eq!(config.macro_api.bot_scope, "user");
+    assert_eq!(config.conation_api.bot_scope, "user");
     assert_eq!(config.server.signing_secret, None);
     assert_eq!(
         config.server.public_url,
@@ -29,14 +29,14 @@ fn args_and_scope_default() {
         .replace("bot_scope = \"user\"\n", "");
     let config: Config = toml::from_str(&trimmed).expect("args and scope are optional");
     assert!(config.harness.args.is_empty());
-    assert_eq!(config.macro_api.bot_scope, "user");
+    assert_eq!(config.conation_api.bot_scope, "user");
 }
 
 #[test]
 fn the_gateway_url_is_the_api_base_with_a_websocket_scheme() {
     let config: Config = toml::from_str(EXAMPLE).expect("example config parses");
     assert_eq!(
-        config.macro_api.gateway_url(),
+        config.conation_api.gateway_url(),
         "ws://localhost:50009/agent-harness/runtime/ws",
     );
 

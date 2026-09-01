@@ -8,7 +8,7 @@ use crate::outbound::no_op_resolver::NoOpCompanyMetadataResolver;
 use entity_access::domain::models::{
     Entity, EntityAccessReceipt, EntityPermission, EntityType, TeamRole,
 };
-use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use serde_json::json;
 
 /// Stub [`CompaniesRepository`]: the two settings methods behave like an
@@ -93,7 +93,7 @@ impl CompaniesRepository for StubRepo {
         unimplemented!()
     }
 
-    async fn get_team_id_for_user(&self, _macro_id: &str) -> Result<Option<uuid::Uuid>, CrmError> {
+    async fn get_team_id_for_user(&self, _conation_id: &str) -> Result<Option<uuid::Uuid>, CrmError> {
         unimplemented!()
     }
 

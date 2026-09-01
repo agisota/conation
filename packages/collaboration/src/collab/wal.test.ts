@@ -1,4 +1,4 @@
-import { type Span, Telemetry } from '@macro-inc/observability';
+import { type Span, Telemetry } from '@conation/observability';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { RawUpdate } from './shared';
 import { disposeTelemetryFor } from './telemetry';

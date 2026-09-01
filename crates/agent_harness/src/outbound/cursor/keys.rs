@@ -11,7 +11,7 @@
 //! visited settings yet, and it has to reach the channel as that sentence.
 
 use cursor_api_key::cipher::{CursorApiKey, CursorApiKeyCipher};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use sqlx::PgPool;
 
 use crate::domain::error::{HarnessError, Result};

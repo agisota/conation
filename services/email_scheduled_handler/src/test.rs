@@ -1,6 +1,6 @@
 use crate::handler::fetch_pending_scheduled_messages;
 use anyhow::Result;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use sqlx::types::Uuid;
 use sqlx::{Pool, Postgres};
 

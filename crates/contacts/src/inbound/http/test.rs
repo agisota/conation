@@ -4,7 +4,7 @@ use axum::{
     http::{Request, header},
 };
 use http_body_util::BodyExt;
-use macro_authorization::{
+use conation_authorization::{
     INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_USER_ID_HEADER, InternalAuthConfig, JwtValidator,
     MacroAuthorizationError, MacroAuthorizationServiceImpl, ValidatedIdentity,
 };
@@ -123,7 +123,7 @@ fn build_test_router(should_exceed: bool) -> (Router, FakeJwtValidator) {
             api_key: VALID_INTERNAL_KEY.to_string(),
             default_user_id: None,
         },
-        macro_authorization::NoBotAuthorizer,
+        conation_authorization::NoBotAuthorizer,
     );
     let state = ContactsRouterState {
         contacts_service: Arc::new(MockService),

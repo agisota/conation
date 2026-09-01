@@ -8,7 +8,7 @@ use axum::{
     routing::post,
 };
 
-use macro_authorization::{
+use conation_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
 };
 

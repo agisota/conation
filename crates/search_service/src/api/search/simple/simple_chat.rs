@@ -1,6 +1,6 @@
 use crate::api::search::simple::SearchError;
 use item_filters::ChatFilters;
-use macro_user_id::user_id::MacroUserId;
+use conation_user_id::user_id::MacroUserId;
 use model::item::{ShareableItem, ShareableItemType, UserAccessibleItem};
 use opensearch_client::search::model::{Highlight, SearchHit};
 use sqlx::{Pool, Postgres, types::Uuid};
@@ -21,7 +21,7 @@ pub(in crate::api::search) async fn filter_chats(
 ) -> Result<FilterChatResponse, SearchError> {
     let chat_ids_response: Vec<UserAccessibleItem> = if !filters.chat_ids.is_empty() {
         // Item ids are provided, we want to get the list of those that are accessible to the user
-        macro_db_client::item_access::validate_user_accessible_items(
+        conation_db_client::item_access::validate_user_accessible_items(
             &ctx.db,
             user_id,
             filters
@@ -40,7 +40,7 @@ pub(in crate::api::search) async fn filter_chats(
         // Otherwise, we need a list of all items the user has access to including what they own
         let should_exclude_owner = filters.project_ids.is_empty() && filters.owners.is_empty();
         // No filters are provided, we want to get the list of everything the has access to but does not own
-        macro_db_client::item_access::get_accessible_items::get_user_accessible_items(
+        conation_db_client::item_access::get_accessible_items::get_user_accessible_items(
             &ctx.db,
             user_id,
             Some("chat".to_string()),
@@ -63,7 +63,7 @@ pub(in crate::api::search) async fn filter_chats(
 
     // If project_ids are provided, we need to filter to only ids that are in those projects
     let chat_ids = if !filters.project_ids.is_empty() {
-        macro_db_client::items::filter::filter_items_by_project_ids(
+        conation_db_client::items::filter::filter_items_by_project_ids(
             &ctx.db,
             &chat_ids,
             ShareableItemType::Chat,
@@ -83,7 +83,7 @@ pub(in crate::api::search) async fn filter_chats(
     }
 
     let chat_ids = if !filters.owners.is_empty() {
-        macro_db_client::items::filter::filter_items_by_owner_ids(
+        conation_db_client::items::filter::filter_items_by_owner_ids(
             &ctx.db,
             &chat_ids,
             ShareableItemType::Chat,
@@ -103,7 +103,7 @@ pub(in crate::api::search) async fn filter_chats(
 #[tracing::instrument(skip(db), err)]
 pub(in crate::api::search::simple) async fn search_names<'a>(
     db: &Pool<Postgres>,
-    user_id: &MacroUserId<macro_user_id::lowercased::Lowercase<'a>>,
+    user_id: &MacroUserId<conation_user_id::lowercased::Lowercase<'a>>,
     filter_chat_response: &FilterChatResponse,
     term: String,
     tag_option_ids: &[String],

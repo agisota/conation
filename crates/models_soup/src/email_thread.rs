@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use doppleganger::Doppleganger;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

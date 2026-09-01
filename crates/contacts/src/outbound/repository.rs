@@ -4,7 +4,7 @@ mod test;
 use crate::domain::ports::{
     ContactsBackfillOutboxMessage, ContactsBackfillOutboxRepo, ContactsRepository,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use rootcause::Report;
 use sqlx::PgPool;
 use sqlx::types::Uuid;

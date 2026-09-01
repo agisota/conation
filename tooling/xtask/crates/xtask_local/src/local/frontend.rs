@@ -134,7 +134,7 @@ fn dev_env(
         // filtered by that env — actually match the emitted spans/records.
         env.push((
             "VITE_OTEL_ENV".to_string(),
-            macro_env_var::maybe_read_env("DD_ENV").unwrap_or_else(|| "local".into()),
+            conation_env_var::maybe_read_env("DD_ENV").unwrap_or_else(|| "local".into()),
         ));
     }
     env.push((

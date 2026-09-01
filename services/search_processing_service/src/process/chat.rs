@@ -34,7 +34,7 @@ pub(crate) async fn upsert_chat_message_by_ids(
     message_id: &str,
     index_override: Option<&str>,
 ) -> anyhow::Result<()> {
-    let info = macro_db_client::chat::get::get_chat_message_info(db, chat_id, message_id)
+    let info = conation_db_client::chat::get::get_chat_message_info(db, chat_id, message_id)
         .await
         .context("failed to get chat message info")?;
 

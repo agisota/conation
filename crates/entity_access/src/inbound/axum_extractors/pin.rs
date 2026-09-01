@@ -11,7 +11,7 @@ use axum::{
     Json, RequestExt,
     extract::{FromRef, FromRequest, Path, Request},
 };
-use macro_authorization::{
+use conation_authorization::{
     AnyPrincipal, MacroAuthorization, MacroAuthorizationService, MacroAuthorizationState,
     OptionalMacroAuthorizationExtractor,
 };
@@ -75,9 +75,9 @@ where
             .map_err(ExtractorError::from)?
             .authorization
             .ok_or(ExtractorError::Unauthorized)?;
-        let macro_user_id = match &authorization {
+        let conation_user_id = match &authorization {
             MacroAuthorization::User(user) | MacroAuthorization::Internal(Some(user)) => {
-                Some(user.macro_user_id.clone())
+                Some(user.conation_user_id.clone())
             }
             MacroAuthorization::Bot(_) => None,
             MacroAuthorization::Internal(None) => return Err(ExtractorError::Unauthorized),
@@ -114,9 +114,9 @@ where
                 .await?
             }
             MacroAuthorization::User(_) | MacroAuthorization::Internal(Some(_)) => {
-                let macro_user_id = macro_user_id.ok_or(ExtractorError::Unauthorized)?;
+                let conation_user_id = conation_user_id.ok_or(ExtractorError::Unauthorized)?;
                 let access_level = service
-                    .get_access_level(Some(&macro_user_id), &pinned_item_id, entity_type)
+                    .get_access_level(Some(&conation_user_id), &pinned_item_id, entity_type)
                     .await
                     .map_err(ExtractorError::from)?
                     .ok_or(ExtractorError::Unauthorized)?;
@@ -130,7 +130,7 @@ where
                         entity_id: pinned_item_id,
                         entity_type,
                     },
-                    auth: EntityAccessAuth::Authenticated(macro_user_id),
+                    auth: EntityAccessAuth::Authenticated(conation_user_id),
                     entity_permission: permission,
                     _marker: PhantomData,
                 }

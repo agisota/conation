@@ -1,4 +1,4 @@
-use macro_aws_config::SdkConfig;
+use conation_aws_config::SdkConfig;
 
 mod bulk_upload;
 

@@ -1,0 +1,20 @@
+# Conation rebrand — git filter-repo --replace-text
+# Format: literal===>replacement  (regex: prefix with regex:)
+# Order matters: longest/most specific first
+regex:macro-inc===>conation-dev
+regex:MACRO_INC===>CONATION_DEV
+regex:Macro Inc===>Conation
+macro.com===>conation.dev
+MACRO\.COM===>CONATION.DEV
+Macro===>Conation
+MACRO===>CONATION
+macro===>conation
+# NPM / crate prefixes keep same case mapping via above
+# Domain-qualified
+regex:nix-cache\.macro\.com===>nix-cache.conation.dev
+regex:s3://macro-nix-cache===>s3://conation-nix-cache
+regex:ghcr\.io/macro-inc/macro===>ghcr.io/conation-dev/conation
+# Buckets / aliases
+regex:macro-email-attachments===>conation-email-attachments
+regex:macro-local===>conation-local
+regex:macro-gmail-webhook===>conation-gmail-webhook

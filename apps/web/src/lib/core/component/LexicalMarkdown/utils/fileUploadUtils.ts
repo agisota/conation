@@ -11,7 +11,7 @@ import {
   type UploadInput,
   uploadFiles,
 } from '@core/util/upload';
-import { Telemetry } from '@macro-inc/observability';
+import { Telemetry } from '@conation/observability';
 
 import { fileExtension } from '@service-storage/util/filename';
 import type { LexicalEditor } from 'lexical';

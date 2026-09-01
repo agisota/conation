@@ -1,7 +1,7 @@
 use super::*;
 use crate::domain::{AiFeature, CompletionUsage, SYSTEM_USER_ID, Usage, UsageApiParams};
 use chrono::Utc;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use sqlx::PgPool;
 
 fn completion(feature: AiFeature, model: &str, input: u32, output: u32) -> CompletionUsage {

@@ -25,7 +25,7 @@ pub async fn setup_and_serve(
 }
 
 async fn serve(state: ApiContext, shutdown_token: CancellationToken) -> anyhow::Result<()> {
-    let cors = macro_cors::cors_layer();
+    let cors = conation_cors::cors_layer();
 
     let port = state.config.port;
     let env = state.config.environment;
@@ -97,7 +97,7 @@ fn api_router() -> Router<ApiContext> {
     Router::new().nest(
         "/internal",
         internal::router().layer(ServiceBuilder::new().layer(axum::middleware::from_fn(
-            macro_middleware::connection_drop_prevention_handler,
+            conation_middleware::connection_drop_prevention_handler,
         ))),
     )
 }

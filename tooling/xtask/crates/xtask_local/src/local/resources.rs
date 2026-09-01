@@ -22,7 +22,7 @@ pub const DOC_STORAGE_BUCKET: &str = "doc-storage";
 
 /// The queue doc-storage ObjectCreated events publish to — referenced by the
 /// upload-finalizer wiring, so it is named.
-pub const UPLOAD_FINALIZER_QUEUE: &str = macro_queues::DocumentUploadFinalizerQueue::LOCAL;
+pub const UPLOAD_FINALIZER_QUEUE: &str = conation_queues::DocumentUploadFinalizerQueue::LOCAL;
 
 // DynamoDB table names: referenced both by their bespoke create-table schema in
 // `localstack` and by the env binding below, so they are named.
@@ -102,48 +102,48 @@ use QueueForm::{Name, Url};
 /// Every local SQS queue and the env var(s) that reference it.
 pub const QUEUES: &[Queue] = &[
     Queue {
-        name: macro_queues::NotificationQueue::LOCAL,
+        name: conation_queues::NotificationQueue::LOCAL,
         bindings: &[("NOTIFICATION_QUEUE", Url)],
     },
     Queue {
-        name: macro_queues::NotificationIngressQueue::LOCAL,
+        name: conation_queues::NotificationIngressQueue::LOCAL,
         bindings: &[("NOTIFICATION_INGRESS_QUEUE", Url)],
     },
     Queue {
-        name: macro_queues::PushNotificationEventHandlerQueue::LOCAL,
+        name: conation_queues::PushNotificationEventHandlerQueue::LOCAL,
         bindings: &[("PUSH_NOTIFICATION_EVENT_HANDLER_QUEUE", Name)],
     },
     Queue {
-        name: macro_queues::WebhookEventQueue::LOCAL,
-        bindings: &[(macro_queues::WebhookEventQueue::OVERRIDE_ENV_VAR_NAME, Url)],
+        name: conation_queues::WebhookEventQueue::LOCAL,
+        bindings: &[(conation_queues::WebhookEventQueue::OVERRIDE_ENV_VAR_NAME, Url)],
     },
     Queue {
-        name: macro_queues::EmailBackfillQueue::LOCAL,
+        name: conation_queues::EmailBackfillQueue::LOCAL,
         bindings: &[("BACKFILL_QUEUE", Name), ("EMAIL_BACKFILL_QUEUE", Url)],
     },
     Queue {
         // Consumed by email_service's nightly CRM-cleanup workers; without the
         // queue existing in LocalStack they tight-loop on receive errors.
-        name: macro_queues::EmailCrmCleanupQueue::LOCAL,
+        name: conation_queues::EmailCrmCleanupQueue::LOCAL,
         bindings: &[(
-            macro_queues::EmailCrmCleanupQueue::OVERRIDE_ENV_VAR_NAME,
+            conation_queues::EmailCrmCleanupQueue::OVERRIDE_ENV_VAR_NAME,
             Url,
         )],
     },
     Queue {
-        name: macro_queues::ChatDeleteQueue::LOCAL,
+        name: conation_queues::ChatDeleteQueue::LOCAL,
         bindings: &[("CHAT_DELETE_QUEUE", Name)],
     },
     Queue {
-        name: macro_queues::ContactsQueue::LOCAL,
+        name: conation_queues::ContactsQueue::LOCAL,
         bindings: &[("CONTACTS_QUEUE", Name)],
     },
     Queue {
-        name: macro_queues::ConvertQueue::LOCAL,
+        name: conation_queues::ConvertQueue::LOCAL,
         bindings: &[("CONVERT_QUEUE", Name)],
     },
     Queue {
-        name: macro_queues::DocumentDeleteQueue::LOCAL,
+        name: conation_queues::DocumentDeleteQueue::LOCAL,
         bindings: &[("DOCUMENT_DELETE_QUEUE", Name)],
     },
     Queue {
@@ -151,51 +151,51 @@ pub const QUEUES: &[Queue] = &[
         bindings: &[("DOCUMENT_UPLOAD_FINALIZER_QUEUE_URL", Url)],
     },
     Queue {
-        name: macro_queues::DocumentTextExtractorQueue::LOCAL,
+        name: conation_queues::DocumentTextExtractorQueue::LOCAL,
         bindings: &[("DOCUMENT_TEXT_EXTRACTOR_QUEUE", Name)],
     },
     Queue {
-        name: macro_queues::EmailScheduledQueue::LOCAL,
+        name: conation_queues::EmailScheduledQueue::LOCAL,
         bindings: &[("EMAIL_SCHEDULED_QUEUE", Name)],
     },
     Queue {
-        name: macro_queues::GmailInboxSyncQueue::LOCAL,
+        name: conation_queues::GmailInboxSyncQueue::LOCAL,
         bindings: &[("GMAIL_INBOX_SYNC_QUEUE", Name)],
     },
     Queue {
-        name: macro_queues::GmailInboxSyncRetryQueue::LOCAL,
+        name: conation_queues::GmailInboxSyncRetryQueue::LOCAL,
         bindings: &[("GMAIL_INBOX_SYNC_RETRY_QUEUE", Name)],
     },
     Queue {
-        name: macro_queues::GmailOpsQueue::LOCAL,
+        name: conation_queues::GmailOpsQueue::LOCAL,
         bindings: &[("GMAIL_OPS_QUEUE", Name)],
     },
     Queue {
-        name: macro_queues::GmailOpsRetryQueue::LOCAL,
+        name: conation_queues::GmailOpsRetryQueue::LOCAL,
         bindings: &[("GMAIL_OPS_RETRY_QUEUE", Name)],
     },
     Queue {
-        name: macro_queues::LinkManagerQueue::LOCAL,
+        name: conation_queues::LinkManagerQueue::LOCAL,
         bindings: &[("LINK_MANAGER_QUEUE", Name)],
     },
     Queue {
-        name: macro_queues::SearchEventQueue::LOCAL,
+        name: conation_queues::SearchEventQueue::LOCAL,
         bindings: &[("SEARCH_EVENT_QUEUE", Name)],
     },
     Queue {
-        name: macro_queues::AiProjectionQueue::LOCAL,
+        name: conation_queues::AiProjectionQueue::LOCAL,
         bindings: &[("AI_PROJECTION_QUEUE", Url)],
     },
     Queue {
-        name: macro_queues::SfsDeleteQueue::LOCAL,
+        name: conation_queues::SfsDeleteQueue::LOCAL,
         bindings: &[("SFS_DELETE_QUEUE", Name)],
     },
     Queue {
-        name: macro_queues::SfsUploaderQueue::LOCAL,
+        name: conation_queues::SfsUploaderQueue::LOCAL,
         bindings: &[("SFS_UPLOADER_QUEUE", Name)],
     },
     Queue {
-        name: macro_queues::StaticFileServiceS3EventQueueUrl::LOCAL,
+        name: conation_queues::StaticFileServiceS3EventQueueUrl::LOCAL,
         bindings: &[("STATIC_FILE_SERVICE_S3_EVENT_QUEUE_URL", Url)],
     },
     Queue {
@@ -206,9 +206,9 @@ pub const QUEUES: &[Queue] = &[
         // No EventBridge locally — LocalStack has `events` disabled — so nothing
         // puts the minutely tick on this queue. `just poke_reminder_sweep` (or
         // `just tick_reminder_sweeps`) stands in for the schedule.
-        name: macro_queues::ReminderDispatchQueue::LOCAL,
+        name: conation_queues::ReminderDispatchQueue::LOCAL,
         bindings: &[(
-            macro_queues::ReminderDispatchQueue::OVERRIDE_ENV_VAR_NAME,
+            conation_queues::ReminderDispatchQueue::OVERRIDE_ENV_VAR_NAME,
             Url,
         )],
     },
@@ -216,9 +216,9 @@ pub const QUEUES: &[Queue] = &[
         // Same EventBridge stand-in as the reminders queue above:
         // `just poke_calendar_reminder_sweep` (or
         // `just tick_calendar_reminder_sweeps`) supplies the minutely tick.
-        name: macro_queues::CalendarReminderDispatchQueue::LOCAL,
+        name: conation_queues::CalendarReminderDispatchQueue::LOCAL,
         bindings: &[(
-            macro_queues::CalendarReminderDispatchQueue::OVERRIDE_ENV_VAR_NAME,
+            conation_queues::CalendarReminderDispatchQueue::OVERRIDE_ENV_VAR_NAME,
             Url,
         )],
     },

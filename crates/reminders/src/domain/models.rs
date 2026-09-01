@@ -8,7 +8,7 @@ use std::str::FromStr;
 use chrono::{DateTime, Timelike, Utc};
 use chrono_tz::Tz;
 use cron::Schedule as CronSchedule;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::{Entity, EntityType};
 use serde::{Deserialize, Deserializer, Serialize};
 use uuid::Uuid;

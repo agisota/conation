@@ -8,7 +8,7 @@ use entity_access::domain::{
     models::{EntityType, ViewAccessLevel},
     ports::EntityAccessService,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use rmcp::model::{CallToolResult, Content};
 use std::net::IpAddr;
 use std::sync::OnceLock;
@@ -199,7 +199,7 @@ async fn fetch_and_encode(url: &str) -> Option<ResolvedImage> {
 }
 
 async fn fetch_and_encode_inner(url: &str) -> anyhow::Result<ResolvedImage> {
-    let url = macro_aws_config::transform_aws_url_for_internal_fetch(url);
+    let url = conation_aws_config::transform_aws_url_for_internal_fetch(url);
     let url = url.as_str();
     let response = reqwest::get(url).await?;
     encode_response(url, response).await

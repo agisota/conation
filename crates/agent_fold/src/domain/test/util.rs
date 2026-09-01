@@ -98,7 +98,7 @@ fn ensure_warn_call_sites_are_registered() {
 ///
 /// A fresh subscriber per call, scoped to `body` with
 /// [`tracing::subscriber::with_default`] - the same pattern
-/// `macro_tower_layers`'s tests use. Each call gets its own capture, so
+/// `conation_tower_layers`'s tests use. Each call gets its own capture, so
 /// nothing needs clearing between tests and parallel tests cannot see each
 /// other's warnings: there is no shared or global state for them to collide
 /// on in the first place.

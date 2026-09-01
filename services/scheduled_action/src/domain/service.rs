@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use anyhow::{Result, bail};
-use macro_user_id::user_id::MacroUserIdStr;
-use macro_uuid::Uuid;
+use conation_user_id::user_id::MacroUserIdStr;
+use conation_uuid::Uuid;
 use tokio::sync::mpsc::Sender;
 
 use super::models::{ActionExecutionRecord, DispatchEvent, InProgressExecution, ScheduledAction};
@@ -45,12 +45,12 @@ where
     async fn update_action(
         &self,
         action: ScheduledAction,
-        macro_user_id: MacroUserIdStr<'static>,
+        conation_user_id: MacroUserIdStr<'static>,
     ) -> Result<ScheduledAction> {
         let Some(id) = action.id else {
             bail!("cannot update action without id");
         };
-        let actions = self.repo.get_actions(macro_user_id).await?;
+        let actions = self.repo.get_actions(conation_user_id).await?;
         if !actions.iter().any(|a| a.id.as_ref() == Some(&id)) {
             bail!("scheduled action {id} not found for user");
         }
@@ -63,13 +63,13 @@ where
         Ok(updated)
     }
 
-    async fn delete_action(&self, id: &Uuid, macro_user_id: MacroUserIdStr<'static>) -> Result<()> {
-        let actions = self.repo.get_actions(macro_user_id.clone()).await?;
+    async fn delete_action(&self, id: &Uuid, conation_user_id: MacroUserIdStr<'static>) -> Result<()> {
+        let actions = self.repo.get_actions(conation_user_id.clone()).await?;
         let Some(action) = actions.into_iter().find(|a| a.id.as_ref() == Some(id)) else {
             bail!("scheduled action {id} not found for user");
         };
 
-        self.repo.delete_action(id, macro_user_id).await?;
+        self.repo.delete_action(id, conation_user_id).await?;
         self.dispatcher_tx
             .send(DispatchEvent::Delete(action))
             .await
@@ -80,9 +80,9 @@ where
     async fn execute_action_now(
         &self,
         id: &Uuid,
-        macro_user_id: MacroUserIdStr<'static>,
+        conation_user_id: MacroUserIdStr<'static>,
     ) -> Result<InProgressExecution> {
-        let actions = self.repo.get_actions(macro_user_id).await?;
+        let actions = self.repo.get_actions(conation_user_id).await?;
         let Some(action) = actions.into_iter().find(|a| a.id.as_ref() == Some(id)) else {
             bail!("scheduled action {id} not found for user");
         };
@@ -93,9 +93,9 @@ where
     async fn get_execution_records(
         &self,
         id: &Uuid,
-        macro_user_id: MacroUserIdStr<'static>,
+        conation_user_id: MacroUserIdStr<'static>,
     ) -> Result<Vec<ActionExecutionRecord>> {
-        let actions = self.repo.get_actions(macro_user_id).await?;
+        let actions = self.repo.get_actions(conation_user_id).await?;
         if !actions.iter().any(|a| a.id.as_ref() == Some(id)) {
             bail!("scheduled action {id} not found for user");
         }

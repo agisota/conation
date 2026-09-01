@@ -1,8 +1,8 @@
 use anyhow::Context;
 use database_env_vars::{DatabaseUrl, RedisUri};
-use macro_auth::InternalApiKey;
-pub use macro_env::Environment;
-use macro_env_var::{env_vars, maybe_env_vars};
+use conation_auth::InternalApiKey;
+pub use conation_env::Environment;
+use conation_env_var::{env_vars, maybe_env_vars};
 
 env_vars! {
     pub struct BaseUrl;
@@ -13,14 +13,14 @@ maybe_env_vars! {
     pub struct ContactsQueueWaitTimeSeconds;
 }
 
-#[derive(macro_config::MacroConfig)]
+#[derive(conation_config::MacroConfig)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Config {
     /// port number of service
-    #[macro_config_default(8080)]
+    #[conation_config_default(8080)]
     pub port: usize,
     /// The environment we are in
-    #[macro_config_default(Environment::new_or_prod())]
+    #[conation_config_default(Environment::new_or_prod())]
     pub environment: Environment,
     /// The connection URL for the Postgres database this application should use.
     pub database_url: DatabaseUrl,
@@ -36,7 +36,7 @@ pub struct Config {
 
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
-        macro_config::ConfigLoader::load::<Config>()
+        conation_config::ConfigLoader::load::<Config>()
             .context("failed to load contacts service config")
     }
 

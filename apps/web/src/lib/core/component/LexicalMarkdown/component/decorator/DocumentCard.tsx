@@ -21,7 +21,7 @@ import {
   type PreviewBox,
   setDocumentCardPreviewComponent,
   unsetDocumentCardPreviewCache,
-} from '@macro-inc/lexical-core';
+} from '@conation/lexical-core';
 import Minimize from '@phosphor/arrows-in.svg';
 import Clipboard from '@phosphor/clipboard.svg';
 import ClockIcon from '@phosphor/clock.svg';

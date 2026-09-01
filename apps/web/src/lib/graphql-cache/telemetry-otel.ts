@@ -1,4 +1,4 @@
-import { Telemetry } from '@macro-inc/observability';
+import { Telemetry } from '@conation/observability';
 import type { CacheTelemetryEnvelope, CacheTelemetrySink } from './telemetry';
 
 /**

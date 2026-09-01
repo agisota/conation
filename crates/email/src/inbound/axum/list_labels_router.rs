@@ -1,6 +1,6 @@
 use axum::{Json, Router, extract::State, http::StatusCode, response::IntoResponse, routing::get};
 use axum_extra::extract::Cached;
-use macro_authorization::{MacroAuthorizationService, MacroAuthorizationState};
+use conation_authorization::{MacroAuthorizationService, MacroAuthorizationState};
 use model_error_response::ErrorResponse;
 use thiserror::Error;
 

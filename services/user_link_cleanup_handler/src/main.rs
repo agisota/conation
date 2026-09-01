@@ -4,8 +4,8 @@ use lambda_runtime::{
     Error, LambdaEvent, run, service_fn,
     tracing::{self},
 };
-use macro_entrypoint::MacroEntrypoint;
-use macro_env_var::env_vars;
+use conation_entrypoint::MacroEntrypoint;
+use conation_env_var::env_vars;
 use sqlx::postgres::PgPoolOptions;
 
 env_vars! {
@@ -38,9 +38,9 @@ async fn main() -> Result<(), Error> {
 }
 
 pub async fn handler(db: sqlx::PgPool, _event: LambdaEvent<EventBridgeEvent>) -> Result<(), Error> {
-    macro_db_client::in_progress_user_link::delete_day_old_in_progress_user_links(&db).await?;
+    conation_db_client::in_progress_user_link::delete_day_old_in_progress_user_links(&db).await?;
 
-    macro_db_client::in_progress_email_link::delete_day_old_in_progress_email_links(&db).await?;
+    conation_db_client::in_progress_email_link::delete_day_old_in_progress_email_links(&db).await?;
 
     Ok(())
 }

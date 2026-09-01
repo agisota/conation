@@ -9,7 +9,7 @@ local = []
 
 [dependencies]
 aws-sdk-secretsmanager = { workspace = true }
-macro_env = { path = "../macro_env" }
+conation_env = { path = "../conation_env" }
 mockall = { workspace = true }
 remote_env_var = { path = "../remote_env_var" }
 thiserror = { workspace = true }

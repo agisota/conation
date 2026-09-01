@@ -1,6 +1,6 @@
 //! Query for channel membership check.
 
-use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId};
+use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId};
 use sqlx::PgPool;
 use uuid::Uuid;
 

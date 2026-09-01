@@ -1,2 +1,2 @@
-/crates/macro_db_client/migrations/ @macro-inc/infra
-/infra/ @macro-inc/infra
+/crates/conation_db_client/migrations/ @conation-dev/infra
+/infra/ @conation-dev/infra

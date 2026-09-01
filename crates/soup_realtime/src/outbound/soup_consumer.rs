@@ -10,7 +10,7 @@ mod test;
 use std::time::Duration;
 
 use kafka_util::{InitialOffset, KafkaEventConsumer, Ungrouped};
-use macro_event_broker::{
+use conation_event_broker::{
     EventBrokerError, KafkaConsumerAdapter, MacroEventCollection, MacroEventConsumerService,
 };
 use rdkafka::message::Message as _;
@@ -27,7 +27,7 @@ const TOPIC_METADATA_TIMEOUT: Duration = Duration::from_secs(10);
 type IndependentKafkaConsumer = KafkaConsumerAdapter<Ungrouped, DeclaredMacroEvent>;
 type SoupEventConsumer = MacroEventConsumerService<DeclaredMacroEvent, IndependentKafkaConsumer>;
 
-macro_event_broker::declare_topics!(DeclaredMacroEvent: SoupMacroEvent);
+conation_event_broker::declare_topics!(DeclaredMacroEvent: SoupMacroEvent);
 
 /// Independent consumer of recipient-targeted Soup messages.
 ///

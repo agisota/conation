@@ -3,7 +3,7 @@ import { $generateNodesFromDOM } from '@lexical/html';
 import {
   $isClassedBlockNode,
   SupportedNodeTypes,
-} from '@macro-inc/lexical-core';
+} from '@conation/lexical-core';
 import type { ApiMessage } from '@service-email/generated/schemas';
 import {
   $createParagraphNode,

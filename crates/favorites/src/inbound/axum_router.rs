@@ -13,7 +13,7 @@ use entity_access::{
     domain::{models::ViewAccessLevel, ports::EntityAccessService},
     inbound::axum_extractors::EntityBodyAccessLevelExtractor,
 };
-use macro_authorization::{
+use conation_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
 };
 use model_entity::EntityType;
@@ -174,7 +174,7 @@ where
 {
     let favorites = state
         .service
-        .list_favorites(&user.authorization.user.macro_user_id)
+        .list_favorites(&user.authorization.user.conation_user_id)
         .await?;
     Ok(Json(FavoritesList { favorites }))
 }
@@ -239,7 +239,7 @@ where
     let entity = params.entity_type.with_entity_str(&params.entity_id);
     state
         .service
-        .remove_favorite_by_entity(&user.authorization.user.macro_user_id, &entity)
+        .remove_favorite_by_entity(&user.authorization.user.conation_user_id, &entity)
         .await?;
     Ok(Json(()))
 }
@@ -276,7 +276,7 @@ where
         .collect();
     state
         .service
-        .reorder_favorites(&user.authorization.user.macro_user_id, &ordered)
+        .reorder_favorites(&user.authorization.user.conation_user_id, &ordered)
         .await?;
     Ok(Json(()))
 }

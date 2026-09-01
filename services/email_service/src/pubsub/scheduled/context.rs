@@ -9,5 +9,5 @@ pub struct ScheduledContext {
     pub email_api: GmailApi,
     pub s3_client: s3_client::S3,
     pub attachment_bucket: String,
-    pub macro_event_broker: PubSubEventBroker,
+    pub conation_event_broker: PubSubEventBroker,
 }

@@ -3,7 +3,7 @@ use agent::PredefinedModel;
 use chat::domain::models::PatchChatArgs;
 use chat::domain::ports::ChatRepo;
 use chat::outbound::postgres::PgChatRepo;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::EntityType;
 use std::sync::Arc;
 
@@ -108,7 +108,7 @@ async fn generate_chat_name(
         initial_question.trim()
     );
     let usage_ctx = ai_usage::UsageContext::new(ai_usage::AiFeature::ChatRename, user_id)
-        .with_entity(macro_uuid::string_to_uuid(chat_id).ok());
+        .with_entity(conation_uuid::string_to_uuid(chat_id).ok());
     let response = agent::complete(
         PredefinedModel::Fast,
         CHAT_RENAME_SYSTEM_PROMPT,

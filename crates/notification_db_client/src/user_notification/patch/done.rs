@@ -11,7 +11,7 @@ pub async fn patch_done(
         SET done = true
         WHERE notification_id = $1 AND user_id = $2
         "#,
-        macro_uuid::string_to_uuid(notification_id)?,
+        conation_uuid::string_to_uuid(notification_id)?,
         user_id,
     )
     .execute(db)

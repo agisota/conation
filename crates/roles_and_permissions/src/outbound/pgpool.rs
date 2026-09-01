@@ -5,7 +5,7 @@ mod test;
 
 use std::collections::HashSet;
 
-use macro_user_id::{
+use conation_user_id::{
     cowlike::CowLike,
     email::{Email, ReadEmailParts},
     lowercased::Lowercase,

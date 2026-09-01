@@ -99,7 +99,7 @@ pub async fn get_all_channel_ids_paginated(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use macro_db_migrator::MACRO_DB_MIGRATIONS;
+    use conation_db_migrator::MACRO_DB_MIGRATIONS;
     use sqlx::{Pool, Postgres};
 
     #[sqlx::test(

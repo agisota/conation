@@ -5,7 +5,7 @@ use std::collections::HashSet;
 use entity_access::domain::models::{
     AdminTeamRole, EntityAccessReceipt, MemberTeamRole, OwnerTeamRole,
 };
-use macro_user_id::{email::Email, lowercased::Lowercase, user_id::MacroUserIdStr};
+use conation_user_id::{email::Email, lowercased::Lowercase, user_id::MacroUserIdStr};
 
 use crate::domain::model::{
     AcceptedTeamInvite, CreateTeamError, DeleteTeamError, InviteUsersToTeamError, JoinTeamError,

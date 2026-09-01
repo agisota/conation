@@ -13,7 +13,7 @@ use std::marker::PhantomData;
 use std::time::Duration;
 
 use either::Either;
-use macro_env::Environment;
+use conation_env::Environment;
 use opentelemetry::propagation::{Extractor, Injector};
 use rdkafka::consumer::{CommitMode, Consumer, ConsumerContext, StreamConsumer};
 use rdkafka::error::{KafkaError, KafkaResult};

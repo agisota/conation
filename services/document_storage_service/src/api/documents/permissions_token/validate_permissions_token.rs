@@ -7,10 +7,10 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use jsonwebtoken::{Algorithm, DecodingKey, Validation};
-use macro_authorization::{
+use conation_authorization::{
     OptionalMacroAuthorizationExtractor, UserOrInternalService, UserOrInternalServiceAuthorization,
 };
-use macro_sync_service_jwt::ISSUER;
+use conation_sync_service_jwt::ISSUER;
 use model::{document::DocumentPermissionsToken, response::ErrorResponse};
 use utoipa::ToSchema;
 
@@ -59,7 +59,7 @@ pub async fn handler(
         .authorization
         .as_ref()
         .and_then(UserOrInternalServiceAuthorization::acting_user)
-        .map(|user| user.macro_user_id.to_string());
+        .map(|user| user.conation_user_id.to_string());
 
     // Attempt to decode the token.
     let decoded_jwt: DocumentPermissionsToken = match jsonwebtoken::decode::<DocumentPermissionsToken>(

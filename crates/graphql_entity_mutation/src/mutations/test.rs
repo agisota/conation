@@ -8,7 +8,7 @@ use entity_mutation::{
 };
 use graphql_permission::GraphqlEntityAccessLevel;
 use graphql_soup::SoupEntityEdges;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::{Entity, EntityType};
 use models_permissions::share_permission::{LinkShare, access_level::AccessLevel};
 

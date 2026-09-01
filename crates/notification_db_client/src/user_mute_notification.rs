@@ -60,7 +60,7 @@ pub async fn get_user_mute_notification_bulk(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use macro_db_migrator::MACRO_DB_MIGRATIONS;
+    use conation_db_migrator::MACRO_DB_MIGRATIONS;
 
     #[sqlx::test(migrator = "MACRO_DB_MIGRATIONS")]
     async fn test_upsert_user_mute_notification(

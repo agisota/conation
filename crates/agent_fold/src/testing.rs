@@ -9,7 +9,7 @@ use agent_client_protocol::JsonRpcMessage;
 use agent_client_protocol::RawJsonRpcMessage;
 use agent_client_protocol::schema::v1::PromptRequest;
 use agent_runtime_protocol::domain::schema::v0::ToRuntimeMessage;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, Mutex};
 
@@ -74,7 +74,7 @@ impl LogRepo for InMemoryLog {
 /// The session id fixture logs are parsed into by default.
 #[must_use]
 pub fn test_session() -> AgentSessionId {
-    AgentSessionId::new_from_uuid(macro_uuid::Uuid::from_u128(1))
+    AgentSessionId::new_from_uuid(conation_uuid::Uuid::from_u128(1))
 }
 
 /// Parse one recorded line - the agent_session_recorder / fixture format:

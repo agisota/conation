@@ -18,5 +18,5 @@ pub struct LinkManagerContext {
     pub crm_service: CrmServiceType,
     pub connection_gateway_client: ConnectionGatewayClient,
     pub notification_ingress_service: Arc<NotificationIngressType>,
-    pub macro_event_broker: PubSubEventBroker,
+    pub conation_event_broker: PubSubEventBroker,
 }

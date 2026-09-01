@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { $createDiffTextNode, DiffTextNode } from '@macro-inc/lexical-core';
+import { $createDiffTextNode, DiffTextNode } from '@conation/lexical-core';
 import { $createParagraphNode, $getRoot, createEditor } from 'lexical';
 import { describe, expect, it } from 'vitest';
 import { diffAuthorColorPlugin } from './diffAuthorColorPlugin';

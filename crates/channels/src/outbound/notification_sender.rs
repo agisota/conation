@@ -5,7 +5,7 @@ use crate::domain::{
     ports::ChannelNotificationSender,
     side_effects::{ChannelMentionNotification, ChannelNotificationEffect},
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_notifications::{
     ChannelInviteMetadata, ChannelMentionMetadata, ChannelMessageSendMetadata,
     ChannelReplyMetadata, CommonChannelMetadata, DocumentMentionMetadata,

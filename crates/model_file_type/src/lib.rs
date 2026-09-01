@@ -29,7 +29,7 @@ impl<'a> Lowercase<'a> {
     }
 }
 
-macro_rules! generate_file_types {
+conation_rules! generate_file_types {
     ($(($variant:ident, $str_name:expr, $mime_type:expr, $app_path:ident)),* $(,)?) => {
         /// Generates a FileType enum and associated ContentType enum with their implementations.
         ///
@@ -92,7 +92,7 @@ macro_rules! generate_file_types {
             }
 
             /// return the app path for the file type
-            pub fn macro_app_path(&self) -> FileAssociation {
+            pub fn conation_app_path(&self) -> FileAssociation {
                 match self {
                     $(
                         FileType::$variant => FileAssociation::from($app_path),
@@ -185,7 +185,7 @@ macro_rules! generate_file_types {
     };
 }
 
-macro_rules! define_file_associations {
+conation_rules! define_file_associations {
     (
         $(
             ($struct_name:ident, $display_str:literal, $doc:literal)

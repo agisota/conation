@@ -2,7 +2,7 @@ use crate::email::db::backfill as db_backfill;
 use crate::email::service::thread::ListThreadsPayload;
 use crate::service::attachment::AttachmentUploadArgs;
 use chrono::{DateTime, Utc};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use strum::{AsRefStr, Display, EnumString};
@@ -175,7 +175,7 @@ impl BackfillOperation {
 pub struct BackfillPubsubMessage {
     // the operation being performed (init, backfill_thread, backfill_message,
     // populate_crm_contact, populate_crm_for_user). Each variant carries its
-    // own link_id/job_id/macro_id as needed — see JobScopedPayload,
+    // own link_id/job_id/conation_id as needed — see JobScopedPayload,
     // LinkScopedPayload, and PopulateCrmForUserPayload.
     pub backfill_operation: BackfillOperation,
 }
@@ -356,12 +356,12 @@ pub struct DepopulateCrmContactPayload {
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
 pub struct PopulateCrmForUserPayload {
-    pub macro_id: MacroUserIdStr<'static>,
+    pub conation_id: MacroUserIdStr<'static>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
 pub struct DepopulateCrmForUserPayload {
-    pub macro_id: MacroUserIdStr<'static>,
+    pub conation_id: MacroUserIdStr<'static>,
     /// Team the user was just removed from. Passed explicitly because
     /// the consumer cannot recover this via `get_team_id_for_user` —
     /// by the time it runs the user has already been removed from

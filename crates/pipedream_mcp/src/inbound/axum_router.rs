@@ -13,7 +13,7 @@ use axum::{
     response::IntoResponse,
     routing::{delete, get, post, put},
 };
-use macro_authorization::{
+use conation_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
 };
 use model_error_response::ErrorResponse;
@@ -322,7 +322,7 @@ where
     let user = &authorization.authorization.user;
     let records = state
         .store
-        .list(&user.macro_user_id)
+        .list(&user.conation_user_id)
         .await
         .map_err(anyhow::Error::from)?;
 
@@ -363,7 +363,7 @@ where
     let user = &authorization.authorization.user;
     let mut record = state
         .store
-        .load(&user.macro_user_id, &body.app_slug)
+        .load(&user.conation_user_id, &body.app_slug)
         .await
         .map_err(anyhow::Error::from)?
         .ok_or(PipedreamHandlerErr::NotFound)?;
@@ -414,7 +414,7 @@ where
     disconnect_mcp_server(
         state.store.as_ref(),
         pipedream.as_ref(),
-        &user.macro_user_id,
+        &user.conation_user_id,
         &params.app_slug,
     )
     .await?;
@@ -451,7 +451,7 @@ where
     let user = &authorization.authorization.user;
     let token = state
         .pipedream()?
-        .create_connect_token(user.macro_user_id.as_ref())
+        .create_connect_token(user.conation_user_id.as_ref())
         .await?;
 
     Ok(Json(PipedreamTokenResponse {
@@ -495,7 +495,7 @@ where
     let record = complete_pipedream_connection(
         state.store.as_ref(),
         state.pipedream()?.as_ref(),
-        &user.macro_user_id,
+        &user.conation_user_id,
         &body.account_id,
         body.server_name.as_deref(),
     )

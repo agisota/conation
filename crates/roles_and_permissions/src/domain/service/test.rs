@@ -4,7 +4,7 @@ use crate::domain::model::Permission;
 use std::collections::HashSet;
 use std::sync::{Arc, Mutex};
 
-use macro_user_id::email::ReadEmailParts;
+use conation_user_id::email::ReadEmailParts;
 
 #[derive(Debug, Clone, Default)]
 struct MockUserRepository {}

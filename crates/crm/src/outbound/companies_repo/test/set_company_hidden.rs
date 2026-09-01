@@ -5,7 +5,7 @@ use crate::domain::service::{CrmService, CrmServiceImpl};
 use crate::outbound::companies_repo::*;
 use crate::outbound::no_op_resolver::NoOpCompanyMetadataResolver;
 use entity_access::domain::models::EditAccessLevel;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use sqlx::PgPool;
 use uuid::Uuid;
 

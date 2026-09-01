@@ -14,10 +14,10 @@ use email::domain::ports::EmailRepo;
 use email::outbound::EmailPgRepo;
 use email_api_client::domain::models::{EmailApiError, TokenFreshness};
 use email_service::pubsub::publish_email_event;
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use macro_db_client::in_progress_user_link::InProgressUserLink;
-use macro_user_id::email::EmailStr;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_db_client::in_progress_user_link::InProgressUserLink;
+use conation_user_id::email::EmailStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model::response::ErrorResponse;
 use models_email::email::service::backfill::{
     BackfillOperation, BackfillPubsubMessage, InitPayload, JobScopedPayload,
@@ -53,7 +53,7 @@ pub enum InitError {
     BadRequest(String),
 
     #[error("Invalid input")]
-    Parse(#[from] macro_user_id::error::ParseErr),
+    Parse(#[from] conation_user_id::error::ParseErr),
 
     #[error("Inbox is already connected by another user")]
     SharedInboxConflict {
@@ -156,7 +156,7 @@ pub struct InitResponse {
     /// self-link bootstrap and the data-source path it's a freshly upserted row.
     pub link_id: Uuid,
     /// Present when init enqueued a backfill job. Absent for cross-user delegation,
-    /// where the child link's backfill already ran under its own macro_id; present for
+    /// where the child link's backfill already ran under its own conation_id; present for
     /// the self-link bootstrap, where a fresh link is provisioned and backfilled.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub backfill_job_id: Option<Uuid>,
@@ -234,7 +234,7 @@ async fn cleanup_in_progress_link_on_failure(
     if let Some(link_id) = link_id
         && should_clean_up_in_progress_link(error)
     {
-        macro_db_client::in_progress_user_link::delete_in_progress_user_link(db, &link_id)
+        conation_db_client::in_progress_user_link::delete_in_progress_user_link(db, &link_id)
             .await
             .inspect_err(|del_err| {
                 tracing::warn!(error = ?del_err, ?link_id, "Failed to clean up in_progress_user_link after failed init");
@@ -251,7 +251,7 @@ async fn init_user(
     }): Query<InitParams>,
     authorization: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
 ) -> Result<Response, InitError> {
-    let macro_user_id = authorization.authorization.user.macro_user_id.clone();
+    let conation_user_id = authorization.authorization.user.conation_user_id.clone();
     let user_context = authorization.authorization.user.user_context.clone();
     let mut completed_google_grant: Option<CompletedGoogleGrant> = None;
     tracing::info!(user_id = %user_context.user_id, ?link_id, "Init called");
@@ -260,13 +260,13 @@ async fn init_user(
 
     let (link, _email_address) = if let Some(link_id) = link_id {
         let in_progress =
-            macro_db_client::in_progress_user_link::get_in_progress_user_link(&ctx.db, &link_id)
+            conation_db_client::in_progress_user_link::get_in_progress_user_link(&ctx.db, &link_id)
                 .await
                 .context("Failed to fetch in_progress_user_link")?;
         let completed_grant = CompletedGoogleGrant::from_in_progress(&in_progress);
         completed_google_grant = Some(completed_grant.clone());
 
-        if in_progress.macro_user_id.to_string() != user_context.fusion_user_id {
+        if in_progress.conation_user_id.to_string() != user_context.fusion_user_id {
             return Err(InitError::BadRequest(
                 "link_id does not belong to the requesting user".to_string(),
             ));
@@ -284,10 +284,10 @@ async fn init_user(
         // (Err) — collapsing the latter to None would silently fall through to the
         // data-source upsert path and create a duplicate email_links row.
         let existing_owner =
-            match macro_db_client::user::get::get_user_id_by_email(ctx.db.clone(), &linked_email)
+            match conation_db_client::user::get::get_user_id_by_email(ctx.db.clone(), &linked_email)
                 .await
             {
-                Ok(macro_id) => Some(macro_id),
+                Ok(conation_id) => Some(conation_id),
                 Err(sqlx::Error::RowNotFound) => None,
                 Err(e) => {
                     return Err(InitError::DatabaseError(
@@ -297,8 +297,8 @@ async fn init_user(
                 }
             };
 
-        if let Some(child_macro_id) = existing_owner.as_deref()
-            && child_macro_id != user_context.user_id
+        if let Some(child_conation_id) = existing_owner.as_deref()
+            && child_conation_id != user_context.user_id
         {
             // Graph path: the linked email belongs to a different macro user. Look the
             // child's inbox up before mutating any state so the in_progress row is only
@@ -322,14 +322,14 @@ async fn init_user(
                     .await
                     .context("Failed to begin graph delegation transaction")?;
 
-                macro_db_client::macro_user_links::insert_edge(
+                conation_db_client::conation_user_links::insert_edge(
                     &mut *tx,
                     &user_context.user_id,
-                    child_macro_id,
+                    child_conation_id,
                     child_link.id,
                 )
                 .await
-                .context("Failed to insert macro_user_links edge")?;
+                .context("Failed to insert conation_user_links edge")?;
 
                 tx.commit()
                     .await
@@ -348,26 +348,26 @@ async fn init_user(
                     .into_response());
             }
 
-            // Self-link bootstrap: the child macro_user exists but never connected an inbox.
+            // Self-link bootstrap: the child conation_user exists but never connected an inbox.
             // Provision its email_links row entirely under the child's identity: the OAuth
             // grant (FA IdP link) is attached to the child's fusion user at the OAuth
             // callback — it is also the child's login identity, so it cannot live under the
             // primary — and token resolution, scoping, and backfill rate-limiting key off it.
-            // Access for the primary comes from the macro_user_links edge alone.
-            let child_macro_id_owned = MacroUserIdStr::try_from(child_macro_id.to_string())?;
+            // Access for the primary comes from the conation_user_links edge alone.
+            let child_conation_id_owned = MacroUserIdStr::try_from(child_conation_id.to_string())?;
 
             // `existing_owner` proved a User row exists for this email, so a miss here means
             // the child account vanished mid-flight. Abort rather than fall back to the
             // requester's fusion id, which would provision the link under the wrong identity.
             let child_fusion_id =
-                macro_db_client::user::get::get_macro_user_id_by_email(&ctx.db, &linked_email)
+                conation_db_client::user::get::get_conation_user_id_by_email(&ctx.db, &linked_email)
                     .await
                     .context("Failed to look up child's fusion id for self-link bootstrap")?
                     .context("child macro user disappeared before self-link bootstrap")?
                     .to_string();
 
             let provisional_link =
-                new_gmail_link(child_fusion_id, child_macro_id_owned, linked_email.clone())?;
+                new_gmail_link(child_fusion_id, child_conation_id_owned, linked_email.clone())?;
             let subscription = ctx
                 .email_api
                 .register_subscription_without_cache(&provisional_link)
@@ -386,14 +386,14 @@ async fn init_user(
                 enable_gmail_sync_for(tx.as_mut(), provisional_link, subscription.cursor.as_str())
                     .await?;
 
-            macro_db_client::macro_user_links::insert_edge(
+            conation_db_client::conation_user_links::insert_edge(
                 &mut *tx,
                 &user_context.user_id,
-                child_macro_id,
+                child_conation_id,
                 link.id,
             )
             .await
-            .context("Failed to insert macro_user_links edge")?;
+            .context("Failed to insert conation_user_links edge")?;
 
             tx.commit()
                 .await
@@ -451,20 +451,20 @@ async fn init_user(
                 )
                 .await
                 .context("Failed to look up existing link for shared-mailbox dedup")?
-                && existing_link.macro_id.as_ref() != user_context.user_id.as_str()
+                && existing_link.conation_id.as_ref() != user_context.user_id.as_str()
             {
                 if !force_share {
                     return Err(InitError::SharedInboxConflict {
                         email_address: linked_email.clone(),
-                        existing_owner_email: existing_link.macro_id.email_str().to_string(),
+                        existing_owner_email: existing_link.conation_id.email_str().to_string(),
                         existing_link_id: existing_link.id,
                     });
                 }
 
                 let organization_id =
-                    macro_db_client::user::get_user_organization::get_user_organization(
+                    conation_db_client::user::get_user_organization::get_user_organization(
                         ctx.db.clone(),
-                        existing_link.macro_id.as_ref(),
+                        existing_link.conation_id.as_ref(),
                     )
                     .await
                     .context("Failed to fetch organization for shared-inbox owner")?;
@@ -475,10 +475,10 @@ async fn init_user(
                     .await
                     .context("Failed to begin shared-inbox promotion transaction")?;
 
-                let promoted = macro_db_client::shared_inbox::promote_link_to_shared(
+                let promoted = conation_db_client::shared_inbox::promote_link_to_shared(
                     &mut tx,
                     existing_link.id,
-                    existing_link.macro_id.as_ref(),
+                    existing_link.conation_id.as_ref(),
                     &user_context.user_id,
                     &linked_email,
                     organization_id,
@@ -554,7 +554,7 @@ async fn init_user(
 
             let provisional_link = new_gmail_link(
                 user_context.fusion_user_id.clone(),
-                macro_user_id.clone(),
+                conation_user_id.clone(),
                 linked_email.clone(),
             )?;
             let subscription = ctx
@@ -581,9 +581,9 @@ async fn init_user(
         }
     } else {
         let existing_link = pg_repo
-            .link_by_fusionauth_and_macro_id(
+            .link_by_fusionauth_and_conation_id(
                 &user_context.fusion_user_id,
-                macro_user_id.clone(),
+                conation_user_id.clone(),
                 UserProvider::Gmail,
             )
             .await
@@ -598,7 +598,7 @@ async fn init_user(
 
         let provisional_link = new_gmail_link(
             user_context.fusion_user_id.clone(),
-            macro_user_id.clone(),
+            conation_user_id.clone(),
             email,
         )?;
         let subscription = ctx
@@ -695,10 +695,10 @@ async fn init_user(
     // Same gate as the history row above: only a genuinely new connection
     // reaches here, so re-inits and concurrent duplicates don't re-publish.
     publish_email_event(
-        ctx.macro_event_broker.as_ref(),
+        ctx.conation_event_broker.as_ref(),
         &EmailMacroEvent::link_connected(LinkConnectedMetadata {
             link_id: link.id,
-            owner: link.macro_id.clone(),
+            owner: link.conation_id.clone(),
             email_address: link.email_address.0.as_ref().to_string(),
             provider: link.provider.as_str().to_string(),
             is_primary: link.is_primary,
@@ -889,7 +889,7 @@ async fn apply_and_consume_calendar_grant(
         grant.intent,
     )
     .await?;
-    macro_db_client::in_progress_user_link::delete_in_progress_user_link(
+    conation_db_client::in_progress_user_link::delete_in_progress_user_link(
         &ctx.db,
         &in_progress_link_id,
     )
@@ -924,14 +924,14 @@ fn classify_provider_init_error(error: EmailApiError) -> InitError {
 
 fn new_gmail_link(
     fusion_user_id: String,
-    macro_id: MacroUserIdStr<'static>,
+    conation_id: MacroUserIdStr<'static>,
     email_address: String,
 ) -> Result<Link, InitError> {
     let email_address = EmailStr::try_from(email_address)?;
-    let is_primary = Link::derive_is_primary(&macro_id, &email_address);
+    let is_primary = Link::derive_is_primary(&conation_id, &email_address);
     Ok(Link {
-        id: macro_uuid::generate_uuid_v7(),
-        macro_id,
+        id: conation_uuid::generate_uuid_v7(),
+        conation_id,
         fusionauth_user_id: fusion_user_id,
         email_address,
         provider: link::UserProvider::Gmail,

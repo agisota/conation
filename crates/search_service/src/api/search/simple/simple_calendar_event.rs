@@ -16,7 +16,7 @@ pub(in crate::api::search) struct FilterCalendarEventResponse {
 ///
 /// Access is resolved here rather than taken from the request: an event is
 /// visible when the caller owns its projection or the event's source link is
-/// one of their inboxes (own or delegated). `fetch_inboxes_for_macro_id` is
+/// one of their inboxes (own or delegated). `fetch_inboxes_for_conation_id` is
 /// the authority for that set, so a caller cannot widen their own scope by
 /// passing link ids.
 ///
@@ -29,7 +29,7 @@ pub(in crate::api::search) async fn filter_calendar_events(
     user_id: &str,
     filters: &CalendarEventFilters,
 ) -> Result<FilterCalendarEventResponse, SearchError> {
-    let inboxes = email_db_client::links::get::fetch_inboxes_for_macro_id(&ctx.db, user_id)
+    let inboxes = email_db_client::links::get::fetch_inboxes_for_conation_id(&ctx.db, user_id)
         .await
         .map_err(SearchError::InternalError)?;
     let link_ids: Vec<String> = inboxes.iter().map(|l| l.id.to_string()).collect();

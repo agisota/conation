@@ -18,7 +18,7 @@ use std::{future::Future, pin::Pin, sync::Arc};
 use agent_egress::domain::service::EgressServiceImpl;
 use agent_egress::outbound::forwarder::ReqwestForwarder;
 use agent_egress::outbound::github_tokens::GithubAppTokens;
-use agent_egress::outbound::macro_mcp::{MacroApiTokenSigner, WithMacroMcp};
+use agent_egress::outbound::conation_mcp::{MacroApiTokenSigner, WithMacroMcp};
 use agent_egress::outbound::mcp_credentials::PipedreamMcpCredentials;
 use agent_egress::outbound::session_authority::StoredTokenSessionAuthority;
 use agent_fold::domain::service::FoldedMessageService;
@@ -73,17 +73,17 @@ use github::outbound::github_sync_client::GithubSyncClientImpl;
 use github::outbound::pg_github_sync_repo::PgGithubSyncRepo;
 use kafka_util::{GroupName, KafkaEventConsumer, consumer_span, record_span_error};
 use lexical_client::LexicalClient;
-use macro_auth::middleware::decode_jwt::JwtValidationArgs;
-use macro_authorization::{
+use conation_auth::middleware::decode_jwt::JwtValidationArgs;
+use conation_authorization::{
     InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationServiceImpl,
     MacroAuthorizationState, PgBotAuthorizationRepo, PgBotAuthorizer,
 };
-use macro_entrypoint::{MacroEntrypoint, shutdown_signal};
-use macro_event_broker::{
+use conation_entrypoint::{MacroEntrypoint, shutdown_signal};
+use conation_event_broker::{
     KafkaConsumerAdapter, KafkaEventPublisher, MacroEvent as _, MacroEventBrokerService,
     MacroEventCollection as _, MacroEventConsumerService,
 };
-use macro_service_urls::{ConnectionGatewayUrl, LexicalServiceUrl};
+use conation_service_urls::{ConnectionGatewayUrl, LexicalServiceUrl};
 use pipedream_mcp::outbound::api::{PipedreamClient, PipedreamConfig};
 use pipedream_mcp::outbound::pg_connection_repo::PgConnectionRepo;
 use rdkafka::consumer::CommitMode;
@@ -102,7 +102,7 @@ impl GroupName for AgentHarnessConsumerGroup {
     const GROUP_NAME: &'static str = "agent-harness-service";
 }
 
-macro_event_broker::declare_topics!(DeclaredMacroEvent: AgentSessionMacroEvent);
+conation_event_broker::declare_topics!(DeclaredMacroEvent: AgentSessionMacroEvent);
 
 type HarnessKafkaAdapter = KafkaConsumerAdapter<AgentHarnessConsumerGroup, DeclaredMacroEvent>;
 type HarnessConsumer = MacroEventConsumerService<DeclaredMacroEvent, HarnessKafkaAdapter>;
@@ -135,7 +135,7 @@ async fn main() -> anyhow::Result<()> {
 async fn run() -> anyhow::Result<()> {
     agent_harness::install_tls_provider();
     // AWS first, because the config's secrets resolve through Secrets Manager.
-    let aws_config = macro_aws_config::get_macro_aws_config().await;
+    let aws_config = conation_aws_config::get_conation_aws_config().await;
     let secrets = secretsmanager_client::SecretsManager::new(aws_sdk_secretsmanager::Client::new(
         &aws_config,
     ));
@@ -309,19 +309,19 @@ async fn run() -> anyhow::Result<()> {
     let notifications = Arc::new(notification::domain::service::SqsNotificationIngress {
         queue: notification::outbound::queue::SqsQueue::new(
             aws_sdk_sqs::Client::new(&aws_config),
-            macro_queues::NotificationIngressQueue::new().to_string(),
+            conation_queues::NotificationIngressQueue::new().to_string(),
         ),
     });
     let contacts_ingress = Arc::new(contacts::domain::service::SqsContactsIngress {
         queue: contacts::outbound::ingress::SqsContactsQueue::new(
             aws_sdk_sqs::Client::new(&aws_config),
-            macro_queues::ContactsQueue::new().to_string(),
+            conation_queues::ContactsQueue::new().to_string(),
         ),
     });
     let broker = MacroEventBrokerService::new(
         KafkaEventPublisher::new(config.kafka_brokers.as_ref())
             .context("failed to create kafka event publisher")?,
-        macro_event_broker::GlobalSpawner,
+        conation_event_broker::GlobalSpawner,
     );
     let side_effects = ChannelSideEffectService::new(
         PgChannelSideEffectContext::new(pool.clone()),
@@ -329,7 +329,7 @@ async fn run() -> anyhow::Result<()> {
         NotificationChannelSender::new(notifications),
         ContactsChannelDispatcher::new(contacts_ingress),
     )
-    .with_macro_event_broker(broker);
+    .with_conation_event_broker(broker);
     let channel_service = Arc::new(ChannelServiceImpl::with_dependencies(
         PgChannelsRepo::new(pool.clone()),
         SpawnedChannelEventDispatcher::new(side_effects),
@@ -478,10 +478,10 @@ async fn run() -> anyhow::Result<()> {
         PipedreamMcpCredentials::new(mcp_connections, pipedream),
         MacroApiTokenSigner::new(
             pool.clone(),
-            config.macro_api_token_issuer.as_ref(),
-            config.macro_api_token_private_secret_key.as_ref(),
+            config.conation_api_token_issuer.as_ref(),
+            config.conation_api_token_private_secret_key.as_ref(),
         ),
-        url::Url::parse(&config.macro_mcp_url).context("MACRO_MCP_URL is not a url")?,
+        url::Url::parse(&config.conation_mcp_url).context("MACRO_MCP_URL is not a url")?,
         // The one gate on cleartext: a local stack's mcp-service is dialed
         // across the compose bridge, where TLS would be theater. Everywhere
         // else, an http URL refuses to boot.

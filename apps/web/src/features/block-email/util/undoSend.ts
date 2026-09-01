@@ -1,5 +1,5 @@
 import { toast } from '@core/component/Toast/Toast';
-import { Telemetry } from '@macro-inc/observability';
+import { Telemetry } from '@conation/observability';
 import { queryClient } from '@queries/client';
 import { emailKeys } from '@queries/email/keys';
 import { invalidateSoupEntity } from '@queries/soup/cache';

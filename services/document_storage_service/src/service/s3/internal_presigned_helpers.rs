@@ -27,7 +27,7 @@ pub(in crate::service::s3) async fn put_internal_presigned_url(
         .key(key)
         .presigned(PresigningConfig::expires_in(EXPIRY)?)
         .await?;
-    Ok(macro_aws_config::transform_aws_url_for_internal_fetch(
+    Ok(conation_aws_config::transform_aws_url_for_internal_fetch(
         presigned.uri(),
     ))
 }
@@ -50,5 +50,5 @@ pub(in crate::service::s3) async fn get_presigned_url(
         .key(key)
         .presigned(PresigningConfig::expires_in(EXPIRY)?)
         .await?;
-    Ok(macro_aws_config::transform_aws_url(presigned.uri()))
+    Ok(conation_aws_config::transform_aws_url(presigned.uri()))
 }

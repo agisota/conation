@@ -7,7 +7,7 @@ version = "0.1.0"
 [features]
 axum = [
   "dep:axum",
-  "dep:macro_authorization",
+  "dep:conation_authorization",
   "dep:model-error-response",
   "dep:utoipa",
 ]
@@ -41,7 +41,7 @@ worker = [
 # Core
 anyhow = { workspace = true }
 chrono = { workspace = true }
-macro_user_id = { path = "../macro_user_id" }
+conation_user_id = { path = "../conation_user_id" }
 models_ai_projection = { path = "../models_ai_projection" }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -56,7 +56,7 @@ tokio = { workspace = true, optional = true }
 
 # Axum dependencies (for inbound)
 axum = { workspace = true, optional = true }
-macro_authorization = { path = "../macro_authorization", optional = true, default-features = false, features = [
+conation_authorization = { path = "../conation_authorization", optional = true, default-features = false, features = [
   "axum",
 ] }
 model-error-response = { path = "../model-error-response", optional = true }
@@ -83,7 +83,7 @@ futures = { workspace = true, optional = true }
 
 [dev-dependencies]
 http-body-util = { workspace = true }
-macro_db_migrator = { path = "../macro_db_migrator" }
+conation_db_migrator = { path = "../conation_db_migrator" }
 model_user = { path = "../model_user" }
 rootcause = { workspace = true }
 serde_json = { workspace = true }

@@ -6,7 +6,7 @@ use axum::{
 };
 use fusionauth::FusionAuthClient;
 use fusionauth::error::FusionAuthClientError;
-use macro_authorization::{InternalOnly, MacroAuthorizationExtractor};
+use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
 use model::authentication::google_token::GoogleAccessToken;
 use model::response::ErrorResponse;
 use std::sync::Arc;

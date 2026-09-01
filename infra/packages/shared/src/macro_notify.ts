@@ -9,7 +9,7 @@ export function getMacroNotify(): {
   const notificationServiceStack = new pulumi.StackReference(
     'notification-service-stack',
     {
-      name: `macro-inc/notification-service/${stack}`,
+      name: `conation-dev/notification-service/${stack}`,
     }
   );
 

@@ -1,3 +1,3 @@
-export * from '@macro-inc/collaboration/sync-service/socket';
-export * from '@macro-inc/collaboration/sync-service/source';
+export * from '@conation/collaboration/sync-service/socket';
+export * from '@conation/collaboration/sync-service/source';
 export * from './helpers';

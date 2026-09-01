@@ -23,8 +23,8 @@ use entity_access::domain::models::{
     AdminTeamRole, EntityAccessReceipt, EntityType, MemberTeamRole, OwnerTeamRole,
     RequiredPermission,
 };
-use macro_event_broker::{EventBrokerError, MacroEvent, MacroEventBroker};
-use macro_user_id::{email::Email, lowercased::Lowercase, user_id::MacroUserIdStr};
+use conation_event_broker::{EventBrokerError, MacroEvent, MacroEventBroker};
+use conation_user_id::{email::Email, lowercased::Lowercase, user_id::MacroUserIdStr};
 use models_pagination::{CreatedAt, Query};
 use notification::domain::{
     models::{Notification, NotificationResult, request::SendNotificationRequest},
@@ -2977,12 +2977,12 @@ impl CrmEnqueuer for RecordingCrmEnqueuer {
 
     async fn enqueue_populate_crm_for_user(
         &self,
-        macro_id: &MacroUserIdStr<'_>,
+        conation_id: &MacroUserIdStr<'_>,
     ) -> Result<(), Self::Err> {
         self.populated
             .lock()
             .unwrap()
-            .push(macro_id.as_ref().to_string());
+            .push(conation_id.as_ref().to_string());
         if self.fail {
             Err("CRM enqueue failed")
         } else {
@@ -2993,12 +2993,12 @@ impl CrmEnqueuer for RecordingCrmEnqueuer {
     async fn enqueue_depopulate_crm_for_user(
         &self,
         team_id: &uuid::Uuid,
-        macro_id: &MacroUserIdStr<'_>,
+        conation_id: &MacroUserIdStr<'_>,
     ) -> Result<(), Self::Err> {
         self.depopulated
             .lock()
             .unwrap()
-            .push((*team_id, macro_id.as_ref().to_string()));
+            .push((*team_id, conation_id.as_ref().to_string()));
         if self.fail {
             Err("CRM enqueue failed")
         } else {

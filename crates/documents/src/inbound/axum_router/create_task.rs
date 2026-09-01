@@ -7,7 +7,7 @@ use entity_access::domain::ports::EntityAccessService;
 use entity_access::inbound::axum_extractors::{
     OptionalMacroUserTeamExtractorV2, ProjectBodyAccessLevelExtractorV2,
 };
-use macro_authorization::{MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal};
 use models_permissions::share_permission::access_level::{AccessLevel, EditAccessLevel};
 
 use super::DocumentRouterState;
@@ -34,7 +34,7 @@ use super::task_duplicates::spawn_task_duplicate_detection;
         (status = 500, body = model_error_response::ErrorResponse),
     )
 )]
-#[tracing::instrument(skip(state, user, optional_team, project), fields(user_id=?user.authorization.user.macro_user_id))]
+#[tracing::instrument(skip(state, user, optional_team, project), fields(user_id=?user.authorization.user.conation_user_id))]
 pub async fn create_task_handler<
     T: DocumentService + DocumentCreationService,
     Svc: EntityAccessService,
@@ -48,7 +48,7 @@ pub async fn create_task_handler<
     let req = project.into_inner();
     let task_name = req.task_name.clone();
     let markdown = req.markdown.clone().unwrap_or_default();
-    let owner = user.authorization.user.macro_user_id.as_ref().to_string();
+    let owner = user.authorization.user.conation_user_id.as_ref().to_string();
 
     let mut metadata = NewDocumentMetadata::builder(task_name.clone());
     if let Some(project_id) = req.project_id {
@@ -58,7 +58,7 @@ pub async fn create_task_handler<
     let team_id = if req.share_with_team {
         optional_team
             .entity_access_receipt
-            .map(|team| macro_uuid::string_to_uuid(&team.entity().entity_id).unwrap())
+            .map(|team| conation_uuid::string_to_uuid(&team.entity().entity_id).unwrap())
     } else {
         None
     };
@@ -66,7 +66,7 @@ pub async fn create_task_handler<
     let created = state
         .creator
         .create_markdown_text(
-            user.authorization.user.macro_user_id.clone(),
+            user.authorization.user.conation_user_id.clone(),
             NewMarkdownTextDocument {
                 metadata: metadata.build(),
                 markdown,
@@ -102,7 +102,7 @@ pub async fn create_task_handler<
     );
 
     let token = encode_permission_token(
-        Some(user.authorization.user.macro_user_id.as_ref().to_string()),
+        Some(user.authorization.user.conation_user_id.as_ref().to_string()),
         document_id.clone(),
         AccessLevel::Edit,
         &state.document_permission_jwt_secret,

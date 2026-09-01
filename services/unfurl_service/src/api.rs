@@ -23,7 +23,7 @@ where
     F: UnfurlFetcher,
     anyhow::Error: From<F::Err>,
 {
-    let cors = macro_cors::cors_layer();
+    let cors = conation_cors::cors_layer();
 
     let env = state.environment;
     let app = api_router(unfurl_state)
@@ -70,7 +70,7 @@ mod tests {
         http::{Request, StatusCode},
     };
     use http_body_util::BodyExt; // for `collect`
-    use macro_env::Environment;
+    use conation_env::Environment;
     use tower::ServiceExt;
 
     fn test_state() -> ApiContext {

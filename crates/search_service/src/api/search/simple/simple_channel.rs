@@ -1,6 +1,6 @@
 use crate::api::search::simple::SearchError;
 use item_filters::ChannelFilters;
-use macro_user_id::user_id::MacroUserId;
+use conation_user_id::user_id::MacroUserId;
 use opensearch_client::search::model::{Highlight, SearchHit};
 use std::collections::HashSet;
 
@@ -16,7 +16,7 @@ pub(in crate::api::search) struct FilterChannelResponse {
 #[tracing::instrument(skip(db), err)]
 pub(in crate::api::search) async fn search_names<'a>(
     db: &sqlx::Pool<sqlx::Postgres>,
-    user_id: &MacroUserId<macro_user_id::lowercased::Lowercase<'a>>,
+    user_id: &MacroUserId<conation_user_id::lowercased::Lowercase<'a>>,
     filter_channel_response: &FilterChannelResponse,
     term: String,
     exact_match: bool,
@@ -102,7 +102,7 @@ pub(in crate::api::search) async fn filter_channels(
 
     // filter through org_id if provided
     let channel_ids = if let Some(org_id) = filters.org_id {
-        macro_db_client::items::filter::filter_channels_by_org_id(&ctx.db, &channel_ids, org_id)
+        conation_db_client::items::filter::filter_channels_by_org_id(&ctx.db, &channel_ids, org_id)
             .await?
     } else {
         channel_ids

@@ -11,7 +11,7 @@ use crate::{
         ExpandedDynamicCursorArgs, GroupedDynamicCursorArgs,
     },
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use models_pagination::{Identify, SortOn};
 use models_properties::service::property_definition_with_options::PropertyDefinitionWithOptions;
 use models_soup::{SoupProperty, item::SoupItem};
@@ -349,8 +349,8 @@ pub(crate) async fn populate_properties(
 
 /// this defines a macro which maps the soup query types for statically checked soup queries
 /// This must be a macro because compile time queries cannot have a named type so we can't use a function
-#[macro_export]
-macro_rules! map_soup_type {
+#[conation_export]
+conation_rules! map_soup_type {
     () => {
         |r| $crate::map_soup_type!(@item r)
     };
@@ -445,8 +445,8 @@ macro_rules! map_soup_type {
 
 /// Maps statically checked expanded Soup rows into an item plus authoritative
 /// server-only document facts from that same row.
-#[macro_export]
-macro_rules! map_soup_projection_hydration {
+#[conation_export]
+conation_rules! map_soup_projection_hydration {
     () => {
         |r| {
             let document_server_facts = match r.item_type.as_ref() {

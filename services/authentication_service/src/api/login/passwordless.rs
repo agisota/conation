@@ -4,13 +4,13 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use macro_middleware::tracking::ClientIp;
+use conation_middleware::tracking::ClientIp;
 
 use std::borrow::Cow;
 
 use crate::{api::context::ApiContext, generate_password::generate_random_password};
 use fusionauth::error::FusionAuthClientError;
-use macro_user_id::user_id::MacroUserId;
+use conation_user_id::user_id::MacroUserId;
 use model::{
     authentication::login::{
         request::PasswordlessRequest,
@@ -71,7 +71,7 @@ pub async fn handler(
         .unwrap_or(Cow::Borrowed(lowercase_email.as_str()))
         .to_string();
 
-    let blocked_email = macro_db_client::blocked_email::get_blocked_emails(
+    let blocked_email = conation_db_client::blocked_email::get_blocked_emails(
         &ctx.db,
         &[&lowercase_email, &blocked_email_without_alias],
     )
@@ -116,8 +116,8 @@ pub async fn handler(
 
                     if let Some(referral_code) = req.referral_code {
                         tracing::trace!(referral_code, "referral code found");
-                        let macro_user_id = format!("macro|{}", req.email.to_lowercase());
-                        let referrerd_user_id = MacroUserId::parse_from_str(&macro_user_id)
+                        let conation_user_id = format!("macro|{}", req.email.to_lowercase());
+                        let referrerd_user_id = MacroUserId::parse_from_str(&conation_user_id)
                             .map_err(|_| {
                                 (
                                     StatusCode::BAD_REQUEST,
@@ -165,7 +165,7 @@ pub async fn handler(
         })?;
 
     // Save the passwordless login code to the users email to tie the code to an account
-    ctx.macro_cache_client
+    ctx.conation_cache_client
         .set_passwordless_login_code(&lowercase_email, &code)
         .await.map_err(|e| {
             tracing::error!(error=?e, email=%lowercase_email, "unable to set passwordless login code");

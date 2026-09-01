@@ -43,7 +43,7 @@ use calendar_events::domain::events::CalendarMacroEvent;
 use channels::domain::broker_events::ChannelMacroEvent;
 use documents::domain::events::DocumentMacroEvent;
 use kafka_util::{GroupName, KafkaEventConsumer};
-use macro_event_broker::{
+use conation_event_broker::{
     KafkaConsumerAdapter, MacroEvent as _, MacroEventCollection, MacroEventConsumerService,
 };
 use projects::domain::events::ProjectMacroEvent;
@@ -81,7 +81,7 @@ type SearchProcessingKafkaAdapter =
 type SearchProcessingKafkaConsumer =
     MacroEventConsumerService<DeclaredMacroEvent, SearchProcessingKafkaAdapter>;
 
-macro_event_broker::declare_topics!(
+conation_event_broker::declare_topics!(
     DeclaredMacroEvent:
         CalendarMacroEvent,
         CallMacroEvent,

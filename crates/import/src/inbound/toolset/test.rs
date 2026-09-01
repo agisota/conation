@@ -2,7 +2,7 @@ use super::*;
 use crate::domain::models::ImportEntity;
 use crate::domain::ports::Result;
 use crate::domain::service::{DiscardOutcome, ImportStager, StageOutcome};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use std::sync::Mutex;
 
 fn user() -> MacroUserIdStr<'static> {

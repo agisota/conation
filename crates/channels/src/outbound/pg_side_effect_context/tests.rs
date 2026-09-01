@@ -1,6 +1,6 @@
 use crate::domain::ports::ChannelSideEffectContext;
 use crate::outbound::pg_side_effect_context::PgChannelSideEffectContext;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 

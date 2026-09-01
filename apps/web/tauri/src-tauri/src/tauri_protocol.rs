@@ -5,7 +5,7 @@
 // 2. Resolves OTA assets through the bundle updater's domain service.
 
 use http::{Response as HttpResponse, StatusCode, header::CONTENT_TYPE};
-use macro_bundle_updater_plugin::domain::{
+use conation_bundle_updater_plugin::domain::{
     asset_service::{
         BundleAssetPath, BundleAssetReadError, BundleAssetResolution, BundleAssetResolver,
         InvalidBundleAssetPath,

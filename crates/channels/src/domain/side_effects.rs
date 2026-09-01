@@ -21,8 +21,8 @@ use crate::domain::{
     },
 };
 use bot_id::BotIdStr;
-use macro_event_broker::{MacroEventBroker, NoopMacroEventBroker};
-use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use conation_event_broker::{MacroEventBroker, NoopMacroEventBroker};
+use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use std::collections::HashSet;
 use tokio::sync::mpsc::UnboundedSender;
 use tracing::Instrument as _;
@@ -342,7 +342,7 @@ pub struct ChannelSideEffectService<C, R, N, K, B = NoopMacroEventBroker> {
     notifications: N,
     contacts: K,
     bot_triggers: Option<ChannelBotTriggerSender>,
-    macro_event_broker: B,
+    conation_event_broker: B,
 }
 
 struct MessagePostedSideEffects {
@@ -370,7 +370,7 @@ struct InviteNotificationRequest {
 impl<C, R, N, K> ChannelSideEffectService<C, R, N, K> {
     /// Create a channel side-effect service that drops broker events.
     ///
-    /// Use [`Self::with_macro_event_broker`] to publish channel events to the
+    /// Use [`Self::with_conation_event_broker`] to publish channel events to the
     /// macro event broker.
     pub fn new(context: C, realtime: R, notifications: N, contacts: K) -> Self {
         Self {
@@ -379,7 +379,7 @@ impl<C, R, N, K> ChannelSideEffectService<C, R, N, K> {
             notifications,
             contacts,
             bot_triggers: None,
-            macro_event_broker: NoopMacroEventBroker,
+            conation_event_broker: NoopMacroEventBroker,
         }
     }
 }
@@ -392,9 +392,9 @@ impl<C, R, N, K, B> ChannelSideEffectService<C, R, N, K, B> {
     }
 
     /// Configure a macro event broker to publish channel events to.
-    pub fn with_macro_event_broker<B2: MacroEventBroker>(
+    pub fn with_conation_event_broker<B2: MacroEventBroker>(
         self,
-        macro_event_broker: B2,
+        conation_event_broker: B2,
     ) -> ChannelSideEffectService<C, R, N, K, B2> {
         ChannelSideEffectService {
             context: self.context,
@@ -402,7 +402,7 @@ impl<C, R, N, K, B> ChannelSideEffectService<C, R, N, K, B> {
             notifications: self.notifications,
             contacts: self.contacts,
             bot_triggers: self.bot_triggers,
-            macro_event_broker,
+            conation_event_broker,
         }
     }
 
@@ -647,7 +647,7 @@ where
         // dropped.
         for broker_event in broker_events {
             let _ = self
-                .macro_event_broker
+                .conation_event_broker
                 .send_event(&broker_event)
                 .inspect_err(|e| {
                     tracing::error!(error=?e, "failed to publish channel event");
@@ -655,7 +655,7 @@ where
         }
         for mention_event in mention_broker_events {
             let _ = self
-                .macro_event_broker
+                .conation_event_broker
                 .send_event(&mention_event)
                 .inspect_err(|e| {
                     tracing::error!(error=?e, "failed to publish mention event");

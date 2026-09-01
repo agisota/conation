@@ -42,10 +42,10 @@ fn covers_every_seeded_table() {
         "team_user",
         "team",
         "\"RolesOnUsers\"",
-        "macro_user_email_verification",
-        "macro_user_info",
+        "conation_user_email_verification",
+        "conation_user_info",
         "\"User\"",
-        "macro_user",
+        "conation_user",
     ] {
         assert!(all.contains(table), "missing table {table}");
     }

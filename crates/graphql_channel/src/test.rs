@@ -6,7 +6,7 @@ use entity_access::domain::models::{
     AccessError, Entity, EntityAccessAuth, EntityAccessReceipt, EntityPermission, EntityType,
     MemberParticipantRole, ParticipantRole,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use uuid::Uuid;
 
 use super::*;

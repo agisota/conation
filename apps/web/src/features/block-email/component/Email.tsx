@@ -20,7 +20,7 @@ import {
   blockHotkeyScopeSignal,
 } from '@core/signal/blockElement';
 import { AnimatedTaskIcon } from '@icon/wide-task';
-import { buildMentionMarkdownString } from '@macro-inc/lexical-core';
+import { buildMentionMarkdownString } from '@conation/lexical-core';
 import type { ApiMessage } from '@service-email/generated/schemas';
 import { createCallback } from '@solid-primitives/rootless';
 import { Button } from '@ui';

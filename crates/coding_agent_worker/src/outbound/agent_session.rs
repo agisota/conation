@@ -8,7 +8,7 @@ use agent_session::inbound::axum_router::{
     ControlRequest, CreateAgentSessionRequest, CreateAgentSessionResponse,
     ThreadSessionExistsResponse,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use reqwest::StatusCode;
 
 use crate::config::MacroApi;

@@ -5,7 +5,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::response::ErrorResponse;
 
 #[derive(Debug, serde::Serialize, utoipa::ToSchema)]
@@ -82,7 +82,7 @@ pub async fn handler(
     };
 
     let organization_name =
-        macro_db_client::organization::get::organization::get_organization_name(
+        conation_db_client::organization::get::organization::get_organization_name(
             &ctx.db,
             organization_id,
         )

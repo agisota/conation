@@ -9,8 +9,8 @@ import {
   LinearBackoff,
   type Websocket,
   WebsocketBuilder,
-} from '@macro-inc/collaboration/websocket';
-import { createWebsocketStateSignal } from '@macro-inc/collaboration/websocket/solid/state-signal';
+} from '@conation/collaboration/websocket';
+import { createWebsocketStateSignal } from '@conation/collaboration/websocket/solid/state-signal';
 import { getMacroApiToken } from '@service-auth/fetch';
 import { createCallback } from '@solid-primitives/rootless';
 import type { ToWebsocketMessage } from './generated/schemas/toWebsocketMessage';

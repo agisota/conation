@@ -40,11 +40,11 @@ use graphql_soup::{
     SoupEntityEdges, SoupInput, SoupPage, SoupPatch, resolve_grouped_soup, resolve_soup,
     resolve_soup_email_thread, resolve_soup_updates,
 };
-use macro_authorization::{
+use conation_authorization::{
     InternalAuthConfig, MacroAuthorizationService, MacroAuthorizationServiceImpl,
     MacroAuthorizationState, NoopMacroAuthJwtValidator,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_notifications::NotifEvent;
 use notification::domain::{
     models::NotificationSubscriptionUpdate,
@@ -187,7 +187,7 @@ impl FromRef<SchemaOnlyState> for MacroAuthorizationState<SchemaOnlyAuthorizatio
                 api_key: String::new(),
                 default_user_id: None,
             },
-            macro_authorization::NoBotAuthorizer,
+            conation_authorization::NoBotAuthorizer,
         );
         MacroAuthorizationState::new(Arc::new(service))
     }

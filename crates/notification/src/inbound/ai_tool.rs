@@ -19,7 +19,7 @@ use ai_toolset::{
 use ai_toolset::{ToolAnnotated, ToolAnnotations};
 use async_trait::async_trait;
 use cowlike::CowLike;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::{Entity, EntityType};
 use models_pagination::CreatedAt;
 use rootcause::compat::boxed_error::IntoBoxedError;

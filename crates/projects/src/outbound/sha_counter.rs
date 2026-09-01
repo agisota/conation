@@ -5,12 +5,12 @@ use crate::domain::ports::ShaCounterPort;
 /// Redis-backed content-hash counter adapter.
 #[derive(Clone)]
 pub struct ShaCountAdapter {
-    redis: macro_sha_count_client::Redis,
+    redis: conation_sha_count_client::Redis,
 }
 
 impl ShaCountAdapter {
     /// Create a SHA counter adapter from the shared Redis client.
-    pub fn new(redis: macro_sha_count_client::Redis) -> Self {
+    pub fn new(redis: conation_sha_count_client::Redis) -> Self {
         Self { redis }
     }
 }

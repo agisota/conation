@@ -7,7 +7,7 @@ use attachment::{
     ResolutionError, image::ImageData,
 };
 use futures::future::join_all;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::{Entity, EntityType};
 use non_empty::NonEmpty;
 

@@ -1,7 +1,7 @@
 use super::*;
 use anyhow::Result;
 use chrono::{DateTime, Utc};
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use sqlx::{Pool, Postgres};
 
 #[sqlx::test(

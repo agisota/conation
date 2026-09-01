@@ -3,8 +3,8 @@ use crate::domain::{
     models::{WebhookFilter, WebhookScope, WebhookStatus},
     ports::{WebhookRepo, WebhookWorkspaceResolver},
 };
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_user_id::user_id::MacroUserIdStr;
 use serde_json::json;
 use sqlx::{PgPool, types::Uuid};
 
@@ -14,16 +14,16 @@ const TEAM_ID: &str = "11111111-1111-1111-1111-111111111111";
 const UNRELATED_TEAM_ID: &str = "22222222-2222-2222-2222-222222222222";
 const OTHER_WORKSPACE_ID: &str = "workspace_other";
 
-fn macro_user_id(user_id: &str) -> MacroUserIdStr<'static> {
+fn conation_user_id(user_id: &str) -> MacroUserIdStr<'static> {
     MacroUserIdStr::try_from(user_id.to_string()).expect("valid macro user id")
 }
 
 fn user_id() -> MacroUserIdStr<'static> {
-    macro_user_id(USER_ID)
+    conation_user_id(USER_ID)
 }
 
 fn second_user_id() -> MacroUserIdStr<'static> {
-    macro_user_id(SECOND_USER_ID)
+    conation_user_id(SECOND_USER_ID)
 }
 
 fn create_request() -> CreateWebhookRequest {
@@ -45,15 +45,15 @@ fn create_request_with_namespace(namespace: &str) -> CreateWebhookRequest {
 }
 
 async fn insert_user_with_id(pool: &PgPool, user_id: &str, email: &str) -> anyhow::Result<()> {
-    let macro_user_id = macro_uuid::generate_uuid_v7();
-    let stripe_customer_id = format!("stripe_{macro_user_id}");
+    let conation_user_id = conation_uuid::generate_uuid_v7();
+    let stripe_customer_id = format!("stripe_{conation_user_id}");
     sqlx::query!(
         r#"
-        INSERT INTO macro_user (id, username, email, stripe_customer_id)
+        INSERT INTO conation_user (id, username, email, stripe_customer_id)
         VALUES ($1, $2, $3, $4)
         ON CONFLICT (id) DO NOTHING
         "#,
-        macro_user_id,
+        conation_user_id,
         email,
         email,
         stripe_customer_id
@@ -63,13 +63,13 @@ async fn insert_user_with_id(pool: &PgPool, user_id: &str, email: &str) -> anyho
 
     sqlx::query!(
         r#"
-        INSERT INTO "User" (id, email, macro_user_id)
+        INSERT INTO "User" (id, email, conation_user_id)
         VALUES ($1, $2, $3)
         ON CONFLICT (id) DO NOTHING
         "#,
         user_id,
         email,
-        macro_user_id
+        conation_user_id
     )
     .execute(pool)
     .await?;

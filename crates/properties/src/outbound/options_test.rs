@@ -3,7 +3,7 @@
 use super::properties_pg_repo::PropertiesPgRepo;
 use crate::domain::model::{PropertyDefinitionOwner, UpdatePropertyOptionOutcome};
 use crate::domain::ports::PropertiesRepo;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use models_properties::service::property_option::PropertyOptionValue;
 use models_properties::service::property_value::PropertyValue;
 use models_properties::{DataType, EntityType};

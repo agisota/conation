@@ -8,7 +8,7 @@ use axum::{
     extract::FromRef,
     http::{Request as HttpRequest, header},
 };
-use macro_authorization::{
+use conation_authorization::{
     BOT_SCOPE_HEADER, BOT_TOKEN_HEADER, BotActingUserClaims, BotAuthentication, BotScope,
     InternalIdentityClaims, MacroAuthorizationError, MacroAuthorizationService,
     MacroAuthorizationState,
@@ -148,7 +148,7 @@ async fn execute(
 }
 
 #[tokio::test]
-async fn valid_bearer_returns_macro_user_id() {
+async fn valid_bearer_returns_conation_user_id() {
     let service = FakeAuthorizationService::default();
 
     let response = execute(&service, RequestCredentials::Bearer("valid"), "{ userId }").await;

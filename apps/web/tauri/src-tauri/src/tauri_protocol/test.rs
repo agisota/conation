@@ -1,6 +1,6 @@
 use std::{path::Path, sync::Arc};
 
-use macro_bundle_updater_plugin::domain::bundle_routes::{BundleRoutes, BundleSource};
+use conation_bundle_updater_plugin::domain::bundle_routes::{BundleRoutes, BundleSource};
 use tokio::sync::Notify;
 
 use super::*;

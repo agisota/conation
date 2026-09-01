@@ -1,5 +1,5 @@
 //! Configuration for the agent schedule service, loaded via the standard
-//! `macro_config` pattern so it gets a `doppler_config` validation binary.
+//! `conation_config` pattern so it gets a `doppler_config` validation binary.
 //!
 //! All required env vars are declared here as typed fields. The
 //! `doppler_config` binary loads this `Config` from Doppler for both the dev
@@ -12,9 +12,9 @@
 
 use anyhow::Context;
 use database_env_vars::DatabaseUrl;
-use macro_auth::InternalApiKey;
-pub use macro_env::Environment;
-use macro_env_var::env_vars;
+use conation_auth::InternalApiKey;
+pub use conation_env::Environment;
+use conation_env_var::env_vars;
 
 env_vars! {
     /// Auth key used by the document storage / search / lexical clients.
@@ -36,14 +36,14 @@ env_vars! {
 }
 
 /// The configuration parameters for the agent schedule service.
-#[derive(macro_config::MacroConfig)]
+#[derive(conation_config::MacroConfig)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Config {
     /// The environment we are in.
-    #[macro_config_default(Environment::new_or_prod())]
+    #[conation_config_default(Environment::new_or_prod())]
     pub environment: Environment,
     /// Port to listen on. Defaults to `8080` when unset.
-    #[macro_config_default(8080)]
+    #[conation_config_default(8080)]
     pub port: usize,
     /// The connection URL for the Postgres database this application uses.
     pub database_url: DatabaseUrl,
@@ -64,7 +64,7 @@ pub struct Config {
 
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
-        macro_config::ConfigLoader::load::<Config>()
+        conation_config::ConfigLoader::load::<Config>()
             .context("failed to load agent schedule service config")
     }
 }

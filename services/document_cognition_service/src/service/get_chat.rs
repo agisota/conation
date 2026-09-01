@@ -2,7 +2,7 @@
 use crate::api::context::ApiContext;
 use crate::model::chats::ChatResponse;
 use anyhow::Context;
-use macro_db_client::dcs::get_chat::{get_chat_db, get_messages, get_web_citations};
+use conation_db_client::dcs::get_chat::{get_chat_db, get_messages, get_web_citations};
 use unfurl_service::GetUnfurlResponse;
 
 #[tracing::instrument(err, skip(ctx))]
@@ -60,7 +60,7 @@ pub async fn get_chat(
 mod tests {
     use super::*;
 
-    use macro_db_migrator::MACRO_DB_MIGRATIONS;
+    use conation_db_migrator::MACRO_DB_MIGRATIONS;
     use sqlx::{Pool, Postgres};
 
     #[ignore]

@@ -2,7 +2,7 @@ mod location;
 
 use document_sub_type::DocumentSubType;
 pub use location::LocationResponseV3;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use std::str::FromStr;
 
 use crate::document::{BomPart, FileType};

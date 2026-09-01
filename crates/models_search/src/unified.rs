@@ -164,7 +164,7 @@ fn expand_file_types_for_search(file_types: Vec<String>) -> Vec<String> {
     file_types
         .iter()
         .flat_map(|ft| resolve_file_types(ft))
-        .filter(|ty| is_searchable_association(&ty.macro_app_path()))
+        .filter(|ty| is_searchable_association(&ty.conation_app_path()))
         .map(|ty| ty.as_str().to_string())
         .collect()
 }

@@ -28,7 +28,7 @@ fn expand_document_name_highlight_yields_name_hit_without_goto() {
         }),
         highlight: Some(HashMap::from([(
             "document_name".to_string(),
-            vec!["Q3 <macro_em>Rep</macro_em>ort".to_string()],
+            vec!["Q3 <conation_em>Rep</conation_em>ort".to_string()],
         )])),
         inner_hits: None,
     };
@@ -42,7 +42,7 @@ fn expand_document_name_highlight_yields_name_hit_without_goto() {
     );
     assert_eq!(
         results[0].highlight.name.as_deref(),
-        Some("Q3 <macro_em>Rep</macro_em>ort")
+        Some("Q3 <conation_em>Rep</conation_em>ort")
     );
 }
 
@@ -96,12 +96,12 @@ fn test_deserialization() -> anyhow::Result<()> {
             },
             "highlight": {
               "content": [
-                ":\n* N/A\n* 🤖 Automated\n#### You can view, comment on, or merge this pull request online at:\nhttps://<macro_em>github.com</macro_em>",
-                "* f39426a make it TS\n#### File Changes\n(6 files)\n* **A** websocket/handlers/authorization-handler/.<macro_em>gitignore</macro_em>",
-                "authorization-handler/tsconfig.json (18)\n* **M** websocket/infra/index.ts (65)\n#### Patch Links:\n* https://<macro_em>github.com</macro_em>",
-                "/macro-inc/macro-api/pull/2520.patch\n* https://<macro_em>github.com</macro_em>/macro-inc/macro-api/pull/2520.diff\n—\nReply",
-                "to this email directly, view it on <macro_em>GitHub</macro_em>, or unsubscribe.",
-                "You are receiving this because your review was requested.Message ID: <macro-inc/macro-api/pull/2520@<macro_em>github.com</macro_em>"
+                ":\n* N/A\n* 🤖 Automated\n#### You can view, comment on, or merge this pull request online at:\nhttps://<conation_em>github.com</conation_em>",
+                "* f39426a make it TS\n#### File Changes\n(6 files)\n* **A** websocket/handlers/authorization-handler/.<conation_em>gitignore</conation_em>",
+                "authorization-handler/tsconfig.json (18)\n* **M** websocket/infra/index.ts (65)\n#### Patch Links:\n* https://<conation_em>github.com</conation_em>",
+                "/macro-inc/macro-api/pull/2520.patch\n* https://<conation_em>github.com</conation_em>/macro-inc/macro-api/pull/2520.diff\n—\nReply",
+                "to this email directly, view it on <conation_em>GitHub</conation_em>, or unsubscribe.",
+                "You are receiving this because your review was requested.Message ID: <macro-inc/macro-api/pull/2520@<conation_em>github.com</conation_em>"
               ]
             }
           },
@@ -134,9 +134,9 @@ fn test_deserialization() -> anyhow::Result<()> {
             },
             "highlight": {
               "content": [
-                "Oct 8     Copenhagen, DK     Join Engin Diri, Senior Solutions Architect at Pulumi, for his talk on <macro_em>GitOps</macro_em>",
-                "Promotion Tools to add to your <macro_em>GitOps</macro_em> Toolkit in 2025.",
-                "The Pulumi Team\n ai-workshop-series-banner \n cloud-red \nTry Pulumi\n docs \nView Docs\ntwitter         <macro_em>GitHub</macro_em>-Mark"
+                "Oct 8     Copenhagen, DK     Join Engin Diri, Senior Solutions Architect at Pulumi, for his talk on <conation_em>GitOps</conation_em>",
+                "Promotion Tools to add to your <conation_em>GitOps</conation_em> Toolkit in 2025.",
+                "The Pulumi Team\n ai-workshop-series-banner \n cloud-red \nTry Pulumi\n docs \nView Docs\ntwitter         <conation_em>GitHub</conation_em>-Mark"
               ]
             }
           },
@@ -158,9 +158,9 @@ fn test_deserialization() -> anyhow::Result<()> {
             },
             "highlight": {
               "content": [
-                "local (presumably modified) source\r\nregex = { path = \"/home/jon/regex\" }\r\n# use a modification on a <macro_em>git</macro_em>",
-                "branch\r\nserde = { <macro_em>git</macro_em> = \"https://<macro_em>github.com</macro_em>/serde-rs/serde.git\", branch = \"faster\" }\r\n# patch a <macro_em>git</macro_em>",
-                "https://<macro_em>github.com</macro_em>/jonhoo/project.git']\r\nproject = { path = \"/home/jon/project\" }\r\nListing 6-6: Overriding"
+                "local (presumably modified) source\r\nregex = { path = \"/home/jon/regex\" }\r\n# use a modification on a <conation_em>git</conation_em>",
+                "branch\r\nserde = { <conation_em>git</conation_em> = \"https://<conation_em>github.com</conation_em>/serde-rs/serde.git\", branch = \"faster\" }\r\n# patch a <conation_em>git</conation_em>",
+                "https://<conation_em>github.com</conation_em>/jonhoo/project.git']\r\nproject = { path = \"/home/jon/project\" }\r\nListing 6-6: Overriding"
               ]
             }
           },
@@ -194,10 +194,10 @@ fn test_deserialization() -> anyhow::Result<()> {
             },
             "highlight": {
               "content": [
-                "Visit https://<macro_em>github.com</macro_em>/settings/tokens for more information.",
-                "To see this and other security events for your account, visit https://<macro_em>github.com</macro_em>/settings/security-log",
-                "If you run into problems, please contact support by visiting https://<macro_em>github.com</macro_em>/contact\r\n\r\nThanks",
-                ",\r\nThe <macro_em>GitHub</macro_em> Team"
+                "Visit https://<conation_em>github.com</conation_em>/settings/tokens for more information.",
+                "To see this and other security events for your account, visit https://<conation_em>github.com</conation_em>/settings/security-log",
+                "If you run into problems, please contact support by visiting https://<conation_em>github.com</conation_em>/contact\r\n\r\nThanks",
+                ",\r\nThe <conation_em>GitHub</conation_em> Team"
               ]
             }
           },
@@ -219,9 +219,9 @@ fn test_deserialization() -> anyhow::Result<()> {
             },
             "highlight": {
               "content": [
-                "local (presumably modified) source\r\nregex = { path = \"/home/jon/regex\" }\r\n# use a modification on a <macro_em>git</macro_em>",
-                "branch\r\nserde = { <macro_em>git</macro_em> = \"https://<macro_em>github.com</macro_em>/serde-rs/serde.git\", branch = \"faster\" }\r\n# patch a <macro_em>git</macro_em>",
-                "https://<macro_em>github.com</macro_em>/jonhoo/project.git']\r\nproject = { path = \"/home/jon/project\" }\r\nListing 6-6: Overriding"
+                "local (presumably modified) source\r\nregex = { path = \"/home/jon/regex\" }\r\n# use a modification on a <conation_em>git</conation_em>",
+                "branch\r\nserde = { <conation_em>git</conation_em> = \"https://<conation_em>github.com</conation_em>/serde-rs/serde.git\", branch = \"faster\" }\r\n# patch a <conation_em>git</conation_em>",
+                "https://<conation_em>github.com</conation_em>/jonhoo/project.git']\r\nproject = { path = \"/home/jon/project\" }\r\nListing 6-6: Overriding"
               ]
             }
           },
@@ -259,11 +259,11 @@ fn test_deserialization() -> anyhow::Result<()> {
             },
             "highlight": {
               "content": [
-                "#### You can view, comment on, or merge this pull request online at:\nhttps://<macro_em>github.com</macro_em>/macro-inc/macro-api",
-                "** cloud-storage/infra/packages/resources/src/resources/frecency.ts (4)\n#### Patch Links:\n* https://<macro_em>github.com</macro_em>",
-                "/macro-inc/macro-api/pull/2425.patch\n* https://<macro_em>github.com</macro_em>/macro-inc/macro-api/pull/2425.diff\n—\nReply",
-                "to this email directly, view it on <macro_em>GitHub</macro_em>, or unsubscribe.",
-                "You are receiving this because your review was requested.Message ID: <macro-inc/macro-api/pull/2425@<macro_em>github.com</macro_em>"
+                "#### You can view, comment on, or merge this pull request online at:\nhttps://<conation_em>github.com</conation_em>/macro-inc/macro-api",
+                "** cloud-storage/infra/packages/resources/src/resources/frecency.ts (4)\n#### Patch Links:\n* https://<conation_em>github.com</conation_em>",
+                "/macro-inc/macro-api/pull/2425.patch\n* https://<conation_em>github.com</conation_em>/macro-inc/macro-api/pull/2425.diff\n—\nReply",
+                "to this email directly, view it on <conation_em>GitHub</conation_em>, or unsubscribe.",
+                "You are receiving this because your review was requested.Message ID: <macro-inc/macro-api/pull/2425@<conation_em>github.com</conation_em>"
               ]
             }
           },
@@ -301,11 +301,11 @@ fn test_deserialization() -> anyhow::Result<()> {
             },
             "highlight": {
               "content": [
-                "just rename the thing\n#### You can view, comment on, or merge this pull request online at:\nhttps://<macro_em>github.com</macro_em>",
-                "file)\n* **M** cloud-storage/infra/stacks/connection-gateway/index.ts (2)\n#### Patch Links:\n* https://<macro_em>github.com</macro_em>",
-                "/macro-inc/macro-api/pull/2471.patch\n* https://<macro_em>github.com</macro_em>/macro-inc/macro-api/pull/2471.diff\n—\nReply",
-                "to this email directly, view it on <macro_em>GitHub</macro_em>, or unsubscribe.",
-                "You are receiving this because your review was requested.Message ID: <macro-inc/macro-api/pull/2471@<macro_em>github.com</macro_em>"
+                "just rename the thing\n#### You can view, comment on, or merge this pull request online at:\nhttps://<conation_em>github.com</conation_em>",
+                "file)\n* **M** cloud-storage/infra/stacks/connection-gateway/index.ts (2)\n#### Patch Links:\n* https://<conation_em>github.com</conation_em>",
+                "/macro-inc/macro-api/pull/2471.patch\n* https://<conation_em>github.com</conation_em>/macro-inc/macro-api/pull/2471.diff\n—\nReply",
+                "to this email directly, view it on <conation_em>GitHub</conation_em>, or unsubscribe.",
+                "You are receiving this because your review was requested.Message ID: <macro-inc/macro-api/pull/2471@<conation_em>github.com</conation_em>"
               ]
             }
           },
@@ -343,9 +343,9 @@ fn test_deserialization() -> anyhow::Result<()> {
             },
             "highlight": {
               "content": [
-                "In .<macro_em>github</macro_em>/workflows/db-client-check.yml:\n> @@ -1,12 +1,12 @@\nname: db client check\non:\npull_request:",
-                "' \nimage.png (view on web)\nsometimes it be your own self\n—\nReply to this email directly, view it on <macro_em>GitHub</macro_em>",
-                "are receiving this because you commented.Message ID: <macro-inc/macro-api/pull/2423/review/3372627995@<macro_em>github.com</macro_em>"
+                "In .<conation_em>github</conation_em>/workflows/db-client-check.yml:\n> @@ -1,12 +1,12 @@\nname: db client check\non:\npull_request:",
+                "' \nimage.png (view on web)\nsometimes it be your own self\n—\nReply to this email directly, view it on <conation_em>GitHub</conation_em>",
+                "are receiving this because you commented.Message ID: <macro-inc/macro-api/pull/2423/review/3372627995@<conation_em>github.com</conation_em>"
               ]
             }
           },
@@ -382,11 +382,11 @@ fn test_deserialization() -> anyhow::Result<()> {
             },
             "highlight": {
               "content": [
-                ":\n* N/A\n* 🤖 Automated\n#### You can view, comment on, or merge this pull request online at:\nhttps://<macro_em>github.com</macro_em>",
-                "* **M** cloud-storage/infra/packages/resources/src/resources/rds.ts (2)\n#### Patch Links:\n* https://<macro_em>github.com</macro_em>",
-                "/macro-inc/macro-api/pull/2466.patch\n* https://<macro_em>github.com</macro_em>/macro-inc/macro-api/pull/2466.diff\n—\nReply",
-                "to this email directly, view it on <macro_em>GitHub</macro_em>, or unsubscribe.",
-                "You are receiving this because your review was requested.Message ID: <macro-inc/macro-api/pull/2466@<macro_em>github.com</macro_em>"
+                ":\n* N/A\n* 🤖 Automated\n#### You can view, comment on, or merge this pull request online at:\nhttps://<conation_em>github.com</conation_em>",
+                "* **M** cloud-storage/infra/packages/resources/src/resources/rds.ts (2)\n#### Patch Links:\n* https://<conation_em>github.com</conation_em>",
+                "/macro-inc/macro-api/pull/2466.patch\n* https://<conation_em>github.com</conation_em>/macro-inc/macro-api/pull/2466.diff\n—\nReply",
+                "to this email directly, view it on <conation_em>GitHub</conation_em>, or unsubscribe.",
+                "You are receiving this because your review was requested.Message ID: <macro-inc/macro-api/pull/2466@<conation_em>github.com</conation_em>"
               ]
             }
           },
@@ -404,7 +404,7 @@ fn test_deserialization() -> anyhow::Result<()> {
               "message_id": "019a30b1-c647-7949-8be2-1ef3f2195790",
               "entity_id": "019a30ae-2a24-78b3-9eef-e3aa7594a1e4",
               "link_id": "01976c0a-7554-719c-a2fc-d4dcf7e8a8bf",
-              "content": "## Summary\nThis PR swaps the backing storage layer for frecency in connection gateway from dynamo -> pg\n* **add inbound poller worker**\n* **switch connection gateway to pg frecency**\n* **use secret macro_db connection string**\n## Screenshots, GIFs, and Videos\n## Checklist\n* Included (`MACRO-N`) in the PR title.\n* QA'd\nTests for PR (pick one):\n* N/A\n* 🤖 Automated\n#### You can view, comment on, or merge this pull request online at:\nhttps://github.com/macro-inc/macro-api/pull/2457\n#### Commit Summary\n* 1575c1b add inbound poller worker\n* b51c9a4 switch connection gateway to pg frecency\n* 3c44249 use secret macro_db connection string\n#### File Changes\n(14 files)\n* **M** .github/CODEOWNERS (2)\n* **M** cloud-storage/Cargo.lock (1)\n* **M** cloud-storage/connection_gateway/Cargo.toml (3)\n* **M** cloud-storage/connection_gateway/src/context.rs (9)\n* **M** cloud-storage/connection_gateway/src/main.rs (33)\n* **M** cloud-storage/frecency/Cargo.toml (11)\n* **M** cloud-storage/frecency/src/domain/models.rs (20)\n* **M** cloud-storage/frecency/src/domain/ports.rs (6)\n* **M** cloud-storage/frecency/src/domain/services.rs (39)\n* **M** cloud-storage/frecency/src/inbound.rs (2)\n* **M** cloud-storage/frecency/src/inbound/polling_aggregator.rs (91)\n* **M** cloud-storage/frecency/src/outbound/postgres.rs (3)\n* **M** cloud-storage/infra/stacks/connection-gateway/index.ts (12)\n* **M** cloud-storage/remote_env_var/src/lib.rs (16)\n#### Patch Links:\n* https://github.com/macro-inc/macro-api/pull/2457.patch\n* https://github.com/macro-inc/macro-api/pull/2457.diff\n—\nReply to this email directly, view it on GitHub, or unsubscribe.\nYou are receiving this because your review was requested.Message ID: <macro-inc/macro-api/pull/2457@github.com>",
+              "content": "## Summary\nThis PR swaps the backing storage layer for frecency in connection gateway from dynamo -> pg\n* **add inbound poller worker**\n* **switch connection gateway to pg frecency**\n* **use secret conation_db connection string**\n## Screenshots, GIFs, and Videos\n## Checklist\n* Included (`MACRO-N`) in the PR title.\n* QA'd\nTests for PR (pick one):\n* N/A\n* 🤖 Automated\n#### You can view, comment on, or merge this pull request online at:\nhttps://github.com/macro-inc/macro-api/pull/2457\n#### Commit Summary\n* 1575c1b add inbound poller worker\n* b51c9a4 switch connection gateway to pg frecency\n* 3c44249 use secret conation_db connection string\n#### File Changes\n(14 files)\n* **M** .github/CODEOWNERS (2)\n* **M** cloud-storage/Cargo.lock (1)\n* **M** cloud-storage/connection_gateway/Cargo.toml (3)\n* **M** cloud-storage/connection_gateway/src/context.rs (9)\n* **M** cloud-storage/connection_gateway/src/main.rs (33)\n* **M** cloud-storage/frecency/Cargo.toml (11)\n* **M** cloud-storage/frecency/src/domain/models.rs (20)\n* **M** cloud-storage/frecency/src/domain/ports.rs (6)\n* **M** cloud-storage/frecency/src/domain/services.rs (39)\n* **M** cloud-storage/frecency/src/inbound.rs (2)\n* **M** cloud-storage/frecency/src/inbound/polling_aggregator.rs (91)\n* **M** cloud-storage/frecency/src/outbound/postgres.rs (3)\n* **M** cloud-storage/infra/stacks/connection-gateway/index.ts (12)\n* **M** cloud-storage/remote_env_var/src/lib.rs (16)\n#### Patch Links:\n* https://github.com/macro-inc/macro-api/pull/2457.patch\n* https://github.com/macro-inc/macro-api/pull/2457.diff\n—\nReply to this email directly, view it on GitHub, or unsubscribe.\nYou are receiving this because your review was requested.Message ID: <macro-inc/macro-api/pull/2457@github.com>",
               "labels": [
                 "github",
                 "CATEGORY_PERSONAL",
@@ -424,12 +424,12 @@ fn test_deserialization() -> anyhow::Result<()> {
             },
             "highlight": {
               "content": [
-                ":\n* N/A\n* 🤖 Automated\n#### You can view, comment on, or merge this pull request online at:\nhttps://<macro_em>github.com</macro_em>",
-                "to pg frecency\n* 3c44249 use secret macro_db connection string\n#### File Changes\n(14 files)\n* **M** .<macro_em>github</macro_em>",
-                "connection-gateway/index.ts (12)\n* **M** cloud-storage/remote_env_var/src/lib.rs (16)\n#### Patch Links:\n* https://<macro_em>github.com</macro_em>",
-                "/macro-inc/macro-api/pull/2457.patch\n* https://<macro_em>github.com</macro_em>/macro-inc/macro-api/pull/2457.diff\n—\nReply",
-                "to this email directly, view it on <macro_em>GitHub</macro_em>, or unsubscribe.",
-                "You are receiving this because your review was requested.Message ID: <macro-inc/macro-api/pull/2457@<macro_em>github.com</macro_em>"
+                ":\n* N/A\n* 🤖 Automated\n#### You can view, comment on, or merge this pull request online at:\nhttps://<conation_em>github.com</conation_em>",
+                "to pg frecency\n* 3c44249 use secret conation_db connection string\n#### File Changes\n(14 files)\n* **M** .<conation_em>github</conation_em>",
+                "connection-gateway/index.ts (12)\n* **M** cloud-storage/remote_env_var/src/lib.rs (16)\n#### Patch Links:\n* https://<conation_em>github.com</conation_em>",
+                "/macro-inc/macro-api/pull/2457.patch\n* https://<conation_em>github.com</conation_em>/macro-inc/macro-api/pull/2457.diff\n—\nReply",
+                "to this email directly, view it on <conation_em>GitHub</conation_em>, or unsubscribe.",
+                "You are receiving this because your review was requested.Message ID: <macro-inc/macro-api/pull/2457@<conation_em>github.com</conation_em>"
               ]
             }
           }
@@ -527,18 +527,18 @@ fn test_build_unified_search_request_content() -> anyhow::Result<()> {
       },
       "highlight": {
         "fields": {
-          "content": { "number_of_fragments": 1, "post_tags": ["</macro_em>"], "pre_tags": ["<macro_em>"], "type": "plain" },
-          "document_name": { "number_of_fragments": 0, "post_tags": ["</macro_em>"], "pre_tags": ["<macro_em>"], "type": "plain" },
-          "name": { "number_of_fragments": 0, "post_tags": ["</macro_em>"], "pre_tags": ["<macro_em>"], "type": "plain" },
-          "subject": { "number_of_fragments": 0, "post_tags": ["</macro_em>"], "pre_tags": ["<macro_em>"], "type": "plain" },
-          "sender": { "number_of_fragments": 0, "post_tags": ["</macro_em>"], "pre_tags": ["<macro_em>"], "type": "plain" },
-          "sender_name": { "number_of_fragments": 0, "post_tags": ["</macro_em>"], "pre_tags": ["<macro_em>"], "type": "plain" },
-          "recipients": { "number_of_fragments": 0, "post_tags": ["</macro_em>"], "pre_tags": ["<macro_em>"], "type": "plain" },
-          "recipient_names": { "number_of_fragments": 0, "post_tags": ["</macro_em>"], "pre_tags": ["<macro_em>"], "type": "plain" },
-          "cc": { "number_of_fragments": 0, "post_tags": ["</macro_em>"], "pre_tags": ["<macro_em>"], "type": "plain" },
-          "cc_names": { "number_of_fragments": 0, "post_tags": ["</macro_em>"], "pre_tags": ["<macro_em>"], "type": "plain" },
-          "bcc": { "number_of_fragments": 0, "post_tags": ["</macro_em>"], "pre_tags": ["<macro_em>"], "type": "plain" },
-          "bcc_names": { "number_of_fragments": 0, "post_tags": ["</macro_em>"], "pre_tags": ["<macro_em>"], "type": "plain" }
+          "content": { "number_of_fragments": 1, "post_tags": ["</conation_em>"], "pre_tags": ["<conation_em>"], "type": "plain" },
+          "document_name": { "number_of_fragments": 0, "post_tags": ["</conation_em>"], "pre_tags": ["<conation_em>"], "type": "plain" },
+          "name": { "number_of_fragments": 0, "post_tags": ["</conation_em>"], "pre_tags": ["<conation_em>"], "type": "plain" },
+          "subject": { "number_of_fragments": 0, "post_tags": ["</conation_em>"], "pre_tags": ["<conation_em>"], "type": "plain" },
+          "sender": { "number_of_fragments": 0, "post_tags": ["</conation_em>"], "pre_tags": ["<conation_em>"], "type": "plain" },
+          "sender_name": { "number_of_fragments": 0, "post_tags": ["</conation_em>"], "pre_tags": ["<conation_em>"], "type": "plain" },
+          "recipients": { "number_of_fragments": 0, "post_tags": ["</conation_em>"], "pre_tags": ["<conation_em>"], "type": "plain" },
+          "recipient_names": { "number_of_fragments": 0, "post_tags": ["</conation_em>"], "pre_tags": ["<conation_em>"], "type": "plain" },
+          "cc": { "number_of_fragments": 0, "post_tags": ["</conation_em>"], "pre_tags": ["<conation_em>"], "type": "plain" },
+          "cc_names": { "number_of_fragments": 0, "post_tags": ["</conation_em>"], "pre_tags": ["<conation_em>"], "type": "plain" },
+          "bcc": { "number_of_fragments": 0, "post_tags": ["</conation_em>"], "pre_tags": ["<conation_em>"], "type": "plain" },
+          "bcc_names": { "number_of_fragments": 0, "post_tags": ["</conation_em>"], "pre_tags": ["<conation_em>"], "type": "plain" }
         },
         "require_field_match": true,
         "max_analyzer_offset": 999999
@@ -853,18 +853,18 @@ fn test_build_unified_search_request_single_index() -> anyhow::Result<()> {
       },
       "highlight": {
         "fields": {
-          "content": { "number_of_fragments": 1, "post_tags": ["</macro_em>"], "pre_tags": ["<macro_em>"], "type": "plain" },
-          "document_name": { "number_of_fragments": 0, "post_tags": ["</macro_em>"], "pre_tags": ["<macro_em>"], "type": "plain" },
-          "name": { "number_of_fragments": 0, "post_tags": ["</macro_em>"], "pre_tags": ["<macro_em>"], "type": "plain" },
-          "subject": { "number_of_fragments": 0, "post_tags": ["</macro_em>"], "pre_tags": ["<macro_em>"], "type": "plain" },
-          "sender": { "number_of_fragments": 0, "post_tags": ["</macro_em>"], "pre_tags": ["<macro_em>"], "type": "plain" },
-          "sender_name": { "number_of_fragments": 0, "post_tags": ["</macro_em>"], "pre_tags": ["<macro_em>"], "type": "plain" },
-          "recipients": { "number_of_fragments": 0, "post_tags": ["</macro_em>"], "pre_tags": ["<macro_em>"], "type": "plain" },
-          "recipient_names": { "number_of_fragments": 0, "post_tags": ["</macro_em>"], "pre_tags": ["<macro_em>"], "type": "plain" },
-          "cc": { "number_of_fragments": 0, "post_tags": ["</macro_em>"], "pre_tags": ["<macro_em>"], "type": "plain" },
-          "cc_names": { "number_of_fragments": 0, "post_tags": ["</macro_em>"], "pre_tags": ["<macro_em>"], "type": "plain" },
-          "bcc": { "number_of_fragments": 0, "post_tags": ["</macro_em>"], "pre_tags": ["<macro_em>"], "type": "plain" },
-          "bcc_names": { "number_of_fragments": 0, "post_tags": ["</macro_em>"], "pre_tags": ["<macro_em>"], "type": "plain" }
+          "content": { "number_of_fragments": 1, "post_tags": ["</conation_em>"], "pre_tags": ["<conation_em>"], "type": "plain" },
+          "document_name": { "number_of_fragments": 0, "post_tags": ["</conation_em>"], "pre_tags": ["<conation_em>"], "type": "plain" },
+          "name": { "number_of_fragments": 0, "post_tags": ["</conation_em>"], "pre_tags": ["<conation_em>"], "type": "plain" },
+          "subject": { "number_of_fragments": 0, "post_tags": ["</conation_em>"], "pre_tags": ["<conation_em>"], "type": "plain" },
+          "sender": { "number_of_fragments": 0, "post_tags": ["</conation_em>"], "pre_tags": ["<conation_em>"], "type": "plain" },
+          "sender_name": { "number_of_fragments": 0, "post_tags": ["</conation_em>"], "pre_tags": ["<conation_em>"], "type": "plain" },
+          "recipients": { "number_of_fragments": 0, "post_tags": ["</conation_em>"], "pre_tags": ["<conation_em>"], "type": "plain" },
+          "recipient_names": { "number_of_fragments": 0, "post_tags": ["</conation_em>"], "pre_tags": ["<conation_em>"], "type": "plain" },
+          "cc": { "number_of_fragments": 0, "post_tags": ["</conation_em>"], "pre_tags": ["<conation_em>"], "type": "plain" },
+          "cc_names": { "number_of_fragments": 0, "post_tags": ["</conation_em>"], "pre_tags": ["<conation_em>"], "type": "plain" },
+          "bcc": { "number_of_fragments": 0, "post_tags": ["</conation_em>"], "pre_tags": ["<conation_em>"], "type": "plain" },
+          "bcc_names": { "number_of_fragments": 0, "post_tags": ["</conation_em>"], "pre_tags": ["<conation_em>"], "type": "plain" }
         },
         "require_field_match": true,
         "max_analyzer_offset": 999999
@@ -926,7 +926,7 @@ fn doc_hit_with_chunks(
                 "_id": format!("{entity_id}-chunk-{i}"),
                 "_score": 1.0,
                 "_source": { "node_id": format!("node-{i}"), "raw_content": "match" },
-                "highlight": { "content": ["<macro_em>match</macro_em>"] },
+                "highlight": { "content": ["<conation_em>match</conation_em>"] },
             })
         })
         .collect();
@@ -1103,7 +1103,7 @@ fn calendar_hit_carries_its_title_highlight() -> anyhow::Result<()> {
         }),
         highlight: Some(std::collections::HashMap::from([(
             "name".to_string(),
-            vec!["<macro_em>Standup</macro_em>".to_string()],
+            vec!["<conation_em>Standup</conation_em>".to_string()],
         )])),
         inner_hits: None,
     }];
@@ -1113,7 +1113,7 @@ fn calendar_hit_carries_its_title_highlight() -> anyhow::Result<()> {
     assert_eq!(hits[0].entity_type, SearchEntityType::CalendarEvents);
     assert_eq!(
         hits[0].highlight.name.as_deref(),
-        Some("<macro_em>Standup</macro_em>")
+        Some("<conation_em>Standup</conation_em>")
     );
     Ok(())
 }
@@ -1368,7 +1368,7 @@ fn project_hit_deserializes_and_converts() -> anyhow::Result<()> {
             },
             "matched_queries": ["projects"],
             "highlight": {
-              "name": ["<macro_em>Mobile</macro_em> Redesign"]
+              "name": ["<conation_em>Mobile</conation_em> Redesign"]
             }
           }
         ]
@@ -1395,7 +1395,7 @@ fn project_hit_deserializes_and_converts() -> anyhow::Result<()> {
     );
     assert_eq!(
         hit.highlight.name.as_deref(),
-        Some("<macro_em>Mobile</macro_em> Redesign")
+        Some("<conation_em>Mobile</conation_em> Redesign")
     );
     assert!(hit.goto.is_none());
     assert_eq!(

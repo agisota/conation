@@ -1,11 +1,11 @@
 use anyhow::Context;
 use database_env_vars::{DatabaseUrl, RedisUri};
-use macro_auth::InternalApiKey;
-use macro_env::Environment;
-use macro_env_var::{env_var, env_vars, maybe_env_var};
+use conation_auth::InternalApiKey;
+use conation_env::Environment;
+use conation_env_var::{env_var, env_vars, maybe_env_var};
 use std::sync::LazyLock;
 
-// We load this through `macro_config` at startup as part of [`Config`]. This lazy is retained for
+// We load this through `conation_config` at startup as part of [`Config`]. This lazy is retained for
 // older notification template code paths that do not receive `Config` directly.
 pub static BASE_URL: LazyLock<String> = LazyLock::new(|| {
     BaseUrl::new()
@@ -45,7 +45,7 @@ env_var!(
 /// The configuration parameters for the application.
 ///
 /// These are loaded from `APP_SECRETS_JSON` when present, otherwise from environment variables.
-#[derive(macro_config::MacroConfig)]
+#[derive(conation_config::MacroConfig)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Config {
     /// The service's base url including the scheme.
@@ -62,19 +62,19 @@ pub struct Config {
     pub(crate) url_signing_hmac: UrlSigningHmac,
 
     /// The port to listen for HTTP requests on.
-    #[macro_config_default(8080)]
+    #[conation_config_default(8080)]
     pub(crate) port: usize,
 
     /// The environment we are in.
-    #[macro_config_default(Environment::new_or_prod())]
+    #[conation_config_default(Environment::new_or_prod())]
     pub(crate) environment: Environment,
 
     /// The notification queue max messages per poll.
-    #[macro_config_default(9)]
+    #[conation_config_default(9)]
     pub(crate) notification_queue_max_messages: i32,
 
     /// The notification queue wait time seconds.
-    #[macro_config_default(4)]
+    #[conation_config_default(4)]
     pub(crate) notification_queue_wait_time_seconds: i32,
 
     /// Redis used by notification-service for digest batching, rate limiting, etc.
@@ -101,7 +101,7 @@ pub struct Config {
 
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
-        let config = macro_config::ConfigLoader::load::<Config>()
+        let config = conation_config::ConfigLoader::load::<Config>()
             .context("failed to load notification service config")?;
 
         if !matches!(config.environment, Environment::Local)

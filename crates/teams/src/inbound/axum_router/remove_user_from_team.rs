@@ -3,8 +3,8 @@ use entity_access::{
     domain::{models::AdminTeamRole, ports::EntityAccessService},
     inbound::axum_extractors::MacroUserTeamExtractorV2,
 };
-use macro_authorization::MacroAuthorizationService;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_authorization::MacroAuthorizationService;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_error_response::ErrorResponse;
 
 use crate::domain::{model::RemoveUserFromTeamError, team_repo::TeamService};

@@ -1,5 +1,5 @@
 import { type InferType, SyncDirection } from '@loro-mirror/core';
-import type { Attributes } from '@macro-inc/observability';
+import type { Attributes } from '@conation/observability';
 import { Mutex } from 'async-mutex';
 import type { VersionVector } from 'loro-crdt';
 import type { ResultAsync } from 'neverthrow';

@@ -1,4 +1,4 @@
-use macro_env_var::VarNameErr;
+use conation_env_var::VarNameErr;
 use thiserror::Error;
 
 /// Domain errors for the MCP client.

@@ -1,6 +1,6 @@
 //! Idempotent local Kafka topic creation, mirroring [`super::localstack`].
 //!
-//! The topics come from `macro_event_topics::all_topic_names()` — the same
+//! The topics come from `conation_event_topics::all_topic_names()` — the same
 //! source of truth the MSK stack consumes (via the generated
 //! `.github/kafka-cluster-topics.json`) — so a topic declared in the crate
 //! exists both locally and in the deployed cluster without a second list.
@@ -87,7 +87,7 @@ async fn provision_async(brokers: &str) -> Result<()> {
         .create()
         .context("creating kafka admin client")?;
 
-    let names = macro_event_topics::all_topic_names();
+    let names = conation_event_topics::all_topic_names();
     let topics: Vec<NewTopic> = names
         .iter()
         .map(|name| NewTopic::new(name, PARTITIONS, TopicReplication::Fixed(1)))

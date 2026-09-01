@@ -18,7 +18,7 @@ pub(in crate::api::search) async fn filter_documents(
 ) -> Result<FilterDocumentResponse, SearchError> {
     let document_ids_response: Vec<UserAccessibleItem> = if !filters.document_ids.is_empty() {
         // Item ids are provided, we want to get the list of those that are accessible to the user
-        macro_db_client::item_access::validate_user_accessible_items(
+        conation_db_client::item_access::validate_user_accessible_items(
             &ctx.db,
             user_id,
             filters
@@ -40,7 +40,7 @@ pub(in crate::api::search) async fn filter_documents(
             && filters.file_types.is_empty();
 
         // No filters are provided, we want to get the list of everything the has access to but does not own
-        macro_db_client::item_access::get_accessible_items::get_user_accessible_items(
+        conation_db_client::item_access::get_accessible_items::get_user_accessible_items(
             &ctx.db,
             user_id,
             Some("document".to_string()),
@@ -65,7 +65,7 @@ pub(in crate::api::search) async fn filter_documents(
     // If project_ids are provided, we need to filter to ids that are within those projects
     // or sub-projects of those projects
     let document_ids = if !filters.project_ids.is_empty() {
-        macro_db_client::items::filter::filter_items_by_project_ids(
+        conation_db_client::items::filter::filter_items_by_project_ids(
             &ctx.db,
             &document_ids,
             ShareableItemType::Document,
@@ -85,7 +85,7 @@ pub(in crate::api::search) async fn filter_documents(
     }
 
     let document_ids = if !filters.owners.is_empty() {
-        macro_db_client::items::filter::filter_items_by_owner_ids(
+        conation_db_client::items::filter::filter_items_by_owner_ids(
             &ctx.db,
             &document_ids,
             ShareableItemType::Document,
@@ -105,7 +105,7 @@ pub(in crate::api::search) async fn filter_documents(
     }
 
     let document_ids = if !filters.file_types.is_empty() {
-        macro_db_client::items::filter::filter_documents_by_file_types(
+        conation_db_client::items::filter::filter_documents_by_file_types(
             &ctx.db,
             &document_ids,
             &filters.file_types,

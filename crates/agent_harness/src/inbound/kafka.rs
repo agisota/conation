@@ -14,7 +14,7 @@ use bot_id::BotId;
 
 use crate::domain::model::{
     AgentKind, AnnounceOrigin, AnnouncePrompt, DeliverAction, HarnessCommand, MentionOrigin,
-    OpenSession, is_macro_staff,
+    OpenSession, is_conation_staff,
 };
 
 #[cfg(test)]
@@ -70,7 +70,7 @@ pub fn route_agent_trigger(
                 .message
                 .sender
                 .as_user()
-                .is_some_and(|user| !is_macro_staff(user))
+                .is_some_and(|user| !is_conation_staff(user))
             {
                 return Err(Skipped::NotMacroStaff);
             }
@@ -132,7 +132,7 @@ pub fn route_agent_trigger(
                     && !message
                         .sender
                         .as_user()
-                        .is_some_and(|user| is_macro_staff(user))
+                        .is_some_and(|user| is_conation_staff(user))
                 {
                     return Err(Skipped::NotMacroStaff);
                 }

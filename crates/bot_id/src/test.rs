@@ -47,7 +47,7 @@ fn system_bot_id_is_stable_and_distinct_from_ai_personas() {
 }
 
 #[test]
-fn macro_new_id_is_stable_and_distinct_from_macro() {
+fn conation_new_id_is_stable_and_distinct_from_macro() {
     assert_eq!(
         MACRO_NEW_BOT_ID.into_storage_id().as_ref(),
         "bot|00000000-0000-0000-0000-00000000a2a2"

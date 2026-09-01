@@ -7,12 +7,12 @@ version = "0.1.0"
 [dependencies]
 anyhow = { workspace = true }
 entity_access_db_utils = { path = "../entity_access_db_utils" }
-macro_user_id = { path = "../macro_user_id" }
-macro_uuid = { path = "../macro_uuid" }
+conation_user_id = { path = "../conation_user_id" }
+conation_uuid = { path = "../conation_uuid" }
 models_permissions = { path = "../models_permissions" }
 sqlx = { workspace = true }
 workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
-macro_db_migrator = { path = "../macro_db_migrator" }
+conation_db_migrator = { path = "../conation_db_migrator" }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

@@ -19,7 +19,7 @@ use chat::domain::events::{ChatMacroEvent, ChatTopicEvent};
 use documents::domain::events::{DocumentMacroEvent, DocumentTopicEvent, InteractionReason};
 use email::domain::events::{EmailMacroEvent, EmailTopicEvent};
 use kafka_util::{GroupName, KafkaEventConsumer};
-use macro_event_broker::{
+use conation_event_broker::{
     KafkaConsumerAdapter, MacroEvent as _, MacroEventCollection as _, MacroEventConsumerService,
 };
 use model_entity::{Entity, EntityType};
@@ -41,7 +41,7 @@ type SoupRealtimeKafkaAdapter = KafkaConsumerAdapter<SoupRealtimeConsumerGroup, 
 type SoupRealtimeKafkaConsumer =
     MacroEventConsumerService<DeclaredMacroEvent, SoupRealtimeKafkaAdapter>;
 
-macro_event_broker::declare_topics!(
+conation_event_broker::declare_topics!(
     DeclaredMacroEvent:
         DocumentMacroEvent,
         ProjectMacroEvent,

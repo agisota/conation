@@ -9,7 +9,7 @@ use graphql_common::{
 };
 use graphql_email::GraphqlEmailLabel;
 use graphql_permission::GraphqlEntityPermission;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::Entity;
 use models_pagination::PaginatedOpaqueCursor;
 use models_soup::{
@@ -2157,7 +2157,7 @@ where
 
 /// Implement interface-only dispatch methods for fields whose concrete
 /// GraphQL definitions are supplied by the flattened edge object.
-macro_rules! impl_common_interface_edges {
+conation_rules! impl_common_interface_edges {
     ($($entity:ident),+ $(,)?) => {
         $(
             impl<E: SoupEntityEdges> $entity<E> {

@@ -2,7 +2,7 @@ use crate::api::settings::Settings;
 use crate::service;
 use crate::service::backfill::BackfillJobStatus;
 use chrono::{DateTime, Utc};
-use macro_user_id::{email::EmailStr, user_id::MacroUserIdStr};
+use conation_user_id::{email::EmailStr, user_id::MacroUserIdStr};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -86,7 +86,7 @@ impl From<crate::email::service::link::UserProvider> for UserProvider {
 pub struct Link {
     pub id: Uuid,
     #[schema(value_type = String)]
-    pub macro_id: MacroUserIdStr<'static>,
+    pub conation_id: MacroUserIdStr<'static>,
     pub fusionauth_user_id: String,
     #[schema(value_type = String)]
     pub email_address: EmailStr<'static>,
@@ -132,7 +132,7 @@ impl Link {
     ) -> Self {
         Link {
             id: source.id,
-            macro_id: source.macro_id,
+            conation_id: source.conation_id,
             fusionauth_user_id: source.fusionauth_user_id,
             email_address: source.email_address,
             photo_url,

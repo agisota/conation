@@ -42,7 +42,7 @@ impl AgentActionId {
         Self(format!(
             "{}{}",
             Self::PREFIX,
-            macro_uuid::generate_uuid_v7()
+            conation_uuid::generate_uuid_v7()
         ))
     }
 

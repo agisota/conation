@@ -1,6 +1,6 @@
 use crate::domain::models::{MacroUserIdStr, PipedreamConnection};
 use crate::domain::ports::ConnectionStore;
-use macro_user_id::cowlike::CowLike;
+use conation_user_id::cowlike::CowLike;
 use sqlx::PgPool;
 
 /// Postgres-backed [`ConnectionStore`] over the `pipedream_mcp_connections` table.

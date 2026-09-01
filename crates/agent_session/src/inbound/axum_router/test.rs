@@ -3,7 +3,7 @@ use crate::domain::model::SessionStatus;
 use axum::body::Body;
 use axum::http::{Request, header};
 use chrono::Utc;
-use macro_authorization::{
+use conation_authorization::{
     BOT_SCOPE_HEADER, BOT_TOKEN_HEADER, BotActingUserClaims, BotAuthentication, BotAuthorizer,
     BotScope, InternalAuthConfig, JwtValidator, MacroAuthorizationError,
     MacroAuthorizationServiceImpl, ValidatedIdentity,

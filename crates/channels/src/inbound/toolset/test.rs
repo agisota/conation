@@ -23,7 +23,7 @@ use entity_access::domain::{
     },
     ports::{EntityAccessService, NoOpEntityAccessService},
 };
-use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
+use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
 use std::sync::{
     Arc, Mutex,
     atomic::{AtomicUsize, Ordering},

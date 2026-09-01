@@ -16,12 +16,12 @@ use entity_access::domain::{
     },
     ports::EntityAccessService,
 };
-use macro_authorization::{
+use conation_authorization::{
     INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_USER_ID_HEADER, InternalAuthConfig, JwtValidator,
     MacroAuthorizationError, MacroAuthorizationServiceImpl, MacroAuthorizationState,
     ValidatedIdentity,
 };
-use macro_user_id::{
+use conation_user_id::{
     lowercased::Lowercase,
     user_id::{MacroUserId, MacroUserIdStr},
 };
@@ -298,7 +298,7 @@ impl CrmService for FakeCrmService {
         panic!("unexpected depopulate_link_in_team call")
     }
 
-    async fn get_team_id_for_user(&self, _macro_id: &str) -> Result<Option<Uuid>, CrmError> {
+    async fn get_team_id_for_user(&self, _conation_id: &str) -> Result<Option<Uuid>, CrmError> {
         panic!("unexpected get_team_id_for_user call")
     }
 
@@ -532,7 +532,7 @@ fn test_router(
             api_key: INTERNAL_KEY.to_string(),
             default_user_id: None,
         },
-        macro_authorization::NoBotAuthorizer,
+        conation_authorization::NoBotAuthorizer,
     );
     let state: CrmRouterState<FakeCrmService, FakeEntityAccessService, TestAuthorizationService> =
         CrmRouterState {

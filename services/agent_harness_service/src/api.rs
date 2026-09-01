@@ -21,8 +21,8 @@ use anyhow::Context;
 use axum::Router;
 use axum::routing::get;
 use entity_access::domain::ports::EntityAccessService;
-use macro_authorization::MacroAuthorizationService;
-use macro_tower_layers::MacroRequestIdAndTracingLayer;
+use conation_authorization::MacroAuthorizationService;
+use conation_tower_layers::MacroRequestIdAndTracingLayer;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -74,7 +74,7 @@ where
     let app = api_router(read_state, control_state, create_state, gateway_state)
         .layer(MacroRequestIdAndTracingLayer::new(Duration::from_millis(200)).into_inner())
         .merge(Router::new().route("/health", get(health)))
-        .layer(macro_cors::cors_layer())
+        .layer(conation_cors::cors_layer())
         .merge(SwaggerUi::new("/docs").url("/api-doc/openapi.json", swagger::ApiDoc::openapi()));
 
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}"))

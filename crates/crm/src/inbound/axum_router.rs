@@ -54,7 +54,7 @@ use axum::{
     routing::{get, patch, post, put},
 };
 use entity_access::domain::ports::EntityAccessService;
-use macro_authorization::{MacroAuthorizationService, MacroAuthorizationState};
+use conation_authorization::{MacroAuthorizationService, MacroAuthorizationState};
 use model_error_response::ErrorResponse;
 
 use crate::domain::{model::CrmError, service::CrmService};

@@ -6,8 +6,8 @@ use email::domain::events::{
 };
 use email_api_client::domain::models::EmailApiError;
 use futures::{StreamExt, stream};
-use macro_event_broker::MacroEventBroker;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_event_broker::MacroEventBroker;
+use conation_user_id::user_id::MacroUserIdStr;
 use models_email::service::contact::{Contact, ContactList};
 use models_email::service::link::Link;
 use models_email::service::pubsub::SFSUploaderMessage;
@@ -27,7 +27,7 @@ pub async fn sync_contacts<B: MacroEventBroker>(
     db: &PgPool,
     email_api: &GmailApi,
     sqs_client: &SQS,
-    macro_event_broker: &B,
+    conation_event_broker: &B,
 ) -> anyhow::Result<()> {
     // 1. Get existing sync tokens from our DB
     let (contacts_sync_token, other_contacts_sync_token) =
@@ -47,7 +47,7 @@ pub async fn sync_contacts<B: MacroEventBroker>(
         Box::pin(process_and_store_contacts(
             db,
             sqs_client,
-            macro_event_broker,
+            conation_event_broker,
             link,
             new_contacts,
         ))
@@ -189,7 +189,7 @@ async fn list_contacts_once(
 async fn process_and_store_contacts<B: MacroEventBroker>(
     db: &PgPool,
     sqs_client: &SQS,
-    macro_event_broker: &B,
+    conation_event_broker: &B,
     link: &Link,
     contacts: Vec<Contact>,
 ) -> anyhow::Result<()> {
@@ -235,7 +235,7 @@ async fn process_and_store_contacts<B: MacroEventBroker>(
     );
 
     if !changed_contact_ids.is_empty() {
-        reindex_threads_for_changed_contacts(db, macro_event_broker, link, &changed_contact_ids)
+        reindex_threads_for_changed_contacts(db, conation_event_broker, link, &changed_contact_ids)
             .await;
     }
 
@@ -274,10 +274,10 @@ async fn process_and_store_contacts<B: MacroEventBroker>(
 
 const REINDEX_BATCH_SIZE: usize = 50;
 
-#[tracing::instrument(skip(db, macro_event_broker, link, changed_contact_ids))]
+#[tracing::instrument(skip(db, conation_event_broker, link, changed_contact_ids))]
 async fn reindex_threads_for_changed_contacts<B: MacroEventBroker>(
     db: &PgPool,
-    macro_event_broker: &B,
+    conation_event_broker: &B,
     link: &Link,
     changed_contact_ids: &[Uuid],
 ) {
@@ -305,18 +305,18 @@ async fn reindex_threads_for_changed_contacts<B: MacroEventBroker>(
         "Re-indexing threads for contacts with name changes"
     );
 
-    publish_thread_reindex_batches(macro_event_broker, link.id, &link.macro_id, &thread_ids);
+    publish_thread_reindex_batches(conation_event_broker, link.id, &link.conation_id, &thread_ids);
 }
 
 fn publish_thread_reindex_batches<B: MacroEventBroker>(
-    macro_event_broker: &B,
+    conation_event_broker: &B,
     link_id: Uuid,
     owner: &MacroUserIdStr<'static>,
     thread_ids: &[Uuid],
 ) {
     for thread_ids in thread_ids.chunks(REINDEX_BATCH_SIZE) {
         publish_email_event(
-            macro_event_broker,
+            conation_event_broker,
             &EmailMacroEvent::threads_reindex_requested(ThreadsReindexRequestedMetadata {
                 link_id,
                 owner: owner.clone(),

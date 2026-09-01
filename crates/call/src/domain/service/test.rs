@@ -9,9 +9,9 @@ use connection::domain::ports::ConnectionService;
 use entity_access::domain::models::{EditAccessLevel, EntityAccessReceipt, EntityType};
 use entity_access::domain::ports::NoOpEntityAccessService;
 use entity_mutation::DeleteEntityPermanently;
-use macro_event_broker::{EventBrokerError, MacroEvent, MacroEventBroker};
-use macro_user_id::cowlike::CowLike;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_event_broker::{EventBrokerError, MacroEvent, MacroEventBroker};
+use conation_user_id::cowlike::CowLike;
+use conation_user_id::user_id::MacroUserIdStr;
 use notification::domain::models::apple::VoipPushPayload;
 use notification::domain::service::NotificationIngress;
 use serde_json::json;
@@ -34,7 +34,7 @@ use super::{
 };
 
 #[cfg(feature = "outbound")]
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 
 fn user(email: &'static str) -> MacroUserIdStr<'static> {
     MacroUserIdStr::try_from_email(email).unwrap()
@@ -2189,33 +2189,33 @@ async fn insert_voice(
 async fn insert_user_mapping(
     pool: &sqlx::Pool<sqlx::Postgres>,
     user_id: &MacroUserIdStr<'_>,
-    macro_user_id: Uuid,
+    conation_user_id: Uuid,
 ) -> anyhow::Result<()> {
     sqlx::query(
         r#"
-        INSERT INTO macro_user (id, username, email, stripe_customer_id)
+        INSERT INTO conation_user (id, username, email, stripe_customer_id)
         VALUES ($1, $2, $3, $4)
         ON CONFLICT (id) DO NOTHING
         "#,
     )
-    .bind(macro_user_id)
+    .bind(conation_user_id)
     .bind(user_id.as_ref())
     .bind(user_id.email_str())
-    .bind(format!("cus_{macro_user_id}"))
+    .bind(format!("cus_{conation_user_id}"))
     .execute(pool)
     .await?;
 
     sqlx::query(
         r#"
-        INSERT INTO "User" (id, email, "stripeCustomerId", macro_user_id)
+        INSERT INTO "User" (id, email, "stripeCustomerId", conation_user_id)
         VALUES ($1, $2, $3, $4)
-        ON CONFLICT (id) DO UPDATE SET macro_user_id = EXCLUDED.macro_user_id
+        ON CONFLICT (id) DO UPDATE SET conation_user_id = EXCLUDED.conation_user_id
         "#,
     )
     .bind(user_id.as_ref())
     .bind(user_id.email_str())
-    .bind(format!("cus_{macro_user_id}"))
-    .bind(macro_user_id)
+    .bind(format!("cus_{conation_user_id}"))
+    .bind(conation_user_id)
     .execute(pool)
     .await?;
 
@@ -2480,8 +2480,8 @@ async fn enroll_stable_speaker_voices_links_all_voices_for_consistent_diarized_s
     let voice_repo = PgVoiceRepo::new(pool.clone());
     let user_a = MacroUserIdStr::parse_from_str("macro|user-a@test.com")?;
     let user_b = MacroUserIdStr::parse_from_str("macro|user-b@test.com")?;
-    let voice_a = macro_uuid::generate_uuid_v7();
-    let voice_b = macro_uuid::generate_uuid_v7();
+    let voice_a = conation_uuid::generate_uuid_v7();
+    let voice_b = conation_uuid::generate_uuid_v7();
     let now = Utc::now();
 
     insert_user_mapping(&pool, &user_a, MACRO_USER_A).await?;

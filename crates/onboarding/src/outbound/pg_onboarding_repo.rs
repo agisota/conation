@@ -3,7 +3,7 @@
 use crate::domain::models::{OnboardingRow, OnboardingStatus};
 use crate::domain::ports::{OnboardingRepo, Result};
 use chrono::{DateTime, Utc};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use sqlx::PgPool;
 use std::str::FromStr;
 

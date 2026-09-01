@@ -4,7 +4,7 @@ use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use entity_access::domain::models::{
     AnyEntityPermission, EntityAccessReceipt, EntityPermission, ParticipantRole,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::EntityType;
 use models_permissions::share_permission::access_level::AccessLevel;
 
@@ -18,7 +18,7 @@ fn user(id: &str) -> MacroUserIdStr<'static> {
 }
 
 fn surface_id() -> Uuid {
-    macro_uuid::generate_uuid_v7()
+    conation_uuid::generate_uuid_v7()
 }
 
 fn receipt_for(
@@ -336,7 +336,7 @@ async fn mint_token_maps_channel_role_to_edit() {
         .unwrap();
 
     let claims: model::document::DocumentPermissionsToken =
-        macro_sync_service_jwt::decode(token.as_str(), SECRET).unwrap();
+        conation_sync_service_jwt::decode(token.as_str(), SECRET).unwrap();
     assert_eq!(claims.document_id, surface.id.to_string());
     assert_eq!(claims.access_level, AccessLevel::Edit);
 }

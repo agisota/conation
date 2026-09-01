@@ -111,7 +111,7 @@ pub async fn insert_or_update_labels(
     // need to generate before conversion
     for service_label in service_labels.iter_mut() {
         if service_label.id.is_none() {
-            service_label.id = Some(macro_uuid::generate_uuid_v7());
+            service_label.id = Some(conation_uuid::generate_uuid_v7());
         }
     }
 
@@ -206,7 +206,7 @@ pub async fn insert_label(
     mut service_label: service::label::Label,
 ) -> anyhow::Result<service::label::Label> {
     if service_label.id.is_none() {
-        service_label.id = Some(macro_uuid::generate_uuid_v7());
+        service_label.id = Some(conation_uuid::generate_uuid_v7());
     }
 
     // Convert to DB model

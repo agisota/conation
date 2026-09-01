@@ -45,8 +45,8 @@ use clap::Parser;
 use futures::StreamExt;
 use lexical_client::LexicalClient;
 use lexical_client::parse_markdown::MarkdownTarget;
-use macro_env_var::env_var;
-use macro_service_urls::LexicalServiceUrl;
+use conation_env_var::env_var;
+use conation_service_urls::LexicalServiceUrl;
 use secretsmanager_client::{SecretManager, SecretsManager};
 use serde_json::json;
 use sqlx::PgPool;
@@ -106,9 +106,9 @@ impl Env {
 
     fn lexical_service_url(self) -> Result<String> {
         let environment = match self {
-            Env::Local => macro_service_urls::macro_env::Environment::Local,
-            Env::Dev => macro_service_urls::macro_env::Environment::Develop,
-            Env::Prod => macro_service_urls::macro_env::Environment::Production,
+            Env::Local => conation_service_urls::conation_env::Environment::Local,
+            Env::Dev => conation_service_urls::conation_env::Environment::Develop,
+            Env::Prod => conation_service_urls::conation_env::Environment::Production,
         };
         Ok(LexicalServiceUrl::new_for_environment(environment)?.to_string())
     }
@@ -181,7 +181,7 @@ fn fake_for(token: &str) -> String {
 /// Collects every `…@macro.com` email token in `text`, including a leading
 /// `macro|` prefix when present, longest first so replacements don't clobber
 /// each other (the prefixed form is replaced before its bare substring).
-fn collect_macro_emails(text: &str) -> Vec<String> {
+fn collect_conation_emails(text: &str) -> Vec<String> {
     const DOMAIN: &str = "@macro.com";
     let is_local = |c: char| c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | '%' | '+' | '-');
 
@@ -218,7 +218,7 @@ fn collect_macro_emails(text: &str) -> Vec<String> {
 /// Replaces every `…@macro.com` email in `text` with its fictitious mapping.
 fn anonymize(text: &str) -> String {
     let mut out = text.to_string();
-    for token in collect_macro_emails(text) {
+    for token in collect_conation_emails(text) {
         out = out.replace(&token, &fake_for(&token));
     }
     out
@@ -603,7 +603,7 @@ async fn resolve_internal_api_secret_key(env: Env) -> Result<String> {
     // SAFETY: runs once at startup before other threads read the env.
     unsafe { std::env::remove_var("LOCAL_AWS_URL") };
     let secrets = SecretsManager::new(aws_sdk_secretsmanager::Client::new(
-        &macro_aws_config::get_macro_aws_config().await,
+        &conation_aws_config::get_conation_aws_config().await,
     ));
     let key = secrets
         .get_secret_value(format!(

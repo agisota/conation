@@ -7,9 +7,9 @@
 #[cfg(test)]
 mod test;
 
-use macro_event_broker::{Event, MacroEvent, TopicEvent};
-use macro_event_topics::MacroChatsTopic;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_event_broker::{Event, MacroEvent, TopicEvent};
+use conation_event_topics::MacroChatsTopic;
+use conation_user_id::user_id::MacroUserIdStr;
 use serde::{Deserialize, Serialize};
 
 /// Metadata for [`ChatTopicEvent::Created`].

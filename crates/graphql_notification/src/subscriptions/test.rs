@@ -5,7 +5,7 @@ use std::{
 
 use async_graphql::{EmptyMutation, Object, Schema};
 use chrono::Utc;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::EntityType;
 use model_notifications::{NotifEvent, TaskAssignedMetadata};
 use notification::domain::{

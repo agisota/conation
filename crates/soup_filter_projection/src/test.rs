@@ -1,6 +1,6 @@
 use base64::{Engine as _, engine::general_purpose::STANDARD_NO_PAD};
 use chrono::{TimeZone, Utc};
-use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use models_soup::{
     chat::SoupChat,
     document::{SoupDocument, SoupDocumentSubType},

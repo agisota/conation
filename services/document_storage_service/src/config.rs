@@ -1,7 +1,7 @@
 use anyhow::Context;
-use macro_auth::InternalApiKey;
-pub use macro_env::Environment;
-use macro_env_var::{env_vars, maybe_env_vars};
+use conation_auth::InternalApiKey;
+pub use conation_env::Environment;
+use conation_env_var::{env_vars, maybe_env_vars};
 use secretsmanager_client::LocalOrRemoteSecret;
 
 pub const DEFAULT_PRESIGNED_URL_EXPIRY_SECONDS: u64 = 900; // 15 minutes
@@ -80,7 +80,7 @@ maybe_env_vars! {
 }
 
 /// The configuration parameters for the application.
-#[derive(macro_config::MacroConfig)]
+#[derive(conation_config::MacroConfig)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Config {
     pub database_url: DatabaseUrl,
@@ -119,49 +119,49 @@ pub struct Config {
     pub internal_api_key: InternalApiKey,
 
     /// The port to listen for HTTP requests on.
-    #[macro_config_default(8080)]
+    #[conation_config_default(8080)]
     pub port: usize,
 
     /// The environment we are in
-    #[macro_config_default(Environment::new_or_prod())]
+    #[conation_config_default(Environment::new_or_prod())]
     pub environment: Environment,
 
     /// Whether calendar events participate in search. Off by default so a
     /// deployed environment can carry the code before its calendar index has
     /// been created and backfilled — with this false, calendar events are
     /// dropped from the searched set no matter what a request asks for.
-    #[macro_config_default(false)]
+    #[conation_config_default(false)]
     pub calendar_search_enabled: bool,
 
     /// Maximum number of SQS messages to receive per poll for the delete document worker
-    #[macro_config_default(10)]
+    #[conation_config_default(10)]
     pub queue_max_messages: i32,
     /// SQS long-poll wait time in seconds for the delete document worker
-    #[macro_config_default(4)]
+    #[conation_config_default(4)]
     pub queue_wait_time_seconds: i32,
 
     /// Maximum number of SQS messages to receive per webhook worker poll
-    #[macro_config_default(10)]
+    #[conation_config_default(10)]
     pub webhook_queue_max_messages: i32,
     /// SQS long-poll wait time in seconds for the webhook worker
-    #[macro_config_default(20)]
+    #[conation_config_default(20)]
     pub webhook_queue_wait_time_seconds: i32,
 
     /// The document limit for free users
-    #[macro_config_default(20)]
+    #[conation_config_default(20)]
     pub document_limit: u64,
 
     /// Master switch for calendar event reminder dispatch. When `false`
     /// (the default) the worker drains its queue without delivering, so
     /// synced reminder schedules produce no notifications until enabled.
-    #[macro_config_default(false)]
+    #[conation_config_default(false)]
     pub calendar_reminder_dispatch_enabled: bool,
 
     /// The number of seconds a signed document or call recording URL is valid for.
-    #[macro_config_default(DEFAULT_PRESIGNED_URL_EXPIRY_SECONDS)]
+    #[conation_config_default(DEFAULT_PRESIGNED_URL_EXPIRY_SECONDS)]
     pub document_storage_service_presigned_url_expiry_seconds: u64,
     /// The number of seconds a browser cache for a presigned url is valid for
-    #[macro_config_default(DEFAULT_PRESIGNED_URL_BROWSER_CACHE_EXPIRY_SECONDS)]
+    #[conation_config_default(DEFAULT_PRESIGNED_URL_BROWSER_CACHE_EXPIRY_SECONDS)]
     pub document_storage_service_presigned_url_browser_cache_expiry_seconds: u64,
 
     /// The CloudFront private key shared by document content and call recording URL signing.
@@ -182,6 +182,6 @@ pub struct Config {
 
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
-        macro_config::ConfigLoader::load::<Config>().context("failed to load config")
+        conation_config::ConfigLoader::load::<Config>().context("failed to load config")
     }
 }

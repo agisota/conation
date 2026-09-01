@@ -15,7 +15,7 @@ use item_filters::ast::{
     project::ProjectLiteral,
     properties::{PropertiesLiteral, PropertyEntityType, PropertyMatchValue},
 };
-use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use models_pagination::{Query, SimpleSortMethod};
 use models_soup::{
     calendar_event::SoupCalendarEvent,
@@ -147,9 +147,9 @@ static GROUPED_CALENDAR_EVENT_TOP_CLAUSE: &str = r#"
                       event.owner_id = $1
                       OR EXISTS (
                           SELECT 1
-                          FROM macro_user_links link
+                          FROM conation_user_links link
                           WHERE link.link_id = event.source_link_id
-                            AND link.primary_macro_id = $1
+                            AND link.primary_conation_id = $1
                       )
                   )
 "#;

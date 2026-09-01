@@ -14,7 +14,7 @@ fn test_plugin() -> MacroNavigationPlugin {
 }
 
 #[test]
-fn get_destination_app_link_for_macro_app_path() {
+fn get_destination_app_link_for_conation_app_path() {
     let plugin = test_plugin();
     let url = Url::parse("https://macro.com/app/component/doc123").unwrap();
     match plugin.get_destination(&url) {
@@ -50,7 +50,7 @@ fn get_destination_app_link_strips_www() {
 }
 
 #[test]
-fn get_destination_external_for_non_app_path_on_macro_host() {
+fn get_destination_external_for_non_app_path_on_conation_host() {
     let plugin = test_plugin();
     for url in ["https://macro.com/pricing", "https://dev.macro.com/pricing"] {
         assert!(

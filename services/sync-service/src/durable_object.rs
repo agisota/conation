@@ -66,8 +66,8 @@ pub fn response(status_code: u16) -> Response {
     Response::builder().with_status(status_code).empty()
 }
 
-#[macro_export]
-macro_rules! maybe_404 {
+#[conation_export]
+conation_rules! maybe_404 {
     ($res:expr) => {
         match $res {
             Ok(x) => Ok(x),
@@ -85,7 +85,7 @@ macro_rules! maybe_404 {
     };
 }
 
-macro_rules! or_unauth {
+conation_rules! or_unauth {
     ($none_if_unauth:expr) => {{
         let out = match $none_if_unauth {
             Some(x) => x,
@@ -1245,7 +1245,7 @@ pub fn cors(request_origin: Option<&str>) -> Cors {
         // `traceparent`/`tracestate` are injected by the web client's traced
         // fetch wrapper (see `safeFetch`), so they must be preflight-allowed or
         // the browser blocks every instrumented call. Kept in sync with
-        // `macro_cors::EXTRA_HEADERS`, which the axum services use; this worker
+        // `conation_cors::EXTRA_HEADERS`, which the axum services use; this worker
         // can't share that list because it's built on tower-http.
         .with_allowed_headers(vec![
             "authorization",

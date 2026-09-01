@@ -12,7 +12,7 @@ use axum::{
 use entity_access::domain::models::{EditAccessLevel, OwnerAccessLevel, ViewAccessLevel};
 use entity_access::domain::ports::EntityAccessService;
 use entity_access::inbound::axum_extractors::ChatAccessLevelExtractor;
-use macro_authorization::{
+use conation_authorization::{
     ActingUser, MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState,
 };
 use model::response::StringIDResponse;
@@ -227,7 +227,7 @@ pub async fn create_chat_handler<
     let id = state
         .inner
         .create(
-            user.macro_user_id.clone(),
+            user.conation_user_id.clone(),
             CreateChatArgs {
                 name: req.name.unwrap_or_else(|| "New Chat".to_string()),
                 project_id: req.project_id,

@@ -5,15 +5,15 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use macro_auth::macro_api_token::EncodeMacroApiTokenArgs;
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_auth::conation_api_token::EncodeMacroApiTokenArgs;
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use sqlx::PgPool;
 use utoipa::ToSchema;
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, ToSchema)]
 pub struct MacroApiTokenResponse {
-    /// The newly created macro_api_token
-    pub macro_api_token: String,
+    /// The newly created conation_api_token
+    pub conation_api_token: String,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
@@ -29,8 +29,8 @@ pub struct MacroApiTokenQuery {
 /// This returns a new macro-api-token
 #[utoipa::path(
         get,
-        operation_id = "macro_api_token",
-        path = "/jwt/macro_api_token",
+        operation_id = "conation_api_token",
+        path = "/jwt/conation_api_token",
         params(
             ("email" = String, Query, description = "The email to generate the macro-api-token for. If not provided, we use your default profile."),
         ),
@@ -40,10 +40,10 @@ pub struct MacroApiTokenQuery {
             (status = 500, body=String),
         )
     )]
-#[tracing::instrument(skip(db, macro_api_token_context, authorization))]
+#[tracing::instrument(skip(db, conation_api_token_context, authorization))]
 pub async fn handler(
     State(db): State<PgPool>,
-    State(macro_api_token_context): State<MacroApiTokenContext>,
+    State(conation_api_token_context): State<MacroApiTokenContext>,
     authorization: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
     Query(query): Query<MacroApiTokenQuery>,
 ) -> Result<Response, Response> {
@@ -64,7 +64,7 @@ pub async fn handler(
     };
 
     let user_profile =
-        macro_db_client::user::get::get_user_profile_by_fusionauth_user_id_and_email(
+        conation_db_client::user::get::get_user_profile_by_fusionauth_user_id_and_email(
             &db,
             &user_context.fusion_user_id,
             &email,
@@ -79,25 +79,25 @@ pub async fn handler(
                 .into_response()
         })?;
 
-    let (macro_user_id, organization_id) =
-        if let Some((macro_user_id, organization_id)) = user_profile {
-            (macro_user_id, organization_id)
+    let (conation_user_id, organization_id) =
+        if let Some((conation_user_id, organization_id)) = user_profile {
+            (conation_user_id, organization_id)
         } else {
             tracing::error!("macro user id is none");
             return Err((StatusCode::UNAUTHORIZED, "no access to this profile").into_response());
         };
 
-    let macro_api_token =
-        macro_auth::macro_api_token::encode_macro_api_token(EncodeMacroApiTokenArgs {
-            macro_user_id,
+    let conation_api_token =
+        conation_auth::conation_api_token::encode_conation_api_token(EncodeMacroApiTokenArgs {
+            conation_user_id,
             fusionauth_id: user_context.fusion_user_id.clone(),
             organization_id, // TOOD: get from user profile
-            issuer: macro_api_token_context.issuer.to_string(),
-            private_key: macro_api_token_context
-                .macro_api_token_private_key
+            issuer: conation_api_token_context.issuer.to_string(),
+            private_key: conation_api_token_context
+                .conation_api_token_private_key
                 .as_ref()
                 .to_string(),
-            expiry_seconds: macro_api_token_context.expiry_seconds,
+            expiry_seconds: conation_api_token_context.expiry_seconds,
         })
         .map_err(|e| {
             tracing::error!(error=?e, "unable to encode macro-api-token");
@@ -110,7 +110,7 @@ pub async fn handler(
 
     Ok((
         StatusCode::OK,
-        Json(MacroApiTokenResponse { macro_api_token }),
+        Json(MacroApiTokenResponse { conation_api_token }),
     )
         .into_response())
 }

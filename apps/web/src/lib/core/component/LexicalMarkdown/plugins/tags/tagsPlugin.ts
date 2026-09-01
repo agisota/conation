@@ -13,7 +13,7 @@ import {
   type TagMentionInfo,
   TagMentionNode,
   validTriggerPosition,
-} from '@macro-inc/lexical-core';
+} from '@conation/lexical-core';
 import {
   $createParagraphNode,
   $createTextNode,

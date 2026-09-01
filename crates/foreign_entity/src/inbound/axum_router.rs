@@ -16,7 +16,7 @@ use entity_access::{
     domain::{models::ViewAccessLevel, ports::EntityAccessService},
     inbound::axum_extractors::ForeignEntityAccessLevelExtractor,
 };
-use macro_authorization::{MacroAuthorizationService, MacroAuthorizationState};
+use conation_authorization::{MacroAuthorizationService, MacroAuthorizationState};
 use model_error_response::ErrorResponse;
 
 use crate::domain::{

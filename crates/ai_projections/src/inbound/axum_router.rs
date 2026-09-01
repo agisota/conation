@@ -15,7 +15,7 @@ use axum::{
     response::{IntoResponse, Response},
     routing::post,
 };
-use macro_authorization::{MacroAuthorizationService, MacroAuthorizationState};
+use conation_authorization::{MacroAuthorizationService, MacroAuthorizationState};
 use model_error_response::ErrorResponse;
 
 use crate::domain::{

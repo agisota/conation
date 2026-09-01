@@ -5,7 +5,7 @@ mod test;
 
 use std::collections::HashSet;
 
-use macro_user_id::cowlike::CowLike;
+use conation_user_id::cowlike::CowLike;
 use model_entity::EntityType;
 use model_notifications::ReminderMetadata;
 use notification::domain::models::SendNotificationRequestBuilder;

@@ -6,7 +6,7 @@ use crate::domain::{
     },
     ports::WebhookDeliveryRepository,
 };
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use serde_json::json;
 use sqlx::PgPool;
 use std::{collections::BTreeMap, time::Duration};

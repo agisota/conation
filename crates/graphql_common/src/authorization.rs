@@ -4,11 +4,11 @@ mod test;
 use async_graphql::Context;
 use axum::extract::FromRef;
 use axum_extra::extract::Cached;
-use macro_authorization::{
+use conation_authorization::{
     MacroAuthorizationService, MacroAuthorizationState, OptionalMacroAuthorizationExtractor,
     UserOrInternalService, UserOrInternalServiceAuthorization,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 
 use crate::extract_part;
 
@@ -46,6 +46,6 @@ where
         .authorization
         .as_ref()
         .and_then(UserOrInternalServiceAuthorization::acting_user)
-        .map(|user| user.macro_user_id.clone())
+        .map(|user| user.conation_user_id.clone())
         .ok_or_else(|| async_graphql::Error::new("authentication required"))
 }

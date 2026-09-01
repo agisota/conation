@@ -32,7 +32,7 @@ use item_filters::{
         reminder::ReminderLiteral,
     },
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::{Entity, EntityType};
 use models_pagination::SimpleSortMethod;
 use rootcause::{
@@ -85,7 +85,7 @@ where
         user_id: MacroUserIdStr<'static>,
     ) -> Result<Vec<Uuid>, SoupItemLoaderError> {
         self.service
-            .get_inboxes_for_macro_id(user_id)
+            .get_inboxes_for_conation_id(user_id)
             .await
             .map(|links| links.into_iter().map(|link| link.id).collect())
             .map_err(|error| rootcause::report!(error).into_dynamic().into_cloneable())

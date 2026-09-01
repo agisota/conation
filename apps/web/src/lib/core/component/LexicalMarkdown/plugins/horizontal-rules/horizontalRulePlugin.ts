@@ -1,4 +1,4 @@
-import { $createHorizontalRuleNode } from '@macro-inc/lexical-core';
+import { $createHorizontalRuleNode } from '@conation/lexical-core';
 import {
   COMMAND_PRIORITY_NORMAL,
   createCommand,

@@ -1,6 +1,6 @@
-use macro_event_broker::{Event, MacroEvent};
-use macro_event_topics::{MacroChatsTopic, Topic};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_event_broker::{Event, MacroEvent};
+use conation_event_topics::{MacroChatsTopic, Topic};
+use conation_user_id::user_id::MacroUserIdStr;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
@@ -176,7 +176,7 @@ fn topic_events() -> Vec<(ChatTopicEvent, Value)> {
     ]
 }
 
-fn macro_events() -> Vec<ChatMacroEvent> {
+fn conation_events() -> Vec<ChatMacroEvent> {
     topic_events()
         .into_iter()
         .map(|(event, _)| match event {
@@ -214,7 +214,7 @@ fn every_variant_has_exact_json_envelope() {
 
 #[test]
 fn every_variant_round_trips() {
-    for original in macro_events() {
+    for original in conation_events() {
         let payload = serde_json::to_vec(original.event()).expect("serializable event");
         let decoded = ChatMacroEvent::decode(original.key(), &payload).expect("decodable event");
 
@@ -227,7 +227,7 @@ fn every_variant_round_trips() {
 
 #[test]
 fn constructors_use_chats_topic_bare_chat_id_key_and_schema_version_one() {
-    for event in macro_events() {
+    for event in conation_events() {
         assert_eq!(event.key(), CHAT_ID);
         assert_eq!(event.topic(), "macro.chats");
         assert_eq!(event.event().schema_version, 1);

@@ -73,7 +73,7 @@ async fn run(config_path: &std::path::Path) -> rootcause::Result<()> {
 
     // The feed: make sure one exists, points here, and we hold its secret.
     // An explicit config secret skips registration entirely (manual setups).
-    let reconciler = FeedReconciler::new(&config.macro_api, &config.server, config_path);
+    let reconciler = FeedReconciler::new(&config.conation_api, &config.server, config_path);
     let (signing_secret, needs_validation) = match &config.server.signing_secret {
         Some(secret) => (secret.clone(), None),
         None => {
@@ -86,8 +86,8 @@ async fn run(config_path: &std::path::Path) -> rootcause::Result<()> {
         }
     };
 
-    let api = HarnessApi::new(&config.macro_api);
-    let runtime = Runtime::new(config.macro_api.clone(), config.harness.clone());
+    let api = HarnessApi::new(&config.conation_api);
+    let runtime = Runtime::new(config.conation_api.clone(), config.harness.clone());
     let app = webhook_router(WebhookState {
         executor: Dispatcher::new(api, runtime, config.workspace.clone()),
         signing_secret,
@@ -99,7 +99,7 @@ async fn run(config_path: &std::path::Path) -> rootcause::Result<()> {
         .context(format!("failed to bind the webhook server to port {port}"))?;
     tracing::info!(
         port,
-        api = %config.macro_api.api_url,
+        api = %config.conation_api.api_url,
         harness = %config.harness.command,
         workspace = %config.workspace.path.display(),
         "daemon listening for agent triggers"

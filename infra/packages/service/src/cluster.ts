@@ -4,7 +4,7 @@ import { stack } from '../../shared';
 export const cloudStorageStack = new pulumi.StackReference(
   'cloud-storage-stack',
   {
-    name: `macro-inc/document-storage/${stack}`,
+    name: `conation-dev/document-storage/${stack}`,
   }
 );
 

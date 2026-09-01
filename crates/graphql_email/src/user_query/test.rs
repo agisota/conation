@@ -9,7 +9,7 @@ use email::domain::{
     },
     ports::EmailUserService,
 };
-use macro_user_id::{email::EmailStr, user_id::MacroUserIdStr};
+use conation_user_id::{email::EmailStr, user_id::MacroUserIdStr};
 use uuid::Uuid;
 
 use super::GraphqlEmailQuery;
@@ -23,9 +23,9 @@ struct FakeEmailUserService {
 impl EmailUserService for FakeEmailUserService {
     async fn get_user_email_labels(
         &self,
-        macro_id: MacroUserIdStr<'static>,
+        conation_id: MacroUserIdStr<'static>,
     ) -> Result<Vec<LinkLabel>, EmailErr> {
-        self.requested_users.lock().unwrap().push(macro_id);
+        self.requested_users.lock().unwrap().push(conation_id);
         if self.fail {
             return Err(EmailErr::InvalidEmailFilter(
                 "sensitive label database detail".to_owned(),
@@ -36,9 +36,9 @@ impl EmailUserService for FakeEmailUserService {
 
     async fn get_user_email_links(
         &self,
-        macro_id: MacroUserIdStr<'static>,
+        conation_id: MacroUserIdStr<'static>,
     ) -> Result<Vec<UserEmailLink>, EmailErr> {
-        self.requested_users.lock().unwrap().push(macro_id);
+        self.requested_users.lock().unwrap().push(conation_id);
         if self.fail {
             return Err(EmailErr::InvalidEmailFilter(
                 "sensitive link database detail".to_owned(),
@@ -68,7 +68,7 @@ fn label() -> LinkLabel {
 fn link() -> UserEmailLink {
     UserEmailLink {
         id: Uuid::from_u128(2),
-        macro_id: MacroUserIdStr::try_from_email("owner@example.com").unwrap(),
+        conation_id: MacroUserIdStr::try_from_email("owner@example.com").unwrap(),
         email_address: EmailStr::try_from("inbox@example.com".to_owned()).unwrap(),
         photo_url: Some("https://example.com/photo.png".to_owned()),
         provider: UserProvider::Gmail,

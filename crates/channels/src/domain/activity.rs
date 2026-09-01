@@ -12,7 +12,7 @@ use ::activity::{
     ParticipantChange, event_time,
 };
 use chrono::{DateTime, Utc};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use uuid::Uuid;
 
 use super::broker_events::ChannelTopicEvent;

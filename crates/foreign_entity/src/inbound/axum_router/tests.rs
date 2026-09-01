@@ -16,11 +16,11 @@ use entity_access::domain::{
     ports::EntityAccessService,
 };
 use http_body_util::BodyExt;
-use macro_authorization::{
+use conation_authorization::{
     INTERNAL_API_KEY_HEADER, InternalIdentityClaims, MacroAuthorizationError,
     MacroAuthorizationService, MacroAuthorizationState,
 };
-use macro_user_id::{
+use conation_user_id::{
     lowercased::Lowercase,
     user_id::{MacroUserId, MacroUserIdStr},
 };

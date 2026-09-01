@@ -20,10 +20,10 @@ use entity_access::{
     domain::{models::MemberTeamRole, ports::EntityAccessService},
     inbound::axum_extractors::OptionalMacroUserTeamExtractorV2,
 };
-use macro_authorization::{
+use conation_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOnly,
 };
-use macro_service_urls::AppServiceUrl;
+use conation_service_urls::AppServiceUrl;
 use reqwest::StatusCode;
 use uuid::Uuid;
 
@@ -117,7 +117,7 @@ where
         .map_err(|error| GithubError::Internal(error.into()))?;
     let url = ctx
         .service
-        .begin_installation_setup(&authorization.authorization.macro_user_id, team_id)
+        .begin_installation_setup(&authorization.authorization.conation_user_id, team_id)
         .await?;
 
     Ok(Redirect::temporary(&url))

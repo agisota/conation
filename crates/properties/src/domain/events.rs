@@ -8,9 +8,9 @@ mod test;
 
 use activity::Actor;
 use chrono::{DateTime, Utc};
-use macro_event_broker::{Event, MacroEvent, TopicEvent};
-use macro_event_topics::MacroPropertiesTopic;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_event_broker::{Event, MacroEvent, TopicEvent};
+use conation_event_topics::MacroPropertiesTopic;
+use conation_user_id::user_id::MacroUserIdStr;
 use models_properties::service::property_option::PropertyOptionValue;
 use models_properties::service::property_value::PropertyValue;
 use models_properties::{DataType, EntityType, PropertyOwner};

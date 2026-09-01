@@ -6,7 +6,7 @@ use item_filters::ast::{
     EntityFilterAst, chat::ChatLiteral, date::DateLiteral, document::DocumentLiteral,
     project::ProjectLiteral,
 };
-use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use model_entity::EntityType;
 use recursion::CollapsibleExt;
 use sqlx::{PgPool, Postgres, QueryBuilder, postgres::PgRow, prelude::FromRow};

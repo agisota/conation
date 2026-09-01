@@ -113,10 +113,10 @@ pub async fn delete_message(
     complete_transaction_with_processing_error(tx, result).await?;
 
     publish_email_event(
-        &ctx.macro_event_broker,
+        &ctx.conation_event_broker,
         &EmailMacroEvent::message_deleted(MessageDeletedMetadata {
             link_id: link.id,
-            owner: link.macro_id.clone(),
+            owner: link.conation_id.clone(),
             message_id: message.db_id,
             provider_message_id: payload.provider_message_id.clone(),
             thread_id: message.thread_db_id,
@@ -126,7 +126,7 @@ pub async fn delete_message(
     // tell FE to refresh user's inbox
     cg_refresh_email(
         &ctx.connection_gateway_client,
-        link.macro_id.as_ref(),
+        link.conation_id.as_ref(),
         RefreshEmailEvent::DeleteMessage { link_id: link.id },
     )
     .await;

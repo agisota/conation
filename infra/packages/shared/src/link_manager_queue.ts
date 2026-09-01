@@ -8,7 +8,7 @@ export function getLinkManagerQueue(): {
   const emailServiceStack = new pulumi.StackReference(
     'link-manager-queue-stack',
     {
-      name: `macro-inc/email-service/${stack}`,
+      name: `conation-dev/email-service/${stack}`,
     }
   );
 

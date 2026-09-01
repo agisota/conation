@@ -2,7 +2,7 @@
 
 use activity::{Actor, Attribution};
 use chrono::{DateTime, Utc};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model::document::response::DocumentResponseMetadata;
 use model::document::{DocumentMetadata, FileType};
 

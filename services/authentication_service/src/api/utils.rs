@@ -1,9 +1,9 @@
 use crate::api::context::ApiContext;
 use cookie::{Cookie, SameSite};
 use email::domain::ports::{FirstInboxProvisionOutcome, FirstInboxProvisioner};
-use macro_auth::constant::{MACRO_ACCESS_TOKEN_COOKIE, MACRO_REFRESH_TOKEN_COOKIE};
-use macro_env::Environment;
-use macro_env_var::maybe_env_vars;
+use conation_auth::constant::{MACRO_ACCESS_TOKEN_COOKIE, MACRO_REFRESH_TOKEN_COOKIE};
+use conation_env::Environment;
+use conation_env_var::maybe_env_vars;
 use rand::{Rng, seq::SliceRandom};
 use url::Url;
 
@@ -130,11 +130,11 @@ pub fn create_refresh_token_cookie(token: &str) -> Cookie<'static> {
 /// redirect URL so the app can attribute the session as a signup for
 /// analytics. Best-effort: never fails the login.
 pub async fn append_signed_up_param_if_new_user(
-    macro_cache_client: &macro_cache_client::MacroCache,
+    conation_cache_client: &conation_cache_client::MacroCache,
     email: &str,
     redirect_url: &mut Url,
 ) {
-    match macro_cache_client.take_user_just_signed_up(email).await {
+    match conation_cache_client.take_user_just_signed_up(email).await {
         Ok(true) => {
             redirect_url
                 .query_pairs_mut()

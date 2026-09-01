@@ -11,7 +11,7 @@ mod tool_service;
 use anyhow::Context;
 use config::Config;
 use context::build_context;
-use macro_entrypoint::MacroEntrypoint;
+use conation_entrypoint::MacroEntrypoint;
 use mcp_auth_proxy::domain::service::McpAuthProxyService;
 use mcp_auth_proxy::inbound::axum_router::mcp_router;
 use rmcp::transport::streamable_http_server::{
@@ -85,7 +85,7 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("MCP server listening on http://{addr}/mcp");
 
     let server_result = axum::serve(listener, app)
-        .with_graceful_shutdown(macro_entrypoint::shutdown_signal())
+        .with_graceful_shutdown(conation_entrypoint::shutdown_signal())
         .await
         .context("MCP server error");
 

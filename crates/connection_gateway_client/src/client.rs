@@ -25,7 +25,7 @@ struct Response {
 impl ConnectionGatewayClient {
     fn with_trace_headers(&self, request: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
         let mut headers = reqwest::header::HeaderMap::new();
-        macro_tower_layers::inject_trace_headers(&mut headers);
+        conation_tower_layers::inject_trace_headers(&mut headers);
         request.headers(headers)
     }
 

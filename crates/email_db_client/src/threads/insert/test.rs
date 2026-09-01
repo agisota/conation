@@ -1,7 +1,7 @@
 use super::*;
 use crate::threads::get::get_thread_by_id_and_link_id;
 use chrono::Utc;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use sqlx::{Pool, Postgres};
 use std::time::Duration;
 

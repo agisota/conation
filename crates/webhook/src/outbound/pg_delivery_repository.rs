@@ -63,11 +63,11 @@ struct CompletionState {
 }
 
 fn new_delivery_id() -> String {
-    format!("whd_{}", macro_uuid::generate_uuid_v7())
+    format!("whd_{}", conation_uuid::generate_uuid_v7())
 }
 
 fn new_attempt_id() -> String {
-    format!("wha_{}", macro_uuid::generate_uuid_v7())
+    format!("wha_{}", conation_uuid::generate_uuid_v7())
 }
 
 fn decode_error(

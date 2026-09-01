@@ -1,6 +1,6 @@
 [package]
 edition.workspace = true
-name = "macro_bundle_updater_plugin"
+name = "conation_bundle_updater_plugin"
 version = "0.1.0"
 
 [dependencies]

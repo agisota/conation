@@ -23,7 +23,7 @@ use agent::types::{ChatMessage, ChatMessageContent, Role};
 use agent::{AgentLoop, PredefinedModel};
 use ai_toolset::{RequestContext, ToolResult, ToolSet, ToolSetError};
 use futures::StreamExt;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use mcp_select::{ConnectorSelect, UserMcpTools};
 use std::collections::HashSet;
 use std::pin::Pin;

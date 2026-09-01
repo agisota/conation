@@ -2,8 +2,8 @@ use crate::pubsub::context::PubSubContext;
 use chrono::{DateTime, Utc};
 use connection_gateway_client::client::ConnectionGatewayClient;
 use email::domain::events::EmailMacroEvent;
-use macro_event_broker::MacroEventBroker;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_event_broker::MacroEventBroker;
+use conation_user_id::user_id::MacroUserIdStr;
 /// shared utils across different pubsub workers
 use models_email::api::refresh::RefreshEmailEvent;
 
@@ -96,15 +96,15 @@ pub fn publish_email_event<B: MacroEventBroker>(broker: &B, event: &EmailMacroEv
 #[tracing::instrument(skip(client), level = "debug")]
 pub async fn cg_refresh_email(
     client: &ConnectionGatewayClient,
-    macro_id: &str,
+    conation_id: &str,
     event: RefreshEmailEvent,
 ) {
     if cfg!(feature = "connection_gateway") {
         let payload = serde_json::to_value(&event).unwrap_or_default();
         let _ = client
-            .refresh_email(macro_id, payload)
+            .refresh_email(conation_id, payload)
             .await
-            .inspect_err(|e| tracing::error!(macro_id = %macro_id, "Failed to refresh email: {e}"));
+            .inspect_err(|e| tracing::error!(conation_id = %conation_id, "Failed to refresh email: {e}"));
     }
 }
 
@@ -115,7 +115,7 @@ pub async fn cg_refresh_email(
 pub async fn cg_refresh_calendar(
     client: &ConnectionGatewayClient,
     db: &sqlx::PgPool,
-    owner_macro_id: &str,
+    owner_conation_id: &str,
     link_id: uuid::Uuid,
 ) {
     if !cfg!(feature = "connection_gateway") {
@@ -125,9 +125,9 @@ pub async fn cg_refresh_calendar(
         calendar_events::domain::models::RefreshCalendarEvent::Synced { link_id },
     )
     .unwrap_or_default();
-    let mut recipients = vec![owner_macro_id.to_string()];
+    let mut recipients = vec![owner_conation_id.to_string()];
     match sqlx::query_scalar!(
-        "SELECT primary_macro_id FROM macro_user_links WHERE link_id = $1",
+        "SELECT primary_conation_id FROM conation_user_links WHERE link_id = $1",
         link_id,
     )
     .fetch_all(db)
@@ -140,12 +140,12 @@ pub async fn cg_refresh_calendar(
     }
     recipients.sort();
     recipients.dedup();
-    for macro_id in recipients {
+    for conation_id in recipients {
         let _ = client
-            .refresh_calendar(&macro_id, payload.clone())
+            .refresh_calendar(&conation_id, payload.clone())
             .await
             .inspect_err(
-                |e| tracing::error!(macro_id = %macro_id, "Failed to refresh calendar: {e}"),
+                |e| tracing::error!(conation_id = %conation_id, "Failed to refresh calendar: {e}"),
             );
     }
 }

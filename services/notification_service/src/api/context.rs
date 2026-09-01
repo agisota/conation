@@ -1,7 +1,7 @@
 use crate::config::Config;
 use axum::extract::FromRef;
-use macro_auth::InternalApiKey;
-use macro_authorization::{
+use conation_auth::InternalApiKey;
+use conation_authorization::{
     MacroAuthJwtValidator, MacroAuthorizationServiceImpl, MacroAuthorizationState,
 };
 use sqlx::PgPool;

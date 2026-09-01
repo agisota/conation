@@ -15,7 +15,7 @@ use axum::{
 };
 use entity_access::domain::models::EditAccessLevel;
 use entity_access::domain::ports::EntityAccessService;
-use macro_authorization::{MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal};
 use models_properties::api::{PropertyTargetEntityType, PropertyTargetReference, SetPropertyValue};
 use models_properties::service::entity_property_with_definition::EntityPropertyWithDefinition;
 use serde::{Deserialize, Serialize};
@@ -253,7 +253,7 @@ pub async fn get_bulk_entity_properties<
     user: MacroAuthorizationExtractor<Auth, UserOrInternal>,
     Json(request): Json<BulkEntityPropertiesRequest>,
 ) -> Result<Json<HashMap<String, EntityPropertiesResponse>>, GetBulkEntityPropertiesErr> {
-    let user = user.authorization.user.macro_user_id;
+    let user = user.authorization.user.conation_user_id;
     // The public endpoint requires explicit property IDs. An empty property_ids
     // means "no properties requested", so return early with empty result.
     if request.entities.is_empty() || request.property_ids.is_empty() {
@@ -798,7 +798,7 @@ pub async fn bulk_update_entities_property_options<
 ) -> Result<Json<BulkUpdateEntitiesPropertyOptionsResponse>, BulkUpdateEntitiesPropertyOptionsErr> {
     tracing::info!("bulk updating property options across entities");
 
-    let user = user.authorization.user.macro_user_id;
+    let user = user.authorization.user.conation_user_id;
     validate_bulk_entities_option_request(&request)?;
 
     let BulkUpdateEntitiesPropertyOptionsRequest {
@@ -935,7 +935,7 @@ pub async fn delete_entity_property<
     State(state): State<PropertiesRouterState<S, A, Auth>>,
     user: MacroAuthorizationExtractor<Auth, UserOrInternal>,
 ) -> Result<StatusCode, DeleteEntityPropertyErr> {
-    let user = user.authorization.user.macro_user_id;
+    let user = user.authorization.user.conation_user_id;
     tracing::info!("removing entity property");
 
     // The entity this property is attached to is only known after a lookup, so

@@ -4,7 +4,7 @@ use axum::{Extension, extract::Path, http::StatusCode, response::IntoResponse};
 use entity_access::inbound::axum_extractors::DocumentAccessExtractor;
 #[allow(unused_imports)]
 use futures::stream::TryStreamExt;
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::document::DocumentBasic;
 use model::response::{
     GenericErrorResponse, GenericResponse, GenericSuccessResponse, SuccessResponse,
@@ -34,7 +34,7 @@ pub struct Params {
             (status = 500, body=GenericErrorResponse),
         )
     )]
-#[tracing::instrument(skip(db, user, document_context, _access), fields(user_id=?user.authorization.user.macro_user_id))]
+#[tracing::instrument(skip(db, user, document_context, _access), fields(user_id=?user.authorization.user.conation_user_id))]
 pub async fn handler(
     _access: DocumentAccessExtractor<OwnerAccessLevel, EntityAccessService, AuthorizationService>,
     State(db): State<PgPool>,
@@ -44,7 +44,7 @@ pub async fn handler(
 ) -> impl IntoResponse {
     tracing::info!("revert_delete document");
 
-    if let Err(e) = macro_db_client::document::revert_delete::revert_delete_document(
+    if let Err(e) = conation_db_client::document::revert_delete::revert_delete_document(
         &db,
         &document_id,
         document_context.project_id.as_deref(),

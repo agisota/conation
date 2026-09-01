@@ -7,7 +7,7 @@ use super::models::{
 };
 use bot_token::HashedBotToken;
 use entity_access::domain::models::{EntityAccessReceipt, MemberParticipantRole};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use std::future::Future;
 use uuid::Uuid;
 

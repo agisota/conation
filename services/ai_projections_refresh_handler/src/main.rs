@@ -11,7 +11,7 @@ use lambda_runtime::{
     Error, LambdaEvent, run, service_fn,
     tracing::{self},
 };
-use macro_entrypoint::MacroEntrypoint;
+use conation_entrypoint::MacroEntrypoint;
 use sqlx::postgres::PgPoolOptions;
 use std::sync::Arc;
 
@@ -32,9 +32,9 @@ async fn main() -> Result<(), Error> {
         .await
         .context("could not connect to db")?;
 
-    let ai_projection_queue = macro_queues::AiProjectionQueue::new();
+    let ai_projection_queue = conation_queues::AiProjectionQueue::new();
     let sqs_client = sqs_client::SQS::new(aws_sdk_sqs::Client::new(
-        &macro_aws_config::get_macro_aws_config().await,
+        &conation_aws_config::get_conation_aws_config().await,
     ))
     .ai_projection_queue(&ai_projection_queue);
 

@@ -19,12 +19,12 @@ use anyhow::Context;
 use config::Config;
 use email_formatting::EmailDigestNotification;
 use hmac::{Hmac, Mac};
-use macro_auth::middleware::decode_jwt::JwtValidationArgs;
-use macro_authorization::{InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationState};
-use macro_entrypoint::MacroEntrypoint;
-use macro_env::Environment;
-use macro_event_broker::{GlobalSpawner, KafkaEventPublisher, MacroEventBrokerService};
-use macro_service_urls::ConnectionGatewayUrl;
+use conation_auth::middleware::decode_jwt::JwtValidationArgs;
+use conation_authorization::{InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationState};
+use conation_entrypoint::MacroEntrypoint;
+use conation_env::Environment;
+use conation_event_broker::{GlobalSpawner, KafkaEventPublisher, MacroEventBrokerService};
+use conation_service_urls::ConnectionGatewayUrl;
 use secretsmanager_client::SecretManager;
 use sha2::Sha256;
 use sqlx::postgres::PgPoolOptions;
@@ -64,7 +64,7 @@ pub async fn main() -> anyhow::Result<()> {
         "initialized db connection"
     );
 
-    let aws_config = macro_aws_config::get_macro_aws_config().await;
+    let aws_config = conation_aws_config::get_conation_aws_config().await;
 
     let secretsmanager_client = secretsmanager_client::SecretsManager::new(
         aws_sdk_secretsmanager::Client::new(&aws_config),
@@ -118,7 +118,7 @@ pub async fn main() -> anyhow::Result<()> {
         let event_queue =
             ::notification::outbound::push_notification_event_queue::SqsPushNotificationEventQueue::new(
                 aws_sdk_sqs::Client::new(&aws_config),
-                macro_queues::PushNotificationEventHandlerQueue::new().to_string(),
+                conation_queues::PushNotificationEventHandlerQueue::new().to_string(),
                 config.notification_queue_max_messages,
                 config.notification_queue_wait_time_seconds,
             );
@@ -141,7 +141,7 @@ pub async fn main() -> anyhow::Result<()> {
             api_key: config.internal_api_key.as_ref().to_string(),
             default_user_id: None,
         },
-        macro_authorization::NoBotAuthorizer,
+        conation_authorization::NoBotAuthorizer,
     )));
 
     let notification_repository =
@@ -149,7 +149,7 @@ pub async fn main() -> anyhow::Result<()> {
 
     let notification_queue = ::notification::outbound::queue::SqsQueue::new(
         aws_sdk_sqs::Client::new(&aws_config),
-        macro_queues::NotificationQueue::new().to_string(),
+        conation_queues::NotificationQueue::new().to_string(),
     );
     let sns_endpoint_manager =
         ::notification::outbound::sns_endpoint::SnsEndpointManagerAdapter::new(
@@ -323,7 +323,7 @@ pub async fn main() -> anyhow::Result<()> {
         ::notification::outbound::repository::DbNotificationRepository::new(db.clone());
     let ingress_delivery_queue = ::notification::outbound::queue::SqsQueue::new(
         aws_sdk_sqs::Client::new(&aws_config),
-        macro_queues::NotificationQueue::new().to_string(),
+        conation_queues::NotificationQueue::new().to_string(),
     );
     let ingress_service = ::notification::domain::service::NotificationIngressService::new(
         ingress_repository,
@@ -333,7 +333,7 @@ pub async fn main() -> anyhow::Result<()> {
 
     let ingress_queue = ::notification::outbound::queue::SqsQueue::new(
         aws_sdk_sqs::Client::new(&aws_config),
-        macro_queues::NotificationIngressQueue::new().to_string(),
+        conation_queues::NotificationIngressQueue::new().to_string(),
     );
     let ingress_worker =
         ::notification::inbound::ingress_worker::IngressWorker::new(ingress_service, ingress_queue);

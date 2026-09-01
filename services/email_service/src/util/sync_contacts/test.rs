@@ -1,6 +1,6 @@
 use std::sync::Mutex;
 
-use macro_event_broker::{EventBrokerError, MacroEvent, MacroEventBroker};
+use conation_event_broker::{EventBrokerError, MacroEvent, MacroEventBroker};
 use serde_json::{Value, json};
 
 use super::*;

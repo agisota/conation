@@ -1,4 +1,4 @@
-import type { AwaitDecoratorProps } from '@macro-inc/lexical-core';
+import type { AwaitDecoratorProps } from '@conation/lexical-core';
 import type { Component } from 'solid-js';
 
 export const Await: Component<AwaitDecoratorProps> = (props) => {

@@ -4,8 +4,8 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use macro_middleware::tracking::ClientIp;
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_middleware::tracking::ClientIp;
 use model::response::ErrorResponse;
 
 use crate::api::context::{ApiContext, AuthorizationService};
@@ -38,7 +38,7 @@ pub async fn handler(
     tracing::info!("create_in_progress_link");
 
     let count =
-        macro_db_client::in_progress_user_link::count_existing_in_progress_user_links_for_user(
+        conation_db_client::in_progress_user_link::count_existing_in_progress_user_links_for_user(
             &ctx.db,
             &authorization.authorization.user.user_context.fusion_user_id,
         )
@@ -63,7 +63,7 @@ pub async fn handler(
         ).into_response());
     }
 
-    let link_id = macro_db_client::in_progress_user_link::create_in_progress_user_link(
+    let link_id = conation_db_client::in_progress_user_link::create_in_progress_user_link(
         &ctx.db,
         &authorization.authorization.user.user_context.fusion_user_id,
     )

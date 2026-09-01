@@ -10,11 +10,11 @@ use email::domain::{
 use entity_access::domain::models::{BotAccessScope, BotId, EntityAccessReceipt, ViewAccessLevel};
 use http_body_util::BodyExt;
 use item_filters::EntityFilters;
-use macro_authorization::{
+use conation_authorization::{
     INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_USER_ID_HEADER, InternalIdentityClaims,
     MacroAuthorizationError, MacroAuthorizationService, MacroAuthorizationState,
 };
-use macro_user_id::{email::EmailStr, user_id::MacroUserIdStr};
+use conation_user_id::{email::EmailStr, user_id::MacroUserIdStr};
 use model_user::UserContext;
 use models_pagination::{
     CursorVal, CursorWithValAndFilter, Frecency, FrecencyValue, Identify, PaginateOn, Query,
@@ -231,14 +231,14 @@ impl EmailService for MockEmail {
         Err(EmailErr::RepoErr(anyhow::anyhow!("Not implemented")))
     }
 
-    async fn get_link_by_auth_id_and_macro_id(
+    async fn get_link_by_auth_id_and_conation_id(
         &self,
         _auth_id: &str,
-        _macro_id: macro_user_id::user_id::MacroUserIdStr<'_>,
+        _conation_id: conation_user_id::user_id::MacroUserIdStr<'_>,
     ) -> Result<Option<email::domain::models::Link>, email::domain::models::EmailErr> {
         Ok(Some(email::domain::models::Link {
             id: Uuid::new_v4(),
-            macro_id: MacroUserIdStr::parse_from_str("macro|example@test.com").unwrap(),
+            conation_id: MacroUserIdStr::parse_from_str("macro|example@test.com").unwrap(),
             fusionauth_user_id: String::new(),
             email_address: EmailStr::try_from("example@test.com".to_string()).unwrap(),
             provider: UserProvider::Gmail,
@@ -249,23 +249,23 @@ impl EmailService for MockEmail {
         }))
     }
 
-    async fn get_link_by_macro_id(
+    async fn get_link_by_conation_id(
         &self,
-        _macro_id: macro_user_id::user_id::MacroUserIdStr<'_>,
+        _conation_id: conation_user_id::user_id::MacroUserIdStr<'_>,
     ) -> Result<Option<email::domain::models::Link>, email::domain::models::EmailErr> {
         Err(EmailErr::RepoErr(anyhow::anyhow!("Not implemented")))
     }
 
-    async fn get_inboxes_for_macro_id(
+    async fn get_inboxes_for_conation_id(
         &self,
-        _macro_id: macro_user_id::user_id::MacroUserIdStr<'_>,
+        _conation_id: conation_user_id::user_id::MacroUserIdStr<'_>,
     ) -> Result<Vec<email::domain::models::Link>, email::domain::models::EmailErr> {
         Ok(Vec::new())
     }
 
     async fn get_owned_link_for_thread(
         &self,
-        _macro_id: macro_user_id::user_id::MacroUserIdStr<'_>,
+        _conation_id: conation_user_id::user_id::MacroUserIdStr<'_>,
         _thread_id: uuid::Uuid,
     ) -> Result<Option<email::domain::models::Link>, email::domain::models::EmailErr> {
         Ok(None)
@@ -375,7 +375,7 @@ impl entity_access::domain::ports::EntityAccessService for MockEntityAccess {
         T: entity_access::domain::models::RequiredPermission,
     >(
         &self,
-        _user_id: &macro_user_id::user_id::MacroUserId<macro_user_id::lowercased::Lowercase<'_>>,
+        _user_id: &conation_user_id::user_id::MacroUserId<conation_user_id::lowercased::Lowercase<'_>>,
         _user_org_id: Option<i64>,
         _entity_id: &str,
         _entity_type: entity_access::domain::models::EntityType,
@@ -404,7 +404,7 @@ impl entity_access::domain::ports::EntityAccessService for MockEntityAccess {
     async fn get_access_level(
         &self,
         _user_id: Option<
-            &macro_user_id::user_id::MacroUserId<macro_user_id::lowercased::Lowercase<'_>>,
+            &conation_user_id::user_id::MacroUserId<conation_user_id::lowercased::Lowercase<'_>>,
         >,
         _entity_id: &str,
         _entity_type: entity_access::domain::models::EntityType,
@@ -418,7 +418,7 @@ impl entity_access::domain::ports::EntityAccessService for MockEntityAccess {
     async fn check_access(
         &self,
         _user_id: Option<
-            &macro_user_id::user_id::MacroUserId<macro_user_id::lowercased::Lowercase<'_>>,
+            &conation_user_id::user_id::MacroUserId<conation_user_id::lowercased::Lowercase<'_>>,
         >,
         _entity_id: &str,
         _entity_type: entity_access::domain::models::EntityType,
@@ -445,7 +445,7 @@ impl entity_access::domain::ports::EntityAccessService for MockEntityAccess {
     async fn get_entity_permission(
         &self,
         _user_id: Option<
-            &macro_user_id::user_id::MacroUserId<macro_user_id::lowercased::Lowercase<'_>>,
+            &conation_user_id::user_id::MacroUserId<conation_user_id::lowercased::Lowercase<'_>>,
         >,
         _entity_id: &str,
         _entity_type: entity_access::domain::models::EntityType,
@@ -460,7 +460,7 @@ impl entity_access::domain::ports::EntityAccessService for MockEntityAccess {
     async fn get_crm_entity_permission_with_team(
         &self,
         _user_id: Option<
-            &macro_user_id::user_id::MacroUserId<macro_user_id::lowercased::Lowercase<'_>>,
+            &conation_user_id::user_id::MacroUserId<conation_user_id::lowercased::Lowercase<'_>>,
         >,
         _entity_id: &str,
         _entity_type: entity_access::domain::models::EntityType,
@@ -505,7 +505,7 @@ impl entity_access::domain::ports::EntityAccessService for MockEntityAccess {
 
     async fn get_user_team(
         &self,
-        _user_id: &macro_user_id::user_id::MacroUserId<macro_user_id::lowercased::Lowercase<'_>>,
+        _user_id: &conation_user_id::user_id::MacroUserId<conation_user_id::lowercased::Lowercase<'_>>,
     ) -> Result<
         Option<entity_access::domain::models::UserTeamInfo>,
         entity_access::domain::models::AccessError,
@@ -673,31 +673,31 @@ impl EmailService for MockEmailLinkResult {
         Err(EmailErr::RepoErr(anyhow::anyhow!("Not implemented")))
     }
 
-    async fn get_link_by_auth_id_and_macro_id(
+    async fn get_link_by_auth_id_and_conation_id(
         &self,
         _auth_id: &str,
-        _macro_id: macro_user_id::user_id::MacroUserIdStr<'_>,
+        _conation_id: conation_user_id::user_id::MacroUserIdStr<'_>,
     ) -> Result<Option<email::domain::models::Link>, email::domain::models::EmailErr> {
         (self.get_link_result)()
     }
 
-    async fn get_link_by_macro_id(
+    async fn get_link_by_conation_id(
         &self,
-        _macro_id: macro_user_id::user_id::MacroUserIdStr<'_>,
+        _conation_id: conation_user_id::user_id::MacroUserIdStr<'_>,
     ) -> Result<Option<email::domain::models::Link>, email::domain::models::EmailErr> {
         Err(EmailErr::RepoErr(anyhow::anyhow!("Not implemented")))
     }
 
-    async fn get_inboxes_for_macro_id(
+    async fn get_inboxes_for_conation_id(
         &self,
-        _macro_id: macro_user_id::user_id::MacroUserIdStr<'_>,
+        _conation_id: conation_user_id::user_id::MacroUserIdStr<'_>,
     ) -> Result<Vec<email::domain::models::Link>, email::domain::models::EmailErr> {
         (self.get_link_result)().map(|opt| opt.into_iter().collect())
     }
 
     async fn get_owned_link_for_thread(
         &self,
-        _macro_id: macro_user_id::user_id::MacroUserIdStr<'_>,
+        _conation_id: conation_user_id::user_id::MacroUserIdStr<'_>,
         _thread_id: uuid::Uuid,
     ) -> Result<Option<email::domain::models::Link>, email::domain::models::EmailErr> {
         (self.get_link_result)()

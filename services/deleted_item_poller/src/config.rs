@@ -1,6 +1,6 @@
 use anyhow::Context;
-pub use macro_env::Environment;
-use macro_env_var::env_vars;
+pub use conation_env::Environment;
+use conation_env_var::env_vars;
 
 env_vars! {
     struct DatabaseUrl;

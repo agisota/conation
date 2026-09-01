@@ -5,7 +5,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use macro_authorization::{InternalOnly, MacroAuthorizationExtractor};
+use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
 use model::{
     authentication::webhooks::populate_jwt::{PopulateJwtWebhook, PopulateJwtWebhookResponse},
     user::UserInfoWithMacroUserId,
@@ -26,8 +26,8 @@ pub async fn handler(
         id: user_id,
         organization_id,
         email: _,
-        macro_user_id,
-    } = macro_db_client::user::get::get_user_info_by_email(&ctx.db, &email)
+        conation_user_id,
+    } = conation_db_client::user::get::get_user_info_by_email(&ctx.db, &email)
         .await
         .map_err(|e| {
             tracing::error!(email, "failed to get user info");
@@ -39,7 +39,7 @@ pub async fn handler(
         Json(PopulateJwtWebhookResponse {
             user_id,
             organization_id,
-            root_macro_id: macro_user_id,
+            root_conation_id: conation_user_id,
         }),
     )
         .into_response())

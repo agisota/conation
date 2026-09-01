@@ -6,7 +6,7 @@ use std::pin::Pin;
 use std::sync::Arc;
 
 use favorites::domain::ports::FavoritesService as _;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::Entity;
 use soup::inbound::axum_router::SoupFavoritesReader;
 

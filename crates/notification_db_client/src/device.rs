@@ -1,4 +1,4 @@
-use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use model_notifications::DeviceType;
 use std::collections::HashMap;
 
@@ -33,7 +33,7 @@ pub async fn upsert_user_device(
     device_endpoint: &str,
     device_type: &DeviceType,
 ) -> anyhow::Result<()> {
-    let id = macro_uuid::generate_uuid_v7();
+    let id = conation_uuid::generate_uuid_v7();
     sqlx::query!(
         r#"
         INSERT INTO notification_user_device_registration (id, user_id, device_token, device_endpoint, device_type)
@@ -158,7 +158,7 @@ pub async fn delete_user_device_by_endpoint(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use macro_db_migrator::MACRO_DB_MIGRATIONS;
+    use conation_db_migrator::MACRO_DB_MIGRATIONS;
     use sqlx::{Pool, Postgres};
 
     #[sqlx::test(migrator = "MACRO_DB_MIGRATIONS")]

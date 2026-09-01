@@ -8,7 +8,7 @@
 use activity::Attribution;
 use anyhow::Context;
 use base64::Engine;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model::document::FileType;
 use sha2::{Digest, Sha256};
 
@@ -737,7 +737,7 @@ mod tests {
     };
     use crate::domain::models::ImportEmailAttachmentRepoArgs;
     use activity::{Actor, Attribution};
-    use macro_user_id::user_id::MacroUserIdStr;
+    use conation_user_id::user_id::MacroUserIdStr;
     use model::document::FileType;
 
     fn metadata() -> NewDocumentMetadata {

@@ -296,7 +296,7 @@ fn build_property_filter<'a>(filter: &PropertyFilterArg) -> Option<QueryType<'a>
 
 /// Highlight config attached to each `has_child` inner_hits block.
 /// Matches the top-level documents highlight (plain highlighter,
-/// `<macro_em>` tags, single fragment) so chunk hits come back with
+/// `<conation_em>` tags, single fragment) so chunk hits come back with
 /// the same shape downstream consumers already handle.
 ///
 /// `highlight_query` lets each clause tag every search term in the
@@ -305,8 +305,8 @@ fn inner_hits_content_highlight(highlight_query: &serde_json::Value) -> serde_js
     serde_json::json!({
         "require_field_match": true,
         "max_analyzer_offset": super::HIGHLIGHT_MAX_ANALYZER_OFFSET,
-        "pre_tags": ["<macro_em>"],
-        "post_tags": ["</macro_em>"],
+        "pre_tags": ["<conation_em>"],
+        "post_tags": ["</conation_em>"],
         "fields": {
             "content": {
                 "type": "plain",

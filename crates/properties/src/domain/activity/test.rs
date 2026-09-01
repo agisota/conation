@@ -1,10 +1,10 @@
 use ::activity::{Action, Actor};
 use chrono::Utc;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::EntityType as ActivityEntityType;
 use uuid::Uuid;
 
-use macro_event_broker::Event;
+use conation_event_broker::Event;
 use models_properties::service::property_value::PropertyValue;
 
 use super::*;

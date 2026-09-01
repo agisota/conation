@@ -22,7 +22,7 @@ use email_db_client::threads;
 use email_utils::dedupe_emails;
 use filter_ast::Expr;
 use item_filters::{SharedEmailFilter, ast::email::EmailLiteral};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::EntityType;
 use model_notifications::NewEmailMetadata;
 use models_email::api::refresh::RefreshEmailEvent;
@@ -255,7 +255,7 @@ pub async fn upsert_message(
             MessageSyncEventKind::DraftSynced => {
                 EmailMacroEvent::message_draft_synced(MessageDraftSyncedMetadata {
                     link_id: link.id,
-                    owner: link.macro_id.clone(),
+                    owner: link.conation_id.clone(),
                     message_id: message_db_id,
                     provider_message_id: payload.provider_message_id.clone(),
                     thread_id: thread_db_id,
@@ -266,7 +266,7 @@ pub async fn upsert_message(
             MessageSyncEventKind::Received => {
                 EmailMacroEvent::message_received(MessageReceivedMetadata {
                     link_id: link.id,
-                    owner: link.macro_id.clone(),
+                    owner: link.conation_id.clone(),
                     message_id: message_db_id,
                     provider_message_id: payload.provider_message_id.clone(),
                     thread_id: thread_db_id,
@@ -283,7 +283,7 @@ pub async fn upsert_message(
             }
             MessageSyncEventKind::Sent => EmailMacroEvent::message_sent(MessageSentMetadata {
                 link_id: link.id,
-                owner: link.macro_id.clone(),
+                owner: link.conation_id.clone(),
                 actor: None,
                 message_id: message_db_id,
                 provider_message_id: payload.provider_message_id.clone(),
@@ -296,7 +296,7 @@ pub async fn upsert_message(
                 sent_at: event_sent_at.unwrap_or_else(chrono::Utc::now),
             }),
         };
-        publish_email_event(&ctx.macro_event_broker, &event);
+        publish_email_event(&ctx.conation_event_broker, &event);
     }
 
     handle_attachment_upload(ctx, link, payload, &message.attachments).await?;
@@ -322,7 +322,7 @@ pub async fn upsert_message(
     // trigger FE inbox refresh
     cg_refresh_email(
         &ctx.connection_gateway_client,
-        link.macro_id.as_ref(),
+        link.conation_id.as_ref(),
         RefreshEmailEvent::UpsertMessage { link_id: link.id },
     )
     .await;
@@ -508,7 +508,7 @@ async fn handle_contacts_sync(
         .iter()
         .map(|email| {
             MacroUserIdStr::try_from_email(email)
-                .map(|contact| ContactConnection::new(link.macro_id.clone(), contact))
+                .map(|contact| ContactConnection::new(link.conation_id.clone(), contact))
         })
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| {
@@ -526,7 +526,7 @@ async fn handle_contacts_sync(
                 reason: FailureReason::SqsEnqueueFailed,
                 source: anyhow::anyhow!("{e:?}").context(format!(
                     "Failed to enqueue contacts message for {}",
-                    link.macro_id
+                    link.conation_id
                 )),
             })
         })?;
@@ -718,9 +718,9 @@ async fn send_notifications(
         snippet: message.snippet.unwrap_or_default(),
     };
 
-    let primaries = macro_db_client::macro_user_links::get_primaries_for_link(
+    let primaries = conation_db_client::conation_user_links::get_primaries_for_link(
         &ctx.db,
-        link.macro_id.as_ref(),
+        link.conation_id.as_ref(),
         link.id,
     )
     .await
@@ -731,7 +731,7 @@ async fn send_notifications(
         })
     })?;
 
-    let recipient_ids = build_notification_recipients(&link.macro_id, primaries);
+    let recipient_ids = build_notification_recipients(&link.conation_id, primaries);
     let (staff_recipients, customer_recipients) = partition_email_push_recipients(recipient_ids);
 
     let notification_entity =
@@ -793,7 +793,7 @@ fn partition_email_push_recipients(
 ) {
     recipient_ids
         .into_iter()
-        .partition(|id| id.is_macro_staff())
+        .partition(|id| id.is_conation_staff())
 }
 
 /// Who should get a `new_email` inbox / websocket notification for a synced
@@ -808,7 +808,7 @@ enum NewEmailNotifyPolicy {
 }
 
 fn new_email_notify_policy(user_id: &MacroUserIdStr<'_>) -> NewEmailNotifyPolicy {
-    if user_id.is_macro_staff() {
+    if user_id.is_conation_staff() {
         NewEmailNotifyPolicy::AllInbox
     } else {
         NewEmailNotifyPolicy::SignalOnly
@@ -865,7 +865,7 @@ async fn filter_notifiable_message(
     //    requires Importance(true) AND Shared(exclude).
     let preview_filter = new_email_preview_filter(
         new_message.thread_db_id,
-        new_email_notify_policy(&link.macro_id),
+        new_email_notify_policy(&link.conation_id),
     );
 
     let query = PreviewCursorQuery {
@@ -880,7 +880,7 @@ async fn filter_notifiable_message(
     };
 
     let previews = EmailPgRepo::new(ctx.db.clone())
-        .previews_for_view_cursor(query, link.macro_id.clone())
+        .previews_for_view_cursor(query, link.conation_id.clone())
         .await
         .map_err(|e| {
             ProcessingError::Retryable(DetailedError {

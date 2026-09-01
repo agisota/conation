@@ -9,7 +9,7 @@
 import { buildConfig } from '@core/component/LexicalMarkdown/builder/MarkdownConfigBuilder';
 import { MarkdownShell } from '@core/component/LexicalMarkdown/builder/MarkdownShell';
 import type { AgentCommandItem } from '@core/component/LexicalMarkdown/plugins';
-import { $insertReferencedPaste } from '@macro-inc/lexical-core';
+import { $insertReferencedPaste } from '@conation/lexical-core';
 import { Button, SendButton, Surface } from '@ui';
 import { createSignal, type JSX, onCleanup, onMount, Show } from 'solid-js';
 

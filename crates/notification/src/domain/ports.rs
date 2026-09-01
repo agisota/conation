@@ -7,7 +7,7 @@ use std::collections::{HashMap, HashSet};
 use std::future::Future;
 use std::sync::Arc;
 
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use rootcause::Report;
 use serde::Serialize;
 use serde::de::DeserializeOwned;

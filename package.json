@@ -1,5 +1,5 @@
 {
-	"name": "@macro-inc/macro",
+	"name": "@conation-dev/conation",
 	"overrides": {
 		"@lexical/clipboard": "0.45.0",
 		"@lexical/code": "0.45.0",

@@ -27,8 +27,8 @@ use entity_access::domain::models::{
 };
 use foreign_entity::domain::models::{ForeignEntity, SourceId};
 use foreign_entity::domain::ports::ForeignEntityService;
-use macro_event_broker::MacroEventBroker;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_event_broker::MacroEventBroker;
+use conation_user_id::user_id::MacroUserIdStr;
 use model::document::response::{DocumentResponseMetadata, LocationResponseData};
 use model::document::{
     ContentType, DocumentBasic, DocumentMetadata, FileAssociation, FileType, FileTypeExt,
@@ -96,7 +96,7 @@ pub struct DocumentServiceImpl<
     /// Foreign entity service
     pub foreign_entity_service: F,
     /// Macro event broker for publishing document lifecycle events
-    pub macro_event_broker: B,
+    pub conation_event_broker: B,
 }
 
 fn ready_content_for_file_type(file_type: Option<FileType>) -> DocumentContent {
@@ -163,9 +163,9 @@ const GITHUB_PULL_REQUEST_FOREIGN_ENTITY_SOURCE: &str = "github_pull_request";
 const MAX_DOCUMENT_NAME_GRAPHEMES: usize = 200;
 
 fn short_id_for_entity_id(entity_id: &str) -> Result<String, DocumentError> {
-    let uuid = macro_uuid::string_to_uuid(entity_id)
+    let uuid = conation_uuid::string_to_uuid(entity_id)
         .map_err(|e| DocumentError::BadRequest(format!("invalid entity_id: {e}")))?;
-    Ok(macro_uuid::ShortUuidConverter::default().from_uuid(&uuid))
+    Ok(conation_uuid::ShortUuidConverter::default().from_uuid(&uuid))
 }
 
 fn invalid_team_task_slug() -> DocumentError {
@@ -278,7 +278,7 @@ impl<
         connection_service: C,
         entity_access_management_service: Eam,
         foreign_entity_service: F,
-        macro_event_broker: B,
+        conation_event_broker: B,
     ) -> Self {
         Self {
             repo,
@@ -289,7 +289,7 @@ impl<
             connection_service,
             entity_access_management_service,
             foreign_entity_service,
-            macro_event_broker,
+            conation_event_broker,
         }
     }
 
@@ -313,7 +313,7 @@ impl<
         let constructed_url = format!("{}/{}", self.cloudfront_config.distribution_url, key);
         let options = self.get_signed_options();
 
-        let signed_url = if !macro_aws_config::is_local_aws() {
+        let signed_url = if !conation_aws_config::is_local_aws() {
             get_signed_url(&constructed_url, &options)?
         } else {
             constructed_url
@@ -548,7 +548,7 @@ impl<
 
     /// Publish a document lifecycle event; failures are logged and dropped.
     fn publish_document_event(&self, event: &DocumentMacroEvent) {
-        let _ = self.macro_event_broker.send_event(event).inspect_err(|e| {
+        let _ = self.conation_event_broker.send_event(event).inspect_err(|e| {
             tracing::error!(error=?e, "failed to publish document event");
         });
     }
@@ -803,7 +803,7 @@ impl<
             .await
             .map_err(|error| map_basic_document_error(document_id, error.into()))?;
 
-        self.macro_event_broker
+        self.conation_event_broker
             .send_event(&DocumentMacroEvent::content_uploaded(
                 document_id,
                 DocumentContentUploadedMetadata {
@@ -1347,7 +1347,7 @@ impl<
                     )
                 })?;
 
-            let current_association = current_file_type.macro_app_path();
+            let current_association = current_file_type.conation_app_path();
 
             if !matches!(current_association, FileAssociation::Code(_)) {
                 return Err(DocumentError::BadRequest(
@@ -1356,7 +1356,7 @@ impl<
             }
 
             if let FileTypeUpdate::Set(new_file_type) = file_type_update {
-                let new_association = new_file_type.macro_app_path();
+                let new_association = new_file_type.conation_app_path();
                 if std::mem::discriminant(&current_association)
                     != std::mem::discriminant(&new_association)
                 {

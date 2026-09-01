@@ -21,7 +21,7 @@ impl<T: NotificationRepository> PushNotificationCheckerImpl<T> {
 impl<T: NotificationRepository> PushNotificationChecker for PushNotificationCheckerImpl<T> {
     async fn push_notification_enabled<'a>(
         &self,
-        user: macro_user_id::user_id::MacroUserIdStr<'a>,
+        user: conation_user_id::user_id::MacroUserIdStr<'a>,
     ) -> Result<bool, rootcause::Report> {
         // a user with push notifications enabled is currently defined as someone
         // who does not have notifications muted and who has registered device endpoints.

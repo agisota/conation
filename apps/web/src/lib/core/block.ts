@@ -7,7 +7,7 @@ import type {
   InitialSync,
   LiveSyncSource,
   TimeoutError,
-} from '@macro-inc/collaboration/collab/source';
+} from '@conation/collaboration/collab/source';
 import type { AccessLevel } from '@service-storage/generated/schemas/accessLevel';
 import type { DocumentMetadata } from '@service-storage/generated/schemas/documentMetadata';
 import type { GetDocumentResponseData } from '@service-storage/generated/schemas/getDocumentResponseData';

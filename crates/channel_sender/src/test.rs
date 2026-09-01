@@ -1,4 +1,4 @@
-use macro_user_id::email::ReadEmailParts;
+use conation_user_id::email::ReadEmailParts;
 use uuid::Uuid;
 
 use super::*;

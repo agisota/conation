@@ -6,7 +6,7 @@
  * as a normal rust type.
  */
 use super::*;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use utoipa::ToSchema;
 #[test]
 fn test_expected_schema() {

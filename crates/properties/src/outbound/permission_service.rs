@@ -7,8 +7,8 @@ use entity_access::domain::models::{
     EntityType as AccessEntityType,
 };
 use entity_access::domain::ports::EntityAccessService;
-use macro_user_id::cowlike::CowLike;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::cowlike::CowLike;
+use conation_user_id::user_id::MacroUserIdStr;
 use models_permissions::share_permission::access_level::AccessLevel;
 use models_properties::EntityType as StorageEntityType;
 use sqlx::{Pool, Postgres};
@@ -66,7 +66,7 @@ impl<Svc: EntityAccessService> PermissionServiceImpl<Svc> {
             && let Some(user_id) = user_id
             && let Ok(thread_id) = Uuid::parse_str(entity_id)
         {
-            match permission_queries::get_macro_id_from_thread_id(&self.db, thread_id).await {
+            match permission_queries::get_conation_id_from_thread_id(&self.db, thread_id).await {
                 Ok(Some(owner_id)) if owner_id == user_id.as_ref() => {
                     tracing::debug!("user owns thread via link_id, granting owner access");
                     return Ok(Some(AccessLevel::Owner));
@@ -208,7 +208,7 @@ impl<Svc: EntityAccessService> PermissionService for PermissionServiceImpl<Svc> 
         entity_access_db_utils::upsert_user_entity_access_bulk(
             &self.db,
             user_ids,
-            &macro_uuid::string_to_uuid(task_id).unwrap(),
+            &conation_uuid::string_to_uuid(task_id).unwrap(),
             model_entity::EntityType::Document,
             AccessLevel::Edit,
         )

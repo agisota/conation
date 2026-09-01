@@ -26,7 +26,7 @@ use entity_access::{
     },
     inbound::axum_extractors::ExtractorError,
 };
-use macro_authorization::{
+use conation_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
 };
 use uuid::Uuid;
@@ -88,11 +88,11 @@ where
             MacroAuthorizationExtractor::<Auth, UserOrInternal>::from_request_parts(parts, state)
                 .await
                 .map_err(ExtractorError::from)?;
-        let macro_user_id = authorization.authorization.user.macro_user_id.clone();
+        let conation_user_id = authorization.authorization.user.conation_user_id.clone();
 
         let (permission, team_id, team_role) = service
             .get_crm_entity_permission_with_team(
-                Some(&macro_user_id),
+                Some(&conation_user_id),
                 &company_id,
                 EntityType::CrmCompany,
             )
@@ -104,7 +104,7 @@ where
         }
 
         let receipt = EntityAccessReceipt::try_new_authenticated_user(
-            macro_user_id,
+            conation_user_id,
             Entity {
                 entity_id: company_id,
                 entity_type: EntityType::CrmCompany,
@@ -164,11 +164,11 @@ where
             MacroAuthorizationExtractor::<Auth, UserOrInternal>::from_request_parts(parts, state)
                 .await
                 .map_err(ExtractorError::from)?;
-        let macro_user_id = authorization.authorization.user.macro_user_id.clone();
+        let conation_user_id = authorization.authorization.user.conation_user_id.clone();
 
         let (permission, team_id, team_role) = service
             .get_crm_entity_permission_with_team(
-                Some(&macro_user_id),
+                Some(&conation_user_id),
                 &contact_id,
                 EntityType::CrmContact,
             )
@@ -180,7 +180,7 @@ where
         }
 
         let receipt = EntityAccessReceipt::try_new_authenticated_user(
-            macro_user_id,
+            conation_user_id,
             Entity {
                 entity_id: contact_id,
                 entity_type: EntityType::CrmContact,
@@ -241,7 +241,7 @@ where
             MacroAuthorizationExtractor::<Auth, UserOrInternal>::from_request_parts(parts, state)
                 .await
                 .map_err(ExtractorError::from)?;
-        let macro_user_id = authorization.authorization.user.macro_user_id.clone();
+        let conation_user_id = authorization.authorization.user.conation_user_id.clone();
 
         let (crm_entity_type, entity_id) = crm_service
             .get_comment_entity(&comment_id)
@@ -257,7 +257,7 @@ where
         // comment exists but isn't yours" (401) — comment ids would
         // otherwise be a probable existence oracle.
         let (permission, team_id, team_role) = match access_service
-            .get_crm_entity_permission_with_team(Some(&macro_user_id), &entity_id_str, entity_type)
+            .get_crm_entity_permission_with_team(Some(&conation_user_id), &entity_id_str, entity_type)
             .await
         {
             Ok(triple) => triple,
@@ -272,7 +272,7 @@ where
         }
 
         let receipt = EntityAccessReceipt::try_new_authenticated_user(
-            macro_user_id,
+            conation_user_id,
             Entity {
                 entity_id: entity_id_str,
                 entity_type,

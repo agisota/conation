@@ -6,7 +6,7 @@ use frecency::{
     outbound::postgres::FrecencyPgStorage,
 };
 use last_online_tracker::inbound::LastOnlineWorker;
-use macro_authorization::{
+use conation_authorization::{
     MacroAuthJwtValidator, MacroAuthorizationServiceImpl, MacroAuthorizationState,
 };
 use redis::{RedisError, aio::MultiplexedConnection};

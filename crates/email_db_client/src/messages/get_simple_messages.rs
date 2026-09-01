@@ -221,8 +221,8 @@ pub async fn get_first_simple_message_draft(
           AND m.is_draft = true
           AND jsonb_path_exists(
               m.headers_jsonb,
-              '$[*] ? (@."Macro-In-Reply-To" == $macro_uuid)'::jsonpath,
-              jsonb_build_object('macro_uuid', $2::text)
+              '$[*] ? (@."Macro-In-Reply-To" == $conation_uuid)'::jsonpath,
+              jsonb_build_object('conation_uuid', $2::text)
           )
         ORDER BY m.created_at DESC
         LIMIT 1

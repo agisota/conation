@@ -31,7 +31,7 @@ const mapSoupPageToEntityListMock = vi.hoisted(() =>
 );
 const makeGraphqlSoupInputMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@macro-inc/observability', () => ({
+vi.mock('@conation/observability', () => ({
   Telemetry: {
     error: vi.fn(),
     span: vi.fn(() => ({ setAttr: vi.fn(), end: vi.fn() })),

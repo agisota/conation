@@ -4,7 +4,7 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use entity_access::domain::{models::ViewAccessLevel, ports::EntityAccessService};
-use macro_authorization::MacroAuthorizationService;
+use conation_authorization::MacroAuthorizationService;
 use model_error_response::ErrorResponse;
 use serde::Serialize;
 use utoipa::ToSchema;

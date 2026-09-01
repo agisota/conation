@@ -31,7 +31,7 @@ pub async fn run_worker(
     dss_client: DocumentStorageServiceClient,
     system_properties_service: Arc<SystemPropertiesServiceImpl<PgSystemPropertiesRepository>>,
     crm_service: CrmServiceType,
-    macro_event_broker: PubSubEventBroker,
+    conation_event_broker: PubSubEventBroker,
     notifications_enabled: bool,
     calendar_sync_enabled: bool,
     retry_worker: bool,
@@ -49,7 +49,7 @@ pub async fn run_worker(
         dss_client,
         system_properties_service,
         crm_service,
-        macro_event_broker,
+        conation_event_broker,
         notifications_enabled,
         calendar_sync_enabled,
         retry_worker,
@@ -75,14 +75,14 @@ pub async fn run_worker_with_cancellation(
     dss_client: DocumentStorageServiceClient,
     system_properties_service: Arc<SystemPropertiesServiceImpl<PgSystemPropertiesRepository>>,
     crm_service: CrmServiceType,
-    macro_event_broker: PubSubEventBroker,
+    conation_event_broker: PubSubEventBroker,
     notifications_enabled: bool,
     calendar_sync_enabled: bool,
     retry_worker: bool,
     cancellation_token: CancellationToken,
 ) {
     let calendar_backfills =
-        CalendarBackfillServices::new(db.clone(), redis_client.clone(), macro_event_broker.clone());
+        CalendarBackfillServices::new(db.clone(), redis_client.clone(), conation_event_broker.clone());
     let ctx = PubSubContext {
         db,
         sqs_worker: worker.clone(),
@@ -96,7 +96,7 @@ pub async fn run_worker_with_cancellation(
         dss_client,
         system_properties_service,
         crm_service,
-        macro_event_broker,
+        conation_event_broker,
         notifications_enabled,
         calendar_sync_enabled,
         retry_worker,

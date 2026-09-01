@@ -36,7 +36,7 @@ use crate::config::Config;
 ///
 /// This function does not resolve service URLs. The caller must provide a [`Config`]
 /// whose service URL fields have already been resolved, for example with
-/// `macro_service_urls`: `document_storage_service_url`, `sync_service_url`,
+/// `conation_service_urls`: `document_storage_service_url`, `sync_service_url`,
 /// `email_service_url`, and `lexical_service_url`.
 ///
 /// The provided [`Config`] must also contain values sourced from the required
@@ -53,7 +53,7 @@ pub async fn build_tool_service_context(
     pool: sqlx::PgPool,
     config: &Config,
 ) -> anyhow::Result<ToolServiceContext> {
-    let aws_config = macro_aws_config::get_macro_aws_config().await;
+    let aws_config = conation_aws_config::get_conation_aws_config().await;
     let sqs_client = sqs_client::SQS::new(aws_sdk_sqs::Client::new(&aws_config))
         .email_scheduled_queue(&config.email_scheduled_queue);
 
@@ -113,7 +113,7 @@ pub async fn build_tool_service_context(
     ));
 
     // Document tool context
-    let s3_client = macro_aws_config::s3_client().await;
+    let s3_client = conation_aws_config::s3_client().await;
     let s3_upload_adapter = S3UploadUrlAdapter::new(
         s3_client,
         &config.document_storage_bucket,

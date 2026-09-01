@@ -13,7 +13,7 @@ mod tests;
 
 use std::collections::HashMap;
 
-use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use model::project::{
     BasicProject, Project, ProjectPreviewData, ProjectPreviewV2, ProjectWithUploadRequest,
     WithProjectId,

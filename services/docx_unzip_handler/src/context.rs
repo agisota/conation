@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use macro_sha_count_client::Redis;
+use conation_sha_count_client::Redis;
 
 use crate::config::Config;
 

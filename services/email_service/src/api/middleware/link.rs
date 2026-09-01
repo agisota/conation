@@ -5,7 +5,7 @@ use axum::{
 };
 use axum_extra::extract::Cached;
 use email::{domain::ports::EmailService, inbound::axum::axum_impls::EmailLinkExtractor};
-use macro_authorization::{MacroAuthorizationService, MacroAuthorizationState};
+use conation_authorization::{MacroAuthorizationService, MacroAuthorizationState};
 
 pub(in crate::api) async fn attach_link_context<U, Auth>(
     Cached(EmailLinkExtractor(link, _)): Cached<EmailLinkExtractor<U, Auth>>,
@@ -31,7 +31,7 @@ where
     req.extensions_mut()
         .insert(models_email::email::service::link::Link {
             id: link.id,
-            macro_id: link.macro_id.clone(),
+            conation_id: link.conation_id.clone(),
             fusionauth_user_id: link.fusionauth_user_id.clone(),
             email_address: link.email_address.clone(),
             provider,

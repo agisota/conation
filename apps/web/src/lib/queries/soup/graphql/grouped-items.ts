@@ -5,7 +5,7 @@
  */
 
 import { createUrqlQuery } from '@app/lib/urql-solid';
-import { Telemetry } from '@macro-inc/observability';
+import { Telemetry } from '@conation/observability';
 import {
   makeGroupComparator,
   resolveGroupMetaForKey,

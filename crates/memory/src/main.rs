@@ -2,7 +2,7 @@
 
 use ai_tools::{all_tools, build_tool_service_context_from_env};
 use anyhow::Context;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use memory::config::Config;
 use memory::domain::{MemoryService, service::MemoryServiceImpl};
 use memory::outbound::pg_memory_repo::PgMemoryRepo;
@@ -16,7 +16,7 @@ const EVENT_BROKER_DRAIN_TIMEOUT: Duration = Duration::from_secs(10);
 #[tracing::instrument(err)]
 async fn main() -> anyhow::Result<()> {
     let config = Config::from_env().context("failed to load memory configuration")?;
-    macro_entrypoint::MacroEntrypoint::new(config.environment).init();
+    conation_entrypoint::MacroEntrypoint::new(config.environment).init();
 
     let user = MacroUserIdStr::try_from(config.user_id.clone())
         .context("USER_ID must be a valid Macro user id")?;

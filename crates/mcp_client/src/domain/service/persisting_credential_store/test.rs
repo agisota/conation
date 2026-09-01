@@ -1,6 +1,6 @@
 use super::*;
 use crate::domain::models::MacroUserIdStr;
-use macro_user_id::cowlike::CowLike;
+use conation_user_id::cowlike::CowLike;
 use std::sync::Mutex;
 
 /// In-memory [`McpServerStore`] fake that records every save.

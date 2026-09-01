@@ -29,7 +29,7 @@ pub async fn setup_and_serve(state: ApiContext) -> anyhow::Result<()> {
         .layer(
             ServiceBuilder::new()
                 .layer(TraceLayer::new_for_http())
-                .layer(macro_cors::cors_layer())
+                .layer(conation_cors::cors_layer())
                 .layer(CompressionLayer::new().gzip(true)),
         )
         // The health router is attached here so we don't attach the logging middleware to it
@@ -44,7 +44,7 @@ pub async fn setup_and_serve(state: ApiContext) -> anyhow::Result<()> {
         port
     );
     axum::serve(listener, app.into_make_service())
-        .with_graceful_shutdown(macro_entrypoint::shutdown_signal())
+        .with_graceful_shutdown(conation_entrypoint::shutdown_signal())
         .await
         .context("error starting service")
 }

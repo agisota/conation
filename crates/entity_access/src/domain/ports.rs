@@ -8,7 +8,7 @@ use crate::domain::models::{
     CrmEntityAccess, EntityAccessReceipt, EntityPermission, RequiredPermission, TeamRole,
     UserTeamInfo, ViewAccessLevel,
 };
-use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
+use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
 use std::{collections::HashMap, future::Future};
 use uuid::Uuid;
 

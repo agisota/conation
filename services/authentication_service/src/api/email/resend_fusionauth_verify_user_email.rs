@@ -4,7 +4,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use macro_middleware::tracking::ClientIp;
+use conation_middleware::tracking::ClientIp;
 use utoipa::ToSchema;
 
 use crate::{api::context::ApiContext, rate_limit_config::RATE_LIMIT_CONFIG};
@@ -36,7 +36,7 @@ pub async fn handler(
     tracing::info!("resend_fusionauth_verify_user_email");
 
     let (minute, daily) = ctx
-        .macro_cache_client
+        .conation_cache_client
         .get_resend_verify_email_rate_limits(&req.email)
         .await
         .map_err(|e| {
@@ -84,7 +84,7 @@ pub async fn handler(
                 .into_response()
         })?;
 
-    ctx.macro_cache_client
+    ctx.conation_cache_client
         .increment_resend_verify_email_rate_limits(&req.email)
         .await
         .map_err(|e| {

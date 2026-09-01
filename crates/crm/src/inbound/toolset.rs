@@ -303,7 +303,7 @@ pub(crate) fn extract_company_crm_props(
 /// caller's own team listing, or a company permission check) — re-checking
 /// each company here would repeat that lookup per company.
 pub(crate) fn company_view_receipts(
-    user_id: &macro_user_id::user_id::MacroUserIdStr<'static>,
+    user_id: &conation_user_id::user_id::MacroUserIdStr<'static>,
     company_ids: impl IntoIterator<Item = Uuid>,
 ) -> Vec<properties::ViewReceipt> {
     company_ids

@@ -20,7 +20,7 @@ mod process;
 use std::time::Instant;
 
 use anyhow::Context;
-use macro_entrypoint::MacroEntrypoint;
+use conation_entrypoint::MacroEntrypoint;
 use sqlx::postgres::PgPoolOptions;
 
 struct Stats {

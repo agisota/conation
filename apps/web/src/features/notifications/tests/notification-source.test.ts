@@ -30,7 +30,7 @@ vi.mock('@core/constant/featureFlags', () => ({
   ENABLE_GRAPHQL_SOUP: () => mocks.graphqlEnabled,
 }));
 
-vi.mock('@macro-inc/collaboration/websocket', () => ({
+vi.mock('@conation/collaboration/websocket', () => ({
   createSocketEffect: vi.fn(
     (
       _ws: unknown,

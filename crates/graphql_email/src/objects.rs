@@ -439,7 +439,7 @@ mod tests {
 
     use async_graphql::{EmptyMutation, EmptySubscription, Schema};
     use chrono::Utc;
-    use macro_user_id::user_id::MacroUserIdStr;
+    use conation_user_id::user_id::MacroUserIdStr;
     use uuid::Uuid;
 
     use super::*;

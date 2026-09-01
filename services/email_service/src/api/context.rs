@@ -21,12 +21,12 @@ use email_service::util::redis::RedisClient;
 use entity_access::{domain::service::EntityAccessServiceImpl, outbound::PgAccessRepository};
 use entity_access_management::domain::service::EntityAccessManagementServiceImpl;
 use frecency::{domain::services::FrecencyQueryServiceImpl, outbound::postgres::FrecencyPgStorage};
-use macro_auth::InternalApiKey;
-use macro_auth::middleware::decode_jwt::JwtValidationArgs;
-use macro_authorization::{
+use conation_auth::InternalApiKey;
+use conation_auth::middleware::decode_jwt::JwtValidationArgs;
+use conation_authorization::{
     MacroAuthJwtValidator, MacroAuthorizationServiceImpl, MacroAuthorizationState,
 };
-use macro_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
+use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
 use static_file_service_client::StaticFileServiceClient;
 use std::sync::Arc;
 use system_properties::{PgSystemPropertiesRepository, SystemPropertiesServiceImpl};
@@ -78,7 +78,7 @@ pub(crate) struct ApiContext {
     pub email_thread_state:
         EmailThreadRouterState<EmailSvc, EmailEntityAccessService, AuthorizationService>,
     pub gmail_token_state: GmailTokenState<GmailTokenProviderImpl>,
-    pub macro_event_broker: Arc<EmailEventBroker>,
+    pub conation_event_broker: Arc<EmailEventBroker>,
     pub calendar_service: Arc<CalendarGrantService>,
     pub calendar_mutation_service: Arc<CalendarMutationSvc>,
 }

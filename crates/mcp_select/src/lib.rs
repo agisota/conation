@@ -15,7 +15,7 @@ use ai_toolset::{
     AsyncToolCollection, RequestContext, RequestSchema, SearchableTool, ToolInfo, ToolResult,
     ToolSet, ToolSetError,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use mcp_client::domain::ports::McpServerStore;
 use mcp_client::domain::service::McpToolSet;
 use pipedream_mcp::domain::ports::{ConnectionStore, McpConnection};

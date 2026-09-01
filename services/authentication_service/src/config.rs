@@ -2,9 +2,9 @@ use std::sync::LazyLock;
 
 use anyhow::Context;
 use database_env_vars::{DatabaseUrl, RedisUri};
-use macro_auth::InternalApiKey;
-pub use macro_env::Environment;
-use macro_env_var::{env_vars, maybe_env_vars};
+use conation_auth::InternalApiKey;
+pub use conation_env::Environment;
+use conation_env_var::{env_vars, maybe_env_vars};
 
 // BASE_URL config value. This is validated when creating the config in main.rs
 pub static BASE_URL: LazyLock<String> = LazyLock::new(|| {
@@ -69,8 +69,8 @@ maybe_env_vars! {
 /// populate the Docker container
 ///
 /// See `.env.sample` in document-storage-service root for details.
-#[derive(macro_config::MacroConfig)]
-// #[macro_config::from_ref_all]
+#[derive(conation_config::MacroConfig)]
+// #[conation_config::from_ref_all]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Config {
     #[allow(dead_code)]
@@ -110,10 +110,10 @@ pub struct Config {
     /// Stripe secret key
     pub stripe_secret_key: StripeSecretKey,
     /// The port to listen for HTTP requests on.
-    #[macro_config_default(8080)]
+    #[conation_config_default(8080)]
     pub port: usize,
     /// The environment we are in
-    #[macro_config_default(Environment::new_or_prod())]
+    #[conation_config_default(Environment::new_or_prod())]
     pub environment: Environment,
     /// The internal auth key used by other services
     pub service_internal_auth_key: ServiceInternalAuthKey,
@@ -149,7 +149,7 @@ pub struct Config {
     /// Whether Gmail link consent requests the Google Calendar scope. Off by
     /// default so deployed environments don't ask users for a scope the
     /// calendar feature isn't using yet.
-    #[macro_config_default(false)]
+    #[conation_config_default(false)]
     pub calendar_scope_enabled: bool,
 }
 
@@ -163,7 +163,7 @@ pub(crate) struct MicrosoftCredentials {
 
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
-        macro_config::ConfigLoader::load::<Config>()
+        conation_config::ConfigLoader::load::<Config>()
             .context("failed to load authentication service config")
     }
 

@@ -4,7 +4,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 
 use crate::api::context::{ApiContext, AuthorizationService};
 
@@ -24,7 +24,7 @@ pub async fn handler(
     State(ctx): State<ApiContext>,
     authorization: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
 ) -> Result<Response, Response> {
-    let permissions = macro_db_client::user::get_permissions::get_user_permissions(
+    let permissions = conation_db_client::user::get_permissions::get_user_permissions(
         &ctx.db,
         &authorization.authorization.user.user_context.user_id,
     )

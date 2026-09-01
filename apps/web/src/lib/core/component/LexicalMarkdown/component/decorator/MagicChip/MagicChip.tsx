@@ -1,5 +1,5 @@
 import { useSplitLayout } from '@components/app/split-layout/layout';
-import type { MagicChipDecoratorProps } from '@macro-inc/lexical-core';
+import type { MagicChipDecoratorProps } from '@conation/lexical-core';
 import type { Component } from 'solid-js';
 import { createMagicChipModel } from './create-magic-chip-model';
 import { MagicChipView } from './MagicChipView';

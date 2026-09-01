@@ -6,7 +6,7 @@ use crate::messages::get::fetch_messages_metadata;
 use chrono::{DateTime, Utc};
 use models_email::email::service::message::{is_inbound, is_outbound, is_spam_or_trash};
 use models_email::service;
-use models_email::service::message::is_macro_draft;
+use models_email::service::message::is_conation_draft;
 use sqlx::types::Uuid;
 
 /// Updates a thread's metadata
@@ -308,7 +308,7 @@ pub async fn update_thread_metadata(
             .iter()
             .any(|label| label.provider_label_id == service::label::system_labels::SENT);
 
-        (has_inbox && !has_sent) || is_macro_draft(message)
+        (has_inbox && !has_sent) || is_conation_draft(message)
     });
 
     // if any message in the thread is unread, the thread is considered unread in the FE
@@ -316,7 +316,7 @@ pub async fn update_thread_metadata(
 
     let latest_draft_ts = messages
         .iter()
-        .filter(|msg| is_macro_draft(msg))
+        .filter(|msg| is_conation_draft(msg))
         .map(|msg| msg.updated_at)
         .max();
 

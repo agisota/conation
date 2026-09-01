@@ -17,11 +17,11 @@ chrono = { workspace = true }
 # `outbound` here would pull rdkafka — and so librdkafka and openssl — into
 # every consumer of this crate, including the self-hosted daemon, which
 # publishes nothing and has to link statically.
-macro_event_broker = { path = "../macro_event_broker", default-features = false }
-macro_event_topics = { path = "../macro_event_topics" }
-macro_user_id = { path = "../macro_user_id" }
+conation_event_broker = { path = "../conation_event_broker", default-features = false }
+conation_event_topics = { path = "../conation_event_topics" }
+conation_user_id = { path = "../conation_user_id" }
 channel_sender = { path = "../channel_sender" }
-macro_uuid = { path = "../macro_uuid" }
+conation_uuid = { path = "../conation_uuid" }
 serde = { workspace = true }
 strum = { workspace = true }
 serde_json = { workspace = true }

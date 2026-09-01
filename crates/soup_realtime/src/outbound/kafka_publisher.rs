@@ -3,7 +3,7 @@
 #[cfg(test)]
 mod test;
 
-use macro_event_broker::MacroEventBroker;
+use conation_event_broker::MacroEventBroker;
 use rootcause::prelude::{Report, ResultExt as _};
 
 use crate::domain::{

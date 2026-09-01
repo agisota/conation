@@ -26,15 +26,15 @@ use entity_access::domain::{
 };
 use http_body_util::BodyExt;
 #[allow(deprecated)]
-use macro_authorization::{
+use conation_authorization::{
     INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_ORGANIZATION_ID_HEADER, INTERNAL_MACRO_USER_ID_HEADER,
     InternalAuthConfig, JwtValidator, LEGACY_DSS_INTERNAL_API_KEY_HEADER,
     LEGACY_DSS_INTERNAL_MACRO_USER_ID_HEADER, MacroAuthorizationError,
     MacroAuthorizationServiceImpl, MacroAuthorizationState, ValidatedIdentity,
 };
-use macro_user_id::cowlike::CowLike;
-use macro_user_id::user_id::MacroUserIdStr;
-use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId};
+use conation_user_id::cowlike::CowLike;
+use conation_user_id::user_id::MacroUserIdStr;
+use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId};
 use models_pagination::{Base64Str, CreatedAt, Cursor, CursorVal, PaginateOn, Query};
 use rootcause::Report;
 use std::sync::{
@@ -931,7 +931,7 @@ fn authorization_state_with_default(
             api_key: VALID_INTERNAL_KEY.to_string(),
             default_user_id: default_user_id.map(str::to_string),
         },
-        macro_authorization::NoBotAuthorizer,
+        conation_authorization::NoBotAuthorizer,
     );
     (MacroAuthorizationState::new(Arc::new(service)), validator)
 }

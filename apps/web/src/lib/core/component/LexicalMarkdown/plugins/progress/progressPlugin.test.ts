@@ -1,5 +1,5 @@
 import { $createListItemNode, $createListNode } from '@lexical/list';
-import { SupportedNodeTypes } from '@macro-inc/lexical-core/node-list';
+import { SupportedNodeTypes } from '@conation/lexical-core/node-list';
 import { $createTextNode, $getRoot, createEditor } from 'lexical';
 import { describe, expect, it } from 'vitest';
 import { $getProgressStats } from './progressPlugin';

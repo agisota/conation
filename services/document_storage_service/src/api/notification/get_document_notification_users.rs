@@ -3,7 +3,7 @@ use axum::Json;
 use axum::extract::State;
 use axum::response::Response;
 use axum::{extract::Path, http::StatusCode, response::IntoResponse};
-use macro_authorization::{InternalOnly, MacroAuthorizationExtractor};
+use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
 use model::response::GenericErrorResponse;
 use sqlx::PgPool;
 
@@ -34,7 +34,7 @@ pub async fn handler(
     Path(Params { document_id }): Path<Params>,
 ) -> Result<Response, Response> {
     let users =
-        macro_db_client::notification::document::get_document_notification_users(&db, &document_id)
+        conation_db_client::notification::document::get_document_notification_users(&db, &document_id)
             .await
             .map_err(|e| {
                 tracing::error!(error=?e, "unable to get document notification users");

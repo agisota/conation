@@ -4,7 +4,7 @@ members = [
   "graphql_cache_plugin",
   "input_accessory_plugin",
   "logger",
-  "macro_bundle_updater_plugin",
+  "conation_bundle_updater_plugin",
   "navigation_plugin",
   "network_status_plugin",
   "pasteboard_plugin",

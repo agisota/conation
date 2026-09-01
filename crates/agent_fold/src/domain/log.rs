@@ -9,8 +9,8 @@
 //! meet them.
 
 use agent_runtime_protocol::domain::schema::v0::{ToRuntimeMessage, ToServerMessage};
-use macro_user_id::user_id::MacroUserIdStr;
-use macro_uuid::Uuid;
+use conation_user_id::user_id::MacroUserIdStr;
+use conation_uuid::Uuid;
 use serde::{Deserialize, Serialize};
 
 /// The identity of an agent session.
@@ -31,7 +31,7 @@ impl AgentSessionId {
     #[expect(clippy::new_without_default, reason = "each call mints a distinct id")]
     #[must_use]
     pub fn new() -> Self {
-        Self(macro_uuid::generate_uuid_v7())
+        Self(conation_uuid::generate_uuid_v7())
     }
 
     /// Wrap an existing UUID as an agent session id.

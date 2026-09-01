@@ -3,7 +3,7 @@
 use agent_session::domain::error::AgentSessionError;
 use agent_session::domain::ports::AgentSessionRepo;
 use channels::domain::broker_events::{ChannelMacroEvent, ChannelTopicEvent};
-use macro_event_broker::{EventBrokerError, MacroEvent as _, MacroEventBroker};
+use conation_event_broker::{EventBrokerError, MacroEvent as _, MacroEventBroker};
 
 use super::broker_events::AgentTriggerEventName;
 use super::service::{

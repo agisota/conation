@@ -1,4 +1,4 @@
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use notification::domain::models::email_notification_digest::ports::LastOnlineChecker;
 use rootcause::Report;
 use std::time::Duration;

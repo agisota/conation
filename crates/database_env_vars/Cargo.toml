@@ -6,5 +6,5 @@ version = "0.1.0"
 
 [dependencies]
 tracing = { workspace = true }
-macro_env_var = { path = "../macro_env_var" }
+conation_env_var = { path = "../conation_env_var" }
 workspace-hack = { version = "0.1", path = "../workspace-hack" }

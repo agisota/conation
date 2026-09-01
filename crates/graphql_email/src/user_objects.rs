@@ -146,7 +146,7 @@ pub struct GraphqlEmailLink {
     /// Stable email link identifier.
     id: ID,
     /// Macro user that owns the inbox.
-    macro_id: String,
+    conation_id: String,
     /// Provider email address for the inbox.
     email_address: String,
     /// SFS URL of the inbox's self-contact photo, when available.
@@ -173,7 +173,7 @@ impl From<UserEmailLink> for GraphqlEmailLink {
     fn from(link: UserEmailLink) -> Self {
         Self {
             id: ID(link.id.to_string()),
-            macro_id: link.macro_id.to_string(),
+            conation_id: link.conation_id.to_string(),
             email_address: link.email_address.0.as_ref().to_owned(),
             photo_url: link.photo_url,
             provider: link.provider.into(),

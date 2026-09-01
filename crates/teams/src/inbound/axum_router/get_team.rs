@@ -8,7 +8,7 @@ use entity_access::{
     domain::{models::MemberTeamRole, ports::EntityAccessService},
     inbound::axum_extractors::OptionalMacroUserTeamExtractorV2,
 };
-use macro_authorization::MacroAuthorizationService;
+use conation_authorization::MacroAuthorizationService;
 use model_error_response::ErrorResponse;
 
 use crate::domain::{

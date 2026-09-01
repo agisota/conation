@@ -2,7 +2,7 @@
 use chrono::{DateTime, Utc};
 use cowlike::CowLike;
 use item_filters::ast::EntityFilterAst;
-use macro_user_id::{error::ParseErr, user_id::MacroUserIdStr};
+use conation_user_id::{error::ParseErr, user_id::MacroUserIdStr};
 use model_entity::Entity;
 use num_traits::ToPrimitive;
 use ordered_float::OrderedFloat;

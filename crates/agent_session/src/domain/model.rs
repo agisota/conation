@@ -2,8 +2,8 @@ use agent_client_protocol::schema::v1::SessionId;
 use agent_runtime_protocol::domain::schema::v0::SystemEvent;
 use bots::domain::models::BotId;
 use chrono::{DateTime, Utc};
-use macro_user_id::user_id::MacroUserIdStr;
-use macro_uuid::Uuid;
+use conation_user_id::user_id::MacroUserIdStr;
+use conation_uuid::Uuid;
 
 // The log vocabulary - the session id, the log entry, and the frame it
 // carries - is owned by `agent_fold`, the bottom of the agent session stack,

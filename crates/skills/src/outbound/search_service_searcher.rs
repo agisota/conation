@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use document_sub_type::DocumentSubType;
 use item_filters::{DocumentFilters, EntityFilters};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use models_search::unified::{
     UnifiedSearchIndex, UnifiedSearchRequest, UnifiedSearchResponseItem,
     entity_filters_from_include,

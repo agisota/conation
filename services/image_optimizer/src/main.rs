@@ -9,7 +9,7 @@ use aws_sdk_s3::Client as S3Client;
 use lambda_runtime::{Error, LambdaEvent, run, service_fn};
 use request::LambdaRequest;
 
-macro_env_var::env_var! {
+conation_env_var::env_var! {
     pub struct EnvConfig {
         pub Bucket,
         pub AwsLambdaFunctionName,
@@ -41,9 +41,9 @@ async fn handle(
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    macro_entrypoint::MacroEntrypoint::default().init();
+    conation_entrypoint::MacroEntrypoint::default().init();
 
-    let aws_config = macro_aws_config::get_macro_aws_config().await;
+    let aws_config = conation_aws_config::get_conation_aws_config().await;
     let env = EnvConfig::unwrap_new();
 
     let ctx = AppContext {

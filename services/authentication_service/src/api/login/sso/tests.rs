@@ -174,7 +174,7 @@ async fn it_works_with_everything() {
 }
 
 #[tokio::test]
-async fn it_works_with_macro_scheme() {
+async fn it_works_with_conation_scheme() {
     let request = Request::builder().uri("https://example.com/login/sso?original_url=macro%3A%2F%2Flogin&idp_name=google&is_mobile=true").body(Body::from(())).unwrap();
 
     let extracted = Query::<LoginQueryParams>::from_request(request, &())

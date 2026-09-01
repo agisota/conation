@@ -10,7 +10,7 @@ import {
   $isClassedBlockNode,
   type ClassedBlockNode,
   type DocumentMentionInfo,
-} from '@macro-inc/lexical-core';
+} from '@conation/lexical-core';
 import type { ApiMessage } from '@service-email/generated/schemas';
 import {
   $addUpdateTag,

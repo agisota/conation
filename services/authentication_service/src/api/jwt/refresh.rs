@@ -9,7 +9,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use fusionauth::{FusionAuthClient, error::FusionAuthClientError};
-use macro_auth::{error::MacroAuthError, middleware::decode_jwt::JwtValidationArgs};
+use conation_auth::{error::MacroAuthError, middleware::decode_jwt::JwtValidationArgs};
 use model::response::UserTokensResponse;
 use std::sync::Arc;
 use tower_cookies::Cookies;
@@ -65,7 +65,7 @@ pub async fn handler(
     token_context: Extension<TokenContext>,
     cookies: Cookies,
 ) -> Result<Json<UserTokensResponse>, RefreshError> {
-    match macro_auth::middleware::decode_jwt::validate_macro_access_token(
+    match conation_auth::middleware::decode_jwt::validate_conation_access_token(
         &token_context.access_token,
         &jwt,
     ) {
@@ -89,7 +89,7 @@ pub async fn handler(
 
     // NOTE: Disabled until we fix FE auth setup.
     // // Decode the JWT (allowing expired) to get the user ID for the advisory lock
-    // let user_id = decode_macro_access_token_allow_expired(&token_context.access_token, &jwt)
+    // let user_id = decode_conation_access_token_allow_expired(&token_context.access_token, &jwt)
     //     .map_err(|e| {
     //         // Keeping this log in here to see why we couldn't decode the jwt
     //         tracing::error!(error=?e, "unable to decode jwt for user id");

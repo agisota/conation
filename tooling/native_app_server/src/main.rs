@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use macro_env_var::maybe_env_vars;
+use conation_env_var::maybe_env_vars;
 use native_app_service::{
     domain::{
         models::{BundleManifest, BundleUpdatePolicy, PlatformData, UpdateErr},

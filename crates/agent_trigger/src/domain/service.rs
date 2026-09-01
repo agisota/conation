@@ -12,7 +12,7 @@ use bot_id::BotId;
 use channels::domain::broker_events::ChannelMessagePostedMetadata;
 use channels::domain::side_effects::bot_mention_ids;
 
-use macro_uuid::Uuid;
+use conation_uuid::Uuid;
 
 use crate::domain::broker_events::{AgentSessionMacroEvent, ChannelEventMetadata, ChannelKind};
 use crate::domain::thread_window::{ThreadMessage, render_transcript, thread_window};

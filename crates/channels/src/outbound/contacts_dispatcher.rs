@@ -2,7 +2,7 @@
 
 use crate::domain::ports::ChannelContactsDispatcher;
 use contacts::domain::ports::ContactsIngress;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use std::{collections::HashSet, sync::Arc};
 
 /// Contacts ingress adapter.

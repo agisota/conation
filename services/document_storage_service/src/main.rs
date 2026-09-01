@@ -86,18 +86,18 @@ use github::domain::service::{GithubSyncConfig, GithubSyncServiceImpl};
 use github::outbound::github_sync_client::GithubSyncClientImpl;
 use github::outbound::pg_github_sync_repo::PgGithubSyncRepo;
 use lexical_client::LexicalClient;
-use macro_auth::middleware::decode_jwt::JwtValidationArgs;
-use macro_authorization::{
+use conation_auth::middleware::decode_jwt::JwtValidationArgs;
+use conation_authorization::{
     InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationServiceImpl,
     MacroAuthorizationState, PgBotAuthorizationRepo, PgBotAuthorizer,
 };
-use macro_entrypoint::MacroEntrypoint;
-use macro_env_var::maybe_env_vars;
-use macro_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
+use conation_entrypoint::MacroEntrypoint;
+use conation_env_var::maybe_env_vars;
+use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
 #[cfg(feature = "delete_document_worker")]
-use macro_service_urls::AiEditingWorkerUrl;
-use macro_service_urls::{ConnectionGatewayUrl, LexicalServiceUrl, SyncServiceUrl};
-use macro_sha_count_client::Redis;
+use conation_service_urls::AiEditingWorkerUrl;
+use conation_service_urls::{ConnectionGatewayUrl, LexicalServiceUrl, SyncServiceUrl};
+use conation_sha_count_client::Redis;
 use notification::domain::service::{
     NotificationReaderService, PlatformArnConfig, SqsNotificationIngress,
     WebSocketNotificationConsumerService,
@@ -181,7 +181,7 @@ async fn main() -> anyhow::Result<()> {
 async fn run() -> anyhow::Result<()> {
     let env = Environment::new_or_prod();
 
-    let aws_config = macro_aws_config::get_macro_aws_config().await;
+    let aws_config = conation_aws_config::get_conation_aws_config().await;
 
     let secretsmanager_client = secretsmanager_client::SecretsManager::new(
         aws_sdk_secretsmanager::Client::new(&aws_config),
@@ -239,24 +239,24 @@ async fn run() -> anyhow::Result<()> {
     );
     tracing::trace!("initialized dynamodb client");
 
-    let s3_client = macro_aws_config::s3_client().await;
+    let s3_client = conation_aws_config::s3_client().await;
 
     tracing::trace!("initialized s3 client");
 
-    let search_event_queue = macro_queues::SearchEventQueue::new();
-    let document_delete_queue = macro_queues::DocumentDeleteQueue::new();
-    let contacts_queue = macro_queues::ContactsQueue::new();
-    let notification_queue = macro_queues::NotificationIngressQueue::new();
-    let gmail_ops_queue = macro_queues::GmailOpsQueue::new();
-    let reminder_dispatch_queue = macro_queues::ReminderDispatchQueue::new();
-    let calendar_reminder_dispatch_queue = macro_queues::CalendarReminderDispatchQueue::new();
+    let search_event_queue = conation_queues::SearchEventQueue::new();
+    let document_delete_queue = conation_queues::DocumentDeleteQueue::new();
+    let contacts_queue = conation_queues::ContactsQueue::new();
+    let notification_queue = conation_queues::NotificationIngressQueue::new();
+    let gmail_ops_queue = conation_queues::GmailOpsQueue::new();
+    let reminder_dispatch_queue = conation_queues::ReminderDispatchQueue::new();
+    let calendar_reminder_dispatch_queue = conation_queues::CalendarReminderDispatchQueue::new();
     let sqs_client = sqs_client::SQS::new(aws_sdk_sqs::Client::new(&aws_config))
         .search_event_queue(&search_event_queue)
         .document_delete_queue(&document_delete_queue)
         .gmail_ops_queue(&gmail_ops_queue);
     let webhook_event_queue = webhook::outbound::SqsWebhookQueue::new(
         Arc::new(sqs_client.clone()),
-        macro_queues::WebhookEventQueue::new().to_string(),
+        conation_queues::WebhookEventQueue::new().to_string(),
         config.webhook_queue_max_messages,
         config.webhook_queue_wait_time_seconds,
     );
@@ -308,13 +308,13 @@ async fn run() -> anyhow::Result<()> {
     let consumer_cancellation_token = CancellationToken::new();
     let consumer_tracker = TaskTracker::new();
     let event_broker_tracker = TaskTracker::new();
-    let macro_event_broker = MacroEventBrokerService::new(
+    let conation_event_broker = MacroEventBrokerService::new(
         KafkaEventPublisher::new(config.kafka_brokers.as_ref())
             .context("failed to create kafka event publisher")?,
         event_broker_tracker.clone(),
     );
     let bots_repo = PgBotsRepo::new(db.clone());
-    let bots_service = BotServiceImpl::new(bots_repo, macro_event_broker.clone());
+    let bots_service = BotServiceImpl::new(bots_repo, conation_event_broker.clone());
 
     let authorization_service: AuthorizationService = MacroAuthorizationServiceImpl::new(
         MacroAuthJwtValidator::new(jwt_validation_args.clone()),
@@ -358,7 +358,7 @@ async fn run() -> anyhow::Result<()> {
         ),
         0,
     )
-    .with_macro_event_broker(macro_event_broker.clone());
+    .with_conation_event_broker(conation_event_broker.clone());
     let readonly_email_service = ReadonlyEmailPreviewAdapter(
         EmailServiceImpl::new(
             EmailPgRepo::new(readonly_db.clone()),
@@ -370,7 +370,7 @@ async fn run() -> anyhow::Result<()> {
             ),
             0,
         )
-        .with_macro_event_broker(macro_event_broker.clone()),
+        .with_conation_event_broker(conation_event_broker.clone()),
     );
     let system_properties_service =
         SystemPropertiesServiceImpl::new(PgSystemPropertiesRepository::new(db.clone()));
@@ -416,7 +416,7 @@ async fn run() -> anyhow::Result<()> {
             Some(permission_checker),
             Some(notification_service),
         )
-        .with_event_broker(macro_event_broker.clone()),
+        .with_event_broker(conation_event_broker.clone()),
     );
 
     // Create the channel list service used by soup.
@@ -462,7 +462,7 @@ async fn run() -> anyhow::Result<()> {
             .document_storage_service_presigned_url_browser_cache_expiry_seconds,
     };
     let s3_upload_adapter = S3UploadUrlAdapter::new(
-        macro_aws_config::s3_client().await,
+        conation_aws_config::s3_client().await,
         config.document_storage_bucket.as_ref(),
         config.docx_document_upload_bucket.as_ref(),
     );
@@ -491,7 +491,7 @@ async fn run() -> anyhow::Result<()> {
     let project_service = Arc::new(ProjectServiceImpl::new(
         PgProjectRepo::new(db.clone()),
         S3ProjectUploadAdapter::new(
-            macro_aws_config::s3_client().await,
+            conation_aws_config::s3_client().await,
             config.document_storage_bucket.as_ref(),
             config.docx_document_upload_bucket.as_ref(),
             config.upload_staging_bucket.as_ref(),
@@ -499,13 +499,13 @@ async fn run() -> anyhow::Result<()> {
         DynamoBulkUploadAdapter::new(dynamodb_client.clone()),
         ShaCountAdapter::new(Redis::new(redis_client.clone())),
         entity_access_management_service.clone(),
-        SqsProjectSearchIndexer::new(Arc::new(sqs_client.clone()), macro_event_broker.clone()),
+        SqsProjectSearchIndexer::new(Arc::new(sqs_client.clone()), conation_event_broker.clone()),
         if cfg!(feature = "local") {
             Some(uuid::uuid!("d50676e2-0a12-4c62-bc07-4b1cb6d8e9bc"))
         } else {
             None
         },
-        macro_event_broker.clone(),
+        conation_event_broker.clone(),
     ));
 
     let document_service = Arc::new(DocumentServiceImpl::new(
@@ -521,7 +521,7 @@ async fn run() -> anyhow::Result<()> {
         connection_service,
         entity_access_management_service.clone(),
         ForeignEntityServiceImpl::new(PgForeignEntityRepo::new(db.clone())),
-        macro_event_broker.clone(),
+        conation_event_broker.clone(),
     ));
 
     let foreign_entity_service = Arc::new(ForeignEntityServiceImpl::new(PgForeignEntityRepo::new(
@@ -702,7 +702,7 @@ async fn run() -> anyhow::Result<()> {
     let call_service = Arc::new(
         call_service_builder
             .with_voice_repo(PgVoiceRepo::new(db.clone()))
-            .with_event_broker(macro_event_broker.clone()),
+            .with_event_broker(conation_event_broker.clone()),
     );
 
     let call_state = CallRouterState::new(
@@ -728,7 +728,7 @@ async fn run() -> anyhow::Result<()> {
             webhook_repository.clone(),
             webhook_http_client.clone(),
             webhook_endpoint_scheme_policy,
-            macro_event_broker.clone(),
+            conation_event_broker.clone(),
         );
     let webhook_rate_limiter = RateLimitServiceImpl {
         repo: RedisRateLimitAdapter {
@@ -901,7 +901,7 @@ async fn run() -> anyhow::Result<()> {
         ContactsChannelDispatcher::new(contacts_ingress.clone()),
     )
     .with_bot_trigger_sender(bot_trigger_sender)
-    .with_macro_event_broker(macro_event_broker.clone());
+    .with_conation_event_broker(conation_event_broker.clone());
 
     let channels_service = Arc::new(
         ChannelServiceImpl::with_dependencies(
@@ -961,7 +961,7 @@ async fn run() -> anyhow::Result<()> {
     // toolset used by other AI hosts. Agent sessions belong to a different
     // bot entirely (`bot_id::MACRO_NEW_BOT_ID`, served by the harness), so
     // the two paths can never answer the same mention.
-    let mut macro_agent_tool_context =
+    let mut conation_agent_tool_context =
         ai_tools::build_tool_service_context_from_env(db.clone(), event_broker_tracker.clone())
             .await
             .context("failed to build Macro agent tool context")?;
@@ -969,18 +969,18 @@ async fn run() -> anyhow::Result<()> {
     // side-effect pipeline so agent-posted messages share the exact instance
     // used by the HTTP API, including the in-process bot trigger sender (the
     // env builder wires an equivalent pipeline, but without bot triggers).
-    macro_agent_tool_context.channel_tool_context =
+    conation_agent_tool_context.channel_tool_context =
         ai_tools::build_channel_tool_context_with_dispatcher(
             db.clone(),
             std::sync::Arc::new(SpawnedChannelEventDispatcher::new(channel_side_effects)),
             lexical_client.clone(),
         );
-    let macro_agent_tools = ai_tools::all_tools();
+    let conation_agent_tools = ai_tools::all_tools();
     let bot_trigger_router = channel_bots::inbound::BotTriggerRouter::new(
         channels_service.clone(),
         Arc::new(channel_bots::outbound::AgentLoopResponder::new(
-            macro_agent_tool_context,
-            macro_agent_tools,
+            conation_agent_tool_context,
+            conation_agent_tools,
         )),
         Arc::new(
             channel_bots::domain::trigger_detector::MentionOrInferredDetector::new(
@@ -1104,7 +1104,7 @@ async fn run() -> anyhow::Result<()> {
     consumer_tracker.spawn({
         let brokers = config.kafka_brokers.as_ref().to_string();
         let entity_access_service = entity_access_service.as_ref().clone();
-        let macro_event_broker = macro_event_broker.clone();
+        let conation_event_broker = conation_event_broker.clone();
         let cancellation_token = consumer_cancellation_token.clone();
         async move {
             let mut consecutive_failures = 0_u32;
@@ -1115,7 +1115,7 @@ async fn run() -> anyhow::Result<()> {
 
                 let fanout_service = SoupRealtimeServiceImpl::new(
                     EntityAccessExpander::new(entity_access_service.clone()),
-                    KafkaSoupRealtimePublisher::new(macro_event_broker.clone()),
+                    KafkaSoupRealtimePublisher::new(conation_event_broker.clone()),
                 );
                 tracing::info!("starting realtime Soup entity consumer");
                 let result = fanout_service
@@ -1247,7 +1247,7 @@ async fn run() -> anyhow::Result<()> {
                 db.clone(),
                 redis_sha_client.clone(),
                 sqs_client.clone(),
-                macro_event_broker.clone(),
+                conation_event_broker.clone(),
             )),
         ));
 
@@ -1298,7 +1298,7 @@ async fn run() -> anyhow::Result<()> {
         s3_client: s3,
         dynamodb_client: Arc::new(dynamodb_client),
         dynamo_db,
-        macro_event_broker: macro_event_broker.clone(),
+        conation_event_broker: conation_event_broker.clone(),
         sqs_client: sqs_client.clone(),
         notification_ingress_service: notification_ingress_service.clone(),
         conn_gateway_client: conn_gateway_client.clone(),

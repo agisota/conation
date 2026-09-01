@@ -9,7 +9,7 @@ use crate::domain::models::{
 };
 use cowlike::CowLike;
 use itertools::Itertools;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::Entity;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -171,11 +171,11 @@ impl<'a, T, U> SendNotificationRequest<'a, T, U> {
         type_disabled_users: HashSet<MacroUserIdStr<'a>>,
     ) -> (Self, Vec<RecipientExclusion<'a>>) {
         let recipient_is_sender = |id: FilteredRecipient<'a>| match (id, &self.req.sender_id) {
-            (FilteredRecipient::Allowed(macro_user_id_str), Some(sender))
-                if sender == &macro_user_id_str =>
+            (FilteredRecipient::Allowed(conation_user_id_str), Some(sender))
+                if sender == &conation_user_id_str =>
             {
                 FilteredRecipient::Excluded(RecipientExclusion {
-                    user_id: macro_user_id_str,
+                    user_id: conation_user_id_str,
                     reason: ExclusionReason::IsSender,
                 })
             }
@@ -183,11 +183,11 @@ impl<'a, T, U> SendNotificationRequest<'a, T, U> {
         };
 
         let user_muted_notifs = |id: FilteredRecipient<'a>| match id {
-            FilteredRecipient::Allowed(macro_user_id_str)
-                if muted_users.contains(&macro_user_id_str) =>
+            FilteredRecipient::Allowed(conation_user_id_str)
+                if muted_users.contains(&conation_user_id_str) =>
             {
                 FilteredRecipient::Excluded(RecipientExclusion {
-                    user_id: macro_user_id_str,
+                    user_id: conation_user_id_str,
                     reason: ExclusionReason::MutedNotifications,
                 })
             }
@@ -195,11 +195,11 @@ impl<'a, T, U> SendNotificationRequest<'a, T, U> {
         };
 
         let notif_type_is_ignored = |id: FilteredRecipient<'a>| match id {
-            FilteredRecipient::Allowed(macro_user_id_str)
-                if unsubscribed_users.contains(&macro_user_id_str) =>
+            FilteredRecipient::Allowed(conation_user_id_str)
+                if unsubscribed_users.contains(&conation_user_id_str) =>
             {
                 FilteredRecipient::Excluded(RecipientExclusion {
-                    user_id: macro_user_id_str,
+                    user_id: conation_user_id_str,
                     reason: ExclusionReason::UnsubscribedFromItem,
                 })
             }
@@ -207,11 +207,11 @@ impl<'a, T, U> SendNotificationRequest<'a, T, U> {
         };
 
         let user_disabled_type = |id: FilteredRecipient<'a>| match id {
-            FilteredRecipient::Allowed(macro_user_id_str)
-                if type_disabled_users.contains(&macro_user_id_str) =>
+            FilteredRecipient::Allowed(conation_user_id_str)
+                if type_disabled_users.contains(&conation_user_id_str) =>
             {
                 FilteredRecipient::Excluded(RecipientExclusion {
-                    user_id: macro_user_id_str,
+                    user_id: conation_user_id_str,
                     reason: ExclusionReason::DisabledNotificationType,
                 })
             }

@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod test;
 
-macro_rules! define_attachment_filters {
+conation_rules! define_attachment_filters {
     (
         document_mime_types: [$($document_mime_type:literal,)* ; $last_document_mime_type:literal],
         octet_stream_extensions: [$($extension:literal,)* ; $last_extension:literal],
@@ -94,7 +94,7 @@ pub fn attachment_is_media(mime_type: &str) -> bool {
         .any(|prefix| mime_type.starts_with(prefix))
 }
 
-macro_rules! define_attachment_whitelist {
+conation_rules! define_attachment_whitelist {
     ($($domain:literal,)* ; $last_domain:literal) => {
         /// Domains whose attachments are always inserted.
         pub const ATTACHMENT_WHITELIST_DOMAINS: &[&str] = &[

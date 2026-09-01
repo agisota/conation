@@ -12,7 +12,7 @@ use item_filters::ast::{
     crm_company::CrmCompanyLiteral, document::DocumentLiteral, email::EmailLiteral,
     foreign_entity::ForeignEntityLiteral, project::ProjectLiteral,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use models_pagination::{SimpleSortMethod, TypeEraseCursor};
 use models_soup::item::SoupItem;
 use soup::domain::{

@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 use async_graphql::dataloader::{DataLoader, Loader};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_notifications::NotifEvent;
 use notification::domain::models::UserNotificationRow;
 use rootcause::markers::{Cloneable, Dynamic};

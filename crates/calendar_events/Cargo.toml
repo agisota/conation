@@ -19,12 +19,12 @@ google = ["dep:reqwest", "dep:urlencoding"]
 mutation-client = ["dep:reqwest"]
 inbound = [
   "dep:axum",
-  "dep:macro_authorization",
+  "dep:conation_authorization",
   "dep:models_pagination",
   "schema",
 ]
 # The notification-service reminder notifier.
-notify = ["dep:macro_user_id", "dep:model-entity", "dep:model_notifications", "dep:notification"]
+notify = ["dep:conation_user_id", "dep:model-entity", "dep:model_notifications", "dep:notification"]
 postgres = ["dep:sqlx", "dep:tokio"]
 schema = ["dep:utoipa"]
 
@@ -36,17 +36,17 @@ aws-sdk-sqs = { workspace = true, optional = true }
 axum = { workspace = true, optional = true }
 chrono = { workspace = true }
 futures = { workspace = true }
-macro_authorization = { path = "../macro_authorization", default-features = false, features = [
+conation_authorization = { path = "../conation_authorization", default-features = false, features = [
   "axum",
 ], optional = true }
-macro_user_id = { path = "../macro_user_id", optional = true }
+conation_user_id = { path = "../conation_user_id", optional = true }
 model-entity = { path = "../model-entity", optional = true }
 model_notifications = { path = "../model_notifications", optional = true }
 models_pagination = { path = "../models_pagination", optional = true }
 notification = { path = "../notification", optional = true }
 reqwest = { workspace = true, optional = true }
-macro_event_broker = { path = "../macro_event_broker", default-features = false }
-macro_event_topics = { path = "../macro_event_topics" }
+conation_event_broker = { path = "../conation_event_broker", default-features = false }
+conation_event_topics = { path = "../conation_event_topics" }
 rootcause = { workspace = true }
 schemars = { workspace = true, optional = true }
 serde = { workspace = true }
@@ -62,6 +62,6 @@ uuid = { workspace = true }
 workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
-macro_db_migrator = { path = "../macro_db_migrator" }
-macro_user_id = { path = "../macro_user_id" }
+conation_db_migrator = { path = "../conation_db_migrator" }
+conation_user_id = { path = "../conation_user_id" }
 tokio = { workspace = true }

@@ -14,7 +14,7 @@ use agent_session::domain::service::AgentSessionService;
 use bot_id::BotId;
 use dashmap::DashMap;
 use dashmap::mapref::entry::Entry;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use tokio::sync::{mpsc, oneshot};
 use tracing::Instrument as _;
 use tracing::instrument::WithSubscriber as _;
@@ -22,7 +22,7 @@ use tracing::instrument::WithSubscriber as _;
 use crate::domain::error::{HarnessError, Result};
 use crate::domain::model::{
     AgentKind, AnnounceOrigin, AnnouncePrompt, DeliverAction, HarnessCommand, HarnessDefaults,
-    OpenSession, SessionAnnouncement, SpawnContainer, is_macro_staff,
+    OpenSession, SessionAnnouncement, SpawnContainer, is_conation_staff,
 };
 use crate::domain::ports::{
     AgentPromptComposer, ChannelPromptContext, ContainerManager, RuntimeConnections,
@@ -494,7 +494,7 @@ where
 
     async fn find_thread_session(
         &self,
-        thread_id: macro_uuid::Uuid,
+        thread_id: conation_uuid::Uuid,
         bot_id: BotId,
     ) -> agent_session::domain::error::Result<Option<AgentSessionId>> {
         match self
@@ -545,14 +545,14 @@ where
         match &command {
             HarnessCommand::Open(open)
                 if AgentKind::of(open.bot_id) == AgentKind::Cursor
-                    && !is_macro_staff(&open.origin.sender) =>
+                    && !is_conation_staff(&open.origin.sender) =>
             {
                 return Err(AgentSessionError::Forbidden.into());
             }
             HarnessCommand::Deliver(deliver) => {
                 let session = self.sessions.get_session(session_id).await?;
                 if AgentKind::of(session.bot_id) == AgentKind::Cursor
-                    && !deliver.actor.as_ref().is_some_and(is_macro_staff)
+                    && !deliver.actor.as_ref().is_some_and(is_conation_staff)
                 {
                     return Err(AgentSessionError::Forbidden.into());
                 }
@@ -862,8 +862,8 @@ where
 
     async fn load_prompt_context(
         &self,
-        channel_id: macro_uuid::Uuid,
-        message_id: macro_uuid::Uuid,
+        channel_id: conation_uuid::Uuid,
+        message_id: conation_uuid::Uuid,
         actor: Option<&MacroUserIdStr<'static>>,
     ) -> Vec<crate::domain::model::PriorChannelMessage> {
         async {

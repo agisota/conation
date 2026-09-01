@@ -8,7 +8,7 @@ version = "0.1.0"
 default = ["outbound", "ports", "service"]
 inbound = [
   "dep:axum",
-  "dep:macro_authorization",
+  "dep:conation_authorization",
   "dep:model-error-response",
   "dep:utoipa",
   "entity_access/inbound",
@@ -25,8 +25,8 @@ chrono = { workspace = true }
 entity_access = { path = "../entity_access", optional = true, default-features = false, features = ["ports"] }
 filter_ast = { path = "../filter_ast", optional = true }
 item_filters = { path = "../item_filters", optional = true }
-macro_authorization = { path = "../macro_authorization", optional = true, default-features = false, features = ["axum"] }
-macro_uuid = { path = "../macro_uuid" }
+conation_authorization = { path = "../conation_authorization", optional = true, default-features = false, features = ["axum"] }
+conation_uuid = { path = "../conation_uuid" }
 model-error-response = { path = "../model-error-response", optional = true }
 models_pagination = { path = "../models_pagination", optional = true }
 serde = { workspace = true }
@@ -41,8 +41,8 @@ workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
 http-body-util = { workspace = true }
-macro_db_migrator = { path = "../macro_db_migrator" }
-macro_user_id = { path = "../macro_user_id" }
+conation_db_migrator = { path = "../conation_db_migrator" }
+conation_user_id = { path = "../conation_user_id" }
 model_user = { path = "../model_user" }
 rootcause = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

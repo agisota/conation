@@ -5,7 +5,7 @@ mod test;
 
 use std::{collections::HashSet, ops::Deref};
 
-use macro_user_id::{
+use conation_user_id::{
     email::{EmailStr, ReadEmailParts},
     lowercased::Lowercase,
     user_id::{MacroUserId, MacroUserIdStr},

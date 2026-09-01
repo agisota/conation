@@ -2,7 +2,7 @@ use crate::api::context::SearchHandlerState;
 use crate::api::search::simple::SearchError;
 use email_db_client::contacts::get::ThreadContactsMap;
 use indexmap::IndexMap;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use models_email::service::message::{MessageSenderInfo, ThreadHistoryInfo};
 use models_properties::{EntityReference, EntityType};
 use models_search::email::{
@@ -33,7 +33,7 @@ pub(in crate::api::search) async fn enrich_emails(
 
     // Resolve every inbox the user can access (their own + delegated) so hits
     // from delegated inboxes are enriched rather than dropped.
-    let inboxes = email_db_client::links::get::fetch_inboxes_for_macro_id(&ctx.db, user_id)
+    let inboxes = email_db_client::links::get::fetch_inboxes_for_conation_id(&ctx.db, user_id)
         .await
         .map_err(SearchError::InternalError)?;
     if inboxes.is_empty() {

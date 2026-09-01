@@ -90,7 +90,7 @@ async fn initialize_backfill(
         &ctx.db,
         &ctx.email_api,
         &ctx.sqs_client,
-        &ctx.macro_event_broker,
+        &ctx.conation_event_broker,
     )
     .await
     {

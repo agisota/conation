@@ -8,8 +8,8 @@ use axum::{
     http::StatusCode,
     response::IntoResponse,
 };
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use macro_db_client::document::build_pdf_modification_data::{
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_db_client::document::build_pdf_modification_data::{
     get_complete_pdf_modification_data, get_pdf_modification_data_for_document,
 };
 use model::{
@@ -39,7 +39,7 @@ pub struct Params {
             (status = 500, body=GenericErrorResponse),
         )
     )]
-#[tracing::instrument(skip(ctx, user, document_context), fields(user_id=?user.authorization.user.macro_user_id, file_type=?document_context.file_type))]
+#[tracing::instrument(skip(ctx, user, document_context), fields(user_id=?user.authorization.user.conation_user_id, file_type=?document_context.file_type))]
 pub async fn handler(
     State(ctx): State<ApiContext>,
     user: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,

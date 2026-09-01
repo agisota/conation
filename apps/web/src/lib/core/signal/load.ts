@@ -2,8 +2,8 @@ import { createBlockSignal, type LoadErrors } from '@core/block';
 import type { OwnedBlockHandle } from '@core/orchestrator';
 import type { Source } from '@core/source';
 import type { IDocumentStorageServiceFile } from '@filesystem/file';
-import type { LoroManager } from '@macro-inc/collaboration/collab/manager';
-import type { LiveSyncSource } from '@macro-inc/collaboration/collab/source';
+import type { LoroManager } from '@conation/collaboration/collab/manager';
+import type { LiveSyncSource } from '@conation/collaboration/collab/source';
 import type { AccessLevel as UserAccessLevel } from '@service-storage/generated/schemas/accessLevel';
 import type { DocumentMetadata } from '@service-storage/generated/schemas/documentMetadata';
 

@@ -10,7 +10,7 @@
 //! unauthenticated".
 
 use agent_egress::domain::model::{McpServerSlug, RepoSlug, SessionToken};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use pipedream_mcp::domain::ports::ConnectionStore;
 use std::sync::Arc;
 use url::Url;

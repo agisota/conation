@@ -11,8 +11,8 @@ use crate::domain::models::{
 use crate::domain::ports::{ChatRepo, MessageRepo};
 use agent::types::ChatMessageContent;
 use attachment::FormattedParts;
-use macro_user_id::cowlike::CowLike;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::cowlike::CowLike;
+use conation_user_id::user_id::MacroUserIdStr;
 use model::chat::ChatMessageWithAttachments;
 use model::chat::NewChatMessage;
 use models_permissions::share_permission::access_level::AccessLevel;
@@ -115,7 +115,7 @@ impl ChatRepo for PgChatRepo {
 
         entity_access_db_utils::insert_entity_access_row(
             &mut tx,
-            &macro_uuid::string_to_uuid(&chat_id).unwrap(),
+            &conation_uuid::string_to_uuid(&chat_id).unwrap(),
             entity_access_db_utils::EntityType::Chat,
             user_id.as_ref(),
             entity_access_db_utils::EntityAccessSourceType::User,
@@ -219,7 +219,7 @@ impl ChatRepo for PgChatRepo {
 
         entity_access_db_utils::insert_entity_access_row(
             &mut tx,
-            &macro_uuid::string_to_uuid(&chat_id).unwrap(),
+            &conation_uuid::string_to_uuid(&chat_id).unwrap(),
             entity_access_db_utils::EntityType::Chat,
             user_id.as_ref(),
             entity_access_db_utils::EntityAccessSourceType::User,

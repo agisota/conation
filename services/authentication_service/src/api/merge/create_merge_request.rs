@@ -5,8 +5,8 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use macro_middleware::tracking::ClientIp;
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_middleware::tracking::ClientIp;
 use utoipa::ToSchema;
 
 use crate::{
@@ -60,7 +60,7 @@ pub async fn handler(
         .to_string();
 
     let (minute, daily) = ctx
-        .macro_cache_client
+        .conation_cache_client
         .get_merge_email_rate_limits(&req.email)
         .await
         .map_err(|e| {
@@ -96,9 +96,9 @@ pub async fn handler(
         return Err((StatusCode::TOO_MANY_REQUESTS, "daily rate limit exceeded").into_response());
     }
 
-    // get the user's macro_user_id through their email
-    let to_merge_macro_user_id =
-        macro_db_client::user::get::get_user_macro_id_by_email(&ctx.db, &req.email)
+    // get the user's conation_user_id through their email
+    let to_merge_conation_user_id =
+        conation_db_client::user::get::get_user_conation_id_by_email(&ctx.db, &req.email)
             .await
             .map_err(|e| {
                 tracing::error!(error=?e, "failed to get user macro id");
@@ -112,10 +112,10 @@ pub async fn handler(
             })?;
 
     // Generate merge request and get code
-    let code = macro_db_client::account_merge_request::create_account_merge_request(
+    let code = conation_db_client::account_merge_request::create_account_merge_request(
         &ctx.db,
         &user_context.fusion_user_id,
-        &to_merge_macro_user_id,
+        &to_merge_conation_user_id,
     )
     .await
     .map_err(|e| {
@@ -129,7 +129,7 @@ pub async fn handler(
             .into_response()
     })?;
 
-    let user_profile = macro_db_client::user::get::get_user_profile(&ctx.db, &user_context.user_id)
+    let user_profile = conation_db_client::user::get::get_user_profile(&ctx.db, &user_context.user_id)
         .await
         .map_err(|e| {
             tracing::error!(error=?e, "failed to get user profile");

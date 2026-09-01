@@ -2,7 +2,7 @@
 //!
 //! These traits define the contracts that adapters must implement.
 
-use macro_user_id::{
+use conation_user_id::{
     email::EmailStr,
     lowercased::Lowercase,
     user_id::{MacroUserId, MacroUserIdStr},

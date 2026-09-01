@@ -2,7 +2,7 @@ use crate::api::context::{ApiContext, AuthorizationService};
 use crate::model::response::history::GetUserHistoryResponse;
 use axum::extract::State;
 use axum::{Extension, http::StatusCode, response::IntoResponse};
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::response::{GenericErrorResponse, GenericResponse};
 use model::version::ApiVersionEnum;
 
@@ -16,7 +16,7 @@ use model::version::ApiVersionEnum;
             (status = 500, body=GenericErrorResponse),
         )
     )]
-#[tracing::instrument(skip(ctx, user), fields(user_id=?user.authorization.user.macro_user_id))]
+#[tracing::instrument(skip(ctx, user), fields(user_id=?user.authorization.user.conation_user_id))]
 pub async fn get_history_handler(
     State(ctx): State<ApiContext>,
     api_version: Extension<ApiVersionEnum>,
@@ -24,15 +24,15 @@ pub async fn get_history_handler(
 ) -> impl IntoResponse {
     tracing::info!("get_history_handler");
 
-    let history = match macro_db_client::history::get_user_history(
+    let history = match conation_db_client::history::get_user_history(
         &ctx.db,
-        user.authorization.user.macro_user_id.as_ref(),
+        user.authorization.user.conation_user_id.as_ref(),
     )
     .await
     {
         Ok(history) => history,
         Err(e) => {
-            tracing::error!(error=?e, user_id=?user.authorization.user.macro_user_id, "unable to get history");
+            tracing::error!(error=?e, user_id=?user.authorization.user.conation_user_id, "unable to get history");
             return GenericResponse::builder()
                 .message("unable to get history")
                 .is_error(true)

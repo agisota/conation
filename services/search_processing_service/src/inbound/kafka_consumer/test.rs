@@ -41,12 +41,12 @@ use documents::domain::events::{
     DocumentSyncContentUpdatedMetadata, DocumentTopicEvent, DocumentUpdatedMetadata,
     InteractionReason,
 };
-use macro_event_broker::{Event, EventBrokerError, MacroEvent as _, MessageParts};
-use macro_event_topics::{
+use conation_event_broker::{Event, EventBrokerError, MacroEvent as _, MessageParts};
+use conation_event_topics::{
     MacroCalendarTopic, MacroCallsTopic, MacroChannelsTopic, MacroChatsTopic, MacroDocumentsTopic,
     MacroEmailTopic, MacroProjectsTopic, MacroPropertiesTopic, Topic as _,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model::document::FileType;
 use models_properties::{
     DataType, EntityType, PropertyOwner, service::property_option::PropertyOptionValue,
@@ -1657,7 +1657,7 @@ fn property_envelope_decodes_round_trip_with_entity_key() {
 }
 
 #[test]
-fn exact_macro_documents_envelopes_decode_into_document_events() {
+fn exact_conation_documents_envelopes_decode_into_document_events() {
     let cases: Vec<(&[u8], Event<DocumentTopicEvent>)> = vec![
         (
             br#"{

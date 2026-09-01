@@ -4,7 +4,7 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use calendar_events::domain::ports::{CalendarMutationError, CalendarMutationService};
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::response::{EmptyResponse, ErrorResponse};
 use uuid::Uuid;
 
@@ -39,14 +39,14 @@ pub async fn disable_link_calendar_handler(
     authorization: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
     Path(link_id): Path<Uuid>,
 ) -> Result<Response, InboxActionError> {
-    let macro_user_id = &authorization.authorization.user.macro_user_id;
-    let (_, access) = authorize_inbox_access(&ctx, macro_user_id.as_ref(), link_id).await?;
+    let conation_user_id = &authorization.authorization.user.conation_user_id;
+    let (_, access) = authorize_inbox_access(&ctx, conation_user_id.as_ref(), link_id).await?;
     if access == InboxAccess::Delegated {
         return Err(InboxActionError::Forbidden);
     }
 
     ctx.calendar_mutation_service
-        .disconnect_calendar(macro_user_id.as_ref(), link_id)
+        .disconnect_calendar(conation_user_id.as_ref(), link_id)
         .await
         .map_err(|error| match error {
             CalendarMutationError::NotFound => InboxActionError::NotFound,

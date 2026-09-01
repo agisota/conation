@@ -24,7 +24,7 @@ tracing = { workspace = true }
 uuid = { workspace = true }
 
 # Domain models (always included)
-macro_user_id = { path = "../macro_user_id" }
+conation_user_id = { path = "../conation_user_id" }
 model-entity = { path = "../model-entity" }
 models_entity_access_management = { path = "../models_entity_access_management", default-features = false }
 models_permissions = { path = "../models_permissions" }
@@ -36,7 +36,7 @@ workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
 cool_asserts = "2"
-macro_db_migrator = { path = "../macro_db_migrator" }
+conation_db_migrator = { path = "../conation_db_migrator" }
 mockall = { workspace = true }
 sqlx = { workspace = true, features = ["postgres", "runtime-tokio-rustls"] }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

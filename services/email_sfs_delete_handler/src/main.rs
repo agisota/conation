@@ -7,7 +7,7 @@ use aws_lambda_events::event::eventbridge::EventBridgeEvent;
 use config::Config;
 use handler::handler;
 use lambda_runtime::{Error, LambdaEvent, run, service_fn};
-use macro_entrypoint::MacroEntrypoint;
+use conation_entrypoint::MacroEntrypoint;
 use sqlx::postgres::PgPoolOptions;
 use std::sync::Arc;
 
@@ -25,9 +25,9 @@ async fn main() -> Result<(), Error> {
         .await
         .context("could not connect to db")?;
 
-    let sfs_delete_queue = macro_queues::SfsDeleteQueue::new();
+    let sfs_delete_queue = conation_queues::SfsDeleteQueue::new();
     let sqs_client = sqs_client::SQS::new(aws_sdk_sqs::Client::new(
-        &macro_aws_config::get_macro_aws_config().await,
+        &conation_aws_config::get_conation_aws_config().await,
     ))
     .sfs_delete_queue(&sfs_delete_queue);
 

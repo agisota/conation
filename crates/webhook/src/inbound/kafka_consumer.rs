@@ -12,7 +12,7 @@
 //! error *without* committing, so the supervising restart loop redelivers the
 //! event and retries durably. Undecodable messages are logged and skipped
 //! rather than wedging the partition. The transport mirrors
-//! [`macro_event_broker::KafkaEventPublisher`]: plaintext for
+//! [`conation_event_broker::KafkaEventPublisher`]: plaintext for
 //! `ENVIRONMENT=local`, TLS + SASL/OAUTHBEARER with MSK IAM otherwise.
 //!
 //! For local testing, run with `RUST_LOG=webhook=trace` to see every received
@@ -30,7 +30,7 @@ use anyhow::Context as _;
 use channels::domain::broker_events::ChannelMacroEvent;
 use documents::domain::events::DocumentMacroEvent;
 use kafka_util::{GroupName, KafkaEventConsumer};
-use macro_event_broker::{
+use conation_event_broker::{
     KafkaConsumerAdapter, MacroEvent as _, MacroEventCollection as _, MacroEventConsumerService,
 };
 use rdkafka::consumer::CommitMode;
@@ -51,7 +51,7 @@ type WebhookKafkaAdapter =
     KafkaConsumerAdapter<WebhookEventIngestionConsumerGroup, DeclaredMacroEvent>;
 type WebhookKafkaConsumer = MacroEventConsumerService<DeclaredMacroEvent, WebhookKafkaAdapter>;
 
-macro_event_broker::declare_topics!(
+conation_event_broker::declare_topics!(
     DeclaredMacroEvent: DocumentMacroEvent,
     ChannelMacroEvent,
     WebhookMacroEvent,

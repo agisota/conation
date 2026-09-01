@@ -1,8 +1,8 @@
 //! Email notification adapter.
 
 use aws_sdk_sesv2::types::{Body, Content, Destination, EmailContent as SesEmailContent, Message};
-use macro_user_id::email::ReadEmailParts;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::email::ReadEmailParts;
+use conation_user_id::user_id::MacroUserIdStr;
 use rootcause::Report;
 
 use crate::domain::models::queue_message::EmailContent;

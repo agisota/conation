@@ -23,8 +23,8 @@ use entity_access_db_utils::{
     AccessLevel, EntityAccessSourceType, EntityType, delete_entity_access_rows,
     insert_entity_access_row,
 };
-use macro_user_id::user_id::MacroUserIdStr;
-use macro_uuid::Uuid;
+use conation_user_id::user_id::MacroUserIdStr;
+use conation_uuid::Uuid;
 use sqlx::PgPool;
 
 /// Postgres implementation of [`AgentSessionRepo`] and [`AgentSessionLogRepo`].
@@ -727,7 +727,7 @@ impl AgentSessionLogRepo for PgAgentSessionRepo {
             VALUES ($1, $2, $3, $4, $5)
             RETURNING created_at
             "#,
-            macro_uuid::generate_uuid_v7(),
+            conation_uuid::generate_uuid_v7(),
             log.agent_session_id.as_uuid(),
             log.user_id.as_ref().map(|user_id| user_id.as_ref()),
             direction,

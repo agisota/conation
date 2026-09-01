@@ -25,12 +25,12 @@ required-features = ["backfill"]
 backfill = [
   "dep:aws-sdk-secretsmanager",
   "dep:clap",
-  "dep:macro_aws_config",
-  "dep:macro_entrypoint",
-  "dep:macro_env",
+  "dep:conation_aws_config",
+  "dep:conation_entrypoint",
+  "dep:conation_env",
   "dep:secretsmanager_client",
   "dep:tokio",
-  "dep:macro_env_var"
+  "dep:conation_env_var"
 ]
 
 default = ["backfill"]
@@ -59,21 +59,21 @@ uuid = { workspace = true }
 # Optional — only compiled in for the `backfill` feature (the backfill binary).
 aws-sdk-secretsmanager = { workspace = true, optional = true }
 clap = { workspace = true, optional = true }
-macro_aws_config = { path = "../macro_aws_config", optional = true }
-macro_entrypoint = { path = "../macro_entrypoint", optional = true }
-macro_env = { path = "../macro_env", optional = true }
+conation_aws_config = { path = "../conation_aws_config", optional = true }
+conation_entrypoint = { path = "../conation_entrypoint", optional = true }
+conation_env = { path = "../conation_env", optional = true }
 secretsmanager_client = { path = "../secretsmanager_client", optional = true }
 tokio = { workspace = true, features = [
   "macros",
   "rt-multi-thread",
 ], optional = true }
-macro_env_var = { path = "../macro_env_var", optional = true }
+conation_env_var = { path = "../conation_env_var", optional = true }
 
-macro_service_urls = { path = "../macro_service_urls" }
+conation_service_urls = { path = "../conation_service_urls" }
 workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
 automod = { workspace = true }
-macro_db_migrator = { path = "../macro_db_migrator" }
-macro_env_var = { path = "../macro_env_var" }
+conation_db_migrator = { path = "../conation_db_migrator" }
+conation_env_var = { path = "../conation_env_var" }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

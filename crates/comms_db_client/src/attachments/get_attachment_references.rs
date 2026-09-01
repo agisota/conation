@@ -198,7 +198,7 @@ pub async fn get_attachment_references(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use macro_db_migrator::MACRO_DB_MIGRATIONS;
+    use conation_db_migrator::MACRO_DB_MIGRATIONS;
 
     // Helper function to extract channel references from entity references for testing
     fn extract_channel_refs(refs: Vec<EntityReference>) -> Vec<ChannelReference> {

@@ -5,7 +5,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use fusionauth::error::FusionAuthClientError;
-use macro_authorization::{InternalOnly, MacroAuthorizationExtractor};
+use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
 use model::response::{EmptyResponse, ErrorResponse};
 
 use crate::api::context::{ApiContext, AuthorizationService};

@@ -7,7 +7,7 @@ use axum::{
     http::{StatusCode, header},
 };
 use http_body_util::BodyExt;
-use macro_authorization::{
+use conation_authorization::{
     INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_USER_ID_HEADER, InternalIdentityClaims,
     MacroAuthorizationError, MacroAuthorizationService, MacroAuthorizationState,
 };
@@ -59,7 +59,7 @@ struct MockReferralService {
 impl ReferralService for MockReferralService {
     async fn get_referral_code_for_user<'a>(
         &self,
-        _user_id: &macro_user_id::user_id::MacroUserId<macro_user_id::lowercased::Lowercase<'a>>,
+        _user_id: &conation_user_id::user_id::MacroUserId<conation_user_id::lowercased::Lowercase<'a>>,
     ) -> Result<ReferralCode, ReferralError> {
         match &self.result {
             Ok(code) => Ok(code.clone()),
@@ -69,8 +69,8 @@ impl ReferralService for MockReferralService {
 
     async fn track_referral<'a>(
         &self,
-        _referred_user_id: &macro_user_id::user_id::MacroUserId<
-            macro_user_id::lowercased::Lowercase<'a>,
+        _referred_user_id: &conation_user_id::user_id::MacroUserId<
+            conation_user_id::lowercased::Lowercase<'a>,
         >,
         _referral_code: &ReferralCode,
     ) -> Result<(), ReferralError> {
@@ -86,8 +86,8 @@ impl ReferralService for MockReferralService {
 
     async fn process_referral<'a>(
         &self,
-        _referred_user_id: &macro_user_id::user_id::MacroUserId<
-            macro_user_id::lowercased::Lowercase<'a>,
+        _referred_user_id: &conation_user_id::user_id::MacroUserId<
+            conation_user_id::lowercased::Lowercase<'a>,
         >,
         _referral_code: &ReferralCode,
     ) -> Result<(), ReferralError> {
@@ -96,8 +96,8 @@ impl ReferralService for MockReferralService {
 
     async fn send_referral_invite(
         &self,
-        _sending_user: macro_user_id::user_id::MacroUserIdStr<'_>,
-        _recipient: macro_user_id::email::EmailStr<'static>,
+        _sending_user: conation_user_id::user_id::MacroUserIdStr<'_>,
+        _recipient: conation_user_id::email::EmailStr<'static>,
     ) -> Result<(), ReferralError> {
         Ok(())
     }

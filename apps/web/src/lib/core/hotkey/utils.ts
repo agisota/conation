@@ -1,5 +1,5 @@
 import { IS_MAC } from '@core/constant/isMac';
-import { Telemetry } from '@macro-inc/observability';
+import { Telemetry } from '@conation/observability';
 
 import { createEffect, createMemo } from 'solid-js';
 import {

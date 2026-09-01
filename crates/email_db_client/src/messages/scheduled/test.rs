@@ -3,7 +3,7 @@ use crate::messages::scheduled::get::{
 };
 use anyhow::Result;
 use chrono::{TimeZone, Utc};
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use sqlx::types::Uuid;
 use sqlx::{Pool, Postgres};
 

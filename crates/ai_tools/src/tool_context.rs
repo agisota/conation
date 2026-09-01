@@ -39,11 +39,11 @@ use foreign_entity::{
     outbound::pg_foreign_entity_repo::PgForeignEntityRepo,
 };
 use lexical_mention_extractor::LexicalMentionExtractor;
-use macro_event_broker::{
+use conation_event_broker::{
     EventBrokerError, KafkaEventPublisher, MacroEvent, MacroEventBroker, MacroEventBrokerService,
     NoopMacroEventBroker,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use notification::domain::service::SqsNotificationIngress;
 use notification::inbound::ai_tool::NotificationToolContext;
 use projects::inbound::toolset::ProjectToolContext;
@@ -202,7 +202,7 @@ pub fn build_channel_tool_context_without_side_effects(
 
 /// Clients a host provides to wire the real channel side effects for AI
 /// tools. Notification-ingress and contacts queue names are resolved through
-/// `macro_queues`, so hosts only supply the shared clients.
+/// `conation_queues`, so hosts only supply the shared clients.
 pub struct ChannelSideEffectClients {
     /// Connection gateway client used to fan realtime updates out to
     /// connected clients.
@@ -210,7 +210,7 @@ pub struct ChannelSideEffectClients {
     /// SQS client used for the notification-ingress and contacts queues.
     pub sqs: aws_sdk_sqs::Client,
     /// Broker publishing channel events to the `macro.channels` topic.
-    pub macro_event_broker: ToolEventBroker,
+    pub conation_event_broker: ToolEventBroker,
 }
 
 /// Build the channel AI tool context dispatching the same side effects as the
@@ -227,13 +227,13 @@ pub fn build_channel_tool_context_with_side_effects(
     let notification_ingress = Arc::new(SqsNotificationIngress {
         queue: notification::outbound::queue::SqsQueue::new(
             clients.sqs.clone(),
-            macro_queues::NotificationIngressQueue::new().to_string(),
+            conation_queues::NotificationIngressQueue::new().to_string(),
         ),
     });
     let contacts_ingress = Arc::new(SqsContactsIngress {
         queue: SqsContactsQueue::new(
             clients.sqs.clone(),
-            macro_queues::ContactsQueue::new().to_string(),
+            conation_queues::ContactsQueue::new().to_string(),
         ),
     });
     let side_effects = ChannelSideEffectService::new(
@@ -242,7 +242,7 @@ pub fn build_channel_tool_context_with_side_effects(
         NotificationChannelSender::new(notification_ingress),
         ContactsChannelDispatcher::new(contacts_ingress),
     )
-    .with_macro_event_broker(clients.macro_event_broker);
+    .with_conation_event_broker(clients.conation_event_broker);
     build_channel_tool_context_with_dispatcher(
         pool,
         Arc::new(SpawnedChannelEventDispatcher::new(side_effects)),
@@ -443,7 +443,7 @@ impl TaskPropertiesPort for TaskPropertiesAdapter {
     ) -> anyhow::Result<()> {
         use properties::PropertiesService as _;
 
-        let user_id = macro_user_id::user_id::MacroUserIdStr::parse_from_str(user_id)?;
+        let user_id = conation_user_id::user_id::MacroUserIdStr::parse_from_str(user_id)?;
         let entity_access_receipt = self
             .entity_access_service
             .generate_entity_access_receipt::<EditAccessLevel>(
@@ -887,7 +887,7 @@ pub type ToolProjectToolContext = ProjectToolContext<
 /// email tool contexts run on so moves share their side-effect wiring.
 pub fn build_project_tool_context(
     pool: sqlx::PgPool,
-    macro_event_broker: ToolEventBroker,
+    conation_event_broker: ToolEventBroker,
     entity_access_service: Arc<ToolEntityAccessService>,
     document_service: Arc<ToolDocumentService>,
     chat_service: Arc<ToolChatService>,
@@ -903,7 +903,7 @@ pub fn build_project_tool_context(
         ),
         projects::domain::ports::UnavailableProjectSearchIndexer,
         None,
-        macro_event_broker,
+        conation_event_broker,
     );
     ProjectToolContext::new(
         Arc::new(project_service),
@@ -996,7 +996,7 @@ impl ToolEntityCreator {
                 Some(team_id),
                 members
                     .into_iter()
-                    .map(|member| macro_user_id::cowlike::CowLike::into_owned(member.user_id))
+                    .map(|member| conation_user_id::cowlike::CowLike::into_owned(member.user_id))
                     .collect(),
             ),
             Err(e) => {

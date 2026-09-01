@@ -1,6 +1,6 @@
 use anyhow::Context;
 use axum::http::StatusCode;
-use macro_sha_count_client::Redis;
+use conation_sha_count_client::Redis;
 use sqlx::{Pool, Postgres};
 use tracing::instrument;
 
@@ -28,7 +28,7 @@ pub async fn save_document(
 ) -> Result<DocumentResponseMetadata, (StatusCode, String, Option<(String, i64)>)> {
     tracing::trace!("saving document");
 
-    let document_metadata: DocumentMetadata = match macro_db_client::document::save_document(
+    let document_metadata: DocumentMetadata = match conation_db_client::document::save_document(
         db,
         document_id,
         file_type,

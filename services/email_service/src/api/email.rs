@@ -32,7 +32,7 @@ pub fn router(state: ApiContext) -> Router<ApiContext> {
         .nest("/sync", sync::router(state.clone()))
         // deleting all user info from the db can take a long time - prevent connection from dropping
         .layer(axum::middleware::from_fn(
-            macro_middleware::connection_drop_prevention_handler,
+            conation_middleware::connection_drop_prevention_handler,
         ))
         .route("/init", post(init::handler))
 }

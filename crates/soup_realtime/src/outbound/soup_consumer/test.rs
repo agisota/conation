@@ -1,4 +1,4 @@
-use macro_event_broker::{
+use conation_event_broker::{
     EventBrokerError, MacroEventCollection as _, MessageParts, MessageWrapper,
 };
 

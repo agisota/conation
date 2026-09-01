@@ -44,7 +44,7 @@ pub async fn upsert_calendar_event(
     let event_id = uuid::Uuid::parse_str(&message.event_id)
         .context("calendar event id is not a valid uuid")?;
 
-    let event = macro_db_client::calendar_event::get_event_for_index::get_calendar_event_for_index(
+    let event = conation_db_client::calendar_event::get_event_for_index::get_calendar_event_for_index(
         db, event_id,
     )
     .await

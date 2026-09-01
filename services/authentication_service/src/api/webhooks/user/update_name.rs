@@ -4,11 +4,11 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use macro_authorization::{InternalOnly, MacroAuthorizationExtractor};
+use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
 
 use crate::api::context::{ApiContext, AuthorizationService};
 
-use macro_db_client::user::update_user_name::update_user_name;
+use conation_db_client::user::update_user_name::update_user_name;
 
 use model::{authentication::webhooks::update_name::UpdateNameWebhook, response::EmptyResponse};
 

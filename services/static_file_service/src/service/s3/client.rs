@@ -29,7 +29,7 @@ impl S3Client {
             .await
             .context("failed to create presigned url")?;
 
-        Ok(macro_aws_config::transform_aws_url(presigned_url.uri()))
+        Ok(conation_aws_config::transform_aws_url(presigned_url.uri()))
     }
 
     #[tracing::instrument(skip(self))]
@@ -60,7 +60,7 @@ impl S3Client {
             .await
             .context("failed to create presigned URL")?;
 
-        Ok(macro_aws_config::transform_aws_url(presigned_url.uri()))
+        Ok(conation_aws_config::transform_aws_url(presigned_url.uri()))
     }
 
     #[tracing::instrument(skip(self), err)]

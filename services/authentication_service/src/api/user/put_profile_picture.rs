@@ -7,8 +7,8 @@ use axum::{
 
 use crate::api::context::{ApiContext, AuthorizationService};
 
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use macro_db_client::user::update_profile_picture::update_profile_picture;
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_db_client::user::update_profile_picture::update_profile_picture;
 use model::response::{EmptyResponse, ErrorResponse};
 use serde::Deserialize;
 

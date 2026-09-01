@@ -78,7 +78,7 @@ async fn notify_if_self_contact(
 
     cg_refresh_email(
         &ctx.connection_gateway_client,
-        link.macro_id.as_ref(),
+        link.conation_id.as_ref(),
         RefreshEmailEvent::PhotoSynced { link_id },
     )
     .await;

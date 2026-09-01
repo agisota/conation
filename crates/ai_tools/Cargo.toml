@@ -48,12 +48,12 @@ item_filters = { path = "../item_filters" }
 lazy_static.workspace = true
 lexical_client = { path = "../lexical_client" }
 lexical_mention_extractor = { path = "../lexical_mention_extractor" }
-macro_aws_config = { path = "../macro_aws_config" }
-macro_db_client = { path = "../macro_db_client" }
-macro_env_var = { path = "../macro_env_var" }
-macro_event_broker = { path = "../macro_event_broker" }
-macro_queues = { path = "../macro_queues" }
-macro_user_id = { path = "../macro_user_id" }
+conation_aws_config = { path = "../conation_aws_config" }
+conation_db_client = { path = "../conation_db_client" }
+conation_env_var = { path = "../conation_env_var" }
+conation_event_broker = { path = "../conation_event_broker" }
+conation_queues = { path = "../conation_queues" }
+conation_user_id = { path = "../conation_user_id" }
 mcp_client = { path = "../mcp_client" }
 mcp_select = { path = "../mcp_select" }
 pipedream_mcp = { path = "../pipedream_mcp" }
@@ -94,11 +94,11 @@ tracing.workspace = true
 utoipa.workspace = true
 uuid.workspace = true
 remote_env_var = { path = "../remote_env_var" }
-macro_env = { path = "../macro_env" }
+conation_env = { path = "../conation_env" }
 secretsmanager_client = { path = "../secretsmanager_client" }
 aws-sdk-secretsmanager = { workspace = true }
 
-macro_service_urls = { path = "../macro_service_urls" }
+conation_service_urls = { path = "../conation_service_urls" }
 workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]

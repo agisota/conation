@@ -1,11 +1,11 @@
 use super::*;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
-use macro_user_id::email::EmailStr;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_user_id::email::EmailStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use models_email::email::service::link::{Link, UserProvider};
 use sqlx::{Pool, Postgres};
 
-/// Mirrors the self-link bootstrap write: the row is owned by the child's macro_id while
+/// Mirrors the self-link bootstrap write: the row is owned by the child's conation_id while
 /// the OAuth grant (fusionauth_user_id) lives under the primary's fusion id. Exercises the
 /// `&mut PgConnection` path so the link, its default settings, and the gmail history all
 /// commit atomically within one transaction.
@@ -13,13 +13,13 @@ use sqlx::{Pool, Postgres};
 async fn upsert_link_in_transaction_persists_divergent_ids(
     pool: Pool<Postgres>,
 ) -> anyhow::Result<()> {
-    let child_macro_id = "macro|child@personal.test";
+    let child_conation_id = "macro|child@personal.test";
     let primary_fusion_id = "11111111-1111-1111-1111-111111111111";
     let child_email = "child@personal.test";
 
     let link = Link {
-        id: macro_uuid::generate_uuid_v7(),
-        macro_id: MacroUserIdStr::try_from(child_macro_id.to_string())?,
+        id: conation_uuid::generate_uuid_v7(),
+        conation_id: MacroUserIdStr::try_from(child_conation_id.to_string())?,
         fusionauth_user_id: primary_fusion_id.to_string(),
         email_address: EmailStr::try_from(child_email.to_string())?,
         provider: UserProvider::Gmail,
@@ -45,12 +45,12 @@ async fn upsert_link_in_transaction_persists_divergent_ids(
     tx.commit().await?;
 
     let row = sqlx::query!(
-        r#"SELECT macro_id, fusionauth_user_id FROM email_links WHERE id = $1"#,
+        r#"SELECT conation_id, fusionauth_user_id FROM email_links WHERE id = $1"#,
         inserted.id,
     )
     .fetch_one(&pool)
     .await?;
-    assert_eq!(row.macro_id, child_macro_id);
+    assert_eq!(row.conation_id, child_conation_id);
     assert_eq!(row.fusionauth_user_id, primary_fusion_id);
 
     assert_eq!(

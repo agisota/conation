@@ -6,7 +6,7 @@ use entity_access::domain::ports::EntityAccessService;
 use entity_access::inbound::axum_extractors::{
     ProjectBodyAccessLevelExtractorV2, ThreadAccessLevelExtractor,
 };
-use macro_authorization::MacroAuthorizationService;
+use conation_authorization::MacroAuthorizationService;
 use model_error_response::ErrorResponse;
 use thiserror::Error;
 

@@ -1,7 +1,7 @@
 //! This module defines all of the ports that the frecency domain requires
 
 use chrono::{DateTime, Utc};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::Entity;
 
 use crate::domain::models::{

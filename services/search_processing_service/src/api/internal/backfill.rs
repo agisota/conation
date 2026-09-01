@@ -21,7 +21,7 @@ use axum::{
     response::{IntoResponse, Response},
     routing::{get, post},
 };
-use macro_authorization::{InternalOnly, MacroAuthorizationExtractor};
+use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
 use serde::Serialize;
 
 use crate::BackfillServiceImpl;

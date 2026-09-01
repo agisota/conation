@@ -3,7 +3,7 @@ use entity_access::{
     domain::{models::MemberTeamRole, ports::EntityAccessService},
     inbound::axum_extractors::MacroUserTeamExtractorV2,
 };
-use macro_authorization::MacroAuthorizationService;
+use conation_authorization::MacroAuthorizationService;
 use model_error_response::ErrorResponse;
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};

@@ -9,7 +9,7 @@ use anyhow::Result;
 use axum::extract::Json;
 use axum::extract::State;
 use axum::response::{IntoResponse, Response};
-use macro_authorization::{OptionalMacroAuthorizationExtractor, UserOrInternalService};
+use conation_authorization::{OptionalMacroAuthorizationExtractor, UserOrInternalService};
 use model::document::{DocumentPreview, DocumentPreviewV2, WithDocumentId};
 use model::response::{GenericErrorResponse, GenericResponse};
 use reqwest::StatusCode;
@@ -43,7 +43,7 @@ pub async fn get_batch_preview_handler(
     let document_ids: Vec<String> = unique_document_ids.into_iter().collect();
 
     let document_preview_results =
-        macro_db_client::document::preview::batch_get_document_preview_v2(&ctx.db, &document_ids)
+        conation_db_client::document::preview::batch_get_document_preview_v2(&ctx.db, &document_ids)
             .await
             .map_err(|err| {
                 tracing::error!(error=?err, "unable to get document preview");

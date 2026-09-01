@@ -130,7 +130,7 @@ impl CustomerRepository for CustomerRepositoryImpl {
         &self,
         subscription_id: &stripe::SubscriptionId,
         team_id: &uuid::Uuid,
-        team_owner_id: &macro_user_id::user_id::MacroUserIdStr<'_>,
+        team_owner_id: &conation_user_id::user_id::MacroUserIdStr<'_>,
     ) -> Result<(), CustomerError> {
         let mut metadata = HashMap::new();
         metadata.insert("team_id".to_string(), team_id.to_string());

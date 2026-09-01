@@ -8,9 +8,9 @@ use std::time::Duration;
 
 use email_formatting::EmailDigestNotification;
 use hmac::{Hmac, Mac};
-use macro_env::Environment;
-use macro_user_id::cowlike::CowLike;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_env::Environment;
+use conation_user_id::cowlike::CowLike;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::EntityType;
 use model_notifications::ChannelMessageSendMetadata;
 use notification::domain::models::email_notification_digest::ports::MessageId;
@@ -133,7 +133,7 @@ async fn main() -> Result<(), Report> {
         NotificationIngressService::new(sandbox_repo, queue.clone(), state_machine_a);
 
     // Egress: interactive mobile push, SES email, real state machine B
-    let aws_config = macro_aws_config::get_macro_aws_config().await;
+    let aws_config = conation_aws_config::get_conation_aws_config().await;
     let (prompt_tx, mut prompt_rx) = tokio::sync::mpsc::unbounded_channel::<PushPromptRequest>();
     let mobile_sender = match &config.sns_mode {
         SnsMode::Mock => SandboxMobileSender::Interactive(InteractiveMobileSender { prompt_tx }),
@@ -450,7 +450,7 @@ async fn run_config_wizard() -> Result<SandboxConfig, Report> {
 
     let sns_mode = if sns_choice == "Real (AWS)" {
         let endpoint_arn = inquire::Text::new("SNS endpoint ARN?").prompt()?;
-        let aws_config = macro_aws_config::get_macro_aws_config().await;
+        let aws_config = conation_aws_config::get_conation_aws_config().await;
         SnsMode::Real {
             sns_client: aws_sdk_sns::Client::new(&aws_config),
             endpoint_arn,

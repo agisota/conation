@@ -71,7 +71,7 @@ setup_test_envs:
     echo "DATABASE_URL={{ DATABASE_URL }}" >> ./services/scheduled_action/.env
     echo "DATABASE_URL={{ DATABASE_URL }}" >> ./crates/notification_db_client/.env
     echo "DATABASE_URL={{ DATABASE_URL }}" >> ./crates/notification/.env
-    echo "DATABASE_URL={{ DATABASE_URL }}" >> ./crates/macro_db_client/.env
+    echo "DATABASE_URL={{ DATABASE_URL }}" >> ./crates/conation_db_client/.env
     echo "DATABASE_URL={{ DATABASE_URL }}" >> ./crates/email_db_client/.env
     echo "DATABASE_URL={{ DATABASE_URL }}" >> ./services/email_refresh_handler/.env
     echo "DATABASE_URL={{ DATABASE_URL }}" >> ./crates/comms_db_client/.env
@@ -122,7 +122,7 @@ setup_test_envs:
     echo "DATABASE_URL={{ DATABASE_URL }}" >> ./services/email_service/.env
 
 setup_macrodb:
-    just crates/macro_db_client/create_db
-    just crates/macro_db_client/migrate_db
+    just crates/conation_db_client/create_db
+    just crates/conation_db_client/migrate_db
 
 initialize_dbs: setup_macrodb

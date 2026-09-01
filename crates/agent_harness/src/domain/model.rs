@@ -6,8 +6,8 @@ use agent_runtime_protocol::domain::action::{AgentAction, AgentActionId};
 use agent_session::domain::model::{AgentSessionId, MessageId, SandboxSize};
 use agent_session::domain::ports::ControlEvent;
 use bot_id::BotId;
-use macro_user_id::user_id::MacroUserIdStr;
-use macro_uuid::Uuid;
+use conation_user_id::user_id::MacroUserIdStr;
+use conation_uuid::Uuid;
 /// Where a mention happened.
 #[derive(Debug, Clone)]
 pub struct MentionOrigin {
@@ -101,7 +101,7 @@ impl AgentKind {
 /// Whether a user belongs to the Macro staff domain - the egress crate's
 /// predicate, reused so the harness's staff gates and the proxy's can never
 /// disagree about who staff is.
-pub(crate) use agent_egress::domain::model::is_macro_staff;
+pub(crate) use agent_egress::domain::model::is_conation_staff;
 
 /// Where a prompt came from, when it came from somewhere the session should
 /// answer back into.
@@ -304,7 +304,7 @@ impl SandboxEgress {
 
     /// Where the proxy serves Macro's own MCP server: its own route, so no
     /// connected app's slug can ever name it.
-    pub fn macro_mcp_url(&self) -> String {
+    pub fn conation_mcp_url(&self) -> String {
         format!("{}/mcp-macro", self.base_url)
     }
 
@@ -334,7 +334,7 @@ impl SandboxEgress {
     /// The one enumeration behind both renderings - [`Self::acp_servers`] and
     /// the Cursor API's - so the two can never advertise different sets.
     pub fn server_entries(&self) -> impl Iterator<Item = (String, String)> + '_ {
-        std::iter::once((MACRO_MCP_NAME.to_owned(), self.macro_mcp_url())).chain(
+        std::iter::once((MACRO_MCP_NAME.to_owned(), self.conation_mcp_url())).chain(
             self.mcp_servers
                 .iter()
                 .map(|slug| (slug.as_str().to_owned(), self.mcp_url(slug))),

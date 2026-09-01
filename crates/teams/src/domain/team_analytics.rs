@@ -3,7 +3,7 @@
 #[cfg(test)]
 mod test;
 
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 
 use crate::domain::model::TeamRole;
 

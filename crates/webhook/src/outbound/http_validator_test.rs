@@ -120,7 +120,7 @@ fn accepts_public_https_endpoint() {
 
 #[test]
 fn detects_reserved_headers_case_insensitively() {
-    assert!(is_reserved_macro_header("X-Macro-Signature"));
-    assert!(is_reserved_macro_header("x-macro-event-id"));
-    assert!(!is_reserved_macro_header("X-External-Trace"));
+    assert!(is_reserved_conation_header("X-Macro-Signature"));
+    assert!(is_reserved_conation_header("x-macro-event-id"));
+    assert!(!is_reserved_conation_header("X-External-Trace"));
 }

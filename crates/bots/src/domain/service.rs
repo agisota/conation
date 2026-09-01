@@ -13,8 +13,8 @@ use super::{
 use bot_token::HashedBotToken;
 use chrono::{DateTime, Utc};
 use entity_access::domain::models::{EntityAccessReceipt, EntityType, MemberParticipantRole};
-use macro_event_broker::MacroEventBroker;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_event_broker::MacroEventBroker;
+use conation_user_id::user_id::MacroUserIdStr;
 use uuid::Uuid;
 
 /// Bot service implementation.

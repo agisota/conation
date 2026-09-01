@@ -30,7 +30,7 @@ use entity_access::domain::models::{
 };
 use entity_access_management::domain::ports::EntityAccessManagementService;
 use frecency::domain::ports::FrecencyQueryService;
-use macro_event_broker::{MacroEventBroker, NoopMacroEventBroker};
+use conation_event_broker::{MacroEventBroker, NoopMacroEventBroker};
 use model_entity::EntityType;
 use models_pagination::{PaginatedCursor, SimpleSortMethod};
 use std::collections::{HashMap, HashSet};
@@ -59,7 +59,7 @@ pub struct EmailServiceImpl<T, U, E, CS, Eam, B = NoopMacroEventBroker> {
     pub(crate) enqueuer: E,
     pub(crate) crm_service: CS,
     pub(crate) entity_access_management_service: Eam,
-    pub(crate) macro_event_broker: B,
+    pub(crate) conation_event_broker: B,
     pub(crate) sent_undo_delay_secs: u32,
 }
 
@@ -85,7 +85,7 @@ where
             enqueuer,
             crm_service,
             entity_access_management_service,
-            macro_event_broker: NoopMacroEventBroker,
+            conation_event_broker: NoopMacroEventBroker,
             sent_undo_delay_secs,
         }
     }
@@ -94,9 +94,9 @@ where
 impl<T, U, E, CS, Eam, B> EmailServiceImpl<T, U, E, CS, Eam, B> {
     /// Replace the event broker used to publish `macro.email` events.
     /// [`new`](Self::new) starts with a [`NoopMacroEventBroker`].
-    pub fn with_macro_event_broker<B2: MacroEventBroker>(
+    pub fn with_conation_event_broker<B2: MacroEventBroker>(
         self,
-        macro_event_broker: B2,
+        conation_event_broker: B2,
     ) -> EmailServiceImpl<T, U, E, CS, Eam, B2> {
         EmailServiceImpl {
             email_repo: self.email_repo,
@@ -104,7 +104,7 @@ impl<T, U, E, CS, Eam, B> EmailServiceImpl<T, U, E, CS, Eam, B> {
             enqueuer: self.enqueuer,
             crm_service: self.crm_service,
             entity_access_management_service: self.entity_access_management_service,
-            macro_event_broker,
+            conation_event_broker,
             sent_undo_delay_secs: self.sent_undo_delay_secs,
         }
     }
@@ -116,7 +116,7 @@ impl<T, U, E, CS, Eam, B> EmailServiceImpl<T, U, E, CS, Eam, B> {
         B: MacroEventBroker,
     {
         let _ = self
-            .macro_event_broker
+            .conation_event_broker
             .send_event(event)
             .inspect_err(|e| tracing::error!(error=?e, "failed to publish email macro event"));
     }
@@ -208,42 +208,42 @@ where
         self.get_email_thread_previews_impl(req).await
     }
 
-    async fn get_link_by_auth_id_and_macro_id(
+    async fn get_link_by_auth_id_and_conation_id(
         &self,
         auth_id: &str,
-        macro_id: macro_user_id::user_id::MacroUserIdStr<'_>,
+        conation_id: conation_user_id::user_id::MacroUserIdStr<'_>,
     ) -> Result<Option<crate::domain::models::Link>, EmailErr> {
-        self.get_link_by_auth_id_and_macro_id_impl(auth_id, macro_id)
+        self.get_link_by_auth_id_and_conation_id_impl(auth_id, conation_id)
             .await
     }
 
-    async fn get_link_by_macro_id(
+    async fn get_link_by_conation_id(
         &self,
-        macro_id: macro_user_id::user_id::MacroUserIdStr<'_>,
+        conation_id: conation_user_id::user_id::MacroUserIdStr<'_>,
     ) -> Result<Option<crate::domain::models::Link>, EmailErr> {
         self.email_repo
-            .link_by_macro_id(macro_id)
+            .link_by_conation_id(conation_id)
             .await
             .map_err(|e| EmailErr::RepoErr(e.into()))
     }
 
-    async fn get_inboxes_for_macro_id(
+    async fn get_inboxes_for_conation_id(
         &self,
-        macro_id: macro_user_id::user_id::MacroUserIdStr<'_>,
+        conation_id: conation_user_id::user_id::MacroUserIdStr<'_>,
     ) -> Result<Vec<crate::domain::models::Link>, EmailErr> {
         self.email_repo
-            .inboxes_for_macro_id(macro_id)
+            .inboxes_for_conation_id(conation_id)
             .await
             .map_err(|e| EmailErr::RepoErr(e.into()))
     }
 
     async fn get_owned_link_for_thread(
         &self,
-        macro_id: macro_user_id::user_id::MacroUserIdStr<'_>,
+        conation_id: conation_user_id::user_id::MacroUserIdStr<'_>,
         thread_id: uuid::Uuid,
     ) -> Result<Option<crate::domain::models::Link>, EmailErr> {
         self.email_repo
-            .owned_link_for_thread(thread_id, macro_id)
+            .owned_link_for_thread(thread_id, conation_id)
             .await
             .map_err(|e| EmailErr::RepoErr(e.into()))
     }
@@ -307,20 +307,20 @@ where
 
     async fn mark_thread_seen(
         &self,
-        macro_id: macro_user_id::user_id::MacroUserIdStr<'static>,
+        conation_id: conation_user_id::user_id::MacroUserIdStr<'static>,
         thread_id: Uuid,
     ) -> Result<(), EmailErr> {
-        self.mark_thread_seen_impl(macro_id, thread_id).await
+        self.mark_thread_seen_impl(conation_id, thread_id).await
     }
 
     async fn update_thread_labels_for_user(
         &self,
-        macro_id: macro_user_id::user_id::MacroUserIdStr<'static>,
+        conation_id: conation_user_id::user_id::MacroUserIdStr<'static>,
         thread_id: Uuid,
         label_id: Uuid,
         add: bool,
     ) -> Result<UpdateThreadLabelsResult, EmailErr> {
-        self.update_thread_labels_for_user_impl(macro_id, thread_id, label_id, add)
+        self.update_thread_labels_for_user_impl(conation_id, thread_id, label_id, add)
             .await
     }
 
@@ -415,7 +415,7 @@ where
                         self.publish_email_event(&EmailMacroEvent::thread_project_changed(
                             ThreadProjectChangedMetadata {
                                 link_id: link.id,
-                                owner: link.macro_id.clone(),
+                                owner: link.conation_id.clone(),
                                 actor: actor.clone(),
                                 thread_id,
                                 previous_project_id: old_project_id.clone(),

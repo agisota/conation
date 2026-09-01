@@ -15,7 +15,7 @@ const mapGraphqlGroupedSoupPageMock = vi.hoisted(() =>
   vi.fn((data: { page: unknown }) => data.page)
 );
 
-vi.mock('@macro-inc/observability', () => ({
+vi.mock('@conation/observability', () => ({
   Telemetry: { error: vi.fn() },
 }));
 

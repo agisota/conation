@@ -2,7 +2,7 @@
 
 use super::repository::DbDeviceType;
 use crate::domain::models::device::DeviceType;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use rootcause::Report;
 use sqlx::PgPool;
 
@@ -95,7 +95,7 @@ impl DeviceRegistrationDbOps for PgPool {
         device_endpoint: &str,
         device_type: &DeviceType,
     ) -> Result<(), Report> {
-        let id = macro_uuid::generate_uuid_v7();
+        let id = conation_uuid::generate_uuid_v7();
         let user_id_str = user_id.as_ref();
         sqlx::query!(
             r#"

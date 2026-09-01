@@ -10,7 +10,7 @@ use chat::domain::models::CreateChatArgs;
 use chat::domain::ports::ChatRepo;
 use chat::outbound::postgres::PgChatRepo;
 use futures::StreamExt;
-use macro_db_client::dcs::create_chat_message::create_chat_message;
+use conation_db_client::dcs::create_chat_message::create_chat_message;
 use memory::domain::MemoryService;
 use memory::domain::service::MemoryServiceImpl;
 use memory::outbound::pg_memory_repo::PgMemoryRepo;
@@ -59,7 +59,7 @@ pub async fn run_agent_task(
 async fn fetch_user_memory(
     db: &PgPool,
     tool_context: &ToolServiceContext,
-    owner: &macro_user_id::user_id::MacroUserIdStr<'static>,
+    owner: &conation_user_id::user_id::MacroUserIdStr<'static>,
 ) -> Option<String> {
     let tools = all_tools();
     let tools = ToolSetWithPrompt {

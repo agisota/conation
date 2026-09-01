@@ -16,10 +16,10 @@ chrono = { workspace = true }
 connection_gateway_client = { path = "../connection_gateway_client" }
 dateparser = { workspace = true }
 futures = { workspace = true }
-macro_authorization = { path = "../macro_authorization", default-features = false, features = [
+conation_authorization = { path = "../conation_authorization", default-features = false, features = [
   "axum",
 ] }
-macro_user_id = { path = "../macro_user_id" }
+conation_user_id = { path = "../conation_user_id" }
 mcp_select = { path = "../mcp_select" }
 model-entity = { path = "../model-entity" }
 models_properties = { path = "../models_properties" }
@@ -40,4 +40,4 @@ uuid = { workspace = true }
 workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
-macro_db_migrator = { path = "../macro_db_migrator" }
+conation_db_migrator = { path = "../conation_db_migrator" }

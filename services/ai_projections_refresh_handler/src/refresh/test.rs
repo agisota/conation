@@ -4,7 +4,7 @@
 //! step is a thin wrapper over `sqs_client` and needs no DB).
 
 use chrono::{DateTime, Duration, Utc};
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use sqlx::{Pool, Postgres};
 
 use super::*;

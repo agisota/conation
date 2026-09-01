@@ -44,8 +44,8 @@ import { $generateHtmlFromNodes } from '@lexical/html';
 import {
   $appendWatermarkNodeToLast,
   $removeAllWatermarkNodes,
-} from '@macro-inc/lexical-core';
-import { Telemetry } from '@macro-inc/observability';
+} from '@conation/lexical-core';
+import { Telemetry } from '@conation/observability';
 import ChevronDown from '@phosphor/caret-down.svg';
 import CaretRight from '@phosphor/caret-right.svg';
 import DotsThree from '@phosphor/dots-three.svg';

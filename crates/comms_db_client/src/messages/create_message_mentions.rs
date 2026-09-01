@@ -78,7 +78,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::{messages::create_message_mentions, model::SimpleMention};
-    use macro_db_migrator::MACRO_DB_MIGRATIONS;
+    use conation_db_migrator::MACRO_DB_MIGRATIONS;
     use sqlx::PgPool;
     use std::str::FromStr;
     use uuid::Uuid;

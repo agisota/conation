@@ -2,9 +2,9 @@ use std::time::Duration;
 
 use agent::types::{ChatMessageContent, Role};
 use chrono::Utc;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
-use macro_user_id::cowlike::CowLike;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_user_id::cowlike::CowLike;
+use conation_user_id::user_id::MacroUserIdStr;
 use model::chat::NewChatMessage;
 use models_permissions::share_permission::access_level::AccessLevel;
 use models_permissions::share_permission::{
@@ -377,7 +377,7 @@ async fn create_chat_creates_user_item_access(pool: Pool<Postgres>) {
         "#,
     )
     .bind("macro|test@example.com")
-    .bind(macro_uuid::string_to_uuid(&chat_id).unwrap())
+    .bind(conation_uuid::string_to_uuid(&chat_id).unwrap())
     .fetch_one(&pool)
     .await
     .unwrap();
@@ -664,7 +664,7 @@ async fn permanently_delete_chat_removes_user_item_access(pool: Pool<Postgres>) 
 
     let count: i64 = sqlx::query!(
         r#"SELECT COUNT(id) AS result FROM "entity_access" WHERE "entity_id" = $1"#,
-        &macro_uuid::string_to_uuid(&chat_id).unwrap(),
+        &conation_uuid::string_to_uuid(&chat_id).unwrap(),
     )
     .map(|r| r.result.unwrap_or(0))
     .fetch_one(&pool)

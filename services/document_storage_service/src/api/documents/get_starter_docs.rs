@@ -1,7 +1,7 @@
 use crate::api::context::AuthorizationService;
 use crate::api::documents::initialize_starter_docs::{HOW_TO_GUIDE_NAME, starter_doc_id};
 use axum::Json;
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::response::GenericErrorResponse;
 use utoipa::ToSchema;
 
@@ -22,13 +22,13 @@ pub struct StarterDocumentsResponse {
         (status = 401, body = GenericErrorResponse),
     )
 )]
-#[tracing::instrument(skip(user), fields(user_id=?user.authorization.user.macro_user_id))]
+#[tracing::instrument(skip(user), fields(user_id=?user.authorization.user.conation_user_id))]
 #[axum::debug_handler(state = crate::api::context::ApiContext)]
 pub async fn handler(
     user: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
 ) -> Json<StarterDocumentsResponse> {
     Json(StarterDocumentsResponse {
-        how_to_guide_id: starter_doc_id(&user.authorization.user.macro_user_id, HOW_TO_GUIDE_NAME)
+        how_to_guide_id: starter_doc_id(&user.authorization.user.conation_user_id, HOW_TO_GUIDE_NAME)
             .to_string(),
     })
 }

@@ -7,7 +7,7 @@ import { untrackMention } from '@core/signal/mention';
 import {
   $isDocumentMentionNode,
   type DocumentMentionNode,
-} from '@macro-inc/lexical-core/nodes/DocumentMentionNode';
+} from '@conation/lexical-core/nodes/DocumentMentionNode';
 import { $getRoot, $isElementNode, type LexicalEditor } from 'lexical';
 
 export interface MentionInfo {

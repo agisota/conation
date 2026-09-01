@@ -34,7 +34,7 @@ pub async fn setup_and_serve(state: ApiContext, port: usize) -> anyhow::Result<(
 }
 
 fn app(state: ApiContext) -> Router {
-    let cors = macro_cors::cors_layer();
+    let cors = conation_cors::cors_layer();
 
     api_router()
         .with_state(state)

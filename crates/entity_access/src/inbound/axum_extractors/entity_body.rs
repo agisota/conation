@@ -9,7 +9,7 @@ use axum::{
     Json, RequestExt,
     extract::{FromRef, FromRequest, Request},
 };
-use macro_authorization::{
+use conation_authorization::{
     AnyPrincipal, MacroAuthorization, MacroAuthorizationService, MacroAuthorizationState,
     OptionalMacroAuthorizationExtractor,
 };
@@ -99,7 +99,7 @@ where
 
         let user = match authorization {
             MacroAuthorization::User(user) | MacroAuthorization::Internal(Some(user)) => {
-                user.macro_user_id
+                user.conation_user_id
             }
             MacroAuthorization::Bot(_) | MacroAuthorization::Internal(None) => {
                 unreachable!("bot and identity-less internal access returned above")

@@ -7,7 +7,7 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
 };
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 

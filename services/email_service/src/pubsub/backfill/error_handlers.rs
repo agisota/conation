@@ -157,7 +157,7 @@ async fn notify_job_failed(ctx: &PubSubContext, job_id: Uuid) {
     if let Ok(Some(link)) = email_db_client::links::get::fetch_link_by_id(&ctx.db, link_id).await {
         cg_refresh_email(
             &ctx.connection_gateway_client,
-            link.macro_id.as_ref(),
+            link.conation_id.as_ref(),
             RefreshEmailEvent::Backfill {
                 link_id,
                 status: BackfillStatus::Failed,
@@ -246,13 +246,13 @@ pub async fn handle_retryable_error(
         }
         BackfillOperation::PopulateCrmForUser(payload) => {
             tracing::warn!(
-                macro_id = %payload.macro_id,
+                conation_id = %payload.conation_id,
                 "Retryable error populating CRM for user"
             )
         }
         BackfillOperation::DepopulateCrmForUser(payload) => {
             tracing::warn!(
-                macro_id = %payload.macro_id,
+                conation_id = %payload.conation_id,
                 "Retryable error depopulating CRM for user"
             )
         }

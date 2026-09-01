@@ -1,4 +1,4 @@
-use macro_service_urls::StaticFileServiceUrl;
+use conation_service_urls::StaticFileServiceUrl;
 use static_file_service_client::StaticFileServiceClient;
 use std::env;
 

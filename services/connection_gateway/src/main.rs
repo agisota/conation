@@ -31,11 +31,11 @@ use last_online_tracker::{
     inbound::LastOnlineWorker,
     outbound::{redis::RedisLastOnlineRepo, time::DefaultTime as LastOnlineDefaultTime},
 };
-use macro_auth::middleware::decode_jwt::JwtValidationArgs;
-use macro_authorization::{InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationState};
-use macro_entrypoint::MacroEntrypoint;
-use macro_env::Environment;
-use macro_tower_layers::MacroRequestIdAndTracingLayer;
+use conation_auth::middleware::decode_jwt::JwtValidationArgs;
+use conation_authorization::{InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationState};
+use conation_entrypoint::MacroEntrypoint;
+use conation_env::Environment;
+use conation_tower_layers::MacroRequestIdAndTracingLayer;
 use service::dynamodb::create_dynamo_db_connection_manager;
 use service::redis::poll_messages;
 use sqlx::postgres::PgPoolOptions;
@@ -47,7 +47,7 @@ use tower_http::cors::CorsLayer;
 async fn main() -> Result<()> {
     MacroEntrypoint::default().init();
 
-    let aws_config = macro_aws_config::get_macro_aws_config().await;
+    let aws_config = conation_aws_config::get_conation_aws_config().await;
 
     let secretsmanager_client = secretsmanager_client::SecretsManager::new(
         aws_sdk_secretsmanager::Client::new(&aws_config),
@@ -105,7 +105,7 @@ async fn main() -> Result<()> {
     let pgpool = PgPoolOptions::new()
         .min_connections(3)
         .max_connections(20)
-        .connect(config.macro_db_url.as_ref())
+        .connect(config.conation_db_url.as_ref())
         .await?;
 
     let stream_service = RedisPostgresStreamRepo::new((*redis_client).clone(), pgpool.clone());
@@ -129,7 +129,7 @@ async fn main() -> Result<()> {
             api_key: config.internal_api_key.to_string(),
             default_user_id: None,
         },
-        macro_authorization::NoBotAuthorizer,
+        conation_authorization::NoBotAuthorizer,
     )));
 
     let app = router(AppState {

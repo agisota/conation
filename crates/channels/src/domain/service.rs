@@ -25,7 +25,7 @@ use bot_id::BotIdStr;
 use bot_id::cowlike::CowLike;
 use channel_sender::ChannelSender;
 use entity_access::domain::models::{EntityAccessReceipt, EntityType, MemberParticipantRole};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use models_pagination::{CreatedAt, PaginateOn, Query};
 use std::collections::{HashMap, HashSet};
 use uuid::Uuid;

@@ -13,7 +13,7 @@ pub fn router(state: ApiContext) -> Router<ApiContext> {
             post(create_permission_token::handler).layer(ServiceBuilder::new().layer(
                 axum::middleware::from_fn_with_state(
                     state.clone(),
-                    macro_middleware::cloud_storage::document::ensure_document_exists::handler,
+                    conation_middleware::cloud_storage::document::ensure_document_exists::handler,
                 ),
             )),
         )

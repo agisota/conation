@@ -5,7 +5,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Redirect, Response},
 };
-use macro_middleware::tracking::ClientIp;
+use conation_middleware::tracking::ClientIp;
 use model::response::{EmptyResponse, ErrorResponse};
 
 #[derive(serde::Deserialize)]
@@ -36,7 +36,7 @@ pub async fn handler(
 
     // Verify through fusionauth
     // This will trigger the user.email.verify event in FusionAuth to call our webhook to update
-    // macro_user_email_verification table
+    // conation_user_email_verification table
     ctx.auth_client
         .verify_email(&verification_id, ip_context.origin_ip())
         .await

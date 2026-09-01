@@ -9,11 +9,11 @@
 mod test;
 
 use askama::Template;
-use macro_env::Environment;
-use macro_user_id::cowlike::CowLike;
-use macro_user_id::email::EmailStr;
-use macro_user_id::email::ReadEmailParts;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_env::Environment;
+use conation_user_id::cowlike::CowLike;
+use conation_user_id::email::EmailStr;
+use conation_user_id::email::ReadEmailParts;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::Entity;
 use notification::domain::models::{
     NotifCollapseKey, Notification, NotificationExtEmail, NotificationExtIos, NotificationTitle,
@@ -65,8 +65,8 @@ const MINUTES_PER_WEEK: u64 = 60 * 24 * 7;
 
 fn frontend_host(env: Environment) -> Url {
     let host = match env {
-        Environment::Production => "https://macro.com".to_string(),
-        Environment::Develop => "https://dev.macro.com".to_string(),
+        Environment::Production => "https://conation.dev".to_string(),
+        Environment::Develop => "https://dev.conation.dev".to_string(),
         Environment::Local => {
             #[expect(clippy::disallowed_methods, reason = "Only used when running locally")]
             let port = std::env::var("FRONTEND_PORT").unwrap_or_else(|_| "3000".to_string());
@@ -98,9 +98,9 @@ impl NotificationExtEmail for InviteToMacro {
             .sender_name
             .as_deref()
             .or(self.sender_email.as_deref())
-            .unwrap_or("A Macro user");
+            .unwrap_or("Пользователь Conation");
         EmailContent {
-            subject: format!("{} has invited you to join Macro", sender),
+            subject: format!("{} пригласил вас в Conation", sender),
             body: self
                 .render()
                 .expect("InviteToMacro template render failed in format_email"),

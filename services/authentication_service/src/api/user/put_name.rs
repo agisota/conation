@@ -4,11 +4,11 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use macro_db_client::user::update_user_name::update_user_name;
+use conation_db_client::user::update_user_name::update_user_name;
 
 use crate::api::context::{ApiContext, AuthorizationService};
 
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::response::EmptyResponse;
 use model::response::ErrorResponse;
 use model::user::PutUserNameQueryParams;
@@ -25,7 +25,7 @@ use model::user::PutUserNameQueryParams;
         ),
         params(PutUserNameQueryParams),
     )]
-#[tracing::instrument(skip(ctx, authorization), fields(user_id = authorization.authorization.user.user_context.user_id, macro_user_id = authorization.authorization.user.user_context.fusion_user_id))]
+#[tracing::instrument(skip(ctx, authorization), fields(user_id = authorization.authorization.user.user_context.user_id, conation_user_id = authorization.authorization.user.user_context.fusion_user_id))]
 pub async fn handler(
     State(ctx): State<ApiContext>,
     Query(params): Query<PutUserNameQueryParams>,

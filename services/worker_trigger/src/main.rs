@@ -1,7 +1,7 @@
 use anyhow::Context;
 use aws_lambda_events::event::eventbridge::EventBridgeEvent;
 use lambda_runtime::{Error, LambdaEvent, run, service_fn, tracing};
-use macro_entrypoint::MacroEntrypoint;
+use conation_entrypoint::MacroEntrypoint;
 use std::sync::Arc;
 use worker_trigger::{config::Config, service};
 
@@ -36,7 +36,7 @@ async fn main() -> Result<(), Error> {
     tracing::trace!("initialized config");
 
     let ecs_client = service::ecs::ECSClient::new(aws_sdk_ecs::Client::new(
-        &macro_aws_config::get_macro_aws_config().await,
+        &conation_aws_config::get_conation_aws_config().await,
     ));
 
     tracing::trace!("initialized ecs client");

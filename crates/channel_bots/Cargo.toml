@@ -14,7 +14,7 @@ async-trait = { workspace = true }
 bot_id = { path = "../bot_id" }
 channels = { path = "../channels", features = ["inbound", "outbound"] }
 futures = { workspace = true }
-macro_user_id = { path = "../macro_user_id" }
+conation_user_id = { path = "../conation_user_id" }
 prompt = { path = "../prompt" }
 serde = { workspace = true }
 serde_json = { workspace = true }

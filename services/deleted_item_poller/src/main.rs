@@ -11,8 +11,8 @@ use lambda_runtime::{
     Error, LambdaEvent, run, service_fn,
     tracing::{self},
 };
-use macro_entrypoint::MacroEntrypoint;
-use macro_event_broker::{GlobalSpawner, KafkaEventPublisher};
+use conation_entrypoint::MacroEntrypoint;
+use conation_event_broker::{GlobalSpawner, KafkaEventPublisher};
 use sqlx::postgres::PgPoolOptions;
 use std::sync::Arc;
 
@@ -25,7 +25,7 @@ async fn main() -> Result<(), Error> {
 
     tracing::trace!("initialized config");
 
-    let macro_event_broker = context::PollerEventBroker::new(
+    let conation_event_broker = context::PollerEventBroker::new(
         KafkaEventPublisher::new(config.kafka_brokers.as_ref())
             .context("failed to create kafka event publisher")?,
         GlobalSpawner,
@@ -39,17 +39,17 @@ async fn main() -> Result<(), Error> {
         .await
         .context("could not connect to db")?;
 
-    let document_delete_queue = macro_queues::DocumentDeleteQueue::new();
-    let chat_delete_queue = macro_queues::ChatDeleteQueue::new();
+    let document_delete_queue = conation_queues::DocumentDeleteQueue::new();
+    let chat_delete_queue = conation_queues::ChatDeleteQueue::new();
     let sqs_client = sqs_client::SQS::new(aws_sdk_sqs::Client::new(
-        &macro_aws_config::get_macro_aws_config().await,
+        &conation_aws_config::get_conation_aws_config().await,
     ))
     .document_delete_queue(&document_delete_queue)
     .chat_delete_queue(&chat_delete_queue);
 
     let ctx = context::Context {
         db,
-        macro_event_broker,
+        conation_event_broker,
         sqs_client: Arc::new(sqs_client),
     };
 

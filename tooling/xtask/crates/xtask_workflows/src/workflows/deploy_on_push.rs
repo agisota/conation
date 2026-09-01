@@ -62,7 +62,7 @@ const CLOUD_STORAGE_PATHS: &[RepoGlob<'static>] = &[
 /// became call/dispatch-only.
 const SYNC_SERVICE_PATHS: &[RepoGlob<'static>] = &[
     xtask_paths::repo_glob!("services/sync-service/**"),
-    xtask_paths::repo_glob!("crates/macro_sync_service_jwt/**"),
+    xtask_paths::repo_glob!("crates/conation_sync_service_jwt/**"),
     xtask_paths::repo_glob!("Cargo.toml"),
     xtask_paths::repo_glob!("Cargo.lock"),
     xtask_paths::repo_glob!("rust-toolchain.toml"),

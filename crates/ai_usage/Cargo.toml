@@ -9,11 +9,11 @@ rootcause = { workspace = true }
 anyhow = { workspace = true }
 axum = { workspace = true }
 chrono = { workspace = true }
-macro_authorization = { path = "../macro_authorization", default-features = false, features = [
+conation_authorization = { path = "../conation_authorization", default-features = false, features = [
   "axum",
 ] }
-macro_user_id = { path = "../macro_user_id", features = ["schema"] }
-macro_uuid = { path = "../macro_uuid" }
+conation_user_id = { path = "../conation_user_id", features = ["schema"] }
+conation_uuid = { path = "../conation_uuid" }
 serde = { workspace = true }
 serde_json = { workspace = true }
 sqlx = { workspace = true }
@@ -25,4 +25,4 @@ utoipa = { workspace = true }
 workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
-macro_db_migrator = { path = "../macro_db_migrator" }
+conation_db_migrator = { path = "../conation_db_migrator" }

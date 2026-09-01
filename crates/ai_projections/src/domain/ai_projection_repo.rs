@@ -1,6 +1,6 @@
 //! Outbound port for ai projection persistence.
 
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 
 use crate::domain::model::{
     AiProjection, AiProjectionError, Expiry, RefreshCadence, TargetType, UserAiProjection,

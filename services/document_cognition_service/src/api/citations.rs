@@ -6,10 +6,10 @@ use axum::{
     response::Json,
     routing::get,
 };
-use macro_authorization::{
+use conation_authorization::{
     OptionalMacroAuthorizationExtractor, UserOrInternalService, UserOrInternalServiceAuthorization,
 };
-use macro_db_client::dcs::get_part_by_id::get_part_by_id;
+use conation_db_client::dcs::get_part_by_id::get_part_by_id;
 use model::citations::DocumentTextPart;
 use sqlx::PgPool;
 
@@ -47,7 +47,7 @@ pub async fn get_citation_handler(
         .authorization
         .as_ref()
         .and_then(UserOrInternalServiceAuthorization::acting_user)
-        .map(|user| user.macro_user_id.as_ref());
+        .map(|user| user.conation_user_id.as_ref());
     match get_part_by_id(db, id.as_str()).await {
         Ok(Some(part)) => Ok(Json(part)),
         Ok(None) => Err((

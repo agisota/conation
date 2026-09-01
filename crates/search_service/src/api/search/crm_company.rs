@@ -18,7 +18,7 @@ use entity_access::domain::models::{
 };
 use entity_access::domain::ports::EntityAccessService;
 use item_filters::CrmCompanyFilters;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model::user::UserContext;
 use models_opensearch::SearchEntityType;
 use models_search::crm_company::{CrmCompanySearchDomain, CrmCompanySearchResponseItem};

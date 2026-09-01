@@ -2,7 +2,7 @@
 
 use axum::{Json, extract::State};
 use entity_access::domain::ports::EntityAccessService;
-use macro_authorization::{
+use conation_authorization::{
     MacroAuthorizationService, OptionalMacroAuthorizationExtractor, UserOrInternalService,
 };
 use model::project::{
@@ -46,7 +46,7 @@ where
         .authorization
         .as_ref()
         .and_then(|authorization| authorization.acting_user())
-        .map(|user| user.macro_user_id.clone());
+        .map(|user| user.conation_user_id.clone());
     let previews = state
         .service
         .get_batch_preview(user_id, request.project_ids)

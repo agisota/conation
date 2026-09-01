@@ -2,7 +2,7 @@ use super::*;
 use frecency::domain::models::{
     FrecencyByIdsRequest, FrecencyPageRequest, FrecencyPageResponse, FrecencyQueryErr,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 
 struct PanicFrecencyService;
 

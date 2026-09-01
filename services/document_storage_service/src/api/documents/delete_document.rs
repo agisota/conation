@@ -9,7 +9,7 @@ use axum::{Extension, extract::Path, http::StatusCode, response::IntoResponse};
 use entity_access::inbound::axum_extractors::DocumentAccessExtractor;
 #[allow(unused_imports)]
 use futures::stream::TryStreamExt;
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::document::DocumentBasic;
 use model::response::{
     ErrorResponse, GenericErrorResponse, GenericResponse, GenericSuccessResponse, SuccessResponse,
@@ -38,7 +38,7 @@ pub struct Params {
             (status = 500, body=GenericErrorResponse),
         )
     )]
-#[tracing::instrument(skip(state, user, _access), fields(user_id=?user.authorization.user.macro_user_id))]
+#[tracing::instrument(skip(state, user, _access), fields(user_id=?user.authorization.user.conation_user_id))]
 pub async fn permanently_delete_document_handler(
     _access: DocumentAccessExtractor<OwnerAccessLevel, EntityAccessService, AuthorizationService>,
     State(state): State<ApiContext>,
@@ -52,7 +52,7 @@ pub async fn permanently_delete_document_handler(
     if let Some(file_type) = document_context.file_type.as_deref()
         && file_type == "docx"
     {
-        let bom_parts = macro_db_client::document::get_bom_parts(&state.db, &document_id)
+        let bom_parts = conation_db_client::document::get_bom_parts(&state.db, &document_id)
             .await
             .map_err(|e| {
                 tracing::error!(error=?e, "unable to get bom parts");
@@ -91,7 +91,7 @@ pub async fn permanently_delete_document_handler(
     }
 
     // Delete document info from db
-    macro_db_client::document::delete_document(&state.db, &document_id)
+    conation_db_client::document::delete_document(&state.db, &document_id)
         .await
         .map_err(|e| {
             tracing::error!(error=?e, "unable to delete document");
@@ -130,7 +130,7 @@ pub async fn permanently_delete_document_handler(
                 .into_response()
         })?;
 
-    publish_document_purged_event(&state.macro_event_broker, &document_id).map_err(|e| {
+    publish_document_purged_event(&state.conation_event_broker, &document_id).map_err(|e| {
         tracing::error!(error=?e, "unable to publish document purged event");
         (
             StatusCode::INTERNAL_SERVER_ERROR,

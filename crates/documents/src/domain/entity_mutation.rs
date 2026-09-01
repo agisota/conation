@@ -13,7 +13,7 @@ use entity_mutation::{
     DuplicateEntity, EntityMutationEffect, EntityMutationErrorCode, MoveEntity, RenameEntity,
     TrashEntity, UpdateEntitySharePolicy, capability::MoveEntityRequest,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model::document::DocumentBasic;
 use model_entity::{Entity, EntityType};
 use models_permissions::share_permission::UpdateSharePermissionRequestV2;
@@ -21,7 +21,7 @@ use models_permissions::share_permission::UpdateSharePermissionRequestV2;
 use connection::domain::ports::ConnectionService;
 use entity_access_management::domain::ports::EntityAccessManagementService;
 use foreign_entity::domain::ports::ForeignEntityService;
-use macro_event_broker::MacroEventBroker;
+use conation_event_broker::MacroEventBroker;
 
 use super::{
     models::{DocumentError, EditDocumentServiceArgs},

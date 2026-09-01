@@ -506,7 +506,7 @@ pub trait CalendarRepository: Send + Sync + 'static {
     ) -> impl Future<Output = Result<Vec<VisibleCalendar>, Report>> + Send;
 
     /// Addresses of every connected inbox the requester owns
-    /// (`email_links.macro_id = requester`). Raw and unnormalized;
+    /// (`email_links.conation_id = requester`). Raw and unnormalized;
     /// [`ActorInboxes::from_owned`] is the single normalization point.
     fn owned_inbox_emails(
         &self,

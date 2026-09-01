@@ -27,8 +27,8 @@ use foreign_entity::{
 };
 use frecency::domain::services::FrecencyQueryServiceImpl;
 use frecency::outbound::postgres::FrecencyPgStorage;
-use macro_auth::middleware::decode_jwt::JwtValidationArgs;
-use macro_service_urls::{
+use conation_auth::middleware::decode_jwt::JwtValidationArgs;
+use conation_service_urls::{
     AiEditingWorkerUrl, ConnectionGatewayUrl, DocumentStorageServiceUrl, EmailServiceUrl,
     LexicalServiceUrl, SyncServiceUrl,
 };
@@ -80,11 +80,11 @@ pub async fn build_context(
 
     tracing::info!("initialized db connection");
 
-    let macro_env = config.environment;
-    let aws_config = macro_aws_config::get_macro_aws_config().await;
+    let conation_env = config.environment;
+    let aws_config = conation_aws_config::get_conation_aws_config().await;
     let queue_aws_client = aws_sdk_sqs::Client::new(&aws_config);
-    let email_scheduled_queue = macro_queues::EmailScheduledQueue::new();
-    let gmail_ops_queue = macro_queues::GmailOpsQueue::new();
+    let email_scheduled_queue = conation_queues::EmailScheduledQueue::new();
+    let gmail_ops_queue = conation_queues::GmailOpsQueue::new();
     let sqs_client = sqs_client::SQS::new(queue_aws_client.clone())
         .email_scheduled_queue(email_scheduled_queue.as_ref())
         .gmail_ops_queue(gmail_ops_queue.as_ref());
@@ -93,7 +93,7 @@ pub async fn build_context(
         aws_sdk_secretsmanager::Client::new(&aws_config),
     );
 
-    let jwt_args = JwtValidationArgs::new_with_secret_manager(macro_env, &secretsmanager_client)
+    let jwt_args = JwtValidationArgs::new_with_secret_manager(conation_env, &secretsmanager_client)
         .await
         .context("failed to initialize JWT validation args")?;
 
@@ -203,7 +203,7 @@ async fn build_tool_context(args: ToolContextBuildArgs<'_>) -> anyhow::Result<To
         reminders::domain::service::NoOpRemindersService,
     ));
 
-    let s3_client = macro_aws_config::s3_client().await;
+    let s3_client = conation_aws_config::s3_client().await;
     let s3_upload_adapter = S3UploadUrlAdapter::new(
         s3_client,
         config.document_storage_bucket.as_ref(),
@@ -244,8 +244,8 @@ async fn build_tool_context(args: ToolContextBuildArgs<'_>) -> anyhow::Result<To
         properties_service.clone(),
         entity_access_service.clone(),
     );
-    let macro_event_broker = macro_event_broker::MacroEventBrokerService::new(
-        macro_event_broker::KafkaEventPublisher::new(config.kafka_brokers.as_ref())
+    let conation_event_broker = conation_event_broker::MacroEventBrokerService::new(
+        conation_event_broker::KafkaEventPublisher::new(config.kafka_brokers.as_ref())
             .context("failed to create kafka event publisher")?,
         event_task_tracker,
     );
@@ -261,7 +261,7 @@ async fn build_tool_context(args: ToolContextBuildArgs<'_>) -> anyhow::Result<To
                 entity_access_management::outbound::PgRepository::new(db.clone()),
             ),
         foreign_entity_service: ForeignEntityServiceImpl::new(PgForeignEntityRepo::new(db.clone())),
-        macro_event_broker: macro_event_broker.clone(),
+        conation_event_broker: conation_event_broker.clone(),
     };
     let lexical_client_for_tools = (*lexical_client).clone();
     let document_tool_context = DocumentToolContext::new(
@@ -289,7 +289,7 @@ async fn build_tool_context(args: ToolContextBuildArgs<'_>) -> anyhow::Result<To
             ),
             0,
         )
-        .with_macro_event_broker(macro_event_broker.clone()),
+        .with_conation_event_broker(conation_event_broker.clone()),
     );
     let email_tool_context = email::inbound::toolset::EmailToolContext::new(
         user_email_service.clone(),
@@ -351,13 +351,13 @@ async fn build_tool_context(args: ToolContextBuildArgs<'_>) -> anyhow::Result<To
                 ConnectionGatewayUrl::new()?.to_string(),
             )),
             sqs: queue_aws_client,
-            macro_event_broker: macro_event_broker.clone(),
+            conation_event_broker: conation_event_broker.clone(),
         },
     );
 
     let project_tool_context = ai_tools::build_project_tool_context(
         db.clone(),
-        macro_event_broker.clone(),
+        conation_event_broker.clone(),
         entity_access_service.clone(),
         document_tool_context.service.clone(),
         chat_tool_context.service.clone(),
@@ -398,7 +398,7 @@ async fn build_tool_context(args: ToolContextBuildArgs<'_>) -> anyhow::Result<To
         channel_tool_context,
         bot_tool_context: ai_tools::build_bot_tool_context(
             db.clone(),
-            ai_tools::ToolBotEventBroker::Real(macro_event_broker.clone()),
+            ai_tools::ToolBotEventBroker::Real(conation_event_broker.clone()),
             entity_access_service.clone(),
             dss_url,
         ),

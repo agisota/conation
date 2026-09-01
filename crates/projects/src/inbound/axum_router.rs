@@ -24,7 +24,7 @@ use axum::{
     response::IntoResponse,
 };
 use entity_access::domain::ports::EntityAccessService;
-use macro_authorization::{MacroAuthorizationService, MacroAuthorizationState};
+use conation_authorization::{MacroAuthorizationService, MacroAuthorizationState};
 use model::response::GenericErrorResponse;
 use serde::Deserialize;
 

@@ -12,7 +12,7 @@ pub async fn upsert_channel_notification_email_sent_bulk(
     }
 
     let channel_id =
-        macro_uuid::string_to_uuid(channel_id).context("could not convert channel_id to uuid")?;
+        conation_uuid::string_to_uuid(channel_id).context("could not convert channel_id to uuid")?;
 
     sqlx::query!(
         r#"
@@ -41,7 +41,7 @@ pub async fn upsert_channel_notification_email_sent_bulk_channel_ids(
 
     let channel_ids = channel_ids
         .iter()
-        .map(|id| macro_uuid::string_to_uuid(id))
+        .map(|id| conation_uuid::string_to_uuid(id))
         .collect::<Result<Vec<Uuid>, _>>()?;
 
     sqlx::query!(
@@ -62,7 +62,7 @@ pub async fn upsert_channel_notification_email_sent_bulk_channel_ids(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use macro_db_migrator::MACRO_DB_MIGRATIONS;
+    use conation_db_migrator::MACRO_DB_MIGRATIONS;
     use sqlx::{Pool, Postgres};
 
     #[sqlx::test(
@@ -88,7 +88,7 @@ mod tests {
             WHERE channel_id = $1
             AND user_id = $2
             "#,
-            macro_uuid::string_to_uuid(channel_id)?,
+            conation_uuid::string_to_uuid(channel_id)?,
             "user1"
         )
         .map(|row| row.created_at)
@@ -102,7 +102,7 @@ mod tests {
             WHERE channel_id = $1
             AND user_id = $2
             "#,
-            macro_uuid::string_to_uuid(channel_id)?,
+            conation_uuid::string_to_uuid(channel_id)?,
             "user2"
         )
         .map(|row| row.created_at)

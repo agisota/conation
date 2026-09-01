@@ -15,7 +15,7 @@ chrono = { workspace = true }
 document_sub_type = { path = "../document_sub_type", default-features = false }
 either = { workspace = true }
 filter_ast = { path = "../filter_ast" }
-macro_user_id = { path = "../macro_user_id" }
+conation_user_id = { path = "../conation_user_id" }
 model_file_type = { path = "../model_file_type" }
 nom = { workspace = true }
 non_empty = { path = "../non_empty" }

@@ -1,6 +1,6 @@
 use super::*;
 use anyhow::Result;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use models_email::db::contact::ContactPhotoless;
 use sqlx::{Pool, Postgres};
 

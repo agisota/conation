@@ -6,7 +6,7 @@ use axum::{
     http::{StatusCode, request::Parts},
     response::{IntoResponse, Response},
 };
-use macro_authorization::{MacroAuthorizationExtractor, MacroAuthorizationState, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, MacroAuthorizationState, UserOrInternal};
 use model::response::ErrorResponse;
 use sqlx::PgPool;
 
@@ -34,7 +34,7 @@ where
                 .await
                 .map_err(IntoResponse::into_response)?;
         let db = PgPool::from_ref(state);
-        let permissions = macro_db_client::user::get_permissions::get_user_permissions(
+        let permissions = conation_db_client::user::get_permissions::get_user_permissions(
             &db,
             &authorization.authorization.user.user_context.user_id,
         )

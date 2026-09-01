@@ -1,5 +1,5 @@
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
-use macro_user_id::cowlike::CowLike;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_user_id::cowlike::CowLike;
 use model_entity::EntityType;
 use models_permissions::share_permission::access_level::AccessLevel;
 use models_permissions::share_permission::channel_share_permission::{
@@ -23,8 +23,8 @@ const TEST_DOCUMENT_ID: &str = "d0000000-0000-0000-0000-000000000001";
 const TEST_DOCUMENT_OWNER_ID: &str = "macro|user@user.com";
 const TEST_DOCUMENT_NON_OWNER_ID: &str = "macro|teammate1@user.com";
 
-fn user_id(user_id: &str) -> macro_user_id::user_id::MacroUserIdStr<'static> {
-    macro_user_id::user_id::MacroUserIdStr::parse_from_str(user_id)
+fn user_id(user_id: &str) -> conation_user_id::user_id::MacroUserIdStr<'static> {
+    conation_user_id::user_id::MacroUserIdStr::parse_from_str(user_id)
         .unwrap()
         .into_owned()
 }
@@ -87,8 +87,8 @@ async fn team_task_numbers(pool: &Pool<Postgres>, team_id: uuid::Uuid) -> Vec<i3
 }
 
 fn short_id_for_document_id(document_id: &str) -> String {
-    let uuid = macro_uuid::string_to_uuid(document_id).unwrap();
-    macro_uuid::ShortUuidConverter::default().from_uuid(&uuid)
+    let uuid = conation_uuid::string_to_uuid(document_id).unwrap();
+    conation_uuid::ShortUuidConverter::default().from_uuid(&uuid)
 }
 
 async fn insert_github_pr_task(
@@ -140,7 +140,7 @@ async fn share_permission_columns(
 }
 
 async fn insert_non_owner_user_access(pool: &Pool<Postgres>) {
-    let document_id = macro_uuid::string_to_uuid(TEST_DOCUMENT_ID).unwrap();
+    let document_id = conation_uuid::string_to_uuid(TEST_DOCUMENT_ID).unwrap();
 
     sqlx::query!(
         r#"
@@ -157,7 +157,7 @@ async fn insert_non_owner_user_access(pool: &Pool<Postgres>) {
 }
 
 async fn direct_user_access_sources(pool: &Pool<Postgres>) -> Vec<String> {
-    let document_id = macro_uuid::string_to_uuid(TEST_DOCUMENT_ID).unwrap();
+    let document_id = conation_uuid::string_to_uuid(TEST_DOCUMENT_ID).unwrap();
 
     sqlx::query_scalar!(
         r#"
@@ -179,7 +179,7 @@ async fn direct_user_access_sources(pool: &Pool<Postgres>) -> Vec<String> {
 async fn insert_second_team(pool: &Pool<Postgres>) {
     sqlx::query(
         r#"
-        INSERT INTO public."macro_user" ("id", "username", "email", "stripe_customer_id")
+        INSERT INTO public."conation_user" ("id", "username", "email", "stripe_customer_id")
         VALUES ($1, 'other', 'other@user.com', 'stripe_id_other')
         ON CONFLICT DO NOTHING
         "#,
@@ -191,7 +191,7 @@ async fn insert_second_team(pool: &Pool<Postgres>) {
 
     sqlx::query(
         r#"
-        INSERT INTO public."User" ("id", "email", "stripeCustomerId", "organizationId", "macro_user_id")
+        INSERT INTO public."User" ("id", "email", "stripeCustomerId", "organizationId", "conation_user_id")
         VALUES ('macro|other@user.com', 'other@user.com', 'stripe_id_other', 1, $1)
         ON CONFLICT DO NOTHING
         "#,
@@ -744,7 +744,7 @@ async fn test_share_with_team_creates_access_for_team_members(pool: Pool<Postgre
         .unwrap();
 
     // All 3 team members should have access rows
-    let doc_uuid = macro_uuid::string_to_uuid("d0000000-0000-0000-0000-000000000001").unwrap();
+    let doc_uuid = conation_uuid::string_to_uuid("d0000000-0000-0000-0000-000000000001").unwrap();
     let rows = sqlx::query!(
         r#"
         SELECT source_id, access_level::text as "access_level"
@@ -805,7 +805,7 @@ async fn test_share_with_team_idempotent(pool: Pool<Postgres>) {
         .await
         .unwrap();
 
-    let doc_uuid = macro_uuid::string_to_uuid("d0000000-0000-0000-0000-000000000001").unwrap();
+    let doc_uuid = conation_uuid::string_to_uuid("d0000000-0000-0000-0000-000000000001").unwrap();
     let count = sqlx::query_scalar!(
         r#"
         SELECT COUNT(*) as "count!"
@@ -839,7 +839,7 @@ async fn test_team_share_roundtrip(pool: Pool<Postgres>) {
     assert_eq!(state.team_id, Some(TEST_TEAM_ID));
     assert!(state.shared_with_team);
 
-    let doc_uuid = macro_uuid::string_to_uuid(document_id).unwrap();
+    let doc_uuid = conation_uuid::string_to_uuid(document_id).unwrap();
     let team_row = sqlx::query!(
         r#"
         SELECT access_level::text as "access_level"
@@ -892,7 +892,7 @@ async fn test_set_team_share_upgrades_existing_team_grant(pool: Pool<Postgres>) 
     // Toggling share on upgrades the team row to Edit
     repo.set_team_share(document_id, true).await.unwrap();
 
-    let doc_uuid = macro_uuid::string_to_uuid(document_id).unwrap();
+    let doc_uuid = conation_uuid::string_to_uuid(document_id).unwrap();
     let rows = sqlx::query!(
         r#"
         SELECT access_level::text as "access_level"
@@ -945,7 +945,7 @@ async fn test_team_share_no_team_owner(pool: Pool<Postgres>) {
 async fn test_share_with_team_skips_user_with_existing_direct_access(pool: Pool<Postgres>) {
     let repo = PgDocumentRepo::new(pool.clone());
 
-    let doc_uuid = macro_uuid::string_to_uuid("d0000000-0000-0000-0000-000000000001").unwrap();
+    let doc_uuid = conation_uuid::string_to_uuid("d0000000-0000-0000-0000-000000000001").unwrap();
 
     // Give teammate1 direct user-sourced edit access before team sharing
     sqlx::query!(
@@ -993,7 +993,7 @@ async fn test_share_with_explicit_team_id(pool: Pool<Postgres>) {
         .await
         .unwrap();
 
-    let doc_uuid = macro_uuid::string_to_uuid("d0000000-0000-0000-0000-000000000001").unwrap();
+    let doc_uuid = conation_uuid::string_to_uuid("d0000000-0000-0000-0000-000000000001").unwrap();
     let rows = sqlx::query!(
         r#"
         SELECT source_id, access_level::text as "access_level"
@@ -1255,7 +1255,7 @@ async fn test_get_branch_name_context_prefers_github_and_team_task(pool: Pool<Po
 
     sqlx::query!(
         r#"
-        INSERT INTO github_links (id, macro_id, fusionauth_user_id, github_username, github_user_id)
+        INSERT INTO github_links (id, conation_id, fusionauth_user_id, github_username, github_user_id)
         VALUES ($1, 'macro|user@user.com', $2, 'octocat', '12345')
         "#,
         uuid::uuid!("b0000000-0000-0000-0000-000000000001"),
@@ -1448,7 +1448,7 @@ async fn test_edit_document_channel_share_creates_user_item_access(pool: Pool<Po
     );
 
     // Verify entity_access rows were created for the channel
-    let doc_uuid = macro_uuid::string_to_uuid("d0000000-0000-0000-0000-000000000001").unwrap();
+    let doc_uuid = conation_uuid::string_to_uuid("d0000000-0000-0000-0000-000000000001").unwrap();
 
     let access_rows = sqlx::query!(
         r#"
@@ -1505,7 +1505,7 @@ async fn test_edit_document_channel_share_idempotent(pool: Pool<Postgres>) {
     repo.edit_document(make_args()).await.unwrap();
     repo.edit_document(make_args()).await.unwrap();
 
-    let doc_uuid = macro_uuid::string_to_uuid("d0000000-0000-0000-0000-000000000001").unwrap();
+    let doc_uuid = conation_uuid::string_to_uuid("d0000000-0000-0000-0000-000000000001").unwrap();
     let count = sqlx::query_scalar!(
         r#"
         SELECT COUNT(*) as "count!"
@@ -1774,7 +1774,7 @@ async fn insert_email_attachments(pool: &Pool<Postgres>, count: usize) -> Vec<uu
 
     sqlx::query(
         r#"
-        INSERT INTO email_links (id, macro_id, fusionauth_user_id, email_address, provider, is_sync_active)
+        INSERT INTO email_links (id, conation_id, fusionauth_user_id, email_address, provider, is_sync_active)
         VALUES ($1, $2, $3, $4, 'GMAIL', true)
         "#,
     )

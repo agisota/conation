@@ -9,7 +9,7 @@ use ai_toolset::{
     AsyncTool, RequestContext, ServiceContext, schema::generate_validated_input_schema,
 };
 use chrono::{DateTime, Utc};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use uuid::Uuid;
 
 use super::*;

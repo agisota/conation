@@ -1,5 +1,5 @@
 use documents::domain::events::{DocumentSyncContentUpdatedMetadata, DocumentTopicEvent};
-use macro_event_broker::MacroEvent as _;
+use conation_event_broker::MacroEvent as _;
 use model::document::FileType;
 
 use super::{SyncDocument, documents_to_events};

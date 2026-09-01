@@ -19,8 +19,8 @@ use email::domain::events::{
     ThreadReadMetadata, ThreadSpamChangedMetadata, ThreadTrashedMetadata, ThreadsReindexReason,
     ThreadsReindexRequestedMetadata,
 };
-use macro_event_broker::{Event, EventBrokerError, MacroEventCollection as _, MessageParts};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_event_broker::{Event, EventBrokerError, MacroEventCollection as _, MessageParts};
+use conation_user_id::user_id::MacroUserIdStr;
 use projects::domain::events::{ProjectDeletedMetadata, ProjectTopicEvent};
 use properties::domain::events::{
     EntityPropertiesClearedMetadata, EntityPropertyDeletedMetadata, EntityPropertyUpdatedMetadata,

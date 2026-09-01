@@ -1,7 +1,7 @@
 mod pgsql;
 mod storage;
 use chrono::{DateTime, Utc};
-use macro_uuid::generate_uuid_v7;
+use conation_uuid::generate_uuid_v7;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;

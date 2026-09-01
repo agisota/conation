@@ -1,7 +1,7 @@
 import { HoverCard } from '@core/component/HoverCard';
 import { UserTooltip } from '@core/component/UserTooltip';
 import { getDisplayNameParts, macroIdToEmail, tryMacroId } from '@core/user';
-import type { UserMentionDecoratorProps } from '@macro-inc/lexical-core';
+import type { UserMentionDecoratorProps } from '@conation/lexical-core';
 import { cn } from '@ui';
 import { createEffect, createMemo, createSignal, useContext } from 'solid-js';
 import { LexicalWrapperContext } from '../../context/LexicalWrapperContext';

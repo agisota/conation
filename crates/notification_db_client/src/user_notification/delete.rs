@@ -29,7 +29,7 @@ pub async fn delete_user_notification(
         WHERE user_id = $1 AND notification_id = $2
         "#,
         user_id,
-        macro_uuid::string_to_uuid(notification_id)?
+        conation_uuid::string_to_uuid(notification_id)?
     )
     .execute(pool)
     .await?;

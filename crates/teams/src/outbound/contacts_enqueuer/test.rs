@@ -4,7 +4,7 @@ use std::{
 };
 
 use contacts::domain::{models::messages::ContactConnection, ports::ContactsIngress};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use rootcause::Report;
 
 use super::*;
@@ -34,7 +34,7 @@ impl ContactsIngress for FakeContactsIngress {
     }
 }
 
-fn macro_user_id(value: &str) -> MacroUserIdStr<'static> {
+fn conation_user_id(value: &str) -> MacroUserIdStr<'static> {
     MacroUserIdStr::try_from(value.to_string()).expect("valid macro user id")
 }
 
@@ -42,9 +42,9 @@ fn macro_user_id(value: &str) -> MacroUserIdStr<'static> {
 async fn contacts_ingress_enqueuer_maps_pairs() {
     let ingress = Arc::new(FakeContactsIngress::default());
     let enqueuer = ContactsIngressEnqueuer::new(ingress.clone()).clone();
-    let first = macro_user_id("macro|first@example.com");
-    let second = macro_user_id("macro|second@example.com");
-    let third = macro_user_id("macro|third@example.com");
+    let first = conation_user_id("macro|first@example.com");
+    let second = conation_user_id("macro|second@example.com");
+    let third = conation_user_id("macro|third@example.com");
 
     enqueuer
         .enqueue_contact_connections(vec![

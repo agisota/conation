@@ -62,7 +62,7 @@ pub async fn remove_email_unsubscribe(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use macro_db_migrator::MACRO_DB_MIGRATIONS;
+    use conation_db_migrator::MACRO_DB_MIGRATIONS;
 
     #[sqlx::test(
         migrator = "MACRO_DB_MIGRATIONS",

@@ -3,7 +3,7 @@
 use std::sync::{Arc, Mutex};
 
 use agent_session::domain::model::AgentSessionId;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 
 use crate::domain::error::Result;
 use crate::domain::model::{ProvisionedEgress, SandboxEgress};

@@ -4,7 +4,7 @@ use std::{
 };
 
 use chrono::Utc;
-use macro_user_id::{email::EmailStr, user_id::MacroUserIdStr};
+use conation_user_id::{email::EmailStr, user_id::MacroUserIdStr};
 use uuid::Uuid;
 
 use crate::domain::{
@@ -29,9 +29,9 @@ struct FakeUserRepo {
 impl EmailUserRepo for FakeUserRepo {
     async fn user_accessible_inboxes(
         &self,
-        macro_id: MacroUserIdStr<'static>,
+        conation_id: MacroUserIdStr<'static>,
     ) -> Result<Vec<Link>, crate::domain::models::EmailErr> {
-        self.requested_users.lock().unwrap().push(macro_id);
+        self.requested_users.lock().unwrap().push(conation_id);
         Ok(self.inboxes.clone())
     }
 
@@ -45,9 +45,9 @@ impl EmailUserRepo for FakeUserRepo {
 
     async fn user_inbox_details(
         &self,
-        macro_id: MacroUserIdStr<'static>,
+        conation_id: MacroUserIdStr<'static>,
     ) -> Result<Vec<EmailInboxDetails>, crate::domain::models::EmailErr> {
-        self.requested_users.lock().unwrap().push(macro_id);
+        self.requested_users.lock().unwrap().push(conation_id);
         Ok(self.details.clone())
     }
 }
@@ -59,7 +59,7 @@ fn service(repo: FakeUserRepo) -> EmailServiceImpl<FakeUserRepo, (), (), (), (),
         enqueuer: (),
         crm_service: (),
         entity_access_management_service: (),
-        macro_event_broker: (),
+        conation_event_broker: (),
         sent_undo_delay_secs: 0,
     }
 }
@@ -71,7 +71,7 @@ fn user_id() -> MacroUserIdStr<'static> {
 fn link(id: Uuid, owner: &str) -> Link {
     Link {
         id,
-        macro_id: MacroUserIdStr::try_from_email(owner).unwrap(),
+        conation_id: MacroUserIdStr::try_from_email(owner).unwrap(),
         fusionauth_user_id: "internal-auth-id".to_owned(),
         email_address: EmailStr::try_from(owner.to_owned()).unwrap(),
         provider: UserProvider::Gmail,
@@ -138,7 +138,7 @@ async fn links_are_scoped_to_the_user_and_enriched_by_domain_policy() {
     let repo = FakeUserRepo {
         details: vec![EmailInboxDetails {
             id: link_id,
-            macro_id: MacroUserIdStr::try_from_email("delegate@example.com").unwrap(),
+            conation_id: MacroUserIdStr::try_from_email("delegate@example.com").unwrap(),
             email_address: EmailStr::try_from("delegate@example.com".to_owned()).unwrap(),
             photo_url: Some("https://example.com/photo.png".to_owned()),
             provider: UserProvider::Gmail,

@@ -15,7 +15,7 @@ path = "src/openapi.rs"
 [dependencies]
 anyhow = { workspace = true }
 aws-sdk-secretsmanager = { workspace = true }
-macro_aws_config = { path = "../macro_aws_config" }
+conation_aws_config = { path = "../conation_aws_config" }
 axum = { workspace = true }
 chrono = { workspace = true }
 channels = { path = "../channels", default-features = false, features = ["outbound"] }
@@ -30,9 +30,9 @@ futures = { workspace = true }
 http-body-util = { workspace = true }
 indexmap = { workspace = true }
 item_filters = { path = "../item_filters" }
-macro_auth = { path = "../macro_auth" }
-macro_authorization = { path = "../macro_authorization" }
-macro_db_client = { path = "../macro_db_client" }
+conation_auth = { path = "../conation_auth" }
+conation_authorization = { path = "../conation_authorization" }
+conation_db_client = { path = "../conation_db_client" }
 models_properties = { path = "../models_properties" }
 models_soup = { path = "../models_soup" }
 properties = { path = "../properties", default-features = false, features = [
@@ -40,9 +40,9 @@ properties = { path = "../properties", default-features = false, features = [
 ] }
 system_properties = { path = "../system_properties" }
 readonly_pool = { path = "../readonly_pool" }
-macro_env = { path = "../macro_env" }
-macro_env_var = { path = "../macro_env_var" }
-macro_user_id = { path = "../macro_user_id" }
+conation_env = { path = "../conation_env" }
+conation_env_var = { path = "../conation_env_var" }
+conation_user_id = { path = "../conation_user_id" }
 model = { path = "../model" }
 models_email = { path = "../models_email" }
 models_opensearch = { path = "../models_opensearch" }
@@ -65,4 +65,4 @@ uuid = { workspace = true }
 workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
-macro_auth = { path = "../macro_auth", features = ["testing"] }
+conation_auth = { path = "../conation_auth", features = ["testing"] }

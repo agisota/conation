@@ -2,7 +2,7 @@ use crate::contacts::get::{
     fetch_contacts_by_link_id, fetch_db_recipients_in_bulk, fetch_senders_by_message_ids,
 };
 use anyhow::Result;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use models_email::db::address::EmailRecipientType;
 use models_email::email::service::address::ContactInfoWithInteraction;
 use sqlx::types::Uuid;

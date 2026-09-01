@@ -2,7 +2,7 @@
 
 use std::collections::HashSet;
 
-use macro_user_id::{email::Email, lowercased::Lowercase, user_id::MacroUserIdStr};
+use conation_user_id::{email::Email, lowercased::Lowercase, user_id::MacroUserIdStr};
 
 use crate::domain::model::{
     Permission, PermissionId, ProductTier, RoleId, SubscriptionStatus, UserRolesAndPermissionsError,

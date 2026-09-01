@@ -16,7 +16,7 @@ use agent_session::domain::ports::{AgentSessionLogRepo as _, NoOpRealtime};
 use agent_session::domain::service::{AgentSessionService, AgentSessionServiceImpl};
 use agent_session::testing::InMemoryAgentSessionRepo;
 use bot_id::BotId;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 
 use super::*;
 use crate::outbound::log_frames::LogFrameSource;

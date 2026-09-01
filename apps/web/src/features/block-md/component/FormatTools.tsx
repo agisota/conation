@@ -20,7 +20,7 @@ import {
   $mergeCells,
   $unmergeCell,
 } from '@lexical/table';
-import type { ElementName } from '@macro-inc/lexical-core';
+import type { ElementName } from '@conation/lexical-core';
 import CaretRight from '@phosphor/caret-right.svg';
 import ChatTeardrop from '@phosphor/chat-teardrop.svg';
 import Check from '@phosphor/check-square.svg';

@@ -1,6 +1,6 @@
 import { Doc } from '@ai-ops/doc';
 import type { DocumentOp } from '@ai-ops/editor';
-import type { NodeIdMappings } from '@macro-inc/lexical-core/plugins/nodeIdPlugin';
+import type { NodeIdMappings } from '@conation/lexical-core/plugins/nodeIdPlugin';
 import type { LexicalEditor } from 'lexical';
 
 export function applyAiOps(

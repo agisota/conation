@@ -120,7 +120,7 @@ impl Plan {
         // Database schema.
         hash_dir(
             &mut h,
-            &workspace_root().join("crates/macro_db_client/migrations"),
+            &workspace_root().join("crates/conation_db_client/migrations"),
             &[],
         )?;
         // Search index mappings (canonical TS helpers; node_modules excluded).

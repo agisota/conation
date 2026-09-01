@@ -10,7 +10,7 @@ pub(in crate::api::documents) async fn cleanup_document_version_on_error(
     file_type: &str,
 ) {
     tracing::trace!("deleting document version");
-    let _ = macro_db_client::document::delete_document_version(
+    let _ = conation_db_client::document::delete_document_version(
         db,
         document_id,
         document_version_id,

@@ -4,11 +4,11 @@ use axum::body::Body;
 use axum::http::{Request, StatusCode, header};
 use entity_access::domain::models::TeamRole;
 use http_body_util::BodyExt;
-use macro_authorization::{
+use conation_authorization::{
     InternalIdentityClaims, MacroAuthorizationError, MacroAuthorizationService,
     MacroAuthorizationState,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model::chat::ChatBasic;
 use model::response::StringIDResponse;
 use model::user::UserContext;
@@ -29,15 +29,15 @@ use entity_access::domain::models::{
     EntityPermission, EntityType, OwnerAccessLevel, UserTeamInfo, ViewAccessLevel,
 };
 use entity_access::domain::ports::EntityAccessService;
-use macro_user_id::lowercased::Lowercase;
-use macro_user_id::user_id::MacroUserId;
+use conation_user_id::lowercased::Lowercase;
+use conation_user_id::user_id::MacroUserId;
 
 struct MockService;
 
 impl ChatService for MockService {
     async fn create(
         &self,
-        _user_id: macro_user_id::user_id::MacroUserIdStr<'static>,
+        _user_id: conation_user_id::user_id::MacroUserIdStr<'static>,
         _args: CreateChatArgs,
     ) -> Result<String> {
         Ok("test-chat-id".to_string())
@@ -162,7 +162,7 @@ struct ErrorService;
 impl ChatService for ErrorService {
     async fn create(
         &self,
-        _user_id: macro_user_id::user_id::MacroUserIdStr<'static>,
+        _user_id: conation_user_id::user_id::MacroUserIdStr<'static>,
         _args: CreateChatArgs,
     ) -> Result<String> {
         Err(ChatErr::Unknown(anyhow::anyhow!("db error")))
@@ -270,7 +270,7 @@ struct NotFoundService;
 impl ChatService for NotFoundService {
     async fn create(
         &self,
-        _user_id: macro_user_id::user_id::MacroUserIdStr<'static>,
+        _user_id: conation_user_id::user_id::MacroUserIdStr<'static>,
         _args: CreateChatArgs,
     ) -> Result<String> {
         Err(ChatErr::Unknown(anyhow::anyhow!("db error")))
@@ -528,7 +528,7 @@ impl roles_and_permissions::domain::port::UserRolesAndPermissionsService
 {
     async fn get_user_roles(
         &self,
-        _user_id: &macro_user_id::user_id::MacroUserIdStr<'_>,
+        _user_id: &conation_user_id::user_id::MacroUserIdStr<'_>,
     ) -> std::result::Result<
         std::collections::HashSet<roles_and_permissions::domain::model::RoleId>,
         roles_and_permissions::domain::model::UserRolesAndPermissionsError,
@@ -538,7 +538,7 @@ impl roles_and_permissions::domain::port::UserRolesAndPermissionsService
 
     async fn get_user_permissions(
         &self,
-        _user_id: &macro_user_id::user_id::MacroUserIdStr<'_>,
+        _user_id: &conation_user_id::user_id::MacroUserIdStr<'_>,
     ) -> std::result::Result<
         std::collections::HashSet<roles_and_permissions::domain::model::PermissionId>,
         roles_and_permissions::domain::model::UserRolesAndPermissionsError,
@@ -548,7 +548,7 @@ impl roles_and_permissions::domain::port::UserRolesAndPermissionsService
 
     async fn update_user_roles_and_permissions_for_subscription(
         &self,
-        _email: macro_user_id::email::Email<macro_user_id::lowercased::Lowercase<'_>>,
+        _email: conation_user_id::email::Email<conation_user_id::lowercased::Lowercase<'_>>,
         _subscription_status: roles_and_permissions::domain::model::SubscriptionStatus,
         _product_tier: roles_and_permissions::domain::model::ProductTier,
     ) -> std::result::Result<(), roles_and_permissions::domain::model::UserRolesAndPermissionsError>
@@ -558,7 +558,7 @@ impl roles_and_permissions::domain::port::UserRolesAndPermissionsService
 
     async fn dangerous_upsert_roles_for_user(
         &self,
-        _user_id: &macro_user_id::user_id::MacroUserIdStr<'_>,
+        _user_id: &conation_user_id::user_id::MacroUserIdStr<'_>,
         _role_ids: non_empty::NonEmpty<&[roles_and_permissions::domain::model::RoleId]>,
     ) -> std::result::Result<(), roles_and_permissions::domain::model::UserRolesAndPermissionsError>
     {
@@ -567,7 +567,7 @@ impl roles_and_permissions::domain::port::UserRolesAndPermissionsService
 
     async fn dangerous_remove_roles_from_user(
         &self,
-        _user_id: &macro_user_id::user_id::MacroUserIdStr<'_>,
+        _user_id: &conation_user_id::user_id::MacroUserIdStr<'_>,
         _role_ids: &non_empty::NonEmpty<&[roles_and_permissions::domain::model::RoleId]>,
     ) -> std::result::Result<(), roles_and_permissions::domain::model::UserRolesAndPermissionsError>
     {
@@ -593,7 +593,7 @@ fn chat_basic_extension() -> Extension<ChatBasic> {
     Extension(ChatBasic {
         id: "some-chat-id".to_string(),
         name: "Mock Chat".to_string(),
-        user_id: macro_user_id::user_id::MacroUserIdStr::try_from(
+        user_id: conation_user_id::user_id::MacroUserIdStr::try_from(
             "macro|test@example.com".to_string(),
         )
         .unwrap(),

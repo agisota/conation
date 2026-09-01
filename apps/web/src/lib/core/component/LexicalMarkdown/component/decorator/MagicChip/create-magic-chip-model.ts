@@ -2,7 +2,7 @@ import {
   MAGIC_CHIP_STATUSES,
   type MagicChipDecoratorProps,
   type MagicChipStatus,
-} from '@macro-inc/lexical-core';
+} from '@conation/lexical-core';
 import {
   acquireAgentSessionFold,
   subscribeAgentSessionLog,

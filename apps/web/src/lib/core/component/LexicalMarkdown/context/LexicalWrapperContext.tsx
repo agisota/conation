@@ -8,7 +8,7 @@ import {
   nodeIdPlugin,
   RegisteredNodesByType,
   SupportedNodeTypes,
-} from '@macro-inc/lexical-core';
+} from '@conation/lexical-core';
 import type { NodeKey } from 'lexical';
 import {
   createEditor,

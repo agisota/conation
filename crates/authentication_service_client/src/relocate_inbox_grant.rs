@@ -17,7 +17,7 @@ impl AuthServiceClient {
     /// Provisions a dedicated (deactivated) FusionAuth user for a shared mailbox and
     /// relocates the mailbox's Google grant onto it (off `owner_fusionauth_user_id`).
     /// `desired_user_id` is used as the created user's id so it can match the mailbox's
-    /// minted `macro_user.id`. Returns the shared user's id so the caller can re-home the
+    /// minted `conation_user.id`. Returns the shared user's id so the caller can re-home the
     /// link's `fusionauth_user_id`. Idempotent.
     #[tracing::instrument(skip(self), err)]
     pub async fn relocate_inbox_grant(

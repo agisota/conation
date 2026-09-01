@@ -5,7 +5,7 @@ use entity_access::{
     domain::{models::OwnerAccessLevel, ports::EntityAccessService},
     inbound::axum_extractors::ProjectAccessLevelExtractor,
 };
-use macro_authorization::MacroAuthorizationService;
+use conation_authorization::MacroAuthorizationService;
 use model::{
     project::BasicProject,
     response::{GenericSuccessResponse, SuccessResponse},

@@ -1,6 +1,6 @@
 use super::*;
 use crate::domain::{dm::EnsureDmsSummary, ports::ChannelMutationErr};
-use macro_event_broker::{Event, MacroEvent as _, MacroEventCollection as _, MessageParts};
+use conation_event_broker::{Event, MacroEvent as _, MacroEventCollection as _, MessageParts};
 use std::sync::{Arc, Mutex};
 
 #[derive(Clone, Default)]
@@ -58,7 +58,7 @@ fn member_joined() -> TeamsTopicForDms {
 }
 
 #[test]
-fn subscribes_to_macro_teams() {
+fn subscribes_to_conation_teams() {
     assert_eq!(DeclaredMacroEvent::topics(), ["macro.teams"]);
 }
 

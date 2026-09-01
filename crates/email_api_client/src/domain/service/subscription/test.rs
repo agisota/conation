@@ -102,7 +102,7 @@ async fn teardown_stop_uses_the_health_neutral_token_path() {
 fn link() -> Link {
     Link {
         id: Uuid::nil(),
-        macro_id: "macro|user@example.com".to_string().try_into().unwrap(),
+        conation_id: "macro|user@example.com".to_string().try_into().unwrap(),
         fusionauth_user_id: "fusion-user-id".to_string(),
         email_address: "user@example.com".to_string().try_into().unwrap(),
         provider: UserProvider::Gmail,

@@ -6,11 +6,11 @@ use std::{
 use axum::{Router, http::Request};
 use hmac::{Hmac, Mac};
 use http_body_util::BodyExt;
-use macro_authorization::{
+use conation_authorization::{
     INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_USER_ID_HEADER, InternalIdentityClaims,
     MacroAuthorizationError, MacroAuthorizationService, MacroAuthorizationState,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::Entity;
 use model_user::UserContext;
 use models_pagination::{CreatedAt, Paginated, Query};

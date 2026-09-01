@@ -31,7 +31,7 @@ mod test;
 /// because a tool schema has nowhere else to put it — descriptions are
 /// independent fields, and tool search can load one of these tools without the
 /// others, so a cross-reference could dangle.
-macro_rules! utc_conversion_note {
+conation_rules! utc_conversion_note {
     () => {
         "## Times are UTC — convert both ways\n\
          \n\
@@ -58,7 +58,7 @@ use entity_access::domain::{
     models::{AccessError, AnyEntityPermission, EntityAccessReceipt, OwnerAccessLevel},
     ports::EntityAccessService,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::{Entity, EntityType};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};

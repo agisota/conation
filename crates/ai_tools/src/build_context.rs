@@ -31,9 +31,9 @@ use foreign_entity::{
 use frecency::domain::services::FrecencyQueryServiceImpl;
 use frecency::outbound::postgres::FrecencyPgStorage;
 use lexical_client::LexicalClient;
-use macro_env::Environment;
-use macro_env_var::{env_var, maybe_env_var};
-use macro_service_urls::{
+use conation_env::Environment;
+use conation_env_var::{env_var, maybe_env_var};
+use conation_service_urls::{
     AiEditingWorkerUrl, ConnectionGatewayUrl, DocumentStorageServiceUrl, EmailServiceUrl,
     LexicalServiceUrl, SyncServiceUrl,
 };
@@ -89,12 +89,12 @@ maybe_env_var! {
 /// `INTERNAL_API_KEY` (presented to the connection gateway for realtime
 /// channel side effects), `KAFKA_BROKERS`.
 ///
-/// Service URLs are resolved through the `macro_service_urls` crate, and queue
-/// names through the `macro_queues` crate (both using optional `OVERRIDE_*` env
+/// Service URLs are resolved through the `conation_service_urls` crate, and queue
+/// names through the `conation_queues` crate (both using optional `OVERRIDE_*` env
 /// vars before environment defaults).
 ///
 /// Queue wiring is opt-in via boolean flags (default `false`); the queue name
-/// itself comes from `macro_queues` when enabled:
+/// itself comes from `conation_queues` when enabled:
 /// - `ENABLE_EMAIL_SCHEDULED_QUEUE`
 /// - `ENABLE_GMAIL_OPS_QUEUE` (if disabled, thread-label updates can't enqueue Gmail sync ops)
 /// - `ENABLE_NOTIFICATION_QUEUE` (if disabled, notification status updates skip push clearing)
@@ -117,7 +117,7 @@ pub async fn build_tool_service_context_from_env(
     let ai_editing_worker_url = AiEditingWorkerUrl::new()?.to_string();
     let connection_gateway_url = ConnectionGatewayUrl::new()?.to_string();
 
-    let aws_config = macro_aws_config::get_macro_aws_config().await;
+    let aws_config = conation_aws_config::get_conation_aws_config().await;
     let aws_sqs_client = aws_sdk_sqs::Client::new(&aws_config);
     let enable_email_scheduled_queue = maybe_env
         .enable_email_scheduled_queue
@@ -140,15 +140,15 @@ pub async fn build_tool_service_context_from_env(
 
     let mut sqs_client = sqs_client::SQS::new(aws_sqs_client.clone());
     if enable_email_scheduled_queue {
-        let email_scheduled_queue = macro_queues::EmailScheduledQueue::new();
+        let email_scheduled_queue = conation_queues::EmailScheduledQueue::new();
         sqs_client = sqs_client.email_scheduled_queue(email_scheduled_queue.as_ref());
     }
     if enable_gmail_ops_queue {
-        let gmail_ops_queue = macro_queues::GmailOpsQueue::new();
+        let gmail_ops_queue = conation_queues::GmailOpsQueue::new();
         sqs_client = sqs_client.gmail_ops_queue(gmail_ops_queue.as_ref());
     }
     let notification_queue = if enable_notification_queue {
-        let notification_queue = macro_queues::NotificationIngressQueue::new();
+        let notification_queue = conation_queues::NotificationIngressQueue::new();
         ToolNotificationQueue::Sqs(SqsQueue::new(
             aws_sqs_client.clone(),
             notification_queue.to_string(),
@@ -230,7 +230,7 @@ pub async fn build_tool_service_context_from_env(
         reminders::domain::service::NoOpRemindersService,
     ));
 
-    let s3_client = macro_aws_config::s3_client().await;
+    let s3_client = conation_aws_config::s3_client().await;
     let s3_upload_adapter = S3UploadUrlAdapter::new(
         s3_client,
         env.document_storage_bucket.to_string(),
@@ -258,8 +258,8 @@ pub async fn build_tool_service_context_from_env(
         properties_service.clone(),
         entity_access_service.clone(),
     );
-    let macro_event_broker = macro_event_broker::MacroEventBrokerService::new(
-        macro_event_broker::KafkaEventPublisher::new(env.kafka_brokers.as_ref())
+    let conation_event_broker = conation_event_broker::MacroEventBrokerService::new(
+        conation_event_broker::KafkaEventPublisher::new(env.kafka_brokers.as_ref())
             .context("failed to create kafka event publisher")?,
         event_task_tracker,
     );
@@ -277,7 +277,7 @@ pub async fn build_tool_service_context_from_env(
                 connection_gateway_url,
             )),
             sqs: aws_sqs_client,
-            macro_event_broker: macro_event_broker.clone(),
+            conation_event_broker: conation_event_broker.clone(),
         },
     );
     let document_service = documents::domain::service::DocumentServiceImpl {
@@ -294,7 +294,7 @@ pub async fn build_tool_service_context_from_env(
         foreign_entity_service: ForeignEntityServiceImpl::new(PgForeignEntityRepo::new(
             pool.clone(),
         )),
-        macro_event_broker: macro_event_broker.clone(),
+        conation_event_broker: conation_event_broker.clone(),
     };
 
     let document_tool_context = DocumentToolContext::new(
@@ -322,7 +322,7 @@ pub async fn build_tool_service_context_from_env(
             ),
             0,
         )
-        .with_macro_event_broker(macro_event_broker.clone()),
+        .with_conation_event_broker(conation_event_broker.clone()),
     );
     let email_tool_context = email::inbound::toolset::EmailToolContext::new(
         user_email_service.clone(),
@@ -382,7 +382,7 @@ pub async fn build_tool_service_context_from_env(
 
     let project_tool_context = crate::tool_context::build_project_tool_context(
         pool.clone(),
-        macro_event_broker.clone(),
+        conation_event_broker.clone(),
         entity_access_service.clone(),
         document_tool_context.service.clone(),
         chat_tool_context.service.clone(),
@@ -419,7 +419,7 @@ pub async fn build_tool_service_context_from_env(
         channel_tool_context,
         bot_tool_context: crate::tool_context::build_bot_tool_context(
             pool.clone(),
-            crate::tool_context::ToolBotEventBroker::Real(macro_event_broker.clone()),
+            crate::tool_context::ToolBotEventBroker::Real(conation_event_broker.clone()),
             entity_access_service.clone(),
             document_storage_service_url,
         ),

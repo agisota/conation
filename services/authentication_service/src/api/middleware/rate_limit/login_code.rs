@@ -9,7 +9,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use http_body_util::BodyExt;
-use macro_middleware::tracking::ClientIp;
+use conation_middleware::tracking::ClientIp;
 
 /// Rate limit for validating passwordless login code
 #[tracing::instrument(skip(ctx, req, next, ip_context), fields(client_ip=%ip_context), err(Debug))]
@@ -53,7 +53,7 @@ pub(in crate::api) async fn handler(
             .to_string();
 
         let count = match ctx
-            .macro_cache_client
+            .conation_cache_client
             .get_code_rate_limit(&email_without_alias)
             .await
         {
@@ -90,7 +90,7 @@ pub(in crate::api) async fn handler(
         }
 
         if let Err(e) = ctx
-            .macro_cache_client
+            .conation_cache_client
             .increment_code_rate_limit(&email_without_alias, RATE_LIMIT_CONFIG.login_code.1)
             .await
         {
@@ -103,7 +103,7 @@ pub(in crate::api) async fn handler(
         }
 
         let daily_count = match ctx
-            .macro_cache_client
+            .conation_cache_client
             .get_daily_code_rate_limit(&email_without_alias)
             .await
         {
@@ -142,7 +142,7 @@ pub(in crate::api) async fn handler(
         }
 
         if let Err(e) = ctx
-            .macro_cache_client
+            .conation_cache_client
             .increment_daily_code_rate_limit(
                 &email_without_alias,
                 RATE_LIMIT_CONFIG.login_code_daily.1,

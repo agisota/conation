@@ -1,4 +1,4 @@
-import type { AgentContextDecoratorProps } from '@macro-inc/lexical-core';
+import type { AgentContextDecoratorProps } from '@conation/lexical-core';
 import type { Component } from 'solid-js';
 
 /** A quiet disclosure for the channel context supplied to an agent. */

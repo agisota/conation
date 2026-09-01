@@ -12,8 +12,8 @@ use super::ports::{OnboardingError, OnboardingRepo, Result};
 use generic_email_domains::is_generic_email_domain;
 use import::domain::models::{ImportSource, Initiator};
 use import::domain::service::ImportService;
-use macro_user_id::email::ReadEmailParts;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::email::ReadEmailParts;
+use conation_user_id::user_id::MacroUserIdStr;
 use mcp_client::domain::ports::McpServerStore;
 use std::sync::Arc;
 

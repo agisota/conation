@@ -3,7 +3,7 @@ use std::str::FromStr;
 use super::file_type::FileType;
 use crate::document::FileTypeExt;
 use document_sub_type::DocumentSubType;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use utoipa::ToSchema;
 
 #[derive(sqlx::FromRow, serde::Serialize, serde::Deserialize, Eq, PartialEq, Debug)]

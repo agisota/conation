@@ -8,7 +8,7 @@ export function getSearchEventQueue(): {
   const searchServiceStack = new pulumi.StackReference(
     'search-event-queue-stack',
     {
-      name: `macro-inc/search-event-queue/${stack}`,
+      name: `conation-dev/search-event-queue/${stack}`,
     }
   );
 

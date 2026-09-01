@@ -9,12 +9,12 @@ use super::*;
 use agent_session::domain::error::AgentSessionError;
 use agent_session::domain::ports::BotFacts;
 use bot_id::BotId;
-use macro_authorization::{
+use conation_authorization::{
     BOT_SCOPE_HEADER, BOT_TOKEN_HEADER, BotActingUserClaims, BotAuthentication, BotAuthorizer,
     BotScope, InternalAuthConfig, JwtValidator, MacroAuthorizationError,
     MacroAuthorizationServiceImpl, ValidatedIdentity,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use rootcause::Report;
 use tokio_tungstenite::tungstenite;
 
@@ -50,7 +50,7 @@ impl BotAuthorizer for SelfBotAuthorizer {
         }
         Ok(BotAuthentication {
             bot_id: BotId::TEST_A,
-            token_id: macro_uuid::generate_uuid_v7(),
+            token_id: conation_uuid::generate_uuid_v7(),
             bot_scope,
             team_id: None,
             acting_user: None,

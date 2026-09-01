@@ -1,5 +1,5 @@
 use super::*;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -7,13 +7,13 @@ const OWNER_WITH_TEAM: &str = "macro|document-owner@team.test";
 const OWNER_WITHOUT_TEAM: &str = "macro|document-owner@personal.test";
 
 async fn insert_user(pool: &PgPool, user_id: &str) -> anyhow::Result<()> {
-    let macro_user_id = Uuid::new_v4();
+    let conation_user_id = Uuid::new_v4();
     sqlx::query!(
         r#"
-        INSERT INTO macro_user (id, username, email, stripe_customer_id)
+        INSERT INTO conation_user (id, username, email, stripe_customer_id)
         VALUES ($1, $2, $2, $2)
         "#,
-        macro_user_id,
+        conation_user_id,
         user_id,
     )
     .execute(pool)
@@ -21,11 +21,11 @@ async fn insert_user(pool: &PgPool, user_id: &str) -> anyhow::Result<()> {
 
     sqlx::query!(
         r#"
-        INSERT INTO "User" (id, email, macro_user_id)
+        INSERT INTO "User" (id, email, conation_user_id)
         VALUES ($1, $1, $2)
         "#,
         user_id,
-        macro_user_id,
+        conation_user_id,
     )
     .execute(pool)
     .await?;

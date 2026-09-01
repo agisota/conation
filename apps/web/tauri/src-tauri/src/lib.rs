@@ -1,14 +1,14 @@
 use device::{IsIpad, detect_is_ipad, is_ipad};
 use logger::Logger;
-use macro_bundle_updater_plugin::domain::{
+use conation_bundle_updater_plugin::domain::{
     asset_service::BundleAssetResolver, bundle_routes::BundleRoutes,
 };
-use macro_bundle_updater_plugin::inbound::plugin::retry_waiting_for_wifi;
+use conation_bundle_updater_plugin::inbound::plugin::retry_waiting_for_wifi;
 #[cfg(feature = "auto_apply_update")]
-use macro_bundle_updater_plugin::inbound::plugin::{
+use conation_bundle_updater_plugin::inbound::plugin::{
     allow_update_reload_retry, apply_completed_update_from, start_update_check,
 };
-use macro_bundle_updater_plugin::outbound::fs::FileSystem;
+use conation_bundle_updater_plugin::outbound::fs::FileSystem;
 use navigation_plugin::scheme::MacroScheme;
 use navigation_plugin::{MacroNavigationPlugin, NavigatePayload};
 use reqwest::cookie::CookieStore;
@@ -195,7 +195,7 @@ pub fn run() {
                 .with_app_link_hosts(APP_LINK_HOSTS),
         )
         .plugin(
-            macro_bundle_updater_plugin::inbound::plugin::MacroBundleUpdaterPlugin::new(
+            conation_bundle_updater_plugin::inbound::plugin::MacroBundleUpdaterPlugin::new(
                 AppEnvironment::current()
                     .bundle_update_base_url()
                     .parse()
@@ -269,13 +269,13 @@ pub fn run() {
             graphql_cache_plugin::commands::graphql_cache_delete_records,
             graphql_cache_plugin::commands::graphql_cache_teardown,
             graphql_cache_plugin::commands::graphql_cache_clear,
-            macro_bundle_updater_plugin::inbound::plugin::grant_bundle_update,
-            macro_bundle_updater_plugin::inbound::plugin::perform_update,
-            macro_bundle_updater_plugin::inbound::plugin::ack_bundle_update_reload,
-            macro_bundle_updater_plugin::inbound::plugin::check_for_update,
-            macro_bundle_updater_plugin::inbound::plugin::get_bundle_debug_info,
-            macro_bundle_updater_plugin::inbound::plugin::get_bundle_update_status,
-            macro_bundle_updater_plugin::inbound::plugin::clear_bundle,
+            conation_bundle_updater_plugin::inbound::plugin::grant_bundle_update,
+            conation_bundle_updater_plugin::inbound::plugin::perform_update,
+            conation_bundle_updater_plugin::inbound::plugin::ack_bundle_update_reload,
+            conation_bundle_updater_plugin::inbound::plugin::check_for_update,
+            conation_bundle_updater_plugin::inbound::plugin::get_bundle_debug_info,
+            conation_bundle_updater_plugin::inbound::plugin::get_bundle_update_status,
+            conation_bundle_updater_plugin::inbound::plugin::clear_bundle,
             is_ipad,
             get_pending_share_filenames,
             pop_shared_files,
@@ -440,7 +440,7 @@ enum LaunchState {
 #[tracing::instrument(err, skip(handle))]
 fn emit_navigate_for_deep_link(url: Url, handle: &AppHandle) -> Result<(), Report> {
     // Universal/App links come in as https:// URLs, custom scheme links come in as macro://
-    let macro_scheme = match url.scheme() {
+    let conation_scheme = match url.scheme() {
         s if s == APP_SCHEME => MacroScheme::new(url)?,
         "http" | "https" => MacroScheme::from_url(&url)?,
         scheme => {
@@ -449,8 +449,8 @@ fn emit_navigate_for_deep_link(url: Url, handle: &AppHandle) -> Result<(), Repor
     };
 
     let payload = NavigatePayload {
-        path: macro_scheme.0.path(),
-        query: macro_scheme.0.query().unwrap_or_default(),
+        path: conation_scheme.0.path(),
+        query: conation_scheme.0.query().unwrap_or_default(),
     };
     // we send a navigate event instead of calling navigate directly
     // because navigate performs a full browser navigation

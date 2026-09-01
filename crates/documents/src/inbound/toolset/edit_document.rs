@@ -146,7 +146,7 @@ where
 
         // The worker runs several models on the caller's behalf; record each so
         // their tokens land on the usage ledger (attributed to this user).
-        let entity = macro_uuid::string_to_uuid(&self.document_id).ok();
+        let entity = conation_uuid::string_to_uuid(&self.document_id).ok();
         for u in &result.usage {
             let cx = ai_usage::UsageContext::new(
                 ai_usage::AiFeature::AiEditing,

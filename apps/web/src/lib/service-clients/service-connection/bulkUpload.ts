@@ -1,5 +1,5 @@
 import { toast } from '@core/component/Toast/Toast';
-import { createWebsocketEventEffect } from '@macro-inc/collaboration/websocket';
+import { createWebsocketEventEffect } from '@conation/collaboration/websocket';
 import type { UploadFolderStatusUpdate } from '@service-connection/generated/schemas/uploadFolderStatusUpdate';
 import type { FromWebsocketMessage } from './websocket';
 import { ws } from './websocket';

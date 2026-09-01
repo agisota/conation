@@ -4,7 +4,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use macro_user_id::user_id::MacroUserId;
+use conation_user_id::user_id::MacroUserId;
 use roles_and_permissions::domain::model::PermissionId;
 
 use crate::api::{context::ApiContext, permissions_extractor::DbPermissionsExtractor};
@@ -114,7 +114,7 @@ pub async fn handler(
 
     let email = user_id.email_part().lowercase();
 
-    let legacy_user_info = macro_db_client::user::get::get_legacy_user_info(&ctx.db, &user_id)
+    let legacy_user_info = conation_db_client::user::get::get_legacy_user_info(&ctx.db, &user_id)
         .await
         .map_err(GetLegacyUserPermissionsError::InternalError)?;
 

@@ -1,7 +1,7 @@
 //! Implementation of GW port using the ConnectionGatewayClient
 
 use connection_gateway_client::ConnectionGatewayClient;
-use macro_user_id::{
+use conation_user_id::{
     lowercased::Lowercase,
     user_id::{MacroUserId, MacroUserIdStr},
 };

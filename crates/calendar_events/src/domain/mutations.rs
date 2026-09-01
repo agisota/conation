@@ -26,7 +26,7 @@ use super::{
     },
 };
 use crate::domain::events::{CalendarEventMetadata, CalendarMacroEvent, CalendarTopicEvent};
-use macro_event_broker::MacroEventBroker;
+use conation_event_broker::MacroEventBroker;
 
 /// Calendar mutation use cases with provider, token, and persistence
 /// details behind ports.
@@ -34,7 +34,7 @@ pub struct CalendarMutationServiceImpl<R, G, T, B> {
     repository: R,
     provider: G,
     tokens: T,
-    macro_event_broker: B,
+    conation_event_broker: B,
 }
 
 impl<R, G, T, B> CalendarMutationServiceImpl<R, G, T, B>
@@ -45,12 +45,12 @@ where
     B: MacroEventBroker,
 {
     /// Construct the service from its ports.
-    pub fn new(repository: R, provider: G, tokens: T, macro_event_broker: B) -> Self {
+    pub fn new(repository: R, provider: G, tokens: T, conation_event_broker: B) -> Self {
         Self {
             repository,
             provider,
             tokens,
-            macro_event_broker,
+            conation_event_broker,
         }
     }
 
@@ -60,7 +60,7 @@ where
     /// point, so a publish failure must not fail the mutation.
     fn publish_calendar_event(&self, event: CalendarTopicEvent) {
         let _ = self
-            .macro_event_broker
+            .conation_event_broker
             .send_event(&CalendarMacroEvent::for_change(event))
             .inspect_err(|error| {
                 tracing::error!(error=?error, "failed to publish calendar event");

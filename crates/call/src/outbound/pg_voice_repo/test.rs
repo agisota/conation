@@ -1,6 +1,6 @@
 use crate::domain::ports::VoiceRepository;
 use crate::outbound::pg_voice_repo::PgVoiceRepo;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use sqlx::{Pool, Postgres};
 use uuid::{Uuid, uuid};
 
@@ -228,7 +228,7 @@ async fn find_nearest_user_for_voice_resolves_via_embedding_lookup(
     // Insert a separate transcript sample directly so this exercises the
     // lookup-by-voice path even though `upsert_voice` now deduplicates nearby
     // embeddings.
-    let segment_voice = macro_uuid::generate_uuid_v7();
+    let segment_voice = conation_uuid::generate_uuid_v7();
     sqlx::query("INSERT INTO voice (id, embedding) VALUES ($1, $2)")
         .bind(segment_voice)
         .bind(pgvector::Vector::from(axis_unit_vector(0)))

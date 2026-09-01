@@ -3,7 +3,7 @@ use crate::domain::companies_repo::CompaniesRepository;
 use crate::domain::model::CrmError;
 use crate::outbound::companies_repo::CompaniesRepositoryImpl;
 use chrono::Utc;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use sqlx::PgPool;
 use uuid::Uuid;
 

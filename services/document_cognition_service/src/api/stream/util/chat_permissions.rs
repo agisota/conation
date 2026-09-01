@@ -1,7 +1,7 @@
 use crate::api::context::ApiContext;
 use anyhow::Result;
 use entity_access::domain::ports::EntityAccessService;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::EntityType;
 use models_permissions::share_permission::access_level::AccessLevel;
 

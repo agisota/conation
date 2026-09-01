@@ -5,7 +5,7 @@ use gh_workflow::{Concurrency, Expression, Workflow};
 
 /// Declares a `${{ secrets.NAME }}` reference as a `&str` const named `NAME`, so
 /// secret usage is greppable and typo-proof.
-macro_rules! secret {
+conation_rules! secret {
     ($name:ident) => {
         pub const $name: &str = concat!("${{ secrets.", stringify!($name), " }}");
     };
@@ -82,7 +82,7 @@ pub const BUN_CACHE_VOLUME_DIR: &str = "/home/runner/.bun/install/cache";
 
 /// GHCR repository for the agent-harness sandbox image (the same Dockerfile
 /// Daytona snapshots). Pushed as `:$SHA` on PRs and `:$SHA` + `:latest` on main.
-pub const AGENT_HARNESS_GHCR_IMAGE: &str = "ghcr.io/macro-inc/macro-agent-harness";
+pub const AGENT_HARNESS_GHCR_IMAGE: &str = "ghcr.io/conation-dev/conation-agent-harness";
 
 /// The repo-wide env block (mirrors the original top-level `env:`). Defaults the
 /// linker to `lld`; the heavy jobs override `RUSTFLAGS` to use `mold`.

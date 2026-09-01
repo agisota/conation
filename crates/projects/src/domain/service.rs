@@ -8,8 +8,8 @@ use entity_access::domain::models::{
 };
 use entity_access_management::domain::ports::EntityAccessManagementService;
 use futures::stream::{FuturesUnordered, StreamExt};
-use macro_event_broker::MacroEventBroker;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_event_broker::MacroEventBroker;
+use conation_user_id::user_id::MacroUserIdStr;
 use model::folder::{FileSystemNodeWithIds, UploadFolderRequest, UploadFolderResponseData};
 use model::item::{Item, ItemWithUserAccessLevel};
 use model::project::request::{CreateProjectRequest, PatchProjectRequestV2};
@@ -80,7 +80,7 @@ where
     /// Document search and deletion queue publisher.
     pub search_indexer: Idx,
     /// Project lifecycle event broker.
-    pub macro_event_broker: B,
+    pub conation_event_broker: B,
     /// Optional deterministic upload request ID used by local development.
     pub fixed_upload_request_id: Option<Uuid>,
 }
@@ -105,7 +105,7 @@ where
         entity_access_management_service: Eam,
         search_indexer: Idx,
         fixed_upload_request_id: Option<Uuid>,
-        macro_event_broker: B,
+        conation_event_broker: B,
     ) -> Self {
         Self {
             repo,
@@ -114,7 +114,7 @@ where
             sha_counter,
             entity_access_management_service,
             search_indexer,
-            macro_event_broker,
+            conation_event_broker,
             fixed_upload_request_id,
         }
     }
@@ -122,7 +122,7 @@ where
     /// Publish a project lifecycle event; failures are logged and dropped.
     fn publish_project_event(&self, event: &ProjectMacroEvent) {
         let _ = self
-            .macro_event_broker
+            .conation_event_broker
             .send_event(event)
             .inspect_err(|error| {
                 tracing::error!(error=?error, "failed to publish project event");

@@ -1,5 +1,5 @@
 use chrono::DateTime;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use rootcause::report;
 use serde::{Deserialize, Serialize};
 use std::hash::{DefaultHasher, Hasher};
@@ -110,7 +110,7 @@ impl DeviceEndpoint {
 /// Because the enum and the assertions share the same variant list, adding a new
 /// variant without a matching `Notification` impl — or with a mismatched
 /// `TYPE_NAME` — is a compile error.
-macro_rules! define_notif_event {
+conation_rules! define_notif_event {
     (
         $(#[$enum_meta:meta])*
         $vis:vis enum $Name:ident {

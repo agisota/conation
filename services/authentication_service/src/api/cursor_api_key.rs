@@ -14,7 +14,7 @@ use axum::{
     Router,
     routing::{delete, get, put},
 };
-use macro_user_id::{email::ReadEmailParts, user_id::MacroUserIdStr};
+use conation_user_id::{email::ReadEmailParts, user_id::MacroUserIdStr};
 
 use crate::api::context::ApiContext;
 
@@ -39,7 +39,7 @@ pub fn router() -> Router<ApiContext> {
         .route("/default-model", put(put_cursor_default_model::handler))
 }
 
-fn require_macro_staff(user_id: &MacroUserIdStr<'_>) -> Result<(), CursorApiKeyError> {
+fn require_conation_staff(user_id: &MacroUserIdStr<'_>) -> Result<(), CursorApiKeyError> {
     if user_id.email_part().domain_part() != "macro.com" {
         return Err(CursorApiKeyError::NotMacroStaff);
     }

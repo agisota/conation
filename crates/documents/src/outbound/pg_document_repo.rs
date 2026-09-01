@@ -1,6 +1,6 @@
 //! PostgreSQL implementation of the [`DocumentRepo`] port.
 //!
-//! All SQL queries are written directly here (not delegated to `macro_db_client`).
+//! All SQL queries are written directly here (not delegated to `conation_db_client`).
 
 #[cfg(test)]
 mod tests;
@@ -12,7 +12,7 @@ mod markdown_backfill;
 mod share;
 
 use document_sub_type::DocumentSubType;
-use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use model::document::{DocumentBasic, DocumentMetadata};
 use models_permissions::share_permission::{SharePermissionV2, TeamLinkShareDefault};
 use sqlx::PgPool;
@@ -574,7 +574,7 @@ impl DocumentRepo for PgDocumentRepo {
             let owner = edit::get_document_owner(&mut transaction, &args.document_id).await?;
 
             // SAFETY: document IDs are UUID strings.
-            let entity_id = macro_uuid::string_to_uuid(&args.document_id).unwrap();
+            let entity_id = conation_uuid::string_to_uuid(&args.document_id).unwrap();
 
             entity_access_db_utils::remove_non_owner_user_entity_access(
                 &mut transaction,
@@ -797,7 +797,7 @@ impl DocumentRepo for PgDocumentRepo {
             LEFT JOIN LATERAL (
                 SELECT github_username
                 FROM github_links
-                WHERE macro_id = request_user.user_id
+                WHERE conation_id = request_user.user_id
                 ORDER BY updated_at DESC
                 LIMIT 1
             ) gl ON true

@@ -32,8 +32,8 @@ mod self_read_guard {
         UserTeamInfo,
     };
     use entity_access::domain::ports::EntityAccessService;
-    use macro_user_id::lowercased::Lowercase;
-    use macro_user_id::user_id::{MacroUserId, MacroUserIdStr};
+    use conation_user_id::lowercased::Lowercase;
+    use conation_user_id::user_id::{MacroUserId, MacroUserIdStr};
     use uuid::Uuid;
 
     /// A [`ChatService`] that panics if any method is invoked — used to prove

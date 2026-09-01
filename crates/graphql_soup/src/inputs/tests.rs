@@ -1,9 +1,9 @@
-use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use models_pagination::{CursorVal, Query};
 
 use super::*;
 
-fn test_macro_user_id() -> MacroUserIdStr<'static> {
+fn test_conation_user_id() -> MacroUserIdStr<'static> {
     MacroUserIdStr::parse_from_str("macro|user@example.com")
         .unwrap()
         .into_owned()
@@ -19,7 +19,7 @@ fn maps_email_view_to_soup_request() {
         filters: None,
         sort_direction: None,
     }))
-    .into_request(test_macro_user_id(), vec![])
+    .into_request(test_conation_user_id(), vec![])
     .unwrap();
 
     assert_eq!(request.email_preview_view.to_string(), "sent");
@@ -35,7 +35,7 @@ fn defaults_email_view_to_inbox() {
         filters: None,
         sort_direction: None,
     }))
-    .into_request(test_macro_user_id(), vec![])
+    .into_request(test_conation_user_id(), vec![])
     .unwrap();
 
     assert_eq!(request.email_preview_view.to_string(), "inbox");
@@ -58,7 +58,7 @@ fn maps_soup_cursor_continuation() {
         email_view: Some(GraphqlEmailView::Sent),
         sort_direction: None,
     })
-    .into_request(test_macro_user_id(), vec![])
+    .into_request(test_conation_user_id(), vec![])
     .unwrap();
 
     assert_eq!(request.limit, 25);
@@ -79,7 +79,7 @@ fn maps_initial_grouped_input() {
         sort_method: Some(GraphqlSimpleSortMethod::UpdatedAt),
         filters: None,
     }))
-    .into_request(test_macro_user_id())
+    .into_request(test_conation_user_id())
     .unwrap();
 
     assert_eq!(request.limit, 42);
@@ -110,7 +110,7 @@ fn maps_grouped_cursor_continuation() {
         group_key: "document".to_owned(),
         cursor: cursor.to_string(),
     })
-    .into_request(test_macro_user_id())
+    .into_request(test_conation_user_id())
     .unwrap();
 
     assert_eq!(request.limit, 25);

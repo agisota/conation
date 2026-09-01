@@ -10,8 +10,8 @@ chrono = { workspace = true }
 doppleganger = { workspace = true }
 email_utils = { path = "../email_utils" }
 futures = { workspace = true }
-macro_user_id = { path = "../macro_user_id" }
-macro_uuid = { path = "../macro_uuid" }
+conation_user_id = { path = "../conation_user_id" }
+conation_uuid = { path = "../conation_uuid" }
 models_email = { path = "../models_email" }
 models_pagination = { path = "../models_pagination" }
 once_cell = { workspace = true }
@@ -23,4 +23,4 @@ tracing = { workspace = true }
 workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
-macro_db_migrator = { path = "../macro_db_migrator" }
+conation_db_migrator = { path = "../conation_db_migrator" }

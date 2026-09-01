@@ -2,7 +2,7 @@ use crate::api::context::{ApiContext, AuthorizationService};
 use ::notification::inbound::http::NotificationRouterState;
 use anyhow::Context;
 use axum::Router;
-use macro_tower_layers::MacroRequestIdAndTracingLayer;
+use conation_tower_layers::MacroRequestIdAndTracingLayer;
 use model::version::{ServiceNameState, VersionedApiServiceName, validate_api_version};
 use std::time::Duration;
 use tower::ServiceBuilder;
@@ -38,7 +38,7 @@ pub async fn setup_and_serve<S: ::notification::domain::service::NotificationRea
                     },
                     validate_api_version,
                 ))
-                .layer(macro_cors::cors_layer())
+                .layer(conation_cors::cors_layer())
                 .layer(CompressionLayer::new().gzip(true)),
         )
         // The health router is attached here so we don't attach the logging middleware to it
@@ -63,7 +63,7 @@ fn api_router<S: ::notification::domain::service::NotificationReader>(
 ) -> Router<ApiContext> {
     let middleware = {
         ServiceBuilder::new().layer(axum::middleware::from_fn(
-            macro_middleware::connection_drop_prevention_handler,
+            conation_middleware::connection_drop_prevention_handler,
         ))
     };
 

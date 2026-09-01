@@ -6,8 +6,8 @@ mod test;
 use std::sync::Arc;
 
 use entity_access::domain::models::{AnyEntityPermission, EntityAccessReceipt};
-use macro_sync_service_jwt::DocumentPermissionToken;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_sync_service_jwt::DocumentPermissionToken;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::Entity;
 use uuid::Uuid;
 

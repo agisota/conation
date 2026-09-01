@@ -46,7 +46,7 @@ import {
 import {
   buildMentionMarkdownString,
   markdownToPlainText,
-} from '@macro-inc/lexical-core';
+} from '@conation/lexical-core';
 import {
   invalidateChannelsActivity,
   useUpdateChannelsActivityMutation,

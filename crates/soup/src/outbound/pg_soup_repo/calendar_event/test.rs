@@ -1,6 +1,6 @@
 use super::*;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_user_id::user_id::MacroUserIdStr;
 use models_pagination::Frecency;
 
 #[sqlx::test(migrator = "MACRO_DB_MIGRATIONS")]
@@ -13,7 +13,7 @@ async fn frecency_fallback_keeps_calendar_events_with_aggregates(
     sqlx::query!(
         r#"
         INSERT INTO email_links (
-            id, macro_id, fusionauth_user_id, email_address, provider
+            id, conation_id, fusionauth_user_id, email_address, provider
         )
         VALUES ($1, $2, $2, 'calendar-frecency@example.com', 'GMAIL')
         "#,

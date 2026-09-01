@@ -61,8 +61,8 @@ pub struct LocalE2eChannelAlias {
 /// User row from `seed/local_e2e/users.json`.
 #[derive(Clone, Debug, Deserialize)]
 pub struct SeedUser {
-    /// Stable database id in `macro_user`.
-    pub macro_user_id: String,
+    /// Stable database id in `conation_user`.
+    pub conation_user_id: String,
     /// Stable FusionAuth id used in locally generated JWTs.
     pub fusion_user_id: String,
     /// Macro auth user id, e.g. `macro|e2e@macro.local`.

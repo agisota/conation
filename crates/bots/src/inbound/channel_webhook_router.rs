@@ -29,11 +29,11 @@ use entity_access::{
     },
     inbound::axum_extractors::ChannelAccessLevelExtractor,
 };
-use macro_authorization::{
+use conation_authorization::{
     BOT_TOKEN_HEADER, BotAuthentication, BotOnly, MacroAuthorizationRejection,
     MacroAuthorizationService, MacroAuthorizationState, OptionalMacroAuthorizationExtractor,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_error_response::ErrorResponse;
 use std::{future::Future, marker::PhantomData, sync::Arc};
 use uuid::Uuid;
@@ -367,7 +367,7 @@ fn record_preferred_bot(bot: &BotAuthentication) {
     if let Some(acting_user) = &bot.acting_user {
         span.record(
             "acting_user_id",
-            tracing::field::display(&acting_user.macro_user_id),
+            tracing::field::display(&acting_user.conation_user_id),
         );
     }
 }

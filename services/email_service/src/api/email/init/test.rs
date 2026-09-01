@@ -1,5 +1,5 @@
 use super::*;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use sqlx::PgPool;
 
 async fn insert_email_link(pool: &PgPool) -> Uuid {
@@ -8,7 +8,7 @@ async fn insert_email_link(pool: &PgPool) -> Uuid {
     sqlx::query!(
         r#"
         INSERT INTO email_links (
-            id, macro_id, fusionauth_user_id, email_address, provider
+            id, conation_id, fusionauth_user_id, email_address, provider
         )
         VALUES ($1, $2, $2, $3, 'GMAIL')
         "#,
@@ -120,7 +120,7 @@ async fn provider_diagnostics_are_not_returned_to_clients() {
 fn only_shared_inbox_conflict_keeps_the_in_progress_link() {
     // SharedInboxConflict is held open for the force_share retry, so its row must be kept;
     // every other terminal failure must clean up the row so it stops counting toward the
-    // /link/gmail start cap. The delete itself is covered by macro_db_client's own tests.
+    // /link/gmail start cap. The delete itself is covered by conation_db_client's own tests.
     assert!(
         !should_clean_up_in_progress_link(&InitError::SharedInboxConflict {
             email_address: "shared@example.com".to_string(),
@@ -155,7 +155,7 @@ fn calendar_intent_follows_the_consent_request_not_the_grant() {
         .to_vec();
     let gmail_scope = "https://www.googleapis.com/auth/gmail.modify".to_owned();
     let in_progress = |requested: Vec<String>| InProgressUserLink {
-        macro_user_id: Uuid::now_v7(),
+        conation_user_id: Uuid::now_v7(),
         linked_email: None,
         requested_google_scopes: requested,
         granted_google_scopes: [vec![gmail_scope.clone()], calendar_scopes.clone()].concat(),

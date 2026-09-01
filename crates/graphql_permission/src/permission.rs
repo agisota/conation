@@ -6,7 +6,7 @@ use entity_access::domain::{
     ports::EntityAccessService,
 };
 use futures::{StreamExt, stream};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::{Entity, OwnedEntity};
 use rootcause::markers::{Cloneable, Dynamic};
 

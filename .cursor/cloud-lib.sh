@@ -1,17 +1,20 @@
 WORKSPACE_ROOT='/workspace'
-CACHE_ROOT="${HOME}/.cache/macro-cloud"
+CACHE_ROOT="${HOME}/.cache/conation-cloud"
 TARGET_CACHE="${CACHE_ROOT}/target"
-export MACRO_STACK_SNAPSHOT_DIR="${CACHE_ROOT}/stack-snapshots"
+export CONATION_STACK_SNAPSHOT_DIR="${CACHE_ROOT}/stack-snapshots"
+# legacy compat
+export MACRO_STACK_SNAPSHOT_DIR="${CONATION_STACK_SNAPSHOT_DIR}"
 
 LOG_DIR="${HOME}/.cursor-cloud"
-MACRODB_URL='postgres://user:password@localhost:5432/macrodb'
+MACRODB_URL='postgres://user:password@localhost:5432/conationdb'
+DATABASE_URL_CONATION='postgres://user:password@localhost:5432/conationdb'
 DOCKER_SOCK='/var/run/docker.sock'
 DOCKER_IPTABLES_BACKEND='/usr/sbin/iptables-legacy'
 DOCKER_IP6TABLES_BACKEND='/usr/sbin/ip6tables-legacy'
 NIX_BIN='/nix/var/nix/profiles/default/bin/nix'
 NIX_SOCK='/nix/var/nix/daemon-socket/socket'
-NIX_CACHE_URL='s3://macro-nix-cache?region=us-east-1&compression=zstd'
-NIX_CACHE_PUBLIC_KEY='nix-cache.macro.com-1:UtlRPa6ac+o4IfY+wV8KUS+X0XPU0YMv18lPWEDYN5k='
+NIX_CACHE_URL='s3://conation-nix-cache?region=us-east-1&compression=zstd'
+NIX_CACHE_PUBLIC_KEY='nix-cache.conation.dev-1:UtlRPa6ac+o4IfY+wV8KUS+X0XPU0YMv18lPWEDYN5k='
 LOCAL_STACK_BINS="${CACHE_ROOT}/local-stack-bins"
 export DATABASE_URL="${MACRODB_URL}"
 

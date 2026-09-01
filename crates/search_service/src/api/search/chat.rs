@@ -1,7 +1,7 @@
 use crate::api::context::SearchHandlerState;
 use crate::api::search::simple::SearchError;
 use indexmap::IndexMap;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use models_properties::{EntityReference, EntityType};
 use models_search::chat::{
     ChatMessageSearchResult, ChatSearchResponseItem, ChatSearchResponseItemWithMetadata,
@@ -32,7 +32,7 @@ pub(in crate::api::search) async fn enrich_chats(
 
     // Fetch chat metadata from database
     let chat_histories =
-        macro_db_client::chat::get::get_chat_history_info(&ctx.db, user_id, &chat_ids)
+        conation_db_client::chat::get::get_chat_history_info(&ctx.db, user_id, &chat_ids)
             .await
             .map_err(SearchError::InternalError)?;
 
@@ -77,7 +77,7 @@ pub(in crate::api::search) async fn enrich_chats(
 
 pub fn construct_search_result(
     search_results: Vec<opensearch_client::search::model::SearchHit>,
-    chat_histories: HashMap<String, macro_db_client::chat::get::ChatHistoryInfo>,
+    chat_histories: HashMap<String, conation_db_client::chat::get::ChatHistoryInfo>,
     properties_map: HashMap<String, Vec<SoupProperty>>,
 ) -> anyhow::Result<Vec<ChatSearchResponseItemWithMetadata>> {
     // construct entity hit map of id -> vec<hits> using IndexMap to preserve insertion order

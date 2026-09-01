@@ -4,17 +4,17 @@ import type {
   InitialSync,
   LiveSyncSource,
   TimeoutError,
-} from '@macro-inc/collaboration/collab/source';
+} from '@conation/collaboration/collab/source';
 import {
   createSyncSocket,
   type SyncWebsocket,
-} from '@macro-inc/collaboration/sync-service/socket';
+} from '@conation/collaboration/sync-service/socket';
 import {
   mapToSyncStatus,
   SyncServiceSource,
-} from '@macro-inc/collaboration/sync-service/source';
-import type { UrlResolver } from '@macro-inc/collaboration/websocket';
-import { createWebsocketStateSignal } from '@macro-inc/collaboration/websocket/solid/state-signal';
+} from '@conation/collaboration/sync-service/source';
+import type { UrlResolver } from '@conation/collaboration/websocket';
+import { createWebsocketStateSignal } from '@conation/collaboration/websocket/solid/state-signal';
 import { storageServiceClient } from '@service-storage/client';
 import type { ResultAsync } from 'neverthrow';
 

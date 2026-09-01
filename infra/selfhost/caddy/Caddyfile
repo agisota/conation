@@ -1,0 +1,75 @@
+# Caddyfile — Conation self-host
+# {$CONATION_DOMAIN} = conation.dev, {$CADDY_TLS} = tls / tls internal
+
+{
+	# Global: use env CONATION_DOMAIN, auto TLS via Let's Encrypt
+	# For local without DNS: CADDY_TLS="tls internal"
+	auto_https off
+}
+
+# Redirect http -> https (when LE enabled)
+:80 {
+	redir https://{host}{uri} permanent
+}
+
+# Main app: app.conation.dev + conation.dev
+{$CONATION_DOMAIN}, app.{$CONATION_DOMAIN} {
+	{$CADDY_TLS} {
+		# on-demand tls for wildcard if needed
+	}
+	# Frontend static (Vite bundle at /app)
+	# When using `just selfhost` with static bundle: root * /srv/app/dist
+	# When dev: reverse_proxy to vite :3000
+	handle /app/* {
+		# Try static first, then proxy to vite dev (if running)
+		# For prod: docker volume mount dist at /srv/app/dist
+		root * /srv/app/dist
+		try_files {path} {path}/ /index.html
+		file_server
+	}
+	handle {
+		reverse_proxy authentication-service:8080
+	}
+}
+
+# API — api.conation.dev proxies all services via path
+api.{$CONATION_DOMAIN} {
+	{$CADDY_TLS}
+	handle /auth/* {
+		reverse_proxy authentication-service:8080
+	}
+	handle /email/* {
+		reverse_proxy email-service:8080
+	}
+	handle /storage/* {
+		reverse_proxy document-storage-service:8080
+	}
+	handle /search/* {
+		reverse_proxy search_processing_service:8080
+	}
+	handle /connection/* {
+		reverse_proxy connection_gateway:8080
+	}
+	handle /notifications/* {
+		reverse_proxy notification_service:8080
+	}
+	handle /cognition/* {
+		reverse_proxy document_cognition_service:8080
+	}
+	handle {
+		reverse_proxy authentication-service:8080
+	}
+}
+
+# Mail — mail.conation.dev (JMAP + webmail if added)
+mail.{$CONATION_DOMAIN} {
+	{$CADDY_TLS}
+	reverse_proxy stalwart:8080
+}
+
+# Static file CDN (S3/MinIO presigned, same as static_file_cdn nginx)
+# Keep local nginx for now; Caddy can also proxy it
+cdn.{$CONATION_DOMAIN} {
+	{$CADDY_TLS}
+	reverse_proxy static_file_cdn:80
+}

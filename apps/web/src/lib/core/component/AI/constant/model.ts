@@ -9,6 +9,8 @@ import OpenAiIcon from '@core/component/AI/assets/openai.svg';
  * strings.
  */
 export const Model = {
+  // Conation default — rox.one (OpenAI-compatible)
+  terra: 'rox/gpt-5.6-terra',
   sonnet5: 'anthropic/claude-sonnet-5',
   opus5: 'anthropic/claude-opus-5',
   haiku45: 'anthropic/claude-haiku-4-5',
@@ -26,6 +28,7 @@ type ExhaustiveMap = {
 };
 
 export const MODEL_PRETTYNAME: ExhaustiveMap = {
+  'rox/gpt-5.6-terra': 'Terra 5.6',
   'anthropic/claude-sonnet-5': 'Sonnet 5',
   'anthropic/claude-opus-5': 'Opus 5',
   'anthropic/claude-haiku-4-5': 'Haiku 4.5',
@@ -34,6 +37,7 @@ export const MODEL_PRETTYNAME: ExhaustiveMap = {
 } as const;
 
 export const MODEL_PROVIDER_ICON: ExhaustiveMap = {
+  'rox/gpt-5.6-terra': OpenAiIcon,
   'anthropic/claude-sonnet-5': AnthropicIcon,
   'anthropic/claude-opus-5': AnthropicIcon,
   'anthropic/claude-haiku-4-5': AnthropicIcon,
@@ -41,8 +45,8 @@ export const MODEL_PROVIDER_ICON: ExhaustiveMap = {
   'openai/gpt-5.6-mini': OpenAiIcon,
 };
 
-/** Default model for paid users. */
-export const DEFAULT_MODEL: TModel = Model.sonnet5;
+/** Default model for paid users. — Conation: rox terra */
+export const DEFAULT_MODEL: TModel = Model.terra;
 
 /**
  * Default model for free users. Free users aren't entitled to the premium
@@ -74,6 +78,7 @@ export function modelsForPlan(hasPaidAccess: boolean): readonly TModel[] {
 
 /** Provider serving each model — mirrors the backend `provider` field. */
 export const MODEL_PROVIDER: ExhaustiveMap = {
+  'rox/gpt-5.6-terra': 'rox',
   'anthropic/claude-sonnet-5': 'anthropic',
   'anthropic/claude-opus-5': 'anthropic',
   'anthropic/claude-haiku-4-5': 'anthropic',

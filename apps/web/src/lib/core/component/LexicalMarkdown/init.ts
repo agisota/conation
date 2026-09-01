@@ -21,11 +21,11 @@ import {
   UserMentionNode,
   VideoNode,
   WatermarkNode,
-} from '@macro-inc/lexical-core';
+} from '@conation/lexical-core';
 import {
   clearDecorators,
   setDecorator,
-} from '@macro-inc/lexical-core/decoratorRegistry';
+} from '@conation/lexical-core/decoratorRegistry';
 import { AgentContext } from './component/decorator/AgentContext';
 import { Await } from './component/decorator/Await';
 import { ContactMention } from './component/decorator/ContactMention';

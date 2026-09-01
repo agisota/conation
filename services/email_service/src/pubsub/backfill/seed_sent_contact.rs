@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use crate::pubsub::backfill::email_api_error::map_email_api_error;
 use crate::pubsub::context::PubSubContext;
 use contacts::domain::ports::ContactsIngress;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use models_email::email::service::backfill::{JobScopedPayload, SeedSentContactPayload};
 use models_email::email::service::link;
 use models_email::email::service::pubsub::{DetailedError, FailureReason, ProcessingError};
@@ -64,7 +64,7 @@ pub async fn seed_sent_contact(
         };
 
         let users: HashSet<MacroUserIdStr<'static>> =
-            HashSet::from([link.macro_id.clone(), recipient]);
+            HashSet::from([link.conation_id.clone(), recipient]);
 
         // Idempotent on the consumer side, so a retried seed message that
         // re-enqueues already-sent connections is harmless.

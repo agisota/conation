@@ -5,9 +5,9 @@ mod test;
 
 use agent::types::ChatMessageContent;
 use attachment::{Attachable, AttachmentService, FormattedParts};
-use macro_event_broker::{MacroEventBroker, NoopMacroEventBroker};
-use macro_user_id::cowlike::CowLike;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_event_broker::{MacroEventBroker, NoopMacroEventBroker};
+use conation_user_id::cowlike::CowLike;
+use conation_user_id::user_id::MacroUserIdStr;
 use model::chat::{AttachmentType, NewChatMessage};
 use model_entity::{Entity, EntityType};
 use non_empty::NonEmpty;

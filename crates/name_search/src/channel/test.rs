@@ -1,6 +1,6 @@
 //! Tests for channel name search.
 
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use sqlx::{Pool, Postgres};
 
 use super::*;
@@ -44,7 +44,7 @@ async fn member_sees_matching_channels_but_non_member_does_not(
     assert_eq!(member_results.items.len(), 2);
     assert!(member_results.items.iter().all(|hit| {
         hit.entity_type == SearchEntityType::Channels
-            && hit.name.contains("<macro_em>Macro</macro_em>")
+            && hit.name.contains("<conation_em>Macro</conation_em>")
     }));
 
     let non_member_results = search_channel_names(
@@ -158,7 +158,7 @@ async fn member_can_find_direct_message_by_resolved_name(
     .await?;
 
     assert_eq!(results.items.len(), 1);
-    assert_eq!(results.items[0].name, "<macro_em>gab</macro_em>riel");
+    assert_eq!(results.items[0].name, "<conation_em>gab</conation_em>riel");
     Ok(())
 }
 

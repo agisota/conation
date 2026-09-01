@@ -3,7 +3,7 @@
 //! or alternatively might be defined inside of a remote secret manager.
 use std::sync::Arc;
 
-use macro_env::Environment;
+use conation_env::Environment;
 use thiserror::Error;
 
 #[cfg(test)]

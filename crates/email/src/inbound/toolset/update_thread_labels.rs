@@ -5,7 +5,7 @@ use ai_toolset::{AsyncTool, RequestContext, ServiceContext, ToolCallError, ToolR
 use ai_toolset::{ToolAnnotated, ToolAnnotations};
 use async_trait::async_trait;
 use entity_access::domain::ports::EntityAccessService;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;

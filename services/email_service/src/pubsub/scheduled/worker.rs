@@ -14,7 +14,7 @@ pub async fn run_worker(
     email_api: GmailApi,
     s3_client: s3_client::S3,
     attachment_bucket: String,
-    macro_event_broker: PubSubEventBroker,
+    conation_event_broker: PubSubEventBroker,
 ) {
     run_worker_with_cancellation(
         worker,
@@ -22,7 +22,7 @@ pub async fn run_worker(
         email_api,
         s3_client,
         attachment_bucket,
-        macro_event_broker,
+        conation_event_broker,
         CancellationToken::new(),
     )
     .await;
@@ -37,7 +37,7 @@ pub async fn run_worker_with_cancellation(
     email_api: GmailApi,
     s3_client: s3_client::S3,
     attachment_bucket: String,
-    macro_event_broker: PubSubEventBroker,
+    conation_event_broker: PubSubEventBroker,
     cancellation_token: CancellationToken,
 ) {
     let ctx = ScheduledContext {
@@ -46,7 +46,7 @@ pub async fn run_worker_with_cancellation(
         email_api,
         s3_client,
         attachment_bucket,
-        macro_event_broker,
+        conation_event_broker,
     };
     loop {
         let worker_result = tokio::spawn({

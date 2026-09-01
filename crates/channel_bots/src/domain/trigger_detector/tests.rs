@@ -10,7 +10,7 @@ use channels::domain::ports::{
     ChannelAttachmentsPage, ChannelMessagesErr, ChannelMessagesQueryResult, ChannelService,
 };
 use chrono::Utc;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use models_pagination::{CreatedAt, Query};
 
 use super::*;
@@ -135,7 +135,7 @@ fn user_id(email: &str) -> MacroUserIdStr<'static> {
     MacroUserIdStr::try_from(format!("macro|{email}")).unwrap()
 }
 
-fn macro_ai_sender_id() -> String {
+fn conation_ai_sender_id() -> String {
     bot_id::MACRO_AI_BOT_ID.into_storage_id().to_string()
 }
 
@@ -220,7 +220,7 @@ fn thread_with_agent_reply(channel_id: Uuid, parent_id: Uuid) -> TestChannelServ
             "notifications are broken",
         )),
         thread_replies: vec![thread_reply(
-            &macro_ai_sender_id(),
+            &conation_ai_sender_id(),
             "what is broken exactly?",
         )],
     }

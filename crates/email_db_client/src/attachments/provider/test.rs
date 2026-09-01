@@ -1,6 +1,6 @@
 use crate::attachments::provider::fetch_db_attachments_in_bulk;
 use anyhow::Result;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use sqlx::types::Uuid;
 use sqlx::{Pool, Postgres};
 

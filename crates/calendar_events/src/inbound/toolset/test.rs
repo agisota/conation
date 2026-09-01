@@ -3,7 +3,7 @@ use std::sync::Mutex;
 use ai_toolset::schema::generate_validated_input_schema;
 use ai_toolset::{AsyncTool, RequestContext, ServiceContext, ToolSet};
 use chrono::{NaiveDate, TimeZone, Utc};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use uuid::Uuid;
 
 use super::*;

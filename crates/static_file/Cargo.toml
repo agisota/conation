@@ -15,7 +15,7 @@ mime = "0.3"
 tracing = { workspace = true }
 
 # Domain
-macro_user_id = { path = "../macro_user_id" }
+conation_user_id = { path = "../conation_user_id" }
 
 # Attachment
 attachment = { path = "../attachment", optional = true }

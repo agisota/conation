@@ -11,7 +11,7 @@ pub async fn share_with_team(
     team_id: &Uuid,
     document_id: &str,
 ) -> Result<(), sqlx::Error> {
-    let document_uuid = macro_uuid::string_to_uuid(document_id)
+    let document_uuid = conation_uuid::string_to_uuid(document_id)
         .map_err(|e| sqlx::Error::Protocol(e.to_string()))?;
 
     sqlx::query!(
@@ -53,7 +53,7 @@ pub async fn get_team_share(
     pool: &PgPool,
     document_id: &str,
 ) -> Result<DocumentTeamShare, sqlx::Error> {
-    let document_uuid = macro_uuid::string_to_uuid(document_id)
+    let document_uuid = conation_uuid::string_to_uuid(document_id)
         .map_err(|e| sqlx::Error::Protocol(e.to_string()))?;
 
     let Some(team_id) = owner_team_id(pool, document_id).await? else {
@@ -97,7 +97,7 @@ pub async fn set_team_share(
     document_id: &str,
     share: bool,
 ) -> Result<DocumentTeamShare, sqlx::Error> {
-    let document_uuid = macro_uuid::string_to_uuid(document_id)
+    let document_uuid = conation_uuid::string_to_uuid(document_id)
         .map_err(|e| sqlx::Error::Protocol(e.to_string()))?;
 
     let Some(team_id) = owner_team_id(pool, document_id).await? else {

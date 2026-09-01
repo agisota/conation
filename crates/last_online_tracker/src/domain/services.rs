@@ -1,6 +1,6 @@
 use crate::domain::ports::{LastOnlineRepo, SystemTime};
 use chrono::{DateTime, Utc};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use rootcause::Report;
 use std::time::Duration;
 

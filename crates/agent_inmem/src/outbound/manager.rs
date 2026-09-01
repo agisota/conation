@@ -13,7 +13,7 @@ use agent_runtime_protocol::domain::connection::{RuntimeConnection, ServerChanne
 use agent_runtime_protocol::domain::schema::v0::SystemEvent;
 use agent_session::domain::model::AgentSessionId;
 use dashmap::DashMap;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 
 use crate::domain::agent::{AgentState, serve};
 use crate::domain::engine::TurnEngine;

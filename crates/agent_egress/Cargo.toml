@@ -29,10 +29,10 @@ http-body-util = { workspace = true }
 lru = { workspace = true }
 # Signing Macro API tokens, with the same shared vocabulary
 # `authentication_service` mints through.
-macro_auth = { path = "../macro_auth" }
+conation_auth = { path = "../conation_auth" }
 # The owner's `User` row, which carries the FusionAuth id the exchange needs.
-macro_db_client = { path = "../macro_db_client" }
-macro_user_id = { path = "../macro_user_id" }
+conation_db_client = { path = "../conation_db_client" }
+conation_user_id = { path = "../conation_user_id" }
 # The rows saying which apps an owner connected, and the client that turns one
 # into Pipedream's MCP endpoint plus the headers scoping a call to it.
 pipedream_mcp = { path = "../pipedream_mcp" }

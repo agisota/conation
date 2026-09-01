@@ -10,7 +10,7 @@ use axum::{
     Json,
     response::{IntoResponse, Redirect, Response},
 };
-use macro_env::Environment;
+use conation_env::Environment;
 use model::response::ErrorResponse;
 use reqwest::StatusCode;
 use tower_cookies::Cookies;
@@ -89,7 +89,7 @@ pub(in crate::api::oauth2) async fn handler(
         url.query_pairs_mut().clear().extend_pairs(filtered);
         url.query_pairs_mut().append_pair("token", &session_code);
 
-        ctx.macro_cache_client
+        ctx.conation_cache_client
             .set_mobile_login_session(&session_code, &refresh_token)
             .await
             .map_err(|e| {

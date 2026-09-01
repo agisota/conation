@@ -18,7 +18,7 @@ pub(in crate::api::search) async fn filter_calls(
     filters: &CallFilters,
 ) -> Result<FilterCallResponse, SearchError> {
     let status_filter = status_filter_values(filters);
-    let accessible = macro_db_client::call_record::get::get_accessible_call_ids(
+    let accessible = conation_db_client::call_record::get::get_accessible_call_ids(
         &ctx.db,
         user_id,
         &status_filter,

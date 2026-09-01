@@ -3,7 +3,7 @@ import {
   ENABLE_GRAPHQL_SOUP,
 } from '@core/constant/featureFlags';
 import type { Entity } from '@core/types';
-import { createSocketEffect } from '@macro-inc/collaboration/websocket';
+import { createSocketEffect } from '@conation/collaboration/websocket';
 import {
   useMuteItemMutation,
   useUnmuteItemMutation,

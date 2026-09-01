@@ -1,6 +1,6 @@
 import { ENABLE_BEARER_TOKEN_AUTH } from '@core/constant/featureFlags';
 import { SERVER_HOSTS } from '@core/constant/servers';
-import { Telemetry } from '@macro-inc/observability';
+import { Telemetry } from '@conation/observability';
 
 import { fetchWithAuth } from '@service-auth/fetch';
 import { err, ok, type Result } from 'neverthrow';

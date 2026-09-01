@@ -4,7 +4,7 @@ use anyhow::{Context, bail};
 use aws_lambda_events::event::s3::{S3Event, S3EventRecord};
 use aws_sdk_s3::{Client as S3Client, primitives::ByteStream};
 use lambda_runtime::{Error, LambdaEvent};
-use macro_env_var::env_vars;
+use conation_env_var::env_vars;
 use sqlx::{PgPool, Postgres};
 use tracing::Instrument;
 
@@ -214,7 +214,7 @@ async fn presign_source_object(
         .await
         .with_context(|| format!("failed to presign s3://{bucket_name}/{source_key}"))?;
 
-    Ok(macro_aws_config::transform_aws_url_for_internal_fetch(
+    Ok(conation_aws_config::transform_aws_url_for_internal_fetch(
         presigned.uri(),
     ))
 }

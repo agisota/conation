@@ -14,7 +14,7 @@ use crate::domain::{
     },
     ports::AccessRepository,
 };
-use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
+use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -153,9 +153,9 @@ impl AccessRepository for PgAccessRepository {
                   event.owner_id = $2
                   OR EXISTS (
                       SELECT 1
-                      FROM macro_user_links link
+                      FROM conation_user_links link
                       WHERE link.link_id = event.source_link_id
-                        AND link.primary_macro_id = $2
+                        AND link.primary_conation_id = $2
                   )
               )
             "#,

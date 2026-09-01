@@ -1,7 +1,7 @@
 import { verifyBlockName } from '@core/constant/allBlocks';
 import { untrackMention } from '@core/signal/mention';
 import { $wrapNodeInElement, mergeRegister } from '@lexical/utils';
-import type { PeerIdValidator } from '@macro-inc/lexical-core';
+import type { PeerIdValidator } from '@conation/lexical-core';
 import {
   $collapseInlineSearch,
   $createContactMentionNode,
@@ -43,9 +43,9 @@ import {
   type UserMentionInfo,
   UserMentionNode,
   validTriggerPosition,
-} from '@macro-inc/lexical-core';
-import { $getId } from '@macro-inc/lexical-core/plugins/nodeIdPlugin';
-import type { MentionNode } from '@macro-inc/lexical-core/utils/mentions';
+} from '@conation/lexical-core';
+import { $getId } from '@conation/lexical-core/plugins/nodeIdPlugin';
+import type { MentionNode } from '@conation/lexical-core/utils/mentions';
 import { blockNameToItemType, type ItemType } from '@service-storage/client';
 import {
   $createParagraphNode,

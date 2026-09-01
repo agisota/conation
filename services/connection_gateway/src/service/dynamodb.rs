@@ -7,7 +7,7 @@ use aws_sdk_dynamodb::error::ProvideErrorMetadata;
 use aws_sdk_dynamodb::types::{AttributeValue, ReturnValue};
 use ensure_exists::dynamodb::{CreateTableErr, DefineTable, DynamoClientWrapper};
 use ensure_exists::{DoesExist, EnsureExists};
-use macro_env_var::env_var;
+use conation_env_var::env_var;
 use model_entity::{Entity, EntityType};
 use std::collections::HashMap;
 

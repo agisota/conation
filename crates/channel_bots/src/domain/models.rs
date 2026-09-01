@@ -2,7 +2,7 @@
 
 use bot_id::BotId;
 use channels::domain::models::MutatedMessage;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use uuid::Uuid;
 
 /// The kind of event that triggered a bot.

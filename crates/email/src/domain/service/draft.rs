@@ -87,7 +87,7 @@ where
         let (thread_db_id, new_thread) = self.build_new_thread_if_needed(link_id, &input);
 
         // Resolve all IDs and build the insert-ready struct
-        let message_db_id = input.db_id.unwrap_or_else(macro_uuid::generate_uuid_v7);
+        let message_db_id = input.db_id.unwrap_or_else(conation_uuid::generate_uuid_v7);
 
         let resolved = ResolvedDraftInput {
             db_id: message_db_id,
@@ -328,7 +328,7 @@ where
 
         let now = chrono::Utc::now();
         let thread = ThreadRow {
-            db_id: macro_uuid::generate_uuid_v7(),
+            db_id: conation_uuid::generate_uuid_v7(),
             provider_id: None,
             link_id,
             inbox_visible: false,

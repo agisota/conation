@@ -1,4 +1,4 @@
-import { Telemetry } from '@macro-inc/observability';
+import { Telemetry } from '@conation/observability';
 
 import ResetIcon from '@phosphor/arrow-clockwise.svg';
 import HomeIcon from '@phosphor/house.svg';

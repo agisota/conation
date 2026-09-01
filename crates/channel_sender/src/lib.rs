@@ -3,7 +3,7 @@
 
 use bot_id::{BotId, BotIdStr, cowlike::CowLike};
 use either::Either;
-use macro_user_id::{error::ParseErr, user_id::MacroUserIdStr};
+use conation_user_id::{error::ParseErr, user_id::MacroUserIdStr};
 use serde::{Deserialize, Serialize};
 
 #[cfg(test)]

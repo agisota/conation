@@ -6,7 +6,7 @@ pub async fn upsert_notification_email_unsubscribe_code(
     db: &sqlx::Pool<sqlx::Postgres>,
     email: &str,
 ) -> anyhow::Result<String> {
-    let code = macro_uuid::generate_uuid_v7();
+    let code = conation_uuid::generate_uuid_v7();
     let code = sqlx::query!(
         r#"
         INSERT INTO notification_email_unsubscribe_code (email, code) VALUES ($1, $2)
@@ -34,7 +34,7 @@ pub async fn get_email_by_code(
         r#"
         SELECT email FROM notification_email_unsubscribe_code WHERE code = $1
         "#,
-        macro_uuid::string_to_uuid(code)?
+        conation_uuid::string_to_uuid(code)?
     )
     .map(|row| row.email)
     .fetch_optional(db)
@@ -46,13 +46,13 @@ pub async fn get_email_by_code(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use macro_db_migrator::MACRO_DB_MIGRATIONS;
+    use conation_db_migrator::MACRO_DB_MIGRATIONS;
 
     #[sqlx::test(migrator = "MACRO_DB_MIGRATIONS")]
     async fn test_upsert_notification_email_unsubscribe_code(
         pool: sqlx::Pool<sqlx::Postgres>,
     ) -> anyhow::Result<()> {
-        let code = macro_uuid::generate_uuid_v7();
+        let code = conation_uuid::generate_uuid_v7();
 
         sqlx::query!(
             r#"
@@ -78,7 +78,7 @@ mod tests {
 
     #[sqlx::test(migrator = "MACRO_DB_MIGRATIONS")]
     async fn test_get_email_by_code(pool: sqlx::Pool<sqlx::Postgres>) -> anyhow::Result<()> {
-        let code = macro_uuid::generate_uuid_v7();
+        let code = conation_uuid::generate_uuid_v7();
 
         sqlx::query!(
             r#"

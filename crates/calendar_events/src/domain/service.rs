@@ -6,7 +6,7 @@ use rootcause::Report;
 use uuid::Uuid;
 
 use crate::domain::events::{CalendarEventMetadata, CalendarMacroEvent, CalendarTopicEvent};
-use macro_event_broker::MacroEventBroker;
+use conation_event_broker::MacroEventBroker;
 
 use super::{
     models::{
@@ -203,7 +203,7 @@ where
 pub struct GoogleCalendarBackfillService<R, G, B> {
     repository: R,
     provider: G,
-    macro_event_broker: B,
+    conation_event_broker: B,
     watch: Option<super::models::GoogleWatchConfig>,
 }
 
@@ -303,7 +303,7 @@ pub struct GoogleCalendarBackfillCoordinator<R, G, L, B> {
     repository: R,
     provider: G,
     lifecycle: L,
-    macro_event_broker: B,
+    conation_event_broker: B,
     watch: Option<super::models::GoogleWatchConfig>,
 }
 
@@ -320,14 +320,14 @@ where
         repository: R,
         provider: G,
         lifecycle: L,
-        macro_event_broker: B,
+        conation_event_broker: B,
         watch: Option<super::models::GoogleWatchConfig>,
     ) -> Self {
         Self {
             repository,
             provider,
             lifecycle,
-            macro_event_broker,
+            conation_event_broker,
             watch,
         }
     }
@@ -385,7 +385,7 @@ where
         let backfill = GoogleCalendarBackfillService::new(
             self.repository.clone(),
             self.provider.clone(),
-            self.macro_event_broker.clone(),
+            self.conation_event_broker.clone(),
             self.watch.clone(),
         );
         let work = backfill.backfill(
@@ -481,13 +481,13 @@ where
     pub fn new(
         repository: R,
         provider: G,
-        macro_event_broker: B,
+        conation_event_broker: B,
         watch: Option<super::models::GoogleWatchConfig>,
     ) -> Self {
         Self {
             repository,
             provider,
-            macro_event_broker,
+            conation_event_broker,
             watch,
         }
     }
@@ -497,7 +497,7 @@ where
     /// than failing the run — the search backfill re-enumerates present rows.
     fn publish_calendar_event(&self, event: CalendarTopicEvent) {
         let _ = self
-            .macro_event_broker
+            .conation_event_broker
             .send_event(&CalendarMacroEvent::for_change(event))
             .inspect_err(|error| {
                 tracing::error!(error=?error, "failed to publish calendar event");

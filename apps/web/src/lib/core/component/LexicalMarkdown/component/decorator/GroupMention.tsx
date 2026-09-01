@@ -1,4 +1,4 @@
-import type { GroupMentionDecoratorProps } from '@macro-inc/lexical-core';
+import type { GroupMentionDecoratorProps } from '@conation/lexical-core';
 import { cn } from '@ui';
 import { useContext } from 'solid-js';
 import { LexicalWrapperContext } from '../../context/LexicalWrapperContext';

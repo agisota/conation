@@ -21,7 +21,7 @@ pub fn provision(instance: &Instance) -> Result<()> {
 }
 
 async fn provision_async(url: &str) -> Result<()> {
-    let cfg = macro_aws_config::local_aws_config(url).await;
+    let cfg = conation_aws_config::local_aws_config(url).await;
 
     let sqs = aws_sdk_sqs::Client::new(&cfg);
     let ddb = aws_sdk_dynamodb::Client::new(&cfg);

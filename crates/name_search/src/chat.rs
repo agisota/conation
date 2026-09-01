@@ -7,7 +7,7 @@
 #[cfg(not(test))]
 use cached::proc_macro::cached;
 use chrono::{DateTime, Utc};
-use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId};
+use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId};
 use models_search_cursor::{SearchCursorOption, SearchMethodCursor};
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
@@ -46,7 +46,7 @@ async fn ids_search(
                 regexp_replace(
                     c.name,
                     $6,
-                    '<macro_em>\1</macro_em>',
+                    '<conation_em>\1</conation_em>',
                     'gi'
                 ) as name_highlighted,
                 c."updatedAt" as updated_at
@@ -117,7 +117,7 @@ async fn ids_search(
 /// Searches chats by owner or IDs
 async fn owner_search<'a>(
     db: &Pool<Postgres>,
-    macro_user_id: &MacroUserId<Lowercase<'a>>,
+    conation_user_id: &MacroUserId<Lowercase<'a>>,
     chat_ids: &[Uuid],
     search_pattern: String,
     highlight_pattern: String,
@@ -143,7 +143,7 @@ async fn owner_search<'a>(
                 regexp_replace(
                     c.name,
                     $7,
-                    '<macro_em>\1</macro_em>',
+                    '<conation_em>\1</conation_em>',
                     'gi'
                 ) as name_highlighted,
                 c."updatedAt" as updated_at
@@ -182,7 +182,7 @@ async fn owner_search<'a>(
             ORDER BY c."updatedAt" DESC, c.id DESC
             LIMIT $4
         "#,
-        macro_user_id.as_ref(),
+        conation_user_id.as_ref(),
         &chat_ids
             .iter()
             .map(|id| id.to_string())
@@ -222,12 +222,12 @@ async fn owner_search<'a>(
         time = 30,
         result = true,
         key = "String",
-        convert = r#"{ format!("{}-{:?}-{}-{}-{:?}-{}-{}-{}", macro_user_id.as_ref(), chat_ids, term, ids_only, tag_option_ids, match_all_tags, limit, cursor.as_ref().and_then(|c| c.as_updated_at()).map(|(id, ts)| format!("{}-{}", id, ts)).unwrap_or_default()) }"#
+        convert = r#"{ format!("{}-{:?}-{}-{}-{:?}-{}-{}-{}", conation_user_id.as_ref(), chat_ids, term, ids_only, tag_option_ids, match_all_tags, limit, cursor.as_ref().and_then(|c| c.as_updated_at()).map(|(id, ts)| format!("{}-{}", id, ts)).unwrap_or_default()) }"#
     )
 )]
 pub async fn search_chat_names<'a>(
     db: &Pool<Postgres>,
-    macro_user_id: &MacroUserId<Lowercase<'a>>,
+    conation_user_id: &MacroUserId<Lowercase<'a>>,
     chat_ids: &[Uuid],
     term: String,
     ids_only: bool,
@@ -261,7 +261,7 @@ pub async fn search_chat_names<'a>(
     } else {
         owner_search(
             db,
-            macro_user_id,
+            conation_user_id,
             chat_ids,
             search_pattern,
             highlight_pattern,

@@ -160,7 +160,7 @@ where
             });
         };
 
-        let content: Content = match file_type.macro_app_path() {
+        let content: Content = match file_type.conation_app_path() {
             FileAssociation::Pdf(_) | FileAssociation::Write(_) => Content::Text(
                 service_context
                     .service

@@ -1,5 +1,5 @@
 import { SERVER_HOSTS, SYNC_SERVICE_HOSTS } from '@core/constant/servers';
-import { Telemetry } from '@macro-inc/observability';
+import { Telemetry } from '@conation/observability';
 import { err, ok, type Result } from 'neverthrow';
 import { platformFetch } from './platformFetch';
 import type { ObjectLike, ResultError } from './result';

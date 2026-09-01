@@ -9,7 +9,7 @@ use crate::domain::models::{
 };
 use crate::domain::ports::{ImportError, ImportRepo, Result};
 use chrono::{DateTime, Utc};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use sqlx::PgPool;
 use std::collections::HashSet;
 use std::str::FromStr;

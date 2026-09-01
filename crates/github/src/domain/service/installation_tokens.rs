@@ -20,7 +20,7 @@
 //! minting a token needs a database handle and an HTTP client, and a caller
 //! that only wants a token should not have to construct the rest.
 
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 
 use crate::domain::models::{
     GithubAppInstallationSource, GithubError, GithubInstallationAccessToken, app_jwt,
@@ -64,17 +64,17 @@ where
         }
     }
 
-    /// A token for `owner`/`repository`, valid because `macro_user_id` may
+    /// A token for `owner`/`repository`, valid because `conation_user_id` may
     /// reach it.
     ///
     /// Returns [`GithubError::RepositoryUnavailable`] when the App is not
     /// installed on the repository *or* when the installation belongs to
     /// someone the user has no claim to - one answer for both, so the caller
     /// learns nothing about other people's accounts.
-    #[tracing::instrument(skip(self, permissions), err, fields(%macro_user_id, owner, repository))]
+    #[tracing::instrument(skip(self, permissions), err, fields(%conation_user_id, owner, repository))]
     pub async fn for_repository(
         &self,
-        macro_user_id: &MacroUserIdStr<'_>,
+        conation_user_id: &MacroUserIdStr<'_>,
         owner: &str,
         repository: &str,
         permissions: &[(&str, &str)],
@@ -90,7 +90,7 @@ where
                 GithubError::RepositoryUnavailable
             })?;
 
-        self.ensure_reachable(macro_user_id, installation).await?;
+        self.ensure_reachable(conation_user_id, installation).await?;
 
         self.client
             .generate_scoped_installation_access_token(&jwt, installation, repository, permissions)
@@ -101,7 +101,7 @@ where
     /// belong to.
     async fn ensure_reachable(
         &self,
-        macro_user_id: &MacroUserIdStr<'_>,
+        conation_user_id: &MacroUserIdStr<'_>,
         installation: u64,
     ) -> Result<(), GithubError> {
         let sources = self
@@ -116,14 +116,14 @@ where
 
         // Cheapest first: a personal installation needs no team lookup at all.
         if sources.iter().any(|source| {
-            matches!(source, GithubAppInstallationSource::User(user) if user == macro_user_id.as_ref())
+            matches!(source, GithubAppInstallationSource::User(user) if user == conation_user_id.as_ref())
         }) {
             return Ok(());
         }
 
         let teams = self
             .installations
-            .get_user_team_ids(macro_user_id.as_ref())
+            .get_user_team_ids(conation_user_id.as_ref())
             .await
             .map_err(|error| {
                 GithubError::Internal(anyhow::anyhow!("could not read user teams: {error:?}"))
@@ -136,7 +136,7 @@ where
         }
 
         tracing::warn!(
-            %macro_user_id,
+            %conation_user_id,
             installation,
             "refused an installation the user has no claim to"
         );

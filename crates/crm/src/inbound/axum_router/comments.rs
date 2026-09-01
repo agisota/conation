@@ -20,7 +20,7 @@ use entity_access::{
     },
     inbound::axum_extractors::EntityPermissionExtractor,
 };
-use macro_authorization::MacroAuthorizationService;
+use conation_authorization::MacroAuthorizationService;
 use model_error_response::ErrorResponse;
 use serde::Deserialize;
 use serde_json::Value;

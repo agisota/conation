@@ -1,9 +1,9 @@
 use askama::Template;
 use chrono::{DateTime, Utc};
 use hmac::Hmac;
-use macro_env::Environment;
-use macro_service_urls::NotificationServiceUrl;
-use macro_user_id::cowlike::CowLike;
+use conation_env::Environment;
+use conation_service_urls::NotificationServiceUrl;
+use conation_user_id::cowlike::CowLike;
 use model_notifications::NotifEvent;
 use notification::domain::models::{
     Notification, NotificationExtEmail, NotificationTitle, RateLimitConfig, RateLimitKey,
@@ -125,9 +125,17 @@ impl EmailDigestNotification {
         }
         .render()?;
 
+        // Locale-aware subject — Conation ru default
+        let subject = if input_len == 1 {
+            format!("У вас {input_len} новое уведомление в Conation")
+        } else if input_len % 10 >= 2 && input_len % 10 <= 4 && (input_len % 100 < 10 || input_len % 100 >= 20) {
+            format!("У вас {input_len} новых уведомления в Conation")
+        } else {
+            format!("У вас {input_len} новых уведомлений в Conation")
+        };
         Ok(EmailDigestNotification {
             inner_html_string,
-            subject: format!("You have {input_len} new notifications on Macro"),
+            subject,
         })
     }
 }

@@ -1,6 +1,6 @@
 import { SERVER_HOSTS } from '@core/constant/servers';
 import { platformFetch } from '@core/util/platformFetch';
-import { WebsocketConnectionState } from '@macro-inc/collaboration/websocket';
+import { WebsocketConnectionState } from '@conation/collaboration/websocket';
 import { connectionGatewayClient } from '@service-connection/client';
 import {
   state as connectionState,

@@ -1,5 +1,5 @@
 use axum::extract::FromRef;
-use macro_authorization::{
+use conation_authorization::{
     MacroAuthorizationServiceImpl, MacroAuthorizationState, NoopMacroAuthJwtValidator,
 };
 use s3_client::S3;

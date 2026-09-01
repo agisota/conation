@@ -137,7 +137,7 @@ fn users(emails: &[&str]) -> Vec<MacroUserIdStr<'static>> {
 }
 
 #[tokio::test]
-async fn macro_ai_bot_profile_is_builtin_without_context_lookup() {
+async fn conation_ai_bot_profile_is_builtin_without_context_lookup() {
     let lookup_count = Arc::new(Mutex::new(0));
     let service = ChannelSideEffectService::new(
         FakeContext {
@@ -174,7 +174,7 @@ async fn macro_ai_bot_profile_is_builtin_without_context_lookup() {
 }
 
 #[tokio::test]
-async fn non_macro_bot_profile_uses_context_lookup() {
+async fn non_conation_bot_profile_uses_context_lookup() {
     let lookup_count = Arc::new(Mutex::new(0));
     let service = ChannelSideEffectService::new(
         FakeContext {
@@ -1088,15 +1088,15 @@ fn mention(entity_type: &str, entity_id: &str) -> SimpleMention {
 }
 
 #[test]
-fn bot_mentions_recognize_bot_and_macro_ai_user_tags() {
-    let macro_ai = bot_id::MACRO_AI_BOT_ID.into_storage_id().to_string();
+fn bot_mentions_recognize_bot_and_conation_ai_user_tags() {
+    let conation_ai = bot_id::MACRO_AI_BOT_ID.into_storage_id().to_string();
     let other_bot = BotId::new_from_uuid(Uuid::new_v4());
     let other_bot_principal = other_bot.into_storage_id().to_string();
     let mentions = vec![
         // Macro AI surfaced through the user-mention UI.
-        mention("user", &macro_ai),
+        mention("user", &conation_ai),
         // Duplicate bot mentions are dispatched once.
-        mention("user", &macro_ai),
+        mention("user", &conation_ai),
         // A real user mention is ignored.
         mention("user", "macro|teo@macro.com"),
         // An explicitly bot-tagged mention.
@@ -1121,7 +1121,7 @@ fn bot_mentions_reject_bare_uuid_ids() {
 }
 
 #[test]
-fn macro_ai_user_mention_is_not_a_user_recipient() {
+fn conation_ai_user_mention_is_not_a_user_recipient() {
     assert!(is_bot_user_mention(&mention(
         "user",
         bot_id::MACRO_AI_BOT_ID.into_storage_id().as_ref()
@@ -1154,12 +1154,12 @@ struct PublishedEvent {
 }
 
 impl MacroEventBroker for TestEventBroker {
-    fn send_event<E: macro_event_broker::MacroEvent + ?Sized>(
+    fn send_event<E: conation_event_broker::MacroEvent + ?Sized>(
         &self,
         event: &E,
     ) -> Result<
-        tokio::task::JoinHandle<Result<(), macro_event_broker::EventBrokerError>>,
-        macro_event_broker::EventBrokerError,
+        tokio::task::JoinHandle<Result<(), conation_event_broker::EventBrokerError>>,
+        conation_event_broker::EventBrokerError,
     > {
         self.published.lock().unwrap().push(PublishedEvent {
             topic: event.topic().to_string(),
@@ -1176,15 +1176,15 @@ struct FailingEventBroker {
 }
 
 impl MacroEventBroker for FailingEventBroker {
-    fn send_event<E: macro_event_broker::MacroEvent + ?Sized>(
+    fn send_event<E: conation_event_broker::MacroEvent + ?Sized>(
         &self,
         _event: &E,
     ) -> Result<
-        tokio::task::JoinHandle<Result<(), macro_event_broker::EventBrokerError>>,
-        macro_event_broker::EventBrokerError,
+        tokio::task::JoinHandle<Result<(), conation_event_broker::EventBrokerError>>,
+        conation_event_broker::EventBrokerError,
     > {
         *self.attempts.lock().unwrap() += 1;
-        Err(macro_event_broker::EventBrokerError::Publish(
+        Err(conation_event_broker::EventBrokerError::Publish(
             "broker unavailable".to_string(),
         ))
     }
@@ -1205,7 +1205,7 @@ fn broker_service(
         FakeNotifications::default(),
         FakeContacts::default(),
     )
-    .with_macro_event_broker(broker)
+    .with_conation_event_broker(broker)
 }
 
 fn attachment(channel_id: Uuid, message_id: Uuid) -> MutatedAttachment {
@@ -1486,7 +1486,7 @@ async fn publish_failure_does_not_break_other_side_effects() {
         FakeNotifications::default(),
         FakeContacts::default(),
     )
-    .with_macro_event_broker(broker.clone());
+    .with_conation_event_broker(broker.clone());
     let channel_id = Uuid::new_v4();
     let message_id = Uuid::new_v4();
 
@@ -1512,7 +1512,7 @@ async fn publish_failure_does_not_break_other_side_effects() {
 
 #[test]
 fn broker_events_map_participant_joined_to_participant_added() {
-    use macro_event_broker::MacroEvent as _;
+    use conation_event_broker::MacroEvent as _;
     let channel_id = Uuid::new_v4();
     let events = broker_events_for_event(&ChannelEvent::ParticipantJoined {
         channel_id,
@@ -1533,7 +1533,7 @@ fn broker_events_map_participant_joined_to_participant_added() {
 
 #[test]
 fn broker_events_map_channel_updated() {
-    use macro_event_broker::MacroEvent as _;
+    use conation_event_broker::MacroEvent as _;
     let channel_id = Uuid::new_v4();
     let events = broker_events_for_event(&ChannelEvent::ChannelUpdated {
         channel_id,
@@ -1597,14 +1597,14 @@ fn message_posted_with_mentions(
 
 #[test]
 fn broker_events_map_message_posted_mentions_per_entity() {
-    use macro_event_broker::MacroEvent as _;
+    use conation_event_broker::MacroEvent as _;
     let channel_id = Uuid::new_v4();
     let message_id = Uuid::new_v4();
     let bot_principal = BotId::new_from_uuid(Uuid::new_v4())
         .into_storage_id()
         .to_string();
-    let macro_ai_principal = bot_id::MACRO_AI_BOT_ID.into_storage_id().to_string();
-    let macro_coder_principal = bot_id::MACRO_CODER_BOT_ID.into_storage_id().to_string();
+    let conation_ai_principal = bot_id::MACRO_AI_BOT_ID.into_storage_id().to_string();
+    let conation_coder_principal = bot_id::MACRO_CODER_BOT_ID.into_storage_id().to_string();
     let uninstalled_bot_principal = BotId::new_from_uuid(Uuid::new_v4())
         .into_storage_id()
         .to_string();
@@ -1618,9 +1618,9 @@ fn broker_events_map_message_posted_mentions_per_entity() {
             // Duplicate mentions of one entity emit a single event.
             mention(BOT_MENTION_ENTITY_TYPE, &bot_principal),
             // Macro AI surfaced through the user-mention UI still counts.
-            mention("user", &macro_ai_principal),
+            mention("user", &conation_ai_principal),
             // Macro Coder is globally available without a participant row.
-            mention(BOT_MENTION_ENTITY_TYPE, &macro_coder_principal),
+            mention(BOT_MENTION_ENTITY_TYPE, &conation_coder_principal),
             // A valid bot principal that is not installed emits nothing.
             mention(BOT_MENTION_ENTITY_TYPE, &uninstalled_bot_principal),
             // A bot-tagged mention with a malformed id emits nothing.
@@ -1668,8 +1668,8 @@ fn broker_events_map_message_posted_mentions_per_entity() {
         mentioned_entities,
         vec![
             ("bot".to_string(), bot_principal),
-            ("user".to_string(), macro_ai_principal),
-            ("bot".to_string(), macro_coder_principal),
+            ("user".to_string(), conation_ai_principal),
+            ("bot".to_string(), conation_coder_principal),
             ("user".to_string(), "macro|alice@example.com".to_string()),
             ("user".to_string(), "macro|bob@example.com".to_string()),
             ("document".to_string(), "doc-1".to_string()),
@@ -1680,7 +1680,7 @@ fn broker_events_map_message_posted_mentions_per_entity() {
 
 #[test]
 fn broker_events_bot_authored_mentions_emit() {
-    use macro_event_broker::MacroEvent as _;
+    use conation_event_broker::MacroEvent as _;
     let sender_bot = BotId::new_from_uuid(Uuid::new_v4());
     let sender_principal = sender_bot.into_storage_id().to_string();
     let other_bot_principal = BotId::new_from_uuid(Uuid::new_v4())
@@ -1717,7 +1717,7 @@ fn broker_events_bot_authored_mentions_emit() {
 
 #[test]
 fn broker_events_skip_mentions_on_message_changed() {
-    use macro_event_broker::MacroEvent as _;
+    use conation_event_broker::MacroEvent as _;
     let channel_id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -1803,7 +1803,7 @@ fn broker_events_skip_entity_mention_events() {
 
 #[test]
 fn mention_broker_events_map_message_posted_mentions() {
-    use macro_event_broker::MacroEvent as _;
+    use conation_event_broker::MacroEvent as _;
     let channel_id = Uuid::new_v4();
     let message_id = Uuid::new_v4();
     let now = Utc::now();
@@ -1856,7 +1856,7 @@ fn mention_broker_events_map_message_posted_mentions() {
 
 #[test]
 fn mention_broker_events_map_entity_mention_created_and_deleted() {
-    use macro_event_broker::MacroEvent as _;
+    use conation_event_broker::MacroEvent as _;
     let mention = entity_mention("bot", "bot-1");
 
     let created = mention_broker_events_for_event(&ChannelEvent::EntityMentionCreated {

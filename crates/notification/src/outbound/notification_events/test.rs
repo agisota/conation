@@ -1,7 +1,7 @@
 use super::*;
 
 use crate::inbound::notification_events_listener::NotificationDatabaseEvent;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use sqlx::Postgres;
 use uuid::Uuid;
 

@@ -1,5 +1,5 @@
 use super::*;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use sqlx::{Pool, Postgres};
 
 #[sqlx::test(
@@ -9,8 +9,8 @@ use sqlx::{Pool, Postgres};
 async fn test_bulk_patch_undone(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let user_id = "macro|user@user.com";
     let notification_ids = vec![
-        macro_uuid::string_to_uuid("0193b1ea-a542-7589-893b-2b4a509c1e76")?,
-        macro_uuid::string_to_uuid("0193b1ea-a542-7589-893b-2b4a509c1e75")?,
+        conation_uuid::string_to_uuid("0193b1ea-a542-7589-893b-2b4a509c1e76")?,
+        conation_uuid::string_to_uuid("0193b1ea-a542-7589-893b-2b4a509c1e75")?,
     ];
 
     // Before patching mark the notifications as done.
@@ -56,7 +56,7 @@ async fn test_patch_done(pool: Pool<Postgres>) -> anyhow::Result<()> {
         r#"
             SELECT done as "done" FROM user_notification WHERE notification_id = $1 AND user_id = $2
             "#,
-        macro_uuid::string_to_uuid(notification_id)?,
+        conation_uuid::string_to_uuid(notification_id)?,
         user_id,
     )
     .map(|n| n.done)
@@ -75,8 +75,8 @@ async fn test_patch_done(pool: Pool<Postgres>) -> anyhow::Result<()> {
 async fn test_bulk_patch_done(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let user_id = "macro|user@user.com";
     let notification_ids = vec![
-        macro_uuid::string_to_uuid("0193b1ea-a542-7589-893b-2b4a509c1e76")?,
-        macro_uuid::string_to_uuid("0193b1ea-a542-7589-893b-2b4a509c1e75")?,
+        conation_uuid::string_to_uuid("0193b1ea-a542-7589-893b-2b4a509c1e76")?,
+        conation_uuid::string_to_uuid("0193b1ea-a542-7589-893b-2b4a509c1e75")?,
     ];
 
     // Before patching, verify that these notifications are not marked as done.

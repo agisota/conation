@@ -11,9 +11,9 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use connection_gateway_client::ConnectionGatewayClient;
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use macro_db_client::annotations::edit_comment::edit_document_comment;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_db_client::annotations::edit_comment::edit_document_comment;
+use conation_user_id::user_id::MacroUserIdStr;
 use model::{
     annotations::{
         AnnotationIncrementalUpdate, Mentions,
@@ -55,13 +55,13 @@ pub async fn edit_comment_handler(
     Path(Params { comment_id }): Path<Params>,
     Json(req): Json<EditCommentRequest>,
 ) -> Result<Response, Response> {
-    let user_id = user.authorization.user.macro_user_id.to_string();
+    let user_id = user.authorization.user.conation_user_id.to_string();
     // TODO: check if the user has comment access to the document
     match edit_document_comment(&db, comment_id, &user_id, &req).await {
         Ok(res) => {
             if let Some(Mentions { users, mention_id }) = req.mentions {
                 let sender_profile_picture_url =
-                    macro_db_client::user::update_profile_picture::get_profile_pictures(
+                    conation_db_client::user::update_profile_picture::get_profile_pictures(
                         &db,
                         &vec![user_id.clone()],
                     )
@@ -105,7 +105,7 @@ pub async fn edit_comment_handler(
                 let mention_recipients: Vec<MacroUserIdStr<'_>> =
                     recipient_ids.iter().cloned().collect();
 
-                let _ = macro_db_client::share_on_mention::share_link_shared_document_with_mentioned_users(
+                let _ = conation_db_client::share_on_mention::share_link_shared_document_with_mentioned_users(
                     &db,
                     &res.document_id,
                     &mention_recipients,

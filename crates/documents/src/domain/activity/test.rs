@@ -1,11 +1,11 @@
 use ::activity::{Action, activity_id};
 use chrono::{TimeZone as _, Utc};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model::document::FileType;
 use model_entity::EntityType;
 use uuid::Uuid;
 
-use macro_event_broker::Event;
+use conation_event_broker::Event;
 
 use super::*;
 use crate::domain::events::{

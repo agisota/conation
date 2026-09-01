@@ -187,7 +187,7 @@ async fn update_search_with_parent_only_document(
 }
 
 fn should_index_parent_only(file_type: &FileType) -> bool {
-    matches!(file_type, FileType::Canvas) || !is_searchable_association(&file_type.macro_app_path())
+    matches!(file_type, FileType::Canvas) || !is_searchable_association(&file_type.conation_app_path())
 }
 
 /// Processes a message for a standard document and reads the updated contents from s3 and updates
@@ -298,7 +298,7 @@ pub async fn update_search_with_raw_document(
     tracing::trace!("got raw file content");
 
     let updated_at_millis = EpochMillis::new(Utc::now().timestamp_millis())?;
-    let uuid = macro_uuid::generate_uuid_v7().to_string();
+    let uuid = conation_uuid::generate_uuid_v7().to_string();
 
     let mut upserts: Vec<UpsertDocumentArgs> = match file_type {
         FileType::Pdf | FileType::Docx => {
@@ -430,7 +430,7 @@ pub async fn update_search_with_sync_document(
     lexical_client: &lexical_client::LexicalClient,
     search_extractor_message: &SearchExtractorMessage,
 ) -> anyhow::Result<()> {
-    match search_extractor_message.file_type.macro_app_path() {
+    match search_extractor_message.file_type.conation_app_path() {
         model_file_type::FileAssociation::Md(_) => {}
         _ => {
             tracing::warn!("unsupported file type");

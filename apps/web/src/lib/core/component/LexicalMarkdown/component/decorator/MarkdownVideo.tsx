@@ -6,7 +6,7 @@ import { mergeRegister } from '@lexical/utils';
 import {
   $isVideoNode,
   type VideoDecoratorProps,
-} from '@macro-inc/lexical-core';
+} from '@conation/lexical-core';
 import VideoIcon from '@phosphor/file-video.svg';
 import LoadingSpinner from '@phosphor/spinner.svg';
 import XIcon from '@phosphor/x.svg';

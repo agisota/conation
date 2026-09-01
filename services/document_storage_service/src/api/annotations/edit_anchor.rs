@@ -9,8 +9,8 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use connection_gateway_client::ConnectionGatewayClient;
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use macro_db_client::annotations::edit_anchor::edit_document_anchor;
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_db_client::annotations::edit_anchor::edit_document_anchor;
 use model::{
     annotations::{
         AnnotationIncrementalUpdate,
@@ -41,7 +41,7 @@ pub async fn edit_anchor_handler(
     user: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
     Json(req): Json<EditAnchorRequest>,
 ) -> Result<Response, Response> {
-    let user_id = user.authorization.user.macro_user_id.as_ref();
+    let user_id = user.authorization.user.conation_user_id.as_ref();
     match edit_document_anchor(&db, user_id, req).await {
         Ok(res) => {
             let response: EditAnchorResponse = res;

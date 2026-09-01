@@ -1,9 +1,9 @@
 use crate::api::search::simple::SearchError;
 use indexmap::IndexMap;
-use macro_db_client::calendar_event::get_events_for_search::{
+use conation_db_client::calendar_event::get_events_for_search::{
     CalendarEventSearchInfo, get_calendar_events_for_search,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use models_properties::{EntityReference, EntityType};
 use models_search::calendar_event::{
     CalendarEventMetadata, CalendarEventOrganizer, CalendarEventSearchOccurrence,

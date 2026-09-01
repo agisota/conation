@@ -102,7 +102,7 @@ const KEY: &str = "item";
 
 impl RedisPostgresStreamRepo {
     /// Create a new Redis + PostgreSQL stream service.
-    /// The `active_streams` table must already exist (created via macro_db_client migration).
+    /// The `active_streams` table must already exist (created via conation_db_client migration).
     pub fn new(redis_client: Client, pg_pool: sqlx::PgPool) -> Self {
         Self {
             redis_client: Arc::new(redis_client),

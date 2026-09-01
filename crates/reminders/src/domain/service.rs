@@ -8,7 +8,7 @@ mod test;
 use chrono::{DateTime, Utc};
 use chrono_tz::Tz;
 use entity_access::domain::models::{AnyEntityPermission, EntityAccessReceipt, OwnerAccessLevel};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::Entity;
 use uuid::Uuid;
 

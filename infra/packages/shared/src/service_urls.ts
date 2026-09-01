@@ -28,17 +28,17 @@ type ServiceUrlMap = {
 const DEV_SERVICE_URLS: ServiceUrlMap = {
   [ServiceUrl.SYNC_SERVICE_URL]:
     'https://sync-service-dev3.macroverse.workers.dev',
-  [ServiceUrl.EMAIL_SERVICE_URL]: 'https://email-service-dev.macro.com',
+  [ServiceUrl.EMAIL_SERVICE_URL]: 'https://email-service-dev.conation.dev',
   [ServiceUrl.STATIC_FILE_SERVICE_URL]:
-    'https://static-file-service-dev.macro.com',
-  [ServiceUrl.NOTIFICATION_SERVICE_URL]: 'https://notifications-dev.macro.com',
-  [ServiceUrl.AUTHENTICATION_SERVICE_URL]: 'https://auth-service-dev.macro.com',
+    'https://static-file-service-dev.conation.dev',
+  [ServiceUrl.NOTIFICATION_SERVICE_URL]: 'https://notifications-dev.conation.dev',
+  [ServiceUrl.AUTHENTICATION_SERVICE_URL]: 'https://auth-service-dev.conation.dev',
   [ServiceUrl.DOCUMENT_STORAGE_SERVICE_URL]:
-    'https://cloud-storage-dev.macro.com',
+    'https://cloud-storage-dev.conation.dev',
   [ServiceUrl.CONNECTION_GATEWAY_URL]:
-    'https://connection-gateway-dev.macro.com',
+    'https://connection-gateway-dev.conation.dev',
   [ServiceUrl.DOCUMENT_COGNITION_SERVICE_URL]:
-    'https://document-cognition-dev.macro.com',
+    'https://document-cognition-dev.conation.dev',
   [ServiceUrl.LEXICAL_SERVICE_URL]:
     'https://lexical-service-dev.macroverse.workers.dev',
 };
@@ -49,14 +49,14 @@ const DEV_SERVICE_URLS: ServiceUrlMap = {
 const PROD_SERVICE_URLS: ServiceUrlMap = {
   [ServiceUrl.SYNC_SERVICE_URL]:
     'https://sync-service-prod2.macroverse.workers.dev',
-  [ServiceUrl.EMAIL_SERVICE_URL]: 'https://email-service.macro.com',
-  [ServiceUrl.STATIC_FILE_SERVICE_URL]: 'https://static-file-service.macro.com',
-  [ServiceUrl.NOTIFICATION_SERVICE_URL]: 'https://notifications.macro.com',
-  [ServiceUrl.AUTHENTICATION_SERVICE_URL]: 'https://auth-service.macro.com',
-  [ServiceUrl.DOCUMENT_STORAGE_SERVICE_URL]: 'https://cloud-storage.macro.com',
-  [ServiceUrl.CONNECTION_GATEWAY_URL]: 'https://connection-gateway.macro.com',
+  [ServiceUrl.EMAIL_SERVICE_URL]: 'https://email-service.conation.dev',
+  [ServiceUrl.STATIC_FILE_SERVICE_URL]: 'https://static-file-service.conation.dev',
+  [ServiceUrl.NOTIFICATION_SERVICE_URL]: 'https://notifications.conation.dev',
+  [ServiceUrl.AUTHENTICATION_SERVICE_URL]: 'https://auth-service.conation.dev',
+  [ServiceUrl.DOCUMENT_STORAGE_SERVICE_URL]: 'https://cloud-storage.conation.dev',
+  [ServiceUrl.CONNECTION_GATEWAY_URL]: 'https://connection-gateway.conation.dev',
   [ServiceUrl.DOCUMENT_COGNITION_SERVICE_URL]:
-    'https://document-cognition.macro.com',
+    'https://document-cognition.conation.dev',
   [ServiceUrl.LEXICAL_SERVICE_URL]:
     'https://lexical-service-prod.macroverse.workers.dev',
 };

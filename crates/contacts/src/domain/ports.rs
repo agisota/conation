@@ -1,5 +1,5 @@
 use crate::domain::models::messages::{ContactConnection, ContactConnections, ContactsNodes};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use rootcause::Report;
 use std::collections::HashSet;
 use uuid::Uuid;

@@ -1,6 +1,6 @@
 use axum::{Json, extract::State};
 use entity_access::domain::ports::EntityAccessService;
-use macro_authorization::{MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal};
 use model_error_response::ErrorResponse;
 
 use crate::domain::{
@@ -29,7 +29,7 @@ pub async fn handler<T: TeamService, Eas: EntityAccessService, Auth: MacroAuthor
 ) -> Result<Json<Vec<Team>>, TeamError> {
     let teams = state
         .service
-        .get_user_teams(&authorization.authorization.user.macro_user_id)
+        .get_user_teams(&authorization.authorization.user.conation_user_id)
         .await?;
     Ok(Json(teams))
 }

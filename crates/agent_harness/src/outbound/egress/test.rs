@@ -194,7 +194,7 @@ fn points_every_acp_server_at_the_proxy() {
 
 /// An owner with no connected apps still gets Macro's own server.
 #[test]
-fn an_owner_with_no_connected_apps_still_gets_the_macro_server() {
+fn an_owner_with_no_connected_apps_still_gets_the_conation_server() {
     let entries: Vec<(String, String)> = egress(&[]).server_entries().collect();
 
     assert_eq!(

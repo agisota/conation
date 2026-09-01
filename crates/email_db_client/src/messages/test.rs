@@ -1,6 +1,6 @@
 use crate::messages::get::{draft_exists_with_id, filter_existing_provider_message_ids};
 use crate::messages::scheduled::get::get_scheduled_db_messages_by_link_id;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use sqlx::types::Uuid;
 use sqlx::{Pool, Postgres};
 

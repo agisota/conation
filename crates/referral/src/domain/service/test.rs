@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use macro_user_id::{email::EmailStr, user_id::MacroUserIdStr};
+use conation_user_id::{email::EmailStr, user_id::MacroUserIdStr};
 use notification::domain::{
     models::SendNotificationRequest, service::NotificationIngress, service::SendNotificationError,
 };

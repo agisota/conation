@@ -9,8 +9,8 @@ use item_filters::{
     ChatFilters, DocumentFilters, EntityFilters, NotificationFilters, ProjectFilters, TaskFilters,
     ast::EntityFilterAst,
 };
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
-use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use model_entity::EntityType;
 use std::collections::VecDeque;
 use std::sync::Arc;
@@ -146,12 +146,12 @@ async fn test_dynamic_filter_by_project_ids(pool: PgPool) {
     let child_project_id = Uuid::new_v4();
     let unrelated_project_id = Uuid::new_v4();
     let doc_id_1 = Uuid::new_v4();
-    let macro_user_id = Uuid::new_v4();
+    let conation_user_id = Uuid::new_v4();
 
     sqlx::query(
-        r#"INSERT INTO "macro_user" ("id", "username", "email", "stripe_customer_id") VALUES ($1, $2, $3, $4)"#,
+        r#"INSERT INTO "conation_user" ("id", "username", "email", "stripe_customer_id") VALUES ($1, $2, $3, $4)"#,
     )
-    .bind(macro_user_id)
+    .bind(conation_user_id)
     .bind("test@example.com")
     .bind("test@example.com")
     .bind("stripe_id")
@@ -159,10 +159,10 @@ async fn test_dynamic_filter_by_project_ids(pool: PgPool) {
     .await
     .unwrap();
 
-    sqlx::query(r#"INSERT INTO "User" ("id", "email", "macro_user_id") VALUES ($1, $2, $3)"#)
+    sqlx::query(r#"INSERT INTO "User" ("id", "email", "conation_user_id") VALUES ($1, $2, $3)"#)
         .bind(test_user_id.as_ref())
         .bind("test@example.com")
-        .bind(macro_user_id)
+        .bind(conation_user_id)
         .execute(&pool)
         .await
         .unwrap();
@@ -243,12 +243,12 @@ async fn test_dynamic_filter_by_project_ids_include_root(pool: PgPool) {
     let parent_project_id = Uuid::new_v4();
     let child_project_id = Uuid::new_v4();
     let unrelated_project_id = Uuid::new_v4();
-    let macro_user_id = Uuid::new_v4();
+    let conation_user_id = Uuid::new_v4();
 
     sqlx::query(
-        r#"INSERT INTO "macro_user" ("id", "username", "email", "stripe_customer_id") VALUES ($1, $2, $3, $4)"#,
+        r#"INSERT INTO "conation_user" ("id", "username", "email", "stripe_customer_id") VALUES ($1, $2, $3, $4)"#,
     )
-    .bind(macro_user_id)
+    .bind(conation_user_id)
     .bind("test@example.com")
     .bind("test@example.com")
     .bind("stripe_id")
@@ -256,10 +256,10 @@ async fn test_dynamic_filter_by_project_ids_include_root(pool: PgPool) {
     .await
     .unwrap();
 
-    sqlx::query(r#"INSERT INTO "User" ("id", "email", "macro_user_id") VALUES ($1, $2, $3)"#)
+    sqlx::query(r#"INSERT INTO "User" ("id", "email", "conation_user_id") VALUES ($1, $2, $3)"#)
         .bind(test_user_id.as_ref())
         .bind("test@example.com")
-        .bind(macro_user_id)
+        .bind(conation_user_id)
         .execute(&pool)
         .await
         .unwrap();
@@ -685,15 +685,15 @@ async fn test_dynamic_filter_document_task_include_cbm_atm_nc(pool: PgPool) {
     let test_user_id = MacroUserIdStr::parse_from_str("macro|test@example.com").unwrap();
 
     // Ensure owner row exists for foreign keys from Document.owner.
-    let macro_user_uuid = Uuid::new_v4();
+    let conation_user_uuid = Uuid::new_v4();
     sqlx::query(
         r#"
-        INSERT INTO "macro_user" ("id", "username", "email", "stripe_customer_id")
+        INSERT INTO "conation_user" ("id", "username", "email", "stripe_customer_id")
         VALUES ($1, 'test', $2, 'stripe_test')
         ON CONFLICT ("id") DO NOTHING
         "#,
     )
-    .bind(macro_user_uuid)
+    .bind(conation_user_uuid)
     .bind("test@example.com")
     .execute(&pool)
     .await
@@ -701,14 +701,14 @@ async fn test_dynamic_filter_document_task_include_cbm_atm_nc(pool: PgPool) {
 
     sqlx::query(
         r#"
-        INSERT INTO "User" ("id", "email", "macro_user_id")
+        INSERT INTO "User" ("id", "email", "conation_user_id")
         VALUES ($1, $2, $3)
         ON CONFLICT ("id") DO NOTHING
         "#,
     )
     .bind(test_user_id.as_ref())
     .bind("test@example.com")
-    .bind(macro_user_uuid)
+    .bind(conation_user_uuid)
     .execute(&pool)
     .await
     .unwrap();
@@ -838,15 +838,15 @@ async fn test_dynamic_filter_document_task_include_cbm_atm_nc(pool: PgPool) {
 }
 
 async fn setup_date_filter_user(pool: &PgPool, user_id: &MacroUserIdStr<'_>) {
-    let macro_user_uuid = Uuid::new_v4();
+    let conation_user_uuid = Uuid::new_v4();
     sqlx::query(
         r#"
-        INSERT INTO "macro_user" ("id", "username", "email", "stripe_customer_id")
+        INSERT INTO "conation_user" ("id", "username", "email", "stripe_customer_id")
         VALUES ($1, 'test', $2, 'stripe_test')
         ON CONFLICT ("id") DO NOTHING
         "#,
     )
-    .bind(macro_user_uuid)
+    .bind(conation_user_uuid)
     .bind("test@example.com")
     .execute(pool)
     .await
@@ -854,14 +854,14 @@ async fn setup_date_filter_user(pool: &PgPool, user_id: &MacroUserIdStr<'_>) {
 
     sqlx::query(
         r#"
-        INSERT INTO "User" ("id", "email", "macro_user_id")
+        INSERT INTO "User" ("id", "email", "conation_user_id")
         VALUES ($1, $2, $3)
         ON CONFLICT ("id") DO NOTHING
         "#,
     )
     .bind(user_id.as_ref())
     .bind("test@example.com")
-    .bind(macro_user_uuid)
+    .bind(conation_user_uuid)
     .execute(pool)
     .await
     .unwrap();

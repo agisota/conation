@@ -8,7 +8,7 @@ use attachment::FormattedParts;
 use entity_access::domain::models::{
     EditAccessLevel, EntityAccessReceipt, OwnerAccessLevel, ViewAccessLevel,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model::chat::Chat;
 use models_permissions::share_permission::access_level::AccessLevel;
 use models_permissions::share_permission::{SharePermissionV2, TeamLinkShareDefault};

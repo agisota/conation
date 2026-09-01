@@ -1,6 +1,6 @@
 import { INSERT_DOCUMENT_MENTION_COMMAND } from '@core/component/LexicalMarkdown/plugins/mentions';
-import type { DocumentMentionInfo } from '@macro-inc/lexical-core';
-import { buildMentionMarkdownString } from '@macro-inc/lexical-core/utils/mentions';
+import type { DocumentMentionInfo } from '@conation/lexical-core';
+import { buildMentionMarkdownString } from '@conation/lexical-core/utils/mentions';
 import type { LexicalEditor } from 'lexical';
 
 export type ChatAttachmentMention = Pick<

@@ -9,14 +9,14 @@ use std::collections::{HashMap, HashSet};
 
 /// gets a list of thread ids with the macro user id for the user
 #[tracing::instrument(skip(pool), err)]
-pub async fn get_paginated_thread_ids_with_macro_user_id(
+pub async fn get_paginated_thread_ids_with_conation_user_id(
     pool: &PgPool,
     thread_limit: i64,
     thread_offset: i64,
 ) -> anyhow::Result<Vec<(Uuid, String)>> {
     let result = sqlx::query!(
         r#"
-        SELECT t.id, l.macro_id
+        SELECT t.id, l.conation_id
         FROM email_threads t
         JOIN email_links l ON t.link_id = l.id
         ORDER BY t.latest_inbound_message_ts DESC NULLS LAST
@@ -25,7 +25,7 @@ pub async fn get_paginated_thread_ids_with_macro_user_id(
         thread_limit,
         thread_offset
     )
-    .map(|row| (row.id, row.macro_id))
+    .map(|row| (row.id, row.conation_id))
     .fetch_all(pool)
     .await?;
 
@@ -34,7 +34,7 @@ pub async fn get_paginated_thread_ids_with_macro_user_id(
 
 /// gets a list of thread ids with the macro user id, filtered to threads updated since a given timestamp.
 #[tracing::instrument(skip(pool), err)]
-pub async fn get_paginated_thread_ids_with_macro_user_id_since(
+pub async fn get_paginated_thread_ids_with_conation_user_id_since(
     pool: &PgPool,
     thread_limit: i64,
     thread_offset: i64,
@@ -42,7 +42,7 @@ pub async fn get_paginated_thread_ids_with_macro_user_id_since(
 ) -> anyhow::Result<Vec<(Uuid, String)>> {
     let result = sqlx::query!(
         r#"
-        SELECT t.id, l.macro_id
+        SELECT t.id, l.conation_id
         FROM email_threads t
         JOIN email_links l ON t.link_id = l.id
         WHERE t.updated_at >= $3
@@ -53,7 +53,7 @@ pub async fn get_paginated_thread_ids_with_macro_user_id_since(
         thread_offset,
         since
     )
-    .map(|row| (row.id, row.macro_id))
+    .map(|row| (row.id, row.conation_id))
     .fetch_all(pool)
     .await?;
 
@@ -67,20 +67,20 @@ pub async fn get_paginated_thread_ids_with_macro_user_id_since(
 /// without tripping a recovery conflict. Threads that do not exist are absent
 /// from the result.
 #[tracing::instrument(skip(pool, thread_ids), err)]
-pub async fn get_thread_ids_with_macro_user_id_by_ids(
+pub async fn get_thread_ids_with_conation_user_id_by_ids(
     pool: &PgPool,
     thread_ids: &[Uuid],
 ) -> anyhow::Result<Vec<(Uuid, String)>> {
     let result = sqlx::query!(
         r#"
-        SELECT t.id, l.macro_id
+        SELECT t.id, l.conation_id
         FROM email_threads t
         JOIN email_links l ON t.link_id = l.id
         WHERE t.id = ANY($1)
         "#,
         thread_ids
     )
-    .map(|row| (row.id, row.macro_id))
+    .map(|row| (row.id, row.conation_id))
     .fetch_all(pool)
     .await?;
 
@@ -157,7 +157,7 @@ pub async fn get_threads_by_link_id_and_provider_ids(
 #[tracing::instrument(skip(pool), err)]
 pub async fn get_threads_by_user_with_outbound(
     pool: &PgPool,
-    macro_user_id: &str,
+    conation_user_id: &str,
     limit: i64,
     offset: i64,
 ) -> anyhow::Result<UserThreadsPage> {
@@ -166,12 +166,12 @@ pub async fn get_threads_by_user_with_outbound(
         SELECT t.id as thread_id
         FROM email_threads t
         JOIN email_links l ON t.link_id = l.id
-        WHERE l.macro_id = $1
+        WHERE l.conation_id = $1
           AND t.latest_outbound_message_ts IS NOT NULL
         ORDER BY t.latest_outbound_message_ts DESC
         LIMIT $2 OFFSET $3
         "#,
-        macro_user_id,
+        conation_user_id,
         limit + 1,
         offset
     )
@@ -198,45 +198,45 @@ pub async fn get_outbound_threads_by_thread_ids(
     user_thread_ids: Vec<UserThreadIds>,
 ) -> anyhow::Result<Vec<UserThreadIds>> {
     // Flatten for one query
-    let mut macro_id_and_thread_id_pairs = Vec::new();
+    let mut conation_id_and_thread_id_pairs = Vec::new();
     for user in &user_thread_ids {
         for thread_id in &user.thread_ids {
-            macro_id_and_thread_id_pairs.push((user.macro_user_id.clone(), *thread_id));
+            conation_id_and_thread_id_pairs.push((user.conation_user_id.clone(), *thread_id));
         }
     }
 
     // Early exit if empty
-    if macro_id_and_thread_id_pairs.is_empty() {
+    if conation_id_and_thread_id_pairs.is_empty() {
         return Ok(vec![]);
     }
 
     // Extract for query
-    let macro_ids: Vec<String> = macro_id_and_thread_id_pairs
+    let conation_ids: Vec<String> = conation_id_and_thread_id_pairs
         .iter()
         .map(|x| x.0.clone())
         .collect();
-    let thread_ids: Vec<Uuid> = macro_id_and_thread_id_pairs.iter().map(|x| x.1).collect();
+    let thread_ids: Vec<Uuid> = conation_id_and_thread_id_pairs.iter().map(|x| x.1).collect();
 
     // The trick: Use UNNEST to join pairs in SQL
     let rows = sqlx::query!(
         r#"
-        SELECT l.macro_id, t.id as thread_id
-        FROM UNNEST($1::text[], $2::uuid[]) AS inp(macro_id, thread_id)
-        JOIN email_links l ON l.macro_id = inp.macro_id
+        SELECT l.conation_id, t.id as thread_id
+        FROM UNNEST($1::text[], $2::uuid[]) AS inp(conation_id, thread_id)
+        JOIN email_links l ON l.conation_id = inp.conation_id
         JOIN email_threads t ON t.link_id = l.id AND t.id = inp.thread_id
         WHERE t.latest_outbound_message_ts IS NOT NULL
         "#,
-        &macro_ids,
+        &conation_ids,
         &thread_ids,
     )
     .fetch_all(pool)
     .await?;
 
-    // Group by macro_user_id
+    // Group by conation_user_id
     let mut threads_by_user: HashMap<String, Vec<Uuid>> = HashMap::new();
     for row in rows {
         threads_by_user
-            .entry(row.macro_id)
+            .entry(row.conation_id)
             .or_default()
             .push(row.thread_id);
     }
@@ -246,9 +246,9 @@ pub async fn get_outbound_threads_by_thread_ids(
         .into_iter()
         .filter_map(|user| {
             threads_by_user
-                .get(&user.macro_user_id)
+                .get(&user.conation_user_id)
                 .map(|filtered_ids| UserThreadIds {
-                    macro_user_id: user.macro_user_id,
+                    conation_user_id: user.conation_user_id,
                     thread_ids: filtered_ids.clone(),
                 })
         })
@@ -281,13 +281,13 @@ pub async fn get_provider_id_by_link_and_thread_id(
 }
 
 #[tracing::instrument(skip(pool), err)]
-pub async fn get_macro_id_from_thread_id(
+pub async fn get_conation_id_from_thread_id(
     pool: &PgPool,
     thread_id: Uuid,
 ) -> anyhow::Result<Option<String>> {
-    let macro_id = sqlx::query_scalar!(
+    let conation_id = sqlx::query_scalar!(
         r#"
-        SELECT l.macro_id
+        SELECT l.conation_id
         FROM email_threads t
         JOIN email_links l ON t.link_id = l.id
         WHERE t.id = $1
@@ -297,7 +297,7 @@ pub async fn get_macro_id_from_thread_id(
     .fetch_optional(pool)
     .await?;
 
-    Ok(macro_id)
+    Ok(conation_id)
 }
 
 /// Gets a single thread by ID and link_ID
@@ -393,7 +393,7 @@ pub async fn get_thread_ids_by_contact_ids(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use macro_db_migrator::MACRO_DB_MIGRATIONS;
+    use conation_db_migrator::MACRO_DB_MIGRATIONS;
     use models_email::email::service::thread::UserThreadIds;
     use sqlx::types::uuid::uuid;
     use sqlx::{Pool, Postgres};
@@ -440,14 +440,14 @@ mod tests {
 
         let user_thread_ids = vec![
             UserThreadIds {
-                macro_user_id: user1.clone(),
+                conation_user_id: user1.clone(),
                 thread_ids: vec![
                     uuid!("10000000-0000-0000-0000-000000000001"),
                     uuid!("10000000-0000-0000-0000-000000000002"),
                 ],
             },
             UserThreadIds {
-                macro_user_id: user2.clone(),
+                conation_user_id: user2.clone(),
                 thread_ids: vec![uuid!("10000000-0000-0000-0000-000000000003")],
             },
         ];
@@ -457,7 +457,7 @@ mod tests {
         assert_eq!(result.len(), 2);
 
         // user1 should get both threads if both have outbound, or only those that do
-        let user1_result = result.iter().find(|u| u.macro_user_id == user1).unwrap();
+        let user1_result = result.iter().find(|u| u.conation_user_id == user1).unwrap();
         assert!(!user1_result.thread_ids.is_empty());
         assert!(
             user1_result
@@ -468,7 +468,7 @@ mod tests {
         );
 
         // user2 should get thread 3 if it has outbound
-        let user2_result = result.iter().find(|u| u.macro_user_id == user2).unwrap();
+        let user2_result = result.iter().find(|u| u.conation_user_id == user2).unwrap();
         assert_eq!(
             user2_result.thread_ids,
             vec![uuid!("10000000-0000-0000-0000-000000000003")]
@@ -500,7 +500,7 @@ mod tests {
         let user3 = "macro|user3@macro.com".to_string();
 
         let user_thread_ids = vec![UserThreadIds {
-            macro_user_id: user3.clone(),
+            conation_user_id: user3.clone(),
             thread_ids: vec![
                 uuid!("10000000-0000-0000-0000-000000000004"),
                 uuid!("10000000-0000-0000-0000-000000000005"),
@@ -523,7 +523,7 @@ mod tests {
 
         // Only one thread has outbound
         let user_thread_ids = vec![UserThreadIds {
-            macro_user_id: user1.clone(),
+            conation_user_id: user1.clone(),
             thread_ids: vec![
                 uuid!("10000000-0000-0000-0000-000000000001"), // assume has outbound
                 uuid!("10000000-0000-0000-0000-00000000dead"), // does not exist
@@ -534,7 +534,7 @@ mod tests {
         assert_eq!(result.len(), 1);
 
         let found = &result[0];
-        assert_eq!(found.macro_user_id, user1);
+        assert_eq!(found.conation_user_id, user1);
         assert!(
             found
                 .thread_ids

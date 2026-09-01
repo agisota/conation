@@ -8,8 +8,8 @@ use lambda_runtime::{
     Error, LambdaEvent, run, service_fn,
     tracing::{self},
 };
-use macro_entrypoint::MacroEntrypoint;
-use macro_env_var::env_vars;
+use conation_entrypoint::MacroEntrypoint;
+use conation_env_var::env_vars;
 use sqlx::postgres::PgPoolOptions;
 
 env_vars! {
@@ -51,9 +51,9 @@ async fn main() -> Result<(), Error> {
 
     tracing::trace!("initialized db client");
 
-    let organization_retention_queue = macro_queues::OrganizationRetentionQueue::new();
+    let organization_retention_queue = conation_queues::OrganizationRetentionQueue::new();
     let sqs_client = sqs_client::SQS::new(aws_sdk_sqs::Client::new(
-        &macro_aws_config::get_macro_aws_config().await,
+        &conation_aws_config::get_conation_aws_config().await,
     ))
     .organization_retention_queue(organization_retention_queue.as_ref());
 

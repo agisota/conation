@@ -7,7 +7,7 @@
 
 use super::{CrmSearchRepositoryImpl, escape_regex};
 use crate::domain::search_repo::{CrmCompanySearchCursor, CrmSearchRepository};
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -16,21 +16,21 @@ use uuid::Uuid;
 // --------------------------------------------------------------------------
 
 async fn seed_team(pool: &PgPool, team_id: Uuid, owner_id: &str) -> sqlx::Result<()> {
-    let macro_user_id = Uuid::now_v7();
+    let conation_user_id = Uuid::now_v7();
     sqlx::query(
-        r#"INSERT INTO macro_user (id, username, email, stripe_customer_id) VALUES ($1, $2, $3, $4)"#,
+        r#"INSERT INTO conation_user (id, username, email, stripe_customer_id) VALUES ($1, $2, $3, $4)"#,
     )
-    .bind(macro_user_id)
+    .bind(conation_user_id)
     .bind(owner_id)
     .bind(owner_id)
-    .bind(format!("stripe_{macro_user_id}"))
+    .bind(format!("stripe_{conation_user_id}"))
     .execute(pool)
     .await?;
 
-    sqlx::query(r#"INSERT INTO "User" (id, email, macro_user_id) VALUES ($1, $2, $3)"#)
+    sqlx::query(r#"INSERT INTO "User" (id, email, conation_user_id) VALUES ($1, $2, $3)"#)
         .bind(owner_id)
         .bind(owner_id)
-        .bind(macro_user_id)
+        .bind(conation_user_id)
         .execute(pool)
         .await?;
 
@@ -267,7 +267,7 @@ async fn search_highlights_matched_span(pool: PgPool) -> anyhow::Result<()> {
     // Case-insensitive match, original case preserved in the wrapped span.
     assert_eq!(
         results[0].name_highlighted,
-        "<macro_em>Acme</macro_em> Inc."
+        "<conation_em>Acme</conation_em> Inc."
     );
     Ok(())
 }
@@ -289,7 +289,7 @@ async fn search_escapes_regex_metacharacters_in_highlight(pool: PgPool) -> anyho
         1,
         "literal '++' must match, not blow up the regex"
     );
-    assert_eq!(results[0].name_highlighted, "<macro_em>C++</macro_em> Corp");
+    assert_eq!(results[0].name_highlighted, "<conation_em>C++</conation_em> Corp");
     Ok(())
 }
 

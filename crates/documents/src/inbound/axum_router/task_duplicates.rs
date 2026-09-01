@@ -12,7 +12,7 @@ use entity_access::inbound::axum_extractors::{
     DocumentAccessExtractor, OptionalMacroUserTeamExtractorV2,
 };
 use lexical_client::LexicalClient;
-use macro_authorization::{MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal};
 use model::document::DocumentBasic;
 use model::response::GenericSuccessResponse;
 use models_permissions::share_permission::access_level::{OwnerAccessLevel, ViewAccessLevel};
@@ -104,7 +104,7 @@ pub async fn get_task_duplicates_handler<
         (status = 500, body = model_error_response::ErrorResponse),
     )
 )]
-#[tracing::instrument(skip(state, user, optional_team, request), fields(user_id=?user.authorization.user.macro_user_id), err)]
+#[tracing::instrument(skip(state, user, optional_team, request), fields(user_id=?user.authorization.user.conation_user_id), err)]
 pub async fn task_similarity_search_handler<
     T: DocumentService,
     Svc: EntityAccessService,
@@ -120,7 +120,7 @@ pub async fn task_similarity_search_handler<
     // back to owner-only scope.
     let team_id = optional_team
         .entity_access_receipt
-        .map(|team| macro_uuid::string_to_uuid(&team.entity().entity_id).unwrap());
+        .map(|team| conation_uuid::string_to_uuid(&team.entity().entity_id).unwrap());
     // The composer renders the draft body with lexical-core's
     // `markdownToEmbeddingText`, so we trust it as embedding-format here rather
     // than round-tripping through lexical-service on this latency-sensitive path.
@@ -129,7 +129,7 @@ pub async fn task_similarity_search_handler<
     let results = state
         .task_dedup_service
         .similarity_search(
-            user.authorization.user.macro_user_id.as_ref(),
+            user.authorization.user.conation_user_id.as_ref(),
             team_id,
             &request.task_name,
             &markdown,
@@ -158,7 +158,7 @@ pub async fn dismiss_task_duplicates_handler<
         .dismiss_matches(
             &document_id,
             &request.match_ids,
-            user.authorization.user.macro_user_id.as_ref(),
+            user.authorization.user.conation_user_id.as_ref(),
         )
         .await
         .map_err(task_dedup_error)?;

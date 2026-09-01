@@ -14,7 +14,7 @@
 //! connected in Macro is an app the sandbox can reach, with nothing to keep
 //! in sync.
 
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use pipedream_mcp::domain::models::PipedreamConnection;
 use pipedream_mcp::domain::ports::ConnectionStore;
 use pipedream_mcp::outbound::api::McpUpstream;
@@ -88,7 +88,7 @@ where
         destination: &McpDestination,
     ) -> Result<UpstreamCall, EgressError> {
         // Macro's own server is the composition root's to layer on with
-        // [`crate::outbound::macro_mcp::WithMacroMcp`]; these rows can never
+        // [`crate::outbound::conation_mcp::WithMacroMcp`]; these rows can never
         // answer for it.
         let McpDestination::Connected(slug) = destination else {
             return Err(EgressError::Internal(rootcause::report!(

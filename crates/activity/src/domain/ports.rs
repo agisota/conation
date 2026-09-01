@@ -36,7 +36,7 @@ pub trait ActivityMetadataResolver: Send + Sync + 'static {
     /// Resolve the requested property definition ids for `viewer`.
     async fn resolve_properties(
         &self,
-        viewer: &macro_user_id::user_id::MacroUserIdStr<'_>,
+        viewer: &conation_user_id::user_id::MacroUserIdStr<'_>,
         property_ids: &[String],
     ) -> HashMap<String, ActivityPropertyMetadata>;
 }

@@ -11,7 +11,7 @@ pub async fn create_job(
     total_candidates: i64,
     max_candidate_id: i64,
 ) -> anyhow::Result<Option<CrmCleanupJob>> {
-    let id = macro_uuid::generate_uuid_v7();
+    let id = conation_uuid::generate_uuid_v7();
 
     let record = sqlx::query_as!(
         CrmCleanupJob,

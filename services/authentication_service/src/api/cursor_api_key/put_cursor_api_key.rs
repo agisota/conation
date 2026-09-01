@@ -3,10 +3,10 @@ use axum::{
     extract::{self, State},
 };
 use cursor_api_key::cipher::CursorApiKey;
-use macro_authorization::{MacroAuthorizationExtractor, UserOnly};
+use conation_authorization::{MacroAuthorizationExtractor, UserOnly};
 use utoipa::ToSchema;
 
-use super::{CursorApiKeyError, CursorApiKeyStatus, require_macro_staff};
+use super::{CursorApiKeyError, CursorApiKeyStatus, require_conation_staff};
 use crate::api::context::{ApiContext, AuthorizationService};
 
 /// The key the user pasted.
@@ -37,14 +37,14 @@ pub struct PutCursorApiKeyRequest {
 )]
 // `req` is skipped: it is the key itself, and an instrumented span field would
 // write a live credential into every trace.
-#[tracing::instrument(skip(ctx, user_context, req), err, fields(user_id = %user_context.authorization.macro_user_id))]
+#[tracing::instrument(skip(ctx, user_context, req), err, fields(user_id = %user_context.authorization.conation_user_id))]
 pub async fn handler(
     State(ctx): State<ApiContext>,
     user_context: MacroAuthorizationExtractor<AuthorizationService, UserOnly>,
     extract::Json(req): extract::Json<PutCursorApiKeyRequest>,
 ) -> Result<Json<CursorApiKeyStatus>, CursorApiKeyError> {
-    let user_id = &user_context.authorization.macro_user_id;
-    require_macro_staff(user_id)?;
+    let user_id = &user_context.authorization.conation_user_id;
+    require_conation_staff(user_id)?;
 
     let cipher = &ctx.cursor_api_key_cipher;
 

@@ -3,7 +3,7 @@ pub mod response;
 #[cfg(test)]
 mod test;
 use document_sub_type::DocumentSubType;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use schemars::JsonSchema;
 use utoipa::ToSchema;
 

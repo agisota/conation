@@ -6,8 +6,8 @@ use crate::domain::ports::{
     ContactsBackfillOutboxRepo, ContactsIngress, ContactsIngressQueue, ContactsNotifier,
     ContactsOutboxService, ContactsRepository, ContactsService,
 };
-use macro_user_id::cowlike::CowLike;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::cowlike::CowLike;
+use conation_user_id::user_id::MacroUserIdStr;
 use rootcause::Report;
 use std::collections::HashSet;
 use std::sync::Arc;

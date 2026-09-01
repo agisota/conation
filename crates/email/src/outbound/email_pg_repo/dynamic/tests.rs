@@ -5,8 +5,8 @@ use super::*;
 use crate::domain::models::{PreviewView, PreviewViewStandardLabel};
 use filter_ast::Expr;
 use item_filters::ast::email::{Email, EmailLiteral};
-use macro_user_id::cowlike::CowLike;
-use macro_user_id::email::EmailStr;
+use conation_user_id::cowlike::CowLike;
+use conation_user_id::email::EmailStr;
 use uuid::Uuid;
 
 fn complete(s: &str) -> Email {

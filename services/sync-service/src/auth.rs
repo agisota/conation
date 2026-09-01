@@ -123,7 +123,7 @@ did not match expected value: {}",
 
     let secret = secrets.document_permissions_secret;
 
-    let claims = macro_sync_service_jwt::decode::<AuthToken>(&token, &secret)
+    let claims = conation_sync_service_jwt::decode::<AuthToken>(&token, &secret)
         .context("failed to decode `AuthToken`")?;
 
     Ok(claims)

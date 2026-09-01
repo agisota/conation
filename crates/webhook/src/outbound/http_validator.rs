@@ -78,7 +78,7 @@ impl WebhookValidationClient for ReqwestWebhookValidationClient {
             .header("X-Macro-Signature", signature);
 
         for (name, value) in webhook.headers {
-            if is_reserved_macro_header(&name) {
+            if is_reserved_conation_header(&name) {
                 return Ok(failure(None, "reserved Macro headers cannot be overridden"));
             }
             request = request.header(name, value);
@@ -109,7 +109,7 @@ impl WebhookValidationClient for ReqwestWebhookValidationClient {
 }
 
 fn new_validation_event_id() -> String {
-    format!("evt_{}", macro_uuid::generate_uuid_v7())
+    format!("evt_{}", conation_uuid::generate_uuid_v7())
 }
 
 fn validation_body(webhook_id: &str, event_id: &str) -> Result<Vec<u8>, serde_json::Error> {
@@ -252,7 +252,7 @@ fn is_blocked_ip(ip: IpAddr) -> bool {
     }
 }
 
-pub(super) fn is_reserved_macro_header(name: &str) -> bool {
+pub(super) fn is_reserved_conation_header(name: &str) -> bool {
     matches!(
         name.to_ascii_lowercase().as_str(),
         "x-macro-event" | "x-macro-event-id" | "x-macro-timestamp" | "x-macro-signature"

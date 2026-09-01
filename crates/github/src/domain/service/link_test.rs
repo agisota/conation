@@ -8,7 +8,7 @@ use foreign_entity::domain::{
     },
     ports::{ForeignEntityListQuery, ForeignEntityService},
 };
-use macro_user_id::{
+use conation_user_id::{
     lowercased::Lowercase,
     user_id::{MacroUserId, MacroUserIdStr},
 };
@@ -105,7 +105,7 @@ impl GithubRepo for StubGithubRepo {
 
     async fn get_github_link_by_user_id<'a>(
         &self,
-        _macro_user_id: &MacroUserId<Lowercase<'a>>,
+        _conation_user_id: &MacroUserId<Lowercase<'a>>,
     ) -> Result<GithubLink, Self::Err> {
         self.state
             .lock()
@@ -539,7 +539,7 @@ fn test_user_id() -> MacroUserId<Lowercase<'static>> {
 fn test_link(user_id: &MacroUserId<Lowercase<'static>>) -> GithubLink {
     GithubLink {
         id: uuid::Uuid::nil(),
-        macro_id: MacroUserIdStr((*user_id).clone()),
+        conation_id: MacroUserIdStr((*user_id).clone()),
         fusionauth_user_id: uuid::Uuid::nil(),
         github_username: "octocat".to_string(),
         github_user_id: "1".to_string(),
@@ -554,7 +554,7 @@ fn owner_link(fusionauth_user_id: uuid::Uuid) -> GithubLink {
         .0;
     GithubLink {
         id: uuid::Uuid::from_u128(0xFFFF),
-        macro_id: MacroUserIdStr(owner_user_id),
+        conation_id: MacroUserIdStr(owner_user_id),
         fusionauth_user_id,
         github_username: "octocat".to_string(),
         github_user_id: "1".to_string(),

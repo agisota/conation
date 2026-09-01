@@ -6,7 +6,7 @@ use crate::domain::models::{
     TypingAction,
 };
 use channel_sender::ChannelSender;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use uuid::Uuid;
 
 /// Notification context for a patched message that should notify like a new post.

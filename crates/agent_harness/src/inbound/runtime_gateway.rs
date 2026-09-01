@@ -27,7 +27,7 @@ use axum::extract::{FromRef, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
-use macro_authorization::{
+use conation_authorization::{
     BotOnly, MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState,
 };
 

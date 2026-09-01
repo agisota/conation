@@ -93,7 +93,7 @@ pub async fn handler(
 
     // Check if the email is blocked
     let blocked_emails =
-        macro_db_client::blocked_email::get_blocked_emails(&ctx.db, &[&lowercase_email]).await?;
+        conation_db_client::blocked_email::get_blocked_emails(&ctx.db, &[&lowercase_email]).await?;
 
     if !blocked_emails.is_empty() {
         return Err(SendMobileWelcomeEmailError::EmailBlocked);

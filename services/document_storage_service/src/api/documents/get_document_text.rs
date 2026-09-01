@@ -42,7 +42,7 @@ pub async fn handler(
 ) -> impl IntoResponse {
     tracing::debug!(document_id = %document_id, "Getting document text");
 
-    let text = match macro_db_client::document_text::get_document_text(&db, &document_id).await {
+    let text = match conation_db_client::document_text::get_document_text(&db, &document_id).await {
         Ok(text) => text,
         Err(e) => {
             tracing::error!(error = %e, document_id = %document_id, "Failed to get document text");

@@ -12,7 +12,7 @@ use agent_session::domain::model::{
 };
 use bot_id::BotId;
 use cursor_api_key::cipher::CursorApiKey;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
@@ -69,7 +69,7 @@ impl AgentSessionRepo for StubSessions {
             thread_id: None,
             thread_channel_id: None,
             originating_message_id: None,
-            bot_id: BotId::new_from_uuid(macro_uuid::generate_uuid_v7()),
+            bot_id: BotId::new_from_uuid(conation_uuid::generate_uuid_v7()),
             model: "auto".to_owned(),
             harness: "cursor".to_owned(),
             repo_url: None,
@@ -92,7 +92,7 @@ impl AgentSessionRepo for StubSessions {
 
     async fn find_for_channel(
         &self,
-        _thread_id: Option<macro_uuid::Uuid>,
+        _thread_id: Option<conation_uuid::Uuid>,
         _bot_id: Option<BotId>,
     ) -> SessionResult<ChannelSession> {
         unimplemented!("the manager never routes channel events")
@@ -100,7 +100,7 @@ impl AgentSessionRepo for StubSessions {
 
     async fn find_all_for_thread(
         &self,
-        _thread_id: macro_uuid::Uuid,
+        _thread_id: conation_uuid::Uuid,
     ) -> SessionResult<Vec<AgentSession>> {
         unimplemented!("the manager never lists thread sessions")
     }

@@ -9,7 +9,7 @@ fn spec() -> RunSpec {
             "REPO_URL".to_owned(),
             "https://github.com/macro-inc/macro".to_owned(),
         )],
-        network: "macro_services".to_owned(),
+        network: "conation_services".to_owned(),
     }
 }
 
@@ -45,7 +45,7 @@ fn a_sandbox_joins_the_compose_network_and_publishes_nothing() {
     let args = run_args(&spec());
 
     let network = args.iter().position(|arg| arg == "--network").unwrap();
-    assert_eq!(args[network + 1], "macro_services");
+    assert_eq!(args[network + 1], "conation_services");
     assert!(!args.contains(&"--publish".to_owned()));
 }
 

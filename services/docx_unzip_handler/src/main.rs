@@ -17,8 +17,8 @@ use lambda_runtime::{
     Error, LambdaEvent, run, service_fn,
     tracing::{self},
 };
-use macro_entrypoint::MacroEntrypoint;
-use macro_sha_count_client::Redis;
+use conation_entrypoint::MacroEntrypoint;
+use conation_sha_count_client::Redis;
 use sqlx::postgres::PgPoolOptions;
 
 #[tokio::main]
@@ -40,15 +40,15 @@ async fn main() -> Result<(), Error> {
 
     tracing::trace!("initialized db connection");
 
-    let aws_config = macro_aws_config::get_macro_aws_config().await;
+    let aws_config = conation_aws_config::get_conation_aws_config().await;
 
-    let s3_client = s3_client::S3::new(macro_aws_config::s3_client().await);
+    let s3_client = s3_client::S3::new(conation_aws_config::s3_client().await);
     tracing::trace!("initialized s3 client");
 
     let lambda_client = lambda_client::Lambda::new(aws_sdk_lambda::Client::new(&aws_config));
     tracing::trace!("initialized lambda client");
 
-    let convert_queue = macro_queues::ConvertQueue::new();
+    let convert_queue = conation_queues::ConvertQueue::new();
     let sqs_client =
         sqs_client::SQS::new(aws_sdk_sqs::Client::new(&aws_config)).convert_queue(&convert_queue);
     tracing::trace!("initialized sqs client");

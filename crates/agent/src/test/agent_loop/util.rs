@@ -14,7 +14,7 @@ use crate::stream::{ChatCompletionStream, StreamPart, ToolCall, ToolResponse};
 use ai_toolset::{AsyncTool, AsyncToolCollection, ToolAnnotated, ToolSet as AiToolSet};
 use ai_usage::{AiFeature, UsageContext, UsageEvent, UsageRecorder};
 use futures::StreamExt;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use rig_core::completion::{CompletionModel, GetTokenUsage};
 use rig_core::message::Message;
 use schemars::JsonSchema;

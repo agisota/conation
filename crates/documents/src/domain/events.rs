@@ -1,6 +1,6 @@
 //! Kafka event models for the `macro.documents` topic.
 //!
-//! Follows the canonical pattern in `macro_event_broker/examples/example_event.rs`:
+//! Follows the canonical pattern in `conation_event_broker/examples/example_event.rs`:
 //! per-variant metadata structs, a [`TopicEvent`] enum tagged by `event_type`,
 //! and a [`MacroEvent`] wrapper keyed by document id.
 
@@ -10,9 +10,9 @@ mod test;
 use activity::Actor;
 use chrono::{DateTime, Utc};
 use document_sub_type::DocumentSubType;
-use macro_event_broker::{Event, MacroEvent, TopicEvent};
-use macro_event_topics::MacroDocumentsTopic;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_event_broker::{Event, MacroEvent, TopicEvent};
+use conation_event_topics::MacroDocumentsTopic;
+use conation_user_id::user_id::MacroUserIdStr;
 use model::document::FileType;
 use serde::{Deserialize, Serialize};
 

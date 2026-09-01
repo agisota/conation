@@ -4,7 +4,7 @@ use channels::domain::{
     models::{PostMessageNotificationPolicy, PostMessageRequest, Sender, SimpleMention},
     ports::ChannelService,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use mention_utils::serialize::user_mention;
 use rootcause::{Report, prelude::ResultExt};
 use uuid::Uuid;

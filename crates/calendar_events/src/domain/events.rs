@@ -1,7 +1,7 @@
 //! Kafka event models for the `macro.calendar` topic.
 
-use macro_event_broker::{Event, MacroEvent, TopicEvent};
-use macro_event_topics::MacroCalendarTopic;
+use conation_event_broker::{Event, MacroEvent, TopicEvent};
+use conation_event_topics::MacroCalendarTopic;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

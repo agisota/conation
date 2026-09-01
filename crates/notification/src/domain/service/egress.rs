@@ -23,7 +23,7 @@ use crate::domain::ports::{
 use cowlike::CowLike;
 use either::Either;
 use futures::stream::{FuturesUnordered, StreamExt};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use rootcause::prelude::ResultExt;
 use rootcause::{Report, report};
 use std::time::Duration;

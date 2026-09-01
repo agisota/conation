@@ -485,7 +485,7 @@ impl DaytonaClient {
         loop {
             let mut request = self.http.get(ping_url);
             let mut trace_headers = reqwest::header::HeaderMap::new();
-            macro_tower_layers::inject_trace_headers(&mut trace_headers);
+            conation_tower_layers::inject_trace_headers(&mut trace_headers);
             request = request.headers(trace_headers);
             if let Some(token) = preview_token {
                 request = request.header("x-daytona-preview-token", token);
@@ -512,7 +512,7 @@ impl DaytonaClient {
         operation: &'static str,
     ) -> Result<T> {
         let mut trace_headers = reqwest::header::HeaderMap::new();
-        macro_tower_layers::inject_trace_headers(&mut trace_headers);
+        conation_tower_layers::inject_trace_headers(&mut trace_headers);
         let response = request
             .headers(trace_headers)
             .bearer_auth(self.api_key.expose())

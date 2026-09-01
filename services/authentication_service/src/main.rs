@@ -33,11 +33,11 @@ use github::{
     },
 };
 use loops_client::LoopsClient;
-use macro_auth::middleware::decode_jwt::JwtValidationArgs;
-use macro_authorization::{InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationState};
-use macro_entrypoint::MacroEntrypoint;
-use macro_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
-use macro_service_urls::{
+use conation_auth::middleware::decode_jwt::JwtValidationArgs;
+use conation_authorization::{InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationState};
+use conation_entrypoint::MacroEntrypoint;
+use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
+use conation_service_urls::{
     AppServiceUrl, ConnectionGatewayUrl, DocumentStorageServiceUrl, EmailServiceUrl,
 };
 use native_app_service::{
@@ -91,7 +91,7 @@ async fn main() -> anyhow::Result<()> {
     let env = Environment::new_or_prod();
 
     // One SDK config is sufficient for every AWS client in this process.
-    let aws_config = macro_aws_config::get_macro_aws_config().await;
+    let aws_config = conation_aws_config::get_conation_aws_config().await;
     let secretsmanager_client = secretsmanager_client::SecretsManager::new(
         aws_sdk_secretsmanager::Client::new(&aws_config),
     );
@@ -146,7 +146,7 @@ async fn main() -> anyhow::Result<()> {
     );
 
     // Macro API token
-    let macro_api_token_private_key = secretsmanager_client
+    let conation_api_token_private_key = secretsmanager_client
         .get_maybe_secret_value(config.environment, MacroApiTokenPrivateSecretKey::new()?)
         .await?;
 
@@ -221,8 +221,8 @@ async fn main() -> anyhow::Result<()> {
         email::outbound::EmailServiceHttpClient::new(EmailServiceUrl::new()?.to_string());
     tracing::trace!("initialized email service client");
 
-    let macro_cache_client =
-        macro_cache_client::MacroCache::new(config.redis_uri.to_string().as_str());
+    let conation_cache_client =
+        conation_cache_client::MacroCache::new(config.redis_uri.to_string().as_str());
 
     tracing::trace!("initialized redis client");
 
@@ -244,7 +244,7 @@ async fn main() -> anyhow::Result<()> {
             api_key: internal_api_key.to_string(),
             default_user_id: None,
         },
-        macro_authorization::NoBotAuthorizer,
+        conation_authorization::NoBotAuthorizer,
     )));
 
     let redis_client = redis::Client::open(config.redis_uri.to_string().as_str())
@@ -254,12 +254,12 @@ async fn main() -> anyhow::Result<()> {
         .await
         .context("failed to get multiplexed redis connection")?;
 
-    let notification_queue = macro_queues::NotificationIngressQueue::new();
-    let search_event_queue = macro_queues::SearchEventQueue::new();
-    let link_manager_queue = macro_queues::LinkManagerQueue::new();
-    let email_backfill_queue = macro_queues::EmailBackfillQueue::new();
+    let notification_queue = conation_queues::NotificationIngressQueue::new();
+    let search_event_queue = conation_queues::SearchEventQueue::new();
+    let link_manager_queue = conation_queues::LinkManagerQueue::new();
+    let email_backfill_queue = conation_queues::EmailBackfillQueue::new();
     let ingress_queue = SqsQueue::new(
-        aws_sdk_sqs::Client::new(&macro_aws_config::get_macro_aws_config().await),
+        aws_sdk_sqs::Client::new(&conation_aws_config::get_conation_aws_config().await),
         notification_queue.to_string(),
     );
     let notification_ingress_service = SqsNotificationIngress {
@@ -326,11 +326,11 @@ async fn main() -> anyhow::Result<()> {
     };
     tracing::trace!("initialized loops client");
 
-    let user_roles_and_permissions_macro_db = MacroDB::new(db.clone());
+    let user_roles_and_permissions_conation_db = MacroDB::new(db.clone());
 
     let user_roles_and_permissions_service = UserRolesAndPermissionsServiceImpl::new(
-        user_roles_and_permissions_macro_db.clone(),
-        user_roles_and_permissions_macro_db,
+        user_roles_and_permissions_conation_db.clone(),
+        user_roles_and_permissions_conation_db,
     );
 
     let teams_repo_impl = TeamRepositoryImpl::new(db.clone());
@@ -351,13 +351,13 @@ async fn main() -> anyhow::Result<()> {
     let contacts_ingress = Arc::new(SqsContactsIngress {
         queue: SqsContactsQueue::new(
             aws_sdk_sqs::Client::new(&aws_config),
-            macro_queues::ContactsQueue::new().to_string(),
+            conation_queues::ContactsQueue::new().to_string(),
         ),
     });
     let contacts_enqueuer = ContactsIngressEnqueuer::new(contacts_ingress.clone());
     let team_analytics = AnalyticsClientTeamAnalytics::new(analytics_client.clone());
     let event_broker_tracker = TaskTracker::new();
-    let macro_event_broker = MacroEventBrokerService::new(
+    let conation_event_broker = MacroEventBrokerService::new(
         KafkaEventPublisher::new(config.kafka_brokers.as_ref())
             .context("failed to create kafka event publisher")?,
         event_broker_tracker.clone(),
@@ -379,7 +379,7 @@ async fn main() -> anyhow::Result<()> {
         NotificationChannelSender::new(notification_ingress_service.clone()),
         ContactsChannelDispatcher::new(contacts_ingress),
     )
-    .with_macro_event_broker(macro_event_broker.clone());
+    .with_conation_event_broker(conation_event_broker.clone());
     let channel_event_dispatcher = SpawnedChannelEventDispatcher::new(channel_side_effects);
     let channel_service = ChannelServiceImpl::with_dependencies(
         PgChannelsRepo::new(db.clone()),
@@ -398,7 +398,7 @@ async fn main() -> anyhow::Result<()> {
         team_analytics,
     )
     .with_contacts_enqueuer(contacts_enqueuer)
-    .with_event_broker(macro_event_broker);
+    .with_event_broker(conation_event_broker);
 
     let foreign_entity_service =
         ForeignEntityServiceImpl::new(PgForeignEntityRepo::new(db.clone()));
@@ -436,7 +436,7 @@ async fn main() -> anyhow::Result<()> {
             auth_client: Arc::new(auth_client),
             microsoft_token_cipher,
             cursor_api_key_cipher,
-            macro_cache_client: Arc::new(macro_cache_client),
+            conation_cache_client: Arc::new(conation_cache_client),
             stripe_client: Arc::new(stripe_client),
             document_storage_service_client: Arc::new(document_storage_service_client),
             email_service_client: Arc::new(email_service_client),
@@ -450,7 +450,7 @@ async fn main() -> anyhow::Result<()> {
             authorization_state,
             token_context: MacroApiTokenContext {
                 issuer: MacroApiTokenIssuer::new()?,
-                macro_api_token_private_key,
+                conation_api_token_private_key,
                 expiry_seconds: MacroApiTokenExpirySeconds::new()?
                     .as_ref()
                     .parse()

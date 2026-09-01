@@ -24,16 +24,16 @@ import {
   CodeNode,
 } from '@lexical/code';
 import { mergeRegister } from '@lexical/utils';
-import { createAwareness } from '@macro-inc/collaboration/collab/awareness';
-import { createSyncEngine } from '@macro-inc/collaboration/collab/engine';
-import { logSyncService } from '@macro-inc/collaboration/collab/logger';
-import type { LoroManager } from '@macro-inc/collaboration/collab/manager';
+import { createAwareness } from '@conation/collaboration/collab/awareness';
+import { createSyncEngine } from '@conation/collaboration/collab/engine';
+import { logSyncService } from '@conation/collaboration/collab/logger';
+import type { LoroManager } from '@conation/collaboration/collab/manager';
 import {
   IDBSnapshotStore,
   LORO_SNAPSHOT_DB_NAME,
-} from '@macro-inc/collaboration/collab/snapshot-store';
-import type { LiveSyncSource } from '@macro-inc/collaboration/collab/source';
-import { createWALSyncSource } from '@macro-inc/collaboration/collab/wal';
+} from '@conation/collaboration/collab/snapshot-store';
+import type { LiveSyncSource } from '@conation/collaboration/collab/source';
+import { createWALSyncSource } from '@conation/collaboration/collab/wal';
 import {
   $isCustomCodeNode,
   $updateAllNodeIds,
@@ -43,8 +43,8 @@ import {
   type NodeIdMappings,
   SKIP_DOM_SELECTION_TAG,
   SKIP_SCROLL_INTO_VIEW_TAG,
-} from '@macro-inc/lexical-core';
-import type { Span } from '@macro-inc/observability';
+} from '@conation/lexical-core';
+import type { Span } from '@conation/observability';
 import type { NodeKey, UpdateListenerPayload } from 'lexical';
 import {
   $addUpdateTag,

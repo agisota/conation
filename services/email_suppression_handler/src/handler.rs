@@ -70,7 +70,7 @@ async fn handle_bounce_notification(
                 .map(|r| r.email_address.as_str())
                 .collect();
 
-            macro_db_client::blocked_email::bulk_upsert_block_email(db, &block_emails)
+            conation_db_client::blocked_email::bulk_upsert_block_email(db, &block_emails)
                 .await
                 .context("failed to upsert block email")?;
         }
@@ -113,7 +113,7 @@ async fn handle_complaint_notification(
             .map(|r| r.email_address.as_str())
             .collect();
 
-        macro_db_client::blocked_email::bulk_upsert_block_email(db, &block_emails)
+        conation_db_client::blocked_email::bulk_upsert_block_email(db, &block_emails)
             .await
             .context("failed to upsert block email")?;
         return Ok(());
@@ -134,7 +134,7 @@ async fn handle_complaint_notification(
                     .map(|r| r.email_address.as_str())
                     .collect();
 
-                macro_db_client::blocked_email::bulk_upsert_block_email(db, &block_emails)
+                conation_db_client::blocked_email::bulk_upsert_block_email(db, &block_emails)
                     .await
                     .context("failed to upsert block email")?;
             }

@@ -14,8 +14,8 @@ use entity_access::domain::{
     ports::EntityAccessService,
 };
 use favorites::domain::ports::FavoritesService;
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_user_id::user_id::MacroUserIdStr;
 use model::document_storage_service_internal::{
     InitializeStarterDocsResponse, StarterDocHowToGuide,
 };
@@ -31,7 +31,7 @@ use system_properties::{PriorityOption, SystemPropertyKey};
 /// Also the name `get_starter_docs` resolves the guide by, so the two stay in
 /// sync from one definition.
 pub(in crate::api) const HOW_TO_GUIDE_NAME: &str = "Macro how to guide";
-const HOW_TO_GUIDE_TEMPLATE: &str = include_str!("./template/macro_how_to_guide.md");
+const HOW_TO_GUIDE_TEMPLATE: &str = include_str!("./template/conation_how_to_guide.md");
 
 /// A starter task the templates can mention. Mention tags embed the target's
 /// document id and name, which don't exist at authoring time, so templates
@@ -163,14 +163,14 @@ fn internal_error(message: &str) -> Response {
 /// favorites. Called by the authentication service when a new user signs up.
 /// Safe to retry: deterministic per-user ids dedupe concurrent duplicate
 /// deliveries, and a create conflict means that document was already seeded.
-#[tracing::instrument(skip(state, user_context), fields(user_id=?user_context.authorization.user.macro_user_id))]
+#[tracing::instrument(skip(state, user_context), fields(user_id=?user_context.authorization.user.conation_user_id))]
 pub async fn handler(
     State(state): State<ApiContext>,
     user_context: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
 ) -> Result<Response, Response> {
     tracing::info!("initialize starter docs");
 
-    let user_id = &user_context.authorization.user.macro_user_id;
+    let user_id = &user_context.authorization.user.conation_user_id;
     let system_for_user = Attribution::delegated(
         Actor::new_from_bot(bot_id::MACRO_SYSTEM_BOT_ID),
         user_id.clone(),
@@ -329,7 +329,7 @@ pub async fn handler(
             .generate_bot_entity_access_receipt::<EditAccessLevel>(
                 bot_id::MACRO_SYSTEM_BOT_ID,
                 BotAccessScope::User {
-                    user_id: user_context.authorization.user.macro_user_id.clone(),
+                    user_id: user_context.authorization.user.conation_user_id.clone(),
                     user_org_id: organization_id,
                 },
                 &document_id,
@@ -415,7 +415,7 @@ pub async fn handler(
         .conn_gateway_client
         .send_message(
             EntityType::User
-                .with_entity_str(user_context.authorization.user.macro_user_id.as_ref()),
+                .with_entity_str(user_context.authorization.user.conation_user_id.as_ref()),
             STARTER_DOCS_INITIALIZED_MESSAGE_TYPE.to_string(),
             serde_json::json!({}),
         )

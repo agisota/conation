@@ -1,7 +1,7 @@
 import {
   $createDocumentMentionNode,
   type DocumentMentionInfo,
-} from '@macro-inc/lexical-core';
+} from '@conation/lexical-core';
 import {
   $createParagraphNode,
   $getNodeByKey,

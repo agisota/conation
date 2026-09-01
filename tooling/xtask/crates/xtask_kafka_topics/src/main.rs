@@ -1,7 +1,7 @@
 //! `cargo x kafka-topics [--check]`
 //!
 //! Generates `.github/kafka-cluster-topics.json`: the name of every Kafka
-//! topic declared in the `macro_event_topics` crate, consumed by infra
+//! topic declared in the `conation_event_topics` crate, consumed by infra
 //! (alongside `services-config.json`) to ensure all cluster topics are
 //! created. The `--check` variant fails on drift instead of writing, so CI
 //! can guarantee the checked-in file always matches the crate.
@@ -27,7 +27,7 @@ fn run(check: bool) -> Result<()> {
 
     // Sorted for a deterministic file regardless of declaration order. A bare
     // array (no disclaimer wrapper) so infra can parse the file directly.
-    let topics: BTreeSet<&'static str> = macro_event_topics::all_topic_names()
+    let topics: BTreeSet<&'static str> = conation_event_topics::all_topic_names()
         .iter()
         .copied()
         .collect();

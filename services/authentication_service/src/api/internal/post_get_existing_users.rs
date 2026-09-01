@@ -6,8 +6,8 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use macro_authorization::{InternalOnly, MacroAuthorizationExtractor};
-use macro_user_id::{cowlike::CowLike, lowercased::Lowercase, user_id::MacroUserId};
+use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
+use conation_user_id::{cowlike::CowLike, lowercased::Lowercase, user_id::MacroUserId};
 use model::response::ErrorResponse;
 use utoipa::ToSchema;
 
@@ -79,7 +79,7 @@ pub async fn handler(
         .map_err(|_| GetExistingUsersError::InvalidMacroId)?;
 
     let existing_user_ids =
-        macro_db_client::user::get_all::get_existing_users(&ctx.db, &user_ids).await?;
+        conation_db_client::user::get_all::get_existing_users(&ctx.db, &user_ids).await?;
 
     Ok(Json(GetExistingUsersResponse { existing_user_ids }))
 }

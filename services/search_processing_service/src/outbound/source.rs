@@ -100,7 +100,7 @@ impl BackfillSource for PgBackfillSource {
         }
 
         let db_cursor = cursor.map(|c| (c.started_at, c.call_id));
-        let batch = macro_db_client::call_record::get::get_call_records_for_search_backfill(
+        let batch = conation_db_client::call_record::get::get_call_records_for_search_backfill(
             &self.db,
             self.page_sizes.calls as i64,
             db_cursor,
@@ -143,7 +143,7 @@ impl BackfillSource for PgBackfillSource {
         let user_ids = (!req.user_ids.is_empty()).then_some(&req.user_ids);
         let db_cursor = cursor.map(|c| (c.updated_at, c.message_id));
 
-        let batch = macro_db_client::chat::get::get_chat_messages_for_search_backfill(
+        let batch = conation_db_client::chat::get::get_chat_messages_for_search_backfill(
             &self.db,
             self.page_sizes.chats as i64,
             db_cursor,
@@ -222,7 +222,7 @@ impl BackfillSource for PgBackfillSource {
         cursor: Option<DocumentBackfillCursor>,
     ) -> Result<(SourcePage, Option<DocumentBackfillCursor>), BackfillError> {
         let db_cursor = cursor.map(|c| (c.updated_at, c.document_id));
-        let batch = macro_db_client::document::get_documents_search::get_documents_for_search(
+        let batch = conation_db_client::document::get_documents_search::get_documents_for_search(
             &self.db,
             self.page_sizes.documents as i64,
             db_cursor,
@@ -289,7 +289,7 @@ impl BackfillSource for PgBackfillSource {
             if page.is_empty() {
                 return Ok(SourcePage::empty());
             }
-            let rows = email_db_client::threads::get::get_thread_ids_with_macro_user_id_by_ids(
+            let rows = email_db_client::threads::get::get_thread_ids_with_conation_user_id_by_ids(
                 &self.db, page,
             )
             .await
@@ -306,7 +306,7 @@ impl BackfillSource for PgBackfillSource {
 
         let rows = match req.since {
             Some(since) => {
-                email_db_client::threads::get::get_paginated_thread_ids_with_macro_user_id_since(
+                email_db_client::threads::get::get_paginated_thread_ids_with_conation_user_id_since(
                     &self.db,
                     self.page_sizes.emails as i64,
                     offset as i64,
@@ -315,7 +315,7 @@ impl BackfillSource for PgBackfillSource {
                 .await
                 .map_err(BackfillError::Source)?
             }
-            None => email_db_client::threads::get::get_paginated_thread_ids_with_macro_user_id(
+            None => email_db_client::threads::get::get_paginated_thread_ids_with_conation_user_id(
                 &self.db,
                 self.page_sizes.emails as i64,
                 offset as i64,
@@ -369,7 +369,7 @@ impl BackfillSource for PgBackfillSource {
         cursor: Option<CalendarEventBackfillCursor>,
     ) -> Result<(SourcePage, Option<CalendarEventBackfillCursor>), BackfillError> {
         let db_cursor = cursor.map(|c| (c.updated_at, c.event_id));
-        let batch = macro_db_client::calendar_event::get_events_for_backfill::get_calendar_events_for_search_backfill(
+        let batch = conation_db_client::calendar_event::get_events_for_backfill::get_calendar_events_for_search_backfill(
             &self.db,
             self.page_sizes.calendar_events as i64,
             db_cursor,
@@ -409,7 +409,7 @@ impl BackfillSource for PgBackfillSource {
         cursor: Option<ProjectBackfillCursor>,
     ) -> Result<(SourcePage, Option<ProjectBackfillCursor>), BackfillError> {
         let db_cursor = cursor.map(|c| (c.updated_at, c.project_id));
-        let batch = macro_db_client::projects::get_projects_for_search_backfill(
+        let batch = conation_db_client::projects::get_projects_for_search_backfill(
             &self.db,
             self.page_sizes.projects as i64,
             db_cursor,
@@ -468,22 +468,22 @@ fn email_source_page(
     index_override: Option<&str>,
 ) -> SourcePage {
     let mut by_user: HashMap<String, Vec<String>> = HashMap::new();
-    for (thread_id, macro_user_id) in rows {
+    for (thread_id, conation_user_id) in rows {
         by_user
-            .entry(macro_user_id)
+            .entry(conation_user_id)
             .or_default()
             .push(thread_id.to_string());
     }
 
     let messages: Vec<SearchQueueMessage> = by_user
         .into_iter()
-        .flat_map(|(macro_user_id, thread_ids)| {
+        .flat_map(|(conation_user_id, thread_ids)| {
             thread_ids
                 .chunks(batch_size)
                 .map(|chunk| {
                     SearchQueueMessage::ExtractEmailThreadBatch(EmailThreadBatchMessage {
                         thread_ids: chunk.to_vec(),
-                        macro_user_id: macro_user_id.clone(),
+                        conation_user_id: conation_user_id.clone(),
                         index_override: index_override.map(str::to_string),
                     })
                 })

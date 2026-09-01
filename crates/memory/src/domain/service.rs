@@ -4,7 +4,7 @@ use agent::{AgentLoop, PredefinedModel, StreamPart};
 use ai_tools::{ToolServiceContext, ToolSetWithPrompt};
 use chrono::Utc;
 use futures::stream::StreamExt;
-use macro_env::Environment;
+use conation_env::Environment;
 use serde::Deserialize;
 use std::sync::Arc;
 
@@ -107,7 +107,7 @@ where
     #[tracing::instrument(skip(self), err)]
     async fn get_or_generate_memory(
         &self,
-        user: macro_user_id::user_id::MacroUserIdStr<'static>,
+        user: conation_user_id::user_id::MacroUserIdStr<'static>,
     ) -> super::Result<Option<Memory>> {
         let record = self.memory_repo.get_latest_memory(user.clone()).await?;
 
@@ -153,7 +153,7 @@ where
     #[tracing::instrument(skip(self, previous_memory), err)]
     async fn generate_memory(
         &self,
-        user: macro_user_id::user_id::MacroUserIdStr<'static>,
+        user: conation_user_id::user_id::MacroUserIdStr<'static>,
         previous_memory: Option<Memory>,
     ) -> super::Result<Memory> {
         // append user data + datetime to prompt
@@ -227,7 +227,7 @@ fn extract_memory_body(content: &str) -> Option<&str> {
 
 fn build_generation_system_prompt(
     base_prompt: impl std::fmt::Display,
-    user: &macro_user_id::user_id::MacroUserIdStr<'_>,
+    user: &conation_user_id::user_id::MacroUserIdStr<'_>,
     datetime: &str,
     previous_memory: Option<&str>,
 ) -> String {
@@ -246,7 +246,7 @@ fn build_generation_system_prompt(
 #[tracing::instrument(skip(memory, user, recorder), err)]
 async fn judge_memory(
     memory: &str,
-    user: macro_user_id::user_id::MacroUserIdStr<'static>,
+    user: conation_user_id::user_id::MacroUserIdStr<'static>,
     recorder: &dyn ai_usage::UsageRecorder,
 ) -> super::Result<()> {
     let user_message = format!(
@@ -281,7 +281,7 @@ async fn judge_memory(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use macro_user_id::user_id::MacroUserIdStr;
+    use conation_user_id::user_id::MacroUserIdStr;
 
     fn user_id(value: &str) -> MacroUserIdStr<'static> {
         MacroUserIdStr::try_from(value.to_string()).expect("valid macro user id")

@@ -1,6 +1,6 @@
 use crate::model::Message;
 use anyhow::{Context, Result};
-use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use sqlx::{Executor, Postgres};
 use uuid::Uuid;
 

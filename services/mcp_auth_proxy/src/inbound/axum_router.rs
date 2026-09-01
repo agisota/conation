@@ -10,7 +10,7 @@ use axum::{
     response::{IntoResponse, Json, Redirect, Response},
     routing,
 };
-use macro_auth::middleware::decode_jwt::JwtValidationArgs;
+use conation_auth::middleware::decode_jwt::JwtValidationArgs;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 
 use crate::domain::{

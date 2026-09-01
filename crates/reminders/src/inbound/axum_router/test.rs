@@ -10,10 +10,10 @@ use entity_access::domain::models::{
     Entity as AccessEntity, EntityPermission, RequiredPermission, TeamRole, UserTeamInfo,
 };
 use http_body_util::BodyExt;
-use macro_authorization::{
+use conation_authorization::{
     InternalIdentityClaims, MacroAuthorizationError, MacroAuthorizationService,
 };
-use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId};
+use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId};
 use model_user::UserContext;
 use rootcause::Report;
 use tower::ServiceExt;

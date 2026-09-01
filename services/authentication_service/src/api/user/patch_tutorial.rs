@@ -4,8 +4,8 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use macro_user_id::user_id::MacroUserId;
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_user_id::user_id::MacroUserId;
 
 use crate::api::context::{ApiContext, AuthorizationService};
 
@@ -78,7 +78,7 @@ pub async fn handler(
             .map_err(|_| PatchTutorialCompleteError::InvalidMacroUserId)?
             .lowercase();
 
-    macro_db_client::user::patch::patch_user_tutorial(&ctx.db, &user_id, req.tutorial_complete)
+    conation_db_client::user::patch::patch_user_tutorial(&ctx.db, &user_id, req.tutorial_complete)
         .await
         .map_err(|e| match e.to_string().as_str() {
             "user not found" => PatchTutorialCompleteError::UserNotFound,

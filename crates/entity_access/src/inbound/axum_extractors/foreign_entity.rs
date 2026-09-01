@@ -12,7 +12,7 @@ use axum::{
     extract::{FromRef, FromRequestParts, Path},
     http::request::Parts,
 };
-use macro_authorization::{
+use conation_authorization::{
     AnyPrincipal, MacroAuthorization, MacroAuthorizationService, MacroAuthorizationState,
     OptionalMacroAuthorizationExtractor,
 };
@@ -88,13 +88,13 @@ where
             .authorization
             .as_ref()
             .is_some_and(MacroAuthorization::is_internal);
-        let macro_user_id = authorization
+        let conation_user_id = authorization
             .authorization
             .as_ref()
             .and_then(MacroAuthorization::acting_user)
-            .map(|user| user.macro_user_id.clone());
+            .map(|user| user.conation_user_id.clone());
 
-        if macro_user_id.is_none() && is_internal_access {
+        if conation_user_id.is_none() && is_internal_access {
             return Self::from_permission(
                 foreign_entity_id,
                 EntityAccessAuth::Internal,
@@ -102,13 +102,13 @@ where
             );
         }
 
-        let Some(macro_user_id) = macro_user_id else {
+        let Some(conation_user_id) = conation_user_id else {
             return Err(ExtractorError::Unauthorized);
         };
 
         let permission = service
             .get_entity_permission(
-                Some(&macro_user_id),
+                Some(&conation_user_id),
                 &foreign_entity_id,
                 EntityType::ForeignEntity,
                 None,
@@ -118,7 +118,7 @@ where
 
         Self::from_permission(
             foreign_entity_id,
-            EntityAccessAuth::Authenticated(macro_user_id),
+            EntityAccessAuth::Authenticated(conation_user_id),
             permission,
         )
     }

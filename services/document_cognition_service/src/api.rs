@@ -28,7 +28,7 @@ pub mod structured_completion;
 
 #[tracing::instrument(err, skip(state))]
 pub async fn setup_and_serve(state: ApiContext) -> anyhow::Result<()> {
-    let cors = macro_cors::cors_layer();
+    let cors = conation_cors::cors_layer();
 
     tracing::trace!("initializing global api context");
     let global_api_context = state.clone();
@@ -65,7 +65,7 @@ pub async fn setup_and_serve(state: ApiContext) -> anyhow::Result<()> {
         "document cognition service is up and running"
     );
     axum::serve(listener, app.into_make_service())
-        .with_graceful_shutdown(macro_entrypoint::shutdown_signal())
+        .with_graceful_shutdown(conation_entrypoint::shutdown_signal())
         .await
         .context("error starting service")
 }

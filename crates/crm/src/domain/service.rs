@@ -143,13 +143,13 @@ pub trait CrmService: Clone + Send + Sync + 'static {
         link_id: &uuid::Uuid,
     ) -> impl Future<Output = Result<(), CrmError>> + Send;
 
-    /// Returns the team id `macro_id` belongs to, or `None` when the user
+    /// Returns the team id `conation_id` belongs to, or `None` when the user
     /// has no team membership. See
     /// [`crate::domain::companies_repo::CompaniesRepository::get_team_id_for_user`]
     /// for tie-breaking when the user is on multiple teams.
     fn get_team_id_for_user(
         &self,
-        macro_id: &str,
+        conation_id: &str,
     ) -> impl Future<Output = Result<Option<uuid::Uuid>, CrmError>> + Send;
 
     /// Manually creates a CRM company for the caller's team with a
@@ -689,9 +689,9 @@ where
     }
 
     #[tracing::instrument(skip(self), err)]
-    async fn get_team_id_for_user(&self, macro_id: &str) -> Result<Option<uuid::Uuid>, CrmError> {
+    async fn get_team_id_for_user(&self, conation_id: &str) -> Result<Option<uuid::Uuid>, CrmError> {
         self.companies_repository
-            .get_team_id_for_user(macro_id)
+            .get_team_id_for_user(conation_id)
             .await
     }
 
@@ -1117,7 +1117,7 @@ impl CrmService for NoOpCrmService {
         unimplemented!("NoOpCrmService.depopulate_link_in_team")
     }
 
-    async fn get_team_id_for_user(&self, _macro_id: &str) -> Result<Option<uuid::Uuid>, CrmError> {
+    async fn get_team_id_for_user(&self, _conation_id: &str) -> Result<Option<uuid::Uuid>, CrmError> {
         unimplemented!("NoOpCrmService.get_team_id_for_user")
     }
 

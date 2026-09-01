@@ -7,7 +7,7 @@ use entity_access::domain::models::{
     EditAccessLevel, EntityAccessAuth, EntityAccessReceipt, EntityType as AccessEntityType,
     RequiredPermission, ViewAccessLevel,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use models_properties::service::entity_property::EntityProperty;
 use models_properties::service::property_definition::PropertyDefinition;
 use models_properties::service::property_option::{PropertyOption, PropertyOptionValue};

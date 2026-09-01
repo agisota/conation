@@ -4,10 +4,10 @@ use axum::{
     extract::{self, State},
     http::StatusCode,
 };
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use macro_db_client::user::get_user_name::get_user_names_with_email;
-use macro_user_id::user_id::MacroUserId;
-use macro_user_id::{cowlike::CowLike, lowercased::Lowercase};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_db_client::user::get_user_name::get_user_names_with_email;
+use conation_user_id::user_id::MacroUserId;
+use conation_user_id::{cowlike::CowLike, lowercased::Lowercase};
 
 use model::response::ErrorResponse;
 use model::user::UserNames;
@@ -55,7 +55,7 @@ pub async fn handler(
 
     let user_names = get_user_names_with_email(
         &ctx.db,
-        authorization.authorization.user.macro_user_id.as_ref(),
+        authorization.authorization.user.conation_user_id.as_ref(),
         user_profile_ids,
     )
     .await

@@ -4,7 +4,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use macro_authorization::{InternalOnly, MacroAuthorizationExtractor};
+use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
 use model::response::{EmptyResponse, GenericErrorResponse};
 
 #[derive(serde::Deserialize)]
@@ -39,7 +39,7 @@ pub async fn delete_user_items_handler(
     })?;
 
     let document_ids =
-        macro_db_client::user::delete_user_dss_items::delete_documents::delete_user_documents(
+        conation_db_client::user::delete_user_dss_items::delete_documents::delete_user_documents(
             &mut transaction,
             &user_id,
         )
@@ -49,7 +49,7 @@ pub async fn delete_user_items_handler(
             (StatusCode::INTERNAL_SERVER_ERROR).into_response()
         })?;
 
-    macro_db_client::user::delete_user_dss_items::delete_chats::delete_user_chats(
+    conation_db_client::user::delete_user_dss_items::delete_chats::delete_user_chats(
         &mut transaction,
         &user_id,
     )
@@ -59,7 +59,7 @@ pub async fn delete_user_items_handler(
         (StatusCode::INTERNAL_SERVER_ERROR).into_response()
     })?;
 
-    macro_db_client::user::delete_user_dss_items::delete_projects::delete_user_projects(
+    conation_db_client::user::delete_user_dss_items::delete_projects::delete_user_projects(
         &mut transaction,
         &user_id,
     )

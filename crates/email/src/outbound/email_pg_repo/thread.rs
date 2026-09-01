@@ -245,7 +245,7 @@ struct MessageMetadata {
     sender_is_recipient: bool,
 }
 
-fn is_macro_draft(msg: &MessageMetadata) -> bool {
+fn is_conation_draft(msg: &MessageMetadata) -> bool {
     msg.is_draft && msg.provider_id.is_none()
 }
 
@@ -391,7 +391,7 @@ pub(super) async fn update_thread_metadata(
         let has_inbox = message.labels.iter().any(|l| l == system_labels::INBOX);
         let has_sent = message.labels.iter().any(|l| l == system_labels::SENT);
 
-        (has_inbox && !has_sent) || is_macro_draft(message)
+        (has_inbox && !has_sent) || is_conation_draft(message)
     });
 
     // if any message in the thread is unread, the thread is considered unread in the FE
@@ -399,7 +399,7 @@ pub(super) async fn update_thread_metadata(
 
     let latest_draft_ts = messages
         .iter()
-        .filter(|msg| is_macro_draft(msg))
+        .filter(|msg| is_conation_draft(msg))
         .map(|msg| msg.updated_at)
         .max();
 

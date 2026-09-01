@@ -4,7 +4,7 @@ use std::time::Duration;
 use anyhow::Context as _;
 use aws_sdk_sqs::types::Message;
 use lambda_runtime::tracing;
-use macro_env_var::maybe_env_vars;
+use conation_env_var::maybe_env_vars;
 
 use crate::AppContext;
 use crate::inbound::s3_notification::object_created_events_from_body;
@@ -22,7 +22,7 @@ pub async fn run_local_sqs_worker(context: Arc<AppContext>) -> Result<(), anyhow
     let queue_url = DocumentUploadFinalizerQueueUrl::new()
         .map(|queue_url| queue_url.to_string())
         .unwrap_or_else(default_queue_url);
-    let sqs_client = aws_sdk_sqs::Client::new(&macro_aws_config::get_macro_aws_config().await);
+    let sqs_client = aws_sdk_sqs::Client::new(&conation_aws_config::get_conation_aws_config().await);
 
     poll_forever(context, sqs_client, queue_url).await
 }

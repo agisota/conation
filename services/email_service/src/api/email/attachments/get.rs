@@ -5,7 +5,7 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use cloudfront_sign::{SignedOptions, get_signed_url};
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::response::ErrorResponse;
 use models_email::email::service::attachment;
 use models_email::service;
@@ -48,7 +48,7 @@ pub async fn handler(
 ) -> Result<Response, Response> {
     // Resolve which of the caller's inboxes owns this attachment. Each inbox is a
     // distinct Google account, so the owning link also determines the Gmail token.
-    let links = email_db_client::links::get::fetch_inboxes_for_macro_id(
+    let links = email_db_client::links::get::fetch_inboxes_for_conation_id(
         &ctx.db,
         &authorization.authorization.user.user_context.user_id,
     )
@@ -287,8 +287,8 @@ async fn get_presigned_url(state: &ApiContext, key: &str) -> anyhow::Result<Stri
     Ok(signed_url)
 }
 
-#[macro_export]
-macro_rules! generate_temp_attachment_s3_key {
+#[conation_export]
+conation_rules! generate_temp_attachment_s3_key {
     ($link_id:expr, $attachment_id:expr, $filename:expr) => {
         format!(
             "temp/{}/{}-{}",

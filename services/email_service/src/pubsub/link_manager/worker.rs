@@ -24,7 +24,7 @@ pub async fn run_worker(
     crm_service: CrmServiceType,
     connection_gateway_client: ConnectionGatewayClient,
     notification_ingress_service: Arc<NotificationIngressType>,
-    macro_event_broker: PubSubEventBroker,
+    conation_event_broker: PubSubEventBroker,
 ) {
     run_worker_with_cancellation(
         worker,
@@ -36,7 +36,7 @@ pub async fn run_worker(
         crm_service,
         connection_gateway_client,
         notification_ingress_service,
-        macro_event_broker,
+        conation_event_broker,
         CancellationToken::new(),
     )
     .await;
@@ -56,7 +56,7 @@ pub async fn run_worker_with_cancellation(
     crm_service: CrmServiceType,
     connection_gateway_client: ConnectionGatewayClient,
     notification_ingress_service: Arc<NotificationIngressType>,
-    macro_event_broker: PubSubEventBroker,
+    conation_event_broker: PubSubEventBroker,
     cancellation_token: CancellationToken,
 ) {
     let ctx = LinkManagerContext {
@@ -69,7 +69,7 @@ pub async fn run_worker_with_cancellation(
         crm_service,
         connection_gateway_client,
         notification_ingress_service,
-        macro_event_broker,
+        conation_event_broker,
     };
     loop {
         let worker_result = tokio::spawn({

@@ -7,10 +7,10 @@ use rdkafka::client::{ClientContext, OAuthToken};
 use rdkafka::consumer::ConsumerContext;
 
 /// Region used to sign MSK IAM auth tokens when `AWS_REGION` is unset.
-/// Matches the fallback in `macro_aws_config`.
+/// Matches the fallback in `conation_aws_config`.
 const DEFAULT_AWS_REGION: &str = "us-east-1";
 
-macro_env_var::maybe_env_var! {
+conation_env_var::maybe_env_var! {
     /// AWS region used to sign MSK IAM auth tokens.
     struct AwsRegion;
 }

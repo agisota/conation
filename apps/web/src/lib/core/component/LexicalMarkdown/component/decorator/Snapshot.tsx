@@ -12,7 +12,7 @@ import { useSplitNavigationHandler } from '@core/util/useSplitNavigationHandler'
 import {
   $isSnapshotNode,
   type SnapshotDecoratorProps,
-} from '@macro-inc/lexical-core';
+} from '@conation/lexical-core';
 import EyeSlashDuo from '@phosphor/eye-slash.svg';
 import LoadingSpinner from '@phosphor/spinner.svg';
 import TrashSimple from '@phosphor/trash-simple.svg';

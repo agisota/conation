@@ -11,7 +11,7 @@ enum PollError {
 pub async fn poll_s3_events(context: AppState) {
     loop {
         if let Err(PollError::PollingError) = poll(
-            macro_queues::StaticFileServiceS3EventQueueUrl::new().to_string(),
+            conation_queues::StaticFileServiceS3EventQueueUrl::new().to_string(),
             context.clone(),
         )
         .await

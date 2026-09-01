@@ -32,8 +32,8 @@ use opensearch_query_builder::{
 ///     }
 /// }
 /// ```
-#[macro_export]
-macro_rules! delegate_methods {
+#[conation_export]
+conation_rules! delegate_methods {
     ($(fn $method:ident($($param:ident: $param_type:ty),*) -> Self;)*) => {
         $(
             pub fn $method(mut self, $($param: $param_type),*) -> Self {

@@ -10,7 +10,7 @@ use crate::domain::{
 };
 use channel_sender::ChannelSender;
 use connection_gateway_client::ConnectionGatewayClient;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::EntityType as GatewayEntityType;
 use serde::Serialize;
 use std::sync::Arc;

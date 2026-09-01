@@ -8,7 +8,7 @@ use crate::domain::models::email_notification_digest::ports::{
     ClaimResult, DigestBatch, DigestBatcher,
 };
 use chrono::Utc;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use redis::aio::MultiplexedConnection;
 use redis::{AsyncCommands, SortedSetAddOptions};
 use rootcause::Report;

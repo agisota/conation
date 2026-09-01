@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use macro_user_id::{email::EmailStr, user_id::MacroUserIdStr};
+use conation_user_id::{email::EmailStr, user_id::MacroUserIdStr};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -8,7 +8,7 @@ use uuid::Uuid;
 pub struct Link {
     pub id: Uuid,
     #[schema(value_type = String)]
-    pub macro_id: MacroUserIdStr<'static>,
+    pub conation_id: MacroUserIdStr<'static>,
     pub fusionauth_user_id: String,
     #[schema(value_type = String)]
     pub email_address: EmailStr<'static>,
@@ -27,11 +27,11 @@ pub struct Link {
 impl Link {
     /// Client-side mirror of the `email_links.is_primary` generated column,
     /// for constructing a [`Link`] that hasn't been persisted yet.
-    pub fn derive_is_primary(macro_id: &MacroUserIdStr<'_>, email_address: &EmailStr<'_>) -> bool {
+    pub fn derive_is_primary(conation_id: &MacroUserIdStr<'_>, email_address: &EmailStr<'_>) -> bool {
         email_address
             .0
             .as_ref()
-            .eq_ignore_ascii_case(macro_id.email_str())
+            .eq_ignore_ascii_case(conation_id.email_str())
     }
 }
 

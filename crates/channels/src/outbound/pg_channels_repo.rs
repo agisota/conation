@@ -31,7 +31,7 @@ use item_filters::ast::{
     LiteralTree,
     channel::{ChannelLiteral, ChannelThreadLiteral},
 };
-use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use models_pagination::{CreatedAt, Query};
 #[cfg(feature = "list")]
 use recursion::CollapsibleExt;
@@ -350,7 +350,7 @@ where
         INSERT INTO comms_activity (id, user_id, channel_id, created_at, updated_at)
         VALUES ($1, $2, $3, NOW(), NOW())
         "#,
-        macro_uuid::generate_uuid_v7(),
+        conation_uuid::generate_uuid_v7(),
         user_id,
         channel_id,
     )
@@ -698,8 +698,8 @@ async fn load_user_display_names(
         UserDisplayNameRow,
         r#"
         SELECT u.id AS user_profile_id, mui.first_name, mui.last_name
-        FROM macro_user_info mui
-        JOIN "User" u ON mui.macro_user_id = u.macro_user_id
+        FROM conation_user_info mui
+        JOIN "User" u ON mui.conation_user_id = u.conation_user_id
         WHERE u.id = ANY($1)
         "#,
         &user_id_strings,
@@ -1610,8 +1610,8 @@ impl ChannelListUserRepo for PgChannelsRepo {
             u.id as user_profile_id,
             mui.first_name,
             mui.last_name
-        FROM macro_user_info mui
-        JOIN "User" u ON mui.macro_user_id = u.macro_user_id
+        FROM conation_user_info mui
+        JOIN "User" u ON mui.conation_user_id = u.conation_user_id
         WHERE u.id = ANY($1)
         "#,
             &ids
@@ -2690,7 +2690,7 @@ impl ChannelRepo for PgChannelsRepo {
     }
 
     async fn get_or_create_channel_join_code(&self, channel_id: Uuid) -> Result<Uuid, Self::Err> {
-        let candidate_join_code = macro_uuid::generate_uuid_v7();
+        let candidate_join_code = conation_uuid::generate_uuid_v7();
         let join_code = sqlx::query_scalar!(
             r#"
             UPDATE comms_channels
@@ -2849,7 +2849,7 @@ impl ChannelRepo for PgChannelsRepo {
             auto_join_team,
             participants,
         } = req;
-        let channel_id = macro_uuid::generate_uuid_v7();
+        let channel_id = conation_uuid::generate_uuid_v7();
         let mut transaction = self.pool.begin().await?;
         sqlx::query!(
             r#"
@@ -3273,7 +3273,7 @@ impl ChannelRepo for PgChannelsRepo {
         content: String,
         thread_id: Option<Uuid>,
     ) -> Result<MutatedMessage, Self::Err> {
-        let message_id = macro_uuid::generate_uuid_v7();
+        let message_id = conation_uuid::generate_uuid_v7();
         let row = sqlx::query_as!(
             MutatedMessageRow,
             r#"
@@ -3373,7 +3373,7 @@ impl ChannelRepo for PgChannelsRepo {
                 VALUES ($1, $2, $3, $4, $5, $6, $7)
                 RETURNING id, message_id, channel_id, entity_type, entity_id, width, height, created_at
                 "#,
-                macro_uuid::generate_uuid_v7(),
+                conation_uuid::generate_uuid_v7(),
                 message_id,
                 channel_id,
                 entity_type,
@@ -3450,7 +3450,7 @@ impl ChannelRepo for PgChannelsRepo {
         &self,
         options: CreateEntityMentionOptions,
     ) -> Result<EntityMention, Self::Err> {
-        let id = macro_uuid::generate_uuid_v7();
+        let id = conation_uuid::generate_uuid_v7();
         let mention = sqlx::query_as!(
             EntityMention,
             r#"
@@ -3671,7 +3671,7 @@ impl ChannelRepo for PgChannelsRepo {
             ON CONFLICT (user_id, channel_id) DO UPDATE
             SET interacted_at = NOW(), updated_at = NOW()
             "#,
-            macro_uuid::generate_uuid_v7(),
+            conation_uuid::generate_uuid_v7(),
             user_id.as_ref(),
             channel_id,
         )
@@ -3750,7 +3750,7 @@ impl ChannelRepo for PgChannelsRepo {
                     viewed_at as "viewed_at?: DateTime<Utc>",
                     interacted_at as "interacted_at?: DateTime<Utc>"
                 "#,
-                    macro_uuid::generate_uuid_v7(),
+                    conation_uuid::generate_uuid_v7(),
                     user_id,
                     channel_id,
                 )
@@ -3783,7 +3783,7 @@ impl ChannelRepo for PgChannelsRepo {
                     viewed_at as "viewed_at?: DateTime<Utc>",
                     interacted_at as "interacted_at?: DateTime<Utc>"
                 "#,
-                    macro_uuid::generate_uuid_v7(),
+                    conation_uuid::generate_uuid_v7(),
                     user_id,
                     channel_id,
                 )

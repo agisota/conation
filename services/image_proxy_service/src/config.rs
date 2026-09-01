@@ -1,17 +1,17 @@
 use anyhow::Context;
-use macro_auth::InternalApiKey;
+use conation_auth::InternalApiKey;
 
-pub use macro_env::Environment;
+pub use conation_env::Environment;
 
 /// The configuration parameters for the application.
-#[derive(macro_config::MacroConfig)]
+#[derive(conation_config::MacroConfig)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Config {
     /// The port to listen on.
-    #[macro_config_default(8080)]
+    #[conation_config_default(8080)]
     pub port: usize,
     /// The environment we are in.
-    #[macro_config_default(Environment::new_or_prod())]
+    #[conation_config_default(Environment::new_or_prod())]
     pub environment: Environment,
     /// The internal API key used to authorize service requests.
     pub internal_api_key: InternalApiKey,
@@ -19,7 +19,7 @@ pub struct Config {
 
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
-        macro_config::ConfigLoader::load::<Config>()
+        conation_config::ConfigLoader::load::<Config>()
             .context("failed to load image proxy service config")
     }
 }

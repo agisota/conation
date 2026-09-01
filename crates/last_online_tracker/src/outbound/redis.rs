@@ -2,7 +2,7 @@
 
 use crate::domain::ports::LastOnlineRepo;
 use chrono::{DateTime, Utc};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use redis::AsyncCommands;
 use redis::aio::MultiplexedConnection;
 use rootcause::Report;

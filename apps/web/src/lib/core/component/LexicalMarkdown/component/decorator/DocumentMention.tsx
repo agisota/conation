@@ -32,7 +32,7 @@ import {
   $isDocumentMentionNode,
   DocumentCardNode,
   type DocumentMentionDecoratorProps,
-} from '@macro-inc/lexical-core';
+} from '@conation/lexical-core';
 import EyeSlashDuo from '@phosphor/eye-slash.svg';
 import TrashSimple from '@phosphor/trash-simple.svg';
 import { PropertyValueIcon } from '@property/component/propertyValue/PropertyValueIcon';

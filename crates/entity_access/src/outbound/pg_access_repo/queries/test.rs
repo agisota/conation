@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use super::*;
 use bot_id::BotId;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -10,13 +10,13 @@ const OWNER: &str = "macro|sharedbox@corp.test";
 const DELEGATE: &str = "macro|primary@corp.test";
 const BOT_OWNER: &str = "macro|bot-owner@corp.test";
 
-/// macro_user + "User" rows so macro_user_links FKs resolve.
+/// conation_user + "User" rows so conation_user_links FKs resolve.
 async fn insert_user(pool: &PgPool, user_id: &str, email: &str) {
-    let macro_uuid = Uuid::new_v4();
+    let conation_uuid = Uuid::new_v4();
     sqlx::query!(
-        r#"INSERT INTO macro_user (id, username, email, stripe_customer_id)
+        r#"INSERT INTO conation_user (id, username, email, stripe_customer_id)
            VALUES ($1, $2, $3, $4)"#,
-        macro_uuid,
+        conation_uuid,
         user_id,
         email,
         user_id,
@@ -26,10 +26,10 @@ async fn insert_user(pool: &PgPool, user_id: &str, email: &str) {
     .unwrap();
 
     sqlx::query!(
-        r#"INSERT INTO "User" (id, email, macro_user_id) VALUES ($1, $2, $3)"#,
+        r#"INSERT INTO "User" (id, email, conation_user_id) VALUES ($1, $2, $3)"#,
         user_id,
         email,
-        macro_uuid,
+        conation_uuid,
     )
     .execute(pool)
     .await
@@ -122,16 +122,16 @@ fn source_id_set(source_ids: SourceIds) -> HashSet<String> {
     source_ids.0.into_iter().collect()
 }
 
-/// An empty link + thread owned by `owner_macro_id`. Returns `(link_id, thread_id)`.
-async fn insert_thread(pool: &PgPool, owner_macro_id: &str, email: &str) -> (Uuid, Uuid) {
+/// An empty link + thread owned by `owner_conation_id`. Returns `(link_id, thread_id)`.
+async fn insert_thread(pool: &PgPool, owner_conation_id: &str, email: &str) -> (Uuid, Uuid) {
     let link_id = Uuid::new_v4();
     let thread_id = Uuid::new_v4();
 
     sqlx::query!(
-        r#"INSERT INTO email_links (id, macro_id, fusionauth_user_id, email_address, provider)
+        r#"INSERT INTO email_links (id, conation_id, fusionauth_user_id, email_address, provider)
            VALUES ($1, $2, $2, $3, 'GMAIL')"#,
         link_id,
-        owner_macro_id,
+        owner_conation_id,
         email,
     )
     .execute(pool)
@@ -251,7 +251,7 @@ async fn get_entity_users_includes_inbox_delegate(pool: PgPool) -> anyhow::Resul
     let (link_id, thread_id) = insert_thread(&pool, OWNER, "sharedbox@corp.test").await;
 
     sqlx::query!(
-        r#"INSERT INTO macro_user_links (primary_macro_id, child_macro_id, link_id)
+        r#"INSERT INTO conation_user_links (primary_conation_id, child_conation_id, link_id)
            VALUES ($1, $2, $3)"#,
         DELEGATE,
         OWNER,
@@ -279,7 +279,7 @@ async fn get_entity_users_excludes_delegate_scoped_to_other_link(
     let (_, other_thread_id) = insert_thread(&pool, OWNER, "other@corp.test").await;
 
     sqlx::query!(
-        r#"INSERT INTO macro_user_links (primary_macro_id, child_macro_id, link_id)
+        r#"INSERT INTO conation_user_links (primary_conation_id, child_conation_id, link_id)
            VALUES ($1, $2, $3)"#,
         DELEGATE,
         OWNER,

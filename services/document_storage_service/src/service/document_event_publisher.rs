@@ -2,7 +2,7 @@
 mod test;
 
 use documents_hex::domain::events::{DocumentMacroEvent, DocumentPurgedMetadata};
-use macro_event_broker::{EventBrokerError, MacroEventBroker};
+use conation_event_broker::{EventBrokerError, MacroEventBroker};
 
 /// Schedules a document-purged event for asynchronous broker delivery.
 #[tracing::instrument(skip(event_broker), err)]

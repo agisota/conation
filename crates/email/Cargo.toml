@@ -28,7 +28,7 @@ ai_tools = [
 axum = [
   "dep:axum",
   "dep:axum-extra",
-  "dep:macro_authorization",
+  "dep:conation_authorization",
   "dep:model-error-response",
   "dep:utoipa",
   "models_pagination/axum",
@@ -63,12 +63,12 @@ frecency = { path = "../frecency" }
 item_filters = { path = "../item_filters" }
 lol_html = { workspace = true }
 scraper = { workspace = true }
-macro_authorization = { path = "../macro_authorization", default-features = false, features = ["axum"], optional = true }
-macro_event_broker = { path = "../macro_event_broker", default-features = false }
-macro_event_topics = { path = "../macro_event_topics" }
+conation_authorization = { path = "../conation_authorization", default-features = false, features = ["axum"], optional = true }
+conation_event_broker = { path = "../conation_event_broker", default-features = false }
+conation_event_topics = { path = "../conation_event_topics" }
 entity_mutation = { path = "../entity_mutation" }
-macro_user_id = { path = "../macro_user_id" }
-macro_uuid = { path = "../macro_uuid" }
+conation_user_id = { path = "../conation_user_id" }
+conation_uuid = { path = "../conation_uuid" }
 model-entity = { path = "../model-entity" }
 non_empty = { path = "../non_empty", optional = true }
 model-error-response = { path = "../model-error-response", optional = true }
@@ -94,6 +94,6 @@ workspace-hack = { version = "0.1", path = "../workspace-hack" }
 [dev-dependencies]
 crm = { path = "../crm", features = ["outbound"] }
 frecency = { path = "../frecency", features = ["outbound", "postgres"] }
-macro_db_migrator = { path = "../macro_db_migrator" }
+conation_db_migrator = { path = "../conation_db_migrator" }
 serde_json = { workspace = true }
 tracing-subscriber = { workspace = true, features = ["env-filter"] }

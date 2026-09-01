@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
-use macro_event_broker::{Event, MacroEvent};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_event_broker::{Event, MacroEvent};
+use conation_user_id::user_id::MacroUserIdStr;
 use serde_json::json;
 use uuid::Uuid;
 
@@ -295,7 +295,7 @@ fn constructors_key_events_by_subject_webhook_id() {
 }
 
 #[test]
-fn macro_event_round_trips_without_exposing_secrets_or_header_values() {
+fn conation_event_round_trips_without_exposing_secrets_or_header_values() {
     let original = WebhookMacroEvent::created(
         WEBHOOK_ID,
         WebhookCreatedMetadata {

@@ -8,7 +8,7 @@ version = "0.1.0"
 [dependencies]
 anyhow = { workspace = true }
 aws-sdk-lambda = { workspace = true }
-macro_aws_config = { path = "../../crates/macro_aws_config", features = ["s3"] }
+conation_aws_config = { path = "../../crates/conation_aws_config", features = ["s3"] }
 aws-sdk-s3 = { workspace = true }
 aws-sdk-sqs = { workspace = true }
 aws-smithy-types = { workspace = true }
@@ -19,11 +19,11 @@ bzip2 = { workspace = true, default-features = false, features = [
 futures = { workspace = true }
 lambda_client = { path = "../../crates/lambda_client" }
 lambda_runtime = { workspace = true }
-macro_db_client = { path = "../../crates/macro_db_client" }
-macro_entrypoint = { path = "../../crates/macro_entrypoint" }
-macro_env = { path = "../../crates/macro_env" }
-macro_sha_count_client = { path = "../../crates/macro_sha_count_client" }
-macro_uuid = { path = "../../crates/macro_uuid" }
+conation_db_client = { path = "../../crates/conation_db_client" }
+conation_entrypoint = { path = "../../crates/conation_entrypoint" }
+conation_env = { path = "../../crates/conation_env" }
+conation_sha_count_client = { path = "../../crates/conation_sha_count_client" }
+conation_uuid = { path = "../../crates/conation_uuid" }
 model = { path = "../../crates/model" }
 s3_key = { path = "../../crates/s3_key" }
 redis = { workspace = true, features = [
@@ -41,6 +41,6 @@ tracing = { workspace = true }
 urlencoding = { workspace = true }
 zip = { workspace = true }
 workspace-hack = { version = "0.1", path = "../../crates/workspace-hack" }
-macro_env_var = { path = "../../crates/macro_env_var" }
-macro_queues = { path = "../../crates/macro_queues" }
+conation_env_var = { path = "../../crates/conation_env_var" }
+conation_queues = { path = "../../crates/conation_queues" }
 

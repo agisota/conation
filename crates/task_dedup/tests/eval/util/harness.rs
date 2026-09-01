@@ -24,7 +24,7 @@ pub type EvalDedupService =
 /// handful of in-flight pairs keeps well within the test pool.
 pub const EVAL_CONCURRENCY: usize = 6;
 
-macro_env_var::env_var! {
+conation_env_var::env_var! {
     /// Env read directly by the eval (the embedder key). The judge reads its own
     /// keys through the agent router.
     struct EvalVars {
@@ -44,7 +44,7 @@ pub fn openai_key() -> String {
         .to_string()
 }
 
-macro_env_var::env_var! {
+conation_env_var::env_var! {
     /// Env read only by the rerank-floor eval, which runs the production Cohere
     /// reranker instead of [`NoOpReranker`](super::rerank::NoOpReranker).
     struct CohereVars {

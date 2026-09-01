@@ -8,10 +8,10 @@ use email_service::outbound::email_api::{
 };
 use email_service::pubsub::CrmMetadataResolver;
 use email_service::util::redis::RedisClient;
-use macro_entrypoint::{MacroEntrypoint, shutdown_signal};
-use macro_env::Environment;
-use macro_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
-use macro_service_urls::{
+use conation_entrypoint::{MacroEntrypoint, shutdown_signal};
+use conation_env::Environment;
+use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
+use conation_service_urls::{
     AuthServiceUrl, ConnectionGatewayUrl, DocumentStorageServiceUrl, StaticFileServiceUrl,
 };
 use notification::domain::service::SqsNotificationIngress;
@@ -48,9 +48,9 @@ async fn main() -> anyhow::Result<()> {
     MacroEntrypoint::default().init();
     let env = Environment::new_or_prod();
 
-    let aws_config = macro_aws_config::get_macro_aws_config().await;
+    let aws_config = conation_aws_config::get_conation_aws_config().await;
 
-    let s3_client = s3_client::S3::new(macro_aws_config::s3_client().await);
+    let s3_client = s3_client::S3::new(conation_aws_config::s3_client().await);
 
     let secretsmanager_client = secretsmanager_client::SecretsManager::new(
         aws_sdk_secretsmanager::Client::new(&aws_config),
@@ -80,31 +80,31 @@ async fn main() -> anyhow::Result<()> {
     let db = PgPoolOptions::new()
         .min_connections(min_connections)
         .max_connections(max_connections)
-        .connect(&config.macro_db_url)
+        .connect(&config.conation_db_url)
         .await
         .context("could not connect to db")?;
 
     let db_backfill = PgPoolOptions::new()
         .min_connections(min_connections_backfill)
         .max_connections(max_connections_backfill)
-        .connect(&config.macro_db_url)
+        .connect(&config.conation_db_url)
         .await
         .context("could not connect to backfill db")?;
 
-    let gmail_queue_aws_config = macro_aws_config::get_macro_aws_config().await;
+    let gmail_queue_aws_config = conation_aws_config::get_conation_aws_config().await;
 
-    let gmail_inbox_sync_queue = macro_queues::GmailInboxSyncQueue::new();
-    let gmail_inbox_sync_retry_queue = macro_queues::GmailInboxSyncRetryQueue::new();
-    let gmail_ops_queue = macro_queues::GmailOpsQueue::new();
-    let gmail_ops_retry_queue = macro_queues::GmailOpsRetryQueue::new();
-    let backfill_queue = macro_queues::EmailBackfillQueue::new();
-    let crm_cleanup_queue = macro_queues::EmailCrmCleanupQueue::new();
-    let email_scheduled_queue = macro_queues::EmailScheduledQueue::new();
-    let sfs_uploader_queue = macro_queues::SfsUploaderQueue::new();
-    let sfs_delete_queue = macro_queues::SfsDeleteQueue::new();
-    let link_manager_queue = macro_queues::LinkManagerQueue::new();
-    let contacts_queue = macro_queues::ContactsQueue::new();
-    let notification_queue = macro_queues::NotificationIngressQueue::new();
+    let gmail_inbox_sync_queue = conation_queues::GmailInboxSyncQueue::new();
+    let gmail_inbox_sync_retry_queue = conation_queues::GmailInboxSyncRetryQueue::new();
+    let gmail_ops_queue = conation_queues::GmailOpsQueue::new();
+    let gmail_ops_retry_queue = conation_queues::GmailOpsRetryQueue::new();
+    let backfill_queue = conation_queues::EmailBackfillQueue::new();
+    let crm_cleanup_queue = conation_queues::EmailCrmCleanupQueue::new();
+    let email_scheduled_queue = conation_queues::EmailScheduledQueue::new();
+    let sfs_uploader_queue = conation_queues::SfsUploaderQueue::new();
+    let sfs_delete_queue = conation_queues::SfsDeleteQueue::new();
+    let link_manager_queue = conation_queues::LinkManagerQueue::new();
+    let contacts_queue = conation_queues::ContactsQueue::new();
+    let notification_queue = conation_queues::NotificationIngressQueue::new();
 
     let sqs_client = sqs_client::SQS::new(aws_sdk_sqs::Client::new(&gmail_queue_aws_config))
         .gmail_inbox_sync_queue(&gmail_inbox_sync_queue)
@@ -131,7 +131,7 @@ async fn main() -> anyhow::Result<()> {
         config.calendar_sync_enabled,
         worker_cancellation_token.clone(),
     ));
-    let macro_event_broker = MacroEventBrokerService::new(
+    let conation_event_broker = MacroEventBrokerService::new(
         KafkaEventPublisher::new(config.kafka_brokers.as_ref())
             .context("failed to create kafka event publisher")?,
         event_broker_tracker.clone(),
@@ -386,7 +386,7 @@ async fn main() -> anyhow::Result<()> {
         let dss_client_inbox_sync = dss_client.clone();
         let system_properties_service_inbox_sync = system_properties_service.clone();
         let crm_service_inbox_sync = crm_service.clone();
-        let macro_event_broker_inbox_sync = macro_event_broker.clone();
+        let conation_event_broker_inbox_sync = conation_event_broker.clone();
         let cancellation_token = worker_cancellation_token.clone();
         worker_tracker.spawn(async move {
             email_service::pubsub::inbox_sync::worker::run_worker_with_cancellation(
@@ -402,7 +402,7 @@ async fn main() -> anyhow::Result<()> {
                 dss_client_inbox_sync,
                 system_properties_service_inbox_sync,
                 crm_service_inbox_sync,
-                macro_event_broker_inbox_sync,
+                conation_event_broker_inbox_sync,
                 config.notifications_enabled,
                 config.calendar_sync_enabled,
                 false,
@@ -429,7 +429,7 @@ async fn main() -> anyhow::Result<()> {
         let dss_client_inbox_sync = dss_client.clone();
         let system_properties_service_inbox_sync = system_properties_service.clone();
         let crm_service_inbox_sync = crm_service.clone();
-        let macro_event_broker_inbox_sync = macro_event_broker.clone();
+        let conation_event_broker_inbox_sync = conation_event_broker.clone();
         let cancellation_token = worker_cancellation_token.clone();
         worker_tracker.spawn(async move {
             email_service::pubsub::inbox_sync::worker::run_worker_with_cancellation(
@@ -445,7 +445,7 @@ async fn main() -> anyhow::Result<()> {
                 dss_client_inbox_sync,
                 system_properties_service_inbox_sync,
                 crm_service_inbox_sync,
-                macro_event_broker_inbox_sync,
+                conation_event_broker_inbox_sync,
                 config.notifications_enabled,
                 config.calendar_sync_enabled,
                 true,
@@ -518,7 +518,7 @@ async fn main() -> anyhow::Result<()> {
         let dss_client_backfill = dss_client.clone();
         let system_properties_service_backfill = system_properties_service.clone();
         let crm_service_backfill = crm_service_backfill.clone();
-        let macro_event_broker_backfill = macro_event_broker.clone();
+        let conation_event_broker_backfill = conation_event_broker.clone();
         let cancellation_token = worker_cancellation_token.clone();
         worker_tracker.spawn(async move {
             email_service::pubsub::backfill::worker::run_worker_with_cancellation(
@@ -534,7 +534,7 @@ async fn main() -> anyhow::Result<()> {
                 dss_client_backfill,
                 system_properties_service_backfill,
                 crm_service_backfill,
-                macro_event_broker_backfill,
+                conation_event_broker_backfill,
                 config.notifications_enabled,
                 config.calendar_sync_enabled,
                 cancellation_token,
@@ -578,7 +578,7 @@ async fn main() -> anyhow::Result<()> {
     let crm_service_link_manager = crm_service.clone();
     let connection_gateway_client_link_manager = connection_gateway_client.clone();
     let notification_ingress_service_link_manager = notification_ingress_service.clone();
-    let macro_event_broker_link_manager = macro_event_broker.clone();
+    let conation_event_broker_link_manager = conation_event_broker.clone();
     let cancellation_token = worker_cancellation_token.clone();
     // daily link_manager operations for user contacts and inbox subscriptions
     worker_tracker.spawn(async move {
@@ -592,7 +592,7 @@ async fn main() -> anyhow::Result<()> {
             crm_service_link_manager,
             connection_gateway_client_link_manager,
             notification_ingress_service_link_manager,
-            macro_event_broker_link_manager,
+            conation_event_broker_link_manager,
             cancellation_token,
         )
         .await;
@@ -602,7 +602,7 @@ async fn main() -> anyhow::Result<()> {
     let email_api_scheduled = email_api_live;
     let s3_client_scheduled = s3_client.clone();
     let attachment_bucket_scheduled = config.attachment_bucket.to_string();
-    let macro_event_broker_scheduled = macro_event_broker.clone();
+    let conation_event_broker_scheduled = conation_event_broker.clone();
     let cancellation_token = worker_cancellation_token.clone();
     // send scheduled emails
     worker_tracker.spawn(async move {
@@ -612,7 +612,7 @@ async fn main() -> anyhow::Result<()> {
             email_api_scheduled,
             s3_client_scheduled,
             attachment_bucket_scheduled,
-            macro_event_broker_scheduled,
+            conation_event_broker_scheduled,
             cancellation_token,
         )
         .await;

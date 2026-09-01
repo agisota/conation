@@ -2,7 +2,7 @@
 
 use async_trait::async_trait;
 use channels::domain::side_effects::ChannelBotTrigger;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 
 use super::models::{BotInvocation, TranscriptMessage};
 

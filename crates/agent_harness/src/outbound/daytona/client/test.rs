@@ -1,7 +1,7 @@
 use super::*;
 
 mod live_env {
-    macro_env_var::maybe_env_vars! {
+    conation_env_var::maybe_env_vars! {
         pub struct DaytonaApiKey;
         pub struct DaytonaSnapshot;
         pub struct DaytonaApiUrl;
@@ -93,7 +93,7 @@ async fn live_hot_resize_increases_cpu_and_memory_without_touching_disk() {
     let client = DaytonaClient::new(api_url, DaytonaApiKey::new(api_key));
     let labels = Labels::from(HashMap::from([(
         "macro.test".to_owned(),
-        format!("sandbox-size-{}", macro_uuid::generate_uuid_v7()),
+        format!("sandbox-size-{}", conation_uuid::generate_uuid_v7()),
     )]));
     let id = client
         .create(&Snapshot::new(snapshot), Env::from(HashMap::new()), labels)

@@ -6,7 +6,7 @@ use std::sync::Arc;
 use agent::structured_output::{DynamicSchema, dynamic_structured_completion};
 use agent::{Message, PredefinedModel};
 use async_trait::async_trait;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use serde::Deserialize;
 use serde_json::json;
 

@@ -11,7 +11,7 @@ fn empty_service() -> AuthenticatedToolService<()> {
 }
 
 #[tokio::test]
-async fn server_info_advertises_macro_tools() {
+async fn server_info_advertises_conation_tools() {
     let info = empty_service().get_info();
 
     assert_eq!(info.server_info.name, "macro-tools");

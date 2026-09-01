@@ -2,8 +2,8 @@ use anyhow::Context as _;
 use documents::outbound::markdown_init::LexicalSyncMarkdownInitializer;
 use documents::outbound::pg_document_repo::PgDocumentRepo;
 use lexical_client::LexicalClient;
-use macro_env_var::env_vars;
-use macro_service_urls::{LexicalServiceUrl, SyncServiceUrl};
+use conation_env_var::env_vars;
+use conation_service_urls::{LexicalServiceUrl, SyncServiceUrl};
 use sqlx::postgres::PgPoolOptions;
 use sync_service_client::SyncServiceClient;
 
@@ -44,7 +44,7 @@ impl AppContext {
 
         let repo = PgDocumentRepo::new(db_pool);
         let document_port = PgDocumentUploadPort::new(repo);
-        let object_reader = S3DocumentObjectReader::new(macro_aws_config::s3_client().await);
+        let object_reader = S3DocumentObjectReader::new(conation_aws_config::s3_client().await);
         let finalizer = DocumentUploadFinalizer::new(document_port, object_reader);
 
         Ok(Self {

@@ -5,9 +5,9 @@ use axum::{
     http::request::Parts,
 };
 use decode_jwt::{DecodedJwt, JwtContext, Params};
-use macro_auth::{headers::AccessTokenExtractor, middleware::decode_jwt::JwtValidationArgs};
+use conation_auth::{headers::AccessTokenExtractor, middleware::decode_jwt::JwtValidationArgs};
 #[allow(deprecated)]
-use macro_authorization::{INTERNAL_API_KEY_HEADER, LEGACY_DSS_INTERNAL_API_KEY_HEADER};
+use conation_authorization::{INTERNAL_API_KEY_HEADER, LEGACY_DSS_INTERNAL_API_KEY_HEADER};
 
 /// The FusionAuth session associated with an authorized request, when present.
 ///

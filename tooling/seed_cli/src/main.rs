@@ -9,8 +9,8 @@ use anyhow::Context;
 use clap::Parser;
 use entity::EntityCommand;
 use fusionauth::FusionAuthClient;
-use macro_entrypoint::MacroEntrypoint;
-use macro_env::Environment;
+use conation_entrypoint::MacroEntrypoint;
+use conation_env::Environment;
 use service::{auth::Auth, db::Db};
 use sqlx::postgres::PgPoolOptions;
 
@@ -72,7 +72,7 @@ pub async fn main() -> anyhow::Result<()> {
         fusionauth_client: Auth::new(fusionauth_client),
         s3: S3::new(
             &env_vars.document_storage_bucket,
-            macro_aws_config::s3_client().await,
+            conation_aws_config::s3_client().await,
         ),
         doc_content: crate::config::DocContentClients::from_env(),
     };

@@ -57,7 +57,7 @@ pub async fn sync_labels(
         // if the label exists in the provider but not in our db, insert it into the db
         } else {
             let mut new_label = (*provider_label).clone();
-            new_label.id = Some(macro_uuid::generate_uuid_v7());
+            new_label.id = Some(conation_uuid::generate_uuid_v7());
             labels_to_upsert.push(new_label);
             insert_count += 1;
         }

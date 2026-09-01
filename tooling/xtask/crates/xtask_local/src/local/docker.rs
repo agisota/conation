@@ -6,7 +6,7 @@
 use anyhow::{Context, Result};
 use bollard::Docker;
 use bollard::models::{NetworkCreateRequest, VolumeCreateRequest};
-use macro_env_var::maybe_env_var;
+use conation_env_var::maybe_env_var;
 
 /// Run a future to completion on a throwaway current-thread runtime (xtask's
 /// flow is synchronous).

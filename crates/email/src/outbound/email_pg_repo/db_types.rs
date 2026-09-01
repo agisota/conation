@@ -5,7 +5,7 @@ use crate::domain::models::{
 };
 use chrono::{DateTime, Utc};
 use doppleganger::{Doppleganger, Mirror};
-use macro_user_id::{cowlike::CowLike, email::EmailStr, user_id::MacroUserIdStr};
+use conation_user_id::{cowlike::CowLike, email::EmailStr, user_id::MacroUserIdStr};
 use sqlx::Type;
 use uuid::Uuid;
 
@@ -124,7 +124,7 @@ impl ThreadPreviewCursorDbRow {
             id,
             provider_id,
             owner_id: MacroUserIdStr::parse_from_str(&owner_id)
-                .expect("invalid macro_id in email_links")
+                .expect("invalid conation_id in email_links")
                 .into_owned(),
             inbox_visible,
             is_read,
@@ -155,7 +155,7 @@ pub enum DbUserProvider {
 #[derive(Debug, Clone)]
 pub(crate) struct DbLink {
     pub id: Uuid,
-    pub macro_id: String,
+    pub conation_id: String,
     pub fusionauth_user_id: String,
     pub email_address: String,
     pub provider: DbUserProvider,
@@ -469,10 +469,10 @@ impl From<DbSimpleMessageRow> for SimpleMessageInfo {
 }
 
 impl DbLink {
-    pub(crate) fn try_into_model(self) -> Result<Link, macro_user_id::error::ParseErr> {
+    pub(crate) fn try_into_model(self) -> Result<Link, conation_user_id::error::ParseErr> {
         let DbLink {
             id,
-            macro_id,
+            conation_id,
             fusionauth_user_id,
             email_address,
             provider,
@@ -484,7 +484,7 @@ impl DbLink {
 
         Ok(Link {
             id,
-            macro_id: MacroUserIdStr::parse_from_str(&macro_id)?.into_owned(),
+            conation_id: MacroUserIdStr::parse_from_str(&conation_id)?.into_owned(),
             fusionauth_user_id,
             email_address: EmailStr::try_from(email_address)?,
             provider: DbUserProvider::mirror(provider),

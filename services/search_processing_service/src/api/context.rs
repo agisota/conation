@@ -1,8 +1,8 @@
 use axum::extract::FromRef;
-use macro_authorization::{
+use conation_authorization::{
     MacroAuthorizationServiceImpl, MacroAuthorizationState, NoopMacroAuthJwtValidator,
 };
-use macro_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
+use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
 use std::sync::Arc;
 use tokio_util::task::TaskTracker;
 
@@ -21,5 +21,5 @@ pub(crate) struct ApiContext {
     pub config: Arc<Config>,
     pub backfill_service: Arc<BackfillServiceImpl>,
     pub backfill_jobs: BackfillJobs,
-    pub macro_event_broker: SpsEventBroker,
+    pub conation_event_broker: SpsEventBroker,
 }

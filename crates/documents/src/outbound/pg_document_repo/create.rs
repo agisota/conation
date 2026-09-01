@@ -1,5 +1,5 @@
 use document_sub_type::DocumentSubType;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model::document::{DocumentMetadata, FileType, VersionIDWithTimeStamps};
 use models_permissions::share_permission::SharePermissionV2;
 
@@ -18,7 +18,7 @@ pub async fn insert_document_row<'a>(
     created_at: &chrono::DateTime<chrono::Utc>,
 ) -> Result<uuid::Uuid, sqlx::Error> {
     // Generate id if one is not provided
-    let id = macro_uuid::generate_uuid_v7();
+    let id = conation_uuid::generate_uuid_v7();
     let document_id: uuid::Uuid = if let Some(id) = document_id { *id } else { id };
 
     // Insert document (with or without user-provided ID)

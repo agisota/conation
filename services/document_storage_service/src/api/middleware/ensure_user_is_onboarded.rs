@@ -5,8 +5,8 @@ use axum::{
     middleware::Next,
     response::Response,
 };
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use macro_db_client::user::onboarding_status::get_onboarding_status;
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_db_client::user::onboarding_status::get_onboarding_status;
 use sqlx::PgPool;
 
 pub async fn handler(
@@ -15,7 +15,7 @@ pub async fn handler(
     req: Request,
     next: Next,
 ) -> Result<Response, (StatusCode, String)> {
-    let is_onboarded = get_onboarding_status(&db, user.authorization.user.macro_user_id.as_ref())
+    let is_onboarded = get_onboarding_status(&db, user.authorization.user.conation_user_id.as_ref())
         .await
         .map_err(|e| {
             (

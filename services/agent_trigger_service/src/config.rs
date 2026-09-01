@@ -2,7 +2,7 @@
 
 use anyhow::Context as _;
 use database_env_vars::DatabaseUrl;
-use macro_env_var::env_vars;
+use conation_env_var::env_vars;
 
 env_vars! {
     /// Comma-separated Kafka bootstrap servers.
@@ -10,7 +10,7 @@ env_vars! {
 }
 
 /// Configuration required by the agent trigger worker.
-#[derive(macro_config::MacroConfig)]
+#[derive(conation_config::MacroConfig)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Config {
     /// MacroDB connection URL.
@@ -24,7 +24,7 @@ pub struct Config {
 impl Config {
     /// Loads configuration from the process environment.
     pub fn from_env() -> anyhow::Result<Self> {
-        macro_config::ConfigLoader::load::<Self>()
+        conation_config::ConfigLoader::load::<Self>()
             .context("failed to load agent trigger service config")
     }
 }

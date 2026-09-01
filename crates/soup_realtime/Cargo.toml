@@ -16,7 +16,7 @@ consumer = [
   "dep:properties",
   "dep:rdkafka",
   "dep:tokio",
-  "macro_event_broker/outbound",
+  "conation_event_broker/outbound",
   "ports",
 ]
 default = ["consumer", "outbound", "ports"]
@@ -42,9 +42,9 @@ email = { path = "../email", default-features = false, optional = true }
 entity_access = { path = "../entity_access", default-features = false, features = ["ports"], optional = true }
 futures = { workspace = true, optional = true }
 kafka_util = { path = "../kafka_util", optional = true }
-macro_event_broker = { path = "../macro_event_broker", default-features = false }
-macro_event_topics = { path = "../macro_event_topics" }
-macro_user_id = { path = "../macro_user_id" }
+conation_event_broker = { path = "../conation_event_broker", default-features = false }
+conation_event_topics = { path = "../conation_event_topics" }
+conation_user_id = { path = "../conation_user_id" }
 model-entity = { path = "../model-entity" }
 models_properties = { path = "../models_properties", optional = true }
 projects = { path = "../projects", default-features = false, features = ["service"], optional = true }

@@ -7,7 +7,7 @@ use axum::{
     response::{IntoResponse, Json, Response},
 };
 use entity_access::inbound::axum_extractors::DocumentAccessExtractor;
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::response::GenericErrorResponse;
 use model::version::ApiVersionEnum;
 use models_permissions::share_permission::access_level::OwnerAccessLevel;
@@ -54,7 +54,7 @@ pub async fn get_document_permissions_handler(
 
 #[tracing::instrument(skip(db))]
 async fn get_document_permissions_v2(db: &PgPool, document_id: &str) -> Result<Response, Response> {
-    let document_permissions = macro_db_client::share_permission::get::get_document_share_permission(
+    let document_permissions = conation_db_client::share_permission::get::get_document_share_permission(
         db,
         document_id,
     )

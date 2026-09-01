@@ -27,7 +27,7 @@ use agent_client_protocol::{
 };
 use agent_runtime_protocol::domain::action::{COMPACT_COMMAND, MODEL_CONFIG_ID};
 use agent_session::domain::model::AgentSessionId;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use tokio_util::sync::CancellationToken;
 
 use crate::domain::engine::{TurnEngine, TurnRequest};
@@ -175,7 +175,7 @@ pub async fn serve(state: Arc<AgentState>, acp: AcpChannel) -> Result<(), AcpErr
                 let state = Arc::clone(&state);
                 async move |_request: NewSessionRequest, responder, _connection| {
                     let state = Arc::clone(&state);
-                    let acp_id = SessionId::new(macro_uuid::generate_uuid_v7().to_string());
+                    let acp_id = SessionId::new(conation_uuid::generate_uuid_v7().to_string());
                     state.bind_acp_session(acp_id.clone(), false);
                     responder.respond(NewSessionResponse::new(acp_id))
                 }

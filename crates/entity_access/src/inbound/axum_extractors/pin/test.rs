@@ -4,10 +4,10 @@ use axum::{
     http::{Request, StatusCode, header},
     routing::post,
 };
-use macro_authorization::{
+use conation_authorization::{
     BOT_SCOPE_HEADER, BOT_TOKEN_HEADER, INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_USER_ID_HEADER,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use serde::Deserialize;
 use tower::ServiceExt;
 

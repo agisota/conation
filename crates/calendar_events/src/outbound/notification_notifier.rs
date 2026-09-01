@@ -2,7 +2,7 @@
 
 use std::collections::HashSet;
 
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::EntityType;
 use model_notifications::CalendarEventReminderMetadata;
 use notification::domain::models::SendNotificationRequestBuilder;

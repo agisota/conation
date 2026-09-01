@@ -1,6 +1,6 @@
 use anyhow::Context;
 use aws_sdk_sns::types::MessageAttributeValue;
-use macro_entrypoint::MacroEntrypoint;
+use conation_entrypoint::MacroEntrypoint;
 use serde::Serialize;
 use sns_client::{APNSPushNotification, Alert, AlertDictionary, Aps, MessageAttributes, SnsTarget};
 use std::collections::HashMap;
@@ -10,7 +10,7 @@ use std::collections::HashMap;
 async fn main() -> anyhow::Result<()> {
     MacroEntrypoint::default().init();
 
-    let aws_config = macro_aws_config::get_macro_aws_config().await;
+    let aws_config = conation_aws_config::get_conation_aws_config().await;
 
     let sns_client = sns_client::SNS::new(aws_sdk_sns::Client::new(&aws_config));
 

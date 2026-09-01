@@ -13,7 +13,7 @@ use connection_gateway_models::{
     BatchSendMessageBody, BatchSendUniqueMessagesBody, SendMessageBody, SendMessageResponse,
 };
 use futures::future::try_join_all;
-use macro_authorization::{InternalOnly, MacroAuthorizationExtractor};
+use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
 use model_entity::Entity;
 
 pub fn router<S>(state: AppState) -> Router<S>

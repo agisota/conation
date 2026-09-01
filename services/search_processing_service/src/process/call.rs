@@ -17,7 +17,7 @@ pub async fn process_call_record(
     index_override: Option<&str>,
 ) -> anyhow::Result<()> {
     let Some(payload) =
-        macro_db_client::call_record::get::get_call_record_search_payload(db, &call_id).await?
+        conation_db_client::call_record::get::get_call_record_search_payload(db, &call_id).await?
     else {
         tracing::debug!(call_id = %call_id, "call record no longer exists; skipping");
         return Ok(());

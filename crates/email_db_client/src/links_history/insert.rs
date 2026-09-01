@@ -12,7 +12,7 @@ pub async fn insert_email_link_history(
     email_address: &str,
     provider: models_email::service::link::UserProvider,
 ) -> anyhow::Result<()> {
-    let id = macro_uuid::generate_uuid_v7();
+    let id = conation_uuid::generate_uuid_v7();
     let db_provider = DbUserProvider::mirror(provider);
 
     sqlx::query!(

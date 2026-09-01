@@ -5,8 +5,8 @@ use std::str::FromStr;
 
 use anyhow::Context;
 use clap::{Args, Subcommand};
-use macro_db_client::document::v2::create::CreateDocumentArgs;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_db_client::document::v2::create::CreateDocumentArgs;
+use conation_user_id::user_id::MacroUserIdStr;
 use model::document::FileType;
 use models_permissions::share_permission::{
     LinkShare, SharePermissionV2, access_level::AccessLevel,

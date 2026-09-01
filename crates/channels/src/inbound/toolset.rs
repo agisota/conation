@@ -27,7 +27,7 @@ use entity_access::domain::{
     },
     ports::EntityAccessService,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use std::sync::Arc;
 use uuid::Uuid;
 

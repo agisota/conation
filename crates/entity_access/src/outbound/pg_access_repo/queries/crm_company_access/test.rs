@@ -1,5 +1,5 @@
 use super::*;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use sqlx::PgPool;
 
 const TEAM_ALPHA: Uuid = Uuid::from_u128(0x000000000000000000000000000ea001);

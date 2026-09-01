@@ -10,7 +10,7 @@ use axum::{
     response::{IntoResponse, Response},
     routing::{get, post},
 };
-use macro_authorization::{
+use conation_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
 };
 use serde::Deserialize;
@@ -107,12 +107,12 @@ fn unknown_source_response(source: &str) -> Response {
     ),
     tag = "import"
 )]
-#[tracing::instrument(skip(service, user), fields(user_id = %user.authorization.user.macro_user_id))]
+#[tracing::instrument(skip(service, user), fields(user_id = %user.authorization.user.conation_user_id))]
 pub async fn get_state_handler<T: ImportService, Auth: MacroAuthorizationService>(
     State(service): State<Arc<T>>,
     user: MacroAuthorizationExtractor<Auth, UserOrInternal>,
 ) -> Response {
-    match service.state(user.authorization.user.macro_user_id).await {
+    match service.state(user.authorization.user.conation_user_id).await {
         Ok(state) => Json(state).into_response(),
         Err(e) => error_response(e),
     }
@@ -129,7 +129,7 @@ pub async fn get_state_handler<T: ImportService, Auth: MacroAuthorizationService
     ),
     tag = "import"
 )]
-#[tracing::instrument(skip(service, user, body), fields(user_id = %user.authorization.user.macro_user_id))]
+#[tracing::instrument(skip(service, user, body), fields(user_id = %user.authorization.user.conation_user_id))]
 pub async fn run_import_handler<T: ImportService, Auth: MacroAuthorizationService>(
     State(service): State<Arc<T>>,
     user: MacroAuthorizationExtractor<Auth, UserOrInternal>,
@@ -137,7 +137,7 @@ pub async fn run_import_handler<T: ImportService, Auth: MacroAuthorizationServic
 ) -> Response {
     match service
         .run_import(
-            user.authorization.user.macro_user_id,
+            user.authorization.user.conation_user_id,
             body.import_ids,
             body.discard_ids,
         )
@@ -160,7 +160,7 @@ pub async fn run_import_handler<T: ImportService, Auth: MacroAuthorizationServic
     ),
     tag = "import"
 )]
-#[tracing::instrument(skip(service, user), fields(user_id = %user.authorization.user.macro_user_id))]
+#[tracing::instrument(skip(service, user), fields(user_id = %user.authorization.user.conation_user_id))]
 pub async fn retry_gather_handler<T: ImportService, Auth: MacroAuthorizationService>(
     State(service): State<Arc<T>>,
     user: MacroAuthorizationExtractor<Auth, UserOrInternal>,
@@ -170,7 +170,7 @@ pub async fn retry_gather_handler<T: ImportService, Auth: MacroAuthorizationServ
         return unknown_source_response(&source);
     };
     match service
-        .retry_gather(user.authorization.user.macro_user_id, source)
+        .retry_gather(user.authorization.user.conation_user_id, source)
         .await
     {
         Ok(_) => StatusCode::NO_CONTENT.into_response(),
@@ -190,7 +190,7 @@ pub async fn retry_gather_handler<T: ImportService, Auth: MacroAuthorizationServ
     ),
     tag = "import"
 )]
-#[tracing::instrument(skip(service, user), fields(user_id = %user.authorization.user.macro_user_id))]
+#[tracing::instrument(skip(service, user), fields(user_id = %user.authorization.user.conation_user_id))]
 pub async fn dismiss_run_handler<T: ImportService, Auth: MacroAuthorizationService>(
     State(service): State<Arc<T>>,
     user: MacroAuthorizationExtractor<Auth, UserOrInternal>,
@@ -200,7 +200,7 @@ pub async fn dismiss_run_handler<T: ImportService, Auth: MacroAuthorizationServi
         return unknown_source_response(&source);
     };
     match service
-        .dismiss_run(user.authorization.user.macro_user_id, source)
+        .dismiss_run(user.authorization.user.conation_user_id, source)
         .await
     {
         Ok(()) => StatusCode::NO_CONTENT.into_response(),

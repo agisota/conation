@@ -18,7 +18,7 @@ use entity_access::domain::{
     },
     ports::EntityAccessService,
 };
-use macro_authorization::{
+use conation_authorization::{
     BOT_FOR_FUSIONAUTH_USER_ID_HEADER, BOT_FOR_MACRO_USER_ID_HEADER,
     BOT_FOR_ORGANIZATION_ID_HEADER, BOT_SCOPE_HEADER, BOT_TOKEN_HEADER,
     BotActingUserClaims as AuthorizationBotActingUserClaims, BotAuthentication, BotAuthorizer,
@@ -26,7 +26,7 @@ use macro_authorization::{
     MacroAuthorizationServiceImpl, MacroAuthorizationState, MacroUserAuthentication,
     ValidatedIdentity,
 };
-use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId};
+use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId};
 use rootcause::Report;
 use std::sync::{
     Arc, Mutex,
@@ -658,7 +658,7 @@ fn bot_authentication_with_acting_user(bot_id: BotId) -> BotAuthentication {
         bot_scope: BotScope::User,
         team_id: None,
         acting_user: Some(MacroUserAuthentication {
-            macro_user_id: MacroUserIdStr::parse_from_str("macro|acting-bot@example.com").unwrap(),
+            conation_user_id: MacroUserIdStr::parse_from_str("macro|acting-bot@example.com").unwrap(),
             user_context: Default::default(),
         }),
     }

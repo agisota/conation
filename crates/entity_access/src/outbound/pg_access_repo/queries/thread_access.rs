@@ -4,7 +4,7 @@
 mod test;
 
 use crate::{domain::models::AccessLevel, outbound::pg_access_repo::queries::SourceIds};
-use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId};
+use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId};
 use sqlx::PgPool;
 use std::str::FromStr;
 use uuid::Uuid;
@@ -31,12 +31,12 @@ pub async fn get_owned_email_thread_ids(
         JOIN email_links l ON l.id = t.link_id
         WHERE t.id = ANY($1)
           AND (
-              l.macro_id = $2
+              l.conation_id = $2
               OR EXISTS (
                   SELECT 1
-                  FROM macro_user_links mul
+                  FROM conation_user_links mul
                   WHERE mul.link_id = l.id
-                    AND mul.primary_macro_id = $2
+                    AND mul.primary_conation_id = $2
               )
           )
         "#,
@@ -59,7 +59,7 @@ pub async fn get_thread_access(
 ) -> Result<Option<AccessLevel>, sqlx::Error> {
     let user_id_str = user_id.map(AsRef::as_ref).unwrap_or("");
 
-    // Thread-specific: the caller owns the thread's inbox, or a macro_user_links
+    // Thread-specific: the caller owns the thread's inbox, or a conation_user_links
     // edge delegates that inbox to the caller (the caller is its primary).
     let is_owner = sqlx::query_scalar!(
         r#"
@@ -69,12 +69,12 @@ pub async fn get_thread_access(
                 JOIN public.email_links l ON l.id = t.link_id
                 WHERE t.id = $1::uuid
                   AND (
-                      l.macro_id = $2
+                      l.conation_id = $2
                       OR EXISTS (
                           SELECT 1
-                          FROM public.macro_user_links mul
+                          FROM public.conation_user_links mul
                           WHERE mul.link_id = l.id
-                            AND mul.primary_macro_id = $2
+                            AND mul.primary_conation_id = $2
                       )
                   )
             ) AS "exists!"
@@ -141,7 +141,7 @@ pub async fn get_thread_access(
                         SELECT 1
                         FROM email_threads t
                         JOIN email_links l ON l.id = t.link_id
-                        JOIN team_user owner_tu ON owner_tu.user_id = l.macro_id
+                        JOIN team_user owner_tu ON owner_tu.user_id = l.conation_id
                         WHERE t.id = $1::uuid
                           AND owner_tu.team_id::text = ANY($2)
                     )
@@ -184,7 +184,7 @@ pub async fn get_thread_access(
     let crm_fut = sqlx::query_scalar!(
         r#"
         WITH thread_owner AS (
-            SELECT el.macro_id
+            SELECT el.conation_id
             FROM email_threads t
             JOIN email_links el ON el.id = t.link_id
             WHERE t.id = $1::uuid
@@ -194,7 +194,7 @@ pub async fn get_thread_access(
             SELECT tcs.team_id, requester.team_role
             FROM team_user requester
             JOIN team_user owner_member ON owner_member.team_id = requester.team_id
-            JOIN thread_owner o ON o.macro_id = owner_member.user_id
+            JOIN thread_owner o ON o.conation_id = owner_member.user_id
             JOIN team_crm_settings tcs ON tcs.team_id = requester.team_id
             WHERE requester.user_id = $2
               AND tcs.crm_enabled

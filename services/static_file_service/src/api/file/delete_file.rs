@@ -6,7 +6,7 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::response::Response;
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal, UserOrInternalCaller};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal, UserOrInternalCaller};
 use std::sync::Arc;
 
 #[derive(serde::Deserialize)]
@@ -49,7 +49,7 @@ pub async fn handle_delete_file(
 
     // Skip owner check for internal requests
     let is_internal = user.authorization.caller == UserOrInternalCaller::Internal;
-    if !is_internal && metadata.owner_id != user.authorization.user.macro_user_id.as_ref() {
+    if !is_internal && metadata.owner_id != user.authorization.user.conation_user_id.as_ref() {
         tracing::warn!("delete requested by non-owner");
         return Err((StatusCode::FORBIDDEN, "access denied").into_response());
     }

@@ -9,7 +9,7 @@ axum = [
   "dep:axum",
   "dep:axum-extra",
   "dep:entity_access",
-  "dep:macro_authorization",
+  "dep:conation_authorization",
   "dep:model-error-response",
   "dep:utoipa",
 ]
@@ -54,12 +54,12 @@ foreign_entity = { path = "../foreign_entity", default-features = false, feature
 hex = { workspace = true }
 hmac = { workspace = true }
 jsonwebtoken = { workspace = true }
-macro_env = { path = "../macro_env" }
-macro_env_var = { path = "../macro_env_var" }
-macro_authorization = { path = "../macro_authorization", default-features = false, features = [
+conation_env = { path = "../conation_env" }
+conation_env_var = { path = "../conation_env_var" }
+conation_authorization = { path = "../conation_authorization", default-features = false, features = [
   "axum",
 ], optional = true }
-macro_service_urls = { path = "../macro_service_urls" }
+conation_service_urls = { path = "../conation_service_urls" }
 model-entity = { path = "../model-entity", optional = true }
 model_notifications = { path = "../model_notifications", optional = true }
 notification = { path = "../notification", optional = true }
@@ -77,8 +77,8 @@ url = { workspace = true }
 uuid = { workspace = true }
 
 fusionauth = { path = "../fusionauth", optional = true }
-macro_user_id = { path = "../macro_user_id" }
-macro_uuid = { path = "../macro_uuid" }
+conation_user_id = { path = "../conation_user_id" }
+conation_uuid = { path = "../conation_uuid" }
 redis = { workspace = true, features = ["aio", "tokio-comp"], optional = true }
 tokio = { workspace = true, features = ["sync"], optional = true }
 
@@ -91,7 +91,7 @@ workspace-hack = { version = "0.1", path = "../workspace-hack" }
 [dev-dependencies]
 document_sub_type = { path = "../document_sub_type" }
 http-body-util = { workspace = true }
-macro_db_migrator = { path = "../macro_db_migrator" }
+conation_db_migrator = { path = "../conation_db_migrator" }
 mockall = { workspace = true }
 model = { path = "../model" }
 model_user = { path = "../model_user" }

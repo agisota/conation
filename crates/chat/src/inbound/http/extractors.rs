@@ -10,7 +10,7 @@ use axum::extract::{FromRef, FromRequestParts};
 use axum::http::StatusCode;
 use axum::http::request::Parts;
 use axum::response::IntoResponse;
-use macro_authorization::{
+use conation_authorization::{
     ActingUser, MacroAuthorizationExtractor, MacroAuthorizationRejection,
     MacroAuthorizationService, MacroAuthorizationState,
 };
@@ -110,10 +110,10 @@ where
         let user = &user.authorization.user;
         let UserPermissionsState(permissions_service) = UserPermissionsState::<P>::from_ref(state);
         let permissions = permissions_service
-            .get_user_permissions(&user.macro_user_id)
+            .get_user_permissions(&user.conation_user_id)
             .await
             .map_err(|error| {
-                tracing::error!(error=?error, user_id = %user.macro_user_id, "unable to load user permissions");
+                tracing::error!(error=?error, user_id = %user.conation_user_id, "unable to load user permissions");
                 ChatModelAccessRejection::PermissionsLookup
             })?;
 

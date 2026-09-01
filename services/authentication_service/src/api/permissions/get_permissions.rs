@@ -21,7 +21,7 @@ use model::authentication::permission::Permission;
     )]
 #[tracing::instrument(skip(db))]
 pub async fn handler(State(db): State<PgPool>) -> Result<Response, Response> {
-    let permissions = macro_db_client::user::permissions::get_all_permissions(&db)
+    let permissions = conation_db_client::user::permissions::get_all_permissions(&db)
         .await
         .map_err(|e| {
             tracing::error!(error=?e, "unable to get permissions");

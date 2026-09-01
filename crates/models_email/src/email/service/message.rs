@@ -234,7 +234,7 @@ pub fn is_outbound(msg: &Message) -> bool {
 }
 
 /// determine if a message is a draft created in macro
-pub fn is_macro_draft(msg: &Message) -> bool {
+pub fn is_conation_draft(msg: &Message) -> bool {
     // we don't send drafts to the provider before sending the message, so it won't have a provider id
     msg.is_draft && msg.provider_id.is_none()
 }

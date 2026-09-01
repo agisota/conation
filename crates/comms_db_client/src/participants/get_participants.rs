@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use channels::domain::models::{ChannelParticipant, ChannelSender};
-use macro_user_id::cowlike::CowLike;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::cowlike::CowLike;
+use conation_user_id::user_id::MacroUserIdStr;
 use sqlx::Transaction;
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
@@ -164,7 +164,7 @@ pub async fn get_channel_participants_for_thread_id(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use macro_db_migrator::MACRO_DB_MIGRATIONS;
+    use conation_db_migrator::MACRO_DB_MIGRATIONS;
 
     #[sqlx::test(
         migrator = "MACRO_DB_MIGRATIONS",

@@ -6,7 +6,7 @@ version = "0.1.0"
 
 [dependencies]
 axum = { workspace = true }
-macro_env_var = { path = "../../crates/macro_env_var" }
+conation_env_var = { path = "../../crates/conation_env_var" }
 native_app_service = { path = "../../crates/native_app_service" }
 rootcause = { workspace = true }
 semver = { workspace = true }

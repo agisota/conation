@@ -1,12 +1,12 @@
 use super::*;
 
-macro_env_var::env_var! {
+conation_env_var::env_var! {
     #[derive(Debug)]
     struct TestSecretName;
 }
 
 #[test]
-fn local_or_remote_secret_deserializes_macro_env_var_as_local() {
+fn local_or_remote_secret_deserializes_conation_env_var_as_local() {
     let secret = serde_json::from_str::<LocalOrRemoteSecret<TestSecretName>>(r#""secret-name""#)
         .expect("secret should deserialize");
 
@@ -17,7 +17,7 @@ fn local_or_remote_secret_deserializes_macro_env_var_as_local() {
 }
 
 #[test]
-fn optional_local_or_remote_secret_deserializes_some_macro_env_var_as_local() {
+fn optional_local_or_remote_secret_deserializes_some_conation_env_var_as_local() {
     let secret =
         serde_json::from_str::<OptionalLocalOrRemoteSecret<TestSecretName>>(r#""secret-name""#)
             .expect("secret should deserialize");

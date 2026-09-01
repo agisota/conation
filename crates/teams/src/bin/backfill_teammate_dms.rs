@@ -6,8 +6,8 @@ use channels::{
     outbound::pg_channels_repo::PgChannelsRepo,
 };
 use database_env_vars::DatabaseUrl;
-use macro_entrypoint::MacroEntrypoint;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_entrypoint::MacroEntrypoint;
+use conation_user_id::user_id::MacroUserIdStr;
 use sqlx::postgres::PgPoolOptions;
 use teams::{domain::team_repo::TeamRepository, outbound::team_repo::TeamRepositoryImpl};
 

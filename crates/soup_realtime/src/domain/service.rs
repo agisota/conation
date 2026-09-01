@@ -7,7 +7,7 @@ use std::{collections::HashSet, num::NonZeroUsize, time::Duration};
 
 use broadcast::{BroadcastManager, GlobalSpawner};
 use futures::{StreamExt as _, stream};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::Entity;
 use rootcause::prelude::{Report, ResultExt as _};
 use tokio::task::JoinHandle;

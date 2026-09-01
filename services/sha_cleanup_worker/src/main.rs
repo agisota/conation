@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use anyhow::Context;
-use macro_entrypoint::MacroEntrypoint;
+use conation_entrypoint::MacroEntrypoint;
 use sha_cleanup_worker::{config::Config, process::process, service};
 use sqlx::postgres::PgPoolOptions;
 
@@ -12,7 +12,7 @@ async fn main() -> Result<(), anyhow::Error> {
     let config = Config::from_env().context("all necessary env vars should be available")?;
 
     let s3_client = service::s3::S3::new(
-        macro_aws_config::s3_client().await,
+        conation_aws_config::s3_client().await,
         &config.document_storage_bucket,
     );
 

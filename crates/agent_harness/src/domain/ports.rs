@@ -5,7 +5,7 @@ use agent_session::domain::model::{AgentSessionId, SandboxSize};
 use agent_session::domain::ports::AgentConnector;
 use bot_id::BotId;
 
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 
 use super::error::Result;
 use super::model::{
@@ -21,16 +21,16 @@ pub trait ChannelPromptContext: Send + Sync + 'static {
     /// Verify that a user who triggered a prompt remains a channel member.
     fn authorize_member(
         &self,
-        actor: &macro_user_id::user_id::MacroUserIdStr<'static>,
-        channel_id: macro_uuid::Uuid,
+        actor: &conation_user_id::user_id::MacroUserIdStr<'static>,
+        channel_id: conation_uuid::Uuid,
     ) -> impl Future<Output = Result<()>> + Send;
 
     /// Return up to ten non-deleted messages immediately before `message_id`
     /// in chronological order.
     fn preceding_messages(
         &self,
-        channel_id: macro_uuid::Uuid,
-        message_id: macro_uuid::Uuid,
+        channel_id: conation_uuid::Uuid,
+        message_id: conation_uuid::Uuid,
     ) -> impl Future<Output = Result<Vec<PriorChannelMessage>>> + Send;
 }
 

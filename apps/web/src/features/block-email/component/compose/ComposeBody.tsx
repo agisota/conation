@@ -8,7 +8,7 @@ import { MarkdownTextarea } from '@core/component/LexicalMarkdown/component/core
 import { createFilesReadyHandler } from '@core/component/LexicalMarkdown/utils/fileUploadUtils';
 import { fileFolderDrop } from '@core/directive/fileFolderDrop';
 import { handleFileFolderDrop } from '@core/util/upload';
-import { Telemetry } from '@macro-inc/observability';
+import { Telemetry } from '@conation/observability';
 
 import { cn, Scroll } from '@ui';
 import type { LexicalEditor } from 'lexical';

@@ -1,4 +1,4 @@
-import type { Span } from '@macro-inc/observability';
+import type { Span } from '@conation/observability';
 import { type DBSchema, type IDBPDatabase, openDB as idbOpen } from 'idb';
 import { logSyncService, type WalContext } from './logger';
 import type { RawUpdate } from './shared';

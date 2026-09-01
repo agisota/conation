@@ -10,7 +10,7 @@ use email::domain::{
 };
 use entity_access::domain::{models::AccessError, ports::EntityAccessService};
 use futures::future::join_all;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use uuid::Uuid;
 
 pub(crate) const MAX_EMAIL_CONTENT_KEYS: usize = 20;

@@ -1,7 +1,7 @@
 use axum::extract::FromRef;
 use entity_access::domain::service::EntityAccessServiceImpl;
 use entity_access::outbound::PgAccessRepository;
-use macro_authorization::{
+use conation_authorization::{
     MacroAuthJwtValidator, MacroAuthorizationServiceImpl, MacroAuthorizationState,
 };
 use opensearch_client::OpensearchClient;

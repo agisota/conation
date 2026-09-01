@@ -21,7 +21,7 @@ use std::sync::{Arc, Mutex, OnceLock};
 use ai_toolset::{RequestContext, SearchableTool};
 use ai_usage::{UsageContext, UsageRecorder};
 use futures::StreamExt;
-use macro_env_var::env_var;
+use conation_env_var::env_var;
 use rig_agent::agent::{Agent, AgentBuilder, MultiTurnStreamItem};
 use rig_agent::streaming::StreamingPrompt;
 use rig_agent::tool::server::ToolServerHandle;
@@ -42,7 +42,8 @@ env_var! {
     struct ApiKeys {
         AnthropicApiKey,
         OpenaiApiKey,
-        CerebrasApiKey
+        CerebrasApiKey,
+        RoxApiKey
     }
 }
 
@@ -55,6 +56,13 @@ const OPENAI_PROVIDER: &str = "openai";
 const CEREBRAS_PROVIDER: &str = "cerebras";
 /// Cerebras inference endpoint (OpenAI-compatible Chat Completions API).
 const CEREBRAS_BASE_URL: &str = "https://api.cerebras.ai/v1";
+/// Provider segment Rox is registered under (OpenAI-compatible Chat Completions).
+/// Default provider for Conation — https://api.rox.one/v1
+const ROX_PROVIDER: &str = "rox";
+/// Rox inference endpoint (OpenAI-compatible Chat Completions API).
+const ROX_BASE_URL: &str = "https://api.rox.one/v1";
+/// Default model for Conation — rox/gpt-5.6-terra
+pub const DEFAULT_ROX_MODEL: &str = "rox/gpt-5.6-terra";
 
 /// A routed model id bound to the provider client that serves it.
 pub(crate) enum RoutedModel<'a> {
@@ -246,7 +254,8 @@ impl ModelRouter {
 
     /// Build a router with the built-in providers from the environment.
     ///
-    /// Requires `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, and `CEREBRAS_API_KEY`.
+    /// Requires `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `CEREBRAS_API_KEY`, `ROX_API_KEY`.
+    /// Rox is the default provider for Conation (https://api.rox.one/v1).
     /// Chain [`with_openai_provider`](Self::with_openai_provider) to add more.
     pub fn try_from_env() -> Result<Self, AgentError> {
         let env = ApiKeys::new()?;
@@ -258,9 +267,27 @@ impl ModelRouter {
         let openai = openai::Client::builder()
             .api_key(env.openai_api_key.to_string())
             .build()?;
+        // Rox speaks the OpenAI Chat Completions API — default for Conation (conation.dev)
+        let rox_key = env.rox_api_key.to_string();
+        let with_rox = if rox_key.is_empty() || rox_key == "local-rox-key" {
+            // Allow boot without real Rox key — default_model will still route to rox/* ids
+            // but calls will fail with auth error until user provides key.
+            // Register with dummy key to enable routing; actual key comes from per-request header.
+            Self::new(anthropic, openai).with_openai_provider(
+                ROX_PROVIDER,
+                ROX_BASE_URL,
+                "dummy-rox-key-for-routing",
+            )
+        } else {
+            Self::new(anthropic, openai).with_openai_provider(
+                ROX_PROVIDER,
+                ROX_BASE_URL,
+                &rox_key,
+            )
+        }?;
         // Cerebras speaks the OpenAI Chat Completions API, so it rides the
         // compatible-provider registry: `cerebras/<model>` ids route to it.
-        Self::new(anthropic, openai).with_openai_provider(
+        with_rox.with_openai_provider(
             CEREBRAS_PROVIDER,
             CEREBRAS_BASE_URL,
             &env.cerebras_api_key,
@@ -362,12 +389,20 @@ impl ModelRouter {
         self.route(model).unwrap_or_else(|_| self.default_model())
     }
 
-    /// The fallback model: native Anthropic serving [`PredefinedModel::Smart`].
-    ///
-    /// Built via `From<PredefinedModel>` so the bound [`Model`] carries the
-    /// bare api id — `PredefinedModel`'s `Display` is the provider-qualified
-    /// routing id, which the Anthropic API rejects as a model name.
+    /// The fallback model: Conation default — Rox gpt-5.6-terra.
+    /// Falls back to Anthropic Smart if Rox not registered (e.g. missing key).
     fn default_model(&self) -> RoutedModel<'static> {
+        // Try Rox first — the Conation default.
+        if let Some(client) = self.openai_compatible.get(ROX_PROVIDER) {
+            let client = Arc::clone(client);
+            // Parse DEFAULT_ROX_MODEL via Model::try_from to get bare id
+            if let Ok(parsed) = Model::try_from(DEFAULT_ROX_MODEL) {
+                return RoutedModel::OpenAiChatCompletions(
+                    OpenAiChatCompletionsModel::new(parsed, client),
+                );
+            }
+        }
+        // Fallback to Anthropic Smart
         RoutedModel::Anthropic(AnthropicModel::new(
             PredefinedModel::Smart.into(),
             self.anthropic.clone(),

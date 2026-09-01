@@ -50,16 +50,16 @@ impl NotificationRepository for MockNotifRepo {
 
     async fn get_muted_users<'a>(
         &self,
-        _: &[macro_user_id::user_id::MacroUserIdStr<'a>],
-    ) -> Result<std::collections::HashSet<macro_user_id::user_id::MacroUserIdStr<'static>>, Report>
+        _: &[conation_user_id::user_id::MacroUserIdStr<'a>],
+    ) -> Result<std::collections::HashSet<conation_user_id::user_id::MacroUserIdStr<'static>>, Report>
     {
         unimplemented!()
     }
     async fn get_unsubscribed_users<'a>(
         &self,
         _: &str,
-        _: &[macro_user_id::user_id::MacroUserIdStr<'a>],
-    ) -> Result<std::collections::HashSet<macro_user_id::user_id::MacroUserIdStr<'static>>, Report>
+        _: &[conation_user_id::user_id::MacroUserIdStr<'a>],
+    ) -> Result<std::collections::HashSet<conation_user_id::user_id::MacroUserIdStr<'static>>, Report>
     {
         unimplemented!()
     }
@@ -79,16 +79,16 @@ impl NotificationRepository for MockNotifRepo {
     async fn update_sent_status<'a>(
         &self,
         _: uuid::Uuid,
-        _: &[macro_user_id::user_id::MacroUserIdStr<'a>],
+        _: &[conation_user_id::user_id::MacroUserIdStr<'a>],
     ) -> Result<(), Report> {
         unimplemented!()
     }
     async fn get_device_endpoints<'a>(
         &self,
-        _: &[macro_user_id::user_id::MacroUserIdStr<'a>],
+        _: &[conation_user_id::user_id::MacroUserIdStr<'a>],
     ) -> Result<
         std::collections::HashMap<
-            macro_user_id::user_id::MacroUserIdStr<'static>,
+            conation_user_id::user_id::MacroUserIdStr<'static>,
             Vec<crate::domain::models::DeviceEndpoint>,
         >,
         Report,
@@ -97,14 +97,14 @@ impl NotificationRepository for MockNotifRepo {
     }
     async fn mark_notifications_seen(
         &self,
-        _: macro_user_id::user_id::MacroUserIdStr<'_>,
+        _: conation_user_id::user_id::MacroUserIdStr<'_>,
         _: &[uuid::Uuid],
     ) -> Result<Vec<crate::domain::models::UserNotificationRow<serde_json::Value>>, Report> {
         unimplemented!()
     }
     async fn mark_notifications_done(
         &self,
-        _: &macro_user_id::user_id::MacroUserIdStr<'_>,
+        _: &conation_user_id::user_id::MacroUserIdStr<'_>,
         _: &[uuid::Uuid],
         _: bool,
     ) -> Result<Vec<crate::domain::models::UserNotificationRow<serde_json::Value>>, Report> {
@@ -112,7 +112,7 @@ impl NotificationRepository for MockNotifRepo {
     }
     async fn get_notification_ids_for_entities(
         &self,
-        _: macro_user_id::user_id::MacroUserIdStr<'_>,
+        _: conation_user_id::user_id::MacroUserIdStr<'_>,
         _: &[model_entity::Entity<'_>],
     ) -> Result<Vec<uuid::Uuid>, Report> {
         unimplemented!()
@@ -125,14 +125,14 @@ impl NotificationRepository for MockNotifRepo {
     }
     async fn get_digest_eligible_notification_ids(
         &self,
-        _: macro_user_id::user_id::MacroUserIdStr<'_>,
+        _: conation_user_id::user_id::MacroUserIdStr<'_>,
         _: &[uuid::Uuid],
     ) -> Result<HashSet<uuid::Uuid>, Report> {
         unimplemented!()
     }
     async fn get_user_notifications<T: serde::de::DeserializeOwned + Send>(
         &self,
-        _: macro_user_id::user_id::MacroUserIdStr<'_>,
+        _: conation_user_id::user_id::MacroUserIdStr<'_>,
         _: u32,
         _: models_pagination::Query<uuid::Uuid, models_pagination::CreatedAt, ()>,
         _: crate::domain::models::request::NotificationListFilters,
@@ -141,7 +141,7 @@ impl NotificationRepository for MockNotifRepo {
     }
     async fn get_user_notifications_by_event_item_ids<T: serde::de::DeserializeOwned + Send>(
         &self,
-        _: macro_user_id::user_id::MacroUserIdStr<'_>,
+        _: conation_user_id::user_id::MacroUserIdStr<'_>,
         _: &[uuid::Uuid],
         _: u32,
         _: models_pagination::Query<uuid::Uuid, models_pagination::CreatedAt, ()>,
@@ -151,7 +151,7 @@ impl NotificationRepository for MockNotifRepo {
     }
     async fn get_entity_notifications_batch(
         &self,
-        _: macro_user_id::user_id::MacroUserIdStr<'_>,
+        _: conation_user_id::user_id::MacroUserIdStr<'_>,
         entity_refs: Vec<model_entity::Entity<'static>>,
     ) -> Result<
         std::collections::HashMap<
@@ -167,28 +167,28 @@ impl NotificationRepository for MockNotifRepo {
     }
     async fn get_user_notification_by_id<T: serde::de::DeserializeOwned + Send>(
         &self,
-        _: macro_user_id::user_id::MacroUserIdStr<'_>,
+        _: conation_user_id::user_id::MacroUserIdStr<'_>,
         _: uuid::Uuid,
     ) -> Result<Option<crate::domain::models::UserNotificationRow<T>>, Report> {
         unimplemented!()
     }
     async fn delete_user_notification(
         &self,
-        _: macro_user_id::user_id::MacroUserIdStr<'_>,
+        _: conation_user_id::user_id::MacroUserIdStr<'_>,
         _: uuid::Uuid,
     ) -> Result<(), Report> {
         unimplemented!()
     }
     async fn bulk_delete_user_notifications(
         &self,
-        _: macro_user_id::user_id::MacroUserIdStr<'_>,
+        _: conation_user_id::user_id::MacroUserIdStr<'_>,
         _: &[uuid::Uuid],
     ) -> Result<(), Report> {
         unimplemented!()
     }
     async fn delete_all_user_notifications(
         &self,
-        _: macro_user_id::user_id::MacroUserIdStr<'_>,
+        _: conation_user_id::user_id::MacroUserIdStr<'_>,
     ) -> Result<(), Report> {
         unimplemented!()
     }
@@ -201,7 +201,7 @@ impl NotificationRepository for MockNotifRepo {
     }
     async fn upsert_device(
         &self,
-        _: macro_user_id::user_id::MacroUserIdStr<'_>,
+        _: conation_user_id::user_id::MacroUserIdStr<'_>,
         _: &str,
         _: &str,
         _: &crate::domain::models::device::DeviceType,
@@ -210,7 +210,7 @@ impl NotificationRepository for MockNotifRepo {
     }
     async fn delete_user_devices_by_token(
         &self,
-        _: macro_user_id::user_id::MacroUserIdStr<'_>,
+        _: conation_user_id::user_id::MacroUserIdStr<'_>,
         _: &str,
         _: &crate::domain::models::device::DeviceType,
     ) -> Result<Vec<String>, Report> {
@@ -227,27 +227,27 @@ impl NotificationRepository for MockNotifRepo {
     async fn get_users_with_type_disabled<'a>(
         &self,
         _: &str,
-        _: &[macro_user_id::user_id::MacroUserIdStr<'a>],
-    ) -> Result<std::collections::HashSet<macro_user_id::user_id::MacroUserIdStr<'static>>, Report>
+        _: &[conation_user_id::user_id::MacroUserIdStr<'a>],
+    ) -> Result<std::collections::HashSet<conation_user_id::user_id::MacroUserIdStr<'static>>, Report>
     {
         unimplemented!()
     }
     async fn get_disabled_notification_types(
         &self,
-        _: macro_user_id::user_id::MacroUserIdStr<'_>,
+        _: conation_user_id::user_id::MacroUserIdStr<'_>,
     ) -> Result<Vec<crate::domain::models::DisabledNotificationType>, Report> {
         unimplemented!()
     }
     async fn disable_notification_type(
         &self,
-        _: macro_user_id::user_id::MacroUserIdStr<'_>,
+        _: conation_user_id::user_id::MacroUserIdStr<'_>,
         _: &str,
     ) -> Result<(), Report> {
         unimplemented!()
     }
     async fn enable_notification_type(
         &self,
-        _: macro_user_id::user_id::MacroUserIdStr<'_>,
+        _: conation_user_id::user_id::MacroUserIdStr<'_>,
         _: &str,
     ) -> Result<(), Report> {
         unimplemented!()

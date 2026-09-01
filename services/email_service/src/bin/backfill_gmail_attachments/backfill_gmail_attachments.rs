@@ -23,7 +23,7 @@ mod process;
 mod upload;
 
 use anyhow::Context;
-use macro_entrypoint::MacroEntrypoint;
+use conation_entrypoint::MacroEntrypoint;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     println!("Loading configuration...");
@@ -42,39 +42,39 @@ async fn main() -> anyhow::Result<()> {
     let email_api_repository =
         email_api_client::GmailApiClientRepository::from_subscription_topic("unused");
 
-    let macro_ids: Vec<String> = config
-        .macro_ids
+    let conation_ids: Vec<String> = config
+        .conation_ids
         .split(',')
         .map(|id| id.trim().to_string())
         .collect();
 
-    println!("Processing {} macro IDs: {:?}", macro_ids.len(), macro_ids);
+    println!("Processing {} macro IDs: {:?}", conation_ids.len(), conation_ids);
 
-    for (index, macro_id) in macro_ids.iter().enumerate() {
+    for (index, conation_id) in conation_ids.iter().enumerate() {
         println!(
             "\n=== Processing macro ID {} ({}/{}) ===",
-            macro_id,
+            conation_id,
             index + 1,
-            macro_ids.len()
+            conation_ids.len()
         );
 
-        match process::process_macro_id(
+        match process::process_conation_id(
             &config,
             &db_pool,
             &dss_client,
             &email_api_repository,
-            macro_id,
+            conation_id,
         )
         .await
         {
             Ok((success_count, total_attachments)) => {
                 println!(
                     "Completed processing for {}. Successfully uploaded {} out of {} attachments.",
-                    macro_id, success_count, total_attachments
+                    conation_id, success_count, total_attachments
                 );
             }
             Err(e) => {
-                println!("Failed to process macro ID {}: {:?}", macro_id, e);
+                println!("Failed to process macro ID {}: {:?}", conation_id, e);
                 // Continue with next macro ID instead of failing completely
             }
         }

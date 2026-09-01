@@ -7,7 +7,7 @@ use axum::response::{IntoResponse, Response};
 use email::domain::events::{EmailEventOrigin, EmailMacroEvent, ThreadArchivedMetadata};
 use email_db_client::threads::update::update_inbox_visible_status;
 use email_service::pubsub::publish_email_event;
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::response::{EmptyResponse, ErrorResponse};
 use models_email::service::label::system_labels;
 use models_email::service::message::Message;
@@ -174,11 +174,11 @@ pub async fn archived_handler(
     }
 
     publish_email_event(
-        ctx.macro_event_broker.as_ref(),
+        ctx.conation_event_broker.as_ref(),
         &EmailMacroEvent::thread_archived(ThreadArchivedMetadata {
             link_id: link.id,
-            owner: link.macro_id.clone(),
-            actor: Some(link.macro_id.clone()),
+            owner: link.conation_id.clone(),
+            actor: Some(link.conation_id.clone()),
             thread_id,
             archived: is_archiving,
             origin: EmailEventOrigin::UserAction,

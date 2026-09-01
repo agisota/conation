@@ -27,7 +27,7 @@ fn map_contact_to_db(contact: &service::address::ContactInfo) -> Option<address:
     }
 
     Some(address::EmailAddress {
-        id: macro_uuid::generate_uuid_v7(), // this value doesn't actually matter as we will be setting it later again
+        id: conation_uuid::generate_uuid_v7(), // this value doesn't actually matter as we will be setting it later again
         email_address: contact.email.clone(),
         name: column_limits::clamp_opt(
             contact.name.clone(),

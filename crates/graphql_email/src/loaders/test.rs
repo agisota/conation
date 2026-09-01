@@ -15,7 +15,7 @@ use entity_access::domain::{
     },
     ports::EntityAccessService,
 };
-use macro_user_id::{
+use conation_user_id::{
     lowercased::Lowercase,
     user_id::{MacroUserId, MacroUserIdStr},
 };

@@ -1,8 +1,8 @@
 use axum::extract::FromRef;
-use macro_authorization::{
+use conation_authorization::{
     MacroAuthJwtValidator, MacroAuthorizationServiceImpl, MacroAuthorizationState,
 };
-use macro_env::Environment;
+use conation_env::Environment;
 
 pub type AuthorizationService = MacroAuthorizationServiceImpl<MacroAuthJwtValidator>;
 

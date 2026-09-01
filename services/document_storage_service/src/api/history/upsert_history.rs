@@ -4,7 +4,7 @@ use axum::extract::State;
 use axum::{extract::Path, http::StatusCode, response::IntoResponse};
 use entity_access::domain::models::EntityPermission;
 use entity_access::inbound::axum_extractors::HistoryAccessExtractor;
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::response::{
     GenericErrorResponse, GenericResponse, GenericSuccessResponse, SuccessResponse,
 };
@@ -32,7 +32,7 @@ pub struct Params {
         (status = 500, body=GenericErrorResponse),
     )
 )]
-#[tracing::instrument(skip(ctx, user, history_access), fields(user_id=?user.authorization.user.macro_user_id))]
+#[tracing::instrument(skip(ctx, user, history_access), fields(user_id=?user.authorization.user.conation_user_id))]
 pub async fn upsert_history_handler(
     history_access: HistoryAccessExtractor<
         ViewAccessLevel,
@@ -68,7 +68,7 @@ pub async fn upsert_history_handler(
 
     if item_type != "thread" {
         // Update the item's last accessed time
-        if let Err(e) = macro_db_client::history::upsert_item_last_accessed(
+        if let Err(e) = conation_db_client::history::upsert_item_last_accessed(
             &mut transaction,
             item_id.as_str(),
             item_type.as_str(),
@@ -83,9 +83,9 @@ pub async fn upsert_history_handler(
         }
     }
 
-    if let Err(e) = macro_db_client::history::upsert_user_history(
+    if let Err(e) = conation_db_client::history::upsert_user_history(
         &mut transaction,
-        user.authorization.user.macro_user_id.clone(),
+        user.authorization.user.conation_user_id.clone(),
         item_id.as_str(),
         item_type.as_str(),
     )
@@ -100,10 +100,10 @@ pub async fn upsert_history_handler(
 
     // If the item is a document, track the document view
     if item_type == "document"
-        && let Err(e) = macro_db_client::document::track_document::track_document(
+        && let Err(e) = conation_db_client::document::track_document::track_document(
             &mut transaction,
             item_id.as_str(),
-            Some(user.authorization.user.macro_user_id.as_ref()),
+            Some(user.authorization.user.conation_user_id.as_ref()),
         )
         .await
     {

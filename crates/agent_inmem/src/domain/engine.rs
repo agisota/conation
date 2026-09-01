@@ -2,7 +2,7 @@
 
 use agent::types::ChatMessage;
 use agent::{AgentError, StreamPart};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
 

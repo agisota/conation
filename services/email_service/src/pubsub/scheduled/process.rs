@@ -9,8 +9,8 @@ use chrono::Utc;
 use email::domain::events::{EmailEventOrigin, EmailMacroEvent, MessageSentMetadata};
 use email_api_client::domain::models::{SendRequest, SentIds};
 use email_db_client::messages::scheduled::get::get_and_start_processing_scheduled_message;
-use macro_user_id::cowlike::CowLike as _;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::cowlike::CowLike as _;
+use conation_user_id::user_id::MacroUserIdStr;
 use models_email::service::message::MessageToSend;
 use models_email::service::pubsub::ScheduledPubsubMessage;
 use sqlx_core::any::AnyConnectionBackend;
@@ -196,10 +196,10 @@ async fn process_scheduled_message_inner(
                 (message_to_send.db_id, message_to_send.thread_db_id)
             {
                 publish_email_event(
-                    &ctx.macro_event_broker,
+                    &ctx.conation_event_broker,
                     &EmailMacroEvent::message_sent(MessageSentMetadata {
                         link_id: link.id,
-                        owner: link.macro_id.clone(),
+                        owner: link.conation_id.clone(),
                         actor,
                         message_id: message_db_id,
                         thread_id: thread_db_id,

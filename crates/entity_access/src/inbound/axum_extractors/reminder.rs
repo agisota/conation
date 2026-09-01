@@ -7,7 +7,7 @@ use axum::{
     extract::{FromRef, FromRequestParts, Path},
     http::request::Parts,
 };
-use macro_authorization::{
+use conation_authorization::{
     AnyPrincipal, MacroAuthorization, MacroAuthorizationService, MacroAuthorizationState,
     OptionalMacroAuthorizationExtractor,
 };
@@ -89,7 +89,7 @@ where
             .authorization
             .as_ref()
             .and_then(MacroAuthorization::acting_user)
-            .map(|user| user.macro_user_id.clone())
+            .map(|user| user.conation_user_id.clone())
         else {
             return Err(ExtractorError::Unauthorized);
         };

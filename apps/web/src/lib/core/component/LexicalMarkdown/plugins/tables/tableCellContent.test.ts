@@ -6,11 +6,11 @@ import {
 import {
   $createImageNode,
   $isImageNode,
-} from '@macro-inc/lexical-core/nodes/ImageNode';
+} from '@conation/lexical-core/nodes/ImageNode';
 import {
   $createVideoNode,
   $isVideoNode,
-} from '@macro-inc/lexical-core/nodes/VideoNode';
+} from '@conation/lexical-core/nodes/VideoNode';
 import type { LexicalEditor } from 'lexical';
 import { describe, expect, it } from 'vitest';
 import {

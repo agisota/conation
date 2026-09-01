@@ -3,7 +3,7 @@
 #[cfg(not(test))]
 use cached::proc_macro::cached;
 use channels::outbound::channel_name::batch_resolve_channel_names;
-use macro_user_id::{
+use conation_user_id::{
     lowercased::Lowercase,
     user_id::{MacroUserId, MacroUserIdStr},
 };
@@ -26,12 +26,12 @@ const CANDIDATE_BATCH_SIZE: i64 = 256;
         time = 30,
         result = true,
         key = "String",
-        convert = r#"{ format!("{}-{:?}-{}-{}-{}-{:?}", macro_user_id.as_ref(), channel_ids, term, exact_match, limit, cursor.as_ref().and_then(|c| c.as_updated_at()).map(|(id, ts)| format!("{}-{}", id, ts)).unwrap_or_default()) }"#
+        convert = r#"{ format!("{}-{:?}-{}-{}-{}-{:?}", conation_user_id.as_ref(), channel_ids, term, exact_match, limit, cursor.as_ref().and_then(|c| c.as_updated_at()).map(|(id, ts)| format!("{}-{}", id, ts)).unwrap_or_default()) }"#
     )
 )]
 pub async fn search_channel_names<'a>(
     db: &Pool<Postgres>,
-    macro_user_id: &MacroUserId<Lowercase<'a>>,
+    conation_user_id: &MacroUserId<Lowercase<'a>>,
     channel_ids: &[Uuid],
     term: String,
     exact_match: bool,
@@ -40,7 +40,7 @@ pub async fn search_channel_names<'a>(
 ) -> Result<PaginatedResult<NameSearchResult>, NameSearchError> {
     search_channel_names_in_batches(
         db,
-        macro_user_id,
+        conation_user_id,
         channel_ids,
         term,
         exact_match,
@@ -54,7 +54,7 @@ pub async fn search_channel_names<'a>(
 #[allow(clippy::too_many_arguments)]
 async fn search_channel_names_in_batches<'a>(
     db: &Pool<Postgres>,
-    macro_user_id: &MacroUserId<Lowercase<'a>>,
+    conation_user_id: &MacroUserId<Lowercase<'a>>,
     channel_ids: &[Uuid],
     term: String,
     exact_match: bool,
@@ -79,7 +79,7 @@ async fn search_channel_names_in_batches<'a>(
         .as_ref()
         .and_then(|c| c.as_updated_at())
         .map(|(id, ts)| (ts, id));
-    let viewer_user_id = MacroUserIdStr(macro_user_id.clone());
+    let viewer_user_id = MacroUserIdStr(conation_user_id.clone());
     let search_pattern = if exact_match {
         format!(r"(^|\W){}($|\W)", escape_regex(&term))
     } else {
@@ -116,7 +116,7 @@ async fn search_channel_names_in_batches<'a>(
                 ORDER BY c.updated_at DESC, c.id DESC
                 LIMIT $6
             "#,
-            macro_user_id.as_ref(),
+            conation_user_id.as_ref(),
             channel_ids,
             cursor_updated_at,
             cursor_entity_id,

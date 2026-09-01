@@ -8,7 +8,7 @@ version = "0.1.0"
 cached = { workspace = true }
 channels = { path = "../channels", default-features = false, features = ["outbound"] }
 chrono = { workspace = true }
-macro_user_id = { path = "../macro_user_id" }
+conation_user_id = { path = "../conation_user_id" }
 models_opensearch = { path = "../models_opensearch" }
 models_search_cursor = { path = "../models_search_cursor" }
 regex = { workspace = true }
@@ -21,5 +21,5 @@ workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
 anyhow = { workspace = true }
-macro_db_migrator = { path = "../macro_db_migrator" }
+conation_db_migrator = { path = "../conation_db_migrator" }
 tokio = { workspace = true }

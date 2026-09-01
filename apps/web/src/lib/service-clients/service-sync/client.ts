@@ -8,7 +8,7 @@ import { isTauri } from '@core/util/platform';
 import { platformFetch } from '@core/util/platformFetch';
 import type { ObjectLike, ResultError } from '@core/util/result';
 import type { SafeFetchInit } from '@core/util/safeFetch';
-import { InitializeFromSnapshotRequest } from '@macro-inc/collaboration/sync-service/generated/schema';
+import { InitializeFromSnapshotRequest } from '@conation/collaboration/sync-service/generated/schema';
 import type { SerializedEditorState } from 'lexical';
 import { err, ok, type Result } from 'neverthrow';
 

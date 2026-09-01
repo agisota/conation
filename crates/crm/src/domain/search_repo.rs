@@ -12,7 +12,7 @@ pub struct CrmCompanyNameMatch {
     pub id: Uuid,
     /// The company's display name.
     pub name: String,
-    /// `name` with matched spans wrapped in `<macro_em>…</macro_em>`.
+    /// `name` with matched spans wrapped in `<conation_em>…</conation_em>`.
     pub name_highlighted: String,
     /// The company's last-interaction time (its "updated_at"), used as the
     /// sort + keyset-pagination key.

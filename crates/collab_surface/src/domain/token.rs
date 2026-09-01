@@ -5,14 +5,14 @@
 //! the shared `document_permission_jwt` secret): the worker string-compares
 //! the `document_id` claim against its session key, so a surface id flows
 //! through the existing claim unchanged. Deliberately not lifted into
-//! `macro_sync_service_jwt` — that crate stays dependency-minimal because it
+//! `conation_sync_service_jwt` — that crate stays dependency-minimal because it
 //! also compiles to wasm for the sync-service worker.
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use entity_access::domain::models::EntityPermission;
-use macro_sync_service_jwt::{DocumentPermissionToken, ISSUER, TOKEN_TTL_SECS};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_sync_service_jwt::{DocumentPermissionToken, ISSUER, TOKEN_TTL_SECS};
+use conation_user_id::user_id::MacroUserIdStr;
 use model::document::DocumentPermissionsToken;
 use models_permissions::share_permission::access_level::AccessLevel;
 
@@ -44,7 +44,7 @@ pub fn encode_surface_token(
         .expect("system clock before unix epoch")
         .as_secs() as usize;
 
-    macro_sync_service_jwt::encode(
+    conation_sync_service_jwt::encode(
         &DocumentPermissionsToken {
             user_id: Some(user_id),
             document_id: surface_id,

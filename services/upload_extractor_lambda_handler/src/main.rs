@@ -12,9 +12,9 @@ use lambda_runtime::{
     Error, LambdaEvent, run, service_fn,
     tracing::{self},
 };
-use macro_entrypoint::MacroEntrypoint;
-use macro_env_var::env_vars;
-use macro_service_urls::ConnectionGatewayUrl;
+use conation_entrypoint::MacroEntrypoint;
+use conation_env_var::env_vars;
+use conation_service_urls::ConnectionGatewayUrl;
 use model::{
     document::{FileType, FileTypeExt},
     folder::{FileSystemNodeWithIds, FolderItem, S3Destination, S3DestinationMap},
@@ -595,7 +595,7 @@ async fn main() -> Result<(), Error> {
         .to_string();
     let connection_gateway_url = ConnectionGatewayUrl::new()?.to_string();
 
-    let config = macro_aws_config::get_macro_aws_config().await;
+    let config = conation_aws_config::get_conation_aws_config().await;
     let s3_client = S3Client::new(&config);
 
     let dss_client = DocumentStorageServiceClient::new(internal_api_secret_key.clone(), dss_url);

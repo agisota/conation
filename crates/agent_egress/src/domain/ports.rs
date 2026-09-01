@@ -11,7 +11,7 @@ use crate::domain::error::EgressError;
 use crate::domain::model::{
     McpDestination, ProxyRequest, ProxyResponse, RepoSlug, SessionGrant, SessionToken, UpstreamCall,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 
 /// Turn a sandbox's session token into what it is allowed to spend.
 ///

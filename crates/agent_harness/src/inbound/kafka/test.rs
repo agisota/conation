@@ -9,8 +9,8 @@ use channel_sender::ChannelSender;
 use channels::domain::broker_events::ChannelMessagePostedMetadata;
 use channels::domain::models::ChannelType;
 use chrono::Utc;
-use macro_user_id::user_id::MacroUserIdStr;
-use macro_uuid::Uuid;
+use conation_user_id::user_id::MacroUserIdStr;
+use conation_uuid::Uuid;
 
 use super::*;
 use crate::domain::model::HarnessCommand;

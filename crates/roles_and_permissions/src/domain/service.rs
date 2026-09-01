@@ -1,5 +1,5 @@
 //! Contains the service logic for roles and permissions
-use macro_user_id::{email::Email, lowercased::Lowercase, user_id::MacroUserIdStr};
+use conation_user_id::{email::Email, lowercased::Lowercase, user_id::MacroUserIdStr};
 
 use crate::domain::{
     model::{ProductTier, RoleId, SubscriptionStatus, UserRolesAndPermissionsError},

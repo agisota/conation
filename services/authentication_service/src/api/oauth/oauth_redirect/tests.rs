@@ -141,7 +141,7 @@ async fn it_rejects_disallowed_original_url_without_side_effects() {
 }
 
 #[tokio::test]
-async fn it_allows_macro_scheme_original_url() {
+async fn it_allows_conation_scheme_original_url() {
     let mut dummy = DummyCb::default();
     let res = get_redirect_url(
         &Some(SsoState {

@@ -11,7 +11,7 @@ use channels::domain::broker_events::ChannelMacroEvent;
 use chat::domain::events::ChatMacroEvent;
 use documents_hex::domain::events::DocumentMacroEvent;
 use email::domain::events::EmailMacroEvent;
-use macro_event_broker::MacroEvent as _;
+use conation_event_broker::MacroEvent as _;
 use projects_hex::domain::events::ProjectMacroEvent;
 use properties::domain::events::PropertyMacroEvent;
 
@@ -19,7 +19,7 @@ use properties::domain::events::PropertyMacroEvent;
 mod source {
     use super::*;
 
-    macro_event_broker::declare_topics!(
+    conation_event_broker::declare_topics!(
         ActivitySourceEvent:
             DocumentMacroEvent,
             ChannelMacroEvent,
@@ -36,7 +36,7 @@ pub(crate) use source::ActivitySourceEvent;
 /// every arm is the identical expression; all semantics live with the
 /// domains.
 pub(crate) fn ingest(event: &ActivitySourceEvent) -> Ingest {
-    fn arm<E: activity::ActivitySource>(envelope: &macro_event_broker::Event<E>) -> Ingest {
+    fn arm<E: activity::ActivitySource>(envelope: &conation_event_broker::Event<E>) -> Ingest {
         envelope.event.ingest(envelope.event_id)
     }
 

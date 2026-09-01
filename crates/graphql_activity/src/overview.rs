@@ -3,7 +3,7 @@ use async_graphql::{Context, ID, InputObject, SimpleObject};
 use chrono::Utc;
 use chrono_tz::Tz;
 use graphql_common::GraphqlEntityType;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 
 use crate::loaders::ActivityFeedReader;
 

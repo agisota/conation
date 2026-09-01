@@ -6,8 +6,8 @@ use axum::extract::Request;
 use axum::http::Method;
 use axum::middleware::Next;
 use github::inbound::github_sync_router::GithubSyncRouterState;
-use macro_axum_utils::compose_layers;
-use macro_tower_layers::MacroRequestIdAndTracingLayer;
+use conation_axum_utils::compose_layers;
+use conation_tower_layers::MacroRequestIdAndTracingLayer;
 use model::version::{ServiceNameState, VersionedApiServiceName, validate_api_version};
 use search_service::SearchHandlerState;
 use std::time::Duration;
@@ -58,7 +58,7 @@ pub async fn setup_and_serve(state: ApiContext) -> anyhow::Result<()> {
                     },
                     validate_api_version,
                 ))
-                .layer(macro_cors::cors_layer())
+                .layer(conation_cors::cors_layer())
                 .layer(CompressionLayer::new().gzip(true)),
         )
         // The health router is attached here so we don't attach the logging middleware to it
@@ -77,7 +77,7 @@ pub async fn setup_and_serve(state: ApiContext) -> anyhow::Result<()> {
         &state.config.port
     );
     axum::serve(listener, app.into_make_service())
-        .with_graceful_shutdown(macro_entrypoint::shutdown_signal())
+        .with_graceful_shutdown(conation_entrypoint::shutdown_signal())
         .await
         .context("error starting service")
 }
@@ -126,13 +126,13 @@ fn api_router(state: ApiContext) -> Router {
                     state.documents_state.clone(),
                 ))
                 .layer(ServiceBuilder::new().layer(axum::middleware::from_fn(
-                    macro_middleware::connection_drop_prevention_handler,
+                    conation_middleware::connection_drop_prevention_handler,
                 ))),
         )
         .nest(
             "/history",
             history::router().layer(compose_layers![
-                axum::middleware::from_fn(macro_middleware::connection_drop_prevention_handler),
+                axum::middleware::from_fn(conation_middleware::connection_drop_prevention_handler),
                 CompressionLayer::new(),
             ]),
         )
@@ -141,19 +141,19 @@ fn api_router(state: ApiContext) -> Router {
         .nest(
             "/threads",
             threads::router(state.clone()).layer(axum::middleware::from_fn(
-                macro_middleware::connection_drop_prevention_handler,
+                conation_middleware::connection_drop_prevention_handler,
             )),
         )
         .nest(
             "/user_document_view_location",
             user_document_view_location::router(state.clone()).layer(axum::middleware::from_fn(
-                macro_middleware::connection_drop_prevention_handler,
+                conation_middleware::connection_drop_prevention_handler,
             )),
         )
         .nest(
             "/pins",
             pins::router().layer(axum::middleware::from_fn(
-                macro_middleware::connection_drop_prevention_handler,
+                conation_middleware::connection_drop_prevention_handler,
             )),
         )
         .nest(
@@ -180,7 +180,7 @@ fn api_router(state: ApiContext) -> Router {
         .nest(
             "/annotations",
             annotations::router(state.clone()).layer(axum::middleware::from_fn(
-                macro_middleware::connection_drop_prevention_handler,
+                conation_middleware::connection_drop_prevention_handler,
             )),
         )
         .nest(
@@ -277,7 +277,7 @@ fn api_router(state: ApiContext) -> Router {
                     ),
                 )
                 .layer(ServiceBuilder::new().layer(axum::middleware::from_fn(
-                    macro_middleware::connection_drop_prevention_handler,
+                    conation_middleware::connection_drop_prevention_handler,
                 ))),
         )
         .nest("/recents", recents::router())

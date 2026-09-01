@@ -6,7 +6,7 @@ use async_trait::async_trait;
 use entity_access::domain::models::EditAccessLevel;
 use entity_access::domain::ports::EntityAccessService;
 use entity_mutation::{EntityMutationErrorCode, MoveEntity, capability::MoveEntityRequest};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::{Entity, EntityType};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};

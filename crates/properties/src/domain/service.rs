@@ -11,7 +11,7 @@
 use std::collections::HashMap;
 
 use entity_access::domain::models::{EntityAccessReceipt, MemberTeamRole};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use models_properties::EntityType;
 use models_properties::api::requests::SetPropertyValue;
 use models_properties::api::{

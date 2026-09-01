@@ -4,8 +4,8 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use macro_user_id::user_id::MacroUserId;
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_user_id::user_id::MacroUserId;
 
 use crate::api::context::{ApiContext, AuthorizationService};
 
@@ -84,10 +84,10 @@ pub async fn handler(
             .map_err(|_| PatchUserOnboardingError::InvalidMacroUserId)?
             .lowercase();
 
-    macro_db_client::user::patch::patch_user_onboarding(
+    conation_db_client::user::patch::patch_user_onboarding(
         &ctx.db,
         &user_id,
-        &macro_db_client::user::patch::UserOnboarding {
+        &conation_db_client::user::patch::UserOnboarding {
             first_name: &req.first_name,
             last_name: &req.last_name,
             title: &req.title,

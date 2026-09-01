@@ -44,6 +44,6 @@ getrandom = { workspace = true, features = ["wasm_js"] }
 wasm-bindgen.workspace = true
 uuid = { workspace = true, features = ["js"] }
 loro = "1.13"
-macro_sync_service_jwt = { path = "../../crates/macro_sync_service_jwt" }
+conation_sync_service_jwt = { path = "../../crates/conation_sync_service_jwt" }
 matchit =  "0.8.4"
 worker-rs-otel = { path = "../../crates/worker-rs-otel" }

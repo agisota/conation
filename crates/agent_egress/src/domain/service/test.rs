@@ -6,7 +6,7 @@ use crate::domain::model::{
 use http::header::{AUTHORIZATION, HeaderMap, HeaderName, HeaderValue};
 use http::{Method, StatusCode};
 use http_body_util::{BodyExt, Empty};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use std::sync::Mutex;
 use url::Url;
 
@@ -394,7 +394,7 @@ async fn strips_hop_by_hop_headers_from_the_response() {
 /// nothing, whatever its token says - told only, in our words, that staff
 /// membership is what it lacks.
 #[tokio::test]
-async fn a_session_owned_outside_macro_gets_nothing() {
+async fn a_session_owned_outside_conation_gets_nothing() {
     let service = EgressServiceImpl::new(
         StubSessions(Ok(SessionGrant {
             session: AgentSessionId::new(),

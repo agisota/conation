@@ -5,8 +5,8 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use macro_middleware::tracking::ClientIp;
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_middleware::tracking::ClientIp;
 use utoipa::ToSchema;
 
 use crate::{
@@ -59,7 +59,7 @@ pub async fn handler(
         .to_string();
 
     let (minute, daily) = ctx
-        .macro_cache_client
+        .conation_cache_client
         .get_resend_verify_email_rate_limits(&req.email)
         .await
         .map_err(|e| {
@@ -96,7 +96,7 @@ pub async fn handler(
     }
 
     // Check if the user profile already exists
-    match macro_db_client::user::get::get_user_id_by_email(ctx.db.clone(), &req.email).await {
+    match conation_db_client::user::get::get_user_id_by_email(ctx.db.clone(), &req.email).await {
         Ok(_) => {
             return Err((
                 StatusCode::BAD_REQUEST,
@@ -122,8 +122,8 @@ pub async fn handler(
     }
 
     // Check if that email is already an in progress email link
-    let link_id = if let Some((macro_user_id, link_id)) =
-        macro_db_client::in_progress_email_link::check_existing_in_progress_email_link(
+    let link_id = if let Some((conation_user_id, link_id)) =
+        conation_db_client::in_progress_email_link::check_existing_in_progress_email_link(
             &ctx.db, &req.email,
         )
         .await
@@ -135,8 +135,8 @@ pub async fn handler(
             )
                 .into_response()
         })? {
-        // if the macro_user_id matches the user_id, we count this as "regenerating" the link
-        if !macro_user_id.to_string().eq(&user_context.fusion_user_id) {
+        // if the conation_user_id matches the user_id, we count this as "regenerating" the link
+        if !conation_user_id.to_string().eq(&user_context.fusion_user_id) {
             return Err((
                 StatusCode::BAD_REQUEST,
                 Json(ErrorResponse {
@@ -148,7 +148,7 @@ pub async fn handler(
 
         link_id
     } else {
-        macro_db_client::macro_user_email_verification::upsert_macro_user_email_verification(
+        conation_db_client::conation_user_email_verification::upsert_conation_user_email_verification(
             &ctx.db,
             &user_context.fusion_user_id,
             &req.email,
@@ -164,7 +164,7 @@ pub async fn handler(
                 .into_response()
         })?;
 
-        macro_db_client::in_progress_email_link::insert_in_progress_email_link(
+        conation_db_client::in_progress_email_link::insert_in_progress_email_link(
             &ctx.db,
             &user_context.fusion_user_id,
             &req.email,
@@ -198,7 +198,7 @@ pub async fn handler(
         })?;
 
     // Increment the rate limits
-    ctx.macro_cache_client
+    ctx.conation_cache_client
         .increment_resend_verify_email_rate_limits(&req.email)
         .await
         .map_err(|e| {

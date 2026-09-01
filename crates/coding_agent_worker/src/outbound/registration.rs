@@ -128,7 +128,7 @@ pub fn state_path(config_path: &Path) -> PathBuf {
 pub(crate) struct FeedReconciler<S = FileFeedStateStore> {
     http: reqwest::Client,
     base: String,
-    macro_api: MacroApi,
+    conation_api: MacroApi,
     owner_user_id: String,
     public_url: String,
     state_store: S,
@@ -136,12 +136,12 @@ pub(crate) struct FeedReconciler<S = FileFeedStateStore> {
 
 impl FeedReconciler<FileFeedStateStore> {
     /// Build a reconciler from the daemon's config.
-    pub fn new(macro_api: &MacroApi, server: &Server, config_path: &Path) -> Self {
+    pub fn new(conation_api: &MacroApi, server: &Server, config_path: &Path) -> Self {
         Self {
             http: reqwest::Client::new(),
-            base: macro_api.storage_url.trim_end_matches('/').to_owned(),
-            macro_api: macro_api.clone(),
-            owner_user_id: macro_api.owner_user_id.clone(),
+            base: conation_api.storage_url.trim_end_matches('/').to_owned(),
+            conation_api: conation_api.clone(),
+            owner_user_id: conation_api.owner_user_id.clone(),
             public_url: server.public_url.clone(),
             state_store: FileFeedStateStore {
                 path: state_path(config_path),
@@ -153,8 +153,8 @@ impl FeedReconciler<FileFeedStateStore> {
 impl<S: FeedStateStore> FeedReconciler<S> {
     fn credentialed(&self, request: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
         request
-            .header(BOT_TOKEN_HEADER, &self.macro_api.bot_token)
-            .header(BOT_SCOPE_HEADER, &self.macro_api.bot_scope)
+            .header(BOT_TOKEN_HEADER, &self.conation_api.bot_token)
+            .header(BOT_SCOPE_HEADER, &self.conation_api.bot_scope)
             .header(BOT_ACTING_USER_HEADER, &self.owner_user_id)
     }
 

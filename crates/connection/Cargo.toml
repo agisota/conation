@@ -14,7 +14,7 @@ ports = ["entity_access/ports"]
 anyhow = { workspace = true }
 chrono = { workspace = true }
 entity_access = { path = "../entity_access", default-features = false }
-macro_user_id = { path = "../macro_user_id" }
+conation_user_id = { path = "../conation_user_id" }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }

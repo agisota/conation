@@ -1,6 +1,6 @@
 use super::*;
 use anyhow::Result;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use sqlx::{Pool, Postgres};
 
 const LINK_ID: &str = "00000000-0000-0000-0000-000000000801";
@@ -8,7 +8,7 @@ const ALICE_CONTACT_ID: &str = "00000000-0000-0000-0000-0000000c8001";
 const BOB_CONTACT_ID: &str = "00000000-0000-0000-0000-0000000c8002";
 fn make_contact(link_id: Uuid, email: &str, name: Option<&str>) -> Contact {
     Contact {
-        id: macro_uuid::generate_uuid_v7(),
+        id: conation_uuid::generate_uuid_v7(),
         link_id,
         email_address: Some(email.to_string()),
         name: name.map(|n| n.to_string()),

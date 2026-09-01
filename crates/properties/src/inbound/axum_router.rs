@@ -27,7 +27,7 @@ use axum::{
 use entity_access::domain::models::MemberTeamRole;
 use entity_access::domain::ports::EntityAccessService;
 use entity_access::inbound::axum_extractors::OptionalMacroUserTeamExtractorV2;
-use macro_authorization::{MacroAuthorizationService, MacroAuthorizationState};
+use conation_authorization::{MacroAuthorizationService, MacroAuthorizationState};
 
 use crate::domain::error::PropertiesErr;
 use crate::domain::service::PropertiesService;

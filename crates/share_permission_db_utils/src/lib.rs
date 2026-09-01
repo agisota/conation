@@ -1,7 +1,7 @@
 //! Small SQL helpers for `SharePermission` and `ChannelSharePermission` rows.
 
 use anyhow::Context;
-use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use models_permissions::share_permission::access_level::AccessLevel;
 use models_permissions::share_permission::{LinkShare, TeamLinkShareDefault};
 use sqlx::{Executor, PgPool, Postgres};
@@ -107,7 +107,7 @@ where
             .await?
         }
         "call" => {
-            let item_id = macro_uuid::string_to_uuid(item_id)?;
+            let item_id = conation_uuid::string_to_uuid(item_id)?;
             sqlx::query_scalar!(
                 r#"
                 SELECT share_permission_id as "share_permission_id!"
@@ -181,10 +181,10 @@ pub async fn ensure_thread_share_permission(pool: &PgPool, thread_id: &str) -> a
         return Ok(());
     }
 
-    let thread_uuid = macro_uuid::string_to_uuid(thread_id).context("invalid thread id")?;
+    let thread_uuid = conation_uuid::string_to_uuid(thread_id).context("invalid thread id")?;
     let owner_id = sqlx::query_scalar!(
         r#"
-        SELECT l.macro_id as "macro_id!"
+        SELECT l.conation_id as "conation_id!"
         FROM email_threads t
         JOIN email_links l ON t.link_id = l.id
         WHERE t.id = $1
@@ -193,7 +193,7 @@ pub async fn ensure_thread_share_permission(pool: &PgPool, thread_id: &str) -> a
     )
     .fetch_optional(pool)
     .await
-    .with_context(|| format!("failed to fetch macro_id for thread ID {thread_id}"))?
+    .with_context(|| format!("failed to fetch conation_id for thread ID {thread_id}"))?
     .context("thread not found")?;
     let owner_id = MacroUserIdStr::parse_from_str(&owner_id)
         .context("invalid thread owner macro user id")?

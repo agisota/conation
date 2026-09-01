@@ -18,8 +18,8 @@ use entity_access::domain::models::{
     OwnerAccessLevel, ViewAccessLevel,
 };
 use entity_access_management::domain::ports::EntityAccessManagementService;
-use macro_event_broker::{MacroEventBroker, NoopMacroEventBroker};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_event_broker::{MacroEventBroker, NoopMacroEventBroker};
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::EntityType;
 use models_permissions::share_permission::SharePermissionV2;
 use std::sync::Arc;

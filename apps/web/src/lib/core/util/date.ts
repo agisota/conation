@@ -29,14 +29,18 @@ interface FormatDateOptions {
  */
 export const formatTime = (
   date: DateValue | null | undefined,
-  timeZone?: string
+  timeZone?: string,
+  locale?: string
 ): string => {
   if (!date) return '';
   const d = date instanceof Date ? date : toDate(date);
-  return d.toLocaleTimeString('en-US', {
+  // Conation: locale-aware, default to system locale (undefined) which respects ru-RU vs en-US
+  // Keep hour12 for en, but ru uses 24h via Intl automatically when locale is ru-RU.
+  const loc = locale ?? (typeof navigator !== 'undefined' ? navigator.language : undefined);
+  return d.toLocaleTimeString(loc, {
     hour: 'numeric',
     minute: '2-digit',
-    hour12: true,
+    hour12: loc?.startsWith('ru') ? false : true,
     timeZone,
   });
 };
@@ -65,6 +69,9 @@ export const formatDate = (
   }
 
   if (isYesterday(date, timeZoneOpts)) {
+    // locale-aware via html lang
+    const isRu = typeof document !== 'undefined' && document.documentElement.lang === 'ru';
+    if (isRu) return `Вчера в ${time}`;
     return `${shortWeekday ? 'Yest' : 'Yesterday'} at ${time}`;
   }
 
@@ -90,19 +97,22 @@ export const formatDate = (
  * @param date - Date object or Unix timestamp in seconds
  * @returns Formatted date string
  */
-export const formatEmailDate = (date: DateValue) => {
+export const formatEmailDate = (date: DateValue, locale?: string) => {
   const d = toDate(date);
-  const weekday = d.toLocaleDateString('en-US', { weekday: 'short' });
-  const month = d.toLocaleDateString('en-US', { month: 'short' });
+  const loc = locale ?? (typeof document !== 'undefined' ? document.documentElement.lang : undefined) ?? 'ru-RU';
+  const weekday = d.toLocaleDateString(loc, { weekday: 'short' });
+  const month = d.toLocaleDateString(loc, { month: 'short' });
   const day = d.getDate();
   const year = d.getFullYear();
-  const time = d.toLocaleTimeString('en-US', {
+  const time = d.toLocaleTimeString(loc, {
     hour: 'numeric',
     minute: '2-digit',
-    hour12: true,
+    hour12: loc.startsWith('ru') ? false : true,
   });
-
-  return `${weekday}, ${month} ${day}, ${year} at ${time}`;
+  const isRu = loc.startsWith('ru');
+  return isRu
+    ? `${weekday}, ${day} ${month} ${year} в ${time}`
+    : `${weekday}, ${month} ${day}, ${year} at ${time}`;
 };
 
 /**

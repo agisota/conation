@@ -160,7 +160,7 @@ import { isSourceDSS, isSourceSyncService } from '@core/util/source';
 import { bufToString } from '@core/util/string';
 import { handleFileFolderDrop } from '@core/util/upload';
 import { type EntityDragEvent, isEntityDragEvent } from '@entity';
-import type { LoroManager } from '@macro-inc/collaboration/collab/manager';
+import type { LoroManager } from '@conation/collaboration/collab/manager';
 import {
   $isInlineSearchNode,
   AwaitNode,
@@ -169,7 +169,7 @@ import {
   InlineSearchNode,
   type PeerIdValidator,
   peerIdPlugin,
-} from '@macro-inc/lexical-core';
+} from '@conation/lexical-core';
 import WarningIcon from '@phosphor/warning.svg';
 import { useDocTags } from '@property/tags';
 import { EntityType } from '@service-properties/generated/schemas/entityType';

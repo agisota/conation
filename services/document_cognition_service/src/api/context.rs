@@ -17,8 +17,8 @@ use document_storage_service_client::DocumentStorageServiceClient;
 use documents::inbound::attachment::DocumentAttachmentService;
 use email::inbound::attachment::EmailAttachmentService;
 use entity_access::{domain::service::EntityAccessServiceImpl, outbound::PgAccessRepository};
-use macro_auth::InternalApiKey;
-use macro_authorization::{
+use conation_auth::InternalApiKey;
+use conation_authorization::{
     MacroAuthJwtValidator, MacroAuthorizationServiceImpl, MacroAuthorizationState,
 };
 use notification::domain::service::SqsNotificationIngress;
@@ -60,8 +60,8 @@ pub type DcsAttachmentProvider = AttachmentProvider<
 >;
 
 /// Kafka-backed event broker with publish tasks tracked for graceful shutdown.
-pub type DcsEventBroker = macro_event_broker::MacroEventBrokerService<
-    macro_event_broker::KafkaEventPublisher,
+pub type DcsEventBroker = conation_event_broker::MacroEventBrokerService<
+    conation_event_broker::KafkaEventPublisher,
     tokio_util::task::TaskTracker,
 >;
 
@@ -160,7 +160,7 @@ pub struct ApiContext {
     pub import_service: Arc<DcsImportService>,
     pub onboarding_service: Arc<DcsOnboardingService>,
     /// Kafka-backed macro event broker for publishing domain events.
-    pub macro_event_broker: DcsEventBroker,
+    pub conation_event_broker: DcsEventBroker,
 }
 
 impl FromRef<ApiContext>

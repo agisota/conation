@@ -1,6 +1,6 @@
 #[allow(unused_imports)]
 use super::*;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 
 #[test]
 fn test_init() {

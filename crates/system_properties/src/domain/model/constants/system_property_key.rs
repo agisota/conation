@@ -14,7 +14,7 @@ use uuid::Uuid;
 /// - `display_name()` method
 /// - `from_uuid()` method
 /// - `all()` iterator
-macro_rules! define_system_properties {
+conation_rules! define_system_properties {
     (
         $(
             $(#[$meta:meta])*

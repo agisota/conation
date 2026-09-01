@@ -6,7 +6,7 @@ use aws_sdk_sesv2 as ses;
 #[allow(unused_imports)]
 use mockall::automock;
 
-macro_env_var::maybe_env_vars! {
+conation_env_var::maybe_env_vars! {
     struct SmtpHost;
     struct SmtpPort;
 }

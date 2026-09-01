@@ -1,5 +1,5 @@
 {
-	"name": "@macro-inc/observability",
+	"name": "@conation/observability",
 	"version": "0.0.1",
 	"private": true,
 	"type": "module",

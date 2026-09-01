@@ -11,7 +11,7 @@ import {
   type TableCellNode,
   type TableNode,
 } from '@lexical/table';
-import { SupportedNodeTypes } from '@macro-inc/lexical-core/node-list';
+import { SupportedNodeTypes } from '@conation/lexical-core/node-list';
 import {
   $createParagraphNode,
   $createTextNode,

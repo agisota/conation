@@ -3,9 +3,9 @@ use axum::Json;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use macro_authorization::{InternalOnly, MacroAuthorizationExtractor};
-use macro_user_id::cowlike::CowLike;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
+use conation_user_id::cowlike::CowLike;
+use conation_user_id::user_id::MacroUserIdStr;
 use model::response::ErrorResponse;
 use models_email::service::thread::GetThreadOwnerResponse;
 use uuid::Uuid;
@@ -16,7 +16,7 @@ pub async fn handler(
     _: MacroAuthorizationExtractor<AuthorizationService, InternalOnly>,
     Path(thread_id): Path<Uuid>,
 ) -> Result<Response, Response> {
-    let user_id = email_db_client::threads::get::get_macro_id_from_thread_id(&ctx.db, thread_id)
+    let user_id = email_db_client::threads::get::get_conation_id_from_thread_id(&ctx.db, thread_id)
         .await
         .map_err(|e| {
             tracing::error!(error=?e, "unable to get owner for thread");

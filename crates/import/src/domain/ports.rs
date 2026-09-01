@@ -1,7 +1,7 @@
 //! Ports (traits) the import domain depends on.
 
 use super::models::{ImportEntity, ImportRun, ImportSource, ImportStatus, Initiator, RunStatus};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use thiserror::Error;
 use uuid::Uuid;
 

@@ -4,7 +4,7 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::{Json, extract};
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::response::ErrorResponse;
 use sqlx::types::Uuid;
 use std::collections::HashSet;
@@ -98,7 +98,7 @@ pub async fn get_thread_messages_handler(
 ) -> Result<Response, GetThreadError> {
     let p = process_get_thread_params(&query_params)?;
 
-    let link_ids: HashSet<Uuid> = email_db_client::links::get::fetch_inboxes_for_macro_id(
+    let link_ids: HashSet<Uuid> = email_db_client::links::get::fetch_inboxes_for_conation_id(
         &ctx.db,
         &authorization.authorization.user.user_context.user_id,
     )

@@ -4,7 +4,7 @@ import {
   type ThemeColorParams,
 } from '@core/email';
 import { interceptMailtoLinks } from '@core/util/interceptMailtoLinks';
-import type { HtmlRenderDecoratorProps } from '@macro-inc/lexical-core/nodes/HtmlRenderNode';
+import type { HtmlRenderDecoratorProps } from '@conation/lexical-core/nodes/HtmlRenderNode';
 import { themeReactive } from '@theme/signals/themeReactive';
 import { themeUpdate } from '@theme/signals/themeSignals';
 import {

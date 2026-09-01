@@ -11,9 +11,9 @@ use axum::{
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Json, Response},
 };
-use macro_user_id::email::Email;
-use macro_user_id::user_id::MacroUserIdStr;
-use macro_user_id::{cowlike::CowLike, lowercased::Lowercase};
+use conation_user_id::email::Email;
+use conation_user_id::user_id::MacroUserIdStr;
+use conation_user_id::{cowlike::CowLike, lowercased::Lowercase};
 use miniserde::json::Value as JsonValue;
 use model::response::ErrorResponse;
 use referral::domain::ports::ReferralService;
@@ -273,7 +273,7 @@ async fn handle_payment_event(
     );
 
     if let Some(team_id) = subscription.metadata.get("team_id") {
-        let team_id = macro_uuid::string_to_uuid(team_id)?;
+        let team_id = conation_uuid::string_to_uuid(team_id)?;
         return handle_team_subscription_event(
             ctx,
             subscription_id,
@@ -458,7 +458,7 @@ async fn handle_customer_subscription_event(
     // Get subscription metadata, if this is a team subscription then we need to handle it
     // separately.
     if let Some(team_id) = subscription.metadata.get("team_id") {
-        let team_id = macro_uuid::string_to_uuid(team_id)?;
+        let team_id = conation_uuid::string_to_uuid(team_id)?;
         // We need to handle team subscriptions differently than regular subscriptions.
         return handle_team_subscription_event(
             ctx,
@@ -539,8 +539,8 @@ async fn handle_customer_subscription_event(
     }
 
     if subscription_status == "trialing" {
-        // set has_trialed in macro_user table
-        macro_db_client::user::patch::update_macro_user_has_trialed(&ctx.db, &email, true).await?;
+        // set has_trialed in conation_user table
+        conation_db_client::user::patch::update_conation_user_has_trialed(&ctx.db, &email, true).await?;
 
         // Add has_trialed: true to stripe customer metadata
         let mut params = stripe::UpdateCustomer::new();
@@ -606,22 +606,22 @@ async fn handle_customer_subscription_event(
 #[tracing::instrument(skip(ctx, email), err)]
 async fn check_and_process_referral(
     ctx: &ApiContext,
-    email: &Email<macro_user_id::lowercased::Lowercase<'_>>,
+    email: &Email<conation_user_id::lowercased::Lowercase<'_>>,
 ) -> anyhow::Result<()> {
-    let (macro_user_id, user_id_str) =
-        macro_db_client::user::get::get_user_macro_user_id_and_id_by_email(&ctx.db, email.as_ref())
+    let (conation_user_id, user_id_str) =
+        conation_db_client::user::get::get_user_conation_user_id_and_id_by_email(&ctx.db, email.as_ref())
             .await?;
 
     let Some(referral_code) = ctx
         .referral_service
-        .get_referred_by(&macro_user_id)
+        .get_referred_by(&conation_user_id)
         .await
         .map_err(|e| anyhow::anyhow!(e))?
     else {
         return Ok(());
     };
 
-    let user_id = macro_user_id::user_id::MacroUserIdStr::parse_from_str(&user_id_str)
+    let user_id = conation_user_id::user_id::MacroUserIdStr::parse_from_str(&user_id_str)
         .expect("user id from db should be valid")
         .into_owned();
 
@@ -648,8 +648,8 @@ async fn handle_team_subscription_event<'a>(
     tracing::trace!("handling team subscription");
 
     if subscription_status == "trialing" {
-        // set has_trialed in macro_user table
-        macro_db_client::user::patch::update_macro_user_has_trialed(&ctx.db, email, true).await?;
+        // set has_trialed in conation_user table
+        conation_db_client::user::patch::update_conation_user_has_trialed(&ctx.db, email, true).await?;
     }
 
     let subscription_id = stripe::SubscriptionId::from_str(subscription_id).unwrap();

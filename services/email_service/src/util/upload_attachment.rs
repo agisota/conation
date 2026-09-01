@@ -3,8 +3,8 @@ use base64::Engine;
 use base64::engine::general_purpose::STANDARD;
 use document_storage_service_client::DocumentStorageServiceClient;
 use email_api_client::domain::models::EmailApiError;
-use macro_user_id::cowlike::ArcCowStr;
-use macro_user_id::user_id::MacroUserId;
+use conation_user_id::cowlike::ArcCowStr;
+use conation_user_id::user_id::MacroUserId;
 use model::document::response::{CreateDocumentRequest, CreateDocumentResponse};
 use models_email::service::attachment::{
     AttachmentSfs, AttachmentUploadArgs, AttachmentUploadMetadata,
@@ -106,7 +106,7 @@ async fn upload_media_attachment(
         .map_err(|e| UploadAttachmentError::SfsUploadFailed(e.to_string()))?;
 
     // Store metadata in email_attachments_sfs table
-    let attachment_sfs_id = macro_uuid::generate_uuid_v7();
+    let attachment_sfs_id = conation_uuid::generate_uuid_v7();
     let sfs_id = Uuid::parse_str(&sfs_response.id).map_err(|e| {
         UploadAttachmentError::ParseError(format!("Failed to parse SFS ID as UUID: {}", e))
     })?;
@@ -273,7 +273,7 @@ async fn create_dss_document_record(
     };
 
     dss_client
-        .create_document_internal(request, link.macro_id.0.as_ref())
+        .create_document_internal(request, link.conation_id.0.as_ref())
         .await
         .map_err(|e| UploadAttachmentError::DssCreateFailed(e.to_string()))
 }

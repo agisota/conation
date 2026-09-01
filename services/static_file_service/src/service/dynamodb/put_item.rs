@@ -28,7 +28,7 @@ mod tests {
 
     // Helper function to create a DynamoDB client for testing
     async fn create_test_client() -> Result<Client> {
-        let aws_config = macro_aws_config::get_macro_aws_config().await;
+        let aws_config = conation_aws_config::get_conation_aws_config().await;
         let client = Client::new(&aws_config);
         Ok(client)
     }

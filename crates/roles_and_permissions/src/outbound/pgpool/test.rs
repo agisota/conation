@@ -1,7 +1,7 @@
 //! Tests for the pgpool implementation for roles and permissions
 
 use super::*;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use sqlx::{Pool, Postgres};
 
 #[sqlx::test(
@@ -9,15 +9,15 @@ use sqlx::{Pool, Postgres};
     fixtures(path = "../../../fixtures", scripts("users"))
 )]
 async fn test_get_user_id_from_email(pool: Pool<Postgres>) -> anyhow::Result<()> {
-    let macro_db = MacroDB::new(pool);
+    let conation_db = MacroDB::new(pool);
 
     let email = Email::parse_from_str("UsEr@uSeR.com")?.lowercase();
 
-    let user_id = macro_db.get_user_id_from_email(&email).await?;
+    let user_id = conation_db.get_user_id_from_email(&email).await?;
 
     assert_eq!(user_id.as_ref(), "macro|user@user.com");
 
-    let result = macro_db
+    let result = conation_db
         .get_user_id_from_email(&Email::parse_from_str("bad@user.com")?.lowercase())
         .await
         .err()
@@ -36,18 +36,18 @@ async fn test_get_user_id_from_email(pool: Pool<Postgres>) -> anyhow::Result<()>
     fixtures(path = "../../../fixtures", scripts("users"))
 )]
 async fn test_add_roles_to_user(pool: Pool<Postgres>) -> anyhow::Result<()> {
-    let macro_db = MacroDB::new(pool);
+    let conation_db = MacroDB::new(pool);
 
     let roles = vec!["professional_subscriber".to_string()];
 
-    macro_db
+    conation_db
         .add_roles_to_user(
             &MacroUserIdStr::parse_from_str("macro|user2@user.com")?,
             &roles,
         )
         .await?;
 
-    let permissions = macro_db
+    let permissions = conation_db
         .get_user_permissions(&MacroUserIdStr::parse_from_str("macro|user2@user.com")?)
         .await?;
 
@@ -60,14 +60,14 @@ async fn test_add_roles_to_user(pool: Pool<Postgres>) -> anyhow::Result<()> {
     assert!(permissions.contains(&"read:professional_features".to_string()));
 
     // add role to user that already has role
-    macro_db
+    conation_db
         .add_roles_to_user(
             &MacroUserIdStr::parse_from_str("macro|user@user.com")?,
             &roles,
         )
         .await?;
 
-    let permissions = macro_db
+    let permissions = conation_db
         .get_user_permissions(&MacroUserIdStr::parse_from_str("macro|user@user.com")?)
         .await?;
 
@@ -79,7 +79,7 @@ async fn test_add_roles_to_user(pool: Pool<Postgres>) -> anyhow::Result<()> {
     assert_eq!(permissions.len(), 3);
 
     // add role to user that doesn't exist
-    let err = macro_db
+    let err = conation_db
         .add_roles_to_user(
             &MacroUserIdStr::parse_from_str("macro|user3@user.com")?,
             &roles,
@@ -98,19 +98,19 @@ async fn test_add_roles_to_user(pool: Pool<Postgres>) -> anyhow::Result<()> {
     fixtures(path = "../../../fixtures", scripts("users"))
 )]
 async fn test_remove_roles_from_user(pool: Pool<Postgres>) -> anyhow::Result<()> {
-    let macro_db = MacroDB::new(pool);
+    let conation_db = MacroDB::new(pool);
 
     let roles = vec!["professional_subscriber".to_string()];
 
     // Remove role
-    macro_db
+    conation_db
         .remove_roles_from_user(
             &MacroUserIdStr::parse_from_str("macro|user@user.com")?,
             &roles,
         )
         .await?;
 
-    let permissions = macro_db
+    let permissions = conation_db
         .get_user_permissions(&MacroUserIdStr::parse_from_str("macro|user@user.com")?)
         .await?;
 
@@ -123,14 +123,14 @@ async fn test_remove_roles_from_user(pool: Pool<Postgres>) -> anyhow::Result<()>
     assert!(permissions.contains(&"read:professional_features".to_string()));
 
     // Remove role that doesn't exist
-    macro_db
+    conation_db
         .remove_roles_from_user(
             &MacroUserIdStr::parse_from_str("macro|user2@user.com")?,
             &roles,
         )
         .await?;
 
-    let permissions = macro_db
+    let permissions = conation_db
         .get_user_permissions(&MacroUserIdStr::parse_from_str("macro|user2@user.com")?)
         .await?;
 
@@ -150,11 +150,11 @@ async fn test_remove_roles_from_user(pool: Pool<Postgres>) -> anyhow::Result<()>
     fixtures(path = "../../../fixtures", scripts("users"))
 )]
 async fn test_get_user_roles(pool: Pool<Postgres>) -> anyhow::Result<()> {
-    let macro_db = MacroDB::new(pool);
+    let conation_db = MacroDB::new(pool);
 
     // user@user.com has professional_subscriber and corporate
     let roles = UserRolesAndPermissionsRepository::get_user_roles(
-        &macro_db,
+        &conation_db,
         &MacroUserIdStr::parse_from_str("macro|user@user.com")?,
     )
     .await?;
@@ -165,7 +165,7 @@ async fn test_get_user_roles(pool: Pool<Postgres>) -> anyhow::Result<()> {
 
     // user2@user.com has only corporate
     let roles = UserRolesAndPermissionsRepository::get_user_roles(
-        &macro_db,
+        &conation_db,
         &MacroUserIdStr::parse_from_str("macro|user2@user.com")?,
     )
     .await?;
@@ -175,7 +175,7 @@ async fn test_get_user_roles(pool: Pool<Postgres>) -> anyhow::Result<()> {
 
     // user that doesn't exist returns empty set
     let roles = UserRolesAndPermissionsRepository::get_user_roles(
-        &macro_db,
+        &conation_db,
         &MacroUserIdStr::parse_from_str("macro|user3@user.com")?,
     )
     .await?;
@@ -190,10 +190,10 @@ async fn test_get_user_roles(pool: Pool<Postgres>) -> anyhow::Result<()> {
     fixtures(path = "../../../fixtures", scripts("users"))
 )]
 async fn test_get_user_roles_after_add_and_remove(pool: Pool<Postgres>) -> anyhow::Result<()> {
-    let macro_db = MacroDB::new(pool);
+    let conation_db = MacroDB::new(pool);
 
     // Add a role and verify it shows up
-    macro_db
+    conation_db
         .add_roles_to_user(
             &MacroUserIdStr::parse_from_str("macro|user2@user.com")?,
             &["self_serve".to_string()],
@@ -201,7 +201,7 @@ async fn test_get_user_roles_after_add_and_remove(pool: Pool<Postgres>) -> anyho
         .await?;
 
     let roles = UserRolesAndPermissionsRepository::get_user_roles(
-        &macro_db,
+        &conation_db,
         &MacroUserIdStr::parse_from_str("macro|user2@user.com")?,
     )
     .await?;
@@ -211,7 +211,7 @@ async fn test_get_user_roles_after_add_and_remove(pool: Pool<Postgres>) -> anyho
     assert!(roles.contains(&RoleId::SelfServe));
 
     // Remove the role and verify it's gone
-    macro_db
+    conation_db
         .remove_roles_from_user(
             &MacroUserIdStr::parse_from_str("macro|user2@user.com")?,
             &["self_serve".to_string()],
@@ -219,7 +219,7 @@ async fn test_get_user_roles_after_add_and_remove(pool: Pool<Postgres>) -> anyho
         .await?;
 
     let roles = UserRolesAndPermissionsRepository::get_user_roles(
-        &macro_db,
+        &conation_db,
         &MacroUserIdStr::parse_from_str("macro|user2@user.com")?,
     )
     .await?;

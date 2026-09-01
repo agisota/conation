@@ -2,7 +2,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -112,8 +112,8 @@ async fn load_participants_and_names(
     let name_rows = sqlx::query!(
         r#"
         SELECT u.id as user_profile_id, mui.first_name, mui.last_name
-        FROM macro_user_info mui
-        JOIN "User" u ON mui.macro_user_id = u.macro_user_id
+        FROM conation_user_info mui
+        JOIN "User" u ON mui.conation_user_id = u.conation_user_id
         WHERE u.id = ANY($1)
         "#,
         &user_id_strings

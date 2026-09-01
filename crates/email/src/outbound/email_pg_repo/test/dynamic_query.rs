@@ -1,5 +1,5 @@
 use super::*;
-use macro_user_id::cowlike::CowLike;
+use conation_user_id::cowlike::CowLike;
 
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
@@ -1923,7 +1923,7 @@ async fn test_shared_only_returns_correct_owner_id(pool: Pool<Postgres>) -> anyh
     )
     .await?;
 
-    // All shared threads should have user2's macro_id as owner
+    // All shared threads should have user2's conation_id as owner
     for result in &results {
         assert_eq!(
             result.owner_id.as_str(),

@@ -12,10 +12,10 @@ use axum::{
     routing::post,
 };
 use chrono::{DateTime, Utc};
-use macro_authorization::{
+use conation_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
 };
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use utoipa::ToSchema;
@@ -107,7 +107,7 @@ fn admin_rejection<Auth>(
     if user
         .authorization
         .user
-        .macro_user_id
+        .conation_user_id
         .email_str()
         .ends_with(ADMIN_EMAIL_SUFFIX)
     {

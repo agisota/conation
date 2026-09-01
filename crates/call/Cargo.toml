@@ -9,7 +9,7 @@ ai_tools = ["dep:ai_toolset", "dep:async-trait", "dep:schemars", "ports"]
 default = ["ai_tools", "inbound", "outbound", "ports"]
 inbound = [
   "dep:axum",
-  "dep:macro_authorization",
+  "dep:conation_authorization",
   "dep:model-error-response",
   "dep:utoipa",
   "entity_access/inbound",
@@ -26,7 +26,7 @@ outbound = [
   "dep:futures",
   "dep:livekit-api",
   "dep:livekit-protocol",
-  "dep:macro_aws_config",
+  "dep:conation_aws_config",
   "dep:pgvector",
   "dep:sqlx",
   "dep:urlencoding",
@@ -59,16 +59,16 @@ futures = { workspace = true, optional = true }
 item_filters = { path = "../item_filters" }
 livekit-api = { workspace = true, optional = true }
 livekit-protocol = { workspace = true, optional = true }
-macro_authorization = { path = "../macro_authorization", optional = true, default-features = false, features = [
+conation_authorization = { path = "../conation_authorization", optional = true, default-features = false, features = [
   "axum",
 ] }
-macro_aws_config = { path = "../macro_aws_config", optional = true, features = [
+conation_aws_config = { path = "../conation_aws_config", optional = true, features = [
   "s3",
 ] }
-macro_event_broker = { path = "../macro_event_broker", default-features = false }
-macro_event_topics = { path = "../macro_event_topics" }
-macro_user_id = { path = "../macro_user_id" }
-macro_uuid = { path = "../macro_uuid" }
+conation_event_broker = { path = "../conation_event_broker", default-features = false }
+conation_event_topics = { path = "../conation_event_topics" }
+conation_user_id = { path = "../conation_user_id" }
+conation_uuid = { path = "../conation_uuid" }
 model-entity = { path = "../model-entity" }
 model-error-response = { path = "../model-error-response", optional = true }
 models_pagination = { path = "../models_pagination" }
@@ -89,7 +89,7 @@ uuid = { workspace = true }
 workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
-macro_db_migrator = { path = "../macro_db_migrator" }
+conation_db_migrator = { path = "../conation_db_migrator" }
 mockall = { workspace = true }
 sqlx = { workspace = true }
 tokio = { workspace = true }

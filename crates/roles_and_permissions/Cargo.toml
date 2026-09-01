@@ -11,7 +11,7 @@ ports = []
 
 [dependencies]
 anyhow = { workspace = true }
-macro_user_id = { path = "../macro_user_id" }
+conation_user_id = { path = "../conation_user_id" }
 non_empty = { path = "../non_empty" }
 sqlx = { workspace = true, optional = true }
 thiserror = { workspace = true }
@@ -19,5 +19,5 @@ tracing = { workspace = true }
 workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
-macro_db_migrator = { path = "../macro_db_migrator" }
+conation_db_migrator = { path = "../conation_db_migrator" }
 tokio = { workspace = true }

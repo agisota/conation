@@ -14,7 +14,7 @@ use crate::{
         port::SystemPropertiesRepository,
     },
 };
-use macro_uuid::generate_uuid_v7;
+use conation_uuid::generate_uuid_v7;
 
 /// PostgreSQL implementation of SystemPropertiesRepository.
 #[derive(Clone)]

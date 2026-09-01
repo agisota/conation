@@ -1,6 +1,6 @@
 //! Domain-owned project models.
 
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model::folder::FileSystemNode;
 use model::project::Project;
 use models_permissions::share_permission::{SharePermissionV2, UpdateSharePermissionRequestV2};

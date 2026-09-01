@@ -7,7 +7,7 @@ use super::models::CalendarAttendee;
 /// These are the attendee rows the user may RSVP as, and the rows a viewer
 /// sees marked as `(you)`. The set is non-empty, lowercased, and
 /// deduplicated. Constructors only accept addresses from inboxes the
-/// requester owns (`email_links.macro_id = requester`), so a calendar
+/// requester owns (`email_links.conation_id = requester`), so a calendar
 /// owner's address cannot enter this type unless the clicker owns that
 /// inbox too.
 #[derive(Clone, Debug, PartialEq, Eq)]

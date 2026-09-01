@@ -6,7 +6,7 @@ use axum::Json;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal, UserOrInternalCaller};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal, UserOrInternalCaller};
 use model::response::ErrorResponse;
 use std::sync::Arc;
 use strum_macros::AsRefStr;
@@ -95,7 +95,7 @@ pub async fn handle_bulk_delete_file(
             Some(metadata) => {
                 // Skip owner check for internal requests
                 if !is_internal
-                    && metadata.owner_id != user.authorization.user.macro_user_id.as_ref()
+                    && metadata.owner_id != user.authorization.user.conation_user_id.as_ref()
                 {
                     tracing::warn!(file_id = file_id, "delete requested by non-owner");
                     results.push(DeleteResult {

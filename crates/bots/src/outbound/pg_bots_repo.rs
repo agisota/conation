@@ -14,7 +14,7 @@ use crate::domain::{
 use anyhow::Context;
 use bot_token::{HashedBotToken, hash_token};
 use chrono::{DateTime, Utc};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -202,7 +202,7 @@ impl BotRepo for PgBotsRepo {
         created_by: MacroUserIdStr<'static>,
         req: CreateBotRequest,
     ) -> Result<Bot, Self::Err> {
-        let bot_id = BotId::new_from_uuid(macro_uuid::generate_uuid_v7());
+        let bot_id = BotId::new_from_uuid(conation_uuid::generate_uuid_v7());
         let (owner_user_id, team_id) = owner_columns(owner);
         let row = sqlx::query_as!(
             BotRow,
@@ -252,8 +252,8 @@ impl BotRepo for PgBotsRepo {
         token: HashedBotToken,
         req: CreateChannelScopedBotRequest,
     ) -> Result<(Bot, BotToken), Self::Err> {
-        let bot_id = BotId::new_from_uuid(macro_uuid::generate_uuid_v7());
-        let token_id = macro_uuid::generate_uuid_v7();
+        let bot_id = BotId::new_from_uuid(conation_uuid::generate_uuid_v7());
+        let token_id = conation_uuid::generate_uuid_v7();
         let (owner_user_id, team_id) = owner_columns(owner);
         let mut tx = self
             .pool
@@ -668,7 +668,7 @@ impl BotRepo for PgBotsRepo {
         token: HashedBotToken,
         req: CreateBotTokenRequest,
     ) -> Result<BotToken, Self::Err> {
-        let token_id = macro_uuid::generate_uuid_v7();
+        let token_id = conation_uuid::generate_uuid_v7();
         let row = sqlx::query_as!(
             BotTokenRow,
             r#"

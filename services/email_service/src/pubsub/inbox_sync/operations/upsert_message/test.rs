@@ -195,7 +195,7 @@ fn suppresses_existing_immutable_non_drafts() {
 }
 
 #[test]
-fn macro_staff_gets_all_inbox_new_email_policy() {
+fn conation_staff_gets_all_inbox_new_email_policy() {
     assert_eq!(
         new_email_notify_policy(&id("macro|teo@macro.com")),
         NewEmailNotifyPolicy::AllInbox
@@ -203,7 +203,7 @@ fn macro_staff_gets_all_inbox_new_email_policy() {
 }
 
 #[test]
-fn macro_staff_plus_alias_gets_all_inbox_new_email_policy() {
+fn conation_staff_plus_alias_gets_all_inbox_new_email_policy() {
     assert_eq!(
         new_email_notify_policy(&id("macro|teo+notify@macro.com")),
         NewEmailNotifyPolicy::AllInbox

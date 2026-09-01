@@ -1,7 +1,7 @@
 //! Outbound adapter for the AI editing worker.
 
 use crate::domain::ports::editing::{EditResult, EditUsage, EditingWorkerService};
-use macro_sync_service_jwt::DocumentPermissionToken;
+use conation_sync_service_jwt::DocumentPermissionToken;
 use reqwest::Client;
 use std::sync::Arc;
 
@@ -79,7 +79,7 @@ impl EditingWorkerService for ReqwestEditingWorkerClient {
         // Propagate the current trace so the worker's spans join this
         // service's trace instead of rooting their own.
         let mut headers = reqwest::header::HeaderMap::new();
-        macro_tower_layers::inject_trace_headers(&mut headers);
+        conation_tower_layers::inject_trace_headers(&mut headers);
 
         let edit_resp = self
             .client
@@ -130,7 +130,7 @@ impl EditingWorkerService for ReqwestEditingWorkerClient {
         };
 
         let mut headers = reqwest::header::HeaderMap::new();
-        macro_tower_layers::inject_trace_headers(&mut headers);
+        conation_tower_layers::inject_trace_headers(&mut headers);
 
         let resp = self
             .client

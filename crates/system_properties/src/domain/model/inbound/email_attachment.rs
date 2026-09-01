@@ -1,8 +1,8 @@
 //! Email attachment property types.
 
 use super::source_entity::SourceEntity;
-use macro_user_id::lowercased::Lowercase;
-use macro_user_id::user_id::MacroUserId;
+use conation_user_id::lowercased::Lowercase;
+use conation_user_id::user_id::MacroUserId;
 
 /// Email attachment properties to set on an entity.
 #[derive(Debug, Clone, Default)]

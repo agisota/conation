@@ -7,8 +7,8 @@ use axum::{
         header::{HeaderValue, WWW_AUTHENTICATE},
     },
 };
-use macro_auth::middleware::decode_jwt::{JwtToken, JwtValidationArgs, handler};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_auth::middleware::decode_jwt::{JwtToken, JwtValidationArgs, handler};
+use conation_user_id::user_id::MacroUserIdStr;
 
 /// Validated Macro JWT from the `Authorization: Bearer` header.
 #[derive(Clone)]
@@ -95,8 +95,8 @@ pub async fn validate_bearer(
     };
 
     let user_id = match jwt_token {
-        JwtToken::MacroAccessToken(token) => token.macro_user_id.clone(),
-        JwtToken::MacroApiToken(token) => token.macro_user_id.clone(),
+        JwtToken::MacroAccessToken(token) => token.conation_user_id.clone(),
+        JwtToken::MacroApiToken(token) => token.conation_user_id.clone(),
     };
 
     let user_id = match MacroUserIdStr::try_from(user_id) {

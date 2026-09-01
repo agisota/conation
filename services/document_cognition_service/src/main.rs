@@ -27,13 +27,13 @@ use foreign_entity::{
 };
 use frecency::domain::services::FrecencyQueryServiceImpl;
 use frecency::outbound::postgres::FrecencyPgStorage;
-use macro_auth::middleware::decode_jwt::JwtValidationArgs;
-use macro_authorization::{
+use conation_auth::middleware::decode_jwt::JwtValidationArgs;
+use conation_authorization::{
     InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationServiceImpl,
     MacroAuthorizationState,
 };
-use macro_entrypoint::MacroEntrypoint;
-use macro_service_urls::{
+use conation_entrypoint::MacroEntrypoint;
+use conation_service_urls::{
     ConnectionGatewayUrl, DocumentStorageServiceUrl, EmailServiceUrl, LexicalServiceUrl,
     StaticFileServiceUrl, SyncServiceUrl,
 };
@@ -62,7 +62,7 @@ mod service;
 async fn main() -> anyhow::Result<()> {
     MacroEntrypoint::default().init();
 
-    let aws_config = macro_aws_config::get_macro_aws_config().await;
+    let aws_config = conation_aws_config::get_conation_aws_config().await;
 
     let secretsmanager_client = secretsmanager_client::SecretsManager::new(
         aws_sdk_secretsmanager::Client::new(&aws_config),
@@ -99,12 +99,12 @@ async fn main() -> anyhow::Result<()> {
     let dynamodb_client = aws_sdk_dynamodb::Client::new(&aws_config);
     let queue_aws_client = aws_sdk_sqs::Client::new(&aws_config);
 
-    let document_text_extractor_queue = macro_queues::DocumentTextExtractorQueue::new();
-    let chat_delete_queue = macro_queues::ChatDeleteQueue::new();
-    let email_scheduled_queue = macro_queues::EmailScheduledQueue::new();
-    let gmail_ops_queue = macro_queues::GmailOpsQueue::new();
-    let ai_projection_queue = macro_queues::AiProjectionQueue::new();
-    let notification_queue = macro_queues::NotificationIngressQueue::new();
+    let document_text_extractor_queue = conation_queues::DocumentTextExtractorQueue::new();
+    let chat_delete_queue = conation_queues::ChatDeleteQueue::new();
+    let email_scheduled_queue = conation_queues::EmailScheduledQueue::new();
+    let gmail_ops_queue = conation_queues::GmailOpsQueue::new();
+    let ai_projection_queue = conation_queues::AiProjectionQueue::new();
+    let notification_queue = conation_queues::NotificationIngressQueue::new();
     let sqs_client = sqs_client::SQS::new(queue_aws_client)
         .document_text_extractor_queue(&document_text_extractor_queue)
         .chat_delete_queue(&chat_delete_queue)
@@ -151,7 +151,7 @@ async fn main() -> anyhow::Result<()> {
                 api_key: internal_api_key.clone(),
                 default_user_id: None,
             },
-            macro_authorization::NoBotAuthorizer,
+            conation_authorization::NoBotAuthorizer,
         )));
 
     let lexical_client = Arc::new(lexical_client::LexicalClient::new(
@@ -263,7 +263,7 @@ async fn main() -> anyhow::Result<()> {
 
     tracing::info!("initialized soup service");
 
-    let s3_client = macro_aws_config::s3_client().await;
+    let s3_client = conation_aws_config::s3_client().await;
     let s3_upload_adapter = S3UploadUrlAdapter::new(
         s3_client,
         config.document_storage_bucket.to_string(),
@@ -300,8 +300,8 @@ async fn main() -> anyhow::Result<()> {
             properties_service.clone(),
         );
     let event_broker_tracker = TaskTracker::new();
-    let macro_event_broker = macro_event_broker::MacroEventBrokerService::new(
-        macro_event_broker::KafkaEventPublisher::new(config.kafka_brokers.as_ref())
+    let conation_event_broker = conation_event_broker::MacroEventBrokerService::new(
+        conation_event_broker::KafkaEventPublisher::new(config.kafka_brokers.as_ref())
             .context("failed to create kafka event publisher")?,
         event_broker_tracker.clone(),
     );
@@ -316,7 +316,7 @@ async fn main() -> anyhow::Result<()> {
             entity_access_management::outbound::PgRepository::new(db.clone()),
         ),
         ForeignEntityServiceImpl::new(PgForeignEntityRepo::new(db.clone())),
-        macro_event_broker.clone(),
+        conation_event_broker.clone(),
     );
     let lexical_client_for_tools = (*lexical_client).clone();
     let document_tool_context = DocumentToolContext::new(
@@ -360,7 +360,7 @@ async fn main() -> anyhow::Result<()> {
             chat::outbound::postgres::PgChatRepo::new(db.clone()),
             attachment_provider,
         )
-        .with_event_broker(macro_event_broker.clone()),
+        .with_event_broker(conation_event_broker.clone()),
     );
 
     tracing::info!("initialized attachment provider");
@@ -389,7 +389,7 @@ async fn main() -> anyhow::Result<()> {
             ),
             0,
         )
-        .with_macro_event_broker(macro_event_broker.clone()),
+        .with_conation_event_broker(conation_event_broker.clone()),
     );
     let email_tool_context = email::inbound::toolset::EmailToolContext::new(
         user_email_service.clone(),
@@ -442,7 +442,7 @@ async fn main() -> anyhow::Result<()> {
         ai_tools::ChannelSideEffectClients {
             connection_gateway: channels_connection_gateway.clone(),
             sqs: aws_sdk_sqs::Client::new(&aws_config),
-            macro_event_broker: macro_event_broker.clone(),
+            conation_event_broker: conation_event_broker.clone(),
         },
     );
     let recorder = ai_usage::pg_recorder(db.clone());
@@ -556,7 +556,7 @@ async fn main() -> anyhow::Result<()> {
 
     let project_tool_context = ai_tools::build_project_tool_context(
         db.clone(),
-        macro_event_broker.clone(),
+        conation_event_broker.clone(),
         entity_access_service.clone(),
         document_tool_context.service.clone(),
         chat_tool_context.service.clone(),
@@ -594,7 +594,7 @@ async fn main() -> anyhow::Result<()> {
         channel_tool_context,
         bot_tool_context: ai_tools::build_bot_tool_context(
             db.clone(),
-            ai_tools::ToolBotEventBroker::Real(macro_event_broker.clone()),
+            ai_tools::ToolBotEventBroker::Real(conation_event_broker.clone()),
             entity_access_service.clone(),
             DocumentStorageServiceUrl::new()?.to_string(),
         ),
@@ -796,7 +796,7 @@ async fn main() -> anyhow::Result<()> {
         mcp_selector,
         import_service,
         onboarding_service,
-        macro_event_broker: macro_event_broker.clone(),
+        conation_event_broker: conation_event_broker.clone(),
     })
     .await
     .context("failed to setup and serve api");

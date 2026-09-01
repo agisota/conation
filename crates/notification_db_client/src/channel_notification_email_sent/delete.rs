@@ -10,7 +10,7 @@ pub async fn delete_channel_notification_email_sent(
         DELETE FROM channel_notification_email_sent
         WHERE channel_id = $1 AND user_id = $2
         "#,
-        macro_uuid::string_to_uuid(channel_id)?,
+        conation_uuid::string_to_uuid(channel_id)?,
         user_id,
     )
     .execute(db)

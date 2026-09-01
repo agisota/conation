@@ -2,7 +2,7 @@
 
 pub use invite_email::{InviteToMacro, ReferralCode};
 
-use macro_uuid::ShortUuidConverter;
+use conation_uuid::ShortUuidConverter;
 use rate_limit::RateLimitExceeded;
 
 /// Errors that can occur during referral operations.

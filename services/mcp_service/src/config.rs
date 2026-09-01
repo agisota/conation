@@ -1,4 +1,4 @@
-//! Configuration for the MCP server, loaded via the standard `macro_config`
+//! Configuration for the MCP server, loaded via the standard `conation_config`
 //! pattern so it gets a `doppler_config` validation binary.
 //!
 //! All required env vars are declared here as typed fields. The
@@ -7,9 +7,9 @@
 
 use anyhow::Context;
 use database_env_vars::DatabaseUrl;
-pub use macro_auth::InternalApiKey;
-pub use macro_env::Environment;
-use macro_env_var::{env_vars, maybe_env_vars};
+pub use conation_auth::InternalApiKey;
+pub use conation_env::Environment;
+use conation_env_var::{env_vars, maybe_env_vars};
 
 maybe_env_vars! {
     /// Browser-reachable FusionAuth origin used for OAuth authorization redirects.
@@ -59,14 +59,14 @@ env_vars! {
 }
 
 /// The configuration parameters for the MCP server.
-#[derive(macro_config::MacroConfig)]
+#[derive(conation_config::MacroConfig)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Config {
     /// The environment we are in.
-    #[macro_config_default(Environment::new_or_prod())]
+    #[conation_config_default(Environment::new_or_prod())]
     pub environment: Environment,
     /// Port to listen on. Defaults to `8080` when unset.
-    #[macro_config_default(8080)]
+    #[conation_config_default(8080)]
     pub port: usize,
     /// The connection URL for the Postgres database this application uses.
     pub database_url: DatabaseUrl,
@@ -99,6 +99,6 @@ pub struct Config {
 
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
-        macro_config::ConfigLoader::load::<Config>().context("failed to load mcp server config")
+        conation_config::ConfigLoader::load::<Config>().context("failed to load mcp server config")
     }
 }

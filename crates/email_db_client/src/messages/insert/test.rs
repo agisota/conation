@@ -1,6 +1,6 @@
 use super::*;
 use chrono::Utc;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use models_email::email::service::address::ContactInfo;
 use models_email::email::service::attachment::Attachment;
 use sqlx::{Pool, Postgres};

@@ -1,7 +1,7 @@
 use agent::AgentError;
 use chrono::{DateTime, Utc};
-use macro_user_id::user_id::MacroUserIdStr;
-use macro_uuid::Uuid;
+use conation_user_id::user_id::MacroUserIdStr;
+use conation_uuid::Uuid;
 use thiserror::Error;
 
 #[derive(Debug, Error)]

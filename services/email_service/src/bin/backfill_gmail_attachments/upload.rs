@@ -20,7 +20,7 @@ pub struct AttachmentProcessor {
         StaticTokenSource,
         AlwaysAllowRateLimiter,
     >,
-    macro_id_destination: String,
+    conation_id_destination: String,
 }
 
 impl AttachmentProcessor {
@@ -32,13 +32,13 @@ impl AttachmentProcessor {
             StaticTokenSource,
             AlwaysAllowRateLimiter,
         >,
-        macro_id_destination: String,
+        conation_id_destination: String,
     ) -> Self {
         Self {
             db,
             dss_client,
             email_api,
-            macro_id_destination,
+            conation_id_destination,
         }
     }
 
@@ -150,7 +150,7 @@ impl AttachmentProcessor {
                     is_task: false,
                     skip_history: true,
                 },
-                &self.macro_id_destination,
+                &self.conation_id_destination,
             )
             .await
             .context("DSS create_document call failed")?;

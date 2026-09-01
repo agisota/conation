@@ -18,9 +18,9 @@ fn host_database_url(instance: &Instance) -> String {
     )
 }
 
-/// The macro_db_client crate dir (sqlx migrations live under ./migrations).
+/// The conation_db_client crate dir (sqlx migrations live under ./migrations).
 fn db_client_dir() -> std::path::PathBuf {
-    workspace_root().join("crates/macro_db_client")
+    workspace_root().join("crates/conation_db_client")
 }
 
 /// Create the database (idempotent) and run migrations.

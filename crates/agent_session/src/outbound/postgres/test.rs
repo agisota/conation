@@ -6,7 +6,7 @@ use agent_runtime_protocol::domain::schema::v0::{AcpMessage, SystemEvent};
 use bots::domain::models::{BotOwner, CreateBotRequest};
 use bots::domain::ports::BotRepo;
 use bots::outbound::pg_bots_repo::PgBotsRepo;
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 
 fn user_id(value: &str) -> MacroUserIdStr<'static> {
     MacroUserIdStr::try_from(value.to_string()).expect("valid macro user id")
@@ -15,36 +15,36 @@ fn user_id(value: &str) -> MacroUserIdStr<'static> {
 /// The fixed owner every [`new_session`] fixture uses.
 const OWNER: &str = "macro|agent-session-owner@example.com";
 
-/// Insert a `"User"` row (and its `macro_user` parent) so the id can satisfy
+/// Insert a `"User"` row (and its `conation_user` parent) so the id can satisfy
 /// `agent_session.owner_id`'s foreign key.
 async fn insert_user(pool: &PgPool, user_id: &str) {
     let email = user_id.strip_prefix("macro|").unwrap_or(user_id);
     // The no-op update makes the existing row's id come back when the user
     // was already seeded by an earlier call.
-    let macro_user_id = sqlx::query_scalar!(
+    let conation_user_id = sqlx::query_scalar!(
         r#"
-        INSERT INTO macro_user (id, username, email, stripe_customer_id)
+        INSERT INTO conation_user (id, username, email, stripe_customer_id)
         VALUES ($1, $2, $3, $4)
         ON CONFLICT (username) DO UPDATE SET username = EXCLUDED.username
         RETURNING id
         "#,
-        macro_uuid::generate_uuid_v7(),
+        conation_uuid::generate_uuid_v7(),
         email,
         email,
         format!("stripe_{email}"),
     )
     .fetch_one(pool)
     .await
-    .expect("insert macro_user");
+    .expect("insert conation_user");
     sqlx::query!(
         r#"
-        INSERT INTO "User" (id, email, macro_user_id)
+        INSERT INTO "User" (id, email, conation_user_id)
         VALUES ($1, $2, $3)
         ON CONFLICT (id) DO NOTHING
         "#,
         user_id,
         email,
-        macro_user_id,
+        conation_user_id,
     )
     .execute(pool)
     .await
@@ -66,7 +66,7 @@ async fn create_test_bot(pool: &PgPool) -> BotId {
             CreateBotRequest {
                 team_id: None,
                 name: "Test Agent".to_string(),
-                handle: format!("test-agent-{}", macro_uuid::generate_uuid_v7()),
+                handle: format!("test-agent-{}", conation_uuid::generate_uuid_v7()),
                 description: None,
                 avatar_url: None,
                 has_agent: None,
@@ -127,9 +127,9 @@ async fn append_system_event(
 }
 
 async fn insert_originating_thread_fixture(pool: &PgPool) -> (Uuid, Uuid, Uuid) {
-    let channel_id = macro_uuid::generate_uuid_v7();
-    let thread_id = macro_uuid::generate_uuid_v7();
-    let originating_message_id = macro_uuid::generate_uuid_v7();
+    let channel_id = conation_uuid::generate_uuid_v7();
+    let thread_id = conation_uuid::generate_uuid_v7();
+    let originating_message_id = conation_uuid::generate_uuid_v7();
     let owner_id = "macro|agent-session-thread-owner@example.com";
     sqlx::query!(
         "INSERT INTO comms_channels (id, channel_type, owner_id) VALUES ($1, 'private', $2)",
@@ -550,7 +550,7 @@ async fn find_for_channel_matches_the_originating_thread_and_bot(pool: PgPool) {
     assert!(matches!(wrong_bot, ChannelSession::None));
 
     let wrong_thread = repo
-        .find_for_channel(Some(macro_uuid::generate_uuid_v7()), Some(bot_b))
+        .find_for_channel(Some(conation_uuid::generate_uuid_v7()), Some(bot_b))
         .await
         .expect("look up an unrelated thread");
     assert!(matches!(wrong_thread, ChannelSession::None));
@@ -604,7 +604,7 @@ async fn find_all_for_thread_returns_every_session_on_the_thread(pool: PgPool) {
     );
 
     let empty = repo
-        .find_all_for_thread(macro_uuid::generate_uuid_v7())
+        .find_all_for_thread(conation_uuid::generate_uuid_v7())
         .await
         .expect("list an unrelated thread");
     assert!(empty.is_empty());

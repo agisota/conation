@@ -1,0 +1,204 @@
+# Conation self-host single-server compose
+# Usage:
+#   cp .env.selfhost.example .env.selfhost
+#   $EDITOR .env.selfhost   # set CONATION_DOMAIN, secrets
+#   docker compose -f docker/docker-compose-databases.yml -f docker/docker-compose.yml -f docker/docker-compose.selfhost.yml --env-file .env.selfhost up -d
+# Or: just selfhost up
+#
+# This file ADDS self-host services (minio, stalwart, caddy) and
+# overrides domain/bucket config for conation.dev
+name: conation
+
+services:
+  # ---------------------------------------------------------------------------
+  # MinIO — S3-compatible storage (replaces AWS S3 + LocalStack S3)
+  # Console: http://localhost:9001 (MINIO_ROOT_USER / MINIO_ROOT_PASSWORD)
+  # API: http://minio:9000 (in-network), http://localhost:9000 (host)
+  # ---------------------------------------------------------------------------
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-conation}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-conation12345}
+    volumes:
+      - minio_data:/data
+    networks:
+      - databases
+      - services
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Create buckets on startup (idempotent)
+  minio-setup:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set myminio http://minio:9000 $${MINIO_ROOT_USER:-conation} $${MINIO_ROOT_PASSWORD:-conation12345} &&
+      /usr/bin/mc mb myminio/doc-storage --ignore-existing &&
+      /usr/bin/mc mb myminio/conation-email-attachments --ignore-existing &&
+      /usr/bin/mc mb myminio/docx-upload --ignore-existing &&
+      /usr/bin/mc mb myminio/static-file-storage --ignore-existing &&
+      /usr/bin/mc mb myminio/bulk-upload-staging --ignore-existing &&
+      /usr/bin/mc mb myminio/conation-call-recording --ignore-existing &&
+      echo 'MinIO buckets ready'
+      "
+    networks:
+      - databases
+
+  # ---------------------------------------------------------------------------
+  # Stalwart — JMAP/IMAP/SMTP mail server (replaces Gmail)
+  # SMTP: 25 (MX), 587 (submission STARTTLS)
+  # IMAP: 993 (TLS), JMAP: 8080 (HTTP API), Admin: 8080/api
+  # Web: http://localhost:8080 (JMAP) — proxied via Caddy as mail.conation.dev
+  # ---------------------------------------------------------------------------
+  stalwart:
+    image: stalwartlabs/stalwart:latest
+    ports:
+      - "25:25"     # SMTP
+      - "587:587"   # Submission
+      - "993:993"   # IMAPS
+      - "4190:4190" # Sieve
+      - "8081:8080" # JMAP/HTTP (host 8081 to avoid conflict with 8080 services)
+    environment:
+      STALWART_HOSTNAME: ${CONATION_DOMAIN:-conation.dev}
+      STALWART_ADMIN_USER: ${STALWART_ADMIN_USER:-admin}
+      STALWART_ADMIN_PASSWORD: ${STALWART_ADMIN_PASSWORD:-conation-admin-123}
+    volumes:
+      - stalwart_data:/opt/stalwart-mail
+      - ./infra/selfhost/stalwart/config.toml:/opt/stalwart-mail/etc/config.toml:ro
+    networks:
+      - databases
+      - services
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz || curl -f http://localhost:8080/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ---------------------------------------------------------------------------
+  # Caddy — reverse proxy + TLS (replaces CloudFront + ALB)
+  # Handles: conation.dev, app.conation.dev, api.conation.dev, mail.conation.dev
+  # TLS: Let's Encrypt auto (requires DNS A record -> this server IP)
+  # For local testing: CADDY_TLS=internal
+  # ---------------------------------------------------------------------------
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # QUIC
+    volumes:
+      - ./infra/selfhost/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      CONATION_DOMAIN: ${CONATION_DOMAIN:-conation.dev}
+      # For local without public DNS: set CADDY_TLS=internal in .env.selfhost
+      CADDY_TLS: ${CADDY_TLS:-tls}
+    depends_on:
+      - authentication-service
+      - document_storage_service
+      - static_file_service
+      - connection_gateway
+    networks:
+      - services
+      - databases
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Overrides for existing services -> conation.dev domain + MinIO
+  # ---------------------------------------------------------------------------
+  authentication-service:
+    environment:
+      LOCAL_AWS_URL: http://minio:9000
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-conation}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-conation12345}
+      AWS_REGION: us-east-1
+      CONATION_DOMAIN: ${CONATION_DOMAIN:-conation.dev}
+      BASE_URL: https://${CONATION_DOMAIN:-conation.dev}
+      EMAIL_PROVIDER: stalwart
+      STALWART_JMAP_URL: http://stalwart:8080
+      STALWART_ADMIN_URL: http://stalwart:8080/api
+      ROX_BASE_URL: https://api.rox.one/v1
+      # SES -> Stalwart SMTP (no AWS)
+      SMTP_HOST: stalwart
+      SMTP_PORT: 587
+      SENDER_BASE_ADDRESS: ${CONATION_DOMAIN:-conation.dev}
+
+  document_storage_service:
+    environment:
+      LOCAL_AWS_URL: http://minio:9000
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-conation}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-conation12345}
+      S3_FORCE_PATH_STYLE: "true"
+
+  static_file_service:
+    environment:
+      LOCAL_AWS_URL: http://minio:9000
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-conation}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-conation12345}
+
+  email_service:
+    environment:
+      LOCAL_AWS_URL: http://minio:9000
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-conation}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-conation12345}
+      EMAIL_PROVIDER: stalwart
+      STALWART_JMAP_URL: http://stalwart:8080
+      STALWART_ADMIN_URL: http://stalwart:8080/api
+      # Gmail queue not needed; JMAP push replaces PubSub
+      GMAIL_GCP_QUEUE: stalwart-jmap-push
+
+  # Stalwart needs no SQS for email; LocalStack still provides SQS/Dynamo for other queues
+  # Keep localstack for non-S3 (SQS/Dynamo/KMS) unless fully replaced by ElasticMQ
+  localstack:
+    profiles: ["localstack"]
+    image: localstack/localstack:4
+    ports:
+      - "4566:4566"
+    environment:
+      SERVICES: sqs,dynamodb,kms
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+    volumes:
+      - localstack_data:/var/lib/localstack
+    networks:
+      - databases
+      - services
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health || curl -f http://localhost:4566/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  minio_data:
+    name: conation_minio_data
+  stalwart_data:
+    name: conation_stalwart_data
+  caddy_data:
+    name: conation_caddy_data
+  caddy_config:
+    name: conation_caddy_config
+  localstack_data:
+    name: conation_localstack_data
+
+networks:
+  services:
+    driver: bridge
+  databases:
+    external: true
+  auth:
+    external: true

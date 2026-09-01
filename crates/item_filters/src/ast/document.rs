@@ -5,7 +5,7 @@ use crate::{
 use document_sub_type::DocumentSubType;
 use either::Either;
 use filter_ast::{ExpandFrame, Expr, FoldTree, TryExpandNode};
-use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use model_file_type::{
     Archive, Audio, Canvas, Code, Data, Database, Document, Executable, FileAssociation, FileType,
     Font, Image, Md, Media, Pdf, ThreeD, ValueError, Vector, Video, Vm, Write,
@@ -94,7 +94,7 @@ fn file_association(s: &str) -> IResult<&str, FileAssociation> {
 }
 
 fn expand_file_association(association: FileAssociation) -> impl Iterator<Item = FileType> {
-    FileType::iter().filter(move |ty| ty.macro_app_path().eq(&association))
+    FileType::iter().filter(move |ty| ty.conation_app_path().eq(&association))
 }
 
 /// other is defined as
@@ -109,7 +109,7 @@ fn other(s: &str) -> IResult<&str, impl Iterator<Item = FileType>> {
     tag("other")
         .map(|_| {
             FileType::iter().filter(|ty| {
-                let association = ty.macro_app_path();
+                let association = ty.conation_app_path();
                 !matches!(
                     association,
                     FileAssociation::Write(_)

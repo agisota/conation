@@ -15,7 +15,7 @@ pub fn check_generated_workflows() -> Workflow {
             PullRequest::default()
                 .add_branch("main")
                 .add_path(xtask_paths::repo_glob!("tooling/xtask/**"))
-                .add_path(xtask_paths::repo_glob!("crates/macro_event_topics/**"))
+                .add_path(xtask_paths::repo_glob!("crates/conation_event_topics/**"))
                 .add_path(xtask_paths::repo_glob!(".github/workflows/**"))
                 .add_path(xtask_paths::repo_glob!(".github/kafka-cluster-topics.json")),
         ))

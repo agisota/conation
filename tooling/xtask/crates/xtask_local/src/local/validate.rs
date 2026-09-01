@@ -241,13 +241,13 @@ fn local_env_flavor(
             }
         }
         Mode::Dev => {
-            // run-dev runs as macro_env `local` *on purpose*: dev_personal ships
+            // run-dev runs as conation_env `local` *on purpose*: dev_personal ships
             // real values, not Secrets-Manager names, so a `dev`/`develop`
-            // macro_env would make services try to fetch each value as a secret.
+            // conation_env would make services try to fetch each value as a secret.
             // Its "dev-ness" comes from the values (dev DB, real AWS), not this.
             if env.get("ENVIRONMENT").map(String::as_str) != Some("local") {
                 failures.push(
-                    "run-dev resolves ENVIRONMENT=local (dev values, local macro_env)".into(),
+                    "run-dev resolves ENVIRONMENT=local (dev values, local conation_env)".into(),
                 );
             }
             if env.get("LOCAL_AWS_URL").is_some() {

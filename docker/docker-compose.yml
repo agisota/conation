@@ -2,7 +2,7 @@
 # Freeze the Docker Compose project name so every checkout/worktree uses the
 # same local containers, networks, and anonymous Compose-managed resources.
 # Local setup is single-instance by design.
-name: macro
+name: conation
 
 include:
   - docker/docker-compose-databases.yml

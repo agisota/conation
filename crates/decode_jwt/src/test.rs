@@ -7,8 +7,8 @@ use axum::http::Request;
 use axum::http::StatusCode;
 use axum::routing::get;
 use http_body_util::BodyExt;
-use macro_auth::headers::{AccessTokenCookieExtractor, AccessTokenExtractor};
-use macro_auth::middleware::decode_jwt::JwtValidationArgs;
+use conation_auth::headers::{AccessTokenCookieExtractor, AccessTokenExtractor};
+use conation_auth::middleware::decode_jwt::JwtValidationArgs;
 use tower::util::ServiceExt;
 
 use super::*;
@@ -40,8 +40,8 @@ fn create_access_token(
         "tid": "tenant_id",
         "email": email,
         "fusion_user_id": "fusion_testing",
-        "macro_user_id": format!("macro|{email}"),
-        "macro_organization_id": 1,
+        "conation_user_id": format!("macro|{email}"),
+        "conation_organization_id": 1,
     });
 
     let mut header = jsonwebtoken::Header::new(jsonwebtoken::Algorithm::HS256);
@@ -81,7 +81,7 @@ fn expired_token() -> String {
 
 fn no_params() -> Params {
     Params {
-        macro_api_token: None,
+        conation_api_token: None,
     }
 }
 
@@ -104,7 +104,7 @@ fn query_extractor_decodes_percent_encoded_token() {
     let encoded = format!("macro-api-token={}", urlencoding::encode(token));
 
     let params: Params = serde_urlencoded::from_str(&encoded).unwrap();
-    assert_eq!(params.macro_api_token.as_deref(), Some(token));
+    assert_eq!(params.conation_api_token.as_deref(), Some(token));
 }
 
 /// The old code collected into a `HashMap<String, String>` via
@@ -126,7 +126,7 @@ fn query_extractor_matches_form_urlencoded_parse() {
 
     assert_eq!(
         old.get("macro-api-token").unwrap(),
-        new.macro_api_token.as_ref().unwrap()
+        new.conation_api_token.as_ref().unwrap()
     );
 }
 
@@ -142,7 +142,7 @@ fn query_extractor_decodes_special_characters() {
     let new: Params = serde_urlencoded::from_str(query).unwrap();
 
     assert_eq!(old.get("macro-api-token").unwrap(), "a+b=c");
-    assert_eq!(new.macro_api_token.as_deref(), Some("a+b=c"));
+    assert_eq!(new.conation_api_token.as_deref(), Some("a+b=c"));
 }
 
 // ---------------------------------------------------------------------------
@@ -181,7 +181,7 @@ fn valid_token_in_header_returns_decoded_jwt() {
     assert_eq!(jwt.user_context.organization_id, Some(1));
     assert!(jwt.jwt_context.is_some());
     assert_eq!(jwt.jwt_context.unwrap().audience, TEST_AUDIENCE);
-    assert_eq!(jwt.macro_user_id.as_ref(), "macro|user@test.com");
+    assert_eq!(jwt.conation_user_id.as_ref(), "macro|user@test.com");
 }
 
 #[test]
@@ -189,7 +189,7 @@ fn valid_token_via_query_param_returns_decoded_jwt() {
     let args = test_args();
     let token = valid_token();
     let params = Params {
-        macro_api_token: Some(token),
+        conation_api_token: Some(token),
     };
     // Even with no header extractor, query param should work
     let jwt = DecodedJwt::new(no_extractor(), params, &args).unwrap();
@@ -202,7 +202,7 @@ fn query_param_takes_precedence_over_header() {
     let args = test_args();
     let good_token = valid_token();
     let params = Params {
-        macro_api_token: Some(good_token),
+        conation_api_token: Some(good_token),
     };
     // Header has garbage, but query param has a valid token — query wins
     let jwt = DecodedJwt::new(extractor_from_token("garbage"), params, &args).unwrap();
@@ -268,14 +268,14 @@ fn wrong_issuer_returns_invalid() {
 }
 
 #[test]
-fn invalid_macro_user_id_in_token_returns_invalid_user_id() {
+fn invalid_conation_user_id_in_token_returns_invalid_user_id() {
     let exp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
         .as_secs() as usize
         + 3600;
 
-    // Build a token whose macro_user_id lacks the required "macro|" prefix
+    // Build a token whose conation_user_id lacks the required "macro|" prefix
     let claims = serde_json::json!({
         "aud": TEST_AUDIENCE,
         "exp": exp,
@@ -283,7 +283,7 @@ fn invalid_macro_user_id_in_token_returns_invalid_user_id() {
         "tid": "tenant_id",
         "email": "user@test.com",
         "fusion_user_id": "fusion_testing",
-        "macro_user_id": "no_pipe_prefix",
+        "conation_user_id": "no_pipe_prefix",
     });
 
     let mut header = jsonwebtoken::Header::new(jsonwebtoken::Algorithm::HS256);

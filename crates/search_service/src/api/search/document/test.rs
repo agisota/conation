@@ -1,4 +1,4 @@
-use macro_db_client::document::get_document_history::DocumentHistoryInfo;
+use conation_db_client::document::get_document_history::DocumentHistoryInfo;
 use models_properties::service::property_definition::PropertyDefinition;
 use models_properties::service::property_value::PropertyValue;
 use models_properties::{DataType, shared::PropertyOwner};
@@ -428,7 +428,7 @@ fn test_document_history_deleted() {
     let mut document_histories = HashMap::new();
     document_histories.insert(
         "11111111-1111-1111-1111-111111111111".to_string(),
-        macro_db_client::document::get_document_history::DocumentHistoryInfo {
+        conation_db_client::document::get_document_history::DocumentHistoryInfo {
             item_id: "11111111-1111-1111-1111-111111111111".to_string(),
             created_at: now,
             updated_at: now,
@@ -755,7 +755,7 @@ fn test_synthesizes_name_highlight_for_content_only_hit() {
     let input = vec![create_test_document_response(
         doc_id,
         "node_1",
-        Some(vec!["<macro_em>test</macro_em>ing body".to_string()]),
+        Some(vec!["<conation_em>test</conation_em>ing body".to_string()]),
     )];
 
     let mut document_histories = HashMap::new();
@@ -774,7 +774,7 @@ fn test_synthesizes_name_highlight_for_content_only_hit() {
         .expect("synthesized name hit should exist");
     assert_eq!(
         name_hit.highlight.name.as_deref(),
-        Some("<macro_em>test</macro_em>ingfoop")
+        Some("<conation_em>test</conation_em>ingfoop")
     );
     assert!(name_hit.node_id.is_none());
     assert!(name_hit.raw_content.is_none());
@@ -789,7 +789,7 @@ fn test_does_not_synthesize_when_name_hit_already_present() {
         goto: None,
         score: None,
         highlight: Highlight {
-            name: Some("<macro_em>test</macro_em> doc".to_string()),
+            name: Some("<conation_em>test</conation_em> doc".to_string()),
             ..Default::default()
         },
         updated_at: None,
@@ -807,7 +807,7 @@ fn test_does_not_synthesize_when_name_hit_already_present() {
             .highlight
             .name
             .as_deref(),
-        Some("<macro_em>test</macro_em> doc")
+        Some("<conation_em>test</conation_em> doc")
     );
 }
 

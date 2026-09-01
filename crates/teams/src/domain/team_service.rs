@@ -12,8 +12,8 @@ use channels::domain::{
 use entity_access::domain::models::{
     AdminTeamRole, EntityAccessReceipt, MemberTeamRole, OwnerTeamRole,
 };
-use macro_event_broker::{MacroEventBroker, NoopMacroEventBroker};
-use macro_user_id::{
+use conation_event_broker::{MacroEventBroker, NoopMacroEventBroker};
+use conation_user_id::{
     cowlike::CowLike,
     email::{Email, ReadEmailParts},
     lowercased::Lowercase,
@@ -533,7 +533,7 @@ where
         entity_access_receipt: EntityAccessReceipt<MemberTeamRole>,
     ) -> Result<TeamMembers, TeamError> {
         let team_id =
-            macro_uuid::string_to_uuid(&entity_access_receipt.entity().entity_id).unwrap();
+            conation_uuid::string_to_uuid(&entity_access_receipt.entity().entity_id).unwrap();
 
         let members = self.team_repository.get_team_by_id(&team_id).await?.members;
         let invited = self.team_repository.get_team_invites(&team_id).await?;
@@ -663,7 +663,7 @@ where
         invites: non_empty::NonEmpty<&[Email<Lowercase<'_>>]>,
     ) -> Result<Vec<TeamInvite<'_>>, InviteUsersToTeamError> {
         let team_id =
-            macro_uuid::string_to_uuid(&entity_access_receipt.entity().entity_id).unwrap();
+            conation_uuid::string_to_uuid(&entity_access_receipt.entity().entity_id).unwrap();
 
         let enterprise = self
             .team_repository
@@ -824,7 +824,7 @@ where
         user_id: &MacroUserIdStr<'_>,
     ) -> Result<(), RemoveUserFromTeamError> {
         let team_id =
-            macro_uuid::string_to_uuid(&entity_access_receipt.entity().entity_id).unwrap();
+            conation_uuid::string_to_uuid(&entity_access_receipt.entity().entity_id).unwrap();
         let removed_by_id = entity_access_receipt
             .get_authenticated_user()
             .map_err(|e| RemoveUserFromTeamError::TeamError(TeamError::AccessError(e)))?
@@ -980,7 +980,7 @@ where
             tracing::error!(
                 error = ?e,
                 team_id = %team_id,
-                macro_id = %user_id,
+                conation_id = %user_id,
                 "Failed to enqueue DepopulateCrmForUser after remove_user_from_team; CRM rows owned by the removed user's link will be left in place until manual cleanup"
             );
         }
@@ -1040,7 +1040,7 @@ where
         team_invite_id: &uuid::Uuid,
     ) -> Result<(), RemoveTeamInviteError> {
         let team_id =
-            macro_uuid::string_to_uuid(&entity_access_receipt.entity().entity_id).unwrap();
+            conation_uuid::string_to_uuid(&entity_access_receipt.entity().entity_id).unwrap();
         let actor_user_id = entity_access_receipt
             .get_authenticated_user()
             .map_err(|error| RemoveTeamInviteError::TeamError(TeamError::AccessError(error)))?
@@ -1071,7 +1071,7 @@ where
         entity_access_receipt: EntityAccessReceipt<OwnerTeamRole>,
     ) -> Result<(), DeleteTeamError> {
         let team_id =
-            macro_uuid::string_to_uuid(&entity_access_receipt.entity().entity_id).unwrap();
+            conation_uuid::string_to_uuid(&entity_access_receipt.entity().entity_id).unwrap();
         let actor_user_id = entity_access_receipt
             .get_authenticated_user()
             .map_err(|error| DeleteTeamError::TeamError(TeamError::AccessError(error)))?
@@ -1424,7 +1424,7 @@ where
             tracing::error!(
                 error = ?e,
                 team_id = %team_member.team_id,
-                macro_id = %user_id,
+                conation_id = %user_id,
                 "Failed to enqueue PopulateCrmForUser after join_team; CRM tables will not be seeded from sent-mail history (per-message fan-out will still cover future sends)"
             );
         }
@@ -1538,7 +1538,7 @@ where
         entity_access_receipt: EntityAccessReceipt<MemberTeamRole>,
     ) -> Result<TeamWithMembers, TeamError> {
         let team_id =
-            macro_uuid::string_to_uuid(&entity_access_receipt.entity().entity_id).unwrap();
+            conation_uuid::string_to_uuid(&entity_access_receipt.entity().entity_id).unwrap();
         self.team_repository.get_team_by_id(&team_id).await
     }
 
@@ -1561,7 +1561,7 @@ where
         entity_access_receipt: EntityAccessReceipt<AdminTeamRole>,
     ) -> Result<Vec<TeamInviteDetails>, TeamError> {
         let team_id =
-            macro_uuid::string_to_uuid(&entity_access_receipt.entity().entity_id).unwrap();
+            conation_uuid::string_to_uuid(&entity_access_receipt.entity().entity_id).unwrap();
         self.team_repository.get_team_invites(&team_id).await
     }
 
@@ -1577,7 +1577,7 @@ where
             .clone()
             .into_owned();
         let team_id =
-            macro_uuid::string_to_uuid(&entity_access_receipt.entity().entity_id).unwrap();
+            conation_uuid::string_to_uuid(&entity_access_receipt.entity().entity_id).unwrap();
 
         if let Some(user_role_updates) = req.user_role_updates.as_ref() {
             if user_role_updates.iter().any(|u| u.role == TeamRole::Owner) {
@@ -1652,7 +1652,7 @@ where
         backfill: bool,
     ) -> Result<PatchTeamCrmSettingsResponse, TeamError> {
         let team_id =
-            macro_uuid::string_to_uuid(&entity_access_receipt.entity().entity_id).unwrap();
+            conation_uuid::string_to_uuid(&entity_access_receipt.entity().entity_id).unwrap();
 
         if enabled {
             // Fetch the members *before* flipping the flag so a member-list
@@ -1693,7 +1693,7 @@ where
                         tracing::error!(
                             error = ?e,
                             team_id = %team_id,
-                            macro_id = %member.user_id,
+                            conation_id = %member.user_id,
                             "Failed to enqueue PopulateCrmForUser during team CRM enable"
                         );
                     }
@@ -1738,7 +1738,7 @@ where
             .clone()
             .into_owned();
         let team_id =
-            macro_uuid::string_to_uuid(&entity_access_receipt.entity().entity_id).unwrap();
+            conation_uuid::string_to_uuid(&entity_access_receipt.entity().entity_id).unwrap();
 
         let auto_join_domain = self
             .team_repository
@@ -1761,7 +1761,7 @@ where
         entity_access_receipt: EntityAccessReceipt<AdminTeamRole>,
     ) -> Result<bool, TeamError> {
         let team_id =
-            macro_uuid::string_to_uuid(&entity_access_receipt.entity().entity_id).unwrap();
+            conation_uuid::string_to_uuid(&entity_access_receipt.entity().entity_id).unwrap();
 
         self.team_repository
             .toggle_allow_non_admin_invites(&team_id)
@@ -2003,7 +2003,7 @@ where
             tracing::error!(
                 error = ?e,
                 team_id = %team_id,
-                macro_id = %user_id,
+                conation_id = %user_id,
                 "Failed to enqueue PopulateCrmForUser after team auto-join; CRM tables will not be seeded from sent-mail history (per-message fan-out will still cover future sends)"
             );
         }

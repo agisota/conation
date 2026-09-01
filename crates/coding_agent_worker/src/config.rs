@@ -14,7 +14,7 @@ mod test;
 pub struct Config {
     /// The Macro deployment this bot's sessions live in.
     #[serde(rename = "macro")]
-    pub macro_api: MacroApi,
+    pub conation_api: MacroApi,
     /// The webhook server this daemon listens on.
     pub server: Server,
     /// The harness process spawned per session.

@@ -74,10 +74,10 @@ pub async fn update_thread_metadata(
     // Best-effort by design: publication failures are logged and dropped so a committed
     // backfill is not retried after its completed-thread counters have advanced.
     publish_email_event(
-        &ctx.macro_event_broker,
+        &ctx.conation_event_broker,
         &EmailMacroEvent::thread_backfilled(ThreadBackfilledMetadata {
             link_id: link.id,
-            owner: link.macro_id.clone(),
+            owner: link.conation_id.clone(),
             thread_id: p.thread_db_id,
         }),
     );

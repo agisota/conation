@@ -3,7 +3,7 @@ use std::{collections::HashMap, sync::Arc};
 use async_graphql::dataloader::{DataLoader, Loader};
 use entity_access::domain::models::ViewAccessLevel;
 use entity_access::domain::ports::EntityAccessService;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use models_properties::service::entity_property_with_definition::EntityPropertyWithDefinition;
 use rootcause::markers::{Cloneable, Dynamic};
 

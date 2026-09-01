@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use agent::types::Role;
 use attachment::{AttachmentContent, AttachmentPart, Attachments};
 use chrono::Utc;
-use macro_event_broker::{EventBrokerError, MacroEvent};
+use conation_event_broker::{EventBrokerError, MacroEvent};
 use model::chat::{ChatMessageWithAttachments, NewAttachment};
 use serde_json::json;
 

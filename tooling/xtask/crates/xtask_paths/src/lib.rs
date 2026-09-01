@@ -221,7 +221,7 @@ impl<'a> RuntimePath<'a> {
     }
 }
 
-macro_rules! impl_path_string_conversions {
+conation_rules! impl_path_string_conversions {
     ($type:ident) => {
         impl fmt::Display for $type<'_> {
             fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -332,8 +332,8 @@ const fn is_glob_meta(byte: u8) -> bool {
 }
 
 /// Construct a compile-time checked [`RepoFile`] literal.
-#[macro_export]
-macro_rules! repo_file {
+#[conation_export]
+conation_rules! repo_file {
     ($path:literal) => {{
         const PATH: $crate::RepoFile<'static> = $crate::RepoFile::new($path);
         PATH
@@ -341,8 +341,8 @@ macro_rules! repo_file {
 }
 
 /// Construct a compile-time checked [`RepoDir`] literal.
-#[macro_export]
-macro_rules! repo_dir {
+#[conation_export]
+conation_rules! repo_dir {
     ($path:literal) => {{
         const PATH: $crate::RepoDir<'static> = $crate::RepoDir::new($path);
         PATH
@@ -350,8 +350,8 @@ macro_rules! repo_dir {
 }
 
 /// Construct a compile-time checked [`RepoGlob`] literal.
-#[macro_export]
-macro_rules! repo_glob {
+#[conation_export]
+conation_rules! repo_glob {
     ($path:literal) => {{
         const PATH: $crate::RepoGlob<'static> = $crate::RepoGlob::new($path);
         PATH
@@ -359,8 +359,8 @@ macro_rules! repo_glob {
 }
 
 /// Construct a compile-time checked, non-empty [`RuntimePath`] literal.
-#[macro_export]
-macro_rules! runtime_path {
+#[conation_export]
+conation_rules! runtime_path {
     ($path:literal) => {{
         const PATH: $crate::RuntimePath<'static> = $crate::RuntimePath::new($path);
         PATH

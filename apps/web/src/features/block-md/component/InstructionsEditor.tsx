@@ -49,7 +49,7 @@ import {
 import { useCanEdit } from '@core/signal/permissions';
 import { isSourceDSS, isSourceSyncService } from '@core/util/source';
 import { bufToString } from '@core/util/string';
-import type { LoroManager } from '@macro-inc/collaboration/collab/manager';
+import type { LoroManager } from '@conation/collaboration/collab/manager';
 import {
   AwaitNode,
   CommentNode,
@@ -57,7 +57,7 @@ import {
   InlineSearchNode,
   type PeerIdValidator,
   peerIdPlugin,
-} from '@macro-inc/lexical-core';
+} from '@conation/lexical-core';
 import WarningIcon from '@phosphor/warning.svg';
 import { onElementConnect } from '@solid-primitives/lifecycle';
 import { debounce } from '@solid-primitives/scheduled';

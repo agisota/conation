@@ -1,5 +1,5 @@
 {
-  "name": "@macro-inc/collaboration",
+  "name": "@conation/collaboration",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@loro-mirror/core": "workspace:*",
-    "@macro-inc/observability": "workspace:*",
+    "@conation/observability": "workspace:*",
     "@solid-primitives/event-bus": "^1.1.2",
     "@tauri-apps/api": "^2.8.0",
     "async-mutex": "^0.5.0",

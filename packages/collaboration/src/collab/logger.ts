@@ -1,4 +1,4 @@
-import type { Attributes } from '@macro-inc/observability';
+import type { Attributes } from '@conation/observability';
 import { type LogLevel, logTelemetry } from './telemetry';
 
 export type WalContext = {

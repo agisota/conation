@@ -18,7 +18,7 @@ use agent::{AgentError, AgentLoop, StreamPart};
 use ai_tools::{ToolServiceContext, ToolSetWithPrompt, all_tools};
 use ai_toolset::ToolSet as AiToolSet;
 use futures::StreamExt as _;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use memory::domain::MemoryService as _;
 use memory::domain::service::MemoryServiceImpl;
 use memory::outbound::pg_memory_repo::PgMemoryRepo;

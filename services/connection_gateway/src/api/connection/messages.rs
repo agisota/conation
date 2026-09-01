@@ -11,7 +11,7 @@ use anyhow::{Context, Result};
 use axum::extract::ws::{Message, WebSocket};
 use cowlike::CowLike;
 use futures::{StreamExt, stream::SplitStream};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use std::error::Error;
 use tokio::sync::mpsc::Sender;
 use tungstenite::error::{Error as TungsteniteError, ProtocolError};

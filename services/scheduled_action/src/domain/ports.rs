@@ -4,8 +4,8 @@ use super::models::{
 };
 use anyhow::Result;
 use chrono::{DateTime, Utc};
-use macro_user_id::user_id::MacroUserIdStr;
-use macro_uuid::Uuid;
+use conation_user_id::user_id::MacroUserIdStr;
+use conation_uuid::Uuid;
 use tokio::sync::mpsc::{Receiver, Sender};
 
 pub trait ScheduledActionRepo: Send + Sync + 'static {
@@ -35,7 +35,7 @@ pub trait ScheduledActionRepo: Send + Sync + 'static {
     fn delete_action(
         &self,
         id: &Uuid,
-        macro_user_id: MacroUserIdStr<'static>,
+        conation_user_id: MacroUserIdStr<'static>,
     ) -> impl Future<Output = Result<()>> + Send;
 
     fn claim_action(&self, id: &Uuid) -> impl Future<Output = Result<()>> + Send;
@@ -75,25 +75,25 @@ pub trait ScheduledActionService: Send + Sync + 'static {
     fn update_action(
         &self,
         action: ScheduledAction,
-        macro_user_id: MacroUserIdStr<'static>,
+        conation_user_id: MacroUserIdStr<'static>,
     ) -> impl Future<Output = Result<ScheduledAction>> + Send;
 
     fn delete_action(
         &self,
         id: &Uuid,
-        macro_user_id: MacroUserIdStr<'static>,
+        conation_user_id: MacroUserIdStr<'static>,
     ) -> impl Future<Output = Result<()>> + Send;
 
     fn execute_action_now(
         &self,
         id: &Uuid,
-        macro_user_id: MacroUserIdStr<'static>,
+        conation_user_id: MacroUserIdStr<'static>,
     ) -> impl Future<Output = Result<InProgressExecution>> + Send;
 
     fn get_execution_records(
         &self,
         id: &Uuid,
-        macro_user_id: MacroUserIdStr<'static>,
+        conation_user_id: MacroUserIdStr<'static>,
     ) -> impl Future<Output = Result<Vec<ActionExecutionRecord>>> + Send;
 }
 

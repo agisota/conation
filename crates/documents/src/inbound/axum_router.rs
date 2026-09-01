@@ -55,7 +55,7 @@ use axum::{
 };
 use entity_access::domain::ports::EntityAccessService;
 use lexical_client::LexicalClient;
-use macro_authorization::{MacroAuthorizationService, MacroAuthorizationState};
+use conation_authorization::{MacroAuthorizationService, MacroAuthorizationState};
 use model_error_response::ErrorResponse;
 use serde::Deserialize;
 use sqlx::PgPool;

@@ -8,7 +8,7 @@ use agent_session::domain::model::{
     SandboxSize, SessionBot, SessionStatus,
 };
 use bot_id::BotId;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use std::sync::{Arc, Mutex};
 use tokio::sync::mpsc;
 
@@ -127,7 +127,7 @@ impl AgentSessionRepo for FixedBotSessions {
 
     async fn find_for_channel(
         &self,
-        _thread_id: Option<macro_uuid::Uuid>,
+        _thread_id: Option<conation_uuid::Uuid>,
         _bot_id: Option<BotId>,
     ) -> SessionResult<ChannelSession> {
         unimplemented!("the router never routes channel events")
@@ -135,7 +135,7 @@ impl AgentSessionRepo for FixedBotSessions {
 
     async fn find_all_for_thread(
         &self,
-        _thread_id: macro_uuid::Uuid,
+        _thread_id: conation_uuid::Uuid,
     ) -> SessionResult<Vec<AgentSession>> {
         unimplemented!("the router never lists thread sessions")
     }

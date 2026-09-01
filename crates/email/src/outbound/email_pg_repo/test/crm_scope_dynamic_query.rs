@@ -21,7 +21,7 @@
 //! UUID — both of which the new ANY-based resolution must cover.
 
 use super::*;
-use macro_user_id::cowlike::CowLike;
+use conation_user_id::cowlike::CowLike;
 
 // === Constants matching the fixture ===
 
@@ -1077,8 +1077,8 @@ async fn crm_scope_dedupe_mid_thread_join_copies_stay_separate(
 
 // =====================================================================
 // Non-primary links — alice has a connected secondary mailbox
-// (alice.personal@gmail.com) on the same macro_id. Team scope must only
-// read primary links (email_address = the owner's macro_id email), so the
+// (alice.personal@gmail.com) on the same conation_id. Team scope must only
+// read primary links (email_address = the owner's conation_id email), so the
 // personal link's threads/contacts/labels never feed team-scoped results.
 // =====================================================================
 
@@ -1089,7 +1089,7 @@ const TP2_ALICE_PERSONAL_INBOX_SECRET: &str = "22220004-0000-0000-0000-000000000
 // =====================================================================
 // 23. Broad team-scoped query: alice's personal-mailbox threads must not
 //     appear even though their senders match the filter and the link's
-//     macro_id is a team member.
+//     conation_id is a team member.
 // =====================================================================
 
 #[sqlx::test(

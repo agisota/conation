@@ -6,9 +6,9 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use calendar_events::domain::models::google_calendar_scope_parameter;
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use macro_middleware::tracking::ClientIp;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_middleware::tracking::ClientIp;
+use conation_user_id::user_id::MacroUserIdStr;
 use model::response::ErrorResponse;
 use roles_and_permissions::domain::model::PermissionId;
 use serde_utils::urlencode::UrlEncoded;
@@ -139,12 +139,12 @@ pub async fn init_gmail_link_handler(
         db_permissions
             .permissions
             .contains(&PermissionId::ReadProfessionalFeatures.to_string()),
-        || count_accessible_email_inboxes(&ctx.db, &authorization.authorization.user.macro_user_id),
+        || count_accessible_email_inboxes(&ctx.db, &authorization.authorization.user.conation_user_id),
     )
     .await?;
 
     let count =
-        macro_db_client::in_progress_user_link::count_existing_in_progress_user_links_for_user(
+        conation_db_client::in_progress_user_link::count_existing_in_progress_user_links_for_user(
             &ctx.db,
             &authorization.authorization.user.user_context.fusion_user_id,
         )
@@ -159,7 +159,7 @@ pub async fn init_gmail_link_handler(
         .split_ascii_whitespace()
         .map(ToOwned::to_owned)
         .collect();
-    let link_id = macro_db_client::in_progress_user_link::create_in_progress_google_link(
+    let link_id = conation_db_client::in_progress_user_link::create_in_progress_google_link(
         &ctx.db,
         &authorization.authorization.user.user_context.fusion_user_id,
         &requested_google_scopes,
@@ -234,13 +234,13 @@ fn google_authorization_url(
     Ok(authorization_url)
 }
 
-#[tracing::instrument(skip(db, macro_user_id), err)]
+#[tracing::instrument(skip(db, conation_user_id), err)]
 async fn count_accessible_email_inboxes(
     db: &sqlx::Pool<sqlx::Postgres>,
-    macro_user_id: &MacroUserIdStr<'static>,
+    conation_user_id: &MacroUserIdStr<'static>,
 ) -> anyhow::Result<i64> {
     let inboxes =
-        email_db_client::links::get::fetch_inboxes_for_macro_id(db, macro_user_id.as_ref()).await?;
+        email_db_client::links::get::fetch_inboxes_for_conation_id(db, conation_user_id.as_ref()).await?;
 
     Ok(inboxes.len() as i64)
 }
@@ -311,16 +311,16 @@ impl IntoResponse for GmailLinkStatusError {
             (status = 500, body=ErrorResponse),
         )
     )]
-#[tracing::instrument(skip(ctx, ip_context, authorization), fields(client_ip=%ip_context, user_id=%authorization.authorization.user.macro_user_id), err)]
+#[tracing::instrument(skip(ctx, ip_context, authorization), fields(client_ip=%ip_context, user_id=%authorization.authorization.user.conation_user_id), err)]
 pub async fn check_gmail_link_status_handler(
     State(ctx): State<ApiContext>,
     ip_context: ClientIp,
     authorization: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
 ) -> Result<Json<GmailLinkStatusResponse>, GmailLinkStatusError> {
     // Check if the user has an email link in db
-    if macro_db_client::email::check_user_email_link(
+    if conation_db_client::email::check_user_email_link(
         &ctx.db,
-        &authorization.authorization.user.macro_user_id,
+        &authorization.authorization.user.conation_user_id,
     )
     .await
     .map_err(GmailLinkStatusError::Internal)?

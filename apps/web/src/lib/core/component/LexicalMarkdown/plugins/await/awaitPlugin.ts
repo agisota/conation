@@ -3,7 +3,7 @@ import {
   $createAwaitNode,
   $isAwaitNode,
   type AwaitNode,
-} from '@macro-inc/lexical-core';
+} from '@conation/lexical-core';
 import {
   $createParagraphNode,
   $createTextNode,

@@ -10,7 +10,7 @@ mod test;
 use std::{borrow::Cow, marker::PhantomData, time::Duration};
 
 use kafka_util::{InitialOffset, KafkaEventConsumer, Ungrouped};
-use macro_event_broker::{
+use conation_event_broker::{
     EventBrokerError, KafkaConsumerAdapter, MacroEventCollection, MacroEventConsumerService,
 };
 use rdkafka::message::Message as _;
@@ -34,7 +34,7 @@ type IndependentKafkaConsumer = KafkaConsumerAdapter<Ungrouped, DeclaredMacroEve
 type NotificationEventConsumer =
     MacroEventConsumerService<DeclaredMacroEvent, IndependentKafkaConsumer>;
 
-macro_event_broker::declare_topics!(DeclaredMacroEvent: JsonNotificationMacroEvent);
+conation_event_broker::declare_topics!(DeclaredMacroEvent: JsonNotificationMacroEvent);
 
 /// Independent consumer of all notification topic event variants decoded as `T`.
 ///

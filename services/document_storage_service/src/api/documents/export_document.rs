@@ -13,7 +13,7 @@ use axum::{
 };
 use entity_access::inbound::axum_extractors::DocumentAccessExtractor;
 use futures::StreamExt;
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::{
     document::{DocumentBasic, FileType, response::LocationResponseData},
     response::{ErrorResponse, GenericErrorResponse},
@@ -61,7 +61,7 @@ pub struct ExportDocumentResponse {
             (status = 500, body=GenericErrorResponse),
         )
     )]
-#[tracing::instrument(skip(state, user, _access), fields(user_id=?user.authorization.user.macro_user_id))]
+#[tracing::instrument(skip(state, user, _access), fields(user_id=?user.authorization.user.conation_user_id))]
 pub async fn handler(
     _access: DocumentAccessExtractor<ViewAccessLevel, EntityAccessService, AuthorizationService>,
     Path(Params { .. }): Path<Params>,
@@ -154,7 +154,7 @@ async fn export_docx_document(state: &ApiContext, document_id: &str) -> anyhow::
     if !exists {
         tracing::trace!("document does not exist in s3, downloading bom parts");
         let latest_document_bom_parts =
-            macro_db_client::document::get_document_bom(state.db.clone(), document_id).await?;
+            conation_db_client::document::get_document_bom(state.db.clone(), document_id).await?;
 
         let shared_s3_client = &state.s3_client;
 

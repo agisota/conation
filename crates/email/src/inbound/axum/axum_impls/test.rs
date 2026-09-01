@@ -2,15 +2,15 @@ use super::{EmailLinkErr, MultiEmailLinkExtractor, resolve_target_link};
 use crate::domain::models::{Link, UserProvider};
 use axum::{body::to_bytes, http::StatusCode, response::IntoResponse};
 use chrono::Utc;
-use macro_authorization::MacroAuthorizationRejection;
-use macro_user_id::{email::EmailStr, user_id::MacroUserIdStr};
+use conation_authorization::MacroAuthorizationRejection;
+use conation_user_id::{email::EmailStr, user_id::MacroUserIdStr};
 use std::{borrow::Cow, marker::PhantomData};
 use uuid::Uuid;
 
 fn test_link(id: Uuid, owner: &str, email: &str, is_primary: bool) -> Link {
     Link {
         id,
-        macro_id: MacroUserIdStr::try_from_email(owner).unwrap(),
+        conation_id: MacroUserIdStr::try_from_email(owner).unwrap(),
         fusionauth_user_id: "fa-user".to_string(),
         email_address: EmailStr::try_from(email.to_string()).unwrap(),
         provider: UserProvider::Gmail,
@@ -91,7 +91,7 @@ fn no_header_falls_back_to_callers_primary() {
 
 #[test]
 fn delegated_primary_is_not_the_callers_primary() {
-    // A delegated inbox is primary for its own account; without the macro_id
+    // A delegated inbox is primary for its own account; without the conation_id
     // guard it would be picked as the caller's default target.
     let own_primary = Uuid::from_u128(1);
     let links = vec![

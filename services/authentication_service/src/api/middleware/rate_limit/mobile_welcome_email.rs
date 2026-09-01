@@ -6,7 +6,7 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Response},
 };
-use macro_middleware::tracking::ClientIp;
+use conation_middleware::tracking::ClientIp;
 use model::response::ErrorResponse;
 
 /// IP-based rate limit for mobile welcome email requests.
@@ -25,7 +25,7 @@ pub(in crate::api) async fn handler(
     let ip = ip_context.to_string();
 
     let count = ctx
-        .macro_cache_client
+        .conation_cache_client
         .get_mobile_welcome_email_rate_limit(&ip)
         .await
         .map_err(|e| {
@@ -56,7 +56,7 @@ pub(in crate::api) async fn handler(
             .into_response());
     }
 
-    ctx.macro_cache_client
+    ctx.conation_cache_client
         .increment_mobile_welcome_email_rate_limit(&ip, RATE_LIMIT_CONFIG.mobile_welcome_email.1)
         .await
         .map_err(|e| {

@@ -13,7 +13,7 @@ use axum::{
     routing::{get, post},
 };
 use chrono::{DateTime, NaiveDate, NaiveTime, Utc};
-use macro_authorization::{
+use conation_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
 };
 use models_pagination::Base64Str;
@@ -180,7 +180,7 @@ where
     let mut occurrences = state
         .service
         .list_occurrences(
-            user.authorization.user.macro_user_id.as_ref(),
+            user.authorization.user.conation_user_id.as_ref(),
             range,
             cursor,
             repository_limit,
@@ -205,7 +205,7 @@ where
         })?;
     let sync_status = state
         .service
-        .sync_status(user.authorization.user.macro_user_id.as_ref())
+        .sync_status(user.authorization.user.conation_user_id.as_ref())
         .await
         .map_err(|error| {
             tracing::error!(error = ?error, "failed to query calendar sync status");
@@ -321,7 +321,7 @@ where
         .collect();
     let previews = state
         .service
-        .mention_previews(user.authorization.user.macro_user_id.as_ref(), items)
+        .mention_previews(user.authorization.user.conation_user_id.as_ref(), items)
         .await
         .map_err(|error| {
             if error

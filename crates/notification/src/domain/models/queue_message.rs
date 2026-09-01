@@ -10,7 +10,7 @@ use crate::domain::models::{
 };
 use chrono::{DateTime, Utc};
 use cowlike::CowLike;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::Entity;
 use rate_limit::RateLimitExceeded;
 use rootcause::Report;

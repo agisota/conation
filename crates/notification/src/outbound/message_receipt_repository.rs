@@ -7,8 +7,8 @@
 mod test;
 
 use crate::domain::models::email_notification_digest::ports::{MessageId, MessageReceiptRepo};
-use macro_user_id::cowlike::CowLike;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::cowlike::CowLike;
+use conation_user_id::user_id::MacroUserIdStr;
 use rootcause::Report;
 use sqlx::PgPool;
 use uuid::Uuid;

@@ -1,5 +1,5 @@
-use macro_event_broker::{Event, MacroEvent};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_event_broker::{Event, MacroEvent};
+use conation_user_id::user_id::MacroUserIdStr;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
@@ -220,7 +220,7 @@ fn topic_events() -> Vec<(TeamTopicEvent, Value)> {
     ]
 }
 
-fn macro_events() -> Vec<TeamMacroEvent> {
+fn conation_events() -> Vec<TeamMacroEvent> {
     topic_events()
         .into_iter()
         .map(|(event, _)| match event {
@@ -262,7 +262,7 @@ fn every_variant_has_exact_json_envelope() {
 
 #[test]
 fn every_variant_round_trips() {
-    for original in macro_events() {
+    for original in conation_events() {
         let payload = serde_json::to_vec(original.event()).expect("serializable event");
         let decoded = TeamMacroEvent::decode(original.key(), &payload).expect("decodable event");
 
@@ -274,7 +274,7 @@ fn every_variant_round_trips() {
 
 #[test]
 fn constructors_use_teams_topic_bare_uuid_key_and_schema_version_one() {
-    for event in macro_events() {
+    for event in conation_events() {
         assert_eq!(event.key(), TEAM_ID);
         assert!(!event.key().starts_with("team|"));
         assert_eq!(event.topic(), "macro.teams");
@@ -327,7 +327,7 @@ fn roles_and_join_methods_serialize_lowercase() {
 fn payloads_recursively_exclude_billing_fields() {
     let forbidden_terms = ["subscription", "customer", "stripe", "payment"];
 
-    for event in macro_events() {
+    for event in conation_events() {
         let payload = serde_json::to_value(event.event()).expect("serializable event");
         assert_no_forbidden_fields(&payload, &forbidden_terms);
     }

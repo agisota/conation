@@ -39,8 +39,8 @@ pub fn router(state: ApiContext) -> Router<ApiContext> {
 }
 
 /// generate an S3 key for an attachment based on the draft_id and attachment_id.
-#[macro_export]
-macro_rules! generate_attachment_s3_key {
+#[conation_export]
+conation_rules! generate_attachment_s3_key {
     ($draft_id:expr, $attachment_id:expr) => {
         format!("draft/{}/{}", $draft_id, $attachment_id)
     };

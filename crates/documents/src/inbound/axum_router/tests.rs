@@ -16,11 +16,11 @@ use entity_access::domain::{
 };
 use http_body_util::BodyExt;
 use lexical_client::LexicalClient;
-use macro_authorization::{
+use conation_authorization::{
     INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_USER_ID_HEADER, InternalIdentityClaims,
     MacroAuthorizationError, MacroAuthorizationService, MacroAuthorizationState,
 };
-use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
+use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
 use model::{
     document::{DocumentBasic, DocumentMetadata, FileType, response::DocumentResponseMetadata},
     sync_service::SyncServiceVersionID,

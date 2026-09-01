@@ -1,4 +1,4 @@
-import type { MagicChipDecoratorProps } from '@macro-inc/lexical-core';
+import type { MagicChipDecoratorProps } from '@conation/lexical-core';
 import type { FoldedMessage } from '@service-agent-fold/generated/types';
 import { createRoot } from 'solid-js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';

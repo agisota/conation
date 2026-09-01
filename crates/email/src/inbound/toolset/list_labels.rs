@@ -8,7 +8,7 @@ use ai_toolset::{AsyncTool, RequestContext, ServiceContext, ToolCallError, ToolR
 use ai_toolset::{ToolAnnotated, ToolAnnotations};
 use async_trait::async_trait;
 use entity_access::domain::ports::EntityAccessService;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -138,14 +138,14 @@ where
             None => {
                 let inboxes = service_context
                     .service
-                    .get_inboxes_for_macro_id(MacroUserIdStr((*request_context.user_id).clone()))
+                    .get_inboxes_for_conation_id(MacroUserIdStr((*request_context.user_id).clone()))
                     .await
                     .map_err(|e| ToolCallError {
                         description: format!("Failed to resolve inboxes: {e}"),
                         internal_error: e.into(),
                     })?;
-                let caller_macro_id = request_context.user_id.to_string();
-                super::resolve_inbox_selector(&inboxes, &caller_macro_id, self.inbox.as_deref())?
+                let caller_conation_id = request_context.user_id.to_string();
+                super::resolve_inbox_selector(&inboxes, &caller_conation_id, self.inbox.as_deref())?
                     .clone()
             }
         };

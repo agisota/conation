@@ -6,7 +6,7 @@ use crate::domain::{
     ports::{EmailMessageEnqueuer, EmailRepo},
 };
 use frecency::domain::ports::FrecencyQueryService;
-use macro_event_broker::MacroEventBroker;
+use conation_event_broker::MacroEventBroker;
 use uuid::Uuid;
 
 use super::EmailServiceImpl;
@@ -21,15 +21,15 @@ where
     anyhow::Error: From<T::Err>,
     anyhow::Error: From<E::Err>,
 {
-    #[tracing::instrument(err, skip(self), fields(user_id = %macro_id, %thread_id))]
+    #[tracing::instrument(err, skip(self), fields(user_id = %conation_id, %thread_id))]
     pub(crate) async fn mark_thread_seen_impl(
         &self,
-        macro_id: macro_user_id::user_id::MacroUserIdStr<'static>,
+        conation_id: conation_user_id::user_id::MacroUserIdStr<'static>,
         thread_id: Uuid,
     ) -> Result<(), EmailErr> {
         let link = self
             .email_repo
-            .owned_link_for_thread(thread_id, macro_id.clone())
+            .owned_link_for_thread(thread_id, conation_id.clone())
             .await
             .map_err(|e| EmailErr::RepoErr(anyhow::Error::from(e)))?
             .ok_or(EmailErr::ThreadNotFound)?;
@@ -75,17 +75,17 @@ where
         Ok(())
     }
 
-    #[tracing::instrument(err, skip(self), fields(user_id = %macro_id, %thread_id, %label_id, add))]
+    #[tracing::instrument(err, skip(self), fields(user_id = %conation_id, %thread_id, %label_id, add))]
     pub(crate) async fn update_thread_labels_for_user_impl(
         &self,
-        macro_id: macro_user_id::user_id::MacroUserIdStr<'static>,
+        conation_id: conation_user_id::user_id::MacroUserIdStr<'static>,
         thread_id: Uuid,
         label_id: Uuid,
         add: bool,
     ) -> Result<UpdateThreadLabelsResult, EmailErr> {
         let link = self
             .email_repo
-            .owned_link_for_thread(thread_id, macro_id)
+            .owned_link_for_thread(thread_id, conation_id)
             .await
             .map_err(|e| EmailErr::RepoErr(anyhow::Error::from(e)))?
             .ok_or(EmailErr::ThreadNotFound)?;
@@ -387,7 +387,7 @@ where
     ) {
         let event = EmailMacroEvent::thread_label_change(
             link.id,
-            link.macro_id.clone(),
+            link.conation_id.clone(),
             None,
             thread_id,
             LabelRef {
@@ -407,7 +407,7 @@ where
             self.publish_email_event(&EmailMacroEvent::message_send_cancelled(
                 MessageSendCancelledMetadata {
                     link_id: link.id,
-                    owner: link.macro_id.clone(),
+                    owner: link.conation_id.clone(),
                     actor: None,
                     message_id: *message_id,
                     thread_id,

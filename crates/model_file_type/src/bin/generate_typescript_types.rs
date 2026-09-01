@@ -10,7 +10,7 @@ fn main() -> std::io::Result<()> {
         let key = serde_json::to_string(ft).unwrap();
         let ext = ft.as_str();
         let mime = ft.mime_type();
-        let app = ft.macro_app_path();
+        let app = ft.conation_app_path();
         writeln!(
             file,
             r#"  {key}: {{ extension: "{ext}", mime: "{mime}", app: "{app}" }},"#

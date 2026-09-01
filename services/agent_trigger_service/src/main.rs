@@ -15,12 +15,12 @@ use channels::outbound::pg_channels_repo::PgChannelsRepo;
 use config::Config;
 use kafka_util::{GroupName, KafkaEventConsumer, consumer_span, record_span_error};
 use lexical_client::LexicalClient;
-use macro_entrypoint::{MacroEntrypoint, shutdown_signal};
-use macro_event_broker::{
+use conation_entrypoint::{MacroEntrypoint, shutdown_signal};
+use conation_event_broker::{
     KafkaConsumerAdapter, KafkaEventPublisher, MacroEvent as _, MacroEventBrokerService,
     MacroEventCollection as _, MacroEventConsumerService,
 };
-use macro_service_urls::LexicalServiceUrl;
+use conation_service_urls::LexicalServiceUrl;
 use rdkafka::consumer::CommitMode;
 use rdkafka::message::{BorrowedMessage, Message as _};
 use sqlx::postgres::PgPoolOptions;
@@ -32,7 +32,7 @@ impl GroupName for AgentTriggerConsumerGroup {
     const GROUP_NAME: &'static str = "agent-trigger-service";
 }
 
-macro_event_broker::declare_topics!(DeclaredMacroEvent: ChannelMacroEvent);
+conation_event_broker::declare_topics!(DeclaredMacroEvent: ChannelMacroEvent);
 
 type TriggerKafkaAdapter = KafkaConsumerAdapter<AgentTriggerConsumerGroup, DeclaredMacroEvent>;
 type TriggerConsumer = MacroEventConsumerService<DeclaredMacroEvent, TriggerKafkaAdapter>;
@@ -86,7 +86,7 @@ async fn run() -> anyhow::Result<()> {
     );
     let publisher = MacroEventBrokerService::new(
         KafkaEventPublisher::new(config.kafka_brokers.as_ref())?,
-        macro_event_broker::GlobalSpawner,
+        conation_event_broker::GlobalSpawner,
     );
     let consumer =
         KafkaEventConsumer::<AgentTriggerConsumerGroup>::from_env(config.kafka_brokers.as_ref())?;

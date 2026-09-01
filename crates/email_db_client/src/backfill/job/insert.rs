@@ -17,7 +17,7 @@ pub async fn create_backfill_job(
     num_threads: Option<i32>,
     is_recovery: bool,
 ) -> anyhow::Result<Option<service::backfill::BackfillJob>> {
-    let id = macro_uuid::generate_uuid_v7();
+    let id = conation_uuid::generate_uuid_v7();
 
     let record = sqlx::query_as!(
         db::backfill::BackfillJob,

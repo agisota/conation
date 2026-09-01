@@ -169,7 +169,7 @@ impl InfraEnv {
         // the calling container. Callers like the authentication service's
         // signup hook (starter docs) then fail with a connection error.
         // `DOCUMENT_STORAGE_SERVICE_URL` (from Doppler) only covers the older
-        // call sites that read that var directly, not `macro_service_urls`.
+        // call sites that read that var directly, not `conation_service_urls`.
         env.insert(
             "OVERRIDE_DOCUMENT_STORAGE_SERVICE_URL".into(),
             "http://document-storage-service:8080".into(),
@@ -185,7 +185,7 @@ impl InfraEnv {
         // first-inbox provisioning (auth-service → `/email/init`) and Gmail
         // token fetches (email-service → `/internal/google_access_token`)
         // fail with connection errors. (Plain `EMAIL_SERVICE_URL` in Doppler
-        // is ignored — macro_service_urls only honors the `OVERRIDE_` prefix.)
+        // is ignored — conation_service_urls only honors the `OVERRIDE_` prefix.)
         env.insert(
             "OVERRIDE_EMAIL_SERVICE_URL".into(),
             "http://email-service:8080".into(),
@@ -316,7 +316,7 @@ struct AgentHarnessEnv {
     /// Macro's own MCP server as the egress proxy dials it. In-network and
     /// cleartext, which the proxy permits only under `ENVIRONMENT=local`:
     /// this hop never leaves the compose bridge.
-    macro_mcp_url: &'static str,
+    conation_mcp_url: &'static str,
 }
 
 impl AgentHarnessEnv {
@@ -340,7 +340,7 @@ impl AgentHarnessEnv {
             egress_base_url: egress_public_url
                 .unwrap_or("http://agent-harness-service:8102")
                 .to_owned(),
-            macro_mcp_url: "http://mcp-service:8080/mcp",
+            conation_mcp_url: "http://mcp-service:8080/mcp",
         }
     }
 
@@ -352,7 +352,7 @@ impl AgentHarnessEnv {
         env.insert("LOCAL_CONTAINER_IMAGE".into(), self.image.into());
         env.insert("LOCAL_CONTAINER_NETWORK".into(), self.network.clone());
         env.insert("EGRESS_BASE_URL".into(), self.egress_base_url.clone());
-        env.insert("MACRO_MCP_URL".into(), self.macro_mcp_url.into());
+        env.insert("MACRO_MCP_URL".into(), self.conation_mcp_url.into());
     }
 }
 
@@ -467,14 +467,14 @@ impl FusionAuthEnv {
             "FUSIONAUTH_OAUTH_REDIRECT_URI".into(),
             self.oauth_redirect_uri.clone(),
         );
-        // macro_auth JWT claim validation.
+        // conation_auth JWT claim validation.
         env.insert("AUDIENCE".into(), identity::APPLICATION_ID.into());
         env.insert("ISSUER".into(), identity::ISSUER.into());
         env.insert("JWT_SECRET_KEY".into(), identity::JWT_SECRET.into());
     }
 }
 
-/// Values the services' `macro_config` loaders require but that only exist in
+/// Values the services' `conation_config` loaders require but that only exist in
 /// Doppler's `lcl_personal` config. Without these a `--no-doppler` stack's
 /// containers crash at startup ("missing required value") before any of the
 /// integration the value backs is ever exercised. Each entry is a deterministic
@@ -544,7 +544,7 @@ impl BootStubEnv {
             "STRIPE_WEBHOOK_SECRET_KEY".into(),
             "local-stripe-webhook-secret".into(),
         );
-        // macro_auth's `JwtValidationArgs` (used by every service that mounts
+        // conation_auth's `JwtValidationArgs` (used by every service that mounts
         // the auth middleware) reads these at boot. The keys are only parsed
         // when a Macro API token is actually validated — normal local auth
         // uses FusionAuth JWTs — so dummies are fine.
@@ -633,6 +633,9 @@ impl BootStubEnv {
         env.insert("LIVEKIT_API_SECRET".into(), "local-livekit-secret".into());
         env.insert("OPENAI_API_KEY".into(), "local-openai-key".into());
         env.insert("COHERE_API_KEY".into(), "local-cohere-key".into());
+        // Conation default LLM — rox.one
+        env.insert("ROX_API_KEY".into(), "local-rox-key".into());
+        env.insert("ROX_BASE_URL".into(), "https://api.rox.one/v1".into());
         env.insert(
             "CAL_WEBHOOK_SECRET_KEY".into(),
             "local-cal-webhook-secret".into(),

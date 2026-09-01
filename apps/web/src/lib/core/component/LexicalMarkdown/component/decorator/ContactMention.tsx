@@ -1,7 +1,7 @@
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import { openInNewSplitForMention } from '@core/util/openInNewSplit';
 import { useSplitNavigationHandler } from '@core/util/useSplitNavigationHandler';
-import type { ContactMentionDecoratorProps } from '@macro-inc/lexical-core';
+import type { ContactMentionDecoratorProps } from '@conation/lexical-core';
 import BuildingIcon from '@phosphor/buildings.svg';
 import UserIcon from '@phosphor/user.svg';
 import { cn } from '@ui';

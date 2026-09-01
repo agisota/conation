@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use doppleganger::Doppleganger;
-use macro_user_id::{email::EmailStr, error::ParseErr, user_id::MacroUserIdStr};
+use conation_user_id::{email::EmailStr, error::ParseErr, user_id::MacroUserIdStr};
 use models_email::service::link::UserProvider;
 use sqlx::{Type, types::Uuid};
 
@@ -22,7 +22,7 @@ impl DbUserProvider {
 #[derive(Debug, Clone)]
 pub struct DbLink {
     pub id: Uuid,
-    pub macro_id: String,
+    pub conation_id: String,
     pub fusionauth_user_id: String,
     pub email_address: String,
     pub provider: DbUserProvider,
@@ -38,7 +38,7 @@ impl From<models_email::email::service::link::Link> for DbLink {
     fn from(service_link: models_email::email::service::link::Link) -> Self {
         Self {
             id: service_link.id,
-            macro_id: service_link.macro_id.to_string(),
+            conation_id: service_link.conation_id.to_string(),
             fusionauth_user_id: service_link.fusionauth_user_id,
             email_address: service_link
                 .email_address
@@ -65,7 +65,7 @@ impl TryFrom<DbLink> for models_email::email::service::link::Link {
     fn try_from(value: DbLink) -> Result<Self, Self::Error> {
         let DbLink {
             id,
-            macro_id,
+            conation_id,
             fusionauth_user_id,
             email_address,
             provider,
@@ -78,7 +78,7 @@ impl TryFrom<DbLink> for models_email::email::service::link::Link {
         } = value;
         Ok(models_email::email::service::link::Link {
             id,
-            macro_id: MacroUserIdStr::try_from(macro_id)?,
+            conation_id: MacroUserIdStr::try_from(conation_id)?,
             fusionauth_user_id,
             email_address: EmailStr::try_from(email_address)?,
             provider: match provider {

@@ -1,7 +1,7 @@
 use super::PgMemoryRepo;
 use crate::domain::{MemoryError, MemoryRepo};
-use macro_db_migrator::MACRO_DB_MIGRATIONS;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_user_id::user_id::MacroUserIdStr;
 use sqlx::{Pool, Postgres};
 
 #[sqlx::test(migrator = "MACRO_DB_MIGRATIONS")]
@@ -60,7 +60,7 @@ async fn get_by_id_wrong_user_returns_error(pool: Pool<Postgres>) {
 async fn get_by_id_nonexistent_returns_error(pool: Pool<Postgres>) {
     let repo = PgMemoryRepo::new(pool);
     let user = MacroUserIdStr::parse_from_str("macro|test@example.com").unwrap();
-    let fake_id = macro_uuid::generate_uuid_v7();
+    let fake_id = conation_uuid::generate_uuid_v7();
 
     let result = repo.get_memory_by_id(user, fake_id).await;
     assert!(matches!(result, Err(MemoryError::NoGeneration)));

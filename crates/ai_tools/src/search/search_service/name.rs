@@ -8,7 +8,7 @@ use ai_toolset::{ToolAnnotated, ToolAnnotations};
 use async_trait::async_trait;
 use email::domain::ports::EmailService;
 use item_filters::{EmailFilters, EntityFilters};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use models_properties::service::tag_sets::{TagFilter, TagMatch};
 use models_search::channel::ChannelNameSearchRequest;
 use models_search::unified::{
@@ -104,16 +104,16 @@ impl AsyncTool<SearchToolContext> for NameSearch {
         {
             let inboxes = search_context
                 .email_service
-                .get_inboxes_for_macro_id(MacroUserIdStr((*request_context.user_id).clone()))
+                .get_inboxes_for_conation_id(MacroUserIdStr((*request_context.user_id).clone()))
                 .await
                 .map_err(|e| ToolCallError {
                     description: format!("Failed to resolve inboxes: {e}"),
                     internal_error: e.into(),
                 })?;
-            let caller_macro_id = request_context.user_id.to_string();
+            let caller_conation_id = request_context.user_id.to_string();
             let link = email::inbound::toolset::resolve_inbox_selector(
                 &inboxes,
-                &caller_macro_id,
+                &caller_conation_id,
                 Some(inbox),
             )?;
             email_filters.link_ids = vec![link.id.to_string()];

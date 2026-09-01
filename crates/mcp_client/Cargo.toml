@@ -6,7 +6,7 @@ publish = false
 
 [features]
 default = ["providers"]
-providers = ["macro_env_var"]
+providers = ["conation_env_var"]
 
 [dependencies]
 aes-gcm = "0.10"
@@ -19,11 +19,11 @@ base64.workspace = true
 async-openai.workspace = true
 axum.workspace = true
 futures.workspace = true
-macro_authorization = { path = "../macro_authorization", default-features = false, features = [
+conation_authorization = { path = "../conation_authorization", default-features = false, features = [
   "axum",
 ] }
-macro_env_var = { path = "../macro_env_var", optional = true }
-macro_user_id = { path = "../macro_user_id" }
+conation_env_var = { path = "../conation_env_var", optional = true }
+conation_user_id = { path = "../conation_user_id" }
 model-error-response = { path = "../model-error-response" }
 redis = { workspace = true, features = ["aio", "tokio-comp"] }
 reqwest.workspace = true

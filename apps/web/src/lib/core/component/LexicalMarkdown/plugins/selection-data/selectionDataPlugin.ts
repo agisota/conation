@@ -11,7 +11,7 @@ import {
   $isTableCellNode,
   $isTableSelection,
 } from '@lexical/table';
-import type { ElementName } from '@macro-inc/lexical-core';
+import type { ElementName } from '@conation/lexical-core';
 import {
   $getSelection,
   $isNodeSelection,

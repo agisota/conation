@@ -10,7 +10,7 @@ use axum::{
     response::{IntoResponse, Response},
     routing::{get, post},
 };
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::response::EmptyResponse;
 use tower_cookies::{CookieManagerLayer, Cookies};
 

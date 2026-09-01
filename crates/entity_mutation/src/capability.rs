@@ -14,7 +14,7 @@
 //! cascade consequence as an ordered update or deletion effect.
 
 use entity_access::domain::models::{EditAccessLevel, EntityAccessReceipt, RequiredPermission};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::Entity;
 use models_permissions::share_permission::UpdateSharePermissionRequestV2;
 

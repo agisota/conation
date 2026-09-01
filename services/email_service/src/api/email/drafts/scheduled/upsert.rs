@@ -99,7 +99,7 @@ pub async fn handler(
         // This legacy transport only knows the link; the owner is the best
         // available attribution (matching the message_send_queued event
         // below).
-        actor_id: Some(link.macro_id.to_string()),
+        actor_id: Some(link.conation_id.to_string()),
     };
 
     // Upsert the scheduled message
@@ -126,11 +126,11 @@ pub async fn handler(
     .map(|m| m.thread_db_id);
     if let Some(thread_id) = thread_db_id {
         publish_email_event(
-            ctx.macro_event_broker.as_ref(),
+            ctx.conation_event_broker.as_ref(),
             &EmailMacroEvent::message_send_queued(MessageSendQueuedMetadata {
                 link_id: link.id,
-                owner: link.macro_id.clone(),
-                actor: Some(link.macro_id.clone()),
+                owner: link.conation_id.clone(),
+                actor: Some(link.conation_id.clone()),
                 message_id: draft_id,
                 thread_id,
                 scheduled_send_at: request.send_time,

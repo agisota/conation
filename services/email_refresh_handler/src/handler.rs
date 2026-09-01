@@ -5,7 +5,7 @@ use lambda_runtime::{
     Error, LambdaEvent,
     tracing::{self},
 };
-use macro_env::Environment;
+use conation_env::Environment;
 use models_email::email::service::pubsub::{DeletionReason, LinkManagerMessage};
 use sqlx::types::uuid;
 use sqlx::{Pool, Postgres, Type};
@@ -208,7 +208,7 @@ pub async fn fetch_unused_link_ids(
             LEFT JOIN
                 public.email_user_history h ON l.id = h.link_id
             WHERE
-                l.macro_id NOT LIKE '%@macro.com'
+                l.conation_id NOT LIKE '%@macro.com'
                 AND l.created_at < NOW() - (make_interval(days => $1))
             GROUP BY
                 l.id
@@ -235,7 +235,7 @@ pub async fn fetch_inactive_link_ids(
             JOIN
                 public.email_user_history h ON l.id = h.link_id
             WHERE
-                l.macro_id NOT LIKE '%@macro.com'
+                l.conation_id NOT LIKE '%@macro.com'
             GROUP BY
                 l.id
             HAVING

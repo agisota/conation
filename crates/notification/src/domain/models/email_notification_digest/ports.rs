@@ -1,5 +1,5 @@
 use crate::domain::models::{TaggedContent, UserNotificationRow};
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use rootcause::Report;
 use serde::Deserialize;
 use std::time::Duration;

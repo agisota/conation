@@ -9,12 +9,12 @@ use entity_access::domain::{
     },
     ports::EntityAccessService,
 };
-use macro_authorization::{
+use conation_authorization::{
     InternalIdentityClaims, MacroAuthorizationError, MacroAuthorizationService,
     MacroAuthorizationState,
 };
-use macro_service_urls::AppServiceUrl;
-use macro_user_id::{
+use conation_service_urls::AppServiceUrl;
+use conation_user_id::{
     lowercased::Lowercase,
     user_id::{MacroUserId, MacroUserIdStr},
 };
@@ -168,7 +168,7 @@ impl EntityAccessService for TestEntityAccessService {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct BeginCall {
-    macro_user_id: String,
+    conation_user_id: String,
     team_id: Option<Uuid>,
 }
 
@@ -221,11 +221,11 @@ impl GithubSyncService for MockGithubSyncService {
 
     async fn begin_installation_setup(
         &self,
-        macro_user_id: &MacroUserIdStr<'_>,
+        conation_user_id: &MacroUserIdStr<'_>,
         team_id: Option<Uuid>,
     ) -> Result<String, GithubError> {
         self.begin_calls.lock().unwrap().push(BeginCall {
-            macro_user_id: macro_user_id.to_string(),
+            conation_user_id: conation_user_id.to_string(),
             team_id,
         });
         Ok("https://github.com/apps/my-sync-app/installations/new?state=signed".to_string())
@@ -298,7 +298,7 @@ fn authenticated_request(uri: &str) -> Request<axum::body::Body> {
 
 fn callback_state(team_id: Option<Uuid>) -> String {
     let state = InstallationState {
-        macro_user_id: MacroUserIdStr::try_from(USER_ID.to_string()).unwrap(),
+        conation_user_id: MacroUserIdStr::try_from(USER_ID.to_string()).unwrap(),
         team_id,
         exp: i64::MAX,
     };
@@ -346,14 +346,14 @@ async fn install_sync_uses_the_authenticated_users_optional_team() {
     assert_eq!(
         personal_service.begin_calls(),
         vec![BeginCall {
-            macro_user_id: USER_ID.to_string(),
+            conation_user_id: USER_ID.to_string(),
             team_id: None,
         }]
     );
     assert_eq!(
         team_service.begin_calls(),
         vec![BeginCall {
-            macro_user_id: USER_ID.to_string(),
+            conation_user_id: USER_ID.to_string(),
             team_id: Some(team_id),
         }]
     );

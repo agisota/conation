@@ -41,7 +41,7 @@ use cursor_cloud_agents::domain::model::RepoUrl;
 use cursor_cloud_agents::domain::service::CursorSessionService;
 use cursor_cloud_agents::inbound::acp::{AcpNotifier, serve};
 use cursor_cloud_agents::outbound::git::GitRepoResolver;
-use macro_env_var::{env_var, maybe_env_var};
+use conation_env_var::{env_var, maybe_env_var};
 use std::process::ExitCode;
 use std::sync::Arc;
 use tracing_subscriber::layer::SubscriberExt as _;

@@ -1,6 +1,6 @@
 use crate::api::search::simple::SearchError;
 use indexmap::IndexMap;
-use macro_user_id::user_id::MacroUserIdStr;
+use conation_user_id::user_id::MacroUserIdStr;
 use models_properties::{EntityReference, EntityType};
 use models_search::project::{
     ProjectSearchResponseItem, ProjectSearchResponseItemWithMetadata, ProjectSearchResult,
@@ -32,7 +32,7 @@ pub(in crate::api::search) async fn enrich_projects(
 
     // Fetch project metadata from database
     let project_histories =
-        macro_db_client::projects::get_project_history::get_project_history_info(
+        conation_db_client::projects::get_project_history::get_project_history_info(
             &ctx.db,
             user_id,
             &project_ids,
@@ -83,7 +83,7 @@ pub fn construct_search_result(
     search_results: Vec<opensearch_client::search::model::SearchHit>,
     project_histories: HashMap<
         String,
-        macro_db_client::projects::get_project_history::ProjectHistoryInfo,
+        conation_db_client::projects::get_project_history::ProjectHistoryInfo,
     >,
     mut properties_map: HashMap<String, Vec<SoupProperty>>,
 ) -> anyhow::Result<Vec<ProjectSearchResponseItemWithMetadata>> {

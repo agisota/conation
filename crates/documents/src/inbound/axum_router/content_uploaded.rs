@@ -6,7 +6,7 @@ use axum::{
     http::StatusCode,
 };
 use entity_access::domain::ports::EntityAccessService;
-use macro_authorization::{InternalOnly, MacroAuthorizationExtractor, MacroAuthorizationService};
+use conation_authorization::{InternalOnly, MacroAuthorizationExtractor, MacroAuthorizationService};
 use model::document::FileType;
 use serde::Deserialize;
 

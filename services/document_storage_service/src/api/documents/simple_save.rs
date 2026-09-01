@@ -13,7 +13,7 @@ use axum::{
     response::IntoResponse,
 };
 use entity_access::inbound::axum_extractors::DocumentAccessExtractor;
-use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::document::response::DocumentResponseMetadata;
 use model::{
     document::{DocumentBasic, FileType, FileTypeExt},
@@ -46,7 +46,7 @@ pub struct Params {
             (status = 500, body=GenericErrorResponse),
         )
     )]
-#[tracing::instrument(skip(_access, state, user, document_context, multipart), fields(user_id=?user.authorization.user.macro_user_id))]
+#[tracing::instrument(skip(_access, state, user, document_context, multipart), fields(user_id=?user.authorization.user.conation_user_id))]
 pub async fn handler(
     _access: DocumentAccessExtractor<EditAccessLevel, EntityAccessService, AuthorizationService>,
     State(state): State<ApiContext>,
@@ -96,7 +96,7 @@ pub async fn handler(
         }
     };
 
-    let document = match macro_db_client::document::save_document(
+    let document = match conation_db_client::document::save_document(
         &state.db,
         &document_id,
         file_type,

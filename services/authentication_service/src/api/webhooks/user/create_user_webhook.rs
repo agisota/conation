@@ -8,7 +8,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use macro_authorization::{InternalOnly, MacroAuthorizationExtractor};
+use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
 use rand::Rng;
 
 use crate::{
@@ -23,7 +23,7 @@ use channels::domain::{
 };
 use favorites::domain::ports::FavoritesService;
 use fusionauth::error::FusionAuthClientError;
-use macro_user_id::{
+use conation_user_id::{
     email::{Email, ReadEmailParts},
     user_id::MacroUserIdStr,
 };
@@ -116,7 +116,7 @@ async fn verify_user_email_webhook(
     let fusionauth_user_id = req.event.user.id;
     let email = req.event.user.email.to_lowercase();
 
-    macro_db_client::macro_user_email_verification::upsert_macro_user_email_verification(
+    conation_db_client::conation_user_email_verification::upsert_conation_user_email_verification(
         &ctx.db,
         &fusionauth_user_id,
         &email,
@@ -164,7 +164,7 @@ async fn create_user_webhook(ctx: &ApiContext, req: FusionAuthUserWebhook) -> an
 
     // rate limit check for user creation
     let rate_limit = ctx
-        .macro_cache_client
+        .conation_cache_client
         .get_create_user_hourly_rate_limit(&ip_address)
         .await?;
 
@@ -176,10 +176,10 @@ async fn create_user_webhook(ctx: &ApiContext, req: FusionAuthUserWebhook) -> an
 
     // check if user exists
     if let Ok((user_id, _stripe_customer_id)) =
-        macro_db_client::user::get::get_user_id_and_stripe_customer_id_by_email(&ctx.db, &email)
+        conation_db_client::user::get::get_user_id_and_stripe_customer_id_by_email(&ctx.db, &email)
             .await
     {
-        // The macro_user already exists for that email
+        // The conation_user already exists for that email
         // We do not allow a user to login through their secondary linked account for SSO so we shouldn't allow for passwordless either
         tracing::info!(user_id=?user_id, "user already exists");
 
@@ -202,7 +202,7 @@ async fn create_user_webhook(ctx: &ApiContext, req: FusionAuthUserWebhook) -> an
     // Mark the account as freshly created so the auth callback completing this
     // flow can attribute the login as a signup (analytics). Best-effort.
     let _ = ctx
-        .macro_cache_client
+        .conation_cache_client
         .mark_user_just_signed_up(&email)
         .await
         .inspect_err(|e| tracing::error!(error=?e, "unable to mark user as just signed up"));
@@ -228,10 +228,10 @@ async fn create_user_webhook(ctx: &ApiContext, req: FusionAuthUserWebhook) -> an
         let has_organization = organization_id.is_some();
         async move {
             // Seed the profile with the name the identity provider gave us (Google
-            // SSO). Keyed on the FusionAuth id, which is macro_user.id — `user_id`
+            // SSO). Keyed on the FusionAuth id, which is conation_user.id — `user_id`
             // here is the "macro|{email}" User profile id.
             if first_name.is_some() || last_name.is_some() {
-                let _ = macro_db_client::user::update_user_name::update_user_name(
+                let _ = conation_db_client::user::update_user_name::update_user_name(
                     &db,
                     &fusionauth_user_id,
                     first_name,
@@ -430,7 +430,7 @@ async fn create_user_webhook(ctx: &ApiContext, req: FusionAuthUserWebhook) -> an
 
     // Allow to fail silently
     let _ = ctx
-        .macro_cache_client
+        .conation_cache_client
         .increment_create_user_hourly_rate_limit(&ip_address)
         .await
         .inspect_err(|e| tracing::error!(error=?e, "unable to increment create user rate limit"));
@@ -465,7 +465,7 @@ async fn initialize_user_experiments(
     db: &sqlx::Pool<sqlx::Postgres>,
     user_id: &str,
 ) -> anyhow::Result<()> {
-    let active_experiments = macro_db_client::experiment::get_active_experiments(db)
+    let active_experiments = conation_db_client::experiment::get_active_experiments(db)
         .await
         .context("failed to get active experiments")?;
 
@@ -482,7 +482,7 @@ async fn initialize_user_experiments(
         })
         .collect::<Vec<(String, String)>>();
 
-    macro_db_client::experiment_log::bulk_create_experiment_logs(db, user_id, &active_experiments)
+    conation_db_client::experiment_log::bulk_create_experiment_logs(db, user_id, &active_experiments)
         .await
         .context("failed to bulk create experiment logs")?;
 
