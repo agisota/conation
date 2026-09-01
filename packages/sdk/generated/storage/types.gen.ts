@@ -3894,11 +3894,18 @@ export type DocumentCreatedMetadata = {
  * Metadata for [`DocumentTopicEvent::Deleted`].
  */
 export type DocumentDeletedMetadata = {
+    /**
+     * Who mechanically deleted the document. Absent on events published
+     * before attribution, and on user-receipt writes (ingest then uses
+     * [`Self::actor_user_id`]).
+     */
+    actor?: string | null;
     actor_user_id?: null | MacroUserIdStr;
     /**
      * The id of the deleted document.
      */
     document_id: string;
+    on_behalf_of?: null | MacroUserIdStr;
     /**
      * Project the document belonged to, when any.
      */
@@ -4346,6 +4353,12 @@ export type DocumentTopicEvent = {
  * Metadata for [`DocumentTopicEvent::Updated`].
  */
 export type DocumentUpdatedMetadata = {
+    /**
+     * Who mechanically updated the document. Absent on events published
+     * before attribution, and on user-receipt writes (ingest then uses
+     * [`Self::actor_user_id`]).
+     */
+    actor?: string | null;
     actor_user_id?: null | MacroUserIdStr;
     /**
      * The id of the updated document.
@@ -4356,6 +4369,7 @@ export type DocumentUpdatedMetadata = {
      */
     document_name?: string | null;
     file_type?: null | FileTypeUpdate;
+    on_behalf_of?: null | MacroUserIdStr;
     /**
      * The owner of the document.
      */
