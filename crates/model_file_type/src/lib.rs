@@ -29,7 +29,7 @@ impl<'a> Lowercase<'a> {
     }
 }
 
-conation_rules! generate_file_types {
+macro_rules! generate_file_types {
     ($(($variant:ident, $str_name:expr, $mime_type:expr, $app_path:ident)),* $(,)?) => {
         /// Generates a FileType enum and associated ContentType enum with their implementations.
         ///
@@ -185,7 +185,7 @@ conation_rules! generate_file_types {
     };
 }
 
-conation_rules! define_file_associations {
+macro_rules! define_file_associations {
     (
         $(
             ($struct_name:ident, $display_str:literal, $doc:literal)

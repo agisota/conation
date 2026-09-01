@@ -1,23 +1,50 @@
-import { createContext, createSignal, useContext } from 'solid-js';
+import IntlMessageFormat, { type PrimitiveType } from 'intl-messageformat';
+import { createSignal } from 'solid-js';
 import en from './locales/en.json';
 import ru from './locales/ru.json';
 
-export type Locale = 'ru' | 'en';
+export const SUPPORTED_LOCALES = ['en', 'ru'] as const;
+export type Locale = (typeof SUPPORTED_LOCALES)[number];
 
-const messages: Record<Locale, Record<string, string>> = { en, ru };
+export const SOURCE_LOCALE: Locale = 'en';
+export const DEFAULT_LOCALE: Locale = SOURCE_LOCALE;
+export const LOCALE_STORAGE_KEY = 'conation-locale';
 
-const LOCALE_STORAGE_KEY = 'conation-locale';
-const DEFAULT_LOCALE: Locale = 'ru';
+type MessageCatalog = Record<string, string>;
+export type MessageValues = Record<string, PrimitiveType>;
+
+const messages: Record<Locale, MessageCatalog> = { en, ru };
+const messageFormatCache = new Map<string, IntlMessageFormat>();
+
+function normalizeLocale(value: string | null | undefined): Locale | undefined {
+  const language = value?.trim().toLowerCase().split(/[-_]/, 1)[0];
+  return SUPPORTED_LOCALES.find((locale) => locale === language);
+}
+
+/** Resolves stored and browser locale preferences in priority order. */
+export function resolveLocale(
+  preferences: readonly (string | null | undefined)[]
+): Locale {
+  for (const preference of preferences) {
+    const resolved = normalizeLocale(preference);
+    if (resolved) return resolved;
+  }
+  return DEFAULT_LOCALE;
+}
 
 function detectLocale(): Locale {
+  let storedLocale: string | null = null;
   try {
-    const stored = localStorage.getItem(LOCALE_STORAGE_KEY) as Locale | null;
-    if (stored === 'ru' || stored === 'en') return stored;
-    const nav = navigator.language?.toLowerCase() ?? '';
-    if (nav.startsWith('ru')) return 'ru';
-    if (nav.startsWith('en')) return 'en';
-  } catch {}
-  return DEFAULT_LOCALE;
+    storedLocale = globalThis.localStorage?.getItem(LOCALE_STORAGE_KEY) ?? null;
+  } catch {
+    // Storage can be unavailable in privacy-restricted webviews.
+  }
+
+  const browserLocales =
+    typeof navigator === 'undefined'
+      ? []
+      : [navigator.language, ...(navigator.languages ?? [])];
+  return resolveLocale([storedLocale, ...browserLocales]);
 }
 
 const [locale, setLocaleSignal] = createSignal<Locale>(detectLocale());
@@ -26,76 +53,162 @@ export function getLocale(): Locale {
   return locale();
 }
 
-export function setLocale(l: Locale) {
-  setLocaleSignal(l);
-  try {
-    localStorage.setItem(LOCALE_STORAGE_KEY, l);
-    document.documentElement.lang = l;
-  } catch {}
-  // Notify backend via Accept-Language header on next fetch (via fetch wrapper)
+export function getDateLocale(localeOverride = getLocale()): string {
+  return localeOverride === 'ru' ? 'ru-RU' : 'en-US';
 }
 
+function syncDocumentLanguage(nextLocale: Locale) {
+  if (typeof document !== 'undefined') {
+    document.documentElement.lang = nextLocale;
+  }
+}
+
+/** Selects and persists the locale for this browser profile. */
+export function setLocale(nextLocale: Locale) {
+  setLocaleSignal(nextLocale);
+  syncDocumentLanguage(nextLocale);
+  try {
+    globalThis.localStorage?.setItem(LOCALE_STORAGE_KEY, nextLocale);
+  } catch {
+    // The in-memory selection remains valid when persistence is unavailable.
+  }
+}
+
+let initialized = false;
+
+/** Applies the initial language and keeps it synchronized across browser tabs. */
 export function initI18n() {
-  const l = getLocale();
-  document.documentElement.lang = l;
-  try {
-    // Also set html lang immediately
-    document.documentElement.setAttribute('lang', l);
-  } catch {}
-}
-
-// Simple ICU-like interpolation: replaces {count} and {var}
-function interpolate(template: string, vars?: Record<string, string | number>): string {
-  if (!vars) return template;
-  return template.replace(/\{(\w+)\}/g, (_, k) => {
-    const v = vars[k];
-    return v !== undefined ? String(v) : `{${k}}`;
+  syncDocumentLanguage(getLocale());
+  if (initialized || typeof window === 'undefined') return;
+  initialized = true;
+  window.addEventListener('storage', (event) => {
+    if (event.key !== LOCALE_STORAGE_KEY) return;
+    const nextLocale = normalizeLocale(event.newValue);
+    if (!nextLocale || nextLocale === getLocale()) return;
+    setLocaleSignal(nextLocale);
+    syncDocumentLanguage(nextLocale);
   });
 }
 
-// Plural handling via Intl.PluralRules (ru: one/few/many/other, en: one/other)
-function pluralKey(locale: Locale, count: number): string {
-  try {
-    const rules = new Intl.PluralRules(locale);
-    return rules.select(count);
-  } catch {
-    return count === 1 ? 'one' : 'other';
+function pluralCategory(
+  targetLocale: Locale,
+  count: number
+): Intl.LDMLPluralRule {
+  return new Intl.PluralRules(getDateLocale(targetLocale)).select(count);
+}
+
+type MessageCandidate = {
+  locale: Locale;
+  template: string;
+};
+
+function messageCandidates(
+  key: string,
+  targetLocale: Locale,
+  values?: MessageValues
+): MessageCandidate[] {
+  const localized = messages[targetLocale];
+  const source = messages[SOURCE_LOCALE];
+  const candidates: MessageCandidate[] = [];
+
+  // Compatibility for the initial catalog's `key.one` / `key.few` layout.
+  // New messages should use ICU plural/select syntax in a single semantic key.
+  if (typeof values?.count === 'number') {
+    const localizedPlural =
+      localized[`${key}.${pluralCategory(targetLocale, values.count)}`];
+    if (localizedPlural) {
+      candidates.push({ locale: targetLocale, template: localizedPlural });
+    }
+
+    const sourcePlural =
+      source[`${key}.${pluralCategory(SOURCE_LOCALE, values.count)}`];
+    if (sourcePlural && sourcePlural !== localizedPlural) {
+      candidates.push({ locale: SOURCE_LOCALE, template: sourcePlural });
+    }
   }
-}
 
-/**
- * Translate key with optional interpolation and plural.
- * - `t('common.close')` -> "Закрыть" / t('common.close')
- * - `t('plural.notification', { count: 5 })` -> picks correct plural form via Intl.PluralRules
- *
- * For plural, expects keys like `plural.notification.one`, `.few`, `.many`, `.other`.
- * If key is plural base, it will resolve to `key + '.' + pluralRule`.
- */
-export function t(key: string, vars?: Record<string, string | number>): string {
-  const l = getLocale();
-  const dict = messages[l] ?? messages[DEFAULT_LOCALE];
-  const fallback = messages['en'];
-
-  // If count provided and key is plural base, try plural
-  if (vars && 'count' in vars && typeof vars.count === 'number') {
-    const count = vars.count as number;
-    const pkey = `${key}.${pluralKey(l, count)}`;
-    const pluralTemplate = dict[pkey] ?? fallback?.[pkey] ?? dict[key] ?? fallback?.[key];
-    if (pluralTemplate) return interpolate(pluralTemplate, vars);
+  const localizedTemplate = localized[key];
+  if (localizedTemplate) {
+    candidates.push({ locale: targetLocale, template: localizedTemplate });
   }
 
-  const template = dict[key] ?? fallback?.[key] ?? key;
-  return interpolate(template, vars);
+  const sourceTemplate = source[key];
+  if (sourceTemplate && sourceTemplate !== localizedTemplate) {
+    candidates.push({ locale: SOURCE_LOCALE, template: sourceTemplate });
+  }
+
+  return candidates;
 }
 
-// Backwards compat helper for date formatting
-export function getDateLocale(): string {
-  return getLocale() === 'ru' ? 'ru-RU' : 'en-US';
+function formatMessage(
+  candidate: MessageCandidate,
+  values: MessageValues
+): string {
+  const cacheKey = `${candidate.locale}\u0000${candidate.template}`;
+  let formatter = messageFormatCache.get(cacheKey);
+  if (!formatter) {
+    formatter = new IntlMessageFormat(
+      candidate.template,
+      getDateLocale(candidate.locale)
+    );
+    messageFormatCache.set(cacheKey, formatter);
+  }
+  const formatted = formatter.format(values);
+  return Array.isArray(formatted) ? formatted.join('') : String(formatted);
 }
 
-export const I18nContext = createContext({ t, locale, setLocale, getLocale });
+function interpolateSafely(template: string, values: MessageValues): string {
+  return template.replace(/\{(\w+)\}/g, (placeholder, name: string) => {
+    const value = values[name];
+    return value === undefined ? placeholder : String(value);
+  });
+}
 
-export function useI18n() {
-  const ctx = useContext(I18nContext);
-  return ctx ?? { t, locale, setLocale, getLocale, getDateLocale };
+/** Formats a semantic message key with ICU plural/select support and English fallback. */
+export function t(key: string, values?: MessageValues): string {
+  const candidates = messageCandidates(key, getLocale(), values);
+  if (candidates.length === 0) return key;
+  if (!values) return candidates[0].template;
+
+  for (const candidate of candidates) {
+    try {
+      return formatMessage(candidate, values);
+    } catch {
+      // Try the English source message before falling back to safe interpolation.
+    }
+  }
+  return interpolateSafely(candidates[0].template, values);
+}
+
+/** Formats a number using the selected locale. */
+export function formatNumber(
+  value: number | bigint,
+  options?: Intl.NumberFormatOptions
+): string {
+  return new Intl.NumberFormat(getDateLocale(), options).format(value);
+}
+
+/** Formats a date/time using the selected locale. */
+export function formatDateTime(
+  value: Date | number,
+  options?: Intl.DateTimeFormatOptions
+): string {
+  return new Intl.DateTimeFormat(getDateLocale(), options).format(value);
+}
+
+/** Formats a relative time using the selected locale. */
+export function formatRelativeTime(
+  value: number,
+  unit: Intl.RelativeTimeFormatUnit,
+  options?: Intl.RelativeTimeFormatOptions
+): string {
+  return new Intl.RelativeTimeFormat(getDateLocale(), options).format(
+    value,
+    unit
+  );
+}
+
+/** Value sent by application API clients in the `Accept-Language` header. */
+export function getAcceptLanguage(): string {
+  return getDateLocale();
 }

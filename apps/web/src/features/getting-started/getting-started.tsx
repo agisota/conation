@@ -1,7 +1,7 @@
 import { DOCS_BASE } from '@app/constants/docs-links';
-import { t } from '@app/lib/i18n';
 import { HomeBackfillProgress } from '@app/features/home/home-backfill-progress';
 import { InteractiveOnboardingModal } from '@app/features/onboarding/InteractiveOnboardingModal';
+import { t } from '@app/lib/i18n';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import type { SplitContent } from '@components/app/split-layout/layoutManager';
 import { useSplitPanelOrThrow } from '@components/app/split-layout/layoutUtils';
@@ -130,7 +130,7 @@ function GettingStartedContent() {
       { source: 'getting-started' }
     );
     if ('error' in result || !result.chatId) {
-      toast.failure('Unable to start chat');
+      toast.failure(t('shell.gettingStarted.errors.startChat'));
       return false;
     }
     // The chat block consumes this on mount and sends immediately. The model
@@ -158,13 +158,13 @@ function GettingStartedContent() {
   const sections: GettingStartedSectionConfig[] = [
     {
       id: 'connect-tools',
-      title: 'Connect your tools',
+      title: t('shell.gettingStarted.connectToolsTitle'),
       actions: [
         {
           id: 'connect-tools',
           icon: PlugsIcon,
-          title: 'Connect your tools',
-          description: 'Link your inbox, GitHub, Linear, Notion & more',
+          title: t('shell.gettingStarted.connectToolsTitle'),
+          description: t('shell.gettingStarted.connectToolsDescription'),
           onActivate: () => openSettingsTab('Connected'),
           // Any real connection counts: a second inbox (onboarding links the
           // first), the GitHub account link, or any authenticated MCP server.
@@ -178,20 +178,20 @@ function GettingStartedContent() {
     },
     {
       id: 'basics',
-      title: 'Set up your account',
+      title: t('shell.gettingStarted.accountSection'),
       actions: [
         {
           id: 'play-tutorial',
           icon: PlayCircleIcon,
-          title: 'Play the Macro tutorial',
-          description: "Take a quick tour of Macro's core features",
+          title: t('shell.gettingStarted.tutorialTitle'),
+          description: t('shell.gettingStarted.tutorialDescription'),
           onActivate: () => setTutorialOpen(true),
         },
         {
           id: 'how-to-guide',
           icon: BookOpenIcon,
-          title: 'Macro how to guide',
-          description: 'Learn about how Macro works',
+          title: t('shell.gettingStarted.guideTitle'),
+          description: t('shell.gettingStarted.guideDescription'),
           // Falls back to the public docs site when the id can't be resolved.
           onActivate: () => {
             const documentId = howToGuideId();
@@ -205,8 +205,8 @@ function GettingStartedContent() {
         {
           id: 'set-name',
           icon: AnimatedProfileIcon,
-          title: 'Set your name & profile picture',
-          description: 'Introduce yourself in Account settings',
+          title: t('shell.gettingStarted.profileTitle'),
+          description: t('shell.gettingStarted.profileDescription'),
           onActivate: () => openSettingsTab('Account'),
           // The editable first/last name (what Account settings writes); the
           // legacy identity-provider display name also counts.
@@ -218,8 +218,8 @@ function GettingStartedContent() {
         {
           id: 'choose-theme',
           icon: PaletteIcon,
-          title: 'Choose your theme',
-          description: 'Light, dark, or completely custom',
+          title: t('shell.gettingStarted.themeTitle'),
+          description: t('shell.gettingStarted.themeDescription'),
           onActivate: () => openSettingsTab('Appearance'),
           // Any theme-picker interaction while the page is mounted; defer
           // skips the mount value.
@@ -236,12 +236,12 @@ function GettingStartedContent() {
     },
     {
       id: 'agent-examples',
-      title: "Put Macro's agent to work",
+      title: t('shell.gettingStarted.agentSection'),
       actions: AGENT_EXAMPLES.map((example) => ({
         id: example.id,
         icon: example.icon,
-        title: example.title,
-        description: example.description,
+        title: t(example.titleKey),
+        description: t(example.descriptionKey),
         onActivate: () => openChatPrompt(example.prompt),
       })),
     },
@@ -272,7 +272,7 @@ function GettingStartedContent() {
   });
 
   onMount(() => {
-    panel.handle.setDisplayName('Getting started');
+    panel.handle.setDisplayName(t('shell.gettingStarted.title'));
     // Preview is always on for Getting Started (no user toggle): engage
     // whenever this panel isn't itself someone's Viewer. engagePreview
     // no-ops on mobile and when there's no room; action opens re-engage if
@@ -286,8 +286,12 @@ function GettingStartedContent() {
       <div class="min-h-0 flex-1 overflow-y-auto">
         <div class="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 pb-6 pt-6">
           <header class="px-1">
-            <h1 class="text-xl font-semibold text-ink">Getting Started</h1>
-            <p class="text-sm text-ink-muted">{t('auto.a_few_actions_to_get_the_most_')}</p>
+            <h1 class="text-xl font-semibold text-ink">
+              {t('shell.gettingStarted.title')}
+            </h1>
+            <p class="text-sm text-ink-muted">
+              {t('shell.gettingStarted.subtitle')}
+            </p>
           </header>
           {/* Renders nothing once no inbox is importing. */}
           <HomeBackfillProgress />
@@ -313,7 +317,7 @@ function GettingStartedContent() {
 
 function GettingStartedSection(props: {
   section: GettingStartedSectionConfig;
-  activate: (action: GettingStartedAction) =>Promise<void>;
+  activate: (action: GettingStartedAction) => Promise<void>;
   isComplete: (action: GettingStartedAction) => boolean;
   sectionProgress: (section: GettingStartedSectionConfig) => {
     completed: number;

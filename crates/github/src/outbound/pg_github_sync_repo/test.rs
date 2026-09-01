@@ -304,11 +304,11 @@ async fn test_resolve_team_task_references_returns_all_teams_sharing_a_slug(pool
     // the service can detect the ambiguity.
     sqlx::query!(
         r#"
-        WITH new_conation_user AS (
-            INSERT INTO conation_user (id, username, email, stripe_customer_id)
+        WITH new_macro_user AS (
+            INSERT INTO macro_user (id, username, email, stripe_customer_id)
             VALUES ('99999999-9999-9999-9999-999999999999'::uuid, 'owner3', 'owner3@test.com', 'cus_test3')
         ), new_user AS (
-            INSERT INTO "User" (id, email, conation_user_id)
+            INSERT INTO "User" (id, email, macro_user_id)
             VALUES ('macro|owner3@user.com', 'owner3@test.com', '99999999-9999-9999-9999-999999999999'::uuid)
             RETURNING id
         ), new_team AS (
@@ -448,18 +448,18 @@ async fn test_get_installation_sources_empty(pool: Pool<Postgres>) {
 }
 
 // ---------------------------------------------------------------------------
-// get_conation_ids_by_github_user_ids
+// get_macro_ids_by_github_user_ids
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(path = "../../../fixtures", scripts("github_installation_test_data"))
 )]
-async fn test_get_conation_ids_by_github_user_ids_found(pool: Pool<Postgres>) {
+async fn test_get_macro_ids_by_github_user_ids_found(pool: Pool<Postgres>) {
     let repo = PgGithubSyncRepo::new(pool);
 
     let links = repo
-        .get_conation_ids_by_github_user_ids(&["12345".to_string()])
+        .get_macro_ids_by_github_user_ids(&["12345".to_string()])
         .await
         .unwrap();
 
@@ -470,11 +470,11 @@ async fn test_get_conation_ids_by_github_user_ids_found(pool: Pool<Postgres>) {
 }
 
 #[sqlx::test(migrator = "MACRO_DB_MIGRATIONS")]
-async fn test_get_conation_ids_by_github_user_ids_not_found(pool: Pool<Postgres>) {
+async fn test_get_macro_ids_by_github_user_ids_not_found(pool: Pool<Postgres>) {
     let repo = PgGithubSyncRepo::new(pool);
 
     let links = repo
-        .get_conation_ids_by_github_user_ids(&["99999".to_string()])
+        .get_macro_ids_by_github_user_ids(&["99999".to_string()])
         .await
         .unwrap();
 
@@ -485,12 +485,12 @@ async fn test_get_conation_ids_by_github_user_ids_not_found(pool: Pool<Postgres>
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(path = "../../../fixtures", scripts("github_installation_test_data"))
 )]
-async fn test_get_conation_ids_by_github_user_ids_fans_out_to_multiple_users(pool: Pool<Postgres>) {
+async fn test_get_macro_ids_by_github_user_ids_fans_out_to_multiple_users(pool: Pool<Postgres>) {
     // A second link sharing github_user_id '12345' (github_user_id is not unique;
     // multiple Macro users may share one GitHub account).
     sqlx::query(
         r#"
-        INSERT INTO public.github_links (id, conation_id, fusionauth_user_id, github_username, github_user_id)
+        INSERT INTO public.github_links (id, macro_id, fusionauth_user_id, github_username, github_user_id)
         VALUES ($1, $2, $3, $4, $5)
         "#,
     )
@@ -510,14 +510,14 @@ async fn test_get_conation_ids_by_github_user_ids_fans_out_to_multiple_users(poo
     let repo = PgGithubSyncRepo::new(pool);
 
     let links = repo
-        .get_conation_ids_by_github_user_ids(&["12345".to_string()])
+        .get_macro_ids_by_github_user_ids(&["12345".to_string()])
         .await
         .unwrap();
 
-    let mut conation_ids = links.get("12345").cloned().unwrap_or_default();
-    conation_ids.sort();
+    let mut macro_ids = links.get("12345").cloned().unwrap_or_default();
+    macro_ids.sort();
     assert_eq!(
-        conation_ids,
+        macro_ids,
         vec![
             "macro|user2@user.com".to_string(),
             "macro|user@user.com".to_string(),
@@ -526,18 +526,18 @@ async fn test_get_conation_ids_by_github_user_ids_fans_out_to_multiple_users(poo
 }
 
 // ---------------------------------------------------------------------------
-// get_conation_ids_by_github_logins
+// get_macro_ids_by_github_logins
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(path = "../../../fixtures", scripts("github_installation_test_data"))
 )]
-async fn test_get_conation_ids_by_github_logins_matches_case_insensitively(pool: Pool<Postgres>) {
+async fn test_get_macro_ids_by_github_logins_matches_case_insensitively(pool: Pool<Postgres>) {
     // A second link sharing the 'testuser' login (github_username is not unique).
     sqlx::query!(
         r#"
-        INSERT INTO github_links (id, conation_id, fusionauth_user_id, github_username, github_user_id)
+        INSERT INTO github_links (id, macro_id, fusionauth_user_id, github_username, github_user_id)
         VALUES ('11111111-2222-3333-4444-555555555555'::uuid, 'macro|user2@user.com', 'cccccccc-cccc-cccc-cccc-cccccccccccc'::uuid, 'TestUser', '54321')
         "#
     )
@@ -547,7 +547,7 @@ async fn test_get_conation_ids_by_github_logins_matches_case_insensitively(pool:
     let repo = PgGithubSyncRepo::new(pool);
 
     let links = repo
-        .get_conation_ids_by_github_logins(&[
+        .get_macro_ids_by_github_logins(&[
             "TESTUSER".to_string(),
             "solo".to_string(),
             "unlinked".to_string(),
@@ -573,10 +573,10 @@ async fn test_get_conation_ids_by_github_logins_matches_case_insensitively(pool:
 }
 
 #[sqlx::test(migrator = "MACRO_DB_MIGRATIONS")]
-async fn test_get_conation_ids_by_github_logins_empty_input(pool: Pool<Postgres>) {
+async fn test_get_macro_ids_by_github_logins_empty_input(pool: Pool<Postgres>) {
     let repo = PgGithubSyncRepo::new(pool);
 
-    let links = repo.get_conation_ids_by_github_logins(&[]).await.unwrap();
+    let links = repo.get_macro_ids_by_github_logins(&[]).await.unwrap();
 
     assert!(links.is_empty());
 }
@@ -633,18 +633,18 @@ async fn test_get_user_team_ids_no_teams(pool: Pool<Postgres>) {
 async fn insert_user_account(
     pool: &Pool<Postgres>,
     user_id: &str,
-    conation_user_id: Uuid,
+    macro_user_id: Uuid,
     username: &str,
     email: &str,
     stripe_customer_id: &str,
 ) {
     sqlx::query(
         r#"
-        INSERT INTO public.conation_user (id, username, email, stripe_customer_id)
+        INSERT INTO public.macro_user (id, username, email, stripe_customer_id)
         VALUES ($1, $2, $3, $4)
         "#,
     )
-    .bind(conation_user_id)
+    .bind(macro_user_id)
     .bind(username)
     .bind(email)
     .bind(stripe_customer_id)
@@ -654,13 +654,13 @@ async fn insert_user_account(
 
     sqlx::query(
         r#"
-        INSERT INTO public."User" (id, email, conation_user_id)
+        INSERT INTO public."User" (id, email, macro_user_id)
         VALUES ($1, $2, $3)
         "#,
     )
     .bind(user_id)
     .bind(email)
-    .bind(conation_user_id)
+    .bind(macro_user_id)
     .execute(pool)
     .await
     .unwrap();

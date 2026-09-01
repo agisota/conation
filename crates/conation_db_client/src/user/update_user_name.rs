@@ -1,19 +1,19 @@
 async fn update(
     db: &sqlx::PgPool,
-    conation_user_id: &uuid::Uuid,
+    macro_user_id: &uuid::Uuid,
     first_name: Option<String>,
     last_name: Option<String>,
 ) -> anyhow::Result<()> {
     sqlx::query!(
         r#"
-        INSERT INTO conation_user_info (conation_user_id, first_name, last_name)
+        INSERT INTO macro_user_info (macro_user_id, first_name, last_name)
         VALUES ($1, $2, $3)
-        ON CONFLICT (conation_user_id)
+        ON CONFLICT (macro_user_id)
         DO UPDATE SET 
-            first_name = COALESCE(EXCLUDED.first_name, conation_user_info.first_name),
-            last_name = COALESCE(EXCLUDED.last_name, conation_user_info.last_name)
+            first_name = COALESCE(EXCLUDED.first_name, macro_user_info.first_name),
+            last_name = COALESCE(EXCLUDED.last_name, macro_user_info.last_name)
     "#,
-        conation_user_id,
+        macro_user_id,
         first_name,
         last_name
     )
@@ -26,12 +26,12 @@ async fn update(
 #[tracing::instrument(skip(db))]
 pub async fn update_user_name(
     db: &sqlx::PgPool,
-    conation_user_id: &str,
+    macro_user_id: &str,
     first_name: Option<String>,
     last_name: Option<String>,
 ) -> anyhow::Result<()> {
-    let conation_user_id = conation_uuid::string_to_uuid(conation_user_id)?;
-    update(db, &conation_user_id, first_name, last_name).await?;
+    let macro_user_id = conation_uuid::string_to_uuid(macro_user_id)?;
+    update(db, &macro_user_id, first_name, last_name).await?;
 
     Ok(())
 }
@@ -49,14 +49,14 @@ mod tests {
         let orig_first = "Alice".to_string();
         let orig_last = "Smith".to_string();
         sqlx::query!(
-            r#"INSERT INTO conation_user (id, stripe_customer_id, username, email) VALUES ($1, 'bogus', 'username', 'bogus')"#,
+            r#"INSERT INTO macro_user (id, stripe_customer_id, username, email) VALUES ($1, 'bogus', 'username', 'bogus')"#,
             &user_id,
         )
         .execute(&pool)
         .await?;
 
         sqlx::query!(
-            r#"INSERT INTO conation_user_info (conation_user_id, first_name, last_name) VALUES ($1, $2, $3)"#,
+            r#"INSERT INTO macro_user_info (macro_user_id, first_name, last_name) VALUES ($1, $2, $3)"#,
             &user_id,
             orig_first,
             orig_last,
@@ -69,7 +69,7 @@ mod tests {
 
         // Check: Values should be unchanged
         let row = sqlx::query!(
-            r#"SELECT first_name, last_name FROM conation_user_info WHERE conation_user_id = $1"#,
+            r#"SELECT first_name, last_name FROM macro_user_info WHERE macro_user_id = $1"#,
             &user_id
         )
         .fetch_one(&pool)
@@ -83,7 +83,7 @@ mod tests {
 
         // Check: firstName should update, lastName should not
         let row = sqlx::query!(
-            r#"SELECT first_name, last_name FROM conation_user_info WHERE conation_user_id = $1"#,
+            r#"SELECT first_name, last_name FROM macro_user_info WHERE macro_user_id = $1"#,
             &user_id
         )
         .fetch_one(&pool)
@@ -97,7 +97,7 @@ mod tests {
 
         // lastName should update, firstName should not
         let row = sqlx::query!(
-            r#"SELECT first_name, last_name FROM conation_user_info WHERE conation_user_id = $1"#,
+            r#"SELECT first_name, last_name FROM macro_user_info WHERE macro_user_id = $1"#,
             &user_id
         )
         .fetch_one(&pool)

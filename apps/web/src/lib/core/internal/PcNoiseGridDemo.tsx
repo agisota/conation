@@ -1,5 +1,4 @@
 import { PcNoiseGrid } from '@core/component/PcNoiseGrid';
-import { t } from '@app/lib/i18n';
 import { DebugSlider } from '@core/component/Slider';
 import { Bar } from '@core/component/TopBar/Bar';
 import { createSignal } from 'solid-js';
@@ -39,7 +38,7 @@ export default function PcNoiseGridDemo() {
   return (
     <div class="flex flex-col size-full">
       <Bar
-        left={<div class="p-2 text-sm w-2xl truncate">{t('auto.pcnoisegrid')}</div>}
+        left={<div class="p-2 text-sm w-2xl truncate">PcNoiseGrid</div>}
         center={<div></div>}
       ></Bar>
       <div class="flex flex-row size-full">
@@ -65,7 +64,7 @@ export default function PcNoiseGridDemo() {
 
         {/* Right side - Controls */}
         <div class="w-[50%] max-w-lg bg-surface p-4 overflow-y-auto border-l border-edge border-dashed">
-          <h2 class="font-mono mb-6">{t('auto.pcnoisegrid_generator')}</h2>
+          <h2 class="font-mono mb-6">PcNoiseGrid Generator</h2>
 
           <div class="space-y-6">
             <DebugSlider
@@ -195,12 +194,14 @@ export default function PcNoiseGridDemo() {
                 navigator.clipboard.writeText(generateComponentCode())
               }
               class="w-full px-4 py-2 bg-ink-extra-muted text-surface font-medium"
-            >{t('auto.copy_component_code')}</button>
+            >
+              Copy Component Code
+            </button>
           </div>
 
           {/* Generated Code */}
           <div class="mt-8">
-            <h3 class="font-mono text-ink-muted mb-3">{t('auto.generated_code')}</h3>
+            <h3 class="font-mono text-ink-muted mb-3">Generated Code</h3>
             <div class="p-4 rounded-xs bg-message overflow-x-auto max-h-96">
               <pre class="text-xs font-mono whitespace-pre-wrap text-ink-muted">
                 {generateComponentCode()}

@@ -60,7 +60,7 @@ pub enum ActingEntity<'a> {
 impl<'a> From<&'a MacroAuthorization> for ActingEntity<'a> {
     fn from(authorization: &'a MacroAuthorization) -> Self {
         match authorization {
-            MacroAuthorization::User(user) => Self::User(user.conation_user_id.as_ref()),
+            MacroAuthorization::User(user) => Self::User(user.macro_user_id.as_ref()),
             MacroAuthorization::Bot(bot) => Self::Bot(bot.bot_id),
             MacroAuthorization::Internal(_) => Self::Internal,
         }
@@ -124,7 +124,7 @@ impl<Svc> Clone for MacroAuthorizationState<Svc> {
 pub(super) fn authenticated_user(
     user_context: UserContext,
 ) -> Result<MacroUserAuthentication, MacroAuthorizationRejection> {
-    let conation_user_id = MacroUserIdStr::parse_from_str(&user_context.user_id)
+    let macro_user_id = MacroUserIdStr::parse_from_str(&user_context.user_id)
         .map(CowLike::into_owned)
         .map_err(|error| {
             tracing::error!(error=?error, "authorized context contained invalid macro user id");
@@ -132,7 +132,7 @@ pub(super) fn authenticated_user(
         })?;
 
     Ok(MacroUserAuthentication {
-        conation_user_id,
+        macro_user_id,
         user_context,
     })
 }

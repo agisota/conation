@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { contentHash } from '@core/util/hash';
 import { throwOnErr } from '@core/util/result';
@@ -107,7 +108,7 @@ export const useUploadDraftAttachmentsMutation = (
               console.error('Unable to remove draft attachment after failure');
             }
           }
-          toast.failure('Failed to save attachments');
+          toast.failure(t('email.feedback.attachmentsSaveFailed'));
         },
       },
       callbacks
@@ -141,7 +142,7 @@ export const useRemoveDraftAttachmentMutation = (
     ...withCallbacks<void, Error, RemoveDraftAttachmentParams>(
       {
         onError() {
-          toast.failure('Failed to remove draft attachment');
+          toast.failure(t('email.feedback.draftAttachmentRemoveFailed'));
         },
       },
       callbacks
@@ -177,7 +178,7 @@ export const useAddForwardedAttachmentsMutation = (
     ...withCallbacks<void, Error, AddForwardedAttachmentsParams>(
       {
         onError() {
-          toast.failure('Failed to add forwarded attachments');
+          toast.failure(t('email.feedback.forwardedAttachmentsAddFailed'));
         },
       },
       callbacks
@@ -211,7 +212,7 @@ export const useRemoveForwardedAttachmentMutation = (
     ...withCallbacks<void, Error, RemoveForwardedAttachmentParams>(
       {
         onError() {
-          toast.failure('Failed to remove forwarded attachment');
+          toast.failure(t('email.feedback.forwardedAttachmentRemoveFailed'));
         },
       },
       callbacks

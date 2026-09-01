@@ -168,7 +168,7 @@ pub async fn update_labels(
         // tell FE to refresh user's inbox
         cg_refresh_email(
             &ctx.connection_gateway_client,
-            link.conation_id.as_ref(),
+            link.macro_id.as_ref(),
             RefreshEmailEvent::UpdateLabels { link_id: link.id },
         )
         .await;
@@ -265,7 +265,7 @@ async fn publish_label_diff_events(
     {
         events.push(EmailMacroEvent::thread_archived(ThreadArchivedMetadata {
             link_id: link.id,
-            owner: link.conation_id.clone(),
+            owner: link.macro_id.clone(),
             actor: None,
             thread_id: thread_db_id,
             archived: thread_row
@@ -280,7 +280,7 @@ async fn publish_label_diff_events(
     {
         events.push(EmailMacroEvent::thread_trashed(ThreadTrashedMetadata {
             link_id: link.id,
-            owner: link.conation_id.clone(),
+            owner: link.macro_id.clone(),
             actor: None,
             thread_id: thread_db_id,
             trashed: added(service::label::system_labels::TRASH),
@@ -290,7 +290,7 @@ async fn publish_label_diff_events(
 
     if let Some(metadata) = build_provider_spam_changed_metadata(
         link.id,
-        &link.conation_id,
+        &link.macro_id,
         thread_db_id,
         labels_to_add,
         labels_to_delete,
@@ -303,7 +303,7 @@ async fn publish_label_diff_events(
     {
         events.push(EmailMacroEvent::thread_read(ThreadReadMetadata {
             link_id: link.id,
-            owner: link.conation_id.clone(),
+            owner: link.macro_id.clone(),
             actor: None,
             thread_id: thread_db_id,
             is_read: thread_row
@@ -319,7 +319,7 @@ async fn publish_label_diff_events(
     {
         events.push(EmailMacroEvent::thread_starred(ThreadStarredMetadata {
             link_id: link.id,
-            owner: link.conation_id.clone(),
+            owner: link.macro_id.clone(),
             actor: None,
             thread_id: thread_db_id,
             starred: added(service::label::system_labels::STARRED),
@@ -353,7 +353,7 @@ async fn publish_label_diff_events(
         events.push(EmailMacroEvent::thread_labels_updated(
             ThreadLabelsUpdatedMetadata {
                 link_id: link.id,
-                owner: link.conation_id.clone(),
+                owner: link.macro_id.clone(),
                 actor: None,
                 thread_id: thread_db_id,
                 added: added_user,

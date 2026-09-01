@@ -50,6 +50,22 @@ fn tool_input_schemas_satisfy_strict_mode() {
 }
 
 #[test]
+fn calendar_tool_copy_uses_conation_display_brand() {
+    let schema = generate_validated_input_schema::<CreateCalendarEvent>()
+        .expect("create calendar event schema should validate");
+
+    assert!(schema.description.contains("In Conation chat"));
+    assert!(!schema.description.contains("In Macro chat"));
+
+    let error = mutation_tool_error(
+        "update the calendar event",
+        CalendarMutationError::PersistFailed("lag".to_string()),
+    );
+    assert!(error.description.contains("Conation's copy lagged behind"));
+    assert!(!error.description.contains("Macro's copy lagged behind"));
+}
+
+#[test]
 fn event_time_input_deserializes_both_shapes() {
     let timed: EventTimeInput = serde_json::from_value(serde_json::json!({
         "kind": "timed",

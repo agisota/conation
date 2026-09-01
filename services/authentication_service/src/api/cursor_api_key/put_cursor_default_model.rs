@@ -36,13 +36,13 @@ pub struct PutCursorDefaultModelRequest {
         (status = 409, body = model::response::ErrorResponse),
     )
 )]
-#[tracing::instrument(skip(ctx, user_context), err, fields(user_id = %user_context.authorization.conation_user_id))]
+#[tracing::instrument(skip(ctx, user_context), err, fields(user_id = %user_context.authorization.macro_user_id))]
 pub async fn handler(
     State(ctx): State<ApiContext>,
     user_context: MacroAuthorizationExtractor<AuthorizationService, UserOnly>,
     extract::Json(req): extract::Json<PutCursorDefaultModelRequest>,
 ) -> Result<Json<CursorApiKeyStatus>, CursorApiKeyError> {
-    let user_id = &user_context.authorization.conation_user_id;
+    let user_id = &user_context.authorization.macro_user_id;
     require_conation_staff(user_id)?;
 
     let updated = cursor_api_key::store::set_default_model_id(

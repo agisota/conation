@@ -45,8 +45,8 @@ export function bufToString(buf: ArrayBuffer) {
 
 /**
  * Pluralize a string if the `length` is great than 1
- * @deprecated Use t('plural.*', { count }) with Intl.PluralRules for ru/en.
- * Kept for compat; now locale-aware via Intl.PluralRules when suffix is 's'.
+ * @deprecated This is an English suffix helper only. User-visible text should
+ * use a semantic `t('domain.message', { count })` ICU plural message instead.
  */
 export function plural(singular: string, length: number, suffix = 's') {
   if (!singular.length) return singular;
@@ -55,21 +55,8 @@ export function plural(singular: string, length: number, suffix = 's') {
   return `${singular}${suffix}`;
 }
 
-/**
- * Locale-aware plural via Intl.PluralRules (ru: one/few/many/other, en: one/other).
- * For full ICU, prefer `t('plural.key', { count })`.
- */
-export function pluralIntl(keyBase: string, count: number, locale?: string): string {
-  const loc = locale ?? (typeof document !== 'undefined' ? document.documentElement.lang : 'ru');
-  const rules = new Intl.PluralRules(loc);
-  const cat = rules.select(count);
-  return `${keyBase}.${cat}`;
-}
-
-/** Formats an integer as an English ordinal, such as `1st` or `23rd`. Locale-aware: ru uses plain number. */
+/** Formats an integer as an English ordinal, such as `1st` or `23rd`. */
 export function formatOrdinal(value: number) {
-  const loc = typeof document !== 'undefined' ? document.documentElement.lang : 'ru';
-  if (loc === 'ru') return String(Math.trunc(value));
   const integer = Math.trunc(value);
   const absolute = Math.abs(integer);
   const tens = absolute % 100;

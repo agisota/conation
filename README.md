@@ -202,6 +202,9 @@ Deeper reading: [key concepts](https://docs.conation.dev/concepts/blocks) covers
 # Running it locally
 
 To run the frontend against hosted services, or to run the local stack, follow [Running locally](docs/RUNNING_LOCALLY.md).
+The supported no-managed-cloud development baseline, operator smoke checks,
+and remaining production self-hosting limitations are documented in
+[Self-hosting status](infra/selfhost/README.md).
 
 To contribute, see [CONTRIBUTING.md](CONTRIBUTING.md).
 

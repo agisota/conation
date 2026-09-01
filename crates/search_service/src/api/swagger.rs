@@ -93,7 +93,7 @@ use models_search::{MatchType, SearchHighlight};
                 ),
         ),
         tags(
-            (name = "search service", description = "Macro Search Service")
+            (name = "search service", description = "Conation Search Service")
         )
     )]
 pub struct ApiDoc;

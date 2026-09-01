@@ -3,6 +3,7 @@ import { SUPPORTED_ATTACHMENT_EXTENSIONS } from '@core/component/AI/constant';
 import { useChatInputContext } from '@core/component/AI/context';
 import { FileDropOverlay } from '@core/component/FileDropOverlay';
 import { fileDrop } from '@core/directive/fileDrop';
+import { t } from '@core/i18n';
 import type { Accessor, Component, ParentProps } from 'solid-js';
 import { createSignal, Show } from 'solid-js';
 
@@ -45,7 +46,7 @@ export const DragDropWrapper: Component<DragDropWrapperProps> = (props) => {
 
       <Show when={showOverlay()}>
         <FileDropOverlay>
-          {props.overlayMessage || 'Drop files to attach to your message'}
+          {props.overlayMessage || t('ai.attachments.dropPrompt')}
         </FileDropOverlay>
       </Show>
     </div>

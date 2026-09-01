@@ -1,5 +1,5 @@
-import { Popover } from '@kobalte/core/popover';
 import { t } from '@app/lib/i18n';
+import { Popover } from '@kobalte/core/popover';
 import { Slider } from '@kobalte/core/slider';
 import { Tabs } from '@kobalte/core/tabs';
 import { cn, Layer } from '@ui';
@@ -204,7 +204,7 @@ function HueSlider(props: { h: () => number; onH: (n: number) => void }) {
       step={1}
       value={[props.h()]}
       onChange={(v) => props.onH(v[0] ?? 0)}
-      aria-label={t('auto.hue')}
+      aria-label={t('theme.color.hue')}
     >
       <Slider.Track
         class="relative h-full w-full rounded-full"
@@ -428,10 +428,12 @@ export function ColorPickerPopover(props: {
                 step={0.01}
                 value={[alpha()]}
                 onChange={(value) => props.onAlpha?.(value[0] ?? 1)}
-                aria-label={t('auto.alpha')}
+                aria-label={t('theme.color.alpha')}
                 class="flex items-center gap-3"
               >
-                <span class="w-10 text-xs text-ink-muted">{t('auto.alpha')}</span>
+                <span class="w-10 text-xs text-ink-muted">
+                  {t('theme.color.alpha')}
+                </span>
                 <Slider.Track
                   class="relative h-3 flex-1 rounded-full border border-edge-muted theme-alpha-track"
                   style={{
@@ -472,7 +474,7 @@ export function ColorPickerPopover(props: {
               <Show when={format() === 'rgb'}>
                 <div class="flex flex-col gap-3 rounded-md bg-inset p-3">
                   <ChannelSlider
-                    label="Red"
+                    label={t('theme.color.red')}
                     value={() => rgb().r}
                     min={0}
                     max={255}
@@ -483,7 +485,7 @@ export function ColorPickerPopover(props: {
                     onChange={(value) => setRgbChannel('r', value)}
                   />
                   <ChannelSlider
-                    label="Green"
+                    label={t('theme.color.green')}
                     value={() => rgb().g}
                     min={0}
                     max={255}
@@ -494,7 +496,7 @@ export function ColorPickerPopover(props: {
                     onChange={(value) => setRgbChannel('g', value)}
                   />
                   <ChannelSlider
-                    label="Blue"
+                    label={t('theme.color.blue')}
                     value={() => rgb().b}
                     min={0}
                     max={255}
@@ -510,7 +512,7 @@ export function ColorPickerPopover(props: {
               <Show when={format() === 'hsl'}>
                 <div class="flex flex-col gap-3 rounded-md bg-inset p-3">
                   <ChannelSlider
-                    label="Hue"
+                    label={t('theme.color.hue')}
                     value={hslHue}
                     min={0}
                     max={360}
@@ -520,7 +522,7 @@ export function ColorPickerPopover(props: {
                     onChange={(value) => setHslChannel('h', value)}
                   />
                   <ChannelSlider
-                    label="Sat"
+                    label={t('theme.color.saturationShort')}
                     value={() => convertedHsl().s}
                     min={0}
                     max={100}
@@ -532,7 +534,7 @@ export function ColorPickerPopover(props: {
                     onChange={(value) => setHslChannel('s', value)}
                   />
                   <ChannelSlider
-                    label="Light"
+                    label={t('theme.color.lightnessShort')}
                     value={() => convertedHsl().l}
                     min={0}
                     max={100}
@@ -554,7 +556,9 @@ export function ColorPickerPopover(props: {
                 value={colorText()}
                 onInput={(e) => setColorTextValue(e.currentTarget.value)}
                 spellcheck={false}
-                aria-label={`${format().toUpperCase()} color`}
+                aria-label={t('theme.color.valueLabel', {
+                  format: format().toUpperCase(),
+                })}
               />
             </div>
           </Popover.Content>

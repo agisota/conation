@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { emailToMacroId } from '@core/user';
 import type { ApiMessage } from '@service-email/generated/schemas';
 import { getFirstName } from './name';
@@ -23,14 +24,14 @@ export function getSenderDisplayName(
   currentUserEmail?: string
 ): string {
   if (isMessageFromCurrentUser(message, currentUserEmail)) {
-    return 'Me';
+    return t('blockEmail.participants.me');
   }
   const from = message.from;
-  if (!from) return 'Unknown';
+  if (!from) return t('blockEmail.participants.unknown');
   if (from.name) {
     return getFirstName(from.name);
   }
-  return from.email ?? 'Unknown';
+  return from.email ?? t('blockEmail.participants.unknown');
 }
 
 /**
@@ -53,7 +54,9 @@ export function getRecipientDisplayName(
   recipient: Recipient,
   currentUserEmail?: string
 ): string {
-  if (recipient.email === currentUserEmail) return 'Me';
+  if (recipient.email === currentUserEmail) {
+    return t('blockEmail.participants.me');
+  }
   return recipient.name
     ? getFirstName(recipient.name)
     : (recipient.email?.split('@')[0] ?? '');

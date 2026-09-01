@@ -1,5 +1,5 @@
-import { EntityIcon } from '@core/component/EntityIcon';
 import { t } from '@app/lib/i18n';
+import { EntityIcon } from '@core/component/EntityIcon';
 import { UserIcon } from '@core/component/UserIcon';
 import type { ChannelEntity } from '@entity';
 import ClockIcon from '@phosphor/clock.svg';
@@ -115,7 +115,9 @@ export function MentionsMenuItem(props: {
           </Show>
         </span>
         <Show when={isBotMentionItem(props.item)}>
-          <span class="inline-flex shrink-0 items-center rounded-sm bg-hover px-1.5 py-0.5 text-[10px] font-medium leading-none text-ink-muted">{t('auto.agent')}</span>
+          <span class="inline-flex shrink-0 items-center rounded-sm bg-hover px-1.5 py-0.5 text-[10px] font-medium leading-none text-ink-muted">
+            {t('editor.mentions.agentBadge')}
+          </span>
         </Show>
       </div>
     </div>

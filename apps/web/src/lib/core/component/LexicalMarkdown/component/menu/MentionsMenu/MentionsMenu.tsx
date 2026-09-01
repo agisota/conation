@@ -256,7 +256,7 @@ function MentionsMenuInner(props: MentionsMenuProps) {
       return [
         {
           id: 'all',
-          label: 'All',
+          label: t('editor.mentions.buckets.all'),
           getData: mobileAllItems,
           getFullCount: () =>
             (usersAndGroups()?.length ?? 0) +
@@ -290,13 +290,16 @@ function MentionsMenuInner(props: MentionsMenuProps) {
     const buckets: BucketConfig[] = [
       {
         id: 'users',
-        label: groups().length > 0 ? 'People & Groups' : 'People',
+        label:
+          groups().length > 0
+            ? t('editor.mentions.buckets.peopleAndGroups')
+            : t('editor.mentions.buckets.people'),
         getData: () => usersAndGroups() ?? [],
         getFullCount: () => usersAndGroups()?.length ?? 0,
       },
       {
         id: 'documents',
-        label: 'Documents, Agents, & Tasks',
+        label: t('editor.mentions.buckets.documentsAgentsTasks'),
         getData: () => docs() ?? [],
         getFullCount: docsMention.totalCount,
         hasMore: docsMention.hasMore,
@@ -305,7 +308,7 @@ function MentionsMenuInner(props: MentionsMenuProps) {
       },
       {
         id: 'channels',
-        label: 'Channels',
+        label: t('editor.mentions.buckets.channels'),
         getData: () => channels() ?? [],
         getFullCount: channelsMention.totalCount,
         hasMore: channelsMention.hasMore,
@@ -314,7 +317,7 @@ function MentionsMenuInner(props: MentionsMenuProps) {
       },
       {
         id: 'companies',
-        label: 'Companies',
+        label: t('editor.mentions.buckets.companies'),
         getData: () => companies() ?? [],
         getFullCount: () => companyMention?.totalCount() ?? 0,
         hasMore: () => companyMention?.hasMore() ?? false,
@@ -323,7 +326,7 @@ function MentionsMenuInner(props: MentionsMenuProps) {
       },
       {
         id: 'emails',
-        label: 'Emails',
+        label: t('editor.mentions.buckets.emails'),
         getData: () => emails() ?? [],
         getFullCount: totalEmailCount,
         hasMore: hasMoreEmails,
@@ -332,7 +335,7 @@ function MentionsMenuInner(props: MentionsMenuProps) {
       },
       {
         id: 'dates',
-        label: 'Dates',
+        label: t('editor.mentions.buckets.dates'),
         getData: () => dates() ?? [],
         getFullCount: () => dates()?.length ?? 0,
       },
@@ -341,7 +344,7 @@ function MentionsMenuInner(props: MentionsMenuProps) {
     if (props.showOpenTabs) {
       buckets.unshift({
         id: 'openTabs',
-        label: 'Open Tabs',
+        label: t('editor.mentions.buckets.openTabs'),
         getData: () => openTabs() ?? [],
         getFullCount: () => openTabs()?.length ?? 0,
       });
@@ -506,9 +509,9 @@ function MentionsMenuInner(props: MentionsMenuProps) {
 
   const viewAllCategoryLabel = () => {
     const mode = controller.viewAllMode();
-    if (!mode) return 'Items';
+    if (!mode) return t('editor.mentions.items');
     const bucket = bucketConfigs().find((b) => b.id === mode);
-    if (!bucket) return 'Items';
+    if (!bucket) return t('editor.mentions.items');
     return `${bucket.label} (${bucket.getFullCount()})`;
   };
 
@@ -599,7 +602,9 @@ function MentionsMenuInner(props: MentionsMenuProps) {
                 <Show
                   when={controller.combinedItems().length > 0}
                   fallback={
-                    <div class="px-2 text-ink-extra-muted">{t('auto.no_results')}</div>
+                    <div class="px-2 text-ink-extra-muted">
+                      {t('editor.mentions.noResults')}
+                    </div>
                   }
                 >
                   <div>
@@ -663,12 +668,16 @@ function MentionsMenuInner(props: MentionsMenuProps) {
                     >
                       <div class="p-0.5 px-1 -my-2 bg-surface text-ink border border-edge-muted rounded-xs text-xs">
                         ←
-                      </div>{t('auto.back_to_everything')}</button>
+                      </div>
+                      {t('editor.mentions.backToEverything')}
+                    </button>
                   </div>
                 </div>
               </Show>
               <Show when={controller.combinedItems().length === 0}>
-                <div class="px-2 text-ink-extra-muted">{t('auto.no_results')}</div>
+                <div class="px-2 text-ink-extra-muted">
+                  {t('editor.mentions.noResults')}
+                </div>
               </Show>
               <VirtualizedItemList
                 items={controller.combinedItems()}

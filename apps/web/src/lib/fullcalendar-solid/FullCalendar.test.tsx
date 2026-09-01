@@ -8,7 +8,6 @@ import {
   type EventContentArg,
 } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
-import { t } from '@app/lib/i18n';
 import { render, screen, waitFor } from '@solidjs/testing-library';
 import {
   createContext,
@@ -236,7 +235,7 @@ describe('FullCalendar Solid connector', () => {
 
     function EventContent() {
       onCleanup(disposeContent);
-      return <span data-testid="owned-content">{t('auto.owned_content')}</span>;
+      return <span data-testid="owned-content">Owned content</span>;
     }
 
     const { unmount } = render(() => (

@@ -22,6 +22,7 @@
  *   instead of pierre's OS-preference "system" mode.
  */
 
+import { formatNumber, t } from '@app/lib/i18n';
 import {
   type FileDiffOptions,
   FileDiff as PierreFileDiffInstance,
@@ -161,7 +162,7 @@ function PierreFileView(props: {
   return (
     <Show
       when={!failed()}
-      fallback={<DiffNote>diff could not be rendered</DiffNote>}
+      fallback={<DiffNote>{t('agent.diff.renderFailed')}</DiffNote>}
     >
       <div
         ref={container}
@@ -190,7 +191,10 @@ function FileDiffBlock(props: {
         when={longestSide() <= MAX_RENDER_LINES}
         fallback={
           <DiffNote>
-            large diff ({longestSide().toLocaleString()} lines)
+            {t('agent.diff.large', {
+              count: longestSide(),
+              formattedCount: formatNumber(longestSide()),
+            })}
           </DiffNote>
         }
       >

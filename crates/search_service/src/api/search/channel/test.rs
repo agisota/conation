@@ -40,7 +40,7 @@ fn channel_name_hit_has_top_level_highlight() {
         entity_type: SearchEntityType::Channels,
         score: None,
         highlight: Highlight {
-            name: Some("<conation_em>acme-h</conation_em>q".to_string()),
+            name: Some("<macro_em>acme-h</macro_em>q".to_string()),
             ..Default::default()
         },
         goto: None,
@@ -53,7 +53,7 @@ fn channel_name_hit_has_top_level_highlight() {
     assert_eq!(items.len(), 1);
     assert_eq!(
         items[0].highlight.name.as_deref(),
-        Some("<conation_em>acme-h</conation_em>q")
+        Some("<macro_em>acme-h</macro_em>q")
     );
     let json = serde_json::to_value(&items[0]).unwrap();
     assert!(json.get("highlight").is_some());

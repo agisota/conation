@@ -3,7 +3,6 @@
  */
 
 import { recipientEntityMapper } from '@core/user';
-import { t } from '@app/lib/i18n';
 import { cleanup, render, screen } from '@solidjs/testing-library';
 import userEvent from '@testing-library/user-event';
 import { Dialog } from '@ui';
@@ -45,7 +44,7 @@ function renderInComposerDialog() {
 
   render(() => (
     <Dialog open>
-      <input aria-label={t('auto.title')} />
+      <input aria-label="Title" />
       <EventComposerGuestsPill
         options={() => [guest('ada@example.com', 'Ada Lovelace')]}
         selected={selected()}

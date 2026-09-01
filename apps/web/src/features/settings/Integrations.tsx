@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import {
   FEATURED_MCP_SERVERS,
   type FeaturedMcpServer,
@@ -5,7 +6,6 @@ import {
   type SvgIcon,
 } from '@core/component/AI/constant/mcpServers';
 import { toast } from '@core/component/Toast/Toast';
-import { t } from '@app/lib/i18n';
 import { openExternalUrl } from '@core/util/url';
 import CheckIcon from '@phosphor-icons/core/regular/check.svg?component-solid';
 import PlugIcon from '@phosphor-icons/core/regular/plug.svg?component-solid';
@@ -58,7 +58,7 @@ function AddServerForm(props: {
           openExternalUrl(result.authorization_url);
         },
         onError: () => {
-          toast.failure('Server added but failed to start authorization');
+          toast.failure(t('settings.integrations.toast.authorizationFailed'));
         },
       }
     );
@@ -78,7 +78,7 @@ function AddServerForm(props: {
           props.onOpenChange(false);
         },
         onError: () => {
-          toast.failure('Failed to add server');
+          toast.failure(t('settings.integrations.toast.addFailed'));
         },
       }
     );
@@ -93,16 +93,22 @@ function AddServerForm(props: {
     >
       <Panel depth={2} class="rounded-xl">
         <Panel.Header class="px-6">
-          <span class="text-ink text-sm font-semibold">{t('auto.add_mcp_server')}</span>
+          <span class="text-ink text-sm font-semibold">
+            {t('settings.integrations.addDialog.title')}
+          </span>
         </Panel.Header>
         <Panel.Body class="p-6 flex flex-col gap-5">
           <div class="flex flex-col gap-4">
             <label class="flex flex-col gap-1.5">
-              <span class="text-xs text-ink-muted">{t('auto.name')}</span>
+              <span class="text-xs text-ink-muted">
+                {t('settings.integrations.addDialog.nameLabel')}
+              </span>
               <input
                 type="text"
                 class="settings-input w-full"
-                placeholder={t('auto.my_mcp_server')}
+                placeholder={t(
+                  'settings.integrations.addDialog.namePlaceholder'
+                )}
                 value={name()}
                 onInput={(e) => setName(e.currentTarget.value)}
                 onKeyDown={(e) => {
@@ -115,7 +121,9 @@ function AddServerForm(props: {
               />
             </label>
             <label class="flex flex-col gap-1.5">
-              <span class="text-xs text-ink-muted">{t('auto.url')}</span>
+              <span class="text-xs text-ink-muted">
+                {t('settings.integrations.addDialog.urlLabel')}
+              </span>
               <input
                 type="url"
                 class="settings-input w-full"
@@ -142,7 +150,9 @@ function AddServerForm(props: {
                 reset();
                 props.onOpenChange(false);
               }}
-            >{t('common.cancel')}</Button>
+            >
+              {t('common.cancel')}
+            </Button>
             <Button
               variant="accent"
               size="sm"
@@ -152,7 +162,9 @@ function AddServerForm(props: {
               }
               onClick={handleSubmit}
             >
-              {addMutation.isPending ? 'Adding...' : 'Add'}
+              {addMutation.isPending
+                ? t('settings.integrations.actions.adding')
+                : t('settings.integrations.actions.add')}
             </Button>
           </div>
         </Panel.Body>
@@ -208,7 +220,7 @@ function ServerRow(props: { server: ServerResponse }) {
       { url: props.server.url, enabled: !props.server.enabled },
       {
         onError: () => {
-          toast.failure('Failed to update server');
+          toast.failure(t('settings.integrations.toast.updateFailed'));
         },
       }
     );
@@ -219,11 +231,11 @@ function ServerRow(props: { server: ServerResponse }) {
       { url: props.server.url },
       {
         onSuccess: () => {
-          toast.success('Server removed');
+          toast.success(t('settings.integrations.toast.removed'));
           setConfirmDelete(false);
         },
         onError: () => {
-          toast.failure('Failed to remove server');
+          toast.failure(t('settings.integrations.toast.removeFailed'));
           setConfirmDelete(false);
         },
       }
@@ -245,7 +257,9 @@ function ServerRow(props: { server: ServerResponse }) {
         onError: () => {
           writeAuthAttempted(props.server.url, true);
           setAttempted(true);
-          toast.failure('Failed to start authorization');
+          toast.failure(
+            t('settings.integrations.toast.authorizationStartFailed')
+          );
         },
       }
     );
@@ -275,7 +289,9 @@ function ServerRow(props: { server: ServerResponse }) {
     >
       <Show when={!props.server.authenticated}>
         <Show when={connectionFailed()}>
-          <span class="text-xs text-failure whitespace-nowrap">{t('auto.last_attempt_failed')}</span>
+          <span class="text-xs text-failure whitespace-nowrap">
+            {t('settings.integrations.status.lastAttemptFailed')}
+          </span>
         </Show>
         <Button
           variant="accent"
@@ -285,10 +301,10 @@ function ServerRow(props: { server: ServerResponse }) {
           onClick={handleAuth}
         >
           {authMutation.isPending
-            ? 'Connecting...'
+            ? t('settings.integrations.actions.connecting')
             : connectionFailed()
-              ? 'Try Again'
-              : 'Connect'}
+              ? t('settings.integrations.actions.tryAgain')
+              : t('settings.integrations.actions.connect')}
         </Button>
       </Show>
 
@@ -298,7 +314,11 @@ function ServerRow(props: { server: ServerResponse }) {
           checked={props.server.enabled}
           disabled={updateMutation.isPending}
           onChange={handleToggleEnabled}
-          label={props.server.enabled ? 'Enabled' : 'Disabled'}
+          label={
+            props.server.enabled
+              ? t('settings.integrations.status.enabled')
+              : t('settings.integrations.status.disabled')
+          }
           labelClass="inline-block w-14 text-left text-xs text-ink-muted whitespace-nowrap"
         />
       </Show>
@@ -314,14 +334,18 @@ function ServerRow(props: { server: ServerResponse }) {
               disabled={deleteMutation.isPending}
               onClick={handleDelete}
             >
-              {deleteMutation.isPending ? 'Removing...' : 'Confirm'}
+              {deleteMutation.isPending
+                ? t('settings.integrations.actions.removing')
+                : t('settings.integrations.actions.confirm')}
             </Button>
             <Button
               variant="outline"
               size="sm"
               depth={3}
               onClick={() => setConfirmDelete(false)}
-            >{t('common.cancel')}</Button>
+            >
+              {t('common.cancel')}
+            </Button>
           </div>
         }
       >
@@ -359,7 +383,11 @@ function FeaturedServerRow(props: { server: FeaturedMcpServer }) {
         url: props.server.url,
       });
     } catch {
-      toast.failure(`Failed to add ${props.server.server_name}`);
+      toast.failure(
+        t('settings.integrations.toast.addNamedFailed', {
+          name: props.server.server_name,
+        })
+      );
       return;
     }
     try {
@@ -369,7 +397,7 @@ function FeaturedServerRow(props: { server: FeaturedMcpServer }) {
       });
       openExternalUrl(result.authorization_url);
     } catch {
-      toast.failure('Server added but failed to start authorization');
+      toast.failure(t('settings.integrations.toast.authorizationFailed'));
     }
   };
 
@@ -377,10 +405,10 @@ function FeaturedServerRow(props: { server: FeaturedMcpServer }) {
     <IntegrationRow
       icon={<props.server.icon class="size-5" />}
       title={props.server.server_name}
-      description={props.server.tagline}
+      description={t(props.server.taglineKey)}
     >
       <ConnectAction
-        label="Connect"
+        label={t('settings.integrations.actions.connect')}
         onClick={handleConnect}
         loading={addMutation.isPending || authMutation.isPending}
       />
@@ -404,8 +432,8 @@ export function IntegrationsSection() {
 
   return (
     <SettingsSection
-      title={t('auto.mcp_integrations')}
-      description="Connect MCP servers to give Macro's agent access to the tools your team already uses."
+      title={t('settings.integrations.title')}
+      description={t('settings.integrations.description')}
       actions={
         <Button
           variant="outline"
@@ -413,18 +441,24 @@ export function IntegrationsSection() {
           depth={3}
           onClick={() => setShowAddDialog(true)}
         >
-          <PlusIcon class="size-4" />{t('auto.add_server')}</Button>
+          <PlusIcon class="size-4" />
+          {t('settings.integrations.actions.addServer')}
+        </Button>
       }
     >
       <Show when={serversQuery.isError}>
         <SettingsCard>
-          <div class="px-6 py-8 text-center text-sm text-ink-muted">{t('auto.failed_to_load_integrations')}<Button
+          <div class="px-6 py-8 text-center text-sm text-ink-muted">
+            {t('settings.integrations.loadFailed')}
+            <Button
               variant="outline"
               size="sm"
               depth={3}
               onClick={() => serversQuery.refetch()}
               class="ml-2"
-            >{t('common.retry')}</Button>
+            >
+              {t('common.retry')}
+            </Button>
           </div>
         </SettingsCard>
       </Show>

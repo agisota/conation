@@ -44,7 +44,7 @@ where
             ));
         }
 
-        let claimed_conation_user_id = claims
+        let claimed_macro_user_id = claims
             .user_id
             .as_deref()
             .map(MacroUserIdStr::parse_from_str)
@@ -64,9 +64,9 @@ where
             .map_err(|error| repository_error(error, "find acting user"))?
             .ok_or_else(|| Report::new(MacroAuthorizationError::ActingUserNotAuthorized))?;
 
-        let conation_user_id_matches = claimed_conation_user_id
+        let macro_user_id_matches = claimed_macro_user_id
             .as_ref()
-            .is_none_or(|claimed| claimed.as_ref() == acting_user.conation_user_id.as_ref());
+            .is_none_or(|claimed| claimed.as_ref() == acting_user.macro_user_id.as_ref());
         let fusion_user_id_matches = claims
             .fusion_user_id
             .as_deref()
@@ -75,7 +75,7 @@ where
             .organization_id
             .is_none_or(|claimed| Some(claimed) == acting_user.organization_id);
 
-        if !conation_user_id_matches || !fusion_user_id_matches || !organization_id_matches {
+        if !macro_user_id_matches || !fusion_user_id_matches || !organization_id_matches {
             return Err(Report::new(
                 MacroAuthorizationError::ActingUserNotAuthorized,
             ));
@@ -83,7 +83,7 @@ where
 
         let authorized = match &token.owner {
             BotAuthorizationOwner::User { user_id } => {
-                user_id == acting_user.conation_user_id.as_ref()
+                user_id == acting_user.macro_user_id.as_ref()
             }
             BotAuthorizationOwner::Team { team_id } => self
                 .repo
@@ -151,9 +151,9 @@ where
 }
 
 fn user_authentication(acting_user: ResolvedBotActingUser) -> MacroUserAuthentication {
-    let user_id = acting_user.conation_user_id.as_ref().to_owned();
+    let user_id = acting_user.macro_user_id.as_ref().to_owned();
     MacroUserAuthentication {
-        conation_user_id: acting_user.conation_user_id,
+        macro_user_id: acting_user.macro_user_id,
         user_context: UserContext {
             user_id,
             fusion_user_id: acting_user.fusion_user_id,

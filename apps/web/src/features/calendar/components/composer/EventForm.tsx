@@ -1,5 +1,5 @@
-import SpinnerIcon from '@phosphor/spinner.svg';
 import { t } from '@app/lib/i18n';
+import SpinnerIcon from '@phosphor/spinner.svg';
 import { Button, cn, Layer } from '@ui';
 import { createEffect, createUniqueId, Show } from 'solid-js';
 import type { CalendarEventFormController } from './create-calendar-event-form-controller';
@@ -128,8 +128,8 @@ export function EventForm(props: EventFormProps) {
               onInput={(event) =>
                 controller.setField('title', event.currentTarget.value)
               }
-              placeholder={t('auto.new_event')}
-              aria-label={t('auto.title')}
+              placeholder={t('calendar.event.new')}
+              aria-label={t('calendar.event.form.title.label')}
               autofocus={!isEdit()}
               disabled={fieldIsDisabled('title')}
               class="h-9 w-full bg-transparent px-2 text-lg font-semibold leading-snug text-ink outline-none placeholder:text-ink-placeholder"
@@ -147,8 +147,8 @@ export function EventForm(props: EventFormProps) {
                 onKeyDown={(event) => {
                   if (event.key === 'Enter') event.preventDefault();
                 }}
-                placeholder={t('auto.add_description')}
-                aria-label={t('auto.description')}
+                placeholder={t('calendar.event.form.description.placeholder')}
+                aria-label={t('calendar.event.form.description.label')}
                 rows={1}
                 wrap="off"
                 disabled={fieldIsDisabled('description')}
@@ -226,7 +226,9 @@ export function EventForm(props: EventFormProps) {
 
       <div class="flex shrink-0 items-center justify-end gap-3">
         <Show when={props.showRecurringEditNotice}>
-          <p class="mr-auto text-xs text-ink-extra-muted">{t('auto.changes_apply_to_all_occurrenc')}</p>
+          <p class="mr-auto text-xs text-ink-extra-muted">
+            {t('calendar.event.form.recurringChangesApplyToAll')}
+          </p>
         </Show>
         <Button
           type="button"
@@ -234,18 +236,24 @@ export function EventForm(props: EventFormProps) {
           class="rounded-lg"
           disabled={formIsDisabled()}
           onClick={props.onCancel}
-        >{t('common.cancel')}</Button>
+        >
+          {t('common.cancel')}
+        </Button>
         <Button
           type="submit"
           variant={controller.canSave() ? 'accent' : 'ghost'}
           depth={3}
           class="rounded-lg border-0"
           disabled={!controller.canSave() || formIsDisabled()}
-          aria-label={isEdit() ? t('common.save') : 'Create event'}
+          aria-label={
+            isEdit() ? t('common.save') : t('calendar.event.form.create')
+          }
         >
           <Show
             when={props.pending}
-            fallback={isEdit() ? t('common.save') : 'Create event'}
+            fallback={
+              isEdit() ? t('common.save') : t('calendar.event.form.create')
+            }
           >
             <SpinnerIcon class="size-4 animate-spin" />
           </Show>

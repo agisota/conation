@@ -1,5 +1,5 @@
-import CloseIcon from '@phosphor-icons/core/regular/x.svg?component-solid';
 import { t } from '@app/lib/i18n';
+import CloseIcon from '@phosphor-icons/core/regular/x.svg?component-solid';
 import { Button, Dialog, Surface } from '@ui';
 import { createSignal, type JSX } from 'solid-js';
 import type { DeleteMessageInput } from './create-channel-message-actions';
@@ -46,7 +46,9 @@ export function createDeleteMessageConfirmation(
           <Dialog.CloseButton as={Button} variant="ghost" size="icon-sm">
             <CloseIcon />
           </Dialog.CloseButton>
-          <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">{t('auto.delete_message')}</Dialog.Title>
+          <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">
+            {t('channel.message.delete')}
+          </Dialog.Title>
         </div>
 
         <div class="p-3 flex flex-col gap-3">
@@ -56,7 +58,9 @@ export function createDeleteMessageConfirmation(
           </Dialog.Description>
 
           <div class="flex justify-end gap-2">
-            <Button variant="ghost" onClick={close}>{t('common.cancel')}</Button>
+            <Button variant="ghost" onClick={close}>
+              {t('common.cancel')}
+            </Button>
             <Button
               ref={(el: HTMLButtonElement) => {
                 requestAnimationFrame(() =>
@@ -66,7 +70,9 @@ export function createDeleteMessageConfirmation(
               type="button"
               variant="danger"
               onClick={confirm}
-            >{t('common.delete')}</Button>
+            >
+              {t('common.delete')}
+            </Button>
           </div>
         </div>
       </Surface>

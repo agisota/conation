@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { UserIcon, type UserIconProps } from '@core/component/UserIcon';
 import { useEmail } from '@core/context/user';
 import { emailToMacroId } from '@core/user';
@@ -60,7 +61,7 @@ export function EmailParticipants() {
   );
 
   const getDisplayName = (p: Participant) => {
-    if (p.email === currentUserEmail()) return 'Me';
+    if (p.email === currentUserEmail()) return t('blockEmail.participants.me');
     if (p.name) return p.name.split(' ')[0];
     return p.email.split('@')[0];
   };
@@ -103,7 +104,9 @@ export function EmailParticipants() {
           onClick={() => setExpanded((v) => !v)}
           class="inline-flex items-center rounded-full border border-ink-muted/8 bg-ink-muted/[0.025] px-3 py-1 text-sm text-ink-muted hover:text-ink hover:bg-ink-muted/[0.06] tabular-nums"
         >
-          {expanded() ? 'Show less' : `+${hiddenCount()} more`}
+          {expanded()
+            ? t('blockEmail.participants.showLess')
+            : t('blockEmail.participants.more', { count: hiddenCount() })}
         </button>
       </Show>
     </div>

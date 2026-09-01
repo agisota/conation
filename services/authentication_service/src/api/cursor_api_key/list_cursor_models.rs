@@ -1,7 +1,7 @@
 use axum::{Json, extract::State};
+use conation_authorization::{MacroAuthorizationExtractor, UserOnly};
 use cursor_cloud_agents::api::{ApiKey, CursorClient, CursorConfig};
 use cursor_cloud_agents::domain::ports::CursorAgents;
-use conation_authorization::{MacroAuthorizationExtractor, UserOnly};
 use utoipa::ToSchema;
 
 use super::{CursorApiKeyError, require_conation_staff};
@@ -48,12 +48,12 @@ pub struct CursorModelsResponse {
         (status = 502, body = model::response::ErrorResponse),
     )
 )]
-#[tracing::instrument(skip(ctx, user_context), err, fields(user_id = %user_context.authorization.conation_user_id))]
+#[tracing::instrument(skip(ctx, user_context), err, fields(user_id = %user_context.authorization.macro_user_id))]
 pub async fn handler(
     State(ctx): State<ApiContext>,
     user_context: MacroAuthorizationExtractor<AuthorizationService, UserOnly>,
 ) -> Result<Json<CursorModelsResponse>, CursorApiKeyError> {
-    let user_id = &user_context.authorization.conation_user_id;
+    let user_id = &user_context.authorization.macro_user_id;
     require_conation_staff(user_id)?;
 
     let stored = cursor_api_key::store::get_cursor_api_key(&ctx.db, user_id.as_ref())

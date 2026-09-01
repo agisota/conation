@@ -231,7 +231,7 @@ pub async fn bulk_get_by_event_item_ids<
     let result = service
         .inner
         .get_user_notifications_by_event_item_ids::<T>(GetNotificationsByEventItemIdsRequest {
-            user_id: user.authorization.user.conation_user_id,
+            user_id: user.authorization.user.macro_user_id,
             event_item_ids: &req.event_item_ids,
             limit,
             cursor: cursor.into_query(CreatedAt, ()),
@@ -287,7 +287,7 @@ pub async fn bulk_mark_seen<S: NotificationReader, Auth: MacroAuthorizationServi
 ) -> Result<Json<()>, (StatusCode, Json<ErrorResponse<'static>>)> {
     bulk_update(
         &service,
-        user.authorization.user.conation_user_id,
+        user.authorization.user.macro_user_id,
         &req,
         NotificationStatus::Seen,
     )
@@ -314,7 +314,7 @@ pub async fn bulk_mark_done<S: NotificationReader, Auth: MacroAuthorizationServi
 ) -> Result<Json<()>, (StatusCode, Json<ErrorResponse<'static>>)> {
     bulk_update(
         &service,
-        user.authorization.user.conation_user_id,
+        user.authorization.user.macro_user_id,
         &req,
         NotificationStatus::Done(true),
     )
@@ -341,7 +341,7 @@ pub async fn bulk_mark_undone<S: NotificationReader, Auth: MacroAuthorizationSer
 ) -> Result<Json<()>, (StatusCode, Json<ErrorResponse<'static>>)> {
     bulk_update(
         &service,
-        user.authorization.user.conation_user_id,
+        user.authorization.user.macro_user_id,
         &req,
         NotificationStatus::Done(false),
     )
@@ -408,7 +408,7 @@ pub async fn get_by_event_item_id<
     let result = service
         .inner
         .get_user_notifications_by_event_item_ids::<T>(GetNotificationsByEventItemIdsRequest {
-            user_id: user.authorization.user.conation_user_id,
+            user_id: user.authorization.user.macro_user_id,
             event_item_ids: &[event_item_id],
             limit,
             cursor: cursor.into_query(CreatedAt, ()),
@@ -463,7 +463,7 @@ pub async fn get_notification_by_id<
 ) -> Result<Json<UserNotificationRow<T>>, (StatusCode, Json<ErrorResponse<'static>>)> {
     let result = service
         .inner
-        .get_user_notification_by_id::<T>(user.authorization.user.conation_user_id, notification_id)
+        .get_user_notification_by_id::<T>(user.authorization.user.macro_user_id, notification_id)
         .await
         .map_err(|e| {
             tracing::error!(error=?e, "failed to get user notification by id");
@@ -509,7 +509,7 @@ pub async fn delete_notification<S: NotificationReader, Auth: MacroAuthorization
 ) -> Result<Json<()>, (StatusCode, Json<ErrorResponse<'static>>)> {
     service
         .inner
-        .delete_user_notification(user.authorization.user.conation_user_id, notification_id)
+        .delete_user_notification(user.authorization.user.macro_user_id, notification_id)
         .await
         .map_err(|e| {
             tracing::error!(error=?e, "failed to delete user notification");
@@ -545,7 +545,7 @@ pub async fn bulk_delete_notifications<S: NotificationReader, Auth: MacroAuthori
     service
         .inner
         .bulk_delete_user_notifications(
-            user.authorization.user.conation_user_id,
+            user.authorization.user.macro_user_id,
             &req.notification_ids,
         )
         .await

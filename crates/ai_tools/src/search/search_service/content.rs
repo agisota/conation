@@ -101,7 +101,7 @@ impl AsyncTool<SearchToolContext> for ContentSearch {
         {
             let inboxes = search_context
                 .email_service
-                .get_inboxes_for_conation_id(MacroUserIdStr((*request_context.user_id).clone()))
+                .get_inboxes_for_macro_id(MacroUserIdStr((*request_context.user_id).clone()))
                 .await
                 .map_err(|e| ToolCallError {
                     description: format!("Failed to resolve inboxes: {e}"),

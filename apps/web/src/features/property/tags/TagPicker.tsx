@@ -1,5 +1,5 @@
-import { useSplitLayout } from '@components/app/split-layout/layout';
 import { t } from '@app/lib/i18n';
+import { useSplitLayout } from '@components/app/split-layout/layout';
 import { useSplitPanel } from '@components/app/split-layout/layoutUtils';
 import { Popover } from '@kobalte/core/popover';
 import CircleDashedEmpty from '@phosphor/circle-dashed.svg';
@@ -93,7 +93,7 @@ export function TagPicker(props: TagPickerProps) {
   );
   const [createSuccessHandler, setCreateSuccessHandler] =
     createSignal<CreateTagSuccessHandler>();
-  let saveAndClose: (() =>Promise<void>) | undefined;
+  let saveAndClose: (() => Promise<void>) | undefined;
   let triggerRef: HTMLButtonElement | undefined;
 
   const restoreFocusToTrigger = () => {
@@ -186,7 +186,7 @@ function TagPickerBodyOwner(props: {
   onOpenEditEditor: (
     mode: Extract<TagEditorDialogMode, { type: 'edit' }>
   ) => void;
-  registerSave: (handler: (() =>Promise<void>) | undefined) => void;
+  registerSave: (handler: (() => Promise<void>) | undefined) => void;
   createSuccessHandler: () => CreateTagSuccessHandler | undefined;
   onEditorClose: () => void;
   withClickBlock: boolean;
@@ -241,7 +241,7 @@ export function TagPickerPopover(props: {
   const [createSuccessHandler, setCreateSuccessHandler] =
     createSignal<CreateTagSuccessHandler>();
   const currentTeamQuery = useCurrentTeamQuery();
-  let saveAndClose: (() =>Promise<void>) | undefined;
+  let saveAndClose: (() => Promise<void>) | undefined;
 
   const handleOpenChange = (value: boolean) => {
     if (value) {
@@ -311,7 +311,7 @@ function TagPickerBody(props: {
   onOpenEditEditor: (
     mode: Extract<TagEditorDialogMode, { type: 'edit' }>
   ) => void;
-  registerSave: (handler: (() =>Promise<void>) | undefined) => void;
+  registerSave: (handler: (() => Promise<void>) | undefined) => void;
   suppressInitialOutsideEvents: boolean;
   withClickBlock?: boolean;
 }) {
@@ -497,10 +497,14 @@ function TagPickerBody(props: {
   const clearAllRowIndex = () => filteredItems().length;
   const createRowIndex = () =>
     filteredItems().length + (showClearAllRow() ? 1 : 0);
-  const teamName = () => currentTeamQuery.data?.team.name?.trim() || 'Team';
+  const teamName = () =>
+    currentTeamQuery.data?.team.name?.trim() || t('property.scope.team');
   const scopeOptions = createMemo<{ scope: TagScope; label: string }[]>(() => [
-    { scope: 'team', label: `Shared with ${teamName()}` },
-    { scope: 'user', label: 'Personal' },
+    {
+      scope: 'team',
+      label: t('property.tags.sharedWithTeam', { team: teamName() }),
+    },
+    { scope: 'user', label: t('property.scope.personal') },
   ]);
   const selectedColor = () =>
     TAG_COLOR_OPTIONS[selectedColorIndex()]?.color ?? DEFAULT_TAG_COLOR;
@@ -710,7 +714,7 @@ function TagPickerBody(props: {
               <>
                 <DropdownSearchInput
                   value={search()}
-                  placeholder={t('auto.change_or_add_tags')}
+                  placeholder={t('property.tags.changeOrAdd')}
                   onInput={(value) => {
                     setSearch(value);
                     dropdown.setSearchQuery(value);
@@ -731,8 +735,8 @@ function TagPickerBody(props: {
                       fallback={
                         <div class="px-2 py-4 text-center text-ink-muted">
                           {initialTagState().items.length === 0
-                            ? 'No tags available'
-                            : 'No tags match your search'}
+                            ? t('property.tags.noneAvailable')
+                            : t('property.tags.noSearchMatches')}
                         </div>
                       }
                     >
@@ -816,7 +820,9 @@ function TagPickerBody(props: {
                           >
                             <CircleDashedEmpty class="size-3 shrink-0 text-ink-extra-muted" />
                             <div class="min-w-0 flex-1 text-left">
-                              <p class="truncate text-ink-muted">{t('auto.clear_all_tags')}</p>
+                              <p class="truncate text-ink-muted">
+                                {t('property.tags.clearAll')}
+                              </p>
                             </div>
                           </DropdownSelectableRow>
                         </div>
@@ -898,8 +904,8 @@ function TagPickerRow(props: {
               variant="ghost"
               size="icon-sm"
               noTouchResize
-              tooltip="View tagged items"
-              aria-label={`View all items with tag ${label()}`}
+              tooltip={t('property.tags.viewAll')}
+              aria-label={t('property.tags.viewAllAria', { tag: label() })}
               class={tagActionButtonClass}
               onMouseDown={(event) => {
                 event.preventDefault();
@@ -918,8 +924,8 @@ function TagPickerRow(props: {
               variant="ghost"
               size="icon-sm"
               noTouchResize
-              tooltip="Edit tag"
-              aria-label={`Edit ${label()}`}
+              tooltip={t('property.tags.editTooltip')}
+              aria-label={t('property.tags.editAria', { tag: label() })}
               class={tagActionButtonClass}
               onMouseDown={(event) => {
                 event.preventDefault();
@@ -970,7 +976,7 @@ function CreateTagRow(props: {
         <PlusIcon class="size-3" />
       </div>
       <span class="min-w-0 flex-1 truncate">
-        Create new tag "{props.label}"
+        {t('property.tags.createNew', { tag: props.label })}
       </span>
     </div>
   );
@@ -992,7 +998,7 @@ function CreateTagFlow(props: {
   return (
     <div class="p-1.5">
       <div class="px-2 pb-1 pt-1 text-xs text-ink-extra-muted">
-        Create tag "{props.label}"
+        {t('property.tags.createTitle', { tag: props.label })}
       </div>
       <Show
         when={props.step === 'color'}
@@ -1014,7 +1020,9 @@ function CreateTagFlow(props: {
                 <Show
                   when={props.pending && props.selectedScopeIndex === index()}
                 >
-                  <span class="text-xs text-ink-muted">{t('auto.creating')}</span>
+                  <span class="text-xs text-ink-muted">
+                    {t('property.tags.creating')}
+                  </span>
                 </Show>
               </DropdownSelectableRow>
             )}
@@ -1029,7 +1037,7 @@ function CreateTagFlow(props: {
               onClick={() => props.onColorSelect(index())}
             >
               <TagDot color={option.color} />
-              <span class="min-w-0 flex-1 truncate">{option.name}</span>
+              <span class="min-w-0 flex-1 truncate">{t(option.labelKey)}</span>
             </DropdownSelectableRow>
           )}
         </For>

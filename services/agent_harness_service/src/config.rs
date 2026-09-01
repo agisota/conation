@@ -2,9 +2,9 @@
 //! `conation_config` pattern.
 
 use anyhow::Context;
-use database_env_vars::DatabaseUrl;
 pub use conation_env::Environment;
 use conation_uuid::Uuid;
+use database_env_vars::DatabaseUrl;
 
 use secretsmanager_client::LocalOrRemoteSecret;
 
@@ -165,11 +165,11 @@ pub struct Config {
     /// endpoint path included - e.g. `https://mcp.macro.com/mcp`, or the
     /// in-network `http://mcp-service:8080/mcp` on a local stack. Cleartext is
     /// refused at boot unless `ENVIRONMENT=local`.
-    pub conation_mcp_url: String,
+    pub macro_mcp_url: String,
     /// RSA key Macro API tokens are signed with.
-    pub conation_api_token_private_secret_key: LocalOrRemoteSecret<MacroApiTokenPrivateSecretKey>,
+    pub macro_api_token_private_secret_key: LocalOrRemoteSecret<MacroApiTokenPrivateSecretKey>,
     /// Issuer stamped into minted Macro API tokens.
-    pub conation_api_token_issuer: MacroApiTokenIssuer,
+    pub macro_api_token_issuer: MacroApiTokenIssuer,
     /// Client id of the GitHub App installation tokens are minted for.
     pub github_sync_app_client_id: String,
     /// PEM private key of that App.

@@ -195,7 +195,7 @@ async fn list_typed_notifications<S: ::notification::domain::service::Notificati
         axum::Json<model_error_response::ErrorResponse<'static>>,
     ),
 > {
-    let user_id = user.authorization.user.conation_user_id.clone();
+    let user_id = user.authorization.user.macro_user_id.clone();
     let cleanup_user_id = user_id.clone();
     let axum::Json(response) = ::notification::inbound::http::list_user_notifications::<
         S,

@@ -6,6 +6,12 @@ WORKDIR /app
 
 FROM chef AS builder
 ARG CARGO_BUILD_JOBS=0
+
+# rdkafka-sys is compiled from source through workspace-hack and requires
+# CMake even for the development services bundle.
+RUN apt-get update && apt-get install -y --no-install-recommends cmake && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
 COPY . .
 
 # Build ALL standard service binaries at once (with BuildKit cache mounts for incremental builds)

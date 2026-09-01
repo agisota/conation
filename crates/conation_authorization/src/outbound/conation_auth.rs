@@ -43,14 +43,14 @@ impl JwtValidator for MacroAuthJwtValidator {
 fn identity_from_token(token: JwtToken) -> ValidatedIdentity {
     let (user_id, fusion_user_id, organization_id) = match token {
         JwtToken::MacroAccessToken(token) => (
-            token.conation_user_id,
-            token.root_conation_id.unwrap_or(token.fusion_user_id),
-            token.conation_organization_id,
+            token.macro_user_id,
+            token.root_macro_id.unwrap_or(token.fusion_user_id),
+            token.macro_organization_id,
         ),
         JwtToken::MacroApiToken(token) => (
-            token.conation_user_id,
+            token.macro_user_id,
             token.fusion_user_id,
-            token.conation_organization_id,
+            token.macro_organization_id,
         ),
     };
 

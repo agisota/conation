@@ -117,13 +117,13 @@ where
             .authorization
             .as_ref()
             .is_some_and(MacroAuthorization::is_internal);
-        let conation_user_id = authorization
+        let macro_user_id = authorization
             .authorization
             .as_ref()
             .and_then(MacroAuthorization::acting_user)
-            .map(|user| user.conation_user_id.clone());
+            .map(|user| user.macro_user_id.clone());
 
-        if conation_user_id.is_none() && is_internal_access {
+        if macro_user_id.is_none() && is_internal_access {
             return Ok(Self {
                 entity_access_receipt: EntityAccessReceipt {
                     entity: Entity {
@@ -142,12 +142,12 @@ where
             });
         }
 
-        let Some(conation_user_id) = conation_user_id else {
+        let Some(macro_user_id) = macro_user_id else {
             return Err(ExtractorError::Unauthorized);
         };
 
         let permission = service
-            .get_entity_permission(Some(&conation_user_id), &call_id, EntityType::Call, None)
+            .get_entity_permission(Some(&macro_user_id), &call_id, EntityType::Call, None)
             .await
             .map_err(ExtractorError::from)?;
 
@@ -161,7 +161,7 @@ where
                     entity_id: call_id,
                     entity_type: EntityType::Call,
                 },
-                auth: EntityAccessAuth::Authenticated(conation_user_id),
+                auth: EntityAccessAuth::Authenticated(macro_user_id),
                 entity_permission: permission,
                 _marker: PhantomData,
             },
@@ -250,14 +250,14 @@ where
             .authorization
             .as_ref()
             .is_some_and(MacroAuthorization::is_internal);
-        let (conation_user_id, user_context) = authorization
+        let (macro_user_id, user_context) = authorization
             .authorization
             .as_ref()
             .and_then(MacroAuthorization::acting_user)
-            .map(|user| (Some(user.conation_user_id.clone()), user.user_context.clone()))
+            .map(|user| (Some(user.macro_user_id.clone()), user.user_context.clone()))
             .unwrap_or_default();
 
-        if conation_user_id.is_none() && is_internal_access {
+        if macro_user_id.is_none() && is_internal_access {
             return Ok(Self {
                 entity_access_receipt: EntityAccessReceipt {
                     entity: Entity {
@@ -276,7 +276,7 @@ where
             });
         }
 
-        let Some(conation_user_id) = conation_user_id else {
+        let Some(macro_user_id) = macro_user_id else {
             return Err(ExtractorError::Unauthorized);
         };
 
@@ -284,7 +284,7 @@ where
 
         let permission = service
             .get_entity_permission(
-                Some(&conation_user_id),
+                Some(&macro_user_id),
                 &channel_id,
                 EntityType::Channel,
                 user_org_id,
@@ -302,7 +302,7 @@ where
                     entity_id: channel_id,
                     entity_type: EntityType::Channel,
                 },
-                auth: EntityAccessAuth::Authenticated(conation_user_id),
+                auth: EntityAccessAuth::Authenticated(macro_user_id),
                 entity_permission: permission,
                 _marker: PhantomData,
             },

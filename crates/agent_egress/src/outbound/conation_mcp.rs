@@ -255,8 +255,8 @@ impl MacroApiTokens for MacroApiTokenSigner {
         // carries the second, so the rest is read off their `User` row. An
         // owner with no row is a session created wrong, which is ours to fix,
         // not something the sandbox can retry its way out of.
-        let (fusion_root_id, conation_user_id) =
-            conation_db_client::user::get::get_user_conation_user_id_and_id_by_email(
+        let (fusion_root_id, macro_user_id) =
+            conation_db_client::user::get::get_user_macro_user_id_and_id_by_email(
                 &self.pool,
                 owner.email_str(),
             )
@@ -268,7 +268,7 @@ impl MacroApiTokens for MacroApiTokenSigner {
             })?;
         let organization_id = conation_db_client::user::get_user_organization::get_user_organization(
             self.pool.clone(),
-            &conation_user_id,
+            &macro_user_id,
         )
         .await
         .map_err(|error| {
@@ -279,7 +279,7 @@ impl MacroApiTokens for MacroApiTokenSigner {
 
         encode_conation_api_token(EncodeMacroApiTokenArgs {
             fusionauth_id: fusion_root_id.to_string(),
-            conation_user_id,
+            macro_user_id,
             organization_id,
             issuer: self.issuer.clone(),
             private_key: self.private_key.clone(),

@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { useTutorialCompleted } from '@core/context/user';
 import { isPlatform } from '@core/util/platform';
@@ -38,24 +39,24 @@ function NotificationToastTrigger(props: {
   onMount(() => {
     const toastId = toast.custom(
       {
-        title: 'Enable Browser Notifications',
+        title: t('notifications.browserPrompt.title'),
         icon: Bell,
         color: 'var(--color-accent)',
         content: () => (
           <div class="text-xs text-ink-extra-muted">
-            Get notified about new messages, mentions, comments, and emails.
+            {t('notifications.browserPrompt.description')}
           </div>
         ),
         actions: [
           {
-            label: 'Hide',
+            label: t('notifications.browserPrompt.hide'),
             onClick: () => {
               props.settings.dismissPrompt();
               toast.dismiss(toastId);
             },
           },
           {
-            label: 'Enable',
+            label: t('notifications.browserPrompt.enable'),
             onClick: async () => {
               try {
                 await props.settings.toggle(true);

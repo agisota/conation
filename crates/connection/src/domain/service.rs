@@ -50,11 +50,11 @@ impl<E: EntityAccessService, Cgw: ConnectionGateway> ConnectionService
 
         // Filter out user who made the invalidation
         let users = match &invalidation_event.invalidated_by {
-            entity_access::domain::models::EntityAccessAuth::Authenticated(conation_user_id_str) => {
+            entity_access::domain::models::EntityAccessAuth::Authenticated(macro_user_id_str) => {
                 users
                     .into_iter()
                     .filter_map(|p| {
-                        if p.as_ref() != conation_user_id_str.as_ref() {
+                        if p.as_ref() != macro_user_id_str.as_ref() {
                             Some(p.0)
                         } else {
                             None

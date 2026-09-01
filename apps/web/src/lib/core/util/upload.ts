@@ -21,6 +21,7 @@ import {
   blockAcceptsFileExtension,
 } from '@core/constant/allBlocks';
 import { heicConversionService } from '@core/heic/service';
+import { t } from '@core/i18n';
 import {
   createStaticUploadFile,
   createUploadFile,
@@ -284,6 +285,7 @@ class UnsupportedFileTypeError extends Error {
 
 class UploadError extends Error {
   public readonly originalError?: Error | string;
+  public readonly fileName: string;
 
   constructor(
     file: { name: string },
@@ -295,6 +297,7 @@ class UploadError extends Error {
     super(message);
 
     this.originalError = originalError;
+    this.fileName = fileName;
 
     console.error(
       `upload${destination ? ` to ${destination}` : ''} failed:`,
@@ -518,7 +521,7 @@ export async function uploadFiles(
     .filter((result) => !result.pending);
 
   successfulUploads.forEach((result) => {
-    toast.success(`Uploaded ${result.name}`);
+    toast.success(t('core.upload.uploaded', { name: result.name }));
   });
 
   const failedUploads = uploadResults.filter((result) => result.failed);
@@ -549,22 +552,58 @@ function handleUploadError(error: Error): void {
     const { maxLength } = nameTooLong;
     toast.failure(
       maxLength != null
-        ? `Name too long (max ${maxLength} characters)`
-        : 'Name too long'
+        ? t('core.upload.nameTooLongWithLimit', { count: maxLength })
+        : t('core.upload.nameTooLong')
     );
     return;
   }
-  if (
-    error instanceof UploadError ||
-    error instanceof FileSizeExceededError ||
-    error instanceof UnsupportedFileTypeError ||
-    error instanceof DirectoryFileCountExceededError ||
-    error instanceof DirectoryFileSizeExceededError
-  ) {
-    toast.failure(error.toString());
-  } else {
-    toast.failure('Upload failed. Please try again.');
+  if (error instanceof FileSizeExceededError) {
+    toast.failure(
+      t('core.upload.fileTooLarge', {
+        name: error.fileName,
+        size: humanFileSize(error.limit),
+      })
+    );
+    return;
   }
+  if (error instanceof UnsupportedFileTypeError) {
+    toast.failure(
+      t('core.upload.unsupportedFileType', {
+        type: error.fileType,
+        name: error.fileName,
+      })
+    );
+    return;
+  }
+  if (error instanceof DirectoryFileCountExceededError) {
+    toast.failure(
+      error.directoryName
+        ? t('core.upload.folderTooManyFilesNamed', {
+            name: error.directoryName,
+            count: error.count ?? error.limit,
+            limit: error.limit,
+          })
+        : t('core.upload.folderTooManyFiles', {
+            count: error.count ?? error.limit,
+            limit: error.limit,
+          })
+    );
+    return;
+  }
+  if (error instanceof DirectoryFileSizeExceededError) {
+    toast.failure(
+      t('core.upload.folderTooLarge', {
+        name: error.directoryName,
+        size: humanFileSize(error.limit),
+      })
+    );
+    return;
+  }
+  if (error instanceof UploadError) {
+    toast.failure(t('core.upload.fileFailed', { name: error.fileName }));
+    return;
+  }
+  toast.failure(t('core.upload.failedRetry'));
 }
 
 function mapFileEntriesToFiles(

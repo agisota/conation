@@ -4,9 +4,17 @@ use conation_user_id::user_id::MacroUserIdStr;
 use uuid::Uuid;
 
 use super::{
-    CALL_NAME_MAX_CHARS, NULL_SUMMARY_SENTINEL, UNTITLED_CALL_SENTINEL,
+    CALL_NAME_MAX_CHARS, CALL_NAME_SYSTEM_PROMPT, NULL_SUMMARY_SENTINEL, UNTITLED_CALL_SENTINEL,
     parse_custom_speaker_results, parse_summary, sanitize_call_name,
 };
+
+#[test]
+fn call_name_prompt_uses_conation_display_brand() {
+    assert!(CALL_NAME_SYSTEM_PROMPT.contains("Jordan (Conation)"));
+    assert!(CALL_NAME_SYSTEM_PROMPT.contains("Conation & Acme SSO Intro Call"));
+    assert!(!CALL_NAME_SYSTEM_PROMPT.contains("Jordan (Macro)"));
+    assert!(!CALL_NAME_SYSTEM_PROMPT.contains("Macro & Acme SSO Intro Call"));
+}
 
 #[test]
 fn parse_summary_returns_none_for_null_sentinel() {

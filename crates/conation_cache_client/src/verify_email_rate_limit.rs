@@ -3,28 +3,28 @@ use anyhow::Context;
 use crate::MacroCache;
 
 /// Generates the rate limit key for verify email for a given email by minute
-conation_rules! conation_rate_limit_resend_verify_email_minute {
+macro_rules! conation_rate_limit_resend_verify_email_minute {
     ($email:expr) => {
         format!("rtl_verify_email_minute:{}", $email)
     };
 }
 
 /// Generates the rate limit key for verify email for a given email by day
-conation_rules! conation_rate_limit_resend_verify_email_day {
+macro_rules! conation_rate_limit_resend_verify_email_day {
     ($email:expr) => {
         format!("rtl_verify_email_day:{}", $email)
     };
 }
 
 /// Generates the rate limit key for generating merge account requests for a given email by minute
-conation_rules! conation_rate_limit_merge_email_minute {
+macro_rules! conation_rate_limit_merge_email_minute {
     ($email:expr) => {
         format!("rtl_merge_email_minute:{}", $email)
     };
 }
 
 /// Generates the rate limit key for generating merge account requests for a given email by day
-conation_rules! conation_rate_limit_merge_email_day {
+macro_rules! conation_rate_limit_merge_email_day {
     ($email:expr) => {
         format!("rtl_merge_email_day:{}", $email)
     };

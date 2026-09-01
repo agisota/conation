@@ -27,7 +27,7 @@ struct QueryParams {
     /// When `Some(team_id)`, the "Owned" candidate source expands from
     /// `t.link_id = ANY($link_ids)` to `t.link_id IN (primary links of every
     /// member of $team_id)`. A link is primary when its `email_address` is
-    /// the owning member's own conation_id email — connected secondary
+    /// the owning member's own macro_id email — connected secondary
     /// mailboxes never feed team-scoped results. Set only after CRM scope
     /// has been validated upstream.
     /// Also switches the candidate select into dedupe mode: team-member
@@ -231,7 +231,7 @@ fn push_thread_candidate_select(
             }
             // CRM-scoped query: expand to every primary email_link owned by
             // any member of the team. Non-primary links (connected secondary
-            // mailboxes, whose address differs from the owner's conation_id
+            // mailboxes, whose address differs from the owner's macro_id
             // email) are excluded. The receipt has already been validated
             // upstream, so the team_id is trusted here.
             //
@@ -252,7 +252,7 @@ fn push_thread_candidate_select(
                     r#"t.link_id IN (
                         SELECT el.id
                         FROM email_links el
-                        JOIN team_user tu ON tu.user_id = el.conation_id
+                        JOIN team_user tu ON tu.user_id = el.macro_id
                         WHERE tu.team_id = "#,
                 );
                 builder.push_bind(team_id);
@@ -525,7 +525,7 @@ fn build_query(
             c.email_address AS sender_email,
             c.name AS sender_name,
             c.sfs_photo_url as sender_photo_url,
-            el.conation_id AS owner_id,
+            el.macro_id AS owner_id,
             el.id AS link_id
         FROM (
             -- Step 1: Efficiently find and sort candidate threads

@@ -136,7 +136,7 @@ impl IntoResponse for ChatMessageError {
         (status = 403, description = "Forbidden"),
     )
 )]
-#[tracing::instrument(skip(state, model_access, user, bearer, request), fields(chat_id=?request.chat_id, user_id = %user.authorization.user.conation_user_id, attachment_ids=?request.attachments.as_ref().map(|a| a.iter().map(|att| att.entity_id.as_ref()).collect::<Vec<_>>()).unwrap_or_default()), ret, err)]
+#[tracing::instrument(skip(state, model_access, user, bearer, request), fields(chat_id=?request.chat_id, user_id = %user.authorization.user.macro_user_id, attachment_ids=?request.attachments.as_ref().map(|a| a.iter().map(|att| att.entity_id.as_ref()).collect::<Vec<_>>()).unwrap_or_default()), ret, err)]
 pub async fn send_chat_message(
     State(state): State<ApiContext>,
     model_access: DcsChatModelAccess,
@@ -147,7 +147,7 @@ pub async fn send_chat_message(
     Box::pin(send_chat_message_inner(
         state,
         model_access,
-        user.authorization.user.conation_user_id.clone(),
+        user.authorization.user.macro_user_id.clone(),
         bearer,
         request,
     ))

@@ -1,5 +1,5 @@
-import { MobileDrawer } from '@components/app/mobile/MobileDrawer';
 import { t } from '@app/lib/i18n';
+import { MobileDrawer } from '@components/app/mobile/MobileDrawer';
 import { useSplitPanelOrThrow } from '@components/app/split-layout/layoutUtils';
 import { getShareDrawerRecipientInput } from '@core/component/TopBar/ShareButton';
 import { triggerFocusInput } from '@core/directive/focusInput';
@@ -52,7 +52,7 @@ export function SoupEntityActionDrawer() {
     >
       <MobileDrawer.Portal>
         <MobileDrawer.Overlay class="fixed inset-0 z-modal-overlay bg-modal-overlay pattern-diagonal-4 pattern-edge-muted" />
-        <MobileDrawer.Content aria-label={t('auto.entity_actions')}>
+        <MobileDrawer.Content aria-label={t('soup.actions.entityDrawerLabel')}>
           <MobileDrawer.Handle />
 
           {/* Entity preview */}

@@ -85,14 +85,15 @@ fn append_block(
     let _ = writeln!(prompt, "</{tag}>");
 }
 
-/// Message Macro posts immediately, then replaces with its answer.
+/// Message Conation posts immediately, then replaces with its answer.
 ///
 /// Rendered by the channel markdown as the existing pulsing AwaitNode.
-const THINKING_MESSAGE: &str = r#"<m-await>{"text":"Macro is thinking…","inline":true}</m-await>"#;
+const THINKING_MESSAGE: &str =
+    r#"<m-await>{"text":"Conation is thinking…","inline":true}</m-await>"#;
 const EMPTY_RESPONSE_FALLBACK: &str = "I wasn't able to come up with a response.";
 const ERROR_FALLBACK: &str = "Sorry — I ran into an error while responding.";
 
-/// In-process handler for the Macro AI system bot.
+/// In-process handler for the Conation AI system bot.
 ///
 /// Posts an immediate "thinking" reply in a thread, runs the agent loop, then
 /// edits that same message with the final answer.
@@ -106,7 +107,7 @@ where
     C: ChannelService,
     R: AgentResponder,
 {
-    /// Create a Macro AI handler.
+    /// Create a Conation AI handler.
     pub fn new(channels: Arc<C>, responder: Arc<R>) -> Self {
         Self {
             channels,
@@ -263,7 +264,7 @@ where
         prompt
     }
 
-    /// React to a Macro AI mention.
+    /// React to a Conation AI mention.
     #[tracing::instrument(skip(self, event), fields(channel_id = %event.channel_id), err)]
     pub(crate) async fn handle(&self, event: &BotEvent) -> anyhow::Result<()> {
         let actor = Sender::new_from_bot(bot_id::MACRO_AI_BOT_ID);

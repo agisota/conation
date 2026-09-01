@@ -1,4 +1,6 @@
+import { t } from '@app/lib/i18n';
 import { useEmail } from '@core/context/user';
+import { formatDateTime } from '@core/i18n';
 import type { DateValue } from '@core/util/date';
 import CaretRight from '@phosphor/caret-right.svg';
 import type { ApiMessage } from '@service-email/generated/schemas';
@@ -40,29 +42,27 @@ interface Recipient {
 }
 
 function formatFullDate(date: DateValue): string {
-  return new Date(date)
-    .toLocaleString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      timeZoneName: 'short',
-    })
-    .replace(',', '');
+  return formatDateTime(new Date(date), {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  }).replace(',', '');
 }
 
 export function formatShortDate(date: DateValue): string {
   const d = new Date(date);
   if (d.getFullYear() !== new Date().getFullYear()) {
-    return d.toLocaleDateString('en-US', {
+    return formatDateTime(d, {
       month: 'numeric',
       day: 'numeric',
       year: '2-digit',
     });
   }
-  return d.toLocaleDateString('en-US', {
+  return formatDateTime(d, {
     month: 'short',
     day: 'numeric',
   });
@@ -119,10 +119,22 @@ function ExpandedDetails(props: { message: ApiMessage }): JSX.Element {
 
   return (
     <div class="mt-2.5 py-3 border-y border-ink-muted/8 flex flex-col gap-1.5 text-xs">
-      <DetailRow label="From" recipients={fromRecipients()} />
-      <DetailRow label="To" recipients={props.message.to} />
-      <DetailRow label="Cc" recipients={props.message.cc} />
-      <DetailRow label="Bcc" recipients={props.message.bcc} />
+      <DetailRow
+        label={t('blockEmail.fields.from')}
+        recipients={fromRecipients()}
+      />
+      <DetailRow
+        label={t('blockEmail.fields.to')}
+        recipients={props.message.to}
+      />
+      <DetailRow
+        label={t('blockEmail.fields.cc')}
+        recipients={props.message.cc}
+      />
+      <DetailRow
+        label={t('blockEmail.fields.bcc')}
+        recipients={props.message.bcc}
+      />
       <Show when={props.message.internal_date_ts}>
         <div class="text-xs text-ink-extra-muted tabular-nums mt-1.5 select-text cursor-text">
           {formatFullDate(props.message.internal_date_ts!)}
@@ -149,7 +161,11 @@ function CollapsedRecipientList(props: {
               <span class="cursor-default">{displayName()}</span>
             </EmailUserTooltip>
             <Show when={!isLast()}>
-              <span>{isSecondToLast() ? ' & ' : ', '}</span>
+              <span>
+                {isSecondToLast()
+                  ? t('blockEmail.participants.conjunction')
+                  : ', '}
+              </span>
             </Show>
           </>
         );
@@ -184,7 +200,7 @@ function HeaderTopRow(props: {
           </span>
         </EmailUserTooltip>
         <span class="text-ink-extra-muted/60 truncate">
-          to{' '}
+          {t('blockEmail.fields.to').toLocaleLowerCase()}{' '}
           <CollapsedRecipientList
             recipients={allRecipients()}
             currentUserEmail={props.currentUserEmail}
@@ -206,8 +222,8 @@ function HeaderTopRow(props: {
           <Tooltip
             label={
               props.isExpanded
-                ? 'Collapse Message Header'
-                : 'Expand Message Header'
+                ? t('blockEmail.message.collapseHeader')
+                : t('blockEmail.message.expandHeader')
             }
           >
             <Button

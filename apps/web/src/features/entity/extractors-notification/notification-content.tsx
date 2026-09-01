@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { globalSplitManager } from '@app/signal/splitLayout';
 import { useGlobalNotificationSource } from '@components/app/GlobalAppState';
 import { useSplitPanel } from '@components/app/split-layout/layoutUtils';
@@ -38,7 +39,8 @@ export function DocumentMentionPill(props: {
     const m = props.notification.notification_metadata;
     return m.tag === 'document_mention' ? m.content : undefined;
   };
-  const documentName = () => documentMeta()?.documentName ?? 'Untitled';
+  const documentName = () =>
+    documentMeta()?.documentName ?? t('entity.fallback.untitled');
   const targetType = () => {
     const meta = documentMeta();
 
@@ -71,7 +73,7 @@ export function DocumentMentionPill(props: {
       <span class="truncate min-w-0">{documentName()}</span>
       <Button
         class="absolute -top-1.5 -right-1.5 size-5 rounded-full bg-surface border border-edge-muted/50 p-0 place-items-center hidden group-hover:grid hover:bg-accent! hover:text-surface!"
-        tooltip="Mark as done"
+        tooltip={t('notifications.actions.markAsDone')}
         onClick={(e) => {
           e.stopPropagation();
           markAsDone();
@@ -177,7 +179,9 @@ function DocumentMentionPills(props: { stack: NotificationStack }) {
           class="text-xs text-ink-muted border border-edge-muted/50 rounded-md px-2 py-1 shrink-0"
           tabIndex={-1}
         >
-          +{notifications().length} more
+          {t('entity.collapsible.additionalCount', {
+            count: notifications().length,
+          })}
         </button>
       </div>
       {/* Visible layer: only as many pills as fit, followed by the badge if needed. */}
@@ -199,7 +203,7 @@ function DocumentMentionPills(props: { stack: NotificationStack }) {
               setExpanded(true);
             }}
           >
-            +{overflow()} more
+            {t('entity.collapsible.additionalCount', { count: overflow() })}
           </button>
         </Show>
       </div>
@@ -244,7 +248,9 @@ export function NotificationContent(props: NotificationContentProps) {
                 <Show
                   when={text().trim()}
                   fallback={
-                    <span class="italic text-ink-disabled">Attached items</span>
+                    <span class="italic text-ink-disabled">
+                      {t('notifications.content.attachedItems')}
+                    </span>
                   }
                 >
                   {(trimmedContent) => (

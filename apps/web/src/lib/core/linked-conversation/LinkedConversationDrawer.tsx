@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { navigateToChannelMessage } from '@block-channel/utils/link';
 import { useGlobalBlockOrchestrator } from '@components/app/GlobalAppState';
 import { SplitDrawer } from '@components/app/split-layout/components/SplitDrawer';
@@ -55,7 +56,7 @@ export function LinkedConversationDrawer(props: LinkedConversationDrawerProps) {
         <Button
           variant="ghost"
           size="icon-sm"
-          label="Open thread"
+          label={t('core.linkedConversation.openThread')}
           onClick={() => openInChannel()}
         >
           <ArrowSquareOut />
@@ -88,7 +89,11 @@ function DrawerConversation(props: {
   return (
     <Show
       when={source.root()}
-      fallback={<p class="px-2 text-sm text-ink-muted">Loading thread…</p>}
+      fallback={
+        <p class="px-2 text-sm text-ink-muted">
+          {t('core.linkedConversation.loading')}
+        </p>
+      }
     >
       <LinkedConversation
         source={source}

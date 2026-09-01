@@ -159,17 +159,17 @@ const accessLevelText = (accessLevel?: AccessLevel | null) => {
   switch (accessLevel) {
     case 'comment':
       if (blockName === 'md' && !ENABLE_MARKDOWN_COMMENTS) {
-        return 'View';
+        return t('core.sharing.accessLevel.view');
       }
-      return 'Comment';
+      return t('core.sharing.accessLevel.comment');
     case 'view':
-      return 'View';
+      return t('core.sharing.accessLevel.view');
     case 'edit':
       return t('common.edit');
     case 'owner':
       return t('common.owner');
     default:
-      return 'Remove Access';
+      return t('core.sharing.accessLevel.remove');
   }
 };
 
@@ -250,7 +250,9 @@ function GroupChannelLabel(props: { channelId: string; fallbackName: string }) {
     const remaining = rest.length - names.length;
     const base = names.join(', ');
     if (remaining === 0) return base;
-    return `${base} +${remaining} ${remaining === 1 ? 'other' : 'others'}`;
+    return `${base} ${t('core.sharing.otherRecipients', {
+      count: remaining,
+    })}`;
   });
 
   const tooltipContent = createMemo(() =>
@@ -292,7 +294,7 @@ function LinkSharingControls(props: LinkSharingControlsProps) {
             <div
               class={cn(
                 'flex items-center justify-center rounded-xl border px-2 py-0.5',
-                shareStatus().label === 'Just me'
+                shareStatus().kind === 'private'
                   ? 'border-edge-muted bg-edge-muted text-ink-extra-muted'
                   : 'border-accent/30 bg-accent/10 text-accent'
               )}
@@ -304,10 +306,13 @@ function LinkSharingControls(props: LinkSharingControlsProps) {
           </Tooltip>
         </div>
         <SegmentedControl
-          aria-label={t('auto.link_sharing_scope')}
+          aria-label={t('core.sharing.link.scope')}
           size="sm"
           value={scope()}
-          options={LINK_SHARE_SCOPE_OPTIONS}
+          options={LINK_SHARE_SCOPE_OPTIONS.map((option) => ({
+            ...option,
+            label: getLinkShareScopeCopy(option.value).label,
+          }))}
           onChange={props.setLinkShareScope}
         />
       </div>
@@ -315,7 +320,7 @@ function LinkSharingControls(props: LinkSharingControlsProps) {
       <Show when={scope() !== 'NONE'}>
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="flex items-center gap-2 text-ink-muted">
-            <span>{t('auto.access_level')}</span>
+            <span>{t('core.sharing.accessLevel.title')}</span>
             <ShareOptions
               permissions={props.linkShareAccessLevel ?? 'view'}
               hideNoAccess={true}
@@ -324,7 +329,7 @@ function LinkSharingControls(props: LinkSharingControlsProps) {
           </div>
           <Button variant="outline" onClick={props.copyLink}>
             <CopyIcon class="size-4" />
-            <span>{t('auto.copy_link')}</span>
+            <span>{t('core.sharing.copyLink')}</span>
           </Button>
         </div>
       </Show>
@@ -370,14 +375,16 @@ function MobileShareDrawer(props: MobileShareDrawerProps) {
   };
 
   const mobileTabs = createMemo((): TabItem[] => {
-    const tabs: TabItem[] = [{ value: 'share', label: 'Share' }];
+    const tabs: TabItem[] = [
+      { value: 'share', label: t('core.sharing.share') },
+    ];
     if ((props.recipients?.length ?? 0) > 0 || props.owner)
-      tabs.push({ value: 'people', label: 'People' });
+      tabs.push({ value: 'people', label: t('core.sharing.people') });
     if (
       props.userPermissions === Permissions.OWNER &&
       !isLinkSharingDisabledForItem(props.itemType)
     )
-      tabs.push({ value: 'link', label: 'Link' });
+      tabs.push({ value: 'link', label: t('core.sharing.link.tab') });
     return tabs;
   });
 
@@ -401,7 +408,7 @@ function MobileShareDrawer(props: MobileShareDrawerProps) {
       <MobileDrawer.Portal>
         <MobileDrawer.Overlay class="fixed inset-0 z-modal-overlay bg-modal-overlay pattern-diagonal-4 pattern-edge-muted" />
         <MobileDrawer.Content
-          aria-label={t('auto.share')}
+          aria-label={t('core.sharing.share')}
           class="h-[80vh] overflow-y-auto"
         >
           <div class="flex justify-center pt-3 pb-1 shrink-0">
@@ -425,7 +432,9 @@ function MobileShareDrawer(props: MobileShareDrawerProps) {
                   (forwardRef()?.getSelectedOptions().length ?? 0) === 0
                 }
                 onClick={() => forwardRef()?.handleSubmit()}
-              >{t('auto.share')}</Button>
+              >
+                {t('core.sharing.share')}
+              </Button>
             </Show>
           </div>
           <div class="shrink-0 h-9 border-b border-edge-muted px-3 mb-2">
@@ -470,7 +479,9 @@ function MobileShareDrawer(props: MobileShareDrawerProps) {
                     </div>
                   </div>
                   <div class="flex items-center">
-                    <div class="font-medium text-ink-muted text-xs">{t('common.owner')}</div>
+                    <div class="font-medium text-ink-muted text-xs">
+                      {t('common.owner')}
+                    </div>
                   </div>
                 </div>
               </Show>
@@ -610,9 +621,8 @@ export function ShareModal(props: ShareModalProps) {
       params
     );
     navigator.clipboard.writeText(url);
-    toast.success('Link copied to clipboard.', {
-      subtext:
-        'Sending this link in a Macro message will automatically update permissions to include recipients.',
+    toast.success(t('core.sharing.linkCopied'), {
+      subtext: t('core.sharing.linkCopiedPermissions'),
     });
   });
 
@@ -686,12 +696,14 @@ export function ShareModal(props: ShareModalProps) {
       });
       if (!result.isErr()) {
         refetch();
-        toast.success('Removed channel access', {
-          subtext: 'Channel no longer has access to this chat',
+        toast.success(t('core.sharing.channelAccess.removed'), {
+          subtext: t('core.sharing.channelAccess.removedDescription', {
+            itemType: props.itemType,
+          }),
         });
       } else {
-        toast.alert('Failed to remove channel access', {
-          subtext: 'Please try again',
+        toast.alert(t('core.sharing.channelAccess.removeFailed'), {
+          subtext: t('core.sharing.tryAgain'),
         });
         console.error(result);
       }
@@ -709,12 +721,14 @@ export function ShareModal(props: ShareModalProps) {
       });
       if (!result.isErr()) {
         refetch();
-        toast.success('Removed channel access', {
-          subtext: 'Channel no longer has access to this document',
+        toast.success(t('core.sharing.channelAccess.removed'), {
+          subtext: t('core.sharing.channelAccess.removedDescription', {
+            itemType: props.itemType,
+          }),
         });
       } else {
-        toast.alert('Failed to remove channel access', {
-          subtext: 'Please try again',
+        toast.alert(t('core.sharing.channelAccess.removeFailed'), {
+          subtext: t('core.sharing.tryAgain'),
         });
         console.error(result);
       }
@@ -732,10 +746,14 @@ export function ShareModal(props: ShareModalProps) {
       });
       if (!result.isErr()) {
         refetch();
-        toast.success('Removed folder access');
+        toast.success(t('core.sharing.channelAccess.removed'), {
+          subtext: t('core.sharing.channelAccess.removedDescription', {
+            itemType: props.itemType,
+          }),
+        });
       } else {
-        toast.alert('Failed to remove folder access', {
-          subtext: 'Please try again',
+        toast.alert(t('core.sharing.channelAccess.removeFailed'), {
+          subtext: t('core.sharing.tryAgain'),
         });
         console.error(result);
       }
@@ -811,7 +829,7 @@ export function ShareModal(props: ShareModalProps) {
       if (result && result.isOk()) {
         refetch();
         if (!hideSuccessToast) {
-          toast.success('Changed channel access level', {
+          toast.success(t('core.sharing.channelAccess.changed'), {
             subtext: accessLevelText(accessLevel),
           });
         }
@@ -823,8 +841,8 @@ export function ShareModal(props: ShareModalProps) {
           accessLevel,
         });
       } else {
-        toast.alert('Failed to change channel access', {
-          subtext: 'Please try again',
+        toast.alert(t('core.sharing.channelAccess.changeFailed'), {
+          subtext: t('core.sharing.tryAgain'),
         });
         console.error(result);
       }
@@ -871,32 +889,38 @@ export function ShareModal(props: ShareModalProps) {
         });
       }
 
-      const entityLabel =
-        props.itemType === 'project' ? 'folder' : props.itemType;
       if (!result || result.isErr()) {
-        toast.alert(`Failed to change ${entityLabel} access`, {
-          subtext: 'Please try again',
-        });
+        toast.alert(
+          t('core.sharing.link.changeFailed', { itemType: props.itemType }),
+          {
+            subtext: t('core.sharing.tryAgain'),
+          }
+        );
         console.error(result);
         return;
       }
 
       refetch();
       if (scope === 'NONE') {
-        toast.success(`Made ${entityLabel} private`, {
-          subtext: `Only shared users can access this ${entityLabel}`,
-        });
+        toast.success(
+          t('core.sharing.link.madePrivate', { itemType: props.itemType }),
+          {
+            subtext: t('core.sharing.link.privateDescription', {
+              itemType: props.itemType,
+            }),
+          }
+        );
         return;
       }
 
       const effectiveAccessLevel =
         sharePermission.linkShareAccessLevel ?? 'view';
-      const audience =
-        scope === 'PUBLIC'
-          ? 'Anyone with the link'
-          : "Members of the owner's team with the link";
-      toast.success(`Updated ${getLinkShareScopeCopy(scope).title} sharing`, {
-        subtext: `${audience} can ${accessLevelText(effectiveAccessLevel).toLowerCase()} this ${entityLabel}`,
+      toast.success(t('core.sharing.link.updated', { scope }), {
+        subtext: t('core.sharing.link.accessDescription', {
+          accessLevel: effectiveAccessLevel,
+          itemType: props.itemType,
+          scope,
+        }),
       });
 
       analytics.track('share_entity', {
@@ -935,7 +959,9 @@ export function ShareModal(props: ShareModalProps) {
     if (!ownerValue) {
       return '';
     }
-    return ownerValue === userId() ? 'Me' : idToEmail(ownerValue).split('@')[0];
+    return ownerValue === userId()
+      ? t('core.sharing.me')
+      : idToEmail(ownerValue).split('@')[0];
   });
 
   return (
@@ -981,7 +1007,7 @@ export function ShareModal(props: ShareModalProps) {
               <Panel depth={2} class="rounded-xl bg-dialog">
                 <Panel.Header class="px-4">
                   <Dialog.Title class="flex items-center gap-1.5 min-w-0 overflow-hidden whitespace-nowrap w-full text-sm font-medium">
-                    <span class="shrink-0">Share:</span>
+                    <span class="shrink-0">{t('core.sharing.share')}:</span>
                     <EntityIcon
                       targetType={props.blockAlias}
                       size="sm"
@@ -1017,10 +1043,9 @@ export function ShareModal(props: ShareModalProps) {
                 <Panel depth={2} class="rounded-xl bg-dialog">
                   <Panel.Header class="px-4">
                     <span class="text-sm font-medium">
-                      People with access to this{' '}
-                      {props.itemType === 'email'
-                        ? 'email thread'
-                        : props.itemType}
+                      {t('core.sharing.peopleWithAccess', {
+                        itemType: props.itemType,
+                      })}
                     </span>
                   </Panel.Header>
                   <Panel.Body class="text-ink">
@@ -1049,7 +1074,9 @@ export function ShareModal(props: ShareModalProps) {
                                 </div>
                               </div>
                               <div class="flex items-center">
-                                <div class="font-medium text-ink-muted text-xs">{t('common.owner')}</div>
+                                <div class="font-medium text-ink-muted text-xs">
+                                  {t('common.owner')}
+                                </div>
                               </div>
                             </div>
                           </Show>
@@ -1189,7 +1216,7 @@ export function ShareTrigger(props: { copyLink?: () => void }) {
       hotkeyToken: TOKENS.block.share,
       runWithInputFocused: true,
       scopeId: blockScopeId(),
-      description: 'Share',
+      description: t('core.sharing.share'),
       hotkey: 'cmd+s',
     });
   });
@@ -1209,9 +1236,8 @@ export function ShareTrigger(props: { copyLink?: () => void }) {
     if (props.copyLink) return props.copyLink();
     navigator.clipboard.writeText(defaultUrl());
     analytics.track('copy_share_link', { blockType });
-    toast.success('Link copied to clipboard.', {
-      subtext:
-        'Sending this link in a Macro message will automatically update permissions to include recipients.',
+    toast.success(t('core.sharing.linkCopied'), {
+      subtext: t('core.sharing.linkCopiedPermissions'),
     });
   });
 
@@ -1237,7 +1263,7 @@ export function ShareTrigger(props: { copyLink?: () => void }) {
   return (
     <ButtonGroup variant="outline" size="sm" class="bg-surface" depth={2}>
       <Tooltip
-        label={shareStatus()?.tooltip ?? 'This item has been shared with you.'}
+        label={shareStatus()?.tooltip ?? t('core.sharing.sharedWithYouTooltip')}
       >
         <Button
           onClick={() => {
@@ -1249,13 +1275,15 @@ export function ShareTrigger(props: { copyLink?: () => void }) {
             }
           }}
         >
-          <IconShared />{t('auto.share')}</Button>
+          <IconShared />
+          {t('core.sharing.share')}
+        </Button>
       </Tooltip>
 
       <ButtonGroup.Divider />
 
       <Button
-        tooltip="Copy Share Link"
+        tooltip={t('core.sharing.copyShareLink')}
         size="icon-sm"
         onClick={ShareLinkAction().action}
       >

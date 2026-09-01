@@ -321,14 +321,14 @@ struct StubSyncRepo {
     /// several of the installation's teams.
     #[allow(clippy::type_complexity)]
     team_task_references: Mutex<HashMap<(String, String, i32), Vec<(uuid::Uuid, MacroTaskId)>>>,
-    /// Maps github_user_id -> conation_ids for installation event lookups.
+    /// Maps github_user_id -> macro_ids for installation event lookups.
     ///
     /// A github_user_id may map to multiple Macro users because multiple Macro
     /// users can share one GitHub account.
     github_links: Mutex<HashMap<String, Vec<String>>>,
-    /// Maps lowercase github login -> conation_ids for mention lookups.
+    /// Maps lowercase github login -> macro_ids for mention lookups.
     github_login_links: Mutex<HashMap<String, Vec<String>>>,
-    /// Maps conation_id -> team_ids for installation event lookups.
+    /// Maps macro_id -> team_ids for installation event lookups.
     user_teams: Mutex<HashMap<String, Vec<uuid::Uuid>>>,
     /// Maps team_id -> Macro user IDs for notification recipient lookups.
     team_members: Mutex<HashMap<uuid::Uuid, Vec<MacroUserIdStr<'static>>>>,
@@ -355,31 +355,31 @@ impl StubSyncRepo {
         }
     }
 
-    fn with_github_link(self, github_user_id: &str, conation_id: &str) -> Self {
+    fn with_github_link(self, github_user_id: &str, macro_id: &str) -> Self {
         self.github_links
             .lock()
             .unwrap()
             .entry(github_user_id.to_string())
             .or_default()
-            .push(conation_id.to_string());
+            .push(macro_id.to_string());
         self
     }
 
-    fn with_github_login_link(self, github_login: &str, conation_id: &str) -> Self {
+    fn with_github_login_link(self, github_login: &str, macro_id: &str) -> Self {
         self.github_login_links
             .lock()
             .unwrap()
             .entry(github_login.to_lowercase())
             .or_default()
-            .push(conation_id.to_string());
+            .push(macro_id.to_string());
         self
     }
 
-    fn with_user_teams(self, conation_id: &str, team_ids: Vec<uuid::Uuid>) -> Self {
+    fn with_user_teams(self, macro_id: &str, team_ids: Vec<uuid::Uuid>) -> Self {
         self.user_teams
             .lock()
             .unwrap()
-            .insert(conation_id.to_string(), team_ids);
+            .insert(macro_id.to_string(), team_ids);
         self
     }
 
@@ -526,7 +526,7 @@ impl GithubSyncRepo for StubSyncRepo {
         Ok(resolved)
     }
 
-    async fn get_conation_ids_by_github_user_ids(
+    async fn get_macro_ids_by_github_user_ids(
         &self,
         github_user_ids: &[String],
     ) -> Result<HashMap<String, Vec<String>>, Self::Err> {
@@ -534,13 +534,13 @@ impl GithubSyncRepo for StubSyncRepo {
         Ok(github_user_ids
             .iter()
             .filter_map(|github_user_id| {
-                let conation_ids = links.get(github_user_id)?.clone();
-                Some((github_user_id.clone(), conation_ids))
+                let macro_ids = links.get(github_user_id)?.clone();
+                Some((github_user_id.clone(), macro_ids))
             })
             .collect())
     }
 
-    async fn get_conation_ids_by_github_logins(
+    async fn get_macro_ids_by_github_logins(
         &self,
         github_logins: &[String],
     ) -> Result<HashMap<String, Vec<String>>, Self::Err> {
@@ -549,18 +549,18 @@ impl GithubSyncRepo for StubSyncRepo {
             .iter()
             .filter_map(|login| {
                 let login = login.to_lowercase();
-                let conation_ids = links.get(&login)?.clone();
-                Some((login, conation_ids))
+                let macro_ids = links.get(&login)?.clone();
+                Some((login, macro_ids))
             })
             .collect())
     }
 
-    async fn get_user_team_ids(&self, conation_id: &str) -> Result<Vec<uuid::Uuid>, Self::Err> {
+    async fn get_user_team_ids(&self, macro_id: &str) -> Result<Vec<uuid::Uuid>, Self::Err> {
         Ok(self
             .user_teams
             .lock()
             .unwrap()
-            .get(conation_id)
+            .get(macro_id)
             .cloned()
             .unwrap_or_default())
     }
@@ -2728,7 +2728,7 @@ async fn github_pr_status_changed_user_source_does_not_notify_nonparticipant() {
 }
 
 #[tokio::test]
-async fn github_pr_status_changed_does_not_notify_any_conation_user_linked_to_actor() {
+async fn github_pr_status_changed_does_not_notify_any_macro_user_linked_to_actor() {
     let team_id: uuid::Uuid = "dddddddd-dddd-dddd-dddd-dddddddddddd".parse().unwrap();
     let repo = StubSyncRepo::new()
         .with_installation_sources("12345", vec![GithubAppInstallationSource::Team(team_id)])
@@ -4370,7 +4370,7 @@ async fn review_requested_notifies_only_mapped_reviewer_in_team() {
 }
 
 #[tokio::test]
-async fn review_requested_fans_out_to_all_conation_users_sharing_reviewer_github_account() {
+async fn review_requested_fans_out_to_all_macro_users_sharing_reviewer_github_account() {
     // The requested reviewer's GitHub account (id 333) is shared by two Macro
     // users, both of whom are members of the source team. The notification
     // should fan out to both of them.
@@ -5273,7 +5273,7 @@ fn make_setup_sync_service() -> TestGithubSyncService {
 fn installation_setup_state(team_id: Option<uuid::Uuid>, exp: i64) -> String {
     sign_installation_state(
         &InstallationState {
-            conation_user_id: installation_setup_user(),
+            macro_user_id: installation_setup_user(),
             team_id,
             exp,
         },
@@ -5305,7 +5305,7 @@ async fn begin_team_installation_setup_preserves_query_and_signs_team() {
 
     assert_eq!(url.path(), "/apps/test/installations/new");
     assert_eq!(query.get("existing").map(String::as_str), Some("1"));
-    assert_eq!(state.conation_user_id, user);
+    assert_eq!(state.macro_user_id, user);
     assert_eq!(state.team_id, Some(team_id));
     assert!(state.exp <= chrono::Utc::now().timestamp() + 60 * 60);
 }

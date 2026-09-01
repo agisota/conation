@@ -89,7 +89,7 @@ where
             .authorization
             .as_ref()
             .and_then(MacroAuthorization::acting_user)
-            .map(|user| user.conation_user_id.clone())
+            .map(|user| user.macro_user_id.clone())
         else {
             return Err(ExtractorError::Unauthorized);
         };

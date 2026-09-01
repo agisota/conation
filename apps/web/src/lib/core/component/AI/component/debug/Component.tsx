@@ -1,5 +1,5 @@
-import { buildChatEditor } from '@core/component/AI/component/input/buildChatEditor';
 import { t } from '@app/lib/i18n';
+import { buildChatEditor } from '@core/component/AI/component/input/buildChatEditor';
 import type { ChatSendInput } from '@core/component/AI/component/input/buildRequest';
 import { MODEL_PRETTYNAME, MODEL_PROVIDER } from '@core/component/AI/constant';
 import { Model } from '@core/component/AI/types';
@@ -102,8 +102,12 @@ function ChatInputBoxInner() {
     <Item label="Chat input - not connected to backend">
       <div class="size-full">
         <div class="flex gap-2 py-2">
-          <Button onClick={() => input.setIsGenerating(true)} variant="accent">{t('auto.generate')}</Button>
-          <Button onClick={() => input.setIsGenerating(false)} variant="accent">{t('auto.stop')}</Button>
+          <Button onClick={() => input.setIsGenerating(true)} variant="accent">
+            {t('ai.debug.actions.generate')}
+          </Button>
+          <Button onClick={() => input.setIsGenerating(false)} variant="accent">
+            {t('ai.debug.actions.stop')}
+          </Button>
         </div>
         <ChatInput
           editor={editor}
@@ -185,7 +189,9 @@ function StreamMessagesInner() {
           setStream(poemStream);
           chat.setStream(poemStream);
         }}
-      >{t('auto.stream')}</button>
+      >
+        {t('ai.debug.actions.stream')}
+      </button>
       <StreamStatus stream={stream} />
       {/* Must be height-bounded (max-h + overflow): ChatMessages sizes a child
           to the scroll container's own height, so an unbounded container grows
@@ -461,12 +467,14 @@ function ProviderFailureDemoBody(props: {
           class="flex-1 rounded border border-accent px-2 py-1 text-sm"
           value={text()}
           onInput={(e) => setText(e.currentTarget.value)}
-          placeholder={t('auto.type_a_message_and_send')}
+          placeholder={t('ai.debug.messagePlaceholder')}
           onKeyDown={(e) => {
             if (e.key === 'Enter') send();
           }}
         />
-        <Button variant="accent" onClick={send}>{t('auto.send')}</Button>
+        <Button variant="accent" onClick={send}>
+          {t('ai.actions.send')}
+        </Button>
       </div>
     </Item>
   );
@@ -671,22 +679,28 @@ function TableStreamInner() {
   return (
     <Item col label="Table stream with controls">
       <div class="flex gap-x-2 items-center">
-        <Button onClick={startStream} variant="accent">{t('auto.stream')}</Button>
+        <Button onClick={startStream} variant="accent">
+          {t('ai.debug.actions.stream')}
+        </Button>
         <Button onClick={() => setIsPaused((p) => !p)} variant="accent">
-          {isPaused() ? 'Resume' : 'Pause'}
+          {t(isPaused() ? 'ai.debug.actions.resume' : 'ai.debug.actions.pause')}
         </Button>
         <label class="flex items-center gap-x-1 text-xs">
           <input
             type="checkbox"
             checked={isSlow()}
             onChange={(e) => setIsSlow(e.currentTarget.checked)}
-          />{t('auto.slow_mode')}</label>
+          />
+          {t('ai.debug.slowMode')}
+        </label>
         <label class="flex items-center gap-x-1 text-xs">
           <input
             type="checkbox"
             checked={showRaw()}
             onChange={(e) => setShowRaw(e.currentTarget.checked)}
-          />{t('auto.raw')}</label>
+          />
+          {t('ai.debug.raw')}
+        </label>
         <Button
           variant="accent"
           onClick={() => {
@@ -695,7 +709,9 @@ function TableStreamInner() {
             chat.setMessages([]);
             chat.setStream(undefined);
           }}
-        >{t('auto.reset')}</Button>
+        >
+          {t('ai.debug.actions.reset')}
+        </Button>
       </div>
       <StreamStatus stream={stream} />
       {showRaw() ? (

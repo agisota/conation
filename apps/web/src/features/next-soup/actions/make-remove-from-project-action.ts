@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import type { EntityData } from '@entity';
 import { createBulkRemoveFromProjectDssEntityMutation } from '@entity';
@@ -21,9 +22,7 @@ export const makeRemoveFromProjectAction = () => {
       .catch(() => null);
     if (!result) return false;
     toast.success(
-      entities.length > 1
-        ? `Removed ${entities.length} items from folder`
-        : 'Removed from folder'
+      t('soup.toast.removedFromFolder', { count: entities.length })
     );
     return true;
   };

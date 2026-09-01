@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { globalSplitManager } from '@app/signal/splitLayout';
 import { useGlobalNotificationSource } from '@components/app/GlobalAppState';
 import { useSplitPanel } from '@components/app/split-layout/layoutUtils';
@@ -79,15 +80,17 @@ function NotificationRowContent(props: {
       </Match>
       <Match when={tag() === 'channel_invite'}>
         <span class="text-xs text-ink-muted/80 italic">
-          to join the channel
+          {t('notifications.content.joinChannel')}
         </span>
       </Match>
       <Match when={tag() === 'invite_to_team'}>
-        <span class="text-xs text-ink-muted/80 italic">to join the team</span>
+        <span class="text-xs text-ink-muted/80 italic">
+          {t('notifications.content.joinTeam')}
+        </span>
       </Match>
       <Match when={tag() === 'call_started'}>
         <span class="text-xs text-ink-muted/80 italic">
-          started a call you can join
+          {t('notifications.content.joinCall')}
         </span>
       </Match>
     </Switch>
@@ -193,7 +196,7 @@ function HeaderTrailing(props: {
             e.stopPropagation();
             props.onMarkAsDone();
           }}
-          tooltip="Mark done"
+          tooltip={t('notifications.actions.markDone')}
           class="rounded text-ink-muted hover:text-accent hover:bg-accent/10 hidden group-hover/notif:grid p-0 place-items-center size-5"
         >
           <CheckIcon class="size-3" />

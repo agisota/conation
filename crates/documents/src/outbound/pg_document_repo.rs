@@ -797,7 +797,7 @@ impl DocumentRepo for PgDocumentRepo {
             LEFT JOIN LATERAL (
                 SELECT github_username
                 FROM github_links
-                WHERE conation_id = request_user.user_id
+                WHERE macro_id = request_user.user_id
                 ORDER BY updated_at DESC
                 LIMIT 1
             ) gl ON true

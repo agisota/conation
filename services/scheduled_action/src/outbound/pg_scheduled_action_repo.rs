@@ -204,7 +204,7 @@ impl ScheduledActionRepo for PgScheduledActionRepo {
     async fn delete_action(
         &self,
         id: &Uuid,
-        _conation_user_id: MacroUserIdStr<'static>,
+        _macro_user_id: MacroUserIdStr<'static>,
     ) -> Result<()> {
         sqlx::query!(
             r#"

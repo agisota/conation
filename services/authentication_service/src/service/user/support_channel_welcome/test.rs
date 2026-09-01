@@ -40,7 +40,7 @@ fn expected_welcome() -> String {
         concat!(
             "Hey {new_user},\n",
             "\n",
-            "Welcome to Macro, we're excited for you to try it out.\n",
+            "Welcome to Conation, we're excited for you to try it out.\n",
             "\n",
             "This is your own personal support Channel, with <m-user-mention>{{\"userId\":\"macro|jacob@macro.com\",\"email\":\"jacob@macro.com\"}}</m-user-mention> (ceo) and <m-user-mention>{{\"userId\":\"macro|teo@macro.com\",\"email\":\"teo@macro.com\"}}</m-user-mention> (cto) and me (julia).\n",
             "\n",

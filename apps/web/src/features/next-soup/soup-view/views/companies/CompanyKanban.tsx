@@ -8,6 +8,7 @@ import {
   preventDuplicatePreviewEntityOpen,
 } from '@app/features/next-soup/utils';
 import { DEBUG_SETTING_KEYS, useDebugSetting } from '@app/lib/debugSettings';
+import { t } from '@app/lib/i18n';
 import { useDealStages } from '@companies/crm/deal-stages';
 import { CrmStageIcon } from '@companies/crm/StageIcon';
 import {
@@ -117,7 +118,7 @@ export function CompanyKanban() {
     // "No stage" — checked columns always render in this fixed order.
     const candidates: StageColumn[] = [
       ...filterStages().map((stage) => ({ key: stage.id, label: stage.label })),
-      { key: NO_STAGE_KEY, label: 'No stage' },
+      { key: NO_STAGE_KEY, label: t('soup.filters.stages.none') },
     ];
     // An active stage filter removes the filtered-out columns entirely,
     // not just their (already predicate-filtered) cards. With no filter,

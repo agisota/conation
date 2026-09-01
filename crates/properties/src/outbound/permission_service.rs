@@ -66,7 +66,7 @@ impl<Svc: EntityAccessService> PermissionServiceImpl<Svc> {
             && let Some(user_id) = user_id
             && let Ok(thread_id) = Uuid::parse_str(entity_id)
         {
-            match permission_queries::get_conation_id_from_thread_id(&self.db, thread_id).await {
+            match permission_queries::get_macro_id_from_thread_id(&self.db, thread_id).await {
                 Ok(Some(owner_id)) if owner_id == user_id.as_ref() => {
                     tracing::debug!("user owns thread via link_id, granting owner access");
                     return Ok(Some(AccessLevel::Owner));

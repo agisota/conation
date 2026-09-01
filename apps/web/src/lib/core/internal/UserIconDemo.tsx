@@ -1,5 +1,4 @@
 import { UserGroup } from '@core/component/UserGroup';
-import { t } from '@app/lib/i18n';
 import { UserIcon } from '@core/component/UserIcon';
 import { seedMockDisplayNames } from '@core/user/displayName';
 import User from '@phosphor-icons/core/regular/user.svg?component-solid';
@@ -63,7 +62,7 @@ export default function UserIconDemo() {
             <Avatar.Fallback>AB</Avatar.Fallback>
           </Avatar>
           <Avatar size="md">
-            <Avatar.Image src="https://i.pravatar.cc/100?img=1" alt={t('auto.random')} />
+            <Avatar.Image src="https://i.pravatar.cc/100?img=1" alt="Random" />
           </Avatar>
           <Avatar size="lg">
             <Avatar.Fallback>
@@ -74,7 +73,7 @@ export default function UserIconDemo() {
       </Section>
 
       {/* Individual UserIcons at each size */}
-      <Section title={t('auto.usericon_all_sizes')}>
+      <Section title="UserIcon - All Sizes">
         <div class="space-y-4">
           <For each={SIZE_LABELS}>
             {(size) => (
@@ -108,7 +107,7 @@ export default function UserIconDemo() {
       </Section>
 
       {/* UserGroup at each size */}
-      <Section title={t('auto.usergroup_all_sizes')}>
+      <Section title="UserGroup - All Sizes">
         <div class="space-y-4">
           <For each={SIZE_LABELS}>
             {(size) => (
@@ -126,7 +125,7 @@ export default function UserIconDemo() {
       </Section>
 
       {/* UserGroup with different maxUsers */}
-      <Section title={t('auto.usergroup_max_users_variants')}>
+      <Section title="UserGroup - Max Users Variants">
         <div class="space-y-4">
           <For each={[1, 2, 3, 4, 5]}>
             {(max) => (
@@ -147,7 +146,7 @@ export default function UserIconDemo() {
       </Section>
 
       {/* Hover background test - the main bug fix */}
-      <Section title={t('auto.hover_background_test')}>
+      <Section title="Hover Background Test">
         <p class="text-xs text-ink-muted mb-3">
           The separator should match the hover background. Add{' '}
           <code class="bg-edge px-1 rounded">
@@ -169,7 +168,7 @@ export default function UserIconDemo() {
                 maxUsers={3}
                 suppressClick
               />
-              <span class="text-sm text-ink">{t('auto.some_content_here')}</span>
+              <span class="text-sm text-ink">Some content here</span>
             </div>
           </div>
 
@@ -185,14 +184,14 @@ export default function UserIconDemo() {
                 maxUsers={3}
                 suppressClick
               />
-              <span class="text-sm text-ink">{t('auto.some_content_here')}</span>
+              <span class="text-sm text-ink">Some content here</span>
             </div>
           </div>
         </div>
       </Section>
 
       {/* Active/selected state test */}
-      <Section title={t('auto.active_state_test')}>
+      <Section title="Active State Test">
         <div class="space-y-2">
           <div class="flex items-center gap-2 px-3 py-2 rounded bg-active [--avatar-group-separator:var(--color-active)] border border-edge-muted">
             <UserGroup
@@ -201,7 +200,9 @@ export default function UserIconDemo() {
               maxUsers={3}
               suppressClick
             />
-            <span class="text-sm text-ink">{t('auto.active_row_with_matching_separ')}</span>
+            <span class="text-sm text-ink">
+              Active row with matching separator
+            </span>
           </div>
 
           <div class="flex items-center gap-2 px-3 py-2 rounded bg-hover [--avatar-group-separator:var(--color-hover)] border border-edge-muted">
@@ -211,13 +212,15 @@ export default function UserIconDemo() {
               maxUsers={3}
               suppressClick
             />
-            <span class="text-sm text-ink">{t('auto.hover_row_with_matching_separa')}</span>
+            <span class="text-sm text-ink">
+              Hover row with matching separator
+            </span>
           </div>
         </div>
       </Section>
 
       {/* Email-only fallback */}
-      <Section title={t('auto.email_fallback_no_macro_id')}>
+      <Section title="Email Fallback (no macro ID)">
         <div class="flex items-center gap-3">
           <UserIcon email="john@example.com" size="sm" suppressClick />
           <UserIcon email="jane@example.com" size="md" suppressClick />
@@ -226,7 +229,7 @@ export default function UserIconDemo() {
       </Section>
 
       {/* Deleted state */}
-      <Section title={t('auto.deleted_user_state')}>
+      <Section title="Deleted User State">
         <div class="flex items-center gap-3">
           <For each={SIZE_LABELS}>
             {(size) => (

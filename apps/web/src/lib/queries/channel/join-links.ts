@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { throwOnErr } from '@core/util/result';
 import { type MutationCallbacks, withCallbacks } from '@queries/utils';
@@ -37,7 +38,7 @@ export function getChannelJoinLinkMutationOptions(
       {
         onError(error) {
           console.error('failed to get channel join link', error);
-          toast.failure('Failed to generate channel join link');
+          toast.failure(t('channel.feedback.joinLinkGenerationFailed'));
         },
       },
       callbacks
@@ -82,7 +83,7 @@ export function joinChannelByCodeMutationOptions(
         },
         onError(error) {
           console.error('failed to join channel by code', error);
-          toast.failure('Failed to join channel');
+          toast.failure(t('channel.feedback.joinFailed'));
         },
       },
       callbacks
@@ -133,7 +134,7 @@ export function joinChannelMutationOptions(callbacks?: JoinChannelCallbacks) {
         },
         onError(error) {
           console.error('failed to join channel', error);
-          toast.failure('Failed to join channel');
+          toast.failure(t('channel.feedback.joinFailed'));
         },
       },
       callbacks

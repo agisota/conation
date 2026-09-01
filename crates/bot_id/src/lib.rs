@@ -50,7 +50,7 @@ fn bot_id_str(input: &str) -> IResult<&str, BotIdStorage<ArcCowStr<'_>>> {
     ))
 }
 
-/// Stable [`BotId`] for the first-party "Macro AI" system bot.
+/// Stable [`BotId`] for the first-party Conation AI system bot.
 ///
 /// Mentioning it answers with the classic in-channel chat reply (the
 /// `channel_bots` agent loop in `document_storage_service`). Agent sessions
@@ -58,13 +58,13 @@ fn bot_id_str(input: &str) -> IResult<&str, BotIdStorage<ArcCowStr<'_>>> {
 pub const MACRO_AI_BOT_ID: BotId =
     BotId::new_from_uuid(Uuid::from_u128(0x0000_0000_0000_0000_0000_0000_0000_a1a1));
 
-/// Stable handle for the "Macro AI" system bot (used for `@` mentions).
+/// Stable handle for the Conation AI system bot (used for `@` mentions).
 pub const MACRO_AI_HANDLE: &str = "macro";
 
-/// Display name for the "Macro" system bot.
-pub const MACRO_AI_NAME: &str = "Macro";
+/// Display name for the Conation AI system bot.
+pub const MACRO_AI_NAME: &str = "Conation";
 
-/// Stable [`BotId`] for the "macro(new)" system bot.
+/// Stable [`BotId`] for the next-generation Conation system bot.
 ///
 /// The next-generation Macro bot: mentioning it opens an agent session served
 /// by the in-process (in-memory) agent harness, which answers with the Macro
@@ -77,17 +77,17 @@ pub const MACRO_NEW_BOT_ID: BotId =
 /// Stable handle for the "macro(new)" system bot (used for `@` mentions).
 pub const MACRO_NEW_HANDLE: &str = "macro-new";
 
-/// Display name for the "macro(new)" system bot.
-pub const MACRO_NEW_NAME: &str = "macro(new)";
+/// Display name for the next-generation Conation system bot.
+pub const MACRO_NEW_NAME: &str = "Conation (new)";
 
-/// Stable [`BotId`] for autonomous Macro platform operations.
+/// Stable [`BotId`] for autonomous Conation platform operations.
 pub const MACRO_SYSTEM_BOT_ID: BotId =
     BotId::new_from_uuid(Uuid::from_u128(0x0000_0000_0000_0000_0000_0000_0000_5759));
 
-/// Display name for the autonomous Macro platform principal.
-pub const MACRO_SYSTEM_NAME: &str = "Macro System";
+/// Display name for the autonomous Conation platform principal.
+pub const MACRO_SYSTEM_NAME: &str = "Conation System";
 
-/// Stable [`BotId`] for the "Macro Coder" system bot, our coding-agent harness.
+/// Stable [`BotId`] for the "Conation Coder" system bot, our coding-agent harness.
 ///
 /// Distinct from [`MACRO_AI_BOT_ID`] on purpose: the Macro bot's sessions run
 /// in-process on the in-memory harness, while this one's run in a provisioned
@@ -98,8 +98,8 @@ pub const MACRO_CODER_BOT_ID: BotId =
 /// Stable handle for the "Macro Coder" system bot (used for `@` mentions).
 pub const MACRO_CODER_HANDLE: &str = "coder";
 
-/// Display name for the "Macro Coder" system bot.
-pub const MACRO_CODER_NAME: &str = "Macro Coder";
+/// Display name for the "Conation Coder" system bot.
+pub const MACRO_CODER_NAME: &str = "Conation Coder";
 
 /// Stable [`BotId`] for the "Cursor" system bot.
 ///

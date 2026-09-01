@@ -35,7 +35,7 @@ build:
 
 # Build dev service Docker images to pre-warm the cache used by root `run_local`.
 build_dev_service_images:
-  docker build -f docker/Dockerfile.dev --target services_bundle -t macro-local-rust-services:dev .
+  docker build -f docker/Dockerfile.dev --target services_bundle -t conation-local-rust-services:dev .
   docker build -f docker/Dockerfile.search_processing_service.dev --target search_processing_service -t macro-local-search-processing-service:dev .
 
 # Build all lambda functions

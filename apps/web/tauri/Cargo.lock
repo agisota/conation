@@ -195,11 +195,11 @@ dependencies = [
 name = "app"
 version = "0.1.0"
 dependencies = [
+ "conation_bundle_updater_plugin",
  "graphql_cache_plugin",
  "http",
  "log",
  "logger",
- "macro_bundle_updater_plugin",
  "mime_guess",
  "navigation_plugin",
  "nom",
@@ -965,6 +965,31 @@ checksum = "ba5a308b75df32fe02788e748662718f03fde005016435c444eea572398219fd"
 dependencies = [
  "bytes",
  "memchr",
+]
+
+[[package]]
+name = "conation_bundle_updater_plugin"
+version = "0.1.0"
+dependencies = [
+ "digest",
+ "futures",
+ "jni",
+ "ndk-context",
+ "objc2 0.5.2",
+ "reqwest",
+ "rootcause",
+ "semver",
+ "serde",
+ "serde_json",
+ "sha2",
+ "strum 0.27.2",
+ "tauri",
+ "tauri-plugin-device-info",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "url",
+ "zip",
 ]
 
 [[package]]
@@ -3364,31 +3389,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b823e83b2affd8f40a9ee8c29dbc56404c1e34cd2710921f2801e2cf29527afa"
 dependencies = [
  "libc",
-]
-
-[[package]]
-name = "macro_bundle_updater_plugin"
-version = "0.1.0"
-dependencies = [
- "digest",
- "futures",
- "jni",
- "ndk-context",
- "objc2 0.5.2",
- "reqwest",
- "rootcause",
- "semver",
- "serde",
- "serde_json",
- "sha2",
- "strum 0.27.2",
- "tauri",
- "tauri-plugin-device-info",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
- "url",
- "zip",
 ]
 
 [[package]]

@@ -90,7 +90,7 @@ pub struct EmailInboxDetails {
     /// Stable email link identifier.
     pub id: Uuid,
     /// Macro user that owns the inbox.
-    pub conation_id: MacroUserIdStr<'static>,
+    pub macro_id: MacroUserIdStr<'static>,
     /// Provider email address for the inbox.
     pub email_address: EmailStr<'static>,
     /// SFS URL of the inbox's self-contact photo, when available.
@@ -122,7 +122,7 @@ pub struct UserEmailLink {
     /// Stable email link identifier.
     pub id: Uuid,
     /// Macro user that owns the inbox.
-    pub conation_id: MacroUserIdStr<'static>,
+    pub macro_id: MacroUserIdStr<'static>,
     /// Provider email address for the inbox.
     pub email_address: EmailStr<'static>,
     /// SFS URL of the inbox's self-contact photo, when available.
@@ -149,7 +149,7 @@ impl From<EmailInboxDetails> for UserEmailLink {
     fn from(details: EmailInboxDetails) -> Self {
         Self {
             id: details.id,
-            conation_id: details.conation_id,
+            macro_id: details.macro_id,
             email_address: details.email_address,
             photo_url: details.photo_url,
             provider: details.provider,
@@ -171,7 +171,7 @@ impl From<EmailInboxDetails> for UserEmailLink {
 #[derive(Clone)]
 pub struct Link {
     pub id: Uuid,
-    pub conation_id: MacroUserIdStr<'static>,
+    pub macro_id: MacroUserIdStr<'static>,
     pub fusionauth_user_id: String,
     pub email_address: EmailStr<'static>,
     pub provider: UserProvider,

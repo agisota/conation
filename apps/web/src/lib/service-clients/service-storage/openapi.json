@@ -24245,7 +24245,7 @@
         "properties": {
           "how_to_guide_id": {
             "type": "string",
-            "description": "Id of the user's \"Macro how to guide\"."
+            "description": "Id of the user's Conation how-to guide."
           }
         }
       },
@@ -25071,7 +25071,7 @@
   "tags": [
     {
       "name": "macro cloud storage service",
-      "description": "Macro Cloud Storage Service"
+      "description": "Conation Cloud Storage Service"
     }
   ]
 }

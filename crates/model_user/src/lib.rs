@@ -45,7 +45,7 @@ pub struct UserInfoWithMacroUserId {
     pub id: String,
     pub email: String,
     pub organization_id: Option<i32>,
-    pub conation_user_id: Option<uuid::Uuid>,
+    pub macro_user_id: Option<uuid::Uuid>,
 }
 
 #[derive(Default, Debug, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]

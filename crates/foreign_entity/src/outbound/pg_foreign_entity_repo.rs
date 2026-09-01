@@ -330,17 +330,17 @@ impl PgForeignEntityRepo {
         .await
     }
 
-    async fn github_user_id_for_conation_user(
+    async fn github_user_id_for_macro_user(
         &self,
-        conation_user_id: &str,
+        macro_user_id: &str,
     ) -> Result<Option<String>, sqlx::Error> {
         sqlx::query_scalar!(
             r#"
             SELECT github_user_id
             FROM github_links
-            WHERE conation_id = $1
+            WHERE macro_id = $1
             "#,
-            conation_user_id,
+            macro_user_id,
         )
         .fetch_optional(&self.pool)
         .await
@@ -447,7 +447,7 @@ impl ForeignEntityRepository for PgForeignEntityRepo {
             let Some(requesting_user) = requesting_user.as_deref() else {
                 return Ok(Vec::new());
             };
-            match self.github_user_id_for_conation_user(requesting_user).await? {
+            match self.github_user_id_for_macro_user(requesting_user).await? {
                 Some(github_user_id) => Some(github_user_id),
                 // No linked GitHub identity: the user participates in nothing.
                 None => return Ok(Vec::new()),

@@ -7,26 +7,26 @@ use rand::seq::SliceRandom;
 #[tracing::instrument(skip(db))]
 pub async fn create_account_merge_request(
     db: &sqlx::Pool<sqlx::Postgres>,
-    conation_user_id: &str,
-    to_merge_conation_user_id: &str,
+    macro_user_id: &str,
+    to_merge_macro_user_id: &str,
 ) -> anyhow::Result<String> {
     let id = conation_uuid::generate_uuid_v7();
-    let conation_user_id = conation_uuid::string_to_uuid(conation_user_id)
-        .context("failed to convert conation_user_id to uuid")?;
-    let to_merge_conation_user_id = conation_uuid::string_to_uuid(to_merge_conation_user_id)
-        .context("failed to convert to_merge_conation_user_id to uuid")?;
+    let macro_user_id = conation_uuid::string_to_uuid(macro_user_id)
+        .context("failed to convert macro_user_id to uuid")?;
+    let to_merge_macro_user_id = conation_uuid::string_to_uuid(to_merge_macro_user_id)
+        .context("failed to convert to_merge_macro_user_id to uuid")?;
 
     let code = generate_code(6);
 
     let code = sqlx::query!(
         r#"
-        INSERT INTO "account_merge_request" (id, conation_user_id, to_merge_conation_user_id, code, created_at)
+        INSERT INTO "account_merge_request" (id, macro_user_id, to_merge_macro_user_id, code, created_at)
         VALUES ($1, $2, $3, $4, NOW())
         RETURNING "code"
         "#,
         &id,
-        &conation_user_id,
-        &to_merge_conation_user_id,
+        &macro_user_id,
+        &to_merge_macro_user_id,
         &code
     ).map(|row| row.code).fetch_one(db).await?;
 

@@ -1,5 +1,4 @@
 import { globalSplitManager } from '@app/signal/splitLayout';
-import { t } from '@app/lib/i18n';
 import { createConfiguredChannelMarkdownEditor } from '@channel/Input';
 import { MarkdownShell } from '@core/component/LexicalMarkdown/builder/MarkdownShell';
 import { NotificationRenderer } from '@core/component/NotificationRenderer';
@@ -162,18 +161,20 @@ function BrowserFormat(props: { notification: UnifiedNotification }) {
     <Show
       when={hasData()}
       fallback={
-        <div class="text-ink-muted text-sm italic">{t('auto.no_extractable_data')}</div>
+        <div class="text-ink-muted text-sm italic">No extractable data</div>
       }
     >
       <Show
         when={browserNotif()}
         fallback={
-          <div class="text-ink-muted text-sm animate-pulse">{t('common.loading')}</div>
+          <div class="text-ink-muted text-sm animate-pulse">Loading…</div>
         }
       >
         <div class="space-y-6">
           <div>
-            <div class="text-xs font-mono text-ink-muted uppercase mb-3">{t('auto.visual_preview')}</div>
+            <div class="text-xs font-mono text-ink-muted uppercase mb-3">
+              Visual Preview
+            </div>
             <BrowserNotificationPreview
               title={browserNotif()!.title}
               body={browserNotif()!.options.body}
@@ -183,13 +184,17 @@ function BrowserFormat(props: { notification: UnifiedNotification }) {
 
           <div class="pt-4 border-t border-edge-muted space-y-4">
             <div>
-              <div class="text-xs font-mono text-ink-muted uppercase mb-2">{t('auto.title')}</div>
+              <div class="text-xs font-mono text-ink-muted uppercase mb-2">
+                Title
+              </div>
               <div class="bg-surface p-4 rounded-lg border border-edge-muted text-sm text-ink font-medium">
                 {browserNotif()!.title}
               </div>
             </div>
             <div>
-              <div class="text-xs font-mono text-ink-muted uppercase mb-2">{t('auto.description_body')}</div>
+              <div class="text-xs font-mono text-ink-muted uppercase mb-2">
+                Description (Body)
+              </div>
               <div class="bg-surface p-4 rounded-lg border border-edge-muted text-sm text-ink">
                 {browserNotif()!.body || (
                   <span class="italic text-ink-muted">(empty)</span>
@@ -197,7 +202,9 @@ function BrowserFormat(props: { notification: UnifiedNotification }) {
               </div>
             </div>
             <div>
-              <div class="text-xs font-mono text-ink-muted uppercase mb-2">{t('auto.icon')}</div>
+              <div class="text-xs font-mono text-ink-muted uppercase mb-2">
+                Icon
+              </div>
               <div class="bg-surface p-4 rounded-lg border border-edge-muted">
                 <code class="text-xs text-ink-muted">
                   {browserNotif()!.icon}
@@ -230,12 +237,14 @@ function PermissionButton(props: { platformNotif: any }) {
             <Button
               variant="accent"
               onClick={() => props.platformNotif.requestPermission()}
-            >{t('auto.enable_browser_notifications')}</Button>
+            >
+              Enable Browser Notifications
+            </Button>
           }
         >
           <div class="flex items-center gap-3 text-sm text-accent bg-accent/10 px-4 py-3 rounded-lg">
             <div class="size-2 bg-accent rounded-full animate-pulse" />
-            <span class="font-medium">{t('auto.notifications_enabled')}</span>
+            <span class="font-medium">Notifications Enabled</span>
           </div>
         </Show>
       </div>
@@ -251,13 +260,17 @@ function CustomBuilder(props: {
   return (
     <div class="w-96 border-r border-edge-muted bg-surface flex flex-col shrink-0">
       <div class="p-6 border-b border-edge-muted bg-surface sticky top-0">
-        <h2 class="text-lg font-semibold text-ink mb-1">{t('auto.custom_message_builder')}</h2>
-        <p class="text-xs text-ink-muted">{t('auto.test_markdown_rendering')}</p>
+        <h2 class="text-lg font-semibold text-ink mb-1">
+          Custom Message Builder
+        </h2>
+        <p class="text-xs text-ink-muted">Test markdown rendering</p>
       </div>
 
       <div class="flex-1 overflow-auto p-6 space-y-6">
         <div>
-          <label class="block text-sm font-medium text-ink mb-3">{t('auto.message_content')}</label>
+          <label class="block text-sm font-medium text-ink mb-3">
+            Message Content
+          </label>
           <div class="border border-edge-muted rounded-lg p-3 bg-surface min-h-64 max-h-96 overflow-auto">
             <MarkdownShell
               config={props.markdownEditor}
@@ -281,7 +294,7 @@ function CustomBuilder(props: {
         </div>
 
         <div>
-          <h3 class="text-sm font-medium text-ink mb-3">{t('auto.live_preview')}</h3>
+          <h3 class="text-sm font-medium text-ink mb-3">Live Preview</h3>
           <div class="p-4 bg-hover rounded-lg border border-edge-muted">
             <NotificationRenderer
               notification={props.customNotification}
@@ -359,7 +372,7 @@ function NotificationDetail(props: {
       </div>
 
       <section class="mb-10">
-        <h3 class="text-lg font-semibold text-ink mb-2">{t('auto.compact_row')}</h3>
+        <h3 class="text-lg font-semibold text-ink mb-2">Compact Row</h3>
         <p class="text-xs text-ink-muted mb-4">
           One-line variant used in the right-panel notifications card. Hover for
           the mark-done button; right-click for the context menu.
@@ -370,7 +383,7 @@ function NotificationDetail(props: {
       </section>
 
       <section class="mb-10">
-        <h3 class="text-lg font-semibold text-ink mb-2">{t('auto.notifications_card')}</h3>
+        <h3 class="text-lg font-semibold text-ink mb-2">Notifications Card</h3>
         <p class="text-xs text-ink-muted mb-4">
           What the right-panel card looks like when several notifications of
           this type land on the same entity.
@@ -385,7 +398,7 @@ function NotificationDetail(props: {
       </section>
 
       <section class="mb-10">
-        <h3 class="text-lg font-semibold text-ink mb-2">{t('auto.expanded_row')}</h3>
+        <h3 class="text-lg font-semibold text-ink mb-2">Expanded Row</h3>
         <p class="text-xs text-ink-muted mb-4">
           Same header as compact, but the content moves below and renders as
           multi-line markdown aligned under the description.
@@ -402,7 +415,8 @@ function NotificationDetail(props: {
         <h3 class="text-lg font-semibold text-ink mb-2">
           Expanded Row · no mark-done
         </h3>
-        <p class="text-xs text-ink-muted mb-4">{t('auto.same_variant_with')}<code>showMarkDone=&#123;false&#125;</code> — the
+        <p class="text-xs text-ink-muted mb-4">
+          Same variant with <code>showMarkDone=&#123;false&#125;</code> — the
           check button is suppressed and the timestamp stays put on hover.
         </p>
         <div class="rounded-lg border border-ink-muted/8 bg-ink-muted/[0.025] overflow-hidden">
@@ -415,7 +429,9 @@ function NotificationDetail(props: {
       </section>
 
       <section class="mb-10">
-        <h3 class="text-lg font-semibold text-ink mb-2">{t('auto.both_variants_side_by_side')}</h3>
+        <h3 class="text-lg font-semibold text-ink mb-2">
+          Both variants side by side
+        </h3>
         <p class="text-xs text-ink-muted mb-4">
           Same notification in both variants — fonts, colors, indicator, icon,
           sender, and mark-done affordance are identical; only the content
@@ -445,7 +461,9 @@ function NotificationDetail(props: {
       </section>
 
       <section class="mb-10">
-        <h3 class="text-lg font-semibold text-ink mb-4">{t('auto.browser_notification_format')}</h3>
+        <h3 class="text-lg font-semibold text-ink mb-4">
+          Browser Notification Format
+        </h3>
         <BrowserFormat notification={props.notification} />
       </section>
 
@@ -585,8 +603,10 @@ function PlaygroundContent() {
       fallback={
         <div class="h-screen flex items-center justify-center bg-surface">
           <div class="text-center">
-            <div class="text-lg text-ink-muted animate-pulse mb-2">{t('auto.loading_notifications')}</div>
-            <div class="text-xs text-ink-extra-muted">{t('auto.fetching_from_server')}</div>
+            <div class="text-lg text-ink-muted animate-pulse mb-2">
+              Loading notifications...
+            </div>
+            <div class="text-xs text-ink-extra-muted">Fetching from server</div>
           </div>
         </div>
       }
@@ -595,7 +615,9 @@ function PlaygroundContent() {
         {/* Type selector sidebar */}
         <div class="w-80 border-r border-edge-muted bg-surface flex flex-col shrink-0">
           <div class="p-6 border-b border-edge-muted bg-surface sticky top-0">
-            <h1 class="text-xl font-semibold text-ink mb-2">{t('auto.notifications_playground')}</h1>
+            <h1 class="text-xl font-semibold text-ink mb-2">
+              Notifications Playground
+            </h1>
             <div class="flex items-center gap-4 text-xs text-ink-muted">
               <span>{allNotifications().length} total</span>
               <span>•</span>
@@ -620,10 +642,14 @@ function PlaygroundContent() {
               <div class="flex items-center justify-between">
                 <span
                   class={`text-sm font-medium ${customMode() ? 'text-[black]' : 'text-accent'}`}
-                >{t('auto.custom_message_test')}</span>
+                >
+                  Custom Message Test
+                </span>
                 <span
                   class={`text-xs ${customMode() ? 'text-[black]/70' : 'text-ink-muted'}`}
-                >{t('auto.builder')}</span>
+                >
+                  Builder
+                </span>
               </div>
             </button>
           </div>
@@ -650,7 +676,7 @@ function PlaygroundContent() {
               when={selectedType() !== null}
               fallback={
                 <EmptyState
-                  title={t('auto.select_a_notification_type')}
+                  title="Select a notification type"
                   description="Choose a type from the left sidebar to see all notifications of that type"
                 />
               }
@@ -677,7 +703,7 @@ function PlaygroundContent() {
             when={selectedNotification()}
             fallback={
               <EmptyState
-                title={t('auto.select_a_notification')}
+                title="Select a notification"
                 description="Choose a notification from the list to see detailed rendering and format information"
               />
             }

@@ -56,7 +56,9 @@ export function MobileAskAiButton() {
         hapticImpact('light');
       }}
       onClick={() => submitAskAi()}
-    >{t('auto.ask_ai')}</button>
+    >
+      {t('shell.command.askAi')}
+    </button>
   );
 }
 
@@ -111,7 +113,7 @@ export function MobileSearchInput() {
         type="text"
         enterkeyhint="search"
         class="h-full min-w-0 flex-1 border-0 bg-transparent text-ink outline-none ring-0 placeholder:text-ink-placeholder focus:outline-none focus:ring-0"
-        placeholder={t('auto.search_or_ask_ai')}
+        placeholder={t('shell.command.searchOrAskPlaceholder')}
         value={SearchState.query()}
         onFocus={() => {
           if (!SearchState.isOpen()) SearchState.open();
@@ -135,7 +137,7 @@ export function MobileSearchInput() {
       <button
         type="button"
         class="flex size-9 shrink-0 items-center justify-center rounded-full text-ink-muted"
-        aria-label={t('auto.close_search')}
+        aria-label={t('shell.actions.closeSearch')}
         onPointerDown={(e) => {
           e.preventDefault();
           hapticImpact('light');

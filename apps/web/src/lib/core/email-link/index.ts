@@ -3,6 +3,7 @@ import { updateUserAuth } from '@core/auth';
 import { toast } from '@core/component/Toast/Toast';
 import { PaywallKey, usePaywallState } from '@core/constant/PaywallState';
 import { currentSettingsReturnTo } from '@core/constant/SettingsState';
+import { t } from '@core/i18n';
 import { getNativeMobilePlatform } from '@core/util/platform';
 import { useInitGmailLink } from '@queries/auth';
 import { invalidateUserInfo } from '@queries/auth/user-info';
@@ -210,9 +211,6 @@ function isTooManyPendingLinks(
   return errors.some((error) => error.code === 'TOO_MANY_PENDING_LINKS');
 }
 
-const TOO_MANY_PENDING_LINKS_MESSAGE =
-  'Too many inbox connections in progress.';
-
 /**
  * Starts the add-inbox flow: fetches the Gmail link authorization URL and
  * navigates the browser to the OAuth consent page. The callback returns to
@@ -242,7 +240,7 @@ export function useAddInboxFlow() {
     await initEmailLink({ linkId, forceShare }).match(
       async () => {
         await query.refetch();
-        toast.success('Inbox connected');
+        toast.success(t('core.inbox.connected'));
       },
       async (error) => {
         if (error.tag === 'AlreadyInitialized') {
@@ -257,7 +255,7 @@ export function useAddInboxFlow() {
           });
           return;
         }
-        toast.failure('Failed to add inbox');
+        toast.failure(t('core.inbox.addFailed'));
       }
     );
   };
@@ -273,10 +271,10 @@ export function useAddInboxFlow() {
         return;
       }
       if (isTooManyPendingLinks(result.error)) {
-        toast.failure(TOO_MANY_PENDING_LINKS_MESSAGE);
+        toast.failure(t('core.inbox.tooManyPending'));
         return;
       }
-      toast.failure('Failed to start Gmail link flow');
+      toast.failure(t('core.inbox.gmailLinkStartFailed'));
       return;
     }
 
@@ -291,13 +289,13 @@ export function useAddInboxFlow() {
       });
     } catch (error) {
       console.error('add-inbox authenticate failed', error);
-      toast.failure('Failed to add inbox');
+      toast.failure(t('core.inbox.addFailed'));
       return;
     }
 
     if (!auth.success || !auth.token) {
       if (auth.error !== 'User canceled login') {
-        toast.failure('Failed to add inbox');
+        toast.failure(t('core.inbox.addFailed'));
       }
       return;
     }
@@ -329,9 +327,9 @@ export function useAddInboxFlow() {
     } else if (isPaymentRequired(result.error)) {
       showPaywall(PaywallKey.MULTI_INBOX);
     } else if (isTooManyPendingLinks(result.error)) {
-      toast.failure(TOO_MANY_PENDING_LINKS_MESSAGE);
+      toast.failure(t('core.inbox.tooManyPending'));
     } else {
-      toast.failure('Failed to start Gmail link flow');
+      toast.failure(t('core.inbox.gmailLinkStartFailed'));
     }
   };
 }

@@ -18,7 +18,7 @@ use crate::domain::{
 const TTL_SECONDS: u64 = 60 * 60 * 24;
 
 /// Generates the key for the github access token in redis
-conation_rules! github_access_token_key {
+macro_rules! github_access_token_key {
     ($fusionauth_user_id:expr) => {
         format!("github_access_token_key:{}", $fusionauth_user_id)
     };

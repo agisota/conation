@@ -1,5 +1,4 @@
 import { createEffect } from 'solid-js';
-import { t } from '@app/lib/i18n';
 
 // All coordinates are stroke-centers (inset from the visual edges by half the stroke).
 // The body is two C-shaped strokes that meet at the left/right edge midpoints:
@@ -184,7 +183,6 @@ export const AnimatedEmailIcon = (props: {
       xmlns="http://www.w3.org/2000/svg"
       class={props.class}
     >
-      {/*<title>{t('auto.animated_email_icon')}</title>*/}
       <path ref={bodyAEl} d={BODY_A_D} stroke-linejoin="round" />
       <path ref={bodyBEl} d={BODY_B_D} stroke-linejoin="round" />
       <path ref={flapEl} d={FLAP_D} />

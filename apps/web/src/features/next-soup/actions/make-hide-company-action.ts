@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import type { EntityData } from '@entity';
 import type { SoupState } from '../create-soup-state';
@@ -31,9 +32,17 @@ export const makeHideCompanyAction = (options: MakeHideCompanyOptions) => {
 
     try {
       await setHidden(entity.id, !hidden);
-      toast.success(hidden ? 'Unhidden' : 'Hidden');
+      toast.success(
+        t(hidden ? 'soup.toast.company.unhidden' : 'soup.toast.company.hidden')
+      );
     } catch {
-      toast.failure(hidden ? 'Failed to unhide' : 'Failed to hide');
+      toast.failure(
+        t(
+          hidden
+            ? 'soup.toast.company.unhideFailed'
+            : 'soup.toast.company.hideFailed'
+        )
+      );
     }
 
     await restoreSoupFocus(nextRow?.id);

@@ -1,5 +1,5 @@
-import { StaticMarkdown } from '@core/component/LexicalMarkdown/component/core/StaticMarkdown';
 import { t } from '@app/lib/i18n';
+import { StaticMarkdown } from '@core/component/LexicalMarkdown/component/core/StaticMarkdown';
 import {
   singleLineMarkdownTheme,
   twoLineClampMarkdownTheme,
@@ -75,7 +75,9 @@ function ChannelMessage(props: {
       <span class="ph-no-capture text-ink/50 font-medium truncate inline-flex items-center shrink min-w-0">
         <Show
           when={hasContent()}
-          fallback={<span class="italic">{t('auto.attached_items')}</span>}
+          fallback={
+            <span class="italic">{t('entity.channel.attachedItems')}</span>
+          }
         >
           <StaticMarkdown
             theme={singleLineMarkdownTheme}
@@ -156,7 +158,9 @@ export function ChannelLatestMessageNarrowBody(props: {
     >
       <Show
         when={props.message.content?.trim()}
-        fallback={<span class="italic">{t('auto.attached_items')}</span>}
+        fallback={
+          <span class="italic">{t('entity.channel.attachedItems')}</span>
+        }
       >
         <span class="ph-no-capture font-medium text-ink-muted">
           <DisplayName id={props.message.senderId} format="firstName" />:{' '}

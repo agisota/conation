@@ -2,18 +2,19 @@
  * @file This component rendered the accessory for the code nodes - a copy button and a syntax highlighting
  * language selector.
  */
-import { isInBlock, useIsNestedBlock } from '@core/block';
+
 import { t } from '@app/lib/i18n';
-import { toast } from '@core/component/Toast/Toast';
-import { ENABLE_SVG_PREVIEW } from '@core/constant/featureFlags';
-import { Switch } from '@kobalte/core/switch';
-import { $isCodeNode, CodeNode } from '@lexical/code';
 import {
   $isCustomCodeNode,
   LanguageDefinitions,
   normalizedLanguage,
   type SupportedLanguage,
 } from '@conation/lexical-core';
+import { isInBlock, useIsNestedBlock } from '@core/block';
+import { toast } from '@core/component/Toast/Toast';
+import { ENABLE_SVG_PREVIEW } from '@core/constant/featureFlags';
+import { Switch } from '@kobalte/core/switch';
+import { $isCodeNode, CodeNode } from '@lexical/code';
 import Braces from '@phosphor/brackets-curly.svg';
 import Copy from '@phosphor/copy.svg';
 import FileC from '@phosphor/file-c.svg';
@@ -191,7 +192,7 @@ export function CodeBoxAccessory(props: {
     if (!code) return;
     try {
       navigator.clipboard.writeText(code);
-      toast.success('Copied code to clipboard');
+      toast.success(t('editor.code.copied'));
     } catch (e) {
       console.error('Failed to copy code to clipboard', e);
     }
@@ -247,7 +248,9 @@ export function CodeBoxAccessory(props: {
           <div class="flex items-center h-full">
             <Show when={showPreviewToggle()}>
               <div class="flex items-center gap-2 mr-2">
-                <div class="text-xs text-ink-extra-muted/50">{t('auto.preview')}</div>
+                <div class="text-xs text-ink-extra-muted/50">
+                  {t('editor.code.preview')}
+                </div>
                 <Switch
                   checked={isPreviewMode()}
                   onChange={(enabled) => {
@@ -267,7 +270,7 @@ export function CodeBoxAccessory(props: {
                 variant="ghost"
                 size="icon-sm"
                 class="text-ink-extra-muted/50 hover:text-failure h-full"
-                tooltip="Delete Code"
+                tooltip={t('editor.code.delete')}
                 on:click={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
@@ -281,7 +284,7 @@ export function CodeBoxAccessory(props: {
               variant="ghost"
               size="icon-sm"
               class="text-ink-extra-muted/50 h-full"
-              tooltip="Copy Code"
+              tooltip={t('editor.code.copy')}
               on:click={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
@@ -324,7 +327,9 @@ function SvgPreview(props: { svgContent: () => string; overlay?: boolean }) {
     const content = props.svgContent();
     if (!content.trim()) {
       return (
-        <div class="flex items-center justify-center h-full text-ink-extra-muted/50 text-sm">{t('auto.no_svg_content')}</div>
+        <div class="flex items-center justify-center h-full text-ink-extra-muted/50 text-sm">
+          {t('editor.code.noSvgContent')}
+        </div>
       );
     }
 
@@ -336,7 +341,9 @@ function SvgPreview(props: { svgContent: () => string; overlay?: boolean }) {
       ) {
         setError('Content does not appear to be valid SVG');
         return (
-          <div class="flex items-center justify-center h-full text-failure text-sm">{t('auto.invalid_svg_content')}</div>
+          <div class="flex items-center justify-center h-full text-failure text-sm">
+            {t('editor.code.invalidSvgContent')}
+          </div>
         );
       }
       const sanitizedContent = sanitizeSvg(content);
@@ -405,7 +412,7 @@ export const StaticCodeBoxAccessory = (props: {
     if (!code) return;
     try {
       navigator.clipboard.writeText(code);
-      toast.success('Copied code to clipboard');
+      toast.success(t('editor.code.copied'));
     } catch (e) {
       console.error('Failed to copy code to clipboard', e);
     }
@@ -431,7 +438,9 @@ export const StaticCodeBoxAccessory = (props: {
         <div class="flex gap-2 items-center">
           <Show when={showPreviewToggle()}>
             <div class="flex items-center gap-2">
-              <div class={cn('text-xs', textColor())}>{t('auto.preview')}</div>
+              <div class={cn('text-xs', textColor())}>
+                {t('editor.code.preview')}
+              </div>
               <Switch checked={isPreviewMode()} onChange={setIsPreviewMode}>
                 <Switch.Input class="sr-only" />
                 <Switch.Control class="inline-flex h-4 w-8 hover:ring hover:ring-edge rounded-full border-2 border-transparent transition-colors bg-edge focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 data-checked:bg-accent">
@@ -444,7 +453,7 @@ export const StaticCodeBoxAccessory = (props: {
             variant="ghost"
             size="icon-sm"
             class="text-ink-extra-muted/50 h-full"
-            tooltip="Copy Code"
+            tooltip={t('editor.code.copy')}
             on:click={(e) => {
               e.stopPropagation();
               e.preventDefault();

@@ -1,3 +1,5 @@
+import { t } from '@app/lib/i18n';
+
 export const DEFAULT_VISIBLE_REPLY_COUNT = 3;
 
 type ThreadReplyMeta = {
@@ -15,9 +17,7 @@ export function getCollapsedRepliesCount(
 export function getThreadReplyCountLabel(
   collapsedRepliesCount: number
 ): string {
-  return `${collapsedRepliesCount} more repl${
-    collapsedRepliesCount === 1 ? 'y' : 'ies'
-  }`;
+  return t('channel.thread.moreReplies', { count: collapsedRepliesCount });
 }
 
 export function getUniqueReplyUserIds(

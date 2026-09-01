@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import type { NotificationType } from '@core/types';
 import { getDisplayNameParts, tryMacroId } from '@core/user';
 import type { NotificationStack } from '@notifications';
@@ -97,7 +98,10 @@ export function NotificationDescription(props: NotificationDescriptionProps) {
     // Single notification: "Peter mentioned you"
     if (isSingleNotification()) {
       if (sender && type !== 'ai_response') {
-        return `${sender} ${getActionVerb(type)}`;
+        return t('notifications.description.singleWithSender', {
+          action: getActionVerb(type),
+          sender,
+        });
       }
       return getActionVerb(type);
     }
@@ -106,17 +110,36 @@ export function NotificationDescription(props: NotificationDescriptionProps) {
     if (hasMultipleSenders()) {
       const senderCount = senderLabels().length;
       if (senderCount === 2) {
-        return `${count()} ${getTypeNoun(type, count())} ${getTypePreposition(type)} ${sender} and ${secondarySenderLabel()}`;
+        return t('notifications.description.stack.twoSenders', {
+          count: count(),
+          noun: getTypeNoun(type, count()),
+          preposition: getTypePreposition(type),
+          secondarySender: secondarySenderLabel() ?? '',
+          sender: sender ?? '',
+        });
       }
       // Three or more senders: "13 messages from Peter and 5 others"
-      return `${count()} ${getTypeNoun(type, count())} ${getTypePreposition(type)} ${sender} and ${additionalSenderCount()} ${additionalSenderCount() === 1 ? 'other' : 'others'}`;
+      return t('notifications.description.stack.manySenders', {
+        additionalCount: additionalSenderCount(),
+        count: count(),
+        noun: getTypeNoun(type, count()),
+        preposition: getTypePreposition(type),
+        sender: sender ?? '',
+      });
     }
 
     // Stack with single sender: "Peter: 13 messages"
     if (sender) {
-      return `${sender}: ${count()} ${getTypeNoun(type, count())}`;
+      return t('notifications.description.stack.oneSender', {
+        count: count(),
+        noun: getTypeNoun(type, count()),
+        sender,
+      });
     }
-    return `${count()} ${getTypeNoun(type, count())}`;
+    return t('notifications.description.stack.noSender', {
+      count: count(),
+      noun: getTypeNoun(type, count()),
+    });
   };
 
   return <>{description()}</>;

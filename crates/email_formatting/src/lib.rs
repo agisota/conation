@@ -1,9 +1,9 @@
 use askama::Template;
 use chrono::{DateTime, Utc};
-use hmac::Hmac;
 use conation_env::Environment;
 use conation_service_urls::NotificationServiceUrl;
 use conation_user_id::cowlike::CowLike;
+use hmac::Hmac;
 use model_notifications::NotifEvent;
 use notification::domain::models::{
     Notification, NotificationExtEmail, NotificationTitle, RateLimitConfig, RateLimitKey,
@@ -14,6 +14,9 @@ use rootcause::{Report, report};
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 use std::time::Duration;
+
+#[cfg(test)]
+mod test;
 
 #[derive(Template)]
 #[template(path = "digest.html")]
@@ -33,6 +36,11 @@ struct NotifPreview {
 
 const TRUNCATE_LEN: usize = 15;
 const BODY_MAX_CHARS: usize = 500;
+
+fn digest_subject(notification_count: usize) -> String {
+    let suffix = if notification_count == 1 { "" } else { "s" };
+    format!("You have {notification_count} new notification{suffix} on Conation")
+}
 
 fn truncate_body(s: String) -> String {
     if s.chars().count() <= BODY_MAX_CHARS {
@@ -125,17 +133,9 @@ impl EmailDigestNotification {
         }
         .render()?;
 
-        // Locale-aware subject — Conation ru default
-        let subject = if input_len == 1 {
-            format!("У вас {input_len} новое уведомление в Conation")
-        } else if input_len % 10 >= 2 && input_len % 10 <= 4 && (input_len % 100 < 10 || input_len % 100 >= 20) {
-            format!("У вас {input_len} новых уведомления в Conation")
-        } else {
-            format!("У вас {input_len} новых уведомлений в Conation")
-        };
         Ok(EmailDigestNotification {
             inner_html_string,
-            subject,
+            subject: digest_subject(input_len),
         })
     }
 }

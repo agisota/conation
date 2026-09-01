@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { HoverCard } from '@core/component/HoverCard';
 import { StaticMarkdown } from '@core/component/LexicalMarkdown/component/core/StaticMarkdown';
 import { unifiedListMarkdownTheme } from '@core/component/LexicalMarkdown/theme';
@@ -121,7 +122,9 @@ function resolveParticipants(
   // duplicate own-address rows from multi-inbox accounts) — show "me".
   if (result.length === 0) {
     const self = participants.find((p) => userEmail && p.email === userEmail);
-    if (self) return [{ participant: self, displayName: 'me' }];
+    if (self) {
+      return [{ participant: self, displayName: t('entity.participants.me') }];
+    }
   }
 
   return result;
@@ -145,7 +148,7 @@ function abbreviateParticipants(
 function copyEmail(email: string, e: MouseEvent) {
   e.stopPropagation();
   navigator.clipboard.writeText(email);
-  toast.success('Email copied');
+  toast.success(t('entity.feedback.emailCopied'));
 }
 
 function HiddenParticipantsTooltip(props: { hidden: ResolvedParticipant[] }) {

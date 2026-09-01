@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import InfoIcon from '@phosphor/info.svg';
 import { cn } from '@ui';
 import { createMemo, Show } from 'solid-js';
@@ -37,7 +38,7 @@ export function RangeUnavailableBanner(props: {
               )}
             >
               <InfoIcon class="size-3.5 shrink-0 text-accent" />
-              <span>Calendar events aren’t available for this date range.</span>
+              <span>{t('calendar.status.rangeUnavailable')}</span>
             </div>
           </div>
         </div>

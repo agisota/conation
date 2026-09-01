@@ -2,6 +2,7 @@ import { useSplitLayout } from '@components/app/split-layout/layout';
 import { ChatMessageMarkdown } from '@core/component/AI/component/message/ChatMessageMarkdown';
 import { replaceCitations } from '@core/component/LexicalMarkdown/citationsUtils';
 import { ENABLE_TTFT } from '@core/constant/featureFlags';
+import { t } from '@core/i18n';
 import { createMarkdownFile } from '@core/util/create';
 import { PulsingStar } from '@entity/components/PulsingStar';
 import WideFileMd from '@icon/wide-file-md.svg';
@@ -181,8 +182,8 @@ export function AssistantMessage(props: {
                   class="p-1 text-ink-extra-muted hover:text-ink-muted"
                   tooltip={
                     isLoading()
-                      ? 'Opening assistant response in Notes'
-                      : 'Edit assistant response in Notes'
+                      ? t('ai.message.openingInNotes')
+                      : t('ai.message.editInNotes')
                   }
                   onClick={() => {
                     !isLoading() && handleEditInMarkdown();
@@ -202,8 +203,8 @@ export function AssistantMessage(props: {
                   class="p-1 text-ink-extra-muted hover:text-ink-muted"
                   tooltip={
                     copied()
-                      ? 'Copied assistant response'
-                      : 'Copy assistant response'
+                      ? t('ai.message.copiedResponse')
+                      : t('ai.message.copyResponse')
                   }
                   onClick={handleCopy}
                 >
@@ -213,7 +214,9 @@ export function AssistantMessage(props: {
                 </Button>
                 <Show when={props.ttft && ENABLE_TTFT}>
                   <div class="flex flex-row items-center space-x-1 text-xs font-mono bg-surface px-2 py-1">
-                    <span class="text-ink-muted">Time to first token:</span>
+                    <span class="text-ink-muted">
+                      {t('ai.message.timeToFirstToken')}
+                    </span>
                     <span class="text-ink font-medium">
                       {props.ttft! / 1000}s
                     </span>

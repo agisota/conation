@@ -10,9 +10,9 @@ const IN_PROGRESS_USER_LINK_MAX_AGE: chrono::Duration = chrono::Duration::hours(
 
 pub async fn count_existing_in_progress_user_links_for_user(
     db: &sqlx::Pool<sqlx::Postgres>,
-    conation_user_id: &str,
+    macro_user_id: &str,
 ) -> anyhow::Result<i64> {
-    let conation_user_id = conation_uuid::string_to_uuid(conation_user_id)?;
+    let macro_user_id = conation_uuid::string_to_uuid(macro_user_id)?;
     let cutoff = (chrono::Utc::now() - IN_PROGRESS_USER_LINK_MAX_AGE).naive_utc();
     let count = sqlx::query!(
         r#"
@@ -21,10 +21,10 @@ pub async fn count_existing_in_progress_user_links_for_user(
             FROM
                 in_progress_user_link
             WHERE
-                conation_user_id = $1
+                macro_user_id = $1
                 AND created_at > $2
         "#,
-        &conation_user_id,
+        &macro_user_id,
         cutoff
     )
     .map(|row| row.count)
@@ -36,18 +36,18 @@ pub async fn count_existing_in_progress_user_links_for_user(
 
 pub async fn create_in_progress_user_link(
     db: &sqlx::Pool<sqlx::Postgres>,
-    conation_user_id: &str,
+    macro_user_id: &str,
 ) -> anyhow::Result<Uuid> {
-    let conation_user_id = conation_uuid::string_to_uuid(conation_user_id)?;
+    let macro_user_id = conation_uuid::string_to_uuid(macro_user_id)?;
     let link_id = conation_uuid::generate_uuid_v7();
 
     sqlx::query!(
         r#"
-            INSERT INTO in_progress_user_link (id, conation_user_id)
+            INSERT INTO in_progress_user_link (id, macro_user_id)
             VALUES ($1, $2)
         "#,
         &link_id,
-        &conation_user_id
+        &macro_user_id
     )
     .execute(db)
     .await?;
@@ -58,23 +58,23 @@ pub async fn create_in_progress_user_link(
 /// Create an in-progress Google link and record the exact scopes requested.
 pub async fn create_in_progress_google_link(
     db: &sqlx::Pool<sqlx::Postgres>,
-    conation_user_id: &str,
+    macro_user_id: &str,
     requested_google_scopes: &[String],
 ) -> anyhow::Result<Uuid> {
-    let conation_user_id = conation_uuid::string_to_uuid(conation_user_id)?;
+    let macro_user_id = conation_uuid::string_to_uuid(macro_user_id)?;
     let link_id = conation_uuid::generate_uuid_v7();
 
     sqlx::query!(
         r#"
             INSERT INTO in_progress_user_link (
                 id,
-                conation_user_id,
+                macro_user_id,
                 requested_google_scopes
             )
             VALUES ($1, $2, $3)
         "#,
         &link_id,
-        &conation_user_id,
+        &macro_user_id,
         requested_google_scopes
     )
     .execute(db)
@@ -123,7 +123,7 @@ pub async fn delete_day_old_in_progress_user_links(
     Ok(())
 }
 
-pub async fn get_conation_user_id_by_link_id(
+pub async fn get_macro_user_id_by_link_id(
     db: &sqlx::Pool<sqlx::Postgres>,
     link_id: &uuid::Uuid,
 ) -> anyhow::Result<Uuid> {
@@ -131,7 +131,7 @@ pub async fn get_conation_user_id_by_link_id(
         r#"
             SELECT
                 id,
-                conation_user_id
+                macro_user_id
             FROM
                 in_progress_user_link
             WHERE
@@ -139,7 +139,7 @@ pub async fn get_conation_user_id_by_link_id(
         "#,
         link_id
     )
-    .map(|row| row.conation_user_id)
+    .map(|row| row.macro_user_id)
     .fetch_one(db)
     .await?;
 
@@ -147,7 +147,7 @@ pub async fn get_conation_user_id_by_link_id(
 }
 
 pub struct InProgressUserLink {
-    pub conation_user_id: Uuid,
+    pub macro_user_id: Uuid,
     pub linked_email: Option<String>,
     /// Scopes Macro placed on the authorization request.
     pub requested_google_scopes: Vec<String>,
@@ -162,7 +162,7 @@ pub async fn get_in_progress_user_link(
     let row = sqlx::query!(
         r#"
             SELECT
-                conation_user_id,
+                macro_user_id,
                 linked_email,
                 requested_google_scopes,
                 granted_google_scopes
@@ -177,7 +177,7 @@ pub async fn get_in_progress_user_link(
     .await?;
 
     Ok(InProgressUserLink {
-        conation_user_id: row.conation_user_id,
+        macro_user_id: row.macro_user_id,
         linked_email: row.linked_email,
         requested_google_scopes: row.requested_google_scopes,
         granted_google_scopes: row.granted_google_scopes,

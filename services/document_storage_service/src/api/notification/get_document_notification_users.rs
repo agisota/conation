@@ -33,20 +33,22 @@ pub async fn handler(
     _auth: MacroAuthorizationExtractor<AuthorizationService, InternalOnly>,
     Path(Params { document_id }): Path<Params>,
 ) -> Result<Response, Response> {
-    let users =
-        conation_db_client::notification::document::get_document_notification_users(&db, &document_id)
-            .await
-            .map_err(|e| {
-                tracing::error!(error=?e, "unable to get document notification users");
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(GenericErrorResponse {
-                        error: true,
-                        message: "unable to get document notification users".to_string(),
-                    }),
-                )
-                    .into_response()
-            })?;
+    let users = conation_db_client::notification::document::get_document_notification_users(
+        &db,
+        &document_id,
+    )
+    .await
+    .map_err(|e| {
+        tracing::error!(error=?e, "unable to get document notification users");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(GenericErrorResponse {
+                error: true,
+                message: "unable to get document notification users".to_string(),
+            }),
+        )
+            .into_response()
+    })?;
 
     Ok((StatusCode::OK, Json(users)).into_response())
 }

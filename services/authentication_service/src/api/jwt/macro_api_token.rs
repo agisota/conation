@@ -12,8 +12,8 @@ use utoipa::ToSchema;
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, ToSchema)]
 pub struct MacroApiTokenResponse {
-    /// The newly created conation_api_token
-    pub conation_api_token: String,
+    /// The newly created macro_api_token
+    pub macro_api_token: String,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
@@ -29,8 +29,8 @@ pub struct MacroApiTokenQuery {
 /// This returns a new macro-api-token
 #[utoipa::path(
         get,
-        operation_id = "conation_api_token",
-        path = "/jwt/conation_api_token",
+        operation_id = "macro_api_token",
+        path = "/jwt/macro_api_token",
         params(
             ("email" = String, Query, description = "The email to generate the macro-api-token for. If not provided, we use your default profile."),
         ),
@@ -79,17 +79,17 @@ pub async fn handler(
                 .into_response()
         })?;
 
-    let (conation_user_id, organization_id) =
-        if let Some((conation_user_id, organization_id)) = user_profile {
-            (conation_user_id, organization_id)
+    let (macro_user_id, organization_id) =
+        if let Some((macro_user_id, organization_id)) = user_profile {
+            (macro_user_id, organization_id)
         } else {
             tracing::error!("macro user id is none");
             return Err((StatusCode::UNAUTHORIZED, "no access to this profile").into_response());
         };
 
-    let conation_api_token =
+    let macro_api_token =
         conation_auth::conation_api_token::encode_conation_api_token(EncodeMacroApiTokenArgs {
-            conation_user_id,
+            macro_user_id,
             fusionauth_id: user_context.fusion_user_id.clone(),
             organization_id, // TOOD: get from user profile
             issuer: conation_api_token_context.issuer.to_string(),
@@ -110,7 +110,7 @@ pub async fn handler(
 
     Ok((
         StatusCode::OK,
-        Json(MacroApiTokenResponse { conation_api_token }),
+        Json(MacroApiTokenResponse { macro_api_token }),
     )
         .into_response())
 }

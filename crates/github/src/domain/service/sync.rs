@@ -996,16 +996,16 @@ impl<
         }
     }
 
-    #[tracing::instrument(skip(self), fields(conation_user_id = %conation_user_id), err)]
+    #[tracing::instrument(skip(self), fields(macro_user_id = %macro_user_id), err)]
     async fn begin_installation_setup(
         &self,
-        conation_user_id: &conation_user_id::user_id::MacroUserIdStr<'_>,
+        macro_user_id: &conation_user_id::user_id::MacroUserIdStr<'_>,
         team_id: Option<uuid::Uuid>,
     ) -> Result<String, GithubError> {
         if let Some(team_id) = team_id {
             let team_ids = self
                 .repo
-                .get_user_team_ids(conation_user_id.as_ref())
+                .get_user_team_ids(macro_user_id.as_ref())
                 .await
                 .map_err(|error| GithubError::Internal(error.into()))?;
             if !team_ids.contains(&team_id) {
@@ -1014,8 +1014,8 @@ impl<
         }
 
         let state = InstallationState {
-            conation_user_id: conation_user_id::user_id::MacroUserIdStr::try_from(
-                conation_user_id.as_ref().to_string(),
+            macro_user_id: conation_user_id::user_id::MacroUserIdStr::try_from(
+                macro_user_id.as_ref().to_string(),
             )
             .map_err(|error| GithubError::Internal(error.into()))?,
             team_id,
@@ -1088,13 +1088,13 @@ impl<
             .to_string();
         let links = self
             .repo
-            .get_conation_ids_by_github_user_ids(std::slice::from_ref(&github_user_id))
+            .get_macro_ids_by_github_user_ids(std::slice::from_ref(&github_user_id))
             .await
             .map_err(|error| GithubError::Internal(error.into()))?;
-        let completer_is_state_user = links.get(&github_user_id).is_some_and(|conation_ids| {
-            conation_ids
+        let completer_is_state_user = links.get(&github_user_id).is_some_and(|macro_ids| {
+            macro_ids
                 .iter()
-                .any(|id| id == state.conation_user_id.as_ref())
+                .any(|id| id == state.macro_user_id.as_ref())
         });
         if !completer_is_state_user {
             return Err(GithubError::SetupUserNotLinked);
@@ -1102,7 +1102,7 @@ impl<
 
         let source = match state.team_id {
             Some(team_id) => GithubAppInstallationSource::Team(team_id),
-            None => GithubAppInstallationSource::User(state.conation_user_id.into()),
+            None => GithubAppInstallationSource::User(state.macro_user_id.into()),
         };
 
         let Some(installation_id) = installation_id else {

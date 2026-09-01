@@ -86,7 +86,7 @@ impl TryFrom<ActingUserRow> for ResolvedBotActingUser {
 
     fn try_from(row: ActingUserRow) -> Result<Self, Self::Error> {
         Ok(Self {
-            conation_user_id: MacroUserIdStr::try_from_email(&row.email)
+            macro_user_id: MacroUserIdStr::try_from_email(&row.email)
                 .map_err(|_| PgBotAuthorizationRepoError::InvalidUserEmail)?,
             fusion_user_id: row.fusion_user_id,
             organization_id: row.organization_id,
@@ -145,8 +145,8 @@ impl BotAuthorizationRepo for PgBotAuthorizationRepo {
         &self,
         claims: &BotActingUserClaims,
     ) -> Result<Option<ResolvedBotActingUser>, Self::Err> {
-        let row = if let Some(conation_user_id) = claims.user_id.as_deref() {
-            let Ok(conation_user_id) = MacroUserIdStr::try_from(conation_user_id) else {
+        let row = if let Some(macro_user_id) = claims.user_id.as_deref() {
+            let Ok(macro_user_id) = MacroUserIdStr::try_from(macro_user_id) else {
                 return Ok(None);
             };
 
@@ -160,7 +160,7 @@ impl BotAuthorizationRepo for PgBotAuthorizationRepo {
                 FROM "User"
                 WHERE email = $1
                 "#,
-                conation_user_id.email_str(),
+                macro_user_id.email_str(),
             )
             .fetch_optional(&self.pool)
             .await?

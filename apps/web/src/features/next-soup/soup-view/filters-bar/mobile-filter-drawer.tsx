@@ -1,5 +1,4 @@
 import type { ListView } from '@app/constants/list-views';
-import { t } from '@app/lib/i18n';
 import { isListViewID } from '@app/constants/list-views';
 import {
   type FilterContext,
@@ -22,6 +21,7 @@ import {
 } from '@app/features/next-soup/soup-view/sort-options';
 import { useSoupView } from '@app/features/next-soup/soup-view/soup-view-context';
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
+import { t } from '@app/lib/i18n';
 import {
   MobileDrawer,
   scrollToFocusedInput,
@@ -237,7 +237,7 @@ export const MobileFilterDrawer = (props: {
     const currentUserId = userId();
     const noAssigneeOption = {
       id: NO_ASSIGNEE,
-      label: 'Unassigned',
+      label: t('soup.filters.assignees.unassigned'),
       icon: () => <CircleDashedIcon class="size-3.5 text-ink-muted" />,
     };
     let meOption: typeof noAssigneeOption | undefined;
@@ -333,7 +333,7 @@ export const MobileFilterDrawer = (props: {
       >
         <MobileDrawer.Trigger
           as={Button}
-          aria-label={t('auto.open_filters')}
+          aria-label={t('soup.filters.openLabel')}
           variant="ghost"
           size="sm"
           depth={3}
@@ -353,7 +353,10 @@ export const MobileFilterDrawer = (props: {
 
         <MobileDrawer.Portal>
           <MobileDrawer.Overlay class="fixed inset-0 z-modal-overlay bg-modal-overlay pattern-diagonal-4 pattern-edge-muted" />
-          <MobileDrawer.Content aria-label={t('auto.filters')} class="h-[80vh]">
+          <MobileDrawer.Content
+            aria-label={t('soup.filters.drawerLabel')}
+            class="h-[80vh]"
+          >
             <MobileDrawer.Handle class="pb-1" />
 
             {/* Scrollable filter list */}
@@ -370,7 +373,9 @@ export const MobileFilterDrawer = (props: {
               >
                 {/* Sort section */}
                 <Show when={sortOptions().length > 0}>
-                  <MobileDrawer.Label id="sort-section-label">{t('auto.sort')}</MobileDrawer.Label>
+                  <MobileDrawer.Label id="sort-section-label">
+                    {t('soup.filters.sort')}
+                  </MobileDrawer.Label>
                   <MobileDrawer.Section
                     role="radiogroup"
                     aria-labelledby="sort-section-label"
@@ -417,7 +422,9 @@ export const MobileFilterDrawer = (props: {
                       showInboxSection()
                     }
                   >
-                    <MobileDrawer.Label class="pt-4">{t('auto.filters')}</MobileDrawer.Label>
+                    <MobileDrawer.Label class="pt-4">
+                      {t('soup.filters.sectionLabel')}
+                    </MobileDrawer.Label>
                   </Show>
 
                   <Show when={showInboxSection()}>
@@ -433,7 +440,9 @@ export const MobileFilterDrawer = (props: {
                             scrollAccordionItemToTop(e, scrollRef())
                           }
                         >
-                          <span class="font-medium">{t('auto.inboxes')}</span>
+                          <span class="font-medium">
+                            {t('soup.filters.inboxes.sectionLabel')}
+                          </span>
                           <div class="flex items-center gap-2">
                             <Show when={inboxFilter() !== undefined}>
                               <span class="group-data-expanded:hidden size-4 flex items-center justify-center rounded-full bg-accent text-surface text-xxs font-medium leading-none">
@@ -496,12 +505,16 @@ export const MobileFilterDrawer = (props: {
                                     class="shrink-0 px-3 text-xs text-ink-muted hover:text-ink hover:bg-hover transition-colors"
                                     aria-label={
                                       isSole()
-                                        ? 'Show all inboxes'
-                                        : `Show only ${option.label}`
+                                        ? t('soup.filters.inboxes.showAll')
+                                        : t('soup.filters.inboxes.showOnly', {
+                                            inbox: option.label,
+                                          })
                                     }
                                     onClick={() => picker.selectOnly(option.id)}
                                   >
-                                    {isSole() ? 'All' : 'Only'}
+                                    {isSole()
+                                      ? t('soup.filters.selection.all')
+                                      : t('soup.filters.selection.only')}
                                   </button>
                                 </Show>
                               </div>
@@ -517,7 +530,9 @@ export const MobileFilterDrawer = (props: {
                             <span class="size-4 flex items-center justify-center shrink-0">
                               <PlusIcon class="size-4 text-ink-muted" />
                             </span>
-                            <span class="flex-1 truncate">{t('auto.add_inbox')}</span>
+                            <span class="flex-1 truncate">
+                              {t('soup.filters.inboxes.add')}
+                            </span>
                           </button>
                         </Show>
                       </Accordion.Content>
@@ -615,7 +630,9 @@ export const MobileFilterDrawer = (props: {
                             scrollAccordionItemToTop(e, scrollRef())
                           }
                         >
-                          <span class="font-medium">{t('auto.assignee')}</span>
+                          <span class="font-medium">
+                            {t('soup.filters.assignees.sectionLabel')}
+                          </span>
                           <div class="flex items-center gap-2">
                             <Show when={assigneeFilter().length > 0}>
                               <span class="group-data-expanded:hidden size-4 flex items-center justify-center rounded-full bg-accent text-surface text-xxs font-medium leading-none">
@@ -632,12 +649,14 @@ export const MobileFilterDrawer = (props: {
                           <SearchIcon class="size-3.5 text-ink-muted shrink-0" />
                           <input
                             type="text"
-                            aria-label={t('auto.search_assignees')}
+                            aria-label={t('soup.filters.assignees.placeholder')}
                             value={assigneeSearch()}
                             onInput={(e) =>
                               setAssigneeSearch(e.currentTarget.value)
                             }
-                            placeholder={t('auto.search_assignees')}
+                            placeholder={t(
+                              'soup.filters.assignees.placeholder'
+                            )}
                             class="flex-1 bg-transparent text-sm outline-none placeholder:text-ink-placeholder"
                           />
                         </div>
@@ -684,7 +703,9 @@ export const MobileFilterDrawer = (props: {
                         </div>
 
                         <Show when={filteredAssigneeOptions().length === 0}>
-                          <div class="px-4 py-2 text-sm text-ink-muted">{t('auto.no_results')}</div>
+                          <div class="px-4 py-2 text-sm text-ink-muted">
+                            {t('soup.filters.noResults')}
+                          </div>
                         </Show>
                       </Accordion.Content>
                     </MobileDrawer.Section>
@@ -703,7 +724,9 @@ export const MobileFilterDrawer = (props: {
                             scrollAccordionItemToTop(e, scrollRef())
                           }
                         >
-                          <span class="font-medium">{t('auto.created_by')}</span>
+                          <span class="font-medium">
+                            {t('soup.filters.creators.sectionLabel')}
+                          </span>
                           <div class="flex items-center gap-2">
                             <Show when={createdByIds().length > 0}>
                               <span class="group-data-expanded:hidden size-4 flex items-center justify-center rounded-full bg-accent text-surface text-xxs font-medium leading-none">
@@ -719,12 +742,12 @@ export const MobileFilterDrawer = (props: {
                           <SearchIcon class="size-3.5 text-ink-muted shrink-0" />
                           <input
                             type="text"
-                            aria-label={t('auto.search_creators')}
+                            aria-label={t('soup.filters.creators.placeholder')}
                             value={createdBySearch()}
                             onInput={(e) =>
                               setCreatedBySearch(e.currentTarget.value)
                             }
-                            placeholder={t('auto.search_creators')}
+                            placeholder={t('soup.filters.creators.placeholder')}
                             class="flex-1 bg-transparent text-sm outline-none placeholder:text-ink-placeholder"
                           />
                         </div>
@@ -770,7 +793,9 @@ export const MobileFilterDrawer = (props: {
                           </For>
                         </div>
                         <Show when={filteredCreatedByOptions().length === 0}>
-                          <div class="px-4 py-2 text-sm text-ink-muted">{t('auto.no_results')}</div>
+                          <div class="px-4 py-2 text-sm text-ink-muted">
+                            {t('soup.filters.noResults')}
+                          </div>
                         </Show>
                       </Accordion.Content>
                     </MobileDrawer.Section>
@@ -798,7 +823,9 @@ export const MobileFilterDrawer = (props: {
                     size="sm"
                     class="min-h-10 rounded-lg bg-active!"
                   >
-                    <XIcon class="size-3!" />{t('auto.clear_all')}</Button>
+                    <XIcon class="size-3!" />
+                    {t('soup.filters.clearAll')}
+                  </Button>
                 </div>
               </div>
             </Show>

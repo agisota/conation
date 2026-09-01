@@ -1,5 +1,5 @@
-import { UserIcon } from '@core/component/UserIcon';
 import { t } from '@app/lib/i18n';
+import { UserIcon } from '@core/component/UserIcon';
 import { isMobileWidth } from '@core/mobile/mobileWidth';
 import { idToDisplayName } from '@core/user';
 import { type DateValue, formatDate } from '@core/util/date';
@@ -14,7 +14,9 @@ import { CommentsContext } from './Thread';
 // SCUFFED: how should we define these tag colors?
 const NewTag = () => {
   return (
-    <div class="py-0.5 px-1.5 rounded ml-1 bg-[oklch(0.962_0.059_95.617)] text-[oklch(0.555_0.163_48.998)] text-xs">{t('auto.new')}</div>
+    <div class="py-0.5 px-1.5 rounded ml-1 bg-[oklch(0.962_0.059_95.617)] text-[oklch(0.555_0.163_48.998)] text-xs">
+      {t('comments.status.new')}
+    </div>
   );
 };
 
@@ -29,7 +31,7 @@ function MessageRow(
 ) {
   return (
     <MessageRowUI
-      authorId={props.authorId ?? 'Macro User'}
+      authorId={props.authorId ?? t('comments.author.unknown')}
       date={props.date}
       hideBottomMargin={props.hideBottomMargin}
       nameSlot={props.nameSlot}
@@ -125,7 +127,7 @@ export function MessageTopRow(props: {
       <div class="absolute top-0 right-0 flex flex-row bg-surface border border-edge-muted p-1 rounded-lg z-user-highlight shadow shadow-drop-shadow">
         <Show when={props.copyLink}>
           <Button
-            tooltip="Copy link to comment"
+            tooltip={t('comments.actions.copyLink')}
             size="icon-sm"
             variant="ghost"
             onClick={props.copyLink}
@@ -137,7 +139,7 @@ export function MessageTopRow(props: {
           <Show when={props.isOwned}>
             <Show when={props.toggleResolve}>
               <Button
-                tooltip="Resolve Comment"
+                tooltip={t('comments.actions.resolve')}
                 size="icon-sm"
                 variant="ghost"
                 onClick={props.toggleResolve}
@@ -147,7 +149,7 @@ export function MessageTopRow(props: {
             </Show>
             <Show when={props.enableEditing}>
               <Button
-                tooltip="Edit Comment"
+                tooltip={t('comments.actions.edit')}
                 size="icon-sm"
                 variant="ghost"
                 onClick={props.enableEditing}
@@ -158,7 +160,7 @@ export function MessageTopRow(props: {
           </Show>
           <Show when={!props.isEditing && (props.isOwned || isDocumentOwner())}>
             <Button
-              tooltip="Delete Comment"
+              tooltip={t('comments.actions.delete')}
               size="icon-sm"
               variant="ghost"
               onClick={props.deleteMessage}

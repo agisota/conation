@@ -179,7 +179,7 @@ async fn direct_user_access_sources(pool: &Pool<Postgres>) -> Vec<String> {
 async fn insert_second_team(pool: &Pool<Postgres>) {
     sqlx::query(
         r#"
-        INSERT INTO public."conation_user" ("id", "username", "email", "stripe_customer_id")
+        INSERT INTO public."macro_user" ("id", "username", "email", "stripe_customer_id")
         VALUES ($1, 'other', 'other@user.com', 'stripe_id_other')
         ON CONFLICT DO NOTHING
         "#,
@@ -191,7 +191,7 @@ async fn insert_second_team(pool: &Pool<Postgres>) {
 
     sqlx::query(
         r#"
-        INSERT INTO public."User" ("id", "email", "stripeCustomerId", "organizationId", "conation_user_id")
+        INSERT INTO public."User" ("id", "email", "stripeCustomerId", "organizationId", "macro_user_id")
         VALUES ('macro|other@user.com', 'other@user.com', 'stripe_id_other', 1, $1)
         ON CONFLICT DO NOTHING
         "#,
@@ -1255,7 +1255,7 @@ async fn test_get_branch_name_context_prefers_github_and_team_task(pool: Pool<Po
 
     sqlx::query!(
         r#"
-        INSERT INTO github_links (id, conation_id, fusionauth_user_id, github_username, github_user_id)
+        INSERT INTO github_links (id, macro_id, fusionauth_user_id, github_username, github_user_id)
         VALUES ($1, 'macro|user@user.com', $2, 'octocat', '12345')
         "#,
         uuid::uuid!("b0000000-0000-0000-0000-000000000001"),
@@ -1774,7 +1774,7 @@ async fn insert_email_attachments(pool: &Pool<Postgres>, count: usize) -> Vec<uu
 
     sqlx::query(
         r#"
-        INSERT INTO email_links (id, conation_id, fusionauth_user_id, email_address, provider, is_sync_active)
+        INSERT INTO email_links (id, macro_id, fusionauth_user_id, email_address, provider, is_sync_active)
         VALUES ($1, $2, $3, $4, 'GMAIL', true)
         "#,
     )

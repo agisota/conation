@@ -1,5 +1,5 @@
-import { toast } from '@core/component/Toast/Toast';
 import { t } from '@app/lib/i18n';
+import { toast } from '@core/component/Toast/Toast';
 import {
   Combobox,
   type ComboboxRootItemComponentProps,
@@ -91,10 +91,10 @@ export function BotInviteSelect(props: {
         botId: bot.id,
       });
       setSelectedBot(undefined);
-      toast.success(`${bot.name} invited to channel`);
+      toast.success(t('channel.bots.invite.success', { name: bot.name }));
       focusInput();
     } catch {
-      toast.failure('Failed to invite bot');
+      toast.failure(t('channel.bots.invite.failed'));
     }
   };
 
@@ -112,7 +112,9 @@ export function BotInviteSelect(props: {
           }
           onChange={(bot) => setSelectedBot(bot ?? undefined)}
           placeholder={
-            botsQuery.isLoading ? 'Loading bots…' : 'Search existing bots…'
+            botsQuery.isLoading
+              ? t('channel.bots.invite.loading')
+              : t('channel.bots.invite.searchPlaceholder')
           }
           itemComponent={BotInviteItem}
           placement="bottom-start"
@@ -139,7 +141,9 @@ export function BotInviteSelect(props: {
               <Show
                 when={availableBots().length > 0}
                 fallback={
-                  <div class="px-3 py-5 text-center text-xs text-ink-muted">{t('auto.no_bots_available_to_invite')}</div>
+                  <div class="px-3 py-5 text-center text-xs text-ink-muted">
+                    {t('channel.bots.invite.empty')}
+                  </div>
                 }
               >
                 <Combobox.Listbox class="max-h-64 overflow-y-auto" />
@@ -154,7 +158,9 @@ export function BotInviteSelect(props: {
         disabled={!selectedBot() || addBotMutation.isPending}
         onClick={() => void inviteBot()}
       >
-        {addBotMutation.isPending ? 'Inviting…' : 'Invite bot'}
+        {addBotMutation.isPending
+          ? t('channel.bots.invite.inviting')
+          : t('channel.bots.invite.submit')}
       </button>
     </div>
   );

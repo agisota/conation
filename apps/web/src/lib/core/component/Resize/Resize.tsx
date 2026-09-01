@@ -1,5 +1,5 @@
+import { t } from '@core/i18n';
 import { createElementSize } from '@solid-primitives/resize-observer';
-import { t } from '@app/lib/i18n';
 import { cn } from '@ui/utils/classname';
 import {
   createContext,
@@ -257,7 +257,7 @@ type PanelProps = {
  *   collapsed={() => sidebarCollapsed()}
  *   hidden={() => sidebarHidden()}
  * >
- *   <div>{t('auto.sidebar_content')}</div>
+ *   <div>Sidebar content</div>
  * </Resize.Panel>
  *
  * // Hidden panels are temporarily removed from layout but stay registered
@@ -512,7 +512,7 @@ function Gutter(props: GutterProps) {
         ctx.direction() === 'horizontal' ? 'vertical' : 'horizontal'
       }
       tabIndex={0}
-      aria-label={`resize at ${props.index}`}
+      aria-label={t('core.resize.handle', { index: props.index })}
       style={{
         position: 'absolute',
         cursor: ctx.direction() === 'horizontal' ? 'col-resize' : 'row-resize',

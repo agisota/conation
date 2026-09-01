@@ -1,5 +1,5 @@
-import { toast } from '@core/component/Toast/Toast';
 import { t } from '@app/lib/i18n';
+import { toast } from '@core/component/Toast/Toast';
 import { registerHotkey, useHotkeyDOMScope } from '@core/hotkey/hotkeys';
 import type { IUser } from '@core/user';
 import { idToDisplayName, idToEmail } from '@core/user/util';
@@ -34,6 +34,7 @@ import type {
   PropertyDefinitionDomain,
 } from '@property/types';
 import {
+  getPropertyDataTypeDropdownOptions,
   macroEntityToPropertyEntityType,
   PropertyDataTypeIcon,
   toPropertyApiValue,
@@ -205,7 +206,7 @@ function propertyEditorEntityType(entity: PropertyEditorEntity): EntityType {
 }
 
 function propertyEditorEntityName(entity: PropertyEditorEntity): string {
-  return entity.name || 'Entity';
+  return entity.name || t('property.types.entity');
 }
 
 export function PropertyEditorModal() {
@@ -217,7 +218,7 @@ export function PropertyEditorModal() {
   const [createPropertyInitialName, setCreatePropertyInitialName] =
     createSignal<string | null>(null);
 
-  const defaultPlaceholder = 'Choose a property...';
+  const defaultPlaceholder = t('property.editor.choosePlaceholder');
   const [placeholder, setPlaceholder] = createSignal('');
 
   const saveProperties = useSavePropertyForMultiEntitites();
@@ -230,11 +231,14 @@ export function PropertyEditorModal() {
 
     // Snapshot before closing — closing resets selectedEntities.
     const count = selectedEntities.length;
-    const message = `Set ${targetProperty.displayName} for ${
-      count === 1
-        ? propertyEditorEntityName(selectedEntities[0])
-        : count + ' entities'
-    }`;
+    const message = t('property.editor.saveSuccess', {
+      property: targetProperty.displayName,
+      count,
+      entity:
+        count === 1
+          ? propertyEditorEntityName(selectedEntities[0])
+          : t('property.types.entity'),
+    });
 
     saveProperties(selectedEntities, targetProperty, value).then((success) => {
       if (success) toast.success(message);
@@ -291,7 +295,7 @@ export function PropertyEditorModal() {
 
   const { dispose: disposeHotkey } = registerHotkey({
     hotkey: ['escape'],
-    description: 'Close property editor',
+    description: t('property.editor.close'),
     keyDownHandler: () => {
       closePropertyEditor();
       return true;
@@ -554,7 +558,9 @@ function PropertyList(props: {
     <Show
       when={rowCount() > 0}
       fallback={
-        <CommandMenuEmptyState>{t('auto.no_matching_properties_found')}</CommandMenuEmptyState>
+        <CommandMenuEmptyState>
+          {t('property.editor.noMatchingProperties')}
+        </CommandMenuEmptyState>
       }
     >
       <CommandMenuList
@@ -573,14 +579,16 @@ function PropertyList(props: {
               <PencilIcon class="size-4 text-ink-muted opacity-50" />
               <div class="flex-1 text-left flex">
                 <p class="text-sm font-medium">
-                  Create property "{createPropertyName()}"
+                  {t('property.editor.createNamed', {
+                    property: createPropertyName(),
+                  })}
                 </p>
               </div>
             </Match>
             <Match when={row.type === 'tags'}>
               <TagIcon class="size-4 text-ink-muted opacity-50" />
               <div class="flex-1 text-left flex">
-                <p class="text-sm font-medium">{t('auto.tags')}</p>
+                <p class="text-sm font-medium">{t('property.tags.title')}</p>
               </div>
             </Match>
             <Match when={row.type === 'property' && row.property}>
@@ -631,7 +639,7 @@ function EditingEntityPreview(props: { entities: PropertyEditorEntity[] }) {
       </For>
       <Show when={remainingCount() > 0}>
         <div class="text-ink-muted text-xs px-2 py-1">
-          +{remainingCount()} more
+          {t('property.editor.moreEntities', { count: remainingCount() })}
         </div>
       </Show>
     </div>
@@ -691,7 +699,7 @@ function TagAssignmentEditor(props: {
   let syncedEntityIds = props.entities.map((entity) => entity.id).join('\0');
 
   createEffect(() => {
-    props.setPlaceholder('Change or add tags...');
+    props.setPlaceholder(t('property.tags.changeOrAdd'));
   });
 
   createEffect(() => {
@@ -1136,15 +1144,19 @@ function TagAssignmentEditor(props: {
   return (
     <Show
       when={!tagsQuery.isLoading}
-      fallback={<CommandMenuEmptyState>{t('auto.loading_tags')}</CommandMenuEmptyState>}
+      fallback={
+        <CommandMenuEmptyState>
+          {t('property.tags.loading')}
+        </CommandMenuEmptyState>
+      }
     >
       <Show
         when={rowCount() > 0}
         fallback={
           <CommandMenuEmptyState>
             {(tagsQuery.data ?? []).length === 0
-              ? 'No tags available'
-              : 'No tags match your search'}
+              ? t('property.tags.noneAvailable')
+              : t('property.tags.noSearchMatches')}
           </CommandMenuEmptyState>
         }
       >
@@ -1167,12 +1179,14 @@ function TagAssignmentEditor(props: {
             <Switch>
               <Match when={row.type === 'clear'}>
                 <CircleDashedEmpty class="size-4 text-ink-muted opacity-50" />
-                <span class="min-w-0 flex-1 truncate text-ink-muted">{t('auto.clear_all_tags')}</span>
+                <span class="min-w-0 flex-1 truncate text-ink-muted">
+                  {t('property.tags.clearAll')}
+                </span>
               </Match>
               <Match when={row.type === 'create'}>
                 <TagIcon class="size-4 text-ink-muted opacity-50" />
                 <span class="min-w-0 flex-1 truncate">
-                  Create new tag "{createLabel()}"
+                  {t('property.tags.createNew', { tag: createLabel() })}
                 </span>
               </Match>
               <Match when={row.type === 'tag' && row.item}>
@@ -1193,7 +1207,9 @@ function TagAssignmentEditor(props: {
                     </Show>
                     <button
                       type="button"
-                      aria-label={`Edit ${tagOptionLabel(item().option)}`}
+                      aria-label={t('property.tags.editAria', {
+                        tag: tagOptionLabel(item().option),
+                      })}
                       class="ml-1 flex size-5 shrink-0 items-center justify-center rounded text-ink-extra-muted opacity-0 outline-none hover:bg-hover hover:text-ink group-hover:opacity-100 focus-visible:opacity-100"
                       onMouseDown={(event) => {
                         event.preventDefault();
@@ -1352,7 +1368,9 @@ function PropertyValueEditor(props: {
         />
       </Match>
       <Match when={propertyType() === 'LINK'}>
-        <div class="p-4 text-center text-ink-muted">{t('auto.link_editing_not_yet_implement')}</div>
+        <div class="p-4 text-center text-ink-muted">
+          {t('property.editor.linkUnsupported')}
+        </div>
       </Match>
     </Switch>
   );
@@ -1387,11 +1405,17 @@ function SelectPropertyEditor(props: {
   createEffect(() => {
     if (props.property.isMultiSelect) {
       props.setPlaceholder(
-        `Add ${props.property.displayName.toLowerCase()}...`
+        t('property.editor.addValuePlaceholder', {
+          property: props.property.displayName.toLowerCase(),
+        })
       );
       return;
     }
-    props.setPlaceholder(`Set ${props.property.displayName.toLowerCase()}...`);
+    props.setPlaceholder(
+      t('property.editor.setValuePlaceholder', {
+        property: props.property.displayName.toLowerCase(),
+      })
+    );
   });
 
   createEffect(() => {
@@ -1577,7 +1601,9 @@ function SelectPropertyEditor(props: {
     <Show
       when={rows().length > 0}
       fallback={
-        <CommandMenuEmptyState>{t('auto.no_matching_options_found')}</CommandMenuEmptyState>
+        <CommandMenuEmptyState>
+          {t('property.options.noSearchMatches')}
+        </CommandMenuEmptyState>
       }
     >
       <CommandMenuList
@@ -1600,7 +1626,9 @@ function SelectPropertyEditor(props: {
             <Match when={row.type === 'clear'}>
               <CircleDashedEmpty class="size-4 text-ink-muted opacity-50" />
               <span class="min-w-0 flex-1 truncate text-ink-muted">
-                Clear all {props.property.displayName.toLowerCase()}
+                {t('property.editor.clearAllValues', {
+                  property: props.property.displayName.toLowerCase(),
+                })}
               </span>
             </Match>
             <Match when={row.type === 'option' && row.option}>
@@ -1720,9 +1748,17 @@ function EntityPropertyEditor(props: {
   });
 
   createEffect(() => {
-    const entityTypeLabel =
-      props.property?.specificEntityType?.toLowerCase() || 'entity';
-    props.setPlaceholder(`Search for ${entityTypeLabel}...`);
+    const specificType = props.property?.specificEntityType;
+    const entityTypeLabel = specificType
+      ? (getPropertyDataTypeDropdownOptions().find(
+          (option) => option.value === `entity:${specificType}`
+        )?.label ?? t('property.types.entity'))
+      : t('property.types.entity');
+    props.setPlaceholder(
+      t('property.editor.searchEntitiesPlaceholder', {
+        entityType: entityTypeLabel.toLowerCase(),
+      })
+    );
   });
 
   createEffect(() => {
@@ -1888,8 +1924,8 @@ function EntityPropertyEditor(props: {
       fallback={
         <CommandMenuEmptyState>
           {props.searchValue().trim()
-            ? 'No matching entities found'
-            : 'No entities available'}
+            ? t('property.editor.noMatchingEntities')
+            : t('property.editor.noEntitiesAvailable')}
         </CommandMenuEmptyState>
       }
     >
@@ -1913,8 +1949,11 @@ function EntityPropertyEditor(props: {
             <Match when={row.type === 'clear'}>
               <CircleDashedEmpty class="size-4 text-ink-muted opacity-50" />
               <span class="min-w-0 flex-1 truncate text-ink-muted">
-                Clear all{' '}
-                {props.property?.displayName.toLowerCase() ?? 'entities'}
+                {t('property.editor.clearAllValues', {
+                  property:
+                    props.property?.displayName.toLowerCase() ??
+                    t('property.editor.entities'),
+                })}
               </span>
             </Match>
             <Match when={row.type === 'entity' && row.entity}>
@@ -2027,7 +2066,7 @@ function DirectEditPropertyEditor(props: {
   });
 
   createEffect(() => {
-    const name = props.property?.displayName || 'value';
+    const name = props.property?.displayName || t('property.editor.value');
     const type = props.property?.valueType;
     const existing = existingValue();
 
@@ -2035,11 +2074,17 @@ function DirectEditPropertyEditor(props: {
     if (existing !== null && existing !== undefined) {
       placeholderText = `${String(existing)}...`;
     } else if (type === 'BOOLEAN') {
-      placeholderText = `Enter true or false for ${name}`;
+      placeholderText = t('property.editor.booleanPlaceholder', {
+        property: name,
+      });
     } else if (type === 'NUMBER') {
-      placeholderText = `Enter number for ${name}`;
+      placeholderText = t('property.editor.numberPlaceholder', {
+        property: name,
+      });
     } else {
-      placeholderText = `Enter ${name}`;
+      placeholderText = t('property.editor.valuePlaceholder', {
+        property: name,
+      });
     }
 
     props.setPlaceholder(placeholderText);
@@ -2081,10 +2126,18 @@ function DirectEditPropertyEditor(props: {
           <PropertyDataTypeIcon property={props.property!} class="opacity-50" />
           <div class="flex-1 text-left">
             <p class="text-sm font-medium">
-              Set {props.property?.displayName}
-              <Show when={displayValue()}>
-                {' '}
-                to <span class="text-ink-muted">{displayValue()}</span>
+              <Show
+                when={displayValue()}
+                fallback={t('property.editor.setValue', {
+                  property: props.property?.displayName ?? '',
+                })}
+              >
+                {(value) =>
+                  t('property.editor.setValueTo', {
+                    property: props.property?.displayName ?? '',
+                    value: value(),
+                  })
+                }
               </Show>
             </p>
           </div>
@@ -2104,7 +2157,11 @@ function DatePropertyEditor(props: {
   setPlaceholder: Setter<string>;
 }) {
   createEffect(() => {
-    props.setPlaceholder(`Set ${props.property.displayName.toLowerCase()}...`);
+    props.setPlaceholder(
+      t('property.editor.setValuePlaceholder', {
+        property: props.property.displayName.toLowerCase(),
+      })
+    );
   });
 
   const dateOptions = useDateSearch({
@@ -2150,11 +2207,13 @@ function DatePropertyEditor(props: {
           <Show
             when={props.searchValue().trim()}
             fallback={
-              <CommandMenuEmptyState>{t('auto.enter_a_date_or_duration')}</CommandMenuEmptyState>
+              <CommandMenuEmptyState>
+                {t('property.date.enterPrompt')}
+              </CommandMenuEmptyState>
             }
           >
             <CommandMenuEmptyState>
-              No dates match "{props.searchValue()}"
+              {t('property.date.noMatches', { query: props.searchValue() })}
             </CommandMenuEmptyState>
           </Show>
         }
@@ -2182,10 +2241,11 @@ function DatePropertyEditor(props: {
 
       <div class="p-4 border-t border-edge-muted">
         <div class="text-xs text-ink-muted">
-          <span>{t('auto.use_queries_like')}</span>
+          <span>{t('property.date.queryHintPrefix')} </span>
           <code class="bg-active px-1">3d</code>,{' '}
           <code class="bg-active px-1">1w</code>,{' '}
-          <code class="bg-active px-1">feb 17</code>, or{' '}
+          <code class="bg-active px-1">feb 17</code>,{' '}
+          {t('property.date.queryHintOr')}{' '}
           <code class="bg-active px-1">tomorrow</code>
         </div>
       </div>

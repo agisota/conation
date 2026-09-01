@@ -46,3 +46,16 @@ fn skills_render_non_empty_titled_markdown() {
         assert!(content.starts_with(&format!("# {}", skill.name)));
     }
 }
+
+#[test]
+fn day_recap_skill_uses_conation_display_brand() {
+    let content = what_i_did_yesterday::SKILL.render_content();
+    let intent = what_i_did_yesterday::PROMPT.intent.as_ref();
+
+    assert!(content.contains("Conation workspace"));
+    assert!(content.contains("Conation item"));
+    assert!(intent.contains("across Conation, GitHub"));
+    assert!(!content.contains("Macro workspace"));
+    assert!(!content.contains("Macro item"));
+    assert!(!intent.contains("across Macro, GitHub"));
+}

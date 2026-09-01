@@ -1,6 +1,6 @@
 import { DEFAULT_ROUTE } from '@app/constants/defaultRoute';
-import { t } from '@app/lib/i18n';
 import { useCheckoutCompletionListener } from '@app/features/paywall/use-checkout-completion-listener';
+import { t } from '@app/lib/i18n';
 import { clearLocalAuthSession } from '@core/auth/logout';
 import { isNativeMobilePlatform } from '@core/mobile/isNativeMobilePlatform';
 import { hasLoginCookie } from '@core/util/cookies';
@@ -57,14 +57,14 @@ function SessionVerificationFallback(props: {
 
   return (
     <div class="flex flex-col items-center justify-center gap-4 size-full text-ink-muted">
-      <p class="text-sm">{t('auto.unable_to_connect_please_check')}</p>
+      <p class="text-sm">{t('shell.routes.unableToConnect')}</p>
       <Button
         class="mt-2"
         disabled={retrying()}
         onClick={handleRetry}
         variant="outline"
       >
-        {retrying() ? 'Retrying…' : t('common.retry')}
+        {retrying() ? t('shell.actions.retrying') : t('common.retry')}
       </Button>
     </div>
   );

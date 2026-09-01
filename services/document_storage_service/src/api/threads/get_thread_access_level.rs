@@ -3,8 +3,8 @@ use axum::Json;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use entity_access::domain::ports::EntityAccessService;
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use entity_access::domain::ports::EntityAccessService;
 use model::response::GenericResponse;
 use model::thread::response::GetThreadUserAccessLevelResponse;
 use model_entity::EntityType;
@@ -14,7 +14,7 @@ use models_permissions::share_permission::access_level::AccessLevel;
 pub struct Params {
     pub thread_id: String,
 }
-#[tracing::instrument(skip(ctx, user), fields(user_id=?user.authorization.user.conation_user_id))]
+#[tracing::instrument(skip(ctx, user), fields(user_id=?user.authorization.user.macro_user_id))]
 pub async fn handler(
     State(ctx): State<ApiContext>,
     user: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
@@ -23,7 +23,7 @@ pub async fn handler(
     let user_access_level: Option<AccessLevel> = match ctx
         .entity_access_service
         .get_access_level(
-            Some(&user.authorization.user.conation_user_id),
+            Some(&user.authorization.user.macro_user_id),
             &thread_id,
             EntityType::EmailThread,
         )

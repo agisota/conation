@@ -1,4 +1,5 @@
 import { toast } from '@core/component/Toast/Toast';
+import { t } from '@core/i18n';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
 
 function extensionForImageBlob(blob: Blob): string {
@@ -70,9 +71,9 @@ export async function copyImageToClipboard(
         // fall back to copying the URL.
         try {
           if (fallbackUrl) await navigator.clipboard.writeText(fallbackUrl);
-          toast.success('Copied image URL to clipboard');
+          toast.success(t('core.images.urlCopied'));
         } catch {
-          toast.failure('Failed to copy image');
+          toast.failure(t('core.images.copyFailed'));
         }
         return;
       }
@@ -85,18 +86,18 @@ export async function copyImageToClipboard(
       await navigator.clipboard.write([
         new ClipboardItem({ 'image/png': pngBlob }),
       ]);
-      toast.success('Copied to clipboard');
+      toast.success(t('core.images.copied'));
     } catch {
       await navigator.clipboard.writeText(fallbackUrl);
-      toast.success('Copied image URL to clipboard');
+      toast.success(t('core.images.urlCopied'));
     }
   } catch (err) {
     console.error('Share/clipboard operation failed:', err);
     try {
       if (fallbackUrl) await navigator.clipboard.writeText(fallbackUrl);
-      toast.success('Copied image URL to clipboard');
+      toast.success(t('core.images.urlCopied'));
     } catch {
-      toast.failure('Failed to copy image');
+      toast.failure(t('core.images.copyFailed'));
     }
   }
 }
@@ -136,9 +137,9 @@ export async function downloadImage(
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(blobUrl);
-    toast.success('Downloaded image');
+    toast.success(t('core.images.downloaded'));
   } catch (err) {
     console.error('Download failed:', err);
-    toast.failure('Failed to download image');
+    toast.failure(t('core.images.downloadFailed'));
   }
 }

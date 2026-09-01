@@ -34,7 +34,7 @@ pub async fn list_contacts_handler(
     State(ctx): State<ApiContext>,
     authorization: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
 ) -> Result<Response, Response> {
-    let links = email_db_client::links::get::fetch_inboxes_for_conation_id(
+    let links = email_db_client::links::get::fetch_inboxes_for_macro_id(
         &ctx.db,
         &authorization.authorization.user.user_context.user_id,
     )

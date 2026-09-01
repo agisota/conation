@@ -58,7 +58,7 @@ pub async fn handler<S: ContactsService, Auth: MacroAuthorizationService>(
 ) -> impl IntoResponse {
     let user = authorization.authorization.user;
 
-    match contacts.query_contacts(user.conation_user_id.clone()).await {
+    match contacts.query_contacts(user.macro_user_id.clone()).await {
         Ok(contacts) if !contacts.is_empty() => {
             (StatusCode::OK, Json(Some(GetContactsResponse { contacts })))
         }
@@ -92,7 +92,7 @@ pub async fn add_contact_handler<S: ContactsService, Auth: MacroAuthorizationSer
 
     service
         .add_contact_nodes(ContactsNodes {
-            users: HashSet::from([user.conation_user_id.clone(), body.user_id]),
+            users: HashSet::from([user.macro_user_id.clone(), body.user_id]),
         })
         .await
         .map_err(|e| {
@@ -120,7 +120,7 @@ where
 
     fn key(&self) -> RateLimitKey {
         RateLimitKey::builder(&"per-user-add-contact")
-            .append(&self.0.authorization.user.conation_user_id.as_ref())
+            .append(&self.0.authorization.user.macro_user_id.as_ref())
             .finish()
     }
 }

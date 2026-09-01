@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import ArrowRight from '@phosphor/arrow-right.svg';
 import CheckIcon from '@phosphor/check.svg';
 import { Button, Layer } from '@ui';
@@ -124,7 +125,7 @@ export function SkipButton(props: {
       disabled={props.disabled}
       onClick={props.onClick}
     >
-      {props.label ?? 'Skip for now'}
+      {props.label ?? t('setup.actions.skipForNow')}
     </Button>
   );
 }
@@ -141,7 +142,7 @@ export function ContinueButton(props: {
       disabled={props.disabled}
       onClick={props.onClick}
     >
-      {props.label ?? 'Continue'}
+      {props.label ?? t('setup.actions.continue')}
       <ArrowRight class="size-5" />
     </Button>
   );

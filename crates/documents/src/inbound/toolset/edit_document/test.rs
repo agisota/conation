@@ -13,13 +13,13 @@ use crate::domain::ports::editing::{EditResult, EditingWorkerService};
 use crate::domain::response::{
     CreateDocumentResponseData, DocumentResponse, GetDocumentResponseData, LocationResponseV3,
 };
+use conation_sync_service_jwt::DocumentPermissionToken;
+use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
 use entity_access::domain::models::{
     AccessError, BotAccessScope, BotId, CallChannelInfo, EntityAccessReceipt, EntityPermission,
     MemberTeamRole, OwnerAccessLevel, RequiredPermission, TeamRole, UserTeamInfo, ViewAccessLevel,
 };
 use lexical_client::LexicalClient;
-use conation_sync_service_jwt::DocumentPermissionToken;
-use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
 use model::{document::DocumentBasic, sync_service::SyncServiceVersionID};
 use model_entity::Entity;
 use sync_service_client::SyncServiceClient;

@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { useCreateBotTokenMutation } from '@queries/bots/bots';
 import { Button } from '@ui';
@@ -16,7 +17,7 @@ export function useMintBotToken() {
     if (createToken.isPending) return;
     createToken.mutate(vars, {
       onSuccess: ({ bearer_token }) => setToken(bearer_token),
-      onError: () => toast.failure('Failed to create token'),
+      onError: () => toast.failure(t('channel.bots.tokenDialog.failed')),
     });
   };
 
@@ -54,8 +55,7 @@ export function MintCredential(props: {
         props.fallback?.({ mint, isPending: minted.isPending() }) ?? (
           <div class="flex flex-col gap-2">
             <p class="text-xs text-ink-muted">
-              {props.description ??
-                'Create a token to authenticate this bot. It is shown only while this card is open. You can mint a new one anytime from bot settings.'}
+              {props.description ?? t('channel.bots.tokenDialog.description')}
             </p>
             <div>
               <Button
@@ -65,7 +65,9 @@ export function MintCredential(props: {
                 disabled={minted.isPending()}
                 onClick={mint}
               >
-                {minted.isPending() ? 'Creating…' : 'Create token'}
+                {minted.isPending()
+                  ? t('channel.bots.tokenDialog.creating')
+                  : t('channel.bots.tokenDialog.create')}
               </Button>
             </div>
           </div>
@@ -75,11 +77,12 @@ export function MintCredential(props: {
       {(rawToken) => (
         <div class="flex flex-col gap-5">
           <CredentialField
-            label={props.fieldLabel ?? 'Bearer token'}
+            label={
+              props.fieldLabel ?? t('channel.bots.tokenDialog.bearerToken')
+            }
             value={rawToken()}
             help={
-              props.fieldHelp ??
-              'Shown only while this card is open. You can mint a new one anytime.'
+              props.fieldHelp ?? t('channel.bots.tokenDialog.visibilityHelp')
             }
           />
           {props.afterToken}

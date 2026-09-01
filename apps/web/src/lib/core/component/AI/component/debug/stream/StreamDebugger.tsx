@@ -1,5 +1,5 @@
-import type { ChatMessageWithAttachments } from '@service-cognition/generated/schemas';
 import { t } from '@app/lib/i18n';
+import type { ChatMessageWithAttachments } from '@service-cognition/generated/schemas';
 import type { ChatMessageStream } from '@service-connection/stream';
 import { Button } from '@ui';
 import { createSignal } from 'solid-js';
@@ -51,7 +51,9 @@ function StreamDebuggerWithControlsInner(props: {
             chat.setStream(stream);
           }}
           variant="accent"
-        >{t('auto.stream')}</Button>
+        >
+          {t('ai.debug.actions.stream')}
+        </Button>
         <Button
           variant="accent"
           onClick={() => {
@@ -59,7 +61,9 @@ function StreamDebuggerWithControlsInner(props: {
             chat.setMessages([]);
             chat.setStream(undefined);
           }}
-        >{t('auto.reset')}</Button>
+        >
+          {t('ai.debug.actions.reset')}
+        </Button>
       </div>
       <StreamStatus stream={stream} />
       <div data-chat-scroll class="min-h-0 max-h-100 overflow-y-auto">

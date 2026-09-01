@@ -5,6 +5,7 @@ import { toast } from '@core/component/Toast/Toast';
 import { UserIcon } from '@core/component/UserIcon';
 import { UserTooltip } from '@core/component/UserTooltip';
 import { useEmail, useUserId } from '@core/context/user';
+import { t } from '@core/i18n';
 import { isMobile } from '@core/mobile/isMobile';
 import {
   type CombinedRecipientItem,
@@ -358,7 +359,9 @@ export function RecipientSelector<K extends CombinedRecipientKind>(
   }
 
   const placeholderText = () => {
-    return props.selectedOptions.length === 0 ? 'Select recipients' : undefined;
+    return props.selectedOptions.length === 0
+      ? t('core.recipients.selectPlaceholder')
+      : undefined;
   };
 
   const userId = useUserId();
@@ -383,7 +386,7 @@ export function RecipientSelector<K extends CombinedRecipientKind>(
       const inputEl = inputRef();
       if (inputEl) inputEl.value = '';
 
-      return toast.failure('You cannot add yourself');
+      return toast.failure(t('core.recipients.cannotAddSelf'));
     }
 
     // We can only select one channel at a time

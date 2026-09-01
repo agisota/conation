@@ -1,5 +1,5 @@
-import CaretDownIcon from '@phosphor/caret-down.svg';
 import { t } from '@app/lib/i18n';
+import CaretDownIcon from '@phosphor/caret-down.svg';
 import CircleDashedEmpty from '@phosphor/circle-dashed.svg';
 import FilterIcon from '@phosphor/funnel-simple.svg';
 import PencilIcon from '@phosphor/pencil-simple.svg';
@@ -43,8 +43,10 @@ function HoverTagRow(props: {
             variant="ghost"
             size="icon-sm"
             noTouchResize
-            tooltip="Filter by tag"
-            aria-label={`Filter by ${props.tag.label}`}
+            tooltip={t('property.tags.filterTooltip')}
+            aria-label={t('property.tags.filterAria', {
+              tag: props.tag.label,
+            })}
             class={hoverMenuIconButtonClass}
             onMouseDown={(event) => {
               event.preventDefault();
@@ -65,8 +67,8 @@ function HoverTagRow(props: {
         variant="ghost"
         size="icon-sm"
         noTouchResize
-        tooltip="Edit tag"
-        aria-label={`Edit ${props.tag.label}`}
+        tooltip={t('property.tags.editTooltip')}
+        aria-label={t('property.tags.editAria', { tag: props.tag.label })}
         class={hoverMenuIconButtonClass}
         onMouseDown={(event) => {
           event.preventDefault();
@@ -107,14 +109,16 @@ function TagHoverContent(props: {
             onClick={() => onFilterByTag()(props.tag.optionId)}
           >
             <FilterIcon class="size-3.5 shrink-0 text-ink-muted" />
-            <span class={hoverMenuLabelClass}>{t('auto.filter_by')}<span class="font-medium">{props.tag.label}</span>
+            <span class={hoverMenuLabelClass}>
+              {t('property.tags.filterByLabel')}{' '}
+              <span class="font-medium">{props.tag.label}</span>
             </span>
           </button>
         )}
       </Show>
       <button
         type="button"
-        aria-label={`Edit ${props.tag.label}`}
+        aria-label={t('property.tags.editAria', { tag: props.tag.label })}
         class="flex w-full min-w-0 items-center gap-2 whitespace-nowrap rounded-md px-2 py-1.5 text-left hover:bg-hover"
         onClick={(event) => {
           event.preventDefault();
@@ -123,7 +127,8 @@ function TagHoverContent(props: {
         }}
       >
         <PencilIcon class="size-3.5 shrink-0 text-ink-muted" />
-        <span class={hoverMenuLabelClass}>{t('common.edit')}<span class="font-medium">{props.tag.label}</span>
+        <span class={hoverMenuLabelClass}>
+          {t('common.edit')} <span class="font-medium">{props.tag.label}</span>
         </span>
       </button>
     </div>
@@ -217,7 +222,7 @@ function TagOverflow(props: {
   const [pickerOpen, setPickerOpen] = createSignal(false);
   const dots = () => props.tags.slice(0, MAX_OVERFLOW_DOTS);
   const count = () =>
-    `+${props.tags.length} ${props.tags.length === 1 ? 'tag' : 'tags'}`;
+    t('property.tags.overflowCount', { count: props.tags.length });
 
   return (
     <Layer depth={2}>
@@ -245,7 +250,7 @@ function TagOverflow(props: {
             size: 'sm',
             class: 'max-w-[14ch] gap-1.5',
           })}
-          triggerLabel="Edit tags"
+          triggerLabel={t('property.tags.editTrigger')}
           onOpenChange={setPickerOpen}
           withClickBlock={props.withClickBlock}
         >
@@ -340,8 +345,7 @@ export function InlineTagsPill(props: {
   const tags = () => props.docTags.appliedTags();
   const first = () => tags()[0];
   const dots = () => tags().slice(0, MAX_OVERFLOW_DOTS);
-  const label = () =>
-    `${tags().length} ${tags().length === 1 ? 'Tag' : 'Tags'}`;
+  const label = () => t('property.tags.count', { count: tags().length });
 
   return (
     <Show when={tags().length > 0 || props.showPlaceholder}>
@@ -357,13 +361,15 @@ export function InlineTagsPill(props: {
               props.class
             ),
           })}
-          triggerLabel="Change or select tags"
+          triggerLabel={t('property.tags.changeOrSelect')}
         >
           <Switch>
             <Match when={tags().length === 0}>
               <span class="inline-flex min-w-0 items-center gap-1.5 opacity-50">
                 <CircleDashedEmpty class="size-3 shrink-0" />
-                <span class="min-w-0 truncate @max-2xl/u-list:hidden">{t('auto.tags')}</span>
+                <span class="min-w-0 truncate @max-2xl/u-list:hidden">
+                  {t('property.tags.title')}
+                </span>
               </span>
             </Match>
             <Match when={tags().length === 1 && first()}>

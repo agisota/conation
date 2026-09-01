@@ -3,12 +3,14 @@ import {
   ChatWithAgentIcon,
   openChatWithAgent,
 } from '@app/features/chat/ChatWithAgentButton';
+import { t } from '@app/lib/i18n';
 import { useHasModificationData } from '@block-pdf/signal/save';
 import { useHasComments } from '@block-pdf/store/comments/commentStore';
 import { doPrint } from '@block-pdf/util/printUtil';
 import { exportPdf } from '@block-pdf/websocket/export';
 import type { BlockTool } from '@components/app/ResponsiveBlockToolbar';
 import {
+  BLOCK_TOOL_IDS,
   ResponsiveBlockToolbar,
   ResponsivePermissionsBadge,
 } from '@components/app/ResponsiveBlockToolbar';
@@ -71,7 +73,7 @@ export function TopBar() {
 
   const copyLink = () => {
     createShareUrl(LocationType.General);
-    toast.success('Link copied to clipboard');
+    toast.success(t('pdf.toast.linkCopied'));
   };
 
   const printFile = createCallback(async () => {
@@ -90,7 +92,7 @@ export function TopBar() {
     if (!isAuth()) return openLoginModal();
 
     const documentProxy = pdfDocumentProxy();
-    if (!documentProxy) return toast.failure('Unable to download file');
+    if (!documentProxy) return toast.failure(t('pdf.error.downloadFailed'));
 
     const data = (await documentProxy.getData()) as Uint8Array<ArrayBuffer>;
     const blob = new Blob([data], { type: 'application/pdf' });
@@ -113,7 +115,7 @@ export function TopBar() {
       try {
         downloadFile(blob, fileNameWithExtension);
       } catch (_) {
-        toast.failure('Unable to download file');
+        toast.failure(t('pdf.error.downloadFailed'));
       }
     }
   });
@@ -123,7 +125,7 @@ export function TopBar() {
 
     const data = await storageServiceClient.exportDocument({ documentId });
     if (data.isErr()) {
-      return toast.failure('Unable to download file');
+      return toast.failure(t('pdf.error.downloadFailed'));
     }
 
     const fileNameWithExtension = `${fileName()}.docx`;
@@ -145,10 +147,10 @@ export function TopBar() {
 
       downloadFile(blob, fileNameWithExtension);
 
-      toast.success('File downloaded successfully');
+      toast.success(t('pdf.toast.downloaded'));
     } catch (error) {
       console.error('Download failed:', error);
-      toast.failure('Failed to download file');
+      toast.failure(t('pdf.error.downloadFailed'));
     }
   });
 
@@ -157,13 +159,13 @@ export function TopBar() {
     { op: 'copy' },
     { op: 'moveToProject' },
     {
-      label: 'Print',
+      label: t('pdf.actions.print'),
       icon: Printer,
       action: () => printFile(),
     },
     {
       group: 'file',
-      label: 'Download',
+      label: t('block.actions.download'),
       icon: DownloadIcon,
       action: download,
     },
@@ -171,7 +173,7 @@ export function TopBar() {
       ? [
           {
             group: 'file',
-            label: 'Download DOCX',
+            label: t('pdf.actions.downloadDocx'),
             icon: DownloadIcon,
             action: downloadDocx,
           } as const,
@@ -182,7 +184,8 @@ export function TopBar() {
 
   const tools: BlockTool[] = [
     {
-      label: 'References',
+      id: BLOCK_TOOL_IDS.references,
+      label: t('pdf.actions.references'),
       icon: Quotes,
       action: referencesControl.toggle,
       condition: () => !!isAuth() && ENABLE_REFERENCES_MODAL,
@@ -195,7 +198,8 @@ export function TopBar() {
       ),
     },
     {
-      label: 'Chat',
+      id: BLOCK_TOOL_IDS.chat,
+      label: t('chat.actions.chat'),
       icon: ChatWithAgentIcon,
       action: () =>
         openChatWithAgent({
@@ -216,8 +220,9 @@ export function TopBar() {
       ),
     },
     {
+      id: BLOCK_TOOL_IDS.share,
       group: 'sharing',
-      label: 'Share',
+      label: t('block.actions.share'),
       icon: IconShared,
       action: () => shareCtx.open(),
       buttonComponent: () => <ShareTrigger copyLink={copyLink} />,
@@ -227,7 +232,7 @@ export function TopBar() {
 
   const menuTools: BlockTool[] = [
     {
-      label: 'Ask Macro',
+      label: t('chat.actions.askConation'),
       icon: ChatWithAgentIcon,
       action: () =>
         openChatWithAgent({

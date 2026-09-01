@@ -1,5 +1,5 @@
-import { useCallContextOptional } from '@channel/Call/CallContext';
 import { t } from '@app/lib/i18n';
+import { useCallContextOptional } from '@channel/Call/CallContext';
 import { joinChannelCall } from '@channel/Call/join-channel-call';
 import PhoneIcon from '@icon/wide-call.svg';
 import { useActiveCallQuery } from '@queries/call/call';
@@ -62,7 +62,9 @@ export function ActiveCallMessage(props: { channelId: string }) {
               >
                 <div class="flex min-w-0 items-center gap-2">
                   <div class="min-w-0 flex-1">
-                    <div class="font-medium">{t('auto.a_call_is_active_in_this_chann')}</div>
+                    <div class="font-medium">
+                      {t('channel.call.activeNotice')}
+                    </div>
                     <Show when={duration()}>
                       {(value) => (
                         <div class="text-xs text-ink-extra-muted">
@@ -78,7 +80,9 @@ export function ActiveCallMessage(props: { channelId: string }) {
                     class="shrink-0"
                     onClick={() => void joinChannelCall(props.channelId)}
                   >
-                    <PhoneIcon class="size-3.5" />{t('auto.join')}</Button>
+                    <PhoneIcon class="size-3.5" />
+                    {t('channel.call.join')}
+                  </Button>
                 </div>
               </div>
             </div>

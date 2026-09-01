@@ -1,6 +1,11 @@
 # Running locally
 
-This guide covers two ways to run Macro on your machine.
+This guide covers two ways to run Conation on your machine.
+
+For the supported no-managed-cloud development baseline, operator smoke path,
+AWS replacement matrix, and the explicit production self-hosting boundary, see
+the [Conation self-hosting status](../infra/selfhost/README.md). The local stack
+described here is not an Internet-facing production distribution.
 
 If you only change the frontend, run the frontend against hosted services. You do not need Docker or the local stack.
 

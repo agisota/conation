@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import {
   type BlockTool,
   ResponsiveBlockToolbar,
@@ -35,6 +36,13 @@ function capitalize(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
+function statusLabel(status: string): string {
+  if (status === 'open') return t('pullRequest.status.open');
+  if (status === 'merged') return t('pullRequest.status.merged');
+  if (status === 'closed') return t('pullRequest.status.closed');
+  return capitalize(status);
+}
+
 /** Pill surface matching the task block's inline property pills. */
 export const PR_PILL_CLASS =
   'inline-flex items-center gap-1.5 min-w-0 border border-edge-muted px-2 py-1 leading-tight text-left rounded-full bg-surface';
@@ -67,7 +75,7 @@ export function PrStatusChip(props: { status: string; class?: string }) {
         )}
       >
         <PrStatusIcon status={props.status} class="size-3 shrink-0" />
-        {capitalize(props.status)}
+        {statusLabel(props.status)}
       </span>
     </Layer>
   );
@@ -88,7 +96,7 @@ export function PrSplitHeader(props: {
 
   const ops: FileOperation[] = [
     {
-      label: 'Open on GitHub',
+      label: t('pullRequest.actions.openOnGithub'),
       icon: GithubIcon,
       action: () => openExternalUrl(githubUrl()),
     },

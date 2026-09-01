@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { throwOnErr } from '@core/util/result';
 import { authServiceClient } from '@service-auth/client';
@@ -57,12 +58,12 @@ export function useRemoveUserFromTeamMutation(
 
         onSuccess: (_data, { teamId }) => {
           invalidateTeam(teamId);
-          toast.success('Member removed');
+          toast.success(t('team.feedback.memberRemoved'));
         },
 
         onError: (error, { teamId }, context) => {
           console.error('Failed to remove user from team', error);
-          toast.failure('Failed to remove team member');
+          toast.failure(t('team.feedback.memberRemoveFailed'));
 
           if (context?.previousTeam) {
             queryClient.setQueryData(

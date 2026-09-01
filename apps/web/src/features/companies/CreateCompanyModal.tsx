@@ -1,5 +1,5 @@
-import { useSplitLayout } from '@components/app/split-layout/layout';
 import { t } from '@app/lib/i18n';
+import { useSplitLayout } from '@components/app/split-layout/layout';
 import { useFocusLock } from '@core/util/createControlledOpenSignal';
 import { ThrownResultError } from '@core/util/result';
 import BuildingsIcon from '@phosphor/buildings.svg';
@@ -20,16 +20,23 @@ export function openCreateCompanyModal() {
 // enforces the real rules (no scheme/path/@, not a generic email provider).
 const DOMAIN_PATTERN = /^[a-z0-9][a-z0-9.-]*\.[a-z]{2,}$/i;
 
-function createErrorMessage(cause: unknown): string {
+type CreateCompanyErrorKey =
+  | 'companies.company.errors.conflict'
+  | 'companies.company.errors.crmDisabled'
+  | 'companies.company.errors.failed'
+  | 'companies.company.errors.nameRequired'
+  | 'companies.company.errors.invalidDomain';
+
+function createErrorKey(cause: unknown): CreateCompanyErrorKey {
   if (cause instanceof ThrownResultError) {
     if (cause.errors.some((e) => e.code === 'CONFLICT')) {
-      return 'A company with this domain already exists.';
+      return 'companies.company.errors.conflict';
     }
     if (cause.errors.some((e) => e.code === 'FORBIDDEN')) {
-      return "CRM isn't enabled for your team.";
+      return 'companies.company.errors.crmDisabled';
     }
   }
-  return 'Failed to create company. Try again.';
+  return 'companies.company.errors.failed';
 }
 
 export function CreateCompanyModal() {
@@ -37,7 +44,7 @@ export function CreateCompanyModal() {
   const createCompanyMutation = useCreateCompanyMutation();
   const [name, setName] = createSignal('');
   const [domain, setDomain] = createSignal('');
-  const [error, setError] = createSignal<string>();
+  const [error, setError] = createSignal<CreateCompanyErrorKey>();
   const companyName = createMemo(() => name().trim());
   const companyDomain = createMemo(() => domain().trim().toLowerCase());
   const canSubmit = createMemo(
@@ -67,11 +74,11 @@ export function CreateCompanyModal() {
   async function handleSubmit(event: SubmitEvent) {
     event.preventDefault();
     if (!companyName()) {
-      setError('Enter a company name');
+      setError('companies.company.errors.nameRequired');
       return;
     }
     if (!DOMAIN_PATTERN.test(companyDomain())) {
-      setError('Enter a valid domain like acme.com');
+      setError('companies.company.errors.invalidDomain');
       return;
     }
 
@@ -85,7 +92,7 @@ export function CreateCompanyModal() {
       replaceOrInsertSplit({ type: 'company', id });
     } catch (cause) {
       console.error('Failed to create company', cause);
-      setError(createErrorMessage(cause));
+      setError(createErrorKey(cause));
     }
   }
 
@@ -113,8 +120,12 @@ export function CreateCompanyModal() {
 
             <div class="flex flex-col gap-4">
               <div class="flex items-center gap-2 px-2">
-                <Dialog.Title class="sr-only">{t('auto.create_a_company')}</Dialog.Title>
-                <label for="new-company-name" class="sr-only">{t('auto.name')}</label>
+                <Dialog.Title class="sr-only">
+                  {t('companies.actions.createCompany')}
+                </Dialog.Title>
+                <label for="new-company-name" class="sr-only">
+                  {t('companies.fields.name')}
+                </label>
                 <BuildingsIcon
                   aria-hidden="true"
                   class="size-5 shrink-0 text-ink-placeholder"
@@ -127,10 +138,12 @@ export function CreateCompanyModal() {
                     setName(event.currentTarget.value);
                     setError(undefined);
                   }}
-                  placeholder={t('auto.company_name')}
+                  placeholder={t('companies.fields.companyName')}
                   autocomplete="off"
                   data-1p-ignore
-                  aria-invalid={error() === 'Enter a company name'}
+                  aria-invalid={
+                    error() === 'companies.company.errors.nameRequired'
+                  }
                   class="h-10 w-full border-none bg-transparent px-0 text-xl font-medium text-ink outline-none placeholder:text-ink-placeholder focus:ring-0"
                 />
               </div>
@@ -139,7 +152,9 @@ export function CreateCompanyModal() {
                 <label
                   for="new-company-domain"
                   class="text-xs font-medium text-ink-muted"
-                >{t('auto.domain')}</label>
+                >
+                  {t('companies.fields.domain')}
+                </label>
                 <input
                   id="new-company-domain"
                   type="text"
@@ -153,19 +168,21 @@ export function CreateCompanyModal() {
                   spellcheck={false}
                   data-1p-ignore
                   aria-invalid={
-                    error() === 'Enter a valid domain like acme.com'
+                    error() === 'companies.company.errors.invalidDomain'
                   }
                   class="h-9 w-full rounded-lg border border-edge-muted bg-transparent px-3 text-sm text-ink outline-none placeholder:text-ink-placeholder focus:border-edge"
                 />
-                <span class="text-xs text-ink-extra-muted">{t('auto.emails_with_this_domain_will_b')}</span>
+                <span class="text-xs text-ink-extra-muted">
+                  {t('companies.company.domainHelp')}
+                </span>
               </div>
             </div>
 
             <Show when={error()}>
-              {(message) => (
+              {(messageKey) => (
                 <div class="border-y border-edge-muted p-2">
                   <div class="px-3 py-2 text-sm text-failure-ink" role="alert">
-                    {message()}
+                    {t(messageKey())}
                   </div>
                 </div>
               )}
@@ -180,8 +197,8 @@ export function CreateCompanyModal() {
                 disabled={!canSubmit()}
               >
                 {createCompanyMutation.isPending
-                  ? 'Creating…'
-                  : 'Create Company'}
+                  ? t('companies.company.creating')
+                  : t('companies.actions.createCompany')}
               </Button>
             </div>
           </form>

@@ -15,7 +15,7 @@ async fn server_info_advertises_conation_tools() {
     let info = empty_service().get_info();
 
     assert_eq!(info.server_info.name, "macro-tools");
-    assert_eq!(info.server_info.title.as_deref(), Some("Macro"));
+    assert_eq!(info.server_info.title.as_deref(), Some("Conation"));
     assert_eq!(info.server_info.version, env!("CARGO_PKG_VERSION"));
     assert!(
         info.server_info
@@ -52,7 +52,7 @@ async fn server_instructions_describe_available_workflows() {
         .expect("server should provide MCP instructions");
 
     for expected_text in [
-        "Macro workspace",
+        "Conation workspace",
         "ContentSearch",
         "NameSearch",
         "ReadContent",

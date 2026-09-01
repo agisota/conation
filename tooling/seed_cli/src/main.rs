@@ -1,5 +1,5 @@
 #![deny(missing_docs)]
-//! The Seed CLI to enable easy populate Macro with seed data.
+//! The Seed CLI for populating Conation with seed data.
 
 mod config;
 mod entity;
@@ -7,10 +7,10 @@ mod service;
 
 use anyhow::Context;
 use clap::Parser;
-use entity::EntityCommand;
-use fusionauth::FusionAuthClient;
 use conation_entrypoint::MacroEntrypoint;
 use conation_env::Environment;
+use entity::EntityCommand;
+use fusionauth::FusionAuthClient;
 use service::{auth::Auth, db::Db};
 use sqlx::postgres::PgPoolOptions;
 
@@ -19,9 +19,12 @@ use crate::{
     service::s3::S3,
 };
 
-/// The Seed CLI for populating Macro with seed data.
+/// The Seed CLI for populating Conation with seed data.
 #[derive(Debug, Parser)]
-#[command(name = "seed_cli", about = "Seed CLI to populate Macro with seed data")]
+#[command(
+    name = "seed_cli",
+    about = "Seed CLI to populate Conation with seed data"
+)]
 pub struct Cli {
     /// The entity and action to perform
     #[command(subcommand)]

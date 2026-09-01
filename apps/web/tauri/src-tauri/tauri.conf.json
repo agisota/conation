@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "conation",
+  "productName": "Conation",
   "version": "../../package.json",
-  "identifier": "dev.conation.app",
+  "identifier": "com.macro.app.prod",
   "build": {
     "frontendDist": "../../dist",
     "devUrl": "http://localhost:3000",
@@ -60,24 +60,24 @@
       "mobile": [
         {
           "scheme": [
-            "conation"
+            "macro"
           ],
           "appLink": false
         },
         {
-          "host": "conation.dev",
+          "host": "macro.com",
           "pathPrefix": [
             "/app"
           ]
         },
         {
-          "host": "dev.conation.dev",
+          "host": "dev.macro.com",
           "pathPrefix": [
             "/app"
           ]
         },
         {
-          "host": "staging.conation.dev",
+          "host": "staging.macro.com",
           "pathPrefix": [
             "/app"
           ]
@@ -85,7 +85,7 @@
       ],
       "desktop": {
         "schemes": [
-          "conation"
+          "macro"
         ]
       }
     }

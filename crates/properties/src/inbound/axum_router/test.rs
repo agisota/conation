@@ -273,7 +273,7 @@ fn test_router(entity_access_service: FakeEntityAccessService) -> Router {
 async fn required_auth_handler(
     authorization: MacroAuthorizationExtractor<TestAuthorizationService, UserOrInternal>,
 ) -> String {
-    authorization.authorization.user.conation_user_id.to_string()
+    authorization.authorization.user.macro_user_id.to_string()
 }
 
 async fn team_handler(

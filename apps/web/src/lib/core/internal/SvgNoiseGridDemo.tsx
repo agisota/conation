@@ -1,5 +1,4 @@
 import { DebugSlider } from '@core/component/Slider';
-import { t } from '@app/lib/i18n';
 import { Bar } from '@core/component/TopBar/Bar';
 import { createSignal } from 'solid-js';
 
@@ -164,7 +163,7 @@ export default function SvgNoiseGridDemo() {
     <div class="flex flex-col size-full">
       <Bar
         left={
-          <div class="p-2 text-sm w-2xl truncate">{t('auto.svg_noise_grid_generator')}</div>
+          <div class="p-2 text-sm w-2xl truncate">SVG Noise Grid Generator</div>
         }
         center={<div></div>}
       ></Bar>
@@ -181,7 +180,7 @@ export default function SvgNoiseGridDemo() {
         </div>
 
         <div class="w-[50%] max-w-lg bg-surface p-4 overflow-y-auto border-l border-edge border-dashed">
-          <h2 class="font-mono mb-6">{t('auto.svg_noise_grid_generator')}</h2>
+          <h2 class="font-mono mb-6">SVG Noise Grid Generator</h2>
 
           <div class="space-y-6">
             <DebugSlider
@@ -256,17 +255,21 @@ export default function SvgNoiseGridDemo() {
             <button
               onClick={downloadSvg}
               class="w-full px-4 py-2 bg-ink-extra-muted text-surface font-medium"
-            >{t('auto.download_svg')}</button>
+            >
+              Download SVG
+            </button>
 
             <button
               onClick={() => navigator.clipboard.writeText(generateSvg())}
               class="w-full px-4 py-2 bg-ink-extra-muted text-surface font-medium"
-            >{t('auto.copy_svg_code')}</button>
+            >
+              Copy SVG Code
+            </button>
           </div>
 
           {/* Generated SVG Code */}
           <div class="mt-8">
-            <h3 class="font-mono text-ink-muted mb-3">{t('auto.generated_svg')}</h3>
+            <h3 class="font-mono text-ink-muted mb-3">Generated SVG</h3>
             <div class="p-4 rounded-xs bg-message overflow-x-auto max-h-96">
               <pre class="text-xs font-mono whitespace-pre-wrap text-ink-muted">
                 {generateSvg()}

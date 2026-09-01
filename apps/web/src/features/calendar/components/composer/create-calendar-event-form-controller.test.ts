@@ -1,3 +1,4 @@
+import { setLocale, t } from '@app/lib/i18n';
 import { format } from 'date-fns';
 import { createRoot } from 'solid-js';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -8,7 +9,6 @@ import {
 import {
   defaultEditorInitialValues,
   type EventEditorInitialValues,
-  PAST_EVENT_GUESTS_WARNING,
   type SelectedEventEditorGuest,
 } from './event-form-model';
 
@@ -36,6 +36,7 @@ const disposers: (() => void)[] = [];
 
 afterEach(() => {
   for (const dispose of disposers.splice(0)) dispose();
+  setLocale('en');
 });
 
 /**
@@ -66,7 +67,9 @@ describe('pastEventWarning', () => {
       title: 'Retro',
       guests: 'guest@example.com',
     });
-    expect(controller.pastEventWarning()).toBe(PAST_EVENT_GUESTS_WARNING);
+    expect(controller.pastEventWarning()).toBe(
+      t('calendar.event.form.pastEventGuestsWarning')
+    );
   });
 
   it('warns once a guest is added to a past event', () => {
@@ -74,7 +77,9 @@ describe('pastEventWarning', () => {
     expect(controller.pastEventWarning()).toBeUndefined();
 
     controller.setSelectedGuests([guest('guest@example.com')]);
-    expect(controller.pastEventWarning()).toBe(PAST_EVENT_GUESTS_WARNING);
+    expect(controller.pastEventWarning()).toBe(
+      t('calendar.event.form.pastEventGuestsWarning')
+    );
   });
 
   it('stays quiet for an upcoming event with guests', () => {
@@ -116,7 +121,9 @@ describe('pastEventWarning', () => {
       guest('guest@example.com'),
       guest('late@example.com'),
     ]);
-    expect(controller.pastEventWarning()).toBe(PAST_EVENT_GUESTS_WARNING);
+    expect(controller.pastEventWarning()).toBe(
+      t('calendar.event.form.pastEventGuestsWarning')
+    );
   });
 
   it('warns when an event with guests is moved into the past', () => {
@@ -127,7 +134,9 @@ describe('pastEventWarning', () => {
     const past = timedRange(-3);
     controller.setStart(past.start);
     controller.setField('end', past.end);
-    expect(controller.pastEventWarning()).toBe(PAST_EVENT_GUESTS_WARNING);
+    expect(controller.pastEventWarning()).toBe(
+      t('calendar.event.form.pastEventGuestsWarning')
+    );
   });
 
   it('warns for an all-day event on a day that has passed', () => {
@@ -139,7 +148,9 @@ describe('pastEventWarning', () => {
       end: yesterday,
       guests: 'guest@example.com',
     });
-    expect(past.pastEventWarning()).toBe(PAST_EVENT_GUESTS_WARNING);
+    expect(past.pastEventWarning()).toBe(
+      t('calendar.event.form.pastEventGuestsWarning')
+    );
 
     const ongoing = controllerFor({
       allDay: true,
@@ -148,5 +159,22 @@ describe('pastEventWarning', () => {
       guests: 'guest@example.com',
     });
     expect(ongoing.pastEventWarning()).toBeUndefined();
+  });
+
+  it('updates warning copy when the locale changes without recreating the controller', () => {
+    const controller = controllerFor({
+      ...timedRange(-3),
+      title: 'Retro',
+      guests: 'guest@example.com',
+    });
+
+    setLocale('en');
+    const englishWarning = controller.pastEventWarning();
+    setLocale('ru');
+
+    expect(controller.pastEventWarning()).toBe(
+      t('calendar.event.form.pastEventGuestsWarning')
+    );
+    expect(controller.pastEventWarning()).not.toBe(englishWarning);
   });
 });

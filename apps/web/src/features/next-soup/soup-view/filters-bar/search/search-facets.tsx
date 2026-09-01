@@ -5,6 +5,7 @@ import type {
   TagFilterMode,
 } from '@app/features/next-soup/filters/filter-store/types';
 import { usePosthog } from '@app/lib/analytics/posthog';
+import { t } from '@app/lib/i18n';
 import { EntityIcon } from '@core/component/EntityIcon';
 import { UserIcon } from '@core/component/UserIcon';
 import { useQuickAccess } from '@core/context/quickAccess';
@@ -29,41 +30,55 @@ export const SEARCH_INDEX_OPTIONS: {
 }[] = [
   {
     value: 'channels',
-    label: 'Channels',
+    get label() {
+      return t('soup.entityTypes.channels');
+    },
     icon: () => (
       <EntityIcon targetType="channel" size="xs" theme="monochrome" />
     ),
   },
   {
     value: 'document-or-file',
-    label: 'Documents',
+    get label() {
+      return t('soup.entityTypes.documents');
+    },
     icon: () => <EntityIcon targetType="md" size="xs" theme="monochrome" />,
   },
   {
     value: 'task',
-    label: 'Tasks',
+    get label() {
+      return t('soup.entityTypes.tasks');
+    },
     icon: () => <EntityIcon targetType="task" size="xs" theme="monochrome" />,
   },
   {
     value: 'email',
-    label: 'Email',
+    get label() {
+      return t('soup.entityTypes.email');
+    },
     icon: () => <EntityIcon targetType="email" size="xs" theme="monochrome" />,
   },
   {
     value: 'calls',
-    label: 'Calls',
+    get label() {
+      return t('soup.entityTypes.calls');
+    },
     icon: () => <EntityIcon targetType="call" size="xs" theme="monochrome" />,
   },
   {
     value: 'folders',
-    label: 'Folders',
+    get label() {
+      return t('soup.entityTypes.folders');
+    },
     icon: () => (
       <EntityIcon targetType="project" size="xs" theme="monochrome" />
     ),
   },
   {
     value: 'agent',
-    label: 'Agents',
+    get label() {
+      return t('soup.entityTypes.agents');
+    },
     icon: () => <EntityIcon targetType="chat" size="xs" theme="monochrome" />,
   },
 ];
@@ -75,14 +90,22 @@ export const SEARCH_INDEX_OPTIONS: {
  */
 const CALENDAR_TYPE_OPTION: (typeof SEARCH_INDEX_OPTIONS)[number] = {
   value: 'calendar',
-  label: 'Calendar',
+  get label() {
+    return t('soup.entityTypes.calendar');
+  },
   icon: () => <EntityIcon targetType="calendar" size="xs" theme="monochrome" />,
 };
 
 const CALL_STATUS_LABELS: Record<CallStatus, string> = {
-  ATTENDED: 'Attended',
-  MISSED: 'Missed',
-  UNATTENDED: 'Unattended',
+  get ATTENDED() {
+    return t('soup.call.status.attended');
+  },
+  get MISSED() {
+    return t('soup.call.status.missed');
+  },
+  get UNATTENDED() {
+    return t('soup.call.status.unattended');
+  },
 };
 
 const optionIcon = (optionId: string) => () => (
@@ -92,27 +115,37 @@ const optionIcon = (optionId: string) => () => (
 const TASK_STATUS_OPTIONS: SearchableOption[] = [
   {
     id: PROPERTY_OPTION_IDS.STATUS.NOT_STARTED,
-    label: 'Not Started',
+    get label() {
+      return t('soup.taskStatus.notStarted');
+    },
     icon: optionIcon(PROPERTY_OPTION_IDS.STATUS.NOT_STARTED),
   },
   {
     id: PROPERTY_OPTION_IDS.STATUS.IN_PROGRESS,
-    label: 'In Progress',
+    get label() {
+      return t('soup.taskStatus.inProgress');
+    },
     icon: optionIcon(PROPERTY_OPTION_IDS.STATUS.IN_PROGRESS),
   },
   {
     id: PROPERTY_OPTION_IDS.STATUS.IN_REVIEW,
-    label: 'In Review',
+    get label() {
+      return t('soup.taskStatus.inReview');
+    },
     icon: optionIcon(PROPERTY_OPTION_IDS.STATUS.IN_REVIEW),
   },
   {
     id: PROPERTY_OPTION_IDS.STATUS.COMPLETED,
-    label: 'Completed',
+    get label() {
+      return t('soup.taskStatus.completed');
+    },
     icon: optionIcon(PROPERTY_OPTION_IDS.STATUS.COMPLETED),
   },
   {
     id: PROPERTY_OPTION_IDS.STATUS.CANCELED,
-    label: 'Canceled',
+    get label() {
+      return t('soup.taskStatus.canceled');
+    },
     icon: optionIcon(PROPERTY_OPTION_IDS.STATUS.CANCELED),
   },
 ];
@@ -120,22 +153,30 @@ const TASK_STATUS_OPTIONS: SearchableOption[] = [
 const TASK_PRIORITY_OPTIONS: SearchableOption[] = [
   {
     id: PROPERTY_OPTION_IDS.PRIORITY.URGENT,
-    label: 'Urgent',
+    get label() {
+      return t('soup.priority.urgent');
+    },
     icon: optionIcon(PROPERTY_OPTION_IDS.PRIORITY.URGENT),
   },
   {
     id: PROPERTY_OPTION_IDS.PRIORITY.HIGH,
-    label: 'High',
+    get label() {
+      return t('soup.priority.highShort');
+    },
     icon: optionIcon(PROPERTY_OPTION_IDS.PRIORITY.HIGH),
   },
   {
     id: PROPERTY_OPTION_IDS.PRIORITY.MEDIUM,
-    label: 'Medium',
+    get label() {
+      return t('soup.priority.mediumShort');
+    },
     icon: optionIcon(PROPERTY_OPTION_IDS.PRIORITY.MEDIUM),
   },
   {
     id: PROPERTY_OPTION_IDS.PRIORITY.LOW,
-    label: 'Low',
+    get label() {
+      return t('soup.priority.lowShort');
+    },
     icon: optionIcon(PROPERTY_OPTION_IDS.PRIORITY.LOW),
   },
 ];
@@ -228,7 +269,11 @@ function usePersonPicker(): Accessor<SearchableOption[]> {
       const opt: SearchableOption = {
         id: s.id,
         label:
-          s.id === uid ? `${s.data.name || 'Me'} (me)` : s.data.name || s.id,
+          s.id === uid
+            ? s.data.name
+              ? t('soup.people.currentUserNamed', { name: s.data.name })
+              : t('soup.people.me')
+            : s.data.name || s.id,
         icon: () => (
           <UserIcon id={s.id} size="sm" suppressClick showTooltip={false} />
         ),
@@ -251,7 +296,9 @@ function singleFacet(args: {
   return {
     kind: 'single',
     id: args.id,
-    label: args.label,
+    get label() {
+      return args.label;
+    },
     options: args.options,
     selectedId: args.selectedId,
     onSelect: args.onSelect,
@@ -277,11 +324,15 @@ function multiFacet(args: {
   return {
     kind: 'multi',
     id: args.id,
-    label: args.label,
+    get label() {
+      return args.label;
+    },
     options: args.options,
     activeIds: args.activeIds,
     onChange: args.onChange,
-    placeholder: args.placeholder,
+    get placeholder() {
+      return args.placeholder;
+    },
     isDefault: () => args.activeIds().length === 0,
     reset: () => args.onChange([]),
     values: () => {
@@ -334,7 +385,7 @@ export function useSearchFacets(
   });
 
   const typeOptions = createMemo<FacetOption[]>(() => [
-    { id: 'all', label: 'All' },
+    { id: 'all', label: t('soup.tabs.all') },
     ...[
       ...SEARCH_INDEX_OPTIONS,
       ...(calendarSearchEnabled() ? [CALENDAR_TYPE_OPTION] : []),
@@ -344,7 +395,7 @@ export function useSearchFacets(
   const buildTypeFacet = () =>
     singleFacet({
       id: 'type',
-      label: 'Type',
+      label: t('soup.filters.categories.type'),
       options: typeOptions(),
       defaultId: 'all',
       selectedId: controller.type,
@@ -353,11 +404,28 @@ export function useSearchFacets(
 
   const importance = singleFacet({
     id: 'importance',
-    label: 'Importance',
+    get label() {
+      return t('soup.search.facets.importance');
+    },
     options: [
-      { id: 'all', label: 'All' },
-      { id: 'signal', label: 'Signal' },
-      { id: 'noise', label: 'Noise' },
+      {
+        id: 'all',
+        get label() {
+          return t('soup.tabs.all');
+        },
+      },
+      {
+        id: 'signal',
+        get label() {
+          return t('soup.tabs.signal');
+        },
+      },
+      {
+        id: 'noise',
+        get label() {
+          return t('soup.tabs.noise');
+        },
+      },
     ],
     defaultId: 'all',
     selectedId: () => {
@@ -372,20 +440,26 @@ export function useSearchFacets(
   const inbox: SearchFacetVM = {
     kind: 'multi',
     id: 'email-inbox',
-    label: 'Inbox',
+    get label() {
+      return t('soup.search.facets.inbox');
+    },
     options: inboxPicker.options,
     activeIds: inboxPicker.activeIds,
     onChange: (ids) =>
       ids.length ? inboxPicker.onChange(ids) : inboxPicker.reset(),
     onOnly: inboxPicker.selectOnly,
-    placeholder: 'Search inboxes...',
+    get placeholder() {
+      return t('soup.filters.inboxes.searchPlaceholder');
+    },
     preserveOrder: true,
     isDefault: inboxPicker.isDefault,
     reset: inboxPicker.reset,
     values: () => {
       const ids = controller.emailInbox();
-      if (ids === undefined) return [{ id: 'all', label: 'All inboxes' }];
-      if (ids.length === 0) return [{ id: 'none', label: 'No inboxes' }];
+      if (ids === undefined)
+        return [{ id: 'all', label: t('soup.filters.inboxes.all') }];
+      if (ids.length === 0)
+        return [{ id: 'none', label: t('soup.filters.inboxes.none') }];
       const options = inboxPicker.options();
       return ids.map((id) => {
         const option = options.find((o) => o.id === id);
@@ -396,9 +470,15 @@ export function useSearchFacets(
 
   const channelIn = multiFacet({
     id: 'channel-in',
-    label: 'In',
-    neutralLabel: 'All channels',
-    placeholder: 'Search channels...',
+    get label() {
+      return t('soup.search.facets.in');
+    },
+    get neutralLabel() {
+      return t('soup.search.facets.allChannels');
+    },
+    get placeholder() {
+      return t('soup.search.facets.searchChannels');
+    },
     options: channelOptions,
     activeIds: controller.channelIn,
     onChange: controller.setChannelIn,
@@ -406,9 +486,15 @@ export function useSearchFacets(
 
   const channelFrom = multiFacet({
     id: 'channel-from',
-    label: 'From',
-    neutralLabel: 'Anyone',
-    placeholder: 'Search senders...',
+    get label() {
+      return t('soup.search.facets.from');
+    },
+    get neutralLabel() {
+      return t('soup.search.facets.anyone');
+    },
+    get placeholder() {
+      return t('soup.search.facets.searchSenders');
+    },
     options: personOptions,
     activeIds: controller.channelFrom,
     onChange: controller.setChannelFrom,
@@ -416,9 +502,15 @@ export function useSearchFacets(
 
   const callIn = multiFacet({
     id: 'call-in',
-    label: 'In',
-    neutralLabel: 'All channels',
-    placeholder: 'Search channels...',
+    get label() {
+      return t('soup.search.facets.in');
+    },
+    get neutralLabel() {
+      return t('soup.search.facets.allChannels');
+    },
+    get placeholder() {
+      return t('soup.search.facets.searchChannels');
+    },
     options: channelOptions,
     activeIds: controller.callIn,
     onChange: controller.setCallIn,
@@ -426,9 +518,15 @@ export function useSearchFacets(
 
   const callFrom = multiFacet({
     id: 'call-from',
-    label: 'From',
-    neutralLabel: 'Anyone',
-    placeholder: 'Search speakers...',
+    get label() {
+      return t('soup.search.facets.from');
+    },
+    get neutralLabel() {
+      return t('soup.search.facets.anyone');
+    },
+    get placeholder() {
+      return t('soup.search.facets.searchSpeakers');
+    },
     options: personOptions,
     activeIds: controller.callFrom,
     onChange: controller.setCallFrom,
@@ -436,12 +534,21 @@ export function useSearchFacets(
 
   const callStatus = singleFacet({
     id: 'call-status',
-    label: 'Status',
+    get label() {
+      return t('soup.fields.status');
+    },
     options: [
-      { id: 'all', label: 'All' },
+      {
+        id: 'all',
+        get label() {
+          return t('soup.tabs.all');
+        },
+      },
       ...(Object.keys(CALL_STATUS_LABELS) as CallStatus[]).map((status) => ({
         id: status,
-        label: CALL_STATUS_LABELS[status],
+        get label() {
+          return CALL_STATUS_LABELS[status];
+        },
       })),
     ],
     defaultId: 'all',
@@ -452,9 +559,15 @@ export function useSearchFacets(
 
   const taskStatus = multiFacet({
     id: 'task-status',
-    label: 'Status',
-    neutralLabel: 'Any status',
-    placeholder: 'Filter by status...',
+    get label() {
+      return t('soup.fields.status');
+    },
+    get neutralLabel() {
+      return t('soup.search.facets.anyStatus');
+    },
+    get placeholder() {
+      return t('soup.search.facets.filterStatus');
+    },
     options: () => TASK_STATUS_OPTIONS,
     activeIds: controller.taskStatus,
     onChange: controller.setTaskStatus,
@@ -462,9 +575,15 @@ export function useSearchFacets(
 
   const taskPriority = multiFacet({
     id: 'task-priority',
-    label: 'Priority',
-    neutralLabel: 'Any priority',
-    placeholder: 'Filter by priority...',
+    get label() {
+      return t('soup.fields.priority');
+    },
+    get neutralLabel() {
+      return t('soup.search.facets.anyPriority');
+    },
+    get placeholder() {
+      return t('soup.search.facets.filterPriority');
+    },
     options: () => TASK_PRIORITY_OPTIONS,
     activeIds: controller.taskPriority,
     onChange: controller.setTaskPriority,
@@ -472,9 +591,15 @@ export function useSearchFacets(
 
   const taskAssignee = multiFacet({
     id: 'task-assignee',
-    label: 'Assignee',
-    neutralLabel: 'Anyone',
-    placeholder: 'Search assignees...',
+    get label() {
+      return t('soup.fields.assignee');
+    },
+    get neutralLabel() {
+      return t('soup.search.facets.anyone');
+    },
+    get placeholder() {
+      return t('soup.filters.assignees.placeholder');
+    },
     options: personOptions,
     activeIds: controller.taskAssignees,
     onChange: controller.setTaskAssignees,
@@ -482,9 +607,15 @@ export function useSearchFacets(
 
   const taskCreatedBy = multiFacet({
     id: 'task-created-by',
-    label: 'Created by',
-    neutralLabel: 'Anyone',
-    placeholder: 'Search creators...',
+    get label() {
+      return t('soup.fields.createdBy');
+    },
+    get neutralLabel() {
+      return t('soup.search.facets.anyone');
+    },
+    get placeholder() {
+      return t('soup.filters.creators.placeholder');
+    },
     options: personOptions,
     activeIds: controller.taskCreatedBy,
     onChange: controller.setTaskCreatedBy,
@@ -493,9 +624,15 @@ export function useSearchFacets(
   const tags: SearchFacetVM = {
     ...multiFacet({
       id: 'tags',
-      label: 'Tags',
-      neutralLabel: 'Any tag',
-      placeholder: 'Filter by tag...',
+      get label() {
+        return t('soup.fields.tags');
+      },
+      get neutralLabel() {
+        return t('soup.search.facets.anyTag');
+      },
+      get placeholder() {
+        return t('soup.filters.tags.placeholder');
+      },
       options: tagSource.options,
       activeIds: () => controller.tags().map((t) => t.value),
       onChange: (ids) => {

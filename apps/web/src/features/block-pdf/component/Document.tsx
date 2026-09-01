@@ -672,7 +672,9 @@ export function Document() {
           }}
           onMouseUp={selectionHandler}
           onTouchEnd={selectionHandler}
-        >{t('auto.this_is_where_the_document_sho')}</div>
+        >
+          {t('pdf.viewer.missingDocument')}
+        </div>
         <InnerDocument />
         <Show when={!isNestedBlock}>
           <ViewerPopupProvider isPopup>

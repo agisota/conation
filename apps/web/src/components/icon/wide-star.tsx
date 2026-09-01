@@ -1,5 +1,4 @@
 import { cn } from '@ui';
-import { t } from '@app/lib/i18n';
 import { createUniqueId } from 'solid-js';
 
 export const AnimatedStarIcon = (props: {
@@ -22,7 +21,6 @@ export const AnimatedStarIcon = (props: {
         props.class
       )}
     >
-      {/*<title>{t('auto.animated_star_icon')}</title>*/}
       <style>{`
         .animated-star-icon {
           .star-inflate, .star-eye, #${maskId} .inflated-rhombus {

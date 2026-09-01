@@ -1,4 +1,5 @@
 import { SearchState } from '@app/features/command/mobile/mobileSearchState';
+import { t } from '@app/lib/i18n';
 import { createMemo } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { FloatRegion } from './float-regions/FloatRegion';
@@ -23,7 +24,7 @@ export function MobileViewsRow() {
   const dockViews = useMobileDockViews();
 
   const items = createMemo<PillTabItem<MobileNavViewId>[]>(() => [
-    { value: 'search', label: 'All' },
+    { value: 'search', label: t('shell.command.category.all') },
     ...dockViews().map((view) =>
       view.pillIcon
         ? {

@@ -63,7 +63,7 @@ pub(super) async fn cursor_soup(
     let mut query =
         QueryBuilder::<Postgres>::new(format!("{} WHERE (event.owner_id = ", select_sql()));
     query.push_bind(req.user_id.as_ref().to_string());
-    query.push(" OR EXISTS (SELECT 1 FROM conation_user_links link WHERE link.link_id = event.source_link_id AND link.primary_conation_id = ");
+    query.push(" OR EXISTS (SELECT 1 FROM macro_user_links link WHERE link.link_id = event.source_link_id AND link.primary_macro_id = ");
     query.push_bind(req.user_id.as_ref().to_string());
     query.push("))");
     if let Some(filter) = &parts.filter {
@@ -111,7 +111,7 @@ pub(super) async fn by_ids(
     let mut query =
         QueryBuilder::<Postgres>::new(format!("{} WHERE (event.owner_id = ", select_sql()));
     query.push_bind(req.user_id.as_ref().to_string());
-    query.push(" OR EXISTS (SELECT 1 FROM conation_user_links link WHERE link.link_id = event.source_link_id AND link.primary_conation_id = ");
+    query.push(" OR EXISTS (SELECT 1 FROM macro_user_links link WHERE link.link_id = event.source_link_id AND link.primary_macro_id = ");
     query.push_bind(req.user_id.as_ref().to_string());
     query.push(")) AND event.id = ANY(");
     query.push_bind(ids);

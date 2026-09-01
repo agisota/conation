@@ -10,6 +10,31 @@ fn make_invite() -> InviteToMacro {
     }
 }
 
+fn has_cyrillic(text: &str) -> bool {
+    text.chars()
+        .any(|character| matches!(character, '\u{0400}'..='\u{052f}'))
+}
+
+fn make_channel_invite() -> ChannelInviteMetadata {
+    ChannelInviteMetadata {
+        invited_by: MacroUserIdStr::try_from_email("sender@example.com").unwrap(),
+        channel_name: "engineering".to_string(),
+        message_content: None,
+        sender_profile_picture_url: None,
+    }
+}
+
+fn make_team_invite() -> InviteToTeamMetadata {
+    InviteToTeamMetadata {
+        team_name: "Platform".to_string(),
+        team_id: Uuid::new_v4(),
+        team_invite_id: Uuid::new_v4(),
+        invited_by: MacroUserIdStr::try_from_email("sender@example.com").unwrap(),
+        role: Some("Member".to_string()),
+        sender_profile_picture_url: None,
+    }
+}
+
 #[test]
 fn referral_url_does_not_panic() {
     let invite = make_invite();
@@ -37,11 +62,17 @@ fn format_email_with_sender_name() {
     let invite = make_invite();
     let referral_url = invite.referral_url().to_string();
     let email = invite.format_email();
-    assert_eq!(email.subject, "Test User has invited you to join Macro");
+    assert_eq!(email.subject, "Test User has invited you to join Conation");
     assert!(
         email.body.contains(&referral_url),
         "email body should contain the referral URL"
     );
+    assert!(email.body.contains("has invited you to Conation"));
+    assert!(!email.body.contains("A Conation user"));
+    assert!(email.body.contains("static-file-service.macro.com"));
+    assert!(!email.body.contains("static-file-service.conation.dev"));
+    assert!(!has_cyrillic(&email.subject));
+    assert!(!has_cyrillic(&email.body));
 }
 
 #[test]
@@ -53,7 +84,7 @@ fn format_email_falls_back_to_email_when_no_name() {
     let email = invite.format_email();
     assert_eq!(
         email.subject,
-        "sender@example.com has invited you to join Macro"
+        "sender@example.com has invited you to join Conation"
     );
     assert!(email.body.contains("sender@example.com"));
 }
@@ -66,7 +97,50 @@ fn format_email_falls_back_to_generic_when_no_name_or_email() {
         ..make_invite()
     };
     let email = invite.format_email();
-    assert_eq!(email.subject, "A Macro user has invited you to join Macro");
+    assert_eq!(
+        email.subject,
+        "A Conation user has invited you to join Conation"
+    );
+    assert!(email.body.contains("A Conation user"));
+    assert!(!has_cyrillic(&email.subject));
+    assert!(!has_cyrillic(&email.body));
+}
+
+#[test]
+fn channel_invite_uses_conation_display_copy_and_compatibility_links() {
+    let invite = make_channel_invite();
+    let email = invite.format_email();
+
+    assert_eq!(
+        invite.format_body(None).unwrap(),
+        "Open Conation to continue"
+    );
+    assert_eq!(
+        email.subject,
+        "sender@example.com has invited you to join #engineering"
+    );
+    assert!(email.body.contains("on Conation"));
+    assert!(email.body.contains("https://macro.com/app/signup"));
+    assert!(email.body.contains("static-file-service.macro.com"));
+    assert!(!email.body.contains("static-file-service.conation.dev"));
+    assert!(!has_cyrillic(&email.subject));
+    assert!(!has_cyrillic(&email.body));
+}
+
+#[test]
+fn team_invite_subject_and_body_use_conation_display_name() {
+    let invite = make_team_invite();
+    let email = invite.format_email();
+
+    assert_eq!(
+        email.subject,
+        "sender@example.com has invited you to the Platform team on Conation"
+    );
+    assert!(email.body.contains("Platform</strong> team on Conation"));
+    assert!(email.body.contains("https://macro.com/app/team-invite?id="));
+    assert!(email.body.contains("static-file-service.macro.com"));
+    assert!(!has_cyrillic(&email.subject));
+    assert!(!has_cyrillic(&email.body));
 }
 
 #[test]

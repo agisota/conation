@@ -332,10 +332,10 @@ fn an_echoed_credential_never_reaches_the_sandbox() {
 /// or a trailing dot is not an email, and casing normalizes before the
 /// compare rather than defeating it.
 #[test]
-fn the_staff_gate_admits_exactly_the_conation_domain() {
+fn the_staff_gate_admits_exactly_the_macro_domain() {
     for staff in ["wolf@macro.com", "wolf@MACRO.COM", "wolf+agents@macro.com"] {
         let owner = MacroUserIdStr::try_from_email(staff).expect(staff);
-        assert!(is_conation_staff(&owner), "refused {staff}");
+        assert!(is_macro_staff(&owner), "refused {staff}");
     }
 
     for visitor in [
@@ -345,7 +345,7 @@ fn the_staff_gate_admits_exactly_the_conation_domain() {
         "evil@macro.org",
     ] {
         let owner = MacroUserIdStr::try_from_email(visitor).expect(visitor);
-        assert!(!is_conation_staff(&owner), "admitted {visitor}");
+        assert!(!is_macro_staff(&owner), "admitted {visitor}");
     }
 
     for not_an_email in [

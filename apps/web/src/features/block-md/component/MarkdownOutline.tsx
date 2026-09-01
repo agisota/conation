@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { HoverCard } from '@core/component/HoverCard';
 import { $isHeadingNode } from '@lexical/rich-text';
 import { $getRoot, type LexicalEditor } from 'lexical';
@@ -245,7 +246,7 @@ export function MarkdownOutline(props: {
             </For>
           </div>
         }
-        triggerAriaLabel="Document outline"
+        triggerAriaLabel={t('markdown.outline.label')}
         triggerAs="nav"
         triggerClass="w-3 outline-none"
         triggerTabIndex={0}

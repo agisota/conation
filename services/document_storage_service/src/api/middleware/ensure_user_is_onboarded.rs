@@ -15,7 +15,7 @@ pub async fn handler(
     req: Request,
     next: Next,
 ) -> Result<Response, (StatusCode, String)> {
-    let is_onboarded = get_onboarding_status(&db, user.authorization.user.conation_user_id.as_ref())
+    let is_onboarded = get_onboarding_status(&db, user.authorization.user.macro_user_id.as_ref())
         .await
         .map_err(|e| {
             (

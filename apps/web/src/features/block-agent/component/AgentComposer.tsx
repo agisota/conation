@@ -5,8 +5,8 @@
  * boundary.
  */
 
-import { Show } from 'solid-js';
 import { t } from '@app/lib/i18n';
+import { Show } from 'solid-js';
 import { useAgentSession } from '../context/AgentSessionContext';
 import {
   AgentInput,
@@ -33,7 +33,7 @@ export function AgentComposer() {
   return (
     <>
       <Show when={resuming()}>
-        <ComposerNotice text="Waking the agent's sandbox…" active />
+        <ComposerNotice text={t('agent.composer.resuming')} active />
       </Show>
       <QueuedPromptList
         prompts={composer.queue()}
@@ -43,7 +43,7 @@ export function AgentComposer() {
         onRemove={composer.remove}
       />
       <AgentInput
-        placeholder={t('auto.message_the_agent')}
+        placeholder={t('agent.composer.placeholder')}
         autofocus={autofocus}
         busy={composer.busy()}
         disabled={loadFailed()}

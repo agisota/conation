@@ -9,9 +9,9 @@ use uuid::Uuid;
 /// How a caller is allowed to act on an inbox.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InboxAccess {
-    /// The caller owns the inbox (`link.conation_id == caller`).
+    /// The caller owns the inbox (`link.macro_id == caller`).
     Own,
-    /// The caller reaches the inbox through a `conation_user_links` edge.
+    /// The caller reaches the inbox through a `macro_user_links` edge.
     Delegated,
 }
 
@@ -59,21 +59,21 @@ impl IntoResponse for InboxActionError {
 /// has neither ownership nor a delegation edge.
 pub async fn authorize_inbox_access(
     ctx: &ApiContext,
-    caller_conation_id: &str,
+    caller_macro_id: &str,
     link_id: Uuid,
 ) -> Result<(Link, InboxAccess), InboxActionError> {
     let link = email_db_client::links::get::fetch_link_by_id(&ctx.db, link_id)
         .await?
         .ok_or(InboxActionError::NotFound)?;
 
-    if link.conation_id.as_ref() == caller_conation_id {
+    if link.macro_id.as_ref() == caller_macro_id {
         return Ok((link, InboxAccess::Own));
     }
 
-    let delegated = conation_db_client::conation_user_links::edge_exists(
+    let delegated = conation_db_client::macro_user_links::edge_exists(
         &ctx.db,
-        caller_conation_id,
-        link.conation_id.as_ref(),
+        caller_macro_id,
+        link.macro_id.as_ref(),
         link.id,
     )
     .await?;

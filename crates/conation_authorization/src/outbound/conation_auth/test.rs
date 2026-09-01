@@ -1,8 +1,8 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use ::conation_auth::{
-    error::MacroAuthError,
     conation_api_token::MacroApiToken,
+    error::MacroAuthError,
     middleware::decode_jwt::{JwtToken, JwtValidationArgs, MacroAccessToken},
 };
 use jsonwebtoken::{Algorithm, EncodingKey, Header, encode};
@@ -23,7 +23,7 @@ fn unix_timestamp() -> usize {
 fn access_token(
     secret: &str,
     expiration: usize,
-    root_conation_id: Option<&str>,
+    root_macro_id: Option<&str>,
     organization_id: Option<i32>,
 ) -> String {
     let claims = MacroAccessToken {
@@ -33,9 +33,9 @@ fn access_token(
         iss: String::new(),
         email: "user@example.com".to_string(),
         fusion_user_id: FUSION_USER_ID.to_string(),
-        conation_user_id: MACRO_USER_ID.to_string(),
-        conation_organization_id: organization_id,
-        root_conation_id: root_conation_id.map(str::to_string),
+        macro_user_id: MACRO_USER_ID.to_string(),
+        macro_organization_id: organization_id,
+        root_macro_id: root_macro_id.map(str::to_string),
     };
     let mut header = Header::new(Algorithm::HS256);
     header.kid = Some("fusionauth".to_string());
@@ -118,7 +118,7 @@ fn maps_wrong_signature_to_invalid_credentials() {
 }
 
 #[test]
-fn maps_root_conation_id_to_fusion_identity_field() {
+fn maps_root_macro_id_to_fusion_identity_field() {
     let token = access_token("", unix_timestamp() + 3_600, Some("root-macro-id"), None);
 
     let identity = validator().validate(&token).unwrap();
@@ -142,8 +142,8 @@ fn maps_conation_api_token_claims() {
         exp: unix_timestamp() + 3_600,
         iss: String::new(),
         fusion_user_id: FUSION_USER_ID.to_string(),
-        conation_user_id: MACRO_USER_ID.to_string(),
-        conation_organization_id: Some(84),
+        macro_user_id: MACRO_USER_ID.to_string(),
+        macro_organization_id: Some(84),
     }));
 
     assert_eq!(identity.user_id, MACRO_USER_ID);

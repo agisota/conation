@@ -16,7 +16,6 @@ export const AnimatedCommandIcon = (props: { triggerAnimation?: boolean }) => {
       overflow="visible"
       class={`animated-command-icon ${props.triggerAnimation ? 'animating' : ''}`}
     >
-      {/*<title>{t('auto.animated_command_icon')}</title>*/}
       <style>{`
         .animated-command-icon {
           .bg-fill { opacity: 0; transition: opacity 0.3s ease; }

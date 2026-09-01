@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import {
   autoUpdate,
   type ComputePositionReturn,
@@ -6,7 +7,6 @@ import {
   shift,
 } from '@floating-ui/dom';
 import { createEffect, createMemo, type JSX, onCleanup, Show } from 'solid-js';
-import { t } from '@app/lib/i18n';
 import { createStore, produce } from 'solid-js/store';
 import { styled } from 'solid-styled-components';
 import type Section from '../../model/Section';
@@ -259,7 +259,9 @@ export function DefinitionLookup(props: IProps) {
                     })
                   )
                 }
-              >{t('auto.terms')}</TabButton>
+              >
+                {t('pdf.definition.terms')}
+              </TabButton>
               <TabButton
                 class="definition-popup-tab-button"
                 isActive={state.activeTab === 'REFERENCE_TAB'}
@@ -270,7 +272,9 @@ export function DefinitionLookup(props: IProps) {
                     })
                   )
                 }
-              >{t('auto.uses')}</TabButton>
+              >
+                {t('pdf.definition.uses')}
+              </TabButton>
             </div>
           </div>
           {state.activeTab === 'DEFINITION_TAB' ? (

@@ -108,7 +108,7 @@ pub async fn handler<T: AiProjectionService, Auth: MacroAuthorizationService>(
     if requires_professional_features(req.model.as_deref())
         && !state
             .service
-            .has_professional_features(&user.conation_user_id)
+            .has_professional_features(&user.macro_user_id)
             .await?
     {
         return Err(UpsertProjectionError::ProfessionalFeaturesRequired);
@@ -117,7 +117,7 @@ pub async fn handler<T: AiProjectionService, Auth: MacroAuthorizationService>(
     let target_projection = state
         .service
         .upsert_projection(
-            &user.conation_user_id,
+            &user.macro_user_id,
             UpsertProjectionParams {
                 id: req.id,
                 prompt: req.prompt,

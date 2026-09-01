@@ -35,31 +35,33 @@ export function CompanyEmailsSection(props: { company?: CrmCompanyEntity }) {
   });
 
   const emptyMessage = () => {
-    const kind = signalView() === 'signal' ? 'signal emails' : 'emails';
-    if (view() === 'me') return `No ${kind} with this company in your inbox.`;
+    const kind = signalView() === 'signal' ? 'signal' : 'all';
+    if (view() === 'me') return t('companies.emails.empty.inbox', { kind });
     if (props.company?.emailSync === false) {
-      return 'Email sync is disabled for this company.';
+      return t('companies.emails.empty.syncDisabled');
     }
-    return `No ${kind} with this company yet.`;
+    return t('companies.emails.empty.team', { kind });
   };
 
   return (
     <div class="flex flex-col gap-2">
       <div class="flex items-center justify-between gap-2">
-        <h2 class="text-sm font-medium text-ink-muted">{t('auto.emails')}</h2>
+        <h2 class="text-sm font-medium text-ink-muted">
+          {t('companies.sections.emails')}
+        </h2>
         <div class="flex items-center gap-2.5">
           <TabsInset
             list={[
-              { value: 'signal', label: 'Signal' },
-              { value: 'all', label: 'All' },
+              { value: 'signal', label: t('companies.emails.tabs.signal') },
+              { value: 'all', label: t('companies.emails.tabs.all') },
             ]}
             value={signalView()}
             onChange={(v) => setSignalView(v as EmailSignalView)}
           />
           <TabsInset
             list={[
-              { value: 'team', label: 'Team' },
-              { value: 'me', label: 'Me' },
+              { value: 'team', label: t('companies.emails.tabs.team') },
+              { value: 'me', label: t('companies.emails.tabs.me') },
             ]}
             value={view()}
             onChange={(v) => setView(v as EmailView)}
@@ -69,7 +71,9 @@ export function CompanyEmailsSection(props: { company?: CrmCompanyEntity }) {
       <Show
         when={props.company && !emailsQuery.isLoading}
         fallback={
-          <div class="p-6 text-center text-sm text-ink-muted">{t('common.loading')}</div>
+          <div class="p-6 text-center text-sm text-ink-muted">
+            {t('common.loading')}
+          </div>
         }
       >
         <Show
@@ -103,7 +107,7 @@ export function CompanyEmailsSection(props: { company?: CrmCompanyEntity }) {
             </Show>
             <Show when={emailsQuery.isFetchingNextPage}>
               <div class="p-3 text-center text-xs text-ink-muted">
-                Loading more…
+                {t('companies.emails.loadingMore')}
               </div>
             </Show>
           </div>

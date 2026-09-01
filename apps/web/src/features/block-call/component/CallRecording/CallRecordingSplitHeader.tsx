@@ -3,8 +3,10 @@ import {
   ChatWithAgentIcon,
   openChatWithAgent,
 } from '@app/features/chat/ChatWithAgentButton';
+import { t } from '@app/lib/i18n';
 import { useCall } from '@channel/Call/use-call';
 import {
+  BLOCK_TOOL_IDS,
   type BlockTool,
   ResponsiveBlockToolbar,
   ResponsivePermissionsBadge,
@@ -36,7 +38,7 @@ export function CallRecordingSplitHeaderLoading() {
       <div class="h-full my-auto flex min-w-0 items-center justify-start gap-3">
         <div class="ph-no-capture z-split-header-content relative flex h-full max-w-full min-w-0 shrink items-center gap-2">
           <StaticSplitLabel
-            label="Call Recording"
+            label={t('call.recording.defaultName')}
             icon={
               <PhoneCallIcon class="size-4 touch:size-6 shrink-0 text-ink-muted" />
             }
@@ -53,11 +55,14 @@ export function CallRecordingSplitHeader(props: {
   const record = props.record;
   const blockId = useBlockId();
   const shareCtx = useShareDialogContext();
-  const callName = () => record().customName ?? record().channelName ?? 'Call';
+  const callName = () =>
+    record().customName ?? record().channelName ?? t('call.defaultName');
   const call = useCall(() => record().channelId);
 
   const shareTool: BlockTool = {
-    label: 'Share',
+    id: BLOCK_TOOL_IDS.share,
+    group: 'sharing',
+    label: t('block.actions.share'),
     icon: IconShared,
     action: () => shareCtx.open(),
     buttonComponent: () => <ShareTrigger />,
@@ -66,7 +71,7 @@ export function CallRecordingSplitHeader(props: {
 
   const tools: BlockTool[] = [
     {
-      label: 'Ask Macro',
+      label: t('chat.actions.askConation'),
       icon: ChatWithAgentIcon,
       action: () =>
         openChatWithAgent({
@@ -78,7 +83,8 @@ export function CallRecordingSplitHeader(props: {
       condition: isMobile,
     },
     {
-      label: 'Chat',
+      id: BLOCK_TOOL_IDS.chat,
+      label: t('chat.actions.chat'),
       icon: ChatWithAgentIcon,
       action: () =>
         openChatWithAgent({
@@ -103,7 +109,7 @@ export function CallRecordingSplitHeader(props: {
 
   const menuTools: BlockTool[] = [
     {
-      label: 'Ask Macro',
+      label: t('chat.actions.askConation'),
       icon: ChatWithAgentIcon,
       action: () =>
         openChatWithAgent({
@@ -143,7 +149,7 @@ export function CallRecordingSplitHeader(props: {
                 variant="outline"
                 size="icon-xs"
                 class="bg-surface"
-                tooltip="Call Again"
+                tooltip={t('call.actions.callAgain')}
                 onClick={() => call.joinCall()}
               >
                 <PhoneCallIcon class="size-4" />

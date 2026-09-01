@@ -1,10 +1,6 @@
+import { t } from '@app/lib/i18n';
 import { globalSplitManager } from '@app/signal/splitLayout';
 import type { ComposeTaskSuccess } from '@block-md/component/ComposeTask';
-import { trackMention } from '@core/signal/mention';
-import { LinkNode } from '@lexical/link';
-import { ListNode } from '@lexical/list';
-import { HeadingNode, QuoteNode } from '@lexical/rich-text';
-import { INSERT_TABLE_COMMAND, TableNode } from '@lexical/table';
 import {
   $createDocumentMentionNode,
   AwaitNode,
@@ -15,6 +11,11 @@ import {
   ImageNode,
   VideoNode,
 } from '@conation/lexical-core';
+import { trackMention } from '@core/signal/mention';
+import { LinkNode } from '@lexical/link';
+import { ListNode } from '@lexical/list';
+import { HeadingNode, QuoteNode } from '@lexical/rich-text';
+import { INSERT_TABLE_COMMAND, TableNode } from '@lexical/table';
 import CheckSquare from '@phosphor/check-square.svg';
 import CodeBlock from '@phosphor/code-block.svg';
 import VideoIcon from '@phosphor/file-video.svg';
@@ -33,11 +34,11 @@ import TextH2 from '@phosphor/text-h-two.svg';
 import TextT from '@phosphor/text-t.svg';
 import type { LexicalEditor } from 'lexical';
 import { nanoid } from 'nanoid';
-import { INSERT_HORIZONTAL_RULE_COMMAND } from '..';
 import {
   INSERT_AWAIT_NODE_COMMAND,
   REPLACE_AWAIT_NODE_COMMAND,
 } from '../await';
+import { INSERT_HORIZONTAL_RULE_COMMAND } from '../horizontal-rules/horizontalRulePlugin';
 import { TRY_INSERT_EQUATION_COMMAND } from '../katex';
 import { TRY_INSERT_LINK_COMMAND } from '../links';
 import { TRY_INSERT_MEDIA_UPLOAD_COMMAND } from '../media';
@@ -65,7 +66,9 @@ async function trackSlashTaskMention(
 export const ACTIONS: Action[] = [
   {
     id: 'paragraph',
-    name: 'Normal Text',
+    get name() {
+      return t('editor.actions.normalText');
+    },
     keywords: ['paragraph', 'text', 'none', 'normal'],
     category: ActionCategory.ELEMENT,
     icon: TextT,
@@ -75,7 +78,9 @@ export const ACTIONS: Action[] = [
   },
   {
     id: 'heading1',
-    name: 'Heading 1',
+    get name() {
+      return t('editor.format.heading.level1');
+    },
     keywords: ['h1', 'title', 'large', 'header'],
     category: ActionCategory.FORMAT,
     icon: TextH1,
@@ -87,7 +92,9 @@ export const ACTIONS: Action[] = [
   },
   {
     id: 'heading2',
-    name: 'Heading 2',
+    get name() {
+      return t('editor.format.heading.level2');
+    },
     keywords: ['h2', 'title', 'medium', 'header'],
     category: ActionCategory.FORMAT,
     icon: TextH2,
@@ -99,7 +106,9 @@ export const ACTIONS: Action[] = [
   },
   {
     id: 'heading3',
-    name: 'Heading 3',
+    get name() {
+      return t('editor.format.heading.level3');
+    },
     keywords: ['h3', 'title', 'medium', 'header'],
     category: ActionCategory.FORMAT,
     icon: TextH3,
@@ -111,7 +120,9 @@ export const ACTIONS: Action[] = [
   },
   {
     id: 'quote',
-    name: 'Quote',
+    get name() {
+      return t('editor.format.quote');
+    },
     keywords: ['quote'],
     category: ActionCategory.ELEMENT,
     icon: Quote,
@@ -123,7 +134,9 @@ export const ACTIONS: Action[] = [
   },
   {
     id: 'code',
-    name: 'Code',
+    get name() {
+      return t('editor.format.codeBlock');
+    },
     keywords: ['code', 'pre', 'programming'],
     category: ActionCategory.ELEMENT,
     icon: CodeBlock,
@@ -135,7 +148,9 @@ export const ACTIONS: Action[] = [
   },
   {
     id: 'list-bullet',
-    name: 'Bullet List',
+    get name() {
+      return t('editor.format.list.bulleted');
+    },
     keywords: ['bullet', 'list', 'unordered'],
     category: ActionCategory.ELEMENT,
     icon: ListBullets,
@@ -147,7 +162,9 @@ export const ACTIONS: Action[] = [
   },
   {
     id: 'list-number',
-    name: 'Numbered List',
+    get name() {
+      return t('editor.format.list.numbered');
+    },
     keywords: ['numbered', 'list', 'ordered'],
     category: ActionCategory.ELEMENT,
     icon: ListNumbers,
@@ -159,7 +176,9 @@ export const ACTIONS: Action[] = [
   },
   {
     id: 'list-check',
-    name: 'Checklist',
+    get name() {
+      return t('editor.format.list.checklist');
+    },
     keywords: ['checklist', 'list', 'checked'],
     category: ActionCategory.ELEMENT,
     icon: ListChecks,
@@ -171,7 +190,9 @@ export const ACTIONS: Action[] = [
   },
   {
     id: 'task',
-    name: 'Task',
+    get name() {
+      return t('editor.actions.task');
+    },
     keywords: ['task', 'todo', 'create'],
     category: ActionCategory.ELEMENT,
     icon: CheckSquare,
@@ -190,7 +211,7 @@ export const ACTIONS: Action[] = [
                 INSERT_AWAIT_NODE_COMMAND,
                 {
                   awaitId,
-                  text: `Creating ${title}`,
+                  text: t('editor.actions.creatingTask', { title }),
                 }
               );
               placeholderInserted = handled;
@@ -235,7 +256,9 @@ export const ACTIONS: Action[] = [
   },
   {
     id: 'image',
-    name: 'Image',
+    get name() {
+      return t('editor.actions.image');
+    },
     keywords: ['picture', 'photo', 'img', 'upload'],
     category: ActionCategory.MEDIA,
     icon: ImageIcon,
@@ -248,7 +271,9 @@ export const ACTIONS: Action[] = [
   },
   {
     id: 'video',
-    name: 'Video',
+    get name() {
+      return t('editor.actions.video');
+    },
     keywords: ['video', 'movie', 'film', 'upload'],
     category: ActionCategory.MEDIA,
     icon: VideoIcon,
@@ -261,7 +286,9 @@ export const ACTIONS: Action[] = [
   },
   {
     id: 'link',
-    name: 'Link',
+    get name() {
+      return t('editor.actions.link');
+    },
     keywords: ['link', 'url'],
     icon: LinkIcon,
     category: ActionCategory.MEDIA,
@@ -274,7 +301,9 @@ export const ACTIONS: Action[] = [
   },
   {
     id: 'latex',
-    name: 'Math',
+    get name() {
+      return t('editor.actions.math');
+    },
     keywords: ['math', 'latex', 'equation'],
     icon: MathIcon,
     category: ActionCategory.MEDIA,
@@ -287,7 +316,9 @@ export const ACTIONS: Action[] = [
   },
   {
     id: 'table',
-    name: 'Table',
+    get name() {
+      return t('editor.actions.table');
+    },
     keywords: ['table', 'grid'],
     icon: TableIcon,
     category: ActionCategory.MEDIA,
@@ -310,7 +341,9 @@ export const ACTIONS: Action[] = [
   },
   {
     id: 'hr',
-    name: 'Divider',
+    get name() {
+      return t('editor.actions.divider');
+    },
     keywords: ['hr', 'horizontal', 'line', 'divider'],
     icon: Minus,
     shortcut: '---',

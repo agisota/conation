@@ -305,7 +305,7 @@ async fn reindex_threads_for_changed_contacts<B: MacroEventBroker>(
         "Re-indexing threads for contacts with name changes"
     );
 
-    publish_thread_reindex_batches(conation_event_broker, link.id, &link.conation_id, &thread_ids);
+    publish_thread_reindex_batches(conation_event_broker, link.id, &link.macro_id, &thread_ids);
 }
 
 fn publish_thread_reindex_batches<B: MacroEventBroker>(

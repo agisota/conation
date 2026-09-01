@@ -47,27 +47,27 @@ async fn insert_bot_token(
 }
 
 async fn insert_user(pool: &PgPool) {
-    let conation_user_id = Uuid::new_v4();
+    let macro_user_id = Uuid::new_v4();
     sqlx::query!(
         r#"
-        INSERT INTO conation_user (id, username, email, stripe_customer_id)
+        INSERT INTO macro_user (id, username, email, stripe_customer_id)
         VALUES ($1, $2, $2, $3)
         "#,
-        conation_user_id,
+        macro_user_id,
         USER_EMAIL,
-        format!("stripe_{conation_user_id}"),
+        format!("stripe_{macro_user_id}"),
     )
     .execute(pool)
     .await
     .unwrap();
     sqlx::query!(
         r#"
-        INSERT INTO "User" (id, email, conation_user_id)
+        INSERT INTO "User" (id, email, macro_user_id)
         VALUES ($1, $2, $3)
         "#,
         FUSION_USER_ID,
         USER_EMAIL,
-        conation_user_id,
+        macro_user_id,
     )
     .execute(pool)
     .await
@@ -158,7 +158,7 @@ async fn resolves_acting_users_by_conation_or_fusion_identifier(pool: PgPool) {
             .await
             .unwrap()
             .expect("acting user");
-        assert_eq!(user.conation_user_id.as_ref(), USER_ID);
+        assert_eq!(user.macro_user_id.as_ref(), USER_ID);
         assert_eq!(user.fusion_user_id, FUSION_USER_ID);
         assert_eq!(user.organization_id, None);
     }

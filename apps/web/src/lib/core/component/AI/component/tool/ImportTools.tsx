@@ -1,5 +1,5 @@
-import TrayArrowDown from '@phosphor-icons/core/regular/tray-arrow-down.svg';
 import { t } from '@app/lib/i18n';
+import TrayArrowDown from '@phosphor-icons/core/regular/tray-arrow-down.svg';
 import { createSignal } from 'solid-js';
 import { match } from 'ts-pattern';
 import { BaseTool } from './BaseTool';
@@ -93,7 +93,9 @@ export const deleteImportEntityHandler = createToolRenderer({
       icon={TrayArrowDown}
       renderContext={ctx.renderContext}
       type="call"
-    >{t('auto.decline_an_import_candidate')}</BaseTool>
+    >
+      {t('ai.tools.import.declineCandidate')}
+    </BaseTool>
   ),
 });
 
@@ -104,6 +106,8 @@ export const listImportEntitiesHandler = createToolRenderer({
       icon={TrayArrowDown}
       renderContext={ctx.renderContext}
       type="call"
-    >{t('auto.list_import_candidates')}</BaseTool>
+    >
+      {t('ai.tools.import.listCandidates')}
+    </BaseTool>
   ),
 });

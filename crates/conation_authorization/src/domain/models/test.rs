@@ -14,7 +14,7 @@ const TEAM_ID: Uuid = Uuid::from_u128(3);
 
 fn user_authentication() -> MacroUserAuthentication {
     MacroUserAuthentication {
-        conation_user_id: MacroUserIdStr::try_from("macro|user@example.com".to_string())
+        macro_user_id: MacroUserIdStr::try_from("macro|user@example.com".to_string())
             .expect("valid Macro user id"),
         user_context: UserContext {
             user_id: "macro|user@example.com".to_string(),
@@ -26,7 +26,7 @@ fn user_authentication() -> MacroUserAuthentication {
 }
 
 fn assert_acting_user(user: &MacroUserAuthentication) {
-    assert_eq!(user.conation_user_id.as_ref(), "macro|user@example.com");
+    assert_eq!(user.macro_user_id.as_ref(), "macro|user@example.com");
     assert_eq!(user.user_context.user_id, "macro|user@example.com");
     assert_eq!(user.user_context.fusion_user_id, "fusion-user-id");
     assert_eq!(user.user_context.organization_id, Some(42));

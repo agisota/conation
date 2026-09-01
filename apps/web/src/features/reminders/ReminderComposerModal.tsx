@@ -1,5 +1,5 @@
-import { toast } from '@core/component/Toast/Toast';
 import { t } from '@app/lib/i18n';
+import { toast } from '@core/component/Toast/Toast';
 import { registerHotkey, useHotkeyDOMScope } from '@core/hotkey/hotkeys';
 import {
   type CronParts,
@@ -197,7 +197,7 @@ export function ReminderComposerModal() {
   // handler below covers the usual case; both have to agree.
   const { dispose: disposeHotkey } = registerHotkey({
     hotkey: ['escape'],
-    description: 'Go back, or close the reminder composer',
+    description: t('reminders.composer.hotkey.backOrClose'),
     keyDownHandler: () => {
       handleEscape();
       return true;
@@ -264,9 +264,9 @@ export function ReminderComposerModal() {
         // Both or neither: the API rejects one without the other.
         ...(attachTo ?? undefined),
       });
-      toast.success('Reminder set');
+      toast.success(t('reminders.composer.toast.created'));
     } catch {
-      toast.failure('Failed to create reminder');
+      toast.failure(t('reminders.composer.toast.createFailed'));
       return;
     }
 
@@ -299,9 +299,9 @@ export function ReminderComposerModal() {
 
     try {
       await createReminder.mutateAsync({ description: resolved, schedule });
-      toast.success('Reminder set');
+      toast.success(t('reminders.composer.toast.created'));
     } catch {
-      toast.failure('Failed to create reminder');
+      toast.failure(t('reminders.composer.toast.createFailed'));
       return;
     }
 
@@ -330,9 +330,9 @@ export function ReminderComposerModal() {
 
     try {
       await updateReminder.mutateAsync({ id: draft.id, patch });
-      toast.success('Reminder updated');
+      toast.success(t('reminders.composer.toast.updated'));
     } catch {
-      toast.failure('Failed to update reminder');
+      toast.failure(t('reminders.composer.toast.updateFailed'));
     }
   };
 
@@ -356,7 +356,7 @@ export function ReminderComposerModal() {
     // exempt: it sends no schedule, so an overdue reminder stays renamable.
     const keepsCurrentTime = date.getTime() === draft?.remindAt.getTime();
     if (!keepsCurrentTime && date.getTime() <= Date.now()) {
-      toast.failure('That time has already passed — pick another');
+      toast.failure(t('reminders.composer.toast.pastTime'));
       return;
     }
 
@@ -422,13 +422,13 @@ export function ReminderComposerModal() {
               <StepInput
                 placeholder={
                   editing()
-                    ? 'Reminder description'
+                    ? t('reminders.composer.description.editPlaceholder')
                     : // Not optional for a standalone reminder: there is no
                       // entity to name it after, so this is all it will ever
                       // say.
                       standalone()
-                      ? "What's the reminder?"
-                      : "What's the reminder? (optional)"
+                      ? t('reminders.composer.description.requiredPlaceholder')
+                      : t('reminders.composer.description.optionalPlaceholder')
                 }
                 value={description()}
                 onInput={setDescription}
@@ -440,7 +440,7 @@ export function ReminderComposerModal() {
             </Match>
             <Match when={step() === 'when'}>
               <StepInput
-                placeholder={t('auto.remind_me_when')}
+                placeholder={t('reminders.composer.whenPlaceholder')}
                 value={query()}
                 onInput={setQuery}
               />
@@ -448,7 +448,9 @@ export function ReminderComposerModal() {
             <Match when={step() === 'repeat'}>
               {/* Not an input: the repeat picker is controls, not a query, so
                   the header states what is being answered instead. */}
-              <span class="px-2 text-base text-ink-muted">{t('auto.how_often')}</span>
+              <span class="px-2 text-base text-ink-muted">
+                {t('reminders.composer.repeat.question')}
+              </span>
             </Match>
           </Switch>
         </CommandMenuShell.Header>
@@ -469,7 +471,7 @@ export function ReminderComposerModal() {
                   <button
                     type="button"
                     class="bg-active border border-edge-muted px-2 py-1 truncate text-xs rounded min-w-0 flex-1 text-left text-ink-muted hover:text-ink"
-                    title={t('auto.edit_the_description')}
+                    title={t('reminders.composer.description.editTitle')}
                     onClick={() => setStep('description')}
                   >
                     {typed()}
@@ -619,7 +621,9 @@ function DescriptionStep(props: {
         class="ml-auto gap-3 rounded-lg border-0"
         disabled={props.disabled}
         onClick={props.onContinue}
-      >{t('auto.continue')}<Hotkey shortcut="enter" theme="current" />
+      >
+        {t('reminders.composer.continue')}
+        <Hotkey shortcut="enter" theme="current" />
       </Button>
     </CommandMenuShell.Footer>
   );
@@ -716,7 +720,9 @@ function WhenList(props: {
       ...dates,
       {
         kind: 'repeat',
-        label: existing ? 'Change repeat…' : 'Repeat…',
+        label: existing
+          ? t('reminders.composer.repeat.change')
+          : t('reminders.composer.repeat.open'),
         detail: existing?.description,
       },
     ];
@@ -783,7 +789,9 @@ function WhenList(props: {
           when={dateOptions().length > 0 || !props.query().trim()}
           fallback={
             <CommandMenuEmptyState>
-              No future dates match "{props.query()}"
+              {t('reminders.composer.noFutureDates', {
+                query: props.query(),
+              })}
             </CommandMenuEmptyState>
           }
         >
@@ -801,7 +809,7 @@ function WhenList(props: {
                     {row.kind === 'date'
                       ? row.option.displayText
                       : row.kind === 'keep'
-                        ? 'Keep repeating'
+                        ? t('reminders.composer.repeat.keep')
                         : row.label}
                   </p>
                 </div>
@@ -816,17 +824,18 @@ function WhenList(props: {
 
       <div class="p-4 border-t border-edge-muted flex items-center gap-4">
         <div class="text-xs text-ink-muted">
-          <span>{t('auto.use_queries_like')}</span>
+          <span>{t('reminders.composer.queryExamples')}</span>{' '}
           <code class="bg-active px-1">3d</code>,{' '}
           <code class="bg-active px-1">1w</code>,{' '}
           <code class="bg-active px-1">feb 17</code>,{' '}
-          <code class="bg-active px-1">tomorrow</code>, or{' '}
+          <code class="bg-active px-1">tomorrow</code>,{' '}
+          {t('reminders.composer.queryExamplesOr')}{' '}
           <code class="bg-active px-1">tomorrow 3pm</code>
         </div>
         <CommandMenuHotkeyHint
           class="ml-auto shrink-0 text-xs text-ink-extra-muted/80"
           hotkey={<Hotkey shortcut="escape" />}
-          label="Back"
+          label={t('reminders.composer.back')}
         />
       </div>
     </>
@@ -839,9 +848,12 @@ function WhenList(props: {
  * No daily entry: weekly with every day ticked says the same thing, and the
  * summary reads it back as "every day".
  */
-const REPEAT_FREQUENCIES: Array<{ value: ScheduleFrequency; label: string }> = [
-  { value: 'week', label: 'Weekly' },
-  { value: 'month', label: 'Monthly' },
+const REPEAT_FREQUENCIES: Array<{
+  value: ScheduleFrequency;
+  labelKey: string;
+}> = [
+  { value: 'week', labelKey: 'reminders.composer.repeat.weekly' },
+  { value: 'month', labelKey: 'reminders.composer.repeat.monthly' },
 ];
 
 /**
@@ -892,7 +904,7 @@ function RepeatStep(props: {
                 )}
                 onClick={() => update({ frequency: option.value })}
               >
-                {option.label}
+                {t(option.labelKey)}
               </button>
             )}
           </For>
@@ -913,7 +925,7 @@ function RepeatStep(props: {
                   aria-pressed={props.parts().daysOfWeek.includes(day.value)}
                   onClick={() => toggleDay(day.value)}
                 >
-                  {day.label}
+                  {t(`reminders.composer.repeat.weekday.${day.value}`)}
                 </button>
               )}
             </For>
@@ -922,7 +934,9 @@ function RepeatStep(props: {
 
         <div class="flex items-center gap-2">
           <Show when={props.parts().frequency === 'month'}>
-            <label class="flex items-center gap-2 text-sm text-ink-muted">{t('auto.day')}<input
+            <label class="flex items-center gap-2 text-sm text-ink-muted">
+              {t('reminders.composer.repeat.day')}
+              <input
                 type="number"
                 min="1"
                 max="31"
@@ -933,7 +947,7 @@ function RepeatStep(props: {
             </label>
           </Show>
           <label class="flex items-center gap-2 text-sm text-ink-muted">
-            At
+            {t('reminders.composer.repeat.at')}
             <input
               type="time"
               class="rounded-sm border border-edge-muted bg-surface px-2 py-1.5 text-sm text-ink outline-none focus:border-accent/20"
@@ -953,7 +967,9 @@ function RepeatStep(props: {
           class="ml-auto gap-3 rounded-lg border-0"
           disabled={!isValid()}
           onClick={props.onSubmit}
-        >{t('auto.set_reminder')}<Hotkey shortcut="enter" theme="current" />
+        >
+          {t('reminders.composer.setReminder')}
+          <Hotkey shortcut="enter" theme="current" />
         </Button>
       </CommandMenuShell.Footer>
     </>

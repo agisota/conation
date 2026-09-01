@@ -3,10 +3,10 @@ use crate::domain::model::{
     AgentSessionId, BearerToken, GitEndpoint, GitService, McpDestination, McpServerSlug, ProxyBody,
     RepoSlug, SessionGrant, UpstreamCall, UpstreamCredential,
 };
+use conation_user_id::user_id::MacroUserIdStr;
 use http::header::{AUTHORIZATION, HeaderMap, HeaderName, HeaderValue};
 use http::{Method, StatusCode};
 use http_body_util::{BodyExt, Empty};
-use conation_user_id::user_id::MacroUserIdStr;
 use std::sync::Mutex;
 use url::Url;
 

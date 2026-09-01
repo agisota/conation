@@ -1,8 +1,8 @@
 /**
- * Identity for the first-party "Macro Coder" system bot. Mirrors
+ * Identity for the first-party "Conation Coder" system bot. Mirrors
  * `bot_id::MACRO_CODER_BOT_ID` on the backend. Deliberately a distinct bot
- * from Macro (see `macroAgent.ts`): mentioning Macro answers in chat, while
- * mentioning Macro Coder opens a sandboxed coding-agent session.
+ * from Conation (see `macroAgent.ts`): mentioning Conation answers in chat,
+ * while mentioning Conation Coder opens a sandboxed coding-agent session.
  */
 export const MACRO_CODER_BOT_ID = '00000000-0000-0000-0000-00000000a9e7';
 
@@ -12,8 +12,8 @@ export const MACRO_CODER_BOT_ID = '00000000-0000-0000-0000-00000000a9e7';
  */
 export const MACRO_CODER_PRINCIPAL_ID = `bot|${MACRO_CODER_BOT_ID}`;
 
-/** Display name for Macro Coder. */
-export const MACRO_CODER_NAME = 'Macro Coder';
+/** Display name for Conation Coder. */
+export const MACRO_CODER_NAME = 'Conation Coder';
 
 /** Handle used to find Macro Coder in the mention typeahead (`@coder`). */
 export const MACRO_CODER_HANDLE = 'coder';

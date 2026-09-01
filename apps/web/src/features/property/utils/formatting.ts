@@ -1,3 +1,4 @@
+import { formatDateTime } from '@core/i18n';
 import { getPropertyOptionLabel } from '@entity/utils/task-properties';
 import { NUMBER_DECIMAL_PLACES } from '../constants';
 import type { Property, PropertyOptionValue } from '../types';
@@ -25,7 +26,7 @@ export function formatNumber(value: number): string {
 export function formatDate(value: Date | string): string {
   const date = typeof value === 'string' ? new Date(value) : value;
 
-  return date.toLocaleDateString('en-US', {
+  return formatDateTime(date, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',

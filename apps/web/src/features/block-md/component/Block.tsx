@@ -1,5 +1,4 @@
 import { useBlockEntityCommands } from '@app/features/next-soup/actions';
-import { t } from '@app/lib/i18n';
 import { useGlobalNotificationSource } from '@components/app/GlobalAppState';
 import { SidePanel } from '@components/app/side-panel';
 import { useBlockId } from '@core/block';

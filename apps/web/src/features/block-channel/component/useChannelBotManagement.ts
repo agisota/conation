@@ -1,4 +1,5 @@
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
+import { t } from '@app/lib/i18n';
 import {
   requestBotCreation,
   requestBotDetail,
@@ -56,9 +57,9 @@ export function useChannelBotManagement(
   const copyWebhookUrl = async () => {
     try {
       await navigator.clipboard.writeText(channelWebhookUrl(options.channelId));
-      toast.success('Webhook URL copied');
+      toast.success(t('channel.bots.feedback.webhookCopied'));
     } catch {
-      toast.failure('Failed to copy webhook URL');
+      toast.failure(t('channel.bots.feedback.webhookCopyFailed'));
     }
   };
 

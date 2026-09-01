@@ -49,15 +49,15 @@ export function Company(props: { companyId: string }) {
       </SidePanel.Section>
       <SidePanel.Section
         id="company-contacts"
-        title={t('auto.contacts')}
+        title={t('companies.sections.contacts')}
         order={20}
         defaultOpen
         actions={
           <Button
             variant="ghost"
             size="icon-sm"
-            label="Add contact"
-            tooltip="Add contact"
+            label={t('companies.actions.addContact')}
+            tooltip={t('companies.actions.addContact')}
             // Contact emails are pinned to the company's primary domain;
             // disabled until the company (and its domains) has loaded.
             disabled={!company()?.domains[0]}
@@ -72,7 +72,11 @@ export function Company(props: { companyId: string }) {
       >
         <CompanyContactsSection company={company()} contacts={contacts()} />
       </SidePanel.Section>
-      <SidePanel.Section id="company-sharing" title={t('auto.sharing')} order={25}>
+      <SidePanel.Section
+        id="company-sharing"
+        title={t('companies.sections.sharing')}
+        order={25}
+      >
         <CompanySharingSection company={company()} />
       </SidePanel.Section>
       {/* TODO: add a References section (inbound channel messages + documents)

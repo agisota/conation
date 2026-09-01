@@ -138,7 +138,23 @@ fn bot_mention_renders_display_name() {
     let input = r#"hi <m-user-mention>{"userId":"bot|00000000-0000-0000-0000-00000000a1a1","email":"Macro"}</m-user-mention> ok"#;
     let parsed = ParsedXmlText::parse(input).unwrap();
     let rendered = PlainTextFormatter::format_xml_text(parsed).0;
-    assert_eq!(rendered, "hi Macro ok");
+    assert_eq!(rendered, "hi Conation ok");
+}
+
+#[test]
+fn bot_mention_uses_the_matching_system_bot_display_name() {
+    let input = r#"<m-user-mention>{"userId":"bot|00000000-0000-0000-0000-00000000a9e7","email":"Macro Coder"}</m-user-mention>"#;
+    let parsed = ParsedXmlText::parse(input).unwrap();
+    let rendered = PlainTextFormatter::format_xml_text(parsed).0;
+    assert_eq!(rendered, "Conation Coder");
+}
+
+#[test]
+fn unknown_bot_mention_uses_a_neutral_fallback() {
+    let input = r#"<m-user-mention>{"userId":"bot|00000000-0000-0000-0000-00000000ffff","email":"Legacy Bot"}</m-user-mention>"#;
+    let parsed = ParsedXmlText::parse(input).unwrap();
+    let rendered = PlainTextFormatter::format_xml_text(parsed).0;
+    assert_eq!(rendered, "Bot");
 }
 
 #[test]

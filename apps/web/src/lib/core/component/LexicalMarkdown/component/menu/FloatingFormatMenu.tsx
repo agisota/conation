@@ -5,6 +5,7 @@
  * block-specific actions, so lightweight editors like the email composer can
  * opt in via MarkdownTextarea.
  */
+import { t } from '@app/lib/i18n';
 import { type PortalScope, ScopedPortal } from '@core/component/ScopedPortal';
 import { isMobile } from '@core/mobile/isMobile';
 import { debouncedDependent } from '@core/util/debounce';
@@ -84,40 +85,94 @@ type InlineFormat =
 const InlineFormatOptions: Array<{
   format: InlineFormat;
   icon: SvgIcon;
-  label: string;
+  labelKey: string;
   shortcut?: string;
 }> = [
-  { format: 'bold', icon: TextBold, label: 'Bold', shortcut: 'cmd+b' },
-  { format: 'italic', icon: TextItalic, label: 'Italic', shortcut: 'cmd+i' },
+  {
+    format: 'bold',
+    icon: TextBold,
+    labelKey: 'editor.format.inline.bold',
+    shortcut: 'cmd+b',
+  },
+  {
+    format: 'italic',
+    icon: TextItalic,
+    labelKey: 'editor.format.inline.italic',
+    shortcut: 'cmd+i',
+  },
   {
     format: 'underline',
     icon: TextUnderline,
-    label: 'Underline',
+    labelKey: 'editor.format.inline.underline',
     shortcut: 'cmd+u',
   },
-  { format: 'strikethrough', icon: TextStriketrough, label: 'Strikethrough' },
-  { format: 'code', icon: TextCode, label: 'Inline code' },
-  { format: 'highlight', icon: TextHighlight, label: 'Highlight' },
-  { format: 'superscript', icon: TextSuper, label: 'Superscript' },
-  { format: 'subscript', icon: TextSub, label: 'Subscript' },
+  {
+    format: 'strikethrough',
+    icon: TextStriketrough,
+    labelKey: 'editor.format.inline.strikethrough',
+  },
+  {
+    format: 'code',
+    icon: TextCode,
+    labelKey: 'editor.format.inline.code',
+  },
+  {
+    format: 'highlight',
+    icon: TextHighlight,
+    labelKey: 'editor.format.inline.highlight',
+  },
+  {
+    format: 'superscript',
+    icon: TextSuper,
+    labelKey: 'editor.format.inline.superscript',
+  },
+  {
+    format: 'subscript',
+    icon: TextSub,
+    labelKey: 'editor.format.inline.subscript',
+  },
 ];
 
 type ElementOption = {
   format: NodeTransformType;
   icon: SvgIcon;
-  label: string;
+  labelKey: string;
 };
 
 const HeadingOptions: ElementOption[] = [
-  { format: 'heading1', icon: TextH1, label: 'Heading 1' },
-  { format: 'heading2', icon: TextH2, label: 'Heading 2' },
-  { format: 'heading3', icon: TextH3, label: 'Heading 3' },
+  {
+    format: 'heading1',
+    icon: TextH1,
+    labelKey: 'editor.format.heading.level1',
+  },
+  {
+    format: 'heading2',
+    icon: TextH2,
+    labelKey: 'editor.format.heading.level2',
+  },
+  {
+    format: 'heading3',
+    icon: TextH3,
+    labelKey: 'editor.format.heading.level3',
+  },
 ];
 
 const ListOptions: ElementOption[] = [
-  { format: 'list-bullet', icon: ListBullets, label: 'Bullet List' },
-  { format: 'list-number', icon: ListNumbers, label: 'Numbered List' },
-  { format: 'list-check', icon: ListChecks, label: 'Checklist' },
+  {
+    format: 'list-bullet',
+    icon: ListBullets,
+    labelKey: 'editor.format.list.bulleted',
+  },
+  {
+    format: 'list-number',
+    icon: ListNumbers,
+    labelKey: 'editor.format.list.numbered',
+  },
+  {
+    format: 'list-check',
+    icon: ListChecks,
+    labelKey: 'editor.format.list.checklist',
+  },
 ];
 
 export function FloatingFormatMenu(props: {
@@ -243,14 +298,14 @@ export function FloatingFormatMenu(props: {
             <ElementFormatButton
               format="paragraph"
               icon={TextT}
-              label="Body"
+              label={t('editor.format.body')}
               selection={selection}
               onFormat={nodeFormat}
             />
             <ElementFormatMenu
               items={HeadingOptions}
               icon={TextH}
-              label="Headings"
+              label={t('editor.format.headings')}
               selection={selection}
               onFormat={nodeFormat}
               onCloseAutoFocus={refocusEditor}
@@ -258,7 +313,7 @@ export function FloatingFormatMenu(props: {
             <ElementFormatMenu
               items={ListOptions}
               icon={ListBullets}
-              label="Lists"
+              label={t('editor.format.lists')}
               selection={selection}
               onFormat={nodeFormat}
               onCloseAutoFocus={refocusEditor}
@@ -266,14 +321,14 @@ export function FloatingFormatMenu(props: {
             <ElementFormatButton
               format="code"
               icon={CodeBlock}
-              label="Code"
+              label={t('editor.format.codeBlock')}
               selection={selection}
               onFormat={nodeFormat}
             />
             <ElementFormatButton
               format="quote"
               icon={Quote}
-              label="Quote"
+              label={t('editor.format.quote')}
               selection={selection}
               onFormat={nodeFormat}
             />
@@ -290,7 +345,11 @@ export function FloatingFormatMenu(props: {
                 depth={3}
                 onPointerDown={(e: PointerEvent) => e.preventDefault()}
                 onClick={handleLink}
-                tooltip={selection()?.hasLinks ? 'Remove Link' : 'Insert Link'}
+                tooltip={
+                  selection()?.hasLinks
+                    ? t('editor.format.link.remove')
+                    : t('editor.format.link.insert')
+                }
               >
                 <Dynamic
                   component={selection()?.hasLinks ? BrokenLinkIcon : LinkIcon}
@@ -370,7 +429,7 @@ function ElementFormatMenu(props: {
                   aria-checked={isActive()}
                 >
                   <Dynamic component={item.icon} class="size-4 shrink-0" />
-                  <span class="flex-1 truncate">{item.label}</span>
+                  <span class="flex-1 truncate">{t(item.labelKey)}</span>
                   <SingleSelectCheck active={isActive()} />
                 </Dropdown.Item>
               );
@@ -397,7 +456,7 @@ function InlineFormatMenu(props: {
         size="icon-sm"
         class="rounded-md"
         depth={3}
-        tooltip="Text Styles"
+        tooltip={t('editor.format.textStyles')}
         tabIndex={-1}
       >
         <TextAA />
@@ -408,7 +467,7 @@ function InlineFormatMenu(props: {
             <For each={InlineFormatOptions}>
               {(item) => (
                 <Button
-                  label={item.label}
+                  label={t(item.labelKey)}
                   shortcut={item.shortcut}
                   size="icon-sm"
                   variant={

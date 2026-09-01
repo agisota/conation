@@ -658,7 +658,7 @@ fn bot_authentication_with_acting_user(bot_id: BotId) -> BotAuthentication {
         bot_scope: BotScope::User,
         team_id: None,
         acting_user: Some(MacroUserAuthentication {
-            conation_user_id: MacroUserIdStr::parse_from_str("macro|acting-bot@example.com").unwrap(),
+            macro_user_id: MacroUserIdStr::parse_from_str("macro|acting-bot@example.com").unwrap(),
             user_context: Default::default(),
         }),
     }

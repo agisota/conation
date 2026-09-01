@@ -29,7 +29,7 @@ struct ScopedBotFixture {
     pool: PgPool,
     services: LocalE2eServices,
     http: Client,
-    conation_user_uuid: Uuid,
+    macro_user_uuid: Uuid,
     acting_user_id: String,
     fusion_user_id: String,
     team_id: Uuid,
@@ -49,9 +49,9 @@ impl ScopedBotFixture {
         reason = "local E2E fixture SQL is validated against the runtime stack"
     )]
     async fn seed(pool: PgPool, services: LocalE2eServices) -> anyhow::Result<Self> {
-        let conation_user_uuid = Uuid::new_v4();
+        let macro_user_uuid = Uuid::new_v4();
         let fusion_user_id = Uuid::new_v4().to_string();
-        let email = format!("bot-entity-access-{conation_user_uuid}@macro.local");
+        let email = format!("bot-entity-access-{macro_user_uuid}@macro.local");
         let acting_user_id = format!("macro|{email}");
         let team_id = Uuid::new_v4();
         let bot_id = Uuid::new_v4();
@@ -70,27 +70,27 @@ impl ScopedBotFixture {
 
         sqlx::query(
             r#"
-            INSERT INTO conation_user (id, username, email, stripe_customer_id)
+            INSERT INTO macro_user (id, username, email, stripe_customer_id)
             VALUES ($1, $2, $3, $4)
             "#,
         )
-        .bind(conation_user_uuid)
+        .bind(macro_user_uuid)
         .bind(&email)
         .bind(&email)
-        .bind(format!("local_e2e_{conation_user_uuid}"))
+        .bind(format!("local_e2e_{macro_user_uuid}"))
         .execute(&mut *transaction)
         .await
         .context("failed to insert scoped bot acting macro user")?;
 
         sqlx::query(
             r#"
-            INSERT INTO "User" (id, email, conation_user_id)
+            INSERT INTO "User" (id, email, macro_user_id)
             VALUES ($1, $2, $3)
             "#,
         )
         .bind(&fusion_user_id)
         .bind(&email)
-        .bind(conation_user_uuid)
+        .bind(macro_user_uuid)
         .execute(&mut *transaction)
         .await
         .context("failed to insert scoped bot acting user")?;
@@ -246,7 +246,7 @@ impl ScopedBotFixture {
             pool,
             services,
             http: Client::new(),
-            conation_user_uuid,
+            macro_user_uuid,
             acting_user_id,
             fusion_user_id,
             team_id,
@@ -345,8 +345,8 @@ impl ScopedBotFixture {
             .execute(&mut *transaction)
             .await
             .context("failed to delete scoped bot acting user")?;
-        sqlx::query("DELETE FROM conation_user WHERE id = $1")
-            .bind(self.conation_user_uuid)
+        sqlx::query("DELETE FROM macro_user WHERE id = $1")
+            .bind(self.macro_user_uuid)
             .execute(&mut *transaction)
             .await
             .context("failed to delete scoped bot acting macro user")?;

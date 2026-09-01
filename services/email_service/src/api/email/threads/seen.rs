@@ -171,8 +171,8 @@ pub async fn seen_handler(
         ctx.conation_event_broker.as_ref(),
         &EmailMacroEvent::thread_read(ThreadReadMetadata {
             link_id: link.id,
-            owner: link.conation_id.clone(),
-            actor: Some(link.conation_id.clone()),
+            owner: link.macro_id.clone(),
+            actor: Some(link.macro_id.clone()),
             thread_id,
             is_read: true,
             origin: EmailEventOrigin::UserAction,

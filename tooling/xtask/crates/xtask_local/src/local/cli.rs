@@ -11,7 +11,7 @@ use clap::{Args, Parser, Subcommand};
 use super::Mode;
 
 #[derive(Parser)]
-#[command(name = "cargo-x", about = "Macro local & dev orchestration")]
+#[command(name = "cargo-x", about = "Conation local & dev orchestration")]
 struct Cli {
     #[command(subcommand)]
     command: Cmd,

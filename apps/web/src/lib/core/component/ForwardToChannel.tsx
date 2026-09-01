@@ -70,7 +70,7 @@ function MobileForwardToChannelLayout(
     <Show when={props.isAuthenticated()}>
       <div class="px-3 py-2 min-h-11" data-share-drawer-recipient>
         <RecipientSelector<'user' | 'contact' | 'channel'>
-          placeholder="To: Email or group"
+          placeholder={t('core.sharing.recipientPlaceholder')}
           setSelectedOptions={props.setSelectedOptions}
           selectedOptions={props.selectedOptions()}
           triedToSubmit={props.triedToSubmit}
@@ -113,13 +113,13 @@ function MobileForwardToChannelLayout(
             <div
               class={`flex flex-col text-sm ${!props.canSendAsGroup() ? 'text-ink-disabled/50' : ''}`}
             >
-              <span class="font-medium">{t('auto.send_as_group_message')}</span>
+              <span class="font-medium">{t('core.sharing.sendAsGroup')}</span>
               <span
                 class={`text-xs mt-0.5 ${!props.canSendAsGroup() ? 'text-ink-disabled/50' : 'text-ink-muted'}`}
               >
                 {props.sendAsGroupMessage() && props.canSendAsGroup()
-                  ? 'Creates a new group message with all recipients'
-                  : 'Send a message to each recipient'}
+                  ? t('core.sharing.groupDescription')
+                  : t('core.sharing.individualDescription')}
               </span>
             </div>
           </label>
@@ -132,13 +132,15 @@ function MobileForwardToChannelLayout(
         }
       >
         <div class="px-3 py-2 flex items-center">
-          <span class="text-sm text-ink-muted pr-2">Access:</span>
+          <span class="text-sm text-ink-muted pr-2">
+            {t('core.sharing.access')}:
+          </span>
           <ShareOptions
             setPermissions={(accessLevel) =>
               props.setSubmitAccessLevel(accessLevel)
             }
             permissions={props.submitAccessLevel()}
-            label="Permission"
+            label={t('core.sharing.permission')}
             hideNoAccess
           />
         </div>
@@ -154,7 +156,7 @@ function MobileForwardToChannelLayout(
         >
           <MarkdownShell
             config={props.markdownEditor}
-            placeholder={t('auto.optional_message')}
+            placeholder={t('core.sharing.optionalMessage')}
             portalScope="local"
             class="text-sm"
           />
@@ -257,7 +259,7 @@ export function ForwardToChannel(props: ForwardToChannelProps) {
 
     const accessLevel = submitAccessLevel();
     if (!accessLevel) {
-      toast.failure('Failed to set channel permissions');
+      toast.failure(t('core.sharing.permissionFailed'));
       return;
     }
 
@@ -326,10 +328,10 @@ export function ForwardToChannel(props: ForwardToChannelProps) {
           submitChannelPermissions(channelId);
 
           props.refetch?.();
-          toast.success('Message sent successfully', {
+          toast.success(t('core.sharing.messageSent'), {
             actions: [
               {
-                label: 'View in channel',
+                label: t('core.sharing.viewInChannel'),
                 onClick: navigateToChannel,
               },
             ],
@@ -337,7 +339,7 @@ export function ForwardToChannel(props: ForwardToChannelProps) {
           trackForwardShare('user');
         });
       } else {
-        toast.failure('Message failed to send');
+        toast.failure(t('core.sharing.messageFailed'));
       }
     } else {
       const multipleMessages = options.length > 1;
@@ -359,10 +361,10 @@ export function ForwardToChannel(props: ForwardToChannelProps) {
               props.refetch?.();
               if (!multipleMessages) {
                 const { navigateToChannel } = res;
-                toast.success('Message sent successfully', {
+                toast.success(t('core.sharing.messageSent'), {
                   actions: [
                     {
-                      label: 'View in channel',
+                      label: t('core.sharing.viewInChannel'),
                       onClick: () => navigateToChannel(),
                     },
                   ],
@@ -388,10 +390,10 @@ export function ForwardToChannel(props: ForwardToChannelProps) {
 
             props.refetch?.();
             if (!multipleMessages) {
-              toast.success('Message sent successfully', {
+              toast.success(t('core.sharing.messageSent'), {
                 actions: [
                   {
-                    label: 'View in channel',
+                    label: t('core.sharing.viewInChannel'),
                     onClick: () => navigateToChannel(),
                   },
                 ],
@@ -403,9 +405,9 @@ export function ForwardToChannel(props: ForwardToChannelProps) {
       }
       if (multipleMessages) {
         if (successfullySentAllMessages) {
-          toast.success('Messages sent successfully');
+          toast.success(t('core.sharing.messagesSent'));
         } else {
-          toast.failure('Some messages failed to send');
+          toast.failure(t('core.sharing.someMessagesFailed'));
         }
       }
     }
@@ -427,7 +429,7 @@ export function ForwardToChannel(props: ForwardToChannelProps) {
   registerHotkey({
     hotkey: 'cmd+enter',
     scopeId: shareHotkeyScope,
-    description: 'Share',
+    description: t('core.sharing.share'),
     // Fires from the composer, the recipient input and the access selector.
     runWithInputFocused: true,
     keyDownHandler: (event) => {
@@ -485,7 +487,7 @@ export function ForwardToChannel(props: ForwardToChannelProps) {
           <div class="flex items-center bg-surface pr-2">
             <div class="min-w-0 flex-1 min-h-11">
               <RecipientSelector<'user' | 'contact' | 'channel'>
-                placeholder="To: Email or group"
+                placeholder={t('core.sharing.recipientPlaceholder')}
                 setSelectedOptions={setSelectedOptions}
                 selectedOptions={selectedOptions()}
                 triedToSubmit={triedToSubmit}
@@ -504,14 +506,16 @@ export function ForwardToChannel(props: ForwardToChannelProps) {
             >
               <div class="shrink-0 pr-2 flex items-center gap-2">
                 <Show when={selectedOptions().length > 0}>
-                  <span class="text-sm text-ink-extra-muted">can</span>
+                  <span class="text-sm text-ink-extra-muted">
+                    {t('core.sharing.can')}
+                  </span>
                 </Show>
                 <ShareOptions
                   setPermissions={(accessLevel) =>
                     setSubmitAccessLevel(accessLevel)
                   }
                   permissions={submitAccessLevel()}
-                  label="Permission"
+                  label={t('core.sharing.permission')}
                   hideNoAccess
                   noBorder
                 />
@@ -531,7 +535,7 @@ export function ForwardToChannel(props: ForwardToChannelProps) {
               >
                 <MarkdownShell
                   config={markdownEditor}
-                  placeholder={t('auto.optional_message')}
+                  placeholder={t('core.sharing.optionalMessage')}
                   portalScope="local"
                   class="text-sm"
                 />
@@ -576,7 +580,9 @@ export function ForwardToChannel(props: ForwardToChannelProps) {
                       !canSendAsGroup() && 'text-ink-disabled/50'
                     )}
                   >
-                    <span class="font-medium">{t('auto.send_as_group_message')}</span>
+                    <span class="font-medium">
+                      {t('core.sharing.sendAsGroup')}
+                    </span>
                     <span
                       class={cn(
                         'text-xs mt-0.5',
@@ -586,8 +592,8 @@ export function ForwardToChannel(props: ForwardToChannelProps) {
                       )}
                     >
                       {sendAsGroupMessage() && canSendAsGroup()
-                        ? 'Creates a new group message with all recipients'
-                        : 'Send a message to each recipient'}
+                        ? t('core.sharing.groupDescription')
+                        : t('core.sharing.individualDescription')}
                     </span>
                   </div>
                 </label>
@@ -599,7 +605,9 @@ export function ForwardToChannel(props: ForwardToChannelProps) {
                   size="sm"
                   class="text-ink-extra-muted"
                   onClick={() => props.onCancel?.()}
-                >{t('common.cancel')}</Button>
+                >
+                  {t('common.cancel')}
+                </Button>
                 <Button
                   variant={selectedOptions().length > 0 ? 'accent' : 'ghost'}
                   depth={3}
@@ -612,7 +620,9 @@ export function ForwardToChannel(props: ForwardToChannelProps) {
                     }
                   }}
                 >
-                  <PaperPlaneTilt class="size-4" />{t('auto.share')}<Hotkey shortcut="cmd+enter" theme="current" />
+                  <PaperPlaneTilt class="size-4" />
+                  {t('core.sharing.share')}
+                  <Hotkey shortcut="cmd+enter" theme="current" />
                 </Button>
               </div>
             </div>

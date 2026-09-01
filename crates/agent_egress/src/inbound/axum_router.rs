@@ -179,7 +179,7 @@ impl IntoResponse for GitRefusal {
         if unauthenticated {
             response.headers_mut().insert(
                 http::header::WWW_AUTHENTICATE,
-                http::HeaderValue::from_static(r#"Basic realm="Macro egress", charset="UTF-8""#),
+                http::HeaderValue::from_static(r#"Basic realm="Conation egress", charset="UTF-8""#),
             );
         }
         response
@@ -268,7 +268,7 @@ impl IntoResponse for EgressError {
             Self::Unroutable(_) => "Nothing is served at that path.",
             Self::UnknownServer(_) => "No such connected MCP server.",
             Self::RepoUnavailable(_) => {
-                "This session's repository is not reachable with Macro's GitHub App."
+                "This session's repository is not reachable with Conation's GitHub App."
             }
             Self::MethodNotAllowed(_) => "That method is not allowed here.",
             Self::InsecureUpstream(_) => "That upstream is misconfigured and cannot be reached.",

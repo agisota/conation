@@ -1,5 +1,5 @@
-import { useIsNestedBlock } from '@core/block';
 import { t } from '@app/lib/i18n';
+import { useIsNestedBlock } from '@core/block';
 import { LOCAL_ONLY } from '@core/constant/featureFlags';
 import { isMobileWidth } from '@core/mobile/mobileWidth';
 import { useCanEdit } from '@core/signal/permissions';
@@ -282,7 +282,9 @@ export function CanvasRenderer() {
       <Show when={!visibleObjects()}>
         <div class="size-full absolute top-0 left-0 flex flex-col text-center items-center justify-center gap-4 z-20 pointer-events-none">
           <Circuitry class="size-12 text-canvas" />
-          <div class="w-80 h-14 text-ink-extra-muted">{t('auto.create_whiteboards_diagrams_mi')}</div>
+          <div class="w-80 h-14 text-ink-extra-muted">
+            {t('canvas.empty.description')}
+          </div>
         </div>
       </Show>
 

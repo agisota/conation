@@ -185,7 +185,7 @@ pub(super) fn can_short_circuit(ast: &Expr<EmailLiteral>, resolved: &ResolvedFil
 ///
 /// When `team_id` is `Some`, the scope expands to every primary `link_id`
 /// owned by any user on the team — a link is primary when its
-/// `email_address` is the owner's own conation_id email, so connected
+/// `email_address` is the owner's own macro_id email, so connected
 /// secondary mailboxes stay out of scope. The same email address may now
 /// resolve to multiple
 /// contact_ids (one per team member who has corresponded with that address),
@@ -209,7 +209,7 @@ pub(super) async fn resolve_filters(
                 r#"
             SELECT el.id
             FROM email_links el
-            JOIN team_user tu ON tu.user_id = el.conation_id
+            JOIN team_user tu ON tu.user_id = el.macro_id
             WHERE tu.team_id = $1 AND el.is_primary
             "#,
                 team_id,

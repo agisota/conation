@@ -8,7 +8,9 @@ export const Await: Component<AwaitDecoratorProps> = (props) => {
       inert
       data-await-id={props.awaitId}
     >
-      {props.text ?? 'Waiting…'}
+      {props.text ?? t('editor.await.waiting')}
     </span>
   );
 };
+
+import { t } from '@app/lib/i18n';

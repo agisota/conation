@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { ENABLE_INBOX_SYNC_STATUS } from '@core/constant/featureFlags';
 import { invalidateAllSoup } from '@queries/soup/normalized-cache';
@@ -78,7 +79,7 @@ export function handleRefreshEmail(payload: unknown): void {
       invalidateEmailLinks();
       invalidateBackfillJobs();
       if (ENABLE_INBOX_SYNC_STATUS) {
-        toast.failure('Inbox sync failed');
+        toast.failure(t('email.feedback.inboxSyncFailed'));
       }
     }
     return;
@@ -96,7 +97,7 @@ export function handleRefreshEmail(payload: unknown): void {
       invalidateEmailLinks();
       invalidateBackfillJobs();
       if (ENABLE_INBOX_SYNC_STATUS) {
-        toast.success('Inbox synced');
+        toast.success(t('email.feedback.inboxSynced'));
       }
     } else {
       setBackfillProgress(

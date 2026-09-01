@@ -1,6 +1,7 @@
-import { SERVER_HOSTS, SYNC_SERVICE_HOSTS } from '@core/constant/servers';
 import { Telemetry } from '@conation/observability';
+import { SERVER_HOSTS, SYNC_SERVICE_HOSTS } from '@core/constant/servers';
 import { err, ok, type Result } from 'neverthrow';
+import { getAcceptLanguage } from '../i18n';
 import { platformFetch } from './platformFetch';
 import type { ObjectLike, ResultError } from './result';
 import { sleep } from './sleep';
@@ -50,6 +51,12 @@ function tracedFetch(
   return span.run(async () => {
     try {
       if (isTracedOrigin(url)) {
+        const hasAcceptLanguage = Object.keys(init.headers).some(
+          (header) => header.toLowerCase() === 'accept-language'
+        );
+        if (!hasAcceptLanguage) {
+          init.headers['Accept-Language'] = getAcceptLanguage();
+        }
         span.injectTraceHeaders(init.headers);
       }
       const response = await platformFetch(input, init);

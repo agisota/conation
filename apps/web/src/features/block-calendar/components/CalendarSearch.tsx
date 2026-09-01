@@ -1,9 +1,9 @@
 import { useCalendarView } from '@app/features/calendar/components/CalendarViewContext';
-import { t } from '@app/lib/i18n';
 import { useCalendarSearchUiFlag } from '@app/features/calendar/hooks/use-calendar-ui-flag';
 import type { CalendarTimeFormat } from '@app/features/calendar/types';
 import { parseLocalDate } from '@app/features/calendar/utils/calendar-date';
 import { formatCalendarTime } from '@app/features/calendar/utils/time-format';
+import { formatDateTime, t } from '@app/lib/i18n';
 import { EntityIcon } from '@core/component/EntityIcon';
 import { debouncedDependent } from '@core/util/debounce';
 import type { EntityData, WithSearch } from '@entity';
@@ -41,22 +41,14 @@ const CALENDAR_ONLY_FILTERS: EntityFilters = {
 
 const MIN_QUERY_LENGTH = 3;
 
-const dateWithYear = new Intl.DateTimeFormat(undefined, {
-  weekday: 'short',
-  month: 'short',
-  day: 'numeric',
-  year: 'numeric',
-});
-const dateNoYear = new Intl.DateTimeFormat(undefined, {
-  weekday: 'short',
-  month: 'short',
-  day: 'numeric',
-});
-
 function formatDateLabel(date: Date): string {
-  const formatter =
-    date.getFullYear() === new Date().getFullYear() ? dateNoYear : dateWithYear;
-  return formatter.format(date);
+  return formatDateTime(date, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year:
+      date.getFullYear() === new Date().getFullYear() ? undefined : 'numeric',
+  });
 }
 
 /** The date/time an event row resolved to, matching the calendar's clock. */
@@ -67,7 +59,11 @@ function formatEventWhen(
   if (!time) return '';
   if (time.kind === 'allDay') {
     const date = parseLocalDate(time.startDate);
-    return date ? `${formatDateLabel(date)} · All day` : '';
+    return date
+      ? t('calendar.event.schedule.allDaySingle', {
+          date: formatDateLabel(date),
+        })
+      : '';
   }
   const start = new Date(time.startsAt);
   if (Number.isNaN(start.getTime())) return '';
@@ -151,7 +147,7 @@ export function CalendarSearch() {
           variant="ghost"
           size="icon-sm"
           class="rounded-lg"
-          aria-label={t('auto.search_events')}
+          aria-label={t('calendar.search.label')}
         >
           <SearchIcon class="size-4" />
         </Popover.Trigger>
@@ -179,7 +175,7 @@ export function CalendarSearch() {
                         if (first) openResult(first);
                       }
                     }}
-                    placeholder={t('auto.search_events')}
+                    placeholder={t('calendar.search.label')}
                     class="min-w-0 flex-1 rounded-sm bg-transparent text-sm caret-accent outline-none placeholder:text-ink-placeholder focus-visible:ring-1 focus-visible:ring-accent"
                   />
                 </div>
@@ -189,7 +185,9 @@ export function CalendarSearch() {
                     when={query().length >= MIN_QUERY_LENGTH}
                     fallback={
                       <div class="px-2 py-3 text-center text-xs text-ink-muted">
-                        Type at least {MIN_QUERY_LENGTH} characters to search
+                        {t('calendar.search.minimumCharacters', {
+                          count: MIN_QUERY_LENGTH,
+                        })}
                       </div>
                     }
                   >
@@ -197,14 +195,16 @@ export function CalendarSearch() {
                       when={!isLoading()}
                       fallback={
                         <div class="px-2 py-3 text-center text-xs text-ink-muted">
-                          Searching…
+                          {t('calendar.search.searching')}
                         </div>
                       }
                     >
                       <Show
                         when={results().length > 0}
                         fallback={
-                          <div class="px-2 py-3 text-center text-xs text-ink-muted">{t('auto.no_events_found')}</div>
+                          <div class="px-2 py-3 text-center text-xs text-ink-muted">
+                            {t('calendar.search.empty')}
+                          </div>
                         }
                       >
                         <For each={results()}>
@@ -223,7 +223,7 @@ export function CalendarSearch() {
                               </span>
                               <span class="min-w-0 flex-1">
                                 <span class="block truncate text-sm text-ink">
-                                  {event.name || 'Untitled event'}
+                                  {event.name || t('calendar.event.untitled')}
                                 </span>
                                 <Show
                                   when={formatEventWhen(

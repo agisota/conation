@@ -23,7 +23,8 @@ maybe_env_vars! {
 #[derive(Deserialize)]
 #[serde(rename_all = "kebab-case")]
 struct AuthorizationQuery {
-    conation_api_token: Option<String>,
+    #[serde(alias = "conation-api-token")]
+    macro_api_token: Option<String>,
 }
 
 pub(super) fn explicit_user_credential_present(parts: &Parts) -> bool {
@@ -65,10 +66,10 @@ where
 fn query_user_credential_present(parts: &Parts) -> bool {
     parts.uri.query().is_some_and(|query| {
         query.split('&').any(|parameter| {
-            parameter
+            let name = parameter
                 .split_once('=')
-                .map_or(parameter, |(name, _value)| name)
-                == "macro-api-token"
+                .map_or(parameter, |(name, _value)| name);
+            matches!(name, "macro-api-token" | "conation-api-token")
         })
     })
 }
@@ -80,7 +81,7 @@ where
     Query::<AuthorizationQuery>::from_request_parts(parts, state)
         .await
         .ok()
-        .and_then(|Query(query)| query.conation_api_token)
+        .and_then(|Query(query)| query.macro_api_token)
 }
 
 async fn extract_explicit_user_token<S>(

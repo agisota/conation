@@ -1,3 +1,4 @@
+import { formatDateTime, t } from '@app/lib/i18n';
 import {
   addDays,
   eachDayOfInterval,
@@ -104,15 +105,21 @@ export function summarizeActivity(overview: {
 }
 
 export function formatMonthName(yearMonth: string): string {
-  return format(parseOverviewDate(`${yearMonth}-01`), 'MMMM', {
-    in: OVERVIEW_TZ,
+  return formatDateTime(parseOverviewDate(`${yearMonth}-01`), {
+    month: 'long',
+    timeZone: 'UTC',
   });
 }
 
 export function formatDayLabel(date: string): string {
-  return format(parseOverviewDate(date), 'MMM d, yyyy', { in: OVERVIEW_TZ });
+  return formatDateTime(parseOverviewDate(date), {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
 }
 
 export function formatStreak(days: number): string {
-  return `${days}d`;
+  return t('activity.stats.streakValue', { count: days });
 }

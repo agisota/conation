@@ -1,5 +1,4 @@
 import { useBlockEntityCommands } from '@app/features/next-soup/actions';
-import { t } from '@app/lib/i18n';
 import {
   createSoupState,
   type SoupState,
@@ -9,6 +8,7 @@ import { soupItemMatchesProjectMembership } from '@app/features/next-soup/filter
 import { SoupContextProvider } from '@app/features/next-soup/soup-context';
 import { SoupViewList } from '@app/features/next-soup/soup-view/soup-view';
 import { SoupViewContextProvider } from '@app/features/next-soup/soup-view/soup-view-context';
+import { t } from '@app/lib/i18n';
 import { getIsSpecialProject } from '@block-project/isSpecial';
 import { SidePanel } from '@components/app/side-panel';
 import { useBlockId } from '@core/block';
@@ -47,7 +47,7 @@ const Block: Component = () => {
 
     // Don't allow uploads to root or trash
     if (isSpecialProject) {
-      toast.failure('Cannot upload files to this location');
+      toast.failure(t('project.upload.unsupportedLocation'));
       return;
     }
 
@@ -85,7 +85,7 @@ const Block: Component = () => {
       }
     } catch (error) {
       console.error('Upload error:', error);
-      toast.failure('Upload failed. Please try again.');
+      toast.failure(t('project.upload.failed'));
     }
   };
 
@@ -115,7 +115,9 @@ const Block: Component = () => {
       >
         <ModalsProvider>
           <Show when={isDragging() && !isSpecialProject}>
-            <FileDropOverlay>{t('auto.upload_to_this_folder')}</FileDropOverlay>
+            <FileDropOverlay>
+              {t('project.upload.dropInFolder')}
+            </FileDropOverlay>
           </Show>
           <SidePanel.Layout defaultOpen={false}>
             <Show when={!isSpecialProject}>

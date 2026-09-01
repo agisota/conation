@@ -1,4 +1,5 @@
 import { analytics } from '@app/lib/analytics';
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { throwOnErr } from '@core/util/result';
 import type { CacheHost } from '@graphql-cache/index';
@@ -167,15 +168,15 @@ export function usePatchChannelMutation(callbacks?: PatchChannelCallbacks) {
           }
           toast.success(
             vars.convert_to_team_channel === true
-              ? 'Channel converted to a team channel'
+              ? t('channel.feedback.convertedToTeam')
               : vars.auto_join_team
-                ? 'Team auto-join enabled'
-                : 'Team auto-join disabled'
+                ? t('channel.feedback.teamAutoJoinEnabled')
+                : t('channel.feedback.teamAutoJoinDisabled')
           );
         },
         onError: (error) => {
           console.error('failed to update channel settings', error);
-          toast.failure('Failed to update channel settings');
+          toast.failure(t('channel.feedback.settingsUpdateFailed'));
         },
         onSettled: () => void invalidateListChannels(),
       },

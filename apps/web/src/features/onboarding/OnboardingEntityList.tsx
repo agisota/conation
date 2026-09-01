@@ -1,5 +1,4 @@
 import type { SoupState } from '@app/features/next-soup/create-soup-state';
-import { t } from '@app/lib/i18n';
 import type { EntityData } from '@entity';
 import { Entity } from '@entity/entity';
 import { cn } from '@ui';
@@ -7,7 +6,7 @@ import { createEffect, For, Show } from 'solid-js';
 
 interface OnboardingEntityListProps {
   soup: SoupState;
-  removingIds?: () =>Set<string>;
+  removingIds?: () => Set<string>;
 }
 
 export function OnboardingEntityList(props: OnboardingEntityListProps) {

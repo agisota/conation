@@ -56,7 +56,7 @@ where
         let GetEmailsRequest {
             view,
             link_ids,
-            conation_id,
+            macro_id,
             limit,
             query,
             include_frecency,
@@ -85,7 +85,7 @@ where
 
         let previews = self
             .email_repo
-            .previews_for_view_cursor(query, conation_id.copied().into_owned())
+            .previews_for_view_cursor(query, macro_id.copied().into_owned())
             .await
             .map_err(anyhow::Error::from)?;
 
@@ -99,7 +99,7 @@ where
         let frecency_scores = get_frecency_scores(
             &self.frecency_service,
             include_frecency,
-            conation_id,
+            macro_id,
             ids.as_slice(),
         );
 
@@ -147,14 +147,14 @@ where
             .into_page())
     }
 
-    pub(crate) async fn get_link_by_auth_id_and_conation_id_impl(
+    pub(crate) async fn get_link_by_auth_id_and_macro_id_impl(
         &self,
         auth_id: &str,
-        conation_id: conation_user_id::user_id::MacroUserIdStr<'_>,
+        macro_id: conation_user_id::user_id::MacroUserIdStr<'_>,
     ) -> Result<Option<crate::domain::models::Link>, EmailErr> {
         Ok(self
             .email_repo
-            .link_by_fusionauth_and_conation_id(auth_id, conation_id, UserProvider::Gmail)
+            .link_by_fusionauth_and_macro_id(auth_id, macro_id, UserProvider::Gmail)
             .await
             .map_err(anyhow::Error::from)?)
     }

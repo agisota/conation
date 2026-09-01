@@ -65,8 +65,8 @@ const MINUTES_PER_WEEK: u64 = 60 * 24 * 7;
 
 fn frontend_host(env: Environment) -> Url {
     let host = match env {
-        Environment::Production => "https://conation.dev".to_string(),
-        Environment::Develop => "https://dev.conation.dev".to_string(),
+        Environment::Production => "https://macro.com".to_string(),
+        Environment::Develop => "https://dev.macro.com".to_string(),
         Environment::Local => {
             #[expect(clippy::disallowed_methods, reason = "Only used when running locally")]
             let port = std::env::var("FRONTEND_PORT").unwrap_or_else(|_| "3000".to_string());
@@ -98,9 +98,9 @@ impl NotificationExtEmail for InviteToMacro {
             .sender_name
             .as_deref()
             .or(self.sender_email.as_deref())
-            .unwrap_or("Пользователь Conation");
+            .unwrap_or("A Conation user");
         EmailContent {
-            subject: format!("{} пригласил вас в Conation", sender),
+            subject: format!("{sender} has invited you to join Conation"),
             body: self
                 .render()
                 .expect("InviteToMacro template render failed in format_email"),
@@ -174,7 +174,7 @@ impl NotificationTitle for ChannelInviteMetadata {
         &self,
         _sender_id: Option<MacroUserIdStr<'_>>,
     ) -> Result<String, rootcause::Report> {
-        Ok("Open macro to continue".to_string())
+        Ok("Open Conation to continue".to_string())
     }
 }
 
@@ -292,7 +292,7 @@ impl NotificationExtEmail for InviteToTeamMetadata {
     fn format_email(&self) -> EmailContent {
         EmailContent {
             subject: format!(
-                "{} has invited you to the {} team on Macro",
+                "{} has invited you to the {} team on Conation",
                 self.invited_by.email_part().as_ref(),
                 self.team_name
             ),

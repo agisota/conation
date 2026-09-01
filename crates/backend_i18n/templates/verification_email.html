@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html lang="en" xmlns:v="urn:schemas-microsoft-com:vml">
+<!doctype html>
+<html lang="{{ language_tag }}" xmlns:v="urn:schemas-microsoft-com:vml">
   <head>
     <meta charset="utf-8" />
     <meta name="x-apple-disable-message-reformatting" />
@@ -10,7 +10,7 @@
     />
     <meta name="color-scheme" content="light dark" />
     <meta name="supported-color-schemes" content="light dark" />
-    <title>Macro Verify Email</title>
+    <title>{{ copy.document_title }}</title>
     <style>
       body {
         margin: 0;
@@ -31,29 +31,18 @@
         margin: 0 16px;
         outline: 1px solid #f3f4f6;
       }
-      .code-display {
-        margin: 56px auto;
-        width: calc(100% - 64px);
-        max-width: 400px;
-        border-radius: 12px;
-        background-color: #f3f4f6;
-        padding: 32px;
-        text-align: center;
-        font-size: 48px;
-        letter-spacing: 0.2em;
-        color: #374151;
-        font-family: monospace;
-        border: 1px solid #e5e7eb;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        box-sizing: border-box;
+      .brand {
+        color: #111827;
+        font-family: Arial, sans-serif;
+        font-size: 30px;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        text-decoration: none;
       }
-      
-      /* Button Styles */
       .button-container {
         text-align: center;
         margin: 40px 0;
       }
-      
       .button {
         display: inline-block;
         background-color: #3b82f6;
@@ -65,29 +54,16 @@
         font-weight: 600;
         text-align: center;
         border: none;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-        box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
         min-width: 120px;
       }
-      
       .button:hover {
         background-color: #2563eb !important;
-        text-decoration: none !important;
       }
-      
-      .button:active {
-        background-color: #1d4ed8 !important;
-        transform: translateY(1px);
-      }
-      
-      /* Fallback for email clients that don't support CSS3 */
       .button-fallback {
         background-color: #3b82f6;
         border-radius: 8px;
         text-align: center;
       }
-      
       .button-fallback a {
         display: block;
         color: #ffffff !important;
@@ -96,20 +72,11 @@
         font-size: 16px;
         font-weight: 600;
       }
-      
       @media (max-width: 425px) {
         .content-block {
           padding: 32px 16px;
           margin: 0 8px;
         }
-        
-        .code-display {
-          width: calc(100% - 32px);
-          margin: 32px auto;
-          padding: 24px 16px;
-          font-size: 32px;
-        }
-        
         .button {
           padding: 14px 24px;
           font-size: 15px;
@@ -120,9 +87,9 @@
   <body>
     <div
       role="article"
-      aria-roledescription="email"
-      aria-label="Macro Veriy Email"
-      lang="en"
+      aria-roledescription="{{ copy.role_description }}"
+      aria-label="{{ copy.aria_label }}"
+      lang="{{ language_tag }}"
     >
       <table
         class="email-container"
@@ -132,63 +99,42 @@
       >
         <tr>
           <td align="center" style="padding: 56px 0 32px">
-            <a href="https://macro.com">
-              <img
-                src="https://coparse-release-artifact-storage-bucket.s3.amazonaws.com/logos/logo.png"
-                width="200"
-                alt="Macro"
-                style="border: 0; max-width: 100%"
-              />
-            </a>
+            <span class="brand">Conation</span>
           </td>
         </tr>
         <tr>
           <td>
             <div class="content-block">
               <h1
-                style="
-                  margin: 0 0 16px;
-                  text-align: center;
-                  font-size: 36px;
-                  font-weight: 600;
-                  color: #374151;
-                "
+                style="margin: 0 0 16px; text-align: center; font-size: 36px; font-weight: 600; color: #374151"
               >
-                Verify your email
+                {{ copy.heading }}
               </h1>
               <p
-                style="
-                  margin: 0 0 40px;
-                  text-align: center;
-                  font-size: 16px;
-                  color: #6b7280;
-                "
+                style="margin: 0 0 40px; text-align: center; font-size: 16px; color: #6b7280"
               >
-                Click the button below to verify your email address.
+                {{ copy.introduction }}
               </p>
-              
-              <!-- Primary Button (Modern CSS) -->
               <div class="button-container">
-                <a href="{{URL}}/email/verify/{{VERIFICATION_ID}}" class="button">
-                  Verify
+                <a href="{{ verification_url }}" class="button">
+                  {{ copy.action }}
                 </a>
               </div>
-              
-              <!-- Fallback Button (Table-based for older email clients) -->
               <!--[if mso]>
               <table cellpadding="0" cellspacing="0" role="presentation" style="margin: 40px auto;">
                 <tr>
                   <td class="button-fallback">
-                    <a href="{{URL}}/email/verify/{{VERIFICATION_ID}}" style="color: #ffffff !important; text-decoration: none !important; display: block; padding: 16px 32px; font-size: 16px; font-weight: 600;">
-                      Verify Email Address
+                    <a href="{{ verification_url }}" style="color: #ffffff !important; text-decoration: none !important; display: block; padding: 16px 32px; font-size: 16px; font-weight: 600;">
+                      {{ copy.fallback_action }}
                     </a>
                   </td>
                 </tr>
               </table>
               <![endif]-->
-              
-              <p style="text-align: center; font-size: 16px; color: #6b7280; margin: 40px 0 0;">
-                If you didn't request this, you can safely ignore this email.
+              <p
+                style="text-align: center; font-size: 16px; color: #6b7280; margin: 40px 0 0"
+              >
+                {{ copy.ignore_notice }}
               </p>
             </div>
           </td>
@@ -196,11 +142,11 @@
         <tr>
           <td style="padding: 48px 0; text-align: center">
             <p style="margin: 0; font-size: 14px; color: #9ca3af">
-              Questions? Email us at
+              {{ copy.support_prompt }}
               <a
-                href="mailto:support@macro.com"
+                href="mailto:{{ support_email }}"
                 style="color: #6b7280; font-weight: 500; text-decoration: none"
-                >support@macro.com</a
+                >{{ support_email }}</a
               >
             </p>
           </td>

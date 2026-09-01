@@ -56,6 +56,18 @@ use collab_surface::{
     outbound::pg_collab_surface_repo::PgCollabSurfaceRepo,
     outbound::surface_init::LexicalSyncSurfaceInitializer,
 };
+use conation_auth::middleware::decode_jwt::JwtValidationArgs;
+use conation_authorization::{
+    InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationServiceImpl,
+    MacroAuthorizationState, PgBotAuthorizationRepo, PgBotAuthorizer,
+};
+use conation_entrypoint::MacroEntrypoint;
+use conation_env_var::maybe_env_vars;
+use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
+#[cfg(feature = "delete_document_worker")]
+use conation_service_urls::AiEditingWorkerUrl;
+use conation_service_urls::{ConnectionGatewayUrl, LexicalServiceUrl, SyncServiceUrl};
+use conation_sha_count_client::Redis;
 use config::{Config, Environment};
 use connection::{
     domain::service::ConnectionServiceImpl,
@@ -86,18 +98,6 @@ use github::domain::service::{GithubSyncConfig, GithubSyncServiceImpl};
 use github::outbound::github_sync_client::GithubSyncClientImpl;
 use github::outbound::pg_github_sync_repo::PgGithubSyncRepo;
 use lexical_client::LexicalClient;
-use conation_auth::middleware::decode_jwt::JwtValidationArgs;
-use conation_authorization::{
-    InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationServiceImpl,
-    MacroAuthorizationState, PgBotAuthorizationRepo, PgBotAuthorizer,
-};
-use conation_entrypoint::MacroEntrypoint;
-use conation_env_var::maybe_env_vars;
-use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
-#[cfg(feature = "delete_document_worker")]
-use conation_service_urls::AiEditingWorkerUrl;
-use conation_service_urls::{ConnectionGatewayUrl, LexicalServiceUrl, SyncServiceUrl};
-use conation_sha_count_client::Redis;
 use notification::domain::service::{
     NotificationReaderService, PlatformArnConfig, SqsNotificationIngress,
     WebSocketNotificationConsumerService,
@@ -157,8 +157,12 @@ mod model;
 mod outbound;
 mod service;
 
+#[cfg(test)]
+mod test;
+
 const SOUP_CONSUMER_RESTART_MAX_DELAY_SECS: u64 = 60;
 const SOUP_CONSUMER_RESTART_ALERT_THRESHOLD: u32 = 5;
+const AGENT_TOOL_CONTEXT_BUILD_ERROR: &str = "failed to build Conation agent tool context";
 
 fn soup_consumer_restart_delay(consecutive_failures: u32) -> Duration {
     let exponent = consecutive_failures.saturating_sub(1).min(6);
@@ -955,7 +959,7 @@ async fn run() -> anyhow::Result<()> {
         }
     });
 
-    // Wire Macro AI to react to mentions with the classic in-channel chat
+    // Wire Conation AI to react to mentions with the classic in-channel chat
     // reply. The router posts replies through the channel service we just
     // built and runs the agent loop in-process with the same pre-configured
     // toolset used by other AI hosts. Agent sessions belong to a different
@@ -964,7 +968,7 @@ async fn run() -> anyhow::Result<()> {
     let mut conation_agent_tool_context =
         ai_tools::build_tool_service_context_from_env(db.clone(), event_broker_tracker.clone())
             .await
-            .context("failed to build Macro agent tool context")?;
+            .context(AGENT_TOOL_CONTEXT_BUILD_ERROR)?;
     // Wire the agent's SendChannelMessage tool to this service's own
     // side-effect pipeline so agent-posted messages share the exact instance
     // used by the HTTP API, including the in-process bot trigger sender (the

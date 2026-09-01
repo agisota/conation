@@ -29,7 +29,7 @@ pub async fn get_referral_code_handler<T: ReferralService, R, Auth: MacroAuthori
     let user = authorization.authorization.user;
     let code = state
         .service
-        .get_referral_code_for_user(&user.conation_user_id)
+        .get_referral_code_for_user(&user.macro_user_id)
         .await?;
 
     Ok(Json(code))

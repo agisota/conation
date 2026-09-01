@@ -1,12 +1,34 @@
+import { formatDateTime, t } from '@app/lib/i18n';
 import type { DateValue } from '@core/util/date';
 import {
   differenceInHours,
   differenceInMinutes,
-  format,
   isSameYear,
   isToday,
   isYesterday,
 } from 'date-fns';
+
+function asDate(value: DateValue): Date {
+  return value instanceof Date ? value : new Date(value);
+}
+
+function formatTime(date: Date): string {
+  return formatDateTime(date, { hour: 'numeric', minute: '2-digit' });
+}
+
+function formatCompactTime(date: Date): string {
+  return formatTime(date).replace(/\s+(?=[A-Za-zА-Яа-яЁё.]+$)/u, '');
+}
+
+function formatCalendarDate(date: Date): string {
+  return isSameYear(date, new Date())
+    ? formatDateTime(date, { month: 'short', day: 'numeric' })
+    : formatDateTime(date, {
+        year: '2-digit',
+        month: 'numeric',
+        day: 'numeric',
+      });
+}
 
 /**
  * Formats a timestamp into a human-readable string.
@@ -15,15 +37,10 @@ import {
  * - Older: Shows full date (e.g., "1/27/24")
  */
 export function formatTimestamp(date: DateValue): string {
-  if (isToday(date)) {
-    return format(date, 'h:mm a');
-  }
+  const value = asDate(date);
+  if (isToday(value)) return formatTime(value);
 
-  if (isSameYear(date, new Date())) {
-    return format(date, 'MMM d');
-  }
-
-  return format(date, 'M/d/yy');
+  return formatCalendarDate(value);
 }
 
 /**
@@ -37,36 +54,45 @@ export function formatRelativeTimestamp(
   date: DateValue,
   options?: { condensed?: boolean }
 ): string {
+  const value = asDate(date);
   const now = new Date();
   const condensed = options?.condensed ?? false;
 
-  const minutesAgo = differenceInMinutes(now, date);
+  const minutesAgo = differenceInMinutes(now, value);
 
   if (minutesAgo < 1) {
-    return 'just now';
+    return t('entity.timestamp.justNow');
   }
 
   if (minutesAgo < 60) {
-    const unit = condensed ? 'min' : minutesAgo === 1 ? 'minute' : 'minutes';
-    return `${minutesAgo} ${unit} ago`;
+    return t(
+      condensed
+        ? 'entity.timestamp.minutesAgoCondensed'
+        : 'entity.timestamp.minutesAgo',
+      { count: minutesAgo }
+    );
   }
 
-  const hoursAgo = differenceInHours(now, date);
+  const hoursAgo = differenceInHours(now, value);
 
   if (hoursAgo < 24) {
-    const unit = condensed ? 'hr' : hoursAgo === 1 ? 'hour' : 'hours';
-    return `${hoursAgo} ${unit} ago`;
+    return t(
+      condensed
+        ? 'entity.timestamp.hoursAgoCondensed'
+        : 'entity.timestamp.hoursAgo',
+      { count: hoursAgo }
+    );
   }
 
-  if (isYesterday(date)) {
-    return condensed ? 'yest' : `${format(date, 'h:mma')} yesterday`;
+  if (isYesterday(value)) {
+    return condensed
+      ? t('entity.timestamp.yesterdayCondensed')
+      : t('entity.timestamp.yesterdayAt', {
+          time: formatCompactTime(value),
+        });
   }
 
-  if (isSameYear(date, now)) {
-    return format(date, 'MMM d');
-  }
-
-  return format(date, 'M/d/yy');
+  return formatCalendarDate(value);
 }
 
 /**
@@ -75,10 +101,19 @@ export function formatRelativeTimestamp(
  * next-run times).
  */
 export function formatDateAndTime(date: DateValue): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  const dateLabel = isSameYear(d, new Date())
-    ? format(d, 'MMM d')
-    : format(d, 'M/d/yy');
-  const timeLabel = format(d, 'h:mm a');
-  return `${dateLabel}, ${timeLabel}`;
+  const value = asDate(date);
+  return isSameYear(value, new Date())
+    ? formatDateTime(value, {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      })
+    : formatDateTime(value, {
+        year: '2-digit',
+        month: 'numeric',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      });
 }

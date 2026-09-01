@@ -78,7 +78,7 @@ impl ScheduledActionRepo for FakeRepository {
     async fn delete_action(
         &self,
         _id: &Uuid,
-        _conation_user_id: MacroUserIdStr<'static>,
+        _macro_user_id: MacroUserIdStr<'static>,
     ) -> Result<()> {
         Ok(())
     }

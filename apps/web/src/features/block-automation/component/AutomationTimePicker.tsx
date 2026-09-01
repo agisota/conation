@@ -1,5 +1,5 @@
+import { formatDateTime, t } from '@app/lib/i18n';
 import clickOutside from '@core/directive/clickOutside';
-import { t } from '@app/lib/i18n';
 import { cn } from '@ui';
 import { createEffect, createSignal, on, Show } from 'solid-js';
 import { INPUT_CLASS, isValidTime } from './automationUtils';
@@ -24,10 +24,10 @@ function formatTimeLabel(value: string) {
   if (!isValidTime(value)) return '—';
   const [h, m] = value.split(':').map(Number);
   const date = new Date(2026, 0, 1, h, m);
-  return new Intl.DateTimeFormat(undefined, {
+  return formatDateTime(date, {
     hour: 'numeric',
     minute: '2-digit',
-  }).format(date);
+  });
 }
 
 function toHHMM(hour12: number, minute: number, period: 'AM' | 'PM') {
@@ -100,7 +100,7 @@ export function AutomationTimePicker(props: {
                 type="text"
                 inputmode="numeric"
                 maxLength={2}
-                aria-label={t('auto.hour')}
+                aria-label={t('automation.time.hour')}
                 class="w-10 text-center bg-active border border-edge-muted rounded-sm p-1 text-sm focus:outline-none focus:border-accent"
                 value={hourDisplay()}
                 onKeyDown={(e) => {
@@ -124,7 +124,7 @@ export function AutomationTimePicker(props: {
                 type="text"
                 inputmode="numeric"
                 maxLength={2}
-                aria-label={t('auto.minute')}
+                aria-label={t('automation.time.minute')}
                 class="w-10 text-center bg-active border border-edge-muted rounded-sm p-1 text-sm focus:outline-none focus:border-accent"
                 value={minuteDisplay()}
                 onKeyDown={(e) => {
@@ -180,7 +180,9 @@ export function AutomationTimePicker(props: {
               type="button"
               class="ml-auto px-2 py-1 border border-accent/30 bg-accent/10 text-accent rounded-sm text-sm hover:bg-accent/20"
               onClick={() => setOpen(false)}
-            >{t('auto.done')}</button>
+            >
+              {t('automation.time.done')}
+            </button>
           </div>
         </div>
       </Show>

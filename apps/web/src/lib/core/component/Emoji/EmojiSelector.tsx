@@ -1,5 +1,5 @@
-import { cn } from '@ui';
 import { t } from '@app/lib/i18n';
+import { cn } from '@ui';
 import type { JSX } from 'solid-js';
 import {
   createEffect,
@@ -40,6 +40,24 @@ interface EmojiOptionProps {
   emoji: SimpleEmoji;
   onEmojiClick: (emoji: SimpleEmoji) => void;
   isSelected: boolean;
+}
+
+const EMOJI_GROUP_KEYS: Record<string, string> = {
+  'Frequently used': 'core.emoji.groups.frequent',
+  'Smileys & Emotion': 'core.emoji.groups.smileys',
+  'People & Body': 'core.emoji.groups.people',
+  'Animals & Nature': 'core.emoji.groups.nature',
+  'Food & Drink': 'core.emoji.groups.food',
+  'Travel & Places': 'core.emoji.groups.travel',
+  Activities: 'core.emoji.groups.activities',
+  Objects: 'core.emoji.groups.objects',
+  Symbols: 'core.emoji.groups.symbols',
+  Flags: 'core.emoji.groups.flags',
+};
+
+function emojiGroupLabel(name: string): string {
+  const key = EMOJI_GROUP_KEYS[name];
+  return key ? t(key) : name;
 }
 
 export function EmojiSelector(props: EmojiPickerProps): JSX.Element {
@@ -167,7 +185,7 @@ export function EmojiSelector(props: EmojiPickerProps): JSX.Element {
       ref={scrollEl}
       class="size-full overflow-y-auto [overflow-anchor:none]"
       role="listbox"
-      aria-label={t('auto.emoji_selector')}
+      aria-label={t('core.emoji.selector')}
     >
       <Switch>
         <Match
@@ -179,7 +197,9 @@ export function EmojiSelector(props: EmojiPickerProps): JSX.Element {
             {(group, groupIndex): JSX.Element => (
               <Show when={group.emojis.length > 0}>
                 <div class="mt-2 w-full">
-                  <p class="pl-1 text-ink-extra-muted text-xs">{group.name}</p>
+                  <p class="pl-1 text-ink-extra-muted text-xs">
+                    {emojiGroupLabel(group.name)}
+                  </p>
                   <div style={gridStyle()}>
                     <For each={group.emojis}>
                       {(emojiItem, index): JSX.Element => (
@@ -201,7 +221,9 @@ export function EmojiSelector(props: EmojiPickerProps): JSX.Element {
         </Match>
         <Match when={filteredEmojis() !== undefined}>
           <div class="mt-2">
-            <span class="pl-1 text-ink-extra-muted text-xs">{t('auto.search_results')}</span>
+            <span class="pl-1 text-ink-extra-muted text-xs">
+              {t('core.emoji.searchResults')}
+            </span>
           </div>
 
           <div style={gridStyle()}>

@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { setLocale } from '@app/lib/i18n';
+import { afterEach, describe, expect, it } from 'vitest';
 import { type ActivitySession, buildActivityRows } from './activityRows';
 
 const MINUTE = 60 * 1000;
@@ -18,6 +19,8 @@ function session(
 }
 
 describe('buildActivityRows', () => {
+  afterEach(() => setLocale('en'));
+
   it('groups recent edits from multiple users into the same progressive tier', () => {
     const rows = buildActivityRows(
       [session('wolf', 2 * MINUTE), session('bob', 6 * MINUTE)],
@@ -53,5 +56,13 @@ describe('buildActivityRows', () => {
     expect(rows).toHaveLength(2);
     expect(rows[0].userIds).toEqual(['wolf']);
     expect(rows[1].userIds).toEqual(['bob']);
+  });
+
+  it('uses the selected locale for relative activity labels', () => {
+    setLocale('ru');
+
+    const rows = buildActivityRows([session('wolf', 5 * MINUTE)], NOW);
+
+    expect(rows[0].label).toBe('5 минут назад');
   });
 });

@@ -1,5 +1,5 @@
-import { URL_PARAMS as CHANNEL_PARAMS } from '@block-channel/constants';
 import { t } from '@app/lib/i18n';
+import { URL_PARAMS as CHANNEL_PARAMS } from '@block-channel/constants';
 import { CommentsProvider } from '@block-md/comments/CommentsProvider';
 import { URL_PARAMS } from '@block-md/constants';
 import { keyNavigationPlugin } from '@block-md/plugins/keyboardNavigation';
@@ -7,6 +7,16 @@ import { markdownBlockErrorSignal } from '@block-md/signal/error';
 import { FindAndReplaceStore } from '@block-md/signal/findAndReplaceStore';
 import { revisionsSignal, rewriteSignal } from '@block-md/signal/rewriteSignal';
 import { SplitBottomPanel } from '@components/app/split-layout/components/SplitBottomPanel';
+import type { LoroManager } from '@conation/collaboration/collab/manager';
+import {
+  $isInlineSearchNode,
+  AwaitNode,
+  CommentNode,
+  createPeerIdValidator,
+  InlineSearchNode,
+  type PeerIdValidator,
+  peerIdPlugin,
+} from '@conation/lexical-core';
 import {
   type BlockName,
   useBlockId,
@@ -161,16 +171,6 @@ import { isSourceDSS, isSourceSyncService } from '@core/util/source';
 import { bufToString } from '@core/util/string';
 import { handleFileFolderDrop } from '@core/util/upload';
 import { type EntityDragEvent, isEntityDragEvent } from '@entity';
-import type { LoroManager } from '@conation/collaboration/collab/manager';
-import {
-  $isInlineSearchNode,
-  AwaitNode,
-  CommentNode,
-  createPeerIdValidator,
-  InlineSearchNode,
-  type PeerIdValidator,
-  peerIdPlugin,
-} from '@conation/lexical-core';
 import WarningIcon from '@phosphor/warning.svg';
 import { useDocTags } from '@property/tags';
 import { EntityType } from '@service-properties/generated/schemas/entityType';
@@ -211,16 +211,10 @@ false && fileFolderDrop;
 const EDITOR_CLICK_TARGET_HEIGHT = 80;
 
 function getBlankMarkdownPlaceholder(canEdit: boolean) {
-  if (!canEdit) return 'This document is blank...';
-
-  const hints = [
-    "'/' for commands",
-    "'@' to reference files",
-    "';' for snippets",
-  ];
-  if (ENABLE_MARKDOWN_AI_GENERATE) hints.push("'space' for AI writing");
-
-  return `Press ${hints.join(', ')}...`;
+  if (!canEdit) return t('markdown.editor.blankReadOnly');
+  return ENABLE_MARKDOWN_AI_GENERATE
+    ? t('markdown.editor.blankEditableWithAi')
+    : t('markdown.editor.blankEditable');
 }
 
 export function MarkdownEditor(props: {
@@ -238,7 +232,9 @@ export function MarkdownEditor(props: {
     blockName === 'task' ? EntityType.TASK : EntityType.DOCUMENT
   );
   const tagApplyTargetLabel = () =>
-    blockName === 'task' ? 'Task' : 'Document';
+    blockName === 'task'
+      ? t('markdown.task.title')
+      : t('markdown.document.title');
 
   const mdDocumentName = useBlockDocumentName('');
 
@@ -521,7 +517,7 @@ export function MarkdownEditor(props: {
         highlightNodeId_
       );
       if (!found) {
-        toast.failure('Document reference not found');
+        toast.failure(t('markdown.editor.referenceNotFound'));
       }
     }
   });
@@ -1179,7 +1175,7 @@ export function MarkdownEditor(props: {
             {(state) => (
               <SplitBottomPanel
                 id="lexical-state-debugger"
-                title={t('auto.lexical_state_debugger')}
+                title={t('markdown.debug.lexicalState')}
                 onClose={props.onLexicalStateDebuggerClose}
               >
                 <LexicalStateDebugger

@@ -1,10 +1,10 @@
-import { resolveEmoji, useEmojiData } from '@core/component/Emoji/emojis';
 import { t } from '@app/lib/i18n';
+import { InlineSearchNode } from '@conation/lexical-core';
+import { resolveEmoji, useEmojiData } from '@core/component/Emoji/emojis';
 import { recordEmojiUsage } from '@core/component/Emoji/emojiUsage';
 import { type PortalScope, ScopedPortal } from '@core/component/ScopedPortal';
 import clickOutside from '@core/directive/clickOutside';
 import { useIsKeyPressActive } from '@core/util/useIsKeyPressActive';
-import { InlineSearchNode } from '@conation/lexical-core';
 import { debounce } from '@solid-primitives/scheduled';
 import { cn, Surface } from '@ui';
 import type { LexicalEditor } from 'lexical';
@@ -283,7 +283,9 @@ export function EmojiMenu(props: EmojiMenuProps) {
               <Show
                 when={emojiOptions().length > 0}
                 fallback={
-                  <div class="px-2 text text-ink-muted">{t('auto.no_results')}</div>
+                  <div class="px-2 text text-ink-muted">
+                    {t('editor.emoji.noResults')}
+                  </div>
                 }
               >
                 <VList

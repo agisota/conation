@@ -5,8 +5,8 @@ import {
   type Query,
   queryStateFrom,
 } from '@app/features/next-soup/filters/filter-store';
-import { throwOnErr } from '@core/util/result';
 import { t } from '@app/lib/i18n';
+import { throwOnErr } from '@core/util/result';
 import {
   ListEntity,
   ListEntityMetadataQueryProvider,
@@ -460,12 +460,16 @@ export default function DocumentWherePlayground() {
   return (
     <div class="flex h-full flex-col bg-surface text-ink">
       <header class="flex h-10 shrink-0 items-center border-edge-muted border-b px-4">
-        <div class="text-sm font-medium">{t('auto.document_ast_playground')}</div>
+        <div class="text-sm font-medium">
+          {t('soup.debug.documentWhere.title')}
+        </div>
       </header>
       <div class="grid min-h-0 flex-1 grid-cols-[420px_1fr] overflow-hidden">
         <aside class="flex min-h-0 flex-col gap-4 border-edge-muted border-r p-4">
           <section class="space-y-2">
-            <div class="text-sm font-medium">{t('auto.endpoint')}</div>
+            <div class="text-sm font-medium">
+              {t('soup.debug.documentWhere.endpoint')}
+            </div>
             <SegmentedControl
               class="w-full"
               size="sm"
@@ -479,7 +483,9 @@ export default function DocumentWherePlayground() {
           </section>
 
           <section class="space-y-3">
-            <div class="text-sm font-medium">{t('auto.expression_shape')}</div>
+            <div class="text-sm font-medium">
+              {t('soup.debug.documentWhere.expressionShape')}
+            </div>
             <select
               class="w-full rounded-sm border border-edge-muted bg-surface p-1.5 text-sm outline-none focus:border-accent"
               value={expressionMode()}
@@ -487,15 +493,25 @@ export default function DocumentWherePlayground() {
                 setExpressionMode(event.currentTarget.value as ExpressionMode)
               }
             >
-              <option value="or">{t('auto.or_selected_clauses')}</option>
-              <option value="and">{t('auto.and_selected_clauses')}</option>
-              <option value="nested-md">{t('auto.or_selected_grouping_markdown_')}</option>
-              <option value="not-selected">{t('auto.not_selected_clauses')}</option>
+              <option value="or">
+                {t('soup.debug.documentWhere.expression.orSelected')}
+              </option>
+              <option value="and">
+                {t('soup.debug.documentWhere.expression.andSelected')}
+              </option>
+              <option value="nested-md">
+                {t('soup.debug.documentWhere.expression.groupMarkdown')}
+              </option>
+              <option value="not-selected">
+                {t('soup.debug.documentWhere.expression.notSelected')}
+              </option>
             </select>
           </section>
 
           <section class="space-y-2">
-            <div class="text-sm font-medium">{t('auto.examples')}</div>
+            <div class="text-sm font-medium">
+              {t('soup.debug.documentWhere.examples')}
+            </div>
             <div class="grid grid-cols-1 gap-1">
               <For each={EXAMPLES}>
                 {(example) => (
@@ -513,7 +529,9 @@ export default function DocumentWherePlayground() {
           </section>
 
           <section class="min-h-0 space-y-3 overflow-auto">
-            <div class="text-sm font-medium">{t('auto.document_clauses')}</div>
+            <div class="text-sm font-medium">
+              {t('soup.debug.documentWhere.documentClauses')}
+            </div>
             <div class="grid grid-cols-2 gap-2">
               <For each={FILTER_TOKENS}>
                 {(token) => (
@@ -541,7 +559,9 @@ export default function DocumentWherePlayground() {
           </section>
 
           <section class="space-y-2">
-            <div class="text-sm font-medium">{t('auto.custom_include_fields')}</div>
+            <div class="text-sm font-medium">
+              {t('soup.debug.documentWhere.customIncludeFields')}
+            </div>
             <input
               class="w-full rounded-sm border border-edge-muted bg-surface p-1.5 text-sm outline-none focus:border-accent"
               placeholder="document ids, comma separated"
@@ -577,7 +597,9 @@ export default function DocumentWherePlayground() {
           </section>
 
           <section class="space-y-2">
-            <div class="text-sm font-medium">{t('auto.limit')}</div>
+            <div class="text-sm font-medium">
+              {t('soup.debug.documentWhere.limit')}
+            </div>
             <input
               class="w-24 rounded-sm border border-edge-muted bg-surface p-1 text-sm outline-none focus:border-accent"
               type="number"
@@ -591,13 +613,17 @@ export default function DocumentWherePlayground() {
           </section>
 
           <section class="flex gap-2">
-            <Button variant="outline" size="sm" onClick={loadJsonFromControls}>{t('auto.edit_json')}</Button>
+            <Button variant="outline" size="sm" onClick={loadJsonFromControls}>
+              {t('soup.debug.documentWhere.editJson')}
+            </Button>
             <Button
               variant="cta"
               size="sm"
               disabled={loading()}
               onClick={() => run()}
-            >{t('auto.run')}</Button>
+            >
+              {t('soup.debug.documentWhere.run')}
+            </Button>
           </section>
 
           <Show when={useJson()}>
@@ -658,7 +684,9 @@ export default function DocumentWherePlayground() {
             </div>
 
             <Show when={loading()}>
-              <div class="mb-3 text-ink-muted text-sm">{t('common.loading')}</div>
+              <div class="mb-3 text-ink-muted text-sm">
+                {t('common.loading')}
+              </div>
             </Show>
 
             <Show when={items().length !== entities().length}>

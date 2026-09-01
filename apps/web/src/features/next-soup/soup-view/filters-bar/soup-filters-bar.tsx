@@ -8,6 +8,7 @@ import {
   CompanyDisplayMenu,
   CompanyViewsMenu,
 } from '@app/features/next-soup/soup-view/views/companies/CompanyViewsMenu';
+import { t } from '@app/lib/i18n';
 import { CollapsibleToolbarItem } from '@components/app/split-layout/components/CollapsibleItem';
 import { PreviewButton } from '@components/app/split-layout/components/PreviewButton';
 import {
@@ -99,7 +100,7 @@ export function SoupFiltersBar(props: {
           {(isCollapsed) => (
             <PreviewButton
               disabled={!props.hasPreviewItems}
-              disabledLabel="No items to preview"
+              disabledLabel={t('soup.preview.noItems')}
               onEngage={props.onPreviewEngage}
               onOpenChange={props.onPreviewOpenChange}
               hideLabel={isCollapsed()}

@@ -53,7 +53,7 @@ pub async fn insert_thread_share_permissions(
 
     // Get the thread owner
     let owner_result: Option<String> =
-        conation_db_client::share_permission::get::get_conation_id_from_thread_id(db, thread_id)
+        conation_db_client::share_permission::get::get_macro_id_from_thread_id(db, thread_id)
             .await
             .context("Failed to get thread owner for email")?;
 

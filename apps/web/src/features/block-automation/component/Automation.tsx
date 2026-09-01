@@ -44,6 +44,7 @@ import {
   INPUT_CLASS,
   isValidTime,
   WEEKDAY_OPTIONS,
+  weekdayLabel,
 } from './automationUtils';
 import type { ScheduleDraft } from './types';
 
@@ -60,7 +61,7 @@ function HistoryRow(props: { record: HistoryRecord }) {
   const chatQuery = useChatQuery(chatId);
   const name = () =>
     chatQuery.data?.chat?.name?.trim() ||
-    (chatQuery.isLoading ? '' : 'Untitled run');
+    (chatQuery.isLoading ? '' : t('automation.history.untitledRun'));
 
   const clickable = () => Boolean(chatId());
   // Synthetic pending rows (no id) are inserted by the websocket sync on
@@ -105,10 +106,14 @@ function HistoryList(props: { records: HistoryRecord[]; isPending: boolean }) {
         <Show
           when={!props.isPending}
           fallback={
-            <div class="px-3 py-8 text-center text-xs text-ink-muted">{t('common.loading')}</div>
+            <div class="px-3 py-8 text-center text-xs text-ink-muted">
+              {t('common.loading')}
+            </div>
           }
         >
-          <div class="px-3 py-8 text-center text-xs text-ink-muted">{t('auto.no_runs_yet')}</div>
+          <div class="px-3 py-8 text-center text-xs text-ink-muted">
+            {t('automation.history.empty')}
+          </div>
         </Show>
       }
     >
@@ -146,15 +151,15 @@ export function Automation() {
   const formError = createMemo(() => {
     const d = state();
     if (!d) return null;
-    if (!d.prompt.trim()) return 'Prompt is required.';
-    if (!isValidTime(d.time)) return 'Choose a valid time.';
+    if (!d.prompt.trim()) return t('automation.validation.promptRequired');
+    if (!isValidTime(d.time)) return t('automation.validation.invalidTime');
     if (d.frequency === 'week' && d.daysOfWeek.length === 0) {
-      return 'Select at least one day.';
+      return t('automation.validation.dayRequired');
     }
     if (d.frequency === 'month') {
       const day = Number(d.dayOfMonth);
       if (!Number.isInteger(day) || day < 1 || day > 31) {
-        return 'Pick a day between 1 and 31';
+        return t('automation.validation.dayOfMonth');
       }
     }
     return null;
@@ -162,7 +167,7 @@ export function Automation() {
 
   const updateMutation = useUpdateScheduleMutation({
     onError: (error) =>
-      toast.alert('Failed to update automation', {
+      toast.alert(t('automation.error.updateFailed'), {
         subtext: getErrorMessage(error),
       }),
   });
@@ -208,12 +213,14 @@ export function Automation() {
 
   const runNowMutation = useRunScheduleNowMutation({
     onError: (error) =>
-      toast.alert('Failed to start run', { subtext: getErrorMessage(error) }),
+      toast.alert(t('automation.error.startFailed'), {
+        subtext: getErrorMessage(error),
+      }),
   });
 
   const duplicateMutation = useCreateScheduleMutation({
     onSuccess: (created) => {
-      toast.success('Duplicated');
+      toast.success(t('automation.toast.duplicated'));
       if (created.id) {
         replaceOrInsertSplit(
           { type: 'automation', id: created.id },
@@ -222,7 +229,7 @@ export function Automation() {
       }
     },
     onError: (error) =>
-      toast.alert('Failed to duplicate automation', {
+      toast.alert(t('automation.error.duplicateFailed'), {
         subtext: getErrorMessage(error),
       }),
   });
@@ -233,7 +240,7 @@ export function Automation() {
     duplicateMutation.mutate({
       enabled: current.enabled,
       kind: current.kind,
-      name: `${current.name} copy`,
+      name: t('automation.copyName', { name: current.name }),
       schedule: current.schedule,
       task: current.task,
       timezone: current.timezone,
@@ -249,10 +256,10 @@ export function Automation() {
       view: 'delete',
       entities: [entity],
       onFinish: () => {
-        toast.success('Deleted');
+        toast.success(t('automation.toast.deleted'));
         returnSplitToRecentListView(panel.handle);
       },
-      onError: () => toast.failure('Failed to delete'),
+      onError: () => toast.failure(t('automation.error.deleteFailed')),
     });
   };
 
@@ -279,10 +286,14 @@ export function Automation() {
         <Show
           when={!schedulesQuery.isPending && !schedule()}
           fallback={
-            <div class="flex size-full items-center justify-center text-xs text-ink-muted">{t('common.loading')}</div>
+            <div class="flex size-full items-center justify-center text-xs text-ink-muted">
+              {t('common.loading')}
+            </div>
           }
         >
-          <div class="flex size-full items-center justify-center text-xs text-ink-muted">{t('auto.automation_not_found')}</div>
+          <div class="flex size-full items-center justify-center text-xs text-ink-muted">
+            {t('automation.notFound')}
+          </div>
         </Show>
       }
     >
@@ -325,13 +336,13 @@ export function Automation() {
               tools={[
                 {
                   group: 'file',
-                  label: 'Rename',
+                  label: t('shell.actions.rename'),
                   icon: RenameIcon,
                   action: () => setRenameOpen(true),
                 },
                 {
                   group: 'file',
-                  label: 'Duplicate',
+                  label: t('shell.fileActions.duplicate'),
                   icon: CopyIcon,
                   action: duplicateAutomation,
                 },
@@ -362,7 +373,9 @@ export function Automation() {
                   class="cursor-default"
                   disabled={runNowMutation.isPending || isRunning()}
                   onClick={() => runNowMutation.mutate({ scheduleId })}
-                >{t('auto.run_now')}</Button>
+                >
+                  {t('automation.actions.runNow')}
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
@@ -374,7 +387,9 @@ export function Automation() {
                     }))
                   }
                 >
-                  {d().enabled ? 'Pause' : 'Resume'}
+                  {d().enabled
+                    ? t('automation.actions.pause')
+                    : t('automation.actions.resume')}
                 </Button>
                 <div class="ml-auto text-xs font-mono text-right uppercase font-light">
                   <Show
@@ -383,23 +398,29 @@ export function Automation() {
                       <span class="text-ink-extra-muted">
                         <Show
                           when={d().enabled && schedule()?.next_run_at}
-                          fallback={<>{t('auto.paused')}</>}
+                          fallback={t('automation.status.paused')}
                         >
-                          {(nextRunAt) => (
-                            <>Next run {formatDateAndTime(nextRunAt())}</>
-                          )}
+                          {(nextRunAt) =>
+                            t('automation.status.nextRun', {
+                              date: formatDateAndTime(nextRunAt()),
+                            })
+                          }
                         </Show>
                       </span>
                     }
                   >
                     <span class="flex items-center justify-end gap-1.5 text-accent">
-                      <span class="size-1.5 animate-pulse rounded-full bg-accent" />{t('auto.running')}</span>
+                      <span class="size-1.5 animate-pulse rounded-full bg-accent" />
+                      {t('automation.status.running')}
+                    </span>
                   </Show>
                 </div>
               </div>
 
               <div class="grid gap-1.5">
-                <h1 class="text-sm font-semibold">{t('auto.instructions')}</h1>
+                <h1 class="text-sm font-semibold">
+                  {t('automation.fields.instructions')}
+                </h1>
                 <AutomationPromptEditor
                   initialValue={d().prompt}
                   onChange={(markdown) =>
@@ -412,7 +433,9 @@ export function Automation() {
               </div>
 
               <div>
-                <h1 class="text-sm font-semibold">{t('auto.schedule')}</h1>
+                <h1 class="text-sm font-semibold">
+                  {t('automation.schedule.title')}
+                </h1>
                 <p class="mt-0.5 text-xs text-ink-muted">{currentSummary()}</p>
               </div>
 
@@ -434,7 +457,7 @@ export function Automation() {
                         }))
                       }
                     >
-                      {option.label}
+                      {t(option.labelKey)}
                     </button>
                   )}
                 </For>
@@ -442,7 +465,9 @@ export function Automation() {
 
               <Show when={d().frequency === 'week'}>
                 <div class="grid gap-1.5">
-                  <label class="text-xs font-medium text-ink-muted cursor-default">{t('auto.days')}</label>
+                  <label class="text-xs font-medium text-ink-muted cursor-default">
+                    {t('automation.schedule.days')}
+                  </label>
                   <div class="flex flex-wrap gap-1">
                     <For each={WEEKDAY_OPTIONS}>
                       {(option) => {
@@ -473,7 +498,7 @@ export function Automation() {
                               })
                             }
                           >
-                            {option.label}
+                            {weekdayLabel(option.value)}
                           </button>
                         );
                       }}
@@ -484,7 +509,9 @@ export function Automation() {
 
               <Show when={d().frequency === 'month'}>
                 <div class="grid gap-1.5">
-                  <label class="text-xs font-medium text-ink-muted cursor-default">{t('auto.day_of_month')}</label>
+                  <label class="text-xs font-medium text-ink-muted cursor-default">
+                    {t('automation.schedule.dayOfMonth')}
+                  </label>
                   <input
                     type="number"
                     min="1"
@@ -502,7 +529,9 @@ export function Automation() {
               </Show>
 
               <div class="grid gap-1.5">
-                <label class="text-xs font-medium text-ink-muted cursor-default">{t('auto.time')}</label>
+                <label class="text-xs font-medium text-ink-muted cursor-default">
+                  {t('automation.schedule.time')}
+                </label>
                 <AutomationTimePicker
                   value={d().time}
                   onChange={(value) =>
@@ -524,7 +553,9 @@ export function Automation() {
             </div>
 
             <div class="flex min-h-0 flex-1 flex-col">
-              <div class="border-b border-edge-muted px-3 py-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">{t('auto.history')}</div>
+              <div class="border-b border-edge-muted px-3 py-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                {t('automation.history.title')}
+              </div>
               <HistoryList
                 records={history()}
                 isPending={historyQuery.isPending}

@@ -1,5 +1,5 @@
-#[conation_export]
-conation_rules! timeit {
+#[macro_export]
+macro_rules! timeit {
     ($code:expr) => {{
         let start = web_time::Instant::now();
         let out = { $code };
@@ -7,8 +7,8 @@ conation_rules! timeit {
     }};
 }
 
-#[conation_export]
-conation_rules! timeit_log {
+#[macro_export]
+macro_rules! timeit_log {
     ($code:expr) => {{ $crate::timeit_log!($code, ::tracing::debug) }};
     ($code:expr, $logger:path) => {{
         let (result, duration) = $crate::timeit!($code);
@@ -26,8 +26,8 @@ conation_rules! timeit_log {
     }};
 }
 
-#[conation_export]
-conation_rules! timeit_log_if_slow {
+#[macro_export]
+macro_rules! timeit_log_if_slow {
     ($fmt:literal, $code:expr) => {{ $crate::timeit_log_if_slow(1, $fmt, $code) }};
     ($max_time:literal, $fmt:literal, $code:expr) => {{
         let (out, elapsed) = $crate::timeit!($code);

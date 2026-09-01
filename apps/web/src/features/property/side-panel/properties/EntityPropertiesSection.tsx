@@ -1,5 +1,5 @@
-import { SidePanel } from '@components/app/side-panel/SidePanel';
 import { t } from '@app/lib/i18n';
+import { SidePanel } from '@components/app/side-panel/SidePanel';
 import { useIsAuthenticated } from '@core/auth';
 import type { BlockAlias, BlockName } from '@core/block';
 import { PopupPreview } from '@core/component/DocumentPreview';
@@ -88,11 +88,18 @@ export function EntityTagsSection(props: EntityTagsSectionProps) {
 
   return (
     <Show when={isTaggableEntityType(props.entityType)}>
-      <SidePanel.Section id="tags" title={t('auto.tags')} defaultOpen order={props.order}>
+      <SidePanel.Section
+        id="tags"
+        title={t('property.tags.title')}
+        defaultOpen
+        order={props.order}
+      >
         <Show
           when={isAuthenticated() !== false && !tagsQuery.isError}
           fallback={
-            <span class="text-xs text-ink-extra-muted">{t('auto.tags_unavailable')}</span>
+            <span class="text-xs text-ink-extra-muted">
+              {t('property.tags.unavailable')}
+            </span>
           }
         >
           <Suspense fallback={<SidePanel.Loading />}>
@@ -307,7 +314,7 @@ export function EntityPropertiesSection(props: EntityPropertiesSectionProps) {
             }
           >
             <div class="mb-2 flex items-center gap-3">
-              <span class="text-ink-muted">{t('auto.tags')}</span>
+              <span class="text-ink-muted">{t('property.tags.title')}</span>
               <TagsRow
                 entityId={props.entityId}
                 entityType={props.entityType}
@@ -379,7 +386,7 @@ function AddPinnedPropertyButton() {
       class="m-px rounded-full"
     >
       <Plus class="size-3" />
-      <span>{t('auto.add_property')}</span>
+      <span>{t('property.actions.addProperty')}</span>
     </Button>
   );
 }
@@ -594,8 +601,8 @@ function PropertyRowActions(props: {
         <Show when={canRemove()}>
           <button
             type="button"
-            title={t('auto.remove_from_entity')}
-            aria-label={t('auto.remove_from_entity')}
+            title={t('property.actions.removeFromEntity')}
+            aria-label={t('property.actions.removeFromEntity')}
             disabled={isSaving()}
             class="pointer-events-auto flex size-5 items-center justify-center rounded-full text-ink-muted outline-none ring-0 shadow-none hover:bg-hover hover:text-failure-ink focus:outline-none focus-visible:outline-none focus-visible:ring-0 disabled:pointer-events-none disabled:opacity-50"
             onClick={removeFromEntity}
@@ -718,7 +725,9 @@ function MultiValue(props: { property: Property }) {
             <Show when={!isReadOnly()}>
               <PropertyNS.Pill
                 class="size-6 p-0"
-                aria-label={`Add ${props.property.displayName}`}
+                aria-label={t('property.actions.addValue', {
+                  property: props.property.displayName,
+                })}
               >
                 <Plus class="size-3" />
               </PropertyNS.Pill>
@@ -782,7 +791,9 @@ function NonUserEntityValue(props: { property: Property }) {
             depth={0}
             size="icon-sm"
             class="rounded-full"
-            aria-label={`Add ${props.property.displayName}`}
+            aria-label={t('property.actions.addValue', {
+              property: props.property.displayName,
+            })}
             onClick={(event) => {
               event.stopPropagation();
               propertyCtx.openEditor(event.currentTarget);
@@ -864,7 +875,9 @@ function EntityCollectionPropertyBody(props: {
               depth={0}
               size="icon-sm"
               class="size-5 rounded-full"
-              aria-label={`Add ${props.property.displayName}`}
+              aria-label={t('property.actions.addValue', {
+                property: props.property.displayName,
+              })}
               onClick={(event) => {
                 event.stopPropagation();
                 propertyCtx.openEditor(event.currentTarget);
@@ -882,7 +895,11 @@ function EntityCollectionPropertyBody(props: {
         <div class="mt-2 flex flex-wrap gap-1.5">
           <For
             each={entities()}
-            fallback={<span class="text-ink-extra-muted">{t('auto.empty')}</span>}
+            fallback={
+              <span class="text-ink-extra-muted">
+                {t('property.common.empty')}
+              </span>
+            }
           >
             {(entityRef) => (
               <NonUserEntityChip
@@ -970,7 +987,7 @@ function NonUserEntityChip(props: {
               event.stopPropagation();
               props.onRemove?.();
             }}
-            aria-label={`Remove ${name()}`}
+            aria-label={t('property.actions.removeValue', { value: name() })}
           >
             <DeleteIcon />
           </Button>

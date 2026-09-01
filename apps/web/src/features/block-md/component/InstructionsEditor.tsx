@@ -1,7 +1,16 @@
-import { markdownBlockErrorSignal } from '@block-md/signal/error';
 import { t } from '@app/lib/i18n';
+import { markdownBlockErrorSignal } from '@block-md/signal/error';
 import { revisionsSignal, rewriteSignal } from '@block-md/signal/rewriteSignal';
 import { SplitBottomPanel } from '@components/app/split-layout/components/SplitBottomPanel';
+import type { LoroManager } from '@conation/collaboration/collab/manager';
+import {
+  AwaitNode,
+  CommentNode,
+  createPeerIdValidator,
+  InlineSearchNode,
+  type PeerIdValidator,
+  peerIdPlugin,
+} from '@conation/lexical-core';
 import { useBlockId } from '@core/block';
 import { DecoratorRenderer } from '@core/component/LexicalMarkdown/component/core/DecoratorRenderer';
 import { FocusClickTarget } from '@core/component/LexicalMarkdown/component/core/FocusClickTarget';
@@ -50,15 +59,6 @@ import {
 import { useCanEdit } from '@core/signal/permissions';
 import { isSourceDSS, isSourceSyncService } from '@core/util/source';
 import { bufToString } from '@core/util/string';
-import type { LoroManager } from '@conation/collaboration/collab/manager';
-import {
-  AwaitNode,
-  CommentNode,
-  createPeerIdValidator,
-  InlineSearchNode,
-  type PeerIdValidator,
-  peerIdPlugin,
-} from '@conation/lexical-core';
 import WarningIcon from '@phosphor/warning.svg';
 import { onElementConnect } from '@solid-primitives/lifecycle';
 import { debounce } from '@solid-primitives/scheduled';
@@ -418,8 +418,8 @@ export function InstructionsEditor(props: {
         <Show when={isBlankMarkdown()}>
           <div class="pointer-events-none text-ink-placeholder absolute top-0">
             {canEdit()
-              ? `Enter custom instructions for AI here...`
-              : `This document is blank...`}
+              ? t('markdown.instructions.editablePlaceholder')
+              : t('markdown.instructions.blankReadOnly')}
           </div>
         </Show>
 
@@ -450,7 +450,7 @@ export function InstructionsEditor(props: {
             {(state) => (
               <SplitBottomPanel
                 id="lexical-state-debugger"
-                title={t('auto.lexical_state_debugger')}
+                title={t('markdown.debug.lexicalState')}
                 onClose={props.onLexicalStateDebuggerClose}
               >
                 <LexicalStateDebugger

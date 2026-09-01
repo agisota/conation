@@ -1,7 +1,7 @@
 import { useCalendarPager } from '@app/features/calendar/components/CalendarPagerContext';
-import { t } from '@app/lib/i18n';
 import { useCalendarView } from '@app/features/calendar/components/CalendarViewContext';
 import { SourceControls } from '@app/features/calendar/components/SourceControls';
+import { t } from '@app/lib/i18n';
 import { SidePanel, useSidePanel } from '@components/app/side-panel/SidePanel';
 import { Calendar as MiniCalendar } from '@ui';
 import { createEffect, createMemo, createSignal, on, Show } from 'solid-js';
@@ -45,7 +45,7 @@ function CalendarMiniCalendarSidePanelSection() {
   return (
     <SidePanel.Section
       id="calendar-mini-calendar"
-      title={t('auto.calendar')}
+      title={t('calendar.label')}
       order={10}
       defaultOpen
     >
@@ -72,7 +72,7 @@ function CalendarSourcesSidePanelSection() {
     <Show when={calendarView.sources().length > 1}>
       <SidePanel.Section
         id="calendar-controls"
-        title={t('auto.calendars')}
+        title={t('calendar.calendarsLabel')}
         order={20}
         defaultOpen
       >

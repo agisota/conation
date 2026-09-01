@@ -169,9 +169,9 @@ pub struct ImportEntityView {
     pub status: ImportStatus,
     /// A human label from the metadata (title / channel name).
     pub label: String,
-    /// The Macro entity it became, when imported.
+    /// The Conation entity it became, when imported.
     pub entity_id: Option<String>,
-    /// The Macro entity type, when imported.
+    /// The Conation entity type, when imported.
     pub entity_type: Option<String>,
     /// Whether the row belongs to a teammate (team-imported), not the user.
     pub imported_by_teammate: bool,
@@ -198,7 +198,7 @@ impl ImportEntityView {
 pub enum CreateImportStatus {
     /// Track an item as a candidate the user has not accepted yet.
     Staged,
-    /// Record an item you have ALREADY created a Macro entity for.
+    /// Record an item you have ALREADY created a Conation entity for.
     Imported,
 }
 
@@ -207,7 +207,7 @@ pub enum CreateImportStatus {
 #[serde(rename_all = "camelCase")]
 #[schemars(
     title = "CreateImportEntity",
-    description = "Track an external item (Linear issue, Notion page, Slack channel) in the import ledger. Use status `staged` to propose an item for import BEFORE creating anything; use status `imported` (with entityId) only to record a Macro entity you already created from the item. The response tells you when the item was already imported by the user or a teammate — in that case do NOT create a duplicate; point the user at the existing entity instead."
+    description = "Track an external item (Linear issue, Notion page, Slack channel) in the import ledger. Use status `staged` to propose an item for import BEFORE creating anything; use status `imported` (with entityId) only to record a Conation entity you already created from the item. The response tells you when the item was already imported by the user or a teammate — in that case do NOT create a duplicate; point the user at the existing entity instead."
 )]
 pub struct CreateImportEntity {
     /// The external system the item comes from.
@@ -222,7 +222,7 @@ pub struct CreateImportEntity {
 
     /// Whether this is a staged candidate or an already-created import.
     #[schemars(
-        description = "`staged` to propose the item for import; `imported` to record a Macro entity you already created from it (requires entityId)."
+        description = "`staged` to propose the item for import; `imported` to record a Conation entity you already created from it (requires entityId)."
     )]
     pub status: CreateImportStatus,
 
@@ -232,9 +232,9 @@ pub struct CreateImportEntity {
     )]
     pub metadata: serde_json::Value,
 
-    /// The Macro entity id, when `status` is `imported`.
+    /// The Conation entity id, when `status` is `imported`.
     #[schemars(
-        description = "The id of the Macro entity you created, required when status is `imported`. The entity type is fixed by source: linear → task, notion → md (document), slack → channel."
+        description = "The id of the Conation entity you created, required when status is `imported`. The entity type is fixed by source: linear → task, notion → md (document), slack → channel."
     )]
     #[serde(default)]
     pub entity_id: Option<String>,
@@ -316,7 +316,7 @@ impl<T: ImportStager> AsyncTool<ImportToolContext<T>> for CreateImportEntity {
                 else {
                     return Err(tool_error(
                         "entityId is required when status is `imported` — pass the id of the \
-                         Macro entity you created."
+                         Conation entity you created."
                             .to_string(),
                         anyhow::anyhow!("missing entity_id"),
                     ));
@@ -395,12 +395,12 @@ fn stage_response(outcome: StageOutcome, user: &str) -> CreateImportEntityRespon
     }
 }
 
-/// Import one specific Notion page as a Macro markdown document.
+/// Import one specific Notion page as a Conation markdown document.
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 #[schemars(
     title = "ImportNotionPage",
-    description = "Import one specific Notion page through Macro's canonical Notion importer. Use this when the user explicitly asks to import a page URL or id. The tool performs deduplication, fetches through the user's connected Notion MCP, normalizes the page, creates the Macro markdown document, and returns its entity id. Do not fetch and recreate the page manually with generic document tools. Notion databases and database-first pages are intentionally not imported."
+    description = "Import one specific Notion page through Conation's canonical Notion importer. Use this when the user explicitly asks to import a page URL or id. The tool performs deduplication, fetches through the user's connected Notion MCP, normalizes the page, creates the Conation markdown document, and returns its entity id. Do not fetch and recreate the page manually with generic document tools. Notion databases and database-first pages are intentionally not imported."
 )]
 pub struct ImportNotionPage {
     /// The exact Notion page URL or stable 32-character page id.
@@ -418,7 +418,7 @@ pub struct ImportNotionPageResponse {
     /// `already_imported_by_teammate`, `previously_declined`, or
     /// `import_in_progress`.
     pub outcome: String,
-    /// The ledger row and Macro entity id, when one exists.
+    /// The ledger row and Conation entity id, when one exists.
     pub entity: ImportEntityView,
     /// Human-readable result and next action.
     pub message: String,
@@ -469,13 +469,13 @@ impl<T: NotionPageImporter> AsyncTool<ImportToolContext<T>> for ImportNotionPage
                 };
                 let message = if already_existed {
                     format!(
-                        "This Notion page was already imported{} as Macro document `{}`. Do not create a duplicate.",
+                        "This Notion page was already imported{} as Conation document `{}`. Do not create a duplicate.",
                         if by_teammate { " by a teammate" } else { "" },
                         entity.entity_id.as_deref().unwrap_or("?"),
                     )
                 } else {
                     format!(
-                        "Imported the Notion page as Macro document `{}`.",
+                        "Imported the Notion page as Conation document `{}`.",
                         entity.entity_id.as_deref().unwrap_or("?"),
                     )
                 };
@@ -624,12 +624,12 @@ impl<T: ImportStager> AsyncTool<ImportToolContext<T>> for ListImportEntities {
     }
 }
 
-/// Finalize one importing row as a Macro document.
+/// Finalize one importing row as a Conation document.
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 #[schemars(
     title = "FinalizeImport",
-    description = "Create the Macro document for one accepted import item and mark it imported. Call exactly once per item you were asked to import."
+    description = "Create the Conation document for one accepted import item and mark it imported. Call exactly once per item you were asked to import."
 )]
 pub struct FinalizeImport {
     /// The importing ledger row to finalize.
@@ -647,11 +647,11 @@ pub struct FinalizeImport {
     /// Notion database properties to attach to the document.
     #[serde(default)]
     #[schemars(
-        description = "Useful non-title Notion page properties, typed for Macro. Omit unsupported or empty values."
+        description = "Useful non-title Notion page properties, typed for Conation. Omit unsupported or empty values."
     )]
     pub properties: Vec<ImportedDocumentProperty>,
 
-    /// Notion labels/tags to attach as Macro tags.
+    /// Notion labels/tags to attach as Conation tags.
     #[serde(default)]
     #[schemars(description = "Labels from Notion properties named Tags, Tag, Labels, or Label.")]
     pub tags: Vec<String>,
@@ -661,9 +661,9 @@ pub struct FinalizeImport {
 #[derive(Debug, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct FinalizeImportResponse {
-    /// The Macro entity id that now exists.
+    /// The Conation entity id that now exists.
     pub entity_id: String,
-    /// The Macro entity type.
+    /// The Conation entity type.
     pub entity_type: String,
 }
 

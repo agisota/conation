@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { FEATURED_MCP_SERVERS } from '@core/component/AI/constant/mcpServers';
 import GmailIcon from '@icon/mcp-gmail.svg';
 import SpinnerIcon from '@phosphor/spinner-gap.svg';
@@ -71,25 +72,27 @@ export function SummaryStep(props: { onContinue: () => void }) {
       <Show when={links().length > 0}>
         <ImportCard
           icon={<GmailIcon />}
-          title="Email & contacts"
+          title={t('setup.summary.email.title')}
           connected
           status={
             <span class="flex items-center gap-1.5">
               <Show
                 when={emailProgress()}
-                fallback={<>processing your inbox in the background</>}
+                fallback={t('setup.summary.email.processingBackground')}
               >
-                {(progress) => (
-                  <>
-                    processing your inbox —{' '}
-                    {progress().completed.toLocaleString()} of{' '}
-                    {progress().total.toLocaleString()} threads
-                  </>
-                )}
+                {(progress) =>
+                  t('setup.summary.email.progress', {
+                    completed: progress().completed,
+                    total: progress().total,
+                  })
+                }
               </Show>
               <Show when={contacts().length > 0}>
                 <span>
-                  · {contacts().length.toLocaleString()} contacts found so far
+                  ·{' '}
+                  {t('setup.summary.email.contactsFound', {
+                    count: contacts().length,
+                  })}
                 </span>
               </Show>
               <SpinnerIcon class="size-3 shrink-0 animate-spin" />
@@ -111,7 +114,7 @@ export function SummaryStep(props: { onContinue: () => void }) {
 
       <Show when={!anythingToShow()}>
         <p class="py-4 text-sm text-ink-extra-muted">
-          Nothing queued — you can always ask Macro AI to bring things in later.
+          {t('setup.summary.empty')}
         </p>
       </Show>
 
@@ -155,6 +158,20 @@ function AutoImportCard(props: {
   const gathering = () => props.run?.status === 'running';
   const importing = () =>
     props.run?.status === 'importing' || counts().importing > 0;
+  const statusMessage = (
+    status:
+      | 'failed'
+      | 'gathering'
+      | 'importing'
+      | 'imported'
+      | 'staged'
+      | 'empty',
+    count = 0
+  ) =>
+    t(`setup.summary.sources.${props.definition.source}.${status}`, {
+      connector: props.definition.serverName,
+      count,
+    });
 
   return (
     <ImportCard
@@ -166,37 +183,32 @@ function AutoImportCard(props: {
         <Switch>
           <Match when={props.run?.status === 'failed'}>
             <FailureNote
-              message={`we couldn't look through your ${props.definition.serverName}.`}
+              message={statusMessage('failed')}
               onRetry={() => props.onRetryGather()}
             />
           </Match>
           <Match when={gathering()}>
             <span class="flex items-center gap-1.5">
-              looking through your {props.definition.serverName} for{' '}
-              {props.definition.noun} worth importing…
+              {statusMessage('gathering')}
               <SpinnerIcon class="size-3 shrink-0 animate-spin" />
             </span>
           </Match>
           <Match when={importing()}>
             <span class="flex items-center gap-1.5">
-              importing {props.definition.noun} into your workspace…
+              {statusMessage('importing')}
               <SpinnerIcon class="size-3 shrink-0 animate-spin" />
             </span>
           </Match>
           <Match when={counts().imported > 0}>
-            {counts().imported} {props.definition.noun} from{' '}
-            {props.definition.serverName} are in your workspace.
+            {statusMessage('imported', counts().imported)}
           </Match>
           <Match when={counts().staged > 0}>
             <span class="flex items-center gap-1.5">
-              found {counts().staged} {props.definition.noun} — importing
-              shortly…
+              {statusMessage('staged', counts().staged)}
               <SpinnerIcon class="size-3 shrink-0 animate-spin" />
             </span>
           </Match>
-          <Match when={true}>
-            nothing new to bring over from {props.definition.serverName}.
-          </Match>
+          <Match when={true}>{statusMessage('empty')}</Match>
         </Switch>
       }
     >

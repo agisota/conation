@@ -39,10 +39,10 @@ pub async fn get_legacy_user_info(
             u."hasChromeExt" as has_chrome_ext,
             u."aiDataConsent" as ai_data_consent,
             mu.has_trialed as has_trialed,
-            u.conation_user_id as "conation_user_id",
+            u.macro_user_id as "macro_user_id",
             u."createdAt" as "created_at?"
         FROM "User" u
-        JOIN "conation_user" mu ON u.conation_user_id = mu.id
+        JOIN "macro_user" mu ON u.macro_user_id = mu.id
         WHERE u."id" = $1
         "#,
         user_id.as_ref()
@@ -57,7 +57,7 @@ pub async fn get_legacy_user_info(
         has_chrome_ext: row.has_chrome_ext,
         ai_data_consent: row.ai_data_consent,
         has_trialed: row.has_trialed,
-        referral_code: converter.from_uuid(&row.conation_user_id),
+        referral_code: converter.from_uuid(&row.macro_user_id),
         created_at: row.created_at,
     })
     .fetch_one(db)

@@ -126,7 +126,7 @@ impl<S, R> OAuthService<S, R> {
         if supports_client_metadata {
             tracing::warn!(
                 client_id = self.client_metadata.client_id(),
-                "authorization server supports CIMD but Macro's metadata URL is not a valid public HTTPS URL; falling back to DCR"
+                "authorization server supports CIMD but Conation's metadata URL is not a valid public HTTPS URL; falling back to DCR"
             );
         }
 

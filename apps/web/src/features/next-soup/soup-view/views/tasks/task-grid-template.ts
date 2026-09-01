@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { SYSTEM_PROPERTY_IDS } from '@property/constants';
 import { DataType } from '@service-storage/generated/schemas/dataType';
 import { EntityType } from '@service-storage/generated/schemas/entityType';
@@ -5,7 +6,9 @@ import { EntityType } from '@service-storage/generated/schemas/entityType';
 export const TASK_GRID_COLUMNS = [
   {
     id: 'status',
-    label: 'Status',
+    get label() {
+      return t('soup.fields.status');
+    },
     defId: SYSTEM_PROPERTY_IDS.STATUS,
     dataType: DataType.SELECT_STRING,
     isMultiSelect: false,
@@ -16,7 +19,9 @@ export const TASK_GRID_COLUMNS = [
   },
   {
     id: 'priority',
-    label: 'Priority',
+    get label() {
+      return t('soup.fields.priority');
+    },
     defId: SYSTEM_PROPERTY_IDS.PRIORITY,
     dataType: DataType.SELECT_STRING,
     isMultiSelect: false,
@@ -26,7 +31,9 @@ export const TASK_GRID_COLUMNS = [
   },
   {
     id: 'assignees',
-    label: 'Assignees',
+    get label() {
+      return t('soup.fields.assignees');
+    },
     defId: SYSTEM_PROPERTY_IDS.ASSIGNEES,
     dataType: DataType.ENTITY,
     isMultiSelect: true,

@@ -2,12 +2,18 @@ use anyhow::Context;
 use axum::{
     Json,
     extract::{self, State},
-    http::StatusCode,
+    http::{HeaderMap, StatusCode, header::ACCEPT_LANGUAGE},
     response::{IntoResponse, Response},
+};
+use backend_i18n::{
+    RenderedVerificationEmail, SupportedLocale, VerificationEmail, negotiate_accept_language,
+    render_verification_email,
 };
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_middleware::tracking::ClientIp;
+use url::Url;
 use utoipa::ToSchema;
+use uuid::Uuid;
 
 use crate::{
     api::context::{ApiContext, AuthorizationService},
@@ -17,13 +23,53 @@ use crate::{
 
 use model::response::{EmptyResponse, ErrorResponse};
 
+#[cfg(test)]
+mod test;
+
 #[derive(serde::Deserialize, serde::Serialize, ToSchema)]
 pub struct GenerateEmailLinkRequest {
     /// The email address to resend the verification email to
     pub email: String,
 }
 
-static VERIFY_EMAIL_TEMPLATE: &str = include_str!("./_verify_email_template.html");
+fn requested_locale(headers: &HeaderMap) -> SupportedLocale {
+    let values = headers
+        .get_all(ACCEPT_LANGUAGE)
+        .iter()
+        .map(|value| value.to_str())
+        .collect::<Result<Vec<_>, _>>();
+
+    match values {
+        Ok(values) if !values.is_empty() => {
+            let combined = values.join(",");
+            negotiate_accept_language(Some(&combined))
+        }
+        _ => SupportedLocale::default(),
+    }
+}
+
+fn verification_email_for_delivery(
+    base_url: &str,
+    verification_id: Uuid,
+    locale: SupportedLocale,
+) -> anyhow::Result<RenderedVerificationEmail> {
+    let mut verification_url = Url::parse(base_url).context("BASE_URL is not a valid URL")?;
+    let path = format!(
+        "{}/email/verify/{verification_id}",
+        verification_url.path().trim_end_matches('/')
+    );
+    verification_url.set_path(&path);
+    verification_url.set_query(None);
+    verification_url.set_fragment(None);
+
+    render_verification_email(
+        locale,
+        VerificationEmail {
+            verification_url: &verification_url,
+        },
+    )
+    .context("failed to render verification email")
+}
 
 /// Generates an email link for the user to verify their email address.
 #[utoipa::path(
@@ -36,11 +82,12 @@ static VERIFY_EMAIL_TEMPLATE: &str = include_str!("./_verify_email_template.html
             (status = 500, body=ErrorResponse),
         ),
     )]
-#[tracing::instrument(skip(ctx, authorization, ip_context,req), fields(client_ip=%ip_context, email=%req.email, fusion_user_id=%authorization.authorization.user.user_context.fusion_user_id), err(Debug))]
+#[tracing::instrument(skip(ctx, authorization, ip_context, headers, req), fields(client_ip=%ip_context, email=%req.email, fusion_user_id=%authorization.authorization.user.user_context.fusion_user_id), err(Debug))]
 pub async fn handler(
     State(ctx): State<ApiContext>,
     authorization: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
     ip_context: ClientIp,
+    headers: HeaderMap,
     extract::Json(mut req): extract::Json<GenerateEmailLinkRequest>,
 ) -> Result<Response, Response> {
     tracing::info!("generate_email_link");
@@ -122,7 +169,7 @@ pub async fn handler(
     }
 
     // Check if that email is already an in progress email link
-    let link_id = if let Some((conation_user_id, link_id)) =
+    let link_id = if let Some((macro_user_id, link_id)) =
         conation_db_client::in_progress_email_link::check_existing_in_progress_email_link(
             &ctx.db, &req.email,
         )
@@ -135,8 +182,8 @@ pub async fn handler(
             )
                 .into_response()
         })? {
-        // if the conation_user_id matches the user_id, we count this as "regenerating" the link
-        if !conation_user_id.to_string().eq(&user_context.fusion_user_id) {
+        // if the macro_user_id matches the user_id, we count this as "regenerating" the link
+        if !macro_user_id.to_string().eq(&user_context.fusion_user_id) {
             return Err((
                 StatusCode::BAD_REQUEST,
                 Json(ErrorResponse {
@@ -148,7 +195,7 @@ pub async fn handler(
 
         link_id
     } else {
-        conation_db_client::conation_user_email_verification::upsert_conation_user_email_verification(
+        conation_db_client::macro_user_email_verification::upsert_macro_user_email_verification(
             &ctx.db,
             &user_context.fusion_user_id,
             &req.email,
@@ -180,17 +227,20 @@ pub async fn handler(
         })?
     };
 
-    // Send email
-    let content = VERIFY_EMAIL_TEMPLATE
-        .replace("{{URL}}", &BASE_URL)
-        .replace("{{VERIFICATION_ID}}", &link_id.to_string());
-    ctx.ses_client
-        .send_email(
-            "auth@macro.com",
-            &req.email,
-            "Verify your email address",
-            &content,
+    // Negotiate at the HTTP edge, then render through the transport-free locale boundary.
+    let locale = requested_locale(&headers);
+    let email = verification_email_for_delivery(&BASE_URL, link_id, locale).map_err(|e| {
+        tracing::error!(error=?e, "failed to render verification email");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "failed to render verification email",
         )
+            .into_response()
+    })?;
+
+    // Send email
+    ctx.ses_client
+        .send_email("auth@macro.com", &req.email, email.subject(), email.html())
         .await
         .map_err(|e| {
             tracing::error!(error=?e, "failed to send email");

@@ -1,5 +1,14 @@
 use super::*;
 
+#[test]
+fn attachment_upload_error_uses_conation_display_brand() {
+    assert_eq!(
+        ATTACHMENT_UPLOAD_FAILURE_MESSAGE,
+        "failed to upload attachment to Conation"
+    );
+    assert!(!ATTACHMENT_UPLOAD_FAILURE_MESSAGE.contains("Macro"));
+}
+
 fn id(s: &str) -> MacroUserIdStr<'static> {
     MacroUserIdStr::try_from(s.to_string()).unwrap()
 }

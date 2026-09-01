@@ -29,7 +29,7 @@ pub async fn get_existing_users(
 }
 
 /// Gets all user ids in the database with null macro user id
-pub async fn get_all_user_ids_stripe_customer_id_with_null_conation_user_id(
+pub async fn get_all_user_ids_stripe_customer_id_with_null_macro_user_id(
     db: &sqlx::Pool<sqlx::Postgres>,
     limit: i64,
     cursor: Option<String>,
@@ -41,7 +41,7 @@ pub async fn get_all_user_ids_stripe_customer_id_with_null_conation_user_id(
                 u.id,
                 u."stripeCustomerId" as "stripe_customer_id"
             FROM "User" u
-            WHERE u."conation_user_id" IS NULL
+            WHERE u."macro_user_id" IS NULL
                 AND u.id > $1
             ORDER BY u.id ASC
             LIMIT $2
@@ -59,7 +59,7 @@ pub async fn get_all_user_ids_stripe_customer_id_with_null_conation_user_id(
                 u.id,
                 u."stripeCustomerId" as "stripe_customer_id"
             FROM "User" u
-            WHERE u."conation_user_id" IS NULL
+            WHERE u."macro_user_id" IS NULL
             ORDER BY u.id ASC
             LIMIT $1
         "#,

@@ -10,8 +10,8 @@
  * folded transcript (`state/session-summary.ts`).
  */
 
-import { SidePanel, useSidePanel } from '@components/app/side-panel';
 import { t } from '@app/lib/i18n';
+import { SidePanel, useSidePanel } from '@components/app/side-panel';
 import { useSplitPanel } from '@components/app/split-layout/layoutUtils';
 import { registerHotkey } from '@core/hotkey/hotkeys';
 import { TOKENS } from '@core/hotkey/tokens';
@@ -66,28 +66,33 @@ export function AgentSidePanelSections() {
 
   return (
     <>
-      <SidePanel.Section id="details" title={t('common.details')} defaultOpen order={10}>
+      <SidePanel.Section
+        id="details"
+        title={t('common.details')}
+        defaultOpen
+        order={10}
+      >
         <SidePanel.Grid>
-          <SidePanel.Row label="Status">
+          <SidePanel.Row label={t('agent.sidePanel.status')}>
             <SessionStatusPill status={status()} />
           </SidePanel.Row>
           <Show when={bot()?.name}>
             {(name) => (
-              <SidePanel.Row label="Agent">
+              <SidePanel.Row label={t('agent.sidePanel.agent')}>
                 <SidePanel.Pill>
                   <span class="truncate">{name()}</span>
                 </SidePanel.Pill>
               </SidePanel.Row>
             )}
           </Show>
-          <SidePanel.Row label="Harness">
+          <SidePanel.Row label={t('agent.sidePanel.harness')}>
             <SidePanel.Pill>
               <span class="truncate">{harnessTitle(session()?.harness)}</span>
             </SidePanel.Pill>
           </SidePanel.Row>
           <Show when={metadata()?.model ?? session()?.model}>
             {(model) => (
-              <SidePanel.Row label="Model">
+              <SidePanel.Row label={t('agent.sidePanel.model')}>
                 <SidePanel.Pill>
                   <span class="truncate">{model()}</span>
                 </SidePanel.Pill>
@@ -96,7 +101,7 @@ export function AgentSidePanelSections() {
           </Show>
           <Show when={session()?.repoUrl}>
             {(url) => (
-              <SidePanel.Row label="Repository">
+              <SidePanel.Row label={t('agent.sidePanel.repository')}>
                 <button
                   type="button"
                   class={`${SidePanel.pillClass} hover:bg-hover`}
@@ -110,7 +115,7 @@ export function AgentSidePanelSections() {
           </Show>
           <Show when={session()?.createdAt}>
             {(created) => (
-              <SidePanel.Row label="Created">
+              <SidePanel.Row label={t('agent.sidePanel.created')}>
                 <SidePanel.Pill>
                   <span class="truncate">
                     {formatDate(created(), { showTime: true })}
@@ -121,7 +126,7 @@ export function AgentSidePanelSections() {
           </Show>
           <Show when={session()?.modifiedAt}>
             {(modified) => (
-              <SidePanel.Row label="Last updated">
+              <SidePanel.Row label={t('agent.sidePanel.lastUpdated')}>
                 <SidePanel.Pill>
                   <span class="truncate">
                     {formatDate(modified(), { showTime: true })}
@@ -135,7 +140,12 @@ export function AgentSidePanelSections() {
 
       <Show when={plan()}>
         {(entries) => (
-          <SidePanel.Section id="plan" title={t('auto.plan')} defaultOpen order={15}>
+          <SidePanel.Section
+            id="plan"
+            title={t('agent.sidePanel.plan')}
+            defaultOpen
+            order={15}
+          >
             <TodoList
               todos={entries().map((entry) => ({
                 content: entry.content,
@@ -151,7 +161,7 @@ export function AgentSidePanelSections() {
           id="files"
           title={
             <SidePanel.CountTitle
-              label="Changed files"
+              label={t('agent.sidePanel.changedFiles')}
               count={files().length}
             />
           }
@@ -181,7 +191,11 @@ export function AgentSidePanelSections() {
       </Show>
 
       <Show when={activity().some((item) => item.count > 0)}>
-        <SidePanel.Section id="activity" title={t('auto.activity')} order={30}>
+        <SidePanel.Section
+          id="activity"
+          title={t('agent.sidePanel.activity')}
+          order={30}
+        >
           <div class="text-xs text-ink-muted">
             <CountSummary items={activity()} />
           </div>

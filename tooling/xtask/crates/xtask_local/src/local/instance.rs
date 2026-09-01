@@ -200,19 +200,22 @@ impl Instance {
     }
 
     pub fn volume_postgres(&self) -> String {
-        self.suffixed_underscore("conation_postgres_data")
+        // These volume bases are persisted compatibility identifiers, not
+        // product display names. Keep them stable across the rebrand so local
+        // stacks, snapshots, and teardown all address the same data.
+        self.suffixed_underscore("macro_postgres_data")
     }
 
     pub fn volume_redis(&self) -> String {
-        self.suffixed_underscore("conation_redis_data")
+        self.suffixed_underscore("macro_redis_data")
     }
 
     pub fn volume_opensearch(&self) -> String {
-        self.suffixed_underscore("conation_opensearch_data")
+        self.suffixed_underscore("macro_opensearch_data")
     }
 
     pub fn volume_kafka(&self) -> String {
-        self.suffixed_underscore("conation_kafka_data")
+        self.suffixed_underscore("macro_kafka_data")
     }
 
     pub fn volume_fusionauth_db(&self) -> String {

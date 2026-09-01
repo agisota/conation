@@ -1,5 +1,5 @@
-import { FindAndReplaceStore } from '@block-md/signal/findAndReplaceStore';
 import { t } from '@app/lib/i18n';
+import { FindAndReplaceStore } from '@block-md/signal/findAndReplaceStore';
 import { mdStore } from '@block-md/signal/markdownBlockData';
 import {
   DO_REPLACE_COMMAND,
@@ -267,7 +267,7 @@ export function FindAndReplace() {
       hotkey: 'cmd+f',
       scopeId: scopeId(),
       hotkeyToken: TOKENS.md.find,
-      description: 'Find in Document',
+      description: () => t('markdown.find.command'),
       runWithInputFocused: true,
       keyDownHandler: () => {
         if (findAndReplaceStore.searchIsOpen) {
@@ -314,7 +314,11 @@ export function FindAndReplace() {
       >
         <div class="flex items-center px-1">
           <Tooltip
-            label={`${findAndReplaceStore.replaceInputOpen ? 'Collapse' : 'Expand'} Search Bar`}
+            label={
+              findAndReplaceStore.replaceInputOpen
+                ? t('markdown.find.collapse')
+                : t('markdown.find.expand')
+            }
           >
             <div
               class="flex items-center w-8 h-6 justify-center rounded-md hover:bg-hover hover-transition-bg"
@@ -345,7 +349,7 @@ export function FindAndReplace() {
               <input
                 class="mx-0.5 flex-1 h-6 border-0 text-sm text-ink focus:outline-none focus:ring-0"
                 type="text"
-                placeholder={t('auto.find')}
+                placeholder={t('markdown.find.placeholder')}
                 ref={inputRef}
                 value={findAndReplaceStore.searchInputText}
                 onInput={(e) => {
@@ -359,15 +363,20 @@ export function FindAndReplace() {
               <div class="flex items-center justify-start">
                 <p class="text-xs text-ink whitespace-nowrap">
                   {findAndReplaceStore.isSearching
-                    ? 'searching...'
+                    ? t('markdown.find.searching')
                     : findAndReplaceStore.matches > 0
-                      ? `${findAndReplaceStore.currentMatch === -1 ? '?' : findAndReplaceStore.currentMatch + 1} of ${findAndReplaceStore.matches}` +
-                        ` match${findAndReplaceStore.matches === 1 ? '' : 'es'}`
-                      : 'no matches'}
+                      ? t('markdown.find.matchPosition', {
+                          current:
+                            findAndReplaceStore.currentMatch === -1
+                              ? '?'
+                              : findAndReplaceStore.currentMatch + 1,
+                          total: findAndReplaceStore.matches,
+                        })
+                      : t('markdown.find.noMatches')}
                 </p>
               </div>
               <div class="ml-4 flex justify-end items-center">
-                <Tooltip label={`Previous Match`}>
+                <Tooltip label={t('markdown.find.previousMatch')}>
                   <div
                     class="flex items-center px-1 size-6 justify-center rounded-md hover:bg-hover hover-transition-bg"
                     onMouseDown={() => {
@@ -377,7 +386,7 @@ export function FindAndReplace() {
                     <CaretUp />
                   </div>
                 </Tooltip>
-                <Tooltip label={`Next Match`}>
+                <Tooltip label={t('markdown.find.nextMatch')}>
                   <div
                     class="flex items-center px-1 size-6 justify-center rounded-md hover:bg-hover hover-transition-bg"
                     onMouseDown={() => {
@@ -387,7 +396,7 @@ export function FindAndReplace() {
                     <CaretDown />
                   </div>
                 </Tooltip>
-                <Tooltip label={`Close Search Bar`}>
+                <Tooltip label={t('markdown.find.closeSearch')}>
                   <div
                     class="flex items-center px-1 size-6 justify-center rounded-md hover:bg-hover hover-transition-bg"
                     onMouseDown={closeSearch}
@@ -405,7 +414,7 @@ export function FindAndReplace() {
                 <input
                   class="mx-0.5 flex-1 h-6 border-0 text-sm text-ink focus:outline-none focus:ring-0"
                   type="text"
-                  placeholder={t('auto.replace_with')}
+                  placeholder={t('markdown.find.replacePlaceholder')}
                   ref={inputReplaceRef}
                   value={findAndReplaceStore.replaceInputText}
                   onInput={(e) =>
@@ -415,7 +424,7 @@ export function FindAndReplace() {
                 />
               </div>
               <div class="flex grow justify-center ml-2">
-                <Tooltip label={`Replace`}>
+                <Tooltip label={t('markdown.find.replace')}>
                   <div
                     class="flex items-center px-1 size-6 justify-center rounded-md hover:bg-hover hover-transition-bg"
                     onMouseDown={() => {
@@ -425,7 +434,7 @@ export function FindAndReplace() {
                     <Replace />
                   </div>
                 </Tooltip>
-                <Tooltip label={`Replace All`}>
+                <Tooltip label={t('markdown.find.replaceAll')}>
                   <div
                     class="flex items-center px-1 size-6 justify-center rounded-md hover:bg-hover hover-transition-bg"
                     onMouseDown={() => {

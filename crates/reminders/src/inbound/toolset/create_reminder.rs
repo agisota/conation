@@ -24,10 +24,10 @@ use crate::domain::ports::RemindersService;
     title = "CreateReminder",
     description = concat!(
         "\
-Schedule a reminder for the current user. At `remindAt` it is delivered to their Macro inbox \
+Schedule a reminder for the current user. At `remindAt` it is delivered to their Conation inbox \
 as a notification and stays there until they mark it done.\n\
 \n\
-A reminder is either attached to one Macro item — so clicking it opens that item — or \
+A reminder is either attached to one Conation item — so clicking it opens that item — or \
 standalone. Attached is the common case (\"remind me to reply to this email tomorrow\"); \
 standalone is for everything else (\"remind me to book a flight\").\n\
 \n\
@@ -44,7 +44,7 @@ Pass `entityType` and `entityId` together, using ids from ListEntities, GetThrea
 The user must already have access to what you attach. `entityType` accepts exactly these \
 values, and a type not on the list cannot be attached even if ListEntities returns it:\n\
 \n\
-- `document` — a Macro document\n\
+- `document` — a Conation document\n\
 - `ai_chat` — an AI chat conversation\n\
 - `project` — a project, shown as a folder in the app\n\
 - `email` — an email thread\n\

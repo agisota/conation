@@ -5,7 +5,7 @@ use gh_workflow::{Concurrency, Expression, Workflow};
 
 /// Declares a `${{ secrets.NAME }}` reference as a `&str` const named `NAME`, so
 /// secret usage is greppable and typo-proof.
-conation_rules! secret {
+macro_rules! secret {
     ($name:ident) => {
         pub const $name: &str = concat!("${{ secrets.", stringify!($name), " }}");
     };

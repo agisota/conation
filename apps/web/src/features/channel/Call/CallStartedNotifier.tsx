@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { useChannelsContext } from '@core/context/channels';
 import { useUserId } from '@core/context/user';
 import { usePlatformNotificationState } from '@notifications';
@@ -344,13 +345,16 @@ async function emitCallStartedNotification(args: {
   try {
     const callerName =
       (createdBy ? await DefaultUserNameResolver(createdBy) : undefined) ??
-      'Someone';
-    const target = channelName ? ` in ${channelName}` : '';
+      t('channel.call.participants.someone');
 
     const handle = await notif.showNotification({
-      title: `Incoming call${target}`,
+      title: channelName
+        ? t('channel.call.notification.titleInChannel', {
+            channel: channelName,
+          })
+        : t('channel.call.notification.title'),
       options: {
-        body: `${callerName} started a call`,
+        body: t('channel.call.notification.body', { name: callerName }),
         // Keep the toast visible until the user answers or dismisses it,
         // instead of the browser's default few-second auto-dismiss.
         requireInteraction: true,

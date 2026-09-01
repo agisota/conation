@@ -243,8 +243,8 @@ impl ServiceUrlVarErr {
 ///
 /// document_storage_service_url_example().unwrap();
 /// ```
-#[conation_export]
-conation_rules! service_url {
+#[macro_export]
+macro_rules! service_url {
     (
         $(#[$attr:meta])*
         $v:vis struct $n:ident {

@@ -1,6 +1,25 @@
 use super::*;
 use crate::local::instance::Instance;
 
+/// Snapshots must keep addressing the established persisted volumes after a
+/// product-brand rename; otherwise restore can populate an unused new volume.
+#[test]
+fn archives_use_compatibility_volume_names() {
+    let instance = Instance::derive(None, None).unwrap();
+    let volumes = archives(&instance).map(|(_, volume)| volume);
+
+    assert_eq!(
+        volumes,
+        [
+            "macro_postgres_data",
+            "macro_opensearch_data",
+            "macro_kafka_data",
+            "fusionauth_db_data",
+            "fusionauth_config",
+        ]
+    );
+}
+
 /// The key must change when any init-defining input changes, and only then —
 /// two computes over identical inputs agree, and the kickstart (which encodes
 /// the instance's ports) is part of the key, so snapshots can't cross

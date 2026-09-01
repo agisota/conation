@@ -4,8 +4,8 @@
  * failed — retry it. Pure component: props in, JSX out.
  */
 
-import ArrowClockwise from '@phosphor/arrow-clockwise.svg';
 import { t } from '@app/lib/i18n';
+import ArrowClockwise from '@phosphor/arrow-clockwise.svg';
 import X from '@phosphor/x.svg';
 import { Button } from '@ui';
 import { For, Show } from 'solid-js';
@@ -44,10 +44,14 @@ export function QueuedPromptList(props: QueuedPromptListProps) {
                   {firstLine(prompt.markdown)}
                 </span>
                 <Show when={sending()}>
-                  <span class="shrink-0 text-xs text-ink-extra-muted">{t('auto.sending')}</span>
+                  <span class="shrink-0 text-xs text-ink-extra-muted">
+                    {t('agent.queue.sending')}
+                  </span>
                 </Show>
                 <Show when={failed()}>
-                  <span class="shrink-0 text-xs text-ink">{t('auto.failed')}</span>
+                  <span class="shrink-0 text-xs text-ink">
+                    {t('agent.status.failed')}
+                  </span>
                   <Button
                     variant="ghost"
                     size="icon-xs"

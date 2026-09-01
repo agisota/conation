@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { throwOnErr } from '@core/util/result';
 import { type MutationCallbacks, withCallbacks } from '@queries/utils';
@@ -200,7 +201,7 @@ export function useAddParticipantsMutation(
           }),
         onError(error, vars, context) {
           console.error('failed to add participants', error);
-          toast.failure('Failed to add participants to channel');
+          toast.failure(t('channel.feedback.participantsAddFailed'));
           if (context) {
             rollbackAddParticipants(vars.channelId, context);
           }
@@ -249,7 +250,7 @@ export function useRemoveParticipantsMutation(
           }),
         onError(error, vars, context) {
           console.error('failed to remove participants', error);
-          toast.failure('Failed to remove participants from channel');
+          toast.failure(t('channel.feedback.participantsRemoveFailed'));
           if (context) {
             rollbackRemoveParticipants(vars.channelId, context);
           }

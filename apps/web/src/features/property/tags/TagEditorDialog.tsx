@@ -1,5 +1,5 @@
-import { TabsInset } from '@core/component/TabsInset';
 import { t } from '@app/lib/i18n';
+import { TabsInset } from '@core/component/TabsInset';
 import TagIcon from '@phosphor/tag-simple.svg';
 import TrashIcon from '@phosphor/trash.svg';
 import XIcon from '@phosphor/x.svg';
@@ -101,7 +101,9 @@ export function TagEditorDialog(props: {
   });
 
   const title = () =>
-    props.mode?.type === 'create' ? 'Create tag' : 'Edit tag';
+    props.mode?.type === 'create'
+      ? t('property.tags.editor.createTitle')
+      : t('property.tags.editor.editTitle');
   const pending = () =>
     createTag.isPending || updateTag.isPending || deleteTag.isPending;
   const trimmedLabel = () => label().trim();
@@ -208,7 +210,7 @@ export function TagEditorDialog(props: {
         </CommandMenuShell.Header>
         <CommandMenuShell.Body>
           <div class="bg-surface">
-            <EditorRow label="Name">
+            <EditorRow label={t('property.tags.editor.nameLabel')}>
               <input
                 ref={nameInputRef}
                 autofocus={props.mode?.type === 'create'}
@@ -218,18 +220,18 @@ export function TagEditorDialog(props: {
                   if (event.key === 'Enter' && canSubmit()) submit();
                 }}
                 class="h-9 w-full rounded-md border border-edge-muted bg-surface px-3 text-sm text-ink outline-none placeholder:text-ink-placeholder focus:border-accent"
-                placeholder={t('auto.tag_name')}
+                placeholder={t('property.tags.editor.namePlaceholder')}
               />
             </EditorRow>
 
-            <EditorRow label="Color">
+            <EditorRow label={t('property.tags.editor.colorLabel')}>
               <div class="flex flex-wrap items-center gap-2">
                 <For each={TAG_COLOR_OPTIONS}>
                   {(option) => (
-                    <Tooltip label={option.name}>
+                    <Tooltip label={t(option.labelKey)}>
                       <button
                         type="button"
-                        aria-label={option.name}
+                        aria-label={t(option.labelKey)}
                         onClick={() => setColor(option.color)}
                         class={cn(
                           'flex size-7 items-center justify-center rounded-md border outline-none hover:bg-hover focus-visible:border-accent',
@@ -247,12 +249,12 @@ export function TagEditorDialog(props: {
             </EditorRow>
 
             <Show when={props.mode?.type === 'create'}>
-              <EditorRow label="Sharing">
+              <EditorRow label={t('property.tags.editor.sharingLabel')}>
                 <TabsInset
                   depth={0}
                   list={[
-                    { value: 'team', label: 'Team' },
-                    { value: 'user', label: 'Personal' },
+                    { value: 'team', label: t('property.scope.team') },
+                    { value: 'user', label: t('property.scope.personal') },
                   ]}
                   value={scope()}
                   onChange={(value) => {
@@ -275,7 +277,9 @@ export function TagEditorDialog(props: {
               disabled={pending()}
               onClick={remove}
             >
-              <TrashIcon class="size-4" />{t('common.delete')}</Button>
+              <TrashIcon class="size-4" />
+              {t('common.delete')}
+            </Button>
           </Show>
           <div class="ml-auto flex items-center gap-2">
             <Button
@@ -284,14 +288,18 @@ export function TagEditorDialog(props: {
               class="rounded-lg"
               disabled={pending()}
               onClick={close}
-            >{t('common.cancel')}</Button>
+            >
+              {t('common.cancel')}
+            </Button>
             <Button
               variant={canSubmit() ? 'accent' : 'ghost'}
               depth={3}
               class="gap-3 rounded-lg border-0"
               disabled={!canSubmit() || pending()}
               onClick={submit}
-            >{t('common.save')}<Hotkey shortcut="cmd+enter" theme="current" />
+            >
+              {t('common.save')}
+              <Hotkey shortcut="cmd+enter" theme="current" />
             </Button>
           </div>
         </CommandMenuShell.Footer>

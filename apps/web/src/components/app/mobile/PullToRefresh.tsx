@@ -1,5 +1,5 @@
-import { toast } from '@core/component/Toast/Toast';
 import { t } from '@app/lib/i18n';
+import { toast } from '@core/component/Toast/Toast';
 import { hapticImpact } from '@core/mobile/haptics';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
 import Spinner from '@phosphor-icons/core/bold/spinner-bold.svg';
@@ -61,7 +61,7 @@ export function PullToRefresh(props: {
    * empty state) works too — its scrollTop reads 0, so pulls always start
    * from rest. */
   scrollContainer: Accessor<HTMLElement | undefined>;
-  onRefresh: () =>Promise<unknown>;
+  onRefresh: () => Promise<unknown>;
 }) {
   const [phase, setPhase] = createSignal<PullPhase>('idle');
   const [pull, setPull] = createSignal(0);
@@ -95,7 +95,7 @@ export function PullToRefresh(props: {
       minSpin,
     ]).then(([refreshResult]) => {
       if (refreshResult.status === 'rejected') {
-        toast.failure('Failed to refresh');
+        toast.failure(t('shell.actions.refreshFailed'));
       }
       retract();
     });

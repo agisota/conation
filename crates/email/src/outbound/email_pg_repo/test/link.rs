@@ -5,12 +5,12 @@ use crate::domain::{models::EmailBackfillStatus, ports::EmailUserRepo};
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(path = "../../../../fixtures", scripts("email_message"))
 )]
-async fn test_link_by_fusionauth_and_conation_id_found(pool: Pool<Postgres>) -> anyhow::Result<()> {
+async fn test_link_by_fusionauth_and_macro_id_found(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let repo = EmailPgRepo::new(pool);
 
-    let conation_id = MacroUserIdStr::parse_from_str("macro|user1@test.com")?;
+    let macro_id = MacroUserIdStr::parse_from_str("macro|user1@test.com")?;
     let link = repo
-        .link_by_fusionauth_and_conation_id("fa-user-1", conation_id, UserProvider::Gmail)
+        .link_by_fusionauth_and_macro_id("fa-user-1", macro_id, UserProvider::Gmail)
         .await?;
 
     assert!(link.is_some(), "Link should exist");
@@ -30,14 +30,14 @@ async fn test_link_by_fusionauth_and_conation_id_found(pool: Pool<Postgres>) -> 
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(path = "../../../../fixtures", scripts("email_message"))
 )]
-async fn test_link_by_fusionauth_and_conation_id_wrong_fusionauth(
+async fn test_link_by_fusionauth_and_macro_id_wrong_fusionauth(
     pool: Pool<Postgres>,
 ) -> anyhow::Result<()> {
     let repo = EmailPgRepo::new(pool);
 
-    let conation_id = MacroUserIdStr::parse_from_str("macro|user1@test.com")?;
+    let macro_id = MacroUserIdStr::parse_from_str("macro|user1@test.com")?;
     let link = repo
-        .link_by_fusionauth_and_conation_id("nonexistent-fa-user", conation_id, UserProvider::Gmail)
+        .link_by_fusionauth_and_macro_id("nonexistent-fa-user", macro_id, UserProvider::Gmail)
         .await?;
 
     assert!(
@@ -52,30 +52,30 @@ async fn test_link_by_fusionauth_and_conation_id_wrong_fusionauth(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(path = "../../../../fixtures", scripts("email_message"))
 )]
-async fn test_link_by_fusionauth_and_conation_id_wrong_conation_id(
+async fn test_link_by_fusionauth_and_macro_id_wrong_macro_id(
     pool: Pool<Postgres>,
 ) -> anyhow::Result<()> {
     let repo = EmailPgRepo::new(pool);
 
-    let conation_id = MacroUserIdStr::parse_from_str("macro|other@test.com")?;
+    let macro_id = MacroUserIdStr::parse_from_str("macro|other@test.com")?;
     let link = repo
-        .link_by_fusionauth_and_conation_id("fa-user-1", conation_id, UserProvider::Gmail)
+        .link_by_fusionauth_and_macro_id("fa-user-1", macro_id, UserProvider::Gmail)
         .await?;
 
-    assert!(link.is_none(), "Wrong conation_id should return None");
+    assert!(link.is_none(), "Wrong macro_id should return None");
 
     Ok(())
 }
 
 #[sqlx::test(migrator = "MACRO_DB_MIGRATIONS")]
-async fn test_inboxes_for_conation_id_includes_own_and_delegated(
+async fn test_inboxes_for_macro_id_includes_own_and_delegated(
     pool: Pool<Postgres>,
 ) -> anyhow::Result<()> {
-    // conation_user_links FK-references "User" (which FK-references conation_user), so
+    // macro_user_links FK-references "User" (which FK-references macro_user), so
     // the delegating and delegated accounts must exist as real users.
     sqlx::query(
         r#"
-        INSERT INTO "conation_user" (id, username, email, stripe_customer_id) VALUES
+        INSERT INTO "macro_user" (id, username, email, stripe_customer_id) VALUES
             ('c1000000-0000-0000-0000-000000000001', 'alice', 'alice@test.com', 'stripe_alice'),
             ('c2000000-0000-0000-0000-000000000002', 'shared', 'shared@test.com', 'stripe_shared')
         "#,
@@ -85,7 +85,7 @@ async fn test_inboxes_for_conation_id_includes_own_and_delegated(
 
     sqlx::query(
         r#"
-        INSERT INTO "User" (id, email, name, conation_user_id) VALUES
+        INSERT INTO "User" (id, email, name, macro_user_id) VALUES
             ('macro|alice@test.com', 'alice@test.com', 'Alice', 'c1000000-0000-0000-0000-000000000001'),
             ('macro|shared@test.com', 'shared@test.com', 'Shared Inbox', 'c2000000-0000-0000-0000-000000000002')
         "#,
@@ -95,7 +95,7 @@ async fn test_inboxes_for_conation_id_includes_own_and_delegated(
 
     sqlx::query(
         r#"
-        INSERT INTO email_links (id, conation_id, fusionauth_user_id, email_address, provider, is_sync_active, created_at, updated_at) VALUES
+        INSERT INTO email_links (id, macro_id, fusionauth_user_id, email_address, provider, is_sync_active, created_at, updated_at) VALUES
             ('a1000000-0000-0000-0000-000000000001'::uuid, 'macro|alice@test.com', 'fa-alice', 'alice@test.com', 'GMAIL', true, NOW() - INTERVAL '2 hours', NOW()),
             ('a2000000-0000-0000-0000-000000000002'::uuid, 'macro|alice@test.com', 'fa-alice', 'alice.work@test.com', 'GMAIL', true, NOW() - INTERVAL '1 hour', NOW()),
             ('5e000000-0000-0000-0000-000000000003'::uuid, 'macro|shared@test.com', 'fa-shared', 'shared@test.com', 'GMAIL', true, NOW(), NOW()),
@@ -110,7 +110,7 @@ async fn test_inboxes_for_conation_id_includes_own_and_delegated(
     // bob is unrelated.
     sqlx::query(
         r#"
-        INSERT INTO conation_user_links (primary_conation_id, child_conation_id, link_id) VALUES
+        INSERT INTO macro_user_links (primary_macro_id, child_macro_id, link_id) VALUES
             ('macro|alice@test.com', 'macro|shared@test.com', '5e000000-0000-0000-0000-000000000003'::uuid)
         "#,
     )
@@ -118,8 +118,8 @@ async fn test_inboxes_for_conation_id_includes_own_and_delegated(
     .await?;
 
     let repo = EmailPgRepo::new(pool);
-    let conation_id = MacroUserIdStr::parse_from_str("macro|alice@test.com")?;
-    let links = repo.inboxes_for_conation_id(conation_id.clone()).await?;
+    let macro_id = MacroUserIdStr::parse_from_str("macro|alice@test.com")?;
+    let links = repo.inboxes_for_macro_id(macro_id.clone()).await?;
 
     let emails: std::collections::HashSet<&str> =
         links.iter().map(|l| l.email_address.0.as_ref()).collect();
@@ -145,7 +145,7 @@ async fn test_inboxes_for_conation_id_includes_own_and_delegated(
     );
 
     let detailed_emails = repo
-        .user_inbox_details(conation_id)
+        .user_inbox_details(macro_id)
         .await?
         .into_iter()
         .map(|inbox| inbox.email_address.0.as_ref().to_owned())
@@ -297,10 +297,10 @@ async fn test_link_by_fusionauth_email_provider_wrong_fusionauth(
 async fn test_owned_link_for_thread_resolves_own_and_delegated(
     pool: Pool<Postgres>,
 ) -> anyhow::Result<()> {
-    // conation_user_links FK-references "User" (which FK-references conation_user).
+    // macro_user_links FK-references "User" (which FK-references macro_user).
     sqlx::query(
         r#"
-        INSERT INTO conation_user (id, username, email, stripe_customer_id) VALUES
+        INSERT INTO macro_user (id, username, email, stripe_customer_id) VALUES
             ('d1000000-0000-0000-0000-000000000001'::uuid, 'child', 'child@test.com', 'stripe_child'),
             ('d2000000-0000-0000-0000-000000000002'::uuid, 'primary', 'primary@test.com', 'stripe_primary'),
             ('d3000000-0000-0000-0000-000000000003'::uuid, 'stranger', 'stranger@test.com', 'stripe_stranger')
@@ -311,7 +311,7 @@ async fn test_owned_link_for_thread_resolves_own_and_delegated(
 
     sqlx::query(
         r#"
-        INSERT INTO "User" (id, email, conation_user_id) VALUES
+        INSERT INTO "User" (id, email, macro_user_id) VALUES
             ('macro|child@test.com', 'child@test.com', 'd1000000-0000-0000-0000-000000000001'::uuid),
             ('macro|primary@test.com', 'primary@test.com', 'd2000000-0000-0000-0000-000000000002'::uuid),
             ('macro|stranger@test.com', 'stranger@test.com', 'd3000000-0000-0000-0000-000000000003'::uuid)
@@ -322,7 +322,7 @@ async fn test_owned_link_for_thread_resolves_own_and_delegated(
 
     sqlx::query(
         r#"
-        INSERT INTO email_links (id, conation_id, fusionauth_user_id, email_address, provider, is_sync_active, created_at, updated_at) VALUES
+        INSERT INTO email_links (id, macro_id, fusionauth_user_id, email_address, provider, is_sync_active, created_at, updated_at) VALUES
             ('c0000000-0000-0000-0000-000000000001'::uuid, 'macro|child@test.com', 'fa-child', 'child@test.com', 'GMAIL', true, NOW(), NOW())
         "#,
     )
@@ -337,7 +337,7 @@ async fn test_owned_link_for_thread_resolves_own_and_delegated(
     .await?;
 
     sqlx::query(
-        r#"INSERT INTO conation_user_links (primary_conation_id, child_conation_id, link_id)
+        r#"INSERT INTO macro_user_links (primary_macro_id, child_macro_id, link_id)
            VALUES ('macro|primary@test.com', 'macro|child@test.com', 'c0000000-0000-0000-0000-000000000001'::uuid)"#,
     )
     .execute(&pool)

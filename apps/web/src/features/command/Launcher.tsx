@@ -1,7 +1,7 @@
 import { startPendingSession } from '@app/features/block-agent/context/pending-session';
-import { t } from '@app/lib/i18n';
 import { openStandaloneReminderComposer } from '@app/features/reminders/reminder-composer';
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
+import { t } from '@app/lib/i18n';
 import { setAutomationComposerOpen } from '@block-automation/component';
 import { EMAIL_COMPOSE_TO_INPUT_ID } from '@block-email/constants';
 import {
@@ -11,6 +11,8 @@ import {
 } from '@block-md/observability';
 import { openNewChannelModal } from '@channel/CreateChannelModal';
 import { useSplitLayout } from '@components/app/split-layout/layout';
+import { getMarkdownGoldenBytes } from '@conation/lexical-core/markdown-golden';
+import type { Span } from '@conation/observability';
 import type { BlockAlias, BlockName } from '@core/block';
 import { CHAT_INPUT_TEXT_AREA_ID } from '@core/component/AI/component/input/ChatInput';
 import { getIconConfig } from '@core/component/EntityIcon';
@@ -66,8 +68,6 @@ import WideStar from '@icon/wide-star.svg';
 import { AnimatedTaskIcon } from '@icon/wide-task';
 import WideTask from '@icon/wide-task.svg';
 import { Dialog } from '@kobalte/core/dialog';
-import { getMarkdownGoldenBytes } from '@conation/lexical-core/markdown-golden';
-import type { Span } from '@conation/observability';
 import BellSimpleIcon from '@phosphor/bell-simple.svg';
 import MagnifyingGlassIcon from '@phosphor/magnifying-glass.svg';
 import PlusIcon from '@phosphor/plus.svg';
@@ -165,7 +165,7 @@ function matchesLauncherSearch(item: CreatableBlock, query: string) {
 
 const createBlock = async (spec: {
   blockName: BlockName | BlockAlias;
-  createFn: () =>Promise<string | undefined>;
+  createFn: () => Promise<string | undefined>;
   loading?: boolean;
   shouldInsert?: boolean;
   /** Active creation span; registered by document id after creation. */
@@ -440,7 +440,9 @@ export type { CreatableBlock, CreatableName } from './types';
 
 export const CREATABLE_BLOCKS: CreatableBlock[] = [
   {
-    label: 'Email',
+    get label() {
+      return t('shell.command.create.email.label');
+    },
     icon: WideEmail,
     animatedIcon: AnimatedEmailIcon,
     description: 'Create email',
@@ -458,11 +460,15 @@ export const CREATABLE_BLOCKS: CreatableBlock[] = [
     // The pre-agent-session chat, kept on `a` for anyone the new agent flag
     // has not reached. Mutually exclusive with the Coding Agent entry below:
     // both bind `a`, and exactly one is ever enabled.
-    label: 'Agent',
+    get label() {
+      return t('shell.command.create.agentChat.label');
+    },
     icon: WideStar,
     animatedIcon: AnimatedStarIcon,
     description: 'Create agent chat',
-    launcherHint: 'New agent session',
+    get launcherHint() {
+      return t('shell.command.create.agentChat.hint');
+    },
     keywords: ['new', 'make', 'add', 'agent'],
     blockName: 'chat',
     hotkeyToken: TOKENS.create.chat,
@@ -479,10 +485,14 @@ export const CREATABLE_BLOCKS: CreatableBlock[] = [
     },
   },
   {
-    label: 'Automation',
+    get label() {
+      return t('shell.command.create.automation.label');
+    },
     icon: WideAutomation,
     description: 'Create automation',
-    launcherHint: 'Scheduled agent runs',
+    get launcherHint() {
+      return t('shell.command.create.automation.hint');
+    },
     keywords: ['new', 'make', 'add', 'schedule', 'agent'],
     blockName: 'automation',
     hotkeyToken: TOKENS.create.automation,
@@ -493,10 +503,14 @@ export const CREATABLE_BLOCKS: CreatableBlock[] = [
     },
   },
   {
-    label: 'Coding Agent',
+    get label() {
+      return t('shell.command.create.codingAgent.label');
+    },
     icon: Robot,
     description: 'Create agent session',
-    launcherHint: 'Sandboxed coding session',
+    get launcherHint() {
+      return t('shell.command.create.codingAgent.hint');
+    },
     keywords: ['new', 'make', 'add', 'agent', 'code', 'coder', 'session'],
     blockName: 'agent',
     hotkeyToken: TOKENS.create.agent,
@@ -510,10 +524,14 @@ export const CREATABLE_BLOCKS: CreatableBlock[] = [
     },
   },
   {
-    label: 'Skill',
+    get label() {
+      return t('shell.command.create.skill.label');
+    },
     icon: SkillIcon,
     description: 'Create skill',
-    launcherHint: 'Custom agent skill',
+    get launcherHint() {
+      return t('shell.command.create.skill.hint');
+    },
     keywords: ['new', 'make', 'add', 'instruction', 'prompt'],
     blockName: 'skill',
     hotkeyToken: TOKENS.create.skill,
@@ -524,7 +542,9 @@ export const CREATABLE_BLOCKS: CreatableBlock[] = [
     },
   },
   {
-    label: 'Document',
+    get label() {
+      return t('shell.command.create.document.label');
+    },
     icon: WideFileMd,
     animatedIcon: AnimatedFileMdIcon,
     description: 'Create doc',
@@ -539,7 +559,9 @@ export const CREATABLE_BLOCKS: CreatableBlock[] = [
     },
   },
   {
-    label: 'Task',
+    get label() {
+      return t('shell.command.create.task.label');
+    },
     icon: WideTask,
     animatedIcon: AnimatedTaskIcon,
     description: 'Create task',
@@ -554,10 +576,14 @@ export const CREATABLE_BLOCKS: CreatableBlock[] = [
     },
   },
   {
-    label: 'Reminder',
+    get label() {
+      return t('shell.command.create.reminder.label');
+    },
     icon: BellSimpleIcon,
     description: 'Create reminder',
-    launcherHint: 'Nudge yourself later',
+    get launcherHint() {
+      return t('shell.command.create.reminder.hint');
+    },
     keywords: ['new', 'make', 'add', 'remind', 'later', 'todo'],
     blockName: 'reminder',
     hotkeyToken: TOKENS.create.reminder,
@@ -571,11 +597,15 @@ export const CREATABLE_BLOCKS: CreatableBlock[] = [
     },
   },
   {
-    label: 'Snippet',
+    get label() {
+      return t('shell.command.create.snippet.label');
+    },
     icon: WideSnippet,
     animatedIcon: AnimatedSnippetIcon,
     description: 'Create snippet',
-    launcherHint: 'Reusable document template',
+    get launcherHint() {
+      return t('shell.command.create.snippet.hint');
+    },
     keywords: ['new', 'make', 'add'],
     blockName: 'snippet',
     hotkeyToken: TOKENS.create.snippet,
@@ -587,11 +617,15 @@ export const CREATABLE_BLOCKS: CreatableBlock[] = [
     },
   },
   {
-    label: 'Message',
+    get label() {
+      return t('shell.command.create.message.label');
+    },
     icon: WideChat,
     animatedIcon: AnimatedChatIcon,
     description: 'Create message',
-    launcherHint: 'Quick send message',
+    get launcherHint() {
+      return t('shell.command.create.message.hint');
+    },
     keywords: ['new', 'make', 'add', 'channel'],
     blockName: 'channel',
     hotkeyToken: TOKENS.create.message,
@@ -603,11 +637,15 @@ export const CREATABLE_BLOCKS: CreatableBlock[] = [
     },
   },
   {
-    label: 'Channel',
+    get label() {
+      return t('shell.command.create.channel.label');
+    },
     icon: WideChannel,
     animatedIcon: AnimatedChannelIcon,
     description: 'Create channel',
-    launcherHint: 'Team-wide or group chat',
+    get launcherHint() {
+      return t('shell.command.create.channel.hint');
+    },
     keywords: ['new', 'make', 'add', 'channel', 'group', 'conversation'],
     blockName: 'channel',
     hotkeyToken: TOKENS.create.channel,
@@ -619,7 +657,9 @@ export const CREATABLE_BLOCKS: CreatableBlock[] = [
     },
   },
   {
-    label: 'Canvas',
+    get label() {
+      return t('shell.command.create.canvas.label');
+    },
     icon: WideDiagram,
     animatedIcon: AnimatedDiagramIcon,
     description: 'Create canvas',
@@ -636,7 +676,9 @@ export const CREATABLE_BLOCKS: CreatableBlock[] = [
     },
   },
   {
-    label: 'Folder',
+    get label() {
+      return t('shell.command.create.folder.label');
+    },
     icon: WideFolder,
     animatedIcon: AnimatedFolderIcon,
     description: 'Create folder',
@@ -651,7 +693,9 @@ export const CREATABLE_BLOCKS: CreatableBlock[] = [
     },
   },
   {
-    label: 'Code',
+    get label() {
+      return t('shell.command.create.code.label');
+    },
     icon: WideFileCode,
     animatedIcon: AnimatedFileCodeIcon,
     description: 'Create code file',
@@ -1005,7 +1049,9 @@ export const LauncherInner = (props: LauncherInnerProps) => {
             fallback={
               <div class="min-w-0 flex flex-1 items-center gap-2 text-ink-muted">
                 <PlusIcon class="size-4 shrink-0 text-ink-extra-muted" />
-                <h1 class="truncate text-base font-normal">{t('auto.create_new')}</h1>
+                <h1 class="truncate text-base font-normal">
+                  {t('shell.command.createNew')}
+                </h1>
               </div>
             }
           >
@@ -1014,7 +1060,7 @@ export const LauncherInner = (props: LauncherInnerProps) => {
               <CommandMenuSearchInput
                 ref={searchInputRef}
                 type="text"
-                placeholder={t('auto.search_create_options')}
+                placeholder={t('shell.command.searchCreateOptions')}
                 value={searchQuery()}
                 onInput={(event) => setSearchQuery(event.currentTarget.value)}
               />
@@ -1026,7 +1072,7 @@ export const LauncherInner = (props: LauncherInnerProps) => {
             size="xs"
             label={
               <span class="flex items-center gap-1 text-[11px] font-medium leading-none text-ink-extra-muted/70">
-                Search mode{' '}
+                {t('shell.command.searchMode')}{' '}
                 <Hotkey
                   shortcut={searchModeHotkey.hotkey()}
                   theme="subtle"
@@ -1078,12 +1124,16 @@ export const LauncherInner = (props: LauncherInnerProps) => {
               <div class="flex border border-edge-muted text-xxs rounded-md items-center px-1.5 py-px font-normal">
                 <Hotkey shortcut={navDownHotkey.hotkey()} class="space-x-1" />
               </div>
-            </div>{t('auto.navigate')}</span>
+            </div>
+            {t('shell.command.navigate')}
+          </span>
           <CommandMenuHotkeyHint
             hotkey={<Hotkey shortcut={confirmHotkey.hotkey()} />}
-            label="Create"
+            label={t('shell.actions.create')}
           />
-          <span class="hidden touch:hidden md:flex items-center gap-1">{t('auto.hold')}<span class="relative inline-flex place-items-center">
+          <span class="hidden touch:hidden md:flex items-center gap-1">
+            {t('shell.command.hold')}
+            <span class="relative inline-flex place-items-center">
               <span
                 ref={shiftRippleRef}
                 class="shift-ripple absolute inset-0 rounded-sm border border-accent pointer-events-none opacity-0"
@@ -1098,7 +1148,9 @@ export const LauncherInner = (props: LauncherInnerProps) => {
               >
                 {getNormalizedKeyString({ shortcut: 'shift' })}
               </span>
-            </span>{t('auto.new_split')}</span>
+            </span>
+            {t('shell.command.newSplit')}
+          </span>
         </CommandMenuShell.Footer>
       </CommandMenuShell>
     </div>

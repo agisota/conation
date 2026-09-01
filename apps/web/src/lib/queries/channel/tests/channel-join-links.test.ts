@@ -1,8 +1,9 @@
+import { setLocale } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { storageServiceClient } from '@service-storage/client';
 import { QueryClient } from '@tanstack/solid-query';
 import { err, ok } from 'neverthrow';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 let testQueryClient: QueryClient;
 
@@ -38,6 +39,7 @@ const mutationContext = () => ({
 describe('channel join-link mutations', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    setLocale('en');
     testQueryClient = new QueryClient({
       defaultOptions: {
         queries: { retry: false },
@@ -45,6 +47,8 @@ describe('channel join-link mutations', () => {
       },
     });
   });
+
+  afterEach(() => setLocale('en'));
 
   it('does not request a join code until the lazy mutation executes', async () => {
     vi.mocked(storageServiceClient.getChannelJoinLink).mockResolvedValue(
@@ -118,5 +122,22 @@ describe('channel join-link mutations', () => {
     );
 
     expect(toast.failure).toHaveBeenCalledWith('Failed to join channel');
+  });
+
+  it('formats feedback with the locale selected when the callback runs', async () => {
+    const options = joinChannelByCodeMutationOptions();
+    const args = { joinCode: 'invalid-code' };
+
+    setLocale('ru');
+    await options.onError?.(
+      new Error('unavailable'),
+      args,
+      undefined,
+      mutationContext()
+    );
+
+    expect(toast.failure).toHaveBeenCalledWith(
+      'Не удалось присоединиться к каналу'
+    );
   });
 });

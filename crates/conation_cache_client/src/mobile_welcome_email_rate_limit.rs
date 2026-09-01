@@ -1,6 +1,6 @@
 use crate::MacroCache;
 
-conation_rules! mobile_welcome_email_rate_limit {
+macro_rules! mobile_welcome_email_rate_limit {
     ($ip:expr) => {
         format!("rtl_mobile_welcome_email:{}", $ip)
     };

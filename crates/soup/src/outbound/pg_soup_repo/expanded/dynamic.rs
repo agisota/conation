@@ -147,9 +147,9 @@ static GROUPED_CALENDAR_EVENT_TOP_CLAUSE: &str = r#"
                       event.owner_id = $1
                       OR EXISTS (
                           SELECT 1
-                          FROM conation_user_links link
+                          FROM macro_user_links link
                           WHERE link.link_id = event.source_link_id
-                            AND link.primary_conation_id = $1
+                            AND link.primary_macro_id = $1
                       )
                   )
 "#;

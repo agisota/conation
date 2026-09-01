@@ -31,7 +31,7 @@ where
     req.extensions_mut()
         .insert(models_email::email::service::link::Link {
             id: link.id,
-            conation_id: link.conation_id.clone(),
+            macro_id: link.macro_id.clone(),
             fusionauth_user_id: link.fusionauth_user_id.clone(),
             email_address: link.email_address.clone(),
             provider,

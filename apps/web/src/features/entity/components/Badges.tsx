@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { UserIcon } from '@core/component/UserIcon';
 import { getDisplayName, tryMacroId } from '@core/user';
 import HashIcon from '@phosphor/hash.svg';
@@ -25,7 +26,7 @@ export function SharedBadge(props: { ownerId: string }) {
   return (
     <Badge class="text-ink-extra-muted border-edge-muted pr-2">
       <UserIcon id={props.ownerId} size="sm" />
-      shared
+      {t('entity.badges.shared')}
     </Badge>
   );
 }
@@ -44,7 +45,7 @@ export function SharedBadgeSmall(props: { ownerId: string }) {
             suppressClick
             showTooltip={false}
           />
-          <span>{name()} shared this with you</span>
+          <span>{t('entity.badges.sharedBy', { name: name() ?? '' })}</span>
         </div>
       }
     >
@@ -69,7 +70,7 @@ export function CreatedByBadgeSmall(props: { ownerId: string }) {
             suppressClick
             showTooltip={false}
           />
-          <span>Created by {name()}</span>
+          <span>{t('entity.badges.createdBy', { name: name() ?? '' })}</span>
         </div>
       }
     >
@@ -81,13 +82,17 @@ export function CreatedByBadgeSmall(props: { ownerId: string }) {
 }
 
 export function DraftBadge() {
-  return <Badge class="text-warning border-edge-muted px-2">draft</Badge>;
+  return (
+    <Badge class="text-warning border-edge-muted px-2">
+      {t('entity.badges.draft')}
+    </Badge>
+  );
 }
 
 function _ImportantBadge() {
   return (
     <Badge class="text-accent bg-accent/10 px-2 border-accent/10">
-      important
+      {t('entity.badges.important')}
     </Badge>
   );
 }
@@ -102,17 +107,17 @@ function getCallStatusBadgeConfig(status: CallStatus): CallStatusBadgeConfig {
     case 'ATTENDED':
       return {
         class: 'text-ink-extra-muted border-edge-muted px-2',
-        label: 'attended',
+        label: t('entity.badges.call.attended'),
       };
     case 'MISSED':
       return {
         class: 'text-warning border-edge-muted px-2',
-        label: 'missed',
+        label: t('entity.badges.call.missed'),
       };
     case 'UNATTENDED':
       return {
         class: 'text-ink-extra-muted/70 border-edge-muted px-2',
-        label: 'unattended',
+        label: t('entity.badges.call.unattended'),
       };
   }
 }

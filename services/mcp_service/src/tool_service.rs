@@ -32,7 +32,7 @@ fn mcp_annotations(annotations: &ai_toolset::ToolAnnotations) -> ToolAnnotations
 pub struct AuthenticatedToolService<Context> {
     toolset: Arc<AsyncToolCollection<Context>>,
     context: Context,
-    /// Base URL of the Macro web app used to build links to Macro items in MCP
+    /// Base URL of the Conation web app used to build links to Conation items in MCP
     /// responses (e.g. `https://macro.com`). Comes from the `APP_BASE_URL`
     /// environment variable.
     item_base_url: String,
@@ -94,19 +94,20 @@ where
             "macro-tools",
             env!("CARGO_PKG_VERSION"),
         )
-        .with_title("Macro")
+        .with_title("Conation")
         .with_description(
-            "Search, read, and create content across documents, emails, and messages in Macro.",
+            "Search, read, and create content across documents, emails, and messages in Conation.",
         )
         // The same icon the web app's <link rel="icon"> points at, so the
-        // server shows up in MCP clients with the Macro favicon.
+        // server shows up in MCP clients with the Conation favicon. The
+        // compatibility filename remains stable for existing deployments.
         .with_icons(vec![
             Icon::new(format!("{base_url}/app/macro-favicon.svg"))
                 .with_mime_type("image/svg+xml")
                 .with_sizes(vec!["any".to_owned()]),
         ]);
         info.instructions = Some(format!(
-            "This server provides tools for interacting with a user's Macro workspace. \
+            "This server provides tools for interacting with a user's Conation workspace. \
              Use ContentSearch and NameSearch to find entities. \
              Use ReadContent, ReadMetadata, and ReadThread to read them. \
              Use CreateDocument to create new documents. \

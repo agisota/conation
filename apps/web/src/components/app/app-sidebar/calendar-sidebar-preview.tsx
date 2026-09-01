@@ -1,5 +1,4 @@
 import { useOpenEventComposer } from '@app/features/block-calendar/components/use-open-event-composer';
-import { t } from '@app/lib/i18n';
 import {
   CALENDAR_BLOCK_ID,
   type CalendarBlockProps,
@@ -17,6 +16,7 @@ import {
   formatCalendarTime,
   getDefaultCalendarTimeFormat,
 } from '@app/features/calendar/utils/time-format';
+import { formatDateTime, t } from '@app/lib/i18n';
 import { globalSplitManager } from '@app/signal/splitLayout';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import { HoverCard } from '@core/component/HoverCard';
@@ -93,17 +93,11 @@ function CalendarScrollElement(props: {
 
 const PREVIEW_TIME_FORMAT_OPTIONS: Array<{
   value: CalendarTimeFormat;
-  label: string;
+  labelKey: string;
 }> = [
-  { value: '12-hour', label: '12-hour' },
-  { value: '24-hour', label: '24-hour' },
+  { value: '12-hour', labelKey: 'shell.calendar.timeFormat12Hour' },
+  { value: '24-hour', labelKey: 'shell.calendar.timeFormat24Hour' },
 ];
-
-const eventDateFormat = new Intl.DateTimeFormat(undefined, {
-  weekday: 'short',
-  month: 'short',
-  day: 'numeric',
-});
 
 function eventDate(value: string) {
   return parseLocalDate(value) ?? new Date(value);
@@ -111,11 +105,20 @@ function eventDate(value: string) {
 
 function eventSchedule(event: CalendarEvent) {
   const start = eventDate(event.start);
-  if (event.allDay) return `${eventDateFormat.format(start)} · All day`;
+  const date = formatDateTime(start, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
+  if (event.allDay) return t('shell.calendar.scheduleAllDay', { date });
 
   const end = eventDate(event.end);
   const timeFormat = getDefaultCalendarTimeFormat();
-  return `${eventDateFormat.format(start)} · ${formatCalendarTime(start, timeFormat)}–${formatCalendarTime(end, timeFormat)}`;
+  return t('shell.calendar.scheduleTimed', {
+    date,
+    start: formatCalendarTime(start, timeFormat),
+    end: formatCalendarTime(end, timeFormat),
+  });
 }
 
 function conferenceUrl(event: CalendarEvent) {
@@ -143,7 +146,7 @@ function EventSummary(props: {
           variant="ghost"
           size="icon-sm"
           class="rounded-lg"
-          label="Close event details"
+          label={t('shell.calendar.closeEventDetails')}
           onClick={props.onClose}
         >
           <XIcon class="size-4" />
@@ -155,7 +158,9 @@ function EventSummary(props: {
           class="rounded-lg bg-surface px-2"
           data-calendar-event-target-navigation
           onClick={props.onViewInCalendar}
-        >{t('auto.open')}<ArrowRightIcon class="size-4" />
+        >
+          {t('shell.actions.open')}
+          <ArrowRightIcon class="size-4" />
         </Button>
       </div>
       <div class="flex flex-col gap-2 px-3 pb-3 pt-2">
@@ -183,8 +188,8 @@ function EventSummary(props: {
             >
               <VideoCameraIcon class="size-4" />
               {props.event.conferenceProvider === 'google_meet'
-                ? 'Join Google Meet'
-                : 'Join meeting'}
+                ? t('shell.calendar.joinGoogleMeet')
+                : t('shell.calendar.joinMeeting')}
             </Button>
           )}
         </Show>
@@ -309,8 +314,8 @@ function PreviewContent(props: { dropdownMount?: HTMLElement }) {
         <Layer depth={4}>
           <div class="absolute right-2 bottom-2 z-anchored-controls flex items-center gap-2">
             <Button
-              aria-label={t('auto.new_event')}
-              label="New event"
+              aria-label={t('shell.calendar.newEvent')}
+              label={t('shell.calendar.newEvent')}
               tooltipPlacement="top"
               variant="ghost"
               size="icon-md"
@@ -322,8 +327,8 @@ function PreviewContent(props: { dropdownMount?: HTMLElement }) {
             </Button>
             <Dropdown placement="right" gutter={6}>
               <Dropdown.Trigger
-                aria-label={t('auto.calendar_settings')}
-                label="Calendar settings"
+                aria-label={t('shell.calendar.settings')}
+                label={t('shell.calendar.settings')}
                 tooltipPlacement="top"
                 variant="ghost"
                 size="icon-md"
@@ -340,7 +345,9 @@ function PreviewContent(props: { dropdownMount?: HTMLElement }) {
                 <Dropdown.Group>
                   <Dropdown.Sub>
                     <Dropdown.SubTrigger>
-                      <span class="min-w-0 flex-1 truncate">{t('auto.calendars')}</span>
+                      <span class="min-w-0 flex-1 truncate">
+                        {t('shell.calendar.calendars')}
+                      </span>
                       <CaretRightIcon class="size-3 shrink-0 text-ink-muted" />
                     </Dropdown.SubTrigger>
                     <Dropdown.SubContent
@@ -375,9 +382,15 @@ function PreviewContent(props: { dropdownMount?: HTMLElement }) {
 
                   <Dropdown.Sub>
                     <Dropdown.SubTrigger>
-                      <span class="min-w-0 flex-1 truncate">{t('auto.time_format')}</span>
+                      <span class="min-w-0 flex-1 truncate">
+                        {t('shell.calendar.timeFormat')}
+                      </span>
                       <span class="text-xs text-ink-muted">
-                        {timeFormat() === '12-hour' ? '12-hour' : '24-hour'}
+                        {t(
+                          timeFormat() === '12-hour'
+                            ? 'shell.calendar.timeFormat12Hour'
+                            : 'shell.calendar.timeFormat24Hour'
+                        )}
                       </span>
                       <CaretRightIcon class="size-3 shrink-0 text-ink-muted" />
                     </Dropdown.SubTrigger>
@@ -399,7 +412,7 @@ function PreviewContent(props: { dropdownMount?: HTMLElement }) {
                                 closeOnSelect
                                 value={option.value}
                               >
-                                <span class="flex-1">{option.label}</span>
+                                <span class="flex-1">{t(option.labelKey)}</span>
                                 <Dropdown.ItemIndicator>
                                   <CheckIcon class="size-3.5 text-accent" />
                                 </Dropdown.ItemIndicator>

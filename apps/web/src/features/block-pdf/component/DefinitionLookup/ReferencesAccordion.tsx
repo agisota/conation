@@ -1,3 +1,4 @@
+import { formatNumber, t } from '@app/lib/i18n';
 import { Accordion } from '@kobalte/core/accordion';
 import { Scrollbars } from 'solid-custom-scrollbars';
 import { createSignal, Index } from 'solid-js';
@@ -46,8 +47,7 @@ export function ReferencesAccordion(props: IProps) {
   return (
     <>
       <DefinitionCount>
-        Found {references().length} reference
-        {references().length > 1 || references().length === 0 ? 's' : ''}
+        {t('pdf.definition.referenceCount', { count: references().length })}
       </DefinitionCount>
       <Scrollbars
         autoHide
@@ -60,9 +60,13 @@ export function ReferencesAccordion(props: IProps) {
         <Accordion value={expandedItem()} onChange={setExpandedItem}>
           <Index each={references()}>
             {(r, idx) => {
-              let text = 'On page ' + (r().pageNum + 1);
+              const page = formatNumber(r().pageNum + 1);
+              let text = t('pdf.definition.onPage', { page });
               if (r().sectionName) {
-                text = `In ${r().sectionName} on page ${r().pageNum + 1}`;
+                text = t('pdf.definition.inSectionOnPage', {
+                  section: r().sectionName ?? '',
+                  page,
+                });
               }
               return (
                 <Accordion.Item value={idx.toString()}>

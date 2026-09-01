@@ -64,7 +64,7 @@ pub async fn seed_sent_contact(
         };
 
         let users: HashSet<MacroUserIdStr<'static>> =
-            HashSet::from([link.conation_id.clone(), recipient]);
+            HashSet::from([link.macro_id.clone(), recipient]);
 
         // Idempotent on the consumer side, so a retried seed message that
         // re-enqueues already-sent connections is harmless.

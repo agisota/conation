@@ -10,15 +10,15 @@ use crate::{
         entity_mutation::{EntityLifecycleService, LifecycleError},
     },
 };
-use entity_mutation::EntityMutationActor;
 use conation_event_broker::MacroEventBroker;
 use conation_sha_count_client::Redis;
+use entity_mutation::EntityMutationActor;
 use model_entity::{Entity, EntityType};
 use models_permissions::share_permission::UpdateSharePermissionRequestV2;
 use sqlx::PgPool;
 
 /// Wrap a legacy client failure as an internal lifecycle error.
-conation_rules! internal {
+macro_rules! internal {
     ($error:expr) => {
         LifecycleError::Internal(rootcause::report!($error).into())
     };
@@ -92,9 +92,10 @@ impl<B: MacroEventBroker> EntityLifecycleService for DssEntityLifecycleAdapter<B
         _actor: &EntityMutationActor,
         entity: &Entity<'static>,
     ) -> Result<Vec<Entity<'static>>, LifecycleError> {
-        let document = conation_db_client::document::get_basic_document(&self.db, &entity.entity_id)
-            .await
-            .map_err(row_error)?;
+        let document =
+            conation_db_client::document::get_basic_document(&self.db, &entity.entity_id)
+                .await
+                .map_err(row_error)?;
         conation_db_client::document::revert_delete::revert_delete_document(
             &self.db,
             &entity.entity_id,
@@ -114,13 +115,15 @@ impl<B: MacroEventBroker> EntityLifecycleService for DssEntityLifecycleAdapter<B
         _actor: &EntityMutationActor,
         entity: &Entity<'static>,
     ) -> Result<Vec<Entity<'static>>, LifecycleError> {
-        let document = conation_db_client::document::get_basic_document(&self.db, &entity.entity_id)
-            .await
-            .map_err(row_error)?;
-        if document.file_type.as_deref() == Some("docx") {
-            let bom_parts = conation_db_client::document::get_bom_parts(&self.db, &entity.entity_id)
+        let document =
+            conation_db_client::document::get_basic_document(&self.db, &entity.entity_id)
                 .await
-                .map_err(|error| internal!(error))?;
+                .map_err(row_error)?;
+        if document.file_type.as_deref() == Some("docx") {
+            let bom_parts =
+                conation_db_client::document::get_bom_parts(&self.db, &entity.entity_id)
+                    .await
+                    .map_err(|error| internal!(error))?;
             self.redis
                 .decrement_counts(&count_occurrences(
                     bom_parts.into_iter().map(|part| part.sha).collect(),

@@ -22,7 +22,7 @@ impl DbUserProvider {
 #[derive(Debug, Clone)]
 pub struct DbLink {
     pub id: Uuid,
-    pub conation_id: String,
+    pub macro_id: String,
     pub fusionauth_user_id: String,
     pub email_address: String,
     pub provider: DbUserProvider,
@@ -38,7 +38,7 @@ impl From<models_email::email::service::link::Link> for DbLink {
     fn from(service_link: models_email::email::service::link::Link) -> Self {
         Self {
             id: service_link.id,
-            conation_id: service_link.conation_id.to_string(),
+            macro_id: service_link.macro_id.to_string(),
             fusionauth_user_id: service_link.fusionauth_user_id,
             email_address: service_link
                 .email_address
@@ -65,7 +65,7 @@ impl TryFrom<DbLink> for models_email::email::service::link::Link {
     fn try_from(value: DbLink) -> Result<Self, Self::Error> {
         let DbLink {
             id,
-            conation_id,
+            macro_id,
             fusionauth_user_id,
             email_address,
             provider,
@@ -78,7 +78,7 @@ impl TryFrom<DbLink> for models_email::email::service::link::Link {
         } = value;
         Ok(models_email::email::service::link::Link {
             id,
-            conation_id: MacroUserIdStr::try_from(conation_id)?,
+            macro_id: MacroUserIdStr::try_from(macro_id)?,
             fusionauth_user_id,
             email_address: EmailStr::try_from(email_address)?,
             provider: match provider {

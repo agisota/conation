@@ -164,18 +164,18 @@ fn assert_no_token_material(payload: &Value, known_token: Option<&str>) {
 }
 
 async fn insert_user(pool: &PgPool, user_id: &str) -> anyhow::Result<()> {
-    let conation_user_id = Uuid::new_v4();
+    let macro_user_id = Uuid::new_v4();
     let email = user_id.strip_prefix("macro|").unwrap_or(user_id);
-    let stripe_customer_id = format!("stripe_{conation_user_id}");
+    let stripe_customer_id = format!("stripe_{macro_user_id}");
 
     sqlx::query(
         r#"
-        INSERT INTO conation_user (id, username, email, stripe_customer_id)
+        INSERT INTO macro_user (id, username, email, stripe_customer_id)
         VALUES ($1, $2, $3, $4)
         ON CONFLICT (id) DO NOTHING
         "#,
     )
-    .bind(conation_user_id)
+    .bind(macro_user_id)
     .bind(email)
     .bind(email)
     .bind(stripe_customer_id)
@@ -184,14 +184,14 @@ async fn insert_user(pool: &PgPool, user_id: &str) -> anyhow::Result<()> {
 
     sqlx::query(
         r#"
-        INSERT INTO "User" (id, email, conation_user_id)
+        INSERT INTO "User" (id, email, macro_user_id)
         VALUES ($1, $2, $3)
         ON CONFLICT (id) DO NOTHING
         "#,
     )
     .bind(user_id)
     .bind(email)
-    .bind(conation_user_id)
+    .bind(macro_user_id)
     .execute(pool)
     .await?;
 

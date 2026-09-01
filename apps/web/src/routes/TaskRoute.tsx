@@ -25,7 +25,7 @@ export function TaskRoute() {
   );
   const taskQuery = useTeamTaskQuery(slugToResolve);
   const documentId = () => taskQuery.data?.documentMetadata.documentId;
-  // FORBIDDEN covers a user who is not part of a Macro team yet; to them the
+  // FORBIDDEN covers a user who is not part of a Conation team yet; to them the
   // reference is just as unavailable as a slug that does not resolve.
   const taskNotFound = () =>
     thrownResultErrorHasCode(taskQuery.error, 'NOT_FOUND') ||
@@ -75,22 +75,28 @@ function TaskRouteError(props: { notFound: boolean; onRetry?: () => void }) {
     <div class="size-full flex items-center justify-center p-8">
       <div class="flex max-w-sm flex-col items-center gap-4 text-center">
         <h1 class="text-lg font-medium text-ink">
-          {props.notFound ? 'Task not found' : 'Unable to open task'}
+          {props.notFound
+            ? t('shell.routes.task.notFoundTitle')
+            : t('shell.routes.task.openErrorTitle')}
         </h1>
         <p class="text-sm text-ink-muted">
           {props.notFound
-            ? 'This task reference does not exist or is not available to your team.'
-            : 'Something went wrong while resolving this task reference.'}
+            ? t('shell.routes.task.notFoundDescription')
+            : t('shell.routes.task.openErrorDescription')}
         </p>
         <div class="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => navigate('/tasks')}
-          >{t('auto.go_to_tasks')}</Button>
+          >
+            {t('shell.routes.task.goToTasks')}
+          </Button>
           <Show when={!props.notFound && props.onRetry}>
             {(onRetry) => (
-              <Button variant="outline" size="sm" onClick={onRetry()}>{t('auto.try_again')}</Button>
+              <Button variant="outline" size="sm" onClick={onRetry()}>
+                {t('shell.actions.tryAgain')}
+              </Button>
             )}
           </Show>
         </div>

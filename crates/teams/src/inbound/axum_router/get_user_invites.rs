@@ -36,7 +36,7 @@ pub async fn handler<T: TeamService, Eas: EntityAccessService, Auth: MacroAuthor
 ) -> Result<Json<TeamInvitesResponse>, TeamError> {
     let invites = state
         .service
-        .get_user_invites(&authorization.authorization.user.conation_user_id)
+        .get_user_invites(&authorization.authorization.user.macro_user_id)
         .await?;
     Ok(Json(TeamInvitesResponse { invites }))
 }

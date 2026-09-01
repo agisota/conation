@@ -1,5 +1,6 @@
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import {
   ENABLE_GRAPHQL_SOUP,
@@ -682,15 +683,19 @@ export async function blockSenderWithToast(
   );
 
   if (result.isErr()) {
-    toast.failure('Failed to block sender', { subtext: senderEmail });
+    toast.failure(t('email.feedback.senderBlockFailed'), {
+      subtext: senderEmail,
+    });
     return;
   }
 
-  toast.success('Sender blocked', {
-    subtext: `All new messages will be trashed for ${senderEmail}`,
+  toast.success(t('email.feedback.senderBlocked'), {
+    subtext: t('email.feedback.senderBlockedDescription', {
+      email: senderEmail,
+    }),
     actions: [
       {
-        label: 'Undo',
+        label: t('email.feedback.undo'),
         icon: ArrowCounterClockwise,
         onClick: async () => {
           const undoResult = await emailClient.unblockSender(
@@ -700,9 +705,11 @@ export async function blockSenderWithToast(
             linkId
           );
           if (undoResult.isErr()) {
-            toast.failure('Failed to unblock sender', { subtext: senderEmail });
+            toast.failure(t('email.feedback.senderUnblockFailed'), {
+              subtext: senderEmail,
+            });
           } else {
-            toast.success('Sender unblocked');
+            toast.success(t('email.feedback.senderUnblocked'));
           }
         },
       },
@@ -715,7 +722,7 @@ async function upsertSenderFilterWithToast(
   isImportant: boolean,
   linkId?: string
 ) {
-  const label = isImportant ? 'Signal' : 'Noise';
+  const category = isImportant ? 'signal' : 'noise';
 
   const result = await emailClient.upsertEmailFilter(
     {
@@ -726,7 +733,7 @@ async function upsertSenderFilterWithToast(
   );
 
   if (result.isErr()) {
-    toast.failure(`Failed to mark sender as ${label}`, {
+    toast.failure(t('email.feedback.senderMarkFailed', { category }), {
       subtext: senderEmail,
     });
     return;
@@ -735,11 +742,14 @@ async function upsertSenderFilterWithToast(
   const filterId = result.value.filter.id;
   invalidateAllSoup();
 
-  toast.success(`Sender marked as ${label}`, {
-    subtext: `Messages from ${senderEmail} will appear in ${label}`,
+  toast.success(t('email.feedback.senderMarked', { category }), {
+    subtext: t('email.feedback.senderMarkedDescription', {
+      email: senderEmail,
+      category,
+    }),
     actions: [
       {
-        label: 'Undo',
+        label: t('email.feedback.undo'),
         icon: ArrowCounterClockwise,
         onClick: async () => {
           const undoResult = await emailClient.deleteEmailFilter(
@@ -747,10 +757,12 @@ async function upsertSenderFilterWithToast(
             linkId
           );
           if (undoResult.isErr()) {
-            toast.failure('Failed to undo', { subtext: senderEmail });
+            toast.failure(t('email.feedback.undoFailed'), {
+              subtext: senderEmail,
+            });
           } else {
             invalidateAllSoup();
-            toast.success('Sender filter removed');
+            toast.success(t('email.feedback.senderFilterRemoved'));
           }
         },
       },

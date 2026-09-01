@@ -156,7 +156,7 @@ fn owner_scoped_bot_authentication() -> BotAuthentication {
         .acting_user
         .as_mut()
         .expect("user-scoped bot should have an acting user");
-    acting_user.conation_user_id =
+    acting_user.macro_user_id =
         MacroUserIdStr::parse_from_str(OWNER_ID).expect("owner id should be valid");
     acting_user.user_context = user_context(OWNER_ID);
     authentication

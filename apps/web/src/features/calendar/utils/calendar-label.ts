@@ -1,15 +1,16 @@
+import { t } from '@app/lib/i18n';
 import type { VisibleCalendar } from '@queries/calendar/calendars';
 import type { CalendarPeriodView } from '../types';
 
 const CALENDAR_PERIOD_LABELS = {
-  dayGridMonth: 'Month',
-  timeGridWeek: 'Week',
-  timeGridDay: 'Day',
+  dayGridMonth: 'calendar.view.month',
+  timeGridWeek: 'calendar.view.week',
+  timeGridDay: 'calendar.view.day',
 } satisfies Record<CalendarPeriodView, string>;
 
 /** Human-readable label for a calendar period view. */
 export function calendarPeriodLabel(view: CalendarPeriodView): string {
-  return CALENDAR_PERIOD_LABELS[view];
+  return t(CALENDAR_PERIOD_LABELS[view]);
 }
 
 /**

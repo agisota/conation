@@ -1,51 +1,160 @@
-# Self-host recipes for Conation (single server)
-# Requires .env.selfhost (see .env.selfhost.example)
+# Self-hosting entry points.
+#
+# The supported no-managed-cloud baseline delegates to the repository-owned
+# Cursor/xtask stack. The MinIO/Stalwart/Caddy Compose overlay is experimental
+# and deliberately has no `up` recipe until those adapters are wired end to end.
 
-selfhost-up *ARGS:
+# Start only the local infrastructure needed by DB-backed development/tests.
+selfhost-infra:
+    bash .cursor/infra.sh
+
+# Start the supported local product stack (backend + hot-reloading frontend).
+selfhost-up:
+    bash .cursor/stack.sh
+
+# Rebuild and remount backend binaries without resetting stack data.
+selfhost-rebuild:
+    bash .cursor/rebuild.sh
+
+# Report service/container health through the repository stack orchestrator.
+selfhost-status *ARGS:
+    just stack status "$@"
+
+# Stop the supported stack while retaining its persistent volumes.
+selfhost-down:
+    just stack down --keep-data
+
+# Follow one service's logs without reconstructing the generated Compose command.
+selfhost-logs SERVICE:
     #!/usr/bin/env bash
     set -euo pipefail
-    ENV_FILE="${ENV_FILE:-.env.selfhost}"
-    if [ ! -f "$ENV_FILE" ]; then
-      echo "Missing $ENV_FILE — cp .env.selfhost.example $ENV_FILE and edit"
+    service={{ quote(SERVICE) }}
+    project="${SELFHOST_STACK_PROJECT:-macro}"
+    mapfile -t container_ids < <(
+      docker ps -q \
+        --filter "label=com.docker.compose.project=$project" \
+        --filter "label=com.docker.compose.service=$service"
+    )
+    if [ "${#container_ids[@]}" -ne 1 ]; then
+      echo "Expected one running $service container in project $project; found ${#container_ids[@]}" >&2
+      echo "Run 'just selfhost-status' to inspect the stack." >&2
       exit 1
     fi
-    echo "Starting Conation self-host ($ENV_FILE) ..."
-    docker compose -f docker/docker-compose-databases.yml --env-file "$ENV_FILE" up -d
-    sleep 5
-    docker compose -f docker/docker-compose.yml -f docker/docker-compose.selfhost.yml --env-file "$ENV_FILE" up -d {{ARGS}}
-    echo "Conation UP: https://${CONATION_DOMAIN:-conation.dev}  MinIO http://localhost:9001  Stalwart http://localhost:8081"
+    docker logs --follow "${container_ids[0]}"
 
-selfhost-down:
-    docker compose -f docker/docker-compose.yml -f docker/docker-compose.selfhost.yml down
-
-selfhost-logs *ARGS:
-    docker compose -f docker/docker-compose.yml -f docker/docker-compose.selfhost.yml logs -f {{ARGS}}
-
-selfhost-backup:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    mkdir -p backup
-    echo "pg_dump conationdb..."
-    docker exec $(docker ps -qf name=postgres) pg_dump -U user conationdb > backup/conationdb-$(date +%Y%m%d).sql || pg_dump postgres://user:password@localhost:5432/conationdb > backup/conationdb-$(date +%Y%m%d).sql
-    echo "MinIO mirror..."
-    docker exec minio mc mirror /data ./backup/minio 2>/dev/null || echo "mc mirror skip (install mc)"
-    echo "backup -> backup/"
-
-selfhost-setup-dns:
-    @echo "Add to DNS:"
-    @echo "  A conation.dev -> $(curl -s ifconfig.me || echo '<SERVER_IP>')"
-    @echo "  MX conation.dev 10 mail.conation.dev"
-    @echo "  TXT conation.dev \"v=spf1 ip4:$(curl -s ifconfig.me) ~all\""
-    @echo "See infra/selfhost/README.md for DKIM/DMARC"
-
+# Create/migrate the canonical `macrodb` compatibility database. This is
+# idempotent, but the full `selfhost-up` flow already performs stack init.
 selfhost-prepare-db:
+    bash .cursor/infra.sh
+    just initialize_dbs
+
+# PostgreSQL-only backup. This is not a complete disaster-recovery snapshot;
+# object storage, identity, Kafka, and search state are documented separately.
+selfhost-backup OUTPUT_DIR:
     #!/usr/bin/env bash
     set -euo pipefail
-    echo "Running migrations for conationdb..."
-    DATABASE_URL=postgres://user:password@localhost:5432/conationdb cargo run -p conation_db_client --bin migrate 2>/dev/null || just setup_macrodb
-    echo "prepare_db (sqlx offline cache)..."
-    nix develop --command just prepare_db || cargo sqlx prepare 2>/dev/null || echo "sqlx prepare skipped (need DB)"
+    output_dir={{ quote(OUTPUT_DIR) }}
+    root="$(pwd -P)"
+    if [[ "$output_dir" != /* ]]; then
+      echo "OUTPUT_DIR must be an absolute path outside the repository." >&2
+      exit 1
+    fi
+    # `--canonicalize-missing` resolves every existing symlink while permitting
+    # a new leaf: it canonicalizes the nearest existing ancestor, then safely
+    # normalizes the remaining components. Validate and subsequently use that
+    # resolved path so an external-looking symlink cannot redirect the dump
+    # back into the checkout.
+    if ! resolved_output_dir="$(realpath --canonicalize-missing -- "$output_dir")"; then
+      echo "Could not resolve OUTPUT_DIR: $output_dir" >&2
+      exit 1
+    fi
+    case "$resolved_output_dir" in
+      "$root"|"$root"/*)
+        echo "Refusing to write a database dump inside the repository: $resolved_output_dir" >&2
+        exit 1
+        ;;
+    esac
+    output_dir="$resolved_output_dir"
+    project="${SELFHOST_STACK_PROJECT:-macro}"
+    mapfile -t container_ids < <(
+      docker ps -q \
+        --filter "label=com.docker.compose.project=$project" \
+        --filter "label=com.docker.compose.service=postgres"
+    )
+    if [ "${#container_ids[@]}" -ne 1 ]; then
+      echo "Expected one running postgres container in project $project; found ${#container_ids[@]}" >&2
+      exit 1
+    fi
+    umask 077
+    mkdir -p "$output_dir"
+    timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
+    temp_file=""
+    cleanup_temp() {
+      if [ -n "$temp_file" ]; then
+        rm -f -- "$temp_file"
+      fi
+    }
+    trap cleanup_temp EXIT HUP INT TERM
+    temp_file="$(mktemp --tmpdir="$output_dir" ".macrodb-${timestamp}.XXXXXXXXXX.tmp")"
+    temp_name="${temp_file##*/}"
+    unique_suffix="${temp_name%.tmp}"
+    unique_suffix="${unique_suffix##*.}"
+    backup_file="${output_dir%/}/macrodb-${timestamp}-${unique_suffix}.sql"
+    docker exec "${container_ids[0]}" pg_dump -U user -d macrodb > "$temp_file"
+    # Same-directory rename is atomic. `--no-clobber` prevents even an
+    # improbable reused suffix from overwriting an earlier completed dump.
+    mv --no-clobber --no-copy --no-target-directory -- "$temp_file" "$backup_file"
+    if [ -e "$temp_file" ]; then
+      echo "Could not publish dump without overwriting an existing file: $backup_file" >&2
+      exit 1
+    fi
+    temp_file=""
+    trap - EXIT HUP INT TERM
+    echo "MacroDB dump written to $backup_file"
+    echo "This does not include object storage, FusionAuth, Kafka, or OpenSearch state."
 
-selfhost-check:
-    docker compose -f docker/docker-compose.yml -f docker/docker-compose.selfhost.yml --env-file .env.selfhost config > /dev/null && echo "compose config OK"
-    rg -i "macro\.com|macro-inc" --hidden -g '!.git' infra/ apps/web/src/lib/i18n 2>/dev/null | wc -l | xargs echo "remaining macro refs:"
+# Validate only the experimental add-on Compose file without starting or
+# recreating containers. The check fails closed if a port is not loopback-bound,
+# an inherited application service appears, or an image is not digest-pinned.
+# Use the tracked example by default; never require an operator's ignored file.
+selfhost-overlay-check ENV_FILE=".env.selfhost.example":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    root="$(pwd -P)"
+    env_file={{ quote(ENV_FILE) }}
+    if [[ "$env_file" != /* ]]; then
+      env_file="$root/$env_file"
+    fi
+    if [ ! -f "$env_file" ]; then
+      echo "Missing environment file: $env_file" >&2
+      exit 1
+    fi
+    if ! docker compose \
+      --project-directory "$root" \
+      -f "$root/docker/docker-compose.selfhost.yml" \
+      --env-file "$env_file" \
+      config --format json \
+      | jq -e '
+          (.services | keys | sort)
+            == ["caddy", "localstack", "minio", "minio-setup", "stalwart"]
+          and ([.services[] | .ports[]?] as $ports
+            | ($ports | length) > 0
+            and all($ports[]; .host_ip == "127.0.0.1"))
+          and ([.services[] | .image] as $images
+            | all($images[]; test("@sha256:[0-9a-f]{64}$")))
+        ' >/dev/null
+    then
+      echo "Experimental overlay must contain only pinned add-ons with loopback-bound ports." >&2
+      exit 1
+    fi
+    echo "Experimental add-on Compose is pinned and loopback-only."
+
+selfhost-check ENV_FILE=".env.selfhost.example":
+    bash -n .cursor/cloud-lib.sh .cursor/infra.sh .cursor/stack.sh .cursor/rebuild.sh
+    just selfhost-overlay-check {{ quote(ENV_FILE) }}
+
+# Public DNS, TLS, and Internet mail require an operator security design and
+# are not enabled by the local experimental overlay.
+selfhost-setup-dns:
+    @echo "Public DNS/TLS/mail deployment is not yet a supported target."
+    @echo "See infra/selfhost/README.md for the explicit gaps and prerequisites."

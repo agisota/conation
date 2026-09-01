@@ -72,7 +72,7 @@ impl ChannelListService for FakeChannelListService {
         let (cursor_id, _) = request.query.vals();
         let limit = request.limit.map_or(usize::MAX, |limit| limit as usize);
         self.tracker.record(ServiceCall::GetChannels {
-            user_id: request.conation_id.to_string(),
+            user_id: request.macro_id.to_string(),
             limit: request.limit,
             cursor_id: cursor_id.copied(),
         });

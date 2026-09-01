@@ -95,8 +95,8 @@ pub async fn validate_bearer(
     };
 
     let user_id = match jwt_token {
-        JwtToken::MacroAccessToken(token) => token.conation_user_id.clone(),
-        JwtToken::MacroApiToken(token) => token.conation_user_id.clone(),
+        JwtToken::MacroAccessToken(token) => token.macro_user_id.clone(),
+        JwtToken::MacroApiToken(token) => token.macro_user_id.clone(),
     };
 
     let user_id = match MacroUserIdStr::try_from(user_id) {

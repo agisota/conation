@@ -84,10 +84,10 @@ where
         // Surface a reply draft the caller moved to another of their inboxes by
         // switching the sender: it lives in a different thread, so pull it in here
         // (matched by the message it replies to) and let the reply reopen with it.
-        if let Ok(conation_id) = receipt.get_authenticated_user() {
+        if let Ok(macro_id) = receipt.get_authenticated_user() {
             let accessible = self
                 .email_repo
-                .inboxes_for_conation_id(conation_id.clone())
+                .inboxes_for_macro_id(macro_id.clone())
                 .await
                 .map_err(anyhow::Error::from)?;
             let link_ids: Vec<Uuid> = accessible.iter().map(|l| l.id).collect();

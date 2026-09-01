@@ -39,7 +39,7 @@ pub async fn handler<T: TeamService, Eas: EntityAccessService, Auth: MacroAuthor
         .service
         .join_team(
             &team_invite_id,
-            &authorization.authorization.user.conation_user_id,
+            &authorization.authorization.user.macro_user_id,
         )
         .await?;
     Ok(())

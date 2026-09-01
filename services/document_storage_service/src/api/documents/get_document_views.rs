@@ -6,8 +6,8 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use entity_access::inbound::axum_extractors::DocumentAccessExtractor;
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use entity_access::inbound::axum_extractors::DocumentAccessExtractor;
 use model::{document::DocumentBasic, response::GenericErrorResponse};
 
 use models_permissions::share_permission::access_level::ViewAccessLevel;
@@ -34,7 +34,7 @@ pub struct Params {
             (status = 500, body=GenericErrorResponse),
         )
     )]
-#[tracing::instrument(skip(db, user, document_id, _access), fields(user_id=?user.authorization.user.conation_user_id, document_id=?document_context.document_id, original_document_id=?document_id))]
+#[tracing::instrument(skip(db, user, document_id, _access), fields(user_id=?user.authorization.user.macro_user_id, document_id=?document_context.document_id, original_document_id=?document_id))]
 pub async fn get_document_views_handler(
     _access: DocumentAccessExtractor<ViewAccessLevel, EntityAccessService, AuthorizationService>,
     Path(Params { document_id }): Path<Params>,
@@ -42,12 +42,13 @@ pub async fn get_document_views_handler(
     user: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
     document_context: Extension<DocumentBasic>,
 ) -> Result<Response, Response> {
-    let users = conation_db_client::document::get_document_views(&db, &document_context.document_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error=?e, "unable to get document views");
-            (StatusCode::INTERNAL_SERVER_ERROR).into_response()
-        })?;
+    let users =
+        conation_db_client::document::get_document_views(&db, &document_context.document_id)
+            .await
+            .map_err(|e| {
+                tracing::error!(error=?e, "unable to get document views");
+                (StatusCode::INTERNAL_SERVER_ERROR).into_response()
+            })?;
 
     let count =
         conation_db_client::document::get_document_view_count(&db, &document_context.document_id)

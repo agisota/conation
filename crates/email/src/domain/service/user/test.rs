@@ -29,9 +29,9 @@ struct FakeUserRepo {
 impl EmailUserRepo for FakeUserRepo {
     async fn user_accessible_inboxes(
         &self,
-        conation_id: MacroUserIdStr<'static>,
+        macro_id: MacroUserIdStr<'static>,
     ) -> Result<Vec<Link>, crate::domain::models::EmailErr> {
-        self.requested_users.lock().unwrap().push(conation_id);
+        self.requested_users.lock().unwrap().push(macro_id);
         Ok(self.inboxes.clone())
     }
 
@@ -45,9 +45,9 @@ impl EmailUserRepo for FakeUserRepo {
 
     async fn user_inbox_details(
         &self,
-        conation_id: MacroUserIdStr<'static>,
+        macro_id: MacroUserIdStr<'static>,
     ) -> Result<Vec<EmailInboxDetails>, crate::domain::models::EmailErr> {
-        self.requested_users.lock().unwrap().push(conation_id);
+        self.requested_users.lock().unwrap().push(macro_id);
         Ok(self.details.clone())
     }
 }
@@ -71,7 +71,7 @@ fn user_id() -> MacroUserIdStr<'static> {
 fn link(id: Uuid, owner: &str) -> Link {
     Link {
         id,
-        conation_id: MacroUserIdStr::try_from_email(owner).unwrap(),
+        macro_id: MacroUserIdStr::try_from_email(owner).unwrap(),
         fusionauth_user_id: "internal-auth-id".to_owned(),
         email_address: EmailStr::try_from(owner.to_owned()).unwrap(),
         provider: UserProvider::Gmail,
@@ -138,7 +138,7 @@ async fn links_are_scoped_to_the_user_and_enriched_by_domain_policy() {
     let repo = FakeUserRepo {
         details: vec![EmailInboxDetails {
             id: link_id,
-            conation_id: MacroUserIdStr::try_from_email("delegate@example.com").unwrap(),
+            macro_id: MacroUserIdStr::try_from_email("delegate@example.com").unwrap(),
             email_address: EmailStr::try_from("delegate@example.com".to_owned()).unwrap(),
             photo_url: Some("https://example.com/photo.png".to_owned()),
             provider: UserProvider::Gmail,

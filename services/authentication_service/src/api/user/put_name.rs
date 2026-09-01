@@ -25,7 +25,7 @@ use model::user::PutUserNameQueryParams;
         ),
         params(PutUserNameQueryParams),
     )]
-#[tracing::instrument(skip(ctx, authorization), fields(user_id = authorization.authorization.user.user_context.user_id, conation_user_id = authorization.authorization.user.user_context.fusion_user_id))]
+#[tracing::instrument(skip(ctx, authorization), fields(user_id = authorization.authorization.user.user_context.user_id, macro_user_id = authorization.authorization.user.user_context.fusion_user_id))]
 pub async fn handler(
     State(ctx): State<ApiContext>,
     Query(params): Query<PutUserNameQueryParams>,

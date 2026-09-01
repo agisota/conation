@@ -11,9 +11,9 @@ import { isTouchDevice } from '@core/mobile/isTouchDevice';
 import { getPlatform, isTauri } from '@core/util/platform';
 import { platformFetch } from '@core/util/platformFetch';
 import { initMonochromeIcons } from '@ui/utils/monochromeIcons';
-import { initI18n } from './lib/i18n';
 import { ErrorBoundary, render } from 'solid-js/web';
 import { FatalError } from './components/app/FatalError';
+import { initI18n, t } from './lib/i18n';
 import { Root } from './routes/Root';
 
 // Override global fetch with platformFetch for Tauri compatibility
@@ -99,7 +99,7 @@ async function main() {
     // this event is emitted when dynamically loading a module fails
     // for example when you're using the app and a new version is deployed
     window.addEventListener('vite:preloadError', () =>
-      window.alert('Please refresh page to update app to new version')
+      window.alert(t('app.update.refreshRequired'))
     );
   }
 

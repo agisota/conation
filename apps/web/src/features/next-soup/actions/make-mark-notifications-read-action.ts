@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { ENABLE_GRAPHQL_SOUP } from '@core/constant/featureFlags';
 import type { EntityData } from '@entity';
@@ -93,16 +94,15 @@ export const makeMarkNotificationsReadAction = (
           : Promise.resolve(),
       ]);
     } catch {
-      toast.failure('Failed to mark as read');
+      toast.failure(t('soup.toast.markReadFailed'));
       return;
     }
 
-    toast.success(
-      targetCount > 1
-        ? `Marked ${targetCount} items as read`
-        : 'Marked as read',
-      { duration: 3_000, stack: true, hideOnMobile: true }
-    );
+    toast.success(t('soup.toast.markedRead', { count: targetCount }), {
+      duration: 3_000,
+      stack: true,
+      hideOnMobile: true,
+    });
   };
 
   /** Rows remain in place; this only updates their notification read state. */

@@ -349,8 +349,8 @@ pub(crate) async fn populate_properties(
 
 /// this defines a macro which maps the soup query types for statically checked soup queries
 /// This must be a macro because compile time queries cannot have a named type so we can't use a function
-#[conation_export]
-conation_rules! map_soup_type {
+#[macro_export]
+macro_rules! map_soup_type {
     () => {
         |r| $crate::map_soup_type!(@item r)
     };
@@ -445,8 +445,8 @@ conation_rules! map_soup_type {
 
 /// Maps statically checked expanded Soup rows into an item plus authoritative
 /// server-only document facts from that same row.
-#[conation_export]
-conation_rules! map_soup_projection_hydration {
+#[macro_export]
+macro_rules! map_soup_projection_hydration {
     () => {
         |r| {
             let document_server_facts = match r.item_type.as_ref() {

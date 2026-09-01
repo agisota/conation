@@ -1,32 +1,12 @@
 import { useCalendarPager } from '@app/features/calendar/components/CalendarPagerContext';
 import { isCalendarRangeSupported } from '@app/features/calendar/utils/calendar-supported-range';
+import { t } from '@app/lib/i18n';
 import { useAddInboxFlow } from '@core/email-link';
 import { useEmailLinksQuery } from '@queries/email/link';
 import { Button } from '@ui';
 import { createMemo, Show } from 'solid-js';
 
-const SETUP_MESSAGES = {
-  connect: {
-    title: 'Connect your calendar',
-    description: 'Connect a Google account to show your calendar events.',
-    action: 'Connect calendar',
-  },
-  permission: {
-    title: 'Enable calendar',
-    description: 'Grant calendar access to show your events in Macro.',
-    action: 'Grant access',
-  },
-  disabled: {
-    title: 'Calendar is off',
-    description: 'Grant calendar access again to show your events in Macro.',
-    action: 'Turn on',
-  },
-  reauth: {
-    title: 'Reconnect calendar',
-    description: 'Reconnect your Google account to resume calendar sync.',
-    action: 'Reconnect',
-  },
-} as const;
+type CalendarSetupState = 'connect' | 'permission' | 'reauth' | 'disabled';
 
 /** Displays account setup actions above the complete calendar pager. */
 export function SetupStatus() {
@@ -40,9 +20,7 @@ export function SetupStatus() {
   // Existing events are not evidence that setup is complete: a revoked grant
   // or delegated inbox can leave events visible without a working calendar
   // connection belonging to the current user.
-  const setupState = createMemo<
-    'connect' | 'permission' | 'reauth' | 'disabled' | undefined
-  >(() => {
+  const setupState = createMemo<CalendarSetupState | undefined>(() => {
     const activeData = calendarPager.activeData();
     const range = activeData?.range();
     if (range && !isCalendarRangeSupported(range)) return undefined;
@@ -75,9 +53,14 @@ export function SetupStatus() {
     return 'connect';
   });
 
-  const setupMessage = createMemo(
-    () => SETUP_MESSAGES[setupState() ?? 'connect']
-  );
+  const setupMessage = createMemo(() => {
+    const state = setupState() ?? 'connect';
+    return {
+      title: t('calendar.setup.title', { state }),
+      description: t('calendar.setup.description', { state }),
+      action: t('calendar.setup.action', { state }),
+    };
+  });
 
   // The permission and disabled states both sit on a working mailbox —
   // turning calendar off leaves Gmail untouched — so they ask for calendar

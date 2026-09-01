@@ -980,7 +980,7 @@ where
             tracing::error!(
                 error = ?e,
                 team_id = %team_id,
-                conation_id = %user_id,
+                macro_id = %user_id,
                 "Failed to enqueue DepopulateCrmForUser after remove_user_from_team; CRM rows owned by the removed user's link will be left in place until manual cleanup"
             );
         }
@@ -1424,7 +1424,7 @@ where
             tracing::error!(
                 error = ?e,
                 team_id = %team_member.team_id,
-                conation_id = %user_id,
+                macro_id = %user_id,
                 "Failed to enqueue PopulateCrmForUser after join_team; CRM tables will not be seeded from sent-mail history (per-message fan-out will still cover future sends)"
             );
         }
@@ -1693,7 +1693,7 @@ where
                         tracing::error!(
                             error = ?e,
                             team_id = %team_id,
-                            conation_id = %member.user_id,
+                            macro_id = %member.user_id,
                             "Failed to enqueue PopulateCrmForUser during team CRM enable"
                         );
                     }
@@ -2003,7 +2003,7 @@ where
             tracing::error!(
                 error = ?e,
                 team_id = %team_id,
-                conation_id = %user_id,
+                macro_id = %user_id,
                 "Failed to enqueue PopulateCrmForUser after team auto-join; CRM tables will not be seeded from sent-mail history (per-message fan-out will still cover future sends)"
             );
         }

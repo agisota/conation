@@ -38,7 +38,7 @@ pub async fn handler<T: TeamService, Eas: EntityAccessService, Auth: MacroAuthor
     state
         .service
         .reject_invitation(
-            &authorization.authorization.user.conation_user_id,
+            &authorization.authorization.user.macro_user_id,
             &team_invite_id,
         )
         .await?;

@@ -224,7 +224,7 @@ fn caller_identity<Auth: MacroAuthorizationService>(
     user: &MacroAuthorizationExtractor<Auth, UserOrInternal>,
 ) -> (&MacroUserIdStr<'static>, Option<i64>) {
     (
-        &user.authorization.user.conation_user_id,
+        &user.authorization.user.macro_user_id,
         // Organization channels grant access by matching org, so the org must
         // be carried through or a member of one reads as a non-participant.
         user.authorization

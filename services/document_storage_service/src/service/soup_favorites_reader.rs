@@ -5,8 +5,8 @@ use std::collections::HashSet;
 use std::pin::Pin;
 use std::sync::Arc;
 
-use favorites::domain::ports::FavoritesService as _;
 use conation_user_id::user_id::MacroUserIdStr;
+use favorites::domain::ports::FavoritesService as _;
 use model_entity::Entity;
 use soup::inbound::axum_router::SoupFavoritesReader;
 

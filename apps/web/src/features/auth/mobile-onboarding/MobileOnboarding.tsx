@@ -1,4 +1,5 @@
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import { PcNoiseGrid } from '@core/component/PcNoiseGrid';
 import { useIsAuthenticated } from '@core/context/user';
 import LogoIcon from '@icon/macro-logo.svg';
@@ -111,7 +112,9 @@ export function MobileOnboarding() {
               class="w-full"
               onClick={onContinue}
             >
-              {step() >= LAST_STEP ? 'Get started' : 'Continue'}
+              {step() >= LAST_STEP
+                ? t('auth.mobile.getStarted')
+                : t('auth.actions.continue')}
             </Button>
           </div>
         </Show>

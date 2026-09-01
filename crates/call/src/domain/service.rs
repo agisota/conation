@@ -1566,9 +1566,9 @@ impl<
     }
 
     #[tracing::instrument(err, skip(self))]
-    async fn get_user_voices(&self, conation_user_id: &Uuid) -> Result<Vec<Uuid>, CallError> {
+    async fn get_user_voices(&self, macro_user_id: &Uuid) -> Result<Vec<Uuid>, CallError> {
         self.voice_repo
-            .get_user_voices(conation_user_id)
+            .get_user_voices(macro_user_id)
             .await
             .map_err(|e| CallError::Internal(e.into()))
     }
@@ -1576,7 +1576,7 @@ impl<
     #[tracing::instrument(err, skip(self, embedding))]
     async fn set_user_voice(
         &self,
-        conation_user_id: &Uuid,
+        macro_user_id: &Uuid,
         embedding: &[f32],
     ) -> Result<Uuid, CallError> {
         let voice_id = self
@@ -1585,7 +1585,7 @@ impl<
             .await
             .map_err(|e| CallError::Internal(e.into()))?;
         self.voice_repo
-            .link_user_voice(conation_user_id, &voice_id)
+            .link_user_voice(macro_user_id, &voice_id)
             .await
             .map_err(|e| CallError::Internal(e.into()))?;
         Ok(voice_id)
@@ -1806,7 +1806,7 @@ where
 /// For each `speaker_id` in the call transcript, the repository returns
 /// candidates only when every transcript row for that speaker has the same
 /// non-NULL `diarized_speaker_id`. All distinct non-NULL `voice_id`s on those
-/// rows are linked to the resolved macro user in `conation_user_voice` via
+/// rows are linked to the resolved macro user in `macro_user_voice` via
 /// [`VoiceRepository::link_user_voice`].
 async fn enroll_stable_speaker_voices_for_call_record<R: CallRepository, Vr: VoiceRepository>(
     repo: &R,
@@ -1833,11 +1833,11 @@ async fn enroll_stable_speaker_voices_for_call_record<R: CallRepository, Vr: Voi
 
     let total = stable_voices.len();
     let mut linked = 0usize;
-    for (conation_user_id, voice_id) in stable_voices {
-        match voice_repo.link_user_voice(&conation_user_id, &voice_id).await {
+    for (macro_user_id, voice_id) in stable_voices {
+        match voice_repo.link_user_voice(&macro_user_id, &voice_id).await {
             Ok(()) => linked += 1,
             Err(e) => tracing::error!(
-                error=?e, %call_record_id, %conation_user_id, %voice_id,
+                error=?e, %call_record_id, %macro_user_id, %voice_id,
                 "failed to link stable speaker voice to user"
             ),
         }

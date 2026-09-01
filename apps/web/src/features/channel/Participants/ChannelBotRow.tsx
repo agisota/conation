@@ -1,5 +1,5 @@
-import { BotAvatar } from '@channel/Bots/BotAvatar';
 import { t } from '@app/lib/i18n';
+import { BotAvatar } from '@channel/Bots/BotAvatar';
 import CopyIcon from '@phosphor/copy.svg';
 import XIcon from '@phosphor/x.svg';
 import type { Bot } from '@service-storage/generated/schemas/bot';
@@ -47,7 +47,9 @@ export function ChannelBotRow(props: {
         label="Copy webhook URL"
         onClick={props.onCopyWebhook}
       >
-        <CopyIcon />{t('auto.webhook_url')}</Button>
+        <CopyIcon />
+        {t('channel.bots.webhookUrl')}
+      </Button>
       <Show when={props.editable}>
         <Button
           class="relative z-1"

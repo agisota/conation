@@ -72,7 +72,7 @@ pub async fn process_message(
                 &ctx.opensearch_client,
                 &ctx.db,
                 &thread_ids,
-                &message.conation_user_id,
+                &message.macro_user_id,
                 message.index_override.as_deref(),
             )
             .await?;

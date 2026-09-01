@@ -1,4 +1,3 @@
-import { SERVER_HOSTS } from '@core/constant/servers';
 import {
   ConstantBackoff,
   type Websocket,
@@ -6,6 +5,7 @@ import {
   WebsocketEvent,
 } from '@conation/collaboration/websocket';
 import { createWebsocketStateSignal } from '@conation/collaboration/websocket/solid/state-signal';
+import { SERVER_HOSTS } from '@core/constant/servers';
 import { createEffect, createSignal, onCleanup } from 'solid-js';
 import { v7 as uuidv7 } from 'uuid';
 

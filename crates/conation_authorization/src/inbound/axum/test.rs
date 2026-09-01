@@ -160,7 +160,7 @@ fn bot_authentication(bot_scope: BotScope, acting_user_id: Option<&str>) -> BotA
         bot_scope,
         team_id: (bot_scope == BotScope::Team).then_some(BOT_TEAM_ID),
         acting_user: acting_user_id.map(|user_id| MacroUserAuthentication {
-            conation_user_id: MacroUserIdStr::try_from(user_id.to_owned())
+            macro_user_id: MacroUserIdStr::try_from(user_id.to_owned())
                 .expect("valid bot acting user id"),
             user_context: user_context(user_id, Some(42)),
         }),
@@ -193,11 +193,11 @@ async fn required_handler(
     Json(json!({
         "authorization": {
             "variant": variant,
-            "conation_user_id": authorization.user.conation_user_id.to_string(),
+            "macro_user_id": authorization.user.macro_user_id.to_string(),
             "user_context": authorization.user.user_context,
         },
         "acting_entity": acting_entity,
-        "conation_user_id": authorization.user.conation_user_id.to_string(),
+        "macro_user_id": authorization.user.macro_user_id.to_string(),
         "user_context": authorization.user.user_context,
         "is_internal_access": authorization.caller == UserOrInternalCaller::Internal,
     }))
@@ -222,7 +222,7 @@ async fn optional_handler(
     Json(json!({
         "authorization": authorization,
         "acting_entity": acting_entity,
-        "conation_user_id": acting_user.map(|user| user.conation_user_id.to_string()),
+        "macro_user_id": acting_user.map(|user| user.macro_user_id.to_string()),
         "user_context": acting_user.map(|user| user.user_context.clone()).unwrap_or_default(),
         "is_internal_access": extractor
             .authorization
@@ -241,7 +241,7 @@ fn user_or_internal_service_json(authorization: &UserOrInternalServiceAuthorizat
 
     json!({
         "variant": variant,
-        "conation_user_id": acting_user.map(|user| user.conation_user_id.to_string()),
+        "macro_user_id": acting_user.map(|user| user.macro_user_id.to_string()),
         "user_context": acting_user.map(|user| &user.user_context),
     })
 }
@@ -254,7 +254,7 @@ async fn user_handler(
 
     Json(json!({
         "acting_entity": acting_entity,
-        "conation_user_id": extractor.authorization.conation_user_id.to_string(),
+        "macro_user_id": extractor.authorization.macro_user_id.to_string(),
         "user_context": extractor.authorization.user_context,
     }))
 }
@@ -320,7 +320,7 @@ fn bot_json(bot: &BotAuthentication, acting_entity: &str) -> Value {
         "acting_user_id": bot
             .acting_user
             .as_ref()
-            .map(|user| user.conation_user_id.to_string()),
+            .map(|user| user.macro_user_id.to_string()),
     })
 }
 
@@ -675,7 +675,7 @@ async fn user_accepts_query_bearer_and_cookie_credentials() {
         let (status, body) = send(&router, request).await;
 
         assert_eq!(status, StatusCode::OK);
-        assert_eq!(body["conation_user_id"], expected_user_id);
+        assert_eq!(body["macro_user_id"], expected_user_id);
         assert_eq!(body["user_context"]["user_id"], expected_user_id);
     }
 
@@ -686,6 +686,21 @@ async fn user_accepts_query_bearer_and_cookie_credentials() {
             AuthorizationCall::Jwt("bearer".to_string()),
             AuthorizationCall::Jwt("cookie".to_string()),
         ]
+    );
+}
+
+#[tokio::test]
+async fn user_accepts_transitional_conation_query_alias() {
+    let (router, service) = test_router();
+    let request = empty_body(request("/user?conation-api-token=query"));
+
+    let (status, body) = send(&router, request).await;
+
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body["macro_user_id"], QUERY_USER_ID);
+    assert_eq!(
+        service.calls(),
+        [AuthorizationCall::Jwt("query".to_string())]
     );
 }
 
@@ -721,11 +736,11 @@ async fn required_extracts_valid_bearer_and_preserves_organization() {
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body["authorization"]["variant"], "user");
     assert_eq!(
-        body["authorization"]["conation_user_id"],
-        body["conation_user_id"]
+        body["authorization"]["macro_user_id"],
+        body["macro_user_id"]
     );
     assert_eq!(body["authorization"]["user_context"], body["user_context"]);
-    assert_eq!(body["conation_user_id"], VALID_USER_ID);
+    assert_eq!(body["macro_user_id"], VALID_USER_ID);
     assert_eq!(body["user_context"]["organization_id"], 42);
     assert_eq!(body["is_internal_access"], false);
     assert_eq!(
@@ -743,7 +758,7 @@ async fn required_extracts_valid_cookie() {
     let (status, body) = send(&router, request).await;
 
     assert_eq!(status, StatusCode::OK);
-    assert_eq!(body["conation_user_id"], COOKIE_USER_ID);
+    assert_eq!(body["macro_user_id"], COOKIE_USER_ID);
     assert_eq!(body["is_internal_access"], false);
     assert_eq!(
         service.calls(),
@@ -763,7 +778,7 @@ async fn query_token_takes_precedence_over_bearer_and_cookie() {
     let (status, body) = send(&router, request).await;
 
     assert_eq!(status, StatusCode::OK);
-    assert_eq!(body["conation_user_id"], QUERY_USER_ID);
+    assert_eq!(body["macro_user_id"], QUERY_USER_ID);
     assert_eq!(
         service.calls(),
         [AuthorizationCall::Jwt("query".to_string())]
@@ -782,7 +797,7 @@ async fn bearer_token_takes_precedence_over_cookie() {
     let (status, body) = send(&router, request).await;
 
     assert_eq!(status, StatusCode::OK);
-    assert_eq!(body["conation_user_id"], BEARER_USER_ID);
+    assert_eq!(body["macro_user_id"], BEARER_USER_ID);
     assert_eq!(
         service.calls(),
         [AuthorizationCall::Jwt("bearer".to_string())]
@@ -799,7 +814,7 @@ async fn malformed_query_remains_an_explicit_user_credential() {
     );
     let (status, body) = send(&router, bearer_request).await;
     assert_eq!(status, StatusCode::OK);
-    assert_eq!(body["conation_user_id"], BEARER_USER_ID);
+    assert_eq!(body["macro_user_id"], BEARER_USER_ID);
 
     let cookie_request = empty_body(
         request(&format!("/required?{malformed_query}"))
@@ -841,7 +856,7 @@ async fn optional_returns_default_context_for_missing_credentials() {
 
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body["authorization"], Value::Null);
-    assert_eq!(body["conation_user_id"], Value::Null);
+    assert_eq!(body["macro_user_id"], Value::Null);
     assert_eq!(body["user_context"]["user_id"], "");
     assert_eq!(body["user_context"]["fusion_user_id"], "");
     assert_eq!(body["user_context"]["organization_id"], Value::Null);
@@ -941,11 +956,11 @@ async fn optional_returns_authenticated_output() {
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body["authorization"]["variant"], "user");
     assert_eq!(
-        body["authorization"]["conation_user_id"],
-        body["conation_user_id"]
+        body["authorization"]["macro_user_id"],
+        body["macro_user_id"]
     );
     assert_eq!(body["authorization"]["user_context"], body["user_context"]);
-    assert_eq!(body["conation_user_id"], OPTIONAL_USER_ID);
+    assert_eq!(body["macro_user_id"], OPTIONAL_USER_ID);
     assert_eq!(body["user_context"]["user_id"], OPTIONAL_USER_ID);
     assert_eq!(body["user_context"]["fusion_user_id"], "fusion-user-id");
     assert_eq!(body["is_internal_access"], false);
@@ -971,11 +986,11 @@ async fn standard_internal_headers_authorize_matching_claims() {
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body["authorization"]["variant"], "internal");
     assert_eq!(
-        body["authorization"]["conation_user_id"],
-        body["conation_user_id"]
+        body["authorization"]["macro_user_id"],
+        body["macro_user_id"]
     );
     assert_eq!(body["authorization"]["user_context"], body["user_context"]);
-    assert_eq!(body["conation_user_id"], STANDARD_INTERNAL_USER_ID);
+    assert_eq!(body["macro_user_id"], STANDARD_INTERNAL_USER_ID);
     assert_eq!(body["user_context"]["fusion_user_id"], "standard-fusion-id");
     assert_eq!(body["user_context"]["organization_id"], 42);
     assert_eq!(body["is_internal_access"], true);
@@ -1008,7 +1023,7 @@ async fn legacy_dss_headers_authorize_matching_claims() {
     let (status, body) = send(&router, request).await;
 
     assert_eq!(status, StatusCode::OK);
-    assert_eq!(body["conation_user_id"], LEGACY_INTERNAL_USER_ID);
+    assert_eq!(body["macro_user_id"], LEGACY_INTERNAL_USER_ID);
     assert_eq!(body["user_context"]["fusion_user_id"], "");
     assert_eq!(body["user_context"]["organization_id"], Value::Null);
     assert_eq!(body["is_internal_access"], true);
@@ -1039,7 +1054,7 @@ async fn internal_identity_headers_are_not_mixed_between_conventions() {
     );
     let (status, body) = send(&router, standard_request).await;
     assert_eq!(status, StatusCode::OK);
-    assert_eq!(body["conation_user_id"], Value::Null);
+    assert_eq!(body["macro_user_id"], Value::Null);
     assert_eq!(body["is_internal_access"], true);
 
     let legacy_request = empty_body(
@@ -1051,7 +1066,7 @@ async fn internal_identity_headers_are_not_mixed_between_conventions() {
     );
     let (status, body) = send(&router, legacy_request).await;
     assert_eq!(status, StatusCode::OK);
-    assert_eq!(body["conation_user_id"], Value::Null);
+    assert_eq!(body["macro_user_id"], Value::Null);
     assert_eq!(body["is_internal_access"], true);
 
     assert_eq!(
@@ -1087,7 +1102,7 @@ async fn standard_convention_takes_precedence_when_both_keys_are_present() {
     let (status, body) = send(&router, request).await;
 
     assert_eq!(status, StatusCode::OK);
-    assert_eq!(body["conation_user_id"], STANDARD_INTERNAL_USER_ID);
+    assert_eq!(body["macro_user_id"], STANDARD_INTERNAL_USER_ID);
     assert_eq!(
         service.calls(),
         [AuthorizationCall::Internal {
@@ -1168,9 +1183,9 @@ async fn identityless_internal_request_is_preserved_by_optional_extractor() {
 
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body["authorization"]["variant"], "internal");
-    assert_eq!(body["authorization"]["conation_user_id"], Value::Null);
+    assert_eq!(body["authorization"]["macro_user_id"], Value::Null);
     assert_eq!(body["authorization"]["user_context"], Value::Null);
-    assert_eq!(body["conation_user_id"], Value::Null);
+    assert_eq!(body["macro_user_id"], Value::Null);
     assert_eq!(body["user_context"]["user_id"], "");
     assert_eq!(body["user_context"]["fusion_user_id"], "");
     assert_eq!(body["user_context"]["organization_id"], Value::Null);
@@ -1198,7 +1213,7 @@ async fn malformed_internal_organization_is_ignored() {
     let (status, body) = send(&router, request).await;
 
     assert_eq!(status, StatusCode::OK);
-    assert_eq!(body["conation_user_id"], STANDARD_INTERNAL_USER_ID);
+    assert_eq!(body["macro_user_id"], STANDARD_INTERNAL_USER_ID);
     assert_eq!(body["user_context"]["organization_id"], Value::Null);
     assert_eq!(body["is_internal_access"], true);
     assert_eq!(
@@ -1849,8 +1864,8 @@ async fn assert_policy_matrix<const N: usize>(policies: [(&str, [StatusCode; 6])
 
 #[test]
 fn policies_report_typed_acting_entity_variants_with_display_parity() {
-    let user = conation_user_authentication(VALID_USER_ID);
-    let internal_user = conation_user_authentication(STANDARD_INTERNAL_USER_ID);
+    let user = macro_user_authentication(VALID_USER_ID);
+    let internal_user = macro_user_authentication(STANDARD_INTERNAL_USER_ID);
     let bot = bot_authentication(BotScope::User, Some(BOT_ACTING_USER_ID));
 
     let direct_user = MacroAuthorization::User(user.clone());
@@ -1874,7 +1889,7 @@ fn policies_report_typed_acting_entity_variants_with_display_parity() {
     assert_eq!(
         internal_service
             .acting_user()
-            .map(|user| user.conation_user_id.as_ref()),
+            .map(|user| user.macro_user_id.as_ref()),
         Some(STANDARD_INTERNAL_USER_ID)
     );
     assert_eq!(
@@ -1886,7 +1901,7 @@ fn policies_report_typed_acting_entity_variants_with_display_parity() {
     let bot_principal = MacroAuthorization::Bot(bot.clone());
     let acting_user = ActingUser::narrow(bot_principal.clone()).unwrap();
     assert!(matches!(acting_user.principal, MacroAuthorization::Bot(_)));
-    assert_eq!(acting_user.user.conation_user_id.as_ref(), BOT_ACTING_USER_ID);
+    assert_eq!(acting_user.user.macro_user_id.as_ref(), BOT_ACTING_USER_ID);
     assert_eq!(
         ActingUser::acting_entity(&acting_user),
         ActingEntity::Bot(BOT_ID)
@@ -1906,7 +1921,7 @@ fn policies_report_typed_acting_entity_variants_with_display_parity() {
         internal_only
             .acting_user
             .as_ref()
-            .map(|user| user.conation_user_id.as_ref()),
+            .map(|user| user.macro_user_id.as_ref()),
         Some(STANDARD_INTERNAL_USER_ID)
     );
     assert_eq!(InternalOnly::acting_entity(&internal_only), InternalEntity);
@@ -1920,9 +1935,9 @@ fn policies_report_typed_acting_entity_variants_with_display_parity() {
     assert_display_parity::<AnyPrincipal>(bot_principal);
 }
 
-fn conation_user_authentication(user_id: &str) -> MacroUserAuthentication {
+fn macro_user_authentication(user_id: &str) -> MacroUserAuthentication {
     MacroUserAuthentication {
-        conation_user_id: MacroUserIdStr::try_from(user_id.to_owned()).expect("valid Macro user ID"),
+        macro_user_id: MacroUserIdStr::try_from(user_id.to_owned()).expect("valid Macro user ID"),
         user_context: user_context(user_id, None),
     }
 }

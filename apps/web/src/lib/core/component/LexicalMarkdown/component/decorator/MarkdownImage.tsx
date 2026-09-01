@@ -1,19 +1,15 @@
-import { internalDrag } from '@core/directive/internalDragState';
 import { t } from '@app/lib/i18n';
+import { internalDrag } from '@core/directive/internalDragState';
 
 false && internalDrag;
 
+import { $isImageNode, type ImageDecoratorProps } from '@conation/lexical-core';
+import { calculateEffectiveDimensions } from '@conation/lexical-core/utils/media';
 import { Lightbox } from '@core/component/Lightbox';
 import { toast } from '@core/component/Toast/Toast';
 import { debouncedDependent } from '@core/util/debounce';
-
 import { Dialog } from '@kobalte/core/dialog';
 import { mergeRegister } from '@lexical/utils';
-import {
-  $isImageNode,
-  type ImageDecoratorProps,
-} from '@conation/lexical-core';
-import { calculateEffectiveDimensions } from '@conation/lexical-core/utils/media';
 import ImageIcon from '@phosphor/image-broken.svg';
 import LoadingSpinner from '@phosphor/spinner.svg';
 import { debounce } from '@solid-primitives/scheduled';
@@ -50,13 +46,13 @@ import { ResizeHandle } from './ResizeHandle';
 
 type ImageState = 'loading' | 'ok' | 'error';
 
-const ImageErrors = {
-  UNAUTHORIZED: 'You do not have access to this image.',
-  MISSING: 'This image does not exist.',
-  GONE: 'This image has been deleted.',
-  FALLBACK: 'This image could not be found.',
+const ImageErrorKeys = {
+  UNAUTHORIZED: 'editor.media.image.errors.unauthorized',
+  MISSING: 'editor.media.image.errors.missing',
+  GONE: 'editor.media.image.errors.deleted',
+  FALLBACK: 'editor.media.image.errors.notFound',
 } as const;
-type ImageError = keyof typeof ImageErrors;
+type ImageError = keyof typeof ImageErrorKeys;
 
 function Spinner() {
   return (
@@ -224,7 +220,7 @@ export function MarkdownImage(props: ImageDecoratorProps) {
           ([key]) => {
             if (key !== props.key) return false;
             setUploading(false);
-            toast.failure('Failed to upload image');
+            toast.failure(t('editor.media.image.uploadFailed'));
             return true;
           },
           COMMAND_PRIORITY_LOW
@@ -333,7 +329,7 @@ export function MarkdownImage(props: ImageDecoratorProps) {
         <Show when={state() === 'error'}>
           <div class="absolute top-0 left-0 size-full flex flex-col justify-center items-center gap-2 text-ink-extra-muted min-h-44">
             <ImageIcon class="size-5" />
-            <div>{ImageErrors[imageError() ?? 'FALLBACK']}</div>
+            <div>{t(ImageErrorKeys[imageError() ?? 'FALLBACK'])}</div>
           </div>
         </Show>
 
@@ -345,7 +341,9 @@ export function MarkdownImage(props: ImageDecoratorProps) {
 
         <Show when={uploading() && state() !== 'error'}>
           <div class="absolute flex gap-2 top-2 left-2 justify-center items-center p-2">
-            <Spinner />{t('auto.saving_image')}</div>
+            <Spinner />
+            {t('editor.media.savingImage')}
+          </div>
         </Show>
 
         <Show

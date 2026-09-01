@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { isNativeMobilePlatform } from '@core/mobile/isNativeMobilePlatform';
 
 let layer = 0;
@@ -20,18 +21,16 @@ const MarkdownEditorErrorDescriptions: Record<
   MarkdownEditorErrors,
   () => string
 > = {
-  [MarkdownEditorErrors.EMPTY_SOURCE]: () =>
-    'No document content could be found.',
-  [MarkdownEditorErrors.JSON_PARSE_ERROR]: () =>
-    'Parse error. Invalid document JSON.',
+  [MarkdownEditorErrors.EMPTY_SOURCE]: () => t('editor.error.emptySource'),
+  [MarkdownEditorErrors.JSON_PARSE_ERROR]: () => t('editor.error.invalidJson'),
   // The native mobile app has no way to refresh a page, so tell those users to
   // relaunch the app instead.
   [MarkdownEditorErrors.VERSION_MISMATCH_ERROR]: () =>
     isNativeMobilePlatform()
-      ? 'Close and re-open the app to edit this document. It may have been updated using a newer version of Macro.'
-      : 'Refresh the page to edit this document. It may have been updated using a newer version of Macro.',
+      ? t('editor.error.versionMismatch.mobile')
+      : t('editor.error.versionMismatch.web'),
   [MarkdownEditorErrors.STAGING_VERSION_MISMATCH_ERROR]: () =>
-    'This doc has been updated on an incompatible version of staging. If you are seeing this message, please open the document on staging to edit.',
+    t('editor.error.stagingVersionMismatch'),
 };
 
 export const getErrorDescription = (

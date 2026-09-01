@@ -24,7 +24,7 @@ use super::TeamRouterState;
 /// (has an active stripe subscription).
 pub struct PremiumUserExtractor<Auth> {
     /// The authenticated premium user's id.
-    pub conation_user_id: MacroUserIdStr<'static>,
+    pub macro_user_id: MacroUserIdStr<'static>,
     /// The authenticated premium user's active Stripe subscription id.
     pub subscription_id: stripe::SubscriptionId,
     _authorization: PhantomData<fn() -> Auth>,
@@ -89,13 +89,13 @@ where
             MacroAuthorizationExtractor::<Auth, UserOrInternal>::from_request_parts(parts, state)
                 .await?;
         let user = &authorization.authorization.user;
-        let Some(subscription_id) = state.service.is_user_premium(&user.conation_user_id).await?
+        let Some(subscription_id) = state.service.is_user_premium(&user.macro_user_id).await?
         else {
             return Err(PremiumUserRejection::NotPremium);
         };
 
         Ok(Self {
-            conation_user_id: user.conation_user_id.clone(),
+            macro_user_id: user.macro_user_id.clone(),
             subscription_id,
             _authorization: PhantomData,
         })

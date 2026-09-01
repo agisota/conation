@@ -1,4 +1,5 @@
 import type { ChatMessageWithAttachments } from '@core/component/AI/types';
+import { t } from '@core/i18n';
 import type { Entity } from '@service-cognition/generated/schemas/entity';
 import { match, P } from 'ts-pattern';
 
@@ -58,17 +59,16 @@ function streamErrorToast(streamError: string | undefined): SideEffect {
     case 'provider_error':
       return {
         type: 'toast',
-        message:
-          'The AI provider may be down. Try switching to a different model.',
+        message: t('ai.errors.providerUnavailableWithAlternative'),
         offerModelSwitch: true,
       };
     case 'model_context_overflow':
       return {
         type: 'toast',
-        message: 'Too much context. Remove attachments or start a new chat',
+        message: t('ai.errors.contextOverflow'),
       };
     default:
-      return { type: 'toast', message: 'Failed to respond to message' };
+      return { type: 'toast', message: t('ai.errors.responseFailed') };
   }
 }
 

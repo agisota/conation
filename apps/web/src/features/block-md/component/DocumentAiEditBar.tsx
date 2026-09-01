@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { mdStore } from '@block-md/signal/markdownBlockData';
 import { buildChatEditor } from '@core/component/AI/component/input/buildChatEditor';
 import { MarkdownShell } from '@core/component/LexicalMarkdown/builder/MarkdownShell';
@@ -45,7 +46,7 @@ export function DocumentAiEditBar(props: { documentId: string }) {
       prompt: value,
     })
       .then((result) => {
-        if (result === 'failed') toast.failure('AI edit failed');
+        if (result === 'failed') toast.failure(t('markdown.ai.editFailed'));
       })
       .finally(() => setEditing(false));
   };
@@ -94,7 +95,9 @@ export function DocumentAiEditBar(props: { documentId: string }) {
             }}
             onMouseEnter={() => setHovering(true)}
             onMouseLeave={() => setHovering(false)}
-            tooltip={editing() ? 'Stop AI edit' : 'Ask AI to edit'}
+            tooltip={
+              editing() ? t('markdown.ai.stopEdit') : t('markdown.ai.askToEdit')
+            }
             hotkey={editing() ? undefined : TOKENS.chat.input.focus}
             variant="ghost"
             size="sm"
@@ -113,7 +116,11 @@ export function DocumentAiEditBar(props: { documentId: string }) {
               class="text-xs font-medium"
               classList={{ 'text-ink-muted': editing() && !hovering() }}
             >
-              {editing() ? (hovering() ? 'Stop' : 'Editing…') : 'Edit with AI'}
+              {editing()
+                ? hovering()
+                  ? t('markdown.ai.stop')
+                  : t('markdown.ai.editing')
+                : t('markdown.ai.editWithAi')}
             </span>
           </Button>
         }
@@ -138,14 +145,14 @@ export function DocumentAiEditBar(props: { documentId: string }) {
               <div class="min-w-0 grow text-sm text-ink">
                 <MarkdownShell
                   config={editor}
-                  placeholder="Describe the edit…"
+                  placeholder={t('markdown.ai.describeEdit')}
                   autofocus
                 />
               </div>
             </div>
             <div class="flex items-center justify-end">
               <SendButton
-                tooltip="Send edit"
+                tooltip={t('markdown.ai.sendEdit')}
                 shortcut="enter"
                 disabled={prompt().trim().length === 0}
                 onClick={submit}

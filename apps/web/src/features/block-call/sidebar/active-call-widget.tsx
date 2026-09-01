@@ -1,5 +1,5 @@
-import { joinChannelCall } from '@channel/Call/join-channel-call';
 import { t } from '@app/lib/i18n';
+import { joinChannelCall } from '@channel/Call/join-channel-call';
 import { openChannelCallTab } from '@channel/Call/open-channel-call-tab';
 import type { SidebarState } from '@components/app/app-sidebar/sidebar';
 import { ContextMenuContent, MenuItem } from '@core/component/ContextMenu';
@@ -20,11 +20,11 @@ import {
 const SLIM_MAX = 4;
 
 function displayName(channel: ApiChannelWithLatest | undefined) {
-  if (!channel) return 'Channel';
+  if (!channel) return t('call.incoming.channelFallback');
   if (channel.channel_type === ChannelTypeEnum.DirectMessage) {
-    return channel.name || 'Direct message';
+    return channel.name || t('call.incoming.directMessage');
   }
-  return channel.name ? `#${channel.name}` : 'Channel';
+  return channel.name ? `#${channel.name}` : t('call.incoming.channelFallback');
 }
 
 function ChannelCallBadge(props: {
@@ -110,10 +110,13 @@ const IncomingCallContextMenu: FlowComponent<IncomingCallContextMenuProps> = (
       <ContextMenu.Portal>
         <ContextMenuContent class="text-xs text-ink-muted">
           <MenuItem
-            text="Join call"
+            text={t('call.actions.join')}
             onClick={() => void joinChannelCall(props.channelId)}
           />
-          <MenuItem text="Dismiss" onClick={props.onDismiss} />
+          <MenuItem
+            text={t('shell.actions.dismiss')}
+            onClick={props.onDismiss}
+          />
         </ContextMenuContent>
       </ContextMenu.Portal>
     </ContextMenu>
@@ -166,7 +169,9 @@ export function SidebarActiveCallWidget(props: {
                       }
                     >
                       <Button
-                        aria-label={`${displayName(channel())} call`}
+                        aria-label={t('call.incoming.namedCall', {
+                          name: displayName(channel()),
+                        })}
                         class="relative flex items-center cursor-default rounded-md text-ink-extra-muted not-disabled:hover:bg-ink/3 justify-center size-8"
                         draggable={false}
                         variant="ghost"
@@ -200,7 +205,7 @@ export function SidebarActiveCallWidget(props: {
           class={cn('size-full flex flex-col justify-center', props.class)}
         >
           <header class="text-xs font-medium text-ink-muted whitespace-nowrap p-2">
-            <h1>{t('auto.incoming_call')}</h1>
+            <h1>{t('call.incoming.title')}</h1>
           </header>
 
           <div class="flex-1 w-full">
@@ -209,7 +214,9 @@ export function SidebarActiveCallWidget(props: {
                 const channel = () =>
                   channelsCtx.channelsById()[call.channelId];
                 const dismissLabel = () =>
-                  `Dismiss ${displayName(channel())} call`;
+                  t('call.incoming.dismissNamed', {
+                    name: displayName(channel()),
+                  });
                 const openCall = () => {
                   void openChannelCallTab(call.channelId);
                 };
@@ -250,7 +257,9 @@ export function SidebarActiveCallWidget(props: {
                         </button>
                         <button
                           type="button"
-                          aria-label={`Join ${displayName(channel())} call`}
+                          aria-label={t('call.incoming.joinNamed', {
+                            name: displayName(channel()),
+                          })}
                           class="shrink-0 size-5 flex items-center justify-center text-xs font-medium bg-success/15 text-success rounded-md"
                           draggable={false}
                           onMouseDown={(e) => {

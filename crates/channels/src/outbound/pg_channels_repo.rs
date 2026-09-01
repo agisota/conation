@@ -698,8 +698,8 @@ async fn load_user_display_names(
         UserDisplayNameRow,
         r#"
         SELECT u.id AS user_profile_id, mui.first_name, mui.last_name
-        FROM conation_user_info mui
-        JOIN "User" u ON mui.conation_user_id = u.conation_user_id
+        FROM macro_user_info mui
+        JOIN "User" u ON mui.macro_user_id = u.macro_user_id
         WHERE u.id = ANY($1)
         "#,
         &user_id_strings,
@@ -1610,8 +1610,8 @@ impl ChannelListUserRepo for PgChannelsRepo {
             u.id as user_profile_id,
             mui.first_name,
             mui.last_name
-        FROM conation_user_info mui
-        JOIN "User" u ON mui.conation_user_id = u.conation_user_id
+        FROM macro_user_info mui
+        JOIN "User" u ON mui.macro_user_id = u.macro_user_id
         WHERE u.id = ANY($1)
         "#,
             &ids

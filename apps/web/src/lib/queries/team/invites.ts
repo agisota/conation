@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { throwOnErr } from '@core/util/result';
 import { authServiceClient } from '@service-auth/client';
@@ -39,12 +40,12 @@ export function useInviteToTeamMutation(callbacks?: InviteToTeamCallbacks) {
       {
         onSuccess: (_data, { teamId }) => {
           invalidateTeamInvites(teamId);
-          toast.success('Invitation sent');
+          toast.success(t('team.feedback.invitationSent'));
         },
 
         onError: (error) => {
           console.error('Failed to invite to team', error);
-          toast.failure('Failed to send invitation');
+          toast.failure(t('team.feedback.invitationSendFailed'));
         },
       },
       callbacks
@@ -100,12 +101,12 @@ export function useDeleteTeamInviteMutation(
 
         onSuccess: (_data, { teamId }) => {
           invalidateTeamInvites(teamId);
-          toast.success('Invitation cancelled');
+          toast.success(t('team.feedback.invitationCancelled'));
         },
 
         onError: (error, { teamId }, context) => {
           console.error('Failed to delete team invite', error);
-          toast.failure('Failed to cancel invitation');
+          toast.failure(t('team.feedback.invitationCancelFailed'));
 
           if (context?.previousInvites) {
             queryClient.setQueryData(

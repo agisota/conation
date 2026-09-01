@@ -1,5 +1,5 @@
-import { ComposeTaskTitleEditor } from '@block-md/component/ComposeTask';
 import { t } from '@app/lib/i18n';
+import { ComposeTaskTitleEditor } from '@block-md/component/ComposeTask';
 import { InlinePropertyValue } from '@block-md/component/InlinePropertyValue';
 import {
   createTaskComposerProperties,
@@ -316,7 +316,7 @@ export function TaskComposer(props: {
                   ? undefined
                   : restoredDraft?.content || undefined
               }
-              placeholder="Add description, type @ to insert or / for commands"
+              placeholder={t('channel.task.descriptionPlaceholder')}
               class="text-sm"
             />
           </Scroll>
@@ -382,7 +382,7 @@ export function TaskComposer(props: {
         <SendButton
           tooltip="Create task and send"
           shortcut="cmd+enter"
-          aria-label={t('auto.create_task_and_send')}
+          aria-label={t('channel.message.createTaskAndSend')}
           data-input-action="send-task"
           pending={isCreating()}
           disabled={!canSend()}

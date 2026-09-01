@@ -28,7 +28,7 @@ use crate::domain::ports::create::DocumentCreationService;
         (status = 500, body = model_error_response::ErrorResponse),
     )
 )]
-#[tracing::instrument(skip(state, user, project), fields(user_id=?user.authorization.user.conation_user_id))]
+#[tracing::instrument(skip(state, user, project), fields(user_id=?user.authorization.user.macro_user_id))]
 pub async fn create_skill_handler<
     T: DocumentService + DocumentCreationService,
     Svc: EntityAccessService,
@@ -48,7 +48,7 @@ pub async fn create_skill_handler<
     let created = state
         .creator
         .create_markdown_text(
-            user.authorization.user.conation_user_id.clone(),
+            user.authorization.user.macro_user_id.clone(),
             NewMarkdownTextDocument {
                 metadata: metadata.build(),
                 markdown: req.markdown.unwrap_or_default(),

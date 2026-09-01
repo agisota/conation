@@ -33,7 +33,7 @@ pub(in crate::api::search) async fn enrich_emails(
 
     // Resolve every inbox the user can access (their own + delegated) so hits
     // from delegated inboxes are enriched rather than dropped.
-    let inboxes = email_db_client::links::get::fetch_inboxes_for_conation_id(&ctx.db, user_id)
+    let inboxes = email_db_client::links::get::fetch_inboxes_for_macro_id(&ctx.db, user_id)
         .await
         .map_err(SearchError::InternalError)?;
     if inboxes.is_empty() {

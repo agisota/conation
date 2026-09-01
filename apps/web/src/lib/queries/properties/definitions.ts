@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { throwOnErr } from '@core/util/result';
 import { useMutation, useQuery } from '@tanstack/solid-query';
@@ -104,7 +105,7 @@ export function useDeletePropertyDefinitionMutation(
       {
         onError(error) {
           console.error('Failed to delete property definition', error);
-          toast.failure('Failed to delete property');
+          toast.failure(t('properties.feedback.deleteFailed'));
         },
         onSuccess: () => {
           invalidatePropertyDefinitions();
@@ -136,7 +137,7 @@ export function useCreatePropertyDefinitionMutation(
       {
         onError(error) {
           console.error('Failed to create property definition', error);
-          toast.failure('Failed to create property');
+          toast.failure(t('properties.feedback.createFailed'));
         },
         onSuccess: () => {
           invalidatePropertyDefinitions();

@@ -21,7 +21,7 @@ use model::{
             (status = 500, body=GenericErrorResponse),
         )
     )]
-#[tracing::instrument(skip(ctx, user, req), fields(user_id=?user.authorization.user.conation_user_id))]
+#[tracing::instrument(skip(ctx, user, req), fields(user_id=?user.authorization.user.macro_user_id))]
 pub async fn reorder_pins_handler(
     State(ctx): State<ApiContext>,
     user: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
@@ -29,14 +29,14 @@ pub async fn reorder_pins_handler(
 ) -> impl IntoResponse {
     match conation_db_client::pins::reorder_pins(
         ctx.db.clone(),
-        user.authorization.user.conation_user_id.as_ref(),
+        user.authorization.user.macro_user_id.as_ref(),
         req,
     )
     .await
     {
         Ok(_) => (),
         Err(err) => {
-            tracing::error!(error=?err, user_id=?user.authorization.user.conation_user_id, "failed to reorder pins");
+            tracing::error!(error=?err, user_id=?user.authorization.user.macro_user_id, "failed to reorder pins");
             return GenericResponse::builder()
                 .message("failed to reorder pins")
                 .is_error(true)

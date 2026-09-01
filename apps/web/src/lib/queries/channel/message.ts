@@ -1,4 +1,5 @@
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import type { OptimisticPostMessageAttachment } from '@channel/Input/message-payload';
 import { toast } from '@core/component/Toast/Toast';
 import type { DateValue } from '@core/util/date';
@@ -491,7 +492,7 @@ export function useSendMessageMutation(
         },
         onError(error, vars, context) {
           console.error('failed to send message', error);
-          toast.failure('Failed to send message');
+          toast.failure(t('channel.feedback.messageSendFailed'));
           if (context) {
             rollbackInsertChannelMessage(vars.channelID, context);
           }
@@ -563,7 +564,7 @@ export function useDeleteMessageMutation(
         },
         onError(error, vars, context) {
           console.error('failed to delete message', error);
-          toast.failure('Failed to delete message');
+          toast.failure(t('channel.feedback.messageDeleteFailed'));
           if (context) {
             rollbackDeleteChannelMessage(vars.channelID, context);
           }
@@ -650,7 +651,7 @@ export function usePatchMessageMutation(
         },
         onError(error, vars, context) {
           console.error('failed to update message', error);
-          toast.failure('Failed to update message');
+          toast.failure(t('channel.feedback.messageUpdateFailed'));
           if (context) {
             rollbackUpdateChannelMessage(vars.channelID, context);
           }

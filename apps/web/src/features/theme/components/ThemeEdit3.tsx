@@ -1,5 +1,5 @@
-import { SplitHeaderLeft } from '@components/app/split-layout/components/SplitHeader';
 import { t } from '@app/lib/i18n';
+import { SplitHeaderLeft } from '@components/app/split-layout/components/SplitHeader';
 import { StaticSplitLabel } from '@components/app/split-layout/components/SplitLabel';
 import { toast } from '@core/component/Toast/Toast';
 import type { CollectionNode } from '@kobalte/core';
@@ -63,17 +63,37 @@ function initialSystemTheme(): SystemTheme {
   );
 }
 
+/** Display-only names for legacy persisted theme identifiers. */
+function systemThemeDisplayName(theme: SystemTheme): string {
+  switch (theme.id) {
+    case 'Macro Dark':
+      return t('theme.system.conationDark');
+    case 'Macro Light':
+      return t('theme.system.conationLight');
+    case 'Macro-Gruvbox':
+      return t('theme.system.conationGruvbox');
+    default:
+      return theme.name;
+  }
+}
+
+function themeModeLabel(mode: ThemeV3['mode']): string {
+  return t(mode === 'dark' ? 'theme.mode.dark' : 'theme.mode.light');
+}
+
 /** Local V3 theme workbench. Edits are rendered immediately but are not saved. */
 export default function ThemeEdit3() {
   const initial = initialSystemTheme();
   const [selectedTheme, setSelectedTheme] = createSignal(initial);
-  const [name, setName] = createSignal(`${initial.name} custom`);
+  const [name, setName] = createSignal(
+    t('theme.customName', { name: systemThemeDisplayName(initial) })
+  );
   const [draftId, setDraftId] = createSignal(`${initial.id}-custom`);
   const [storageHydrated, setStorageHydrated] = createSignal(false);
 
   const loadSystemTheme = (theme: SystemTheme) => {
     setSelectedTheme(theme);
-    setName(`${theme.name} custom`);
+    setName(t('theme.customName', { name: systemThemeDisplayName(theme) }));
     setDraftId(`${theme.id}-custom`);
     setLiveThemeMode(theme.mode);
     setLiveThemeColorTokens({ ...theme.colorTokens });
@@ -142,13 +162,13 @@ export default function ThemeEdit3() {
       colorTokens: { ...themeColorTokens() },
     };
     await navigator.clipboard.writeText(JSON.stringify(theme, null, 2));
-    toast.success('Full theme JSON copied to clipboard');
+    toast.success(t('theme.copy.success'));
   };
 
   return (
     <div class="size-full overflow-auto text-ink">
       <SplitHeaderLeft>
-        <StaticSplitLabel label="Theme editor V3" />
+        <StaticSplitLabel label={t('theme.editorV3.title')} />
       </SplitHeaderLeft>
 
       <div class="sticky top-0 z-10 border-b border-edge-muted bg-panel px-6 py-4 backdrop-blur-xl">
@@ -175,10 +195,10 @@ export default function ThemeEdit3() {
                   }}
                 />
                 <Select.ItemLabel class="min-w-0 flex-1 truncate">
-                  {itemProps.item.rawValue.name}
+                  {systemThemeDisplayName(itemProps.item.rawValue)}
                 </Select.ItemLabel>
                 <span class="text-[10px] uppercase text-ink-extra-muted">
-                  {itemProps.item.rawValue.mode}
+                  {themeModeLabel(itemProps.item.rawValue.mode)}
                 </span>
                 <Select.ItemIndicator>
                   <CheckIcon class="size-3.5" />
@@ -196,7 +216,7 @@ export default function ThemeEdit3() {
               <Select.Value<SystemTheme>>
                 {(state) => (
                   <span class="min-w-0 flex-1 truncate">
-                    {state.selectedOption().name}
+                    {systemThemeDisplayName(state.selectedOption())}
                   </span>
                 )}
               </Select.Value>
@@ -214,23 +234,23 @@ export default function ThemeEdit3() {
           <input
             value={name()}
             onInput={(event) => setName(event.currentTarget.value)}
-            aria-label={t('auto.theme_name')}
+            aria-label={t('theme.fields.name')}
             spellcheck={false}
             class="h-9 min-w-48 flex-1 rounded-md border border-edge-muted bg-surface px-3 text-sm text-ink outline-none placeholder:text-ink-placeholder focus:border-accent"
           />
 
           <Button variant="outline" size="md" onClick={copyTheme}>
-            <ClipboardIcon class="size-4" />{t('auto.copy_full_theme_json')}</Button>
+            <ClipboardIcon class="size-4" />
+            {t('theme.copy.fullJson')}
+          </Button>
         </div>
       </div>
 
       <main class="mx-auto max-w-6xl px-6 py-8">
         <div class="mb-5">
-          <h2 class="text-base font-medium">{t('auto.color_tokens')}</h2>
+          <h2 class="text-base font-medium">{t('theme.tokens.title')}</h2>
           <p class="mt-1 max-w-2xl text-xs leading-relaxed text-ink-muted">
-            Pick a color to make it custom, or compose it from another raw token
-            with link, mix, and alpha controls. Every change updates the active
-            CSS variables immediately.
+            {t('theme.tokens.description')}
           </p>
         </div>
         <ThemeTokenEditor />

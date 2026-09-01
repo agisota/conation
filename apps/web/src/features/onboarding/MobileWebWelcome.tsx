@@ -39,10 +39,11 @@ export default function MobileWebWelcome(props: MobileWebWelcomeProps) {
 
       <div class="flex flex-col items-start gap-4 w-full max-w-md mx-auto mt-6">
         <LogoIcon class="size-16 text-accent self-center" />
-        <h2 class="text-3xl font-semibold text-ink mt-3">Welcome to Macro.</h2>
+        <h2 class="text-3xl font-semibold text-ink mt-3">
+          {t('onboarding.mobile.welcome.title')}
+        </h2>
         <p class="text-base text-ink/60 mt-4">
-          Macro is a unified system for work{'\u2060'}—built for{' '}
-          <strong>speed</strong> and <strong>focus</strong>.
+          {t('onboarding.mobile.welcome.description')}
         </p>
 
         <form
@@ -54,8 +55,8 @@ export default function MobileWebWelcome(props: MobileWebWelcomeProps) {
         >
           <input
             type="email"
-            aria-label={t('auto.email_address')}
-            placeholder="name@company.com"
+            aria-label={t('onboarding.mobile.emailAddress')}
+            placeholder={t('onboarding.mobile.emailPlaceholder')}
             value={email()}
             onInput={(e) => setEmail(e.currentTarget.value)}
             class="w-full px-3 py-2.5 text-base border border-edge-muted rounded-lg bg-surface text-ink placeholder:text-ink-placeholder outline-none focus:border-accent"
@@ -63,15 +64,21 @@ export default function MobileWebWelcome(props: MobileWebWelcomeProps) {
           <button
             type="submit"
             class="w-full px-3 py-2.5 text-lg font-bold rounded-xs bg-accent text-surface border-none"
-          >{t('auto.sign_up')}</button>
+          >
+            {t('onboarding.mobile.signUp')}
+          </button>
         </form>
 
-        <p class="text-sm text-ink/50 mt-20">{t('auto.already_have_an_account')}</p>
+        <p class="text-sm text-ink/50 mt-20">
+          {t('onboarding.mobile.alreadyHaveAccount')}
+        </p>
         <A
           href="/login"
           onClick={() => analytics.track('login_from_onboarding')}
           class="w-full px-3 py-2.5 text-lg rounded-xs flex items-center justify-between gap-2 border border-edge-muted bg-transparent text-ink/50 hover:bg-hover/60"
-        >{t('auto.login')}</A>
+        >
+          {t('onboarding.mobile.login')}
+        </A>
       </div>
     </div>
   );

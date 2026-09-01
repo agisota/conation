@@ -13,6 +13,7 @@ import {
 import {
   convertTimesForAllDay,
   createEventEditorState,
+  currentPastEventGuestsWarning,
   type EventEditorCalendarOption,
   type EventEditorConferenceChoice,
   type EventEditorGuestOption,
@@ -22,7 +23,6 @@ import {
   guestEmail,
   initialGuestOptions,
   moveAllDayRange,
-  PAST_EVENT_GUESTS_WARNING,
   type SelectedEventEditorGuest,
 } from './event-form-model';
 
@@ -267,7 +267,7 @@ export function createCalendarEventFormController(
   const pastEventWarning = createMemo(() => {
     if (selectedGuests().length === 0) return undefined;
     if (!invitesNewGuests() && !timeChanged()) return undefined;
-    return eventHasEnded(state()) ? PAST_EVENT_GUESTS_WARNING : undefined;
+    return eventHasEnded(state()) ? currentPastEventGuestsWarning() : undefined;
   });
 
   const notifyChange = () => options.onChange?.(value());

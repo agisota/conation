@@ -459,18 +459,18 @@ fn real_router(pool: PgPool, user_id: &str) -> Router {
 }
 
 async fn insert_user(pool: &PgPool, user_id: &str) -> anyhow::Result<()> {
-    let conation_user_id = Uuid::new_v4();
+    let macro_user_id = Uuid::new_v4();
     let email = user_id.strip_prefix("macro|").unwrap_or(user_id);
-    let stripe_customer_id = format!("stripe_{conation_user_id}");
+    let stripe_customer_id = format!("stripe_{macro_user_id}");
 
     sqlx::query(
         r#"
-        INSERT INTO conation_user (id, username, email, stripe_customer_id)
+        INSERT INTO macro_user (id, username, email, stripe_customer_id)
         VALUES ($1, $2, $3, $4)
         ON CONFLICT (id) DO NOTHING
         "#,
     )
-    .bind(conation_user_id)
+    .bind(macro_user_id)
     .bind(email)
     .bind(email)
     .bind(stripe_customer_id)
@@ -479,14 +479,14 @@ async fn insert_user(pool: &PgPool, user_id: &str) -> anyhow::Result<()> {
 
     sqlx::query(
         r#"
-        INSERT INTO "User" (id, email, conation_user_id)
+        INSERT INTO "User" (id, email, macro_user_id)
         VALUES ($1, $2, $3)
         ON CONFLICT (id) DO NOTHING
         "#,
     )
     .bind(user_id)
     .bind(email)
-    .bind(conation_user_id)
+    .bind(macro_user_id)
     .execute(pool)
     .await?;
 
@@ -524,7 +524,7 @@ async fn insert_private_channel_with_admin(
     Ok(())
 }
 
-fn conation_user_id(value: &str) -> MacroUserIdStr<'static> {
+fn macro_user_id(value: &str) -> MacroUserIdStr<'static> {
     MacroUserIdStr::try_from(value.to_string()).expect("valid macro user id")
 }
 
@@ -819,7 +819,7 @@ async fn bot_owner_can_list_and_remove_bot_channels_via_bot_routes(
     let bot_service = BotServiceImpl::new(PgBotsRepo::new(pool.clone()), NoopMacroEventBroker);
     let bot = bot_service
         .create_bot(
-            conation_user_id(BOT_OWNER_ID),
+            macro_user_id(BOT_OWNER_ID),
             CreateBotRequest {
                 team_id: None,
                 name: "Datadog Alerts".to_string(),
@@ -834,7 +834,7 @@ async fn bot_owner_can_list_and_remove_bot_channels_via_bot_routes(
     bot_service
         .add_bot_to_channel(
             EntityAccessReceipt::try_new_authenticated_user(
-                conation_user_id(BOT_OWNER_ID),
+                macro_user_id(BOT_OWNER_ID),
                 Entity {
                     entity_id: channel_id.to_string(),
                     entity_type: EntityType::Channel,
@@ -919,7 +919,7 @@ async fn channel_admin_can_add_and_remove_owned_bot_via_http(pool: PgPool) -> an
     let bot_service = BotServiceImpl::new(PgBotsRepo::new(pool.clone()), NoopMacroEventBroker);
     let bot = bot_service
         .create_bot(
-            conation_user_id(ADMIN_USER_ID),
+            macro_user_id(ADMIN_USER_ID),
             CreateBotRequest {
                 team_id: None,
                 name: "Datadog Alerts".to_string(),

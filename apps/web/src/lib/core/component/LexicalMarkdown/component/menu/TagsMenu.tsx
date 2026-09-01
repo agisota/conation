@@ -1,5 +1,5 @@
-import { type PortalScope, ScopedPortal } from '@core/component/ScopedPortal';
 import { t } from '@app/lib/i18n';
+import { type PortalScope, ScopedPortal } from '@core/component/ScopedPortal';
 import clickOutside from '@core/directive/clickOutside';
 import PlusIcon from '@phosphor/plus.svg';
 import { TagDot } from '@property/tags/TagDot';
@@ -53,21 +53,21 @@ type PendingTagCreate = {
 };
 
 const TAG_COLOR_OPTIONS = [
-  { color: '#E5484D', name: 'Red' },
-  { color: '#E54D2E', name: 'Tomato' },
-  { color: '#F76B15', name: 'Orange' },
-  { color: '#FFB224', name: 'Amber' },
-  { color: '#F5D90A', name: 'Yellow' },
-  { color: '#46A758', name: 'Green' },
-  { color: '#12A594', name: 'Teal' },
-  { color: '#0091FF', name: 'Blue' },
-  { color: '#3E63DD', name: 'Indigo' },
-  { color: '#8E4EC6', name: 'Purple' },
-  { color: '#E93D82', name: 'Pink' },
-  { color: '#889096', name: 'Gray' },
+  { color: '#E5484D', nameKey: 'editor.tags.colors.red' },
+  { color: '#E54D2E', nameKey: 'editor.tags.colors.tomato' },
+  { color: '#F76B15', nameKey: 'editor.tags.colors.orange' },
+  { color: '#FFB224', nameKey: 'editor.tags.colors.amber' },
+  { color: '#F5D90A', nameKey: 'editor.tags.colors.yellow' },
+  { color: '#46A758', nameKey: 'editor.tags.colors.green' },
+  { color: '#12A594', nameKey: 'editor.tags.colors.teal' },
+  { color: '#0091FF', nameKey: 'editor.tags.colors.blue' },
+  { color: '#3E63DD', nameKey: 'editor.tags.colors.indigo' },
+  { color: '#8E4EC6', nameKey: 'editor.tags.colors.purple' },
+  { color: '#E93D82', nameKey: 'editor.tags.colors.pink' },
+  { color: '#889096', nameKey: 'editor.tags.colors.gray' },
 ] as const satisfies readonly {
   color: (typeof TAG_COLORS)[number];
-  name: string;
+  nameKey: string;
 }[];
 
 const FOLLOWUP_MENU_OPEN_DELAY_MS = 40;
@@ -177,10 +177,14 @@ export function TagsMenu(props: {
     createLabel().length >= 2 && !exactTagMatchExists();
   const createRowIndex = () => items().length;
   const itemCount = () => items().length + (showCreateRow() ? 1 : 0);
-  const teamName = () => currentTeamQuery.data?.team.name?.trim() || 'Team';
+  const teamName = () =>
+    currentTeamQuery.data?.team.name?.trim() || t('editor.tags.teamFallback');
   const scopeOptions = createMemo<{ scope: TagScope; label: string }[]>(() => [
-    { scope: 'team', label: `Shared with ${teamName()}` },
-    { scope: 'user', label: 'Personal' },
+    {
+      scope: 'team',
+      label: t('editor.tags.sharedWith', { team: teamName() }),
+    },
+    { scope: 'user', label: t('editor.tags.personal') },
   ]);
   const createStepCount = () =>
     createStep() === 'color' ? TAG_COLOR_OPTIONS.length : scopeOptions().length;
@@ -431,7 +435,9 @@ export function TagsMenu(props: {
                   <Show
                     when={items().length > 0 || showCreateRow()}
                     fallback={
-                      <div class="px-3 py-1 text-ink-extra-muted">{t('auto.no_tags')}</div>
+                      <div class="px-3 py-1 text-ink-extra-muted">
+                        {t('editor.tags.noTags')}
+                      </div>
                     }
                   >
                     <TagMenuItems
@@ -487,7 +493,9 @@ export function TagsMenu(props: {
         options={[
           {
             id: 'apply-tag',
-            label: <>Add tag to {props.applyTargetLabel ?? ''}</>,
+            label: t('editor.tags.addTo', {
+              target: props.applyTargetLabel ?? '',
+            }),
             hotkey: 'enter',
             onSelect: applyPendingTag,
           },
@@ -569,7 +577,7 @@ function TagMenuItems(props: {
           >
             <PlusIcon class="size-3 shrink-0 text-ink-muted" />
             <span class="min-w-0 truncate">
-              Create tag "{props.createLabel}"
+              {t('editor.tags.create', { label: props.createLabel })}
             </span>
           </button>
         </ScrollIntoViewOnSelect>
@@ -594,7 +602,7 @@ function CreateTagFlow(props: {
   return (
     <div class="p-1.5">
       <div class="px-2 pb-1 pt-1 text-xs text-ink-extra-muted">
-        Create tag "{props.label}"
+        {t('editor.tags.create', { label: props.label })}
       </div>
       <Show
         when={props.step === 'color'}
@@ -631,7 +639,9 @@ function CreateTagFlow(props: {
                   <Show
                     when={props.pending && props.selectedScopeIndex === index()}
                   >
-                    <span class="shrink-0 text-xs text-ink-muted">{t('auto.creating')}</span>
+                    <span class="shrink-0 text-xs text-ink-muted">
+                      {t('editor.tags.creating')}
+                    </span>
                   </Show>
                 </button>
               </ScrollIntoViewOnSelect>
@@ -662,7 +672,7 @@ function CreateTagFlow(props: {
                 }}
               >
                 <TagDot color={option.color} />
-                <span class="min-w-0 flex-1 truncate">{option.name}</span>
+                <span class="min-w-0 flex-1 truncate">{t(option.nameKey)}</span>
               </button>
             </ScrollIntoViewOnSelect>
           )}

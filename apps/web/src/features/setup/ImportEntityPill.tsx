@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { buildSimpleEntityUrl } from '@core/util/url';
 import SpinnerIcon from '@phosphor/spinner-gap.svg';
 import { entityLabel, type ImportEntity } from '@queries/import';
@@ -41,7 +42,7 @@ export function ImportEntityPill(props: {
           icon={props.icon}
           code={code()}
           label={entityLabel(props.entity)}
-          title="Importing…"
+          title={t('setup.import.importing')}
           status={
             <SpinnerIcon class="size-3 shrink-0 animate-spin text-ink-extra-muted" />
           }

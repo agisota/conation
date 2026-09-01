@@ -26,7 +26,7 @@ pub async fn fetch_link_by_email(
     let db_link = sqlx::query_as!(
         DbLink,
         r#"
-        SELECT id, conation_id, fusionauth_user_id, email_address, provider as "provider: _",
+        SELECT id, macro_id, fusionauth_user_id, email_address, provider as "provider: _",
                is_sync_active, is_primary, needs_reauth, last_sync_error_at, created_at, updated_at
         FROM email_links
         WHERE email_address = $1 AND provider = $2
@@ -41,27 +41,27 @@ pub async fn fetch_link_by_email(
     Ok(db_link.map(service::link::Link::try_from).transpose()?)
 }
 
-/// fetches email_links given a conation_id.
+/// fetches email_links given a macro_id.
 #[tracing::instrument(skip(pool), err)]
-pub async fn fetch_link_by_conation_id(
+pub async fn fetch_link_by_macro_id(
     pool: &PgPool,
-    conation_id: &str,
+    macro_id: &str,
 ) -> anyhow::Result<Option<link::Link>> {
-    if conation_id.is_empty() {
+    if macro_id.is_empty() {
         anyhow::bail!("Macro ID cannot be empty");
     }
 
     let db_link = sqlx::query_as!(
         DbLink,
         r#"
-        SELECT id, conation_id, fusionauth_user_id, email_address, provider as "provider: _",
+        SELECT id, macro_id, fusionauth_user_id, email_address, provider as "provider: _",
                is_sync_active, is_primary, needs_reauth, last_sync_error_at, created_at, updated_at
         FROM email_links
-        WHERE conation_id = $1
+        WHERE macro_id = $1
         ORDER BY created_at DESC
         LIMIT 1
         "#,
-        conation_id
+        macro_id
     )
     .fetch_optional(pool)
     .await?;
@@ -70,20 +70,20 @@ pub async fn fetch_link_by_conation_id(
     Ok(db_link.map(service::link::Link::try_from).transpose()?)
 }
 
-/// Fetches the link for a `conation_id` whose `email_address` matches the given
+/// Fetches the link for a `macro_id` whose `email_address` matches the given
 /// address. Used by the CRM backfill/teardown path, where the address is
-/// derived from the conation_id itself (`macro|<email>`) — this resolves the
+/// derived from the macro_id itself (`macro|<email>`) — this resolves the
 /// inbox that *is* the user rather than the most-recently-connected one that
-/// [`fetch_link_by_conation_id`] would return. The comparison is
-/// case-insensitive: the conation_id email part is always lowercased, but
+/// [`fetch_link_by_macro_id`] would return. The comparison is
+/// case-insensitive: the macro_id email part is always lowercased, but
 /// `email_address` preserves its original casing.
 #[tracing::instrument(skip(pool), err)]
-pub async fn fetch_link_by_conation_id_and_email_address(
+pub async fn fetch_link_by_macro_id_and_email_address(
     pool: &PgPool,
-    conation_id: &str,
+    macro_id: &str,
     email_address: &str,
 ) -> anyhow::Result<Option<link::Link>> {
-    if conation_id.is_empty() {
+    if macro_id.is_empty() {
         anyhow::bail!("Macro ID cannot be empty");
     }
     if email_address.is_empty() {
@@ -95,14 +95,14 @@ pub async fn fetch_link_by_conation_id_and_email_address(
     let db_link = sqlx::query_as!(
         DbLink,
         r#"
-        SELECT id, conation_id, fusionauth_user_id, email_address, provider as "provider: _",
+        SELECT id, macro_id, fusionauth_user_id, email_address, provider as "provider: _",
                is_sync_active, is_primary, needs_reauth, last_sync_error_at, created_at, updated_at
         FROM email_links
-        WHERE conation_id = $1 AND LOWER(email_address) = $2
+        WHERE macro_id = $1 AND LOWER(email_address) = $2
         ORDER BY created_at DESC
         LIMIT 1
         "#,
-        conation_id,
+        macro_id,
         email_address
     )
     .fetch_optional(pool)
@@ -111,22 +111,22 @@ pub async fn fetch_link_by_conation_id_and_email_address(
     Ok(db_link.map(service::link::Link::try_from).transpose()?)
 }
 
-/// Fetches all email_links the user can access via their conation_id, including any
-/// inboxes delegated via conation_user_links. The union is the read-side half of the
+/// Fetches all email_links the user can access via their macro_id, including any
+/// inboxes delegated via macro_user_links. The union is the read-side half of the
 /// multi-inbox narrow-graph design — it surfaces both the user's own inboxes
-/// (same conation_id) and inboxes belonging to other macro users they've been delegated.
-pub async fn fetch_inboxes_for_conation_id(
+/// (same macro_id) and inboxes belonging to other macro users they've been delegated.
+pub async fn fetch_inboxes_for_macro_id(
     pool: &PgPool,
-    conation_id: &str,
+    macro_id: &str,
 ) -> anyhow::Result<Vec<link::Link>> {
-    if conation_id.is_empty() {
-        anyhow::bail!("conation_id cannot be empty");
+    if macro_id.is_empty() {
+        anyhow::bail!("macro_id cannot be empty");
     }
 
     let db_links = sqlx::query_as!(
         DbLink,
         r#"
-        SELECT id as "id!", conation_id as "conation_id!",
+        SELECT id as "id!", macro_id as "macro_id!",
                fusionauth_user_id as "fusionauth_user_id!",
                email_address as "email_address!",
                provider as "provider!: _",
@@ -137,22 +137,22 @@ pub async fn fetch_inboxes_for_conation_id(
                created_at as "created_at!",
                updated_at as "updated_at!"
         FROM (
-            SELECT el.id, el.conation_id, el.fusionauth_user_id, el.email_address,
+            SELECT el.id, el.macro_id, el.fusionauth_user_id, el.email_address,
                    el.provider, el.is_sync_active, el.is_primary, el.needs_reauth,
                    el.last_sync_error_at, el.created_at, el.updated_at
             FROM email_links el
-            WHERE el.conation_id = $1
+            WHERE el.macro_id = $1
             UNION
-            SELECT el.id, el.conation_id, el.fusionauth_user_id, el.email_address,
+            SELECT el.id, el.macro_id, el.fusionauth_user_id, el.email_address,
                    el.provider, el.is_sync_active, el.is_primary, el.needs_reauth,
                    el.last_sync_error_at, el.created_at, el.updated_at
             FROM email_links el
-            JOIN conation_user_links mul ON el.id = mul.link_id
-            WHERE mul.primary_conation_id = $1
+            JOIN macro_user_links mul ON el.id = mul.link_id
+            WHERE mul.primary_macro_id = $1
         ) AS combined
         ORDER BY created_at DESC
         "#,
-        conation_id
+        macro_id
     )
     .fetch_all(pool)
     .await?;
@@ -189,7 +189,7 @@ pub struct InboxDetails {
 
 struct DbInboxDetailsRow {
     id: Uuid,
-    conation_id: String,
+    macro_id: String,
     fusionauth_user_id: String,
     email_address: String,
     provider: DbUserProvider,
@@ -208,21 +208,21 @@ struct DbInboxDetailsRow {
     photo_url: Option<String>,
 }
 
-/// Single-query variant of [`fetch_inboxes_for_conation_id`] that also joins each
+/// Single-query variant of [`fetch_inboxes_for_macro_id`] that also joins each
 /// inbox's settings, its most recent backfill job status, and its own photo
 /// (the self-contact's SFS photo, synced from people/me). Inboxes without an
 /// `email_settings` row get default settings.
 #[tracing::instrument(skip(pool), err)]
-pub async fn fetch_inbox_details_for_conation_id(
+pub async fn fetch_inbox_details_for_macro_id(
     pool: &PgPool,
-    conation_id: &MacroUserIdStr<'_>,
+    macro_id: &MacroUserIdStr<'_>,
 ) -> anyhow::Result<Vec<InboxDetails>> {
-    let conation_id: &str = conation_id.as_ref();
+    let macro_id: &str = macro_id.as_ref();
 
     let rows = sqlx::query_as!(
         DbInboxDetailsRow,
         r#"
-        SELECT l.id as "id!", l.conation_id as "conation_id!",
+        SELECT l.id as "id!", l.macro_id as "macro_id!",
                l.fusionauth_user_id as "fusionauth_user_id!",
                l.email_address as "email_address!",
                l.provider as "provider!: _",
@@ -242,18 +242,18 @@ pub async fn fetch_inbox_details_for_conation_id(
                    SELECT 1 FROM calendar_accounts ca WHERE ca.email_link_id = l.id
                ) AS "has_calendar_data!"
         FROM (
-            SELECT el.id, el.conation_id, el.fusionauth_user_id, el.email_address,
+            SELECT el.id, el.macro_id, el.fusionauth_user_id, el.email_address,
                    el.provider, el.is_sync_active, el.is_primary, el.needs_reauth,
                    el.last_sync_error_at, el.created_at, el.updated_at
             FROM email_links el
-            WHERE el.conation_id = $1
+            WHERE el.macro_id = $1
             UNION
-            SELECT el.id, el.conation_id, el.fusionauth_user_id, el.email_address,
+            SELECT el.id, el.macro_id, el.fusionauth_user_id, el.email_address,
                    el.provider, el.is_sync_active, el.is_primary, el.needs_reauth,
                    el.last_sync_error_at, el.created_at, el.updated_at
             FROM email_links el
-            JOIN conation_user_links mul ON el.id = mul.link_id
-            WHERE mul.primary_conation_id = $1
+            JOIN macro_user_links mul ON el.id = mul.link_id
+            WHERE mul.primary_macro_id = $1
         ) l
         LEFT JOIN email_link_google_scopes g ON g.link_id = l.id
         LEFT JOIN email_settings s ON s.link_id = l.id
@@ -267,7 +267,7 @@ pub async fn fetch_inbox_details_for_conation_id(
             ON c.link_id = l.id AND LOWER(c.email_address) = LOWER(l.email_address)
         ORDER BY l.created_at DESC
         "#,
-        conation_id
+        macro_id
     )
     .fetch_all(pool)
     .await?;
@@ -282,7 +282,7 @@ pub async fn fetch_inbox_details_for_conation_id(
             };
             let link = link::Link::try_from(DbLink {
                 id: row.id,
-                conation_id: row.conation_id,
+                macro_id: row.macro_id,
                 fusionauth_user_id: row.fusionauth_user_id,
                 email_address: row.email_address,
                 provider: row.provider,
@@ -306,7 +306,7 @@ pub async fn fetch_inbox_details_for_conation_id(
         .collect()
 }
 
-/// fetches email_links given a fusionauth_user_id. a fusionauth_user_id can have multiple email_links, each with a unique conation_id
+/// fetches email_links given a fusionauth_user_id. a fusionauth_user_id can have multiple email_links, each with a unique macro_id
 #[tracing::instrument(skip(pool), err)]
 pub async fn fetch_links_by_fusionauth_user_id(
     pool: &PgPool,
@@ -319,7 +319,7 @@ pub async fn fetch_links_by_fusionauth_user_id(
     let db_links = sqlx::query_as!(
         DbLink,
         r#"
-        SELECT id, fusionauth_user_id, conation_id, email_address, provider as "provider: _",
+        SELECT id, fusionauth_user_id, macro_id, email_address, provider as "provider: _",
                is_sync_active, is_primary, needs_reauth, last_sync_error_at, created_at, updated_at
         FROM email_links
         WHERE fusionauth_user_id = $1
@@ -340,7 +340,7 @@ pub async fn fetch_links_by_fusionauth_user_id(
 }
 
 /// Resolves the inbox (email_link) that owns a thread, but only when that inbox
-/// belongs to the given macro user or is delegated to them via conation_user_links.
+/// belongs to the given macro user or is delegated to them via macro_user_links.
 /// Returns `None` when the thread doesn't exist or its inbox isn't one the caller
 /// owns or has delegated access to — callers map that to a not-found/unauthorized
 /// response. Lets mutating thread routes derive the inbox from the thread instead
@@ -348,28 +348,28 @@ pub async fn fetch_links_by_fusionauth_user_id(
 #[tracing::instrument(skip(pool), err)]
 pub async fn fetch_owned_link_for_thread(
     pool: &PgPool,
-    conation_id: &str,
+    macro_id: &str,
     thread_id: Uuid,
 ) -> anyhow::Result<Option<link::Link>> {
     let db_link = sqlx::query_as!(
         DbLink,
         r#"
-        SELECT l.id, l.conation_id, l.fusionauth_user_id, l.email_address, l.provider as "provider: _",
+        SELECT l.id, l.macro_id, l.fusionauth_user_id, l.email_address, l.provider as "provider: _",
                l.is_sync_active, l.is_primary, l.needs_reauth, l.last_sync_error_at,
                l.created_at, l.updated_at
         FROM email_threads t
         JOIN email_links l ON l.id = t.link_id
         WHERE t.id = $1
           AND (
-              l.conation_id = $2
+              l.macro_id = $2
               OR EXISTS (
-                  SELECT 1 FROM conation_user_links mul
-                  WHERE mul.link_id = l.id AND mul.primary_conation_id = $2
+                  SELECT 1 FROM macro_user_links mul
+                  WHERE mul.link_id = l.id AND mul.primary_macro_id = $2
               )
           )
         "#,
         thread_id,
-        conation_id
+        macro_id
     )
     .fetch_optional(pool)
     .await?;
@@ -382,28 +382,28 @@ pub async fn fetch_owned_link_for_thread(
 #[tracing::instrument(skip(pool), err)]
 pub async fn fetch_owned_link_for_message(
     pool: &PgPool,
-    conation_id: &str,
+    macro_id: &str,
     message_id: Uuid,
 ) -> anyhow::Result<Option<link::Link>> {
     let db_link = sqlx::query_as!(
         DbLink,
         r#"
-        SELECT l.id, l.conation_id, l.fusionauth_user_id, l.email_address, l.provider as "provider: _",
+        SELECT l.id, l.macro_id, l.fusionauth_user_id, l.email_address, l.provider as "provider: _",
                l.is_sync_active, l.is_primary, l.needs_reauth, l.last_sync_error_at,
                l.created_at, l.updated_at
         FROM email_messages m
         JOIN email_links l ON l.id = m.link_id
         WHERE m.id = $1
           AND (
-              l.conation_id = $2
+              l.macro_id = $2
               OR EXISTS (
-                  SELECT 1 FROM conation_user_links mul
-                  WHERE mul.link_id = l.id AND mul.primary_conation_id = $2
+                  SELECT 1 FROM macro_user_links mul
+                  WHERE mul.link_id = l.id AND mul.primary_macro_id = $2
               )
           )
         "#,
         message_id,
-        conation_id
+        macro_id
     )
     .fetch_optional(pool)
     .await?;
@@ -418,7 +418,7 @@ pub async fn fetch_link_by_id(pool: &PgPool, link_id: Uuid) -> anyhow::Result<Op
     let db_link = sqlx::query_as!(
         DbLink,
         r#"
-        SELECT id, conation_id, fusionauth_user_id, email_address, provider as "provider: _",
+        SELECT id, macro_id, fusionauth_user_id, email_address, provider as "provider: _",
                is_sync_active, is_primary, needs_reauth, last_sync_error_at, created_at, updated_at
         FROM email_links
         WHERE id = $1

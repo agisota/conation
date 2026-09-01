@@ -28,7 +28,7 @@ pub async fn calendar_google_backfill(
                 job_id: payload.calendar_job_id,
                 email_link_id: link.id,
             },
-            link.conation_id.as_ref(),
+            link.macro_id.as_ref(),
             access_token,
             OccurrenceRange::maintenance_horizon(Utc::now()),
             &mut report,
@@ -42,7 +42,7 @@ pub async fn calendar_google_backfill(
         cg_refresh_calendar(
             &ctx.connection_gateway_client,
             &ctx.db,
-            link.conation_id.as_ref(),
+            link.macro_id.as_ref(),
             link.id,
         )
         .await;

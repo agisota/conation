@@ -1,8 +1,5 @@
-import { useSplitLayout } from '@components/app/split-layout/layout';
 import { t } from '@app/lib/i18n';
-import { HoverCard } from '@core/component/HoverCard';
-import { openInNewSplitForMention } from '@core/util/openInNewSplit';
-import { useSplitNavigationHandler } from '@core/util/useSplitNavigationHandler';
+import { useSplitLayout } from '@components/app/split-layout/layout';
 import {
   $isPullRequestMentionNode,
   HISTORIC_TAG,
@@ -10,6 +7,9 @@ import {
   SKIP_DOM_SELECTION_TAG,
   SKIP_SCROLL_INTO_VIEW_TAG,
 } from '@conation/lexical-core';
+import { HoverCard } from '@core/component/HoverCard';
+import { openInNewSplitForMention } from '@core/util/openInNewSplit';
+import { useSplitNavigationHandler } from '@core/util/useSplitNavigationHandler';
 import OpenIcon from '@phosphor/arrows-out.svg';
 import ChatCircle from '@phosphor/chat-circle.svg';
 import GitMerge from '@phosphor/git-merge.svg';
@@ -124,7 +124,7 @@ function pullRequestParts(
 }
 
 function fallbackLabel(props: PullRequestMentionDecoratorProps): string {
-  return props.label || 'Pull request';
+  return props.label || t('editor.pullRequest.fallbackLabel');
 }
 
 function PullRequestStatusIcon(props: { status: string }) {
@@ -352,7 +352,9 @@ function PullRequestPreviewCard(props: {
       <Surface depth={3} class="rounded-xl shadow-lg shadow-drop-shadow">
         <Suspense
           fallback={
-            <div class="p-3 flex items-center justify-center text-sm text-ink-muted">{t('auto.fetching_pr')}</div>
+            <div class="p-3 flex items-center justify-center text-sm text-ink-muted">
+              {t('editor.pullRequest.loading')}
+            </div>
           }
         >
           <PullRequestPreviewBody
@@ -473,13 +475,18 @@ export function PullRequestMention(props: PullRequestMentionDecoratorProps) {
           >
             <Suspense
               fallback={
-                <span class="text-ink-placeholder">{t('auto.fetching_pr')}</span>
+                <span class="text-ink-placeholder">
+                  {t('editor.pullRequest.loading')}
+                </span>
               }
             >
               <PullRequestMentionContent {...props} />
             </Suspense>
           </span>
-          <MentionTooltip show={isSelectedAsNode()} text="Open" />
+          <MentionTooltip
+            show={isSelectedAsNode()}
+            text={t('editor.mention.open')}
+          />
         </span>
       }
       content={<PullRequestPreviewCard id={props.id} fallbackProps={props} />}

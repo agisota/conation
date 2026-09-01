@@ -1,6 +1,6 @@
 /// Creates a new macro user in the database
 #[tracing::instrument(skip(transaction))]
-pub async fn create_conation_user(
+pub async fn create_macro_user(
     transaction: &mut sqlx::Transaction<'_, sqlx::Postgres>,
     fusionauth_user_id: &str,
     username: &str,
@@ -11,7 +11,7 @@ pub async fn create_conation_user(
 
     sqlx::query!(
         r#"
-        INSERT INTO conation_user (id, username, stripe_customer_id, email)
+        INSERT INTO macro_user (id, username, stripe_customer_id, email)
         VALUES ($1, $2, $3, $4)
         ON CONFLICT ("id") DO NOTHING
         "#,
@@ -34,7 +34,7 @@ pub struct MacroUser {
 }
 
 /// Gets the macro user
-pub async fn get_conation_user(
+pub async fn get_macro_user(
     db: &sqlx::Pool<sqlx::Postgres>,
     id: &str,
 ) -> anyhow::Result<MacroUser> {
@@ -44,7 +44,7 @@ pub async fn get_conation_user(
         MacroUser,
         r#"
         SELECT id, username, stripe_customer_id
-        FROM conation_user
+        FROM macro_user
         WHERE id = $1
         "#,
         &id
@@ -55,13 +55,13 @@ pub async fn get_conation_user(
     Ok(result)
 }
 
-pub async fn delete_conation_user(
+pub async fn delete_macro_user(
     db: &sqlx::Pool<sqlx::Postgres>,
     id: &uuid::Uuid,
 ) -> anyhow::Result<()> {
     sqlx::query!(
         r#"
-        DELETE FROM conation_user
+        DELETE FROM macro_user
         WHERE id = $1
         "#,
         id
@@ -99,7 +99,7 @@ pub async fn check_username_exists(
     let result = sqlx::query!(
         r#"
         SELECT id
-        FROM conation_user
+        FROM macro_user
         WHERE username = $1
         "#,
         username

@@ -3,7 +3,6 @@
  */
 
 import { cleanup, fireEvent, render, screen } from '@solidjs/testing-library';
-import { t } from '@app/lib/i18n';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   PropertyRootContext,
@@ -53,7 +52,7 @@ describe('PropertyPill', () => {
 
     render(() => (
       <PropertyRootContext.Provider value={context(true, property, onEdit)}>
-        <PropertyPill>{t('auto.status')}</PropertyPill>
+        <PropertyPill>Status</PropertyPill>
       </PropertyRootContext.Provider>
     ));
 
@@ -71,7 +70,7 @@ describe('PropertyPill', () => {
   it('remains passive when the property is read-only', () => {
     render(() => (
       <PropertyRootContext.Provider value={context(false, property)}>
-        <PropertyPill>{t('auto.status')}</PropertyPill>
+        <PropertyPill>Status</PropertyPill>
       </PropertyRootContext.Provider>
     ));
 
@@ -86,7 +85,7 @@ describe('PropertyPill', () => {
       <PropertyRootContext.Provider
         value={context(true, { ...property, value: null })}
       >
-        <PropertyPill>{t('auto.set_status')}</PropertyPill>
+        <PropertyPill>Set status</PropertyPill>
       </PropertyRootContext.Provider>
     ));
 

@@ -1,10 +1,10 @@
+import { formatDateTime, t } from '@app/lib/i18n';
 import { DateSelector } from '@block-email/component/date-selector';
 import { isMobile } from '@core/mobile/isMobile';
 import ClockIcon from '@phosphor/clock.svg';
 import IconX from '@phosphor/x.svg';
 import { Button, Tooltip } from '@ui';
 import { addYears } from 'date-fns/addYears';
-import { format } from 'date-fns/format';
 import { type JSX, Show, type VoidComponent } from 'solid-js';
 
 interface EmailDateSelectorProps {
@@ -37,7 +37,13 @@ export const EmailDateSelector: VoidComponent<EmailDateSelectorProps> = (
       trigger={(state) => {
         const formattedDate = () =>
           state.selectedDate
-            ? format(state.selectedDate, 'MMM d, yyyy  h:mm a')
+            ? formatDateTime(state.selectedDate, {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+              })
             : undefined;
         const showExpanded = () => !isCompact() && !!formattedDate();
 
@@ -55,8 +61,10 @@ export const EmailDateSelector: VoidComponent<EmailDateSelectorProps> = (
               <Tooltip
                 label={
                   state.selectedDate
-                    ? `Scheduled for ${formattedDate()}`
-                    : 'Schedule this email'
+                    ? t('blockEmail.schedule.scheduledFor', {
+                        date: formattedDate() ?? '',
+                      })
+                    : t('blockEmail.schedule.action')
                 }
               >
                 <Button size="icon-sm" disabled={props.disabled}>
@@ -72,7 +80,7 @@ export const EmailDateSelector: VoidComponent<EmailDateSelectorProps> = (
             >
               <ClockIcon />
               <span class="text-sm">{formattedDate()}</span>
-              <Tooltip label="Clear">
+              <Tooltip label={t('blockEmail.dateSelector.clear')}>
                 <div
                   tabIndex={0}
                   class="hover:bg-accent/30"

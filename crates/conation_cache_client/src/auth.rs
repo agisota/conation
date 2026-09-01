@@ -13,14 +13,14 @@ pub static MACRO_PASSWORDLESS_LOGIN_CODE_EXPIRY_SECONDS: u64 = 630;
 pub static MACRO_JUST_SIGNED_UP_EXPIRY_SECONDS: u64 = 30 * 60;
 
 /// Generates the rate limit key for channel invites for a given ip
-conation_rules! conation_passwordless_login_code {
+macro_rules! conation_passwordless_login_code {
     ($email:expr) => {
         format!("pw_login_code:{}", $email)
     };
 }
 
 /// Generates the "account was just created" marker key for a given email
-conation_rules! conation_just_signed_up {
+macro_rules! conation_just_signed_up {
     ($email:expr) => {
         format!("just_signed_up:{}", $email)
     };

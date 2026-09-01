@@ -180,7 +180,7 @@ pub struct UpdateCalendarEvent {
     #[schemars(
         description = "Replacement notification reminders. `useDefault: true` follows the \
                        calendar's own defaults; otherwise `overrides` replaces the whole list \
-                       with entries of `method` \"popup\" (a Macro notification) or \"email\" \
+                       with entries of `method` \"popup\" (a Conation notification) or \"email\" \
                        and `minutes` before the start — an empty list silences the event. \
                        Omit to keep the current reminders."
     )]

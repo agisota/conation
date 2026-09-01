@@ -5,7 +5,6 @@
  */
 
 import { URL_PARAMS } from '@channel/Channel/link';
-import { t } from '@app/lib/i18n';
 import { useDrawerControl } from '@components/app/split-layout/components/SplitDrawerContext';
 import { createSignal, Show, Suspense } from 'solid-js';
 import { createChannelThreadSource } from '../channel-thread-source';
@@ -78,28 +77,34 @@ export default function LinkedConversationDemo() {
   return (
     <div class="p-8 space-y-6 bg-surface min-h-full overflow-auto">
       <div>
-        <h1 class="text-xl font-bold text-ink mb-2">{t('auto.linkedconversation')}</h1>
+        <h1 class="text-xl font-bold text-ink mb-2">LinkedConversation</h1>
         <p class="text-sm text-ink-muted">
           Read-only rendering of a conversation (root message + reply chain)
-          from a <code>{t('auto.linkedconversationsource')}</code>, here backed by a channel
+          from a <code>LinkedConversationSource</code>, here backed by a channel
           thread via <code>createChannelThreadSource</code>.
         </p>
       </div>
 
       <form onSubmit={load} class="flex flex-col gap-3">
-        <label class="flex flex-col gap-1 text-xs text-ink-muted">{t('auto.paste_a_message_link_fills_the')}<input
+        <label class="flex flex-col gap-1 text-xs text-ink-muted">
+          Paste a message link (fills the ids below)
+          <input
             class={inputClass}
             placeholder="https://macro.com/app/channel/…?channel_message_id=…"
             onInput={(e) => handleLinkPaste(e.currentTarget.value)}
           />
         </label>
-        <label class="flex flex-col gap-1 text-xs text-ink-muted">{t('auto.channel_id')}<input
+        <label class="flex flex-col gap-1 text-xs text-ink-muted">
+          Channel id
+          <input
             class={inputClass}
             value={channelIdInput()}
             onInput={(e) => setChannelIdInput(e.currentTarget.value)}
           />
         </label>
-        <label class="flex flex-col gap-1 text-xs text-ink-muted">{t('auto.message_id_thread_root')}<input
+        <label class="flex flex-col gap-1 text-xs text-ink-muted">
+          Message id (thread root)
+          <input
             class={inputClass}
             value={messageIdInput()}
             onInput={(e) => setMessageIdInput(e.currentTarget.value)}
@@ -109,7 +114,9 @@ export default function LinkedConversationDemo() {
           type="submit"
           class="w-fit rounded border border-edge-muted bg-surface px-3 py-1 text-sm text-ink hover:bg-hover"
           disabled={!channelIdInput().trim() || !messageIdInput().trim()}
-        >{t('auto.load_conversation')}</button>
+        >
+          Load conversation
+        </button>
       </form>
 
       <Show when={target()} keyed>
@@ -118,7 +125,7 @@ export default function LinkedConversationDemo() {
             <DrawerToggle />
             <div class="max-w-2xl rounded-md border border-edge-muted p-3">
               <Suspense
-                fallback={<p class="text-sm text-ink-muted">{t('common.loading')}</p>}
+                fallback={<p class="text-sm text-ink-muted">Loading…</p>}
               >
                 <ConversationViewer target={conversationTarget} />
               </Suspense>
@@ -142,7 +149,9 @@ function DrawerToggle() {
       type="button"
       class="w-fit rounded border border-edge-muted bg-surface px-3 py-1 text-sm text-ink hover:bg-hover"
       onClick={drawer.toggle}
-    >{t('auto.open_in_drawer')}</button>
+    >
+      Open in drawer
+    </button>
   );
 }
 
@@ -156,7 +165,9 @@ function ConversationViewer(props: { target: Target }) {
     <Show
       when={source.root()}
       fallback={
-        <p class="text-sm text-ink-muted">{t('auto.no_message_found_check_the_cha')}</p>
+        <p class="text-sm text-ink-muted">
+          No message found — check the channel id and message id.
+        </p>
       }
     >
       <LinkedConversation source={source} />

@@ -16,7 +16,7 @@ fn serializes_user_mention() {
 fn serializes_bot_mention() {
     assert_eq!(
         bot_mention(bot_id::MACRO_AI_BOT_ID, bot_id::MACRO_AI_NAME).unwrap(),
-        "<m-user-mention>{\"userId\":\"bot|00000000-0000-0000-0000-00000000a1a1\",\"email\":\"Macro\"}</m-user-mention>"
+        "<m-user-mention>{\"userId\":\"bot|00000000-0000-0000-0000-00000000a1a1\",\"email\":\"Conation\"}</m-user-mention>"
     );
 }
 

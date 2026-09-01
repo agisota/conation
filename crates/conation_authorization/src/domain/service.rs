@@ -119,7 +119,7 @@ where
         if let Some(acting_user) = &bot.acting_user {
             span.record(
                 "acting_user_id",
-                tracing::field::display(&acting_user.conation_user_id),
+                tracing::field::display(&acting_user.macro_user_id),
             );
         }
 

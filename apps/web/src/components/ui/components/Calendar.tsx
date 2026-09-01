@@ -1,8 +1,8 @@
+import { formatDateTime, t } from '@app/lib/i18n';
 import CorvuCalendar, {
   type RootSingleProps as CorvuCalendarRootSingleProps,
 } from '@corvu/calendar';
 import ArrowDownIcon from '@phosphor/arrow-down.svg';
-import { t } from '@app/lib/i18n';
 import ArrowUpIcon from '@phosphor/arrow-up.svg';
 import CaretDownIcon from '@phosphor/caret-down.svg';
 import CaretLeftIcon from '@phosphor/caret-left.svg';
@@ -22,12 +22,10 @@ import { cn } from '../utils/classname';
 import { Button } from './Button';
 import { Dropdown } from './Dropdown';
 
-const formatWeekdayLong = new Intl.DateTimeFormat(undefined, {
-  weekday: 'long',
-}).format;
-const formatWeekdayNarrow = new Intl.DateTimeFormat(undefined, {
-  weekday: 'narrow',
-}).format;
+const formatWeekdayLong = (date: Date) =>
+  formatDateTime(date, { weekday: 'long' });
+const formatWeekdayNarrow = (date: Date) =>
+  formatDateTime(date, { weekday: 'narrow' });
 
 type HighlightedRange = { start: Date; end: Date };
 
@@ -87,14 +85,14 @@ export function Calendar(props: CalendarProps) {
             <div class="ml-auto flex shrink-0 items-center gap-0.5">
               <CorvuCalendar.Nav
                 action="prev-month"
-                aria-label={t('auto.go_to_previous_month')}
+                aria-label={t('shell.calendar.previousMonth')}
                 class="flex size-7 items-center justify-center rounded-md text-ink-muted outline-none hover:bg-hover hover:text-ink focus-visible:ring focus-visible:ring-accent"
               >
                 <CaretLeftIcon class="size-3" />
               </CorvuCalendar.Nav>
               <CorvuCalendar.Nav
                 action="next-month"
-                aria-label={t('auto.go_to_next_month')}
+                aria-label={t('shell.calendar.nextMonth')}
                 class="flex size-7 items-center justify-center rounded-md text-ink-muted outline-none hover:bg-hover hover:text-ink focus-visible:ring focus-visible:ring-accent"
               >
                 <CaretRightIcon class="size-3" />
@@ -171,10 +169,8 @@ const MONTH_RANGE_YEARS = 100;
 const MONTH_OPTION_HEIGHT = 32;
 const DRAWER_MONTH_OPTION_HEIGHT = 44;
 
-export const formatCalendarMonth = new Intl.DateTimeFormat(undefined, {
-  month: 'long',
-  year: 'numeric',
-}).format;
+export const formatCalendarMonth = (date: Date) =>
+  formatDateTime(date, { month: 'long', year: 'numeric' });
 
 type MonthOption = {
   date: Date;
@@ -206,7 +202,7 @@ function CalendarMonthDropdown(props: CalendarMonthSelectorProps) {
   return (
     <Dropdown open={open()} onOpenChange={setOpen} placement="bottom-start">
       <Dropdown.Trigger
-        aria-label={t('auto.choose_month')}
+        aria-label={t('shell.calendar.chooseMonth')}
         class="h-7 max-w-full min-w-0 justify-start gap-1 border-none bg-transparent px-1 text-xs font-medium text-ink hover:bg-hover"
       >
         <span class="min-w-0 truncate">{formatCalendarMonth(props.month)}</span>
@@ -462,7 +458,7 @@ export function CalendarMonthMenu(props: CalendarMonthMenuProps) {
             size="sm"
             depth={3}
             class="rounded-full bg-surface px-3 text-ink shadow-menu"
-            label="Go To Today"
+            label={t('shell.calendar.goToToday')}
             onClick={() => {
               if (props.onToday) {
                 props.onToday();
@@ -470,7 +466,9 @@ export function CalendarMonthMenu(props: CalendarMonthMenuProps) {
               }
               focusIndex(todayIndex());
             }}
-          >{t('auto.go_to_today')}</Button>
+          >
+            {t('shell.calendar.goToToday')}
+          </Button>
         </div>
       </Show>
 
@@ -498,7 +496,9 @@ export function CalendarMonthMenu(props: CalendarMonthMenuProps) {
               fallback={<ArrowDownIcon aria-hidden="true" class="size-3" />}
             >
               <ArrowUpIcon aria-hidden="true" class="size-3" />
-            </Show>{t('auto.today')}</button>
+            </Show>
+            {t('shell.calendar.today')}
+          </button>
         </div>
       </Show>
     </div>

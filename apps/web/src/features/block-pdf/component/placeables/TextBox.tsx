@@ -1,5 +1,5 @@
-import { Color } from '@block-pdf/model/Color';
 import { t } from '@app/lib/i18n';
+import { Color } from '@block-pdf/model/Color';
 import { activePlaceableIdSignal } from '@block-pdf/signal/placeables';
 import {
   useDeletePlaceable,
@@ -86,7 +86,7 @@ export function TextBox(props: TextBoxProps) {
         }
         textAreaRef = el;
       }}
-      placeholder={t('auto.text')}
+      placeholder={t('pdf.annotations.textPlaceholder')}
       value={text()}
       readOnly={readOnly()}
       onInput={(e) => setText(e.currentTarget.value)}

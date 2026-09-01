@@ -1,5 +1,16 @@
-import { URL_PARAMS as CHANNEL_PARAMS } from '@block-channel/constants';
 import { t } from '@app/lib/i18n';
+import { URL_PARAMS as CHANNEL_PARAMS } from '@block-channel/constants';
+import {
+  $convertCardToMention,
+  $getId,
+  $isDocumentCardNode,
+  DEFAULT_PREVIEW_BOX,
+  type DocumentCardDecoratorProps,
+  HISTORY_MERGE_TAG,
+  type PreviewBox,
+  setDocumentCardPreviewComponent,
+  unsetDocumentCardPreviewCache,
+} from '@conation/lexical-core';
 import {
   type PreviewState,
   useBlockOwner,
@@ -12,17 +23,6 @@ import { ENABLE_BLOCK_IN_BLOCK } from '@core/constant/featureFlags';
 import { canNestBlock, createBlockInstance } from '@core/orchestrator';
 import { blockElementSignal } from '@core/signal/blockElement';
 import { matches } from '@core/util/match';
-import {
-  $convertCardToMention,
-  $getId,
-  $isDocumentCardNode,
-  DEFAULT_PREVIEW_BOX,
-  type DocumentCardDecoratorProps,
-  HISTORY_MERGE_TAG,
-  type PreviewBox,
-  setDocumentCardPreviewComponent,
-  unsetDocumentCardPreviewCache,
-} from '@conation/lexical-core';
 import Minimize from '@phosphor/arrows-in.svg';
 import Clipboard from '@phosphor/clipboard.svg';
 import ClockIcon from '@phosphor/clock.svg';
@@ -288,7 +288,7 @@ function DocumentCardInner(props: DocumentCardDecoratorProps) {
         link += `?${queryParams}`;
       }
       navigator.clipboard.writeText(link);
-      toast.success('Copied document link to clipboard');
+      toast.success(t('editor.document.linkCopied'));
     } catch (e) {
       console.error(e);
     }
@@ -369,11 +369,15 @@ function DocumentCardInner(props: DocumentCardDecoratorProps) {
               <Dropdown.Group>
                 <Dropdown.Item onSelect={convertToMention}>
                   <Minimize class="size-4 shrink-0" />
-                  <span class="flex-1 truncate">{t('auto.convert_to_inline_mention')}</span>
+                  <span class="flex-1 truncate">
+                    {t('editor.document.convertToInlineMention')}
+                  </span>
                 </Dropdown.Item>
                 <Dropdown.Item onSelect={handleCopy}>
                   <Clipboard class="size-4 shrink-0" />
-                  <span class="flex-1 truncate">{t('auto.copy_link')}</span>
+                  <span class="flex-1 truncate">
+                    {t('editor.document.copyLink')}
+                  </span>
                 </Dropdown.Item>
               </Dropdown.Group>
               <Dropdown.Group>

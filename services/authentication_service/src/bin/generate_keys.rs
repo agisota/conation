@@ -60,7 +60,7 @@ fn main() -> anyhow::Result<()> {
     let public_jwk = json!({
         "kty": "RSA",
         "use": "sig",
-        "kid": format!("conation_access_token_{env}"),
+        "kid": format!("macro_access_token_{env}"),
         "n": n_b64,
         "e": e_b64,
         "alg": "RS256"

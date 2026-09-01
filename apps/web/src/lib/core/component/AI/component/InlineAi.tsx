@@ -1,9 +1,10 @@
+import { t } from '@core/i18n';
 import GridLoader from '@icon/macro-grid-noise-loader-4.svg';
 import PaperPlaneRight from '@phosphor/paper-plane-right.svg';
 import { cn } from '@ui';
 import { createSignal, onMount } from 'solid-js';
 
-const defaultPlaceholder = 'Generate with AI...';
+const defaultPlaceholder = () => t('ai.inline.placeholder');
 
 type InlineInputReadyProps = {
   // send message to chat
@@ -57,7 +58,7 @@ export function InlineInputReady(props: InlineInputReadyProps) {
         onSubmit={(e) => e.preventDefault()}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
-        placeholder={props?.options?.placeholderText ?? defaultPlaceholder}
+        placeholder={props?.options?.placeholderText ?? defaultPlaceholder()}
         onInput={(e) => {
           setInputVal(e.currentTarget.value);
           e.target.style.height = 'auto';
@@ -112,7 +113,7 @@ export function InlineInputLoading(props: InlineInputLoadingProps) {
         class="flex resize-none rounded-md w-full p-1 text-sm max-h-[800px] overflow-hidden select-none"
         disabled
         rows={props?.options?.defaultLines ?? 1}
-        placeholder={props?.options?.placeholderText ?? defaultPlaceholder}
+        placeholder={props?.options?.placeholderText ?? defaultPlaceholder()}
       />
       <div
         class="text-ink-muted bg-transparent rounded-full flex flex-col justify-center items-center py-1"
@@ -131,7 +132,7 @@ export function InlineInputDisabled(props: InlineInputLoadingProps) {
         class="flex resize-none rounded-md w-full p-1 text-sm max-h-[800px] overflow-hidden select-none"
         disabled
         rows={props?.options?.defaultLines ?? 1}
-        placeholder={props?.options?.placeholderText ?? defaultPlaceholder}
+        placeholder={props?.options?.placeholderText ?? defaultPlaceholder()}
       />
       <div
         class="text-ink-extra-muted bg-transparent rounded-full flex flex-col justify-center items-center py-1"

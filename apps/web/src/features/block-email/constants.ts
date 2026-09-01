@@ -2,7 +2,9 @@ export const URL_PARAMS = {
   messageId: 'email_message_id',
 };
 
-export const MACRO_EMAIL_SIGNATURE = '-- Sent with Macro';
+// The exported symbol is a compatibility-facing implementation name; only
+// the user-visible signature follows the product display brand.
+export const MACRO_EMAIL_SIGNATURE = '-- Sent with Conation';
 
 export const MAX_ATTACHMENTS_BYTES_SIZE = 18_000_000;
 

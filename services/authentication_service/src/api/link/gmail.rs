@@ -139,7 +139,7 @@ pub async fn init_gmail_link_handler(
         db_permissions
             .permissions
             .contains(&PermissionId::ReadProfessionalFeatures.to_string()),
-        || count_accessible_email_inboxes(&ctx.db, &authorization.authorization.user.conation_user_id),
+        || count_accessible_email_inboxes(&ctx.db, &authorization.authorization.user.macro_user_id),
     )
     .await?;
 
@@ -234,13 +234,13 @@ fn google_authorization_url(
     Ok(authorization_url)
 }
 
-#[tracing::instrument(skip(db, conation_user_id), err)]
+#[tracing::instrument(skip(db, macro_user_id), err)]
 async fn count_accessible_email_inboxes(
     db: &sqlx::Pool<sqlx::Postgres>,
-    conation_user_id: &MacroUserIdStr<'static>,
+    macro_user_id: &MacroUserIdStr<'static>,
 ) -> anyhow::Result<i64> {
     let inboxes =
-        email_db_client::links::get::fetch_inboxes_for_conation_id(db, conation_user_id.as_ref()).await?;
+        email_db_client::links::get::fetch_inboxes_for_macro_id(db, macro_user_id.as_ref()).await?;
 
     Ok(inboxes.len() as i64)
 }
@@ -311,7 +311,7 @@ impl IntoResponse for GmailLinkStatusError {
             (status = 500, body=ErrorResponse),
         )
     )]
-#[tracing::instrument(skip(ctx, ip_context, authorization), fields(client_ip=%ip_context, user_id=%authorization.authorization.user.conation_user_id), err)]
+#[tracing::instrument(skip(ctx, ip_context, authorization), fields(client_ip=%ip_context, user_id=%authorization.authorization.user.macro_user_id), err)]
 pub async fn check_gmail_link_status_handler(
     State(ctx): State<ApiContext>,
     ip_context: ClientIp,
@@ -320,7 +320,7 @@ pub async fn check_gmail_link_status_handler(
     // Check if the user has an email link in db
     if conation_db_client::email::check_user_email_link(
         &ctx.db,
-        &authorization.authorization.user.conation_user_id,
+        &authorization.authorization.user.macro_user_id,
     )
     .await
     .map_err(GmailLinkStatusError::Internal)?

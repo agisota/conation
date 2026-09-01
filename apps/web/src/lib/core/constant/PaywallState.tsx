@@ -1,7 +1,5 @@
 import { createSignal } from 'solid-js';
 
-const DAILY_LIMIT = 5;
-
 export enum PaywallKey {
   PROJECT_LIMIT = 'PROJECT_LIMIT',
   FILE_LIMIT = 'FILE_LIMIT',
@@ -16,73 +14,40 @@ export enum PaywallKey {
 }
 
 export type PaywallMessageMetadata = {
-  title: string;
-  description: string;
-  learnMoreUrl?: string;
-  learnMoreSubject?: string;
+  learnMoreUrl: string;
 };
 
-export const PaywallMessages: Record<PaywallKey, PaywallMessageMetadata> = {
+// User-visible paywall copy is locale-owned in `shell.paywall.limit.*`.
+// This map contains only stable documentation destinations.
+export const PaywallMessages: Partial<
+  Record<PaywallKey, PaywallMessageMetadata>
+> = {
   [PaywallKey.PROJECT_LIMIT]: {
-    title: 'Folder limit reached',
-    description:
-      'Upgrade to create more folders and keep organizing your workspace.',
     learnMoreUrl: 'https://docs.macro.com/product/folders',
-    learnMoreSubject: 'folders',
-  },
-  [PaywallKey.FILE_LIMIT]: {
-    title: 'File limit reached',
-    description: 'Upgrade for more storage and room for all of your documents.',
   },
   [PaywallKey.CHAT_LIMIT]: {
-    title: 'Chat limit reached',
-    description: 'Upgrade to keep creating agent chats with premium AI access.',
     learnMoreUrl: 'https://docs.macro.com/product/agents',
-    learnMoreSubject: 'agents',
   },
   [PaywallKey.IMAGE_LIMIT]: {
-    title: 'Image processing limit reached',
-    description: `You’ve used ${DAILY_LIMIT} AI image processing requests today. Upgrade for higher limits.`,
     learnMoreUrl: 'https://docs.macro.com/product/agents',
-    learnMoreSubject: 'agents',
   },
   [PaywallKey.O1_LIMIT]: {
-    title: 'Smart models are premium',
-    description: 'Upgrade to use Macro’s most capable AI models.',
     learnMoreUrl: 'https://docs.macro.com/product/agents',
-    learnMoreSubject: 'agents',
   },
   [PaywallKey.CANVAS_CLIKED]: {
-    title: 'AI canvases are premium',
-    description:
-      'Upgrade to generate diagrams, whiteboards, and visual drafts with AI.',
     learnMoreUrl: 'https://docs.macro.com/product/canvas',
-    learnMoreSubject: 'canvases',
   },
   [PaywallKey.SAVED_PROMPT]: {
-    title: 'Saved prompts are premium',
-    description: 'Upgrade to save reusable prompts for faster workflows.',
     learnMoreUrl: 'https://docs.macro.com/product/snippets',
-    learnMoreSubject: 'saved prompts',
   },
   [PaywallKey.REMOVE_SIGNATURE]: {
-    title: 'Remove the Macro signature',
-    description: 'Upgrade to send emails without the Macro signature.',
     learnMoreUrl: 'https://docs.macro.com/product/email',
-    learnMoreSubject: 'email',
   },
   [PaywallKey.MULTI_INBOX]: {
-    title: 'Connect more inboxes',
-    description: 'Upgrade your plan to connect more than two inboxes.',
     learnMoreUrl: 'https://docs.macro.com/product/inbox',
-    learnMoreSubject: 'multiple inboxes',
   },
   [PaywallKey.TEAMS]: {
-    title: 'Collaborate with your team',
-    description:
-      'Upgrade to create a team, invite members, and manage access together.',
     learnMoreUrl: 'https://docs.macro.com/account/teams',
-    learnMoreSubject: 'teams',
   },
 };
 

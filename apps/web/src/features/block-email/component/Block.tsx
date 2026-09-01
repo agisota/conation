@@ -1,4 +1,5 @@
 import { useBlockEntityCommands } from '@app/features/next-soup/actions';
+import { t } from '@app/lib/i18n';
 import { useGlobalNotificationSource } from '@components/app/GlobalAppState';
 import { useSplitPanel } from '@components/app/split-layout/layoutUtils';
 import { useBlockId } from '@core/block';
@@ -67,11 +68,11 @@ export default function BlockEmail() {
 
   return (
     <Suspense>
-      <DocumentBlockContainer title={title() ?? 'Email'}>
+      <DocumentBlockContainer title={title() || t('blockEmail.title')}>
         <div class="size-full" tabIndex={-1}>
           <EntityLoadGate
             result={threadLoadResult}
-            loadErrorTitle="Unable to load this email"
+            loadErrorTitle={t('blockEmail.loadFailed')}
             onRetry={() => void threadQuery.refetch()}
           >
             <Show when={threadId()}>

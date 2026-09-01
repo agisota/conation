@@ -30,7 +30,10 @@ fn default_instance_uses_fixed_ports() {
     assert_eq!(inst.port(Port::DocStorage), 8086);
     assert_eq!(inst.port(Port::SdkWebhookSsh), 8788);
     assert_eq!(inst.network_databases(), "databases");
-    assert_eq!(inst.volume_postgres(), "conation_postgres_data");
+    assert_eq!(inst.volume_postgres(), "macro_postgres_data");
+    assert_eq!(inst.volume_redis(), "macro_redis_data");
+    assert_eq!(inst.volume_opensearch(), "macro_opensearch_data");
+    assert_eq!(inst.volume_kafka(), "macro_kafka_data");
 }
 
 #[test]
@@ -49,7 +52,10 @@ fn named_instance_is_isolated_and_deterministic() {
         a1.port_base() + Port::SdkWebhookSsh.offset()
     );
     assert_eq!(a1.network_databases(), "databases-agent-a");
-    assert_eq!(a1.volume_postgres(), "conation_postgres_data_agent-a");
+    assert_eq!(a1.volume_postgres(), "macro_postgres_data_agent-a");
+    assert_eq!(a1.volume_redis(), "macro_redis_data_agent-a");
+    assert_eq!(a1.volume_opensearch(), "macro_opensearch_data_agent-a");
+    assert_eq!(a1.volume_kafka(), "macro_kafka_data_agent-a");
 }
 
 #[test]

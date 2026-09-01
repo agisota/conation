@@ -128,7 +128,7 @@ async fn register_client(
         StatusCode::CREATED,
         Json(serde_json::json!({
             "client_id": "dcr-client-id",
-            "client_name": "Macro",
+            "client_name": "Conation",
             "redirect_uris": [REDIRECT_URI],
             "grant_types": ["authorization_code", "refresh_token"],
             "response_types": ["code"],

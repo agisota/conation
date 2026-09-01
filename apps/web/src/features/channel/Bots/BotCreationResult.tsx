@@ -1,5 +1,5 @@
-import HashIcon from '@phosphor/hash.svg';
 import { t } from '@app/lib/i18n';
+import HashIcon from '@phosphor/hash.svg';
 import CheckCircleIcon from '@phosphor-icons/core/assets/fill/check-circle-fill.svg?component-solid';
 import type { Bot } from '@service-storage/generated/schemas/bot';
 import { Button, Surface } from '@ui';
@@ -23,8 +23,12 @@ export function BotCreationResult(props: {
           <CheckCircleIcon class="size-5" />
         </div>
         <div class="min-w-0">
-          <h1 class="text-lg font-semibold tracking-[-0.01em]">{t('auto.bot_created')}</h1>
-          <p class="mt-0.5 text-sm text-ink-muted">{t('auto.copy_the_credentials_now_the_t')}</p>
+          <h1 class="text-lg font-semibold tracking-[-0.01em]">
+            {t('channel.bots.created.title')}
+          </h1>
+          <p class="mt-0.5 text-sm text-ink-muted">
+            {t('channel.bots.created.credentialsWarning')}
+          </p>
         </div>
       </header>
 
@@ -55,9 +59,11 @@ export function BotCreationResult(props: {
         <For each={props.channels}>
           {(channel) => (
             <CredentialField
-              label={`${channel.name} webhook URL`}
+              label={t('channel.bots.webhookUrlForChannel', {
+                channel: channel.name,
+              })}
               value={channelWebhookUrl(channel.id)}
-              help="Paste into GitHub or any webhook provider"
+              help={t('channel.bots.created.webhookHelp')}
             />
           )}
         </For>
@@ -67,27 +73,27 @@ export function BotCreationResult(props: {
           fallback={
             <div class="rounded-lg border border-alert/30 bg-alert-bg px-3 py-2.5 text-xs text-alert-ink">
               {props.tokenFailed
-                ? 'The bot was created, but its first token could not be generated. Use New token on the Bots settings page to retry.'
-                : 'No token was generated.'}
+                ? t('channel.bots.created.tokenFailed')
+                : t('channel.bots.created.noToken')}
             </div>
           }
         >
           {(token) => (
             <>
               <CredentialField
-                label="Webhook token"
+                label={t('channel.bots.webhookToken')}
                 value={token()}
-                help="Send as x-macro-channel-bot-token"
+                help={t('channel.bots.created.tokenHeaderHelp')}
               />
               <Show when={props.channels[0]}>
                 {(channel) => (
                   <CredentialField
-                    label="Example request"
+                    label={t('channel.bots.created.exampleRequest')}
                     value={webhookExample(
                       channelWebhookUrl(channel().id),
                       token()
                     )}
-                    help="Copy and run"
+                    help={t('channel.bots.created.copyAndRun')}
                   />
                 )}
               </Show>
@@ -97,14 +103,15 @@ export function BotCreationResult(props: {
 
         <Show when={props.channels.length === 0}>
           <div class="rounded-lg border border-edge-muted bg-ink/[0.025] px-3 py-2.5 text-xs text-ink-muted">
-            Invite this bot to a channel to get its webhook URL. The token above
-            will still work after it is invited.
+            {t('channel.bots.created.inviteHelp')}
           </div>
         </Show>
       </div>
 
       <div class="mt-8 flex justify-end border-t border-edge-muted pt-4">
-        <Button type="button" variant="cta" size="sm" onClick={props.onDone}>{t('auto.done')}</Button>
+        <Button type="button" variant="cta" size="sm" onClick={props.onDone}>
+          {t('channel.bots.done')}
+        </Button>
       </div>
     </div>
   );

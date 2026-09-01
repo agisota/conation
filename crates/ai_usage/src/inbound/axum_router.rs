@@ -107,7 +107,7 @@ fn admin_rejection<Auth>(
     if user
         .authorization
         .user
-        .conation_user_id
+        .macro_user_id
         .email_str()
         .ends_with(ADMIN_EMAIL_SUFFIX)
     {

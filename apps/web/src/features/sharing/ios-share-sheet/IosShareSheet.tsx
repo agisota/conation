@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import {
   applyInlineFormat,
   applyNodeFormat,
@@ -14,7 +15,6 @@ import {
   uploadInputAttachments,
 } from '@channel/Input';
 import { ChannelInputContainer } from '@channel/Input/ChannelInputContainer';
-import { t } from '@app/lib/i18n';
 import { buildPostMessageRequest } from '@channel/Input/message-payload';
 import { getAttachmentKindFromFile } from '@channel/Input/utils/file-helpers';
 import { hasSendableInputContent } from '@channel/Input/utils/sendable-content';
@@ -118,7 +118,7 @@ async function uploadPendingShareAttachment(options: {
   file: PendingShareFile;
   tracker: InputAttachmentTracker;
   uploadPendingShareFile:
-    | ((args: UploadPendingShareFileArgs) =>Promise<void>)
+    | ((args: UploadPendingShareFileArgs) => Promise<void>)
     | undefined;
   isActive: () => boolean;
 }) {
@@ -126,7 +126,9 @@ async function uploadPendingShareAttachment(options: {
   // The iOS share extension only hands the app images and videos today, and
   // this upload path only creates static-file attachments for those media types.
   if (kind === 'document') {
-    toast.failure(`Can't share ${options.file.name} from iOS yet`);
+    toast.failure(
+      t('sharing.ios.unsupportedFile', { filename: options.file.name })
+    );
     return;
   }
 
@@ -168,7 +170,9 @@ async function uploadPendingShareAttachment(options: {
       file: options.file,
       error,
     });
-    toast.failure(`Failed to upload ${options.file.name}`);
+    toast.failure(
+      t('sharing.ios.uploadFailed', { filename: options.file.name })
+    );
   }
 }
 
@@ -184,7 +188,9 @@ function ShareSheetHeaderActions(props: {
         size="sm"
         onClick={props.handleCancel}
         class="pl-0"
-      >{t('common.cancel')}</Button>
+      >
+        {t('common.cancel')}
+      </Button>
       <Button
         variant="ghost"
         size="sm"
@@ -194,7 +200,9 @@ function ShareSheetHeaderActions(props: {
           event.preventDefault();
           props.handleSend();
         }}
-      >{t('auto.send')}</Button>
+      >
+        {t('sharing.ios.send')}
+      </Button>
     </div>
   );
 }
@@ -202,8 +210,8 @@ function ShareSheetHeaderActions(props: {
 function ShareSheetComposerError(_props: { error: unknown }) {
   return (
     <div class="macro-message-width flex min-h-32 w-full flex-col items-center justify-center gap-2 rounded-[5px] border border-edge-muted bg-surface px-4 py-6 text-center">
-      <p class="text-sm text-ink">Couldn&apos;t load the composer.</p>
-      <p class="text-xs text-ink-muted">{t('auto.close_the_sheet_and_try_sharin')}</p>
+      <p class="text-sm text-ink">{t('sharing.ios.composerLoadFailed')}</p>
+      <p class="text-xs text-ink-muted">{t('sharing.ios.tryAgain')}</p>
     </div>
   );
 }
@@ -265,7 +273,7 @@ function IosShareSheetComposer(props: {
     const options = selectedOptions();
 
     if (options.length === 0) {
-      toast.failure('Select a recipient');
+      toast.failure(t('sharing.ios.selectRecipient'));
       throw new Error('No recipient selected for iOS share sheet');
     }
 
@@ -276,7 +284,7 @@ function IosShareSheetComposer(props: {
     }
 
     if (destination.users.length === 0) {
-      toast.failure('Select a valid recipient');
+      toast.failure(t('sharing.ios.selectValidRecipient'));
       throw new Error('No valid recipients selected for iOS share sheet');
     }
 
@@ -291,7 +299,7 @@ function IosShareSheetComposer(props: {
             });
       return result.channel_id;
     } catch {
-      toast.failure('Failed to open channel');
+      toast.failure(t('sharing.ios.openChannelFailed'));
       throw new Error('Failed to resolve share destination channel');
     }
   };
@@ -299,7 +307,7 @@ function IosShareSheetComposer(props: {
   const handleSend = async (snapshot: InputSnapshot) => {
     const senderId = userId();
     if (!senderId) {
-      toast.failure('Failed to send message');
+      toast.failure(t('sharing.ios.sendFailed'));
       throw new Error('Missing sender id for iOS share sheet send');
     }
 
@@ -312,7 +320,7 @@ function IosShareSheetComposer(props: {
     });
 
     if (result.isErr()) {
-      toast.failure('Failed to send message');
+      toast.failure(t('sharing.ios.sendFailed'));
       throw new Error('Failed to post shared message');
     }
 
@@ -326,7 +334,7 @@ function IosShareSheetComposer(props: {
     initialInput: {
       mode: 'channel',
       id: `ios-share-input-${composerId}`,
-      placeholder: 'Add a message',
+      placeholder: t('sharing.ios.messagePlaceholder'),
       value: pendingShareInitialText(shareTarget?.pendingShareFiles() ?? []),
     },
     mentions: mentionsTracker.mentions,
@@ -401,11 +409,11 @@ function IosShareSheetComposer(props: {
           handleCancel={props.handleCancel}
           handleSend={handleHeaderSend}
         />
-        <MobileDrawer.Label>{t('auto.recipients')}</MobileDrawer.Label>
+        <MobileDrawer.Label>{t('sharing.ios.recipients')}</MobileDrawer.Label>
         <MobileDrawer.Section>
           <div class="shrink-0 p-2">
             <RecipientSelector<'user' | 'contact' | 'channel'>
-              placeholder="To: Email or group"
+              placeholder={t('sharing.ios.recipientPlaceholder')}
               setSelectedOptions={setSelectedOptions}
               selectedOptions={selectedOptions()}
               options={destinationOptions}
@@ -539,7 +547,10 @@ export function IosShareSheet() {
       >
         <MobileDrawer.Portal>
           <MobileDrawer.Overlay class="fixed inset-0 z-modal-overlay bg-modal-overlay" />
-          <MobileDrawer.Content aria-label={t('auto.share_to_macro')} targetHeight={80}>
+          <MobileDrawer.Content
+            aria-label={t('sharing.ios.ariaLabel')}
+            targetHeight={80}
+          >
             <MobileDrawer.Handle />
             <Show when={isOpen() ? shareBatchKey() : undefined} keyed>
               {(batchKey) => (

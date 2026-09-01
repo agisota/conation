@@ -38,7 +38,8 @@ pub struct JwtContext {
 #[derive(Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct Params {
-    conation_api_token: Option<String>,
+    #[serde(alias = "conation-api-token")]
+    macro_api_token: Option<String>,
 }
 
 /// The result of successfully decoding a JWT from a request.
@@ -49,7 +50,7 @@ pub struct DecodedJwt {
     pub jwt_context: Option<JwtContext>,
 
     /// the parsed macro user id of the user
-    pub conation_user_id: MacroUserIdStr<'static>,
+    pub macro_user_id: MacroUserIdStr<'static>,
 }
 
 impl<S> FromRequestParts<S> for DecodedJwt
@@ -90,7 +91,7 @@ impl DecodedJwt {
         if cfg!(feature = "local_auth") && std::env::var("LOCAL_USER_ID").is_ok() {
             let user_id =
                 std::env::var("LOCAL_USER_ID").unwrap_or("macro|orguser@org.com".to_string());
-            let Ok(conation_user_id) =
+            let Ok(macro_user_id) =
                 MacroUserIdStr::parse_from_str(&user_id).map(CowLike::into_owned)
             else {
                 return Err(DecodeJwtError::InvalidUserId(user_id));
@@ -110,16 +111,16 @@ impl DecodedJwt {
                     permissions: None,
                 },
                 jwt_context: None,
-                conation_user_id,
+                macro_user_id,
             });
         }
 
         let access_token = if let Params {
-            conation_api_token: Some(conation_api_token),
+            macro_api_token: Some(macro_api_token),
         } = query_params
         {
             tracing::trace!("macro-api-token found in query params");
-            conation_api_token
+            macro_api_token
         } else {
             match access_token_header {
                 Ok(extractor) => extractor.as_ref().to_string(),
@@ -130,25 +131,26 @@ impl DecodedJwt {
             }
         };
 
-        let jwt = conation_auth::middleware::decode_jwt::handler(jwt_validation_args, &access_token)
-            .map_err(|e| match e {
-            MacroAuthError::JwtExpired => DecodeJwtError::Expired,
-            other => DecodeJwtError::Invalid(other),
-        })?;
+        let jwt =
+            conation_auth::middleware::decode_jwt::handler(jwt_validation_args, &access_token)
+                .map_err(|e| match e {
+                    MacroAuthError::JwtExpired => DecodeJwtError::Expired,
+                    other => DecodeJwtError::Invalid(other),
+                })?;
 
         let (user_id, fusion_user_id, organization_id) = match &jwt {
             JwtToken::MacroAccessToken(token) => (
-                token.conation_user_id.clone(),
+                token.macro_user_id.clone(),
                 token
-                    .root_conation_id
+                    .root_macro_id
                     .clone()
                     .unwrap_or_else(|| token.fusion_user_id.clone()),
-                token.conation_organization_id,
+                token.macro_organization_id,
             ),
             JwtToken::MacroApiToken(token) => (
-                token.conation_user_id.clone(),
+                token.macro_user_id.clone(),
                 token.fusion_user_id.clone(),
-                token.conation_organization_id,
+                token.macro_organization_id,
             ),
         };
 
@@ -161,7 +163,7 @@ impl DecodedJwt {
             None
         };
 
-        let Ok(conation_user_id) = MacroUserIdStr::parse_from_str(&user_id).map(CowLike::into_owned)
+        let Ok(macro_user_id) = MacroUserIdStr::parse_from_str(&user_id).map(CowLike::into_owned)
         else {
             return Err(DecodeJwtError::InvalidUserId(user_id));
         };
@@ -174,7 +176,7 @@ impl DecodedJwt {
                 permissions: None,
             },
             jwt_context,
-            conation_user_id,
+            macro_user_id,
         })
     }
 }

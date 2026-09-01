@@ -1,5 +1,5 @@
-import KeyIcon from '@phosphor/key.svg';
 import { t } from '@app/lib/i18n';
+import KeyIcon from '@phosphor/key.svg';
 import { Button } from '@ui';
 import { For, Show } from 'solid-js';
 import { BotFormSection } from './BotFormSection';
@@ -19,8 +19,8 @@ type BotWebhooksSectionProps = {
 export function BotWebhooksSection(props: BotWebhooksSectionProps) {
   return (
     <BotFormSection
-      title={t('auto.webhooks')}
-      description="Copy a channel URL or generate another token."
+      title={t('channel.bots.webhooks.title')}
+      description={t('channel.bots.webhooks.description')}
       action={
         <Button
           type="button"
@@ -28,13 +28,17 @@ export function BotWebhooksSection(props: BotWebhooksSectionProps) {
           size="sm"
           onClick={props.onNewToken}
         >
-          <KeyIcon />{t('auto.new_token')}</Button>
+          <KeyIcon />
+          {t('channel.bots.webhooks.newToken')}
+        </Button>
       }
     >
       <Show
         when={props.channels.length > 0}
         fallback={
-          <p class="text-xs text-ink-muted">{t('auto.add_this_bot_to_a_channel_to_g')}</p>
+          <p class="text-xs text-ink-muted">
+            {t('channel.bots.webhooks.empty')}
+          </p>
         }
       >
         <div class="flex flex-col gap-4">
@@ -43,7 +47,7 @@ export function BotWebhooksSection(props: BotWebhooksSectionProps) {
               <CredentialField
                 label={channel.name}
                 value={channelWebhookUrl(channel.id)}
-                help="Webhook URL"
+                help={t('channel.bots.webhookUrl')}
               />
             )}
           </For>

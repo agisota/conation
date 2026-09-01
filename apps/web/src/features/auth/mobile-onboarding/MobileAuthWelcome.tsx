@@ -39,19 +39,23 @@ export function MobileAuthWelcome() {
         <Surface depth={1}>
           <div class="flex flex-col items-center gap-2 py-10">
             <LogoIcon class="size-20 text-ink" />
-            <div class="text-lg font-medium">{t('auto.welcome_to_macro')}</div>
+            <div class="text-lg font-medium">{t('auth.welcome.title')}</div>
           </div>
           <div class="flex flex-col gap-3 px-8 pb-8">
             <Button
               variant="strong"
               size="xl"
               onClick={() => navigate('/onboarding')}
-            >{t('auto.create_new_account')}</Button>
+            >
+              {t('auth.mobile.createNewAccount')}
+            </Button>
             <Button
               size="xl"
               class="border border-edge-muted"
               onClick={() => navigate('/login')}
-            >{t('auto.log_into_existing_account')}</Button>
+            >
+              {t('auth.mobile.loginExistingAccount')}
+            </Button>
           </div>
         </Surface>
       </div>

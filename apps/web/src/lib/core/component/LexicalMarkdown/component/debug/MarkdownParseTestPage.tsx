@@ -1,5 +1,4 @@
 import { SplitHeaderLeft } from '@components/app/split-layout/components/SplitHeader';
-import { t } from '@app/lib/i18n';
 import { StaticSplitLabel } from '@components/app/split-layout/components/SplitLabel';
 import { debounce } from '@solid-primitives/scheduled';
 import { cn } from '@ui';
@@ -312,7 +311,7 @@ export default function MarkdownParseTestPage() {
         <div class="size-full flex">
           <div class="w-1/2 h-full p-4 flex flex-col border-r border-edge">
             <div class="flex items-center gap-2 mb-2">
-              <h2 class="text-sm">{t('auto.input')}</h2>
+              <h2 class="text-sm">Input</h2>
               <div class="flex bg-edge rounded border border-edge overflow-hidden">
                 <button
                   class={cn(
@@ -320,14 +319,18 @@ export default function MarkdownParseTestPage() {
                     inputType() === 'markdown' && 'bg-accent text-surface'
                   )}
                   onClick={() => setInputType('markdown')}
-                >{t('auto.markdown')}</button>
+                >
+                  Markdown
+                </button>
                 <button
                   class={cn(
                     'px-2 py-0.5 text-xs',
                     inputType() === 'lexical-json' && 'bg-accent text-surface'
                   )}
                   onClick={() => setInputType('lexical-json')}
-                >{t('auto.lexical_json')}</button>
+                >
+                  Lexical JSON
+                </button>
               </div>
             </div>
             <textarea
@@ -344,12 +347,12 @@ export default function MarkdownParseTestPage() {
           </div>
 
           <div class="w-1/2 h-full p-4 flex flex-col">
-            <h2 class="text-sm mb-2">{t('auto.output')}</h2>
+            <h2 class="text-sm mb-2">Output</h2>
             <div class="h-px bg-edge mb-2"></div>
 
             <div class="flex gap-16 mb-4">
               <div class="flex items-center gap-1">
-                <span class="text-sm text-ink-extra-muted">{t('auto.render_as')}</span>
+                <span class="text-sm text-ink-extra-muted">Render as</span>
                 <div class="flex bg-edge rounded border border-edge overflow-hidden">
                   <button
                     class={cn(
@@ -357,19 +360,23 @@ export default function MarkdownParseTestPage() {
                       outputType() === 'static' && 'bg-accent text-surface'
                     )}
                     onClick={() => setOutputType('static')}
-                  >{t('auto.static')}</button>
+                  >
+                    Static
+                  </button>
                   <button
                     class={cn(
                       'px-3 py-1 text-sm',
                       outputType() === 'editor' && 'bg-accent text-surface'
                     )}
                     onClick={() => setOutputType('editor')}
-                  >{t('auto.editor')}</button>
+                  >
+                    Editor
+                  </button>
                 </div>
               </div>
 
               <div class="flex items-center gap-2">
-                <span class="text-sm text-ink-extra-muted">{t('auto.target')}</span>
+                <span class="text-sm text-ink-extra-muted">Target</span>
                 <div class="flex bg-edge rounded border border-edge overflow-hidden">
                   <button
                     class={cn(
@@ -377,38 +384,44 @@ export default function MarkdownParseTestPage() {
                       targetType() === 'internal' && 'bg-accent text-surface'
                     )}
                     onClick={() => setTargetType('internal')}
-                  >{t('auto.internal')}</button>
+                  >
+                    Internal
+                  </button>
                   <button
                     class={cn(
                       'px-3 py-1 text-sm',
                       targetType() === 'external' && 'bg-accent text-surface'
                     )}
                     onClick={() => setTargetType('external')}
-                  >{t('auto.external')}</button>
+                  >
+                    External
+                  </button>
                   <button
                     class={cn(
                       'px-3 py-1 text-sm',
                       targetType() === 'both' && 'bg-accent text-surface'
                     )}
                     onClick={() => setTargetType('both')}
-                  >{t('auto.both')}</button>
+                  >
+                    Both
+                  </button>
                 </div>
               </div>
             </div>
 
             <div class="flex items-center gap-2 mb-4">
-              <span class="text-sm text-ink-extra-muted">{t('auto.theme')}</span>
+              <span class="text-sm text-ink-extra-muted">Theme</span>
               <select
                 class="px-3 py-1 text-sm bg-edge border border-edge rounded"
                 value={themeType()}
                 onChange={(e) => setThemeType(e.target.value as ThemeType)}
               >
-                <option value="default">{t('auto.default')}</option>
-                <option value="aiChat">{t('auto.ai_chat')}</option>
-                <option value="channel">{t('auto.channel')}</option>
-                <option value="channelSender">{t('auto.channel_sender')}</option>
-                <option value="embeddedCode">{t('auto.embedded_code')}</option>
-                <option value="unifiedList">{t('auto.unified_list')}</option>
+                <option value="default">Default</option>
+                <option value="aiChat">AI chat</option>
+                <option value="channel">Channel</option>
+                <option value="channelSender">Channel sender</option>
+                <option value="embeddedCode">Embedded code</option>
+                <option value="unifiedList">Unified list</option>
               </select>
             </div>
 
@@ -421,7 +434,7 @@ export default function MarkdownParseTestPage() {
                     onChange={(e) => setSingleLine(e.target.checked)}
                     class="rounded border-edge"
                   />
-                  <span class="text-sm text-ink-extra-muted">{t('auto.single_line')}</span>
+                  <span class="text-sm text-ink-extra-muted">Single line</span>
                 </label>
               </div>
             </Show>

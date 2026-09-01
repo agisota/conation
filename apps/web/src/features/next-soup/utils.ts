@@ -1,5 +1,6 @@
 import { isListViewID } from '@app/constants/list-views';
 import { scopeChannelNotificationsForEntity } from '@app/features/soup/entity-notifications';
+import { t } from '@app/lib/i18n';
 import { globalSplitManager } from '@app/signal/splitLayout';
 import { createCalendarBlockRange } from '@block-calendar/calendar-range';
 import {
@@ -375,8 +376,6 @@ interface OpenEntityOptions {
   referredFrom?: ReferredFrom;
 }
 
-const DUPLICATE_CONTENT_MESSAGE = 'Content already open.';
-
 /** Whether this entity is open outside the controller's own preview viewer. */
 export function isDuplicatePreviewEntityOpen(
   entity: EntityData,
@@ -393,7 +392,7 @@ export function isDuplicatePreviewEntityOpen(
 
 /** Show the standard duplicate-content notification. */
 export function notifyDuplicateContentOpen() {
-  toast.alert(DUPLICATE_CONTENT_MESSAGE);
+  toast.alert(t('soup.toast.contentAlreadyOpen'));
 }
 
 /** Reject and notify for an entity already owned by another split. */

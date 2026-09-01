@@ -16,6 +16,11 @@ use axum::http::{
     Method,
     header::{AUTHORIZATION, CONTENT_TYPE},
 };
+use conation_auth::middleware::decode_jwt::JwtValidationArgs;
+use conation_authorization::{InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationState};
+use conation_entrypoint::MacroEntrypoint;
+use conation_env::Environment;
+use conation_tower_layers::MacroRequestIdAndTracingLayer;
 use config::Config;
 use constants::ORIGINS;
 use frecency::{
@@ -31,11 +36,6 @@ use last_online_tracker::{
     inbound::LastOnlineWorker,
     outbound::{redis::RedisLastOnlineRepo, time::DefaultTime as LastOnlineDefaultTime},
 };
-use conation_auth::middleware::decode_jwt::JwtValidationArgs;
-use conation_authorization::{InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationState};
-use conation_entrypoint::MacroEntrypoint;
-use conation_env::Environment;
-use conation_tower_layers::MacroRequestIdAndTracingLayer;
 use service::dynamodb::create_dynamo_db_connection_manager;
 use service::redis::poll_messages;
 use sqlx::postgres::PgPoolOptions;
@@ -105,7 +105,7 @@ async fn main() -> Result<()> {
     let pgpool = PgPoolOptions::new()
         .min_connections(3)
         .max_connections(20)
-        .connect(config.conation_db_url.as_ref())
+        .connect(config.macro_db_url.as_ref())
         .await?;
 
     let stream_service = RedisPostgresStreamRepo::new((*redis_client).clone(), pgpool.clone());

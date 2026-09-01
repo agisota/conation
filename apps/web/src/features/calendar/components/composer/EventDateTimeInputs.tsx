@@ -1,3 +1,4 @@
+import { formatDateTime, t } from '@app/lib/i18n';
 import type { CollectionNode } from '@kobalte/core';
 import { Listbox } from '@kobalte/core/listbox';
 import { Popover } from '@kobalte/core/popover';
@@ -12,18 +13,19 @@ import { formatLocalDate, parseLocalDate } from '../../utils/calendar-date';
 
 interface EventTimeOption {
   value: string;
-  label: string;
 }
 
-export const timeLabelFormatter = new Intl.DateTimeFormat(undefined, {
-  hour: 'numeric',
-  minute: '2-digit',
-});
-export const dateLabelFormatter = new Intl.DateTimeFormat(undefined, {
-  day: 'numeric',
-  month: 'short',
-  year: 'numeric',
-});
+export function formatEventTimeLabel(date: Date) {
+  return formatDateTime(date, { hour: 'numeric', minute: '2-digit' });
+}
+
+export function formatEventDateLabel(date: Date) {
+  return formatDateTime(date, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
 
 /** Every quarter-hour in a day, with canonical values and localized labels. */
 const EVENT_TIME_OPTIONS: EventTimeOption[] = Array.from(
@@ -33,10 +35,14 @@ const EVENT_TIME_OPTIONS: EventTimeOption[] = Array.from(
     const minute = (index % 4) * 15;
     return {
       value: `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`,
-      label: timeLabelFormatter.format(new Date(2000, 0, 1, hour, minute)),
     };
   }
 );
+
+function eventTimeOptionLabel(value: string) {
+  const [hour = 0, minute = 0] = value.split(':').map(Number);
+  return formatEventTimeLabel(new Date(2000, 0, 1, hour, minute));
+}
 
 export function splitLocalDateTime(value: string) {
   const separator = value.indexOf('T');
@@ -61,7 +67,9 @@ function TimeOptionItem(props: CollectionNode<EventTimeOption>) {
       item={props}
       class="group flex cursor-default items-center justify-between rounded-lg px-3 py-2 text-sm text-ink outline-none hover:bg-hover data-selected:bg-active data-highlighted:bg-hover"
     >
-      <Listbox.ItemLabel>{props.rawValue.label}</Listbox.ItemLabel>
+      <Listbox.ItemLabel>
+        {eventTimeOptionLabel(props.rawValue.value)}
+      </Listbox.ItemLabel>
       <Listbox.ItemIndicator class="text-accent">
         <CheckIcon class="size-3.5" />
       </Listbox.ItemIndicator>
@@ -178,7 +186,9 @@ export function EventTimeInput(props: EventTimeInputProps) {
             }}
           >
             <Popover.Title class="sr-only">
-              Choose {props.label.toLowerCase()}
+              {t('calendar.event.form.dateTime.chooseTime', {
+                field: props.label,
+              })}
             </Popover.Title>
             <Listbox<EventTimeOption>
               ref={(element) => {
@@ -186,7 +196,7 @@ export function EventTimeInput(props: EventTimeInputProps) {
               }}
               options={EVENT_TIME_OPTIONS}
               optionValue="value"
-              optionTextValue="label"
+              optionTextValue={(option) => eventTimeOptionLabel(option.value)}
               value={selectedTime()}
               onChange={selectTime}
               selectionMode="single"
@@ -218,6 +228,10 @@ export function EventDateField(props: EventDateFieldProps) {
   const [open, setOpen] = createSignal(false);
   const [portalSearchRef, setPortalSearchRef] = createSignal<HTMLDivElement>();
   const selectedDate = () => parseLocalDate(props.value);
+  const selectedDateLabel = () => {
+    const date = selectedDate();
+    return date ? formatEventDateLabel(date) : undefined;
+  };
   const portalMount = () => {
     if (props.portalScope !== 'local') return undefined;
     return (
@@ -235,10 +249,12 @@ export function EventDateField(props: EventDateFieldProps) {
       slide
     >
       <Popover.Trigger
-        aria-label={`${props.label} date`}
+        aria-label={t('calendar.event.form.dateTime.dateLabel', {
+          field: props.label,
+        })}
         aria-describedby={props.describedBy}
         aria-invalid={props.invalid || undefined}
-        title={selectedDate() ? dateLabelFormatter.format(selectedDate()) : ''}
+        title={selectedDateLabel() ?? ''}
         disabled={props.disabled}
         class={cn(
           'flex min-w-0 items-center justify-start gap-1 truncate bg-transparent text-xs font-normal outline-none disabled:cursor-not-allowed',
@@ -251,7 +267,7 @@ export function EventDateField(props: EventDateFieldProps) {
       >
         <CalendarBlankIcon class="size-3 shrink-0 text-ink-extra-muted" />
         <span class="truncate">
-          {selectedDate() ? dateLabelFormatter.format(selectedDate()) : 'Date'}
+          {selectedDateLabel() ?? t('calendar.event.form.dateTime.date')}
         </span>
       </Popover.Trigger>
 
@@ -260,7 +276,9 @@ export function EventDateField(props: EventDateFieldProps) {
         <Layer depth={3}>
           <Popover.Content class="z-action-menu w-72 max-w-[calc(100vw-1rem)] rounded-xl border border-edge bg-menu p-3 shadow-menu menu-open-animation">
             <Popover.Title class="sr-only">
-              Choose {props.label.toLowerCase()} date
+              {t('calendar.event.form.dateTime.chooseDate', {
+                field: props.label,
+              })}
             </Popover.Title>
             <Calendar
               required

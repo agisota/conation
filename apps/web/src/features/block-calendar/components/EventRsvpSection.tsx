@@ -11,20 +11,18 @@ import { createMemo, createSignal, For, Show } from 'solid-js';
 type RsvpResponse = Exclude<AttendeeResponseStatus, 'needs_action'>;
 
 const RSVP_OPTIONS = [
-  { response: 'accepted', label: 'Yes' },
-  { response: 'tentative', label: 'Maybe' },
-  { response: 'declined', label: 'No' },
+  { response: 'accepted' },
+  { response: 'tentative' },
+  { response: 'declined' },
 ] as const satisfies readonly {
   response: RsvpResponse;
-  label: string;
 }[];
 
 const SCOPE_OPTIONS = [
-  { scope: 'this_event', label: 'This event' },
-  { scope: 'all', label: 'All events' },
+  { scope: 'this_event' },
+  { scope: 'all' },
 ] as const satisfies readonly {
   scope: CalendarRsvpScope;
-  label: string;
 }[];
 
 /**
@@ -56,7 +54,9 @@ export function EventRsvpSection(props: {
 
   const rsvp = useRsvpCalendarEventMutation({
     onError: (error) => {
-      toast.failure('Failed to update RSVP', { subtext: error.message });
+      toast.failure(t('calendar.rsvp.toast.updateFailed'), {
+        subtext: error.message,
+      });
     },
   });
 
@@ -97,7 +97,7 @@ export function EventRsvpSection(props: {
   return (
     <Show when={canRespond()}>
       <div class="border-edge-muted flex items-center gap-3 border-t bg-active px-4 py-2.5 text-sm text-ink-muted sm:text-xs">
-        <span>{t('auto.going')}</span>
+        <span>{t('calendar.rsvp.prompt')}</span>
         <div class="ml-auto flex shrink-0 gap-3 lg:gap-2">
           <For each={RSVP_OPTIONS}>
             {(option) => (
@@ -112,7 +112,7 @@ export function EventRsvpSection(props: {
                 class="rounded-lg px-3"
                 onClick={() => respond(option.response)}
               >
-                {option.label}
+                {t('calendar.rsvp.response', { response: option.response })}
               </Button>
             )}
           </For>
@@ -127,7 +127,9 @@ export function EventRsvpSection(props: {
             <Dialog.CloseButton as={Button} variant="ghost" size="icon-sm">
               <CloseIcon />
             </Dialog.CloseButton>
-            <Dialog.Title as="span" class="m-0 p-0 text-sm font-medium">{t('auto.rsvp_to_recurring_event')}</Dialog.Title>
+            <Dialog.Title as="span" class="m-0 p-0 text-sm font-medium">
+              {t('calendar.rsvp.recurringDialog.title')}
+            </Dialog.Title>
           </Panel.Header>
           <Panel.Body class="flex flex-col gap-3 p-3">
             <div class="flex max-w-80 flex-col gap-2 text-sm text-ink-muted">
@@ -140,7 +142,7 @@ export function EventRsvpSection(props: {
                       checked={scope() === option.scope}
                       onChange={() => setScope(option.scope)}
                     />
-                    {option.label}
+                    {t('calendar.rsvp.scope', { scope: option.scope })}
                   </label>
                 )}
               </For>
@@ -150,9 +152,11 @@ export function EventRsvpSection(props: {
                 variant="ghost"
                 class="rounded-lg"
                 onClick={() => setPendingResponse(undefined)}
-              >{t('common.cancel')}</Button>
+              >
+                {t('common.cancel')}
+              </Button>
               <Button variant="accent" class="rounded-lg" onClick={confirm}>
-                OK
+                {t('calendar.rsvp.confirm')}
               </Button>
             </div>
           </Panel.Body>

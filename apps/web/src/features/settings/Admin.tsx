@@ -1,5 +1,4 @@
 import { useSoupFilterPersistence } from '@app/features/next-soup/use-soup-filter-persistence';
-import { t } from '@app/lib/i18n';
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
 import {
   clearAllDebugSettings,
@@ -9,6 +8,7 @@ import {
   getDebugSetting,
   setDebugSetting,
 } from '@app/lib/debugSettings';
+import { t } from '@app/lib/i18n';
 import {
   ENABLE_SOUP_FILTER_PERSISTENCE_FLAG,
   ENABLE_SOUP_FILTER_PERSISTENCE_OVERRIDE,
@@ -45,8 +45,8 @@ export function Admin() {
 
   return (
     <SettingsPage
-      title={t('auto.debug')}
-      description="Local toggles for debugging — only visible to Macro staff."
+      title={t('settings.admin.title')}
+      description={t('settings.admin.description')}
       actions={
         <Button
           variant="outline"
@@ -54,7 +54,9 @@ export function Admin() {
           depth={3}
           disabled={!hasActiveSettings()}
           onClick={clearAllDebugSettings}
-        >{t('auto.reset_all')}</Button>
+        >
+          {t('settings.admin.resetAll')}
+        </Button>
       }
     >
       <Show when={soupFilterPersistenceFlag().enabled}>

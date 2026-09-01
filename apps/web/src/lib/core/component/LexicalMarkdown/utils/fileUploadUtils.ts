@@ -1,3 +1,5 @@
+import { t } from '@app/lib/i18n';
+import { Telemetry } from '@conation/observability';
 import type { BlockName } from '@core/block';
 import { toast } from '@core/component/Toast/Toast';
 import {
@@ -11,7 +13,6 @@ import {
   type UploadInput,
   uploadFiles,
 } from '@core/util/upload';
-import { Telemetry } from '@conation/observability';
 
 import { fileExtension } from '@service-storage/util/filename';
 import type { LexicalEditor } from 'lexical';
@@ -45,7 +46,7 @@ async function processInlineMediaFiles(
         constrainedMediaDimensions
       );
       if (!res.success) {
-        toast.failure('Invalid media attachment file(s)');
+        toast.failure(t('editor.upload.invalidMedia'));
       }
     } else if (ext != null && VIDEO_EXTENSIONS.includes(ext)) {
       const res = await addMediaFromFile(
@@ -55,7 +56,7 @@ async function processInlineMediaFiles(
         constrainedMediaDimensions
       );
       if (!res.success) {
-        toast.failure('Invalid media attachment file(s)');
+        toast.failure(t('editor.upload.invalidMedia'));
       }
     }
   }
@@ -131,7 +132,7 @@ async function onFilesReady(
       if (blockName) {
         const item = await documentUploadToItem(result);
         if (!item) {
-          toast.failure('Document upload failed or timed out');
+          toast.failure(t('editor.upload.documentFailed'));
           Telemetry.error(new Error('Document upload failed or timed out'));
           continue;
         }
@@ -147,7 +148,7 @@ async function onFilesReady(
     } else if (result.type === 'folder') {
       const item = await documentUploadToItem(result);
       if (!item) {
-        toast.failure('Folder upload failed or timed out');
+        toast.failure(t('editor.upload.folderFailed'));
         Telemetry.error(new Error('Folder upload failed or timed out'));
         continue;
       }

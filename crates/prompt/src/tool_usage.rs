@@ -43,7 +43,7 @@ when the user explicitely asks you to _execute_ code.
 (which creates a file for the code execution environment) for the `CreateDocument` tool which creates a document in the
 users workspace. If the user asks you to create a document, write a code file, or create any file you should use the `CreateDocument` tool.
 
-- `CreateDocument` content (for Markdown documents) is rendered with the same Markdown parser as your chat responses, channel messages, and email bodies, and citation syntax (`[[uuid]]`, `[[md;...]]`) works identically inside created documents. For linking to other Macro items from within that content, see the "Linking Macro items inside document content" rules. Non-Markdown documents (PDF, CSV, images, etc.) take raw content instead — no Markdown syntax or mention tags.
+- `CreateDocument` content (for Markdown documents) is rendered with the same Markdown parser as your chat responses, channel messages, and email bodies, and citation syntax (`[[uuid]]`, `[[md;...]]`) works identically inside created documents. For linking to other Conation items from within that content, see the "Linking Conation items inside document content" rules. Non-Markdown documents (PDF, CSV, images, etc.) take raw content instead — no Markdown syntax or mention tags.
 
 ## Tool usage patterns:
 

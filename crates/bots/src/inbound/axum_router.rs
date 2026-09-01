@@ -188,7 +188,7 @@ async fn create_bot_handler<
 ) -> Result<(StatusCode, Json<Bot>), BotsHandlerErr> {
     let bot = state
         .service
-        .create_bot(authorization.authorization.user.conation_user_id, req)
+        .create_bot(authorization.authorization.user.macro_user_id, req)
         .await?;
     Ok((StatusCode::CREATED, Json(bot)))
 }
@@ -204,7 +204,7 @@ async fn list_bots_handler<
     Ok(Json(
         state
             .service
-            .list_bots(authorization.authorization.user.conation_user_id)
+            .list_bots(authorization.authorization.user.macro_user_id)
             .await?,
     ))
 }
@@ -251,7 +251,7 @@ async fn get_bot_handler<
     Ok(Json(
         state
             .service
-            .get_bot(authorization.authorization.user.conation_user_id, path.bot_id)
+            .get_bot(authorization.authorization.user.macro_user_id, path.bot_id)
             .await?,
     ))
 }
@@ -270,7 +270,7 @@ async fn patch_bot_handler<
         state
             .service
             .patch_bot(
-                authorization.authorization.user.conation_user_id,
+                authorization.authorization.user.macro_user_id,
                 path.bot_id,
                 req,
             )
@@ -289,7 +289,7 @@ async fn delete_bot_handler<
 ) -> Result<StatusCode, BotsHandlerErr> {
     state
         .service
-        .delete_bot(authorization.authorization.user.conation_user_id, path.bot_id)
+        .delete_bot(authorization.authorization.user.macro_user_id, path.bot_id)
         .await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -307,7 +307,7 @@ async fn create_token_handler<
     let token = state
         .service
         .create_token(
-            authorization.authorization.user.conation_user_id,
+            authorization.authorization.user.macro_user_id,
             path.bot_id,
             req,
         )
@@ -327,7 +327,7 @@ async fn list_tokens_handler<
     Ok(Json(
         state
             .service
-            .list_tokens(authorization.authorization.user.conation_user_id, path.bot_id)
+            .list_tokens(authorization.authorization.user.macro_user_id, path.bot_id)
             .await?,
     ))
 }
@@ -344,7 +344,7 @@ async fn revoke_token_handler<
     state
         .service
         .revoke_token(
-            authorization.authorization.user.conation_user_id,
+            authorization.authorization.user.macro_user_id,
             path.bot_id,
             path.token_id,
         )
@@ -378,7 +378,7 @@ pub async fn list_bot_channels_handler<
     Path(path): Path<BotPath>,
 ) -> Result<Json<Vec<BotChannel>>, BotsHandlerErr> {
     let caller = match authorization.authorization {
-        MacroAuthorization::User(user) => BotChannelListCaller::User(user.conation_user_id),
+        MacroAuthorization::User(user) => BotChannelListCaller::User(user.macro_user_id),
         MacroAuthorization::Bot(bot) => BotChannelListCaller::Bot(bot.bot_id),
         MacroAuthorization::Internal(_) => BotChannelListCaller::Internal,
     };
@@ -416,7 +416,7 @@ pub async fn remove_bot_channel_handler<
     state
         .service
         .remove_bot_from_channel(
-            authorization.authorization.user.conation_user_id,
+            authorization.authorization.user.macro_user_id,
             path.channel_id,
             path.bot_id,
         )

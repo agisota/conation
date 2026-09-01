@@ -686,7 +686,7 @@ use utoipa::OpenApi;
         ),
     ),
     tags(
-            (name = "macro cloud storage service", description = "Macro Cloud Storage Service")
+            (name = "macro cloud storage service", description = "Conation Cloud Storage Service")
     )
 )]
 pub struct ApiDoc;

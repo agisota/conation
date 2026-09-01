@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { useGlobalNotificationSource } from '@components/app/GlobalAppState';
 import { SidePanel } from '@components/app/side-panel';
 import { useBlockId } from '@core/block';
@@ -201,7 +202,7 @@ function PrLoadErrorBanner(props: { loadFailed: Accessor<boolean> }) {
   return (
     <Show when={props.loadFailed()}>
       <div class="mt-6 px-3 py-2 rounded-lg border border-edge-muted text-xs text-ink-muted">
-        Couldn't load this pull request from cached GitHub data.
+        {t('pullRequest.error.loadCached')}
       </div>
     </Show>
   );

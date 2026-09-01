@@ -1,4 +1,5 @@
 /** File-type mutations used by document entities. */
+import { t } from '@app/lib/i18n';
 import { setFileType } from '@core/component/FileList/itemOperations';
 import { toast } from '@core/component/Toast/Toast';
 import { setHistoryItemFileType } from '@queries/history/history';
@@ -65,7 +66,7 @@ export function createUpdateFileTypeMutation() {
       return performOptimisticFileTypeUpdate(id, fileType);
     },
     onError: (_error, { id, oldFileType }, context) => {
-      toast.failure('Failed to update file type');
+      toast.failure(t('entity.feedback.fileTypeUpdateFailed'));
       if (context) {
         rollbackFileTypeUpdate(id, oldFileType, context.soupTransaction);
         return false;

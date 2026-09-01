@@ -16,7 +16,6 @@ export const AnimatedGearIcon = (props: { triggerAnimation?: boolean }) => {
       overflow="visible"
       class={`animated-gear-icon ${props.triggerAnimation ? 'animating' : ''}`}
     >
-      {/*<title>{t('auto.animated_gear_icon')}</title>*/}
       <style>{`
         @keyframes gear-rotate {
           0%   { transform: rotate(0deg); }

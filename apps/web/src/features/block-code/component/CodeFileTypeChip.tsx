@@ -1,5 +1,5 @@
-import { useBlockId } from '@core/block';
 import { t } from '@app/lib/i18n';
+import { useBlockId } from '@core/block';
 import { FileTypeChip } from '@core/component/FileTypeChip';
 import { blockMetadataSignal } from '@core/signal/load';
 import { useCanEdit } from '@core/signal/permissions';
@@ -95,7 +95,7 @@ export function CodeFileTypeChip() {
                 <input
                   ref={searchRef}
                   type="text"
-                  placeholder={t('auto.search')}
+                  placeholder={t('code.language.search')}
                   class="w-full bg-transparent text-xs outline-none placeholder:text-ink-placeholder"
                   value={search()}
                   onInput={(e) => setSearch(e.currentTarget.value)}
@@ -124,7 +124,9 @@ export function CodeFileTypeChip() {
                   )}
                 </For>
                 <Show when={filteredFileTypes().length === 0}>
-                  <div class="px-2 py-1 text-xs text-ink-muted">{t('auto.no_results')}</div>
+                  <div class="px-2 py-1 text-xs text-ink-muted">
+                    {t('code.language.noResults')}
+                  </div>
                 </Show>
               </div>
             </Popover.Content>

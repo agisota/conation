@@ -1,5 +1,5 @@
-import { ItemPreview } from '@core/component/ItemPreview';
 import { t } from '@app/lib/i18n';
+import { ItemPreview } from '@core/component/ItemPreview';
 import type { ItemType } from '@service-storage/client';
 import { cn } from '@ui';
 import { For, Show } from 'solid-js';
@@ -154,7 +154,11 @@ export function Timeline(props: TimelineProps) {
 
       <Show
         when={events().length > 0}
-        fallback={<span class={cn('text-xs', TEXT.secondary)}>{t('auto.no_events')}</span>}
+        fallback={
+          <span class={cn('text-xs', TEXT.secondary)}>
+            {t('dynamicUi.widgets.timeline.empty')}
+          </span>
+        }
       >
         <ol class="flex w-full flex-col gap-0">
           <For each={events()}>

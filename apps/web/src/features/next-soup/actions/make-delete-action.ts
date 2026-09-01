@@ -1,4 +1,5 @@
 import { openBulkEditModal } from '@app/features/entity/bulk-edit/BulkEditEntityModal';
+import { t } from '@app/lib/i18n';
 import { globalSplitManager } from '@app/signal/splitLayout';
 import { globalRemoveFromSplitHistory } from '@components/app/split-layout/layoutUtils';
 import { toast } from '@core/component/Toast/Toast';
@@ -41,9 +42,7 @@ export const makeDeleteAction = (options: MakeDeleteOptions) => {
         );
       }
       toast.success(
-        reminders.length > 1
-          ? `Deleted ${reminders.length} reminders`
-          : 'Reminder deleted'
+        t('soup.toast.remindersDeleted', { count: reminders.length })
       );
     } catch {
       // createBulkDeleteDssItemsMutation already toasts and restores the rows.
@@ -86,9 +85,7 @@ export const makeDeleteAction = (options: MakeDeleteOptions) => {
             entityIdSet.has(entry.id)
           );
         }
-        toast.success(
-          rest.length > 1 ? `Deleted ${rest.length} items` : 'Deleted'
-        );
+        toast.success(t('soup.toast.deleted', { count: rest.length }));
       },
     });
   };
@@ -129,19 +126,17 @@ export const makeDeleteAction = (options: MakeDeleteOptions) => {
       }
 
       const toastId = toast.success(
-        emailEntities.length > 1
-          ? `Moved ${emailEntities.length} items to Trash`
-          : 'Moved to Trash',
+        t('soup.toast.movedToTrash', { count: emailEntities.length }),
         {
           actions: [
             {
-              label: 'Undo',
+              label: t('soup.actions.undo'),
               icon: ArrowCounterClockwise,
               onClick: () => {
                 if (toastId != null) toast.dismiss(toastId);
                 handle.undo().then(
-                  () => toast.success('Restored from Trash'),
-                  () => toast.failure('Failed to restore from Trash')
+                  () => toast.success(t('soup.toast.restoredFromTrash')),
+                  () => toast.failure(t('soup.toast.restoreFromTrashFailed'))
                 );
               },
             },
@@ -152,7 +147,7 @@ export const makeDeleteAction = (options: MakeDeleteOptions) => {
 
       // Surface background API failures
       handle.done.catch(() => {
-        toast.failure('Failed to move to Trash');
+        toast.failure(t('soup.toast.moveToTrashFailed'));
       });
 
       restoreSoupFocus(nextRow?.id);
@@ -174,9 +169,7 @@ export const makeDeleteAction = (options: MakeDeleteOptions) => {
           }
 
           toast.success(
-            nonEmailEntities.length > 1
-              ? `Deleted ${nonEmailEntities.length} items`
-              : 'Deleted'
+            t('soup.toast.deleted', { count: nonEmailEntities.length })
           );
 
           if (emailEntities.length > 0) {

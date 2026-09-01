@@ -1725,7 +1725,7 @@ export const mcpAuthCallback = async (
 };
 
 /**
- * @summary Return Macro's public OAuth Client ID Metadata Document.
+ * @summary Return Conation's public OAuth Client ID Metadata Document.
  */
 export type mcpOauthClientMetadataResponse200 = {
   data: void;

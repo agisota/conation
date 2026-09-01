@@ -15,7 +15,7 @@ async fn insert_link_needing_reauth(pool: &PgPool) -> Uuid {
     sqlx::query!(
         r#"
         INSERT INTO email_links (
-            id, conation_id, fusionauth_user_id, email_address, provider, needs_reauth
+            id, macro_id, fusionauth_user_id, email_address, provider, needs_reauth
         )
         VALUES ($1, $2, $2, $3, 'GMAIL', true)
         "#,

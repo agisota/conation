@@ -2,8 +2,8 @@
  * @vitest-environment jsdom
  */
 
-import { render, screen } from '@solidjs/testing-library';
 import { t } from '@app/lib/i18n';
+import { render, screen } from '@solidjs/testing-library';
 import { QueryClient, QueryClientProvider } from '@tanstack/solid-query';
 import { ok } from 'neverthrow';
 import { beforeEach, describe, expect, it, vi } from 'vitest';

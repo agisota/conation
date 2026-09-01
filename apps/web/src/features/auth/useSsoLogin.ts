@@ -1,5 +1,6 @@
 import type { AnalyticsProvider } from '@app/lib/analytics';
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { SERVER_HOSTS } from '@core/constant/servers';
 import { useEmailLinks } from '@core/email-link';
@@ -60,7 +61,7 @@ export function useSsoLogin(opts?: { signupMode?: boolean }) {
         // A canceled sheet is a deliberate user action, not a failure.
         if (result.error !== 'User canceled login') {
           console.error('Authentication failed:', result.error);
-          toast.failure('Sign-in failed. Please try again.');
+          toast.failure(t('auth.errors.signInFailed'));
         }
         return;
       }
@@ -85,7 +86,7 @@ export function useSsoLogin(opts?: { signupMode?: boolean }) {
         );
       } else {
         console.error('Failed to redeem session code', res.error);
-        toast.failure('Sign-in failed. Please try again.');
+        toast.failure(t('auth.errors.signInFailed'));
       }
 
       analytics.track(analyticsEvent, { method: idp_name }, analyticsProviders);

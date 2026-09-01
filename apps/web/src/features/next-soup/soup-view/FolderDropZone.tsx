@@ -1,5 +1,5 @@
-import { useHandleFileUpload } from '@app/util/handleFileUpload';
 import { t } from '@app/lib/i18n';
+import { useHandleFileUpload } from '@app/util/handleFileUpload';
 import { useMaybeBlockId, useMaybeBlockName } from '@core/block';
 import { fileSelector } from '@core/directive/fileSelector';
 import { folderSelector } from '@core/directive/folderSelector';
@@ -25,9 +25,9 @@ export function FolderDropZone() {
   return (
     <Show when={!isMobile()}>
       <div class="drop-zone flex w-full flex-col items-center justify-center rounded-md border border-dashed border-edge-muted bg-hover py-8">
-        <p class="text-ink-muted">Drag & drop files and folders here</p>
+        <p class="text-ink-muted">{t('soup.upload.dropFilesAndFolders')}</p>
         <p class="text-ink-muted">
-          or{' '}
+          {t('soup.upload.or')}{' '}
           <button
             type="button"
             use:fileSelector={{
@@ -37,7 +37,9 @@ export function FolderDropZone() {
               },
             }}
             class="border-0 bg-transparent p-0 font-[inherit] text-inherit underline"
-          >{t('auto.upload_files')}</button>{' '}
+          >
+            {t('soup.upload.files')}
+          </button>{' '}
           /{' '}
           <button
             type="button"
@@ -47,7 +49,9 @@ export function FolderDropZone() {
               },
             }}
             class="border-0 bg-transparent p-0 font-[inherit] text-inherit underline"
-          >{t('auto.upload_folders')}</button>
+          >
+            {t('soup.upload.folders')}
+          </button>
         </p>
       </div>
     </Show>

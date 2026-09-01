@@ -1,5 +1,5 @@
-import { UnfurlLink } from '@core/component/Link';
 import { t } from '@app/lib/i18n';
+import { UnfurlLink } from '@core/component/Link';
 import { ScopedPortal } from '@core/component/ScopedPortal';
 import { toast } from '@core/component/Toast/Toast';
 import clickOutside from '@core/directive/clickOutside';
@@ -177,7 +177,7 @@ export function FloatingLinkMenu(props: {
     if (!pendingLinkInfo()) return;
     try {
       navigator.clipboard.writeText(pendingLinkInfo()!.url || '');
-      toast.success('Copied link to clipboard');
+      toast.success(t('editor.link.copied'));
     } catch {}
   };
 
@@ -441,7 +441,7 @@ export function FloatingLinkMenu(props: {
                   onClick={openInNewTab}
                   variant="accent"
                   size="icon-sm"
-                  tooltip="Open in new tab"
+                  tooltip={t('editor.link.openInNewTab')}
                 >
                   <NewTab />
                 </Button>
@@ -449,7 +449,7 @@ export function FloatingLinkMenu(props: {
                   onClick={handleEditClick}
                   variant="ghost"
                   size="icon-sm"
-                  tooltip="Edit link"
+                  tooltip={t('editor.link.edit')}
                 >
                   <Pencil />
                 </Button>
@@ -457,7 +457,7 @@ export function FloatingLinkMenu(props: {
                   onClick={copyLink}
                   variant="ghost"
                   size="icon-sm"
-                  tooltip="Copy link"
+                  tooltip={t('editor.link.copy')}
                 >
                   <Copy />
                 </Button>
@@ -465,7 +465,7 @@ export function FloatingLinkMenu(props: {
                   onClick={handleUnlink}
                   variant="ghost"
                   size="icon-sm"
-                  tooltip="Remove link"
+                  tooltip={t('editor.link.remove')}
                 >
                   <Trash />
                 </Button>
@@ -493,7 +493,7 @@ export function FloatingLinkMenu(props: {
                   });
                 }}
                 onFocus={() => setIsEditing(true)}
-                placeholder={t('auto.link_text')}
+                placeholder={t('editor.link.textPlaceholder')}
                 class="min-w-0 grow bg-transparent text-ink outline-none placeholder:text-ink-placeholder"
               />
             </div>
@@ -509,10 +509,12 @@ export function FloatingLinkMenu(props: {
               onClick={handleSubmit}
               variant="cta"
               size="sm"
-              tooltip="Apply link changes"
+              tooltip={t('editor.link.applyChanges')}
               disabled={!pendingLinkInfo()?.url && !pendingLinkInfo()?.linkText}
             >
-              <Check />{t('auto.apply')}</Button>
+              <Check />
+              {t('editor.link.apply')}
+            </Button>
           </div>
         </MenuWrapper>
       </Match>

@@ -51,7 +51,7 @@ pub struct CreateCheckoutSessionV2Request {
         (status = 500, body = ErrorResponse),
     )
 )]
-#[tracing::instrument(skip(ctx, user, optional_team), err, fields(user_id = %user.authorization.user.conation_user_id))]
+#[tracing::instrument(skip(ctx, user, optional_team), err, fields(user_id = %user.authorization.user.macro_user_id))]
 pub async fn create_checkout_session<Eas: EntityAccessService>(
     State(ctx): State<ApiContext>,
     user: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
@@ -61,7 +61,7 @@ pub async fn create_checkout_session<Eas: EntityAccessService>(
     // Get the stripe customer ID from the database
     let stripe_customer_id = conation_db_client::user::get::get_stripe_customer_id_by_user_id(
         &ctx.db,
-        &user.authorization.user.conation_user_id,
+        &user.authorization.user.macro_user_id,
     )
     .await?
     .ok_or(StripeOperationError::MissingStripeId)?;
@@ -120,7 +120,7 @@ pub async fn create_checkout_session<Eas: EntityAccessService>(
 
         metadata.insert(
             "owner_id".to_string(),
-            user.authorization.user.conation_user_id.to_string(),
+            user.authorization.user.macro_user_id.to_string(),
         );
     }
 

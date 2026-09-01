@@ -4,7 +4,7 @@ use crate::MacroCache;
 pub static MACRO_CREATE_USER_HOURLY_EXPIRY_SECONDS: i64 = 60 * 60; // 1 hour in seconds
 
 /// Generates the rate limit key for creating user for a given ip
-conation_rules! conation_create_user_rate_limit_hourly {
+macro_rules! conation_create_user_rate_limit_hourly {
     ($ip:expr) => {
         format!("rtl_create_user_hourly:{}", $ip)
     };

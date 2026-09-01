@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { SERVER_HOSTS } from '@core/constant/servers';
 import { platformFetch } from '@core/util/platformFetch';
 import { authServiceClient } from '@service-auth/client';
@@ -28,7 +29,9 @@ async function isPasswordLogin(email?: string | null) {
 // Redirecting to the requested identity provider endpoint.
 export const sendEmailCode = action(async (formData: FormData) => {
   const email = formData.get('email');
-  if (!email || typeof email !== 'string') throw new Error('Invalid email');
+  if (!email || typeof email !== 'string') {
+    throw new Error(t('auth.errors.invalidEmail'));
+  }
 
   if (typeof email === 'string' && (await isPasswordLogin(email))) {
     const password = formData.get('password');
@@ -39,9 +42,7 @@ export const sendEmailCode = action(async (formData: FormData) => {
       email,
     });
     if (maybeTokens.isErr())
-      throw new Error(
-        'Failed to login. Check your email and password then try again.'
-      );
+      throw new Error(t('auth.errors.passwordLoginFailed'));
 
     return 'LoggedIn';
   }
@@ -75,7 +76,7 @@ export const sendEmailCode = action(async (formData: FormData) => {
       typeof body.idp_id !== 'string' ||
       !body.idp_id
     ) {
-      throw new Error('Unable to start SSO login for this email.');
+      throw new Error(t('auth.errors.ssoUnavailable'));
     }
     const ssoUrl = new URL(`${SERVER_HOSTS['auth-service']}/login/sso`);
     ssoUrl.searchParams.set('idp_id', body.idp_id);

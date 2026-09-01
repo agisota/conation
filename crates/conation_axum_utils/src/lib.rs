@@ -1,5 +1,5 @@
-#[conation_export]
-conation_rules! compose_layers {
+#[macro_export]
+macro_rules! compose_layers {
     ($($layer:expr),+ $(,)?) => {
         {
             use tower::ServiceBuilder;

@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { globalSplitManager } from '@app/signal/splitLayout';
 import { useGlobalNotificationSource } from '@components/app/GlobalAppState';
 import { useSplitPanel } from '@components/app/split-layout/layoutUtils';
@@ -151,7 +152,7 @@ export function NotificationStackRow(props: {
             <Show when={canMarkDone()}>
               <Button
                 onClick={handleMarkAsDone}
-                tooltip={'Mark done'}
+                tooltip={t('notifications.actions.markDone')}
                 class="rounded text-ink-muted hover:text-accent hover:bg-accent/10 hidden group-hover/notif:grid p-0 place-items-center size-5"
               >
                 <CheckIcon class="size-3" />
@@ -164,10 +165,19 @@ export function NotificationStackRow(props: {
         <div onClick={(e) => e.stopPropagation()}>
           <ContextMenuContent class="text-xs text-ink-muted">
             <Show when={canMarkDone()}>
-              <MenuItem text="Mark Done" onClick={() => handleMarkAsDone()} />
+              <MenuItem
+                text={t('notifications.actions.markDone')}
+                onClick={() => handleMarkAsDone()}
+              />
             </Show>
-            <MenuItem text="Mark Read" onClick={handleMarkAsRead} />
-            <MenuItem text="Copy Link" onClick={handleCopyLink} />
+            <MenuItem
+              text={t('notifications.actions.markRead')}
+              onClick={handleMarkAsRead}
+            />
+            <MenuItem
+              text={t('notifications.actions.copyLink')}
+              onClick={handleCopyLink}
+            />
           </ContextMenuContent>
         </div>
       </ContextMenu.Portal>

@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { createTaskWithInitialSnapshot } from '@core/util/create';
 import { filterMap } from '@core/util/list';
@@ -86,7 +87,7 @@ export async function createTaskWithProperties(
   });
 
   if (!createdTask) {
-    toast.failure('Failed to create Task');
+    toast.failure(t('markdown.task.createFailed'));
     return null;
   }
 

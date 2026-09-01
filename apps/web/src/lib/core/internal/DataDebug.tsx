@@ -1,5 +1,4 @@
 import { Bar } from '@core/component/TopBar/Bar';
-import { t } from '@app/lib/i18n';
 import { useContacts } from '@core/user';
 import Refresh from '@phosphor-icons/core/regular/arrow-clockwise.svg?component-solid';
 import Copy from '@phosphor-icons/core/regular/copy.svg?component-solid';
@@ -51,12 +50,12 @@ function SignalDebugCard(props: SignalDebugCardProps) {
       </div>
       <div class="border-t border-edge mt-3 pt-3">
         <details>
-          <summary class="text-accent text-sm">{t('auto.raw_json')}</summary>
+          <summary class="text-accent text-sm">Raw JSON</summary>
           <div class="mt-2 relative">
             <button
               onClick={copyToClipboard}
               class="absolute top-2 right-2 p-1 rounded bg-panel hover:bg-lift text-ink-muted hover:text-ink transition-colors z-10"
-              title={t('auto.copy_to_clipboard')}
+              title="Copy to clipboard"
             >
               <Copy class="size-4" />
             </button>
@@ -84,11 +83,15 @@ const DataDebug: Component = () => {
     <div class="flex flex-col size-full">
       <Bar
         left={
-          <div class="p-2 text-sm w-2xl truncate">{t('auto.global_signals_data_debug')}</div>
+          <div class="p-2 text-sm w-2xl truncate">
+            Global Signals Data Debug
+          </div>
         }
         center={
           <Button variant="outline" onClick={handleRefresh}>
-            <Refresh />{t('auto.refresh')}</Button>
+            <Refresh />
+            Refresh
+          </Button>
         }
       ></Bar>
       <div class="flex flex-col gap-6 p-6 overflow-scroll">

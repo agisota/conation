@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { globalSplitManager } from '@app/signal/splitLayout';
 import { toast } from '@core/component/Toast/Toast';
 import {
@@ -27,7 +28,7 @@ export function usePendingNotificationNavigationEffect(
         ).match(
           () => {},
           () => {
-            toast.failure('Failed to open notification.');
+            toast.failure(t('notifications.feedback.openFailed'));
           }
         );
       }

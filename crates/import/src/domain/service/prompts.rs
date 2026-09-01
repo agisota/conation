@@ -46,7 +46,7 @@ pub fn gather_system(source: ImportSource) -> String {
         ),
     };
     format!(
-        "You are discovering {what} so they can be imported into Macro, the user's new \
+        "You are discovering {what} so they can be imported into Conation, the user's new \
          workspace.\n\
          \n\
          Use the connected tools to find 8-15 strong candidates: recently active, substantive, \
@@ -85,7 +85,7 @@ pub fn gather_prompt(source: ImportSource) -> &'static str {
 
 /// System prompt for the Notion import session.
 pub const NOTION_IMPORT_SYSTEM: &str = "You are importing Notion pages the user accepted into \
-    Macro, their new workspace.\n\
+    Conation, their new workspace.\n\
     \n\
     Work through the listed pages ONE AT A TIME, in order. For each page:\n\
     1. Fetch its content by URL or page id with the canonical Notion `notion-fetch` tool (named \
@@ -101,25 +101,25 @@ pub const NOTION_IMPORT_SYSTEM: &str = "You are importing Notion pages the user 
     may wrap the source as `<page><properties>...</properties><content>...</content></page>`; use \
     only the contents of `<content>` for the body and map `<properties>` separately. If no body \
     content was fetched, skip the page rather than fabricating content.\n\
-    3. Convert Notion's enhanced markdown to clean Macro markdown. Preserve headings, lists, \
+    3. Convert Notion's enhanced markdown to clean Conation markdown. Preserve headings, lists, \
     checkboxes, formatting, and image URLs. Never copy raw Notion XML-like tags into the result. \
-    Macro has no toggle block: remove markers such as `{toggle=\"true\"}` and `<details>` / \
+    Conation has no toggle block: remove markers such as `{toggle=\"true\"}` and `<details>` / \
     `<summary>` wrappers while retaining and de-indenting the toggle title and body as ordinary \
     markdown. Convert Notion user/date mentions to readable text, file blocks to markdown links, \
     and callouts to blockquotes.\n\
-    4. Macro does not support Notion databases. Remove every `<database>` and \
+    4. Conation does not support Notion databases. Remove every `<database>` and \
     `<mention-database>` block or reference completely; do not turn it into a link, table, or \
     prose. If the fetched object is itself a database, or the page is mostly database with \
     little substantive non-database body content, skip the whole page and do NOT call \
     `FinalizeImport` for it.\n\
     5. Convert every `<page>`, `<mention-page>`, and `<ancestor-N-page>` reference \
     into a normal markdown link: `[visible title](notion URL)`. The destination may not be \
-    imported into Macro, so keep it as an external Notion URL; never invent a Macro entity id. \
+    imported into Conation, so keep it as an external Notion URL; never invent a Conation entity id. \
     If a reference has no title, use `Notion page` as its visible text.\n\
     6. Convert every Notion `<table>` to a rectangular pipe table. Use one `| ... |` line per \
     row and put `| --- | ... |` immediately after the first row. Every row must have the same \
     cell count. Represent line breaks or lists inside a cell with the two literal characters \
-    `\\n` so the Macro Lexical transformer can reconstruct rich cell content; encode a literal \
+    `\\n` so the Conation Lexical transformer can reconstruct rich cell content; encode a literal \
     pipe inside a cell as `&#124;`. Do not emit `<table>`, `<tr>`, `<td>`, `<colgroup>`, or \
     `<col>` tags.\n\
     7. Read the fetched page's `properties` map. Put properties named Tags, Tag, Labels, or \

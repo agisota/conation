@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import {
   defineBlock,
   type ExtractLoadType,
@@ -25,12 +26,31 @@ import type { MarkdownRewriteOutput } from './signal/rewriteSignal';
 
 export const definition = defineBlock({
   name: 'md',
-  description: 'write markdown notes',
-  defaultFilename: 'New Note',
+  get description() {
+    return t('markdown.document.description');
+  },
+  get defaultFilename() {
+    return t('markdown.document.newNote');
+  },
   aliases: [
-    { name: 'task', defaultFileName: 'New Task' },
-    { name: 'snippet', defaultFileName: 'New Snippet' },
-    { name: 'skill', defaultFileName: 'New Skill' },
+    {
+      name: 'task',
+      get defaultFileName() {
+        return t('markdown.task.new');
+      },
+    },
+    {
+      name: 'snippet',
+      get defaultFileName() {
+        return t('markdown.snippet.new');
+      },
+    },
+    {
+      name: 'skill',
+      get defaultFileName() {
+        return t('markdown.skill.new');
+      },
+    },
   ],
   component: MarkdownBlock,
   accepted: {

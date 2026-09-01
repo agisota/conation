@@ -7,7 +7,6 @@ import {
   useCalendarPager,
 } from '@app/features/calendar/components/CalendarPagerContext';
 import { useCalendarView } from '@app/features/calendar/components/CalendarViewContext';
-import { t } from '@app/lib/i18n';
 import { calendarSelectionToEditorInitialValues } from '@app/features/calendar/components/composer/event-form-model';
 import {
   type CalendarOccurrenceData,
@@ -26,6 +25,7 @@ import {
   scrollEventChipIntoView,
   timeGridScroller,
 } from '@app/features/calendar/utils/time-grid-scroller';
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { ScrollIndicators } from '@core/component/VerticalScrollIndicators';
 import { isMobile } from '@core/mobile/isMobile';
@@ -155,22 +155,26 @@ function CalendarPageDataStatus(props: { data: CalendarOccurrenceData }) {
             when={!props.data.occurrencesQuery.isError}
             fallback={
               <div class="flex max-w-sm flex-col items-center gap-3">
-                <div class="text-sm font-semibold text-ink">{t('auto.calendar_unavailable')}</div>
+                <div class="text-sm font-semibold text-ink">
+                  {t('calendar.status.unavailable.title')}
+                </div>
                 <p class="text-xs text-ink-muted">
-                  We couldn’t load your calendar events. Try again.
+                  {t('calendar.status.unavailable.description')}
                 </p>
                 <Button
                   variant="accent"
                   size="sm"
-                  label="Retry loading calendar"
+                  label={t('calendar.status.retryLoading')}
                   onClick={() => void props.data.occurrencesQuery.refetch()}
-                >{t('common.retry')}</Button>
+                >
+                  {t('common.retry')}
+                </Button>
               </div>
             }
           >
             <div class="flex items-center gap-2 text-xs text-ink-muted">
               <SpinnerIcon class="size-4 animate-spin" />
-              <span>Syncing calendar…</span>
+              <span>{t('calendar.status.syncingCalendar')}</span>
             </div>
           </Show>
         </div>
@@ -178,7 +182,9 @@ function CalendarPageDataStatus(props: { data: CalendarOccurrenceData }) {
 
       <Show when={showLoading()}>
         <div class="absolute top-2 left-2 z-10 flex items-center gap-1.5 rounded-full border border-edge-muted bg-surface px-2.5 py-1 text-xs text-ink-muted shadow-menu">
-          <SpinnerIcon class="size-3 animate-spin" />{t('auto.loading')}</div>
+          <SpinnerIcon class="size-3 animate-spin" />
+          {t('calendar.status.loading')}
+        </div>
       </Show>
 
       <Show
@@ -191,7 +197,9 @@ function CalendarPageDataStatus(props: { data: CalendarOccurrenceData }) {
         }
       >
         <div class="absolute right-2 bottom-2 z-10 flex items-center gap-1.5 rounded-full border border-edge-muted bg-surface px-2.5 py-1 text-xs text-ink-muted shadow-menu">
-          <SpinnerIcon class="size-3 animate-spin" />{t('auto.syncing')}</div>
+          <SpinnerIcon class="size-3 animate-spin" />
+          {t('calendar.status.syncing')}
+        </div>
       </Show>
     </>
   );
@@ -286,7 +294,7 @@ export function Page(props: {
       {
         onError: (error) => {
           change.revert();
-          toast.failure('Failed to update event', {
+          toast.failure(t('calendar.event.toast.updateFailed'), {
             subtext: error.message,
           });
         },

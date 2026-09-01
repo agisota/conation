@@ -184,7 +184,7 @@ pub async fn ensure_thread_share_permission(pool: &PgPool, thread_id: &str) -> a
     let thread_uuid = conation_uuid::string_to_uuid(thread_id).context("invalid thread id")?;
     let owner_id = sqlx::query_scalar!(
         r#"
-        SELECT l.conation_id as "conation_id!"
+        SELECT l.macro_id as "macro_id!"
         FROM email_threads t
         JOIN email_links l ON t.link_id = l.id
         WHERE t.id = $1
@@ -193,7 +193,7 @@ pub async fn ensure_thread_share_permission(pool: &PgPool, thread_id: &str) -> a
     )
     .fetch_optional(pool)
     .await
-    .with_context(|| format!("failed to fetch conation_id for thread ID {thread_id}"))?
+    .with_context(|| format!("failed to fetch macro_id for thread ID {thread_id}"))?
     .context("thread not found")?;
     let owner_id = MacroUserIdStr::parse_from_str(&owner_id)
         .context("invalid thread owner macro user id")?

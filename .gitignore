@@ -31,6 +31,8 @@ run-local.fish
 # Per-instance generated local-stack artifacts (compose override, env, kickstart, Caddyfile).
 infra/local/generated/
 **/target/
+/target
+/previous.md
 **/ai_tools/schemas/
 .pi/outputs/
 .commandcode/

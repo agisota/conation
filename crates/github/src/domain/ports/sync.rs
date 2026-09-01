@@ -61,7 +61,7 @@ pub trait GithubSyncRepo: Send + Sync + 'static {
     /// A GitHub user ID absent from the result has no link; a GitHub user ID may map to
     /// multiple Macro users because `github_links.github_user_id` is not unique (many Macro
     /// users may share one GitHub account).
-    fn get_conation_ids_by_github_user_ids(
+    fn get_macro_ids_by_github_user_ids(
         &self,
         github_user_ids: &[String],
     ) -> impl Future<Output = Result<std::collections::HashMap<String, Vec<String>>, Self::Err>> + Send;
@@ -71,7 +71,7 @@ pub trait GithubSyncRepo: Send + Sync + 'static {
     /// Logins are matched case-insensitively and returned lowercased. A login absent
     /// from the result has no link; a login may map to multiple Macro users because
     /// `github_links.github_username` is not unique.
-    fn get_conation_ids_by_github_logins(
+    fn get_macro_ids_by_github_logins(
         &self,
         github_logins: &[String],
     ) -> impl Future<Output = Result<std::collections::HashMap<String, Vec<String>>, Self::Err>> + Send;
@@ -79,7 +79,7 @@ pub trait GithubSyncRepo: Send + Sync + 'static {
     /// Returns all team IDs the given macro user belongs to.
     fn get_user_team_ids(
         &self,
-        conation_id: &str,
+        macro_id: &str,
     ) -> impl Future<Output = Result<Vec<uuid::Uuid>, Self::Err>> + Send;
 
     /// Returns the Macro sources associated with a GitHub App installation.
@@ -238,7 +238,7 @@ pub trait GithubSyncService: Send + Sync + 'static {
     /// Begins an authenticated GitHub App installation setup flow.
     fn begin_installation_setup(
         &self,
-        _conation_user_id: &MacroUserIdStr<'_>,
+        _macro_user_id: &MacroUserIdStr<'_>,
         _team_id: Option<uuid::Uuid>,
     ) -> impl Future<Output = Result<String, GithubError>> + Send {
         async {

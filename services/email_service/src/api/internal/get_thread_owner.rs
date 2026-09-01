@@ -16,7 +16,7 @@ pub async fn handler(
     _: MacroAuthorizationExtractor<AuthorizationService, InternalOnly>,
     Path(thread_id): Path<Uuid>,
 ) -> Result<Response, Response> {
-    let user_id = email_db_client::threads::get::get_conation_id_from_thread_id(&ctx.db, thread_id)
+    let user_id = email_db_client::threads::get::get_macro_id_from_thread_id(&ctx.db, thread_id)
         .await
         .map_err(|e| {
             tracing::error!(error=?e, "unable to get owner for thread");

@@ -1,5 +1,5 @@
+import { getDateLocale, t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
-import { t } from '@app/lib/i18n';
 import { useContacts } from '@core/user';
 import { createTask } from '@core/util/create';
 import { parseCsv } from '@core/util/csv';
@@ -23,6 +23,34 @@ function normalize(s: string): string {
 
 function lower(s: string): string {
   return normalize(s).toLowerCase();
+}
+
+function localizeCsvError(error: string): string {
+  switch (error) {
+    case 'CSV is empty':
+      return t('integrations.linear.csv.errors.empty');
+    case 'CSV has an unterminated quote':
+      return t('integrations.linear.csv.errors.unterminatedQuote');
+    case 'CSV is missing a header row':
+      return t('integrations.linear.csv.errors.missingHeader');
+    case 'CSV contains an empty header column':
+      return t('integrations.linear.csv.errors.emptyHeader');
+    default:
+      return error;
+  }
+}
+
+function localizeWarning(warning: string): string {
+  if (warning === 'Missing Title') {
+    return t('integrations.linear.warnings.missingTitle');
+  }
+  const assigneePrefix = 'Assignee not mapped: ';
+  if (warning.startsWith(assigneePrefix)) {
+    return t('integrations.linear.warnings.assigneeNotMapped', {
+      assignee: warning.slice(assigneePrefix.length),
+    });
+  }
+  return warning;
 }
 
 export default function ImportLinear() {
@@ -60,7 +88,7 @@ export default function ImportLinear() {
       const a = normalize(r['Assignee'] ?? '');
       if (a) set.add(a);
     }
-    return [...set].sort((a, b) => a.localeCompare(b));
+    return [...set].sort((a, b) => a.localeCompare(b, getDateLocale()));
   });
 
   const contactOptions = createMemo(() => {
@@ -73,7 +101,7 @@ export default function ImportLinear() {
         email: c.email,
         name: c.name,
       }))
-      .sort((a, b) => a.label.localeCompare(b.label));
+      .sort((a, b) => a.label.localeCompare(b.label, getDateLocale()));
   });
 
   createEffect(() => {
@@ -190,8 +218,12 @@ export default function ImportLinear() {
 
       setCreatedIds(createdList);
       setProgress({ type: 'done', created, skipped, failed });
-      toast.success(`Imported ${created} tasks`);
-      if (failed > 0) toast.failure(`${failed} tasks failed to import`);
+      toast.success(
+        t('integrations.linear.toast.imported', { count: created })
+      );
+      if (failed > 0) {
+        toast.failure(t('integrations.linear.toast.failed', { count: failed }));
+      }
     } finally {
       setIsImporting(false);
     }
@@ -201,7 +233,9 @@ export default function ImportLinear() {
     <div class="flex flex-col size-full">
       <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
         <div class="flex items-center justify-between">
-          <div class="text-lg font-medium text-ink">{t('auto.import_linear_csv')}</div>
+          <div class="text-lg font-medium text-ink">
+            {t('integrations.linear.title')}
+          </div>
           <Button
             variant="outline"
             onClick={() => {
@@ -212,13 +246,17 @@ export default function ImportLinear() {
               setProgress({ type: 'idle' });
               setAssigneeMapping(reconcile({}));
             }}
-          >{t('auto.clear')}</Button>
+          >
+            {t('integrations.linear.actions.clear')}
+          </Button>
         </div>
 
         <div class="flex flex-col gap-2">
-          <label class="text-sm text-ink-muted">{t('auto.csv_file')}</label>
+          <label class="text-sm text-ink-muted">
+            {t('integrations.linear.csv.label')}
+          </label>
           <label class="inline-flex items-center gap-2 px-4 py-2 bg-accent text-accent-contrast font-medium rounded-md hover:bg-accent-hover transition-colors w-fit">
-            <span>{t('auto.choose_file')}</span>
+            <span>{t('integrations.linear.csv.choose')}</span>
             <input
               type="file"
               accept=".csv,text/csv"
@@ -228,26 +266,34 @@ export default function ImportLinear() {
           </label>
           <Show when={fileName()}>
             <div class="text-sm text-ink">
-              <span class="text-ink-muted">Loaded:</span> {fileName()}
+              <span class="text-ink-muted">
+                {t('integrations.linear.csv.loaded')}
+              </span>{' '}
+              {fileName()}
             </div>
           </Show>
           <Show when={parseError()}>
-            <div class="text-sm text-failure-ink">{parseError()}</div>
+            {(error) => (
+              <div class="text-sm text-failure-ink">
+                {localizeCsvError(error())}
+              </div>
+            )}
           </Show>
         </div>
 
         <Show when={records().length > 0}>
           <div class="flex flex-col gap-2">
             <div class="text-sm text-ink-muted">
-              Rows: <span class="text-ink">{records().length}</span>
+              {t('integrations.linear.rows', { count: records().length })}
             </div>
 
             <Show when={uniqueAssignees().length > 0}>
               <div class="flex flex-col gap-2">
-                <div class="text-sm font-medium text-ink">{t('auto.assignee_mapping')}</div>
+                <div class="text-sm font-medium text-ink">
+                  {t('integrations.linear.mapping.title')}
+                </div>
                 <div class="text-xs text-ink-muted">
-                  Linear assignees that don’t match your contacts will import as
-                  unassigned unless you map them here.
+                  {t('integrations.linear.mapping.help')}
                 </div>
 
                 <div class="flex flex-col gap-2 border border-edge rounded-sm p-2">
@@ -266,7 +312,9 @@ export default function ImportLinear() {
                             setAssigneeMapping(assignee, e.currentTarget.value)
                           }
                         >
-                          <option value="">{t('auto.unassigned')}</option>
+                          <option value="">
+                            {t('integrations.linear.mapping.unassigned')}
+                          </option>
                           <For each={contactOptions()}>
                             {(o) => <option value={o.id}>{o.label}</option>}
                           </For>
@@ -283,15 +331,21 @@ export default function ImportLinear() {
         <Show when={records().length > 0}>
           <div class="flex flex-col gap-2">
             <div class="text-sm font-medium text-ink">
-              Preview (first 20 + all rows with warnings)
+              {t('integrations.linear.preview.title')}
             </div>
             <div class="border border-edge rounded-sm overflow-hidden">
               <table class="w-full text-sm">
                 <thead class="bg-hover">
                   <tr class="text-left">
-                    <th class="p-2">{t('auto.row')}</th>
-                    <th class="p-2">{t('auto.title')}</th>
-                    <th class="p-2">{t('auto.warnings')}</th>
+                    <th class="p-2">
+                      {t('integrations.linear.preview.columns.row')}
+                    </th>
+                    <th class="p-2">
+                      {t('integrations.linear.preview.columns.title')}
+                    </th>
+                    <th class="p-2">
+                      {t('integrations.linear.preview.columns.warnings')}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -303,13 +357,14 @@ export default function ImportLinear() {
                         </td>
                         <td class="p-2 align-top">
                           <div class="text-ink">
-                            {d.title || '(missing title)'}
+                            {d.title ||
+                              t('integrations.linear.preview.missingTitle')}
                           </div>
                         </td>
                         <td class="p-2 align-top">
                           <div class="text-xs text-ink-muted">
                             {d.warnings.length > 0
-                              ? d.warnings.join(' · ')
+                              ? d.warnings.map(localizeWarning).join(' · ')
                               : '—'}
                           </div>
                         </td>
@@ -324,7 +379,9 @@ export default function ImportLinear() {
 
         <Show when={createdIds().length > 0}>
           <div class="flex flex-col gap-2">
-            <div class="text-sm font-medium text-ink">{t('auto.created_tasks')}</div>
+            <div class="text-sm font-medium text-ink">
+              {t('integrations.linear.created.title')}
+            </div>
             <div class="flex flex-col gap-1">
               <For each={createdIds()}>
                 {(id) => (
@@ -344,19 +401,27 @@ export default function ImportLinear() {
       </div>
 
       <div class="border-t border-edge p-4 flex items-center gap-3 shrink-0">
-        <Button onClick={runImport} disabled={!canImport()}>{t('auto.import_tasks')}</Button>
+        <Button onClick={runImport} disabled={!canImport()}>
+          {t('integrations.linear.actions.import')}
+        </Button>
         <Show when={runningProgress()}>
           {(p) => (
             <div class="text-sm text-ink-muted">
-              Importing… {p().done}/{p().total}
+              {t('integrations.linear.progress.running', {
+                done: p().done,
+                total: p().total,
+              })}
             </div>
           )}
         </Show>
         <Show when={doneProgress()}>
           {(p) => (
             <div class="text-sm text-ink-muted">
-              Done — created {p().created}, skipped {p().skipped}, failed{' '}
-              {p().failed}
+              {t('integrations.linear.progress.done', {
+                created: p().created,
+                skipped: p().skipped,
+                failed: p().failed,
+              })}
             </div>
           )}
         </Show>

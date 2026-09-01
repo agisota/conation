@@ -21,22 +21,22 @@ use channels::domain::{
     models::{ChannelType, CreateChannelRequest, Sender},
     ports::ChannelService,
 };
-use favorites::domain::ports::FavoritesService;
-use fusionauth::error::FusionAuthClientError;
 use conation_user_id::{
     email::{Email, ReadEmailParts},
     user_id::MacroUserIdStr,
 };
+use favorites::domain::ports::FavoritesService;
+use fusionauth::error::FusionAuthClientError;
 use model::authentication::webhooks::{FusionAuthUserWebhook, User as FusionAuthWebhookUser};
 use model_entity::EntityType;
 use std::collections::HashSet;
 use teams::domain::team_repo::TeamService;
 
-/// Macro support team members added to every new user's support channel.
+/// Support team members added to every new user's Conation support channel.
 const MACRO_SUPPORT_EMAILS: [&str; 3] = ["jacob@macro.com", "julia@macro.com", "teo@macro.com"];
 
 fn support_channel_name<T: AsRef<str>>(email: &Email<T>) -> String {
-    format!("Macro Support x {}", email.local_part())
+    format!("Conation Support x {}", email.local_part())
 }
 
 /// Name the identity provider gave us, as (first, last).
@@ -116,7 +116,7 @@ async fn verify_user_email_webhook(
     let fusionauth_user_id = req.event.user.id;
     let email = req.event.user.email.to_lowercase();
 
-    conation_db_client::conation_user_email_verification::upsert_conation_user_email_verification(
+    conation_db_client::macro_user_email_verification::upsert_macro_user_email_verification(
         &ctx.db,
         &fusionauth_user_id,
         &email,
@@ -179,7 +179,7 @@ async fn create_user_webhook(ctx: &ApiContext, req: FusionAuthUserWebhook) -> an
         conation_db_client::user::get::get_user_id_and_stripe_customer_id_by_email(&ctx.db, &email)
             .await
     {
-        // The conation_user already exists for that email
+        // The macro_user already exists for that email
         // We do not allow a user to login through their secondary linked account for SSO so we shouldn't allow for passwordless either
         tracing::info!(user_id=?user_id, "user already exists");
 
@@ -228,7 +228,7 @@ async fn create_user_webhook(ctx: &ApiContext, req: FusionAuthUserWebhook) -> an
         let has_organization = organization_id.is_some();
         async move {
             // Seed the profile with the name the identity provider gave us (Google
-            // SSO). Keyed on the FusionAuth id, which is conation_user.id — `user_id`
+            // SSO). Keyed on the FusionAuth id, which is macro_user.id — `user_id`
             // here is the "macro|{email}" User profile id.
             if first_name.is_some() || last_name.is_some() {
                 let _ = conation_db_client::user::update_user_name::update_user_name(
@@ -352,10 +352,10 @@ async fn create_user_webhook(ctx: &ApiContext, req: FusionAuthUserWebhook) -> an
         }
     });
 
-    // Seed the starter documents (the "Macro how to guide" and the starter
-    // tasks it links to, with the guide pinned to the new user's sidebar
+    // Seed the starter documents (including the compatibility-named guide and
+    // its starter tasks, with the guide pinned to the new user's sidebar
     // favorites), then create a private support channel connecting the new
-    // user with the Macro support team and post the welcome script — which
+    // user with the Conation support team and post the welcome script — which
     // mentions the guide, so seeding runs first. Fire-and-forget: neither a
     // failed seeding (retried, then skipped) nor a failed channel creation
     // may block user creation.
@@ -405,7 +405,7 @@ async fn create_user_webhook(ctx: &ApiContext, req: FusionAuthUserWebhook) -> an
             {
                 Ok(channel) => channel,
                 Err(e) => {
-                    tracing::error!(error=?e, %email, "failed to create Macro support channel");
+                    tracing::error!(error=?e, %email, "failed to create Conation support channel");
                     return;
                 }
             };
@@ -415,13 +415,13 @@ async fn create_user_webhook(ctx: &ApiContext, req: FusionAuthUserWebhook) -> an
                 .add_favorite_with_established_access(&owner_id, &channel_entity)
                 .await
             {
-                tracing::error!(error=?e, channel_id=%channel.id, %email, "failed to favorite Macro support channel");
+                tracing::error!(error=?e, channel_id=%channel.id, %email, "failed to favorite Conation support channel");
             }
 
             let _ = post_support_channel_welcome(channel_service.as_ref(), &channel.id, owner_id)
                 .await
                 .inspect_err(|e| {
-                tracing::error!(error=?e, channel_id=%channel.id, %email, "failed to post Macro support welcome message");
+                tracing::error!(error=?e, channel_id=%channel.id, %email, "failed to post Conation support welcome message");
             });
         }
     });
@@ -482,9 +482,13 @@ async fn initialize_user_experiments(
         })
         .collect::<Vec<(String, String)>>();
 
-    conation_db_client::experiment_log::bulk_create_experiment_logs(db, user_id, &active_experiments)
-        .await
-        .context("failed to bulk create experiment logs")?;
+    conation_db_client::experiment_log::bulk_create_experiment_logs(
+        db,
+        user_id,
+        &active_experiments,
+    )
+    .await
+    .context("failed to bulk create experiment logs")?;
 
     Ok(())
 }

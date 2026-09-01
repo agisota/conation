@@ -1,5 +1,6 @@
-import { markdownBlockErrorSignal } from '@block-md/signal/error';
 import { t } from '@app/lib/i18n';
+import { markdownBlockErrorSignal } from '@block-md/signal/error';
+import type { ElementName } from '@conation/lexical-core';
 import {
   INSERT_HORIZONTAL_RULE_COMMAND,
   NODE_TRANSFORM,
@@ -21,7 +22,6 @@ import {
   $mergeCells,
   $unmergeCell,
 } from '@lexical/table';
-import type { ElementName } from '@conation/lexical-core';
 import CaretRight from '@phosphor/caret-right.svg';
 import ChatTeardrop from '@phosphor/chat-teardrop.svg';
 import Check from '@phosphor/check-square.svg';
@@ -98,56 +98,93 @@ type DropdownItemProps = {
 
 export const NodeMenuOptions: Record<ElementName, DropdownItemProps> = {
   paragraph: {
-    label: 'Body',
+    get label() {
+      return t('markdown.format.body');
+    },
     icon: TextT,
     show: false,
     themeClass: '',
   },
   heading1: {
-    label: 'Heading 1',
+    get label() {
+      return t('markdown.format.heading1');
+    },
     icon: TextH1,
     show: true,
     themeClass: 'text-[1.15em] font-bold',
   },
   heading2: {
-    label: 'Heading 2',
+    get label() {
+      return t('markdown.format.heading2');
+    },
     icon: TextH2,
     show: true,
     themeClass: 'text-[1.07em] font-bold',
   },
   heading3: {
-    label: 'Heading 3',
+    get label() {
+      return t('markdown.format.heading3');
+    },
     icon: TextH3,
     show: true,
     themeClass: 'text-[1.03em] font-bold',
   },
-  quote: { label: 'Quote', icon: Quote, show: true, themeClass: 'italic' },
-  code: { label: 'Code', icon: CodeBlock, show: true, themeClass: 'font-mono' },
+  quote: {
+    get label() {
+      return t('markdown.format.quote');
+    },
+    icon: Quote,
+    show: true,
+    themeClass: 'italic',
+  },
+  code: {
+    get label() {
+      return t('markdown.format.code');
+    },
+    icon: CodeBlock,
+    show: true,
+    themeClass: 'font-mono',
+  },
   'custom-code': {
-    label: 'Code',
+    get label() {
+      return t('markdown.format.code');
+    },
     icon: CodeBlock,
     show: false,
     themeClass: 'font-mono',
   },
   'list-bullet': {
-    label: 'Bullet List',
+    get label() {
+      return t('markdown.format.bulletList');
+    },
     icon: ListBullets,
     show: true,
     before: <div class="bg-ink size-1.5 rounded-full ml-1.5 mr-3" />,
   },
   'list-number': {
-    label: 'Numbered List',
+    get label() {
+      return t('markdown.format.numberedList');
+    },
     icon: ListNumbers,
     show: true,
     before: <One class="size-4 mr-2" />,
   },
   'list-check': {
-    label: 'Checklist',
+    get label() {
+      return t('markdown.format.checklist');
+    },
     icon: ListChecks,
     show: true,
     before: <Check class="size-4 mr-2" />,
   },
-  link: { label: 'Link', icon: LinkIcon, show: false, themeClass: '' },
+  link: {
+    get label() {
+      return t('markdown.format.link');
+    },
+    icon: LinkIcon,
+    show: false,
+    themeClass: '',
+  },
 } as const;
 
 type InlineFormat =
@@ -184,14 +221,30 @@ const InlineShortcuts: Partial<Record<InlineFormat, ValidHotkey>> = {
 } as const;
 
 const InlineLabels: Record<InlineFormat, string> = {
-  bold: 'Bold',
-  italic: 'Italic',
-  underline: 'Underline',
-  strikethrough: 'Strikethrough',
-  highlight: 'Highlight',
-  code: 'Inline code',
-  superscript: 'Superscript',
-  subscript: 'Subscript',
+  get bold() {
+    return t('markdown.format.bold');
+  },
+  get italic() {
+    return t('markdown.format.italic');
+  },
+  get underline() {
+    return t('markdown.format.underline');
+  },
+  get strikethrough() {
+    return t('markdown.format.strikethrough');
+  },
+  get highlight() {
+    return t('markdown.format.highlight');
+  },
+  get code() {
+    return t('markdown.format.inlineCode');
+  },
+  get superscript() {
+    return t('markdown.format.superscript');
+  },
+  get subscript() {
+    return t('markdown.format.subscript');
+  },
 } as const;
 
 const isInlineFormatActive = (
@@ -274,11 +327,12 @@ export const ElementFormatButton = (props: {
   onClick: (e: MouseEvent) => void;
   buttonIsDisabled: Accessor<boolean>;
 }) => {
-  const name = NodeMenuOptions[props.format]?.label || 'Body';
+  const name = () =>
+    NodeMenuOptions[props.format]?.label || t('markdown.format.body');
   const icon = NodeMenuOptions[props.format]?.icon;
   return (
     <Button
-      tooltip={name}
+      tooltip={name()}
       size="icon-sm"
       class="rounded-md"
       depth={3}
@@ -307,7 +361,8 @@ const ElementFormatMenuItem = (
     buttonIsDisabled: Accessor<boolean>;
   }>
 ) => {
-  const name = NodeMenuOptions[props.format]?.label || 'Text';
+  const name = () =>
+    NodeMenuOptions[props.format]?.label || t('markdown.format.text');
   const themeClass = NodeMenuOptions[props.format]?.themeClass || '';
   const before = NodeMenuOptions[props.format]?.before;
   const isActive = () => isElementFormatActive(props.selection(), props.format);
@@ -316,11 +371,11 @@ const ElementFormatMenuItem = (
       return (
         <span class={themeClass + ' flex items-center gap-0 justify-start'}>
           {before}
-          {name}
+          {name()}
         </span>
       );
     }
-    return <span>{name}</span>;
+    return <span>{name()}</span>;
   };
   const icon = () =>
     props.useIcon ? NodeMenuOptions[props.format]?.icon : undefined;
@@ -484,7 +539,7 @@ export function FormatTools(props: { withinPopup?: boolean }) {
       undefined
     );
     if (!created) {
-      toast.failure('Please highlight text to comment.');
+      toast.failure(t('markdown.format.commentSelectionRequired'));
     }
   };
   const InlineFormats: InlineFormat[] = [
@@ -519,7 +574,7 @@ export function FormatTools(props: { withinPopup?: boolean }) {
           size="icon-sm"
           class="rounded-md"
           depth={3}
-          tooltip={'Text Styles'}
+          tooltip={t('markdown.format.textStyles')}
           disabled={buttonIsDisabled()}
           tabIndex={-1}
         >
@@ -583,7 +638,7 @@ export function FormatTools(props: { withinPopup?: boolean }) {
           size="icon-sm"
           class="rounded-md"
           depth={3}
-          tooltip="Text Styles"
+          tooltip={t('markdown.format.textStyles')}
           disabled={props.buttonIsDisabled()}
           tabIndex={-1}
         >
@@ -642,7 +697,7 @@ export function FormatTools(props: { withinPopup?: boolean }) {
         size="icon-sm"
         class="rounded-md"
         depth={3}
-        tooltip={props.label ?? 'More Formats'}
+        tooltip={props.label ?? t('markdown.format.moreFormats')}
         disabled={buttonIsDisabled()}
         tabIndex={-1}
       >
@@ -691,7 +746,7 @@ export function FormatTools(props: { withinPopup?: boolean }) {
         size="icon-sm"
         class="rounded-md"
         depth={3}
-        tooltip={props.label ?? 'More Formats'}
+        tooltip={props.label ?? t('markdown.format.moreFormats')}
         disabled={buttonIsDisabled()}
         tabIndex={-1}
       >
@@ -751,13 +806,13 @@ export function FormatTools(props: { withinPopup?: boolean }) {
           <ElementFormatMenu
             elements={['heading1', 'heading2', 'heading3']}
             icon={TextH}
-            label="Headings"
+            label={t('markdown.format.headings')}
             buttonIsDisabled={buttonIsDisabled}
           />
           <ElementFormatMenu
             elements={['list-bullet', 'list-number', 'list-check']}
             icon={ListBullets}
-            label="Lists"
+            label={t('markdown.format.lists')}
             buttonIsDisabled={buttonIsDisabled}
           />
           <ElementFormatButton
@@ -800,7 +855,11 @@ export function FormatTools(props: { withinPopup?: boolean }) {
             depth={3}
             onPointerDown={(e: PointerEvent) => e.preventDefault()}
             onClick={handleLink}
-            tooltip={selection()?.hasLinks ? 'Remove Link' : 'Insert Link'}
+            tooltip={
+              selection()?.hasLinks
+                ? t('markdown.format.removeLink')
+                : t('markdown.format.insertLink')
+            }
             disabled={buttonIsDisabled()}
           >
             <Dynamic
@@ -813,7 +872,7 @@ export function FormatTools(props: { withinPopup?: boolean }) {
               size="icon-sm"
               class="rounded-md"
               depth={3}
-              tooltip="Merge cells"
+              tooltip={t('markdown.format.mergeCells')}
               onClick={handleMergeCells}
               disabled={buttonIsDisabled()}
             >
@@ -826,7 +885,7 @@ export function FormatTools(props: { withinPopup?: boolean }) {
               size="icon-sm"
               class="rounded-md"
               depth={3}
-              tooltip="Split cell"
+              tooltip={t('markdown.format.splitCell')}
               onClick={handleSplitCell}
               disabled={buttonIsDisabled()}
             >
@@ -840,7 +899,7 @@ export function FormatTools(props: { withinPopup?: boolean }) {
             size="icon-sm"
             class="rounded-md"
             depth={3}
-            tooltip="Comment"
+            tooltip={t('markdown.format.comment')}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -914,13 +973,13 @@ export function FormatTools(props: { withinPopup?: boolean }) {
               <ElementFormatMenu
                 elements={['heading1', 'heading2', 'heading3']}
                 icon={TextH}
-                label="Headings"
+                label={t('markdown.format.headings')}
                 buttonIsDisabled={buttonIsDisabled}
               />
               <ElementFormatMenu
                 elements={['list-bullet', 'list-number', 'list-check']}
                 icon={ListBullets}
-                label="Lists"
+                label={t('markdown.format.lists')}
                 buttonIsDisabled={buttonIsDisabled}
               />
               <ElementFormatButton
@@ -974,7 +1033,11 @@ export function FormatTools(props: { withinPopup?: boolean }) {
               depth={3}
               onPointerDown={(e: PointerEvent) => e.preventDefault()}
               onClick={handleLink}
-              tooltip={selection()?.hasLinks ? 'Remove Link' : 'Insert Link'}
+              tooltip={
+                selection()?.hasLinks
+                  ? t('markdown.format.removeLink')
+                  : t('markdown.format.insertLink')
+              }
               disabled={buttonIsDisabled()}
             >
               <Dynamic
@@ -988,7 +1051,7 @@ export function FormatTools(props: { withinPopup?: boolean }) {
                 size="icon-sm"
                 class="rounded-md"
                 depth={3}
-                tooltip="Comment"
+                tooltip={t('markdown.format.comment')}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -1009,7 +1072,7 @@ export function FormatTools(props: { withinPopup?: boolean }) {
                 size="icon-sm"
                 class="rounded-md"
                 depth={3}
-                tooltip="More"
+                tooltip={t('markdown.format.more')}
                 disabled={buttonIsDisabled()}
                 tabIndex={-1}
               >
@@ -1030,7 +1093,9 @@ export function FormatTools(props: { withinPopup?: boolean }) {
                       disabled={buttonIsDisabled()}
                     >
                       <Quote class="size-4 shrink-0" />
-                      <span class="flex-1 truncate">{t('auto.block_quote')}</span>
+                      <span class="flex-1 truncate">
+                        {t('markdown.format.blockQuote')}
+                      </span>
                     </Dropdown.Item>
                   </Dropdown.Group>
                   <Dropdown.Group>
@@ -1045,7 +1110,9 @@ export function FormatTools(props: { withinPopup?: boolean }) {
                       disabled={buttonIsDisabled()}
                     >
                       <Minus class="size-4 shrink-0" />
-                      <span class="flex-1 truncate">{t('auto.divider')}</span>
+                      <span class="flex-1 truncate">
+                        {t('markdown.format.divider')}
+                      </span>
                     </Dropdown.Item>
                     <Dropdown.Item
                       onSelect={() => {
@@ -1055,12 +1122,16 @@ export function FormatTools(props: { withinPopup?: boolean }) {
                       disabled={buttonIsDisabled()}
                     >
                       <MathIcon class="size-4 shrink-0" />
-                      <span class="flex-1 truncate">{t('auto.equation')}</span>
+                      <span class="flex-1 truncate">
+                        {t('markdown.format.equation')}
+                      </span>
                     </Dropdown.Item>
                     <Dropdown.Sub>
                       <Dropdown.SubTrigger disabled={buttonIsDisabled()}>
                         <Grid class="size-4 shrink-0" />
-                        <span class="flex-1 truncate">{t('auto.table')}</span>
+                        <span class="flex-1 truncate">
+                          {t('markdown.format.table')}
+                        </span>
                         <CaretRight class="size-3.5" />
                       </Dropdown.SubTrigger>
                       <Dropdown.SubContent>
@@ -1086,7 +1157,7 @@ export function FormatTools(props: { withinPopup?: boolean }) {
             size="icon-sm"
             class="rounded-md"
             depth={3}
-            tooltip="Comment"
+            tooltip={t('markdown.format.comment')}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();

@@ -1,4 +1,5 @@
 import { DEV_MODE_ENV } from '@core/constant/featureFlags';
+import { t } from '@core/i18n';
 import {
   getDeletedItems,
   invalidateDeletedItems,
@@ -34,9 +35,9 @@ export const useItemOperations = createSingletonRoot(() => {
     async (args: { itemType: ItemType; id: string; itemName: string }) => {
       const success = await deleteItemOp(args);
       if (success) {
-        toast.success(`${args.itemName} deleted`);
+        toast.success(t('core.files.item.deleted', { name: args.itemName }));
       } else {
-        toast.failure('Unable to delete item');
+        toast.failure(t('core.files.item.deleteFailed'));
       }
       return success;
     }
@@ -52,9 +53,14 @@ export const useItemOperations = createSingletonRoot(() => {
     }) => {
       const success = await moveToFolderOp(args);
       if (success) {
-        toast.success(`${args.itemName} moved to ${args.folderName}`);
+        toast.success(
+          t('core.files.item.moved', {
+            name: args.itemName,
+            folder: args.folderName,
+          })
+        );
       } else {
-        toast.failure('Unable to move item');
+        toast.failure(t('core.files.item.moveFailed'));
       }
       return success;
     }
@@ -63,15 +69,22 @@ export const useItemOperations = createSingletonRoot(() => {
   const bulkMoveToFolder = createCallback(
     async (items: Item[], folderId: string, folderName: string) => {
       const result = await toast.promise(bulkMoveToFolderOp(items, folderId), {
-        loading: `Moving ${items.length} ${items.length === 1 ? 'item' : 'items'}...`,
+        loading: t('core.files.bulk.move.loading', { count: items.length }),
         success: ({ failedItems }) => {
           if (failedItems.length > 0) {
-            return `Failed to move ${failedItems.length} ${failedItems.length === 1 ? 'item' : 'items'}`;
+            return t('core.files.bulk.move.partialFailure', {
+              count: failedItems.length,
+            });
           }
-          return `Successfully moved ${items.length} ${items.length === 1 ? 'item' : 'items'} to ${folderName}`;
+          return t('core.files.bulk.move.success', {
+            count: items.length,
+            folder: folderName,
+          });
         },
         error: (error) =>
-          `Failed to move items: ${error.message || 'Unknown error'}`,
+          t('core.files.bulk.move.error', {
+            reason: error.message || t('core.errors.unknown'),
+          }),
         toastTypeDeterminer: (result) =>
           result.failedItems.length > 0 ? ToastType.FAILURE : ToastType.SUCCESS,
       });
@@ -88,26 +101,30 @@ export const useItemOperations = createSingletonRoot(() => {
       const id = await copyItemOp(args);
       const success = id !== null;
       if (success) {
-        toast.success(`${args.name} copied`);
+        toast.success(t('core.files.item.copied', { name: args.name }));
       } else {
-        toast.failure('Unable to copy item');
+        toast.failure(t('core.files.item.copyFailed'));
       }
       return id;
     }
   );
   const bulkDelete = createCallback(async (items: Item[]) => {
     const result = await toast.promise(bulkDeleteOp(items), {
-      loading: `Deleting ${items.length} ${items.length === 1 ? 'item' : 'items'}...`,
+      loading: t('core.files.bulk.delete.loading', { count: items.length }),
       success: ({ failedItems }) => {
         if (failedItems.length > 0) {
-          return `Failed to delete ${failedItems.length} ${failedItems.length === 1 ? 'item' : 'items'}`;
+          return t('core.files.bulk.delete.partialFailure', {
+            count: failedItems.length,
+          });
         }
         return items.length === 5 && DEV_MODE_ENV
           ? 'PENTAKILL'
-          : `Successfully deleted ${items.length} ${items.length === 1 ? 'item' : 'items'}`;
+          : t('core.files.bulk.delete.success', { count: items.length });
       },
       error: (error) =>
-        `Failed to delete items: ${error.message || 'Unknown error'}`,
+        t('core.files.bulk.delete.error', {
+          reason: error.message || t('core.errors.unknown'),
+        }),
       toastTypeDeterminer: (result) =>
         result.failedItems.length > 0 ? ToastType.FAILURE : ToastType.SUCCESS,
     });
@@ -116,15 +133,19 @@ export const useItemOperations = createSingletonRoot(() => {
 
   const bulkCopy = createCallback(async (items: Item[]) => {
     const result = await toast.promise(bulkCopyOp(items), {
-      loading: `Copying ${items.length} ${items.length === 1 ? 'item' : 'items'}...`,
+      loading: t('core.files.bulk.copy.loading', { count: items.length }),
       success: ({ failedItems }) => {
         if (failedItems.length > 0) {
-          return `Failed to copy ${failedItems.length} ${failedItems.length === 1 ? 'item' : 'items'}`;
+          return t('core.files.bulk.copy.partialFailure', {
+            count: failedItems.length,
+          });
         }
-        return `Successfully copied ${items.length} ${items.length === 1 ? 'item' : 'items'}`;
+        return t('core.files.bulk.copy.success', { count: items.length });
       },
       error: (error) =>
-        `Failed to copy items: ${error.message || 'Unknown error'}`,
+        t('core.files.bulk.copy.error', {
+          reason: error.message || t('core.errors.unknown'),
+        }),
       toastTypeDeterminer: (result) =>
         result.failedItems.length > 0 ? ToastType.FAILURE : ToastType.SUCCESS,
     });
@@ -135,9 +156,9 @@ export const useItemOperations = createSingletonRoot(() => {
     async (args: { itemType: ItemType; id: string; itemName: string }) => {
       const success = await revertDeleteOp(args);
       if (success) {
-        toast.success(`${args.itemName} restored`);
+        toast.success(t('core.files.item.restored', { name: args.itemName }));
       } else {
-        toast.failure('Unable to restore item');
+        toast.failure(t('core.files.item.restoreFailed'));
       }
     }
   );
@@ -146,24 +167,28 @@ export const useItemOperations = createSingletonRoot(() => {
     async (args: { itemType: ItemType; id: string; itemName: string }) => {
       const success = await permanentlyDeleteOp(args);
       if (success) {
-        toast.success(`${args.itemName} deleted`);
+        toast.success(t('core.files.item.deleted', { name: args.itemName }));
       } else {
-        toast.failure('Unable to delete item');
+        toast.failure(t('core.files.item.deleteFailed'));
       }
     }
   );
 
   const bulkPermanentlyDelete = createCallback(async (items: Item[]) => {
     const result = await toast.promise(bulkPermanentlyDeleteOp(items), {
-      loading: `Deleting ${items.length} ${items.length === 1 ? 'item' : 'items'}...`,
+      loading: t('core.files.bulk.delete.loading', { count: items.length }),
       success: ({ failedItems }) => {
         if (failedItems.length > 0) {
-          return `Failed to delete ${failedItems.length} ${failedItems.length === 1 ? 'item' : 'items'}.`;
+          return t('core.files.bulk.delete.partialFailure', {
+            count: failedItems.length,
+          });
         }
-        return `Successfully deleted ${items.length} ${items.length === 1 ? 'item' : 'items'}`;
+        return t('core.files.bulk.delete.success', { count: items.length });
       },
       error: (error) =>
-        `Failed to delete items: ${error.message || 'Unknown error'}`,
+        t('core.files.bulk.delete.error', {
+          reason: error.message || t('core.errors.unknown'),
+        }),
       toastTypeDeterminer: (result) =>
         result.failedItems.length > 0 ? ToastType.FAILURE : ToastType.SUCCESS,
     });
@@ -189,15 +214,19 @@ export const useItemOperations = createSingletonRoot(() => {
 
   const bulkRevertDelete = createCallback(async (items: Item[]) => {
     const result = await toast.promise(bulkRevertDeleteOp(items), {
-      loading: `Restoring ${items.length} ${items.length === 1 ? 'item' : 'items'}...`,
+      loading: t('core.files.bulk.restore.loading', { count: items.length }),
       success: ({ failedItems }) => {
         if (failedItems.length > 0) {
-          return `Failed to restore ${failedItems.length} ${failedItems.length === 1 ? 'item' : 'items'}`;
+          return t('core.files.bulk.restore.partialFailure', {
+            count: failedItems.length,
+          });
         }
-        return `Successfully restored ${items.length} ${items.length === 1 ? 'item' : 'items'}`;
+        return t('core.files.bulk.restore.success', { count: items.length });
       },
       error: (error) =>
-        `Failed to restore items: ${error.message || 'Unknown error'}`,
+        t('core.files.bulk.restore.error', {
+          reason: error.message || t('core.errors.unknown'),
+        }),
       toastTypeDeterminer: (result) =>
         result.failedItems.length > 0 ? ToastType.FAILURE : ToastType.SUCCESS,
     });

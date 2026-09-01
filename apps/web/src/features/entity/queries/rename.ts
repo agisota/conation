@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { renameItem } from '@core/component/FileList/itemOperations';
 import { toast } from '@core/component/Toast/Toast';
 import { ENABLE_GRAPHQL_SOUP } from '@core/constant/featureFlags';
@@ -398,7 +399,7 @@ const bulkRenameOnSettled = (
   if (!hasFailed) return;
 
   console.error(`Failed rename`, params, data, error);
-  toast.failure('Failed to rename');
+  toast.failure(t('entity.feedback.renameFailed'));
 
   if (!onMutateResult) {
     // most likely nothing to rollback, but it's possible there were mutations that succeeded before the OnMutate failed

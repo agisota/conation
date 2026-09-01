@@ -124,6 +124,7 @@ impl AgentResponder for TestResponder {
 /// missing (deleted while the agent ran).
 struct MutationChannelService {
     thinking_deleted: bool,
+    posted: Mutex<Vec<String>>,
     posted_policies: Mutex<Vec<PostMessageNotificationPolicy>>,
     patched: Mutex<Vec<String>>,
     patched_policies: Mutex<Vec<PatchMessageNotificationPolicy>>,
@@ -133,6 +134,7 @@ impl MutationChannelService {
     fn new(thinking_deleted: bool) -> Self {
         Self {
             thinking_deleted,
+            posted: Mutex::new(Vec::new()),
             posted_policies: Mutex::new(Vec::new()),
             patched: Mutex::new(Vec::new()),
             patched_policies: Mutex::new(Vec::new()),
@@ -221,6 +223,7 @@ impl ChannelService for MutationChannelService {
         _channel_id: Uuid,
         req: PostMessageRequest,
     ) -> impl Future<Output = Result<PostMessageResponse, ChannelMutationErr>> + Send {
+        self.posted.lock().unwrap().push(req.content.clone());
         self.posted_policies
             .lock()
             .unwrap()
@@ -376,6 +379,10 @@ async fn handle_patches_thinking_message_with_reply() {
         .await
         .unwrap();
 
+    assert_eq!(
+        channels.posted.lock().unwrap().clone(),
+        vec![r#"<m-await>{"text":"Conation is thinking…","inline":true}</m-await>"#.to_string()]
+    );
     assert_eq!(
         channels.posted_policies.lock().unwrap().clone(),
         vec![PostMessageNotificationPolicy::Silent]

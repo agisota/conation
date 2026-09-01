@@ -16,7 +16,6 @@ export const AnimatedContactIcon = (props: {
       overflow="visible"
       class={`animated-contact-icon ${props.triggerAnimation ? 'animating' : ''} ${props.class ?? ''}`}
     >
-      {/*<title>{t('auto.animated_contact_icon')}</title>*/}
       <style>{`
         @keyframes head-bob {
           0% { transform: translateY(0); }

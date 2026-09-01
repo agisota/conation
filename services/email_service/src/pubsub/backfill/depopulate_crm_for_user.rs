@@ -18,27 +18,27 @@ use models_email::email::service::pubsub::{DetailedError, FailureReason, Process
 /// No-ops (acks the message) when the user has no email link.
 /// Team-deletion does NOT go through this path; the
 /// `crm_companies.team_id` FK cascade handles it in macrodb.
-#[tracing::instrument(skip(ctx), err, fields(conation_id = %payload.conation_id, team_id = %payload.team_id))]
+#[tracing::instrument(skip(ctx), err, fields(macro_id = %payload.macro_id, team_id = %payload.team_id))]
 pub async fn depopulate_crm_for_user(
     ctx: &PubSubContext,
     payload: &DepopulateCrmForUserPayload,
 ) -> Result<(), ProcessingError> {
-    let conation_id_str = payload.conation_id.0.as_ref();
+    let macro_id_str = payload.macro_id.0.as_ref();
     // Must resolve the same link `populate_crm_for_user` seeded from — the
-    // inbox whose address matches the conation_id email — so teardown targets
+    // inbox whose address matches the macro_id email — so teardown targets
     // the link that was actually populated.
-    let email_address = payload.conation_id.email_str();
+    let email_address = payload.macro_id.email_str();
 
-    let link = email_db_client::links::get::fetch_link_by_conation_id_and_email_address(
+    let link = email_db_client::links::get::fetch_link_by_macro_id_and_email_address(
         &ctx.db,
-        conation_id_str,
+        macro_id_str,
         email_address,
     )
     .await
     .map_err(|e| {
         ProcessingError::Retryable(DetailedError {
             reason: FailureReason::DatabaseQueryFailed,
-            source: e.context("Failed to fetch link by conation_id and email_address"),
+            source: e.context("Failed to fetch link by macro_id and email_address"),
         })
     })?;
 

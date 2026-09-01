@@ -104,19 +104,19 @@ fn debug_output_is_simple_string() {
 }
 
 #[test]
-fn conation_com_users_are_staff() {
+fn macro_com_users_are_staff() {
     let id = MacroUserIdStr::parse_from_str("macro|teo@macro.com").unwrap();
-    assert!(id.is_conation_staff());
+    assert!(id.is_macro_staff());
 }
 
 #[test]
-fn conation_com_plus_aliases_are_staff() {
+fn macro_com_plus_aliases_are_staff() {
     let id = MacroUserIdStr::parse_from_str("macro|teo+notify@macro.com").unwrap();
-    assert!(id.is_conation_staff());
+    assert!(id.is_macro_staff());
 }
 
 #[test]
-fn non_conation_domains_are_not_staff() {
+fn non_macro_domains_are_not_staff() {
     let id = MacroUserIdStr::parse_from_str("macro|teo@example.com").unwrap();
-    assert!(!id.is_conation_staff());
+    assert!(!id.is_macro_staff());
 }

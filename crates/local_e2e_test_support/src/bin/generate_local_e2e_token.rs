@@ -28,12 +28,12 @@ fn main() -> anyhow::Result<()> {
     let email = read_arg("email").unwrap_or_else(|| seed.manifest.user.email.clone());
     let seed_user = seed.user_by_email(&email);
 
-    let conation_user_id = read_arg("macro-user-id")
+    let macro_user_id = read_arg("macro-user-id")
         .or_else(|| seed_user.map(|user| user.user_id.clone()))
         .unwrap_or_else(|| format!("macro|{email}"));
     let fusion_user_id = read_arg("fusion-user-id")
         .or_else(|| seed_user.map(|user| user.fusion_user_id.clone()))
-        .or_else(|| seed_user.map(|user| user.conation_user_id.clone()))
+        .or_else(|| seed_user.map(|user| user.macro_user_id.clone()))
         .unwrap_or_else(|| "00000000-0000-0000-0003-000000000001".to_owned());
 
     let expiry_seconds = read_arg("expiry-seconds")
@@ -64,7 +64,7 @@ fn main() -> anyhow::Result<()> {
         &config,
         LocalJwtClaims {
             fusion_user_id: &fusion_user_id,
-            conation_user_id: &conation_user_id,
+            macro_user_id: &macro_user_id,
             organization_id,
             issuer: issuer.as_deref(),
             expiry_seconds,

@@ -39,7 +39,7 @@ pub type UploadExtractFolderResponse = TypedSuccessResponse<UploadExtractFolderR
 )]
 #[tracing::instrument(
     skip(state, user, request),
-    fields(user_id = %user.authorization.user.conation_user_id),
+    fields(user_id = %user.authorization.user.macro_user_id),
     err
 )]
 pub async fn upload_folder_handler<T, Svc, Auth>(
@@ -56,7 +56,7 @@ where
     let data = state
         .service
         .upload_folder(
-            user.authorization.user.conation_user_id.clone(),
+            user.authorization.user.macro_user_id.clone(),
             user.authorization.caller == UserOrInternalCaller::Internal,
             request,
         )
@@ -79,7 +79,7 @@ where
 )]
 #[tracing::instrument(
     skip(state, user, request),
-    fields(user_id = %user.authorization.user.conation_user_id),
+    fields(user_id = %user.authorization.user.macro_user_id),
     err
 )]
 pub async fn upload_extract_folder_handler<T, Svc, Auth>(
@@ -95,7 +95,7 @@ where
     ensure_parent_edit_access(&state, &user, request.parent_id.as_deref()).await?;
     let data = state
         .service
-        .create_upload_extract_request(user.authorization.user.conation_user_id.clone(), request)
+        .create_upload_extract_request(user.authorization.user.macro_user_id.clone(), request)
         .await?;
 
     Ok(Json(UploadExtractFolderResponse { error: false, data }))
@@ -120,7 +120,7 @@ where
     let _receipt = state
         .access_service
         .generate_entity_access_receipt::<EditAccessLevel>(
-            &user.conation_user_id,
+            &user.macro_user_id,
             user.user_context.organization_id.map(i64::from),
             parent_id,
             EntityType::Project,
@@ -133,7 +133,7 @@ where
 /// Mark a project tree as uploaded. This handler is mounted only on the internal router.
 #[tracing::instrument(
     skip(state, user, request),
-    fields(user_id = %user.authorization.user.conation_user_id),
+    fields(user_id = %user.authorization.user.macro_user_id),
     err
 )]
 pub async fn mark_uploaded_handler<T, Svc, Auth>(

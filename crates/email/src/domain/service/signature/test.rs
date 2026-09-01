@@ -19,13 +19,23 @@ fn separates_signature_from_message_with_blank_line() {
 
 #[test]
 fn inserts_above_quote_for_replies_and_forwards() {
-    let body = r#"<body><p>My reply</p><div class="conation_quote"><p>Quoted</p></div></body>"#;
+    let body = r#"<body><p>My reply</p><div class="macro_quote"><p>Quoted</p></div></body>"#;
     let out = inject_signature(body, "<p>Regards</p>");
     let sig = out.find("macro-email-signature").unwrap();
-    let quote = out.find("conation_quote").unwrap();
+    let quote = out.find("macro_quote").unwrap();
     assert!(
         sig < quote,
         "signature should sit above the quoted thread: {out}"
+    );
+}
+
+#[test]
+fn accepts_transitional_conation_quote_marker() {
+    let body = r#"<body><p>My reply</p><div class="conation_quote"><p>Quoted</p></div></body>"#;
+    let out = inject_signature(body, "<p>Regards</p>");
+    assert!(
+        out.find("macro-email-signature").unwrap() < out.find("conation_quote").unwrap(),
+        "signature should sit above the transitional quote marker: {out}"
     );
 }
 
@@ -50,10 +60,10 @@ fn is_idempotent_when_signature_already_present() {
 fn ignores_signature_inside_quoted_thread() {
     // Replying to a previously-signed message: the quote carries that message's
     // signature, which must not count as "already signed" for this reply.
-    let reply = r#"<body><p>My reply</p><div class="conation_quote"><p>Old</p><div class="macro-email-signature">Ryan</div></div></body>"#;
+    let reply = r#"<body><p>My reply</p><div class="macro_quote"><p>Old</p><div class="macro-email-signature">Ryan</div></div></body>"#;
     assert!(!has_signature(reply));
     // A signature in the reply's own content (above the quote) still counts.
-    let signed = r#"<body><div class="macro-email-signature">Me</div><div class="conation_quote"><p>Old</p></div></body>"#;
+    let signed = r#"<body><div class="macro-email-signature">Me</div><div class="macro_quote"><p>Old</p></div></body>"#;
     assert!(has_signature(signed));
 }
 

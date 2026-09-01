@@ -2157,7 +2157,7 @@ where
 
 /// Implement interface-only dispatch methods for fields whose concrete
 /// GraphQL definitions are supplied by the flattened edge object.
-conation_rules! impl_common_interface_edges {
+macro_rules! impl_common_interface_edges {
     ($($entity:ident),+ $(,)?) => {
         $(
             impl<E: SoupEntityEdges> $entity<E> {

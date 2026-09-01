@@ -1,5 +1,5 @@
-import RefreshIcon from '@phosphor/arrow-clockwise.svg';
 import { t } from '@app/lib/i18n';
+import RefreshIcon from '@phosphor/arrow-clockwise.svg';
 import WarningIcon from '@phosphor/warning.svg';
 import { Button } from '@ui';
 import {
@@ -35,12 +35,11 @@ function HomeSectionError(props: HomeSectionErrorProps) {
         <div class="min-w-0 flex flex-1 flex-col">
           <p class="text-sm font-medium text-ink">
             {props.title
-              ? `Failed to load ${props.title}`
-              : 'Something went wrong'}
+              ? t('shell.home.section.failedNamed', { section: props.title })
+              : t('shell.home.section.failedGeneric')}
           </p>
           <p class="text-xs leading-5 text-ink-muted">
-            We couldn’t load this section. Try again, or view details if the
-            issue continues.
+            {t('shell.home.section.failureDescription')}
           </p>
 
           <Show when={showDetails()}>
@@ -57,14 +56,18 @@ function HomeSectionError(props: HomeSectionErrorProps) {
               class="w-fit bg-surface"
               onClick={props.reset}
             >
-              <RefreshIcon class="size-3.5" />{t('auto.try_again')}</Button>
+              <RefreshIcon class="size-3.5" />
+              {t('shell.actions.tryAgain')}
+            </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowDetails((value) => !value)}
               class="w-fit"
             >
-              {showDetails() ? 'Hide details' : 'Show details'}
+              {showDetails()
+                ? t('shell.actions.hideDetails')
+                : t('shell.actions.showDetails')}
             </Button>
           </div>
         </div>

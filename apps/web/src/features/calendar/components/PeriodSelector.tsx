@@ -1,5 +1,5 @@
-import { MobileDrawer } from '@components/app/mobile/MobileDrawer';
 import { t } from '@app/lib/i18n';
+import { MobileDrawer } from '@components/app/mobile/MobileDrawer';
 import { type HotkeyToken, TOKENS } from '@core/hotkey/tokens';
 import CalendarIcon from '@phosphor/calendar-blank.svg';
 import CaretDownIcon from '@phosphor/caret-down.svg';
@@ -16,22 +16,22 @@ import { useCalendarView } from './CalendarViewContext';
 const CALENDAR_VIEWS = [
   {
     value: 'dayGridMonth',
-    label: calendarPeriodLabel('dayGridMonth'),
+    label: () => calendarPeriodLabel('dayGridMonth'),
     hotkeyToken: TOKENS.calendar.view.month,
   },
   {
     value: 'timeGridWeek',
-    label: calendarPeriodLabel('timeGridWeek'),
+    label: () => calendarPeriodLabel('timeGridWeek'),
     hotkeyToken: TOKENS.calendar.view.week,
   },
   {
     value: 'timeGridDay',
-    label: calendarPeriodLabel('timeGridDay'),
+    label: () => calendarPeriodLabel('timeGridDay'),
     hotkeyToken: TOKENS.calendar.view.day,
   },
 ] satisfies Array<{
   value: CalendarPeriodView;
-  label: string;
+  label: () => string;
   hotkeyToken: HotkeyToken;
 }>;
 
@@ -150,12 +150,13 @@ export function PeriodSelector(props: { isNarrow?: boolean }) {
     >
       <Dropdown.Trigger
         depth={2}
-        aria-label={t('auto.choose_calendar_view')}
+        aria-label={t('calendar.view.choose')}
         size="sm"
         class="shrink-0 gap-1 rounded-lg border-edge-muted text-xs font-medium text-ink"
       >
-        {CALENDAR_VIEWS.find((view) => view.value === controls.activeView())
-          ?.label ?? 'Week'}
+        {CALENDAR_VIEWS.find(
+          (view) => view.value === controls.activeView()
+        )?.label() ?? calendarPeriodLabel('timeGridWeek')}
         <CaretDownIcon class="size-3 text-ink-muted" />
       </Dropdown.Trigger>
       <Dropdown.Content class="min-w-36">
@@ -167,7 +168,7 @@ export function PeriodSelector(props: { isNarrow?: boolean }) {
             <For each={CALENDAR_VIEWS}>
               {(view) => (
                 <Dropdown.RadioItem closeOnSelect value={view.value}>
-                  <span class="flex-1">{view.label}</span>
+                  <span class="flex-1">{view.label()}</span>
                   <Dropdown.ItemIndicator>
                     <CheckIcon class="size-3.5 text-accent" />
                   </Dropdown.ItemIndicator>
@@ -183,7 +184,7 @@ export function PeriodSelector(props: { isNarrow?: boolean }) {
             <Dropdown.Sub>
               <Dropdown.SubTrigger>
                 <CalendarIcon class="size-3.5 text-ink-muted" />
-                <span class="flex-1">{t('auto.go_to_date')}</span>
+                <span class="flex-1">{t('calendar.navigation.goToDate')}</span>
                 <CaretRightIcon class="size-3 text-ink-muted" />
               </Dropdown.SubTrigger>
               <Dropdown.SubContent class="w-72 max-w-[calc(100vw-1rem)]">
@@ -205,7 +206,7 @@ export function MobilePeriodControls(props: { onSelect: () => void }) {
 
   return (
     <>
-      <MobileDrawer.Label>{t('auto.period')}</MobileDrawer.Label>
+      <MobileDrawer.Label>{t('calendar.view.period')}</MobileDrawer.Label>
       <MobileDrawer.Section class="flex shrink-0 flex-col">
         <For each={CALENDAR_VIEWS}>
           {(view) => (
@@ -215,7 +216,7 @@ export function MobilePeriodControls(props: { onSelect: () => void }) {
               aria-pressed={controls.activeView() === view.value}
               onClick={() => controls.changeView(view.value)}
             >
-              <span class="flex-1">{view.label}</span>
+              <span class="flex-1">{view.label()}</span>
               <CheckIcon
                 class="size-4 shrink-0 text-accent"
                 classList={{

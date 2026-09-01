@@ -1,5 +1,6 @@
-import { toast } from '@core/component/Toast/Toast';
+import { t } from '@app/lib/i18n';
 import { createWebsocketEventEffect } from '@conation/collaboration/websocket';
+import { toast } from '@core/component/Toast/Toast';
 import type { UploadFolderStatusUpdate } from '@service-connection/generated/schemas/uploadFolderStatusUpdate';
 import type { FromWebsocketMessage } from './websocket';
 import { ws } from './websocket';
@@ -37,7 +38,7 @@ export function waitBulkUploadStatus(
     nullTimeout = setTimeout(() => {
       if (pollInterval) clearInterval(pollInterval);
       console.error('timed out waiting for upload result', requestId);
-      toast.alert('Upload is taking a while. Try refreshing the page');
+      toast.alert(t('file.upload.longRunning'));
       resolve(undefined);
     }, MAX_UPLOAD_WAIT_MS);
 

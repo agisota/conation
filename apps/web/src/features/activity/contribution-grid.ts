@@ -1,8 +1,8 @@
+import { formatDateTime } from '@app/lib/i18n';
 import {
   addDays,
   eachDayOfInterval,
   eachWeekOfInterval,
-  format,
   getDate,
   isBefore,
   isValid,
@@ -33,7 +33,10 @@ export type ContributionGrid = {
 };
 
 function labelMonth(day: ContributionDay): string {
-  return format(parseOverviewDate(day.date), 'MMM', { in: OVERVIEW_TZ });
+  return formatDateTime(parseOverviewDate(day.date), {
+    month: 'short',
+    timeZone: 'UTC',
+  });
 }
 
 function isInWindow(day: Date, from: Date, to: Date): boolean {

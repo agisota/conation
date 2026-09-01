@@ -1,5 +1,5 @@
-import { BotAvatar } from '@channel/Bots/BotAvatar';
 import { t } from '@app/lib/i18n';
+import { BotAvatar } from '@channel/Bots/BotAvatar';
 import { LoadingSpinner } from '@core/component/LoadingSpinner';
 import BotIcon from '@icon/wide-bot.svg';
 import CaretRightIcon from '@phosphor/caret-right.svg';
@@ -14,15 +14,20 @@ function BotSettingsRow(props: { bot: Bot; onOpen: (botId: string) => void }) {
   const channelsQuery = useBotChannelsQuery(() => props.bot.id);
   const channels = () => channelsQuery.data ?? [];
   const ownerLabel = () =>
-    props.bot.owner?.type === 'team' ? 'Team' : 'Personal';
+    props.bot.owner?.type === 'team'
+      ? t('settings.bots.owner.team')
+      : t('settings.bots.owner.personal');
 
   const channelSummary = () => {
-    if (channelsQuery.isLoading) return 'Loading channels…';
-    if (channels().length === 0) return 'Not in any channels yet';
+    if (channelsQuery.isLoading) return t('settings.bots.channels.loading');
+    if (channels().length === 0) return t('settings.bots.channels.none');
     if (channels().length === 1) {
-      return `In ${channels()[0]?.name ?? '1 channel'}`;
+      const channelName = channels()[0]?.name;
+      return channelName
+        ? t('settings.bots.channels.inNamed', { name: channelName })
+        : t('settings.bots.channels.count', { count: 1 });
     }
-    return `In ${channels().length} channels`;
+    return t('settings.bots.channels.count', { count: channels().length });
   };
 
   return (
@@ -66,16 +71,18 @@ export function BotSettingsList(props: {
 }) {
   return (
     <SettingsPage
-      title={t('auto.bots')}
-      description="Create webhook-powered teammates and connect them to channels."
+      title={t('settings.bots.title')}
+      description={t('settings.bots.description')}
       actions={
         <Button variant="cta" size="sm" onClick={props.onCreate}>
-          <PlusIcon />{t('auto.create_bot')}</Button>
+          <PlusIcon />
+          {t('settings.bots.create.action')}
+        </Button>
       }
     >
       <SettingsSection
-        title={t('auto.your_bots')}
-        description="Each bot can join multiple channels. Webhook URLs are scoped to the channel."
+        title={t('settings.bots.list.title')}
+        description={t('settings.bots.list.description')}
       >
         <SettingsCard>
           <Show
@@ -93,10 +100,11 @@ export function BotSettingsList(props: {
                   <div class="flex size-11 items-center justify-center rounded-xl bg-accent-bg text-accent">
                     <BotIcon class="size-6" />
                   </div>
-                  <div class="mt-3 text-sm font-medium text-ink">{t('auto.create_your_first_bot')}</div>
+                  <div class="mt-3 text-sm font-medium text-ink">
+                    {t('settings.bots.empty.title')}
+                  </div>
                   <div class="mt-1 max-w-80 text-xs text-ink-muted">
-                    Bots post to channels through a secure webhook and can be
-                    mentioned like any other participant.
+                    {t('settings.bots.empty.description')}
                   </div>
                   <Button
                     class="mt-4"
@@ -104,7 +112,9 @@ export function BotSettingsList(props: {
                     size="sm"
                     onClick={props.onCreate}
                   >
-                    <PlusIcon />{t('auto.create_bot')}</Button>
+                    <PlusIcon />
+                    {t('settings.bots.create.action')}
+                  </Button>
                 </div>
               }
             >

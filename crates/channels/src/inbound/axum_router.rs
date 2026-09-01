@@ -413,7 +413,7 @@ pub async fn create_channel_handler<
     let res = state
         .service
         .create_channel(
-            Sender::new_from_user(user.conation_user_id.clone()),
+            Sender::new_from_user(user.macro_user_id.clone()),
             user.user_context.organization_id.map(i64::from),
             req,
         )
@@ -449,7 +449,7 @@ pub async fn get_or_create_dm_handler<
     let user = &user.authorization.user;
     let res = state
         .service
-        .get_or_create_dm(Sender::new_from_user(user.conation_user_id.clone()), req)
+        .get_or_create_dm(Sender::new_from_user(user.macro_user_id.clone()), req)
         .await?;
     Ok((StatusCode::OK, Json(res)))
 }
@@ -482,7 +482,7 @@ pub async fn get_or_create_private_handler<
     let user = &user.authorization.user;
     let res = state
         .service
-        .get_or_create_private(Sender::new_from_user(user.conation_user_id.clone()), req)
+        .get_or_create_private(Sender::new_from_user(user.macro_user_id.clone()), req)
         .await?;
     Ok((StatusCode::OK, Json(res)))
 }
@@ -879,7 +879,7 @@ pub async fn join_channel_by_code_handler<
     let user = &user.authorization.user;
     state
         .service
-        .join_channel_by_code(Sender::new_from_user(user.conation_user_id.clone()), join_code)
+        .join_channel_by_code(Sender::new_from_user(user.macro_user_id.clone()), join_code)
         .await?;
     Ok(StatusCode::OK)
 }
@@ -1006,13 +1006,13 @@ pub async fn create_mention_handler<
     Auth: MacroAuthorizationService,
 >(
     State(state): State<ChannelsRouterState<S, Svc, Auth>>,
-    conation_user: MacroAuthorizationExtractor<Auth, UserOrInternal>,
+    macro_user: MacroAuthorizationExtractor<Auth, UserOrInternal>,
     Json(req): Json<CreateEntityMentionRequest>,
 ) -> Result<(StatusCode, Json<CreateEntityMentionResponse>), ChannelsHandlerErr> {
-    let conation_user = &conation_user.authorization.user;
+    let macro_user = &macro_user.authorization.user;
     require_document_edit_access(
         state.access_service.as_ref(),
-        &conation_user.conation_user_id,
+        &macro_user.macro_user_id,
         &req.source_entity_type,
         &req.source_entity_id,
     )
@@ -1025,7 +1025,7 @@ pub async fn create_mention_handler<
             source_entity_id: req.source_entity_id,
             entity_type: req.entity_type,
             entity_id: req.entity_id,
-            user_id: Some(conation_user.user_context.user_id.clone()),
+            user_id: Some(macro_user.user_context.user_id.clone()),
         })
         .await?;
 
@@ -1067,10 +1067,10 @@ pub async fn delete_mention_handler<
     Auth: MacroAuthorizationService,
 >(
     State(state): State<ChannelsRouterState<S, Svc, Auth>>,
-    conation_user: MacroAuthorizationExtractor<Auth, UserOrInternal>,
+    macro_user: MacroAuthorizationExtractor<Auth, UserOrInternal>,
     Path(mention_id): Path<Uuid>,
 ) -> Result<(StatusCode, Json<DeleteEntityMentionResponse>), ChannelsHandlerErr> {
-    let conation_user = &conation_user.authorization.user;
+    let macro_user = &macro_user.authorization.user;
     let mention = state
         .service
         .get_entity_mention(mention_id)
@@ -1079,7 +1079,7 @@ pub async fn delete_mention_handler<
 
     require_document_edit_access(
         state.access_service.as_ref(),
-        &conation_user.conation_user_id,
+        &macro_user.macro_user_id,
         &mention.source_entity_type,
         &mention.source_entity_id,
     )
@@ -1628,7 +1628,7 @@ pub async fn get_batch_channel_preview_handler<
     let org_id = user.user_context.organization_id.map(i64::from);
     let previews = state
         .service
-        .batch_get_channel_previews(user.conation_user_id.clone(), org_id, req.channel_ids)
+        .batch_get_channel_previews(user.macro_user_id.clone(), org_id, req.channel_ids)
         .await?;
     Ok(Json(GetBatchChannelPreviewResponse { previews }))
 }
@@ -1676,7 +1676,7 @@ pub async fn get_attachment_references_handler<
         .get_attachment_references(
             path.entity_type,
             path.entity_id,
-            user.conation_user_id.to_string(),
+            user.macro_user_id.to_string(),
         )
         .await?;
 
@@ -1713,7 +1713,7 @@ pub async fn get_activity_handler<
     let user = &user.authorization.user;
     let activities = state
         .service
-        .get_activities(user.conation_user_id.to_string())
+        .get_activities(user.macro_user_id.to_string())
         .await?;
     Ok(Json(
         activities.into_iter().map(ApiActivity::from).collect(),
@@ -1751,7 +1751,7 @@ pub async fn post_activity_handler<
     let access = state
         .access_service
         .generate_entity_access_receipt::<MemberParticipantRole>(
-            &user.conation_user_id,
+            &user.macro_user_id,
             user.user_context.organization_id.map(i64::from),
             &channel_id.to_string(),
             EntityType::Channel,

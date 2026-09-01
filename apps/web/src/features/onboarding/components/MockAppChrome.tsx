@@ -30,43 +30,43 @@ import {
 const MOCK_SIDEBAR_LINKS = [
   {
     id: 'agents',
-    label: 'Agents',
+    labelKey: 'onboarding.mock.sidebar.agents',
     icon: AnimatedStarIcon,
     hotkey: 'a',
   },
   {
     id: 'mail',
-    label: 'Emails',
+    labelKey: 'onboarding.mock.sidebar.emails',
     icon: AnimatedEmailIcon,
     hotkey: 'e',
   },
   {
     id: 'documents',
-    label: 'Documents',
+    labelKey: 'onboarding.mock.sidebar.documents',
     icon: AnimatedFileMdIcon,
     hotkey: 'd',
   },
   {
     id: 'tasks',
-    label: 'Tasks',
+    labelKey: 'onboarding.mock.sidebar.tasks',
     icon: AnimatedTaskIcon,
     hotkey: 't',
   },
   {
     id: 'channels',
-    label: 'Channels',
+    labelKey: 'onboarding.mock.sidebar.channels',
     icon: AnimatedChannelIcon,
     hotkey: 'c',
   },
   {
     id: 'folders',
-    label: 'Folders',
+    labelKey: 'onboarding.mock.sidebar.folders',
     icon: AnimatedFolderIcon,
     hotkey: 'f',
   },
 ] satisfies {
   id: SandboxSidebarFilter;
-  label: string;
+  labelKey: string;
   icon: (props: {}) => JSX.Element;
   hotkey: ValidHotkey;
 }[];
@@ -88,9 +88,9 @@ interface MockAppChromeProps {
 export function MockAppChrome(props: MockAppChromeProps) {
   const displayTitle = () => {
     const filter = sidebarFilter();
-    if (!filter) return 'All Items';
+    if (!filter) return t('onboarding.mock.sidebar.allItems');
     const match = MOCK_SIDEBAR_LINKS.find((link) => link.id === filter);
-    return match?.label ?? 'All Items';
+    return match ? t(match.labelKey) : t('onboarding.mock.sidebar.allItems');
   };
 
   // Tracks which highlight ids have been activated at least once so the glow
@@ -124,7 +124,7 @@ export function MockAppChrome(props: MockAppChromeProps) {
     const leaderRegistration = registerHotkey({
       hotkey: GO_TO_LEADER_KEY,
       scopeId: props.scopeId ?? 'global',
-      description: 'Go to page',
+      description: t('onboarding.hotkeys.goToPage'),
       keyDownHandler: () => false,
       hide: true,
       registrationType: 'add',
@@ -143,7 +143,9 @@ export function MockAppChrome(props: MockAppChromeProps) {
       registerHotkey({
         hotkey: link.hotkey as ValidHotkey,
         scopeId: commandScopeId,
-        description: `Go to ${link.label}`,
+        description: t('onboarding.hotkeys.goToSection', {
+          section: t(link.labelKey),
+        }),
         keyDownHandler: () => {
           setFilter(link.id as SandboxSidebarFilter);
           return true;
@@ -179,7 +181,7 @@ export function MockAppChrome(props: MockAppChromeProps) {
               setCreateActivated(true);
               props.onCreateClick?.();
             }}
-            title={t('auto.create')}
+            title={t('onboarding.mock.actions.create')}
           >
             <AnimatedPlusIcon />
           </button>
@@ -196,7 +198,7 @@ export function MockAppChrome(props: MockAppChromeProps) {
               e.preventDefault();
               setFilter(null);
             }}
-            title={t('auto.all')}
+            title={t('onboarding.mock.actions.all')}
           >
             <svg
               viewBox="0 0 24 24"
@@ -232,12 +234,12 @@ export function MockAppChrome(props: MockAppChromeProps) {
                   placement="right"
                   content={
                     <span class="flex items-center gap-1.5 text-xs">
-                      {link.label}
+                      {t(link.labelKey)}
                       <span class="flex items-center gap-1 text-ink/40">
                         <span class="px-1.5 rounded-sm border border-edge-muted">
                           G
                         </span>
-                        then
+                        {t('onboarding.callout.then')}
                         <span class="px-1.5 rounded-sm border border-edge-muted">
                           {link.hotkey.toUpperCase()}
                         </span>
@@ -270,7 +272,7 @@ export function MockAppChrome(props: MockAppChromeProps) {
               type="button"
               class="size-6 text-ink rounded-xs p-1 transition-colors cursor-default opacity-50 hover:opacity-80 hover:bg-ink/10"
               onClick={(e) => e.preventDefault()}
-              title={t('auto.settings')}
+              title={t('onboarding.mock.actions.settings')}
             >
               <AnimatedGearIcon />
             </button>

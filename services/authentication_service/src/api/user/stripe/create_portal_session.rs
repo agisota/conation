@@ -27,7 +27,7 @@ pub struct CreatePortalSessionRequest {
         (status = 500, body = ErrorResponse),
     )
 )]
-#[tracing::instrument(skip(ctx, authorization), err, fields(user_id = %authorization.authorization.user.conation_user_id))]
+#[tracing::instrument(skip(ctx, authorization), err, fields(user_id = %authorization.authorization.user.macro_user_id))]
 pub async fn create_portal_session(
     State(ctx): State<ApiContext>,
     authorization: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
@@ -36,7 +36,7 @@ pub async fn create_portal_session(
     // Get the stripe customer ID from the database
     let stripe_customer_id = conation_db_client::user::get::get_stripe_customer_id_by_user_id(
         &ctx.db,
-        &authorization.authorization.user.conation_user_id,
+        &authorization.authorization.user.macro_user_id,
     )
     .await?
     .ok_or(StripeOperationError::MissingStripeId)?;

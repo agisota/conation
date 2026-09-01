@@ -1,7 +1,8 @@
+import { t } from '@app/lib/i18n';
 import type { ApiMessage } from '@service-email/generated/schemas';
 import type { ReplyType } from './replyType';
 
-const NO_SUBJECT = '[No subject]';
+const LEGACY_NO_SUBJECT = '[No subject]';
 
 /**
  * A thread subject as it should be shown: accumulated "re:" prefixes stripped,
@@ -11,11 +12,11 @@ export const displaySubject = (subject: string | null | undefined): string => {
   // Strip before testing for blank: a subject of just "Re:" is empty once the
   // prefix is gone, and callers rely on this never returning an empty string.
   const stripped = subject?.replace(/^(\s*re:\s*)+/i, '').trim();
-  return stripped || NO_SUBJECT;
+  return stripped || t('blockEmail.noSubject');
 };
 
 export const isPlaceholderSubject = (title: string): boolean =>
-  title === NO_SUBJECT;
+  title === LEGACY_NO_SUBJECT || title === t('blockEmail.noSubject');
 
 export const getSubjectText = (
   replyingTo: ApiMessage | undefined,

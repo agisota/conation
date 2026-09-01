@@ -1,7 +1,9 @@
 # Freeze the Docker Compose project name so every checkout/worktree uses the
 # same local database containers and Compose-managed resources.
 # Local setup is single-instance by design.
-name: conation
+# Compose project/network names are persisted integration identifiers. Keep the
+# established `macro` project while user-facing and image branding migrates.
+name: macro
 
 services: 
   postgres:
@@ -11,18 +13,21 @@ services:
     # "pool timed out" / "too many clients". Local-only headroom.
     command: postgres -c max_connections=500
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user"]
+      test: ["CMD-SHELL", "pg_isready -U user -d $${POSTGRES_DB:-macrodb}"]
       interval: 2s
       timeout: 5s
       retries: 15
     ports:
-      - '5433:5432'
+      - '${DATABASE_BIND_ADDRESS:-127.0.0.1}:${POSTGRES_PORT:-5432}:5432'
     expose:
       - '5432'
     environment:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password
       - PGPASSWORD=password
+      # `macrodb` is a persisted compatibility identifier; product display
+      # branding does not rename an existing database.
+      - POSTGRES_DB=${POSTGRES_DB:-macrodb}
     volumes:
       # pg18+ images keep PGDATA in a version-specific subdir; mount the parent
       # so the data dir lands inside the volume (see docker-library/postgres#1259).
@@ -32,8 +37,8 @@ services:
   redis:
     image: 'redis/redis-stack:latest'
     ports:
-      - '6380:6379' # Expose Redis on alternative host port (host 6379 used by rox)
-      - '8005:8001' # Expose Redis Stack UI on 8005 (8001-8003 used by rox)
+      - '${DATABASE_BIND_ADDRESS:-127.0.0.1}:${REDIS_PORT:-6379}:6379'
+      - '${DATABASE_BIND_ADDRESS:-127.0.0.1}:${REDIS_UI_PORT:-8001}:8001'
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
     volumes:
@@ -70,13 +75,16 @@ services:
       timeout: 10s
       retries: 20
     ports:
-      - '9093:9092'
+      - '${DATABASE_BIND_ADDRESS:-127.0.0.1}:${KAFKA_PORT:-9092}:9092'
     volumes:
       - kafka_data:/var/lib/kafka/data
     networks:
       - databases
   search:
-    image: opensearchproject/opensearch:3.5.0
+    # The channels mapping requires analysis-icu, which the stock image omits.
+    build:
+      context: ../infra/local/opensearch
+    image: conation-local-opensearch:dev
     environment:
       cluster.name: search 
       discovery.type: single-node
@@ -97,8 +105,8 @@ services:
         soft: 65536
         hard: 65536
     ports:
-      - 9201:9200 # REST API (host 9200 used by other)
-      - 9601:9600 # Performance Analyzer
+      - '${DATABASE_BIND_ADDRESS:-127.0.0.1}:${OPENSEARCH_PORT:-9200}:9200'
+      - '${DATABASE_BIND_ADDRESS:-127.0.0.1}:${OPENSEARCH_PERFORMANCE_PORT:-9600}:9600'
     networks:
       - databases
     volumes:
@@ -109,14 +117,16 @@ networks:
     external: true
 volumes:
   db:
-    name: conation_postgres_data
+    # Persisted compatibility names: changing product branding must not orphan
+    # an existing local database or silently select a new empty volume.
+    name: macro_postgres_data
     external: true
   cache:
-    name: conation_redis_data
+    name: macro_redis_data
     external: true
   opensearch_data:
-    name: conation_opensearch_data
+    name: macro_opensearch_data
     external: true
   kafka_data:
-    name: conation_kafka_data
+    name: macro_kafka_data
     external: true

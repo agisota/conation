@@ -1,5 +1,5 @@
-import { SidePanel } from '@components/app/side-panel';
 import { t } from '@app/lib/i18n';
+import { SidePanel } from '@components/app/side-panel';
 import type { Entity as EntityRef } from '@core/types';
 import { compareDateDesc } from '@core/util/date';
 import { NotificationRow } from '@entity';
@@ -26,7 +26,9 @@ export function Notifications(props: NotificationsProps) {
     <Show
       when={notifications().length > 0}
       fallback={
-        <div class="py-8 text-ink-muted text-sm text-center">{t('auto.no_notifications_found')}</div>
+        <div class="py-8 text-ink-muted text-sm text-center">
+          {t('core.notifications.empty')}
+        </div>
       }
     >
       <SidePanel.Card>

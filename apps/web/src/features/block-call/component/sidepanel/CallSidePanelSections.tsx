@@ -1,6 +1,6 @@
 import { EntityActivitySectionConditional } from '@app/features/activity/EntityActivitySection';
-import { t } from '@app/lib/i18n';
 import { EntityPropertiesSection } from '@app/features/property/side-panel/properties';
+import { t } from '@app/lib/i18n';
 import { useCallContextOptional } from '@channel/Call/CallContext';
 import { SidePanel } from '@components/app/side-panel';
 import { useBlockId } from '@core/block';
@@ -28,7 +28,12 @@ export function CallSidePanelSections(props: CallSidePanelSectionsProps) {
 
   return (
     <>
-      <SidePanel.Section id="details" title={t('common.details')} defaultOpen order={10}>
+      <SidePanel.Section
+        id="details"
+        title={t('common.details')}
+        defaultOpen
+        order={10}
+      >
         <DetailsSectionContent record={props.record} />
       </SidePanel.Section>
       <SidePanel.Section
@@ -39,7 +44,11 @@ export function CallSidePanelSections(props: CallSidePanelSectionsProps) {
       >
         <PropertiesSectionContent record={props.record} />
       </SidePanel.Section>
-      <SidePanel.Section id="sharing" title={t('auto.sharing')} order={20}>
+      <SidePanel.Section
+        id="sharing"
+        title={t('call.sidePanel.sharing')}
+        order={20}
+      >
         <SharingSectionContent record={props.record} />
       </SidePanel.Section>
       <EntityActivitySectionConditional
@@ -66,21 +75,21 @@ function DetailsSectionContent(props: { record: Accessor<CallRecord> }) {
       </SidePanel.Row>
       <Show when={startedAt()}>
         {(value) => (
-          <SidePanel.Row label="Started">
+          <SidePanel.Row label={t('call.sidePanel.started')}>
             <DateValueDisplay value={value()} />
           </SidePanel.Row>
         )}
       </Show>
       <Show when={endedAt()}>
         {(value) => (
-          <SidePanel.Row label="Ended">
+          <SidePanel.Row label={t('call.sidePanel.ended')}>
             <DateValueDisplay value={value()} />
           </SidePanel.Row>
         )}
       </Show>
       <Show when={durationMs()}>
         {(ms) => (
-          <SidePanel.Row label="Duration">
+          <SidePanel.Row label={t('call.sidePanel.duration')}>
             <SidePanel.Pill>
               <ClockIcon class="size-3 shrink-0" />
               <span class="truncate">{formatCallDuration(ms())}</span>
@@ -88,14 +97,20 @@ function DetailsSectionContent(props: { record: Accessor<CallRecord> }) {
           </SidePanel.Row>
         )}
       </Show>
-      <SidePanel.Row label="Status">
+      <SidePanel.Row label={t('call.sidePanel.status')}>
         <SidePanel.Pill>
           <Show
             when={record().isActive}
-            fallback={<span class="truncate text-ink-muted">{t('auto.ended')}</span>}
+            fallback={
+              <span class="truncate text-ink-muted">
+                {t('call.status.ended')}
+              </span>
+            }
           >
             <span class="size-2 rounded-full bg-success shrink-0" />
-            <span class="truncate text-success font-medium">{t('auto.in_progress')}</span>
+            <span class="truncate text-success font-medium">
+              {t('call.status.inProgress')}
+            </span>
           </Show>
         </SidePanel.Pill>
       </SidePanel.Row>
@@ -191,11 +206,10 @@ function SharingSectionContent(props: { record: Accessor<CallRecord> }) {
         )}
       >
         <InlineCheckbox checked={isShared()} />
-        <span class="whitespace-nowrap">{t('auto.share_with_team')}</span>
+        <span class="whitespace-nowrap">{t('call.actions.shareWithTeam')}</span>
       </button>
       <p class="text-ink-muted leading-5">
-        Lets everyone on your team view and search this call's transcript and AI
-        summary.
+        {t('call.sidePanel.sharingDescription')}
       </p>
     </div>
   );
@@ -217,7 +231,12 @@ function ReferencesSectionConditional(props: { callId: string }) {
     <Show when={count() > 0}>
       <SidePanel.Section
         id="references"
-        title={<SidePanel.CountTitle label="References" count={count()} />}
+        title={
+          <SidePanel.CountTitle
+            label={t('call.sidePanel.references')}
+            count={count()}
+          />
+        }
         order={50}
       >
         <Suspense fallback={<SidePanel.Loading />}>

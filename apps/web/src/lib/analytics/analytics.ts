@@ -1,5 +1,4 @@
 import type { AppEventNames, AppEvents } from '@app/lib/analytics/app-events';
-import { t } from '@app/lib/i18n';
 import {
   type GoogleConversionAction,
   googleConversionSendTo,
@@ -97,7 +96,7 @@ const META_STANDARD_EVENT_NAMES = [
   'PageView',
   'Purchase',
   'Schedule',
-  t('common.search'),
+  'Search',
   'StartTrial',
   'SubmitApplication',
   'Subscribe',

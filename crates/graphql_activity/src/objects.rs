@@ -76,7 +76,7 @@ pub enum GraphqlActivityAction {
 
 /// Declares the payload-free union members: each needs a distinct object
 /// type, and GraphQL objects need at least one field.
-conation_rules! payload_free_action_objects {
+macro_rules! payload_free_action_objects {
     ($($(#[$doc:meta])* $name:ident),+ $(,)?) => {$(
         $(#[$doc])*
         #[derive(Default, SimpleObject)]

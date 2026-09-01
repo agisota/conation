@@ -5,9 +5,9 @@ import {
   queryStateFrom,
 } from '@app/features/next-soup/filters/filter-store';
 import type { FieldFilters } from '@app/features/next-soup/filters/filter-store/types';
-import { t } from '@app/lib/i18n';
 import { soupItemMatchesQuery } from '@app/features/next-soup/filters/query-filters';
 import { openEntityInSplitFromUnifiedList } from '@app/features/next-soup/utils';
+import { t } from '@app/lib/i18n';
 import { ListEntityMetadataQueryProvider } from '@entity';
 import { CollapsibleList } from '@entity/components/CollapsibleList';
 import { ListEntity, ListLayoutProvider } from '@entity/composed/ListEntity';
@@ -169,7 +169,9 @@ function Rows(props: {
     <Show
       when={entities().length > 0}
       fallback={
-        <div class={cn('px-3 py-6 text-center text-sm', TEXT.tertiary)}>{t('auto.no_items')}</div>
+        <div class={cn('px-3 py-6 text-center text-sm', TEXT.tertiary)}>
+          {t('dynamicUi.widgets.list.empty')}
+        </div>
       }
     >
       <CollapsibleList
@@ -218,7 +220,9 @@ export function List(props: ListProps) {
             {/* Soup fetches suspend; guard so it can't blank the surrounding view. */}
             <Suspense
               fallback={
-                <div class={cn('px-3 py-6 text-center text-sm', TEXT.tertiary)}>{t('common.loading')}</div>
+                <div class={cn('px-3 py-6 text-center text-sm', TEXT.tertiary)}>
+                  {t('common.loading')}
+                </div>
               }
             >
               <Rows

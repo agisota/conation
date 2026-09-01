@@ -1,13 +1,10 @@
+import { t } from '@app/lib/i18n';
 import { Button, Dialog, Surface } from '@ui';
 
 export function NativeAppUpdateRequiredDialog(props: {
   open: boolean;
   onClose: () => void;
 }) {
-  const title = 'Update Macro App required';
-  const description =
-    'There is a new version of Macro App available. Please update your app. You may experience degraded service until the app is updated.';
-
   return (
     <Dialog
       open={props.open}
@@ -21,15 +18,15 @@ export function NativeAppUpdateRequiredDialog(props: {
         <div class="flex flex-col gap-4 px-4 py-5">
           <div class="flex flex-col gap-2">
             <Dialog.Title class="text-lg font-semibold text-ink">
-              {title}
+              {t('mobile.updateRequired.title')}
             </Dialog.Title>
             <Dialog.Description class="text-sm leading-5 text-ink-extra-muted">
-              {description}
+              {t('mobile.updateRequired.description')}
             </Dialog.Description>
           </div>
           <div class="flex justify-end">
             <Dialog.CloseButton as={Button} variant="accent" size="sm">
-              OK
+              {t('mobile.updateRequired.confirm')}
             </Dialog.CloseButton>
           </div>
         </div>

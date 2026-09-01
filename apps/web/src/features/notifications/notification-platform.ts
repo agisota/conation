@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { getFaviconUrl } from '@app/util/favicon';
 import type { SplitManager } from '@components/app/split-layout/layoutManager';
 import { markdownToPlainText } from '@conation/lexical-core';
@@ -31,9 +32,6 @@ export interface PlatformNotificationData {
   options?: NotificationOptions;
 }
 
-const USER_NAME_FALLBACK = 'Someone';
-const DOCUMENT_NAME_FALLBACK = 'Something';
-
 function getAccentColorForIcon(): string {
   const { l, c, h } = themeReactive.a0;
   return `oklch(${l[0]()} ${c[0]()} ${h[0]()}deg)`;
@@ -47,7 +45,7 @@ export async function toPlatformNotificationData(
   const actorId = notification.sender_id;
   const actor =
     (actorId ? await resolveUserName(actorId) : undefined) ??
-    USER_NAME_FALLBACK;
+    t('notifications.platform.someone');
 
   const showTarget = shouldShowNotificationTarget(notification);
   const targetName =
@@ -56,7 +54,7 @@ export async function toPlatformNotificationData(
       notification.entity_id,
       notification.entity_type
     )) ??
-    DOCUMENT_NAME_FALLBACK;
+    t('notifications.platform.something');
 
   const content = getNotificationContent(notification);
   const action = getNotificationAction(notification);

@@ -1,5 +1,5 @@
-import { openExternalUrl } from '@core/util/url';
 import { t } from '@app/lib/i18n';
+import { openExternalUrl } from '@core/util/url';
 import CaretDown from '@phosphor/caret-down.svg';
 import CaretRight from '@phosphor/caret-right.svg';
 import GlobeIcon from '@phosphor/globe-simple.svg';
@@ -99,7 +99,9 @@ function _UnfurledLinkCollection(props: UnfurledLinkCollection) {
           <div class="flex items-center gap-2">
             <GlobeIcon class="size-6" />
             <div>
-              <div class="flex items-center gap-1 font-medium">{t('auto.sources')}</div>
+              <div class="flex items-center gap-1 font-medium">
+                {t('core.sources.title')}
+              </div>
               <div class="flex gap-1 text-xs">
                 <p class="font-medium text-ink-muted">
                   {props.links.length > 0
@@ -112,7 +114,9 @@ function _UnfurledLinkCollection(props: UnfurledLinkCollection) {
                 </p>
                 <Show when={props.links.length > 1}>
                   <p class="font-medium text-accent">
-                    +{props.links.length - 1} More
+                    {t('core.sources.more', {
+                      count: props.links.length - 1,
+                    })}
                   </p>
                 </Show>
               </div>

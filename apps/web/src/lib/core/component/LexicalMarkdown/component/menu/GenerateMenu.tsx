@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import {
   generatedAndWaitingSignal,
   isGeneratingSignal,
@@ -8,7 +9,6 @@ import {
   InlineInputReady,
 } from '@core/component/AI/component/InlineAi';
 import { ScopedPortal } from '@core/component/ScopedPortal';
-import { t } from '@app/lib/i18n';
 import clickOutside from '@core/directive/clickOutside';
 import { createCallback } from '@solid-primitives/rootless';
 import { cn } from '@ui';
@@ -111,7 +111,11 @@ function GenerateActionMenu(props: GenerateMenuProps) {
         setSelected={setSelected}
         index={0}
       >
-        <div class="flex justify-between">{t('auto.accept')}<span class="pl-4 opacity-50 w-full text-end ">{t('auto.tab')}</span>
+        <div class="flex justify-between">
+          {t('editor.suggestion.accept')}
+          <span class="pl-4 opacity-50 w-full text-end ">
+            {t('editor.keyboard.tab')}
+          </span>
         </div>
       </MenuItem>
       <MenuItem
@@ -121,7 +125,11 @@ function GenerateActionMenu(props: GenerateMenuProps) {
         selected={selectedIndex() === 1}
         setSelected={setSelected}
         index={1}
-      >{t('auto.reject')}<span class="pl-4 opacity-50 w-full text-end">{t('auto.escape')}</span>
+      >
+        {t('editor.suggestion.reject')}
+        <span class="pl-4 opacity-50 w-full text-end">
+          {t('editor.keyboard.escape')}
+        </span>
       </MenuItem>
     </div>
   );

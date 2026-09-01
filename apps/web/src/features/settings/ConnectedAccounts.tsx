@@ -1,5 +1,5 @@
-import { ENABLE_EMAIL } from '@core/constant/featureFlags';
 import { t } from '@app/lib/i18n';
+import { ENABLE_EMAIL } from '@core/constant/featureFlags';
 import { useCursorAgentsAccess } from '@core/cursor/flag';
 import { usePipedreamMcpFlag } from '@core/pipedream/flag';
 import { Show, Suspense } from 'solid-js';
@@ -13,17 +13,17 @@ import { SettingsPage, SettingsSection } from './primitives';
 /**
  * Consolidated "Connections" page: one card per external account the user can
  * link (Gmail, GitHub), then the agent's MCP integrations, then the coding
- * agents — so everything Macro is connected to lives in one place.
+ * agents — so everything Conation is connected to lives in one place.
  */
 export function ConnectedAccounts() {
   const pipedreamMcp = usePipedreamMcpFlag();
   const canUseCursor = useCursorAgentsAccess();
   return (
     <SettingsPage
-      title={t('auto.connections')}
-      description="Connect your accounts so Macro can work across the tools you already use."
+      title={t('settings.connections.title')}
+      description={t('settings.connections.description')}
     >
-      <SettingsSection title={t('auto.accounts')}>
+      <SettingsSection title={t('settings.connections.accounts.title')}>
         <div class="flex flex-col gap-3">
           <Show when={ENABLE_EMAIL}>
             <Suspense>
@@ -42,8 +42,8 @@ export function ConnectedAccounts() {
       </Suspense>
       <Show when={canUseCursor()}>
         <SettingsSection
-          title={t('auto.coding_sessions')}
-          description="Connect a coding agent so Macro can run sessions on your own account."
+          title={t('settings.connections.codingSessions.title')}
+          description={t('settings.connections.codingSessions.description')}
         >
           <Suspense>
             <CursorCard />

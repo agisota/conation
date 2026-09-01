@@ -306,7 +306,7 @@ pub struct SoupRequest<T> {
     pub user: MacroUserIdStr<'static>,
     /// Email preview view used when hydrating email soup items.
     pub email_preview_view: PreviewView,
-    /// Every inbox the caller can read (own + delegated via conation_user_links).
+    /// Every inbox the caller can read (own + delegated via macro_user_links).
     /// Empty when the caller has no inboxes — `build_email_request` returns
     /// `None` so the email branch is skipped.
     pub link_ids: Vec<Uuid>,
@@ -405,7 +405,7 @@ impl SoupRequest<Option<EntityFilterAst>> {
         Some(GetEmailsRequest {
             view: self.email_preview_view.clone(),
             link_ids: self.link_ids.clone(),
-            conation_id: self.user.clone(),
+            macro_id: self.user.clone(),
             limit: Some(self.limit as u32),
             query: match &self.cursor {
                 SoupQuery::Simple(SimpleQueryInner(Query::Sort(t, f))) => Some(Query::Sort(
@@ -643,7 +643,7 @@ impl SoupRequest<Option<EntityFilterAst>> {
             return None;
         }
         Some(GetChannelsRequest {
-            conation_id: self.user.clone(),
+            macro_id: self.user.clone(),
             limit: Some(self.limit as u32),
             include_frecency: false,
             query: match &self.cursor {
@@ -700,7 +700,7 @@ impl SoupRequest<Option<EntityFilterAst>> {
         }?;
 
         Some(GetThreadReplyRowsRequest {
-            conation_id: self.user.clone(),
+            macro_id: self.user.clone(),
             limit: Some(self.limit as u32),
             query,
         })

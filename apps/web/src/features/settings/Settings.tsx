@@ -1,6 +1,6 @@
 import { Billing } from '@app/features/settings/Billing';
-import { t } from '@app/lib/i18n';
 import { Bots } from '@app/features/settings/Bots';
+import { t } from '@app/lib/i18n';
 import { PillTabs } from '@components/app/mobile/PillTabs';
 import { HeaderIsland } from '@components/app/split-layout/components/HeaderIsland';
 import {
@@ -46,6 +46,7 @@ import { Crm } from './Crm';
 import { MobileApp } from './MobileApp';
 import { Notifications } from './Notifications';
 import { Shortcuts } from './Shortcuts';
+import { settingsGroupLabel, settingsTabLabel } from './settings-i18n';
 import { Tags } from './Tags';
 import { Team } from './Team';
 
@@ -135,7 +136,7 @@ export function SettingsPanel(props: SettingsPanelProps) {
   // Register Escape key to close settings
   registerHotkey({
     keyDownHandler: handleEscapeKey,
-    description: 'Close settings',
+    description: t('settings.navigation.hotkeys.close'),
     scopeId: settingsHotkeyScope,
     hotkey: 'escape',
   });
@@ -177,14 +178,14 @@ export function SettingsPanel(props: SettingsPanelProps) {
   registerHotkey({
     hotkey: 'tab',
     scopeId: settingsHotkeyScope,
-    description: 'Next settings tab',
+    description: t('settings.navigation.hotkeys.nextTab'),
     keyDownHandler: handleNextTab,
     hide: true,
   });
 
   // Register Shift+Tab for previous tab navigation
   registerHotkey({
-    description: 'Previous settings tab',
+    description: t('settings.navigation.hotkeys.previousTab'),
     keyDownHandler: handlePreviousTab,
     scopeId: settingsHotkeyScope,
     hotkey: 'shift+tab',
@@ -198,7 +199,9 @@ export function SettingsPanel(props: SettingsPanelProps) {
       return navigateToTabIndex(keyNum - 1);
     }
     registerHotkey({
-      description: `Go to settings tab ${keyNum}`,
+      description: t('settings.navigation.hotkeys.goToTab', {
+        number: keyNum,
+      }),
       hotkey: `${keyNum}` as ValidHotkey,
       keyDownHandler: handleNumberKey,
       scopeId: settingsHotkeyScope,
@@ -214,7 +217,10 @@ export function SettingsPanel(props: SettingsPanelProps) {
 
   // Tab list for the compact segmented control / dropdown.
   const tabItems = () =>
-    flatTabs().map((tab) => ({ value: tab.tab, label: tab.label }));
+    flatTabs().map((tab) => ({
+      value: tab.tab,
+      label: settingsTabLabel(tab.tab, tab.label),
+    }));
 
   // "Back to app" — the close affordance for solo settings. Laid out like a nav row.
   const backToApp = () => (
@@ -224,14 +230,16 @@ export function SettingsPanel(props: SettingsPanelProps) {
       class="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs text-ink-extra-muted cursor-default hover:bg-ink/4 hover:text-ink-muted"
     >
       <CaretLeftIcon class="size-4 shrink-0" />
-      <span class="whitespace-nowrap">{t('auto.back_to_app')}</span>
+      <span class="whitespace-nowrap">
+        {t('settings.navigation.backToApp')}
+      </span>
     </button>
   );
 
   const moveToSplitButton = () => (
     <Button
       class="p-1 rounded-md"
-      label="Move to split"
+      label={t('settings.navigation.moveToSplit')}
       onClick={() => moveSettingsToSplit()}
     >
       <ArrowsIn class="size-4" />
@@ -269,7 +277,9 @@ export function SettingsPanel(props: SettingsPanelProps) {
           >
             <HeaderIsland>
               <div class="h-full flex gap-3 items-center">
-                <h1 class="font-semibold text-ink select-none text-sm shrink-0">{t('auto.settings')}</h1>
+                <h1 class="font-semibold text-ink select-none text-sm shrink-0">
+                  {t('settings.navigation.title')}
+                </h1>
               </div>
             </HeaderIsland>
             {/* When the sidebar collapses, tab selection moves into the split's
@@ -292,7 +302,7 @@ export function SettingsPanel(props: SettingsPanelProps) {
           <SplitHeaderRight>
             <Button
               class="p-1 rounded-lg"
-              label="Open fullscreen"
+              label={t('settings.navigation.openFullscreen')}
               onClick={() => moveSettingsToSolo()}
             >
               <ArrowsOut class="size-4" />
@@ -320,7 +330,7 @@ export function SettingsPanel(props: SettingsPanelProps) {
             </Show>
             <For each={groups()}>
               {(group) => (
-                <SideNav.Group label={group.label}>
+                <SideNav.Group label={settingsGroupLabel(group.label)}>
                   <For each={group.items}>
                     {(item) => (
                       <SideNav.Item
@@ -329,7 +339,7 @@ export function SettingsPanel(props: SettingsPanelProps) {
                         onSelect={() => handleTabChange(item.tab)}
                         class="text-xs py-1.5"
                       >
-                        {item.label}
+                        {settingsTabLabel(item.tab, item.label)}
                       </SideNav.Item>
                     )}
                   </For>
@@ -343,7 +353,9 @@ export function SettingsPanel(props: SettingsPanelProps) {
                 class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-ink-extra-muted cursor-default hover:bg-ink/3 hover:text-ink"
               >
                 <SignOutIcon class="size-4 shrink-0" />
-                <span class="whitespace-nowrap">{t('auto.log_out')}</span>
+                <span class="whitespace-nowrap">
+                  {t('settings.navigation.logout')}
+                </span>
               </button>
             </div>
           </SideNav>

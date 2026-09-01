@@ -1,5 +1,4 @@
 import { SplitHeaderLeft } from '@components/app/split-layout/components/SplitHeader';
-import { t } from '@app/lib/i18n';
 import { StaticSplitLabel } from '@components/app/split-layout/components/SplitLabel';
 import { seedMockDisplayNames } from '@core/user';
 import { type Component, createSignal, For, type JSX, Show } from 'solid-js';
@@ -13,7 +12,7 @@ import type { PropertyApiValues, Property as PropertyT } from '../types';
 
 // Seed mock display names so user properties render real first names.
 seedMockDisplayNames([
-  { id: 'macro|alex@example.com', firstName: 'Alex', lastName: t('common.owner') },
+  { id: 'macro|alex@example.com', firstName: 'Alex', lastName: 'Owner' },
   { id: 'macro|sam@example.com', firstName: 'Sam', lastName: 'Shared' },
   { id: 'macro|jordan@example.com', firstName: 'Jordan', lastName: 'Team' },
   { id: 'macro|current@example.com', firstName: 'Current', lastName: 'User' },
@@ -139,9 +138,9 @@ const PropertyDebug: Component = () => {
           </Grid>
         </Section>
 
-        <Section title={t('auto.primitives_empty')}>
+        <Section title="Primitives — empty">
           <Grid
-            title={t('auto.property_text_with_fallback')}
+            title="Property.Text with fallback"
             properties={PROPERTIES_EMPTY}
           >
             {(p) => (
@@ -164,9 +163,9 @@ const PropertyDebug: Component = () => {
           </Grid>
         </Section>
 
-        <Section title={t('auto.primitives_read_only_ismetadat')}>
+        <Section title="Primitives — read-only (isMetadata)">
           <Grid
-            title={t('auto.no_edit_affordances_should_ren')}
+            title="No edit affordances should render"
             properties={PROPERTIES_METADATA}
           >
             {(p) => (
@@ -186,7 +185,7 @@ const PropertyDebug: Component = () => {
           </Grid>
         </Section>
 
-        <Section title={t('auto.compositions_inline_pill_like_')}>
+        <Section title="Compositions — inline pill (like InlinePropertyValue)">
           <Grid
             title="Tooltip + Pill + Icon + Text + Caret"
             properties={PROPERTIES_FILLED}
@@ -264,11 +263,11 @@ const PropertyDebug: Component = () => {
           </For>
         </Section>
 
-        <Section title={t('auto.editors_interactive_click_any_')}>
+        <Section title="Editors — interactive (click any value)">
           <EditorsDemo />
         </Section>
 
-        <Section title={t('auto.composed_stubs_coming_in_pr_3_')}>
+        <Section title="Composed (stubs — coming in PR 3-6)">
           <Show when={true} fallback={null}>
             <div class="text-xs text-ink-muted">
               CondensedProperty / InlineProperty / ListProperty / PanelRow will

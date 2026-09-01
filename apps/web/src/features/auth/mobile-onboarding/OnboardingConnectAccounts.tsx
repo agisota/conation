@@ -1,5 +1,5 @@
-import { toast } from '@core/component/Toast/Toast';
 import { t } from '@app/lib/i18n';
+import { toast } from '@core/component/Toast/Toast';
 import { useIsAuthenticated } from '@core/context/user';
 import { useAddInboxFlow } from '@core/email-link';
 import { getNativeMobilePlatform } from '@core/util/platform';
@@ -57,7 +57,7 @@ export function OnboardingConnectAccounts() {
     if (githubLinked()) return;
     if (DEBUG_FAKE_GITHUB) {
       setDebugGithubConnected(true);
-      toast.success('GitHub connected (debug)');
+      toast.success(t('auth.mobile.githubConnectedDebug'));
       return;
     }
     const isIos = getNativeMobilePlatform() === 'ios';
@@ -89,22 +89,24 @@ export function OnboardingConnectAccounts() {
 
       if (!auth.success) {
         if (auth.error !== 'User canceled login') {
-          toast.failure('Failed to connect GitHub');
+          toast.failure(t('auth.mobile.githubConnectFailed'));
         }
         return;
       }
 
       await invalidateGithubLinkStatus();
-      toast.success('GitHub connected');
+      toast.success(t('auth.mobile.githubConnected'));
     } catch (error) {
       console.error('connect github failed', error);
-      toast.failure('Failed to connect GitHub');
+      toast.failure(t('auth.mobile.githubConnectFailed'));
     }
   };
 
   return (
     <div class="h-full flex flex-col gap-6 justify-between">
-      <h1 class="text-2xl font-semibold tracking-tight text-ink">{t('auto.connect_more_accounts')}</h1>
+      <h1 class="text-2xl font-semibold tracking-tight text-ink">
+        {t('auth.mobile.connectAccounts.title')}
+      </h1>
       <div>
         <div class="flex flex-col gap-2">
           <Button
@@ -114,9 +116,11 @@ export function OnboardingConnectAccounts() {
             disabled={!isAuthenticated()}
             onClick={() => void addInbox()}
           >
-            <IconGoogle class="size-5" />{t('auto.connect_another_gmail')}</Button>
+            <IconGoogle class="size-5" />
+            {t('auth.mobile.connectAccounts.anotherGmail')}
+          </Button>
           <p class="text-sm/relaxed text-ink-muted">
-            Connect multiple accounts to see all your emails in one inbox.
+            {t('auth.mobile.connectAccounts.gmailDescription')}
           </p>
         </div>
 
@@ -133,22 +137,30 @@ export function OnboardingConnectAccounts() {
             onClick={() => void connectGithub()}
           >
             <GithubIcon class="size-5" />
-            {githubLinked() ? 'GitHub Connected' : 'Connect GitHub'}
+            {githubLinked()
+              ? t('auth.mobile.githubConnected')
+              : t('auth.mobile.connectGithub')}
           </Button>
-          <p class="text-sm/relaxed text-ink-muted">{t('auto.connect_github_account_to_see_')}</p>
+          <p class="text-sm/relaxed text-ink-muted">
+            {t('auth.mobile.connectAccounts.githubDescription')}
+          </p>
         </div>
       </div>
 
       <Show when={hasConnectedAccounts()}>
         <div>
-          <h1 class="pb-2">{t('auto.connected_accounts')}</h1>
+          <h1 class="pb-2">{t('auth.mobile.connectedAccounts')}</h1>
           <div class="flex flex-col overflow-hidden rounded-lg border border-edge-muted">
             <For each={linksQuery.data?.links ?? []}>
               {(link) => (
                 <AccountRow
                   icon={<IconGoogle />}
                   label={link.email_address}
-                  badge={link.is_primary ? 'Primary' : undefined}
+                  badge={
+                    link.is_primary
+                      ? t('auth.mobile.primaryAccount')
+                      : undefined
+                  }
                 />
               )}
             </For>

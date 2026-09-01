@@ -1,9 +1,9 @@
+import { t } from '@app/lib/i18n';
 import {
   type EdgeConnectionStyle,
   EdgeConnectionStyles,
 } from '@block-canvas/model/CanvasModel';
 import { useCachedStyle } from '@block-canvas/signal/cachedStyle';
-import { t } from '@app/lib/i18n';
 import { useToolManager } from '@block-canvas/signal/toolManager';
 import { useIsNestedBlock } from '@core/block';
 import { ScopedPortal } from '@core/component/ScopedPortal';
@@ -69,7 +69,7 @@ const ConnectorTypeSubMenu = (props: {
             }}
           >
             <ConnectorStraightArrows class="size-4 shrink-0" />
-            <span class="flex-1 truncate">{t('auto.connector')}</span>
+            <span class="flex-1 truncate">{t('canvas.tools.connector')}</span>
             <Hotkey
               token={TOKENS.canvas.line.straight}
               class="text-ink-muted"
@@ -82,7 +82,9 @@ const ConnectorTypeSubMenu = (props: {
             }}
           >
             <ConnectorBezierArrows class="size-4 shrink-0" />
-            <span class="flex-1 truncate">{t('auto.flow_connector')}</span>
+            <span class="flex-1 truncate">
+              {t('canvas.tools.flowConnector')}
+            </span>
             <Hotkey
               token={TOKENS.canvas.line.flow}
               class="text-ink-muted"
@@ -95,7 +97,9 @@ const ConnectorTypeSubMenu = (props: {
             }}
           >
             <ConnectorSteppedArrows class="size-4 shrink-0" />
-            <span class="flex-1 truncate">{t('auto.bent_connector')}</span>
+            <span class="flex-1 truncate">
+              {t('canvas.tools.bentConnector')}
+            </span>
             <Hotkey
               token={TOKENS.canvas.line.bent}
               class="text-ink-muted"
@@ -192,7 +196,7 @@ export function ToolBar() {
           <Button
             variant={activeTool() === Tools.Grab ? 'accent' : 'ghost'}
             size="icon-md"
-            label="Hand tool"
+            label={t('canvas.tools.hand')}
             hotkey={TOKENS.canvas.handTool}
             onClick={() => {
               toolManager.setSelectedTool(Tools.Grab);
@@ -209,7 +213,7 @@ export function ToolBar() {
                   : 'ghost'
               }
               size="icon-md"
-              label="Zoom"
+              label={t('canvas.tools.zoom')}
               hotkey={TOKENS.canvas.zoomInTool}
               /* scuffed: previously also showed a second row
                  "Zoom out — hold ${IS_MAC ? 'option' : 'alt'}"
@@ -232,7 +236,7 @@ export function ToolBar() {
                   : 'ghost'
               }
               size="icon-md"
-              label="Move"
+              label={t('canvas.tools.move')}
               hotkey={TOKENS.canvas.selectTool}
               onClick={() => {
                 toolManager.setSelectedTool(Tools.Select);
@@ -247,7 +251,7 @@ export function ToolBar() {
             <Button
               variant={activeTool() === Tools.Shape ? 'accent' : 'ghost'}
               size="icon-md"
-              label="Rectangle"
+              label={t('canvas.tools.rectangle')}
               hotkey={TOKENS.canvas.shapeTool}
               onClick={() => {
                 toolManager.setSelectedTool(Tools.Shape);
@@ -259,7 +263,7 @@ export function ToolBar() {
             <Button
               variant={activeTool() === Tools.Pencil ? 'accent' : 'ghost'}
               size="icon-md"
-              label="Pencil"
+              label={t('canvas.tools.pencil')}
               hotkey={TOKENS.canvas.pencilTool}
               onClick={() => {
                 toolManager.setSelectedTool(Tools.Pencil);
@@ -271,7 +275,7 @@ export function ToolBar() {
             <Button
               variant={activeTool() === Tools.Line ? 'accent' : 'ghost'}
               size="icon-md"
-              label="Connector"
+              label={t('canvas.tools.connector')}
               hotkey={TOKENS.canvas.lineTool}
               onClick={() => {
                 toolManager.setSelectedTool(Tools.Line);
@@ -289,7 +293,7 @@ export function ToolBar() {
                     : 'ghost'
                 }
                 size="icon-md"
-                label="Text"
+                label={t('canvas.tools.text')}
                 hotkey={TOKENS.canvas.textTool}
                 onClick={() => {
                   toolManager.setSelectedTool(Tools.Text);

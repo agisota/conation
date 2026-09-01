@@ -277,7 +277,7 @@ where
     };
     let page = state
         .service
-        .list_reminders(&user.authorization.user.conation_user_id, filter)
+        .list_reminders(&user.authorization.user.macro_user_id, filter)
         .await?;
     Ok(Json(RemindersList {
         reminders: page.reminders,
@@ -321,7 +321,7 @@ where
         entity_id,
         schedule,
     } = req;
-    let user_id = &user.authorization.user.conation_user_id;
+    let user_id = &user.authorization.user.macro_user_id;
     // Organization channels grant access by matching org, so the org must be
     // carried through or a member of one reads as a non-participant.
     let user_org_id = user

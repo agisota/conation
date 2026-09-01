@@ -64,7 +64,7 @@ pub fn router() -> Router<ApiContext> {
         (status = 500, body = ErrorResponse),
     )
 )]
-#[tracing::instrument(skip(ctx, authorization, request), fields(user_id = %authorization.authorization.user.conation_user_id), err)]
+#[tracing::instrument(skip(ctx, authorization, request), fields(user_id = %authorization.authorization.user.macro_user_id), err)]
 pub async fn handler(
     State(ctx): State<ApiContext>,
     authorization: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
@@ -75,7 +75,7 @@ pub async fn handler(
     let pull_requests = ctx
         .github_link_service
         .enrich_pull_requests(
-            &authorization.authorization.user.conation_user_id,
+            &authorization.authorization.user.macro_user_id,
             request.pull_requests,
         )
         .await?;

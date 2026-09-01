@@ -3,10 +3,10 @@ use axum::{
     extract::State,
     response::{IntoResponse, Json, Response},
 };
-use futures::StreamExt;
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_event_broker::MacroEventBroker;
 use conation_user_id::cowlike::CowLike;
+use futures::StreamExt;
 use model::{
     document::BasicDocument,
     response::{ErrorResponse, GenericErrorResponse, GenericSuccessResponse},
@@ -34,7 +34,7 @@ const CANVAS_TEMPLATE: &str = include_str!("./template/canvas_template.canvas");
             (status = 500, body=GenericErrorResponse),
         )
     )]
-#[tracing::instrument(skip(state, user_context), fields(user_id=?user_context.authorization.user.conation_user_id))]
+#[tracing::instrument(skip(state, user_context), fields(user_id=?user_context.authorization.user.macro_user_id))]
 pub async fn handler(
     State(state): State<ApiContext>,
     user_context: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
@@ -85,7 +85,7 @@ pub async fn handler(
     let project =
         conation_db_client::document::initialize_onboarding_documents::create_project_transaction(
             &mut transaction,
-            user_context.authorization.user.conation_user_id.copied(),
+            user_context.authorization.user.macro_user_id.copied(),
             PROJECT_NAME,
             None,
             &share_permission,
@@ -108,7 +108,7 @@ pub async fn handler(
     let db_documents =
         conation_db_client::document::initialize_onboarding_documents::create_onboarding_documents(
             &mut transaction,
-            user_context.authorization.user.conation_user_id.clone(),
+            user_context.authorization.user.macro_user_id.clone(),
             &project.id,
             &share_permission,
             documents,
@@ -163,7 +163,7 @@ pub async fn handler(
             let s3_client = shared_s3_client.clone(); // Clone the client for parallel usage
             let markdown_template = shared_markdown_template.clone();
             let canvas_template = shared_canvas_template.clone();
-            let user_id = user_context.authorization.user.conation_user_id.clone();
+            let user_id = user_context.authorization.user.macro_user_id.clone();
             async move {
                 let uri_document_name = urlencoding::encode(document.document_name.as_str());
                 let deref_file_type = document.file_type.as_deref();
@@ -221,7 +221,7 @@ pub async fn handler(
     // Set the onboarding status to true so we don't do this again
     conation_db_client::user::onboarding_status::set_onboarding_status(
         &mut transaction,
-        user_context.authorization.user.conation_user_id.as_ref(),
+        user_context.authorization.user.macro_user_id.as_ref(),
     )
     .await
     .map_err(|e| {
@@ -253,7 +253,7 @@ pub async fn handler(
         project.id.clone(),
         ProjectCreatedMetadata {
             project_id: project.id.clone(),
-            owner: user_context.authorization.user.conation_user_id.clone(),
+            owner: user_context.authorization.user.macro_user_id.clone(),
             name: PROJECT_NAME.to_string(),
             parent_project_id: None,
             created_at: project.created_at,

@@ -2,6 +2,7 @@ import { URL_PARAMS as CHANNEL_PARAMS } from '@block-channel/constants';
 import { useGlobalBlockOrchestrator } from '@components/app/GlobalAppState';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import { toast } from '@core/component/Toast/Toast';
+import { t } from '@core/i18n';
 import { invalidateContacts } from '@core/user/contactService';
 
 import { invalidateListChannels } from '@queries/channel/channels';
@@ -59,7 +60,7 @@ export function useSendMessageToPeople() {
     });
 
     if (message.isErr()) {
-      toast.failure('Failed to send message to people');
+      toast.failure(t('core.messages.sendToPeopleFailed'));
       console.error('failed to post message to channel', message.error);
       return;
     }
@@ -103,7 +104,7 @@ export function useSendMessageToPeople() {
             });
       channelId = result.channel_id;
     } catch (err) {
-      toast.failure('Failed to send message to people');
+      toast.failure(t('core.messages.sendToPeopleFailed'));
       console.error('failed to create new channel to forward', err);
       return;
     }

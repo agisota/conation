@@ -1,9 +1,9 @@
 import { isListViewID } from '@app/constants/list-views';
-import { t } from '@app/lib/i18n';
 import { openChatWithMessage } from '@app/features/chat/ChatWithAgentButton';
 import { getViewPreset } from '@app/features/next-soup/sidebar/soup-filter-presets';
 import { getSearchSplit } from '@app/features/next-soup/soup-view/search-controllers';
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import { globalSplitManager } from '@app/signal/splitLayout';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import { TabsInset } from '@core/component/TabsInset';
@@ -63,13 +63,48 @@ import {
 } from './useCommandItems';
 
 const CATEGORIES: { id: CategoryFilter; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'commands', label: 'Command' },
-  { id: 'chats', label: 'Agents' },
-  { id: 'documents', label: 'Files' },
-  { id: 'tasks', label: 'Tasks' },
-  { id: 'channels', label: 'Channels' },
-  { id: 'dms', label: 'People' },
+  {
+    id: 'all',
+    get label() {
+      return t('shell.command.category.all');
+    },
+  },
+  {
+    id: 'commands',
+    get label() {
+      return t('shell.command.category.commands');
+    },
+  },
+  {
+    id: 'chats',
+    get label() {
+      return t('shell.command.category.agents');
+    },
+  },
+  {
+    id: 'documents',
+    get label() {
+      return t('shell.command.category.files');
+    },
+  },
+  {
+    id: 'tasks',
+    get label() {
+      return t('shell.command.category.tasks');
+    },
+  },
+  {
+    id: 'channels',
+    get label() {
+      return t('shell.command.category.channels');
+    },
+  },
+  {
+    id: 'dms',
+    get label() {
+      return t('shell.command.category.people');
+    },
+  },
 ];
 
 const VIRTUAL_ITEM_HEIGHT = 40; // tailwind h-10
@@ -552,10 +587,12 @@ export function CommandMenuInner(props: {
     );
   };
 
-  const categoryTabs = CATEGORIES.map((c) => ({
-    value: c.id,
-    label: c.label,
-  }));
+  const categoryTabs = createMemo(() =>
+    CATEGORIES.map((category) => ({
+      value: category.id,
+      label: category.label,
+    }))
+  );
 
   return (
     <CommandMenuShell
@@ -575,7 +612,7 @@ export function CommandMenuInner(props: {
           <button
             class="flex size-5 shrink-0 items-center justify-center text-ink-muted hover:text-ink transition-colors"
             onClick={handleBack}
-            title={t('auto.back_esc')}
+            title={t('shell.command.backEscape')}
           >
             <ArrowLeft class="size-3" />
           </button>
@@ -584,7 +621,9 @@ export function CommandMenuInner(props: {
           type="text"
           placeholder={
             CommandState.commandScopePlaceholder() ??
-            (isEntityActionMode() ? 'Search actions...' : 'Search...')
+            (isEntityActionMode()
+              ? t('shell.command.searchActionsPlaceholder')
+              : t('shell.command.searchPlaceholder'))
           }
           value={CommandState.query()}
           onInput={(e) => CommandState.setQuery(e.currentTarget.value)}
@@ -604,7 +643,7 @@ export function CommandMenuInner(props: {
             fallback={
               <TabsInset
                 depth={1}
-                list={categoryTabs}
+                list={categoryTabs()}
                 value={CommandState.categoryFilter()}
                 onChange={(value) => {
                   if (value) {
@@ -629,7 +668,9 @@ export function CommandMenuInner(props: {
           <Show
             when={filteredItems().length > 0}
             fallback={
-              <CommandMenuEmptyState>{t('auto.no_results_found')}</CommandMenuEmptyState>
+              <CommandMenuEmptyState>
+                {t('shell.command.noResults')}
+              </CommandMenuEmptyState>
             }
           >
             <VirtualizedCommandList
@@ -655,47 +696,69 @@ export function CommandMenuInner(props: {
             <div class="flex border border-edge-muted text-xxs rounded-md items-center px-1.5 py-px font-normal">
               <Hotkey shortcut={navDownHotkey.hotkey()} class="space-x-1" />
             </div>
-          </div>{t('auto.navigate')}</span>
+          </div>
+          {t('shell.command.navigate')}
+        </span>
 
         <Switch>
           <Match when={isInCommandScope()}>
-            <HotkeyHint command={confirmHotkey} label="Run action" />
-            <HotkeyHint command={backspaceHotkey} label="Back" />
+            <HotkeyHint
+              command={confirmHotkey}
+              label={t('shell.command.runAction')}
+            />
+            <HotkeyHint
+              command={backspaceHotkey}
+              label={t('shell.actions.back')}
+            />
           </Match>
           <Match when={selectedIsCommand() || isEntityActionMode()}>
-            <HotkeyHint command={confirmHotkey} label="Run action" />
+            <HotkeyHint
+              command={confirmHotkey}
+              label={t('shell.command.runAction')}
+            />
           </Match>
           <Match when={selectedIsSearch()}>
             <HotkeyHint command={confirmHotkey} label={t('common.search')} />
             <Show when={canOpenInNewSplit()}>
               <HotkeyHint
                 command={confirmSplitHotkey}
-                label="Search in new split"
+                label={t('shell.command.searchInNewSplit')}
               />
             </Show>
           </Match>
           <Match when={selectedIsAskAi()}>
-            <HotkeyHint command={confirmHotkey} label="Ask AI" />
+            <HotkeyHint
+              command={confirmHotkey}
+              label={t('shell.command.askAi')}
+            />
           </Match>
           <Match when={selectedIsEntity()}>
-            <HotkeyHint command={confirmHotkey} label="Open" />
+            <HotkeyHint
+              command={confirmHotkey}
+              label={t('shell.actions.open')}
+            />
             <Show when={canOpenInNewSplit()}>
               <HotkeyHint
                 command={confirmSplitHotkey}
-                label="Open in new split"
+                label={t('shell.command.openInNewSplit')}
               />
             </Show>
           </Match>
         </Switch>
 
         <Show when={!isInCommandScope() && !isEntityActionMode()}>
-          <HotkeyHint command={tabHotkey} label="Category" />
+          <HotkeyHint
+            command={tabHotkey}
+            label={t('shell.command.categoryLabel')}
+          />
         </Show>
         <Show
           when={isInCommandScope()}
-          fallback={<HotkeyHint command={escapeHotkey} label={t('common.close')} />}
+          fallback={
+            <HotkeyHint command={escapeHotkey} label={t('common.close')} />
+          }
         >
-          <HotkeyHint command={escapeHotkey} label="Back" />
+          <HotkeyHint command={escapeHotkey} label={t('shell.actions.back')} />
         </Show>
       </CommandMenuShell.Footer>
     </CommandMenuShell>

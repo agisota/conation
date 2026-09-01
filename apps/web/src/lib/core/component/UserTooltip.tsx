@@ -55,7 +55,7 @@ export function UserTooltip(props: UserTooltipProps) {
     enabledOverride: ENABLE_CRM_OVERRIDE,
   });
   const getOrCreateDmMutation = useGetOrCreateDirectMessageMutation({
-    onError: () => toast.failure('Failed to open direct message'),
+    onError: () => toast.failure(t('core.userActions.directMessageFailed')),
   });
 
   const openDM = async (e: MouseEvent) => {
@@ -135,12 +135,22 @@ export function UserTooltip(props: UserTooltipProps) {
           <div class="p-1.5 flex flex-col gap-0.5">
             <Show when={props.email}>
               {(email) => (
-                <CopyActionItem value={email()} toastMessage="Email copied">{t('auto.copy_email')}</CopyActionItem>
+                <CopyActionItem
+                  value={email()}
+                  toastMessage={t('core.userActions.emailCopied')}
+                >
+                  {t('core.userActions.copyEmail')}
+                </CopyActionItem>
               )}
             </Show>
             <Show when={copyableName(props.displayName, props.email)}>
               {(name) => (
-                <CopyActionItem value={name()} toastMessage="Name copied">{t('auto.copy_name')}</CopyActionItem>
+                <CopyActionItem
+                  value={name()}
+                  toastMessage={t('core.userActions.nameCopied')}
+                >
+                  {t('core.userActions.copyName')}
+                </CopyActionItem>
               )}
             </Show>
             <Show when={crmFlag().enabled ? props.email : undefined}>
@@ -153,12 +163,14 @@ export function UserTooltip(props: UserTooltipProps) {
             <Show when={canTreatAsUser() && props.id !== currentUserId()}>
               <ActionItem onClick={openDM}>
                 <WideChat class="size-3.5" />
-                DM
+                {t('core.userActions.message')}
               </ActionItem>
             </Show>
             <Show when={canTreatAsUser()}>
               <ActionItem onClick={openTaskComposer}>
-                <WideTask class="size-3.5" />{t('auto.assign_task')}</ActionItem>
+                <WideTask class="size-3.5" />
+                {t('core.userActions.assignTask')}
+              </ActionItem>
             </Show>
           </div>
         </Show>
@@ -196,7 +208,9 @@ function OpenContactAction(props: { email: string; onClose?: () => void }) {
     <Show when={crmEnabled() ? contactQuery.data : undefined}>
       {(contact) => (
         <ActionItem onClick={(e) => openContact(e, contact().id)}>
-          <WideContact class="size-3.5" />{t('auto.open_contact')}</ActionItem>
+          <WideContact class="size-3.5" />
+          {t('core.userActions.openContact')}
+        </ActionItem>
       )}
     </Show>
   );

@@ -34,7 +34,7 @@ async fn test_get_stripe_customer_id(pool: Pool<Postgres>) -> anyhow::Result<()>
     fixtures(path = "../../../fixtures", scripts("teams"))
 )]
 async fn test_has_user_trialed(pool: Pool<Postgres>) -> anyhow::Result<()> {
-    sqlx::query("UPDATE conation_user SET has_trialed = FALSE WHERE email = 'user4@user.com'")
+    sqlx::query("UPDATE macro_user SET has_trialed = FALSE WHERE email = 'user4@user.com'")
         .execute(&pool)
         .await?;
 
@@ -1632,12 +1632,12 @@ async fn test_toggle_auto_join_domain_rejects_generic_domain(
 ) -> anyhow::Result<()> {
     let team_id = conation_uuid::string_to_uuid("33333333-3333-3333-3333-333333333333")?;
     sqlx::query(
-        "INSERT INTO conation_user (id, username, email, stripe_customer_id) VALUES ('a5555555-5555-5555-5555-555555555555', 'owner@gmail.com', 'owner@gmail.com', 'cus_gmail_owner')",
+        "INSERT INTO macro_user (id, username, email, stripe_customer_id) VALUES ('a5555555-5555-5555-5555-555555555555', 'owner@gmail.com', 'owner@gmail.com', 'cus_gmail_owner')",
     )
     .execute(&pool)
     .await?;
     sqlx::query(
-        r#"INSERT INTO "User" (id, email, name, conation_user_id) VALUES ('macro|owner@gmail.com', 'owner@gmail.com', 'Gmail Owner', 'a5555555-5555-5555-5555-555555555555')"#,
+        r#"INSERT INTO "User" (id, email, name, macro_user_id) VALUES ('macro|owner@gmail.com', 'owner@gmail.com', 'Gmail Owner', 'a5555555-5555-5555-5555-555555555555')"#,
     )
     .execute(&pool)
     .await?;

@@ -1,5 +1,5 @@
-import { toast } from '@core/component/Toast/Toast';
 import { t } from '@app/lib/i18n';
+import { toast } from '@core/component/Toast/Toast';
 import { useDisableCalendarMutation } from '@queries/email/link';
 import { Button, Dialog, Panel } from '@ui';
 
@@ -21,9 +21,8 @@ export function TurnOffCalendarDialog(props: {
   onClose: () => void;
 }) {
   const disableCalendar = useDisableCalendarMutation({
-    onSuccess: () => toast.success('Calendar turned off'),
-    onError: () =>
-      toast.failure('Failed to turn off calendar. Please try again.'),
+    onSuccess: () => toast.success(t('calendar.turnOffDialog.toast.success')),
+    onError: () => toast.failure(t('calendar.turnOffDialog.toast.failure')),
   });
 
   const confirm = () => {
@@ -44,19 +43,23 @@ export function TurnOffCalendarDialog(props: {
     >
       <Panel depth={2} class="rounded-xl">
         <Panel.Header class="px-6">
-          <Dialog.Title class="text-ink text-sm font-semibold">{t('auto.turn_off_calendar')}</Dialog.Title>
+          <Dialog.Title class="text-ink text-sm font-semibold">
+            {t('calendar.turnOffDialog.title')}
+          </Dialog.Title>
         </Panel.Header>
         <Panel.Body class="p-6 font-sans flex flex-col gap-3">
           <Dialog.Description class="text-ink-muted text-sm/tight font-normal">
-            Turn off calendar for{' '}
-            <span class="text-ink">{props.target?.emailAddress}</span>? Macro
-            deletes its copy of these events and gives up calendar access. Your
-            Google Calendar is untouched and email keeps syncing, but turning
-            calendar back on means granting access again.
+            {t('calendar.turnOffDialog.descriptionPrefix')}
+            <span class="text-ink">{props.target?.emailAddress}</span>
+            {t('calendar.turnOffDialog.descriptionSuffix')}
           </Dialog.Description>
           <div class="pt-3 justify-end items-center gap-3 inline-flex">
-            <Button variant="outline" depth={3} onClick={props.onClose}>{t('common.cancel')}</Button>
-            <Button variant="danger" depth={3} onClick={confirm}>{t('auto.turn_off')}</Button>
+            <Button variant="outline" depth={3} onClick={props.onClose}>
+              {t('common.cancel')}
+            </Button>
+            <Button variant="danger" depth={3} onClick={confirm}>
+              {t('calendar.turnOffDialog.confirm')}
+            </Button>
           </div>
         </Panel.Body>
       </Panel>

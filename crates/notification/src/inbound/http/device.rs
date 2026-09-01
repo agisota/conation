@@ -34,7 +34,7 @@ async fn register_device<S: NotificationReader, Auth: MacroAuthorizationService>
     state
         .inner
         .register_device(
-            user.authorization.user.conation_user_id,
+            user.authorization.user.macro_user_id,
             &req.token,
             &req.device_type,
         )
@@ -62,7 +62,7 @@ async fn unregister_device<S: NotificationReader, Auth: MacroAuthorizationServic
     state
         .inner
         .unregister_device(
-            user.authorization.user.conation_user_id,
+            user.authorization.user.macro_user_id,
             &req.token,
             &req.device_type,
         )

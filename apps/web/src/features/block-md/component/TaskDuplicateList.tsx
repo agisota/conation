@@ -1,7 +1,7 @@
 import { QUERY_FILTERS_BASE } from '@app/features/next-soup/filters/query-filters';
-import { t } from '@app/lib/i18n';
 import { TaskListEntity } from '@app/features/next-soup/soup-view/views/tasks/TaskListEntity';
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
+import { t } from '@app/lib/i18n';
 import {
   ENABLE_TASK_DUPLICATES_FLAG,
   ENABLE_TASK_DUPLICATES_OVERRIDE,
@@ -92,7 +92,7 @@ function SimilarTasksInner(props: {
             )}
           />
           <CopyIcon class="size-3.5 shrink-0" />
-          <span>{t('auto.similar_tasks')}</span>
+          <span>{t('markdown.task.duplicates.similar')}</span>
         </button>
         <Show when={expanded()}>
           <TagSetsQueryProvider>

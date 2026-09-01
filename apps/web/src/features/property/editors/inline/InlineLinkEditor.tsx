@@ -1,5 +1,5 @@
-import { useUnfurl } from '@core/signal/unfurl';
 import { t } from '@app/lib/i18n';
+import { useUnfurl } from '@core/signal/unfurl';
 import { openExternalUrl } from '@core/util/url';
 import LinkIcon from '@phosphor/link.svg';
 import DeleteIcon from '@phosphor/x.svg';
@@ -72,11 +72,11 @@ export function InlineLinkEditor() {
     }
     const normalized = normalize(raw);
     if (!isValidUrl(normalized)) {
-      setError('Please enter a valid URL');
+      setError(t('property.link.errors.invalidUrl'));
       return;
     }
     if (links().includes(normalized)) {
-      setError('This URL has already been added');
+      setError(t('property.link.errors.duplicateUrl'));
       return;
     }
 
@@ -148,7 +148,7 @@ export function InlineLinkEditor() {
         fallback={
           <Show when={!hasValue(property())}>
             <div class="text-ink-muted px-2 py-0.5 bg-transparent inline-block shrink-0 rounded-sm">
-              <PropertyEmpty label="Empty" />
+              <PropertyEmpty label={t('property.common.empty')} />
             </div>
           </Show>
         }
@@ -179,7 +179,7 @@ export function InlineLinkEditor() {
                 if (isAdding()) handleAddLink();
               }, 100);
             }}
-            placeholder={t('auto.enter_url')}
+            placeholder={t('property.link.urlPlaceholder')}
             disabled={isSaving()}
             class="text-left px-2 py-0.5 bg-transparent focus:outline-none text-ink inline-block shrink-0 rounded-sm"
           />
@@ -253,7 +253,7 @@ const LinkChip: Component<LinkChipProps> = (props) => {
               src={faviconUrl()!}
               class="size-4 object-cover rounded-sm"
               crossorigin="anonymous"
-              alt="favicon"
+              alt={t('property.link.faviconAlt')}
               onError={() => {
                 setImageError(true);
                 const f = faviconUrl();

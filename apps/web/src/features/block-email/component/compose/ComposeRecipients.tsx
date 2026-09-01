@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import type { EmailRecipient } from '@block-email/component/EmailContext';
 import { EMAIL_COMPOSE_TO_INPUT_ID } from '@block-email/constants';
 import { RecipientSelector } from '@core/component/RecipientSelector';
@@ -209,7 +210,9 @@ export function ComposeRecipients(props: {
           activate(field);
         }
       }}
-      placeholder={isMobile() ? '' : 'Macro users or email addresses'}
+      placeholder={
+        isMobile() ? '' : t('blockEmail.compose.recipientPlaceholder')
+      }
       focusOnMount={opts?.focusOnMount}
       openOnFocus={false}
       hideBorder
@@ -238,7 +241,9 @@ export function ComposeRecipients(props: {
           <span class="truncate">{summaryParts(field).names}</span>
           <Show when={summaryParts(field).extra > 0}>
             <span class="shrink-0 whitespace-pre">
-              {` & ${summaryParts(field).extra} more…`}
+              {t('blockEmail.recipients.more', {
+                count: summaryParts(field).extra,
+              })}
             </span>
           </Show>
         </button>
@@ -278,7 +283,7 @@ export function ComposeRecipients(props: {
   const toRow = (handlers?: RowFocusHandlers) =>
     fieldRow(
       'to',
-      fieldLabel('To'),
+      fieldLabel(t('blockEmail.fields.to')),
       <>
         {summarizable(
           'to',
@@ -300,14 +305,14 @@ export function ComposeRecipients(props: {
   const ccRow = (handlers?: RowFocusHandlers) =>
     fieldRow(
       'cc',
-      fieldLabel('Cc'),
+      fieldLabel(t('blockEmail.fields.cc')),
       summarizable('cc', recipientSelector('cc', props.ccRef)),
       handlers
     );
   const bccRow = (handlers?: RowFocusHandlers) =>
     fieldRow(
       'bcc',
-      fieldLabel('Bcc'),
+      fieldLabel(t('blockEmail.fields.bcc')),
       summarizable('bcc', recipientSelector('bcc', props.bccRef)),
       handlers
     );
@@ -334,7 +339,7 @@ export function ComposeRecipients(props: {
               onClick={expand}
             >
               <span class="text-sm shrink-0 text-ink-placeholder min-h-9 flex items-center">
-                Cc/Bcc, From:
+                {t('blockEmail.fields.ccBccFrom')}
               </span>
               <span class="ph-no-capture text-sm text-ink-muted truncate min-h-9 flex items-center">
                 {ctx.fromAddress?.()}
@@ -345,7 +350,9 @@ export function ComposeRecipients(props: {
           {ccRow(rowFocusHandlers('cc'))}
           {bccRow(rowFocusHandlers('bcc'))}
           <div class="flex items-center gap-2 py-1 border-b border-edge-muted">
-            <div class="text-sm shrink-0 text-ink-placeholder">From:</div>
+            <div class="text-sm shrink-0 text-ink-placeholder">
+              {fieldLabel(t('blockEmail.fields.from'))}
+            </div>
             <div class="flex-1 min-w-0 min-h-9 flex items-center">
               <FromInboxSelector
                 links={ctx.fromInboxes?.() ?? []}

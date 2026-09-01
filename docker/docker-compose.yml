@@ -2,7 +2,9 @@
 # Freeze the Docker Compose project name so every checkout/worktree uses the
 # same local containers, networks, and anonymous Compose-managed resources.
 # Local setup is single-instance by design.
-name: conation
+# Compose project/network names are persisted integration identifiers. Keep the
+# established `macro` project while user-facing and image branding migrates.
+name: macro
 
 include:
   - docker/docker-compose-databases.yml
@@ -17,7 +19,7 @@ x-common-env: &common-env
       required: false
 
 x-rust-services-image: &rust-services-image
-  image: macro-local-rust-services:dev
+  image: conation-local-rust-services:dev
   build:
     context: .
     dockerfile: docker/Dockerfile.dev
@@ -31,7 +33,7 @@ services:
       context: .
       dockerfile: docker/Dockerfile.dev
       target: services_bundle
-    image: macro-local-rust-services:dev
+    image: conation-local-rust-services:dev
 
   # ============================================================================
   # authentication-service (Port 8080)

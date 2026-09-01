@@ -18,7 +18,7 @@ async fn test_get_github_link_by_user_id(pool: Pool<Postgres>) {
         .into_owned();
     let link = repo.get_github_link_by_user_id(&user_id.0).await.unwrap();
 
-    assert_eq!(link.conation_id.as_ref(), "macro|user@user.com");
+    assert_eq!(link.macro_id.as_ref(), "macro|user@user.com");
     assert_eq!(link.github_username, "testuser");
     assert_eq!(link.github_user_id, "12345");
     assert_eq!(
@@ -54,7 +54,7 @@ async fn test_get_github_link_by_github_user_id(pool: Pool<Postgres>) {
         .await
         .unwrap();
 
-    assert_eq!(link.conation_id.as_ref(), "macro|user@user.com");
+    assert_eq!(link.macro_id.as_ref(), "macro|user@user.com");
     assert_eq!(link.github_username, "testuser");
     assert_eq!(link.github_user_id, "12345");
 }
@@ -81,7 +81,7 @@ async fn test_get_github_link_by_id(pool: Pool<Postgres>) {
     let id = uuid::Uuid::parse_str("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa").unwrap();
     let link = repo.get_github_link_by_id(&id).await.unwrap();
 
-    assert_eq!(link.conation_id.as_ref(), "macro|user@user.com");
+    assert_eq!(link.macro_id.as_ref(), "macro|user@user.com");
     assert_eq!(link.github_username, "testuser");
     assert_eq!(link.github_user_id, "12345");
 }
@@ -109,7 +109,7 @@ async fn test_insert_github_link(pool: Pool<Postgres>) {
     let now = chrono::Utc::now();
     let link = GithubLink {
         id: uuid::Uuid::parse_str("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee").unwrap(),
-        conation_id: MacroUserIdStr::parse_from_str("macro|new@user.com")
+        macro_id: MacroUserIdStr::parse_from_str("macro|new@user.com")
             .unwrap()
             .into_owned(),
         fusionauth_user_id: uuid::Uuid::parse_str("ffffffff-ffff-ffff-ffff-ffffffffffff").unwrap(),
@@ -123,7 +123,7 @@ async fn test_insert_github_link(pool: Pool<Postgres>) {
 
     // Verify it was inserted by reading it back
     let fetched = repo.get_github_link_by_id(&link.id).await.unwrap();
-    assert_eq!(fetched.conation_id.as_ref(), "macro|new@user.com");
+    assert_eq!(fetched.macro_id.as_ref(), "macro|new@user.com");
     assert_eq!(fetched.github_username, "newuser");
     assert_eq!(fetched.github_user_id, "67890");
 }
@@ -140,7 +140,7 @@ async fn test_insert_github_link_shared_github_user_id_succeeds(pool: Pool<Postg
     let link = GithubLink {
         id,
         // Different macro user than the fixture owner of github_user_id 12345.
-        conation_id: MacroUserIdStr::parse_from_str("macro|sharer@user.com")
+        macro_id: MacroUserIdStr::parse_from_str("macro|sharer@user.com")
             .unwrap()
             .into_owned(),
         fusionauth_user_id: uuid::Uuid::new_v4(),
@@ -151,13 +151,13 @@ async fn test_insert_github_link_shared_github_user_id_succeeds(pool: Pool<Postg
     };
 
     // A different macro user may now link the same github_user_id, since the
-    // unique constraint is on (conation_id, github_user_id) rather than github_user_id.
+    // unique constraint is on (macro_id, github_user_id) rather than github_user_id.
     let result = repo.insert_github_link(&link).await;
     assert!(result.is_ok());
 
     // Confirm the row was actually persisted.
     let fetched = repo.get_github_link_by_id(&id).await.unwrap();
-    assert_eq!(fetched.conation_id.as_ref(), "macro|sharer@user.com");
+    assert_eq!(fetched.macro_id.as_ref(), "macro|sharer@user.com");
     assert_eq!(fetched.github_user_id, "12345");
 }
 
@@ -172,17 +172,17 @@ async fn test_insert_github_link_duplicate_conation_and_github_user_id_fails(poo
     let link = GithubLink {
         id: uuid::Uuid::new_v4(),
         // Existing fixture user who already owns github_user_id 12345.
-        conation_id: MacroUserIdStr::parse_from_str("macro|user@user.com")
+        macro_id: MacroUserIdStr::parse_from_str("macro|user@user.com")
             .unwrap()
             .into_owned(),
         fusionauth_user_id: uuid::Uuid::new_v4(),
         github_username: "testuser".to_string(),
-        github_user_id: "12345".to_string(), // same (conation_id, github_user_id) as fixture
+        github_user_id: "12345".to_string(), // same (macro_id, github_user_id) as fixture
         created_at: now,
         updated_at: now,
     };
 
-    // Re-using the same (conation_id, github_user_id) pair must violate the
+    // Re-using the same (macro_id, github_user_id) pair must violate the
     // composite unique constraint.
     let result = repo.insert_github_link(&link).await;
     assert!(result.is_err());
@@ -201,7 +201,7 @@ async fn test_get_github_link_by_github_user_id_returns_owner(pool: Pool<Postgre
     let later = chrono::Utc::now() + chrono::Duration::days(1);
     let sharer_link = GithubLink {
         id: uuid::Uuid::new_v4(),
-        conation_id: MacroUserIdStr::parse_from_str("macro|sharer@user.com")
+        macro_id: MacroUserIdStr::parse_from_str("macro|sharer@user.com")
             .unwrap()
             .into_owned(),
         fusionauth_user_id: uuid::Uuid::new_v4(),
@@ -218,7 +218,7 @@ async fn test_get_github_link_by_github_user_id_returns_owner(pool: Pool<Postgre
         .await
         .unwrap();
 
-    assert_eq!(link.conation_id.as_ref(), "macro|user@user.com");
+    assert_eq!(link.macro_id.as_ref(), "macro|user@user.com");
     assert_eq!(link.github_username, "testuser");
     assert_eq!(link.github_user_id, "12345");
 }
@@ -241,7 +241,7 @@ async fn test_count_github_links_by_github_user_id(pool: Pool<Postgres>) {
     let now = chrono::Utc::now();
     let sharer_link = GithubLink {
         id: uuid::Uuid::new_v4(),
-        conation_id: MacroUserIdStr::parse_from_str("macro|sharer@user.com")
+        macro_id: MacroUserIdStr::parse_from_str("macro|sharer@user.com")
             .unwrap()
             .into_owned(),
         fusionauth_user_id: uuid::Uuid::new_v4(),

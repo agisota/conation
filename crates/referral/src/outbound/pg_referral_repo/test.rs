@@ -29,7 +29,7 @@ async fn test_get_referral_code_for_user(pool: Pool<Postgres>) {
 
     let code = repo.get_referral_code_for_user(&user_id.0).await.unwrap();
 
-    // Round-trip: the returned code should decode back to the referrer's conation_user_id
+    // Round-trip: the returned code should decode back to the referrer's macro_user_id
     let converter = ShortUuidConverter::default();
     let decoded = converter.to_uuid(&code.0).unwrap();
     assert_eq!(decoded.to_string(), REFERRER_UUID);
@@ -84,7 +84,7 @@ async fn test_get_referrers_customer_id_invalid_code(pool: Pool<Postgres>) {
 async fn test_get_referrers_customer_id_nonexistent_user(pool: Pool<Postgres>) {
     let repo = PgReferralRepo::new(pool);
 
-    // Valid short UUID format but no matching conation_user row
+    // Valid short UUID format but no matching macro_user row
     let converter = ShortUuidConverter::default();
     let fake_uuid = uuid::Uuid::parse_str("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa").unwrap();
     let code = ReferralCode(converter.from_uuid(&fake_uuid));
@@ -151,7 +151,7 @@ async fn test_track_referral_nonexistent_referrer(pool: Pool<Postgres>) {
         .unwrap()
         .into_owned();
 
-    // Valid short UUID but no matching conation_user
+    // Valid short UUID but no matching macro_user
     let converter = ShortUuidConverter::default();
     let fake_uuid = uuid::Uuid::parse_str("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa").unwrap();
     let code = ReferralCode(converter.from_uuid(&fake_uuid));

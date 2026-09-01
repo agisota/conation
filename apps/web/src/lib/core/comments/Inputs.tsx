@@ -1,5 +1,5 @@
-import { MarkdownTextarea } from '@core/component/LexicalMarkdown/component/core/MarkdownTextarea';
 import { t } from '@app/lib/i18n';
+import { MarkdownTextarea } from '@core/component/LexicalMarkdown/component/core/MarkdownTextarea';
 import type { ItemMention } from '@core/component/LexicalMarkdown/plugins/mentions/mentionsPlugin';
 import XIcon from '@phosphor/x.svg';
 import { Button, cn, SendButton } from '@ui';
@@ -16,7 +16,7 @@ function EditBottomRow(props: {
   return (
     <div class="absolute bottom-2 right-2 flex items-center gap-1">
       <Button
-        tooltip="Delete Draft"
+        tooltip={t('comments.composer.deleteDraft')}
         size="icon-sm"
         variant="ghost"
         on:click={props.handleCancel}
@@ -25,7 +25,7 @@ function EditBottomRow(props: {
       </Button>
 
       <SendButton
-        tooltip="Send Comment"
+        tooltip={t('comments.composer.send')}
         shortcut="enter"
         disabled={!props.hasContent || props.isSending}
         pending={props.isSending}
@@ -111,7 +111,7 @@ export function EditInput(props: {
           void handleSend();
           return true;
         }}
-        placeholder={t('auto.add_a_comment')}
+        placeholder={t('comments.composer.placeholder')}
         focusOnMount
         onUserMention={(mention) => {
           setMentions((prev) => [...prev, mention]);
@@ -152,7 +152,7 @@ export function NewReplyInput(props: {
               props.setEditing(true);
             }}
           >
-            <p class="mt-1.5">{t('auto.reply')}</p>
+            <p class="mt-1.5">{t('comments.actions.reply')}</p>
           </div>
         }
       >

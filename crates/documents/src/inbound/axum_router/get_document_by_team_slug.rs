@@ -76,7 +76,7 @@ where
         let entity_access_receipt = state
             .access_service
             .generate_entity_access_receipt::<Level>(
-                &user.authorization.user.conation_user_id,
+                &user.authorization.user.macro_user_id,
                 user.authorization
                     .user
                     .user_context

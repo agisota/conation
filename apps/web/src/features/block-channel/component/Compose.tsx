@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import {
   applyInlineFormat,
   applyNodeFormat,
@@ -237,7 +238,7 @@ export function ChannelCompose() {
               options={destinationOptions}
               selectedOptions={selectedRecipients()}
               setSelectedOptions={setSelectedRecipients}
-              placeholder="To: Macro users or email addresses"
+              placeholder={t('blockChannel.compose.recipientPlaceholder')}
               triedToSubmit={triedToSubmit}
               focusOnMount
               hideMenuOnEscape
@@ -245,10 +246,9 @@ export function ChannelCompose() {
             <div class="mt-6 p-3 flex flex-row items-center border border-edge-muted text-ink-placeholder rounded-md">
               <InfoIcon class="shrink-0 size-8 mr-4 fill-edge" />
               <p class="text-xs">
-                Send a Macro message to anyone. Share your files, tasks, emails;
-                you can <code>@mention</code> anything. If your message
-                recipient is not already a Macro user, they will receive an
-                email letting them know they received a message on Macro.
+                {t('blockChannel.compose.deliveryBeforeMention')}{' '}
+                <code>@mention</code>{' '}
+                {t('blockChannel.compose.deliveryAfterMention')}
               </p>
             </div>
           </div>

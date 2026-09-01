@@ -2,8 +2,8 @@ import {
   openChatWithInputReplacingSplit,
   openChatWithMessageReplacingSplit,
 } from '@app/features/chat/ChatWithAgentButton';
-import { useSplitPanelOrThrow } from '@components/app/split-layout/layoutUtils';
 import { t } from '@app/lib/i18n';
+import { useSplitPanelOrThrow } from '@components/app/split-layout/layoutUtils';
 import { registerHotkey } from '@core/hotkey/hotkeys';
 import { TOKENS } from '@core/hotkey/tokens';
 import { Button, Hotkey } from '@ui';
@@ -48,12 +48,12 @@ export function SearchAskAiButton() {
       variant="ghost"
       size="sm"
       depth={2}
-      tooltip="Ask AI"
+      tooltip={t('soup.search.askAi')}
       class="shrink-0 h-7 touch:h-9 gap-1.5 rounded-lg px-2"
       disabled={isAsking()}
       onClick={askAi}
     >
-      <span class="font-medium">{t('auto.ask_ai')}</span>
+      <span class="font-medium">{t('soup.search.askAi')}</span>
       <Hotkey shortcut={askAiHotkey.hotkey()} theme="subtle" />
     </Button>
   );

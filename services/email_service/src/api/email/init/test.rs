@@ -8,7 +8,7 @@ async fn insert_email_link(pool: &PgPool) -> Uuid {
     sqlx::query!(
         r#"
         INSERT INTO email_links (
-            id, conation_id, fusionauth_user_id, email_address, provider
+            id, macro_id, fusionauth_user_id, email_address, provider
         )
         VALUES ($1, $2, $2, $3, 'GMAIL')
         "#,
@@ -155,7 +155,7 @@ fn calendar_intent_follows_the_consent_request_not_the_grant() {
         .to_vec();
     let gmail_scope = "https://www.googleapis.com/auth/gmail.modify".to_owned();
     let in_progress = |requested: Vec<String>| InProgressUserLink {
-        conation_user_id: Uuid::now_v7(),
+        macro_user_id: Uuid::now_v7(),
         linked_email: None,
         requested_google_scopes: requested,
         granted_google_scopes: [vec![gmail_scope.clone()], calendar_scopes.clone()].concat(),

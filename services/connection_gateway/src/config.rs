@@ -26,7 +26,7 @@ pub struct Config {
     #[conation_config_default(Environment::new_or_prod())]
     pub environment: Environment,
     pub redis_host: RedisHost,
-    pub conation_db_url: LocalOrRemoteSecret<MacroDbUrl>,
+    pub macro_db_url: LocalOrRemoteSecret<MacroDbUrl>,
     /// The internal api key
     pub internal_api_key: InternalApiKey,
 }

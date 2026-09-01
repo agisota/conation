@@ -1,5 +1,4 @@
 import { cleanup, render, screen } from '@solidjs/testing-library';
-import { t } from '@app/lib/i18n';
 import { afterEach, describe, expect, it } from 'vitest';
 import { Button, buttonClasses, buttonVariants } from './Button';
 import { ButtonGroup } from './ButtonGroup';
@@ -85,43 +84,45 @@ describe('Button', () => {
 
   it('uses label as its accessible name and default tooltip content', () => {
     render(() => (
-      <Button size="icon-sm" label={t('common.close')}>
+      <Button size="icon-sm" label="Close">
         <svg aria-hidden="true" />
       </Button>
     ));
 
-    expect(screen.getByRole('button', { name: t('common.close') })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Close' })).toBeTruthy();
   });
 
   it('uses an icon button tooltip as an accessible-name fallback', () => {
     render(() => (
-      <Button size="icon-sm" tooltip={t('common.search')}>
+      <Button size="icon-sm" tooltip="Search">
         <svg aria-hidden="true" />
       </Button>
     ));
 
-    expect(screen.getByRole('button', { name: t('common.search') })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Search' })).toBeTruthy();
   });
 
   it('uses a square button tooltip as an accessible-name fallback', () => {
     render(() => (
-      <Button size="sm" square tooltip={t('common.search')}>
+      <Button size="sm" square tooltip="Search">
         <svg aria-hidden="true" />
       </Button>
     ));
 
-    expect(screen.getByRole('button', { name: t('common.search') })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Search' })).toBeTruthy();
   });
 
   it('does not replace visible text with tooltip content', () => {
-    render(() => <Button tooltip="Save the current draft">{t('common.save')}</Button>);
+    render(() => <Button tooltip="Save the current draft">Save</Button>);
 
-    expect(screen.getByRole('button', { name: t('common.save') })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy();
   });
 
   it('does not leak custom props and preserves CTA inline styles', () => {
     render(() => (
-      <Button variant="cta" noTouchResize style={{ color: 'rgb(1, 2, 3)' }}>{t('auto.continue')}</Button>
+      <Button variant="cta" noTouchResize style={{ color: 'rgb(1, 2, 3)' }}>
+        Continue
+      </Button>
     ));
 
     const button = screen.getByRole('button', { name: 'Continue' });

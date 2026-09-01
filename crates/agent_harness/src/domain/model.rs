@@ -101,7 +101,7 @@ impl AgentKind {
 /// Whether a user belongs to the Macro staff domain - the egress crate's
 /// predicate, reused so the harness's staff gates and the proxy's can never
 /// disagree about who staff is.
-pub(crate) use agent_egress::domain::model::is_conation_staff;
+pub(crate) use agent_egress::domain::model::is_macro_staff;
 
 /// Where a prompt came from, when it came from somewhere the session should
 /// answer back into.

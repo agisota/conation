@@ -1,3 +1,4 @@
+import { formatNumber, t } from '@app/lib/i18n';
 import {
   createContext,
   type JSX,
@@ -42,10 +43,10 @@ function Words(props: { class?: string }): JSX.Element {
     <span class={props.class}>
       <Show
         when={stats.selectedWords !== null}
-        fallback={<span>{stats.totalWords.toLocaleString()}</span>}
+        fallback={<span>{formatNumber(stats.totalWords)}</span>}
       >
-        <span>{stats.selectedWords?.toLocaleString()}</span>
-        <span class="opacity-50"> / {stats.totalWords.toLocaleString()}</span>
+        <span>{formatNumber(stats.selectedWords ?? 0)}</span>
+        <span class="opacity-50"> / {formatNumber(stats.totalWords)}</span>
       </Show>
     </span>
   );
@@ -61,13 +62,10 @@ function Characters(props: { class?: string }): JSX.Element {
     <span class={props.class}>
       <Show
         when={stats.selectedCharacters !== null}
-        fallback={<span>{stats.totalCharacters.toLocaleString()}</span>}
+        fallback={<span>{formatNumber(stats.totalCharacters)}</span>}
       >
-        <span>{stats.selectedCharacters?.toLocaleString()}</span>
-        <span class="opacity-50">
-          {' '}
-          / {stats.totalCharacters.toLocaleString()}
-        </span>
+        <span>{formatNumber(stats.selectedCharacters ?? 0)}</span>
+        <span class="opacity-50"> / {formatNumber(stats.totalCharacters)}</span>
       </Show>
     </span>
   );
@@ -81,7 +79,7 @@ function SimpleWordCount(props: { class?: string }): JSX.Element {
   const count = () =>
     stats.selectedWords !== null ? stats.selectedWords : stats.totalWords;
 
-  return <span class={props.class}>{count().toLocaleString()}</span>;
+  return <span class={props.class}>{formatNumber(count())}</span>;
 }
 
 /**
@@ -92,7 +90,7 @@ function WordLabel(): JSX.Element {
   const count = () =>
     stats.selectedWords !== null ? stats.selectedWords : stats.totalWords;
 
-  return <>{count() === 1 ? 'word' : 'words'}</>;
+  return <>{t('editor.wordcount.words', { count: count() })}</>;
 }
 
 /**
@@ -105,7 +103,7 @@ function SimpleCharacterCount(props: { class?: string }): JSX.Element {
       ? stats.selectedCharacters
       : stats.totalCharacters;
 
-  return <span class={props.class}>{count().toLocaleString()}</span>;
+  return <span class={props.class}>{formatNumber(count())}</span>;
 }
 
 /**
@@ -118,7 +116,7 @@ function CharacterLabel(): JSX.Element {
       ? stats.selectedCharacters
       : stats.totalCharacters;
 
-  return <>{count() === 1 ? 'character' : 'characters'}</>;
+  return <>{t('editor.wordcount.characters', { count: count() })}</>;
 }
 
 export const Wordcount = {

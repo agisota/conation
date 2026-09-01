@@ -33,7 +33,7 @@ pub struct CrmCompanySearchResponseItem {
     pub team_id: Uuid,
     /// Display name from the primary domain's directory entry.
     pub name: Option<String>,
-    /// `name` with matched spans wrapped in `<conation_em>…</conation_em>`.
+    /// `name` with matched spans wrapped in `<macro_em>…</macro_em>`.
     pub name_highlighted: Option<String>,
     /// Display description from the primary domain's directory entry.
     pub description: Option<String>,

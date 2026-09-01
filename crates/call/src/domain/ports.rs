@@ -312,13 +312,13 @@ pub trait CallRepository: Send + Sync + 'static {
         assignments: Vec<(Uuid, String)>,
     ) -> impl Future<Output = Result<(), Self::Err>> + Send;
 
-    /// Stable `(conation_user_id, voice_id)` pairs inferred from a finished
+    /// Stable `(macro_user_id, voice_id)` pairs inferred from a finished
     /// call's archived transcripts. A speaker is returned only when every
     /// transcript row for that `speaker_id` has the same non-NULL
     /// `diarized_speaker_id`; all distinct non-NULL `voice_id`s observed on
     /// those rows are returned. The `speaker_id` is resolved through the
-    /// canonical `User` row to get the `conation_user.id` used by
-    /// `conation_user_voice`.
+    /// canonical `User` row to get the `macro_user.id` used by
+    /// `macro_user_voice`.
     fn get_stable_speaker_voices_for_call_record(
         &self,
         call_record_id: &Uuid,
@@ -659,18 +659,18 @@ pub trait CallService: Send + Sync + 'static {
     /// cases.
     fn summarize_call(&self, call_id: &Uuid) -> impl Future<Output = Result<(), CallError>> + Send;
 
-    /// List the voice ids currently enrolled for `conation_user_id`.
+    /// List the voice ids currently enrolled for `macro_user_id`.
     fn get_user_voices(
         &self,
-        conation_user_id: &Uuid,
+        macro_user_id: &Uuid,
     ) -> impl Future<Output = Result<Vec<Uuid>, CallError>> + Send;
 
-    /// Enroll a new voice embedding for `conation_user_id`. Inserts a row into
-    /// the `voice` table and links it to the user via `conation_user_voice`.
+    /// Enroll a new voice embedding for `macro_user_id`. Inserts a row into
+    /// the `voice` table and links it to the user via `macro_user_voice`.
     /// Returns the new `voice.id`.
     fn set_user_voice(
         &self,
-        conation_user_id: &Uuid,
+        macro_user_id: &Uuid,
         embedding: &[f32],
     ) -> impl Future<Output = Result<Uuid, CallError>> + Send;
 }
@@ -709,7 +709,7 @@ impl CallRecordQueryService for NoOpCallRecordQueryService {
 ///
 /// `voice` stores a row per distinct speaker fingerprint (a `vector(N)`
 /// embedding produced by the LiveKit agent's speaker-embedding model).
-/// `conation_user_voice` is a many-to-many join linking enrolled users to
+/// `macro_user_voice` is a many-to-many join linking enrolled users to
 /// the voice rows that identify them.
 #[cfg_attr(test, mockall::automock(type Err = anyhow::Error;))]
 pub trait VoiceRepository: Send + Sync + 'static {
@@ -727,21 +727,21 @@ pub trait VoiceRepository: Send + Sync + 'static {
     ) -> impl Future<Output = Result<Uuid, Self::Err>> + Send;
 
     /// Link a `voice` row to a macro user. Idempotent on the composite
-    /// primary key `(conation_user_id, voice_id)`.
+    /// primary key `(macro_user_id, voice_id)`.
     fn link_user_voice(
         &self,
-        conation_user_id: &Uuid,
+        macro_user_id: &Uuid,
         voice_id: &Uuid,
     ) -> impl Future<Output = Result<(), Self::Err>> + Send;
 
     /// All voice ids currently linked to a macro user.
     fn get_user_voices(
         &self,
-        conation_user_id: &Uuid,
+        macro_user_id: &Uuid,
     ) -> impl Future<Output = Result<Vec<Uuid>, Self::Err>> + Send;
 
     /// Resolve a `voice_id` back to its linked macro user, if any. Uses the
-    /// `conation_user_voice` join — does not perform similarity search.
+    /// `macro_user_voice` join — does not perform similarity search.
     fn find_user_by_voice(
         &self,
         voice_id: &Uuid,
@@ -781,13 +781,13 @@ impl VoiceRepository for NoOpVoiceRepository {
 
     async fn link_user_voice(
         &self,
-        _conation_user_id: &Uuid,
+        _macro_user_id: &Uuid,
         _voice_id: &Uuid,
     ) -> Result<(), Self::Err> {
         Ok(())
     }
 
-    async fn get_user_voices(&self, _conation_user_id: &Uuid) -> Result<Vec<Uuid>, Self::Err> {
+    async fn get_user_voices(&self, _macro_user_id: &Uuid) -> Result<Vec<Uuid>, Self::Err> {
         Ok(Vec::new())
     }
 

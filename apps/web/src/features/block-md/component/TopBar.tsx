@@ -3,9 +3,10 @@ import {
   ChatWithAgentIcon,
   openChatWithAgent,
 } from '@app/features/chat/ChatWithAgentButton';
-import { useDownloadDocumentAsMarkdownText } from '@block-md/signal/save';
 import { t } from '@app/lib/i18n';
+import { useDownloadDocumentAsMarkdownText } from '@block-md/signal/save';
 import {
+  BLOCK_TOOL_IDS,
   type BlockTool,
   ResponsiveBlockToolbar,
   ResponsivePermissionsBadge,
@@ -76,7 +77,7 @@ export function TopBar(props: { name?: Accessor<string | undefined> } = {}) {
           hotkey: 'shift+cmd+b',
           scopeId: id,
           hotkeyToken: TOKENS.entity.action.copyBranchName,
-          description: 'Copy branch name',
+          description: () => t('markdown.agent.copyBranchName'),
           keyDownHandler: () => {
             copyBranchName();
             return true;
@@ -95,7 +96,9 @@ export function TopBar(props: { name?: Accessor<string | undefined> } = {}) {
       ? ([
           {
             group: 'sharing' as const,
-            label: 'Copy Branch Name',
+            get label() {
+              return t('markdown.agent.copyBranchName');
+            },
             icon: GitBranch,
             action: copyBranchName,
           },
@@ -103,7 +106,9 @@ export function TopBar(props: { name?: Accessor<string | undefined> } = {}) {
       : []),
     {
       group: 'file',
-      label: 'Download',
+      get label() {
+        return t('markdown.actions.download');
+      },
       icon: Download,
       action: downloadAsMarkdownText,
     },
@@ -122,7 +127,7 @@ export function TopBar(props: { name?: Accessor<string | undefined> } = {}) {
       hotkey: ']',
       scopeId: splitPanel.splitHotkeyScope,
       hotkeyToken: TOKENS.block.toggleSidePanel,
-      description: 'Toggle Side Panel',
+      description: () => t('markdown.sidePanel.toggle'),
       keyDownHandler: () => {
         if (!sidePanel) return false;
         if (!sidePanel.hasSections()) return false;
@@ -142,14 +147,20 @@ export function TopBar(props: { name?: Accessor<string | undefined> } = {}) {
     //   hotkeyToken: TOKENS.entity.action.copyBranchName,
     // },
     {
-      label: 'Dispatch to Agent',
+      id: BLOCK_TOOL_IDS.dispatchToAgent,
+      get label() {
+        return t('markdown.agent.dispatch');
+      },
       icon: TerminalWindowIcon,
       action: () => {},
       condition: () => isTask && !isMobile(),
       buttonComponent: () => <DispatchAgentButton />,
     },
     {
-      label: 'Chat',
+      id: BLOCK_TOOL_IDS.chat,
+      get label() {
+        return t('markdown.actions.chat');
+      },
       icon: ChatWithAgentIcon,
       action: () =>
         openChatWithAgent({
@@ -170,8 +181,11 @@ export function TopBar(props: { name?: Accessor<string | undefined> } = {}) {
       ),
     },
     {
+      id: BLOCK_TOOL_IDS.share,
       group: 'sharing',
-      label: 'Share',
+      get label() {
+        return t('markdown.sharing.share');
+      },
       icon: IconLink,
       action: () => shareCtx.open(),
       buttonComponent: () => <ShareTrigger />,
@@ -181,7 +195,9 @@ export function TopBar(props: { name?: Accessor<string | undefined> } = {}) {
 
   const menuTools: BlockTool[] = [
     {
-      label: 'Ask Macro',
+      get label() {
+        return t('markdown.ai.askConation');
+      },
       icon: ChatWithAgentIcon,
       action: () =>
         openChatWithAgent({
@@ -194,7 +210,9 @@ export function TopBar(props: { name?: Accessor<string | undefined> } = {}) {
     ...(isTask
       ? ([
           {
-            label: 'Code Actions',
+            get label() {
+              return t('markdown.agent.codeActions');
+            },
             icon: TerminalWindowIcon,
             action: () => {},
             children: dispatchAgentActions,
@@ -208,7 +226,9 @@ export function TopBar(props: { name?: Accessor<string | undefined> } = {}) {
       <SplitHeaderLeft>
         <BlockItemSplitLabel name={name} />
         <Show when={isSkill}>
-          <span class="ml-1.5 inline-flex shrink-0 items-center self-center rounded-sm bg-hover px-1.5 py-0.5 text-[10px] font-medium leading-none text-ink-muted">{t('auto.skill')}</span>
+          <span class="ml-1.5 inline-flex shrink-0 items-center self-center rounded-sm bg-hover px-1.5 py-0.5 text-[10px] font-medium leading-none text-ink-muted">
+            {t('markdown.skill.label')}
+          </span>
         </Show>
       </SplitHeaderLeft>
 
@@ -236,7 +256,7 @@ export function TopBar(props: { name?: Accessor<string | undefined> } = {}) {
 export function InstructionsTopBar() {
   return (
     <SplitHeaderLeft>
-      <StaticSplitLabel label="AI Instructions" iconType="md" />
+      <StaticSplitLabel label={t('markdown.ai.instructions')} iconType="md" />
     </SplitHeaderLeft>
   );
 }

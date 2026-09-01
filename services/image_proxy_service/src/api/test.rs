@@ -4,14 +4,14 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use axum::body::{Body, Bytes};
 use axum::http::header::{AUTHORIZATION, COOKIE};
 use axum::http::{Request, StatusCode};
-use http_body_util::BodyExt;
-use jsonwebtoken::{Algorithm, EncodingKey, Header};
 use conation_auth::middleware::decode_jwt::{JwtValidationArgs, MacroAccessToken};
 use conation_authorization::{
     InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationServiceImpl,
     MacroAuthorizationState,
 };
 use conation_env::Environment;
+use http_body_util::BodyExt;
+use jsonwebtoken::{Algorithm, EncodingKey, Header};
 use serde_json::{Value, json};
 use tower::ServiceExt;
 
@@ -47,9 +47,9 @@ fn access_token(expiration: usize) -> String {
         iss: String::new(),
         email: "image-proxy-test@example.com".to_string(),
         fusion_user_id: "test-fusion-user".to_string(),
-        conation_user_id: TEST_USER_ID.to_string(),
-        conation_organization_id: None,
-        root_conation_id: None,
+        macro_user_id: TEST_USER_ID.to_string(),
+        macro_organization_id: None,
+        root_macro_id: None,
     };
     let mut header = Header::new(Algorithm::HS256);
     header.kid = Some("test-access-token".to_string());

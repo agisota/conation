@@ -1,5 +1,4 @@
 import { cn, Layer } from '@ui';
-import { t } from '@app/lib/i18n';
 import { type JSX, Show } from 'solid-js';
 
 /*
@@ -8,8 +7,8 @@ import { type JSX, Show } from 'solid-js';
  * column with a large page title, sections, and quiet outlined cards whose rows
  * are separated by hairline dividers.
  *
- *   <SettingsPage title={t('auto.account')} description="…">
- *     <SettingsSection title={t('auto.profile')}>
+ *   <SettingsPage title={t('settings.account.title')} description="…">
+ *     <SettingsSection title={t('settings.account.profilePicture.label')}>
  *       <SettingsCard>
  *         <SettingsRow label="Email">…</SettingsRow>
  *         <SettingsRow label="Full name">…</SettingsRow>

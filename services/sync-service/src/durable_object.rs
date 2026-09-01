@@ -66,8 +66,8 @@ pub fn response(status_code: u16) -> Response {
     Response::builder().with_status(status_code).empty()
 }
 
-#[conation_export]
-conation_rules! maybe_404 {
+#[macro_export]
+macro_rules! maybe_404 {
     ($res:expr) => {
         match $res {
             Ok(x) => Ok(x),
@@ -85,7 +85,7 @@ conation_rules! maybe_404 {
     };
 }
 
-conation_rules! or_unauth {
+macro_rules! or_unauth {
     ($none_if_unauth:expr) => {{
         let out = match $none_if_unauth {
             Some(x) => x,

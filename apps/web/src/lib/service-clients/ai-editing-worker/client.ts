@@ -1,7 +1,7 @@
 import type { DocumentOp } from '@ai-ops/editor';
 import { resumeDocumentSpan } from '@block-md/observability';
-import { toast } from '@core/component/Toast/Toast';
 import { Telemetry } from '@conation/observability';
+import { toast } from '@core/component/Toast/Toast';
 import { getDocumentPermissionToken } from '@service-storage/client';
 import { createSignal } from 'solid-js';
 

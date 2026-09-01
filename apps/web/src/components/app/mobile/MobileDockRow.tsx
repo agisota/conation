@@ -1,10 +1,10 @@
 import { useCreateMenuBlocks } from '@app/features/command/Launcher';
-import { t } from '@app/lib/i18n';
 import {
   MobileAskAiButton,
   MobileSearchInput,
 } from '@app/features/command/mobile/MobileSearchInput';
 import { SearchState } from '@app/features/command/mobile/mobileSearchState';
+import { t } from '@app/lib/i18n';
 import { useHandleFileUpload } from '@app/util/handleFileUpload';
 import { ENABLE_ANIMATED_ICONS } from '@core/constant/featureFlags';
 import { useSettingsState } from '@core/constant/SettingsState';
@@ -67,7 +67,9 @@ function CreateMenu() {
                 await handleFileUpload(files, false);
               });
             }}
-          >{t('auto.upload_file')}</MobileTouchMenu.Item>
+          >
+            {t('shell.actions.uploadFile')}
+          </MobileTouchMenu.Item>
           {/* Labels key the rows: 'Message' and 'Channel' share a
               blockName. */}
           <For each={blocks()}>
@@ -89,7 +91,9 @@ function CreateMenu() {
             }}
           </For>
           <MobileTouchMenu.Separator />
-          <MobileTouchMenu.Footer>{t('auto.create')}</MobileTouchMenu.Footer>
+          <MobileTouchMenu.Footer>
+            {t('shell.actions.create')}
+          </MobileTouchMenu.Footer>
         </MobileTouchMenu.Content>
       </MobileTouchMenu>
     </MobileDockIsland>
@@ -168,7 +172,9 @@ function MoreViewsMenu(props: {
           active={settingsOpen()}
           animateIcon={false}
           onSelect={toggleSettings}
-        >{t('auto.settings')}</MobileTouchMenu.Item>
+        >
+          {t('shell.navigation.settings')}
+        </MobileTouchMenu.Item>
         <MobileTouchMenu.Separator />
         {/* Rows render top → bottom ending at the thumb: reverse the shared
             canonical order so Inbox lands nearest it. */}
@@ -186,7 +192,9 @@ function MoreViewsMenu(props: {
           )}
         </For>
         <MobileTouchMenu.Separator />
-        <MobileTouchMenu.Footer>{t('auto.views')}</MobileTouchMenu.Footer>
+        <MobileTouchMenu.Footer>
+          {t('shell.mobile.views')}
+        </MobileTouchMenu.Footer>
       </MobileTouchMenu.Content>
     </MobileTouchMenu>
   );
@@ -210,12 +218,16 @@ function MobileCompactDockRow() {
   }> => [
     {
       id: 'inbox',
-      label: 'Notifications',
+      label: t('shell.navigation.notifications'),
       icon: BellIcon,
       animateIcon: false,
     },
-    { id: 'mail', label: 'Email', icon: AnimatedEmailIcon },
-    { id: 'channels', label: 'Channels', icon: AnimatedChannelIcon },
+    { id: 'mail', label: t('shell.navigation.email'), icon: AnimatedEmailIcon },
+    {
+      id: 'channels',
+      label: t('shell.navigation.channels'),
+      icon: AnimatedChannelIcon,
+    },
   ];
 
   return (

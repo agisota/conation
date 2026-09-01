@@ -17,6 +17,7 @@ import { toast } from '@core/component/Toast/Toast';
 import { fileTypeToBlockName } from '@core/constant/allBlocks';
 import { PaywallKey, usePaywallState } from '@core/constant/PaywallState';
 import { TOKENS } from '@core/hotkey/tokens';
+import { t } from '@core/i18n';
 import { isMobile } from '@core/mobile/isMobile';
 import { isNativeMobilePlatform } from '@core/mobile/isNativeMobilePlatform';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
@@ -194,7 +195,7 @@ export function ChatInput(props: ChatInputComponentProps) {
     .withFilePaste({
       onPasteFilesAndDirs: (files, directories) => {
         if (directories.length > 0) {
-          toast.failure('Folder upload not supported here');
+          toast.failure(t('core.upload.folderUnsupportedHere'));
           return;
         }
         handleFileFolderDrop(files, directories, (entries) => {
@@ -234,7 +235,7 @@ export function ChatInput(props: ChatInputComponentProps) {
     <Button
       variant="ghost"
       size="icon-sm"
-      label="Stop generating"
+      label={t('ai.composer.stopGenerating')}
       hotkey={TOKENS.chat.stop}
       onClick={() => props.onStop?.()}
       class={cn(
@@ -253,7 +254,7 @@ export function ChatInput(props: ChatInputComponentProps) {
   const sendHidden = () => isMobile() && isEmptyInput();
   const SendButton = () => (
     <UiSendButton
-      tooltip={'Ask AI'}
+      tooltip={t('ai.composer.ask')}
       shortcut="enter"
       tooltipPlacement="top"
       disabled={!canSendMessage()}
@@ -385,7 +386,7 @@ export function ChatInput(props: ChatInputComponentProps) {
             >
               <MarkdownShell
                 config={props.editor}
-                placeholder="Ask AI, @mention anything"
+                placeholder={t('ai.composer.placeholder')}
                 initialValue={props.initialValue}
                 autofocus={
                   !isMobile() &&

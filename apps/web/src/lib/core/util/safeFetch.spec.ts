@@ -3,7 +3,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-
+import { setLocale } from '../i18n';
 import { type BaseFetchErrorCode, safeFetch } from './safeFetch';
 
 let originalFetch = global.fetch;
@@ -27,6 +27,7 @@ describe('safeFetch', () => {
   });
 
   afterEach(() => {
+    setLocale('en');
     global.fetch = originalFetch;
     global.setTimeout = originalSetTimeout;
     mockFetch.mockClear();
@@ -48,6 +49,26 @@ describe('safeFetch', () => {
       const data = result.value;
       expect(data).toEqual({ data: 'test' });
     }
+  });
+
+  test('sends the selected locale to application origins', async () => {
+    setLocale('ru');
+
+    await safeFetch<{ data: string }>(`${window.location.origin}/data`);
+
+    expect(mockFetch.mock.calls[0]?.[1]?.headers).toMatchObject({
+      'Accept-Language': 'ru-RU',
+    });
+  });
+
+  test('does not add the locale header to external origins', async () => {
+    setLocale('ru');
+
+    await safeFetch<{ data: string }>('https://example.org/data');
+
+    expect(mockFetch.mock.calls[0]?.[1]?.headers).not.toHaveProperty(
+      'Accept-Language'
+    );
   });
 
   test('handle network errors', async () => {

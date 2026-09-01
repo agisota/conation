@@ -195,8 +195,8 @@ impl<T: MessageParts, M: MacroEventCollection> MessageWrapper<T, M> {
 /// ```text
 /// declare_topics!(ConsumerEvents: DocumentMacroEvent, ChannelMacroEvent);
 /// ```
-#[conation_export]
-conation_rules! declare_topics {
+#[macro_export]
+macro_rules! declare_topics {
     ($collection:ident: $($event:ident),+ $(,)?) => {
         #[doc = concat!(
             "An event decoded from one of the topics declared for `",

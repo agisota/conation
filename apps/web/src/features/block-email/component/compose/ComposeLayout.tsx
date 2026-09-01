@@ -1,5 +1,5 @@
-import { CircleSpinner } from '@core/component/CircleSpinner';
 import { t } from '@app/lib/i18n';
+import { CircleSpinner } from '@core/component/CircleSpinner';
 import { registerHotkey, useHotkeyDOMScope } from '@core/hotkey/hotkeys';
 import { TOKENS } from '@core/hotkey/tokens';
 import { isMobile } from '@core/mobile/isMobile';
@@ -71,7 +71,7 @@ export function ComposeLayout(props: {
   registerHotkey({
     hotkey: 'shift+cmd+o',
     scopeId: composeHotkeyScope,
-    description: 'Edit "To" recipients',
+    description: () => t('blockEmail.hotkeys.editTo'),
     keyDownHandler: () => {
       if (ctx.disabled()) return false;
       refs()?.directRecipientsSelector?.focus();
@@ -85,7 +85,7 @@ export function ComposeLayout(props: {
   registerHotkey({
     hotkey: 'shift+cmd+c',
     scopeId: composeHotkeyScope,
-    description: 'Edit "Cc" recipients',
+    description: () => t('blockEmail.hotkeys.editCc'),
     keyDownHandler: () => {
       if (ctx.disabled()) return false;
       if (!showCc()) {
@@ -104,7 +104,7 @@ export function ComposeLayout(props: {
   registerHotkey({
     hotkey: 'shift+cmd+b',
     scopeId: composeHotkeyScope,
-    description: 'Edit "Bcc" recipients',
+    description: () => t('blockEmail.hotkeys.editBcc'),
     keyDownHandler: () => {
       if (ctx.disabled()) return false;
       if (!showBcc()) {
@@ -123,7 +123,7 @@ export function ComposeLayout(props: {
   registerHotkey({
     hotkey: 'shift+cmd+s',
     scopeId: composeHotkeyScope,
-    description: 'Edit subject',
+    description: () => t('blockEmail.hotkeys.editSubject'),
     keyDownHandler: () => {
       if (ctx.disabled()) return false;
       refs()?.subjectInput?.focus();
@@ -137,7 +137,7 @@ export function ComposeLayout(props: {
   registerHotkey({
     hotkey: 'shift+cmd+m',
     scopeId: composeHotkeyScope,
-    description: 'Edit message',
+    description: () => t('blockEmail.hotkeys.editMessage'),
     keyDownHandler: () => {
       if (ctx.disabled()) return false;
       refs()?.messageInput?.focus();
@@ -151,7 +151,7 @@ export function ComposeLayout(props: {
   registerHotkey({
     hotkey: 'cmd+enter',
     scopeId: composeHotkeyScope,
-    description: 'Send email',
+    description: () => t('blockEmail.actions.send'),
     keyDownHandler: () => {
       if (ctx.disabled()) return false;
       if (ctx.sendTime()) return false;
@@ -201,13 +201,17 @@ export function ComposeLayout(props: {
                 fallback={
                   <div class="flex gap-1 items-center">
                     <CircleSpinner class="size-4 animate-spin" />
-                    <span class="text-ink-extra-muted/50 text-xs">{t('auto.processing')}</span>
+                    <span class="text-ink-extra-muted/50 text-xs">
+                      {t('blockEmail.compose.processing')}
+                    </span>
                   </div>
                 }
               >
                 <Show when={ctx.fromAddress?.()}>
                   <div class="text-xs text-ink-extra-muted/50 flex items-center gap-2 min-w-0 flex-1">
-                    <span class="w-14 shrink-0">from</span>
+                    <span class="w-14 shrink-0">
+                      {t('blockEmail.fields.from')}
+                    </span>
                     <div class="min-w-0">
                       <FromInboxSelector
                         links={ctx.fromInboxes?.() ?? []}
@@ -233,7 +237,7 @@ export function ComposeLayout(props: {
                 onClick={() => setShowCc(true)}
                 disabled={ctx.disabled()}
               >
-                Cc
+                {t('blockEmail.fields.cc')}
               </Button>
             </Show>
             <Show when={!isBccVisible()}>
@@ -242,7 +246,9 @@ export function ComposeLayout(props: {
                 class="rounded-lg"
                 onClick={() => setShowBcc(true)}
                 disabled={ctx.disabled()}
-              >{t('auto.bcc')}</Button>
+              >
+                {t('blockEmail.fields.bcc')}
+              </Button>
             </Show>
           </div>
         </div>

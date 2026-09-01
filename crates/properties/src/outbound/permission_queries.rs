@@ -68,13 +68,13 @@ pub async fn get_owner_and_deleted(
 
 /// Gets the macro user id of the owner of an email thread via its link.
 /// Returns `None` if the thread doesn't exist.
-pub async fn get_conation_id_from_thread_id(
+pub async fn get_macro_id_from_thread_id(
     pool: &Pool<Postgres>,
     thread_id: Uuid,
 ) -> anyhow::Result<Option<String>> {
-    let conation_id = sqlx::query_scalar!(
+    let macro_id = sqlx::query_scalar!(
         r#"
-        SELECT l.conation_id
+        SELECT l.macro_id
         FROM email_threads t
         JOIN email_links l ON t.link_id = l.id
         WHERE t.id = $1
@@ -84,5 +84,5 @@ pub async fn get_conation_id_from_thread_id(
     .fetch_optional(pool)
     .await?;
 
-    Ok(conation_id)
+    Ok(macro_id)
 }

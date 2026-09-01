@@ -1,5 +1,4 @@
 import { useActivityFeedFlag } from '@app/features/activity/use-activity-feed-flag';
-import { t } from '@app/lib/i18n';
 import type { EventEditorInitialValues } from '@app/features/calendar/components/composer/event-form-model';
 import type { CalendarEvent } from '@app/features/calendar/types';
 import { GettingStarted } from '@app/features/getting-started';
@@ -15,6 +14,7 @@ import { useRecentViewFlag } from '@app/features/next-soup/use-recent-view-flag'
 import { SettingsPanelComponentWrapper } from '@app/features/settings/Settings';
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
 import { usePosthog } from '@app/lib/analytics/posthog';
+import { t } from '@app/lib/i18n';
 import { globalSplitManager } from '@app/signal/splitLayout';
 import { EventComposerSplit } from '@block-calendar/components/EventComposerSplit';
 import { ChannelCompose } from '@block-channel/component/Compose';
@@ -498,7 +498,7 @@ registerComponent('loading', () => <LoadingBlock />);
 // restore.
 registerComponent('preview-empty', () => {
   const panel = useSplitPanelOrThrow();
-  onMount(() => panel.handle.setDisplayName('Preview'));
+  onMount(() => panel.handle.setDisplayName(t('shell.split.preview')));
   const emptyState = () => {
     const manager = globalSplitManager();
     const controllerId = manager?.controllerOf(panel.handle.id);

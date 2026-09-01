@@ -6,10 +6,11 @@
  * chrome mirrors `@core/component/AI/component/input/ChatInput.tsx`.
  */
 
+import { t } from '@app/lib/i18n';
+import { $insertReferencedPaste } from '@conation/lexical-core';
 import { buildConfig } from '@core/component/LexicalMarkdown/builder/MarkdownConfigBuilder';
 import { MarkdownShell } from '@core/component/LexicalMarkdown/builder/MarkdownShell';
 import type { AgentCommandItem } from '@core/component/LexicalMarkdown/plugins';
-import { $insertReferencedPaste } from '@conation/lexical-core';
 import { Button, SendButton, Surface } from '@ui';
 import { createSignal, type JSX, onCleanup, onMount, Show } from 'solid-js';
 
@@ -118,7 +119,7 @@ export function AgentInput(props: AgentInputProps) {
           >
             <MarkdownShell
               config={editor}
-              placeholder={props.placeholder ?? 'Message the agent'}
+              placeholder={props.placeholder ?? t('agent.composer.placeholder')}
               autofocus={props.autofocus}
             />
           </div>
@@ -128,7 +129,7 @@ export function AgentInput(props: AgentInputProps) {
               when={props.busy && props.onStop}
               fallback={
                 <SendButton
-                  tooltip="Send"
+                  tooltip={t('agent.actions.send')}
                   disabled={!canSend()}
                   onClick={send}
                 />
@@ -137,7 +138,7 @@ export function AgentInput(props: AgentInputProps) {
               <Button
                 variant="ghost"
                 size="icon-sm"
-                label="Stop"
+                label={t('agent.actions.stop')}
                 onClick={() => props.onStop?.()}
                 class="rounded-[11px] size-7.5 text-ink-extra-muted not-disabled:bg-ink/5 not-disabled:hover:bg-ink/10"
               >

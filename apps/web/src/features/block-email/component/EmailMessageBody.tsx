@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { StaticMarkdown } from '@core/component/LexicalMarkdown/component/core/StaticMarkdown';
 import { channelTheme } from '@core/component/LexicalMarkdown/theme';
 import { DEV_MODE_ENV } from '@core/constant/featureFlags';
@@ -372,6 +373,7 @@ export function EmailMessageBody(props: EmailMessageBodyProps) {
             <Button
               variant="ghost"
               size="icon-sm"
+              tooltip={t('blockEmail.reply.showQuotedText')}
               onClick={() => setShowFullHTML(true)}
               class={cn(
                 'rounded-md text-ink-extra-muted hover:text-ink-muted',

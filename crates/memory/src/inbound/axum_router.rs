@@ -93,7 +93,7 @@ pub async fn get_memory_handler<T: MemoryService, Auth: MacroAuthorizationServic
 ) -> Response {
     let user = user.authorization.user;
 
-    match service.get_or_generate_memory(user.conation_user_id).await {
+    match service.get_or_generate_memory(user.macro_user_id).await {
         Ok(Some(memory)) => Json(MemoryResponse { memory }).into_response(),
         Ok(None) => StatusCode::NOT_FOUND.into_response(),
         Err(e) => {

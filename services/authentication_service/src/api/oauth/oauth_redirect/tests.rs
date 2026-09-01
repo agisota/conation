@@ -3,6 +3,14 @@ use cool_asserts::assert_matches;
 
 use super::*;
 
+#[test]
+fn session_cache_error_display_is_product_neutral() {
+    let error = InnerErr::MacroCacheErr(anyhow::anyhow!("unavailable")).to_string();
+
+    assert_eq!(error, "session cache error: unavailable");
+    assert!(!error.contains("Macro"));
+}
+
 #[tokio::test]
 async fn it_should_deserialize_query_params() {
     let sso_state = SsoState {

@@ -73,7 +73,7 @@ async fn fetch_inactive_link_ids_excludes_conation_internal_links(pool: Pool<Pos
     let unused_result = fetch_unused_link_ids(&pool, 30).await?;
     let inactive_result = fetch_inactive_link_ids(&pool, 60).await?;
 
-    // Links with @macro.com in conation_id should never be deleted
+    // Links with @macro.com in macro_id should never be deleted
     let internal_link_id = Uuid::parse_str("00000000-0000-0000-0000-000000000005")?;
     assert!(
         !unused_result.contains(&internal_link_id) && !inactive_result.contains(&internal_link_id),

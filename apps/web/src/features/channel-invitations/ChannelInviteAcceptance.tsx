@@ -1,5 +1,5 @@
-import { LoadingBlock } from '@core/component/LoadingBlock';
 import { t } from '@app/lib/i18n';
+import { LoadingBlock } from '@core/component/LoadingBlock';
 import { PcNoiseGrid } from '@core/component/PcNoiseGrid';
 import { ThrownResultError } from '@core/util/result';
 import LogoIcon from '@icon/macro-logo.svg';
@@ -100,14 +100,20 @@ function InvalidInviteLink() {
 
   return (
     <div class="w-full flex flex-col items-center gap-4 text-center">
-      <h2 class="text-lg font-medium text-ink">{t('auto.invalid_invite_link')}</h2>
-      <p class="text-sm text-ink-muted">{t('auto.this_channel_invitation_is_inv')}</p>
+      <h2 class="text-lg font-medium text-ink">
+        {t('invitations.channel.invalid.title')}
+      </h2>
+      <p class="text-sm text-ink-muted">
+        {t('invitations.channel.invalid.description')}
+      </p>
       <Button
         variant="outline"
         size="md"
         class="w-full rounded-xs"
         onClick={() => navigate('/')}
-      >{t('auto.go_to_home')}</Button>
+      >
+        {t('invitations.common.goHome')}
+      </Button>
     </div>
   );
 }
@@ -115,16 +121,20 @@ function InvalidInviteLink() {
 function UnauthenticatedView(props: { onLogin: () => void }) {
   return (
     <div class="w-full flex flex-col items-center gap-4 text-center">
-      <h2 class="text-lg font-medium text-ink">You've Been Invited</h2>
+      <h2 class="text-lg font-medium text-ink">
+        {t('invitations.channel.unauthenticated.title')}
+      </h2>
       <p class="text-sm text-ink-muted">
-        Sign in or create an account to accept this channel invitation.
+        {t('invitations.channel.unauthenticated.description')}
       </p>
       <Button
         variant="outline"
         size="md"
         class="w-full rounded-xs"
         onClick={props.onLogin}
-      >{t('auto.sign_in_to_continue')}</Button>
+      >
+        {t('invitations.common.signIn')}
+      </Button>
     </div>
   );
 }
@@ -134,15 +144,21 @@ function JoinConfirmation(props: { onJoin: () => void }) {
     <div class="flex flex-col items-center gap-6 text-center w-full">
       <div class="flex flex-col gap-2">
         <h2 class="flex items-center justify-center gap-2 text-lg font-medium text-ink">
-          <UsersThreeIcon class="size-5" />{t('auto.join_channel')}</h2>
-        <p class="text-sm text-ink-muted">{t('auto.confirm_that_you_want_to_join_')}</p>
+          <UsersThreeIcon class="size-5" />
+          {t('invitations.channel.join.title')}
+        </h2>
+        <p class="text-sm text-ink-muted">
+          {t('invitations.channel.join.description')}
+        </p>
       </div>
       <Button
         variant="outline"
         size="md"
         class="w-full rounded-xs"
         onClick={props.onJoin}
-      >{t('auto.join_channel')}</Button>
+      >
+        {t('invitations.channel.join.submit')}
+      </Button>
     </div>
   );
 }
@@ -150,9 +166,11 @@ function JoinConfirmation(props: { onJoin: () => void }) {
 function ServerError(props: { onRetry: () => void }) {
   return (
     <div class="w-full flex flex-col items-center gap-4 text-center">
-      <h2 class="text-lg font-medium text-ink">{t('auto.unable_to_join_channel')}</h2>
+      <h2 class="text-lg font-medium text-ink">
+        {t('invitations.channel.error.title')}
+      </h2>
       <p class="text-sm text-ink-muted">
-        Something went wrong while joining the channel. Please try again.
+        {t('invitations.channel.error.description')}
       </p>
       <Button
         variant="outline"
@@ -160,7 +178,7 @@ function ServerError(props: { onRetry: () => void }) {
         class="w-full rounded-xs"
         onClick={props.onRetry}
       >
-        Try Again
+        {t('common.retry')}
       </Button>
     </div>
   );

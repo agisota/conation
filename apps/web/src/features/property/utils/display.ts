@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import type { Property } from '../types';
 
 /**
@@ -5,22 +6,25 @@ import type { Property } from '../types';
  * This is the single source of truth for all property type labels
  */
 export const getPropertyDataTypeDropdownOptions = () => [
-  { value: 'string' as const, label: 'Input' },
-  { value: 'number' as const, label: 'Input (Number)' },
-  { value: 'boolean' as const, label: 'Checkbox' },
-  { value: 'date' as const, label: 'Date' },
-  { value: 'link' as const, label: 'Link' },
-  { value: 'select_string' as const, label: 'Option' },
-  { value: 'select_number' as const, label: 'Option (Number)' },
-  { value: 'entity:USER' as const, label: 'User' },
-  { value: 'entity:DOCUMENT' as const, label: 'Document' },
-  { value: 'entity:CHANNEL' as const, label: 'Channel' },
-  { value: 'entity:PROJECT' as const, label: 'Project' },
-  { value: 'entity:CHAT' as const, label: 'Chat' },
-  { value: 'entity:TASK' as const, label: 'Task' },
+  { value: 'string' as const, label: t('property.types.input') },
+  { value: 'number' as const, label: t('property.types.numberInput') },
+  { value: 'boolean' as const, label: t('property.types.checkbox') },
+  { value: 'date' as const, label: t('property.types.date') },
+  { value: 'link' as const, label: t('property.types.link') },
+  { value: 'select_string' as const, label: t('property.types.option') },
+  {
+    value: 'select_number' as const,
+    label: t('property.types.numberOption'),
+  },
+  { value: 'entity:USER' as const, label: t('property.types.user') },
+  { value: 'entity:DOCUMENT' as const, label: t('property.types.document') },
+  { value: 'entity:CHANNEL' as const, label: t('property.types.channel') },
+  { value: 'entity:PROJECT' as const, label: t('property.types.project') },
+  { value: 'entity:CHAT' as const, label: t('property.types.chat') },
+  { value: 'entity:TASK' as const, label: t('property.types.task') },
   // { value: 'entity:COMPANY' as const, label: 'Company' }, NOT YET IMPLEMENTED
-  { value: 'entity:THREAD' as const, label: 'Email' },
-  { value: 'entity' as const, label: 'Any Entity' },
+  { value: 'entity:THREAD' as const, label: t('property.types.email') },
+  { value: 'entity' as const, label: t('property.types.anyEntity') },
 ];
 
 /**

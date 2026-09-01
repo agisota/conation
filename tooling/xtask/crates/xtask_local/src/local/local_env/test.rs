@@ -318,7 +318,7 @@ fn local_sandboxes_join_the_instances_compose_network() {
         default_env
             .get("LOCAL_CONTAINER_NETWORK")
             .map(String::as_str),
-        Some("conation_services")
+        Some("macro_services")
     );
     assert_eq!(
         named_env.get("LOCAL_CONTAINER_NETWORK").map(String::as_str),

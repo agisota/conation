@@ -124,7 +124,7 @@ fn bot_authentication() -> BotAuthentication {
         bot_scope: BotScope::Team,
         team_id: Some(TEAM_ID),
         acting_user: Some(MacroUserAuthentication {
-            conation_user_id: MacroUserIdStr::try_from("macro|acting@example.com".to_string())
+            macro_user_id: MacroUserIdStr::try_from("macro|acting@example.com".to_string())
                 .expect("valid Macro user id"),
             user_context: UserContext {
                 user_id: "macro|acting@example.com".to_string(),
@@ -147,7 +147,7 @@ fn assert_bot_authentication(bot: &BotAuthentication) {
         .as_ref()
         .expect("expected a verified acting user");
     assert_eq!(
-        acting_user.conation_user_id.as_ref(),
+        acting_user.macro_user_id.as_ref(),
         "macro|acting@example.com"
     );
     assert_eq!(acting_user.user_context.user_id, "macro|acting@example.com");

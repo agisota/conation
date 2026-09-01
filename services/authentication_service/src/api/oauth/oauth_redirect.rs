@@ -187,7 +187,7 @@ enum InnerErr {
     Serde(#[from] serde_json::Error),
     #[error("invalid jwt")]
     InvalidJwtError,
-    #[error("Macro Cache Err {0}")]
+    #[error("session cache error: {0}")]
     MacroCacheErr(anyhow::Error),
     #[error("Failed to parse url {0}")]
     ParseErr(#[from] url::ParseError),

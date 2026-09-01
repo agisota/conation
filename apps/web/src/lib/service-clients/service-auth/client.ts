@@ -1,3 +1,4 @@
+import { Telemetry } from '@conation/observability';
 import { ENABLE_BEARER_TOKEN_AUTH } from '@core/constant/featureFlags';
 import { SERVER_HOSTS } from '@core/constant/servers';
 import { fetchWithToken } from '@core/util/fetchWithToken';
@@ -8,7 +9,6 @@ import {
   type SafeFetchInit,
   safeFetch,
 } from '@core/util/safeFetch';
-import { Telemetry } from '@conation/observability';
 
 import { makePersisted } from '@solid-primitives/storage';
 import { err, ok } from 'neverthrow';

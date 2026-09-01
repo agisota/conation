@@ -466,13 +466,13 @@ const PG_BOT_OWNER: &str = "macro|pg-bot-owner@example.com";
 const PG_OTHER_DOCUMENT_OWNER: &str = "macro|other-document-owner@example.com";
 
 async fn insert_pg_user(pool: &PgPool, user_id: &str, email: &str) -> anyhow::Result<()> {
-    let conation_user_id = Uuid::new_v4();
+    let macro_user_id = Uuid::new_v4();
     sqlx::query!(
         r#"
-        INSERT INTO conation_user (id, username, email, stripe_customer_id)
+        INSERT INTO macro_user (id, username, email, stripe_customer_id)
         VALUES ($1, $2, $3, $2)
         "#,
-        conation_user_id,
+        macro_user_id,
         user_id,
         email,
     )
@@ -481,12 +481,12 @@ async fn insert_pg_user(pool: &PgPool, user_id: &str, email: &str) -> anyhow::Re
 
     sqlx::query!(
         r#"
-        INSERT INTO "User" (id, email, conation_user_id)
+        INSERT INTO "User" (id, email, macro_user_id)
         VALUES ($1, $2, $3)
         "#,
         user_id,
         email,
-        conation_user_id,
+        macro_user_id,
     )
     .execute(pool)
     .await?;
@@ -860,7 +860,7 @@ async fn team_thread_access_does_not_inherit_inbox_ownership(pool: PgPool) -> an
     insert_pg_bot(&pool, bot_id, None, Some(team_id)).await?;
     sqlx::query!(
         r#"
-        INSERT INTO email_links (id, conation_id, fusionauth_user_id, email_address, provider)
+        INSERT INTO email_links (id, macro_id, fusionauth_user_id, email_address, provider)
         VALUES ($1, $2, $2, 'pg-bot-owner@example.com', 'GMAIL')
         "#,
         link_id,
@@ -1052,19 +1052,19 @@ const REMINDER_OWNER: &str = "macro|reminder-owner@example.com";
 const REMINDER_STRANGER: &str = "macro|reminder-stranger@example.com";
 
 async fn insert_reminder_user(pool: &PgPool, id: &str) -> anyhow::Result<()> {
-    let conation_user_id = Uuid::new_v4();
+    let macro_user_id = Uuid::new_v4();
     sqlx::query!(
-        r#"INSERT INTO conation_user (id, username, email, stripe_customer_id)
+        r#"INSERT INTO macro_user (id, username, email, stripe_customer_id)
            VALUES ($1, $2, $2, $2)"#,
-        conation_user_id,
+        macro_user_id,
         id,
     )
     .execute(pool)
     .await?;
     sqlx::query!(
-        r#"INSERT INTO "User" (id, email, conation_user_id) VALUES ($1, $1, $2)"#,
+        r#"INSERT INTO "User" (id, email, macro_user_id) VALUES ($1, $1, $2)"#,
         id,
-        conation_user_id,
+        macro_user_id,
     )
     .execute(pool)
     .await?;

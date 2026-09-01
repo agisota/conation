@@ -1,5 +1,5 @@
-import { UserIcon } from '@core/component/UserIcon';
 import { t } from '@app/lib/i18n';
+import { UserIcon } from '@core/component/UserIcon';
 import { getDisplayName, tryMacroId } from '@core/user';
 import Envelope from '@phosphor-icons/core/regular/envelope.svg';
 import Users from '@phosphor-icons/core/regular/users.svg';
@@ -40,7 +40,9 @@ function TeamInviteRow(props: { invite: TeamInvite }) {
       <div class="min-w-0 flex-1">
         <div class="truncate text-xs text-ink">{props.invite.email}</div>
         <div class="truncate text-xs capitalize text-ink-placeholder">
-          Invited as {formatRole(props.invite.role)}
+          {t('ai.tools.team.invitedAs', {
+            role: formatRole(props.invite.role),
+          })}
         </div>
       </div>
     </Tool.ListItem>
@@ -64,14 +66,11 @@ function TeamMembersToolResponse(props: ListTeamMembersResponse) {
         </For>
       </Show>
       <Show when={!hasMembers() && !hasInvites()}>
-        <Tool.ListItem>{t('auto.no_team_members_found')}</Tool.ListItem>
+        <Tool.ListItem>{t('ai.tools.team.noMembers')}</Tool.ListItem>
       </Show>
     </Tool.List>
   );
 }
-
-const pluralize = (count: number, singular: string, plural = `${singular}s`) =>
-  `${count} ${count === 1 ? singular : plural}`;
 
 const listTeamMembersHandler = createToolRenderer({
   name: 'ListTeamMembers',
@@ -81,9 +80,13 @@ const listTeamMembersHandler = createToolRenderer({
     const statusText = () => {
       if (!ctx.response) return undefined;
 
-      const parts = [pluralize(members().length, 'member')];
+      const parts = [
+        t('ai.tools.team.memberCount', { count: members().length }),
+      ];
       if (invited().length > 0) {
-        parts.push(pluralize(invited().length, 'pending invite'));
+        parts.push(
+          t('ai.tools.team.pendingInviteCount', { count: invited().length })
+        );
       }
 
       return parts.join(', ');
@@ -101,7 +104,7 @@ const listTeamMembersHandler = createToolRenderer({
         }
       >
         <div class="flex min-w-0 flex-1 items-center justify-between gap-3 overflow-hidden">
-          <span class="min-w-0 truncate">{t('auto.read_team_members')}</span>
+          <span class="min-w-0 truncate">{t('ai.tools.team.readMembers')}</span>
           <Show when={statusText()}>
             {(text) => (
               <span class="shrink-0 whitespace-nowrap text-xs text-ink-extra-muted">

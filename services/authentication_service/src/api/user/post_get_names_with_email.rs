@@ -55,7 +55,7 @@ pub async fn handler(
 
     let user_names = get_user_names_with_email(
         &ctx.db,
-        authorization.authorization.user.conation_user_id.as_ref(),
+        authorization.authorization.user.macro_user_id.as_ref(),
         user_profile_ids,
     )
     .await

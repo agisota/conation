@@ -24,7 +24,7 @@ pub trait Topic: Copy + Send + Sync + 'static {
 
 /// Defines each topic struct with its `Topic` impl, plus [`all_topic_names`]
 /// so every declared topic is automatically included in the registry.
-conation_rules! topics {
+macro_rules! topics {
     ($($(#[$meta:meta])* $name:ident => $topic:literal),* $(,)?) => {
         $(
             $(#[$meta])*

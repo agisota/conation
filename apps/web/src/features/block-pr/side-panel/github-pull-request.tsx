@@ -1,5 +1,5 @@
-import { SidePanel } from '@components/app/side-panel/SidePanel';
 import { t } from '@app/lib/i18n';
+import { SidePanel } from '@components/app/side-panel/SidePanel';
 import ArrowSquareOut from '@phosphor/arrow-square-out.svg';
 import CheckCircle from '@phosphor/check-circle.svg';
 import Circle from '@phosphor/circle.svg';
@@ -36,6 +36,13 @@ const PR_PILL_CLASS =
 
 function capitalize(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function statusLabel(status: string): string {
+  if (status === 'open') return t('pullRequest.status.open');
+  if (status === 'merged') return t('pullRequest.status.merged');
+  if (status === 'closed') return t('pullRequest.status.closed');
+  return capitalize(status);
 }
 
 function githubDisplayLogin(login: string): string {
@@ -127,7 +134,7 @@ export function GithubPullRequestStatusChip(props: {
           status={props.status}
           class="size-3 shrink-0"
         />
-        {capitalize(props.status)}
+        {statusLabel(props.status)}
       </span>
     </Layer>
   );
@@ -152,7 +159,7 @@ export function GithubPullRequestDetailsRows(props: {
 }) {
   return (
     <>
-      <SidePanel.Row label="Author">
+      <SidePanel.Row label={t('pullRequest.sidePanel.author')}>
         <SidePanel.Pill>
           <Show
             when={props.enrichment.authorLogin}
@@ -177,14 +184,14 @@ export function GithubPullRequestDetailsRows(props: {
           </Show>
         </SidePanel.Pill>
       </SidePanel.Row>
-      <SidePanel.Row label="Repository">
+      <SidePanel.Row label={t('pullRequest.sidePanel.repository')}>
         <span class="truncate">
           {props.enrichment.owner}/{props.enrichment.repo}
         </span>
       </SidePanel.Row>
       <Show when={props.enrichment.status}>
         {(status) => (
-          <SidePanel.Row label="Status">
+          <SidePanel.Row label={t('pullRequest.sidePanel.status')}>
             <GithubPullRequestStatusChip
               status={status()}
               class="text-xs px-1.5 py-0.5 gap-1"
@@ -198,13 +205,13 @@ export function GithubPullRequestDetailsRows(props: {
           props.enrichment.deletions != null
         }
       >
-        <SidePanel.Row label="Changes">
+        <SidePanel.Row label={t('pullRequest.sidePanel.changes')}>
           <span class="text-success">+{props.enrichment.additions ?? 0}</span>
           <span class="text-ink-extra-muted">/</span>
           <span class="text-failure">−{props.enrichment.deletions ?? 0}</span>
         </SidePanel.Row>
       </Show>
-      <SidePanel.Row label="GitHub">
+      <SidePanel.Row label={t('pullRequest.sidePanel.github')}>
         <a
           href={props.enrichment.url}
           target="_blank"
@@ -225,11 +232,15 @@ export function GithubPullRequestChecksContent(props: {
   return (
     <Show
       when={checks().length > 0}
-      fallback={<div class="text-ink-placeholder">{t('auto.no_checks')}</div>}
+      fallback={
+        <div class="text-ink-placeholder">{t('pullRequest.checks.empty')}</div>
+      }
     >
       <div class="flex flex-col gap-1 text-xs">
         <div class="text-xs text-ink-muted">
-          {checksPassedCount(checks())} passed
+          {t('pullRequest.checks.passed', {
+            count: checksPassedCount(checks()),
+          })}
         </div>
         <For each={checks()}>
           {(check) => (
@@ -246,7 +257,9 @@ export function GithubPullRequestChecksContent(props: {
                       href={url()}
                       target="_blank"
                       rel="noreferrer"
-                      aria-label={`Open ${check.name} on GitHub`}
+                      aria-label={t('pullRequest.checks.openOnGithub', {
+                        name: check.name,
+                      })}
                       class="text-link hover:text-link-hover visited:text-link-visited transition-colors"
                     >
                       <ArrowSquareOut class="size-3" />

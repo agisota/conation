@@ -177,8 +177,8 @@ pub async fn archived_handler(
         ctx.conation_event_broker.as_ref(),
         &EmailMacroEvent::thread_archived(ThreadArchivedMetadata {
             link_id: link.id,
-            owner: link.conation_id.clone(),
-            actor: Some(link.conation_id.clone()),
+            owner: link.macro_id.clone(),
+            actor: Some(link.macro_id.clone()),
             thread_id,
             archived: is_archiving,
             origin: EmailEventOrigin::UserAction,

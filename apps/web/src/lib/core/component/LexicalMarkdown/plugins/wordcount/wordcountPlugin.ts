@@ -1,3 +1,4 @@
+import { getDateLocale } from '@core/i18n';
 import { debounce } from '@solid-primitives/scheduled';
 import {
   $getRoot,
@@ -6,10 +7,6 @@ import {
   type UpdateListener,
 } from 'lexical';
 import { createStore, type SetStoreFunction } from 'solid-js/store';
-
-const segmenter = new Intl.Segmenter('en-US', {
-  granularity: 'word',
-});
 
 export type WordcountStats = {
   totalWords: number;
@@ -32,6 +29,14 @@ type WordcountPluginProps = {
   debounceTime: number;
 };
 
+function countSegmentedWords(text: string, segmenter: Intl.Segmenter): number {
+  let wordCount = 0;
+  for (const segment of segmenter.segment(text)) {
+    if (segment.isWordLike) wordCount++;
+  }
+  return wordCount;
+}
+
 function registerWordcountPlugin(
   editor: LexicalEditor,
   props: WordcountPluginProps
@@ -43,24 +48,15 @@ function registerWordcountPlugin(
       return [childText.join('\n'), $getSelection()?.getTextContent() ?? null];
     });
 
-    const segments = segmenter.segment(all);
-    let wordCount = 0;
-    for (const seg of segments) {
-      if (seg.isWordLike) {
-        wordCount++;
-      }
-    }
+    const segmenter = new Intl.Segmenter(getDateLocale(), {
+      granularity: 'word',
+    });
 
-    props.setStore('totalWords', wordCount);
+    props.setStore('totalWords', countSegmentedWords(all, segmenter));
     props.setStore('totalCharacters', all.length);
 
     if (selected) {
-      const segments = segmenter.segment(selected);
-      let wordCount = 0;
-      for (const seg of segments) {
-        if (seg.isWordLike) wordCount++;
-      }
-      props.setStore('selectedWords', wordCount);
+      props.setStore('selectedWords', countSegmentedWords(selected, segmenter));
       props.setStore('selectedCharacters', selected.length);
     } else {
       props.setStore('selectedWords', null);

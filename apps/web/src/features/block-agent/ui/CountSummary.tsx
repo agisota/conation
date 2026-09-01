@@ -21,6 +21,8 @@ export interface CountItem {
   one: string;
   /** Label otherwise, e.g. "files read". */
   other: string;
+  /** Locale-aware label formatter for languages with more than two plural forms. */
+  formatLabel?: (count: number) => string;
 }
 
 const EASE = 'ease-[cubic-bezier(0.22,1,0.36,1)]';
@@ -58,7 +60,12 @@ function splitWords(one: string, other: string) {
  * other, the extra letters sliding in and out on pluralization. Labels that
  * diverge mid-word ("file read" / "files read") swap without animating.
  */
-function CountLabel(props: { count: number; one: string; other: string }) {
+function CountLabel(props: {
+  count: number;
+  one: string;
+  other: string;
+  formatLabel?: (count: number) => string;
+}) {
   const singular = createMemo(() => Math.round(props.count) === 1);
   const parts = createMemo(() => splitWords(props.one, props.other));
   const animatable = createMemo(
@@ -74,11 +81,14 @@ function CountLabel(props: { count: number; one: string; other: string }) {
     <span class="inline-flex items-baseline whitespace-pre">
       <AnimatedNumber value={props.count} />
       <Show
-        when={animatable()}
+        when={!props.formatLabel && animatable()}
         fallback={
-          <span class="whitespace-pre">{` ${
-            singular() ? props.one : props.other
-          }`}</span>
+          <span class="whitespace-pre">
+            {` ${
+              props.formatLabel?.(Math.max(0, Math.round(props.count))) ??
+              (singular() ? props.one : props.other)
+            }`}
+          </span>
         }
       >
         <span class="whitespace-pre">{` ${parts().stem}`}</span>
@@ -138,6 +148,7 @@ export function CountSummary(props: {
                   <CountLabel
                     one={item().one}
                     other={item().other}
+                    formatLabel={item().formatLabel}
                     count={Math.max(0, Math.round(item().count))}
                   />
                 </span>

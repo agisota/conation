@@ -10,7 +10,7 @@ use uuid::Uuid;
 fn test_link(id: Uuid, owner: &str, email: &str, is_primary: bool) -> Link {
     Link {
         id,
-        conation_id: MacroUserIdStr::try_from_email(owner).unwrap(),
+        macro_id: MacroUserIdStr::try_from_email(owner).unwrap(),
         fusionauth_user_id: "fa-user".to_string(),
         email_address: EmailStr::try_from(email.to_string()).unwrap(),
         provider: UserProvider::Gmail,
@@ -91,7 +91,7 @@ fn no_header_falls_back_to_callers_primary() {
 
 #[test]
 fn delegated_primary_is_not_the_callers_primary() {
-    // A delegated inbox is primary for its own account; without the conation_id
+    // A delegated inbox is primary for its own account; without the macro_id
     // guard it would be picked as the caller's default target.
     let own_primary = Uuid::from_u128(1);
     let links = vec![

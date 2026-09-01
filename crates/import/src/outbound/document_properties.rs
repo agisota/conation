@@ -1,4 +1,4 @@
-//! Applies properties recovered from an external document to a Macro document.
+//! Applies properties recovered from an external document to a Conation document.
 //!
 //! This adapter translates import-domain values into the Properties service's
 //! definitions, options, and stored values. Imported enrichment is best-effort:
@@ -26,10 +26,13 @@ use crate::domain::ports::{
 #[cfg(test)]
 mod test;
 
-/// Applies imported document properties through Macro's Properties service.
+/// Applies imported document properties through Conation's Properties service.
 pub struct DocumentPropertiesApplicator<P> {
     properties: Arc<P>,
 }
+
+const INCOMPATIBLE_DEFINITION_LOG_MESSAGE: &str =
+    "skipping imported property whose existing Conation definition has a different type";
 
 impl<P> Clone for DocumentPropertiesApplicator<P> {
     fn clone(&self) -> Self {
@@ -491,7 +494,8 @@ fn log_definition_conflict(document_id: &str, property_name: &str, conflict: Def
             document_id,
             property = %property_name,
             is_system,
-            "skipping imported property whose existing Macro definition has a different type"
+            "{}",
+            INCOMPATIBLE_DEFINITION_LOG_MESSAGE
         ),
         DefinitionConflict::ReservedSystem { definition_id } => tracing::warn!(
             document_id,
@@ -547,7 +551,7 @@ async fn create_or_recover_definition<P: ImportedPropertyDefinitions>(
 
 #[derive(Debug, Clone, PartialEq)]
 struct ImportedPropertyDescriptor {
-    /// API type used when a Macro definition must be created.
+    /// API type used when a Conation definition must be created.
     definition_type: PropertyDataType,
     /// Stored type used to check compatibility with an existing definition.
     stored_type: DataType,

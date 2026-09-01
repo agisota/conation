@@ -4,6 +4,8 @@
  * menu for the clipboard and no format popup for table selections. On
  * desktop, merge/split live in the normal selection popup (FormatTools).
  */
+
+import { t } from '@app/lib/i18n';
 import { mdStore } from '@block-md/signal/markdownBlockData';
 import { ScopedPortal } from '@core/component/ScopedPortal';
 import { toast } from '@core/component/Toast/Toast';
@@ -173,7 +175,7 @@ export function TableSelectionActionBar() {
     const data = readSelectionData();
     if (!currentEditor || !data) return;
     if (!(await writeClipboardData(data))) {
-      toast.failure('Failed to cut cells');
+      toast.failure(t('editor.table.cutFailed'));
       return;
     }
     // Clear the selected cells via the same path as backspacing a table
@@ -188,7 +190,7 @@ export function TableSelectionActionBar() {
     const data = readSelectionData();
     if (!data) return;
     if (await writeClipboardData(data)) {
-      toast.success('Copied cells');
+      toast.success(t('editor.table.copiedCells'));
       // Dismiss the bar once the action is taken, like a normal menu.
       clearSelection();
     }
@@ -220,7 +222,7 @@ export function TableSelectionActionBar() {
     if (!currentEditor) return;
     const dataTransfer = await readClipboardAsDataTransfer();
     if (!dataTransfer) {
-      toast.failure('Nothing to paste');
+      toast.failure(t('editor.table.nothingToPaste'));
       return;
     }
     currentEditor.update(() => {
@@ -280,14 +282,34 @@ export function TableSelectionActionBar() {
                 floatingOptions: { placement: 'top' },
               }}
             >
-              {barButton('Cut', ScissorsIcon, () => void runCut())}
-              {barButton('Copy', CopyIcon, () => void runCopy())}
-              {barButton('Paste', ClipboardIcon, () => void runPaste())}
+              {barButton(
+                t('editor.table.actions.cut'),
+                ScissorsIcon,
+                () => void runCut()
+              )}
+              {barButton(
+                t('editor.table.actions.copy'),
+                CopyIcon,
+                () => void runCopy()
+              )}
+              {barButton(
+                t('editor.table.actions.paste'),
+                ClipboardIcon,
+                () => void runPaste()
+              )}
               <Show when={isMultiCell()}>
-                {barButton('Merge', CornersInIcon, runMerge)}
+                {barButton(
+                  t('editor.table.actions.merge'),
+                  CornersInIcon,
+                  runMerge
+                )}
               </Show>
               <Show when={hasMergedCell()}>
-                {barButton('Split', CornersOutIcon, runSplit)}
+                {barButton(
+                  t('editor.table.actions.split'),
+                  CornersOutIcon,
+                  runSplit
+                )}
               </Show>
             </div>
           </Layer>

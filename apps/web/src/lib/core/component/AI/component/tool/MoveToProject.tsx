@@ -1,4 +1,5 @@
 import { ItemPreview } from '@core/component/ItemPreview';
+import { t } from '@core/i18n';
 import ArrowSquareIn from '@phosphor-icons/core/regular/arrow-square-in.svg';
 import type { MoveableEntityType } from '@service-cognition/generated/tools/types';
 import type { ItemType } from '@service-storage/client';
@@ -22,7 +23,7 @@ const handler = createToolRenderer({
       type="call"
     >
       <div class="min-w-0 flex-1">
-        Move{' '}
+        {t('ai.tools.move.move')}{' '}
         <Suspense>
           <ItemPreview
             class="inline-flex align-middle ring-0"
@@ -30,10 +31,10 @@ const handler = createToolRenderer({
             type={ITEM_TYPES[ctx.tool.data.entityType]}
           />
         </Suspense>{' '}
-        to{' '}
+        {t('ai.tools.move.to')}{' '}
         <Show
           when={ctx.tool.data.projectId}
-          fallback={<span class="text-ink">top level</span>}
+          fallback={<span class="text-ink">{t('ai.tools.move.topLevel')}</span>}
         >
           {(projectId) => (
             <Suspense>

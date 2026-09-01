@@ -1,5 +1,5 @@
-import { INSERT_TABLE_COMMAND } from '@lexical/table';
 import { t } from '@app/lib/i18n';
+import { INSERT_TABLE_COMMAND } from '@lexical/table';
 import { createCallback } from '@solid-primitives/rootless';
 import { Button } from '@ui';
 import { createSignal, Index, type ParentProps } from 'solid-js';
@@ -143,7 +143,7 @@ export function TableInsert(
           <input
             type="number"
             class="size-full p-2 border border-edge text-sm rounded"
-            placeholder="rows"
+            placeholder={t('markdown.table.rows')}
             value={`${rows()}`}
             onInput={(e) => setRows(Number(e.target.value))}
             on:focus={(e) => e.stopPropagation()}
@@ -155,7 +155,7 @@ export function TableInsert(
           <input
             type="number"
             class="size-full p-2 border border-edge bg-surface text-sm rounded"
-            placeholder="cols"
+            placeholder={t('markdown.table.columns')}
             value={`${cols()}`}
             onInput={(e) => setCols(Number(e.target.value))}
             on:focus={(e) => e.stopPropagation()}
@@ -166,7 +166,9 @@ export function TableInsert(
           variant="outline"
           disabled={!rows() || !cols()}
           onClick={() => handleInsertTable(rows() ?? 0, cols() ?? 0)}
-        >{t('auto.insert_table')}</Button>
+        >
+          {t('markdown.table.insert')}
+        </Button>
       </div>
     </div>
   );

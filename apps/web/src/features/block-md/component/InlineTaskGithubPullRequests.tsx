@@ -1,3 +1,4 @@
+import { formatNumber, t } from '@app/lib/i18n';
 import { GithubPullRequestStatusIcon } from '@components/app/side-panel';
 import { useBlockAliasedName, useBlockId } from '@core/block';
 import { TOKENS } from '@core/hotkey/tokens';
@@ -31,7 +32,7 @@ function hasLineChanges(pr: GithubPullRequest): boolean {
 }
 
 function formatLineCount(value: number | null | undefined): string {
-  return (value ?? 0).toLocaleString();
+  return formatNumber(value ?? 0);
 }
 
 function lineChangesLabel(pr: GithubPullRequest): string | undefined {
@@ -83,7 +84,9 @@ function InlineTaskGithubPullRequestsContent(props: {
           return (
             <Layer depth={2}>
               <a
-                aria-label={`Open GitHub pull request ${pullRequestLabel(pr)}`}
+                aria-label={t('markdown.github.openPullRequest', {
+                  name: pullRequestLabel(pr),
+                })}
                 class={PILL_CLASS}
                 href={pr.url}
                 target="_blank"
@@ -139,7 +142,7 @@ function InlineTaskGithubPullRequestsContent(props: {
           variant="ghost"
           size="sm"
           depth={2}
-          tooltip="Copy branch name"
+          tooltip={t('markdown.agent.copyBranchName')}
           hotkey={TOKENS.entity.action.copyBranchName}
           class={cn(PILL_CLASS, 'bg-surface px-1.5')}
           onClick={() => void copyBranchNameToClipboard(props.blockId)}

@@ -24,7 +24,7 @@ env_vars! {
 pub struct Config {
     /// The connection URL for the macrodb instance this application should use.
     /// For deployed applications, this is a secret stored in AWS Secrets Manager.
-    pub conation_db_url: MacroDbUrl,
+    pub macro_db_url: MacroDbUrl,
 
     /// The port to listen for HTTP requests on.
     #[conation_config_default(8080)]

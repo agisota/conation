@@ -46,7 +46,7 @@ impl Modify for SecurityAddon {
             ("internal" = [])
         ),
         tags(
-            (name = "convert service", description = "Macro Convert Service")
+            (name = "convert service", description = "Conation Convert Service")
         )
     )]
 pub struct ApiDoc;

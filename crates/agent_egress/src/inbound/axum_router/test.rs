@@ -254,7 +254,7 @@ async fn an_unauthenticated_git_request_is_told_to_use_basic() {
             .headers()
             .get(http::header::WWW_AUTHENTICATE)
             .and_then(|value| value.to_str().ok()),
-        Some(r#"Basic realm="Macro egress", charset="UTF-8""#)
+        Some(r#"Basic realm="Conation egress", charset="UTF-8""#)
     );
 }
 

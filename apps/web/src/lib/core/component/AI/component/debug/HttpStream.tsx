@@ -1,7 +1,7 @@
-import { SERVER_HOSTS } from '@core/constant/servers';
-import { t } from '@app/lib/i18n';
-import { platformFetch } from '@core/util/platformFetch';
+import { formatDateTime, t } from '@app/lib/i18n';
 import { WebsocketConnectionState } from '@conation/collaboration/websocket';
+import { SERVER_HOSTS } from '@core/constant/servers';
+import { platformFetch } from '@core/util/platformFetch';
 import { connectionGatewayClient } from '@service-connection/client';
 import {
   state as connectionState,
@@ -125,7 +125,7 @@ export default function HttpStreamDebug() {
         action: 'open',
       });
     } catch (err) {
-      setError(`Error: ${err}`);
+      setError(t('ai.debug.http.error', { error: String(err) }));
       setIsStreaming(false);
     }
   };
@@ -133,11 +133,11 @@ export default function HttpStreamDebug() {
   return (
     <div class="size-full overflow-auto p-4">
       <div class="max-w-5xl mx-auto space-y-4">
-        <h1 class="text-lg font-medium">{t('auto.http_stream_debug')}</h1>
+        <h1 class="text-lg font-medium">{t('ai.debug.http.title')}</h1>
 
         {/* Connection Status */}
         <div class="flex items-center gap-2">
-          <span class="text-sm">Connection Gateway:</span>
+          <span class="text-sm">{t('ai.debug.http.connectionGateway')}</span>
           <span
             class={cn(
               'text-sm px-2 py-1 rounded',
@@ -147,19 +147,19 @@ export default function HttpStreamDebug() {
             )}
           >
             {connectionState() === WebsocketConnectionState.Open
-              ? 'Connected'
-              : 'Disconnected'}
+              ? t('ai.debug.http.connected')
+              : t('ai.debug.http.disconnected')}
           </span>
         </div>
 
         {/* Form */}
         <div class="space-y-3 p-4 border border-edge rounded-lg">
           <div>
-            <div class="block text-sm mb-1">{t('auto.message')}</div>
+            <div class="block text-sm mb-1">{t('ai.debug.http.message')}</div>
             <textarea
               value={messageContent()}
               onInput={(e) => setMessageContent(e.currentTarget.value)}
-              placeholder={t('auto.enter_message')}
+              placeholder={t('ai.debug.http.messagePlaceholder')}
               rows={3}
               class="w-full px-3 py-2 border border-edge rounded bg-surface resize-none"
             />
@@ -170,7 +170,11 @@ export default function HttpStreamDebug() {
               variant="accent"
               disabled={isStreaming()}
             >
-              {isStreaming() ? 'Streaming...' : 'Send Message'}
+              {t(
+                isStreaming()
+                  ? 'ai.debug.http.streaming'
+                  : 'ai.debug.http.sendMessage'
+              )}
             </Button>
             <Button
               onClick={() => {
@@ -181,21 +185,23 @@ export default function HttpStreamDebug() {
                 setIsStreaming(false);
               }}
               variant="outline"
-            >{t('auto.reset')}</Button>
+            >
+              {t('ai.debug.actions.reset')}
+            </Button>
           </div>
         </div>
 
         {/* Chat ID */}
         <Show when={chatId()}>
           <div class="text-sm p-2 bg-surface rounded font-mono break-all">
-            Chat ID: {chatId()}
+            {t('ai.debug.http.chatId')}: {chatId()}
           </div>
         </Show>
 
         {/* Stream ID */}
         <Show when={streamId()}>
           <div class="text-sm p-2 bg-surface rounded font-mono break-all">
-            Stream ID: {streamId()}
+            {t('ai.debug.http.streamId')}: {streamId()}
           </div>
         </Show>
 
@@ -211,16 +217,22 @@ export default function HttpStreamDebug() {
           {/* Response (left) */}
           <div class="flex-1 space-y-2">
             <div class="flex items-center justify-between">
-              <span class="text-sm font-medium">{t('auto.response')}</span>
+              <span class="text-sm font-medium">
+                {t('ai.debug.http.response')}
+              </span>
               <Show when={isStreaming()}>
-                <span class="text-sm text-accent animate-pulse">{t('auto.streaming')}</span>
+                <span class="text-sm text-accent animate-pulse">
+                  {t('ai.debug.http.streaming')}
+                </span>
               </Show>
             </div>
             <div class="border border-edge rounded-lg max-h-96 overflow-auto">
               <Show
                 when={responseText()}
                 fallback={
-                  <div class="p-4 text-center text-sm text-ink-muted">{t('auto.no_response_yet_send_a_message')}</div>
+                  <div class="p-4 text-center text-sm text-ink-muted">
+                    {t('ai.debug.http.noResponse')}
+                  </div>
                 }
               >
                 <div class="p-3 text-sm whitespace-pre-wrap">
@@ -234,24 +246,32 @@ export default function HttpStreamDebug() {
           <div class="flex-1 space-y-2">
             <div class="flex items-center justify-between">
               <span class="text-sm font-medium">
-                Chunks ({chunks().length})
+                {t('ai.debug.http.chunkCount', { count: chunks().length })}
               </span>
               <Show when={isStreaming()}>
-                <span class="text-sm text-accent animate-pulse">{t('auto.receiving')}</span>
+                <span class="text-sm text-accent animate-pulse">
+                  {t('ai.debug.http.receiving')}
+                </span>
               </Show>
             </div>
             <div class="border border-edge rounded-lg max-h-96 overflow-auto">
               <Show
                 when={chunks().length > 0}
                 fallback={
-                  <div class="p-4 text-center text-sm text-ink-muted">{t('auto.no_chunks_yet_send_a_message_t')}</div>
+                  <div class="p-4 text-center text-sm text-ink-muted">
+                    {t('ai.debug.http.noChunks')}
+                  </div>
                 }
               >
                 <For each={chunks()}>
                   {(chunk) => (
                     <div class="p-3 border-b border-edge last:border-b-0">
                       <div class="text-xs text-ink-muted mb-1">
-                        {chunk.timestamp.toLocaleTimeString()}
+                        {formatDateTime(chunk.timestamp, {
+                          hour: 'numeric',
+                          minute: '2-digit',
+                          second: '2-digit',
+                        })}
                       </div>
                       <pre class="text-xs font-mono whitespace-pre-wrap break-all">
                         {JSON.stringify(chunk.raw, null, 2)}

@@ -1,5 +1,5 @@
+import { formatDateTime, t } from '@app/lib/i18n';
 import { UserIcon, type UserIconProps } from '@core/component/UserIcon';
-import { t } from '@app/lib/i18n';
 import { emailToMacroId, getDisplayName } from '@core/user';
 import RepeatIcon from '@phosphor/repeat.svg';
 import { Show } from 'solid-js';
@@ -9,19 +9,9 @@ import type {
   CalendarEventEntityTime,
 } from '../../types/entity';
 
-const timeOnly = new Intl.DateTimeFormat(undefined, {
-  hour: 'numeric',
-  minute: '2-digit',
-});
-const stampSameYear = new Intl.DateTimeFormat(undefined, {
-  month: 'short',
-  day: 'numeric',
-});
-const stampOtherYear = new Intl.DateTimeFormat(undefined, {
-  year: '2-digit',
-  month: 'numeric',
-  day: 'numeric',
-});
+function formatTime(date: Date): string {
+  return formatDateTime(date, { hour: 'numeric', minute: '2-digit' });
+}
 
 /** Parse an all-day `YYYY-MM-DD` key as a local date, no UTC shift. */
 function parseAllDay(value: string): Date | undefined {
@@ -52,21 +42,25 @@ export function formatStampDate(
   const date = occurrenceStart(time);
   if (!date) return '';
   return date.getFullYear() === new Date().getFullYear()
-    ? stampSameYear.format(date)
-    : stampOtherYear.format(date);
+    ? formatDateTime(date, { month: 'short', day: 'numeric' })
+    : formatDateTime(date, {
+        year: '2-digit',
+        month: 'numeric',
+        day: 'numeric',
+      });
 }
 
 /** Time-of-day range for the left detail line; the date rides the stamp. */
 function formatTimeOfDay(time: CalendarEventEntityTime | undefined): string {
   if (!time) return '';
-  if (time.kind === 'allDay') return 'All day';
+  if (time.kind === 'allDay') return t('calendar.event.allDay');
   const start = new Date(time.startsAt);
   if (Number.isNaN(start.getTime())) return '';
   const end = new Date(time.endsAt);
   if (Number.isNaN(end.getTime()) || end.getTime() === start.getTime()) {
-    return timeOnly.format(start);
+    return formatTime(start);
   }
-  return `${timeOnly.format(start)}–${timeOnly.format(end)}`;
+  return `${formatTime(start)}–${formatTime(end)}`;
 }
 
 /** Plain-text preview of a description that may carry HTML from the source. */
@@ -125,7 +119,10 @@ export function CalendarWideContent(props: { entity: CalendarEventEntity }) {
       </span>
       <span class="inline-flex min-w-0 flex-1 items-center gap-1.5 truncate font-medium text-ink/50">
         <Show when={props.entity.isRecurring}>
-          <RepeatIcon class="size-3 shrink-0" aria-label={t('auto.repeats')} />
+          <RepeatIcon
+            class="size-3 shrink-0"
+            aria-label={t('calendar.event.form.recurrence.label')}
+          />
         </Show>
         <Show when={time()}>
           <span class="shrink-0">{time()}</span>
@@ -176,15 +173,19 @@ export function CalendarEventWhen(props: { entity: CalendarEventEntity }) {
   const when = () => {
     const date = start();
     if (!date) return '';
-    const time = formatTimeOfDay(props.entity.time);
-    return time === 'All day'
-      ? `${formatStampDate(props.entity.time)} · All day`
-      : `${formatStampDate(props.entity.time)} · ${timeOnly.format(date)}`;
+    return props.entity.time?.kind === 'allDay'
+      ? t('calendar.event.schedule.allDaySingle', {
+          date: formatStampDate(props.entity.time),
+        })
+      : `${formatStampDate(props.entity.time)} · ${formatTime(date)}`;
   };
   return (
     <span class="inline-flex min-w-0 items-center gap-1 whitespace-nowrap text-xs text-ink-extra-muted font-normal">
       <Show when={props.entity.isRecurring}>
-        <RepeatIcon class="size-3 shrink-0" aria-label={t('auto.repeats')} />
+        <RepeatIcon
+          class="size-3 shrink-0"
+          aria-label={t('calendar.event.form.recurrence.label')}
+        />
       </Show>
       <span class="shrink-0">{when()}</span>
       <Show when={organizerName(props.entity)}>

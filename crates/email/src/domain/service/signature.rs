@@ -8,10 +8,19 @@ mod test;
 
 /// Marker class wrapping an injected signature.
 const SIGNATURE_CLASS: &str = "macro-email-signature";
+const QUOTE_SELECTOR: &str = ".macro_quote, .conation_quote";
+
+fn is_quote_class(class: &str) -> bool {
+    class
+        .split_whitespace()
+        .any(|class| matches!(class, "macro_quote" | "conation_quote"))
+}
 
 /// Whether the body already carries our signature in its own content (idempotency
 /// for re-sends / an old client that still bakes it in). A signature inside a
-/// quoted thread (`.conation_quote`) is the replied-to message's and is ignored.
+/// quoted thread is the replied-to message's and is ignored. `.macro_quote` is
+/// the stable editor wire marker; `.conation_quote` is accepted as a temporary
+/// compatibility alias for bodies produced during the rebrand migration.
 pub(crate) fn has_signature(body_html: &str) -> bool {
     let Ok(sig_sel) = Selector::parse(&format!(".{SIGNATURE_CLASS}")) else {
         return false;
@@ -21,7 +30,7 @@ pub(crate) fn has_signature(body_html: &str) -> bool {
             node.value()
                 .as_element()
                 .and_then(|e| e.attr("class"))
-                .is_some_and(|class| class.split_whitespace().any(|c| c == "conation_quote"))
+                .is_some_and(is_quote_class)
         })
     })
 }
@@ -29,9 +38,9 @@ pub(crate) fn has_signature(body_html: &str) -> bool {
 /// Injects the (already-sanitized) signature into the outgoing HTML body,
 /// wrapped in a `.macro-email-signature` marker div. Placed after the message
 /// but above any quoted/forwarded thread (Gmail's ordering): inserted before the
-/// first `.conation_quote` block if present, else appended to `<body>`. If neither
-/// matches (e.g. a bare fragment with no `<body>`), it is appended to the end so
-/// the signature is never silently dropped.
+/// first quote block if present, else appended to `<body>`. If neither matches
+/// (e.g. a bare fragment with no `<body>`), it is appended to the end so the
+/// signature is never silently dropped.
 pub(crate) fn inject_signature(body_html: &str, signature_html: &str) -> String {
     // The leading <div><br></div> is a blank line separating the signature from
     // the message body (the text/plain part gets "\n\n" for the same reason).
@@ -39,7 +48,7 @@ pub(crate) fn inject_signature(body_html: &str, signature_html: &str) -> String 
     let wrapped =
         format!(r#"<div class="{SIGNATURE_CLASS}"><div><br></div>{signature_html}</div>"#);
 
-    let has_quote = Selector::parse(".conation_quote")
+    let has_quote = Selector::parse(QUOTE_SELECTOR)
         .ok()
         .map(|sel| {
             Html::parse_fragment(body_html)
@@ -50,7 +59,7 @@ pub(crate) fn inject_signature(body_html: &str, signature_html: &str) -> String 
         .unwrap_or(false);
 
     let done = Cell::new(false);
-    let selector = if has_quote { ".conation_quote" } else { "body" };
+    let selector = if has_quote { QUOTE_SELECTOR } else { "body" };
     let mut output = Vec::new();
     let mut rewriter = HtmlRewriter::new(
         Settings {
@@ -80,7 +89,7 @@ pub(crate) fn inject_signature(body_html: &str, signature_html: &str) -> String 
         Ok(result) => result,
         Err(_) => return format!("{body_html}{wrapped}"),
     };
-    // Neither a `<body>` nor a `.conation_quote` matched (e.g. a bare fragment) —
+    // Neither a `<body>` nor a quote marker matched (e.g. a bare fragment) —
     // append rather than drop the signature.
     if !done.get() {
         result.push_str(&wrapped);

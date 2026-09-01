@@ -5,10 +5,10 @@ use ai_toolset::schema::generate_validated_input_schema;
 use chrono::Utc;
 use conation_user_id::email::EmailStr;
 
-fn make_link(conation_id: &'static str, email: &'static str, is_primary: bool) -> Link {
+fn make_link(macro_id: &'static str, email: &'static str, is_primary: bool) -> Link {
     Link {
         id: uuid::Uuid::new_v4(),
-        conation_id: MacroUserIdStr::parse_from_str(conation_id).unwrap(),
+        macro_id: MacroUserIdStr::parse_from_str(macro_id).unwrap(),
         fusionauth_user_id: "fa-user".to_string(),
         email_address: EmailStr::parse_from_str(email).unwrap(),
         provider: UserProvider::Gmail,

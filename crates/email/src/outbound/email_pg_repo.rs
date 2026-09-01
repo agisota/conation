@@ -60,9 +60,9 @@ impl EmailPgRepo {
 impl EmailUserRepo for EmailPgRepo {
     async fn user_accessible_inboxes(
         &self,
-        conation_id: MacroUserIdStr<'static>,
+        macro_id: MacroUserIdStr<'static>,
     ) -> Result<Vec<Link>, EmailErr> {
-        link::inboxes_for_conation_id(&self.pool, conation_id)
+        link::inboxes_for_macro_id(&self.pool, macro_id)
             .await
             .map_err(|error| EmailErr::RepoErr(error.into()))
     }
@@ -75,9 +75,9 @@ impl EmailUserRepo for EmailPgRepo {
 
     async fn user_inbox_details(
         &self,
-        conation_id: MacroUserIdStr<'static>,
+        macro_id: MacroUserIdStr<'static>,
     ) -> Result<Vec<EmailInboxDetails>, EmailErr> {
-        link::inbox_details_for_conation_id(&self.pool, &conation_id)
+        link::inbox_details_for_macro_id(&self.pool, &macro_id)
             .await
             .map_err(|error| EmailErr::RepoErr(error.into()))
     }
@@ -115,36 +115,36 @@ impl EmailRepo for EmailPgRepo {
         preview::labels_by_thread_ids(&self.pool, thread_ids).await
     }
 
-    async fn link_by_fusionauth_and_conation_id(
+    async fn link_by_fusionauth_and_macro_id(
         &self,
         fusionauth_user_id: &str,
-        conation_id: MacroUserIdStr<'_>,
+        macro_id: MacroUserIdStr<'_>,
         provider: UserProvider,
     ) -> Result<Option<Link>, Self::Err> {
-        link::link_by_fusionauth_and_conation_id(&self.pool, fusionauth_user_id, conation_id, provider)
+        link::link_by_fusionauth_and_macro_id(&self.pool, fusionauth_user_id, macro_id, provider)
             .await
     }
 
-    async fn link_by_conation_id(
+    async fn link_by_macro_id(
         &self,
-        conation_id: MacroUserIdStr<'_>,
+        macro_id: MacroUserIdStr<'_>,
     ) -> Result<Option<Link>, Self::Err> {
-        link::link_by_conation_id(&self.pool, conation_id).await
+        link::link_by_macro_id(&self.pool, macro_id).await
     }
 
     async fn owned_link_for_thread(
         &self,
         thread_id: Uuid,
-        conation_id: MacroUserIdStr<'_>,
+        macro_id: MacroUserIdStr<'_>,
     ) -> Result<Option<Link>, Self::Err> {
-        link::owned_link_for_thread(&self.pool, thread_id, conation_id).await
+        link::owned_link_for_thread(&self.pool, thread_id, macro_id).await
     }
 
-    async fn inboxes_for_conation_id(
+    async fn inboxes_for_macro_id(
         &self,
-        conation_id: MacroUserIdStr<'_>,
+        macro_id: MacroUserIdStr<'_>,
     ) -> Result<Vec<Link>, Self::Err> {
-        link::inboxes_for_conation_id(&self.pool, conation_id).await
+        link::inboxes_for_macro_id(&self.pool, macro_id).await
     }
 
     async fn thread_by_id(&self, thread_id: Uuid) -> Result<Option<ThreadRow>, Self::Err> {

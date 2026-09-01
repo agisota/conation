@@ -56,7 +56,7 @@ pub async fn incr_completed_threads(
     {
         cg_refresh_email(
             &ctx.connection_gateway_client,
-            link.conation_id.as_ref(),
+            link.macro_id.as_ref(),
             RefreshEmailEvent::BackfillProgress {
                 link_id: link.id,
                 status: BackfillStatus::Progress,
@@ -260,7 +260,7 @@ async fn finalize_claimed_backfill(
             .map_err(completion_effect_retry)?;
         cg_refresh_email(
             &ctx.connection_gateway_client,
-            link.conation_id.as_ref(),
+            link.macro_id.as_ref(),
             RefreshEmailEvent::BackfillProgress {
                 link_id: canonical_link_id,
                 status: BackfillStatus::Complete,
@@ -393,14 +393,14 @@ async fn handle_contacts_sync(ctx: &PubSubContext, link: &Link) -> Result<(), Pr
     tracing::info!(
         "Populating {} contacts for macro email {}",
         length,
-        link.conation_id
+        link.macro_id
     );
 
     let connections = email_addresses
         .iter()
         .map(|email| {
             MacroUserIdStr::try_from_email(email)
-                .map(|contact| ContactConnection::new(link.conation_id.clone(), contact))
+                .map(|contact| ContactConnection::new(link.macro_id.clone(), contact))
         })
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| {
@@ -426,7 +426,7 @@ async fn handle_contacts_sync(ctx: &PubSubContext, link: &Link) -> Result<(), Pr
     tracing::info!(
         "Successfully populated {} contacts for macro email {}",
         length,
-        link.conation_id
+        link.macro_id
     );
 
     Ok(())

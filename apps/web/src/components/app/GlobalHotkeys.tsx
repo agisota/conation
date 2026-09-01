@@ -4,7 +4,6 @@ import {
   CREATE_MENU_COMMAND_SCOPE,
 } from '@app/constants/hotkeys';
 import { type CategoryFilter, CommandState } from '@app/features/command';
-import { t } from '@app/lib/i18n';
 import {
   CREATABLE_BLOCKS,
   createMenuOpen,
@@ -13,6 +12,7 @@ import {
 import { openMacroMcpSetupModal } from '@app/features/integrations/mcp-setup/MacroMcpSetupModal';
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
+import { t } from '@app/lib/i18n';
 import { useSubscribeToKeypress } from '@app/signal/hotkeyRoot';
 import { globalSplitManager } from '@app/signal/splitLayout';
 import { useHandleFileUpload } from '@app/util/handleFileUpload';
@@ -424,7 +424,9 @@ export default function GlobalShortcuts() {
     },
     runWithInputFocused: true,
     displayComponent: () => (
-      <div class="flex items-center gap-2">{t('auto.system_preference')}<Show when={systemResolvedTheme()}>
+      <div class="flex items-center gap-2">
+        {t('shell.theme.systemPreference')}
+        <Show when={systemResolvedTheme()}>
           {(theme) => <ThemeChips theme={theme()} size="sm" />}
         </Show>
       </div>
@@ -574,7 +576,9 @@ export default function GlobalShortcuts() {
     keyDownHandler: (e) => {
       if (!undoCtx.canUndo()) return false;
       e?.preventDefault();
-      undoCtx.undo({ onError: () => toast.failure('Failed to undo') });
+      undoCtx.undo({
+        onError: () => toast.failure(t('shell.actions.undoFailed')),
+      });
       return true;
     },
     condition: () => undoCtx.canUndo(),
@@ -588,7 +592,9 @@ export default function GlobalShortcuts() {
     keyDownHandler: (e) => {
       if (!undoCtx.canRedo()) return false;
       e?.preventDefault();
-      undoCtx.redo({ onError: () => toast.failure('Failed to redo') });
+      undoCtx.redo({
+        onError: () => toast.failure(t('shell.actions.redoFailed')),
+      });
       return true;
     },
     condition: () => undoCtx.canRedo(),

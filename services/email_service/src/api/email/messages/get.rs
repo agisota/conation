@@ -15,9 +15,9 @@ use thiserror::Error;
 
 /// The set of link ids the caller can read — own plus delegated/shared inboxes;
 /// every message read unions across these.
-async fn owned_link_ids(ctx: &ApiContext, conation_id: &str) -> anyhow::Result<HashSet<Uuid>> {
+async fn owned_link_ids(ctx: &ApiContext, macro_id: &str) -> anyhow::Result<HashSet<Uuid>> {
     Ok(
-        email_db_client::links::get::fetch_inboxes_for_conation_id(&ctx.db, conation_id)
+        email_db_client::links::get::fetch_inboxes_for_macro_id(&ctx.db, macro_id)
             .await?
             .into_iter()
             .map(|link| link.id)

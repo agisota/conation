@@ -1,5 +1,5 @@
-import { EntityIcon } from '@core/component/EntityIcon';
 import { t } from '@app/lib/i18n';
+import { EntityIcon } from '@core/component/EntityIcon';
 import { InlineTitleEditor } from '@core/component/InlineTitleEditor';
 import type { CrmCompanyEntity } from '@entity';
 import { useSetCompanyNameMutation } from '@queries/crm/companies';
@@ -35,7 +35,9 @@ function Description(props: { text: string }) {
           onClick={() => setExpanded(!expanded())}
           class="text-xs text-ink-muted underline hover:text-ink"
         >
-          {expanded() ? 'Show less' : 'Show more'}
+          {expanded()
+            ? t('companies.description.showLess')
+            : t('companies.description.showMore')}
         </button>
       </Show>
     </div>
@@ -49,8 +51,8 @@ function TitleEditor(props: { company: CrmCompanyEntity }) {
   return (
     <InlineTitleEditor
       value={props.company.name}
-      placeholder={t('auto.company')}
-      ariaLabel="Company name"
+      placeholder={t('companies.fields.company')}
+      ariaLabel={t('companies.fields.companyName')}
       onRename={(name) =>
         renameMutation.mutate({ companyId: props.company.id, name })
       }
@@ -66,7 +68,7 @@ export function CompanyHeader(props: { company?: CrmCompanyEntity }) {
       </div>
       <div class="flex min-w-0 flex-col gap-1">
         <h1 class="min-w-0 text-xl font-semibold">
-          <Show when={props.company} fallback={'Loading company…'}>
+          <Show when={props.company} fallback={t('companies.header.loading')}>
             {(company) => <TitleEditor company={company()} />}
           </Show>
         </h1>

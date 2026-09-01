@@ -1,5 +1,5 @@
-import Plus from '@phosphor/plus.svg';
 import { t } from '@app/lib/i18n';
+import Plus from '@phosphor/plus.svg';
 import XIcon from '@phosphor/x.svg';
 import { Button, cn, Dropdown, Layer } from '@ui';
 import { createSignal, For, Show } from 'solid-js';
@@ -23,7 +23,7 @@ const AddFilterButton = () => (
   <Dropdown.Trigger
     variant="ghost"
     size="icon-sm"
-    tooltip="Add filters"
+    tooltip={t('soup.filters.add')}
     class="p-1 rounded-full"
   >
     <Plus class="size-3" />
@@ -56,10 +56,12 @@ export function SoupActiveFiltersBar(props: SoupActiveFiltersBarProps) {
                 variant="outline"
                 size="sm"
                 class="h-7 rounded-md"
-                tooltip="Clear active filters"
+                tooltip={t('soup.filters.clearActive')}
               >
                 <XIcon />
-                <span class="hidden @min-[300px]/split:inline">{t('auto.clear_all')}</span>
+                <span class="hidden @min-[300px]/split:inline">
+                  {t('soup.filters.clearAll')}
+                </span>
               </Button>
             </div>
           </div>

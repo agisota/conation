@@ -18,7 +18,7 @@ use model::response::EmptyResponse;
                 ),
         ),
         tags(
-            (name = "search processing service", description = "Macro Search Processing Service")
+            (name = "search processing service", description = "Conation Search Processing Service")
         )
     )]
 pub struct ApiDoc;

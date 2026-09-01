@@ -2,6 +2,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::Context;
 
+#[cfg(test)]
+mod test;
+
 /// The expected JWT access token that is provided back from FusionAuth
 #[derive(serde::Serialize, serde::Deserialize, Eq, PartialEq, Debug, Clone)]
 pub struct MacroApiToken {
@@ -11,19 +14,21 @@ pub struct MacroApiToken {
     /// This is the fuisionauth domain
     pub iss: String,
     /// The root fusionauth id of the user. This is provided from the macro-access-token
-    /// root_conation_id which is put into the UserContext
+    /// root_macro_id which is put into the UserContext
     pub fusion_user_id: String,
     /// The macro user id of the user
-    pub conation_user_id: String,
+    #[serde(alias = "conation_user_id")]
+    pub macro_user_id: String,
     /// The organization id for the user if they belong to one
-    pub conation_organization_id: Option<i32>,
+    #[serde(alias = "conation_organization_id")]
+    pub macro_organization_id: Option<i32>,
 }
 
 pub struct EncodeMacroApiTokenArgs {
     /// The fusionauth id
     pub fusionauth_id: String,
     /// The macro user id
-    pub conation_user_id: String,
+    pub macro_user_id: String,
     /// The organization id
     pub organization_id: Option<i32>,
     /// The issuer of the token
@@ -45,8 +50,8 @@ pub fn encode_conation_api_token(args: EncodeMacroApiTokenArgs) -> anyhow::Resul
         exp: now + args.expiry_seconds,
         iss: args.issuer.clone(),
         fusion_user_id: args.fusionauth_id.clone(),
-        conation_user_id: args.conation_user_id.clone(),
-        conation_organization_id: args.organization_id,
+        macro_user_id: args.macro_user_id.clone(),
+        macro_organization_id: args.organization_id,
     };
 
     let mut header = jsonwebtoken::Header::new(jsonwebtoken::Algorithm::RS256);

@@ -173,9 +173,9 @@ pub fn build(
             "url": format!("/api/email/template/{template_id}"),
             "body": { "emailTemplate": {
                 "name": "Passwordless Login (local)",
-                "defaultSubject": "Your Macro login code",
-                "defaultHtmlTemplate": "<p>Your Macro login code:</p><h1>${code}</h1>",
-                "defaultTextTemplate": "Your Macro login code: ${code}",
+                "defaultSubject": "Your Conation login code",
+                "defaultHtmlTemplate": "<p>Your Conation login code:</p><h1>${code}</h1>",
+                "defaultTextTemplate": "Your Conation login code: ${code}",
                 "fromEmail": identity::MAIL_FROM,
             }}
         }),
@@ -191,7 +191,7 @@ pub fn build(
             "method": "PATCH",
             "url": format!("/api/tenant/{tenant_id}"),
             "body": { "tenant": {
-                "name": "Macro Local",
+                "name": "Conation Local",
                 "issuer": identity::ISSUER,
                 // Enable the events the create/delete user webhooks consume, so
                 // FusionAuth notifies auth-service to register new users for the
@@ -214,7 +214,7 @@ pub fn build(
                     "port": 1025,
                     "security": "NONE",
                     "defaultFromEmail": identity::MAIL_FROM,
-                    "defaultFromName": "Macro Local",
+                    "defaultFromName": "Conation Local",
                     "passwordlessEmailTemplateId": template_id,
                 },
                 // Make the passwordless code a 6-digit number (matches the dev
@@ -227,14 +227,14 @@ pub fn build(
                 },
             }}
         }),
-        // 5. Macro application. `tenantId` sets the X-FusionAuth-TenantId header
+        // 5. Conation application. `tenantId` sets the X-FusionAuth-TenantId header
         // (required for tenant-scoped ops once a second tenant exists).
         json!({
             "method": "POST",
             "url": format!("/api/application/{app_id}"),
             "tenantId": tenant_id,
             "body": { "application": {
-                "name": "Macro",
+                "name": "Conation",
                 "tenantId": tenant_id,
                 // The passwordless /login endpoint issues a refresh token based
                 // on loginConfiguration.generateRefreshTokens; without it FA omits

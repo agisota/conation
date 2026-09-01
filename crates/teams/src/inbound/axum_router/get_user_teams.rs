@@ -29,7 +29,7 @@ pub async fn handler<T: TeamService, Eas: EntityAccessService, Auth: MacroAuthor
 ) -> Result<Json<Vec<Team>>, TeamError> {
     let teams = state
         .service
-        .get_user_teams(&authorization.authorization.user.conation_user_id)
+        .get_user_teams(&authorization.authorization.user.macro_user_id)
         .await?;
     Ok(Json(teams))
 }

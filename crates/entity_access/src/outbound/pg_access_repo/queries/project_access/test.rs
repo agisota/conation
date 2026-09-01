@@ -7,15 +7,15 @@ const OWNER: &str = "macro|owner@corp.test";
 const REQUESTER: &str = "macro|requester@corp.test";
 
 async fn insert_user(pool: &PgPool, user_id: &str) -> anyhow::Result<()> {
-    let conation_user_id = Uuid::new_v4();
+    let macro_user_id = Uuid::new_v4();
     let email = user_id.trim_start_matches("macro|");
 
     sqlx::query!(
         r#"
-        INSERT INTO conation_user (id, username, email, stripe_customer_id)
+        INSERT INTO macro_user (id, username, email, stripe_customer_id)
         VALUES ($1, $2, $3, $2)
         "#,
-        conation_user_id,
+        macro_user_id,
         user_id,
         email,
     )
@@ -23,10 +23,10 @@ async fn insert_user(pool: &PgPool, user_id: &str) -> anyhow::Result<()> {
     .await?;
 
     sqlx::query!(
-        r#"INSERT INTO "User" (id, email, conation_user_id) VALUES ($1, $2, $3)"#,
+        r#"INSERT INTO "User" (id, email, macro_user_id) VALUES ($1, $2, $3)"#,
         user_id,
         email,
-        conation_user_id,
+        macro_user_id,
     )
     .execute(pool)
     .await?;

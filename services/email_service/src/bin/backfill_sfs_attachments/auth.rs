@@ -5,14 +5,14 @@ use anyhow::Context;
 /// 1. Looking up the user in FusionAuth
 /// 2. Getting their identity provider link with refresh token
 /// 3. Using that refresh token to get a new Gmail access token
-pub async fn get_gmail_access_token(config: &Config, conation_id: &str) -> anyhow::Result<String> {
+pub async fn get_gmail_access_token(config: &Config, macro_id: &str) -> anyhow::Result<String> {
     let client = reqwest::Client::builder().build()?;
 
     // First request: Get user by email
     let mut headers = reqwest::header::HeaderMap::new();
     headers.insert("Authorization", config.fusionauth_api_key.parse()?);
 
-    let user_email = conation_id.strip_prefix("macro|").unwrap();
+    let user_email = macro_id.strip_prefix("macro|").unwrap();
 
     let url = format!(
         "{}/api/user?email={}",

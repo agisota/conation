@@ -1,5 +1,5 @@
-import { channelWebhookUrl } from '@channel/Bots/webhook';
 import { t } from '@app/lib/i18n';
+import { channelWebhookUrl } from '@channel/Bots/webhook';
 import { LoadingSpinner } from '@core/component/LoadingSpinner';
 import { toast } from '@core/component/Toast/Toast';
 import PlusIcon from '@phosphor/plus.svg';
@@ -27,9 +27,9 @@ export function ChannelBotsPanel(props: {
   const copyWebhook = async () => {
     try {
       await navigator.clipboard.writeText(channelWebhookUrl(props.channelId));
-      toast.success('Webhook URL copied');
+      toast.success(t('channel.bots.feedback.webhookCopied'));
     } catch {
-      toast.failure('Failed to copy webhook URL');
+      toast.failure(t('channel.bots.feedback.webhookCopyFailed'));
     }
   };
 
@@ -37,8 +37,10 @@ export function ChannelBotsPanel(props: {
     removeBotMutation.mutate(
       { channelId: props.channelId, botId },
       {
-        onSuccess: () => toast.success(`${name} removed from channel`),
-        onError: () => toast.failure('Failed to remove bot'),
+        onSuccess: () =>
+          toast.success(t('channel.bots.feedback.removed', { name })),
+        onError: () =>
+          toast.failure(t('channel.bots.feedback.removeFailed')),
       }
     );
   };
@@ -50,12 +52,16 @@ export function ChannelBotsPanel(props: {
     >
       <Panel.Header class="h-auto min-h-10 justify-between gap-3 px-6 py-2">
         <div>
-          <div class="text-sm font-semibold">{t('auto.bots')}</div>
-          <div class="text-xs font-normal text-ink-muted">{t('auto.webhook_powered_channel_partic')}</div>
+          <div class="text-sm font-semibold">{t('channel.bots.title')}</div>
+          <div class="text-xs font-normal text-ink-muted">
+            {t('channel.bots.subtitle')}
+          </div>
         </div>
         <Show when={props.editable}>
           <Button variant="cta" size="sm" onClick={props.onCreateBot}>
-            <PlusIcon />{t('auto.new_bot')}</Button>
+            <PlusIcon />
+            {t('channel.bots.new')}
+          </Button>
         </Show>
       </Panel.Header>
       <Panel.Body>
@@ -84,8 +90,12 @@ export function ChannelBotsPanel(props: {
                   <div class="flex size-9 items-center justify-center rounded-lg bg-accent-bg text-accent">
                     <RobotIcon class="size-5" />
                   </div>
-                  <div class="mt-2 text-sm font-medium">{t('auto.no_bots_in_this_channel')}</div>
-                  <div class="mt-0.5 text-xs text-ink-muted">{t('auto.select_an_existing_bot_above_o')}</div>
+                  <div class="mt-2 text-sm font-medium">
+                    {t('channel.bots.empty.title')}
+                  </div>
+                  <div class="mt-0.5 text-xs text-ink-muted">
+                    {t('channel.bots.empty.description')}
+                  </div>
                 </div>
               }
             >

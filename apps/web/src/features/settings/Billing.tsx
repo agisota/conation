@@ -1,10 +1,9 @@
 import type { PlanTier } from '@app/features/paywall/plans';
-import { t } from '@app/lib/i18n';
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import { useHasPaidAccess } from '@core/auth';
 import { PERMISSION_IDS } from '@core/constant/permissions';
 import { usePermissions, useUserId } from '@core/context/user';
-import { plural } from '@core/util/string';
 import CheckIcon from '@phosphor/check.svg';
 import EnvelopeIcon from '@phosphor/envelope.svg';
 import { useCurrentTeamQuery } from '@queries/team/teams';
@@ -14,16 +13,20 @@ import { createMemo, For, Match, Show, Switch } from 'solid-js';
 import { SettingsCard, SettingsPage, SettingsSection } from './primitives';
 
 const BILLING_PLAN_FEATURES: Record<PlanTier, string[]> = {
-  free: ['Access to Haiku', 'MCP access', '5 GB storage'],
+  free: [
+    'settings.billing.features.haiku',
+    'settings.billing.features.mcp',
+    'settings.billing.features.storage5Gb',
+  ],
   premium: [
-    'All agents',
-    'All models',
-    'No watermark',
-    'AI projections',
-    'Multiple email inboxes',
-    'Calls',
-    'Teams',
-    '1 TB storage',
+    'settings.billing.features.allAgents',
+    'settings.billing.features.allModels',
+    'settings.billing.features.noWatermark',
+    'settings.billing.features.aiProjections',
+    'settings.billing.features.multipleInboxes',
+    'settings.billing.features.calls',
+    'settings.billing.features.teams',
+    'settings.billing.features.storage1Tb',
   ],
 };
 
@@ -32,7 +35,7 @@ const PlanFeatures = (props: { tier: PlanTier }) => (
     {(label) => (
       <li class="flex items-center gap-2">
         <CheckIcon class="size-3 text-success" />
-        <span class="text-ink-muted text-xs">{label}</span>
+        <span class="text-ink-muted text-xs">{t(label)}</span>
       </li>
     )}
   </For>
@@ -91,15 +94,15 @@ export const Billing = () => {
 
   return (
     <SettingsPage
-      title={t('auto.billing')}
+      title={t('settings.billing.title')}
       description={
         <>
-          For questions about billing,{' '}
+          {t('settings.billing.support.prefix')}{' '}
           <a
             class="text-link hover:text-link-hover visited:text-link-visited inline-flex items-center"
             href="mailto:support@macro.com"
           >
-            contact us
+            {t('settings.billing.support.action')}
             <EnvelopeIcon class="size-4 inline mx-1" />
           </a>
         </>
@@ -112,18 +115,24 @@ export const Billing = () => {
               <div class="flex flex-col gap-1">
                 <div class="flex items-center gap-2">
                   <h2 class="text-lg font-medium text-ink">
-                    <Show when={!hasPaid()} fallback={'Premium plan'}>{t('auto.free_plan')}</Show>
+                    <Show
+                      when={!hasPaid()}
+                      fallback={t('settings.billing.plan.premium')}
+                    >
+                      {t('settings.billing.plan.free')}
+                    </Show>
                   </h2>
 
                   <Layer depth={3}>
-                    <span class="text-xs text-ink-muted px-1.5 py-0.25 border border-edge-muted rounded-md bg-active">{t('auto.current')}</span>
+                    <span class="text-xs text-ink-muted px-1.5 py-0.25 border border-edge-muted rounded-md bg-active">
+                      {t('settings.billing.current')}
+                    </span>
                   </Layer>
                 </div>
                 <Switch>
                   <Match when={teamRole() === 'member'}>
                     <p class="text-ink-extra-muted text-xs">
-                      Your subscription is managed by your team owner. Contact
-                      them to make changes.
+                      {t('settings.billing.managedByOwner')}
                     </p>
                   </Match>
                   <Match
@@ -131,9 +140,9 @@ export const Billing = () => {
                   >
                     {(team) => (
                       <p class="text-ink-extra-muted text-xs">
-                        {team().members.length}{' '}
-                        {plural('user', team().members.length)} • $40 per
-                        seat/per month
+                        {t('settings.billing.teamPrice', {
+                          count: team().members.length,
+                        })}
                       </p>
                     )}
                   </Match>
@@ -153,7 +162,9 @@ export const Billing = () => {
                   depth={2}
                   variant="outline"
                   onClick={handleManage}
-                >{t('auto.manage')}</Button>
+                >
+                  {t('settings.billing.actions.manage')}
+                </Button>
               </Show>
             </header>
             <ul class="border-t border-t-edge-muted pt-4 flex flex-wrap gap-4 text-sm text-ink-muted">
@@ -175,9 +186,11 @@ export const Billing = () => {
             <section class="flex flex-col gap-4 p-4">
               <header class="flex items-center gap-2">
                 <div class="flex flex-col">
-                  <h2 class="text-lg font-medium text-ink">{t('auto.premium')}</h2>
+                  <h2 class="text-lg font-medium text-ink">
+                    {t('settings.billing.plan.premium')}
+                  </h2>
                   <p class="text-ink-extra-muted text-xs">
-                    $40 per seat / month
+                    {t('settings.billing.pricePerSeat')}
                   </p>
                 </div>
 
@@ -186,7 +199,9 @@ export const Billing = () => {
                   depth={2}
                   variant="cta"
                   onClick={handleCheckout}
-                >{t('auto.upgrade_now')}</Button>
+                >
+                  {t('settings.billing.actions.upgrade')}
+                </Button>
               </header>
               <ul class="border-t border-t-edge-muted pt-4 flex flex-wrap gap-4 text-sm text-ink-muted">
                 <PlanFeatures tier="premium" />

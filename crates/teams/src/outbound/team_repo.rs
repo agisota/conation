@@ -258,7 +258,7 @@ impl TeamRepository for TeamRepositoryImpl {
             r#"
             SELECT mu.has_trialed
             FROM "User" u
-            INNER JOIN conation_user mu ON mu.id = u.conation_user_id
+            INNER JOIN macro_user mu ON mu.id = u.macro_user_id
             WHERE u.id = $1
             "#,
         )
@@ -382,7 +382,7 @@ impl TeamRepository for TeamRepositoryImpl {
             .map(|email| email.as_ref().to_string())
             .collect();
 
-        let conation_user_ids: Vec<String> = invites
+        let macro_user_ids: Vec<String> = invites
             .iter()
             .map(|email| format!("macro|{}", email.as_ref()))
             .collect();
@@ -422,7 +422,7 @@ impl TeamRepository for TeamRepositoryImpl {
         invited_by.as_ref(),
         &team_invite_ids[..],
         &email_strings[..],
-        &conation_user_ids[..],
+        &macro_user_ids[..],
     )
     .map(|r| (r.id, r.team_id, r.email))
     .fetch_all(&mut *transaction)
@@ -478,7 +478,7 @@ impl TeamRepository for TeamRepositoryImpl {
             .map(|email| email.as_ref().to_string())
             .collect();
 
-        let conation_user_ids: Vec<String> = invites
+        let macro_user_ids: Vec<String> = invites
             .iter()
             .map(|email| format!("macro|{}", email.as_ref()))
             .collect();
@@ -500,7 +500,7 @@ impl TeamRepository for TeamRepositoryImpl {
             "#,
             team_id,
             &email_strings[..],
-            &conation_user_ids[..],
+            &macro_user_ids[..],
         )
         .fetch_all(&self.pool)
         .await?;

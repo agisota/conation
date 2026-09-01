@@ -79,8 +79,8 @@ export function extractSearchSnippet(highlightedContent: string): string {
  * // Returns: "The <macro_em>quick brown</macro_em> fox"
  *
  * @example
- * mergeAdjacentMacroEmTags("<macro_em>{t('auto.hello')}</macro_em> <macro_em>world</macro_em>, <macro_em>goodbye</macro_em>")
- * // Returns: "<macro_em>{t('auto.hello_world')}</macro_em>, <macro_em>goodbye</macro_em>"
+ * mergeAdjacentMacroEmTags("<macro_em>Hello</macro_em> <macro_em>world</macro_em>, <macro_em>goodbye</macro_em>")
+ * // Returns: "<macro_em>Hello world</macro_em>, <macro_em>goodbye</macro_em>"
  */
 export function mergeAdjacentMacroEmTags(highlightedContent: string): string {
   return highlightedContent.replace(/<\/macro_em>(\s+)<macro_em>/g, '$1');

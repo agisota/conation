@@ -31,7 +31,7 @@ use std::collections::HashSet;
 use std::sync::Arc;
 use uuid::Uuid;
 
-conation_rules! unwrap_enum {
+macro_rules! unwrap_enum {
     // Base case: single variant
     ($value:expr, $variant:path) => {
         match $value {

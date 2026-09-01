@@ -149,33 +149,33 @@ async fn insert_voice(pool: &Pool<Postgres>, voice_id: Uuid, axis: usize) -> any
 async fn insert_user_mapping(
     pool: &Pool<Postgres>,
     user_id: &MacroUserIdStr<'_>,
-    conation_user_id: Uuid,
+    macro_user_id: Uuid,
 ) -> anyhow::Result<()> {
     sqlx::query(
         r#"
-        INSERT INTO conation_user (id, username, email, stripe_customer_id)
+        INSERT INTO macro_user (id, username, email, stripe_customer_id)
         VALUES ($1, $2, $3, $4)
         ON CONFLICT (id) DO NOTHING
         "#,
     )
-    .bind(conation_user_id)
+    .bind(macro_user_id)
     .bind(user_id.as_ref())
     .bind(user_id.email_str())
-    .bind(format!("cus_{conation_user_id}"))
+    .bind(format!("cus_{macro_user_id}"))
     .execute(pool)
     .await?;
 
     sqlx::query(
         r#"
-        INSERT INTO "User" (id, email, "stripeCustomerId", conation_user_id)
+        INSERT INTO "User" (id, email, "stripeCustomerId", macro_user_id)
         VALUES ($1, $2, $3, $4)
-        ON CONFLICT (id) DO UPDATE SET conation_user_id = EXCLUDED.conation_user_id
+        ON CONFLICT (id) DO UPDATE SET macro_user_id = EXCLUDED.macro_user_id
         "#,
     )
     .bind(user_id.as_ref())
     .bind(user_id.email_str())
-    .bind(format!("cus_{conation_user_id}"))
-    .bind(conation_user_id)
+    .bind(format!("cus_{macro_user_id}"))
+    .bind(macro_user_id)
     .execute(pool)
     .await?;
 
@@ -742,27 +742,27 @@ async fn archive_call_returns_no_result_when_call_is_missing(
 }
 
 /// Test helper: give `user_id` a brand new team owned by that user. Inserts
-/// the parent `conation_user` and `User` rows that the `team_user` FK requires.
+/// the parent `macro_user` and `User` rows that the `team_user` FK requires.
 async fn give_user_a_team(
     pool: &Pool<Postgres>,
     user_id: &str,
     team_id: &Uuid,
 ) -> anyhow::Result<()> {
-    let conation_user_id = Uuid::now_v7();
+    let macro_user_id = Uuid::now_v7();
 
     sqlx::query(
-        r#"INSERT INTO conation_user (id, username, email, stripe_customer_id) VALUES ($1, $2, $3, '')"#,
+        r#"INSERT INTO macro_user (id, username, email, stripe_customer_id) VALUES ($1, $2, $3, '')"#,
     )
-    .bind(conation_user_id)
+    .bind(macro_user_id)
     .bind(user_id)
     .bind(format!("{user_id}@test.com"))
     .execute(pool)
     .await?;
 
-    sqlx::query(r#"INSERT INTO "User" (id, email, conation_user_id) VALUES ($1, $2, $3)"#)
+    sqlx::query(r#"INSERT INTO "User" (id, email, macro_user_id) VALUES ($1, $2, $3)"#)
         .bind(user_id)
         .bind(format!("{user_id}@test.com"))
-        .bind(conation_user_id)
+        .bind(macro_user_id)
         .execute(pool)
         .await?;
 
@@ -2816,7 +2816,7 @@ async fn patch_call_record_share_with_team_ignores_non_creator_teams(
     let repo = repo(pool.clone());
     let creator_team: Uuid = Uuid::from_u128(0xaaaaaaaa_aaaa_aaaa_aaaa_aaaaaaaaa004);
     let other_team: Uuid = Uuid::from_u128(0xbbbbbbbb_bbbb_bbbb_bbbb_bbbbbbbbb004);
-    let other_conation_user_id = Uuid::now_v7();
+    let other_macro_user_id = Uuid::now_v7();
 
     // USER_A (the call creator) is on `creator_team`.
     give_user_a_team(&pool, USER_A.as_ref(), &creator_team).await?;
@@ -2825,18 +2825,18 @@ async fn patch_call_record_share_with_team_ignores_non_creator_teams(
     // must not grant access to this team — the lookup keys off the call's
     // created_by (USER_A), not off any other user's team membership.
     sqlx::query(
-        r#"INSERT INTO conation_user (id, username, email, stripe_customer_id) VALUES ($1, $2, $3, $4)"#,
+        r#"INSERT INTO macro_user (id, username, email, stripe_customer_id) VALUES ($1, $2, $3, $4)"#,
     )
-    .bind(other_conation_user_id)
+    .bind(other_macro_user_id)
     .bind(USER_B.as_ref())
     .bind("user-b@test.com")
     .bind("cus_other")
     .execute(&pool)
     .await?;
-    sqlx::query(r#"INSERT INTO "User" (id, email, conation_user_id) VALUES ($1, $2, $3)"#)
+    sqlx::query(r#"INSERT INTO "User" (id, email, macro_user_id) VALUES ($1, $2, $3)"#)
         .bind(USER_B.as_ref())
         .bind("user-b@test.com")
-        .bind(other_conation_user_id)
+        .bind(other_macro_user_id)
         .execute(&pool)
         .await?;
     sqlx::query(r#"INSERT INTO team (id, name, owner_id) VALUES ($1, $2, $3)"#)

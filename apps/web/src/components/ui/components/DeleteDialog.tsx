@@ -1,5 +1,5 @@
-import SpinnerIcon from '@phosphor/spinner.svg';
 import { t } from '@app/lib/i18n';
+import SpinnerIcon from '@phosphor/spinner.svg';
 import type { JSX } from 'solid-js';
 import { createSignal, createUniqueId, Show } from 'solid-js';
 import { cn } from '../utils/classname';
@@ -73,8 +73,8 @@ export function DeleteDialog(props: DeleteDialogProps) {
                 <label
                   for={confirmationInputId}
                   class="text-sm leading-5 text-ink-muted"
-                >{t('auto.type')}<span class="font-medium text-ink">{phrase()}</span> to
-                  confirm.
+                >
+                  {t('shell.dialog.typeToConfirm', { phrase: phrase() })}
                 </label>
                 <input
                   id={confirmationInputId}
@@ -112,9 +112,14 @@ export function DeleteDialog(props: DeleteDialogProps) {
             disabled={!canDelete()}
             onClick={deleteItem}
           >
-            <Show when={props.pending} fallback={props.deleteLabel ?? t('common.delete')}>
+            <Show
+              when={props.pending}
+              fallback={props.deleteLabel ?? t('common.delete')}
+            >
               <SpinnerIcon class="size-4 animate-spin" />
-              <span class="sr-only">{props.deleteLabel ?? t('common.delete')}</span>
+              <span class="sr-only">
+                {props.deleteLabel ?? t('common.delete')}
+              </span>
             </Show>
           </Button>
         </div>

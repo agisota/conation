@@ -14,7 +14,7 @@ mod tests;
 
 const MACRO_PREFIX: &str = "macro";
 
-fn conation_user_id(input: &str) -> IResult<&str, MacroUserId<ArcCowStr<'_>>> {
+fn macro_user_id(input: &str) -> IResult<&str, MacroUserId<ArcCowStr<'_>>> {
     let (rest, ((prefix, pipe), email)) =
         tag(MACRO_PREFIX).and(char('|')).and(email).parse(input)?;
     let email_part = email.map(|_| ());
@@ -272,10 +272,16 @@ where
     /// True when this user belongs to the `macro.com` staff domain.
     ///
     /// Plus-aliases such as `name+tag@macro.com` still match.
-    pub fn is_conation_staff(&self) -> bool {
+    pub fn is_macro_staff(&self) -> bool {
         self.email_part()
             .domain_part()
             .eq_ignore_ascii_case("macro.com")
+    }
+
+    /// Transitional alias for the accidental product-branding rename.
+    #[deprecated(note = "use is_macro_staff; the authorization policy is the macro.com domain")]
+    pub fn is_conation_staff(&self) -> bool {
+        self.is_macro_staff()
     }
 }
 
@@ -301,7 +307,7 @@ where
 impl<'a> MacroUserId<ArcCowStr<'a>> {
     /// attempt to create a borrowed version of self from an input string
     pub fn parse_from_str(input: &'a str) -> Result<Self, ParseErr> {
-        let (_, out) = conation_user_id(input).finish().map_err(|e| e.cloned())?;
+        let (_, out) = macro_user_id(input).finish().map_err(|e| e.cloned())?;
         Ok(out)
     }
 

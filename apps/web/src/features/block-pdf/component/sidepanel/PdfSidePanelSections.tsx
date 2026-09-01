@@ -12,7 +12,12 @@ import { useBlockDocumentName } from '@core/util/currentBlockDocumentName';
 export function PdfSidePanelSections() {
   return (
     <>
-      <SidePanel.Section id="actions" title={t('auto.actions')} defaultOpen order={10}>
+      <SidePanel.Section
+        id="actions"
+        title={t('pdf.sidePanel.actions')}
+        defaultOpen
+        order={10}
+      >
         <ActionsSectionContent />
       </SidePanel.Section>
       <FileDetailsSection order={20} />
@@ -23,7 +28,7 @@ export function PdfSidePanelSections() {
 
 function ActionsSectionContent() {
   const documentId = useBlockId();
-  const name = useBlockDocumentName('Unknown Filename');
+  const name = useBlockDocumentName(t('pdf.file.unknownName'));
   const fileType = () => blockMetadataSignal()?.fileType;
 
   return (

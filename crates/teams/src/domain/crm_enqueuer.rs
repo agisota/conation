@@ -23,18 +23,18 @@ pub trait CrmEnqueuer: Clone + Send + Sync + 'static {
     /// Error type for enqueue operations.
     type Err: std::fmt::Display + std::fmt::Debug + Send;
 
-    /// Enqueue a request to populate the CRM tables for `conation_id`. The
+    /// Enqueue a request to populate the CRM tables for `macro_id`. The
     /// user is expected to already be a member of a team at the time this
     /// fires — the email-service consumer re-checks team membership and
     /// per-domain killswitches, so a race with `remove_user_from_team` is
     /// safe.
     fn enqueue_populate_crm_for_user(
         &self,
-        conation_id: &MacroUserIdStr<'_>,
+        macro_id: &MacroUserIdStr<'_>,
     ) -> impl Future<Output = Result<(), Self::Err>> + Send;
 
     /// Enqueue a request to tear down `team_id`'s CRM rows sourced from
-    /// `conation_id`'s email link. Counterpart to
+    /// `macro_id`'s email link. Counterpart to
     /// [`Self::enqueue_populate_crm_for_user`]; called from
     /// `remove_user_from_team`. The user is expected to no longer be a
     /// member of `team_id` at the time the consumer runs — `team_id` is
@@ -45,7 +45,7 @@ pub trait CrmEnqueuer: Clone + Send + Sync + 'static {
     fn enqueue_depopulate_crm_for_user(
         &self,
         team_id: &uuid::Uuid,
-        conation_id: &MacroUserIdStr<'_>,
+        macro_id: &MacroUserIdStr<'_>,
     ) -> impl Future<Output = Result<(), Self::Err>> + Send;
 }
 
@@ -59,7 +59,7 @@ impl CrmEnqueuer for NoOpCrmEnqueuer {
 
     async fn enqueue_populate_crm_for_user(
         &self,
-        _conation_id: &MacroUserIdStr<'_>,
+        _macro_id: &MacroUserIdStr<'_>,
     ) -> Result<(), Self::Err> {
         Ok(())
     }
@@ -67,7 +67,7 @@ impl CrmEnqueuer for NoOpCrmEnqueuer {
     async fn enqueue_depopulate_crm_for_user(
         &self,
         _team_id: &uuid::Uuid,
-        _conation_id: &MacroUserIdStr<'_>,
+        _macro_id: &MacroUserIdStr<'_>,
     ) -> Result<(), Self::Err> {
         Ok(())
     }

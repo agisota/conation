@@ -16,9 +16,9 @@ mod trigger;
 use std::{future::Future, pin::Pin, sync::Arc};
 
 use agent_egress::domain::service::EgressServiceImpl;
+use agent_egress::outbound::conation_mcp::{MacroApiTokenSigner, WithMacroMcp};
 use agent_egress::outbound::forwarder::ReqwestForwarder;
 use agent_egress::outbound::github_tokens::GithubAppTokens;
-use agent_egress::outbound::conation_mcp::{MacroApiTokenSigner, WithMacroMcp};
 use agent_egress::outbound::mcp_credentials::PipedreamMcpCredentials;
 use agent_egress::outbound::session_authority::StoredTokenSessionAuthority;
 use agent_fold::domain::service::FoldedMessageService;
@@ -62,17 +62,6 @@ use channels::outbound::contacts_dispatcher::ContactsChannelDispatcher;
 use channels::outbound::notification_sender::NotificationChannelSender;
 use channels::outbound::pg_channels_repo::PgChannelsRepo;
 use channels::outbound::pg_side_effect_context::PgChannelSideEffectContext;
-use config::{Config, Environment};
-use connection_gateway_client::ConnectionGatewayClient;
-use containers::{InMemRuntime, RoutedContainers};
-use cursor_api_key::cipher::{AwsKmsCiphertexts, KmsCursorApiKeyCipher};
-use cursor_cloud_agents::api::CURSOR_API_BASE_URL;
-use cursor_cloud_agents::domain::model::RepoUrl as CursorRepoUrl;
-use github::domain::service::{InstallationTokenConfig, InstallationTokenService};
-use github::outbound::github_sync_client::GithubSyncClientImpl;
-use github::outbound::pg_github_sync_repo::PgGithubSyncRepo;
-use kafka_util::{GroupName, KafkaEventConsumer, consumer_span, record_span_error};
-use lexical_client::LexicalClient;
 use conation_auth::middleware::decode_jwt::JwtValidationArgs;
 use conation_authorization::{
     InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationServiceImpl,
@@ -84,6 +73,17 @@ use conation_event_broker::{
     MacroEventCollection as _, MacroEventConsumerService,
 };
 use conation_service_urls::{ConnectionGatewayUrl, LexicalServiceUrl};
+use config::{Config, Environment};
+use connection_gateway_client::ConnectionGatewayClient;
+use containers::{InMemRuntime, RoutedContainers};
+use cursor_api_key::cipher::{AwsKmsCiphertexts, KmsCursorApiKeyCipher};
+use cursor_cloud_agents::api::CURSOR_API_BASE_URL;
+use cursor_cloud_agents::domain::model::RepoUrl as CursorRepoUrl;
+use github::domain::service::{InstallationTokenConfig, InstallationTokenService};
+use github::outbound::github_sync_client::GithubSyncClientImpl;
+use github::outbound::pg_github_sync_repo::PgGithubSyncRepo;
+use kafka_util::{GroupName, KafkaEventConsumer, consumer_span, record_span_error};
+use lexical_client::LexicalClient;
 use pipedream_mcp::outbound::api::{PipedreamClient, PipedreamConfig};
 use pipedream_mcp::outbound::pg_connection_repo::PgConnectionRepo;
 use rdkafka::consumer::CommitMode;
@@ -478,10 +478,10 @@ async fn run() -> anyhow::Result<()> {
         PipedreamMcpCredentials::new(mcp_connections, pipedream),
         MacroApiTokenSigner::new(
             pool.clone(),
-            config.conation_api_token_issuer.as_ref(),
-            config.conation_api_token_private_secret_key.as_ref(),
+            config.macro_api_token_issuer.as_ref(),
+            config.macro_api_token_private_secret_key.as_ref(),
         ),
-        url::Url::parse(&config.conation_mcp_url).context("MACRO_MCP_URL is not a url")?,
+        url::Url::parse(&config.macro_mcp_url).context("MACRO_MCP_URL is not a url")?,
         // The one gate on cleartext: a local stack's mcp-service is dialed
         // across the compose bridge, where TLS would be theater. Everywhere
         // else, an http URL refuses to boot.

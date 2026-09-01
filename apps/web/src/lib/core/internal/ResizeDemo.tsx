@@ -1,5 +1,4 @@
 import { EntityIcon, type EntityIconProps } from '@core/component/EntityIcon';
-import { t } from '@app/lib/i18n';
 import { MarkdownTextarea } from '@core/component/LexicalMarkdown/component/core/MarkdownTextarea';
 import { Resize } from '@core/component/Resize/Resize';
 import { Bar } from '@core/component/TopBar/Bar';
@@ -38,7 +37,7 @@ function PanelCard(
             <button
               onClick={props.onClickAddPanel}
               class="p-1 rounded hover:bg-accent/10 group-focus-within:hover:bg-accent/10"
-              title={t('auto.add_panel')}
+              title="Add panel"
             >
               <AddIcon class="size-4" />
             </button>
@@ -47,7 +46,7 @@ function PanelCard(
             <button
               onClick={props.onClickRemove}
               class="p-1 rounded hover:bg-accent/10 group-focus-within:hover:bg-accent/10"
-              title={t('auto.remove_panel')}
+              title="Remove panel"
             >
               <XIcon class="size-4" />
             </button>
@@ -95,7 +94,7 @@ function VerticalPanelCard(
             <button
               onClick={props.onClickAddPanel}
               class="p-1 rounded hover:bg-accent/10 group-focus-within:hover:bg-accent/10"
-              title={t('auto.add_panel')}
+              title="Add panel"
             >
               <AddIcon class="size-4" />
             </button>
@@ -104,7 +103,7 @@ function VerticalPanelCard(
             <button
               onClick={props.onClickRemove}
               class="p-1 rounded hover:bg-accent/10 group-focus-within:hover:bg-accent/10"
-              title={t('auto.remove_panel')}
+              title="Remove panel"
             >
               <XIcon class="size-4" />
             </button>
@@ -115,7 +114,7 @@ function VerticalPanelCard(
         <Resize.Zone gutter={0} direction="vertical">
           <Resize.Panel id={`${props.id}-top`} minSize={100}>
             <div class="size-full p-2 overflow-auto border-b border-edge">
-              <div class="text-xs text-ink/60 mb-2">{t('auto.top_section')}</div>
+              <div class="text-xs text-ink/60 mb-2">TOP SECTION</div>
               <MarkdownTextarea
                 initialValue={props.markdownTop}
                 editable={() => true}
@@ -125,7 +124,7 @@ function VerticalPanelCard(
           </Resize.Panel>
           <Resize.Panel id={`${props.id}-bottom`} minSize={100}>
             <div class="size-full p-2 overflow-auto">
-              <div class="text-xs text-ink/60 mb-2">{t('auto.bottom_section')}</div>
+              <div class="text-xs text-ink/60 mb-2">BOTTOM SECTION</div>
               <MarkdownTextarea
                 initialValue={props.markdownBottom}
                 editable={() => true}
@@ -282,7 +281,9 @@ export default function ResizeDemo() {
     <div class="size-full flex flex-col">
       <Bar
         left={
-          <div class="p-2 text-sm w-2xl truncate">{t('auto.resize_debug_mixed_layout_test')}</div>
+          <div class="p-2 text-sm w-2xl truncate">
+            Resize Debug - Mixed Layout Test
+          </div>
         }
         center={<div />}
       />

@@ -74,8 +74,8 @@ pub enum CursorApiKeyError {
     /// The supplied value does not look like a Cursor API key.
     #[error("value does not look like a Cursor API key")]
     MalformedKey,
-    /// Cursor agents are currently restricted to Macro staff.
-    #[error("Cursor agents are only available to Macro staff")]
+    /// Cursor agents are currently restricted to Conation staff.
+    #[error("Cursor agents are only available to Conation staff")]
     NotMacroStaff,
     /// An operation that needs a connected account was attempted without one —
     /// e.g. choosing a model before pasting a key.

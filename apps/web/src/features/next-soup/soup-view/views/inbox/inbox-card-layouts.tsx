@@ -1,5 +1,5 @@
 import { ListPropertyValue } from '@app/features/next-soup/soup-view/views/tasks/list-property-value';
-import { formatCallDuration } from '@block-call/utils';
+import { formatDateTime, formatRelativeTime, t } from '@app/lib/i18n';
 import { BotIcon } from '@channel/Message/BotIcon';
 import { MACRO_AI_BOT_ID, MACRO_AI_NAME } from '@channel/macroAi';
 import { EntityIcon, getEntityIconType } from '@core/component/EntityIcon';
@@ -14,8 +14,6 @@ import { UserIcon } from '@core/component/UserIcon';
 import { isMacroAgentId } from '@core/constant/macroAgent';
 import { useUserId } from '@core/context/user';
 import { getDisplayName, tryMacroId } from '@core/user';
-import { formatRelativeDay } from '@core/util/dateParser';
-import { plural } from '@core/util/string';
 import {
   DraftBadge,
   type EntityData,
@@ -26,7 +24,6 @@ import {
 } from '@entity';
 import MacroLogo from '@icon/macro-logo.svg';
 import GithubIcon from '@icon/mcp-github.svg';
-import { formatCalendarReminderTime } from '@notifications';
 import FilesIcon from '@phosphor/files.svg';
 import GitMergeIcon from '@phosphor/git-merge.svg';
 import GitPullRequestIcon from '@phosphor/git-pull-request.svg';
@@ -49,7 +46,7 @@ import type { ItemEntity } from '@queries/preview';
 import { useBulkSaveEntityPropertiesMutation } from '@queries/properties/entity';
 import { EntityType } from '@service-storage/generated/schemas';
 import { Avatar, cn, Tooltip } from '@ui';
-import { parseISO } from 'date-fns';
+import { differenceInCalendarDays, parseISO } from 'date-fns';
 import { createMemo, For, type JSX, Match, Show, Switch } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { match, P } from 'ts-pattern';
@@ -121,7 +118,7 @@ const getNotificationSenderFallbackName = (
     case 'new_email':
       return content?.sender ?? undefined;
     case 'ai_response':
-      return 'Macro agent';
+      return MACRO_AI_NAME;
     case 'channel_message_send':
       return content?.sender ?? notification.sender_id ?? undefined;
     case 'github_pr_status_changed':
@@ -374,10 +371,50 @@ const formatDetailedTimestamp = (timestamp: string | undefined) => {
   const date = new Date(timestamp);
   if (Number.isNaN(date.getTime())) return timestamp;
 
-  return date.toLocaleString(undefined, {
+  return formatDateTime(date, {
     dateStyle: 'medium',
     timeStyle: 'short',
   });
+};
+
+const formatLocalizedCallDuration = (milliseconds: number): string => {
+  const totalSeconds = Math.floor(milliseconds / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return t('soup.inbox.duration.hoursMinutes', { hours, minutes });
+  }
+  if (minutes > 0) {
+    return t('soup.inbox.duration.minutesSeconds', { minutes, seconds });
+  }
+  return t('soup.inbox.duration.seconds', { seconds });
+};
+
+const formatLocalizedCalendarTime = (occurrence: {
+  startsAt?: string | null;
+  endsAt?: string | null;
+  startDate?: string | null;
+}): string | undefined => {
+  if (!occurrence.startsAt) {
+    return occurrence.startDate ? t('soup.inbox.calendar.allDay') : undefined;
+  }
+
+  const startDate = new Date(occurrence.startsAt);
+  if (Number.isNaN(startDate.getTime())) return undefined;
+  const start = formatDateTime(startDate, {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+
+  if (!occurrence.endsAt) return start;
+  const endDate = new Date(occurrence.endsAt);
+  if (Number.isNaN(endDate.getTime())) return start;
+  return `${start} – ${formatDateTime(endDate, {
+    hour: 'numeric',
+    minute: '2-digit',
+  })}`;
 };
 
 function InboxTimestamp(props: { timestamp?: string; class?: string }) {
@@ -422,7 +459,7 @@ const createSenderDisplayName = (
     if (parsed.type !== 'bot') return undefined;
 
     if (parsed.name) return parsed.name;
-    return parsed.id === MACRO_AI_BOT_ID ? MACRO_AI_NAME : 'Bot';
+    return parsed.id === MACRO_AI_BOT_ID ? MACRO_AI_NAME : t('soup.inbox.bot');
   };
 
   return () => {
@@ -477,21 +514,25 @@ const githubAction = (notification?: Notification): string => {
   return match(metadata)
     .with(
       { tag: 'github_pr_status_changed', content: { status: 'merged' } },
-      () => 'merged'
+      () => t('soup.inbox.github.merged')
     )
     .with(
       { tag: 'github_pr_status_changed', content: { status: 'closed' } },
-      () => 'closed'
+      () => t('soup.inbox.github.closed')
     )
     .with(
       { tag: 'github_pr_status_changed', content: { status: 'open' } },
-      () => 'opened'
+      () => t('soup.inbox.github.opened')
     )
-    .with({ tag: 'github_review_requested' }, () => 'requested your review on')
-    .with({ tag: 'github_pr_comment' }, () => 'commented on')
-    .with({ tag: 'github_pr_mention' }, () => 'mentioned you')
-    .with({ tag: 'github_pr_review' }, () => 'reviewed')
-    .otherwise(() => 'updated');
+    .with({ tag: 'github_review_requested' }, () =>
+      t('soup.inbox.github.requestedReview')
+    )
+    .with({ tag: 'github_pr_comment' }, () => t('soup.inbox.github.commented'))
+    .with({ tag: 'github_pr_mention' }, () =>
+      t('soup.inbox.github.mentionedYou')
+    )
+    .with({ tag: 'github_pr_review' }, () => t('soup.inbox.github.reviewed'))
+    .otherwise(() => t('soup.inbox.github.updated'));
 };
 
 /**
@@ -610,9 +651,7 @@ function CardClampedMarkdown(props: {
 
 /** Fallback shown in place of message text when a message is just attachments. */
 const attachmentSummary = (count: number): string | undefined =>
-  count <= 0
-    ? undefined
-    : `sent ${count === 1 ? 'an' : count} ${plural('attachment', count)}`;
+  count <= 0 ? undefined : t('soup.inbox.sentAttachments', { count });
 
 export function ChannelCardLayout(props: InboxCardLayoutProps) {
   const entity = createMemo(() => props.item.entity);
@@ -655,7 +694,7 @@ export function ChannelCardLayout(props: InboxCardLayoutProps) {
   });
 
   const senderLabel = () => {
-    if (messageSenderId() === currentUserId()) return 'You';
+    if (messageSenderId() === currentUserId()) return t('soup.people.you');
     return isDM() ? undefined : messageSenderName();
   };
 
@@ -668,7 +707,7 @@ export function ChannelCardLayout(props: InboxCardLayoutProps) {
     let action = '';
 
     if (tag === 'document_mention' && isDM()) {
-      action = 'shared a document with you';
+      action = t('soup.inbox.channel.sharedDocument');
     }
 
     const content = itemContent(value, props.item.notification);
@@ -736,9 +775,9 @@ export function ChannelMessageCardLayout(props: InboxCardLayoutProps) {
 
   const text = createMemo(() => {
     const location = channelLocation(props.item.entity);
-    let action = 'sent a message';
+    let action = t('soup.inbox.channel.sentMessage');
     if (location) {
-      action = 'sent a message in';
+      action = t('soup.inbox.channel.sentMessageIn');
     }
 
     return {
@@ -799,7 +838,7 @@ export function ChannelThreadCardLayout(props: InboxCardLayoutProps) {
   const senderName = createSenderDisplayName(senderId);
   const currentUserId = useUserId();
   const senderLabel = () =>
-    senderId() === currentUserId() ? 'You' : senderName();
+    senderId() === currentUserId() ? t('soup.people.you') : senderName();
 
   // The root/original thread message sender (who a reply is replying to).
   const originalSenderId = () =>
@@ -808,7 +847,9 @@ export function ChannelThreadCardLayout(props: InboxCardLayoutProps) {
       : undefined;
   const originalSenderName = createSenderDisplayName(originalSenderId);
   const originalSenderLabel = () =>
-    originalSenderId() === currentUserId() ? 'You' : originalSenderName();
+    originalSenderId() === currentUserId()
+      ? t('soup.people.you')
+      : originalSenderName();
 
   const text = createMemo(() => {
     if (props.item.entity.type !== 'channel_thread') {
@@ -971,14 +1012,20 @@ export function DocumentCardLayout(props: InboxCardLayoutProps) {
 
     if (metadata?.tag === 'document_mention') {
       return {
-        action: buildActionLabel({ sender: senderName(), action: 'shared' }),
+        action: buildActionLabel({
+          sender: senderName(),
+          action: t('soup.inbox.document.shared'),
+        }),
         content: metadata.content.messageContent,
       };
     }
 
     if (metadata?.tag === 'commented_on_document') {
       return {
-        action: buildActionLabel({ sender: senderName(), action: 'commented' }),
+        action: buildActionLabel({
+          sender: senderName(),
+          action: t('soup.inbox.document.commented'),
+        }),
         content,
       };
     }
@@ -987,7 +1034,7 @@ export function DocumentCardLayout(props: InboxCardLayoutProps) {
       return {
         action: buildActionLabel({
           sender: senderName(),
-          action: 'mentioned you',
+          action: t('soup.inbox.document.mentionedYou'),
         }),
         content,
       };
@@ -995,7 +1042,10 @@ export function DocumentCardLayout(props: InboxCardLayoutProps) {
 
     if (metadata?.tag === 'replied_to_document_comment_thread') {
       return {
-        action: buildActionLabel({ sender: senderName(), action: 'replied' }),
+        action: buildActionLabel({
+          sender: senderName(),
+          action: t('soup.inbox.document.replied'),
+        }),
         content,
       };
     }
@@ -1061,7 +1111,7 @@ export function TaskCardLayout(props: InboxCardLayoutProps) {
       return {
         title: buildActionLabel({
           sender: senderName(),
-          action: 'assigned you a task',
+          action: t('soup.inbox.task.assignedYou'),
         }),
         content: content || props.item.entity.name,
       };
@@ -1324,7 +1374,9 @@ export function CallCardLayout(props: InboxCardLayoutProps) {
       return {
         title: buildActionLabel({
           sender: senderName(),
-          action: location ? 'started a call in' : 'started a call',
+          action: location
+            ? t('soup.inbox.call.startedIn')
+            : t('soup.inbox.call.started'),
           location,
         }),
       };
@@ -1332,19 +1384,25 @@ export function CallCardLayout(props: InboxCardLayoutProps) {
 
     if (entity.type === 'call' && entity.status === 'MISSED') {
       return {
-        title: entity.name ? `Missed call in ${entity.name}` : 'Missed call',
+        title: entity.name
+          ? t('soup.inbox.call.missedIn', { location: entity.name })
+          : t('soup.inbox.call.missed'),
       };
     }
 
     if (entity.type === 'call' && entity.status === 'UNATTENDED') {
       return {
         title: entity.name
-          ? `Call unattended in ${entity.name}`
-          : 'Call unattended',
+          ? t('soup.inbox.call.unattendedIn', { location: entity.name })
+          : t('soup.inbox.call.unattended'),
       };
     }
 
-    return { title: entity.name ? `Call in ${entity.name}` : 'Call' };
+    return {
+      title: entity.name
+        ? t('soup.inbox.call.in', { location: entity.name })
+        : t('soup.call.action'),
+    };
   });
 
   const participantIds = () =>
@@ -1354,11 +1412,15 @@ export function CallCardLayout(props: InboxCardLayoutProps) {
     const entity = props.item.entity;
     if (entity.type !== 'call') {
       return getNotificationTag(props.item.notification) === 'call_started'
-        ? 'In progress'
+        ? t('soup.inbox.call.inProgress')
         : undefined;
     }
-    if (entity.durationMs != null) return formatCallDuration(entity.durationMs);
-    return entity.isActive ? 'In progress' : 'No duration';
+    if (entity.durationMs != null) {
+      return formatLocalizedCallDuration(entity.durationMs);
+    }
+    return entity.isActive
+      ? t('soup.inbox.call.inProgress')
+      : t('soup.inbox.call.noDuration');
   };
 
   return (
@@ -1425,12 +1487,15 @@ export function CalendarEventCardLayout(props: InboxCardLayoutProps) {
     if (!raw) return undefined;
     const date = parseISO(raw);
     if (Number.isNaN(date.getTime())) return undefined;
-    return formatRelativeDay(date);
+    const dayOffset = differenceInCalendarDays(date, new Date());
+    return Math.abs(dayOffset) <= 1
+      ? formatRelativeTime(dayOffset, 'day', { numeric: 'auto' })
+      : formatDateTime(date, { dateStyle: 'medium' });
   };
 
   const timePreview = () => {
     const value = occurrence();
-    return value ? formatCalendarReminderTime(value) : undefined;
+    return value ? formatLocalizedCalendarTime(value) : undefined;
   };
 
   return (
@@ -1440,7 +1505,7 @@ export function CalendarEventCardLayout(props: InboxCardLayoutProps) {
       highlighted={props.highlighted}
       onClick={props.onClick}
       icon={<CalendarBlankIcon class={AVATAR_GLYPH_CLASS} />}
-      title={props.item.entity.name || '(No title)'}
+      title={props.item.entity.name || t('soup.inbox.noTitle')}
     >
       <Show when={datePreview()}>
         {(value) => (
@@ -1486,7 +1551,7 @@ export function ReminderCardLayout(props: InboxCardLayoutProps) {
       // reminder first, and the thing it points at is named right below.
       icon={<BellSimpleIcon class={AVATAR_GLYPH_CLASS} />}
       title={
-        <Show when={referenced()} fallback="Reminder">
+        <Show when={referenced()} fallback={t('soup.inbox.reminder')}>
           {(reference) => (
             <ReminderTitle
               description={description()}
@@ -1539,7 +1604,7 @@ function ReminderTitle(props: ItemEntity & { description: string }) {
     return description === name().trim() ? undefined : description;
   };
 
-  return <>{ownText() ?? 'Reminder'}</>;
+  return <>{ownText() ?? t('soup.inbox.reminder')}</>;
 }
 
 /**
@@ -1562,8 +1627,8 @@ function ReminderReferenceChip(props: ItemEntity) {
 export function GenericCardLayout(props: InboxCardLayoutProps) {
   const text = createMemo(() => ({
     title: props.item.entity.name
-      ? `${props.item.entity.name} updated`
-      : 'Updated',
+      ? t('soup.inbox.entityUpdated', { name: props.item.entity.name })
+      : t('soup.inbox.updated'),
     content: itemContent(props.item.entity, props.item.notification),
   }));
 

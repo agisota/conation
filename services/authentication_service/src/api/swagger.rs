@@ -21,7 +21,7 @@ use utoipa::OpenApi;
 use crate::api::cursor_api_key::{CursorApiKeyStatus, put_cursor_api_key::PutCursorApiKeyRequest};
 use crate::api::email::generate_email_link::GenerateEmailLinkRequest;
 use crate::api::email::resend_fusionauth_verify_user_email::ResendFusionauthVerifyUserEmailRequest;
-use crate::api::jwt::conation_api_token::MacroApiTokenResponse;
+use crate::api::jwt::macro_api_token::MacroApiTokenResponse;
 use crate::api::link::create_in_progress_link::CreateInProgressLinkResponse;
 use crate::api::link::github::{GithubLinkStatusResponse, InitGithubLinkResponse};
 use crate::api::link::gmail::{GmailLinkStatusResponse, InitGmailLinkResponse};
@@ -104,7 +104,7 @@ use model::user::{
 
                 /// /jwt
                 jwt::refresh::handler,
-                jwt::conation_api_token::handler,
+                jwt::macro_api_token::handler,
 
                 /// /user
                 user::create_user::handler,
@@ -248,7 +248,7 @@ use model::user::{
                 ),
         ),
         tags(
-            (name = "auth service", description = "Macro Authentication Service")
+            (name = "auth service", description = "Conation Authentication Service")
         )
     )]
 pub struct ApiDoc;

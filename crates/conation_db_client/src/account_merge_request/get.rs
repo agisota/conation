@@ -1,30 +1,30 @@
 use uuid::Uuid;
 
 /// Gets the merge request macro user id by code
-/// Returns the merge request id and the to_merge_conation_user_id
+/// Returns the merge request id and the to_merge_macro_user_id
 #[tracing::instrument(skip(db))]
 pub async fn get_merge_request_info(
     db: &sqlx::Pool<sqlx::Postgres>,
-    conation_user_id: &str,
+    macro_user_id: &str,
     code: &str,
 ) -> anyhow::Result<(String, String)> {
-    let conation_user_id = conation_uuid::string_to_uuid(conation_user_id)?;
+    let macro_user_id = conation_uuid::string_to_uuid(macro_user_id)?;
 
     let merge_request = sqlx::query!(
         r#"
         SELECT
             "id" as "merge_request_id!",
-            "to_merge_conation_user_id" as "to_merge_conation_user_id!"
+            "to_merge_macro_user_id" as "to_merge_macro_user_id!"
         FROM "account_merge_request"
-        WHERE "code" = $1 AND "conation_user_id" = $2
+        WHERE "code" = $1 AND "macro_user_id" = $2
         "#,
         code,
-        &conation_user_id
+        &macro_user_id
     )
     .map(|row| {
         (
             row.merge_request_id.to_string(),
-            row.to_merge_conation_user_id.to_string(),
+            row.to_merge_macro_user_id.to_string(),
         )
     })
     .fetch_one(db)
@@ -35,19 +35,19 @@ pub async fn get_merge_request_info(
 
 /// Checks if there is an account merge request for the given macro user id
 #[tracing::instrument(skip(db))]
-pub async fn check_merge_request_for_to_merge_conation_user_id(
+pub async fn check_merge_request_for_to_merge_macro_user_id(
     db: &sqlx::Pool<sqlx::Postgres>,
-    conation_user_id: &str,
+    macro_user_id: &str,
 ) -> anyhow::Result<Option<Uuid>> {
-    let conation_user_id = conation_uuid::string_to_uuid(conation_user_id)?;
+    let macro_user_id = conation_uuid::string_to_uuid(macro_user_id)?;
     let merge_request: Option<Uuid> = sqlx::query!(
         r#"
         SELECT
             id
         FROM account_merge_request
-        WHERE to_merge_conation_user_id = $1
+        WHERE to_merge_macro_user_id = $1
         "#,
-        &conation_user_id,
+        &macro_user_id,
     )
     .map(|row| row.id)
     .fetch_optional(db)
@@ -66,7 +66,7 @@ mod tests {
         // create macro user
         sqlx::query!(
             r#"
-            INSERT INTO "conation_user" ("id", "email", "stripe_customer_id", "username")
+            INSERT INTO "macro_user" ("id", "email", "stripe_customer_id", "username")
             VALUES ($1, $2, $3, $4)
         "#,
             &conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?,
@@ -79,7 +79,7 @@ mod tests {
 
         sqlx::query!(
             r#"
-            INSERT INTO "conation_user" ("id", "email", "stripe_customer_id", "username")
+            INSERT INTO "macro_user" ("id", "email", "stripe_customer_id", "username")
             VALUES ($1, $2, $3, $4)
         "#,
             &conation_uuid::string_to_uuid("22222222-2222-2222-2222-222222222222")?,
@@ -103,7 +103,7 @@ mod tests {
 
         sqlx::query!(
             r#"
-            INSERT INTO "account_merge_request" ("id", "conation_user_id", "to_merge_conation_user_id", "code", "created_at")
+            INSERT INTO "account_merge_request" ("id", "macro_user_id", "to_merge_macro_user_id", "code", "created_at")
             VALUES ($1, $2, $3, $4, NOW())
             "#,
             &conation_uuid::string_to_uuid("33333333-3333-3333-3333-333333333333")?,
@@ -130,36 +130,36 @@ mod tests {
     }
 
     #[sqlx::test(fixtures(path = "../../fixtures", scripts("account_merge_request")))]
-    pub async fn test_check_merge_request_for_to_merge_conation_user_id(
+    pub async fn test_check_merge_request_for_to_merge_macro_user_id(
         pool: Pool<Postgres>,
     ) -> anyhow::Result<()> {
         let merge_request_id = conation_uuid::generate_uuid_v7();
-        let to_merge_conation_user_id = conation_uuid::generate_uuid_v7();
+        let to_merge_macro_user_id = conation_uuid::generate_uuid_v7();
 
         sqlx::query!(
             r#"
-            INSERT INTO "account_merge_request" ("id", "conation_user_id", "to_merge_conation_user_id", "code", "created_at")
+            INSERT INTO "account_merge_request" ("id", "macro_user_id", "to_merge_macro_user_id", "code", "created_at")
             VALUES ($1, $2, $3, $4, NOW())
             "#,
             &merge_request_id,
             &conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?,
-            &to_merge_conation_user_id,
+            &to_merge_macro_user_id,
             "code-one"
         )
         .execute(&pool)
         .await?;
 
         // Exists
-        let merge_request = check_merge_request_for_to_merge_conation_user_id(
+        let merge_request = check_merge_request_for_to_merge_macro_user_id(
             &pool,
-            &to_merge_conation_user_id.to_string(),
+            &to_merge_macro_user_id.to_string(),
         )
         .await?;
 
         assert_eq!(merge_request, Some(merge_request_id));
 
         // Does not exist
-        let merge_request = check_merge_request_for_to_merge_conation_user_id(
+        let merge_request = check_merge_request_for_to_merge_macro_user_id(
             &pool,
             &conation_uuid::generate_uuid_v7().to_string(),
         )

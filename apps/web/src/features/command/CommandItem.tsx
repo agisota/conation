@@ -178,7 +178,8 @@ function SearchDisplay(props: { item: SearchItem }) {
       <div class="size-5 flex items-center justify-center text-ink-muted shrink-0">
         <SearchIcon class="size-4" />
       </div>
-      <span class="truncate text-ink">{t('auto.search_for')}<span class="text-ink">“{props.item.query}”</span>
+      <span class="truncate text-ink">
+        {t('shell.command.searchFor', { query: props.item.query })}
       </span>
     </div>
   );
@@ -190,7 +191,8 @@ function AskAiDisplay(props: { item: AskAiItem }) {
       <div class="size-5 flex items-center justify-center text-ink-muted shrink-0">
         <WideStar class="size-4" />
       </div>
-      <span class="truncate text-ink">{t('auto.ask_ai_about')}<span class="text-ink">“{props.item.query}”</span>
+      <span class="truncate text-ink">
+        {t('shell.command.askAiAbout', { query: props.item.query })}
       </span>
     </div>
   );

@@ -64,18 +64,18 @@ fn new_reminder(description: &str, schedule: ReminderSchedule) -> NewReminder {
 }
 
 async fn insert_user(pool: &PgPool, id: &str) {
-    let conation_user_id = conation_uuid::generate_uuid_v7();
+    let macro_user_id = conation_uuid::generate_uuid_v7();
     sqlx::query(
-        r#"INSERT INTO conation_user (id, username, email, stripe_customer_id) VALUES ($1, $2, $2, $2)"#,
+        r#"INSERT INTO macro_user (id, username, email, stripe_customer_id) VALUES ($1, $2, $2, $2)"#,
     )
-    .bind(conation_user_id)
+    .bind(macro_user_id)
     .bind(id)
     .execute(pool)
     .await
-    .expect("conation_user should insert");
-    sqlx::query(r#"INSERT INTO "User" (id, email, conation_user_id) VALUES ($1, $1, $2)"#)
+    .expect("macro_user should insert");
+    sqlx::query(r#"INSERT INTO "User" (id, email, macro_user_id) VALUES ($1, $1, $2)"#)
         .bind(id)
-        .bind(conation_user_id)
+        .bind(macro_user_id)
         .execute(pool)
         .await
         .expect("user should insert");

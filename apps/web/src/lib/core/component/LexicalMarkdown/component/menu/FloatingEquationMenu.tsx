@@ -1,7 +1,7 @@
-import clickOutside from '@core/directive/clickOutside';
 import { t } from '@app/lib/i18n';
-import { useCanEdit } from '@core/signal/permissions';
 import { $isEquationNode } from '@conation/lexical-core';
+import clickOutside from '@core/directive/clickOutside';
+import { useCanEdit } from '@core/signal/permissions';
 import Check from '@phosphor/check-circle.svg';
 import { createCallback } from '@solid-primitives/rootless';
 import { Tooltip } from '@ui';
@@ -229,7 +229,9 @@ export function FloatingEquationMenu() {
         use:clickOutside={() => resetMenu()}
       >
         <div class="flex flex-col gap-3">
-          <h3 class="text-sm font-medium text-ink">{t('auto.latex_expression')}</h3>
+          <h3 class="text-sm font-medium text-ink">
+            {t('editor.equation.expression')}
+          </h3>
           <div class="flex flex-col items-start gap-4">
             <div class="w-full grow">
               {inline() ? (
@@ -239,7 +241,7 @@ export function FloatingEquationMenu() {
                   type="text"
                   value={equation() ?? ''}
                   onInput={(e) => setEquation(e.currentTarget.value)}
-                  placeholder={t('auto.enter_latex_expression')}
+                  placeholder={t('editor.equation.inputPlaceholder')}
                   class="w-full p-2 border border-edge rounded-md focus:ring focus:ring-accent/40 focus:border-accent/40 outline-none transition"
                 />
               ) : (
@@ -249,12 +251,14 @@ export function FloatingEquationMenu() {
                   rows={3}
                   value={equation() ?? ''}
                   onInput={(e) => setEquation(e.currentTarget.value)}
-                  placeholder={t('auto.enter_latex_expression')}
+                  placeholder={t('editor.equation.inputPlaceholder')}
                   class="w-full p-2 border border-edge rounded-md focus:ring focus:ring-accent/40 focus:border-accent/40 outline-none transition resize-none"
                 />
               )}
             </div>
-            <h3 class="text-sm font-medium text-ink">{t('auto.rendered_latex')}</h3>
+            <h3 class="text-sm font-medium text-ink">
+              {t('editor.equation.rendered')}
+            </h3>
             <div class="min-h-12 max-h-40 w-full p-2 border border-edge rounded-md bg-edge overflow-auto">
               <Equation equation={equation()} inline={inline()} />
             </div>
@@ -267,16 +271,20 @@ export function FloatingEquationMenu() {
                   class="size-4 rounded"
                   checked={inline()}
                   onChange={toggleInlineMode}
-                />{t('auto.inline_equation')}</label>
+                />
+                {t('editor.equation.inline')}
+              </label>
             </Show>
-            <Tooltip label="Apply changes">
+            <Tooltip label={t('editor.equation.apply')}>
               <button
                 onClick={handleSubmit}
                 disabled={!equation()}
                 class="px-3 py-1.5 bg-accent/80 text-surface rounded-md hover:bg-accent transition disabled:bg-edge disabled:cursor-not-allowed flex items-center gap-1.5 text-sm font-medium"
               >
                 <Check class="size-4" />
-                {isNewEquation() ? 'Insert' : 'Update'}
+                {isNewEquation()
+                  ? t('editor.equation.insert')
+                  : t('editor.equation.update')}
               </button>
             </Tooltip>
           </div>

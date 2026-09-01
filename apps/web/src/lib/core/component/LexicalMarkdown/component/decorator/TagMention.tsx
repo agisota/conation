@@ -1,6 +1,6 @@
+import { t } from '@app/lib/i18n';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import { useSplitPanel } from '@components/app/split-layout/layoutUtils';
-import { useIsAuthenticated } from '@core/auth';
 import {
   $isTagMentionNode,
   HISTORIC_TAG,
@@ -8,6 +8,7 @@ import {
   SKIP_SCROLL_INTO_VIEW_TAG,
   type TagMentionDecoratorProps,
 } from '@conation/lexical-core';
+import { useIsAuthenticated } from '@core/auth';
 import { TagDot } from '@property/tags/TagDot';
 import { navigateToTag } from '@property/tags/tagNavigation';
 import { useTagsQuery } from '@queries/properties/tags';
@@ -141,7 +142,10 @@ export function TagMention(props: TagMentionDecoratorProps) {
           {resolvedTag().name}
         </span>
       </span>
-      <MentionTooltip show={isSelectedAsNode()} text="Open" />
+      <MentionTooltip
+        show={isSelectedAsNode()}
+        text={t('editor.mention.open')}
+      />
     </span>
   );
 }

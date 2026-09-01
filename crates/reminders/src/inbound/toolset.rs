@@ -31,7 +31,7 @@ mod test;
 /// because a tool schema has nowhere else to put it — descriptions are
 /// independent fields, and tool search can load one of these tools without the
 /// others, so a cross-reference could dangle.
-conation_rules! utc_conversion_note {
+macro_rules! utc_conversion_note {
     () => {
         "## Times are UTC — convert both ways\n\
          \n\
@@ -54,11 +54,11 @@ use std::sync::Arc;
 
 use ai_toolset::{AsyncToolCollection, ToolCallError};
 use chrono::{DateTime, Utc};
+use conation_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::{
     models::{AccessError, AnyEntityPermission, EntityAccessReceipt, OwnerAccessLevel},
     ports::EntityAccessService,
 };
-use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::{Entity, EntityType};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -218,11 +218,11 @@ fn reminder_error(error: ReminderError) -> ToolCallError {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ReminderEntityType {
-    /// Macro document.
+    /// Conation document.
     Document,
     /// AI chat conversation.
     AiChat,
-    /// Macro project (shown as a folder in the app UI).
+    /// Conation project (shown as a folder in the app UI).
     Project,
     /// Email thread.
     Email,

@@ -1,4 +1,5 @@
 import type { CalendarEvent } from '@app/features/calendar/types';
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { writeClipboardData } from '@core/util/dataTransfer';
 import { CALENDAR_BLOCK_ID } from './types';
@@ -68,9 +69,9 @@ export async function copyCalendarEventMentionTarget(
     'text/plain': calendarEventDeepLink(target),
   });
   if (written) {
-    toast.success('Copied event to clipboard');
+    toast.success(t('calendar.event.toast.copied'));
   } else {
-    toast.failure('Failed to copy event');
+    toast.failure(t('calendar.event.toast.copyFailed'));
   }
 }
 

@@ -1,5 +1,5 @@
-import { toast } from '@core/component/Toast/Toast';
 import { t } from '@app/lib/i18n';
+import { toast } from '@core/component/Toast/Toast';
 import { SERVER_HOSTS } from '@core/constant/servers';
 import GithubIcon from '@icon/mcp-github.svg';
 import ArrowUpRightIcon from '@phosphor/arrow-up-right.svg';
@@ -35,7 +35,9 @@ export function GitHubCard() {
         ? 'attention'
         : undefined;
   const connectionLabel = () =>
-    connectionState() === 'attention' ? 'Reconnect required' : 'Connected';
+    connectionState() === 'attention'
+      ? t('settings.github.status.reconnectRequired')
+      : t('settings.github.status.connected');
 
   const handleGithubEnable = async () => {
     try {
@@ -43,7 +45,7 @@ export function GitHubCard() {
         window.location.href
       );
     } catch {
-      toast.failure('Failed to start GitHub connect flow');
+      toast.failure(t('settings.github.errors.connect'));
     }
   };
 
@@ -51,7 +53,7 @@ export function GitHubCard() {
     try {
       await deleteGithubLink.mutateAsync();
     } catch {
-      toast.failure('Failed to disconnect GitHub');
+      toast.failure(t('settings.github.errors.disconnect'));
     }
   };
 
@@ -61,7 +63,7 @@ export function GitHubCard() {
         window.location.href
       );
     } catch {
-      toast.failure('Failed to start GitHub reconnect flow');
+      toast.failure(t('settings.github.errors.reconnect'));
     }
   };
 
@@ -69,14 +71,14 @@ export function GitHubCard() {
     <SettingsCard>
       <IntegrationRow
         icon={<GithubIcon />}
-        title={t('auto.github')}
-        description="Connect Macro to your GitHub account and repositories."
+        title={t('settings.github.title')}
+        description={t('settings.github.description')}
       />
 
       <SettingsRow
         label={
           <span class="flex items-center gap-2">
-            <span>{t('auto.account')}</span>
+            <span>{t('settings.github.account.label')}</span>
             <Show when={connectionState()}>
               {(state) => (
                 <StatusDot state={state()} label={connectionLabel()} />
@@ -84,16 +86,18 @@ export function GitHubCard() {
             </Show>
           </span>
         }
-        description="Identify your GitHub activity in Macro."
+        description={t('settings.github.account.description')}
       >
         <Show
           when={!githubLink.isLoading}
-          fallback={<span class="text-xs text-ink-muted">{t('common.loading')}</span>}
+          fallback={
+            <span class="text-xs text-ink-muted">{t('common.loading')}</span>
+          }
         >
           <Switch
             fallback={
               <ConnectAction
-                label="Connect"
+                label={t('settings.github.actions.connect')}
                 onClick={handleGithubEnable}
                 disabled={initGithubLink.isPending}
               />
@@ -108,7 +112,7 @@ export function GitHubCard() {
                 )}
               </Show>
               <ConnectAction
-                label="Disconnect"
+                label={t('settings.github.actions.disconnect')}
                 variant="danger"
                 onClick={handleGithubDisable}
                 disabled={deleteGithubLink.isPending}
@@ -116,7 +120,7 @@ export function GitHubCard() {
             </Match>
             <Match when={status() === 'reauthentication_required'}>
               <ConnectAction
-                label="Reconnect"
+                label={t('settings.github.actions.reconnect')}
                 onClick={handleGithubReconnect}
                 disabled={reauthenticateGithub.isPending}
               />
@@ -126,8 +130,8 @@ export function GitHubCard() {
       </SettingsRow>
 
       <SettingsRow
-        label="GitHub App"
-        description="Choose repositories for Macro to sync."
+        label={t('settings.github.app.label')}
+        description={t('settings.github.app.description')}
       >
         {/* The install callback rejects users without a linked account, so
             don't offer the flow until the account above is connected. */}
@@ -137,7 +141,7 @@ export function GitHubCard() {
             <span class="text-xs text-ink-muted">
               {githubLink.isLoading
                 ? t('common.loading')
-                : 'Connect your GitHub account first'}
+                : t('settings.github.app.connectFirst')}
             </span>
           }
         >
@@ -146,7 +150,9 @@ export function GitHubCard() {
             target="_blank"
             rel="noopener noreferrer"
             class="inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-sm font-medium text-ink-muted outline-none transition-colors hover:bg-ink/4 hover:text-ink focus-visible:bg-ink/6"
-          >{t('auto.configure_app')}<ArrowUpRightIcon class="size-3.5 opacity-70" />
+          >
+            {t('settings.github.app.configure')}
+            <ArrowUpRightIcon class="size-3.5 opacity-70" />
           </a>
         </Show>
       </SettingsRow>

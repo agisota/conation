@@ -5,6 +5,8 @@ use axum::{
     response::{IntoResponse, Json, Response},
 };
 use channels::domain::{models::CreateEntityMentionOptions, ports::ChannelService};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_user_id::user_id::MacroUserIdStr;
 use documents_hex::domain::{
     create::{MarkdownSubtype, NewDocumentMetadata, NewMarkdownTextDocument},
     models::DocumentError,
@@ -14,8 +16,6 @@ use entity_access::domain::{
     ports::EntityAccessService,
 };
 use favorites::domain::ports::FavoritesService;
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use conation_user_id::user_id::MacroUserIdStr;
 use model::document_storage_service_internal::{
     InitializeStarterDocsResponse, StarterDocHowToGuide,
 };
@@ -28,10 +28,15 @@ use reqwest::StatusCode;
 use std::collections::HashSet;
 use system_properties::{PriorityOption, SystemPropertyKey};
 
-/// Also the name `get_starter_docs` resolves the guide by, so the two stay in
-/// sync from one definition.
-pub(in crate::api) const HOW_TO_GUIDE_NAME: &str = "Macro how to guide";
-const HOW_TO_GUIDE_TEMPLATE: &str = include_str!("./template/conation_how_to_guide.md");
+#[cfg(test)]
+mod test;
+
+/// Display name used for newly created guide documents.
+pub(in crate::api) const HOW_TO_GUIDE_NAME: &str = "Conation how to guide";
+/// Historical UUIDv5 input. Changing this would create a second guide for
+/// every existing user, so it remains a compatibility identifier.
+pub(in crate::api) const HOW_TO_GUIDE_ID_SEED: &str = "Macro how to guide";
+const HOW_TO_GUIDE_TEMPLATE: &str = include_str!("./template/macro_how_to_guide.md");
 
 /// A starter task the templates can mention. Mention tags embed the target's
 /// document id and name, which don't exist at authoring time, so templates
@@ -41,6 +46,8 @@ const HOW_TO_GUIDE_TEMPLATE: &str = include_str!("./template/conation_how_to_gui
 /// deterministic ids substituted at creation time.
 struct StarterTask {
     name: &'static str,
+    /// Historical UUIDv5 input, kept separate from user-visible copy.
+    id_seed: &'static str,
     template: &'static str,
     id_placeholder: &'static str,
     name_placeholder: &'static str,
@@ -52,6 +59,7 @@ struct StarterTask {
 const STARTER_TASKS: [StarterTask; 3] = [
     StarterTask {
         name: "Intro to tasks",
+        id_seed: "Intro to tasks",
         template: include_str!("./template/learn_about_tasks.md"),
         id_placeholder: "LEARN_ABOUT_TASKS_ID",
         name_placeholder: "LEARN_ABOUT_TASKS_NAME",
@@ -59,13 +67,15 @@ const STARTER_TASKS: [StarterTask; 3] = [
     },
     StarterTask {
         name: "Advanced task features",
+        id_seed: "Advanced task features",
         template: include_str!("./template/advanced_task_features.md"),
         id_placeholder: "ADVANCED_TASK_FEATURES_ID",
         name_placeholder: "ADVANCED_TASK_FEATURES_NAME",
         priority: PriorityOption::Medium,
     },
     StarterTask {
-        name: "How we use tasks at Macro",
+        name: "How we use tasks at Conation",
+        id_seed: "How we use tasks at Macro",
         template: include_str!("./template/how_we_use_tasks.md"),
         id_placeholder: "HOW_WE_USE_TASKS_ID",
         name_placeholder: "HOW_WE_USE_TASKS_NAME",
@@ -92,16 +102,13 @@ const STARTER_DOC_ID_NAMESPACE: uuid::Uuid =
     uuid::Uuid::from_u128(0x3d1c_5f86_9e4b_45d2_a7c8_6b0e_2f9a_1d47);
 
 /// Deterministic id for one of a user's starter documents (UUIDv5 over the
-/// user id and document name). Every retry — including a concurrent
+/// user id and immutable seed). Every retry — including a concurrent
 /// duplicate webhook delivery — computes the same id, so the primary key
 /// dedupes creation instead of a rerun seeding a document twice.
-pub(in crate::api) fn starter_doc_id(
-    user_id: &MacroUserIdStr<'_>,
-    document_name: &str,
-) -> uuid::Uuid {
+pub(in crate::api) fn starter_doc_id(user_id: &MacroUserIdStr<'_>, id_seed: &str) -> uuid::Uuid {
     uuid::Uuid::new_v5(
         &STARTER_DOC_ID_NAMESPACE,
-        format!("{}:{document_name}", user_id.as_ref()).as_bytes(),
+        format!("{}:{id_seed}", user_id.as_ref()).as_bytes(),
     )
 }
 
@@ -157,20 +164,20 @@ fn internal_error(message: &str) -> Response {
         .send(StatusCode::INTERNAL_SERVER_ERROR)
 }
 
-/// Creates the user's starter content — the "Macro how to guide" markdown
+/// Creates the user's starter content — the "Conation how to guide" markdown
 /// document plus the starter tasks it links to — records the mention
 /// backlinks between them, and pins the guide to the user's sidebar
 /// favorites. Called by the authentication service when a new user signs up.
 /// Safe to retry: deterministic per-user ids dedupe concurrent duplicate
 /// deliveries, and a create conflict means that document was already seeded.
-#[tracing::instrument(skip(state, user_context), fields(user_id=?user_context.authorization.user.conation_user_id))]
+#[tracing::instrument(skip(state, user_context), fields(user_id=?user_context.authorization.user.macro_user_id))]
 pub async fn handler(
     State(state): State<ApiContext>,
     user_context: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
 ) -> Result<Response, Response> {
     tracing::info!("initialize starter docs");
 
-    let user_id = &user_context.authorization.user.conation_user_id;
+    let user_id = &user_context.authorization.user.macro_user_id;
     let system_for_user = Attribution::delegated(
         Actor::new_from_bot(bot_id::MACRO_SYSTEM_BOT_ID),
         user_id.clone(),
@@ -180,9 +187,9 @@ pub async fn handler(
     // templates can cross-link before any document has been created.
     let task_ids: Vec<String> = STARTER_TASKS
         .iter()
-        .map(|task| starter_doc_id(user_id, task.name).to_string())
+        .map(|task| starter_doc_id(user_id, task.id_seed).to_string())
         .collect();
-    let guide_id = starter_doc_id(user_id, HOW_TO_GUIDE_NAME).to_string();
+    let guide_id = starter_doc_id(user_id, HOW_TO_GUIDE_ID_SEED).to_string();
 
     let fill = |template: &str| {
         let mut filled = template.to_string();
@@ -206,7 +213,7 @@ pub async fn handler(
                 user_id.clone(),
                 NewMarkdownTextDocument {
                     metadata: NewDocumentMetadata::builder(task.name)
-                        .id(starter_doc_id(user_id, task.name))
+                        .id(starter_doc_id(user_id, task.id_seed))
                         .attribution(system_for_user.clone())
                         .build(),
                     markdown: fill(task.template),
@@ -237,7 +244,7 @@ pub async fn handler(
             user_id.clone(),
             NewMarkdownTextDocument {
                 metadata: NewDocumentMetadata::builder(HOW_TO_GUIDE_NAME)
-                    .id(starter_doc_id(user_id, HOW_TO_GUIDE_NAME))
+                    .id(starter_doc_id(user_id, HOW_TO_GUIDE_ID_SEED))
                     .attribution(system_for_user.clone())
                     .build(),
                 markdown: fill(HOW_TO_GUIDE_TEMPLATE),
@@ -329,7 +336,7 @@ pub async fn handler(
             .generate_bot_entity_access_receipt::<EditAccessLevel>(
                 bot_id::MACRO_SYSTEM_BOT_ID,
                 BotAccessScope::User {
-                    user_id: user_context.authorization.user.conation_user_id.clone(),
+                    user_id: user_context.authorization.user.macro_user_id.clone(),
                     user_org_id: organization_id,
                 },
                 &document_id,
@@ -415,7 +422,7 @@ pub async fn handler(
         .conn_gateway_client
         .send_message(
             EntityType::User
-                .with_entity_str(user_context.authorization.user.conation_user_id.as_ref()),
+                .with_entity_str(user_context.authorization.user.macro_user_id.as_ref()),
             STARTER_DOCS_INITIALIZED_MESSAGE_TYPE.to_string(),
             serde_json::json!({}),
         )

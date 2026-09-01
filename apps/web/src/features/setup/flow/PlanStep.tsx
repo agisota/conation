@@ -4,6 +4,7 @@ import {
   type PlanTier,
 } from '@app/features/paywall/plans';
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { formatNumber, t } from '@app/lib/i18n';
 import ArrowRight from '@phosphor/arrow-right.svg';
 import Check from '@phosphor/check.svg';
 import { useUserInfoQuery } from '@queries/auth/user-info';
@@ -16,6 +17,25 @@ import { SkipButton } from './shared';
 // app already reflects Premium when the user continues in.
 const LICENSE_POLL_ATTEMPTS = 10;
 const LICENSE_POLL_INTERVAL_MS = 1_000;
+
+const planName = (tier: PlanTier) => t(`setup.plan.tiers.${tier}.name`);
+
+const featureLabel = (label: string) => {
+  if (label === 'AI Tool Calls') return t('setup.plan.features.aiToolCalls');
+  if (label === 'AI Agent') return t('setup.plan.features.aiAgent');
+  if (label === 'Storage') return t('setup.plan.features.storage');
+  return label;
+};
+
+const featureValue = (label: string, tier: PlanTier, fallback: string) => {
+  if (label === 'AI Tool Calls' && tier === 'premium') {
+    return t('setup.plan.values.unlimited');
+  }
+  if (label === 'AI Agent' && tier === 'premium') {
+    return t('setup.plan.values.allModels');
+  }
+  return fallback;
+};
 
 /** Free vs paid. The last step: free/skip finishes immediately; premium
  * round-trips through Stripe checkout (the flow stays incomplete, so both
@@ -77,13 +97,13 @@ export function PlanStep(props: {
             <div class="flex flex-col gap-1">
               <span class="text-sm font-semibold text-ink">
                 {returnedFromCheckout
-                  ? 'Payment successful'
-                  : 'Premium is already active'}
+                  ? t('setup.plan.paymentSuccessful')
+                  : t('setup.plan.alreadyActive')}
               </span>
               <p class="text-sm leading-relaxed text-ink-muted">
                 {returnedFromCheckout
-                  ? 'Premium is now active on your account.'
-                  : 'Your account already has Premium access — no payment needed.'}
+                  ? t('setup.plan.paymentDescription')
+                  : t('setup.plan.alreadyActiveDescription')}
               </p>
             </div>
           </div>
@@ -93,7 +113,9 @@ export function PlanStep(props: {
             disabled={props.finishing}
             onClick={() => props.onPremiumPaid()}
           >
-            {props.finishing ? 'Setting up your workspace…' : 'Continue'}
+            {props.finishing
+              ? t('setup.plan.settingUp')
+              : t('setup.actions.continue')}
             <ArrowRight class="size-5" />
           </Button>
         </div>
@@ -115,7 +137,7 @@ export function PlanStep(props: {
               >
                 <div class="flex items-center justify-between">
                   <span class="text-sm font-semibold text-ink">
-                    {plan().name}
+                    {planName(plan().tier)}
                   </span>
                   <span
                     class={cn(
@@ -132,19 +154,31 @@ export function PlanStep(props: {
                 </div>
                 <div class="flex items-baseline gap-1">
                   <span class="text-2xl font-semibold tracking-tight text-ink">
-                    ${plan().price}
+                    {formatNumber(plan().price, {
+                      style: 'currency',
+                      currency: 'USD',
+                      maximumFractionDigits: 0,
+                    })}
                   </span>
                   <span class="text-xs text-ink-muted">
-                    {plan().price === 0 ? 'forever' : 'per user / month'}
+                    {plan().price === 0
+                      ? t('setup.plan.forever')
+                      : t('setup.plan.perUserMonth')}
                   </span>
                 </div>
                 <ul class="flex flex-col gap-2">
                   <Index each={PLAN_FEATURES}>
                     {(feature) => (
                       <li class="flex items-center justify-between gap-2 text-xs">
-                        <span class="text-ink-muted">{feature().label}</span>
+                        <span class="text-ink-muted">
+                          {featureLabel(feature().label)}
+                        </span>
                         <span class="text-ink font-medium">
-                          {feature().values[plan().tier]}
+                          {featureValue(
+                            feature().label,
+                            plan().tier,
+                            feature().values[plan().tier]
+                          )}
                         </span>
                       </li>
                     )}
@@ -164,13 +198,15 @@ export function PlanStep(props: {
           >
             {props.finishing
               ? selected() === 'free'
-                ? 'Setting up your workspace…'
-                : 'Heading to checkout…'
-              : `Continue with ${selected() === 'free' ? 'Free' : 'Premium'}`}
+                ? t('setup.plan.settingUp')
+                : t('setup.plan.headingToCheckout')
+              : t('setup.plan.continueWith', {
+                  plan: planName(selected()),
+                })}
             <ArrowRight class="size-5" />
           </Button>
           <SkipButton
-            label="Decide later"
+            label={t('setup.plan.decideLater')}
             disabled={props.finishing}
             onClick={() => props.onFree(true)}
           />

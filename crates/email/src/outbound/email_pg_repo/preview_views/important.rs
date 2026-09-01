@@ -143,7 +143,7 @@ pub(crate) async fn important_preview_cursor(
                c.email_address AS "sender_email?",
                COALESCE(isk.from_name, c.name) AS "sender_name?",
                c.sfs_photo_url as "sender_photo_url?",
-               el.conation_id AS "owner_id!",
+               el.macro_id AS "owner_id!",
             el.id AS "link_id!"
         FROM ImportantWithSortKey isk
         JOIN email_threads t ON isk.thread_id = t.id

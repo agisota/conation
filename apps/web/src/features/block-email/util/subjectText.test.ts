@@ -1,8 +1,11 @@
+import { setLocale } from '@app/lib/i18n';
 import type { ApiMessage } from '@service-email/generated/schemas';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { displaySubject, getSubjectText } from './subjectText';
 
 describe('displaySubject', () => {
+  afterEach(() => setLocale('en'));
+
   it('returns the subject as-is when there is nothing to strip', () => {
     expect(displaySubject('Q3 contract')).toBe('Q3 contract');
   });
@@ -32,6 +35,11 @@ describe('displaySubject', () => {
 
   it('names a subject that is nothing but reply prefixes', () => {
     expect(displaySubject('Re: ')).toBe('[No subject]');
+  });
+
+  it('localizes the missing-subject label at runtime', () => {
+    setLocale('ru');
+    expect(displaySubject(undefined)).toBe('[Без темы]');
   });
 });
 

@@ -1,5 +1,5 @@
-import { Show } from 'solid-js';
 import { t } from '@app/lib/i18n';
+import { Show } from 'solid-js';
 import { useProperty } from '../../core/context';
 import { PropertyEmpty } from '../../extractors/PropertyEmpty';
 import { formatNumber } from '../../utils';
@@ -46,7 +46,10 @@ export function InlineNumberEditor() {
             'text-ink-muted': !supportsInline(),
           }}
         >
-          <Show when={hasValue()} fallback={<PropertyEmpty label="Empty" />}>
+          <Show
+            when={hasValue()}
+            fallback={<PropertyEmpty label={t('property.common.empty')} />}
+          >
             <span class="block truncate max-w-full">{display()}</span>
           </Show>
         </button>
@@ -61,7 +64,7 @@ export function InlineNumberEditor() {
         onBlur={editor.save}
         onKeyDown={handleKeyDown}
         disabled={editor.isSaving()}
-        placeholder={t('auto.enter_number')}
+        placeholder={t('property.number.placeholder')}
         class="w-full text-left text-ink px-2 py-0.5 bg-transparent focus:outline-none rounded-sm"
       />
     </Show>

@@ -11,11 +11,11 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use connection_gateway_client::ConnectionGatewayClient;
-use entity_access::domain::models::{EntityAccessReceipt, ViewAccessLevel};
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_db_client::annotations::create_comment::create_document_comment;
 use conation_user_id::user_id::MacroUserIdStr;
+use connection_gateway_client::ConnectionGatewayClient;
+use entity_access::domain::models::{EntityAccessReceipt, ViewAccessLevel};
 use model::{
     annotations::{
         AnnotationIncrementalUpdate, Mentions,
@@ -66,7 +66,7 @@ pub async fn create_comment_handler(
     Path(Params { document_id }): Path<Params>,
     Json(req): Json<CreateCommentRequest>,
 ) -> Result<Response, Response> {
-    let user_id = user.authorization.user.conation_user_id.to_string();
+    let user_id = user.authorization.user.macro_user_id.to_string();
     if document_context.deleted_at.is_some() {
         return Err((
             StatusCode::BAD_REQUEST,

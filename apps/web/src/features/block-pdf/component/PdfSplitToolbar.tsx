@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { showTabBarSignal } from '@block-pdf/signal/placeables';
 import {
   SplitToolbarLeft,
@@ -20,7 +21,7 @@ function TabsToggle() {
     <Show when={canEdit()}>
       <Button
         size="icon-sm"
-        label={showTabBar() ? 'Hide Tabs' : 'Show Tabs'}
+        label={showTabBar() ? t('pdf.tabs.hide') : t('pdf.tabs.show')}
         variant="ghost"
         onClick={() => {
           setShowTabBar(!showTabBar());

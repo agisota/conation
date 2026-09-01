@@ -50,11 +50,11 @@ pub async fn ws_handler(
     State(ctx): State<ApiContext>,
     State(config): State<Arc<Config>>,
 ) -> impl IntoResponse {
-    let conation_user_id = authorization.authorization.user.conation_user_id.clone();
+    let macro_user_id = authorization.authorization.user.macro_user_id.clone();
     let user_context = authorization.authorization.user.user_context.clone();
 
     ws.on_upgrade(move |socket| {
-        handle_websocket_connection(socket, ctx, config, conation_user_id, user_context)
+        handle_websocket_connection(socket, ctx, config, macro_user_id, user_context)
     })
 }
 
@@ -62,12 +62,12 @@ pub async fn ws_handler(
 /// Should create a new connection in the connection manager,
 /// and spawn tasks for both forwarding of messages, and reading incoming messages from the client.
 /// If any part of forwarding or reading fails, then the connection should be removed from the connection manager.
-#[tracing::instrument(skip(socket, ctx, config, conation_user_id, user_context), fields(user_id=?conation_user_id))]
+#[tracing::instrument(skip(socket, ctx, config, macro_user_id, user_context), fields(user_id=?macro_user_id))]
 async fn handle_websocket_connection(
     socket: WebSocket,
     ctx: ApiContext,
     config: Arc<Config>,
-    conation_user_id: MacroUserIdStr<'static>,
+    macro_user_id: MacroUserIdStr<'static>,
     user_context: UserContext,
 ) {
     let (sink, stream) = socket.split();
@@ -75,7 +75,7 @@ async fn handle_websocket_connection(
     let connection_id = uuid::Uuid::new_v4().to_string();
 
     // Create guard that records last online time when websocket connection closes
-    let last_online_guard = ctx.last_online_worker.new_guard(conation_user_id.clone());
+    let last_online_guard = ctx.last_online_worker.new_guard(macro_user_id.clone());
 
     let sender_connection_id = connection_id.clone();
     let sender_task = tokio::spawn(forwarder(sink, receiver, sender_connection_id));
@@ -84,9 +84,9 @@ async fn handle_websocket_connection(
         .connection_manager
         .add_connection(
             EntityType::User
-                .with_entity_str(conation_user_id.as_ref())
+                .with_entity_str(macro_user_id.as_ref())
                 .with_connection_str(&connection_id)
-                .with_user_str(conation_user_id.as_ref()),
+                .with_user_str(macro_user_id.as_ref()),
             sender.clone(),
             sender_task.abort_handle(),
         )

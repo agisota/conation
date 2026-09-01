@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { cn } from '@ui';
 import type { Accessor, ParentProps } from 'solid-js';
 import { Show } from 'solid-js';
@@ -28,12 +29,14 @@ export function ItemBin(
       props.showingCount !== undefined &&
       props.totalCount > props.showingCount
     ) {
-      return `View all (${props.totalCount})`;
+      return t('editor.mentions.viewAllWithCount', {
+        count: props.totalCount,
+      });
     }
     if (props.isNextPage?.()) {
-      return 'View all';
+      return t('editor.mentions.viewAll');
     }
-    return 'View all';
+    return t('editor.mentions.viewAll');
   };
 
   return (

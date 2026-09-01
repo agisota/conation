@@ -1,5 +1,5 @@
-import { joinChannelCall } from '@channel/Call/join-channel-call';
 import { t } from '@app/lib/i18n';
+import { joinChannelCall } from '@channel/Call/join-channel-call';
 import { RecipientSelector } from '@core/component/RecipientSelector';
 import { toast } from '@core/component/Toast/Toast';
 import { useCombinedRecipients } from '@core/signal/useCombinedRecipient';
@@ -60,7 +60,7 @@ export function NewCallButton() {
                 });
           channelId = result.channel_id;
         } catch {
-          toast.failure('Failed to create channel for call');
+          toast.failure(t('soup.call.createChannelFailed'));
           setIsSubmitting(false);
           return;
         }
@@ -72,7 +72,7 @@ export function NewCallButton() {
       await joinChannelCall(channelId);
     } catch (err) {
       console.error('Failed to start call', err);
-      toast.failure('Failed to start call');
+      toast.failure(t('soup.call.startFailed'));
       setIsSubmitting(false);
     }
   }
@@ -86,7 +86,7 @@ export function NewCallButton() {
         onClick={() => setIsOpen(true)}
       >
         <PlusCircleIcon class="size-3.5 text-accent" />
-        <span>{t('auto.call')}</span>
+        <span>{t('soup.call.action')}</span>
       </Button>
       <Dialog
         open={isOpen()}
@@ -103,14 +103,16 @@ export function NewCallButton() {
                 <Dialog.CloseButton as={Button} variant="ghost" size="icon-sm">
                   <XIcon />
                 </Dialog.CloseButton>
-                <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">{t('auto.new_call')}</Dialog.Title>
+                <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">
+                  {t('soup.call.dialogTitle')}
+                </Dialog.Title>
               </div>
               <div class="flex flex-col p-4 gap-4">
                 <RecipientSelector<'user' | 'contact' | 'channel'>
                   options={destinationOptions}
                   selectedOptions={selectedOptions()}
                   setSelectedOptions={setSelectedOptions}
-                  placeholder="To: Macro users or email addresses"
+                  placeholder={t('soup.call.recipientPlaceholder')}
                   triedToSubmit={triedToSubmit}
                   focusOnMount
                   triggerMode="input"
@@ -123,7 +125,9 @@ export function NewCallButton() {
                     onClick={handleStartCall}
                   >
                     <PhoneCallIcon class="size-3.5" />
-                    {isSubmitting() ? 'Starting...' : 'Start Call'}
+                    {isSubmitting()
+                      ? t('soup.call.starting')
+                      : t('soup.call.start')}
                   </Button>
                 </div>
               </div>

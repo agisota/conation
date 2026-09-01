@@ -1,5 +1,6 @@
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
+import { t } from '@app/lib/i18n';
 import { FEATURED_MCP_SERVERS } from '@core/component/AI/constant/mcpServers';
 import LogoIcon from '@icon/macro-logo.svg';
 import { authKeys } from '@queries/auth/keys';
@@ -95,46 +96,43 @@ interface StepControls {
 }
 
 interface ConnectorStepCopy {
-  subtitle: string;
-  features: string[];
+  subtitleKey: string;
+  featureKeys: string[];
   /** Shown under the row once connected — what happens behind the scenes. */
-  gatherHint?: string;
+  gatherHintKey?: string;
 }
 
 const CONNECTOR_COPY: Record<string, ConnectorStepCopy> = {
   Linear: {
-    subtitle: 'Bring your issues into your unified workspace.',
-    features: [
-      'Macro imports a small set of your recent issues and tags as Macro tasks, ready to work on.',
-      'Macro AI can create, read, and update Linear issues without leaving Macro.',
+    subtitleKey: 'setup.connectors.linear.subtitle',
+    featureKeys: [
+      'setup.connectors.linear.featureImport',
+      'setup.connectors.linear.featureAi',
     ],
-    gatherHint:
-      "We're already looking through your Linear — you'll see what we found before you finish.",
+    gatherHintKey: 'setup.connectors.linear.gatherHint',
   },
   Notion: {
-    subtitle: 'Bring your docs and wikis into your unified workspace.',
-    features: [
-      'Macro imports a small set of your pages as Macro docs.',
-      'Macro AI can search your pages and wikis.',
+    subtitleKey: 'setup.connectors.notion.subtitle',
+    featureKeys: [
+      'setup.connectors.notion.featureImport',
+      'setup.connectors.notion.featureAi',
     ],
-    gatherHint:
-      "We're already looking through your Notion — you'll see what we found before you finish.",
+    gatherHintKey: 'setup.connectors.notion.gatherHint',
   },
   Slack: {
-    subtitle: 'Bring your conversations into your unified workspace.',
-    features: [
-      'Macro creates channels based on your existing Slack channels, with the right participants.',
-      'Macro AI can search conversations and post updates for you.',
+    subtitleKey: 'setup.connectors.slack.subtitle',
+    featureKeys: [
+      'setup.connectors.slack.featureImport',
+      'setup.connectors.slack.featureAi',
     ],
-    gatherHint:
-      "We're already looking through your Slack — you'll see what we found before you finish.",
+    gatherHintKey: 'setup.connectors.slack.gatherHint',
   },
   GitHub: {
-    subtitle: 'Bring your repos into your unified workspace.',
-    features: [
-      'Pull requests show up in Macro.',
-      'Tasks get auto-updating branch names.',
-      'Macro AI can answer questions about your repos, pull requests, and issues.',
+    subtitleKey: 'setup.connectors.github.subtitle',
+    featureKeys: [
+      'setup.connectors.github.featurePullRequests',
+      'setup.connectors.github.featureBranches',
+      'setup.connectors.github.featureAi',
     ],
   },
 };
@@ -154,16 +152,16 @@ function buildSteps(
     return [
       {
         key: `connect-${name.toLowerCase()}`,
-        title: `Connect ${name}`,
-        subtitle: copy.subtitle,
+        title: t('setup.connectors.stepTitle', { connector: name }),
+        subtitle: t(copy.subtitleKey),
         ...(logo && {
           module: { kind: 'connector', serverName: name, logo },
         }),
         render: (controls: StepControls) => (
           <ConnectorStep
             server={server}
-            features={copy.features}
-            gatherHint={copy.gatherHint}
+            features={copy.featureKeys.map((key) => t(key))}
+            gatherHint={copy.gatherHintKey ? t(copy.gatherHintKey) : undefined}
             onContinue={controls.next}
             onSkip={controls.skip}
           />
@@ -175,9 +173,8 @@ function buildSteps(
   return [
     {
       key: 'email',
-      title: 'Connect your Google accounts',
-      subtitle:
-        'Macro builds one unified memory across everything you do. Connecting multiple email accounts brings your email, docs, and calendar together, so nothing lives in a silo.',
+      title: t('setup.email.title'),
+      subtitle: t('setup.email.subtitle'),
       module: { kind: 'email', logo: MODULE_LOGOS.Google },
       render: (controls) => (
         <EmailStep onContinue={controls.next} onSkip={controls.skip} />
@@ -186,9 +183,8 @@ function buildSteps(
     ...connectorSteps,
     {
       key: 'team',
-      title: 'Macro is meant for teams',
-      subtitle:
-        'Macro is built to be used with others. Invite your team to share docs, channels, and context from day one.',
+      title: t('setup.team.title'),
+      subtitle: t('setup.team.subtitle'),
       render: (controls) => (
         <TeamStep onContinue={controls.next} onSkip={controls.skip} />
       ),
@@ -208,16 +204,15 @@ function buildSteps(
     },
     {
       key: 'summary',
-      title: 'Your workspace is taking shape',
-      subtitle:
-        "Here's what we're bringing into Macro. Imports keep running in the background — no need to wait.",
+      title: t('setup.summary.title'),
+      subtitle: t('setup.summary.subtitle'),
       wide: true,
       render: (controls) => <SummaryStep onContinue={controls.next} />,
     },
     {
       key: 'plan',
-      title: 'Choose your plan',
-      subtitle: 'Start free, or go Premium. You can change this anytime.',
+      title: t('setup.plan.title'),
+      subtitle: t('setup.plan.subtitle'),
       wide: true,
       render: (controls) => (
         <PlanStep

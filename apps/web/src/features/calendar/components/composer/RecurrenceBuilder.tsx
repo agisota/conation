@@ -1,5 +1,5 @@
+import { formatDateTime, t } from '@app/lib/i18n';
 import { RadioGroup } from '@kobalte/core/radio-group';
-import { t } from '@app/lib/i18n';
 import { Button, Select } from '@ui';
 import { addMonths, format } from 'date-fns';
 import { createMemo, For, Show } from 'solid-js';
@@ -14,17 +14,23 @@ import {
 import { EventDateField } from './EventDateTimeInputs';
 
 const DATE_VALUE = 'yyyy-MM-dd';
+const WEEKDAY_REFERENCE = new Date(2024, 0, 7);
+
+function weekdayLabel(code: WeekdayCode, width: 'long' | 'narrow') {
+  const date = new Date(WEEKDAY_REFERENCE);
+  date.setDate(date.getDate() + WEEKDAY_CODES.indexOf(code));
+  return formatDateTime(date, { weekday: width });
+}
 
 type FrequencyOption = {
   value: RecurrenceFrequency;
-  label: string;
 };
 
 const FREQUENCY_OPTIONS: FrequencyOption[] = [
-  { value: 'DAILY', label: 'day' },
-  { value: 'WEEKLY', label: 'week' },
-  { value: 'MONTHLY', label: 'month' },
-  { value: 'YEARLY', label: 'year' },
+  { value: 'DAILY' },
+  { value: 'WEEKLY' },
+  { value: 'MONTHLY' },
+  { value: 'YEARLY' },
 ];
 
 export interface RecurrenceBuilderProps {
@@ -48,8 +54,13 @@ export function RecurrenceBuilder(props: RecurrenceBuilderProps) {
     () =>
       formatRecurrenceDescription(
         buildRecurrenceLines(props.value, props.allDay)
-      ) ?? 'Recurring event'
+      ) ?? t('calendar.recurrence.recurringEvent')
   );
+  const frequencyLabel = (option: FrequencyOption) =>
+    t('calendar.recurrence.frequencyUnit', {
+      frequency: option.value,
+      count: props.value.interval,
+    });
 
   const patchConfig = (patch: Partial<RecurrenceConfig>) =>
     props.onChange({ ...props.value, ...patch });
@@ -90,7 +101,9 @@ export function RecurrenceBuilder(props: RecurrenceBuilderProps) {
 
       <div class="flex flex-wrap items-start gap-4">
         <div class="flex flex-col gap-2">
-          <span class="text-ink-extra-muted">{t('auto.repeat_every')}</span>
+          <span class="text-ink-extra-muted">
+            {t('calendar.recurrence.repeatEvery')}
+          </span>
           <div class="flex min-w-0 flex-wrap items-center gap-2">
             <input
               type="number"
@@ -99,7 +112,7 @@ export function RecurrenceBuilder(props: RecurrenceBuilderProps) {
               onInput={(event) =>
                 patchConfig({ interval: event.currentTarget.valueAsNumber })
               }
-              aria-label={t('auto.repeat_interval')}
+              aria-label={t('calendar.recurrence.intervalLabel')}
               class="settings-input h-7 w-16"
               disabled={props.disabled}
             />
@@ -110,15 +123,17 @@ export function RecurrenceBuilder(props: RecurrenceBuilderProps) {
                 option && patchConfig({ frequency: option.value })
               }
               optionValue="value"
-              optionTextValue="label"
+              optionTextValue={frequencyLabel}
               disabled={props.disabled}
             >
               <Select.Trigger
-                aria-label={t('auto.repeat_unit')}
+                aria-label={t('calendar.recurrence.unitLabel')}
                 class="settings-input h-7 w-28"
               >
                 <Select.Value<FrequencyOption>>
-                  {(selectState) => selectState.selectedOption().label}
+                  {(selectState) =>
+                    frequencyLabel(selectState.selectedOption())
+                  }
                 </Select.Value>
                 <Select.Icon />
               </Select.Trigger>
@@ -131,7 +146,9 @@ export function RecurrenceBuilder(props: RecurrenceBuilderProps) {
 
         <Show when={props.value.frequency === 'WEEKLY'}>
           <div class="flex flex-col gap-2">
-            <span class="text-ink-extra-muted">{t('auto.repeat_on')}</span>
+            <span class="text-ink-extra-muted">
+              {t('calendar.recurrence.repeatOn')}
+            </span>
             <div class="flex flex-wrap items-center gap-1.5">
               <For each={WEEKDAY_CODES}>
                 {(code) => (
@@ -142,12 +159,12 @@ export function RecurrenceBuilder(props: RecurrenceBuilderProps) {
                     }
                     size="icon-sm"
                     class="rounded-full text-xxs"
-                    aria-label={code}
+                    aria-label={weekdayLabel(code, 'long')}
                     aria-pressed={props.value.byDay.includes(code)}
                     disabled={props.disabled}
                     onClick={() => toggleWeekday(code)}
                   >
-                    {code[0]}
+                    {weekdayLabel(code, 'narrow')}
                   </Button>
                 )}
               </For>
@@ -157,12 +174,14 @@ export function RecurrenceBuilder(props: RecurrenceBuilderProps) {
       </div>
 
       <div class="flex flex-col gap-2">
-        <span class="text-ink-extra-muted">{t('auto.ends')}</span>
+        <span class="text-ink-extra-muted">
+          {t('calendar.recurrence.ends')}
+        </span>
         <RadioGroup
           value={props.value.ends.kind}
           onChange={changeEndsKind}
           disabled={props.disabled}
-          aria-label={t('auto.recurrence_ends')}
+          aria-label={t('calendar.recurrence.endsLabel')}
           class="grid min-w-0 grid-cols-3 gap-2"
         >
           <RadioGroup.Item
@@ -175,8 +194,12 @@ export function RecurrenceBuilder(props: RecurrenceBuilderProps) {
               <RadioGroup.ItemControl class="flex size-4 shrink-0 items-center justify-center rounded-full border border-edge data-checked:border-accent">
                 <RadioGroup.ItemIndicator class="size-2 rounded-full bg-accent" />
               </RadioGroup.ItemControl>
-              <RadioGroup.ItemLabel class="shrink-0 font-medium text-ink">never</RadioGroup.ItemLabel>
-              <span class="text-ink-extra-muted">{t('auto.the_event_repeats_indefinitely')}</span>
+              <RadioGroup.ItemLabel class="shrink-0 font-medium text-ink">
+                {t('calendar.recurrence.never')}
+              </RadioGroup.ItemLabel>
+              <span class="text-ink-extra-muted">
+                {t('calendar.recurrence.indefinitely')}
+              </span>
             </div>
           </RadioGroup.Item>
 
@@ -191,10 +214,10 @@ export function RecurrenceBuilder(props: RecurrenceBuilderProps) {
                 <RadioGroup.ItemIndicator class="size-2 rounded-full bg-accent" />
               </RadioGroup.ItemControl>
               <RadioGroup.ItemLabel class="shrink-0 font-medium text-ink">
-                On
+                {t('calendar.recurrence.on')}
               </RadioGroup.ItemLabel>
               <EventDateField
-                label="Ends on"
+                label={t('calendar.recurrence.endsOn')}
                 value={
                   props.value.ends.kind === 'on'
                     ? props.value.ends.date
@@ -219,7 +242,9 @@ export function RecurrenceBuilder(props: RecurrenceBuilderProps) {
               <RadioGroup.ItemControl class="flex size-4 shrink-0 items-center justify-center rounded-full border border-edge data-checked:border-accent">
                 <RadioGroup.ItemIndicator class="size-2 rounded-full bg-accent" />
               </RadioGroup.ItemControl>
-              <RadioGroup.ItemLabel class="shrink-0 font-medium text-ink">{t('auto.after')}</RadioGroup.ItemLabel>
+              <RadioGroup.ItemLabel class="shrink-0 font-medium text-ink">
+                {t('calendar.recurrence.after')}
+              </RadioGroup.ItemLabel>
               <input
                 type="number"
                 min="1"
@@ -234,11 +259,18 @@ export function RecurrenceBuilder(props: RecurrenceBuilderProps) {
                     count: event.currentTarget.valueAsNumber,
                   })
                 }
-                aria-label={t('auto.ends_after_occurrences')}
+                aria-label={t('calendar.recurrence.endsAfterOccurrences')}
                 class="settings-input h-7 w-14"
                 disabled={props.disabled}
               />
-              <span>occurrences</span>
+              <span>
+                {t('calendar.recurrence.occurrences', {
+                  count:
+                    props.value.ends.kind === 'after'
+                      ? props.value.ends.count
+                      : 13,
+                })}
+              </span>
             </div>
           </RadioGroup.Item>
         </RadioGroup>

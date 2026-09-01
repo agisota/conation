@@ -1,3 +1,5 @@
+import { t } from '@app/lib/i18n';
+
 export type PlanTier = 'free' | 'premium';
 export type Plan = {
   tier: PlanTier;
@@ -11,13 +13,17 @@ export type PaidPlanTier = Exclude<PlanTier, 'free'>;
 export const PLANS = [
   {
     tier: 'free' as const,
-    name: 'Free',
+    get name() {
+      return t('shell.paywall.plan.free');
+    },
     price: 0,
     highlighted: false,
   },
   {
     tier: 'premium' as const,
-    name: 'Premium',
+    get name() {
+      return t('shell.paywall.plan.premium');
+    },
     price: 40,
     highlighted: true,
   },
@@ -30,21 +36,31 @@ interface PlanFeature {
 
 export const PLAN_FEATURES: PlanFeature[] = [
   {
-    label: 'AI Tool Calls',
+    get label() {
+      return t('shell.paywall.plan.aiToolCalls');
+    },
     values: {
       free: '—',
-      premium: 'Unlimited',
+      get premium() {
+        return t('shell.paywall.plan.unlimited');
+      },
     },
   },
   {
-    label: 'AI Agent',
+    get label() {
+      return t('shell.paywall.plan.aiAgent');
+    },
     values: {
       free: 'Haiku',
-      premium: 'All models',
+      get premium() {
+        return t('shell.paywall.features.allModels');
+      },
     },
   },
   {
-    label: 'Storage',
+    get label() {
+      return t('shell.paywall.plan.storage');
+    },
     values: {
       free: '5 GB',
       premium: '1 TB',

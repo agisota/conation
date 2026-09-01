@@ -111,7 +111,7 @@ async fn test_search_chat_names_ids_only_mode(pool: Pool<Postgres>) -> anyhow::R
     assert_eq!(response.items[0].entity_type, SearchEntityType::Chats);
     assert_eq!(
         response.items[0].name,
-        "<conation_em>Project</conation_em> Review Chat"
+        "<macro_em>Project</macro_em> Review Chat"
     );
 
     assert_eq!(
@@ -120,7 +120,7 @@ async fn test_search_chat_names_ids_only_mode(pool: Pool<Postgres>) -> anyhow::R
     );
     assert_eq!(
         response.items[1].name,
-        "<conation_em>Project</conation_em> Planning Chat"
+        "<macro_em>Project</macro_em> Planning Chat"
     );
 
     Ok(())
@@ -161,7 +161,7 @@ async fn test_search_chat_names_normal_mode_owned_chats(
     );
     assert_eq!(
         response.items[0].name,
-        "IMPORTANT <conation_em>PROJECT</conation_em>"
+        "IMPORTANT <macro_em>PROJECT</macro_em>"
     );
 
     assert_eq!(
@@ -170,7 +170,7 @@ async fn test_search_chat_names_normal_mode_owned_chats(
     );
     assert_eq!(
         response.items[1].name,
-        "<conation_em>Project</conation_em> Review Chat"
+        "<macro_em>Project</macro_em> Review Chat"
     );
 
     Ok(())
@@ -273,7 +273,7 @@ async fn test_search_chat_names_with_shared_chats(pool: Pool<Postgres>) -> anyho
     assert!(user3_chat.is_some());
     assert_eq!(
         user3_chat.unwrap().name,
-        "User3 Shared <conation_em>Project</conation_em>"
+        "User3 Shared <macro_em>Project</macro_em>"
     );
 
     Ok(())
@@ -459,7 +459,7 @@ async fn test_search_chat_names_partial_match(pool: Pool<Postgres>) -> anyhow::R
     );
     assert_eq!(
         response.items[0].name,
-        "Client <conation_em>Meet</conation_em>ing"
+        "Client <macro_em>Meet</macro_em>ing"
     );
 
     assert_eq!(
@@ -468,7 +468,7 @@ async fn test_search_chat_names_partial_match(pool: Pool<Postgres>) -> anyhow::R
     );
     assert_eq!(
         response.items[1].name,
-        "Team <conation_em>Meet</conation_em>ing Chat"
+        "Team <macro_em>Meet</macro_em>ing Chat"
     );
 
     Ok(())

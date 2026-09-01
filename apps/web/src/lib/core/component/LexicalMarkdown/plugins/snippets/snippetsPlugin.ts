@@ -1,5 +1,4 @@
-import { ENABLE_SNIPPETS } from '@core/constant/featureFlags';
-import { $dfsIterator, mergeRegister } from '@lexical/utils';
+import { t } from '@app/lib/i18n';
 import type { PeerIdValidator } from '@conation/lexical-core';
 import {
   $collapseInlineSearch,
@@ -15,6 +14,8 @@ import {
   InlineSearchNodesType,
   validTriggerPosition,
 } from '@conation/lexical-core';
+import { ENABLE_SNIPPETS } from '@core/constant/featureFlags';
+import { $dfsIterator, mergeRegister } from '@lexical/utils';
 import {
   $getNodeByKey,
   $insertNodes,
@@ -206,7 +207,7 @@ function registerSnippetsPlugin(
       insertionNode.remove();
       const awaitNode = $createAwaitNode({
         awaitId,
-        text: 'Inserting snippet...',
+        text: t('editor.snippets.inserting'),
         inline: true,
       });
       const awaitNodeKey = awaitNode.getKey();

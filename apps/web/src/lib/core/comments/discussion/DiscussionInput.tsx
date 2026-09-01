@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { InputActionButton } from '@channel/Input/ActionButton';
 import { useInputCommands } from '@channel/Input/context';
 import { FormatButtons } from '@channel/Input/FormatButtons';
@@ -67,7 +68,7 @@ function AttachImagesAction() {
         onChange={onAttachImages}
       />
       <InputActionButton
-        label="Attach images"
+        label={t('comments.composer.attachImages')}
         onClick={() => fileInputRef?.click()}
       >
         <PaperclipIcon class="size-5" />
@@ -87,7 +88,10 @@ function DefaultActions(props: { input: InputData; isSending: boolean }) {
         </Show>
       </Input.Actions.Left>
       <Input.Actions.Right>
-        <Input.SendAction tooltip="Send comment" disabled={props.isSending} />
+        <Input.SendAction
+          tooltip={t('comments.composer.send')}
+          disabled={props.isSending}
+        />
       </Input.Actions.Right>
     </Input.Actions>
   );

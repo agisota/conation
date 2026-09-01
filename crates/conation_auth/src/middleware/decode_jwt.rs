@@ -1,14 +1,14 @@
 use std::sync::OnceLock;
 
 use anyhow::Context;
-use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode};
 use conation_env::Environment;
 use conation_env_var::{VarNameErr, env_var};
 use conation_user_id::{cowlike::CowLike, lowercased::Lowercase, user_id::MacroUserId};
+use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode};
 use remote_env_var::{LocalOrRemoteSecret, SecretManager};
 use thiserror::Error;
 
-use crate::{error::MacroAuthError, conation_api_token::MacroApiToken};
+use crate::{conation_api_token::MacroApiToken, error::MacroAuthError};
 
 #[derive(Clone)]
 pub struct JwtValidationArgs {
@@ -36,7 +36,7 @@ impl JwtValidationArgs {
         let Env {
             audience,
             issuer,
-            conation_api_token_issuer,
+            macro_api_token_issuer: conation_api_token_issuer,
         } = Env::new()?;
         let (jwt_secret, conation_api_token_public_key) = tokio::try_join!(
             secret_manager.get_maybe_secret_value(env, JwtSecretKey::new()?),
@@ -107,11 +107,14 @@ pub struct MacroAccessToken {
     /// The fusionauth id of the user
     pub fusion_user_id: String,
     /// The macro user id of the user
-    pub conation_user_id: String,
+    #[serde(alias = "conation_user_id")]
+    pub macro_user_id: String,
     /// The organization id for the user if they belong to one
-    pub conation_organization_id: Option<i32>,
+    #[serde(alias = "conation_organization_id")]
+    pub macro_organization_id: Option<i32>,
     /// The root macro id. If provided, if None, use fusion_user_id
-    pub root_conation_id: Option<String>,
+    #[serde(alias = "root_conation_id")]
+    pub root_macro_id: Option<String>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Eq, PartialEq, Debug, Clone)]
@@ -155,12 +158,12 @@ pub fn decode_conation_access_token_allow_expired(
     })?
     .claims;
 
-    let conation_user_id = MacroUserId::parse_from_str(&decoded_jwt.conation_user_id)
+    let macro_user_id = MacroUserId::parse_from_str(&decoded_jwt.macro_user_id)
         .map_err(|_| MacroAuthError::from(anyhow::anyhow!("invalid macro user id in token")))?
         .lowercase()
         .into_owned();
 
-    Ok(conation_user_id)
+    Ok(macro_user_id)
 }
 
 fn validate_conation_access_token_inner(
@@ -318,9 +321,9 @@ mod tests {
             tid: "tenant_id".to_string(),
             email: email.to_string(),
             fusion_user_id: "fusion_testing".to_string(),
-            conation_user_id: "macro|testing".to_string(),
-            conation_organization_id: None,
-            root_conation_id: None,
+            macro_user_id: "macro|testing".to_string(),
+            macro_organization_id: None,
+            root_macro_id: None,
         };
 
         let mut header = jsonwebtoken::Header::new(jsonwebtoken::Algorithm::HS256);
@@ -372,7 +375,7 @@ CwIDAQAB
 
     fn create_test_conation_api_token_jwt(
         issuer: &str,
-        conation_user_id: &str,
+        macro_user_id: &str,
         fusionauth_id: &str,
         organization_id: Option<i32>,
         private_key: &str,
@@ -390,8 +393,8 @@ CwIDAQAB
             exp: now + 3600, // Token expires in 1 hour
             iss: issuer.to_string(),
             fusion_user_id: fusionauth_id.to_string(),
-            conation_user_id: conation_user_id.to_string(),
-            conation_organization_id: organization_id,
+            macro_user_id: macro_user_id.to_string(),
+            macro_organization_id: organization_id,
         };
 
         let mut header = jsonwebtoken::Header::new(jsonwebtoken::Algorithm::RS256);
@@ -641,7 +644,7 @@ CwIDAQAB
             &jwt_validation_args.conation_api_token_issuer,
         )?;
 
-        assert_eq!(result.conation_user_id, "macro|test@macro.com");
+        assert_eq!(result.macro_user_id, "macro|test@macro.com");
 
         Ok(())
     }

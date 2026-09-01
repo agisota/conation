@@ -1,5 +1,5 @@
-import { DatePickerUI } from '@core/component/DatePicker/DatePickerUI';
 import { t } from '@app/lib/i18n';
+import { DatePickerUI } from '@core/component/DatePicker/DatePickerUI';
 import { useDateSearch } from '@core/util/dateSearch/useDateSearch';
 import { useKeyPressed } from '@core/util/useKeyPressed';
 import SearchIcon from '@phosphor/magnifying-glass.svg';
@@ -164,7 +164,9 @@ export const PropertyDateSelector = (props: DateSelectorProps) => {
               }
             }
           }}
-          placeholder={`Set ${props.property.displayName.toLowerCase()}...`}
+          placeholder={t('property.date.setPlaceholder', {
+            property: props.property.displayName.toLowerCase(),
+          })}
           disabled={mode() !== 'search'}
         />
       </div>
@@ -179,12 +181,16 @@ export const PropertyDateSelector = (props: DateSelectorProps) => {
                     when={searchQuery().trim()}
                     fallback={
                       <Show when={!hasClear()}>
-                        <div class="text-center py-2 text-ink-muted text-sm">{t('auto.enter_a_date_or_duration')}</div>
+                        <div class="text-center py-2 text-ink-muted text-sm">
+                          {t('property.date.enterPrompt')}
+                        </div>
                       </Show>
                     }
                   >
                     <div class="text-center py-2 text-ink-muted text-sm">
-                      No dates match "{searchQuery()}"
+                      {t('property.date.noMatches', {
+                        query: searchQuery(),
+                      })}
                     </div>
                   </Show>
                 }
@@ -232,11 +238,13 @@ export const PropertyDateSelector = (props: DateSelectorProps) => {
                 >
                   <div class="flex items-center gap-2 flex-1 min-w-0">
                     <div class="flex-1 min-w-0">
-                      <p class="truncate">{t('auto.custom_date')}</p>
+                      <p class="truncate">{t('property.date.custom')}</p>
                     </div>
                   </div>
                   <div class="flex items-center gap-2 shrink-0">
-                    <span class="text-xs text-ink-muted">{t('auto.pick_from_calendar')}</span>
+                    <span class="text-xs text-ink-muted">
+                      {t('property.date.pickFromCalendar')}
+                    </span>
                   </div>
                 </div>
                 <Show when={hasClear()}>
@@ -254,7 +262,9 @@ export const PropertyDateSelector = (props: DateSelectorProps) => {
                     }}
                   >
                     <div class="flex items-center gap-2 flex-1 min-w-0">
-                      <p class="truncate text-ink-muted">{t('auto.clear_date')}</p>
+                      <p class="truncate text-ink-muted">
+                        {t('property.date.clear')}
+                      </p>
                     </div>
                   </div>
                 </Show>
@@ -265,10 +275,11 @@ export const PropertyDateSelector = (props: DateSelectorProps) => {
           {/* Help text */}
           <div class="shrink-0 px-2 py-1.5 border-t border-edge-muted">
             <div class="text-xs text-ink-muted">
-              <span>{t('auto.use_queries_like')}</span>
+              <span>{t('property.date.queryHintPrefix')} </span>
               <code class="bg-active px-1">3d</code>,{' '}
               <code class="bg-active px-1">1w</code>,{' '}
-              <code class="bg-active px-1">feb 17</code>, or{' '}
+              <code class="bg-active px-1">feb 17</code>,{' '}
+              {t('property.date.queryHintOr')}{' '}
               <code class="bg-active px-1">tomorrow</code>
             </div>
           </div>

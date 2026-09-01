@@ -10,10 +10,10 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use connection_gateway_client::ConnectionGatewayClient;
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_db_client::annotations::edit_comment::edit_document_comment;
 use conation_user_id::user_id::MacroUserIdStr;
+use connection_gateway_client::ConnectionGatewayClient;
 use model::{
     annotations::{
         AnnotationIncrementalUpdate, Mentions,
@@ -55,7 +55,7 @@ pub async fn edit_comment_handler(
     Path(Params { comment_id }): Path<Params>,
     Json(req): Json<EditCommentRequest>,
 ) -> Result<Response, Response> {
-    let user_id = user.authorization.user.conation_user_id.to_string();
+    let user_id = user.authorization.user.macro_user_id.to_string();
     // TODO: check if the user has comment access to the document
     match edit_document_comment(&db, comment_id, &user_id, &req).await {
         Ok(res) => {

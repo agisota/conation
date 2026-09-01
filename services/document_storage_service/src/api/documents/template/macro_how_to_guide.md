@@ -1,10 +1,10 @@
-# Welcome to Macro!
+# Welcome to Conation!
 
-Macro is an extremely fast, unified interface for all your work—email, messages, tasks, docs, and AI agents, all linked together in one database. 
+Conation is an extremely fast, unified interface for all your work—email, messages, tasks, docs, and AI agents, all linked together in one database.
 
-We've prepared some starter docs to help you get a sense of the power of **Macro**. Press `cmd + k` to take a peek!
+We've prepared some starter docs to help you get a sense of the power of **Conation**. Press `cmd + k` to take a peek!
 
-Let's walk around together and see what **Macro** can do. As you're reading, try playing around.
+Let's walk around together and see what **Conation** can do. As you're reading, try playing around.
 
 > **Tip:** We've pinned this doc to your favorites, which appears in the sidebar. For the full documentation, visit [docs.macro.com](https://docs.macro.com).
 
@@ -12,19 +12,19 @@ Let's walk around together and see what **Macro** can do. As you're reading, try
 
 # Unified Input
 
-In **Macro**, anywhere that you can type—whether it's a document, an email, a message—you have access to a host of powerful tools.
+In **Conation**, anywhere that you can type—whether it's a document, an email, a message—you have access to a host of powerful tools.
 
 For example, you can always type @ to open the **mentions** menu. Go ahead, try it.
 
 **Type @ here:**
 
-Mentions allow you to create **bidirectional links** to any document, contact, channel, etc. Anything inside of Macro can be mentioned. 
+Mentions allow you to create **bidirectional links** to any document, contact, channel, etc. Anything inside of Conation can be mentioned.
 
 For example here is **task** mention: <m-document-mention>{"documentId":"LEARN_ABOUT_TASKS_ID","blockName":"task","documentName":"LEARN_ABOUT_TASKS_NAME","blockParams":{},"collapsed":false}</m-document-mention>. And here is the same mention, rendered as a card:
 
 <m-document-card>{"documentId":"LEARN_ABOUT_TASKS_ID","blockName":"task","documentName":"LEARN_ABOUT_TASKS_NAME","blockParams":{},"previewBox":["100%","400px"],"previewData":null}</m-document-card>
 
-Sometimes mentioning has special powers. For example, if you mention a user in a **message** or in a **document comment**, Macro will notify that user that they've been mentioned.
+Sometimes mentioning has special powers. For example, if you mention a user in a **message** or in a **document comment**, Conation will notify that user that they've been mentioned.
 
 > **Tip:** You can see every place that a document has been mentioned in the References sections of the document's info panel.
 
@@ -38,7 +38,7 @@ Other tools available wherever you are typing:
 
 # Learn the five most important shortcuts
 
-Macro is built to be driven from the keyboard.
+Conation is built to be driven from the keyboard.
 
 - `cmd + k` — jump to anything by name
 - `c` — create anything (then `d` for a doc, `t` for a task, `e` for an email, `m` for a channel, `a` for an AI chat)
@@ -63,7 +63,7 @@ There's a bunch of other fancy stuff documents can do:
 - Select text to comment; comments with @mentions always notify
 - Markdown auto-formatting: `#` for headings, `[]` for checklists, `>` for quotes.
 - Full version history with time-travel browsing
-- Type `/` for a bunch of fun nodes. Math? $\int_{you=0}^{you=100}(Macro)dx$
+- Type `/` for a bunch of fun nodes. Math? $\int_{you=0}^{you=100}(Conation)dx$
 
 ---
 
@@ -78,19 +78,19 @@ Press `g` then `i` to open your unified **inbox**: emails, channel messages, tas
 
 # Connect *all* your email accounts
 
-Macro is a full email client that syncs with Gmail and Google Workspace—no migration needed. Connect one or more accounts in **Settings**, and every message lands in a single unified inbox. When you compose, you pick which address sends.
+Conation is a full email client that syncs with Gmail and Google Workspace—no migration needed. Connect one or more accounts in **Settings**, and every message lands in a single unified inbox. When you compose, you pick which address sends.
 
 ---
 
 # Put agents to work
 
-Press `c` then `a` to chat with an agent, or mention **@Macro** in any channel. Agents see your whole workspace — docs, emails, messages, call transcripts — so they can summarize discussions, answer questions, draft documents, and create tasks. You can also schedule **automations** (daily reminders, weekly summaries) that deliver results straight to your inbox.
+Press `c` then `a` to chat with an agent, or mention **@macro** in any channel. Agents see your whole workspace — docs, emails, messages, call transcripts — so they can summarize discussions, answer questions, draft documents, and create tasks. You can also schedule **automations** (daily reminders, weekly summaries) that deliver results straight to your inbox.
 
 ---
 
 # Splits
 
-Macro has a built-in window manager:
+Conation has a built-in window manager:
 
 - `\` or `cmd+\` — split your workspace
 - `shift+h` / `shift+l` — move focus between splits

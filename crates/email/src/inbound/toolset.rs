@@ -27,16 +27,16 @@ pub use set_sender_policy::{SetSenderPolicy, SetSenderPolicyResponse, ToolSender
 pub use update_thread_labels::{UpdateThreadLabels, UpdateThreadLabelsResponse};
 
 /// The caller's default inbox: the primary link they own. Falls back to any
-/// link they own, then any accessible inbox. `caller_conation_id` is the caller's
+/// link they own, then any accessible inbox. `caller_macro_id` is the caller's
 /// own macro id (e.g. `macro|user@example.com`).
-pub fn caller_primary_inbox<'a>(inboxes: &'a [Link], caller_conation_id: &str) -> Option<&'a Link> {
+pub fn caller_primary_inbox<'a>(inboxes: &'a [Link], caller_macro_id: &str) -> Option<&'a Link> {
     inboxes
         .iter()
-        .find(|l| l.is_primary && l.conation_id.to_string() == caller_conation_id)
+        .find(|l| l.is_primary && l.macro_id.to_string() == caller_macro_id)
         .or_else(|| {
             inboxes
                 .iter()
-                .find(|l| l.conation_id.to_string() == caller_conation_id)
+                .find(|l| l.macro_id.to_string() == caller_macro_id)
         })
         .or_else(|| inboxes.first())
 }
@@ -47,11 +47,11 @@ pub fn caller_primary_inbox<'a>(inboxes: &'a [Link], caller_conation_id: &str) -
 /// scope to an inbox they don't have.
 pub fn resolve_inbox_selector<'a>(
     inboxes: &'a [Link],
-    caller_conation_id: &str,
+    caller_macro_id: &str,
     requested: Option<&str>,
 ) -> Result<&'a Link, ToolCallError> {
     let Some(addr) = requested.map(str::trim).filter(|s| !s.is_empty()) else {
-        return caller_primary_inbox(inboxes, caller_conation_id).ok_or_else(|| ToolCallError {
+        return caller_primary_inbox(inboxes, caller_macro_id).ok_or_else(|| ToolCallError {
             description: "No email account is linked for this user.".to_string(),
             internal_error: anyhow::anyhow!("no accessible inboxes"),
         });
@@ -121,9 +121,9 @@ impl<T: EmailService, G: GmailTokenProvider, E: EntityAccessService> EmailToolCo
     /// Resolve the user's email link from their macro ID.
     ///
     /// This is shared across all email tools that need an authenticated link.
-    pub async fn resolve_link(&self, conation_id: MacroUserIdStr<'_>) -> Result<Link, ToolCallError> {
+    pub async fn resolve_link(&self, macro_id: MacroUserIdStr<'_>) -> Result<Link, ToolCallError> {
         self.service
-            .get_link_by_conation_id(conation_id)
+            .get_link_by_macro_id(macro_id)
             .await
             .map_err(|e| ToolCallError {
                 description: format!("Failed to resolve email link: {e}"),

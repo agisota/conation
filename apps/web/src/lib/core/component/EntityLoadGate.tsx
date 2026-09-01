@@ -1,5 +1,5 @@
-import { nativeNetworkStatus } from '@core/mobile/native-network-status';
 import { t } from '@app/lib/i18n';
+import { nativeNetworkStatus } from '@core/mobile/native-network-status';
 import { ThrownResultError } from '@core/util/result';
 import { EmptyStatePanel } from '@ui';
 import {
@@ -116,8 +116,8 @@ export function LoadErrorPanel(props: {
   return (
     <EmptyStatePanel
       centered
-      title={props.title ?? 'Unable to load this view'}
-      description="Check your internet connection and try again."
+      title={props.title ?? t('core.loadError.viewTitle')}
+      description={t('core.loadError.description')}
       primaryAction={
         props.onRetry && nativeNetworkStatus() !== 'offline'
           ? { label: t('common.retry'), onClick: props.onRetry }
@@ -136,7 +136,9 @@ export function EntityLoadGate<Data>(props: EntityLoadGateProps<Data>) {
     <Suspense fallback={<LoadingBlock />}>
       <Switch
         fallback={
-          <div class="flex flex-col items-center justify-center h-full text-lg">{t('auto.sorry_an_unexpected_error_has_')}</div>
+          <div class="flex flex-col items-center justify-center h-full text-lg">
+            {t('core.loadError.unexpected')}
+          </div>
         }
       >
         <Match when={error() === 'UNAUTHORIZED' || error() === 'FORBIDDEN'}>

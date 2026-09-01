@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { useHandleFileUpload } from '@app/util/handleFileUpload';
 import { FileDropOverlay } from '@core/component/FileDropOverlay';
 import { fileFolderDrop } from '@core/directive/fileFolderDrop';
@@ -29,9 +30,9 @@ export const SoupViewFileDropzone: FlowComponent = (props) => {
       <Show when={isDragging()}>
         <FileDropOverlay valid={isValidDrag()}>
           <Show when={!isValidDrag()}>
-            <div class="text-failure">[!] Invalid file type</div>
+            <div class="text-failure">{t('soup.upload.invalidFileType')}</div>
           </Show>
-          <div>Drop any file here to add it to your workspace</div>
+          <div>{t('soup.upload.dropToWorkspace')}</div>
         </FileDropOverlay>
       </Show>
       {props.children}

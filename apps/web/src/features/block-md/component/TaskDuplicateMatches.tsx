@@ -42,10 +42,12 @@ export function TaskDuplicateMatchPill() {
                 'hover:bg-failure/15 focus-visible:bg-failure/15 focus-visible:ring-failure/60',
                 open() && 'bg-failure/15'
               )}
-              title={t('auto.possible_duplicate_tasks')}
+              title={t('markdown.task.duplicates.possibleTitle')}
             >
               <WarningIcon class="size-3 shrink-0" />
-              <span class="truncate">{t('auto.possible_duplicate')}</span>
+              <span class="truncate">
+                {t('markdown.task.duplicates.possible')}
+              </span>
               <CaretDownIcon class="size-3 shrink-0 text-current/70" />
             </Dropdown.Trigger>
             <Dropdown.Content class="max-w-[calc(100vw-24px)]">
@@ -70,7 +72,7 @@ export function TaskDuplicateMatchesSidePanelSection() {
         <Show when={matches.count() > 0}>
           <SidePanel.Section
             id="duplicates"
-            title={t('auto.duplicate_tasks')}
+            title={t('markdown.task.duplicates.sectionTitle')}
             defaultOpen
             order={60}
           >
@@ -94,19 +96,21 @@ function useTaskDuplicateMatches() {
 
   const dismiss = async (matchesToDismiss: TaskDuplicate[]) => {
     if (matchesToDismiss.length === 0) return;
-    const plural = matchesToDismiss.length > 1;
-
     try {
       await dismissMutation.mutateAsync({
         matchIds: matchesToDismiss.map((match) => match.id),
         otherDocumentIds: matchesToDismiss.map((match) => match.taskId),
       });
-      toast.success(plural ? 'Duplicates dismissed.' : 'Duplicate dismissed.');
+      toast.success(
+        t('markdown.task.duplicates.dismissed', {
+          count: matchesToDismiss.length,
+        })
+      );
     } catch {
       toast.failure(
-        plural
-          ? 'Could not dismiss duplicates.'
-          : 'Could not dismiss duplicate.'
+        t('markdown.task.duplicates.dismissFailed', {
+          count: matchesToDismiss.length,
+        })
       );
     }
   };
@@ -170,7 +174,9 @@ function TaskDuplicateMention(props: { match: TaskDuplicate }) {
       <DocumentMention
         key={props.match.id}
         documentId={props.match.taskId}
-        documentName={props.match.taskName || 'Untitled task'}
+        documentName={
+          props.match.taskName || t('markdown.task.duplicates.untitled')
+        }
         blockName="task"
         theme={{}}
       />
@@ -186,7 +192,9 @@ function DismissDuplicateButton(props: { onDismiss: () => void }) {
       size="sm"
       class="h-6 shrink-0 px-2 text-xs"
       onClick={props.onDismiss}
-    >{t('auto.dismiss')}</Button>
+    >
+      {t('markdown.task.duplicates.dismiss')}
+    </Button>
   );
 }
 
@@ -198,7 +206,9 @@ function DismissAllButton(props: { onDismissAll: () => void }) {
       size="sm"
       class="mt-1 w-fit text-xs"
       onClick={props.onDismissAll}
-    >{t('auto.dismiss_all')}</Button>
+    >
+      {t('markdown.task.duplicates.dismissAll')}
+    </Button>
   );
 }
 

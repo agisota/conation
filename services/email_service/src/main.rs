@@ -5,6 +5,12 @@ use calendar_events::{
     domain::{mutations::CalendarMutationServiceImpl, service::CalendarService},
     outbound::{google::GoogleCalendarClient, pg::PgCalendarRepository},
 };
+use conation_auth::middleware::decode_jwt::JwtValidationArgs;
+use conation_authorization::{InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationState};
+use conation_entrypoint::MacroEntrypoint;
+use conation_env::Environment;
+use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
+use conation_service_urls::{AuthServiceUrl, DocumentStorageServiceUrl, StaticFileServiceUrl};
 use document_storage_service_client::DocumentStorageServiceClient;
 use email::{
     domain::service::EmailServiceImpl,
@@ -22,12 +28,6 @@ use email_service::outbound::email_api::{
 use email_service::pubsub::calendar_backfill_adapters::RedisCalendarRequestGate;
 use entity_access::{domain::service::EntityAccessServiceImpl, outbound::PgAccessRepository};
 use frecency::{domain::services::FrecencyQueryServiceImpl, outbound::postgres::FrecencyPgStorage};
-use conation_auth::middleware::decode_jwt::JwtValidationArgs;
-use conation_authorization::{InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationState};
-use conation_entrypoint::MacroEntrypoint;
-use conation_env::Environment;
-use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
-use conation_service_urls::{AuthServiceUrl, DocumentStorageServiceUrl, StaticFileServiceUrl};
 use sqlx::postgres::PgPoolOptions;
 use static_file_service_client::StaticFileServiceClient;
 use std::{sync::Arc, time::Duration};
@@ -68,7 +68,7 @@ async fn main() -> anyhow::Result<()> {
     let db = PgPoolOptions::new()
         .min_connections(min_connections)
         .max_connections(max_connections)
-        .connect(&config.conation_db_url)
+        .connect(&config.macro_db_url)
         .await
         .context("could not connect to db")?;
 

@@ -4,6 +4,14 @@ use std::collections::BTreeSet;
 /// Every mode whose spec we assert invariants over.
 const MODES: &[Mode] = &[Mode::Local, Mode::Dev];
 
+#[test]
+fn package_metadata_uses_conation_display_brand() {
+    let manifest = include_str!("../../Cargo.toml");
+
+    assert!(manifest.contains("xtask local: Conation local & dev stack orchestration"));
+    assert!(!manifest.contains("xtask local: Macro local & dev stack orchestration"));
+}
+
 /// Cross-field design rules every [`ModeSpec`] must satisfy. These encode what
 /// makes a mode *coherent* — a new mode that trips one of these is a bug, not a
 /// new policy — so they're the real guard on the table, not a restatement of it.

@@ -25,6 +25,12 @@ import {
   SettingsRow,
   SettingsSection,
 } from './primitives';
+import {
+  mutedEntityLabel,
+  notificationEventDescription,
+  notificationEventLabel,
+  notificationGroupLabel,
+} from './settings-i18n';
 
 export function Notifications() {
   const analytics = useAnalytics();
@@ -53,7 +59,7 @@ export function Notifications() {
     try {
       await setTypeEnabled.mutateAsync({ type, enabled });
     } catch {
-      toast.failure('Could not update notification preference');
+      toast.failure(t('settings.notifications.errors.updatePreference'));
     }
   };
 
@@ -61,40 +67,46 @@ export function Notifications() {
     try {
       await unmuteItem.mutateAsync(item);
     } catch {
-      toast.failure('Could not unmute item');
+      toast.failure(t('settings.notifications.errors.unmute'));
     }
   };
 
-  const pushLabel = isNativeMobilePlatform()
-    ? 'Mobile notifications'
-    : 'Desktop notifications';
-  const pushDescription = isNativeMobilePlatform()
-    ? 'Receive push notifications on this device'
-    : 'Receive notifications on this browser or desktop app';
+  const pushLabel = () =>
+    isNativeMobilePlatform()
+      ? t('settings.notifications.delivery.push.mobile.label')
+      : t('settings.notifications.delivery.push.desktop.label');
+  const pushDescription = () =>
+    isNativeMobilePlatform()
+      ? t('settings.notifications.delivery.push.mobile.description')
+      : t('settings.notifications.delivery.push.desktop.description');
 
   return (
     <SettingsPage
-      title={t('auto.notifications')}
-      description="Choose when you'll be notified. Inbox items always arrive unless you mute a type or an item."
+      title={t('settings.notifications.title')}
+      description={t('settings.notifications.description')}
     >
-      <SettingsSection title={t('auto.delivery')}>
+      <SettingsSection title={t('settings.notifications.delivery.title')}>
         <SettingsCard>
           <SettingsRow
-            label="Inbox"
-            description="Always on for types you have not muted"
+            label={t('settings.notifications.delivery.inbox.label')}
+            description={t('settings.notifications.delivery.inbox.description')}
           >
-            <span class="text-sm text-ink-muted">{t('auto.always_on')}</span>
+            <span class="text-sm text-ink-muted">
+              {t('settings.notifications.delivery.alwaysOn')}
+            </span>
           </SettingsRow>
           <Show
             when={platformSettings.isSupported && platformSettings}
             fallback={
-              <SettingsRow label={pushLabel} description={pushDescription}>
-                <span class="text-sm text-ink-muted">{t('auto.not_supported_on_this_device')}</span>
+              <SettingsRow label={pushLabel()} description={pushDescription()}>
+                <span class="text-sm text-ink-muted">
+                  {t('settings.notifications.delivery.notSupported')}
+                </span>
               </SettingsRow>
             }
           >
             {(settings) => (
-              <SettingsRow label={pushLabel} description={pushDescription}>
+              <SettingsRow label={pushLabel()} description={pushDescription()}>
                 <ToggleSwitch
                   size="md"
                   checked={settings().isEnabled()}
@@ -107,8 +119,10 @@ export function Notifications() {
             )}
           </Show>
           <SettingsRow
-            label="Email digest"
-            description="A periodic email of unread notifications. Inbox items are unchanged."
+            label={t('settings.notifications.delivery.emailDigest.label')}
+            description={t(
+              'settings.notifications.delivery.emailDigest.description'
+            )}
           >
             <ToggleSwitch
               size="md"
@@ -124,13 +138,18 @@ export function Notifications() {
 
       <For each={NOTIFICATION_EVENT_GROUPS}>
         {(group) => (
-          <SettingsSection title={group.label}>
+          <SettingsSection
+            title={notificationGroupLabel(group.id, group.label)}
+          >
             <SettingsCard>
               <For each={group.events}>
                 {(event) => (
                   <SettingsRow
-                    label={event.label}
-                    description={event.description}
+                    label={notificationEventLabel(event.type, event.label)}
+                    description={notificationEventDescription(
+                      event.type,
+                      event.description
+                    )}
                   >
                     <ToggleSwitch
                       size="md"
@@ -147,30 +166,37 @@ export function Notifications() {
       </For>
 
       <SettingsSection
-        title={t('auto.muted_items')}
-        description="These items will not send you notifications."
+        title={t('settings.notifications.muted.title')}
+        description={t('settings.notifications.muted.description')}
       >
         <SettingsCard>
           <Show
             when={mutedEntities().length > 0}
             fallback={
               <SettingsRow
-                label="Nothing muted"
-                description="Items you mute stop sending notifications."
+                label={t('settings.notifications.muted.empty.label')}
+                description={t(
+                  'settings.notifications.muted.empty.description'
+                )}
               />
             }
           >
             <For each={mutedEntities()}>
               {(item) => (
                 <SettingsRow
-                  label={mutedEntityTypeLabel(item.item_type)}
+                  label={mutedEntityLabel(
+                    item.item_type,
+                    mutedEntityTypeLabel(item.item_type)
+                  )}
                   description={item.item_id}
                 >
                   <button
                     type="button"
                     class="text-sm text-ink-muted hover:text-ink"
                     onClick={() => unmuteEntity(item)}
-                  >{t('auto.unmute')}</button>
+                  >
+                    {t('settings.notifications.muted.unmute')}
+                  </button>
                 </SettingsRow>
               )}
             </For>

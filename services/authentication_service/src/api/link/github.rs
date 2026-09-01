@@ -118,14 +118,14 @@ impl IntoResponse for GithubLinkStatusError {
             (status = 500, body=ErrorResponse),
         )
     )]
-#[tracing::instrument(skip(ctx, ip_context, authorization), fields(client_ip=%ip_context, user_id=%authorization.authorization.user.conation_user_id), err)]
+#[tracing::instrument(skip(ctx, ip_context, authorization), fields(client_ip=%ip_context, user_id=%authorization.authorization.user.macro_user_id), err)]
 pub async fn check_github_link_status_handler(
     State(ctx): State<ApiContext>,
     ip_context: ClientIp,
     authorization: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
 ) -> Result<Json<GithubLinkStatusResponse>, GithubLinkStatusError> {
     ctx.github_link_service
-        .check_user_link_token(&authorization.authorization.user.conation_user_id)
+        .check_user_link_token(&authorization.authorization.user.macro_user_id)
         .await?;
 
     Ok(Json(GithubLinkStatusResponse {
@@ -254,14 +254,14 @@ impl IntoResponse for DeleteGithubLinkError {
             (status = 500, body=ErrorResponse),
         )
     )]
-#[tracing::instrument(skip(ctx, ip_context, authorization), fields(client_ip=%ip_context, user_id=%authorization.authorization.user.conation_user_id), err)]
+#[tracing::instrument(skip(ctx, ip_context, authorization), fields(client_ip=%ip_context, user_id=%authorization.authorization.user.macro_user_id), err)]
 pub async fn delete_github_link_handler(
     State(ctx): State<ApiContext>,
     ip_context: ClientIp,
     authorization: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
 ) -> Result<Json<EmptyResponse>, DeleteGithubLinkError> {
     ctx.github_link_service
-        .delete_user_link(&authorization.authorization.user.conation_user_id)
+        .delete_user_link(&authorization.authorization.user.macro_user_id)
         .await?;
 
     Ok(Json(EmptyResponse::default()))

@@ -3,13 +3,13 @@ import {
   type FullCalendarContextValue,
   useFullCalendar,
 } from '@app/lib/fullcalendar-solid';
+import { formatDateTime, t } from '@app/lib/i18n';
 import type {
   DateSelectArg,
   DatesSetArg,
   EventInput,
 } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
-import { t } from '@app/lib/i18n';
 import interactionPlugin from '@fullcalendar/interaction';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import {
@@ -46,17 +46,12 @@ import { EventContent } from './EventContent';
 import '../calendar.css';
 
 const formatWeekdayHeader = {
-  narrow: new Intl.DateTimeFormat(undefined, {
-    weekday: 'narrow',
-  }).format,
-  short: new Intl.DateTimeFormat(undefined, {
-    weekday: 'short',
-  }).format,
+  narrow: (date: Date) => formatDateTime(date, { weekday: 'narrow' }),
+  short: (date: Date) => formatDateTime(date, { weekday: 'short' }),
 };
 
-const formatDayNumber = new Intl.DateTimeFormat(undefined, {
-  day: 'numeric',
-}).format;
+const formatDayNumber = (date: Date) =>
+  formatDateTime(date, { day: 'numeric' });
 
 function CurrentTimeAxisIndicator(props: {
   date: Date;
@@ -213,7 +208,7 @@ export function CalendarGrid(props: CalendarGridProps) {
       expandRows
       fixedWeekCount={false}
       handleWindowResize={false}
-      allDayText="All day"
+      allDayText={t('calendar.event.allDay')}
       nowIndicator
       headerToolbar={false}
       scrollTime={TIME_GRID_OPENING_SCROLL_TIME}
@@ -353,7 +348,9 @@ export function CalendarGrid(props: CalendarGridProps) {
           ) {
             return (
               <div class="calendar-event-selection-preview flex h-full min-w-0 flex-col overflow-hidden px-1 py-0.5 text-xs leading-tight">
-                <span class="truncate font-semibold">{t('auto.new_event')}</span>
+                <span class="truncate font-semibold">
+                  {t('calendar.event.new')}
+                </span>
                 <Show when={renderProps.timeText}>
                   <span class="truncate">{renderProps.timeText}</span>
                 </Show>

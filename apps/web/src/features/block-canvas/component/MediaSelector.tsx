@@ -1,9 +1,9 @@
+import { t } from '@app/lib/i18n';
 import {
   canvasDraggingSignal,
   useCanvasFileDrop,
 } from '@block-canvas/signal/fileDrop';
 import { useRenderState } from '@block-canvas/store/RenderState';
-import { t } from '@app/lib/i18n';
 import { vec2 } from '@block-canvas/util/vector2';
 import { EntityIcon } from '@core/component/EntityIcon';
 import { FileDropOverlay } from '@core/component/FileDropOverlay';
@@ -134,7 +134,7 @@ export function MediaSelector() {
       <Dropdown.Trigger
         variant="ghost"
         size="icon-md"
-        label="Media"
+        label={t('canvas.tools.media')}
         tabIndex={-1}
       >
         <Image />
@@ -156,7 +156,7 @@ export function MediaSelector() {
           >
             <Show when={isDragging()}>
               <FileDropOverlay valid={true}>
-                <div class="font-mono">{t('auto.drop_any_file_here_to_add_it_t')}</div>
+                <div class="font-mono">{t('canvas.media.dropFiles')}</div>
               </FileDropOverlay>
             </Show>
             <Dropdown.Item closeOnSelect={false}>
@@ -186,7 +186,7 @@ export function MediaSelector() {
                 >
                   <UploadSimple class="size-3.5 shrink-0 text-accent" />
                   <span class="text-sm font-medium text-accent">
-                    Upload File
+                    {t('shell.actions.uploadFile')}
                   </span>
                 </div>
               </div>
@@ -195,7 +195,9 @@ export function MediaSelector() {
               <Show
                 when={userMediaFiles().length > 0}
                 fallback={
-                  <div class="p-4 text-sm text-center">{t('auto.no_media_found')}</div>
+                  <div class="p-4 text-sm text-center">
+                    {t('canvas.media.empty')}
+                  </div>
                 }
               >
                 <VList

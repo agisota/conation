@@ -47,7 +47,7 @@ async function generateTaskPrompt(
 
   const lines: string[] = [];
 
-  lines.push(`Work on Macro task ${documentName}:`);
+  lines.push(`Work on Conation task ${documentName}:`);
   lines.push('');
   lines.push(`<task identifier="${shortId}">`);
   lines.push(`<title>${documentName}</title>`);
@@ -87,7 +87,7 @@ async function generateTaskPrompt(
   lines.push(`Please use the branch "${branchName}" for your work.`);
   lines.push('');
   lines.push(
-    'If you have the Macro MCP server enabled, use it to gather additional context about this task.'
+    'If you have the Conation MCP server enabled, use it to gather additional context about this task.'
   );
   lines.push('');
   lines.push(
@@ -111,19 +111,23 @@ type AgentAction = {
 
 const COPY_ACTION: AgentAction = {
   key: 'copy',
-  name: 'Copy as prompt',
+  get name() {
+    return t('markdown.agent.copyAsPrompt');
+  },
   icon: CopyIcon,
   buttonIcon: TerminalWindowIcon,
   execute: (prompt) => {
     navigator.clipboard.writeText(prompt);
-    toast.success('Task prompt copied to clipboard');
+    toast.success(t('markdown.agent.promptCopied'));
   },
 };
 
 const PLATFORM_ACTIONS: AgentAction[] = [
   {
     key: 'claude-code',
-    name: 'Claude Code Web',
+    get name() {
+      return 'Claude Code Web';
+    },
     icon: ClaudeIcon,
     execute: (prompt) =>
       window.open(
@@ -133,14 +137,18 @@ const PLATFORM_ACTIONS: AgentAction[] = [
   },
   {
     key: 'codex-desktop',
-    name: 'Codex Desktop',
+    get name() {
+      return 'Codex Desktop';
+    },
     icon: CodexIcon,
     execute: (prompt) =>
       window.open(`codex://new?prompt=${encodeURIComponent(prompt)}`, '_blank'),
   },
   {
     key: 'cursor',
-    name: 'Cursor',
+    get name() {
+      return 'Cursor';
+    },
     icon: CursorIcon,
     execute: (prompt) =>
       window.open(
@@ -150,7 +158,9 @@ const PLATFORM_ACTIONS: AgentAction[] = [
   },
   {
     key: 'zed',
-    name: 'Zed',
+    get name() {
+      return 'Zed';
+    },
     icon: ZedIcon,
     execute: (prompt) =>
       window.open(`zed://agent?prompt=${encodeURIComponent(prompt)}`, '_blank'),
@@ -188,7 +198,7 @@ export function useDispatchAgentAction() {
       setLastUsedKey(action.key);
     } catch (e) {
       console.error('Failed to generate task prompt', e);
-      toast.failure('Failed to generate task prompt');
+      toast.failure(t('markdown.agent.promptFailed'));
     }
   };
 
@@ -205,21 +215,27 @@ export function useDispatchAgentSplitFileActions(): SplitFileMenuAction[] {
 
   return [
     {
-      label: COPY_ACTION.name,
+      get label() {
+        return COPY_ACTION.name;
+      },
       icon: COPY_ACTION.icon,
       action: () => {
         void executeAction(COPY_ACTION);
       },
     },
     ...PLATFORM_ACTIONS.map((action) => ({
-      label: action.name,
+      get label() {
+        return action.name;
+      },
       icon: action.icon,
       action: () => {
         void executeAction(action);
       },
     })),
     {
-      label: 'MCP setup instructions',
+      get label() {
+        return t('markdown.agent.mcpSetupInstructions');
+      },
       icon: PlugIcon,
       action: openMacroMcpSetupModal,
     },
@@ -259,7 +275,7 @@ export function DispatchAgentButton(
         <ButtonGroup.Divider />
         <Dropdown.Trigger
           class="bg-transparent p-1 hover:bg-ink/[0.04]"
-          label="Agent options"
+          label={t('markdown.agent.options')}
         >
           <CaretDown class="size-3.5!" />
         </Dropdown.Trigger>
@@ -282,7 +298,9 @@ export function DispatchAgentButton(
             }}
           >
             <GitBranch class="size-4 shrink-0" />
-            <span class="flex-1 truncate">{t('auto.copy_branch_name')}</span>
+            <span class="flex-1 truncate">
+              {t('markdown.agent.copyBranchName')}
+            </span>
           </Dropdown.Item>
           <Dropdown.Item
             onSelect={() => {
@@ -291,11 +309,15 @@ export function DispatchAgentButton(
             }}
           >
             <PlugIcon class="size-4 shrink-0" />
-            <span class="flex-1 truncate">{t('auto.mcp_setup_instructions')}</span>
+            <span class="flex-1 truncate">
+              {t('markdown.agent.mcpSetupInstructions')}
+            </span>
           </Dropdown.Item>
         </Dropdown.Group>
         <Dropdown.Group>
-          <Dropdown.GroupLabel>{t('auto.open_in')}</Dropdown.GroupLabel>
+          <Dropdown.GroupLabel>
+            {t('markdown.agent.openIn')}
+          </Dropdown.GroupLabel>
           <For each={PLATFORM_ACTIONS}>
             {(action) => (
               <Dropdown.Item

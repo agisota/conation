@@ -1,5 +1,5 @@
-import { useSplitLayout } from '@components/app/split-layout/layout';
 import { t } from '@app/lib/i18n';
+import { useSplitLayout } from '@components/app/split-layout/layout';
 import { useSplitPanelOrThrow } from '@components/app/split-layout/layoutUtils';
 import { buildConfig } from '@core/component/LexicalMarkdown/builder/MarkdownConfigBuilder';
 import { MarkdownShell } from '@core/component/LexicalMarkdown/builder/MarkdownShell';
@@ -177,7 +177,9 @@ function ComposeSkillTitleEditor(props: {
         }}
       />
       <Show when={showPlaceholder()}>
-        <div class="pointer-events-none absolute top-1.5 text-xl font-medium text-ink-placeholder">{t('auto.new_skill')}</div>
+        <div class="pointer-events-none absolute top-1.5 text-xl font-medium text-ink-placeholder">
+          {t('markdown.skill.new')}
+        </div>
       </Show>
     </div>
   );
@@ -229,14 +231,14 @@ export function ComposeSkill(props: ComposeSkillProps) {
       await navigator.clipboard.writeText(url);
       linkCopied = true;
     } catch {
-      toast.failure('Failed to copy link to clipboard');
+      toast.failure(t('markdown.actions.copyLinkFailed'));
     }
 
-    toast.success('Skill created', {
-      subtext: linkCopied ? 'Link copied' : undefined,
+    toast.success(t('markdown.skill.created'), {
+      subtext: linkCopied ? t('markdown.actions.linkCopied') : undefined,
       actions: [
         {
-          label: 'Open',
+          label: t('markdown.actions.open'),
           icon: ArrowSquareOutIcon,
           onClick: () => {
             openWithSplit(
@@ -246,7 +248,7 @@ export function ComposeSkill(props: ComposeSkillProps) {
           },
         },
         {
-          label: 'Open (New Split)',
+          label: t('markdown.actions.openInNewSplit'),
           icon: SplitIcon,
           onClick: () => {
             openWithSplit(
@@ -275,7 +277,7 @@ export function ComposeSkill(props: ComposeSkillProps) {
     setIsCreating(false);
 
     if (!documentId) {
-      toast.failure('Failed to create Skill');
+      toast.failure(t('markdown.skill.createFailed'));
       return null;
     }
 
@@ -293,7 +295,7 @@ export function ComposeSkill(props: ComposeSkillProps) {
     if (isCreating()) return;
 
     if (!title().trim()) {
-      setErrorMessage('Please give this skill a name');
+      setErrorMessage(t('markdown.skill.nameRequired'));
       return;
     }
     setErrorMessage('');
@@ -332,7 +334,7 @@ export function ComposeSkill(props: ComposeSkillProps) {
   registerHotkey({
     hotkey: 'cmd+enter',
     scopeId: composeHotkeyScope,
-    description: 'Create skill',
+    description: () => t('markdown.skill.create'),
     keyDownHandler: () => {
       handleCreateSkill();
       return true;
@@ -372,7 +374,7 @@ export function ComposeSkill(props: ComposeSkillProps) {
               onMouseDown={handleContinueInSplit}
               disabled={isCreating()}
               tabIndex={-1}
-              tooltip="Continue editing in split"
+              tooltip={t('markdown.compose.continueInSplit')}
               size="icon-sm"
             >
               <ArrowsOutIcon />
@@ -411,7 +413,9 @@ export function ComposeSkill(props: ComposeSkillProps) {
             <MarkdownShell
               config={editorConfig}
               initialValue={props.initialContent || undefined}
-              placeholder={props.placeholder ?? 'Add instructions...'}
+              placeholder={
+                props.placeholder ?? t('markdown.skill.instructionsPlaceholder')
+              }
               portalScope={portalScope()}
             />
           </Scroll>
@@ -432,7 +436,9 @@ export function ComposeSkill(props: ComposeSkillProps) {
           variant={title().trim().length === 0 ? 'ghost' : 'accent'}
           depth={3}
           class="gap-3 rounded-lg border-0"
-        >{t('auto.create_skill')}<Hotkey shortcut="cmd+enter" theme="current" />
+        >
+          {t('markdown.skill.create')}
+          <Hotkey shortcut="cmd+enter" theme="current" />
         </Button>
       </div>
     </div>

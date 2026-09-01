@@ -1,5 +1,5 @@
-import CheckIcon from '@phosphor-icons/core/regular/check.svg?component-solid';
 import { t } from '@app/lib/i18n';
+import CheckIcon from '@phosphor-icons/core/regular/check.svg?component-solid';
 import { cn, Layer } from '@ui';
 import { For, type JSX, Show } from 'solid-js';
 import { StatusDot } from '../settings/integration-ui';
@@ -63,7 +63,9 @@ export function ImportCard(props: {
           <div class="flex flex-wrap items-center gap-x-1.5 gap-y-1 rounded-lg border border-edge-muted bg-surface px-3 py-2.5 text-[13px] text-ink-muted">
             <Show when={props.connected}>
               <StatusDot state="connected" />
-              <span class="font-medium text-ink">{t('auto.connected')}</span>
+              <span class="font-medium text-ink">
+                {t('setup.connectors.connected')}
+              </span>
               <span>—</span>
             </Show>
             {props.status}
@@ -147,7 +149,7 @@ export function ItemPill(props: {
       {(href) => (
         <button
           type="button"
-          title={t('auto.already_in_your_workspace_clic')}
+          title={t('setup.import.alreadyImportedTitle')}
           onClick={() => window.open(href(), '_blank')}
           class={cn(
             base,
@@ -158,7 +160,7 @@ export function ItemPill(props: {
           {content}
           <span class="flex shrink-0 items-center gap-1 text-xs text-ink-extra-muted">
             <CheckIcon class="size-3 shrink-0" />
-            in Macro
+            {t('setup.import.inWorkspace')}
           </span>
         </button>
       )}
@@ -198,13 +200,15 @@ export function FailureNote(props: { message?: string; onRetry: () => void }) {
   return (
     <span class="flex items-center gap-3">
       <span class="min-w-0 truncate">
-        {props.message ?? "Something went wrong — this one's on us."}
+        {props.message ?? t('setup.errors.generic')}
       </span>
       <button
         type="button"
         class="shrink-0 font-medium text-ink-muted transition-colors hover:text-ink"
         onClick={() => props.onRetry()}
-      >{t('common.retry')}</button>
+      >
+        {t('common.retry')}
+      </button>
     </span>
   );
 }

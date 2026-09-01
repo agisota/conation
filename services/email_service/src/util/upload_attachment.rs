@@ -273,7 +273,7 @@ async fn create_dss_document_record(
     };
 
     dss_client
-        .create_document_internal(request, link.conation_id.0.as_ref())
+        .create_document_internal(request, link.macro_id.0.as_ref())
         .await
         .map_err(|e| UploadAttachmentError::DssCreateFailed(e.to_string()))
 }

@@ -1,5 +1,5 @@
-import { isBotSenderId } from '@queries/channel/message-sender';
 import { t } from '@app/lib/i18n';
+import { isBotSenderId } from '@queries/channel/message-sender';
 import { cn } from '@ui';
 import { Show } from 'solid-js';
 import { useMessage } from './context';
@@ -24,7 +24,9 @@ export function AgentBadge(props: AgentBadgeProps) {
           'text-xs font-medium leading-none text-ink-muted',
           props.class
         )}
-      >{t('auto.agent')}</span>
+      >
+        {t('channel.message.agentBadge')}
+      </span>
     </Show>
   );
 }

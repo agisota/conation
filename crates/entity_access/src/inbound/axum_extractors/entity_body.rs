@@ -99,7 +99,7 @@ where
 
         let user = match authorization {
             MacroAuthorization::User(user) | MacroAuthorization::Internal(Some(user)) => {
-                user.conation_user_id
+                user.macro_user_id
             }
             MacroAuthorization::Bot(_) | MacroAuthorization::Internal(None) => {
                 unreachable!("bot and identity-less internal access returned above")

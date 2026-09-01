@@ -542,7 +542,7 @@ pub async fn control_agent_session_handler<
     let actor = caller
         .authorization
         .acting_user()
-        .map(|user| user.conation_user_id.clone());
+        .map(|user| user.macro_user_id.clone());
 
     let action_id = state
         .recipient
@@ -654,7 +654,7 @@ pub async fn get_agent_sandbox_size_handler<
 ) -> Result<Json<SandboxSizeBody>, AgentSessionApiError> {
     let size = state
         .service
-        .user_sandbox_size(&caller.authorization.user.conation_user_id)
+        .user_sandbox_size(&caller.authorization.user.macro_user_id)
         .await?;
     Ok(Json(SandboxSizeBody { size }))
 }
@@ -688,7 +688,7 @@ pub async fn put_agent_sandbox_size_handler<
 ) -> Result<Json<SandboxSizeBody>, AgentSessionApiError> {
     state
         .service
-        .set_user_sandbox_size(&caller.authorization.user.conation_user_id, req.size)
+        .set_user_sandbox_size(&caller.authorization.user.macro_user_id, req.size)
         .await?;
     Ok(Json(req))
 }
@@ -1145,7 +1145,7 @@ fn resolve_owner(
     claimed: Option<String>,
 ) -> Result<MacroUserIdStr<'static>, CreateSessionApiError> {
     if let Some(user) = caller.acting_user() {
-        return Ok(user.conation_user_id.clone());
+        return Ok(user.macro_user_id.clone());
     }
     let claimed = claimed.ok_or(CreateSessionApiError::OwnerRequired)?;
     MacroUserIdStr::try_from(claimed).map_err(|_| CreateSessionApiError::UnparseableOwner)
@@ -1244,7 +1244,7 @@ pub async fn create_agent_session_handler<
     // check: its sessions are opened with the bot's own token until team
     // membership is modeled here.
     if let UserOrBotAuthorization::User(user) = &caller.authorization
-        && owner_user_id.as_ref() != Some(&user.conation_user_id)
+        && owner_user_id.as_ref() != Some(&user.macro_user_id)
     {
         return Err(CreateSessionApiError::NotYourBot);
     }

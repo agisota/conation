@@ -1,12 +1,13 @@
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import { toast } from '@core/component/Toast/Toast';
+import { t } from '@core/i18n';
 import {
   useCreateInstructionsMd,
   useInstructionsMdIdQuery,
 } from '@queries/storage/instructions-md';
 
 const showFailToast = () => {
-  toast.failure('Failed to open AI instructions document');
+  toast.failure(t('ai.instructions.openFailed'));
 };
 
 export function useOpenInstructionsMd() {

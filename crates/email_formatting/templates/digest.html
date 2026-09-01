@@ -5,7 +5,7 @@
   xmlns="http://www.w3.org/1999/xhtml"
 >
   <head>
-    <title>Conation — Дайджест уведомлений</title>
+    <title>Conation Notification Digest</title>
     <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
     <meta content="width=device-width, initial-scale=1" name="viewport" />
     <!--[if mso]>
@@ -64,7 +64,7 @@
           "
         >
           <img
-            src="https://conation.dev/app/conation-logo-orange.png"
+            src="https://macro.com/app/macro-logo-orange.png"
             width="30"
             height="20"
             alt=""
@@ -73,7 +73,8 @@
               margin-right: 10px;
               border: 0;
             "
-          />У вас {{ total_count }} {% if total_count == 1 %}новое уведомление{% else if total_count % 10 >= 2 && total_count % 10 <= 4 && (total_count % 100 < 10 || total_count % 100 >= 20) %}новых уведомления{% else %}новых уведомлений{% endif %}
+          />You have {{ total_count }} new {% if total_count == 1 %}notification{%
+          else %}notifications{% endif %}
         </div>
         <hr
           style="
@@ -93,7 +94,7 @@
               display: block;
               color: #090909;
             "
-            href="https://conation.dev"
+            href="https://macro.com"
             target="_blank"
           >
             <table
@@ -197,7 +198,7 @@
               font-family: &quot;Inter&quot;, sans-serif;
             "
           >
-            и ещё {{ num_truncated }} {% if num_truncated == 1 %}уведомление{% else if num_truncated % 10 >= 2 && num_truncated % 10 <= 4 && (num_truncated % 100 < 10 || num_truncated % 100 >= 20) %}уведомления{% else %}уведомлений{% endif %}
+            and {{ num_truncated }} more notification{% if num_truncated != 1 %}s{% endif %}
           </div>
           {% endif %}
 
@@ -236,10 +237,10 @@
                       padding: 8px 48px;
                       color: #090909;
                     "
-                    href="https://conation.dev"
+                    href="https://macro.com"
                     target="_blank"
                   >
-                    Открыть в Conation
+                    View in Conation
                   </a>
                 </td>
               </tr>
@@ -259,7 +260,7 @@
               href="{{ unsubscribe_url.as_ref() }}"
               target="_blank"
             >
-              Отписаться от дайджестов
+              Unsubscribe from digest emails
             </a>
           </div>
         </div>

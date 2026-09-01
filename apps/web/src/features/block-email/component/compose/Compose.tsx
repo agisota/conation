@@ -9,7 +9,6 @@ import {
   markThreadDraftSaved,
   useMaybeEmailContext,
 } from '@block-email/component/EmailContext';
-import { MACRO_EMAIL_SIGNATURE } from '@block-email/constants';
 import { decodeBase64Utf8 } from '@block-email/util/decodeBase64';
 import { plainTextToHtml } from '@block-email/util/plainTextToHtml';
 import {
@@ -32,6 +31,11 @@ import {
 } from '@components/app/split-layout/components/SplitLabel';
 import { SplitPanelContext } from '@components/app/split-layout/context';
 import { useSplitLayout } from '@components/app/split-layout/layout';
+import {
+  $appendWatermarkNodeToLast,
+  $removeAllWatermarkNodes,
+} from '@conation/lexical-core';
+import { Telemetry } from '@conation/observability';
 import { useHasPaidAccess } from '@core/auth';
 import { EmailPermissionsBanner } from '@core/component/EmailPermissionsBanner';
 import { toast } from '@core/component/Toast/Toast';
@@ -52,11 +56,6 @@ import {
   type WithCustomUserInput,
 } from '@core/user';
 import { $generateHtmlFromNodes } from '@lexical/html';
-import {
-  $appendWatermarkNodeToLast,
-  $removeAllWatermarkNodes,
-} from '@conation/lexical-core';
-import { Telemetry } from '@conation/observability';
 
 import ArrowCounterClockwise from '@phosphor-icons/core/regular/arrow-counter-clockwise.svg?component-solid';
 import {
@@ -475,11 +474,11 @@ export function EmailCompose(props: EmailComposeProps) {
       // This send opens a fresh undo cycle for the draft id.
       if (draftId) endUndoSend(draftId);
       const sendLinkId = vars.linkId;
-      const toastId = toast.success('Email sent', {
+      const toastId = toast.success(t('blockEmail.status.sent'), {
         actions: draftId
           ? [
               {
-                label: 'Undo',
+                label: t('blockEmail.actions.undo'),
                 icon: ArrowCounterClockwise,
                 onClick: () => {
                   if (toastId != null) toast.dismiss(toastId);
@@ -498,7 +497,7 @@ export function EmailCompose(props: EmailComposeProps) {
       }
     },
     onError: () => {
-      toast.failure('Failed to send email');
+      toast.failure(t('blockEmail.status.sendFailed'));
     },
   });
 
@@ -512,7 +511,7 @@ export function EmailCompose(props: EmailComposeProps) {
     if (!recipients.to.length) {
       setValidationError({
         type: 'no_recipient',
-        message: 'Please select at least one recipient',
+        message: t('blockEmail.validation.recipientRequired'),
       });
       return;
     }
@@ -520,7 +519,7 @@ export function EmailCompose(props: EmailComposeProps) {
     if (!content().trim()) {
       setValidationError({
         type: 'no_message',
-        message: 'Please enter a message',
+        message: t('blockEmail.validation.messageRequired'),
       });
       return;
     }
@@ -528,7 +527,7 @@ export function EmailCompose(props: EmailComposeProps) {
     if (!form.subject()?.trim()) {
       setValidationError({
         type: 'no_subject',
-        message: 'Please enter a subject',
+        message: t('blockEmail.validation.subjectRequired'),
       });
       return;
     }
@@ -536,7 +535,7 @@ export function EmailCompose(props: EmailComposeProps) {
     if (!currentLink) {
       setValidationError({
         type: 'no_link',
-        message: 'Unable to find linked email account',
+        message: t('blockEmail.validation.accountUnavailable'),
       });
       return;
     }
@@ -577,7 +576,7 @@ export function EmailCompose(props: EmailComposeProps) {
     // leave orphaned watermark nodes in the editor tree.
     const cleanupWatermark = $appendWatermarkNodeToLast(
       currentEditor,
-      !hasPaidAccess() ? MACRO_EMAIL_SIGNATURE : undefined
+      !hasPaidAccess() ? t('blockEmail.compose.conationSignature') : undefined
     );
 
     const prepared = prepareEmailBody(currentEditor);
@@ -618,11 +617,11 @@ export function EmailCompose(props: EmailComposeProps) {
 
   const unscheduleMessageMutation = useUnscheduleMessageMutation({
     onSuccess: (_data, vars) => {
-      toast.success('Email unscheduled');
+      toast.success(t('blockEmail.schedule.unscheduled'));
       invalidateSoupEntity(vars.draftID);
     },
     onError: () => {
-      toast.failure('Failed to unschedule email');
+      toast.failure(t('blockEmail.schedule.unscheduleFailed'));
     },
   });
 
@@ -645,8 +644,8 @@ export function EmailCompose(props: EmailComposeProps) {
     if (date) {
       const draftID = currentDraft ?? (await executeSaveDraft());
       if (!draftID) {
-        toast.failure('Failed to schedule message', {
-          subtext: 'Draft required',
+        toast.failure(t('blockEmail.schedule.failed'), {
+          subtext: t('blockEmail.schedule.draftRequired'),
         });
         return;
       }
@@ -734,7 +733,7 @@ export function EmailCompose(props: EmailComposeProps) {
   const previewName = createMemo(() => {
     const recipients = form.recipients().to;
     if (recipients.length === 0) {
-      return 'Draft email';
+      return t('blockEmail.preview.draft');
     }
 
     if (recipients.length === 1) {
@@ -744,7 +743,9 @@ export function EmailCompose(props: EmailComposeProps) {
         recipientName = getDisplayName(tryMacroId(recipients[0].data.id));
       }
 
-      return recipientName ? `Email to ${recipientName}` : 'Draft email';
+      return recipientName
+        ? t('blockEmail.preview.toRecipient', { name: recipientName })
+        : t('blockEmail.preview.draft');
     }
 
     const names = recipients
@@ -753,15 +754,18 @@ export function EmailCompose(props: EmailComposeProps) {
         if (r.kind === 'user') {
           return getDisplayName(tryMacroId(r.data.id));
         }
-        return r.data.email || 'Unknown';
+        return r.data.email || t('blockEmail.preview.unknownRecipient');
       })
       .filter(Boolean);
 
     if (recipients.length > 2) {
-      return `Email to ${names.join(', ')}, and others`;
+      return t('blockEmail.preview.toOthers', { names: names.join(', ') });
     }
 
-    return `Email to ${names.join(' and ')}`;
+    return t('blockEmail.preview.toPair', {
+      first: names[0] ?? '',
+      second: names[1] ?? '',
+    });
   });
 
   // --- Context value ---
@@ -870,10 +874,17 @@ export function EmailCompose(props: EmailComposeProps) {
         <SplitHeaderLeft>
           <StaticSplitLabel
             class="ph-no-capture"
-            label={ctxValue.subject() || previewName?.() || 'Draft email'}
+            label={
+              ctxValue.subject() ||
+              previewName?.() ||
+              t('blockEmail.preview.draft')
+            }
             iconType="email"
             badges={[
-              <SplitHeaderBadge text="draft" tooltip="This is a Draft Email" />,
+              <SplitHeaderBadge
+                text={t('blockEmail.compose.draft')}
+                tooltip={t('blockEmail.compose.draftBadge')}
+              />,
             ]}
           />
         </SplitHeaderLeft>
@@ -905,7 +916,9 @@ export function EmailCompose(props: EmailComposeProps) {
         >
           <MobileDrawer.Portal>
             <MobileDrawer.Overlay class="fixed inset-0 z-modal-overlay bg-modal-overlay pattern-diagonal-4 pattern-edge-muted" />
-            <MobileDrawer.Content aria-label={t('auto.draft_options')}>
+            <MobileDrawer.Content
+              aria-label={t('blockEmail.compose.draftOptions')}
+            >
               <MobileDrawer.Handle />
               <MobileDrawer.Section class="mb-3">
                 <button
@@ -922,12 +935,16 @@ export function EmailCompose(props: EmailComposeProps) {
                     }
                     leaveCompose();
                   }}
-                >{t('auto.delete_draft')}</button>
+                >
+                  {t('blockEmail.compose.deleteDraft')}
+                </button>
                 <button
                   type="button"
                   class="w-full bg-surface px-3 py-3.5 text-sm font-medium text-center"
                   onClick={leaveCompose}
-                >{t('auto.save_draft')}</button>
+                >
+                  {t('blockEmail.compose.saveDraft')}
+                </button>
               </MobileDrawer.Section>
             </MobileDrawer.Content>
           </MobileDrawer.Portal>

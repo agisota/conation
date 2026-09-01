@@ -1,5 +1,5 @@
-import { LoadingBlock } from '@core/component/LoadingBlock';
 import { t } from '@app/lib/i18n';
+import { LoadingBlock } from '@core/component/LoadingBlock';
 import { PcNoiseGrid } from '@core/component/PcNoiseGrid';
 import { getDisplayName, tryMacroId } from '@core/user';
 import LogoIcon from '@icon/macro-logo.svg';
@@ -161,14 +161,20 @@ function NoInviteId() {
   const navigate = useNavigate();
   return (
     <div class="w-full flex flex-col items-center gap-4 text-center">
-      <h2 class="text-lg font-medium text-ink">{t('auto.invalid_invite_link')}</h2>
-      <p class="text-sm text-ink-muted">{t('auto.this_invite_link_appears_to_be')}</p>
+      <h2 class="text-lg font-medium text-ink">
+        {t('invitations.team.invalid.title')}
+      </h2>
+      <p class="text-sm text-ink-muted">
+        {t('invitations.team.invalid.description')}
+      </p>
       <Button
         variant="outline"
         size="md"
         class="w-full rounded-xs"
         onClick={() => navigate('/')}
-      >{t('auto.go_to_home')}</Button>
+      >
+        {t('invitations.common.goHome')}
+      </Button>
     </div>
   );
 }
@@ -178,17 +184,19 @@ function UnauthenticatedView(props: { onLogin: () => void }) {
     <div class="w-full flex flex-col items-center gap-4 text-center">
       <h2 class="flex items-center gap-2 text-lg font-medium text-ink">
         <EnvelopeIcon class="size-5" />
-        You've Been Invited
+        {t('invitations.team.unauthenticated.title')}
       </h2>
       <p class="text-sm text-ink-muted">
-        Sign in or create an account to view and accept this team invitation.
+        {t('invitations.team.unauthenticated.description')}
       </p>
       <Button
         variant="outline"
         size="md"
         class="w-full rounded-xs"
         onClick={props.onLogin}
-      >{t('auto.sign_in_to_continue')}</Button>
+      >
+        {t('invitations.common.signIn')}
+      </Button>
     </div>
   );
 }
@@ -199,19 +207,23 @@ function AlreadyOnTeam(props: { teamName: string }) {
     <div class="w-full flex flex-col items-center gap-4 text-center">
       <h2 class="flex items-center justify-center gap-2 text-lg font-medium text-ink">
         <UsersThreeIcon class="size-5" />
-        Already on Team {props.teamName}
+        {t('invitations.team.alreadyMember.title', {
+          team: props.teamName,
+        })}
       </h2>
       <p class="text-sm text-ink-muted">
-        You're already a member of{' '}
-        <span class="text-ink">{props.teamName}</span>, so there's nothing more
-        to do here.
+        {t('invitations.team.alreadyMember.description', {
+          team: props.teamName,
+        })}
       </p>
       <Button
         variant="outline"
         size="md"
         class="w-full rounded-xs"
         onClick={() => navigate('/')}
-      >{t('auto.go_to_home')}</Button>
+      >
+        {t('invitations.common.goHome')}
+      </Button>
     </div>
   );
 }
@@ -220,17 +232,20 @@ function InviteNotFound() {
   const navigate = useNavigate();
   return (
     <div class="w-full flex flex-col items-center gap-4 text-center">
-      <h2 class="text-lg font-medium text-ink">{t('auto.invite_not_found')}</h2>
+      <h2 class="text-lg font-medium text-ink">
+        {t('invitations.team.notFound.title')}
+      </h2>
       <p class="text-sm text-ink-muted">
-        This invitation may have already been accepted, expired, or was sent to
-        a different email address.
+        {t('invitations.team.notFound.description')}
       </p>
       <Button
         variant="outline"
         size="md"
         class="w-full rounded-xs"
         onClick={() => navigate('/')}
-      >{t('auto.go_to_home')}</Button>
+      >
+        {t('invitations.common.goHome')}
+      </Button>
     </div>
   );
 }
@@ -244,10 +259,18 @@ function InviteDetails(props: {
   isJoining: boolean;
   isDeclining: boolean;
 }) {
-  const displayTeamName = () => props.teamName ?? 'a team';
+  const joinTitle = () =>
+    props.teamName
+      ? t('invitations.team.join.title', { team: props.teamName })
+      : t('invitations.team.join.titleFallback');
   const roleDisplay = () => {
     const role = props.role.toLowerCase();
-    return role.charAt(0).toUpperCase() + role.slice(1);
+    const key = {
+      admin: 'invitations.team.role.admin',
+      member: 'invitations.team.role.member',
+      owner: 'invitations.team.role.owner',
+    }[role];
+    return key ? t(key) : props.role;
   };
   const isDisabled = () => props.isJoining || props.isDeclining;
 
@@ -258,11 +281,13 @@ function InviteDetails(props: {
       <div class="flex flex-col gap-2">
         <h2 class="flex items-center justify-center gap-2 text-lg font-medium text-ink">
           <UsersThreeIcon class="size-5" />
-          Join {displayTeamName()}
+          {joinTitle()}
         </h2>
         <p class="text-sm text-ink-muted">
-          <span class="text-ink">{invitedBy()}</span> has invited you to join as
-          a <span class="font-medium text-accent">{roleDisplay()}</span>.
+          {t('invitations.team.join.description', {
+            inviter: invitedBy(),
+            role: roleDisplay(),
+          })}
         </p>
       </div>
 
@@ -274,7 +299,7 @@ function InviteDetails(props: {
           onClick={props.onAccept}
           disabled={isDisabled()}
         >
-          <Show when={props.isJoining} fallback="Accept Invitation">
+          <Show when={props.isJoining} fallback={t('invitations.team.accept')}>
             <SpinnerIcon class="size-4 animate-spin" />
           </Show>
         </Button>
@@ -285,7 +310,10 @@ function InviteDetails(props: {
           onClick={props.onDecline}
           disabled={isDisabled()}
         >
-          <Show when={props.isDeclining} fallback="Decline">
+          <Show
+            when={props.isDeclining}
+            fallback={t('invitations.team.decline')}
+          >
             <SpinnerIcon class="size-4 animate-spin" />
           </Show>
         </Button>

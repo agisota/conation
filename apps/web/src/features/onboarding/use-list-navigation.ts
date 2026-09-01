@@ -1,4 +1,5 @@
 import type { SoupState } from '@app/features/next-soup/create-soup-state';
+import { t } from '@app/lib/i18n';
 import { createHotkeyGroup, registerHotkey } from '@core/hotkey/hotkeys';
 import { onCleanup, onMount } from 'solid-js';
 
@@ -28,14 +29,14 @@ export function useListNavigation(
     registerHotkey({
       scopeId,
       hotkey: ['j', 'arrowdown'],
-      description: 'Navigate down',
+      description: t('onboarding.hotkeys.navigateDown'),
       keyDownHandler: () => handle('down'),
     }).withGroup(group);
 
     registerHotkey({
       scopeId,
       hotkey: ['k', 'arrowup'],
-      description: 'Navigate up',
+      description: t('onboarding.hotkeys.navigateUp'),
       keyDownHandler: () => handle('up'),
     }).withGroup(group);
   });

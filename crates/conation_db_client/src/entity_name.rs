@@ -48,7 +48,7 @@ pub async fn get_entity_name_and_owner(
                 r#"
                 SELECT
                     e.subject,
-                    l.conation_id
+                    l.macro_id
                 FROM
                     "email_messages" e
                 JOIN email_links l ON l.id = e.link_id
@@ -58,7 +58,7 @@ pub async fn get_entity_name_and_owner(
                 "#,
                 entity_id,
             )
-            .map(|row| (row.subject, row.conation_id))
+            .map(|row| (row.subject, row.macro_id))
             .fetch_one(db)
             .await?
         }

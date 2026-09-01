@@ -87,13 +87,13 @@ fn error_response(e: OnboardingError) -> Response {
     ),
     tag = "onboarding"
 )]
-#[tracing::instrument(skip(service, user), fields(user_id = %user.authorization.user.conation_user_id))]
+#[tracing::instrument(skip(service, user), fields(user_id = %user.authorization.user.macro_user_id))]
 pub async fn get_state_handler<T: OnboardingService, Auth: MacroAuthorizationService>(
     State(service): State<Arc<T>>,
     user: MacroAuthorizationExtractor<Auth, UserOrInternal>,
 ) -> Response {
     match service
-        .get_state(user.authorization.user.conation_user_id)
+        .get_state(user.authorization.user.macro_user_id)
         .await
     {
         Ok(state) => Json(state).into_response(),
@@ -113,14 +113,14 @@ pub async fn get_state_handler<T: OnboardingService, Auth: MacroAuthorizationSer
     ),
     tag = "onboarding"
 )]
-#[tracing::instrument(skip(service, user, body), fields(user_id = %user.authorization.user.conation_user_id))]
+#[tracing::instrument(skip(service, user, body), fields(user_id = %user.authorization.user.macro_user_id))]
 pub async fn complete_handler<T: OnboardingService, Auth: MacroAuthorizationService>(
     State(service): State<Arc<T>>,
     user: MacroAuthorizationExtractor<Auth, UserOrInternal>,
     Json(body): Json<CompleteOnboardingRequest>,
 ) -> Response {
     match service
-        .complete(user.authorization.user.conation_user_id, body.skipped)
+        .complete(user.authorization.user.macro_user_id, body.skipped)
         .await
     {
         Ok(row) => Json(row).into_response(),

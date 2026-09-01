@@ -83,21 +83,21 @@ where
     )
 )]
 #[tracing::instrument(
-    skip(links, conation_user, service),
+    skip(links, macro_user, service),
     fields(
-        actor = %conation_user.acting_entity(),
+        actor = %macro_user.acting_entity(),
         fusionauth_user_id = tracing::field::Empty,
     )
 )]
 async fn cursor_handler<T: EmailService, Auth: MacroAuthorizationService>(
     State(service): State<EmailRouterState<T>>,
-    Cached(conation_user): Cached<MacroAuthorizationExtractor<Auth, UserOrInternal>>,
+    Cached(macro_user): Cached<MacroAuthorizationExtractor<Auth, UserOrInternal>>,
     Cached(MultiEmailLinkExtractor(links, _)): Cached<MultiEmailLinkExtractor<T, Auth>>,
     PreviewViewPathExtractor(preview_view): PreviewViewPathExtractor,
     extract::Query(params): extract::Query<GetPreviewsCursorParams>,
     cursor: Option<CursorWithValAndFilter<Uuid, SimpleSortMethod, ()>>,
 ) -> Result<Json<ApiPaginatedThreadCursor>, GetPreviewsCursorError> {
-    let user = &conation_user.authorization.user;
+    let user = &macro_user.authorization.user;
     let span = tracing::Span::current();
     span.record(
         "fusionauth_user_id",
@@ -110,7 +110,7 @@ async fn cursor_handler<T: EmailService, Auth: MacroAuthorizationService>(
             .get_email_thread_previews(GetEmailsRequest {
                 view: preview_view,
                 link_ids: links.iter().map(|link| link.id).collect(),
-                conation_id: user.conation_user_id.clone(),
+                macro_id: user.macro_user_id.clone(),
                 limit: params.limit,
                 query: cursor
                     .into_query(

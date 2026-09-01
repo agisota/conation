@@ -1,5 +1,5 @@
-import { Match, Switch } from 'solid-js';
 import { t } from '@app/lib/i18n';
+import { Match, Switch } from 'solid-js';
 import { Entity } from '../../entity';
 import type { AutomationEntity } from '../../types/entity';
 import { formatDateAndTime } from '../../utils/timestamp';
@@ -10,17 +10,23 @@ function AutomationSubtitle(props: { entity: AutomationEntity }) {
       <Switch>
         <Match when={props.entity.isRunning}>
           <span class="flex items-center justify-end gap-1.5 text-accent">
-            <span class="size-1.5 animate-pulse rounded-full bg-accent" />{t('auto.running')}</span>
+            <span class="size-1.5 animate-pulse rounded-full bg-accent" />
+            {t('entity.automation.running')}
+          </span>
         </Match>
         <Match when={props.entity.enabled && props.entity.nextRunAt}>
           {(nextRunAt) => (
             <span class="text-ink-extra-muted">
-              Next run {formatDateAndTime(nextRunAt())}
+              {t('entity.automation.nextRun', {
+                date: formatDateAndTime(nextRunAt()),
+              })}
             </span>
           )}
         </Match>
         <Match when={!props.entity.enabled}>
-          <span class="text-ink-extra-muted">{t('auto.paused')}</span>
+          <span class="text-ink-extra-muted">
+            {t('entity.automation.paused')}
+          </span>
         </Match>
       </Switch>
     </div>

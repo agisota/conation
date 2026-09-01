@@ -156,14 +156,14 @@ fn parse_id(id: ID, field: &str) -> InputResult<Uuid> {
 }
 
 /// Parse a Macro user id with a field-specific error.
-fn parse_conation_user_id(value: String, field: &str) -> InputResult<MacroUserIdStr<'static>> {
+fn parse_macro_user_id(value: String, field: &str) -> InputResult<MacroUserIdStr<'static>> {
     MacroUserIdStr::parse_from_str(&value)
         .map(CowLike::into_owned)
         .map_err(|err| InputError::new(format!("invalid {field} `{value}`: {err}")))
 }
 
 /// Define the recursive GraphQL and serde expression shape for one literal family.
-conation_rules! filter_expr_input {
+macro_rules! filter_expr_input {
     ($name:ident, $binary_name:ident, $literal:ty, $target:ty, $type_name:literal) => {
         #[doc = concat!("The two operands of a recursive `", $type_name, "` binary expression.")]
         #[cfg_attr(feature = "server", derive(async_graphql::InputObject))]
@@ -637,7 +637,7 @@ impl IntoFilterExpr<DocumentLiteral> for GraphqlDocumentLiteral {
             ),
             Self::Id(id) => DocumentLiteral::Id(parse_id(id, "id")?),
             Self::ProjectId(id) => DocumentLiteral::ProjectId(parse_id(id, "projectId")?),
-            Self::Owner(owner) => DocumentLiteral::Owner(parse_conation_user_id(owner, "owner")?),
+            Self::Owner(owner) => DocumentLiteral::Owner(parse_macro_user_id(owner, "owner")?),
             Self::Importance(importance) => DocumentLiteral::Importance(importance),
             Self::NotificationDone(done) => DocumentLiteral::NotificationDone(done),
             Self::NotificationSeen(seen) => DocumentLiteral::NotificationSeen(seen),
@@ -706,7 +706,7 @@ impl IntoFilterExpr<ProjectLiteral> for GraphqlProjectLiteral {
             Self::ProjectIdSelf(id) => {
                 ProjectLiteral::ProjectIdSelf(parse_id(id, "projectIdSelf")?)
             }
-            Self::Owner(owner) => ProjectLiteral::Owner(parse_conation_user_id(owner, "owner")?),
+            Self::Owner(owner) => ProjectLiteral::Owner(parse_macro_user_id(owner, "owner")?),
             Self::Importance(importance) => ProjectLiteral::Importance(importance),
             Self::NotificationDone(done) => ProjectLiteral::NotificationDone(done),
             Self::NotificationSeen(seen) => ProjectLiteral::NotificationSeen(seen),
@@ -749,7 +749,7 @@ impl IntoFilterExpr<ChatLiteral> for GraphqlChatLiteral {
             Self::ProjectId(id) => ChatLiteral::ProjectId(parse_id(id, "projectId")?),
             Self::Role(role) => ChatLiteral::Role(role.into_model()),
             Self::ChatId(id) => ChatLiteral::ChatId(parse_id(id, "chatId")?),
-            Self::Owner(owner) => ChatLiteral::Owner(parse_conation_user_id(owner, "owner")?),
+            Self::Owner(owner) => ChatLiteral::Owner(parse_macro_user_id(owner, "owner")?),
             Self::Importance(importance) => ChatLiteral::Importance(importance),
             Self::NotificationDone(done) => ChatLiteral::NotificationDone(done),
             Self::NotificationSeen(seen) => ChatLiteral::NotificationSeen(seen),
@@ -933,12 +933,12 @@ impl IntoFilterExpr<ChannelLiteral> for GraphqlChannelLiteral {
         let literal = match self {
             Self::ThreadId(id) => ChannelLiteral::ThreadId(parse_id(id, "threadId")?),
             Self::Mention(mention) => {
-                ChannelLiteral::Mention(parse_conation_user_id(mention, "mention")?)
+                ChannelLiteral::Mention(parse_macro_user_id(mention, "mention")?)
             }
             Self::OrganizationId(id) => ChannelLiteral::OrganizationId(id),
             Self::TeamId(id) => ChannelLiteral::TeamId(parse_id(id, "teamId")?),
             Self::ChannelId(id) => ChannelLiteral::ChannelId(parse_id(id, "channelId")?),
-            Self::Sender(sender) => ChannelLiteral::Sender(parse_conation_user_id(sender, "sender")?),
+            Self::Sender(sender) => ChannelLiteral::Sender(parse_macro_user_id(sender, "sender")?),
             Self::ChannelType(channel_type) => {
                 ChannelLiteral::ChannelType(channel_type.into_model())
             }
@@ -1004,10 +1004,10 @@ impl IntoFilterExpr<ChannelThreadLiteral> for GraphqlChannelThreadLiteral {
             Self::ThreadId(id) => ChannelThreadLiteral::ThreadId(parse_id(id, "threadId")?),
             Self::ChannelId(id) => ChannelThreadLiteral::ChannelId(parse_id(id, "channelId")?),
             Self::RootSender(sender) => {
-                ChannelThreadLiteral::RootSender(parse_conation_user_id(sender, "rootSender")?)
+                ChannelThreadLiteral::RootSender(parse_macro_user_id(sender, "rootSender")?)
             }
             Self::Participant(participant) => {
-                ChannelThreadLiteral::Participant(parse_conation_user_id(participant, "participant")?)
+                ChannelThreadLiteral::Participant(parse_macro_user_id(participant, "participant")?)
             }
             Self::NotificationDone(done) => ChannelThreadLiteral::NotificationDone(done),
             Self::NotificationSeen(seen) => ChannelThreadLiteral::NotificationSeen(seen),
@@ -1040,7 +1040,7 @@ impl IntoFilterExpr<CallLiteral> for GraphqlCallLiteral {
             Self::CallId(id) => CallLiteral::CallId(parse_id(id, "callId")?),
             Self::ChannelId(id) => CallLiteral::ChannelId(parse_id(id, "channelId")?),
             Self::Speaker(speaker) => {
-                CallLiteral::Speaker(parse_conation_user_id(speaker, "speaker")?)
+                CallLiteral::Speaker(parse_macro_user_id(speaker, "speaker")?)
             }
             Self::Status(status) => CallLiteral::Status(status.into_model()),
             Self::Attended(attended) => CallLiteral::Attended(attended),

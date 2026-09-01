@@ -1,5 +1,5 @@
-import XIcon from '@phosphor/x.svg';
 import { t } from '@app/lib/i18n';
+import XIcon from '@phosphor/x.svg';
 import { Button, Layer } from '@ui';
 import { ThemeTokenEditor } from './ThemeTokenEditor';
 
@@ -25,7 +25,7 @@ export function ThemeEditor(props: {
       <div class="mx-3 my-2 flex max-h-[70vh] flex-col gap-3 rounded-xl border border-edge-muted bg-surface px-4 py-4">
         <div class="flex items-center gap-2">
           <Button
-            label="Close editor"
+            label={t('theme.actions.closeEditor')}
             onClick={props.onClose}
             variant="ghost"
             size="icon-sm"
@@ -37,8 +37,8 @@ export function ThemeEditor(props: {
             value={props.name}
             onInput={(e) => props.onNameChange(e.currentTarget.value)}
             spellcheck={false}
-            placeholder={t('auto.theme_name')}
-            aria-label={t('auto.theme_name')}
+            placeholder={t('theme.fields.name')}
+            aria-label={t('theme.fields.name')}
             class="w-40 min-w-0 rounded-md border border-edge-muted bg-transparent px-2 py-1 text-xs text-ink outline-none placeholder:text-ink-placeholder focus:border-accent"
           />
           <div class="flex-1" />
@@ -47,7 +47,9 @@ export function ThemeEditor(props: {
           <ThemeTokenEditor />
         </div>
         <div class="flex justify-end">
-          <Button variant="outline" size="sm" onClick={props.onSave}>{t('auto.save_theme')}</Button>
+          <Button variant="outline" size="sm" onClick={props.onSave}>
+            {t('theme.actions.save')}
+          </Button>
         </div>
       </div>
     </Layer>

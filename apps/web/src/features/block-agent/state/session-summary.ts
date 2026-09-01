@@ -4,6 +4,7 @@
  * `FoldedMessage[]`; the Solid layer wraps calls in memos.
  */
 
+import { t } from '@app/lib/i18n';
 import type {
   FoldedMessage,
   PlanEntry,
@@ -91,15 +92,35 @@ export function activityCounts(messages: FoldedMessage[]): CountItem[] {
       count: counts.edit,
       one: 'file edited',
       other: 'files edited',
+      formatLabel: (count) => t('agent.activity.filesEdited', { count }),
     },
-    { key: 'read', count: counts.read, one: 'file read', other: 'files read' },
-    { key: 'search', count: counts.search, one: 'search', other: 'searches' },
+    {
+      key: 'read',
+      count: counts.read,
+      one: 'file read',
+      other: 'files read',
+      formatLabel: (count) => t('agent.activity.filesRead', { count }),
+    },
+    {
+      key: 'search',
+      count: counts.search,
+      one: 'search',
+      other: 'searches',
+      formatLabel: (count) => t('agent.activity.searches', { count }),
+    },
     {
       key: 'terminal',
       count: counts.terminal,
       one: 'command',
       other: 'commands',
+      formatLabel: (count) => t('agent.activity.commands', { count }),
     },
-    { key: 'fetch', count: counts.fetch, one: 'fetch', other: 'fetches' },
+    {
+      key: 'fetch',
+      count: counts.fetch,
+      one: 'fetch',
+      other: 'fetches',
+      formatLabel: (count) => t('agent.activity.fetches', { count }),
+    },
   ];
 }

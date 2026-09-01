@@ -1,27 +1,43 @@
-//! Email provider abstraction for Conation.
+//! Experimental email-provider abstraction for Conation.
 //! Supports two backends:
 //! - `GmailProvider` — legacy Gmail API via `gmail_client` (kept for connected Gmail accounts)
-//! - `StalwartProvider` — self-hosted Stalwart JMAP (default for `user@conation.dev`)
+//! - `StalwartProvider` — a self-hosted Stalwart provisioning client
+//!
+//! The Stalwart message and watch paths deliberately fail closed until their
+//! JMAP implementations are wired end to end. Production Gmail traffic remains
+//! on the established `gmail_client` path.
 
 #![deny(missing_docs)]
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
+use url::Url;
+
+#[cfg(test)]
+mod test;
+
+mod environment {
+    conation_env_var::env_vars! {
+        pub(super) struct StalwartJmapUrl;
+        pub(super) struct StalwartAdminUrl;
+        pub(super) struct StalwartAdminUser;
+        pub(super) struct StalwartAdminPassword;
+    }
+
+    conation_env_var::maybe_env_var! {
+        pub(super) struct EmailProvider;
+    }
+}
 
 /// Which email backend is active. Controlled by `EMAIL_PROVIDER` env (gmail|stalwart).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum EmailProviderKind {
     /// Legacy Gmail API (requires Google OAuth + GCP PubSub)
+    #[default]
     Gmail,
     /// Self-hosted Stalwart JMAP (Conation default)
     Stalwart,
-}
-
-impl Default for EmailProviderKind {
-    fn default() -> Self {
-        Self::Stalwart
-    }
 }
 
 impl std::str::FromStr for EmailProviderKind {
@@ -30,7 +46,9 @@ impl std::str::FromStr for EmailProviderKind {
         match s.to_lowercase().as_str() {
             "gmail" => Ok(Self::Gmail),
             "stalwart" | "jmap" | "conation" => Ok(Self::Stalwart),
-            _ => Err(format!("unknown email provider: {s} (expected gmail|stalwart)")),
+            _ => Err(format!(
+                "unknown email provider: {s} (expected gmail|stalwart)"
+            )),
         }
     }
 }
@@ -125,51 +143,106 @@ pub enum ProviderError {
     /// Provider-specific
     #[error("provider error: {0}")]
     Provider(String),
+    /// Required provider configuration is missing or invalid.
+    #[error("provider configuration error: {0}")]
+    Configuration(String),
+    /// The selected provider operation is not implemented yet.
+    #[error("unsupported provider operation: {0}")]
+    Unsupported(&'static str),
 }
 
 /// Stalwart JMAP provider — talks to Stalwart via JMAP at `STALWART_JMAP_URL`.
 /// For Conation self-host: `http://stalwart:8080`.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct StalwartProvider {
     /// Base JMAP URL (e.g. `http://stalwart:8080`)
-    pub jmap_url: String,
+    pub jmap_url: Url,
     /// Admin API URL for provisioning (e.g. `http://stalwart:8080/api`)
-    pub admin_url: String,
+    pub admin_url: Url,
+    admin_user: String,
+    admin_password: String,
+}
+
+impl std::fmt::Debug for StalwartProvider {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("StalwartProvider")
+            .field("jmap_url", &self.jmap_url)
+            .field("admin_url", &self.admin_url)
+            .field("admin_user", &"[redacted]")
+            .field("admin_password", &"[redacted]")
+            .finish()
+    }
 }
 
 impl StalwartProvider {
-    /// Create from env `STALWART_JMAP_URL` / `STALWART_ADMIN_URL`
-    pub fn from_env() -> Self {
-        let jmap_url = std::env::var("STALWART_JMAP_URL")
-            .unwrap_or_else(|_| "http://stalwart:8080".to_string());
-        let admin_url = std::env::var("STALWART_ADMIN_URL")
-            .unwrap_or_else(|_| "http://stalwart:8080/api".to_string());
-        Self { jmap_url, admin_url }
+    /// Creates an explicitly configured Stalwart provider.
+    #[must_use]
+    pub fn new(
+        jmap_url: Url,
+        admin_url: Url,
+        admin_user: impl Into<String>,
+        admin_password: impl Into<String>,
+    ) -> Self {
+        Self {
+            jmap_url,
+            admin_url,
+            admin_user: admin_user.into(),
+            admin_password: admin_password.into(),
+        }
+    }
+
+    /// Loads required Stalwart settings through the repository environment wrapper.
+    pub fn from_env() -> Result<Self, ProviderError> {
+        let jmap_url = environment::StalwartJmapUrl::new()
+            .map_err(|error| ProviderError::Configuration(error.to_string()))?;
+        let admin_url = environment::StalwartAdminUrl::new()
+            .map_err(|error| ProviderError::Configuration(error.to_string()))?;
+        let admin_user = environment::StalwartAdminUser::new()
+            .map_err(|error| ProviderError::Configuration(error.to_string()))?;
+        let admin_password = environment::StalwartAdminPassword::new()
+            .map_err(|error| ProviderError::Configuration(error.to_string()))?;
+
+        Ok(Self::new(
+            Url::parse(jmap_url.as_ref())
+                .map_err(|error| ProviderError::Configuration(error.to_string()))?,
+            Url::parse(admin_url.as_ref())
+                .map_err(|error| ProviderError::Configuration(error.to_string()))?,
+            admin_user.as_ref(),
+            admin_password.as_ref(),
+        ))
     }
 
     /// Provision a new mailbox for `email` (called on signup).
     /// Uses Stalwart Admin API: `POST /api/principal`
-    pub async fn provision_account(&self, email: &str, password: &str) -> Result<(), ProviderError> {
+    pub async fn provision_account(
+        &self,
+        email: &str,
+        password: &str,
+    ) -> Result<(), ProviderError> {
         let client = reqwest::Client::new();
-        let url = format!("{}/principal", self.admin_url.trim_end_matches('/'));
+        let url = self
+            .admin_url
+            .join("principal")
+            .map_err(|error| ProviderError::Configuration(error.to_string()))?;
         let body = serde_json::json!({
             "type": "individual",
             "name": email.split('@').next().unwrap_or(email),
             "emails": [email],
             "secrets": [password],
         });
-        let admin_user = std::env::var("STALWART_ADMIN_USER").unwrap_or_else(|_| "admin".to_string());
-        let admin_pass = std::env::var("STALWART_ADMIN_PASSWORD").unwrap_or_else(|_| "conation-admin-123".to_string());
         let resp = client
-            .post(&url)
-            .basic_auth(admin_user, Some(admin_pass))
+            .post(url)
+            .basic_auth(&self.admin_user, Some(&self.admin_password))
             .json(&body)
             .send()
             .await
             .map_err(|e| ProviderError::Transport(e.to_string()))?;
         if !resp.status().is_success() {
-            let txt = resp.text().await.unwrap_or_default();
-            return Err(ProviderError::Provider(format!("stalwart provision failed: {txt}")));
+            return Err(ProviderError::Provider(format!(
+                "stalwart provision failed with HTTP {}",
+                resp.status()
+            )));
         }
         Ok(())
     }
@@ -187,11 +260,9 @@ impl EmailProvider for StalwartProvider {
         _max_results: u32,
         _page_token: Option<&str>,
     ) -> Result<Vec<ProviderMessage>, ProviderError> {
-        // TODO: JMAP Email/query + Email/get via jmap-client
-        // For now, stub — full impl talks to Stalwart JMAP endpoint with bearer token
-        // derived from user's Stalwart session (provisioned at signup).
-        tracing::warn!("StalwartProvider::list_threads stub — wire via JMAP Email/query");
-        Ok(vec![])
+        Err(ProviderError::Unsupported(
+            "Stalwart JMAP Email/query is not wired",
+        ))
     }
 
     async fn get_message(
@@ -199,8 +270,9 @@ impl EmailProvider for StalwartProvider {
         _access_token: &str,
         _message_id: &str,
     ) -> Result<Option<ProviderMessage>, ProviderError> {
-        tracing::warn!("StalwartProvider::get_message stub");
-        Ok(None)
+        Err(ProviderError::Unsupported(
+            "Stalwart JMAP Email/get is not wired",
+        ))
     }
 
     async fn send_message(
@@ -209,43 +281,40 @@ impl EmailProvider for StalwartProvider {
         mime: &[u8],
         _thread_id: Option<&str>,
     ) -> Result<SendResult, ProviderError> {
-        // JMAP EmailSubmission: POST { using: [urn:ietf:params:jmap:core, urn:ietf:params:jmap:mail], methodCalls: [["EmailSubmission/set", {create: {s1: {emailId: ...}}}, "0"]] }
-        // For bootstrap, send via SMTP submission (587) using stalwart SMTP if JMAP not wired.
-        tracing::info!(mime_len = mime.len(), "StalwartProvider::send_message via SMTP submission");
-        // Stub id — real impl returns JMAP emailId
-        Ok(SendResult {
-            message_id: format!("stalwart-{}", uuid::Uuid::new_v4()),
-            thread_id: format!("thread-{}", uuid::Uuid::new_v4()),
-        })
+        let _ = mime;
+        Err(ProviderError::Unsupported(
+            "Stalwart JMAP EmailSubmission is not wired",
+        ))
     }
 
     async fn register_watch(&self, _access_token: &str) -> Result<WatchResult, ProviderError> {
-        // JMAP push: no PubSub needed — server push via WebSocket / EventSource
-        // Stalwart supports JMAP push subscription; we store subscription id in DB.
-        Ok(WatchResult {
-            expiration: None,
-            watch_id: "stalwart-push".to_string(),
-        })
+        Err(ProviderError::Unsupported(
+            "Stalwart JMAP push subscriptions are not wired",
+        ))
     }
 
     async fn stop_watch(&self, _access_token: &str) -> Result<(), ProviderError> {
-        Ok(())
+        Err(ProviderError::Unsupported(
+            "Stalwart JMAP push subscriptions are not wired",
+        ))
     }
 }
 
-/// Factory — picks provider from `EMAIL_PROVIDER` env (default stalwart).
-pub fn provider_from_env() -> Box<dyn EmailProvider> {
-    let kind = std::env::var("EMAIL_PROVIDER")
-        .ok()
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(EmailProviderKind::Stalwart);
+/// Builds the experimental provider selected by `EMAIL_PROVIDER`.
+///
+/// The established Gmail integration is intentionally not duplicated by this
+/// crate. Selecting Gmail returns an explicit error and callers must use
+/// `gmail_client`.
+pub fn provider_from_env() -> Result<Box<dyn EmailProvider>, ProviderError> {
+    let kind = environment::EmailProvider::new()
+        .map(|value| value.as_ref().parse())
+        .transpose()
+        .map_err(ProviderError::Configuration)?
+        .unwrap_or_default();
     match kind {
-        EmailProviderKind::Gmail => {
-            // Defer to gmail_client — caller should construct GmailClient directly.
-            // Return stub Stalwart and log; full Gmail path uses GmailClient unchanged.
-            tracing::warn!("EMAIL_PROVIDER=gmail — using GmailClient path (gmail_client crate)");
-            Box::new(StalwartProvider::from_env())
-        }
-        EmailProviderKind::Stalwart => Box::new(StalwartProvider::from_env()),
+        EmailProviderKind::Gmail => Err(ProviderError::Unsupported(
+            "Gmail remains on the gmail_client integration",
+        )),
+        EmailProviderKind::Stalwart => Ok(Box::new(StalwartProvider::from_env()?)),
     }
 }

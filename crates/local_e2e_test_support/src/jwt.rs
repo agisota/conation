@@ -40,7 +40,7 @@ pub struct LocalJwtClaims<'a> {
     /// FusionAuth user id claim.
     pub fusion_user_id: &'a str,
     /// Macro auth user id claim.
-    pub conation_user_id: &'a str,
+    pub macro_user_id: &'a str,
     /// Optional organization id claim.
     pub organization_id: Option<i32>,
     /// Optional issuer claim. Falls back to env, then `local`.
@@ -64,7 +64,7 @@ pub fn encode_local_jwt_with(
         config,
         LocalJwtClaims {
             fusion_user_id: &options.user.fusion_user_id,
-            conation_user_id: &options.user.user_id,
+            macro_user_id: &options.user.user_id,
             organization_id: options.organization_id,
             expiry_seconds: options.expiry_seconds,
             issuer: None,
@@ -95,7 +95,7 @@ pub fn encode_local_jwt_claims_with(
 
     encode_conation_api_token(EncodeMacroApiTokenArgs {
         fusionauth_id: claims.fusion_user_id.to_owned(),
-        conation_user_id: claims.conation_user_id.to_owned(),
+        macro_user_id: claims.macro_user_id.to_owned(),
         organization_id: claims.organization_id,
         issuer,
         private_key,

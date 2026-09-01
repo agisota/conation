@@ -1,3 +1,4 @@
+import { t } from '@core/i18n';
 import CaretRight from '@phosphor/caret-right.svg?component-solid';
 import { cn } from '@ui';
 import { createSignal, type JSX, onCleanup, onMount, Show } from 'solid-js';
@@ -51,7 +52,9 @@ export function CollapsibleMessage(props: { children: JSX.Element }) {
             class="size-3 shrink-0 transition-transform"
             classList={{ 'rotate-90': expanded() }}
           />
-          <span>{expanded() ? 'Show less' : 'Show more'}</span>
+          <span>
+            {expanded() ? t('common.showLess') : t('common.showMore')}
+          </span>
         </button>
       </Show>
     </div>

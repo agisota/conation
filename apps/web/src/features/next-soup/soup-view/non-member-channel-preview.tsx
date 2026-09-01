@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import EmptyStateChannelsGraphic from '@design/empty-state-channels.svg';
 import { useJoinChannelMutation } from '@queries/channel/join-links';
 import { EmptyStatePanel } from '@ui';
@@ -23,10 +24,9 @@ export function NonMemberChannelPreview(props: {
   });
 
   const description = () => {
-    const count = props.memberCount;
-    const members =
-      count > 0 ? ` (${count} ${count === 1 ? 'member' : 'members'})` : '';
-    return `You're not in this channel yet${members}. Join it to read and send messages.`;
+    return t('soup.channel.notMemberDescription', {
+      count: props.memberCount,
+    });
   };
 
   return (
@@ -35,7 +35,9 @@ export function NonMemberChannelPreview(props: {
       title={props.channelName}
       description={description()}
       primaryAction={{
-        label: joinMutation.isPending ? 'Joining…' : 'Join channel',
+        label: joinMutation.isPending
+          ? t('soup.channel.joining')
+          : t('soup.channel.join'),
         onClick: () => {
           if (joinMutation.isPending) return;
           joinMutation.mutate({ channelId: props.channelId });

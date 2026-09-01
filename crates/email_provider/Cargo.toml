@@ -6,16 +6,14 @@ description = "Abstraction over email providers: Gmail (legacy) and Stalwart JMA
 
 [dependencies]
 async-trait = { workspace = true }
+conation_env_var = { path = "../conation_env_var" }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 reqwest = { workspace = true }
-rootcause = { workspace = true }
-uuid = { workspace = true }
+url = { workspace = true }
 
-# For Stalwart JMAP
-base64 = { workspace = true }
 chrono = { workspace = true }
 
 [dev-dependencies]

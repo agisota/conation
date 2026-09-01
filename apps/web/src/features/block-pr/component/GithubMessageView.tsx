@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { Message } from '@channel/Message/Message';
 import type { MessageData } from '@channel/Message/types';
 import { Thread } from '@channel/Thread/Thread';
@@ -44,9 +45,9 @@ function GithubAvatar(props: { login: string }) {
 function sourceLabel(source: string): string | null {
   switch (source) {
     case 'review':
-      return 'review';
+      return t('pullRequest.comment.review');
     case 'review_comment':
-      return 'on diff';
+      return t('pullRequest.comment.onDiff');
     default:
       return null;
   }
@@ -203,7 +204,9 @@ function GithubCommentMessage(props: {
               class="mt-2"
               onClick={() => setExpanded(!expanded())}
             >
-              {expanded() ? 'Show less' : 'Show more'}
+              {expanded()
+                ? t('pullRequest.comment.showLess')
+                : t('pullRequest.comment.showMore')}
             </Button>
           </Show>
         </Message.Slot>

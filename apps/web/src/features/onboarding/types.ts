@@ -9,7 +9,9 @@ export interface BackContext {
 
 export interface LessonDefinition {
   id: LessonId;
+  /** Semantic i18n key for the lesson heading. */
   title: string;
+  /** Semantic i18n key for the optional lesson summary. */
   subtitle?: string;
   content: Component<LessonContentProps>;
   /** Optional component rendered in the right demo panel. When omitted the Macro logo is shown. */

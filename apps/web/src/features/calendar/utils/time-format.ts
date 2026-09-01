@@ -1,3 +1,4 @@
+import { getDateLocale } from '@app/lib/i18n';
 import type { CalendarTimeFormat } from '../types';
 
 /** FullCalendar and Intl options for the supported calendar time formats. */
@@ -14,21 +15,12 @@ export const CALENDAR_TIME_FORMAT_OPTIONS = {
   },
 } satisfies Record<CalendarTimeFormat, Intl.DateTimeFormatOptions>;
 
-const calendarTimeFormatters = {
-  '12-hour': new Intl.DateTimeFormat(
-    undefined,
-    CALENDAR_TIME_FORMAT_OPTIONS['12-hour']
-  ),
-  '24-hour': new Intl.DateTimeFormat(
-    undefined,
-    CALENDAR_TIME_FORMAT_OPTIONS['24-hour']
-  ),
-} satisfies Record<CalendarTimeFormat, Intl.DateTimeFormat>;
-
-const compactWholeHourFormatter = new Intl.DateTimeFormat(undefined, {
-  hour: 'numeric',
-  hour12: true,
-});
+function calendarTimeFormatter(timeFormat: CalendarTimeFormat) {
+  return new Intl.DateTimeFormat(
+    getDateLocale(),
+    CALENDAR_TIME_FORMAT_OPTIONS[timeFormat]
+  );
+}
 
 function compactDayPeriod(
   parts: Intl.DateTimeFormatPart[],
@@ -57,7 +49,7 @@ function compactDayPeriod(
 
 /** Returns the time format that matches the user's current locale. */
 export function getDefaultCalendarTimeFormat(): CalendarTimeFormat {
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(getDateLocale(), {
     hour: 'numeric',
   }).resolvedOptions().hour12 === false
     ? '24-hour'
@@ -66,7 +58,7 @@ export function getDefaultCalendarTimeFormat(): CalendarTimeFormat {
 
 /** Formats a time using the calendar's selected 12/24-hour preference. */
 export function formatCalendarTime(date: Date, timeFormat: CalendarTimeFormat) {
-  return calendarTimeFormatters[timeFormat].format(date);
+  return calendarTimeFormatter(timeFormat).format(date);
 }
 
 /** Formats event-card times compactly while preserving the selected clock. */
@@ -76,13 +68,16 @@ export function formatCompactCalendarTime(
   showDayPeriod = true
 ) {
   if (timeFormat === '24-hour') {
-    return calendarTimeFormatters[timeFormat].format(date);
+    return calendarTimeFormatter(timeFormat).format(date);
   }
 
   const formatter =
     date.getMinutes() === 0
-      ? compactWholeHourFormatter
-      : calendarTimeFormatters[timeFormat];
+      ? new Intl.DateTimeFormat(getDateLocale(), {
+          hour: 'numeric',
+          hour12: true,
+        })
+      : calendarTimeFormatter(timeFormat);
   return compactDayPeriod(formatter.formatToParts(date), showDayPeriod);
 }
 

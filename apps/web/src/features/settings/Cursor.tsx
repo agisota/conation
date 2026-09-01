@@ -1,5 +1,5 @@
-import { toast } from '@core/component/Toast/Toast';
 import { t } from '@app/lib/i18n';
+import { toast } from '@core/component/Toast/Toast';
 import { ThrownResultError } from '@core/util/result';
 import {
   useCursorApiKeyStatusQuery,
@@ -45,16 +45,22 @@ export function CursorCard() {
   const handleModelChange = async (modelId: string) => {
     try {
       await setDefaultModel.mutateAsync(modelId);
-      toast.success('Default model updated');
+      toast.success(t('settings.cursor.toast.defaultModelUpdated'));
     } catch (error) {
-      toast.failure(failureMessage(error, 'Failed to set your default model'));
+      toast.failure(
+        failureMessage(error, t('settings.cursor.toast.defaultModelFailed'))
+      );
     }
   };
 
   const handleSave = async () => {
     const key = apiKey().trim();
     if (!key.startsWith(CURSOR_KEY_PREFIX)) {
-      toast.failure(`Cursor API keys start with ${CURSOR_KEY_PREFIX}`);
+      toast.failure(
+        t('settings.cursor.toast.invalidKeyPrefix', {
+          prefix: CURSOR_KEY_PREFIX,
+        })
+      );
       return;
     }
     try {
@@ -62,10 +68,10 @@ export function CursorCard() {
       // Cleared on success so the key does not sit in the DOM, and because
       // there is nothing to edit afterwards — replacing means pasting again.
       setApiKey('');
-      toast.success('Cursor connected');
+      toast.success(t('settings.cursor.toast.connected'));
     } catch (error) {
       toast.failure(
-        failureMessage(error, 'Failed to save your Cursor API key')
+        failureMessage(error, t('settings.cursor.toast.saveFailed'))
       );
     }
   };
@@ -73,9 +79,11 @@ export function CursorCard() {
   const handleDisconnect = async () => {
     try {
       await disconnect.mutateAsync();
-      toast.success('Cursor disconnected');
+      toast.success(t('settings.cursor.toast.disconnected'));
     } catch (error) {
-      toast.failure(failureMessage(error, 'Failed to disconnect Cursor'));
+      toast.failure(
+        failureMessage(error, t('settings.cursor.toast.disconnectFailed'))
+      );
     }
   };
 
@@ -83,22 +91,27 @@ export function CursorCard() {
     <SettingsCard>
       <IntegrationRow
         icon={<span class="text-sm font-medium text-ink-muted">Cs</span>}
-        title={t('auto.cursor')}
-        description="Run @cursor coding sessions on your Cursor account."
+        title={t('settings.cursor.title')}
+        description={t('settings.cursor.description')}
       />
 
       <SettingsRow
         label={
           <span class="flex items-center gap-2">
-            <span>{t('auto.api_key')}</span>
+            <span>{t('settings.cursor.apiKey.label')}</span>
             <Show when={registered()}>
-              <StatusDot state="connected" label="Connected" />
+              <StatusDot
+                state="connected"
+                label={t('settings.cursor.status.connected')}
+              />
             </Show>
           </span>
         }
         description={
-          <Switch fallback="Paste a key from Cursor's dashboard. Macro stores it encrypted and never shows it again.">
-            <Match when={registered()}>{t('auto.stored_encrypted')}</Match>
+          <Switch fallback={t('settings.cursor.apiKey.description')}>
+            <Match when={registered()}>
+              {t('settings.cursor.apiKey.storedEncrypted')}
+            </Match>
           </Switch>
         }
       >
@@ -106,7 +119,9 @@ export function CursorCard() {
           // The placeholder reads as "no key", which for this card would flash
           // the paste-a-key input at someone who has one already.
           when={!status.isPlaceholderData}
-          fallback={<span class="text-xs text-ink-muted">{t('common.loading')}</span>}
+          fallback={
+            <span class="text-xs text-ink-muted">{t('common.loading')}</span>
+          }
         >
           <Switch
             fallback={
@@ -128,13 +143,15 @@ export function CursorCard() {
                   depth={3}
                   disabled={apiKey().length === 0 || saveKey.isPending}
                   onClick={handleSave}
-                >{t('common.save')}</Button>
+                >
+                  {t('common.save')}
+                </Button>
               </div>
             }
           >
             <Match when={registered()}>
               <ConnectAction
-                label="Disconnect"
+                label={t('settings.cursor.actions.disconnect')}
                 variant="danger"
                 onClick={handleDisconnect}
                 disabled={disconnect.isPending}
@@ -146,8 +163,8 @@ export function CursorCard() {
 
       <Show when={registered()}>
         <SettingsRow
-          label="Default model"
-          description="The model new @cursor sessions start on. You can still switch it per session."
+          label={t('settings.cursor.defaultModel.label')}
+          description={t('settings.cursor.defaultModel.description')}
         >
           <select
             class="settings-input w-56"

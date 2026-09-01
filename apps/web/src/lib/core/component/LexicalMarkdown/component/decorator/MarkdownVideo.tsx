@@ -1,13 +1,9 @@
-import { toast } from '@core/component/Toast/Toast';
 import { t } from '@app/lib/i18n';
+import { $isVideoNode, type VideoDecoratorProps } from '@conation/lexical-core';
+import { toast } from '@core/component/Toast/Toast';
 import { debouncedDependent } from '@core/util/debounce';
-
 import { Dialog } from '@kobalte/core/dialog';
 import { mergeRegister } from '@lexical/utils';
-import {
-  $isVideoNode,
-  type VideoDecoratorProps,
-} from '@conation/lexical-core';
 import VideoIcon from '@phosphor/file-video.svg';
 import LoadingSpinner from '@phosphor/spinner.svg';
 import XIcon from '@phosphor/x.svg';
@@ -44,13 +40,13 @@ import { ResizeHandle } from './ResizeHandle';
 
 type VideoState = 'loading' | 'ok' | 'error';
 
-const VideoErrors = {
-  UNAUTHORIZED: 'You do not have access to this video.',
-  MISSING: 'This video does not exist.',
-  GONE: 'This video has been deleted.',
-  FALLBACK: 'This video could not be found.',
+const VideoErrorKeys = {
+  UNAUTHORIZED: 'editor.media.video.errors.unauthorized',
+  MISSING: 'editor.media.video.errors.missing',
+  GONE: 'editor.media.video.errors.deleted',
+  FALLBACK: 'editor.media.video.errors.notFound',
 } as const;
-type VideoError = keyof typeof VideoErrors;
+type VideoError = keyof typeof VideoErrorKeys;
 
 function Spinner() {
   return (
@@ -207,7 +203,7 @@ export function MarkdownVideo(props: VideoDecoratorProps) {
           ([key]) => {
             if (key !== props.key) return false;
             setUploading(false);
-            toast.failure('Failed to upload video');
+            toast.failure(t('editor.media.video.uploadFailed'));
             return true;
           },
           COMMAND_PRIORITY_LOW
@@ -312,7 +308,7 @@ export function MarkdownVideo(props: VideoDecoratorProps) {
         <Show when={state() === 'error'}>
           <div class="absolute top-0 left-0 size-full flex flex-col justify-center items-center gap-2 text-ink-extra-muted min-h-44">
             <VideoIcon class="size-5" />
-            <div>{VideoErrors[videoError() ?? 'FALLBACK']}</div>
+            <div>{t(VideoErrorKeys[videoError() ?? 'FALLBACK'])}</div>
           </div>
         </Show>
 
@@ -324,7 +320,9 @@ export function MarkdownVideo(props: VideoDecoratorProps) {
 
         <Show when={uploading() && state() !== 'error'}>
           <div class="absolute flex gap-2 top-2 left-2 justify-center items-center p-2">
-            <Spinner />{t('auto.saving_video')}</div>
+            <Spinner />
+            {t('editor.media.savingVideo')}
+          </div>
         </Show>
 
         <Show

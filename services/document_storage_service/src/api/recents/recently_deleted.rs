@@ -28,7 +28,7 @@ pub type RecentlyDeletedResponse = TypedSuccessResponse<RecentlyDeletedResponseD
         (status = 500, body=GenericErrorResponse),
     )
 )]
-#[tracing::instrument(skip(db, user), fields(user_id=?user.authorization.user.conation_user_id))]
+#[tracing::instrument(skip(db, user), fields(user_id=?user.authorization.user.macro_user_id))]
 pub async fn handler(
     State(db): State<PgPool>,
     user: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
@@ -37,7 +37,7 @@ pub async fn handler(
 
     let items = match conation_db_client::recents::deleted::get_recently_deleted(
         &db,
-        user.authorization.user.conation_user_id.as_ref(),
+        user.authorization.user.macro_user_id.as_ref(),
     )
     .await
     {

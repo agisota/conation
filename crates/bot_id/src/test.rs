@@ -59,6 +59,22 @@ fn conation_new_id_is_stable_and_distinct_from_macro() {
 }
 
 #[test]
+fn system_bot_display_names_use_conation_without_changing_handles() {
+    assert_eq!(MACRO_AI_NAME, "Conation");
+    assert_eq!(MACRO_NEW_NAME, "Conation (new)");
+    assert_eq!(MACRO_CODER_NAME, "Conation Coder");
+    assert_eq!(MACRO_SYSTEM_NAME, "Conation System");
+
+    assert_eq!(system_bot(MACRO_AI_BOT_ID).unwrap().handle, "macro");
+    assert_eq!(system_bot(MACRO_NEW_BOT_ID).unwrap().handle, "macro-new");
+    assert_eq!(system_bot(MACRO_CODER_BOT_ID).unwrap().handle, "coder");
+    assert_eq!(
+        system_bot(MACRO_SYSTEM_BOT_ID).unwrap().handle,
+        "macro-system"
+    );
+}
+
+#[test]
 fn rejects_non_bot_storage_string() {
     assert!(BotIdStr::parse_from_str("macro|teo@macro.com").is_err());
 }

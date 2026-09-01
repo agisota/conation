@@ -29,7 +29,7 @@ pub struct ConfigureBotResponse {
 #[serde(rename_all = "camelCase")]
 #[schemars(
     title = "ConfigureBot",
-    description = "Configure a manageable bot's profile. Provide only fields that should change. Use avatarUrl to set a profile picture from an image already uploaded to Macro static files or another reachable image URL; pass an empty string to clear the current picture. Passing an empty string for description clears it. Confirm handle changes because integrations and mentions may rely on the stable handle."
+    description = "Configure a manageable bot's profile. Provide only fields that should change. Use avatarUrl to set a profile picture from an image already uploaded to Conation static files or another reachable image URL; pass an empty string to clear the current picture. Passing an empty string for description clears it. Confirm handle changes because integrations and mentions may rely on the stable handle."
 )]
 pub struct ConfigureBot {
     /// Bot to configure.
@@ -53,7 +53,7 @@ pub struct ConfigureBot {
     pub description: Option<String>,
     /// Optional replacement profile-picture URL.
     #[schemars(
-        description = "New profile-picture URL. Use a Macro static-file URL or another reachable image URL. Omit to keep the current picture; pass an empty string to clear it."
+        description = "New profile-picture URL. Use a Conation static-file URL or another reachable image URL. Omit to keep the current picture; pass an empty string to clear it."
     )]
     #[serde(default)]
     pub avatar_url: Option<String>,

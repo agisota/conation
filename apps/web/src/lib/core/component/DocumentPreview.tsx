@@ -1,6 +1,6 @@
 import { parseLocalDate } from '@app/features/calendar/utils/calendar-date';
-import { t } from '@app/lib/i18n';
 import { openChatWithAgent } from '@app/features/chat/ChatWithAgentButton';
+import { formatDateTime, t } from '@app/lib/i18n';
 import { globalSplitManager } from '@app/signal/splitLayout';
 import {
   type CalendarMentionTarget,
@@ -115,7 +115,9 @@ function Spinner() {
  * Loading indicator for mentions
  */
 function Loading() {
-  return <MentionContainer icon={<Spinner />} text="Loading" />;
+  return (
+    <MentionContainer icon={<Spinner />} text={t('core.itemPreview.loading')} />
+  );
 }
 
 /**
@@ -158,7 +160,7 @@ export const mentionsAccessories = (
   if (blockName === 'pdf') {
     const id = params[URL_PARAMS_PDF.annotationId];
     if (id?.trim()) {
-      return { note: `Annotation: ${id}` };
+      return { note: t('core.itemPreview.annotation', { id }) };
     }
 
     const pageIndex = Number(params[URL_PARAMS_PDF.pageNumber]);
@@ -174,9 +176,12 @@ export const mentionsAccessories = (
         width > 0 &&
         height > 0
       ) {
-        return { note: `Page ${pageIndex}`, icon: 'highlight' };
+        return {
+          note: t('core.itemPreview.page', { page: pageIndex }),
+          icon: 'highlight',
+        };
       }
-      return { note: `Page ${pageIndex}` };
+      return { note: t('core.itemPreview.page', { page: pageIndex }) };
     }
   }
   // Canvas block handling
@@ -195,10 +200,10 @@ export const mentionsAccessories = (
     if (threadId) {
       return {
         icon: 'thread',
-        note: 'Thread',
+        note: t('core.itemPreview.thread'),
       };
     } else if (messageId) {
-      return { icon: 'message', note: 'Message' };
+      return { icon: 'message', note: t('core.itemPreview.message') };
     }
     return;
   }
@@ -207,12 +212,12 @@ export const mentionsAccessories = (
     const id = params[URL_PARAMS_MD.nodeId];
     const loc = params[URL_PARAMS_MD.location];
     if (id?.trim() || loc?.trim()) {
-      return { icon: 'highlight', note: 'Snippet' };
+      return { icon: 'highlight', note: t('core.itemPreview.snippet') };
     }
 
     const comment = params[URL_PARAMS_MD.commentId];
     if (comment?.trim()) {
-      return { icon: 'message', note: 'Comment' };
+      return { icon: 'message', note: t('core.itemPreview.comment') };
     }
   }
 };
@@ -462,15 +467,10 @@ function PreviewPropertyPill(props: {
   );
 }
 
-const calendarDateFormat = new Intl.DateTimeFormat(undefined, {
-  weekday: 'short',
-  month: 'short',
-  day: 'numeric',
-});
-const calendarTimeFormat = new Intl.DateTimeFormat(undefined, {
-  hour: 'numeric',
-  minute: '2-digit',
-});
+const formatCalendarPreviewDate = (date: Date) =>
+  formatDateTime(date, { weekday: 'short', month: 'short', day: 'numeric' });
+const formatCalendarPreviewTime = (date: Date) =>
+  formatDateTime(date, { hour: 'numeric', minute: '2-digit' });
 
 /** One compact local-time schedule line for a calendar mention preview. */
 export function calendarPreviewSchedule(
@@ -483,18 +483,35 @@ export function calendarPreviewSchedule(
     const inclusiveEnd = end ? new Date(end) : undefined;
     inclusiveEnd?.setDate(inclusiveEnd.getDate() - 1);
     return inclusiveEnd && inclusiveEnd > start
-      ? `${calendarDateFormat.format(start)} – ${calendarDateFormat.format(inclusiveEnd)} · All day`
-      : `${calendarDateFormat.format(start)} · All day`;
+      ? t('calendar.event.schedule.allDayRange', {
+          start: formatCalendarPreviewDate(start),
+          end: formatCalendarPreviewDate(inclusiveEnd),
+        })
+      : t('calendar.event.schedule.allDaySingle', {
+          date: formatCalendarPreviewDate(start),
+        });
   }
   const start = new Date(event.time.startsAt);
   const end = new Date(event.time.endsAt);
   if (!Number.isFinite(start.getTime())) return undefined;
   if (!Number.isFinite(end.getTime())) {
-    return `${calendarDateFormat.format(start)} · ${calendarTimeFormat.format(start)}`;
+    return t('calendar.event.schedule.timedStart', {
+      date: formatCalendarPreviewDate(start),
+      time: formatCalendarPreviewTime(start),
+    });
   }
   return start.toDateString() === end.toDateString()
-    ? `${calendarDateFormat.format(start)} · ${calendarTimeFormat.format(start)} – ${calendarTimeFormat.format(end)}`
-    : `${calendarDateFormat.format(start)}, ${calendarTimeFormat.format(start)} – ${calendarDateFormat.format(end)}, ${calendarTimeFormat.format(end)}`;
+    ? t('calendar.event.schedule.timedSingle', {
+        date: formatCalendarPreviewDate(start),
+        startTime: formatCalendarPreviewTime(start),
+        endTime: formatCalendarPreviewTime(end),
+      })
+    : t('calendar.event.schedule.timedRange', {
+        startDate: formatCalendarPreviewDate(start),
+        startTime: formatCalendarPreviewTime(start),
+        endDate: formatCalendarPreviewDate(end),
+        endTime: formatCalendarPreviewTime(end),
+      });
 }
 
 /** Meeting-level rows of the calendar mention hover card. */
@@ -509,7 +526,10 @@ function CalendarEventPreviewDetails(props: {
         {(schedule) => (
           <MetadataInfo icon={ClockIcon}>
             {schedule()}
-            <Show when={props.event.isRecurring}> · Repeats</Show>
+            <Show when={props.event.isRecurring}>
+              {' '}
+              · {t('calendar.event.form.recurrence.label')}
+            </Show>
           </MetadataInfo>
         )}
       </Show>
@@ -528,8 +548,9 @@ function CalendarEventPreviewDetails(props: {
               {' · '}
             </Show>
             <Show when={props.event.attendeeCount > 0}>
-              {props.event.attendeeCount}{' '}
-              {props.event.attendeeCount === 1 ? 'attendee' : 'attendees'}
+              {t('core.itemPreview.attendees', {
+                count: props.event.attendeeCount,
+              })}
             </Show>
           </span>
         </MetadataInfo>
@@ -740,7 +761,7 @@ export function DocumentPreviewContent(props: DocumentPreviewContentProps) {
         link += `?${queryParams}`;
       }
       navigator.clipboard.writeText(link);
-      toast.success('Copied document link to clipboard');
+      toast.success(t('core.itemPreview.linkCopied'));
     } catch (e) {
       console.error(e);
     }
@@ -813,8 +834,8 @@ export function DocumentPreviewContent(props: DocumentPreviewContentProps) {
           <PopupIconButton
             tooltip={
               props.previewInfo.isPreviewable
-                ? 'Convert to Embed'
-                : 'Convert to Card View'
+                ? t('core.itemPreview.convertToEmbed')
+                : t('core.itemPreview.convertToCard')
             }
             onClick={props.previewInfo.handlePreviewToggle}
             icon={MacroEmbed}
@@ -831,14 +852,14 @@ export function DocumentPreviewContent(props: DocumentPreviewContentProps) {
             when={props.collapseInfo?.isCollapsed}
             fallback={
               <PopupIconButton
-                tooltip="Collapse Reference"
+                tooltip={t('core.itemPreview.collapseReference')}
                 onClick={handleToggleCollapse}
                 icon={CollapseInlinePreview}
               />
             }
           >
             <PopupIconButton
-              tooltip="Expand Reference"
+              tooltip={t('core.itemPreview.expandReference')}
               onClick={handleToggleCollapse}
               icon={ExpandInlinePreview}
             />
@@ -852,7 +873,7 @@ export function DocumentPreviewContent(props: DocumentPreviewContentProps) {
     if (canOpenInChat()) {
       buttons.push(
         <PopupIconButton
-          tooltip="Open Document in AI Chat"
+          tooltip={t('core.itemPreview.openInAiChat')}
           onClick={handleOpenInChat}
           icon={SparkleIcon}
         />
@@ -860,13 +881,17 @@ export function DocumentPreviewContent(props: DocumentPreviewContentProps) {
     }
 
     buttons.push(
-      <PopupIconButton tooltip="Copy Link" onClick={handleCopy} icon={Link} />
+      <PopupIconButton
+        tooltip={t('core.itemPreview.copyLink')}
+        onClick={handleCopy}
+        icon={Link}
+      />
     );
 
     if (props.documentInfo.type === 'task') {
       buttons.push(
         <PopupIconButton
-          tooltip="Copy Branch Name"
+          tooltip={t('core.itemPreview.copyBranchName')}
           onClick={handleCopyBranchName}
           icon={GitBranchIcon}
         />
@@ -876,7 +901,7 @@ export function DocumentPreviewContent(props: DocumentPreviewContentProps) {
     if (props.documentInfo.isOpenable) {
       buttons.push(
         <PopupIconButton
-          tooltip="Open Fullscreen"
+          tooltip={t('core.itemPreview.openFullscreen')}
           onClick={openDocument}
           icon={OpenIcon}
         />
@@ -885,7 +910,7 @@ export function DocumentPreviewContent(props: DocumentPreviewContentProps) {
       if (!isSplitAlreadyOpen()) {
         buttons.push(
           <PopupIconButton
-            tooltip="Open in New Split"
+            tooltip={t('core.itemPreview.openInNewSplit')}
             onClick={openInNewSplit}
             icon={ColumnsPlusRight}
           />

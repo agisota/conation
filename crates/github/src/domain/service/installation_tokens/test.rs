@@ -79,14 +79,14 @@ impl GithubSyncRepo for FakeRepo {
         unimplemented!("minting a token does not resolve task references")
     }
 
-    async fn get_conation_ids_by_github_user_ids(
+    async fn get_macro_ids_by_github_user_ids(
         &self,
         _github_user_ids: &[String],
     ) -> Result<HashMap<String, Vec<String>>, Self::Err> {
         unimplemented!("minting a token does not map github users")
     }
 
-    async fn get_conation_ids_by_github_logins(
+    async fn get_macro_ids_by_github_logins(
         &self,
         _github_logins: &[String],
     ) -> Result<HashMap<String, Vec<String>>, Self::Err> {

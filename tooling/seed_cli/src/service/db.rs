@@ -30,11 +30,11 @@ pub struct AdoptOrSeedUserArgs {
     pub email: String,
     /// The `macro|email` user id.
     pub user_id: String,
-    /// Derived uuid used when no `conation_user` row exists for the email.
-    pub derived_conation_user_id: Uuid,
-    /// First name for `conation_user_info`.
+    /// Derived uuid used when no `macro_user` row exists for the email.
+    pub derived_macro_user_id: Uuid,
+    /// First name for `macro_user_info`.
     pub first_name: String,
-    /// Last name for `conation_user_info`.
+    /// Last name for `macro_user_info`.
     pub last_name: String,
     /// Fabricated stripe customer id used on fresh inserts.
     pub stripe_customer_id: String,
@@ -571,18 +571,18 @@ impl SeedDb {
 
     /// Delegate an email link from its owner to another user.
     #[tracing::instrument(skip(self), err)]
-    pub async fn insert_conation_user_link(
+    pub async fn insert_macro_user_link(
         &self,
-        primary_conation_id: &str,
-        child_conation_id: &str,
+        primary_macro_id: &str,
+        child_macro_id: &str,
         link_id: uuid::Uuid,
     ) -> anyhow::Result<()> {
         sqlx::query!(
-            r#"INSERT INTO conation_user_links (primary_conation_id, child_conation_id, link_id)
+            r#"INSERT INTO macro_user_links (primary_macro_id, child_macro_id, link_id)
                VALUES ($1, $2, $3)
                ON CONFLICT DO NOTHING"#,
-            primary_conation_id,
-            child_conation_id,
+            primary_macro_id,
+            child_macro_id,
             link_id,
         )
         .execute(&self.inner)
@@ -591,14 +591,14 @@ impl SeedDb {
     }
 
     /// Seed one user, adopting rows the signup webhook may already have
-    /// created for the email (their `conation_user` id wins over the derived
+    /// created for the email (their `macro_user` id wins over the derived
     /// one so login-created accounts stay intact).
     #[tracing::instrument(skip(self), err)]
     pub async fn adopt_or_seed_user(&self, args: AdoptOrSeedUserArgs) -> anyhow::Result<()> {
         let AdoptOrSeedUserArgs {
             email,
             user_id,
-            derived_conation_user_id,
+            derived_macro_user_id,
             first_name,
             last_name,
             stripe_customer_id,
@@ -610,61 +610,61 @@ impl SeedDb {
         let mut transaction = self.inner.begin().await?;
 
         let existing: Option<Uuid> =
-            sqlx::query_scalar!("SELECT id FROM conation_user WHERE email = $1 LIMIT 1", email)
+            sqlx::query_scalar!("SELECT id FROM macro_user WHERE email = $1 LIMIT 1", email)
                 .fetch_optional(transaction.as_mut())
                 .await?;
 
-        let conation_user_id = match existing {
+        let macro_user_id = match existing {
             Some(id) => id,
             None => {
                 sqlx::query!(
-                    r#"INSERT INTO conation_user (id, username, email, stripe_customer_id, has_trialed)
+                    r#"INSERT INTO macro_user (id, username, email, stripe_customer_id, has_trialed)
                        VALUES ($1, $2, $3, $4, false)"#,
-                    derived_conation_user_id,
+                    derived_macro_user_id,
                     email,
                     email,
                     stripe_customer_id,
                 )
                 .execute(transaction.as_mut())
                 .await?;
-                derived_conation_user_id
+                derived_macro_user_id
             }
         };
 
         sqlx::query!(
-            r#"INSERT INTO "User" (id, email, "stripeCustomerId", conation_user_id, "tutorialComplete", "hasOnboardingDocuments")
+            r#"INSERT INTO "User" (id, email, "stripeCustomerId", macro_user_id, "tutorialComplete", "hasOnboardingDocuments")
                VALUES ($1, $2, $3, $4, true, true)
                ON CONFLICT (id) DO UPDATE SET
-                 conation_user_id = EXCLUDED.conation_user_id,
+                 macro_user_id = EXCLUDED.macro_user_id,
                  "tutorialComplete" = true,
                  "hasOnboardingDocuments" = true"#,
             user_id,
             email,
             stripe_customer_id,
-            conation_user_id,
+            macro_user_id,
         )
         .execute(transaction.as_mut())
         .await?;
 
         sqlx::query!(
-            r#"INSERT INTO conation_user_email_verification (conation_user_id, email, is_verified)
+            r#"INSERT INTO macro_user_email_verification (macro_user_id, email, is_verified)
                VALUES ($1, $2, true)
                ON CONFLICT (email) DO UPDATE SET
-                 conation_user_id = EXCLUDED.conation_user_id,
+                 macro_user_id = EXCLUDED.macro_user_id,
                  is_verified = true"#,
-            conation_user_id,
+            macro_user_id,
             email,
         )
         .execute(transaction.as_mut())
         .await?;
 
         sqlx::query!(
-            r#"INSERT INTO conation_user_info (conation_user_id, first_name, last_name)
+            r#"INSERT INTO macro_user_info (macro_user_id, first_name, last_name)
                VALUES ($1, $2, $3)
-               ON CONFLICT (conation_user_id) DO UPDATE SET
+               ON CONFLICT (macro_user_id) DO UPDATE SET
                  first_name = EXCLUDED.first_name,
                  last_name = EXCLUDED.last_name"#,
-            conation_user_id,
+            macro_user_id,
             first_name,
             last_name,
         )

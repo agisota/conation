@@ -1,8 +1,8 @@
 import { OnboardingFlow } from '@app/features/setup/flow/OnboardingFlow';
-import { t } from '@app/lib/i18n';
 import { NoiseBackground } from '@app/features/setup/flow/shared';
 import { useOnboardingV4Flag } from '@app/features/setup/flow/useOnboardingV4Flag';
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import { GOOGLE_GMAIL_IDP } from '@core/auth/email';
 import { LoadingBlock } from '@core/component/LoadingBlock';
 import { toast } from '@core/component/Toast/Toast';
@@ -129,7 +129,9 @@ function LoginPicker(props: {
         autofocus
         onClick={() => startSsoLogin(GOOGLE_GMAIL_IDP)}
       >
-        <IconGoogle class="size-fit" />{t('auto.continue_with_google')}</Button>
+        <IconGoogle class="size-fit" />
+        {t('auth.methods.continueWithGoogle')}
+      </Button>
 
       <Show when={showApple}>
         <Button
@@ -138,7 +140,9 @@ function LoginPicker(props: {
           class="bg-surface"
           onClick={() => startSsoLogin('Apple')}
         >
-          <IconApple class="size-fit" />{t('auto.continue_with_apple')}</Button>
+          <IconApple class="size-fit" />
+          {t('auth.methods.continueWithApple')}
+        </Button>
       </Show>
 
       <Button
@@ -146,7 +150,9 @@ function LoginPicker(props: {
         size="xl"
         class="bg-surface"
         onClick={continueWithEmail}
-      >{t('auto.continue_with_email')}</Button>
+      >
+        {t('auth.methods.continueWithEmail')}
+      </Button>
     </div>
   );
 }
@@ -249,19 +255,19 @@ function EmailFormNew(props: {
       class="flex flex-col gap-3"
     >
       <p class="text-xs text-ink-muted leading-snug">
-        We’ll send a one-time code to verify.
+        {t('auth.email.verificationHint')}
       </p>
       <FormInput
         id="email"
         type="email"
-        placeholder="you@company.com"
+        placeholder={t('auth.email.placeholder')}
         value={searchParamsEmail}
       />
       <Show when={isPasswordLogin()}>
         <FormInput
           id="password"
           type="password"
-          placeholder={t('auto.password')}
+          placeholder={t('auth.password.placeholder')}
           required={isPasswordLogin()}
         />
       </Show>
@@ -271,7 +277,9 @@ function EmailFormNew(props: {
         size="xl"
         type="submit"
         disabled={submission.pending}
-      >{t('auto.continue')}<ArrowRight class="size-5" />
+      >
+        {t('auth.actions.continue')}
+        <ArrowRight class="size-5" />
       </Button>
       <Button
         variant="outline"
@@ -279,23 +287,25 @@ function EmailFormNew(props: {
         class="bg-surface"
         onClick={props.onBack}
       >
-        <ArrowLeft class="size-5" />{t('auto.back_to_sign_in')}</Button>
+        <ArrowLeft class="size-5" />
+        {t('auth.actions.backToSignIn')}
+      </Button>
     </form>
   );
 }
 
 const verifyCode = action(async (formData: FormData) => {
   const code = formData.get('one-time-code');
-  if (typeof code !== 'string') throw new Error('Invalid code');
+  if (typeof code !== 'string') throw new Error(t('auth.errors.invalidCode'));
   const email = formData.get('email');
-  if (typeof email !== 'string') throw new Error('Invalid email');
+  if (typeof email !== 'string') throw new Error(t('auth.errors.invalidEmail'));
 
   const result = await authServiceClient.passwordlessCallback({ code, email });
   if (result.isErr()) {
     if (result.error.some((err) => err.code === 'UNAUTHORIZED')) {
-      throw new Error('Invalid code.');
+      throw new Error(t('auth.errors.invalidCode'));
     }
-    throw new Error('Unable to perform verification.');
+    throw new Error(t('auth.errors.verificationFailed'));
   }
 
   return true;
@@ -360,7 +370,7 @@ function VerifyFormNew(props: {
   const handleResendCode = async () => {
     const submittedEmail = email();
     if (!submittedEmail) {
-      setResendError('Email address is unavailable. Go back and try again.');
+      setResendError(t('auth.errors.emailUnavailable'));
       return;
     }
     submission.clear();
@@ -376,9 +386,7 @@ function VerifyFormNew(props: {
       setResendTimer(0);
       setShowResendCode(true);
       setResendError(
-        e instanceof Error
-          ? e.message
-          : 'Failed to resend code. Please try again.'
+        e instanceof Error ? e.message : t('auth.errors.resendFailed')
       );
     }
   };
@@ -405,8 +413,7 @@ function VerifyFormNew(props: {
       <input type="hidden" name="email" value={email() ?? ''} />
       <input type="hidden" name="one-time-code" value={code()} />
       <p class="text-xs text-ink-muted leading-snug">
-        Enter the 6-digit code we sent to{' '}
-        <span class="text-ink font-medium break-all">{email()}</span>.
+        {t('auth.verify.instructions', { email: email() ?? '' })}
       </p>
       <OtpInput
         value={code()}
@@ -422,7 +429,7 @@ function VerifyFormNew(props: {
         }}
       />
       <p class="text-center text-xs text-ink-muted" aria-live="polite">
-        Didn't receive a code?{' '}
+        {t('auth.verify.didNotReceiveCode')}{' '}
         <button
           type="button"
           onClick={handleResendCode}
@@ -434,8 +441,8 @@ function VerifyFormNew(props: {
           }
           class="font-medium text-ink transition-colors hover:text-ink-muted disabled:text-ink-extra-muted"
         >
-          <Show when={resendTimer() > 0} fallback="Resend">
-            Resend ({resendTimer()})
+          <Show when={resendTimer() > 0} fallback={t('auth.actions.resend')}>
+            {t('auth.actions.resendCountdown', { seconds: resendTimer() })}
           </Show>
         </button>
       </p>
@@ -448,7 +455,9 @@ function VerifyFormNew(props: {
         size="xl"
         type="submit"
         disabled={submission.pending || code().length !== 6 || !email()}
-      >{t('auto.verify')}<ArrowRight class="size-5" />
+      >
+        {t('auth.actions.verify')}
+        <ArrowRight class="size-5" />
       </Button>
       <Button
         variant="outline"
@@ -456,7 +465,9 @@ function VerifyFormNew(props: {
         class="bg-surface"
         onClick={props.onBack}
       >
-        <ArrowLeft class="size-5" />{t('auto.change_email')}</Button>
+        <ArrowLeft class="size-5" />
+        {t('auth.actions.changeEmail')}
+      </Button>
     </form>
   );
 }
@@ -520,7 +531,7 @@ export function Login(props: { signupMode?: boolean }) {
           );
         } else {
           console.error('Failed to redeem session code', res.error);
-          toast.failure('Sign-in failed. Please try again.');
+          toast.failure(t('auth.errors.signInFailed'));
         }
       });
     }
@@ -614,8 +625,12 @@ export function Login(props: { signupMode?: boolean }) {
               <Show when={!virtualKeyboardVisible()}>
                 <div class="flex flex-col gap-1.5">
                   <LogoIcon class="mb-2 size-9 text-accent" />
-                  <h1 class="font-semibold tracking-tight text-ink text-2xl">{t('auto.welcome_to_macro')}</h1>
-                  <p class="text-sm text-ink-muted">{t('auto.the_open_source_workspace')}</p>
+                  <h1 class="font-semibold tracking-tight text-ink text-2xl">
+                    {t('auth.welcome.title')}
+                  </h1>
+                  <p class="text-sm text-ink-muted">
+                    {t('auth.welcome.tagline')}
+                  </p>
                 </div>
               </Show>
 
@@ -639,19 +654,19 @@ export function Login(props: { signupMode?: boolean }) {
             </div>
 
             <div class="text-center text-xs text-ink/50 wrap-break-word">
-              By continuing, you agree to our{' '}
+              {t('auth.legal.byContinuing')}{' '}
               <a
                 class="text-link hover:text-link-hover visited:text-link-visited underline underline-offset-2 focus-visible:text-link-hover"
                 href="/terms"
               >
-                terms
+                {t('auth.legal.terms')}
               </a>{' '}
-              and{' '}
+              {t('auth.legal.and')}{' '}
               <a
                 class="text-link hover:text-link-hover visited:text-link-visited underline underline-offset-2 focus-visible:text-link-hover"
                 href="/privacy"
               >
-                privacy policy
+                {t('auth.legal.privacyPolicy')}
               </a>
               .
             </div>

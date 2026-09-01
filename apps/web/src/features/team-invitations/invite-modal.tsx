@@ -1,5 +1,5 @@
-import { toast } from '@core/component/Toast/Toast';
 import { t } from '@app/lib/i18n';
+import { toast } from '@core/component/Toast/Toast';
 import { useReferralCode } from '@core/context/user';
 
 import { getWebOrigin } from '@core/util/webOrigin';
@@ -53,11 +53,7 @@ export const InviteModal = () => {
     }
     setValue('');
     setSending(false);
-    toast.success(
-      emails.length === 1
-        ? 'Invite sent successfully'
-        : `${emails.length} invites sent successfully`
-    );
+    toast.success(t('invitations.referral.sent', { count: emails.length }));
     setInviteModalOpen(false);
   };
 
@@ -73,14 +69,13 @@ export const InviteModal = () => {
           <Dialog.CloseButton as={Button} variant="ghost" size="icon-sm">
             <CloseIcon />
           </Dialog.CloseButton>
-          <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">{t('auto.invite')}</Dialog.Title>
+          <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">
+            {t('invitations.referral.title')}
+          </Dialog.Title>
         </Panel.Header>
 
         <Panel.Body scroll class="p-3 flex flex-col gap-3">
-          <p>
-            Invite friends and teammates to Macro. You'll get $100 in credits
-            for each person who signs up.
-          </p>
+          <p>{t('invitations.referral.description')}</p>
           <div class="flex flex-col gap-2">
             <textarea
               ref={(el) => {
@@ -97,7 +92,9 @@ export const InviteModal = () => {
           </div>
 
           <div class="flex justify-end gap-1 pt-2">
-            <Button variant="ghost" class="rounded-xs" onClick={handleClose}>{t('common.cancel')}</Button>
+            <Button variant="ghost" class="rounded-xs" onClick={handleClose}>
+              {t('common.cancel')}
+            </Button>
             <Button
               onClick={handleSend}
               variant={
@@ -106,7 +103,9 @@ export const InviteModal = () => {
               disabled={sending() || !parseEmails(value()).length}
               class="rounded-xs font-semibold"
             >
-              {sending() ? 'Sending…' : 'Send Invites'}
+              {sending()
+                ? t('invitations.referral.sending')
+                : t('invitations.referral.send')}
             </Button>
           </div>
 
@@ -114,7 +113,7 @@ export const InviteModal = () => {
             {(url) => (
               <div class="flex flex-col gap-1.5 pt-3">
                 <p class="text-xs text-ink/50">
-                  Or share your personal referral link:
+                  {t('invitations.referral.shareLink')}
                 </p>
                 <div class="flex items-stretch gap-2">
                   <input
@@ -132,7 +131,9 @@ export const InviteModal = () => {
                     class="font-medium rounded-xs border px-2"
                   >
                     <ClipboardIcon class="size-3" />
-                    {copied() ? 'Copied!' : 'Copy'}
+                    {copied()
+                      ? t('invitations.referral.copied')
+                      : t('invitations.referral.copy')}
                   </Button>
                 </div>
               </div>

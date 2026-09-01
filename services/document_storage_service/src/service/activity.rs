@@ -9,9 +9,9 @@ use activity::Ingest;
 use call::domain::events::CallMacroEvent;
 use channels::domain::broker_events::ChannelMacroEvent;
 use chat::domain::events::ChatMacroEvent;
+use conation_event_broker::MacroEvent as _;
 use documents_hex::domain::events::DocumentMacroEvent;
 use email::domain::events::EmailMacroEvent;
-use conation_event_broker::MacroEvent as _;
 use projects_hex::domain::events::ProjectMacroEvent;
 use properties::domain::events::PropertyMacroEvent;
 

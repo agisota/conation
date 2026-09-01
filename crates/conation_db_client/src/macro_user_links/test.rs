@@ -1,14 +1,14 @@
 use super::*;
 
 async fn insert_user(pool: &Pool<Postgres>, id: &str) -> anyhow::Result<()> {
-    let conation_user_id = conation_uuid::generate_uuid_v7();
-    let stripe_customer_id = format!("cus_{conation_user_id}");
+    let macro_user_id = conation_uuid::generate_uuid_v7();
+    let stripe_customer_id = format!("cus_{macro_user_id}");
     sqlx::query!(
         r#"
-        INSERT INTO conation_user (id, username, email, stripe_customer_id)
+        INSERT INTO macro_user (id, username, email, stripe_customer_id)
         VALUES ($1, $2, $3, $4)
         "#,
-        &conation_user_id,
+        &macro_user_id,
         id,
         id,
         stripe_customer_id,
@@ -18,12 +18,12 @@ async fn insert_user(pool: &Pool<Postgres>, id: &str) -> anyhow::Result<()> {
 
     sqlx::query!(
         r#"
-        INSERT INTO "User" (id, email, conation_user_id)
+        INSERT INTO "User" (id, email, macro_user_id)
         VALUES ($1, $2, $3)
         "#,
         id,
         id,
-        &conation_user_id,
+        &macro_user_id,
     )
     .execute(pool)
     .await?;
@@ -31,15 +31,15 @@ async fn insert_user(pool: &Pool<Postgres>, id: &str) -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn insert_link(pool: &Pool<Postgres>, conation_id: &str, email: &str) -> anyhow::Result<Uuid> {
+async fn insert_link(pool: &Pool<Postgres>, macro_id: &str, email: &str) -> anyhow::Result<Uuid> {
     let link_id = conation_uuid::generate_uuid_v7();
     sqlx::query!(
         r#"
-        INSERT INTO email_links (id, conation_id, fusionauth_user_id, email_address, provider)
+        INSERT INTO email_links (id, macro_id, fusionauth_user_id, email_address, provider)
         VALUES ($1, $2, $2, $3, 'GMAIL')
         "#,
         link_id,
-        conation_id,
+        macro_id,
         email,
     )
     .execute(pool)

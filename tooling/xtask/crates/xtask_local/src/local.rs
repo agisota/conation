@@ -327,7 +327,7 @@ pub fn run_stack(mode: Mode, args: &cli::RunArgs) -> Result<()> {
     // Both modes run at least Redis + LocalStack locally, and those reference the
     // instance's `external` volumes/networks — which must exist before compose
     // `up`. Unconditional + idempotent, mirroring the unconditional teardown (dev
-    // was tearing `conation_redis_data` down each run but never recreating it).
+    // was tearing `macro_redis_data` down each run but never recreating it).
     ensure_external_resources(&stage, &instance)?;
 
     // Bring the backend infra up and fully ready — DB created + migrated,

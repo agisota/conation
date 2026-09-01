@@ -1,5 +1,5 @@
-import type { JSX } from 'solid-js';
 import { t } from '@app/lib/i18n';
+import type { JSX } from 'solid-js';
 import { createEffect, createSignal, onCleanup, onMount, Show } from 'solid-js';
 
 export function CallRecordingVideo(props: {
@@ -144,12 +144,9 @@ export function CallRecordingVideo(props: {
           role="alert"
           class="w-full max-w-lg rounded border border-alert/30 bg-alert-bg px-3 py-2 text-sm text-alert-ink"
         >
-          <p class="font-medium">
-            This recording uses a media format your browser can't play.
-          </p>
+          <p class="font-medium">{t('call.recording.unsupportedFormat')}</p>
           <p class="mt-1 text-alert-ink/80">
-            You can still open or download the recording to play it in another
-            app.
+            {t('call.recording.unsupportedFormatHelp')}
           </p>
           <a
             href={props.url}
@@ -157,7 +154,9 @@ export function CallRecordingVideo(props: {
             rel="noopener noreferrer"
             download=""
             class="mt-2 inline-flex font-medium text-alert-ink underline underline-offset-2 hover:text-alert-ink/80"
-          >{t('auto.open_or_download_recording')}</a>
+          >
+            {t('call.recording.openOrDownload')}
+          </a>
         </div>
       </Show>
     </div>

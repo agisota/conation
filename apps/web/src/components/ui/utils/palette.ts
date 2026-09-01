@@ -1,4 +1,4 @@
-/** Macro's authored color palette, in stable hashing order. */
+/** Conation's authored color palette, in stable hashing order. */
 export const PALETTE_COLORS = [
   'red',
   'orange',
@@ -14,7 +14,7 @@ export const PALETTE_COLORS = [
   'pink',
 ] as const;
 
-/** A color from Macro's authored palette. */
+/** A color from Conation's authored palette. */
 export type PaletteColor = (typeof PALETTE_COLORS)[number];
 
 /** A palette that always contains at least one color. */

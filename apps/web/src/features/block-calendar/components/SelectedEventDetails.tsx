@@ -1,5 +1,4 @@
 import { hasEveryoneElseDeclined } from '@app/features/calendar/components/EventContent';
-import { t } from '@app/lib/i18n';
 import {
   EventAttendeesSection,
   EventDetails,
@@ -8,6 +7,7 @@ import type {
   CalendarEvent,
   CalendarTimeFormat,
 } from '@app/features/calendar/types';
+import { t } from '@app/lib/i18n';
 import { MobileDrawer } from '@components/app/mobile/MobileDrawer';
 import { toast } from '@core/component/Toast/Toast';
 import { isMobile } from '@core/mobile/isMobile';
@@ -136,7 +136,9 @@ function EveryoneElseDeclinedNotice(props: {
           <ExclamationIcon class="size-3" />
         </span>
         <div class="flex min-w-0 flex-col gap-4">
-          <div role="status" class="font-medium text-ink">{t('auto.everyone_else_declined_this_ev')}</div>
+          <div role="status" class="font-medium text-ink">
+            {t('calendar.event.attendance.everyoneElseDeclinedNotice')}
+          </div>
           <Show when={props.canModify}>
             <div class="flex justify-end gap-1">
               <Button
@@ -144,13 +146,17 @@ function EveryoneElseDeclinedNotice(props: {
                 size="sm"
                 class="rounded-lg"
                 onClick={props.onDelete}
-              >{t('common.delete')}</Button>
+              >
+                {t('common.delete')}
+              </Button>
               <Button
                 variant="cta"
                 size="sm"
                 class="rounded-lg"
                 onClick={props.onReschedule}
-              >{t('auto.reschedule')}</Button>
+              >
+                {t('calendar.event.action.reschedule')}
+              </Button>
             </div>
           </Show>
         </div>
@@ -192,7 +198,7 @@ function EventDetailsDrawer(props: EventDetailsOverlayProps) {
           <div class="flex shrink-0 items-center justify-between px-2 pb-3 pt-2">
             <MobileDrawer.Close
               as={Button}
-              aria-label={t('auto.close_event_details')}
+              aria-label={t('calendar.event.action.closeDetails')}
               variant="ghost"
               size="icon-md"
               depth={3}
@@ -202,7 +208,7 @@ function EventDetailsDrawer(props: EventDetailsOverlayProps) {
             </MobileDrawer.Close>
             <div class="flex items-center gap-1">
               <Button
-                aria-label={t('auto.copy_event')}
+                aria-label={t('calendar.event.action.copy')}
                 variant="ghost"
                 size="icon-md"
                 depth={3}
@@ -213,7 +219,7 @@ function EventDetailsDrawer(props: EventDetailsOverlayProps) {
               </Button>
               <Show when={canModify()}>
                 <Button
-                  aria-label={t('auto.edit_event')}
+                  aria-label={t('calendar.event.action.edit')}
                   variant="ghost"
                   size="icon-md"
                   depth={3}
@@ -223,7 +229,7 @@ function EventDetailsDrawer(props: EventDetailsOverlayProps) {
                   <PencilSimpleIcon />
                 </Button>
                 <Button
-                  aria-label={t('auto.delete_event')}
+                  aria-label={t('calendar.event.action.delete')}
                   variant="ghost"
                   size="icon-md"
                   depth={3}
@@ -293,7 +299,9 @@ function DeleteEventDialog(
   const deleteEvent = useDeleteCalendarEventMutation({
     onSuccess: () => props.onDeleted(),
     onError: (error) => {
-      toast.failure('Failed to delete event', { subtext: error.message });
+      toast.failure(t('calendar.event.toast.deleteFailed'), {
+        subtext: error.message,
+      });
     },
   });
   const confirm = () => {
@@ -314,7 +322,7 @@ function DeleteEventDialog(
     <DeleteDialog
       open={props.open}
       onOpenChange={props.onOpenChange}
-      title={t('auto.delete_event')}
+      title={t('calendar.event.deleteDialog.title')}
       pending={deleteEvent.isPending}
       onDelete={confirm}
     >
@@ -322,15 +330,19 @@ function DeleteEventDialog(
         when={isRecurring()}
         fallback={
           <p>
-            Delete “{props.event.title || 'Untitled event'}”? Guests will be
-            notified.
+            {t('calendar.event.deleteDialog.description', {
+              title: props.event.title || t('calendar.event.untitled'),
+              recurring: 'false',
+            })}
           </p>
         }
       >
         <div class="flex flex-col gap-2">
           <p>
-            Remove “{props.event.title || 'Untitled event'}”? Guests will be
-            notified.
+            {t('calendar.event.deleteDialog.description', {
+              title: props.event.title || t('calendar.event.untitled'),
+              recurring: 'true',
+            })}
           </p>
           <label class="flex items-center gap-2">
             <input
@@ -338,21 +350,27 @@ function DeleteEventDialog(
               name="delete-scope"
               checked={scope() === 'this_event'}
               onChange={() => setScope('this_event')}
-            />{t('auto.this_event')}</label>
+            />
+            {t('calendar.event.scope.thisEvent')}
+          </label>
           <label class="flex items-center gap-2">
             <input
               type="radio"
               name="delete-scope"
               checked={scope() === 'this_and_following'}
               onChange={() => setScope('this_and_following')}
-            />{t('auto.this_and_following_events')}</label>
+            />
+            {t('calendar.event.scope.thisAndFollowing')}
+          </label>
           <label class="flex items-center gap-2">
             <input
               type="radio"
               name="delete-scope"
               checked={scope() === 'all'}
               onChange={() => setScope('all')}
-            />{t('auto.all_events')}</label>
+            />
+            {t('calendar.event.scope.allEvents')}
+          </label>
         </div>
       </Show>
     </DeleteDialog>
@@ -425,7 +443,7 @@ function EventDetailsPopover(props: EventDetailsPopoverProps) {
               <Popover.Title class="sr-only">{props.event.title}</Popover.Title>
               <div class="flex items-center justify-end gap-1 px-2 pt-2">
                 <Button
-                  aria-label={t('auto.copy_event')}
+                  aria-label={t('calendar.event.action.copy')}
                   variant="ghost"
                   size="icon-sm"
                   depth={3}
@@ -436,7 +454,7 @@ function EventDetailsPopover(props: EventDetailsPopoverProps) {
                 </Button>
                 <Show when={canModify()}>
                   <Button
-                    aria-label={t('auto.edit_event')}
+                    aria-label={t('calendar.event.action.edit')}
                     variant="ghost"
                     size="icon-sm"
                     depth={3}
@@ -446,7 +464,7 @@ function EventDetailsPopover(props: EventDetailsPopoverProps) {
                     <PencilSimpleIcon />
                   </Button>
                   <Button
-                    aria-label={t('auto.delete_event')}
+                    aria-label={t('calendar.event.action.delete')}
                     variant="ghost"
                     size="icon-sm"
                     depth={3}
@@ -458,7 +476,7 @@ function EventDetailsPopover(props: EventDetailsPopoverProps) {
                 </Show>
                 <Popover.CloseButton
                   as={Button}
-                  aria-label={t('auto.close_event_details')}
+                  aria-label={t('calendar.event.action.closeDetails')}
                   variant="ghost"
                   size="icon-sm"
                   depth={3}

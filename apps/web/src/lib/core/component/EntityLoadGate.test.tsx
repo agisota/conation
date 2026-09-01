@@ -3,21 +3,20 @@
  */
 
 import { ThrownResultError } from '@core/util/result';
-import { t } from '@app/lib/i18n';
 import { render } from 'solid-js/web';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('./AccessErrorViews/Gone', () => ({
-  default: () => <div>{t('auto.gone')}</div>,
+  default: () => <div>Gone</div>,
 }));
 vi.mock('./AccessErrorViews/NotFound', () => ({
-  default: () => <div>{t('auto.not_found')}</div>,
+  default: () => <div>Not found</div>,
 }));
 vi.mock('./AccessErrorViews/Unauthorized', () => ({
-  default: () => <div>{t('auto.unauthorized')}</div>,
+  default: () => <div>Unauthorized</div>,
 }));
 vi.mock('./LoadingBlock', () => ({
-  LoadingBlock: () => <div>{t('auto.loading')}</div>,
+  LoadingBlock: () => <div>Loading</div>,
 }));
 
 // A real signal so components reacting to connectivity changes re-run.
@@ -48,7 +47,7 @@ function renderGate<Data>(result: EntityLoadResult<Data>): HTMLElement {
   const disposeRender = render(
     () => (
       <EntityLoadGate result={result}>
-        <div>{t('auto.loaded')}</div>
+        <div>Loaded</div>
       </EntityLoadGate>
     ),
     container
@@ -96,7 +95,7 @@ describe('EntityLoadGate', () => {
     let childMounted = false;
     const Child = () => {
       childMounted = true;
-      return <div>{t('auto.loaded')}</div>;
+      return <div>Loaded</div>;
     };
     const container = document.createElement('div');
     document.body.appendChild(container);
@@ -218,7 +217,7 @@ describe('EntityLoadGate', () => {
           }}
           onRetry={onRetry}
         >
-          <div>{t('auto.loaded')}</div>
+          <div>Loaded</div>
         </EntityLoadGate>
       ),
       container
@@ -232,7 +231,7 @@ describe('EntityLoadGate', () => {
     expect(container.querySelector('button')).toBeNull();
 
     network.set('online');
-    expect(container.querySelector('button')?.textContent).toContain(t('common.retry'));
+    expect(container.querySelector('button')?.textContent).toContain('Retry');
   });
 
   it('auto-retries shortly after connectivity returns', () => {
@@ -251,7 +250,7 @@ describe('EntityLoadGate', () => {
           }}
           onRetry={onRetry}
         >
-          <div>{t('auto.loaded')}</div>
+          <div>Loaded</div>
         </EntityLoadGate>
       ),
       container
@@ -283,7 +282,7 @@ describe('EntityLoadGate', () => {
           }}
           onRetry={onRetry}
         >
-          <div>{t('auto.loaded')}</div>
+          <div>Loaded</div>
         </EntityLoadGate>
       ),
       container
@@ -313,7 +312,7 @@ describe('EntityLoadGate', () => {
           }}
           onRetry={onRetry}
         >
-          <div>{t('auto.loaded')}</div>
+          <div>Loaded</div>
         </EntityLoadGate>
       ),
       container
@@ -344,7 +343,7 @@ describe('EntityLoadGate', () => {
           }}
           onRetry={onRetry}
         >
-          <div>{t('auto.loaded')}</div>
+          <div>Loaded</div>
         </EntityLoadGate>
       ),
       container
@@ -355,7 +354,7 @@ describe('EntityLoadGate', () => {
     };
 
     const retryButton = container.querySelector('button');
-    expect(retryButton?.textContent).toContain(t('common.retry'));
+    expect(retryButton?.textContent).toContain('Retry');
     retryButton?.click();
     expect(onRetry).toHaveBeenCalledOnce();
   });

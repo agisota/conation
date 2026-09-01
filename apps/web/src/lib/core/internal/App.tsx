@@ -1,5 +1,4 @@
 import { BlockRegistry } from '@core/block';
-import { t } from '@app/lib/i18n';
 import { EntityIcon } from '@core/component/EntityIcon';
 import { LiveIndicators } from '@core/component/LiveIndicators';
 import MacroBrandLoader from '@icon/macro-brand-loader.svg';
@@ -82,7 +81,9 @@ const App: Component = () => {
         <For each={Themes}>
           {() => (
             <Button variant="outline">
-              <Subtract />{t('auto.button_text')}<CaretDown />
+              <Subtract />
+              Button Text
+              <CaretDown />
             </Button>
           )}
         </For>
@@ -91,7 +92,9 @@ const App: Component = () => {
         <Index each={ThemesWithSeparator}>
           {() => (
             <Button variant="outline">
-              <Subtract />{t('auto.button_text')}<CaretDown />
+              <Subtract />
+              Button Text
+              <CaretDown />
             </Button>
           )}
         </Index>
@@ -137,22 +140,24 @@ const App: Component = () => {
       </div>
       <div class="flex flex-row flex-wrap justify-center gap-4">
         <Dropdown>
-          <Dropdown.Trigger variant="outline" tabIndex={-1}>{t('auto.open')}</Dropdown.Trigger>
+          <Dropdown.Trigger variant="outline" tabIndex={-1}>
+            Open
+          </Dropdown.Trigger>
           <Dropdown.Content>
             <Dropdown.Group>
               <Dropdown.Item>
-                <span class="flex-1 truncate">{t('auto.this_menu_item')}</span>
+                <span class="flex-1 truncate">This Menu Item</span>
               </Dropdown.Item>
               <Dropdown.Item>
-                <span class="flex-1 truncate">{t('auto.this_menu_item')}</span>
+                <span class="flex-1 truncate">This Menu Item</span>
               </Dropdown.Item>
               <Dropdown.Item>
                 <TrashSimple class="size-4 shrink-0" />
-                <span class="flex-1 truncate">{t('auto.this_menu_item')}</span>
+                <span class="flex-1 truncate">This Menu Item</span>
               </Dropdown.Item>
               <Dropdown.Item>
                 <TrashSimple class="size-4 shrink-0 text-failure" />
-                <span class="flex-1 truncate">{t('auto.this_menu_item')}</span>
+                <span class="flex-1 truncate">This Menu Item</span>
               </Dropdown.Item>
             </Dropdown.Group>
           </Dropdown.Content>

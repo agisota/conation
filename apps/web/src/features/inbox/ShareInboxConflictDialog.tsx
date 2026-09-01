@@ -1,9 +1,9 @@
+import { t } from '@app/lib/i18n';
 import {
   dismissShareInboxConfirmation,
   shareInboxConflict,
 } from '@core/email-link/share-conflict';
 import { Button, Dialog, Panel } from '@ui';
-import { t } from '@app/lib/i18n';
 import { Show } from 'solid-js';
 
 /**
@@ -28,21 +28,28 @@ export function ShareInboxConflictDialog(props: {
     >
       <Panel depth={2} class="rounded-xl">
         <Panel.Header class="px-6">
-          <Dialog.Title class="text-ink text-sm font-semibold">{t('auto.share_this_inbox')}</Dialog.Title>
+          <Dialog.Title class="text-ink text-sm font-semibold">
+            {t('inbox.shareConflict.title')}
+          </Dialog.Title>
         </Panel.Header>
         <Panel.Body class="p-6 font-sans flex flex-col gap-3">
           <Dialog.Description class="text-ink-muted text-sm/tight font-normal">
-            <span class="text-ink">{props.emailAddress}</span> is already
-            connected by <span class="text-ink">{props.ownerEmail}</span>. Share
-            it so you both manage one inbox instead of syncing a duplicate copy.
+            {t('inbox.shareConflict.description', {
+              email: props.emailAddress,
+              owner: props.ownerEmail,
+            })}
           </Dialog.Description>
           <div class="pt-3 justify-end items-center gap-3 inline-flex">
             <Button
               variant="outline"
               depth={3}
               onClick={() => props.onCancel()}
-            >{t('common.cancel')}</Button>
-            <Button variant="accent" depth={3} onClick={() => props.onShare()}>{t('auto.share_inbox')}</Button>
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button variant="accent" depth={3} onClick={() => props.onShare()}>
+              {t('inbox.shareConflict.submit')}
+            </Button>
           </div>
         </Panel.Body>
       </Panel>

@@ -35,7 +35,7 @@ pub fn parse_id(id: ID, field: &str) -> async_graphql::Result<Uuid> {
 
 /// Parse a string field into an owned [`MacroUserIdStr`], reporting the field
 /// name on error.
-pub fn parse_conation_user_id(
+pub fn parse_macro_user_id(
     value: String,
     field: &str,
 ) -> async_graphql::Result<MacroUserIdStr<'static>> {
@@ -50,8 +50,8 @@ pub fn parse_conation_user_id(
 ///
 /// The generated types and fields carry documentation that is emitted as SDL
 /// descriptions, keeping the exported schema self-documenting.
-#[conation_export]
-conation_rules! filter_expr_input {
+#[macro_export]
+macro_rules! filter_expr_input {
     ($name:ident, $binary_name:ident, $literal:ty, $target:ty, $type_name:literal) => {
         #[doc = concat!("The two operands of a recursive `", $type_name, "` binary expression.")]
         #[derive(async_graphql::InputObject)]

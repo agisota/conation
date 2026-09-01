@@ -35,23 +35,23 @@ pub async fn get_stripe_customer_id_by_user_id(
 
 /// Gets the user macro id for a given email
 #[tracing::instrument(skip(db))]
-pub async fn get_user_conation_id_by_email(
+pub async fn get_user_macro_id_by_email(
     db: &sqlx::Pool<sqlx::Postgres>,
     email: &str,
 ) -> Result<String, sqlx::Error> {
-    let conation_user_id: String = sqlx::query!(
+    let macro_user_id: String = sqlx::query!(
         r#"
-        SELECT "conation_user_id" as "conation_user_id!"
+        SELECT "macro_user_id" as "macro_user_id!"
         FROM "User"
         WHERE "email" = $1
         "#,
         email
     )
-    .map(|row| row.conation_user_id.to_string())
+    .map(|row| row.macro_user_id.to_string())
     .fetch_one(db)
     .await?;
 
-    Ok(conation_user_id)
+    Ok(macro_user_id)
 }
 
 /// Gets the user id for a given email
@@ -75,17 +75,17 @@ pub async fn get_user_id_by_email(
     Ok(user_id)
 }
 
-/// Returns the `conation_user_id` (FusionAuth uuid) tied to a User row by email, if any.
+/// Returns the `macro_user_id` (FusionAuth uuid) tied to a User row by email, if any.
 /// Used to distinguish "this email belongs to the same macro user" from a true cross-user
 /// account merge.
 #[tracing::instrument(skip(db))]
-pub async fn get_conation_user_id_by_email(
+pub async fn get_macro_user_id_by_email(
     db: &sqlx::Pool<sqlx::Postgres>,
     email: &str,
 ) -> Result<Option<uuid::Uuid>, sqlx::Error> {
     sqlx::query_scalar!(
         r#"
-        SELECT "conation_user_id"
+        SELECT "macro_user_id"
         FROM "User"
         WHERE "email" = $1
         "#,
@@ -127,7 +127,7 @@ pub async fn get_user_profile_by_fusionauth_user_id_and_email(
         r#"
         SELECT id, "organizationId" as "organization_id?"
         FROM "User"
-        WHERE "conation_user_id" = $1
+        WHERE "macro_user_id" = $1
         AND email = $2
         "#,
         &fusionauth_user_id,
@@ -150,7 +150,7 @@ pub async fn get_user_profiles_by_fusionauth_user_id(
         r#"
         SELECT id
         FROM "User"
-        WHERE "conation_user_id" = $1
+        WHERE "macro_user_id" = $1
         "#,
         &fusionauth_user_id
     )
@@ -174,7 +174,7 @@ pub async fn get_user_info_by_email(
             id,
             email,
             "organizationId" as "organization_id?",
-            conation_user_id as "conation_user_id?"
+            macro_user_id as "macro_user_id?"
         FROM "User"
         WHERE "email" = $1
         "#,
@@ -210,21 +210,21 @@ pub async fn get_user_profile(
     Ok(user_info)
 }
 
-/// Gets the user's conation_user_id (UUID) and id (MacroUserIdStr) by email
+/// Gets the user's macro_user_id (UUID) and id (MacroUserIdStr) by email
 #[tracing::instrument(skip(db), err)]
-pub async fn get_user_conation_user_id_and_id_by_email(
+pub async fn get_user_macro_user_id_and_id_by_email(
     db: &sqlx::Pool<sqlx::Postgres>,
     email: &str,
 ) -> Result<(uuid::Uuid, String), sqlx::Error> {
     sqlx::query!(
         r#"
-        SELECT "conation_user_id" as "conation_user_id!", "id"
+        SELECT "macro_user_id" as "macro_user_id!", "id"
         FROM "User"
         WHERE "email" = $1
         "#,
         email
     )
-    .map(|row| (row.conation_user_id, row.id))
+    .map(|row| (row.macro_user_id, row.id))
     .fetch_one(db)
     .await
 }
