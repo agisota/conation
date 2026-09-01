@@ -83,7 +83,7 @@ services:
       - databases
       - services
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/ || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/ >/dev/null"]
       interval: 15s
       timeout: 5s
       retries: 5
