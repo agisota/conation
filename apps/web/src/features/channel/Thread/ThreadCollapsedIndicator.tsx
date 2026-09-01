@@ -1,4 +1,5 @@
 import { UserIcon } from '@core/component/UserIcon';
+import { t } from '@app/lib/i18n';
 import { formatRelativeDate } from '@core/util/time';
 import CaretRight from '@phosphor/caret-right.svg';
 import { cn } from '@ui';
@@ -31,7 +32,7 @@ export function ThreadCollapsedIndicator(props: ThreadCollapsedIndicatorProps) {
   return (
     <button
       type="button"
-      title="Expand thread"
+      title={t('auto.expand_thread')}
       class={cn(
         'flex items-center gap-2 text-xs w-fit h-8 touch:min-h-(--user-icon-width) border bg-surface hover:bg-hover py-1 pr-2 pl-1.5 mb-2 select-none outline-none focus-visible:bg-active rounded-full',
         local.hasNewMessages ? 'border-accent/40' : 'border-thread-rail',

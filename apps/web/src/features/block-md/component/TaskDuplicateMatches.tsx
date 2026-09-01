@@ -42,7 +42,7 @@ export function TaskDuplicateMatchPill() {
                 'hover:bg-failure/15 focus-visible:bg-failure/15 focus-visible:ring-failure/60',
                 open() && 'bg-failure/15'
               )}
-              title="Possible duplicate tasks"
+              title={t('auto.possible_duplicate_tasks')}
             >
               <WarningIcon class="size-3 shrink-0" />
               <span class="truncate">{t('auto.possible_duplicate')}</span>
@@ -70,7 +70,7 @@ export function TaskDuplicateMatchesSidePanelSection() {
         <Show when={matches.count() > 0}>
           <SidePanel.Section
             id="duplicates"
-            title="Duplicate Tasks"
+            title={t('auto.duplicate_tasks')}
             defaultOpen
             order={60}
           >

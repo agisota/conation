@@ -16,7 +16,7 @@ export function PrSidePanelSections(props: {
         <GithubPullRequestDetailsContent enrichment={props.enrichment} />
       </SidePanel.Section>
 
-      <SidePanel.Section id="pr-checks" title="Checks" order={20}>
+      <SidePanel.Section id="pr-checks" title={t('auto.checks')} order={20}>
         <GithubPullRequestChecksContent enrichment={props.enrichment} />
       </SidePanel.Section>
     </>

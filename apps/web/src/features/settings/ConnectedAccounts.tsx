@@ -1,4 +1,5 @@
 import { ENABLE_EMAIL } from '@core/constant/featureFlags';
+import { t } from '@app/lib/i18n';
 import { useCursorAgentsAccess } from '@core/cursor/flag';
 import { usePipedreamMcpFlag } from '@core/pipedream/flag';
 import { Show, Suspense } from 'solid-js';
@@ -19,10 +20,10 @@ export function ConnectedAccounts() {
   const canUseCursor = useCursorAgentsAccess();
   return (
     <SettingsPage
-      title="Connections"
+      title={t('auto.connections')}
       description="Connect your accounts so Macro can work across the tools you already use."
     >
-      <SettingsSection title="Accounts">
+      <SettingsSection title={t('auto.accounts')}>
         <div class="flex flex-col gap-3">
           <Show when={ENABLE_EMAIL}>
             <Suspense>
@@ -41,7 +42,7 @@ export function ConnectedAccounts() {
       </Suspense>
       <Show when={canUseCursor()}>
         <SettingsSection
-          title="Coding sessions"
+          title={t('auto.coding_sessions')}
           description="Connect a coding agent so Macro can run sessions on your own account."
         >
           <Suspense>

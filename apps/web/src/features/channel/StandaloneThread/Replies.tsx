@@ -1,4 +1,5 @@
 import { createMemo, For, type ParentProps, Show } from 'solid-js';
+import { t } from '@app/lib/i18n';
 import { Message, type MessageActions, type MessageData } from '../Message';
 import { Thread } from '../Thread';
 import { buildThreadReplyListMeta } from '../Thread/reply-list-meta';
@@ -168,7 +169,7 @@ export function Replies(props: RepliesProps) {
                     if (!parent) return;
                     replyAction()?.({ message: parent, event });
                   }}
-                  aria-label="Reply"
+                  aria-label={t('auto.reply')}
                 />
               </Show>
             </Thread.ActionsFooter>

@@ -1,4 +1,5 @@
 import { EmojiSelector } from '@core/component/Emoji/EmojiSelector';
+import { t } from '@app/lib/i18n';
 import { Popover } from '@kobalte/core/popover';
 import { Button, type ButtonProps, Layer } from '@ui';
 import { createEffect, createSignal, type JSX, splitProps } from 'solid-js';
@@ -51,7 +52,7 @@ export function EmojiReactionPopover(props: EmojiReactionPopoverProps) {
             <div
               class="w-64.5 h-78.75 pl-2 pt-2 rounded-md flex flex-col border border-edge bg-surface shadow-lg"
               role="dialog"
-              aria-label="Emoji search"
+              aria-label={t('auto.emoji_search')}
             >
               <div class="flex pr-2 w-full">
                 <div class="flex flex-row items-center text-ink gap-1 border border-edge-muted rounded-md px-2 py-1 text-xs w-full">
@@ -63,9 +64,9 @@ export function EmojiReactionPopover(props: EmojiReactionPopoverProps) {
                       event.preventDefault();
                       local.onOpenChange(false);
                     }}
-                    placeholder="Search emojis"
+                    placeholder={t('auto.search_emojis')}
                     role="searchbox"
-                    aria-label="Search emojis"
+                    aria-label={t('auto.search_emojis')}
                   />
                 </div>
               </div>

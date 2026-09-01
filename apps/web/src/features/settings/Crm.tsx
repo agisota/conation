@@ -155,7 +155,7 @@ function CrmEnablementSection() {
   };
 
   return (
-    <SettingsSection title="General">
+    <SettingsSection title={t('auto.general')}>
       <SettingsCard>
         <SettingsRow
           label={crmEnabled() ? 'Disable CRM' : 'Enable CRM'}
@@ -255,7 +255,7 @@ function CrmEnablementSection() {
 
       <ConfirmDialog
         open={showDisableModal()}
-        title="Disable CRM"
+        title={t('auto.disable_crm')}
         confirmLabel="Disable CRM"
         pending={patchCrmMutation.isPending}
         confirmDisabled={disableConfirmation() !== DISABLE_CRM_PHRASE}
@@ -287,7 +287,7 @@ function CrmEnablementSection() {
 
 function NoTeamState() {
   return (
-    <SettingsPage title="CRM">
+    <SettingsPage title={t('auto.crm')}>
       <SettingsSection>
         <SettingsCard>
           <div class="px-6 py-8 text-center text-sm text-ink-muted">{t('auto.join_or_create_a_team_to_set_u')}</div>
@@ -303,7 +303,7 @@ function CrmContent() {
   return (
     <Show when={teamQuery.data} fallback={<NoTeamState />}>
       <SettingsPage
-        title="CRM"
+        title={t('auto.crm')}
         description="Enable or disable your team's CRM."
       >
         <CrmEnablementSection />

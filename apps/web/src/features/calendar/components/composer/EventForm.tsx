@@ -128,8 +128,8 @@ export function EventForm(props: EventFormProps) {
               onInput={(event) =>
                 controller.setField('title', event.currentTarget.value)
               }
-              placeholder="New event"
-              aria-label="Title"
+              placeholder={t('auto.new_event')}
+              aria-label={t('auto.title')}
               autofocus={!isEdit()}
               disabled={fieldIsDisabled('title')}
               class="h-9 w-full bg-transparent px-2 text-lg font-semibold leading-snug text-ink outline-none placeholder:text-ink-placeholder"
@@ -147,8 +147,8 @@ export function EventForm(props: EventFormProps) {
                 onKeyDown={(event) => {
                   if (event.key === 'Enter') event.preventDefault();
                 }}
-                placeholder="Add description..."
-                aria-label="Description"
+                placeholder={t('auto.add_description')}
+                aria-label={t('auto.description')}
                 rows={1}
                 wrap="off"
                 disabled={fieldIsDisabled('description')}

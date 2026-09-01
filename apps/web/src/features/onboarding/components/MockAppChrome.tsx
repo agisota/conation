@@ -1,4 +1,5 @@
 import { GO_TO_COMMAND_SCOPE, GO_TO_LEADER_KEY } from '@app/constants/hotkeys';
+import { t } from '@app/lib/i18n';
 import { createHotkeyGroup, registerHotkey } from '@core/hotkey/hotkeys';
 import type { ValidHotkey } from '@core/hotkey/types';
 import MacroIcon from '@icon/macro-logo.svg';
@@ -178,7 +179,7 @@ export function MockAppChrome(props: MockAppChromeProps) {
               setCreateActivated(true);
               props.onCreateClick?.();
             }}
-            title="Create"
+            title={t('auto.create')}
           >
             <AnimatedPlusIcon />
           </button>
@@ -195,7 +196,7 @@ export function MockAppChrome(props: MockAppChromeProps) {
               e.preventDefault();
               setFilter(null);
             }}
-            title="All"
+            title={t('auto.all')}
           >
             <svg
               viewBox="0 0 24 24"
@@ -269,7 +270,7 @@ export function MockAppChrome(props: MockAppChromeProps) {
               type="button"
               class="size-6 text-ink rounded-xs p-1 transition-colors cursor-default opacity-50 hover:opacity-80 hover:bg-ink/10"
               onClick={(e) => e.preventDefault()}
-              title="Settings"
+              title={t('auto.settings')}
             >
               <AnimatedGearIcon />
             </button>

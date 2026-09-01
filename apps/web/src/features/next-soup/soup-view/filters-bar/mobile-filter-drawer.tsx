@@ -333,7 +333,7 @@ export const MobileFilterDrawer = (props: {
       >
         <MobileDrawer.Trigger
           as={Button}
-          aria-label="Open filters"
+          aria-label={t('auto.open_filters')}
           variant="ghost"
           size="sm"
           depth={3}
@@ -353,7 +353,7 @@ export const MobileFilterDrawer = (props: {
 
         <MobileDrawer.Portal>
           <MobileDrawer.Overlay class="fixed inset-0 z-modal-overlay bg-modal-overlay pattern-diagonal-4 pattern-edge-muted" />
-          <MobileDrawer.Content aria-label="Filters" class="h-[80vh]">
+          <MobileDrawer.Content aria-label={t('auto.filters')} class="h-[80vh]">
             <MobileDrawer.Handle class="pb-1" />
 
             {/* Scrollable filter list */}
@@ -632,12 +632,12 @@ export const MobileFilterDrawer = (props: {
                           <SearchIcon class="size-3.5 text-ink-muted shrink-0" />
                           <input
                             type="text"
-                            aria-label="Search assignees"
+                            aria-label={t('auto.search_assignees')}
                             value={assigneeSearch()}
                             onInput={(e) =>
                               setAssigneeSearch(e.currentTarget.value)
                             }
-                            placeholder="Search assignees..."
+                            placeholder={t('auto.search_assignees')}
                             class="flex-1 bg-transparent text-sm outline-none placeholder:text-ink-placeholder"
                           />
                         </div>
@@ -719,12 +719,12 @@ export const MobileFilterDrawer = (props: {
                           <SearchIcon class="size-3.5 text-ink-muted shrink-0" />
                           <input
                             type="text"
-                            aria-label="Search creators"
+                            aria-label={t('auto.search_creators')}
                             value={createdBySearch()}
                             onInput={(e) =>
                               setCreatedBySearch(e.currentTarget.value)
                             }
-                            placeholder="Search creators..."
+                            placeholder={t('auto.search_creators')}
                             class="flex-1 bg-transparent text-sm outline-none placeholder:text-ink-placeholder"
                           />
                         </div>

@@ -138,7 +138,7 @@ export const BulkRenameEntitiesView = (props: {
       <div class="p-3 flex flex-col gap-3">
         <Show when={multi()}>
           <SegmentedControl
-            aria-label="Mode"
+            aria-label={t('auto.mode')}
             value={mode()}
             options={modeOptions}
             onChange={(value) => setMode(value)}
@@ -163,7 +163,7 @@ export const BulkRenameEntitiesView = (props: {
             class="w-full p-2 text-sm border border-edge bg-surface text-ink
                    placeholder:text-ink-placeholder focus:outline-none focus:bg-active
                    selection:bg-ink selection:text-surface"
-            placeholder="Enter new text..."
+            placeholder={t('auto.enter_new_text')}
           />
         </div>
 

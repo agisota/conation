@@ -1063,7 +1063,7 @@ function ShortcutSectionComponent(props: { section: ShortcutSection }) {
 export function Shortcuts() {
   return (
     <SettingsPage
-      title="Keyboard shortcuts"
+      title={t('auto.keyboard_shortcuts')}
       actions={
         <div class="flex items-center gap-2">
           <span class="text-sm text-ink-muted">{t('auto.screencast_keys')}</span>

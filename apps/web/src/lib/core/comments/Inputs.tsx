@@ -111,7 +111,7 @@ export function EditInput(props: {
           void handleSend();
           return true;
         }}
-        placeholder="Add a comment..."
+        placeholder={t('auto.add_a_comment')}
         focusOnMount
         onUserMention={(mention) => {
           setMentions((prev) => [...prev, mention]);

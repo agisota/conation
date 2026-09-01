@@ -632,7 +632,7 @@ const TryCard = (props: {
   onDismiss: () => void;
 }) => (
   <Layer depth={1}>
-    <section aria-label="Quick Start" class="relative group/try-card w-full">
+    <section aria-label={t('auto.quick_start')} class="relative group/try-card w-full">
       <div class="rounded-lg border border-ink-muted/8 bg-ink-muted/2.5 overflow-hidden">
         <header class="flex items-center gap-2 min-w-0 px-2.5 py-1.5 border-b border-ink-muted/8">
           <h3 class="flex-1 min-w-0 text-xs font-medium text-ink leading-tight m-0">{t('auto.quick_start')}</h3>
@@ -1659,7 +1659,7 @@ export const AppSidebar = (props: AppSidebarProps) => {
           }
         >
           <SidebarPromoHint
-            title="Maybe later"
+            title={t('auto.maybe_later')}
             message="You can upgrade anytime from Account settings."
             onDone={() => setPremiumHintVisible(false)}
             secondaryAction={{

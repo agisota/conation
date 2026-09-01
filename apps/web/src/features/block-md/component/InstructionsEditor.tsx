@@ -1,4 +1,5 @@
 import { markdownBlockErrorSignal } from '@block-md/signal/error';
+import { t } from '@app/lib/i18n';
 import { revisionsSignal, rewriteSignal } from '@block-md/signal/rewriteSignal';
 import { SplitBottomPanel } from '@components/app/split-layout/components/SplitBottomPanel';
 import { useBlockId } from '@core/block';
@@ -449,7 +450,7 @@ export function InstructionsEditor(props: {
             {(state) => (
               <SplitBottomPanel
                 id="lexical-state-debugger"
-                title="Lexical state debugger"
+                title={t('auto.lexical_state_debugger')}
                 onClose={props.onLexicalStateDebuggerClose}
               >
                 <LexicalStateDebugger

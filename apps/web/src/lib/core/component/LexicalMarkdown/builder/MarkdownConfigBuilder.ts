@@ -1,4 +1,5 @@
 import type { EditorType } from '@conation/lexical-core';
+import { t } from '@app/lib/i18n';
 import type { LexicalEditor } from 'lexical';
 import type { Store } from 'solid-js/store';
 import type { PluginManager, SelectionData } from '../plugins';
@@ -304,7 +305,7 @@ export class EditorConfigBuilder implements EditorBuilder {
  *   .onEscape(() => { containerRef()?.focus(); return true; });
  *
  * // In JSX — no .build() needed:
- * <MarkdownShell editor={editor} placeholder="Write something..." />
+ * <MarkdownShell editor={editor} placeholder={t('auto.write_something')} />
  *
  * // Access controls after mount (e.g. in event handlers):
  * editor.controls.focus();

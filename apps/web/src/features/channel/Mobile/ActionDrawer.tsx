@@ -127,8 +127,8 @@ function EmojiSearchView(props: {
             ref={inputRef}
             value={query()}
             onInput={(e) => setQuery(e.currentTarget.value)}
-            placeholder="Search emojis"
-            aria-label="Search emojis"
+            placeholder={t('auto.search_emojis')}
+            aria-label={t('auto.search_emojis')}
             class="flex-1 bg-transparent outline-none placeholder:text-ink-placeholder"
           />
         </div>
@@ -205,7 +205,7 @@ export function ActionDrawer() {
       <MobileDrawer.Portal>
         <MobileDrawer.Overlay class="fixed inset-0 z-modal-overlay bg-modal-overlay pattern-diagonal-4 pattern-edge-muted" />
         <MobileDrawer.Content
-          aria-label="Message actions"
+          aria-label={t('auto.message_actions')}
           class={showEmojiSearch() ? 'h-[80vh]' : undefined}
         >
           {/* Drag handle */}
@@ -243,8 +243,8 @@ export function ActionDrawer() {
                 </For>
                 <button
                   type="button"
-                  title="More reactions"
-                  aria-label="More reactions"
+                  title={t('auto.more_reactions')}
+                  aria-label={t('auto.more_reactions')}
                   class="size-12 bg-edge rounded-full flex items-center justify-center text-ink-muted"
                   onClick={() => setShowEmojiSearch(true)}
                 >

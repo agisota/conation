@@ -1,4 +1,5 @@
 import { EntityIcon } from '@core/component/EntityIcon';
+import { t } from '@app/lib/i18n';
 import { InlineTitleEditor } from '@core/component/InlineTitleEditor';
 import type { CrmCompanyEntity } from '@entity';
 import { useSetCompanyNameMutation } from '@queries/crm/companies';
@@ -48,7 +49,7 @@ function TitleEditor(props: { company: CrmCompanyEntity }) {
   return (
     <InlineTitleEditor
       value={props.company.name}
-      placeholder="Company"
+      placeholder={t('auto.company')}
       ariaLabel="Company name"
       onRename={(name) =>
         renameMutation.mutate({ companyId: props.company.id, name })

@@ -493,7 +493,7 @@ export function FloatingLinkMenu(props: {
                   });
                 }}
                 onFocus={() => setIsEditing(true)}
-                placeholder="Link text"
+                placeholder={t('auto.link_text')}
                 class="min-w-0 grow bg-transparent text-ink outline-none placeholder:text-ink-placeholder"
               />
             </div>

@@ -1,4 +1,5 @@
 import { cn } from '@ui';
+import { t } from '@app/lib/i18n';
 import { createSignal, Index, onCleanup, onMount } from 'solid-js';
 
 /**
@@ -62,7 +63,7 @@ export function OtpInput(props: {
         onInput={(e) => handleInput(e.currentTarget)}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        aria-label="One-time code"
+        aria-label={t('auto.one_time_code')}
         class="absolute inset-0 z-10 size-full cursor-text opacity-0"
       />
       <div class="flex justify-between gap-2">

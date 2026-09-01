@@ -127,7 +127,7 @@ export function CreateCompanyModal() {
                     setName(event.currentTarget.value);
                     setError(undefined);
                   }}
-                  placeholder="Company name"
+                  placeholder={t('auto.company_name')}
                   autocomplete="off"
                   data-1p-ignore
                   aria-invalid={error() === 'Enter a company name'}

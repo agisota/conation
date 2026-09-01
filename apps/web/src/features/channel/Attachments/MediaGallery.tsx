@@ -68,7 +68,7 @@ export function MediaGallery(props: {
         <div class="flex min-h-0 flex-1 flex-col px-6 py-2">
           <div
             ref={setContainerRef}
-            aria-label="Photos and videos gallery"
+            aria-label={t('auto.photos_and_videos_gallery')}
             class="min-h-0 flex-1"
           >
             <VList

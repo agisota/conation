@@ -1,4 +1,5 @@
 import { SidePanel } from '@components/app/side-panel/SidePanel';
+import { t } from '@app/lib/i18n';
 import { formatRelativeTimestamp } from '@entity/utils/timestamp';
 import CaretRightIcon from '@phosphor/caret-right.svg';
 import {
@@ -53,7 +54,7 @@ function EntityActivitySection(props: EntityActivitySectionProps) {
 
   return (
     <Show when={query.isEnabled()}>
-      <SidePanel.Section id="activity" title="Activity" order={props.order}>
+      <SidePanel.Section id="activity" title={t('auto.activity')} order={props.order}>
         {/* Two loading layers: the urql store never suspends, so the query's
             own fetch/error need explicit branches (or they'd render as a
             false "No activity yet"), while the Suspense boundary scopes

@@ -192,7 +192,7 @@ export function OnboardingInbox() {
       >
         <MobileDrawer.Portal>
           <MobileDrawer.Overlay class="fixed inset-0 z-modal-overlay bg-modal-overlay" />
-          <MobileDrawer.Content aria-label="Entity actions">
+          <MobileDrawer.Content aria-label={t('auto.entity_actions')}>
             <MobileDrawer.Handle />
 
             <Show when={drawerEmail()}>

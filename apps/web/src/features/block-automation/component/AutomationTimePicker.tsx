@@ -100,7 +100,7 @@ export function AutomationTimePicker(props: {
                 type="text"
                 inputmode="numeric"
                 maxLength={2}
-                aria-label="Hour"
+                aria-label={t('auto.hour')}
                 class="w-10 text-center bg-active border border-edge-muted rounded-sm p-1 text-sm focus:outline-none focus:border-accent"
                 value={hourDisplay()}
                 onKeyDown={(e) => {
@@ -124,7 +124,7 @@ export function AutomationTimePicker(props: {
                 type="text"
                 inputmode="numeric"
                 maxLength={2}
-                aria-label="Minute"
+                aria-label={t('auto.minute')}
                 class="w-10 text-center bg-active border border-edge-muted rounded-sm p-1 text-sm focus:outline-none focus:border-accent"
                 value={minuteDisplay()}
                 onKeyDown={(e) => {

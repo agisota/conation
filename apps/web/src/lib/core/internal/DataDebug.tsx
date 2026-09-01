@@ -56,7 +56,7 @@ function SignalDebugCard(props: SignalDebugCardProps) {
             <button
               onClick={copyToClipboard}
               class="absolute top-2 right-2 p-1 rounded bg-panel hover:bg-lift text-ink-muted hover:text-ink transition-colors z-10"
-              title="Copy to clipboard"
+              title={t('auto.copy_to_clipboard')}
             >
               <Copy class="size-4" />
             </button>

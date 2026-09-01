@@ -31,7 +31,7 @@ export function ChatTipsSection() {
         />
         <SetupRow
           icon={<PaperPlaneTiltIcon class="size-4" />}
-          title="Send in the background"
+          title={t('auto.send_in_the_background')}
           desc={
             <>{t('auto.press')}<Hotkey shortcut="meta+enter" theme="subtle" /> to send and
               get notified when the AI responds
@@ -40,7 +40,7 @@ export function ChatTipsSection() {
         />
         <SetupRow
           icon={<PlugsConnectedIcon class="size-4" />}
-          title="Connect your tools"
+          title={t('auto.connect_your_tools')}
           desc="Give the agent access to Linear, Notion, PostHog & more"
           trailing={
             <ChevronRightIcon class="size-4 shrink-0 text-ink-extra-muted" />
@@ -49,7 +49,7 @@ export function ChatTipsSection() {
         />
         <SetupRow
           icon={<PuzzlePieceIcon class="size-4" />}
-          title="Connect your own agents"
+          title={t('auto.connect_your_own_agents')}
           desc="Use Macro as a tool from Claude Code, Cursor, or any MCP client"
           trailing={
             <ChevronRightIcon class="size-4 shrink-0 text-ink-extra-muted" />
@@ -58,7 +58,7 @@ export function ChatTipsSection() {
         />
         <SetupRow
           icon={<BookOpenIcon class="size-4" />}
-          title="Learn about the agent"
+          title={t('auto.learn_about_the_agent')}
           desc="What it can do and how to get the most out of it"
           trailing={
             <ArrowUpRightIcon class="size-4 shrink-0 text-ink-extra-muted" />

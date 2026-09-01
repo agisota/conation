@@ -235,7 +235,7 @@ export function GettingStartedSection(props: { preferences: HomePreferences }) {
           <button
             type="button"
             class="rounded-md p-1 text-ink-extra-muted transition-colors hover:bg-hover hover:text-ink-muted"
-            aria-label="Dismiss getting started"
+            aria-label={t('auto.dismiss_getting_started')}
             onClick={() => props.preferences.dismiss('setup')}
           >
             <XIcon class="size-3.5" />
@@ -245,7 +245,7 @@ export function GettingStartedSection(props: { preferences: HomePreferences }) {
           <Show when={showConnectRow()}>
             <SetupRow
               icon={<PlusIcon class="size-4" />}
-              title="Connect your tools"
+              title={t('auto.connect_your_tools')}
               desc="Link your inbox, Linear, Notion, GitHub & more"
               trailing={
                 <span class="flex items-center gap-2">
@@ -261,7 +261,7 @@ export function GettingStartedSection(props: { preferences: HomePreferences }) {
           </Show>
           <SetupRow
             icon={<BookOpenIcon class="size-4" />}
-            title="Learn the basics"
+            title={t('auto.learn_the_basics')}
             desc="Mentions, search, shortcuts & more"
             trailing={
               <ArrowUpRightIcon class="size-4 shrink-0 text-ink-extra-muted" />

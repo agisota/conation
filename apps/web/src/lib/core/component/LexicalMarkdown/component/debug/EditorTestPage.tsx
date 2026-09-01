@@ -153,7 +153,7 @@ export default function EditorTestPage() {
           <MarkdownTextarea
             type="chat"
             editable={() => true}
-            placeholder="Cool Placeholder!"
+            placeholder={t('auto.cool_placeholder')}
           />
         </Container>
 

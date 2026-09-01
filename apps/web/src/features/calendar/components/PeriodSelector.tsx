@@ -150,7 +150,7 @@ export function PeriodSelector(props: { isNarrow?: boolean }) {
     >
       <Dropdown.Trigger
         depth={2}
-        aria-label="Choose calendar view"
+        aria-label={t('auto.choose_calendar_view')}
         size="sm"
         class="shrink-0 gap-1 rounded-lg border-edge-muted text-xs font-medium text-ink"
       >

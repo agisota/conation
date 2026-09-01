@@ -1,4 +1,5 @@
 import { AskMacroButton } from '@app/features/chat/ChatWithAgentButton';
+import { t } from '@app/lib/i18n';
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
 import { CommentMargin } from '@block-md/comments/CommentMargin';
 import {
@@ -361,7 +362,7 @@ export function Notebook(props: {
       >
         <SidePanel.Section
           id="document-ai-actions"
-          title="Actions"
+          title={t('auto.actions')}
           defaultOpen
           order={0}
         >

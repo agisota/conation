@@ -91,7 +91,7 @@ export const Billing = () => {
 
   return (
     <SettingsPage
-      title="Billing"
+      title={t('auto.billing')}
       description={
         <>
           For questions about billing,{' '}

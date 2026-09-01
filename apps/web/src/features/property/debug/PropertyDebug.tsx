@@ -139,9 +139,9 @@ const PropertyDebug: Component = () => {
           </Grid>
         </Section>
 
-        <Section title="Primitives — empty">
+        <Section title={t('auto.primitives_empty')}>
           <Grid
-            title="Property.Text with fallback"
+            title={t('auto.property_text_with_fallback')}
             properties={PROPERTIES_EMPTY}
           >
             {(p) => (
@@ -164,9 +164,9 @@ const PropertyDebug: Component = () => {
           </Grid>
         </Section>
 
-        <Section title="Primitives — read-only (isMetadata)">
+        <Section title={t('auto.primitives_read_only_ismetadat')}>
           <Grid
-            title="No edit affordances should render"
+            title={t('auto.no_edit_affordances_should_ren')}
             properties={PROPERTIES_METADATA}
           >
             {(p) => (
@@ -186,7 +186,7 @@ const PropertyDebug: Component = () => {
           </Grid>
         </Section>
 
-        <Section title="Compositions — inline pill (like InlinePropertyValue)">
+        <Section title={t('auto.compositions_inline_pill_like_')}>
           <Grid
             title="Tooltip + Pill + Icon + Text + Caret"
             properties={PROPERTIES_FILLED}
@@ -264,11 +264,11 @@ const PropertyDebug: Component = () => {
           </For>
         </Section>
 
-        <Section title="Editors — interactive (click any value)">
+        <Section title={t('auto.editors_interactive_click_any_')}>
           <EditorsDemo />
         </Section>
 
-        <Section title="Composed (stubs — coming in PR 3-6)">
+        <Section title={t('auto.composed_stubs_coming_in_pr_3_')}>
           <Show when={true} fallback={null}>
             <div class="text-xs text-ink-muted">
               CondensedProperty / InlineProperty / ListProperty / PanelRow will

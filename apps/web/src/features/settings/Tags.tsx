@@ -313,7 +313,7 @@ export function Tags() {
 
   return (
     <SettingsPage
-      title="Tags"
+      title={t('auto.tags')}
       description="Manage personal labels and shared team labels."
       actions={
         <Button
@@ -326,7 +326,7 @@ export function Tags() {
       }
     >
       <TagListSection
-        title="Personal"
+        title={t('auto.personal')}
         scope="user"
         set={tagSet('user')}
         onCreate={openCreate}
@@ -338,7 +338,7 @@ export function Tags() {
       />
       <Show when={hasTeam()}>
         <TagListSection
-          title="Team"
+          title={t('auto.team')}
           description={teamName()}
           scope="team"
           set={tagSet('team')}
@@ -358,7 +358,7 @@ export function Tags() {
 
       <ConfirmDialog
         open={pendingShare() !== null}
-        title="Share with team"
+        title={t('auto.share_with_team')}
         confirmLabel="Share"
         pending={promoteTag.isPending}
         onConfirm={confirmShare}
@@ -373,7 +373,7 @@ export function Tags() {
 
       <ConfirmDialog
         open={conflict() !== null}
-        title="Team label already exists"
+        title={t('auto.team_label_already_exists')}
         confirmLabel="Use team label"
         pending={mergeTag.isPending}
         onConfirm={confirmMerge}

@@ -277,7 +277,7 @@ export function ChatAttachMenu(props: ChatAttachMenuProps) {
                   }
                 }}
                 class="w-full outline-none"
-                placeholder="Search Attachments"
+                placeholder={t('auto.search_attachments')}
               />
             </div>
             <div class="flex flex-col gap-1 max-h-62.5 w-75 overflow-y-auto">

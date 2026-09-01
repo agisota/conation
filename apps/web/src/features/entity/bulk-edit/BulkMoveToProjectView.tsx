@@ -483,7 +483,7 @@ export const BulkMoveToProjectView = (props: {
               );
             }}
             type="text"
-            placeholder="Search folders..."
+            placeholder={t('auto.search_folders')}
             value={searchQuery()}
             onInput={(e) => setSearchQuery(e.currentTarget.value)}
             onKeyDown={(e) => {
@@ -596,7 +596,7 @@ export const BulkMoveToProjectView = (props: {
                     requestAnimationFrame(() => el.focus());
                   }}
                   type="text"
-                  placeholder="Folder name"
+                  placeholder={t('auto.folder_name')}
                   value={newFolderName()}
                   onInput={(e) => setNewFolderName(e.currentTarget.value)}
                   onKeyDown={(e) => {

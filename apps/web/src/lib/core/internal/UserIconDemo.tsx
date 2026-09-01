@@ -63,7 +63,7 @@ export default function UserIconDemo() {
             <Avatar.Fallback>AB</Avatar.Fallback>
           </Avatar>
           <Avatar size="md">
-            <Avatar.Image src="https://i.pravatar.cc/100?img=1" alt="Random" />
+            <Avatar.Image src="https://i.pravatar.cc/100?img=1" alt={t('auto.random')} />
           </Avatar>
           <Avatar size="lg">
             <Avatar.Fallback>
@@ -74,7 +74,7 @@ export default function UserIconDemo() {
       </Section>
 
       {/* Individual UserIcons at each size */}
-      <Section title="UserIcon - All Sizes">
+      <Section title={t('auto.usericon_all_sizes')}>
         <div class="space-y-4">
           <For each={SIZE_LABELS}>
             {(size) => (
@@ -108,7 +108,7 @@ export default function UserIconDemo() {
       </Section>
 
       {/* UserGroup at each size */}
-      <Section title="UserGroup - All Sizes">
+      <Section title={t('auto.usergroup_all_sizes')}>
         <div class="space-y-4">
           <For each={SIZE_LABELS}>
             {(size) => (
@@ -126,7 +126,7 @@ export default function UserIconDemo() {
       </Section>
 
       {/* UserGroup with different maxUsers */}
-      <Section title="UserGroup - Max Users Variants">
+      <Section title={t('auto.usergroup_max_users_variants')}>
         <div class="space-y-4">
           <For each={[1, 2, 3, 4, 5]}>
             {(max) => (
@@ -147,7 +147,7 @@ export default function UserIconDemo() {
       </Section>
 
       {/* Hover background test - the main bug fix */}
-      <Section title="Hover Background Test">
+      <Section title={t('auto.hover_background_test')}>
         <p class="text-xs text-ink-muted mb-3">
           The separator should match the hover background. Add{' '}
           <code class="bg-edge px-1 rounded">
@@ -192,7 +192,7 @@ export default function UserIconDemo() {
       </Section>
 
       {/* Active/selected state test */}
-      <Section title="Active State Test">
+      <Section title={t('auto.active_state_test')}>
         <div class="space-y-2">
           <div class="flex items-center gap-2 px-3 py-2 rounded bg-active [--avatar-group-separator:var(--color-active)] border border-edge-muted">
             <UserGroup
@@ -217,7 +217,7 @@ export default function UserIconDemo() {
       </Section>
 
       {/* Email-only fallback */}
-      <Section title="Email Fallback (no macro ID)">
+      <Section title={t('auto.email_fallback_no_macro_id')}>
         <div class="flex items-center gap-3">
           <UserIcon email="john@example.com" size="sm" suppressClick />
           <UserIcon email="jane@example.com" size="md" suppressClick />
@@ -226,7 +226,7 @@ export default function UserIconDemo() {
       </Section>
 
       {/* Deleted state */}
-      <Section title="Deleted User State">
+      <Section title={t('auto.deleted_user_state')}>
         <div class="flex items-center gap-3">
           <For each={SIZE_LABELS}>
             {(size) => (

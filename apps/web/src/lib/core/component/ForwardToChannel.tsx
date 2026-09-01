@@ -154,7 +154,7 @@ function MobileForwardToChannelLayout(
         >
           <MarkdownShell
             config={props.markdownEditor}
-            placeholder="Optional message"
+            placeholder={t('auto.optional_message')}
             portalScope="local"
             class="text-sm"
           />
@@ -531,7 +531,7 @@ export function ForwardToChannel(props: ForwardToChannelProps) {
               >
                 <MarkdownShell
                   config={markdownEditor}
-                  placeholder="Optional message"
+                  placeholder={t('auto.optional_message')}
                   portalScope="local"
                   class="text-sm"
                 />

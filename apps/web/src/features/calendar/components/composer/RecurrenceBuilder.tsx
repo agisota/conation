@@ -99,7 +99,7 @@ export function RecurrenceBuilder(props: RecurrenceBuilderProps) {
               onInput={(event) =>
                 patchConfig({ interval: event.currentTarget.valueAsNumber })
               }
-              aria-label="Repeat interval"
+              aria-label={t('auto.repeat_interval')}
               class="settings-input h-7 w-16"
               disabled={props.disabled}
             />
@@ -114,7 +114,7 @@ export function RecurrenceBuilder(props: RecurrenceBuilderProps) {
               disabled={props.disabled}
             >
               <Select.Trigger
-                aria-label="Repeat unit"
+                aria-label={t('auto.repeat_unit')}
                 class="settings-input h-7 w-28"
               >
                 <Select.Value<FrequencyOption>>
@@ -162,7 +162,7 @@ export function RecurrenceBuilder(props: RecurrenceBuilderProps) {
           value={props.value.ends.kind}
           onChange={changeEndsKind}
           disabled={props.disabled}
-          aria-label="Recurrence ends"
+          aria-label={t('auto.recurrence_ends')}
           class="grid min-w-0 grid-cols-3 gap-2"
         >
           <RadioGroup.Item
@@ -234,7 +234,7 @@ export function RecurrenceBuilder(props: RecurrenceBuilderProps) {
                     count: event.currentTarget.valueAsNumber,
                   })
                 }
-                aria-label="Ends after occurrences"
+                aria-label={t('auto.ends_after_occurrences')}
                 class="settings-input h-7 w-14"
                 disabled={props.disabled}
               />

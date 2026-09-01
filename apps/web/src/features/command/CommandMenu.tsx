@@ -575,7 +575,7 @@ export function CommandMenuInner(props: {
           <button
             class="flex size-5 shrink-0 items-center justify-center text-ink-muted hover:text-ink transition-colors"
             onClick={handleBack}
-            title="Back (Esc)"
+            title={t('auto.back_esc')}
           >
             <ArrowLeft class="size-3" />
           </button>

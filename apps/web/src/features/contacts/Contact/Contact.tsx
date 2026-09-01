@@ -41,7 +41,7 @@ export function Contact(props: { contactId: string }) {
       {/* Sharing is admin-only; hide the whole section for non-admins
           rather than rendering it empty. */}
       <Show when={isTeamAdmin()}>
-        <SidePanel.Section id="contact-sharing" title="Sharing" order={25}>
+        <SidePanel.Section id="contact-sharing" title={t('auto.sharing')} order={25}>
           <ContactSharingSection contact={contact()} />
         </SidePanel.Section>
       </Show>

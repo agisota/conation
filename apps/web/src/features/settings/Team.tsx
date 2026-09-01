@@ -176,7 +176,7 @@ function InviteEntryRow(props: {
           value={props.entry.email}
           onInput={(e) => props.onEmailChange(e.currentTarget.value)}
           onBlur={() => props.onBlur()}
-          placeholder="Enter email address"
+          placeholder={t('auto.enter_email_address')}
           class="settings-input flex-1 min-w-0"
           aria-invalid={!!props.error}
         />
@@ -533,10 +533,10 @@ function TeamInvites() {
     rejectMutation.variables?.teamInviteId === inviteId;
 
   return (
-    <SettingsPage title="Team">
+    <SettingsPage title={t('auto.team')}>
       <Show when={invites().length > 0}>
         <SettingsSection
-          title="Invitations"
+          title={t('auto.invitations')}
           description="You've been invited to join a team."
         >
           <SettingsCard>
@@ -668,7 +668,7 @@ function CreateTeamDialog(props: { open: boolean; onClose: () => void }) {
               value={teamName()}
               onInput={(e) => handleTeamNameChange(e.currentTarget.value)}
               onBlur={() => validateTeamName()}
-              placeholder="My Team"
+              placeholder={t('auto.my_team')}
               class="settings-input w-full"
               aria-invalid={!!teamNameError()}
             />
@@ -717,7 +717,7 @@ function EmptyTeamState() {
   const [showCreateModal, setShowCreateModal] = createSignal(false);
 
   return (
-    <SettingsPage title="Team">
+    <SettingsPage title={t('auto.team')}>
       <SettingsSection>
         <SettingsCard>
           <div class="flex flex-col items-center justify-center py-12 text-center px-6">
@@ -1144,7 +1144,7 @@ function TeamManagement(props: {
   return (
     <>
       <SettingsPage
-        title="Team"
+        title={t('auto.team')}
         actions={
           <Show when={isOwner()}>
             <Button
@@ -1157,7 +1157,7 @@ function TeamManagement(props: {
           </Show>
         }
       >
-        <SettingsSection title="General">
+        <SettingsSection title={t('auto.general')}>
           <SettingsCard>
             <SettingsRow
               label="Name"
@@ -1188,7 +1188,7 @@ function TeamManagement(props: {
                         e.currentTarget.blur();
                       }
                     }}
-                    placeholder="Enter team name"
+                    placeholder={t('auto.enter_team_name')}
                     class={TEAM_FIELD_CLASS}
                   />
                   <Show when={hasTeamNameChanged()}>
@@ -1236,7 +1236,7 @@ function TeamManagement(props: {
                           e.currentTarget.blur();
                         }
                       }}
-                      placeholder="Enter team slug"
+                      placeholder={t('auto.enter_team_slug')}
                       class={TEAM_FIELD_CLASS}
                       aria-invalid={!!teamSlugError()}
                     />
@@ -1319,7 +1319,7 @@ function TeamManagement(props: {
                 hideDescriptionOnMobile
               >
                 <SegmentedControl
-                  aria-label="Default link sharing scope"
+                  aria-label={t('auto.default_link_sharing_scope')}
                   size="sm"
                   value={defaultLinkShare()}
                   options={LINK_SHARE_SCOPE_OPTIONS.map((option) => ({
@@ -1334,11 +1334,11 @@ function TeamManagement(props: {
           </SettingsCard>
         </SettingsSection>
 
-        <SettingsSection title="Connections">
+        <SettingsSection title={t('auto.connections')}>
           <SettingsCard>
             <IntegrationRow
               icon={<GithubIcon />}
-              title="GitHub App"
+              title={t('auto.github_app')}
               description="Connect your team's repositories for pull request sync."
             >
               {/* The install callback rejects users without a linked GitHub
@@ -1367,7 +1367,7 @@ function TeamManagement(props: {
         </SettingsSection>
 
         <SettingsSection
-          title="Members"
+          title={t('auto.members')}
           actions={
             // Members can invite unless the team has restricted inviting
             // to admins; removals stay admin-only.
@@ -1389,14 +1389,14 @@ function TeamManagement(props: {
                 type="text"
                 value={memberQuery()}
                 onInput={(e) => setMemberQuery(e.currentTarget.value)}
-                placeholder="Filter members"
+                placeholder={t('auto.filter_members')}
                 class="flex-1 min-w-0 bg-transparent text-sm text-ink outline-none placeholder:text-ink-placeholder"
               />
               <Show when={memberQuery()}>
                 <button
                   type="button"
                   class="shrink-0 text-ink-muted hover:text-ink"
-                  aria-label="Clear filter"
+                  aria-label={t('auto.clear_filter')}
                   onClick={() => setMemberQuery('')}
                 >
                   <XIcon class="size-4" />
@@ -1465,7 +1465,7 @@ function TeamManagement(props: {
             (invitesQuery.data?.invites?.length ?? 0) > 0
           }
         >
-          <SettingsSection title="Pending invites">
+          <SettingsSection title={t('auto.pending_invites')}>
             <SettingsCard>
               <For each={invitesQuery.data?.invites ?? []}>
                 {(invite) => (

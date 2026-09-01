@@ -87,14 +87,14 @@ export function Calendar(props: CalendarProps) {
             <div class="ml-auto flex shrink-0 items-center gap-0.5">
               <CorvuCalendar.Nav
                 action="prev-month"
-                aria-label="Go to previous month"
+                aria-label={t('auto.go_to_previous_month')}
                 class="flex size-7 items-center justify-center rounded-md text-ink-muted outline-none hover:bg-hover hover:text-ink focus-visible:ring focus-visible:ring-accent"
               >
                 <CaretLeftIcon class="size-3" />
               </CorvuCalendar.Nav>
               <CorvuCalendar.Nav
                 action="next-month"
-                aria-label="Go to next month"
+                aria-label={t('auto.go_to_next_month')}
                 class="flex size-7 items-center justify-center rounded-md text-ink-muted outline-none hover:bg-hover hover:text-ink focus-visible:ring focus-visible:ring-accent"
               >
                 <CaretRightIcon class="size-3" />
@@ -206,7 +206,7 @@ function CalendarMonthDropdown(props: CalendarMonthSelectorProps) {
   return (
     <Dropdown open={open()} onOpenChange={setOpen} placement="bottom-start">
       <Dropdown.Trigger
-        aria-label="Choose month"
+        aria-label={t('auto.choose_month')}
         class="h-7 max-w-full min-w-0 justify-start gap-1 border-none bg-transparent px-1 text-xs font-medium text-ink hover:bg-hover"
       >
         <span class="min-w-0 truncate">{formatCalendarMonth(props.month)}</span>

@@ -83,7 +83,7 @@ export function Lightbox(props: LightboxProps) {
       }}
     >
       <Dialog.Content
-        aria-label="Lightbox image viewer"
+        aria-label={t('auto.lightbox_image_viewer')}
         class="flex items-center justify-center bg-surface rounded-md overflow-hidden"
       >
         <LightboxToolbar isVisible={true}>

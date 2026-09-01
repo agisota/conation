@@ -1,4 +1,5 @@
 import { InlineTitleEditor } from '@core/component/InlineTitleEditor';
+import { t } from '@app/lib/i18n';
 import { getInitialsFromName } from '@core/user';
 import { AnimatedContactIcon } from '@icon/wide-contact';
 import { useSetContactNameMutation } from '@queries/crm/contacts';
@@ -15,7 +16,7 @@ function TitleEditor(props: { contact: CrmContactResponse }) {
       // Nameless contacts display their email; committing it unchanged
       // is a no-op rather than a save.
       value={props.contact.name ?? props.contact.email}
-      placeholder="Contact"
+      placeholder={t('auto.contact')}
       ariaLabel="Contact name"
       onRename={(name) =>
         renameMutation.mutate({

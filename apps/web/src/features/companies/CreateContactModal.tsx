@@ -151,7 +151,7 @@ export function CreateContactModal() {
                     setName(event.currentTarget.value);
                     setError(undefined);
                   }}
-                  placeholder="Contact name"
+                  placeholder={t('auto.contact_name')}
                   autocomplete="off"
                   data-1p-ignore
                   aria-invalid={error() === 'Enter a name'}

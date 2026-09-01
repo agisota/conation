@@ -104,7 +104,7 @@ function CalendarChatComposeFallback() {
     <Layer depth={2}>
       <div
         role="status"
-        aria-label="Loading calendar editor"
+        aria-label={t('auto.loading_calendar_editor')}
         aria-busy="true"
         class="flex min-h-64 animate-pulse flex-col gap-6 rounded-xl border border-edge-muted bg-surface p-4 shadow-sm"
       >

@@ -23,7 +23,7 @@ export function TopEntities(props: {
   entities: ActivityOverview['topEntities'];
 }) {
   return (
-    <section class="min-w-0" aria-label="Most active">
+    <section class="min-w-0" aria-label={t('auto.most_active')}>
       <SoupSectionHeader>{t('auto.most_active')}</SoupSectionHeader>
       <Show
         when={props.entities.length > 0}

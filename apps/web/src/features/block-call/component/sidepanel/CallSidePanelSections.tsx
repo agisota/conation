@@ -39,7 +39,7 @@ export function CallSidePanelSections(props: CallSidePanelSectionsProps) {
       >
         <PropertiesSectionContent record={props.record} />
       </SidePanel.Section>
-      <SidePanel.Section id="sharing" title="Sharing" order={20}>
+      <SidePanel.Section id="sharing" title={t('auto.sharing')} order={20}>
         <SharingSectionContent record={props.record} />
       </SidePanel.Section>
       <EntityActivitySectionConditional

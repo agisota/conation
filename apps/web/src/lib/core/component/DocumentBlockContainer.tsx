@@ -1,4 +1,5 @@
 import { BlockContainer } from '@core/component/BlockContainer';
+import { t } from '@app/lib/i18n';
 import { blockDataSignal } from '@core/internal/BlockLoader';
 import { nativeNetworkStatus } from '@core/mobile/native-network-status';
 import { blockErrorSignal, blockLoadRetrySignal } from '@core/signal/load';
@@ -32,7 +33,7 @@ export function DocumentBlockContainer(
           <Switch
             fallback={
               <LoadErrorPanel
-                title="Unable to load this document"
+                title={t('auto.unable_to_load_this_document')}
                 onRetry={retryLoad}
               />
             }
@@ -42,7 +43,7 @@ export function DocumentBlockContainer(
                 returns, so no Retry (a second concurrent load could leak
                 the first one's sync source). */}
             <Match when={isLoading() && nativeNetworkStatus() === 'offline'}>
-              <LoadErrorPanel title="Unable to load this document" />
+              <LoadErrorPanel title={t('auto.unable_to_load_this_document')} />
             </Match>
             <Match when={isLoading()}>
               <LoadingPanel />

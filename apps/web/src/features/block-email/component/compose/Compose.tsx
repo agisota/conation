@@ -905,7 +905,7 @@ export function EmailCompose(props: EmailComposeProps) {
         >
           <MobileDrawer.Portal>
             <MobileDrawer.Overlay class="fixed inset-0 z-modal-overlay bg-modal-overlay pattern-diagonal-4 pattern-edge-muted" />
-            <MobileDrawer.Content aria-label="Draft options">
+            <MobileDrawer.Content aria-label={t('auto.draft_options')}>
               <MobileDrawer.Handle />
               <MobileDrawer.Section class="mb-3">
                 <button

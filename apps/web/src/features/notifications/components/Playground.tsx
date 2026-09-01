@@ -650,7 +650,7 @@ function PlaygroundContent() {
               when={selectedType() !== null}
               fallback={
                 <EmptyState
-                  title="Select a notification type"
+                  title={t('auto.select_a_notification_type')}
                   description="Choose a type from the left sidebar to see all notifications of that type"
                 />
               }
@@ -677,7 +677,7 @@ function PlaygroundContent() {
             when={selectedNotification()}
             fallback={
               <EmptyState
-                title="Select a notification"
+                title={t('auto.select_a_notification')}
                 description="Choose a notification from the list to see detailed rendering and format information"
               />
             }

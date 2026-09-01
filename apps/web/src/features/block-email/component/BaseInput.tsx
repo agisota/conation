@@ -1929,7 +1929,7 @@ export function BaseInput(props: {
                   e.preventDefault();
                   e.currentTarget.blur();
                 }}
-                placeholder="Subject"
+                placeholder={t('auto.subject')}
               />
             </div>
           </>

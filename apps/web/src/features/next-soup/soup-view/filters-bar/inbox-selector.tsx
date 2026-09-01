@@ -54,7 +54,7 @@ export function InboxSelector() {
       activeIds={picker.activeIds}
       onChange={(ids) => (ids.length ? picker.onChange(ids) : picker.reset())}
       onOnly={picker.selectOnly}
-      placeholder="Search inboxes..."
+      placeholder={t('auto.search_inboxes')}
       preserveOrder
       action={
         multiInboxFlag().enabled

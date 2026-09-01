@@ -101,7 +101,7 @@ function VideoViewerContent(props: {
             style={{ 'z-index': 'calc(var(--z-index-modal) + 1)' }}
             onClick={props.onPrevious}
             disabled={!props.onPrevious}
-            aria-label="Previous media"
+            aria-label={t('auto.previous_media')}
           >
             <ChevronLeftIcon class="size-5 text-ink" />
           </button>
@@ -111,7 +111,7 @@ function VideoViewerContent(props: {
             style={{ 'z-index': 'calc(var(--z-index-modal) + 1)' }}
             onClick={props.onNext}
             disabled={!props.onNext}
-            aria-label="Next media"
+            aria-label={t('auto.next_media')}
           >
             <ChevronRightIcon class="size-5 text-ink" />
           </button>

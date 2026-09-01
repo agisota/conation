@@ -95,7 +95,7 @@ export function CodeFileTypeChip() {
                 <input
                   ref={searchRef}
                   type="text"
-                  placeholder="Search..."
+                  placeholder={t('auto.search')}
                   class="w-full bg-transparent text-xs outline-none placeholder:text-ink-placeholder"
                   value={search()}
                   onInput={(e) => setSearch(e.currentTarget.value)}

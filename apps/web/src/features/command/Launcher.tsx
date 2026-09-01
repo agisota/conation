@@ -1014,7 +1014,7 @@ export const LauncherInner = (props: LauncherInnerProps) => {
               <CommandMenuSearchInput
                 ref={searchInputRef}
                 type="text"
-                placeholder="Search create options"
+                placeholder={t('auto.search_create_options')}
                 value={searchQuery()}
                 onInput={(event) => setSearchQuery(event.currentTarget.value)}
               />

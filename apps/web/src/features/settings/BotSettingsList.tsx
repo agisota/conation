@@ -66,7 +66,7 @@ export function BotSettingsList(props: {
 }) {
   return (
     <SettingsPage
-      title="Bots"
+      title={t('auto.bots')}
       description="Create webhook-powered teammates and connect them to channels."
       actions={
         <Button variant="cta" size="sm" onClick={props.onCreate}>
@@ -74,7 +74,7 @@ export function BotSettingsList(props: {
       }
     >
       <SettingsSection
-        title="Your bots"
+        title={t('auto.your_bots')}
         description="Each bot can join multiple channels. Webhook URLs are scoped to the channel."
       >
         <SettingsCard>

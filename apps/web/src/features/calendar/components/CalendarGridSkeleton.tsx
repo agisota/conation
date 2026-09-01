@@ -18,7 +18,7 @@ export function CalendarGridSkeleton(props: {
   return (
     <div
       role="status"
-      aria-label="Loading calendar"
+      aria-label={t('auto.loading_calendar')}
       aria-busy="true"
       class="flex size-full min-w-0 min-h-0 animate-pulse flex-col overflow-hidden bg-surface"
     >

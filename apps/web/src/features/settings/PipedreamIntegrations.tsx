@@ -161,7 +161,7 @@ export function PipedreamIntegrationsSection() {
 
   return (
     <SettingsSection
-      title="MCP integrations"
+      title={t('auto.mcp_integrations')}
       description="Connect the tools your team already uses to give Macro's agent access to them."
     >
       <Show when={serversQuery.isError}>
@@ -190,7 +190,7 @@ export function PipedreamIntegrationsSection() {
           <input
             type="search"
             class="settings-input w-full"
-            placeholder="Search all connectors..."
+            placeholder={t('auto.search_all_connectors')}
             value={catalog.searchInput()}
             onInput={(e) => catalog.onSearchInput(e.currentTarget.value)}
           />

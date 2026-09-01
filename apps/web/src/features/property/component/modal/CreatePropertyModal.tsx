@@ -583,7 +583,7 @@ export const CreatePropertyModal: Component<CreatePropertyModalProps> = (
                     handleCreateProperty();
                   }
                 }}
-                placeholder="Property name"
+                placeholder={t('auto.property_name')}
                 class={inputClass}
               />
             </EditorRow>
@@ -720,7 +720,7 @@ export const CreatePropertyModal: Component<CreatePropertyModalProps> = (
                             ''
                           )
                         }
-                        placeholder="Number"
+                        placeholder={t('auto.number')}
                       />
                     }
                   >
@@ -744,7 +744,7 @@ export const CreatePropertyModal: Component<CreatePropertyModalProps> = (
                           ''
                         )
                       }
-                      placeholder="Option value"
+                      placeholder={t('auto.option_value')}
                     />
                   </Show>
                 </div>

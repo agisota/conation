@@ -159,7 +159,7 @@ export default function HttpStreamDebug() {
             <textarea
               value={messageContent()}
               onInput={(e) => setMessageContent(e.currentTarget.value)}
-              placeholder="Enter message..."
+              placeholder={t('auto.enter_message')}
               rows={3}
               class="w-full px-3 py-2 border border-edge rounded bg-surface resize-none"
             />

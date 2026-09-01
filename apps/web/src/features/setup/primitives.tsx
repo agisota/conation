@@ -147,7 +147,7 @@ export function ItemPill(props: {
       {(href) => (
         <button
           type="button"
-          title="Already in your workspace — click to open"
+          title={t('auto.already_in_your_workspace_clic')}
           onClick={() => window.open(href(), '_blank')}
           class={cn(
             base,

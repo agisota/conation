@@ -159,7 +159,7 @@ export function EmailCard() {
       <SettingsCard>
         <IntegrationRow
           icon={<GmailIcon />}
-          title="Gmail"
+          title={t('auto.gmail')}
           description="Read, organize, and act on your email."
           status={
             <Show when={emailActive()}>
@@ -251,7 +251,7 @@ export function EmailCard() {
                   variant="outline"
                   size="icon-sm"
                   depth={3}
-                  aria-label="Add inbox"
+                  aria-label={t('auto.add_inbox')}
                   onClick={openAddInboxDialog}
                 >
                   <PlusIcon class="size-4" />

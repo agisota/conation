@@ -304,7 +304,7 @@ function LinkSharingControls(props: LinkSharingControlsProps) {
           </Tooltip>
         </div>
         <SegmentedControl
-          aria-label="Link sharing scope"
+          aria-label={t('auto.link_sharing_scope')}
           size="sm"
           value={scope()}
           options={LINK_SHARE_SCOPE_OPTIONS}
@@ -401,7 +401,7 @@ function MobileShareDrawer(props: MobileShareDrawerProps) {
       <MobileDrawer.Portal>
         <MobileDrawer.Overlay class="fixed inset-0 z-modal-overlay bg-modal-overlay pattern-diagonal-4 pattern-edge-muted" />
         <MobileDrawer.Content
-          aria-label="Share"
+          aria-label={t('auto.share')}
           class="h-[80vh] overflow-y-auto"
         >
           <div class="flex justify-center pt-3 pb-1 shrink-0">

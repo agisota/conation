@@ -218,7 +218,7 @@ export function TagEditorDialog(props: {
                   if (event.key === 'Enter' && canSubmit()) submit();
                 }}
                 class="h-9 w-full rounded-md border border-edge-muted bg-surface px-3 text-sm text-ink outline-none placeholder:text-ink-placeholder focus:border-accent"
-                placeholder="Tag name"
+                placeholder={t('auto.tag_name')}
               />
             </EditorRow>
 

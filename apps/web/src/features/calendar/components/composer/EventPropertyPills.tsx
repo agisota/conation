@@ -122,7 +122,7 @@ function ReadOnlyEventComposerGuestsPill(props: EventComposerGuestsPillProps) {
       <Tooltip label="View event guests" placement="bottom">
         <Popover.Trigger
           disabled={props.disabled}
-          aria-label="Guests"
+          aria-label={t('auto.guests')}
           aria-readonly="true"
           class={cn(PROPERTY_TRIGGER_CLASS, 'max-w-48 overflow-hidden')}
         >
@@ -222,7 +222,7 @@ function GuestsPillTrigger(props: EventComposerGuestsPillProps) {
       disabled={ctx.editorOpen() || props.disabled}
     >
       <PropertyPill
-        aria-label="Guests"
+        aria-label={t('auto.guests')}
         aria-expanded={ctx.editorOpen()}
         data-expanded={ctx.editorOpen() ? '' : undefined}
         class={cn(PROPERTY_TRIGGER_CLASS, 'max-w-48 overflow-hidden')}
@@ -318,7 +318,7 @@ export function EventComposerLocationPill(
       <Tooltip label="Set the event location" placement="bottom">
         <Popover.Trigger
           disabled={props.disabled}
-          aria-label="Location"
+          aria-label={t('auto.location')}
           class={cn(PROPERTY_TRIGGER_CLASS, 'max-w-48 overflow-hidden')}
         >
           <Show when={!props.hideIcon}>
@@ -351,8 +351,8 @@ export function EventComposerLocationPill(
               type="text"
               value={props.value}
               onInput={(event) => props.onChange(event.currentTarget.value)}
-              placeholder="Add location..."
-              aria-label="Location"
+              placeholder={t('auto.add_location')}
+              aria-label={t('auto.location')}
               disabled={props.disabled}
               class="h-8 w-full rounded-md border border-edge-muted bg-surface px-2 text-sm text-ink outline-none placeholder:text-ink-placeholder focus:border-accent"
             />
@@ -411,7 +411,7 @@ export function EventComposerConferencePill(
     >
       <Tooltip label="Set event video conferencing" placement="bottom">
         <Select.Trigger
-          aria-label="Video conferencing"
+          aria-label={t('auto.video_conferencing')}
           class={cn(PROPERTY_TRIGGER_CLASS, 'max-w-48 overflow-hidden')}
         >
           <VideoCameraIcon class="size-3.5 shrink-0 text-ink-extra-muted" />
@@ -520,7 +520,7 @@ export function EventComposerRemindersPill(
       }
       closeOnSelection={false}
       selectionBehavior="toggle"
-      placeholder="Choose reminders"
+      placeholder={t('auto.choose_reminders')}
       disabled={props.disabled}
       itemComponent={(itemProps) => (
         <Select.Item item={itemProps.item}>
@@ -538,7 +538,7 @@ export function EventComposerRemindersPill(
     >
       <Tooltip label="Set event notifications" placement="bottom">
         <Select.Trigger
-          aria-label="Notifications"
+          aria-label={t('auto.notifications')}
           class={cn(PROPERTY_TRIGGER_CLASS, 'max-w-48 overflow-hidden')}
         >
           <BellSimpleIcon class="size-3.5 shrink-0 text-ink-extra-muted" />
@@ -598,7 +598,7 @@ export function EventComposerRecurrencePill(
     >
       <Tooltip label="Set how this event repeats" placement="bottom">
         <Select.Trigger
-          aria-label="Repeats"
+          aria-label={t('auto.repeats')}
           aria-readonly={props.readOnly || undefined}
           class={cn(PROPERTY_TRIGGER_CLASS, 'max-w-48')}
         >
@@ -644,7 +644,7 @@ export function EventComposerCalendarPill(
     >
       <Tooltip label="Choose the calendar for this event" placement="bottom">
         <Select.Trigger
-          aria-label="Calendar"
+          aria-label={t('auto.calendar')}
           aria-readonly={props.readOnly || undefined}
           class={cn(PROPERTY_TRIGGER_CLASS, 'w-40')}
         >

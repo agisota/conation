@@ -214,7 +214,7 @@ export function CallControlsDefaultAndPanelRow(
               as={Button}
               size="icon-sm"
               disabled={isConnecting()}
-              aria-label="Call settings"
+              aria-label={t('auto.call_settings')}
             >
               <Gear />
             </DropdownMenu.Trigger>
@@ -272,7 +272,7 @@ export function CallControlsDefaultAndPanelRow(
             class="text-failure not-disabled:hover:text-failure not-disabled:hover:bg-failure/10"
             onClick={() => void props.onLeave()}
             disabled={isConnecting()}
-            aria-label="Leave call"
+            aria-label={t('auto.leave_call')}
           >
             <PhoneDisconnect />
           </Button>

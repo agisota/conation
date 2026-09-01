@@ -167,7 +167,7 @@ export function EmojiSelector(props: EmojiPickerProps): JSX.Element {
       ref={scrollEl}
       class="size-full overflow-y-auto [overflow-anchor:none]"
       role="listbox"
-      aria-label="Emoji Selector"
+      aria-label={t('auto.emoji_selector')}
     >
       <Switch>
         <Match

@@ -710,7 +710,7 @@ function TagPickerBody(props: {
               <>
                 <DropdownSearchInput
                   value={search()}
-                  placeholder="Change or add tags"
+                  placeholder={t('auto.change_or_add_tags')}
                   onInput={(value) => {
                     setSearch(value);
                     dropdown.setSearchQuery(value);

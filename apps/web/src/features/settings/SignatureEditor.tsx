@@ -1,4 +1,5 @@
 import 'quill/dist/quill.snow.css';
+import { t } from '@app/lib/i18n';
 import './SignatureEditor.css';
 import { toast } from '@core/component/Toast/Toast';
 import { staticFileIdEndpoint } from '@core/constant/servers';
@@ -226,7 +227,7 @@ export default function SignatureEditor(props: {
       <div ref={toolbarEl}>
         <span class="ql-formats">
           <Tooltip label="Font" as="span">
-            <select class="ql-font" aria-label="Font">
+            <select class="ql-font" aria-label={t('auto.font')}>
               <For each={FONT_OPTIONS}>
                 {(font) =>
                   font === false ? <option /> : <option value={font} />
@@ -235,7 +236,7 @@ export default function SignatureEditor(props: {
             </select>
           </Tooltip>
           <Tooltip label="Size" as="span">
-            <select class="ql-size" aria-label="Font size">
+            <select class="ql-size" aria-label={t('auto.font_size')}>
               <For each={SIZE_OPTIONS}>
                 {(size) =>
                   size === false ? <option /> : <option value={size} />
@@ -255,10 +256,10 @@ export default function SignatureEditor(props: {
         </span>
         <span class="ql-formats">
           <Tooltip label="Text color" as="span">
-            <select class="ql-color" aria-label="Text color" />
+            <select class="ql-color" aria-label={t('auto.text_color')} />
           </Tooltip>
           <Tooltip label="Highlight color" as="span">
-            <select class="ql-background" aria-label="Highlight color" />
+            <select class="ql-background" aria-label={t('auto.highlight_color')} />
           </Tooltip>
         </span>
         <span class="ql-formats">

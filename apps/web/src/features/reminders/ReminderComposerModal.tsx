@@ -440,7 +440,7 @@ export function ReminderComposerModal() {
             </Match>
             <Match when={step() === 'when'}>
               <StepInput
-                placeholder="Remind me when?"
+                placeholder={t('auto.remind_me_when')}
                 value={query()}
                 onInput={setQuery}
               />
@@ -469,7 +469,7 @@ export function ReminderComposerModal() {
                   <button
                     type="button"
                     class="bg-active border border-edge-muted px-2 py-1 truncate text-xs rounded min-w-0 flex-1 text-left text-ink-muted hover:text-ink"
-                    title="Edit the description"
+                    title={t('auto.edit_the_description')}
                     onClick={() => setStep('description')}
                   >
                     {typed()}

@@ -125,7 +125,7 @@ function DesktopCalendarSettings(props: {
         variant="ghost"
         size="icon-sm"
         class="shrink-0 rounded-lg"
-        aria-label="Calendar settings"
+        aria-label={t('auto.calendar_settings')}
       >
         <GearIcon class="size-3.5" />
       </Dropdown.Trigger>
@@ -274,7 +274,7 @@ function MobileCalendarSettings(props: { controls: CalendarSettingsControls }) {
         variant="ghost"
         size="icon-sm"
         class="shrink-0 rounded-full"
-        aria-label="Calendar settings"
+        aria-label={t('auto.calendar_settings')}
       >
         <GearIcon class="size-3.5" />
       </MobileDrawer.Trigger>
@@ -282,7 +282,7 @@ function MobileCalendarSettings(props: { controls: CalendarSettingsControls }) {
       <MobileDrawer.Portal>
         <MobileDrawer.Overlay class="fixed inset-0 z-modal-overlay bg-modal-overlay pattern-diagonal-4 pattern-edge-muted" />
         <MobileDrawer.Content
-          aria-label="Calendar settings"
+          aria-label={t('auto.calendar_settings')}
           class="overflow-y-auto"
         >
           <MobileDrawer.Handle />

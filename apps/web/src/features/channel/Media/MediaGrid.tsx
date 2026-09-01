@@ -32,7 +32,7 @@ function MessageImageTile(props: {
       type="button"
       class="relative flex rounded-2xl"
       onClick={props.onOpen}
-      aria-label="Open image viewer"
+      aria-label={t('auto.open_image_viewer')}
     >
       <MediaImage.Image
         src={props.item.src}
@@ -94,7 +94,7 @@ function MessageVideoTile(props: { item: MediaItem; onOpen: () => void }) {
               type="button"
               class="block max-w-full"
               onClick={props.onOpen}
-              aria-label="Open video viewer"
+              aria-label={t('auto.open_video_viewer')}
             >
               <MediaVideo.Preview
                 src={props.item.src}

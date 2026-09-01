@@ -6,6 +6,7 @@
  */
 
 import { Show } from 'solid-js';
+import { t } from '@app/lib/i18n';
 import { useAgentSession } from '../context/AgentSessionContext';
 import {
   AgentInput,
@@ -42,7 +43,7 @@ export function AgentComposer() {
         onRemove={composer.remove}
       />
       <AgentInput
-        placeholder="Message the agent"
+        placeholder={t('auto.message_the_agent')}
         autofocus={autofocus}
         busy={composer.busy()}
         disabled={loadFailed()}

@@ -349,7 +349,7 @@ export default function IconGallery() {
                           [pair.name]: false,
                         }))
                       }
-                      title="Hover to animate"
+                      title={t('auto.hover_to_animate')}
                     >
                       <pair.animated
                         triggerAnimation={animationTriggers()[pair.name]}
@@ -360,7 +360,7 @@ export default function IconGallery() {
                       <button
                         onClick={() => triggerAnimation(pair.name)}
                         class="flex size-2.5 items-center justify-center rounded-full border border-current text-ink-muted transition-colors hover:bg-ink/10 hover:text-ink"
-                        title="Play animation"
+                        title={t('auto.play_animation')}
                       >
                         <svg
                           width="4"

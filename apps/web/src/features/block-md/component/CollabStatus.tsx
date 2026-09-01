@@ -1,4 +1,5 @@
 import { HeaderIsland } from '@components/app/split-layout/components/HeaderIsland';
+import { t } from '@app/lib/i18n';
 import { SplitHeaderRight } from '@components/app/split-layout/components/SplitHeader';
 import { blockSyncSourceSignal } from '@core/signal/load';
 import { SyncSourceStatus } from '@conation/collaboration/collab/source';
@@ -27,7 +28,7 @@ export function CollabStatus() {
               <Button
                 variant="outline"
                 size="icon-sm"
-                aria-label="Offline"
+                aria-label={t('auto.offline')}
                 tooltip="You're offline. Changes will sync when you reconnect."
                 class="bg-alert-bg border-alert/20"
               >
@@ -38,7 +39,7 @@ export function CollabStatus() {
               <Button
                 variant="ghost"
                 size="icon-sm"
-                aria-label="Reconnecting"
+                aria-label={t('auto.reconnecting')}
                 tooltip="Reconnecting to the document…"
               >
                 <CloudIcon class="text-ink-extra-muted animate-pulse" />

@@ -45,7 +45,7 @@ export function Admin() {
 
   return (
     <SettingsPage
-      title="Debug"
+      title={t('auto.debug')}
       description="Local toggles for debugging — only visible to Macro staff."
       actions={
         <Button

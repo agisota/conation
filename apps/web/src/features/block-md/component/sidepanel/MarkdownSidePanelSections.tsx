@@ -120,12 +120,12 @@ export function MarkdownSidePanelSections(
         />
       </SidePanel.Section>
       <Show when={!isTask()}>
-        <SidePanel.Section id="stats" title="Stats" order={30}>
+        <SidePanel.Section id="stats" title={t('auto.stats')} order={30}>
           <StatsSectionContent />
         </SidePanel.Section>
       </Show>
       <Show when={ENABLE_HISTORY_COMPONENT()}>
-        <SidePanel.Section id="history" title="History" order={35}>
+        <SidePanel.Section id="history" title={t('auto.history')} order={35}>
           <HistorySectionContent />
         </SidePanel.Section>
       </Show>
@@ -275,7 +275,7 @@ function SnippetSharingTeamSectionConditional(props: { documentId: string }) {
 
   return (
     <Show when={teamShareQuery.data?.teamId}>
-      <SidePanel.Section id="sharing" title="Sharing" defaultOpen order={15}>
+      <SidePanel.Section id="sharing" title={t('auto.sharing')} defaultOpen order={15}>
         <SnippetSharingSectionContent documentId={props.documentId} />
       </SidePanel.Section>
     </Show>

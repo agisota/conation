@@ -204,7 +204,7 @@ function HueSlider(props: { h: () => number; onH: (n: number) => void }) {
       step={1}
       value={[props.h()]}
       onChange={(v) => props.onH(v[0] ?? 0)}
-      aria-label="Hue"
+      aria-label={t('auto.hue')}
     >
       <Slider.Track
         class="relative h-full w-full rounded-full"
@@ -428,7 +428,7 @@ export function ColorPickerPopover(props: {
                 step={0.01}
                 value={[alpha()]}
                 onChange={(value) => props.onAlpha?.(value[0] ?? 1)}
-                aria-label="Alpha"
+                aria-label={t('auto.alpha')}
                 class="flex items-center gap-3"
               >
                 <span class="w-10 text-xs text-ink-muted">{t('auto.alpha')}</span>

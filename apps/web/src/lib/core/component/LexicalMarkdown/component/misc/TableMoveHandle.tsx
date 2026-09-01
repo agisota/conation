@@ -539,7 +539,7 @@ export function TableMoveHandle() {
             <button
               ref={setHandleElem}
               type="button"
-              aria-label="Move cells"
+              aria-label={t('auto.move_cells')}
               class="fixed z-20 flex size-6 -translate-x-[calc(100%-3px)] -translate-y-[3px] items-center justify-center rounded-full border border-edge bg-surface text-ink-muted shadow-sm touch-none"
               classList={{
                 'cursor-grab': !dragging(),
@@ -556,8 +556,8 @@ export function TableMoveHandle() {
               {(corner) => (
                 <button
                   type="button"
-                  aria-label="Delete table"
-                  title="Delete table"
+                  aria-label={t('auto.delete_table')}
+                  title={t('auto.delete_table')}
                   class="fixed z-20 flex size-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-edge bg-surface text-failure shadow-sm active:border-failure active:bg-failure active:text-surface"
                   style={{ left: `${corner().x}px`, top: `${corner().y}px` }}
                   onPointerDown={(e) => e.preventDefault()}
@@ -593,8 +593,8 @@ export function TableMoveHandle() {
                 <Show when={anchorCellMerged()}>
                   <button
                     type="button"
-                    aria-label="Split cell"
-                    title="Split cell"
+                    aria-label={t('auto.split_cell')}
+                    title={t('auto.split_cell')}
                     class="col-span-2 flex items-center justify-center gap-1.5 rounded-md py-2 ring-1 ring-edge active:bg-accent/10 text-ink-muted"
                     onClick={() => runMenuAction(() => $unmergeCell())}
                   >

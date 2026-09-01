@@ -220,7 +220,7 @@ function ProfilePictureRow(props: { userId: string }) {
               <span
                 tabindex="0"
                 role="button"
-                aria-label="Upload profile picture"
+                aria-label={t('auto.upload_profile_picture')}
                 onClick={pickProfilePicture}
                 class="flex size-full items-center justify-center rounded-full bg-edge text-ink-muted transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
@@ -234,7 +234,7 @@ function ProfilePictureRow(props: { userId: string }) {
               <Dropdown.Trigger
                 as="div"
                 tabindex="0"
-                aria-label="Edit profile picture"
+                aria-label={t('auto.edit_profile_picture')}
                 class="group block size-full rounded-full outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 <div class="size-full overflow-hidden rounded-full">
@@ -401,7 +401,7 @@ export function Account() {
   };
 
   return (
-    <SettingsPage title="Account">
+    <SettingsPage title={t('auto.account')}>
       <SettingsSection>
         <SettingsCard>
           <Show when={ENABLE_PROFILE_PICTURES}>
@@ -427,7 +427,7 @@ export function Account() {
                   setUpdatedFirstName
                 )
               }
-              placeholder="Enter First Name"
+              placeholder={t('auto.enter_first_name')}
             />
           </Row>
 
@@ -442,7 +442,7 @@ export function Account() {
                   setUpdatedLastName
                 )
               }
-              placeholder="Enter Last Name"
+              placeholder={t('auto.enter_last_name')}
             />
           </Row>
 
@@ -473,7 +473,7 @@ export function Account() {
         </SettingsSection>
       </Show>
 
-      <SettingsSection title="Danger zone">
+      <SettingsSection title={t('auto.danger_zone')}>
         <SettingsCard>
           <SettingsRow
             label="Delete account"
@@ -551,7 +551,7 @@ export function Account() {
                   onInput={(event) =>
                     setDeleteFeedback(event.currentTarget.value)
                   }
-                  placeholder="Your feedback helps us improve Macro"
+                  placeholder={t('auto.your_feedback_helps_us_improve')}
                 />
                 <span class="text-ink-extra-muted text-xs">
                   Please don't include sensitive information.

@@ -142,7 +142,7 @@ export function EmptyState(props: {
         <EmptyStatePanel
           centered
           graphic={EmptyStateNoFilterMatchGraphic}
-          title="No items matching the filters"
+          title={t('auto.no_items_matching_the_filters')}
           description="Try adjusting or clearing your filters to see more results."
         >
           {props.onClearFilters && (
@@ -162,7 +162,7 @@ export function EmptyState(props: {
       >
         <EmptyStatePanel
           graphic={EmptyStateInboxTrayGraphic}
-          title="No scheduled reminders"
+          title={t('auto.no_scheduled_reminders')}
           description={
             <>
               Reminders you schedule wait here until they fire into Signal. Set
@@ -189,7 +189,7 @@ export function EmptyState(props: {
       <Match when={props.listView === 'inbox' && !emailActive()}>
         <EmptyStatePanel
           graphic={EmptyStateInboxTrayGraphic}
-          title="Your inbox is empty"
+          title={t('auto.your_inbox_is_empty')}
           description="Bring your inbox into Macro to triage signal from noise, reply faster, and let agents work alongside your mail."
           primaryAction={{
             label: 'Connect email',
@@ -202,7 +202,7 @@ export function EmptyState(props: {
       <Match when={props.listView === 'mail' && !emailActive()}>
         <EmptyStatePanel
           graphic={EmptyStateEmailGraphic}
-          title="Connect your email"
+          title={t('auto.connect_your_email')}
           description="Bring your inbox into Macro to triage signal from noise, reply faster, and let agents work alongside your mail."
           primaryAction={{
             label: 'Connect email',
@@ -254,7 +254,7 @@ export function EmptyState(props: {
       <Match when={props.listView === 'mail' && emailActive()}>
         <EmptyStatePanel
           graphic={EmptyStateInboxTrayGraphic}
-          title="Inbox zero"
+          title={t('auto.inbox_zero')}
           description="You're all caught up. New email will appear here as it arrives."
           documentationUrl={`${DOCS_BASE}/product/email`}
         />
@@ -263,7 +263,7 @@ export function EmptyState(props: {
       <Match when={props.listView === 'tasks'}>
         <EmptyStatePanel
           graphic={EmptyStateTasksGraphic}
-          title="Nothing to do"
+          title={t('auto.nothing_to_do')}
           description="Tasks you create or that get assigned to you will show up here."
           primaryAction={{
             label: 'New task',
@@ -279,7 +279,7 @@ export function EmptyState(props: {
       >
         <EmptyStatePanel
           graphic={EmptyStateAutomationsGraphic}
-          title="No automations to show"
+          title={t('auto.no_automations_to_show')}
           description="Automations run in the background to handle repetitive work for you — like triaging messages, updating tasks, or sending follow-ups."
           primaryAction={{
             label: 'New automation',
@@ -295,7 +295,7 @@ export function EmptyState(props: {
       >
         <EmptyStatePanel
           graphic={EmptyStateAiGraphic}
-          title="No skills yet"
+          title={t('auto.no_skills_yet')}
           description="Skills are markdown documents with instructions AI follows. Reference one with / in any AI input."
           primaryAction={{
             label: 'New skill',
@@ -309,7 +309,7 @@ export function EmptyState(props: {
       <Match when={props.listView === 'agents'}>
         <EmptyStatePanel
           graphic={EmptyStateAiGraphic}
-          title="Get started with agents"
+          title={t('auto.get_started_with_agents')}
           description="Create an agent, or use Macro with your favorite AI chat client or code editor via MCP."
           primaryAction={{
             label: 'New agent',
@@ -329,7 +329,7 @@ export function EmptyState(props: {
             <EmptyStatePanel
               centered
               graphic={EmptyStateCompaniesGraphic}
-              title="Join a team to enable CRM"
+              title={t('auto.join_a_team_to_enable_crm')}
               description="Create or join a team in Settings > Team."
               primaryAction={{
                 label: 'Open team settings',
@@ -341,7 +341,7 @@ export function EmptyState(props: {
             <EmptyStatePanel
               centered
               graphic={EmptyStateCompaniesGraphic}
-              title="CRM is disabled"
+              title={t('auto.crm_is_disabled')}
               description={
                 isTeamAdmin()
                   ? 'Enable CRM in Settings > CRM to start tracking your customers.'
@@ -360,7 +360,7 @@ export function EmptyState(props: {
           <Match when={true}>
             <EmptyStatePanel
               graphic={EmptyStateCompaniesGraphic}
-              title="No customers yet"
+              title={t('auto.no_customers_yet')}
               description="Customers your team emails will appear here."
             />
           </Match>
@@ -378,7 +378,7 @@ export function EmptyState(props: {
       >
         <EmptyStatePanel
           graphic={EmptyStateFolderGraphic}
-          title="No folders"
+          title={t('auto.no_folders')}
           description="Folders let you organize conversations, documents, and tasks into projects. Create a folder or drop files below to get started."
           primaryAction={{
             label: 'New folder',
@@ -395,7 +395,7 @@ export function EmptyState(props: {
         <EmptyStatePanel
           centered
           graphic={EmptyStateNoSearchMatchGraphic}
-          title="No items to show"
+          title={t('auto.no_items_to_show')}
           description="Search across messages, documents, tasks, and more."
           documentationUrl={`${DOCS_BASE}/product/search`}
         />

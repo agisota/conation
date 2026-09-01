@@ -1,4 +1,5 @@
 import { blockTextSignal } from '@core/signal/load';
+import { t } from '@app/lib/i18n';
 import { createEffect, createMemo } from 'solid-js';
 
 export function HtmlPreview() {
@@ -12,7 +13,7 @@ export function HtmlPreview() {
     // can't under-scroll the floating chrome — the viewport sits between it.
     <div class="size-full bg-surface overflow-auto touch:pt-(--mobile-content-inset-top) touch:pb-(--mobile-content-inset-bottom)">
       <iframe
-        title="HTML preview"
+        title={t('auto.html_preview')}
         class="size-full border-0"
         sandbox="allow-scripts"
         referrerPolicy="no-referrer"

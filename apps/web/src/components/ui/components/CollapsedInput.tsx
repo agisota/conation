@@ -1,4 +1,5 @@
 import { focusInput } from '@core/directive/focusInput';
+import { t } from '@app/lib/i18n';
 import { isMobile } from '@core/mobile/isMobile';
 import PaperclipIcon from '@phosphor-icons/core/regular/paperclip.svg?component-solid';
 import { type Accessor, type JSX, Show } from 'solid-js';
@@ -58,7 +59,7 @@ export function CollapsedInput(props: CollapsedInputProps) {
         <Button
           variant="ghost"
           size="icon-sm"
-          aria-label="Attach files"
+          aria-label={t('auto.attach_files')}
           label="Attach files"
           onClick={() => props.onAttach?.()}
         >

@@ -49,7 +49,7 @@ export function Company(props: { companyId: string }) {
       </SidePanel.Section>
       <SidePanel.Section
         id="company-contacts"
-        title="Contacts"
+        title={t('auto.contacts')}
         order={20}
         defaultOpen
         actions={
@@ -72,7 +72,7 @@ export function Company(props: { companyId: string }) {
       >
         <CompanyContactsSection company={company()} contacts={contacts()} />
       </SidePanel.Section>
-      <SidePanel.Section id="company-sharing" title="Sharing" order={25}>
+      <SidePanel.Section id="company-sharing" title={t('auto.sharing')} order={25}>
         <CompanySharingSection company={company()} />
       </SidePanel.Section>
       {/* TODO: add a References section (inbound channel messages + documents)

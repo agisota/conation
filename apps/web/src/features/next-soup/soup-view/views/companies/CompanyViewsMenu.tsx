@@ -282,7 +282,7 @@ export function CompanyViewsMenu(props: { hideLabel?: boolean } = {}) {
                   e.stopPropagation();
                   if (e.key === 'Enter') saveCurrentView();
                 }}
-                placeholder="View name"
+                placeholder={t('auto.view_name')}
                 class={cn(
                   'w-full rounded-md border border-edge-muted bg-transparent px-2 py-1 text-sm',
                   'outline-none focus:border-accent placeholder:text-ink-placeholder'
@@ -291,7 +291,7 @@ export function CompanyViewsMenu(props: { hideLabel?: boolean } = {}) {
               <div class="flex items-center justify-between gap-1.5">
                 <SegmentedControl
                   size="sm"
-                  aria-label="View visibility"
+                  aria-label={t('auto.view_visibility')}
                   value={saveScope()}
                   onChange={(value) => setSaveScope(value)}
                   options={[

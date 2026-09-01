@@ -222,7 +222,7 @@ export function BotDetail(props: { botId: string; onBack: () => void }) {
 
                 <BotFormSection
                   class="mt-3"
-                  title="Profile"
+                  title={t('auto.profile')}
                   description="Update how this bot appears in channels and mentions."
                 >
                   <BotProfileFields
@@ -257,7 +257,7 @@ export function BotDetail(props: { botId: string; onBack: () => void }) {
                 />
 
                 <BotFormSection
-                  title="Channels"
+                  title={t('auto.channels')}
                   description="Choose every channel this bot can post to."
                 >
                   <ChannelMultiSelect

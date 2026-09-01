@@ -214,7 +214,7 @@ export default function ThemeEdit3() {
           <input
             value={name()}
             onInput={(event) => setName(event.currentTarget.value)}
-            aria-label="Theme name"
+            aria-label={t('auto.theme_name')}
             spellcheck={false}
             class="h-9 min-w-48 flex-1 rounded-md border border-edge-muted bg-surface px-3 text-sm text-ink outline-none placeholder:text-ink-placeholder focus:border-accent"
           />

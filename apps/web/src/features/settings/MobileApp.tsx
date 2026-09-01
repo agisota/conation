@@ -5,7 +5,7 @@ import { SettingsCard, SettingsPage } from './primitives';
 export function MobileApp() {
   return (
     <SettingsPage
-      title="Mobile app"
+      title={t('auto.mobile_app')}
       description="Scan the code to get Macro on your phone."
     >
       <SettingsCard>

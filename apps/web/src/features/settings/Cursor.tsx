@@ -83,7 +83,7 @@ export function CursorCard() {
     <SettingsCard>
       <IntegrationRow
         icon={<span class="text-sm font-medium text-ink-muted">Cs</span>}
-        title="Cursor"
+        title={t('auto.cursor')}
         description="Run @cursor coding sessions on your Cursor account."
       />
 

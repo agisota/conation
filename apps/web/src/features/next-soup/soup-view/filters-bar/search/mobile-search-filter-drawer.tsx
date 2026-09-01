@@ -76,7 +76,7 @@ function MultiFacetContent(props: { facet: MultiFacet }) {
     <>
       {/* Any-of/all-of segment (e.g. tags), mirroring the desktop chip. */}
       <Show when={props.facet.mode?.visible()}>
-        <div class="flex bg-surface mb-px" role="radiogroup" aria-label="Match">
+        <div class="flex bg-surface mb-px" role="radiogroup" aria-label={t('auto.match')}>
           <For
             each={[
               { id: 'any', label: 'Match any' } as const,
@@ -264,7 +264,7 @@ export const MobileSearchFilterDrawer = (props: { class?: string }) => {
     >
       <MobileDrawer.Trigger
         as={Button}
-        aria-label="Open search filters"
+        aria-label={t('auto.open_search_filters')}
         variant="ghost"
         size="sm"
         depth={3}
@@ -284,7 +284,7 @@ export const MobileSearchFilterDrawer = (props: { class?: string }) => {
 
       <MobileDrawer.Portal>
         <MobileDrawer.Overlay class="fixed inset-0 z-modal-overlay bg-modal-overlay pattern-diagonal-4 pattern-edge-muted" />
-        <MobileDrawer.Content aria-label="Search filters" class="h-[80vh]">
+        <MobileDrawer.Content aria-label={t('auto.search_filters')} class="h-[80vh]">
           <MobileDrawer.Handle class="pb-1" />
 
           <div class="relative flex-1 min-h-0">

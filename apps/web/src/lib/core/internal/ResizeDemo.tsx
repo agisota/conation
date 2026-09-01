@@ -38,7 +38,7 @@ function PanelCard(
             <button
               onClick={props.onClickAddPanel}
               class="p-1 rounded hover:bg-accent/10 group-focus-within:hover:bg-accent/10"
-              title="Add panel"
+              title={t('auto.add_panel')}
             >
               <AddIcon class="size-4" />
             </button>
@@ -47,7 +47,7 @@ function PanelCard(
             <button
               onClick={props.onClickRemove}
               class="p-1 rounded hover:bg-accent/10 group-focus-within:hover:bg-accent/10"
-              title="Remove panel"
+              title={t('auto.remove_panel')}
             >
               <XIcon class="size-4" />
             </button>
@@ -95,7 +95,7 @@ function VerticalPanelCard(
             <button
               onClick={props.onClickAddPanel}
               class="p-1 rounded hover:bg-accent/10 group-focus-within:hover:bg-accent/10"
-              title="Add panel"
+              title={t('auto.add_panel')}
             >
               <AddIcon class="size-4" />
             </button>
@@ -104,7 +104,7 @@ function VerticalPanelCard(
             <button
               onClick={props.onClickRemove}
               class="p-1 rounded hover:bg-accent/10 group-focus-within:hover:bg-accent/10"
-              title="Remove panel"
+              title={t('auto.remove_panel')}
             >
               <XIcon class="size-4" />
             </button>

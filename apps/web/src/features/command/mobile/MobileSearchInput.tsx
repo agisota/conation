@@ -111,7 +111,7 @@ export function MobileSearchInput() {
         type="text"
         enterkeyhint="search"
         class="h-full min-w-0 flex-1 border-0 bg-transparent text-ink outline-none ring-0 placeholder:text-ink-placeholder focus:outline-none focus:ring-0"
-        placeholder="Search or ask AI..."
+        placeholder={t('auto.search_or_ask_ai')}
         value={SearchState.query()}
         onFocus={() => {
           if (!SearchState.isOpen()) SearchState.open();
@@ -135,7 +135,7 @@ export function MobileSearchInput() {
       <button
         type="button"
         class="flex size-9 shrink-0 items-center justify-center rounded-full text-ink-muted"
-        aria-label="Close search"
+        aria-label={t('auto.close_search')}
         onPointerDown={(e) => {
           e.preventDefault();
           hapticImpact('light');

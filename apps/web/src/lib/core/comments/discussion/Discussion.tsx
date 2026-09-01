@@ -376,7 +376,7 @@ export function DiscussionThreadView(props: {
                             ) ?? null
                           }
                           onClick={() => setIsReplying(true)}
-                          aria-label="Reply"
+                          aria-label={t('auto.reply')}
                         />
                       </Thread.ActionsFooter>
                     </Show>

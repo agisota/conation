@@ -239,7 +239,7 @@ export function FloatingEquationMenu() {
                   type="text"
                   value={equation() ?? ''}
                   onInput={(e) => setEquation(e.currentTarget.value)}
-                  placeholder="Enter LaTeX expression"
+                  placeholder={t('auto.enter_latex_expression')}
                   class="w-full p-2 border border-edge rounded-md focus:ring focus:ring-accent/40 focus:border-accent/40 outline-none transition"
                 />
               ) : (
@@ -249,7 +249,7 @@ export function FloatingEquationMenu() {
                   rows={3}
                   value={equation() ?? ''}
                   onInput={(e) => setEquation(e.currentTarget.value)}
-                  placeholder="Enter LaTeX expression"
+                  placeholder={t('auto.enter_latex_expression')}
                   class="w-full p-2 border border-edge rounded-md focus:ring focus:ring-accent/40 focus:border-accent/40 outline-none transition resize-none"
                 />
               )}

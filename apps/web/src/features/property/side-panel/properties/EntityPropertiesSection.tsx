@@ -88,7 +88,7 @@ export function EntityTagsSection(props: EntityTagsSectionProps) {
 
   return (
     <Show when={isTaggableEntityType(props.entityType)}>
-      <SidePanel.Section id="tags" title="Tags" defaultOpen order={props.order}>
+      <SidePanel.Section id="tags" title={t('auto.tags')} defaultOpen order={props.order}>
         <Show
           when={isAuthenticated() !== false && !tagsQuery.isError}
           fallback={
@@ -594,8 +594,8 @@ function PropertyRowActions(props: {
         <Show when={canRemove()}>
           <button
             type="button"
-            title="Remove from entity"
-            aria-label="Remove from entity"
+            title={t('auto.remove_from_entity')}
+            aria-label={t('auto.remove_from_entity')}
             disabled={isSaving()}
             class="pointer-events-auto flex size-5 items-center justify-center rounded-full text-ink-muted outline-none ring-0 shadow-none hover:bg-hover hover:text-failure-ink focus:outline-none focus-visible:outline-none focus-visible:ring-0 disabled:pointer-events-none disabled:opacity-50"
             onClick={removeFromEntity}

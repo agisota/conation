@@ -1,4 +1,5 @@
 import { ComposeTaskTitleEditor } from '@block-md/component/ComposeTask';
+import { t } from '@app/lib/i18n';
 import { InlinePropertyValue } from '@block-md/component/InlinePropertyValue';
 import {
   createTaskComposerProperties,
@@ -381,7 +382,7 @@ export function TaskComposer(props: {
         <SendButton
           tooltip="Create task and send"
           shortcut="cmd+enter"
-          aria-label="Create task and send"
+          aria-label={t('auto.create_task_and_send')}
           data-input-action="send-task"
           pending={isCreating()}
           disabled={!canSend()}

@@ -275,7 +275,7 @@ function MobileRender(
     >
       <MobileDrawer.Portal>
         <MobileDrawer.Overlay class="fixed inset-0 z-modal-overlay bg-modal-overlay pattern-diagonal-4 pattern-edge-muted" />
-        <MobileDrawer.Content aria-label="File actions">
+        <MobileDrawer.Content aria-label={t('auto.file_actions')}>
           <MobileDrawer.Handle />
           <MobileDrawer.ScrollBody>
             <Show when={props.views}>

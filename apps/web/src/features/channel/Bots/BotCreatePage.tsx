@@ -208,7 +208,7 @@ export function BotCreate(props: { channelId?: string; onBack: () => void }) {
             }}
           >
             <BotFormSection
-              title="Profile"
+              title={t('auto.profile')}
               description="This is how the bot appears in channels and mentions."
             >
               <BotProfileFields
@@ -245,7 +245,7 @@ export function BotCreate(props: { channelId?: string; onBack: () => void }) {
             />
 
             <BotFormSection
-              title="Ownership"
+              title={t('auto.ownership')}
               description="Bots are personal by default."
             >
               <div class="flex items-center justify-between gap-4">
@@ -272,7 +272,7 @@ export function BotCreate(props: { channelId?: string; onBack: () => void }) {
             </BotFormSection>
 
             <BotFormSection
-              title="Channels"
+              title={t('auto.channels')}
               description="Add the bot now to get ready-to-use webhook URLs."
             >
               <label class="mb-1.5 block text-xs font-medium">{t('auto.add_to_channels')}<span class="text-ink-muted">· optional</span>

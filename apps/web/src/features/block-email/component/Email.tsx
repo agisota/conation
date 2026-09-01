@@ -719,7 +719,7 @@ function EmailContent(props: EmailViewProps) {
                 />
                 <SidePanel.Section
                   id="email-ai-actions"
-                  title="Actions"
+                  title={t('auto.actions')}
                   defaultOpen
                   order={0}
                 >

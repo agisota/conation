@@ -19,7 +19,7 @@ type BotWebhooksSectionProps = {
 export function BotWebhooksSection(props: BotWebhooksSectionProps) {
   return (
     <BotFormSection
-      title="Webhooks"
+      title={t('auto.webhooks')}
       description="Copy a channel URL or generate another token."
       action={
         <Button

@@ -461,7 +461,7 @@ function ProviderFailureDemoBody(props: {
           class="flex-1 rounded border border-accent px-2 py-1 text-sm"
           value={text()}
           onInput={(e) => setText(e.currentTarget.value)}
-          placeholder="Type a message and send"
+          placeholder={t('auto.type_a_message_and_send')}
           onKeyDown={(e) => {
             if (e.key === 'Enter') send();
           }}

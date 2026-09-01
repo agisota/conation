@@ -1,4 +1,5 @@
 import { useUnfurl } from '@core/signal/unfurl';
+import { t } from '@app/lib/i18n';
 import { openExternalUrl } from '@core/util/url';
 import LinkIcon from '@phosphor/link.svg';
 import DeleteIcon from '@phosphor/x.svg';
@@ -178,7 +179,7 @@ export function InlineLinkEditor() {
                 if (isAdding()) handleAddLink();
               }, 100);
             }}
-            placeholder="Enter URL..."
+            placeholder={t('auto.enter_url')}
             disabled={isSaving()}
             class="text-left px-2 py-0.5 bg-transparent focus:outline-none text-ink inline-block shrink-0 rounded-sm"
           />

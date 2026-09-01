@@ -192,7 +192,7 @@ function EventDetailsDrawer(props: EventDetailsOverlayProps) {
           <div class="flex shrink-0 items-center justify-between px-2 pb-3 pt-2">
             <MobileDrawer.Close
               as={Button}
-              aria-label="Close event details"
+              aria-label={t('auto.close_event_details')}
               variant="ghost"
               size="icon-md"
               depth={3}
@@ -202,7 +202,7 @@ function EventDetailsDrawer(props: EventDetailsOverlayProps) {
             </MobileDrawer.Close>
             <div class="flex items-center gap-1">
               <Button
-                aria-label="Copy event"
+                aria-label={t('auto.copy_event')}
                 variant="ghost"
                 size="icon-md"
                 depth={3}
@@ -213,7 +213,7 @@ function EventDetailsDrawer(props: EventDetailsOverlayProps) {
               </Button>
               <Show when={canModify()}>
                 <Button
-                  aria-label="Edit event"
+                  aria-label={t('auto.edit_event')}
                   variant="ghost"
                   size="icon-md"
                   depth={3}
@@ -223,7 +223,7 @@ function EventDetailsDrawer(props: EventDetailsOverlayProps) {
                   <PencilSimpleIcon />
                 </Button>
                 <Button
-                  aria-label="Delete event"
+                  aria-label={t('auto.delete_event')}
                   variant="ghost"
                   size="icon-md"
                   depth={3}
@@ -314,7 +314,7 @@ function DeleteEventDialog(
     <DeleteDialog
       open={props.open}
       onOpenChange={props.onOpenChange}
-      title="Delete event"
+      title={t('auto.delete_event')}
       pending={deleteEvent.isPending}
       onDelete={confirm}
     >
@@ -425,7 +425,7 @@ function EventDetailsPopover(props: EventDetailsPopoverProps) {
               <Popover.Title class="sr-only">{props.event.title}</Popover.Title>
               <div class="flex items-center justify-end gap-1 px-2 pt-2">
                 <Button
-                  aria-label="Copy event"
+                  aria-label={t('auto.copy_event')}
                   variant="ghost"
                   size="icon-sm"
                   depth={3}
@@ -436,7 +436,7 @@ function EventDetailsPopover(props: EventDetailsPopoverProps) {
                 </Button>
                 <Show when={canModify()}>
                   <Button
-                    aria-label="Edit event"
+                    aria-label={t('auto.edit_event')}
                     variant="ghost"
                     size="icon-sm"
                     depth={3}
@@ -446,7 +446,7 @@ function EventDetailsPopover(props: EventDetailsPopoverProps) {
                     <PencilSimpleIcon />
                   </Button>
                   <Button
-                    aria-label="Delete event"
+                    aria-label={t('auto.delete_event')}
                     variant="ghost"
                     size="icon-sm"
                     depth={3}
@@ -458,7 +458,7 @@ function EventDetailsPopover(props: EventDetailsPopoverProps) {
                 </Show>
                 <Popover.CloseButton
                   as={Button}
-                  aria-label="Close event details"
+                  aria-label={t('auto.close_event_details')}
                   variant="ghost"
                   size="icon-sm"
                   depth={3}

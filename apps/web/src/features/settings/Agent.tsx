@@ -1,4 +1,5 @@
 import { McpSetupCards } from '@core/component/AI/component/McpSetupCards';
+import { t } from '@app/lib/i18n';
 import { SettingsPage } from './primitives';
 
 /**
@@ -10,7 +11,7 @@ import { SettingsPage } from './primitives';
 export function Agent() {
   return (
     <SettingsPage
-      title="Macro MCP server"
+      title={t('auto.macro_mcp_server')}
       description="Connect other agents and tools to your Macro workspace."
     >
       <McpSetupCards class="max-w-none" />

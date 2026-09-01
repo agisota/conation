@@ -61,7 +61,7 @@ function ReplyToSelectionDemo() {
         />
       </div>
       <AgentInput
-        placeholder="Referenced text lands here"
+        placeholder={t('auto.referenced_text_lands_here')}
         onSend={(content) => console.info('[gallery] send', content)}
         registerQuoteInsert={(insert) => {
           quoteInsert = insert;
@@ -200,12 +200,12 @@ export default function AgentUiGallery() {
 
           <Item label="ToolCard">
             <ToolCard
-              title="Bash"
+              title={t('auto.bash')}
               subtitle="cargo test -p agent_fold"
               status={status()}
             />
             <ToolCard
-              title="Read"
+              title={t('auto.read')}
               subtitle="crates/agent_fold/src/domain/fold.rs"
               args={{ limit: '200' }}
               status="completed"

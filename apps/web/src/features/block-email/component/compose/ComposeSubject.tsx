@@ -1,4 +1,5 @@
 import { isMobile } from '@core/mobile/isMobile';
+import { t } from '@app/lib/i18n';
 import { cn } from '@ui';
 import { createSignal, Show } from 'solid-js';
 import { useCompose } from './ComposeContext';
@@ -52,7 +53,7 @@ export function ComposeSubject(props: {
               ref={props.inputRef}
               type="text"
               value={ctx.subject()}
-              placeholder="Subject"
+              placeholder={t('auto.subject')}
               class="w-full resize-none text-sm placeholder:text-ink-placeholder p-1"
               onInput={(e) => ctx.setSubject(e.currentTarget.value)}
               onKeyDown={blurOnEscape}

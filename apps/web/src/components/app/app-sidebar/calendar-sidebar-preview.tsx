@@ -309,7 +309,7 @@ function PreviewContent(props: { dropdownMount?: HTMLElement }) {
         <Layer depth={4}>
           <div class="absolute right-2 bottom-2 z-anchored-controls flex items-center gap-2">
             <Button
-              aria-label="New event"
+              aria-label={t('auto.new_event')}
               label="New event"
               tooltipPlacement="top"
               variant="ghost"
@@ -322,7 +322,7 @@ function PreviewContent(props: { dropdownMount?: HTMLElement }) {
             </Button>
             <Dropdown placement="right" gutter={6}>
               <Dropdown.Trigger
-                aria-label="Calendar settings"
+                aria-label={t('auto.calendar_settings')}
                 label="Calendar settings"
                 tooltipPlacement="top"
                 variant="ghost"

@@ -151,7 +151,7 @@ export function CalendarSearch() {
           variant="ghost"
           size="icon-sm"
           class="rounded-lg"
-          aria-label="Search events"
+          aria-label={t('auto.search_events')}
         >
           <SearchIcon class="size-4" />
         </Popover.Trigger>
@@ -179,7 +179,7 @@ export function CalendarSearch() {
                         if (first) openResult(first);
                       }
                     }}
-                    placeholder="Search events"
+                    placeholder={t('auto.search_events')}
                     class="min-w-0 flex-1 rounded-sm bg-transparent text-sm caret-accent outline-none placeholder:text-ink-placeholder focus-visible:ring-1 focus-visible:ring-accent"
                   />
                 </div>

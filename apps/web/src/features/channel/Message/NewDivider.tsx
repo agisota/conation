@@ -1,4 +1,5 @@
 import { formatRelativeDate } from '@core/util/time';
+import { t } from '@app/lib/i18n';
 import { Show } from 'solid-js';
 import { isDateDividerVisible } from './DateDivider';
 import type { ChannelMessageListMeta } from './list-meta';
@@ -24,7 +25,7 @@ export function NewDivider(props: NewDividerProps) {
       <button
         type="button"
         class="w-full text-left"
-        title="Mark as read"
+        title={t('auto.mark_as_read')}
         onClick={props.onDismiss}
       >
         <MessageFlag text={text()} highlight />

@@ -19,7 +19,7 @@ export function BotProfileFields(props: {
       <div class="flex items-center gap-3 border-b border-edge-muted pb-4">
         <button
           type="button"
-          aria-label="Upload avatar"
+          aria-label={t('auto.upload_avatar')}
           class="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-accent"
           onClick={props.onUploadAvatar}
         >
@@ -57,7 +57,7 @@ export function BotProfileFields(props: {
           <input
             autofocus
             value={props.value.name}
-            placeholder="Release bot"
+            placeholder={t('auto.release_bot')}
             class="settings-input w-full"
             aria-invalid={!!props.errors.name}
             onInput={(event) => props.onNameChange(event.currentTarget.value)}
@@ -90,7 +90,7 @@ export function BotProfileFields(props: {
         <span class="text-xs font-medium">{t('auto.description')}</span>
         <textarea
           value={props.value.description}
-          placeholder="Posts release updates and deployment status"
+          placeholder={t('auto.posts_release_updates_and_depl')}
           rows={3}
           class="settings-input h-auto min-h-20 w-full resize-none px-3 py-2.5 leading-5"
           onInput={(event) =>

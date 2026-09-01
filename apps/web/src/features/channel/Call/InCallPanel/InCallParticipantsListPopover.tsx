@@ -146,7 +146,7 @@ export function InCallParticipantsListPopover(
         )}
         aria-haspopup="dialog"
         aria-expanded={open()}
-        aria-label="Everyone in call"
+        aria-label={t('auto.everyone_in_call')}
       >
         <UsersThree class="block size-4" />
       </Popover.Trigger>

@@ -193,7 +193,7 @@ export function CreateChannelModal() {
                     setName(event.currentTarget.value);
                     setError(undefined);
                   }}
-                  placeholder="Channel name"
+                  placeholder={t('auto.channel_name')}
                   autocomplete="off"
                   data-1p-ignore
                   aria-invalid={error() === 'Enter a channel name'}

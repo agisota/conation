@@ -987,7 +987,7 @@ export const UnifiedFilterDropdown = (
                       options={tagFilter.options}
                       activeIds={tagFilter.activeIds}
                       onChange={tagFilter.onChange}
-                      placeholder="Filter by tag..."
+                      placeholder={t('auto.filter_by_tag')}
                     />
                   </Show>
 
@@ -1044,7 +1044,7 @@ export const UnifiedFilterDropdown = (
                       options={assigneeOptions}
                       activeIds={assigneeFilter}
                       onChange={handleAssigneeChange}
-                      placeholder="Search assignees..."
+                      placeholder={t('auto.search_assignees')}
                     />
                   </Show>
 
@@ -1054,7 +1054,7 @@ export const UnifiedFilterDropdown = (
                       options={createdByOptions}
                       activeIds={createdByIds}
                       onChange={handleCreatedByChange}
-                      placeholder="Search creators..."
+                      placeholder={t('auto.search_creators')}
                     />
                   </Show>
 
@@ -1065,7 +1065,7 @@ export const UnifiedFilterDropdown = (
                       options={stageOptions}
                       activeIds={effectiveStageFilter}
                       onChange={handleStageChange}
-                      placeholder="Filter stages..."
+                      placeholder={t('auto.filter_stages')}
                       preserveOrder
                     />
                     <SearchableFilterSubmenu
@@ -1073,7 +1073,7 @@ export const UnifiedFilterDropdown = (
                       options={ownerOptions}
                       activeIds={ownerFilter}
                       onChange={handleOwnerChange}
-                      placeholder="Search owners..."
+                      placeholder={t('auto.search_owners')}
                     />
                   </Show>
                 </>
@@ -1118,7 +1118,7 @@ export const UnifiedFilterDropdown = (
                 options={tagFilter.options}
                 activeIds={tagFilter.activeIds}
                 onChange={tagFilter.onChange}
-                placeholder="Filter by tag..."
+                placeholder={t('auto.filter_by_tag')}
               />
             </Show>
           </Dropdown.Group>

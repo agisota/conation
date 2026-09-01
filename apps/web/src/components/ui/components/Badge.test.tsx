@@ -49,7 +49,7 @@ describe('Badge', () => {
 
   it('renders a span with resolved variant and size metadata', () => {
     render(() => (
-      <Badge variant="outline" size="sm" title="Status">{t('auto.ready')}</Badge>
+      <Badge variant="outline" size="sm" title={t('auto.status')}>{t('auto.ready')}</Badge>
     ));
 
     const badge = screen.getByText('Ready');

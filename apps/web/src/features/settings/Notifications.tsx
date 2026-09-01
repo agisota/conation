@@ -74,10 +74,10 @@ export function Notifications() {
 
   return (
     <SettingsPage
-      title="Notifications"
+      title={t('auto.notifications')}
       description="Choose when you'll be notified. Inbox items always arrive unless you mute a type or an item."
     >
-      <SettingsSection title="Delivery">
+      <SettingsSection title={t('auto.delivery')}>
         <SettingsCard>
           <SettingsRow
             label="Inbox"
@@ -147,7 +147,7 @@ export function Notifications() {
       </For>
 
       <SettingsSection
-        title="Muted items"
+        title={t('auto.muted_items')}
         description="These items will not send you notifications."
       >
         <SettingsCard>

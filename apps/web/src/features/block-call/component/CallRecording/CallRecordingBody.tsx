@@ -142,7 +142,7 @@ export function CallRecordingBody(props: {
       <div class="relative flex-1 min-h-0 overflow-hidden">
         <SidePanel.Section
           id="call-ai-actions"
-          title="Actions"
+          title={t('auto.actions')}
           defaultOpen
           order={0}
         >

@@ -1,4 +1,5 @@
 import { AskMacroButton } from '@app/features/chat/ChatWithAgentButton';
+import { t } from '@app/lib/i18n';
 import {
   FileDetailsSection,
   FilePropertiesSection,
@@ -11,7 +12,7 @@ import { useBlockDocumentName } from '@core/util/currentBlockDocumentName';
 export function PdfSidePanelSections() {
   return (
     <>
-      <SidePanel.Section id="actions" title="Actions" defaultOpen order={10}>
+      <SidePanel.Section id="actions" title={t('auto.actions')} defaultOpen order={10}>
         <ActionsSectionContent />
       </SidePanel.Section>
       <FileDetailsSection order={20} />

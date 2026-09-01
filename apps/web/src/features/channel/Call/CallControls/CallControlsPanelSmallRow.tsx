@@ -41,7 +41,7 @@ export function CallControlsPanelSmallRow() {
       <Dropdown placement="top-start" gutter={6}>
         <DropdownMenu.Trigger
           disabled={isConnecting()}
-          aria-label="Call options"
+          aria-label={t('auto.call_options')}
           class={cn(
             'flex items-center justify-center size-5 shrink-0 rounded-md transition-colors',
             isConnecting() && 'opacity-50 pointer-events-none',

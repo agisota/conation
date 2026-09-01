@@ -246,7 +246,7 @@ function TeamForm(props: {
           <FormInput
             id="team-name"
             // An example, not "Team name" again — the label says that.
-            placeholder="Acme Inc."
+            placeholder={t('auto.acme_inc')}
             value={name()}
             autoFocus={!props.domain}
             onInput={setName}

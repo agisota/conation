@@ -574,7 +574,7 @@ export function MarkdownPopup(props: {
             <textarea
               class="grow resize-none overflow-hidden bg-transparent text-sm placeholder:text-ink-placeholder focus:outline-none"
               rows={1}
-              placeholder="Ask Macro to edit this selection"
+              placeholder={t('auto.ask_macro_to_edit_this_selecti')}
               ref={(el) => {
                 aiInputRef = el;
               }}

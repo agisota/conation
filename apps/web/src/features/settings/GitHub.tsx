@@ -69,7 +69,7 @@ export function GitHubCard() {
     <SettingsCard>
       <IntegrationRow
         icon={<GithubIcon />}
-        title="GitHub"
+        title={t('auto.github')}
         description="Connect Macro to your GitHub account and repositories."
       />
 

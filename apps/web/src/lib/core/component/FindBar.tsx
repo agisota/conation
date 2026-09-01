@@ -242,7 +242,7 @@ function FindBarCloseButton() {
     <Button
       size="icon-sm"
       variant="ghost"
-      aria-label="Close find bar"
+      aria-label={t('auto.close_find_bar')}
       onClick={() => controller.close()}
     >
       <X />

@@ -102,7 +102,7 @@ function AddServerForm(props: {
               <input
                 type="text"
                 class="settings-input w-full"
-                placeholder="My MCP Server"
+                placeholder={t('auto.my_mcp_server')}
                 value={name()}
                 onInput={(e) => setName(e.currentTarget.value)}
                 onKeyDown={(e) => {
@@ -404,7 +404,7 @@ export function IntegrationsSection() {
 
   return (
     <SettingsSection
-      title="MCP integrations"
+      title={t('auto.mcp_integrations')}
       description="Connect MCP servers to give Macro's agent access to the tools your team already uses."
       actions={
         <Button

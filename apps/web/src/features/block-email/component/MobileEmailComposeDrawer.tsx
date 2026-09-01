@@ -3,6 +3,7 @@ import {
   scrollToFocusedInput,
 } from '@components/app/mobile/MobileDrawer';
 import { FloatingInputLoader } from '@core/component/FloatingInputLoader';
+import { t } from '@app/lib/i18n';
 import { createMemo, Show } from 'solid-js';
 import { useEmailContext } from './EmailContext';
 import { EmailInput } from './EmailInput';
@@ -52,7 +53,7 @@ export function MobileEmailComposeDrawer(props: {
           <MobileDrawer.Portal>
             <MobileDrawer.Overlay class="fixed inset-0 z-modal-overlay bg-modal-overlay pattern-diagonal-4 pattern-edge-muted" />
             <MobileDrawer.Content
-              aria-label="Reply composer"
+              aria-label={t('auto.reply_composer')}
               maxHeight={90}
               targetHeight={90}
             >

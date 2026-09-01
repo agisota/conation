@@ -54,7 +54,7 @@ export function HomeExamples(props: { preferences: HomePreferences }) {
           <button
             type="button"
             class="rounded-md p-1 text-ink-extra-muted transition-colors hover:bg-hover hover:text-ink-muted"
-            aria-label="Dismiss examples"
+            aria-label={t('auto.dismiss_examples')}
             onClick={() => props.preferences.dismiss('examples')}
           >
             <XIcon class="size-3.5" />

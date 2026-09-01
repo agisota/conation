@@ -1,4 +1,5 @@
 import { URL_PARAMS as CHANNEL_PARAMS } from '@block-channel/constants';
+import { t } from '@app/lib/i18n';
 import { CommentsProvider } from '@block-md/comments/CommentsProvider';
 import { URL_PARAMS } from '@block-md/constants';
 import { keyNavigationPlugin } from '@block-md/plugins/keyboardNavigation';
@@ -1178,7 +1179,7 @@ export function MarkdownEditor(props: {
             {(state) => (
               <SplitBottomPanel
                 id="lexical-state-debugger"
-                title="Lexical state debugger"
+                title={t('auto.lexical_state_debugger')}
                 onClose={props.onLexicalStateDebuggerClose}
               >
                 <LexicalStateDebugger

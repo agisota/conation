@@ -1,4 +1,5 @@
 import { SplitHeaderLeft } from '@components/app/split-layout/components/SplitHeader';
+import { t } from '@app/lib/i18n';
 import { StaticSplitLabel } from '@components/app/split-layout/components/SplitLabel';
 import type { JSX } from 'solid-js';
 import { buildConfig } from './MarkdownConfigBuilder';
@@ -54,7 +55,7 @@ function Editor() {
 
   return (
     <Container label="Builder Pattern">
-      <MarkdownShell config={editor} placeholder="Cool test placeholder" />
+      <MarkdownShell config={editor} placeholder={t('auto.cool_test_placeholder')} />
     </Container>
   );
 }

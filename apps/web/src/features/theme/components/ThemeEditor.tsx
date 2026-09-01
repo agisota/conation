@@ -37,8 +37,8 @@ export function ThemeEditor(props: {
             value={props.name}
             onInput={(e) => props.onNameChange(e.currentTarget.value)}
             spellcheck={false}
-            placeholder="Theme name"
-            aria-label="Theme name"
+            placeholder={t('auto.theme_name')}
+            aria-label={t('auto.theme_name')}
             class="w-40 min-w-0 rounded-md border border-edge-muted bg-transparent px-2 py-1 text-xs text-ink outline-none placeholder:text-ink-placeholder focus:border-accent"
           />
           <div class="flex-1" />

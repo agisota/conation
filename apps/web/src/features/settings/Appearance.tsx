@@ -649,8 +649,8 @@ export function Appearance() {
   return (
     // Soften any stray `b4` edge in the theme editor to the muted `b3` tone.
     <div class="h-full" style={{ '--b4l': 'var(--b3l)' }}>
-      <SettingsPage title="Appearance">
-        <SettingsSection title="Color Theme">
+      <SettingsPage title={t('auto.appearance')}>
+        <SettingsSection title={t('auto.color_theme')}>
           {/* Establish a container so the rows can stack (label/description over
               the picker) when the panel is narrower than 460px. */}
           <SettingsCard class="@container">
@@ -679,7 +679,7 @@ export function Appearance() {
           </SettingsCard>
         </SettingsSection>
 
-        <SettingsSection title="Interface">
+        <SettingsSection title={t('auto.interface')}>
           <SettingsCard>
             <SettingsRow
               label="Monochrome icons"

@@ -1,4 +1,5 @@
 import { StackedAvatarsRow } from '@core/component/StackedAvatarsRow';
+import { t } from '@app/lib/i18n';
 import { useChannelsContext } from '@core/context/channels';
 import PhoneDisconnect from '@icon/wide-call-disconnect.svg';
 import ArrowsOut from '@phosphor/arrows-out.svg';
@@ -136,7 +137,7 @@ export const InCallPanel: Component<InCallPanelProps> = (props) => {
     <Show when={() => panel.isActive()}>
       <section
         data-in-call-panel
-        aria-label="In call"
+        aria-label={t('auto.in_call')}
         class="relative isolate overflow-hidden rounded-lg border border-ink-muted/[0.08] bg-ink-muted/[0.025] divide-y divide-ink-muted/[0.08]"
       >
         {/* Header — soup notification vocabulary: muted label, accent pulse,
@@ -186,8 +187,8 @@ export const InCallPanel: Component<InCallPanelProps> = (props) => {
               <button
                 type="button"
                 class="inline-flex items-center justify-center size-6 rounded transition-colors text-ink-muted/70 hover:text-ink hover:bg-ink-muted/[0.06]"
-                title="Open full call view"
-                aria-label="Open full call view"
+                title={t('auto.open_full_call_view')}
+                aria-label={t('auto.open_full_call_view')}
                 onClick={() => {
                   const id = panel.callCtx.activeChannelId();
                   if (id) void openChannelCallTab(id);
@@ -261,7 +262,7 @@ export const InCallPanel: Component<InCallPanelProps> = (props) => {
             <button
               class="flex items-center justify-center size-5 shrink-0 rounded-md transition-colors text-failure hover:bg-failure/10"
               onClick={() => void panel.controls.leaveCall()}
-              aria-label="Leave call"
+              aria-label={t('auto.leave_call')}
               type="button"
             >
               <PhoneDisconnect class="size-4" />

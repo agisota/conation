@@ -18,7 +18,7 @@ export function BotAgentSection(props: {
   return (
     <Show when={agentsEnabled()}>
       <BotFormSection
-        title="Agent"
+        title={t('auto.agent')}
         description="Turn this bot into a coding agent instead of a webhook responder."
       >
         <div class="flex items-center justify-between gap-4">

@@ -261,7 +261,7 @@ function EmailFormNew(props: {
         <FormInput
           id="password"
           type="password"
-          placeholder="Password"
+          placeholder={t('auto.password')}
           required={isPasswordLogin()}
         />
       </Show>

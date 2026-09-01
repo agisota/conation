@@ -135,7 +135,7 @@ export function AgentSidePanelSections() {
 
       <Show when={plan()}>
         {(entries) => (
-          <SidePanel.Section id="plan" title="Plan" defaultOpen order={15}>
+          <SidePanel.Section id="plan" title={t('auto.plan')} defaultOpen order={15}>
             <TodoList
               todos={entries().map((entry) => ({
                 content: entry.content,
@@ -181,7 +181,7 @@ export function AgentSidePanelSections() {
       </Show>
 
       <Show when={activity().some((item) => item.count > 0)}>
-        <SidePanel.Section id="activity" title="Activity" order={30}>
+        <SidePanel.Section id="activity" title={t('auto.activity')} order={30}>
           <div class="text-xs text-ink-muted">
             <CountSummary items={activity()} />
           </div>

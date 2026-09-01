@@ -143,7 +143,7 @@ export const SidebarPromoHint = (props: SidebarPromoHintProps) => {
         <div class="rounded-lg border border-ink-muted/8 bg-ink-muted/2.5 overflow-hidden">
           <div
             role="progressbar"
-            aria-label="Auto-dismiss countdown"
+            aria-label={t('auto.auto_dismiss_countdown')}
             class="h-0.5 w-full bg-ink-muted/8"
           >
             <div

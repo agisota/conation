@@ -279,7 +279,7 @@ export function CalendarToolEventPreview(props: CalendarToolEventPreviewProps) {
   return (
     <div
       role="region"
-      aria-label="Calendar event preview"
+      aria-label={t('auto.calendar_event_preview')}
       class={cn(
         'calendar-tool-preview relative flex min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-edge-muted bg-surface shadow-sm',
         props.class
@@ -411,7 +411,7 @@ export function CalendarToolEventPreview(props: CalendarToolEventPreviewProps) {
           <Show when={occurrenceData.isLoading()}>
             <div
               role="status"
-              aria-label="Loading calendar events"
+              aria-label={t('auto.loading_calendar_events')}
               class="pointer-events-none absolute right-2 bottom-2 rounded-md border border-edge-muted bg-surface px-2 py-1 text-xs text-ink-muted shadow-sm"
             >
               Loading events…

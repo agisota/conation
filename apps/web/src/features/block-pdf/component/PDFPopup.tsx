@@ -226,7 +226,7 @@ export function PDFPopup(props: PDFPopupProps) {
                   onClick={() =>
                     insertProps().insertText(completion()!.content)
                   }
-                  title="Insert AI response"
+                  title={t('auto.insert_ai_response')}
                 >
                   <PasteIcon />
                 </Button>

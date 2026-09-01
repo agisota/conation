@@ -326,7 +326,7 @@ export function DatePickerUI(props: DatePickerUIProps) {
               type="text"
               inputmode="numeric"
               maxLength={2}
-              aria-label="Hour"
+              aria-label={t('auto.hour')}
               class="w-10 text-center bg-active border border-edge-muted rounded-md p-1 text-sm focus:outline-none focus:border-accent"
               value={hourDisplay()}
               onKeyDown={(e) => {
@@ -351,7 +351,7 @@ export function DatePickerUI(props: DatePickerUIProps) {
               type="text"
               inputmode="numeric"
               maxLength={2}
-              aria-label="Minute"
+              aria-label={t('auto.minute')}
               class="w-10 text-center bg-active border border-edge-muted rounded-md p-1 text-sm focus:outline-none focus:border-accent"
               value={minuteDisplay()}
               onKeyDown={(e) => {
@@ -398,7 +398,7 @@ export function DatePickerUI(props: DatePickerUIProps) {
           </div>
           <button
             type="button"
-            aria-label="Confirm scheduled time"
+            aria-label={t('auto.confirm_scheduled_time')}
             class="p-1 rounded-md bg-surface text-accent hover:bg-active transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             disabled={isTimeInPast()}
             onClick={() => props.onChange(buildDateWithTime(selectedDate()))}

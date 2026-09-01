@@ -1,6 +1,7 @@
 /** A permission request, with the outcome (chosen option) as trailing text. */
 
 import type { MessagePart } from '@service-agent-fold/generated/types';
+import { t } from '@app/lib/i18n';
 import { Show } from 'solid-js';
 import { ToolCard } from '../../ui';
 
@@ -21,7 +22,7 @@ export function PermissionPart(props: {
 
   return (
     <ToolCard
-      title="Permission requested"
+      title={t('auto.permission_requested')}
       trailing={
         <Show when={outcome()}>
           {(label) => <span class="text-ink">{label()}</span>}

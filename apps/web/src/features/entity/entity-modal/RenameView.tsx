@@ -1,4 +1,5 @@
 import { createRenameDssEntityMutation, type EntityData } from '@entity';
+import { t } from '@app/lib/i18n';
 import { createSignal, onMount } from 'solid-js';
 import { EntityModalActionFooter, EntityModalTitle } from './EntityModal';
 
@@ -39,7 +40,7 @@ export const RenameView = (props: {
 
   return (
     <div class="w-full">
-      <EntityModalTitle title="Rename" />
+      <EntityModalTitle title={t('auto.rename')} />
       <div class="w-full">
         <input
           ref={(el) => {
@@ -56,7 +57,7 @@ export const RenameView = (props: {
           onInput={(e) => setEditValue(e.currentTarget.value)}
           onKeyDown={handleKeyDown}
           class="w-full p-2 text-sm border border-edge bg-surface text-ink placeholder:text-ink-placeholder focus:outline-none focus:bg-active selection:bg-ink selection:text-surface"
-          placeholder="Enter title..."
+          placeholder={t('auto.enter_title')}
         />
       </div>
 

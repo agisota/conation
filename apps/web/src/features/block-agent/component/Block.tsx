@@ -1,4 +1,5 @@
 import { SidePanel } from '@components/app/side-panel';
+import { t } from '@app/lib/i18n';
 import { SplitPanelContext } from '@components/app/split-layout/context';
 import { useBlockId } from '@core/block';
 import { LoadErrorPanel } from '@core/component/EntityLoadGate';
@@ -39,7 +40,7 @@ function AgentBlockContent() {
       when={!loadUnavailable()}
       fallback={
         <LoadErrorPanel
-          title="Unable to load this document"
+          title={t('auto.unable_to_load_this_document')}
           onRetry={loadRetryable() ? retryLoad : undefined}
         />
       }

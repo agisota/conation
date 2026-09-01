@@ -803,7 +803,7 @@ function GlyphEditor(props: GlyphEditorProps) {
             <div class="flex-1 p-1 overflow-y-auto">
               <input
                 type="text"
-                placeholder="Icon name..."
+                placeholder={t('auto.icon_name')}
                 value={glyphName()}
                 onInput={(e) => setGlyphName(e.currentTarget.value)}
                 class="p-2 w-full text-sm border-b border-edge mb-4"

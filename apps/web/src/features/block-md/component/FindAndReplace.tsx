@@ -1,4 +1,5 @@
 import { FindAndReplaceStore } from '@block-md/signal/findAndReplaceStore';
+import { t } from '@app/lib/i18n';
 import { mdStore } from '@block-md/signal/markdownBlockData';
 import {
   DO_REPLACE_COMMAND,
@@ -344,7 +345,7 @@ export function FindAndReplace() {
               <input
                 class="mx-0.5 flex-1 h-6 border-0 text-sm text-ink focus:outline-none focus:ring-0"
                 type="text"
-                placeholder="Find..."
+                placeholder={t('auto.find')}
                 ref={inputRef}
                 value={findAndReplaceStore.searchInputText}
                 onInput={(e) => {
@@ -404,7 +405,7 @@ export function FindAndReplace() {
                 <input
                   class="mx-0.5 flex-1 h-6 border-0 text-sm text-ink focus:outline-none focus:ring-0"
                   type="text"
-                  placeholder="Replace with..."
+                  placeholder={t('auto.replace_with')}
                   ref={inputReplaceRef}
                   value={findAndReplaceStore.replaceInputText}
                   onInput={(e) =>
