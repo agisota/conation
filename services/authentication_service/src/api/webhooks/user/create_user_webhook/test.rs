@@ -9,7 +9,7 @@ fn support_channel_name_uses_email_local_part() {
 
     assert_eq!(
         support_channel_name(&email),
-        "Conation Support x new.user+trial"
+        "Поддержка Conation — new.user+trial"
     );
 }
 

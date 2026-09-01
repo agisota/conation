@@ -6,10 +6,10 @@ use std::fmt;
 /// A locale for which backend-authored content has a complete catalog.
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub enum SupportedLocale {
-    /// English, the source and fallback locale.
-    #[default]
+    /// English, the source-catalog fallback locale.
     English,
-    /// Russian.
+    /// Russian, the default product locale.
+    #[default]
     Russian,
 }
 
@@ -35,7 +35,7 @@ impl fmt::Display for SupportedLocale {
 /// Quality weights and source order are honored, regional tags fall back to
 /// their primary language, and ranges with `q=0` are excluded. Invalid,
 /// unsupported, wildcard-only, absent, or otherwise unresolvable values fall
-/// back to English.
+/// back to the Russian product default.
 #[must_use]
 pub fn negotiate_accept_language(value: Option<&str>) -> SupportedLocale {
     let Some(value) = value else {
@@ -87,7 +87,7 @@ fn parse_language_range(range: &str) -> Option<SupportedLocale> {
         return None;
     }
     if range == "*" {
-        return Some(SupportedLocale::English);
+        return Some(SupportedLocale::default());
     }
 
     let mut subtags = range.split('-');
