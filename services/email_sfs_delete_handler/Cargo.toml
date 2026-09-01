@@ -1,0 +1,21 @@
+[package]
+edition = "2024"
+name = "email_sfs_delete_handler"
+publish = false
+version = "0.1.0"
+
+[dependencies]
+anyhow = { workspace = true }
+aws-sdk-sqs = { workspace = true }
+conation_aws_config = { path = "../../crates/conation_aws_config" }
+aws_lambda_events = { workspace = true, features = ["eventbridge"] }
+lambda_runtime = { workspace = true }
+conation_entrypoint = { path = "../../crates/conation_entrypoint" }
+conation_env = { path = "../../crates/conation_env" }
+conation_env_var = { path = "../../crates/conation_env_var" }
+conation_queues = { path = "../../crates/conation_queues" }
+sqlx = { workspace = true }
+sqs_client = { path = "../../crates/sqs_client", default-features = false, features = ["email", "sfs_delete"] }
+tokio = { workspace = true }
+tracing = { workspace = true }
+workspace-hack = { version = "0.1", path = "../../crates/workspace-hack" }

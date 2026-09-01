@@ -1,0 +1,564 @@
+import { t } from '@core/i18n';
+import { createElementSize } from '@solid-primitives/resize-observer';
+import { cn } from '@ui/utils/classname';
+import {
+  createContext,
+  createEffect,
+  createMemo,
+  createSignal,
+  Index,
+  on,
+  onCleanup,
+  type ParentProps,
+  Show,
+  useContext,
+} from 'solid-js';
+import { createResizeSolver } from './solver';
+import type {
+  PanelConfig,
+  PanelId,
+  PanelSizeSpec,
+  ResizeZoneCtx,
+} from './types';
+
+export const ResizeZoneContext = createContext<ResizeZoneCtx>();
+
+/**
+ * Props for the Resize Zone component.
+ *
+ * @property direction - The direction of the zone. The direction of the flow, not the splits.
+ * @property gutter - The size of gutters (in px).
+ * @property minSize - The zone-wide min size for a panel (in px). Individual panels can override.
+ * @property class - Optional class name for the Zone.
+ * @property id - Optional id for the Zone.
+ * @property resizable - Optional boolean indicating whether the zone is resizable. Defaults to true.
+ */
+type ZoneProps = {
+  direction: 'horizontal' | 'vertical';
+  gutter?: number;
+  minSize?: number;
+  class?: string;
+  id?: string;
+  captureResizeCtx?: (ctx: ResizeZoneCtx) => void;
+  resizable?: boolean;
+};
+
+/**
+ * The main container component for resizable panels.
+ *
+ * Creates a zone where panels can be arranged and resized either horizontally or vertically.
+ * Manages the layout calculation, gutter positioning, and provides context for child panels.
+ * Also provides hide/show functionality through the context.
+ *
+ * @param props - The zone configuration properties
+ * @returns A resizable zone container with panels and gutters
+ *
+ * @example
+ * ```tsx
+ * <Resize.Zone direction="horizontal" gutter={8} minSize={100}>
+ *   <Resize.Panel id="panel1" minSize={150}>
+ *     Content 1
+ *   </Resize.Panel>
+ *   <Resize.Panel id="panel2" minSize={200}>
+ *     Content 2
+ *   </Resize.Panel>
+ * </Resize.Zone>
+ *
+ * // Access hide/show functionality via context
+ * const ctx = useContext(ResizeZoneContext);
+ * ctx.hide('panel1'); // Temporarily hide panel1, others flow around it
+ * ctx.show('panel1'); // Show panel1 again
+ * ```
+ */
+function Zone(props: ParentProps<ZoneProps>) {
+  const direction = () => props.direction;
+
+  const gutterPx = () => props.gutter ?? 0;
+  const minSize = () => props.minSize ?? 0;
+
+  const [root, setRoot] = createSignal<HTMLDivElement>();
+  const rootSize = createElementSize(root);
+  const zoneSize = createMemo(() => {
+    return direction() === 'horizontal'
+      ? (rootSize.width ?? 0)
+      : (rootSize.height ?? 0);
+  });
+
+  const solver = createResizeSolver({
+    // The solver is axis-agnostic (shares are dimensionless), so it only needs
+    // the current axis to store; reactivity lives on `ctx.direction`.
+    direction: props.direction,
+    gutter: gutterPx,
+    size: zoneSize,
+    panels: [],
+  });
+
+  function register(config: PanelConfig, index?: number) {
+    solver.addPanel(
+      { ...config, minSize: config?.minSize ?? minSize() },
+      index
+    );
+  }
+
+  function unregister(id: PanelId) {
+    solver.dropPanel(id);
+  }
+
+  function update(
+    id: PanelId,
+    config: {
+      minSize?: number;
+      maxSize?: number;
+      redistributionPreferredSize?: number;
+      shareGroup?: string;
+    }
+  ) {
+    solver.updatePanel(id, config);
+  }
+
+  const layouts = createMemo(() => {
+    const solve = solver.solve();
+    return solver.order().map((id) => ({
+      id,
+      offset: solve.offsets.get(id) ?? 0,
+      size: solve.sizes.get(id) ?? 0,
+    }));
+  });
+
+  const visibleLayouts = createMemo(() => {
+    return layouts().filter((layout) => !solver.isHidden(layout.id));
+  });
+
+  const offsetOf = (id: PanelId) =>
+    createMemo(() => solver.solve().offsets.get(id) ?? 0);
+
+  const sizeOf = (id: PanelId) =>
+    createMemo(() => solver.solve().sizes.get(id) ?? 0);
+
+  const ctx: ResizeZoneCtx = {
+    direction,
+    register,
+    unregister,
+    update,
+    gutterSize: gutterPx,
+    size: zoneSize,
+    offsetOf,
+    sizeOf,
+    canFit: solver.canFitPanel,
+    swap: solver.swap,
+    hide: solver.hide,
+    show: solver.show,
+    isHidden: solver.isHidden,
+    reset: solver.reset,
+  };
+
+  createEffect(() => {
+    props.captureResizeCtx?.(ctx);
+  });
+
+  const gutterEnabled = () => Boolean(props.resizable ?? true);
+
+  return (
+    <div
+      class={props.class ?? ''}
+      ref={setRoot}
+      style={{
+        position: 'relative',
+        height: '100%',
+        width: '100%',
+      }}
+      data-resize-zone
+    >
+      <ResizeZoneContext.Provider value={ctx}>
+        {props.children}
+        <Show when={gutterEnabled() && visibleLayouts().length > 1}>
+          <Index each={visibleLayouts()}>
+            {(panel, visibleIndex) => {
+              const actualIndex = solver.order().indexOf(panel().id);
+              return (
+                <Show when={visibleIndex < visibleLayouts().length - 1}>
+                  <Gutter
+                    offset={panel().offset + panel().size}
+                    index={actualIndex}
+                    nudge={solver.moveHandle}
+                    root={root}
+                  />
+                </Show>
+              );
+            }}
+          </Index>
+        </Show>
+      </ResizeZoneContext.Provider>
+    </div>
+  );
+}
+
+/**
+ * Props for the Resize Panel component.
+ *
+ * @property id - Unique identifier for the panel
+ * @property minSize - Minimum size constraint for the panel in pixels
+ * @property maxSize - Maximum size constraint for the panel in pixels (defaults to Infinity)
+ * @property redistributionPreferredSize - Preferred size used only during
+ *     automatic layout redistribution. It is reduced when neighboring panel
+ *     minimums leave insufficient room.
+ * @property collapsed - Accessor that returns whether the panel should be collapsed. This
+ *     is currently kind of COPE and should be avoided. Is used for the side-bar which should
+ *     be toggled without being unmounted. It is WAY preferred to let the system derive its
+ *     state from the component lifecycle.
+ * @property hidden - Accessor that returns whether the panel should be hidden (temporarily
+ *     removed from layout but still registered). When hidden, other panels flow around it.
+ * @property persistent - When true, panel stays registered even when hidden (for singleton panels
+ *     like settings). When false or undefined, hidden panels unregister (default behavior).
+ */
+type PanelProps = {
+  id: PanelId;
+  minSize: number;
+  maxSize?: number;
+  redistributionPreferredSize?: number;
+  /**
+   * Panels sharing a `shareGroup` count as ONE unit for automatic share
+   * allocation: an incoming member carves its share out of the group, a
+   * departing member returns it, and redistribution-preference deltas settle
+   * within the group before touching other panels.
+   */
+  shareGroup?: string;
+  /**
+   * Initial target size for the panel at registration time.
+   * - number: interpreted as a percentage (e.g., 25 = 25%)
+   * - PanelSizeSpec: explicit spec like { kind: 'percent', percent: 25 } or { kind: 'px', px: 300 }
+   *
+   * After initial layout, the panel resizes normally via drag handles.
+   */
+  target?: number | PanelSizeSpec;
+  collapsed?: () => boolean;
+  hidden?: () => boolean;
+  /** The index position for this panel in the layout order */
+  index?: number;
+  persistent?: boolean;
+};
+
+/**
+ * A resizable panel component that renders within a Resize.Zone.
+ *
+ * Automatically registers and unregisters itself with the parent zone,
+ * manages its own positioning and sizing based on the zone's layout calculations,
+ * and can be conditionally collapsed, hidden, or made invisible.
+ *
+ * @param props - Panel configuration and content properties
+ * @returns A positioned and sized panel container
+ *
+ * @example
+ * ```tsx
+ * <Resize.Panel
+ *   id="sidebar"
+ *   minSize={200}
+ *   maxSize={400}
+ *   collapsed={() => sidebarCollapsed()}
+ *   hidden={() => sidebarHidden()}
+ * >
+ *   <div>Sidebar content</div>
+ * </Resize.Panel>
+ *
+ * // Hidden panels are temporarily removed from layout but stay registered
+ * // Other panels will flow to fill the space, and the panel can be shown again
+ * ```
+ */
+function Panel(props: ParentProps<PanelProps>) {
+  const ctx = useContext(ResizeZoneContext);
+  if (!ctx) throw new Error('<Resize.Panel> must be inside <Resize.Zone>');
+
+  // Convert shorthand number (percentage) to PanelSizeSpec
+  const getTarget = (): PanelSizeSpec | undefined => {
+    if (props.target === undefined) return undefined;
+    if (typeof props.target === 'number') {
+      return { kind: 'percent', percent: props.target };
+    }
+    return props.target;
+  };
+
+  let registered = false;
+  createEffect(
+    on(ctx.size, (size) => {
+      if (size <= 0 || registered || props.collapsed?.() === false) return;
+
+      registered = true;
+
+      ctx.register(
+        {
+          id: props.id,
+          minSize: props.minSize,
+          maxSize: props.maxSize ?? Infinity,
+          redistributionPreferredSize: props.redistributionPreferredSize,
+          shareGroup: props.shareGroup,
+          target: getTarget(),
+        },
+        props.index
+      );
+    })
+  );
+
+  createEffect(() => {
+    ctx.update(props.id, {
+      minSize: props.minSize,
+      maxSize: props.maxSize ?? Infinity,
+      redistributionPreferredSize: props.redistributionPreferredSize,
+      shareGroup: props.shareGroup,
+    });
+  });
+
+  createEffect(() => {
+    const collapsed = props.collapsed?.();
+    if (collapsed === undefined) return;
+    if (collapsed) {
+      ctx.unregister(props.id);
+    } else {
+      ctx.register(
+        {
+          id: props.id,
+          minSize: props.minSize,
+          maxSize: props.maxSize ?? Infinity,
+          redistributionPreferredSize: props.redistributionPreferredSize,
+          shareGroup: props.shareGroup,
+          target: getTarget(),
+        },
+        props.index
+      );
+    }
+  });
+
+  createEffect(() => {
+    const hidden = props.hidden?.();
+    if (hidden === undefined) return;
+
+    if (props.persistent) {
+      if (hidden) {
+        ctx.hide(props.id);
+      } else {
+        ctx.show(props.id);
+      }
+    } else {
+      if (hidden) {
+        ctx.unregister(props.id);
+      } else {
+        ctx.register(
+          {
+            id: props.id,
+            minSize: props.minSize,
+            maxSize: props.maxSize ?? Infinity,
+            redistributionPreferredSize: props.redistributionPreferredSize,
+            shareGroup: props.shareGroup,
+            target: getTarget(),
+          },
+          props.index
+        );
+      }
+    }
+  });
+
+  onCleanup(() => ctx.unregister(props.id));
+
+  const offset = createMemo(ctx.offsetOf(props.id));
+  const size = createMemo(ctx.sizeOf(props.id));
+
+  const styles = createMemo(() => {
+    if (ctx.direction() === 'horizontal') {
+      return {
+        top: '0px',
+        bottom: '0px',
+        height: '100%',
+        left: offset() + 'px',
+        width: size() + 'px',
+      };
+    } else {
+      return {
+        left: '0px',
+        right: '0px',
+        width: '100%',
+        top: offset() + 'px',
+        height: size() + 'px',
+      };
+    }
+  });
+
+  return (
+    <div
+      classList={{
+        hidden: props.collapsed?.(),
+      }}
+      style={{
+        position: 'absolute',
+        ...styles(),
+      }}
+      data-resize-panel
+    >
+      {props.children}
+    </div>
+  );
+}
+
+/**
+ * Props for the Gutter component (internal).
+ *
+ * @property offset - The offset position of the gutter in pixels
+ * @property index - The index of the gutter in the layout
+ * @property nudge - Function to call when the gutter is moved, with index and movement amount
+ */
+type GutterProps = {
+  offset: number;
+  index: number;
+  nudge: (index: number, amt: number) => void;
+  root: () => HTMLDivElement | undefined;
+};
+
+function Gutter(props: GutterProps) {
+  const ctx = useContext(ResizeZoneContext)!;
+  const styles = createMemo(() => {
+    if (ctx.direction() === 'horizontal') {
+      return {
+        top: '0px',
+        bottom: '0px',
+        height: '100%',
+        left: props.offset + 'px',
+        width: ctx.gutterSize() + 'px',
+      };
+    } else {
+      return {
+        left: '0px',
+        right: '0px',
+        width: '100%',
+        top: props.offset + 'px',
+        height: ctx.gutterSize() + 'px',
+      };
+    }
+  });
+
+  let [ptrDown, setPtrDown] = createSignal(false);
+  let lastPointerPosition: number | undefined;
+
+  function getAxisZoom() {
+    const root = props.root();
+    if (!root) return 1;
+
+    const rect = root.getBoundingClientRect();
+    const visualSize =
+      ctx.direction() === 'horizontal' ? rect.width : rect.height;
+    const layoutSize =
+      ctx.direction() === 'horizontal' ? root.offsetWidth : root.offsetHeight;
+
+    if (visualSize <= 0 || layoutSize <= 0) return 1;
+    return visualSize / layoutSize;
+  }
+
+  function eventPosition(ev: PointerEvent) {
+    return ctx.direction() === 'horizontal' ? ev.clientX : ev.clientY;
+  }
+
+  function onPointerDown(ev: PointerEvent) {
+    if (ev.button !== 0) return;
+    (ev.currentTarget as HTMLElement).setPointerCapture?.(ev.pointerId);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp, { once: true });
+    window.addEventListener('pointercancel', onPointerUp, { once: true });
+    lastPointerPosition = eventPosition(ev);
+    setPtrDown(true);
+    ev.preventDefault();
+  }
+
+  function onPointerMove(ev: PointerEvent) {
+    if (!ptrDown) return;
+    const position = eventPosition(ev);
+    const prevPosition = lastPointerPosition ?? position;
+    lastPointerPosition = position;
+
+    const delta = (position - prevPosition) / getAxisZoom();
+    props.nudge(props.index, delta);
+  }
+
+  function onPointerUp() {
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', onPointerUp);
+    window.removeEventListener('pointercancel', onPointerUp);
+    lastPointerPosition = undefined;
+    setPtrDown(false);
+  }
+
+  function onKeyDown(ev: KeyboardEvent) {
+    if (ctx?.direction() === 'horizontal') {
+      if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') return;
+    } else {
+      if (ev.key !== 'ArrowUp' && ev.key !== 'ArrowDown') return;
+    }
+
+    ev.preventDefault();
+    ev.stopPropagation();
+    ev.stopImmediatePropagation();
+
+    const step = ev.shiftKey ? 100 : 20;
+    if (ctx?.direction() === 'horizontal') {
+      const sign = ev.key === 'ArrowLeft' ? -1 : 1;
+      props.nudge(props.index, sign * step);
+    } else {
+      const sign = ev.key === 'ArrowUp' ? -1 : 1;
+      props.nudge(props.index, sign * step);
+    }
+  }
+
+  return (
+    <div
+      class="group"
+      role="separator"
+      aria-orientation={
+        ctx.direction() === 'horizontal' ? 'vertical' : 'horizontal'
+      }
+      tabIndex={0}
+      aria-label={t('core.resize.handle', { index: props.index })}
+      style={{
+        position: 'absolute',
+        cursor: ctx.direction() === 'horizontal' ? 'col-resize' : 'row-resize',
+        ...styles(),
+      }}
+      onPointerDown={onPointerDown}
+      onKeyDown={onKeyDown}
+    >
+      <div
+        class={cn(
+          'bg-accent absolute opacity-0 group-focus:opacity-100 rounded-[1px]',
+          !ptrDown() && 'group-hover:opacity-50',
+          ptrDown() && 'opacity-100'
+        )}
+        style={{
+          left: ctx.direction() === 'horizontal' ? '50%' : '0',
+          top: ctx.direction() === 'vertical' ? '50%' : '0',
+          width: ctx.direction() === 'horizontal' ? '2px' : '100%',
+          height: ctx.direction() === 'vertical' ? '2px' : '100%',
+          transform:
+            ctx.direction() === 'horizontal'
+              ? 'translateX(-50%)'
+              : 'translateY(-50%)',
+        }}
+      ></div>
+    </div>
+  );
+}
+
+/**
+ * Resize component system for creating resizable panel layouts.
+ *
+ * Provides a Zone container that manages the overall layout and Panel
+ * components that represent individual resizable sections. Gutter and drag
+ * handles are managed automatically.
+ *
+ * @example
+ * ```tsx
+ * <Resize.Zone direction="horizontal" gutter={4}>
+ *   <Resize.Panel id="nav" minSize={200}>
+ *     <Navigation />
+ *   </Resize.Panel>
+ *   <Resize.Panel id="main" minSize={400}>
+ *     <MainContent />
+ *   </Resize.Panel>
+ * </Resize.Zone>
+ * ```
+ */
+export const Resize = { Zone, Panel };

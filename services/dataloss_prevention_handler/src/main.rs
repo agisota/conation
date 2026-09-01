@@ -1,0 +1,45 @@
+use anyhow::Context;
+use aws_lambda_events::s3::S3Event;
+use lambda_runtime::{
+    Error, LambdaEvent, run, service_fn,
+    tracing::{self},
+};
+use conation_entrypoint::MacroEntrypoint;
+use conation_env_var::env_vars;
+
+mod handler;
+
+env_vars! {
+    struct SnsTopicArn;
+}
+
+#[tokio::main]
+async fn main() -> Result<(), Error> {
+    MacroEntrypoint::default().init();
+
+    tracing::trace!("initiating lambda");
+
+    let aws_config = conation_aws_config::get_conation_aws_config().await;
+
+    let s3_client = s3_client::S3::new(conation_aws_config::s3_client().await);
+    tracing::trace!("initialized s3 client");
+
+    let sns_client = sns_client::SNS::new(aws_sdk_sns::Client::new(&aws_config));
+    tracing::trace!("initialized sns client");
+
+    let topic_arn = SnsTopicArn::new()
+        .context("SNS_TOPIC_ARN is required")?
+        .to_string();
+
+    let shared_s3_client = &s3_client;
+    let shared_sns_client = &sns_client;
+
+    let func = service_fn(move |event: LambdaEvent<S3Event>| {
+        let s3_client = shared_s3_client;
+        let sns_client = shared_sns_client;
+        let topic_arn = topic_arn.clone();
+        async move { handler::handler(s3_client, sns_client, &topic_arn, event).await }
+    });
+
+    run(func).await
+}

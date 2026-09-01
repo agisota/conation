@@ -1,0 +1,67 @@
+import { isNativeMobilePlatform } from '@core/mobile/isNativeMobilePlatform';
+import { hasLoginCookie } from '@core/util/cookies';
+import { partialMatchKey, type QueryKey } from '@tanstack/query-core';
+import { authKeys } from './auth/keys';
+import { channelKeys } from './channel/keys';
+import { createPersistenceKey, type PersistScope } from './persistence';
+import { createPerQueryIDBStore } from './persistence/per-query-idb';
+import { soupKeys } from './soup/keys';
+
+const persistedChannelQueryPrefixes = [
+  channelKeys.mentions._def,
+  channelKeys.activity.queryKey,
+  channelKeys.listChannels.queryKey,
+] as const;
+
+export function shouldPersistChannelQuery(queryKey: QueryKey): boolean {
+  return persistedChannelQueryPrefixes.some((prefix) =>
+    partialMatchKey(queryKey, prefix)
+  );
+}
+
+export function createQueryPersistenceScopes(
+  buster: string
+): readonly PersistScope[] {
+  return [
+    {
+      store: createPerQueryIDBStore({
+        dbName: createPersistenceKey('channels', 1),
+      }),
+      maxAge: { value: 7, unit: 'd' },
+      buster,
+      shouldPersist: shouldPersistChannelQuery,
+    },
+    {
+      store: createPerQueryIDBStore({
+        dbName: createPersistenceKey('email-threads', 1),
+      }),
+      maxAge: { value: 7, unit: 'd' },
+      buster,
+      shouldPersist: (queryKey) =>
+        partialMatchKey(queryKey, ['email', 'threadMessages']),
+    },
+    ...(isNativeMobilePlatform()
+      ? [
+          {
+            store: createPerQueryIDBStore({
+              dbName: createPersistenceKey('soup-list-queries', 1),
+            }),
+            maxAge: { value: 7, unit: 'd' },
+            buster,
+            shouldPersist: (queryKey: QueryKey) =>
+              partialMatchKey(queryKey, soupKeys.astItems._def),
+            shouldRestore: hasLoginCookie,
+          } satisfies PersistScope,
+          {
+            store: createPerQueryIDBStore({
+              dbName: createPersistenceKey('user-info', 1),
+            }),
+            buster,
+            shouldPersist: (queryKey: QueryKey) =>
+              partialMatchKey(queryKey, authKeys.userInfo.queryKey),
+            shouldRestore: hasLoginCookie,
+          } satisfies PersistScope,
+        ]
+      : []),
+  ];
+}

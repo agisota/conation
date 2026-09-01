@@ -1,0 +1,10 @@
+[package]
+edition = "2024"
+name = "database_env_vars"
+publish = false
+version = "0.1.0"
+
+[dependencies]
+tracing = { workspace = true }
+conation_env_var = { path = "../conation_env_var" }
+workspace-hack = { version = "0.1", path = "../workspace-hack" }

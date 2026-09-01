@@ -1,0 +1,26 @@
+[package]
+edition = "2024"
+name = "model_notifications"
+publish = false
+version = "0.1.0"
+
+[dependencies]
+anyhow = { workspace = true }
+chrono = { workspace = true }
+chrono-tz = { workspace = true }
+conation_user_id = { path = "../conation_user_id" }
+mention_utils = { path = "../mention_utils" }
+model-entity = { path = "../model-entity" }
+models_pagination = { path = "../models_pagination" }
+notification = { path = "../notification" }
+paste = { workspace = true }
+invite_email = { path = "../invite_email" }
+rootcause = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sqlx = { workspace = true }
+strum = { workspace = true, features = ["derive"] }
+tracing = { workspace = true }
+utoipa = { workspace = true, features = ["chrono"] }
+uuid = { workspace = true }
+workspace-hack = { version = "0.1", path = "../workspace-hack" }

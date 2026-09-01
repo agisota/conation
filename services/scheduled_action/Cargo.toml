@@ -1,0 +1,71 @@
+[package]
+name = "scheduled_action"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[[bin]]
+name = "service"
+path = "src/bins/service.rs"
+
+[[bin]]
+name = "scheduled_action_openapi"
+path = "src/bins/openapi.rs"
+
+[[bin]]
+name = "scheduled_action_doppler_config"
+path = "src/doppler_config.rs"
+
+[features]
+default = []
+local_auth = ["conation_authorization/local_auth"]
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+conation_env_var = { path = "../../crates/conation_env_var" }
+conation_queues = { path = "../../crates/conation_queues" }
+conation_config = { path = "../../crates/conation_config" }
+conation_authorization = { path = "../../crates/conation_authorization" }
+database_env_vars = { path = "../../crates/database_env_vars" }
+doppler-config = { workspace = true }
+sqlx = { workspace = true }
+conation_user_id = { path = "../../crates/conation_user_id"}
+cron = { workspace = true }
+anyhow = { workspace = true }
+conation_uuid = { path = "../../crates/conation_uuid"}
+chrono = { workspace = true}
+chrono-tz = { workspace = true }
+agent = { path = "../../crates/agent" }
+ai_usage = { path = "../../crates/ai_usage" }
+tokio = { workspace = true, features = ["signal"] }
+tokio-util = { workspace = true, features = ["rt"] }
+futures = { workspace = true }
+tracing = { workspace = true }
+axum = { workspace = true }
+ai_tools = { path = "../../crates/ai_tools" }
+ai_toolset = { path = "../../crates/ai_toolset" }
+aws-sdk-sqs = { workspace = true }
+chat = { path = "../../crates/chat" }
+connection_gateway_client = { path = "../../crates/connection_gateway_client" }
+share_permission_db_utils = { path = "../../crates/share_permission_db_utils" }
+models_permissions = { path = "../../crates/models_permissions" }
+conation_db_client = { path = "../../crates/conation_db_client" }
+memory = { path = "../../crates/memory" }
+model = { path = "../../crates/model" }
+model-entity = { path = "../../crates/model-entity" }
+model_notifications = { path = "../../crates/model_notifications" }
+notification = { path = "../../crates/notification" }
+utoipa = { workspace = true, features = ["axum_extras", "chrono"] }
+utoipa-swagger-ui = { workspace = true }
+
+conation_aws_config = { path = "../../crates/conation_aws_config" }
+conation_cors = { path = "../../crates/conation_cors" }
+conation_auth = { path = "../../crates/conation_auth" }
+conation_entrypoint = { path = "../../crates/conation_entrypoint" }
+conation_env = { path = "../../crates/conation_env" }
+secretsmanager_client = { path = "../../crates/secretsmanager_client" }
+aws-sdk-secretsmanager = { workspace = true }
+
+conation_service_urls = { path = "../../crates/conation_service_urls" }
+workspace-hack = { version = "0.1", path = "../../crates/workspace-hack" }

@@ -1,0 +1,303 @@
+import { mergeRegister } from '@lexical/utils';
+import {
+  COMMAND_PRIORITY_NORMAL,
+  type CommandListener,
+  type CommandListenerPriority,
+  createCommand,
+  DELETE_CHARACTER_COMMAND,
+  DELETE_LINE_COMMAND,
+  DELETE_WORD_COMMAND,
+  type LexicalCommand,
+  type LexicalEditor,
+  type UpdateListener,
+} from 'lexical';
+import { type Accessor, createEffect, on, onCleanup } from 'solid-js';
+
+export function mapRegisterDelete(
+  editor: LexicalEditor,
+  deleteFn: (payload: boolean) => boolean,
+  priority: CommandListenerPriority
+) {
+  const deleteCommands = [
+    DELETE_CHARACTER_COMMAND,
+    DELETE_WORD_COMMAND,
+    DELETE_LINE_COMMAND,
+  ];
+  return mergeRegister(
+    ...deleteCommands.map((command) => {
+      return editor.registerCommand(command, deleteFn, priority);
+    })
+  );
+}
+
+type WidthChangeCallback = (width: number) => void;
+type EditorMutationCallback = () => void;
+
+const observersByEditor = new WeakMap<
+  LexicalEditor,
+  {
+    observer: ResizeObserver;
+    callbacks: Set<WidthChangeCallback>;
+  }
+>();
+
+const mutationObserversByEditor = new WeakMap<
+  LexicalEditor,
+  {
+    observer: MutationObserver;
+    callbacks: Set<EditorMutationCallback>;
+    cleanupRootListener: () => void;
+  }
+>();
+
+/**
+ * Register a callback that runs when the width of the editor root changes. If a
+ * a selector is provided, then the closest matching parent will be observed
+ * instead. If the selector fails then the editor root will still be observed.
+ * @param editor
+ * @param onWidthChange
+ * @param selector
+ * @returns
+ */
+export function registerEditorWidthObserver(
+  editor: LexicalEditor,
+  onWidthChange: WidthChangeCallback,
+  selector?: string
+) {
+  function getObserver() {
+    if (!observersByEditor.has(editor)) {
+      const callbacks = new Set<WidthChangeCallback>([onWidthChange]);
+
+      const observer = new ResizeObserver((entries) => {
+        const w = entries[0].contentBoxSize[0].inlineSize;
+        callbacks.forEach((callback) => callback(w));
+      });
+
+      observersByEditor.set(editor, { observer, callbacks });
+      return { observer, callbacks };
+    }
+
+    const editorObserver = observersByEditor.get(editor)!;
+    editorObserver.callbacks.add(onWidthChange);
+    return editorObserver;
+  }
+
+  const { observer } = getObserver();
+
+  return mergeRegister(
+    editor.registerRootListener((root) => {
+      observer.disconnect();
+      if (root) {
+        let element = root;
+        if (selector) {
+          element = root.closest(selector) ?? root;
+        }
+        const currentWidth = element.getBoundingClientRect().width;
+        onWidthChange(currentWidth);
+        observer.observe(element);
+      }
+    }),
+    () => {
+      const editorEntry = observersByEditor.get(editor);
+      if (editorEntry) {
+        editorEntry.callbacks.delete(onWidthChange);
+      }
+      if (editorEntry && editorEntry.callbacks.size === 0) {
+        editorEntry.observer.disconnect();
+        observersByEditor.delete(editor);
+      }
+    }
+  );
+}
+
+/**
+ * Register a callback that runs when the editor root mutates. Observing is
+ * shared per editor so multiple floating controls do not each attach their own
+ * MutationObserver to the same root.
+ */
+export function registerEditorMutationObserver(
+  editor: LexicalEditor,
+  onMutation: EditorMutationCallback
+) {
+  let editorObserver = mutationObserversByEditor.get(editor);
+
+  if (!editorObserver) {
+    const callbacks = new Set<EditorMutationCallback>();
+    const observer = new MutationObserver(() => {
+      callbacks.forEach((callback) => callback());
+    });
+
+    const cleanupRootListener = editor.registerRootListener(
+      (root, prevRoot) => {
+        if (prevRoot) {
+          observer.disconnect();
+        }
+        if (root) {
+          observer.observe(root, {
+            attributes: true,
+            childList: true,
+            characterData: true,
+            subtree: true,
+          });
+        }
+      }
+    );
+
+    editorObserver = { observer, callbacks, cleanupRootListener };
+    mutationObserversByEditor.set(editor, editorObserver);
+  }
+
+  editorObserver.callbacks.add(onMutation);
+
+  return () => {
+    const editorObserver = mutationObserversByEditor.get(editor);
+    if (!editorObserver) return;
+
+    editorObserver.callbacks.delete(onMutation);
+
+    if (editorObserver.callbacks.size === 0) {
+      editorObserver.observer.disconnect();
+      editorObserver.cleanupRootListener();
+      mutationObserversByEditor.delete(editor);
+    }
+  };
+}
+
+/**
+ * Take a signal that might be undefined or a lexical editor and register some
+ * plugin-style cleanup closure on it. As long as this is called in the
+ * component tree, then the cleanups will be managed.
+ * @param editor A signal that might be undefined or a lexical editor.
+ * @param registerFunc Some function that registers one or more lexical listeners and
+ *     returns a cleanup function.
+ */
+export function lazyRegister(
+  editor: Accessor<LexicalEditor | undefined>,
+  registerFunc: (editor: LexicalEditor) => () => void
+) {
+  let cleanup: () => void = () => {};
+  createEffect(
+    on(editor, (editor) => {
+      cleanup();
+      if (editor) {
+        cleanup = registerFunc(editor);
+      } else {
+        cleanup = () => {};
+      }
+    })
+  );
+  onCleanup(() => cleanup());
+  return () => cleanup();
+}
+
+/**
+ * Register one or more Lexical listeners and automatically clean them up with
+ * the calling component's life cycle.
+ * @param fns The cleanup functions to register.
+ */
+export function autoRegister(...fns: Array<() => void>) {
+  let cleanup = () => {
+    for (const fn of fns) fn();
+  };
+  onCleanup(cleanup);
+}
+
+/**
+ * Reactively register a Lexical command for the lifetime of the calling
+ * component. The `handler` accessor is tracked inside a `createEffect`:
+ *
+ * - When it returns `undefined` no command is registered.
+ * - When it returns a function the command is registered.
+ * - If the accessor is reactive and its value changes, the previous
+ *   registration is cleaned up and a new one is created automatically.
+ * - On component unmount the registration is always cleaned up.
+ *
+ * @example
+ * // Register only when an optional prop is provided:
+ * registerCommandEffect(
+ *   editor,
+ *   KEY_TAB_COMMAND,
+ *   () => props.onTab ? (e) => props.onTab!(e) : undefined,
+ *   COMMAND_PRIORITY_CRITICAL,
+ * );
+ */
+export function registerCommandEffect<T>(
+  editor: LexicalEditor,
+  command: LexicalCommand<T>,
+  handler: Accessor<CommandListener<T> | undefined>,
+  priority: CommandListenerPriority
+): void {
+  let cleanup: () => void = () => {};
+  createEffect(() => {
+    cleanup();
+    const fn = handler();
+    cleanup = fn ? editor.registerCommand(command, fn, priority) : () => {};
+  });
+  onCleanup(() => cleanup());
+}
+
+const LAYOUT_SHFIT_COMMAND = createCommand<void>('LAYOUT_SHIFT_COMMAND');
+
+/**
+ * Register a callback to run whenever a non-mutating layout shift occurs – like when
+ * a decorator changes size without writing to the lexical state.
+ * @param editor
+ * @param listener
+ * @returns
+ */
+export function registerInternalLayoutShiftListener(
+  editor: LexicalEditor,
+  listener: () => void
+) {
+  return editor.registerCommand(
+    LAYOUT_SHFIT_COMMAND,
+    () => {
+      listener();
+      return false;
+    },
+    COMMAND_PRIORITY_NORMAL
+  );
+}
+
+/**
+ * Manually dispatch the internal layout shift event and trigger any listeners.
+ * @param editor
+ */
+export function dispatchInternalLayoutShift(editor: LexicalEditor) {
+  editor.dispatchCommand(LAYOUT_SHFIT_COMMAND, undefined);
+}
+
+/**
+ * Wrapper on editor.registerUpdateListener that only calls the listener if there are dirty nodes.
+ *     i.e. ignores selection change only updates.
+ */
+export function registerMutationListener(
+  editor: LexicalEditor,
+  fn: UpdateListener
+) {
+  return editor.registerUpdateListener((payload) => {
+    if (payload.mutatedNodes !== null && payload.mutatedNodes.size > 0) {
+      fn(payload);
+    }
+  });
+}
+
+/**
+ * Wrapper on registerRootListener for nicer ergo on adding a single event
+ * listener to the root div of a lexical editor.
+ */
+export function registerRootEventListener<K extends keyof HTMLElementEventMap>(
+  editor: LexicalEditor,
+  type: K,
+  listener: (event: HTMLElementEventMap[K]) => void,
+  options?: boolean | AddEventListenerOptions
+) {
+  return editor.registerRootListener((root, prevRoot) => {
+    if (prevRoot) {
+      prevRoot.removeEventListener(type, listener, options);
+    }
+    if (root) {
+      root.addEventListener(type, listener, options);
+    }
+  });
+}

@@ -1,0 +1,209 @@
+import { t } from '@app/lib/i18n';
+import { useSplitLayout } from '@components/app/split-layout/layout';
+import { useFocusLock } from '@core/util/createControlledOpenSignal';
+import { ThrownResultError } from '@core/util/result';
+import BuildingsIcon from '@phosphor/buildings.svg';
+import XIcon from '@phosphor/x.svg';
+import { useCreateCompanyMutation } from '@queries/crm/companies';
+import { Button, Dialog, Panel } from '@ui';
+import { createMemo, createSignal, Show } from 'solid-js';
+
+const [createCompanyModalOpen, setCreateCompanyModalOpen] = createSignal(false);
+const createCompanyModalFocusLock = useFocusLock('create-company');
+
+export function openCreateCompanyModal() {
+  createCompanyModalFocusLock.acquire();
+  setCreateCompanyModalOpen(true);
+}
+
+// Light client-side check for a bare domain like "acme.com"; the server
+// enforces the real rules (no scheme/path/@, not a generic email provider).
+const DOMAIN_PATTERN = /^[a-z0-9][a-z0-9.-]*\.[a-z]{2,}$/i;
+
+type CreateCompanyErrorKey =
+  | 'companies.company.errors.conflict'
+  | 'companies.company.errors.crmDisabled'
+  | 'companies.company.errors.failed'
+  | 'companies.company.errors.nameRequired'
+  | 'companies.company.errors.invalidDomain';
+
+function createErrorKey(cause: unknown): CreateCompanyErrorKey {
+  if (cause instanceof ThrownResultError) {
+    if (cause.errors.some((e) => e.code === 'CONFLICT')) {
+      return 'companies.company.errors.conflict';
+    }
+    if (cause.errors.some((e) => e.code === 'FORBIDDEN')) {
+      return 'companies.company.errors.crmDisabled';
+    }
+  }
+  return 'companies.company.errors.failed';
+}
+
+export function CreateCompanyModal() {
+  const { replaceOrInsertSplit } = useSplitLayout();
+  const createCompanyMutation = useCreateCompanyMutation();
+  const [name, setName] = createSignal('');
+  const [domain, setDomain] = createSignal('');
+  const [error, setError] = createSignal<CreateCompanyErrorKey>();
+  const companyName = createMemo(() => name().trim());
+  const companyDomain = createMemo(() => domain().trim().toLowerCase());
+  const canSubmit = createMemo(
+    () =>
+      companyName().length > 0 &&
+      companyDomain().length > 0 &&
+      !createCompanyMutation.isPending
+  );
+
+  function reset() {
+    setName('');
+    setDomain('');
+    setError(undefined);
+  }
+
+  function resetAndClose() {
+    createCompanyModalFocusLock.release();
+    reset();
+    setCreateCompanyModalOpen(false);
+  }
+
+  function close() {
+    if (createCompanyMutation.isPending) return;
+    resetAndClose();
+  }
+
+  async function handleSubmit(event: SubmitEvent) {
+    event.preventDefault();
+    if (!companyName()) {
+      setError('companies.company.errors.nameRequired');
+      return;
+    }
+    if (!DOMAIN_PATTERN.test(companyDomain())) {
+      setError('companies.company.errors.invalidDomain');
+      return;
+    }
+
+    setError(undefined);
+    try {
+      const { id } = await createCompanyMutation.mutateAsync({
+        name: companyName(),
+        domain: companyDomain(),
+      });
+      resetAndClose();
+      replaceOrInsertSplit({ type: 'company', id });
+    } catch (cause) {
+      console.error('Failed to create company', cause);
+      setError(createErrorKey(cause));
+    }
+  }
+
+  return (
+    <Dialog
+      open={createCompanyModalOpen()}
+      onOpenChange={(open) => !open && close()}
+      class="w-120"
+    >
+      <Panel depth={2} class="rounded-xl *:max-h-[75vh]">
+        <Panel.Body>
+          <form class="flex flex-col gap-4 p-4" onSubmit={handleSubmit}>
+            <div class="flex items-center gap-1">
+              <div class="flex-1" />
+              <Dialog.CloseButton
+                as={Button}
+                size="icon-sm"
+                label={t('common.close')}
+                tabIndex={-1}
+                disabled={createCompanyMutation.isPending}
+              >
+                <XIcon />
+              </Dialog.CloseButton>
+            </div>
+
+            <div class="flex flex-col gap-4">
+              <div class="flex items-center gap-2 px-2">
+                <Dialog.Title class="sr-only">
+                  {t('companies.actions.createCompany')}
+                </Dialog.Title>
+                <label for="new-company-name" class="sr-only">
+                  {t('companies.fields.name')}
+                </label>
+                <BuildingsIcon
+                  aria-hidden="true"
+                  class="size-5 shrink-0 text-ink-placeholder"
+                />
+                <input
+                  id="new-company-name"
+                  type="text"
+                  value={name()}
+                  onInput={(event) => {
+                    setName(event.currentTarget.value);
+                    setError(undefined);
+                  }}
+                  placeholder={t('companies.fields.companyName')}
+                  autocomplete="off"
+                  data-1p-ignore
+                  aria-invalid={
+                    error() === 'companies.company.errors.nameRequired'
+                  }
+                  class="h-10 w-full border-none bg-transparent px-0 text-xl font-medium text-ink outline-none placeholder:text-ink-placeholder focus:ring-0"
+                />
+              </div>
+
+              <div class="flex flex-col gap-2 px-2">
+                <label
+                  for="new-company-domain"
+                  class="text-xs font-medium text-ink-muted"
+                >
+                  {t('companies.fields.domain')}
+                </label>
+                <input
+                  id="new-company-domain"
+                  type="text"
+                  value={domain()}
+                  onInput={(event) => {
+                    setDomain(event.currentTarget.value);
+                    setError(undefined);
+                  }}
+                  placeholder="acme.com"
+                  autocomplete="off"
+                  spellcheck={false}
+                  data-1p-ignore
+                  aria-invalid={
+                    error() === 'companies.company.errors.invalidDomain'
+                  }
+                  class="h-9 w-full rounded-lg border border-edge-muted bg-transparent px-3 text-sm text-ink outline-none placeholder:text-ink-placeholder focus:border-edge"
+                />
+                <span class="text-xs text-ink-extra-muted">
+                  {t('companies.company.domainHelp')}
+                </span>
+              </div>
+            </div>
+
+            <Show when={error()}>
+              {(messageKey) => (
+                <div class="border-y border-edge-muted p-2">
+                  <div class="px-3 py-2 text-sm text-failure-ink" role="alert">
+                    {t(messageKey())}
+                  </div>
+                </div>
+              )}
+            </Show>
+
+            <div class="flex shrink-0 items-end justify-end gap-2">
+              <Button
+                type="submit"
+                variant={canSubmit() ? 'accent' : 'ghost'}
+                depth={3}
+                class="rounded-lg border-0"
+                disabled={!canSubmit()}
+              >
+                {createCompanyMutation.isPending
+                  ? t('companies.company.creating')
+                  : t('companies.actions.createCompany')}
+              </Button>
+            </div>
+          </form>
+        </Panel.Body>
+      </Panel>
+    </Dialog>
+  );
+}

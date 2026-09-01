@@ -1,0 +1,38 @@
+import { t } from '@app/lib/i18n';
+import { toast } from '@core/component/Toast/Toast';
+import type { EntityData } from '@entity';
+import { createBulkCopyDssEntityMutation } from '@entity';
+import type { SoupState } from '../create-soup-state';
+
+export const makeCopyAction = () => {
+  const bulkCopyMutation = createBulkCopyDssEntityMutation();
+
+  const canExecute = (entity: EntityData): boolean => {
+    return (
+      entity.type !== 'channel' &&
+      entity.type !== 'email' &&
+      entity.type !== 'channel_message' &&
+      entity.type !== 'channel_thread' &&
+      entity.type !== 'foreign' &&
+      entity.type !== 'automation' &&
+      // There is no duplicate endpoint for reminders; the bulk copy mutation
+      // only knows how to clone documents.
+      entity.type !== 'reminder'
+    );
+  };
+
+  const execute = async (entities: EntityData[]) => {
+    await bulkCopyMutation.mutateAsync({
+      entities,
+      name: (name) => name,
+    });
+    toast.success(t('soup.toast.copied', { count: entities.length }));
+  };
+
+  const executeWithSoup = async (entities: EntityData[], soup: SoupState) => {
+    await execute(entities);
+    soup.selection.clear();
+  };
+
+  return { canExecute, execute, executeWithSoup };
+};

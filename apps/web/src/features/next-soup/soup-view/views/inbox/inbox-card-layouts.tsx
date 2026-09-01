@@ -1,0 +1,1748 @@
+import { ListPropertyValue } from '@app/features/next-soup/soup-view/views/tasks/list-property-value';
+import { formatDateTime, formatRelativeTime, t } from '@app/lib/i18n';
+import { BotIcon } from '@channel/Message/BotIcon';
+import { MACRO_AI_BOT_ID, MACRO_AI_NAME } from '@channel/macroAi';
+import { EntityIcon, getEntityIconType } from '@core/component/EntityIcon';
+import { ItemPreview, useItemPreviewData } from '@core/component/ItemPreview';
+import { StaticMarkdown } from '@core/component/LexicalMarkdown/component/core/StaticMarkdown';
+import {
+  createTheme,
+  twoLineClampMarkdownTheme,
+  unifiedListMarkdownTheme,
+} from '@core/component/LexicalMarkdown/theme';
+import { UserIcon } from '@core/component/UserIcon';
+import { isMacroAgentId } from '@core/constant/macroAgent';
+import { useUserId } from '@core/context/user';
+import { getDisplayName, tryMacroId } from '@core/user';
+import {
+  DraftBadge,
+  type EntityData,
+  isGithubPrEntity,
+  type Notification,
+  unreadFilterFn,
+  type WithNotification,
+} from '@entity';
+import MacroLogo from '@icon/macro-logo.svg';
+import GithubIcon from '@icon/mcp-github.svg';
+import FilesIcon from '@phosphor/files.svg';
+import GitMergeIcon from '@phosphor/git-merge.svg';
+import GitPullRequestIcon from '@phosphor/git-pull-request.svg';
+import ArrowBendUpLeftIcon from '@phosphor-icons/core/regular/arrow-bend-up-left.svg?component-solid';
+import AtIcon from '@phosphor-icons/core/regular/at.svg?component-solid';
+import BellSimpleIcon from '@phosphor-icons/core/regular/bell-simple.svg?component-solid';
+import CalendarBlankIcon from '@phosphor-icons/core/regular/calendar-blank.svg?component-solid';
+import ChatCircleIcon from '@phosphor-icons/core/regular/chat-circle.svg?component-solid';
+import ChatTextIcon from '@phosphor-icons/core/regular/chat-text.svg?component-solid';
+import PaperclipIcon from '@phosphor-icons/core/regular/paperclip.svg?component-solid';
+import PhoneIcon from '@phosphor-icons/core/regular/phone.svg?component-solid';
+import UserPlusIcon from '@phosphor-icons/core/regular/user-plus.svg?component-solid';
+import {
+  PropertiesProvider,
+  type PropertySaveHandler,
+} from '@property/context/PropertiesContext';
+import type { PropertyApiValues, Property as PropertyT } from '@property/types';
+import { senderFromStorageId } from '@queries/channel/message-sender';
+import type { ItemEntity } from '@queries/preview';
+import { useBulkSaveEntityPropertiesMutation } from '@queries/properties/entity';
+import { EntityType } from '@service-storage/generated/schemas';
+import { Avatar, cn, Tooltip } from '@ui';
+import { differenceInCalendarDays, parseISO } from 'date-fns';
+import { createMemo, For, type JSX, Match, Show, Switch } from 'solid-js';
+import { Dynamic } from 'solid-js/web';
+import { match, P } from 'ts-pattern';
+import { InboxCard } from './InboxCard';
+import {
+  formatCompactRelativeTimestamp,
+  getGithubTitle,
+  getInboxTaskProperties,
+  getNotificationTag,
+  itemContent,
+} from './utils';
+
+export interface InboxCardLayoutProps {
+  /** The already-derived item to render. */
+  item: InboxCardDisplayItem;
+  selected?: boolean;
+  highlighted?: boolean;
+  onClick?: (event: MouseEvent) => void;
+}
+
+/** Glyph size inside the card's avatar bubble — grows with the circle on
+ * mobile, matching the narrow rows' icon factor (see InboxCard.Icon). */
+const AVATAR_GLYPH_CLASS = 'size-4 mobile:size-6';
+
+type NotificationTag = ReturnType<typeof getNotificationTag>;
+
+/** The notification driving the row's action/sender (most recent first). */
+const getFirstNotification = (item: WithNotification<EntityData>) =>
+  item.notifications?.()?.[0];
+
+const getGithubSender = (entity: EntityData, notification?: Notification) => {
+  const meta = notification?.notification_metadata;
+  if (
+    meta &&
+    meta.tag !== 'github_pr_status_changed' &&
+    meta.tag !== 'github_review_requested' &&
+    meta.tag !== 'github_pr_comment' &&
+    meta.tag !== 'github_pr_mention' &&
+    meta.tag !== 'github_pr_review' &&
+    meta.tag !== 'github_pr_check_run'
+  )
+    return;
+
+  const content = meta?.content;
+
+  const pr = isGithubPrEntity(entity) ? entity.metadata : undefined;
+
+  const login = content?.senderGithubLogin ?? pr?.authorLogin ?? undefined;
+  let imageUrl: string | undefined;
+  if (content?.senderGithubLogin) {
+    imageUrl = `https://github.com/${encodeURIComponent(content.senderGithubLogin)}.png?size=80`;
+  } else if (pr?.authorId) {
+    imageUrl = `https://avatars.githubusercontent.com/u/${pr.authorId}?s=80&v=4`;
+  } else if (login) {
+    imageUrl = `https://github.com/${encodeURIComponent(login)}.png?size=80`;
+  }
+
+  return { id: login, fallbackName: login, imageUrl };
+};
+
+const getNotificationSenderFallbackName = (
+  notification: Notification
+): string | undefined => {
+  const content = notification.notification_metadata.content as
+    | { sender?: string; senderGithubLogin?: string }
+    | undefined;
+
+  switch (notification.notification_metadata.tag) {
+    case 'new_email':
+      return content?.sender ?? undefined;
+    case 'ai_response':
+      return MACRO_AI_NAME;
+    case 'channel_message_send':
+      return content?.sender ?? notification.sender_id ?? undefined;
+    case 'github_pr_status_changed':
+    case 'github_review_requested':
+    case 'github_pr_comment':
+    case 'github_pr_mention':
+    case 'github_pr_review':
+      return content?.senderGithubLogin ?? notification.sender_id ?? undefined;
+    default:
+      return undefined;
+  }
+};
+
+const getTimestamp = (entity: EntityData, notification?: Notification) => {
+  // Reminders sort on when they fire, so the row has to show that field too.
+  // The notification's time drifts from it for anything recurring, retried, or
+  // dispatched late, and the list then reads as unsorted.
+  if (entity.type === 'reminder') {
+    return entity.nextRunAt != null ? String(entity.nextRunAt) : undefined;
+  }
+
+  const messageTime =
+    entity.type === 'channel'
+      ? entity.latestRootMessage?.createdAt
+      : entity.type === 'channel_message' || entity.type === 'channel_thread'
+        ? (entity.createdAt ?? entity.updatedAt)
+        : undefined;
+  const raw =
+    messageTime ??
+    notification?.created_at ??
+    notification?.updated_at ??
+    entity.updatedAt ??
+    entity.createdAt;
+  return raw != null ? String(raw) : undefined;
+};
+
+const initials = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('') || '?';
+
+type SenderIconProps = {
+  class?: string;
+  senderId?: string;
+};
+
+export function SenderIcon(props: SenderIconProps) {
+  // Bot senders render their own avatar; Macro AI keeps its dedicated logo.
+  const botSender = () => {
+    const sender = props.senderId
+      ? senderFromStorageId(props.senderId)
+      : undefined;
+    if (sender?.type !== 'bot' || isMacroAgentId(sender.id)) return;
+    return sender;
+  };
+
+  return (
+    <div class={cn('shrink-0 size-full', props.class)}>
+      <Show
+        when={botSender()}
+        fallback={
+          <UserIcon id={props.senderId ?? ''} class="size-full" size="fill" />
+        }
+      >
+        {(bot) => (
+          <BotIcon name={bot().name} avatarUrl={bot().avatar_url} size="fill" />
+        )}
+      </Show>
+    </div>
+  );
+}
+
+function InboxAvatar(props: {
+  senderId?: string;
+  fallbackName?: string;
+  imageUrl?: string;
+}) {
+  const parsedSender = () =>
+    props.senderId ? senderFromStorageId(props.senderId) : undefined;
+  const isMacroAgent = () => {
+    const sender = parsedSender();
+    return sender?.type === 'bot' && isMacroAgentId(sender.id);
+  };
+
+  return (
+    <Switch
+      fallback={
+        <Avatar.Fallback class="text-base font-semibold">
+          {initials(props.fallbackName ?? props.senderId ?? '')}
+        </Avatar.Fallback>
+      }
+    >
+      <Match when={props.imageUrl}>
+        {(url) => <img src={url()} alt="" class="size-full object-cover" />}
+      </Match>
+      <Match when={isMacroAgent()}>
+        <MacroLogo class="m-auto size-1/2 text-accent" />
+      </Match>
+      <Match when={props.senderId}>
+        {(senderId) => <SenderIcon senderId={senderId()} />}
+      </Match>
+    </Switch>
+  );
+}
+
+const tagBubbleIcon = (tag: NotificationTag) =>
+  match(tag)
+    .with('new_email', () => () => (
+      <EntityIcon
+        class={AVATAR_GLYPH_CLASS}
+        targetType="email"
+        theme="monochrome"
+        size="fill"
+      />
+    ))
+    .with('task_assigned', () => () => (
+      <EntityIcon class={AVATAR_GLYPH_CLASS} targetType="task" size="fill" />
+    ))
+    .with('ai_response', () => () => (
+      <EntityIcon class={AVATAR_GLYPH_CLASS} targetType="chat" size="fill" />
+    ))
+    .with('channel_mention', 'mentioned_in_document_comment', () => () => (
+      <AtIcon class={AVATAR_GLYPH_CLASS} />
+    ))
+    .with('document_mention', () => () => (
+      <FilesIcon class={AVATAR_GLYPH_CLASS} />
+    ))
+    .with(
+      'channel_message_reply',
+      'replied_to_document_comment_thread',
+      () => () => <ArrowBendUpLeftIcon class={AVATAR_GLYPH_CLASS} />
+    )
+    .with('commented_on_document', () => () => (
+      <ChatCircleIcon class={AVATAR_GLYPH_CLASS} />
+    ))
+    .with('channel_message_send', () => () => (
+      <ChatTextIcon class={AVATAR_GLYPH_CLASS} />
+    ))
+    .with('channel_invite', 'invite_to_team', () => () => (
+      <UserPlusIcon class={AVATAR_GLYPH_CLASS} />
+    ))
+    .with('call_started', () => () => <PhoneIcon class={AVATAR_GLYPH_CLASS} />)
+    .with('reminder', () => () => <BellSimpleIcon class={AVATAR_GLYPH_CLASS} />)
+    .with('calendar_event_reminder', () => () => (
+      <CalendarBlankIcon class={AVATAR_GLYPH_CLASS} />
+    ))
+    .with(
+      'github_pr_status_changed',
+      'github_pr_check_run',
+      'github_review_requested',
+      'github_pr_comment',
+      'github_pr_mention',
+      'github_pr_review',
+      () => () => <GithubIcon class={AVATAR_GLYPH_CLASS} />
+    )
+    .with(
+      P.when((value) => value?.startsWith('github_') ?? false),
+      () => () => <GithubIcon class={AVATAR_GLYPH_CLASS} />
+    )
+    .otherwise(() => undefined);
+
+/** Avatar action bubble derived from the notification tag (mention, reply, …). */
+function ActionBubble(props: { tag: NotificationTag }) {
+  const renderIcon = () => tagBubbleIcon(props.tag);
+
+  return (
+    <Show when={renderIcon()}>
+      {(renderIcon) => <Dynamic component={renderIcon()} />}
+    </Show>
+  );
+}
+
+function GithubStatusIcon(props: { status?: string }) {
+  const statusClass = () => {
+    if (props.status === 'merged') return 'text-note';
+    if (props.status === 'closed') return 'text-failure';
+    if (props.status === 'open') return 'text-success';
+    return undefined;
+  };
+
+  return (
+    <span class={cn('grid place-items-center', AVATAR_GLYPH_CLASS)}>
+      <Show
+        when={props.status === 'merged'}
+        fallback={
+          <Show
+            when={props.status === 'open' || props.status === 'closed'}
+            fallback={<GithubIcon class={AVATAR_GLYPH_CLASS} />}
+          >
+            <GitPullRequestIcon class={cn(AVATAR_GLYPH_CLASS, statusClass())} />
+          </Show>
+        }
+      >
+        <GitMergeIcon class={cn(AVATAR_GLYPH_CLASS, 'text-note')} />
+      </Show>
+    </span>
+  );
+}
+
+function PropertyPills(props: { entityId: string; properties?: PropertyT[] }) {
+  const properties = createMemo(() => props.properties ?? []);
+
+  const saveMutation = useBulkSaveEntityPropertiesMutation();
+
+  const saveOne = (property: PropertyT, apiValues: PropertyApiValues) =>
+    saveMutation.mutateAsync({
+      properties: [
+        {
+          entityId: props.entityId,
+          entityType: EntityType.TASK,
+          property,
+          apiValues,
+        },
+      ],
+    });
+
+  const saveHandler: PropertySaveHandler = {
+    saveProperty: (property, value) => saveOne(property, value),
+    saveDate: (property, date) =>
+      saveOne(property, { valueType: 'DATE', value: date }),
+  };
+
+  return (
+    <Show when={properties().length}>
+      <PropertiesProvider
+        entityType={EntityType.TASK}
+        canEdit={true}
+        properties={properties}
+        onRefresh={() => {}}
+        onPropertyAdded={() => {}}
+        onPropertyDeleted={() => {}}
+        saveHandler={saveHandler}
+      >
+        <div class="flex flex-wrap items-center gap-1 text-xs">
+          <For each={properties()}>
+            {(property) => <ListPropertyValue property={property} />}
+          </For>
+        </div>
+      </PropertiesProvider>
+    </Show>
+  );
+}
+
+const formatDetailedTimestamp = (timestamp: string | undefined) => {
+  if (!timestamp) return undefined;
+
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return timestamp;
+
+  return formatDateTime(date, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+};
+
+const formatLocalizedCallDuration = (milliseconds: number): string => {
+  const totalSeconds = Math.floor(milliseconds / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return t('soup.inbox.duration.hoursMinutes', { hours, minutes });
+  }
+  if (minutes > 0) {
+    return t('soup.inbox.duration.minutesSeconds', { minutes, seconds });
+  }
+  return t('soup.inbox.duration.seconds', { seconds });
+};
+
+const formatLocalizedCalendarTime = (occurrence: {
+  startsAt?: string | null;
+  endsAt?: string | null;
+  startDate?: string | null;
+}): string | undefined => {
+  if (!occurrence.startsAt) {
+    return occurrence.startDate ? t('soup.inbox.calendar.allDay') : undefined;
+  }
+
+  const startDate = new Date(occurrence.startsAt);
+  if (Number.isNaN(startDate.getTime())) return undefined;
+  const start = formatDateTime(startDate, {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+
+  if (!occurrence.endsAt) return start;
+  const endDate = new Date(occurrence.endsAt);
+  if (Number.isNaN(endDate.getTime())) return start;
+  return `${start} – ${formatDateTime(endDate, {
+    hour: 'numeric',
+    minute: '2-digit',
+  })}`;
+};
+
+function InboxTimestamp(props: { timestamp?: string; class?: string }) {
+  const short = () =>
+    props.timestamp
+      ? formatCompactRelativeTimestamp(props.timestamp)
+      : undefined;
+  const detailed = () => formatDetailedTimestamp(props.timestamp);
+
+  return (
+    <Show when={short()}>
+      {(value) => (
+        <Tooltip class={props.class} label={detailed() ?? value()}>
+          <span class="whitespace-nowrap text-xs text-ink-extra-muted">
+            {value()}
+          </span>
+        </Tooltip>
+      )}
+    </Show>
+  );
+}
+
+const createSenderDisplayName = (
+  senderId: () => string | undefined,
+  fallbackName?: () => string | undefined
+) => {
+  const macroId = () => {
+    const id = senderId();
+    return id ? tryMacroId(id) : undefined;
+  };
+
+  const displayName = () => {
+    const id = macroId();
+    return id ? getDisplayName(id) : undefined;
+  };
+
+  const botName = () => {
+    const id = senderId();
+    if (!id) return undefined;
+
+    const parsed = senderFromStorageId(id);
+    if (parsed.type !== 'bot') return undefined;
+
+    if (parsed.name) return parsed.name;
+    return parsed.id === MACRO_AI_BOT_ID ? MACRO_AI_NAME : t('soup.inbox.bot');
+  };
+
+  return () => {
+    return botName() || displayName() || fallbackName?.() || senderId();
+  };
+};
+
+const buildActionLabel = (args: {
+  sender?: string;
+  action: string;
+  location?: string;
+}): string =>
+  [args.sender, args.action, args.location].filter(Boolean).join(' ');
+
+const channelLocation = (entity: EntityData): string | undefined => {
+  if (
+    entity.type !== 'channel' &&
+    entity.type !== 'channel_message' &&
+    entity.type !== 'channel_thread'
+  ) {
+    return undefined;
+  }
+  if (entity.channelType === 'direct_message') return undefined;
+  return entity.name.startsWith('#') ? entity.name.slice(1) : entity.name;
+};
+
+const entityLocation = (entity: EntityData): string | undefined => {
+  if (
+    (entity.type === 'channel' ||
+      entity.type === 'channel_message' ||
+      entity.type === 'channel_thread') &&
+    entity.channelType === 'direct_message'
+  ) {
+    return undefined;
+  }
+  return entity.name;
+};
+
+const githubLocation = (entity: EntityData): string | undefined => {
+  if (
+    entity.type !== 'foreign' ||
+    entity.foreignSource !== 'github_pull_request'
+  ) {
+    return entity.name;
+  }
+  return `${entity.metadata.owner}/${entity.metadata.repo}#${entity.metadata.number}`;
+};
+
+const githubAction = (notification?: Notification): string => {
+  const metadata = notification?.notification_metadata;
+
+  return match(metadata)
+    .with(
+      { tag: 'github_pr_status_changed', content: { status: 'merged' } },
+      () => t('soup.inbox.github.merged')
+    )
+    .with(
+      { tag: 'github_pr_status_changed', content: { status: 'closed' } },
+      () => t('soup.inbox.github.closed')
+    )
+    .with(
+      { tag: 'github_pr_status_changed', content: { status: 'open' } },
+      () => t('soup.inbox.github.opened')
+    )
+    .with({ tag: 'github_review_requested' }, () =>
+      t('soup.inbox.github.requestedReview')
+    )
+    .with({ tag: 'github_pr_comment' }, () => t('soup.inbox.github.commented'))
+    .with({ tag: 'github_pr_mention' }, () =>
+      t('soup.inbox.github.mentionedYou')
+    )
+    .with({ tag: 'github_pr_review' }, () => t('soup.inbox.github.reviewed'))
+    .otherwise(() => t('soup.inbox.github.updated'));
+};
+
+/**
+ * The shared card scaffold: the avatar bubble (`icon` fills the circle), the
+ * title row with the timestamp at its right, and a body cell where `children`
+ * stack as lines. The grid exists only to position icon | text column |
+ * timestamp — body lines never need grid rows of their own, so every card
+ * shares this one shape and callers never touch row arithmetic. Lines are
+ * composed from `InboxCard.Content` / `CardMarkdownLine` at the call site;
+ * the body cell provides `text-sm` and `min-w-0`.
+ * (`ChannelThreadCardLayout` is the one bespoke card that stays on raw
+ * `InboxCard.Root`: its title sits inside the body row.)
+ */
+function BaseCard(props: {
+  item: InboxCardDisplayItem;
+  selected?: boolean;
+  highlighted?: boolean;
+  onClick?: (event: MouseEvent) => void;
+  /** Contents of the avatar bubble (glyph or avatar); the circle is ours. */
+  icon: JSX.Element;
+  /**
+   * The title's text run — a string or a text-producing component. Always
+   * rendered inside the truncating wrapper; anything that isn't text (a
+   * badge, a block icon) belongs in `titleLeading`.
+   */
+  title: JSX.Element;
+  /** Adornment before the title text (e.g. draft badge, block-type icon). */
+  titleLeading?: JSX.Element;
+  children?: JSX.Element;
+}) {
+  return (
+    <InboxCard.Root
+      dimmed={!props.item.unread}
+      selected={props.selected}
+      highlighted={props.highlighted}
+      onClick={props.onClick}
+    >
+      <div class="col-start-1 row-start-1 row-span-2">
+        <InboxCard.Icon fallback={props.icon} />
+      </div>
+      <InboxCard.Body class="contents">
+        <InboxCard.Header class="col-start-2 row-start-1 self-center">
+          <InboxCard.Title class="flex items-center gap-1">
+            {props.titleLeading}
+            {/* A flex row can't ellipsize bare text, so the text run always
+                renders inside this truncating item. */}
+            <span class="truncate">{props.title}</span>
+          </InboxCard.Title>
+        </InboxCard.Header>
+
+        <div class="col-start-2 row-start-2 flex min-w-0 flex-col text-sm">
+          {props.children}
+        </div>
+      </InboxCard.Body>
+      <InboxTimestamp
+        timestamp={props.item.timestamp}
+        class="col-start-3 row-start-1 self-start justify-self-end"
+      />
+    </InboxCard.Root>
+  );
+}
+
+/**
+ * A single truncating body line of markdown, rendered only when the text has
+ * content — the standard middle/bottom line of a BaseCard.
+ */
+function CardMarkdownLine(props: { text?: string; class?: string }) {
+  return (
+    <Show when={props.text?.trim()}>
+      {(value) => (
+        <InboxCard.Content class={cn('truncate', props.class)}>
+          <StaticMarkdown
+            markdown={value()}
+            singleLine
+            theme={unifiedListMarkdownTheme}
+          />
+        </InboxCard.Content>
+      )}
+    </Show>
+  );
+}
+
+const inlineWrappingMarkdownTheme = createTheme(
+  {
+    root: 'md inline pr-[2px] cursor-default',
+    paragraph: 'md-p text-[1em] inline',
+  },
+  twoLineClampMarkdownTheme
+);
+
+/**
+ * The two-line clamped markdown body (the channel-style message preview),
+ * reserving its height so short previews keep the row rhythm.
+ */
+function CardClampedMarkdown(props: {
+  text?: string;
+  /** Inline run rendered ahead of the text (e.g. a sender label or
+   * attachment paperclip); wraps and clamps as part of the same lines. */
+  prefix?: JSX.Element;
+}) {
+  return (
+    <InboxCard.Content class="line-clamp-2 min-h-[2lh]">
+      {props.prefix}
+      <Show when={props.text?.trim()}>
+        {(value) => (
+          <StaticMarkdown
+            markdown={value()}
+            singleLine
+            theme={inlineWrappingMarkdownTheme}
+          />
+        )}
+      </Show>
+    </InboxCard.Content>
+  );
+}
+
+/** Fallback shown in place of message text when a message is just attachments. */
+const attachmentSummary = (count: number): string | undefined =>
+  count <= 0 ? undefined : t('soup.inbox.sentAttachments', { count });
+
+export function ChannelCardLayout(props: InboxCardLayoutProps) {
+  const entity = createMemo(() => props.item.entity);
+
+  const messageSenderId = createMemo(() => {
+    const value = props.item.entity;
+
+    if (value.type !== 'channel') return;
+
+    const latestSender = value.latestRootMessage?.senderId;
+
+    return latestSender;
+  });
+
+  const messageSenderName = createSenderDisplayName(messageSenderId);
+
+  const currentUserId = useUserId();
+
+  const isDM = createMemo(() => {
+    const value = entity();
+    return value.type === 'channel' && value.channelType === 'direct_message';
+  });
+
+  const senderAvatarId = createMemo(() => {
+    if (!isDM()) {
+      return messageSenderId();
+    }
+
+    const value = props.item.entity;
+
+    if (value.type !== 'channel') return;
+
+    const participant = value.participantIds?.filter(
+      (id) => id !== currentUserId()
+    )[0];
+
+    if (!participant) return;
+
+    return participant;
+  });
+
+  const senderLabel = () => {
+    if (messageSenderId() === currentUserId()) return t('soup.people.you');
+    return isDM() ? undefined : messageSenderName();
+  };
+
+  const text = createMemo(() => {
+    const value = entity();
+    const location = channelLocation(value);
+    const tag = getNotificationTag(props.item.notification);
+
+    const sender = isDM() ? value.name || messageSenderName() : '';
+    let action = '';
+
+    if (tag === 'document_mention' && isDM()) {
+      action = t('soup.inbox.channel.sharedDocument');
+    }
+
+    const content = itemContent(value, props.item.notification);
+    const latestMessage =
+      value.type === 'channel' ? value.latestRootMessage : undefined;
+
+    const contentIsAttachmentSummary = !content?.trim() && !!latestMessage;
+
+    return {
+      title: buildActionLabel({
+        sender,
+        action,
+        location,
+      }),
+      content: contentIsAttachmentSummary ? attachmentSummary(1) : content,
+      contentIsAttachmentSummary,
+    };
+  });
+
+  return (
+    <BaseCard
+      item={props.item}
+      selected={props.selected}
+      highlighted={props.highlighted}
+      onClick={props.onClick}
+      icon={
+        <Show
+          when={!isDM()}
+          fallback={<InboxAvatar senderId={senderAvatarId()} />}
+        >
+          <EntityIcon
+            class={AVATAR_GLYPH_CLASS}
+            targetType={getEntityIconType(entity())}
+            size="fill"
+            theme="monochrome"
+          />
+        </Show>
+      }
+      title={text().title}
+    >
+      <CardClampedMarkdown
+        text={text().content}
+        prefix={
+          <>
+            <Show when={senderLabel()}>
+              <span class="whitespace-nowrap mr-1">{senderLabel()}:</span>
+            </Show>
+            <Show when={text().contentIsAttachmentSummary}>
+              <PaperclipIcon class="mr-0.5 inline size-3.5 align-[-0.125em]" />
+            </Show>
+          </>
+        }
+      />
+    </BaseCard>
+  );
+}
+
+export function ChannelMessageCardLayout(props: InboxCardLayoutProps) {
+  const senderId = () => {
+    const value = props.item.entity;
+    return value.type === 'channel_message' ? value.senderId : undefined;
+  };
+
+  const senderName = createSenderDisplayName(senderId);
+
+  const text = createMemo(() => {
+    const location = channelLocation(props.item.entity);
+    let action = t('soup.inbox.channel.sentMessage');
+    if (location) {
+      action = t('soup.inbox.channel.sentMessageIn');
+    }
+
+    return {
+      title: buildActionLabel({ sender: senderName(), action, location }),
+      content: itemContent(props.item.entity, props.item.notification),
+    };
+  });
+
+  // Two-line clamped message body (like the channel card) so the row matches
+  // its three-line neighbors.
+  return (
+    <BaseCard
+      item={props.item}
+      selected={props.selected}
+      highlighted={props.highlighted}
+      onClick={props.onClick}
+      icon={<ActionBubble tag={getNotificationTag(props.item.notification)} />}
+      title={text().title}
+    >
+      <CardClampedMarkdown text={text().content} />
+    </BaseCard>
+  );
+}
+
+export function ChannelThreadCardLayout(props: InboxCardLayoutProps) {
+  const isLatestNotificationReply = createMemo(() => {
+    const notification = props.item.notification;
+    const notificationMetadata = notification?.notification_metadata;
+
+    return notificationMetadata?.tag === 'channel_message_reply';
+  });
+
+  const senderId = createMemo(() => {
+    const value = props.item.entity;
+
+    if (isLatestNotificationReply()) {
+      return props.item.notification?.sender_id ?? undefined;
+    }
+
+    return value.type === 'channel_thread' ? value.senderId : undefined;
+  });
+
+  const isDM = createMemo(() => {
+    const notification = props.item.notification;
+    const meta = notification?.notification_metadata;
+    return match(meta)
+      .with(
+        P.union(
+          { tag: 'channel_mention' },
+          { tag: 'channel_message_reply' },
+          { tag: 'channel_message_send' }
+        ),
+        (m) => m.content.channelType === 'directMessage'
+      )
+      .otherwise(() => false);
+  });
+
+  const senderName = createSenderDisplayName(senderId);
+  const currentUserId = useUserId();
+  const senderLabel = () =>
+    senderId() === currentUserId() ? t('soup.people.you') : senderName();
+
+  // The root/original thread message sender (who a reply is replying to).
+  const originalSenderId = () =>
+    props.item.entity.type === 'channel_thread'
+      ? props.item.entity.senderId
+      : undefined;
+  const originalSenderName = createSenderDisplayName(originalSenderId);
+  const originalSenderLabel = () =>
+    originalSenderId() === currentUserId()
+      ? t('soup.people.you')
+      : originalSenderName();
+
+  const text = createMemo(() => {
+    if (props.item.entity.type !== 'channel_thread') {
+      return {
+        title: '',
+        content: '',
+        contentIsAttachmentSummary: false,
+        contextIsAttachmentSummary: false,
+      };
+    }
+
+    const metadata = props.item.notification?.notification_metadata;
+    const location = channelLocation(props.item.entity);
+
+    const rootAttachments = props.item.entity.attachments;
+
+    let content: string | undefined;
+    let context: string | undefined;
+    let contentIsAttachmentSummary = false;
+    let contextIsAttachmentSummary = false;
+    if (metadata?.tag === 'channel_message_reply') {
+      // Current message is the reply; the quoted context is the original (root).
+      content = metadata.content.messageContent;
+      if (!content.trim()) {
+        const reply = props.item.entity.thread.preview.find(
+          (candidate) => candidate.id === metadata.content.messageId
+        );
+        // Empty channel messages must contain at least one attachment. The
+        // preview gives us the exact count when that reply is included.
+        content = attachmentSummary(reply?.attachments.length || 1);
+        contentIsAttachmentSummary = true;
+      }
+      const original = props.item.entity.content.trim();
+      context = original.length
+        ? original
+        : attachmentSummary(rootAttachments.length);
+      contextIsAttachmentSummary = !original.length && !!context;
+    } else {
+      // Root message: fall back to an attachment summary when it has no text.
+      content = itemContent(props.item.entity, props.item.notification);
+      if (!content?.trim()) {
+        const summary = attachmentSummary(rootAttachments.length);
+        content = summary ?? content;
+        contentIsAttachmentSummary = !!summary;
+      }
+    }
+
+    return {
+      title: location,
+      context,
+      content,
+      contentIsAttachmentSummary,
+      contextIsAttachmentSummary,
+    };
+  });
+
+  // The one bespoke card kept on raw InboxCard.Root: unlike BaseCard's shape,
+  // its title sits inside the body row (icon and timestamp align to it), with
+  // the quoted-original block stacked beneath.
+  return (
+    <InboxCard.Root
+      dimmed={!props.item.unread}
+      selected={props.selected}
+      highlighted={props.highlighted}
+      onClick={props.onClick}
+    >
+      <div class="col-start-1 row-start-2">
+        <InboxCard.Icon
+          fallback={
+            <ActionBubble tag={getNotificationTag(props.item.notification)} />
+          }
+        ></InboxCard.Icon>
+      </div>
+      <InboxCard.Body class="contents">
+        <div class={cn('col-start-2 row-start-2')}>
+          <InboxCard.Header class="self-center">
+            <InboxCard.Title class="flex items-center gap-1">
+              <span class="truncate">{text().title}</span>
+            </InboxCard.Title>
+          </InboxCard.Header>
+
+          {/* For replies, show the original message being replied to first,
+              with a left bar marking it as the quoted original. */}
+          <div class="min-h-[2lh]">
+            <Show when={isLatestNotificationReply() && text().context?.trim()}>
+              {(context) => (
+                <div class="flex min-w-0 items-center gap-1 border-l-2 border-edge-muted pl-2">
+                  <span class="flex gap-1 items-center text-sm whitespace-nowrap text-ink-extra-muted/80 group-data-unread/inbox-item:text-ink-muted">
+                    {originalSenderLabel()}:
+                  </span>
+                  <InboxCard.Content class="truncate text-sm text-ink/60">
+                    <Show when={text().contextIsAttachmentSummary}>
+                      <PaperclipIcon class="mr-0.5 inline size-3.5 align-[-0.125em]" />
+                    </Show>
+                    <StaticMarkdown
+                      markdown={context()}
+                      singleLine
+                      theme={unifiedListMarkdownTheme}
+                    />
+                  </InboxCard.Content>
+                </div>
+              )}
+            </Show>
+
+            <InboxCard.Content
+              class={cn(
+                'text-sm text-ink/60',
+                isLatestNotificationReply() ? 'truncate' : 'line-clamp-2'
+              )}
+            >
+              <Show when={!isDM()}>
+                <span class="mr-1 whitespace-nowrap">{senderLabel()}:</span>
+              </Show>
+              <Show when={text().content?.trim()}>
+                {(value) => (
+                  <>
+                    <Show when={text().contentIsAttachmentSummary}>
+                      <PaperclipIcon class="mr-0.5 inline size-3.5 align-[-0.125em]" />
+                    </Show>
+                    <StaticMarkdown
+                      markdown={value()}
+                      singleLine
+                      theme={
+                        isLatestNotificationReply()
+                          ? unifiedListMarkdownTheme
+                          : inlineWrappingMarkdownTheme
+                      }
+                    />
+                  </>
+                )}
+              </Show>
+            </InboxCard.Content>
+          </div>
+        </div>
+      </InboxCard.Body>
+      <InboxTimestamp
+        timestamp={props.item.timestamp}
+        class="col-start-3 row-start-2 self-start justify-self-end"
+      />
+    </InboxCard.Root>
+  );
+}
+
+export function DocumentCardLayout(props: InboxCardLayoutProps) {
+  const senderId = () => props.item.notification?.sender_id ?? undefined;
+
+  const senderFallbackName = () =>
+    props.item.notification
+      ? getNotificationSenderFallbackName(props.item.notification)
+      : undefined;
+
+  const senderName = createSenderDisplayName(senderId, senderFallbackName);
+
+  // Three lines tall like the other inbox layouts: the document name (with
+  // its block-type icon) leads, the sender's action announces itself on the
+  // second line ("Peter commented"), and the comment text fills the third.
+  const text = createMemo(() => {
+    const metadata = props.item.notification?.notification_metadata;
+    const content = itemContent(props.item.entity, props.item.notification);
+
+    if (metadata?.tag === 'document_mention') {
+      return {
+        action: buildActionLabel({
+          sender: senderName(),
+          action: t('soup.inbox.document.shared'),
+        }),
+        content: metadata.content.messageContent,
+      };
+    }
+
+    if (metadata?.tag === 'commented_on_document') {
+      return {
+        action: buildActionLabel({
+          sender: senderName(),
+          action: t('soup.inbox.document.commented'),
+        }),
+        content,
+      };
+    }
+
+    if (metadata?.tag === 'mentioned_in_document_comment') {
+      return {
+        action: buildActionLabel({
+          sender: senderName(),
+          action: t('soup.inbox.document.mentionedYou'),
+        }),
+        content,
+      };
+    }
+
+    if (metadata?.tag === 'replied_to_document_comment_thread') {
+      return {
+        action: buildActionLabel({
+          sender: senderName(),
+          action: t('soup.inbox.document.replied'),
+        }),
+        content,
+      };
+    }
+
+    return { action: undefined, content };
+  });
+
+  return (
+    <BaseCard
+      item={props.item}
+      selected={props.selected}
+      highlighted={props.highlighted}
+      onClick={props.onClick}
+      icon={
+        <Show
+          when={props.item.notification}
+          fallback={
+            <EntityIcon
+              class={AVATAR_GLYPH_CLASS}
+              targetType={getEntityIconType(props.item.entity)}
+              size="fill"
+            />
+          }
+        >
+          <ActionBubble tag={getNotificationTag(props.item.notification)} />
+        </Show>
+      }
+      titleLeading={
+        <EntityIcon
+          targetType={getEntityIconType(props.item.entity)}
+          size="xs"
+          class="shrink-0"
+        />
+      }
+      title={props.item.entity.name}
+    >
+      <Show when={text().action}>
+        {(value) => (
+          <InboxCard.Content class="truncate">{value()}</InboxCard.Content>
+        )}
+      </Show>
+
+      <CardMarkdownLine text={text().content} />
+    </BaseCard>
+  );
+}
+
+export function TaskCardLayout(props: InboxCardLayoutProps) {
+  const senderId = () =>
+    props.item.notification?.sender_id ?? props.item.entity.ownerId;
+
+  const senderFallbackName = () =>
+    props.item.notification
+      ? getNotificationSenderFallbackName(props.item.notification)
+      : undefined;
+
+  const senderName = createSenderDisplayName(senderId, senderFallbackName);
+
+  const text = createMemo(() => {
+    const content = itemContent(props.item.entity, props.item.notification);
+
+    if (getNotificationTag(props.item.notification) === 'task_assigned') {
+      return {
+        title: buildActionLabel({
+          sender: senderName(),
+          action: t('soup.inbox.task.assignedYou'),
+        }),
+        content: content || props.item.entity.name,
+      };
+    }
+
+    return { title: props.item.entity.name, content };
+  });
+
+  return (
+    <BaseCard
+      item={props.item}
+      selected={props.selected}
+      highlighted={props.highlighted}
+      onClick={props.onClick}
+      icon={
+        <Show
+          when={props.item.notification}
+          fallback={
+            <EntityIcon
+              class={AVATAR_GLYPH_CLASS}
+              size="fill"
+              targetType={getEntityIconType(props.item.entity)}
+            />
+          }
+        >
+          <ActionBubble tag={getNotificationTag(props.item.notification)} />
+        </Show>
+      }
+      title={text().title}
+    >
+      <CardMarkdownLine text={text().content} />
+      <PropertyPills
+        entityId={props.item.entity.id}
+        properties={getInboxTaskProperties(props.item.entity)}
+      />
+    </BaseCard>
+  );
+}
+
+export function AiCardLayout(props: InboxCardLayoutProps) {
+  const text = createMemo(() => {
+    const content = itemContent(props.item.entity, props.item.notification);
+    const location = entityLocation(props.item.entity);
+
+    if (getNotificationTag(props.item.notification) !== 'ai_response') {
+      return { title: props.item.entity.name, content };
+    }
+
+    return {
+      title: location || props.item.entity.name,
+      content,
+    };
+  });
+
+  // Three lines tall like the other inbox layouts: the title row plus a
+  // two-line clamp of the response summary with its height reserved.
+  return (
+    <BaseCard
+      item={props.item}
+      selected={props.selected}
+      highlighted={props.highlighted}
+      onClick={props.onClick}
+      icon={
+        <Show
+          when={props.item.notification}
+          fallback={
+            <EntityIcon
+              class={AVATAR_GLYPH_CLASS}
+              targetType={getEntityIconType(props.item.entity)}
+              size="fill"
+            />
+          }
+        >
+          <ActionBubble tag={getNotificationTag(props.item.notification)} />
+        </Show>
+      }
+      title={text().title}
+    >
+      <CardClampedMarkdown text={text().content} />
+    </BaseCard>
+  );
+}
+
+export function EmailCardLayout(props: InboxCardLayoutProps) {
+  const senderId = () => props.item.notification?.sender_id ?? undefined;
+
+  const senderFallbackName = () => {
+    const entity = props.item.entity;
+    if (entity.type !== 'email') return undefined;
+
+    if (entity.senderName) return entity.senderName;
+
+    return props.item.notification
+      ? (getNotificationSenderFallbackName(props.item.notification) ??
+          entity.senderEmail)
+      : entity.senderEmail;
+  };
+
+  const senderName = createSenderDisplayName(senderId, senderFallbackName);
+
+  const text = createMemo(() => {
+    const entity = props.item.entity;
+
+    return {
+      sender: senderName(),
+      subject: entity.name,
+      content:
+        entity.type === 'email'
+          ? (itemContent(entity, props.item.notification) ?? entity.snippet)
+          : undefined,
+      isDraft: entity.type === 'email' && entity.isDraft,
+    };
+  });
+
+  return (
+    <BaseCard
+      item={props.item}
+      selected={props.selected}
+      highlighted={props.highlighted}
+      onClick={props.onClick}
+      icon={<ActionBubble tag="new_email" />}
+      titleLeading={
+        <Show when={text().isDraft}>
+          <DraftBadge />
+        </Show>
+      }
+      title={text().sender}
+    >
+      <Show when={text().subject?.trim()}>
+        {(subject) => (
+          <InboxCard.Content class="truncate">{subject()}</InboxCard.Content>
+        )}
+      </Show>
+
+      <CardMarkdownLine text={text().content} />
+    </BaseCard>
+  );
+}
+
+export function GithubCardLayout(props: InboxCardLayoutProps) {
+  const sender = createMemo(() =>
+    getGithubSender(props.item.entity, props.item.notification)
+  );
+
+  const senderId = () => sender()?.id;
+  const senderFallbackName = () => sender()?.fallbackName;
+
+  const senderName = createSenderDisplayName(senderId, senderFallbackName);
+
+  const status = createMemo(() => {
+    const metadata = props.item.notification?.notification_metadata;
+    if (
+      metadata?.tag === 'github_pr_status_changed' &&
+      typeof metadata.content.status === 'string'
+    ) {
+      return metadata.content.status;
+    }
+
+    if (!isGithubPrEntity(props.item.entity)) return;
+
+    return props.item.entity.metadata.status;
+  });
+
+  const text = createMemo(() => {
+    const entity = props.item.entity;
+
+    if (isGithubPrEntity(entity)) {
+      const hasGithubNotification = getNotificationTag(
+        props.item.notification
+      )?.startsWith('github_');
+
+      let sender = entity.metadata.authorLogin;
+      let action = '';
+      if (hasGithubNotification) {
+        sender = senderName() ?? entity.metadata.authorLogin;
+        action = githubAction(props.item.notification);
+      }
+
+      return {
+        title: buildActionLabel({
+          sender,
+          action,
+        }),
+        content:
+          getGithubTitle(entity, props.item.notification) ||
+          entity.metadata.name,
+        location: githubLocation(entity),
+      };
+    }
+
+    return {
+      title: buildActionLabel({
+        sender: senderName(),
+        action: githubAction(props.item.notification),
+      }),
+      content: getGithubTitle(entity, props.item.notification) || entity.name,
+      location: githubLocation(entity),
+    };
+  });
+
+  return (
+    <BaseCard
+      item={props.item}
+      selected={props.selected}
+      highlighted={props.highlighted}
+      onClick={props.onClick}
+      icon={
+        <Show
+          when={
+            !props.item.notification ||
+            getNotificationTag(props.item.notification) ===
+              'github_pr_status_changed'
+          }
+          fallback={
+            <ActionBubble
+              tag={
+                getNotificationTag(props.item.notification) ??
+                'github_pr_status_changed'
+              }
+            />
+          }
+        >
+          <GithubStatusIcon status={status()} />
+        </Show>
+      }
+      title={text().title}
+    >
+      <CardMarkdownLine text={text().content} class="text-ink/60" />
+
+      <Show when={text().location}>
+        {(location) => (
+          <InboxCard.Content class="truncate text-ink/40">
+            {location()}
+          </InboxCard.Content>
+        )}
+      </Show>
+    </BaseCard>
+  );
+}
+
+function CallParticipantName(props: { id: string }) {
+  const displayName = createSenderDisplayName(() => props.id);
+  return <>{displayName()}</>;
+}
+
+export function CallCardLayout(props: InboxCardLayoutProps) {
+  const senderId = () => props.item.notification?.sender_id ?? undefined;
+
+  const senderName = createSenderDisplayName(senderId, () =>
+    props.item.notification
+      ? getNotificationSenderFallbackName(props.item.notification)
+      : undefined
+  );
+
+  const text = createMemo(() => {
+    const entity = props.item.entity;
+    const location = entityLocation(entity);
+
+    if (getNotificationTag(props.item.notification) === 'call_started') {
+      return {
+        title: buildActionLabel({
+          sender: senderName(),
+          action: location
+            ? t('soup.inbox.call.startedIn')
+            : t('soup.inbox.call.started'),
+          location,
+        }),
+      };
+    }
+
+    if (entity.type === 'call' && entity.status === 'MISSED') {
+      return {
+        title: entity.name
+          ? t('soup.inbox.call.missedIn', { location: entity.name })
+          : t('soup.inbox.call.missed'),
+      };
+    }
+
+    if (entity.type === 'call' && entity.status === 'UNATTENDED') {
+      return {
+        title: entity.name
+          ? t('soup.inbox.call.unattendedIn', { location: entity.name })
+          : t('soup.inbox.call.unattended'),
+      };
+    }
+
+    return {
+      title: entity.name
+        ? t('soup.inbox.call.in', { location: entity.name })
+        : t('soup.call.action'),
+    };
+  });
+
+  const participantIds = () =>
+    props.item.entity.type === 'call' ? props.item.entity.participantIds : [];
+
+  const duration = () => {
+    const entity = props.item.entity;
+    if (entity.type !== 'call') {
+      return getNotificationTag(props.item.notification) === 'call_started'
+        ? t('soup.inbox.call.inProgress')
+        : undefined;
+    }
+    if (entity.durationMs != null) {
+      return formatLocalizedCallDuration(entity.durationMs);
+    }
+    return entity.isActive
+      ? t('soup.inbox.call.inProgress')
+      : t('soup.inbox.call.noDuration');
+  };
+
+  return (
+    <BaseCard
+      item={props.item}
+      selected={props.selected}
+      highlighted={props.highlighted}
+      onClick={props.onClick}
+      icon={
+        <EntityIcon
+          class={AVATAR_GLYPH_CLASS}
+          targetType="call"
+          size="fill"
+          theme="monochrome"
+        />
+      }
+      title={text().title}
+    >
+      <Show when={participantIds().length}>
+        <InboxCard.Content class="truncate">
+          <For each={participantIds()}>
+            {(participantId, index) => (
+              <>
+                {index() > 0 ? ', ' : ''}
+                <CallParticipantName id={participantId} />
+              </>
+            )}
+          </For>
+        </InboxCard.Content>
+      </Show>
+
+      <Show when={duration()}>
+        {(value) => (
+          <InboxCard.Content class="truncate">{value()}</InboxCard.Content>
+        )}
+      </Show>
+    </BaseCard>
+  );
+}
+
+/**
+ * A calendar event row exists because its alarm fired: the event title leads,
+ * the occurrence's date sits on the second line, and its local time on the
+ * third — three lines tall, matching the other inbox layouts.
+ */
+export function CalendarEventCardLayout(props: InboxCardLayoutProps) {
+  const occurrence = () => {
+    const meta = props.item.notification?.notification_metadata;
+    if (meta?.tag === 'calendar_event_reminder') {
+      return meta.content;
+    }
+    const entity = props.item.entity;
+    if (entity.type !== 'calendar_event' || !entity.time) return undefined;
+    return entity.time.kind === 'timed'
+      ? { startsAt: entity.time.startsAt, endsAt: entity.time.endsAt }
+      : { startDate: entity.time.startDate };
+  };
+
+  const datePreview = () => {
+    const value = occurrence();
+    // parseISO reads a date-only string (all-day events) as local midnight,
+    // where `new Date` would shift it a day for viewers west of UTC.
+    const raw = value?.startsAt ?? value?.startDate;
+    if (!raw) return undefined;
+    const date = parseISO(raw);
+    if (Number.isNaN(date.getTime())) return undefined;
+    const dayOffset = differenceInCalendarDays(date, new Date());
+    return Math.abs(dayOffset) <= 1
+      ? formatRelativeTime(dayOffset, 'day', { numeric: 'auto' })
+      : formatDateTime(date, { dateStyle: 'medium' });
+  };
+
+  const timePreview = () => {
+    const value = occurrence();
+    return value ? formatLocalizedCalendarTime(value) : undefined;
+  };
+
+  return (
+    <BaseCard
+      item={props.item}
+      selected={props.selected}
+      highlighted={props.highlighted}
+      onClick={props.onClick}
+      icon={<CalendarBlankIcon class={AVATAR_GLYPH_CLASS} />}
+      title={props.item.entity.name || t('soup.inbox.noTitle')}
+    >
+      <Show when={datePreview()}>
+        {(value) => (
+          <InboxCard.Content class="truncate">{value()}</InboxCard.Content>
+        )}
+      </Show>
+
+      <Show when={timePreview()}>
+        {(value) => (
+          <InboxCard.Content class="truncate">{value()}</InboxCard.Content>
+        )}
+      </Show>
+    </BaseCard>
+  );
+}
+
+/**
+ * A reminder is self-set, so there is no sender and no action to describe.
+ *
+ * With something to point at, the description leads and the chip below says
+ * what it is about. Standalone, there is nothing to link to, so the generic
+ * title leads — matching `ReminderMetadata::format_title` on the backend, so
+ * the row and the push notification read the same — and the description
+ * becomes the body.
+ */
+export function ReminderCardLayout(props: InboxCardLayoutProps) {
+  // The current description, not the notification's copy of it, so editing a
+  // reminder after it fires updates the row.
+  const description = () => props.item.entity.name;
+
+  const referenced = () =>
+    props.item.entity.type === 'reminder'
+      ? props.item.entity.referencedEntity
+      : undefined;
+
+  return (
+    <BaseCard
+      item={props.item}
+      selected={props.selected}
+      highlighted={props.highlighted}
+      onClick={props.onClick}
+      // Always the bell, never the referenced entity's icon: the row is a
+      // reminder first, and the thing it points at is named right below.
+      icon={<BellSimpleIcon class={AVATAR_GLYPH_CLASS} />}
+      title={
+        <Show when={referenced()} fallback={t('soup.inbox.reminder')}>
+          {(reference) => (
+            <ReminderTitle
+              description={description()}
+              id={reference().id}
+              type={reference().type}
+            />
+          )}
+        </Show>
+      }
+    >
+      {/* A reminder only says one thing, so the body reserves the two lines
+          its three-line neighbors use to keep the list rhythm even. The chip
+          replaces the description when there's something to point at. */}
+      <div class="min-h-[2lh] min-w-0">
+        <InboxCard.Content class="truncate">
+          <Show when={referenced()} fallback={description()}>
+            {(reference) => (
+              <ReminderReferenceChip
+                id={reference().id}
+                type={reference().type}
+              />
+            )}
+          </Show>
+        </InboxCard.Content>
+      </div>
+    </BaseCard>
+  );
+}
+
+/**
+ * The reminder's description, unless it says nothing the chip below doesn't.
+ *
+ * The composer derives the description from the entity, so today it usually
+ * *is* the referenced entity's name — printing it as the title would just
+ * repeat the chip. Falling back to the generic title keeps the row readable
+ * until descriptions become editable, and gets out of the way once they are.
+ */
+function ReminderTitle(props: ItemEntity & { description: string }) {
+  const { item, name } = useItemPreviewData(() => ({
+    id: props.id,
+    type: props.type,
+  }));
+
+  const ownText = () => {
+    const description = props.description.trim();
+    // While the reference is resolving, `name()` is a placeholder, so the two
+    // cannot be compared yet — hold the generic title rather than flash text
+    // that is about to collapse into it.
+    if (!description || item().loading) return undefined;
+    return description === name().trim() ? undefined : description;
+  };
+
+  return <>{ownText() ?? t('soup.inbox.reminder')}</>;
+}
+
+/**
+ * What the reminder is about, as an inline mention chip — the same icon, name,
+ * and hover preview a document mention gets inside a message. `ItemPreview`
+ * resolves the name and handles the deleted / no-access cases; the classes
+ * strip its default boxed-button look back to inline text.
+ */
+function ReminderReferenceChip(props: ItemEntity) {
+  return (
+    <ItemPreview
+      {...props}
+      class="inline-flex h-auto max-w-full rounded-none px-0 align-[-0.15em] ring-0 hover:bg-transparent border-none"
+      iconClass="mr-1 size-3.5"
+      textClass="underline decoration-current/20 decoration-[max(1px,0.1em)] underline-offset-2"
+    />
+  );
+}
+
+export function GenericCardLayout(props: InboxCardLayoutProps) {
+  const text = createMemo(() => ({
+    title: props.item.entity.name
+      ? t('soup.inbox.entityUpdated', { name: props.item.entity.name })
+      : t('soup.inbox.updated'),
+    content: itemContent(props.item.entity, props.item.notification),
+  }));
+
+  return (
+    <BaseCard
+      item={props.item}
+      selected={props.selected}
+      highlighted={props.highlighted}
+      onClick={props.onClick}
+      icon={
+        <EntityIcon
+          class={AVATAR_GLYPH_CLASS}
+          targetType={getEntityIconType(props.item.entity)}
+          size="fill"
+          theme="monochrome"
+        />
+      }
+      title={text().title}
+    >
+      <CardMarkdownLine text={text().content} />
+    </BaseCard>
+  );
+}
+
+export function InboxCardLayout(props: InboxCardLayoutProps) {
+  const notificationTag = () => getNotificationTag(props.item.notification);
+  const isGithub = () => {
+    const entity = props.item.entity;
+    const tag = notificationTag();
+
+    if (tag?.startsWith('github_')) return true;
+
+    return (
+      entity.type === 'foreign' &&
+      entity.foreignSource === 'github_pull_request'
+    );
+  };
+  const isTask = () => {
+    const entity = props.item.entity;
+
+    return (
+      notificationTag() === 'task_assigned' ||
+      (entity.type === 'document' && entity.subType?.type === 'task')
+    );
+  };
+
+  return (
+    <Switch>
+      <Match when={props.item.entity.type === 'email'}>
+        <EmailCardLayout {...props} />
+      </Match>
+      <Match
+        when={
+          notificationTag() === 'call_started' ||
+          props.item.entity.type === 'call'
+        }
+      >
+        <CallCardLayout {...props} />
+      </Match>
+      <Match when={isGithub()}>
+        <GithubCardLayout {...props} />
+      </Match>
+      <Match
+        when={
+          notificationTag() === 'ai_response' ||
+          props.item.entity.type === 'chat'
+        }
+      >
+        <AiCardLayout {...props} />
+      </Match>
+      <Match when={isTask()}>
+        <TaskCardLayout {...props} />
+      </Match>
+      <Match when={props.item.entity.type === 'document'}>
+        <DocumentCardLayout {...props} />
+      </Match>
+      <Match when={props.item.entity.type === 'channel'}>
+        <ChannelCardLayout {...props} />
+      </Match>
+      <Match when={props.item.entity.type === 'channel_message'}>
+        <ChannelMessageCardLayout {...props} />
+      </Match>
+      <Match when={props.item.entity.type === 'channel_thread'}>
+        <ChannelThreadCardLayout {...props} />
+      </Match>
+      <Match when={props.item.entity.type === 'reminder'}>
+        <ReminderCardLayout {...props} />
+      </Match>
+      <Match when={props.item.entity.type === 'calendar_event'}>
+        <CalendarEventCardLayout {...props} />
+      </Match>
+      <Match when={true}>
+        <GenericCardLayout {...props} />
+      </Match>
+    </Switch>
+  );
+}
+
+export type InboxCardDisplayItem = {
+  entity: WithNotification<EntityData>;
+  notification?: Notification;
+  unread: boolean;
+  timestamp?: string;
+};
+
+export function toInboxCardDisplayItem(
+  item: WithNotification<EntityData>
+): InboxCardDisplayItem {
+  const notification = getFirstNotification(item);
+
+  return {
+    entity: item,
+    notification,
+    unread: unreadFilterFn(item),
+    timestamp: getTimestamp(item, notification),
+  };
+}

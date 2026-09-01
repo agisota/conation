@@ -1,0 +1,92 @@
+-- Disable foreign key constraints temporarily for easier setup
+SET session_replication_role = 'replica';
+
+-- Create Organization (needed for User foreign key)
+INSERT INTO public."Organization" ("id",
+                                   "name",
+                                   "status") (SELECT 1,
+                                                     'Test Organization',
+                                                     'PILOT');
+
+INSERT INTO public."macro_user" ("id",
+                                 "username",
+                                 "email",
+                                 "stripe_customer_id") (SELECT 'a1111111-1111-1111-1111-111111111111',
+                                                               'user@user.com',
+                                                               'user@user.com',
+                                                               'stripe_id');
+
+-- Insert user
+INSERT INTO public."User" ("id",
+                           "email",
+                           "stripeCustomerId",
+                           "organizationId",
+                           "macro_user_id") (SELECT 'macro|user@user.com',
+                                                     'user@user.com',
+                                                     'stripe_id',
+                                                     1,
+                                                     'a1111111-1111-1111-1111-111111111111');
+
+-- Create project
+INSERT INTO public."Project" ("id",
+                              "name",
+                              "userId",
+                              "createdAt",
+                              "updatedAt") (SELECT 'test-project',
+                                                   'Test Project',
+                                                   'macro|user@user.com',
+                                                   '2023-01-17 12:00:00',
+                                                   '2023-01-17 12:00:00');
+
+-- Create DocumentFamily (needed for Document)
+INSERT INTO public."DocumentFamily" ("id",
+                                     "rootDocumentId") (SELECT 1,
+                                                               'test-document');
+
+-- Create document
+INSERT INTO public."Document" ("id",
+                               "name",
+                               "fileType",
+                               "owner",
+                               "createdAt",
+                               "updatedAt",
+                               "documentFamilyId",
+                               "projectId") (SELECT 'test-document',
+                                                    'Test Document',
+                                                    'pdf',
+                                                    'macro|user@user.com',
+                                                    '2023-01-15 10:00:00',
+                                                    '2023-01-15 10:00:00',
+                                                    1,
+                                                    'test-project');
+
+-- Add document instance
+INSERT INTO public."DocumentInstance" ("id",
+                                       "revisionName",
+                                       "documentId",
+                                       "createdAt",
+                                       "updatedAt",
+                                       "sha") (SELECT 1,
+                                                      'Test Document',
+                                                      'test-document',
+                                                      '2023-01-15 10:00:00',
+                                                      '2023-01-15 10:00:00',
+                                                      'abc123sha');
+
+-- Create chat
+INSERT INTO public."Chat" ("id",
+                           "userId",
+                           "name",
+                           "createdAt",
+                           "updatedAt",
+                           "isPersistent",
+                           "projectId") (SELECT 'test-chat',
+                                                'macro|user@user.com',
+                                                'Test Chat',
+                                                '2023-01-16 11:00:00',
+                                                '2023-01-16 11:00:00',
+                                                true,
+                                                'test-project');
+
+-- Re-enable foreign key constraints
+SET session_replication_role = 'origin';

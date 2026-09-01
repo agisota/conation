@@ -1,0 +1,41 @@
+{
+  "name": "cloud-storage-infra",
+  "private": true,
+  "workspaces": [
+    "stacks/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "preinstall": "node -e \"if (process.env.npm_execpath && !process.env.npm_execpath.includes('bun')) { console.error('Please use bun as the package manager'); process.exit(1); }\"",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.12",
+    "@types/node": "^20.8.10",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "turbo": "latest",
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "@pulumi/aws": "^7.34.0",
+    "@pulumi/aws-native": "*",
+    "@pulumi/awsx": "^3.1.0",
+    "@pulumi/datadog": "^4.51.0",
+    "@pulumi/docker-build": "^0.0.15",
+    "@pulumi/pulumi": "^3.209.0",
+    "@pulumi/tls": "*",
+    "@pulumiverse/doppler": "^0.9.0",
+    "dotenv": "^17.2.3",
+    "minimist": "^1.2.8"
+  },
+  "resolutions": {
+    "ts-node": "10.8.0"
+  },
+  "packageManager": "bun@1.2.0",
+  "engines": {
+    "node": ">=21"
+  }
+}

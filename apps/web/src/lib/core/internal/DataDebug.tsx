@@ -1,0 +1,128 @@
+import { Bar } from '@core/component/TopBar/Bar';
+import { useContacts } from '@core/user';
+import Refresh from '@phosphor-icons/core/regular/arrow-clockwise.svg?component-solid';
+import Copy from '@phosphor-icons/core/regular/copy.svg?component-solid';
+import { useHistoryQuery } from '@queries/history/history';
+import { Button } from '@ui';
+import { type Component, createSignal, For, type JSX, Show } from 'solid-js';
+
+interface SignalDebugCardProps {
+  title: string;
+  data: any[];
+  renderItem: (item: any) => JSX.Element;
+}
+
+function SignalDebugCard(props: SignalDebugCardProps) {
+  const formatJson = (data: any) => {
+    try {
+      return JSON.stringify(data, null, 2);
+    } catch (_e) {
+      return String(data);
+    }
+  };
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(formatJson(props.data));
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err);
+    }
+  };
+
+  return (
+    <div class="border border-edge rounded-lg p-4">
+      <h2 class="text-lg font-semibold mb-3 text-accent">
+        {props.title} - {props.data.length} items
+      </h2>
+      <div>
+        <Show
+          when={props.data.length > 0}
+          fallback={
+            <div class="text-ink-muted italic">
+              No {props.title.toLowerCase()} found
+            </div>
+          }
+        >
+          <div class="max-h-60 overflow-y-auto space-y-2">
+            <For each={props.data}>{props.renderItem}</For>
+          </div>
+        </Show>
+      </div>
+      <div class="border-t border-edge mt-3 pt-3">
+        <details>
+          <summary class="text-accent text-sm">Raw JSON</summary>
+          <div class="mt-2 relative">
+            <button
+              onClick={copyToClipboard}
+              class="absolute top-2 right-2 p-1 rounded bg-panel hover:bg-lift text-ink-muted hover:text-ink transition-colors z-10"
+              title="Copy to clipboard"
+            >
+              <Copy class="size-4" />
+            </button>
+            <pre class="text-xs bg-message p-3 rounded overflow-auto max-h-80 border border-edge">
+              {formatJson(props.data)}
+            </pre>
+          </div>
+        </details>
+      </div>
+    </div>
+  );
+}
+
+const DataDebug: Component = () => {
+  const contacts = useContacts();
+  const historyQuery = useHistoryQuery();
+
+  const [_, setRefreshKey] = createSignal(0);
+
+  const handleRefresh = () => {
+    setRefreshKey((prev) => prev + 1);
+  };
+
+  return (
+    <div class="flex flex-col size-full">
+      <Bar
+        left={
+          <div class="p-2 text-sm w-2xl truncate">
+            Global Signals Data Debug
+          </div>
+        }
+        center={
+          <Button variant="outline" onClick={handleRefresh}>
+            <Refresh />
+            Refresh
+          </Button>
+        }
+      ></Bar>
+      <div class="flex flex-col gap-6 p-6 overflow-scroll">
+        <div class="grid grid-cols-2 @max-md/split:grid-cols-1 gap-6">
+          <SignalDebugCard
+            title="useContacts()"
+            data={contacts()}
+            renderItem={(contact) => (
+              <div class="bg-panel p-2 rounded text-sm">
+                <div class="font-medium">{contact.email}</div>
+                <div class="text-ink-muted">ID: {contact.id}</div>
+              </div>
+            )}
+          />
+
+          <SignalDebugCard
+            title="useHistoryQuery()"
+            data={historyQuery.data ?? []}
+            renderItem={(item) => (
+              <div class="bg-panel p-2 rounded text-sm">
+                <div class="font-medium">{item.name}</div>
+                <div class="text-ink-muted">
+                  ID: {item.id} | Type: {item.type}
+                </div>
+              </div>
+            )}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default DataDebug;

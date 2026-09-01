@@ -1,0 +1,29 @@
+[package]
+edition = "2024"
+name = "email_scheduled_handler"
+publish = false
+version = "0.1.0"
+
+[dependencies]
+anyhow = { workspace = true }
+aws-sdk-sqs = { workspace = true }
+conation_aws_config = { path = "../../crates/conation_aws_config" }
+aws_lambda_events = { workspace = true, features = ["eventbridge"] }
+chrono = { workspace = true }
+lambda_runtime = { workspace = true }
+conation_entrypoint = { path = "../../crates/conation_entrypoint" }
+conation_env = { path = "../../crates/conation_env" }
+conation_env_var = { path = "../../crates/conation_env_var" }
+conation_queues = { path = "../../crates/conation_queues" }
+models_email = { path = "../../crates/models_email" }
+sqlx = { workspace = true }
+sqs_client = { path = "../../crates/sqs_client" }
+tokio = { workspace = true }
+tracing = { workspace = true }
+workspace-hack = { version = "0.1", path = "../../crates/workspace-hack" }
+
+[package.metadata.cargo-machete]
+ignored = []
+
+[dev-dependencies]
+conation_db_migrator = { path = "../../crates/conation_db_migrator" }

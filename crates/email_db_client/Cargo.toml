@@ -1,0 +1,26 @@
+[package]
+edition = "2024"
+name = "email_db_client"
+publish = false
+version = "0.1.0"
+
+[dependencies]
+anyhow = { workspace = true }
+chrono = { workspace = true }
+doppleganger = { workspace = true }
+email_utils = { path = "../email_utils" }
+futures = { workspace = true }
+conation_user_id = { path = "../conation_user_id" }
+conation_uuid = { path = "../conation_uuid" }
+models_email = { path = "../models_email" }
+models_pagination = { path = "../models_pagination" }
+once_cell = { workspace = true }
+regex = { workspace = true }
+serde_json = { workspace = true }
+sqlx = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+workspace-hack = { version = "0.1", path = "../workspace-hack" }
+
+[dev-dependencies]
+conation_db_migrator = { path = "../conation_db_migrator" }

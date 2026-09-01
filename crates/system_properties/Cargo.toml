@@ -1,0 +1,22 @@
+[package]
+edition = "2024"
+name = "system_properties"
+publish = false
+version = "0.1.0"
+
+[dependencies]
+rootcause = { workspace = true }
+conation_user_id = { path = "../conation_user_id" }
+conation_uuid = { path = "../conation_uuid" }
+models_properties = { path = "../models_properties" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sqlx = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
+workspace-hack = { version = "0.1", path = "../workspace-hack" }
+
+[dev-dependencies]
+anyhow = { workspace = true }
+conation_db_migrator = { path = "../conation_db_migrator" }

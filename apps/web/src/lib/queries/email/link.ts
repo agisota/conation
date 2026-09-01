@@ -1,0 +1,256 @@
+import { useUserId } from '@core/context/user';
+import { throwOnErr } from '@core/util/result';
+import { invalidateUserInfo } from '@queries/auth/user-info';
+import { invalidateCalendarViews } from '@queries/calendar/sync';
+import { queryClient } from '@queries/client';
+import { invalidateAllSoup } from '@queries/soup/normalized-cache';
+import { emailClient } from '@service-email/client';
+import type { ListLinksResponse } from '@service-email/generated/schemas';
+import { useMutation, useQuery } from '@tanstack/solid-query';
+import { type Accessor, createMemo } from 'solid-js';
+import { type MutationCallbacks, withCallbacks } from '../utils';
+import { emailKeys } from './keys';
+
+const LINK_STALE_TIME = 5 * 60 * 1000;
+
+const HEALTH_PROBE_STALE_TIME = 15 * 60 * 1000;
+
+const queryEnabled = () => true;
+
+/**
+ * Asks the server to probe each linked inbox's grant against Google and record its
+ * health, so a grant that died while the user was away surfaces soon after they return
+ * rather than waiting on the daily refresh. Runs on mount and on window focus, throttled
+ * to once per stale-time window (the server also throttles per inbox). Fire-and-forget:
+ * the refreshed `needs_reauth` is read by `useEmailLinksQuery`, which drives the reconnect
+ * prompt — nothing renders from this query.
+ */
+export function useInboxHealthProbeQuery() {
+  return useQuery(() => ({
+    queryKey: emailKeys.linksHealthProbe.queryKey,
+    queryFn: async () => {
+      await emailClient.healthCheckLinks();
+      return null;
+    },
+    staleTime: HEALTH_PROBE_STALE_TIME,
+    refetchOnWindowFocus: true,
+    retry: false,
+  }));
+}
+
+export function useEmailLinksQuery(enabled: Accessor<boolean> = queryEnabled) {
+  return useQuery(() => ({
+    queryKey: emailKeys.links.queryKey,
+    queryFn: async () => throwOnErr(async () => await emailClient.getLinks()),
+    enabled: enabled(),
+    staleTime: LINK_STALE_TIME,
+    refetchOnWindowFocus: 'always',
+  }));
+}
+
+/**
+ * The link id of the user's primary inbox — their own `is_primary` link.
+ * Delegated inboxes are primary for their own account, hence the macro_id
+ * guard. `undefined` until links load or if none match.
+ */
+export function usePrimaryEmailLinkId() {
+  const linksQuery = useEmailLinksQuery();
+  const userId = useUserId();
+  return createMemo(() => {
+    const uid = userId();
+    if (!uid) return undefined;
+    return linksQuery.data?.links.find(
+      (link) => link.is_primary && link.macro_id === uid
+    )?.id;
+  });
+}
+
+/**
+ * The HTML signature configured for a given inbox, read straight from the links
+ * query (`GET /email/links` → `link.settings.signature`) — no extra request.
+ * `undefined` until links load, when no link matches, or when the inbox has no
+ * signature set (the backend's `null` is normalized to `undefined`).
+ */
+export function useEmailSignature(
+  linkId: Accessor<string | undefined>
+): Accessor<string | undefined> {
+  const linksQuery = useEmailLinksQuery();
+  return createMemo(() => {
+    const id = linkId();
+    if (!id) return undefined;
+    return (
+      linksQuery.data?.links.find((link) => link.id === id)?.settings
+        .signature ?? undefined
+    );
+  });
+}
+
+/**
+ * Returns a mapper from a target inbox link id to the `X-Email-Link-Id` value a
+ * mutation should send: the link id when it targets a non-primary inbox, or
+ * `undefined` for the primary inbox (the backend defaults to primary when the
+ * header is absent). Use at mutation call sites to scope writes to the inbox the
+ * user is acting in.
+ */
+export function useNonPrimaryEmailLinkIdHeader() {
+  const primaryLinkId = usePrimaryEmailLinkId();
+  return (linkId: string | undefined | null): string | undefined =>
+    !linkId || linkId === primaryLinkId() ? undefined : linkId;
+}
+
+export function invalidateEmailLinks() {
+  queryClient.cancelQueries({ queryKey: emailKeys.links.queryKey });
+  queryClient.invalidateQueries({
+    queryKey: emailKeys.links.queryKey,
+  });
+}
+
+type DisableCalendarContext = {
+  previousLinks: ListLinksResponse | undefined;
+};
+type DisableCalendarCallbacks = MutationCallbacks<
+  void,
+  Error,
+  string,
+  DisableCalendarContext
+>;
+
+/**
+ * Turns calendar off for one inbox: the backend deletes its calendar data and
+ * drops the calendar scopes from its Google grant. The cached link flips to
+ * `calendar_disabled` + `needs_calendar_permission` right away and drops
+ * `has_calendar_data`, which is what swaps the settings row back to "Enable
+ * calendar", retires the turn-off control, and keeps the enable prompt quiet.
+ * The emptied calendar caches are refetched.
+ */
+export function useDisableCalendarMutation(
+  callbacks?: DisableCalendarCallbacks
+) {
+  return useMutation(() => ({
+    mutationFn: async (linkId: string) => {
+      await throwOnErr(() => emailClient.disableLinkCalendar({ linkId }));
+    },
+
+    ...withCallbacks<void, Error, string, DisableCalendarContext>(
+      {
+        onMutate: async (linkId) => {
+          await queryClient.cancelQueries({
+            queryKey: emailKeys.links.queryKey,
+          });
+
+          const previousLinks = queryClient.getQueryData<ListLinksResponse>(
+            emailKeys.links.queryKey
+          );
+
+          queryClient.setQueryData<ListLinksResponse>(
+            emailKeys.links.queryKey,
+            (old) =>
+              old && {
+                ...old,
+                links: old.links.map((link) =>
+                  link.id === linkId
+                    ? {
+                        ...link,
+                        calendar_disabled: true,
+                        needs_calendar_permission: true,
+                        has_calendar_data: false,
+                      }
+                    : link
+                ),
+              }
+          );
+
+          return { previousLinks };
+        },
+
+        onSuccess: () => {
+          invalidateEmailLinks();
+          invalidateCalendarViews();
+        },
+
+        onError: (_error, _linkId, context) => {
+          if (context?.previousLinks) {
+            queryClient.setQueryData(
+              emailKeys.links.queryKey,
+              context.previousLinks
+            );
+          }
+        },
+      },
+      callbacks
+    ),
+  }));
+}
+
+type RemoveInboxContext = { previousLinks: ListLinksResponse | undefined };
+type RemoveInboxCallbacks = MutationCallbacks<
+  void,
+  Error,
+  string,
+  RemoveInboxContext
+>;
+
+/**
+ * Removes a linked inbox, optimistically dropping its row from the cached links
+ * list so the change is reflected immediately. Rolls the cache back on failure
+ * and reconciles with the server on success.
+ */
+export function useRemoveInboxMutation(callbacks?: RemoveInboxCallbacks) {
+  return useMutation(() => ({
+    mutationFn: async (linkId: string) => {
+      await throwOnErr(() => emailClient.deleteLink({ linkId }));
+    },
+
+    ...withCallbacks<void, Error, string, RemoveInboxContext>(
+      {
+        onMutate: async (linkId) => {
+          await queryClient.cancelQueries({
+            queryKey: emailKeys.links.queryKey,
+          });
+
+          const previousLinks = queryClient.getQueryData<ListLinksResponse>(
+            emailKeys.links.queryKey
+          );
+
+          queryClient.setQueryData<ListLinksResponse>(
+            emailKeys.links.queryKey,
+            (old) =>
+              old
+                ? {
+                    ...old,
+                    links: old.links.filter((link) => link.id !== linkId),
+                  }
+                : undefined
+          );
+
+          return { previousLinks };
+        },
+
+        onSuccess: async () => {
+          // Owned inboxes are torn down asynchronously, so the row still appears
+          // in GET /email/links for a short window after the 204. Refetching links
+          // here would resurrect the optimistically-removed row; instead leave the
+          // optimistic cache in place and let the next focus refetch reconcile once
+          // teardown completes.
+          //
+          // Clears a delegated inbox's threads immediately (its removal is a
+          // synchronous edge drop). An owned inbox is torn down asynchronously,
+          // so its threads are dropped when the `refresh_email` `link_removed`
+          // event arrives after teardown — refetching now would race that.
+          invalidateAllSoup();
+          await invalidateUserInfo();
+        },
+
+        onError: (_error, _linkId, context) => {
+          if (context?.previousLinks) {
+            queryClient.setQueryData(
+              emailKeys.links.queryKey,
+              context.previousLinks
+            );
+          }
+        },
+      },
+      callbacks
+    ),
+  }));
+}

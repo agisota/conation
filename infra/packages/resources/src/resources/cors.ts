@@ -1,0 +1,33 @@
+export const ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:3002',
+  'http://localhost:3003',
+  'http://localhost:3004',
+  'http://localhost:3005',
+  'http://localhost:3006',
+  'http://localhost:3007',
+  'http://localhost:3008',
+  'http://localhost:3009',
+  'http://host.local:3000',
+  'https://app-dev.conation.dev',
+  'https://app-staging.conation.dev',
+  'https://app-prod.conation.dev',
+  'https://app.conation.dev',
+  'https://dev.conation.dev',
+  'https://chat-dev.conation.dev',
+  'https://chat.conation.dev',
+  'https://staging.conation.dev',
+  'https://prod.conation.dev',
+  'https://www.conation.dev',
+  'https://conation.dev',
+  'https://website-dev.conation.dev',
+  'https://website-staging.conation.dev',
+  'https://website-prod.conation.dev',
+  'https://apollo-testing.conation.dev',
+  // S3 CORS supports a single wildcard in AllowedOrigin. This lets feature
+  // preview apps (for example, https://branch.preview.conation.dev) load
+  // presigned S3 media such as call recordings.
+  'https://*.preview.conation.dev',
+  'tauri://localhost',
+];

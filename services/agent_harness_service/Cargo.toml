@@ -1,0 +1,80 @@
+[package]
+edition = "2024"
+name = "agent_harness_service"
+publish = false
+version = "0.1.0"
+
+[[bin]]
+name = "agent_harness_service"
+path = "src/main.rs"
+
+[[bin]]
+name = "agent_harness_service_openapi"
+path = "src/openapi.rs"
+
+[dependencies]
+agent_egress = { path = "../../crates/agent_egress" }
+agent_fold = { path = "../../crates/agent_fold" }
+agent_harness = { path = "../../crates/agent_harness" }
+agent_inmem = { path = "../../crates/agent_inmem" }
+ai_tools = { path = "../../crates/ai_tools" }
+agent_runtime_protocol = { path = "../../crates/agent_runtime_protocol", features = ["utoipa"] }
+agent_session = { path = "../../crates/agent_session" }
+agent_trigger = { path = "../../crates/agent_trigger" }
+ai_usage = { path = "../../crates/ai_usage" }
+aws-sdk-sqs = { workspace = true }
+bot_id = { path = "../../crates/bot_id" }
+bots = { path = "../../crates/bots" }
+connection_gateway_client = { path = "../../crates/connection_gateway_client" }
+aws-sdk-kms = { workspace = true }
+cursor_api_key = { path = "../../crates/cursor_api_key" }
+cursor_cloud_agents = { path = "../../crates/cursor_cloud_agents" }
+database_env_vars = { path = "../../crates/database_env_vars" }
+entity_access = { path = "../../crates/entity_access" }
+github = { path = "../../crates/github", default-features = false, features = [
+  "outbound",
+  "ports",
+  "sync",
+] }
+pipedream_mcp = { path = "../../crates/pipedream_mcp" }
+url = { workspace = true }
+contacts = { path = "../../crates/contacts" }
+conation_aws_config = { path = "../../crates/conation_aws_config" }
+conation_event_broker = { path = "../../crates/conation_event_broker", features = ["outbound"] }
+conation_queues = { path = "../../crates/conation_queues" }
+lexical_client = { path = "../../crates/lexical_client" }
+conation_service_urls = { path = "../../crates/conation_service_urls" }
+conation_tower_layers = { path = "../../crates/conation_tower_layers" }
+notification = { path = "../../crates/notification" }
+rdkafka = { workspace = true }
+channels = { path = "../../crates/channels", features = ["ports", "outbound"] }
+anyhow = { workspace = true }
+conation_user_id = { path = "../../crates/conation_user_id" }
+axum = { workspace = true }
+aws-sdk-secretsmanager = { workspace = true }
+kafka_util = { path = "../../crates/kafka_util" }
+conation_auth = { path = "../../crates/conation_auth" }
+conation_authorization = { path = "../../crates/conation_authorization", default-features = false, features = [
+  "axum",
+  "outbound",
+  "postgres",
+] }
+conation_cors = { path = "../../crates/conation_cors" }
+secretsmanager_client = { path = "../../crates/secretsmanager_client" }
+serde_json = { workspace = true }
+utoipa = { workspace = true }
+utoipa-swagger-ui = { workspace = true }
+conation_config = { path = "../../crates/conation_config" }
+conation_entrypoint = { path = "../../crates/conation_entrypoint" }
+conation_env = { path = "../../crates/conation_env" }
+conation_env_var = { path = "../../crates/conation_env_var" }
+conation_uuid = { path = "../../crates/conation_uuid" }
+serde = { workspace = true }
+sqlx = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "time"] }
+tokio-util = { workspace = true, features = ["rt"] }
+tracing = { workspace = true }
+workspace-hack = { version = "0.1", path = "../../crates/workspace-hack" }
+
+[dev-dependencies]
+agent_session = { path = "../../crates/agent_session", features = ["test-utils"] }

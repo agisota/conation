@@ -1,0 +1,19 @@
+[package]
+edition = "2024"
+name = "conation_config"
+publish = false
+version = "0.1.0"
+
+[dependencies]
+conation_config_derive = { path = "../conation_config_derive" }
+conation_env = { path = "../conation_env" }
+remote_env_var = { path = "../remote_env_var" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+thiserror = { workspace = true }
+workspace-hack = { version = "0.1", path = "../workspace-hack" }
+
+[dev-dependencies]
+conation_env_var = { path = "../conation_env_var" }
+tokio = { workspace = true, features = ["macros", "rt"] }

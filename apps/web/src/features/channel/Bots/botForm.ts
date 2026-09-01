@@ -1,0 +1,67 @@
+import { t } from '@app/lib/i18n';
+import type { Bot } from '@service-storage/generated/schemas/bot';
+import { z } from 'zod';
+
+const botFormSchema = () =>
+  z.object({
+    name: z
+      .string()
+      .trim()
+      .min(1, t('channel.bots.validation.nameRequired'))
+      .max(128),
+    handle: z
+      .string()
+      .trim()
+      .min(1, t('channel.bots.validation.handleRequired'))
+      .max(64, t('channel.bots.validation.handleTooLong'))
+      .regex(/^[a-z0-9_-]+$/, t('channel.bots.validation.handleFormat')),
+    description: z.string().trim().max(500),
+    avatarUrl: z.string().trim(),
+    hasAgent: z.boolean(),
+  });
+
+export type BotFormValues = z.infer<ReturnType<typeof botFormSchema>>;
+export type BotFormErrors = Partial<Record<keyof BotFormValues, string>>;
+
+export const EMPTY_BOT_FORM: BotFormValues = {
+  name: '',
+  handle: '',
+  description: '',
+  avatarUrl: '',
+  hasAgent: false,
+};
+
+export function botToFormValues(bot: Bot): BotFormValues {
+  return {
+    name: bot.name,
+    handle: bot.handle,
+    description: bot.description ?? '',
+    avatarUrl: bot.avatar_url ?? '',
+    hasAgent: bot.has_agent,
+  };
+}
+
+export function slugBotHandle(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 64);
+}
+
+export function validateBotForm(values: BotFormValues) {
+  const result = botFormSchema().safeParse(values);
+  if (result.success) return result;
+
+  const fieldErrors = result.error.flatten().fieldErrors;
+  return {
+    success: false as const,
+    errors: Object.fromEntries(
+      Object.entries(fieldErrors).map(([field, messages]) => [
+        field,
+        messages?.[0],
+      ])
+    ) as BotFormErrors,
+  };
+}

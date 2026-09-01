@@ -1,0 +1,20 @@
+[package]
+name = "email_provider"
+version = "0.1.0"
+edition = "2021"
+description = "Abstraction over email providers: Gmail (legacy) and Stalwart JMAP (Conation default)"
+
+[dependencies]
+async-trait = { workspace = true }
+conation_env_var = { path = "../conation_env_var" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+reqwest = { workspace = true }
+url = { workspace = true }
+
+chrono = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

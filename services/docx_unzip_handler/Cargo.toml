@@ -1,0 +1,46 @@
+[package]
+edition = "2024"
+exclude = ["fixtures/", "migrations/", "tests/"]
+name = "docx_unzip_handler"
+publish = false
+version = "0.1.0"
+
+[dependencies]
+anyhow = { workspace = true }
+aws-sdk-lambda = { workspace = true }
+conation_aws_config = { path = "../../crates/conation_aws_config", features = ["s3"] }
+aws-sdk-s3 = { workspace = true }
+aws-sdk-sqs = { workspace = true }
+aws-smithy-types = { workspace = true }
+aws_lambda_events = { workspace = true, features = ["s3"] }
+bzip2 = { workspace = true, default-features = false, features = [
+  "libbz2-rs-sys",
+] }
+futures = { workspace = true }
+lambda_client = { path = "../../crates/lambda_client" }
+lambda_runtime = { workspace = true }
+conation_db_client = { path = "../../crates/conation_db_client" }
+conation_entrypoint = { path = "../../crates/conation_entrypoint" }
+conation_env = { path = "../../crates/conation_env" }
+conation_sha_count_client = { path = "../../crates/conation_sha_count_client" }
+conation_uuid = { path = "../../crates/conation_uuid" }
+model = { path = "../../crates/model" }
+s3_key = { path = "../../crates/s3_key" }
+redis = { workspace = true, features = [
+  "aio",
+  "tokio-rustls-comp",
+] }
+s3_client = { path = "../../crates/s3_client" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+sqlx = { workspace = true }
+sqs_client = { path = "../../crates/sqs_client" }
+tokio = { workspace = true }
+tracing = { workspace = true }
+urlencoding = { workspace = true }
+zip = { workspace = true }
+workspace-hack = { version = "0.1", path = "../../crates/workspace-hack" }
+conation_env_var = { path = "../../crates/conation_env_var" }
+conation_queues = { path = "../../crates/conation_queues" }
+

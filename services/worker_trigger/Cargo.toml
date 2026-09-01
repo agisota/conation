@@ -1,0 +1,22 @@
+[package]
+edition = "2024"
+name = "worker_trigger"
+publish = false
+version = "0.1.0"
+
+[dependencies]
+anyhow = { workspace = true }
+aws-sdk-ecs = "1.124.0"
+aws_lambda_events = { workspace = true, features = ["eventbridge"] }
+lambda_runtime = { workspace = true }
+conation_aws_config = { path = "../../crates/conation_aws_config" }
+conation_entrypoint = { path = "../../crates/conation_entrypoint" }
+conation_env = { path = "../../crates/conation_env" }
+conation_env_var = { path = "../../crates/conation_env_var" }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+workspace-hack = { version = "0.1", path = "../../crates/workspace-hack" }
+
+[dev-dependencies]
+mockall = { workspace = true }

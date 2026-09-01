@@ -1,0 +1,512 @@
+import { type InferType, SyncDirection } from '@loro-mirror/core';
+import type { Attributes } from '@conation/observability';
+import { Mutex } from 'async-mutex';
+import type { VersionVector } from 'loro-crdt';
+import type { ResultAsync } from 'neverthrow';
+import {
+  type Accessor,
+  createEffect,
+  createSignal,
+  on,
+  onCleanup,
+} from 'solid-js';
+import { match } from 'ts-pattern';
+import type { Awareness } from './awareness';
+import { BroadcastChannelChatter, type Chatter, noopChatter } from './chatter';
+import { logSyncService } from './logger';
+import {
+  LoroManagerError,
+  LoroStateTag,
+  type StateUpdate,
+  type SyncEngineManager,
+} from './manager';
+import type { GenericRootSchema, LoroRawUpdate, RawUpdate } from './shared';
+import type { SnapshotStore } from './snapshot-store';
+import { peerCounterAttr, telemetrySpan } from './telemetry';
+
+// SnapshotStore in the engine is always Loro updates — RawUpdate.
+type LoroSnapshotStore = SnapshotStore<RawUpdate>;
+
+import type { LiveSyncSource, SyncSourceEvent, TimeoutError } from './source';
+import type { WALSyncer } from './wal';
+
+const SNAPSHOT_INTERVAL_MS = 5_000;
+
+const REQUEST_UPDATES_MAX_ATTEMPTS = 3;
+const REQUEST_UPDATES_RETRY_DELAY_MS = 2_000;
+
+/** A version vector as a compact `peer:counter` span attribute. */
+function vvAttr(vv: VersionVector): string {
+  try {
+    return peerCounterAttr(vv.toJSON().entries());
+  } catch {
+    return 'unavailable';
+  }
+}
+
+export type EngineBindings<S extends GenericRootSchema> = {
+  onRemoteState: (state: InferType<S>) => void;
+};
+
+export type SyncSources = {
+  wal: WALSyncer<RawUpdate>;
+  live: LiveSyncSource;
+};
+
+export type SyncEngineParams<S extends GenericRootSchema, D> = {
+  loroManager: SyncEngineManager<S>;
+  awareness: Awareness<D>;
+  syncs: SyncSources;
+  bindings: EngineBindings<S>;
+  readonly?: () => boolean;
+  onRunningChange?: (v: boolean) => void;
+  snapshotStore?: LoroSnapshotStore;
+  makeChatter?: (documentId: string) => Chatter;
+};
+
+type SnapshotThunk = () => ResultAsync<Uint8Array, TimeoutError>;
+
+export class SyncEngine<S extends GenericRootSchema, D> {
+  private _isRunning = false;
+
+  get isRunning() {
+    return this._isRunning;
+  }
+
+  private readonly loroManager: SyncEngineManager<S>;
+  private readonly awareness: Awareness<D>;
+  private readonly syncs: SyncSources;
+  private readonly bindings: EngineBindings<S>;
+  private readonly readonly: () => boolean;
+  private readonly syncLock = new Mutex();
+  private unsubscribe?: () => void;
+  private liveUnsubscribe?: () => void;
+  private snapshotInterval?: ReturnType<typeof setInterval>;
+  private readonly snapshotStore?: LoroSnapshotStore;
+  private readonly defaultSnapshotThunk: SnapshotThunk;
+  private readonly onRunningChange: (v: boolean) => void;
+  private readonly makeChatter: (documentId: string) => Chatter;
+  private chatter?: Chatter;
+  private chatterUnsub?: () => void;
+  private lifecycleGeneration = 0;
+  private convergence?: {
+    generation: number;
+    promise: Promise<void>;
+    rerunRequested: boolean;
+  };
+
+  constructor({
+    loroManager,
+    awareness,
+    syncs,
+    bindings,
+    readonly = () => false,
+    onRunningChange = () => {},
+    snapshotStore,
+    makeChatter = () => noopChatter(),
+  }: SyncEngineParams<S, D>) {
+    this.loroManager = loroManager;
+    this.awareness = awareness;
+    this.syncs = syncs;
+    this.bindings = bindings;
+    this.readonly = readonly;
+    this.defaultSnapshotThunk = syncs.live.requestSnapshot;
+    this.onRunningChange = onRunningChange;
+    this.snapshotStore = snapshotStore;
+    this.makeChatter = makeChatter;
+  }
+
+  private log(
+    level: Parameters<typeof logSyncService>[0]['level'],
+    message: string,
+    extra?: Attributes
+  ) {
+    logSyncService({
+      documentId: this.syncs.live.documentId,
+      level,
+      context: extra ? { misc: extra } : {},
+      message,
+    });
+  }
+
+  public start(): boolean {
+    if (this._isRunning) return true; // already running — idempotent
+
+    if (!this.loroManager.initialized) {
+      this.log('warn', 'engine.start: manager not initialized, aborting');
+      return false;
+    }
+
+    this.unsubscribe?.();
+    this.unsubscribe = this.loroManager.doc.subscribeLocalUpdates((update) => {
+      this.handleLocalUpdates(update);
+    });
+
+    this.chatter = this.makeChatter(this.syncs.live.documentId);
+    this.chatterUnsub = this.chatter.subscribe((msg) =>
+      match(msg)
+        .with({ type: 'update' }, (m) => void this.handleRemoteUpdate(m.data))
+        .with({ type: 'awareness' }, (m) =>
+          this.awareness.importRemoteAwareness(m.data)
+        )
+        .exhaustive()
+    );
+
+    this._isRunning = true;
+    this.lifecycleGeneration++;
+
+    this.liveUnsubscribe?.();
+    this.liveUnsubscribe = this.syncs.live.listen((event) =>
+      this.handleSourceEvent(event)
+    );
+    this.syncs.live.registerPeerId(this.loroManager.peerId);
+
+    if (this.snapshotStore && this.snapshotInterval === undefined) {
+      this.snapshotInterval = setInterval(
+        () => void this.persistSnapshot(),
+        SNAPSHOT_INTERVAL_MS
+      );
+    }
+
+    this.onRunningChange(true);
+    this.log('info', 'engine.start: ok');
+    void this.convergeFromServer();
+    return true;
+  }
+
+  public stop() {
+    this._isRunning = false;
+    this.lifecycleGeneration++;
+
+    this.unsubscribe?.();
+    this.unsubscribe = undefined;
+
+    this.liveUnsubscribe?.();
+    this.liveUnsubscribe = undefined;
+
+    this.chatterUnsub?.();
+    this.chatter?.close();
+    this.chatterUnsub = undefined;
+    this.chatter = undefined;
+
+    if (this.snapshotInterval !== undefined) {
+      clearInterval(this.snapshotInterval);
+      this.snapshotInterval = undefined;
+    }
+
+    this.awareness.updateLocalAwareness(undefined);
+    this.syncs.live.pushAwareness(this.awareness.getEncodedLocalAwareness());
+    this.onRunningChange(false);
+    this.log('info', 'engine.stop: ok');
+  }
+
+  public async syncStateToLoro(state: InferType<S>) {
+    if (!this._isRunning) return;
+
+    await this.syncLock.runExclusive(async () => {
+      const syncResult = await this.loroManager.syncToLoro(state);
+
+      if (syncResult.isErr()) {
+        this.log('error', 'syncStateToLoro: failed, resetting engine', {
+          err: JSON.stringify(syncResult.error),
+        });
+        this.reset();
+      }
+    });
+  }
+
+  public syncAwarenessToLoro(awarenessUpdate: D) {
+    if (!this._isRunning) return;
+
+    this.awareness.updateLocalAwareness(awarenessUpdate);
+    this.syncs.live.pushAwareness(this.awareness.getEncodedLocalAwareness());
+  }
+
+  public async reset(snapshotThunk?: SnapshotThunk) {
+    const wasRunning = this._isRunning;
+
+    if (wasRunning) {
+      this.stop();
+    }
+
+    await this.syncLock.runExclusive(async () => {
+      this.log('info', 'engine.reset: starting');
+      const snapshot = await (snapshotThunk ?? this.defaultSnapshotThunk)();
+      if (snapshot.isErr()) {
+        this.log('error', 'engine.reset: failed to get snapshot', {
+          err: String(snapshot.error),
+        });
+        return;
+      }
+
+      const resetResult = await this.loroManager.reset(snapshot.value);
+      if (resetResult.isErr()) {
+        this.log('error', 'engine.reset: loro manager reset failed', {
+          err: JSON.stringify(resetResult.error),
+        });
+        return;
+      }
+    });
+
+    if (wasRunning) {
+      this.start();
+    }
+  }
+
+  public onStateUpdate(stateUpdate: StateUpdate<S> | undefined) {
+    if (!this._isRunning || !stateUpdate) return;
+
+    if (stateUpdate.metadata.direction === SyncDirection.TO_LORO) return;
+    if (stateUpdate.metadata.tags?.includes(LoroStateTag.Initialize)) return;
+    this.syncLock.runExclusive(() =>
+      this.bindings.onRemoteState(stateUpdate.state)
+    );
+  }
+
+  public onLocalAwarenessChange() {
+    if (!this._isRunning) return;
+
+    const awarenessUpdate = this.awareness.getEncodedLocalAwareness();
+    if (!awarenessUpdate) return;
+    this.syncs.live.pushAwareness(awarenessUpdate);
+    this.chatter?.post({ type: 'awareness', data: awarenessUpdate });
+  }
+
+  private async handleLocalUpdates(update: LoroRawUpdate) {
+    if (this.readonly()) return;
+    this.log('debug', 'engine: local update, appending to WAL');
+    void this.syncs.wal.append(update);
+    this.chatter?.post({ type: 'update', data: update });
+  }
+
+  private async persistSnapshot() {
+    if (!this.snapshotStore) return;
+
+    void this.syncs.wal.flush(); // unawaited
+
+    try {
+      const doc = this.loroManager.doc;
+      this.log('debug', 'engine: persisting snapshot', { doc: doc.toJSON() });
+      const snapshot = doc.export({
+        mode: 'shallow-snapshot',
+        frontiers: doc.oplogFrontiers(),
+      });
+      await this.snapshotStore.save(snapshot);
+      // now safe to drop WAL entries it captures. we prune only
+      // after the save succeeds so that we can always recover fully.
+      await this.syncs.wal.pruneDelivered();
+      this.log('debug', 'engine: snapshot persisted ok');
+    } catch (err) {
+      this.log('error', 'engine: failed to persist snapshot', {
+        errName: err instanceof Error ? err.name : undefined,
+        errMessage: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  private async handleRemoteUpdate(
+    update: RawUpdate
+  ): Promise<'applied' | 'pending' | 'reset'> {
+    return this.syncLock.runExclusive(() =>
+      telemetrySpan(this.syncs.live.documentId, 'edit.apply', async (span) => {
+        span.setAttr('update.bytes', update.length);
+        const importResult = this.loroManager.importUpdate(update);
+        await Promise.resolve();
+        if (importResult.isErr()) {
+          const pendingOnly = importResult.error.every(
+            (e) => e.code === LoroManagerError.ImportPending
+          );
+          if (pendingOnly) {
+            // Loro retains causally-ahead updates. Pull the missing operations
+            // rather than resetting the document.
+            this.log('debug', 'engine: remote update pending on missing ops');
+            span.setAttr('outcome', 'pending');
+            void this.convergeFromServer();
+            return 'pending';
+          }
+
+          this.log(
+            'error',
+            'engine: failed to import remote update, resetting',
+            {
+              err: JSON.stringify(importResult.error),
+            }
+          );
+          span.error(importResult.error);
+          span.setAttr('outcome', 'reset');
+          this.reset();
+          return 'reset';
+        }
+        span.setAttr('outcome', 'applied');
+        span.setAttr('did_change', importResult.value);
+        return 'applied';
+      })
+    );
+  }
+
+  private handleSourceEvent(event: SyncSourceEvent) {
+    switch (event.type) {
+      case 'update':
+        this.handleRemoteUpdate(event.update);
+        break;
+      case 'awareness':
+        this.awareness.importRemoteAwareness(event.awareness);
+        break;
+      case 'incremental_snapshot':
+        this.log('debug', 'engine: source event: incremental_snapshot');
+        this.handleRemoteUpdate(event.snapshot);
+        break;
+      case 'reconnect':
+        this.log(
+          'info',
+          'engine: reconnect, requesting updates since current version'
+        );
+        void this.convergeFromServer({ rerunIfInFlight: true });
+        break;
+    }
+  }
+
+  /**
+   * Pull every server operation missing from the current local seed.
+   *
+   * Snapshot sources are intentionally transport-agnostic and first-wins, so
+   * this anti-entropy step is what makes optimistic, IDB, and S3 seeds converge
+   * to server truth. Calls within one engine lifecycle are coalesced;
+   * `rerunIfInFlight` additionally queues one fresh pass after the in-flight
+   * one settles, so a reconnect is never absorbed into an attempt that goes
+   * on to exhaust its retries.
+   */
+  private convergeFromServer({
+    rerunIfInFlight = false,
+  }: {
+    rerunIfInFlight?: boolean;
+  } = {}): Promise<void> {
+    const generation = this.lifecycleGeneration;
+    if (!this.isActiveGeneration(generation)) return Promise.resolve();
+
+    const inFlight = this.convergence;
+    if (inFlight?.generation === generation) {
+      if (rerunIfInFlight) inFlight.rerunRequested = true;
+      return inFlight.promise;
+    }
+
+    const since = this.loroManager.doc.version();
+    const promise = this.requestAndHandleUpdatesSince(since, 1, generation);
+    const record = { generation, promise, rerunRequested: false };
+    this.convergence = record;
+    const settle = () => {
+      if (this.convergence !== record) return;
+      this.convergence = undefined;
+      if (record.rerunRequested) void this.convergeFromServer();
+    };
+    void promise.then(settle, settle);
+    return promise;
+  }
+
+  private isActiveGeneration(generation: number): boolean {
+    return this._isRunning && this.lifecycleGeneration === generation;
+  }
+
+  private async requestAndHandleUpdatesSince(
+    since: VersionVector,
+    attempt: number,
+    generation: number
+  ) {
+    if (!this.isActiveGeneration(generation)) return;
+
+    // The catch-up flow: "give me everything after the version I hold".
+    // The span shows the anchor version, what came back, and whether it
+    // applied — the trail for "client was stale and (never) reconciled".
+    const span = telemetrySpan(this.syncs.live.documentId, 'doc.sync.catchup');
+    span.setAttr('since.version', vvAttr(since));
+    span.setAttr('attempt', attempt);
+    this.log('debug', `engine: requestUpdatesSince (attempt ${attempt})`);
+    const updates = await this.syncs.live.requestUpdatesSince(since);
+    if (!this.isActiveGeneration(generation)) {
+      span.setAttr('outcome', 'cancelled');
+      span.end();
+      return;
+    }
+
+    if (updates.isErr() || !updates.value) {
+      this.log('error', 'engine: requestUpdatesSince failed', {
+        err: updates.isErr() ? String(updates.error) : 'update is undefined',
+      });
+      const retrying =
+        updates.isErr() && attempt < REQUEST_UPDATES_MAX_ATTEMPTS;
+      span.error(updates.isErr() ? updates.error : 'update is undefined');
+      span.setAttr('outcome', retrying ? 'retrying' : 'failed');
+      span.end();
+      if (retrying) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, REQUEST_UPDATES_RETRY_DELAY_MS)
+        );
+        await this.requestAndHandleUpdatesSince(since, attempt + 1, generation);
+      }
+      return;
+    }
+
+    if (updates.value.length === 0) {
+      // Nothing to converge. Zero bytes are not a valid Loro payload (real
+      // sources encode "no new ops" as a non-empty update), so importing them
+      // would throw and trigger a reset — the noop live source used by
+      // non-propagating AI edit sessions answers with exactly this.
+      this.log('debug', 'engine: requestUpdatesSince ok, empty update');
+      span.setAttr('outcome', 'noop');
+      span.setAttr('update.bytes', 0);
+      span.end();
+      return;
+    }
+
+    this.log('debug', 'engine: requestUpdatesSince ok, applying update');
+    const outcome = await this.handleRemoteUpdate(updates.value);
+    span.setAttr('outcome', outcome);
+    span.setAttr('update.bytes', updates.value.length);
+    span.end();
+  }
+}
+
+export type ReactiveSyncEngine<S extends GenericRootSchema, D> = {
+  isRunning: Accessor<boolean>;
+  start: () => void;
+  stop: () => void;
+  reset: (
+    snapshotThunk?: () => ResultAsync<Uint8Array, TimeoutError>
+  ) => Promise<void>;
+  syncStateToLoro: (state: InferType<S>) => Promise<void>;
+  syncAwarenessToLoro: (awareness: D) => void;
+};
+
+export function createSyncEngine<
+  D,
+  S extends GenericRootSchema = GenericRootSchema,
+>(
+  params: Omit<SyncEngineParams<S, D>, 'onRunningChange'> & {
+    readonly?: Accessor<boolean>;
+  }
+): ReactiveSyncEngine<S, D> {
+  const [isRunning, setIsRunning] = createSignal(false);
+
+  const engine = new SyncEngine({
+    ...params,
+    onRunningChange: setIsRunning,
+    // In the browser, gossip local edits to other tabs of the same doc.
+    makeChatter:
+      params.makeChatter ?? ((id) => new BroadcastChannelChatter(id)),
+  });
+  const { loroManager, awareness } = params;
+
+  onCleanup(
+    loroManager.onStateChange((update) => engine.onStateUpdate(update))
+  );
+  createEffect(on(awareness.local, () => engine.onLocalAwarenessChange()));
+
+  return {
+    isRunning,
+    start: () => engine.start(),
+    stop: () => engine.stop(),
+    reset: (t) => engine.reset(t),
+    syncStateToLoro: (state) => engine.syncStateToLoro(state),
+    syncAwarenessToLoro: (a) => engine.syncAwarenessToLoro(a),
+  };
+}

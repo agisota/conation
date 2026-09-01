@@ -1,0 +1,60 @@
+[package]
+default-run = "convert_service"
+edition = "2024"
+name = "convert_service"
+publish = false
+version = "0.1.0"
+
+[[bin]]
+name = "convert_service_doppler_config"
+path = "src/doppler_config.rs"
+
+[features]
+disable_cleanup = []
+disable_worker = []
+local_queue = []
+
+[dependencies]
+anyhow = { workspace = true }
+aws-sdk-lambda = { workspace = true }
+aws-sdk-s3 = { workspace = true }
+aws-sdk-secretsmanager = { workspace = true }
+aws-sdk-sqs = { workspace = true }
+axum = { workspace = true }
+database_env_vars = { path = "../../crates/database_env_vars" }
+doppler-config = { workspace = true }
+futures = { workspace = true }
+http-body-util = { workspace = true }
+lambda_client = { path = "../../crates/lambda_client" }
+conation_auth = { path = "../../crates/conation_auth" }
+conation_authorization = { path = "../../crates/conation_authorization" }
+conation_aws_config = { path = "../../crates/conation_aws_config", features = ["s3"] }
+conation_cors = { path = "../../crates/conation_cors" }
+conation_config = { path = "../../crates/conation_config" }
+conation_db_client = { path = "../../crates/conation_db_client" }
+conation_entrypoint = { path = "../../crates/conation_entrypoint" }
+conation_env = { path = "../../crates/conation_env" }
+conation_env_var = { path = "../../crates/conation_env_var" }
+conation_middleware = { path = "../../crates/conation_middleware", default-features = false }
+conation_queues = { path = "../../crates/conation_queues" }
+conation_uuid = { path = "../../crates/conation_uuid" }
+model = { path = "../../crates/model" }
+s3_key = { path = "../../crates/s3_key" }
+nix = { version = "0.29.0", features = ["process", "signal"] }
+remote_env_var = { path = "../../crates/remote_env_var" }
+rs-libreoffice-bindings = { git = "https://github.com/macro-inc/rs-libreoffice-bindings", rev = "056a40ddfac1d9650be30b9f0b4b934e9266c7dc" }
+s3_client = { path = "../../crates/s3_client" }
+secretsmanager_client = { path = "../../crates/secretsmanager_client" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sqlx = { workspace = true }
+sqs_client = { path = "../../crates/sqs_client" }
+sqs_worker = { path = "../../crates/sqs_worker" }
+tokio = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }
+tracing = { workspace = true }
+utoipa = { workspace = true }
+utoipa-swagger-ui = { workspace = true }
+zip = { workspace = true, features = ["bzip2"] }
+workspace-hack = { version = "0.1", path = "../../crates/workspace-hack" }

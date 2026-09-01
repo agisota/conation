@@ -1,0 +1,634 @@
+import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
+import { createConfiguredChannelMarkdownEditor } from '@channel/Input';
+import { useIsAuthenticated } from '@core/auth';
+import {
+  type BlockAlias,
+  type BlockName,
+  useMaybeBlockAliasedName,
+  useMaybeBlockId,
+  useMaybeBlockName,
+} from '@core/block';
+import { CustomScrollbar } from '@core/component/CustomScrollbar';
+import { MarkdownShell } from '@core/component/LexicalMarkdown/builder/MarkdownShell';
+import { RecipientSelector } from '@core/component/RecipientSelector';
+import { ShareOptions } from '@core/component/TopBar/ShareButton';
+import { registerHotkey, useHotkeyDOMScope } from '@core/hotkey/hotkeys';
+import { isMobile } from '@core/mobile/isMobile';
+import { useCombinedRecipients } from '@core/signal/useCombinedRecipient';
+import type { WithCustomUserInput } from '@core/user';
+import { useSendMessageToPeople } from '@core/util/channels';
+import { getDestinationFromOptions } from '@core/util/destination';
+import CheckIcon from '@phosphor/check.svg?component-solid';
+import PaperPlaneTilt from '@phosphor/paper-plane-tilt.svg';
+import {
+  blockNameToItemType,
+  itemTypeToReferenceEntityType,
+} from '@service-storage/client';
+import type { AccessLevel } from '@service-storage/generated/schemas/accessLevel';
+import type { SharePermissionV2ChannelSharePermissions } from '@service-storage/generated/schemas/sharePermissionV2ChannelSharePermissions';
+import { Button, cn, Hotkey } from '@ui';
+import {
+  type Accessor,
+  createEffect,
+  createMemo,
+  createSignal,
+  onMount,
+  Show,
+} from 'solid-js';
+import { Permissions } from './SharePermissions';
+import { toast } from './Toast/Toast';
+import { ScrollIndicators } from './VerticalScrollIndicators';
+
+type Recipient = WithCustomUserInput<'user' | 'contact' | 'channel'>;
+
+interface MobileForwardToChannelLayoutProps
+  extends Pick<
+    ForwardToChannelProps,
+    'submitPermissionInfo' | 'hideAccessLevelSelector'
+  > {
+  isAuthenticated: Accessor<boolean | undefined>;
+  selectedOptions: Accessor<Recipient[]>;
+  setSelectedOptions: (v: Recipient[]) => void;
+  triedToSubmit: Accessor<boolean>;
+  destinationOptions: ReturnType<typeof useCombinedRecipients>['all'];
+  submitAccessLevel: Accessor<AccessLevel | null>;
+  setSubmitAccessLevel: (level: AccessLevel | null) => void;
+  mdScrollRef: Accessor<HTMLElement | undefined>;
+  setMdScrollRef: (el: HTMLElement) => void;
+  markdownEditor: ReturnType<typeof createConfiguredChannelMarkdownEditor>;
+  handleSubmit: () => void;
+  canSendAsGroup: Accessor<boolean>;
+  sendAsGroupMessage: Accessor<boolean>;
+  setSendAsGroupMessage: (v: boolean) => void;
+}
+
+function MobileForwardToChannelLayout(
+  props: MobileForwardToChannelLayoutProps
+) {
+  return (
+    <Show when={props.isAuthenticated()}>
+      <div class="px-3 py-2 min-h-11" data-share-drawer-recipient>
+        <RecipientSelector<'user' | 'contact' | 'channel'>
+          placeholder={t('core.sharing.recipientPlaceholder')}
+          setSelectedOptions={props.setSelectedOptions}
+          selectedOptions={props.selectedOptions()}
+          triedToSubmit={props.triedToSubmit}
+          options={props.destinationOptions}
+          triggerMode="input"
+          class="border border-edge-muted p-1"
+          focusOnMount
+        />
+      </div>
+      {/* Send as group */}
+      <Show when={props.canSendAsGroup()}>
+        <div class="shrink-0 flex w-full items-center p-3 gap-3 flex-wrap">
+          <label
+            class={`flex items-start gap-2 ${!props.canSendAsGroup() ? 'cursor-not-allowed' : 'cursor-default'}`}
+          >
+            <div class="relative mt-0.5">
+              <input
+                onChange={(e) =>
+                  props.setSendAsGroupMessage(e.currentTarget.checked)
+                }
+                checked={props.sendAsGroupMessage() && props.canSendAsGroup()}
+                disabled={!props.canSendAsGroup()}
+                class="peer sr-only"
+                type="checkbox"
+              />
+              <div
+                class={`size-4 border ${
+                  !props.canSendAsGroup()
+                    ? 'border-edge peer-checked:bg-surface/20'
+                    : 'border-edge hover:border-accent/30 peer-checked:bg-accent/10 peer-checked:border-accent/30'
+                }`}
+              >
+                <Show
+                  when={props.sendAsGroupMessage() && props.canSendAsGroup()}
+                >
+                  <CheckIcon class="size-full text-accent p-0.5" />
+                </Show>
+              </div>
+            </div>
+            <div
+              class={`flex flex-col text-sm ${!props.canSendAsGroup() ? 'text-ink-disabled/50' : ''}`}
+            >
+              <span class="font-medium">{t('core.sharing.sendAsGroup')}</span>
+              <span
+                class={`text-xs mt-0.5 ${!props.canSendAsGroup() ? 'text-ink-disabled/50' : 'text-ink-muted'}`}
+              >
+                {props.sendAsGroupMessage() && props.canSendAsGroup()
+                  ? t('core.sharing.groupDescription')
+                  : t('core.sharing.individualDescription')}
+              </span>
+            </div>
+          </label>
+        </div>
+      </Show>
+      <Show
+        when={
+          props.submitPermissionInfo?.userPermissions === Permissions.OWNER &&
+          !props.hideAccessLevelSelector
+        }
+      >
+        <div class="px-3 py-2 flex items-center">
+          <span class="text-sm text-ink-muted pr-2">
+            {t('core.sharing.access')}:
+          </span>
+          <ShareOptions
+            setPermissions={(accessLevel) =>
+              props.setSubmitAccessLevel(accessLevel)
+            }
+            permissions={props.submitAccessLevel()}
+            label={t('core.sharing.permission')}
+            hideNoAccess
+          />
+        </div>
+      </Show>
+
+      <div class="flex-1 min-h-20 flex flex-col w-full mt-3 border-t border-edge-muted relative">
+        <ScrollIndicators scrollRef={props.mdScrollRef} noBorderStart />
+        <CustomScrollbar scrollContainer={props.mdScrollRef} />
+        <div
+          class="grow shrink min-h-20 overflow-y-auto scrollbar-hidden px-3 py-1.5 w-full text-sm"
+          onClick={() => props.markdownEditor.controls.focus()}
+          ref={props.setMdScrollRef}
+        >
+          <MarkdownShell
+            config={props.markdownEditor}
+            placeholder={t('core.sharing.optionalMessage')}
+            portalScope="local"
+            class="text-sm"
+          />
+        </div>
+      </div>
+    </Show>
+  );
+}
+
+interface ForwardToChannelProps {
+  submitPermissionInfo?: {
+    setChannelPermissions: (
+      channelId: string,
+      accessLevel: AccessLevel
+    ) => void;
+    channelSharePermissions?: SharePermissionV2ChannelSharePermissions;
+    userPermissions: Permissions;
+  };
+  onSubmit?: () => void;
+  onCancel?: () => void;
+  refetch?: () => void;
+  projectId?: string;
+  name: string;
+  ref?: (ref: {
+    getSelectedOptions: () => WithCustomUserInput<
+      'user' | 'contact' | 'channel'
+    >[];
+    setSubmitAccessLevel: (level: AccessLevel | null) => void;
+    getSubmitAccessLevel: () => AccessLevel | null;
+    handleSubmit: () => void;
+  }) => void;
+  hideAccessLevelSelector?: boolean;
+  initialAccessLevel?: AccessLevel | null;
+  blockId?: string;
+  blockName?: BlockName | BlockAlias;
+}
+
+export function ForwardToChannel(props: ForwardToChannelProps) {
+  const isAuthenticated = useIsAuthenticated();
+  const analytics = useAnalytics();
+
+  const [selectedOptions, setSelectedOptions] = createSignal<
+    WithCustomUserInput<'user' | 'contact' | 'channel'>[]
+  >([]);
+
+  const [mdScrollRef, setMdScrollRef] = createSignal<HTMLElement>();
+  const [containerRef, setContainerRef] = createSignal<HTMLDivElement>();
+
+  const [markdown, setMarkdown] = createSignal('');
+  // No onEnter: the optional message is a multi-line composer, so a bare Enter
+  // falls through to Lexical and inserts a newline. Sharing is bound to
+  // cmd+enter through the hotkey system below.
+  const markdownEditor = createConfiguredChannelMarkdownEditor({
+    namespace: 'forward-to-channel-markdown',
+    enableMentions: true,
+    onChange: setMarkdown,
+  });
+  const [triedToSubmit, setTriedToSubmit] = createSignal(false);
+  const { all: destinationOptions } = useCombinedRecipients();
+
+  const destination = createMemo(() => {
+    let options = selectedOptions();
+    if (!options || options.length === 0) {
+      return;
+    }
+    return getDestinationFromOptions(options);
+  });
+
+  const channelPermissions = createMemo(() => {
+    if (!props.submitPermissionInfo) {
+      return;
+    }
+    const destination_ = destination();
+    if (!destination_ || destination_.type !== 'channel') {
+      return;
+    }
+    const perms = props.submitPermissionInfo.channelSharePermissions?.find(
+      (p) => p.channel_id === destination_.id
+    );
+    return perms;
+  });
+
+  const { sendToUsers, sendToChannel } = useSendMessageToPeople();
+  const blockBaseName = useMaybeBlockName() ?? props.blockName;
+  const [submitAccessLevel, setSubmitAccessLevel] =
+    createSignal<AccessLevel | null>(
+      props.initialAccessLevel ?? (blockBaseName === 'md' ? 'edit' : 'view')
+    );
+  createEffect(() => {
+    const channelPermissions_ = channelPermissions();
+    if (channelPermissions_) {
+      setSubmitAccessLevel(channelPermissions_.access_level);
+    }
+  });
+
+  const submitChannelPermissions = (channelId: string) => {
+    if (!props.submitPermissionInfo) {
+      return;
+    }
+
+    const accessLevel = submitAccessLevel();
+    if (!accessLevel) {
+      toast.failure(t('core.sharing.permissionFailed'));
+      return;
+    }
+
+    props.submitPermissionInfo.setChannelPermissions(channelId, accessLevel);
+  };
+
+  const [sendAsGroupMessage, setSendAsGroupMessage] =
+    createSignal<boolean>(true);
+
+  const canSendAsGroup = createMemo(() => {
+    const _selectedOptions = selectedOptions();
+    if (!_selectedOptions || _selectedOptions.length <= 1) {
+      return false;
+    }
+    for (const selectedOption of _selectedOptions) {
+      if (selectedOption.kind === 'channel') {
+        return false;
+      }
+    }
+    return true;
+  });
+
+  const blockName = useMaybeBlockAliasedName() ?? props.blockName;
+  const blockId = useMaybeBlockId() ?? props.blockId;
+  const itemType = () =>
+    blockName != null ? blockNameToItemType(blockName) : undefined;
+
+  const asAttachment = () => {
+    const type = itemType();
+    return {
+      entity_type: type ? itemTypeToReferenceEntityType(type) : 'unknown',
+      entity_id: blockId ?? '',
+    };
+  };
+
+  const trackForwardShare = (targetType: 'channel' | 'user') => {
+    const attachment = asAttachment();
+    analytics.track('share_entity', {
+      entityType: itemType() ?? attachment.entity_type,
+      entityId: attachment.entity_id || undefined,
+      shareMethod: 'forward',
+      targetType,
+      location: 'forward_to_channel',
+    });
+  };
+
+  function handleSubmit() {
+    let options = selectedOptions();
+    if (!options || options.length === 0) {
+      return setTriedToSubmit(true);
+    }
+
+    if (canSendAsGroup() && sendAsGroupMessage()) {
+      const destination_ = destination();
+      if (destination_ && destination_.type === 'users') {
+        sendToUsers({
+          attachments: [asAttachment()],
+          users: destination_.users,
+          content: markdown(),
+          mentions: [],
+        }).then((res) => {
+          if (!res) {
+            return;
+          }
+          const { channelId, navigateToChannel } = res;
+          submitChannelPermissions(channelId);
+
+          props.refetch?.();
+          toast.success(t('core.sharing.messageSent'), {
+            actions: [
+              {
+                label: t('core.sharing.viewInChannel'),
+                onClick: navigateToChannel,
+              },
+            ],
+          });
+          trackForwardShare('user');
+        });
+      } else {
+        toast.failure(t('core.sharing.messageFailed'));
+      }
+    } else {
+      const multipleMessages = options.length > 1;
+      let successfullySentAllMessages = true;
+      for (const option of options) {
+        if (option.kind === 'channel') {
+          Promise.all([
+            submitChannelPermissions(option.id),
+            sendToChannel({
+              attachments: [asAttachment()],
+              content: markdown(),
+              channelId: option.id,
+              mentions: [],
+            }).then((res) => {
+              if (!res) {
+                successfullySentAllMessages = false;
+                return;
+              }
+              props.refetch?.();
+              if (!multipleMessages) {
+                const { navigateToChannel } = res;
+                toast.success(t('core.sharing.messageSent'), {
+                  actions: [
+                    {
+                      label: t('core.sharing.viewInChannel'),
+                      onClick: () => navigateToChannel(),
+                    },
+                  ],
+                });
+              }
+              trackForwardShare('channel');
+            }),
+          ]);
+        } else {
+          // handles option.kind of user, custom, and contact (gmail)
+          sendToUsers({
+            attachments: [asAttachment()],
+            content: markdown(),
+            users: [option.id],
+            mentions: [],
+          }).then((res) => {
+            if (!res) {
+              successfullySentAllMessages = false;
+              return;
+            }
+            const { channelId, navigateToChannel } = res;
+            submitChannelPermissions(channelId);
+
+            props.refetch?.();
+            if (!multipleMessages) {
+              toast.success(t('core.sharing.messageSent'), {
+                actions: [
+                  {
+                    label: t('core.sharing.viewInChannel'),
+                    onClick: () => navigateToChannel(),
+                  },
+                ],
+              });
+            }
+            trackForwardShare('user');
+          });
+        }
+      }
+      if (multipleMessages) {
+        if (successfullySentAllMessages) {
+          toast.success(t('core.sharing.messagesSent'));
+        } else {
+          toast.failure(t('core.sharing.someMessagesFailed'));
+        }
+      }
+    }
+
+    const destination_ = destination();
+    if (!destination_) {
+      return;
+    }
+
+    props.onSubmit?.();
+  }
+
+  // Not detached: the handler below captures cmd+enter before the scope walk
+  // reaches any ancestor, so the share menu can keep inheriting global hotkeys.
+  const [attachHotkeys, shareHotkeyScope] = useHotkeyDOMScope(
+    'share-forward-to-channel'
+  );
+
+  registerHotkey({
+    hotkey: 'cmd+enter',
+    scopeId: shareHotkeyScope,
+    description: t('core.sharing.share'),
+    // Fires from the composer, the recipient input and the access selector.
+    runWithInputFocused: true,
+    keyDownHandler: (event) => {
+      // Holding the shortcut repeats keydown; swallow the repeats so one press
+      // sends one share, but keep capturing them so none reaches the composer.
+      if (event?.repeat) return true;
+      handleSubmit();
+      return true;
+    },
+  });
+
+  onMount(() => {
+    const container = containerRef();
+    if (container) attachHotkeys(container);
+
+    if (props.ref) {
+      props.ref({
+        getSubmitAccessLevel: submitAccessLevel,
+        getSelectedOptions: selectedOptions,
+        setSubmitAccessLevel,
+        handleSubmit,
+      });
+    }
+  });
+
+  return (
+    // Hosts the hotkey scope. `contents` keeps it out of the layout while it
+    // still sees the focusin events that activate the scope.
+    <div class="contents" ref={setContainerRef}>
+      <Show
+        when={!isMobile()}
+        fallback={
+          <MobileForwardToChannelLayout
+            isAuthenticated={isAuthenticated}
+            selectedOptions={selectedOptions}
+            setSelectedOptions={(v) => setSelectedOptions(v)}
+            triedToSubmit={triedToSubmit}
+            destinationOptions={destinationOptions}
+            submitPermissionInfo={props.submitPermissionInfo}
+            hideAccessLevelSelector={props.hideAccessLevelSelector}
+            submitAccessLevel={submitAccessLevel}
+            setSubmitAccessLevel={setSubmitAccessLevel}
+            mdScrollRef={mdScrollRef}
+            setMdScrollRef={setMdScrollRef}
+            markdownEditor={markdownEditor}
+            handleSubmit={handleSubmit}
+            canSendAsGroup={canSendAsGroup}
+            sendAsGroupMessage={sendAsGroupMessage}
+            setSendAsGroupMessage={setSendAsGroupMessage}
+          />
+        }
+      >
+        <Show when={isAuthenticated()}>
+          {/* Row 1: Recipient input + ShareOptions */}
+          <div class="flex items-center bg-surface pr-2">
+            <div class="min-w-0 flex-1 min-h-11">
+              <RecipientSelector<'user' | 'contact' | 'channel'>
+                placeholder={t('core.sharing.recipientPlaceholder')}
+                setSelectedOptions={setSelectedOptions}
+                selectedOptions={selectedOptions()}
+                triedToSubmit={triedToSubmit}
+                options={destinationOptions}
+                triggerMode="input"
+                focusOnMount
+                horizontalScroll
+                hideBorder
+              />
+            </div>
+            <Show
+              when={
+                props.submitPermissionInfo?.userPermissions ===
+                  Permissions.OWNER && !props.hideAccessLevelSelector
+              }
+            >
+              <div class="shrink-0 pr-2 flex items-center gap-2">
+                <Show when={selectedOptions().length > 0}>
+                  <span class="text-sm text-ink-extra-muted">
+                    {t('core.sharing.can')}
+                  </span>
+                </Show>
+                <ShareOptions
+                  setPermissions={(accessLevel) =>
+                    setSubmitAccessLevel(accessLevel)
+                  }
+                  permissions={submitAccessLevel()}
+                  label={t('core.sharing.permission')}
+                  hideNoAccess
+                  noBorder
+                />
+              </div>
+            </Show>
+          </div>
+
+          {/* Row 2: Optional message */}
+          <div class="grow shrink min-h-0 flex flex-col w-full border-t border-edge-muted">
+            <div class="relative grow shrink min-h-0 flex flex-col">
+              <ScrollIndicators scrollRef={mdScrollRef} noBorderStart />
+              <CustomScrollbar scrollContainer={mdScrollRef} />
+              <div
+                class="grow shrink min-h-20 max-h-40 overflow-y-auto scrollbar-hidden px-4 py-1.5 w-full text-sm"
+                onClick={() => markdownEditor.controls.focus()}
+                ref={setMdScrollRef}
+              >
+                <MarkdownShell
+                  config={markdownEditor}
+                  placeholder={t('core.sharing.optionalMessage')}
+                  portalScope="local"
+                  class="text-sm"
+                />
+              </div>
+            </div>
+
+            {/* Row 3: Send As Group (optional) + Cancel + Send */}
+            <div class="shrink-0 flex w-full items-center px-4 py-4 gap-3 flex-wrap">
+              <Show when={canSendAsGroup()}>
+                <label
+                  class={cn(
+                    'flex items-start gap-2',
+                    !canSendAsGroup() ? 'cursor-not-allowed' : 'cursor-default'
+                  )}
+                >
+                  <div class="relative mt-0.5">
+                    <input
+                      onChange={(e) =>
+                        setSendAsGroupMessage(e.currentTarget.checked)
+                      }
+                      checked={sendAsGroupMessage() && canSendAsGroup()}
+                      disabled={!canSendAsGroup()}
+                      class="peer sr-only"
+                      type="checkbox"
+                    />
+                    <div
+                      class={cn(
+                        'size-4 border',
+                        !canSendAsGroup()
+                          ? 'border-edge peer-checked:bg-surface/20'
+                          : 'border-edge hover:border-accent/30 peer-checked:bg-accent/10 peer-checked:border-accent/30'
+                      )}
+                    >
+                      <Show when={sendAsGroupMessage() && canSendAsGroup()}>
+                        <CheckIcon class="size-full text-accent p-0.5" />
+                      </Show>
+                    </div>
+                  </div>
+                  <div
+                    class={cn(
+                      'flex flex-col text-sm',
+                      !canSendAsGroup() && 'text-ink-disabled/50'
+                    )}
+                  >
+                    <span class="font-medium">
+                      {t('core.sharing.sendAsGroup')}
+                    </span>
+                    <span
+                      class={cn(
+                        'text-xs mt-0.5',
+                        !canSendAsGroup()
+                          ? 'text-ink-disabled/50'
+                          : 'text-ink-muted'
+                      )}
+                    >
+                      {sendAsGroupMessage() && canSendAsGroup()
+                        ? t('core.sharing.groupDescription')
+                        : t('core.sharing.individualDescription')}
+                    </span>
+                  </div>
+                </label>
+              </Show>
+
+              <div class="flex flex-auto items-center justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  class="text-ink-extra-muted"
+                  onClick={() => props.onCancel?.()}
+                >
+                  {t('common.cancel')}
+                </Button>
+                <Button
+                  variant={selectedOptions().length > 0 ? 'accent' : 'ghost'}
+                  depth={3}
+                  class="rounded-lg border-0"
+                  disabled={selectedOptions().length === 0}
+                  onClick={() => {
+                    const options = selectedOptions();
+                    if (options && options.length > 0) {
+                      handleSubmit();
+                    }
+                  }}
+                >
+                  <PaperPlaneTilt class="size-4" />
+                  {t('core.sharing.share')}
+                  <Hotkey shortcut="cmd+enter" theme="current" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Show>
+      </Show>
+    </div>
+  );
+}

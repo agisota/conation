@@ -1,0 +1,13 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"baseUrl": ".",
+		"paths": {
+			"@conation/lexical-core/markdown-loro-snapshot": [
+				"src/types/markdown-loro-snapshot.d.ts"
+			],
+			"@conation/lexical-core": ["../../packages/lexical-core/"],
+			"@conation/lexical-core/*": ["../../packages/lexical-core/*"]
+		}
+	}
+}

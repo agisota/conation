@@ -1,0 +1,139 @@
+# Freeze Docker Compose resources across checkouts/worktrees. Local setup is
+# single-instance by design; do not derive resource names from the directory.
+export COMPOSE_PROJECT_NAME := "macro"
+
+# Gets the .env variables for the FusionAuth docker compose.
+get_fusionauth_env:
+  @echo "Getting fusionauth .env file for docker compose"
+  curl -o .env https://raw.githubusercontent.com/FusionAuth/fusionauth-containers/452efcac5c60f6a3a734947b1a8eefaae6f811fa/docker/fusionauth/.env
+
+# Starts up the local FusionAuth instance. This should only be used during setup/testing.
+start *ARGS:
+  @echo "Starting fusionauth"
+  test -f .env || just get_fusionauth_env
+  docker network create auth 2>/dev/null || true
+  docker volume create fusionauth_db_data 2>/dev/null || true
+  docker volume create fusionauth_config 2>/dev/null || true
+  docker compose up {{ ARGS }}
+
+# Stops the local FusionAuth instance. This should only be used for setup/testing.
+stop *ARGS:
+  @echo "Stopping fusionauth"
+  docker compose stop {{ ARGS }}
+
+# Destroys the local pulumi stack.
+destroy_local_stack:
+  cp Pulumi.local.yaml Pulumi.local.yaml.bak
+  pulumi stack rm local --yes --force
+  mv Pulumi.local.yaml.bak Pulumi.local.yaml
+
+# Destroys the local FusionAuth instance and pulumi stack.
+destroy:
+  just destroy_local_stack || true
+  docker compose down -v
+  docker volume rm fusionauth_db_data fusionauth_config || true
+
+# Creates the local pulumi stack and updates FusionAuth with components.
+setup_local_stack:
+  @echo "Initializing local stack"
+  pulumi stack init local || true
+  pulumi import --stack local \
+    fusionauth:index/fusionAuthKey:FusionAuthKey jwt-signing-key d7d09513-a3f5-401c-9685-34ab6c552453 \
+    --yes || true # Note: This command appears to fail but actually doesn't
+  @echo "Local stack initialized"
+  pulumi up --stack local --yes
+  @echo "FusionAuth local stack deployed"
+
+# Imports all pre-existing dev FusionAuth assets into pulumi.
+import_dev:
+  pulumi import --stack macro-inc/dev \
+    fusionauth:index/fusionAuthKey:FusionAuthKey jwt-signing-key aea64fc1-84f6-89ab-fb7c-08a21556263e \
+    fusionauth:index/fusionAuthApplication:FusionAuthApplication macro-application eb75fe7a-0ef1-4186-96d9-cc62cfb1d10c \
+    fusionauth:index/fusionAuthTenant:FusionAuthTenant default-tenant 5e13f524-8d32-0454-81f8-061936256aa4 \
+    fusionauth:index/fusionAuthLambda:FusionAuthLambda populate-jwt-lambda a7f3e8d2-4b91-4c5a-9e6f-1a2b3c4d5e6f \
+    fusionauth:index/fusionAuthIdpOpenIdConnect:FusionAuthIdpOpenIdConnect google-idp 17dc55db-c78e-4b19-940b-2e847479a08f \
+    fusionauth:index/fusionAuthIdpOpenIdConnect:FusionAuthIdpOpenIdConnect google-gmail-idp b99932ac-bce5-4f1d-99a1-e64760aae811
+
+# Performs a healthcheck on local FusionAuth.
+healthcheck:
+  @echo "Waiting for FusionAuth to be healthy..."
+  @until curl -s http://localhost:9011/api/status | grep -q '{"status":"Ok"}'; do \
+    echo "FusionAuth not ready, waiting..."; \
+    sleep 3; \
+  done
+  @echo "FusionAuth healthy"
+
+# Sets up the local FusionAuth stack.
+setup:
+  cd ../../ && bun i && cd -
+  just get_fusionauth_env
+  just start -d --wait
+  just healthcheck
+  just setup_local_stack
+  just insert_local_fusionauth_variables
+  just stop
+  @echo "FusionAuth setup complete"
+
+# Patches the root `.env` file with local FusionAuth values.
+# Idempotent: replaces existing values in-place, appends if missing.
+# Covers both dynamic values (from Pulumi/FusionAuth API) and static
+# values that differ between local and dev FusionAuth.
+insert_local_fusionauth_variables:
+  #!/usr/bin/env bash
+  set -eo pipefail
+
+  ENV_FILE="{{justfile_directory()}}/../../../.env"
+  if [ ! -f "$ENV_FILE" ]; then
+    echo "Error: $ENV_FILE does not exist. Run 'just get_environment' first."
+    exit 1
+  fi
+
+  if ! pulumi stack output macroApplicationClientId -s local &>/dev/null; then
+    echo "Error: Pulumi local stack not found. Run 'just setup' first."
+    exit 1
+  fi
+
+  API_KEY="bf69486b-4733-4954-a44e-2e1b5f2c8a91"
+  APPLICATION_ID=$(pulumi stack output macroApplicationClientId -s local)
+  TENANT_ID=$(pulumi stack output defaultTenantId -s local)
+
+  CURL_RESPONSE=$(curl -s "http://localhost:9011/api/application/${APPLICATION_ID}" \
+    -H "Authorization: ${API_KEY}")
+  if [ -z "$CURL_RESPONSE" ]; then
+    echo "Error: Local FusionAuth instance is not running."
+    exit 1
+  fi
+  CLIENT_SECRET=$(echo "$CURL_RESPONSE" | jq -r '.application.oauthConfiguration.clientSecret')
+  if [ -z "$CLIENT_SECRET" ] || [ "$CLIENT_SECRET" = "null" ]; then
+    echo "Error: Could not read client secret from FusionAuth."
+    exit 1
+  fi
+
+  # Sets a key=value in the env file. Replaces in-place if present, appends if missing.
+  patch_var() {
+    local key="$1" value="$2"
+    if grep -q "^${key}=" "$ENV_FILE"; then
+      if [[ "$OSTYPE" == "darwin"* ]]; then
+        sed -i '' "s|^${key}=.*|${key}=\"${value}\"|" "$ENV_FILE"
+      else
+        sed -i "s|^${key}=.*|${key}=\"${value}\"|" "$ENV_FILE"
+      fi
+    else
+      echo "${key}=\"${value}\"" >> "$ENV_FILE"
+    fi
+  }
+
+  # Dynamic (from Pulumi / FusionAuth API)
+  patch_var AUDIENCE "$APPLICATION_ID"
+  patch_var FUSIONAUTH_TENANT_ID "$TENANT_ID"
+  patch_var FUSIONAUTH_CLIENT_ID "$APPLICATION_ID"
+  patch_var FUSIONAUTH_CLIENT_SECRET_KEY "$CLIENT_SECRET"
+
+  # Static (known values for local FusionAuth)
+  patch_var JWT_SECRET_KEY "super-secret-jwt-signing-key-for-local-development-only"
+  patch_var ISSUER "local.macro.com"
+  patch_var FUSIONAUTH_BASE_URL "http://fusionauth:9011"
+  patch_var FUSIONAUTH_API_KEY_SECRET_KEY "$API_KEY"
+  patch_var FUSIONAUTH_OAUTH_REDIRECT_URI "http://localhost:8080/oauth/redirect"
+
+  echo "Patched .env with local FusionAuth values"

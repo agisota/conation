@@ -1,0 +1,58 @@
+[package]
+default-run = "contacts_service"
+edition = "2024"
+name = "contacts_service"
+publish = false
+version = "0.1.0"
+
+[[bin]]
+name = "contacts_service"
+path = "src/main.rs"
+
+[[bin]]
+name = "contacts_service_openapi"
+path = "src/openapi.rs"
+
+[[bin]]
+name = "contacts_service_doppler_config"
+path = "src/doppler_config.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+aws-sdk-secretsmanager = { workspace = true }
+aws-sdk-sqs = { workspace = true }
+axum = { workspace = true }
+contacts = { path = "../../crates/contacts", features = ["axum"] }
+conation_auth = { path = "../../crates/conation_auth" }
+conation_authorization = { path = "../../crates/conation_authorization" }
+conation_aws_config = { path = "../../crates/conation_aws_config" }
+conation_cors = { path = "../../crates/conation_cors" }
+conation_entrypoint = { path = "../../crates/conation_entrypoint" }
+conation_env = { path = "../../crates/conation_env" }
+conation_user_id = { path = "../../crates/conation_user_id" }
+model = { path = "../../crates/model" }
+rate_limit = { path = "../../crates/rate_limit", features = ["axum"] }
+redis = { workspace = true }
+secretsmanager_client = { path = "../../crates/secretsmanager_client" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sqlx = { workspace = true }
+sqs_worker = { path = "../../crates/sqs_worker" }
+tokio = { workspace = true }
+tracing = { workspace = true }
+utoipa = { workspace = true }
+utoipa-swagger-ui = { workspace = true }
+conation_service_urls = { path = "../../crates/conation_service_urls" }
+workspace-hack = { version = "0.1", path = "../../crates/workspace-hack" }
+conation_env_var = { path = "../../crates/conation_env_var" }
+conation_queues = { path = "../../crates/conation_queues" }
+conation_config = { path = "../../crates/conation_config" }
+database_env_vars = { path = "../../crates/database_env_vars" }
+doppler-config = { workspace = true }
+
+[features]
+mock = []
+
+[dev-dependencies]
+http-body-util = { workspace = true }
+tower = { workspace = true }

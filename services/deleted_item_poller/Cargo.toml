@@ -1,0 +1,38 @@
+[package]
+edition = "2024"
+name = "deleted_item_poller"
+publish = false
+version = "0.1.0"
+
+[dependencies]
+anyhow = { workspace = true }
+aws-sdk-sqs = { workspace = true }
+conation_aws_config = { path = "../../crates/conation_aws_config" }
+aws-smithy-types = { workspace = true }
+aws_lambda_events = { workspace = true, features = ["eventbridge"] }
+chat = { path = "../../crates/chat", default-features = false }
+chrono = { workspace = true }
+documents = { path = "../../crates/documents", default-features = false }
+futures = { workspace = true }
+lambda_runtime = { workspace = true }
+conation_db_client = { path = "../../crates/conation_db_client" }
+conation_entrypoint = { path = "../../crates/conation_entrypoint" }
+conation_env = { path = "../../crates/conation_env" }
+conation_env_var = { path = "../../crates/conation_env_var" }
+conation_event_broker = { path = "../../crates/conation_event_broker" }
+conation_queues = { path = "../../crates/conation_queues" }
+conation_user_id = { path = "../../crates/conation_user_id", default-features = false }
+conation_uuid = { path = "../../crates/conation_uuid" }
+model = { path = "../../crates/model" }
+projects = { path = "../../crates/projects", default-features = false }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sqlx = { workspace = true }
+sqs_client = { path = "../../crates/sqs_client", default-features = false, features = [
+  "chat",
+  "document",
+] }
+tokio = { workspace = true }
+tracing = { workspace = true }
+urlencoding = { workspace = true }
+workspace-hack = { version = "0.1", path = "../../crates/workspace-hack" }

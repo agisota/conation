@@ -1,0 +1,104 @@
+import { t } from '@app/lib/i18n';
+import {
+  createBulkDeleteDssItemsMutation,
+  type EntityData,
+  InlineEntity,
+} from '@entity';
+import { Dialog } from '@kobalte/core/dialog';
+import CloseIcon from '@phosphor-icons/core/regular/x.svg?component-solid';
+import { Button, cn } from '@ui';
+import { For, onMount, Show } from 'solid-js';
+
+export const BulkDeleteView = (props: {
+  entities: EntityData[];
+  onFinish: () => void;
+  onCancel: () => void;
+  onError?: (error: unknown) => void;
+}) => {
+  const bulkDelete = createBulkDeleteDssItemsMutation();
+  let deleteButton: HTMLButtonElement | undefined;
+
+  const focusDeleteButton = () => {
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => deleteButton?.focus())
+    );
+  };
+
+  onMount(focusDeleteButton);
+
+  const handleDelete = async () => {
+    try {
+      await bulkDelete.mutateAsync(props.entities);
+      props.onFinish();
+    } catch (error) {
+      console.error('Failed to delete entities:', error);
+      props.onError?.(error);
+    }
+  };
+
+  const handleCancel = () => {
+    props.onCancel();
+  };
+
+  return (
+    <>
+      <div class="shrink-0 flex flex-row items-center px-2 gap-1 border-b border-b-edge-muted h-10">
+        <Dialog.CloseButton as={Button} variant="ghost" size="icon-sm">
+          <CloseIcon />
+        </Dialog.CloseButton>
+        <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">
+          {t('entity.delete.title', { count: props.entities.length })}
+        </Dialog.Title>
+      </div>
+
+      <div class="p-2 border-b border-edge-muted">
+        <div class="flex items-center gap-2">
+          <For each={props.entities.slice(0, 2)}>
+            {(entity) => (
+              <div
+                class={cn(
+                  'bg-hover border border-edge-muted px-2 py-1 truncate text-xs rounded-xs',
+                  {
+                    'max-w-[50%]': props.entities.length === 2,
+                  }
+                )}
+              >
+                <InlineEntity entity={entity} />
+              </div>
+            )}
+          </For>
+          <Show when={props.entities.length > 2}>
+            <div class="text-ink-muted text-xs px-2 py-1">
+              {t('entity.selection.additionalCount', {
+                count: props.entities.length - 2,
+              })}
+            </div>
+          </Show>
+        </div>
+      </div>
+
+      <div class="p-3 flex flex-col gap-3">
+        <p class="text-sm text-ink-muted">
+          {t('entity.delete.confirmation', { count: props.entities.length })}
+        </p>
+
+        <div class="flex justify-end gap-2">
+          <Button variant="ghost" onClick={handleCancel}>
+            {t('common.cancel')}
+          </Button>
+          <Button
+            ref={(el: HTMLButtonElement) => {
+              deleteButton = el;
+              focusDeleteButton();
+            }}
+            type="button"
+            variant="danger"
+            onClick={handleDelete}
+          >
+            {t('common.delete')}
+          </Button>
+        </div>
+      </div>
+    </>
+  );
+};
