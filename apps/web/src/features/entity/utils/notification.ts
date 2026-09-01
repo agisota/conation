@@ -58,6 +58,136 @@ export function toNotificationEntity(entity: EntityData): Entity {
 }
 
 /**
+ * Item types the notification service can mute. Keep aligned with
+ * `MUTED_ENTITY_TYPE_LABELS` and the events that actually fan out.
+ */
+const MUTEABLE_ITEM_TYPES = new Set([
+  'calendar_event',
+  'call',
+  'channel',
+  'chat',
+  'document',
+  'email_thread',
+  'foreign_entity',
+  'project',
+  'reminder',
+]);
+
+export type MuteItem = {
+  item_id: string;
+  item_type: string;
+};
+
+/**
+ * Canonical unsubscribe `item_type`. Frontend rows use `email` / `foreign`;
+ * notifications and the mute API store `email_thread` / `foreign_entity`.
+ */
+export function normalizeMuteItemType(type: string): string {
+  return match(type)
+    .with('email', () => 'email_thread')
+    .with('foreign', () => 'foreign_entity')
+    .otherwise((value) => value);
+}
+
+/**
+ * The unsubscribe row that mutes notifications for this entity.
+ *
+ * Uses {@link toNotificationEntity} so the stored item matches the
+ * notification's primary entity — outbound delivery filters unsubscribes by
+ * that entity's `item_id`. Channel threads therefore mute the parent
+ * channel, which is also how their notifications are attached.
+ */
+export function muteItemForEntity(entity: EntityData): MuteItem | undefined {
+  return muteItemForRef(toNotificationEntity(entity));
+}
+
+/** Same mapping for a bare id/type (favorites, already-canonical refs). */
+export function muteItemForRef(entity: {
+  id: string;
+  type: string;
+}): MuteItem | undefined {
+  const item_type = normalizeMuteItemType(entity.type);
+  if (!MUTEABLE_ITEM_TYPES.has(item_type)) return undefined;
+  return { item_id: entity.id, item_type };
+}
+
+/**
+ * Preview fetch key for a muted item. Only types the preview pipeline
+ * actually serves — reminder and GitHub have no batch preview fetcher.
+ */
+export function muteItemPreviewEntity(item: MuteItem):
+  | {
+      id: string;
+      type:
+        | 'calendar_event'
+        | 'call'
+        | 'channel'
+        | 'chat'
+        | 'document'
+        | 'email'
+        | 'project';
+    }
+  | undefined {
+  return match(normalizeMuteItemType(item.item_type))
+    .with('email_thread', () => ({ id: item.item_id, type: 'email' as const }))
+    .with(
+      'channel',
+      'calendar_event',
+      'document',
+      'chat',
+      'project',
+      'call',
+      (type) => ({ id: item.item_id, type })
+    )
+    .otherwise(() => undefined);
+}
+
+export type MuteItemFallbackIconType =
+  | 'calendar'
+  | 'call'
+  | 'channel'
+  | 'chat'
+  | 'default'
+  | 'email'
+  | 'githubPullRequest'
+  | 'md'
+  | 'project'
+  | 'reminder';
+
+/** Icon used before a preview loads, or when the type has no preview. */
+export function muteItemFallbackIconType(
+  itemType: string
+): MuteItemFallbackIconType {
+  return match(normalizeMuteItemType(itemType))
+    .with('channel', 'chat', 'call', 'project', 'reminder', (type) => type)
+    .with('document', () => 'md' as const)
+    .with('email_thread', () => 'email' as const)
+    .with('calendar_event', () => 'calendar' as const)
+    .with('foreign_entity', () => 'githubPullRequest' as const)
+    .otherwise(() => 'default' as const);
+}
+
+export function isMutedItem(
+  muted: readonly MuteItem[],
+  item: MuteItem
+): boolean {
+  const type = normalizeMuteItemType(item.item_type);
+  return muted.some(
+    (entry) =>
+      entry.item_id === item.item_id &&
+      normalizeMuteItemType(entry.item_type) === type
+  );
+}
+
+export function entityIsMuted(
+  muted: readonly MuteItem[],
+  entity: EntityData
+): boolean {
+  const item = muteItemForEntity(entity);
+  return item !== undefined && isMutedItem(muted, item);
+}
+
+/**
  * Filters out invalid notification types that shouldn't be displayed
  */
 export function filterValidNotifications(

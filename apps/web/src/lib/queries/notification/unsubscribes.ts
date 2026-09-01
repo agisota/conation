@@ -5,6 +5,18 @@ import { useMutation, useQuery } from '@tanstack/solid-query';
 import { queryClient } from '../client';
 import { notificationKeys } from './keys';
 
+function sameMuteItem(left: UserUnsubscribe, right: UserUnsubscribe): boolean {
+  const normalize = (type: string) => {
+    if (type === 'email') return 'email_thread';
+    if (type === 'foreign') return 'foreign_entity';
+    return type;
+  };
+  return (
+    left.item_id === right.item_id &&
+    normalize(left.item_type) === normalize(right.item_type)
+  );
+}
+
 async function fetchUnsubscribes() {
   const response = await notificationServiceClient.getUnsubscribes();
   if (response.isErr()) {
@@ -35,26 +47,109 @@ function invalidateUnsubscribes() {
   });
 }
 
+const MUTE_ITEM_MUTATION_KEY = ['notification', 'mute-item'] as const;
+const UNMUTE_ITEM_MUTATION_KEY = ['notification', 'unmute-item'] as const;
+
+function writeUnsubscribes(
+  update: (prev: UserUnsubscribe[]) => UserUnsubscribe[]
+) {
+  queryClient.setQueryData<UserUnsubscribe[]>(
+    notificationKeys.unsubscribes.queryKey,
+    (prev) => update(prev ?? [])
+  );
+}
+
+function readUnsubscribes() {
+  return queryClient.getQueryData<UserUnsubscribe[]>(
+    notificationKeys.unsubscribes.queryKey
+  );
+}
+
+function clearUnsubscribesIfUncachedEmpty(hadCache: boolean) {
+  if (hadCache) return;
+  const current = readUnsubscribes();
+  if (current !== undefined && current.length > 0) return;
+  queryClient.removeQueries({
+    queryKey: notificationKeys.unsubscribes.queryKey,
+  });
+}
+
+/** Undo one mute without restoring a stale full-list snapshot. */
+function rollbackFailedMute(item: UserUnsubscribe, hadCache: boolean) {
+  if (readUnsubscribes() === undefined) return;
+  writeUnsubscribes((prev) =>
+    prev.filter((entry) => !sameMuteItem(entry, item))
+  );
+  clearUnsubscribesIfUncachedEmpty(hadCache);
+}
+
+/** Undo one unmute without restoring a stale full-list snapshot. */
+function rollbackFailedUnmute(item: UserUnsubscribe, hadCache: boolean) {
+  if (!hadCache) {
+    clearUnsubscribesIfUncachedEmpty(false);
+    return;
+  }
+  writeUnsubscribes((prev) =>
+    prev.some((entry) => sameMuteItem(entry, item)) ? prev : [...prev, item]
+  );
+}
+
+function invalidateUnsubscribesWhenIdle() {
+  const pending =
+    queryClient.isMutating({ mutationKey: MUTE_ITEM_MUTATION_KEY }) +
+    queryClient.isMutating({ mutationKey: UNMUTE_ITEM_MUTATION_KEY });
+  if (pending > 1) return;
+  return invalidateUnsubscribes();
+}
+
 export function useMuteItemMutation() {
   return useMutation(() => ({
+    mutationKey: MUTE_ITEM_MUTATION_KEY,
     mutationFn: async (item: UserUnsubscribe) => {
       await throwOnErr(() => notificationServiceClient.unsubscribeItem(item));
     },
+    onMutate: async (item) => {
+      await queryClient.cancelQueries({
+        queryKey: notificationKeys.unsubscribes.queryKey,
+      });
+      const hadCache = readUnsubscribes() !== undefined;
+      writeUnsubscribes((prev) =>
+        prev.some((entry) => sameMuteItem(entry, item)) ? prev : [...prev, item]
+      );
+      return { hadCache };
+    },
+    onError: (_error, item, context) => {
+      rollbackFailedMute(item, context?.hadCache === true);
+    },
     onSettled: () => {
-      void invalidateUnsubscribes();
+      void invalidateUnsubscribesWhenIdle();
     },
   }));
 }
 
 export function useUnmuteItemMutation() {
   return useMutation(() => ({
+    mutationKey: UNMUTE_ITEM_MUTATION_KEY,
     mutationFn: async (item: UserUnsubscribe) => {
       await throwOnErr(() =>
         notificationServiceClient.removeUnsubscribeItem(item)
       );
     },
+    onMutate: async (item) => {
+      await queryClient.cancelQueries({
+        queryKey: notificationKeys.unsubscribes.queryKey,
+      });
+      const hadCache = readUnsubscribes() !== undefined;
+      writeUnsubscribes((prev) =>
+        prev.filter((entry) => !sameMuteItem(entry, item))
+      );
+      return { hadCache };
+    },
+    onError: (_error, item, context) => {
+      rollbackFailedUnmute(item, context?.hadCache === true);
+    },
     onSettled: () => {
-      void invalidateUnsubscribes();
+      void invalidateUnsubscribesWhenIdle();
     },
   }));
 }
