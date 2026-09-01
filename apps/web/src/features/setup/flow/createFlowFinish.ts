@@ -1,4 +1,5 @@
 import { AFTER_SETUP_ROUTE, DEFAULT_ROUTE } from '@app/constants/defaultRoute';
+import { t } from '@app/lib/i18n';
 import { createOnboardingCheckoutSession } from '@app/features/onboarding/use-onboarding-checkout';
 import type { PaidPlanTier } from '@app/features/paywall/plans';
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
@@ -78,7 +79,7 @@ export function createFlowFinish(options?: {
     // Exiting with the row still active would leave staged candidates
     // undiscarded and the flow resumable after the user thinks it's done.
     if (onboardingResult.status === 'rejected') {
-      toast.failure("Couldn't finish setup — please try again");
+      toast.failure(t('auto.couldn_t_finish_setup_please_t'));
       return false;
     }
     await queryClient
@@ -91,7 +92,7 @@ export function createFlowFinish(options?: {
       authKeys.userInfo.queryKey
     );
     if (userInfo?.tutorialComplete !== true) {
-      toast.failure("Couldn't finish setup — please try again");
+      toast.failure(t('auto.couldn_t_finish_setup_please_t'));
       return false;
     }
     sessionStorage.removeItem(FLOW_STEP_STORAGE_KEY);
@@ -129,7 +130,7 @@ export function createFlowFinish(options?: {
       // and re-enabling the buttons mid-unload invites a double checkout.
       window.location.href = checkoutUrl;
     } catch {
-      toast.failure("Couldn't start checkout — please try again");
+      toast.failure(t('auto.couldn_t_start_checkout_please'));
       setFinishing(false);
     }
   };

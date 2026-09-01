@@ -1063,5 +1063,7 @@
   "auto.type_a_message_and_send": "Type a message and send",
   "auto.search_attachments": "Search Attachments",
   "auto.calendar_event_preview": "Calendar event preview",
-  "auto.loading_calendar_events": "Loading calendar events"
+  "auto.loading_calendar_events": "Loading calendar events",
+  "auto.couldn_t_finish_setup_please_t": "Couldn't finish setup — please try again",
+  "auto.couldn_t_start_checkout_please": "Couldn't start checkout — please try again"
 }
