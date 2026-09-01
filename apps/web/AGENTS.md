@@ -24,16 +24,14 @@ A thin `useXFlag` wrapper around `useFeatureFlag(flag)` is fine.
   `disable-browser-turso-cache`). Do not invert on the flag object.
 - Remote (PostHog): pass `key`. Read with `useFeatureFlag(flag)` in components
   or `isFeatureEnabled(flag)` outside the tree. JSX: `<ShowFeatureFlag flag={flag}>`.
-- Env-only: pass `default`, no `key`. Read with `isFeatureEnabled(flag)` only.
-  `useFeatureFlag` will not accept it.
+- Env-only: pass `env`, no `key`. Read with `isFeatureEnabled(flag)` only.
+  `useFeatureFlag` will not accept it. Omit `default` for `false`.
 - `env` is the name after `VITE_`, e.g. `'ENABLE_REMINDERS'`.
 - `default` is the value when env is unset. For remote flags, omit it to defer
   to PostHog. The caller decides when it applies (`DEV_MODE_ENV || undefined`,
   `LOCAL_ONLY || undefined`, `true`).
 - Do not create the PostHog flag yourself. Ask the user where it should live
   (which PostHog project / environment) and wait for them.
-- Leave existing FLAG / OVERRIDE / string `useFeatureFlag` call sites alone
-  unless you are already changing that flag or were asked to migrate it.
 
 ### SolidJs
 - Avoid createEffect. Legitimate uses: syncing with external/imperative systems (DOM APIs, third-party libs). If you're using it to derive state or trigger updates, use a derived signal or wrap the setter instead.
