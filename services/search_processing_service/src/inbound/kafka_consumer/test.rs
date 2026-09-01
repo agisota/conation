@@ -37,9 +37,9 @@ use channels::domain::{
 use chrono::Utc;
 use documents::domain::events::{
     DocumentContentUploadedMetadata, DocumentCopiedMetadata, DocumentCreatedMetadata,
-    DocumentDeletedMetadata, DocumentInteractionMetadata, DocumentPurgedMetadata,
-    DocumentSyncContentUpdatedMetadata, DocumentTopicEvent, DocumentUpdatedMetadata,
-    InteractionReason,
+    DocumentDeletedMetadata, DocumentEmailAttachmentUnlinkedMetadata, DocumentInteractionMetadata,
+    DocumentPurgedMetadata, DocumentSyncContentUpdatedMetadata, DocumentTopicEvent,
+    DocumentUpdatedMetadata, InteractionReason,
 };
 use macro_event_broker::{Event, EventBrokerError, MacroEvent as _, MessageParts};
 use macro_event_topics::{
@@ -961,6 +961,16 @@ fn document_event_cases() -> Vec<(DocumentTopicEvent, DocumentEventDescription)>
                 event_type: "document.interaction",
             },
         ),
+        (
+            DocumentTopicEvent::EmailAttachmentUnlinked(DocumentEmailAttachmentUnlinkedMetadata {
+                document_id: DOCUMENT_ID.to_string(),
+            }),
+            DocumentEventDescription {
+                action: DocumentIndexAction::Ignore,
+                document_id: DOCUMENT_ID.to_string(),
+                event_type: "document.email_attachment_unlinked",
+            },
+        ),
     ]
 }
 
@@ -1383,7 +1393,7 @@ fn maps_all_channel_lifecycle_events_to_index_actions() {
 #[test]
 fn maps_all_document_lifecycle_events_to_index_actions() {
     let cases = document_event_cases();
-    assert_eq!(cases.len(), 9);
+    assert_eq!(cases.len(), 10);
 
     for (event, expected) in cases {
         let serialized = serde_json::to_value(&event).expect("serializable document event");
