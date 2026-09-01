@@ -74,7 +74,7 @@ type SwipeTouchState = {
 type SwipableRowContextValue = {
   stateFor: (id: string) => SwipableRowState;
   clearState: (id: string) => void;
-  collapseRow: (id: string) =>{t('auto.promise')}<void>;
+  collapseRow: (id: string) =>Promise<void>;
   registerRowHandler: (
     id: string,
     handlers: { onSwipeLeft?: () => void; onSwipeRight?: () => void }
@@ -98,7 +98,7 @@ export function SwipableRowProvider(
      * actions that keep it in place (e.g. reply to a message).
      */
     triggerBehavior?: 'fly-out' | 'spring-back';
-    setCollapseEntity?: Setter<((id: string) =>{t('auto.promise')}<void>) | undefined>;
+    setCollapseEntity?: Setter<((id: string) =>Promise<void>) | undefined>;
   }>
 ) {
   const [stateById, setStateById] = createSignal<

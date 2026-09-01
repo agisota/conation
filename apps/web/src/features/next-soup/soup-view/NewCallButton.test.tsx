@@ -9,7 +9,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NewCallButton } from './NewCallButton';
 
 const mocks = vi.hoisted(() => ({
-  joinChannelCall: vi.fn<(_: string) =>{t('auto.promise')}<void>>(),
+  joinChannelCall: vi.fn<(_: string) =>Promise<void>>(),
 }));
 
 vi.mock('@channel/Call/join-channel-call', () => ({

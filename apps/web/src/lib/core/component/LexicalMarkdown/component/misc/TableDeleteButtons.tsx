@@ -1,5 +1,5 @@
 import { mdStore } from '@block-md/signal/markdownBlockData';
-import { t } from '@app/lib/i18n';
+import { t as translate } from '@app/lib/i18n';
 import { ScopedPortal } from '@core/component/ScopedPortal';
 import {
   $deleteTableColumnAtSelection,
@@ -181,7 +181,7 @@ export function TableDeleteButtons() {
             <Show when={t().nearTop}>
               <button
                 type="button"
-                aria-label={t('auto.delete_column')}
+                aria-label={translate('auto.delete_column')}
                 class={BUTTON_CLASS}
                 style={{
                   left: `${(t().cellLeft + t().cellRight) / 2}px`,
@@ -198,7 +198,7 @@ export function TableDeleteButtons() {
             <Show when={t().nearLeft}>
               <button
                 type="button"
-                aria-label={t('auto.delete_row')}
+                aria-label={translate('auto.delete_row')}
                 class={BUTTON_CLASS}
                 style={{
                   left: `${t().tableLeft}px`,
@@ -215,7 +215,7 @@ export function TableDeleteButtons() {
             <Show when={t().nearTop && t().nearLeft}>
               <button
                 type="button"
-                aria-label={t('auto.delete_table')}
+                aria-label={translate('auto.delete_table')}
                 class={BUTTON_CLASS}
                 style={{
                   left: `${t().tableLeft}px`,

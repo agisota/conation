@@ -1,5 +1,4 @@
 import type { ResultError } from '@core/util/result';
-import { t } from '@app/lib/i18n';
 
 import { err, ok, type Result } from 'neverthrow';
 import { v7 as uuid7 } from 'uuid';
@@ -176,7 +175,7 @@ export enum JobTypeEnum {
 }
 
 const SUCCESS_STATUS = 'Success';
-const ERROR_STATUS = t('common.error');
+const ERROR_STATUS = 'Error';
 
 type DocumentProcessSuccessResponse = {
   error: false;

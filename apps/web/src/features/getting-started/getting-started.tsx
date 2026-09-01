@@ -313,7 +313,7 @@ function GettingStartedContent() {
 
 function GettingStartedSection(props: {
   section: GettingStartedSectionConfig;
-  activate: (action: GettingStartedAction) =>{t('auto.promise')}<void>;
+  activate: (action: GettingStartedAction) =>Promise<void>;
   isComplete: (action: GettingStartedAction) => boolean;
   sectionProgress: (section: GettingStartedSectionConfig) => {
     completed: number;

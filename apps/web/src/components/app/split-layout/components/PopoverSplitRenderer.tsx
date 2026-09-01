@@ -29,7 +29,7 @@ type PopoverSplitData = {
 };
 
 export function PopoverSplitRenderer(props: {
-  popovers: () =>{t('auto.map')}<string, PopoverSplitData>;
+  popovers: () =>Map<string, PopoverSplitData>;
   onClosePopover?: (id: string) => void;
 }) {
   const activePopovers = createMemo(() =>

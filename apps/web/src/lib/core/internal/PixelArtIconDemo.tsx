@@ -390,7 +390,7 @@ function GlyphGrid(props: GlyphGridProps) {
         return newIndex;
       });
     }
-    if (e.key === t('common.delete')) {
+    if (e.key === 'Delete') {
       e.preventDefault();
       props.onDeleteGlyph(props.glyphs[selectedIndex()]);
     } else if (e.key === 'Enter') {
@@ -600,7 +600,7 @@ function GlyphEditor(props: GlyphEditorProps) {
         event.preventDefault();
         event.stopPropagation();
         setSymmetryY((prev) => !prev);
-      } else if (event.key === t('common.delete')) {
+      } else if (event.key === 'Delete') {
         event.preventDefault();
         event.stopPropagation();
         clearAll();

@@ -175,7 +175,7 @@ export function RecurrenceBuilder(props: RecurrenceBuilderProps) {
               <RadioGroup.ItemControl class="flex size-4 shrink-0 items-center justify-center rounded-full border border-edge data-checked:border-accent">
                 <RadioGroup.ItemIndicator class="size-2 rounded-full bg-accent" />
               </RadioGroup.ItemControl>
-              <RadioGroup.ItemLabel class="shrink-0 font-medium text-ink">{t('auto.never')}</RadioGroup.ItemLabel>
+              <RadioGroup.ItemLabel class="shrink-0 font-medium text-ink">never</RadioGroup.ItemLabel>
               <span class="text-ink-extra-muted">{t('auto.the_event_repeats_indefinitely')}</span>
             </div>
           </RadioGroup.Item>

@@ -61,7 +61,7 @@ export function PullToRefresh(props: {
    * empty state) works too — its scrollTop reads 0, so pulls always start
    * from rest. */
   scrollContainer: Accessor<HTMLElement | undefined>;
-  onRefresh: () =>{t('auto.promise')}<unknown>;
+  onRefresh: () =>Promise<unknown>;
 }) {
   const [phase, setPhase] = createSignal<PullPhase>('idle');
   const [pull, setPull] = createSignal(0);

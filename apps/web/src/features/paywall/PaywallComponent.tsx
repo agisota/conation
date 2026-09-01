@@ -12,7 +12,7 @@ import { Button, Tooltip } from '@ui';
 import { createMemo, For, Show } from 'solid-js';
 
 export interface PaywallProps {
-  cb: () =>{t('auto.promise')}<void> | void;
+  cb: () =>Promise<void> | void;
   handleGuest?: () => void;
   isOnboarding?: boolean;
   errorKey?: PaywallKey | null;

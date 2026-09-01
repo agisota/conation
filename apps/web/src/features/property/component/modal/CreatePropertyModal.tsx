@@ -59,7 +59,7 @@ type Option<T> = {
 };
 
 type OptionInputProps<T extends string | number> = {
-  options: () =>{t('auto.option')}<T>[];
+  options: () =>Option<T>[];
   type: 'string' | 'number';
   onRemove: (id: string) => void;
   onUpdate: (id: string, value: T) => void;
@@ -247,7 +247,7 @@ export const CreatePropertyModal: Component<CreatePropertyModalProps> = (
   });
 
   const removeOption = <T extends string | number>(
-    options: () =>{t('auto.option')}<T>[],
+    options: () =>Option<T>[],
     setOptions: (options: Option<T>[]) => void,
     optionId: string,
     defaultValue: T
@@ -259,7 +259,7 @@ export const CreatePropertyModal: Component<CreatePropertyModalProps> = (
   };
 
   const updateOption = <T extends string | number>(
-    options: () =>{t('auto.option')}<T>[],
+    options: () =>Option<T>[],
     setOptions: (options: Option<T>[]) => void,
     optionId: string,
     value: T,
@@ -272,7 +272,7 @@ export const CreatePropertyModal: Component<CreatePropertyModalProps> = (
   };
 
   const hasDuplicateOptions = <T extends string | number>(
-    options: () =>{t('auto.option')}<T>[]
+    options: () =>Option<T>[]
   ): boolean => {
     const values = options().map((opt) =>
       typeof opt.value === 'string' ? opt.value.trim() : opt.value

@@ -1,5 +1,4 @@
 import { createContext, createSignal, useContext } from 'solid-js';
-import { t } from '@app/lib/i18n';
 import en from './locales/en.json';
 import ru from './locales/ru.json';
 

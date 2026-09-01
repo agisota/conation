@@ -130,7 +130,7 @@ function formatBundleUpdateStatus(status: BundleUpdateStatus): string {
       return 'App update required';
     case 'Completed':
       return 'Update ready';
-    case t('common.error'):
+    case 'Error':
       return 'An error occurred when checking for updates';
   }
 }
@@ -683,7 +683,7 @@ function NameInput(props: {
   value?: string;
   placeholder?: string;
   /** Returns whether the save succeeded so we can show status / revert. */
-  onSave: (value: string) =>{t('auto.promise')}<boolean>;
+  onSave: (value: string) =>Promise<boolean>;
 }) {
   const [inputValue, setInputValue] = createSignal(props.value ?? '');
   const [isFocused, setIsFocused] = createSignal(false);
@@ -789,7 +789,7 @@ function bundleUpdateAction(
         label: 'Check for Update',
         action: () => invoke('check_for_update'),
       };
-    case t('common.error'):
+    case 'Error':
       return { label: t('common.retry'), action: () => invoke('check_for_update') };
     case 'UpdateFound':
       return { label: 'Download', action: grantBundleUpdate };

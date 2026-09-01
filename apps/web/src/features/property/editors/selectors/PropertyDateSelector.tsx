@@ -95,7 +95,7 @@ export const PropertyDateSelector = (props: DateSelectorProps) => {
     const total = totalOptions();
 
     if (
-      (e.key === t('common.delete') || e.key === 'Backspace') &&
+      (e.key === 'Delete' || e.key === 'Backspace') &&
       !searchQuery().trim()
     ) {
       handleClearDate(false);

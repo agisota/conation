@@ -108,8 +108,8 @@ async function uploadPendingShareFile(
 
 interface ShareTargetContextValue {
   pendingShareFiles: Accessor<PendingShareFile[]>;
-  uploadPendingShareFile: (args: UploadPendingShareFileArgs) =>{t('auto.promise')}<void>;
-  clearPendingShareFiles: () =>{t('auto.promise')}<void>;
+  uploadPendingShareFile: (args: UploadPendingShareFileArgs) =>Promise<void>;
+  clearPendingShareFiles: () =>Promise<void>;
 }
 
 const ShareTargetContext = createContext<ShareTargetContextValue | undefined>(

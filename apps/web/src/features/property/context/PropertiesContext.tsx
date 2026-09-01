@@ -24,8 +24,8 @@ interface CreatePropertyModalState {
 }
 
 export interface PropertySaveHandler {
-  saveProperty: (property: Property, value: PropertyApiValues) =>{t('auto.promise')}<void>;
-  saveDate: (property: Property, date: Date) =>{t('auto.promise')}<void>;
+  saveProperty: (property: Property, value: PropertyApiValues) =>Promise<void>;
+  saveDate: (property: Property, date: Date) =>Promise<void>;
 }
 
 interface PropertiesContextValue {
@@ -40,8 +40,8 @@ interface PropertiesContextValue {
   onPropertyPinned?: (propertyId: string) => void;
   onPropertyUnpinned?: (propertyId: string) => void;
   pinnedPropertyIds?: () => string[];
-  addProperty?: (propertyDefinitionId: string) =>{t('auto.promise')}<void>;
-  removeProperty?: (propertyId: string) =>{t('auto.promise')}<void>;
+  addProperty?: (propertyDefinitionId: string) =>Promise<void>;
+  removeProperty?: (propertyId: string) =>Promise<void>;
   saveHandler: PropertySaveHandler;
 
   // Specific modal state accessors
@@ -77,8 +77,8 @@ interface PropertiesProviderProps extends ParentProps {
   onPropertyPinned?: (propertyId: string) => void;
   onPropertyUnpinned?: (propertyId: string) => void;
   pinnedPropertyIds?: () => string[];
-  addProperty?: (propertyDefinitionId: string) =>{t('auto.promise')}<void>;
-  removeProperty?: (propertyId: string) =>{t('auto.promise')}<void>;
+  addProperty?: (propertyDefinitionId: string) =>Promise<void>;
+  removeProperty?: (propertyId: string) =>Promise<void>;
   saveHandler: PropertySaveHandler;
 }
 

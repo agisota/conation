@@ -1,8 +1,7 @@
 import { AccessLevel as UserAccessLevel } from '@service-storage/generated/schemas/accessLevel';
-import { t } from '@app/lib/i18n';
 
 export enum Permissions {
-  OWNER = t('common.owner'),
+  OWNER = 'Owner',
   CAN_EDIT = 'Can Edit',
   CAN_VIEW = 'Can View',
   CAN_COMMENT = 'Can Comment',

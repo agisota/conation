@@ -93,7 +93,7 @@ export function TagPicker(props: TagPickerProps) {
   );
   const [createSuccessHandler, setCreateSuccessHandler] =
     createSignal<CreateTagSuccessHandler>();
-  let saveAndClose: (() =>{t('auto.promise')}<void>) | undefined;
+  let saveAndClose: (() =>Promise<void>) | undefined;
   let triggerRef: HTMLButtonElement | undefined;
 
   const restoreFocusToTrigger = () => {
@@ -186,7 +186,7 @@ function TagPickerBodyOwner(props: {
   onOpenEditEditor: (
     mode: Extract<TagEditorDialogMode, { type: 'edit' }>
   ) => void;
-  registerSave: (handler: (() =>{t('auto.promise')}<void>) | undefined) => void;
+  registerSave: (handler: (() =>Promise<void>) | undefined) => void;
   createSuccessHandler: () => CreateTagSuccessHandler | undefined;
   onEditorClose: () => void;
   withClickBlock: boolean;
@@ -241,7 +241,7 @@ export function TagPickerPopover(props: {
   const [createSuccessHandler, setCreateSuccessHandler] =
     createSignal<CreateTagSuccessHandler>();
   const currentTeamQuery = useCurrentTeamQuery();
-  let saveAndClose: (() =>{t('auto.promise')}<void>) | undefined;
+  let saveAndClose: (() =>Promise<void>) | undefined;
 
   const handleOpenChange = (value: boolean) => {
     if (value) {
@@ -311,7 +311,7 @@ function TagPickerBody(props: {
   onOpenEditEditor: (
     mode: Extract<TagEditorDialogMode, { type: 'edit' }>
   ) => void;
-  registerSave: (handler: (() =>{t('auto.promise')}<void>) | undefined) => void;
+  registerSave: (handler: (() =>Promise<void>) | undefined) => void;
   suppressInitialOutsideEvents: boolean;
   withClickBlock?: boolean;
 }) {

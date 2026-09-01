@@ -245,7 +245,7 @@ export function MaybePushNotificationRegistration(props: {
 
   // now we compose the standard tauri notif plugin with the push notification plugin
   function curriedTauriPushNotification(
-    setDisabled: () =>{t('auto.promise')}<void>
+    setDisabled: () =>Promise<void>
   ): PlatformNotificationInterface {
     const {
       requestPermission,

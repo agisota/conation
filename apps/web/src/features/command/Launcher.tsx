@@ -165,7 +165,7 @@ function matchesLauncherSearch(item: CreatableBlock, query: string) {
 
 const createBlock = async (spec: {
   blockName: BlockName | BlockAlias;
-  createFn: () =>{t('auto.promise')}<string | undefined>;
+  createFn: () =>Promise<string | undefined>;
   loading?: boolean;
   shouldInsert?: boolean;
   /** Active creation span; registered by document id after creation. */

@@ -1,5 +1,4 @@
 import { SERVER_HOSTS } from '@core/constant/servers';
-import { t } from '@app/lib/i18n';
 import {
   ConstantBackoff,
   type Websocket,
@@ -94,7 +93,7 @@ export function createWebSocketJob<T, R, D, U>({
         return;
 
       const isError =
-        eventMessage.status === t('common.error') || eventMessage.data.error;
+        eventMessage.status === 'Error' || eventMessage.data.error;
       if (isError) {
         console.error(`${action} error`, eventMessage);
         setFailed(true);

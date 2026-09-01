@@ -179,7 +179,7 @@ interface ForwardToChannelProps {
   projectId?: string;
   name: string;
   ref?: (ref: {
-    getSelectedOptions: () =>{t('auto.withcustomuserinput')}<
+    getSelectedOptions: () => WithCustomUserInput<
       'user' | 'contact' | 'channel'
     >[];
     setSubmitAccessLevel: (level: AccessLevel | null) => void;

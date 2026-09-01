@@ -1,5 +1,4 @@
 import { ENABLE_GRAPHQL_SOUP } from '@core/constant/featureFlags';
-import { t } from '@app/lib/i18n';
 import type { Maybe } from '@core/types';
 import { throwOnErr } from '@core/util/result';
 import type { UnifiedNotification } from '@notifications/types';
@@ -733,7 +732,7 @@ export type NotificationStatusPatch = {
 
 export type NotificationStatusPatchDelete =
   | { t: 'Patch'; c: NotificationStatusPatch }
-  | { t: t('common.delete'); c: { id: string } };
+  | { t: 'Delete'; c: { id: string } };
 
 export type NotificationStatusUpdate = {
   type: 'notification_status_updated';
@@ -763,7 +762,7 @@ export const notificationStatusUpdateSchema = z.object({
         }),
       }),
       z.object({
-        t: z.literal(t('common.delete')),
+        t: z.literal('Delete'),
         c: z.object({
           id: z.string(),
         }),
@@ -798,7 +797,7 @@ export function applyNotificationStatusUpdate(
   const patchById = new Map(patches.map((patch) => [patch.id, patch]));
   const deleteIds = new Set(
     update.updates
-      .filter((item) => item.t === t('common.delete'))
+      .filter((item) => item.t === 'Delete')
       .map((item) => item.c.id)
   );
   const doneIds = new Set(

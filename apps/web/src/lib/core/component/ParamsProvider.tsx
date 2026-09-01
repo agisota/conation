@@ -28,7 +28,7 @@ type ResolvedParams<T extends ParamSchema> = {
  * consumers.
  */
 type ParamsContextValue = {
-  getParam: (param: string) =>{t('auto.accessor')}<string | undefined>;
+  getParam: (param: string) => Accessor<string | undefined>;
 };
 
 const ParamsContext = createContext<ParamsContextValue>({

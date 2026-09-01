@@ -353,7 +353,7 @@ export type CallState = {
   /** Call ID of the active call (from CallTokenResponse) */
   activeCallId: () => string | null;
   /** Remote participants in the call */
-  remoteParticipants: () =>{t('auto.map')}<string, RemoteParticipant>;
+  remoteParticipants: () =>Map<string, RemoteParticipant>;
   /** Incremented when track subscription/mute state changes */
   trackVersion: () => number;
   /** Whether the local participant is currently speaking */
@@ -384,27 +384,27 @@ export type CallState = {
   connectSession: (
     tokenResponse: CallTokenResponse,
     metadata?: CallSessionConnectMetadata
-  ) =>{t('auto.promise')}<void>;
+  ) =>Promise<void>;
   /** Disconnect the active call session using the right platform controller */
-  disconnectSession: (options?: CallSessionDisconnectOptions) =>{t('auto.promise')}<void>;
+  disconnectSession: (options?: CallSessionDisconnectOptions) =>Promise<void>;
   /** Toggle local audio */
-  toggleAudio: () =>{t('auto.promise')}<void>;
+  toggleAudio: () =>Promise<void>;
   /** Toggle local video */
-  toggleVideo: () =>{t('auto.promise')}<void>;
+  toggleVideo: () =>Promise<void>;
   /** Toggle screen sharing */
-  toggleScreenShare: () =>{t('auto.promise')}<void>;
+  toggleScreenShare: () =>Promise<void>;
   /** Switch active audio input device */
-  switchAudioInput: (deviceId: string) =>{t('auto.promise')}<void>;
+  switchAudioInput: (deviceId: string) =>Promise<void>;
   /** Switch active audio output device */
-  switchAudioOutput: (deviceId: string) =>{t('auto.promise')}<void>;
+  switchAudioOutput: (deviceId: string) =>Promise<void>;
   /** Switch active video input device */
-  switchVideoInput: (deviceId: string) =>{t('auto.promise')}<void>;
+  switchVideoInput: (deviceId: string) =>Promise<void>;
   /** Active mic noise suppression mode: off, browser-native, or Krisp */
   noiseSuppressionMode: () => MicNoiseSuppressionMode;
   /** Whether mic noise suppression (Krisp or native fallback) is enabled */
   isNoiseSuppressed: () => boolean;
   /** Toggle mic noise suppression on/off */
-  toggleNoiseSuppression: () =>{t('auto.promise')}<void>;
+  toggleNoiseSuppression: () =>Promise<void>;
   /** Begin an optimistic join to a channel */
   beginOptimisticJoin: (channelId: string) => void;
   /** Rollback an optimistic join to a channel */
@@ -431,7 +431,7 @@ export type CallState = {
   /** Current background effect (none, blur, or image) */
   backgroundEffect: () => BackgroundEffect;
   /** Set the background effect (blur with intensity or image background) */
-  setBackgroundEffect: (effect: BackgroundEffect) =>{t('auto.promise')}<void>;
+  setBackgroundEffect: (effect: BackgroundEffect) =>Promise<void>;
   /** Whether the call is currently shared with the creator's team */
   isSharedWithTeam: () => boolean;
   /** Update the locally-cached share-with-team flag (call after a toggle RPC) */
@@ -579,7 +579,7 @@ function createCallState() {
   // which means the latest user intent wins regardless of arrival order.
   let micProcessingQueue: Promise<void> = Promise.resolve();
 
-  function enqueueMicProcessing<T>(task: () =>{t('auto.promise')}<T>): Promise<T> {
+  function enqueueMicProcessing<T>(task: () =>Promise<T>): Promise<T> {
     const run = micProcessingQueue.then(task);
     micProcessingQueue = run.then(
       () => {},

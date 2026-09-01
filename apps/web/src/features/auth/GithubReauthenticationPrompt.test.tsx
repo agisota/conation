@@ -34,7 +34,7 @@ import { GithubReauthenticationPrompt } from './GithubReauthenticationPrompt';
 
 type ToastAction = {
   label: string;
-  onClick: () =>{t('auto.promise')}<void> | void;
+  onClick: () =>Promise<void> | void;
 };
 
 type ToastConfig = {

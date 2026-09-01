@@ -3,7 +3,6 @@
  */
 
 import type { UnifiedNotification } from '@notifications/types';
-import { t } from '@app/lib/i18n';
 import type { ApiUserNotification } from '@service-notification/generated/schemas/apiUserNotification';
 import type { GetAllUserNotificationsResponse } from '@service-notification/generated/schemas/getAllUserNotificationsResponse';
 import { QueryClient, QueryClientProvider } from '@tanstack/solid-query';
@@ -373,7 +372,7 @@ describe('notification realtime status updates', () => {
     applyNotificationStatusUpdate({
       type: 'notification_status_updated',
       updates: [
-        { t: t('common.delete'), c: { id: 'n1' } },
+        { t: 'Delete', c: { id: 'n1' } },
         {
           t: 'Patch',
           c: {

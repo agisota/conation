@@ -113,20 +113,20 @@ export default function LinkedConversationDemo() {
       </form>
 
       <Show when={target()} keyed>
-        {(t) => (
+        {(conversationTarget) => (
           <>
             <DrawerToggle />
             <div class="max-w-2xl rounded-md border border-edge-muted p-3">
               <Suspense
                 fallback={<p class="text-sm text-ink-muted">{t('common.loading')}</p>}
               >
-                <ConversationViewer target={t} />
+                <ConversationViewer target={conversationTarget} />
               </Suspense>
             </div>
             <LinkedConversationDrawer
               id={DEMO_DRAWER_ID}
-              channelId={t.channelId}
-              messageId={t.messageId}
+              channelId={conversationTarget.channelId}
+              messageId={conversationTarget.messageId}
             />
           </>
         )}

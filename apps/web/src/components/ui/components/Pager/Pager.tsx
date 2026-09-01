@@ -68,11 +68,11 @@ export interface PagerController<PageId> {
   /** Currently mounted pager viewport. */
   viewport: Accessor<HTMLDivElement | undefined>;
   /** Moves to the previous page in the configured order. */
-  previous: () =>{t('auto.promise')}<boolean>;
+  previous: () =>Promise<boolean>;
   /** Moves to the next page in the configured order. */
-  next: () =>{t('auto.promise')}<boolean>;
+  next: () =>Promise<boolean>;
   /** Moves to any currently configured page. */
-  goTo: (page: PageId, options?: { animate?: boolean }) =>{t('auto.promise')}<boolean>;
+  goTo: (page: PageId, options?: { animate?: boolean }) =>Promise<boolean>;
   /** Immediately cancels an active drag or transition. */
   cancel: () => void;
   /** Begins an externally controlled drag. */
@@ -80,7 +80,7 @@ export interface PagerController<PageId> {
   /** Moves the page rail during an externally controlled drag. */
   updateDrag: (offset: number) => void;
   /** Commits an externally controlled drag in one direction. */
-  commitDrag: (direction: PagerDirection) =>{t('auto.promise')}<boolean>;
+  commitDrag: (direction: PagerDirection) =>Promise<boolean>;
   /** Animates an externally controlled drag back to the active page. */
   cancelDrag: () => void;
   /** Returns whether this page is currently controlled as active. */

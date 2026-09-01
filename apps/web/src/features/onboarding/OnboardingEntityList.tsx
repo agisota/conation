@@ -7,7 +7,7 @@ import { createEffect, For, Show } from 'solid-js';
 
 interface OnboardingEntityListProps {
   soup: SoupState;
-  removingIds?: () =>{t('auto.set')}<string>;
+  removingIds?: () =>Set<string>;
 }
 
 export function OnboardingEntityList(props: OnboardingEntityListProps) {

@@ -121,7 +121,7 @@ export const DateSelector = (props: DateSelectorProps) => {
       target instanceof HTMLInputElement && target !== searchInputRef();
 
     switch (e.key) {
-      case t('common.delete'):
+      case 'Delete':
       case 'Backspace': {
         if (isNonComboboxInput || searchQuery().trim()) {
           return;

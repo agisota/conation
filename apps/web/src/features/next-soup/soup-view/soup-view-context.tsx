@@ -122,7 +122,7 @@ type DataSource<T> = {
    * Full refresh (e.g. mobile pull-to-refresh): invalidate every soup query
    * plus notification state. Resolves once the active refetches settle.
    */
-  refresh: () =>{t('auto.promise')}<void>;
+  refresh: () =>Promise<void>;
 };
 
 type SoupViewInitializeOptions = {
@@ -183,7 +183,7 @@ interface SoupViewContextValues {
   readFilter: Accessor<ReadFilter>;
   setReadFilter: Setter<ReadFilter>;
   groupByField: Accessor<GroupByField | undefined>;
-  fetchNextGroupPage: (groupKey: string) =>{t('auto.promise')}<void>;
+  fetchNextGroupPage: (groupKey: string) =>Promise<void>;
   isFetchingGroupPage: (groupKey: string) => boolean;
   hasNextGroupPage: (groupKey: string) => boolean;
 }

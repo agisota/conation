@@ -20,16 +20,16 @@ type NotGranted = 'not-granted';
 /// the context provider value which provides an interface wherein downstream consumers can interact with
 // this platforms Notifcation implementation
 export interface PlatformNotificationInterface {
-  requestPermission: () =>{t('auto.promise')}<NotificationPermission>;
-  getCurrentPermission: () =>{t('auto.promise')}<NotificationPermission>;
+  requestPermission: () =>Promise<NotificationPermission>;
+  getCurrentPermission: () =>Promise<NotificationPermission>;
   showNotification: (
     data: PlatformNotificationData
-  ) =>{t('auto.promise')}<PlatformNotificationHandle | NotGranted>;
-  unregisterNotifications: () =>{t('auto.promise')}<void>;
+  ) =>Promise<PlatformNotificationHandle | NotGranted>;
+  unregisterNotifications: () =>Promise<void>;
 }
 
 export type CreateAppNotificationInterface = (
-  setDisabled: () =>{t('auto.promise')}<void>
+  setDisabled: () =>Promise<void>
 ) => PlatformNotificationInterface;
 
 export type NotificationUnsupported = 'not-supported';
@@ -41,7 +41,7 @@ const ELECTION_NAMESPACE = 'notification-provider';
 // unregistration is an application detail and isn't actually part of the browser notification api
 // which Iis why it is passed in
 function createDefaultBrowserInterface(
-  unregisterNotifications: () =>{t('auto.promise')}<void>
+  unregisterNotifications: () =>Promise<void>
 ): PlatformNotificationInterface | NotificationUnsupported {
   if (!('Notification' in window)) return 'not-supported';
 
@@ -115,11 +115,11 @@ type UserSetting = 'allowed' | UiDisabled;
 
 export interface PlatformNotificationState {
   permission: Accessor<NotificationPermission | UiDisabled>;
-  requestPermission: () =>{t('auto.promise')}<NotificationPermission>;
-  unregisterNotification: () =>{t('auto.promise')}<void>;
+  requestPermission: () =>Promise<NotificationPermission>;
+  unregisterNotification: () =>Promise<void>;
   showNotification: (
     data: PlatformNotificationData
-  ) =>{t('auto.promise')}<PlatformNotificationHandle | NotGranted | UiDisabled>;
+  ) =>Promise<PlatformNotificationHandle | NotGranted | UiDisabled>;
 }
 
 const NotificationStateContext = createContext<

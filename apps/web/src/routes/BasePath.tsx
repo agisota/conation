@@ -42,7 +42,7 @@ function shouldShowNativeSessionVerificationFallback(
 }
 
 function SessionVerificationFallback(props: {
-  onRetry: () =>{t('auto.promise')}<unknown>;
+  onRetry: () => Promise<unknown>;
 }) {
   const [retrying, setRetrying] = createSignal(false);
 

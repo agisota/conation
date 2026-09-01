@@ -33,7 +33,7 @@ type CreateBlockSpec = {
   hotkeyToken: HotkeyToken;
   icon: Component;
   loading?: boolean;
-  createFn: (projectId: string) =>{t('auto.promise')}<string>;
+  createFn: (projectId: string) =>Promise<string>;
   params?: ObjectLike;
 };
 
@@ -155,7 +155,7 @@ function makeCreateBlock({
 }: Pick<ReturnType<typeof useSplitLayout>, 'replaceSplit' | 'insertSplit'>) {
   return async (spec: {
     blockName: BlockName | BlockAlias;
-    createFn: () =>{t('auto.promise')}<string>;
+    createFn: () =>Promise<string>;
     loading?: boolean;
     params?: Record<string, unknown>;
   }) => {

@@ -118,7 +118,7 @@ async function uploadPendingShareAttachment(options: {
   file: PendingShareFile;
   tracker: InputAttachmentTracker;
   uploadPendingShareFile:
-    | ((args: UploadPendingShareFileArgs) =>{t('auto.promise')}<void>)
+    | ((args: UploadPendingShareFileArgs) =>Promise<void>)
     | undefined;
   isActive: () => boolean;
 }) {

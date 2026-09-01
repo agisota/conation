@@ -1,4 +1,3 @@
-import { t } from '@app/lib/i18n';
 export type CallStatus = 'ATTENDED' | 'MISSED' | 'UNATTENDED';
 
 export type DateRangeFilter = {
@@ -57,7 +56,7 @@ export const FILTER_TARGETS = {
   // ef — email
   ef: {
     threadId: { backend: 'ThreadId' },
-    emailLinkId: { backend: t('common.owner') },
+    emailLinkId: { backend: 'Owner' },
     emailProjectId: { backend: 'ProjectId' },
     emailSender: {
       backend: 'Sender',

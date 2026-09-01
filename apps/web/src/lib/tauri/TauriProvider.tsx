@@ -39,7 +39,7 @@ export type BundleUpdateStatus =
       data: { bundleBuild: number; minNativeBuild: number };
     }
   | { status: 'Completed' }
-  | { status: t('common.error'); data: { message: string } };
+  | { status: 'Error'; data: { message: string } };
 
 interface TauriContextValue {
   os: OsType;

@@ -58,7 +58,7 @@ describe('ActionMenu', () => {
 
     fireEvent.pointerEnter(root!);
     const emojiMenuTrigger = container.querySelector<HTMLButtonElement>(
-      '[aria-label={t('auto.more_reactions')}]'
+      '[aria-label="More reactions"]'
     );
     expect(emojiMenuTrigger).not.toBeNull();
 

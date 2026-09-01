@@ -92,9 +92,9 @@ function useCounter(intervalMs = 1200) {
 const FIXTURE_DIFF = {
   path: 'crates/agent_fold/src/domain/fold.rs',
   oldText:
-    'fn fold(log: &[Frame]) ->{t('auto.vec')}<Message> {\n    let mut out = Vec::new();\n    for frame in log {\n        out.push(frame.into());\n    }\n    out\n}\n',
+    'fn fold(log: &[Frame]) -> Vec<Message> {\n    let mut out = Vec::new();\n    for frame in log {\n        out.push(frame.into());\n    }\n    out\n}\n',
   newText:
-    'fn fold(log: &[Frame]) ->{t('auto.vec')}<Message> {\n    let mut machine = FoldMachine::default();\n    for frame in log {\n        machine.push(frame);\n    }\n    machine.finish()\n}\n',
+    'fn fold(log: &[Frame]) -> Vec<Message> {\n    let mut machine = FoldMachine::default();\n    for frame in log {\n        machine.push(frame);\n    }\n    machine.finish()\n}\n',
 };
 
 const FIXTURE_MESSAGE: FoldedMessage = {
@@ -131,7 +131,7 @@ const FIXTURE_MESSAGE: FoldedMessage = {
       detail: {
         kind: 'search',
         paths: ['crates/agent_fold/src'],
-        output: 'fold.rs:12: fn fold(log: &[Frame]) ->{t('auto.vec')}<Message>',
+        output: 'fold.rs:12: fn fold(log: &[Frame]) -> Vec<Message>',
       },
     },
     {

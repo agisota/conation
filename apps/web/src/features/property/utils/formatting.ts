@@ -1,5 +1,4 @@
 import { getPropertyOptionLabel } from '@entity/utils/task-properties';
-import { t } from '@app/lib/i18n';
 import { NUMBER_DECIMAL_PLACES } from '../constants';
 import type { Property, PropertyOptionValue } from '../types';
 
@@ -90,7 +89,7 @@ export const formatPropertyValue = (
   let formattedValue = value.toString();
 
   // Filter out "macro|" prefix for system owner properties
-  if (property.displayName === t('common.owner')) {
+  if (property.displayName === 'Owner') {
     formattedValue = formattedValue.replace('macro|', '');
   }
 

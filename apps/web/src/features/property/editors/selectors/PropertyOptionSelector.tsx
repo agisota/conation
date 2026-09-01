@@ -158,9 +158,9 @@ type SelectOptionsProps = {
   options: SelectableOption[];
   isLoading: boolean;
   error: string | null;
-  selectedOptions: () =>{t('auto.set')}<string>;
+  selectedOptions: () =>Set<string>;
   onToggleOption: (value: string) => void;
-  onAddOption?: (value: string) =>{t('auto.promise')}<void>;
+  onAddOption?: (value: string) =>Promise<void>;
   /** When provided, renders a "no value" item at the top of the list. */
   clearOption?: { label: string; onClear: () => void };
   onClose?: () => void;

@@ -72,7 +72,7 @@ function startSnapshotIngest(
   parentSpan: Span | undefined,
   source: SnapshotSource,
   loroManager: MarkdownLoroManager,
-  ingest: () =>{t('auto.promise')}<SnapshotResult>
+  ingest: () =>Promise<SnapshotResult>
 ): void {
   parentSpan?.event('doc.snapshot.attempt', {
     'snapshot.source': source,

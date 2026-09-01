@@ -1,4 +1,3 @@
-import { t } from '@app/lib/i18n';
 import type {
   DateRangeFilter,
   DocumentFieldFilters,
@@ -96,7 +95,7 @@ const FIELD_CONFIG: Record<
   calendarEventSeen: { target: 'calf', field: 'ns' },
   calendarEventDone: { target: 'calf', field: 'nd' },
   threadId: { target: 'ef', field: 'ThreadId' },
-  emailLinkId: { target: 'ef', field: t('common.owner') },
+  emailLinkId: { target: 'ef', field: 'Owner' },
   emailSeen: { target: 'ef', field: 'NotificationSeen' },
   emailDone: { target: 'ef', field: 'NotificationDone' },
   emailImportance: { target: 'ef', field: 'Importance' },
