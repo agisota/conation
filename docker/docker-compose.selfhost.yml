@@ -34,6 +34,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   # Create buckets on startup (idempotent)
   minio-setup:
@@ -71,8 +72,9 @@ services:
       - "18081:8080" # JMAP/HTTP (host 8081 to avoid conflict)
     environment:
       STALWART_HOSTNAME: ${CONATION_DOMAIN:-conation.dev}
-      # bootstrap admin (shown once in logs) — set STALWART_RECOVERY_ADMIN to pin
-      # STALWART_RECOVERY_ADMIN: admin:conation-admin-123
+      # Pin the recovery credential from the self-host environment. Never bake
+      # a production password into the compose file.
+      STALWART_RECOVERY_ADMIN: ${STALWART_RECOVERY_ADMIN:?set STALWART_RECOVERY_ADMIN}
     volumes:
       - stalwart_data:/opt/stalwart-mail
       # Custom config optional — if present, mount to /etc/stalwart/config.toml and override command
@@ -86,6 +88,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
+    restart: unless-stopped
 
   # ---------------------------------------------------------------------------
   # Caddy — reverse proxy + TLS (replaces CloudFront + ALB)
