@@ -60,8 +60,8 @@ import {
   adjacentStop,
   nextThreadStop,
   shownStops,
-  threadStopFromHover,
   type ThreadStop,
+  threadStopFromHover,
 } from '../util/threadStops';
 import { BottomReplyButtons } from './BottomReplyButtons';
 import { EmailFormContextProvider } from './EmailFormContext';
@@ -391,7 +391,9 @@ function EmailContent(props: EmailViewProps) {
       }
       const focusedId = context.messages.focusedID();
       if (!focusedId) return undefined;
-      const index = messages.findIndex((message) => message.db_id === focusedId);
+      const index = messages.findIndex(
+        (message) => message.db_id === focusedId
+      );
       return index >= 0 ? ({ kind: 'message', index } as const) : undefined;
     })();
 
