@@ -1,4 +1,5 @@
 import { LIST_VIEW_DOCS_URL } from '@app/constants/docs-links';
+import { t } from '@app/lib/i18n';
 import { isListViewID, type ListView } from '@app/constants/list-views';
 import { SoupChatInput } from '@app/features/chat/SoupChatInput';
 import {
@@ -566,7 +567,7 @@ export const SoupView = (props: SoupViewProps) => {
     hotkeyToken: TOKENS.soup.openSearch,
     scopeId: panel.splitHotkeyScope,
     registrationType: 'add',
-    description: 'Search',
+    description: t('common.search'),
     keyDownHandler: () => {
       if (narrowSearchExpanded() || !searchIsCollapsed()) return false;
       setNarrowSearchExpanded(true);
@@ -698,7 +699,7 @@ export const SoupView = (props: SoupViewProps) => {
                     <Show
                       when={!isCollapsed()}
                       fallback={
-                        <Tooltip label="Search" hotkey={TOKENS.soup.openSearch}>
+                        <Tooltip label={t('common.search')} hotkey={TOKENS.soup.openSearch}>
                           <Button
                             variant="outline"
                             class="p-1 size-7 rounded-lg ml-2 bg-surface"
@@ -1496,9 +1497,7 @@ const SoupViewListContent = (props: SoupViewListProps) => {
                                               })}
                                               disabled
                                             >
-                                              <Spinner class="size-3 animate-spin" />
-                                              Loading...
-                                            </Button>
+                                              <Spinner class="size-3 animate-spin" />{t('common.loading')}</Button>
                                           }
                                         >
                                           <Button

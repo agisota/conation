@@ -1,4 +1,5 @@
 import { openEntityInSplitFromUnifiedList } from '@app/features/next-soup/utils';
+import { t } from '@app/lib/i18n';
 import { useInfiniteScrollSentinel } from '@companies/Company/use-infinite-scroll-sentinel';
 import { TabsInset } from '@core/component/TabsInset';
 import {
@@ -57,7 +58,7 @@ export function ContactEmailsSection(props: { contact?: CrmContactResponse }) {
       <Show
         when={props.contact && !emailsQuery.isLoading}
         fallback={
-          <div class="p-6 text-center text-sm text-ink-muted">Loading…</div>
+          <div class="p-6 text-center text-sm text-ink-muted">{t('common.loading')}</div>
         }
       >
         <Show

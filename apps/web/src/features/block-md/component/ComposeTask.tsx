@@ -1,4 +1,5 @@
 import { useSplitLayout } from '@components/app/split-layout/layout';
+import { t } from '@app/lib/i18n';
 import { useSplitPanelOrThrow } from '@components/app/split-layout/layoutUtils';
 import { buildConfig } from '@core/component/LexicalMarkdown/builder/MarkdownConfigBuilder';
 import { MarkdownShell } from '@core/component/LexicalMarkdown/builder/MarkdownShell';
@@ -821,7 +822,7 @@ export function ComposeTask(props: ComposeTaskProps) {
           <Button
             onMouseDown={handleClose}
             tabIndex={-1}
-            tooltip="Close"
+            tooltip={t('common.close')}
             size="icon-sm"
           >
             <XIcon />

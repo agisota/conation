@@ -1,4 +1,5 @@
 import { useSplitLayout } from '@components/app/split-layout/layout';
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { createControlledOpenSignal } from '@core/util/createControlledOpenSignal';
 import { useCreateScheduleMutation } from '@queries/agent-schedule/schedules';
@@ -307,9 +308,7 @@ export function AutomationComposer() {
                 size="sm"
                 class="cursor-default"
                 onClick={() => setAutomationComposerOpen(false, false)}
-              >
-                Cancel
-              </Button>
+              >{t('common.cancel')}</Button>
               <Button
                 variant="accent"
                 size="sm"

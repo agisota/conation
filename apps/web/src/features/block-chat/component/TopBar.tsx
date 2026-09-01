@@ -1,4 +1,5 @@
 import { DEFAULT_CHAT_NAME } from '@block-chat/definition';
+import { t } from '@app/lib/i18n';
 import type { BlockTool } from '@components/app/ResponsiveBlockToolbar';
 import {
   ResponsiveBlockToolbar,
@@ -40,7 +41,7 @@ export function TopBar(props: {
 
   const ops: FileOperation[] = [
     {
-      label: 'Details',
+      label: t('common.details'),
       icon: Info,
       action: detailsControl.toggle,
     },

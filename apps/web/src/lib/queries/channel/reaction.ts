@@ -1,4 +1,5 @@
 import { toast } from '@core/component/Toast/Toast';
+import { t } from '@app/lib/i18n';
 import { throwOnErr } from '@core/util/result';
 import { type MutationCallbacks, withCallbacks } from '@queries/utils';
 import {
@@ -311,7 +312,7 @@ export function useRemoveReactionMutation(
             channel_id: vars.channelId,
             message_id: vars.messageId,
             emoji: vars.emoji,
-            action: 'Remove',
+            action: t('common.remove'),
             nonce: removeReactionNonce.use(vars),
           })
       );

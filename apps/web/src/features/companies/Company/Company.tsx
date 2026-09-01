@@ -1,4 +1,5 @@
 import { openCreateContactModal } from '@app/features/companies/CreateContactModal';
+import { t } from '@app/lib/i18n';
 import { SidePanel } from '@components/app/side-panel';
 import PlusIcon from '@phosphor/plus.svg';
 import { useCompanyQuery } from '@queries/crm/companies';
@@ -32,7 +33,7 @@ export function Company(props: { companyId: string }) {
 
       <SidePanel.Section
         id="company-details"
-        title="Details"
+        title={t('common.details')}
         order={10}
         defaultOpen
       >
@@ -40,7 +41,7 @@ export function Company(props: { companyId: string }) {
       </SidePanel.Section>
       <SidePanel.Section
         id="company-properties"
-        title="Properties"
+        title={t('common.properties')}
         order={15}
         defaultOpen
       >

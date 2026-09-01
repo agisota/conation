@@ -1,4 +1,5 @@
 import { MobileDrawer } from '@components/app/mobile/MobileDrawer';
+import { t } from '@app/lib/i18n';
 import { SwipableRowProvider } from '@components/app/mobile/SwipableRow';
 import { touchHandler } from '@core/directive/touchHandler';
 import {
@@ -118,7 +119,7 @@ export function OnboardingInbox() {
         ],
       },
       {
-        items: [{ label: 'Delete', destructive: true, onClick: removeEmail }],
+        items: [{ label: t('common.delete'), destructive: true, onClick: removeEmail }],
       },
     ];
   };

@@ -3,6 +3,7 @@
  */
 
 import { render, screen } from '@solidjs/testing-library';
+import { t } from '@app/lib/i18n';
 import { QueryClient, QueryClientProvider } from '@tanstack/solid-query';
 import { ok } from 'neverthrow';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -77,7 +78,7 @@ describe('TurnOffCalendarDialog', () => {
   it('leaves the calendar alone when cancelled', () => {
     const onClose = renderDialog();
 
-    screen.getByRole('button', { name: 'Cancel' }).click();
+    screen.getByRole('button', { name: t('common.cancel') }).click();
 
     expect(disableLinkCalendarMock).not.toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();

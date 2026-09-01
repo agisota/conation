@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from '@solidjs/testing-library';
+import { t } from '@app/lib/i18n';
 import { afterEach, describe, expect, it } from 'vitest';
 import { Button, buttonClasses, buttonVariants } from './Button';
 import { ButtonGroup } from './ButtonGroup';
@@ -84,38 +85,38 @@ describe('Button', () => {
 
   it('uses label as its accessible name and default tooltip content', () => {
     render(() => (
-      <Button size="icon-sm" label="Close">
+      <Button size="icon-sm" label={t('common.close')}>
         <svg aria-hidden="true" />
       </Button>
     ));
 
-    expect(screen.getByRole('button', { name: 'Close' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: t('common.close') })).toBeTruthy();
   });
 
   it('uses an icon button tooltip as an accessible-name fallback', () => {
     render(() => (
-      <Button size="icon-sm" tooltip="Search">
+      <Button size="icon-sm" tooltip={t('common.search')}>
         <svg aria-hidden="true" />
       </Button>
     ));
 
-    expect(screen.getByRole('button', { name: 'Search' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: t('common.search') })).toBeTruthy();
   });
 
   it('uses a square button tooltip as an accessible-name fallback', () => {
     render(() => (
-      <Button size="sm" square tooltip="Search">
+      <Button size="sm" square tooltip={t('common.search')}>
         <svg aria-hidden="true" />
       </Button>
     ));
 
-    expect(screen.getByRole('button', { name: 'Search' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: t('common.search') })).toBeTruthy();
   });
 
   it('does not replace visible text with tooltip content', () => {
-    render(() => <Button tooltip="Save the current draft">Save</Button>);
+    render(() => <Button tooltip="Save the current draft">{t('common.save')}</Button>);
 
-    expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: t('common.save') })).toBeTruthy();
   });
 
   it('does not leak custom props and preserves CTA inline styles', () => {

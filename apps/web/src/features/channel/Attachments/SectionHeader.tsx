@@ -1,4 +1,5 @@
 import Spinner from '@phosphor-icons/core/bold/spinner-gap-bold.svg?component-solid';
+import { t } from '@app/lib/i18n';
 import { Button, cn, Panel } from '@ui';
 import { type Accessor, type JSX, Show } from 'solid-js';
 
@@ -51,9 +52,7 @@ export function LoadMoreButton(props: {
         when={!props.isFetching()}
         fallback={
           <>
-            <Spinner class="size-3.5 animate-spin" />
-            Loading...
-          </>
+            <Spinner class="size-3.5 animate-spin" />{t('common.loading')}</>
         }
       >
         Load More

@@ -1,4 +1,5 @@
 import { toast } from '@core/component/Toast/Toast';
+import { t } from '@app/lib/i18n';
 import {
   getLinkShareScope,
   LINK_SHARE_SCOPE_OPTIONS,
@@ -180,7 +181,7 @@ function InviteEntryRow(props: {
           aria-invalid={!!props.error}
         />
         <Show when={props.showRemove}>
-          <Tooltip label="Remove">
+          <Tooltip label={t('common.remove')}>
             <Button
               variant="outline"
               size="icon-sm"
@@ -696,9 +697,7 @@ function CreateTeamDialog(props: { open: boolean; onClose: () => void }) {
               class="rounded-xs"
               disabled={createTeamMutation.isPending}
               onClick={props.onClose}
-            >
-              Cancel
-            </Button>
+            >{t('common.cancel')}</Button>
             <Button
               variant="accent"
               class="rounded-xs"
@@ -788,7 +787,7 @@ function SaveCancelButtons(props: {
 }) {
   return (
     <div class="flex items-center gap-1 shrink-0">
-      <Tooltip label="Save">
+      <Tooltip label={t('common.save')}>
         <Button
           variant="accent"
           size="icon-sm"
@@ -801,7 +800,7 @@ function SaveCancelButtons(props: {
           </Show>
         </Button>
       </Tooltip>
-      <Tooltip label="Cancel">
+      <Tooltip label={t('common.cancel')}>
         <Button
           variant="ghost"
           size="icon-sm"
@@ -1363,7 +1362,7 @@ function TeamManagement(props: {
                 fallback={
                   <span class="text-xs text-ink-muted">
                     {githubLink.isLoading
-                      ? 'Loading…'
+                      ? t('common.loading')
                       : 'Connect your GitHub account first'}
                   </span>
                 }
@@ -1538,9 +1537,7 @@ function TeamManagement(props: {
                 class="rounded-xs"
                 disabled={deleteTeamMutation.isPending}
                 onClick={() => handleDeleteTeamModalClose(false)}
-              >
-                Cancel
-              </Button>
+              >{t('common.cancel')}</Button>
               <Button
                 variant="danger"
                 class="rounded-xs"
@@ -1586,16 +1583,14 @@ function TeamManagement(props: {
                 class="rounded-xs"
                 disabled={removeUserMutation.isPending}
                 onClick={() => setShowRemoveModal(null)}
-              >
-                Cancel
-              </Button>
+              >{t('common.cancel')}</Button>
               <Button
                 variant="danger"
                 class="rounded-xs"
                 disabled={removeUserMutation.isPending}
                 onClick={handleRemoveMember}
               >
-                <Show when={removeUserMutation.isPending} fallback="Remove">
+                <Show when={removeUserMutation.isPending} fallback={t('common.remove')}>
                   <SpinnerIcon class="size-4 animate-spin" />
                 </Show>
               </Button>
@@ -1673,9 +1668,7 @@ function TeamManagement(props: {
                 class="rounded-xs"
                 disabled={inviteToTeamMutation.isPending}
                 onClick={() => handleInviteModalClose(false)}
-              >
-                Cancel
-              </Button>
+              >{t('common.cancel')}</Button>
               <Button
                 variant={hasValidInvites() ? 'accent' : 'ghost'}
                 class="rounded-xs"

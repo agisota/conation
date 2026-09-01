@@ -1,4 +1,5 @@
 import { useOwnedCommentPlaceableSelector } from '@block-pdf/signal/permissions';
+import { t } from '@app/lib/i18n';
 import {
   activePlaceableIdSignal,
   placeableModeSignal,
@@ -89,7 +90,7 @@ export function MarkupToolbar() {
               <Button
                 size="icon-sm"
                 variant="danger"
-                tooltip="Delete"
+                tooltip={t('common.delete')}
                 onClick={() => {
                   const activePlaceableIndex_ = activePlaceableId();
                   if (activePlaceableIndex_ == null) return;
@@ -104,7 +105,7 @@ export function MarkupToolbar() {
           <Button
             size="icon-sm"
             variant="danger"
-            tooltip="Cancel"
+            tooltip={t('common.cancel')}
             onClick={() => {
               setMode(PayloadMode.NoMode);
             }}

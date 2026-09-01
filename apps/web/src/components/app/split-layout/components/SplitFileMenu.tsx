@@ -1,4 +1,5 @@
 import { openBulkEditModal } from '@app/features/entity/bulk-edit/BulkEditEntityModal';
+import { t } from '@app/lib/i18n';
 import {
   makeAddTagAction,
   makeCopyEntityIdAction,
@@ -510,7 +511,7 @@ export function SplitFileMenu(props: {
             case 'delete':
               if (!isOwner()) return null;
               return {
-                label: 'Delete',
+                label: t('common.delete'),
                 action: () => {
                   const entity = buildEntityData({
                     id: props.id,

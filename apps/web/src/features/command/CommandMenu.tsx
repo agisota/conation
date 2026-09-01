@@ -1,4 +1,5 @@
 import { isListViewID } from '@app/constants/list-views';
+import { t } from '@app/lib/i18n';
 import { openChatWithMessage } from '@app/features/chat/ChatWithAgentButton';
 import { getViewPreset } from '@app/features/next-soup/sidebar/soup-filter-presets';
 import { getSearchSplit } from '@app/features/next-soup/soup-view/search-controllers';
@@ -667,7 +668,7 @@ export function CommandMenuInner(props: {
             <HotkeyHint command={confirmHotkey} label="Run action" />
           </Match>
           <Match when={selectedIsSearch()}>
-            <HotkeyHint command={confirmHotkey} label="Search" />
+            <HotkeyHint command={confirmHotkey} label={t('common.search')} />
             <Show when={canOpenInNewSplit()}>
               <HotkeyHint
                 command={confirmSplitHotkey}
@@ -694,7 +695,7 @@ export function CommandMenuInner(props: {
         </Show>
         <Show
           when={isInCommandScope()}
-          fallback={<HotkeyHint command={escapeHotkey} label="Close" />}
+          fallback={<HotkeyHint command={escapeHotkey} label={t('common.close')} />}
         >
           <HotkeyHint command={escapeHotkey} label="Back" />
         </Show>

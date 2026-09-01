@@ -1,4 +1,5 @@
 import { DatePickerUI } from '@core/component/DatePicker/DatePickerUI';
+import { t } from '@app/lib/i18n';
 import { useDateSearch } from '@core/util/dateSearch/useDateSearch';
 import {
   Combobox,
@@ -120,7 +121,7 @@ export const DateSelector = (props: DateSelectorProps) => {
       target instanceof HTMLInputElement && target !== searchInputRef();
 
     switch (e.key) {
-      case 'Delete':
+      case t('common.delete'):
       case 'Backspace': {
         if (isNonComboboxInput || searchQuery().trim()) {
           return;

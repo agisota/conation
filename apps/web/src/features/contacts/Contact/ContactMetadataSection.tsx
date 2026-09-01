@@ -1,4 +1,5 @@
 import { NIL_UUID } from '@app/features/next-soup/filters/filter-store';
+import { t } from '@app/lib/i18n';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import { useCompanyQuery } from '@queries/crm/companies';
 import type { CrmContactResponse } from '@service-storage/generated/schemas/crmContactResponse';
@@ -30,7 +31,7 @@ export function ContactMetadataSection(props: {
   return (
     <Show
       when={props.contact}
-      fallback={<div class="text-sm text-ink-muted">Loading…</div>}
+      fallback={<div class="text-sm text-ink-muted">{t('common.loading')}</div>}
     >
       {(contact) => (
         <div class="flex flex-col gap-3">

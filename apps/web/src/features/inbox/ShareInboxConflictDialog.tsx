@@ -3,6 +3,7 @@ import {
   shareInboxConflict,
 } from '@core/email-link/share-conflict';
 import { Button, Dialog, Panel } from '@ui';
+import { t } from '@app/lib/i18n';
 import { Show } from 'solid-js';
 
 /**
@@ -42,9 +43,7 @@ export function ShareInboxConflictDialog(props: {
               variant="outline"
               depth={3}
               onClick={() => props.onCancel()}
-            >
-              Cancel
-            </Button>
+            >{t('common.cancel')}</Button>
             <Button variant="accent" depth={3} onClick={() => props.onShare()}>
               Share inbox
             </Button>

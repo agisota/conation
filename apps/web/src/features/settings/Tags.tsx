@@ -1,4 +1,5 @@
 import PencilIcon from '@phosphor/pencil-simple.svg';
+import { t } from '@app/lib/i18n';
 import PlusIcon from '@phosphor/plus.svg';
 import SpinnerIcon from '@phosphor/spinner.svg';
 import TrashIcon from '@phosphor/trash.svg';
@@ -208,9 +209,7 @@ function ConfirmDialog(props: {
               class="rounded-xs"
               disabled={props.pending}
               onClick={props.onClose}
-            >
-              Cancel
-            </Button>
+            >{t('common.cancel')}</Button>
             <Button
               variant="accent"
               class="rounded-xs"

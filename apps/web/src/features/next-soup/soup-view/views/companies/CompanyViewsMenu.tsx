@@ -1,4 +1,5 @@
 import { useSoupView } from '@app/features/next-soup/soup-view/soup-view-context';
+import { t } from '@app/lib/i18n';
 import { useApplyPreset } from '@app/features/next-soup/soup-view/soup-view-tabs';
 import { useApplyCrmView } from '@app/features/next-soup/soup-view/views/companies/use-apply-crm-view';
 import {
@@ -303,9 +304,7 @@ export function CompanyViewsMenu(props: { hideLabel?: boolean } = {}) {
                   size="sm"
                   disabled={!saveName().trim()}
                   onClick={saveCurrentView}
-                >
-                  Save
-                </Button>
+                >{t('common.save')}</Button>
               </div>
             </div>
           </Show>

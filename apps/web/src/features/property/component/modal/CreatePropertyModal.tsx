@@ -1,4 +1,5 @@
 import { useMaybeBlockId } from '@core/block';
+import { t } from '@app/lib/i18n';
 import { TabsInset } from '@core/component/TabsInset';
 import { useUserId } from '@core/context/user';
 import type { CollectionNode } from '@kobalte/core';
@@ -558,7 +559,7 @@ export const CreatePropertyModal: Component<CreatePropertyModalProps> = (
             variant="ghost"
             size="icon-sm"
             disabled={pending()}
-            label="Close"
+            label={t('common.close')}
           >
             <XIcon />
           </Dialog.CloseButton>
@@ -664,7 +665,7 @@ export const CreatePropertyModal: Component<CreatePropertyModalProps> = (
             </EditorRow>
 
             <Show when={hasTeam()}>
-              <EditorRow label="Owner">
+              <EditorRow label={t('common.owner')}>
                 <TabsInset
                   depth={0}
                   list={[
@@ -762,9 +763,7 @@ export const CreatePropertyModal: Component<CreatePropertyModalProps> = (
               class="rounded-lg"
               onClick={close}
               disabled={pending()}
-            >
-              Cancel
-            </Button>
+            >{t('common.cancel')}</Button>
             <Button
               variant={canSubmit() ? 'accent' : 'ghost'}
               depth={3}

@@ -1,4 +1,5 @@
 import { TOKENS } from '@core/hotkey/tokens';
+import { t } from '@app/lib/i18n';
 import CaretLeftIcon from '@phosphor/caret-left.svg';
 import CaretRightIcon from '@phosphor/caret-right.svg';
 import CloseIcon from '@phosphor/x.svg';
@@ -249,7 +250,7 @@ function CloseButton(props: SplitControlButtonProps) {
     'type',
     'variant',
   ]);
-  const label = () => local.label ?? 'Close';
+  const label = () => local.label ?? t('common.close');
 
   return (
     <Show when={controller.canClose()}>

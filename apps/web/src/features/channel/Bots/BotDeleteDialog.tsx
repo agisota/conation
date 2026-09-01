@@ -1,4 +1,5 @@
 import TrashIcon from '@phosphor/trash.svg';
+import { t } from '@app/lib/i18n';
 import { Button, Dialog, Surface } from '@ui';
 
 export function BotDeleteDialog(props: {
@@ -33,9 +34,7 @@ export function BotDeleteDialog(props: {
               size="sm"
               disabled={props.pending}
               onClick={props.onClose}
-            >
-              Cancel
-            </Button>
+            >{t('common.cancel')}</Button>
             <Button
               type="button"
               variant="danger"

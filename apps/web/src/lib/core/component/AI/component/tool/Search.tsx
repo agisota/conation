@@ -1,4 +1,5 @@
 import { globalSplitManager } from '@app/signal/splitLayout';
+import { t } from '@app/lib/i18n';
 import { navigateToChannelMessage } from '@block-channel/utils/link';
 import { getEntityClickContent } from '@channel/Attachments/attachment-utils';
 import { useSplitLayout } from '@components/app/split-layout/layout';
@@ -120,8 +121,7 @@ const UnifiedSearchToolResponse = (props: {
 
 function SearchText(props: { query: string }) {
   return (
-    <span class="min-w-0 truncate">
-      Search <span class="text-ink"> {props.query} </span>
+    <span class="min-w-0 truncate">{t('common.search')}<span class="text-ink"> {props.query} </span>
     </span>
   );
 }

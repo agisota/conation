@@ -1,4 +1,5 @@
 import { ConfirmDrawer } from '@components/app/mobile/ConfirmDrawer';
+import { t } from '@app/lib/i18n';
 import { isMobile } from '@core/mobile/isMobile';
 import type { JSX } from 'solid-js';
 import { cn } from '../utils/classname';
@@ -66,7 +67,7 @@ export function ConfirmDialog(props: ConfirmDialogProps) {
             class="rounded-lg"
             onClick={() => props.onOpenChange(false)}
           >
-            {props.cancelLabel ?? 'Cancel'}
+            {props.cancelLabel ?? t('common.cancel')}
           </Button>
           <Button
             type="button"

@@ -1,4 +1,5 @@
 import { PIPEDREAM_ICON_MAP } from '@core/component/AI/constant/mcpServers';
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { PipedreamConnectorIcon } from '@core/pipedream/ConnectorIcon';
 import {
@@ -92,9 +93,7 @@ function ServerRow(props: { server: PipedreamConnectionResponse }) {
               size="sm"
               depth={3}
               onClick={() => setConfirmDelete(false)}
-            >
-              Cancel
-            </Button>
+            >{t('common.cancel')}</Button>
           </div>
         }
       >
@@ -102,7 +101,7 @@ function ServerRow(props: { server: PipedreamConnectionResponse }) {
           variant="outline"
           size="sm"
           depth={3}
-          tooltip="Remove"
+          tooltip={t('common.remove')}
           onClick={() => setConfirmDelete(true)}
         >
           <XIcon class="size-4" />
@@ -175,9 +174,7 @@ export function PipedreamIntegrationsSection() {
               depth={3}
               onClick={() => serversQuery.refetch()}
               class="ml-2"
-            >
-              Retry
-            </Button>
+            >{t('common.retry')}</Button>
           </div>
         </SettingsCard>
       </Show>
@@ -210,9 +207,7 @@ export function PipedreamIntegrationsSection() {
               depth={3}
               onClick={() => catalogQuery.refetch()}
               class="ml-2"
-            >
-              Retry
-            </Button>
+            >{t('common.retry')}</Button>
           </div>
         </Show>
 
@@ -248,7 +243,7 @@ export function PipedreamIntegrationsSection() {
                 disabled={catalogQuery.isFetchingNextPage}
                 onClick={() => void catalogQuery.fetchNextPage()}
               >
-                {catalogQuery.isFetchingNextPage ? 'Loading...' : 'Load more'}
+                {catalogQuery.isFetchingNextPage ? t('common.loading') : 'Load more'}
               </Button>
             </div>
           </Show>

@@ -4,6 +4,7 @@ import {
   openChatWithAgent,
 } from '@app/features/chat/ChatWithAgentButton';
 import { getIsSpecialProject } from '@block-project/isSpecial';
+import { t } from '@app/lib/i18n';
 import { projectBlockDataSignal } from '@block-project/signal/projectBlockData';
 import {
   type BlockTool,
@@ -74,7 +75,7 @@ export function TopBar() {
     ...(!isSpecialProject
       ? [
           {
-            label: 'Details',
+            label: t('common.details'),
             icon: Info,
             action: detailsControl.toggle,
           },

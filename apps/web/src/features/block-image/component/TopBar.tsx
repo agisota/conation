@@ -1,4 +1,5 @@
 import type { BlockTool } from '@components/app/ResponsiveBlockToolbar';
+import { t } from '@app/lib/i18n';
 import {
   ResponsiveBlockToolbar,
   ResponsivePermissionsBadge,
@@ -53,7 +54,7 @@ export function TopBar() {
 
   const ops: FileOperation[] = [
     {
-      label: 'Details',
+      label: t('common.details'),
       icon: Info,
       action: detailsControl.toggle,
     },

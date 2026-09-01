@@ -1,4 +1,5 @@
 import { globalSplitManager } from '@app/signal/splitLayout';
+import { t } from '@app/lib/i18n';
 import { createConfiguredChannelMarkdownEditor } from '@channel/Input';
 import { MarkdownShell } from '@core/component/LexicalMarkdown/builder/MarkdownShell';
 import { NotificationRenderer } from '@core/component/NotificationRenderer';
@@ -167,7 +168,7 @@ function BrowserFormat(props: { notification: UnifiedNotification }) {
       <Show
         when={browserNotif()}
         fallback={
-          <div class="text-ink-muted text-sm animate-pulse">Loading...</div>
+          <div class="text-ink-muted text-sm animate-pulse">{t('common.loading')}</div>
         }
       >
         <div class="space-y-6">

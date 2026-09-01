@@ -1,4 +1,5 @@
 import { useSplitLayout } from '@components/app/split-layout/layout';
+import { t } from '@app/lib/i18n';
 import type { CrmCompanyEntity } from '@entity';
 import type { CompanyContact } from '@queries/crm/companies';
 import { createMemo, createSignal, For, Show } from 'solid-js';
@@ -24,7 +25,7 @@ export function CompanyContactsSection(props: {
   return (
     <Show
       when={props.company}
-      fallback={<div class="text-sm text-ink-muted">Loading…</div>}
+      fallback={<div class="text-sm text-ink-muted">{t('common.loading')}</div>}
     >
       <Show
         when={contacts().length > 0}

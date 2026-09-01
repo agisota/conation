@@ -1,4 +1,5 @@
 import { useSplitLayout } from '@components/app/split-layout/layout';
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import type { CrmCompanyEntity } from '@entity';
 import {
@@ -58,7 +59,7 @@ export function CompanySharingSection(props: { company?: CrmCompanyEntity }) {
   return (
     <Show
       when={props.company}
-      fallback={<div class="text-xs text-ink-muted">Loading…</div>}
+      fallback={<div class="text-xs text-ink-muted">{t('common.loading')}</div>}
     >
       {(company) => {
         const isShared = () => !company().hidden;

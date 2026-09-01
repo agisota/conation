@@ -1,4 +1,5 @@
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import type { AccountDeletionReason } from '@app/lib/analytics/app-events';
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
 import { useLogout } from '@core/auth/logout';
@@ -129,7 +130,7 @@ function formatBundleUpdateStatus(status: BundleUpdateStatus): string {
       return 'App update required';
     case 'Completed':
       return 'Update ready';
-    case 'Error':
+    case t('common.error'):
       return 'An error occurred when checking for updates';
   }
 }
@@ -291,17 +292,13 @@ function ProfilePictureRow(props: { userId: string }) {
                 depth={3}
                 disabled={isRemoving()}
                 onClick={() => setShowRemoveConfirmModal(false)}
-              >
-                Cancel
-              </Button>
+              >{t('common.cancel')}</Button>
               <Button
                 variant="danger"
                 depth={3}
                 disabled={isRemoving()}
                 onClick={handleRemove}
-              >
-                Remove
-              </Button>
+              >{t('common.remove')}</Button>
             </div>
           </Panel.Body>
         </Panel>
@@ -583,9 +580,7 @@ export function Account() {
                   setShowDeleteModal(false);
                   resetDeleteFlow();
                 }}
-              >
-                Cancel
-              </Button>
+              >{t('common.cancel')}</Button>
               <Button
                 variant="danger"
                 depth={3}
@@ -629,9 +624,7 @@ export function Account() {
                   setShowDeleteConfirmModal(false);
                   resetDeleteFlow();
                 }}
-              >
-                Cancel
-              </Button>
+              >{t('common.cancel')}</Button>
               <Button
                 variant="danger"
                 depth={3}
@@ -814,8 +807,8 @@ function bundleUpdateAction(
         label: 'Check for Update',
         action: () => invoke('check_for_update'),
       };
-    case 'Error':
-      return { label: 'Retry', action: () => invoke('check_for_update') };
+    case t('common.error'):
+      return { label: t('common.retry'), action: () => invoke('check_for_update') };
     case 'UpdateFound':
       return { label: 'Download', action: grantBundleUpdate };
     case 'WaitingForWifi':

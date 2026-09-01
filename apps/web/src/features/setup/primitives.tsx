@@ -1,4 +1,5 @@
 import CheckIcon from '@phosphor-icons/core/regular/check.svg?component-solid';
+import { t } from '@app/lib/i18n';
 import { cn, Layer } from '@ui';
 import { For, type JSX, Show } from 'solid-js';
 import { StatusDot } from '../settings/integration-ui';
@@ -203,9 +204,7 @@ export function FailureNote(props: { message?: string; onRetry: () => void }) {
         type="button"
         class="shrink-0 font-medium text-ink-muted transition-colors hover:text-ink"
         onClick={() => props.onRetry()}
-      >
-        Retry
-      </button>
+      >{t('common.retry')}</button>
     </span>
   );
 }

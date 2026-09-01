@@ -1,4 +1,5 @@
 import { MintCredential } from '@channel/Bots/MintCredential';
+import { t } from '@app/lib/i18n';
 import Key from '@phosphor-icons/core/regular/key.svg';
 import Link from '@phosphor-icons/core/regular/link.svg';
 import List from '@phosphor-icons/core/regular/list.svg';
@@ -59,7 +60,7 @@ function botDetails(bot: BotSummary): Detail[] {
   return [
     { label: 'Bot ID', value: bot.botId, secret: true },
     { label: 'Handle', value: `@${bot.handle}` },
-    { label: 'Owner', value: ownerLabel(bot.owner) },
+    { label: t('common.owner'), value: ownerLabel(bot.owner) },
     { label: 'Description', value: bot.description },
     { label: 'Profile picture', value: bot.avatarUrl },
     { label: 'Coding agent', value: bot.hasAgent ? 'Yes' : 'No' },

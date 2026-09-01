@@ -1,4 +1,5 @@
 import CaretDownIcon from '@phosphor/caret-down.svg';
+import { t } from '@app/lib/i18n';
 import CircleDashedEmpty from '@phosphor/circle-dashed.svg';
 import FilterIcon from '@phosphor/funnel-simple.svg';
 import PencilIcon from '@phosphor/pencil-simple.svg';
@@ -123,8 +124,7 @@ function TagHoverContent(props: {
         }}
       >
         <PencilIcon class="size-3.5 shrink-0 text-ink-muted" />
-        <span class={hoverMenuLabelClass}>
-          Edit <span class="font-medium">{props.tag.label}</span>
+        <span class={hoverMenuLabelClass}>{t('common.edit')}<span class="font-medium">{props.tag.label}</span>
         </span>
       </button>
     </div>

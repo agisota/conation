@@ -1,4 +1,5 @@
 import { ENABLE_SCRIPTING } from '@core/constant/featureFlags';
+import { t } from '@app/lib/i18n';
 import { showMessageBoxSync } from '@core/util/dialog';
 import debounce from 'lodash/debounce';
 import { AnnotationMode, type PageViewport } from 'pdfjs-dist';
@@ -1323,7 +1324,7 @@ export class InternalPDFViewer {
               type: 'question',
               title: 'Macro',
               message: args[0],
-              buttons: ['OK', 'Cancel'],
+              buttons: ['OK', t('common.cancel')],
               defaultId: 0,
               cancelId: 1,
             }) === 0

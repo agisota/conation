@@ -1,4 +1,5 @@
 import { Lightbox, LightboxToolbar } from '@core/component/Lightbox';
+import { t } from '@app/lib/i18n';
 
 import { isMobile } from '@core/mobile/isMobile';
 import { Dialog } from '@kobalte/core/dialog';
@@ -77,7 +78,7 @@ function VideoViewerContent(props: {
             as={Button}
             variant="ghost"
             size="icon-md"
-            label="Close"
+            label={t('common.close')}
           >
             <XIcon />
           </Dialog.CloseButton>

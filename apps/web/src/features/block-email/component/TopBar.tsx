@@ -4,6 +4,7 @@ import {
   openChatWithAgent,
 } from '@app/features/chat/ChatWithAgentButton';
 import { makeMoveToProjectAction } from '@app/features/next-soup/actions';
+import { t } from '@app/lib/i18n';
 import { useMaybeSoup } from '@app/features/next-soup/soup-context';
 import {
   openEntityInSplitFromUnifiedList,
@@ -253,7 +254,7 @@ export function TopBar(props: {
     },
     {
       group: 'delete',
-      label: 'Delete',
+      label: t('common.delete'),
       icon: TrashIcon,
       action: trashThread,
       condition: isOwnThread,

@@ -1,4 +1,5 @@
 import { useAddInboxFlow } from '@core/email-link';
+import { t } from '@app/lib/i18n';
 import { Button, Dialog, Panel } from '@ui';
 import { createSignal, onCleanup } from 'solid-js';
 
@@ -64,9 +65,7 @@ export function AddInboxDialog() {
               depth={3}
               disabled={pending()}
               onClick={() => setIsOpen(false)}
-            >
-              Cancel
-            </Button>
+            >{t('common.cancel')}</Button>
             <Button
               variant="accent"
               depth={3}

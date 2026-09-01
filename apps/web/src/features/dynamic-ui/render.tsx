@@ -1,4 +1,5 @@
 import { createMemo, ErrorBoundary, For, type JSX, Suspense } from 'solid-js';
+import { t } from '@app/lib/i18n';
 import { match } from 'ts-pattern';
 import { Col, Row, View } from './core/Layout';
 import type {
@@ -121,7 +122,7 @@ export function Compose(props: { view: ComposedView }): JSX.Element {
       )}
     >
       <Suspense
-        fallback={<div class="text-ink-muted p-3 text-sm">Loading…</div>}
+        fallback={<div class="text-ink-muted p-3 text-sm">{t('common.loading')}</div>}
       >
         <View title={props.view.title}>
           <For each={props.view.widgets}>

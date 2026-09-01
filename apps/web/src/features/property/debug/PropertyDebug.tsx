@@ -1,4 +1,5 @@
 import { SplitHeaderLeft } from '@components/app/split-layout/components/SplitHeader';
+import { t } from '@app/lib/i18n';
 import { StaticSplitLabel } from '@components/app/split-layout/components/SplitLabel';
 import { seedMockDisplayNames } from '@core/user';
 import { type Component, createSignal, For, type JSX, Show } from 'solid-js';
@@ -12,7 +13,7 @@ import type { PropertyApiValues, Property as PropertyT } from '../types';
 
 // Seed mock display names so user properties render real first names.
 seedMockDisplayNames([
-  { id: 'macro|alex@example.com', firstName: 'Alex', lastName: 'Owner' },
+  { id: 'macro|alex@example.com', firstName: 'Alex', lastName: t('common.owner') },
   { id: 'macro|sam@example.com', firstName: 'Sam', lastName: 'Shared' },
   { id: 'macro|jordan@example.com', firstName: 'Jordan', lastName: 'Team' },
   { id: 'macro|current@example.com', firstName: 'Current', lastName: 'User' },

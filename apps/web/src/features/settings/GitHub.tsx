@@ -1,4 +1,5 @@
 import { toast } from '@core/component/Toast/Toast';
+import { t } from '@app/lib/i18n';
 import { SERVER_HOSTS } from '@core/constant/servers';
 import GithubIcon from '@icon/mcp-github.svg';
 import ArrowUpRightIcon from '@phosphor/arrow-up-right.svg';
@@ -87,7 +88,7 @@ export function GitHubCard() {
       >
         <Show
           when={!githubLink.isLoading}
-          fallback={<span class="text-xs text-ink-muted">Loading…</span>}
+          fallback={<span class="text-xs text-ink-muted">{t('common.loading')}</span>}
         >
           <Switch
             fallback={
@@ -135,7 +136,7 @@ export function GitHubCard() {
           fallback={
             <span class="text-xs text-ink-muted">
               {githubLink.isLoading
-                ? 'Loading…'
+                ? t('common.loading')
                 : 'Connect your GitHub account first'}
             </span>
           }

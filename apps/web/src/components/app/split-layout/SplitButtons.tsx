@@ -1,4 +1,5 @@
 import { LIST_VIEW_ID } from '@app/constants/list-views';
+import { t } from '@app/lib/i18n';
 
 import ArrowLeft from '@phosphor/arrow-left.svg';
 import ArrowRight from '@phosphor/arrow-right.svg';
@@ -70,7 +71,7 @@ export function SplitCloseButton() {
     <Button
       variant="ghost"
       size="icon-md"
-      label="Close"
+      label={t('common.close')}
       onClick={context.handle.close}
     >
       <CloseIcon />

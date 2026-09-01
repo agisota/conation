@@ -1,4 +1,5 @@
 import { DEFAULT_ROUTE } from '@app/constants/defaultRoute';
+import { t } from '@app/lib/i18n';
 import { useCheckoutCompletionListener } from '@app/features/paywall/use-checkout-completion-listener';
 import { clearLocalAuthSession } from '@core/auth/logout';
 import { isNativeMobilePlatform } from '@core/mobile/isNativeMobilePlatform';
@@ -63,7 +64,7 @@ function SessionVerificationFallback(props: {
         onClick={handleRetry}
         variant="outline"
       >
-        {retrying() ? 'Retrying…' : 'Retry'}
+        {retrying() ? 'Retrying…' : t('common.retry')}
       </Button>
     </div>
   );

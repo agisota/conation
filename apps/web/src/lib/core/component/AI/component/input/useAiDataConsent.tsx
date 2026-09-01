@@ -1,4 +1,5 @@
 import { useAiDataConsent } from '@core/context/user';
+import { t } from '@app/lib/i18n';
 import CloseIcon from '@phosphor/x.svg';
 import { invalidateUserInfo } from '@queries/auth/user-info';
 import { authServiceClient } from '@service-auth/client';
@@ -42,7 +43,7 @@ export function useAiDataConsentGate() {
             <div class="flex flex-row items-center justify-between px-2 h-10 gap-2 border-b border-b-edge-muted">
               <div class="flex flex-row items-center gap-2">
                 <Dialog.CloseButton>
-                  <Button label="Close" variant="ghost" size="icon-sm">
+                  <Button label={t('common.close')} variant="ghost" size="icon-sm">
                     <CloseIcon />
                   </Button>
                 </Dialog.CloseButton>
@@ -56,9 +57,7 @@ export function useAiDataConsentGate() {
                 data is not retained or used for training.
               </p>
               <div class="flex justify-end mt-4 gap-2">
-                <Button variant="outline" onClick={denyConsent}>
-                  Cancel
-                </Button>
+                <Button variant="outline" onClick={denyConsent}>{t('common.cancel')}</Button>
                 <Button variant="outline" onClick={grantConsent}>
                   Accept
                 </Button>

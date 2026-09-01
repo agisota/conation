@@ -1,4 +1,5 @@
 import type { CalendarBlockProps } from '@block-calendar/types';
+import { t } from '@app/lib/i18n';
 import type { BlockCanvasProps } from '@block-canvas/component/Block';
 import type { BlockChannelProps } from '@block-channel/component/NewChannelBlockAdapter';
 import type { BlockMarkdownProps } from '@block-md/component/Block';
@@ -940,7 +941,7 @@ type BlockResource<T, R = unknown> = [
  * function UserProfile() {
  *   const user = userResource();
  *   return (
- *     <Show when={!user.loading} fallback={<div>Loading...</div>}>
+ *     <Show when={!user.loading} fallback={<div>{t('common.loading')}</div>}>
  *       <div>Name: {user().name}</div>
  *     </Show>
  *   );

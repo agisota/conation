@@ -1,4 +1,5 @@
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import { createConfiguredChannelMarkdownEditor } from '@channel/Input';
 import { useIsAuthenticated } from '@core/auth';
 import {
@@ -598,9 +599,7 @@ export function ForwardToChannel(props: ForwardToChannelProps) {
                   size="sm"
                   class="text-ink-extra-muted"
                   onClick={() => props.onCancel?.()}
-                >
-                  Cancel
-                </Button>
+                >{t('common.cancel')}</Button>
                 <Button
                   variant={selectedOptions().length > 0 ? 'accent' : 'ghost'}
                   depth={3}

@@ -1,4 +1,5 @@
 import { toast } from '@core/component/Toast/Toast';
+import { t } from '@app/lib/i18n';
 import { useReferralCode } from '@core/context/user';
 
 import { getWebOrigin } from '@core/util/webOrigin';
@@ -98,9 +99,7 @@ export const InviteModal = () => {
           </div>
 
           <div class="flex justify-end gap-1 pt-2">
-            <Button variant="ghost" class="rounded-xs" onClick={handleClose}>
-              Cancel
-            </Button>
+            <Button variant="ghost" class="rounded-xs" onClick={handleClose}>{t('common.cancel')}</Button>
             <Button
               onClick={handleSend}
               variant={

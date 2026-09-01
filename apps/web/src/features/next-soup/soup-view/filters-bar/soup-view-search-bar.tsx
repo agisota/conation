@@ -1,4 +1,5 @@
 import { useSoup } from '@app/features/next-soup/soup-context';
+import { t } from '@app/lib/i18n';
 import { registerSearchSplit } from '@app/features/next-soup/soup-view/search-controllers';
 import { useSoupView } from '@app/features/next-soup/soup-view/soup-view-context';
 import { useSplitPanelOrThrow } from '@components/app/split-layout/layoutUtils';
@@ -119,7 +120,7 @@ export const SoupSearchbar = (props: SoupSearchbarProps) => {
     hotkey: ['cmd+f'],
     scopeId: panel.splitHotkeyScope,
     registrationType: 'add',
-    description: 'Search',
+    description: t('common.search'),
     runWithInputFocused: true,
     keyDownHandler: () => {
       editor.controls.focus();
@@ -181,7 +182,7 @@ export const SoupSearchbar = (props: SoupSearchbarProps) => {
         >
           <MarkdownShell
             config={editor}
-            placeholder={props.placeholder ?? 'Search'}
+            placeholder={props.placeholder ?? t('common.search')}
             autofocus={props.autoFocus}
             initialValue={initialEditorValue}
             class="min-h-0! overflow-visible!"

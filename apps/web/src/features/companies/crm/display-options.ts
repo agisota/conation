@@ -5,6 +5,7 @@
  */
 
 import { makePersisted } from '@solid-primitives/storage';
+import { t } from '@app/lib/i18n';
 import { createSignal } from 'solid-js';
 
 export type CrmListColumnId = 'stage' | 'owner' | 'revenue';
@@ -20,7 +21,7 @@ export const DEFAULT_CRM_DISPLAY_OPTIONS: CrmDisplayOptions = {
 
 export const CRM_LIST_COLUMN_LABELS: Record<CrmListColumnId, string> = {
   stage: 'Stage',
-  owner: 'Owner',
+  owner: t('common.owner'),
   revenue: 'Revenue',
 };
 

@@ -1,4 +1,5 @@
 import { EntityActivitySectionConditional } from '@app/features/activity/EntityActivitySection';
+import { t } from '@app/lib/i18n';
 import {
   EntityPropertiesSection,
   EntityTagsSection,
@@ -95,7 +96,7 @@ export function MarkdownSidePanelSections(
 
   return (
     <>
-      <SidePanel.Section id="details" title="Details" defaultOpen order={10}>
+      <SidePanel.Section id="details" title={t('common.details')} defaultOpen order={10}>
         <DetailsSectionContent />
       </SidePanel.Section>
       <Show when={isSnippet()}>
@@ -109,7 +110,7 @@ export function MarkdownSidePanelSections(
       />
       <SidePanel.Section
         id="properties"
-        title="Properties"
+        title={t('common.properties')}
         defaultOpen
         order={25}
       >
@@ -355,7 +356,7 @@ function DetailsGrid(props: {
     <SidePanel.Grid>
       <Show when={props.owner()}>
         {(ownerId) => (
-          <SidePanel.Row label="Owner">
+          <SidePanel.Row label={t('common.owner')}>
             <OwnerValue ownerId={ownerId()} />
           </SidePanel.Row>
         )}

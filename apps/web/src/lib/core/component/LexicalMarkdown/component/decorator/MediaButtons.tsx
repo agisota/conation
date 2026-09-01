@@ -1,4 +1,5 @@
 import { isMobile } from '@core/mobile/isMobile';
+import { t } from '@app/lib/i18n';
 import { Dialog } from '@kobalte/core/dialog';
 import NewTab from '@phosphor/arrow-square-out.svg';
 import ArrowsOut from '@phosphor/arrows-out-simple.svg';
@@ -72,7 +73,7 @@ export function MediaButtons(props: MediaButtonsProps) {
         <Button
           variant="ghost"
           size="icon-sm"
-          tooltip="Remove"
+          tooltip={t('common.remove')}
           on:mousedown={(e: MouseEvent) => {
             e.preventDefault();
             e.stopPropagation();
@@ -138,7 +139,7 @@ export function MediaButtons(props: MediaButtonsProps) {
                     }}
                   >
                     <Trash class="size-4 shrink-0 text-failure" />
-                    <span class="flex-1 truncate">Remove</span>
+                    <span class="flex-1 truncate">{t('common.remove')}</span>
                   </Dropdown.Item>
                 </Dropdown.Group>
               </Show>

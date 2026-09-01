@@ -6,6 +6,7 @@ import {
   queryStateFrom,
 } from '@app/features/next-soup/filters/filter-store';
 import { throwOnErr } from '@core/util/result';
+import { t } from '@app/lib/i18n';
 import {
   ListEntity,
   ListEntityMetadataQueryProvider,
@@ -663,7 +664,7 @@ export default function DocumentWherePlayground() {
             </div>
 
             <Show when={loading()}>
-              <div class="mb-3 text-ink-muted text-sm">Loading...</div>
+              <div class="mb-3 text-ink-muted text-sm">{t('common.loading')}</div>
             </Show>
 
             <Show when={items().length !== entities().length}>

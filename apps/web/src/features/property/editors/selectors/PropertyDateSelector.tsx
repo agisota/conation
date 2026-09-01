@@ -1,4 +1,5 @@
 import { DatePickerUI } from '@core/component/DatePicker/DatePickerUI';
+import { t } from '@app/lib/i18n';
 import { useDateSearch } from '@core/util/dateSearch/useDateSearch';
 import { useKeyPressed } from '@core/util/useKeyPressed';
 import SearchIcon from '@phosphor/magnifying-glass.svg';
@@ -94,7 +95,7 @@ export const PropertyDateSelector = (props: DateSelectorProps) => {
     const total = totalOptions();
 
     if (
-      (e.key === 'Delete' || e.key === 'Backspace') &&
+      (e.key === t('common.delete') || e.key === 'Backspace') &&
       !searchQuery().trim()
     ) {
       handleClearDate(false);

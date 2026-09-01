@@ -3,6 +3,7 @@ import {
   type TurnOffCalendarTarget,
 } from '@app/features/calendar/components/TurnOffCalendarDialog';
 import { useCalendarUiFlag } from '@app/features/calendar/hooks/use-calendar-ui-flag';
+import { t } from '@app/lib/i18n';
 import { openAddInboxDialog } from '@app/features/inbox/AddInboxDialog';
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
 import { toast } from '@core/component/Toast/Toast';
@@ -291,8 +292,7 @@ export function EmailCard() {
                     inbox and its data stay with its owner.
                   </>
                 }
-              >
-                Remove <span class="text-ink">{removeTarget()?.email}</span>?
+              >{t('common.remove')}<span class="text-ink">{removeTarget()?.email}</span>?
                 This clears all of its email data from Macro and cannot be
                 undone.
               </Show>
@@ -302,12 +302,8 @@ export function EmailCard() {
                 variant="outline"
                 depth={3}
                 onClick={() => setRemoveTarget(null)}
-              >
-                Cancel
-              </Button>
-              <Button variant="danger" depth={3} onClick={handleRemoveInbox}>
-                Remove
-              </Button>
+              >{t('common.cancel')}</Button>
+              <Button variant="danger" depth={3} onClick={handleRemoveInbox}>{t('common.remove')}</Button>
             </div>
           </Panel.Body>
         </Panel>

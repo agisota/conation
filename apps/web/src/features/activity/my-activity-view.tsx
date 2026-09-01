@@ -1,4 +1,5 @@
 import { dateBucket } from '@app/features/next-soup/soup-view/group-by-date';
+import { t } from '@app/lib/i18n';
 import { SoupSectionHeader } from '@app/features/next-soup/soup-view/section-header';
 import { SplitHeaderLeft } from '@components/app/split-layout/components/SplitHeader';
 import { StaticMarkdownContext } from '@core/component/LexicalMarkdown/component/core/StaticMarkdown';
@@ -64,7 +65,7 @@ export function MyActivityView() {
               fallback={
                 <p class={`${INSET_CLASS} px-2 py-2 text-ink-muted text-sm`}>
                   {feed.isLoading
-                    ? 'Loading…'
+                    ? t('common.loading')
                     : feed.isError
                       ? 'Activity is unavailable right now. Try again in a moment.'
                       : 'No activity yet.'}
@@ -79,7 +80,7 @@ export function MyActivityView() {
                     onClick={() => void feed.fetchNextPage()}
                     disabled={feed.isFetchingNextPage}
                   >
-                    {feed.isFetchingNextPage ? 'Loading…' : 'Show more'}
+                    {feed.isFetchingNextPage ? t('common.loading') : 'Show more'}
                   </Button>
                 </div>
               </Show>

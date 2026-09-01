@@ -3,6 +3,7 @@ import type {
   MessagePart,
 } from '@service-agent-fold/generated/types';
 import { describe, expect, it } from 'vitest';
+import { t } from '@app/lib/i18n';
 import {
   activityCounts,
   changedFiles,
@@ -27,7 +28,7 @@ function edit(
   return {
     kind: 'tool_use',
     id: `edit-${diffs[0]?.path}`,
-    label: 'Edit',
+    label: t('common.edit'),
     status: 'completed',
     detail: { kind: 'edit', diffs },
     rawInput: null,

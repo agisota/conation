@@ -5,6 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import * as zod from 'zod';
+import { t } from '@app/lib/i18n';
 
 /**
  * @summary Deletes a single unthreaded anchor for a document
@@ -3228,7 +3229,7 @@ export const postReactionParams = zod.object({
 
 export const postReactionBody = zod
   .object({
-    action: zod.enum(['Add', 'Remove']).describe('Reaction mutation action.'),
+    action: zod.enum(['Add', t('common.remove')]).describe('Reaction mutation action.'),
     emoji: zod.string().describe('Reaction emoji.'),
     message_id: zod.string().describe('Message id to react to.'),
     nonce: zod.string().nullish().describe('Optional optimistic-update nonce.'),

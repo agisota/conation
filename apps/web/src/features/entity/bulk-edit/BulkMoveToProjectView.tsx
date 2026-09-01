@@ -1,4 +1,5 @@
 import { analytics } from '@app/lib/analytics';
+import { t } from '@app/lib/i18n';
 import { EntityIcon } from '@core/component/EntityIcon';
 import { toast } from '@core/component/Toast/Toast';
 import { registerHotkey, useHotkeyDOMScope } from '@core/hotkey/hotkeys';
@@ -626,7 +627,7 @@ export const BulkMoveToProjectView = (props: {
                   size="icon-sm"
                   variant="ghost"
                   class="shrink-0"
-                  tooltip="Cancel"
+                  tooltip={t('common.cancel')}
                   onClick={cancelCreatingFolder}
                 >
                   <CloseIcon />
@@ -637,9 +638,7 @@ export const BulkMoveToProjectView = (props: {
         </div>
 
         <div class="flex justify-end gap-2">
-          <Button variant="ghost" class="rounded-xs" onClick={props.onCancel}>
-            Cancel
-          </Button>
+          <Button variant="ghost" class="rounded-xs" onClick={props.onCancel}>{t('common.cancel')}</Button>
           <Button
             type="button"
             variant="outline"

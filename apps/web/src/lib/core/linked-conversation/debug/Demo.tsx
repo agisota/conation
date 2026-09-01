@@ -5,6 +5,7 @@
  */
 
 import { URL_PARAMS } from '@channel/Channel/link';
+import { t } from '@app/lib/i18n';
 import { useDrawerControl } from '@components/app/split-layout/components/SplitDrawerContext';
 import { createSignal, Show, Suspense } from 'solid-js';
 import { createChannelThreadSource } from '../channel-thread-source';
@@ -125,7 +126,7 @@ export default function LinkedConversationDemo() {
             <DrawerToggle />
             <div class="max-w-2xl rounded-md border border-edge-muted p-3">
               <Suspense
-                fallback={<p class="text-sm text-ink-muted">Loading…</p>}
+                fallback={<p class="text-sm text-ink-muted">{t('common.loading')}</p>}
               >
                 <ConversationViewer target={t} />
               </Suspense>

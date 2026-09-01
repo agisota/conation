@@ -1,4 +1,5 @@
 import { openBulkEditModal } from '@app/features/entity/bulk-edit/BulkEditEntityModal';
+import { t } from '@app/lib/i18n';
 import { HeaderIsland } from '@components/app/split-layout/components/HeaderIsland';
 import { SplitFileMenu } from '@components/app/split-layout/components/SplitFileMenu';
 import { SplitHeaderLeft } from '@components/app/split-layout/components/SplitHeader';
@@ -104,9 +105,7 @@ function HistoryList(props: { records: HistoryRecord[]; isPending: boolean }) {
         <Show
           when={!props.isPending}
           fallback={
-            <div class="px-3 py-8 text-center text-xs text-ink-muted">
-              Loading…
-            </div>
+            <div class="px-3 py-8 text-center text-xs text-ink-muted">{t('common.loading')}</div>
           }
         >
           <div class="px-3 py-8 text-center text-xs text-ink-muted">
@@ -282,9 +281,7 @@ export function Automation() {
         <Show
           when={!schedulesQuery.isPending && !schedule()}
           fallback={
-            <div class="flex size-full items-center justify-center text-xs text-ink-muted">
-              Loading…
-            </div>
+            <div class="flex size-full items-center justify-center text-xs text-ink-muted">{t('common.loading')}</div>
           }
         >
           <div class="flex size-full items-center justify-center text-xs text-ink-muted">
@@ -344,7 +341,7 @@ export function Automation() {
                 },
                 {
                   group: 'delete',
-                  label: 'Delete',
+                  label: t('common.delete'),
                   icon: TrashIcon,
                   action: deleteAutomation,
                 },

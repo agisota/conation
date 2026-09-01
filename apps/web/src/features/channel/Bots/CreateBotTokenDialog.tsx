@@ -1,4 +1,5 @@
 import KeyIcon from '@phosphor/key.svg';
+import { t } from '@app/lib/i18n';
 import XIcon from '@phosphor/x.svg';
 import type { Bot } from '@service-storage/generated/schemas/bot';
 import { Button, Dialog, Panel } from '@ui';
@@ -42,8 +43,8 @@ export function CreateBotTokenDialog(props: {
             <Button
               variant="ghost"
               size="icon-sm"
-              label="Close"
-              aria-label="Close"
+              label={t('common.close')}
+              aria-label={t('common.close')}
               disabled={minted.isPending()}
               onClick={close}
             >
@@ -95,9 +96,7 @@ export function CreateBotTokenDialog(props: {
                         </span>
                       </label>
                       <div class="flex justify-end gap-2 border-t border-edge-muted pt-4">
-                        <Button variant="ghost" size="sm" onClick={close}>
-                          Cancel
-                        </Button>
+                        <Button variant="ghost" size="sm" onClick={close}>{t('common.cancel')}</Button>
                         <Button
                           variant="cta"
                           size="sm"

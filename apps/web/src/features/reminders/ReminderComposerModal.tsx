@@ -1,4 +1,5 @@
 import { toast } from '@core/component/Toast/Toast';
+import { t } from '@app/lib/i18n';
 import { registerHotkey, useHotkeyDOMScope } from '@core/hotkey/hotkeys';
 import {
   type CronParts,
@@ -609,7 +610,7 @@ function DescriptionStep(props: {
     <CommandMenuShell.Footer class="gap-2 border-t-0 py-3">
       <CommandMenuHotkeyHint
         hotkey={<Hotkey shortcut="escape" />}
-        label="Cancel"
+        label={t('common.cancel')}
       />
       <Button
         variant="accent"

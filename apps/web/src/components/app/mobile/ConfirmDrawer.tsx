@@ -1,4 +1,5 @@
 import { Button, type ConfirmDialogProps } from '@ui';
+import { t } from '@app/lib/i18n';
 import { createSignal, Show } from 'solid-js';
 import { MobileDrawer } from './MobileDrawer';
 
@@ -68,7 +69,7 @@ export function ConfirmDrawer(props: ConfirmDialogProps) {
               size="lg"
               class="w-full rounded-lg"
             >
-              {props.cancelLabel ?? 'Cancel'}
+              {props.cancelLabel ?? t('common.cancel')}
             </MobileDrawer.Close>
           </div>
         </MobileDrawer.Content>

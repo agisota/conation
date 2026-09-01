@@ -1,4 +1,5 @@
 import type { ListView } from '@app/constants/list-views';
+import { t } from '@app/lib/i18n';
 import { isListViewID, TAGGABLE_LIST_VIEWS } from '@app/constants/list-views';
 import {
   type FilterContext,
@@ -1068,7 +1069,7 @@ export const UnifiedFilterDropdown = (
                       preserveOrder
                     />
                     <SearchableFilterSubmenu
-                      label="Owner"
+                      label={t('common.owner')}
                       options={ownerOptions}
                       activeIds={ownerFilter}
                       onChange={handleOwnerChange}

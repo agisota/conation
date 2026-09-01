@@ -1,4 +1,5 @@
 import { nativeNetworkStatus } from '@core/mobile/native-network-status';
+import { t } from '@app/lib/i18n';
 import { ThrownResultError } from '@core/util/result';
 import { EmptyStatePanel } from '@ui';
 import {
@@ -119,7 +120,7 @@ export function LoadErrorPanel(props: {
       description="Check your internet connection and try again."
       primaryAction={
         props.onRetry && nativeNetworkStatus() !== 'offline'
-          ? { label: 'Retry', onClick: props.onRetry }
+          ? { label: t('common.retry'), onClick: props.onRetry }
           : undefined
       }
     />

@@ -1,4 +1,5 @@
 import { toast } from '@core/component/Toast/Toast';
+import { t } from '@app/lib/i18n';
 import { ThrownResultError } from '@core/util/result';
 import {
   useCursorApiKeyStatusQuery,
@@ -105,7 +106,7 @@ export function CursorCard() {
           // The placeholder reads as "no key", which for this card would flash
           // the paste-a-key input at someone who has one already.
           when={!status.isPlaceholderData}
-          fallback={<span class="text-xs text-ink-muted">Loading…</span>}
+          fallback={<span class="text-xs text-ink-muted">{t('common.loading')}</span>}
         >
           <Switch
             fallback={
@@ -127,9 +128,7 @@ export function CursorCard() {
                   depth={3}
                   disabled={apiKey().length === 0 || saveKey.isPending}
                   onClick={handleSave}
-                >
-                  Save
-                </Button>
+                >{t('common.save')}</Button>
               </div>
             }
           >

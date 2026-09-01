@@ -1,4 +1,5 @@
 import { useSplitLayout } from '@components/app/split-layout/layout';
+import { t } from '@app/lib/i18n';
 import { useFocusLock } from '@core/util/createControlledOpenSignal';
 import { ThrownResultError } from '@core/util/result';
 import UserPlusIcon from '@phosphor/user-plus.svg';
@@ -126,7 +127,7 @@ export function CreateContactModal() {
               <Dialog.CloseButton
                 as={Button}
                 size="icon-sm"
-                label="Close"
+                label={t('common.close')}
                 tabIndex={-1}
                 disabled={createContactMutation.isPending}
               >

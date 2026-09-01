@@ -3,6 +3,7 @@ import {
   EntityTagsSection,
 } from '@app/features/property/side-panel/properties';
 import { useBlockId } from '@core/block';
+import { t } from '@app/lib/i18n';
 import { EntityIcon } from '@core/component/EntityIcon';
 import { openDocument } from '@core/component/LexicalMarkdown/component/core/BlockLink';
 import { UserIcon } from '@core/component/UserIcon';
@@ -30,7 +31,7 @@ export function FileDetailsSection(props: { order?: number }) {
   return (
     <SidePanel.Section
       id="details"
-      title="Details"
+      title={t('common.details')}
       defaultOpen
       order={props.order}
     >
@@ -43,7 +44,7 @@ export function FilePropertiesSection(props: { order?: number }) {
   return (
     <SidePanel.Section
       id="properties"
-      title="Properties"
+      title={t('common.properties')}
       defaultOpen
       order={props.order}
     >
@@ -91,7 +92,7 @@ function DetailsSectionContent() {
     <SidePanel.Grid>
       <Show when={metadata()?.owner}>
         {(ownerId) => (
-          <SidePanel.Row label="Owner">
+          <SidePanel.Row label={t('common.owner')}>
             <OwnerValue ownerId={ownerId()} />
           </SidePanel.Row>
         )}

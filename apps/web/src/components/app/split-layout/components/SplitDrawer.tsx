@@ -1,4 +1,5 @@
 import { ScopedPortal } from '@core/component/ScopedPortal';
+import { t } from '@app/lib/i18n';
 import { registerHotkey } from '@core/hotkey/hotkeys';
 import { TOKENS } from '@core/hotkey/tokens';
 import CloseIcon from '@phosphor/x.svg';
@@ -140,7 +141,7 @@ export function SplitDrawer(
               <Button
                 variant="ghost"
                 size="icon-sm"
-                label="Close"
+                label={t('common.close')}
                 onClick={drawerControl.close}
               >
                 <CloseIcon />

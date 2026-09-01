@@ -5,6 +5,7 @@
  */
 
 import ArrowClockwise from '@phosphor/arrow-clockwise.svg';
+import { t } from '@app/lib/i18n';
 import X from '@phosphor/x.svg';
 import { Button } from '@ui';
 import { For, Show } from 'solid-js';
@@ -52,7 +53,7 @@ export function QueuedPromptList(props: QueuedPromptListProps) {
                   <Button
                     variant="ghost"
                     size="icon-xs"
-                    label="Retry"
+                    label={t('common.retry')}
                     onClick={() => props.onRetry?.()}
                   >
                     <ArrowClockwise />
@@ -62,7 +63,7 @@ export function QueuedPromptList(props: QueuedPromptListProps) {
                   <Button
                     variant="ghost"
                     size="icon-xs"
-                    label="Remove"
+                    label={t('common.remove')}
                     onClick={() => props.onRemove?.(prompt.id)}
                   >
                     <X />

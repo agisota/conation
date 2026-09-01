@@ -14,6 +14,7 @@ import {
   uploadInputAttachments,
 } from '@channel/Input';
 import { ChannelInputContainer } from '@channel/Input/ChannelInputContainer';
+import { t } from '@app/lib/i18n';
 import { buildPostMessageRequest } from '@channel/Input/message-payload';
 import { getAttachmentKindFromFile } from '@channel/Input/utils/file-helpers';
 import { hasSendableInputContent } from '@channel/Input/utils/sendable-content';
@@ -183,9 +184,7 @@ function ShareSheetHeaderActions(props: {
         size="sm"
         onClick={props.handleCancel}
         class="pl-0"
-      >
-        Cancel
-      </Button>
+      >{t('common.cancel')}</Button>
       <Button
         variant="ghost"
         size="sm"

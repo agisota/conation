@@ -1,4 +1,5 @@
 import { hasEveryoneElseDeclined } from '@app/features/calendar/components/EventContent';
+import { t } from '@app/lib/i18n';
 import {
   EventAttendeesSection,
   EventDetails,
@@ -145,9 +146,7 @@ function EveryoneElseDeclinedNotice(props: {
                 size="sm"
                 class="rounded-lg"
                 onClick={props.onDelete}
-              >
-                Delete
-              </Button>
+              >{t('common.delete')}</Button>
               <Button
                 variant="cta"
                 size="sm"

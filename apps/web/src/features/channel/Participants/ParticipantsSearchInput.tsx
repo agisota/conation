@@ -1,4 +1,5 @@
 import MagnifyingGlassIcon from '@phosphor/magnifying-glass.svg';
+import { t } from '@app/lib/i18n';
 
 export function ParticipantsSearchInput(props: {
   value: string;
@@ -11,7 +12,7 @@ export function ParticipantsSearchInput(props: {
         type="text"
         value={props.value}
         onInput={(event) => props.onInput(event.currentTarget.value)}
-        placeholder="Search"
+        placeholder={t('common.search')}
         class="flex-1 min-w-0 text-sm bg-surface border-none outline-none text-ink placeholder:text-ink-placeholder"
       />
     </div>

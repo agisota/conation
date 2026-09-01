@@ -1,4 +1,5 @@
 import { useCanvasFileDrop } from '@block-canvas/signal/fileDrop';
+import { t } from '@app/lib/i18n';
 import { type BlockName, useBlockId, useIsNestedBlock } from '@core/block';
 import { FileDropOverlay } from '@core/component/FileDropOverlay';
 import { OldMenu, OldMenuItem } from '@core/component/OldMenu';
@@ -1080,7 +1081,7 @@ export function CanvasController(props: ParentProps) {
           hotkey={<Hotkey token={'canvas.paste'} />}
         />
         <OldMenuItem
-          text="Delete"
+          text={t('common.delete')}
           iconClass="text-ink-extra-muted"
           icon={TrashSimple}
           onClick={() => {

@@ -22,6 +22,7 @@ import type {
   SoupInput as GraphqlSoupInput,
 } from '@service-storage/graphql/generated/graphql';
 import { match } from 'ts-pattern';
+import { t } from '@app/lib/i18n';
 
 type GraphqlExprInput<TLiteral> =
   | {
@@ -308,7 +309,7 @@ function mapEmailLiteral(literal: unknown): GraphqlEmailLiteralInput {
       return { sender: mapEmailValue(value) };
     case 'ThreadId':
       return { threadId: mapString(value, 'threadId') };
-    case 'Owner':
+    case t('common.owner'):
       return { owner: mapString(value, 'owner') };
     case 'ProjectId':
       return { projectId: mapString(value, 'projectId') };

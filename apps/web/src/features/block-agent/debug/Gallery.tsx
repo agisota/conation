@@ -5,6 +5,7 @@
  */
 
 import { StaticMarkdownContext } from '@core/component/LexicalMarkdown/component/core/StaticMarkdown';
+import { t } from '@app/lib/i18n';
 import type {
   FoldedMessage,
   ToolStatus,
@@ -127,7 +128,7 @@ const FIXTURE_MESSAGE: FoldedMessage = {
       rawInput: null,
       rawOutput: null,
       id: 'demo-search',
-      label: 'Search',
+      label: t('common.search'),
       status: 'completed',
       detail: {
         kind: 'search',
@@ -140,7 +141,7 @@ const FIXTURE_MESSAGE: FoldedMessage = {
       rawInput: null,
       rawOutput: null,
       id: 'demo-edit',
-      label: 'Edit',
+      label: t('common.edit'),
       status: 'completed',
       detail: { kind: 'edit', diffs: [FIXTURE_DIFF] },
     },
@@ -212,7 +213,7 @@ export default function AgentUiGallery() {
               status="completed"
             />
             <ToolCard
-              title="Edit"
+              title={t('common.edit')}
               subtitle={FIXTURE_DIFF.path}
               trailing={<DiffChanges additions={4} deletions={3} />}
               status="completed"

@@ -1,4 +1,5 @@
 import { UserIcon } from '@core/component/UserIcon';
+import { t } from '@app/lib/i18n';
 import { useEmail, useUserId } from '@core/context/user';
 import { emailToId, useAugmentUserWithDmActivity } from '@core/user';
 import { createFreshSearch } from '@core/util/freshSort';
@@ -650,7 +651,7 @@ export function PropertyEntitySelector(props: EntityInputProps) {
 
       <Show when={totalCount() === 0}>
         <div class="text-center py-4 text-ink-muted text-sm">
-          <Show when={!isLoadingEntities()} fallback={<span>Loading...</span>}>
+          <Show when={!isLoadingEntities()} fallback={<span>{t('common.loading')}</span>}>
             No {getEntityTypePluralLabel(props.config.specificEntityType)} found
           </Show>
         </div>

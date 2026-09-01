@@ -1,4 +1,5 @@
 import { useSplitLayout } from '@components/app/split-layout/layout';
+import { t } from '@app/lib/i18n';
 import { CustomScrollbar } from '@core/component/CustomScrollbar';
 import { RecipientSelector } from '@core/component/RecipientSelector';
 import { TabsInset } from '@core/component/TabsInset';
@@ -168,7 +169,7 @@ export function CreateChannelModal() {
               <Dialog.CloseButton
                 as={Button}
                 size="icon-sm"
-                label="Close"
+                label={t('common.close')}
                 tabIndex={-1}
                 disabled={createChannelMutation.isPending}
               >

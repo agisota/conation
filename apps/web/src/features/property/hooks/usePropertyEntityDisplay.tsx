@@ -1,4 +1,5 @@
 import { URL_PARAMS as CHANNEL_PARAMS } from '@block-channel/constants';
+import { t } from '@app/lib/i18n';
 import { EntityIcon as CoreEntityIcon } from '@core/component/EntityIcon';
 import { UserIcon } from '@core/component/UserIcon';
 import { fileTypeToBlockName } from '@core/constant/allBlocks';
@@ -103,7 +104,7 @@ export function usePropertyEntityDisplay(
       .with('COMPANY', () => entityId())
       .otherwise(() => {
         const item = preview();
-        if (!item || item.loading) return 'Loading...';
+        if (!item || item.loading) return t('common.loading');
         if (isAccessiblePreviewItem(item)) {
           return item.name;
         }

@@ -4,6 +4,7 @@ import {
   SidePanel,
 } from '@components/app/side-panel';
 import type { GithubPullRequestWithDetails } from '@queries/storage/github-pull-requests';
+import { t } from '@app/lib/i18n';
 import type { Accessor } from 'solid-js';
 
 export function PrSidePanelSections(props: {
@@ -11,7 +12,7 @@ export function PrSidePanelSections(props: {
 }) {
   return (
     <>
-      <SidePanel.Section id="pr-details" title="Details" defaultOpen order={10}>
+      <SidePanel.Section id="pr-details" title={t('common.details')} defaultOpen order={10}>
         <GithubPullRequestDetailsContent enrichment={props.enrichment} />
       </SidePanel.Section>
 

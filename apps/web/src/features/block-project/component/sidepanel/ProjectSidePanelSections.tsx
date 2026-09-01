@@ -1,4 +1,5 @@
 import { EntityActivitySectionConditional } from '@app/features/activity/EntityActivitySection';
+import { t } from '@app/lib/i18n';
 import {
   EntityPropertiesSection,
   EntityTagsSection,
@@ -16,7 +17,7 @@ export function ProjectSidePanelSections() {
 
   return (
     <>
-      <SidePanel.Section id="details" title="Details" defaultOpen order={10}>
+      <SidePanel.Section id="details" title={t('common.details')} defaultOpen order={10}>
         <Suspense fallback={<SidePanel.Loading />}>
           <EntityPropertiesSection
             entityId={projectId}
@@ -38,7 +39,7 @@ export function ProjectSidePanelSections() {
       />
       <SidePanel.Section
         id="properties"
-        title="Properties"
+        title={t('common.properties')}
         defaultOpen
         order={30}
       >

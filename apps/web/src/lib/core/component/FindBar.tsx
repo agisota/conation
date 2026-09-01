@@ -1,4 +1,5 @@
 import CaretDown from '@phosphor/caret-down.svg';
+import { t } from '@app/lib/i18n';
 import CaretUp from '@phosphor/caret-up.svg';
 import MagnifyingGlass from '@phosphor/magnifying-glass.svg';
 import X from '@phosphor/x.svg';
@@ -103,7 +104,7 @@ function FindBarSubmitButton() {
     <Button
       size="icon-sm"
       variant="ghost"
-      aria-label="Search"
+      aria-label={t('common.search')}
       onClick={() => controller.submit()}
       classList={{
         '!text-accent':

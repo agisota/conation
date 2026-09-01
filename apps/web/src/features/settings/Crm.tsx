@@ -1,6 +1,7 @@
 /** CRM settings tab: team admins enable or disable the CRM here. */
 
 import { toast } from '@core/component/Toast/Toast';
+import { t } from '@app/lib/i18n';
 import { SERVER_HOSTS } from '@core/constant/servers';
 import { throwOnErr } from '@core/util/result';
 import SpinnerIcon from '@phosphor/spinner.svg';
@@ -59,9 +60,7 @@ function ConfirmDialog(props: {
               class="rounded-xs"
               disabled={props.pending}
               onClick={props.onClose}
-            >
-              Cancel
-            </Button>
+            >{t('common.cancel')}</Button>
             <Button
               variant="danger"
               class="rounded-xs"
@@ -222,9 +221,7 @@ function CrmEnablementSection() {
                 class="rounded-xs"
                 disabled={patchCrmMutation.isPending}
                 onClick={() => setShowEnableModal(false)}
-              >
-                Cancel
-              </Button>
+              >{t('common.cancel')}</Button>
               <Button
                 variant="outline"
                 class="rounded-xs"

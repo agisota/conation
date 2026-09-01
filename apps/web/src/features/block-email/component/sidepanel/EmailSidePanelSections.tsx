@@ -1,4 +1,5 @@
 import { EntityActivitySectionConditional } from '@app/features/activity/EntityActivitySection';
+import { t } from '@app/lib/i18n';
 import {
   EntityPropertiesSection,
   EntityTagsSection,
@@ -28,7 +29,7 @@ export function EmailSidePanelSections(props: EmailSidePanelSectionsProps) {
       />
       <SidePanel.Section
         id="properties"
-        title="Properties"
+        title={t('common.properties')}
         defaultOpen
         order={30}
       >

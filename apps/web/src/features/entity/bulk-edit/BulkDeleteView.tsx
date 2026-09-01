@@ -4,6 +4,7 @@ import {
   InlineEntity,
 } from '@entity';
 import { Dialog } from '@kobalte/core/dialog';
+import { t } from '@app/lib/i18n';
 import CloseIcon from '@phosphor-icons/core/regular/x.svg?component-solid';
 import { Button, cn } from '@ui';
 import { For, onMount, Show } from 'solid-js';
@@ -85,9 +86,7 @@ export const BulkDeleteView = (props: {
         </p>
 
         <div class="flex justify-end gap-2">
-          <Button variant="ghost" onClick={handleCancel}>
-            Cancel
-          </Button>
+          <Button variant="ghost" onClick={handleCancel}>{t('common.cancel')}</Button>
           <Button
             ref={(el: HTMLButtonElement) => {
               deleteButton = el;
@@ -96,9 +95,7 @@ export const BulkDeleteView = (props: {
             type="button"
             variant="danger"
             onClick={handleDelete}
-          >
-            Delete
-          </Button>
+          >{t('common.delete')}</Button>
         </div>
       </div>
     </>

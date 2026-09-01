@@ -3,6 +3,7 @@
  */
 
 import { ThrownResultError } from '@core/util/result';
+import { t } from '@app/lib/i18n';
 import { render } from 'solid-js/web';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -231,7 +232,7 @@ describe('EntityLoadGate', () => {
     expect(container.querySelector('button')).toBeNull();
 
     network.set('online');
-    expect(container.querySelector('button')?.textContent).toContain('Retry');
+    expect(container.querySelector('button')?.textContent).toContain(t('common.retry'));
   });
 
   it('auto-retries shortly after connectivity returns', () => {
@@ -354,7 +355,7 @@ describe('EntityLoadGate', () => {
     };
 
     const retryButton = container.querySelector('button');
-    expect(retryButton?.textContent).toContain('Retry');
+    expect(retryButton?.textContent).toContain(t('common.retry'));
     retryButton?.click();
     expect(onRetry).toHaveBeenCalledOnce();
   });

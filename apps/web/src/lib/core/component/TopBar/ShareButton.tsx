@@ -1,4 +1,5 @@
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import { useChannelParticipants } from '@channel/use-channel-participants';
 import { MobileDrawer } from '@components/app/mobile/MobileDrawer';
 import { useIsAuthenticated } from '@core/auth';
@@ -164,9 +165,9 @@ const accessLevelText = (accessLevel?: AccessLevel | null) => {
     case 'view':
       return 'View';
     case 'edit':
-      return 'Edit';
+      return t('common.edit');
     case 'owner':
-      return 'Owner';
+      return t('common.owner');
     default:
       return 'Remove Access';
   }
@@ -471,7 +472,7 @@ function MobileShareDrawer(props: MobileShareDrawerProps) {
                     </div>
                   </div>
                   <div class="flex items-center">
-                    <div class="font-medium text-ink-muted text-xs">Owner</div>
+                    <div class="font-medium text-ink-muted text-xs">{t('common.owner')}</div>
                   </div>
                 </div>
               </Show>
@@ -1050,9 +1051,7 @@ export function ShareModal(props: ShareModalProps) {
                                 </div>
                               </div>
                               <div class="flex items-center">
-                                <div class="font-medium text-ink-muted text-xs">
-                                  Owner
-                                </div>
+                                <div class="font-medium text-ink-muted text-xs">{t('common.owner')}</div>
                               </div>
                             </div>
                           </Show>

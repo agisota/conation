@@ -1,4 +1,5 @@
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
+import { t } from '@app/lib/i18n';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import type { BlockAlias, BlockName } from '@core/block';
 import { fileTypeToBlockName } from '@core/constant/allBlocks';
@@ -197,7 +198,7 @@ function ButtonLoading(props: StatusDisplayProps) {
           <LoadingSpinner />
         </div>
       </div>
-      <div class={cn(DEFAULT_TEXT_CLASS, props.textClass)}>Loading...</div>
+      <div class={cn(DEFAULT_TEXT_CLASS, props.textClass)}>{t('common.loading')}</div>
     </div>
   );
 }
@@ -208,7 +209,7 @@ function InlineLoading() {
       <span class="relative top-[0.125em] inline-flex size-[1em] shrink-0 animate-spin">
         <LoadingSpinner />
       </span>
-      <span class="text-ink-muted">Loading...</span>
+      <span class="text-ink-muted">{t('common.loading')}</span>
     </span>
   );
 }

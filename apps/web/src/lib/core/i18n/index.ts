@@ -1,4 +1,5 @@
 import { createContext, createSignal, useContext } from 'solid-js';
+import { t } from '@app/lib/i18n';
 import en from './locales/en.json';
 import ru from './locales/ru.json';
 
@@ -65,7 +66,7 @@ function pluralKey(locale: Locale, count: number): string {
 
 /**
  * Translate key with optional interpolation and plural.
- * - `t('common.close')` -> "Закрыть" / "Close"
+ * - `t('common.close')` -> "Закрыть" / t('common.close')
  * - `t('plural.notification', { count: 5 })` -> picks correct plural form via Intl.PluralRules
  *
  * For plural, expects keys like `plural.notification.one`, `.few`, `.many`, `.other`.

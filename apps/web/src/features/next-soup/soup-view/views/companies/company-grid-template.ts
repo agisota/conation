@@ -1,4 +1,5 @@
 import { SYSTEM_PROPERTY_IDS } from '@property/constants';
+import { t } from '@app/lib/i18n';
 import { DataType } from '@service-storage/generated/schemas/dataType';
 import { EntityType } from '@service-storage/generated/schemas/entityType';
 
@@ -19,7 +20,7 @@ export const COMPANY_GRID_COLUMNS = [
   },
   {
     id: 'owner',
-    label: 'Owner',
+    label: t('common.owner'),
     defId: SYSTEM_PROPERTY_IDS.COMPANY_OWNER,
     dataType: DataType.ENTITY,
     isMultiSelect: false,

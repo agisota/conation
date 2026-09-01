@@ -4,6 +4,7 @@ import {
   SYSTEM_PROPERTY_IDS,
 } from '@property/constants';
 import type { Property, PropertyOption, ValueType } from '@property/types';
+import { t } from '@app/lib/i18n';
 import type { SoupProperty } from '@service-storage/generated/schemas/soupProperty';
 import {
   COMPANY_STAGE_OPTIONS,
@@ -291,7 +292,7 @@ const COMPANY_DEFAULT_PROPERTY_DEFS = [
   },
   {
     id: SYSTEM_PROPERTY_IDS.COMPANY_OWNER,
-    displayName: 'Owner',
+    displayName: t('common.owner'),
     dataType: 'ENTITY',
     specificEntityType: 'USER',
   },

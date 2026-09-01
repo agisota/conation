@@ -1,4 +1,5 @@
 import { parseLocalDate } from '@app/features/calendar/utils/calendar-date';
+import { t } from '@app/lib/i18n';
 import { openChatWithAgent } from '@app/features/chat/ChatWithAgentButton';
 import { globalSplitManager } from '@app/signal/splitLayout';
 import {
@@ -895,7 +896,7 @@ export function DocumentPreviewContent(props: DocumentPreviewContentProps) {
     if (props.delete) {
       buttons.push(
         <PopupIconButton
-          tooltip="Delete"
+          tooltip={t('common.delete')}
           onClick={props.delete}
           icon={TrashSimple}
         />

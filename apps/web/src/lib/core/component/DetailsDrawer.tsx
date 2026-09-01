@@ -1,4 +1,5 @@
 import { SplitDrawer } from '@components/app/split-layout/components/SplitDrawer';
+import { t } from '@app/lib/i18n';
 import { EntityIcon } from '@core/component/EntityIcon';
 import { openDocument } from '@core/component/LexicalMarkdown/component/core/BlockLink';
 import { UserIcon } from '@core/component/UserIcon';
@@ -20,7 +21,7 @@ type DetailsTarget =
 
 export function DetailsDrawer(props: DetailsTarget) {
   return (
-    <SplitDrawer id={DETAILS_DRAWER_ID} side="left" size={360} title="Details">
+    <SplitDrawer id={DETAILS_DRAWER_ID} side="left" size={360} title={t('common.details')}>
       <Suspense fallback={<DetailsLoading />}>
         <Switch>
           <Match when={'projectId' in props ? props.projectId : undefined}>
@@ -109,7 +110,7 @@ function DetailsGrid(props: {
     <div class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-3 items-center text-sm px-2 py-1">
       <Show when={props.owner()}>
         {(ownerId) => (
-          <Row label="Owner">
+          <Row label={t('common.owner')}>
             <OwnerValue ownerId={ownerId()} />
           </Row>
         )}

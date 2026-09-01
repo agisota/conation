@@ -1,4 +1,5 @@
 import { SYSTEM_PROPERTY_IDS } from '@property/constants';
+import { t } from '@app/lib/i18n';
 
 export type GroupOptionId =
   | 'none'
@@ -58,7 +59,7 @@ export const TASK_GROUP_OPTIONS: GroupOption[] = [
 export const COMPANY_GROUP_OPTIONS: GroupOption[] = [
   { value: 'none', label: 'None' },
   { value: `property:${SYSTEM_PROPERTY_IDS.STAGE}`, label: 'Stage' },
-  { value: `property:${SYSTEM_PROPERTY_IDS.COMPANY_OWNER}`, label: 'Owner' },
+  { value: `property:${SYSTEM_PROPERTY_IDS.COMPANY_OWNER}`, label: t('common.owner') },
 ];
 
 export const TAG_VIEW_GROUP_OPTIONS: GroupOption[] = [

@@ -1,4 +1,5 @@
 import SpinnerIcon from '@phosphor/spinner.svg';
+import { t } from '@app/lib/i18n';
 import type { JSX } from 'solid-js';
 import { createSignal, createUniqueId, Show } from 'solid-js';
 import { cn } from '../utils/classname';
@@ -102,7 +103,7 @@ export function DeleteDialog(props: DeleteDialogProps) {
             disabled={props.pending}
             onClick={close}
           >
-            {props.cancelLabel ?? 'Cancel'}
+            {props.cancelLabel ?? t('common.cancel')}
           </Button>
           <Button
             type="button"
@@ -112,9 +113,9 @@ export function DeleteDialog(props: DeleteDialogProps) {
             disabled={!canDelete()}
             onClick={deleteItem}
           >
-            <Show when={props.pending} fallback={props.deleteLabel ?? 'Delete'}>
+            <Show when={props.pending} fallback={props.deleteLabel ?? t('common.delete')}>
               <SpinnerIcon class="size-4 animate-spin" />
-              <span class="sr-only">{props.deleteLabel ?? 'Delete'}</span>
+              <span class="sr-only">{props.deleteLabel ?? t('common.delete')}</span>
             </Show>
           </Button>
         </div>

@@ -1,4 +1,5 @@
 import { DebugSlider } from '@core/component/Slider';
+import { t } from '@app/lib/i18n';
 import { Bar } from '@core/component/TopBar/Bar';
 import clickOutside from '@core/directive/clickOutside';
 import Rotate from '@phosphor/arrow-counter-clockwise.svg';
@@ -389,7 +390,7 @@ function GlyphGrid(props: GlyphGridProps) {
         return newIndex;
       });
     }
-    if (e.key === 'Delete') {
+    if (e.key === t('common.delete')) {
       e.preventDefault();
       props.onDeleteGlyph(props.glyphs[selectedIndex()]);
     } else if (e.key === 'Enter') {
@@ -517,7 +518,7 @@ function GlyphGrid(props: GlyphGridProps) {
                     <Button
                       variant="outline"
                       size="icon-md"
-                      label="Edit"
+                      label={t('common.edit')}
                       onClick={(e) => {
                         e.preventDefault();
                         props.onEditGlyph(glyph);
@@ -528,7 +529,7 @@ function GlyphGrid(props: GlyphGridProps) {
                     <Button
                       variant="danger"
                       size="icon-md"
-                      label="Delete"
+                      label={t('common.delete')}
                       onClick={(e) => {
                         e.preventDefault();
                         props.onDeleteGlyph(glyph);
@@ -602,7 +603,7 @@ function GlyphEditor(props: GlyphEditorProps) {
         event.preventDefault();
         event.stopPropagation();
         setSymmetryY((prev) => !prev);
-      } else if (event.key === 'Delete') {
+      } else if (event.key === t('common.delete')) {
         event.preventDefault();
         event.stopPropagation();
         clearAll();
@@ -955,12 +956,8 @@ function GlyphEditor(props: GlyphEditorProps) {
 
               <div class="pt-4 border-t border-edge">
                 <div class="grid grid-cols-2 gap-2">
-                  <Button variant="outline" onClick={props.onClose}>
-                    Cancel
-                  </Button>
-                  <Button variant="accent" onClick={handleSave}>
-                    Save
-                  </Button>
+                  <Button variant="outline" onClick={props.onClose}>{t('common.cancel')}</Button>
+                  <Button variant="accent" onClick={handleSave}>{t('common.save')}</Button>
                 </div>
               </div>
             </div>

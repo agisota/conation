@@ -1,4 +1,5 @@
 import { toast } from '@core/component/Toast/Toast';
+import { t } from '@app/lib/i18n';
 import { isMobile } from '@core/mobile/isMobile';
 import { ThrownResultError } from '@core/util/result';
 import SignatureIcon from '@phosphor-icons/core/regular/signature.svg?component-solid';
@@ -95,7 +96,7 @@ export function SignatureSection(props: { link: EmailLink }) {
   const persisted = () => signature() ?? '';
   const isDirty = () => draft() !== null && draft() !== persisted();
   // Enabled when there's a saved signature or unsaved draft text to clear — so
-  // "Remove" stays available even after the user manually empties the editor.
+  // t('common.remove') stays available even after the user manually empties the editor.
   const hasContent = () => persisted().length > 0 || (draft()?.length ?? 0) > 0;
 
   const updateSettings = useUpdateEmailSettingsMutation();
@@ -209,9 +210,7 @@ export function SignatureSection(props: { link: EmailLink }) {
             depth={3}
             disabled={!hasContent() || updateSettings.isPending}
             onClick={removeSignature}
-          >
-            Remove
-          </Button>
+          >{t('common.remove')}</Button>
           <Show when={!isMobile()}>
             <Button
               variant="accent"
@@ -219,9 +218,7 @@ export function SignatureSection(props: { link: EmailLink }) {
               depth={3}
               disabled={!isDirty() || updateSettings.isPending}
               onClick={saveSignature}
-            >
-              Save
-            </Button>
+            >{t('common.save')}</Button>
           </Show>
         </div>
       </div>

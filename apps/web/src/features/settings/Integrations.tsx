@@ -5,6 +5,7 @@ import {
   type SvgIcon,
 } from '@core/component/AI/constant/mcpServers';
 import { toast } from '@core/component/Toast/Toast';
+import { t } from '@app/lib/i18n';
 import { openExternalUrl } from '@core/util/url';
 import CheckIcon from '@phosphor-icons/core/regular/check.svg?component-solid';
 import PlugIcon from '@phosphor-icons/core/regular/plug.svg?component-solid';
@@ -141,9 +142,7 @@ function AddServerForm(props: {
                 reset();
                 props.onOpenChange(false);
               }}
-            >
-              Cancel
-            </Button>
+            >{t('common.cancel')}</Button>
             <Button
               variant="accent"
               size="sm"
@@ -324,9 +323,7 @@ function ServerRow(props: { server: ServerResponse }) {
               size="sm"
               depth={3}
               onClick={() => setConfirmDelete(false)}
-            >
-              Cancel
-            </Button>
+            >{t('common.cancel')}</Button>
           </div>
         }
       >
@@ -334,7 +331,7 @@ function ServerRow(props: { server: ServerResponse }) {
           variant="outline"
           size="sm"
           depth={3}
-          tooltip="Remove"
+          tooltip={t('common.remove')}
           onClick={() => setConfirmDelete(true)}
         >
           <XIcon class="size-4" />
@@ -433,9 +430,7 @@ export function IntegrationsSection() {
               depth={3}
               onClick={() => serversQuery.refetch()}
               class="ml-2"
-            >
-              Retry
-            </Button>
+            >{t('common.retry')}</Button>
           </div>
         </SettingsCard>
       </Show>

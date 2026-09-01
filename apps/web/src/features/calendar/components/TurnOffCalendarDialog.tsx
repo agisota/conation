@@ -1,4 +1,5 @@
 import { toast } from '@core/component/Toast/Toast';
+import { t } from '@app/lib/i18n';
 import { useDisableCalendarMutation } from '@queries/email/link';
 import { Button, Dialog, Panel } from '@ui';
 
@@ -56,9 +57,7 @@ export function TurnOffCalendarDialog(props: {
             calendar back on means granting access again.
           </Dialog.Description>
           <div class="pt-3 justify-end items-center gap-3 inline-flex">
-            <Button variant="outline" depth={3} onClick={props.onClose}>
-              Cancel
-            </Button>
+            <Button variant="outline" depth={3} onClick={props.onClose}>{t('common.cancel')}</Button>
             <Button variant="danger" depth={3} onClick={confirm}>
               Turn off
             </Button>

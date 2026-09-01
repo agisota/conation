@@ -1,4 +1,5 @@
 import { MobileDrawer } from '@components/app/mobile/MobileDrawer';
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { isMobileWidth } from '@core/mobile/mobileWidth';
 import { blockElementSignal } from '@core/signal/blockElement';
@@ -149,7 +150,7 @@ export function PasteNode(props: PasteNodeDecoratorProps) {
                 <Dropdown.Group>
                   <Dropdown.Item onSelect={deletePaste}>
                     <TrashSimple class="size-4 shrink-0" />
-                    <span class="flex-1 truncate">Delete</span>
+                    <span class="flex-1 truncate">{t('common.delete')}</span>
                   </Dropdown.Item>
                 </Dropdown.Group>
               </Dropdown.Content>

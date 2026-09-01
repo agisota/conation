@@ -1,4 +1,5 @@
 import { EntityActivitySectionConditional } from '@app/features/activity/EntityActivitySection';
+import { t } from '@app/lib/i18n';
 import { EntityPropertiesSection } from '@app/features/property/side-panel/properties';
 import { useCallContextOptional } from '@channel/Call/CallContext';
 import { SidePanel } from '@components/app/side-panel';
@@ -27,12 +28,12 @@ export function CallSidePanelSections(props: CallSidePanelSectionsProps) {
 
   return (
     <>
-      <SidePanel.Section id="details" title="Details" defaultOpen order={10}>
+      <SidePanel.Section id="details" title={t('common.details')} defaultOpen order={10}>
         <DetailsSectionContent record={props.record} />
       </SidePanel.Section>
       <SidePanel.Section
         id="properties"
-        title="Properties"
+        title={t('common.properties')}
         defaultOpen
         order={15}
       >
@@ -60,7 +61,7 @@ function DetailsSectionContent(props: { record: Accessor<CallRecord> }) {
 
   return (
     <SidePanel.Grid>
-      <SidePanel.Row label="Owner">
+      <SidePanel.Row label={t('common.owner')}>
         <OwnerValue ownerId={record().createdBy} />
       </SidePanel.Row>
       <Show when={startedAt()}>

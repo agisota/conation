@@ -1,4 +1,5 @@
 import { TabsInset } from '@core/component/TabsInset';
+import { t } from '@app/lib/i18n';
 import TagIcon from '@phosphor/tag-simple.svg';
 import TrashIcon from '@phosphor/trash.svg';
 import XIcon from '@phosphor/x.svg';
@@ -200,7 +201,7 @@ export function TagEditorDialog(props: {
             variant="ghost"
             size="icon-sm"
             disabled={pending()}
-            label="Close"
+            label={t('common.close')}
           >
             <XIcon />
           </Dialog.CloseButton>
@@ -274,9 +275,7 @@ export function TagEditorDialog(props: {
               disabled={pending()}
               onClick={remove}
             >
-              <TrashIcon class="size-4" />
-              Delete
-            </Button>
+              <TrashIcon class="size-4" />{t('common.delete')}</Button>
           </Show>
           <div class="ml-auto flex items-center gap-2">
             <Button
@@ -285,18 +284,14 @@ export function TagEditorDialog(props: {
               class="rounded-lg"
               disabled={pending()}
               onClick={close}
-            >
-              Cancel
-            </Button>
+            >{t('common.cancel')}</Button>
             <Button
               variant={canSubmit() ? 'accent' : 'ghost'}
               depth={3}
               class="gap-3 rounded-lg border-0"
               disabled={!canSubmit() || pending()}
               onClick={submit}
-            >
-              Save
-              <Hotkey shortcut="cmd+enter" theme="current" />
+            >{t('common.save')}<Hotkey shortcut="cmd+enter" theme="current" />
             </Button>
           </div>
         </CommandMenuShell.Footer>

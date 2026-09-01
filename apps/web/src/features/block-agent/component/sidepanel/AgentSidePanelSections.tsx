@@ -11,6 +11,7 @@
  */
 
 import { SidePanel, useSidePanel } from '@components/app/side-panel';
+import { t } from '@app/lib/i18n';
 import { useSplitPanel } from '@components/app/split-layout/layoutUtils';
 import { registerHotkey } from '@core/hotkey/hotkeys';
 import { TOKENS } from '@core/hotkey/tokens';
@@ -65,7 +66,7 @@ export function AgentSidePanelSections() {
 
   return (
     <>
-      <SidePanel.Section id="details" title="Details" defaultOpen order={10}>
+      <SidePanel.Section id="details" title={t('common.details')} defaultOpen order={10}>
         <SidePanel.Grid>
           <SidePanel.Row label="Status">
             <SessionStatusPill status={status()} />

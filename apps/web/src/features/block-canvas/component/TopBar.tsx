@@ -3,6 +3,7 @@ import {
   openChatWithAgent,
 } from '@app/features/chat/ChatWithAgentButton';
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import type { BlockTool } from '@components/app/ResponsiveBlockToolbar';
 import {
   ResponsiveBlockToolbar,
@@ -105,7 +106,7 @@ export function TopBar() {
 
   const ops: FileOperation[] = [
     {
-      label: 'Details',
+      label: t('common.details'),
       icon: Info,
       action: detailsControl.toggle,
     },

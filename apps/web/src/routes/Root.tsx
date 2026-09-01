@@ -1,4 +1,5 @@
 import { DEFAULT_ROUTE } from '@app/constants/defaultRoute';
+import { t } from '@app/lib/i18n';
 import { ROUTER_BASE } from '@app/constants/routerBase';
 import { makeEmailAuthComponents } from '@app/features/auth/EmailAuth';
 import { Login } from '@app/features/auth/Login';
@@ -317,9 +318,7 @@ const ROUTES: RouteDefinition[] = [
                 publishLoginSuccess();
                 window.close();
               }}
-            >
-              Close
-            </Button>
+            >{t('common.close')}</Button>
           </div>
         </div>
       );

@@ -1,4 +1,5 @@
 import type { CalendarEvent } from '@app/features/calendar/types';
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import CloseIcon from '@phosphor/x.svg';
 import { useRsvpCalendarEventMutation } from '@queries/calendar/mutations';
@@ -151,9 +152,7 @@ export function EventRsvpSection(props: {
                 variant="ghost"
                 class="rounded-lg"
                 onClick={() => setPendingResponse(undefined)}
-              >
-                Cancel
-              </Button>
+              >{t('common.cancel')}</Button>
               <Button variant="accent" class="rounded-lg" onClick={confirm}>
                 OK
               </Button>

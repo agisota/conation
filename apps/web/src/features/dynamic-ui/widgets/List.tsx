@@ -5,6 +5,7 @@ import {
   queryStateFrom,
 } from '@app/features/next-soup/filters/filter-store';
 import type { FieldFilters } from '@app/features/next-soup/filters/filter-store/types';
+import { t } from '@app/lib/i18n';
 import { soupItemMatchesQuery } from '@app/features/next-soup/filters/query-filters';
 import { openEntityInSplitFromUnifiedList } from '@app/features/next-soup/utils';
 import { ListEntityMetadataQueryProvider } from '@entity';
@@ -219,9 +220,7 @@ export function List(props: ListProps) {
             {/* Soup fetches suspend; guard so it can't blank the surrounding view. */}
             <Suspense
               fallback={
-                <div class={cn('px-3 py-6 text-center text-sm', TEXT.tertiary)}>
-                  Loading…
-                </div>
+                <div class={cn('px-3 py-6 text-center text-sm', TEXT.tertiary)}>{t('common.loading')}</div>
               }
             >
               <Rows

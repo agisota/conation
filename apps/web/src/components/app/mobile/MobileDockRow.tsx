@@ -1,4 +1,5 @@
 import { useCreateMenuBlocks } from '@app/features/command/Launcher';
+import { t } from '@app/lib/i18n';
 import {
   MobileAskAiButton,
   MobileSearchInput,
@@ -237,7 +238,7 @@ function MobileCompactDockRow() {
         </For>
         <MobileDockButton
           icon={AnimatedSearchIcon}
-          ariaLabel="Search"
+          ariaLabel={t('common.search')}
           onClick={() => {
             // Focus synchronously inside the tap so iOS lets the keyboard
             // open; the input mounts once opening the session flips the row

@@ -1,4 +1,5 @@
 import { isListViewID, LIST_VIEW_ID } from '@app/constants/list-views';
+import { t } from '@app/lib/i18n';
 import { createSoupState } from '@app/features/next-soup/create-soup-state';
 import { SoupContextProvider } from '@app/features/next-soup/soup-context';
 import { SoupViewContextProvider } from '@app/features/next-soup/soup-view/soup-view-context';
@@ -413,7 +414,7 @@ export function SplitPanel(props: SplitPanelProps) {
                                 <Button
                                   variant="ghost"
                                   size="icon-sm"
-                                  label="Close"
+                                  label={t('common.close')}
                                   onClick={() => panel().onClose?.()}
                                 >
                                   <CloseIcon />

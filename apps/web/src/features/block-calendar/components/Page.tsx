@@ -7,6 +7,7 @@ import {
   useCalendarPager,
 } from '@app/features/calendar/components/CalendarPagerContext';
 import { useCalendarView } from '@app/features/calendar/components/CalendarViewContext';
+import { t } from '@app/lib/i18n';
 import { calendarSelectionToEditorInitialValues } from '@app/features/calendar/components/composer/event-form-model';
 import {
   type CalendarOccurrenceData,
@@ -165,9 +166,7 @@ function CalendarPageDataStatus(props: { data: CalendarOccurrenceData }) {
                   size="sm"
                   label="Retry loading calendar"
                   onClick={() => void props.data.occurrencesQuery.refetch()}
-                >
-                  Retry
-                </Button>
+                >{t('common.retry')}</Button>
               </div>
             }
           >

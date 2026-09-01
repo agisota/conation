@@ -1,4 +1,5 @@
 import { Dialog, useDialogContext } from '@kobalte/core/dialog';
+import { t } from '@app/lib/i18n';
 import ClipboardIcon from '@phosphor/clipboard.svg';
 import DownloadIcon from '@phosphor/download-simple.svg';
 import XIcon from '@phosphor/x.svg';
@@ -108,7 +109,7 @@ export function Lightbox(props: LightboxProps) {
             as={Button}
             variant="ghost"
             size="icon-md"
-            label="Close"
+            label={t('common.close')}
           >
             <XIcon />
           </Dialog.CloseButton>

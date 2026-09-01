@@ -1,4 +1,5 @@
 import { useSplitLayout } from '@components/app/split-layout/layout';
+import { t } from '@app/lib/i18n';
 import { useFocusLock } from '@core/util/createControlledOpenSignal';
 import { ThrownResultError } from '@core/util/result';
 import BuildingsIcon from '@phosphor/buildings.svg';
@@ -102,7 +103,7 @@ export function CreateCompanyModal() {
               <Dialog.CloseButton
                 as={Button}
                 size="icon-sm"
-                label="Close"
+                label={t('common.close')}
                 tabIndex={-1}
                 disabled={createCompanyMutation.isPending}
               >

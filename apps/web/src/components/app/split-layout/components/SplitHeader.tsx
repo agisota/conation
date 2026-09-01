@@ -1,4 +1,5 @@
 import { isListViewID, LIST_VIEW_ID } from '@app/constants/list-views';
+import { t } from '@app/lib/i18n';
 import { useSoup } from '@app/features/next-soup/soup-context';
 import { openEntityInSplitFromUnifiedList } from '@app/features/next-soup/utils';
 import { CALENDAR_BLOCK_ID } from '@block-calendar/types';
@@ -202,7 +203,7 @@ function SplitCloseButton() {
   const label = createMemo(() => {
     const isOnlySplit = layout.manager.splits().length === 1;
     const isNotUnifiedList = !isListViewID(context.handle.content().id);
-    return isOnlySplit && isNotUnifiedList ? 'Return to list' : 'Close';
+    return isOnlySplit && isNotUnifiedList ? 'Return to list' : t('common.close');
   });
 
   return (

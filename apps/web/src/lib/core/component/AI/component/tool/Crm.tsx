@@ -1,4 +1,5 @@
 import Buildings from '@phosphor-icons/core/regular/buildings.svg';
+import { t } from '@app/lib/i18n';
 import type { NamedTool } from '@service-cognition/generated/tools/tool';
 import { For, Show } from 'solid-js';
 import { BaseTool } from './BaseTool';
@@ -106,7 +107,7 @@ function GetCompanyToolResponse(props: GetCompanyResponse) {
     }
     if (props.stage) rows.push({ label: 'Stage', value: props.stage.label });
     if (props.ownerUserId) {
-      rows.push({ label: 'Owner', value: props.ownerUserId });
+      rows.push({ label: t('common.owner'), value: props.ownerUserId });
     }
     if (props.revenue !== undefined && props.revenue !== null) {
       rows.push({ label: 'Revenue', value: `$${props.revenue}` });

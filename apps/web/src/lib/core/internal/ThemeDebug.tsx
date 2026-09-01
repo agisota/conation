@@ -1,4 +1,5 @@
 import CaretDownIcon from '@phosphor-icons/core/regular/caret-down.svg?component-solid';
+import { t } from '@app/lib/i18n';
 import CellSignalHighIcon from '@phosphor-icons/core/regular/cell-signal-high.svg?component-solid';
 import CheckIcon from '@phosphor-icons/core/regular/check.svg?component-solid';
 import PlusIcon from '@phosphor-icons/core/regular/plus.svg?component-solid';
@@ -458,9 +459,7 @@ function ThemeDebug() {
               <p class="text-sm text-ink-muted">{LOREM_MEDIUM}</p>
             </Panel.Body>
             <Panel.Footer class="px-4 justify-end gap-2">
-              <Button variant="ghost" size="sm">
-                Cancel
-              </Button>
+              <Button variant="ghost" size="sm">{t('common.cancel')}</Button>
               <Button variant="accent" size="sm">
                 Confirm
               </Button>

@@ -1,4 +1,5 @@
 import SpinnerIcon from '@phosphor/spinner.svg';
+import { t } from '@app/lib/i18n';
 import { Button, cn, Layer } from '@ui';
 import { createEffect, createUniqueId, Show } from 'solid-js';
 import type { CalendarEventFormController } from './create-calendar-event-form-controller';
@@ -235,20 +236,18 @@ export function EventForm(props: EventFormProps) {
           class="rounded-lg"
           disabled={formIsDisabled()}
           onClick={props.onCancel}
-        >
-          Cancel
-        </Button>
+        >{t('common.cancel')}</Button>
         <Button
           type="submit"
           variant={controller.canSave() ? 'accent' : 'ghost'}
           depth={3}
           class="rounded-lg border-0"
           disabled={!controller.canSave() || formIsDisabled()}
-          aria-label={isEdit() ? 'Save' : 'Create event'}
+          aria-label={isEdit() ? t('common.save') : 'Create event'}
         >
           <Show
             when={props.pending}
-            fallback={isEdit() ? 'Save' : 'Create event'}
+            fallback={isEdit() ? t('common.save') : 'Create event'}
           >
             <SpinnerIcon class="size-4 animate-spin" />
           </Show>

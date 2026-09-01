@@ -1,4 +1,5 @@
 import { isListViewID } from '@app/constants/list-views';
+import { t } from '@app/lib/i18n';
 import { canExecuteMarkDoneOnView } from '@app/features/next-soup/actions/make-mark-done-action';
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
 import { globalSplitManager } from '@app/signal/splitLayout';
@@ -498,7 +499,7 @@ export function createSoupEntityActions(): {
     if (canExecuteAll(deleteAction.canExecute)) {
       deleteItems.push({
         id: 'delete',
-        label: 'Delete',
+        label: t('common.delete'),
         hotkeyToken: TOKENS.entity.action.delete,
         onClick: handle(deleteAction.executeWithSoup),
         destructive: true,

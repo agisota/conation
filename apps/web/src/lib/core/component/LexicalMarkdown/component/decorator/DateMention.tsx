@@ -1,4 +1,5 @@
 import { DatePicker } from '@core/component/DatePicker';
+import { t } from '@app/lib/i18n';
 import { formatRelativeDay } from '@core/util/dateParser';
 import type { DateMentionDecoratorProps } from '@conation/lexical-core';
 import { $isDateMentionNode } from '@conation/lexical-core';
@@ -113,7 +114,7 @@ export function DateMention(props: DateMentionDecoratorProps) {
         >
           {displayFormat()}
         </span>
-        <MentionTooltip show={isSelectedAsNode()} text="Edit" />
+        <MentionTooltip show={isSelectedAsNode()} text={t('common.edit')} />
       </span>
 
       <Show when={hovered() && !datePickerOpen()}>

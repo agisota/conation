@@ -1,4 +1,5 @@
 import { EntityActivitySectionConditional } from '@app/features/activity/EntityActivitySection';
+import { t } from '@app/lib/i18n';
 import {
   EntityPropertiesSection,
   EntityTagsSection,
@@ -21,7 +22,7 @@ export function ChatSidePanelSections() {
 
   return (
     <>
-      <SidePanel.Section id="details" title="Details" defaultOpen order={10}>
+      <SidePanel.Section id="details" title={t('common.details')} defaultOpen order={10}>
         <Suspense fallback={<SidePanel.Loading />}>
           <ChatDetailsContent chatId={chatId} />
         </Suspense>
@@ -34,7 +35,7 @@ export function ChatSidePanelSections() {
       />
       <SidePanel.Section
         id="properties"
-        title="Properties"
+        title={t('common.properties')}
         defaultOpen
         order={30}
       >
@@ -62,7 +63,7 @@ function ChatDetailsContent(props: { chatId: string }) {
     <SidePanel.Grid>
       <Show when={chat()?.userId}>
         {(ownerId) => (
-          <SidePanel.Row label="Owner">
+          <SidePanel.Row label={t('common.owner')}>
             <OwnerValue ownerId={ownerId()} />
           </SidePanel.Row>
         )}

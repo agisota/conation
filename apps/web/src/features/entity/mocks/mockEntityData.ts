@@ -1,4 +1,5 @@
 import { applyDurationToDate } from '@core/util/dateSearch/dateParser';
+import { t } from '@app/lib/i18n';
 import type { Property } from '@property/types';
 import type {
   ChannelEntity,
@@ -20,7 +21,7 @@ const MOCK_USER_IDS = {
 } as const;
 
 export const MOCK_USERS = [
-  { id: MOCK_USER_IDS.owner, firstName: 'Alex', lastName: 'Owner' },
+  { id: MOCK_USER_IDS.owner, firstName: 'Alex', lastName: t('common.owner') },
   { id: MOCK_USER_IDS.sharedUser, firstName: 'Sam', lastName: 'Shared' },
   { id: MOCK_USER_IDS.teamMember1, firstName: 'Jordan', lastName: 'Team' },
   { id: MOCK_USER_IDS.teamMember2, firstName: 'Casey', lastName: 'Member' },

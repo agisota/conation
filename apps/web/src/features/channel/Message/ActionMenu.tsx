@@ -1,4 +1,5 @@
 import { recordEmojiUsage } from '@core/component/Emoji/emojiUsage';
+import { t } from '@app/lib/i18n';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
 import StarIcon from '@icon/wide-star.svg';
 import TaskIcon from '@icon/wide-task.svg';
@@ -141,14 +142,14 @@ function ActionMenuContent(props: ActionMenuProps) {
     },
     {
       id: 'edit',
-      label: 'Edit',
+      label: t('common.edit'),
       icon: EditIcon,
       onClick: actions?.onEdit,
       iconClass: 'size-4',
     },
     {
       id: 'delete',
-      label: 'Delete',
+      label: t('common.delete'),
       icon: TrashIcon,
       onClick: actions?.onDelete,
       destructive: true,

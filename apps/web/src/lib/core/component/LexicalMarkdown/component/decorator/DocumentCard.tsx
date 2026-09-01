@@ -1,4 +1,5 @@
 import { URL_PARAMS as CHANNEL_PARAMS } from '@block-channel/constants';
+import { t } from '@app/lib/i18n';
 import {
   type PreviewState,
   useBlockOwner,
@@ -378,7 +379,7 @@ function DocumentCardInner(props: DocumentCardDecoratorProps) {
               <Dropdown.Group>
                 <Dropdown.Item onSelect={deleteCard}>
                   <TrashSimple class="size-4 shrink-0" />
-                  <span class="flex-1 truncate">Delete</span>
+                  <span class="flex-1 truncate">{t('common.delete')}</span>
                 </Dropdown.Item>
               </Dropdown.Group>
             </Dropdown.Content>

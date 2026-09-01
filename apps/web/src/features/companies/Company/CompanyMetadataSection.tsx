@@ -1,4 +1,5 @@
 import { type CrmCompanyEntity, formatDateAndTime } from '@entity';
+import { t } from '@app/lib/i18n';
 import { For, type JSX, Show } from 'solid-js';
 
 function Field(props: { label: string; children: JSX.Element }) {
@@ -14,7 +15,7 @@ export function CompanyMetadataSection(props: { company?: CrmCompanyEntity }) {
   return (
     <Show
       when={props.company}
-      fallback={<div class="text-sm text-ink-muted">Loading…</div>}
+      fallback={<div class="text-sm text-ink-muted">{t('common.loading')}</div>}
     >
       {(company) => (
         <div class="flex flex-col gap-3">

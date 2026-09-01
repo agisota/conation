@@ -4,6 +4,7 @@ import {
   InlineEntity,
 } from '@entity';
 import { Dialog } from '@kobalte/core/dialog';
+import { t } from '@app/lib/i18n';
 import CloseIcon from '@phosphor-icons/core/regular/x.svg?component-solid';
 import { Button, cn, SegmentedControl } from '@ui';
 import { createMemo, createSignal, For, onMount, Show } from 'solid-js';
@@ -195,9 +196,7 @@ export const BulkRenameEntitiesView = (props: {
         </Show>
 
         <div class="flex justify-end gap-2">
-          <Button variant="ghost" class="rounded-xs" onClick={props.onCancel}>
-            Cancel
-          </Button>
+          <Button variant="ghost" class="rounded-xs" onClick={props.onCancel}>{t('common.cancel')}</Button>
           <Button
             type="button"
             variant="outline"

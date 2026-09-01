@@ -1,4 +1,5 @@
 import type { HorizontalRuleDecoratorProps } from '@conation/lexical-core';
+import { t } from '@app/lib/i18n';
 import Trash from '@phosphor/x.svg';
 import { debounce } from '@solid-primitives/scheduled';
 import { Button } from '@ui';
@@ -68,7 +69,7 @@ export function HorizontalRule(props: HorizontalRuleDecoratorProps) {
           {editor()?.isEditable() && (
             <Button
               class="size-8 p-0 border-0 bg-transparent hover:bg-hover"
-              tooltip="Remove"
+              tooltip={t('common.remove')}
               on:mousedown={(e: MouseEvent) => {
                 e.preventDefault();
                 e.stopPropagation();

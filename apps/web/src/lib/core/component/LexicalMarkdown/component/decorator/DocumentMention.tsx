@@ -1,4 +1,5 @@
 import { parseLocalDate } from '@app/features/calendar/utils/calendar-date';
+import { t } from '@app/lib/i18n';
 import { openCalendarEventSplit } from '@block-calendar/open-calendar-event';
 import { URL_PARAMS as CHANNEL_PARAMS } from '@block-channel/constants';
 import {
@@ -273,7 +274,7 @@ function InlinePreview(props: {
                   data-document-name={props.documentName}
                   class="opacity-50"
                 >
-                  <Show when={props.documentName} fallback={'Loading...'}>
+                  <Show when={props.documentName} fallback={t('common.loading')}>
                     {(name) => name().replaceAll('\n', ' ').trim()}
                   </Show>
                 </span>

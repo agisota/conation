@@ -1,4 +1,5 @@
 import { NativeCallProvider } from '@channel/Call/native-call-state';
+import { t } from '@app/lib/i18n';
 import { useCallKitSetup } from '@channel/Call/use-callkit';
 import { NativeAppUpdateRequiredDialog } from '@core/mobile/NativeAppUpdateRequiredDialog';
 import { isPlatform, isTauri } from '@core/util/platform';
@@ -38,7 +39,7 @@ export type BundleUpdateStatus =
       data: { bundleBuild: number; minNativeBuild: number };
     }
   | { status: 'Completed' }
-  | { status: 'Error'; data: { message: string } };
+  | { status: t('common.error'); data: { message: string } };
 
 interface TauriContextValue {
   os: OsType;

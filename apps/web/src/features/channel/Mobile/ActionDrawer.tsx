@@ -1,4 +1,5 @@
 import { MobileDrawer } from '@components/app/mobile/MobileDrawer';
+import { t } from '@app/lib/i18n';
 import { EmojiSelector } from '@core/component/Emoji/EmojiSelector';
 import { recordEmojiUsage } from '@core/component/Emoji/emojiUsage';
 import { focusInput } from '@core/directive/focusInput';
@@ -84,7 +85,7 @@ function buildActionItems(
     },
     {
       id: 'edit',
-      label: 'Edit',
+      label: t('common.edit'),
       icon: PencilIcon,
       onClick: actions?.onEdit,
       getFocusTarget: messageId
@@ -96,7 +97,7 @@ function buildActionItems(
     },
     {
       id: 'delete',
-      label: 'Delete',
+      label: t('common.delete'),
       icon: TrashIcon,
       onClick: actions?.onDelete,
       destructive: true,

@@ -1,4 +1,5 @@
 import { toast } from '@core/component/Toast/Toast';
+import { t } from '@app/lib/i18n';
 import { useSetContactHiddenMutation } from '@queries/crm/contacts';
 import type { CrmContactResponse } from '@service-storage/generated/schemas/crmContactResponse';
 import { cn, InlineCheckbox } from '@ui';
@@ -36,7 +37,7 @@ export function ContactSharingSection(props: { contact?: CrmContactResponse }) {
   return (
     <Show
       when={props.contact}
-      fallback={<div class="text-xs text-ink-muted">Loading…</div>}
+      fallback={<div class="text-xs text-ink-muted">{t('common.loading')}</div>}
     >
       {(contact) => {
         const isShared = () => !contact().hidden;

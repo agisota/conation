@@ -1,4 +1,5 @@
 import { LoadingSpinner } from '@core/component/LoadingSpinner';
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { useChannelsContext } from '@core/context/channels';
 import CaretLeftIcon from '@phosphor/caret-left.svg';
@@ -300,9 +301,7 @@ export function BotCreate(props: { channelId?: string; onBack: () => void }) {
                 A webhook token is generated automatically.
               </p>
               <div class="flex shrink-0 gap-2">
-                <Button type="button" variant="ghost" size="sm" onClick={leave}>
-                  Cancel
-                </Button>
+                <Button type="button" variant="ghost" size="sm" onClick={leave}>{t('common.cancel')}</Button>
                 <Button type="submit" variant="cta" size="sm">
                   Create bot
                 </Button>

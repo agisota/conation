@@ -3,6 +3,7 @@
  */
 
 import { render, screen } from '@solidjs/testing-library';
+import { t } from '@app/lib/i18n';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { createDeleteMessageConfirmation } from '../create-delete-message-confirmation';
@@ -29,7 +30,7 @@ describe('createDeleteMessageConfirmation', () => {
     await screen.findByText('Delete message');
     expect(deleteMessage).not.toHaveBeenCalled();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    await userEvent.click(screen.getByRole('button', { name: t('common.delete') }));
 
     expect(deleteMessage).toHaveBeenCalledTimes(1);
     expect(deleteMessage).toHaveBeenCalledWith(deleteInput);
@@ -45,7 +46,7 @@ describe('createDeleteMessageConfirmation', () => {
     requestDelete(deleteInput);
     await screen.findByText('Delete message');
 
-    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    await userEvent.click(screen.getByRole('button', { name: t('common.cancel') }));
 
     expect(deleteMessage).not.toHaveBeenCalled();
   });

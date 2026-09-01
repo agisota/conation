@@ -1,4 +1,5 @@
 import { SidePanel } from '@components/app/side-panel';
+import { t } from '@app/lib/i18n';
 import { useContactQuery } from '@queries/crm/contacts';
 import { useIsTeamAdmin } from '@queries/team/teams';
 import { Show } from 'solid-js';
@@ -31,7 +32,7 @@ export function Contact(props: { contactId: string }) {
 
       <SidePanel.Section
         id="contact-details"
-        title="Details"
+        title={t('common.details')}
         order={10}
         defaultOpen
       >

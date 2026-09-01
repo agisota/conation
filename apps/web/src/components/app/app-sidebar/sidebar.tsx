@@ -1,4 +1,5 @@
 import { GO_TO_COMMAND_SCOPE, GO_TO_LEADER_KEY } from '@app/constants/hotkeys';
+import { t } from '@app/lib/i18n';
 import { LIST_VIEW_PATHS, type ListView } from '@app/constants/list-views';
 import { useActivityFeedFlag } from '@app/features/activity/use-activity-feed-flag';
 import { SidebarActiveCallWidget } from '@app/features/block-call/sidebar/active-call-widget';
@@ -195,7 +196,7 @@ const SIDEBAR_LINKS = [
   },
   {
     id: 'search',
-    label: 'Search',
+    label: t('common.search'),
     href: LIST_VIEW_PATHS.search,
     icon: AnimatedSearchIcon,
     hotkey: '/',
@@ -801,7 +802,7 @@ const SidebarHeaderSearchButton = (props: { link: SidebarItem }) => {
     <Button
       size="icon-sm"
       class="[&_svg]:size-4!"
-      label="Search"
+      label={t('common.search')}
       hotkey={props.link.hotkeyToken}
       onMouseDown={(e) => {
         if (e.button !== 0) return;

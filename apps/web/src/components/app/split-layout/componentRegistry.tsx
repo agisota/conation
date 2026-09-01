@@ -1,4 +1,5 @@
 import { useActivityFeedFlag } from '@app/features/activity/use-activity-feed-flag';
+import { t } from '@app/lib/i18n';
 import type { EventEditorInitialValues } from '@app/features/calendar/components/composer/event-form-model';
 import type { CalendarEvent } from '@app/features/calendar/types';
 import { GettingStarted } from '@app/features/getting-started';
@@ -476,7 +477,7 @@ registerComponent(
     const preset = getViewPreset('search');
     return (
       <SoupView
-        viewName="Search"
+        viewName={t('common.search')}
         initialFilters={params.initialFilters ?? preset?.filters}
         initialClientFilters={
           params.initialClientFilters ?? preset?.clientFilters
