@@ -1,5 +1,5 @@
-import { $getId } from '@macro-inc/lexical-core/plugins/nodeIdPlugin';
-import type { Span } from '@macro-inc/observability';
+import { $getId } from '@conation/lexical-core/plugins/nodeIdPlugin';
+import type { Span } from '@conation/observability';
 import { $getRoot, $isElementNode, type LexicalNode } from 'lexical';
 import type { LexicalSession } from './ai-toolkit/session';
 import type { AwarenessSource } from './awareness';

@@ -2,7 +2,7 @@ import { $convertToMarkdownString } from '@lexical/markdown';
 import {
   EXTERNAL_TRANSFORMERS,
   INTERNAL_TRANSFORMERS,
-} from '@macro-inc/lexical-core';
+} from '@conation/lexical-core';
 import {
   $isElementNode,
   $parseSerializedNode,

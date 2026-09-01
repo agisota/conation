@@ -25,10 +25,10 @@
 		],
 		"baseUrl": ".",
 		"paths": {
-			"@macro-inc/lexical-core": [
+			"@conation/lexical-core": [
 				"../../packages/lexical-core"
 			],
-			"@macro-inc/lexical-core/*": [
+			"@conation/lexical-core/*": [
 				"../../packages/lexical-core/*"
 			]
 		}

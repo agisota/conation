@@ -7,7 +7,7 @@ import {
   type ImageNode,
   INTERNAL_TRANSFORMERS,
   markdownToEmbeddingText,
-} from '@macro-inc/lexical-core';
+} from '@conation/lexical-core';
 import { $getRoot, $isElementNode, type SerializedEditorState } from 'lexical';
 import type { CognitionNode, NewMdNode, SearchableNode } from '../types';
 import { createEditor } from './editor';

@@ -1,4 +1,4 @@
-import { toXml } from '@macro-inc/lexical-core';
+import { toXml } from '@conation/lexical-core';
 import { OpenAPIRoute } from 'chanfana';
 import type { Context } from 'hono';
 import { z } from 'zod';

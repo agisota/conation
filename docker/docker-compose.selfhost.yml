@@ -68,19 +68,20 @@ services:
       - "587:587"   # Submission
       - "993:993"   # IMAPS
       - "4190:4190" # Sieve
-      - "8081:8080" # JMAP/HTTP (host 8081 to avoid conflict with 8080 services)
+      - "18081:8080" # JMAP/HTTP (host 8081 to avoid conflict)
     environment:
       STALWART_HOSTNAME: ${CONATION_DOMAIN:-conation.dev}
-      STALWART_ADMIN_USER: ${STALWART_ADMIN_USER:-admin}
-      STALWART_ADMIN_PASSWORD: ${STALWART_ADMIN_PASSWORD:-conation-admin-123}
+      # bootstrap admin (shown once in logs) — set STALWART_RECOVERY_ADMIN to pin
+      # STALWART_RECOVERY_ADMIN: admin:conation-admin-123
     volumes:
       - stalwart_data:/opt/stalwart-mail
-      - ./infra/selfhost/stalwart/config.toml:/opt/stalwart-mail/etc/config.toml:ro
+      # Custom config optional — if present, mount to /etc/stalwart/config.toml and override command
+      # - ./infra/selfhost/stalwart/config.toml:/etc/stalwart/config.toml:ro
     networks:
       - databases
       - services
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz || curl -f http://localhost:8080/ || exit 1"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/ || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5

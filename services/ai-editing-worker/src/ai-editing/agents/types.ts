@@ -1,4 +1,4 @@
-import type { Span } from '@macro-inc/observability';
+import type { Span } from '@conation/observability';
 import type { AwarenessSource } from '../awareness';
 import type { Doc } from '../doc';
 import type { DocumentOp } from '../editor';

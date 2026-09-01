@@ -1,5 +1,5 @@
 import { $createHeadingNode } from '@lexical/rich-text';
-import { $getId } from '@macro-inc/lexical-core/plugins/nodeIdPlugin';
+import { $getId } from '@conation/lexical-core/plugins/nodeIdPlugin';
 import { $createParagraphNode, $createTextNode } from 'lexical';
 import { describe, expect, it } from 'vitest';
 import { serializeWithXml } from '../utils';

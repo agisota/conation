@@ -1,8 +1,8 @@
 import {
 	MAGIC_CHIP_AUTHORS,
 	MAGIC_CHIP_STATUSES,
-} from "@macro-inc/lexical-core/nodes/MagicChipNode";
-import { composeAgentSessionAnnouncement } from "@macro-inc/lexical-core/utils/agent-announcement";
+} from "@conation/lexical-core/nodes/MagicChipNode";
+import { composeAgentSessionAnnouncement } from "@conation/lexical-core/utils/agent-announcement";
 import { OpenAPIRoute } from "chanfana";
 import type { Context } from "hono";
 import { z } from "zod";

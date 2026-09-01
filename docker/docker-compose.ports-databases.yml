@@ -1,0 +1,15 @@
+services:
+  postgres:
+    ports:
+      - "5433:5432"
+  redis:
+    ports:
+      - "6380:6379"
+      - "8002:8001"
+  kafka:
+    ports:
+      - "9093:9092"
+  search:
+    ports:
+      - "9201:9200"
+      - "9601:9600"

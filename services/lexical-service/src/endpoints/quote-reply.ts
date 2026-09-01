@@ -3,7 +3,7 @@ import type { Context } from 'hono';
 import { z } from 'zod';
 import { handleEndpointError } from '../lib/error-handler';
 import { standardErrorResponses } from '../lib/schemas';
-import { isQuoteReplyMarkdown } from '@macro-inc/lexical-core/utils/quote-reply';
+import { isQuoteReplyMarkdown } from '@conation/lexical-core/utils/quote-reply';
 
 const quoteReplyRequest = z.object({
   markdown: z.string(),

@@ -1,5 +1,5 @@
 import { createHeadlessEditor } from '@lexical/headless';
-import { SupportedNodeTypes } from '@macro-inc/lexical-core';
+import { SupportedNodeTypes } from '@conation/lexical-core';
 
 export function createEditor() {
   const editor = createHeadlessEditor({

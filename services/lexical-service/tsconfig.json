@@ -19,8 +19,8 @@
 		"strict": true,
 		"noUncheckedIndexedAccess": true,
 		"paths": {
-			"@macro-inc/lexical-core": ["../../packages/lexical-core/"],
-			"@macro-inc/lexical-core/*": ["../../packages/lexical-core/*"]
+			"@conation/lexical-core": ["../../packages/lexical-core/"],
+			"@conation/lexical-core/*": ["../../packages/lexical-core/*"]
 		},
 		"moduleResolution": "Bundler",
 		"module": "es2022",

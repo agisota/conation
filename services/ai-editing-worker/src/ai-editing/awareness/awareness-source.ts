@@ -9,7 +9,7 @@
  */
 
 import type { Mirror } from '@loro-mirror/core';
-import type { MarkdownLoroSchemaType } from '@macro-inc/lexical-core/markdown-loro-schema';
+import type { MarkdownLoroSchemaType } from '@conation/lexical-core/markdown-loro-schema';
 import {
   type Container,
   EphemeralStore,

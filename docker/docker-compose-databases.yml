@@ -16,7 +16,7 @@ services:
       timeout: 5s
       retries: 15
     ports:
-      - '5432:5432'
+      - '5433:5432'
     expose:
       - '5432'
     environment:
@@ -32,8 +32,8 @@ services:
   redis:
     image: 'redis/redis-stack:latest'
     ports:
-      - '6379:6379' # Expose Redis on the default port
-      - '8001:8001' # Expose Redis Stack Server UI/tools
+      - '6380:6379' # Expose Redis on alternative host port (host 6379 used by rox)
+      - '8005:8001' # Expose Redis Stack UI on 8005 (8001-8003 used by rox)
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
     volumes:
@@ -70,15 +70,13 @@ services:
       timeout: 10s
       retries: 20
     ports:
-      - '9092:9092'
+      - '9093:9092'
     volumes:
       - kafka_data:/var/lib/kafka/data
     networks:
       - databases
   search:
-    build:
-      context: ../infra/local/opensearch
-    image: macro-local-opensearch:dev
+    image: opensearchproject/opensearch:3.5.0
     environment:
       cluster.name: search 
       discovery.type: single-node
@@ -99,8 +97,8 @@ services:
         soft: 65536
         hard: 65536
     ports:
-      - 9200:9200 # REST API
-      - 9600:9600 # Performance Analyzer
+      - 9201:9200 # REST API (host 9200 used by other)
+      - 9601:9600 # Performance Analyzer
     networks:
       - databases
     volumes:

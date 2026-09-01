@@ -17,7 +17,7 @@
 		"check": "tsc --noEmit --project tsconfig.check.json"
 	},
 	"dependencies": {
-		"@macro-inc/lexical-core": "workspace:*",
+		"@conation/lexical-core": "workspace:*",
 		"@ai-sdk/anthropic": "^3.0.85",
 		"@ai-sdk/cerebras": "^2.0.57",
 		"@ai-sdk/google": "^3.0.83",

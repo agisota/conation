@@ -10,13 +10,13 @@
 import {
   AI_PEER_BASE,
   AI_PEER_COUNT,
-} from '@macro-inc/collaboration/collab/ai-peer';
+} from '@conation/collaboration/collab/ai-peer';
 
 export {
   AI_PEER_BASE,
   AI_PEER_COUNT,
   isAiPeer,
-} from '@macro-inc/collaboration/collab/ai-peer';
+} from '@conation/collaboration/collab/ai-peer';
 
 // the worker's lifecycle is naturally short-lived enough that this should be fine
 let nextOffset = 0;

@@ -1,4 +1,4 @@
-import { toXml } from "@macro-inc/lexical-core/transformers/xml";
+import { toXml } from "@conation/lexical-core/transformers/xml";
 
 const json = await Bun.stdin.text();
 const state = JSON.parse(json);

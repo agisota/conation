@@ -1,14 +1,14 @@
 import type { InferType } from '@loro-mirror/core';
-import { SyncEngine } from '@macro-inc/collaboration/collab/engine';
-import type { LoroManager } from '@macro-inc/collaboration/collab/manager';
-import type { RawUpdate } from '@macro-inc/collaboration/collab/shared';
-import type { LiveSyncSource } from '@macro-inc/collaboration/collab/source';
-import type { WALSyncer } from '@macro-inc/collaboration/collab/wal';
+import { SyncEngine } from '@conation/collaboration/collab/engine';
+import type { LoroManager } from '@conation/collaboration/collab/manager';
+import type { RawUpdate } from '@conation/collaboration/collab/shared';
+import type { LiveSyncSource } from '@conation/collaboration/collab/source';
+import type { WALSyncer } from '@conation/collaboration/collab/wal';
 import type {
   MARKDOWN_LORO_SCHEMA,
   MarkdownLoroSchemaType,
-} from '@macro-inc/lexical-core/markdown-loro-schema';
-import { $updateAllNodeIds } from '@macro-inc/lexical-core/plugins/nodeIdPlugin';
+} from '@conation/lexical-core/markdown-loro-schema';
+import { $updateAllNodeIds } from '@conation/lexical-core/plugins/nodeIdPlugin';
 import type { SerializedEditorState } from 'lexical';
 import {
   createEditingSession,

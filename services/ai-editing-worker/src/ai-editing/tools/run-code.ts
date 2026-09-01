@@ -1,4 +1,4 @@
-import { type Span, Telemetry } from '@macro-inc/observability';
+import { type Span, Telemetry } from '@conation/observability';
 import { tool } from 'ai';
 import { z } from 'zod';
 import type { LexicalSession } from '../ai-toolkit';

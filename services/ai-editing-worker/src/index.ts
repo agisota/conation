@@ -2,7 +2,7 @@ import './globals';
 import {
   createWorkerTraceConfig,
   instrument,
-} from '@macro-inc/observability/worker';
+} from '@conation/observability/worker';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import endpoints from './endpoints';

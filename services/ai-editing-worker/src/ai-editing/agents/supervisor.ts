@@ -1,4 +1,4 @@
-import { type Span, Telemetry } from '@macro-inc/observability';
+import { type Span, Telemetry } from '@conation/observability';
 import { hasToolCall, stepCountIs, streamText } from 'ai';
 import type { ResolvedModels } from '../../run-edit';
 import type { LexicalSession } from '../ai-toolkit';

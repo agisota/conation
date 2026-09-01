@@ -144,12 +144,12 @@ export const definition = defineBlock({
             owner: documentMetadata.owner,
             documentId: documentMetadata.documentId,
             documentVersionId: documentMetadata.documentVersionId.toString(),
-            // @ts-ignore: TODO: fix / replace @macro-inc/document-processing-job-types
+            // @ts-ignore: TODO: fix / replace @conation/document-processing-job-types
             fileType: 'md',
           },
           fileName: documentMetadata.documentName,
           mimeType: definition.accepted['md']!,
-          // @ts-ignore: TODO: fix / replace @macro-inc/document-processing-job-types
+          // @ts-ignore: TODO: fix / replace @conation/document-processing-job-types
           metadata: documentMetadata,
         });
 

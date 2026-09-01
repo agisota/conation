@@ -2,7 +2,7 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { createCerebras } from '@ai-sdk/cerebras';
 import { createOpenAI } from '@ai-sdk/openai';
 import { zValidator } from '@hono/zod-validator';
-import { Telemetry } from '@macro-inc/observability';
+import { Telemetry } from '@conation/observability';
 import type { LanguageModel } from 'ai';
 import { createFallback } from 'ai-fallback';
 import { Hono } from 'hono';

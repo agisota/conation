@@ -1,16 +1,16 @@
-import { LoroManager } from '@macro-inc/collaboration/collab/manager';
-import type { RawUpdate } from '@macro-inc/collaboration/collab/shared';
+import { LoroManager } from '@conation/collaboration/collab/manager';
+import type { RawUpdate } from '@conation/collaboration/collab/shared';
 import {
   createNoopLiveSyncSource,
   type LiveSyncSource,
-} from '@macro-inc/collaboration/collab/source';
+} from '@conation/collaboration/collab/source';
 import {
   InMemoryWALStore,
   WALSyncer,
-} from '@macro-inc/collaboration/collab/wal';
-import type { SyncServiceSource } from '@macro-inc/collaboration/sync-service/source';
-import { MARKDOWN_LORO_SCHEMA } from '@macro-inc/lexical-core/markdown-loro-schema';
-import { Telemetry } from '@macro-inc/observability';
+} from '@conation/collaboration/collab/wal';
+import type { SyncServiceSource } from '@conation/collaboration/sync-service/source';
+import { MARKDOWN_LORO_SCHEMA } from '@conation/lexical-core/markdown-loro-schema';
+import { Telemetry } from '@conation/observability';
 import type { LanguageModel } from 'ai';
 import { supervisor } from './ai-editing/agents';
 import type { DocumentOp } from './ai-editing/editor';
