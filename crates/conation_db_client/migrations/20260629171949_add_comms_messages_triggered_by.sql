@@ -1,6 +1,6 @@
 -- Record which user triggered an agent-authored channel message.
 --
--- AI/agent messages are sent as the Conation agent bot (`Sender::Bot`), so the
+-- AI/agent messages are sent as the Macro agent bot (`Sender::Bot`), so the
 -- `sender_id` identifies the bot, not the person who prompted it. This column
 -- persists the triggering user's id so clients can render a "from <user>" pill
 -- on the agent's message.

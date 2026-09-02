@@ -54,7 +54,7 @@ CREATE INDEX agent_session_log_session_order
 ALTER TABLE bots
     ADD COLUMN has_agent boolean NOT NULL DEFAULT false;
 
--- Historical seed for the Conation Coder system bot (bot_id::CONATION_CODER_BOT_ID).
+-- Seed the "Macro Coder" system bot (bot_id::MACRO_CODER_BOT_ID).
 INSERT INTO bots (id, kind, name, handle, has_agent)
 VALUES ('00000000-0000-0000-0000-00000000a9e7', 'system', 'Macro Coder', 'coder', true)
 ON CONFLICT (id) DO NOTHING;
