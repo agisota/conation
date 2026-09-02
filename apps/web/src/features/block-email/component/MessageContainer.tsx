@@ -6,7 +6,10 @@ import { EmailInput } from '@block-email/component/EmailInput';
 import { EmailMessageBody } from '@block-email/component/EmailMessageBody';
 import { EmailMessageTopBar } from '@block-email/component/EmailMessageTopBar';
 import { getSenderMacroId } from '@block-email/util/emailUser';
-import { revealMessageAfterLayout } from '@block-email/util/scrollToMessage';
+import {
+  revealMessageAfterLayout,
+  scrollFocusedCardIntoView,
+} from '@block-email/util/scrollToMessage';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import { Telemetry } from '@conation/observability';
 import { FloatingInputLoader } from '@core/component/FloatingInputLoader';
@@ -265,7 +268,8 @@ export function MessageContainer(props: MessageContainerProps) {
             tabIndex={0}
             onPointerEnter={hoverThisRow}
             onPointerLeave={unhoverThisRow}
-            onFocus={() => {
+            onFocus={(e) => {
+              scrollFocusedCardIntoView(e.currentTarget);
               if (props.message.db_id) {
                 context.messages.setFocused(props.message.db_id);
               }
