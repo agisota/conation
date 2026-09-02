@@ -52,7 +52,7 @@ use rate_limit::domain::service::RateLimitServiceImpl;
 use roles_and_permissions::{
     domain::service::UserRolesAndPermissionsServiceImpl, outbound::pgpool::MacroDB,
 };
-use secretsmanager_client::SecretManager;
+use secretsmanager_client::{LocalOrRemoteSecret, SecretManager};
 use sqlx::postgres::PgPoolOptions;
 use teams::{
     domain::team_service::TeamServiceImpl,
@@ -84,6 +84,33 @@ mod config;
 mod generate_password;
 mod microsoft_token_cipher;
 mod rate_limit_config;
+
+/// Resolves the Stripe webhook secret only when hosted billing is enabled.
+///
+/// Keeping this conditional prevents a free Conation deployment from requiring
+/// a legacy Stripe secret in its secret manager just to start the service.
+async fn resolve_stripe_webhook_secret<S>(
+    secret_manager: &S,
+    environment: Environment,
+    stripe_enabled: bool,
+) -> anyhow::Result<Option<LocalOrRemoteSecret<StripeWebhookSecretKey>>>
+where
+    S: SecretManager,
+    S::Err: Send + Sync + 'static,
+{
+    if !stripe_enabled {
+        return Ok(None);
+    }
+
+    Ok(Some(
+        secret_manager
+            .get_maybe_secret_value(environment, StripeWebhookSecretKey::new()?)
+            .await?,
+    ))
+}
+
+#[cfg(test)]
+mod test;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -129,9 +156,9 @@ async fn main() -> anyhow::Result<()> {
 
     let internal_api_key = config.internal_api_key.clone();
 
-    let stripe_webhook_secret = secretsmanager_client
-        .get_maybe_secret_value(env, StripeWebhookSecretKey::new()?)
-        .await?;
+    let stripe_webhook_secret =
+        resolve_stripe_webhook_secret(&secretsmanager_client, env, stripe_credentials.is_some())
+            .await?;
 
     tracing::trace!("initialized config");
 

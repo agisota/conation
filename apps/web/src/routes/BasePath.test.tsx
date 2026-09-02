@@ -18,10 +18,6 @@ const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
 }));
 
-vi.mock('@app/features/paywall/use-checkout-completion-listener', () => ({
-  useCheckoutCompletionListener: () => () => false,
-}));
-
 vi.mock('@core/auth/logout', () => ({
   clearLocalAuthSession: mocks.clearLocalAuthSession,
 }));
@@ -76,7 +72,6 @@ vi.mock('@solidjs/router', () => ({
     mocks.navigate(props.href, { replace: true });
     return null;
   },
-  useSearchParams: () => [{}, () => {}],
 }));
 
 vi.mock('@ui', () => ({
@@ -214,7 +209,7 @@ describe('BasePathComponent', () => {
     const container = renderRoute();
 
     await vi.waitFor(() => {
-      expect(container.textContent).toContain('Unable to connect.');
+      expect(container.querySelector('button')).not.toBeNull();
     });
     expect(mocks.navigate).not.toHaveBeenCalled();
   });
@@ -245,7 +240,7 @@ describe('BasePathComponent', () => {
     const container = renderRoute();
 
     await vi.waitFor(() => {
-      expect(container.textContent).toContain('Unable to connect.');
+      expect(container.querySelector('button')).not.toBeNull();
     });
 
     container.querySelector('button')?.click();

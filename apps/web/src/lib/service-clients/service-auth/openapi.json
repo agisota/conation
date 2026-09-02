@@ -3559,124 +3559,6 @@
         }
       }
     },
-    "/user/stripe/checkoutv2": {
-      "post": {
-        "tags": ["user::stripe::create_checkout_session_v2"],
-        "summary": "Creates a Stripe checkout session for the user to subscribe.",
-        "operationId": "create_checkout_session_v2",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateCheckoutSessionV2Request"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StripeSessionResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/user/stripe/portal": {
-      "post": {
-        "tags": ["user::stripe::create_portal_session"],
-        "summary": "Creates a Stripe billing portal session.",
-        "operationId": "create_portal_session",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreatePortalSessionRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StripeSessionResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/user/tutorial": {
       "patch": {
         "tags": ["user::patch_tutorial"],
@@ -3755,24 +3637,6 @@
           }
         }
       },
-      "CheckoutSessionMetadata": {
-        "type": "object",
-        "description": "Tracking metadata for conversion attribution",
-        "properties": {
-          "fbc": {
-            "type": ["string", "null"],
-            "description": "Meta (Facebook) click ID from _fbc cookie"
-          },
-          "fbp": {
-            "type": ["string", "null"],
-            "description": "Meta (Facebook) browser ID from _fbp cookie"
-          },
-          "gaClientId": {
-            "type": ["string", "null"],
-            "description": "Google Analytics client ID for conversion tracking"
-          }
-        }
-      },
       "ConationApiTokenResponse": {
         "type": "object",
         "required": ["conation_api_token"],
@@ -3793,29 +3657,6 @@
           }
         }
       },
-      "CreateCheckoutSessionV2Request": {
-        "type": "object",
-        "description": "Request body for creating a Stripe checkout session",
-        "required": ["successUrl", "cancelUrl"],
-        "properties": {
-          "cancelUrl": {
-            "type": "string",
-            "description": "The URL to redirect to if checkout is cancelled"
-          },
-          "discount": {
-            "type": ["string", "null"],
-            "description": "Optional discount/promo code to apply"
-          },
-          "metadata": {
-            "$ref": "#/components/schemas/CheckoutSessionMetadata",
-            "description": "Tracking metadata for conversion attribution"
-          },
-          "successUrl": {
-            "type": "string",
-            "description": "The URL to redirect to on successful checkout"
-          }
-        }
-      },
       "CreateInProgressLinkResponse": {
         "type": "object",
         "required": ["link_id"],
@@ -3823,17 +3664,6 @@
           "link_id": {
             "type": "string",
             "description": "The link id"
-          }
-        }
-      },
-      "CreatePortalSessionRequest": {
-        "type": "object",
-        "description": "Request body for creating a Stripe portal session",
-        "required": ["returnUrl"],
-        "properties": {
-          "returnUrl": {
-            "type": "string",
-            "description": "The URL to redirect to after leaving the portal"
           }
         }
       },
@@ -4763,17 +4593,6 @@
           "idp_id": {
             "type": "string",
             "description": "The idp_id you need to perform sso login with."
-          }
-        }
-      },
-      "StripeSessionResponse": {
-        "type": "object",
-        "description": "Response containing the Stripe session URL",
-        "required": ["url"],
-        "properties": {
-          "url": {
-            "type": "string",
-            "description": "The URL to redirect the user to"
           }
         }
       },

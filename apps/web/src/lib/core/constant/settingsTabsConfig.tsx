@@ -4,8 +4,8 @@ import BellIcon from '@phosphor/bell-simple.svg';
 import BugIcon from '@phosphor/bug.svg';
 import BuildingsIcon from '@phosphor/buildings.svg';
 import CpuIcon from '@phosphor/cpu.svg';
-import CreditCardIcon from '@phosphor/credit-card.svg';
 import DeviceMobileIcon from '@phosphor/device-mobile-speaker.svg';
+import KeyIcon from '@phosphor/key.svg';
 import KeyboardIcon from '@phosphor/keyboard.svg';
 import PlugIcon from '@phosphor/plug.svg';
 import SwatchesIcon from '@phosphor/swatches.svg';
@@ -54,7 +54,9 @@ export const SETTINGS_TAB_GROUPS: SettingsTabGroup[] = [
     items: [
       { tab: 'Account', label: 'Account', icon: UserIconPhosphor },
       { tab: 'Notifications', label: 'Notifications', icon: BellIcon },
-      { tab: 'Billing', label: 'Billing', icon: CreditCardIcon },
+      // The historical route remains `/settings/billing`, while its free
+      // Conation surface is presented as access rather than a purchase flow.
+      { tab: 'Billing', label: 'Access', icon: KeyIcon },
       { tab: 'Appearance', label: 'Appearance', icon: SwatchesIcon },
       { tab: 'Mobile App', label: 'Mobile App', icon: DeviceMobileIcon },
       { tab: 'Shortcuts', label: 'Shortcuts', icon: KeyboardIcon },

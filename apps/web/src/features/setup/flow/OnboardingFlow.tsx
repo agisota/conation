@@ -88,11 +88,8 @@ interface StepControls {
   /** Advance without finishing the step (tracked as skipped). */
   skip: () => void;
   finishing: () => boolean;
-  finishFree: (planSkipped: boolean) => void;
-  /** Redirect to Stripe checkout without completing the flow. */
-  startPremiumCheckout: (tier: 'premium') => void;
-  /** Finish after checkout confirmed payment (or an existing license). */
-  finishPremium: () => void;
+  /** Complete the included-access step and enter the app. */
+  finish: () => void;
 }
 
 interface ConnectorStepCopy {
@@ -217,9 +214,7 @@ function buildSteps(
       render: (controls) => (
         <PlanStep
           finishing={controls.finishing()}
-          onFree={controls.finishFree}
-          onStartCheckout={controls.startPremiumCheckout}
-          onPremiumPaid={controls.finishPremium}
+          onContinue={controls.finish}
         />
       ),
     },
@@ -432,9 +427,7 @@ function FlowContent() {
     next: () => advance('completed'),
     skip: () => advance('skipped'),
     finishing: finish.finishing,
-    finishFree: (planSkipped) => void finish.finishFree(planSkipped),
-    startPremiumCheckout: (tier) => void finish.startPremiumCheckout(tier),
-    finishPremium: () => void finish.finishPremium(),
+    finish: () => void finish.finish(),
   };
 
   // Heal a half-landed finish: NewOnboardingRedirect keys off
@@ -455,7 +448,7 @@ function FlowContent() {
   };
 
   // Redirect out when there is nothing to onboard. finishing() guards the
-  // window between our own complete call and the checkout redirect.
+  // window between our own completion call and the navigation.
   createEffect(() => {
     const info = userInfoQuery.data;
     if (info?.authenticated === false) {

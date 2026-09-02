@@ -1,7 +1,17 @@
+use axum::http::StatusCode;
 use roles_and_permissions::domain::model::SubscriptionStatus;
 use stripe_webhook::EventType;
 
-use super::{PaymentEventOutcome, is_active_subscription_except_current};
+use super::{
+    PaymentEventOutcome, configured_stripe_webhook_secret, is_active_subscription_except_current,
+};
+
+#[test]
+fn missing_webhook_secret_returns_service_unavailable() {
+    let response = configured_stripe_webhook_secret(None).unwrap_err();
+
+    assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
+}
 
 #[test]
 fn invoice_payment_failed_maps_to_revoke_outcome() {

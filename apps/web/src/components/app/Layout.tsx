@@ -23,7 +23,6 @@ import {
   isAddInboxDialogOpen,
 } from '@app/features/inbox/AddInboxDialog';
 import { ConationMcpSetupModal } from '@app/features/integrations/mcp-setup/ConationMcpSetupModal';
-import { Paywall } from '@app/features/paywall/Paywall';
 import { PropertyEditorModal } from '@app/features/property/editor/PropertyEditorModal';
 import { ReminderComposerModal } from '@app/features/reminders/ReminderComposerModal';
 import { useOnboardingV4Flag } from '@app/features/setup/flow/useOnboardingV4Flag';
@@ -51,7 +50,6 @@ import {
   ENABLE_REMINDERS_FLAG,
   ENABLE_REMINDERS_OVERRIDE,
 } from '@core/constant/featureFlags';
-import { usePaywallState } from '@core/constant/PaywallState';
 import { isSoloSettings } from '@core/constant/SettingsState';
 import { attachGlobalDOMScope } from '@core/hotkey/hotkeys';
 import { isMobile } from '@core/mobile/isMobile';
@@ -74,7 +72,6 @@ import {
   createSignal,
   type JSX,
   onCleanup,
-  onMount,
   Show,
   Suspense,
 } from 'solid-js';
@@ -343,7 +340,6 @@ function NewOnboardingRedirect() {
 
 function LayoutInner(props: RouteSectionProps) {
   const isAuthenticated = useIsAuthenticated();
-  const { paywallOpen, showPaywall } = usePaywallState();
   const location = useLocation();
   const [sidebarOverlayOpen, setSidebarOverlayOpen] = createSignal(false);
   const [sidebarOverlayTriggerHovered, setSidebarOverlayTriggerHovered] =
@@ -407,13 +403,6 @@ function LayoutInner(props: RouteSectionProps) {
       path: '/',
       sameSite: 'Lax',
     });
-  });
-
-  onMount(() => {
-    if (sessionStorage.getItem('showUpgradeModal') === 'true') {
-      showPaywall();
-      sessionStorage.removeItem('showUpgradeModal');
-    }
   });
 
   mountGlobalFocusListener();
@@ -483,9 +472,6 @@ function LayoutInner(props: RouteSectionProps) {
         <Onboarding />
       </Show> */}
 
-      <Show when={paywallOpen()}>
-        <Paywall />
-      </Show>
       <div class="max-h-full grow flex">
         {/* The provider spans the sidebar too so its favorites can register
             sortables with the same drag-drop context as the entity drags. */}

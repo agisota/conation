@@ -145,7 +145,8 @@ pub(crate) struct ApiContext {
     pub authorization_state: MacroAuthorizationState<AuthorizationService>,
     pub token_context: ConationApiTokenContext,
     pub internal_api_key: InternalApiKey,
-    pub stripe_webhook_secret: LocalOrRemoteSecret<StripeWebhookSecretKey>,
+    /// Shared secret used to verify Stripe webhooks when hosted billing is enabled.
+    pub stripe_webhook_secret: Option<LocalOrRemoteSecret<StripeWebhookSecretKey>>,
     pub user_roles_and_permissions_service:
         Arc<UserRolesAndPermissionsServiceImpl<MacroDB, MacroDB>>, // Note: since FromRef doesn't support generics we have to specify the concrete types here
     pub teams_service: Arc<TeamsServiceType>,

@@ -7,17 +7,10 @@
 
 export * from './aBGroup';
 export * from './appleLoginRequest';
-export * from './checkoutSessionMetadata';
-export * from './checkoutSessionMetadataFbc';
-export * from './checkoutSessionMetadataFbp';
-export * from './checkoutSessionMetadataGaClientId';
 export * from './conationApiTokenParams';
 export * from './conationApiTokenResponse';
 export * from './createAccountMergeRequest';
-export * from './createCheckoutSessionV2Request';
-export * from './createCheckoutSessionV2RequestDiscount';
 export * from './createInProgressLinkResponse';
-export * from './createPortalSessionRequest';
 export * from './createTeamRequest';
 export * from './createUserRequest';
 export * from './cursorApiKeyStatus';
@@ -116,7 +109,6 @@ export * from './sendMobileWelcomeEmailRequest';
 export * from './sendMobileWelcomeEmailResponse';
 export * from './ssoLoginParams';
 export * from './ssoRequiredResponse';
-export * from './stripeSessionResponse';
 export * from './team';
 export * from './teamAutoJoinDomain';
 export * from './teamDefaultLinkShare';

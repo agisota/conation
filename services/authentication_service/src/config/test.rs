@@ -122,7 +122,7 @@ fn absent_google_and_stripe_credentials_disable_integrations() {
 }
 
 #[test]
-fn complete_google_and_stripe_credentials_enable_integrations() {
+fn complete_google_and_legacy_stripe_credentials_are_resolved() {
     let google = resolve_google_credentials(Some("google-client"), Some("GOCSPX-google-secret"))
         .unwrap()
         .expect("Google credentials should be enabled");
@@ -131,28 +131,59 @@ fn complete_google_and_stripe_credentials_enable_integrations() {
 
     let stripe = resolve_stripe_credentials(Some("stripe-secret"), Some("price-free"))
         .unwrap()
-        .expect("Stripe credentials should be enabled");
+        .expect("complete legacy Stripe credentials should parse");
     assert_eq!(stripe.secret_key, "stripe-secret");
     assert_eq!(stripe.price_id, "price-free");
 }
 
 #[test]
-fn local_placeholder_stripe_credentials_disable_billing() {
-    let credentials = resolve_stripe_credentials(Some("local-stripe-secret"), Some("price-free"))
-        .unwrap()
-        .expect("the pair is syntactically complete");
+fn conation_free_access_policy_disables_hosted_stripe_billing_in_every_environment() {
+    let credentials = StripeCredentials {
+        secret_key: "sk_live_legacy_key".to_owned(),
+        price_id: "price-legacy".to_owned(),
+    };
 
+    for environment in [
+        Environment::Local,
+        Environment::Develop,
+        Environment::Production,
+    ] {
+        assert!(
+            !stripe_billing_is_enabled_for_environment(environment, &credentials),
+            "free Conation policy must keep Stripe disabled in {environment:?}"
+        );
+    }
+}
+
+#[test]
+fn genuine_local_stripe_key_is_only_a_legacy_eligibility_signal() {
+    let credentials = StripeCredentials {
+        secret_key: "sk_test_real_key".to_owned(),
+        price_id: "price-legacy".to_owned(),
+    };
+
+    assert!(stripe_credentials_are_usable_for_environment(
+        Environment::Local,
+        &credentials
+    ));
     assert!(!stripe_billing_is_enabled_for_environment(
         Environment::Local,
         &credentials
     ));
-    assert!(stripe_billing_is_enabled_for_environment(
-        Environment::Local,
-        &StripeCredentials {
-            secret_key: "sk_test_real_key".to_owned(),
-            price_id: "price-free".to_owned(),
-        }
-    ));
+}
+
+#[test]
+fn conation_free_policy_ignores_incomplete_legacy_stripe_configuration() {
+    for (secret_key, price_id) in [
+        (Some("legacy-stripe-secret"), None),
+        (None, Some("legacy-price-id")),
+    ] {
+        assert!(
+            resolve_stripe_billing_credentials(Environment::Production, secret_key, price_id)
+                .expect("free policy must not validate inert Stripe configuration")
+                .is_none()
+        );
+    }
 }
 
 #[test]

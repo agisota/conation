@@ -1,6 +1,6 @@
 use axum::{
     Router,
-    routing::{delete, get, patch, post, put},
+    routing::{MethodRouter, delete, get, patch, post, put},
 };
 use tower_cookies::CookieManagerLayer;
 
@@ -50,23 +50,14 @@ fn router_with_auth(stripe_enabled: bool) -> Router<ApiContext> {
         .route("/ai_consent", patch(patch_ai_consent::handler))
         .route("/quota", get(get_user_quota::handler));
 
-    let router = if stripe_enabled {
-        router
-            .route(
-                "/stripe/checkoutv2",
-                post(
-                    stripe::create_checkout_session_v2::create_checkout_session::<
-                        EntityAccessServiceType,
-                    >,
-                ),
-            )
-            .route(
-                "/stripe/portal",
-                post(stripe::create_portal_session::create_portal_session),
-            )
-    } else {
-        router
-    };
+    let router = with_stripe_routes(
+        router,
+        stripe_enabled,
+        post(
+            stripe::create_checkout_session_v2::create_checkout_session::<EntityAccessServiceType>,
+        ),
+        post(stripe::create_portal_session::create_portal_session),
+    );
 
     router
         .route(
@@ -78,3 +69,24 @@ fn router_with_auth(stripe_enabled: bool) -> Router<ApiContext> {
         .route("/onboarding", patch(patch_user_onboarding::handler))
         .layer(CookieManagerLayer::new())
 }
+
+fn with_stripe_routes<S>(
+    router: Router<S>,
+    stripe_enabled: bool,
+    checkout: MethodRouter<S>,
+    portal: MethodRouter<S>,
+) -> Router<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    if stripe_enabled {
+        router
+            .route("/stripe/checkoutv2", checkout)
+            .route("/stripe/portal", portal)
+    } else {
+        router
+    }
+}
+
+#[cfg(test)]
+mod test;

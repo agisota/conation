@@ -92,6 +92,19 @@ fn is_active_subscription_except_current(
     subscription_id != current_subscription_id && is_active_subscription_status(status)
 }
 
+fn configured_stripe_webhook_secret(stripe_webhook_secret: Option<&str>) -> Result<&str, Response> {
+    stripe_webhook_secret.ok_or_else(|| {
+        tracing::warn!("stripe webhook invoked while billing is disabled");
+        (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(ErrorResponse {
+                message: "Stripe billing is disabled".into(),
+            }),
+        )
+            .into_response()
+    })
+}
+
 /// The main entrypoint for all stripe webhook events handling
 #[tracing::instrument(skip(ctx, headers, body))]
 pub async fn handler(
@@ -100,6 +113,12 @@ pub async fn handler(
     body: Bytes,
 ) -> Result<Response, Response> {
     tracing::info!("stripe_webhook");
+
+    let stripe_webhook_secret = configured_stripe_webhook_secret(
+        ctx.stripe_webhook_secret
+            .as_ref()
+            .map(|secret| secret.as_ref()),
+    )?;
 
     let signature = headers
         .get("stripe-signature")
@@ -127,21 +146,17 @@ pub async fn handler(
     })?;
 
     // Construct and verify the event
-    let event = stripe_webhook::Webhook::construct_event(
-        payload,
-        signature,
-        ctx.stripe_webhook_secret.as_ref(),
-    )
-    .map_err(|e| {
-        tracing::error!(error=?e, "failed to construct stripe event");
-        (
-            StatusCode::BAD_REQUEST,
-            Json(ErrorResponse {
-                message: "failed to construct stripe event".into(),
-            }),
-        )
-            .into_response()
-    })?;
+    let event = stripe_webhook::Webhook::construct_event(payload, signature, stripe_webhook_secret)
+        .map_err(|e| {
+            tracing::error!(error=?e, "failed to construct stripe event");
+            (
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse {
+                    message: "failed to construct stripe event".into(),
+                }),
+            )
+                .into_response()
+        })?;
 
     tracing::info!(
         event_id = %event.id,

@@ -77,7 +77,7 @@ describe('remaining settings localization', () => {
     setLocale('ru');
 
     expect(t('settings.crm.disable.confirmPhrase')).toBe('Отключить CRM');
-    expect(t('settings.billing.plan.free')).toBe('Бесплатный план');
+    expect(t('settings.billing.access.title')).toBe('Возможности Conation');
     expect(
       t('settings.email.sync.progress', { completed: 1200, total: 2500 })
     ).toBe('Обработано 1 200 из 2 500 цепочек');

@@ -5,6 +5,7 @@ use conation_auth::InternalApiKey;
 pub use conation_env::Environment;
 use conation_env_var::{env_vars, maybe_env_vars};
 use database_env_vars::{DatabaseUrl, RedisUri};
+use roles_and_permissions::domain::access_policy::CONATION_ACCESS_POLICY;
 use url::Url;
 
 // BASE_URL config value. This is validated when creating the config in main.rs
@@ -40,8 +41,15 @@ maybe_env_vars! {
     /// Google OAuth is enabled only when both credentials are configured.
     pub struct GoogleClientId;
     pub struct GoogleClientSecretKey;
-    /// Stripe billing is enabled only when its key and price are configured.
+    /// Legacy Stripe credential retained for configuration compatibility.
+    ///
+    /// Conation's free-access policy keeps hosted billing disabled even when
+    /// this value is present.
     pub struct StripeSecretKey;
+    /// Legacy Stripe price retained for configuration compatibility.
+    ///
+    /// Conation's free-access policy keeps hosted billing disabled even when
+    /// this value is present.
     pub struct StripePriceId;
     pub struct MicrosoftClientId;
     pub struct MicrosoftClientSecret;
@@ -178,7 +186,10 @@ pub(crate) struct GoogleCredentials {
     pub(crate) client_secret: String,
 }
 
-/// Complete Stripe credentials used to enable hosted billing.
+/// Complete legacy Stripe credentials.
+///
+/// They remain parseable for a future payment-required policy, but free
+/// Conation deployments deliberately do not read or validate them.
 pub(crate) struct StripeCredentials {
     pub(crate) secret_key: String,
     pub(crate) price_id: String,
@@ -247,16 +258,17 @@ impl Config {
         )
     }
 
-    /// Resolves Stripe billing credentials, enforcing that both values are configured together.
+    /// Resolves legacy Stripe credentials when hosted billing is permitted by policy.
+    ///
+    /// Free Conation deployments ignore the values entirely, including an
+    /// incomplete legacy pair. A future payment-required policy retains the
+    /// pair validation before it can enable a checkout surface.
     pub(crate) fn stripe_credentials(&self) -> anyhow::Result<Option<StripeCredentials>> {
-        let credentials = resolve_stripe_credentials(
+        resolve_stripe_billing_credentials(
+            self.environment,
             self.stripe_secret_key.value(),
             self.stripe_price_id.value(),
-        )?;
-
-        Ok(credentials.filter(|credentials| {
-            stripe_billing_is_enabled_for_environment(self.environment, credentials)
-        }))
+        )
     }
 
     /// Resolves and validates the sender and support mailboxes.
@@ -399,13 +411,36 @@ fn resolve_stripe_credentials(
     )
 }
 
+fn resolve_stripe_billing_credentials(
+    environment: Environment,
+    secret_key: Option<&str>,
+    price_id: Option<&str>,
+) -> anyhow::Result<Option<StripeCredentials>> {
+    if !CONATION_ACCESS_POLICY.requires_payment_for_features() {
+        return Ok(None);
+    }
+
+    let credentials = resolve_stripe_credentials(secret_key, price_id)?;
+    Ok(credentials
+        .filter(|credentials| stripe_billing_is_enabled_for_environment(environment, credentials)))
+}
+
 fn stripe_billing_is_enabled_for_environment(
+    environment: Environment,
+    credentials: &StripeCredentials,
+) -> bool {
+    CONATION_ACCESS_POLICY.requires_payment_for_features()
+        && stripe_credentials_are_usable_for_environment(environment, credentials)
+}
+
+fn stripe_credentials_are_usable_for_environment(
     environment: Environment,
     credentials: &StripeCredentials,
 ) -> bool {
     match environment {
         // `run_local --no-doppler` provides a non-secret placeholder so the
-        // process can start. Only genuine Stripe API keys enable billing locally.
+        // process can start. Only genuine Stripe API keys would be usable
+        // locally if a future product policy deliberately enabled billing.
         Environment::Local => {
             credentials.secret_key.starts_with("sk_") || credentials.secret_key.starts_with("rk_")
         }

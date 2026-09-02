@@ -36,9 +36,6 @@ use crate::api::user::patch_user_group::PatchUserGroupRequest;
 use crate::api::user::patch_user_onboarding::PatchUserOnboardingRequest;
 use crate::api::user::post_get_names::PostGetNamesRequestBody;
 use crate::api::user::post_get_names_with_email::GetNamesWithEmailRequestBody;
-use crate::api::user::stripe::StripeSessionResponse;
-use crate::api::user::stripe::create_checkout_session_v2::CreateCheckoutSessionV2Request;
-use crate::api::user::stripe::create_portal_session::CreatePortalSessionRequest;
 use crate::api::{
     email, github_pull_requests, health, jwt, link, login, logout, merge, mobile_welcome_email,
     oauth, oauth2, permissions, session, user,
@@ -124,8 +121,6 @@ use model::user::{
                 user::get_user_quota::handler,
                 user::get_legacy_user_permissions::handler,
                 user::patch_tutorial::handler,
-                user::stripe::create_checkout_session_v2::create_checkout_session,
-                user::stripe::create_portal_session::create_portal_session,
 
                 /// /session
                 session::session_login::handler,
@@ -211,11 +206,6 @@ use model::user::{
                         UserOrganizationResponse,
                         GetLegacyUserPermissionsResponse,
                         PatchUserTutorialRequest,
-
-                        // Stripe
-                        CreateCheckoutSessionV2Request,
-                        CreatePortalSessionRequest,
-                        StripeSessionResponse,
 
                         // User onboarding
                         PatchUserGroupRequest,
@@ -308,6 +298,31 @@ mod tests {
 
         assert_eq!(email["in"], "query");
         assert_eq!(email["required"], false);
+    }
+
+    #[test]
+    fn openapi_omits_disabled_stripe_billing_routes() {
+        let openapi = serde_json::to_value(ApiDoc::openapi()).unwrap();
+        let paths = openapi["paths"].as_object().unwrap();
+        let schemas = openapi["components"]["schemas"].as_object().unwrap();
+
+        for path in ["/user/stripe/checkoutv2", "/user/stripe/portal"] {
+            assert!(
+                !paths.contains_key(path),
+                "disabled Stripe route {path} must not be advertised"
+            );
+        }
+
+        for schema in [
+            "CreateCheckoutSessionV2Request",
+            "CreatePortalSessionRequest",
+            "StripeSessionResponse",
+        ] {
+            assert!(
+                !schemas.contains_key(schema),
+                "disabled Stripe schema {schema} must not be advertised"
+            );
+        }
     }
 
     #[test]

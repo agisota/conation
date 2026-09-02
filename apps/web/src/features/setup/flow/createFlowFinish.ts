@@ -1,6 +1,4 @@
 import { AFTER_SETUP_ROUTE, DEFAULT_ROUTE } from '@app/constants/defaultRoute';
-import { createOnboardingCheckoutSession } from '@app/features/onboarding/use-onboarding-checkout';
-import type { PaidPlanTier } from '@app/features/paywall/plans';
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
 import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
@@ -33,9 +31,11 @@ export function createFlowFinish(options?: {
   const analytics = useAnalytics();
   const [finishing, setFinishing] = createSignal(false);
 
-  const trackCompleted = (plan: 'free' | 'premium', planSkipped: boolean) => {
+  const trackCompleted = (planSkipped: boolean) => {
     analytics.track('onboarding_v4_completed', {
-      plan,
+      // Analytics retains the legacy enum for historical dashboards. In
+      // Conation this means included access, not a selectable plan.
+      plan: 'free',
       plan_skipped: planSkipped,
       emails_connected: 0,
       connectors_connected: [],
@@ -100,48 +100,13 @@ export function createFlowFinish(options?: {
     return true;
   };
 
-  /** Finish on the free plan (or a skipped plan step) and enter the app. */
-  const finishFree = async (planSkipped = false) => {
+  /** Finish the included-access step and enter the app. */
+  const finish = async (planSkipped = false) => {
     if (finishing()) return;
     setFinishing(true);
     try {
       if (await completeFlow()) {
-        trackCompleted('free', planSkipped);
-        navigate(afterTarget(), { replace: true });
-      }
-    } finally {
-      setFinishing(false);
-    }
-  };
-
-  /**
-   * Hand the page to Stripe WITHOUT completing the flow: the onboarding
-   * redirect plus the persisted step bring both checkout legs (success and
-   * cancel) back to the plan step, which finishes only once payment is
-   * confirmed. On failure the user stays on the plan step and can retry or
-   * pick free.
-   */
-  const startPremiumCheckout = async (tier: PaidPlanTier) => {
-    if (finishing()) return;
-    setFinishing(true);
-    try {
-      const { checkoutUrl } = await createOnboardingCheckoutSession(tier);
-      // Deliberately leave `finishing` set: the page is navigating away,
-      // and re-enabling the buttons mid-unload invites a double checkout.
-      window.location.href = checkoutUrl;
-    } catch {
-      toast.failure(t('setup.errors.checkoutFailed'));
-      setFinishing(false);
-    }
-  };
-
-  /** Finish after checkout confirmed payment (or an existing license). */
-  const finishPremium = async () => {
-    if (finishing()) return;
-    setFinishing(true);
-    try {
-      if (await completeFlow()) {
-        trackCompleted('premium', false);
+        trackCompleted(planSkipped);
         navigate(afterTarget(), { replace: true });
       }
     } finally {
@@ -151,9 +116,7 @@ export function createFlowFinish(options?: {
 
   return {
     finishing,
-    finishFree,
-    startPremiumCheckout,
-    finishPremium,
+    finish,
     afterTarget,
   };
 }

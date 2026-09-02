@@ -1,5 +1,4 @@
 import { DEFAULT_ROUTE } from '@app/constants/defaultRoute';
-import { useCheckoutCompletionListener } from '@app/features/paywall/use-checkout-completion-listener';
 import { t } from '@app/lib/i18n';
 import { clearLocalAuthSession } from '@core/auth/logout';
 import { isNativeMobilePlatform } from '@core/mobile/isNativeMobilePlatform';
@@ -13,16 +12,9 @@ import {
   useUserInfoQuery,
 } from '@queries/auth/user-info';
 import { queryClient } from '@queries/client';
-import { Navigate, useSearchParams } from '@solidjs/router';
+import { Navigate } from '@solidjs/router';
 import { Button } from '@ui';
-import {
-  createResource,
-  createSignal,
-  Match,
-  onMount,
-  Show,
-  Switch,
-} from 'solid-js';
+import { createResource, createSignal, Match, Show, Switch } from 'solid-js';
 
 function getCurrentQueryString() {
   const params = new URLSearchParams(window.location.search);
@@ -98,15 +90,7 @@ function SessionExpiredRedirect() {
 }
 
 export function BasePathComponent() {
-  const [searchParams] = useSearchParams();
   const userInfoQuery = useUserInfoQuery();
-  const checkoutRefreshPending = useCheckoutCompletionListener();
-
-  onMount(() => {
-    if (searchParams.upgrade === 'true') {
-      sessionStorage.setItem('showUpgradeModal', 'true');
-    }
-  });
 
   // check session storage for redirect url
   const redirectUrl = consumePostLoginRedirect();
@@ -122,9 +106,7 @@ export function BasePathComponent() {
 
   return (
     <Switch>
-      <Match when={userInfoQuery.isLoading || checkoutRefreshPending()}>
-        {null}
-      </Match>
+      <Match when={userInfoQuery.isLoading}>{null}</Match>
       <Match
         when={
           hasLoginCookie() &&
