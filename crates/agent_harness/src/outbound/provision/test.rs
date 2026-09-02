@@ -1,11 +1,18 @@
 use super::{ENSURE_READY_SCRIPT, SIDECAR_PORT};
-use crate::domain::model::{EGRESS_URL_VARIABLE, SESSION_TOKEN_VARIABLE};
+use crate::domain::model::{
+    EGRESS_URL_VARIABLE, MODEL_PROXY_URL_VARIABLE, MODEL_SESSION_TOKEN_VARIABLE,
+    SESSION_TOKEN_VARIABLE,
+};
 
 const SANDBOX_DOCKERFILE: &str =
     include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/container/Dockerfile"));
 const OPENCODE_CONFIG: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/container/opencode.json"
+));
+const SIDECAR_PROXY: &str = include_str!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/container/sidecar/src/server.rs"
 ));
 
 /// The script and the Rust constants name the same things. Asserted rather
@@ -16,6 +23,8 @@ fn the_script_and_the_harness_agree_on_shared_names() {
     assert!(ENSURE_READY_SCRIPT.contains(&format!("sidecar_port={SIDECAR_PORT}")));
     assert!(ENSURE_READY_SCRIPT.contains(&format!("${{{EGRESS_URL_VARIABLE}%/}}/git")));
     assert!(ENSURE_READY_SCRIPT.contains(&format!("${SESSION_TOKEN_VARIABLE}")));
+    assert!(SIDECAR_PROXY.contains(MODEL_PROXY_URL_VARIABLE));
+    assert!(SIDECAR_PROXY.contains(MODEL_SESSION_TOKEN_VARIABLE));
 }
 
 /// The sandbox holds no GitHub credential and is told no repository: it clones
@@ -60,12 +69,24 @@ fn opencode_is_pinned_to_the_rox_provider_and_known_models() {
     assert_eq!(config["model"], "rox/gemini-2.5-flash");
     assert_eq!(
         config["provider"]["rox"]["options"]["baseURL"],
-        "https://api.rox.one/v1"
+        "http://127.0.0.1:8701/v1"
     );
     assert_eq!(
         config["provider"]["rox"]["options"]["apiKey"],
-        "{env:ROX_API_KEY}"
+        "conation-local-proxy"
     );
+    assert!(
+        !OPENCODE_CONFIG.contains("ROX_API_KEY"),
+        "OpenCode must never receive an upstream service credential"
+    );
+    assert!(
+        !SIDECAR_PROXY.contains("ROX_API_KEY"),
+        "the sidecar must use only the session-scoped egress capability"
+    );
+    assert!(!SIDECAR_PROXY.contains("ROX_API_BASE_URL"));
+    assert!(!SIDECAR_PROXY.contains("https://api.rox.one"));
+    assert!(SIDECAR_PROXY.contains("gemini-2.5-flash,nemotron-3-ultra,gpt-5.6-luna"));
+    assert!(!SIDECAR_PROXY.contains("ROX_FALLBACK_MODELS"));
     for model in ["gemini-2.5-flash", "nemotron-3-ultra", "gpt-5.6-luna"] {
         assert!(config["provider"]["rox"]["models"][model].is_object());
     }

@@ -8,7 +8,6 @@ use crate::domain::error::{HarnessError, Result};
 use crate::domain::model::{SandboxEgress, SpawnContainer};
 use crate::domain::ports::ContainerManager;
 use crate::domain::sandbox::{SandboxResizeEffect, create_only_resize_effect};
-use crate::outbound::daytona::RoxApiKey;
 use crate::outbound::provision::{self, SESSION_LABEL};
 use crate::outbound::sidecar::SidecarTransport;
 
@@ -26,8 +25,6 @@ pub struct LocalSettings {
     pub image: String,
     /// Compose network the sandbox joins so this service can dial it by name.
     pub network: String,
-    /// Key sandboxes use for Conation's OmniRoute provider.
-    pub rox_api_key: RoxApiKey,
 }
 
 /// Hands out containers on the local Docker daemon.
@@ -45,7 +42,6 @@ pub struct LocalContainerManager {
     docker: Docker,
     image: String,
     network: String,
-    rox_api_key: RoxApiKey,
 }
 
 impl LocalContainerManager {
@@ -56,13 +52,11 @@ impl LocalContainerManager {
             docker_binary,
             image,
             network,
-            rox_api_key,
         } = settings;
         Self {
             docker: Docker::new(docker_binary),
             image,
             network,
-            rox_api_key,
         }
     }
 
@@ -232,7 +226,7 @@ impl ContainerManager for LocalContainerManager {
             image: self.image.clone(),
             name: container_name(session_id),
             labels: vec![(SESSION_LABEL.to_owned(), session_id.to_string())],
-            env: sandbox_env(&self.rox_api_key, egress),
+            env: sandbox_env(egress),
             network: self.network.clone(),
         };
         let container = self.docker.run(&spec).await.map_err(unavailable)?;
@@ -316,10 +310,8 @@ fn sidecar_address(container: &ContainerRef) -> String {
     format!("{}:{}", container.name, provision::SIDECAR_PORT)
 }
 
-fn sandbox_env(rox_api_key: &RoxApiKey, egress: SandboxEgress) -> Vec<(String, String)> {
-    let mut env = vec![("ROX_API_KEY".to_owned(), rox_api_key.expose().to_owned())];
-    env.extend(egress.environment());
-    env
+fn sandbox_env(egress: SandboxEgress) -> Vec<(String, String)> {
+    egress.environment().into_iter().collect()
 }
 
 fn unavailable(error: LocalError) -> HarnessError {

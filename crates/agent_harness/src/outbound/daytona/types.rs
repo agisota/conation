@@ -61,26 +61,6 @@ impl DaytonaApiKey {
     }
 }
 
-/// API key sandboxes use to run Conation's OmniRoute models.
-///
-/// OpenCode's custom `rox` provider reads this value from `ROX_API_KEY`.
-/// Empty behaves like absent, so managed sessions cannot prompt until an
-/// operator provisions the server-side credential.
-#[derive(Clone)]
-pub struct RoxApiKey(String);
-
-impl RoxApiKey {
-    /// Wrap an OmniRoute API credential.
-    #[must_use]
-    pub fn new(value: String) -> Self {
-        Self(value)
-    }
-
-    pub(crate) fn expose(&self) -> &str {
-        &self.0
-    }
-}
-
 /// Settings required to create Daytona-backed containers.
 pub struct DaytonaSettings {
     /// Base URL of the Daytona REST API.
@@ -89,6 +69,4 @@ pub struct DaytonaSettings {
     pub api_key: DaytonaApiKey,
     /// Prebuilt snapshot used to create sandboxes.
     pub snapshot: Snapshot,
-    /// Key sandboxes use for Conation's OmniRoute provider.
-    pub rox_api_key: RoxApiKey,
 }

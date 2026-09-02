@@ -131,8 +131,10 @@ CONATION_OPERATOR_ORIGIN=https://conation.example just tauri-build-standalone
 - Экспериментальный Stalwart ещё не подключён как полноценный backend почты:
   нет подтверждённого end-to-end provisioning, JMAP sync и outbound delivery.
 - GitHub-функции требуют GitHub OAuth/App credentials и разрешений.
-- AI требует ключа выбранного провайдера. Автоматическая цепочка fallback между
-  несколькими моделями пока не подтверждена end-to-end и здесь не обещается.
+- AI требует серверного ключа выбранного провайдера. Исходники содержат
+  ограниченные capability-маршруты и fallback Gemini Flash → Nematron → Luna,
+  но production-маршрут из Daytona и live OmniRoute smoke-тест ещё не
+  подтверждены end-to-end.
 - Платёжная логика и внешние SaaS-интеграции могут оставаться в коде как
   исторические контракты; AGPL-лицензия не делает внешние API бесплатными.
 - Асинхронные письма, push, digest и часть уведомлений ещё не локализованы для

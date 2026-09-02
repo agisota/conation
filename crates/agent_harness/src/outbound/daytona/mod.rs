@@ -8,4 +8,4 @@ mod types;
 pub use client::DaytonaClient;
 pub use errors::DaytonaError;
 pub use manager::{DaytonaContainer, DaytonaContainerManager};
-pub use types::{DaytonaApiKey, DaytonaSettings, Env, Labels, PortPreview, RoxApiKey, Snapshot};
+pub use types::{DaytonaApiKey, DaytonaSettings, Env, Labels, PortPreview, Snapshot};

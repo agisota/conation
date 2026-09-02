@@ -68,6 +68,16 @@ pub trait GithubTokens: Send + Sync {
     ) -> impl Future<Output = Result<UpstreamCall, EgressError>> + Send;
 }
 
+/// Resolve Conation's deployment-owned managed-model credential.
+///
+/// This deliberately receives no sandbox input.  The only model operation is
+/// represented by a dedicated target, and the service owns both its route and
+/// its model allowlist before this port is called.
+pub trait ManagedModelCredentials: Send + Sync {
+    /// The fixed OmniRoute chat-completions endpoint and service credential.
+    fn resolve(&self) -> impl Future<Output = Result<UpstreamCall, EgressError>> + Send;
+}
+
 /// Execute a request and stream the answer back.
 ///
 /// The only port that speaks to the network, and deliberately the dumbest:

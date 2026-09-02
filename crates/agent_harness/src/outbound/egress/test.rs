@@ -225,7 +225,9 @@ fn the_egress_environment_does_not_print_its_secrets() {
         environment,
         [
             "CONATION_EGRESS_URL".to_owned(),
-            "CONATION_SESSION_TOKEN".to_owned()
+            "CONATION_SESSION_TOKEN".to_owned(),
+            "CONATION_MODEL_PROXY_URL".to_owned(),
+            "CONATION_MODEL_SESSION_TOKEN".to_owned(),
         ]
     );
 }

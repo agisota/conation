@@ -2,6 +2,8 @@ import { msg } from '@conation/sdk';
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
 import { conation } from './src/conation';
+import { env } from './src/env';
+import { modelCapabilities, registerModelProxyRoute } from './src/model_proxy';
 import { registerWebhookRoute } from './src/routes';
 import { startSession } from './src/session';
 
@@ -32,6 +34,10 @@ function repoName(repoUrl: string): string | undefined {
 const app = new Hono();
 
 app.use(logger());
+registerModelProxyRoute(app, {
+  apiKey: env.ROX_API_KEY,
+  capabilities: modelCapabilities,
+});
 
 conation.events.on('channel.message_posted', async ({ metadata, message }) => {
   const content = await message.content();

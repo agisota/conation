@@ -1,5 +1,4 @@
 use super::*;
-use crate::outbound::daytona::RoxApiKey;
 use crate::testing::helpers::egress::test_egress;
 
 /// One container per session, so a resume finds exactly one and `docker ps`
@@ -24,18 +23,16 @@ fn a_sidecar_is_dialed_by_container_name() {
 }
 
 /// Same environment Daytona injects, so the readiness recipe is exercised
-/// against what a deployed sandbox sees: the OmniRoute key that activates the
-/// one model provider `container/opencode.json` enables, plus the egress
-/// variables the clone and every outbound call go through. No GitHub
-/// credential - the proxy holds that one.
+/// against what a deployed sandbox sees: session-scoped egress capabilities
+/// only. No deployment credential, GitHub token, or repository URL is handed
+/// to model-authored code.
 #[test]
-fn sandbox_env_carries_the_model_key_and_egress() {
-    let env = sandbox_env(&RoxApiKey::new("test-rox-key".to_owned()), test_egress());
+fn sandbox_env_carries_only_egress() {
+    let env = sandbox_env(test_egress());
 
-    assert!(env.contains(&("ROX_API_KEY".to_owned(), "test-rox-key".to_owned())));
     assert!(
         !env.iter()
-            .any(|(key, _)| key == "GITHUB_TOKEN" || key == "REPO_URL")
+            .any(|(key, _)| key == "ROX_API_KEY" || key == "GITHUB_TOKEN" || key == "REPO_URL")
     );
     for (key, value) in test_egress().environment() {
         assert!(env.contains(&(key, value)));

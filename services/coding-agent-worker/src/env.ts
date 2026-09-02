@@ -32,6 +32,6 @@ export const env = envsafe({
   ROX_API_KEY: str({
     default: '',
     allowEmpty: true,
-    desc: 'Forwarded into sandboxes so OpenCode can call Conation OmniRoute. Empty leaves managed coding agents unarmed.',
+    desc: 'Worker-only OmniRoute credential. It is exchanged for per-session sandbox capabilities and is never injected into a sandbox.',
   }),
 });

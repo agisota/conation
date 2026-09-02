@@ -447,6 +447,13 @@ pub enum EgressTarget {
         /// Which of the three smart-HTTP routes.
         endpoint: GitEndpoint,
     },
+    /// Conation's managed OmniRoute chat-completions API.
+    ///
+    /// This intentionally carries no URL and no model.  The route selects the
+    /// one OpenAI-compatible operation and the service normalizes the model
+    /// inside its bounded JSON request body before it ever resolves the
+    /// deployment credential.
+    OmniRouteChatCompletions,
 }
 
 impl EgressTarget {
@@ -456,7 +463,30 @@ impl EgressTarget {
             Self::McpServer(McpDestination::Conation) => "conation".to_owned(),
             Self::McpServer(McpDestination::Connected(slug)) => slug.as_str().to_owned(),
             Self::GitHubGit { endpoint } => format!("git {}", endpoint.path_and_query()),
+            Self::OmniRouteChatCompletions => "OmniRoute chat completions".to_owned(),
         }
+    }
+}
+
+/// The largest JSON chat-completions request accepted from a sandbox.
+///
+/// Chat requests have to be parsed to enforce the server-side model allowlist,
+/// unlike MCP and git requests which can stay fully streamed.  One mebibyte is
+/// ample for prompts and tool schemas while putting a hard ceiling on proxy
+/// memory consumed by an untrusted sandbox.
+pub const MAX_MANAGED_MODEL_REQUEST_BYTES: usize = 1024 * 1024;
+
+/// Normalize one model name accepted by Conation's managed OmniRoute route.
+///
+/// The `rox/` spelling is accepted only as a backwards-compatible provider
+/// prefix.  Nothing else is repaired: a misspelled or unapproved model is a
+/// refusal, not an opportunity for a provider to choose a default.
+pub fn normalize_managed_model(value: &str) -> Option<&'static str> {
+    match value.strip_prefix("rox/").unwrap_or(value) {
+        "gemini-2.5-flash" => Some("gemini-2.5-flash"),
+        "nemotron-3-ultra" => Some("nemotron-3-ultra"),
+        "gpt-5.6-luna" => Some("gpt-5.6-luna"),
+        _ => None,
     }
 }
 

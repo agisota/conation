@@ -297,7 +297,9 @@ just build-hosted-legacy
 - замена всех SQS/DynamoDB/KMS/Lambda/ECS/SES/SNS контрактов;
 - полноценные почтовые аккаунты Stalwart и Internet delivery;
 - locale пользователя в асинхронных email/push/digest;
-- end-to-end AI routing и автоматический межмодельный fallback;
+- production egress для sandbox, его TLS-достижимость из Daytona и live
+  OmniRoute smoke-тест; исходники содержат capability-защищенный fallback,
+  но end-to-end production-подтверждения ещё нет;
 - подписанный и notarized macOS artifact;
 - проверенные public web/docs/MCP endpoints на домене `conation.dev`.
 

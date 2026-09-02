@@ -3,10 +3,11 @@ use crate::domain::model::{
     AgentSessionId, BearerToken, GitEndpoint, GitService, McpDestination, McpServerSlug, ProxyBody,
     RepoSlug, SessionGrant, UpstreamCall, UpstreamCredential,
 };
+use bytes::Bytes;
 use conation_user_id::user_id::MacroUserIdStr;
 use http::header::{AUTHORIZATION, HeaderMap, HeaderName, HeaderValue};
 use http::{Method, StatusCode};
-use http_body_util::{BodyExt, Empty};
+use http_body_util::{BodyExt, Empty, Full};
 use std::sync::Mutex;
 use url::Url;
 
@@ -179,9 +180,36 @@ impl GithubTokens for SpyGithubTokens {
     }
 }
 
+/// Records whether a managed-model credential was requested.
+struct SpyManagedModels {
+    calls: Mutex<usize>,
+}
+
+impl SpyManagedModels {
+    fn new() -> Self {
+        Self {
+            calls: Mutex::default(),
+        }
+    }
+
+    fn calls(&self) -> usize {
+        *self.calls.lock().expect("lock")
+    }
+}
+
+impl ManagedModelCredentials for SpyManagedModels {
+    async fn resolve(&self) -> Result<UpstreamCall, EgressError> {
+        *self.calls.lock().expect("lock") += 1;
+        UpstreamCall::bearer(
+            Url::parse("https://api.rox.one/v1/chat/completions").expect("url"),
+            BearerToken::new("server-rox-token"),
+        )
+    }
+}
+
 /// Records the request it was handed, and answers with a fixed response.
 struct SpyForwarder {
-    seen: Mutex<Option<http::request::Parts>>,
+    seen: Mutex<Option<(http::request::Parts, Bytes)>>,
     response_headers: HeaderMap,
 }
 
@@ -198,20 +226,32 @@ impl SpyForwarder {
     }
 
     fn forwarded<T>(&self, read: impl Fn(&http::request::Parts) -> T) -> T {
-        read(
-            self.seen
-                .lock()
-                .expect("lock")
-                .as_ref()
-                .expect("forwarder was called"),
-        )
+        let guard = self.seen.lock().expect("lock");
+        read(&guard.as_ref().expect("forwarder was called").0)
+    }
+
+    fn body(&self) -> Bytes {
+        self.seen
+            .lock()
+            .expect("lock")
+            .as_ref()
+            .expect("forwarder was called")
+            .1
+            .clone()
     }
 }
 
 impl Forwarder for SpyForwarder {
     async fn forward(&self, request: ProxyRequest) -> Result<ProxyResponse, EgressError> {
-        let (parts, _body) = request.into_parts();
-        *self.seen.lock().expect("lock") = Some(parts);
+        let (parts, body) = request.into_parts();
+        let body = body
+            .collect()
+            .await
+            .map_err(|error| {
+                EgressError::Internal(rootcause::report!("test proxy body failed: {error}"))
+            })?
+            .to_bytes();
+        *self.seen.lock().expect("lock") = Some((parts, body));
 
         let mut response = http::Response::new(empty_body());
         *response.status_mut() = StatusCode::ACCEPTED;
@@ -223,6 +263,17 @@ impl Forwarder for SpyForwarder {
 fn request(method: Method, header_pairs: &[(&str, &str)]) -> ProxyRequest {
     let mut request = http::Request::new(empty_body());
     *request.method_mut() = method;
+    *request.headers_mut() = header_map(header_pairs);
+    request
+}
+
+fn chat_request(model: &str, header_pairs: &[(&str, &str)]) -> ProxyRequest {
+    let payload = serde_json::json!({"model": model, "messages": []});
+    let body: ProxyBody = Full::new(Bytes::from(serde_json::to_vec(&payload).expect("json")))
+        .map_err(|never| match never {})
+        .boxed_unsync();
+    let mut request = http::Request::new(body);
+    *request.method_mut() = Method::POST;
     *request.headers_mut() = header_map(header_pairs);
     request
 }
@@ -698,5 +749,126 @@ async fn a_cleartext_git_base_is_refused_too() {
         .expect_err("refused");
 
     assert!(matches!(error, EgressError::InsecureUpstream(_)));
+    assert!(!service.forward.was_called());
+}
+
+#[tokio::test]
+async fn managed_model_requires_a_session_before_resolving_a_credential() {
+    let service = EgressServiceImpl::new(
+        StubSessions::refusing(),
+        SpyCredentials::knowing(),
+        SpyGithubTokens::default(),
+        SpyForwarder::answering(&[]),
+    )
+    .with_managed_models(SpyManagedModels::new());
+
+    let error = service
+        .proxy(
+            &SessionToken::new("bad-token"),
+            EgressTarget::OmniRouteChatCompletions,
+            chat_request("gemini-2.5-flash", &[]),
+        )
+        .await
+        .expect_err("unauthenticated requests must stop before credential resolution");
+
+    assert!(matches!(error, EgressError::Unauthenticated(_)));
+    assert_eq!(service.models.calls(), 0);
+    assert!(!service.forward.was_called());
+}
+
+#[tokio::test]
+async fn managed_model_route_normalizes_the_model_and_stamps_only_the_server_credential() {
+    let service = EgressServiceImpl::new(
+        StubSessions::granting(),
+        SpyCredentials::knowing(),
+        SpyGithubTokens::default(),
+        SpyForwarder::answering(&[
+            ("authorization", "Bearer echoed-server-token"),
+            ("set-cookie", "upstream-session=secret"),
+        ]),
+    )
+    .with_managed_models(SpyManagedModels::new());
+
+    let response = service
+        .proxy(
+            &SessionToken::new("session-token"),
+            EgressTarget::OmniRouteChatCompletions,
+            chat_request(
+                "rox/gemini-2.5-flash",
+                &[
+                    ("authorization", "Bearer sandbox-token"),
+                    ("cookie", "sandbox-cookie=secret"),
+                    ("host", "attacker.invalid"),
+                ],
+            ),
+        )
+        .await
+        .expect("proxied");
+
+    assert_eq!(service.models.calls(), 1);
+    assert_eq!(
+        service.forward.forwarded(|parts| parts.uri.to_string()),
+        "https://api.rox.one/v1/chat/completions"
+    );
+    assert_eq!(
+        service
+            .forward
+            .forwarded(|parts| parts.headers[AUTHORIZATION]
+                .to_str()
+                .expect("header")
+                .to_owned()),
+        "Bearer server-rox-token"
+    );
+    assert!(
+        service
+            .forward
+            .forwarded(|parts| !parts.headers.contains_key("cookie"))
+    );
+    assert!(
+        service
+            .forward
+            .forwarded(|parts| !parts.headers.contains_key("host"))
+    );
+    assert_eq!(
+        serde_json::from_slice::<serde_json::Value>(&service.forward.body()).expect("json")["model"],
+        "gemini-2.5-flash"
+    );
+    assert!(!response.headers().contains_key("authorization"));
+    assert!(!response.headers().contains_key("set-cookie"));
+}
+
+#[tokio::test]
+async fn managed_model_refuses_non_post_and_unapproved_models_without_forwarding() {
+    let service = EgressServiceImpl::new(
+        StubSessions::granting(),
+        SpyCredentials::knowing(),
+        SpyGithubTokens::default(),
+        SpyForwarder::answering(&[]),
+    )
+    .with_managed_models(SpyManagedModels::new());
+
+    let method_error = service
+        .proxy(
+            &SessionToken::new("token"),
+            EgressTarget::OmniRouteChatCompletions,
+            request(Method::GET, &[]),
+        )
+        .await
+        .expect_err("GET must not reach OmniRoute");
+    assert!(matches!(
+        method_error,
+        EgressError::MethodNotAllowed(Method::GET)
+    ));
+
+    let model_error = service
+        .proxy(
+            &SessionToken::new("token"),
+            EgressTarget::OmniRouteChatCompletions,
+            chat_request("other-provider/anything", &[]),
+        )
+        .await
+        .expect_err("unapproved model must not reach OmniRoute");
+    assert!(matches!(model_error, EgressError::Unroutable(_)));
+    assert_eq!(service.models.calls(), 0);
     assert!(!service.forward.was_called());
 }

@@ -9,8 +9,8 @@
       "npm": "@ai-sdk/openai-compatible",
       "name": "Conation OmniRoute",
       "options": {
-        "baseURL": "https://api.rox.one/v1",
-        "apiKey": "{env:ROX_API_KEY}"
+        "baseURL": "http://127.0.0.1:8701/v1",
+        "apiKey": "conation-local-proxy"
       },
       "models": {
         "gemini-2.5-flash": {

@@ -201,6 +201,20 @@ task-reference namespace — `CONATION-<short_uuid>`: префикс распо�
    - публичный TLS `EGRESS_BASE_URL`, доступный sandbox-ам;
    - `CONATION_MCP_URL` с адресом MCP endpoint Conation.
 
+`agent_harness` публикует для sandbox только capability-защищенный маршрут
+`POST /openai/v1/chat/completions`. Сессия передаёт непрозрачную capability, а
+сервер подставляет свой `ROX_API_KEY`; в образ, переменные окружения sandbox и
+OpenCode этот ключ не попадает. Маршрут фиксирует операцию, а не является
+общим HTTP-прокси. Внутренний loopback-sidecar выполняет упорядоченное
+переключение до получения заголовков ответа: Gemini Flash → Nematron → Luna.
+
+Standalone `coding-agent-worker` использует отдельный публичный маршрут
+`POST /conation-model-proxy/v1/chat/completions`. Для каждой sandbox-сессии он
+выдаёт краткоживущую capability и отзывает её при завершении сессии; worker
+сам хранит серверный `ROX_API_KEY`. Здесь также нет инъекции ключа OmniRoute в
+sandbox. Его loopback-sidecar применяет ту же последовательность моделей до
+начала ответа.
+
 ## Публичный MCP и OAuth/JWT
 
 1. DNS: `mcp.conation.dev` направить на публичный ingress/Caddy.
@@ -241,9 +255,9 @@ frontend, container image или репозиторий. На 2026-09-01 authent
 2. `nemotron-3-ultra` — первый fallback;
 3. `gpt-5.6-luna` — последний fallback.
 
-Backend хранит provider-qualified цепочку
+Основной backend assistant хранит provider-qualified цепочку
 `rox/gemini-2.5-flash,rox/nemotron-3-ultra,rox/gpt-5.6-luna`. Ее можно целиком
-переопределить серверной переменной `ROX_MODEL_FALLBACK_CHAIN`. Policy
+переопределить серверной переменной `ROX_MODEL_FALLBACK_CHAIN`. Его policy
 классифицируется по typed error/status: `408/409/425/429/5xx` получают один
 retry той же модели, затем fallback; `404/422` сразу переходят к следующей;
 `400/401/403`, отмена и локальная ошибка конфигурации останавливают запрос.
@@ -259,14 +273,19 @@ retry той же модели, затем fallback; `404/422` сразу пер
 затем одной операцией записать одноразовый plaintext в Infisical как
 `ROX_API_KEY`. Не выводить его в terminal log или CI output.
 
-Provisioned coding sandbox — отдельный OpenCode runtime. Его образ включает
-только custom OpenAI-compatible provider `rox`, получает `ROX_API_KEY` только
-при создании sandbox и по умолчанию использует `rox/gemini-2.5-flash`.
-`rox/nemotron-3-ultra` и `rox/gpt-5.6-luna` зарегистрированы в том же provider и
-доступны для явного выбора. Текущая версия OpenCode не предоставляет в JSON
-декларативную цепочку переключения модели после runtime-ошибки, поэтому
-автоматический retry/fallback встроенного Rust assistant здесь не заявляется:
-нужен отдельный supervisor либо поддержка failover со стороны OmniRoute.
+Provisioned coding sandbox — отдельный OpenCode runtime. Он получает локальный
+адрес sidecar и session capability, но **не** `ROX_API_KEY`. OpenCode не умеет
+декларативно задавать упорядоченный межмодельный fallback; это делает sidecar,
+который передаёт capability в один из ограниченных серверных маршрутов выше.
+Он переключает Gemini Flash → Nematron → Luna лишь при ошибке до заголовков
+upstream-ответа. После начала stream ответ не повторяется, чтобы не смешивать
+два сообщения.
+
+Это реализованный контракт исходников, но не заявление о готовом production
+сервисе OmniRoute. Перед вводом в эксплуатацию нужны: серверная настройка
+`ROX_API_KEY`; публичный HTTPS URL соответствующего egress/worker, достижимый
+из Daytona; и реальный smoke-тест создания сессии и completion через каждую
+проверяемую границу. До этого нельзя утверждать, что live fallback подтверждён.
 
 При сборке sandbox image приватный `https://github.com/agisota/conation.git`
 может прогреть Nix dev shell. `GH_TOKEN`/`GITHUB_TOKEN` передается BuildKit как

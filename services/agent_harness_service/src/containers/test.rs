@@ -1,6 +1,5 @@
 use super::*;
 use agent_fold::domain::service::FoldedMessageService;
-use agent_harness::outbound::daytona::RoxApiKey;
 use agent_harness::outbound::local::{LocalContainerManager, LocalSettings};
 use agent_session::domain::ports::NoOpRealtime;
 use agent_session::domain::service::AgentSessionServiceImpl;
@@ -13,7 +12,6 @@ fn unreachable_sandbox() -> HarnessContainers {
         docker_binary: "false".to_owned(),
         image: "unused".to_owned(),
         network: "unused".to_owned(),
-        rox_api_key: RoxApiKey::new(String::new()),
     }))
 }
 

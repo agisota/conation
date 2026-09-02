@@ -11,7 +11,7 @@ export interface CommandRunner {
 export interface SpawnOptions {
   /** Repo to clone into /workspace, e.g. "https://github.com/agisota/conation.git" */
   repoUrl: string;
-  /** Extra env vars for the sandbox (GITHUB_TOKEN, ROX_API_KEY, ...) */
+  /** Extra non-secret env vars for the sandbox (GitHub access and session capabilities). */
   envVars?: Record<string, string>;
 }
 

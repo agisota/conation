@@ -284,6 +284,21 @@ pub const EGRESS_URL_VARIABLE: &str = "CONATION_EGRESS_URL";
 /// `container/ensure_ready.sh` on the same terms as [`EGRESS_URL_VARIABLE`].
 pub const SESSION_TOKEN_VARIABLE: &str = "CONATION_SESSION_TOKEN";
 
+/// The one OpenAI-compatible model endpoint a sandbox may call.
+///
+/// The URL is derived from the session egress origin, never an OmniRoute
+/// origin. The egress service authenticates the request by session token,
+/// enforces the endpoint and model allowlist, then stamps the deployment
+/// credential itself.
+pub const MODEL_PROXY_URL_VARIABLE: &str = "CONATION_MODEL_PROXY_URL";
+
+/// The egress capability presented to the managed-model endpoint.
+///
+/// This is deliberately the same opaque session capability used for Git and
+/// MCP. It is not an upstream credential: closing the session revokes it and
+/// the egress route fixes the only model operation it may perform.
+pub const MODEL_SESSION_TOKEN_VARIABLE: &str = "CONATION_MODEL_SESSION_TOKEN";
+
 /// The name every session's server list gives Conation's own MCP server.
 ///
 /// Purely a display name now - resolution happens by route, not by name - but
@@ -308,6 +323,11 @@ impl SandboxEgress {
         format!("Bearer {}", self.session_token)
     }
 
+    /// The egress route that serves the managed OpenAI-compatible provider.
+    pub fn model_proxy_url(&self) -> String {
+        format!("{}/openai/v1", self.base_url)
+    }
+
     /// The sandbox environment this becomes.
     ///
     /// Unsized on purpose: a third variable should be one more line here and
@@ -317,6 +337,11 @@ impl SandboxEgress {
             (EGRESS_URL_VARIABLE.to_owned(), self.base_url.clone()),
             (
                 SESSION_TOKEN_VARIABLE.to_owned(),
+                self.session_token.clone(),
+            ),
+            (MODEL_PROXY_URL_VARIABLE.to_owned(), self.model_proxy_url()),
+            (
+                MODEL_SESSION_TOKEN_VARIABLE.to_owned(),
                 self.session_token.clone(),
             ),
         ]

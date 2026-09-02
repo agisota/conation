@@ -13,6 +13,9 @@ const dockerfile = await Bun.file(
 const openCodeConfig = await Bun.file(
   new URL('../container/opencode.json', import.meta.url)
 ).json();
+const sidecarProxy = await Bun.file(
+  new URL('../container/sidecar/src/server.rs', import.meta.url)
+).text();
 
 test('accepts a plain https repo url', () => {
   expect(() =>
@@ -86,9 +89,20 @@ test('OpenCode exposes only the configured OmniRoute models', () => {
   expect(openCodeConfig.enabled_providers).toEqual(['rox']);
   expect(openCodeConfig.model).toBe('rox/gemini-2.5-flash');
   expect(openCodeConfig.provider.rox.options).toEqual({
-    baseURL: 'https://api.rox.one/v1',
-    apiKey: '{env:ROX_API_KEY}',
+    baseURL: 'http://127.0.0.1:8701/v1',
+    apiKey: 'conation-local-proxy',
   });
+  expect(JSON.stringify(openCodeConfig)).not.toContain('ROX_API_KEY');
+  expect(sidecarProxy).not.toContain('ROX_API_KEY');
+  expect(sidecarProxy).not.toContain('ROX_API_BASE_URL');
+  expect(sidecarProxy).not.toContain('https://api.rox.one');
+  expect(sidecarProxy).toContain('CONATION_MODEL_PROXY_URL');
+  expect(sidecarProxy).toContain('CONATION_MODEL_SESSION_TOKEN');
+  expect(sidecarProxy).toContain('/conation-model-proxy/v1');
+  expect(sidecarProxy).toContain(
+    'gemini-2.5-flash,nemotron-3-ultra,gpt-5.6-luna'
+  );
+  expect(sidecarProxy).not.toContain('ROX_FALLBACK_MODELS');
   expect(Object.keys(openCodeConfig.provider.rox.models)).toEqual([
     'gemini-2.5-flash',
     'nemotron-3-ultra',

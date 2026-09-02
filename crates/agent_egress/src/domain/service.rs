@@ -1,14 +1,20 @@
 //! The service itself: verify, resolve, stamp, forward.
 
+use axum::body::{Body, to_bytes};
+use bytes::Bytes;
 use http::Uri;
-use http::header::AUTHORIZATION;
+use http::header::{AUTHORIZATION, CONTENT_TYPE};
+use http_body_util::{BodyExt, Full};
 
 use crate::domain::error::EgressError;
 use crate::domain::model::{
-    EgressTarget, ProxyRequest, ProxyResponse, SessionToken, ensure_method_allowed,
-    sanitize_request_headers, sanitize_response_headers,
+    EgressTarget, MAX_MANAGED_MODEL_REQUEST_BYTES, ProxyBody, ProxyRequest, ProxyResponse,
+    SessionToken, ensure_method_allowed, normalize_managed_model, sanitize_request_headers,
+    sanitize_response_headers,
 };
-use crate::domain::ports::{Forwarder, GithubTokens, McpCredentials, SessionAuthority};
+use crate::domain::ports::{
+    Forwarder, GithubTokens, ManagedModelCredentials, McpCredentials, SessionAuthority,
+};
 
 #[cfg(test)]
 mod test;
@@ -27,15 +33,34 @@ pub trait EgressService: Send + Sync {
 }
 
 /// The service, over its four ports.
-pub struct EgressServiceImpl<Sessions, Credentials, Tokens, Forward> {
+pub struct EgressServiceImpl<
+    Sessions,
+    Credentials,
+    Tokens,
+    Forward,
+    Models = NoManagedModelCredentials,
+> {
     sessions: Sessions,
     credentials: Credentials,
     tokens: Tokens,
+    models: Models,
     forward: Forward,
 }
 
+/// The safe default for existing egress deployments while the managed-model
+/// adapter is being configured.
+pub struct NoManagedModelCredentials;
+
+impl ManagedModelCredentials for NoManagedModelCredentials {
+    async fn resolve(&self) -> Result<crate::domain::model::UpstreamCall, EgressError> {
+        Err(EgressError::Unroutable(
+            "managed OmniRoute is not configured".to_owned(),
+        ))
+    }
+}
+
 impl<Sessions, Credentials, Tokens, Forward>
-    EgressServiceImpl<Sessions, Credentials, Tokens, Forward>
+    EgressServiceImpl<Sessions, Credentials, Tokens, Forward, NoManagedModelCredentials>
 where
     Sessions: SessionAuthority,
     Credentials: McpCredentials,
@@ -53,17 +78,36 @@ where
             sessions,
             credentials,
             tokens,
+            models: NoManagedModelCredentials,
             forward,
+        }
+    }
+
+    /// Add the deployment-owned managed-model resolver.
+    pub fn with_managed_models<ConfiguredModels>(
+        self,
+        models: ConfiguredModels,
+    ) -> EgressServiceImpl<Sessions, Credentials, Tokens, Forward, ConfiguredModels>
+    where
+        ConfiguredModels: ManagedModelCredentials,
+    {
+        EgressServiceImpl {
+            sessions: self.sessions,
+            credentials: self.credentials,
+            tokens: self.tokens,
+            models,
+            forward: self.forward,
         }
     }
 }
 
-impl<Sessions, Credentials, Tokens, Forward> EgressService
-    for EgressServiceImpl<Sessions, Credentials, Tokens, Forward>
+impl<Sessions, Credentials, Tokens, Forward, Models> EgressService
+    for EgressServiceImpl<Sessions, Credentials, Tokens, Forward, Models>
 where
     Sessions: SessionAuthority,
     Credentials: McpCredentials,
     Tokens: GithubTokens,
+    Models: ManagedModelCredentials,
     Forward: Forwarder,
 {
     #[tracing::instrument(skip_all, err, fields(
@@ -112,6 +156,13 @@ where
                     })?;
                 base.redirected_to(url)?
             }
+            EgressTarget::OmniRouteChatCompletions => {
+                if request.method() != http::Method::POST {
+                    return Err(EgressError::MethodNotAllowed(request.method().clone()));
+                }
+                request = normalize_managed_model_request(request).await?;
+                self.models.resolve().await?
+            }
         };
 
         tracing::info!(
@@ -152,4 +203,46 @@ where
 
         Ok(response)
     }
+}
+
+/// Parse and rewrite a managed chat request without letting its body grow
+/// beyond the egress memory budget.
+async fn normalize_managed_model_request(
+    request: ProxyRequest,
+) -> Result<ProxyRequest, EgressError> {
+    let (mut parts, body) = request.into_parts();
+    let bytes = to_bytes(Body::new(body), MAX_MANAGED_MODEL_REQUEST_BYTES)
+        .await
+        .map_err(|_| {
+            EgressError::Unroutable(format!(
+                "managed model request exceeds {MAX_MANAGED_MODEL_REQUEST_BYTES} bytes or is unreadable"
+            ))
+        })?;
+    let mut payload: serde_json::Value = serde_json::from_slice(&bytes)
+        .map_err(|_| EgressError::Unroutable("managed model request is not JSON".to_owned()))?;
+    let model = payload
+        .get("model")
+        .and_then(serde_json::Value::as_str)
+        .and_then(normalize_managed_model)
+        .ok_or_else(|| EgressError::Unroutable("managed model is not allowed".to_owned()))?;
+    payload["model"] = serde_json::Value::String(model.to_owned());
+    let bytes = serde_json::to_vec(&payload).map_err(|error| {
+        EgressError::Internal(rootcause::report!(
+            "could not encode managed model request: {error}"
+        ))
+    })?;
+    if bytes.len() > MAX_MANAGED_MODEL_REQUEST_BYTES {
+        return Err(EgressError::Unroutable(
+            "managed model request is too large".to_owned(),
+        ));
+    }
+    parts.headers.remove(http::header::CONTENT_LENGTH);
+    parts.headers.insert(
+        CONTENT_TYPE,
+        http::HeaderValue::from_static("application/json"),
+    );
+    let body: ProxyBody = Full::new(Bytes::from(bytes))
+        .map_err(|never| match never {})
+        .boxed_unsync();
+    Ok(ProxyRequest::from_parts(parts, body))
 }

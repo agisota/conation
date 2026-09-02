@@ -10,6 +10,8 @@ edition = "2024"
 axum = { version = "0.8", features = ["ws"] }
 clap = { version = "4", features = ["derive", "env"] }
 futures-util = "0.3"
+reqwest = { version = "0.13", default-features = false, features = ["rustls", "stream"] }
+serde_json = "1"
 tokio = { version = "1", features = [
   "io-util",
   "macros",
@@ -17,6 +19,7 @@ tokio = { version = "1", features = [
   "process",
   "rt-multi-thread",
   "sync",
+  "time",
 ] }
 tracing = "0.1"
 tracing-subscriber = "0.3"

@@ -20,6 +20,7 @@ use agent_egress::outbound::conation_mcp::{ConationApiTokenSigner, WithConationM
 use agent_egress::outbound::forwarder::ReqwestForwarder;
 use agent_egress::outbound::github_tokens::GithubAppTokens;
 use agent_egress::outbound::mcp_credentials::PipedreamMcpCredentials;
+use agent_egress::outbound::omniroute::OmniRouteCredentials;
 use agent_egress::outbound::session_authority::StoredTokenSessionAuthority;
 use agent_fold::domain::service::FoldedMessageService;
 use agent_harness::domain::model::{HarnessCommand, HarnessDefaults, SessionDefaults};
@@ -32,8 +33,7 @@ use agent_harness::outbound::channel_prompt_context::ChannelPromptContextAdapter
 use agent_harness::outbound::containers::HarnessContainers;
 use agent_harness::outbound::cursor::{CursorContainerManager, PgCursorApiKeys};
 use agent_harness::outbound::daytona::{
-    DaytonaApiKey as DaytonaApiKeySecret, DaytonaContainerManager, DaytonaSettings,
-    RoxApiKey as RoxApiKeySecret, Snapshot,
+    DaytonaApiKey as DaytonaApiKeySecret, DaytonaContainerManager, DaytonaSettings, Snapshot,
 };
 use agent_harness::outbound::egress::EgressProvisioner;
 use agent_harness::outbound::local::{LocalContainerManager, LocalSettings};
@@ -191,15 +191,14 @@ async fn run() -> anyhow::Result<()> {
     // Containers: the sandbox provider (local Docker when a developer has
     // opted in, Daytona otherwise) plus Cursor cloud agents for the `@cursor`
     // bot, routed per session.
-    // The OmniRoute key rides into every sandbox's environment; the image
-    // enables only the custom `rox` provider, so empty leaves managed prompts
-    // deliberately unarmed rather than selecting an unrelated free provider.
+    // The OmniRoute key remains in this process. The session-token-authenticated
+    // egress listener stamps it on the one managed model route, so sandbox code
+    // never receives a credential it could exfiltrate.
     if config.rox_api_key.trim().is_empty() {
         tracing::warn!(
             "ROX_API_KEY is unset: managed sandboxes have no model provider; external agent sessions are unaffected"
         );
     }
-    let rox_api_key = RoxApiKeySecret::new(config.rox_api_key.clone());
     let sandbox = if config.dev_dangerous_local_containers {
         if !matches!(config.environment, Environment::Local) {
             anyhow::bail!("DEV_DANGEROUS_LOCAL_CONTAINERS is only allowed when ENVIRONMENT=local");
@@ -214,7 +213,6 @@ async fn run() -> anyhow::Result<()> {
             docker_binary: config.local_container_docker_binary.clone(),
             image: config.local_container_image.clone(),
             network: network.to_owned(),
-            rox_api_key: rox_api_key.clone(),
         }))
     } else {
         // Credential-less boot is deliberate: external sessions need no
@@ -229,7 +227,6 @@ async fn run() -> anyhow::Result<()> {
             api_url: config.daytona_api_url.clone(),
             api_key: DaytonaApiKeySecret::new(config.daytona_api_key.clone()),
             snapshot: Snapshot::new(config.daytona_snapshot.clone()),
-            rox_api_key,
         }))
     };
     let container_shutdown = sandbox.clone();
@@ -502,6 +499,14 @@ async fn run() -> anyhow::Result<()> {
             GithubSyncClientImpl::default(),
         )),
         ReqwestForwarder::new()?,
+    )
+    .with_managed_models(
+        OmniRouteCredentials::new(
+            url::Url::parse(&config.rox_api_base_url)
+                .context("ROX_API_BASE_URL is not a valid HTTPS origin")?,
+            agent_egress::domain::model::BearerToken::new(config.rox_api_key.clone()),
+        )
+        .context("the OmniRoute upstream is misconfigured")?,
     );
     let egress_port = config.egress_port;
     let egress_http = tokio::spawn(async move {

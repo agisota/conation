@@ -1,15 +1,18 @@
 //! ACP sidecar
 //!
-//! A dumb byte pipe between one websocket connection and one `<harness> acp`
-//! process's stdio. The harness speaks ndjson on stdio; we forward raw bytes
-//! both ways and let the client's ACP SDK do all framing.
+//! An ACP bridge plus a loopback-only OpenAI-compatible fallback proxy.
+//!
+//! The bridge forwards one websocket connection to one `<harness> acp`
+//! process's stdio. The local proxy keeps OmniRoute credentials out of
+//! OpenCode and tries the configured models only before an upstream response
+//! has started.
 //!
 //! Process-per-connection: connect spawns the harness, disconnect kills it.
 //! GET /ping is a readiness probe callers poll before connecting.
 
 use clap::Parser;
 
-use crate::server::{Config, app};
+use crate::server::{Config, acp_app, proxy_app};
 
 mod server;
 
@@ -25,6 +28,9 @@ struct Args {
     /// Port to listen on.
     #[arg(long, env = "ACP_PORT", default_value_t = 8700)]
     port: u16,
+    /// Loopback-only port for OpenCode's OpenAI-compatible provider.
+    #[arg(long, env = "ROX_PROXY_PORT", default_value_t = 8701)]
+    rox_proxy_port: u16,
 }
 
 #[tokio::main]
@@ -36,11 +42,22 @@ async fn main() {
         port = args.port,
         harness = %args.harness,
         workspace = %args.workspace,
+        rox_proxy_port = args.rox_proxy_port,
         "acp-sidecar listening"
     );
-    let listener = tokio::net::TcpListener::bind(("0.0.0.0", args.port))
+    let config = Config::from_env(args.harness, args.workspace).unwrap_or_else(|error| {
+        tracing::error!(reason = %error, "invalid OmniRoute fallback proxy configuration");
+        std::process::exit(2);
+    });
+    let acp_listener = tokio::net::TcpListener::bind(("0.0.0.0", args.port))
         .await
         .expect("bind sidecar port");
-    let config = Config::new(args.harness, args.workspace);
-    axum::serve(listener, app(config)).await.expect("serve");
+    let proxy_listener = tokio::net::TcpListener::bind(("127.0.0.1", args.rox_proxy_port))
+        .await
+        .expect("bind OmniRoute fallback proxy port");
+
+    tokio::select! {
+        result = axum::serve(acp_listener, acp_app(config.clone())) => result.expect("serve ACP bridge"),
+        result = axum::serve(proxy_listener, proxy_app(config)) => result.expect("serve OmniRoute fallback proxy"),
+    }
 }

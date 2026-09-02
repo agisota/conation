@@ -171,6 +171,25 @@ async fn a_request_without_a_token_never_reaches_the_service() {
     assert!(service.targets().is_empty());
 }
 
+#[tokio::test]
+async fn routes_only_the_fixed_managed_model_endpoint_after_a_bearer_token() {
+    let service = SpyService::accepting();
+    let request = Request::builder()
+        .method(Method::POST)
+        .uri("/openai/v1/chat/completions")
+        .header(AUTHORIZATION, "Bearer session")
+        .body(Body::empty())
+        .expect("request");
+    let response = call(&service, request).await;
+
+    assert_eq!(response.status(), StatusCode::ACCEPTED);
+    assert_eq!(service.targets(), [EgressTarget::OmniRouteChatCompletions]);
+
+    let response = call(&service, get("/openai/v1/models", Some("Bearer session"))).await;
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+    assert_eq!(service.targets(), [EgressTarget::OmniRouteChatCompletions]);
+}
+
 /// The sandbox's remote is just `<egress>/git`; git appends the smart-HTTP
 /// suffix itself, and there is nowhere in the route for it to name a
 /// repository.

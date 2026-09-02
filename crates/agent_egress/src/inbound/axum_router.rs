@@ -66,6 +66,10 @@ where
         .route("/mcp/{slug}", any(mcp_handler::<Service>))
         .route("/mcp-conation", any(conation_mcp_handler::<Service>))
         .route(
+            "/openai/v1/chat/completions",
+            axum::routing::post(omniroute_chat_completions_handler::<Service>),
+        )
+        .route(
             "/git/{*path}",
             get(git_handler::<Service>).post(git_handler::<Service>),
         )
@@ -109,6 +113,25 @@ where
     Service: EgressService,
 {
     mcp_proxy(state, McpDestination::Conation, request).await
+}
+
+/// The single sandbox-facing managed-model operation.
+#[tracing::instrument(skip_all, err)]
+async fn omniroute_chat_completions_handler<Service>(
+    State(state): State<EgressRouterState<Service>>,
+    request: Request,
+) -> Result<Response, EgressError>
+where
+    Service: EgressService,
+{
+    let token = session_token(request.headers())?;
+    dispatch(
+        state,
+        token,
+        EgressTarget::OmniRouteChatCompletions,
+        request,
+    )
+    .await
 }
 
 /// One MCP request through the proxy, whichever destination its route named.

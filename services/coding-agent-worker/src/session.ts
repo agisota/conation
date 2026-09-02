@@ -2,6 +2,7 @@ import type { AnyMessage, Stream } from '@agentclientprotocol/sdk';
 import { conation } from './conation';
 import { env } from './env';
 import type { AgentSandbox } from './interfaces';
+import { modelCapabilities, modelProxyBaseUrl } from './model_proxy';
 import type { AcpMessage } from './protocol/generated';
 import { DaytonaProvider } from './providers/daytona';
 import { UpstreamLink } from './upstream';
@@ -121,7 +122,8 @@ async function run(
       repoUrl: opts.repoUrl,
       envVars: {
         GITHUB_TOKEN: env.GITHUB_TOKEN,
-        ...(env.ROX_API_KEY ? { ROX_API_KEY: env.ROX_API_KEY } : {}),
+        CONATION_MODEL_PROXY_URL: modelProxyBaseUrl(env.PUBLIC_URL),
+        CONATION_MODEL_SESSION_TOKEN: modelCapabilities.mint(sessionId),
       },
     });
     console.log(
@@ -144,6 +146,7 @@ async function run(
     if (sessions.has(sessionId)) {
       await destroySession(sessionId);
     } else {
+      modelCapabilities.revokeSession(sessionId);
       link.status('shutting_down');
       await sandbox?.release().catch(() => {});
       link.close();
@@ -153,7 +156,8 @@ async function run(
 
 async function destroySession(id: string): Promise<boolean> {
   const live = sessions.get(id);
-  if (!live) return false;
+  const capabilityRevoked = modelCapabilities.revokeSession(id);
+  if (!live) return capabilityRevoked;
   sessions.delete(id);
   live.link.status('shutting_down');
   await live.router.close().catch(() => {});

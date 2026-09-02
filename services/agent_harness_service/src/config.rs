@@ -64,11 +64,17 @@ pub struct Config {
     /// keeping image builds off the first-prompt critical path.
     #[conation_config_default(String::from("conation-agent-harness"))]
     pub daytona_snapshot: String,
-    /// API key sandboxes use for Conation's OpenAI-compatible OmniRoute.
-    /// Injected only into the sandbox environment at creation. Empty leaves
-    /// managed sessions unable to prompt; external sessions still work.
+    /// Deployment-owned API key for Conation's OpenAI-compatible OmniRoute.
+    /// It is stamped only by the session-token-authenticated egress listener;
+    /// it is never injected into a sandbox. Empty leaves managed sessions
+    /// unable to prompt while external sessions still work.
     #[conation_config_default(String::new())]
     pub rox_api_key: String,
+    /// HTTPS origin of Conation's OmniRoute deployment.
+    /// The fixed `/v1/chat/completions` path is appended by the egress adapter;
+    /// this is configuration, never sandbox input.
+    #[conation_config_default(String::from("https://api.rox.one"))]
+    pub rox_api_base_url: String,
     /// Run sandboxes on the local Docker daemon instead of Daytona.
     ///
     /// Default off: a deployed harness must keep using Daytona even if this
