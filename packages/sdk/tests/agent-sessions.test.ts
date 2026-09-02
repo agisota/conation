@@ -136,4 +136,97 @@ describe('AgentSession', () => {
       'DELETE',
     ]);
   });
+
+  test('createExternal sends provisionEgress and returns one-time egress', async () => {
+    const requests: Request[] = [];
+    const sessionToken = 'one-time-session-token';
+    globalThis.fetch = (async (input) => {
+      const request = input instanceof Request ? input : new Request(input);
+      requests.push(request);
+      if (
+        request.method === 'POST' &&
+        request.url.endsWith('/agent-sessions')
+      ) {
+        return Response.json(
+          {
+            session,
+            egress: {
+              baseUrl: 'https://egress.example.test',
+              sessionToken,
+            },
+          },
+          { status: 201 },
+        );
+      }
+      if (
+        request.method === 'GET' &&
+        request.url.endsWith(`/agent-sessions/${sessionId}`)
+      ) {
+        return Response.json(session, { status: 200 });
+      }
+      return new Response(null, { status: 200 });
+    }) as typeof fetch;
+    const macro = new Macro({
+      token: 'user-token',
+      hosts: { 'agent-harness': 'https://agent.example.test' },
+    });
+
+    const created = await macro.agentSessions.createExternal({
+      workspace: '/workspace',
+      repoUrl: 'https://github.com/example/repo',
+      provisionEgress: true,
+    });
+
+    expect(requests[0]?.method).toBe('POST');
+    expect(requests[0]?.url).toBe(
+      'https://agent.example.test/agent-sessions',
+    );
+    await expect(requests[0]?.json()).resolves.toEqual({
+      repoUrl: 'https://github.com/example/repo',
+      workspace: '/workspace',
+      provisionEgress: true,
+    });
+    expect(created.egress).toEqual({
+      baseUrl: 'https://egress.example.test',
+      sessionToken,
+    });
+    await expect(created.session.name()).resolves.toBe('Agent Session');
+    expect(created.session).not.toHaveProperty('sessionToken');
+    expect(created.session).not.toHaveProperty('egress');
+    expect(JSON.stringify(created.session.toJSON())).not.toContain(
+      sessionToken,
+    );
+
+    const fetched = macro.agentSessions.byId(sessionId);
+    await expect(fetched.name()).resolves.toBe('Agent Session');
+    expect(fetched).not.toHaveProperty('sessionToken');
+    expect(fetched).not.toHaveProperty('egress');
+    expect(JSON.stringify(fetched.toJSON())).not.toContain(sessionToken);
+    expect(requests[1]?.method).toBe('GET');
+    expect(requests[1]?.url).toBe(
+      `https://agent.example.test/agent-sessions/${sessionId}`,
+    );
+  });
+
+  test('createExternal omits provisionEgress unless opted in', async () => {
+    let request: Request | undefined;
+    globalThis.fetch = (async (input) => {
+      request = input instanceof Request ? input : new Request(input);
+      return Response.json({ session }, { status: 201 });
+    }) as typeof fetch;
+    const macro = new Macro({
+      token: 'user-token',
+      hosts: { 'agent-harness': 'https://agent.example.test' },
+    });
+
+    const created = await macro.agentSessions.createExternal({
+      workspace: '/workspace',
+    });
+
+    const body = await request?.json();
+    expect(body).not.toHaveProperty('provisionEgress');
+    expect(body).toMatchObject({ workspace: '/workspace' });
+    expect(created.egress).toBeUndefined();
+    expect(created.session).not.toHaveProperty('sessionToken');
+  });
 });

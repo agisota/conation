@@ -8,18 +8,24 @@ import {
 } from './provision';
 
 const dockerfile = await Bun.file(
-  new URL('../container/Dockerfile', import.meta.url)
+  new URL('../container/Dockerfile', import.meta.url),
 ).text();
 const openCodeConfig = await Bun.file(
-  new URL('../container/opencode.json', import.meta.url)
+  new URL('../container/opencode.json', import.meta.url),
 ).json();
 const sidecarProxy = await Bun.file(
-  new URL('../container/sidecar/src/server.rs', import.meta.url)
+  new URL('../container/sidecar/src/server.rs', import.meta.url),
+).text();
+const sessionWorker = await Bun.file(
+  new URL('./session.ts', import.meta.url),
+).text();
+const daytonaProvider = await Bun.file(
+  new URL('./providers/daytona.ts', import.meta.url),
 ).text();
 
 test('accepts a plain https repo url', () => {
   expect(() =>
-    assertSafeRepoUrl('https://github.com/agisota/conation.git')
+    assertSafeRepoUrl('https://github.com/agisota/conation.git'),
   ).not.toThrow();
 });
 
@@ -42,12 +48,30 @@ test('every stage guards itself so the script is idempotent', () => {
   expect(cmd).toContain('if ! curl -sf localhost:8700/ping');
 });
 
-test('secrets come from the environment, not interpolation', () => {
+test('sandbox clones only through its scoped egress capability', () => {
   const cmd = ensureReadyCommand();
-  expect(cmd).toContain('clone --depth 1 "$REPO_URL"');
-  expect(cmd).toContain('gh auth setup-git --hostname github.com --force');
+  expect(cmd).toContain('egress_git_url="${CONATION_EGRESS_URL%/}/git"');
+  expect(cmd).toContain('clone --depth 1 "$egress_git_url"');
+  expect(cmd).toContain(
+    'credential.$egress_git_url.helper=$git_credential_helper',
+  );
+  expect(cmd).toContain('CONATION_SESSION_TOKEN');
+  expect(cmd).not.toContain('REPO_URL');
   expect(cmd).not.toContain('GITHUB_TOKEN');
+  expect(cmd).not.toContain('gh auth');
   expect(cmd).not.toContain('http.extraHeader');
+});
+
+test('worker injects egress and model capabilities, never GitHub credentials', () => {
+  expect(sessionWorker).toContain('CONATION_EGRESS_URL: opts.egress.baseUrl');
+  expect(sessionWorker).toContain(
+    'CONATION_SESSION_TOKEN: opts.egress.sessionToken',
+  );
+  expect(sessionWorker).toContain('CONATION_MODEL_SESSION_TOKEN');
+  expect(sessionWorker).not.toContain('GITHUB_TOKEN');
+  expect(sessionWorker).not.toContain('REPO_URL');
+  expect(daytonaProvider).not.toContain('REPO_URL');
+  expect(daytonaProvider).not.toContain('GITHUB_TOKEN');
 });
 
 test('sidecar starts detached sourcing the baked repo env when present', () => {
@@ -71,18 +95,12 @@ test('ensureReady runs the script with the ensure timeout', async () => {
   ]);
 });
 
-test('image bake authenticates the private Conation clone only through BuildKit', () => {
-  expect(dockerfile).toContain('--mount=type=secret,id=github_token');
-  expect(dockerfile).toContain('GIT_ASKPASS');
-  expect(dockerfile).toContain('https://github.com/agisota/conation.git');
-  expect(dockerfile).not.toContain('ARG GITHUB_TOKEN');
+test('image contains no GitHub credential or repository bake path', () => {
+  expect(dockerfile).not.toContain('github_token');
+  expect(dockerfile).not.toContain('GIT_ASKPASS');
+  expect(dockerfile).not.toContain('https://github.com/agisota/conation.git');
+  expect(dockerfile).not.toContain('GITHUB_TOKEN');
   expect(dockerfile).not.toContain('github.com/macro-inc/macro');
-
-  const secretStep = dockerfile
-    .split("RUN --mount=type=secret,id=github_token bash <<'EOF'\n")[1]
-    ?.split('\nEOF\n')[0];
-  expect(secretStep).toContain('git -c credential.helper= clone');
-  expect(secretStep).not.toContain('nix develop');
 });
 
 test('OpenCode exposes only the configured OmniRoute models', () => {
@@ -100,7 +118,7 @@ test('OpenCode exposes only the configured OmniRoute models', () => {
   expect(sidecarProxy).toContain('CONATION_MODEL_SESSION_TOKEN');
   expect(sidecarProxy).toContain('/conation-model-proxy/v1');
   expect(sidecarProxy).toContain(
-    'gemini-2.5-flash,nemotron-3-ultra,gpt-5.6-luna'
+    'gemini-2.5-flash,nemotron-3-ultra,gpt-5.6-luna',
   );
   expect(sidecarProxy).not.toContain('ROX_FALLBACK_MODELS');
   expect(Object.keys(openCodeConfig.provider.rox.models)).toEqual([
@@ -108,4 +126,6 @@ test('OpenCode exposes only the configured OmniRoute models', () => {
     'nemotron-3-ultra',
     'gpt-5.6-luna',
   ]);
+  expect(JSON.stringify(openCodeConfig)).not.toContain('github-mcp-server');
+  expect(JSON.stringify(openCodeConfig)).not.toContain('GITHUB_TOKEN');
 });

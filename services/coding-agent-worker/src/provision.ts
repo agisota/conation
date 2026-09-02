@@ -6,8 +6,7 @@
 
 import type { CommandRunner } from './interfaces';
 
-/** Conation dev shell baked into the image at build time (see the Dockerfile);
- * absent on images built without the github_token secret. */
+/** Conation dev shell baked into the image at build time (see the Dockerfile). */
 const REPO_ENV_FILE = '/env/repo-dev-env.sh';
 const SIDECAR_LOG = '/tmp/acp-sidecar.log';
 
@@ -38,18 +37,24 @@ export function assertSafeRepoUrl(url: string): void {
  * skips itself when already done, so this is safe to run on first boot,
  * reconnect, or after a machine restart.
  *
- * Reads REPO_URL and GITHUB_TOKEN from the sandbox environment (set at
- * creation) rather than interpolating them into the script.
+ * Reads only an opaque egress capability from the sandbox environment (set at
+ * creation) rather than interpolating repository or GitHub credentials into
+ * the script. The egress server resolves the repository from the session.
  *
- * Stages: configure GitHub credentials, clone the repo, then start the sidecar
- * with the baked repo dev shell first on PATH and the base tools (opencode,
- * gh, github-mcp-server) still reachable. */
+ * Stages: clone through the exact egress origin with a URL-scoped Git
+ * credential helper, then start the sidecar with the baked repo dev shell
+ * first on PATH. */
 export function ensureReadyCommand(): string {
   return (
     `bash -c 'set -e; ` +
-    `gh auth setup-git --hostname github.com --force; ` +
+    `: "\${CONATION_EGRESS_URL:?CONATION_EGRESS_URL is required}"; ` +
+    `: "\${CONATION_SESSION_TOKEN:?CONATION_SESSION_TOKEN is required}"; ` +
+    `egress_git_url="\${CONATION_EGRESS_URL%/}/git"; ` +
+    `git_credential_helper="!f() { printf \\\"username=x-access-token\\\\npassword=%s\\\\n\\\" \\\"\\$CONATION_SESSION_TOKEN\\\"; }; f"; ` +
     `if [ ! -d ${WORKSPACE_DIR}/.git ]; then ` +
-    `git clone --depth 1 "$REPO_URL" ${WORKSPACE_DIR}; ` +
+    `git -c credential.helper= ` +
+    `-c "credential.$egress_git_url.helper=$git_credential_helper" ` +
+    `clone --depth 1 "$egress_git_url" ${WORKSPACE_DIR}; ` +
     `fi; ` +
     `if ! curl -sf localhost:8700/ping >/dev/null 2>&1; then ` +
     `baked_path="$PATH"; ` +
@@ -67,7 +72,7 @@ export async function ensureReady(runner: CommandRunner): Promise<void> {
 /** Poll the sidecar's readiness probe until it answers. */
 export async function waitForPing(
   pingUrl: string,
-  timeoutMs: number
+  timeoutMs: number,
 ): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {

@@ -9,9 +9,7 @@ export interface CommandRunner {
 }
 
 export interface SpawnOptions {
-  /** Repo to clone into /workspace, e.g. "https://github.com/agisota/conation.git" */
-  repoUrl: string;
-  /** Extra non-secret env vars for the sandbox (GitHub access and session capabilities). */
+  /** Session-scoped, non-reusable capability variables for the sandbox. */
   envVars?: Record<string, string>;
 }
 
@@ -33,7 +31,7 @@ export interface AgentSandbox {
 }
 
 export interface SandboxProvider {
-  /** Create a sandbox: container up, repo cloned, ACP sidecar listening. */
+  /** Create a sandbox: container up, egress-cloned repo, ACP sidecar listening. */
   spawn(opts: SpawnOptions): Promise<AgentSandbox>;
   /** Reattach to an existing sandbox (e.g. after the caller restarted). */
   get(id: string): Promise<AgentSandbox>;

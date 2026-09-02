@@ -21,7 +21,7 @@ class SessionRouter {
   constructor(
     conn: Stream,
     private readonly link: UpstreamLink,
-    private readonly sessionId: string
+    private readonly sessionId: string,
   ) {
     // The SDK's connection layer is deliberately not used: agent_proxy owns
     // the ACP session, so this end correlates nothing.
@@ -50,7 +50,7 @@ class SessionRouter {
         const { value, done } = await reader.read();
         if (done) {
           console.warn(
-            `[session ${this.sessionId}] agent stream closed (done)`
+            `[session ${this.sessionId}] agent stream closed (done)`,
           );
           break;
         }
@@ -79,9 +79,9 @@ const provider = new DaytonaProvider();
  * verbatim (the shared runtime endpoint's `?id=` is matched against it on
  * the other end). */
 export function startSession(opts: {
-  repoUrl: string;
   prompt: string;
   agentId: string;
+  egress: { baseUrl: string; sessionToken: string };
   /** Called once the sandbox is up and the agent is ready to work. */
   onBoot?: () => unknown;
 }): string {
@@ -92,11 +92,11 @@ export function startSession(opts: {
 async function run(
   sessionId: string,
   opts: {
-    repoUrl: string;
     prompt: string;
     agentId: string;
+    egress: { baseUrl: string; sessionToken: string };
     onBoot?: () => unknown;
-  }
+  },
 ): Promise<void> {
   // agent_harness serves the runtime websocket on the same host as its HTTP
   // API, so the SDK's resolved host (env defaults / local portmap) is the
@@ -114,26 +114,26 @@ async function run(
     });
 
     link.status('booting');
-    console.log(`[session ${sessionId}] spawning sandbox`, {
-      repoUrl: opts.repoUrl,
-    });
+    console.log(
+      `[session ${sessionId}] spawning sandbox through session egress`,
+    );
 
     sandbox = await provider.spawn({
-      repoUrl: opts.repoUrl,
       envVars: {
-        GITHUB_TOKEN: env.GITHUB_TOKEN,
+        CONATION_EGRESS_URL: opts.egress.baseUrl,
+        CONATION_SESSION_TOKEN: opts.egress.sessionToken,
         CONATION_MODEL_PROXY_URL: modelProxyBaseUrl(env.PUBLIC_URL),
         CONATION_MODEL_SESSION_TOKEN: modelCapabilities.mint(sessionId),
       },
     });
     console.log(
       `[session ${sessionId}] sandbox up, connecting to ACP sidecar`,
-      { sandboxId: sandbox.id }
+      { sandboxId: sandbox.id },
     );
 
     const conn = await sandbox.connect();
     console.log(
-      `[session ${sessionId}] ACP sidecar connected, wiring session router`
+      `[session ${sessionId}] ACP sidecar connected, wiring session router`,
     );
     const router = new SessionRouter(conn, link, sessionId);
     router.onAgentExit = () => void destroySession(sessionId);
@@ -146,6 +146,7 @@ async function run(
     if (sessions.has(sessionId)) {
       await destroySession(sessionId);
     } else {
+      await closeServerSession(sessionId);
       modelCapabilities.revokeSession(sessionId);
       link.status('shutting_down');
       await sandbox?.release().catch(() => {});
@@ -157,11 +158,25 @@ async function run(
 async function destroySession(id: string): Promise<boolean> {
   const live = sessions.get(id);
   const capabilityRevoked = modelCapabilities.revokeSession(id);
-  if (!live) return capabilityRevoked;
+  if (!live) {
+    await closeServerSession(id);
+    return capabilityRevoked;
+  }
   sessions.delete(id);
   live.link.status('shutting_down');
   await live.router.close().catch(() => {});
   await live.sandbox.release().catch(() => {});
   live.link.close();
+  await closeServerSession(id);
   return true;
+}
+
+/** Close the server session on all local terminal paths so its egress grant is revoked. */
+async function closeServerSession(id: string): Promise<void> {
+  await conation.agentSessions
+    .byId(id)
+    .delete()
+    .catch((error) =>
+      console.error(`[session ${id}] could not close server session`, error),
+    );
 }

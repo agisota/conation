@@ -3,6 +3,7 @@ import type {
   AgentActionId,
   AgentSessionLogResponse,
   AgentSessionResponse,
+  CreateSessionEgressResponse,
   SandboxSize,
 } from '../../../generated/agent-harness/types.gen';
 import { unwrap } from '../../utils';
@@ -32,18 +33,27 @@ export class AgentSession extends MacroEntity<AgentSessionResponse> {
   /** Create a session served by an externally hosted runtime. */
   static async createExternal(
     client: MacroClient,
-    opts: { repoUrl?: string; workspace: string; instructions?: string },
-  ): Promise<AgentSession> {
-    const { session } = unwrap(
+    opts: {
+      repoUrl?: string;
+      workspace: string;
+      instructions?: string;
+      provisionEgress?: boolean;
+    },
+  ): Promise<{ session: AgentSession; egress?: CreateSessionEgressResponse }> {
+    const created = unwrap(
       await client.agentHarness.createAgentSession({
         body: {
           repoUrl: opts.repoUrl,
           workspace: opts.workspace,
           instructions: opts.instructions,
+          ...(opts.provisionEgress === true ? { provisionEgress: true } : {}),
         },
       }),
     );
-    return new AgentSession(client, session.id, session);
+    return {
+      session: new AgentSession(client, created.session.id, created.session),
+      egress: created.egress ?? undefined,
+    };
   }
 
   protected async fetch(): Promise<AgentSessionResponse> {

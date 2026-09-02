@@ -4,6 +4,7 @@ import { logger } from 'hono/logger';
 import { conation } from './src/conation';
 import { env } from './src/env';
 import { modelCapabilities, registerModelProxyRoute } from './src/model_proxy';
+import { assertSafeRepoUrl } from './src/provision';
 import { registerWebhookRoute } from './src/routes';
 import { startSession } from './src/session';
 
@@ -45,15 +46,17 @@ conation.events.on('channel.message_posted', async ({ metadata, message }) => {
   const match = content && normalizeMessageContent(content).match(TRIGGER);
   if (!match) return;
   const [, repoUrl, prompt] = match;
+  assertSafeRepoUrl(repoUrl);
 
-  const session = await conation.agentSessions.createExternal({
-    repoUrl,
-    workspace: '/workspace',
-    instructions: repoName(repoUrl),
-  });
+  const { session, egress } =
+    await conation.agentSessions.createSandboxedExternal({
+      repoUrl,
+      workspace: '/workspace',
+      instructions: repoName(repoUrl),
+    });
   startSession({
     agentId: session.id,
-    repoUrl,
+    egress,
     prompt: prompt ?? 'Look around the repo and summarize it.',
     onBoot: () =>
       message.reply(msg`Сессия ${session.id} запущена и готова к работе.`),

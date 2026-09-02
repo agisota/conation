@@ -13,12 +13,12 @@ fn user_id(value: &str) -> MacroUserIdStr<'static> {
 }
 
 /// The fixed owner every [`new_session`] fixture uses.
-const OWNER: &str = "macro|agent-session-owner@example.com";
+const OWNER: &str = "conation|agent-session-owner@example.com";
 
 /// Insert a `"User"` row (and its `macro_user` parent) so the id can satisfy
 /// `agent_session.owner_id`'s foreign key.
 async fn insert_user(pool: &PgPool, user_id: &str) {
-    let email = user_id.strip_prefix("macro|").unwrap_or(user_id);
+    let email = user_id.strip_prefix("conation|").unwrap_or(user_id);
     // The no-op update makes the existing row's id come back when the user
     // was already seeded by an earlier call.
     let macro_user_id = sqlx::query_scalar!(
@@ -56,7 +56,7 @@ async fn create_test_bot(pool: &PgPool) -> BotId {
     // `agent_session.owner_id` references `"User"(id)` - so seed the
     // row here, where every session-creating test already passes through.
     insert_user(pool, OWNER).await;
-    let owner = user_id("macro|agent-session-test-bot-owner@example.com");
+    let owner = user_id("conation|agent-session-test-bot-owner@example.com");
     let bot = PgBotsRepo::new(pool.clone())
         .create_owned_bot(
             BotOwner::User {
@@ -130,7 +130,7 @@ async fn insert_originating_thread_fixture(pool: &PgPool) -> (Uuid, Uuid, Uuid) 
     let channel_id = conation_uuid::generate_uuid_v7();
     let thread_id = conation_uuid::generate_uuid_v7();
     let originating_message_id = conation_uuid::generate_uuid_v7();
-    let owner_id = "macro|agent-session-thread-owner@example.com";
+    let owner_id = "conation|agent-session-thread-owner@example.com";
     sqlx::query!(
         "INSERT INTO comms_channels (id, channel_type, owner_id) VALUES ($1, 'private', $2)",
         channel_id,
@@ -188,7 +188,7 @@ async fn create_and_get_round_trips(pool: PgPool) {
     assert_eq!(session.bot_id, bot_id);
     assert_eq!(
         session.owner_id.to_string(),
-        "macro|agent-session-owner@example.com"
+        "conation|agent-session-owner@example.com"
     );
     assert_eq!(session.thread_id, None);
     assert_eq!(session.sandbox_size, SandboxSize::Default);
@@ -455,7 +455,7 @@ async fn log_create_and_list_by_session_orders_chronologically(pool: PgPool) {
         .await
         .id;
 
-    let user = user_id("macro|agent-session-log-test@example.com");
+    let user = user_id("conation|agent-session-log-test@example.com");
 
     let _ = AgentSessionLogRepo::create(
         &repo,
@@ -669,7 +669,7 @@ async fn a_sessions_audience_is_its_owner(pool: PgPool) {
 
     assert_eq!(
         audience,
-        vec!["macro|agent-session-owner@example.com".to_string()],
+        vec!["conation|agent-session-owner@example.com".to_string()],
         "frames stream to the session owner"
     );
 }

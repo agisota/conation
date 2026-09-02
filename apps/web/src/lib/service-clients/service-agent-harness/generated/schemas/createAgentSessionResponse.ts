@@ -4,7 +4,9 @@
  * agent_harness_service
  * OpenAPI spec version: 0.1.0
  */
+
 import type { AgentSessionResponse } from './agentSessionResponse';
+import type { CreateAgentSessionResponseEgress } from './createAgentSessionResponseEgress';
 
 /**
  * Response body for `POST /agent-sessions`.
@@ -12,6 +14,7 @@ import type { AgentSessionResponse } from './agentSessionResponse';
 Clients deserialize this, so both derives are used.
  */
 export interface CreateAgentSessionResponse {
+  egress?: CreateAgentSessionResponseEgress;
   /** The created session. */
   session: AgentSessionResponse;
 }

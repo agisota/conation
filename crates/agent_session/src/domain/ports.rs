@@ -75,6 +75,48 @@ pub struct OpenExternalAgentSession {
     pub thread: Option<SessionThread>,
     /// Instructions the session's runtime works under, when any were stated.
     pub instructions: Option<String>,
+    /// Whether this explicitly authorized external runtime needs an opaque
+    /// server-side egress capability. Defaults to false at the HTTP boundary.
+    pub provision_egress: bool,
+}
+
+/// The egress capability returned exactly once while opening an external
+/// session. It is deliberately transport-neutral: `agent_session` does not
+/// know which sandbox or worker will consume it.
+#[derive(Clone)]
+pub struct ExternalSessionEgress {
+    /// Base URL of the service that accepts this capability.
+    pub base_url: String,
+    /// Opaque session capability. Never persist or return from session reads.
+    pub session_token: String,
+}
+
+impl std::fmt::Debug for ExternalSessionEgress {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("ExternalSessionEgress")
+            .field("base_url", &self.base_url)
+            .field("session_token", &"[REDACTED]")
+            .finish()
+    }
+}
+
+/// The persisted session and, only when explicitly requested, its one-time
+/// egress capability.
+#[derive(Debug)]
+pub struct OpenExternalSessionResult {
+    /// The created persisted session.
+    pub session: AgentSession,
+    /// Capability returned at creation time only.
+    pub egress: Option<ExternalSessionEgress>,
+}
+
+impl std::ops::Deref for OpenExternalSessionResult {
+    type Target = AgentSession;
+
+    fn deref(&self) -> &Self::Target {
+        &self.session
+    }
 }
 
 /// Everything needed to open a session the server hosts itself.
@@ -107,7 +149,7 @@ pub trait SessionOpener: Send + Sync + 'static {
     fn open_external_session(
         &self,
         request: OpenExternalAgentSession,
-    ) -> impl Future<Output = Result<AgentSession>> + Send;
+    ) -> impl Future<Output = Result<OpenExternalSessionResult>> + Send;
 
     /// Provision a sandbox, open a session on it and return the persisted
     /// row, delivering `prompt` once it is attached.

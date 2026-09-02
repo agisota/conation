@@ -46,7 +46,7 @@ use crate::domain::model::{
     StoredAgentSessionLog,
 };
 use crate::domain::ports::{
-    AgentSessionNotificationRecipient, BotDirectory, BotFacts, ControlEvent,
+    AgentSessionNotificationRecipient, BotDirectory, BotFacts, ControlEvent, ExternalSessionEgress,
     OpenExternalAgentSession, OpenManagedSession, SessionOpener, SessionThread,
 };
 use crate::domain::service::AgentSessionService;
@@ -945,6 +945,11 @@ pub struct CreateAgentSessionRequest {
     /// in-process one acts on them today; `agent_harness`'s `AgentKind`
     /// records what each of the others will need to.
     pub instructions: Option<String>,
+    /// Explicitly request an opaque egress capability for this external
+    /// session. It is restricted to a bot with a verified acting user and a
+    /// repository URL, and defaults to false.
+    #[serde(default)]
+    pub provision_egress: bool,
 }
 
 /// The triggering mention on a create request.
@@ -973,6 +978,29 @@ pub struct CreateSessionThread {
 pub struct CreateAgentSessionResponse {
     /// The created session.
     pub session: AgentSessionResponse,
+    /// Returned once at creation for an explicitly authorized external
+    /// session. It is intentionally absent from all session read responses.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub egress: Option<CreateSessionEgressResponse>,
+}
+
+/// One-time representation of an external session egress capability.
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateSessionEgressResponse {
+    /// Base URL of the egress service.
+    pub base_url: String,
+    /// Opaque session capability.
+    pub session_token: String,
+}
+
+impl From<ExternalSessionEgress> for CreateSessionEgressResponse {
+    fn from(value: ExternalSessionEgress) -> Self {
+        Self {
+            base_url: value.base_url,
+            session_token: value.session_token,
+        }
+    }
 }
 
 /// What the 409 from `POST /agent-sessions` says when a thread already
@@ -1015,6 +1043,11 @@ pub enum CreateSessionApiError {
     InvalidWorkspace(&'static str),
     /// The request mixed the managed and external shapes.
     MixedSessionShape,
+    /// Egress capabilities can only be minted for an authenticated bot
+    /// explicitly acting for a verified user.
+    EgressBotWithVerifiedActingUserRequired,
+    /// An egress capability must be bound to a repository.
+    EgressRepositoryRequired,
     /// The thread already routes to a session; carries it for recovery.
     ThreadSessionExists {
         /// The existing session, when it could be resolved.
@@ -1064,6 +1097,14 @@ impl IntoResponse for CreateSessionApiError {
                 "a managed session takes only a prompt; naming a workspace, bot, repo, \
                  owner or thread asks for an external one"
                     .to_owned(),
+            ),
+            Self::EgressBotWithVerifiedActingUserRequired => (
+                StatusCode::FORBIDDEN,
+                "provisionEgress requires a bot caller with a verified acting user".to_owned(),
+            ),
+            Self::EgressRepositoryRequired => (
+                StatusCode::UNPROCESSABLE_ENTITY,
+                "provisionEgress requires repoUrl".to_owned(),
             ),
             Self::ThreadSessionExists { session_id } => {
                 let body = ThreadSessionExistsResponse {
@@ -1194,7 +1235,8 @@ pub async fn create_agent_session_handler<
     // skipped. That is only sound while the request carries none of the
     // external fields, which is what this refuses.
     let Some(workspace) = request.workspace else {
-        if request.bot_id.is_some()
+        if request.provision_egress
+            || request.bot_id.is_some()
             || request.repo_url.is_some()
             || request.thread.is_some()
             || request.owner.is_some()
@@ -1214,6 +1256,7 @@ pub async fn create_agent_session_handler<
             StatusCode::CREATED,
             Json(CreateAgentSessionResponse {
                 session: session.into(),
+                egress: None,
             }),
         ));
     };
@@ -1222,6 +1265,16 @@ pub async fn create_agent_session_handler<
     // endpoint, so accepting one here would silently drop it.
     if request.prompt.is_some() {
         return Err(CreateSessionApiError::MixedSessionShape);
+    }
+    if request.provision_egress {
+        if !matches!(&caller.authorization, UserOrBotAuthorization::Bot(_))
+            || caller.authorization.acting_user().is_none()
+        {
+            return Err(CreateSessionApiError::EgressBotWithVerifiedActingUserRequired);
+        }
+        if request.repo_url.as_deref().is_none_or(str::is_empty) {
+            return Err(CreateSessionApiError::EgressRepositoryRequired);
+        }
     }
     let bot_id = resolve_bot(&caller.authorization, request.bot_id)?;
 
@@ -1258,7 +1311,7 @@ pub async fn create_agent_session_handler<
         message_id: thread.message_id,
         content: thread.content,
     });
-    let session = match state
+    let opened = match state
         .opener
         .open_external_session(OpenExternalAgentSession {
             bot_id,
@@ -1267,6 +1320,7 @@ pub async fn create_agent_session_handler<
             owner,
             thread: thread.clone(),
             instructions,
+            provision_egress: request.provision_egress,
         })
         .await
     {
@@ -1291,7 +1345,8 @@ pub async fn create_agent_session_handler<
     Ok((
         StatusCode::CREATED,
         Json(CreateAgentSessionResponse {
-            session: session.into(),
+            session: opened.session.into(),
+            egress: opened.egress.map(Into::into),
         }),
     ))
 }

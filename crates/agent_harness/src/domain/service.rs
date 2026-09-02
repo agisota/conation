@@ -327,13 +327,34 @@ where
     async fn open_external_session(
         &self,
         request: agent_session::domain::ports::OpenExternalAgentSession,
-    ) -> agent_session::domain::error::Result<AgentSession> {
+    ) -> agent_session::domain::error::Result<agent_session::domain::ports::OpenExternalSessionResult>
+    {
         let defaults = self.inner.defaults.for_bot(request.bot_id);
+        let session_id = AgentSessionId::new();
+        // The opaque capability is minted before the row and only its hash is
+        // persisted. A failed create leaves an unusable token rather than a
+        // token that can name an unpersisted session.
+        let egress = if request.provision_egress {
+            let repo_url = request.repo_url.as_deref().ok_or_else(|| {
+                agent_session::domain::error::AgentSessionError::Unknown(anyhow::anyhow!(
+                    "external egress requires a repository URL"
+                ))
+            })?;
+            Some(
+                self.inner
+                    .egress
+                    .provision(session_id, &request.owner, repo_url)
+                    .await
+                    .map_err(into_session_error)?,
+            )
+        } else {
+            None
+        };
         let session = self
             .inner
             .sessions
             .create_session(CreateAgentSessionParams {
-                id: AgentSessionId::new(),
+                id: session_id,
                 owner_id: request.owner.clone(),
                 bot_id: request.bot_id,
                 thread_id: request.thread.as_ref().map(|thread| thread.thread_id),
@@ -346,7 +367,9 @@ where
                 instructions: request.instructions,
                 // No sandbox: the runtime dials in and reaches the network on
                 // its operator's own terms, so there is no egress token.
-                egress_token_hash: None,
+                egress_token_hash: egress
+                    .as_ref()
+                    .map(|value| value.session_token_hash.clone()),
                 // The thread linkage is the caller's claim, not an observed
                 // mention; it must not grant the channel anything.
             })
@@ -371,7 +394,15 @@ where
             }
         }
 
-        Ok(session)
+        Ok(agent_session::domain::ports::OpenExternalSessionResult {
+            session,
+            egress: egress.map(
+                |value| agent_session::domain::ports::ExternalSessionEgress {
+                    base_url: value.sandbox.base_url,
+                    session_token: value.sandbox.session_token,
+                },
+            ),
+        })
     }
 
     /// Provision the managed-default bot's runtime, open a session on it,

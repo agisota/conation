@@ -354,7 +354,7 @@ fn queued_actions_carry_their_sender_onto_the_wire() {
         })
         .collect();
     assert_eq!(senders.len(), 1);
-    assert_eq!(senders[0].to_string(), "macro|owner@example.com");
+    assert_eq!(senders[0].to_string(), "conation|owner@example.com");
 }
 
 #[test]

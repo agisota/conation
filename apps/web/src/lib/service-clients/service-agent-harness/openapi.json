@@ -842,6 +842,10 @@
             "type": ["string", "null"],
             "description": "First prompt to deliver once the session is running. Managed sessions\nonly - an external runtime sends its own first prompt through the\ncontrol endpoint. Omitted, the session opens idle."
           },
+          "provisionEgress": {
+            "type": "boolean",
+            "description": "Explicitly request an opaque egress capability for this external\nsession. It is restricted to a bot with a verified acting user and a\nrepository URL, and defaults to false."
+          },
           "repoUrl": {
             "type": ["string", "null"],
             "description": "Repository nominally checked out at `workspace`. Informational and\noptional: having it cloned there is the runtime operator's job."
@@ -868,9 +872,35 @@
         "description": "Response body for `POST /agent-sessions`.\n\nClients deserialize this, so both derives are used.",
         "required": ["session"],
         "properties": {
+          "egress": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CreateSessionEgressResponse",
+                "description": "Returned once at creation for an explicitly authorized external\nsession. It is intentionally absent from all session read responses."
+              }
+            ]
+          },
           "session": {
             "$ref": "#/components/schemas/AgentSessionResponse",
             "description": "The created session."
+          }
+        }
+      },
+      "CreateSessionEgressResponse": {
+        "type": "object",
+        "description": "One-time representation of an external session egress capability.",
+        "required": ["baseUrl", "sessionToken"],
+        "properties": {
+          "baseUrl": {
+            "type": "string",
+            "description": "Base URL of the egress service."
+          },
+          "sessionToken": {
+            "type": "string",
+            "description": "Opaque session capability."
           }
         }
       },

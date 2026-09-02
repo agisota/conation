@@ -13,8 +13,8 @@ use std::sync::{Arc, Mutex};
 use tower::ServiceExt;
 
 const BOT_TOKEN: &str = "mbot_self_test";
-const OWNER: &str = "macro|owner@example.com";
-const STRANGER: &str = "macro|stranger@example.com";
+const OWNER: &str = "conation|owner@example.com";
+const STRANGER: &str = "conation|stranger@example.com";
 
 #[derive(Clone, Default)]
 struct FakeJwtValidator;
@@ -39,7 +39,7 @@ impl BotAuthorizer for SelfBotAuthorizer {
         &self,
         bot_token: &str,
         bot_scope: BotScope,
-        _acting_user: Option<BotActingUserClaims>,
+        acting_user: Option<BotActingUserClaims>,
     ) -> Result<BotAuthentication, Report<MacroAuthorizationError>> {
         if bot_token != BOT_TOKEN {
             return Err(Report::new(MacroAuthorizationError::InvalidCredentials));
@@ -49,7 +49,17 @@ impl BotAuthorizer for SelfBotAuthorizer {
             token_id: Uuid::new_v4(),
             bot_scope,
             team_id: None,
-            acting_user: None,
+            acting_user: acting_user
+                .and_then(|claims| claims.user_id)
+                .map(|user_id| conation_authorization::MacroUserAuthentication {
+                    macro_user_id: MacroUserIdStr::try_from(user_id.clone()).unwrap(),
+                    user_context: model_user::UserContext {
+                        user_id,
+                        fusion_user_id: "fusion-user".to_owned(),
+                        permissions: None,
+                        organization_id: None,
+                    },
+                }),
         })
     }
 }
@@ -65,7 +75,7 @@ impl SessionOpener for RecordingOpener {
     async fn open_external_session(
         &self,
         request: OpenExternalAgentSession,
-    ) -> crate::domain::error::Result<AgentSession> {
+    ) -> crate::domain::error::Result<crate::domain::ports::OpenExternalSessionResult> {
         let session = AgentSession {
             id: AgentSessionId::TEST_A,
             name: crate::domain::model::DEFAULT_AGENT_SESSION_NAME.to_owned(),
@@ -86,8 +96,15 @@ impl SessionOpener for RecordingOpener {
             created_at: Utc::now(),
             modified_at: Utc::now(),
         };
+        let provision_egress = request.provision_egress;
         self.opened.lock().unwrap().push(request);
-        Ok(session)
+        Ok(crate::domain::ports::OpenExternalSessionResult {
+            session,
+            egress: provision_egress.then(|| crate::domain::ports::ExternalSessionEgress {
+                base_url: "https://egress.test".to_owned(),
+                session_token: "test-session-token".to_owned(),
+            }),
+        })
     }
 
     async fn open_managed_session(
@@ -214,6 +231,19 @@ fn as_bot(request_body: String) -> Request<Body> {
         .unwrap()
 }
 
+fn as_verified_bot(request_body: String) -> Request<Body> {
+    Request::post("/")
+        .header(header::CONTENT_TYPE, "application/json")
+        .header(BOT_TOKEN_HEADER, BOT_TOKEN)
+        .header(BOT_SCOPE_HEADER, "user")
+        .header(
+            conation_authorization::BOT_FOR_CONATION_USER_ID_HEADER,
+            OWNER,
+        )
+        .body(Body::from(request_body))
+        .unwrap()
+}
+
 fn as_user(user: &str, request_body: String) -> Request<Body> {
     Request::post("/")
         .header(header::CONTENT_TYPE, "application/json")
@@ -235,6 +265,10 @@ async fn a_bot_opens_an_external_session_for_itself() {
         .unwrap();
     let payload: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
     assert_eq!(payload["session"]["workspace"], "/home/wolf/code");
+    assert!(
+        payload.get("egress").is_none(),
+        "default external open is capability-free"
+    );
 
     let opened = opener.opened.lock().unwrap();
     assert_eq!(opened.len(), 1);
@@ -244,6 +278,78 @@ async fn a_bot_opens_an_external_session_for_itself() {
     let thread = opened[0].thread.as_ref().expect("thread linkage was given");
     assert_eq!(thread.thread_id, thread.message_id);
     assert_eq!(thread.content, "fix the flaky test");
+}
+
+#[tokio::test]
+async fn egress_requires_a_verified_bot_and_repository() {
+    let opener = Arc::new(RecordingOpener::default());
+    let mut request = serde_json::json!({
+        "botId": BotId::TEST_A.as_uuid(),
+        "workspace": "/srv/agent",
+        "repoUrl": "https://github.com/agisota/conation",
+        "provisionEgress": true,
+    });
+    let user_response = router(opener.clone())
+        .oneshot(as_user(OWNER, request.to_string()))
+        .await
+        .unwrap();
+    assert_eq!(user_response.status(), StatusCode::FORBIDDEN);
+
+    request["owner"] = serde_json::json!(OWNER);
+    let unverified_response = router(opener.clone())
+        .oneshot(as_bot(request.to_string()))
+        .await
+        .unwrap();
+    assert_eq!(unverified_response.status(), StatusCode::FORBIDDEN);
+
+    request["repoUrl"] = serde_json::Value::Null;
+    let missing_repo_response = router(opener.clone())
+        .oneshot(as_verified_bot(request.to_string()))
+        .await
+        .unwrap();
+    assert_eq!(
+        missing_repo_response.status(),
+        StatusCode::UNPROCESSABLE_ENTITY
+    );
+    assert!(opener.opened.lock().unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn a_verified_bot_receives_egress_only_in_its_create_response() {
+    let opener = Arc::new(RecordingOpener::default());
+    let response = router(opener.clone())
+        .oneshot(as_verified_bot(
+            serde_json::json!({
+                "workspace": "/srv/agent",
+                "repoUrl": "https://github.com/agisota/conation",
+                "provisionEgress": true,
+            })
+            .to_string(),
+        ))
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::CREATED);
+    let bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let payload: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+    assert_eq!(payload["egress"]["baseUrl"], "https://egress.test");
+    assert_eq!(payload["egress"]["sessionToken"], "test-session-token");
+    assert!(opener.opened.lock().unwrap()[0].provision_egress);
+}
+
+#[tokio::test]
+async fn a_managed_shape_cannot_silently_request_egress() {
+    let opener = Arc::new(RecordingOpener::default());
+    let response = router(opener.clone())
+        .oneshot(as_user(
+            OWNER,
+            serde_json::json!({ "provisionEgress": true }).to_string(),
+        ))
+        .await
+        .unwrap();
+    assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
+    assert!(opener.managed.lock().unwrap().is_empty());
 }
 
 #[tokio::test]

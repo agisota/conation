@@ -1,4 +1,7 @@
-import type { SandboxSize } from '../../../generated/agent-harness/types.gen';
+import type {
+  CreateSessionEgressResponse,
+  SandboxSize,
+} from '../../../generated/agent-harness/types.gen';
 import type { MacroClient } from '../../utils/client';
 import { AgentSession } from './agent-session';
 
@@ -24,7 +27,11 @@ export class AgentSessionNamespace {
     repoUrl?: string;
     workspace: string;
     instructions?: string;
-  }): Promise<AgentSession> {
+    provisionEgress?: boolean;
+  }): Promise<{
+    session: AgentSession;
+    egress?: CreateSessionEgressResponse | null;
+  }> {
     return AgentSession.createExternal(this.client, opts);
   }
 

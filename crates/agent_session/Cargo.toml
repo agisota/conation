@@ -48,6 +48,7 @@ tracing = { workspace = true }
 workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
+model_user = { path = "../model_user" }
 agent-client-protocol = { workspace = true }
 bot_id = { path = "../bot_id", features = ["test-utils"] }
 non_empty = { path = "../non_empty" }

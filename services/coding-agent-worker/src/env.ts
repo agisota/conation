@@ -26,9 +26,6 @@ export const env = envsafe({
     allowEmpty: true,
     desc: 'Override the upstream websocket endpoint (e.g. ws://localhost:4001 for the scripts/client.tsx fixture). Defaults to the SDK-resolved agent-proxy host at /runtime.',
   }),
-  GITHUB_TOKEN: str({
-    desc: 'Token with read access to the repos we clone into sandboxes',
-  }),
   ROX_API_KEY: str({
     default: '',
     allowEmpty: true,

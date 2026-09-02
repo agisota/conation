@@ -1156,6 +1156,7 @@ fn open_external_request(workspace: &str) -> OpenExternalAgentSession {
         repo_url: None,
         owner: sender(),
         thread: None,
+        provision_egress: false,
     }
 }
 
@@ -1289,6 +1290,38 @@ async fn an_external_open_provisions_nothing_and_prompts_nobody() {
     // negotiated ACP session id has been persisted by now.
     let row = repo.get(session.id).await.expect("the session row exists");
     assert_eq!(row.acp_session_id, Some(SessionId::new("acp-test")));
+}
+
+#[tokio::test]
+async fn an_opted_in_external_open_mints_egress_before_persisting_its_hash() {
+    let (service, repo, _containers, _announcer, _runtimes) = harness();
+    let mut request = open_external_request("/srv/agent");
+    request.provision_egress = true;
+    request.repo_url = Some("https://github.com/agisota/conation".to_owned());
+
+    let opened = service.open_external_session(request).await.expect("open");
+
+    let egress = opened
+        .egress
+        .as_ref()
+        .expect("the opted-in open returns its capability once");
+    assert_eq!(egress.base_url, "https://egress.test");
+    assert_eq!(egress.session_token, "test-session-token");
+    let row = repo.get(opened.id).await.expect("the session row exists");
+    assert_eq!(
+        row.repo_url.as_deref(),
+        Some("https://github.com/agisota/conation")
+    );
+    // In-memory repo recognizes the hash through its token index; the raw
+    // token never becomes part of the persisted session model.
+    assert_eq!(
+        repo.find_by_egress_token_hash("test-token-hash")
+            .await
+            .unwrap()
+            .unwrap()
+            .id,
+        opened.id
+    );
 }
 
 #[tokio::test]

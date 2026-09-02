@@ -7,7 +7,7 @@ import type {
   SandboxProvider,
   SpawnOptions,
 } from '../interfaces';
-import { assertSafeRepoUrl, ensureReady, waitForPing } from '../provision';
+import { ensureReady, waitForPing } from '../provision';
 
 const SIDECAR_PORT = 8700;
 
@@ -20,11 +20,11 @@ class DaytonaRunner implements CommandRunner {
       command,
       undefined,
       undefined,
-      opts?.timeoutS
+      opts?.timeoutS,
     );
     if (res.exitCode !== 0) {
       throw new Error(
-        `sandbox command failed (exit ${res.exitCode}): ${command}\n${res.result}`
+        `sandbox command failed (exit ${res.exitCode}): ${command}\n${res.result}`,
       );
     }
   }
@@ -33,7 +33,7 @@ class DaytonaRunner implements CommandRunner {
 class DaytonaSandbox implements AgentSandbox {
   constructor(
     readonly id: string,
-    private readonly daytona: Daytona
+    private readonly daytona: Daytona,
   ) {}
 
   async ensure(): Promise<void> {
@@ -65,25 +65,21 @@ export class DaytonaProvider implements SandboxProvider {
   private readonly daytona = new Daytona();
 
   async spawn(opts: SpawnOptions): Promise<AgentSandbox> {
-    // Defense in depth: the url only travels as an env var, never
-    // interpolated into a shell command, but reject junk at the boundary.
-    assertSafeRepoUrl(opts.repoUrl);
-
     // The SDK uploads the Dockerfile's COPY sources before snapshot logs can
     // stream; that upload phase has no progress reporting.
     console.log('[daytona] uploading build context + creating sandbox');
     const created = await this.daytona.create(
       {
         image: Image.fromDockerfile('container/Dockerfile'),
-        // REPO_URL rides in the sandbox env so ensure() needs no arguments
-        // and reconnects don't have to rethread it.
-        envVars: { ...opts.envVars, REPO_URL: opts.repoUrl },
+        // The sandbox receives only session-scoped egress credentials. The
+        // server-side egress resolves the repository and obtains GitHub auth.
+        envVars: opts.envVars,
         autoStopInterval: 0, // long-lived: we manage teardown explicitly
       },
       {
         timeout: 0,
         onSnapshotCreateLogs: (chunk) => process.stderr.write(chunk),
-      }
+      },
     );
     console.log(`[daytona] sandbox ${created.id} created`);
 

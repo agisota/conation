@@ -50,6 +50,10 @@ bot's say-so. */
 only - an external runtime sends its own first prompt through the
 control endpoint. Omitted, the session opens idle. */
   prompt?: CreateAgentSessionRequestPrompt;
+  /** Explicitly request an opaque egress capability for this external
+session. It is restricted to a bot with a verified acting user and a
+repository URL, and defaults to false. */
+  provisionEgress?: boolean;
   /** Repository nominally checked out at `workspace`. Informational and
 optional: having it cloned there is the runtime operator's job. */
   repoUrl?: CreateAgentSessionRequestRepoUrl;

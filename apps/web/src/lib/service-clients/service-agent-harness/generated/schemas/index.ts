@@ -42,6 +42,8 @@ export * from './createAgentSessionRequestRepoUrl';
 export * from './createAgentSessionRequestThread';
 export * from './createAgentSessionRequestWorkspace';
 export * from './createAgentSessionResponse';
+export * from './createAgentSessionResponseEgress';
+export * from './createSessionEgressResponse';
 export * from './createSessionThread';
 export * from './createSessionThreadThreadId';
 export * from './externalSessionResponse';

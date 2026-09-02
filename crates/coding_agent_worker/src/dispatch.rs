@@ -68,6 +68,9 @@ impl WorkExecutor for Dispatcher {
                     // whatever the binary in its config was built with, so
                     // there is nothing to state here.
                     instructions: None,
+                    // This legacy external daemon has no server-side egress
+                    // grant; it keeps the default capability-free contract.
+                    provision_egress: false,
                 };
                 let created = match self.api.create_session(&request).await {
                     Ok(created) => created,

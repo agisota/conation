@@ -4,8 +4,9 @@ use agent_runtime_protocol::domain::action::{AgentAction, AgentActionId};
 use agent_session::domain::model::{SandboxSize, SessionBot};
 use agent_session::inbound::axum_router::{
     self, AgentSessionLogEntryDto, AgentSessionLogResponse, AgentSessionResponse, ControlRequest,
-    CreateAgentSessionRequest, CreateAgentSessionResponse, CreateSessionThread, LogDirectionDto,
-    LogFrameDto, RenameAgentSessionRequest, SandboxSizeBody, SessionStatusDto,
+    CreateAgentSessionRequest, CreateAgentSessionResponse, CreateSessionEgressResponse,
+    CreateSessionThread, LogDirectionDto, LogFrameDto, RenameAgentSessionRequest, SandboxSizeBody,
+    SessionStatusDto,
 };
 use utoipa::OpenApi;
 
@@ -29,6 +30,7 @@ use utoipa::OpenApi;
     components(schemas(
         CreateAgentSessionRequest,
         CreateAgentSessionResponse,
+        CreateSessionEgressResponse,
         CreateSessionThread,
         ControlRequest,
         AgentAction,

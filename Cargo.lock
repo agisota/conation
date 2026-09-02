@@ -412,6 +412,7 @@ dependencies = [
  "entity_access_db_utils",
  "mockall",
  "model-entity",
+ "model_user",
  "non_empty",
  "rootcause",
  "serde",

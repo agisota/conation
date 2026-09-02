@@ -238,6 +238,12 @@ export type CreateAgentSessionRequest = {
      */
     prompt?: string | null;
     /**
+     * Explicitly request an opaque egress capability for this external
+     * session. It is restricted to a bot with a verified acting user and a
+     * repository URL, and defaults to false.
+     */
+    provisionEgress?: boolean;
+    /**
      * Repository nominally checked out at `workspace`. Informational and
      * optional: having it cloned there is the runtime operator's job.
      */
@@ -252,17 +258,35 @@ export type CreateAgentSessionRequest = {
 };
 
 /**
+ * One-time representation of an external session egress capability.
+ */
+export type CreateSessionEgressResponse = {
+    /**
+     * Base URL of the egress service.
+     */
+    baseUrl: string;
+    /**
+     * Opaque session capability.
+     */
+    sessionToken: string;
+};
+
+/**
  * Response body for `POST /agent-sessions`.
  *
  * Clients deserialize this, so both derives are used.
  */
 export type CreateAgentSessionResponse = {
     /**
+     * Returned once at creation for an explicitly authorized external
+     * session. It is intentionally absent from all session read responses.
+     */
+    egress?: null | CreateSessionEgressResponse;
+    /**
      * The created session.
      */
     session: AgentSessionResponse;
 };
-
 /**
  * The triggering mention on a create request.
  *
