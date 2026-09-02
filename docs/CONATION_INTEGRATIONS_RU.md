@@ -215,6 +215,32 @@ Standalone `coding-agent-worker` использует отдельный пуб�
 sandbox. Его loopback-sidecar применяет ту же последовательность моделей до
 начала ответа.
 
+### Границы реализаций и готовность к эксплуатации
+
+Это три разные реализации, а не взаимозаменяемые варианты одного production
+сервиса.
+
+1. `agent_harness_service` — официальная часть локального/self-host stack.
+   Он умеет создавать управляемый Docker sandbox в local-режиме и Daytona
+   sandbox при соответствующей конфигурации. Доступ к моделям идёт через
+   ограниченный server-side egress: sandbox получает capability, а не
+   `ROX_API_KEY`.
+2. Rust `conationd` — доверенный daemon оператора, а не контейнер текущего
+   self-host stack. Совместное размещение OpenCode с его bot/webhook
+   конфигурацией в одном процессе или слабо изолированном окружении раскроет
+   операторские секреты. До более сильной изоляции процесса и секретов его
+   нельзя выдавать за безопасный self-host coding runtime.
+3. TypeScript `coding-agent-worker` — самостоятельный Daytona/cloud worker.
+   Для него пока нет воспроизводимого self-host image, маршрутизации хоста и
+   подтверждённого сценария развёртывания. Кроме того, его GitHub credential
+   всё ещё доступен процессам sandbox; model capability этого не исправляет.
+
+Следующая безопасная работа: выделить для GitHub внутренний scoped egress grant
+или API proxy; изолировать секреты и процессы от кода/инструментов sandbox;
+настроить публичные TLS endpoints и callbacks; после этого выполнить реальный
+smoke-тест каждой границы. До выполнения этих шагов документация не заявляет
+готовность ни одного cloud/Daytona маршрута к production.
+
 ## Публичный MCP и OAuth/JWT
 
 1. DNS: `mcp.conation.dev` направить на публичный ingress/Caddy.

@@ -277,6 +277,27 @@ nix develop --command just selfhost-overlay-check
 
 ## Владение секретами и конфигурацией
 
+## Coding agent: граница self-host
+
+Официальный `agent_harness_service` входит в локальный/self-host stack. В
+local-режиме он использует управляемый Docker sandbox, а при настройке Daytona
+— управляемый Daytona sandbox. Доступ к моделям проходит через ограниченный
+server-side egress с session capability; `ROX_API_KEY` не передаётся в sandbox.
+
+Это не означает, что все агенты репозитория готовы к самостоятельному
+развёртыванию. Rust `conationd` остаётся доверенным daemon оператора вне stack:
+размещение OpenCode рядом с его bot/webhook конфигурацией без сильной изоляции
+процесса раскроет операторские секреты. Отдельный TypeScript
+`coding-agent-worker` рассчитан на Daytona/cloud, пока не имеет
+воспроизводимого self-host image и host routing; его GitHub credential всё ещё
+видим процессам sandbox.
+
+Перед production нужны scoped internal egress grant либо GitHub API proxy,
+изоляция секретов/процессов, публичные TLS endpoints и callbacks, а затем
+реальные session/completion smoke-тесты. До этого self-host stack пригоден для
+локальной разработки и smoke-проверок, а не для заявления production-ready
+coding agent.
+
 - Локальная базовая конфигурация генерирует детерминированные служебные
   настройки для нерабочего окружения и фиктивные учётные данные AWS в
   `xtask_local`.
