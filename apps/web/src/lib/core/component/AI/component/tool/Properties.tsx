@@ -97,10 +97,11 @@ function describeLiteralValue(
   if (data.date_value != null) return data.date_value.slice(0, 10);
   if (data.link_url != null) return data.link_url;
   if (data.link_urls?.length) return data.link_urls.join(', ');
-  if (data.entity_ref) return data.entity_ref.entityId.replace(/^macro\|/, '');
+  if (data.entity_ref)
+    return data.entity_ref.entityId.replace(/^conation\|/, '');
   if (data.entity_refs?.length) {
     return data.entity_refs
-      .map((ref) => ref.entityId.replace(/^macro\|/, ''))
+      .map((ref) => ref.entityId.replace(/^conation\|/, ''))
       .join(', ');
   }
   return undefined;

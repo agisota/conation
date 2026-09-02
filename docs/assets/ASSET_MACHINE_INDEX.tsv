@@ -106,7 +106,6 @@ apps/web/public/support-avatars/tars.svg	SVG	1097	512	512	n/a	9eca70ae017c5bbbea
 apps/web/public/teo.png	PNG	128273	400	366	1	7e2c0de16f526a770ff2541d6cbea333d74a15352f9c0f54113eb07a3fc84d56	n/a	ok	required
 apps/web/src/components/icon/dots-three-large.svg	SVG	221	256	256	n/a	22935259f2bb6d7c0bbd5780fadcdff3829e0c46ed2ae3541e922a9aefe70e37	n/a	ok	required
 apps/web/src/components/icon/conation-apple.svg	SVG	907	24	24	n/a	203393faf9ce9d8a67ce7a7cbb977afa3fce7a058214fbf6dc3d84325f862b46	n/a	ok	required
-apps/web/src/components/icon/macro-brand-loader-2.svg	SVG	5120	37	20	unknown	dfdd9087a850494bb1b5a33794b5fec8aabfbc62b7d3467b592c1a1e99b3215d	n/a	ok	required
 apps/web/src/components/icon/macro-brand-loader.svg	SVG	2236	480	480	unknown	d7f5ab218235b25e950ca2338763da0bd1869756da4bdd7756fd5a442a1baf77	n/a	ok	required
 apps/web/src/components/icon/macro-embed.svg	SVG	371	24	24	n/a	e1d1dafb03fc67878153b3af1bc013a73ed549234be3b65eb8f165a6a47c4ce8	n/a	ok	required
 apps/web/src/components/icon/macro-gear.svg	SVG	527	24	24	n/a	c1b38b0e87eac9b7bc9bcc9d9f531cd86930c86e32b0ce3382da4158bdd26fbc	n/a	ok	required

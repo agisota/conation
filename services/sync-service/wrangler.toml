@@ -31,7 +31,10 @@ bucket_name = "document-snapshot-bucket-dev"
 
 [vars]
 INTERNAL_API_SECRET_KEY = "LOCAL_API_KEY"
-SPS_URL = "https://search-processing-dev.macro.com"
+# Direct `wrangler dev` runs outside Compose. Use the local default-stack
+# listener rather than falling through to a managed Macro service. Named local
+# instances can override this value in their generated environment.
+SPS_URL = "http://localhost:8092"
 DSS_URL = "http://localhost:8086"
 DSS_INTERNAL_AUTH_KEY = "local"
 # Tags exported spans with deployment.environment=local, matching the

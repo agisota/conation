@@ -9,7 +9,6 @@ rank	category	path	format	bytes	width_px	height_px	animated_frame_count	duration
 8	brand	apps/web/public/support-avatars/pythia.svg	SVG	1077	512	512	n/a	n/a	747a50ea243cc8f5e3f87b6a918d9e1d28455b5310bc95696bc30bb499e55e05	human-reviewed
 9	brand	apps/web/public/support-avatars/ramzan-kadyrov.svg	SVG	984	512	512	n/a	n/a	9e183d68faa11266917f161e0e28ae33d746cbdb7a9f3bf960dff47ba9b00c0d	human-reviewed
 10	brand	apps/web/public/support-avatars/tars.svg	SVG	1097	512	512	n/a	n/a	9eca70ae017c5bbbea452e5bb0e03ec9d11f675745b7ac7a753a716c6abac425	human-reviewed
-11	brand	apps/web/src/components/icon/macro-brand-loader-2.svg	SVG	5120	37	20	unknown	n/a	dfdd9087a850494bb1b5a33794b5fec8aabfbc62b7d3467b592c1a1e99b3215d	human-reviewed
 12	brand	apps/web/src/components/icon/macro-brand-loader.svg	SVG	2236	480	480	unknown	n/a	d7f5ab218235b25e950ca2338763da0bd1869756da4bdd7756fd5a442a1baf77	human-reviewed
 13	brand	apps/web/src/components/icon/macro-logo-badge.svg	SVG	571	24	24	n/a	n/a	b984e23c7134ba2d39465f22640161aad58e6364f5d084c95fe12e334ef4675f	human-reviewed
 14	brand	apps/web/src/components/icon/macro-logo.svg	SVG	398	24	24	n/a	n/a	c438220dba4ba9dc428fa4e3e2bd5ce9cd153632fd250df3b27e2481f9930e91	human-reviewed

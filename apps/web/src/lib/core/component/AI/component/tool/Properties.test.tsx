@@ -227,6 +227,43 @@ describe('SetEntityProperty renderer', () => {
     expect(container.textContent).toContain('Draft copy');
   });
 
+  it('formats canonical Conation entity references without hiding legacy IDs', () => {
+    const { container } = renderTool(
+      setEntityPropertyHandler,
+      setTool({
+        entity_type: 'document',
+        entity_id: 'entity-1',
+        property_definition_id: 'assignee-def',
+        entity_refs: [
+          { entityType: 'user', entityId: 'conation|pythia@conation.dev' },
+          { entityType: 'user', entityId: 'macro|unexpected@example.com' },
+        ],
+      })
+    );
+
+    expect(container.textContent).toContain('pythia@conation.dev');
+    expect(container.textContent).not.toContain('conation|pythia@conation.dev');
+    expect(container.textContent).toContain('macro|unexpected@example.com');
+  });
+
+  it('formats a single canonical Conation entity reference', () => {
+    const { container } = renderTool(
+      setEntityPropertyHandler,
+      setTool({
+        entity_type: 'document',
+        entity_id: 'entity-1',
+        property_definition_id: 'assignee-def',
+        entity_ref: {
+          entityType: 'user',
+          entityId: 'conation|tars@conation.dev',
+        },
+      })
+    );
+
+    expect(container.textContent).toContain('tars@conation.dev');
+    expect(container.textContent).not.toContain('conation|tars@conation.dev');
+  });
+
   it('falls back to a bare label when no option resolves', () => {
     const { container } = renderTool(
       setEntityPropertyHandler,

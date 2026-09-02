@@ -1,11 +1,14 @@
-import MacroBrandLoader from '@icon/macro-brand-loader-2.svg';
+import { ConationMark } from '@app/components/brand';
 import { cn } from '@ui';
 import { createSignal, onMount } from 'solid-js';
 
 export function LoadingSpinner(props: { class?: string }) {
   return (
     <div class={cn('text-accent size-48 p-14', props.class)}>
-      <MacroBrandLoader class="size-full" />
+      <ConationMark
+        class="size-full animate-pulse motion-reduce:animate-none"
+        alt=""
+      />
     </div>
   );
 }
