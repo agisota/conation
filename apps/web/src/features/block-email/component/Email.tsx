@@ -102,6 +102,7 @@ function EmailContent(props: EmailViewProps) {
   const blockElement = blockElementSignal.get;
 
   const context = useEmailContext();
+  const splitPanel = useSplitPanel();
   const canAutofocusSplitContent = useCanAutofocusSplitContent();
   const { isLoading: isUserLoading } = useUserContext();
   const userEmail = useEmail();
@@ -164,6 +165,16 @@ function EmailContent(props: EmailViewProps) {
       await waitForQueryLoad();
     }
   };
+
+  const fetchNextPage = async () => {
+    if (context.query.hasMore() && !context.query.isFetching()) {
+      context.query.fetchNextPage();
+      await waitForQueryLoad();
+    }
+  };
+
+  const canRunInitialEmailScroll = () =>
+    !isTouchDevice() || splitPanel?.isPanelActive() !== false;
 
   const [hiddenChipFocused, setHiddenChipFocused] = createSignal(false);
   const [keyboardSelecting, setKeyboardSelecting] = createSignal(false);
@@ -250,6 +261,7 @@ function EmailContent(props: EmailViewProps) {
   };
 
   context.onInitialDataLoad(() => {
+    if (!canRunInitialEmailScroll()) return false;
     if (!untrack(context.messagesListRef)) return false;
 
     const targetMessageId_ = context.messages.targetMessageID();
@@ -265,12 +277,22 @@ function EmailContent(props: EmailViewProps) {
     context.messages.setExpandedBodyId(messageId, true);
     const messages = untrack(context.messages.list);
     if (!messages) return;
-    if (!messages.some((message) => message.db_id === messageId)) {
+
+    const initialIndex = messages.findIndex(
+      (message) => message.db_id === messageId
+    );
+
+    if (initialIndex < 0) {
       try {
-        await loadMessagesUntilFound(messageId);
+        const found = await loadMessagesUntilFound(messageId);
+        if (!found) return;
+        await fetchNextPage();
       } catch (error) {
         console.error('Error loading target message:', error);
+        return;
       }
+    } else if (initialIndex === 0) {
+      await fetchNextPage();
     }
 
     requestAnimationFrame(() => {
