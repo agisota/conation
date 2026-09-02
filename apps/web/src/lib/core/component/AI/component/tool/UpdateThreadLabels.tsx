@@ -1,5 +1,5 @@
-import TagSimple from '@phosphor-icons/core/regular/tag-simple.svg';
 import { t } from '@app/lib/i18n';
+import TagSimple from '@phosphor-icons/core/regular/tag-simple.svg';
 import { BaseTool } from './BaseTool';
 import { createToolRenderer } from './ToolRenderer';
 

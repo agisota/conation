@@ -5,9 +5,9 @@ use channels::{
     domain::{dm::ensure_dms_for_roster, ports::ChannelService, service::ChannelServiceImpl},
     outbound::pg_channels_repo::PgChannelsRepo,
 };
-use database_env_vars::DatabaseUrl;
 use conation_entrypoint::MacroEntrypoint;
 use conation_user_id::user_id::MacroUserIdStr;
+use database_env_vars::DatabaseUrl;
 use sqlx::postgres::PgPoolOptions;
 use teams::{domain::team_repo::TeamRepository, outbound::team_repo::TeamRepositoryImpl};
 

@@ -1,5 +1,5 @@
-import { SUPPORTED_ATTACHMENT_EXTENSIONS } from '@core/component/AI/constant';
 import { t } from '@app/lib/i18n';
+import { SUPPORTED_ATTACHMENT_EXTENSIONS } from '@core/component/AI/constant';
 import { useChatInputContext } from '@core/component/AI/context';
 import {
   useChatAttachableHistory,
@@ -277,7 +277,7 @@ export function ChatAttachMenu(props: ChatAttachMenuProps) {
                   }
                 }}
                 class="w-full outline-none"
-                placeholder={t('auto.search_attachments')}
+                placeholder={t('ai.attachments.searchPlaceholder')}
               />
             </div>
             <div class="flex flex-col gap-1 max-h-62.5 w-75 overflow-y-auto">
@@ -285,7 +285,9 @@ export function ChatAttachMenu(props: ChatAttachMenuProps) {
                 when={rankedHistory().length > 0}
                 fallback={
                   <div class="p-2 w-full flex-col justify-center items-center">
-                    <p class="text-sm text-ink-muted">{t('auto.no_results')}</p>
+                    <p class="text-sm text-ink-muted">
+                      {t('ai.attachments.noResults')}
+                    </p>
                   </div>
                 }
               >

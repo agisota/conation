@@ -9,6 +9,11 @@ use axum::{
     body::Body,
     http::{Request, StatusCode},
 };
+use conation_authorization::{
+    InternalIdentityClaims, MacroAuthorizationError, MacroAuthorizationService,
+    MacroAuthorizationState,
+};
+use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
 use entity_access::domain::{
     models::{
         AccessError, AccessLevel, BotAccessScope, BotId, CallChannelInfo, EntityAccessReceipt,
@@ -17,11 +22,6 @@ use entity_access::domain::{
     ports::EntityAccessService,
 };
 use http_body_util::BodyExt;
-use conation_authorization::{
-    InternalIdentityClaims, MacroAuthorizationError, MacroAuthorizationService,
-    MacroAuthorizationState,
-};
-use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
 use model::{
     folder::{FileSystemNodeWithIds, UploadFolderRequest, UploadFolderResponseData},
     item::ItemWithUserAccessLevel,
@@ -461,7 +461,7 @@ fn internal_identity_json_request(method: &str, uri: &str, body: Value) -> Reque
         .method(method)
         .uri(uri)
         .header("x-internal-auth-key", INTERNAL_KEY)
-        .header("x-internal-macro-user-id", USER_ID)
+        .header("x-internal-conation-user-id", USER_ID)
         .header("x-internal-fusionauth-user-id", "fusion-user")
         .header("content-type", "application/json")
         .body(Body::from(body.to_string()))

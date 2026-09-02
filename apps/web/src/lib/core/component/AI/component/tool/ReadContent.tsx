@@ -1,5 +1,5 @@
-import { EntityIcon } from '@core/component/EntityIcon';
 import { t } from '@app/lib/i18n';
+import { EntityIcon } from '@core/component/EntityIcon';
 import { ItemPreview } from '@core/component/ItemPreview';
 import Newspaper from '@phosphor-icons/core/regular/newspaper.svg';
 import { useSystemSkillsQuery } from '@queries/storage/system-skills';
@@ -19,7 +19,8 @@ const handler = createToolRenderer({
           <Show
             when={systemSkills.getSystemSkill(ctx.tool.data.documentId)}
             fallback={
-              <>{t('auto.read')}<span class="text-ink">document</span>{' '}
+              <>
+                {t('ai.tools.content.readDocument')}{' '}
                 <span class="text-ink-placeholder">·</span>{' '}
                 <Suspense>
                   <ItemPreview
@@ -32,7 +33,8 @@ const handler = createToolRenderer({
             }
           >
             {(skill) => (
-              <>{t('auto.read')}<span class="text-ink">skill</span>{' '}
+              <>
+                {t('ai.tools.content.readSkill')}{' '}
                 <span class="text-ink-placeholder">·</span>{' '}
                 <span class="inline-flex items-center gap-1 align-middle text-ink">
                   <EntityIcon targetType="skill" size="xs" />

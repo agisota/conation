@@ -1,5 +1,5 @@
-import { useSplitLayout } from '@components/app/split-layout/layout';
 import { t } from '@app/lib/i18n';
+import { useSplitLayout } from '@components/app/split-layout/layout';
 import { useFocusLock } from '@core/util/createControlledOpenSignal';
 import { ThrownResultError } from '@core/util/result';
 import UserPlusIcon from '@phosphor/user-plus.svg';
@@ -28,16 +28,23 @@ export function openCreateContactModal(companyId: string, domain: string) {
 // The part before the @: non-empty, no whitespace or a second @.
 const LOCAL_PART_PATTERN = /^[^\s@]+$/;
 
-function createErrorMessage(cause: unknown): string {
+type CreateContactErrorKey =
+  | 'companies.contact.errors.conflict'
+  | 'companies.contact.errors.crmDisabled'
+  | 'companies.contact.errors.failed'
+  | 'companies.contact.errors.nameRequired'
+  | 'companies.contact.errors.localPartRequired';
+
+function createErrorKey(cause: unknown): CreateContactErrorKey {
   if (cause instanceof ThrownResultError) {
     if (cause.errors.some((e) => e.code === 'CONFLICT')) {
-      return 'A contact with this email already exists.';
+      return 'companies.contact.errors.conflict';
     }
     if (cause.errors.some((e) => e.code === 'FORBIDDEN')) {
-      return "CRM isn't enabled for your team.";
+      return 'companies.contact.errors.crmDisabled';
     }
   }
-  return 'Failed to create contact. Try again.';
+  return 'companies.contact.errors.failed';
 }
 
 export function CreateContactModal() {
@@ -45,7 +52,7 @@ export function CreateContactModal() {
   const createContactMutation = useCreateContactMutation();
   const [name, setName] = createSignal('');
   const [localPart, setLocalPart] = createSignal('');
-  const [error, setError] = createSignal<string>();
+  const [error, setError] = createSignal<CreateContactErrorKey>();
   const contactName = createMemo(() => name().trim());
   const emailLocalPart = createMemo(() => localPart().trim().toLowerCase());
   const canSubmit = createMemo(
@@ -90,11 +97,11 @@ export function CreateContactModal() {
     const target = createContactTarget();
     if (!target) return;
     if (!contactName()) {
-      setError('Enter a name');
+      setError('companies.contact.errors.nameRequired');
       return;
     }
     if (!LOCAL_PART_PATTERN.test(emailLocalPart())) {
-      setError('Enter the part of the email before the @');
+      setError('companies.contact.errors.localPartRequired');
       return;
     }
 
@@ -109,7 +116,7 @@ export function CreateContactModal() {
       replaceOrInsertSplit({ type: 'contact', id });
     } catch (cause) {
       console.error('Failed to create contact', cause);
-      setError(createErrorMessage(cause));
+      setError(createErrorKey(cause));
     }
   }
 
@@ -137,8 +144,12 @@ export function CreateContactModal() {
 
             <div class="flex flex-col gap-4">
               <div class="flex items-center gap-2 px-2">
-                <Dialog.Title class="sr-only">{t('auto.add_a_contact')}</Dialog.Title>
-                <label for="new-contact-name" class="sr-only">{t('auto.name')}</label>
+                <Dialog.Title class="sr-only">
+                  {t('companies.actions.addContact')}
+                </Dialog.Title>
+                <label for="new-contact-name" class="sr-only">
+                  {t('companies.fields.name')}
+                </label>
                 <UserPlusIcon
                   aria-hidden="true"
                   class="size-5 shrink-0 text-ink-placeholder"
@@ -151,10 +162,12 @@ export function CreateContactModal() {
                     setName(event.currentTarget.value);
                     setError(undefined);
                   }}
-                  placeholder={t('auto.contact_name')}
+                  placeholder={t('companies.fields.contactName')}
                   autocomplete="off"
                   data-1p-ignore
-                  aria-invalid={error() === 'Enter a name'}
+                  aria-invalid={
+                    error() === 'companies.contact.errors.nameRequired'
+                  }
                   class="h-10 w-full border-none bg-transparent px-0 text-xl font-medium text-ink outline-none placeholder:text-ink-placeholder focus:ring-0"
                 />
               </div>
@@ -163,7 +176,9 @@ export function CreateContactModal() {
                 <label
                   for="new-contact-email"
                   class="text-xs font-medium text-ink-muted"
-                >{t('auto.email')}</label>
+                >
+                  {t('companies.fields.email')}
+                </label>
                 <div class="flex h-9 w-full items-center rounded-lg border border-edge-muted focus-within:border-edge">
                   <input
                     id="new-contact-email"
@@ -177,7 +192,7 @@ export function CreateContactModal() {
                     spellcheck={false}
                     data-1p-ignore
                     aria-invalid={
-                      error() === 'Enter the part of the email before the @'
+                      error() === 'companies.contact.errors.localPartRequired'
                     }
                     class="h-full min-w-0 flex-1 border-none bg-transparent pl-3 text-sm text-ink outline-none placeholder:text-ink-placeholder focus:ring-0"
                   />
@@ -189,10 +204,10 @@ export function CreateContactModal() {
             </div>
 
             <Show when={error()}>
-              {(message) => (
+              {(messageKey) => (
                 <div class="border-y border-edge-muted p-2">
                   <div class="px-3 py-2 text-sm text-failure-ink" role="alert">
-                    {message()}
+                    {t(messageKey())}
                   </div>
                 </div>
               )}
@@ -206,7 +221,9 @@ export function CreateContactModal() {
                 class="rounded-lg border-0"
                 disabled={!canSubmit()}
               >
-                {createContactMutation.isPending ? 'Adding…' : 'Add Contact'}
+                {createContactMutation.isPending
+                  ? t('companies.contact.adding')
+                  : t('companies.actions.addContact')}
               </Button>
             </div>
           </form>

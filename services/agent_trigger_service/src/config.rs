@@ -1,8 +1,8 @@
 //! Environment-backed service configuration.
 
 use anyhow::Context as _;
-use database_env_vars::DatabaseUrl;
 use conation_env_var::env_vars;
+use database_env_vars::DatabaseUrl;
 
 env_vars! {
     /// Comma-separated Kafka bootstrap servers.

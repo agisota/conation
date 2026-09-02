@@ -2,8 +2,8 @@ import {
   EntityModalActionFooter,
   EntityModalTitle,
 } from '@app/features/entity/entity-modal/EntityModal';
-import { getSplitPanelRef } from '@components/app/split-layout/layoutUtils';
 import { t } from '@app/lib/i18n';
+import { getSplitPanelRef } from '@components/app/split-layout/layoutUtils';
 import clickOutside from '@core/directive/clickOutside';
 import { Dialog } from '@kobalte/core/dialog';
 import {
@@ -77,7 +77,7 @@ function AutomationRenameModalContent(props: {
           <Dialog.Content class="pointer-events-none!">
             <div class="pointer-events-auto w-full max-w-[min(36rem,calc(100%-1rem))] mx-auto mt-16 bg-surface border border-edge h-fit p-2">
               <div class="w-full my-1">
-                <EntityModalTitle title={t('auto.rename')} />
+                <EntityModalTitle title={t('automation.rename.title')} />
                 <div class="w-full">
                   <input
                     ref={(el) => {
@@ -93,13 +93,13 @@ function AutomationRenameModalContent(props: {
                     onInput={(e) => setEditValue(e.currentTarget.value)}
                     onKeyDown={handleKeyDown}
                     class="w-full p-2 text-sm border border-edge bg-surface text-ink placeholder:text-ink-placeholder focus:outline-none focus:bg-active selection:bg-ink selection:text-surface"
-                    placeholder={t('auto.enter_title')}
+                    placeholder={t('automation.rename.placeholder')}
                   />
                 </div>
                 <EntityModalActionFooter
                   onCancel={close}
                   onConfirm={finishEditing}
-                  confirmText="Rename"
+                  confirmText={t('shell.actions.rename')}
                 />
               </div>
             </div>

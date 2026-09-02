@@ -32,7 +32,7 @@ pub struct Params {
             (status = 500, body=GenericErrorResponse),
         )
     )]
-#[tracing::instrument(skip(ctx, user), fields(user_id=?user.authorization.user.conation_user_id))]
+#[tracing::instrument(skip(ctx, user), fields(user_id=?user.authorization.user.macro_user_id))]
 pub async fn remove_pin_handler(
     State(ctx): State<ApiContext>,
     user: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
@@ -41,7 +41,7 @@ pub async fn remove_pin_handler(
 ) -> impl IntoResponse {
     match conation_db_client::pins::remove_pin(
         ctx.db.clone(),
-        user.authorization.user.conation_user_id.as_ref(),
+        user.authorization.user.macro_user_id.as_ref(),
         pinned_item_id.as_str(),
         req.pin_type.as_str(),
     )
@@ -49,7 +49,7 @@ pub async fn remove_pin_handler(
     {
         Ok(_) => (),
         Err(err) => {
-            tracing::error!(error=?err, user_id=?user.authorization.user.conation_user_id, "failed to add pin");
+            tracing::error!(error=?err, user_id=?user.authorization.user.macro_user_id, "failed to add pin");
             return GenericResponse::builder()
                 .message("failed to add pin")
                 .is_error(true)

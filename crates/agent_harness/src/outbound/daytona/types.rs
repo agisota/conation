@@ -61,18 +61,16 @@ impl DaytonaApiKey {
     }
 }
 
-/// API key sandboxes use to run Anthropic models.
+/// API key sandboxes use to run Conation's OmniRoute models.
 ///
-/// opencode activates its `anthropic` provider on this variable's value —
-/// empty behaves like absent — so it wraps a possibly empty string and is
-/// always injected. Empty means the sandbox has no model provider at all
-/// (`container/opencode.json` enables only `anthropic`), so managed sessions
-/// advertise no models and cannot prompt.
+/// OpenCode's custom `rox` provider reads this value from `ROX_API_KEY`.
+/// Empty behaves like absent, so managed sessions cannot prompt until an
+/// operator provisions the server-side credential.
 #[derive(Clone)]
-pub struct AnthropicApiKey(String);
+pub struct RoxApiKey(String);
 
-impl AnthropicApiKey {
-    /// Wrap an Anthropic API credential.
+impl RoxApiKey {
+    /// Wrap an OmniRoute API credential.
     #[must_use]
     pub fn new(value: String) -> Self {
         Self(value)
@@ -91,6 +89,6 @@ pub struct DaytonaSettings {
     pub api_key: DaytonaApiKey,
     /// Prebuilt snapshot used to create sandboxes.
     pub snapshot: Snapshot,
-    /// Key sandboxes run Anthropic models with.
-    pub anthropic_api_key: AnthropicApiKey,
+    /// Key sandboxes use for Conation's OmniRoute provider.
+    pub rox_api_key: RoxApiKey,
 }

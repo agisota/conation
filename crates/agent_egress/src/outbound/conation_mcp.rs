@@ -1,22 +1,22 @@
-//! Macro's own MCP server, answered on its own route.
+//! Conation's own MCP server, answered on its own route.
 //!
 //! Unlike the owner's connected apps, this destination is not resolved from
 //! their rows - every session gets it, because every session's owner is a
-//! Macro user. What has to be resolved per owner is the credential:
+//! Conation user. What has to be resolved per owner is the credential:
 //! `mcp_service` authenticates a *user*, so the proxy exchanges the session
-//! owner's identity for a short-lived Macro API token and stamps that.
+//! owner's identity for a short-lived Conation API token and stamps that.
 //!
 //! The exchange is local signing with the same RS256 key
 //! `authentication_service` uses - this process holds a key that can
-//! impersonate any user at every service accepting Macro API tokens. That
+//! impersonate any user at every service accepting Conation API tokens. That
 //! custody is the cost of not putting a mint-for-anyone endpoint on the
 //! network; what limits the blast radius is that every token minted here is
 //! single-user, scoped to the session's owner, and minutes from expiry.
 
 use chrono::{DateTime, Duration as ChronoDuration, TimeZone, Utc};
-use lru::LruCache;
-use conation_auth::conation_api_token::{EncodeMacroApiTokenArgs, encode_conation_api_token};
+use conation_auth::conation_api_token::{EncodeConationApiTokenArgs, encode_conation_api_token};
 use conation_user_id::user_id::MacroUserIdStr;
+use lru::LruCache;
 use std::num::NonZeroUsize;
 use std::sync::Mutex;
 use url::Url;
@@ -32,11 +32,11 @@ mod test;
 /// can stream for a while, and a token that expires mid-call fails it.
 const EXPIRY_MARGIN_MINUTES: i64 = 5;
 
-/// Exchange a session owner's identity for a short-lived Macro API token.
+/// Exchange a session owner's identity for a short-lived Conation API token.
 ///
 /// Implementations own the whole exchange - including finding whatever else
 /// the minting side needs to know about the owner beyond their id.
-pub trait MacroApiTokens: Send + Sync {
+pub trait ConationApiTokens: Send + Sync {
     /// A token that acts as `owner`, and nobody else.
     fn mint(
         &self,
@@ -44,12 +44,12 @@ pub trait MacroApiTokens: Send + Sync {
     ) -> impl Future<Output = Result<String, EgressError>> + Send;
 }
 
-/// Layers Macro's own MCP destination over another resolver.
+/// Layers Conation's own MCP destination over another resolver.
 ///
-/// [`McpDestination::Macro`] is answered here; everything else passes
+/// [`McpDestination::Conation`] is answered here; everything else passes
 /// straight through to `Inner`. The two destinations arrive from different
 /// routes, so there is no name for a connected app to collide with.
-pub struct WithMacroMcp<Inner, Tokens> {
+pub struct WithConationMcp<Inner, Tokens> {
     inner: Inner,
     tokens: Tokens,
     url: Url,
@@ -74,12 +74,12 @@ struct CachedToken {
     expires_at: DateTime<Utc>,
 }
 
-impl<Inner, Tokens> WithMacroMcp<Inner, Tokens>
+impl<Inner, Tokens> WithConationMcp<Inner, Tokens>
 where
     Inner: McpCredentials,
-    Tokens: MacroApiTokens,
+    Tokens: ConationApiTokens,
 {
-    /// Wrap `inner`, answering [`McpDestination::Macro`] at `url` with tokens
+    /// Wrap `inner`, answering [`McpDestination::Conation`] at `url` with tokens
     /// from `tokens`.
     ///
     /// `local_cleartext` permits an `http` URL, and the caller must gate it on
@@ -114,14 +114,14 @@ where
             let mut cached = self.cached.lock().expect("token cache poisoned");
             match usable(cached.get(owner).cloned()) {
                 Some(live) => {
-                    tracing::debug!(%owner, "macro api token cache hit");
+                    tracing::debug!(%owner, "Conation API token cache hit");
                     return Ok(live.token);
                 }
                 // A stale entry is evicted now rather than on capacity
                 // pressure: there is no reason to keep a dead credential.
                 None => {
                     let expired = cached.pop(owner).is_some();
-                    tracing::debug!(%owner, expired, "macro api token cache miss; minting");
+                    tracing::debug!(%owner, expired, "Conation API token cache miss; minting");
                 }
             }
         }
@@ -140,10 +140,10 @@ where
     }
 }
 
-impl<Inner, Tokens> McpCredentials for WithMacroMcp<Inner, Tokens>
+impl<Inner, Tokens> McpCredentials for WithConationMcp<Inner, Tokens>
 where
     Inner: McpCredentials,
-    Tokens: MacroApiTokens,
+    Tokens: ConationApiTokens,
 {
     #[tracing::instrument(skip_all, err, fields(%owner, ?destination))]
     async fn resolve(
@@ -151,7 +151,7 @@ where
         owner: &MacroUserIdStr<'static>,
         destination: &McpDestination,
     ) -> Result<UpstreamCall, EgressError> {
-        if *destination != McpDestination::Macro {
+        if *destination != McpDestination::Conation {
             return self.inner.resolve(owner, destination).await;
         }
 
@@ -185,7 +185,7 @@ fn token_expiry(token: &str) -> Result<DateTime<Utc>, EgressError> {
 
     let unreadable = |detail: &str| {
         EgressError::Upstream(rootcause::report!(
-            "minted Macro API token is unreadable: {detail}"
+            "minted Conation API token is unreadable: {detail}"
         ))
     };
 
@@ -218,9 +218,9 @@ fn token_expiry(token: &str) -> Result<DateTime<Utc>, EgressError> {
 /// document-permission JWT follows the same pattern), and this process is
 /// already the credential concentrator - it holds the GitHub App key and the
 /// Pipedream project token on the same terms. The key can act as any user
-/// wherever Macro API tokens are accepted, which is why everything minted
+/// wherever Conation API tokens are accepted, which is why everything minted
 /// here is short-lived and names only the one owner the grant did.
-pub struct MacroApiTokenSigner {
+pub struct ConationApiTokenSigner {
     pool: sqlx::PgPool,
     issuer: String,
     private_key: String,
@@ -231,7 +231,7 @@ pub struct MacroApiTokenSigner {
 /// anyone can do much with it.
 const MINTED_TOKEN_LIFETIME_SECONDS: usize = 900;
 
-impl MacroApiTokenSigner {
+impl ConationApiTokenSigner {
     /// Build the signer over the database holding user rows, the token
     /// issuer, and the RSA signing key.
     pub fn new(
@@ -247,16 +247,16 @@ impl MacroApiTokenSigner {
     }
 }
 
-impl MacroApiTokens for MacroApiTokenSigner {
+impl ConationApiTokens for ConationApiTokenSigner {
     #[tracing::instrument(skip_all, err, fields(%owner))]
     async fn mint(&self, owner: &MacroUserIdStr<'static>) -> Result<String, EgressError> {
         // The claims name the owner three ways - the FusionAuth root id, the
-        // Macro user id, and their organization - and the session row only
+        // Conation user id, and their organization - and the session row only
         // carries the second, so the rest is read off their `User` row. An
         // owner with no row is a session created wrong, which is ours to fix,
         // not something the sandbox can retry its way out of.
-        let (fusion_root_id, conation_user_id) =
-            conation_db_client::user::get::get_user_conation_user_id_and_id_by_email(
+        let (fusion_root_id, macro_user_id) =
+            conation_db_client::user::get::get_user_macro_user_id_and_id_by_email(
                 &self.pool,
                 owner.email_str(),
             )
@@ -266,20 +266,21 @@ impl MacroApiTokens for MacroApiTokenSigner {
                     "session owner has no user row to mint a token for: {error}"
                 ))
             })?;
-        let organization_id = conation_db_client::user::get_user_organization::get_user_organization(
-            self.pool.clone(),
-            &conation_user_id,
-        )
-        .await
-        .map_err(|error| {
-            EgressError::Internal(rootcause::report!(
-                "could not read the session owner's organization: {error}"
-            ))
-        })?;
+        let organization_id =
+            conation_db_client::user::get_user_organization::get_user_organization(
+                self.pool.clone(),
+                &macro_user_id,
+            )
+            .await
+            .map_err(|error| {
+                EgressError::Internal(rootcause::report!(
+                    "could not read the session owner's organization: {error}"
+                ))
+            })?;
 
-        encode_conation_api_token(EncodeMacroApiTokenArgs {
+        encode_conation_api_token(EncodeConationApiTokenArgs {
             fusionauth_id: fusion_root_id.to_string(),
-            conation_user_id,
+            macro_user_id,
             organization_id,
             issuer: self.issuer.clone(),
             private_key: self.private_key.clone(),
@@ -287,7 +288,7 @@ impl MacroApiTokens for MacroApiTokenSigner {
         })
         .map_err(|error| {
             EgressError::Internal(rootcause::report!(
-                "could not sign a Macro API token: {error}"
+                "could not sign a Conation API token: {error}"
             ))
         })
     }

@@ -1,5 +1,5 @@
-import type { IHighlight } from '@block-pdf/model/Highlight';
 import { t } from '@app/lib/i18n';
+import type { IHighlight } from '@block-pdf/model/Highlight';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import { useIsAuthenticated } from '@core/auth';
 import { useBlockId } from '@core/block';
@@ -165,7 +165,7 @@ export function PDFPopup(props: PDFPopupProps) {
     const title = await generateTitle(content);
     const documentId = await createMarkdownFile({
       content,
-      title: title ?? `${name()} - AI Explanation`,
+      title: title ?? t('pdf.ai.explanationTitle', { documentName: name() }),
     });
 
     if (!documentId) {
@@ -226,7 +226,7 @@ export function PDFPopup(props: PDFPopupProps) {
                   onClick={() =>
                     insertProps().insertText(completion()!.content)
                   }
-                  title={t('auto.insert_ai_response')}
+                  label={t('pdf.actions.insertAiResponse')}
                 >
                   <PasteIcon />
                 </Button>
@@ -239,6 +239,7 @@ export function PDFPopup(props: PDFPopupProps) {
                   <Button
                     variant="ghost"
                     size="icon-md"
+                    label={t('pdf.markup.highlight')}
                     onClick={() => {
                       props.highlightProps.highlight();
                     }}
@@ -252,6 +253,7 @@ export function PDFPopup(props: PDFPopupProps) {
                   <Button
                     variant="ghost"
                     size="icon-md"
+                    label={t('pdf.markup.removeHighlight')}
                     onClick={() => {
                       props.highlightProps.removeHighlight();
                     }}
@@ -271,6 +273,7 @@ export function PDFPopup(props: PDFPopupProps) {
             >
               <Button
                 variant="ghost"
+                label={t('pdf.markup.comment')}
                 size="icon-md"
                 onClick={(e: MouseEvent | KeyboardEvent) =>
                   props.commentProps.placeComment(e as MouseEvent)
@@ -294,7 +297,9 @@ export function PDFPopup(props: PDFPopupProps) {
                 ) : (
                   <LinkIcon />
                 )}
-                {locationCopied() ? 'Copied' : 'Share'}
+                {locationCopied()
+                  ? t('pdf.actions.copied')
+                  : t('block.actions.share')}
               </Button>
             )}
           </Show>
@@ -340,7 +345,7 @@ export function PDFPopup(props: PDFPopupProps) {
                       >
                         <NotesIcon class="size-3 text-note" />
                       </Show>
-                      <p>{t('auto.edit_in_notes')}</p>
+                      <p>{t('pdf.actions.editInNotes')}</p>
                     </button>
                   </div>
                   <div class="w-fit">
@@ -359,7 +364,11 @@ export function PDFPopup(props: PDFPopupProps) {
                           <ClipboardIcon class="size-3" />
                         </Show>
                       </Show>
-                      <p>{copied() ? 'Copied!' : 'Copy'}</p>
+                      <p>
+                        {copied()
+                          ? t('pdf.actions.copied')
+                          : t('pdf.actions.copy')}
+                      </p>
                     </button>
                   </div>
                 </div>

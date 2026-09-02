@@ -1,10 +1,10 @@
 use crate::outbound::email_api::GmailApi;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD;
+use conation_user_id::cowlike::ArcCowStr;
+use conation_user_id::user_id::{CONATION_USER_ID_PREFIX, MacroUserId};
 use document_storage_service_client::DocumentStorageServiceClient;
 use email_api_client::domain::models::EmailApiError;
-use conation_user_id::cowlike::ArcCowStr;
-use conation_user_id::user_id::MacroUserId;
 use model::document::response::{CreateDocumentRequest, CreateDocumentResponse};
 use models_email::service::attachment::{
     AttachmentSfs, AttachmentUploadArgs, AttachmentUploadMetadata,
@@ -273,7 +273,7 @@ async fn create_dss_document_record(
     };
 
     dss_client
-        .create_document_internal(request, link.conation_id.0.as_ref())
+        .create_document_internal(request, link.macro_id.0.as_ref())
         .await
         .map_err(|e| UploadAttachmentError::DssCreateFailed(e.to_string()))
 }
@@ -323,7 +323,10 @@ async fn set_email_attachment_properties(
     document_id: &str,
     p: &AttachmentUploadArgs,
 ) -> Result<(), UploadAttachmentError> {
-    let sender_email = format!("macro|{}", p.attachment_metadata.sender_email);
+    let sender_email = format!(
+        "{CONATION_USER_ID_PREFIX}{}",
+        p.attachment_metadata.sender_email
+    );
     let sender = MacroUserId::parse_from_str(&sender_email)
         .map_err(|e| {
             UploadAttachmentError::ParseError(format!(
@@ -337,7 +340,7 @@ async fn set_email_attachment_properties(
     let prefixed_emails: Vec<String> = p
         .recipient_emails
         .iter()
-        .map(|email| format!("macro|{}", email))
+        .map(|email| format!("{CONATION_USER_ID_PREFIX}{email}"))
         .collect();
 
     let recipients: Result<Vec<MacroUserId<ArcCowStr>>, _> = prefixed_emails

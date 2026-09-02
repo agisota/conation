@@ -6,7 +6,7 @@ use axum::{
 };
 use conation_authorization::{
     BOT_SCOPE_HEADER, BOT_TOKEN_HEADER, BotScope, INTERNAL_API_KEY_HEADER,
-    INTERNAL_MACRO_USER_ID_HEADER,
+    INTERNAL_CONATION_USER_ID_HEADER,
 };
 use conation_user_id::user_id::MacroUserIdStr;
 use tower::ServiceExt;
@@ -129,7 +129,7 @@ async fn internal_history_act_as_identity_uses_acl() {
         .oneshot(
             request()
                 .header(INTERNAL_API_KEY_HEADER, INTERNAL_KEY)
-                .header(INTERNAL_MACRO_USER_ID_HEADER, USER_ID)
+                .header(INTERNAL_CONATION_USER_ID_HEADER, USER_ID)
                 .body(Body::empty())
                 .unwrap(),
         )

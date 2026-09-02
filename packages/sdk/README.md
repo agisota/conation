@@ -1,6 +1,6 @@
-Macro's SDK: a Typescript library for harnessing the power of Macro
+Conation SDK: a TypeScript library for working with Conation
 
-- **`generated/`**: generated Typescript types and a HeyAPI client from Macro's
+- **`generated/`**: generated TypeScript types and a HeyAPI client from Conation
   OpenAPI specs.
 - **`src/`**: a hand-written ergonomic SDK layer that provides an "orm"-y API.
 
@@ -8,20 +8,20 @@ Macro's SDK: a Typescript library for harnessing the power of Macro
 
 ### Getting started
 
-To get started, make a Macro client
+To get started, make a Conation client
 
 ```ts
-import { Macro } from '@macro/sdk';
+import { Macro } from '@conation/sdk';
 
-const macro = new Macro({ }); // uses MACRO_API_KEY env var
+const macro = new Macro({}); // uses CONATION_API_KEY env var
 ```
 
 ### Authenticating
 
-The SDK can authenticate as a **user** (a Macro API token, sent as an
+The SDK can authenticate as a **user** (a Conation API token, sent as an
 `Authorization` bearer) or as a **bot** (an `mbot_` API key, created under
 Settings → Bots in the web app). With no explicit `auth`, the SDK falls back
-to the `MACRO_API_KEY` (user) or `MACRO_BOT_TOKEN` (bot) env var.
+to the `CONATION_API_KEY` (user) or `CONATION_BOT_TOKEN` (bot) env var.
 
 ```ts
 const asUser = new Macro({ auth: { type: 'user', token: myApiToken } });
@@ -32,7 +32,7 @@ A bot can act on behalf of a user it's authorized for (its owner, or a member
 of its owning team):
 
 ```ts
-const asWolf = asBot.requestedAs('macro|wolf@macro.com');
+const asWolf = asBot.requestedAs('conation|wolf@conation.dev');
 ```
 
 Bot requests carry an access scope: `user` (the requested-as user's access —
@@ -42,7 +42,7 @@ access, for team-owned bots — the default otherwise). Pass
 
 ### Accessing our API
 
-Our SDK acts lets you easily access any Macro "resource":
+Our SDK lets you access Conation resources:
 
 ```ts
 const doc = macro.documents.byId('doc_123');
@@ -106,14 +106,14 @@ Use the `msg` tagged template to build rich message bodies for channel messages
 or documents.
 
 ```ts
-import { msg, here } from '@macro/sdk';
+import { msg, here } from '@conation/sdk';
 
 const channel = macro.channels.byId('chan_1');
 const user = macro.users.byId('user_1');
 await channel.send(msg`Hey ${user}, take a look at ${doc}. cc ${here}`);
 ```
 
-These will render as @mentions in the Macro UI.
+These will render as @mentions in the Conation UI.
 
 ### Posting to a channel webhook
 
@@ -122,7 +122,7 @@ bot token, so it goes in the normal place:
 
 ```ts
 const macro = new Macro({
-  auth: { type: 'bot', token: process.env.MACRO_WEBHOOK_TOKEN },
+  auth: { type: 'bot', token: process.env.CONATION_WEBHOOK_TOKEN },
 });
 
 await macro.channels
@@ -132,14 +132,14 @@ await macro.channels
 
 # Webhook Events
 
-Pass a `webhookSecret` (or set `MACRO_WEBHOOK_SECRET`) to receive events. You
+Pass a `webhookSecret` (or set `CONATION_WEBHOOK_SECRET`) to receive events. You
 should use a framework like Hono or Express to handle the webhook request and
 pass it to the SDK which will handle verification and dispatching.
 
 ```ts
 const macro = new Macro({
-  token: process.env.MACRO_API_KEY,
-  webhookSecret: process.env.MACRO_WEBHOOK_SECRET,
+  token: process.env.CONATION_API_KEY,
+  webhookSecret: process.env.CONATION_WEBHOOK_SECRET,
 });
 
 const me = await macro.users.me();

@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { defineBlock, type ExtractLoadType, LoadErrors } from '@core/block';
 import { ok } from 'neverthrow';
 import { lazy } from 'solid-js';
@@ -5,7 +6,9 @@ import { CALENDAR_BLOCK_ID } from './types';
 
 export const definition = defineBlock({
   name: 'calendar',
-  description: 'View calendar events',
+  get description() {
+    return t('calendar.block.description');
+  },
   component: lazy(() => import('./CalendarBlockAdapter')),
   liveTrackingEnabled: false,
   openTrackingEnabled: false,

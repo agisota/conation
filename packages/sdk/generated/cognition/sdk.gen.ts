@@ -349,7 +349,7 @@ export class Sdk extends HeyApiClient {
     }
     
     /**
-     * Return Macro's public OAuth Client ID Metadata Document.
+     * Return Conation's public OAuth Client ID Metadata Document.
      */
     public mcpOauthClientMetadata<ThrowOnError extends boolean = false>(options?: Options<McpOauthClientMetadataData, ThrowOnError>): RequestResult<McpOauthClientMetadataResponses, unknown, ThrowOnError> {
         return (options?.client ?? this.client).get<McpOauthClientMetadataResponses, unknown, ThrowOnError>({ url: '/mcp/servers/auth/client-metadata', ...options });

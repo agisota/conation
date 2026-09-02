@@ -33,7 +33,7 @@ export const [htmlColor, setHtmlColor] = makePersisted(
 
 export const [userThemes, setUserThemes] = makePersisted(
   createSignal<ThemeV3[]>([]),
-  { name: 'macro-user-themes' }
+  { name: 'conation-user-themes' }
 );
 setUserThemes(
   (userThemes() as unknown[]).flatMap((theme) => {
@@ -63,7 +63,7 @@ setUserThemes(
 
 export const [currentThemeId, setCurrentThemeId] = makePersisted(
   createSignal<string>(DEFAULT_DARK_THEME),
-  { name: 'macro-selected-theme' }
+  { name: 'conation-selected-theme' }
 );
 
 export const themes = createMemo<ThemeV3[]>(() => [
@@ -86,12 +86,12 @@ export const [liveThemeMode, setLiveThemeMode] = createSignal<'light' | 'dark'>(
 // 'dark' (or 'system' + OS dark).
 export const [lightModeTheme, setLightModeTheme] = makePersisted(
   createSignal<string>(DEFAULT_LIGHT_THEME),
-  { name: 'macro-light-mode-theme' }
+  { name: 'conation-light-mode-theme' }
 );
 
 export const [darkModeTheme, setDarkModeTheme] = makePersisted(
   createSignal<string>(DEFAULT_DARK_THEME),
-  { name: 'macro-dark-mode-theme' }
+  { name: 'conation-dark-mode-theme' }
 );
 
 /** The "Active theme" mode: pin a fixed light or dark theme, or follow the OS
@@ -99,32 +99,9 @@ export const [darkModeTheme, setDarkModeTheme] = makePersisted(
  *  live — see resolveActiveThemeId / systemThemeEffect in themeUtils. */
 export type ThemeMode = 'light' | 'dark' | 'system';
 
-/** Fallback for the initial themeMode, migrating the pre-"Active theme" setting
- *  (`macro-theme-should-match-system`) so returning users keep their appearance:
- *  auto-detect on → 'system'; auto-detect off (a pinned theme) → the fixed
- *  light/dark mode matching the previously-selected theme. Only used until the
- *  new `macro-theme-mode` key is written. */
-function initialThemeMode(): ThemeMode {
-  if (typeof localStorage === 'undefined') {
-    return 'system';
-  }
-  const legacy = localStorage.getItem('macro-theme-should-match-system');
-  // New/already-migrated users, and anyone who had auto-detect on: follow the OS.
-  if (legacy !== 'false') {
-    return 'system';
-  }
-  // Auto-detect was off: pin to the mode matching the previously-selected theme
-  // based on the explicit mode stored by V3.
-  const pinned = themes().find((theme) => theme.id === currentThemeId());
-  if (!pinned) {
-    return 'system';
-  }
-  return pinned.mode;
-}
-
 export const [themeMode, setThemeMode] = makePersisted(
-  createSignal<ThemeMode>(initialThemeMode()),
-  { name: 'macro-theme-mode' }
+  createSignal<ThemeMode>('system'),
+  { name: 'conation-theme-mode' }
 );
 
 const supportsMatchMedia =
@@ -149,11 +126,11 @@ if (supportsMatchMedia) {
 // Theme-list filters: whether light and/or dark themes are shown in the list.
 export const [showLightThemes, setShowLightThemes] = makePersisted(
   createSignal<boolean>(true),
-  { name: 'macro-show-light-themes' }
+  { name: 'conation-show-light-themes' }
 );
 export const [showDarkThemes, setShowDarkThemes] = makePersisted(
   createSignal<boolean>(true),
-  { name: 'macro-show-dark-themes' }
+  { name: 'conation-show-dark-themes' }
 );
 
 export const [themeDepth, setThemeDepth] = createSignal<number>(0.15);

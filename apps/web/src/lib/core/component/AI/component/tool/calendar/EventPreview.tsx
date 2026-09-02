@@ -1,5 +1,4 @@
 import type { CalendarGridHandle } from '@app/features/calendar/components/CalendarGrid';
-import { t } from '@app/lib/i18n';
 import { CalendarGridSkeleton } from '@app/features/calendar/components/CalendarGridSkeleton';
 import type { CalendarEventFormController } from '@app/features/calendar/components/composer/create-calendar-event-form-controller';
 import { useCalendarOccurrenceData } from '@app/features/calendar/hooks/use-calendar-occurrence-data';
@@ -7,6 +6,7 @@ import { useCalendarSources } from '@app/features/calendar/hooks/use-calendar-so
 import type { CalendarPeriodView } from '@app/features/calendar/types';
 import { formatLocalDate } from '@app/features/calendar/utils/calendar-date';
 import { getDefaultCalendarTimeFormat } from '@app/features/calendar/utils/time-format';
+import { formatDateTime, t } from '@app/lib/i18n';
 import CalendarIcon from '@phosphor/calendar-blank.svg';
 import CaretLeftIcon from '@phosphor/caret-left.svg';
 import CaretRightIcon from '@phosphor/caret-right.svg';
@@ -39,10 +39,6 @@ const CalendarEmbed = lazy(() =>
 );
 
 const MAX_EXISTING_PREVIEW_EVENTS = 50;
-const PREVIEW_MONTH_YEAR_FORMAT = new Intl.DateTimeFormat(undefined, {
-  month: 'long',
-  year: 'numeric',
-});
 
 function previewScrollTime(date: Date) {
   const startMinutes = date.getHours() * 60 + date.getMinutes();
@@ -279,7 +275,7 @@ export function CalendarToolEventPreview(props: CalendarToolEventPreviewProps) {
   return (
     <div
       role="region"
-      aria-label={t('auto.calendar_event_preview')}
+      aria-label={t('ai.tools.calendar.previewLabel')}
       class={cn(
         'calendar-tool-preview relative flex min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-edge-muted bg-surface shadow-sm',
         props.class
@@ -290,7 +286,7 @@ export function CalendarToolEventPreview(props: CalendarToolEventPreviewProps) {
           <Show when={props.showPeriodLabel ? periodDate() : undefined}>
             {(date) => (
               <div class="text-sm font-semibold text-ink">
-                {PREVIEW_MONTH_YEAR_FORMAT.format(date())}
+                {formatDateTime(date(), { month: 'long', year: 'numeric' })}
               </div>
             )}
           </Show>
@@ -311,13 +307,20 @@ export function CalendarToolEventPreview(props: CalendarToolEventPreviewProps) {
                         class="rounded-lg px-2"
                         onClick={goToEvent}
                       >
-                        <CalendarIcon class="size-3.5" />{t('auto.go_to_event')}</Button>
+                        <CalendarIcon class="size-3.5" />
+                        {t('ai.tools.calendar.goToEvent')}
+                      </Button>
                     </Show>
                     <Button
                       variant="ghost"
                       size="icon-sm"
                       class="rounded-lg"
-                      label={`Previous ${previewView() === 'dayGridMonth' ? 'month' : 'week'}`}
+                      label={t('ai.tools.calendar.previousPeriod', {
+                        period:
+                          previewView() === 'dayGridMonth'
+                            ? t('calendar.view.month').toLowerCase()
+                            : t('calendar.view.week').toLowerCase(),
+                      })}
                       onClick={() => navigate('previous')}
                     >
                       <CaretLeftIcon class="size-4" />
@@ -326,7 +329,12 @@ export function CalendarToolEventPreview(props: CalendarToolEventPreviewProps) {
                       variant="ghost"
                       size="icon-sm"
                       class="rounded-lg"
-                      label={`Next ${previewView() === 'dayGridMonth' ? 'month' : 'week'}`}
+                      label={t('ai.tools.calendar.nextPeriod', {
+                        period:
+                          previewView() === 'dayGridMonth'
+                            ? t('calendar.view.month').toLowerCase()
+                            : t('calendar.view.week').toLowerCase(),
+                      })}
                       onClick={() => navigate('next')}
                     >
                       <CaretRightIcon class="size-4" />
@@ -405,21 +413,21 @@ export function CalendarToolEventPreview(props: CalendarToolEventPreviewProps) {
           </Show>
           <Show when={previewEvent() === undefined}>
             <div class="pointer-events-none absolute inset-x-2 top-2 rounded-md border border-edge-muted bg-surface px-2 py-1 text-center text-xs text-ink-muted shadow-sm">
-              Enter an end time after the start time to preview this event.
+              {t('ai.tools.calendar.invalidTimeRange')}
             </div>
           </Show>
           <Show when={occurrenceData.isLoading()}>
             <div
               role="status"
-              aria-label={t('auto.loading_calendar_events')}
+              aria-label={t('ai.tools.calendar.loadingEvents')}
               class="pointer-events-none absolute right-2 bottom-2 rounded-md border border-edge-muted bg-surface px-2 py-1 text-xs text-ink-muted shadow-sm"
             >
-              Loading events…
+              {t('ai.tools.calendar.loadingEvents')}
             </div>
           </Show>
           <Show when={occurrenceData.occurrencesQuery.isError}>
             <div class="absolute inset-x-2 bottom-2 rounded-md border border-edge-muted bg-surface px-2 py-1 text-center text-xs text-ink-muted shadow-sm">
-              Other calendar events couldn’t be loaded.
+              {t('ai.tools.calendar.eventsLoadFailed')}
             </div>
           </Show>
         </Suspense>

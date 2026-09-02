@@ -1,9 +1,9 @@
 use crate::domain::models::SoupProjectionHydration;
 use crate::map_soup_projection_hydration;
 use crate::outbound::pg_soup_repo::type_err;
-use document_sub_type::DocumentSubType;
 use conation_user_id::cowlike::CowLike;
 use conation_user_id::user_id::MacroUserIdStr;
+use document_sub_type::DocumentSubType;
 use models_pagination::{Frecency, Query, SimpleSortMethod};
 use models_soup::item::SoupItem;
 use sqlx::PgPool;

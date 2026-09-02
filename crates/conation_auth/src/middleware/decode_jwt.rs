@@ -1,22 +1,22 @@
 use std::sync::OnceLock;
 
 use anyhow::Context;
-use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode};
 use conation_env::Environment;
 use conation_env_var::{VarNameErr, env_var};
 use conation_user_id::{cowlike::CowLike, lowercased::Lowercase, user_id::MacroUserId};
+use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode};
 use remote_env_var::{LocalOrRemoteSecret, SecretManager};
 use thiserror::Error;
 
-use crate::{error::MacroAuthError, conation_api_token::MacroApiToken};
+use crate::{conation_api_token::ConationApiToken, error::MacroAuthError};
 
 #[derive(Clone)]
 pub struct JwtValidationArgs {
     audience: Audience,
     issuer: Issuer,
     jwt_secret: LocalOrRemoteSecret<JwtSecretKey>,
-    conation_api_token_issuer: MacroApiTokenIssuer,
-    conation_api_token_public_key: LocalOrRemoteSecret<MacroApiTokenPublicKey>,
+    conation_api_token_issuer: ConationApiTokenIssuer,
+    conation_api_token_public_key: LocalOrRemoteSecret<ConationApiTokenPublicKey>,
 }
 
 #[derive(Debug, Error)]
@@ -40,7 +40,7 @@ impl JwtValidationArgs {
         } = Env::new()?;
         let (jwt_secret, conation_api_token_public_key) = tokio::try_join!(
             secret_manager.get_maybe_secret_value(env, JwtSecretKey::new()?),
-            secret_manager.get_maybe_secret_value(env, MacroApiTokenPublicKey::new()?)
+            secret_manager.get_maybe_secret_value(env, ConationApiTokenPublicKey::new()?)
         )
         .map_err(JwtValidationErr::RemoteErr)?;
         Ok(Self {
@@ -60,9 +60,9 @@ impl JwtValidationArgs {
             audience: Audience::Comptime(""),
             issuer: Issuer::Comptime(""),
             jwt_secret: LocalOrRemoteSecret::Local(JwtSecretKey::Comptime("")),
-            conation_api_token_issuer: MacroApiTokenIssuer::Comptime(""),
+            conation_api_token_issuer: ConationApiTokenIssuer::Comptime(""),
             conation_api_token_public_key: LocalOrRemoteSecret::Local(
-                MacroApiTokenPublicKey::Comptime(""),
+                ConationApiTokenPublicKey::Comptime(""),
             ),
         }
     }
@@ -75,7 +75,7 @@ env_var! {
 
 env_var! {
     #[derive(Clone)]
-    struct MacroApiTokenPublicKey;
+    struct ConationApiTokenPublicKey;
 }
 
 env_var! {
@@ -86,7 +86,7 @@ env_var! {
         #[derive(Debug, Clone)]
         Issuer,
         #[derive(Debug, Clone)]
-        MacroApiTokenIssuer
+        ConationApiTokenIssuer
     }
 }
 
@@ -107,17 +107,20 @@ pub struct MacroAccessToken {
     /// The fusionauth id of the user
     pub fusion_user_id: String,
     /// The macro user id of the user
-    pub conation_user_id: String,
+    #[serde(rename = "conation_user_id")]
+    pub macro_user_id: String,
     /// The organization id for the user if they belong to one
-    pub conation_organization_id: Option<i32>,
+    #[serde(rename = "conation_organization_id")]
+    pub macro_organization_id: Option<i32>,
     /// The root macro id. If provided, if None, use fusion_user_id
-    pub root_conation_id: Option<String>,
+    #[serde(rename = "root_conation_id")]
+    pub root_macro_id: Option<String>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Eq, PartialEq, Debug, Clone)]
 pub enum JwtToken {
     MacroAccessToken(MacroAccessToken),
-    MacroApiToken(MacroApiToken),
+    ConationApiToken(ConationApiToken),
 }
 
 pub fn validate_conation_access_token(
@@ -155,12 +158,12 @@ pub fn decode_conation_access_token_allow_expired(
     })?
     .claims;
 
-    let conation_user_id = MacroUserId::parse_from_str(&decoded_jwt.conation_user_id)
+    let macro_user_id = MacroUserId::parse_from_str(&decoded_jwt.macro_user_id)
         .map_err(|_| MacroAuthError::from(anyhow::anyhow!("invalid macro user id in token")))?
         .lowercase()
         .into_owned();
 
-    Ok(conation_user_id)
+    Ok(macro_user_id)
 }
 
 fn validate_conation_access_token_inner(
@@ -202,9 +205,9 @@ static DECODING_KEY: OnceLock<Result<DecodingKey, MacroAuthError>> = OnceLock::n
 #[tracing::instrument(skip_all)]
 fn validate_conation_api_token(
     conation_api_token: &str,
-    public_key: &LocalOrRemoteSecret<MacroApiTokenPublicKey>,
-    issuer: &MacroApiTokenIssuer,
-) -> Result<MacroApiToken, MacroAuthError> {
+    public_key: &LocalOrRemoteSecret<ConationApiTokenPublicKey>,
+    issuer: &ConationApiTokenIssuer,
+) -> Result<ConationApiToken, MacroAuthError> {
     // Verify and decode the JWT
     let mut validation = Validation::new(Algorithm::RS256);
 
@@ -220,8 +223,8 @@ fn validate_conation_api_token(
         .context("cached key failed to decode")?;
 
     // Attempt to decode the token.
-    let decoded_jwt: MacroApiToken =
-        match decode::<MacroApiToken>(conation_api_token, decoding_key, &validation) {
+    let decoded_jwt: ConationApiToken =
+        match decode::<ConationApiToken>(conation_api_token, decoding_key, &validation) {
             Ok(decoded) => decoded.claims,
             Err(e) => match e.kind() {
                 jsonwebtoken::errors::ErrorKind::ExpiredSignature => {
@@ -238,7 +241,7 @@ fn validate_conation_api_token(
     Ok(decoded_jwt)
 }
 
-/// Takes in a token (either a macro-access-token or a macro-api-token) and returns the decoded JWT token.
+/// Takes an access token or a Conation API token and returns its decoded JWT.
 pub fn handler(
     jwt_validation_args: &JwtValidationArgs,
     access_token: &str,
@@ -247,7 +250,7 @@ pub fn handler(
 
     let kid = token.kid.context("expected kid")?;
 
-    if kid == "macro" {
+    if kid == "conation" {
         let decoded_jwt = match validate_conation_api_token(
             access_token,
             &jwt_validation_args.conation_api_token_public_key,
@@ -264,7 +267,7 @@ pub fn handler(
                 return Err(e);
             }
         };
-        Ok(JwtToken::MacroApiToken(decoded_jwt))
+        Ok(JwtToken::ConationApiToken(decoded_jwt))
     } else {
         let decoded_jwt = match validate_conation_access_token_inner(
             access_token,
@@ -318,9 +321,9 @@ mod tests {
             tid: "tenant_id".to_string(),
             email: email.to_string(),
             fusion_user_id: "fusion_testing".to_string(),
-            conation_user_id: "macro|testing".to_string(),
-            conation_organization_id: None,
-            root_conation_id: None,
+            macro_user_id: "conation|testing@example.com".to_string(),
+            macro_organization_id: None,
+            root_macro_id: None,
         };
 
         let mut header = jsonwebtoken::Header::new(jsonwebtoken::Algorithm::HS256);
@@ -372,7 +375,7 @@ CwIDAQAB
 
     fn create_test_conation_api_token_jwt(
         issuer: &str,
-        conation_user_id: &str,
+        macro_user_id: &str,
         fusionauth_id: &str,
         organization_id: Option<i32>,
         private_key: &str,
@@ -386,16 +389,16 @@ CwIDAQAB
                 .as_secs() as usize
         });
 
-        let claims = MacroApiToken {
+        let claims = ConationApiToken {
             exp: now + 3600, // Token expires in 1 hour
             iss: issuer.to_string(),
             fusion_user_id: fusionauth_id.to_string(),
-            conation_user_id: conation_user_id.to_string(),
-            conation_organization_id: organization_id,
+            macro_user_id: macro_user_id.to_string(),
+            macro_organization_id: organization_id,
         };
 
         let mut header = jsonwebtoken::Header::new(jsonwebtoken::Algorithm::RS256);
-        header.kid = Some("macro".to_string());
+        header.kid = Some("conation".to_string());
         jsonwebtoken::encode(
             &header,
             &claims,
@@ -411,9 +414,9 @@ CwIDAQAB
             issuer: Issuer::new_testing("test.macro.com"),
             jwt_secret: LocalOrRemoteSecret::Local(JwtSecretKey::new_testing("super_secret_key")),
             conation_api_token_public_key: LocalOrRemoteSecret::Local(
-                MacroApiTokenPublicKey::new_testing(PUBLIC_KEY),
+                ConationApiTokenPublicKey::new_testing(PUBLIC_KEY),
             ),
-            conation_api_token_issuer: MacroApiTokenIssuer::new_testing("test.macro.com"),
+            conation_api_token_issuer: ConationApiTokenIssuer::new_testing("test.conation.dev"),
         };
 
         let token = create_test_jwt(
@@ -428,7 +431,7 @@ CwIDAQAB
 
         let result = match result {
             JwtToken::MacroAccessToken(token) => token,
-            _ => panic!("expected macro-access-token"),
+            _ => panic!("expected Conation access token"),
         };
 
         assert_eq!(result.aud, "test_audience");
@@ -443,14 +446,14 @@ CwIDAQAB
             issuer: Issuer::new_testing("test.macro.com"),
             jwt_secret: LocalOrRemoteSecret::Local(JwtSecretKey::new_testing("super_secret_key")),
             conation_api_token_public_key: LocalOrRemoteSecret::Local(
-                MacroApiTokenPublicKey::new_testing(PUBLIC_KEY),
+                ConationApiTokenPublicKey::new_testing(PUBLIC_KEY),
             ),
-            conation_api_token_issuer: MacroApiTokenIssuer::new_testing("test.macro.com"),
+            conation_api_token_issuer: ConationApiTokenIssuer::new_testing("test.conation.dev"),
         };
 
         let token = create_test_conation_api_token_jwt(
-            "test.macro.com",
-            "macro|test@macro.com",
+            "test.conation.dev",
+            "conation|test@macro.com",
             "fusionauth_user_id",
             None,
             PRIVATE_KEY,
@@ -460,8 +463,8 @@ CwIDAQAB
         let result = handler(&jwt_validation_args, &token)?;
 
         let result = match result {
-            JwtToken::MacroApiToken(token) => token,
-            _ => panic!("expected macro-api-token"),
+            JwtToken::ConationApiToken(token) => token,
+            _ => panic!("expected conation-api-token"),
         };
 
         assert!(!result.fusion_user_id.is_empty());
@@ -476,9 +479,9 @@ CwIDAQAB
             issuer: Issuer::new_testing("test.macro.com"),
             jwt_secret: LocalOrRemoteSecret::Local(JwtSecretKey::new_testing("super_secret_key")),
             conation_api_token_public_key: LocalOrRemoteSecret::Local(
-                MacroApiTokenPublicKey::new_testing(""),
+                ConationApiTokenPublicKey::new_testing(""),
             ),
-            conation_api_token_issuer: MacroApiTokenIssuer::new_testing(""),
+            conation_api_token_issuer: ConationApiTokenIssuer::new_testing(""),
         };
 
         let token = create_test_jwt(
@@ -509,9 +512,9 @@ CwIDAQAB
             issuer: Issuer::new_testing("test.macro.com"),
             jwt_secret: LocalOrRemoteSecret::Local(JwtSecretKey::new_testing("super_secret_key")),
             conation_api_token_public_key: LocalOrRemoteSecret::Local(
-                MacroApiTokenPublicKey::new_testing(""),
+                ConationApiTokenPublicKey::new_testing(""),
             ),
-            conation_api_token_issuer: MacroApiTokenIssuer::new_testing(""),
+            conation_api_token_issuer: ConationApiTokenIssuer::new_testing(""),
         };
 
         let token = create_test_jwt(
@@ -544,9 +547,9 @@ CwIDAQAB
             issuer: Issuer::new_testing("test.macro.com"),
             jwt_secret: LocalOrRemoteSecret::Local(JwtSecretKey::new_testing("super_secret_key")),
             conation_api_token_public_key: LocalOrRemoteSecret::Local(
-                MacroApiTokenPublicKey::new_testing(""),
+                ConationApiTokenPublicKey::new_testing(""),
             ),
-            conation_api_token_issuer: MacroApiTokenIssuer::new_testing(""),
+            conation_api_token_issuer: ConationApiTokenIssuer::new_testing(""),
         };
 
         let token = create_test_jwt(
@@ -579,9 +582,9 @@ CwIDAQAB
             issuer: Issuer::new_testing("test.macro.com"),
             jwt_secret: LocalOrRemoteSecret::Local(JwtSecretKey::new_testing("super_secret_key")),
             conation_api_token_public_key: LocalOrRemoteSecret::Local(
-                MacroApiTokenPublicKey::new_testing(""),
+                ConationApiTokenPublicKey::new_testing(""),
             ),
-            conation_api_token_issuer: MacroApiTokenIssuer::new_testing(""),
+            conation_api_token_issuer: ConationApiTokenIssuer::new_testing(""),
         };
 
         let token = create_test_jwt(
@@ -620,14 +623,14 @@ CwIDAQAB
             issuer: Issuer::new_testing(""),
             jwt_secret: LocalOrRemoteSecret::Local(JwtSecretKey::new_testing("")),
             conation_api_token_public_key: LocalOrRemoteSecret::Local(
-                MacroApiTokenPublicKey::new_testing(PUBLIC_KEY),
+                ConationApiTokenPublicKey::new_testing(PUBLIC_KEY),
             ),
-            conation_api_token_issuer: MacroApiTokenIssuer::new_testing("test.macro.com"),
+            conation_api_token_issuer: ConationApiTokenIssuer::new_testing("test.conation.dev"),
         };
 
         let token = create_test_conation_api_token_jwt(
-            "test.macro.com",
-            "macro|test@macro.com",
+            "test.conation.dev",
+            "conation|test@macro.com",
             "fusionauth_user_id",
             None,
             PRIVATE_KEY,
@@ -641,7 +644,7 @@ CwIDAQAB
             &jwt_validation_args.conation_api_token_issuer,
         )?;
 
-        assert_eq!(result.conation_user_id, "macro|test@macro.com");
+        assert_eq!(result.macro_user_id, "conation|test@macro.com");
 
         Ok(())
     }
@@ -653,14 +656,14 @@ CwIDAQAB
             issuer: Issuer::new_testing(""),
             jwt_secret: LocalOrRemoteSecret::Local(JwtSecretKey::new_testing("")),
             conation_api_token_public_key: LocalOrRemoteSecret::Local(
-                MacroApiTokenPublicKey::new_testing(PUBLIC_KEY),
+                ConationApiTokenPublicKey::new_testing(PUBLIC_KEY),
             ),
-            conation_api_token_issuer: MacroApiTokenIssuer::new_testing("test.macro.com"),
+            conation_api_token_issuer: ConationApiTokenIssuer::new_testing("test.conation.dev"),
         };
 
         let token = create_test_conation_api_token_jwt(
             "bad.macro.com",
-            "macro|test@macro.com",
+            "conation|test@macro.com",
             "fusionauth_user_id",
             None,
             PRIVATE_KEY,
@@ -688,14 +691,14 @@ CwIDAQAB
             issuer: Issuer::new_testing(""),
             jwt_secret: LocalOrRemoteSecret::Local(JwtSecretKey::new_testing("")),
             conation_api_token_public_key: LocalOrRemoteSecret::Local(
-                MacroApiTokenPublicKey::new_testing(PUBLIC_KEY),
+                ConationApiTokenPublicKey::new_testing(PUBLIC_KEY),
             ),
-            conation_api_token_issuer: MacroApiTokenIssuer::new_testing("test.macro.com"),
+            conation_api_token_issuer: ConationApiTokenIssuer::new_testing("test.conation.dev"),
         };
 
         let token = create_test_conation_api_token_jwt(
-            "test.macro.com",
-            "macro|test@macro.com",
+            "test.conation.dev",
+            "conation|test@macro.com",
             "fusionauth_user_id",
             None,
             PRIVATE_KEY,

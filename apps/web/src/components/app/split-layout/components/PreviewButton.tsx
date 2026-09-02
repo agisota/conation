@@ -61,7 +61,7 @@ export function PreviewButton(
     <Show when={!isViewer()}>
       <Tooltip
         hotkey={canEngage() ? TOKENS.unifiedList.togglePreview : undefined}
-        label={canEngage() ? 'Preview' : unavailableLabel()}
+        label={canEngage() ? t('shell.split.preview') : unavailableLabel()}
       >
         <Button
           onClick={togglePreview}
@@ -70,11 +70,11 @@ export function PreviewButton(
           depth={2}
           class="bg-surface"
           disabled={!canEngage()}
-          aria-label={props.hideLabel ? 'Preview' : undefined}
+          aria-label={props.hideLabel ? t('shell.split.preview') : undefined}
         >
           {isController() ? <EyeSlashIcon /> : <EyeIcon />}
           <Show when={!props.hideLabel}>
-            <span>{t('auto.preview')}</span>
+            <span>{t('shell.split.preview')}</span>
           </Show>
         </Button>
       </Tooltip>

@@ -1,5 +1,5 @@
-import { usePreference } from '@app/preferences/use-preference';
 import { t } from '@app/lib/i18n';
+import { usePreference } from '@app/preferences/use-preference';
 import { Resize, ResizeZoneContext } from '@core/component/Resize/Resize';
 import { TOKENS } from '@core/hotkey/tokens';
 import { isMobile } from '@core/mobile/isMobile';
@@ -58,7 +58,7 @@ function createWideOpenState(
   defaultOpen: boolean
 ): [Accessor<boolean>, Setter<boolean>] {
   if (persistKey === undefined) return createSignal(defaultOpen);
-  return usePreference(`macro:pref:side-panel:open:${persistKey}`, {
+  return usePreference(`conation:pref:side-panel:open:${persistKey}`, {
     default: defaultOpen,
   });
 }
@@ -233,7 +233,9 @@ function SidePanelLayoutInner(
                   class="gap-2 px-2 text-ink-muted"
                   onClick={() => props.setIsOpen(false)}
                 >
-                  <ArrowLeft class="size-4" />{t('auto.back_to_content')}</Button>
+                  <ArrowLeft class="size-4" />
+                  {t('shell.split.backToContent')}
+                </Button>
               </div>
               <SidePanelOutlet
                 sections={props.sections}

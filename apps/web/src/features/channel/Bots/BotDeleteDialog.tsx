@@ -1,5 +1,5 @@
-import TrashIcon from '@phosphor/trash.svg';
 import { t } from '@app/lib/i18n';
+import TrashIcon from '@phosphor/trash.svg';
 import { Button, Dialog, Surface } from '@ui';
 
 export function BotDeleteDialog(props: {
@@ -19,13 +19,14 @@ export function BotDeleteDialog(props: {
       <Surface depth={2} class="rounded-xl text-ink">
         <div class="border-b border-edge-muted px-5 py-3">
           <Dialog.Title class="text-sm font-semibold">
-            Delete {props.botName ?? 'bot'}?
+            {t('channel.bots.delete.confirmTitle', {
+              name: props.botName ?? t('channel.bots.botFallbackName'),
+            })}
           </Dialog.Title>
         </div>
         <div class="flex flex-col gap-4 p-5">
           <Dialog.Description class="text-sm leading-5 text-ink-muted">
-            This removes the bot from every channel and disables its webhook
-            URLs. This action cannot be undone.
+            {t('channel.bots.delete.description')}
           </Dialog.Description>
           <div class="flex justify-end gap-2">
             <Button
@@ -34,7 +35,9 @@ export function BotDeleteDialog(props: {
               size="sm"
               disabled={props.pending}
               onClick={props.onClose}
-            >{t('common.cancel')}</Button>
+            >
+              {t('common.cancel')}
+            </Button>
             <Button
               type="button"
               variant="danger"
@@ -43,7 +46,9 @@ export function BotDeleteDialog(props: {
               onClick={props.onConfirm}
             >
               <TrashIcon />
-              {props.pending ? 'Deleting…' : 'Delete bot'}
+              {props.pending
+                ? t('channel.bots.delete.deleting')
+                : t('channel.bots.delete.submit')}
             </Button>
           </div>
         </div>

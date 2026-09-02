@@ -6,7 +6,7 @@ VALUES
 INSERT INTO
     public."User" (id, email, macro_user_id)
 VALUES
-    ('macro|user@user.com', 'testuser@test.com', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'::uuid);
+    ('conation|user@user.com', 'testuser@test.com', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'::uuid);
 
 INSERT INTO
     public.macro_user (id, username, email, stripe_customer_id)
@@ -16,13 +16,13 @@ VALUES
 INSERT INTO
     public."User" (id, email, macro_user_id)
 VALUES
-    ('macro|sharer@user.com', 'sharer@test.com', '99999999-9999-9999-9999-999999999999'::uuid);
+    ('conation|sharer@user.com', 'sharer@test.com', '99999999-9999-9999-9999-999999999999'::uuid);
 
 INSERT INTO
     public.github_links (id, macro_id, fusionauth_user_id, github_username, github_user_id) (
         SELECT
             'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'::uuid,
-            'macro|user@user.com',
+            'conation|user@user.com',
             'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'::uuid,
             'testuser',
             '12345'

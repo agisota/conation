@@ -28,6 +28,14 @@ fn publish_job_pushes_amd64_ghcr_tags() {
     );
     assert!(yaml.contains("--platform linux/amd64 \\"), "{yaml}");
     assert!(
+        yaml.contains("--secret id=github_token,env=GITHUB_TOKEN \\"),
+        "{yaml}"
+    );
+    assert!(
+        yaml.contains("--build-arg CONATION_REPO_URL=https://github.com/agisota/conation.git \\"),
+        "{yaml}"
+    );
+    assert!(
         !yaml.contains("linux/arm64"),
         "GHCR stays amd64; local stacks bake native: {yaml}"
     );

@@ -40,7 +40,7 @@ describe('parseRecording', () => {
       LINE({
         ts: '2026-01-01T00:00:00.000Z',
         createdAt: '2026-02-02T00:00:00.000Z',
-        userId: 'macro|someone@example.com',
+        userId: 'conation|someone@example.com',
         direction: 'to_server',
         content: { type: 'event', event: 'acp_ready' },
       })
@@ -48,7 +48,7 @@ describe('parseRecording', () => {
 
     expect(entry).toMatchObject({
       createdAt: '2026-02-02T00:00:00.000Z',
-      userId: 'macro|someone@example.com',
+      userId: 'conation|someone@example.com',
     });
   });
 

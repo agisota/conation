@@ -20,8 +20,8 @@ use std::sync::{Arc, Mutex, OnceLock};
 
 use ai_toolset::{RequestContext, SearchableTool};
 use ai_usage::{UsageContext, UsageRecorder};
+use conation_env_var::{env_var, maybe_env_var};
 use futures::StreamExt;
-use conation_env_var::env_var;
 use rig_agent::agent::{Agent, AgentBuilder, MultiTurnStreamItem};
 use rig_agent::streaming::StreamingPrompt;
 use rig_agent::tool::server::ToolServerHandle;
@@ -39,12 +39,23 @@ use crate::hook::{RegisterFn, StreamBridge, ToolRouter};
 use crate::stream::{ChatCompletionStream, StreamPart};
 
 env_var! {
-    struct ApiKeys {
-        AnthropicApiKey,
-        OpenaiApiKey,
-        CerebrasApiKey,
-        RoxApiKey
-    }
+    struct RoxApiKey;
+}
+
+maybe_env_var! {
+    struct RoxModelFallbackChain;
+}
+
+maybe_env_var! {
+    struct AnthropicApiKey;
+}
+
+maybe_env_var! {
+    struct OpenaiApiKey;
+}
+
+maybe_env_var! {
+    struct CerebrasApiKey;
 }
 
 /// Provider segment for native Anthropic.
@@ -61,8 +72,64 @@ const CEREBRAS_BASE_URL: &str = "https://api.cerebras.ai/v1";
 const ROX_PROVIDER: &str = "rox";
 /// Rox inference endpoint (OpenAI-compatible Chat Completions API).
 const ROX_BASE_URL: &str = "https://api.rox.one/v1";
-/// Default model for Conation — rox/gpt-5.6-terra
-pub const DEFAULT_ROX_MODEL: &str = "rox/gpt-5.6-terra";
+/// Default Rox/OmniRoute model sequence for Conation.
+pub const DEFAULT_ROX_MODEL_CHAIN: &[&str] = &[
+    "rox/gemini-2.5-flash",
+    "rox/nemotron-3-ultra",
+    "rox/gpt-5.6-luna",
+];
+/// First model in the default Conation sequence.
+pub const DEFAULT_ROX_MODEL: &str = DEFAULT_ROX_MODEL_CHAIN[0];
+
+/// What the server should do with a model failure before any output escaped.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum FailureDisposition {
+    /// The request/configuration is invalid or unauthorized; surface it.
+    Stop,
+    /// Retry the same model once, then continue down the fallback chain.
+    RetryThenFallback,
+    /// Skip directly to the next configured model.
+    Fallback,
+}
+
+/// Classify provider failures without relying on provider-specific message text.
+pub(crate) fn classify_failure(error: &AgentError) -> FailureDisposition {
+    if error.was_cancelled() {
+        return FailureDisposition::Stop;
+    }
+    let Some(completion) = error.completion_error() else {
+        return FailureDisposition::Stop;
+    };
+
+    if let Some(status) = completion.provider_response_status() {
+        return classify_status(status.as_u16());
+    }
+
+    match completion {
+        // No status means the request did not receive a usable HTTP response.
+        rig_core::completion::CompletionError::HttpError(_)
+        | rig_core::completion::CompletionError::ProviderError(_) => {
+            FailureDisposition::RetryThenFallback
+        }
+        // A provider answered but its response could not be consumed. A second
+        // model may still satisfy the same provider-neutral request.
+        rig_core::completion::CompletionError::ResponseError(_)
+        | rig_core::completion::CompletionError::JsonError(_)
+        | rig_core::completion::CompletionError::ProviderResponse(_) => {
+            FailureDisposition::Fallback
+        }
+        _ => FailureDisposition::Stop,
+    }
+}
+
+/// Classify an HTTP response without coupling tests to a concrete HTTP client.
+pub(crate) fn classify_status(status: u16) -> FailureDisposition {
+    match status {
+        404 | 422 => FailureDisposition::Fallback,
+        408 | 409 | 425 | 429 | 500..=599 => FailureDisposition::RetryThenFallback,
+        _ => FailureDisposition::Stop,
+    }
+}
 
 /// A routed model id bound to the provider client that serves it.
 pub(crate) enum RoutedModel<'a> {
@@ -87,36 +154,36 @@ impl<'a> RoutedModel<'a> {
         match self {
             RoutedModel::Anthropic(m) => {
                 let thinking = m.thinking_params();
-                ProviderAgent::Anthropic(build_agent(
+                ProviderAgent::Anthropic(Arc::new(build_agent(
                     m.completion(),
                     thinking,
                     handle,
                     system_prompt,
                     max_turns,
                     max_tokens,
-                ))
+                )))
             }
             RoutedModel::OpenAiChatCompletions(m) => {
                 let thinking = m.thinking_params();
-                ProviderAgent::OpenAiChatCompletions(build_agent(
+                ProviderAgent::OpenAiChatCompletions(Arc::new(build_agent(
                     m.completion(),
                     thinking,
                     handle,
                     system_prompt,
                     max_turns,
                     max_tokens,
-                ))
+                )))
             }
             RoutedModel::OpenAiResponses(m) => {
                 let thinking = m.thinking_params();
-                ProviderAgent::OpenAiResponses(build_agent(
+                ProviderAgent::OpenAiResponses(Arc::new(build_agent(
                     m.completion(),
                     thinking,
                     handle,
                     system_prompt,
                     max_turns,
                     max_tokens,
-                ))
+                )))
             }
         }
     }
@@ -128,17 +195,27 @@ impl<'a> RoutedModel<'a> {
 /// that behind one concrete [`ChatCompletionStream`], so callers never match.
 ///
 /// [`run_stream`]: ProviderAgent::run_stream
+#[derive(Clone)]
 pub(crate) enum ProviderAgent {
     /// An agent over Anthropic's native completion model.
-    Anthropic(Agent<anthropic::completion::CompletionModel>),
+    Anthropic(Arc<Agent<anthropic::completion::CompletionModel>>),
     /// An agent over the OpenAI Chat Completions model.
-    OpenAiChatCompletions(Agent<openai::completion::CompletionModel>),
+    OpenAiChatCompletions(Arc<Agent<openai::completion::CompletionModel>>),
     /// An agent over the OpenAI Responses model.
-    OpenAiResponses(Agent<openai::responses_api::ResponsesCompletionModel>),
+    OpenAiResponses(Arc<Agent<openai::responses_api::ResponsesCompletionModel>>),
+    /// Ordered server-side retry/fallback sequence.
+    Fallback(Arc<[FallbackCandidate]>),
     /// A test-only agent over an arbitrary completion model (e.g. a scripted
     /// fake), type-erased so the enum itself stays non-generic.
     #[cfg(test)]
-    Test(Box<dyn DynStreamAgent>),
+    Test(Arc<dyn DynStreamAgent>),
+}
+
+/// One concrete agent in an ordered fallback sequence.
+#[derive(Clone)]
+pub(crate) struct FallbackCandidate {
+    model: String,
+    agent: ProviderAgent,
 }
 
 impl ProviderAgent {
@@ -207,6 +284,18 @@ impl ProviderAgent {
                 )
                 .await
             }
+            ProviderAgent::Fallback(candidates) => fallback_stream(
+                candidates.clone(),
+                prompt,
+                history,
+                max_turns,
+                routing,
+                loaded_buffer,
+                register_loaded,
+                recorder,
+                usage_ctx,
+                request_context,
+            ),
             #[cfg(test)]
             ProviderAgent::Test(agent) => {
                 agent
@@ -237,8 +326,11 @@ impl ProviderAgent {
 #[derive(Clone)]
 pub struct ModelRouter {
     anthropic: Arc<anthropic::Client>,
+    anthropic_configured: bool,
     openai: Arc<openai::Client>,
+    openai_configured: bool,
     openai_compatible: HashMap<String, Arc<openai::CompletionsClient>>,
+    fallback_chain: Arc<[String]>,
 }
 
 impl ModelRouter {
@@ -247,51 +339,81 @@ impl ModelRouter {
     pub fn new(anthropic: anthropic::Client, openai: openai::Client) -> Self {
         Self {
             anthropic: Arc::new(anthropic),
+            anthropic_configured: true,
             openai: Arc::new(openai),
+            openai_configured: true,
             openai_compatible: HashMap::new(),
+            fallback_chain: DEFAULT_ROX_MODEL_CHAIN
+                .iter()
+                .map(|model| (*model).to_owned())
+                .collect::<Vec<_>>()
+                .into(),
         }
     }
 
     /// Build a router with the built-in providers from the environment.
     ///
-    /// Requires `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `CEREBRAS_API_KEY`, `ROX_API_KEY`.
-    /// Rox is the default provider for Conation (https://api.rox.one/v1).
+    /// Requires `ROX_API_KEY`. `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, and
+    /// `CEREBRAS_API_KEY` are optional and only arm their explicitly selected
+    /// providers. Rox is the default provider for Conation
+    /// (`https://api.rox.one/v1`).
     /// Chain [`with_openai_provider`](Self::with_openai_provider) to add more.
     pub fn try_from_env() -> Result<Self, AgentError> {
-        let env = ApiKeys::new()?;
+        let rox_key = RoxApiKey::new()?;
+        let anthropic_key = AnthropicApiKey::new();
+        let anthropic_configured = anthropic_key.is_some();
         let anthropic = anthropic::Client::builder()
-            .api_key(env.anthropic_api_key.to_string())
+            .api_key(
+                anthropic_key
+                    .as_ref()
+                    .map(|key| key.as_ref().to_owned())
+                    .unwrap_or_else(|| "unconfigured-anthropic-key".to_owned()),
+            )
             .build()?;
         // Default base URL is api.openai.com; OpenAI's GPT models use
         // Responses API so reasoning models get max_output_tokens.
+        let openai_key = OpenaiApiKey::new();
+        let openai_configured = openai_key.is_some();
         let openai = openai::Client::builder()
-            .api_key(env.openai_api_key.to_string())
+            .api_key(
+                openai_key
+                    .as_ref()
+                    .map(|key| key.as_ref().to_owned())
+                    .unwrap_or_else(|| "unconfigured-openai-key".to_owned()),
+            )
             .build()?;
         // Rox speaks the OpenAI Chat Completions API — default for Conation (conation.dev)
-        let rox_key = env.rox_api_key.to_string();
-        let with_rox = if rox_key.is_empty() || rox_key == "local-rox-key" {
+        let rox_key = rox_key.to_string();
+        let mut with_rox = if rox_key.is_empty() || rox_key == "local-rox-key" {
             // Allow boot without real Rox key — default_model will still route to rox/* ids
-            // but calls will fail with auth error until user provides key.
-            // Register with dummy key to enable routing; actual key comes from per-request header.
+            // but calls fail with an authentication error until the deployment
+            // provides its server-side ROX_API_KEY.
             Self::new(anthropic, openai).with_openai_provider(
                 ROX_PROVIDER,
                 ROX_BASE_URL,
                 "dummy-rox-key-for-routing",
             )
         } else {
-            Self::new(anthropic, openai).with_openai_provider(
-                ROX_PROVIDER,
-                ROX_BASE_URL,
-                &rox_key,
-            )
+            Self::new(anthropic, openai).with_openai_provider(ROX_PROVIDER, ROX_BASE_URL, &rox_key)
         }?;
+        // A missing optional native-provider key must make that route
+        // unavailable. Otherwise an explicitly selected model would send the
+        // user's prompt to a provider with a dummy credential before failing.
+        with_rox.anthropic_configured = anthropic_configured;
+        with_rox.openai_configured = openai_configured;
         // Cerebras speaks the OpenAI Chat Completions API, so it rides the
-        // compatible-provider registry: `cerebras/<model>` ids route to it.
-        with_rox.with_openai_provider(
-            CEREBRAS_PROVIDER,
-            CEREBRAS_BASE_URL,
-            &env.cerebras_api_key,
-        )
+        // compatible-provider registry when explicitly configured.
+        let router = match CerebrasApiKey::new() {
+            Some(key) => {
+                with_rox.with_openai_provider(CEREBRAS_PROVIDER, CEREBRAS_BASE_URL, key.as_ref())?
+            }
+            None => with_rox,
+        };
+
+        match RoxModelFallbackChain::new() {
+            Some(raw) => router.with_fallback_chain(parse_fallback_chain(raw.as_ref())?),
+            None => Ok(router),
+        }
     }
 
     /// The process-wide full router, built from the environment on first use.
@@ -342,6 +464,20 @@ impl ModelRouter {
         Ok(self.with_openai_client(provider, client))
     }
 
+    /// Override the ordered model sequence used for default Rox requests.
+    pub fn with_fallback_chain(mut self, models: Vec<String>) -> Result<Self, AgentError> {
+        if models.is_empty() {
+            return Err(AgentError::Other(anyhow::anyhow!(
+                "Rox fallback chain must contain at least one model"
+            )));
+        }
+        for model in &models {
+            Model::try_from(model.as_str())?;
+        }
+        self.fallback_chain = models.into();
+        Ok(self)
+    }
+
     /// Route + build the agent in one step, falling back to the default model on
     /// an unroutable id.
     pub(crate) fn agent(
@@ -352,8 +488,29 @@ impl ModelRouter {
         max_turns: usize,
         max_tokens: u64,
     ) -> ProviderAgent {
-        self.route_or_default(model)
-            .into_agent(handle, system_prompt, max_turns, max_tokens)
+        let mut candidates = self
+            .candidate_model_ids(model)
+            .into_iter()
+            .filter_map(|model| {
+                let routed = self.route(&model).ok()?;
+                let prompt = format!(
+                    "{system_prompt}\n\nThe model currently serving this request is {model}. \
+                     Trust this exact id when identifying yourself."
+                );
+                Some(FallbackCandidate {
+                    model: model.clone(),
+                    agent: routed.into_agent(handle.clone(), &prompt, max_turns, max_tokens),
+                })
+            })
+            .collect::<Vec<_>>();
+
+        match candidates.len() {
+            0 => self
+                .default_model()
+                .into_agent(handle, system_prompt, max_turns, max_tokens),
+            1 => candidates.pop().expect("one candidate").agent,
+            _ => ProviderAgent::Fallback(candidates.into()),
+        }
     }
 
     /// Route a `provider/model` id to the provider that serves it.
@@ -363,13 +520,13 @@ impl ModelRouter {
     pub(crate) fn route<'a>(&self, model: &'a str) -> Result<RoutedModel<'a>, AgentError> {
         let parsed = Model::try_from(model)?;
 
-        if parsed.provider() == ANTHROPIC_PROVIDER {
+        if parsed.provider() == ANTHROPIC_PROVIDER && self.anthropic_configured {
             return Ok(RoutedModel::Anthropic(AnthropicModel::new(
                 parsed,
                 self.anthropic.clone(),
             )));
         }
-        if parsed.provider() == OPENAI_PROVIDER {
+        if parsed.provider() == OPENAI_PROVIDER && self.openai_configured {
             return Ok(RoutedModel::OpenAiResponses(OpenAiResponsesModel::new(
                 parsed,
                 self.openai.clone(),
@@ -384,12 +541,22 @@ impl ModelRouter {
         Err(AgentError::UnknownModel(model.to_string()))
     }
 
-    /// Route `model`, falling back to the default model on an unroutable id.
-    pub(crate) fn route_or_default<'a>(&self, model: &'a str) -> RoutedModel<'a> {
-        self.route(model).unwrap_or_else(|_| self.default_model())
+    /// Ordered ids to try for `requested`.
+    pub(crate) fn candidate_model_ids(&self, requested: &str) -> Vec<String> {
+        if let Some(position) = self
+            .fallback_chain
+            .iter()
+            .position(|candidate| candidate == requested)
+        {
+            return self.fallback_chain[position..].to_vec();
+        }
+        if self.route(requested).is_ok() {
+            return vec![requested.to_owned()];
+        }
+        self.fallback_chain.to_vec()
     }
 
-    /// The fallback model: Conation default — Rox gpt-5.6-terra.
+    /// The fallback model: Conation default — Rox Gemini 2.5 Flash.
     /// Falls back to Anthropic Smart if Rox not registered (e.g. missing key).
     fn default_model(&self) -> RoutedModel<'static> {
         // Try Rox first — the Conation default.
@@ -397,9 +564,9 @@ impl ModelRouter {
             let client = Arc::clone(client);
             // Parse DEFAULT_ROX_MODEL via Model::try_from to get bare id
             if let Ok(parsed) = Model::try_from(DEFAULT_ROX_MODEL) {
-                return RoutedModel::OpenAiChatCompletions(
-                    OpenAiChatCompletionsModel::new(parsed, client),
-                );
+                return RoutedModel::OpenAiChatCompletions(OpenAiChatCompletionsModel::new(
+                    parsed, client,
+                ));
             }
         }
         // Fallback to Anthropic Smart
@@ -408,6 +575,111 @@ impl ModelRouter {
             self.anthropic.clone(),
         ))
     }
+}
+
+fn parse_fallback_chain(raw: &str) -> Result<Vec<String>, AgentError> {
+    let models = raw
+        .split(',')
+        .map(str::trim)
+        .filter(|model| !model.is_empty())
+        .map(str::to_owned)
+        .collect::<Vec<_>>();
+    if models.is_empty() {
+        return Err(AgentError::Other(anyhow::anyhow!(
+            "ROX_MODEL_FALLBACK_CHAIN must contain comma-separated provider/model ids"
+        )));
+    }
+    for model in &models {
+        Model::try_from(model.as_str())?;
+    }
+    Ok(models)
+}
+
+pub(crate) const MAX_SAME_MODEL_RETRIES: usize = 1;
+
+/// Consume candidates in order, retrying only before any observable output.
+#[allow(clippy::too_many_arguments)]
+fn fallback_stream(
+    candidates: Arc<[FallbackCandidate]>,
+    prompt: Message,
+    history: Vec<Message>,
+    max_turns: usize,
+    routing: ToolRouter,
+    loaded_buffer: Arc<Mutex<Vec<SearchableTool>>>,
+    register_loaded: RegisterFn,
+    recorder: Arc<dyn UsageRecorder>,
+    usage_ctx: UsageContext,
+    request_context: RequestContext,
+) -> ChatCompletionStream<'static> {
+    Box::pin(async_stream::stream! {
+        let mut final_error = None;
+
+        for candidate in candidates.iter() {
+            let mut retries = 0;
+            'attempt: loop {
+                let mut stream = candidate
+                    .agent
+                    .run_stream(
+                        prompt.clone(),
+                        history.clone(),
+                        max_turns,
+                        routing.clone(),
+                        loaded_buffer.clone(),
+                        register_loaded.clone(),
+                        recorder.clone(),
+                        usage_ctx.clone(),
+                        candidate.model.clone(),
+                        request_context.clone(),
+                    )
+                    .await;
+                let mut emitted = false;
+
+                while let Some(item) = stream.next().await {
+                    match item {
+                        Ok(part) => {
+                            emitted = true;
+                            yield Ok(part);
+                        }
+                        Err(error) if emitted => {
+                            yield Err(error);
+                            return;
+                        }
+                        Err(error) => {
+                            let disposition = classify_failure(&error);
+                            tracing::warn!(
+                                model = %candidate.model,
+                                ?disposition,
+                                "model failed before producing output"
+                            );
+                            final_error = Some(error);
+                            match disposition {
+                                FailureDisposition::RetryThenFallback
+                                    if retries < MAX_SAME_MODEL_RETRIES =>
+                                {
+                                    retries += 1;
+                                    continue 'attempt;
+                                }
+                                FailureDisposition::RetryThenFallback
+                                | FailureDisposition::Fallback => break 'attempt,
+                                FailureDisposition::Stop => {
+                                    yield Err(final_error.take().expect("failure was recorded"));
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // A normally exhausted stream is success, even if the provider
+                // returned no content. Never invent a retry without an error.
+                return;
+            }
+        }
+
+        if let Some(error) = final_error {
+            yield Err(error);
+        }
+    })
 }
 
 /// Build a rig agent from a completion model and per-session config.
@@ -619,7 +891,7 @@ impl ProviderAgent {
         M: CompletionModel + 'static,
         M::StreamingResponse: GetTokenUsage + Send + Sync,
     {
-        ProviderAgent::Test(Box::new(build_agent(
+        ProviderAgent::Test(Arc::new(build_agent(
             model,
             None,
             handle,

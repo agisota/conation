@@ -12,15 +12,15 @@ use axum::{
     response::IntoResponse,
     routing::{delete, get, patch, post},
 };
+use conation_authorization::{
+    MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
+};
+use conation_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::{
     models::{AccessError, AnyEntityPermission, EntityAccessReceipt, OwnerAccessLevel},
     ports::EntityAccessService,
 };
 use entity_access::inbound::axum_extractors::ReminderAccessExtractor;
-use conation_authorization::{
-    MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
-};
-use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::{Entity, EntityType};
 use model_error_response::ErrorResponse;
 use serde::Deserialize;
@@ -277,7 +277,7 @@ where
     };
     let page = state
         .service
-        .list_reminders(&user.authorization.user.conation_user_id, filter)
+        .list_reminders(&user.authorization.user.macro_user_id, filter)
         .await?;
     Ok(Json(RemindersList {
         reminders: page.reminders,
@@ -321,7 +321,7 @@ where
         entity_id,
         schedule,
     } = req;
-    let user_id = &user.authorization.user.conation_user_id;
+    let user_id = &user.authorization.user.macro_user_id;
     // Organization channels grant access by matching org, so the org must be
     // carried through or a member of one reads as a non-participant.
     let user_org_id = user

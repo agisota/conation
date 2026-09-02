@@ -4,7 +4,7 @@ use model::{
 };
 use models_bulk_upload::{MarkProjectUploadedRequest, MarkProjectUploadedResponse};
 
-use crate::constants::MACRO_INTERNAL_USER_ID_HEADER_KEY;
+use crate::constants::INTERNAL_CONATION_USER_ID_HEADER;
 
 use super::DocumentStorageServiceClient;
 
@@ -30,7 +30,7 @@ impl DocumentStorageServiceClient {
         let response = self
             .client
             .post(&url)
-            .header(MACRO_INTERNAL_USER_ID_HEADER_KEY, user_id)
+            .header(INTERNAL_CONATION_USER_ID_HEADER, user_id)
             .json(&request)
             .send()
             .await?;
@@ -73,7 +73,7 @@ impl DocumentStorageServiceClient {
         let response = self
             .client
             .post(&url)
-            .header(MACRO_INTERNAL_USER_ID_HEADER_KEY, user_id)
+            .header(INTERNAL_CONATION_USER_ID_HEADER, user_id)
             .json(&request)
             .send()
             .await?;

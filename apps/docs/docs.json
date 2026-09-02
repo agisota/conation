@@ -1,33 +1,21 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "maple",
-  "name": "Macro",
-  "appearance": {
-    "default": "dark",
-    "strict": true
-  },
-  "colors": {
-    "primary": "#ff8f05",
-    "light": "#ff8f05",
-    "dark": "#ff8f05"
-  },
-  "background": {
-    "color": {
-      "dark": "#090909"
-    }
-  },
+  "name": "Conation",
+  "appearance": { "default": "dark", "strict": true },
+  "colors": { "primary": "#a8adb6", "light": "#4b5563", "dark": "#d1d5db" },
+  "background": { "color": { "dark": "#090909" } },
   "favicon": {
-    "light": "/favicon.svg",
-    "dark": "/favicon.svg"
+    "light": "/brand/conation-favicon.png",
+    "dark": "/brand/conation-favicon.png"
   },
   "navigation": {
     "pages": [
       "index",
       "getting-started",
-      "switch-to-macro",
       "apps",
       {
-        "group": "Features",
+        "group": "Возможности",
         "pages": [
           "product/inbox",
           "product/search",
@@ -36,7 +24,7 @@
         ]
       },
       {
-        "group": "Blocks",
+        "group": "Блоки",
         "pages": [
           "product/agents",
           "product/email",
@@ -51,7 +39,7 @@
         ]
       },
       {
-        "group": "Key Concepts",
+        "group": "Основные понятия",
         "pages": [
           "concepts/blocks",
           "concepts/mentions",
@@ -60,13 +48,13 @@
         ]
       },
       {
-        "group": "Agents",
+        "group": "Агенты",
         "pages": [
           "AI/recipes",
           "AI/bring-your-own",
           "AI/mcp/overview",
           {
-            "group": "Tool Reference",
+            "group": "Справочник инструментов",
             "icon": "wrench",
             "pages": [
               "AI/mcp/tools/index",
@@ -146,32 +134,18 @@
           }
         ]
       },
+      { "group": "Интеграции", "pages": ["integrations/github"] },
       {
-        "group": "Integrations",
-        "pages": [
-          "integrations/github"
-        ]
-      },
-      {
-        "group": "Account",
-        "pages": [
-          "account/teams",
-          "account/billing",
-          "security"
-        ]
+        "group": "Аккаунт",
+        "pages": ["account/teams", "account/billing", "security"]
       },
       "support",
       "faq",
       "keyboard-shortcuts",
       {
-        "group": "Changelog",
+        "group": "История изменений",
         "pages": [
-          {
-            "group": "Releases",
-            "pages": [
-              "changelog/introduction"
-            ]
-          },
+          { "group": "Релизы", "pages": ["changelog/introduction"] },
           {
             "group": "2026",
             "pages": [
@@ -182,12 +156,7 @@
               "changelog/2026-01"
             ]
           },
-          {
-            "group": "2025",
-            "pages": [
-              "changelog/2025-12"
-            ]
-          }
+          { "group": "2025", "pages": ["changelog/2025-12"] }
         ]
       }
     ]
@@ -195,13 +164,13 @@
   "navbar": {
     "primary": {
       "type": "button",
-      "label": "Get Macro",
-      "href": "https://macro.com"
+      "label": "Начать работу",
+      "href": "/getting-started"
     }
   },
-  "description": "Product and technical documentation for Macro, the unified interface for email, messages, tasks, calls, agents, pull requests, docs, CRM — linked together with shared AI memory.",
+  "description": "Пользовательская и техническая документация Conation — русскоязычного рабочего пространства для документов, сообщений, задач, почты и AI-инструментов.",
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "light": "/brand/conation-app-icon-master-v1.png",
+    "dark": "/brand/conation-combined-lockup-master-v1.png"
   }
 }

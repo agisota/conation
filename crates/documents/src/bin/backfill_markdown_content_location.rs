@@ -4,6 +4,8 @@ use std::time::Duration;
 
 use anyhow::Context as _;
 use clap::Parser;
+use conation_env_var::env_vars;
+use conation_service_urls::{LexicalServiceUrl, SyncServiceUrl};
 use documents::domain::markdown_backfill::{
     MarkdownBackfillOptions, MarkdownBackfillReport, MarkdownBackfillService,
     MarkdownBackfillStats, MarkdownObjectReadError, MarkdownObjectReader,
@@ -14,8 +16,6 @@ use documents::outbound::markdown_init::LexicalSyncMarkdownInitializer;
 use documents::outbound::pg_document_repo::PgDocumentRepo;
 use documents::outbound::s3_markdown_source::S3MarkdownObjectReader;
 use lexical_client::LexicalClient;
-use conation_env_var::env_vars;
-use conation_service_urls::{LexicalServiceUrl, SyncServiceUrl};
 use sqlx::postgres::PgPoolOptions;
 use sync_service_client::SyncServiceClient;
 
@@ -189,7 +189,10 @@ async fn build_object_reader(enabled: bool) -> anyhow::Result<OptionalMarkdownOb
         .to_string();
 
     Ok(OptionalMarkdownObjectReader::Enabled(
-        S3MarkdownObjectReader::new(document_storage_bucket, conation_aws_config::s3_client().await),
+        S3MarkdownObjectReader::new(
+            document_storage_bucket,
+            conation_aws_config::s3_client().await,
+        ),
     ))
 }
 

@@ -64,7 +64,7 @@ where
     Router::new()
         .route("/health", get(health))
         .route("/mcp/{slug}", any(mcp_handler::<Service>))
-        .route("/mcp-macro", any(conation_mcp_handler::<Service>))
+        .route("/mcp-conation", any(conation_mcp_handler::<Service>))
         .route(
             "/git/{*path}",
             get(git_handler::<Service>).post(git_handler::<Service>),
@@ -97,7 +97,7 @@ where
     mcp_proxy(state, McpDestination::Connected(slug), request).await
 }
 
-/// Macro's own MCP server, on its own route rather than under `/mcp/{slug}`:
+/// Conation's own MCP server, on its own route rather than under `/mcp/{slug}`:
 /// with no name shared between the built-in server and the owner's connected
 /// apps, no connected app can collide with it.
 #[tracing::instrument(skip_all, err)]
@@ -108,7 +108,7 @@ async fn conation_mcp_handler<Service>(
 where
     Service: EgressService,
 {
-    mcp_proxy(state, McpDestination::Macro, request).await
+    mcp_proxy(state, McpDestination::Conation, request).await
 }
 
 /// One MCP request through the proxy, whichever destination its route named.
@@ -179,7 +179,7 @@ impl IntoResponse for GitRefusal {
         if unauthenticated {
             response.headers_mut().insert(
                 http::header::WWW_AUTHENTICATE,
-                http::HeaderValue::from_static(r#"Basic realm="Macro egress", charset="UTF-8""#),
+                http::HeaderValue::from_static(r#"Basic realm="Conation egress", charset="UTF-8""#),
             );
         }
         response
@@ -268,7 +268,7 @@ impl IntoResponse for EgressError {
             Self::Unroutable(_) => "Nothing is served at that path.",
             Self::UnknownServer(_) => "No such connected MCP server.",
             Self::RepoUnavailable(_) => {
-                "This session's repository is not reachable with Macro's GitHub App."
+                "This session's repository is not reachable with Conation's GitHub App."
             }
             Self::MethodNotAllowed(_) => "That method is not allowed here.",
             Self::InsecureUpstream(_) => "That upstream is misconfigured and cannot be reached.",

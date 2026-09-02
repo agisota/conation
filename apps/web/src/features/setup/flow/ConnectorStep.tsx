@@ -1,4 +1,5 @@
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import type { FeaturedMcpServer } from '@core/component/AI/constant/mcpServers';
 import { usePipedreamMcpFlag } from '@core/pipedream/flag';
 import SpinnerIcon from '@phosphor/spinner-gap.svg';
@@ -84,7 +85,7 @@ export function ConnectorStep(props: {
               </span>
               <span class="ml-auto flex shrink-0 items-center gap-1.5 text-xs text-ink-muted">
                 <SpinnerIcon class="size-3 shrink-0 animate-spin" />
-                Checking…
+                {t('setup.connectors.checking')}
               </span>
             </div>
           </Layer>

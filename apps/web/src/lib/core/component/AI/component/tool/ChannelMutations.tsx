@@ -1,4 +1,5 @@
 import { ItemPreview } from '@core/component/ItemPreview';
+import { macroIdToEmail, tryMacroId } from '@core/user';
 import Hash from '@phosphor-icons/core/regular/hash.svg';
 import PencilSimple from '@phosphor-icons/core/regular/pencil-simple.svg';
 import Users from '@phosphor-icons/core/regular/users.svg';
@@ -47,7 +48,8 @@ function ChannelPreview(props: { channelId: string }) {
 }
 
 function displayParticipant(id: string) {
-  return id.startsWith('macro|') ? id.slice('macro|'.length) : id;
+  const userId = tryMacroId(id);
+  return userId ? macroIdToEmail(userId) : id;
 }
 
 const createChannelHandler = createToolRenderer({

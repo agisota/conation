@@ -56,7 +56,7 @@ pub struct CreateBot {
     pub description: Option<String>,
     /// Optional profile-picture URL.
     #[schemars(
-        description = "Optional URL for the bot profile picture. Pass the URL of an image already uploaded to Macro static files or another reachable image URL."
+        description = "Optional URL for the bot profile picture. Pass the URL of an image already uploaded to Conation static files or another reachable image URL."
     )]
     #[serde(default)]
     pub avatar_url: Option<String>,

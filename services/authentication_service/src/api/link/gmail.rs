@@ -10,7 +10,7 @@ use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_middleware::tracking::ClientIp;
 use conation_user_id::user_id::MacroUserIdStr;
 use model::response::ErrorResponse;
-use roles_and_permissions::domain::model::PermissionId;
+use roles_and_permissions::domain::{access_policy::CONATION_ACCESS_POLICY, model::PermissionId};
 use serde_utils::urlencode::UrlEncoded;
 use url::Url;
 
@@ -60,6 +60,9 @@ pub struct InitGmailLinkResponse {
 /// Error type for init Gmail operations
 #[derive(thiserror::Error, Debug)]
 pub enum InitGmailLinkError {
+    /// Google OAuth is not configured for this deployment.
+    #[error("Google OAuth is not configured")]
+    GoogleOAuthDisabled,
     /// Too many in-progress links
     #[error("too many in progress links")]
     TooManyInProgressLinks,
@@ -78,6 +81,7 @@ impl IntoResponse for InitGmailLinkError {
     fn into_response(self) -> Response {
         let message = self.to_string();
         let status_code: StatusCode = match &self {
+            InitGmailLinkError::GoogleOAuthDisabled => StatusCode::SERVICE_UNAVAILABLE,
             InitGmailLinkError::TooManyInProgressLinks => StatusCode::TOO_MANY_REQUESTS,
             InitGmailLinkError::PaymentRequired => StatusCode::PAYMENT_REQUIRED,
             InitGmailLinkError::InternalError(_) | InitGmailLinkError::IdentityProviderNotFound => {
@@ -129,6 +133,10 @@ pub async fn init_gmail_link_handler(
     ip_context: ClientIp,
     db_permissions: DbPermissionsExtractor,
 ) -> Result<Json<InitGmailLinkResponse>, InitGmailLinkError> {
+    if !ctx.google_oauth_enabled.0 {
+        return Err(InitGmailLinkError::GoogleOAuthDisabled);
+    }
+
     let Query(InitGmailLinkQueryParams {
         original_url,
         scopes,
@@ -139,7 +147,7 @@ pub async fn init_gmail_link_handler(
         db_permissions
             .permissions
             .contains(&PermissionId::ReadProfessionalFeatures.to_string()),
-        || count_accessible_email_inboxes(&ctx.db, &authorization.authorization.user.conation_user_id),
+        || count_accessible_email_inboxes(&ctx.db, &authorization.authorization.user.macro_user_id),
     )
     .await?;
 
@@ -234,19 +242,22 @@ fn google_authorization_url(
     Ok(authorization_url)
 }
 
-#[tracing::instrument(skip(db, conation_user_id), err)]
+#[tracing::instrument(skip(db, macro_user_id), err)]
 async fn count_accessible_email_inboxes(
     db: &sqlx::Pool<sqlx::Postgres>,
-    conation_user_id: &MacroUserIdStr<'static>,
+    macro_user_id: &MacroUserIdStr<'static>,
 ) -> anyhow::Result<i64> {
     let inboxes =
-        email_db_client::links::get::fetch_inboxes_for_conation_id(db, conation_user_id.as_ref()).await?;
+        email_db_client::links::get::fetch_inboxes_for_macro_id(db, macro_user_id.as_ref()).await?;
 
     Ok(inboxes.len() as i64)
 }
 
-/// Enforces the inbox paywall. Free users can connect inboxes until they reach
-/// `FREE_INBOX_LIMIT`; professional users skip the count entirely.
+/// Applies the compatibility inbox-paywall policy.
+///
+/// Conation grants professional features without payment, so current requests
+/// return before querying inbox counts. The legacy limit path stays available
+/// for wire compatibility if a future deployment deliberately changes policy.
 async fn enforce_inbox_paywall<F, Fut>(
     has_professional_features: bool,
     count_connected_inboxes: F,
@@ -255,7 +266,7 @@ where
     F: FnOnce() -> Fut,
     Fut: std::future::Future<Output = anyhow::Result<i64>>,
 {
-    if !has_professional_features {
+    if !CONATION_ACCESS_POLICY.grants_professional_features(has_professional_features) {
         let connected_inbox_count = count_connected_inboxes().await?;
         if connected_inbox_count >= FREE_INBOX_LIMIT {
             return Err(InitGmailLinkError::PaymentRequired);
@@ -311,7 +322,7 @@ impl IntoResponse for GmailLinkStatusError {
             (status = 500, body=ErrorResponse),
         )
     )]
-#[tracing::instrument(skip(ctx, ip_context, authorization), fields(client_ip=%ip_context, user_id=%authorization.authorization.user.conation_user_id), err)]
+#[tracing::instrument(skip(ctx, ip_context, authorization), fields(client_ip=%ip_context, user_id=%authorization.authorization.user.macro_user_id), err)]
 pub async fn check_gmail_link_status_handler(
     State(ctx): State<ApiContext>,
     ip_context: ClientIp,
@@ -320,7 +331,7 @@ pub async fn check_gmail_link_status_handler(
     // Check if the user has an email link in db
     if conation_db_client::email::check_user_email_link(
         &ctx.db,
-        &authorization.authorization.user.conation_user_id,
+        &authorization.authorization.user.macro_user_id,
     )
     .await
     .map_err(GmailLinkStatusError::Internal)?

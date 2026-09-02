@@ -12,15 +12,15 @@ async fn returns_old_deleted_projects_with_owners(pool: Pool<Postgres>) -> anyho
         vec![
             ProjectToDelete {
                 project_id: "p1".to_owned(),
-                user_id: "macro|user@user.com".to_owned(),
+                user_id: "conation|user@user.com".to_owned(),
             },
             ProjectToDelete {
                 project_id: "p2".to_owned(),
-                user_id: "macro|user@user.com".to_owned(),
+                user_id: "conation|user@user.com".to_owned(),
             },
             ProjectToDelete {
                 project_id: "p3".to_owned(),
-                user_id: "macro|user@user.com".to_owned(),
+                user_id: "conation|user@user.com".to_owned(),
             },
         ]
     );

@@ -4,9 +4,9 @@ use axum::Json;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use email::domain::events::{EmailEventOrigin, EmailMacroEvent, ThreadReadMetadata};
 use email_service::pubsub::publish_email_event;
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::response::{EmptyResponse, ErrorResponse};
 use models_email::service::label::system_labels;
 use models_email::service::message::Message;
@@ -171,8 +171,8 @@ pub async fn seen_handler(
         ctx.conation_event_broker.as_ref(),
         &EmailMacroEvent::thread_read(ThreadReadMetadata {
             link_id: link.id,
-            owner: link.conation_id.clone(),
-            actor: Some(link.conation_id.clone()),
+            owner: link.macro_id.clone(),
+            actor: Some(link.macro_id.clone()),
             thread_id,
             is_read: true,
             origin: EmailEventOrigin::UserAction,

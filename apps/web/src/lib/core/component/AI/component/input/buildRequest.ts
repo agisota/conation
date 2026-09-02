@@ -3,7 +3,6 @@ import { analytics } from '@app/lib/analytics';
 import { DEFAULT_MODEL } from '@core/component/AI/constant';
 import { useAdditionalInstructions } from '@core/component/AI/constant/prompts';
 import type { Attachment, Model, ToolSet } from '@core/component/AI/types';
-import { isPaymentError } from '@core/util/handlePaymentError';
 
 import { cognitionApiServiceClient } from '@service-cognition/client';
 import type { ChatMessageStream } from '@service-connection/stream';
@@ -19,7 +18,7 @@ export type ChatSendInput = {
 
 type SendChatMessageResult =
   | { stream: ChatMessageStream; chat_id: string }
-  | { error: true; paymentError?: boolean };
+  | { error: true };
 
 export function useSendChatMessage() {
   const additionalInstructions = useAdditionalInstructions();
@@ -46,9 +45,6 @@ export function useSendChatMessage() {
       additional_instructions: merged,
     });
 
-    if (isPaymentError(response)) {
-      return { error: true, paymentError: true };
-    }
     if (response.isErr()) {
       return { error: true };
     }

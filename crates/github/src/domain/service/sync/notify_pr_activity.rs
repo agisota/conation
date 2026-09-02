@@ -10,9 +10,9 @@
 
 use std::collections::HashSet;
 
+use conation_user_id::user_id::MacroUserIdStr;
 use documents::domain::ports::DocumentService;
 use foreign_entity::domain::ports::ForeignEntityService;
-use conation_user_id::user_id::MacroUserIdStr;
 use model_notifications::{
     GithubPrComment, GithubPrCommentKind, GithubPrMention, GithubPrMentionLocation,
     GithubPrNotificationCommon, GithubPrReview, GithubPrReviewState, GithubReviewRequested,
@@ -65,7 +65,7 @@ impl<
         };
 
         let reviewers = self
-            .conation_users_for_github_user_id(&reviewer_github_user_id)
+            .macro_users_for_github_user_id(&reviewer_github_user_id)
             .await;
         if reviewers.is_empty() {
             tracing::trace!(
@@ -140,9 +140,9 @@ impl<
             _ => (GithubPrCommentKind::Issue, GithubPrMentionLocation::Comment),
         };
 
-        let mentioned_users = self.mentioned_conation_users(&body).await;
+        let mentioned_users = self.mentioned_macro_users(&body).await;
         let participant_users = self
-            .pull_request_participant_conation_user_ids(pull_request, upserts)
+            .pull_request_participant_macro_user_ids(pull_request, upserts)
             .await;
         let snippet = GithubPrNotificationCommon::snippet(&body);
         let sender = self.notification_sender(event).await;
@@ -234,7 +234,7 @@ impl<
             }
         };
 
-        let authors = self.pull_request_author_conation_users(event).await;
+        let authors = self.pull_request_author_macro_users(event).await;
         let review_github_id = event
             .payload
             .get("review")
@@ -244,7 +244,7 @@ impl<
         let review_snippet =
             (!body.trim().is_empty()).then(|| GithubPrNotificationCommon::snippet(&body));
 
-        let mentioned_users = self.mentioned_conation_users(&body).await;
+        let mentioned_users = self.mentioned_macro_users(&body).await;
         let sender = self.notification_sender(event).await;
         for upsert in upserts {
             let recipients = self.notification_recipient_ids(&upsert.source).await;
@@ -337,7 +337,7 @@ impl<
             return;
         }
 
-        let mentioned_users = self.conation_users_for_logins(&logins).await;
+        let mentioned_users = self.macro_users_for_logins(&logins).await;
         if mentioned_users.is_empty() {
             return;
         }
@@ -374,7 +374,7 @@ impl<
     /// users linked to that GitHub account via `github_links`. Returns an empty
     /// set (with a trace) when unmapped; a single GitHub account may be linked
     /// to several Macro users, so all of them are returned.
-    async fn pull_request_author_conation_users(
+    async fn pull_request_author_macro_users(
         &self,
         event: &ValidatedGithubWebhookEvent,
     ) -> HashSet<MacroUserIdStr<'static>> {
@@ -390,7 +390,7 @@ impl<
         };
 
         let authors = self
-            .conation_users_for_github_user_id(&author_github_user_id)
+            .macro_users_for_github_user_id(&author_github_user_id)
             .await;
         if authors.is_empty() {
             tracing::trace!(
@@ -405,13 +405,13 @@ impl<
     /// Resolve a single GitHub user ID to the Macro users linked to it via
     /// `github_links`. Unmapped GitHub user IDs and invalid Macro IDs are
     /// skipped. A GitHub account may be linked to several Macro users.
-    async fn conation_users_for_github_user_id(
+    async fn macro_users_for_github_user_id(
         &self,
         github_user_id: &str,
     ) -> HashSet<MacroUserIdStr<'static>> {
         let links = match self
             .repo
-            .get_conation_ids_by_github_user_ids(std::slice::from_ref(&github_user_id.to_string()))
+            .get_macro_ids_by_github_user_ids(std::slice::from_ref(&github_user_id.to_string()))
             .await
         {
             Ok(links) => links,
@@ -425,19 +425,19 @@ impl<
             }
         };
 
-        let Some(conation_ids) = links.get(github_user_id) else {
+        let Some(macro_ids) = links.get(github_user_id) else {
             return HashSet::new();
         };
 
-        conation_ids
+        macro_ids
             .iter()
             .filter_map(
-                |conation_id| match MacroUserIdStr::try_from(conation_id.clone()) {
+                |macro_id| match MacroUserIdStr::try_from(macro_id.clone()) {
                     Ok(user_id) => Some(user_id),
                     Err(error) => {
                         tracing::warn!(
                             error=?error,
-                            conation_id=%conation_id,
+                            macro_id=%macro_id,
                             github_user_id=%github_user_id,
                             "GitHub user mapping is not a valid Macro user ID"
                         );
@@ -450,19 +450,19 @@ impl<
 
     /// Resolve the Macro users @mentioned in `text` via their `github_links`
     /// login mappings. Unmapped logins and invalid Macro IDs are skipped.
-    async fn mentioned_conation_users(&self, text: &str) -> HashSet<MacroUserIdStr<'static>> {
-        self.conation_users_for_logins(&extract_github_mentions(text))
+    async fn mentioned_macro_users(&self, text: &str) -> HashSet<MacroUserIdStr<'static>> {
+        self.macro_users_for_logins(&extract_github_mentions(text))
             .await
     }
 
     /// Resolve GitHub logins to Macro users via their `github_links` login
     /// mappings. Unmapped logins and invalid Macro IDs are skipped.
-    async fn conation_users_for_logins(&self, logins: &[String]) -> HashSet<MacroUserIdStr<'static>> {
+    async fn macro_users_for_logins(&self, logins: &[String]) -> HashSet<MacroUserIdStr<'static>> {
         if logins.is_empty() {
             return HashSet::new();
         }
 
-        let links = match self.repo.get_conation_ids_by_github_logins(logins).await {
+        let links = match self.repo.get_macro_ids_by_github_logins(logins).await {
             Ok(links) => links,
             Err(error) => {
                 tracing::warn!(
@@ -477,12 +477,12 @@ impl<
             .into_values()
             .flatten()
             .filter_map(
-                |conation_id| match MacroUserIdStr::try_from(conation_id.clone()) {
+                |macro_id| match MacroUserIdStr::try_from(macro_id.clone()) {
                     Ok(user_id) => Some(user_id),
                     Err(error) => {
                         tracing::warn!(
                             error=?error,
-                            conation_id=%conation_id,
+                            macro_id=%macro_id,
                             "GitHub mention mapping is not a valid Macro user ID"
                         );
                         None

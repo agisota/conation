@@ -6,10 +6,10 @@ mod test;
 
 use anyhow::Context;
 use aws_lambda_events::event::eventbridge::EventBridgeEvent;
+use conation_entrypoint::MacroEntrypoint;
 use config::Config;
 use handler::handler;
 use lambda_runtime::{Error, LambdaEvent, run, service_fn};
-use conation_entrypoint::MacroEntrypoint;
 use sqlx::postgres::PgPoolOptions;
 use std::sync::Arc;
 

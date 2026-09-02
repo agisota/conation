@@ -1,11 +1,11 @@
 //! Handler for restoring soft-deleted projects.
 
 use axum::{Extension, Json, extract::State};
+use conation_authorization::MacroAuthorizationService;
 use entity_access::{
     domain::{models::OwnerAccessLevel, ports::EntityAccessService},
     inbound::axum_extractors::ProjectAccessLevelExtractor,
 };
-use conation_authorization::MacroAuthorizationService;
 use model::{
     project::BasicProject,
     response::{GenericSuccessResponse, SuccessResponse},

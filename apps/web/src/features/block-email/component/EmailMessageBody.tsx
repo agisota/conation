@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { StaticMarkdown } from '@core/component/LexicalMarkdown/component/core/StaticMarkdown';
 import { channelTheme } from '@core/component/LexicalMarkdown/theme';
 import { DEV_MODE_ENV } from '@core/constant/featureFlags';
@@ -102,7 +103,7 @@ export function EmailMessageBody(props: EmailMessageBodyProps) {
       : parsedBodyReplyless();
   };
 
-  // Sent-from-Macro messages strip the quoted thread from body_macro at send
+  // Sent-from-Conation messages strip the quoted thread from body_macro at send
   // time, and the backend skips replyless trimming for "Fwd:" subjects — so a
   // quote in the full html means there is hidden content regardless of
   // body_replyless.
@@ -130,9 +131,9 @@ export function EmailMessageBody(props: EmailMessageBodyProps) {
     isPersonalMessage(props.message, userEmail(), props.personalSenders())
   );
 
-  const isMacroSender = createMemo(() => {
+  const isConationSender = createMemo(() => {
     const senderEmail = props.message.from?.email?.toLowerCase();
-    return senderEmail?.endsWith('@macro.com') ?? false;
+    return senderEmail?.endsWith('@conation.dev') ?? false;
   });
 
   const host = createMemo(() => {
@@ -143,7 +144,7 @@ export function EmailMessageBody(props: EmailMessageBodyProps) {
     const styleEl = document.createElement('style');
     // Normalize font in email
     const fontOverride =
-      isPersonal() && !isMacroSender()
+      isPersonal() && !isConationSender()
         ? `*:not(code):not(pre):not(code *):not(pre *):not([data-macro-btn]){font-family: system-ui, sans-serif !important; font-size: inherit !important; line-height: 1.5 !important;}`
         : '';
     // Containment (images, signatures, quotes, pre/code) lives in
@@ -372,6 +373,7 @@ export function EmailMessageBody(props: EmailMessageBodyProps) {
             <Button
               variant="ghost"
               size="icon-sm"
+              tooltip={t('blockEmail.reply.showQuotedText')}
               onClick={() => setShowFullHTML(true)}
               class={cn(
                 'rounded-md text-ink-extra-muted hover:text-ink-muted',

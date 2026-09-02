@@ -15,18 +15,18 @@ use email::{
 use email_service::calendar_tokens::CalendarTokenProviderAdapter;
 use email_service::pubsub::calendar_backfill_adapters::RedisCalendarRequestGate;
 
-use email_service::config::Config;
-use email_service::outbound::email_api::GmailApi;
-use email_service::util::redis::RedisClient;
-use entity_access::{domain::service::EntityAccessServiceImpl, outbound::PgAccessRepository};
-use entity_access_management::domain::service::EntityAccessManagementServiceImpl;
-use frecency::{domain::services::FrecencyQueryServiceImpl, outbound::postgres::FrecencyPgStorage};
 use conation_auth::InternalApiKey;
 use conation_auth::middleware::decode_jwt::JwtValidationArgs;
 use conation_authorization::{
     MacroAuthJwtValidator, MacroAuthorizationServiceImpl, MacroAuthorizationState,
 };
 use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
+use email_service::config::Config;
+use email_service::outbound::email_api::GmailApi;
+use email_service::util::redis::RedisClient;
+use entity_access::{domain::service::EntityAccessServiceImpl, outbound::PgAccessRepository};
+use entity_access_management::domain::service::EntityAccessManagementServiceImpl;
+use frecency::{domain::services::FrecencyQueryServiceImpl, outbound::postgres::FrecencyPgStorage};
 use static_file_service_client::StaticFileServiceClient;
 use std::sync::Arc;
 use system_properties::{PgSystemPropertiesRepository, SystemPropertiesServiceImpl};

@@ -13,14 +13,14 @@ pub static MACRO_PASSWORDLESS_LOGIN_CODE_EXPIRY_SECONDS: u64 = 630;
 pub static MACRO_JUST_SIGNED_UP_EXPIRY_SECONDS: u64 = 30 * 60;
 
 /// Generates the rate limit key for channel invites for a given ip
-conation_rules! conation_passwordless_login_code {
+macro_rules! conation_passwordless_login_code {
     ($email:expr) => {
         format!("pw_login_code:{}", $email)
     };
 }
 
 /// Generates the "account was just created" marker key for a given email
-conation_rules! conation_just_signed_up {
+macro_rules! conation_just_signed_up {
     ($email:expr) => {
         format!("just_signed_up:{}", $email)
     };
@@ -91,8 +91,13 @@ impl MacroCache {
     /// same flow can attribute the login as a signup.
     pub async fn mark_user_just_signed_up(&self, email: &str) -> anyhow::Result<()> {
         let key = conation_just_signed_up!(email.to_lowercase());
-        conation_redis::set::set_with_expiry(&self.inner, &key, 1, MACRO_JUST_SIGNED_UP_EXPIRY_SECONDS)
-            .await
+        conation_redis::set::set_with_expiry(
+            &self.inner,
+            &key,
+            1,
+            MACRO_JUST_SIGNED_UP_EXPIRY_SECONDS,
+        )
+        .await
     }
 
     /// Consumes the just-signed-up marker for an email. Returns true exactly

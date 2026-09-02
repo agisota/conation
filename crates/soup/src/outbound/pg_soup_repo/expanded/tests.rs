@@ -12,6 +12,8 @@ use crate::{
         populate_properties,
     },
 };
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use filter_ast::Expr;
 use item_filters::{
     PropertyFilter,
@@ -20,8 +22,6 @@ use item_filters::{
         project::ProjectLiteral,
     },
 };
-use conation_db_migrator::MACRO_DB_MIGRATIONS;
-use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use model_entity::EntityType;
 use models_pagination::Identify;
 use models_pagination::{Frecency, PaginateOn, Query, SimpleSortMethod};
@@ -31,7 +31,7 @@ use std::collections::HashSet;
 use std::sync::Arc;
 use uuid::Uuid;
 
-conation_rules! unwrap_enum {
+macro_rules! unwrap_enum {
     // Base case: single variant
     ($value:expr, $variant:path) => {
         match $value {

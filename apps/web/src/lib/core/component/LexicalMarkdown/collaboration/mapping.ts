@@ -1,7 +1,6 @@
-import { DEV_MODE_ENV } from '@core/constant/featureFlags';
 import type { LoroManager } from '@conation/collaboration/collab/manager';
-
 import type { NodeIdMappings } from '@conation/lexical-core';
+import { DEV_MODE_ENV } from '@core/constant/featureFlags';
 import { $getNodeByKey, type LexicalNode } from 'lexical';
 import { type ContainerID, LoroMap } from 'loro-crdt';
 

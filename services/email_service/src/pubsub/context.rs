@@ -6,6 +6,7 @@ use calendar_events::{
     domain::service::{GoogleCalendarBackfillCoordinator, GoogleCalendarBackfillFailureService},
     outbound::{google::GoogleCalendarClient, pg::PgCalendarRepository},
 };
+use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
 use connection_gateway_client::client::ConnectionGatewayClient;
 use contacts::domain::service::SqsContactsIngress;
 use contacts::outbound::ingress::SqsContactsQueue;
@@ -16,7 +17,6 @@ use crm::outbound::apollo_resolver::ApolloCompanyMetadataResolver;
 use crm::outbound::companies_repo::CompaniesRepositoryImpl;
 use crm::outbound::unfurl_resolver::UnfurlCompanyMetadataResolver;
 use document_storage_service_client::DocumentStorageServiceClient;
-use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
 use notification::domain::service::SqsNotificationIngress;
 use notification::outbound::queue::SqsQueue;
 use sqlx::PgPool;

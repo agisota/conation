@@ -24,6 +24,7 @@ use crate::domain::{
 use anyhow::Context;
 use channel_sender::ChannelSender;
 use chrono::{DateTime, Utc};
+use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 #[cfg(feature = "list")]
 use filter_ast::Expr;
 #[cfg(feature = "list")]
@@ -31,7 +32,6 @@ use item_filters::ast::{
     LiteralTree,
     channel::{ChannelLiteral, ChannelThreadLiteral},
 };
-use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use models_pagination::{CreatedAt, Query};
 #[cfg(feature = "list")]
 use recursion::CollapsibleExt;
@@ -599,7 +599,7 @@ async fn resolve_channel_display_name(
 }
 
 /// Display name for a participant principal: users resolve through the name
-/// lookup, bots through the bot-name lookup (Macro AI is code-defined).
+/// lookup, bots through the bot-name lookup (Conation AI is code-defined).
 /// Unrecognized principals yield `None`.
 fn principal_display_name(
     principal: &str,
@@ -610,8 +610,8 @@ fn principal_display_name(
         return Some(id_to_display_name(&user_id, name_lookup));
     }
     let bot_id = bot_id::BotIdStr::parse_from_str(principal).ok()?.bot_id();
-    if bot_id == bot_id::MACRO_AI_BOT_ID {
-        return Some(bot_id::MACRO_AI_NAME.to_string());
+    if bot_id == bot_id::CONATION_AI_BOT_ID {
+        return Some(bot_id::CONATION_AI_NAME.to_string());
     }
     Some(
         bot_name_lookup
@@ -698,8 +698,8 @@ async fn load_user_display_names(
         UserDisplayNameRow,
         r#"
         SELECT u.id AS user_profile_id, mui.first_name, mui.last_name
-        FROM conation_user_info mui
-        JOIN "User" u ON mui.conation_user_id = u.conation_user_id
+        FROM macro_user_info mui
+        JOIN "User" u ON mui.macro_user_id = u.macro_user_id
         WHERE u.id = ANY($1)
         "#,
         &user_id_strings,
@@ -1610,8 +1610,8 @@ impl ChannelListUserRepo for PgChannelsRepo {
             u.id as user_profile_id,
             mui.first_name,
             mui.last_name
-        FROM conation_user_info mui
-        JOIN "User" u ON mui.conation_user_id = u.conation_user_id
+        FROM macro_user_info mui
+        JOIN "User" u ON mui.macro_user_id = u.macro_user_id
         WHERE u.id = ANY($1)
         "#,
             &ids

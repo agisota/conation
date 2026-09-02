@@ -5,15 +5,15 @@ use crate::context::{self};
 use anyhow::Context;
 use aws_lambda_events::eventbridge::EventBridgeEvent;
 use chat::domain::events::{ChatMacroEvent, ChatPermanentlyDeletedMetadata};
+use conation_db_client::projects::ProjectToDelete;
+use conation_event_broker::MacroEventBroker;
+use conation_user_id::user_id::MacroUserIdStr;
 use documents::domain::events::{DocumentMacroEvent, DocumentPurgedMetadata};
 use futures::future::join_all;
 use lambda_runtime::{
     Error, LambdaEvent,
     tracing::{self},
 };
-use conation_db_client::projects::ProjectToDelete;
-use conation_event_broker::MacroEventBroker;
-use conation_user_id::user_id::MacroUserIdStr;
 use projects::domain::events::{ProjectMacroEvent, ProjectPermanentlyDeletedMetadata};
 
 #[tracing::instrument(skip(ctx, _event), err)]

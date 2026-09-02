@@ -3,6 +3,7 @@
  * mirrors the wire's `SessionStatusDto`.
  */
 
+import { t } from '@app/lib/i18n';
 import { match } from 'ts-pattern';
 
 export type SessionStatusLike =
@@ -24,17 +25,23 @@ function prettyEventName(event: string): string {
 function presentation(status: SessionStatusLike): Presentation {
   return match(status)
     .with({ kind: 'no_messages' }, (): Presentation => {
-      return { label: 'Starting', tone: 'neutral' };
+      return { label: t('agent.session.status.starting'), tone: 'neutral' };
     })
     .with({ kind: 'disconnected' }, (): Presentation => {
-      return { label: 'Disconnected', tone: 'negative' };
+      return {
+        label: t('agent.session.status.disconnected'),
+        tone: 'negative',
+      };
     })
     .with({ kind: 'event' }, (status): Presentation => {
       if (status.event === 'acp_ready') {
-        return { label: 'Ready', tone: 'positive' };
+        return { label: t('agent.session.status.ready'), tone: 'positive' };
       }
       if (status.event === 'disconnected') {
-        return { label: 'Disconnected', tone: 'negative' };
+        return {
+          label: t('agent.session.status.disconnected'),
+          tone: 'negative',
+        };
       }
       // An event name the protocol doesn't model yet — show it rather than
       // hide it.

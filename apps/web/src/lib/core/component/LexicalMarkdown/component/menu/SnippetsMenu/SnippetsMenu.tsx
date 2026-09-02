@@ -207,12 +207,16 @@ function SnippetsMenuInner(props: SnippetsMenuProps) {
             depth={2}
             class="pt-2 pb-1.5 shadow-lg shadow-drop-shadow rounded-xl"
           >
-            <div class="px-3.5 pb-1 text-xs font-medium text-ink-muted">{t('auto.snippets')}</div>
+            <div class="px-3.5 pb-1 text-xs font-medium text-ink-muted">
+              {t('editor.snippets.title')}
+            </div>
             <Show
               when={filteredSnippets().length > 0}
               fallback={
                 <div class="px-3.5 pb-1 text-ink-extra-muted">
-                  {searchTerm() ? 'No results' : 'No snippets yet'}
+                  {searchTerm()
+                    ? t('editor.snippets.noResults')
+                    : t('editor.snippets.empty')}
                 </div>
               }
             >

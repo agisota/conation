@@ -35,8 +35,11 @@ pub async fn get_document_info(
         return Ok(DocumentInfo::Removable);
     }
 
-    match conation_db_client::document::get_document(db, search_extractor_message.document_id.as_str())
-        .await
+    match conation_db_client::document::get_document(
+        db,
+        search_extractor_message.document_id.as_str(),
+    )
+    .await
     {
         Ok(document) => Ok(DocumentInfo::Active(Box::new(document))),
         Err(e) => {

@@ -1,5 +1,5 @@
-import CaretDown from '@phosphor-icons/core/regular/caret-down.svg';
 import { t } from '@app/lib/i18n';
+import CaretDown from '@phosphor-icons/core/regular/caret-down.svg';
 import CaretRight from '@phosphor-icons/core/regular/caret-right.svg';
 import Terminal from '@phosphor-icons/core/regular/terminal.svg';
 import type { BashCodeExecutionResult } from '@service-cognition/generated/tools/types';
@@ -87,7 +87,7 @@ function BashResult(props: { result: BashCodeExecutionResult }) {
         <CodeFence content={output()} collapsible={false} />
       </Show>
       <Show when={!hasOutput() && props.result.return_code === 0}>
-        <span class="text-ink-muted">{t('auto.no_output')}</span>
+        <span class="text-ink-muted">{t('ai.tools.execution.noOutput')}</span>
       </Show>
     </div>
   );
@@ -116,7 +116,9 @@ const handler = createToolRenderer({
                   return (
                     <Switch>
                       <Match when={isError}>
-                        <span class="text-failure">{t('auto.execution_failed')}</span>
+                        <span class="text-failure">
+                          {t('ai.tools.execution.failed')}
+                        </span>
                       </Match>
                       <Match when={!isError}>
                         <BashResult
@@ -134,7 +136,7 @@ const handler = createToolRenderer({
         }
       >
         <div class="flex min-w-0 flex-1 items-center justify-between gap-3">
-          <span>{t('auto.code_execution')}</span>
+          <span>{t('ai.tools.execution.title')}</span>
           <Tool.ResultToggle
             expanded={isExpanded()}
             onToggle={() => setIsExpanded((expanded) => !expanded)}

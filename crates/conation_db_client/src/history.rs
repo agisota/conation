@@ -197,7 +197,7 @@ mod tests {
 
     #[sqlx::test(fixtures(path = "../fixtures", scripts("simple_history")))]
     async fn test_get_user_history_simple(pool: Pool<Postgres>) -> anyhow::Result<()> {
-        let recent = get_user_history(&pool, "macro|user@user.com").await?;
+        let recent = get_user_history(&pool, "conation|user@user.com").await?;
         assert_eq!(recent.len(), 3);
 
         let recent = recent

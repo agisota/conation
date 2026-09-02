@@ -42,6 +42,7 @@ fn kickstart_without_google_has_no_idp_requests() {
     let doc = build(
         3000,
         8080,
+        "http://localhost:8090",
         "function populate() {}",
         "function reconcile() {}",
         None,
@@ -68,6 +69,7 @@ fn kickstart_with_google_adds_lambda_and_both_idps_after_the_application() {
     let doc = build(
         3000,
         8080,
+        "http://localhost:8090",
         "function populate() {}",
         "function reconcile() {}",
         Some(&google),
@@ -119,6 +121,7 @@ fn kickstart_adopts_the_default_tenant() {
     let doc = build(
         3000,
         8080,
+        "http://localhost:8090",
         "function populate() {}",
         "function reconcile() {}",
         None,
@@ -139,6 +142,73 @@ fn kickstart_adopts_the_default_tenant() {
         tenant["method"], "PATCH",
         "the tenant is reconfigured in place, not created — local stays single-tenant"
     );
+}
+
+#[test]
+fn kickstart_has_conation_mail_identity_without_a_static_admin() {
+    let doc = build(
+        3000,
+        8080,
+        "http://localhost:8090",
+        "function populate() {}",
+        "function reconcile() {}",
+        None,
+        None,
+    );
+    let requests = doc["requests"].as_array().expect("requests");
+    let tenant = requests
+        .iter()
+        .find(|request| {
+            request["url"].as_str() == Some(format!("/api/tenant/{}", identity::TENANT_ID).as_str())
+        })
+        .expect("tenant request");
+
+    assert_eq!(
+        tenant["body"]["tenant"]["emailConfiguration"]["defaultFromEmail"],
+        "noreply@conation.local"
+    );
+    assert!(
+        !requests
+            .iter()
+            .any(|request| request["url"].as_str() == Some("/api/user/registration")),
+        "kickstart must not seed a privileged user with a static password"
+    );
+}
+
+#[test]
+fn kickstart_registers_the_instance_mcp_callback_exactly() {
+    let doc = build(
+        3000,
+        8080,
+        "http://localhost:25090/",
+        "function populate() {}",
+        "function reconcile() {}",
+        None,
+        None,
+    );
+    let application = doc["requests"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|request| {
+            request["url"].as_str()
+                == Some(format!("/api/application/{}", identity::APPLICATION_ID).as_str())
+        })
+        .expect("missing Conation application");
+    let oauth = &application["body"]["application"]["oauthConfiguration"];
+    let redirects = oauth["authorizedRedirectURLs"].as_array().unwrap();
+
+    assert!(
+        redirects
+            .iter()
+            .any(|url| { url.as_str() == Some("http://localhost:25090/oauth/callback") })
+    );
+    assert!(
+        redirects
+            .iter()
+            .all(|url| { !url.as_str().unwrap_or_default().contains("macro.com") })
+    );
+    assert_eq!(oauth["authorizedURLValidationPolicy"], "ExactMatch");
 }
 
 /// A no-Doppler stack fills these with placeholders so the service's config
@@ -198,6 +268,7 @@ fn the_github_idp_id_follows_the_env_the_service_reads() {
     let doc = build(
         3000,
         8080,
+        "http://localhost:8090",
         "function populate() {}",
         "function reconcile() {}",
         None,
@@ -226,6 +297,7 @@ fn the_github_idp_is_created_under_both_the_name_and_the_id_the_service_uses() {
     let doc = build(
         3000,
         8080,
+        "http://localhost:8090",
         "function populate() {}",
         "function reconcile() {}",
         None,
@@ -263,6 +335,7 @@ fn kickstart_without_github_creates_no_github_idp() {
     let doc = build(
         3000,
         8080,
+        "http://localhost:8090",
         "function populate() {}",
         "function reconcile() {}",
         None,

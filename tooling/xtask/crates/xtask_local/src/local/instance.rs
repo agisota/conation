@@ -1,8 +1,7 @@
 //! Per-instance isolation: names, networks, volumes, and host ports.
 //!
-//! The default instance is named `macro` and keeps the exact resource names
-//! and host ports the repo uses today, so existing worktrees and muscle memory
-//! are untouched. A named instance (`--instance agent-a`) derives a disjoint
+//! The default instance is named `conation`. A named instance
+//! (`--instance agent-a`) derives a disjoint
 //! set of project name, networks, volumes, and a deterministic high port window
 //! so two stacks can run concurrently without clobbering each other.
 
@@ -13,9 +12,9 @@ use strum::{EnumIter, IntoEnumIterator};
 
 use super::repo_root;
 
-/// The reserved default instance name. Maps to today's frozen `macro` Compose
-/// project and the fixed base ports.
-pub const DEFAULT_NAME: &str = "macro";
+/// The reserved default instance name. Maps to the Conation Compose project
+/// and the fixed base ports.
+pub const DEFAULT_NAME: &str = "conation";
 
 /// Start of the non-default port window. Keep the entire allocation below
 /// Linux's default ephemeral range (32768-60999), otherwise an ordinary
@@ -23,6 +22,13 @@ pub const DEFAULT_NAME: &str = "macro";
 const WINDOW_START: u32 = 20_000;
 const STRIDE: u32 = 100;
 const BUCKETS: u32 = 120; // 20000..=31999
+
+// Docker's automatic address pool is unaware of policy routes installed by
+// VPNs such as Tailscale. A named local instance therefore uses deterministic
+// /24s from RFC 2544's benchmarking range instead of accepting an arbitrary
+// bridge subnet that may be routed away from Docker on the host.
+const DATABASE_NETWORK_PREFIX: &str = "198.18";
+const AUTH_NETWORK_PREFIX: &str = "198.19";
 
 /// A validated instance name: lowercase ASCII alphanumerics, hyphen, and
 /// underscore, starting alphanumeric, non-empty, <= 40 chars. The newtype
@@ -63,7 +69,7 @@ fn ensure_valid(raw: &str) -> Result<()> {
 }
 
 /// Every host port the orchestrator allocates. The discriminant IS the port the
-/// default `macro` instance binds (matching the values hardcoded in the compose
+/// default `conation` instance binds (matching the values hardcoded in the compose
 /// files today); a named instance binds `port_base + offset`, where `offset` is
 /// the variant's position in declaration order. Adding a port is a single line:
 /// `NewThing = 8099,`. Offsets stay below `STRIDE`, so named windows never
@@ -108,10 +114,12 @@ pub enum Port {
     /// Published on every local instance - it is what the Cursor egress
     /// tunnel points at, and Cursor's cloud is outside the compose network.
     AgentHarnessEgress = 8102,
+    /// Scheduled-action API and polling worker.
+    ScheduledAction = 8103,
 }
 
 impl Port {
-    /// The port the default `macro` instance binds — the variant's discriminant.
+    /// The port the default `conation` instance binds — the variant's discriminant.
     pub const fn fixed(self) -> u16 {
         self as u16
     }
@@ -143,7 +151,7 @@ pub struct Instance {
 
 impl Instance {
     /// Derive the instance from the `--instance`/`--port-base` flags. `None`
-    /// (or `--instance macro`) is the default instance.
+    /// (or `--instance conation`) is the default instance.
     pub fn derive(instance: Option<&str>, port_base: Option<u16>) -> Result<Self> {
         let name = match instance {
             None | Some(DEFAULT_NAME) => InstanceName(DEFAULT_NAME.to_string()),
@@ -152,7 +160,7 @@ impl Instance {
         let project_name = if name.as_str() == DEFAULT_NAME {
             DEFAULT_NAME.to_string()
         } else {
-            format!("macro-{}", name.0)
+            format!("conation-{}", name.0)
         };
         let port_base = port_base.unwrap_or_else(|| derive_port_base(&name));
         Ok(Instance {
@@ -199,6 +207,19 @@ impl Instance {
         self.suffixed_dash("auth")
     }
 
+    /// Deterministic IPv4 subnet for the named instance's database network.
+    ///
+    /// The default instance retains Docker's existing network configuration;
+    /// only explicitly named, disposable instances opt into isolated IPAM.
+    pub fn network_databases_subnet(&self) -> Option<String> {
+        self.named_network_subnet(DATABASE_NETWORK_PREFIX)
+    }
+
+    /// Deterministic IPv4 subnet for the named instance's FusionAuth network.
+    pub fn network_auth_subnet(&self) -> Option<String> {
+        self.named_network_subnet(AUTH_NETWORK_PREFIX)
+    }
+
     pub fn volume_postgres(&self) -> String {
         self.suffixed_underscore("conation_postgres_data")
     }
@@ -216,11 +237,11 @@ impl Instance {
     }
 
     pub fn volume_fusionauth_db(&self) -> String {
-        self.suffixed_underscore("fusionauth_db_data")
+        self.suffixed_underscore("conation_fusionauth_db_data")
     }
 
     pub fn volume_fusionauth_config(&self) -> String {
-        self.suffixed_underscore("fusionauth_config")
+        self.suffixed_underscore("conation_fusionauth_config")
     }
 
     /// Where generated artifacts (compose override, env file, kickstart,
@@ -237,6 +258,13 @@ impl Instance {
         } else {
             format!("{base}-{}", self.name.0)
         }
+    }
+
+    fn named_network_subnet(&self, prefix: &str) -> Option<String> {
+        (!self.is_default()).then(|| {
+            let bucket = fnv1a(self.name.as_str()) % BUCKETS;
+            format!("{prefix}.{bucket}.0/24")
+        })
     }
 
     fn suffixed_underscore(&self, base: &str) -> String {

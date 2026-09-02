@@ -1,4 +1,5 @@
 import { isListViewID, LIST_VIEW_ID } from '@app/constants/list-views';
+import { t } from '@app/lib/i18n';
 import type { SplitContent, SplitContentType } from './layoutManager';
 
 type PreviewControllerWidth = {
@@ -36,9 +37,11 @@ const PREVIEW_CONTROLLER_CONTENT_CONFIG: readonly PreviewControllerContentConfig
     {
       type: 'component',
       id: 'getting-started',
-      emptyState: {
-        title: 'Welcome to Macro',
-        description: 'Select an item from the list to get started.',
+      get emptyState() {
+        return {
+          title: t('shell.gettingStarted.welcomeToConation'),
+          description: t('shell.gettingStarted.selectItemPrompt'),
+        };
       },
     },
     {

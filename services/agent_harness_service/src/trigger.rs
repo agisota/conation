@@ -9,13 +9,13 @@ use bots::domain::ports::BotRepo as _;
 use bots::outbound::pg_bots_repo::PgBotsRepo;
 use channels::domain::broker_events::ChannelMacroEvent;
 use channels::outbound::pg_channels_repo::PgChannelsRepo;
-use kafka_util::{GroupName, KafkaEventConsumer, consumer_span, record_span_error};
-use lexical_client::LexicalClient;
 use conation_event_broker::{
     KafkaConsumerAdapter, KafkaEventPublisher, MacroEvent as _, MacroEventBrokerService,
     MacroEventCollection as _, MacroEventConsumerService,
 };
 use conation_service_urls::LexicalServiceUrl;
+use kafka_util::{GroupName, KafkaEventConsumer, consumer_span, record_span_error};
+use lexical_client::LexicalClient;
 use rdkafka::consumer::CommitMode;
 use rdkafka::message::{BorrowedMessage, Message as _};
 use sqlx::PgPool;

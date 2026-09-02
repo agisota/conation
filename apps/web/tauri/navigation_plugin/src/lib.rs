@@ -48,6 +48,7 @@ pub enum Platform {
 pub struct MacroNavigationPlugin {
     internal_domains: Arc<[Url]>,
     app_link_hosts: &'static [&'static str],
+    app_scheme: &'static str,
     allowed_file_prefix: Option<PathBuf>,
 }
 
@@ -73,6 +74,7 @@ impl MacroNavigationPlugin {
                 .map(|s| s.parse())
                 .collect::<Result<Arc<_>, _>>()?,
             app_link_hosts: &[],
+            app_scheme: "conation",
             allowed_file_prefix: None,
         })
     }
@@ -81,6 +83,12 @@ impl MacroNavigationPlugin {
     /// via the `navigate` event instead of loading the remote site
     pub fn with_app_link_hosts(mut self, hosts: &'static [&'static str]) -> Self {
         self.app_link_hosts = hosts;
+        self
+    }
+
+    /// Set the custom URL scheme compiled into this client profile.
+    pub fn with_app_scheme(mut self, scheme: &'static str) -> Self {
+        self.app_scheme = scheme;
         self
     }
 
@@ -120,7 +128,7 @@ impl MacroNavigationPlugin {
         if path != "/app" && !path.starts_with("/app/") {
             return None;
         }
-        MacroScheme::from_url(url).ok()
+        MacroScheme::from_url_with_scheme(url, self.app_scheme).ok()
     }
 
     #[tracing::instrument(ret, level = tracing::Level::DEBUG, skip(self))]

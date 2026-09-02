@@ -1,11 +1,13 @@
 //! Handler for soft-deleting projects.
 
 use axum::{Extension, Json, extract::State};
+use conation_authorization::{
+    MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal,
+};
 use entity_access::{
     domain::{models::OwnerAccessLevel, ports::EntityAccessService},
     inbound::axum_extractors::ProjectAccessLevelExtractor,
 };
-use conation_authorization::{MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal};
 use model::project::BasicProject;
 use model::response::{GenericSuccessResponse, SuccessResponse, TypedSuccessResponse};
 use serde::{Deserialize, Serialize};
@@ -42,7 +44,7 @@ pub type ProjectDeleteResponse = TypedSuccessResponse<ProjectDeleteResponseData>
 )]
 #[tracing::instrument(
     skip(state, user, access, project),
-    fields(user_id = ?user.authorization.user.conation_user_id),
+    fields(user_id = ?user.authorization.user.macro_user_id),
     err
 )]
 pub async fn delete_project_handler<T, Svc, Auth>(
@@ -61,7 +63,7 @@ where
         .soft_delete_project(
             access.entity_access_receipt,
             project.0,
-            user.authorization.user.conation_user_id.to_string(),
+            user.authorization.user.macro_user_id.to_string(),
         )
         .await?;
 
@@ -91,7 +93,7 @@ where
 )]
 #[tracing::instrument(
     skip(state, user, access, project),
-    fields(user_id = ?user.authorization.user.conation_user_id),
+    fields(user_id = ?user.authorization.user.macro_user_id),
     err
 )]
 pub async fn permanently_delete_project_handler<T, Svc, Auth>(

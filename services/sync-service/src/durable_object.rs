@@ -10,6 +10,7 @@ use loro::{ExportMode, awareness::EphemeralStore};
 use matchit::Router;
 use serde::{Deserialize, Serialize};
 use tracing::{Instrument, debug, error, info, instrument, trace, warn};
+use url::Url;
 use worker::{
     Cors, Date, DurableObject, Env, Error, Method, Request, Response, ResponseBody,
     ResponseBuilder, Result, ScheduledTime, State, WebSocket, WebSocketIncomingMessage,
@@ -34,6 +35,9 @@ use crate::{
     tags::{get_ws_id_from_tags, new_ws_id},
     timeit, websocket,
 };
+
+#[cfg(test)]
+mod test;
 
 pub const NO_SUCH_VALUE_ERR_STR: &str = "No such value in storage.";
 
@@ -66,8 +70,8 @@ pub fn response(status_code: u16) -> Response {
     Response::builder().with_status(status_code).empty()
 }
 
-#[conation_export]
-conation_rules! maybe_404 {
+#[macro_export]
+macro_rules! maybe_404 {
     ($res:expr) => {
         match $res {
             Ok(x) => Ok(x),
@@ -85,7 +89,7 @@ conation_rules! maybe_404 {
     };
 }
 
-conation_rules! or_unauth {
+macro_rules! or_unauth {
     ($none_if_unauth:expr) => {{
         let out = match $none_if_unauth {
             Some(x) => x,
@@ -920,12 +924,17 @@ impl DurableObject for DocumentSyncSession {
     /// Fetch the durable object
     /// Upgrades the request to a websocket request connected to the document session
     async fn fetch(&self, req: Request) -> Result<Response> {
+        let configured_origins = self
+            .env
+            .var("ALLOWED_ORIGINS")
+            .ok()
+            .map(|origins| origins.to_string());
         let set_allow_origin = if let Some(origin) = req
             .headers()
             .get("Origin")
             .context("No `Origin` header found in header")?
         {
-            if is_origin_allowed(&origin) {
+            if is_origin_allowed(&origin, configured_origins.as_deref()) {
                 Some(origin)
             } else {
                 return Ok(response(status_codes::FORBIDDEN));
@@ -1193,36 +1202,76 @@ pub struct PeerResponse {
     pub user_id: String,
 }
 
-pub static ALLOWED_ORIGINS: &[&str] = &[
+pub static DEFAULT_ALLOWED_ORIGINS: &[&str] = &[
     "http://localhost:5173",
     "http://localhost:3000",
     "http://host.local:3000",
-    "https://dev.macro.com",
-    "https://staging.macro.com",
-    "https://www.macro.com",
-    "https://macro.com",
+    "https://dev.conation.dev",
+    "https://staging.conation.dev",
+    "https://www.conation.dev",
+    "https://app.conation.dev",
+    "https://conation.dev",
     "capacitor://localhost",
-    "https://apollo-testing.macro.com",
+    "http://conation.localhost",
 ];
 
-pub fn is_origin_allowed(origin: &str) -> bool {
-    if ALLOWED_ORIGINS.contains(&origin) {
+fn normalize_origin(origin: &str) -> Option<String> {
+    let origin = origin.trim();
+    let parsed = Url::parse(origin).ok()?;
+    if !matches!(parsed.scheme(), "http" | "https" | "tauri" | "capacitor")
+        || parsed.host_str().is_none()
+        || !parsed.username().is_empty()
+        || parsed.password().is_some()
+        || !matches!(parsed.path(), "" | "/")
+        || parsed.query().is_some()
+        || parsed.fragment().is_some()
+    {
+        return None;
+    }
+
+    Some(parsed.as_str().trim_end_matches('/').to_owned())
+}
+
+fn parse_allowed_origins(origins: &str) -> Option<Vec<String>> {
+    let mut parsed = Vec::new();
+    for origin in origins.split(',') {
+        let origin = normalize_origin(origin)?;
+        if !parsed.contains(&origin) {
+            parsed.push(origin);
+        }
+    }
+    (!parsed.is_empty()).then_some(parsed)
+}
+
+pub fn is_origin_allowed(origin: &str, configured_origins: Option<&str>) -> bool {
+    let Some(origin) = normalize_origin(origin) else {
+        return false;
+    };
+    let allowed_origins = match configured_origins {
+        Some(origins) => match parse_allowed_origins(origins) {
+            Some(origins) => origins,
+            None => return false,
+        },
+        None => DEFAULT_ALLOWED_ORIGINS
+            .iter()
+            .filter_map(|origin| normalize_origin(origin))
+            .collect(),
+    };
+
+    if allowed_origins.contains(&origin) {
         return true;
     }
     // `localhost` and `*.localhost` (loopback-reserved; local dev uses
     // per-persona hostnames so each seeded user gets its own cookie jar).
-    if let Some(rest) = origin.strip_prefix("http://")
-        && let Some((host, port)) = rest.rsplit_once(':')
-        && (host == "localhost" || host.ends_with(".localhost"))
-        && let Ok(port) = port.parse::<u16>()
+    if let Ok(parsed) = Url::parse(&origin)
+        && parsed.scheme() == "http"
+        && matches!(
+            parsed.host_str(),
+            Some(host) if host == "localhost" || host.ends_with(".localhost")
+        )
+        && let Some(port) = parsed.port()
     {
         return (3000..=3999).contains(&port) || (20000..=60000).contains(&port);
-    }
-    // Allow feature branch previews: https://{subdomain}.preview.macro.com
-    if let Some(host) = origin.strip_prefix("https://")
-        && let Some(subdomain) = host.strip_suffix(".preview.macro.com")
-    {
-        return !subdomain.is_empty() && !subdomain.contains('/');
     }
     false
 }
@@ -1231,13 +1280,7 @@ pub fn is_origin_allowed(origin: &str) -> bool {
 pub fn cors(request_origin: Option<&str>) -> Cors {
     use worker::Method;
     let cors_origins = request_origin
-        .map(|o| {
-            if is_origin_allowed(o) {
-                vec![o.to_string()]
-            } else {
-                vec![]
-            }
-        })
+        .map(|origin| vec![origin.to_owned()])
         .unwrap_or_default();
 
     Cors::new()

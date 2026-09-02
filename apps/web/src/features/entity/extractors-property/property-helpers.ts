@@ -1,10 +1,10 @@
+import { t } from '@app/lib/i18n';
 import {
   NUMBER_DECIMAL_PLACES,
   PROPERTY_OPTION_IDS,
   SYSTEM_PROPERTY_IDS,
 } from '@property/constants';
 import type { Property, PropertyOption, ValueType } from '@property/types';
-import { t } from '@app/lib/i18n';
 import type { SoupProperty } from '@service-storage/generated/schemas/soupProperty';
 import {
   COMPANY_STAGE_OPTIONS,
@@ -292,7 +292,7 @@ const COMPANY_DEFAULT_PROPERTY_DEFS = [
   },
   {
     id: SYSTEM_PROPERTY_IDS.COMPANY_OWNER,
-    displayName: t('common.owner'),
+    displayName: 'Owner',
     dataType: 'ENTITY',
     specificEntityType: 'USER',
   },
@@ -317,7 +317,10 @@ export function buildCompanyDefaultProperties(): Property[] {
       id: def.id,
       definition: {
         id: def.id,
-        display_name: def.displayName,
+        display_name:
+          def.id === SYSTEM_PROPERTY_IDS.COMPANY_OWNER
+            ? t('common.owner')
+            : def.displayName,
         data_type: def.dataType,
         is_metadata: false,
         is_multi_select: false,

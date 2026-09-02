@@ -1,5 +1,5 @@
-import { useCanvasFileDrop } from '@block-canvas/signal/fileDrop';
 import { t } from '@app/lib/i18n';
+import { useCanvasFileDrop } from '@block-canvas/signal/fileDrop';
 import { type BlockName, useBlockId, useIsNestedBlock } from '@core/block';
 import { FileDropOverlay } from '@core/component/FileDropOverlay';
 import { OldMenu, OldMenuItem } from '@core/component/OldMenu';
@@ -1034,7 +1034,7 @@ export function CanvasController(props: ParentProps) {
     >
       <ContextMenu>
         <OldMenuItem
-          text="Cut"
+          text={t('canvas.context.cut')}
           iconClass="text-ink-extra-muted"
           icon={Scissors}
           onClick={() => {
@@ -1050,7 +1050,7 @@ export function CanvasController(props: ParentProps) {
           disabled={!selection.active()}
         />
         <OldMenuItem
-          text="Copy"
+          text={t('canvas.context.copy')}
           iconClass="text-ink-extra-muted"
           icon={CopySimple}
           onClick={() => {
@@ -1061,7 +1061,7 @@ export function CanvasController(props: ParentProps) {
           disabled={!selection.active()}
         />
         <OldMenuItem
-          text="Paste"
+          text={t('canvas.context.paste')}
           iconClass="text-ink-extra-muted"
           icon={Clipboard}
           onClick={() => {
@@ -1094,7 +1094,7 @@ export function CanvasController(props: ParentProps) {
         <Show when={selection.active()}>
           <OldMenuItem
             spacerTop={true}
-            text="Change order"
+            text={t('canvas.context.changeOrder')}
             iconClass="text-ink-extra-muted"
             icon={Stack}
             chevron={true}
@@ -1102,7 +1102,7 @@ export function CanvasController(props: ParentProps) {
             submenu={
               <OldMenu width="md">
                 <OldMenuItem
-                  text="Bring forward"
+                  text={t('canvas.context.bringForward')}
                   iconClass="text-ink-extra-muted"
                   icon={StackPlus}
                   onClick={() => {
@@ -1112,7 +1112,7 @@ export function CanvasController(props: ParentProps) {
                   hotkey={<Hotkey token={'canvas.bringForward'} />}
                 />
                 <OldMenuItem
-                  text="Send backward"
+                  text={t('canvas.context.sendBackward')}
                   iconClass="text-ink-extra-muted"
                   icon={StackMinus}
                   onClick={() => {
@@ -1122,7 +1122,7 @@ export function CanvasController(props: ParentProps) {
                   hotkey={<Hotkey token={'canvas.sendBackward'} />}
                 />
                 <OldMenuItem
-                  text="Bring to front"
+                  text={t('canvas.context.bringToFront')}
                   iconClass="text-ink-extra-muted"
                   icon={SelectionBackground}
                   onClick={() => {
@@ -1132,7 +1132,7 @@ export function CanvasController(props: ParentProps) {
                   hotkey={<Hotkey token={'canvas.bringToFront'} />}
                 />
                 <OldMenuItem
-                  text="Send to back"
+                  text={t('canvas.context.sendToBack')}
                   iconClass="text-ink-extra-muted"
                   icon={SelectionForeground}
                   onClick={() => {
@@ -1145,7 +1145,7 @@ export function CanvasController(props: ParentProps) {
             }
           />
           <OldMenuItem
-            text="Group"
+            text={t('canvas.context.group')}
             iconClass="text-ink-extra-muted"
             icon={GridFour}
             onClick={() => {
@@ -1156,7 +1156,7 @@ export function CanvasController(props: ParentProps) {
             }}
           />
           <OldMenuItem
-            text="Ungroup"
+            text={t('canvas.context.ungroup')}
             iconClass="text-ink-extra-muted"
             icon={SquaresFour}
             onClick={() => {
@@ -1205,7 +1205,7 @@ export function CanvasController(props: ParentProps) {
       </ContextMenu>
       <Show when={isDragging() || droppable.isActiveDroppable}>
         <FileDropOverlay valid={true}>
-          <div class="font-mono">{t('auto.drop_any_file_here_to_add_it_t')}</div>
+          <div class="font-mono">{t('canvas.media.dropFiles')}</div>
         </FileDropOverlay>
       </Show>
       {props.children}

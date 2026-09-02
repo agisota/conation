@@ -1,5 +1,5 @@
-import { getSplitPanelRef } from '@components/app/split-layout/layoutUtils';
 import { t } from '@app/lib/i18n';
+import { getSplitPanelRef } from '@components/app/split-layout/layoutUtils';
 import { isInBlock } from '@core/block';
 import clickOutside from '@core/directive/clickOutside';
 import { blockElementSignal } from '@core/signal/blockElement';
@@ -31,7 +31,9 @@ export const EntityModalActionFooter = (props: {
 }) => {
   return (
     <div class="flex justify-end mt-2 text-sm pt-2">
-      <button class="py-1 px-3 font-mono text-sm" onClick={props.onCancel}>{t('common.cancel')}</button>
+      <button class="py-1 px-3 font-mono text-sm" onClick={props.onCancel}>
+        {t('common.cancel')}
+      </button>
       <button
         class={cn(
           'uppercase py-1 px-3 font-mono text-sm',

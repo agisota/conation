@@ -1,6 +1,7 @@
 import type { GroupHeaderProps } from '@app/features/next-soup/create-soup-state';
 import { SoupSectionHeader } from '@app/features/next-soup/soup-view/section-header';
 import { useSoupView } from '@app/features/next-soup/soup-view/soup-view-context';
+import { formatNumber } from '@app/lib/i18n';
 import { UserIcon } from '@core/component/UserIcon';
 import { getDisplayName, type MacroId, tryMacroId } from '@core/user';
 import ChevronRightIcon from '@phosphor/caret-right.svg';
@@ -124,7 +125,7 @@ export const TaskGroupHeader = (
           'px-1.5 py-px rounded-full bg-ink/10 text-ink-extra-muted'
         )}
       >
-        {props.group.count}
+        {formatNumber(props.group.count)}
       </span>
     </SoupSectionHeader>
   );

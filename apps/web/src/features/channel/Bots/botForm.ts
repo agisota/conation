@@ -1,20 +1,26 @@
+import { t } from '@app/lib/i18n';
 import type { Bot } from '@service-storage/generated/schemas/bot';
 import { z } from 'zod';
 
-const botFormSchema = z.object({
-  name: z.string().trim().min(1, 'Enter a bot name.').max(128),
-  handle: z
-    .string()
-    .trim()
-    .min(1, 'Enter a mention handle.')
-    .max(64, 'Mention handle must be 64 characters or fewer.')
-    .regex(/^[a-z0-9_-]+$/, "Use lowercase letters, numbers, '-' or '_' only."),
-  description: z.string().trim().max(500),
-  avatarUrl: z.string().trim(),
-  hasAgent: z.boolean(),
-});
+const botFormSchema = () =>
+  z.object({
+    name: z
+      .string()
+      .trim()
+      .min(1, t('channel.bots.validation.nameRequired'))
+      .max(128),
+    handle: z
+      .string()
+      .trim()
+      .min(1, t('channel.bots.validation.handleRequired'))
+      .max(64, t('channel.bots.validation.handleTooLong'))
+      .regex(/^[a-z0-9_-]+$/, t('channel.bots.validation.handleFormat')),
+    description: z.string().trim().max(500),
+    avatarUrl: z.string().trim(),
+    hasAgent: z.boolean(),
+  });
 
-export type BotFormValues = z.infer<typeof botFormSchema>;
+export type BotFormValues = z.infer<ReturnType<typeof botFormSchema>>;
 export type BotFormErrors = Partial<Record<keyof BotFormValues, string>>;
 
 export const EMPTY_BOT_FORM: BotFormValues = {
@@ -45,7 +51,7 @@ export function slugBotHandle(value: string) {
 }
 
 export function validateBotForm(values: BotFormValues) {
-  const result = botFormSchema.safeParse(values);
+  const result = botFormSchema().safeParse(values);
   if (result.success) return result;
 
   const fieldErrors = result.error.flatten().fieldErrors;

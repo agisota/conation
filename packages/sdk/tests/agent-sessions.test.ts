@@ -12,7 +12,7 @@ const session: AgentSessionResponse = {
   model: 'claude-sonnet',
   modifiedAt: '2026-08-24T12:00:00Z',
   name: 'Agent Session',
-  ownerId: 'macro|owner@example.com',
+  ownerId: 'conation|owner@example.com',
   sandboxSize: 'default',
   status: { kind: 'no_messages' },
   workspace: '/workspace',

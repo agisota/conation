@@ -1,5 +1,5 @@
-use entity_access::{domain::service::EntityAccessServiceImpl, outbound::PgAccessRepository};
 use conation_authorization::{MacroAuthJwtValidator, MacroAuthorizationServiceImpl};
+use entity_access::{domain::service::EntityAccessServiceImpl, outbound::PgAccessRepository};
 use notification::domain::service::SqsNotificationIngress;
 use notification::outbound::queue::SqsQueue;
 

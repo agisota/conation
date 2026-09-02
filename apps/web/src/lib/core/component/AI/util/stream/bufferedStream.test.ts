@@ -1,9 +1,10 @@
 /**
  * @vitest-environment jsdom
  */
+
+import { ALL_TRANSFORMERS, SupportedNodeTypes } from '@conation/lexical-core';
 import { tailContext } from '@core/component/LexicalMarkdown/tailContext';
 import { $convertFromMarkdownString } from '@lexical/markdown';
-import { ALL_TRANSFORMERS, SupportedNodeTypes } from '@conation/lexical-core';
 import type { ChatStream } from '@service-cognition/generated/schemas';
 import {
   type ChatStreamController,

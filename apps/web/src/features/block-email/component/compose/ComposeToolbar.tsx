@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { EmailDateSelector } from '@block-email/component/email-date-selector';
 import { MAX_ATTACHMENTS_BYTES_SIZE } from '@block-email/constants';
 import { FormatButtons } from '@channel/Input/FormatButtons';
@@ -12,7 +13,6 @@ import { toast } from '@core/component/Toast/Toast';
 import { ENABLE_EMAIL_SCHEDULED_SEND } from '@core/constant/featureFlags';
 import { fileSelector } from '@core/directive/fileSelector';
 import { isMobile } from '@core/mobile/isMobile';
-import { plural } from '@core/util/string';
 import PaperclipIcon from '@phosphor/paperclip.svg?component-solid';
 import TextAa from '@phosphor/text-aa.svg';
 import Trash from '@phosphor/trash.svg';
@@ -34,7 +34,9 @@ export function EmailComposeToolbar(props: {
     const attachmentsToAddByteSize = files.reduce((sum, f) => sum + f.size, 0);
 
     if (attachmentsToAddByteSize >= MAX_ATTACHMENTS_BYTES_SIZE) {
-      toast.failure(`${plural('Attachment', files.length)} exceed 18MB`);
+      toast.failure(
+        t('blockEmail.attachments.tooLarge', { count: files.length })
+      );
       return;
     }
 
@@ -47,8 +49,8 @@ export function EmailComposeToolbar(props: {
       currentAttachmentsByteSize + attachmentsToAddByteSize >=
       MAX_ATTACHMENTS_BYTES_SIZE
     ) {
-      toast.failure("Can't add more attachments", {
-        subtext: 'Total attachments exceed 18MB limit',
+      toast.failure(t('blockEmail.attachments.limitReached'), {
+        subtext: t('blockEmail.attachments.limitDescription'),
       });
       return;
     }
@@ -96,7 +98,7 @@ export function EmailComposeToolbar(props: {
                       onSelect: handleAddAttachments,
                     }))
                   }
-                  tooltip="Attach"
+                  tooltip={t('blockEmail.actions.attach')}
                   size="icon-sm"
                   disabled={ctx.disabled()}
                 >
@@ -105,7 +107,7 @@ export function EmailComposeToolbar(props: {
               </div>
             </Show>
             <Button
-              tooltip="Format"
+              tooltip={t('blockEmail.actions.format')}
               size="icon-sm"
               disabled={ctx.disabled()}
               onClick={() => {
@@ -118,7 +120,7 @@ export function EmailComposeToolbar(props: {
               <div aria-hidden="true" class="mx-1 h-4 w-px bg-edge-muted/70" />
               <Button
                 onclick={ctx.onDelete}
-                tooltip="Delete draft"
+                tooltip={t('blockEmail.compose.deleteDraft')}
                 size="icon-sm"
               >
                 <Trash />
@@ -136,7 +138,9 @@ export function EmailComposeToolbar(props: {
                 variant="outline"
                 size="sm"
               >
-                {ctx.isSavingDraft?.() ? 'Saving…' : 'Save Draft'}
+                {ctx.isSavingDraft?.()
+                  ? t('blockEmail.compose.saving')
+                  : t('blockEmail.compose.saveDraft')}
               </Button>
             </Show>
             <Show when={ENABLE_EMAIL_SCHEDULED_SEND && ctx.onSendTimeChange}>
@@ -146,7 +150,9 @@ export function EmailComposeToolbar(props: {
                 disabled={ctx.scheduleSendDisabled?.()}
               />
             </Show>
-            <Tooltip label={ctx.sendTime() ? 'Send time is scheduled' : ''}>
+            <Tooltip
+              label={ctx.sendTime() ? t('blockEmail.schedule.scheduled') : ''}
+            >
               <SendButton
                 onClick={() => ctx.onSend()}
                 disabled={
@@ -156,7 +162,7 @@ export function EmailComposeToolbar(props: {
                   ctx.disabled()
                 }
                 pending={ctx.isSending()}
-                tooltip="Send email"
+                tooltip={t('blockEmail.actions.send')}
                 shortcut="cmd+enter"
               />
             </Tooltip>
@@ -188,6 +194,7 @@ function MobileToolbar(props: {
                 }
                 size="icon-sm"
                 disabled={ctx.disabled()}
+                tooltip={t('blockEmail.actions.attach')}
               >
                 <PaperclipIcon />
               </Button>
@@ -202,7 +209,9 @@ function MobileToolbar(props: {
               }
               onClick={() => void ctx.onSaveDraft?.()}
             >
-              {ctx.isSavingDraft?.() ? 'Saving…' : 'Draft'}
+              {ctx.isSavingDraft?.()
+                ? t('blockEmail.compose.saving')
+                : t('blockEmail.compose.draft')}
             </Button>
           </Show>
           <Show when={ENABLE_EMAIL_SCHEDULED_SEND && ctx.onSendTimeChange}>
@@ -222,6 +231,7 @@ function MobileToolbar(props: {
             }
             pending={ctx.isSending()}
             onClick={() => ctx.onSend()}
+            tooltip={t('blockEmail.actions.send')}
           />
         </div>
       </HeaderIsland>

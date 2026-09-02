@@ -22,8 +22,8 @@ use crate::inbound::toolset::{
 use agent::types::{ChatMessage, ChatMessageContent, Role};
 use agent::{AgentLoop, PredefinedModel};
 use ai_toolset::{RequestContext, ToolResult, ToolSet, ToolSetError};
-use futures::StreamExt;
 use conation_user_id::user_id::MacroUserIdStr;
+use futures::StreamExt;
 use mcp_select::{ConnectorSelect, UserMcpTools};
 use std::collections::HashSet;
 use std::pin::Pin;

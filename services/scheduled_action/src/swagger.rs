@@ -20,7 +20,8 @@ use model::response::EmptyResponse;
     info(
         title = "scheduled_action",
         description = "API for managing scheduled actions",
-        terms_of_service = "https://macro.com/terms",
+        terms_of_service = "https://conation.dev/terms",
+        license(name = "GNU Affero General Public License v3.0", identifier = "AGPL-3.0-only"),
     ),
     paths(
         crate::inbound::axum_router::health,

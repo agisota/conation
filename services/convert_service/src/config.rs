@@ -1,10 +1,10 @@
 use std::sync::LazyLock;
 
 use anyhow::Context;
-use database_env_vars::DatabaseUrl;
 use conation_auth::InternalApiKey;
 pub use conation_env::Environment;
 use conation_env_var::env_vars;
+use database_env_vars::DatabaseUrl;
 
 /// The path to the LibreOffice binary
 pub static LOK_PATH: LazyLock<String> = LazyLock::new(|| {

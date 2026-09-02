@@ -1,9 +1,9 @@
 use anyhow::Context as _;
+use conation_env_var::env_vars;
+use conation_service_urls::{LexicalServiceUrl, SyncServiceUrl};
 use documents::outbound::markdown_init::LexicalSyncMarkdownInitializer;
 use documents::outbound::pg_document_repo::PgDocumentRepo;
 use lexical_client::LexicalClient;
-use conation_env_var::env_vars;
-use conation_service_urls::{LexicalServiceUrl, SyncServiceUrl};
 use sqlx::postgres::PgPoolOptions;
 use sync_service_client::SyncServiceClient;
 

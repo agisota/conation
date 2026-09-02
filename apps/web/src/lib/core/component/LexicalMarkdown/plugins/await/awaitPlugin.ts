@@ -1,9 +1,9 @@
-import { $wrapNodeInElement, mergeRegister } from '@lexical/utils';
 import {
   $createAwaitNode,
   $isAwaitNode,
   type AwaitNode,
 } from '@conation/lexical-core';
+import { $wrapNodeInElement, mergeRegister } from '@lexical/utils';
 import {
   $createParagraphNode,
   $createTextNode,

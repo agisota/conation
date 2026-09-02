@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import type { ReplyType } from '@block-email/util/replyType';
 import ArrowBendUpLeft from '@phosphor/arrow-bend-up-left.svg';
 import ArrowBendUpRight from '@phosphor/arrow-bend-up-right.svg';
@@ -54,7 +55,7 @@ export function MessageActions(props: {
         <Button
           class="size-6 p-0 border-0 bg-transparent rounded text-ink-muted hover:text-ink hover:bg-ink-muted/8"
           onClick={onChangeReplyType('reply-all')}
-          tooltip="Reply"
+          tooltip={t('blockEmail.actions.reply')}
         >
           <ArrowBendUpLeft class="size-3.5" />
         </Button>
@@ -63,7 +64,7 @@ export function MessageActions(props: {
         <Button
           class="size-6 p-0 border-0 bg-transparent rounded text-ink-muted hover:text-ink hover:bg-ink-muted/8"
           onClick={onChangeReplyType('forward')}
-          tooltip="Forward"
+          tooltip={t('blockEmail.actions.forward')}
         >
           <ArrowBendUpRight class="size-3.5" />
         </Button>

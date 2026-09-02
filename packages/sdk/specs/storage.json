@@ -3,9 +3,10 @@
   "info": {
     "title": "document_storage_service",
     "description": "",
-    "termsOfService": "https://macro.com/terms",
+    "termsOfService": "https://conation.dev/terms",
     "license": {
-      "name": ""
+      "name": "GNU Affero General Public License v3.0",
+      "identifier": "AGPL-3.0-only"
     },
     "version": "0.1.0"
   },
@@ -4039,20 +4040,55 @@
             }
           },
           {
-            "name": "x-macro-bot-token",
+            "name": "x-conation-bot-token",
             "in": "header",
-            "description": "Preferred bot authentication token",
+            "description": "Bot authentication token",
             "required": false,
             "schema": {
               "type": ["string", "null"]
             }
           },
           {
-            "name": "x-macro-channel-bot-token",
+            "name": "x-conation-bot-scope",
             "in": "header",
-            "description": "Legacy channel-scoped bot authentication token",
+            "description": "Required with x-conation-bot-token: user or team",
             "required": false,
-            "deprecated": true,
+            "schema": {
+              "type": ["string", "null"]
+            }
+          },
+          {
+            "name": "x-conation-bot-for-conation-user-id",
+            "in": "header",
+            "description": "Optional Conation user ID the bot claims to act for",
+            "required": false,
+            "schema": {
+              "type": ["string", "null"]
+            }
+          },
+          {
+            "name": "x-conation-bot-for-fusionauth-user-id",
+            "in": "header",
+            "description": "Optional FusionAuth user ID the bot claims to act for",
+            "required": false,
+            "schema": {
+              "type": ["string", "null"]
+            }
+          },
+          {
+            "name": "x-conation-bot-for-organization-id",
+            "in": "header",
+            "description": "Optional organization ID the bot claims to act for",
+            "required": false,
+            "schema": {
+              "type": ["string", "null"]
+            }
+          },
+          {
+            "name": "x-conation-channel-bot-token",
+            "in": "header",
+            "description": "Channel-scoped bot authentication token",
+            "required": false,
             "schema": {
               "type": ["string", "null"]
             }
@@ -15124,7 +15160,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Filter by chat owner. Examples: ['macro|user1@user.com'], ['macro|user1@user.com', 'macro|user2@user.com']. Empty to search all owners."
+            "description": "Filter by chat owner. Examples: ['conation|user1@user.com'], ['conation|user1@user.com', 'conation|user2@user.com']. Empty to search all owners."
           },
           "project_ids": {
             "type": "array",
@@ -16578,7 +16614,7 @@
       },
       "CustomSpeakerAssignment": {
         "type": "object",
-        "description": "One per-diarized-speaker override, used in [`EditCallTranscriptRequest`].\n\n`custom_speaker = None` clears any existing override for this\n`diarized_speaker_id`; `Some(macro_user_id)` sets it. The string is\nexpected to parse as a `MacroUserId` (e.g. `macro|alice@example.com`);\nthe service layer rejects malformed values with `400 Bad Request`.",
+        "description": "One per-diarized-speaker override, used in [`EditCallTranscriptRequest`].\n\n`custom_speaker = None` clears any existing override for this\n`diarized_speaker_id`; `Some(macro_user_id)` sets it. The string is\nexpected to parse as a `MacroUserId` (e.g. `conation|alice@example.com`);\nthe service layer rejects malformed values with `400 Bad Request`.",
         "required": ["diarizedSpeakerId", "customSpeaker"],
         "properties": {
           "customSpeaker": {
@@ -17064,7 +17100,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Filter by document owner. Examples: ['macro|user1@user.com'], ['macro|user1@user.com', 'macro|user2@user.com']. Empty to search all owners."
+            "description": "Filter by document owner. Examples: ['conation|user1@user.com'], ['conation|user1@user.com', 'conation|user2@user.com']. Empty to search all owners."
           },
           "project_ids": {
             "type": "array",
@@ -21541,7 +21577,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Filter by project owner. Examples: ['macro|user1@user.com'], ['macro|user1@user.com', 'macro|user2@user.com']. Empty to search all owners."
+            "description": "Filter by project owner. Examples: ['conation|user1@user.com'], ['conation|user1@user.com', 'conation|user2@user.com']. Empty to search all owners."
           },
           "project_ids": {
             "type": "array",
@@ -24245,7 +24281,7 @@
         "properties": {
           "how_to_guide_id": {
             "type": "string",
-            "description": "Id of the user's \"Macro how to guide\"."
+            "description": "Id of the user's Conation how-to guide."
           }
         }
       },
@@ -25071,7 +25107,7 @@
   "tags": [
     {
       "name": "macro cloud storage service",
-      "description": "Macro Cloud Storage Service"
+      "description": "Conation Cloud Storage Service"
     }
   ]
 }

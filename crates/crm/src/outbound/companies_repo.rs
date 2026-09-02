@@ -1295,7 +1295,7 @@ impl CompaniesRepository for CompaniesRepositoryImpl {
     }
 
     #[tracing::instrument(skip(self), err)]
-    async fn get_team_id_for_user(&self, conation_id: &str) -> Result<Option<uuid::Uuid>, CrmError> {
+    async fn get_team_id_for_user(&self, macro_id: &str) -> Result<Option<uuid::Uuid>, CrmError> {
         sqlx::query_scalar!(
             r#"
             SELECT team_id
@@ -1304,7 +1304,7 @@ impl CompaniesRepository for CompaniesRepositoryImpl {
             ORDER BY team_role DESC
             LIMIT 1
             "#,
-            conation_id,
+            macro_id,
         )
         .fetch_optional(&self.pool)
         .await

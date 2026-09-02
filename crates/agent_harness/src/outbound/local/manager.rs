@@ -8,7 +8,7 @@ use crate::domain::error::{HarnessError, Result};
 use crate::domain::model::{SandboxEgress, SpawnContainer};
 use crate::domain::ports::ContainerManager;
 use crate::domain::sandbox::{SandboxResizeEffect, create_only_resize_effect};
-use crate::outbound::daytona::AnthropicApiKey;
+use crate::outbound::daytona::RoxApiKey;
 use crate::outbound::provision::{self, SESSION_LABEL};
 use crate::outbound::sidecar::SidecarTransport;
 
@@ -26,8 +26,8 @@ pub struct LocalSettings {
     pub image: String,
     /// Compose network the sandbox joins so this service can dial it by name.
     pub network: String,
-    /// Key sandboxes run Anthropic models with.
-    pub anthropic_api_key: AnthropicApiKey,
+    /// Key sandboxes use for Conation's OmniRoute provider.
+    pub rox_api_key: RoxApiKey,
 }
 
 /// Hands out containers on the local Docker daemon.
@@ -45,7 +45,7 @@ pub struct LocalContainerManager {
     docker: Docker,
     image: String,
     network: String,
-    anthropic_api_key: AnthropicApiKey,
+    rox_api_key: RoxApiKey,
 }
 
 impl LocalContainerManager {
@@ -56,20 +56,20 @@ impl LocalContainerManager {
             docker_binary,
             image,
             network,
-            anthropic_api_key,
+            rox_api_key,
         } = settings;
         Self {
             docker: Docker::new(docker_binary),
             image,
             network,
-            anthropic_api_key,
+            rox_api_key,
         }
     }
 
     /// Stop every sandbox this provider still owns, returning how many refused.
     ///
     /// Compose does not reap siblings created over the mounted Docker socket,
-    /// so without this a `just run_local` Ctrl-C leaves `macro-agent-*`
+    /// so without this a `just run_local` Ctrl-C leaves `conation-agent-*`
     /// containers on the network.
     pub async fn shutdown_all(&self) -> usize {
         let containers = match self.docker.find_all_by_label_key(SESSION_LABEL).await {
@@ -232,7 +232,7 @@ impl ContainerManager for LocalContainerManager {
             image: self.image.clone(),
             name: container_name(session_id),
             labels: vec![(SESSION_LABEL.to_owned(), session_id.to_string())],
-            env: sandbox_env(&self.anthropic_api_key, egress),
+            env: sandbox_env(&self.rox_api_key, egress),
             network: self.network.clone(),
         };
         let container = self.docker.run(&spec).await.map_err(unavailable)?;
@@ -304,10 +304,10 @@ impl ContainerManager for LocalContainerManager {
 /// The container name for a session.
 ///
 /// Deterministic so a session has at most one container and `docker ps` reads
-/// legibly, and prefixed so a developer can tell Macro's sandboxes apart from
+/// legibly, and prefixed so a developer can tell Conation's sandboxes apart from
 /// the rest of their daemon.
 fn container_name(session: AgentSessionId) -> String {
-    format!("macro-agent-{session}")
+    format!("conation-agent-{session}")
 }
 
 /// The sidecar keeps its own port; on a shared network the container name is
@@ -316,14 +316,8 @@ fn sidecar_address(container: &ContainerRef) -> String {
     format!("{}:{}", container.name, provision::SIDECAR_PORT)
 }
 
-fn sandbox_env(
-    anthropic_api_key: &AnthropicApiKey,
-    egress: SandboxEgress,
-) -> Vec<(String, String)> {
-    let mut env = vec![(
-        "ANTHROPIC_API_KEY".to_owned(),
-        anthropic_api_key.expose().to_owned(),
-    )];
+fn sandbox_env(rox_api_key: &RoxApiKey, egress: SandboxEgress) -> Vec<(String, String)> {
+    let mut env = vec![("ROX_API_KEY".to_owned(), rox_api_key.expose().to_owned())];
     env.extend(egress.environment());
     env
 }

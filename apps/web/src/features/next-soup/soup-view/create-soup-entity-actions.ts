@@ -1,7 +1,7 @@
 import { isListViewID } from '@app/constants/list-views';
-import { t } from '@app/lib/i18n';
 import { canExecuteMarkDoneOnView } from '@app/features/next-soup/actions/make-mark-done-action';
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import { globalSplitManager } from '@app/signal/splitLayout';
 import { useGlobalNotificationSource } from '@components/app/GlobalAppState';
 import type { SplitHandle } from '@components/app/split-layout/layoutManager';
@@ -176,14 +176,14 @@ export function createSoupEntityActions(): {
       if (canExecuteAll(markNotDone.canExecute)) {
         topItems.push({
           id: 'mark-not-done',
-          label: 'Mark Not Done',
+          label: t('soup.actions.markNotDone'),
           hotkeyToken: TOKENS.entity.action.markNotDone,
           onClick: handle(markNotDone.executeWithSoup),
         });
       } else if (canExecuteAll(markDone.canExecute)) {
         topItems.push({
           id: 'mark-done',
-          label: 'Mark Done',
+          label: t('soup.actions.markDone'),
           hotkeyToken: TOKENS.entity.action.markDone,
           onClick: handle(markDone.executeWithSoup),
         });
@@ -196,7 +196,7 @@ export function createSoupEntityActions(): {
     if (canExecuteAll(markUnread.canExecute)) {
       topItems.push({
         id: 'mark-unread',
-        label: 'Mark Unread',
+        label: t('soup.actions.markUnread'),
         hotkeyToken: TOKENS.entity.action.markUnread,
         onClick: handle(markUnread.executeWithSoup),
       });
@@ -206,7 +206,7 @@ export function createSoupEntityActions(): {
     ) {
       topItems.push({
         id: 'mark-read',
-        label: 'Mark Read',
+        label: t('soup.actions.markRead'),
         hotkeyToken: TOKENS.entity.action.markRead,
         onClick: handle(markRead.executeWithSoup),
       });
@@ -216,7 +216,7 @@ export function createSoupEntityActions(): {
     ) {
       topItems.push({
         id: 'mark-notifications-read',
-        label: 'Mark Read',
+        label: t('soup.actions.markRead'),
         onClick: handle(markNotificationsRead.executeWithSoup),
       });
     }
@@ -284,7 +284,7 @@ export function createSoupEntityActions(): {
     if (openableEntity()) {
       topItems.push({
         id: 'open-in-split',
-        label: 'Open in new split',
+        label: t('soup.actions.openInNewSplit'),
         shortcut: 'shift+enter',
         // A layout with no room for another split cannot honor this: the open
         // would fall back to replacing a split instead of adding one.
@@ -295,7 +295,7 @@ export function createSoupEntityActions(): {
       if (splitHandle?.isControllerSplit()) {
         topItems.push({
           id: 'open-to-replace-preview',
-          label: 'Open to replace preview',
+          label: t('soup.actions.openReplacePreview'),
           shortcut: 'opt+enter',
           onClick: openEntity({ replacePreview: true }),
         });
@@ -308,7 +308,7 @@ export function createSoupEntityActions(): {
     if (canExecuteAll(renameAction.canExecute)) {
       middleItems.push({
         id: 'rename',
-        label: 'Rename',
+        label: t('soup.actions.renameShort'),
         hotkeyToken: TOKENS.entity.action.rename,
         onClick: handle(renameAction.executeWithSoup),
       });
@@ -324,7 +324,7 @@ export function createSoupEntityActions(): {
     if (entities.length === 1 && editReminderAction.canExecute(entities[0])) {
       middleItems.push({
         id: 'edit-reminder',
-        label: 'Edit reminder',
+        label: t('soup.actions.editReminder'),
         hotkeyToken: TOKENS.entity.action.rename,
         onClick: handle(editReminderAction.executeWithSoup),
       });
@@ -337,7 +337,9 @@ export function createSoupEntityActions(): {
       // No icon: the other items in this menu don't have one.
       middleItems.push({
         id: 'favorite',
-        label: allFavorited ? 'Unfavorite' : 'Favorite',
+        label: allFavorited
+          ? t('soup.actions.unfavorite')
+          : t('soup.actions.favorite'),
         hotkeyToken: TOKENS.entity.action.favorite,
         onClick: handle(favoriteAction.executeWithSoup),
       });
@@ -347,7 +349,7 @@ export function createSoupEntityActions(): {
     if (entities.length === 1 && createReminderAction.canExecute(entities[0])) {
       middleItems.push({
         id: 'create-reminder',
-        label: 'Remind me',
+        label: t('soup.actions.remindMe'),
         hotkeyToken: TOKENS.entity.action.createReminder,
         // Not `handle`: the mark-done that follows needs this view's answer to
         // whether the list moves on, the same one Mark Done above is gated by.
@@ -361,7 +363,7 @@ export function createSoupEntityActions(): {
     if (entities.length === 1 && openTagPicker) {
       middleItems.push({
         id: 'add-tag',
-        label: 'Add tag',
+        label: t('soup.actions.addTag'),
         onClick: openTagPicker,
       });
     }
@@ -369,7 +371,7 @@ export function createSoupEntityActions(): {
     if (canExecuteAll(moveToProjectAction.canExecute)) {
       middleItems.push({
         id: 'move-to-folder',
-        label: 'Move to folder',
+        label: t('soup.actions.moveToFolder', { count: entities.length }),
         hotkeyToken: TOKENS.entity.action.moveToFolder,
         onClick: handle(moveToProjectAction.executeWithSoup),
       });
@@ -378,7 +380,7 @@ export function createSoupEntityActions(): {
     if (viewedProjectId && canExecuteAll(removeFromProjectAction.canExecute)) {
       middleItems.push({
         id: 'remove-from-folder',
-        label: 'Remove from folder',
+        label: t('soup.actions.removeFromFolder'),
         onClick: handle(removeFromProjectAction.executeWithSoup),
       });
     }
@@ -386,7 +388,7 @@ export function createSoupEntityActions(): {
     if (canExecuteAll(copyAction.canExecute)) {
       middleItems.push({
         id: 'duplicate',
-        label: 'Duplicate',
+        label: t('soup.actions.duplicateShort'),
         hotkeyToken: TOKENS.entity.action.copy,
         onClick: handle(copyAction.executeWithSoup),
       });
@@ -395,7 +397,7 @@ export function createSoupEntityActions(): {
     if (entities.length === 1) {
       middleItems.push({
         id: 'copy-link',
-        label: 'Copy Link',
+        label: t('soup.actions.copyLink'),
         hotkeyToken: TOKENS.entity.action.copyLink,
         onClick: handle(copyLinkAction.executeWithSoup),
       });
@@ -403,7 +405,7 @@ export function createSoupEntityActions(): {
       if (copyBranchNameAction.canExecute(entities[0])) {
         middleItems.push({
           id: 'copy-branch-name',
-          label: 'Copy Branch Name',
+          label: t('soup.actions.copyBranchName'),
           hotkeyToken: TOKENS.entity.action.copyBranchName,
           onClick: handle(copyBranchNameAction.executeWithSoup),
         });
@@ -411,14 +413,14 @@ export function createSoupEntityActions(): {
 
       middleItems.push({
         id: 'copy-entity-id',
-        label: 'Copy ID',
+        label: t('soup.actions.copyId'),
         onClick: handle(copyEntityIdAction.executeWithSoup),
       });
 
       if (shareAction.canExecute(entities[0])) {
         middleItems.push({
           id: 'share',
-          label: 'Share',
+          label: t('soup.actions.share'),
           onClick: handle(shareAction.executeWithSoup),
         });
       }
@@ -433,7 +435,7 @@ export function createSoupEntityActions(): {
     ) {
       senderItems.push({
         id: 'sender-signal',
-        label: 'Sender → Signal',
+        label: t('soup.actions.senderToSignal'),
         onClick: handle(markSenderSignalAction.executeWithSoup),
       });
     }
@@ -444,7 +446,7 @@ export function createSoupEntityActions(): {
     ) {
       senderItems.push({
         id: 'sender-noise',
-        label: 'Sender → Noise',
+        label: t('soup.actions.senderToNoise'),
         onClick: handle(markSenderNoiseAction.executeWithSoup),
       });
     }
@@ -452,7 +454,7 @@ export function createSoupEntityActions(): {
     if (canExecuteAll(blockSenderAction.canExecute)) {
       senderItems.push({
         id: 'block-sender',
-        label: 'Block Sender',
+        label: t('soup.actions.blockSender'),
         onClick: handle(blockSenderAction.executeWithSoup),
       });
     }
@@ -465,17 +467,17 @@ export function createSoupEntityActions(): {
       crmItems.push(
         {
           id: 'set-stage',
-          label: 'Set stage',
+          label: t('soup.actions.setStage'),
           onClick: () => setCompanyPropertyAction.execute(entities, 'stage'),
         },
         {
           id: 'set-owner',
-          label: 'Set owner',
+          label: t('soup.actions.setOwner'),
           onClick: () => setCompanyPropertyAction.execute(entities, 'owner'),
         },
         {
           id: 'set-revenue',
-          label: 'Set revenue',
+          label: t('soup.actions.setRevenue'),
           onClick: () => setCompanyPropertyAction.execute(entities, 'revenue'),
         }
       );
@@ -488,7 +490,9 @@ export function createSoupEntityActions(): {
     ) {
       crmItems.push({
         id: 'hide-company',
-        label: singleEntity.hidden ? 'Unhide' : 'Hide',
+        label: singleEntity.hidden
+          ? t('soup.actions.unhide')
+          : t('soup.actions.hide'),
         onClick: handle(hideCompanyAction.executeWithSoup),
       });
     }

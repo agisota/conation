@@ -132,7 +132,7 @@ vi.mock('@graphql-cache/scope', () => ({
 vi.mock('@graphql-cache/exchange/normalized-cache-exchange', () => ({
   normalizedCacheExchange: (host: unknown) => ({ kind: 'cache', host }),
 }));
-vi.mock('@service-auth/fetch', () => ({ getMacroApiToken: vi.fn() }));
+vi.mock('@service-auth/fetch', () => ({ getConationApiToken: vi.fn() }));
 vi.mock('graphql-ws', () => ({
   createClient: () => ({ subscribe: vi.fn(), dispose: vi.fn() }),
 }));

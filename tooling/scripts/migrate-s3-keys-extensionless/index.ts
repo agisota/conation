@@ -12,14 +12,15 @@ import {
   writeFileSync,
 } from 'fs';
 import { createInterface } from 'readline';
+import { readConationPrefix } from './prefix';
 
 const S3_BUCKET = process.env.S3_BUCKET;
 const DRY_RUN = process.env.DRY_RUN === 'true';
-const PREFIX = process.env.PREFIX ?? 'macro|';
+let PREFIX: string;
 const CONCURRENCY = parseInt(process.env.CONCURRENCY ?? '20', 10);
 const PAGE_SIZE = parseInt(process.env.PAGE_SIZE ?? '100', 10);
 const LIMIT = process.env.LIMIT ? parseInt(process.env.LIMIT, 10) : undefined;
-const USER = process.env.USER_PREFIX;
+let USER: string | undefined;
 const DOCUMENT_ID = process.env.DOCUMENT_ID;
 const KEYS_FILE = process.env.KEYS_FILE;
 const RESET = process.env.RESET === 'true';
@@ -29,6 +30,12 @@ if (!S3_BUCKET) {
   process.exit(1);
 }
 
+try {
+  ({ prefix: PREFIX, userPrefix: USER } = readConationPrefix());
+} catch (error) {
+  console.error(error instanceof Error ? error.message : error);
+  process.exit(1);
+}
 const s3 = new S3Client({});
 
 const CURSOR_FILE = `cursor-${S3_BUCKET}.txt`;
@@ -67,7 +74,7 @@ function clearCursor() {
 }
 
 // Matches keys in the format: {owner}/{uuid_v4}/{version_id}.{extension}
-// e.g. macro|user@foo.com/12f9a0ac-d445-45e3-94c1-5e8c02f0a6d8/564457.pdf
+// e.g. conation|user@conation.dev/12f9a0ac-d445-45e3-94c1-5e8c02f0a6d8/564457.pdf
 const UUID_V4 = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
 const VERSION_WITH_EXT_REGEX = new RegExp(`${UUID_V4}/(\\d+)\\..+$`);
 const SKIP_PATTERNS = [

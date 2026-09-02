@@ -3,11 +3,11 @@
 use std::fmt;
 
 use chrono::{DateTime, Utc};
+use conation_user_id::user_id::MacroUserIdStr;
 use item_filters::{
     CallStatus,
     ast::{LiteralTree, call::CallLiteral},
 };
-use conation_user_id::user_id::MacroUserIdStr;
 use models_pagination::{Query, SimpleSortMethod};
 use models_permissions::share_permission::access_level::AccessLevel;
 use uuid::Uuid;
@@ -332,8 +332,8 @@ pub struct EditCallRecordRequest {
 /// One per-diarized-speaker override, used in [`EditCallTranscriptRequest`].
 ///
 /// `custom_speaker = None` clears any existing override for this
-/// `diarized_speaker_id`; `Some(conation_user_id)` sets it. The string is
-/// expected to parse as a `MacroUserId` (e.g. `macro|alice@example.com`);
+/// `diarized_speaker_id`; `Some(macro_user_id)` sets it. The string is
+/// expected to parse as a `MacroUserId` (e.g. `conation|alice@example.com`);
 /// the service layer rejects malformed values with `400 Bad Request`.
 #[derive(Debug, Clone, serde::Deserialize)]
 #[cfg_attr(feature = "inbound", derive(utoipa::ToSchema))]

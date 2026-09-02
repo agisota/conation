@@ -1,5 +1,5 @@
-import UploadIcon from '@phosphor/upload-simple.svg';
 import { t } from '@app/lib/i18n';
+import UploadIcon from '@phosphor/upload-simple.svg';
 import { Button } from '@ui';
 import { Show } from 'solid-js';
 import { BotAvatar } from './BotAvatar';
@@ -19,7 +19,7 @@ export function BotProfileFields(props: {
       <div class="flex items-center gap-3 border-b border-edge-muted pb-4">
         <button
           type="button"
-          aria-label={t('auto.upload_avatar')}
+          aria-label={t('channel.bots.profile.uploadAvatar')}
           class="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-accent"
           onClick={props.onUploadAvatar}
         >
@@ -33,10 +33,12 @@ export function BotProfileFields(props: {
         </button>
         <div class="min-w-0 flex-1">
           <div class="text-sm font-medium">
-            {props.value.avatarUrl ? 'Change avatar' : 'Bot avatar'}
+            {props.value.avatarUrl
+              ? t('channel.bots.profile.changeAvatar')
+              : t('channel.bots.profile.avatar')}
           </div>
           <div class="mt-0.5 text-xs text-ink-muted">
-            Optional · square images work best
+            {t('channel.bots.profile.avatarHelp')}
           </div>
         </div>
         <Button
@@ -47,17 +49,21 @@ export function BotProfileFields(props: {
           onClick={props.onUploadAvatar}
         >
           <UploadIcon />
-          {props.uploadingAvatar ? 'Uploading…' : 'Upload'}
+          {props.uploadingAvatar
+            ? t('channel.bots.profile.uploading')
+            : t('channel.bots.profile.upload')}
         </Button>
       </div>
 
       <div class="mt-4 grid grid-cols-2 gap-3 mobile:grid-cols-1">
         <label class="flex flex-col gap-1.5">
-          <span class="text-xs font-medium">{t('auto.name')}</span>
+          <span class="text-xs font-medium">
+            {t('channel.bots.profile.name')}
+          </span>
           <input
             autofocus
             value={props.value.name}
-            placeholder={t('auto.release_bot')}
+            placeholder={t('channel.bots.profile.namePlaceholder')}
             class="settings-input w-full"
             aria-invalid={!!props.errors.name}
             onInput={(event) => props.onNameChange(event.currentTarget.value)}
@@ -67,7 +73,9 @@ export function BotProfileFields(props: {
           </Show>
         </label>
         <label class="flex flex-col gap-1.5">
-          <span class="text-xs font-medium">{t('auto.mention_handle')}</span>
+          <span class="text-xs font-medium">
+            {t('channel.bots.profile.handle')}
+          </span>
           <div class="flex items-center rounded-md border border-edge-muted bg-transparent px-2 focus-within:border-accent">
             <span class="text-sm text-ink-extra-muted">@</span>
             <input
@@ -87,10 +95,12 @@ export function BotProfileFields(props: {
       </div>
 
       <label class="mt-4 flex flex-col gap-1.5">
-        <span class="text-xs font-medium">{t('auto.description')}</span>
+        <span class="text-xs font-medium">
+          {t('channel.bots.profile.description')}
+        </span>
         <textarea
           value={props.value.description}
-          placeholder={t('auto.posts_release_updates_and_depl')}
+          placeholder={t('channel.bots.profile.descriptionPlaceholder')}
           rows={3}
           class="settings-input h-auto min-h-20 w-full resize-none px-3 py-2.5 leading-5"
           onInput={(event) =>

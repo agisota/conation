@@ -34,7 +34,7 @@ mod tests {
 
     #[test]
     fn share_filenames_from_url_preserves_order() {
-        let url = Url::parse("macro://share?files=share_one.jpg,share_two.mp4").unwrap();
+        let url = Url::parse("conation://share?files=share_one.jpg,share_two.mp4").unwrap();
 
         assert_eq!(
             share_filenames_from_url(&url),
@@ -45,7 +45,7 @@ mod tests {
     #[test]
     fn share_filenames_from_url_rejects_invalid_names() {
         let url = Url::parse(
-            "macro://share?files=share_ok.png,../bad.mov,not_shared.jpg,share_nested%2Fbad.mp4",
+            "conation://share?files=share_ok.png,../bad.mov,not_shared.jpg,share_nested%2Fbad.mp4",
         )
         .unwrap();
 

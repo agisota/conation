@@ -16,7 +16,7 @@ use utoipa::ToSchema;
 /// `const`. Deref yields a `&'static MacroUserIdStr`; clone it when an owned
 /// value is needed.
 pub static SYSTEM_USER_ID: LazyLock<MacroUserIdStr<'static>> = LazyLock::new(|| {
-    MacroUserIdStr::try_from("macro|ai-system@macro.com".to_string())
+    MacroUserIdStr::try_from("conation|ai-system@conation.dev".to_string())
         .expect("system user id is valid")
 });
 

@@ -43,16 +43,19 @@ pub async fn get_batch_preview_handler(
     let document_ids: Vec<String> = unique_document_ids.into_iter().collect();
 
     let document_preview_results =
-        conation_db_client::document::preview::batch_get_document_preview_v2(&ctx.db, &document_ids)
-            .await
-            .map_err(|err| {
-                tracing::error!(error=?err, "unable to get document preview");
-                GenericResponse::builder()
-                    .message("failed to retrive document previews")
-                    .is_error(true)
-                    .send(StatusCode::INTERNAL_SERVER_ERROR)
-                    .into_response()
-            })?;
+        conation_db_client::document::preview::batch_get_document_preview_v2(
+            &ctx.db,
+            &document_ids,
+        )
+        .await
+        .map_err(|err| {
+            tracing::error!(error=?err, "unable to get document preview");
+            GenericResponse::builder()
+                .message("failed to retrive document previews")
+                .is_error(true)
+                .send(StatusCode::INTERNAL_SERVER_ERROR)
+                .into_response()
+        })?;
 
     let result: Vec<DocumentPreview> = document_preview_results
         .iter()

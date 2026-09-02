@@ -1,14 +1,13 @@
 import type { CalendarBlockProps } from '@block-calendar/types';
-import { t } from '@app/lib/i18n';
 import type { BlockCanvasProps } from '@block-canvas/component/Block';
 import type { BlockChannelProps } from '@block-channel/component/NewChannelBlockAdapter';
 import type { BlockMarkdownProps } from '@block-md/component/Block';
-import type { IDocumentStorageServiceFile } from '@filesystem/file';
 import type {
   InitialSync,
   LiveSyncSource,
   TimeoutError,
 } from '@conation/collaboration/collab/source';
+import type { IDocumentStorageServiceFile } from '@filesystem/file';
 import type { AccessLevel } from '@service-storage/generated/schemas/accessLevel';
 import type { DocumentMetadata } from '@service-storage/generated/schemas/documentMetadata';
 import type { GetDocumentResponseData } from '@service-storage/generated/schemas/getDocumentResponseData';

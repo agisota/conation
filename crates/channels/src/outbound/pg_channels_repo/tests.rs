@@ -6,13 +6,13 @@ use crate::domain::models::{
 };
 use crate::domain::ports::{ChannelListRepo, ChannelRepo};
 use crate::outbound::pg_channels_repo::PgChannelsRepo;
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_user_id::user_id::MacroUserIdStr;
 use filter_ast::Expr;
 use item_filters::ast::{
     LiteralTree,
     channel::{ChannelLiteral, ChannelThreadLiteral},
 };
-use conation_db_migrator::MACRO_DB_MIGRATIONS;
-use conation_user_id::user_id::MacroUserIdStr;
 use models_pagination::{CreatedAt, Cursor, CursorVal, Query, SimpleSortMethod};
 use sqlx::{Pool, Postgres};
 use std::{
@@ -67,7 +67,7 @@ fn repo(pool: Pool<Postgres>) -> PgChannelsRepo {
     PgChannelsRepo::new(pool)
 }
 
-fn conation_user_id(user_id: &str) -> MacroUserIdStr<'static> {
+fn macro_user_id(user_id: &str) -> MacroUserIdStr<'static> {
     MacroUserIdStr::try_from(user_id.to_owned()).expect("valid macro user id")
 }
 
@@ -78,7 +78,7 @@ fn thread_rows_request(
     limit: u32,
 ) -> GetThreadReplyRowsRequest {
     GetThreadReplyRowsRequest {
-        conation_id: conation_user_id(user_id),
+        macro_id: macro_user_id(user_id),
         limit: Some(limit),
         query: Query::Sort(sort, filter),
     }
@@ -94,7 +94,7 @@ fn report_err(e: rootcause::Report) -> anyhow::Error {
 
 fn channels_params(user_id: &str, filter: LiteralTree<ChannelLiteral>) -> GetChannelsParams {
     GetChannelsRequest {
-        conation_id: conation_user_id(user_id),
+        macro_id: macro_user_id(user_id),
         limit: Some(50),
         include_frecency: false,
         query: Query::Sort(SimpleSortMethod::UpdatedAt, filter),
@@ -272,7 +272,7 @@ async fn channel_list_cursor_pagination_matches_unpaginated_results(pool: Pool<P
         let unpaginated = repo
             .get_user_channels_with_participants(
                 GetChannelsRequest {
-                    conation_id: conation_user_id(USER_A),
+                    macro_id: macro_user_id(USER_A),
                     limit: Some(50),
                     include_frecency: false,
                     query: Query::Sort(sort, None),
@@ -293,7 +293,7 @@ async fn channel_list_cursor_pagination_matches_unpaginated_results(pool: Pool<P
             let page = repo
                 .get_user_channels_with_participants(
                     GetChannelsRequest {
-                        conation_id: conation_user_id(USER_A),
+                        macro_id: macro_user_id(USER_A),
                         limit: Some(1),
                         include_frecency: false,
                         query,
@@ -363,7 +363,7 @@ async fn create_channel_persists_auto_join_team_and_adds_current_members(pool: P
 
     let enabled_channel_id = repo
         .create_channel(
-            conation_user_id(USER_A),
+            macro_user_id(USER_A),
             None,
             CreateChannelRequest {
                 name: Some("enabled".to_string()),
@@ -377,7 +377,7 @@ async fn create_channel_persists_auto_join_team_and_adds_current_members(pool: P
         .unwrap();
     let disabled_channel_id = repo
         .create_channel(
-            conation_user_id(USER_A),
+            macro_user_id(USER_A),
             None,
             CreateChannelRequest {
                 name: Some("disabled".to_string()),
@@ -444,7 +444,7 @@ async fn create_channel_persists_auto_join_team_and_adds_current_members(pool: P
     assert_eq!(disabled_participants, vec![USER_A]);
     assert_eq!(
         enabled_channel_id.participant_user_ids,
-        vec![conation_user_id(LEFT_USER), conation_user_id(USER_A)]
+        vec![macro_user_id(LEFT_USER), macro_user_id(USER_A)]
     );
 }
 
@@ -454,8 +454,8 @@ async fn create_channel_persists_auto_join_team_and_adds_current_members(pool: P
 )]
 async fn maybe_get_dm_finds_channel_regardless_of_argument_order(pool: Pool<Postgres>) {
     let repo = repo(pool.clone());
-    let user_a = conation_user_id(USER_A);
-    let user_b = conation_user_id(USER_B);
+    let user_a = macro_user_id(USER_A);
+    let user_b = macro_user_id(USER_B);
 
     let created = repo
         .create_channel(
@@ -527,7 +527,7 @@ async fn patch_channel_rename_advances_updated_at(pool: Pool<Postgres>) {
 )]
 async fn patch_channel_converts_to_team_and_updates_auto_join_members(pool: Pool<Postgres>) {
     let repo = repo(pool.clone());
-    let user_id = conation_user_id(TEAM_OWNER_A);
+    let user_id = macro_user_id(TEAM_OWNER_A);
     sqlx::query!(
         r#"
         INSERT INTO team_user (user_id, team_id, team_role)
@@ -699,7 +699,7 @@ async fn patch_team_channel_converts_to_private_and_clears_team_settings(pool: P
 )]
 async fn auto_join_is_enabled_team_scoped_and_idempotent(pool: Pool<Postgres>) {
     let repo = repo(pool.clone());
-    let user_id = conation_user_id(NON_MEMBER);
+    let user_id = macro_user_id(NON_MEMBER);
 
     repo.auto_join_by_team_id(&TEAM_A, &user_id).await.unwrap();
     repo.auto_join_by_team_id(&TEAM_A, &user_id).await.unwrap();
@@ -730,7 +730,7 @@ async fn auto_join_reactivates_left_members_without_changing_active_memberships(
     pool: Pool<Postgres>,
 ) {
     let repo = repo(pool.clone());
-    let user_id = conation_user_id(LEFT_USER);
+    let user_id = macro_user_id(LEFT_USER);
     let active_before = sqlx::query!(
         r#"
         SELECT role AS "role: ParticipantRole", joined_at
@@ -797,7 +797,7 @@ async fn auto_join_reactivates_left_members_without_changing_active_memberships(
 )]
 async fn leave_soft_leaves_all_team_channels_and_returns_only_changes(pool: Pool<Postgres>) {
     let repo = repo(pool.clone());
-    let user_id = conation_user_id(LEFT_USER);
+    let user_id = macro_user_id(LEFT_USER);
     let original_left_at = sqlx::query_scalar!(
         r#"
         SELECT left_at::timestamptz
@@ -871,7 +871,7 @@ async fn leave_soft_leaves_all_team_channels_and_returns_only_changes(pool: Pool
 )]
 async fn rollback_restores_exact_channels_without_changing_role_or_joined_at(pool: Pool<Postgres>) {
     let repo = repo(pool.clone());
-    let user_id = conation_user_id(LEFT_USER);
+    let user_id = macro_user_id(LEFT_USER);
     let before = sqlx::query!(
         r#"
         SELECT channel_id, role AS "role: ParticipantRole", joined_at
@@ -937,23 +937,23 @@ async fn add_participant_atomically_adds_or_reactivates(pool: Pool<Postgres>) {
 
     assert!(
         !repo
-            .add_participant(CH1, conation_user_id(USER_A), ParticipantRole::Member)
+            .add_participant(CH1, macro_user_id(USER_A), ParticipantRole::Member)
             .await
             .unwrap()
     );
     assert!(
-        repo.add_participant(CH1, conation_user_id(LEFT_USER), ParticipantRole::Member)
+        repo.add_participant(CH1, macro_user_id(LEFT_USER), ParticipantRole::Member)
             .await
             .unwrap()
     );
     assert!(
         !repo
-            .add_participant(CH1, conation_user_id(LEFT_USER), ParticipantRole::Member)
+            .add_participant(CH1, macro_user_id(LEFT_USER), ParticipantRole::Member)
             .await
             .unwrap()
     );
     assert!(
-        repo.add_participant(CH1, conation_user_id(NON_MEMBER), ParticipantRole::Member)
+        repo.add_participant(CH1, macro_user_id(NON_MEMBER), ParticipantRole::Member)
             .await
             .unwrap()
     );
@@ -1285,7 +1285,7 @@ async fn channel_thread_rows_filter_by_root_sender(pool: Pool<Postgres>) -> anyh
         .get_thread_messages(
             thread_rows_request(
                 USER_A,
-                thread_filter(ChannelThreadLiteral::RootSender(conation_user_id(USER_A))),
+                thread_filter(ChannelThreadLiteral::RootSender(macro_user_id(USER_A))),
                 SimpleSortMethod::UpdatedAt,
                 50,
             )
@@ -1308,7 +1308,7 @@ async fn threads_matching_participant(
         .get_thread_messages(
             thread_rows_request(
                 querying_user,
-                thread_filter(ChannelThreadLiteral::Participant(conation_user_id(
+                thread_filter(ChannelThreadLiteral::Participant(macro_user_id(
                     participant,
                 ))),
                 SimpleSortMethod::UpdatedAt,
@@ -1454,7 +1454,7 @@ async fn channel_thread_rows_apply_cursor(pool: Pool<Postgres>) -> anyhow::Resul
     let second_page = repo
         .get_thread_messages(
             GetThreadReplyRowsRequest {
-                conation_id: conation_user_id(USER_A),
+                macro_id: macro_user_id(USER_A),
                 limit: Some(50),
                 query: Query::Cursor(Cursor {
                     id: first_page[0].id,
@@ -2391,7 +2391,7 @@ async fn notification_done_filter_matches_top_level_messages_and_thread_replies(
             MessagePageDirection::Older,
             50,
             &filters,
-            Some(conation_user_id(USER_A)),
+            Some(macro_user_id(USER_A)),
         )
         .await?;
 
@@ -2425,7 +2425,7 @@ async fn notification_not_done_filter_matches_top_level_messages_and_thread_repl
             MessagePageDirection::Older,
             50,
             &filters,
-            Some(conation_user_id(USER_A)),
+            Some(macro_user_id(USER_A)),
         )
         .await?;
 
@@ -2459,7 +2459,7 @@ async fn notification_seen_filter_matches_top_level_messages_and_thread_replies(
             MessagePageDirection::Older,
             50,
             &filters,
-            Some(conation_user_id(USER_A)),
+            Some(macro_user_id(USER_A)),
         )
         .await?;
 
@@ -2493,7 +2493,7 @@ async fn notification_not_seen_filter_matches_top_level_messages_and_thread_repl
             MessagePageDirection::Older,
             50,
             &filters,
-            Some(conation_user_id(USER_A)),
+            Some(macro_user_id(USER_A)),
         )
         .await?;
 
@@ -2526,7 +2526,7 @@ async fn notification_done_and_seen_filters_match_soup_independent_exists_semant
             MessagePageDirection::Older,
             50,
             &filters,
-            Some(conation_user_id(USER_A)),
+            Some(macro_user_id(USER_A)),
         )
         .await?;
 
@@ -2558,7 +2558,7 @@ async fn notification_filter_is_scoped_to_requesting_user(
             MessagePageDirection::Older,
             50,
             &filters,
-            Some(conation_user_id(USER_A)),
+            Some(macro_user_id(USER_A)),
         )
         .await?;
 

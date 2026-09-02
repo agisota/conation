@@ -2,7 +2,7 @@ use serde::Serialize;
 use tracing::error;
 use worker::{Env, Fetch, Method, Request, RequestInit};
 
-use crate::constants::header_names::MACRO_DOCUMENT_STORAGE_SERVICE_AUTH_HEADER_KEY;
+use crate::constants::header_names::INTERNAL_AUTH_KEY_HEADER;
 
 /// Why a document interaction was reported to DSS.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -83,7 +83,7 @@ impl DssInternal for DssInternalClient<'_> {
                 .with_body(Some(snapshot.to_vec().into())),
         )?;
         req.headers_mut()?
-            .set(MACRO_DOCUMENT_STORAGE_SERVICE_AUTH_HEADER_KEY, &auth_key)?;
+            .set(INTERNAL_AUTH_KEY_HEADER, &auth_key)?;
         req.headers_mut()?
             .set("Content-Type", "application/octet-stream")?;
 
@@ -126,7 +126,7 @@ impl DssInternal for DssInternalClient<'_> {
                 .with_body(Some(body.into())),
         )?;
         req.headers_mut()?
-            .set(MACRO_DOCUMENT_STORAGE_SERVICE_AUTH_HEADER_KEY, &auth_key)?;
+            .set(INTERNAL_AUTH_KEY_HEADER, &auth_key)?;
         req.headers_mut()?.set("Content-Type", "application/json")?;
 
         let resp = Fetch::Request(req).send().await?;

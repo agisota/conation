@@ -3,10 +3,10 @@ use super::resolve::{
 };
 use super::*;
 use crate::domain::models::{PreviewView, PreviewViewStandardLabel};
-use filter_ast::Expr;
-use item_filters::ast::email::{Email, EmailLiteral};
 use conation_user_id::cowlike::CowLike;
 use conation_user_id::email::EmailStr;
+use filter_ast::Expr;
+use item_filters::ast::email::{Email, EmailLiteral};
 use uuid::Uuid;
 
 fn complete(s: &str) -> Email {

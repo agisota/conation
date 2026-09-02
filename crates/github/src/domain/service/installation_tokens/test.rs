@@ -1,9 +1,9 @@
 use super::*;
 use crate::domain::models::AppJwt;
 use crate::domain::models::{
-    EnrichedGithubPullRequest, GithubAuthenticatedUser, GithubKey, GithubPullRequestDetails,
-    GithubSetupAccessToken, GithubUserInstallation, MacroTaskId, ResolvedTeamTaskReference,
-    TeamTaskReference,
+    ConationTaskId, EnrichedGithubPullRequest, GithubAuthenticatedUser, GithubKey,
+    GithubPullRequestDetails, GithubSetupAccessToken, GithubUserInstallation,
+    ResolvedTeamTaskReference, TeamTaskReference,
 };
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -51,14 +51,14 @@ impl GithubSyncRepo for FakeRepo {
         Ok(self.teams.clone())
     }
 
-    async fn get_task_ids(&self, _github_key: GithubKey) -> Result<Vec<MacroTaskId>, Self::Err> {
+    async fn get_task_ids(&self, _github_key: GithubKey) -> Result<Vec<ConationTaskId>, Self::Err> {
         unimplemented!("minting a token does not read tasks")
     }
 
     async fn upsert_task_ids(
         &self,
         _github_key: GithubKey,
-        _task_ids: &[MacroTaskId],
+        _task_ids: &[ConationTaskId],
     ) -> Result<(), Self::Err> {
         unimplemented!("minting a token does not write tasks")
     }
@@ -66,8 +66,8 @@ impl GithubSyncRepo for FakeRepo {
     async fn filter_duplicate_tasks(
         &self,
         _github_key: GithubKey,
-        _task_ids: &[MacroTaskId],
-    ) -> Result<Vec<MacroTaskId>, Self::Err> {
+        _task_ids: &[ConationTaskId],
+    ) -> Result<Vec<ConationTaskId>, Self::Err> {
         unimplemented!("minting a token does not read tasks")
     }
 
@@ -79,14 +79,14 @@ impl GithubSyncRepo for FakeRepo {
         unimplemented!("minting a token does not resolve task references")
     }
 
-    async fn get_conation_ids_by_github_user_ids(
+    async fn get_macro_ids_by_github_user_ids(
         &self,
         _github_user_ids: &[String],
     ) -> Result<HashMap<String, Vec<String>>, Self::Err> {
         unimplemented!("minting a token does not map github users")
     }
 
-    async fn get_conation_ids_by_github_logins(
+    async fn get_macro_ids_by_github_logins(
         &self,
         _github_logins: &[String],
     ) -> Result<HashMap<String, Vec<String>>, Self::Err> {

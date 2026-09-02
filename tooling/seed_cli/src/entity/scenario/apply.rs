@@ -14,9 +14,9 @@ use chrono::{DateTime, Duration, Utc};
 use comms_db_client::channels::seed_channel::SeedChannelOptions;
 use comms_db_client::messages::seed_message::SeedMessageOptions;
 use comms_db_client::model::SimpleMention;
-use entity_access_db_utils::{AccessLevel, EntityAccessSourceType, EntityType};
 use conation_db_client::document::v2::create::CreateDocumentArgs;
 use conation_user_id::user_id::MacroUserIdStr;
+use entity_access_db_utils::{AccessLevel, EntityAccessSourceType, EntityType};
 use model::document::FileType;
 use model::item::ShareableItemType;
 use models_email::email::service::address::ContactInfo;
@@ -259,7 +259,7 @@ async fn seed_users(ctx: &SeedCliContext, spec: &ScenarioSpec) -> anyhow::Result
             .adopt_or_seed_user(crate::service::db::AdoptOrSeedUserArgs {
                 email: user.email.clone(),
                 user_id: spec.user_id(key),
-                derived_conation_user_id: spec.conation_user_uuid(key),
+                derived_macro_user_id: spec.macro_user_uuid(key),
                 first_name: user
                     .first_name
                     .clone()
@@ -933,17 +933,17 @@ async fn seed_emails(ctx: &SeedCliContext, spec: &ScenarioSpec) -> anyhow::Resul
             .unwrap_or_else(|| owner.email.clone());
         let link_id = spec.email_link_id(key);
 
-        let conation_id = MacroUserIdStr::parse_from_str(spec.user_id(&account.owner).leak())
+        let macro_id = MacroUserIdStr::parse_from_str(spec.user_id(&account.owner).leak())
             .context("valid inbox owner id")?;
         let email_str = conation_user_id::email::EmailStr::try_from(address.clone())
             .map_err(|e| anyhow::anyhow!("invalid inbox address {address}: {e:?}"))?;
-        let is_primary = Link::derive_is_primary(&conation_id, &email_str);
+        let is_primary = Link::derive_is_primary(&macro_id, &email_str);
 
         let link = ctx
             .db
             .upsert_email_link(Link {
                 id: link_id,
-                conation_id,
+                macro_id,
                 fusionauth_user_id: spec.user_id(&account.owner),
                 email_address: email_str,
                 provider: UserProvider::Gmail,
@@ -999,7 +999,7 @@ async fn seed_emails(ctx: &SeedCliContext, spec: &ScenarioSpec) -> anyhow::Resul
 
         for delegate in &account.delegated_to {
             ctx.db
-                .insert_conation_user_link(
+                .insert_macro_user_link(
                     &spec.user_id(delegate),
                     &spec.user_id(&account.owner),
                     link.id,

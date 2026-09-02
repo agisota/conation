@@ -4,12 +4,12 @@ const SECRET: &[u8] = b"a distinct installation state test secret";
 const NOW: i64 = 1_730_000_000;
 
 fn user_id() -> MacroUserIdStr<'static> {
-    MacroUserIdStr::try_from("macro|installer@example.com".to_string()).unwrap()
+    MacroUserIdStr::try_from("conation|installer@example.com".to_string()).unwrap()
 }
 
 fn state(team_id: Option<Uuid>, exp: i64) -> InstallationState {
     InstallationState {
-        conation_user_id: user_id(),
+        macro_user_id: user_id(),
         team_id,
         exp,
     }
@@ -98,10 +98,10 @@ fn malformed_tokens_are_rejected() {
 #[test]
 fn malformed_ids_are_rejected() {
     let malformed_team_id = sign_raw_payload(
-        br#"{"conation_user_id":"macro|installer@example.com","team_id":"not-a-uuid","exp":1730003600}"#,
+        br#"{"macro_user_id":"conation|installer@example.com","team_id":"not-a-uuid","exp":1730003600}"#,
     );
     let malformed_user_id = sign_raw_payload(
-        br#"{"conation_user_id":"not-a-macro-user","team_id":"8c06ab3e-693c-45a7-8f92-1b5a5bf876ac","exp":1730003600}"#,
+        br#"{"macro_user_id":"not-a-macro-user","team_id":"8c06ab3e-693c-45a7-8f92-1b5a5bf876ac","exp":1730003600}"#,
     );
 
     assert_eq!(

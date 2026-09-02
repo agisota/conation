@@ -3,28 +3,28 @@ use anyhow::Context;
 use crate::MacroCache;
 
 /// Generates the rate limit key for verify email for a given email by minute
-conation_rules! conation_rate_limit_resend_verify_email_minute {
+macro_rules! conation_rate_limit_resend_verify_email_minute {
     ($email:expr) => {
         format!("rtl_verify_email_minute:{}", $email)
     };
 }
 
 /// Generates the rate limit key for verify email for a given email by day
-conation_rules! conation_rate_limit_resend_verify_email_day {
+macro_rules! conation_rate_limit_resend_verify_email_day {
     ($email:expr) => {
         format!("rtl_verify_email_day:{}", $email)
     };
 }
 
 /// Generates the rate limit key for generating merge account requests for a given email by minute
-conation_rules! conation_rate_limit_merge_email_minute {
+macro_rules! conation_rate_limit_merge_email_minute {
     ($email:expr) => {
         format!("rtl_merge_email_minute:{}", $email)
     };
 }
 
 /// Generates the rate limit key for generating merge account requests for a given email by day
-conation_rules! conation_rate_limit_merge_email_day {
+macro_rules! conation_rate_limit_merge_email_day {
     ($email:expr) => {
         format!("rtl_merge_email_day:{}", $email)
     };
@@ -45,7 +45,8 @@ impl MacroCache {
         let key_minute = conation_rate_limit_resend_verify_email_minute!(normalized_email);
         let key_day = conation_rate_limit_resend_verify_email_day!(normalized_email);
 
-        let minute_limit = conation_redis::get::get_optional::<u64>(&self.inner, &key_minute).await?;
+        let minute_limit =
+            conation_redis::get::get_optional::<u64>(&self.inner, &key_minute).await?;
         let day_limit = conation_redis::get::get_optional::<u64>(&self.inner, &key_day).await?;
 
         Ok((minute_limit, day_limit))
@@ -81,7 +82,8 @@ impl MacroCache {
         let key_minute = conation_rate_limit_merge_email_minute!(normalized_email);
         let key_day = conation_rate_limit_merge_email_day!(normalized_email);
 
-        let minute_limit = conation_redis::get::get_optional::<u64>(&self.inner, &key_minute).await?;
+        let minute_limit =
+            conation_redis::get::get_optional::<u64>(&self.inner, &key_minute).await?;
         let day_limit = conation_redis::get::get_optional::<u64>(&self.inner, &key_day).await?;
 
         Ok((minute_limit, day_limit))

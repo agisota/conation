@@ -3,7 +3,6 @@
  */
 
 import { err as resultErr, ok as resultOk } from 'neverthrow';
-import { t } from '@app/lib/i18n';
 import { render } from 'solid-js/web';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -34,7 +33,7 @@ import { GithubReauthenticationPrompt } from './GithubReauthenticationPrompt';
 
 type ToastAction = {
   label: string;
-  onClick: () =>Promise<void> | void;
+  onClick: () => Promise<void> | void;
 };
 
 type ToastConfig = {

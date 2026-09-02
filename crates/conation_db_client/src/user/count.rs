@@ -43,11 +43,11 @@ mod tests {
 
     #[sqlx::test(fixtures(path = "../../fixtures", scripts("count")))]
     async fn test_count_user_items(pool: Pool<Postgres>) -> anyhow::Result<()> {
-        let count = count_user_items(&pool, "macro|user@user.com", true).await?;
+        let count = count_user_items(&pool, "conation|user@user.com", true).await?;
 
         assert_eq!(3, count);
 
-        let count = count_user_items(&pool, "macro|user@user.com", false).await?;
+        let count = count_user_items(&pool, "conation|user@user.com", false).await?;
         assert_eq!(1, count);
 
         Ok(())

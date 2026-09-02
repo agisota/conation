@@ -1,5 +1,5 @@
-import type { DateValue } from '@core/util/date';
 import { t } from '@app/lib/i18n';
+import type { DateValue } from '@core/util/date';
 import type { EntityData } from '@entity';
 import { For, Show } from 'solid-js';
 import { AttachmentEntityRow } from './AttachmentEntityRow';
@@ -24,7 +24,9 @@ export function AttachmentEntityList(props: {
     <AttachmentSection label="Documents">
       <div class="grid grid-cols-1">
         <Show when={!hasDocuments()}>
-          <div class="py-3 text-sm text-ink-subtle">{t('auto.no_documents_in_this_channel_y')}</div>
+          <div class="py-3 text-sm text-ink-subtle">
+            {t('channel.attachments.emptyDocuments')}
+          </div>
         </Show>
 
         <Show when={hasDocuments()}>

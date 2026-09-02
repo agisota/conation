@@ -4,9 +4,9 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use documents::domain::events::{DocumentMacroEvent, DocumentSyncContentUpdatedMetadata};
 use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
 use conation_event_broker::MacroEventBroker as _;
+use documents::domain::events::{DocumentMacroEvent, DocumentSyncContentUpdatedMetadata};
 use model::document::FileType;
 
 #[cfg(test)]
@@ -58,14 +58,18 @@ pub async fn handler(
     tracing::info!(?document_ids, "extract_sync received");
     let events = documents_to_events(req.documents);
     for event in events {
-        drop(ctx.conation_event_broker.send_event(&event).map_err(|error| {
-            tracing::error!(error=?error, "failed to publish document sync event");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "failed to enqueue documents",
-            )
-                .into_response()
-        })?);
+        drop(
+            ctx.conation_event_broker
+                .send_event(&event)
+                .map_err(|error| {
+                    tracing::error!(error=?error, "failed to publish document sync event");
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        "failed to enqueue documents",
+                    )
+                        .into_response()
+                })?,
+        );
     }
 
     Ok(StatusCode::OK.into_response())

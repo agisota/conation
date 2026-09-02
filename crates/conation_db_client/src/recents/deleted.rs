@@ -169,7 +169,7 @@ mod tests {
 
     #[sqlx::test(fixtures(path = "../../fixtures", scripts("recently_deleted")))]
     async fn test_get_recently_deleted(pool: Pool<Postgres>) -> anyhow::Result<()> {
-        let items = get_recently_deleted(&pool, "macro|user@user.com").await?;
+        let items = get_recently_deleted(&pool, "conation|user@user.com").await?;
         assert_eq!(items.len(), 7);
 
         let ids = items

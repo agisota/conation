@@ -1,5 +1,6 @@
 import { useIsAuthenticated } from '@core/auth';
 import { useEmail } from '@core/context/user';
+import { t } from '@core/i18n';
 import NoAccessGraphic from '@design/empty-state-no-access.svg';
 import { EmptyStatePanel } from '@ui';
 import { onMount } from 'solid-js';
@@ -23,9 +24,11 @@ export default function Unauthorized() {
       centered
       graphic={NoAccessGraphic}
       graphicClass="mb-6"
-      title="You don't have access to this file"
+      title={t('core.access.unauthorizedTitle')}
       description={
-        currentUserEmail() ? `Signed in as ${currentUserEmail()}` : undefined
+        currentUserEmail()
+          ? t('core.access.signedInAs', { email: currentUserEmail()! })
+          : undefined
       }
     />
   );

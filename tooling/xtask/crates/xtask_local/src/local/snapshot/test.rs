@@ -1,6 +1,24 @@
 use super::*;
 use crate::local::instance::Instance;
 
+/// Fresh Conation snapshots must restore only Conation-owned local volumes.
+#[test]
+fn archives_use_conation_volume_names() {
+    let instance = Instance::derive(None, None).unwrap();
+    let volumes = archives(&instance).map(|(_, volume)| volume);
+
+    assert_eq!(
+        volumes,
+        [
+            "conation_postgres_data",
+            "conation_opensearch_data",
+            "conation_kafka_data",
+            "conation_fusionauth_db_data",
+            "conation_fusionauth_config",
+        ]
+    );
+}
+
 /// The key must change when any init-defining input changes, and only then —
 /// two computes over identical inputs agree, and the kickstart (which encodes
 /// the instance's ports) is part of the key, so snapshots can't cross
@@ -32,7 +50,7 @@ fn key_is_deterministic_and_kickstart_sensitive() {
 /// half-written or foreign directory is a cache miss, not a restore.
 #[test]
 fn exists_requires_a_matching_manifest() {
-    let dir = std::env::temp_dir().join("macro-snapshot-exists-test");
+    let dir = std::env::temp_dir().join("conation-snapshot-exists-test");
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).unwrap();
 

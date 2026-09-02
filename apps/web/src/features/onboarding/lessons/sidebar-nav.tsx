@@ -23,25 +23,24 @@ function SidebarNavContent(props: LessonContentProps) {
   return (
     <div class="flex flex-col gap-8 onboarding-stagger">
       <div class="mt-2 text-ink-muted text-base">
-        <p>{t('auto.use_the_sidebar_to_quickly_jum')}</p>
-        <p>{t('auto.try_navigating_to')}<strong>{t('auto.emails')}</strong>.
-        </p>
+        <p>{t('onboarding.lessons.sidebar.description')}</p>
+        <p>{t('onboarding.lessons.sidebar.tryEmail')}</p>
       </div>
       <div class="flex flex-col gap-2">
         <HotkeyCallout
           keys={['G', 'E']}
-          separator="then"
+          separator={t('onboarding.callout.then')}
           label=""
           completed={done()}
         />
         <div class="flex items-center gap-3 text-sm text-ink/40">
           <div class="h-px w-8 bg-edge-muted" />
-          or
+          {t('onboarding.callout.or')}
           <div class="h-px flex-1 bg-edge-muted" />
         </div>
         <ClickCallout
           icon={AnimatedEmailIcon}
-          label="in the sidebar"
+          label={t('onboarding.callout.inSidebar')}
           completed={done()}
         />
       </div>
@@ -69,7 +68,7 @@ function SidebarNavDemo(props: LessonContentProps) {
 
 export const sidebarNavLesson: LessonDefinition = {
   id: 'sidebar-nav',
-  title: 'Sidebar Navigation',
+  title: 'onboarding.lessons.sidebar.title',
   content: SidebarNavContent,
   demo: SidebarNavDemo,
   order: 5,

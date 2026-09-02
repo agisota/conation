@@ -14,35 +14,36 @@ function isExpired(token: string) {
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
     const exp = payload.exp * 1000;
-    return Date.now() / 1000 > exp;
+    return Date.now() > exp;
   } catch {
     return true;
   }
 }
 
-let macroApiTokenPromise: Promise<string> | null = null;
-export async function getMacroApiToken() {
+let conationApiTokenPromise: Promise<string> | null = null;
+export async function getConationApiToken() {
   if (LOCAL_ONLY) {
     const apiToken = import.meta.env.__LOCAL_JWT__;
     if (apiToken) {
       return apiToken;
     }
   }
-  const apiToken = await macroApiTokenPromise;
+  const apiToken = await conationApiTokenPromise;
   if (apiToken && !isExpired(apiToken)) {
     return apiToken;
   }
 
-  macroApiTokenPromise = new Promise((resolve, reject) =>
-    authServiceClient.macroApiToken().then((result) => {
+  conationApiTokenPromise = new Promise((resolve, reject) =>
+    authServiceClient.conationApiToken().then((result) => {
       if (result.isErr()) {
+        conationApiTokenPromise = null;
         reject(result.error);
       } else {
-        resolve(result.value.macro_api_token);
+        resolve(result.value.conation_api_token);
       }
     })
   );
-  return macroApiTokenPromise;
+  return conationApiTokenPromise;
 }
 
 type TextContentType = `text/${string}`;
@@ -73,7 +74,7 @@ export async function fetchWithAuth<
   input: RequestInfo,
   init?: fetchWithAuthOptions<T, CustomErrorCode>
 ): Promise<Result<T, ResultError<BaseFetchErrorCode | CustomErrorCode>[]>> {
-  const apiToken = await getMacroApiToken();
+  const apiToken = await getConationApiToken();
   if (!apiToken) {
     return err([
       { code: 'UNAUTHORIZED', message: 'No access and/or refresh token found' },

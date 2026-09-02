@@ -2,8 +2,8 @@ use activity::{ActivityOverview, DayCount, EntityRank, trailing_year};
 use async_graphql::{Context, ID, InputObject, SimpleObject};
 use chrono::Utc;
 use chrono_tz::Tz;
-use graphql_common::GraphqlEntityType;
 use conation_user_id::user_id::MacroUserIdStr;
+use graphql_common::GraphqlEntityType;
 
 use crate::loaders::ActivityFeedReader;
 

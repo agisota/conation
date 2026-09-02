@@ -92,9 +92,9 @@ pub async fn handler(
     }
 
     // set email link to validated
-    conation_db_client::conation_user_email_verification::upsert_conation_user_email_verification(
+    conation_db_client::macro_user_email_verification::upsert_macro_user_email_verification(
         &ctx.db,
-        &link.conation_user_id.to_string(),
+        &link.macro_user_id.to_string(),
         &link.email,
         true,
     )
@@ -109,7 +109,7 @@ pub async fn handler(
     })?;
 
     // create new user profile
-    create_user_profile(&link.conation_user_id.to_string(), &link.email, &ctx.db)
+    create_user_profile(&link.macro_user_id.to_string(), &link.email, &ctx.db)
         .await
         .map_err(|e| {
             tracing::error!(error=?e, "failed to insert macro user email verification");

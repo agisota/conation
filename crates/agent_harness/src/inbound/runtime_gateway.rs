@@ -1,7 +1,7 @@
 //! The runtime gateway: where external runtimes dial in to serve a bot.
 //!
 //! `GET /runtime/ws`, authenticated with the standard bot credential headers
-//! (`x-macro-bot-token`, `x-macro-bot-scope`) - a WebSocket upgrade is an
+//! (`x-conation-bot-token`, `x-conation-bot-scope`) - a WebSocket upgrade is an
 //! ordinary HTTP request, and every runtime dialing in is a real client that
 //! can set headers.
 //!

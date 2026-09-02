@@ -12,7 +12,7 @@ ON CONFLICT DO NOTHING;
 
 INSERT INTO public."User" ("id", "email", "stripeCustomerId", "organizationId", "macro_user_id")
 VALUES (
-    'macro|phase0-other@example.com',
+    'conation|phase0-other@example.com',
     'phase0-other@example.com',
     'stripe_phase0_other',
     1,
@@ -23,7 +23,7 @@ ON CONFLICT DO NOTHING;
 -- doc-in-D remains visible to user-1 through entity_access, but is owned by a
 -- different user so it represents an ordinary shared document.
 UPDATE public."Document"
-SET owner = 'macro|phase0-other@example.com'
+SET owner = 'conation|phase0-other@example.com'
 WHERE id = 'dddddddd-dddd-dddd-dddd-dddddddddddd';
 
 -- The standalone document represents a snippet with no email relation.
@@ -43,7 +43,7 @@ INSERT INTO public.entity_access (
 VALUES (
     'ffffffff-ffff-ffff-ffff-ffffffffffff',
     'document',
-    'macro|user-1@test.com',
+    'conation|user-1@test.com',
     'user',
     'view',
     NULL

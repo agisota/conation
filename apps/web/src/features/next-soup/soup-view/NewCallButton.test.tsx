@@ -3,13 +3,12 @@
  */
 
 import { fireEvent, render, screen, waitFor } from '@solidjs/testing-library';
-import { t } from '@app/lib/i18n';
 import type { JSX } from 'solid-js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NewCallButton } from './NewCallButton';
 
 const mocks = vi.hoisted(() => ({
-  joinChannelCall: vi.fn<(_: string) =>Promise<void>>(),
+  joinChannelCall: vi.fn<(_: string) => Promise<void>>(),
 }));
 
 vi.mock('@channel/Call/join-channel-call', () => ({
@@ -23,7 +22,9 @@ vi.mock('@core/component/RecipientSelector', () => ({
     <button
       type="button"
       onClick={() => props.setSelectedOptions([{ id: 'channel-option' }])}
-    >{t('auto.choose_channel')}</button>
+    >
+      Choose channel
+    </button>
   ),
 }));
 

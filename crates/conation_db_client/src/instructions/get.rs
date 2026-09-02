@@ -38,7 +38,7 @@ mod tests {
 
     #[sqlx::test(fixtures(path = "../../fixtures", scripts("basic_user_with_documents")))]
     async fn test_get_instructions_document_exists(pool: Pool<Postgres>) -> anyhow::Result<()> {
-        let user_id = MacroUserIdStr::parse_from_str("macro|user@user.com").unwrap();
+        let user_id = MacroUserIdStr::parse_from_str("conation|user@user.com").unwrap();
 
         // First create an instructions document
         let created_document_id = create_instructions_document(&pool, user_id.clone())
@@ -56,7 +56,7 @@ mod tests {
 
     #[sqlx::test(fixtures(path = "../../fixtures", scripts("basic_user_with_documents")))]
     async fn test_get_instructions_document_not_exists(pool: Pool<Postgres>) -> anyhow::Result<()> {
-        let user_id = MacroUserIdStr::parse_from_str("macro|user@user.com").unwrap();
+        let user_id = MacroUserIdStr::parse_from_str("conation|user@user.com").unwrap();
 
         // Try to get instructions document without creating one first
         let result = get_instructions_document(&pool, user_id).await?;
@@ -70,8 +70,8 @@ mod tests {
     async fn test_get_instructions_document_different_users(
         pool: Pool<Postgres>,
     ) -> anyhow::Result<()> {
-        let user1 = MacroUserIdStr::parse_from_str("macro|user@user.com").unwrap();
-        let user2 = MacroUserIdStr::parse_from_str("macro|user2@user.com").unwrap();
+        let user1 = MacroUserIdStr::parse_from_str("conation|user@user.com").unwrap();
+        let user2 = MacroUserIdStr::parse_from_str("conation|user2@user.com").unwrap();
 
         // Add second user to the database (only if it doesn't exist)
         let _ = sqlx::query!(
@@ -103,7 +103,7 @@ mod tests {
     async fn test_get_instructions_document_nonexistent_user(
         pool: Pool<Postgres>,
     ) -> anyhow::Result<()> {
-        let nonexistent_user = MacroUserIdStr::parse_from_str("macro|user@fake.com").unwrap();
+        let nonexistent_user = MacroUserIdStr::parse_from_str("conation|user@fake.com").unwrap();
 
         // Should return None for non-existent user
         let result = get_instructions_document(&pool, nonexistent_user).await?;

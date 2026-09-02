@@ -1,4 +1,10 @@
 use super::*;
+
+#[test]
+fn incompatible_definition_log_uses_conation_display_brand() {
+    assert!(INCOMPATIBLE_DEFINITION_LOG_MESSAGE.contains("Conation definition"));
+    assert!(!INCOMPATIBLE_DEFINITION_LOG_MESSAGE.contains("Macro definition"));
+}
 use chrono::Utc;
 use models_properties::PropertyOwner;
 

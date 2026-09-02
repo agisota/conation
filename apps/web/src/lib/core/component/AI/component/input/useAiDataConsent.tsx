@@ -1,5 +1,5 @@
-import { useAiDataConsent } from '@core/context/user';
 import { t } from '@app/lib/i18n';
+import { useAiDataConsent } from '@core/context/user';
 import CloseIcon from '@phosphor/x.svg';
 import { invalidateUserInfo } from '@queries/auth/user-info';
 import { authServiceClient } from '@service-auth/client';
@@ -43,22 +43,28 @@ export function useAiDataConsentGate() {
             <div class="flex flex-row items-center justify-between px-2 h-10 gap-2 border-b border-b-edge-muted">
               <div class="flex flex-row items-center gap-2">
                 <Dialog.CloseButton>
-                  <Button label={t('common.close')} variant="ghost" size="icon-sm">
+                  <Button
+                    label={t('common.close')}
+                    variant="ghost"
+                    size="icon-sm"
+                  >
                     <CloseIcon />
                   </Button>
                 </Dialog.CloseButton>
-                <Dialog.Title>{t('auto.ai_data_sharing')}</Dialog.Title>
+                <Dialog.Title>{t('ai.consent.title')}</Dialog.Title>
               </div>
             </div>
             <div class="p-3">
               <p class="text-ink-muted text-sm">
-                AI Chat sends your messages to Anthropic for processing and may
-                access your files in Macro to provide relevant responses. Your
-                data is not retained or used for training.
+                {t('ai.consent.description')}
               </p>
               <div class="flex justify-end mt-4 gap-2">
-                <Button variant="outline" onClick={denyConsent}>{t('common.cancel')}</Button>
-                <Button variant="outline" onClick={grantConsent}>{t('auto.accept')}</Button>
+                <Button variant="outline" onClick={denyConsent}>
+                  {t('common.cancel')}
+                </Button>
+                <Button variant="outline" onClick={grantConsent}>
+                  {t('ai.consent.accept')}
+                </Button>
               </div>
             </div>
           </div>

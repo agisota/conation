@@ -1,4 +1,4 @@
-use crate::constants::MACRO_INTERNAL_USER_ID_HEADER_KEY;
+use crate::constants::INTERNAL_CONATION_USER_ID_HEADER;
 
 use super::DocumentStorageServiceClient;
 use anyhow::Result;
@@ -377,7 +377,7 @@ impl DocumentStorageServiceClient {
         let res = self
             .client
             .get(&url)
-            .header(MACRO_INTERNAL_USER_ID_HEADER_KEY, user_id)
+            .header(INTERNAL_CONATION_USER_ID_HEADER, user_id)
             .send()
             .await?;
 
@@ -443,7 +443,7 @@ impl DocumentStorageServiceClient {
         let res = self
             .client
             .post(&url)
-            .header(MACRO_INTERNAL_USER_ID_HEADER_KEY, user_id)
+            .header(INTERNAL_CONATION_USER_ID_HEADER, user_id)
             .send()
             .await?;
 
@@ -477,7 +477,7 @@ impl DocumentStorageServiceClient {
             .client
             .post(&url)
             .json(&req)
-            .header(MACRO_INTERNAL_USER_ID_HEADER_KEY, user_id)
+            .header(INTERNAL_CONATION_USER_ID_HEADER, user_id)
             .send()
             .await?;
 

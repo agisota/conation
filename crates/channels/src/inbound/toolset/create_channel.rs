@@ -55,7 +55,7 @@ pub struct CreateChannelResponse {
 #[serde(rename_all = "camelCase")]
 #[schemars(
     title = "CreateChannel",
-    description = "Create a private or team channel and add its first members. Use `private` for an invite-only channel and `team` for a channel owned by the current user's team. Do not use this for a direct message — those are created separately. Team id is resolved from the current user; do not invent one. Participants accept `macro|<email>` ids from ListTeamMembers or bare emails. Creating a team channel when the user has no team fails; create a private channel instead. Creating a team channel with no participants adds the current user so the channel is valid. Use only when the user asks to create a channel."
+    description = "Create a private or team channel and add its first members. Use `private` for an invite-only channel and `team` for a channel owned by the current user's team. Do not use this for a direct message — those are created separately. Team id is resolved from the current user; do not invent one. Participants accept `conation|<email>` ids from ListTeamMembers or bare emails. Creating a team channel when the user has no team fails; create a private channel instead. Creating a team channel with no participants adds the current user so the channel is valid. Use only when the user asks to create a channel."
 )]
 pub struct CreateChannel {
     /// Channel display name.
@@ -68,7 +68,7 @@ pub struct CreateChannel {
     pub channel_type: NewChannelType,
     /// First members, excluding implicit owner insertion performed by the domain.
     #[schemars(
-        description = "People to add, as `macro|<email>` ids or bare emails. Defaults to none. A team channel with an empty list adds the current user."
+        description = "People to add, as `conation|<email>` ids or bare emails. Defaults to none. A team channel with an empty list adds the current user."
     )]
     #[serde(default)]
     pub participants: Vec<String>,

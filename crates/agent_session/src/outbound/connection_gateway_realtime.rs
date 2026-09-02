@@ -16,7 +16,7 @@
 //! {
 //!   "agentSessionId": "019f…",
 //!   "createdAt":      "2026-08-13T12:34:56.789Z",
-//!   "userId":         "macro|someone@example.com",
+//!   "userId":         "conation|someone@example.com",
 //!   "direction":      "to_server",
 //!   "content":        { "type": "acp", "jsonrpc": "2.0", … }
 //! }
@@ -38,9 +38,9 @@ use crate::domain::model::{
     StoredAgentSessionLog,
 };
 use crate::domain::ports::AgentSessionRealtime;
-use connection_gateway_client::ConnectionGatewayClient;
 use conation_user_id::user_id::MacroUserIdStr;
 use conation_uuid::Uuid;
+use connection_gateway_client::ConnectionGatewayClient;
 use model_entity::EntityType as GatewayEntityType;
 use serde::Serialize;
 use std::sync::Arc;

@@ -1,5 +1,5 @@
-use document_sub_type::DocumentSubType;
 use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use document_sub_type::DocumentSubType;
 use model::document::{
     BomPart, DocumentBasic, DocumentMetadata, FileType, SaveBomPart, VersionIDWithTimeStamps,
     VersionIDWithTimeStampsNoSha, VersionIDWithTimeStampsOptionalSha,
@@ -635,7 +635,7 @@ mod tests {
         assert!(!document_metadata.document_id.is_empty());
         assert_eq!(document_metadata.document_version_id, 3);
         assert_eq!(document_metadata.file_type, Some("txt".to_string()));
-        assert_eq!(document_metadata.owner.as_ref(), "macro|user@user.com");
+        assert_eq!(document_metadata.owner.as_ref(), "conation|user@user.com");
 
         Ok(())
     }
@@ -662,7 +662,7 @@ mod tests {
             "test_document_name".to_string()
         );
         assert_eq!(document_metadata.document_version_id, 3);
-        assert_eq!(document_metadata.owner.as_ref(), "macro|user@user.com");
+        assert_eq!(document_metadata.owner.as_ref(), "conation|user@user.com");
         let bom_parts: Vec<BomPart> =
             serde_json::from_value(document_metadata.document_bom.unwrap()).unwrap();
         assert_eq!(bom_parts[0].sha, "sha-1");

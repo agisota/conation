@@ -46,6 +46,12 @@ fn create_reminder_schema_is_valid() {
         "{}",
         validated.description
     );
+    assert!(validated.description.contains("Conation inbox"));
+    assert!(validated.description.contains("Conation item"));
+    assert!(validated.description.contains("Conation document"));
+    assert!(!validated.description.contains("Macro inbox"));
+    assert!(!validated.description.contains("Macro item"));
+    assert!(!validated.description.contains("Macro document"));
 }
 
 #[test]

@@ -1,5 +1,5 @@
-import { Dialog, useDialogContext } from '@kobalte/core/dialog';
 import { t } from '@app/lib/i18n';
+import { Dialog, useDialogContext } from '@kobalte/core/dialog';
 import ClipboardIcon from '@phosphor/clipboard.svg';
 import DownloadIcon from '@phosphor/download-simple.svg';
 import XIcon from '@phosphor/x.svg';
@@ -32,7 +32,7 @@ type LightboxProps = {
   // Used for the download filename
   imageId: Accessor<string>;
   // Optional pre-fetched blob override (e.g. DSS images). Falls back to fetching `src`.
-  getBlob?: () =>Promise<Blob | undefined>;
+  getBlob?: () => Promise<Blob | undefined>;
   // Gallery navigation. Passing either enables swipe (mobile) + arrow key (desktop) support.
   // Pass undefined for a direction when that navigation is unavailable (first/last image).
   onPrevious?: () => void;
@@ -83,7 +83,7 @@ export function Lightbox(props: LightboxProps) {
       }}
     >
       <Dialog.Content
-        aria-label={t('auto.lightbox_image_viewer')}
+        aria-label={t('core.images.viewer')}
         class="flex items-center justify-center bg-surface rounded-md overflow-hidden"
       >
         <LightboxToolbar isVisible={true}>
@@ -92,7 +92,7 @@ export function Lightbox(props: LightboxProps) {
             size="icon-md"
             onClick={images.copyToClipboard}
             disabled={images.isBusy() || images.isPrefetching()}
-            label="Copy image"
+            label={t('core.images.copy')}
           >
             {images.isCopying() ? <SpinnerIcon /> : <ClipboardIcon />}
           </Button>
@@ -101,7 +101,7 @@ export function Lightbox(props: LightboxProps) {
             size="icon-md"
             onClick={images.downloadImage}
             disabled={images.isBusy() || images.isPrefetching()}
-            label="Download image"
+            label={t('core.images.download')}
           >
             {images.isDownloading() ? <SpinnerIcon /> : <DownloadIcon />}
           </Button>

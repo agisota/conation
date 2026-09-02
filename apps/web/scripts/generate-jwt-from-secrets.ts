@@ -12,7 +12,7 @@ Usage:
   bun scripts/generate-jwt-from-secrets.ts [options]
 
 Options:
-  --email EMAIL           Email address (default: gab@macro.com)
+  --email EMAIL           Email address (default: pythia@conation.dev)
   --env ENV               Environment: dev or prod (default: dev)
   --expiry MINUTES        Token expiry in minutes (default: 480)
   --output FORMAT         Output format: cookies, json, or env (default: cookies)
@@ -25,22 +25,22 @@ Options:
 const ENV_CONFIG = {
   dev: {
     jwtSecretKey: "fusionauth-jwt-secret-dev",
-    macroApiTokenPrivateKey: "macro-api-token-private-key-dev",
+    conationApiTokenPrivateKey: "conation-api-token-private-key-dev",
     fusionauthClientId: "fusionauth-client-id-key-dev",
-    issuer: "fusionauth-dev.macro.com",
-    macroApiTokenIssuer: "authentication-service-dev.macro.com",
-    accessTokenCookie: "dev-macro-access-token",
-    refreshTokenCookie: "dev-macro-refresh-token",
+    issuer: "fusionauth-dev.conation.dev",
+    conationApiTokenIssuer: "authentication-service-dev.conation.dev",
+    accessTokenCookie: "dev-conation-access-token",
+    refreshTokenCookie: "dev-conation-refresh-token",
     tid: "tenant-dev",
   },
   prod: {
     jwtSecretKey: "fusionauth-jwt-secret-prod",
-    macroApiTokenPrivateKey: "macro-api-token-private-key-prod",
+    conationApiTokenPrivateKey: "conation-api-token-private-key-prod",
     fusionauthClientId: "fusionauth-client-id-key-prod",
-    issuer: "auth.macro.com",
-    macroApiTokenIssuer: "authentication-service.macro.com",
-    accessTokenCookie: "macro-access-token",
-    refreshTokenCookie: "macro-refresh-token",
+    issuer: "auth.conation.dev",
+    conationApiTokenIssuer: "authentication-service.conation.dev",
+    accessTokenCookie: "conation-access-token",
+    refreshTokenCookie: "conation-refresh-token",
     tid: "tenant-prod",
   },
 } as const;
@@ -85,7 +85,7 @@ async function generateAccessToken(params: {
     organizationId,
   } = params;
 
-  const macroUserId = `macro|${email}`;
+  const conationUserId = `conation|${email}`;
 
   const payload: Record<string, unknown> = {
     aud: audience,
@@ -93,11 +93,11 @@ async function generateAccessToken(params: {
     iss: issuer,
     email: email,
     fusion_user_id: fusionUserId,
-    macro_user_id: macroUserId,
+    conation_user_id: conationUserId,
   };
 
   if (organizationId !== undefined) {
-    payload.macro_organization_id = organizationId;
+    payload.conation_organization_id = organizationId;
   }
 
   // Create the secret key for HS256
@@ -111,7 +111,7 @@ async function generateAccessToken(params: {
   return token;
 }
 
-async function generateMacroApiToken(params: {
+async function generateConationApiToken(params: {
   email: string;
   privateKey: string;
   issuer: string;
@@ -122,16 +122,16 @@ async function generateMacroApiToken(params: {
   const { email, privateKey, issuer, expiryMinutes, fusionUserId, organizationId } =
     params;
 
-  const macroUserId = `macro|${email}`;
+  const conationUserId = `conation|${email}`;
 
   const payload: Record<string, unknown> = {
     iss: issuer,
     fusion_user_id: fusionUserId,
-    macro_user_id: macroUserId,
+    conation_user_id: conationUserId,
   };
 
   if (organizationId !== undefined) {
-    payload.macro_organization_id = organizationId;
+    payload.conation_organization_id = organizationId;
   }
 
   // Import the RSA private key - handle both PKCS#8 and RSA PRIVATE KEY formats
@@ -152,7 +152,7 @@ async function generateMacroApiToken(params: {
   }
 
   const token = await new jose.SignJWT(payload)
-    .setProtectedHeader({ alg: "RS256", kid: "macro" })
+    .setProtectedHeader({ alg: "RS256", kid: "conation" })
     .setExpirationTime(`${expiryMinutes}m`)
     .sign(rsaPrivateKey);
 
@@ -165,7 +165,7 @@ async function main() {
     options: {
       email: {
         type: "string",
-        default: "gab@macro.com",
+        default: "pythia@conation.dev",
       },
       env: {
         type: "string",
@@ -207,7 +207,7 @@ async function main() {
   const email = values.email!;
   const expiryMinutes = parseInt(values.expiry!, 10);
   const output = values.output as "cookies" | "json" | "env";
-  const macroUserId = `macro|${email}`;
+  const conationUserId = `conation|${email}`;
   const fusionUserId = values["fusion-user-id"] ?? crypto.randomUUID();
   const organizationId = values["organization-id"]
     ? parseInt(values["organization-id"], 10)
@@ -218,7 +218,7 @@ async function main() {
   // Fetch secrets from AWS
   const [jwtSecret, privateKey, audience] = await Promise.all([
     getSecret(config.jwtSecretKey),
-    getSecret(config.macroApiTokenPrivateKey),
+    getSecret(config.conationApiTokenPrivateKey),
     getSecret(config.fusionauthClientId),
   ]);
 
@@ -236,10 +236,10 @@ async function main() {
     organizationId,
   });
 
-  const macroApiToken = await generateMacroApiToken({
+  const conationApiToken = await generateConationApiToken({
     email,
     privateKey,
-    issuer: config.macroApiTokenIssuer,
+    issuer: config.conationApiTokenIssuer,
     expiryMinutes,
     fusionUserId,
     organizationId,
@@ -251,18 +251,18 @@ async function main() {
   if (output === "json") {
     const result = {
       access_token: accessToken,
-      macro_api_token: macroApiToken,
+      conation_api_token: conationApiToken,
       access_token_cookie_name: config.accessTokenCookie,
       email,
-      macro_user_id: macroUserId,
+      conation_user_id: conationUserId,
       fusion_user_id: fusionUserId,
       expires_at: expiryTime.toISOString(),
       environment: env,
     };
     console.log(JSON.stringify(result, null, 2));
   } else if (output === "env") {
-    console.log(`export MACRO_ACCESS_TOKEN='${accessToken}'`);
-    console.log(`export MACRO_API_TOKEN='${macroApiToken}'`);
+    console.log(`export CONATION_ACCESS_TOKEN='${accessToken}'`);
+    console.log(`export CONATION_API_TOKEN='${conationApiToken}'`);
   } else {
     // Default: simple output with browser command and curl
     const serviceSuffix = env === "prod" ? "" : "-dev";
@@ -270,12 +270,12 @@ async function main() {
 
     console.log(`\nBrowser console:`);
     console.log(
-      `document.cookie = '${config.accessTokenCookie}=${accessToken}; domain=.macro.com; path=/; expires=${cookieExpiry}; SameSite=None; Secure';`
+      `document.cookie = '${config.accessTokenCookie}=${accessToken}; domain=.conation.dev; path=/; expires=${cookieExpiry}; SameSite=None; Secure';`
     );
 
     console.log(`\nCurl:`);
     console.log(
-      `curl -H 'Authorization: Bearer ${accessToken}' https://auth-service${serviceSuffix}.macro.com/user/me`
+      `curl -H 'Authorization: Bearer ${accessToken}' https://authentication-service${serviceSuffix}.conation.dev/user/me`
     );
   }
 }

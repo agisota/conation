@@ -21,8 +21,12 @@ fn is_local_stripe_stub() -> bool {
 
 /// A unique placeholder Stripe customer id for local signups. `stripe_customer_id`
 /// has a UNIQUE constraint, so it must be unique per user.
-fn local_stripe_customer_id(email: &str) -> String {
-    format!("local-stripe-customer-{email}")
+fn unmanaged_stripe_customer_id(email: &str) -> String {
+    format!("self-hosted-customer-{email}")
+}
+
+fn should_create_stripe_customer(stripe_client: Option<&stripe::Client>) -> bool {
+    stripe_client.is_some() && !is_local_stripe_stub()
 }
 
 /// Creates a new user
@@ -37,16 +41,20 @@ pub async fn create_user(
     email: &str,
     is_verified: bool,
     db: &sqlx::Pool<sqlx::Postgres>,
-    stripe_client: &stripe::Client,
+    stripe_client: Option<&stripe::Client>,
 ) -> anyhow::Result<(String, Option<i32>)> {
-    let stripe_customer_id = if is_local_stripe_stub() {
+    let stripe_customer_id = if !should_create_stripe_customer(stripe_client) {
         // Local mode uses a stub key; don't call Stripe (it would 401 and
         // abort the transactional user.create webhook, blocking all signups).
-        local_stripe_customer_id(email)
+        unmanaged_stripe_customer_id(email)
     } else {
         // NOTE: stripe adds in ~400ms of latency to this request. We may want to update our
         // requirement that each customer exists in stripe and create stripe customers as needed.
-        let stripe_customer = create_stripe_user(email, stripe_client).await?;
+        let stripe_customer = create_stripe_user(
+            email,
+            stripe_client.expect("checked that Stripe is configured"),
+        )
+        .await?;
         tracing::trace!(stripe_customer_id=?stripe_customer.id.to_string(), "created stripe customer");
         stripe_customer.id.to_string()
     };

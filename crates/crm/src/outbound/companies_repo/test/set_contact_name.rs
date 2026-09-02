@@ -5,8 +5,8 @@ use crate::domain::model::CrmError;
 use crate::domain::service::{CrmService, CrmServiceImpl};
 use crate::outbound::companies_repo::CompaniesRepositoryImpl;
 use crate::outbound::no_op_resolver::NoOpCompanyMetadataResolver;
-use entity_access::domain::models::ViewAccessLevel;
 use conation_db_migrator::MACRO_DB_MIGRATIONS;
+use entity_access::domain::models::ViewAccessLevel;
 use sqlx::PgPool;
 use uuid::Uuid;
 

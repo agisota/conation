@@ -4,7 +4,7 @@ VALUES ('a1111111-1111-1111-1111-111111111111', 'user', 'user@user.com', 'stripe
 INSERT INTO
   public."User" ("id", "email", "stripeCustomerId", "macro_user_id") (
     SELECT
-      'macro|user@user.com',
+      'conation|user@user.com',
       'user@user.com',
       'stripe_id',
       'a1111111-1111-1111-1111-111111111111'
@@ -23,7 +23,7 @@ INSERT INTO
       'document-one',
       'test_document_name',
       'txt',
-      'macro|user@user.com',
+      'conation|user@user.com',
       '2019-10-16 00:00:00',
       '2019-10-16 03:00:00' -- oldest should be last.
   );
@@ -57,7 +57,7 @@ INSERT INTO
       'document-two',
       'test_document_name',
       'pdf',
-      'macro|user@user.com',
+      'conation|user@user.com',
       '2019-10-16 00:10:00',
       '2019-10-16 02:00:00'
   );
@@ -91,7 +91,7 @@ INSERT INTO
       'document-three',
       'test_document_name',
       'pdf',
-      'macro|user@user.com',
+      'conation|user@user.com',
       '2019-10-16 00:00:00',
       '2019-10-16 01:00:00'
   );
@@ -121,7 +121,7 @@ INSERT INTO
     "updatedAt"
   ) (
     SELECT
-      'macro|user@user.com',
+      'conation|user@user.com',
       'document-one',
       'document',
       '2019-10-16 00:00:00',
@@ -137,7 +137,7 @@ INSERT INTO
     "updatedAt"
   ) (
     SELECT
-      'macro|user@user.com',
+      'conation|user@user.com',
       'document-two',
       'document',
       '2019-10-16 00:00:00',
@@ -153,7 +153,7 @@ INSERT INTO
     "updatedAt"
   ) (
     SELECT
-      'macro|user@user.com',
+      'conation|user@user.com',
       'document-three',
       'document',
       '2019-10-16 00:00:00',

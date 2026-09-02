@@ -1,5 +1,5 @@
-import { useSplitLayout } from '@components/app/split-layout/layout';
 import { t } from '@app/lib/i18n';
+import { useSplitLayout } from '@components/app/split-layout/layout';
 import { toast } from '@core/component/Toast/Toast';
 import { getDisplayName, tryMacroId } from '@core/user';
 import { Popover } from '@kobalte/core/popover';
@@ -19,11 +19,17 @@ export function InCallRosterListSection(props: {
 }) {
   return (
     <>
-      <div class="rounded-t-md border-b border-edge px-2 py-2.5 text-xs font-medium text-accent">{t('auto.in_this_call')}</div>
+      <div class="rounded-t-md border-b border-edge px-2 py-2.5 text-xs font-medium text-accent">
+        {t('channel.call.roster.title')}
+      </div>
       <div class="max-h-64 overflow-y-auto p-1">
         <Show
           when={props.members.length > 0}
-          fallback={<div class="p-2 text-sm text-ink-muted">Connecting…</div>}
+          fallback={
+            <div class="p-2 text-sm text-ink-muted">
+              {t('channel.call.connecting')}
+            </div>
+          }
         >
           <For each={props.members}>
             {(member) => (
@@ -50,7 +56,7 @@ export function InCallParticipantNameRow(props: {
 }) {
   const { replaceOrInsertSplit } = useSplitLayout();
   const getOrCreateDmMutation = useGetOrCreateDirectMessageMutation({
-    onError: () => toast.failure('Could not open direct message'),
+    onError: () => toast.failure(t('channel.call.roster.openDmFailed')),
   });
 
   const label = createMemo(() => {
@@ -60,7 +66,9 @@ export function InCallParticipantNameRow(props: {
     return (
       displayName ||
       r ||
-      (props.member.kind === 'local' ? 'You' : 'Participant')
+      (props.member.kind === 'local'
+        ? t('channel.call.you')
+        : t('channel.call.participant'))
     );
   });
 
@@ -71,10 +79,10 @@ export function InCallParticipantNameRow(props: {
   const openDm = () => {
     if (props.member.kind !== 'remote') return;
     const { identity } = props.member.participant;
-    if (!identity.startsWith('macro|') || !identity.slice(6).includes('@'))
-      return;
+    const userId = tryMacroId(identity);
+    if (!userId) return;
     getOrCreateDmMutation.mutate(
-      { recipient_id: identity },
+      { recipient_id: userId },
       {
         onSuccess: ({ channel_id }) => {
           props.onClose();
@@ -104,7 +112,9 @@ export function InCallParticipantNameRow(props: {
       />
       <span class="truncate text-sm text-ink">{label()}</span>
       <Show when={props.member.kind === 'local'}>
-        <span class="ml-auto text-xs text-ink-muted shrink-0">{t('auto.you')}</span>
+        <span class="ml-auto text-xs text-ink-muted shrink-0">
+          {t('channel.call.you')}
+        </span>
       </Show>
     </div>
   );
@@ -146,7 +156,7 @@ export function InCallParticipantsListPopover(
         )}
         aria-haspopup="dialog"
         aria-expanded={open()}
-        aria-label={t('auto.everyone_in_call')}
+        aria-label={t('channel.call.roster.everyone')}
       >
         <UsersThree class="block size-4" />
       </Popover.Trigger>

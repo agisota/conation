@@ -19,12 +19,12 @@ use channels::domain::{
         ChannelService,
     },
 };
+use conation_event_broker::{EventBrokerError, MacroEvent, MacroEventBroker};
+use conation_user_id::{email::Email, lowercased::Lowercase, user_id::MacroUserIdStr};
 use entity_access::domain::models::{
     AdminTeamRole, EntityAccessReceipt, EntityType, MemberTeamRole, OwnerTeamRole,
     RequiredPermission,
 };
-use conation_event_broker::{EventBrokerError, MacroEvent, MacroEventBroker};
-use conation_user_id::{email::Email, lowercased::Lowercase, user_id::MacroUserIdStr};
 use models_pagination::{CreatedAt, Query};
 use notification::domain::{
     models::{Notification, NotificationResult, request::SendNotificationRequest},
@@ -166,7 +166,7 @@ impl MockTeamRepository {
                 uuid::Uuid::from_u128(1000),
                 "Created Team".to_string(),
                 "CREATED_TEAM".to_string(),
-                MacroUserIdStr::parse_from_str("macro|owner@example.com")
+                MacroUserIdStr::parse_from_str("conation|owner@example.com")
                     .unwrap()
                     .into_owned(),
                 false,
@@ -1363,7 +1363,7 @@ fn make_accepted_invite(
                 .into_owned()
                 .lowercase(),
             team_role: TeamRole::Member,
-            invited_by: MacroUserIdStr::parse_from_str("macro|owner@example.com")
+            invited_by: MacroUserIdStr::parse_from_str("conation|owner@example.com")
                 .unwrap()
                 .into_owned(),
             created_at: chrono::Utc::now(),
@@ -1415,7 +1415,7 @@ fn make_enterprise_remove_user_repository(
     role: TeamRole,
 ) -> MockTeamRepository {
     let mark_sent_calls = Arc::new(Mutex::new(Vec::new()));
-    let owner_id = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
+    let owner_id = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
     let team = Team::new(
         team_id,
         "Enterprise Team".to_string(),
@@ -1572,7 +1572,7 @@ async fn event_broker_can_be_replaced_and_is_preserved_by_service_reconstruction
         team_id,
         name: "Event Team".to_string(),
         slug: "EVENT_TEAM".to_string(),
-        owner: MacroUserIdStr::parse_from_str("macro|owner@example.com")
+        owner: MacroUserIdStr::parse_from_str("conation|owner@example.com")
             .unwrap()
             .into_owned(),
         enterprise: false,
@@ -1627,7 +1627,7 @@ async fn event_broker_can_be_replaced_and_is_preserved_by_service_reconstruction
 
 #[tokio::test]
 async fn team_event_create_publishes_actual_domain_and_billing_flags() {
-    let owner = MacroUserIdStr::parse_from_str("macro|owner@corporate.test").unwrap();
+    let owner = MacroUserIdStr::parse_from_str("conation|owner@corporate.test").unwrap();
     let team_id = uuid::Uuid::from_u128(6100);
     let mut team_repository = MockTeamRepository::new(
         Vec::new(),
@@ -1663,7 +1663,7 @@ async fn team_event_create_publishes_actual_domain_and_billing_flags() {
 
 #[tokio::test]
 async fn team_event_create_generic_domain_is_unpaid_without_auto_join() {
-    let owner = MacroUserIdStr::parse_from_str("macro|owner@gmail.com").unwrap();
+    let owner = MacroUserIdStr::parse_from_str("conation|owner@gmail.com").unwrap();
     let team_repository = MockTeamRepository::new(
         Vec::new(),
         "Personal Team",
@@ -1687,7 +1687,7 @@ async fn team_event_create_generic_domain_is_unpaid_without_auto_join() {
 
 #[tokio::test]
 async fn team_event_create_failure_emits_nothing_and_broker_failure_is_swallowed() {
-    let owner = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
+    let owner = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
     let mut team_repository =
         MockTeamRepository::new(Vec::new(), "Failed Team", Arc::new(Mutex::new(Vec::new())));
     team_repository.fail_github_installation_move = true;
@@ -1721,7 +1721,7 @@ async fn invite_team_event_is_published_only_for_new_lowercase_email() {
     let team_id = uuid::Uuid::from_u128(6110);
     let new_invite_id = uuid::Uuid::from_u128(6111);
     let existing_invite_id = uuid::Uuid::from_u128(6112);
-    let inviter = MacroUserIdStr::parse_from_str("macro|admin@example.com").unwrap();
+    let inviter = MacroUserIdStr::parse_from_str("conation|admin@example.com").unwrap();
     let mut team_repository = MockTeamRepository::new(
         vec![
             make_invite("new@example.com", new_invite_id, team_id),
@@ -1764,7 +1764,7 @@ async fn invite_team_event_is_published_only_for_new_lowercase_email() {
 async fn invite_team_event_repository_failure_emits_nothing_and_broker_failure_is_swallowed() {
     let team_id = uuid::Uuid::from_u128(6115);
     let invite_id = uuid::Uuid::from_u128(6116);
-    let inviter = MacroUserIdStr::parse_from_str("macro|admin@example.com").unwrap();
+    let inviter = MacroUserIdStr::parse_from_str("conation|admin@example.com").unwrap();
     let email = Email::parse_from_str("member@example.com")
         .unwrap()
         .lowercase();
@@ -1811,7 +1811,7 @@ async fn invite_team_event_rejected_and_revoked_payloads_follow_successful_delet
     let team_id = uuid::Uuid::from_u128(6120);
     let invite_id = uuid::Uuid::from_u128(6121);
     let invite = make_invite("member@example.com", invite_id, team_id);
-    let recipient = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let recipient = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let mut team_repository =
         MockTeamRepository::new(Vec::new(), "Invite Team", Arc::new(Mutex::new(Vec::new())));
     team_repository.invite_by_id = Some(invite.clone());
@@ -1835,7 +1835,7 @@ async fn invite_team_event_rejected_and_revoked_payloads_follow_successful_delet
         recipient.as_ref()
     );
 
-    let admin = MacroUserIdStr::parse_from_str("macro|admin@example.com").unwrap();
+    let admin = MacroUserIdStr::parse_from_str("conation|admin@example.com").unwrap();
     let mut team_repository =
         MockTeamRepository::new(Vec::new(), "Invite Team", Arc::new(Mutex::new(Vec::new())));
     team_repository.invite_by_id = Some(invite);
@@ -1863,7 +1863,7 @@ async fn invite_team_event_rejected_and_revoked_payloads_follow_successful_delet
 async fn invite_team_event_deletion_failure_emits_nothing() {
     let team_id = uuid::Uuid::from_u128(6130);
     let invite_id = uuid::Uuid::from_u128(6131);
-    let admin = MacroUserIdStr::parse_from_str("macro|admin@example.com").unwrap();
+    let admin = MacroUserIdStr::parse_from_str("conation|admin@example.com").unwrap();
     let mut team_repository =
         MockTeamRepository::new(Vec::new(), "Invite Team", Arc::new(Mutex::new(Vec::new())));
     team_repository.invite_by_id = Some(make_invite("member@example.com", invite_id, team_id));
@@ -1884,13 +1884,12 @@ async fn invite_team_event_deletion_failure_emits_nothing() {
 }
 
 #[tokio::test]
-async fn team_payment_revoke_removes_exact_premium_roles_from_members() {
+async fn expired_team_subscription_does_not_revoke_feature_roles() {
     let team_id = uuid::Uuid::from_u128(5000);
     let members = vec![
-        make_team_member(team_id, "macro|member-one@example.com", TeamRole::Member),
-        make_team_member(team_id, "macro|member-two@example.com", TeamRole::Admin),
+        make_team_member(team_id, "conation|member-one@example.com", TeamRole::Member),
+        make_team_member(team_id, "conation|member-two@example.com", TeamRole::Admin),
     ];
-    let expected_roles = vec![RoleId::TeamSubscriber, RoleId::SubOpus];
     let mark_sent_calls: Arc<Mutex<Vec<Vec<uuid::Uuid>>>> = Arc::new(Mutex::new(Vec::new()));
     let team_repo = MockTeamRepository::new(Vec::new(), "Test Team", mark_sent_calls)
         .with_team_members(members);
@@ -1911,15 +1910,9 @@ async fn team_payment_revoke_removes_exact_premium_roles_from_members() {
         .await
         .unwrap();
 
-    assert_eq!(
-        *remove_role_calls.lock().unwrap(),
-        vec![
-            (
-                "macro|member-one@example.com".to_string(),
-                expected_roles.clone(),
-            ),
-            ("macro|member-two@example.com".to_string(), expected_roles),
-        ]
+    assert!(
+        remove_role_calls.lock().unwrap().is_empty(),
+        "billing events may update metadata but must not revoke product access"
     );
 }
 
@@ -1927,8 +1920,8 @@ async fn team_payment_revoke_removes_exact_premium_roles_from_members() {
 async fn team_payment_restore_adds_exact_premium_roles_to_members() {
     let team_id = uuid::Uuid::from_u128(5001);
     let members = vec![
-        make_team_member(team_id, "macro|member-one@example.com", TeamRole::Member),
-        make_team_member(team_id, "macro|member-two@example.com", TeamRole::Admin),
+        make_team_member(team_id, "conation|member-one@example.com", TeamRole::Member),
+        make_team_member(team_id, "conation|member-two@example.com", TeamRole::Admin),
     ];
     let expected_roles = vec![RoleId::TeamSubscriber, RoleId::SubOpus];
     let mark_sent_calls: Arc<Mutex<Vec<Vec<uuid::Uuid>>>> = Arc::new(Mutex::new(Vec::new()));
@@ -1955,10 +1948,13 @@ async fn team_payment_restore_adds_exact_premium_roles_to_members() {
         *upsert_role_calls.lock().unwrap(),
         vec![
             (
-                "macro|member-one@example.com".to_string(),
+                "conation|member-one@example.com".to_string(),
                 expected_roles.clone(),
             ),
-            ("macro|member-two@example.com".to_string(), expected_roles),
+            (
+                "conation|member-two@example.com".to_string(),
+                expected_roles
+            ),
         ]
     );
 }
@@ -1996,11 +1992,11 @@ async fn team_payment_patch_payment_status_delegates_to_repository() {
 
 #[tokio::test]
 async fn create_team_sets_slug_from_name_or_uses_default() {
-    let owner = MacroUserIdStr::parse_from_str("macro|creator@gmail.com").unwrap();
+    let owner = MacroUserIdStr::parse_from_str("conation|creator@gmail.com").unwrap();
 
     for (team_name, expected_slug) in [
         ("Product Engineering", "PRODUCT_ENGINEERING"),
-        ("Team 42", "MACRO"),
+        ("Team 42", "CONATION"),
     ] {
         let team_repository =
             MockTeamRepository::new(Vec::new(), team_name, Arc::new(Mutex::new(Vec::new())));
@@ -2026,7 +2022,7 @@ async fn create_team_sets_slug_from_name_or_uses_default() {
 
 #[tokio::test]
 async fn create_team_creates_default_team_channel() {
-    let owner = MacroUserIdStr::parse_from_str("macro|creator@example.com").unwrap();
+    let owner = MacroUserIdStr::parse_from_str("conation|creator@example.com").unwrap();
     let team_id = uuid::Uuid::from_u128(2000);
     let team = Team::new(
         team_id,
@@ -2081,7 +2077,7 @@ async fn create_team_creates_default_team_channel() {
 
 #[tokio::test]
 async fn create_team_fails_when_default_team_channel_creation_fails() {
-    let owner = MacroUserIdStr::parse_from_str("macro|creator@example.com").unwrap();
+    let owner = MacroUserIdStr::parse_from_str("conation|creator@example.com").unwrap();
     let team = Team::new(
         uuid::Uuid::from_u128(2001),
         "Failed Channel Team".to_string(),
@@ -2124,7 +2120,7 @@ async fn create_team_fails_when_default_team_channel_creation_fails() {
 
 #[tokio::test]
 async fn test_create_team_moves_github_installation_to_created_team() {
-    let user_id = MacroUserIdStr::parse_from_str("macro|creator@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|creator@example.com").unwrap();
     let team = Team::new(
         uuid::Uuid::from_u128(2000),
         "New Team".to_string(),
@@ -2162,7 +2158,7 @@ async fn test_create_team_moves_github_installation_to_created_team() {
 
 #[tokio::test]
 async fn test_create_team_propagates_github_installation_move_failure() {
-    let user_id = MacroUserIdStr::parse_from_str("macro|creator@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|creator@example.com").unwrap();
     let team = Team::new(
         uuid::Uuid::from_u128(2001),
         "New Team".to_string(),
@@ -2202,7 +2198,7 @@ async fn test_create_team_propagates_github_installation_move_failure() {
 
 #[tokio::test]
 async fn team_analytics_create_team_emits_created_event_with_team_id() {
-    let user_id = MacroUserIdStr::parse_from_str("macro|creator@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|creator@example.com").unwrap();
     let team_id = uuid::Uuid::from_u128(2100);
     let team = Team::new(
         team_id,
@@ -2252,7 +2248,7 @@ async fn team_analytics_create_team_emits_created_event_with_team_id() {
 
 #[tokio::test]
 async fn team_analytics_failure_is_swallowed_by_create_team() {
-    let user_id = MacroUserIdStr::parse_from_str("macro|creator@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|creator@example.com").unwrap();
     let team_id = uuid::Uuid::from_u128(2101);
     let team = Team::new(
         team_id,
@@ -2289,7 +2285,7 @@ async fn team_analytics_failure_is_swallowed_by_create_team() {
 
 #[tokio::test]
 async fn team_analytics_create_team_does_not_emit_when_side_effect_fails() {
-    let user_id = MacroUserIdStr::parse_from_str("macro|creator@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|creator@example.com").unwrap();
     let team = Team::new(
         uuid::Uuid::from_u128(2102),
         "Analytics Team".to_string(),
@@ -2349,7 +2345,7 @@ fn build_service_for_premium_check(
 
 #[tokio::test]
 async fn test_is_user_premium_with_active_subscription() {
-    let user_id = MacroUserIdStr::parse_from_str("macro|premium@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|premium@example.com").unwrap();
     let service = build_service_for_premium_check(Some("cus_test".parse().unwrap()), false);
 
     assert!(service.is_user_premium(&user_id).await.unwrap().is_some());
@@ -2357,7 +2353,7 @@ async fn test_is_user_premium_with_active_subscription() {
 
 #[tokio::test]
 async fn test_is_user_premium_without_stripe_customer() {
-    let user_id = MacroUserIdStr::parse_from_str("macro|free@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|free@example.com").unwrap();
     let service = build_service_for_premium_check(None, false);
 
     assert!(service.is_user_premium(&user_id).await.unwrap().is_none());
@@ -2365,7 +2361,7 @@ async fn test_is_user_premium_without_stripe_customer() {
 
 #[tokio::test]
 async fn test_is_user_premium_without_active_subscription() {
-    let user_id = MacroUserIdStr::parse_from_str("macro|lapsed@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|lapsed@example.com").unwrap();
     let service = build_service_for_premium_check(Some("cus_test".parse().unwrap()), true);
 
     assert!(service.is_user_premium(&user_id).await.unwrap().is_none());
@@ -2375,7 +2371,7 @@ async fn test_is_user_premium_without_active_subscription() {
 async fn invite_users_to_team_enterprise_bypasses_billing_and_preserves_side_effects() {
     let team_id = uuid::Uuid::from_u128(6000);
     let invite_id = uuid::Uuid::from_u128(6001);
-    let invited_by = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
+    let invited_by = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
     let mark_sent_calls = Arc::new(Mutex::new(Vec::new()));
     let mut team_repo = MockTeamRepository::new(
         vec![make_invite("member@example.com", invite_id, team_id)],
@@ -2469,7 +2465,7 @@ async fn invite_users_to_team_enterprise_bypasses_billing_and_preserves_side_eff
 async fn invite_users_to_team_blocked_for_member_when_non_admin_invites_disabled() {
     let team_id = uuid::Uuid::from_u128(6100);
     let invite_id = uuid::Uuid::from_u128(6101);
-    let invited_by = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let invited_by = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let mark_sent_calls = Arc::new(Mutex::new(Vec::new()));
     let team_repo = MockTeamRepository::new(
         vec![make_invite("new@example.com", invite_id, team_id)],
@@ -2517,7 +2513,7 @@ async fn invite_users_to_team_blocked_for_member_when_non_admin_invites_disabled
 async fn invite_users_to_team_allowed_for_admin_when_non_admin_invites_disabled() {
     let team_id = uuid::Uuid::from_u128(6110);
     let invite_id = uuid::Uuid::from_u128(6111);
-    let invited_by = MacroUserIdStr::parse_from_str("macro|admin@example.com").unwrap();
+    let invited_by = MacroUserIdStr::parse_from_str("conation|admin@example.com").unwrap();
     let mark_sent_calls = Arc::new(Mutex::new(Vec::new()));
     let team_repo = MockTeamRepository::new(
         vec![make_invite("new@example.com", invite_id, team_id)],
@@ -2561,7 +2557,7 @@ async fn invite_users_to_team_allowed_for_admin_when_non_admin_invites_disabled(
 #[tokio::test]
 async fn toggle_allow_non_admin_invites_delegates_to_repository() {
     let team_id = uuid::Uuid::from_u128(6120);
-    let owner = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
+    let owner = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
     let mark_sent_calls = Arc::new(Mutex::new(Vec::new()));
     let team_repo = MockTeamRepository::new(vec![], "Team", mark_sent_calls);
     let toggle_calls = team_repo.non_admin_invites_toggle_calls.clone();
@@ -2589,10 +2585,10 @@ async fn toggle_allow_non_admin_invites_delegates_to_repository() {
 }
 
 #[tokio::test]
-async fn invite_users_to_team_enterprise_enforces_team_plan_seat_cap() {
+async fn invite_users_to_team_ignores_legacy_team_plan_seat_cap() {
     let team_id = uuid::Uuid::from_u128(6010);
     let invite_id = uuid::Uuid::from_u128(6011);
-    let invited_by = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
+    let invited_by = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
     let mark_sent_calls = Arc::new(Mutex::new(Vec::new()));
     let mut team_repo = MockTeamRepository::new(
         vec![make_invite("member@example.com", invite_id, team_id)],
@@ -2629,25 +2625,26 @@ async fn invite_users_to_team_enterprise_enforces_team_plan_seat_cap() {
     let invites = non_empty::NonEmpty::new(invite_emails.as_slice()).unwrap();
     let receipt = test_team_receipt::<MemberTeamRole>(team_id, &invited_by);
 
-    let error = service
+    let result = service
         .invite_users_to_team(receipt, invites)
         .await
-        .unwrap_err();
+        .unwrap();
 
-    assert!(matches!(error, InviteUsersToTeamError::NotEnoughOpenSeats));
+    assert_eq!(result.len(), 1);
+    assert_eq!(result[0].team_invite_id, invite_id);
     assert_eq!(*payment_status_lookup_calls.lock().unwrap(), 0);
     assert_eq!(*subscription_id_lookup_calls.lock().unwrap(), 0);
-    assert_eq!(*invitation_persistence_calls.lock().unwrap(), 0);
-    assert_eq!(notification_ingress.call_count.load(Ordering::SeqCst), 0);
-    assert!(mark_sent_calls.lock().unwrap().is_empty());
-    assert!(analytics_events.lock().unwrap().is_empty());
+    assert_eq!(*invitation_persistence_calls.lock().unwrap(), 1);
+    assert_eq!(notification_ingress.call_count.load(Ordering::SeqCst), 1);
+    assert_eq!(*mark_sent_calls.lock().unwrap(), vec![vec![invite_id]]);
+    assert_eq!(analytics_events.lock().unwrap().len(), 1);
 }
 
 #[tokio::test]
 async fn invite_users_to_team_enterprise_status_lookup_failure_precedes_persistence() {
     let team_id = uuid::Uuid::from_u128(6020);
     let invite_id = uuid::Uuid::from_u128(6021);
-    let invited_by = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
+    let invited_by = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
     let mark_sent_calls = Arc::new(Mutex::new(Vec::new()));
     let mut team_repo = MockTeamRepository::new(
         vec![make_invite("member@example.com", invite_id, team_id)],
@@ -2713,7 +2710,7 @@ async fn test_invite_marks_sent_only_for_successful_notifications() {
     let (service, _notification_ingress) =
         build_service(invites, fail_indices, mark_sent_calls.clone());
 
-    let invited_by = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
+    let invited_by = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
     let invites = vec![
         Email::parse_from_str("alice@example.com")
             .unwrap()
@@ -2761,7 +2758,7 @@ async fn test_invite_does_not_call_mark_sent_when_all_notifications_fail() {
     let (service, _notification_ingress) =
         build_service(invites, fail_indices, mark_sent_calls.clone());
 
-    let invited_by = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
+    let invited_by = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
     let invites = vec![
         Email::parse_from_str("fail@example.com")
             .unwrap()
@@ -2799,7 +2796,7 @@ async fn test_invite_marks_all_sent_when_all_notifications_succeed() {
         mark_sent_calls.clone(),
     );
 
-    let invited_by = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
+    let invited_by = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
     let invites = vec![
         Email::parse_from_str("one@example.com")
             .unwrap()
@@ -2844,7 +2841,7 @@ async fn team_analytics_invite_users_emits_invited_events_with_team_id() {
         MockTeamAnalytics::new(events.clone()),
     );
 
-    let invited_by = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
+    let invited_by = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
     let invites = vec![
         Email::parse_from_str("one@example.com")
             .unwrap()
@@ -2901,7 +2898,7 @@ async fn team_analytics_invite_users_does_not_emit_when_invite_creation_fails() 
         MockTeamAnalytics::new(events.clone()),
     );
 
-    let invited_by = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
+    let invited_by = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
     let invites = vec![
         Email::parse_from_str("one@example.com")
             .unwrap()
@@ -2924,7 +2921,7 @@ async fn team_analytics_invite_users_does_not_emit_when_invite_creation_fails() 
 #[tokio::test]
 async fn test_get_team_reports_crm_enabled() {
     let team_id = uuid::Uuid::from_u128(1);
-    let owner_id = MacroUserIdStr::parse_from_str("macro|owner@example.com")
+    let owner_id = MacroUserIdStr::parse_from_str("conation|owner@example.com")
         .unwrap()
         .into_owned();
     let team = Team::new(
@@ -2977,12 +2974,12 @@ impl CrmEnqueuer for RecordingCrmEnqueuer {
 
     async fn enqueue_populate_crm_for_user(
         &self,
-        conation_id: &MacroUserIdStr<'_>,
+        macro_id: &MacroUserIdStr<'_>,
     ) -> Result<(), Self::Err> {
         self.populated
             .lock()
             .unwrap()
-            .push(conation_id.as_ref().to_string());
+            .push(macro_id.as_ref().to_string());
         if self.fail {
             Err("CRM enqueue failed")
         } else {
@@ -2993,12 +2990,12 @@ impl CrmEnqueuer for RecordingCrmEnqueuer {
     async fn enqueue_depopulate_crm_for_user(
         &self,
         team_id: &uuid::Uuid,
-        conation_id: &MacroUserIdStr<'_>,
+        macro_id: &MacroUserIdStr<'_>,
     ) -> Result<(), Self::Err> {
         self.depopulated
             .lock()
             .unwrap()
-            .push((*team_id, conation_id.as_ref().to_string()));
+            .push((*team_id, macro_id.as_ref().to_string()));
         if self.fail {
             Err("CRM enqueue failed")
         } else {
@@ -3042,10 +3039,10 @@ fn build_crm_enable_service(
 #[tokio::test]
 async fn test_enable_crm_with_backfill_enqueues_members() {
     let team_id = uuid::Uuid::from_u128(7);
-    let owner_id = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
+    let owner_id = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
     let (service, populated) = build_crm_enable_service(
         team_id,
-        &["macro|owner@example.com", "macro|member@example.com"],
+        &["conation|owner@example.com", "conation|member@example.com"],
     );
 
     let receipt = test_team_receipt::<AdminTeamRole>(team_id, &owner_id);
@@ -3061,8 +3058,8 @@ async fn test_enable_crm_with_backfill_enqueues_members() {
     assert_eq!(
         *populated.lock().unwrap(),
         vec![
-            "macro|owner@example.com".to_string(),
-            "macro|member@example.com".to_string()
+            "conation|owner@example.com".to_string(),
+            "conation|member@example.com".to_string()
         ]
     );
 }
@@ -3071,10 +3068,10 @@ async fn test_enable_crm_with_backfill_enqueues_members() {
 #[tokio::test]
 async fn test_enable_crm_without_backfill_skips_enqueue() {
     let team_id = uuid::Uuid::from_u128(7);
-    let owner_id = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
+    let owner_id = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
     let (service, populated) = build_crm_enable_service(
         team_id,
-        &["macro|owner@example.com", "macro|member@example.com"],
+        &["conation|owner@example.com", "conation|member@example.com"],
     );
 
     let receipt = test_team_receipt::<AdminTeamRole>(team_id, &owner_id);
@@ -3135,7 +3132,7 @@ fn build_service_with_team(
 #[tokio::test]
 async fn test_patch_team_rejects_owner_role_assignment() {
     let team_id = uuid::Uuid::from_u128(1);
-    let owner_id = MacroUserIdStr::parse_from_str("macro|owner@example.com")
+    let owner_id = MacroUserIdStr::parse_from_str("conation|owner@example.com")
         .unwrap()
         .into_owned();
     let team = Team::new(
@@ -3153,7 +3150,7 @@ async fn test_patch_team_rejects_owner_role_assignment() {
         name: Some("New Name".to_string()),
         slug: Some("new-team".to_string()),
         user_role_updates: Some(vec![PatchTeamUserRole {
-            team_user_id: MacroUserIdStr::parse_from_str("macro|member@example.com")
+            team_user_id: MacroUserIdStr::parse_from_str("conation|member@example.com")
                 .unwrap()
                 .into_owned(),
             role: TeamRole::Owner,
@@ -3163,7 +3160,7 @@ async fn test_patch_team_rejects_owner_role_assignment() {
 
     let receipt = test_team_receipt::<AdminTeamRole>(
         team_id,
-        &MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap(),
+        &MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap(),
     );
     let err = service.patch_team(receipt, &req).await.err().unwrap();
     assert!(matches!(err, TeamError::BadRequest(_)));
@@ -3175,7 +3172,7 @@ async fn test_patch_team_rejects_owner_role_assignment() {
 #[tokio::test]
 async fn test_patch_team_rejects_owner_downgrade() {
     let team_id = uuid::Uuid::from_u128(1);
-    let owner_id = MacroUserIdStr::parse_from_str("macro|owner@example.com")
+    let owner_id = MacroUserIdStr::parse_from_str("conation|owner@example.com")
         .unwrap()
         .into_owned();
     let team = Team::new(
@@ -3210,13 +3207,13 @@ async fn test_patch_team_rejects_owner_downgrade() {
 #[tokio::test]
 async fn test_patch_team_applies_role_updates_and_name() {
     let team_id = uuid::Uuid::from_u128(1);
-    let owner_id = MacroUserIdStr::parse_from_str("macro|owner@example.com")
+    let owner_id = MacroUserIdStr::parse_from_str("conation|owner@example.com")
         .unwrap()
         .into_owned();
-    let member_id = MacroUserIdStr::parse_from_str("macro|member@example.com")
+    let member_id = MacroUserIdStr::parse_from_str("conation|member@example.com")
         .unwrap()
         .into_owned();
-    let admin_id = MacroUserIdStr::parse_from_str("macro|admin@example.com")
+    let admin_id = MacroUserIdStr::parse_from_str("conation|admin@example.com")
         .unwrap()
         .into_owned();
     let team = Team::new(
@@ -3276,7 +3273,7 @@ async fn test_patch_team_applies_role_updates_and_name() {
 #[tokio::test]
 async fn test_patch_team_empty_role_updates() {
     let team_id = uuid::Uuid::from_u128(1);
-    let owner_id = MacroUserIdStr::parse_from_str("macro|owner@example.com")
+    let owner_id = MacroUserIdStr::parse_from_str("conation|owner@example.com")
         .unwrap()
         .into_owned();
     let team = Team::new(
@@ -3309,7 +3306,7 @@ async fn test_patch_team_empty_role_updates() {
 #[tokio::test]
 async fn test_patch_team_metadata_publishes_updated_with_omitted_fields() {
     let team_id = uuid::Uuid::from_u128(801);
-    let actor = MacroUserIdStr::parse_from_str("macro|admin@example.com").unwrap();
+    let actor = MacroUserIdStr::parse_from_str("conation|admin@example.com").unwrap();
     let broker = RecordingEventBroker::default();
     let service = build_service_with_repo_and_broker(
         MockTeamRepository::new(Vec::new(), "Team", Arc::new(Mutex::new(Vec::new()))),
@@ -3342,8 +3339,8 @@ async fn test_patch_team_metadata_publishes_updated_with_omitted_fields() {
 #[tokio::test]
 async fn test_patch_team_role_only_publishes_previous_role_without_updated_event() {
     let team_id = uuid::Uuid::from_u128(802);
-    let owner = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
-    let member = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let owner = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
+    let member = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let mut repo = MockTeamRepository::new(Vec::new(), "Team", Arc::new(Mutex::new(Vec::new())))
         .with_team(Team::new(
             team_id,
@@ -3386,9 +3383,9 @@ async fn test_patch_team_role_only_publishes_previous_role_without_updated_event
 #[tokio::test]
 async fn test_patch_team_partial_role_failure_keeps_ordered_success_events() {
     let team_id = uuid::Uuid::from_u128(803);
-    let owner = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
-    let first = MacroUserIdStr::parse_from_str("macro|first@example.com").unwrap();
-    let second = MacroUserIdStr::parse_from_str("macro|second@example.com").unwrap();
+    let owner = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
+    let first = MacroUserIdStr::parse_from_str("conation|first@example.com").unwrap();
+    let second = MacroUserIdStr::parse_from_str("conation|second@example.com").unwrap();
     let mut repo = MockTeamRepository::new(Vec::new(), "Team", Arc::new(Mutex::new(Vec::new())))
         .with_team(Team::new(
             team_id,
@@ -3439,7 +3436,7 @@ async fn test_patch_team_partial_role_failure_keeps_ordered_success_events() {
 #[tokio::test]
 async fn test_patch_team_repository_failure_does_not_publish_updated() {
     let team_id = uuid::Uuid::from_u128(804);
-    let actor = MacroUserIdStr::parse_from_str("macro|admin@example.com").unwrap();
+    let actor = MacroUserIdStr::parse_from_str("conation|admin@example.com").unwrap();
     let mut repo = MockTeamRepository::new(Vec::new(), "Team", Arc::new(Mutex::new(Vec::new())));
     repo.fail_patch_team = true;
     let broker = RecordingEventBroker::default();
@@ -3466,7 +3463,7 @@ async fn test_patch_team_repository_failure_does_not_publish_updated() {
 #[tokio::test]
 async fn test_toggle_auto_join_domain_publishes_enabled_and_disabled_states() {
     let team_id = uuid::Uuid::from_u128(805);
-    let actor = MacroUserIdStr::parse_from_str("macro|admin@example.com").unwrap();
+    let actor = MacroUserIdStr::parse_from_str("conation|admin@example.com").unwrap();
 
     for expected_domain in [Some("example.com".to_string()), None] {
         let mut repo =
@@ -3501,7 +3498,7 @@ async fn test_toggle_auto_join_domain_publishes_enabled_and_disabled_states() {
 #[tokio::test]
 async fn test_toggle_auto_join_domain_failure_does_not_publish_event() {
     let team_id = uuid::Uuid::from_u128(806);
-    let actor = MacroUserIdStr::parse_from_str("macro|admin@example.com").unwrap();
+    let actor = MacroUserIdStr::parse_from_str("conation|admin@example.com").unwrap();
     let mut repo = MockTeamRepository::new(Vec::new(), "Team", Arc::new(Mutex::new(Vec::new())));
     repo.fail_auto_join_toggle = true;
     let broker = RecordingEventBroker::default();
@@ -3519,8 +3516,8 @@ async fn test_toggle_auto_join_domain_failure_does_not_publish_event() {
 #[tokio::test]
 async fn test_delete_team_publishes_single_event_with_member_snapshot() {
     let team_id = uuid::Uuid::from_u128(807);
-    let owner = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
-    let member = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let owner = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
+    let member = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let mut repo = MockTeamRepository::new(Vec::new(), "Team", Arc::new(Mutex::new(Vec::new())));
     repo.team_members = vec![
         make_team_member(team_id, owner.as_ref(), TeamRole::Owner),
@@ -3548,7 +3545,7 @@ async fn test_delete_team_publishes_single_event_with_member_snapshot() {
 #[tokio::test]
 async fn test_delete_team_repository_failures_do_not_publish_event() {
     let team_id = uuid::Uuid::from_u128(808);
-    let owner = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
+    let owner = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
 
     for failure_step in 0..3 {
         let mut repo =
@@ -3571,10 +3568,10 @@ async fn test_delete_team_repository_failures_do_not_publish_event() {
 }
 
 #[tokio::test]
-async fn test_invite_users_to_team_backfills_legacy_team_subscription() {
+async fn invite_users_to_team_skips_legacy_billing_backfill() {
     let team_id = uuid::Uuid::from_u128(42);
     let invite_id = uuid::Uuid::from_u128(420);
-    let owner_id = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
+    let owner_id = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
     let subscription_id: stripe::SubscriptionId = "sub_backfill_invite".parse().unwrap();
 
     let mark_sent_calls: Arc<Mutex<Vec<Vec<uuid::Uuid>>>> = Arc::new(Mutex::new(Vec::new()));
@@ -3627,26 +3624,16 @@ async fn test_invite_users_to_team_backfills_legacy_team_subscription() {
         .await
         .unwrap();
 
-    assert_eq!(
-        *convert_calls.lock().unwrap(),
-        vec![(
-            (subscription_id.to_string()),
-            team_id,
-            owner_id.as_ref().to_string()
-        )]
-    );
-    assert_eq!(
-        *subscription_update_calls.lock().unwrap(),
-        vec![(team_id, subscription_id.to_string())]
-    );
-    assert_eq!(*payment_update_calls.lock().unwrap(), vec![(team_id, true)]);
+    assert!(convert_calls.lock().unwrap().is_empty());
+    assert!(subscription_update_calls.lock().unwrap().is_empty());
+    assert!(payment_update_calls.lock().unwrap().is_empty());
 }
 
 #[tokio::test]
 async fn join_team_enterprise_bypasses_billing_and_preserves_membership_side_effects() {
     let team_id = uuid::Uuid::from_u128(45);
     let invite_id = uuid::Uuid::from_u128(450);
-    let user_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let team_repository = make_enterprise_join_team_repository(team_id, invite_id, &user_id);
     let customer_repository = MockCustomerRepository::default();
     let channels_repository = RecordingChannelService::default();
@@ -3710,7 +3697,7 @@ async fn join_team_enterprise_bypasses_billing_and_preserves_membership_side_eff
 async fn join_team_enterprise_rolls_back_accepted_invite_when_role_assignment_fails() {
     let team_id = uuid::Uuid::from_u128(46);
     let invite_id = uuid::Uuid::from_u128(460);
-    let user_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let team_repository = make_enterprise_join_team_repository(team_id, invite_id, &user_id);
     let customer_repository = MockCustomerRepository::default();
     let channels_repository = RecordingChannelService::default();
@@ -3761,7 +3748,7 @@ async fn join_team_enterprise_rolls_back_accepted_invite_when_role_assignment_fa
 async fn join_team_enterprise_rolls_back_roles_and_invite_when_channel_add_fails() {
     let team_id = uuid::Uuid::from_u128(47);
     let invite_id = uuid::Uuid::from_u128(470);
-    let user_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let team_repository = make_enterprise_join_team_repository(team_id, invite_id, &user_id);
     let customer_repository = MockCustomerRepository::default();
     let channels_repository = RecordingChannelService {
@@ -3809,7 +3796,7 @@ async fn join_team_enterprise_rolls_back_roles_and_invite_when_channel_add_fails
 async fn join_team_enterprise_rolls_back_accepted_invite_when_status_read_fails() {
     let team_id = uuid::Uuid::from_u128(48);
     let invite_id = uuid::Uuid::from_u128(480);
-    let user_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let mut team_repository = make_enterprise_join_team_repository(team_id, invite_id, &user_id);
     team_repository.fail_enterprise_status_lookup = true;
     let customer_repository = MockCustomerRepository::default();
@@ -3855,14 +3842,12 @@ async fn join_team_enterprise_rolls_back_accepted_invite_when_status_read_fails(
 }
 
 #[tokio::test]
-async fn join_team_rolls_back_accepted_invite_when_billing_lookup_fails() {
+async fn join_team_ignores_billing_lookup_failures_under_free_access() {
     let team_id = uuid::Uuid::from_u128(49);
     let invite_id = uuid::Uuid::from_u128(490);
-    let user_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
 
-    for (fail_payment_status, fail_subscription_id, expected_subscription_lookups) in
-        [(true, false, 0), (false, true, 1)]
-    {
+    for (fail_payment_status, fail_subscription_id) in [(true, false), (false, true)] {
         let mut team_repository =
             make_enterprise_join_team_repository(team_id, invite_id, &user_id);
         team_repository.enterprise = false;
@@ -3879,36 +3864,34 @@ async fn join_team_rolls_back_accepted_invite_when_billing_lookup_fails() {
             NoOpTeamCrmSettingsRepository,
         );
 
-        let error = service.join_team(&invite_id, &user_id).await.unwrap_err();
+        let member = service.join_team(&invite_id, &user_id).await.unwrap();
 
-        assert!(matches!(
-            error,
-            JoinTeamError::TeamError(TeamError::StorageLayerError(_))
-        ));
-        assert_eq!(*team_repository.rollback_accept_calls.lock().unwrap(), 1);
+        assert_eq!(member.team_id, team_id);
+        assert_eq!(member.user_id, user_id);
+        assert_eq!(*team_repository.rollback_accept_calls.lock().unwrap(), 0);
         assert_eq!(
             *team_repository
                 .team_payment_status_lookup_calls
                 .lock()
                 .unwrap(),
-            1
+            0
         );
         assert_eq!(
             *team_repository
                 .team_subscription_id_lookup_calls
                 .lock()
                 .unwrap(),
-            expected_subscription_lookups
+            0
         );
     }
 }
 
 #[tokio::test]
-async fn test_join_team_backfills_legacy_team_subscription() {
+async fn join_team_skips_legacy_billing_backfill_and_seat_sync() {
     let team_id = uuid::Uuid::from_u128(43);
     let invite_id = uuid::Uuid::from_u128(430);
-    let owner_id = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
-    let user_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let owner_id = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let subscription_id: stripe::SubscriptionId = "sub_backfill_join".parse().unwrap();
 
     let mark_sent_calls: Arc<Mutex<Vec<Vec<uuid::Uuid>>>> = Arc::new(Mutex::new(Vec::new()));
@@ -3947,32 +3930,21 @@ async fn test_join_team_backfills_legacy_team_subscription() {
 
     service.join_team(&invite_id, &user_id).await.unwrap();
 
-    assert!(convert_calls.lock().unwrap().contains(&(
-        subscription_id.to_string(),
-        team_id,
-        owner_id.as_ref().to_string()
-    )));
-    assert_eq!(
-        *subscription_update_calls.lock().unwrap(),
-        vec![(team_id, subscription_id.to_string())]
-    );
-    assert_eq!(*payment_update_calls.lock().unwrap(), vec![(team_id, true)]);
-    assert_eq!(
-        *increment_calls.lock().unwrap(),
-        vec![(subscription_id.to_string(), 1)]
-    );
+    assert!(convert_calls.lock().unwrap().is_empty());
+    assert!(subscription_update_calls.lock().unwrap().is_empty());
+    assert!(payment_update_calls.lock().unwrap().is_empty());
+    assert!(increment_calls.lock().unwrap().is_empty());
 }
 
 #[tokio::test]
-async fn test_join_team_rolls_back_accept_when_backfill_fails() {
+async fn join_team_skips_dormant_backfill_even_when_team_lookup_would_fail() {
     let team_id = uuid::Uuid::from_u128(44);
     let invite_id = uuid::Uuid::from_u128(440);
-    let user_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
 
     let mark_sent_calls: Arc<Mutex<Vec<Vec<uuid::Uuid>>>> = Arc::new(Mutex::new(Vec::new()));
-    // No `.with_team(...)`: the backfill's team lookup fails hard, which —
-    // unlike the owner simply having no subscription - must still roll the
-    // accepted invite back.
+    // No `.with_team(...)`: this would fail if the dormant billing backfill
+    // were accidentally reintroduced into the free-access join path.
     let mut team_repo = MockTeamRepository::new(Vec::new(), "Legacy Team", mark_sent_calls);
     team_repo.team_payment_status = false;
     team_repo.team_subscription_id = None;
@@ -3993,19 +3965,19 @@ async fn test_join_team_rolls_back_accept_when_backfill_fails() {
         NoOpTeamCrmSettingsRepository,
     );
 
-    let err = service.join_team(&invite_id, &user_id).await.err().unwrap();
+    let member = service.join_team(&invite_id, &user_id).await.unwrap();
 
-    assert!(matches!(err, JoinTeamError::TeamError(_)));
-    assert_eq!(*rollback_accept_calls.lock().unwrap(), 1);
+    assert_eq!(member.team_id, team_id);
+    assert_eq!(*rollback_accept_calls.lock().unwrap(), 0);
     assert!(increment_calls.lock().unwrap().is_empty());
 }
 
 #[tokio::test]
-async fn test_join_team_owner_without_subscription_joins_as_free_team() {
+async fn join_team_without_owner_subscription_grants_free_access_roles_at_legacy_cap() {
     let team_id = uuid::Uuid::from_u128(48);
     let invite_id = uuid::Uuid::from_u128(480);
-    let owner_id = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
-    let user_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let owner_id = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
 
     let mark_sent_calls: Arc<Mutex<Vec<Vec<uuid::Uuid>>>> = Arc::new(Mutex::new(Vec::new()));
     let mut team_repo = MockTeamRepository::new(Vec::new(), "Legacy Team", mark_sent_calls)
@@ -4017,8 +3989,7 @@ async fn test_join_team_owner_without_subscription_joins_as_free_team() {
             false,
             false,
         ));
-    // Legacy team whose owner has no active subscription: joining now
-    // degrades to a free team instead of failing.
+    // Legacy billing state and the old free-team cap no longer gate joins.
     team_repo.team_payment_status = false;
     team_repo.team_subscription_id = None;
     team_repo.stripe_customer_id = Some("cus_backfill_join".parse().unwrap());
@@ -4048,14 +4019,20 @@ async fn test_join_team_owner_without_subscription_joins_as_free_team() {
     assert_eq!(member.team_id, team_id);
     assert_eq!(*rollback_accept_calls.lock().unwrap(), 0);
     assert!(increment_calls.lock().unwrap().is_empty());
-    assert!(roles_service.upsert_calls.lock().unwrap().is_empty());
+    assert_eq!(
+        *roles_service.upsert_calls.lock().unwrap(),
+        vec![(
+            user_id.as_ref().to_string(),
+            vec![RoleId::TeamSubscriber, RoleId::SubOpus]
+        )]
+    );
 }
 
 #[tokio::test]
-async fn test_join_team_increments_customer_seat_count() {
+async fn join_team_does_not_sync_legacy_subscription_seat_count() {
     let team_id = uuid::Uuid::from_u128(1);
     let invite_id = uuid::Uuid::from_u128(2);
-    let user_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let subscription_id: stripe::SubscriptionId = "sub_test".parse().unwrap();
     let mark_sent_calls: Arc<Mutex<Vec<Vec<uuid::Uuid>>>> = Arc::new(Mutex::new(Vec::new()));
 
@@ -4088,10 +4065,7 @@ async fn test_join_team_increments_customer_seat_count() {
 
     service.join_team(&invite_id, &user_id).await.unwrap();
 
-    assert_eq!(
-        *increment_calls.lock().unwrap(),
-        vec![(subscription_id.to_string(), 1)]
-    );
+    assert!(increment_calls.lock().unwrap().is_empty());
     assert!(decrement_calls.lock().unwrap().is_empty());
     assert_eq!(*rollback_accept_calls.lock().unwrap(), 0);
     assert_eq!(
@@ -4105,7 +4079,7 @@ async fn test_join_team_increments_customer_seat_count() {
 async fn team_analytics_join_team_emits_joined_event_with_team_id() {
     let team_id = uuid::Uuid::from_u128(321);
     let invite_id = uuid::Uuid::from_u128(322);
-    let user_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let subscription_id: stripe::SubscriptionId = "sub_test".parse().unwrap();
     let mark_sent_calls: Arc<Mutex<Vec<Vec<uuid::Uuid>>>> = Arc::new(Mutex::new(Vec::new()));
 
@@ -4149,7 +4123,7 @@ async fn team_analytics_join_team_emits_joined_event_with_team_id() {
 async fn team_event_invite_join_uses_accepted_invite_snapshot() {
     let team_id = uuid::Uuid::from_u128(333);
     let invite_id = uuid::Uuid::from_u128(334);
-    let user_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let team_repository = make_enterprise_join_team_repository(team_id, invite_id, &user_id);
     let event_broker = RecordingEventBroker::default();
     let service = TeamServiceImpl::new(
@@ -4180,15 +4154,15 @@ async fn team_event_invite_join_uses_accepted_invite_snapshot() {
     assert_eq!(metadata["join_method"]["invite_id"], invite_id.to_string());
     assert_eq!(
         metadata["join_method"]["invited_by"],
-        "macro|owner@example.com"
+        "conation|owner@example.com"
     );
 }
 
 #[tokio::test]
-async fn test_join_team_rolls_back_accept_when_customer_increment_fails() {
+async fn join_team_ignores_dormant_customer_increment_failure() {
     let team_id = uuid::Uuid::from_u128(1);
     let invite_id = uuid::Uuid::from_u128(2);
-    let user_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let subscription_id: stripe::SubscriptionId = "sub_test".parse().unwrap();
     let mark_sent_calls: Arc<Mutex<Vec<Vec<uuid::Uuid>>>> = Arc::new(Mutex::new(Vec::new()));
 
@@ -4220,24 +4194,25 @@ async fn test_join_team_rolls_back_accept_when_customer_increment_fails() {
     )
     .with_event_broker(event_broker.clone());
 
-    let err = service.join_team(&invite_id, &user_id).await.err().unwrap();
+    let member = service.join_team(&invite_id, &user_id).await.unwrap();
 
-    assert!(matches!(err, JoinTeamError::CustomerError(_)));
-    assert!(event_broker.events().is_empty());
+    assert_eq!(member.team_id, team_id);
+    assert_eq!(member.user_id, user_id);
+    assert_eq!(event_broker.events().len(), 1);
+    assert!(increment_calls.lock().unwrap().is_empty());
+    assert_eq!(*rollback_accept_calls.lock().unwrap(), 0);
     assert_eq!(
-        *increment_calls.lock().unwrap(),
-        vec![(subscription_id.to_string(), 1)]
+        *add_channel_calls.lock().unwrap(),
+        vec![(team_id, user_id.as_ref().to_string())]
     );
-    assert_eq!(*rollback_accept_calls.lock().unwrap(), 1);
-    assert!(add_channel_calls.lock().unwrap().is_empty());
-    assert!(upsert_role_calls.lock().unwrap().is_empty());
+    assert_eq!(upsert_role_calls.lock().unwrap().len(), 1);
 }
 
 #[tokio::test]
-async fn test_remove_user_from_team_decrements_customer_seat_count() {
+async fn remove_user_from_team_does_not_sync_legacy_subscription_seat_count() {
     let team_id = uuid::Uuid::from_u128(1);
-    let owner_id = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
-    let member_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let owner_id = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
+    let member_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let subscription_id: stripe::SubscriptionId = "sub_test".parse().unwrap();
     let mark_sent_calls: Arc<Mutex<Vec<Vec<uuid::Uuid>>>> = Arc::new(Mutex::new(Vec::new()));
 
@@ -4281,10 +4256,7 @@ async fn test_remove_user_from_team_decrements_customer_seat_count() {
         .await
         .unwrap();
 
-    assert_eq!(
-        *decrement_calls.lock().unwrap(),
-        vec![(subscription_id.to_string(), 1)]
-    );
+    assert!(decrement_calls.lock().unwrap().is_empty());
     assert!(increment_calls.lock().unwrap().is_empty());
     assert_eq!(*rollback_remove_calls.lock().unwrap(), 0);
     assert_eq!(
@@ -4298,8 +4270,8 @@ async fn test_remove_user_from_team_decrements_customer_seat_count() {
 #[tokio::test]
 async fn team_analytics_remove_user_from_team_emits_left_event_with_team_id() {
     let team_id = uuid::Uuid::from_u128(331);
-    let owner_id = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
-    let member_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let owner_id = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
+    let member_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let subscription_id: stripe::SubscriptionId = "sub_test".parse().unwrap();
     let mark_sent_calls: Arc<Mutex<Vec<Vec<uuid::Uuid>>>> = Arc::new(Mutex::new(Vec::new()));
 
@@ -4352,7 +4324,7 @@ async fn team_analytics_remove_user_from_team_emits_left_event_with_team_id() {
 #[tokio::test]
 async fn team_event_self_service_removal_uses_member_as_actor_and_previous_role() {
     let team_id = uuid::Uuid::from_u128(335);
-    let member_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let member_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let team_repository =
         make_enterprise_remove_user_repository(team_id, &member_id, TeamRole::Admin);
     let event_broker = RecordingEventBroker::default();
@@ -4386,10 +4358,10 @@ async fn team_event_self_service_removal_uses_member_as_actor_and_previous_role(
 }
 
 #[tokio::test]
-async fn test_remove_user_from_team_rolls_back_remove_when_customer_decrement_fails() {
+async fn remove_user_from_team_ignores_dormant_customer_decrement_failure() {
     let team_id = uuid::Uuid::from_u128(1);
-    let owner_id = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
-    let member_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let owner_id = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
+    let member_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let subscription_id: stripe::SubscriptionId = "sub_test".parse().unwrap();
     let mark_sent_calls: Arc<Mutex<Vec<Vec<uuid::Uuid>>>> = Arc::new(Mutex::new(Vec::new()));
 
@@ -4423,30 +4395,28 @@ async fn test_remove_user_from_team_rolls_back_remove_when_customer_decrement_fa
         NoOpTeamCrmSettingsRepository,
     );
 
-    let err = service
+    service
         .remove_user_from_team(
             test_team_receipt::<AdminTeamRole>(team_id, &owner_id),
             &member_id,
         )
         .await
-        .err()
         .unwrap();
 
-    assert!(matches!(err, RemoveUserFromTeamError::CustomerError(_)));
+    assert!(decrement_calls.lock().unwrap().is_empty());
+    assert_eq!(*rollback_remove_calls.lock().unwrap(), 0);
     assert_eq!(
-        *decrement_calls.lock().unwrap(),
-        vec![(subscription_id.to_string(), 1)]
+        *remove_channel_calls.lock().unwrap(),
+        vec![(team_id, member_id.as_ref().to_string())]
     );
-    assert_eq!(*rollback_remove_calls.lock().unwrap(), 1);
-    assert!(remove_channel_calls.lock().unwrap().is_empty());
-    assert!(remove_role_calls.lock().unwrap().is_empty());
+    assert_eq!(remove_role_calls.lock().unwrap().len(), 1);
 }
 
 #[tokio::test]
-async fn test_join_team_rolls_back_customer_roles_and_accept_when_channel_add_fails() {
+async fn join_team_rolls_back_roles_and_accept_when_channel_add_fails_without_billing_sync() {
     let team_id = uuid::Uuid::from_u128(1);
     let invite_id = uuid::Uuid::from_u128(2);
-    let user_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let subscription_id: stripe::SubscriptionId = "sub_test".parse().unwrap();
     let mark_sent_calls: Arc<Mutex<Vec<Vec<uuid::Uuid>>>> = Arc::new(Mutex::new(Vec::new()));
 
@@ -4482,14 +4452,8 @@ async fn test_join_team_rolls_back_customer_roles_and_accept_when_channel_add_fa
     let err = service.join_team(&invite_id, &user_id).await.err().unwrap();
 
     assert!(matches!(err, JoinTeamError::TeamError(_)));
-    assert_eq!(
-        *increment_calls.lock().unwrap(),
-        vec![(subscription_id.to_string(), 1)]
-    );
-    assert_eq!(
-        *decrement_calls.lock().unwrap(),
-        vec![(subscription_id.to_string(), 1)]
-    );
+    assert!(increment_calls.lock().unwrap().is_empty());
+    assert!(decrement_calls.lock().unwrap().is_empty());
     assert_eq!(*rollback_accept_calls.lock().unwrap(), 1);
     assert_eq!(upsert_role_calls.lock().unwrap().len(), 1);
     assert_eq!(remove_role_calls.lock().unwrap().len(), 1);
@@ -4499,7 +4463,7 @@ async fn test_join_team_rolls_back_customer_roles_and_accept_when_channel_add_fa
 async fn team_analytics_join_team_does_not_emit_when_join_is_rolled_back() {
     let team_id = uuid::Uuid::from_u128(323);
     let invite_id = uuid::Uuid::from_u128(324);
-    let user_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let subscription_id: stripe::SubscriptionId = "sub_test".parse().unwrap();
     let mark_sent_calls: Arc<Mutex<Vec<Vec<uuid::Uuid>>>> = Arc::new(Mutex::new(Vec::new()));
 
@@ -4530,10 +4494,11 @@ async fn team_analytics_join_team_does_not_emit_when_join_is_rolled_back() {
 }
 
 #[tokio::test]
-async fn test_remove_user_from_team_rolls_back_customer_and_remove_when_channel_remove_fails() {
+async fn remove_user_from_team_rolls_back_membership_when_channel_remove_fails_without_billing_sync()
+ {
     let team_id = uuid::Uuid::from_u128(1);
-    let owner_id = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
-    let member_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let owner_id = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
+    let member_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let subscription_id: stripe::SubscriptionId = "sub_test".parse().unwrap();
     let mark_sent_calls: Arc<Mutex<Vec<Vec<uuid::Uuid>>>> = Arc::new(Mutex::new(Vec::new()));
 
@@ -4579,14 +4544,8 @@ async fn test_remove_user_from_team_rolls_back_customer_and_remove_when_channel_
         .unwrap();
 
     assert!(matches!(err, RemoveUserFromTeamError::TeamError(_)));
-    assert_eq!(
-        *decrement_calls.lock().unwrap(),
-        vec![(subscription_id.to_string(), 1)]
-    );
-    assert_eq!(
-        *increment_calls.lock().unwrap(),
-        vec![(subscription_id.to_string(), 1)]
-    );
+    assert!(decrement_calls.lock().unwrap().is_empty());
+    assert!(increment_calls.lock().unwrap().is_empty());
     assert_eq!(*rollback_remove_calls.lock().unwrap(), 1);
     assert!(remove_role_calls.lock().unwrap().is_empty());
 }
@@ -4594,8 +4553,8 @@ async fn test_remove_user_from_team_rolls_back_customer_and_remove_when_channel_
 #[tokio::test]
 async fn team_analytics_remove_user_from_team_does_not_emit_when_remove_is_rolled_back() {
     let team_id = uuid::Uuid::from_u128(332);
-    let owner_id = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
-    let member_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let owner_id = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
+    let member_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let subscription_id: stripe::SubscriptionId = "sub_test".parse().unwrap();
     let mark_sent_calls: Arc<Mutex<Vec<Vec<uuid::Uuid>>>> = Arc::new(Mutex::new(Vec::new()));
 
@@ -4638,7 +4597,7 @@ async fn team_analytics_remove_user_from_team_does_not_emit_when_remove_is_rolle
 
 #[tokio::test]
 async fn test_try_join_team_by_domain_no_matching_team_returns_none() {
-    let user_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let mark_sent_calls: Arc<Mutex<Vec<Vec<uuid::Uuid>>>> = Arc::new(Mutex::new(Vec::new()));
 
     let team_repo = MockTeamRepository::new(Vec::new(), "Test Team", mark_sent_calls);
@@ -4663,9 +4622,9 @@ async fn test_try_join_team_by_domain_no_matching_team_returns_none() {
 }
 
 #[tokio::test]
-async fn test_try_join_team_by_domain_adds_member_directly() {
+async fn try_join_team_by_domain_adds_member_without_billing_sync() {
     let team_id = uuid::Uuid::from_u128(77);
-    let user_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let subscription_id: stripe::SubscriptionId = "sub_test".parse().unwrap();
     let mark_sent_calls: Arc<Mutex<Vec<Vec<uuid::Uuid>>>> = Arc::new(Mutex::new(Vec::new()));
 
@@ -4673,7 +4632,7 @@ async fn test_try_join_team_by_domain_adds_member_directly() {
     team_repo.team_id_for_domain = Some(team_id);
     team_repo.add_user_to_team_result = Some(make_team_member(
         team_id,
-        "macro|member@example.com",
+        "conation|member@example.com",
         TeamRole::Member,
     ));
     team_repo.team_subscription_id = Some(subscription_id.clone());
@@ -4710,10 +4669,7 @@ async fn test_try_join_team_by_domain_adds_member_directly() {
     assert_eq!(member.team_id, team_id);
     assert_eq!(member.user_id.as_ref(), user_id.as_ref());
     assert_eq!(member.role, TeamRole::Member);
-    assert_eq!(
-        *increment_calls.lock().unwrap(),
-        vec![(subscription_id.to_string(), 1)]
-    );
+    assert!(increment_calls.lock().unwrap().is_empty());
     assert!(decrement_calls.lock().unwrap().is_empty());
     assert_eq!(
         *add_channel_calls.lock().unwrap(),
@@ -4726,7 +4682,7 @@ async fn test_try_join_team_by_domain_adds_member_directly() {
 #[tokio::test]
 async fn test_try_join_team_by_domain_returns_none_when_already_member() {
     let team_id = uuid::Uuid::from_u128(78);
-    let user_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let mark_sent_calls: Arc<Mutex<Vec<Vec<uuid::Uuid>>>> = Arc::new(Mutex::new(Vec::new()));
 
     // add_user_to_team returns None: the user is already on the team.
@@ -4757,18 +4713,18 @@ async fn test_try_join_team_by_domain_returns_none_when_already_member() {
 }
 
 #[tokio::test]
-async fn test_try_join_team_by_domain_skips_team_at_seat_cap() {
+async fn try_join_team_by_domain_ignores_legacy_team_plan_seat_cap() {
     let team_id = uuid::Uuid::from_u128(79);
-    let user_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let mark_sent_calls: Arc<Mutex<Vec<Vec<uuid::Uuid>>>> = Arc::new(Mutex::new(Vec::new()));
 
-    // The mock would add the member, so a None result proves the seat-cap
-    // check short-circuited before the membership insert.
+    // The legacy plan is deliberately at its former cap. Free access still
+    // permits the membership insert and avoids Stripe seat synchronization.
     let mut team_repo = MockTeamRepository::new(Vec::new(), "Test Team", mark_sent_calls);
     team_repo.team_id_for_domain = Some(team_id);
     team_repo.add_user_to_team_result = Some(make_team_member(
         team_id,
-        "macro|member@example.com",
+        "conation|member@example.com",
         TeamRole::Member,
     ));
     team_repo.team_plan = Some(TeamPlan::Idea);
@@ -4777,6 +4733,7 @@ async fn test_try_join_team_by_domain_skips_team_at_seat_cap() {
     let customer_repo = MockCustomerRepository::default();
     let increment_calls = customer_repo.increment_calls.clone();
 
+    let add_user_to_team_calls = team_repo.add_user_to_team_calls.clone();
     let event_broker = RecordingEventBroker::default();
     let service = TeamServiceImpl::new(
         team_repo,
@@ -4789,21 +4746,26 @@ async fn test_try_join_team_by_domain_skips_team_at_seat_cap() {
     )
     .with_event_broker(event_broker.clone());
 
-    let member = service.try_join_team_by_domain(&user_id).await.unwrap();
+    let member = service
+        .try_join_team_by_domain(&user_id)
+        .await
+        .unwrap()
+        .expect("user should join despite the legacy plan cap");
 
-    assert!(member.is_none());
+    assert_eq!(member.team_id, team_id);
+    assert_eq!(*add_user_to_team_calls.lock().unwrap(), 1);
     assert!(increment_calls.lock().unwrap().is_empty());
-    assert!(event_broker.events().is_empty());
+    assert_eq!(event_broker.events().len(), 1);
 }
 
 #[tokio::test]
 async fn test_try_join_team_by_domain_rolls_back_membership_when_roles_fail() {
     let team_id = uuid::Uuid::from_u128(80);
-    let user_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let subscription_id: stripe::SubscriptionId = "sub_test".parse().unwrap();
     let mark_sent_calls: Arc<Mutex<Vec<Vec<uuid::Uuid>>>> = Arc::new(Mutex::new(Vec::new()));
 
-    let member = make_team_member(team_id, "macro|member@example.com", TeamRole::Member);
+    let member = make_team_member(team_id, "conation|member@example.com", TeamRole::Member);
     let mut team_repo = MockTeamRepository::new(Vec::new(), "Test Team", mark_sent_calls);
     team_repo.team_id_for_domain = Some(team_id);
     team_repo.add_user_to_team_result = Some(member.clone());
@@ -4846,28 +4808,20 @@ async fn test_try_join_team_by_domain_rolls_back_membership_when_roles_fail() {
         err,
         TryJoinTeamByDomainError::JoinTeamError(JoinTeamError::AddRolesToUserError(_))
     ));
-    // The seat increment happened, was rolled back, and the membership
-    // itself was removed again.
-    assert_eq!(
-        *increment_calls.lock().unwrap(),
-        vec![(subscription_id.to_string(), 1)]
-    );
-    assert_eq!(
-        *decrement_calls.lock().unwrap(),
-        vec![(subscription_id.to_string(), 1)]
-    );
+    // Authorization-role failure still rolls membership back, while the
+    // dormant billing path makes no external seat mutations.
+    assert!(increment_calls.lock().unwrap().is_empty());
+    assert!(decrement_calls.lock().unwrap().is_empty());
     assert_eq!(*remove_user_calls.lock().unwrap(), 1);
     assert!(event_broker.events().is_empty());
 }
 
 #[tokio::test]
-async fn try_join_team_by_domain_rolls_back_membership_when_billing_lookup_fails() {
+async fn try_join_team_by_domain_ignores_billing_lookup_failures_under_free_access() {
     let team_id = uuid::Uuid::from_u128(86);
-    let user_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
 
-    for (fail_payment_status, fail_subscription_id, expected_subscription_lookups) in
-        [(true, false, 0), (false, true, 1)]
-    {
+    for (fail_payment_status, fail_subscription_id) in [(true, false), (false, true)] {
         let mut team_repository = make_enterprise_domain_join_team_repository(team_id, &user_id);
         team_repository.enterprise = false;
         team_repository.fail_team_payment_status_lookup = fail_payment_status;
@@ -4883,27 +4837,28 @@ async fn try_join_team_by_domain_rolls_back_membership_when_billing_lookup_fails
             NoOpTeamCrmSettingsRepository,
         );
 
-        let error = service.try_join_team_by_domain(&user_id).await.unwrap_err();
+        let member = service
+            .try_join_team_by_domain(&user_id)
+            .await
+            .unwrap()
+            .expect("billing metadata failures must not gate a free-access join");
 
-        assert!(matches!(
-            error,
-            TryJoinTeamByDomainError::TeamError(TeamError::StorageLayerError(_))
-        ));
+        assert_eq!(member.team_id, team_id);
         assert_eq!(*team_repository.add_user_to_team_calls.lock().unwrap(), 1);
-        assert_eq!(*team_repository.remove_user_calls.lock().unwrap(), 1);
+        assert_eq!(*team_repository.remove_user_calls.lock().unwrap(), 0);
         assert_eq!(
             *team_repository
                 .team_payment_status_lookup_calls
                 .lock()
                 .unwrap(),
-            1
+            0
         );
         assert_eq!(
             *team_repository
                 .team_subscription_id_lookup_calls
                 .lock()
                 .unwrap(),
-            expected_subscription_lookups
+            0
         );
     }
 }
@@ -4911,7 +4866,7 @@ async fn try_join_team_by_domain_rolls_back_membership_when_billing_lookup_fails
 #[tokio::test]
 async fn try_join_team_by_domain_enterprise_bypasses_billing_and_preserves_side_effects() {
     let team_id = uuid::Uuid::from_u128(81);
-    let user_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let team_repository = make_enterprise_domain_join_team_repository(team_id, &user_id);
     let customer_repository = MockCustomerRepository::default();
     let channels_repository = RecordingChannelService::default();
@@ -4984,9 +4939,9 @@ async fn try_join_team_by_domain_enterprise_bypasses_billing_and_preserves_side_
 }
 
 #[tokio::test]
-async fn try_join_team_by_domain_enterprise_still_enforces_local_seat_cap() {
+async fn try_join_team_by_domain_ignores_legacy_enterprise_seat_cap() {
     let team_id = uuid::Uuid::from_u128(82);
-    let user_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let mut team_repository = make_enterprise_domain_join_team_repository(team_id, &user_id);
     team_repository.team_plan = Some(TeamPlan::Idea);
     team_repository.seat_count = TeamPlan::Idea.seat_cap();
@@ -5009,7 +4964,8 @@ async fn try_join_team_by_domain_enterprise_still_enforces_local_seat_cap() {
 
     let member = service.try_join_team_by_domain(&user_id).await.unwrap();
 
-    assert!(member.is_none());
+    let member = member.expect("enterprise user should join despite the legacy plan cap");
+    assert_eq!(member.team_id, team_id);
     assert_eq!(
         *team_repository
             .enterprise_status_lookup_calls
@@ -5017,25 +4973,31 @@ async fn try_join_team_by_domain_enterprise_still_enforces_local_seat_cap() {
             .unwrap(),
         1
     );
-    assert_eq!(*team_repository.add_user_to_team_calls.lock().unwrap(), 0);
+    assert_eq!(*team_repository.add_user_to_team_calls.lock().unwrap(), 1);
     assert_eq!(*team_repository.remove_user_calls.lock().unwrap(), 0);
     assert_no_enterprise_join_team_billing_calls(&team_repository, &customer_repository);
-    assert!(roles_service.upsert_calls.lock().unwrap().is_empty());
-    assert!(
-        channels_repository
-            .auto_join_calls
-            .lock()
-            .unwrap()
-            .is_empty()
+    assert_eq!(
+        *roles_service.upsert_calls.lock().unwrap(),
+        vec![(
+            user_id.as_ref().to_string(),
+            vec![RoleId::TeamSubscriber, RoleId::SubOpus]
+        )]
     );
-    assert!(crm_enqueuer.populated.lock().unwrap().is_empty());
+    assert_eq!(
+        *channels_repository.auto_join_calls.lock().unwrap(),
+        vec![(team_id, user_id.as_ref().to_string())]
+    );
+    assert_eq!(
+        *crm_enqueuer.populated.lock().unwrap(),
+        vec![user_id.as_ref().to_string()]
+    );
     assert!(events.lock().unwrap().is_empty());
 }
 
 #[tokio::test]
 async fn try_join_team_by_domain_enterprise_rolls_back_membership_when_roles_fail() {
     let team_id = uuid::Uuid::from_u128(83);
-    let user_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let team_repository = make_enterprise_domain_join_team_repository(team_id, &user_id);
     let customer_repository = MockCustomerRepository::default();
     let channels_repository = RecordingChannelService::default();
@@ -5082,7 +5044,7 @@ async fn try_join_team_by_domain_enterprise_rolls_back_membership_when_roles_fai
 #[tokio::test]
 async fn try_join_team_by_domain_enterprise_rolls_back_roles_when_channels_fail() {
     let team_id = uuid::Uuid::from_u128(84);
-    let user_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let team_repository = make_enterprise_domain_join_team_repository(team_id, &user_id);
     let customer_repository = MockCustomerRepository::default();
     let channels_repository = RecordingChannelService {
@@ -5126,8 +5088,8 @@ async fn try_join_team_by_domain_enterprise_rolls_back_roles_when_channels_fail(
 #[tokio::test]
 async fn remove_user_from_team_enterprise_bypasses_billing_and_preserves_side_effects() {
     let team_id = uuid::Uuid::from_u128(91);
-    let owner_id = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
-    let member_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let owner_id = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
+    let member_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let team_repository =
         make_enterprise_remove_user_repository(team_id, &member_id, TeamRole::Admin);
     let customer_repository = MockCustomerRepository::default();
@@ -5213,8 +5175,8 @@ async fn remove_user_from_team_enterprise_bypasses_billing_and_preserves_side_ef
 #[tokio::test]
 async fn remove_user_from_team_enterprise_rolls_back_membership_when_channel_removal_fails() {
     let team_id = uuid::Uuid::from_u128(92);
-    let owner_id = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
-    let member_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let owner_id = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
+    let member_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let team_repository =
         make_enterprise_remove_user_repository(team_id, &member_id, TeamRole::Member);
     let customer_repository = MockCustomerRepository::default();
@@ -5272,8 +5234,8 @@ async fn remove_user_from_team_enterprise_rolls_back_membership_when_channel_rem
 async fn remove_user_from_team_enterprise_rolls_back_membership_and_channels_when_role_removal_fails()
  {
     let team_id = uuid::Uuid::from_u128(93);
-    let owner_id = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
-    let member_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let owner_id = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
+    let member_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let team_repository =
         make_enterprise_remove_user_repository(team_id, &member_id, TeamRole::Member);
     let customer_repository = MockCustomerRepository::default();
@@ -5339,8 +5301,8 @@ async fn remove_user_from_team_enterprise_rolls_back_membership_and_channels_whe
 #[tokio::test]
 async fn remove_user_from_team_enterprise_status_read_precedes_membership_removal() {
     let team_id = uuid::Uuid::from_u128(94);
-    let owner_id = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
-    let member_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let owner_id = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
+    let member_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let mut team_repository =
         make_enterprise_remove_user_repository(team_id, &member_id, TeamRole::Member);
     team_repository.fail_enterprise_status_lookup = true;
@@ -5400,10 +5362,10 @@ async fn remove_user_from_team_enterprise_status_read_precedes_membership_remova
 async fn team_contacts_invite_join_enqueues_distinct_owner_and_member_edges() {
     let team_id = uuid::Uuid::from_u128(6001);
     let invite_id = uuid::Uuid::from_u128(6002);
-    let owner_id = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
-    let user_id = MacroUserIdStr::parse_from_str("macro|joining@example.com").unwrap();
-    let first_teammate = "macro|first@example.com";
-    let second_teammate = "macro|second@example.com";
+    let owner_id = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|joining@example.com").unwrap();
+    let first_teammate = "conation|first@example.com";
+    let second_teammate = "conation|second@example.com";
     let team = Team::new(
         team_id,
         "Contacts Team".to_string(),
@@ -5453,8 +5415,8 @@ async fn team_contacts_invite_join_enqueues_distinct_owner_and_member_edges() {
 async fn team_contacts_invite_join_swallows_enqueue_failure_without_rollback() {
     let team_id = uuid::Uuid::from_u128(6003);
     let invite_id = uuid::Uuid::from_u128(6004);
-    let owner_id = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
-    let user_id = MacroUserIdStr::parse_from_str("macro|joining@example.com").unwrap();
+    let owner_id = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|joining@example.com").unwrap();
     let team = Team::new(
         team_id,
         "Contacts Team".to_string(),
@@ -5488,7 +5450,7 @@ async fn team_contacts_invite_join_swallows_enqueue_failure_without_rollback() {
 async fn team_contacts_invite_join_swallows_roster_failure() {
     let team_id = uuid::Uuid::from_u128(6005);
     let invite_id = uuid::Uuid::from_u128(6006);
-    let user_id = MacroUserIdStr::parse_from_str("macro|joining@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|joining@example.com").unwrap();
     let team_repository = make_enterprise_join_team_repository(team_id, invite_id, &user_id);
     let contacts_enqueuer = RecordingContactsEnqueuer::default();
     let service = TeamServiceImpl::new(
@@ -5514,7 +5476,7 @@ async fn team_contacts_invite_join_swallows_roster_failure() {
 async fn team_contacts_invite_join_skips_empty_connection_batch() {
     let team_id = uuid::Uuid::from_u128(6007);
     let invite_id = uuid::Uuid::from_u128(6008);
-    let user_id = MacroUserIdStr::parse_from_str("macro|joining@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|joining@example.com").unwrap();
     let team = Team::new(
         team_id,
         "Contacts Team".to_string(),
@@ -5546,8 +5508,8 @@ async fn team_contacts_invite_join_skips_empty_connection_batch() {
 async fn team_contacts_invite_join_does_not_enqueue_when_channel_work_rolls_back() {
     let team_id = uuid::Uuid::from_u128(6009);
     let invite_id = uuid::Uuid::from_u128(6010);
-    let owner_id = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
-    let user_id = MacroUserIdStr::parse_from_str("macro|joining@example.com").unwrap();
+    let owner_id = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|joining@example.com").unwrap();
     let team = Team::new(
         team_id,
         "Contacts Team".to_string(),
@@ -5584,9 +5546,9 @@ async fn team_contacts_invite_join_does_not_enqueue_when_channel_work_rolls_back
 #[tokio::test]
 async fn team_contacts_domain_join_enqueues_distinct_owner_and_member_edges() {
     let team_id = uuid::Uuid::from_u128(6011);
-    let owner_id = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
-    let user_id = MacroUserIdStr::parse_from_str("macro|joining@example.com").unwrap();
-    let teammate_id = "macro|teammate@example.com";
+    let owner_id = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|joining@example.com").unwrap();
+    let teammate_id = "conation|teammate@example.com";
     let team = Team::new(
         team_id,
         "Contacts Team".to_string(),
@@ -5634,7 +5596,7 @@ async fn team_contacts_domain_join_enqueues_distinct_owner_and_member_edges() {
 
 #[tokio::test]
 async fn team_contacts_domain_join_does_not_enqueue_without_matching_team() {
-    let user_id = MacroUserIdStr::parse_from_str("macro|joining@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|joining@example.com").unwrap();
     let team_repository = MockTeamRepository::new(
         Vec::new(),
         "Contacts Team",
@@ -5662,7 +5624,7 @@ async fn team_contacts_domain_join_does_not_enqueue_without_matching_team() {
 #[tokio::test]
 async fn team_contacts_domain_join_does_not_enqueue_for_existing_member() {
     let team_id = uuid::Uuid::from_u128(6012);
-    let user_id = MacroUserIdStr::parse_from_str("macro|joining@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|joining@example.com").unwrap();
     let mut team_repository = MockTeamRepository::new(
         Vec::new(),
         "Contacts Team",
@@ -5690,9 +5652,9 @@ async fn team_contacts_domain_join_does_not_enqueue_for_existing_member() {
 }
 
 #[tokio::test]
-async fn team_contacts_domain_join_does_not_enqueue_at_seat_cap() {
+async fn team_contacts_domain_join_proceeds_above_legacy_seat_cap() {
     let team_id = uuid::Uuid::from_u128(6013);
-    let user_id = MacroUserIdStr::parse_from_str("macro|joining@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|joining@example.com").unwrap();
     let mut team_repository = MockTeamRepository::new(
         Vec::new(),
         "Contacts Team",
@@ -5718,18 +5680,22 @@ async fn team_contacts_domain_join_does_not_enqueue_at_seat_cap() {
     )
     .with_contacts_enqueuer(contacts_enqueuer.clone());
 
-    let member = service.try_join_team_by_domain(&user_id).await.unwrap();
+    let member = service
+        .try_join_team_by_domain(&user_id)
+        .await
+        .unwrap()
+        .expect("legacy seat caps must not block a free-access join");
 
-    assert!(member.is_none());
-    assert_eq!(*team_repository.add_user_to_team_calls.lock().unwrap(), 0);
-    assert_eq!(*team_repository.get_team_by_id_calls.lock().unwrap(), 0);
+    assert_eq!(member.team_id, team_id);
+    assert_eq!(*team_repository.add_user_to_team_calls.lock().unwrap(), 1);
+    assert_eq!(*team_repository.get_team_by_id_calls.lock().unwrap(), 1);
     assert!(contacts_enqueuer.batches.lock().unwrap().is_empty());
 }
 
 #[tokio::test]
 async fn try_join_team_by_domain_enterprise_status_read_precedes_membership_mutation() {
     let team_id = uuid::Uuid::from_u128(85);
-    let user_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let mut team_repository = make_enterprise_domain_join_team_repository(team_id, &user_id);
     team_repository.fail_enterprise_status_lookup = true;
     let customer_repository = MockCustomerRepository::default();
@@ -5779,7 +5745,7 @@ async fn try_join_team_by_domain_enterprise_status_read_precedes_membership_muta
 
 #[tokio::test]
 async fn create_team_without_subscription_skips_convert_and_defaults_auto_join() {
-    let user_id = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
     let mark_sent_calls = Arc::new(Mutex::new(Vec::new()));
     let team_repo = MockTeamRepository::new(Vec::new(), "Free Team", mark_sent_calls);
     let auto_join_toggle_calls = team_repo.auto_join_toggle_calls.clone();
@@ -5814,7 +5780,7 @@ async fn create_team_without_subscription_skips_convert_and_defaults_auto_join()
 
 #[tokio::test]
 async fn create_team_with_subscription_converts_and_defaults_auto_join() {
-    let user_id = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
     let mark_sent_calls = Arc::new(Mutex::new(Vec::new()));
     let team_repo = MockTeamRepository::new(Vec::new(), "Paid Team", mark_sent_calls);
     let auto_join_toggle_calls = team_repo.auto_join_toggle_calls.clone();
@@ -5848,7 +5814,7 @@ async fn create_team_with_subscription_converts_and_defaults_auto_join() {
 
 #[tokio::test]
 async fn create_team_generic_domain_does_not_default_auto_join() {
-    let user_id = MacroUserIdStr::parse_from_str("macro|owner@gmail.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|owner@gmail.com").unwrap();
     let mark_sent_calls = Arc::new(Mutex::new(Vec::new()));
     let team_repo = MockTeamRepository::new(Vec::new(), "Personal Team", mark_sent_calls);
     let auto_join_toggle_calls = team_repo.auto_join_toggle_calls.clone();
@@ -5875,7 +5841,7 @@ async fn create_team_generic_domain_does_not_default_auto_join() {
 async fn invite_users_to_team_free_team_under_cap_skips_billing() {
     let team_id = uuid::Uuid::from_u128(7000);
     let invite_id = uuid::Uuid::from_u128(7001);
-    let invited_by = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
+    let invited_by = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
     let mark_sent_calls = Arc::new(Mutex::new(Vec::new()));
     let mut team_repo = MockTeamRepository::new(
         vec![make_invite("member@example.com", invite_id, team_id)],
@@ -5925,10 +5891,10 @@ async fn invite_users_to_team_free_team_under_cap_skips_billing() {
 }
 
 #[tokio::test]
-async fn invite_users_to_team_free_team_enforces_member_cap() {
+async fn invite_users_to_team_allows_members_above_legacy_free_cap() {
     let team_id = uuid::Uuid::from_u128(7010);
     let invite_id = uuid::Uuid::from_u128(7011);
-    let invited_by = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
+    let invited_by = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
     let mark_sent_calls = Arc::new(Mutex::new(Vec::new()));
     let mut team_repo = MockTeamRepository::new(
         vec![make_invite("member@example.com", invite_id, team_id)],
@@ -5959,20 +5925,20 @@ async fn invite_users_to_team_free_team_enforces_member_cap() {
     let invites = non_empty::NonEmpty::new(invite_emails.as_slice()).unwrap();
     let receipt = test_team_receipt::<MemberTeamRole>(team_id, &invited_by);
 
-    let result = service.invite_users_to_team(receipt, invites).await;
+    let result = service
+        .invite_users_to_team(receipt, invites)
+        .await
+        .unwrap();
 
-    assert!(matches!(
-        result,
-        Err(InviteUsersToTeamError::NotEnoughOpenSeats)
-    ));
-    assert_eq!(*invitation_persistence_calls.lock().unwrap(), 0);
+    assert_eq!(result.len(), 1);
+    assert_eq!(*invitation_persistence_calls.lock().unwrap(), 1);
 }
 
 #[tokio::test]
-async fn join_team_free_team_skips_billing_and_premium_roles() {
+async fn join_team_without_subscription_skips_billing_and_grants_feature_roles() {
     let team_id = uuid::Uuid::from_u128(7020);
     let invite_id = uuid::Uuid::from_u128(7021);
-    let user_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let mark_sent_calls = Arc::new(Mutex::new(Vec::new()));
     let mut team_repo = MockTeamRepository::new(Vec::new(), "Free Team", mark_sent_calls);
     team_repo.team_payment_status = true;
@@ -6004,8 +5970,13 @@ async fn join_team_free_team_skips_billing_and_premium_roles() {
     assert_eq!(member.team_id, team_id);
     assert_eq!(*rollback_accept_calls.lock().unwrap(), 0);
     assert!(increment_calls.lock().unwrap().is_empty());
-    // Free teams do not grant premium roles.
-    assert!(roles_service.upsert_calls.lock().unwrap().is_empty());
+    assert_eq!(
+        *roles_service.upsert_calls.lock().unwrap(),
+        vec![(
+            user_id.as_ref().to_string(),
+            vec![RoleId::TeamSubscriber, RoleId::SubOpus]
+        )]
+    );
     assert_eq!(
         *channels_repo.auto_join_calls.lock().unwrap(),
         vec![(team_id, user_id.as_ref().to_string())]
@@ -6014,16 +5985,36 @@ async fn join_team_free_team_skips_billing_and_premium_roles() {
 }
 
 #[tokio::test]
-async fn join_team_free_team_over_cap_rolls_back() {
+async fn join_team_above_legacy_free_cap_is_allowed() {
     let team_id = uuid::Uuid::from_u128(7030);
     let invite_id = uuid::Uuid::from_u128(7031);
-    let user_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let mark_sent_calls = Arc::new(Mutex::new(Vec::new()));
     let mut team_repo = MockTeamRepository::new(Vec::new(), "Free Team", mark_sent_calls);
     team_repo.team_payment_status = true;
     team_repo.team_subscription_id = None;
     team_repo.seat_count = FREE_TEAM_MAX_MEMBERS + 1;
-    team_repo.accepted_invite = Some(make_accepted_invite(team_id, invite_id, &user_id));
+    team_repo.accepted_invite = Some(AcceptedTeamInvite {
+        member: TeamMember {
+            team_id,
+            user_id: user_id.clone().into_owned(),
+            role: TeamRole::Member,
+        },
+        invite: TeamInviteSnapshot {
+            id: invite_id,
+            team_id,
+            email: Email::parse_from_str(user_id.email_part().as_ref())
+                .unwrap()
+                .into_owned()
+                .lowercase(),
+            team_role: TeamRole::Member,
+            invited_by: MacroUserIdStr::parse_from_str("conation|owner@example.com")
+                .unwrap()
+                .into_owned(),
+            created_at: chrono::Utc::now(),
+            last_sent_at: chrono::Utc::now(),
+        },
+    });
     let rollback_accept_calls = team_repo.rollback_accept_calls.clone();
 
     let customer_repo = MockCustomerRepository::default();
@@ -6041,19 +6032,22 @@ async fn join_team_free_team_over_cap_rolls_back() {
         NoOpTeamCrmSettingsRepository,
     );
 
-    let result = service.join_team(&invite_id, &user_id).await;
+    let result = service.join_team(&invite_id, &user_id).await.unwrap();
 
-    assert!(matches!(result, Err(JoinTeamError::FreeTeamLimitReached)));
-    assert_eq!(*rollback_accept_calls.lock().unwrap(), 1);
+    assert_eq!(result.team_id, team_id);
+    assert_eq!(*rollback_accept_calls.lock().unwrap(), 0);
     assert!(increment_calls.lock().unwrap().is_empty());
-    assert!(roles_service.upsert_calls.lock().unwrap().is_empty());
-    assert!(channels_repo.auto_join_calls.lock().unwrap().is_empty());
+    assert_eq!(roles_service.upsert_calls.lock().unwrap().len(), 1);
+    assert_eq!(
+        *channels_repo.auto_join_calls.lock().unwrap(),
+        vec![(team_id, user_id.as_ref().to_string())]
+    );
 }
 
 #[tokio::test]
-async fn try_join_team_by_domain_free_team_at_cap_skips() {
+async fn try_join_team_by_domain_above_legacy_free_cap_is_allowed() {
     let team_id = uuid::Uuid::from_u128(7040);
-    let user_id = MacroUserIdStr::parse_from_str("macro|member@example.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|member@example.com").unwrap();
     let mark_sent_calls = Arc::new(Mutex::new(Vec::new()));
     let member = TeamMember {
         team_id,
@@ -6086,20 +6080,20 @@ async fn try_join_team_by_domain_free_team_at_cap_skips() {
 
     let result = service.try_join_team_by_domain(&user_id).await.unwrap();
 
-    assert!(result.is_none());
+    assert!(result.is_some());
     assert_eq!(*add_user_calls.lock().unwrap(), 1);
-    assert_eq!(*remove_user_calls.lock().unwrap(), 1);
+    assert_eq!(*remove_user_calls.lock().unwrap(), 0);
     assert!(increment_calls.lock().unwrap().is_empty());
-    assert!(roles_service.upsert_calls.lock().unwrap().is_empty());
+    assert_eq!(roles_service.upsert_calls.lock().unwrap().len(), 1);
 }
 
 #[tokio::test]
 async fn invite_join_does_not_create_teammate_dms_inline() {
     let team_id = uuid::Uuid::from_u128(7100);
     let invite_id = uuid::Uuid::from_u128(7101);
-    let owner = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
-    let joiner = MacroUserIdStr::parse_from_str("macro|joiner@example.com").unwrap();
-    let teammate = MacroUserIdStr::parse_from_str("macro|teammate@example.com").unwrap();
+    let owner = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
+    let joiner = MacroUserIdStr::parse_from_str("conation|joiner@example.com").unwrap();
+    let teammate = MacroUserIdStr::parse_from_str("conation|teammate@example.com").unwrap();
     let team = Team::new(
         team_id,
         "DM Team".to_string(),
@@ -6143,9 +6137,9 @@ async fn invite_join_does_not_create_teammate_dms_inline() {
 #[tokio::test]
 async fn domain_join_does_not_create_teammate_dms_inline() {
     let team_id = uuid::Uuid::from_u128(7110);
-    let owner = MacroUserIdStr::parse_from_str("macro|owner@example.com").unwrap();
-    let joiner = MacroUserIdStr::parse_from_str("macro|joiner@example.com").unwrap();
-    let teammate = MacroUserIdStr::parse_from_str("macro|teammate@example.com").unwrap();
+    let owner = MacroUserIdStr::parse_from_str("conation|owner@example.com").unwrap();
+    let joiner = MacroUserIdStr::parse_from_str("conation|joiner@example.com").unwrap();
+    let teammate = MacroUserIdStr::parse_from_str("conation|teammate@example.com").unwrap();
     let team = Team::new(
         team_id,
         "DM Team".to_string(),

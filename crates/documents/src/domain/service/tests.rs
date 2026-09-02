@@ -1,10 +1,10 @@
+use conation_event_broker::{EventBrokerError, MacroEvent, MacroEventBroker};
+use conation_user_id::cowlike::CowLike;
 use entity_access::domain::models::MemberTeamRole;
 use foreign_entity::domain::models::{
     CreateForeignEntity, ForeignEntity, ForeignEntityError, PatchForeignEntity, SourceId,
 };
 use foreign_entity::domain::ports::{ForeignEntityListQuery, ForeignEntityService};
-use conation_event_broker::{EventBrokerError, MacroEvent, MacroEventBroker};
-use conation_user_id::cowlike::CowLike;
 use model::document::{DocumentMetadata, FileType};
 use std::sync::{Arc, Mutex};
 
@@ -2035,7 +2035,7 @@ async fn create_document_publishes_resolved_attribution() {
     );
     assert_eq!(
         published[0].payload["metadata"]["actor"],
-        bot_id::MACRO_SYSTEM_BOT_ID.into_storage_id().as_ref()
+        bot_id::CONATION_SYSTEM_BOT_ID.into_storage_id().as_ref()
     );
     assert!(
         published[0].payload["metadata"]

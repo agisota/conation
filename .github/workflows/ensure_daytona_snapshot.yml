@@ -33,7 +33,7 @@ permissions:
 jobs:
   ensure-snapshot:
     if: github.event_name != 'pull_request'
-    name: Ensure macro-agent-harness snapshot
+    name: Ensure conation-agent-harness snapshot
     runs-on: namespace-profile-linux-small
     steps:
     - name: Checkout
@@ -90,17 +90,21 @@ jobs:
     - name: Build and push sandbox image
       run: |
         set -euo pipefail
-        image=ghcr.io/macro-inc/macro-agent-harness
+        image=ghcr.io/conation-dev/conation-agent-harness
         tags=(--tag "$image:$GITHUB_SHA")
         if [ "${GITHUB_REF:-}" = "refs/heads/main" ]; then
           tags+=(--tag "$image:latest")
         fi
         docker buildx build \
           --platform linux/amd64 \
+          --secret id=github_token,env=GITHUB_TOKEN \
+          --build-arg CONATION_REPO_URL=https://github.com/agisota/conation.git \
           "${tags[@]}" \
           --push \
           crates/agent_harness/container
       shell: bash
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false

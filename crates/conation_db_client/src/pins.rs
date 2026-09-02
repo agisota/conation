@@ -347,7 +347,7 @@ mod tests {
     async fn test_upsert_pin(pool: Pool<Postgres>) {
         upsert_pin(
             pool.clone(),
-            "macro|user@user.com",
+            "conation|user@user.com",
             "document-one",
             "document",
             0,
@@ -359,7 +359,7 @@ mod tests {
             r#"
             SELECT "createdAt", "updatedAt" FROM "Pin" WHERE "userId" = $1 AND "pinnedItemId" = $2 and "pinnedItemType" = $3
             "#,
-            "macro|user@user.com",
+            "conation|user@user.com",
             "document-one",
             "document",
         )
@@ -371,7 +371,7 @@ mod tests {
 
         upsert_pin(
             pool.clone(),
-            "macro|user@user.com",
+            "conation|user@user.com",
             "document-two",
             "document",
             0,
@@ -383,7 +383,7 @@ mod tests {
             r#"
             SELECT "createdAt", "updatedAt" FROM "Pin" WHERE "userId" = $1 AND "pinnedItemId" = $2 and "pinnedItemType" = $3
             "#,
-            "macro|user@user.com",
+            "conation|user@user.com",
             "document-two",
             "document"
         ).fetch_one(&pool.clone()).await.unwrap();
@@ -393,7 +393,9 @@ mod tests {
 
     #[sqlx::test(fixtures(path = "../fixtures", scripts("basic_user_with_lots_of_documents")))]
     async fn test_get_pins(pool: Pool<Postgres>) {
-        let pins = get_pins(pool.clone(), "macro|user@user.com").await.unwrap();
+        let pins = get_pins(pool.clone(), "conation|user@user.com")
+            .await
+            .unwrap();
 
         assert_eq!(pins.len(), 7);
         let ids: Vec<String> = pins
@@ -433,7 +435,7 @@ mod tests {
         // document doesn't exist
         remove_pin(
             pool.clone(),
-            "macro|user@user.com",
+            "conation|user@user.com",
             "document-one",
             "document",
         )
@@ -444,7 +446,7 @@ mod tests {
             r#"
             SELECT "pinnedItemId" FROM "Pin" WHERE "userId" = $1 AND "pinnedItemId" = $2 AND "pinnedItemType" = $3
             "#,
-            "macro|user@user.com",
+            "conation|user@user.com",
             "document-one",
             "document",
         )
@@ -459,7 +461,7 @@ mod tests {
 
         remove_pin(
             pool.clone(),
-            "macro|user@user.com",
+            "conation|user@user.com",
             "document-random",
             "document",
         )
@@ -471,7 +473,7 @@ mod tests {
     async fn test_reorder_pins(pool: Pool<Postgres>) {
         reorder_pins(
             pool.clone(),
-            "macro|user@user.com",
+            "conation|user@user.com",
             vec![
                 ReorderPinRequest::new("document-one", "document", 0),
                 ReorderPinRequest::new("document-two", "document", 5),
@@ -490,7 +492,7 @@ mod tests {
             WHERE "userId" = $1
             ORDER BY "pinIndex" ASC
             "#,
-            "macro|user@user.com",
+            "conation|user@user.com",
         )
         .fetch_all(&pool.clone())
         .await

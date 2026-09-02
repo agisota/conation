@@ -6,9 +6,9 @@ use attachment::{
     AttachmentContent, AttachmentError, AttachmentPart, AttachmentService, Attachments,
     ResolutionError, fmt::XmlTag,
 };
+use conation_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::{models::ViewAccessLevel, ports::EntityAccessService};
 use futures::future::join_all;
-use conation_user_id::user_id::MacroUserIdStr;
 use model::chat::ChatMessageWithAttachments;
 use model_entity::{Entity, EntityType};
 use non_empty::NonEmpty;

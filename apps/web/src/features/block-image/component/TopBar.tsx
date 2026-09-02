@@ -1,6 +1,7 @@
-import type { BlockTool } from '@components/app/ResponsiveBlockToolbar';
 import { t } from '@app/lib/i18n';
+import type { BlockTool } from '@components/app/ResponsiveBlockToolbar';
 import {
+  BLOCK_TOOL_IDS,
   ResponsiveBlockToolbar,
   ResponsivePermissionsBadge,
 } from '@components/app/ResponsiveBlockToolbar';
@@ -72,6 +73,7 @@ export function TopBar() {
 
   const tools: BlockTool[] = [
     {
+      id: BLOCK_TOOL_IDS.references,
       label: 'References',
       icon: Quotes,
       action: referencesControl.toggle,
@@ -85,6 +87,7 @@ export function TopBar() {
       ),
     },
     {
+      id: BLOCK_TOOL_IDS.share,
       group: 'sharing',
       label: 'Share',
       icon: IconShared,

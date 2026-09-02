@@ -5,9 +5,9 @@
 
 use std::collections::HashMap;
 
+use conation_user_id::user_id::MacroUserIdStr;
 use document_sub_type::DocumentSubType;
 use entity_access::domain::models::EntityType as AccessEntityType;
-use conation_user_id::user_id::MacroUserIdStr;
 use models_properties::service::document_metadata::DocumentMetadata;
 use models_properties::service::entity_property::EntityProperty;
 use models_properties::service::entity_property_with_definition::EntityPropertyWithDefinition;

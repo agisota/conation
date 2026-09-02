@@ -335,7 +335,7 @@ export type EntityItem =
        */
       fileType?: string | null;
       /**
-       * The document's sub type: "task" for Macro tasks, "snippet" for snippets,
+       * The document's sub type: "task" for Conation tasks, "snippet" for snippets,
        * "skill" for skills.
        */
       subType?: string | null;
@@ -980,7 +980,7 @@ export interface BulkSetEntityPropertyOptionsResult {
   error?: string | null;
 }
 /**
- * Configure a manageable bot's profile. Provide only fields that should change. Use avatarUrl to set a profile picture from an image already uploaded to Macro static files or another reachable image URL; pass an empty string to clear the current picture. Passing an empty string for description clears it. Confirm handle changes because integrations and mentions may rely on the stable handle.
+ * Configure a manageable bot's profile. Provide only fields that should change. Use avatarUrl to set a profile picture from an image already uploaded to Conation static files or another reachable image URL; pass an empty string to clear the current picture. Passing an empty string for description clears it. Confirm handle changes because integrations and mentions may rely on the stable handle.
  */
 export interface ConfigureBot {
   /**
@@ -1000,7 +1000,7 @@ export interface ConfigureBot {
    */
   description?: string | null;
   /**
-   * New profile-picture URL. Use a Macro static-file URL or another reachable image URL. Omit to keep the current picture; pass an empty string to clear it.
+   * New profile-picture URL. Use a Conation static-file URL or another reachable image URL. Omit to keep the current picture; pass an empty string to clear it.
    */
   avatarUrl?: string | null;
   /**
@@ -1714,7 +1714,7 @@ export interface CreateBot {
    */
   description?: string | null;
   /**
-   * Optional URL for the bot profile picture. Pass the URL of an image already uploaded to Macro static files or another reachable image URL.
+   * Optional URL for the bot profile picture. Pass the URL of an image already uploaded to Conation static files or another reachable image URL.
    */
   avatarUrl?: string | null;
   /**
@@ -1796,7 +1796,7 @@ export interface BotWebhook {
   webhookUrl: string;
 }
 /**
- * Prepare an event on the user's calendar, inviting any listed attendees through Google Calendar. In Macro chat this tool opens an inline composer so the user can review, edit, and confirm the event; use the tool to present the proposal instead of asking for a redundant confirmation in prose. When the pending call is executed, the event is written to Google immediately and attendees receive invitations. Other clients should confirm attendee events before executing the call.
+ * Prepare an event on the user's calendar, inviting any listed attendees through Google Calendar. In Conation chat this tool opens an inline composer so the user can review, edit, and confirm the event; use the tool to present the proposal instead of asking for a redundant confirmation in prose. When the pending call is executed, the event is written to Google immediately and attendees receive invitations. Other clients should confirm attendee events before executing the call.
  *
  * The event lands on the user's primary calendar unless `calendarId` (from ListCalendars) targets another one. For recurring events pass RFC 5545 lines in `recurrenceLines`, e.g. ["RRULE:FREQ=WEEKLY;BYDAY=MO"]. Returns the created event with its `eventId` for later updates or deletion. Fails if the user has no writable calendar connected.
  */
@@ -1866,7 +1866,7 @@ export interface EventRemindersInput {
  */
 export interface EventReminderOverrideInput {
   /**
-   * Provider reminder method. `popup` creates a Macro notification.
+   * Provider reminder method. `popup` creates a Conation notification.
    */
   method: string;
   /**
@@ -1879,7 +1879,7 @@ export interface EventReminderOverrideInput {
  */
 export interface ToolCalendarEvent {
   /**
-   * Macro calendar event id, used by UpdateCalendarEvent and
+   * Conation calendar event id, used by UpdateCalendarEvent and
    * DeleteCalendarEvent.
    */
   eventId: string;
@@ -1971,7 +1971,7 @@ export interface ToolEventAttendee {
   isOptional: boolean;
 }
 /**
- * Create a private or team channel and add its first members. Use `private` for an invite-only channel and `team` for a channel owned by the current user's team. Do not use this for a direct message — those are created separately. Team id is resolved from the current user; do not invent one. Participants accept `macro|<email>` ids from ListTeamMembers or bare emails. Creating a team channel when the user has no team fails; create a private channel instead. Creating a team channel with no participants adds the current user so the channel is valid. Use only when the user asks to create a channel.
+ * Create a private or team channel and add its first members. Use `private` for an invite-only channel and `team` for a channel owned by the current user's team. Do not use this for a direct message — those are created separately. Team id is resolved from the current user; do not invent one. Participants accept `conation|<email>` ids from ListTeamMembers or bare emails. Creating a team channel when the user has no team fails; create a private channel instead. Creating a team channel with no participants adds the current user so the channel is valid. Use only when the user asks to create a channel.
  */
 export interface CreateChannel {
   /**
@@ -1980,7 +1980,7 @@ export interface CreateChannel {
   name: string;
   channelType: NewChannelType;
   /**
-   * People to add, as `macro|<email>` ids or bare emails. Defaults to none. A team channel with an empty list adds the current user.
+   * People to add, as `conation|<email>` ids or bare emails. Defaults to none. A team channel with an empty list adds the current user.
    */
   participants?: string[];
 }
@@ -2041,7 +2041,7 @@ export interface CreateDocumentResponse {
   documentId: string;
 }
 /**
- * Track an external item (Linear issue, Notion page, Slack channel) in the import ledger. Use status `staged` to propose an item for import BEFORE creating anything; use status `imported` (with entityId) only to record a Macro entity you already created from the item. The response tells you when the item was already imported by the user or a teammate — in that case do NOT create a duplicate; point the user at the existing entity instead.
+ * Track an external item (Linear issue, Notion page, Slack channel) in the import ledger. Use status `staged` to propose an item for import BEFORE creating anything; use status `imported` (with entityId) only to record a Conation entity you already created from the item. The response tells you when the item was already imported by the user or a teammate — in that case do NOT create a duplicate; point the user at the existing entity instead.
  */
 export interface CreateImportEntity {
   source: ImportSource;
@@ -2057,7 +2057,7 @@ export interface CreateImportEntity {
     [k: string]: unknown;
   };
   /**
-   * The id of the Macro entity you created, required when status is `imported`. The entity type is fixed by source: linear → task, notion → md (document), slack → channel.
+   * The id of the Conation entity you created, required when status is `imported`. The entity type is fixed by source: linear → task, notion → md (document), slack → channel.
    */
   entityId?: string | null;
 }
@@ -2096,11 +2096,11 @@ export interface ImportEntityView {
    */
   label: string;
   /**
-   * The Macro entity it became, when imported.
+   * The Conation entity it became, when imported.
    */
   entityId?: string | null;
   /**
-   * The Macro entity type, when imported.
+   * The Conation entity type, when imported.
    */
   entityType?: string | null;
   /**
@@ -2135,9 +2135,9 @@ export interface CreateProjectResponse {
   projectName: string;
 }
 /**
- * Schedule a reminder for the current user. At `remindAt` it is delivered to their Macro inbox as a notification and stays there until they mark it done.
+ * Schedule a reminder for the current user. At `remindAt` it is delivered to their Conation inbox as a notification and stays there until they mark it done.
  *
- * A reminder is either attached to one Macro item — so clicking it opens that item — or standalone. Attached is the common case ("remind me to reply to this email tomorrow"); standalone is for everything else ("remind me to book a flight").
+ * A reminder is either attached to one Conation item — so clicking it opens that item — or standalone. Attached is the common case ("remind me to reply to this email tomorrow"); standalone is for everything else ("remind me to book a flight").
  *
  * Reminders are private: one is only ever delivered to its owner, and there is no way to set one for somebody else. Only one-off reminders can be created — if the user asks for a repeating one, say so rather than creating a single reminder and implying it repeats.
  *
@@ -2154,7 +2154,7 @@ export interface CreateProjectResponse {
  *
  * Pass `entityType` and `entityId` together, using ids from ListEntities, GetThread, or search. The user must already have access to what you attach. `entityType` accepts exactly these values, and a type not on the list cannot be attached even if ListEntities returns it:
  *
- * - `document` — a Macro document
+ * - `document` — a Conation document
  * - `ai_chat` — an AI chat conversation
  * - `project` — a project, shown as a folder in the app
  * - `email` — an email thread
@@ -2413,7 +2413,7 @@ export interface DisplayResultsResponse {
   message: string;
 }
 /**
- * Apply AI-driven edits to a Macro markdown document in place -- rewriting, inserting, formatting, or restructuring. Markdown documents only: these are authored in Macro's collaborative editor, and are the only documents whose content this tool can rewrite. Uploaded files -- PDFs, DOCX, spreadsheets, images, source files such as .py or .ts -- are readable but not editable, and are rejected. If the response contains a `clarification` field, invoke again with the requested info appended to `instructions`. To insert mention(s), include each person's userId and email. To insert document-card(s), include each document's documentId and documentName.
+ * Apply AI-driven edits to a Conation markdown document in place -- rewriting, inserting, formatting, or restructuring. Markdown documents only: these are authored in Conation's collaborative editor, and are the only documents whose content this tool can rewrite. Uploaded files -- PDFs, DOCX, spreadsheets, images, source files such as .py or .ts -- are readable but not editable, and are rejected. If the response contains a `clarification` field, invoke again with the requested info appended to `instructions`. To insert mention(s), include each person's userId and email. To insert document-card(s), include each document's documentId and documentName.
  */
 export interface EditDocument {
   /**
@@ -2848,7 +2848,7 @@ export interface ToolContact {
   name?: string | null;
 }
 /**
- * Import one specific Notion page through Macro's canonical Notion importer. Use this when the user explicitly asks to import a page URL or id. The tool performs deduplication, fetches through the user's connected Notion MCP, normalizes the page, creates the Macro markdown document, and returns its entity id. Do not fetch and recreate the page manually with generic document tools. Notion databases and database-first pages are intentionally not imported.
+ * Import one specific Notion page through Conation's canonical Notion importer. Use this when the user explicitly asks to import a page URL or id. The tool performs deduplication, fetches through the user's connected Notion MCP, normalizes the page, creates the Conation markdown document, and returns its entity id. Do not fetch and recreate the page manually with generic document tools. Notion databases and database-first pages are intentionally not imported.
  */
 export interface ImportNotionPage {
   /**
@@ -2970,7 +2970,7 @@ export interface ListCalendarEventsResponse {
  */
 export interface CalendarEventListItem {
   /**
-   * Macro calendar event id, used by UpdateCalendarEvent and
+   * Conation calendar event id, used by UpdateCalendarEvent and
    * DeleteCalendarEvent. Recurring events repeat it across occurrences.
    */
   eventId: string;
@@ -3105,7 +3105,7 @@ export interface ListCompanies {
    */
   stage?: string | null;
   /**
-   * Filter to companies whose Owner property is this Macro user id (e.g. "macro|user@example.com"). Use ListTeamMembers to find user ids.
+   * Filter to companies whose Owner property is this Conation user id (e.g. "conation|user@example.com"). Use ListTeamMembers to find user ids.
    */
   owner_user_id?: string | null;
   /**
@@ -3169,16 +3169,16 @@ export interface CompanyListItem {
   revenue?: number | null;
 }
 /**
- * Browse the user's Macro workspace to see recent items they have access to. Returns Macro documents, AI conversations, projects, emails, chat channels, call records, and foreign entities. Use this to get an overview of what the user has been working on or to find items by type. Start here for activity-summary questions such as "what happened today", "what's going on", "catch me up", or "what happened in standup today"; apply precise time, type, channel, or mailbox filters when the user gives that scope. For Macro task requests such as "list my tasks", "tasks assigned to me", or "tasks I completed yesterday", prefer this tool over external task trackers such as Linear unless the user explicitly asks for Linear. Macro tasks are document items with df subtype {"l":{"dst":"task"}} and includeTypes ["document"]. Filter task Status and Assignees through propf using entity_type TASK: Status property 00000001-0000-0000-0000-000000000002, Completed option 00000001-0000-0000-0002-000000000004, Assignees property 00000001-0000-0000-0000-000000000001. The current user's assignee entity id is their Macro user id, usually macro|<their email address from context>. For "completed yesterday", combine status Completed, assigned-to-me, and a df updatedAt yesterday window with ua gte/lt ISO timestamps. Returned documents, AI chats, projects, emails, and call records include the tags visible to the user as {label, scope} pairs. To filter by tag (e.g. "my items tagged bug-report"), pass the tag labels in the tags argument — ListTags shows which tags exist. For finding specific items by name or content, use the search tool instead.
+ * Browse the user's Conation workspace to see recent items they have access to. Returns Conation documents, AI conversations, projects, emails, chat channels, call records, and foreign entities. Use this to get an overview of what the user has been working on or to find items by type. Start here for activity-summary questions such as "what happened today", "what's going on", "catch me up", or "what happened in standup today"; apply precise time, type, channel, or mailbox filters when the user gives that scope. For Conation task requests such as "list my tasks", "tasks assigned to me", or "tasks I completed yesterday", prefer this tool over external task trackers such as Linear unless the user explicitly asks for Linear. Conation tasks are document items with df subtype {"l":{"dst":"task"}} and includeTypes ["document"]. Filter task Status and Assignees through propf using entity_type TASK: Status property 00000001-0000-0000-0000-000000000002, Completed option 00000001-0000-0000-0002-000000000004, Assignees property 00000001-0000-0000-0000-000000000001. The current user's assignee entity id is their Conation user id, usually conation|<their email address from context>. For "completed yesterday", combine status Completed, assigned-to-me, and a df updatedAt yesterday window with ua gte/lt ISO timestamps. Returned documents, AI chats, projects, emails, and call records include the tags visible to the user as {label, scope} pairs. To filter by tag (e.g. "my items tagged bug-report"), pass the tag labels in the tags argument — ListTags shows which tags exist. For finding specific items by name or content, use the search tool instead.
  */
 export interface ListEntities {
   /**
-   * Filter returned items to specific item types. If not provided, returns all types. Example: ["document", "email"] returns only documents and emails. Macro tasks are returned as document items, so use includeTypes=["document"] with df subtype task for task requests. This is folded into the AST and applied as part of cursor-level filtering.
+   * Filter returned items to specific item types. If not provided, returns all types. Example: ["document", "email"] returns only documents and emails. Conation tasks are returned as document items, so use includeTypes=["document"] with df subtype task for task requests. This is folded into the AST and applied as part of cursor-level filtering.
    */
   includeTypes?: ItemType[] | null;
   sortBy?: SortBy;
   /**
-   * Full soup AST document filter (df). Use the same shape as /items/soup/ast, e.g. {"l":{"id":"..."}}. For Macro tasks, use {"l":{"dst":"task"}}; for skills, {"l":{"dst":"skill"}}. For "completed yesterday", AND the task subtype with updatedAt bounds, e.g. {"&":[{"l":{"dst":"task"}},{"&":[{"l":{"ua":{"gte":"<start>"}}},{"l":{"ua":{"lt":"<end>"}}}]}]} using ISO timestamps.
+   * Full soup AST document filter (df). Use the same shape as /items/soup/ast, e.g. {"l":{"id":"..."}}. For Conation tasks, use {"l":{"dst":"task"}}; for skills, {"l":{"dst":"skill"}}. For "completed yesterday", AND the task subtype with updatedAt bounds, e.g. {"&":[{"l":{"dst":"task"}},{"&":[{"l":{"ua":{"gte":"<start>"}}},{"l":{"ua":{"lt":"<end>"}}}]}]} using ISO timestamps.
    */
   df?: {
     [k: string]: unknown;
@@ -3230,7 +3230,7 @@ export interface ListEntities {
     [k: string]: unknown;
   };
   /**
-   * Full soup AST property filter (propf). Use this for Macro task Status, Assignees, Priority, and other entity properties. For task Status Completed: {"l":{"pd":"00000001-0000-0000-0000-000000000002","et":"TASK","v":{"so":"00000001-0000-0000-0002-000000000004"}}}. For tasks assigned to the current user: {"l":{"pd":"00000001-0000-0000-0000-000000000001","et":"TASK","v":{"er":"macro|user@example.com"}}}. Combine both with &: {"&":[statusCompleted, assignedToMe]}. Prefer this over Linear tools for unqualified task requests.
+   * Full soup AST property filter (propf). Use this for Conation task Status, Assignees, Priority, and other entity properties. For task Status Completed: {"l":{"pd":"00000001-0000-0000-0000-000000000002","et":"TASK","v":{"so":"00000001-0000-0000-0002-000000000004"}}}. For tasks assigned to the current user: {"l":{"pd":"00000001-0000-0000-0000-000000000001","et":"TASK","v":{"er":"conation|user@example.com"}}}. Combine both with &: {"&":[statusCompleted, assignedToMe]}. Prefer this over Linear tools for unqualified task requests.
    */
   propf?: {
     [k: string]: unknown;
@@ -3729,7 +3729,7 @@ export interface ManageBotChannelAccessResponse {
   summary: string;
 }
 /**
- * Add or remove members of an existing channel. Requires the current user to be a channel member. Direct-message channels cannot change membership. The channel owner cannot be removed. Participants accept `macro|<email>` ids from ListTeamMembers or bare emails. Use `add` to invite people and `remove` to take them out. Use only when the user asks to change who is in a channel.
+ * Add or remove members of an existing channel. Requires the current user to be a channel member. Direct-message channels cannot change membership. The channel owner cannot be removed. Participants accept `conation|<email>` ids from ListTeamMembers or bare emails. Use `add` to invite people and `remove` to take them out. Use only when the user asks to change who is in a channel.
  */
 export interface ManageChannelParticipants {
   /**
@@ -3738,7 +3738,7 @@ export interface ManageChannelParticipants {
   channelId: string;
   action: ParticipantAction;
   /**
-   * People to add or remove, as `macro|<email>` ids or bare emails. Must not be empty.
+   * People to add or remove, as `conation|<email>` ids or bare emails. Must not be empty.
    */
   participants: string[];
 }
@@ -4879,7 +4879,7 @@ export interface SearchToolsResponse {
   additional_matches: ToolMatch[];
 }
 /**
- * Learn what Macro is and how it works. Call this whenever the user asks an open-ended question about Macro itself — what it is, what it's for, what it can do, or how to do something in Macro — instead of answering from memory (your training data may be stale). Takes no arguments. Returns an overview of Macro and a map of links into the official docs at docs.macro.com; every docs page is readable as Markdown (append `.md` to its URL), so follow up with WebFetch on the relevant page for details and cite it.
+ * Learn what Conation is and how it works. Call this whenever the user asks an open-ended question about Conation itself — what it is, what it's for, what it can do, or how to do something in Conation — instead of answering from memory (your training data may be stale). Takes no arguments. Returns an overview of Conation and a map of links into the official docs at docs.macro.com; every docs page is readable as Markdown (append `.md` to its URL), so follow up with WebFetch on the relevant page for details and cite it.
  */
 export type SelfKnowledge = {};
 /**
@@ -4887,7 +4887,7 @@ export type SelfKnowledge = {};
  */
 export interface SelfKnowledgeResponse {
   /**
-   * An overview of Macro and a routing map into the docs at docs.macro.com.
+   * An overview of Conation and a routing map into the docs at docs.macro.com.
    */
   about: string;
 }
@@ -4971,7 +4971,7 @@ export interface EmailRecipient {
  * For multi-select properties — including tags — prefer add_option_ids / remove_option_ids over option_ids: they add or remove just those options atomically, composing with concurrent edits. option_ids replaces the entire value, so a stale read can silently drop options someone else just added; only use it when the user asks to set the value to exactly a given list. To apply a tag, pass the tag set's property_definition_id and the tag's option id (both from ListTags) in add_option_ids; to remove a tag, use remove_option_ids.
  *
  * Tasks always have these system properties (use these property_definition_id values directly):
- * - Assignees (00000001-0000-0000-0000-000000000001): entity type, multi-select. Use entity_refs with entity_type='user' and entity_id='macro|email@domain.com'.
+ * - Assignees (00000001-0000-0000-0000-000000000001): entity type, multi-select. Use entity_refs with entity_type='user' and entity_id='conation|email@domain.com'.
  * - Status (00000001-0000-0000-0000-000000000002): select_string, single. Options: Not Started (00000001-0000-0000-0002-000000000001), In Progress (...0002), In Review (...0003), Completed (...0004), Canceled (...0005).
  * - Priority (00000001-0000-0000-0000-000000000003): select_string, single. Options: Low (...0001), Medium (...0002), High (...0003), Urgent (...0004). Option IDs: 00000001-0000-0000-0003-0000000000XX.
  * - Due Date (00000001-0000-0000-0000-000000000004): date, single. Use date_value with ISO 8601.
@@ -4981,7 +4981,7 @@ export interface EmailRecipient {
  *
  * CRM companies (entity_type='company', entity_id=the company UUID) always have these system properties:
  * - Stage (00000001-0000-0000-0000-000000000010): select_string, single. Use option_id. Default options: Lead (00000001-0000-0000-0010-000000000001), Qualified (...0002), Demo (...0003), Trial (...0004), Negotiation (...0005), Customer (...0006), Churned (...0007). Teams can customize their stages, so prefer calling GetCompany or GetEntityProperties first to get the valid stage option ids.
- * - Owner (00000001-0000-0000-0000-000000000011): entity, single. Use entity_ref with entity_type='user' and entity_id='macro|email@domain.com'.
+ * - Owner (00000001-0000-0000-0000-000000000011): entity, single. Use entity_ref with entity_type='user' and entity_id='conation|email@domain.com'.
  * - Revenue (00000001-0000-0000-0000-000000000012): number, single. Use number_value (dollars).
  * Any member of the owning team can edit visible company properties; hidden records remain admin/owner-only.
  *
@@ -5235,7 +5235,7 @@ export interface UpdateCalendarEvent {
    */
   conference?: ConferenceChangeInput | null;
   /**
-   * Replacement notification reminders. `useDefault: true` follows the calendar's own defaults; otherwise `overrides` replaces the whole list with entries of `method` "popup" (a Macro notification) or "email" and `minutes` before the start — an empty list silences the event. Omit to keep the current reminders.
+   * Replacement notification reminders. `useDefault: true` follows the calendar's own defaults; otherwise `overrides` replaces the whole list with entries of `method` "popup" (a Conation notification) or "email" and `minutes` before the start — an empty list silences the event. Omit to keep the current reminders.
    */
   reminders?: EventRemindersInput | null;
   /**

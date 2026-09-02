@@ -4,6 +4,10 @@ use std::sync::{
     atomic::{AtomicUsize, Ordering},
 };
 
+use conation_user_id::{
+    lowercased::Lowercase,
+    user_id::{MacroUserId, MacroUserIdStr},
+};
 use email::domain::{
     models::{EmailErr, EmailThreadMetadata},
     ports::EmailThreadMetadataService,
@@ -14,10 +18,6 @@ use entity_access::domain::{
         EntityType, RequiredPermission, UserTeamInfo, ViewAccessLevel,
     },
     ports::EntityAccessService,
-};
-use conation_user_id::{
-    lowercased::Lowercase,
-    user_id::{MacroUserId, MacroUserIdStr},
 };
 
 use super::*;

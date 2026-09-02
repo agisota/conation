@@ -1,6 +1,6 @@
+import type { DocumentMentionInfo } from '@conation/lexical-core';
 import { itemToBlockName } from '@core/constant/allBlocks';
 import type { EntityData } from '@entity';
-import type { DocumentMentionInfo } from '@conation/lexical-core';
 
 // Keep these in sync with `@block-channel/constants` `URL_PARAMS`. They are
 // inlined here to avoid a circular dependency (`@block-channel` imports

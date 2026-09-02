@@ -39,7 +39,8 @@ use models_search::{MatchType, SearchHighlight};
 #[derive(OpenApi)]
 #[openapi(
         info(
-                terms_of_service = "https://macro.com/terms",
+                terms_of_service = "https://conation.dev/terms",
+                license(name = "GNU Affero General Public License v3.0", identifier = "AGPL-3.0-only"),
         ),
         paths(
                 /// /search
@@ -93,7 +94,7 @@ use models_search::{MatchType, SearchHighlight};
                 ),
         ),
         tags(
-            (name = "search service", description = "Macro Search Service")
+            (name = "search service", description = "Conation Search Service")
         )
     )]
 pub struct ApiDoc;

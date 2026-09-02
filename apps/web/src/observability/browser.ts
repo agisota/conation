@@ -1,8 +1,8 @@
-import { recordBrowserTursoCacheNavigation } from '@graphql-cache/rollout-observability';
 import { Telemetry } from '@conation/observability';
 import { createWebTracingProvider } from '@conation/observability/web';
 // This static import loads the zone.js Promise patch before application modules run.
 import { ZoneContextManager } from '@conation/observability/zone';
+import { recordBrowserTursoCacheNavigation } from '@graphql-cache/rollout-observability';
 
 async function browserTelemetryEnabled(hasExporter: boolean): Promise<boolean> {
   const override = import.meta.env.VITE_ENABLE_BROWSER_OTEL;

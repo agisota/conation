@@ -3,7 +3,7 @@ use sqlx::{Pool, Postgres};
 
 #[sqlx::test]
 async fn test_xact_lock_acquired_in_transaction(pool: Pool<Postgres>) -> anyhow::Result<()> {
-    let user_id = MacroUserId::parse_from_str("macro|user@user.com")
+    let user_id = MacroUserId::parse_from_str("conation|user@user.com")
         .unwrap()
         .lowercase();
 
@@ -20,7 +20,7 @@ async fn test_xact_lock_acquired_in_transaction(pool: Pool<Postgres>) -> anyhow:
 
 #[sqlx::test]
 async fn test_xact_lock_blocks_concurrent_transaction(pool: Pool<Postgres>) -> anyhow::Result<()> {
-    let user_id = MacroUserId::parse_from_str("macro|user@user.com")
+    let user_id = MacroUserId::parse_from_str("conation|user@user.com")
         .unwrap()
         .lowercase();
 
@@ -53,7 +53,7 @@ async fn test_xact_lock_blocks_concurrent_transaction(pool: Pool<Postgres>) -> a
 
 #[sqlx::test]
 async fn test_xact_lock_released_on_commit(pool: Pool<Postgres>) -> anyhow::Result<()> {
-    let user_id = MacroUserId::parse_from_str("macro|user@user.com")
+    let user_id = MacroUserId::parse_from_str("conation|user@user.com")
         .unwrap()
         .lowercase();
 
@@ -78,7 +78,7 @@ async fn test_xact_lock_released_on_commit(pool: Pool<Postgres>) -> anyhow::Resu
 
 #[sqlx::test]
 async fn test_xact_lock_released_on_rollback(pool: Pool<Postgres>) -> anyhow::Result<()> {
-    let user_id = MacroUserId::parse_from_str("macro|user@user.com")
+    let user_id = MacroUserId::parse_from_str("conation|user@user.com")
         .unwrap()
         .lowercase();
 
@@ -106,7 +106,7 @@ async fn test_xact_lock_released_on_rollback(pool: Pool<Postgres>) -> anyhow::Re
 
 #[sqlx::test]
 async fn test_xact_lock_released_on_drop(pool: Pool<Postgres>) -> anyhow::Result<()> {
-    let user_id = MacroUserId::parse_from_str("macro|user@user.com")
+    let user_id = MacroUserId::parse_from_str("conation|user@user.com")
         .unwrap()
         .lowercase();
 
@@ -131,10 +131,10 @@ async fn test_xact_lock_released_on_drop(pool: Pool<Postgres>) -> anyhow::Result
 
 #[sqlx::test]
 async fn test_xact_lock_different_users(pool: Pool<Postgres>) -> anyhow::Result<()> {
-    let user_id_1 = MacroUserId::parse_from_str("macro|user1@user.com")
+    let user_id_1 = MacroUserId::parse_from_str("conation|user1@user.com")
         .unwrap()
         .lowercase();
-    let user_id_2 = MacroUserId::parse_from_str("macro|user2@user.com")
+    let user_id_2 = MacroUserId::parse_from_str("conation|user2@user.com")
         .unwrap()
         .lowercase();
 

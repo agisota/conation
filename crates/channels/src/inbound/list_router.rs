@@ -10,11 +10,11 @@ use axum::{
     response::IntoResponse,
     routing::get,
 };
-use frecency::domain::models::AggregateFrecency;
 use conation_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
 };
 use conation_user_id::user_id::MacroUserIdStr;
+use frecency::domain::models::AggregateFrecency;
 use models_pagination::{
     CursorOptionExt, CursorWithValAndFilter, PaginateOn, Paginated, SimpleSortMethod,
     TypeEraseCursor,
@@ -135,7 +135,7 @@ where
     let res = service
         .inner
         .get_channels(GetChannelsRequest {
-            conation_id: user.conation_user_id.clone(),
+            macro_id: user.macro_user_id.clone(),
             // Fetch one extra row so pagination can distinguish a full final
             // page from a page with more results.
             limit: Some(limit.saturating_add(1)),
@@ -193,7 +193,7 @@ where
     let user = &authorization.authorization.user;
     let res = service
         .inner
-        .get_activities(user.conation_user_id.clone())
+        .get_activities(user.macro_user_id.clone())
         .await
         .map_err(|_| ChannelListRouterErr::Internal)?;
 

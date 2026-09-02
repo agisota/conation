@@ -372,7 +372,7 @@ export const BulkMoveToProjectView = (props: {
     try {
       const projectId = await createProject({ name });
       if (!projectId) {
-        toast.failure('Failed to create folder');
+        toast.failure(t('entity.feedback.folderCreateFailed'));
         return;
       }
       setIsCreatingFolder(false);
@@ -393,7 +393,7 @@ export const BulkMoveToProjectView = (props: {
       });
     } catch (error) {
       console.error('Failed to create folder:', error);
-      toast.failure('Failed to create folder');
+      toast.failure(t('entity.feedback.folderCreateFailed'));
     } finally {
       setIsSavingFolder(false);
     }
@@ -436,7 +436,6 @@ export const BulkMoveToProjectView = (props: {
   };
 
   const entityCount = () => props.entities.length;
-  const entityText = () => (entityCount() === 1 ? 'item' : 'items');
 
   return (
     <div ref={rootScopeId}>
@@ -445,7 +444,7 @@ export const BulkMoveToProjectView = (props: {
           <CloseIcon />
         </Dialog.CloseButton>
         <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">
-          Move {entityCount()} {entityText()} to folder
+          {t('entity.move.title', { count: entityCount() })}
         </Dialog.Title>
       </div>
 
@@ -467,7 +466,9 @@ export const BulkMoveToProjectView = (props: {
           </For>
           <Show when={props.entities.length > 2}>
             <div class="text-ink-muted text-xs px-2 py-1">
-              +{props.entities.length - 2} more
+              {t('entity.selection.additionalCount', {
+                count: props.entities.length - 2,
+              })}
             </div>
           </Show>
         </div>
@@ -483,7 +484,7 @@ export const BulkMoveToProjectView = (props: {
               );
             }}
             type="text"
-            placeholder={t('auto.search_folders')}
+            placeholder={t('entity.move.searchFolders')}
             value={searchQuery()}
             onInput={(e) => setSearchQuery(e.currentTarget.value)}
             onKeyDown={(e) => {
@@ -586,7 +587,9 @@ export const BulkMoveToProjectView = (props: {
                   class="flex w-full items-center gap-2 px-2 py-1.5 text-sm text-ink-muted hover:bg-hover hover:text-ink"
                   onClick={startCreatingFolder}
                 >
-                  <FolderPlusIcon class="size-4 shrink-0" />{t('auto.new_folder')}</button>
+                  <FolderPlusIcon class="size-4 shrink-0" />
+                  {t('entity.move.newFolder')}
+                </button>
               }
             >
               <div class="flex items-center gap-2 px-2 py-1">
@@ -596,7 +599,7 @@ export const BulkMoveToProjectView = (props: {
                     requestAnimationFrame(() => el.focus());
                   }}
                   type="text"
-                  placeholder={t('auto.folder_name')}
+                  placeholder={t('entity.move.folderNamePlaceholder')}
                   value={newFolderName()}
                   onInput={(e) => setNewFolderName(e.currentTarget.value)}
                   onKeyDown={(e) => {
@@ -618,7 +621,9 @@ export const BulkMoveToProjectView = (props: {
                   class="rounded-xs shrink-0"
                   disabled={!newFolderName().trim() || isSavingFolder()}
                   onClick={submitNewFolder}
-                >{t('auto.create')}</Button>
+                >
+                  {t('entity.move.createFolder')}
+                </Button>
                 <Button
                   size="icon-sm"
                   variant="ghost"
@@ -634,14 +639,18 @@ export const BulkMoveToProjectView = (props: {
         </div>
 
         <div class="flex justify-end gap-2">
-          <Button variant="ghost" class="rounded-xs" onClick={props.onCancel}>{t('common.cancel')}</Button>
+          <Button variant="ghost" class="rounded-xs" onClick={props.onCancel}>
+            {t('common.cancel')}
+          </Button>
           <Button
             type="button"
             variant="outline"
             class="rounded-xs"
             onClick={finishEditing}
             disabled={!selectedProject()}
-          >{t('auto.move')}</Button>
+          >
+            {t('entity.move.submit')}
+          </Button>
         </div>
       </div>
     </div>

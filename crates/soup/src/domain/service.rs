@@ -13,6 +13,7 @@ use channels::domain::{
     models::{GetChannelsRequest, GetThreadReplyRowsRequest},
     ports::ChannelListService,
 };
+use conation_user_id::user_id::MacroUserIdStr;
 use cowlike::CowLike;
 use crm::domain::service::CrmService;
 use doppleganger::Mirror;
@@ -34,7 +35,6 @@ use frecency::domain::{
     ports::FrecencyQueryService,
 };
 use item_filters::ast::{EntityFilterAst, channel::ChannelLiteral, email::EmailLiteral};
-use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::EntityType;
 use models_pagination::{
     Base64Str, Cursor, CursorVal, Frecency, FrecencyValue, Identify, PaginateOn, Paginated, Query,
@@ -551,7 +551,7 @@ where
                 .collect(),
         )
         .map(|tree| GetChannelsRequest {
-            conation_id: user.clone(),
+            macro_id: user.clone(),
             limit: Some(channel_ids.len() as u32),
             include_frecency: false,
             query: Query::Sort(SimpleSortMethod::UpdatedAt, Some(tree)),
@@ -569,7 +569,7 @@ where
             // candidate that fails hydration is lost from the page.
             view: PreviewView::StandardLabel(PreviewViewStandardLabel::All),
             link_ids: link_ids.clone(),
-            conation_id: user.clone(),
+            macro_id: user.clone(),
             limit: Some(email_ids.len() as u32),
             query: Query::Sort(SimpleSortMethod::UpdatedAt, Some(tree)),
             include_frecency: false,

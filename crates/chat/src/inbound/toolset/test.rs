@@ -26,14 +26,14 @@ mod self_read_guard {
     use crate::inbound::toolset::read_chat::ReadChat;
     use ai_toolset::tool_object::UserToolResponse;
     use ai_toolset::{AsyncTool, RequestContext, ServiceContext};
+    use conation_user_id::lowercased::Lowercase;
+    use conation_user_id::user_id::{MacroUserId, MacroUserIdStr};
     use entity_access::domain::models::{
         AccessError, AccessLevel, BotAccessScope, BotId, CallChannelInfo, Entity,
         EntityAccessReceipt, EntityPermission, EntityType, RequiredPermission, TeamRole,
         UserTeamInfo,
     };
     use entity_access::domain::ports::EntityAccessService;
-    use conation_user_id::lowercased::Lowercase;
-    use conation_user_id::user_id::{MacroUserId, MacroUserIdStr};
     use uuid::Uuid;
 
     /// A [`ChatService`] that panics if any method is invoked — used to prove

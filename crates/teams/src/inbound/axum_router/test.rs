@@ -9,16 +9,8 @@ use axum::{
     http::{Request, StatusCode, header},
     response::IntoResponse,
 };
-use entity_access::domain::{
-    models::{
-        AccessError, AccessLevel, AdminTeamRole, BotAccessScope, BotId, CallChannelInfo,
-        EntityAccessReceipt, EntityPermission, EntityType, MemberTeamRole, RequiredPermission,
-        TeamRole, UserTeamInfo,
-    },
-    ports::EntityAccessService,
-};
 use conation_authorization::{
-    INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_USER_ID_HEADER, InternalIdentityClaims,
+    INTERNAL_API_KEY_HEADER, INTERNAL_CONATION_USER_ID_HEADER, InternalIdentityClaims,
     MacroAuthorizationError, MacroAuthorizationRejection, MacroAuthorizationService,
     MacroAuthorizationState,
 };
@@ -26,6 +18,14 @@ use conation_user_id::{
     email::Email,
     lowercased::Lowercase,
     user_id::{MacroUserId, MacroUserIdStr},
+};
+use entity_access::domain::{
+    models::{
+        AccessError, AccessLevel, AdminTeamRole, BotAccessScope, BotId, CallChannelInfo,
+        EntityAccessReceipt, EntityPermission, EntityType, MemberTeamRole, RequiredPermission,
+        TeamRole, UserTeamInfo,
+    },
+    ports::EntityAccessService,
 };
 use model_user::UserContext;
 use roles_and_permissions::domain::model::PermissionId;
@@ -124,16 +124,21 @@ async fn invite_to_team_validation_error_response_is_preserved() {
 }
 
 #[tokio::test]
-async fn invite_to_free_team_at_capacity_returns_bad_request() {
+async fn invite_to_team_at_configured_capacity_returns_bad_request() {
     let error =
         InviteToTeamError::InviteUsersToTeamError(InviteUsersToTeamError::NotEnoughOpenSeats);
     let (status, body_text, _) = response_parts(error).await;
 
     assert_eq!(status, StatusCode::BAD_REQUEST);
-    assert_eq!(
-        body_text,
-        r#"{"message":"free team member limit reached; upgrade to invite more members"}"#
-    );
+    assert_eq!(body_text, r#"{"message":"team member limit reached"}"#);
+}
+
+#[tokio::test]
+async fn join_team_at_configured_capacity_returns_forbidden() {
+    let (status, body_text, _) = response_parts(JoinTeamError::FreeTeamLimitReached).await;
+
+    assert_eq!(status, StatusCode::FORBIDDEN);
+    assert_eq!(body_text, r#"{"message":"team member limit reached"}"#);
 }
 
 #[tokio::test]
@@ -187,8 +192,8 @@ async fn toggle_auto_join_domain_missing_team_response_is_not_found() {
     assert_eq!(body_text, r#"{"message":"team does not exist"}"#);
 }
 
-const USER_ID: &str = "macro|user@example.com";
-const ACTING_USER_ID: &str = "macro|acting@example.com";
+const USER_ID: &str = "conation|user@example.com";
+const ACTING_USER_ID: &str = "conation|acting@example.com";
 const INTERNAL_KEY: &str = "valid-internal-key";
 const TEAM_ID: uuid::Uuid = uuid::Uuid::from_u128(42);
 
@@ -611,7 +616,7 @@ async fn teams_router_accepts_internal_acting_user_credentials() {
         .oneshot(
             get_user_teams_request()
                 .header(INTERNAL_API_KEY_HEADER, INTERNAL_KEY)
-                .header(INTERNAL_MACRO_USER_ID_HEADER, ACTING_USER_ID)
+                .header(INTERNAL_CONATION_USER_ID_HEADER, ACTING_USER_ID)
                 .body(Body::empty())
                 .expect("request should be valid"),
         )

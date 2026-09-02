@@ -17,13 +17,13 @@ use crate::domain::{
     teammate_dms::{TeammateDirectMessages, TeammateDmError, ensure_joined_member_dms},
 };
 use anyhow::Context as _;
-use kafka_util::{GroupName, KafkaEventConsumer};
 use conation_event_broker::{
     Event, KafkaConsumerAdapter, MacroEvent, MacroEventCollection as _, MacroEventConsumerService,
     TopicEvent,
 };
 use conation_event_topics::MacroTeamsTopic;
 use conation_user_id::user_id::MacroUserIdStr;
+use kafka_util::{GroupName, KafkaEventConsumer};
 use rdkafka::consumer::CommitMode;
 use rdkafka::message::{BorrowedMessage, Message};
 use serde::{Deserialize, Serialize};

@@ -10,26 +10,26 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 /// Process attachments for a single macro ID
-pub async fn process_conation_id(
+pub async fn process_macro_id(
     config: &config::Config,
     db_pool: &sqlx::PgPool,
     dss_client: &document_storage_service_client::DocumentStorageServiceClient,
     email_api_repository: &GmailApiClientRepository,
-    conation_id: &str,
+    macro_id: &str,
 ) -> anyhow::Result<(usize, usize)> {
     // Get fresh Gmail access token for this macro ID
-    let gmail_access_token = auth::get_gmail_access_token(config, conation_id).await?;
-    println!("Successfully obtained Gmail access token for {}", conation_id);
+    let gmail_access_token = auth::get_gmail_access_token(config, macro_id).await?;
+    println!("Successfully obtained Gmail access token for {}", macro_id);
 
     // Fetch the link associated with the user's account.
-    let link = email_db_client::links::get::fetch_link_by_conation_id(db_pool, conation_id)
+    let link = email_db_client::links::get::fetch_link_by_macro_id(db_pool, macro_id)
         .await?
-        .ok_or_else(|| anyhow::anyhow!("No link found for macro ID: {}", conation_id))?;
+        .ok_or_else(|| anyhow::anyhow!("No link found for macro ID: {}", macro_id))?;
 
     // Fetch all relevant attachment metadata from the database.
     println!(
         "Fetching unique attachment metadata from database for {}...",
-        conation_id
+        macro_id
     );
     let attachments = database::fetch_unique_attachments(db_pool, link.id)
         .await
@@ -37,7 +37,7 @@ pub async fn process_conation_id(
     println!(
         "Found {} unique attachments to process for {}.",
         attachments.len(),
-        conation_id
+        macro_id
     );
 
     if attachments.is_empty() {
@@ -54,43 +54,43 @@ pub async fn process_conation_id(
         db_pool.clone(),
         dss_client.clone(),
         email_api,
-        conation_id.to_string(),
+        macro_id.to_string(),
     ));
 
     let success_count = Arc::new(AtomicUsize::new(0));
     let total_attachments = attachments.len();
 
-    println!("Starting concurrent upload process for {}...", conation_id);
+    println!("Starting concurrent upload process for {}...", macro_id);
 
     stream::iter(attachments.into_iter().enumerate())
         .for_each_concurrent(config.upload_concurrency, |(index, attachment)| {
             let processor: Arc<AttachmentProcessor> = Arc::clone(&processor);
             let success_count = Arc::clone(&success_count);
-            let conation_id = conation_id.to_string();
+            let macro_id = macro_id.to_string();
             let link = link.clone();
 
             async move {
                 match processor.upload(&link, &attachment).await {
                     Ok(_) => {
                         success_count.fetch_add(1, Ordering::Relaxed);
-                        println!("Successfully uploaded '{}' (index: {}) for {}", attachment.filename.unwrap_or("N/A".to_string()), index, conation_id);
+                        println!("Successfully uploaded '{}' (index: {}) for {}", attachment.filename.unwrap_or("N/A".to_string()), index, macro_id);
                     }
                     Err(e) => {
                         // ignore weird file types. annoying game of whack a mole
                         if e.to_string().contains("file extension") {
                             println!(
                                 "Skipping '{}' (index: {}) for {} due to unsupported mime type {}",
-                                attachment.filename.unwrap_or("N/A".to_string()), index, conation_id, attachment.mime_type
+                                attachment.filename.unwrap_or("N/A".to_string()), index, macro_id, attachment.mime_type
                             );
                             return;
                         }
                         panic!(
-                            "Failed to upload attachment - filename: {}, provider_attachment_id: {}, provider_message_id: {}, index: {}, conation_id: {}, error: {:?}",
+                            "Failed to upload attachment - filename: {}, provider_attachment_id: {}, provider_message_id: {}, index: {}, macro_id: {}, error: {:?}",
                             attachment.filename.unwrap_or("N/A".to_string()),
                             attachment.provider_attachment_id,
                             attachment.email_provider_id,
                             index,
-                            conation_id,
+                            macro_id,
                             e
                         );
                     }

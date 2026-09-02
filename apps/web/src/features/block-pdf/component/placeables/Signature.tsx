@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import {
   activePlaceableIdSignal,
   newPlaceableSignal,
@@ -185,7 +186,7 @@ export function Signature(props: SignatureProps) {
         {(base64) => (
           <img
             class="size-full"
-            alt="signature"
+            alt={t('pdf.markup.signatureAlt')}
             draggable={false}
             src={base64()}
           />

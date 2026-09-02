@@ -23,6 +23,23 @@ pub struct CreateAccountMergeRequest {
 }
 
 static MERGE_REQUEST_TEMPLATE: &str = include_str!("./_merge_request_template.html");
+const MERGE_REQUEST_SUBJECT: &str = "Conation Account Merge Request";
+
+#[cfg(test)]
+mod test;
+
+fn render_merge_request_email(
+    requesting_email: &str,
+    code: &str,
+    app_url: &str,
+    support_email: &str,
+) -> String {
+    MERGE_REQUEST_TEMPLATE
+        .replace("{{APP_URL}}", app_url)
+        .replace("{{SUPPORT_EMAIL}}", support_email)
+        .replace("{{CODE}}", code)
+        .replace("{{EMAIL}}", requesting_email)
+}
 
 /// Creates a merge request used to verify the user's email address in order to merge their
 /// accounts.
@@ -96,9 +113,9 @@ pub async fn handler(
         return Err((StatusCode::TOO_MANY_REQUESTS, "daily rate limit exceeded").into_response());
     }
 
-    // get the user's conation_user_id through their email
-    let to_merge_conation_user_id =
-        conation_db_client::user::get::get_user_conation_id_by_email(&ctx.db, &req.email)
+    // get the user's macro_user_id through their email
+    let to_merge_macro_user_id =
+        conation_db_client::user::get::get_user_macro_id_by_email(&ctx.db, &req.email)
             .await
             .map_err(|e| {
                 tracing::error!(error=?e, "failed to get user macro id");
@@ -115,7 +132,7 @@ pub async fn handler(
     let code = conation_db_client::account_merge_request::create_account_merge_request(
         &ctx.db,
         &user_context.fusion_user_id,
-        &to_merge_conation_user_id,
+        &to_merge_macro_user_id,
     )
     .await
     .map_err(|e| {
@@ -129,30 +146,34 @@ pub async fn handler(
             .into_response()
     })?;
 
-    let user_profile = conation_db_client::user::get::get_user_profile(&ctx.db, &user_context.user_id)
-        .await
-        .map_err(|e| {
-            tracing::error!(error=?e, "failed to get user profile");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse {
-                    message: "failed to get user profile".into(),
-                }),
-            )
-                .into_response()
-        })?;
+    let user_profile =
+        conation_db_client::user::get::get_user_profile(&ctx.db, &user_context.user_id)
+            .await
+            .map_err(|e| {
+                tracing::error!(error=?e, "failed to get user profile");
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse {
+                        message: "failed to get user profile".into(),
+                    }),
+                )
+                    .into_response()
+            })?;
 
-    let content = MERGE_REQUEST_TEMPLATE
-        .replace("{{EMAIL}}", &user_profile.email)
-        .replace("{{CODE}}", &code);
+    let content = render_merge_request_email(
+        &user_profile.email,
+        &code,
+        ctx.app_base_url.as_str(),
+        &ctx.mail_identity.support_email,
+    );
 
     if let Err(e) = ctx
         .ses_client
         .send_email(
-            "auth@macro.com",        // from email
-            &req.email,              // to email
-            "Account Merge Request", // subject
-            &content,                // content
+            &ctx.mail_identity.auth_sender_email,
+            &req.email,
+            MERGE_REQUEST_SUBJECT,
+            &content,
         )
         .await
     {

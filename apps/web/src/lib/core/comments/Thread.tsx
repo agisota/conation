@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { StaticMarkdownContext } from '@core/component/LexicalMarkdown/component/core/StaticMarkdown';
 import { createTheme } from '@core/component/LexicalMarkdown/theme';
 import type { UserMentionRecord } from '@core/component/LexicalMarkdown/utils/mentionsUtils';
@@ -253,7 +254,9 @@ export function Thread(props: {
                             });
                           }}
                         >
-                          {`Show ${collapsedCount()} ${collapsedCount() > 1 ? 'replies' : 'reply'}`}
+                          {t('comments.thread.showReplies', {
+                            count: collapsedCount(),
+                          })}
                         </button>
                       </Show>
                     </Show>

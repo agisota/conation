@@ -62,7 +62,7 @@ mod tests {
 
     #[sqlx::test(fixtures(path = "../../fixtures", scripts("basic_user_with_lots_of_documents")))]
     async fn test_get_document_search(pool: Pool<Postgres>) {
-        let documents = get_document_list(pool.clone(), &"macro|user@user.com")
+        let documents = get_document_list(pool.clone(), &"conation|user@user.com")
             .await
             .unwrap();
 

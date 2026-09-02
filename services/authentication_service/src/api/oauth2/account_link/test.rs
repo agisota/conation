@@ -7,7 +7,7 @@ use super::build_callback_redirect;
 #[test]
 fn callback_redirect_appends_link_identifiers_and_preserves_query_parameters() {
     let link_id = Uuid::parse_str("694d20f7-ff85-46fd-b17d-5f68ff2d3707").unwrap();
-    let original_url = urlencoding::encode("https://app.macro.com/inbox?view=shared&sort=newest");
+    let original_url = urlencoding::encode("https://conation.dev/inbox?view=shared&sort=newest");
 
     let response = build_callback_redirect(&original_url, &link_id).unwrap();
     let redirect_url = Url::parse(response.headers()[LOCATION].to_str().unwrap()).unwrap();
@@ -29,7 +29,7 @@ fn callback_redirect_appends_link_identifiers_and_preserves_query_parameters() {
 fn callback_redirect_replaces_stale_link_identifiers() {
     let link_id = Uuid::parse_str("694d20f7-ff85-46fd-b17d-5f68ff2d3707").unwrap();
     let original_url = urlencoding::encode(
-        "https://app.macro.com/inbox?link_id=stale-link&view=shared&token=stale-token",
+        "https://conation.dev/inbox?link_id=stale-link&view=shared&token=stale-token",
     );
 
     let response = build_callback_redirect(&original_url, &link_id).unwrap();

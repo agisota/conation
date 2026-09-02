@@ -98,7 +98,7 @@ export const authExcluded = [
 ];
 
 export const authBacklog = [
-  'macroApiToken',
+  'conationApiToken',
 ] as const satisfies readonly (keyof AuthSdk)[];
 
 export const cognitionExcluded = [

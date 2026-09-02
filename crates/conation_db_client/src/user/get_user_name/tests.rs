@@ -20,23 +20,23 @@ fn parse_user_ids(
 #[sqlx::test(fixtures(path = "../../../fixtures", scripts("user_names_with_email")))]
 async fn test_get_user_names_with_email_basic(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let user_profile_ids = parse_user_ids(vec![
-        "macro|user_profile_1@macro.com",
-        "macro|user_profile_2@macro.com",
+        "conation|user_profile_1@macro.com",
+        "conation|user_profile_2@macro.com",
     ])?;
 
     let mut names =
-        get_user_names_with_email(&pool, "macro|user_profile_1@macro.com", user_profile_ids)
+        get_user_names_with_email(&pool, "conation|user_profile_1@macro.com", user_profile_ids)
             .await?;
     names.sort_by(|a, b| a.id.cmp(&b.id));
 
     assert_eq!(names.len(), 2);
 
-    // Sorted: macro|user_profile_1@macro.com, macro|user_profile_2@macro.com
-    assert_eq!(names[0].id, "macro|user_profile_1@macro.com");
+    // Sorted: conation|user_profile_1@macro.com, conation|user_profile_2@macro.com
+    assert_eq!(names[0].id, "conation|user_profile_1@macro.com");
     assert_eq!(names[0].first_name, Some("JohnMacroContact".to_string()));
     assert_eq!(names[0].last_name, Some("DoeMacroContact".to_string()));
 
-    assert_eq!(names[1].id, "macro|user_profile_2@macro.com");
+    assert_eq!(names[1].id, "conation|user_profile_2@macro.com");
     assert_eq!(names[1].first_name, Some("JaneMacroContact".to_string()));
     assert_eq!(names[1].last_name, Some("SmithMacroContact".to_string()));
 
@@ -48,14 +48,14 @@ async fn test_get_user_names_with_email_fallback_to_contact(
     pool: Pool<Postgres>,
 ) -> anyhow::Result<()> {
     // User with N/A name should fall back to email contact name
-    let user_profile_ids = parse_user_ids(vec!["macro|user_profile_3@macro.com"])?;
+    let user_profile_ids = parse_user_ids(vec!["conation|user_profile_3@macro.com"])?;
 
     let names =
-        get_user_names_with_email(&pool, "macro|user_profile_1@macro.com", user_profile_ids)
+        get_user_names_with_email(&pool, "conation|user_profile_1@macro.com", user_profile_ids)
             .await?;
 
     assert_eq!(names.len(), 1);
-    assert_eq!(names[0].id, "macro|user_profile_3@macro.com");
+    assert_eq!(names[0].id, "conation|user_profile_3@macro.com");
     assert_eq!(names[0].first_name, Some("BobEmailContact".to_string()));
     assert_eq!(names[0].last_name, Some("JohnsonEmailContact".to_string()));
 
@@ -65,14 +65,14 @@ async fn test_get_user_names_with_email_fallback_to_contact(
 #[sqlx::test(fixtures(path = "../../../fixtures", scripts("user_names_with_email")))]
 async fn test_get_user_names_with_email_contact_only(pool: Pool<Postgres>) -> anyhow::Result<()> {
     // User not in User table, only in email_contacts
-    let user_profile_ids = parse_user_ids(vec!["macro|contact@example.com"])?;
+    let user_profile_ids = parse_user_ids(vec!["conation|contact@example.com"])?;
 
     let names =
-        get_user_names_with_email(&pool, "macro|user_profile_1@macro.com", user_profile_ids)
+        get_user_names_with_email(&pool, "conation|user_profile_1@macro.com", user_profile_ids)
             .await?;
 
     assert_eq!(names.len(), 1);
-    assert_eq!(names[0].id, "macro|contact@example.com");
+    assert_eq!(names[0].id, "conation|contact@example.com");
     assert_eq!(names[0].first_name, Some("AliceEmailContact".to_string()));
     assert_eq!(names[0].last_name, Some("WilliamsEmailContact".to_string()));
 
@@ -83,28 +83,29 @@ async fn test_get_user_names_with_email_contact_only(pool: Pool<Postgres>) -> an
 async fn test_get_user_names_with_email_mixed(pool: Pool<Postgres>) -> anyhow::Result<()> {
     // Mix of users with names, N/A fallback, and contact-only
     let user_profile_ids = parse_user_ids(vec![
-        "macro|user_profile_1@macro.com",
-        "macro|user_profile_3@macro.com",
-        "macro|contact@example.com",
+        "conation|user_profile_1@macro.com",
+        "conation|user_profile_3@macro.com",
+        "conation|contact@example.com",
     ])?;
 
     let mut names =
-        get_user_names_with_email(&pool, "macro|user_profile_1@macro.com", user_profile_ids)
+        get_user_names_with_email(&pool, "conation|user_profile_1@macro.com", user_profile_ids)
             .await?;
     names.sort_by(|a, b| a.id.cmp(&b.id));
 
     assert_eq!(names.len(), 3);
 
-    // Sorted: macro|contact@example.com, macro|user_profile_1@macro.com, macro|user_profile_3@macro.com
-    assert_eq!(names[0].id, "macro|contact@example.com");
+    // Sorted: conation|contact@example.com, conation|user_profile_1@macro.com,
+    // conation|user_profile_3@macro.com
+    assert_eq!(names[0].id, "conation|contact@example.com");
     assert_eq!(names[0].first_name, Some("AliceEmailContact".to_string()));
     assert_eq!(names[0].last_name, Some("WilliamsEmailContact".to_string()));
 
-    assert_eq!(names[1].id, "macro|user_profile_1@macro.com");
+    assert_eq!(names[1].id, "conation|user_profile_1@macro.com");
     assert_eq!(names[1].first_name, Some("JohnMacroContact".to_string()));
     assert_eq!(names[1].last_name, Some("DoeMacroContact".to_string()));
 
-    assert_eq!(names[2].id, "macro|user_profile_3@macro.com");
+    assert_eq!(names[2].id, "conation|user_profile_3@macro.com");
     assert_eq!(names[2].first_name, Some("BobEmailContact".to_string()));
     assert_eq!(names[2].last_name, Some("JohnsonEmailContact".to_string()));
 
@@ -113,10 +114,10 @@ async fn test_get_user_names_with_email_mixed(pool: Pool<Postgres>) -> anyhow::R
 
 #[sqlx::test(fixtures(path = "../../../fixtures", scripts("user_names_with_email")))]
 async fn test_get_user_names_with_email_not_found(pool: Pool<Postgres>) -> anyhow::Result<()> {
-    let user_profile_ids = parse_user_ids(vec!["macro|nonexistent@example.com"])?;
+    let user_profile_ids = parse_user_ids(vec!["conation|nonexistent@example.com"])?;
 
     let names =
-        get_user_names_with_email(&pool, "macro|user_profile_1@macro.com", user_profile_ids)
+        get_user_names_with_email(&pool, "conation|user_profile_1@macro.com", user_profile_ids)
             .await?;
 
     // Should return empty list for users that don't exist
@@ -128,16 +129,16 @@ async fn test_get_user_names_with_email_not_found(pool: Pool<Postgres>) -> anyho
 #[sqlx::test(fixtures(path = "../../../fixtures", scripts("user_names_with_email")))]
 async fn deduplicates_requested_user_ids(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let user_profile_ids = parse_user_ids(vec![
-        "macro|user_profile_1@macro.com",
-        "macro|user_profile_1@macro.com",
+        "conation|user_profile_1@macro.com",
+        "conation|user_profile_1@macro.com",
     ])?;
 
     let names =
-        get_user_names_with_email(&pool, "macro|user_profile_1@macro.com", user_profile_ids)
+        get_user_names_with_email(&pool, "conation|user_profile_1@macro.com", user_profile_ids)
             .await?;
 
     assert_eq!(names.len(), 1);
-    assert_eq!(names[0].id, "macro|user_profile_1@macro.com");
+    assert_eq!(names[0].id, "conation|user_profile_1@macro.com");
 
     Ok(())
 }
@@ -149,25 +150,25 @@ async fn uses_conation_names_if_either_first_or_last_present(
     pool: Pool<Postgres>,
 ) -> anyhow::Result<()> {
     let user_profile_ids = parse_user_ids(vec![
-        "macro|user_profile_4@macro.com",
-        "macro|user_profile_5@macro.com",
+        "conation|user_profile_4@macro.com",
+        "conation|user_profile_5@macro.com",
     ])?;
 
     let mut names =
-        get_user_names_with_email(&pool, "macro|user_profile_1@macro.com", user_profile_ids)
+        get_user_names_with_email(&pool, "conation|user_profile_1@macro.com", user_profile_ids)
             .await?;
     names.sort_by(|a, b| a.id.cmp(&b.id));
 
     let u4 = names
         .iter()
-        .find(|n| n.id == "macro|user_profile_4@macro.com")
+        .find(|n| n.id == "conation|user_profile_4@macro.com")
         .expect("user_profile_4 should be returned");
     assert_eq!(u4.first_name.as_deref(), Some("OnlyFirstMacro"));
     assert_eq!(u4.last_name.as_deref(), None);
 
     let u5 = names
         .iter()
-        .find(|n| n.id == "macro|user_profile_5@macro.com")
+        .find(|n| n.id == "conation|user_profile_5@macro.com")
         .expect("user_profile_5 should be returned");
     assert_eq!(u5.first_name.as_deref(), None);
     assert_eq!(u5.last_name.as_deref(), Some("OnlyLastMacro"));
@@ -177,7 +178,7 @@ async fn uses_conation_names_if_either_first_or_last_present(
 
 #[sqlx::test]
 async fn test_get_user_name_without_info_row(pool: Pool<Postgres>) -> anyhow::Result<()> {
-    // The conation_user_info row is created lazily by the first name write, so a
+    // The macro_user_info row is created lazily by the first name write, so a
     // brand-new user has none — the lookup must report "no name yet", not
     // error.
     let user_id = "00000000-0000-0000-0000-000000000042";

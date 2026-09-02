@@ -5,7 +5,7 @@ use rmcp::service::RunningService;
 pub use conation_user_id::user_id::MacroUserIdStr;
 
 /// Our MCP client publishes this name to servers on-connect.
-pub const MCP_CLIENT_NAME: &str = "Macro";
+pub const MCP_CLIENT_NAME: &str = "Conation";
 
 /// A connected MCP server session.
 pub type McpServer = RunningService<RoleClient, ClientInfo>;

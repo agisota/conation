@@ -6,8 +6,10 @@ use axum::{
     http::{StatusCode, uri::PathAndQuery},
     response::Html,
 };
-use conation_authorization::{MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal};
-use conation_service_urls::NotificationServiceUrl;
+use conation_authorization::{
+    MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal,
+};
+use conation_service_urls::{NotificationServiceUrl, Url};
 use conation_user_id::user_id::MacroUserIdStr;
 use model_error_response::ErrorResponse;
 use serde::{Deserialize, Serialize};
@@ -52,7 +54,7 @@ pub async fn get_notification_type_preferences<
 {
     let disabled = state
         .inner
-        .get_disabled_notification_types(user.authorization.user.conation_user_id)
+        .get_disabled_notification_types(user.authorization.user.macro_user_id)
         .await
         .map_err(|e| {
             tracing::error!(error=?e, "failed to get notification type preferences");
@@ -96,7 +98,7 @@ pub async fn disable_notification_type<S: NotificationReader, Auth: MacroAuthori
 ) -> Result<Json<()>, (StatusCode, Json<ErrorResponse<'static>>)> {
     disable_notification_type_inner(
         &state,
-        user.authorization.user.conation_user_id,
+        user.authorization.user.macro_user_id,
         notification_event_type.as_str(),
     )
     .await
@@ -107,6 +109,23 @@ pub async fn disable_notification_type<S: NotificationReader, Auth: MacroAuthori
 #[derive(Deserialize)]
 pub struct PresignedQueryParams {
     id: MacroUserIdStr<'static>,
+}
+
+/// Reconstruct the public URL used to create a signed preferences link.
+///
+/// The notification service may be mounted below a reverse-proxy path prefix.
+/// Treating the incoming request path as relative preserves that prefix, so the
+/// verifier uses the exact URL that the digest renderer signed.
+pub(super) fn signed_request_url(
+    mut notification_service_url: Url,
+    path_and_query: &str,
+) -> Result<Url, ()> {
+    if !notification_service_url.path().ends_with('/') {
+        notification_service_url.path_segments_mut()?.push("");
+    }
+    notification_service_url
+        .join(path_and_query.trim_start_matches('/'))
+        .map_err(|_| ())
 }
 
 /// Disable a notification type for the authenticated user via a GET request with a presigned url.
@@ -136,12 +155,11 @@ pub async fn presigned_disable_notification_type<
             Html("Invalid link".to_string()),
         )
     })?;
-    let to_verify = notification_service_url.join(
-        original_uri
-            .path_and_query()
-            .map(PathAndQuery::as_str)
-            .unwrap_or("/"),
-    );
+    let path_and_query = original_uri
+        .path_and_query()
+        .map(PathAndQuery::as_str)
+        .unwrap_or("/");
+    let to_verify = signed_request_url(notification_service_url, path_and_query);
 
     let Ok(to_verify) = to_verify else {
         return Err((StatusCode::BAD_REQUEST, Html("Invalid link".to_string())));
@@ -158,7 +176,7 @@ pub async fn presigned_disable_notification_type<
         .await
         .map(|()| {
             Html(format!(
-                "You have been unsubscribed from {notification_event_type}"
+                "Вы отписались от уведомлений типа {notification_event_type}"
             ))
         })
         .map_err(|(status, Json(ErrorResponse { message }))| (status, Html(message.to_string())))
@@ -228,7 +246,7 @@ pub async fn enable_notification_type<S: NotificationReader, Auth: MacroAuthoriz
     state
         .inner
         .enable_notification_type(
-            user.authorization.user.conation_user_id,
+            user.authorization.user.macro_user_id,
             &notification_event_type,
         )
         .await

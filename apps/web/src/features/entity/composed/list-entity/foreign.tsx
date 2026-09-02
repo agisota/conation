@@ -1,5 +1,5 @@
+import { formatNumber, t } from '@app/lib/i18n';
 import { Popover } from '@kobalte/core/popover';
-import { t } from '@app/lib/i18n';
 import ArrowSquareOut from '@phosphor/arrow-square-out.svg';
 import ChatCircle from '@phosphor/chat-circle.svg';
 import Check from '@phosphor/check.svg';
@@ -37,8 +37,6 @@ function Pill(props: PillProps) {
     </span>
   );
 }
-
-const numberFormatter = new Intl.NumberFormat();
 
 function checkFailed(conclusion: string | null | undefined): boolean {
   return (
@@ -92,16 +90,18 @@ function checkCounts(entity: GithubPullRequestEntity): CheckCounts {
 }
 
 function checkOverviewTitle(counts: CheckCounts) {
-  if (counts.total === 0) return 'No checks';
+  if (counts.total === 0) return t('entity.github.checks.overview.none');
 
   if (counts.failed > 0) {
     return counts.failed === counts.total
-      ? 'All checks failed'
-      : 'Some checks failed';
+      ? t('entity.github.checks.overview.allFailed')
+      : t('entity.github.checks.overview.someFailed');
   }
-  if (counts.pending > 0) return 'Checks pending';
-  if (counts.successful === counts.total) return 'All checks succeeded';
-  return 'Checks completed';
+  if (counts.pending > 0) return t('entity.github.checks.overview.pending');
+  if (counts.successful === counts.total) {
+    return t('entity.github.checks.overview.allSucceeded');
+  }
+  return t('entity.github.checks.overview.completed');
 }
 
 function checkOverviewTitleClass(state: CheckVisualState): string {
@@ -121,22 +121,22 @@ function showCheckCountSummary(counts: CheckCounts) {
   return counts.failed > 0 || counts.pending > 0;
 }
 
-const CHECK_RUN_STATE_LABELS: Record<string, string> = {
-  action_required: 'Action required',
-  cancelled: 'Cancelled',
-  completed: 'Completed',
-  failure: 'Failed',
-  in_progress: 'In progress',
-  neutral: 'Neutral',
-  pending: 'Pending',
-  queued: 'Queued',
-  requested: 'Requested',
-  skipped: 'Skipped',
-  stale: 'Stale',
-  startup_failure: 'Startup failure',
-  success: 'Success',
-  timed_out: 'Timed out',
-  waiting: 'Waiting',
+const CHECK_RUN_STATE_KEYS: Record<string, string> = {
+  action_required: 'entity.github.checks.state.actionRequired',
+  cancelled: 'entity.github.checks.state.cancelled',
+  completed: 'entity.github.checks.state.completed',
+  failure: 'entity.github.checks.state.failed',
+  in_progress: 'entity.github.checks.state.inProgress',
+  neutral: 'entity.github.checks.state.neutral',
+  pending: 'entity.github.checks.state.pending',
+  queued: 'entity.github.checks.state.queued',
+  requested: 'entity.github.checks.state.requested',
+  skipped: 'entity.github.checks.state.skipped',
+  stale: 'entity.github.checks.state.stale',
+  startup_failure: 'entity.github.checks.state.startupFailure',
+  success: 'entity.github.checks.state.success',
+  timed_out: 'entity.github.checks.state.timedOut',
+  waiting: 'entity.github.checks.state.waiting',
 };
 
 type CheckVisualState = 'success' | 'failure' | 'pending' | 'skipped' | 'none';
@@ -170,7 +170,8 @@ function checkStatusText(
   check: GithubPullRequestEntity['metadata']['checks'][number]
 ) {
   const state = check.conclusion ?? check.status;
-  return CHECK_RUN_STATE_LABELS[state] ?? state.replaceAll('_', ' ');
+  const key = CHECK_RUN_STATE_KEYS[state];
+  return key ? t(key) : state.replaceAll('_', ' ');
 }
 
 function formatDuration(milliseconds: number): string | undefined {
@@ -181,11 +182,18 @@ function formatDuration(milliseconds: number): string | undefined {
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
 
-  if (hours > 0) return `${hours}h ${minutes}m`;
+  if (hours > 0) {
+    return t('entity.github.checks.duration.hoursMinutes', { hours, minutes });
+  }
 
-  if (minutes > 0) return `${minutes}m ${seconds}s`;
+  if (minutes > 0) {
+    return t('entity.github.checks.duration.minutesSeconds', {
+      minutes,
+      seconds,
+    });
+  }
 
-  return `${seconds}s`;
+  return t('entity.github.checks.duration.seconds', { seconds });
 }
 
 function checkDurationText(
@@ -298,9 +306,21 @@ function GithubPullRequestChecksPopover(props: {
           </div>
           <Show when={showCheckCountSummary(counts())}>
             <div class="flex items-center gap-2 text-xs text-ink-extra-muted tabular-nums">
-              <span>{counts().successful} succeeded</span>
-              <span>{counts().failed} failed</span>
-              <span>{counts().skipped} skipped</span>
+              <span>
+                {t('entity.github.checks.summary.succeeded', {
+                  count: counts().successful,
+                })}
+              </span>
+              <span>
+                {t('entity.github.checks.summary.failed', {
+                  count: counts().failed,
+                })}
+              </span>
+              <span>
+                {t('entity.github.checks.summary.skipped', {
+                  count: counts().skipped,
+                })}
+              </span>
             </div>
           </Show>
         </div>
@@ -312,9 +332,11 @@ function GithubPullRequestChecksPopover(props: {
             <div class="flex flex-col items-center gap-2 px-4 py-6 text-center">
               <CircleDashed class="size-6 text-ink-extra-muted" />
               <div class="flex flex-col gap-1">
-                <div class="text-sm font-medium text-ink">{t('auto.no_checks_yet')}</div>
+                <div class="text-sm font-medium text-ink">
+                  {t('entity.github.checks.empty.title')}
+                </div>
                 <div class="max-w-56 text-xs text-ink-extra-muted">
-                  GitHub has not reported any check runs for this pull request.
+                  {t('entity.github.checks.empty.description')}
                 </div>
               </div>
             </div>
@@ -355,8 +377,8 @@ function GithubPullRequestChecksPopover(props: {
                           class="w-[7ch] shrink-0 text-right tabular-nums text-ink-extra-muted/70"
                           title={
                             check.status === 'completed'
-                              ? 'Duration'
-                              : 'Elapsed'
+                              ? t('entity.github.checks.duration.title')
+                              : t('entity.github.checks.elapsed.title')
                           }
                         >
                           {duration()}
@@ -434,7 +456,7 @@ export function GithubPullRequestPills(props: {
             largestChanges() === 'additions' && 'font-semibold'
           )}
         >
-          +{numberFormatter.format(additions())}
+          +{formatNumber(additions())}
         </span>
         <span
           class={cn(
@@ -442,12 +464,12 @@ export function GithubPullRequestPills(props: {
             largestChanges() === 'deletions' && 'font-semibold'
           )}
         >
-          −{numberFormatter.format(deletions())}
+          −{formatNumber(deletions())}
         </span>
       </Pill>
       <Pill class="text-ink-muted tabular-nums">
         <ChatCircle class="size-3 shrink-0" />
-        {numberFormatter.format(props.entity.metadata.comments.length)}
+        {formatNumber(props.entity.metadata.comments.length)}
       </Pill>
     </>
   );

@@ -1,4 +1,6 @@
-#![recursion_limit = "256"]
+// Shared implementation included by the historical AWS and standalone/local
+// binary entrypoints. Their crate-level recursion attributes live in the thin
+// wrappers because inner attributes cannot be carried through `include!`.
 use std::{sync::Arc, time::Duration};
 
 use ai_tools::build_tool_service_context_from_env;

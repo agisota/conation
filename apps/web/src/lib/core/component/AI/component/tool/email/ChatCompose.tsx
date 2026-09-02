@@ -247,12 +247,15 @@ export function ComposeTool(props: ComposeToolProps) {
     if (recipients().to.length === 0) {
       errors.push({
         type: 'no_recipient',
-        message: 'Add at least one recipient',
+        message: t('ai.tools.email.validation.recipientRequired'),
       });
     }
 
     if (!prepareEmailBody(editor())?.bodyText.trim()) {
-      errors.push({ type: 'no_message', message: 'Write a message' });
+      errors.push({
+        type: 'no_message',
+        message: t('ai.tools.email.validation.messageRequired'),
+      });
     }
 
     setValidationErrors(errors);
@@ -285,7 +288,7 @@ export function ComposeTool(props: ComposeToolProps) {
       });
 
     if (updateCallResult.isErr()) {
-      toast.failure('Failed to save changes');
+      toast.failure(t('ai.tools.email.saveFailed'));
       return;
     }
 
@@ -298,7 +301,7 @@ export function ComposeTool(props: ComposeToolProps) {
       });
 
     if (updateResponseResult.isErr()) {
-      toast.failure('Failed to save changes');
+      toast.failure(t('ai.tools.email.saveFailed'));
       return;
     }
 
@@ -323,7 +326,7 @@ export function ComposeTool(props: ComposeToolProps) {
     setIsSending(false);
 
     if (result.isErr()) {
-      toast.failure('Failed to send email');
+      toast.failure(t('ai.tools.email.sendFailed'));
       return;
     }
 
@@ -352,7 +355,7 @@ export function ComposeTool(props: ComposeToolProps) {
       );
     }
 
-    toast.success('Email sent');
+    toast.success(t('ai.tools.email.sent'));
   }
 
   // `body` is markdown while the AI is drafting, but every persist path
@@ -438,7 +441,9 @@ export function ComposeTool(props: ComposeToolProps) {
           )}
           header={
             showOwnerDisabledMessage() ? (
-              <div class="text-xs text-ink-extra-muted/60">{t('auto.only_the_chat_owner_can_send_o')}</div>
+              <div class="text-xs text-ink-extra-muted/60">
+                {t('ai.tools.email.ownerOnly')}
+              </div>
             ) : (
               props.header
             )

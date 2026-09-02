@@ -1,5 +1,5 @@
+import { formatDateTime, t } from '@app/lib/i18n';
 import { DatePickerUI } from '@core/component/DatePicker/DatePickerUI';
-import { t } from '@app/lib/i18n';
 import { useDateSearch } from '@core/util/dateSearch/useDateSearch';
 import {
   Combobox,
@@ -220,7 +220,9 @@ export const DateSelector = (props: DateSelectorProps) => {
   };
 
   const getOptionTextValue = (option: DateSelectorOption) => {
-    if (option.type === 'select-custom') return 'Custom date';
+    if (option.type === 'select-custom') {
+      return t('blockEmail.dateSelector.customDate');
+    }
 
     return option.type === 'option' ? option.displayText : '';
   };
@@ -278,7 +280,7 @@ export const DateSelector = (props: DateSelectorProps) => {
       onInputChange={onInputChange}
       allowsEmptyCollection
       placement="bottom-start"
-      placeholder={props.placeholder ?? 'Select date'}
+      placeholder={props.placeholder ?? t('blockEmail.dateSelector.selectDate')}
       closeOnSelection={false}
       // Filtering is done by `useDateSearch`
       defaultFilter={() => true}
@@ -345,11 +347,15 @@ export const DateSelector = (props: DateSelectorProps) => {
                   <Show
                     when={searchQuery().trim()}
                     fallback={
-                      <div class="text-center py-2 text-ink-muted text-sm">{t('auto.enter_a_date_or_duration')}</div>
+                      <div class="text-center py-2 text-ink-muted text-sm">
+                        {t('blockEmail.dateSelector.prompt')}
+                      </div>
                     }
                   >
                     <div class="text-center py-2 text-ink-muted text-sm">
-                      No dates match "{searchQuery()}"
+                      {t('blockEmail.dateSelector.noMatches', {
+                        query: searchQuery(),
+                      })}
                     </div>
                   </Show>
                 </Show>
@@ -358,7 +364,9 @@ export const DateSelector = (props: DateSelectorProps) => {
             </div>
             <Show when={props.withTime}>
               <div class="px-2 py-1.5 border-t border-edge-muted">
-                <label class="flex items-center justify-between text-sm">{t('auto.time')}<input
+                <label class="flex items-center justify-between text-sm">
+                  {t('blockEmail.dateSelector.time')}
+                  <input
                     type="time"
                     value={
                       selectedDate()
@@ -372,10 +380,11 @@ export const DateSelector = (props: DateSelectorProps) => {
             </Show>
             <div class="px-2 py-1.5 border-t border-edge-muted">
               <div class="text-xs text-ink-muted">
-                <span>{t('auto.use_queries_like')}</span>
+                <span>{t('blockEmail.dateSelector.examples')}</span>
                 <code class="bg-active px-1">3d</code>,{' '}
                 <code class="bg-active px-1">1w</code>,{' '}
-                <code class="bg-active px-1">feb 17</code>, or{' '}
+                <code class="bg-active px-1">feb 17</code>,{' '}
+                {t('blockEmail.dateSelector.or')}{' '}
                 <code class="bg-active px-1">tomorrow</code>
               </div>
             </div>
@@ -395,9 +404,15 @@ const CurrentValueDisplay = (props: CurrentValueDisplayProps) => {
   const currentDateDisplay = createMemo(() => {
     if (props.selectedOption.type === 'select-custom') return '';
     try {
-      return format(props.selectedOption.date, "MMMM d, yyyy 'at' h:mm a");
+      return formatDateTime(props.selectedOption.date, {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      });
     } catch {
-      return 'Invalid date';
+      return t('blockEmail.dateSelector.invalid');
     }
   });
 
@@ -405,14 +420,18 @@ const CurrentValueDisplay = (props: CurrentValueDisplayProps) => {
     <div class="px-3 py-2 border-b border-edge-muted">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <span class="text-xs text-ink-muted">Current:</span>
+          <span class="text-xs text-ink-muted">
+            {t('blockEmail.dateSelector.current')}:
+          </span>
           <span class="text-xs font-medium">{currentDateDisplay()}</span>
         </div>
         <button
           onPointerDown={(e: PointerEvent) => e.preventDefault()}
           onClick={props.onClear}
           class="text-xs text-ink-muted hover:text-ink underline"
-        >{t('auto.clear')}</button>
+        >
+          {t('blockEmail.dateSelector.clear')}
+        </button>
       </div>
     </div>
   );
@@ -450,14 +469,14 @@ const DateSelectorItem: Component<
 
     if (item.type === 'option') return item.displayText;
 
-    return 'Custom date...';
+    return t('blockEmail.dateSelector.customDateEllipsis');
   };
 
   const description = () => {
     const item = props.item.rawValue;
 
     if (item.type === 'option') return item.secondaryText;
-    return 'Pick from calendar';
+    return t('blockEmail.dateSelector.pickFromCalendar');
   };
 
   const item = () => (

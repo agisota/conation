@@ -1,5 +1,5 @@
-import MagnifyingGlassIcon from '@phosphor/magnifying-glass.svg';
 import { t } from '@app/lib/i18n';
+import MagnifyingGlassIcon from '@phosphor/magnifying-glass.svg';
 
 export function ParticipantsSearchInput(props: {
   value: string;

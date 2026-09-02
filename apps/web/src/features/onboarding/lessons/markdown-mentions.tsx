@@ -1,5 +1,5 @@
-import { buildConfig } from '@core/component/LexicalMarkdown/builder/MarkdownConfigBuilder';
 import { t } from '@app/lib/i18n';
+import { buildConfig } from '@core/component/LexicalMarkdown/builder/MarkdownConfigBuilder';
 import { MarkdownShell } from '@core/component/LexicalMarkdown/builder/MarkdownShell';
 import { createSignal, onCleanup } from 'solid-js';
 import { MockAppChrome } from '../components/MockAppChrome';
@@ -19,14 +19,12 @@ function MarkdownMentionsContent(_props: LessonContentProps) {
   return (
     <div class="flex flex-col gap-8 onboarding-stagger">
       <p class="text-ink-muted mt-2">
-        Macro's editor supports rich markdown, mentions, and emoji. Try
-        mentioning someone or something by typing <strong>@</strong> in the
-        editor.
+        {t('onboarding.lessons.editor.description')}
       </p>
 
       <HotkeyCallout
         keys={['@']}
-        label="to mention someone or something"
+        label={t('onboarding.lessons.editor.mentionCallout')}
         completed={completed()}
       />
     </div>
@@ -71,11 +69,13 @@ function MarkdownMentionsDemo(props: LessonContentProps) {
   return (
     <MockAppChrome scopeId={props.scopeId}>
       <div class="portal-scope h-full flex flex-col px-8 py-6">
-        <h1 class="text-3xl font-semibold text-ink mb-4">{t('auto.daily_note')}</h1>
+        <h1 class="text-3xl font-semibold text-ink mb-4">
+          {t('onboarding.lessons.editor.dailyNote')}
+        </h1>
         <MarkdownShell
           class="flex-1 min-h-0 cursor-text"
           config={config}
-          placeholder="Start typing... use @ to mention"
+          placeholder={t('onboarding.lessons.editor.placeholder')}
           autofocus
           portalScope="local"
         />
@@ -86,7 +86,7 @@ function MarkdownMentionsDemo(props: LessonContentProps) {
 
 export const markdownMentionsLesson: LessonDefinition = {
   id: 'markdown-mentions',
-  title: 'Editor',
+  title: 'onboarding.lessons.editor.title',
   content: MarkdownMentionsContent,
   demo: MarkdownMentionsDemo,
   order: 50,

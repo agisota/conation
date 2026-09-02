@@ -15,15 +15,15 @@ fn user_id(value: &str) -> MacroUserIdStr<'static> {
 /// The fixed owner every [`new_session`] fixture uses.
 const OWNER: &str = "macro|agent-session-owner@example.com";
 
-/// Insert a `"User"` row (and its `conation_user` parent) so the id can satisfy
+/// Insert a `"User"` row (and its `macro_user` parent) so the id can satisfy
 /// `agent_session.owner_id`'s foreign key.
 async fn insert_user(pool: &PgPool, user_id: &str) {
     let email = user_id.strip_prefix("macro|").unwrap_or(user_id);
     // The no-op update makes the existing row's id come back when the user
     // was already seeded by an earlier call.
-    let conation_user_id = sqlx::query_scalar!(
+    let macro_user_id = sqlx::query_scalar!(
         r#"
-        INSERT INTO conation_user (id, username, email, stripe_customer_id)
+        INSERT INTO macro_user (id, username, email, stripe_customer_id)
         VALUES ($1, $2, $3, $4)
         ON CONFLICT (username) DO UPDATE SET username = EXCLUDED.username
         RETURNING id
@@ -35,16 +35,16 @@ async fn insert_user(pool: &PgPool, user_id: &str) {
     )
     .fetch_one(pool)
     .await
-    .expect("insert conation_user");
+    .expect("insert macro_user");
     sqlx::query!(
         r#"
-        INSERT INTO "User" (id, email, conation_user_id)
+        INSERT INTO "User" (id, email, macro_user_id)
         VALUES ($1, $2, $3)
         ON CONFLICT (id) DO NOTHING
         "#,
         user_id,
         email,
-        conation_user_id,
+        macro_user_id,
     )
     .execute(pool)
     .await

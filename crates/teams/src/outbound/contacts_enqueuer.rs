@@ -5,8 +5,8 @@ mod test;
 
 use std::sync::Arc;
 
-use contacts::domain::{models::messages::ContactConnection, ports::ContactsIngress};
 use conation_user_id::user_id::MacroUserIdStr;
+use contacts::domain::{models::messages::ContactConnection, ports::ContactsIngress};
 
 use crate::domain::contacts_enqueuer::ContactsEnqueuer;
 

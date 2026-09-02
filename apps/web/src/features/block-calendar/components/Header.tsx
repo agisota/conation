@@ -1,5 +1,4 @@
 import { CopyAvailabilityButton } from '@app/features/calendar/availability/CopyAvailabilityButton';
-import { t } from '@app/lib/i18n';
 import {
   type CalendarPageId,
   useCalendarPager,
@@ -10,6 +9,7 @@ import { MonthDrawer } from '@app/features/calendar/components/MonthDrawer';
 import { PeriodSelector } from '@app/features/calendar/components/PeriodSelector';
 import { useCalendarHotkeys } from '@app/features/calendar/hooks/use-calendar-hotkeys';
 import { calendarPeriodLabel } from '@app/features/calendar/utils/calendar-label';
+import { formatDateTime, t } from '@app/lib/i18n';
 import { useSidePanel } from '@components/app/side-panel/SidePanel';
 import { HeaderIsland } from '@components/app/split-layout/components/HeaderIsland';
 import {
@@ -28,11 +28,6 @@ import { usePager } from '@ui/components/Pager';
 import { createMemo, createSignal, onCleanup, Show } from 'solid-js';
 import { CalendarSearch } from './CalendarSearch';
 import { useOpenEventComposer } from './use-open-event-composer';
-
-const formatMonthTitle = new Intl.DateTimeFormat(undefined, {
-  month: 'long',
-  year: 'numeric',
-}).format;
 
 function createLocalToday() {
   const [today, setToday] = createSignal(new Date());
@@ -83,7 +78,9 @@ export function Header() {
   const currentDate = createMemo(
     () => calendarPager.activeDateInfo()?.view.calendar.getDate() ?? initialDate
   );
-  const dateTitle = createMemo(() => formatMonthTitle(currentDate()));
+  const dateTitle = createMemo(() =>
+    formatDateTime(currentDate(), { month: 'long', year: 'numeric' })
+  );
   const periodLabel = createMemo(() =>
     calendarPeriodLabel(calendarView.displaySettings.periodView).toLowerCase()
   );
@@ -131,10 +128,12 @@ export function Header() {
                     size="sm"
                     class="rounded-lg px-3"
                     depth={2}
-                    label="Go to today"
+                    label={t('calendar.navigation.goToToday')}
                     hotkey={TOKENS.calendar.period.today}
                     onClick={calendarPager.navigateToToday}
-                  >{t('auto.today')}</Button>
+                  >
+                    {t('calendar.navigation.today')}
+                  </Button>
                 </Show>
               }
             >
@@ -142,7 +141,7 @@ export function Header() {
                 variant="ghost"
                 size="icon-sm"
                 class="rounded-full"
-                label="Go to today"
+                label={t('calendar.navigation.goToToday')}
                 hotkey={TOKENS.calendar.period.today}
                 onClick={calendarPager.navigateToToday}
               >
@@ -162,14 +161,18 @@ export function Header() {
                 class="rounded-lg px-2"
                 onClick={() => openEventComposer()}
               >
-                <PlusIcon class="size-3.5" />{t('auto.new_event')}</Button>
+                <PlusIcon class="size-3.5" />
+                {t('calendar.event.new')}
+              </Button>
               <PeriodSelector isNarrow={sidePanel?.isNarrow()} />
               <div class="flex shrink-0 items-center gap-1">
                 <Button
                   variant="ghost"
                   size="icon-sm"
                   class="rounded-lg"
-                  label={`Previous ${periodLabel()}`}
+                  label={t('calendar.navigation.previousPeriod', {
+                    period: periodLabel(),
+                  })}
                   hotkey={TOKENS.calendar.period.previous}
                   onClick={() => void pager.previous()}
                 >
@@ -179,7 +182,9 @@ export function Header() {
                   variant="ghost"
                   size="icon-sm"
                   class="rounded-lg"
-                  label={`Next ${periodLabel()}`}
+                  label={t('calendar.navigation.nextPeriod', {
+                    period: periodLabel(),
+                  })}
                   hotkey={TOKENS.calendar.period.next}
                   onClick={() => void pager.next()}
                 >

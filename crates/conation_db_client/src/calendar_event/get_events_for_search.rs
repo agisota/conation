@@ -56,7 +56,7 @@ pub struct CalendarEventSearchInfo {
 /// contextual occurrence per event.
 ///
 /// Visibility mirrors the soup predicate: the requester owns the projection,
-/// or the event's source link is delegated to them through `conation_user_links`.
+/// or the event's source link is delegated to them through `macro_user_links`.
 /// An id the requester cannot see is simply absent from the result, which
 /// drops the hit during enrichment.
 ///
@@ -133,9 +133,9 @@ pub async fn get_calendar_events_for_search(
                 event.owner_id = $1
                 OR EXISTS (
                     SELECT 1
-                    FROM conation_user_links link
+                    FROM macro_user_links link
                     WHERE link.link_id = event.source_link_id
-                      AND link.primary_conation_id = $1
+                      AND link.primary_macro_id = $1
                 )
           )
         "#,

@@ -1,5 +1,5 @@
 /// Checks if an email is already in progress
-/// If it is, returns the conation_user_id and the link_id
+/// If it is, returns the macro_user_id and the link_id
 pub async fn check_existing_in_progress_email_link(
     db: &sqlx::Pool<sqlx::Postgres>,
     email: &str,
@@ -7,7 +7,7 @@ pub async fn check_existing_in_progress_email_link(
     let result = sqlx::query!(
         r#"
             SELECT
-                conation_user_id,
+                macro_user_id,
                 id
             FROM
                 in_progress_email_link
@@ -16,7 +16,7 @@ pub async fn check_existing_in_progress_email_link(
         "#,
         email
     )
-    .map(|r| (r.conation_user_id, r.id))
+    .map(|r| (r.macro_user_id, r.id))
     .fetch_optional(db)
     .await?;
 
@@ -25,21 +25,21 @@ pub async fn check_existing_in_progress_email_link(
 
 pub async fn insert_in_progress_email_link(
     db: &sqlx::Pool<sqlx::Postgres>,
-    conation_user_id: &str,
+    macro_user_id: &str,
     email: &str,
 ) -> anyhow::Result<uuid::Uuid> {
     let id = conation_uuid::generate_uuid_v7();
-    let conation_user_id = conation_uuid::string_to_uuid(conation_user_id)?;
+    let macro_user_id = conation_uuid::string_to_uuid(macro_user_id)?;
 
     sqlx::query!(
         r#"
             INSERT INTO
-                in_progress_email_link (id, conation_user_id, email, created_at)
+                in_progress_email_link (id, macro_user_id, email, created_at)
             VALUES
                 ($1, $2, $3, NOW())
         "#,
         &id,
-        &conation_user_id,
+        &macro_user_id,
         email
     )
     .execute(db)
@@ -51,7 +51,7 @@ pub async fn insert_in_progress_email_link(
 #[derive(Debug, Clone)]
 pub struct InProgressEmailLink {
     pub id: uuid::Uuid,
-    pub conation_user_id: uuid::Uuid,
+    pub macro_user_id: uuid::Uuid,
     pub email: String,
 }
 
@@ -65,7 +65,7 @@ pub async fn get_in_progress_email_link(
         r#"
             SELECT
                 id,
-                conation_user_id,
+                macro_user_id,
                 email
             FROM
                 in_progress_email_link

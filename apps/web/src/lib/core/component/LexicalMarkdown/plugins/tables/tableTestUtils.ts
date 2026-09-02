@@ -1,3 +1,4 @@
+import { SupportedNodeTypes } from '@conation/lexical-core/node-list';
 import { $createListItemNode, $createListNode } from '@lexical/list';
 import { registerRichText } from '@lexical/rich-text';
 import {
@@ -11,7 +12,6 @@ import {
   type TableCellNode,
   type TableNode,
 } from '@lexical/table';
-import { SupportedNodeTypes } from '@conation/lexical-core/node-list';
 import {
   $createParagraphNode,
   $createTextNode,

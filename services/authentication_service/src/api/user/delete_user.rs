@@ -5,6 +5,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_user_id::user_id::MacroUserIdStr;
 use tower_cookies::Cookies;
 
 use crate::api::{
@@ -35,12 +36,6 @@ pub async fn handler(
 ) -> Result<Response, Response> {
     let user_context = &authorization.authorization.user.user_context;
     let user_id = &*user_context.user_id;
-    // This may seem dumb, but if you delete this account it will delete my fusionauth account and
-    // we will then be locked out of fusionauth. So this is a way to prevent any accidental fuck
-    // ups from occurring.
-    if user_context.user_id == "macro|hutch@macro.com" {
-        return Err((StatusCode::FORBIDDEN, "you cannot delete hutch").into_response());
-    }
     // Perform a logout for the user
     // Remove access token cookie
     let mut access_token_cookie = create_access_token_cookie("");
@@ -59,7 +54,13 @@ pub async fn handler(
         tracing::warn!(error=?e, "error logging out");
     }
 
-    let email = user_id.replace("macro|", "");
+    let email = MacroUserIdStr::parse_from_str(user_id)
+        .map_err(|e| {
+            tracing::error!(error=?e, user_id, "invalid Conation user id");
+            (StatusCode::BAD_REQUEST, "invalid Conation user id").into_response()
+        })?
+        .email_str()
+        .to_owned();
 
     // Delete the user from fusionauth
     // This will trigger the delete user webhook to clear out the user's items from the db async

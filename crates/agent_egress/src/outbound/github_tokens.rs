@@ -11,11 +11,11 @@
 //! spend rate limit for nothing.
 
 use chrono::{DateTime, Duration as ChronoDuration, Utc};
+use conation_user_id::user_id::MacroUserIdStr;
 use github::domain::models::GithubError;
 use github::domain::ports::{GithubSyncClient, GithubSyncRepo};
 use github::domain::service::InstallationTokenService;
 use lru::LruCache;
-use conation_user_id::user_id::MacroUserIdStr;
 use std::num::NonZeroUsize;
 use std::sync::Mutex;
 use url::Url;

@@ -7,8 +7,8 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use fusionauth::identity_provider::{IdentityProviderLink, LinkUserRequest};
 use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
+use fusionauth::identity_provider::{IdentityProviderLink, LinkUserRequest};
 use model::response::ErrorResponse;
 
 use crate::api::context::{ApiContext, AuthorizationService};
@@ -22,7 +22,7 @@ pub struct RelocateInboxGrantRequest {
     /// The connector whose FusionAuth user currently holds the mailbox's Google grant.
     pub owner_fusionauth_user_id: String,
     /// When set, the dedicated user is created with this id, keeping the FusionAuth id
-    /// aligned with the mailbox's minted `conation_user.id`.
+    /// aligned with the mailbox's minted `macro_user.id`.
     #[serde(default)]
     pub desired_user_id: Option<String>,
 }

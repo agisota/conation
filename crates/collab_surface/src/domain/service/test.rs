@@ -1,10 +1,10 @@
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
+use conation_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::models::{
     AnyEntityPermission, EntityAccessReceipt, EntityPermission, ParticipantRole,
 };
-use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::EntityType;
 use models_permissions::share_permission::access_level::AccessLevel;
 

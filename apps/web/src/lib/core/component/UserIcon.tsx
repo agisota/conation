@@ -1,8 +1,9 @@
+import { ConationMark } from '@app/components/brand';
 import { useSplitLayout } from '@components/app/split-layout/layout';
+import { isBotPrincipalId, isConationAiId } from '@core/constant/conationAi';
+import { isConationCoderId } from '@core/constant/conationCoder';
+import { isConationNewId } from '@core/constant/conationNew';
 import { ENABLE_PROFILE_PICTURES } from '@core/constant/featureFlags';
-import { isBotPrincipalId, isMacroAgentId } from '@core/constant/macroAgent';
-import { isMacroCoderId } from '@core/constant/macroCoder';
-import { isMacroNewId } from '@core/constant/macroNew';
 import { staticFileSizedUrl } from '@core/constant/servers';
 import { internalDrag } from '@core/directive/internalDragState';
 import { useProfilePictureUrl } from '@core/signal/profilePicture';
@@ -14,7 +15,6 @@ import {
   tryMacroId,
   useIsConnectedSecondaryInbox,
 } from '@core/user';
-import MacroLogo from '@icon/macro-logo.svg';
 import RobotIcon from '@phosphor/robot.svg';
 import Trash from '@phosphor-icons/core/regular/trash.svg?component-solid';
 import { useGetOrCreateDirectMessageMutation } from '@queries/channel/get-or-create-dm';
@@ -176,9 +176,9 @@ export function UserIcon(props: UserIconProps) {
     <Switch>
       <Match
         when={
-          isMacroAgentId(props.id) ||
-          isMacroCoderId(props.id) ||
-          isMacroNewId(props.id)
+          isConationAiId(props.id) ||
+          isConationCoderId(props.id) ||
+          isConationNewId(props.id)
         }
       >
         <Avatar
@@ -186,7 +186,7 @@ export function UserIcon(props: UserIconProps) {
           class={cn('bg-surface text-accent ring ring-edge-muted', props.class)}
         >
           <Avatar.Fallback>
-            <MacroLogo class="size-[62%]" />
+            <ConationMark class="size-[62%] rounded-[22%]" alt="" />
           </Avatar.Fallback>
         </Avatar>
       </Match>

@@ -13,7 +13,7 @@ pub struct Params {
 }
 
 /// Gets the ids of the items the user has access to
-#[tracing::instrument(skip(ctx, user), fields(user_id=?user.authorization.user.conation_user_id))]
+#[tracing::instrument(skip(ctx, user), fields(user_id=?user.authorization.user.macro_user_id))]
 pub async fn get_item_ids_handler(
     State(ctx): State<ApiContext>,
     user: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
@@ -33,23 +33,24 @@ pub async fn get_item_ids_handler(
         ));
     }
 
-    let items = match conation_db_client::item_access::get_accessible_items::get_user_accessible_items(
-        &ctx.db,
-        &user_id,
-        item_type,
-        exclude_owned.unwrap_or_default(),
-    )
-    .await
-    {
-        Ok(items) => items,
-        Err(e) => {
-            tracing::error!(error=?e, "unable to get item ids");
-            return Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "unable to get item ids".to_string(),
-            ));
-        }
-    };
+    let items =
+        match conation_db_client::item_access::get_accessible_items::get_user_accessible_items(
+            &ctx.db,
+            &user_id,
+            item_type,
+            exclude_owned.unwrap_or_default(),
+        )
+        .await
+        {
+            Ok(items) => items,
+            Err(e) => {
+                tracing::error!(error=?e, "unable to get item ids");
+                return Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "unable to get item ids".to_string(),
+                ));
+            }
+        };
 
     Ok((StatusCode::OK, Json(GetItemIDsResponse { items })))
 }

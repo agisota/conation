@@ -3,12 +3,6 @@
  * the markdown features that are supported by our LexicalEngine.
  */
 
-import type { CodeNode } from '@lexical/code';
-import { PrismTokenizer } from '@lexical/code';
-import type { LinkNode } from '@lexical/link';
-import { $getListDepth, type ListItemNode, type ListNode } from '@lexical/list';
-import type { HeadingNode, QuoteNode } from '@lexical/rich-text';
-import type { TableCellNode, TableNode, TableRowNode } from '@lexical/table';
 import {
   $isClassedBlockNode,
   type AgentContextNode,
@@ -36,6 +30,12 @@ import {
   type VideoNode,
   type WatermarkNode,
 } from '@conation/lexical-core';
+import type { CodeNode } from '@lexical/code';
+import { PrismTokenizer } from '@lexical/code';
+import type { LinkNode } from '@lexical/link';
+import { $getListDepth, type ListItemNode, type ListNode } from '@lexical/list';
+import type { HeadingNode, QuoteNode } from '@lexical/rich-text';
+import type { TableCellNode, TableNode, TableRowNode } from '@lexical/table';
 import { cn } from '@ui';
 import {
   $getRoot,
@@ -65,12 +65,12 @@ import {
 import { Dynamic } from 'solid-js/web';
 import { replaceCitations } from '../../citationsUtils';
 import '../../styles.css';
+import type { SearchMatchNode } from '@conation/lexical-core/nodes/SearchMatchNode';
 import {
   ENABLE_STATIC_DOCUMENT_CARDS,
   ENABLE_SVG_PREVIEW,
 } from '@core/constant/featureFlags';
 import type { MarkNode } from '@lexical/mark';
-import type { SearchMatchNode } from '@conation/lexical-core/nodes/SearchMatchNode';
 import { getCachedItemPreview } from '@queries/preview';
 import { theme as baseTheme, createTheme } from '../../theme';
 import { forceSingleLine, setEditorStateFromMarkdown } from '../../utils';

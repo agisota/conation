@@ -9,6 +9,15 @@ use axum::{
     http::{Request, StatusCode, header},
 };
 use channels::domain::models::PostMessageResponse;
+use conation_authorization::{
+    BOT_FOR_CONATION_USER_ID_HEADER, BOT_FOR_FUSIONAUTH_USER_ID_HEADER,
+    BOT_FOR_ORGANIZATION_ID_HEADER, BOT_SCOPE_HEADER, BOT_TOKEN_HEADER,
+    BotActingUserClaims as AuthorizationBotActingUserClaims, BotAuthentication, BotAuthorizer,
+    BotScope, InternalAuthConfig, JwtValidator, MacroAuthorizationError,
+    MacroAuthorizationServiceImpl, MacroAuthorizationState, MacroUserAuthentication,
+    ValidatedIdentity,
+};
+use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId};
 use entity_access::domain::models::TeamRole;
 use entity_access::domain::{
     models::{
@@ -18,15 +27,6 @@ use entity_access::domain::{
     },
     ports::EntityAccessService,
 };
-use conation_authorization::{
-    BOT_FOR_FUSIONAUTH_USER_ID_HEADER, BOT_FOR_MACRO_USER_ID_HEADER,
-    BOT_FOR_ORGANIZATION_ID_HEADER, BOT_SCOPE_HEADER, BOT_TOKEN_HEADER,
-    BotActingUserClaims as AuthorizationBotActingUserClaims, BotAuthentication, BotAuthorizer,
-    BotScope, InternalAuthConfig, JwtValidator, MacroAuthorizationError,
-    MacroAuthorizationServiceImpl, MacroAuthorizationState, MacroUserAuthentication,
-    ValidatedIdentity,
-};
-use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId};
 use rootcause::Report;
 use std::sync::{
     Arc, Mutex,
@@ -34,7 +34,7 @@ use std::sync::{
 };
 use tower::ServiceExt;
 
-const DEFAULT_BEARER_TOKEN: &str = "macro|bot-admin@example.com";
+const DEFAULT_BEARER_TOKEN: &str = "conation|bot-admin@example.com";
 
 #[derive(Clone)]
 enum TestCreateMode {
@@ -658,7 +658,8 @@ fn bot_authentication_with_acting_user(bot_id: BotId) -> BotAuthentication {
         bot_scope: BotScope::User,
         team_id: None,
         acting_user: Some(MacroUserAuthentication {
-            conation_user_id: MacroUserIdStr::parse_from_str("macro|acting-bot@example.com").unwrap(),
+            macro_user_id: MacroUserIdStr::parse_from_str("conation|acting-bot@example.com")
+                .unwrap(),
             user_context: Default::default(),
         }),
     }
@@ -680,13 +681,13 @@ fn scoped_bot_response(bot_id: BotId) -> CreateChannelScopedBotResponse {
             id: bot_id,
             kind: BotKind::Owned,
             owner: Some(BotOwner::User {
-                user_id: "macro|bot-admin@example.com".to_string(),
+                user_id: "conation|bot-admin@example.com".to_string(),
             }),
             name: "Datadog Alerts".to_string(),
             handle: "datadog-alerts".to_string(),
             description: Some("Posts alarm notifications".to_string()),
             avatar_url: None,
-            created_by: Some("macro|bot-admin@example.com".to_string()),
+            created_by: Some("conation|bot-admin@example.com".to_string()),
             created_at: now,
             updated_at: now,
             deleted_at: None,
@@ -748,7 +749,7 @@ async fn channel_webhook_router_admin_can_create_scoped_bot() {
         .expect("create call mutex poisoned")
         .clone()
         .expect("create call recorded");
-    assert_eq!(call.caller.as_ref(), "macro|bot-admin@example.com");
+    assert_eq!(call.caller.as_ref(), "conation|bot-admin@example.com");
     assert_eq!(call.channel_id, channel_id);
 }
 
@@ -801,7 +802,7 @@ async fn channel_webhook_router_verified_acting_user_is_not_used_for_attribution
     let bot_id = BotId::new_from_uuid(Uuid::new_v4());
     let token = "mbot_test_acting_user";
     let claims = AuthorizationBotActingUserClaims {
-        user_id: Some("macro|acting-bot@example.com".to_string()),
+        user_id: Some("conation|acting-bot@example.com".to_string()),
         fusion_user_id: Some("fusion-acting-bot".to_string()),
         organization_id: Some(42),
     };
@@ -816,7 +817,7 @@ async fn channel_webhook_router_verified_acting_user_is_not_used_for_attribution
         .header(BOT_TOKEN_HEADER, token)
         .header(BOT_SCOPE_HEADER, BotScope::User.as_str())
         .header(
-            BOT_FOR_MACRO_USER_ID_HEADER,
+            BOT_FOR_CONATION_USER_ID_HEADER,
             claims.user_id.as_deref().unwrap(),
         )
         .header(
@@ -865,7 +866,10 @@ async fn channel_webhook_router_cookie_only_user_is_forbidden_without_posting() 
     let poster = TestChannelPoster::new();
     let authorizer = rejecting_bot_authorizer();
     let request = webhook_request(channel_id)
-        .header("cookie", "macro-access-token=macro|cookie-user@example.com")
+        .header(
+            "cookie",
+            "conation-access-token=conation|cookie-user@example.com",
+        )
         .body(Body::from(
             serde_json::json!({ "content": "user request" }).to_string(),
         ))
@@ -906,7 +910,7 @@ async fn channel_webhook_router_bot_token_and_user_are_ambiguous_without_posting
         .header(BOT_SCOPE_HEADER, BotScope::User.as_str())
         .header(
             header::AUTHORIZATION,
-            "Bearer macro|explicit-user@example.com",
+            "Bearer conation|explicit-user@example.com",
         )
         .body(Body::from(
             serde_json::json!({ "content": "ambiguous" }).to_string(),
@@ -966,6 +970,43 @@ async fn channel_webhook_router_both_bot_headers_are_ambiguous_before_validation
         .unwrap();
     let error: ErrorResponse = serde_json::from_slice(&body).unwrap();
     assert_eq!(error.message, "ambiguous credentials");
+    assert_eq!(authorizer.call_count(), 0);
+    assert_eq!(service.auth_calls.load(Ordering::SeqCst), 0);
+    assert_eq!(service.membership_calls.load(Ordering::SeqCst), 0);
+    assert!(
+        poster
+            .calls
+            .lock()
+            .expect("posted message mutex poisoned")
+            .is_empty()
+    );
+}
+
+#[tokio::test]
+async fn channel_webhook_router_rejects_legacy_header_without_authenticating() {
+    let channel_id = Uuid::new_v4();
+    let service = TestBotService::unauthorized_webhook();
+    let poster = TestChannelPoster::new();
+    let authorizer = rejecting_bot_authorizer();
+    let request = webhook_request(channel_id)
+        .header("x-macro-channel-bot-token", "mbot_legacy")
+        .body(Body::from(
+            serde_json::json!({ "content": "legacy" }).to_string(),
+        ))
+        .unwrap();
+
+    let response =
+        webhook_router_with_authorizer(service.clone(), poster.clone(), authorizer.clone())
+            .oneshot(request)
+            .await
+            .unwrap();
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let error: ErrorResponse = serde_json::from_slice(&body).unwrap();
+    assert_eq!(error.message, "legacy bot credentials are not supported");
     assert_eq!(authorizer.call_count(), 0);
     assert_eq!(service.auth_calls.load(Ordering::SeqCst), 0);
     assert_eq!(service.membership_calls.load(Ordering::SeqCst), 0);
@@ -1055,7 +1096,10 @@ async fn channel_webhook_router_rejected_acting_user_is_forbidden_without_postin
     let request = webhook_request(channel_id)
         .header(BOT_TOKEN_HEADER, "mbot_test_forbidden_claims")
         .header(BOT_SCOPE_HEADER, BotScope::User.as_str())
-        .header(BOT_FOR_MACRO_USER_ID_HEADER, "macro|forbidden@example.com")
+        .header(
+            BOT_FOR_CONATION_USER_ID_HEADER,
+            "conation|forbidden@example.com",
+        )
         .body(Body::from(
             serde_json::json!({ "content": "forbidden" }).to_string(),
         ))
@@ -1081,7 +1125,7 @@ async fn channel_webhook_router_rejected_acting_user_is_forbidden_without_postin
 }
 
 #[tokio::test]
-async fn channel_webhook_router_legacy_valid_json_posts_as_bot() {
+async fn channel_webhook_router_channel_scoped_token_posts_as_bot() {
     let channel_id = Uuid::new_v4();
     let bot_id = BotId::new_from_uuid(Uuid::new_v4());
     let token = "mbot_test_valid";

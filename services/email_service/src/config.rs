@@ -7,7 +7,7 @@ use secretsmanager_client::LocalOrRemoteSecret;
 env_vars! {
     pub struct EmailServiceCloudfrontSignerPrivateKey;
     pub struct KafkaBrokers;
-    pub struct MacroDbUrl;
+    pub struct ConationDbUrl;
     pub struct RedisUri;
     pub struct GmailGcpQueue;
     #[derive(Debug)]
@@ -22,9 +22,13 @@ env_vars! {
 #[derive(conation_config::MacroConfig)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Config {
-    /// The connection URL for the macrodb instance this application should use.
-    /// For deployed applications, this is a secret stored in AWS Secrets Manager.
-    pub conation_db_url: MacroDbUrl,
+    /// The Conation database connection setting.
+    ///
+    /// In local environments this is the PostgreSQL connection URL itself. In
+    /// development and production it is the AWS Secrets Manager identifier of
+    /// the secret containing that URL; [`Config::resolve_remote_secrets`]
+    /// resolves it before the service creates a pool.
+    pub conation_db_url: LocalOrRemoteSecret<ConationDbUrl>,
 
     /// The port to listen for HTTP requests on.
     #[conation_config_default(8080)]

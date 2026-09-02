@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { ACTIONS } from '@core/component/LexicalMarkdown/plugins/actions/actions';
 import { createHotkeyGroup, registerHotkey } from '@core/hotkey/hotkeys';
 import type { HotkeyToken } from '@core/hotkey/tokens';
@@ -22,7 +23,7 @@ import type { Component, JSX } from 'solid-js';
 type InlineFormatDef = {
   token: HotkeyToken;
   format: TextFormatType;
-  description: string;
+  description: () => string;
   icon: Component<JSX.SvgSVGAttributes<SVGSVGElement>>;
   hotkey?: ValidHotkey;
 };
@@ -31,55 +32,55 @@ const INLINE_FORMATS: InlineFormatDef[] = [
   {
     token: TOKENS.md.bold,
     format: 'bold',
-    description: 'Bold',
+    description: () => t('markdown.format.bold'),
     icon: TextBold,
     hotkey: 'cmd+b',
   },
   {
     token: TOKENS.md.italic,
     format: 'italic',
-    description: 'Italic',
+    description: () => t('markdown.format.italic'),
     icon: TextItalic,
     hotkey: 'cmd+i',
   },
   {
     token: TOKENS.md.underline,
     format: 'underline',
-    description: 'Underline',
+    description: () => t('markdown.format.underline'),
     icon: TextUnderline,
     hotkey: 'cmd+u',
   },
   {
     token: TOKENS.md.strikethrough,
     format: 'strikethrough',
-    description: 'Strikethrough',
+    description: () => t('markdown.format.strikethrough'),
     icon: TextStrikethrough,
     hotkey: 'shift+cmd+x',
   },
   {
     token: TOKENS.md.highlight,
     format: 'highlight',
-    description: 'Highlight',
+    description: () => t('markdown.format.highlight'),
     icon: TextHighlight,
     hotkey: 'shift+cmd+h',
   },
   {
     token: TOKENS.md.inlineCode,
     format: 'code',
-    description: 'Inline code',
+    description: () => t('markdown.format.inlineCode'),
     icon: TextCode,
     hotkey: 'cmd+e',
   },
   {
     token: TOKENS.md.superscript,
     format: 'superscript',
-    description: 'Superscript',
+    description: () => t('markdown.format.superscript'),
     icon: TextSuper,
   },
   {
     token: TOKENS.md.subscript,
     format: 'subscript',
-    description: 'Subscript',
+    description: () => t('markdown.format.subscript'),
     icon: TextSub,
   },
 ];
@@ -104,6 +105,43 @@ const ACTION_ID_TO_TOKEN: Record<string, HotkeyToken> = {
   hr: TOKENS.md.divider,
 };
 
+function actionDescription(id: string, fallback: string): string {
+  switch (id) {
+    case 'paragraph':
+      return t('markdown.format.body');
+    case 'heading1':
+      return t('markdown.format.heading1');
+    case 'heading2':
+      return t('markdown.format.heading2');
+    case 'heading3':
+      return t('markdown.format.heading3');
+    case 'quote':
+      return t('markdown.format.quote');
+    case 'code':
+      return t('markdown.format.code');
+    case 'list-bullet':
+      return t('markdown.format.bulletList');
+    case 'list-number':
+      return t('markdown.format.numberedList');
+    case 'list-check':
+      return t('markdown.format.checklist');
+    case 'image':
+      return t('markdown.format.image');
+    case 'video':
+      return t('markdown.format.video');
+    case 'link':
+      return t('markdown.format.link');
+    case 'latex':
+      return t('markdown.format.equation');
+    case 'table':
+      return t('markdown.format.table');
+    case 'hr':
+      return t('markdown.format.divider');
+    default:
+      return fallback;
+  }
+}
+
 type LexicalStateDebuggerCommandOptions = {
   canUseStateDebugger?: () => boolean;
   toggleStateDebugger: () => void;
@@ -118,7 +156,7 @@ function registerLexicalStateDebuggerHotkey(
     scopeId,
     runWithInputFocused: true,
     hotkeyToken: TOKENS.md.toggleStateDebugger,
-    description: 'Toggle lexical state debugger',
+    description: () => t('markdown.debug.toggleLexicalState'),
     icon: BugIcon,
     hide: () => options.canUseStateDebugger?.() === false,
     condition: () => options.canUseStateDebugger?.() !== false,
@@ -189,7 +227,7 @@ export function registerMarkdownCommands(
     registerHotkey({
       ...shared,
       hotkeyToken: token,
-      description: action.name,
+      description: () => actionDescription(action.id, action.name),
       icon: action.icon,
       keyDownHandler: () => {
         const editor = getEditor();

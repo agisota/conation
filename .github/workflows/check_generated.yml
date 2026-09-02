@@ -7,7 +7,7 @@ name: check generated workflows
     - main
     paths:
     - tooling/xtask/**
-    - crates/macro_event_topics/**
+    - crates/conation_event_topics/**
     - '.github/workflows/**'
     - '.github/kafka-cluster-topics.json'
 jobs:

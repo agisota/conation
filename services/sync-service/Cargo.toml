@@ -34,6 +34,7 @@ tracing-subscriber = { workspace = true, features = [
   'time',
 ] }
 tracing-web = "0.1"
+url.workspace = true
 web-time.workspace = true
 time = { workspace = true, features = ['wasm-bindgen'] }
 bebop.workspace = true

@@ -1,13 +1,13 @@
 import { useSoup } from '@app/features/next-soup/soup-context';
-import { t } from '@app/lib/i18n';
 import { registerSearchSplit } from '@app/features/next-soup/soup-view/search-controllers';
 import { useSoupView } from '@app/features/next-soup/soup-view/soup-view-context';
+import { t } from '@app/lib/i18n';
 import { useSplitPanelOrThrow } from '@components/app/split-layout/layoutUtils';
+import { markdownToPlainText } from '@conation/lexical-core/utils/parsers';
 import { buildConfig } from '@core/component/LexicalMarkdown/builder/MarkdownConfigBuilder';
 import { MarkdownShell } from '@core/component/LexicalMarkdown/builder/MarkdownShell';
 import { registerHotkey } from '@core/hotkey/hotkeys';
 import SearchIcon from '@icon/macro-magnifying-glass.svg';
-import { markdownToPlainText } from '@conation/lexical-core/utils/parsers';
 import XIcon from '@phosphor/x.svg?component-solid';
 import { cn, Hotkey } from '@ui';
 import {

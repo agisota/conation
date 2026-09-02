@@ -1,5 +1,5 @@
-import { toast } from '@core/component/Toast/Toast';
 import { t } from '@app/lib/i18n';
+import { toast } from '@core/component/Toast/Toast';
 import { isMobile } from '@core/mobile/isMobile';
 import { ThrownResultError } from '@core/util/result';
 import SignatureIcon from '@phosphor-icons/core/regular/signature.svg?component-solid';
@@ -67,9 +67,9 @@ function saveSignatureErrorMessage(error: Error): string {
     error instanceof ThrownResultError
       ? error.errors.find((e) => e.code === SIGNATURE_IMAGES_UNRESOLVED_CODE)
       : undefined;
-  if (!unresolved) return 'Failed to save signature. Please try again.';
+  if (!unresolved) return t('settings.email.signature.errors.saveFailed');
 
-  return 'Unable to save images. Use the image button to add images.';
+  return t('settings.email.signature.errors.imagesUnresolved');
 }
 
 /**
@@ -119,7 +119,7 @@ export function SignatureSection(props: { link: EmailLink }) {
         onSuccess: (data) => {
           setDraft(null);
           editorApi?.setContent(data.settings.signature ?? '');
-          toast.success('Signature saved');
+          toast.success(t('settings.email.signature.toast.saved'));
         },
         // The backend rejects the whole patch (HTTP 422, nothing persisted) when
         // a signature has images that won't render for recipients — e.g. pasted
@@ -141,10 +141,10 @@ export function SignatureSection(props: { link: EmailLink }) {
         onSuccess: () => {
           setDraft(null);
           editorApi?.setContent('');
-          toast.success('Signature removed');
+          toast.success(t('settings.email.signature.toast.removed'));
         },
         onError: () =>
-          toast.failure('Failed to remove signature. Please try again.'),
+          toast.failure(t('settings.email.signature.errors.removeFailed')),
       }
     );
   };
@@ -155,7 +155,10 @@ export function SignatureSection(props: { link: EmailLink }) {
         linkId: props.link.id,
         settings: { signature_on_replies_forwards: checked },
       },
-      { onError: () => toast.failure('Failed to update setting.') }
+      {
+        onError: () =>
+          toast.failure(t('settings.email.signature.errors.updateFailed')),
+      }
     );
   };
 
@@ -168,7 +171,9 @@ export function SignatureSection(props: { link: EmailLink }) {
         fallback={
           <div class="flex flex-col items-center gap-1.5 rounded-lg border border-dashed border-edge-muted px-3 py-6 text-center">
             <SignatureIcon class="size-5 text-ink-muted" />
-            <p class="text-sm text-ink-muted">{t('auto.update_your_signature_on_deskt')}</p>
+            <p class="text-sm text-ink-muted">
+              {t('settings.email.signature.mobileHint')}
+            </p>
           </div>
         }
       >
@@ -197,7 +202,7 @@ export function SignatureSection(props: { link: EmailLink }) {
           onChange={setOnRepliesForwards}
           label={
             <span class="text-sm text-ink-muted">
-              Add to replies & forwards
+              {t('settings.email.signature.addToReplies')}
             </span>
           }
         />
@@ -208,7 +213,9 @@ export function SignatureSection(props: { link: EmailLink }) {
             depth={3}
             disabled={!hasContent() || updateSettings.isPending}
             onClick={removeSignature}
-          >{t('common.remove')}</Button>
+          >
+            {t('common.remove')}
+          </Button>
           <Show when={!isMobile()}>
             <Button
               variant="accent"
@@ -216,7 +223,9 @@ export function SignatureSection(props: { link: EmailLink }) {
               depth={3}
               disabled={!isDirty() || updateSettings.isPending}
               onClick={saveSignature}
-            >{t('common.save')}</Button>
+            >
+              {t('common.save')}
+            </Button>
           </Show>
         </div>
       </div>

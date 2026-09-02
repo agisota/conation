@@ -1,6 +1,6 @@
 use anyhow::{Result, bail};
-use document_sub_type::DocumentSubType;
 use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use document_sub_type::DocumentSubType;
 use model::annotations::{
     Comment,
     edit::{EditCommentRequest, EditCommentResponse},
@@ -93,7 +93,7 @@ mod tests {
     ))]
     async fn test_edit_document_comment(pool: Pool<Postgres>) {
         let comment_id = 10001;
-        let owner = "macro|user@user.com";
+        let owner = "conation|user@user.com";
         let req = EditCommentRequest {
             text: Some("Updated comment text".to_string()),
             metadata: None,
@@ -117,7 +117,7 @@ mod tests {
         assert_eq!(sub_type, None);
         assert_eq!(
             document_owner,
-            MacroUserIdStr::parse_from_str("macro|user@user.com").unwrap()
+            MacroUserIdStr::parse_from_str("conation|user@user.com").unwrap()
         );
     }
 
@@ -127,7 +127,7 @@ mod tests {
     ))]
     async fn test_edit_no_row(pool: Pool<Postgres>) {
         let comment_id = 6543024; // should not exist
-        let owner = "macro|user@user.com";
+        let owner = "conation|user@user.com";
         let req = EditCommentRequest {
             mentions: None,
             text: Some("Updated comment text".to_string()),
@@ -145,7 +145,7 @@ mod tests {
     ))]
     async fn test_document_owner_cannot_edit_unowned_comment(pool: Pool<Postgres>) {
         let comment_id = 10007;
-        let document_owner = "macro|user@user.com";
+        let document_owner = "conation|user@user.com";
         let req = EditCommentRequest {
             mentions: None,
             text: Some("Updated comment text".to_string()),
@@ -164,7 +164,7 @@ mod tests {
     ))]
     async fn test_non_document_owner_can_delete_owned_comment(pool: Pool<Postgres>) {
         let comment_id = 10007;
-        let owner = "macro|user2@user.com";
+        let owner = "conation|user2@user.com";
         let req = EditCommentRequest {
             mentions: None,
             text: Some("Updated comment text".to_string()),
@@ -183,7 +183,7 @@ mod tests {
     ))]
     async fn test_non_document_owner_cannot_delete_unowned_comment(pool: Pool<Postgres>) {
         let comment_id = 10007;
-        let non_owner = "macro|user3@user.com";
+        let non_owner = "conation|user3@user.com";
         let req = EditCommentRequest {
             mentions: None,
             text: Some("Updated comment text".to_string()),

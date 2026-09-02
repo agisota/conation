@@ -19,3 +19,32 @@ fn still_allows_non_local_database_overrides() {
         "postgres://user:password@dev.example.com:5432/macrodb"
     ));
 }
+
+#[test]
+fn generated_environment_detects_a_canonical_key_rename() {
+    let legacy = BTreeMap::from([(
+        "MACRO_MCP_URL".to_string(),
+        "https://api.example.test/mcp".to_string(),
+    )]);
+    let canonical = BTreeMap::from([(
+        "CONATION_MCP_URL".to_string(),
+        "https://api.example.test/mcp".to_string(),
+    )]);
+
+    let prior = render_dotenv(&legacy);
+    let next = render_dotenv(&canonical);
+
+    assert!(generated_env_changed(Ok(prior.into_bytes()), next.as_bytes()).unwrap());
+    assert!(!generated_env_changed(Ok(next.clone().into_bytes()), next.as_bytes()).unwrap());
+    assert!(
+        generated_env_changed(
+            Err(std::io::Error::from(std::io::ErrorKind::NotFound)),
+            next.as_bytes(),
+        )
+        .unwrap()
+    );
+    assert_ne!(
+        generated_env_fingerprint(&legacy),
+        generated_env_fingerprint(&canonical)
+    );
+}

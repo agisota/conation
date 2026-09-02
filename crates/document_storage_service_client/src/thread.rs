@@ -1,5 +1,5 @@
 use crate::DocumentStorageServiceClient;
-use crate::constants::MACRO_INTERNAL_USER_ID_HEADER_KEY;
+use crate::constants::INTERNAL_CONATION_USER_ID_HEADER;
 use model::thread::response::GetThreadUserAccessLevelResponse;
 use models_permissions::share_permission::access_level::AccessLevel;
 
@@ -16,7 +16,7 @@ impl DocumentStorageServiceClient {
                 "{}/internal/threads/{}/access_level",
                 self.url, thread_id
             ))
-            .header(MACRO_INTERNAL_USER_ID_HEADER_KEY, user_id)
+            .header(INTERNAL_CONATION_USER_ID_HEADER, user_id)
             .send()
             .await?
             .error_for_status()?;

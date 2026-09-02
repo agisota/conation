@@ -7,7 +7,7 @@ import {
 
 function legacyMessage(
   senderId: string,
-  replySenderId = 'macro|reply@example.com'
+  replySenderId = 'conation|reply@example.com'
 ): ChannelMessageWithMaybeSender {
   return {
     id: 'message-1',
@@ -39,16 +39,16 @@ function legacyMessage(
 describe('message sender normalization', () => {
   it('derives user senders for old channel message payloads', () => {
     const message = normalizeChannelMessageSender(
-      legacyMessage('macro|alice@example.com')
+      legacyMessage('conation|alice@example.com')
     );
 
     expect(message.sender).toEqual({
       type: 'user',
-      id: 'macro|alice@example.com',
+      id: 'conation|alice@example.com',
     });
     expect(message.thread.preview[0].sender).toEqual({
       type: 'user',
-      id: 'macro|reply@example.com',
+      id: 'conation|reply@example.com',
     });
   });
 

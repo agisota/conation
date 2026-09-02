@@ -1,5 +1,5 @@
-import { ToggleSwitch } from '@ui';
 import { t } from '@app/lib/i18n';
+import { ToggleSwitch } from '@ui';
 import { Show } from 'solid-js';
 
 export function ChannelTeamSettingsPanel(props: {
@@ -13,11 +13,13 @@ export function ChannelTeamSettingsPanel(props: {
 }) {
   return (
     <section class="shrink-0 border-b border-edge-muted text-ink">
-      <div class="flex min-h-10 items-center border-b border-edge-muted px-6 text-sm font-semibold">{t('auto.team_access')}</div>
+      <div class="flex min-h-10 items-center border-b border-edge-muted px-6 text-sm font-semibold">
+        {t('channel.team.access')}
+      </div>
       <div class="divide-y divide-edge-muted px-6">
         <div class="flex items-center justify-between gap-4 py-3">
           <div class="min-w-0">
-            <div class="text-sm font-medium">{t('auto.team_channel')}</div>
+            <div class="text-sm font-medium">{t('channel.team.channel')}</div>
             <p class="text-xs text-ink-muted">
               {props.isTeamChannel
                 ? 'This channel belongs to your team.'
@@ -40,7 +42,9 @@ export function ChannelTeamSettingsPanel(props: {
         <Show when={props.isTeamChannel}>
           <div class="flex items-center justify-between gap-4 py-3">
             <div class="min-w-0">
-              <div class="text-sm font-medium">{t('auto.team_auto_join')}</div>
+              <div class="text-sm font-medium">
+                {t('channel.team.autoJoin')}
+              </div>
               <p class="text-xs text-ink-muted">
                 Add current and future team members to this channel
                 automatically.

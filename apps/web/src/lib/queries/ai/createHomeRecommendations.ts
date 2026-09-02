@@ -1,5 +1,3 @@
-import { PERMISSION_IDS } from '@core/constant/permissions';
-import { useHasPermission } from '@core/context/user';
 import type { Accessor } from 'solid-js';
 import {
   buildRecommendationPrompt,
@@ -8,10 +6,9 @@ import {
 } from './homeRecommendations';
 import { createAIProjection } from './projection';
 
-// `provider/model` id routed by the projection generator. Must stay in the
-// backend's free-tier allowlist (ai_projections FREE_TIER_MODELS). The smart
-// projection omits the model and uses the server default (the smart tier).
-const FAST_MODEL = 'anthropic/claude-haiku-4-5';
+// `provider/model` id routed by the projection generator. This is the first
+// model in Conation's server-side Rox fallback chain.
+const FAST_MODEL = 'rox/gemini-2.5-flash';
 
 /**
  * Fast + smart recommendation projections. The static prompt instructs the
@@ -19,9 +16,9 @@ const FAST_MODEL = 'anthropic/claude-haiku-4-5';
  * ListEntities, which preserves each entity type's canonical inbox semantics.
  *
  * Two projections share one prompt and schema and differ only in model: the
- * fast one (Haiku, free tier) generates inline for immediate paint; the smart
- * one (server default, premium-gated) replaces it when it lands, and is
- * skipped entirely for users without professional features.
+ * fast one generates inline for immediate paint; the smart one uses the
+ * server default and replaces it when it lands. Both are available to every
+ * authenticated user in Conation.
  *
  * Result selection is pure and lives in `homeRecommendations.ts`; this hook
  * only wires it to the projections.
@@ -30,9 +27,7 @@ export function createHomeRecommendations(
   args: { enabled?: Accessor<boolean> } = {}
 ) {
   const enabled = () => args.enabled?.() ?? true;
-
-  const isPremium = useHasPermission(PERMISSION_IDS.READ_PROFESSIONAL_FEATURES);
-  const smartEnabled = () => enabled() && isPremium();
+  const smartEnabled = enabled;
 
   const fast = createAIProjection(() => ({
     id: 'home/recommended-fast',
@@ -51,7 +46,7 @@ export function createHomeRecommendations(
     schema: recommendationSchema,
     refreshCadence: 'high',
     expiry: 'day',
-    enabled: smartEnabled(),
+    enabled: enabled(),
   }));
 
   const items = () => pickRecommendations(smart.data(), fast.data());

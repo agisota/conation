@@ -57,14 +57,14 @@ impl<T: RequiredPermission> TeamAccessOutcome<T> {
 
 async fn user_team_access_outcome<T, Svc>(
     service: &Svc,
-    conation_user_id: MacroUserIdStr<'static>,
+    macro_user_id: MacroUserIdStr<'static>,
 ) -> Result<TeamAccessOutcome<T>, ExtractorError>
 where
     T: RequiredPermission,
     Svc: EntityAccessService,
 {
     let Some(team_info) = service
-        .get_user_team(&conation_user_id)
+        .get_user_team(&macro_user_id)
         .await
         .map_err(ExtractorError::from)?
     else {
@@ -83,7 +83,7 @@ where
             entity_id: team_info.team_id.to_string(),
             entity_type: EntityType::Team,
         },
-        auth: EntityAccessAuth::Authenticated(conation_user_id),
+        auth: EntityAccessAuth::Authenticated(macro_user_id),
         entity_permission: permission,
         _marker: PhantomData,
     }))
@@ -137,7 +137,7 @@ where
 {
     match authorization {
         MacroAuthorization::User(user) | MacroAuthorization::Internal(Some(user)) => {
-            user_team_access_outcome::<T, Svc>(service, user.conation_user_id).await
+            user_team_access_outcome::<T, Svc>(service, user.macro_user_id).await
         }
         MacroAuthorization::Bot(authentication) => {
             bot_team_access_outcome::<T, Svc>(service, &authentication).await

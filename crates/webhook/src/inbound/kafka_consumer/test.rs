@@ -5,11 +5,11 @@ use crate::domain::{
 };
 use channel_sender::ChannelSender;
 use channels::domain::broker_events::{ChannelDeletedMetadata, ChannelTopicEvent};
-use documents::domain::events::{DocumentDeletedMetadata, DocumentTopicEvent};
 use conation_event_broker::{
     Event, EventBrokerError, MacroEvent as _, MacroEventCollection as _, MessageParts,
 };
 use conation_user_id::user_id::MacroUserIdStr;
+use documents::domain::events::{DocumentDeletedMetadata, DocumentTopicEvent};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, Ordering};
 use uuid::Uuid;

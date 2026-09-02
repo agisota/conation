@@ -1,5 +1,5 @@
-import { toast } from '@core/component/Toast/Toast';
 import { t } from '@app/lib/i18n';
+import { toast } from '@core/component/Toast/Toast';
 import WideCopy from '@icon/wide-copy.svg';
 import IconCheck from '@phosphor/check.svg';
 import { debounce } from '@solid-primitives/scheduled';
@@ -22,7 +22,7 @@ export function CopySubjectButton(props: { subject: string; class?: string }) {
     const subject = copyableSubject(props.subject);
     if (!subject) return;
     navigator.clipboard.writeText(subject);
-    toast.success('Subject copied');
+    toast.success(t('blockEmail.status.subjectCopied'));
     setCopied(true);
     resetCopied();
   }
@@ -31,7 +31,7 @@ export function CopySubjectButton(props: { subject: string; class?: string }) {
     <Show when={copyableSubject(props.subject)}>
       <button
         type="button"
-        aria-label={t('auto.copy_subject')}
+        aria-label={t('blockEmail.actions.copySubject')}
         class={cn(
           'inline-flex align-middle size-6 items-center justify-center rounded-md select-none text-inherit hover:bg-ink/10',
           props.class

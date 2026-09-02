@@ -1,5 +1,5 @@
-import { $isCodeNode } from '@lexical/code';
 import { $isCustomCodeNode } from '@conation/lexical-core';
+import { $isCodeNode } from '@lexical/code';
 import type { LexicalEditor, NodeKey } from 'lexical';
 import { removeNodeAndRestoreSelection } from '../shared/removeNodeAndRestoreSelection';
 

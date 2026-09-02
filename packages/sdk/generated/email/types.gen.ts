@@ -1573,7 +1573,7 @@ export type UpsertScheduledResponse = {
     send_time: string;
 };
 
-export type UserProvider = 'GMAIL';
+export type UserProvider = 'GMAIL' | 'STALWART';
 
 export type Value = unknown;
 

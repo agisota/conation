@@ -1,3 +1,4 @@
+import { getSupportedLanguageFromFileExtension } from '@conation/lexical-core';
 import { DecoratorRenderer } from '@core/component/LexicalMarkdown/component/core/DecoratorRenderer';
 import { NodeAccessoryRenderer } from '@core/component/LexicalMarkdown/component/core/NodeAccessoryRenderer';
 import {
@@ -11,7 +12,6 @@ import {
 } from '@core/component/LexicalMarkdown/plugins';
 import { embeddedCodeBlock } from '@core/component/LexicalMarkdown/theme';
 import { blockMetadataSignal, blockTextSignal } from '@core/signal/load';
-import { getSupportedLanguageFromFileExtension } from '@conation/lexical-core';
 import { onCleanup, onMount } from 'solid-js';
 
 export function CodeMarkdown() {

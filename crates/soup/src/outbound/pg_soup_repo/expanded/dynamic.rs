@@ -4,6 +4,7 @@
 use std::str::FromStr;
 
 use chrono::{DateTime, Utc};
+use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use document_sub_type::DocumentSubType;
 use filter_ast::Expr;
 use item_filters::ast::{
@@ -15,7 +16,6 @@ use item_filters::ast::{
     project::ProjectLiteral,
     properties::{PropertiesLiteral, PropertyEntityType, PropertyMatchValue},
 };
-use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use models_pagination::{Query, SimpleSortMethod};
 use models_soup::{
     calendar_event::SoupCalendarEvent,
@@ -147,9 +147,9 @@ static GROUPED_CALENDAR_EVENT_TOP_CLAUSE: &str = r#"
                       event.owner_id = $1
                       OR EXISTS (
                           SELECT 1
-                          FROM conation_user_links link
+                          FROM macro_user_links link
                           WHERE link.link_id = event.source_link_id
-                            AND link.primary_conation_id = $1
+                            AND link.primary_macro_id = $1
                       )
                   )
 "#;

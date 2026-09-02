@@ -1,6 +1,19 @@
 use super::*;
 
 #[test]
+fn stalwart_provider_has_stable_wire_value() {
+    let provider = UserProvider::from(service::link::UserProvider::Stalwart);
+
+    assert_eq!(provider, UserProvider::Stalwart);
+    assert_eq!(provider.to_string(), "STALWART");
+    assert_eq!(serde_json::to_string(&provider).unwrap(), r#""STALWART""#);
+    assert_eq!(
+        serde_json::from_str::<UserProvider>(r#""STALWART""#).unwrap(),
+        UserProvider::Stalwart
+    );
+}
+
+#[test]
 fn inactive_link_is_inactive_regardless_of_reauth() {
     assert_eq!(SyncStatus::derive(false, false, None), SyncStatus::Inactive);
     assert_eq!(SyncStatus::derive(false, true, None), SyncStatus::Inactive);

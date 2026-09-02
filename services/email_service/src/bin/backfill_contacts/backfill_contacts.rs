@@ -18,8 +18,8 @@ async fn main() -> anyhow::Result<()> {
         .await
         .context("Could not connect to db")?;
 
-    let conation_ids: Vec<String> = config
-        .conation_ids
+    let macro_ids: Vec<String> = config
+        .macro_ids
         .split(',')
         .map(|id| id.trim().to_string())
         .collect();
@@ -33,22 +33,22 @@ async fn main() -> anyhow::Result<()> {
         ),
     };
 
-    println!("Processing {} macro IDs: {:?}", conation_ids.len(), conation_ids);
+    println!("Processing {} macro IDs: {:?}", macro_ids.len(), macro_ids);
 
-    for (index, conation_id) in conation_ids.iter().enumerate() {
+    for (index, macro_id) in macro_ids.iter().enumerate() {
         println!(
             "\n=== Processing macro ID {} ({}/{}) ===",
-            conation_id,
+            macro_id,
             index + 1,
-            conation_ids.len()
+            macro_ids.len()
         );
 
-        match process::process_conation_id(&db_pool, &contacts_ingress, conation_id).await {
+        match process::process_macro_id(&db_pool, &contacts_ingress, macro_id).await {
             Ok(()) => {
-                println!("Completed processing for {}.", conation_id);
+                println!("Completed processing for {}.", macro_id);
             }
             Err(e) => {
-                panic!("Failed to process macro ID {}: {:?}", conation_id, e);
+                panic!("Failed to process macro ID {}: {:?}", macro_id, e);
             }
         }
     }

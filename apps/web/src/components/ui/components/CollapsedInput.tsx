@@ -1,5 +1,5 @@
-import { focusInput } from '@core/directive/focusInput';
 import { t } from '@app/lib/i18n';
+import { focusInput } from '@core/directive/focusInput';
 import { isMobile } from '@core/mobile/isMobile';
 import PaperclipIcon from '@phosphor-icons/core/regular/paperclip.svg?component-solid';
 import { type Accessor, type JSX, Show } from 'solid-js';
@@ -59,8 +59,8 @@ export function CollapsedInput(props: CollapsedInputProps) {
         <Button
           variant="ghost"
           size="icon-sm"
-          aria-label={t('auto.attach_files')}
-          label="Attach files"
+          aria-label={t('shell.composer.attachFiles')}
+          label={t('shell.composer.attachFiles')}
           onClick={() => props.onAttach?.()}
         >
           <PaperclipIcon />
@@ -79,7 +79,7 @@ export function CollapsedInput(props: CollapsedInputProps) {
             when={hasText()}
             fallback={
               <span class="truncate text-ink-placeholder">
-                {props.placeholder ?? 'Message'}
+                {props.placeholder ?? t('shell.composer.messagePlaceholder')}
               </span>
             }
           >
@@ -95,9 +95,9 @@ export function CollapsedInput(props: CollapsedInputProps) {
             variant="ghost"
             size="sm"
             class="h-8 px-1.5 gap-1"
-            aria-label={`${attachmentCount()} attachment${
-              attachmentCount() === 1 ? '' : 's'
-            }`}
+            aria-label={t('shell.composer.attachmentCount', {
+              count: attachmentCount(),
+            })}
             label={`${attachmentCount()} attachment${
               attachmentCount() === 1 ? '' : 's'
             }`}

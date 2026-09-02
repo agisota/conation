@@ -1,6 +1,6 @@
 import { getChannelParams } from '@channel/Channel/link';
-import { buildSimpleEntityUrl } from '@core/util/url';
 import { quoteMarkdown } from '@conation/lexical-core/utils/quote-markdown';
+import { buildSimpleEntityUrl } from '@core/util/url';
 import type { MessageData } from '../../Message';
 
 export const DEFAULT_REACTION_EMOJI = '👍';

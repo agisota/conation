@@ -1,13 +1,13 @@
-Tasks are, essentially, *fancy* documents. They carry everything a regular document does, plus:
+Задачи в Conation — это документы со структурированными полями для работы: исполнителем, статусом и приоритетом.
 
-- **You can *assign* tasks.** If you assign someone a task, a notification appears in their inbox.
-- __Tasks have a *status* and a *priority.*__ You'll see these in the pills beneath the task title, as well as anywhere a task is mentioned.
-- **Tasks live in the *Tasks View*.** Navigate to Tasks View with `g -> t` to see all your tasks.
+- **Задачу можно назначить участнику команды.** Уведомление зависит от настроек получателя и развертывания.
+- **У задачи есть статус и приоритет.** Они показаны под заголовком и рядом с упоминаниями задачи.
+- **Все задачи собраны в разделе «Задачи».** Нажмите `g`, затем `t`, чтобы открыть его с клавиатуры.
 
-Create a task with `c -> t` or by typing `/task`.
+Создайте задачу сочетанием `c`, затем `t`, либо командой `/task` в редакторе, где эта команда доступна.
 
-Find yourself craving additional properties, like *story points?* You can add them as a custom property, in the info panel.
+Если вашей команде нужны дополнительные поля — например, оценка сложности, — добавьте пользовательское свойство на информационной панели.
 
-Learn more: <m-document-mention>{"documentId":"ADVANCED_TASK_FEATURES_ID","blockName":"task","documentName":"ADVANCED_TASK_FEATURES_NAME","blockParams":{},"collapsed":false}</m-document-mention>
+Подробнее: <m-document-mention>{"documentId":"ADVANCED_TASK_FEATURES_ID","blockName":"task","documentName":"ADVANCED_TASK_FEATURES_NAME","blockParams":{},"collapsed":false}</m-document-mention>
 
-Or see: <m-document-mention>{"documentId":"HOW_WE_USE_TASKS_ID","blockName":"task","documentName":"HOW_WE_USE_TASKS_NAME","blockParams":{},"collapsed":false}</m-document-mention>
+Пример процесса: <m-document-mention>{"documentId":"HOW_WE_USE_TASKS_ID","blockName":"task","documentName":"HOW_WE_USE_TASKS_NAME","blockParams":{},"collapsed":false}</m-document-mention>

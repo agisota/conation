@@ -44,7 +44,7 @@ pub struct ManageChannelParticipantsResponse {
 #[serde(rename_all = "camelCase")]
 #[schemars(
     title = "ManageChannelParticipants",
-    description = "Add or remove members of an existing channel. Requires the current user to be a channel member. Direct-message channels cannot change membership. The channel owner cannot be removed. Participants accept `macro|<email>` ids from ListTeamMembers or bare emails. Use `add` to invite people and `remove` to take them out. Use only when the user asks to change who is in a channel."
+    description = "Add or remove members of an existing channel. Requires the current user to be a channel member. Direct-message channels cannot change membership. The channel owner cannot be removed. Participants accept `conation|<email>` ids from ListTeamMembers or bare emails. Use `add` to invite people and `remove` to take them out. Use only when the user asks to change who is in a channel."
 )]
 pub struct ManageChannelParticipants {
     /// Channel to change.
@@ -55,7 +55,7 @@ pub struct ManageChannelParticipants {
     pub action: ParticipantAction,
     /// People to add or remove.
     #[schemars(
-        description = "People to add or remove, as `macro|<email>` ids or bare emails. Must not be empty."
+        description = "People to add or remove, as `conation|<email>` ids or bare emails. Must not be empty."
     )]
     pub participants: Vec<String>,
 }

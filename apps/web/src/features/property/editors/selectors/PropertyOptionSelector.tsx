@@ -1,5 +1,5 @@
-import { isTouchDevice } from '@core/mobile/isTouchDevice';
 import { t } from '@app/lib/i18n';
+import { isTouchDevice } from '@core/mobile/isTouchDevice';
 import { useKeyPressed } from '@core/util/useKeyPressed';
 import CircleDashedEmpty from '@phosphor/circle-dashed.svg';
 import SearchIcon from '@phosphor/magnifying-glass.svg';
@@ -158,9 +158,9 @@ type SelectOptionsProps = {
   options: SelectableOption[];
   isLoading: boolean;
   error: string | null;
-  selectedOptions: () =>Set<string>;
+  selectedOptions: () => Set<string>;
   onToggleOption: (value: string) => void;
-  onAddOption?: (value: string) =>Promise<void>;
+  onAddOption?: (value: string) => Promise<void>;
   /** When provided, renders a "no value" item at the top of the list. */
   clearOption?: { label: string; onClear: () => void };
   onClose?: () => void;
@@ -341,7 +341,11 @@ export const PropertyOptionSelector = (props: SelectOptionsProps) => {
             <PlusIcon class="size-3" />
           </Show>
         </div>
-        <p>Add "{dropdown.searchQuery().trim()}"</p>
+        <p>
+          {t('property.options.add', {
+            value: dropdown.searchQuery().trim(),
+          })}
+        </p>
       </div>
     </div>
   );
@@ -354,7 +358,9 @@ export const PropertyOptionSelector = (props: SelectOptionsProps) => {
           <div class="w-5 h-5 animate-spin">
             <LoadingSpinner />
           </div>
-          <span class="ml-2 text-ink-muted">{t('auto.loading_options')}</span>
+          <span class="ml-2 text-ink-muted">
+            {t('property.options.loading')}
+          </span>
         </div>
       }
     >
@@ -381,7 +387,9 @@ export const PropertyOptionSelector = (props: SelectOptionsProps) => {
                 <Show
                   when={isValidNewOption() && props.onAddOption}
                   fallback={
-                    <div class="text-center py-6 text-ink-muted">{t('auto.no_options_available')}</div>
+                    <div class="text-center py-6 text-ink-muted">
+                      {t('property.options.noneAvailable')}
+                    </div>
                   }
                 >
                   <div class="p-1">
@@ -400,7 +408,9 @@ export const PropertyOptionSelector = (props: SelectOptionsProps) => {
                 <Show
                   when={selectableItems().length > 0}
                   fallback={
-                    <div class="text-center py-4 text-ink-muted">{t('auto.no_options_match_your_search')}</div>
+                    <div class="text-center py-4 text-ink-muted">
+                      {t('property.options.noSearchMatches')}
+                    </div>
                   }
                 >
                   <For each={selectableItems()}>

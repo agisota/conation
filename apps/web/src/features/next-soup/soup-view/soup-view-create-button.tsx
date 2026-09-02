@@ -6,6 +6,7 @@ import {
   useCreatableEnabled,
 } from '@app/features/command/Launcher';
 import { openCreateCompanyModal } from '@app/features/companies/CreateCompanyModal';
+import { t } from '@app/lib/i18n';
 import { useHandleFileUpload } from '@app/util/handleFileUpload';
 import { openNewChannelModal } from '@channel/CreateChannelModal';
 import { CollapsibleHeaderItem } from '@components/app/split-layout/components/CollapsibleItem';
@@ -43,17 +44,23 @@ type CreateOption = {
 
 const IMPORT_FILE_OPTION: CreateOption = {
   id: 'import-file',
-  label: 'Import file',
+  get label() {
+    return t('soup.create.importFile');
+  },
 };
 const IMPORT_FOLDER_OPTION: CreateOption = {
   id: 'import-folder',
-  label: 'Import folder',
+  get label() {
+    return t('soup.create.importFolder');
+  },
 };
 // Companies aren't blocks, so the Customers view gets a bespoke option
 // that opens the create-company modal instead of a create action.
 const CREATE_COMPANY_OPTION: CreateOption = {
   id: 'create-company',
-  label: 'Company',
+  get label() {
+    return t('soup.create.company');
+  },
 };
 
 /**
@@ -62,18 +69,36 @@ const CREATE_COMPANY_OPTION: CreateOption = {
  * specific list views.
  */
 const VIEW_ONLY_BLOCK_LABELS: Partial<Record<CreatableName, string>> = {
-  automation: 'Automation',
+  get automation() {
+    return t('soup.create.automation');
+  },
 };
 
 const VIEW_CREATE_LABELS: Partial<Record<ListView, string>> = {
-  agents: 'Agent',
-  channels: 'Channel',
-  companies: 'Company',
-  documents: 'New',
-  folders: 'Folder',
-  mail: 'Email',
-  reminders: 'Reminder',
-  tasks: 'Task',
+  get agents() {
+    return t('soup.create.agent');
+  },
+  get channels() {
+    return t('soup.create.channel');
+  },
+  get companies() {
+    return t('soup.create.company');
+  },
+  get documents() {
+    return t('soup.create.new');
+  },
+  get folders() {
+    return t('soup.create.folder');
+  },
+  get mail() {
+    return t('soup.create.email');
+  },
+  get reminders() {
+    return t('soup.create.reminder');
+  },
+  get tasks() {
+    return t('soup.create.task');
+  },
 };
 
 function getViewCreateOptions(
@@ -145,8 +170,8 @@ export const SoupViewCreateButton = () => {
   });
   const createLabel = createMemo(() => {
     const view = currentView();
-    if (!view) return 'Create';
-    return VIEW_CREATE_LABELS[view] ?? 'Create';
+    if (!view) return t('soup.create.action');
+    return VIEW_CREATE_LABELS[view] ?? t('soup.create.action');
   });
 
   const handleSelect = (option: CreateOption) => {

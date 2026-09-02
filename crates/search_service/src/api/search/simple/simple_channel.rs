@@ -1,6 +1,6 @@
 use crate::api::search::simple::SearchError;
-use item_filters::ChannelFilters;
 use conation_user_id::user_id::MacroUserId;
+use item_filters::ChannelFilters;
 use opensearch_client::search::model::{Highlight, SearchHit};
 use std::collections::HashSet;
 

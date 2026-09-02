@@ -4,8 +4,8 @@ import { authServiceClient } from '@service-auth/client';
 import { createResource } from 'solid-js';
 import { getOpenEntitiesPrompt } from './openEntitiesPrompt';
 
-const ABOUT_MACRO = `
-Macro is an AI workspace with all the latest models and built-in editors for pdfs, docs, notes, images, diagrams, chats and more. Macro is like ChatGPT but you can do all your work inside it+
+const ABOUT_CONATION = `
+Conation is an AI workspace with all the latest models and built-in editors for PDFs, documents, notes, images, diagrams, chats, and more. Conation is like ChatGPT, but you can do all your work inside it.
 List of support file types
 - Notes: Mention files and create bullets and to-dos.
 - PDFs: Try out AI Popups: just highlight any text and click Explain.
@@ -35,7 +35,7 @@ export function useAdditionalInstructions() {
     return response.isOk() ? response.value : null;
   });
   return (currentChatId?: string) => {
-    let prompt = ABOUT_MACRO;
+    let prompt = ABOUT_CONATION;
     const name = userName();
     const parts = [name?.first_name, name?.last_name].filter(Boolean);
     if (parts.length > 0 || email()) {

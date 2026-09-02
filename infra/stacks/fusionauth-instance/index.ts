@@ -28,7 +28,11 @@ import {
   SMTP_CREDENTIALS,
   FUSIONAUTH_THEME_ID,
 } from './constants';
-import { ALLOWED_ORIGINS } from './origins';
+import {
+  ALLOWED_ORIGINS,
+  APPLICATION_URL,
+  MCP_OAUTH_CALLBACK_URL,
+} from './origins';
 
 // The main fusionauth provider, this will be passed around when creating various components
 
@@ -151,7 +155,7 @@ const defaultTenant = new FusionAuthTenant(
       verificationEmailTemplateId: emailVerificationTemplate.id,
       verificationStrategy: 'ClickableLink',
     },
-    logoutUrl: `https://${stack === 'prod' ? '' : `${stack}.`}macro.com`,
+    logoutUrl: APPLICATION_URL,
     // Delete unverified users
     userDeletePolicy: {
       unverifiedEnabled: true,
@@ -288,14 +292,11 @@ const macroApplication = new FusionAuthApplication(
       proofKeyForCodeExchangePolicy: 'NotRequired',
       scopeHandlingPolicy: 'Compatibility',
       unknownScopePolicy: 'Remove',
-      authorizedUrlValidationPolicy:
-        stack === 'local' || stack === 'dev' ? 'AllowWildcards' : 'ExactMatch',
+      authorizedUrlValidationPolicy: 'ExactMatch',
       authorizedRedirectUrls: [
         `${AUTHENTICATION_SERVICE_DOMAIN}/oauth/redirect`,
-        `https://mcp-server${stack === 'prod' ? '' : `-${stack}`}.macro.com/oauth/callback`,
-        ...(stack === 'local' || stack === 'dev'
-          ? ['http://localhost:8085/*', 'http://localhost:8085/oauth/*']
-          : []),
+        MCP_OAUTH_CALLBACK_URL,
+        ...(stack === 'dev' ? ['http://localhost:8085/oauth/callback'] : []),
       ],
       authorizedOriginUrls: ALLOWED_ORIGINS(),
       logoutBehavior: 'AllApplications',

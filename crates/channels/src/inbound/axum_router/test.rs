@@ -15,6 +15,14 @@ use axum::{
     body::Body,
     http::{Request, StatusCode, header},
 };
+use conation_authorization::{
+    INTERNAL_API_KEY_HEADER, INTERNAL_CONATION_ORGANIZATION_ID_HEADER,
+    INTERNAL_CONATION_USER_ID_HEADER, InternalAuthConfig, JwtValidator, MacroAuthorizationError,
+    MacroAuthorizationServiceImpl, MacroAuthorizationState, ValidatedIdentity,
+};
+use conation_user_id::cowlike::CowLike;
+use conation_user_id::user_id::MacroUserIdStr;
+use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId};
 use entity_access::domain::models::TeamRole;
 use entity_access::domain::{
     models::{
@@ -25,16 +33,6 @@ use entity_access::domain::{
     ports::EntityAccessService,
 };
 use http_body_util::BodyExt;
-#[allow(deprecated)]
-use conation_authorization::{
-    INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_ORGANIZATION_ID_HEADER, INTERNAL_MACRO_USER_ID_HEADER,
-    InternalAuthConfig, JwtValidator, LEGACY_DSS_INTERNAL_API_KEY_HEADER,
-    LEGACY_DSS_INTERNAL_MACRO_USER_ID_HEADER, MacroAuthorizationError,
-    MacroAuthorizationServiceImpl, MacroAuthorizationState, ValidatedIdentity,
-};
-use conation_user_id::cowlike::CowLike;
-use conation_user_id::user_id::MacroUserIdStr;
-use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId};
 use models_pagination::{Base64Str, CreatedAt, Cursor, CursorVal, PaginateOn, Query};
 use rootcause::Report;
 use std::sync::{
@@ -1076,8 +1074,8 @@ async fn standard_internal_headers_propagate_organization_to_entity_access() {
     ));
     let request = Request::get(format!("/{channel_id}/messages"))
         .header(INTERNAL_API_KEY_HEADER, VALID_INTERNAL_KEY)
-        .header(INTERNAL_MACRO_USER_ID_HEADER, INTERNAL_USER_ID)
-        .header(INTERNAL_MACRO_ORGANIZATION_ID_HEADER, "73")
+        .header(INTERNAL_CONATION_USER_ID_HEADER, INTERNAL_USER_ID)
+        .header(INTERNAL_CONATION_ORGANIZATION_ID_HEADER, "73")
         .body(Body::empty())
         .unwrap();
 
@@ -1095,27 +1093,25 @@ async fn standard_internal_headers_propagate_organization_to_entity_access() {
     );
 }
 
-#[allow(deprecated)]
 #[tokio::test]
-async fn legacy_internal_headers_authenticate_acting_user() {
+async fn legacy_internal_headers_are_rejected_before_join_service_invocation() {
     let (router, join_code, joined_users, validator) = join_by_code_router(None);
     let request = join_by_code_request(join_code)
-        .header(LEGACY_DSS_INTERNAL_API_KEY_HEADER, VALID_INTERNAL_KEY)
-        .header(LEGACY_DSS_INTERNAL_MACRO_USER_ID_HEADER, INTERNAL_USER_ID)
+        .header("x-document-storage-service-auth-key", VALID_INTERNAL_KEY)
+        .header("x-document-storage-service-user-id", INTERNAL_USER_ID)
         .body(Body::empty())
         .unwrap();
 
     let response = router.oneshot(request).await.unwrap();
 
-    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
     assert_eq!(validator.validation_count(), 0);
     let joined_users = joined_users.lock().unwrap();
-    assert_eq!(joined_users.len(), 1);
-    assert_eq!(joined_users[0].as_ref(), INTERNAL_USER_ID);
+    assert!(joined_users.is_empty());
 }
 
 #[tokio::test]
-async fn internal_headers_use_dss_style_default_identity() {
+async fn internal_headers_use_configured_default_identity() {
     let (router, join_code, joined_users, validator) = join_by_code_router(Some(TEST_USER_ID));
     let request = join_by_code_request(join_code)
         .header(INTERNAL_API_KEY_HEADER, VALID_INTERNAL_KEY)

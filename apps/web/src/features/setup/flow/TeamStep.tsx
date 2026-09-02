@@ -88,13 +88,14 @@ function OnTeamPanel(props: { name?: string; onContinue: () => void }) {
           <CheckIcon class="size-5" />
         </span>
         <p class="text-sm font-medium text-ink">
-          You're on {props.name ?? 'your team'}
+          {t('setup.team.onTeam', {
+            name: props.name ?? t('setup.team.yourTeam'),
+          })}
         </p>
         {/* Copy must stay true for auto-join, invite-accept, and the
             optimistic mid-create flash alike. */}
         <p class="max-w-xs text-xs text-ink-muted leading-snug">
-          Your team is set up — everything your teammates bring into Macro is
-          shared with you.
+          {t('setup.team.readyDescription')}
         </p>
       </div>
       <ContinueButton onClick={props.onContinue} />
@@ -120,7 +121,9 @@ function InvitesPanel(props: {
         {(invite) => (
           <div class="flex items-center gap-2.5 rounded-lg border border-edge bg-surface px-4 py-3 text-sm">
             <span class="min-w-0 truncate text-ink">
-              {idToDisplayName(invite.invited_by)} invited you to their team
+              {t('setup.team.invitedBy', {
+                name: idToDisplayName(invite.invited_by),
+              })}
             </span>
             <Button
               variant="cta"
@@ -128,7 +131,9 @@ function InvitesPanel(props: {
               class="ml-auto shrink-0"
               disabled={joinTeam.isPending}
               onClick={() => joinTeam.mutate({ teamInviteId: invite.id })}
-            >{t('auto.join')}</Button>
+            >
+              {t('setup.team.join')}
+            </Button>
           </div>
         )}
       </For>
@@ -242,11 +247,13 @@ function TeamForm(props: {
           exactly when the field needs explaining. */}
       <div class="flex items-center gap-1.5">
         <div class="flex min-w-0 flex-1 flex-col gap-1.5">
-          <label for="team-name" class="text-xs text-ink-muted">{t('auto.team_name')}</label>
+          <label for="team-name" class="text-xs text-ink-muted">
+            {t('setup.team.nameLabel')}
+          </label>
           <FormInput
             id="team-name"
             // An example, not "Team name" again — the label says that.
-            placeholder={t('auto.acme_inc')}
+            placeholder={t('setup.team.namePlaceholder')}
             value={name()}
             autoFocus={!props.domain}
             onInput={setName}
@@ -268,7 +275,7 @@ function TeamForm(props: {
                 <FormInput
                   id={`invite-${i}`}
                   type="email"
-                  placeholder="teammate@company.com"
+                  placeholder={t('setup.team.invitePlaceholder')}
                   value={slot()}
                   onInput={(value) =>
                     setInviteSlots((slots) =>
@@ -283,8 +290,12 @@ function TeamForm(props: {
                 <Show when={canRemoveSlot(slot())}>
                   <button
                     type="button"
-                    aria-label={`Don't invite ${slot().trim()}`}
-                    title={`Don't invite ${slot().trim()}`}
+                    aria-label={t('setup.team.removeInvite', {
+                      email: slot().trim(),
+                    })}
+                    title={t('setup.team.removeInvite', {
+                      email: slot().trim(),
+                    })}
                     onClick={() =>
                       setInviteSlots((slots) => removeInviteSlot(slots, i))
                     }
@@ -305,13 +316,17 @@ function TeamForm(props: {
         class="self-center text-ink-muted"
         onClick={addEmptyInvite}
       >
-        <Plus class="size-4" />{t('auto.add_another_teammate')}</Button>
+        <Plus class="size-4" />
+        {t('setup.team.addTeammate')}
+      </Button>
 
       <ContinueButton
         label={
           validInvites().length > 0
-            ? `Create team & invite ${validInvites().length}`
-            : 'Create team'
+            ? t('setup.team.createAndInvite', {
+                count: validInvites().length,
+              })
+            : t('setup.team.create')
         }
         disabled={name().trim().length === 0 || createTeam.isPending}
         onClick={() => void create()}

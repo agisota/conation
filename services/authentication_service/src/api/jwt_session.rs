@@ -4,10 +4,9 @@ use axum::{
     extract::{FromRef, FromRequestParts, Query},
     http::request::Parts,
 };
-use decode_jwt::{DecodedJwt, JwtContext, Params};
 use conation_auth::{headers::AccessTokenExtractor, middleware::decode_jwt::JwtValidationArgs};
-#[allow(deprecated)]
-use conation_authorization::{INTERNAL_API_KEY_HEADER, LEGACY_DSS_INTERNAL_API_KEY_HEADER};
+use conation_authorization::INTERNAL_API_KEY_HEADER;
+use decode_jwt::{DecodedJwt, JwtContext, Params};
 
 /// The FusionAuth session associated with an authorized request, when present.
 ///
@@ -41,10 +40,6 @@ where
     }
 }
 
-#[allow(deprecated)]
 fn is_internal_request(parts: &Parts) -> bool {
     parts.headers.contains_key(INTERNAL_API_KEY_HEADER)
-        || parts
-            .headers
-            .contains_key(LEGACY_DSS_INTERNAL_API_KEY_HEADER)
 }

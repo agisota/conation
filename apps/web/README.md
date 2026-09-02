@@ -1,77 +1,113 @@
-# Macro App Frontend
+# Веб-клиент Conation
 
-This is the root directory for the [solidjs](https://www.solidjs.com/) frontend application known as _Macro_
+Это frontend Conation: статическое одностраничное приложение на
+[SolidJS](https://www.solidjs.com/) и [Vite](https://vite.dev/). Браузерная
+версия — самостоятельный клиент, а не оболочка desktop-приложения. В профиле
+`standalone` она по умолчанию обращается к API через same-origin маршруты
+Conation.
 
-We use the [bun](https://bun.sh/) as a javascript package manager and runtime for the [vite](https://vite.dev/) development server.
+Подробная и актуальная инструкция для macOS/Linux находится в
+[`docs/RUNNING_LOCALLY.md`](../../docs/RUNNING_LOCALLY.md). Этот файл оставляет
+короткие команды именно для работы с web-клиентом и Tauri.
 
-The production application is compiled down to a static javascript bundle using a traditional SPA-like architecture.
+## Инструменты
 
-### Toolchain Management
+Репозиторий использует [Nix](https://nixos.org/) для фиксированной toolchain и
+[Bun](https://bun.sh/) для JavaScript-зависимостей и Vite. Из корня репозитория:
 
-If you have the [nix](https://nixos.org/learn/) package manager installed on your system then you can drop into a nix shell where everything you need is installed for you.
+```bash
+nix develop
+bun install --frozen-lockfile
+```
 
-`nix develop`
+На macOS для полного локального стека отдельно нужен Docker runtime: Docker
+Desktop, OrbStack или Colima. Nix предоставляет CLI, но не запускает macOS VM
+или Docker daemon.
 
-## Local Playwright
+## Собрать web-клиент
 
-For the local smoke suite, prefer the repo-level harness:
+```bash
+\cd apps/web
+just build-prod
+just check-standalone-artifact
+```
+
+`build-prod` подготавливает WASM-компоненты и собирает `dist`. Проверка
+`check-standalone-artifact` не допускает в standalone-артефакт управляемые
+legacy endpoints и устаревшую URL-схему. Это статическая проверка: она не
+заменяет работающий backend.
+
+Если оператору нужен фиксированный origin вместо same-origin маршрутов, он
+задаётся только во время сборки:
+
+```bash
+VITE_CONATION_OPERATOR_ORIGIN=https://conation.example just build-prod
+```
+
+Замените `conation.example` на реально контролируемый HTTPS origin. Для
+самостоятельного развёртывания не используйте hosted-legacy профиль.
+
+## Локальный продуктовый стек
+
+Из корня репозитория:
+
+```bash
+just doctor-local
+just run_local --no-doppler
+```
+
+Команда поднимает локальные Postgres, Redis, OpenSearch, Kafka, FusionAuth,
+Mailpit, proxy и сервисы Conation. Логин по одноразовому коду работает без
+облачных секретов; Google/Gmail, GitHub, реальные AI-провайдеры и доставка
+Internet-почты без соответствующих credentials намеренно не эмулируются как
+рабочие интеграции.
+
+Для локального браузерного smoke-теста:
 
 ```bash
 just local-e2e
 ```
 
-This starts a named headless stack through the same xtask orchestration as
-`just run_local`, seeds local fixture data into that isolated instance, and
-runs Playwright against a Vite server connected to the instance proxy. The
-harness generates local bearer-token auth from the stack's generated env; it
-does not need a refresh token or the legacy local-E2E compose overlay.
+Harness создаёт отдельный именованный стек, seed-данные и локальную bearer
+авторизацию. Для интерактивного режима Playwright используйте
+`just local-e2e-ui`.
 
-Set `LOCAL_E2E_INSTANCE` to reuse a different named stack. The default is
-`local-e2e`.
+## Tauri: native-клиенты
 
-The local smoke suite can import `localE2ESeed` from `tests/e2e/fixtures/local-e2e-seed.ts`. That helper loads the actual seed files used by `seed_cli` (`local_e2e/users.json`, `documents.json`, `channels.json`, and `channel_messages.json`) and exposes raw rows plus lookup maps by id/name/email. The small `local_e2e/manifest.json` only names the smoke aliases.
+Standalone native-артефакты используют отдельную идентичность
+`dev.conation.app`, а не bundle ID или deep link прежнего продукта. Для
+разработки нужны Rust, Bun и Tauri CLI из Nix shell; дополнительно:
 
-For Playwright UI mode, run:
+- Android: Android Studio, SDK/NDK и подходящий shell `nix develop
+  .#tauri-android` на Linux;
+- iOS/macOS: Xcode и Command Line Tools на macOS;
+- desktop Linux: `nix develop .#tauri-linux` для GTK/WebKitGTK/GStreamer.
 
-```bash
-just local-e2e-ui
-```
-
-## Tauri 🤝 Macro
-
-We are currently in the process of bundling the frontend javascript application as a [Tauri](https://tauri.app/) app.
-You will need the following dependencies installed on your system to develop in this environment.
-
-1. The [rust programming language](https://rust-lang.org/tools/install/)
-1. The [Tauri CLI](https://v2.tauri.app/reference/cli/)
-1. The [bun](https://bun.sh/) runtime
-1. *For Android Development* The [Android Studio IDE](https://developer.android.com/studio)
-1. *For iOS Development* [XCode](https://developer.apple.com/xcode/) for MacOS
-
-The default shell contains the shared frontend and Tauri CLI tooling. Use the
-focused shells when developing targets with large platform dependencies:
+Базовые команды Tauri запускаются из `apps/web/tauri` в соответствующем
+окружении:
 
 ```bash
-nix develop .#tauri-linux    # GTK/WebKitGTK/GStreamer desktop stack
-nix develop .#tauri-android  # Android Studio, SDK/NDK, emulator, and Rust targets
+cargo tauri dev
+cargo tauri android dev
+cargo tauri ios dev
 ```
 
-`tauri-android` is available on x86_64 Linux. On macOS, use the default shell
-with the platform IDE installed outside Nix (Xcode for iOS or Android Studio
-for Android).
+Для standalone Tauri-сборки с явно заданным операторским origin используйте:
 
-### Running Tauri
+```bash
+\cd apps/web
+CONATION_OPERATOR_ORIGIN=https://conation.example just tauri-build-standalone
+```
 
-After the dependencies are installed you can use the tauri cli to run the app.
-Note the first command should be substituted with the package manager you used to install the cli e.g. cargo, bun, etc.
-In the nix shell the cli is installed for the cargo package manager.
+Сборка исходников не равна готовому store/release артефакту. Перед публичным
+macOS/iOS/Android выпуском владелец Conation должен создать собственные App
+IDs, signing certificates, provisioning profiles, APNS/SNS настройки и пройти
+подпись/notarization. Эти внешние права и секреты не хранятся в репозитории.
 
+## Граница готовности
 
-Run the Desktop App for your host operating system
-  > `cargo tauri dev`
-
-Run the Android App
-  > `cargo tauri android dev`
-
-Run the iOS App (note: I haven't had the chance to test this yet)
-  > `cargo tauri ios dev`
+Локальный web-стек и standalone-сборка пригодны для разработки и валидации.
+Production self-host требует отдельно настроенных DNS/TLS, секретов,
+наблюдаемости, backup/restore, облачных адаптеров и полноценного JMAP/Stalwart
+mailbox lifecycle. Смотрите [статус self-host](../../infra/selfhost/README.md)
+перед тем, как заявлять production-готовность.

@@ -6,8 +6,8 @@ use attachment::{
     AttachmentContent, AttachmentError, AttachmentPart, AttachmentService, Attachments,
     ResolutionError, image::ImageData,
 };
-use futures::future::join_all;
 use conation_user_id::user_id::MacroUserIdStr;
+use futures::future::join_all;
 use model_entity::{Entity, EntityType};
 use non_empty::NonEmpty;
 

@@ -1,4 +1,4 @@
-const RETURN_LAYOUT_KEY = 'macro:inbox-link:return-layout';
+const RETURN_LAYOUT_KEY = 'conation:inbox-link:return-layout';
 
 /** Where the app should land once the Gmail consent round trip comes back. */
 export type InboxLinkReturn = {

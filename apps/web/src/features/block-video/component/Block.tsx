@@ -1,4 +1,5 @@
 import { useBlockEntityCommands } from '@app/features/next-soup/actions';
+import { t } from '@app/lib/i18n';
 import { FileSidePanelSections, SidePanel } from '@components/app/side-panel';
 import { DocumentBlockContainer } from '@core/component/DocumentBlockContainer';
 import { toast } from '@core/component/Toast/Toast';
@@ -51,7 +52,7 @@ const Video = () => {
           src={videoUrl()}
           onError={(e) => {
             console.error('video error', e);
-            setPlaybackError('Video playback failed');
+            setPlaybackError(t('video.playback.failed'));
           }}
         />
       </Show>

@@ -1,4 +1,5 @@
 import type { TagFilterMode } from '@app/features/next-soup/filters/filter-store/types';
+import { t } from '@app/lib/i18n';
 import { useSplitPanelOrThrow } from '@components/app/split-layout/layoutUtils';
 import { Combobox } from '@kobalte/core/combobox';
 import XIcon from '@phosphor/x.svg';
@@ -96,8 +97,18 @@ const SingleValueSegment = (props: {
 };
 
 const MODE_OPTIONS: { id: TagFilterMode; label: string }[] = [
-  { id: 'any', label: 'any of' },
-  { id: 'all', label: 'all of' },
+  {
+    id: 'any',
+    get label() {
+      return t('soup.search.filters.anyOf');
+    },
+  },
+  {
+    id: 'all',
+    get label() {
+      return t('soup.search.filters.allOf');
+    },
+  },
 ];
 
 const ModeSegment = (props: { mode: FacetModeVM }) => (

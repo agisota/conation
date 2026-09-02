@@ -1,11 +1,11 @@
 import { DOCS_BASE } from '@app/constants/docs-links';
-import { t } from '@app/lib/i18n';
 import type { ListView } from '@app/constants/list-views';
 import {
   type CreatableName,
   runCreateAction,
   useCreatableEnabled,
 } from '@app/features/command/Launcher';
+import { t } from '@app/lib/i18n';
 import { openNewChannelModal } from '@channel/CreateChannelModal';
 import { useSettingsState } from '@core/constant/SettingsState';
 import { useAddInboxFlow, useEmailLinksStatus } from '@core/email-link';
@@ -39,7 +39,7 @@ function HotkeyCap(props: { children: JSXElement }) {
 }
 
 type FallbackContent = {
-  plural: string;
+  title: string;
   graphic?: Component<{ class?: string }>;
   description?: JSXElement;
   create?: { label: string; blockName: CreatableName };
@@ -54,45 +54,48 @@ export function shouldShowLoadError(options: {
   return !options.hasData && !options.forceEmptyState;
 }
 
-const FALLBACK_CONTENT: Partial<Record<ListView, FallbackContent>> = {
+const fallbackContent = (): Partial<Record<ListView, FallbackContent>> => ({
   documents: {
-    plural: 'documents',
+    title: t('soup.empty.documents.title'),
     graphic: EmptyStateDocGraphic,
-    description:
-      'Write, collaborate, and share documents right inside Macro. Create notes, specs, or any long-form content and keep it alongside your conversations.',
-    create: { label: 'New document', blockName: 'md' },
+    description: t('soup.empty.documents.description'),
+    create: { label: t('soup.empty.documents.create'), blockName: 'md' },
     documentationUrl: `${DOCS_BASE}/product/docs`,
   },
   channels: {
-    plural: 'channels',
+    title: t('soup.empty.channels.title'),
     graphic: EmptyStateChannelsGraphic,
-    description:
-      'Channels are shared spaces for team conversations organized by topic, project, or team. Create a channel to start collaborating with your team.',
-    create: { label: 'New channel', blockName: 'channel' },
+    description: t('soup.empty.channels.description'),
+    create: { label: t('soup.empty.channels.create'), blockName: 'channel' },
     documentationUrl: `${DOCS_BASE}/product/channels`,
   },
   reminders: {
-    plural: 'reminders',
+    title: t('soup.empty.reminders.fallbackTitle'),
     description: (
       <>
-        Set a reminder on anything in Macro by selecting it and pressing{' '}
-        <HotkeyCap>h</HotkeyCap>, or write one about nothing in particular from
-        the Create menu.
+        {t('soup.empty.reminders.hotkeyPrefix')}
+        <HotkeyCap>h</HotkeyCap>
+        {t('soup.empty.reminders.createMenuSuffix')}
       </>
     ),
-    create: { label: 'New reminder', blockName: 'reminder' },
+    create: {
+      label: t('soup.empty.reminders.create'),
+      blockName: 'reminder',
+    },
   },
   calls: {
-    plural: 'calls',
+    title: t('soup.empty.calls.title'),
     graphic: EmptyStateCallsGraphic,
     description: (
       <>
-        See recordings, transcriptions and summaries of your Macro calls.
-        <br />{t('auto.calls_are_available_to_agents')}</>
+        {t('soup.empty.calls.description')}
+        <br />
+        {t('soup.empty.calls.agentsAvailable')}
+      </>
     ),
     documentationUrl: `${DOCS_BASE}/product/calls`,
   },
-};
+});
 
 export function EmptyState(props: {
   listView?: ListView;
@@ -130,10 +133,12 @@ export function EmptyState(props: {
           graphic={EmptyStateNoSearchMatchGraphic}
           title={
             soup.searchText().trim().length > 0
-              ? `No results for "${soup.searchText()}"`
-              : 'No results'
+              ? t('soup.empty.search.noResultsFor', {
+                  query: soup.searchText(),
+                })
+              : t('soup.empty.search.noResults')
           }
-          description="Search across messages, documents, tasks, and more. Try a different query or broaden your filters."
+          description={t('soup.empty.search.queryDescription')}
           documentationUrl={`${DOCS_BASE}/product/search`}
         />
       </Match>
@@ -142,8 +147,8 @@ export function EmptyState(props: {
         <EmptyStatePanel
           centered
           graphic={EmptyStateNoFilterMatchGraphic}
-          title={t('auto.no_items_matching_the_filters')}
-          description="Try adjusting or clearing your filters to see more results."
+          title={t('soup.empty.filters.noMatchTitle')}
+          description={t('soup.empty.filters.noMatchDescription')}
         >
           {props.onClearFilters && (
             <FilteredHiddenBanner
@@ -162,13 +167,12 @@ export function EmptyState(props: {
       >
         <EmptyStatePanel
           graphic={EmptyStateInboxTrayGraphic}
-          title={t('auto.no_scheduled_reminders')}
+          title={t('soup.empty.reminders.title')}
           description={
             <>
-              Reminders you schedule wait here until they fire into Signal. Set
-              one on anything in Macro by selecting it and pressing{' '}
-              <HotkeyCap>h</HotkeyCap>, or write one about nothing in
-              particular.
+              {t('soup.empty.reminders.signalPrefix')}
+              <HotkeyCap>h</HotkeyCap>
+              {t('soup.empty.reminders.genericSuffix')}
             </>
           }
           // Gated like every other reminder affordance. The tab itself is
@@ -177,7 +181,7 @@ export function EmptyState(props: {
           primaryAction={
             isCreatableEnabled('reminder')
               ? {
-                  label: 'New reminder',
+                  label: t('soup.empty.reminders.create'),
                   onClick: () => runCreateAction('reminder'),
                 }
               : undefined
@@ -189,10 +193,10 @@ export function EmptyState(props: {
       <Match when={props.listView === 'inbox' && !emailActive()}>
         <EmptyStatePanel
           graphic={EmptyStateInboxTrayGraphic}
-          title={t('auto.your_inbox_is_empty')}
-          description="Bring your inbox into Macro to triage signal from noise, reply faster, and let agents work alongside your mail."
+          title={t('soup.empty.inbox.disconnectedTitle')}
+          description={t('soup.empty.mail.connectDescription')}
           primaryAction={{
-            label: 'Connect email',
+            label: t('soup.empty.mail.connectAction'),
             onClick: onConnectEmail,
           }}
           documentationUrl={`${DOCS_BASE}/product/inbox`}
@@ -202,10 +206,10 @@ export function EmptyState(props: {
       <Match when={props.listView === 'mail' && !emailActive()}>
         <EmptyStatePanel
           graphic={EmptyStateEmailGraphic}
-          title={t('auto.connect_your_email')}
-          description="Bring your inbox into Macro to triage signal from noise, reply faster, and let agents work alongside your mail."
+          title={t('soup.empty.mail.disconnectedTitle')}
+          description={t('soup.empty.mail.connectDescription')}
           primaryAction={{
-            label: 'Connect email',
+            label: t('soup.empty.mail.connectAction'),
             onClick: onConnectEmail,
           }}
           documentationUrl={`${DOCS_BASE}/product/email`}
@@ -221,24 +225,23 @@ export function EmptyState(props: {
           const { title, description } =
             tab === 'noise'
               ? {
-                  title: 'No noise',
+                  title: t('soup.empty.inbox.noNoiseTitle'),
                   description: (
                     <>
-                      Low-priority items like newsletters and notifications
-                      collect here.
-                      <br />{t('auto.nothing_to_clear_right_now')}</>
+                      {t('soup.empty.inbox.noNoisePrefix')}
+                      <br />
+                      {t('soup.empty.inbox.noNoiseDescription')}
+                    </>
                   ),
                 }
               : tab === 'all'
                 ? {
-                    title: 'Inbox zero',
-                    description:
-                      "You're all caught up. New items will appear here as they arrive.",
+                    title: t('soup.empty.inbox.zeroTitle'),
+                    description: t('soup.empty.inbox.allCaughtUp'),
                   }
                 : {
-                    title: 'Inbox zero',
-                    description:
-                      "You're all caught up. Important items will appear here as they arrive.",
+                    title: t('soup.empty.inbox.zeroTitle'),
+                    description: t('soup.empty.inbox.signalCaughtUp'),
                   };
           return (
             <EmptyStatePanel
@@ -254,8 +257,8 @@ export function EmptyState(props: {
       <Match when={props.listView === 'mail' && emailActive()}>
         <EmptyStatePanel
           graphic={EmptyStateInboxTrayGraphic}
-          title={t('auto.inbox_zero')}
-          description="You're all caught up. New email will appear here as it arrives."
+          title={t('soup.empty.mail.zeroTitle')}
+          description={t('soup.empty.mail.zeroDescription')}
           documentationUrl={`${DOCS_BASE}/product/email`}
         />
       </Match>
@@ -263,10 +266,10 @@ export function EmptyState(props: {
       <Match when={props.listView === 'tasks'}>
         <EmptyStatePanel
           graphic={EmptyStateTasksGraphic}
-          title={t('auto.nothing_to_do')}
-          description="Tasks you create or that get assigned to you will show up here."
+          title={t('soup.empty.tasks.title')}
+          description={t('soup.empty.tasks.description')}
           primaryAction={{
-            label: 'New task',
+            label: t('soup.empty.tasks.create'),
             icon: PlusIcon,
             onClick: () => runCreateAction('task'),
           }}
@@ -279,10 +282,10 @@ export function EmptyState(props: {
       >
         <EmptyStatePanel
           graphic={EmptyStateAutomationsGraphic}
-          title={t('auto.no_automations_to_show')}
-          description="Automations run in the background to handle repetitive work for you — like triaging messages, updating tasks, or sending follow-ups."
+          title={t('soup.empty.automations.title')}
+          description={t('soup.empty.automations.description')}
           primaryAction={{
-            label: 'New automation',
+            label: t('soup.empty.automations.create'),
             icon: PlusIcon,
             onClick: () => runCreateAction('automation'),
           }}
@@ -295,10 +298,10 @@ export function EmptyState(props: {
       >
         <EmptyStatePanel
           graphic={EmptyStateAiGraphic}
-          title={t('auto.no_skills_yet')}
-          description="Skills are markdown documents with instructions AI follows. Reference one with / in any AI input."
+          title={t('soup.empty.skills.title')}
+          description={t('soup.empty.skills.description')}
           primaryAction={{
-            label: 'New skill',
+            label: t('soup.empty.skills.create'),
             icon: PlusIcon,
             onClick: () => runCreateAction('skill'),
           }}
@@ -309,10 +312,10 @@ export function EmptyState(props: {
       <Match when={props.listView === 'agents'}>
         <EmptyStatePanel
           graphic={EmptyStateAiGraphic}
-          title={t('auto.get_started_with_agents')}
-          description="Create an agent, or use Macro with your favorite AI chat client or code editor via MCP."
+          title={t('soup.empty.agents.title')}
+          description={t('soup.empty.agents.description')}
           primaryAction={{
-            label: 'New agent',
+            label: t('soup.empty.agents.create'),
             icon: PlusIcon,
             onClick: () => runCreateAction('chat'),
           }}
@@ -329,10 +332,10 @@ export function EmptyState(props: {
             <EmptyStatePanel
               centered
               graphic={EmptyStateCompaniesGraphic}
-              title={t('auto.join_a_team_to_enable_crm')}
-              description="Create or join a team in Settings > Team."
+              title={t('soup.empty.crm.joinTeamTitle')}
+              description={t('soup.empty.crm.joinTeamDescription')}
               primaryAction={{
-                label: 'Open team settings',
+                label: t('soup.empty.crm.openTeamSettings'),
                 onClick: () => openSettings('Team'),
               }}
             />
@@ -341,16 +344,16 @@ export function EmptyState(props: {
             <EmptyStatePanel
               centered
               graphic={EmptyStateCompaniesGraphic}
-              title={t('auto.crm_is_disabled')}
+              title={t('soup.empty.crm.disabledTitle')}
               description={
                 isTeamAdmin()
-                  ? 'Enable CRM in Settings > CRM to start tracking your customers.'
-                  : 'Team owners and admins can enable CRM in Settings > CRM.'
+                  ? t('soup.empty.crm.enableAdminDescription')
+                  : t('soup.empty.crm.enableMemberDescription')
               }
               primaryAction={
                 isTeamAdmin()
                   ? {
-                      label: 'Open CRM settings',
+                      label: t('soup.empty.crm.openCrmSettings'),
                       onClick: () => openSettings('CRM'),
                     }
                   : undefined
@@ -360,8 +363,8 @@ export function EmptyState(props: {
           <Match when={true}>
             <EmptyStatePanel
               graphic={EmptyStateCompaniesGraphic}
-              title={t('auto.no_customers_yet')}
-              description="Customers your team emails will appear here."
+              title={t('soup.empty.companies.title')}
+              description={t('soup.empty.companies.description')}
             />
           </Match>
         </Switch>
@@ -378,10 +381,10 @@ export function EmptyState(props: {
       >
         <EmptyStatePanel
           graphic={EmptyStateFolderGraphic}
-          title={t('auto.no_folders')}
-          description="Folders let you organize conversations, documents, and tasks into projects. Create a folder or drop files below to get started."
+          title={t('soup.empty.folders.title')}
+          description={t('soup.empty.folders.description')}
           primaryAction={{
-            label: 'New folder',
+            label: t('soup.empty.folders.create'),
             icon: PlusIcon,
             onClick: () => runCreateAction('project'),
           }}
@@ -395,8 +398,8 @@ export function EmptyState(props: {
         <EmptyStatePanel
           centered
           graphic={EmptyStateNoSearchMatchGraphic}
-          title={t('auto.no_items_to_show')}
-          description="Search across messages, documents, tasks, and more."
+          title={t('soup.empty.search.title')}
+          description={t('soup.empty.search.description')}
           documentationUrl={`${DOCS_BASE}/product/search`}
         />
       </Match>
@@ -404,8 +407,8 @@ export function EmptyState(props: {
       <Match when={true}>
         {(() => {
           const fallback = (props.listView &&
-            FALLBACK_CONTENT[props.listView]) ?? {
-            plural: 'items',
+            fallbackContent()[props.listView]) ?? {
+            title: t('soup.empty.generic.title'),
           };
           // A gated creatable is not offered here either. Nothing else stops
           // this button: a view can be reachable while the thing it creates is
@@ -430,7 +433,7 @@ export function EmptyState(props: {
           return (
             <EmptyStatePanel
               graphic={fallback.graphic ?? EmptyStateInboxZeroGraphic}
-              title={`No ${fallback.plural} to show`}
+              title={fallback.title}
               description={fallback.description}
               primaryAction={createAction()}
               documentationUrl={fallback.documentationUrl}

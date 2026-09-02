@@ -1,10 +1,10 @@
+import { t } from '@app/lib/i18n';
 import {
   CustomEntityIcon,
   EntityIcon,
   getEntityIconConfig,
 } from '@core/component/EntityIcon';
 import { ExplorerSpacer } from '@core/component/FileList/ExplorerSpacer';
-import { t } from '@app/lib/i18n';
 import { registerHotkey, useHotkeyDOMScope } from '@core/hotkey/hotkeys';
 import Fragment from '@core/util/Fragment';
 import { scrollToKeepGap } from '@core/util/scrollToKeepGap';
@@ -370,7 +370,7 @@ export const MoveToProjectView = (props: {
 
   return (
     <div class="" ref={rootScopeId} tabindex={-1}>
-      <EntityModalTitle title={t('auto.move_to_folder')} />
+      <EntityModalTitle title={t('entity.move.titleSingle')} />
       <div class="flex pb-2">
         <div class="flex justify-between items-center gap-2">
           <div class="flex items-center gap-1">
@@ -416,7 +416,7 @@ export const MoveToProjectView = (props: {
       <div class="w-full h-fit mb-3">
         <input
           type="text"
-          placeholder={t('auto.search_folders')}
+          placeholder={t('entity.move.searchFolders')}
           value={searchQuery()}
           onInput={(e) => setSearchQuery(e.currentTarget.value)}
           class="w-full p-2 text-sm border border-edge bg-surface text-ink placeholder:text-ink-placeholder focus:outline-none selection:bg-ink selection:text-surface"

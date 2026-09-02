@@ -6,6 +6,7 @@ import {
 } from '@app/features/calendar/components/composer/event-form-model';
 import { useEventEditor } from '@app/features/calendar/hooks/use-event-editor';
 import type { CalendarEvent } from '@app/features/calendar/types';
+import { t } from '@app/lib/i18n';
 import { useSplitPanelOrThrow } from '@components/app/split-layout/layoutUtils';
 import { useHotkeyDOMScope } from '@core/hotkey/hotkeys';
 import { onMount } from 'solid-js';
@@ -41,7 +42,9 @@ export function EventComposerSplit(props: {
   });
 
   onMount(() =>
-    panel.handle.setDisplayName(isEdit() ? 'Edit event' : 'New event')
+    panel.handle.setDisplayName(
+      isEdit() ? t('calendar.event.action.edit') : t('calendar.event.new')
+    )
   );
 
   return (

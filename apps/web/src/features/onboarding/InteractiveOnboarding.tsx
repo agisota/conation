@@ -1,6 +1,7 @@
 import { ROUTER_BASE } from '@app/constants/routerBase';
 import { CommandState } from '@app/features/command';
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import { useSplitPanel } from '@components/app/split-layout/layoutUtils';
 import { useTutorialCompleted } from '@core/context/user';
 import { registerHotkey, useHotkeyDOMScope } from '@core/hotkey/hotkeys';
@@ -252,7 +253,7 @@ function InteractiveOnboardingInner(props: InteractiveOnboardingProps) {
   const reg = registerHotkey({
     scopeId,
     hotkey: 'cmd+enter',
-    description: 'Continue',
+    description: t('onboarding.actions.continue'),
     runWithInputFocused: true,
     keyDownHandler: () => {
       if (readyToContinue()) {
@@ -268,7 +269,7 @@ function InteractiveOnboardingInner(props: InteractiveOnboardingProps) {
   const cmdkReg = registerHotkey({
     scopeId,
     hotkey: 'cmd+k',
-    description: 'Command menu (onboarding)',
+    description: t('onboarding.hotkeys.commandMenu'),
     runWithInputFocused: true,
     keyDownHandler: () => {
       setCommandKOpen((v) => !v);

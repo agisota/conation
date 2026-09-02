@@ -13,6 +13,7 @@ use axum::{
     Json,
     extract::{Path, State},
 };
+use conation_authorization::MacroAuthorizationService;
 use entity_access::{
     domain::{
         models::{TeamRole, ViewAccessLevel},
@@ -20,7 +21,6 @@ use entity_access::{
     },
     inbound::axum_extractors::EntityPermissionExtractor,
 };
-use conation_authorization::MacroAuthorizationService;
 use model_error_response::ErrorResponse;
 use serde::Deserialize;
 use serde_json::Value;

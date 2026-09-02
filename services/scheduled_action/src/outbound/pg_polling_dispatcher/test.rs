@@ -78,7 +78,7 @@ impl ScheduledActionRepo for FakeRepository {
     async fn delete_action(
         &self,
         _id: &Uuid,
-        _conation_user_id: MacroUserIdStr<'static>,
+        _macro_user_id: MacroUserIdStr<'static>,
     ) -> Result<()> {
         Ok(())
     }
@@ -153,7 +153,7 @@ fn due_action() -> ScheduledAction {
     let now = Utc::now();
     ScheduledAction {
         id: Some(generate_uuid_v7()),
-        owner: MacroUserIdStr::parse_from_str("macro|polling-dispatcher@test.com")
+        owner: MacroUserIdStr::parse_from_str("conation|polling-dispatcher@test.com")
             .expect("test owner should be valid"),
         name: "test action".to_string(),
         schedule: Schedule::from_cron("0 * * * * *".to_string())

@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { recipientEntityMapper, useContacts } from '@core/user';
 import { useVisibleCalendarsQuery } from '@queries/calendar/calendars';
@@ -61,7 +62,7 @@ export function useEventEditor(props: UseEventEditorProps) {
       return [
         {
           id: calendarId,
-          label: event.calendar.name || 'Calendar',
+          label: event.calendar.name || t('calendar.label'),
           color: event.calendar.color,
           defaultReminders: calendar?.defaultReminders,
         },
@@ -79,13 +80,17 @@ export function useEventEditor(props: UseEventEditorProps) {
   const create = useCreateCalendarEventMutation({
     onSuccess: props.onSaved,
     onError: (error) => {
-      toast.failure('Failed to create event', { subtext: error.message });
+      toast.failure(t('calendar.event.toast.createFailed'), {
+        subtext: error.message,
+      });
     },
   });
   const update = useUpdateCalendarEventMutation({
     onSuccess: props.onSaved,
     onError: (error) => {
-      toast.failure('Failed to update event', { subtext: error.message });
+      toast.failure(t('calendar.event.toast.updateFailed'), {
+        subtext: error.message,
+      });
     },
   });
 

@@ -12,9 +12,9 @@ use agent_session::domain::model::{
 use agent_session::domain::ports::{AgentSessionNotificationRecipient, ControlEvent};
 use agent_session::domain::service::AgentSessionService;
 use bot_id::BotId;
+use conation_user_id::user_id::MacroUserIdStr;
 use dashmap::DashMap;
 use dashmap::mapref::entry::Entry;
-use conation_user_id::user_id::MacroUserIdStr;
 use tokio::sync::{mpsc, oneshot};
 use tracing::Instrument as _;
 use tracing::instrument::WithSubscriber as _;
@@ -22,7 +22,7 @@ use tracing::instrument::WithSubscriber as _;
 use crate::domain::error::{HarnessError, Result};
 use crate::domain::model::{
     AgentKind, AnnounceOrigin, AnnouncePrompt, DeliverAction, HarnessCommand, HarnessDefaults,
-    OpenSession, SessionAnnouncement, SpawnContainer, is_conation_staff,
+    OpenSession, SessionAnnouncement, SpawnContainer,
 };
 use crate::domain::ports::{
     AgentPromptComposer, ChannelPromptContext, ContainerManager, RuntimeConnections,
@@ -542,26 +542,6 @@ where
     Egress: SandboxEgressProvisioner,
 {
     async fn execute(&self, session_id: AgentSessionId, command: HarnessCommand) -> Result<()> {
-        match &command {
-            HarnessCommand::Open(open)
-                if AgentKind::of(open.bot_id) == AgentKind::Cursor
-                    && !is_conation_staff(&open.origin.sender) =>
-            {
-                return Err(AgentSessionError::Forbidden.into());
-            }
-            HarnessCommand::Deliver(deliver) => {
-                let session = self.sessions.get_session(session_id).await?;
-                if AgentKind::of(session.bot_id) == AgentKind::Cursor
-                    && !deliver.actor.as_ref().is_some_and(is_conation_staff)
-                {
-                    return Err(AgentSessionError::Forbidden.into());
-                }
-            }
-            HarnessCommand::Open(_)
-            | HarnessCommand::SetSandboxSize(_)
-            | HarnessCommand::Delete => {}
-        }
-
         match command {
             HarnessCommand::Open(command) => self.open(session_id, command).await,
             HarnessCommand::Deliver(command) => self.deliver(session_id, command).await,

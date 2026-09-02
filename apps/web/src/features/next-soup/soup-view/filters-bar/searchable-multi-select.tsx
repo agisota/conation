@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { useSelectedFirst } from '@core/util/useSelectedFirst';
 import type { CollectionNode } from '@kobalte/core';
 import { Combobox } from '@kobalte/core/combobox';
@@ -118,8 +119,8 @@ const SearchableMultiSelectItem = (itemProps: {
           }}
         >
           {itemProps.isSoleActive?.(itemProps.item.rawValue.id)
-            ? 'All'
-            : 'Only'}
+            ? t('soup.filters.selection.all')
+            : t('soup.filters.selection.only')}
         </button>
       )}
     </Show>
@@ -290,7 +291,7 @@ export const SearchableMultiSelect = (props: SearchableMultiSelectProps) => {
               <SearchIcon class="size-3.5 text-ink-muted shrink-0" />
               <Combobox.Input
                 class="flex-1 min-w-0 text-sm bg-transparent outline-none caret-accent placeholder:text-ink-placeholder"
-                placeholder={props.placeholder ?? 'Search...'}
+                placeholder={props.placeholder ?? t('common.search')}
               />
             </div>
             <div class="p-1">
@@ -299,8 +300,10 @@ export const SearchableMultiSelect = (props: SearchableMultiSelectProps) => {
                 fallback={
                   <div class="py-3 px-2 text-center text-xs text-ink-muted">
                     {searchQuery().trim()
-                      ? `No options match "${searchQuery()}"`
-                      : 'No options available'}
+                      ? t('soup.filters.options.noMatch', {
+                          query: searchQuery(),
+                        })
+                      : t('soup.filters.options.noneAvailable')}
                   </div>
                 }
               >
@@ -414,7 +417,7 @@ export const SearchableMultiSelectInline = (
           ref={props.inputRef}
           onKeyDown={handleInputKeyDown}
           class="flex-1 min-w-0 text-sm bg-transparent outline-none caret-accent placeholder:text-ink-placeholder"
-          placeholder={props.placeholder ?? 'Search...'}
+          placeholder={props.placeholder ?? t('common.search')}
         />
       </div>
       <div class="p-1">
@@ -422,7 +425,7 @@ export const SearchableMultiSelectInline = (
           when={hasMatches()}
           fallback={
             <div class="py-3 px-2 text-center text-xs text-ink-muted">
-              No options match "{searchQuery()}"
+              {t('soup.filters.options.noMatch', { query: searchQuery() })}
             </div>
           }
         >

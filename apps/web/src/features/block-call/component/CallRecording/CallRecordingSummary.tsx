@@ -1,9 +1,9 @@
+import { t } from '@app/lib/i18n';
 import {
   StaticMarkdown,
   StaticMarkdownContext,
 } from '@core/component/LexicalMarkdown/component/core/StaticMarkdown';
 import { aiChatTheme } from '@core/component/LexicalMarkdown/theme';
-import { t } from '@app/lib/i18n';
 import type { CallRecord } from '@service-storage/generated/schemas/callRecord';
 import type { Accessor } from 'solid-js';
 import { createMemo, Show } from 'solid-js';
@@ -30,13 +30,17 @@ export function CallRecordingSummarySection(props: {
   return (
     <Show when={shouldShow()}>
       <section class="flex flex-col gap-3">
-        <h3 class="text-sm font-semibold text-ink">{t('auto.summary')}</h3>
+        <h3 class="text-sm font-semibold text-ink">
+          {t('call.recording.summary')}
+        </h3>
         <Show
           when={summary()}
           fallback={
             <div class="flex items-center gap-2 animate-pulse">
               <div class="size-3.5 shrink-0 animate-spin rounded-full border-2 border-ink-extra-muted border-t-ink-muted" />
-              <span class="text-sm text-ink-subtle">Generating summary…</span>
+              <span class="text-sm text-ink-subtle">
+                {t('call.recording.generatingSummary')}
+              </span>
             </div>
           }
         >

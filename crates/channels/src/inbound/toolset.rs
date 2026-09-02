@@ -20,6 +20,7 @@ use crate::{
     },
 };
 use ai_toolset::{AsyncToolCollection, RequestContext, ToolCallError};
+use conation_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::{
     models::{
         AccessError, AccessLevel, AdminParticipantRole, EntityAccessReceipt, EntityType,
@@ -27,7 +28,6 @@ use entity_access::domain::{
     },
     ports::EntityAccessService,
 };
-use conation_user_id::user_id::MacroUserIdStr;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -251,7 +251,7 @@ fn parse_participants(entries: &[String]) -> Result<Vec<MacroUserIdStr<'static>>
                 }
             }
             Err(()) => invalid.push(format!(
-                "participants[{index}] `{trimmed}` is not a user id (`macro|<email>`) or email"
+                "participants[{index}] `{trimmed}` is not a user id (`conation|<email>`) or email"
             )),
         }
     }

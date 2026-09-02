@@ -1,4 +1,4 @@
--- Seed the "Macro" system bot (bot_id::MACRO_AI_BOT_ID) as an agent bot.
+-- Seed the Conation system bot (bot_id::CONATION_AI_BOT_ID) as an agent bot.
 --
 -- The bot has always been code-defined with no row of its own; agent sessions
 -- reference bots(id), so mentioning it can only open a session once it exists

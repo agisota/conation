@@ -1,11 +1,4 @@
 import {
-  $getMarkIDs,
-  $isMarkNode,
-  $unwrapMarkNode,
-  $wrapSelectionInMarkNode,
-} from '@lexical/mark';
-import { mergeRegister, registerNestedElementResolver } from '@lexical/utils';
-import {
   $addSharedPeer,
   $createCommentNode,
   $getPeerId,
@@ -13,6 +6,13 @@ import {
   $removePeerId,
   CommentNode,
 } from '@conation/lexical-core';
+import {
+  $getMarkIDs,
+  $isMarkNode,
+  $unwrapMarkNode,
+  $wrapSelectionInMarkNode,
+} from '@lexical/mark';
+import { mergeRegister, registerNestedElementResolver } from '@lexical/utils';
 import {
   $getNodeByKey,
   $getRoot,

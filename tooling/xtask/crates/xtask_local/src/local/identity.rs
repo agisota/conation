@@ -22,7 +22,7 @@ pub const JWT_SECRET: &str = "super-secret-jwt-signing-key-for-local-development
 /// The populate-JWT lambda id (the unlicensed local variant).
 pub const POPULATE_JWT_LAMBDA_ID: &str = "a7f3e8d2-4b91-4c5a-9e6f-1a2b3c4d5e6f";
 
-/// The Macro application id. Client id == application id == JWT `aud`
+/// The Conation application id. Client id == application id == JWT `aud`
 /// (`AUDIENCE`). Must NOT be FusionAuth's reserved built-in application id
 /// (`3c219e58-ed0e-4b18-ad48-f4f92793ae32`, the "FusionAuth" admin app), which
 /// already exists on every instance and would make the kickstart's
@@ -38,7 +38,7 @@ pub const TENANT_ID: &str = "11111111-1111-4111-8111-111111111111";
 pub const CLIENT_SECRET: &str = "c3VwZXItc2VjcmV0LWxvY2FsLWNsaWVudC1zZWNyZXQtMDE";
 
 /// The JWT issuer the tenant emits; `conation_auth` checks `iss` against this.
-pub const ISSUER: &str = "local.macro.com";
+pub const ISSUER: &str = "local.conation.dev";
 
 /// Fixed id for the passwordless-login email template the kickstart creates.
 pub const PASSWORDLESS_EMAIL_TEMPLATE_ID: &str = "33333333-3333-4333-8333-333333333333";
@@ -67,7 +67,7 @@ pub const RECONCILE_LAMBDA_ID: &str = "66666666-6666-4666-8666-666666666666";
 pub const GITHUB_IDP_ID: &str = "99999999-9999-4999-8999-999999999999";
 
 /// Local from-address for FusionAuth-sent mail (lands in Mailpit).
-pub const MAIL_FROM: &str = "noreply@macro.local";
+pub const MAIL_FROM: &str = "noreply@conation.local";
 
 /// The internal service-to-service auth key in local mode. Services read it as
 /// `INTERNAL_API_SECRET_KEY`; the FusionAuth kickstart's user webhooks send it
@@ -89,3 +89,6 @@ pub fn oauth_redirect_uri(auth_port: u16) -> String {
 pub fn instance_secret(label: &str, instance: &str) -> String {
     format!("local-{instance}-{label}")
 }
+
+#[cfg(test)]
+mod test;

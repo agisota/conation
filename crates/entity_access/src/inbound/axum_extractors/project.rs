@@ -86,15 +86,15 @@ where
             });
         }
 
-        let conation_user_id = match authorization.authorization.as_ref() {
+        let macro_user_id = match authorization.authorization.as_ref() {
             Some(MacroAuthorization::User(user))
-            | Some(MacroAuthorization::Internal(Some(user))) => Some(user.conation_user_id.clone()),
+            | Some(MacroAuthorization::Internal(Some(user))) => Some(user.macro_user_id.clone()),
             Some(MacroAuthorization::Bot(_)) | Some(MacroAuthorization::Internal(None)) | None => {
                 None
             }
         };
 
-        if let Some(ref user_id) = conation_user_id
+        if let Some(ref user_id) = macro_user_id
             && project_context.user_id == *user_id
         {
             return Ok(Self {
@@ -145,7 +145,7 @@ where
         }
 
         let entity_access_receipt =
-            get_project_access_receipt(service.as_ref(), conation_user_id, &project_context.id)
+            get_project_access_receipt(service.as_ref(), macro_user_id, &project_context.id)
                 .await?;
 
         Ok(Self {
@@ -342,7 +342,7 @@ where
             .await?
         }
         Some(MacroAuthorization::User(user)) | Some(MacroAuthorization::Internal(Some(user))) => {
-            get_project_access_receipt(service.as_ref(), Some(user.conation_user_id), project.id())
+            get_project_access_receipt(service.as_ref(), Some(user.macro_user_id), project.id())
                 .await?
         }
         None => get_project_access_receipt(service.as_ref(), None, project.id()).await?,
@@ -357,11 +357,11 @@ where
 
 async fn get_project_access_receipt<T: RequiredPermission>(
     service: &impl EntityAccessService,
-    conation_user_id: Option<MacroUserIdStr<'static>>,
+    macro_user_id: Option<MacroUserIdStr<'static>>,
     project_id: &str,
 ) -> Result<EntityAccessReceipt<T>, ExtractorError> {
     let access_level = service
-        .get_access_level(conation_user_id.as_deref(), project_id, EntityType::Project)
+        .get_access_level(macro_user_id.as_deref(), project_id, EntityType::Project)
         .await
         .map_err(ExtractorError::from)?
         .ok_or(ExtractorError::Unauthorized)?;
@@ -369,7 +369,7 @@ async fn get_project_access_receipt<T: RequiredPermission>(
     if !permission.satisfies::<T>() {
         return Err(ExtractorError::Unauthorized);
     }
-    let auth = conation_user_id
+    let auth = macro_user_id
         .map(EntityAccessAuth::Authenticated)
         .unwrap_or(EntityAccessAuth::Unauthenticated);
 

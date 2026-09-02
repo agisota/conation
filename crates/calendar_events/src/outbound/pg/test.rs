@@ -38,7 +38,7 @@ async fn insert_link(pool: &PgPool, owner_id: &str) -> Uuid {
     sqlx::query!(
         r#"
         INSERT INTO email_links (
-            id, conation_id, fusionauth_user_id, email_address, provider
+            id, macro_id, fusionauth_user_id, email_address, provider
         )
         VALUES ($1, $2, $2, $3, 'GMAIL')
         "#,
@@ -53,14 +53,14 @@ async fn insert_link(pool: &PgPool, owner_id: &str) -> Uuid {
 }
 
 async fn insert_user(pool: &PgPool, id: &str) {
-    let conation_user_id = Uuid::now_v7();
-    let stripe_customer_id = format!("cus_{conation_user_id}");
+    let macro_user_id = Uuid::now_v7();
+    let stripe_customer_id = format!("cus_{macro_user_id}");
     sqlx::query!(
         r#"
-        INSERT INTO conation_user (id, username, email, stripe_customer_id)
+        INSERT INTO macro_user (id, username, email, stripe_customer_id)
         VALUES ($1, $2, $3, $4)
         "#,
-        conation_user_id,
+        macro_user_id,
         id,
         id,
         stripe_customer_id,
@@ -71,12 +71,12 @@ async fn insert_user(pool: &PgPool, id: &str) {
     let email = id.rsplit_once('|').map(|(_, email)| email).unwrap_or(id);
     sqlx::query!(
         r#"
-        INSERT INTO "User" (id, email, conation_user_id)
+        INSERT INTO "User" (id, email, macro_user_id)
         VALUES ($1, $2, $3)
         "#,
         id,
         email,
-        conation_user_id,
+        macro_user_id,
     )
     .execute(pool)
     .await
@@ -1694,7 +1694,7 @@ async fn delegated_inbox_source_grants_calendar_visibility(pool: PgPool) {
     .unwrap();
     sqlx::query!(
         r#"
-        INSERT INTO conation_user_links (primary_conation_id, child_conation_id, link_id)
+        INSERT INTO macro_user_links (primary_macro_id, child_macro_id, link_id)
         VALUES ($1, $2, $3)
         "#,
         primary_id,
@@ -1762,7 +1762,7 @@ async fn identical_uids_from_distinct_inboxes_remain_distinct_and_link_scoped(po
     .unwrap();
     sqlx::query!(
         r#"
-        INSERT INTO conation_user_links (primary_conation_id, child_conation_id, link_id)
+        INSERT INTO macro_user_links (primary_macro_id, child_macro_id, link_id)
         VALUES ($1, $2, $3)
         "#,
         primary_id,
@@ -2294,7 +2294,7 @@ async fn mutation_target_resolves_only_for_visible_requesters(pool: PgPool) {
         .event_id;
     sqlx::query!(
         r#"
-        INSERT INTO conation_user_links (primary_conation_id, child_conation_id, link_id)
+        INSERT INTO macro_user_links (primary_macro_id, child_macro_id, link_id)
         VALUES ($1, $2, $3)
         "#,
         delegate_id,
@@ -2358,7 +2358,7 @@ async fn creation_target_actor_is_owned_inboxes_not_the_calendar_inbox(pool: PgP
     grant_and_provider_ids(&repo, link_id).await;
     sqlx::query!(
         r#"
-        INSERT INTO conation_user_links (primary_conation_id, child_conation_id, link_id)
+        INSERT INTO macro_user_links (primary_macro_id, child_macro_id, link_id)
         VALUES ($1, $2, $3)
         "#,
         delegate_id,

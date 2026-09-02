@@ -1,5 +1,5 @@
-import { DebugSuspense } from '@channel/DebugSuspense';
 import { t } from '@app/lib/i18n';
+import { DebugSuspense } from '@channel/DebugSuspense';
 import { useUserId } from '@core/context/user';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
 import { getDisplayName, tryMacroId } from '@core/user';
@@ -439,7 +439,7 @@ export function ChannelThread(props: ThreadProps) {
                           onClick={(event) =>
                             replyAction()?.({ message: props.data(), event })
                           }
-                          aria-label={t('auto.reply')}
+                          aria-label={t('channel.message.reply')}
                         />
                       </Show>
                     </Thread.ActionsFooter>

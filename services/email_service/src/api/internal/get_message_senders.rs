@@ -45,7 +45,7 @@ pub async fn handler(
     _: MacroAuthorizationExtractor<AuthorizationService, InternalOnly>,
     Json(req_body): Json<MessageSendersRequest>,
 ) -> Result<Response, GetMessageSendersError> {
-    let link = email_db_client::links::get::fetch_link_by_conation_id(&ctx.db, &req_body.user_id)
+    let link = email_db_client::links::get::fetch_link_by_macro_id(&ctx.db, &req_body.user_id)
         .await?
         .ok_or(GetMessageSendersError::LinkNotFound(req_body.user_id))?;
 

@@ -1,6 +1,6 @@
 import { dateBucket } from '@app/features/next-soup/soup-view/group-by-date';
-import { t } from '@app/lib/i18n';
 import { SoupSectionHeader } from '@app/features/next-soup/soup-view/section-header';
+import { t } from '@app/lib/i18n';
 import { SplitHeaderLeft } from '@components/app/split-layout/components/SplitHeader';
 import { StaticMarkdownContext } from '@core/component/LexicalMarkdown/component/core/StaticMarkdown';
 import type { ActivityEvent } from '@queries/activity/graphql/entity';
@@ -38,7 +38,7 @@ export function MyActivityView() {
   return (
     <div class="@container/u-list flex size-full flex-col">
       <SplitHeaderLeft>
-        <span class="font-semibold text-sm">{t('auto.activity')}</span>
+        <span class="font-semibold text-sm">{t('activity.title')}</span>
       </SplitHeaderLeft>
       <StaticMarkdownContext>
         <div class="min-h-0 flex-1 overflow-y-auto py-1">
@@ -49,8 +49,8 @@ export function MyActivityView() {
                 fallback={
                   <p class="px-2 py-1 text-ink-extra-muted text-xs">
                     {overview.isError
-                      ? 'Activity overview is unavailable right now.'
-                      : 'Loading activity overview…'}
+                      ? t('activity.overview.unavailable')
+                      : t('activity.overview.loading')}
                   </p>
                 }
               >
@@ -67,8 +67,8 @@ export function MyActivityView() {
                   {feed.isLoading
                     ? t('common.loading')
                     : feed.isError
-                      ? 'Activity is unavailable right now. Try again in a moment.'
-                      : 'No activity yet.'}
+                      ? t('activity.feed.unavailable')
+                      : t('activity.feed.empty')}
                 </p>
               }
             >
@@ -80,7 +80,9 @@ export function MyActivityView() {
                     onClick={() => void feed.fetchNextPage()}
                     disabled={feed.isFetchingNextPage}
                   >
-                    {feed.isFetchingNextPage ? t('common.loading') : 'Show more'}
+                    {feed.isFetchingNextPage
+                      ? t('common.loading')
+                      : t('activity.feed.showMore')}
                   </Button>
                 </div>
               </Show>

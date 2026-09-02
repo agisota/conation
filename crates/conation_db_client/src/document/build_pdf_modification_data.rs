@@ -656,7 +656,7 @@ mod build_pdf_modification_data_tests {
         sqlx::query!(
             r#"
             INSERT INTO "Document" (id, name, owner, "fileType")
-            VALUES ($1, 'Empty Test Document', 'macro|user@user.com', 'pdf')
+            VALUES ($1, 'Empty Test Document', 'conation|user@user.com', 'pdf')
             "#,
             document_id,
         )

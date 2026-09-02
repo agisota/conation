@@ -7,8 +7,8 @@ use axum::Json;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use futures::StreamExt;
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::sync::Arc;
@@ -57,11 +57,10 @@ impl IntoResponse for StructuredCompletionError {
         (status = 200, description = "Structured completion result", body = StructuredCompletionResponse),
         (status = 400, description = "Bad request", body = StructuredCompletionError),
         (status = 401, description = "Unauthorized"),
-        (status = 402, description = "Payment required"),
         (status = 500, description = "Internal error", body = StructuredCompletionError),
     )
 )]
-#[tracing::instrument(skip(state, model_access, user, request), fields(user_id = %user.authorization.user.conation_user_id), err)]
+#[tracing::instrument(skip(state, model_access, user, request), fields(user_id = %user.authorization.user.macro_user_id), err)]
 pub async fn structured_completion(
     State(state): State<ApiContext>,
     model_access: DcsChatModelAccess,
@@ -71,7 +70,7 @@ pub async fn structured_completion(
     let ctx = Arc::new(state);
     let model = model_access.best_model();
 
-    let user_id = user.authorization.user.conation_user_id.clone();
+    let user_id = user.authorization.user.macro_user_id.clone();
 
     let tools_prompt: &(dyn std::fmt::Display + Sync) = match request.toolset {
         ToolSet::All => &ctx.all_tools_prompt,

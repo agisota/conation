@@ -50,61 +50,60 @@ fn bot_id_str(input: &str) -> IResult<&str, BotIdStorage<ArcCowStr<'_>>> {
     ))
 }
 
-/// Stable [`BotId`] for the first-party "Macro AI" system bot.
+/// Stable [`BotId`] for the first-party Conation AI system bot.
 ///
 /// Mentioning it answers with the classic in-channel chat reply (the
 /// `channel_bots` agent loop in `document_storage_service`). Agent sessions
-/// belong to [`MACRO_NEW_BOT_ID`] instead.
-pub const MACRO_AI_BOT_ID: BotId =
+/// belong to [`CONATION_NEW_BOT_ID`] instead.
+pub const CONATION_AI_BOT_ID: BotId =
     BotId::new_from_uuid(Uuid::from_u128(0x0000_0000_0000_0000_0000_0000_0000_a1a1));
 
-/// Stable handle for the "Macro AI" system bot (used for `@` mentions).
-pub const MACRO_AI_HANDLE: &str = "macro";
+/// Canonical handle for the Conation AI system bot (used for `@` mentions).
+pub const CONATION_AI_HANDLE: &str = "conation";
 
-/// Display name for the "Macro" system bot.
-pub const MACRO_AI_NAME: &str = "Macro";
+/// Display name for the Conation AI system bot.
+pub const CONATION_AI_NAME: &str = "Conation";
 
-/// Stable [`BotId`] for the "macro(new)" system bot.
+/// Stable [`BotId`] for the next-generation Conation system bot.
 ///
-/// The next-generation Macro bot: mentioning it opens an agent session served
-/// by the in-process (in-memory) agent harness, which answers with the Macro
-/// product toolset. A separate bot from [`MACRO_AI_BOT_ID`] on purpose - the
-/// classic in-channel reply stays on `@macro` for everyone while this one
-/// rolls out, and one id cannot mean both.
-pub const MACRO_NEW_BOT_ID: BotId =
+/// Mentioning it opens an agent session served by the in-process (in-memory)
+/// agent harness, which answers with the Conation product toolset. It remains
+/// a separate bot from [`CONATION_AI_BOT_ID`] because one stable id cannot mean
+/// both the classic reply path and a durable agent session.
+pub const CONATION_NEW_BOT_ID: BotId =
     BotId::new_from_uuid(Uuid::from_u128(0x0000_0000_0000_0000_0000_0000_0000_a2a2));
 
-/// Stable handle for the "macro(new)" system bot (used for `@` mentions).
-pub const MACRO_NEW_HANDLE: &str = "macro-new";
+/// Canonical handle for the next-generation Conation bot (used for `@` mentions).
+pub const CONATION_NEW_HANDLE: &str = "conation-new";
 
-/// Display name for the "macro(new)" system bot.
-pub const MACRO_NEW_NAME: &str = "macro(new)";
+/// Display name for the next-generation Conation system bot.
+pub const CONATION_NEW_NAME: &str = "Conation (new)";
 
-/// Stable [`BotId`] for autonomous Macro platform operations.
-pub const MACRO_SYSTEM_BOT_ID: BotId =
+/// Stable [`BotId`] for autonomous Conation platform operations.
+pub const CONATION_SYSTEM_BOT_ID: BotId =
     BotId::new_from_uuid(Uuid::from_u128(0x0000_0000_0000_0000_0000_0000_0000_5759));
 
-/// Display name for the autonomous Macro platform principal.
-pub const MACRO_SYSTEM_NAME: &str = "Macro System";
+/// Display name for the autonomous Conation platform principal.
+pub const CONATION_SYSTEM_NAME: &str = "Conation System";
 
-/// Stable [`BotId`] for the "Macro Coder" system bot, our coding-agent harness.
+/// Stable [`BotId`] for the "Conation Coder" system bot, our coding-agent harness.
 ///
-/// Distinct from [`MACRO_AI_BOT_ID`] on purpose: the Macro bot's sessions run
-/// in-process on the in-memory harness, while this one's run in a provisioned
-/// sandbox, and one id cannot mean both.
-pub const MACRO_CODER_BOT_ID: BotId =
+/// Distinct from [`CONATION_AI_BOT_ID`] on purpose: Conation's general assistant
+/// sessions run in-process, while this one's run in a provisioned sandbox,
+/// and one id cannot mean both.
+pub const CONATION_CODER_BOT_ID: BotId =
     BotId::new_from_uuid(Uuid::from_u128(0x0000_0000_0000_0000_0000_0000_0000_a9e7));
 
-/// Stable handle for the "Macro Coder" system bot (used for `@` mentions).
-pub const MACRO_CODER_HANDLE: &str = "coder";
+/// Stable handle for the "Conation Coder" system bot (used for `@` mentions).
+pub const CONATION_CODER_HANDLE: &str = "coder";
 
-/// Display name for the "Macro Coder" system bot.
-pub const MACRO_CODER_NAME: &str = "Macro Coder";
+/// Display name for the "Conation Coder" system bot.
+pub const CONATION_CODER_NAME: &str = "Conation Coder";
 
 /// Stable [`BotId`] for the "Cursor" system bot.
 ///
-/// Mentioning it opens an agent session like [`MACRO_CODER_BOT_ID`] does, but
-/// the session is served by a Cursor cloud agent rather than a Macro-managed
+/// Mentioning it opens an agent session like [`CONATION_CODER_BOT_ID`] does, but
+/// the session is served by a Cursor cloud agent rather than a Conation-managed
 /// sandbox.
 pub const CURSOR_BOT_ID: BotId =
     BotId::new_from_uuid(Uuid::from_u128(0x0000_0000_0000_0000_0000_0000_0000_c5c5));
@@ -115,8 +114,8 @@ pub const CURSOR_HANDLE: &str = "cursor";
 /// Display name for the "Cursor" system bot.
 pub const CURSOR_NAME: &str = "Cursor";
 
-/// Stable handle for the autonomous Macro platform principal.
-pub const MACRO_SYSTEM_HANDLE: &str = "macro-system";
+/// Canonical handle for the autonomous Conation platform principal.
+pub const CONATION_SYSTEM_HANDLE: &str = "conation-system";
 
 /// A first-party bot.
 ///
@@ -143,21 +142,21 @@ pub const SYSTEM_BOTS: &[SystemBot] = &[
     // needs no agent session; its next-generation replacement below is the
     // one whose mentions open sessions.
     SystemBot {
-        id: MACRO_AI_BOT_ID,
-        name: MACRO_AI_NAME,
-        handle: MACRO_AI_HANDLE,
+        id: CONATION_AI_BOT_ID,
+        name: CONATION_AI_NAME,
+        handle: CONATION_AI_HANDLE,
         has_agent: false,
     },
     SystemBot {
-        id: MACRO_NEW_BOT_ID,
-        name: MACRO_NEW_NAME,
-        handle: MACRO_NEW_HANDLE,
+        id: CONATION_NEW_BOT_ID,
+        name: CONATION_NEW_NAME,
+        handle: CONATION_NEW_HANDLE,
         has_agent: true,
     },
     SystemBot {
-        id: MACRO_CODER_BOT_ID,
-        name: MACRO_CODER_NAME,
-        handle: MACRO_CODER_HANDLE,
+        id: CONATION_CODER_BOT_ID,
+        name: CONATION_CODER_NAME,
+        handle: CONATION_CODER_HANDLE,
         has_agent: true,
     },
     SystemBot {
@@ -169,9 +168,9 @@ pub const SYSTEM_BOTS: &[SystemBot] = &[
     // Posts as itself for autonomous platform operations, but nothing mentions
     // it and it opens no sessions.
     SystemBot {
-        id: MACRO_SYSTEM_BOT_ID,
-        name: MACRO_SYSTEM_NAME,
-        handle: MACRO_SYSTEM_HANDLE,
+        id: CONATION_SYSTEM_BOT_ID,
+        name: CONATION_SYSTEM_NAME,
+        handle: CONATION_SYSTEM_HANDLE,
         has_agent: false,
     },
 ];

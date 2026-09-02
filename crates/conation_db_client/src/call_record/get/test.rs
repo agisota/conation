@@ -1,23 +1,23 @@
 use super::*;
 use sqlx::PgPool;
 
-const REQUESTER: &str = "macro|call-list-requester@corp.test";
-const SAME_TEAM_OWNER: &str = "macro|call-list-same-team-owner@corp.test";
-const OTHER_TEAM_OWNER: &str = "macro|call-list-other-team-owner@corp.test";
-const OWNER_WITHOUT_TEAM: &str = "macro|call-list-owner-without-team@corp.test";
+const REQUESTER: &str = "conation|call-list-requester@corp.test";
+const SAME_TEAM_OWNER: &str = "conation|call-list-same-team-owner@corp.test";
+const OTHER_TEAM_OWNER: &str = "conation|call-list-other-team-owner@corp.test";
+const OWNER_WITHOUT_TEAM: &str = "conation|call-list-owner-without-team@corp.test";
 const REQUESTER_TEAM: Uuid = Uuid::from_u128(0x00000000000000000000000000001101);
 const OTHER_TEAM: Uuid = Uuid::from_u128(0x00000000000000000000000000001102);
 
 async fn insert_user(pool: &PgPool, user_id: &str) -> anyhow::Result<()> {
-    let conation_user_id = Uuid::new_v4();
-    let email = user_id.strip_prefix("macro|").unwrap_or(user_id);
+    let macro_user_id = Uuid::new_v4();
+    let email = user_id.strip_prefix("conation|").unwrap_or(user_id);
 
     sqlx::query!(
         r#"
-        INSERT INTO conation_user (id, username, email, stripe_customer_id)
+        INSERT INTO macro_user (id, username, email, stripe_customer_id)
         VALUES ($1, $2, $3, $2)
         "#,
-        conation_user_id,
+        macro_user_id,
         user_id,
         email,
     )
@@ -25,10 +25,10 @@ async fn insert_user(pool: &PgPool, user_id: &str) -> anyhow::Result<()> {
     .await?;
 
     sqlx::query!(
-        r#"INSERT INTO "User" (id, email, conation_user_id) VALUES ($1, $2, $3)"#,
+        r#"INSERT INTO "User" (id, email, macro_user_id) VALUES ($1, $2, $3)"#,
         user_id,
         email,
-        conation_user_id,
+        macro_user_id,
     )
     .execute(pool)
     .await?;

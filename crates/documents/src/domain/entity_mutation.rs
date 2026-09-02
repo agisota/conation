@@ -6,6 +6,7 @@
 
 use std::collections::HashSet;
 
+use conation_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::models::{
     EditAccessLevel, EntityAccessReceipt, OwnerAccessLevel, ViewAccessLevel,
 };
@@ -13,15 +14,14 @@ use entity_mutation::{
     DuplicateEntity, EntityMutationEffect, EntityMutationErrorCode, MoveEntity, RenameEntity,
     TrashEntity, UpdateEntitySharePolicy, capability::MoveEntityRequest,
 };
-use conation_user_id::user_id::MacroUserIdStr;
 use model::document::DocumentBasic;
 use model_entity::{Entity, EntityType};
 use models_permissions::share_permission::UpdateSharePermissionRequestV2;
 
+use conation_event_broker::MacroEventBroker;
 use connection::domain::ports::ConnectionService;
 use entity_access_management::domain::ports::EntityAccessManagementService;
 use foreign_entity::domain::ports::ForeignEntityService;
-use conation_event_broker::MacroEventBroker;
 
 use super::{
     models::{DocumentError, EditDocumentServiceArgs},

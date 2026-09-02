@@ -2,6 +2,7 @@
  * Parse natural language date inputs like "today", "tomorrow", "next week", etc.
  */
 
+import { formatDateTime, formatRelativeTime, getDateLocale } from '@core/i18n';
 import { differenceInCalendarDays } from 'date-fns';
 
 export type ParsedDate = {
@@ -50,6 +51,11 @@ const MONTH_ABBR = [
   'dec',
 ];
 
+function formatRelativeDayLabel(dayOffset: number): string {
+  const formatted = formatRelativeTime(dayOffset, 'day', { numeric: 'auto' });
+  return `${formatted.charAt(0).toLocaleUpperCase(getDateLocale())}${formatted.slice(1)}`;
+}
+
 function parseDateString(input: string): ParsedDate | null {
   const normalized = input.toLowerCase().trim();
   const today = new Date();
@@ -59,7 +65,7 @@ function parseDateString(input: string): ParsedDate | null {
   if (normalized === 'today' || normalized === 'tod') {
     return {
       date: new Date(today),
-      displayFormat: 'Today',
+      displayFormat: formatRelativeDayLabel(0),
       confidence: 1,
     };
   }
@@ -74,7 +80,7 @@ function parseDateString(input: string): ParsedDate | null {
     tomorrow.setDate(tomorrow.getDate() + 1);
     return {
       date: tomorrow,
-      displayFormat: 'Tomorrow',
+      displayFormat: formatRelativeDayLabel(1),
       confidence: 1,
     };
   }
@@ -85,7 +91,7 @@ function parseDateString(input: string): ParsedDate | null {
     yesterday.setDate(yesterday.getDate() - 1);
     return {
       date: yesterday,
-      displayFormat: 'Yesterday',
+      displayFormat: formatRelativeDayLabel(-1),
       confidence: 1,
     };
   }
@@ -286,9 +292,9 @@ export function formatDate(date: Date): string {
   dateOnly.setHours(0, 0, 0, 0);
 
   if (dateOnly.getTime() === today.getTime()) {
-    return 'Today';
+    return formatRelativeDayLabel(0);
   } else if (dateOnly.getTime() === tomorrow.getTime()) {
-    return 'Tomorrow';
+    return formatRelativeDayLabel(1);
   }
 
   // Calculate if we should show the year
@@ -311,7 +317,7 @@ export function formatDate(date: Date): string {
     options.year = 'numeric';
   }
 
-  return date.toLocaleDateString('en-US', options);
+  return formatDateTime(date, options);
 }
 
 /**
@@ -321,20 +327,9 @@ export function formatDate(date: Date): string {
  */
 export function formatRelativeDay(date: Date): string {
   const diff = differenceInCalendarDays(date, new Date());
-  switch (diff) {
-    case -2:
-      return '2 days ago';
-    case -1:
-      return 'Yesterday';
-    case 0:
-      return 'Today';
-    case 1:
-      return 'Tomorrow';
-    case 2:
-      return 'In 2 days';
-    default:
-      return formatDate(date);
-  }
+  return diff >= -2 && diff <= 2
+    ? formatRelativeDayLabel(diff)
+    : formatDate(date);
 }
 
 function _getDateSuggestions(input: string): ParsedDate[] {
@@ -347,7 +342,7 @@ function _getDateSuggestions(input: string): ParsedDate[] {
     today.setHours(0, 0, 0, 0);
     suggestions.push({
       date: today,
-      displayFormat: 'Today',
+      displayFormat: formatRelativeDayLabel(0),
       confidence: 1,
     });
   }
@@ -358,7 +353,7 @@ function _getDateSuggestions(input: string): ParsedDate[] {
     tomorrow.setDate(tomorrow.getDate() + 1);
     suggestions.push({
       date: tomorrow,
-      displayFormat: 'Tomorrow',
+      displayFormat: formatRelativeDayLabel(1),
       confidence: 1,
     });
   }

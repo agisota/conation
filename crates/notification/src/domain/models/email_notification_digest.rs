@@ -17,9 +17,9 @@ use crate::domain::{
     },
     ports::NotificationRepository,
 };
-use either::Either;
 use conation_user_id::cowlike::CowLike;
 use conation_user_id::user_id::MacroUserIdStr;
+use either::Either;
 use rootcause::{Report, report};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, sync::Arc, time::Duration};

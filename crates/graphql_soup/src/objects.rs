@@ -4,12 +4,12 @@ use async_graphql::{
     Context, ID, InputValueError, InputValueResult, Interface, Json, Object, ObjectType,
     OutputType, Scalar, ScalarType, SimpleObject, Union, Value as GraphqlValue,
 };
+use conation_user_id::user_id::MacroUserIdStr;
 use graphql_common::{
     GraphqlCacheDeletion, GraphqlEntity, GraphqlEntityType, GraphqlSoupEntityType,
 };
 use graphql_email::GraphqlEmailLabel;
 use graphql_permission::GraphqlEntityPermission;
-use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::Entity;
 use models_pagination::PaginatedOpaqueCursor;
 use models_soup::{
@@ -2157,7 +2157,7 @@ where
 
 /// Implement interface-only dispatch methods for fields whose concrete
 /// GraphQL definitions are supplied by the flattened edge object.
-conation_rules! impl_common_interface_edges {
+macro_rules! impl_common_interface_edges {
     ($($entity:ident),+ $(,)?) => {
         $(
             impl<E: SoupEntityEdges> $entity<E> {

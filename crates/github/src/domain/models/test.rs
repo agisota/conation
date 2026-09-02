@@ -578,42 +578,42 @@ fn pull_request_foreign_entity_metadata_carries_existing_participants_forward() 
 }
 
 // ---------------------------------------------------------------------------
-// MacroTaskId::from_short_uuid
+// ConationTaskId::from_short_uuid
 // ---------------------------------------------------------------------------
 
 #[test]
 fn from_short_uuid_valid() {
-    let task_id = MacroTaskId::from_short_uuid("2BuyvtY3ae").unwrap();
+    let task_id = ConationTaskId::from_short_uuid("2BuyvtY3ae").unwrap();
     assert_eq!(task_id.short_uuid, "2BuyvtY3ae");
 }
 
 #[test]
 fn from_short_uuid_rejects_empty() {
-    assert!(MacroTaskId::from_short_uuid("").is_none());
+    assert!(ConationTaskId::from_short_uuid("").is_none());
 }
 
 #[test]
 fn from_short_uuid_rejects_invalid_chars() {
     // 'O', 'I', 'l', '0' are not in Flickr base58
-    assert!(MacroTaskId::from_short_uuid("OOOOO").is_none());
-    assert!(MacroTaskId::from_short_uuid("IIIlll").is_none());
-    assert!(MacroTaskId::from_short_uuid("000abc").is_none());
+    assert!(ConationTaskId::from_short_uuid("OOOOO").is_none());
+    assert!(ConationTaskId::from_short_uuid("IIIlll").is_none());
+    assert!(ConationTaskId::from_short_uuid("000abc").is_none());
 }
 
 #[test]
 fn from_short_uuid_rejects_too_long() {
     let long = "a".repeat(25);
-    assert!(MacroTaskId::from_short_uuid(&long).is_none());
+    assert!(ConationTaskId::from_short_uuid(&long).is_none());
 }
 
 // ---------------------------------------------------------------------------
-// MacroTaskId::from_uuid / to_uuid roundtrip
+// ConationTaskId::from_uuid / to_uuid roundtrip
 // ---------------------------------------------------------------------------
 
 #[test]
 fn roundtrip_uuid_conversion() {
     let uuid = uuid::Uuid::parse_str("0d0dc589-f301-43f1-8b11-4ab448ca4bb4").unwrap();
-    let task_id = MacroTaskId::from_uuid(&uuid);
+    let task_id = ConationTaskId::from_uuid(&uuid);
     assert_eq!(task_id.short_uuid, "2BuyvtY3aeEvHx4uG8iD51");
 
     let recovered = task_id.to_uuid().unwrap();
@@ -622,24 +622,24 @@ fn roundtrip_uuid_conversion() {
 
 #[test]
 fn to_task_id_string() {
-    let task_id = MacroTaskId::from_short_uuid("2BuyvtY3ae").unwrap();
-    assert_eq!(task_id.to_task_id_string(), "MACRO-2BuyvtY3ae");
+    let task_id = ConationTaskId::from_short_uuid("2BuyvtY3ae").unwrap();
+    assert_eq!(task_id.to_task_id_string(), "CONATION-2BuyvtY3ae");
 }
 
 #[test]
 fn display_impl() {
-    let task_id = MacroTaskId::from_short_uuid("abc123").unwrap();
-    assert_eq!(format!("{task_id}"), "MACRO-abc123");
+    let task_id = ConationTaskId::from_short_uuid("abc123").unwrap();
+    assert_eq!(format!("{task_id}"), "CONATION-abc123");
 }
 
 // ---------------------------------------------------------------------------
-// MacroTaskId::extract_from_text
+// ConationTaskId::extract_from_text
 // ---------------------------------------------------------------------------
 
 #[test]
 fn extract_case_insensitive() {
-    let text = "fixes MACRO-2BuyvtY3ae and also macro-abc123 and Macro-XYZ";
-    let ids = MacroTaskId::extract_from_text(text);
+    let text = "fixes CONATION-2BuyvtY3ae and also conation-abc123 and Conation-XYZ";
+    let ids = ConationTaskId::extract_from_text(text);
     assert_eq!(ids.len(), 3);
     assert_eq!(ids[0].short_uuid, "2BuyvtY3ae");
     assert_eq!(ids[1].short_uuid, "abc123");
@@ -648,9 +648,15 @@ fn extract_case_insensitive() {
 }
 
 #[test]
+fn extract_rejects_legacy_macro_prefix() {
+    let ids = ConationTaskId::extract_from_text("MACRO-2BuyvtY3ae macro-abc123 Macro-XYZ");
+    assert!(ids.is_empty());
+}
+
+#[test]
 fn extract_deduplicates() {
-    let text = "MACRO-abc123 and macro-abc123 again MACRO-abc123";
-    let ids = MacroTaskId::extract_from_text(text);
+    let text = "CONATION-abc123 and conation-abc123 again CONATION-abc123";
+    let ids = ConationTaskId::extract_from_text(text);
     // Same short UUID captured, only first occurrence kept
     assert_eq!(ids.len(), 1);
     assert_eq!(ids[0].short_uuid, "abc123");
@@ -658,32 +664,32 @@ fn extract_deduplicates() {
 
 #[test]
 fn extract_no_match() {
-    let text = "no task ids here, just MACR-123 or MACRO- or MACRO";
-    let ids = MacroTaskId::extract_from_text(text);
+    let text = "no task ids here, just CONATIO-123 or CONATION- or CONATION";
+    let ids = ConationTaskId::extract_from_text(text);
     assert!(ids.is_empty());
 }
 
 #[test]
 fn extract_ignores_invalid_base58_chars() {
     // '0', 'O', 'I', 'l' are not in Flickr base58
-    // "MACRO-000abc" -> regex captures "000abc" but from_short_uuid rejects it
-    let text = "MACRO-000abc";
-    let ids = MacroTaskId::extract_from_text(text);
+    // "CONATION-000abc" -> regex captures "000abc" but from_short_uuid rejects it
+    let text = "CONATION-000abc";
+    let ids = ConationTaskId::extract_from_text(text);
     assert!(ids.is_empty());
 }
 
 #[test]
 fn extract_from_branch_name() {
-    let text = "feature/macro-2BuyvtY3ae";
-    let ids = MacroTaskId::extract_from_text(text);
+    let text = "feature/conation-2BuyvtY3ae";
+    let ids = ConationTaskId::extract_from_text(text);
     assert_eq!(ids.len(), 1);
     assert_eq!(ids[0].short_uuid, "2BuyvtY3ae");
 }
 
 #[test]
 fn extract_multiple_in_sentence() {
-    let text = "closes MACRO-aaa111 and MACRO-bbb222";
-    let ids = MacroTaskId::extract_from_text(text);
+    let text = "closes CONATION-aaa111 and CONATION-bbb222";
+    let ids = ConationTaskId::extract_from_text(text);
     assert_eq!(ids.len(), 2);
     assert_eq!(ids[0].short_uuid, "aaa111");
     assert_eq!(ids[1].short_uuid, "bbb222");
@@ -756,6 +762,53 @@ fn pull_number_missing() {
     let event =
         ValidatedGithubWebhookEvent::new("ping".to_string(), serde_json::json!({"zen": "hello"}));
     assert_eq!(event.pull_number(), None);
+}
+
+#[test]
+fn task_status_tracks_draft_and_ready_pull_request_transitions() {
+    let cases = [
+        ("opened", true, false, Some("In Progress")),
+        ("reopened", true, false, Some("In Progress")),
+        ("edited", true, false, Some("In Progress")),
+        ("converted_to_draft", true, false, Some("In Progress")),
+        ("opened", false, false, Some("In Review")),
+        ("ready_for_review", false, false, Some("In Review")),
+        ("closed", false, true, Some("Completed")),
+        ("closed", false, false, Some("Not Started")),
+    ];
+
+    for (action, draft, merged, expected) in cases {
+        let event = ValidatedGithubWebhookEvent::new(
+            "pull_request".to_string(),
+            serde_json::json!({
+                "action": action,
+                "pull_request": {
+                    "draft": draft,
+                    "merged": merged,
+                }
+            }),
+        );
+
+        assert_eq!(
+            event.task_status_for_event(),
+            expected,
+            "unexpected task status for action={action}, draft={draft}, merged={merged}"
+        );
+    }
+}
+
+#[test]
+fn task_status_keeps_missing_draft_field_ready_for_review() {
+    let event = ValidatedGithubWebhookEvent::new(
+        "pull_request".to_string(),
+        serde_json::json!({
+            "action": "opened",
+            "pull_request": {}
+        }),
+    );
+
+    assert!(!event.is_draft_pull_request());
+    assert_eq!(event.task_status_for_event(), Some("In Review"));
 }
 
 #[test]
@@ -854,19 +907,19 @@ fn extract_text_pull_request() {
     let payload = serde_json::json!({
         "action": "opened",
         "pull_request": {
-            "title": "fixes MACRO-abc123",
-            "body": "This PR closes MACRO-def456",
+            "title": "fixes CONATION-abc123",
+            "body": "This PR closes CONATION-def456",
             "head": {
-                "ref": "feature/macro-ghi789"
+                "ref": "feature/conation-ghi789"
             }
         }
     });
     let event = ValidatedGithubWebhookEvent::new("pull_request".to_string(), payload);
     let texts = event.extract_searchable_text();
     assert_eq!(texts.len(), 3);
-    assert_eq!(texts[0], "fixes MACRO-abc123");
-    assert_eq!(texts[1], "This PR closes MACRO-def456");
-    assert_eq!(texts[2], "feature/macro-ghi789");
+    assert_eq!(texts[0], "fixes CONATION-abc123");
+    assert_eq!(texts[1], "This PR closes CONATION-def456");
+    assert_eq!(texts[2], "feature/conation-ghi789");
 }
 
 #[test]
@@ -893,13 +946,13 @@ fn extract_text_issue_comment() {
     let payload = serde_json::json!({
         "action": "created",
         "comment": {
-            "body": "See MACRO-abc123 for details"
+            "body": "See CONATION-abc123 for details"
         }
     });
     let event = ValidatedGithubWebhookEvent::new("issue_comment".to_string(), payload);
     let texts = event.extract_searchable_text();
     assert_eq!(texts.len(), 1);
-    assert_eq!(texts[0], "See MACRO-abc123 for details");
+    assert_eq!(texts[0], "See CONATION-abc123 for details");
 }
 
 #[test]
@@ -907,13 +960,13 @@ fn extract_text_pull_request_review() {
     let payload = serde_json::json!({
         "action": "submitted",
         "review": {
-            "body": "Looks good, relates to MACRO-xyz789"
+            "body": "Looks good, relates to CONATION-xyz789"
         }
     });
     let event = ValidatedGithubWebhookEvent::new("pull_request_review".to_string(), payload);
     let texts = event.extract_searchable_text();
     assert_eq!(texts.len(), 1);
-    assert_eq!(texts[0], "Looks good, relates to MACRO-xyz789");
+    assert_eq!(texts[0], "Looks good, relates to CONATION-xyz789");
 }
 
 #[test]
@@ -921,14 +974,14 @@ fn extract_text_pull_request_review_comment() {
     let payload = serde_json::json!({
         "action": "created",
         "comment": {
-            "body": "This line relates to MACRO-abc123"
+            "body": "This line relates to CONATION-abc123"
         }
     });
     let event =
         ValidatedGithubWebhookEvent::new("pull_request_review_comment".to_string(), payload);
     let texts = event.extract_searchable_text();
     assert_eq!(texts.len(), 1);
-    assert_eq!(texts[0], "This line relates to MACRO-abc123");
+    assert_eq!(texts[0], "This line relates to CONATION-abc123");
 }
 
 #[test]
@@ -1035,9 +1088,9 @@ fn pr_context_empty_for_pull_request_event() {
     let payload = serde_json::json!({
         "action": "opened",
         "pull_request": {
-            "title": "fixes MACRO-abc123",
+            "title": "fixes CONATION-abc123",
             "body": "body text",
-            "head": { "ref": "feature/macro-abc123" }
+            "head": { "ref": "feature/conation-abc123" }
         }
     });
     let event = ValidatedGithubWebhookEvent::new("pull_request".to_string(), payload);
@@ -1049,21 +1102,21 @@ fn pr_context_from_issue_comment() {
     let payload = serde_json::json!({
         "action": "created",
         "issue": {
-            "title": "PR title with MACRO-abc123",
-            "body": "PR body with MACRO-def456",
+            "title": "PR title with CONATION-abc123",
+            "body": "PR body with CONATION-def456",
             "pull_request": {},
-            "head": { "ref": "feature/macro-ghi789" }
+            "head": { "ref": "feature/conation-ghi789" }
         },
         "comment": {
-            "body": "Fixes MACRO-abc123"
+            "body": "Fixes CONATION-abc123"
         }
     });
     let event = ValidatedGithubWebhookEvent::new("issue_comment".to_string(), payload);
     let texts = event.extract_pr_context_text();
     assert_eq!(texts.len(), 3);
-    assert_eq!(texts[0], "PR title with MACRO-abc123");
-    assert_eq!(texts[1], "PR body with MACRO-def456");
-    assert_eq!(texts[2], "feature/macro-ghi789");
+    assert_eq!(texts[0], "PR title with CONATION-abc123");
+    assert_eq!(texts[1], "PR body with CONATION-def456");
+    assert_eq!(texts[2], "feature/conation-ghi789");
 }
 
 #[test]
@@ -1071,18 +1124,18 @@ fn pr_context_from_review() {
     let payload = serde_json::json!({
         "action": "submitted",
         "pull_request": {
-            "title": "MACRO-abc123 fix",
+            "title": "CONATION-abc123 fix",
             "body": null,
             "head": { "ref": "main" }
         },
         "review": {
-            "body": "Relates to MACRO-abc123"
+            "body": "Relates to CONATION-abc123"
         }
     });
     let event = ValidatedGithubWebhookEvent::new("pull_request_review".to_string(), payload);
     let texts = event.extract_pr_context_text();
     assert_eq!(texts.len(), 2);
-    assert_eq!(texts[0], "MACRO-abc123 fix");
+    assert_eq!(texts[0], "CONATION-abc123 fix");
     assert_eq!(texts[1], "main");
 }
 
@@ -1091,21 +1144,21 @@ fn pr_context_from_review_comment() {
     let payload = serde_json::json!({
         "action": "created",
         "pull_request": {
-            "title": "MACRO-abc123 fix",
+            "title": "CONATION-abc123 fix",
             "body": "details",
-            "head": { "ref": "feature/macro-abc123" }
+            "head": { "ref": "feature/conation-abc123" }
         },
         "comment": {
-            "body": "This line relates to MACRO-abc123"
+            "body": "This line relates to CONATION-abc123"
         }
     });
     let event =
         ValidatedGithubWebhookEvent::new("pull_request_review_comment".to_string(), payload);
     let texts = event.extract_pr_context_text();
     assert_eq!(texts.len(), 3);
-    assert_eq!(texts[0], "MACRO-abc123 fix");
+    assert_eq!(texts[0], "CONATION-abc123 fix");
     assert_eq!(texts[1], "details");
-    assert_eq!(texts[2], "feature/macro-abc123");
+    assert_eq!(texts[2], "feature/conation-abc123");
 }
 
 #[test]

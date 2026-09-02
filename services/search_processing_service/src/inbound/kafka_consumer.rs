@@ -41,11 +41,11 @@ use ::chat::domain::events::ChatMacroEvent;
 use ::email::domain::events::EmailMacroEvent;
 use calendar_events::domain::events::CalendarMacroEvent;
 use channels::domain::broker_events::ChannelMacroEvent;
-use documents::domain::events::DocumentMacroEvent;
-use kafka_util::{GroupName, KafkaEventConsumer};
 use conation_event_broker::{
     KafkaConsumerAdapter, MacroEvent as _, MacroEventCollection, MacroEventConsumerService,
 };
+use documents::domain::events::DocumentMacroEvent;
+use kafka_util::{GroupName, KafkaEventConsumer};
 use projects::domain::events::ProjectMacroEvent;
 use properties::domain::events::PropertyMacroEvent;
 use rdkafka::{

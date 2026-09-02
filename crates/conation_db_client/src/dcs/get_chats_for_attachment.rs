@@ -100,7 +100,7 @@ mod tests {
         let chat = get_latest_single_attachment_chat(
             &mut transaction,
             "d0000002-0000-0000-0000-000000000002",
-            "macro|user@user.com",
+            "conation|user@user.com",
         )
         .await?;
         assert!(chat.is_some());
@@ -114,7 +114,7 @@ mod tests {
         let chat = get_multi_attachment_chat(
             &mut transaction,
             "d0000002-0000-0000-0000-000000000002",
-            "macro|user@user.com",
+            "conation|user@user.com",
         )
         .await?;
         assert_eq!(chat.len(), 3);

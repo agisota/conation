@@ -1,4 +1,5 @@
 import { ShowFeatureFlag } from '@app/lib/analytics/posthog';
+import { t } from '@app/lib/i18n';
 import { FloatRegionOrInline } from '@components/app/mobile/float-regions/FloatRegion';
 import { useSplitPanelOrThrow } from '@components/app/split-layout/layoutUtils';
 import { DragDropWrapper } from '@core/component/AI/component/DragDrop';
@@ -69,9 +70,9 @@ function AnimatedHeroLogo(props: { class?: string }) {
 
 function getGreeting() {
   const hour = new Date().getHours();
-  if (hour < 12) return 'Good morning';
-  if (hour < 18) return 'Good afternoon';
-  return 'Good evening';
+  if (hour < 12) return t('shell.home.greeting.morning');
+  if (hour < 18) return t('shell.home.greeting.afternoon');
+  return t('shell.home.greeting.evening');
 }
 
 export function Home() {
@@ -134,7 +135,7 @@ function HomeContent() {
             </h1>
           </header>
 
-          <HomeSectionBoundary title="import">
+          <HomeSectionBoundary title={t('shell.home.section.import')}>
             <HomeBackfillProgress />
           </HomeSectionBoundary>
 
@@ -142,16 +143,22 @@ function HomeContent() {
             key={ENABLE_HOME_RECOMMENDATIONS_FLAG}
             enabledOverride={ENABLE_HOME_RECOMMENDATIONS_OVERRIDE}
           >
-            <HomeSectionBoundary title="recommendations" fallback={null}>
+            <HomeSectionBoundary
+              title={t('shell.home.section.recommendations')}
+              fallback={null}
+            >
               <RecommendedSection />
             </HomeSectionBoundary>
           </ShowFeatureFlag>
 
-          <HomeSectionBoundary title="getting started" fallback={null}>
+          <HomeSectionBoundary
+            title={t('shell.home.section.gettingStarted')}
+            fallback={null}
+          >
             <GettingStartedSection preferences={preferences} />
           </HomeSectionBoundary>
 
-          <HomeSectionBoundary title="examples">
+          <HomeSectionBoundary title={t('shell.home.section.examples')}>
             <HomeExamples preferences={preferences} />
           </HomeSectionBoundary>
         </div>
@@ -205,7 +212,7 @@ const HomeChatInput = () => {
   registerHotkey({
     hotkey: 'enter',
     scopeId: splitPanelContext.splitHotkeyScope,
-    description: 'Focus Chat Input',
+    description: t('shell.home.focusChatInput'),
     keyDownHandler: () => {
       editor.controls.focus();
       return true;

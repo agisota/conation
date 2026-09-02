@@ -149,19 +149,19 @@ pub(in crate::outbound::pg_access_repo) async fn get_entity_users(
 ) -> anyhow::Result<Vec<MacroUserIdStr<'static>>> {
     // because we don't store entity_access per email we need to also grab the owner
     // of the email to append to the list, plus any primary that delegates the inbox
-    // via conation_user_links (shared inbox)
+    // via macro_user_links (shared inbox)
     let mut email_owner: Vec<MacroUserIdStr> = if let EntityType::EmailThread = entity_type {
-        let conation_ids = sqlx::query_scalar!(
+        let macro_ids = sqlx::query_scalar!(
             r#"
-        SELECT l.conation_id AS "conation_id!"
+        SELECT l.macro_id AS "macro_id!"
         FROM email_threads et
         JOIN email_links l ON et.link_id = l.id
         WHERE et.id = $1
         UNION
-        SELECT mul.primary_conation_id
+        SELECT mul.primary_macro_id
         FROM email_threads et
         JOIN email_links l ON et.link_id = l.id
-        JOIN conation_user_links mul ON mul.link_id = l.id
+        JOIN macro_user_links mul ON mul.link_id = l.id
         WHERE et.id = $1
         "#,
             entity_id
@@ -169,10 +169,10 @@ pub(in crate::outbound::pg_access_repo) async fn get_entity_users(
         .fetch_all(pool)
         .await?;
 
-        conation_ids
+        macro_ids
             .into_iter()
-            .map(|conation_id| {
-                MacroUserIdStr::parse_from_str(conation_id.as_str())
+            .map(|macro_id| {
+                MacroUserIdStr::parse_from_str(macro_id.as_str())
                     .map(|u| u.into_owned())
                     .context("macro user id should be valid")
             })

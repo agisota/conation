@@ -3,7 +3,7 @@ import type { DocxExpandedPartList } from './getDocxFile';
 /** If making breaking changes to the OPFS structure / format, increment this */
 const OPFS_VERSION = 0;
 
-const OPFS_DIR_NAME = `macro-documents-v${OPFS_VERSION}`;
+const OPFS_DIR_NAME = `conation-documents-v${OPFS_VERSION}`;
 
 let opfsHandle_: FileSystemDirectoryHandle | null = null;
 /** OPFS filesystem handle singleton */

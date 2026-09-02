@@ -1,12 +1,12 @@
-import { internalDrag } from '@core/directive/internalDragState';
 import { t } from '@app/lib/i18n';
+import { internalDrag } from '@core/directive/internalDragState';
 
 false && internalDrag;
 
+import { constrainImageDimensions } from '@conation/lexical-core/utils/media';
 import { SERVER_HOSTS } from '@core/constant/servers';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
 import { Dialog } from '@kobalte/core/dialog';
-import { constrainImageDimensions } from '@conation/lexical-core/utils/media';
 import ExpandIcon from '@phosphor/arrows-out-simple.svg';
 import ClipboardIcon from '@phosphor/clipboard.svg';
 import ThreeDotsIcon from '@phosphor/dots-three-vertical.svg';
@@ -136,7 +136,11 @@ export const ImageGalleryPreview: Component<ImageGalleryPreviewProps> = (
                       onClick={() => setClickedIndex(index())}
                       disabled={props.isContext}
                     >
-                      <Button variant="ghost" size="icon-md">
+                      <Button
+                        variant="ghost"
+                        size="icon-md"
+                        label={t('core.images.expand')}
+                      >
                         <ExpandIcon />
                       </Button>
                     </Dialog.Trigger>
@@ -154,13 +158,17 @@ export const ImageGalleryPreview: Component<ImageGalleryPreviewProps> = (
                             onSelect={() => copyToClipboardById(image.id)}
                           >
                             <ClipboardIcon class="size-4 shrink-0" />
-                            <span class="flex-1 truncate">{t('auto.copy_image')}</span>
+                            <span class="flex-1 truncate">
+                              {t('core.images.copy')}
+                            </span>
                           </Dropdown.Item>
                           <Dropdown.Item
                             onSelect={() => downloadImageById(image.id)}
                           >
                             <DownloadIcon class="size-4 shrink-0" />
-                            <span class="flex-1 truncate">{t('auto.download_image')}</span>
+                            <span class="flex-1 truncate">
+                              {t('core.images.download')}
+                            </span>
                           </Dropdown.Item>
                         </Dropdown.Group>
                         <Show when={props.onDelete}>
@@ -171,7 +179,9 @@ export const ImageGalleryPreview: Component<ImageGalleryPreviewProps> = (
                               }
                             >
                               <TrashIcon class="size-4 shrink-0" />
-                              <span class="flex-1 truncate">{t('auto.delete_image')}</span>
+                              <span class="flex-1 truncate">
+                                {t('core.images.delete')}
+                              </span>
                             </Dropdown.Item>
                           </Dropdown.Group>
                         </Show>
@@ -204,7 +214,7 @@ export const ImageGalleryPreview: Component<ImageGalleryPreviewProps> = (
                             !loaded() && 'hidden'
                           )}
                           src={getImageUrl(image.id)}
-                          alt="preview"
+                          alt={t('core.images.previewAlt')}
                           width={dims?.width}
                           height={dims?.height}
                           style={{

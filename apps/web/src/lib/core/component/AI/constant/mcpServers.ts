@@ -69,22 +69,22 @@ export type QuickConnectServer = (typeof QUICK_CONNECT_SERVERS)[number];
  * presets absent from {@link QUICK_CONNECT_SERVERS} (e.g. dev-only Slack in
  * production) are dropped automatically.
  */
-const FEATURED_SERVER_TAGLINES: [name: string, tagline: string][] = [
-  ['Linear', 'Create and update issues without leaving Macro.'],
-  ['Slack', 'Search conversations and post updates to channels.'],
-  ['Notion', 'Search your pages, databases, and wikis.'],
-  ['PostHog', 'Query product analytics and user insights.'],
-  ['GitHub', 'Give the agent access to your repos, PRs, and issues.'],
-  ['Datadog', 'Query metrics, logs, and monitors.'],
-  ['Grafana', 'Search dashboards and query your data sources.'],
+const FEATURED_SERVER_TAGLINES: [name: string, taglineKey: string][] = [
+  ['Linear', 'settings.integrations.provider.linear.description'],
+  ['Slack', 'settings.integrations.provider.slack.description'],
+  ['Notion', 'settings.integrations.provider.notion.description'],
+  ['PostHog', 'settings.integrations.provider.posthog.description'],
+  ['GitHub', 'settings.integrations.provider.github.description'],
+  ['Datadog', 'settings.integrations.provider.datadog.description'],
+  ['Grafana', 'settings.integrations.provider.grafana.description'],
 ];
 
-export type FeaturedMcpServer = QuickConnectServer & { tagline: string };
+export type FeaturedMcpServer = QuickConnectServer & { taglineKey: string };
 
 export const FEATURED_MCP_SERVERS: FeaturedMcpServer[] =
-  FEATURED_SERVER_TAGLINES.flatMap(([name, tagline]) => {
+  FEATURED_SERVER_TAGLINES.flatMap(([name, taglineKey]) => {
     const server = QUICK_CONNECT_SERVERS.find((s) => s.server_name === name);
-    return server ? [{ ...server, tagline }] : [];
+    return server ? [{ ...server, taglineKey }] : [];
   });
 
 export const QUICK_CONNECT_ICON_MAP: Map<string, SvgIcon> = new Map(

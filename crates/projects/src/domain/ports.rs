@@ -5,10 +5,10 @@
 
 use std::future::Future;
 
+use conation_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::models::{
     EditAccessLevel, EntityAccessReceipt, OwnerAccessLevel, ViewAccessLevel,
 };
-use conation_user_id::user_id::MacroUserIdStr;
 use model::document::ContentType;
 use model::folder::{UploadFolderRequest, UploadFolderResponseData, UploadFolderWithIdsResponse};
 use model::item::{Item, ItemWithUserAccessLevel};

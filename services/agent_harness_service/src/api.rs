@@ -20,9 +20,9 @@ use agent_session::inbound::axum_router::{
 use anyhow::Context;
 use axum::Router;
 use axum::routing::get;
-use entity_access::domain::ports::EntityAccessService;
 use conation_authorization::MacroAuthorizationService;
 use conation_tower_layers::MacroRequestIdAndTracingLayer;
+use entity_access::domain::ports::EntityAccessService;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 

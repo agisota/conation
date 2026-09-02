@@ -32,7 +32,8 @@ impl Modify for SecurityAddon {
 #[openapi(
         modifiers(&SecurityAddon),
         info(
-            terms_of_service = "https://macro.com/terms",
+            terms_of_service = "https://conation.dev/terms",
+            license(name = "GNU Affero General Public License v3.0", identifier = "AGPL-3.0-only"),
         ),
         paths(
             message::send_message_handler,

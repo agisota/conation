@@ -19,6 +19,15 @@ export class AgentSessionNamespace {
     return AgentSession.createManaged(this.client, opts);
   }
 
+  /** Create a session served by an externally hosted runtime. */
+  createExternal(opts: {
+    repoUrl?: string;
+    workspace: string;
+    instructions?: string;
+  }): Promise<AgentSession> {
+    return AgentSession.createExternal(this.client, opts);
+  }
+
   /** The caller's default sandbox size for new `@coder` sessions. */
   defaultSandboxSize(): Promise<SandboxSize> {
     return AgentSession.defaultSandboxSize(this.client);

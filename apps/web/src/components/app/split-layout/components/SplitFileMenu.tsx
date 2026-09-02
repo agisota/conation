@@ -1,5 +1,4 @@
 import { openBulkEditModal } from '@app/features/entity/bulk-edit/BulkEditEntityModal';
-import { t } from '@app/lib/i18n';
 import {
   makeAddTagAction,
   makeCopyEntityIdAction,
@@ -10,6 +9,7 @@ import {
   markReminderTargetDone,
 } from '@app/features/next-soup/actions';
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
+import { t } from '@app/lib/i18n';
 import { useGlobalNotificationSource } from '@components/app/GlobalAppState';
 import { MobileDrawer } from '@components/app/mobile/MobileDrawer';
 import type { BlockTool } from '@components/app/ResponsiveBlockToolbar';
@@ -275,7 +275,7 @@ function MobileRender(
     >
       <MobileDrawer.Portal>
         <MobileDrawer.Overlay class="fixed inset-0 z-modal-overlay bg-modal-overlay pattern-diagonal-4 pattern-edge-muted" />
-        <MobileDrawer.Content aria-label={t('auto.file_actions')}>
+        <MobileDrawer.Content aria-label={t('shell.split.fileActions')}>
           <MobileDrawer.Handle />
           <MobileDrawer.ScrollBody>
             <Show when={props.views}>
@@ -316,7 +316,9 @@ function MobileRender(
                   {/* With a views group leading the drawer, title the action
                       sections to set the two apart. */}
                   <Show when={sections().length > 0}>
-                    <MobileDrawer.Label>{t('auto.actions')}</MobileDrawer.Label>
+                    <MobileDrawer.Label>
+                      {t('shell.common.actions')}
+                    </MobileDrawer.Label>
                   </Show>
                 </>
               )}
@@ -439,7 +441,7 @@ export function SplitFileMenu(props: {
     const entity = menuEntity();
     if (!entity || !createReminderAction.canExecute(entity)) return undefined;
     return {
-      label: 'Remind me',
+      label: t('shell.fileActions.remindMe'),
       icon: BellSimple,
       action: () => {
         setOpen(false);
@@ -455,7 +457,7 @@ export function SplitFileMenu(props: {
     const entity = menuEntity();
     if (!entity || !addTagAction.canExecute(entity)) return undefined;
     return {
-      label: 'Add tag',
+      label: t('shell.fileActions.addTag'),
       icon: Tag,
       action: () => {
         setOpen(false);
@@ -473,7 +475,7 @@ export function SplitFileMenu(props: {
     // the item when the entity is unavailable.
     if (!entity && blockName === 'pr') return undefined;
     return {
-      label: 'Copy Link',
+      label: t('shell.fileActions.copyLink'),
       icon: Link,
       action: () => {
         if (entity) {
@@ -488,7 +490,7 @@ export function SplitFileMenu(props: {
   };
 
   const copyEntityIdOp = (): SplitFileMenuAction => ({
-    label: 'Copy ID',
+    label: t('shell.fileActions.copyId'),
     icon: Copy,
     action: () => {
       void copyEntityIdAction.executeById(props.id);
@@ -524,10 +526,11 @@ export function SplitFileMenu(props: {
                     view: 'delete',
                     entities: [entity],
                     onFinish: () => {
-                      toast.success('Deleted');
+                      toast.success(t('shell.fileActions.deleted'));
                       returnSplitToRecentListView(ctx.handle);
                     },
-                    onError: () => toast.failure('Failed to delete'),
+                    onError: () =>
+                      toast.failure(t('shell.fileActions.deleteFailed')),
                   });
                 },
                 icon: Trash,
@@ -537,7 +540,7 @@ export function SplitFileMenu(props: {
             case 'rename':
               if (!isOwner()) return null;
               return {
-                label: 'Rename',
+                label: t('shell.actions.rename'),
                 action: () => {
                   const entity = buildEntityData({
                     id: props.id,
@@ -549,8 +552,10 @@ export function SplitFileMenu(props: {
                   openBulkEditModal({
                     view: 'rename',
                     entities: [entity],
-                    onFinish: () => toast.success('Renamed'),
-                    onError: () => toast.failure('Failed to rename'),
+                    onFinish: () =>
+                      toast.success(t('shell.fileActions.renamed')),
+                    onError: () =>
+                      toast.failure(t('shell.fileActions.renameFailed')),
                   });
                 },
                 icon: Rename,
@@ -560,7 +565,7 @@ export function SplitFileMenu(props: {
 
             case 'copy':
               return {
-                label: 'Duplicate',
+                label: t('shell.fileActions.duplicate'),
                 action: async () => {
                   if (props.itemType === 'project') {
                     console.warn(
@@ -590,7 +595,7 @@ export function SplitFileMenu(props: {
             case 'moveToProject':
               if (!isOwner()) return null;
               return {
-                label: 'Move to Folder',
+                label: t('shell.fileActions.moveToFolder'),
                 action: () => {
                   const entity = buildEntityData({
                     id: props.id,
@@ -602,8 +607,10 @@ export function SplitFileMenu(props: {
                   openBulkEditModal({
                     view: 'moveToProject',
                     entities: [entity],
-                    onFinish: () => toast.success('Moved to folder'),
-                    onError: () => toast.failure('Failed to move to folder'),
+                    onFinish: () =>
+                      toast.success(t('shell.fileActions.movedToFolder')),
+                    onError: () =>
+                      toast.failure(t('shell.fileActions.moveToFolderFailed')),
                   });
                 },
                 icon: ArrowRight,

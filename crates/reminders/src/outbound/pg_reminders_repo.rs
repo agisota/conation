@@ -65,8 +65,8 @@ pub enum RemindersRepoErr {
     },
     /// A stored owner is not a parseable macro user id.
     ///
-    /// Identified by reminder rather than by the offending value: a macro user
-    /// id is `macro|someone@example.com`, so echoing it would put an email
+    /// Identified by reminder rather than by the offending value: a user
+    /// principal is `conation|someone@example.com`, so echoing it would put an email
     /// address into every log line this error reaches. The row id is enough to
     /// find it.
     #[error("invalid user id stored for reminder {reminder_id}")]

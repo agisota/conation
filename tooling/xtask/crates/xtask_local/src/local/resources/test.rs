@@ -35,6 +35,28 @@ fn resource_names_are_unique() {
     }
 }
 
+/// The clean local profile must not recreate storage resources from the
+/// pre-rebrand deployment.
+#[test]
+fn local_bucket_names_are_conation_branded() {
+    for bucket in BUCKETS {
+        assert!(
+            !bucket.name.contains("macro"),
+            "local bucket {} retains an upstream brand name",
+            bucket.name
+        );
+    }
+}
+
+#[test]
+fn local_kms_alias_is_conation_branded() {
+    assert_eq!(
+        CURSOR_API_KEY_KMS_ALIAS,
+        "alias/conation-local-cursor-api-key"
+    );
+    assert!(!CURSOR_API_KEY_KMS_ALIAS.contains("macro"));
+}
+
 /// A queue with no bindings is created in LocalStack but unreachable by any
 /// service — almost always a mistake.
 #[test]

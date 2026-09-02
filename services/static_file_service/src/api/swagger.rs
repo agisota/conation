@@ -25,7 +25,8 @@ fn get_file_documentation() {}
 #[derive(OpenApi)]
 #[openapi(
     info(
-        terms_of_service = "https://macro.com/terms",
+        terms_of_service = "https://conation.dev/terms",
+        license(name = "GNU Affero General Public License v3.0", identifier = "AGPL-3.0-only"),
     ),
     paths(
       file::metadata::handle_get_metadata,

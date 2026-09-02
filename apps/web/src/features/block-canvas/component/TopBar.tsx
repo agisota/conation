@@ -6,6 +6,7 @@ import { useAnalytics } from '@app/lib/analytics/analytics-context';
 import { t } from '@app/lib/i18n';
 import type { BlockTool } from '@components/app/ResponsiveBlockToolbar';
 import {
+  BLOCK_TOOL_IDS,
   ResponsiveBlockToolbar,
   ResponsivePermissionsBadge,
 } from '@components/app/ResponsiveBlockToolbar';
@@ -96,11 +97,11 @@ export function TopBar() {
       params
     );
     if (!url) {
-      toast.failure('failed to copy url');
+      toast.failure(t('canvas.link.copyFailed'));
       return;
     }
     navigator.clipboard.writeText(url);
-    toast.success('Link copied to clipboard');
+    toast.success(t('canvas.link.copied'));
     analytics.track('copy_share_link', { blockType: 'canvas' });
   };
 
@@ -115,7 +116,7 @@ export function TopBar() {
     { op: 'moveToProject' },
     {
       group: 'file',
-      label: 'Download',
+      label: t('block.actions.download'),
       icon: DownloadSimple,
       action: downloadDocument,
     },
@@ -124,7 +125,7 @@ export function TopBar() {
 
   const tools: BlockTool[] = [
     {
-      label: 'Ask Macro',
+      label: t('chat.actions.askConation'),
       icon: ChatWithAgentIcon,
       action: () =>
         openChatWithAgent({
@@ -135,7 +136,8 @@ export function TopBar() {
         }),
     },
     {
-      label: 'References',
+      id: BLOCK_TOOL_IDS.references,
+      label: t('canvas.actions.references'),
       icon: Quotes,
       action: referencesControl.toggle,
       condition: () => !!isAuth() && ENABLE_REFERENCES_MODAL,
@@ -148,8 +150,9 @@ export function TopBar() {
       ),
     },
     {
+      id: BLOCK_TOOL_IDS.share,
       group: 'sharing',
-      label: 'Share',
+      label: t('block.actions.share'),
       icon: IconShared,
       action: () => shareCtx.open(),
       condition: () => !!canvasFile(),

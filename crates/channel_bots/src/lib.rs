@@ -7,13 +7,13 @@
 //! [`BotTriggerRouter`](inbound::BotTriggerRouter) resolves each candidate
 //! through a [`TriggerDetector`](domain::ports::TriggerDetector) — an explicit
 //! `@`-mention triggers the mentioned bots, and a thread reply with no mention
-//! may trigger an *inferred* Macro AI invocation when the thread already
+//! may trigger an *inferred* Conation invocation when the thread already
 //! contains an agent message and a fast-model classifier judges that the
 //! message expects an agent response — and runs the appropriate domain
 //! service:
 //!
-//! * **System bots** (defined inside Macro) run in-process. The only one today
-//!   is Macro AI, handled by
+//! * **System bots** (defined inside Conation) run in-process. The only one today
+//!   is the Conation assistant, handled by
 //!   [`MacroAiHandler`](domain::service::MacroAiHandler), which posts an
 //!   immediate "thinking" message, runs the agent loop, then edits the message
 //!   with the answer.

@@ -1,7 +1,8 @@
-import { DEFAULT_CHAT_NAME } from '@block-chat/definition';
 import { t } from '@app/lib/i18n';
+import { DEFAULT_CHAT_NAME } from '@block-chat/definition';
 import type { BlockTool } from '@components/app/ResponsiveBlockToolbar';
 import {
+  BLOCK_TOOL_IDS,
   ResponsiveBlockToolbar,
   ResponsivePermissionsBadge,
 } from '@components/app/ResponsiveBlockToolbar';
@@ -46,7 +47,7 @@ export function TopBar(props: {
       action: detailsControl.toggle,
     },
     {
-      label: 'Edit AI Instructions',
+      label: t('chat.actions.editInstructions'),
       icon: Notepad,
       action: openInstructions,
     },
@@ -69,8 +70,9 @@ export function TopBar(props: {
 
   const tools: BlockTool[] = [
     {
+      id: BLOCK_TOOL_IDS.share,
       group: 'sharing',
-      label: 'Share',
+      label: t('block.actions.share'),
       icon: IconShared,
       action: () => shareCtx.open(),
       buttonComponent: () => <ShareTrigger />,

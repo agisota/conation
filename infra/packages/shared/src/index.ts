@@ -39,7 +39,7 @@ export const DATADOG_KINESIS_FIREHOSE_STREAM_ARN =
 export const CLOUDWATCH_KINESIS_STREAM_ROLE_ARN =
   'arn:aws:iam::569036502058:role/cloudwatch-kinesis-stream-role';
 
-export { getMacroApiToken } from './macro_api_token';
+export { getConationApiToken } from './conation_api_token';
 export { getMacroNotify } from './macro_notify';
 export { getSearchEventQueue } from './search_event_queue';
 export { getLinkManagerQueue } from './link_manager_queue';

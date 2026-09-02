@@ -26,14 +26,14 @@ pub(in crate::api) mod put_name;
 pub(in crate::api) mod put_profile_picture;
 pub(in crate::api) mod stripe;
 
-pub fn router() -> Router<ApiContext> {
+pub fn router(stripe_enabled: bool) -> Router<ApiContext> {
     Router::new()
         .route("/", post(create_user::handler))
-        .merge(router_with_auth())
+        .merge(router_with_auth(stripe_enabled))
 }
 
-fn router_with_auth() -> Router<ApiContext> {
-    Router::new()
+fn router_with_auth(stripe_enabled: bool) -> Router<ApiContext> {
+    let router = Router::new()
         .route("/me", get(get_user_info::handler))
         .route("/me", delete(delete_user::handler))
         .route("/profile_pictures", post(post_profile_pictures::handler))
@@ -48,19 +48,27 @@ fn router_with_auth() -> Router<ApiContext> {
         .route("/link_exists", get(get_user_link_exists::handler))
         .route("/tutorial", patch(patch_tutorial::handler))
         .route("/ai_consent", patch(patch_ai_consent::handler))
-        .route("/quota", get(get_user_quota::handler))
-        .route(
-            "/stripe/checkoutv2",
-            post(
-                stripe::create_checkout_session_v2::create_checkout_session::<
-                    EntityAccessServiceType,
-                >,
-            ),
-        )
-        .route(
-            "/stripe/portal",
-            post(stripe::create_portal_session::create_portal_session),
-        )
+        .route("/quota", get(get_user_quota::handler));
+
+    let router = if stripe_enabled {
+        router
+            .route(
+                "/stripe/checkoutv2",
+                post(
+                    stripe::create_checkout_session_v2::create_checkout_session::<
+                        EntityAccessServiceType,
+                    >,
+                ),
+            )
+            .route(
+                "/stripe/portal",
+                post(stripe::create_portal_session::create_portal_session),
+            )
+    } else {
+        router
+    };
+
+    router
         .route(
             "/legacy_user_permissions",
             get(get_legacy_user_permissions::handler),

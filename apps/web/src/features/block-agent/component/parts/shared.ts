@@ -5,6 +5,7 @@
  * row-level facts every card shares.
  */
 
+import { t } from '@app/lib/i18n';
 import type { JSX } from 'solid-js';
 import type { ToolStatus } from '../../ui';
 
@@ -21,5 +22,5 @@ export type ToolCallCommon = {
 export function pathsSubtitle(paths: string[]): string | undefined {
   if (paths.length === 0) return undefined;
   if (paths.length === 1) return paths[0];
-  return `${paths.length} files`;
+  return t('agent.files.count', { count: paths.length });
 }

@@ -3,15 +3,15 @@ import type { EventName } from '../src/events/types';
 import { Macro } from '../src/macro';
 
 const [url, actAs] = process.argv.slice(2);
-const botToken = process.env.MACRO_BOT_TOKEN;
+const botToken = process.env.CONATION_BOT_TOKEN;
 if (!url || !actAs || !botToken) {
   console.error(
-    'usage: MACRO_BOT_TOKEN=mbot_... bun examples/webhook-events.ts <public-url> <acting-user-id>',
+    'usage: CONATION_BOT_TOKEN=mbot_... bun examples/webhook-events.ts <public-url> <acting-user-id>',
   );
   process.exit(1);
 }
 
-const env = (process.env.MACRO_ENV ?? 'dev') as Env;
+const env = (process.env.CONATION_ENV ?? 'dev') as Env;
 const port = Number(process.env.PORT ?? 8787);
 const bot = new Macro({ env, auth: { type: 'bot', token: botToken } });
 const macro = bot.requestedAs(bot.users.byId(actAs));

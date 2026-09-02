@@ -1,5 +1,5 @@
-import { useSplitLayout } from '@components/app/split-layout/layout';
 import { t } from '@app/lib/i18n';
+import { useSplitLayout } from '@components/app/split-layout/layout';
 import { toast } from '@core/component/Toast/Toast';
 import type { CrmCompanyEntity } from '@entity';
 import {
@@ -32,12 +32,12 @@ export function CompanySharingSection(props: { company?: CrmCompanyEntity }) {
       // On hide (un-share), drop the user back to the companies list and toast.
       // Un-hide leaves them on the block.
       if (willHide) {
-        toast.success('Company hidden.');
+        toast.success(t('companies.sharing.hidden'));
         replaceOrInsertSplit({ type: 'component', id: 'companies' });
       }
     } catch (error) {
       console.error('failed to update company sharing', error);
-      toast.failure('Could not update company visibility');
+      toast.failure(t('companies.sharing.visibilityUpdateFailed'));
     }
   };
 
@@ -52,7 +52,7 @@ export function CompanySharingSection(props: { company?: CrmCompanyEntity }) {
       });
     } catch (error) {
       console.error('failed to update company email sync', error);
-      toast.failure('Could not update email sync');
+      toast.failure(t('companies.sharing.emailSyncUpdateFailed'));
     }
   };
 
@@ -89,11 +89,12 @@ export function CompanySharingSection(props: { company?: CrmCompanyEntity }) {
                   class={cn(TOGGLE_BUTTON_CLASS)}
                 >
                   <InlineCheckbox checked={isShared()} />
-                  <span class="whitespace-nowrap">{t('auto.visible_in_crm')}</span>
+                  <span class="whitespace-nowrap">
+                    {t('companies.sharing.visibleInCrm')}
+                  </span>
                 </button>
                 <p class="text-ink-muted leading-5">
-                  Shows this company in your team's CRM lists and search. Hide
-                  companies that aren't relevant to your team's CRM.
+                  {t('companies.sharing.visibleInCrmHelp')}
                 </p>
               </div>
             </Show>
@@ -113,14 +114,15 @@ export function CompanySharingSection(props: { company?: CrmCompanyEntity }) {
                 )}
               >
                 <InlineCheckbox checked={isSyncing()} />
-                <span class="whitespace-nowrap">{t('auto.sync_emails')}</span>
+                <span class="whitespace-nowrap">
+                  {t('companies.sharing.syncEmails')}
+                </span>
               </button>
               <p class="text-ink-muted leading-5">
-                Lets everyone on your team see each other's emails with this
-                company.
+                {t('companies.sharing.syncEmailsHelp')}
                 <Show when={!isTeamAdmin()}>
                   {' '}
-                  Contact a team admin or owner to toggle.
+                  {t('companies.sharing.adminRequired')}
                 </Show>
               </p>
             </div>

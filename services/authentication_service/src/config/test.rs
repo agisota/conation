@@ -1,6 +1,88 @@
 use super::*;
 
 #[test]
+fn public_urls_accept_conation_and_custom_operator_hosts() {
+    for (base_url, public_url) in [
+        ("https://auth.conation.dev", "https://login.conation.dev"),
+        (
+            "https://auth.workspace.example.org",
+            "https://identity.workspace.example.org",
+        ),
+        ("http://localhost:8080", "http://localhost:9011"),
+    ] {
+        validate_public_url_config(
+            base_url,
+            &format!("{base_url}/oauth/redirect"),
+            Some(public_url),
+        )
+        .unwrap();
+    }
+}
+
+#[test]
+fn public_urls_reject_mismatched_callbacks_and_malformed_hosts() {
+    assert!(
+        validate_public_url_config(
+            "https://auth.conation.dev",
+            "https://attacker.example/oauth/redirect",
+            None,
+        )
+        .is_err()
+    );
+
+    for base_url in [
+        "auth.conation.dev",
+        "javascript:alert(1)",
+        "https://user@auth.conation.dev",
+        "https://auth.conation.dev?next=attacker",
+    ] {
+        assert!(
+            validate_public_url_config(base_url, "https://auth.conation.dev/oauth/redirect", None,)
+                .is_err(),
+            "{base_url}"
+        );
+    }
+}
+
+#[test]
+fn mail_identity_uses_conation_defaults() {
+    assert_eq!(
+        resolve_mail_identity(None, None).unwrap(),
+        MailIdentity {
+            auth_sender_email: "auth@conation.dev".to_owned(),
+            support_email: "pythia@conation.dev".to_owned(),
+        }
+    );
+}
+
+#[test]
+fn mail_identity_accepts_operator_owned_addresses() {
+    assert_eq!(
+        resolve_mail_identity(
+            Some("MAILER@WORKSPACE.EXAMPLE"),
+            Some("HELP@WORKSPACE.EXAMPLE"),
+        )
+        .unwrap(),
+        MailIdentity {
+            auth_sender_email: "mailer@workspace.example".to_owned(),
+            support_email: "help@workspace.example".to_owned(),
+        }
+    );
+}
+
+#[test]
+fn mail_identity_rejects_blank_or_malformed_addresses() {
+    for (sender, support) in [
+        (Some(""), None),
+        (Some("not-an-email"), None),
+        (None, Some(" \t ")),
+        (None, Some("help@localhost")),
+    ] {
+        assert!(resolve_mail_identity(sender, support).is_err());
+    }
+}
+
+#[test]
 fn complete_microsoft_credentials_are_resolved() {
     let credentials = resolve(
         Some("microsoft-client-id"),
@@ -31,6 +113,63 @@ fn absent_or_blank_microsoft_credentials_are_disabled() {
             }
         }
     }
+}
+
+#[test]
+fn absent_google_and_stripe_credentials_disable_integrations() {
+    assert!(resolve_google_credentials(None, None).unwrap().is_none());
+    assert!(resolve_stripe_credentials(None, None).unwrap().is_none());
+}
+
+#[test]
+fn complete_google_and_stripe_credentials_enable_integrations() {
+    let google = resolve_google_credentials(Some("google-client"), Some("GOCSPX-google-secret"))
+        .unwrap()
+        .expect("Google credentials should be enabled");
+    assert_eq!(google.client_id, "google-client");
+    assert_eq!(google.client_secret, "GOCSPX-google-secret");
+
+    let stripe = resolve_stripe_credentials(Some("stripe-secret"), Some("price-free"))
+        .unwrap()
+        .expect("Stripe credentials should be enabled");
+    assert_eq!(stripe.secret_key, "stripe-secret");
+    assert_eq!(stripe.price_id, "price-free");
+}
+
+#[test]
+fn local_placeholder_stripe_credentials_disable_billing() {
+    let credentials = resolve_stripe_credentials(Some("local-stripe-secret"), Some("price-free"))
+        .unwrap()
+        .expect("the pair is syntactically complete");
+
+    assert!(!stripe_billing_is_enabled_for_environment(
+        Environment::Local,
+        &credentials
+    ));
+    assert!(stripe_billing_is_enabled_for_environment(
+        Environment::Local,
+        &StripeCredentials {
+            secret_key: "sk_test_real_key".to_owned(),
+            price_id: "price-free".to_owned(),
+        }
+    ));
+}
+
+#[test]
+fn google_secret_name_placeholder_disables_oauth() {
+    let credentials =
+        resolve_google_credentials(Some("google-client"), Some("google-client-secret-dev"))
+            .expect("a complete placeholder pair is a disabled integration");
+
+    assert!(credentials.is_none());
+}
+
+#[test]
+fn partial_google_or_stripe_credentials_are_rejected() {
+    assert!(resolve_google_credentials(Some("google-client"), None).is_err());
+    assert!(resolve_google_credentials(None, Some("google-secret")).is_err());
+    assert!(resolve_stripe_credentials(Some("stripe-secret"), None).is_err());
+    assert!(resolve_stripe_credentials(None, Some("price-free")).is_err());
 }
 
 #[test]

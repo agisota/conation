@@ -27,8 +27,8 @@ use crate::domain::{
 
 /// Header carrying the shared key for internal service authorization.
 const INTERNAL_API_KEY_HEADER: &str = "x-internal-auth-key";
-/// Header carrying the acting Macro user for internal authorization.
-const INTERNAL_MACRO_USER_ID_HEADER: &str = "x-internal-macro-user-id";
+/// Header carrying the acting Conation user for internal authorization.
+const INTERNAL_CONATION_USER_ID_HEADER: &str = "x-internal-conation-user-id";
 
 /// Calendar mutation client calling the email service with internal
 /// authorization on behalf of the requesting user.
@@ -60,7 +60,7 @@ impl EmailServiceCalendarMutations {
         self.http
             .request(method, format!("{}{path}", self.base_url))
             .header(INTERNAL_API_KEY_HEADER, &self.internal_api_key)
-            .header(INTERNAL_MACRO_USER_ID_HEADER, requester_id)
+            .header(INTERNAL_CONATION_USER_ID_HEADER, requester_id)
     }
 
     async fn send(

@@ -62,7 +62,7 @@ mod test {
         sqlx::query(
             r#"
             INSERT INTO comms_channels (id, name, channel_type, owner_id, created_at, updated_at)
-            VALUES ($1, 'preview-test-channel', 'public', 'macro|owner@test.com', NOW(), NOW())
+            VALUES ($1, 'preview-test-channel', 'public', 'conation|owner@test.com', NOW(), NOW())
             "#,
         )
         .bind(CHANNEL_ID)
@@ -97,7 +97,7 @@ mod test {
         sqlx::query(
             r#"
             INSERT INTO calls (id, channel_id, room_name, created_by, recording_key, share_permission_id)
-            VALUES ($1, $2, 'preview-active-room', 'macro|owner@test.com', $3, 'preview-test-active-share')
+            VALUES ($1, $2, 'preview-active-room', 'conation|owner@test.com', $3, 'preview-test-active-share')
             "#,
         )
         .bind(ACTIVE_CALL_ID)
@@ -131,7 +131,7 @@ mod test {
                 $1,
                 $2,
                 'preview-archived-room',
-                'macro|owner@test.com',
+                'conation|owner@test.com',
                 NOW(),
                 NOW(),
                 0,

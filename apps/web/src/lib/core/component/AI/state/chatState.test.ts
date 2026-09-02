@@ -1,4 +1,5 @@
 import type { ChatMessageWithAttachments } from '@core/component/AI/types';
+import { t } from '@core/i18n';
 import { describe, expect, it } from 'vitest';
 import { type ChatPhase, type SideEffect, transition } from './chatState';
 
@@ -30,7 +31,9 @@ describe('transition: provider failure surfaces a toast', () => {
     const toast = toastOf(result.effects);
     expect(toast).toBeDefined();
     // The message points the user at switching models...
-    expect(toast!.message).toMatch(/provider/i);
+    expect(toast!.message).toBe(
+      t('ai.errors.providerUnavailableWithAlternative')
+    );
     // ...and flags that a "Switch model" action should be offered.
     expect(toast!.offerModelSwitch).toBe(true);
   });
@@ -53,7 +56,7 @@ describe('transition: provider failure surfaces a toast', () => {
     );
     expect(toast).toBeDefined();
     expect(toast!.offerModelSwitch).toBeFalsy();
-    expect(toast!.message).toMatch(/context/i);
+    expect(toast!.message).toBe(t('ai.errors.contextOverflow'));
   });
 
   it('an unknown stream error toasts a generic message without a switch', () => {
@@ -68,18 +71,10 @@ describe('transition: provider failure surfaces a toast', () => {
   });
 });
 
-describe('transition: paywall on payment failure', () => {
-  it('a send_failed with paymentError opens the paywall', () => {
-    const result = transition(sending, {
-      type: 'send_failed',
-      paymentError: true,
-    });
-    expect(result.phase).toEqual({ type: 'idle' });
-    expect(result.effects).toContainEqual({ type: 'show_paywall' });
-  });
-
-  it('a plain send_failure does not open the paywall', () => {
+describe('transition: send failure', () => {
+  it('returns to idle without an AI paywall effect', () => {
     const result = transition(sending, { type: 'send_failed' });
+    expect(result.phase).toEqual({ type: 'idle' });
     expect(result.effects).toHaveLength(0);
   });
 });

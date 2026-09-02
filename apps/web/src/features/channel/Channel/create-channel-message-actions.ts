@@ -1,4 +1,5 @@
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { getWebOrigin } from '@core/util/webOrigin';
 import type { Accessor } from 'solid-js';
@@ -71,18 +72,18 @@ function createDefaultEffects(): ChannelMessageActionEffects {
       window.location.hash,
     copyToClipboard: (text) => navigator.clipboard.writeText(text),
     notifyCopyLinkSuccess: () => {
-      toast.success('Link copied to clipboard');
+      toast.success(t('channel.message.feedback.linkCopied'));
     },
     notifyCopyLinkFailure: (error) => {
       console.error('failed to copy link', error);
-      toast.failure('Failed to copy link');
+      toast.failure(t('channel.message.feedback.linkCopyFailed'));
     },
     notifyCopyMessageTextSuccess: () => {
-      toast.success('Message copied to clipboard');
+      toast.success(t('channel.message.feedback.textCopied'));
     },
     notifyCopyMessageTextFailure: (error) => {
       console.error('failed to copy message text', error);
-      toast.failure('Failed to copy message');
+      toast.failure(t('channel.message.feedback.textCopyFailed'));
     },
   };
 }

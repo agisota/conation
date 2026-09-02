@@ -15,6 +15,10 @@ use axum::{
     routing::{get, post},
 };
 use axum_extra::either::Either3;
+use conation_authorization::{
+    MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
+};
+use conation_user_id::user_id::MacroUserIdStr;
 use cowlike::CowLike;
 use email::{
     domain::{
@@ -48,10 +52,6 @@ use item_filters::{
         reminder::ReminderLiteral,
     },
 };
-use conation_authorization::{
-    MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
-};
-use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::Entity;
 use model_error_response::ErrorResponse;
 use models_grouping::{GroupByField, GroupingConfig};
@@ -527,7 +527,7 @@ where
 
     async fn handle<R>(
         &self,
-        conation_user_id: MacroUserIdStr<'static>,
+        macro_user_id: MacroUserIdStr<'static>,
         link_ids: Vec<Uuid>,
         team_receipt_option: Option<EntityAccessReceipt<MemberTeamRole>>,
         ApiSoupRequestInner {
@@ -541,7 +541,7 @@ where
         SoupRequest<R>: IntoSoupReqAst,
         R: Clone + Serialize + Send,
     {
-        let user_for_favorites = conation_user_id.copied().into_owned();
+        let user_for_favorites = macro_user_id.copied().into_owned();
         let sort_direction: SoupSortDirection =
             params.sort_direction.map(Into::into).unwrap_or_default();
         let create_fallback = move || -> SoupQuery<R> {
@@ -596,7 +596,7 @@ where
                     limit: params.limit.unwrap_or(20),
                     cursor,
                     sort_direction,
-                    user: conation_user_id,
+                    user: macro_user_id,
                     email_preview_view: email_view,
                     link_ids,
                 },
@@ -612,12 +612,12 @@ where
 
     async fn handle_grouped(
         &self,
-        conation_user_id: MacroUserIdStr<'static>,
+        macro_user_id: MacroUserIdStr<'static>,
         filters: EntityFilterAst,
         params: GroupedParams,
         cursor: Option<CursorWithValAndFilter<Uuid, SimpleSortMethod, EntityFilterAst>>,
     ) -> Result<ApiGroupedSoupParts, SoupHandlerErr> {
-        let user_for_favorites = conation_user_id.copied().into_owned();
+        let user_for_favorites = macro_user_id.copied().into_owned();
         let limit = params.limit.unwrap_or(20).clamp(20, 500);
         let sort_method = params
             .sort_method
@@ -640,7 +640,7 @@ where
         let req = GroupedSortRequest {
             limit,
             cursor: query_cursor,
-            user_id: conation_user_id,
+            user_id: macro_user_id,
             grouping,
         };
 
@@ -825,7 +825,7 @@ impl IntoResponse for SoupHandlerErr {
 
 async fn fetch_caller_link_ids<T, U, EAS, Auth>(
     service: &SoupRouterState<T, U, EAS, Auth>,
-    conation_user_id: &str,
+    macro_user_id: &str,
 ) -> Result<Vec<Uuid>, SoupHandlerErr>
 where
     T: SoupService,
@@ -833,15 +833,15 @@ where
     EAS: EntityAccessService,
     Auth: MacroAuthorizationService,
 {
-    let conation_id = MacroUserIdStr::parse_from_str(conation_user_id).map_err(|e| {
+    let macro_id = MacroUserIdStr::parse_from_str(macro_user_id).map_err(|e| {
         SoupHandlerErr::Internal(SoupErr::SoupDbErr(anyhow::anyhow!(
-            "invalid conation_user_id from extractor: {e}"
+            "invalid macro_user_id from extractor: {e}"
         )))
     })?;
     let links = service
         .email
         .service()
-        .get_inboxes_for_conation_id(conation_id)
+        .get_inboxes_for_macro_id(macro_id)
         .await?;
     Ok(links.into_iter().map(|l| l.id).collect())
 }
@@ -874,14 +874,14 @@ where
     EAS: EntityAccessService,
     Auth: MacroAuthorizationService,
 {
-    let conation_user_id = authorization.authorization.user.conation_user_id;
-    let link_ids = fetch_caller_link_ids(&service, conation_user_id.as_ref()).await?;
+    let macro_user_id = authorization.authorization.user.macro_user_id;
+    let link_ids = fetch_caller_link_ids(&service, macro_user_id.as_ref()).await?;
     // Team receipt is plumbed through even for GET so that paginating a
     // team-scoped query via a cursor (which carries the original filter)
     // continues to authorize correctly.
     service
         .handle(
-            conation_user_id,
+            macro_user_id,
             link_ids,
             team.entity_access_receipt,
             ApiSoupRequestInner {
@@ -954,14 +954,14 @@ where
     EAS: EntityAccessService,
     Auth: MacroAuthorizationService,
 {
-    let conation_user_id = authorization.authorization.user.conation_user_id;
-    let link_ids = fetch_caller_link_ids(&service, conation_user_id.as_ref()).await?;
+    let macro_user_id = authorization.authorization.user.macro_user_id;
+    let link_ids = fetch_caller_link_ids(&service, macro_user_id.as_ref()).await?;
     // Pass the raw extractor receipt through — `handle` resolves the
     // CRM-scope check against the *effective* filter (which may come from
     // the cursor on follow-up pages), not the request body.
     service
         .handle(
-            conation_user_id,
+            macro_user_id,
             link_ids,
             team.entity_access_receipt,
             ApiSoupRequestInner {
@@ -1021,14 +1021,14 @@ where
     EAS: EntityAccessService,
     Auth: MacroAuthorizationService,
 {
-    let conation_user_id = authorization.authorization.user.conation_user_id;
-    let link_ids = fetch_caller_link_ids(&service, conation_user_id.as_ref()).await?;
+    let macro_user_id = authorization.authorization.user.macro_user_id;
+    let link_ids = fetch_caller_link_ids(&service, macro_user_id.as_ref()).await?;
     // Pass the raw extractor receipt through — `handle` resolves the
     // CRM-scope check against the *effective* filter (which may come from
     // the cursor on follow-up pages), not the request body.
     service
         .handle(
-            conation_user_id,
+            macro_user_id,
             link_ids,
             team.entity_access_receipt,
             ApiSoupRequestInner {
@@ -1108,7 +1108,7 @@ where
     EAS: EntityAccessService,
     Auth: MacroAuthorizationService,
 {
-    let conation_user_id = authorization.authorization.user.conation_user_id;
+    let macro_user_id = authorization.authorization.user.macro_user_id;
     let (filters, params, mode) = match request {
         PostGroupedSoupAstRequest::Initial(request) => (
             request.filters,
@@ -1127,7 +1127,7 @@ where
         .map_err(|_| SoupHandlerErr::Expand)?;
 
     let response = service
-        .handle_grouped(conation_user_id, filters, params, cursor)
+        .handle_grouped(macro_user_id, filters, params, cursor)
         .await?;
 
     Ok(Json(match mode {

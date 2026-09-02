@@ -8,8 +8,8 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use fusionauth::error::FusionAuthClientError;
 use conation_middleware::tracking::ClientIp;
+use fusionauth::error::FusionAuthClientError;
 use model::{
     authentication::login::request::PasswordRequest,
     response::{ErrorResponse, UserTokensResponse},

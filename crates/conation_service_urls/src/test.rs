@@ -230,7 +230,8 @@ fn grouped_conation_resolves_all_service_urls() {
 
 #[test]
 fn grouped_defaults_do_not_check_overrides() {
-    let service_urls = TestServiceUrls::default_for_environment(conation_env::Environment::Production);
+    let service_urls =
+        TestServiceUrls::default_for_environment(conation_env::Environment::Production);
 
     assert_eq!(
         service_urls.test_document_storage_service_url.as_ref(),

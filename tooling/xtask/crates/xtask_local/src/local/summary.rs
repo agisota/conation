@@ -63,7 +63,7 @@ pub fn logs_command(instance: &Instance, generated_env: &Path) -> String {
     let base_compose = repo_root.join("docker/docker-compose.yml");
     let override_compose = instance.artifact_dir().join("docker-compose.override.yml");
     format!(
-        "MACRO_ENV_FILE={:?} docker compose --project-directory {:?} -p {} -f {:?} -f {:?} --env-file {:?} logs -f",
+        "CONATION_ENV_FILE={:?} docker compose --project-directory {:?} -p {} -f {:?} -f {:?} --env-file {:?} logs -f",
         generated_env,
         repo_root,
         instance.project_name(),
@@ -114,7 +114,7 @@ pub fn print(
         Style::new()
             .green()
             .bold()
-            .apply_to(format!("✓ macro {} stack ready", mode.label()))
+            .apply_to(format!("✓ conation {} stack ready", mode.label()))
     );
     row("mode", mode.label().to_string());
     row(

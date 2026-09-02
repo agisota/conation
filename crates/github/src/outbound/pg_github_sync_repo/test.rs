@@ -3,7 +3,7 @@ use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 
 use crate::domain::models::{
-    GithubAppInstallationSource, GithubKey, MacroTaskId, ResolvedTeamTaskReference,
+    ConationTaskId, GithubAppInstallationSource, GithubKey, ResolvedTeamTaskReference,
     TeamTaskReference,
 };
 use crate::domain::ports::GithubSyncRepo;
@@ -63,8 +63,8 @@ async fn test_upsert_task_ids_inserts_new(pool: Pool<Postgres>) {
 
     let key = GithubKey::new("org", "repo", 10);
     let tasks = vec![
-        MacroTaskId::from_short_uuid("xoyQ8nrV6PNZFmpsWYMdyC").unwrap(),
-        MacroTaskId::from_short_uuid("2ZbZ7wJQfEMWyBSycKYTYr").unwrap(),
+        ConationTaskId::from_short_uuid("xoyQ8nrV6PNZFmpsWYMdyC").unwrap(),
+        ConationTaskId::from_short_uuid("2ZbZ7wJQfEMWyBSycKYTYr").unwrap(),
     ];
 
     repo.upsert_task_ids(key.clone(), &tasks).await.unwrap();
@@ -82,8 +82,8 @@ async fn test_upsert_task_ids_ignores_duplicates(pool: Pool<Postgres>) {
 
     let key = GithubKey::new("my-org", "my-repo", 1);
     let tasks = vec![
-        MacroTaskId::from_short_uuid("s61deeZUHehUjkNT8rxB3S").unwrap(), // already exists
-        MacroTaskId::from_short_uuid("xoyQ8nrV6PNZFmpsWYMdyC").unwrap(),
+        ConationTaskId::from_short_uuid("s61deeZUHehUjkNT8rxB3S").unwrap(), // already exists
+        ConationTaskId::from_short_uuid("xoyQ8nrV6PNZFmpsWYMdyC").unwrap(),
     ];
 
     repo.upsert_task_ids(key.clone(), &tasks).await.unwrap();
@@ -101,9 +101,10 @@ async fn test_upsert_task_ids_records_owning_team(pool: Pool<Postgres>) {
 
     // 0d0dc589-f301-43f1-8b11-4ab448ca4bb4 is team task ENG-123 of team
     // dddddddd-...; the second task id has no team_task row.
-    let team_task =
-        MacroTaskId::from_uuid(&Uuid::parse_str("0d0dc589-f301-43f1-8b11-4ab448ca4bb4").unwrap());
-    let teamless_task = MacroTaskId::from_short_uuid("xoyQ8nrV6PNZFmpsWYMdyC").unwrap();
+    let team_task = ConationTaskId::from_uuid(
+        &Uuid::parse_str("0d0dc589-f301-43f1-8b11-4ab448ca4bb4").unwrap(),
+    );
+    let teamless_task = ConationTaskId::from_short_uuid("xoyQ8nrV6PNZFmpsWYMdyC").unwrap();
 
     let key = GithubKey::new("org", "repo", 10);
     repo.upsert_task_ids(key.clone(), &[team_task.clone(), teamless_task.clone()])
@@ -137,8 +138,9 @@ async fn test_upsert_task_ids_records_owning_team(pool: Pool<Postgres>) {
 async fn test_upsert_task_ids_backfills_team_on_existing_rows(pool: Pool<Postgres>) {
     let repo = PgGithubSyncRepo::new(pool.clone());
 
-    let team_task =
-        MacroTaskId::from_uuid(&Uuid::parse_str("0d0dc589-f301-43f1-8b11-4ab448ca4bb4").unwrap());
+    let team_task = ConationTaskId::from_uuid(
+        &Uuid::parse_str("0d0dc589-f301-43f1-8b11-4ab448ca4bb4").unwrap(),
+    );
     let key = GithubKey::new("org", "repo", 10);
 
     // Simulate a legacy row written before team_id existed.
@@ -196,9 +198,9 @@ async fn test_filter_duplicate_tasks_removes_existing(pool: Pool<Postgres>) {
 
     let key = GithubKey::new("my-org", "my-repo", 1);
     let candidates = vec![
-        MacroTaskId::from_short_uuid("s61deeZUHehUjkNT8rxB3S").unwrap(), // exists
-        MacroTaskId::from_short_uuid("bMv3eymKvu18qsQyrpt1VH").unwrap(), // exists
-        MacroTaskId::from_short_uuid("xoyQ8nrV6PNZFmpsWYMdyC").unwrap(),
+        ConationTaskId::from_short_uuid("s61deeZUHehUjkNT8rxB3S").unwrap(), // exists
+        ConationTaskId::from_short_uuid("bMv3eymKvu18qsQyrpt1VH").unwrap(), // exists
+        ConationTaskId::from_short_uuid("xoyQ8nrV6PNZFmpsWYMdyC").unwrap(),
     ];
 
     let new_only = repo.filter_duplicate_tasks(key, &candidates).await.unwrap();
@@ -216,8 +218,8 @@ async fn test_filter_duplicate_tasks_all_new(pool: Pool<Postgres>) {
 
     let key = GithubKey::new("my-org", "my-repo", 1);
     let candidates = vec![
-        MacroTaskId::from_short_uuid("xoyQ8nrV6PNZFmpsWYMdyC").unwrap(),
-        MacroTaskId::from_short_uuid("2ZbZ7wJQfEMWyBSycKYTYr").unwrap(),
+        ConationTaskId::from_short_uuid("xoyQ8nrV6PNZFmpsWYMdyC").unwrap(),
+        ConationTaskId::from_short_uuid("2ZbZ7wJQfEMWyBSycKYTYr").unwrap(),
     ];
 
     let new_only = repo.filter_duplicate_tasks(key, &candidates).await.unwrap();
@@ -234,8 +236,8 @@ async fn test_filter_duplicate_tasks_all_existing(pool: Pool<Postgres>) {
 
     let key = GithubKey::new("my-org", "my-repo", 1);
     let candidates = vec![
-        MacroTaskId::from_short_uuid("s61deeZUHehUjkNT8rxB3S").unwrap(),
-        MacroTaskId::from_short_uuid("bMv3eymKvu18qsQyrpt1VH").unwrap(),
+        ConationTaskId::from_short_uuid("s61deeZUHehUjkNT8rxB3S").unwrap(),
+        ConationTaskId::from_short_uuid("bMv3eymKvu18qsQyrpt1VH").unwrap(),
     ];
 
     let new_only = repo.filter_duplicate_tasks(key, &candidates).await.unwrap();
@@ -277,14 +279,14 @@ async fn test_resolve_team_task_references(pool: Pool<Postgres>) {
     let expected_known = ResolvedTeamTaskReference {
         reference: TeamTaskReference::new("eng", 123).unwrap(),
         team_id: Uuid::parse_str("dddddddd-dddd-dddd-dddd-dddddddddddd").unwrap(),
-        task_id: MacroTaskId::from_uuid(
+        task_id: ConationTaskId::from_uuid(
             &Uuid::parse_str("0d0dc589-f301-43f1-8b11-4ab448ca4bb4").unwrap(),
         ),
     };
     let expected_platform = ResolvedTeamTaskReference {
         reference: TeamTaskReference::new("platform_api", 7).unwrap(),
         team_id: Uuid::parse_str("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee").unwrap(),
-        task_id: MacroTaskId::from_uuid(
+        task_id: ConationTaskId::from_uuid(
             &Uuid::parse_str("11111111-1111-1111-1111-111111111111").unwrap(),
         ),
     };
@@ -304,12 +306,12 @@ async fn test_resolve_team_task_references_returns_all_teams_sharing_a_slug(pool
     // the service can detect the ambiguity.
     sqlx::query!(
         r#"
-        WITH new_conation_user AS (
-            INSERT INTO conation_user (id, username, email, stripe_customer_id)
+        WITH new_macro_user AS (
+            INSERT INTO macro_user (id, username, email, stripe_customer_id)
             VALUES ('99999999-9999-9999-9999-999999999999'::uuid, 'owner3', 'owner3@test.com', 'cus_test3')
         ), new_user AS (
-            INSERT INTO "User" (id, email, conation_user_id)
-            VALUES ('macro|owner3@user.com', 'owner3@test.com', '99999999-9999-9999-9999-999999999999'::uuid)
+            INSERT INTO "User" (id, email, macro_user_id)
+            VALUES ('conation|owner3@user.com', 'owner3@test.com', '99999999-9999-9999-9999-999999999999'::uuid)
             RETURNING id
         ), new_team AS (
             INSERT INTO team (id, name, owner_id, slug)
@@ -317,7 +319,7 @@ async fn test_resolve_team_task_references_returns_all_teams_sharing_a_slug(pool
             RETURNING id
         ), new_doc AS (
             INSERT INTO "Document" (id, name, "fileType", owner)
-            VALUES ('22222222-2222-2222-2222-222222222222', 'Other Task', 'md', 'macro|owner2@user.com')
+            VALUES ('22222222-2222-2222-2222-222222222222', 'Other Task', 'md', 'conation|owner2@user.com')
             RETURNING id
         ), new_task AS (
             INSERT INTO team_task (team_id, document_id, task_num)
@@ -404,7 +406,7 @@ async fn test_filter_duplicate_tasks_different_key_not_filtered(pool: Pool<Postg
 
     // s61dee.. exists for my-org/my-repo/pull/1, but not for this key
     let key = GithubKey::new("my-org", "other-repo", 42);
-    let candidates = vec![MacroTaskId::from_short_uuid("s61deeZUHehUjkNT8rxB3S").unwrap()];
+    let candidates = vec![ConationTaskId::from_short_uuid("s61deeZUHehUjkNT8rxB3S").unwrap()];
 
     let new_only = repo.filter_duplicate_tasks(key, &candidates).await.unwrap();
 
@@ -448,33 +450,33 @@ async fn test_get_installation_sources_empty(pool: Pool<Postgres>) {
 }
 
 // ---------------------------------------------------------------------------
-// get_conation_ids_by_github_user_ids
+// get_macro_ids_by_github_user_ids
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(path = "../../../fixtures", scripts("github_installation_test_data"))
 )]
-async fn test_get_conation_ids_by_github_user_ids_found(pool: Pool<Postgres>) {
+async fn test_get_macro_ids_by_github_user_ids_found(pool: Pool<Postgres>) {
     let repo = PgGithubSyncRepo::new(pool);
 
     let links = repo
-        .get_conation_ids_by_github_user_ids(&["12345".to_string()])
+        .get_macro_ids_by_github_user_ids(&["12345".to_string()])
         .await
         .unwrap();
 
     assert_eq!(
         links.get("12345"),
-        Some(&vec!["macro|user@user.com".to_string()])
+        Some(&vec!["conation|user@user.com".to_string()])
     );
 }
 
 #[sqlx::test(migrator = "MACRO_DB_MIGRATIONS")]
-async fn test_get_conation_ids_by_github_user_ids_not_found(pool: Pool<Postgres>) {
+async fn test_get_macro_ids_by_github_user_ids_not_found(pool: Pool<Postgres>) {
     let repo = PgGithubSyncRepo::new(pool);
 
     let links = repo
-        .get_conation_ids_by_github_user_ids(&["99999".to_string()])
+        .get_macro_ids_by_github_user_ids(&["99999".to_string()])
         .await
         .unwrap();
 
@@ -485,17 +487,17 @@ async fn test_get_conation_ids_by_github_user_ids_not_found(pool: Pool<Postgres>
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(path = "../../../fixtures", scripts("github_installation_test_data"))
 )]
-async fn test_get_conation_ids_by_github_user_ids_fans_out_to_multiple_users(pool: Pool<Postgres>) {
+async fn test_get_macro_ids_by_github_user_ids_fans_out_to_multiple_users(pool: Pool<Postgres>) {
     // A second link sharing github_user_id '12345' (github_user_id is not unique;
     // multiple Macro users may share one GitHub account).
     sqlx::query(
         r#"
-        INSERT INTO public.github_links (id, conation_id, fusionauth_user_id, github_username, github_user_id)
+        INSERT INTO public.github_links (id, macro_id, fusionauth_user_id, github_username, github_user_id)
         VALUES ($1, $2, $3, $4, $5)
         "#,
     )
     .bind(Uuid::new_v4())
-    .bind("macro|user2@user.com")
+    .bind("conation|user2@user.com")
     .bind(
         "cccccccc-cccc-cccc-cccc-cccccccccccc"
             .parse::<Uuid>()
@@ -510,35 +512,35 @@ async fn test_get_conation_ids_by_github_user_ids_fans_out_to_multiple_users(poo
     let repo = PgGithubSyncRepo::new(pool);
 
     let links = repo
-        .get_conation_ids_by_github_user_ids(&["12345".to_string()])
+        .get_macro_ids_by_github_user_ids(&["12345".to_string()])
         .await
         .unwrap();
 
-    let mut conation_ids = links.get("12345").cloned().unwrap_or_default();
-    conation_ids.sort();
+    let mut macro_ids = links.get("12345").cloned().unwrap_or_default();
+    macro_ids.sort();
     assert_eq!(
-        conation_ids,
+        macro_ids,
         vec![
-            "macro|user2@user.com".to_string(),
-            "macro|user@user.com".to_string(),
+            "conation|user2@user.com".to_string(),
+            "conation|user@user.com".to_string(),
         ]
     );
 }
 
 // ---------------------------------------------------------------------------
-// get_conation_ids_by_github_logins
+// get_macro_ids_by_github_logins
 // ---------------------------------------------------------------------------
 
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",
     fixtures(path = "../../../fixtures", scripts("github_installation_test_data"))
 )]
-async fn test_get_conation_ids_by_github_logins_matches_case_insensitively(pool: Pool<Postgres>) {
+async fn test_get_macro_ids_by_github_logins_matches_case_insensitively(pool: Pool<Postgres>) {
     // A second link sharing the 'testuser' login (github_username is not unique).
     sqlx::query!(
         r#"
-        INSERT INTO github_links (id, conation_id, fusionauth_user_id, github_username, github_user_id)
-        VALUES ('11111111-2222-3333-4444-555555555555'::uuid, 'macro|user2@user.com', 'cccccccc-cccc-cccc-cccc-cccccccccccc'::uuid, 'TestUser', '54321')
+        INSERT INTO github_links (id, macro_id, fusionauth_user_id, github_username, github_user_id)
+        VALUES ('11111111-2222-3333-4444-555555555555'::uuid, 'conation|user2@user.com', 'cccccccc-cccc-cccc-cccc-cccccccccccc'::uuid, 'TestUser', '54321')
         "#
     )
     .execute(&pool)
@@ -547,7 +549,7 @@ async fn test_get_conation_ids_by_github_logins_matches_case_insensitively(pool:
     let repo = PgGithubSyncRepo::new(pool);
 
     let links = repo
-        .get_conation_ids_by_github_logins(&[
+        .get_macro_ids_by_github_logins(&[
             "TESTUSER".to_string(),
             "solo".to_string(),
             "unlinked".to_string(),
@@ -561,22 +563,22 @@ async fn test_get_conation_ids_by_github_logins_matches_case_insensitively(pool:
     assert_eq!(
         testuser_ids,
         vec![
-            "macro|user2@user.com".to_string(),
-            "macro|user@user.com".to_string()
+            "conation|user2@user.com".to_string(),
+            "conation|user@user.com".to_string()
         ]
     );
     assert_eq!(
         links.get("solo"),
-        Some(&vec!["macro|solo@user.com".to_string()])
+        Some(&vec!["conation|solo@user.com".to_string()])
     );
     assert!(!links.contains_key("unlinked"));
 }
 
 #[sqlx::test(migrator = "MACRO_DB_MIGRATIONS")]
-async fn test_get_conation_ids_by_github_logins_empty_input(pool: Pool<Postgres>) {
+async fn test_get_macro_ids_by_github_logins_empty_input(pool: Pool<Postgres>) {
     let repo = PgGithubSyncRepo::new(pool);
 
-    let links = repo.get_conation_ids_by_github_logins(&[]).await.unwrap();
+    let links = repo.get_macro_ids_by_github_logins(&[]).await.unwrap();
 
     assert!(links.is_empty());
 }
@@ -592,7 +594,10 @@ async fn test_get_conation_ids_by_github_logins_empty_input(pool: Pool<Postgres>
 async fn test_get_user_team_ids(pool: Pool<Postgres>) {
     let repo = PgGithubSyncRepo::new(pool);
 
-    let team_ids = repo.get_user_team_ids("macro|user@user.com").await.unwrap();
+    let team_ids = repo
+        .get_user_team_ids("conation|user@user.com")
+        .await
+        .unwrap();
     assert_eq!(team_ids.len(), 1);
     assert_eq!(
         team_ids[0],
@@ -602,7 +607,7 @@ async fn test_get_user_team_ids(pool: Pool<Postgres>) {
     );
 
     let team_ids2 = repo
-        .get_user_team_ids("macro|user2@user.com")
+        .get_user_team_ids("conation|user2@user.com")
         .await
         .unwrap();
     assert_eq!(team_ids2.len(), 1);
@@ -621,7 +626,10 @@ async fn test_get_user_team_ids(pool: Pool<Postgres>) {
 async fn test_get_user_team_ids_no_teams(pool: Pool<Postgres>) {
     let repo = PgGithubSyncRepo::new(pool);
 
-    let team_ids = repo.get_user_team_ids("macro|solo@user.com").await.unwrap();
+    let team_ids = repo
+        .get_user_team_ids("conation|solo@user.com")
+        .await
+        .unwrap();
 
     assert!(team_ids.is_empty());
 }
@@ -633,18 +641,18 @@ async fn test_get_user_team_ids_no_teams(pool: Pool<Postgres>) {
 async fn insert_user_account(
     pool: &Pool<Postgres>,
     user_id: &str,
-    conation_user_id: Uuid,
+    macro_user_id: Uuid,
     username: &str,
     email: &str,
     stripe_customer_id: &str,
 ) {
     sqlx::query(
         r#"
-        INSERT INTO public.conation_user (id, username, email, stripe_customer_id)
+        INSERT INTO public.macro_user (id, username, email, stripe_customer_id)
         VALUES ($1, $2, $3, $4)
         "#,
     )
-    .bind(conation_user_id)
+    .bind(macro_user_id)
     .bind(username)
     .bind(email)
     .bind(stripe_customer_id)
@@ -654,13 +662,13 @@ async fn insert_user_account(
 
     sqlx::query(
         r#"
-        INSERT INTO public."User" (id, email, conation_user_id)
+        INSERT INTO public."User" (id, email, macro_user_id)
         VALUES ($1, $2, $3)
         "#,
     )
     .bind(user_id)
     .bind(email)
-    .bind(conation_user_id)
+    .bind(macro_user_id)
     .execute(pool)
     .await
     .unwrap();
@@ -691,7 +699,7 @@ async fn test_get_team_member_ids(pool: Pool<Postgres>) {
 
     insert_user_account(
         &pool,
-        "macro|zeta@user.com",
+        "conation|zeta@user.com",
         "11111111-1111-1111-1111-111111111111".parse().unwrap(),
         "zeta",
         "zeta@test.com",
@@ -700,7 +708,7 @@ async fn test_get_team_member_ids(pool: Pool<Postgres>) {
     .await;
     insert_user_account(
         &pool,
-        "macro|alpha@user.com",
+        "conation|alpha@user.com",
         "22222222-2222-2222-2222-222222222222".parse().unwrap(),
         "alpha",
         "alpha@test.com",
@@ -716,8 +724,8 @@ async fn test_get_team_member_ids(pool: Pool<Postgres>) {
         "cus_invalid",
     )
     .await;
-    insert_team_member(&pool, team_id, "macro|zeta@user.com").await;
-    insert_team_member(&pool, team_id, "macro|alpha@user.com").await;
+    insert_team_member(&pool, team_id, "conation|zeta@user.com").await;
+    insert_team_member(&pool, team_id, "conation|alpha@user.com").await;
     insert_team_member(&pool, team_id, "github-user-without-macro-prefix").await;
 
     let empty_team_id = "44444444-4444-4444-4444-444444444444"
@@ -731,7 +739,7 @@ async fn test_get_team_member_ids(pool: Pool<Postgres>) {
     )
     .bind(empty_team_id)
     .bind("Empty Team")
-    .bind("macro|solo@user.com")
+    .bind("conation|solo@user.com")
     .execute(&pool)
     .await
     .unwrap();
@@ -743,9 +751,9 @@ async fn test_get_team_member_ids(pool: Pool<Postgres>) {
     assert_eq!(
         member_ids,
         vec![
-            "macro|alpha@user.com".to_string(),
-            "macro|user@user.com".to_string(),
-            "macro|zeta@user.com".to_string(),
+            "conation|alpha@user.com".to_string(),
+            "conation|user@user.com".to_string(),
+            "conation|zeta@user.com".to_string(),
         ]
     );
 
@@ -848,7 +856,7 @@ async fn test_upsert_installation_sources_idempotent_user_source(pool: Pool<Post
     let repo = PgGithubSyncRepo::new(pool.clone());
 
     let sources = vec![GithubAppInstallationSource::User(
-        "macro|solo@user.com".to_string(),
+        "conation|solo@user.com".to_string(),
     )];
 
     repo.upsert_installation_sources("654321", &sources)
@@ -864,7 +872,7 @@ async fn test_upsert_installation_sources_idempotent_user_source(pool: Pool<Post
         rows,
         vec![(
             "654321".to_string(),
-            "macro|solo@user.com".to_string(),
+            "conation|solo@user.com".to_string(),
             "user".to_string(),
         )]
     );
@@ -883,7 +891,7 @@ async fn test_delete_installation_sources_removes_all_sources(pool: Pool<Postgre
 
     let sources = vec![
         GithubAppInstallationSource::Team("dddddddd-dddd-dddd-dddd-dddddddddddd".parse().unwrap()),
-        GithubAppInstallationSource::User("macro|solo@user.com".to_string()),
+        GithubAppInstallationSource::User("conation|solo@user.com".to_string()),
     ];
     repo.upsert_installation_sources("123456", &sources)
         .await
@@ -942,7 +950,7 @@ async fn test_upsert_installation_request_replaces_earlier_request(pool: Pool<Po
         .unwrap();
     repo.upsert_installation_request(
         "777",
-        &GithubAppInstallationSource::User("macro|user@user.com".to_string()),
+        &GithubAppInstallationSource::User("conation|user@user.com".to_string()),
     )
     .await
     .unwrap();
@@ -951,7 +959,7 @@ async fn test_upsert_installation_request_replaces_earlier_request(pool: Pool<Po
     assert_eq!(
         repo.get_installation_request("777").await.unwrap(),
         Some(GithubAppInstallationSource::User(
-            "macro|user@user.com".to_string()
+            "conation|user@user.com".to_string()
         ))
     );
 }
@@ -966,7 +974,7 @@ async fn test_installation_requests_are_scoped_by_github_user(pool: Pool<Postgre
         .unwrap();
     repo.upsert_installation_request(
         "888",
-        &GithubAppInstallationSource::User("macro|user@user.com".to_string()),
+        &GithubAppInstallationSource::User("conation|user@user.com".to_string()),
     )
     .await
     .unwrap();
@@ -977,7 +985,7 @@ async fn test_installation_requests_are_scoped_by_github_user(pool: Pool<Postgre
     assert_eq!(
         repo.get_installation_request("888").await.unwrap(),
         Some(GithubAppInstallationSource::User(
-            "macro|user@user.com".to_string()
+            "conation|user@user.com".to_string()
         ))
     );
 }

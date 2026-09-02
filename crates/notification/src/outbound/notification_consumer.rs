@@ -9,10 +9,10 @@ mod test;
 
 use std::{borrow::Cow, marker::PhantomData, time::Duration};
 
-use kafka_util::{InitialOffset, KafkaEventConsumer, Ungrouped};
 use conation_event_broker::{
     EventBrokerError, KafkaConsumerAdapter, MacroEventCollection, MacroEventConsumerService,
 };
+use kafka_util::{InitialOffset, KafkaEventConsumer, Ungrouped};
 use rdkafka::message::Message as _;
 use rootcause::prelude::{Report, ResultExt as _};
 use serde::{Serialize, de::DeserializeOwned};

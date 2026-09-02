@@ -1,7 +1,7 @@
 import { useSplitLayout } from '@components/app/split-layout/layout';
+import type { ContactMentionDecoratorProps } from '@conation/lexical-core';
 import { openInNewSplitForMention } from '@core/util/openInNewSplit';
 import { useSplitNavigationHandler } from '@core/util/useSplitNavigationHandler';
-import type { ContactMentionDecoratorProps } from '@conation/lexical-core';
 import BuildingIcon from '@phosphor/buildings.svg';
 import UserIcon from '@phosphor/user.svg';
 import { cn } from '@ui';
@@ -125,7 +125,10 @@ export function ContactMention(props: ContactMentionDecoratorProps) {
             {displayName()}
           </span>
         </span>
-        <MentionTooltip show={isSelectedAsNode()} text="Open" />
+        <MentionTooltip
+          show={isSelectedAsNode()}
+          text={t('editor.mention.open')}
+        />
       </span>
 
       <Show when={popupOpen()}>
@@ -155,3 +158,5 @@ export function ContactMention(props: ContactMentionDecoratorProps) {
     </>
   );
 }
+
+import { t } from '@app/lib/i18n';

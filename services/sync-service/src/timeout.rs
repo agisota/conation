@@ -149,8 +149,8 @@ where
     Timeout::new(future, duration_ms)
 }
 
-#[conation_export]
-conation_rules! timeout_ez {
+#[macro_export]
+macro_rules! timeout_ez {
     ($future:expr) => {
         $crate::timeout::timeout($future, $crate::timeout::DEFAULT_TIMEOUT_MS)
             .await

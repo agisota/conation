@@ -27,7 +27,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="macro" />
+                <data android:scheme="conation" />
                 
                 
                 
@@ -40,31 +40,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" />
                 <data android:scheme="http" />
-                <data android:host="macro.com" />
-                
-                
-                <data android:pathPrefix="/app" />
-                
-            </intent-filter>
-            <intent-filter android:autoVerify="true" >
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" />
-                <data android:scheme="http" />
-                <data android:host="dev.macro.com" />
-                
-                
-                <data android:pathPrefix="/app" />
-                
-            </intent-filter>
-            <intent-filter android:autoVerify="true" >
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" />
-                <data android:scheme="http" />
-                <data android:host="staging.macro.com" />
+                <data android:host="conation.dev" />
                 
                 
                 <data android:pathPrefix="/app" />

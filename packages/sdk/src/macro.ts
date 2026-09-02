@@ -56,7 +56,7 @@ export class Macro<T extends MacroOpts = MacroOpts> {
   declare readonly events: T extends { webhookSecret: string }
     ? MacroEvents
     : undefined;
-  /** Base URL of the Macro web app, used to build entity URLs. */
+  /** Base URL of the Conation web app, used to build entity URLs. */
   readonly webAppUrl: string;
   /** Direct access to the underlying hey-api service clients. */
   readonly _client: MacroClient;
@@ -90,14 +90,14 @@ export class Macro<T extends MacroOpts = MacroOpts> {
 
   /**
    * The authenticated caller's mentionable principal — `bot|<uuid>` for bot
-   * auth, `macro|<email>` for user auth — fetched once and cached.
+   * auth, `conation|<email>` for user auth — fetched once and cached.
    */
   myPrincipalId(): Promise<string> {
     return this._client.myPrincipalId();
   }
 
   /** Clone of this SDK acting on behalf of `user` (sent as
-   * `x-macro-bot-for-macro-user-id`). Bot auth only — throws for user auth,
+   * `x-conation-bot-for-conation-user-id`). Bot auth only — throws for user auth,
    * since a user token always acts as its own user. */
   requestedAs(user: User): Macro<T> {
     return new Macro({ ...this.opts, requestedAs: user.id });

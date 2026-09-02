@@ -14,11 +14,11 @@ use super::sender_label;
 /// Detects both explicit `@`-mention triggers and inferred triggers.
 ///
 /// A message that mentions bots triggers exactly those bots. A message that
-/// mentions none is considered for an inferred Macro AI trigger, which fires
+/// mentions none is considered for an inferred Conation trigger, which fires
 /// only when all of the following hold:
 ///
 /// * the message is a thread reply (never a top-level message),
-/// * the thread already contains a Macro AI message,
+/// * the thread already contains a Conation assistant message,
 /// * the classifier judges that the message expects an agent response.
 ///
 /// Bot-authored messages never trigger anything; classifier failures resolve
@@ -104,7 +104,7 @@ where
             .await
         {
             Ok(true) => Some(BotInvocation {
-                bot_id: bot_id::MACRO_AI_BOT_ID,
+                bot_id: bot_id::CONATION_AI_BOT_ID,
                 trigger: BotTrigger::Inferred,
             }),
             Ok(false) => None,
@@ -118,7 +118,7 @@ where
 
 fn transcript_message(sender_id: &str, content: &str) -> TranscriptMessage {
     let from_agent = bot_id::BotIdStr::parse_from_str(sender_id)
-        .is_ok_and(|bot| bot.bot_id() == bot_id::MACRO_AI_BOT_ID);
+        .is_ok_and(|bot| bot.bot_id() == bot_id::CONATION_AI_BOT_ID);
     TranscriptMessage {
         from_agent,
         sender: sender_label(sender_id),

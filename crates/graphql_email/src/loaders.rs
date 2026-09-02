@@ -4,13 +4,13 @@ use std::{
 };
 
 use async_graphql::dataloader::{DataLoader, Loader};
+use conation_user_id::user_id::MacroUserIdStr;
 use email::domain::{
     models::{EmailThreadMetadata, Message, ParsedMessage},
     ports::{EmailContentService, EmailThreadMetadataService},
 };
 use entity_access::domain::{models::AccessError, ports::EntityAccessService};
 use futures::future::join_all;
-use conation_user_id::user_id::MacroUserIdStr;
 use uuid::Uuid;
 
 pub(crate) const MAX_EMAIL_CONTENT_KEYS: usize = 20;

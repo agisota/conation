@@ -774,7 +774,7 @@ mod get_comment_thread_tests {
         // Check that the thread matches expectations
         assert_eq!(comment_thread.thread.thread_id, thread_id);
         assert_eq!(comment_thread.thread.document_id, "document-with-comments");
-        assert_eq!(comment_thread.thread.owner, "macro|user@user.com");
+        assert_eq!(comment_thread.thread.owner, "conation|user@user.com");
         assert_eq!(comment_thread.thread.resolved, false);
         assert!(comment_thread.thread.deleted_at.is_none());
 
@@ -787,7 +787,7 @@ mod get_comment_thread_tests {
         // Validate first comment
         let first_comment = &comment_thread.comments[0];
         assert_eq!(first_comment.thread_id, thread_id);
-        assert_eq!(first_comment.owner, "macro|user@user.com");
+        assert_eq!(first_comment.owner, "conation|user@user.com");
         assert_eq!(first_comment.sender, Some("user@user.com".to_string()));
         assert_eq!(first_comment.text, "Initial question on page 1");
         assert!(first_comment.deleted_at.is_none());
@@ -808,7 +808,7 @@ mod get_comment_thread_tests {
 
         assert_eq!(comment_thread.thread.thread_id, thread_id);
         assert_eq!(comment_thread.thread.document_id, "document-with-comments");
-        assert_eq!(comment_thread.thread.owner, "macro|user@user.com");
+        assert_eq!(comment_thread.thread.owner, "conation|user@user.com");
         assert_eq!(comment_thread.thread.resolved, false);
         assert!(comment_thread.thread.deleted_at.is_none());
 
@@ -845,7 +845,7 @@ mod get_comment_thread_tests {
 
         assert_eq!(comment_thread.thread.thread_id, thread_id);
         assert_eq!(comment_thread.thread.document_id, "document-with-comments");
-        assert_eq!(comment_thread.thread.owner, "macro|user@user.com");
+        assert_eq!(comment_thread.thread.owner, "conation|user@user.com");
         assert_eq!(comment_thread.thread.resolved, true);
         assert!(comment_thread.thread.deleted_at.is_none());
 

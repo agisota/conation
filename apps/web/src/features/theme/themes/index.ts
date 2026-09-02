@@ -3,9 +3,9 @@ import { decepticonTheme } from './decepticon';
 import { emberTheme } from './ember';
 import { floraTheme } from './flora';
 import { lapisTheme } from './lapis';
-import { macroDarkTheme } from './macro-dark';
-import { macroGruvboxTheme } from './macro-gruvbox';
-import { macroLightTheme } from './macro-light';
+import { conationDarkTheme } from './macro-dark';
+import { conationGruvboxTheme } from './macro-gruvbox';
+import { conationLightTheme } from './macro-light';
 import { moonTheme } from './moon';
 import { paperTheme } from './paper';
 import { rainTheme } from './rain';
@@ -13,17 +13,17 @@ import { satsumaTheme } from './satsuma';
 import { spiritTheme } from './spirit';
 import { voidTheme } from './void';
 
-// Ordered for the theme picker: dark themes first (led by Macro Dark), then
-// light themes (led by Macro Light).
+// Ordered for the theme picker: dark themes first (led by Conation Dark), then
+// light themes (led by Conation Light).
 export const DEFAULT_THEMES = [
-  macroDarkTheme,
-  macroGruvboxTheme,
+  conationDarkTheme,
+  conationGruvboxTheme,
   voidTheme,
   emberTheme,
   spiritTheme,
   moonTheme,
   rainTheme,
-  macroLightTheme,
+  conationLightTheme,
   satsumaTheme,
   lapisTheme,
   floraTheme,

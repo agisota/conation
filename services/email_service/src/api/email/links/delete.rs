@@ -13,7 +13,7 @@ use uuid::Uuid;
 ///
 /// For an inbox the caller owns this enqueues a full cascade teardown
 /// (`LinkManagerMessage::DeleteLink`). For an inbox reached via delegation it
-/// only drops the `conation_user_links` edge, leaving the owner's data intact.
+/// only drops the `macro_user_links` edge, leaving the owner's data intact.
 #[utoipa::path(
     delete,
     tag = "Links",
@@ -52,10 +52,10 @@ pub async fn delete_link_handler(
                 .context("failed to enqueue delete notification")?;
         }
         InboxAccess::Delegated => {
-            conation_db_client::conation_user_links::delete_edge(
+            conation_db_client::macro_user_links::delete_edge(
                 &ctx.db,
                 &user_context.user_id,
-                link.conation_id.as_ref(),
+                link.macro_id.as_ref(),
                 link.id,
             )
             .await
@@ -64,9 +64,9 @@ pub async fn delete_link_handler(
             // A promoted shared mailbox has no human owner — it lives only through its
             // delegation edges. When the last delegate leaves, tear the mailbox down so it
             // doesn't linger as an orphaned link + minted user that nobody can reach.
-            let remaining = conation_db_client::conation_user_links::get_primaries_for_child(
+            let remaining = conation_db_client::macro_user_links::get_primaries_for_child(
                 &ctx.db,
-                link.conation_id.as_ref(),
+                link.macro_id.as_ref(),
             )
             .await
             .context("failed to count remaining shared-inbox delegates")?;
@@ -79,7 +79,7 @@ pub async fn delete_link_handler(
                     .context("failed to acquire connection")?;
                 let is_promoted = conation_db_client::shared_inbox::is_promoted_shared_mailbox(
                     &mut conn,
-                    link.conation_id.as_ref(),
+                    link.macro_id.as_ref(),
                 )
                 .await
                 .context("failed to check promoted shared mailbox")?;

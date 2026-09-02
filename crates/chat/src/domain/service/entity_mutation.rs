@@ -2,6 +2,7 @@
 
 use std::collections::HashSet;
 
+use conation_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::models::{
     AccessError, EntityAccessReceipt, OwnerAccessLevel, ViewAccessLevel,
 };
@@ -10,7 +11,6 @@ use entity_mutation::{
     MoveEntity, RenameEntity, RestoreEntity, TrashEntity, UpdateEntitySharePolicy,
     capability::MoveEntityRequest,
 };
-use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::{Entity, EntityType};
 use models_permissions::share_permission::UpdateSharePermissionRequestV2;
 

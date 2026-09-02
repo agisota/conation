@@ -1,10 +1,10 @@
 use crate::api::context::{AuthorizationService, EntityAccessService};
 use axum::extract::State;
 use axum::{Extension, extract::Path, http::StatusCode, response::IntoResponse};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use entity_access::inbound::axum_extractors::DocumentAccessExtractor;
 #[allow(unused_imports)]
 use futures::stream::TryStreamExt;
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::document::DocumentBasic;
 use model::response::{
     GenericErrorResponse, GenericResponse, GenericSuccessResponse, SuccessResponse,
@@ -34,7 +34,7 @@ pub struct Params {
             (status = 500, body=GenericErrorResponse),
         )
     )]
-#[tracing::instrument(skip(db, user, document_context, _access), fields(user_id=?user.authorization.user.conation_user_id))]
+#[tracing::instrument(skip(db, user, document_context, _access), fields(user_id=?user.authorization.user.macro_user_id))]
 pub async fn handler(
     _access: DocumentAccessExtractor<OwnerAccessLevel, EntityAccessService, AuthorizationService>,
     State(db): State<PgPool>,

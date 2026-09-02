@@ -187,7 +187,8 @@ async fn update_search_with_parent_only_document(
 }
 
 fn should_index_parent_only(file_type: &FileType) -> bool {
-    matches!(file_type, FileType::Canvas) || !is_searchable_association(&file_type.conation_app_path())
+    matches!(file_type, FileType::Canvas)
+        || !is_searchable_association(&file_type.conation_app_path())
 }
 
 /// Processes a message for a standard document and reads the updated contents from s3 and updates

@@ -13,7 +13,7 @@ use uuid::Uuid;
 #[derive(Clone, Debug)]
 pub struct MacroUserAuthentication {
     /// The user's parsed Macro identifier.
-    pub conation_user_id: MacroUserIdStr<'static>,
+    pub macro_user_id: MacroUserIdStr<'static>,
     /// The authenticated user context.
     pub user_context: UserContext,
 }
@@ -131,7 +131,7 @@ pub struct BotTokenAuthorization {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ResolvedBotActingUser {
     /// The user's parsed Macro identifier.
-    pub conation_user_id: MacroUserIdStr<'static>,
+    pub macro_user_id: MacroUserIdStr<'static>,
     /// The user's FusionAuth identifier.
     pub fusion_user_id: String,
     /// The user's organization, when present.

@@ -2,10 +2,10 @@
 
 use std::collections::HashSet;
 
+use conation_user_id::{email::Email, lowercased::Lowercase, user_id::MacroUserIdStr};
 use entity_access::domain::models::{
     AdminTeamRole, EntityAccessReceipt, MemberTeamRole, OwnerTeamRole,
 };
-use conation_user_id::{email::Email, lowercased::Lowercase, user_id::MacroUserIdStr};
 
 use crate::domain::model::{
     AcceptedTeamInvite, CreateTeamError, DeleteTeamError, InviteUsersToTeamError, JoinTeamError,
@@ -47,8 +47,10 @@ pub trait TeamRepository: Clone + Send + Sync + 'static {
         team_id: &uuid::Uuid,
     ) -> impl Future<Output = Result<bool, TeamError>> + Send;
 
-    /// Creates a new team with the provided normalized slug. `subscription_id` is `None` for
-    /// free teams (capped at [`crate::domain::model::FREE_TEAM_MAX_MEMBERS`] members).
+    /// Creates a new team with the provided normalized slug.
+    ///
+    /// `subscription_id` is retained for compatibility with historical
+    /// billing data; it does not control team membership in Conation.
     fn create_team(
         &self,
         user_id: &MacroUserIdStr<'_>,
@@ -325,8 +327,8 @@ pub trait TeamMembersService: Clone + Send + Sync + 'static {
 
 /// The TeamService defines a set of actions to perform on the teams
 pub trait TeamService: Clone + Send + Sync + 'static {
-    /// Creates a new team. `subscription_id` is `None` for free teams
-    /// (capped at [`crate::domain::model::FREE_TEAM_MAX_MEMBERS`] members).
+    /// Creates a new team. `subscription_id` is retained for compatibility
+    /// with historical billing data and does not control product access.
     fn create_team(
         &self,
         user_id: &MacroUserIdStr<'_>,

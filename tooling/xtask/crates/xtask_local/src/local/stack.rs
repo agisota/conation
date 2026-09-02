@@ -21,6 +21,16 @@ use super::instance::{Instance, Port};
 use super::stage::Stage;
 use super::{Mode, arch, env_layer, frontend, mailpit, proxy, sdk_webhook, snapshot, summary};
 
+/// Non-Rust local app services that inherit `x-common-env` from the base
+/// Compose file. They need recreation when the generated env file changes,
+/// but are deliberately kept separate from the infrastructure lifecycle.
+const ENV_FILE_AUXILIARY_SERVICES: &[&str] = &[
+    "sync_service",
+    "ai_editing_worker",
+    "analytics_proxy",
+    "lexical_service",
+];
+
 #[derive(Args, Clone, Default)]
 pub struct UpArgs {
     #[command(flatten)]
@@ -85,7 +95,7 @@ pub struct DownArgs {
 
 /// Durable per-instance record of what `up` brought up, so `update`/`status`
 /// don't need the flags repeated. Lives in the instance artifact dir.
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 struct StackState {
     /// `local` / `dev` — mirrors [`Mode::label`].
     mode: String,
@@ -94,6 +104,17 @@ struct StackState {
     /// Host directory currently bind-mounted at `/app/out`.
     #[serde(default)]
     binaries_dir: Option<PathBuf>,
+    /// SHA-256 marker of the generated environment that has actually been
+    /// applied to containers. Legacy records deliberately deserialize as
+    /// `None`, which makes their first update reconcile safely.
+    #[serde(default)]
+    generated_env_fingerprint: Option<String>,
+    /// Versioned SHA-256 marker of the generated Caddyfile content that the
+    /// proxy container has actually been recreated against. Legacy records
+    /// deliberately deserialize as `None`, so their first update reconciles the
+    /// proxy without touching databases or volumes.
+    #[serde(default)]
+    caddyfile_fingerprint: Option<String>,
 }
 
 fn state_path(instance: &Instance) -> PathBuf {
@@ -140,7 +161,7 @@ pub fn up(mode: Mode, args: &UpArgs) -> Result<Instance> {
         args.run.instance.port_base,
     )?;
     stage.section(&format!(
-        "macro {} stack (headless) — instance {}",
+        "conation {} stack (headless) — instance {}",
         mode.label(),
         instance.name()
     ));
@@ -255,8 +276,18 @@ pub fn up(mode: Mode, args: &UpArgs) -> Result<Instance> {
         .transpose()?;
 
     // Headless "ready" means the backend answers through the proxy — the caller
-    // (a CI step, an agent) acts on the URL the moment we return.
-    if mode.spec().wait_backend_before_frontend {
+    // (a CI step, an agent) acts on the URL the moment we return. A fully local
+    // stack also reconciles its support identities at the same post-health
+    // boundary as interactive `run_local`; this targets only this instance's
+    // FusionAuth origin and does not run another stack lifecycle.
+    if mode.spec().runs_local_infra {
+        super::provision_support_users_after_backend_ready(
+            &stage,
+            &instance,
+            &env.merged,
+            &proxy::url(&instance),
+        )?;
+    } else if mode.spec().wait_backend_before_frontend {
         frontend::wait_backend_ready(&stage, &instance)?;
     }
 
@@ -267,6 +298,8 @@ pub fn up(mode: Mode, args: &UpArgs) -> Result<Instance> {
                 mode: mode.label().to_string(),
                 frontend: if static_frontend { "static" } else { "none" }.to_string(),
                 binaries_dir: Some(active_binaries),
+                generated_env_fingerprint: Some(env.generated_env_fingerprint.clone()),
+                caddyfile_fingerprint: Some(proxy::caddyfile_fingerprint(mode, static_frontend)),
             },
         )?;
         super::build::BinariesDir::release_previous_gc_root(&instance.artifact_dir());
@@ -332,10 +365,10 @@ fn bootstrap_from_update(args: &UpdateArgs) -> Result<()> {
 fn update_running(args: &UpdateArgs) -> Result<()> {
     let stage = Stage::from_env_cli(args.verbose);
     let instance = Instance::derive(args.instance.instance.as_deref(), args.instance.port_base)?;
-    let state = read_state(&instance).expect("update_running requires stack state");
+    let mut state = read_state(&instance).expect("update_running requires stack state");
     let mode = mode_from_label(&state.mode)?;
     stage.section(&format!(
-        "macro {} stack update — instance {}",
+        "conation {} stack update — instance {}",
         mode.label(),
         instance.name()
     ));
@@ -348,18 +381,18 @@ fn update_running(args: &UpdateArgs) -> Result<()> {
         state.frontend == "static",
         None,
     )?;
-    let remounted = if let Some(source) = args.binaries_dir.as_deref() {
+    let (remounted, active_binaries) = if let Some(source) = args.binaries_dir.as_deref() {
         let new = super::build::BinariesDir::classify(source)?;
         new.validate(&super::inventory::local_binaries())?;
         new.pin_gc_root(&instance.artifact_dir())?;
         match new.adoption_from_recorded(state.binaries_dir.as_deref()) {
             super::build::Adoption::Unchanged => {
                 stage.note("binaries unchanged — mounts left as-is");
-                false
+                (false, new)
             }
             super::build::Adoption::Remount => {
-                remount(&stage, mode, &instance, &env, &new, &state)?;
-                true
+                state = remount(&stage, mode, &instance, &env, &new, &state)?;
+                (true, new)
             }
         }
     } else {
@@ -372,7 +405,12 @@ fn update_running(args: &UpdateArgs) -> Result<()> {
             target,
             args.build_aux_services,
         )?;
-        false
+        // Preserve the existing bind mount when this stack was adopted from a
+        // Nix/crane output. Only legacy state lacks a recorded directory, in
+        // which case the rebuilt target dir is the active local convention.
+        let fallback = super::workspace_root().join(target.debug_dir());
+        let active_path = state.binaries_dir.as_deref().unwrap_or(&fallback);
+        (false, super::build::BinariesDir::classify(active_path)?)
     };
 
     if args.binaries_dir.is_some() && args.build_aux_services {
@@ -380,11 +418,72 @@ fn update_running(args: &UpdateArgs) -> Result<()> {
         super::recreate_aux_service_containers(&stage, &instance, &env)?;
     }
 
+    let mut generated_caddyfile_written = false;
+    let generated_env_drifted = generated_environment_drifted(&state, &env);
+    if let Some(scope) = environment_refresh_scope(generated_env_drifted, remounted) {
+        // Compose's env_file is read only while a container is created. A
+        // binary-only `docker restart` therefore cannot adopt a newly
+        // generated configuration. Regenerate first because its service shape
+        // is itself environment-derived (currently the Gmail forwarder).
+        if !remounted {
+            regenerate_compose_for_environment(
+                mode,
+                &instance,
+                &active_binaries,
+                state.frontend == "static",
+                &env,
+            )?;
+            generated_caddyfile_written = true;
+        }
+        refresh_environment_consumers(&stage, mode, &instance, &env, scope)?;
+        // This write is the commit point for the generated environment: any
+        // earlier build or Compose failure leaves the prior marker in place so
+        // a retry cannot mistake a rewritten env file for applied containers.
+        state.generated_env_fingerprint = Some(env.generated_env_fingerprint.clone());
+        write_state(&instance, &state)?;
+    }
+
+    let caddyfile_drifted = generated_caddyfile_drifted(&state, mode);
+    let proxy_refresh = proxy_refresh_plan(
+        caddyfile_drifted,
+        generated_caddyfile_written,
+        args.frontend,
+    );
+    if proxy_refresh.regenerate_compose {
+        regenerate_compose_for_environment(
+            mode,
+            &instance,
+            &active_binaries,
+            state.frontend == "static",
+            &env,
+        )?;
+    }
+    if proxy_refresh.recreate_proxy {
+        recreate_proxy_for_caddyfile(&stage, &instance, &env)?;
+        state.caddyfile_fingerprint = Some(proxy::caddyfile_fingerprint(
+            mode,
+            state.frontend == "static",
+        ));
+        write_state(&instance, &state)?;
+    }
     if args.frontend {
         reload_static_frontend(&stage, &instance, mode, &env, &state)?;
+        state.caddyfile_fingerprint = Some(proxy::caddyfile_fingerprint(
+            mode,
+            state.frontend == "static",
+        ));
+        write_state(&instance, &state)?;
     }
     if mode.spec().wait_backend_before_frontend {
         frontend::wait_backend_ready(&stage, &instance)?;
+    }
+    if mode.spec().runs_local_infra {
+        super::support_users::provision(
+            &stage,
+            &instance,
+            &env.merged,
+            &frontend::static_url(&instance),
+        )?;
     }
     if args.json {
         println!(
@@ -393,11 +492,141 @@ fn update_running(args: &UpdateArgs) -> Result<()> {
                 "remounted": remounted,
                 "frontend_updated": args.frontend,
                 "aux_services_rebuilt": args.build_aux_services,
+                "proxy_recreated": proxy_refresh.recreate_proxy || args.frontend,
             }))?
         );
     }
     Ok(())
 }
+
+/// Which env-file consumers remain stale after this update path. A binary
+/// remount already recreates every Rust service and the conditional Gmail
+/// forwarder; only the four local worker containers still need refresh.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum EnvironmentRefreshScope {
+    AllConsumers,
+    AuxiliaryConsumers,
+}
+
+fn environment_refresh_scope(
+    generated_env_changed: bool,
+    remounted: bool,
+) -> Option<EnvironmentRefreshScope> {
+    generated_env_changed.then_some(if remounted {
+        EnvironmentRefreshScope::AuxiliaryConsumers
+    } else {
+        EnvironmentRefreshScope::AllConsumers
+    })
+}
+
+fn generated_environment_drifted(state: &StackState, env: &env_layer::ResolvedEnv) -> bool {
+    env.generated_env_changed
+        || state.generated_env_fingerprint.as_deref()
+            != Some(env.generated_env_fingerprint.as_str())
+}
+
+fn generated_caddyfile_drifted(state: &StackState, mode: Mode) -> bool {
+    let expected = proxy::caddyfile_fingerprint(mode, state.frontend == "static");
+    state.caddyfile_fingerprint.as_deref() != Some(expected.as_str())
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct ProxyRefreshPlan {
+    regenerate_compose: bool,
+    recreate_proxy: bool,
+}
+
+fn proxy_refresh_plan(
+    caddyfile_drifted: bool,
+    generated_caddyfile_already_written: bool,
+    frontend_refresh_requested: bool,
+) -> ProxyRefreshPlan {
+    ProxyRefreshPlan {
+        regenerate_compose: caddyfile_drifted && !generated_caddyfile_already_written,
+        recreate_proxy: caddyfile_drifted && !frontend_refresh_requested,
+    }
+}
+
+fn regenerate_compose_for_environment(
+    mode: Mode,
+    instance: &Instance,
+    binaries: &super::build::BinariesDir,
+    static_frontend: bool,
+    env: &env_layer::ResolvedEnv,
+) -> Result<()> {
+    let gmail_forwarder = gmail_forwarder_enabled(env);
+    super::gen_compose::generate(mode, instance, binaries, static_frontend, gmail_forwarder)?;
+    proxy::write_caddyfile(instance, mode, static_frontend)?;
+    Ok(())
+}
+
+/// Force-create just the containers that inherit the generated env file. The
+/// named Compose project and `--no-deps` leave databases, queues, FusionAuth,
+/// the proxy, and their volumes untouched. `--remove-orphans` is intentionally
+/// scoped to this project/config: after a regeneration it removes only a
+/// conditional service that disappeared (the Gmail forwarder), never a service
+/// selected from the active Compose configuration.
+fn refresh_environment_consumers(
+    stage: &Stage,
+    mode: Mode,
+    instance: &Instance,
+    env: &env_layer::ResolvedEnv,
+    scope: EnvironmentRefreshScope,
+) -> Result<()> {
+    let mut up = environment_refresh_command(instance, env, mode, scope);
+    stage.run("Recreating services with updated environment", &mut up)
+}
+
+fn environment_refresh_command(
+    instance: &Instance,
+    env: &env_layer::ResolvedEnv,
+    mode: Mode,
+    scope: EnvironmentRefreshScope,
+) -> Command {
+    let mut up = super::compose_cmd(instance, env);
+    up.args([
+        "up",
+        "-d",
+        "--force-recreate",
+        "--no-deps",
+        "--remove-orphans",
+    ]);
+    if scope == EnvironmentRefreshScope::AllConsumers {
+        for service in super::inventory::services_for_mode(mode) {
+            up.arg(service.compose_name);
+        }
+        if mode.spec().runs_local_infra && gmail_forwarder_enabled(env) {
+            up.arg("gmail_forwarder");
+        }
+    }
+    if mode.spec().runs_local_infra {
+        up.args(ENV_FILE_AUXILIARY_SERVICES);
+    }
+    up
+}
+
+fn gmail_forwarder_enabled(env: &env_layer::ResolvedEnv) -> bool {
+    env.merged
+        .get("GMAIL_FORWARDER_SA_KEY")
+        .is_some_and(|key| !key.trim().is_empty())
+}
+
+fn recreate_proxy_for_caddyfile(
+    stage: &Stage,
+    instance: &Instance,
+    env: &env_layer::ResolvedEnv,
+) -> Result<()> {
+    let mut up = proxy_recreate_command(instance, env);
+    stage.run("Recreating proxy (Caddyfile)", &mut up)
+}
+
+fn proxy_recreate_command(instance: &Instance, env: &env_layer::ResolvedEnv) -> Command {
+    let mut up = super::compose_cmd(instance, env);
+    up.args(PROXY_RECREATE_ARGS);
+    up
+}
+
+const PROXY_RECREATE_ARGS: &[&str] = &["up", "-d", "--force-recreate", "--no-deps", "proxy"];
 
 fn remount(
     stage: &Stage,
@@ -406,11 +635,8 @@ fn remount(
     env: &env_layer::ResolvedEnv,
     new: &super::build::BinariesDir,
     state: &StackState,
-) -> Result<()> {
-    let gmail_forwarder = env
-        .merged
-        .get("GMAIL_FORWARDER_SA_KEY")
-        .is_some_and(|key| !key.trim().is_empty());
+) -> Result<StackState> {
+    let gmail_forwarder = gmail_forwarder_enabled(env);
     super::gen_compose::generate(
         mode,
         instance,
@@ -433,16 +659,19 @@ fn remount(
         up.arg("gmail_forwarder");
     }
     stage.run("Remounting Rust services", &mut up)?;
-    write_state(
-        instance,
-        &StackState {
-            mode: state.mode.clone(),
-            frontend: state.frontend.clone(),
-            binaries_dir: Some(new.host_dir().to_path_buf()),
-        },
-    )?;
+    // Do not acknowledge the new environment here. A remount still leaves
+    // env-file auxiliary workers to refresh; `update_running` marks the
+    // fingerprint only after that complete reconciliation succeeds.
+    let next_state = StackState {
+        mode: state.mode.clone(),
+        frontend: state.frontend.clone(),
+        binaries_dir: Some(new.host_dir().to_path_buf()),
+        generated_env_fingerprint: state.generated_env_fingerprint.clone(),
+        caddyfile_fingerprint: state.caddyfile_fingerprint.clone(),
+    };
+    write_state(instance, &next_state)?;
     super::build::BinariesDir::release_previous_gc_root(&instance.artifact_dir());
-    Ok(())
+    Ok(next_state)
 }
 
 fn reload_static_frontend(
@@ -461,8 +690,7 @@ fn reload_static_frontend(
     frontend::build_static(stage, instance, mode)?;
     // build_static replaces the staged directory, so the container must be
     // recreated to establish a bind mount to the new inode.
-    let mut up = super::compose_cmd(instance, env);
-    up.args(["up", "-d", "--force-recreate", "--no-deps", "proxy"]);
+    let mut up = proxy_recreate_command(instance, env);
     stage.run("Recreating proxy (frontend bundle)", &mut up)
 }
 

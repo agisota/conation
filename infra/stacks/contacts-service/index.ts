@@ -1,7 +1,7 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 import { Queue } from '../../packages/resources';
-import { config, getMacroApiToken, stack } from '../../packages/shared';
+import { config, getConationApiToken, stack } from '../../packages/shared';
 import { get_coparse_api_vpc } from '../../packages/vpc';
 import { ContactsService } from './service';
 
@@ -25,11 +25,11 @@ const jwtSecretKeyArn: pulumi.Output<string> = aws.secretsmanager
   .getSecretVersionOutput({ secretId: JWT_SECRET_KEY })
   .apply((secret) => secret.arn);
 
-let MACRO_API_TOKENS = getMacroApiToken();
+let CONATION_API_TOKENS = getConationApiToken();
 
 const secretKeyArns = [
   pulumi.interpolate`${jwtSecretKeyArn}`,
-  MACRO_API_TOKENS.macroApiTokenPublicKeyArn,
+  CONATION_API_TOKENS.conationApiTokenPublicKeyArn,
 ];
 
 let containerEnvVars = [

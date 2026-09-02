@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { useUserId } from '@core/context/user';
 import { ThrownResultError, throwOnErr } from '@core/util/result';
@@ -93,12 +94,12 @@ function _useCreateTeamMutation(callbacks?: CreateTeamCallbacks) {
       {
         onSuccess: () => {
           invalidateUserTeams();
-          toast.success('Team created');
+          toast.success(t('team.feedback.created'));
         },
 
         onError: (error) => {
           console.error('Failed to create team', error);
-          toast.failure('Failed to create team');
+          toast.failure(t('team.feedback.createFailed'));
         },
       },
       callbacks
@@ -120,12 +121,12 @@ export function usePatchTeamMutation(callbacks?: PatchTeamCallbacks) {
         onSuccess: (_data, { teamId }) => {
           invalidateTeam(teamId);
           invalidateUserTeams();
-          toast.success('Team updated');
+          toast.success(t('team.feedback.updated'));
         },
 
         onError: (error) => {
           console.error('Failed to update team', error);
-          toast.failure('Failed to update team');
+          toast.failure(t('team.feedback.updateFailed'));
         },
       },
       callbacks
@@ -140,8 +141,7 @@ type ToggleAutoJoinDomainCallbacks = MutationCallbacks<
   ToggleAutoJoinDomainArgs
 >;
 
-/** True when the failure is the backend rejecting a generic email provider
- *  domain (e.g. gmail.com) — the one case whose message we show verbatim. */
+/** True when the backend rejects a generic email-provider domain. */
 function isGenericDomainError(error: Error): boolean {
   return (
     error instanceof ThrownResultError &&
@@ -192,8 +192,10 @@ export function useToggleAutoJoinDomainMutation(
           invalidateUserTeams();
           toast.success(
             data.auto_join_domain
-              ? `Auto-join enabled for @${data.auto_join_domain}`
-              : 'Auto-join disabled'
+              ? t('team.feedback.autoJoinEnabled', {
+                  domain: data.auto_join_domain,
+                })
+              : t('team.feedback.autoJoinDisabled')
           );
         },
 
@@ -201,8 +203,8 @@ export function useToggleAutoJoinDomainMutation(
           console.error('Failed to toggle team auto-join', error);
           toast.failure(
             isGenericDomainError(error)
-              ? error.message
-              : 'Failed to update auto-join'
+              ? t('team.feedback.autoJoinGenericDomainNotAllowed')
+              : t('team.feedback.autoJoinUpdateFailed')
           );
         },
       },
@@ -257,14 +259,14 @@ export function useToggleNonAdminInvitesMutation(
           invalidateUserTeams();
           toast.success(
             data.allow_non_admin_invites
-              ? 'All members can now invite'
-              : 'Inviting is now limited to admins'
+              ? t('team.feedback.memberInvitesEnabled')
+              : t('team.feedback.memberInvitesAdminsOnly')
           );
         },
 
         onError: (error) => {
           console.error('Failed to toggle member invites', error);
-          toast.failure('Failed to update member invites');
+          toast.failure(t('team.feedback.memberInvitesUpdateFailed'));
         },
       },
       callbacks
@@ -307,12 +309,12 @@ export function useDeleteTeamMutation(callbacks?: DeleteTeamCallbacks) {
 
         onSuccess: () => {
           invalidateUserTeams();
-          toast.success('Team deleted');
+          toast.success(t('team.feedback.deleted'));
         },
 
         onError: (error, _args, context) => {
           console.error('Failed to delete team', error);
-          toast.failure('Failed to delete team');
+          toast.failure(t('team.feedback.deleteFailed'));
 
           if (context?.previousTeams) {
             queryClient.setQueryData(
@@ -401,13 +403,15 @@ export function useCreateTeamWithInvitesMutation(
           invalidateUserTeams();
           const hasInvites = invites && invites.length > 0;
           toast.success(
-            hasInvites ? 'Team created and invitations sent' : 'Team created'
+            hasInvites
+              ? t('team.feedback.createdWithInvitations')
+              : t('team.feedback.created')
           );
         },
 
         onError: (error, _args, context) => {
           console.error('Failed to create team', error);
-          toast.failure('Failed to create team');
+          toast.failure(t('team.feedback.createFailed'));
 
           if (context?.previousTeams) {
             queryClient.setQueryData(

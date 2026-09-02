@@ -2,8 +2,8 @@
  * Utilities for extracting information from search highlight content
  * that contains <macro_em> tags marking matched terms.
  */
+
 import { For } from 'solid-js';
-import { t } from '@app/lib/i18n';
 
 const INVISIBLE_CHARS_RE =
   /(?:[\u200B-\u200F\u2028-\u202F\u2060-\u206F\uFEFF\u00AD\u2800-\u28FF]|\u034F)+/g;
@@ -79,8 +79,8 @@ export function extractSearchSnippet(highlightedContent: string): string {
  * // Returns: "The <macro_em>quick brown</macro_em> fox"
  *
  * @example
- * mergeAdjacentMacroEmTags("<macro_em>{t('auto.hello')}</macro_em> <macro_em>world</macro_em>, <macro_em>goodbye</macro_em>")
- * // Returns: "<macro_em>{t('auto.hello_world')}</macro_em>, <macro_em>goodbye</macro_em>"
+ * mergeAdjacentMacroEmTags("<macro_em>Hello</macro_em> <macro_em>world</macro_em>, <macro_em>goodbye</macro_em>")
+ * // Returns: "<macro_em>Hello world</macro_em>, <macro_em>goodbye</macro_em>"
  */
 export function mergeAdjacentMacroEmTags(highlightedContent: string): string {
   return highlightedContent.replace(/<\/macro_em>(\s+)<macro_em>/g, '$1');

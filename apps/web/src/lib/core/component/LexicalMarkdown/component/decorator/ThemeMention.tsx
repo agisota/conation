@@ -1,5 +1,5 @@
-import { useSettingsState } from '@core/constant/SettingsState';
 import type { ThemeMentionDecoratorProps } from '@conation/lexical-core';
+import { useSettingsState } from '@core/constant/SettingsState';
 import { ThemeChips } from '@theme/components/ThemeChips';
 import { setUserThemes, themes, userThemes } from '@theme/signals/themeSignals';
 import type { ThemeV3 } from '@theme/types/themeTypes';

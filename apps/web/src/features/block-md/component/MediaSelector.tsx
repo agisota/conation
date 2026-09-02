@@ -1,5 +1,5 @@
-import { EntityIcon } from '@core/component/EntityIcon';
 import { t } from '@app/lib/i18n';
+import { EntityIcon } from '@core/component/EntityIcon';
 import { INSERT_MEDIA_COMMAND } from '@core/component/LexicalMarkdown/plugins';
 import {
   blockAcceptsFileExtension,
@@ -120,7 +120,7 @@ export function MediaSelector(props: MediaSelectorProps) {
     // TODO bring up to menu best practices, ie. fully focusable menu items, etc.
     <Dropdown open={menuOpen()} onOpenChange={setMenuOpen}>
       <Dropdown.Trigger
-        label="Insert Media File"
+        label={t('markdown.media.insertFile')}
         variant="ghost"
         size="icon-md"
         disabled={props?.buttonIsDisabled?.() ?? false}
@@ -156,15 +156,15 @@ export function MediaSelector(props: MediaSelectorProps) {
                   }}
                 >
                   <UploadSimple class="size-3.5 shrink-0" />
-                  <span class="text-sm font-medium">{t('auto.upload_file')}</span>
+                  <span class="text-sm font-medium">
+                    {t('markdown.media.uploadFile')}
+                  </span>
                 </div>
               </div>
               <div class="w-full max-h-80 overflow-y-auto overflow-x-hidden">
                 <For
                   each={userMediaFiles()}
-                  fallback={
-                    <div class="m-2">You haven't added any media yet!</div>
-                  }
+                  fallback={<div class="m-2">{t('markdown.media.empty')}</div>}
                 >
                   {(media) => <ItemOption media={media} editor={editor()} />}
                 </For>

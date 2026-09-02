@@ -1736,7 +1736,6 @@ export type UpsertAiProjectionData = {
 
 export type UpsertAiProjectionErrors = {
     400: ErrorResponse;
-    403: ErrorResponse;
     500: ErrorResponse;
 };
 
@@ -2437,7 +2436,7 @@ export type McpOauthClientMetadataData = {
 
 export type McpOauthClientMetadataResponses = {
     /**
-     * Macro OAuth client metadata document
+     * Conation OAuth client metadata document
      */
     200: unknown;
 };
@@ -2717,10 +2716,6 @@ export type SendChatMessageErrors = {
      */
     401: unknown;
     /**
-     * Payment required — user lacks access to the requested model
-     */
-    402: unknown;
-    /**
      * Forbidden
      */
     403: unknown;
@@ -2778,10 +2773,6 @@ export type StructuredCompletionErrors = {
      * Unauthorized
      */
     401: unknown;
-    /**
-     * Payment required
-     */
-    402: unknown;
     /**
      * Internal error
      */

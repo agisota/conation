@@ -1,5 +1,5 @@
-import type { Attachment, Model } from '@core/component/AI/types';
 import { t } from '@app/lib/i18n';
+import type { Attachment, Model } from '@core/component/AI/types';
 
 import { cognitionApiServiceClient } from '@service-cognition/client';
 import type { ChatMessageStream } from '@service-connection/stream';
@@ -113,7 +113,9 @@ export default function DebugAttachments() {
       <div class="flex flex-1 justify-center w-full">
         <div class="w-4/5 grid grid-cols-2 border border-accent divide-accent divide-y divide-x">
           <Item>
-            <Button variant="accent" onClick={sendAll}>{t('auto.send_all')}</Button>
+            <Button variant="accent" onClick={sendAll}>
+              {t('ai.debug.attachment.sendAll')}
+            </Button>
           </Item>
           <For each={components}>
             {(component) => <Dynamic component={component} />}
@@ -210,7 +212,9 @@ function RequestDebugger(props: {
         onClick={() => {
           makeRequest();
         }}
-      >{t('auto.send')}</Button>
+      >
+        {t('ai.actions.send')}
+      </Button>
       <div class="border border-edge font-mono p-2">
         <div class="text-accent italic">{props.simpleRequest.userRequest}</div>
         <div>
@@ -225,8 +229,12 @@ function RequestDebugger(props: {
       </div>
 
       <Switch>
-        <Match when={chatCreated()}>{t('auto.chat_created')}</Match>
-        <Match when={!chatCreated}>{t('auto.chat_not_created')}</Match>
+        <Match when={chatCreated()}>
+          {t('ai.debug.attachment.chatCreated')}
+        </Match>
+        <Match when={!chatCreated}>
+          {t('ai.debug.attachment.chatNotCreated')}
+        </Match>
       </Switch>
       <Show when={stream()}>
         {(stream) => <StreamDebugger stream={stream()} />}

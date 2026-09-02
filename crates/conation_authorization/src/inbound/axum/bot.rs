@@ -12,15 +12,39 @@ use crate::{
 use super::{MacroAuthorizationRejection, MacroAuthorizationState, rejection, status_rejection};
 
 /// Header carrying a bot authentication token.
-pub const BOT_TOKEN_HEADER: &str = "x-macro-bot-token";
+pub const BOT_TOKEN_HEADER: &str = "x-conation-bot-token";
 /// Header carrying the access scope for a bot-authorized request.
-pub const BOT_SCOPE_HEADER: &str = "x-macro-bot-scope";
-/// Header carrying the Macro user ID a bot claims to act for.
-pub const BOT_FOR_MACRO_USER_ID_HEADER: &str = "x-macro-bot-for-macro-user-id";
+pub const BOT_SCOPE_HEADER: &str = "x-conation-bot-scope";
+/// Header carrying the Conation user ID a bot claims to act for.
+pub const BOT_FOR_CONATION_USER_ID_HEADER: &str = "x-conation-bot-for-conation-user-id";
 /// Header carrying the FusionAuth user ID a bot claims to act for.
-pub const BOT_FOR_FUSIONAUTH_USER_ID_HEADER: &str = "x-macro-bot-for-fusionauth-user-id";
+pub const BOT_FOR_FUSIONAUTH_USER_ID_HEADER: &str = "x-conation-bot-for-fusionauth-user-id";
 /// Header carrying the organization ID a bot claims to act for.
-pub const BOT_FOR_ORGANIZATION_ID_HEADER: &str = "x-macro-bot-for-organization-id";
+pub const BOT_FOR_ORGANIZATION_ID_HEADER: &str = "x-conation-bot-for-organization-id";
+
+const LEGACY_BOT_HEADERS: &[&str] = &[
+    "x-macro-bot-token",
+    "x-macro-bot-scope",
+    "x-macro-bot-for-macro-user-id",
+    "x-macro-bot-for-fusionauth-user-id",
+    "x-macro-bot-for-organization-id",
+];
+
+pub(super) fn reject_legacy_bot_headers(
+    headers: &HeaderMap,
+) -> Result<(), MacroAuthorizationRejection> {
+    if LEGACY_BOT_HEADERS
+        .iter()
+        .any(|header| headers.contains_key(*header))
+    {
+        return Err(status_rejection(
+            StatusCode::BAD_REQUEST,
+            "legacy bot credentials are not supported",
+        ));
+    }
+
+    Ok(())
+}
 
 pub(super) async fn authorize_optional_bot_request<S, Svc>(
     parts: &Parts,
@@ -74,7 +98,7 @@ fn bot_scope(headers: &HeaderMap) -> Result<BotScope, MacroAuthorizationRejectio
 fn bot_acting_user_claims(
     headers: &HeaderMap,
 ) -> Result<Option<BotActingUserClaims>, MacroAuthorizationRejection> {
-    let user_id = bot_claim_header(headers, BOT_FOR_MACRO_USER_ID_HEADER)?;
+    let user_id = bot_claim_header(headers, BOT_FOR_CONATION_USER_ID_HEADER)?;
     let fusion_user_id = bot_claim_header(headers, BOT_FOR_FUSIONAUTH_USER_ID_HEADER)?;
     let organization_id = bot_claim_header(headers, BOT_FOR_ORGANIZATION_ID_HEADER)?
         .map(|organization_id| organization_id.parse::<i32>())

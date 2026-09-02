@@ -4,7 +4,7 @@ import {
   config,
   getBackfillQueue,
   getLinkManagerQueue,
-  getMacroApiToken,
+  getConationApiToken,
   getMacroNotify,
   getSearchEventQueue,
   stack,
@@ -87,12 +87,12 @@ const googleClientSecretKeyArn: pulumi.Output<string> = aws.secretsmanager
   .getSecretVersionOutput({ secretId: GOOGLE_CLIENT_SECRET_KEY })
   .apply((secret) => secret.arn);
 
-const MACRO_API_TOKEN_PRIVATE_SECRET_KEY = config.require(
-  `macro_api_token_private_secret_key`
+const CONATION_API_TOKEN_PRIVATE_SECRET_KEY = config.require(
+  `conation_api_token_private_secret_key`
 );
-const macroApiTokenSecretPrivateKeyArn: pulumi.Output<string> =
+const conationApiTokenSecretPrivateKeyArn: pulumi.Output<string> =
   aws.secretsmanager
-    .getSecretVersionOutput({ secretId: MACRO_API_TOKEN_PRIVATE_SECRET_KEY })
+    .getSecretVersionOutput({ secretId: CONATION_API_TOKEN_PRIVATE_SECRET_KEY })
     .apply((secret) => secret.arn);
 
 const stripeWebhookSecretKey = config.require(`stripe_webhook_secret_key`);
@@ -100,7 +100,7 @@ const stripeWebhookSecretKeyArn: pulumi.Output<string> = aws.secretsmanager
   .getSecretVersionOutput({ secretId: stripeWebhookSecretKey })
   .apply((secret) => secret.arn);
 
-const MACRO_API_TOKENS = getMacroApiToken();
+const CONATION_API_TOKENS = getConationApiToken();
 
 const secretKeyArns = [
   pulumi.interpolate`${jwtSecretKeyArn}`,
@@ -109,8 +109,8 @@ const secretKeyArns = [
   pulumi.interpolate`${fusionauthClientSecretKeyArn}`,
   pulumi.interpolate`${stripeSecretKeyArn}`,
   pulumi.interpolate`${googleClientSecretKeyArn}`,
-  pulumi.interpolate`${MACRO_API_TOKENS.macroApiTokenPublicKeyArn}`,
-  pulumi.interpolate`${macroApiTokenSecretPrivateKeyArn}`,
+  pulumi.interpolate`${CONATION_API_TOKENS.conationApiTokenPublicKeyArn}`,
+  pulumi.interpolate`${conationApiTokenSecretPrivateKeyArn}`,
   pulumi.interpolate`${stripeWebhookSecretKeyArn}`,
 ];
 

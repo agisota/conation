@@ -40,7 +40,7 @@ mkdirSync(dirname(outPath), { recursive: true });
 writeFileSync(outPath, `${JSON.stringify(manifest, null, 2)}\n`);
 
 const indexPath = join(packageDir, 'dist', 'index.html');
-const bundleBuildPlaceholder = '__MACRO_BUNDLE_BUILD__';
+const bundleBuildPlaceholder = '__CONATION_BUNDLE_BUILD__';
 const indexHtml = readFileSync(indexPath, 'utf8');
 if (!indexHtml.includes(bundleBuildPlaceholder)) {
   throw new Error(`${indexPath} is missing ${bundleBuildPlaceholder}`);

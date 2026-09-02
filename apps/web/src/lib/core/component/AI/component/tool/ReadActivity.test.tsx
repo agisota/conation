@@ -92,7 +92,7 @@ describe('ReadActivity renderer', () => {
   it('reuses activity property and entity display resolution', async () => {
     const { container } = renderTool([
       {
-        actorId: 'macro|user@example.com',
+        actorId: 'conation|user@example.com',
         entityType: 'document',
         entityId: 'document-raw-id',
         action: {
@@ -122,7 +122,7 @@ describe('ReadActivity renderer', () => {
   it('renders an unsupported entity type without leaking the raw id', () => {
     const { container } = renderTool([
       {
-        actorId: 'macro|user@example.com',
+        actorId: 'conation|user@example.com',
         entityType: 'agent_session',
         entityId: 'agent-session-raw-id',
         action: { type: 'created' },

@@ -51,7 +51,10 @@ describe('mail view presets', () => {
 });
 
 describe('documents view GraphQL input contract', () => {
-  const context = { userId: 'macro|phase-0@example.com', isTeamAdmin: false };
+  const context = {
+    userId: 'conation|phase-0@example.com',
+    isTeamAdmin: false,
+  };
   const tabs = ['owned', 'shared', 'attachments', 'all'] as const;
 
   it.each([true, false])(

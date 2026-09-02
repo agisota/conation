@@ -13,9 +13,9 @@ use reqwest::StatusCode;
 
 use crate::config::MacroApi;
 
-const BOT_TOKEN_HEADER: &str = "x-macro-bot-token";
-const BOT_SCOPE_HEADER: &str = "x-macro-bot-scope";
-const BOT_ACTING_USER_HEADER: &str = "x-macro-bot-for-macro-user-id";
+const BOT_TOKEN_HEADER: &str = "x-conation-bot-token";
+const BOT_SCOPE_HEADER: &str = "x-conation-bot-scope";
+const BOT_ACTING_USER_HEADER: &str = "x-conation-bot-for-conation-user-id";
 
 /// A failure calling the agent-harness service.
 #[derive(Debug, thiserror::Error)]

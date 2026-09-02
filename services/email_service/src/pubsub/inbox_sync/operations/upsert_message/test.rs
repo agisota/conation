@@ -1,5 +1,14 @@
 use super::*;
 
+#[test]
+fn attachment_upload_error_uses_conation_display_brand() {
+    assert_eq!(
+        ATTACHMENT_UPLOAD_FAILURE_MESSAGE,
+        "failed to upload attachment to Conation"
+    );
+    assert!(!ATTACHMENT_UPLOAD_FAILURE_MESSAGE.contains("Macro"));
+}
+
 fn id(s: &str) -> MacroUserIdStr<'static> {
     MacroUserIdStr::try_from(s.to_string()).unwrap()
 }
@@ -104,12 +113,12 @@ fn missing_filename_excludes_documents_but_not_media() {
 
 #[test]
 fn includes_owner_and_all_delegated_primaries() {
-    let owner = id("macro|owner@x.com");
+    let owner = id("conation|owner@x.com");
     let recipients = build_notification_recipients(
         &owner,
         vec![
-            "macro|primary-a@x.com".to_string(),
-            "macro|primary-b@x.com".to_string(),
+            "conation|primary-a@x.com".to_string(),
+            "conation|primary-b@x.com".to_string(),
         ],
     );
 
@@ -117,15 +126,15 @@ fn includes_owner_and_all_delegated_primaries() {
         recipients,
         HashSet::from([
             owner,
-            id("macro|primary-a@x.com"),
-            id("macro|primary-b@x.com"),
+            id("conation|primary-a@x.com"),
+            id("conation|primary-b@x.com"),
         ])
     );
 }
 
 #[test]
 fn returns_only_owner_when_no_primaries() {
-    let owner = id("macro|owner@x.com");
+    let owner = id("conation|owner@x.com");
     let recipients = build_notification_recipients(&owner, vec![]);
 
     assert_eq!(recipients, HashSet::from([owner]));
@@ -133,18 +142,18 @@ fn returns_only_owner_when_no_primaries() {
 
 #[test]
 fn skips_unparseable_primaries_keeping_valid_ones() {
-    let owner = id("macro|owner@x.com");
+    let owner = id("conation|owner@x.com");
     let recipients = build_notification_recipients(
         &owner,
         vec![
-            "macro|primary-a@x.com".to_string(),
+            "conation|primary-a@x.com".to_string(),
             "not-a-valid-id".to_string(),
         ],
     );
 
     assert_eq!(
         recipients,
-        HashSet::from([owner, id("macro|primary-a@x.com")])
+        HashSet::from([owner, id("conation|primary-a@x.com")])
     );
 }
 
@@ -197,7 +206,7 @@ fn suppresses_existing_immutable_non_drafts() {
 #[test]
 fn conation_staff_gets_all_inbox_new_email_policy() {
     assert_eq!(
-        new_email_notify_policy(&id("macro|teo@macro.com")),
+        new_email_notify_policy(&id("conation|tars@conation.dev")),
         NewEmailNotifyPolicy::AllInbox
     );
 }
@@ -205,7 +214,7 @@ fn conation_staff_gets_all_inbox_new_email_policy() {
 #[test]
 fn conation_staff_plus_alias_gets_all_inbox_new_email_policy() {
     assert_eq!(
-        new_email_notify_policy(&id("macro|teo+notify@macro.com")),
+        new_email_notify_policy(&id("conation|tars+notify@conation.dev")),
         NewEmailNotifyPolicy::AllInbox
     );
 }
@@ -213,7 +222,15 @@ fn conation_staff_plus_alias_gets_all_inbox_new_email_policy() {
 #[test]
 fn customer_gets_signal_only_new_email_policy() {
     assert_eq!(
-        new_email_notify_policy(&id("macro|user@example.com")),
+        new_email_notify_policy(&id("conation|user@example.com")),
+        NewEmailNotifyPolicy::SignalOnly
+    );
+}
+
+#[test]
+fn legacy_macro_domain_gets_customer_new_email_policy() {
+    assert_eq!(
+        new_email_notify_policy(&id("conation|legacy@macro.com")),
         NewEmailNotifyPolicy::SignalOnly
     );
 }
@@ -221,25 +238,35 @@ fn customer_gets_signal_only_new_email_policy() {
 #[test]
 fn staff_recipients_are_split_onto_the_apns_path() {
     let (staff, customers) = partition_email_push_recipients(HashSet::from([
-        id("macro|teo@macro.com"),
-        id("macro|teo+notify@macro.com"),
-        id("macro|user@example.com"),
+        id("conation|tars@conation.dev"),
+        id("conation|tars+notify@conation.dev"),
+        id("conation|legacy@macro.com"),
+        id("conation|user@example.com"),
     ]));
 
     assert_eq!(
         staff,
-        HashSet::from([id("macro|teo@macro.com"), id("macro|teo+notify@macro.com"),])
+        HashSet::from([
+            id("conation|tars@conation.dev"),
+            id("conation|tars+notify@conation.dev"),
+        ])
     );
-    assert_eq!(customers, HashSet::from([id("macro|user@example.com")]));
+    assert_eq!(
+        customers,
+        HashSet::from([
+            id("conation|legacy@macro.com"),
+            id("conation|user@example.com"),
+        ])
+    );
 }
 
 #[test]
 fn customer_only_recipients_do_not_take_the_apns_path() {
     let (staff, customers) =
-        partition_email_push_recipients(HashSet::from([id("macro|user@example.com")]));
+        partition_email_push_recipients(HashSet::from([id("conation|user@example.com")]));
 
     assert!(staff.is_empty());
-    assert_eq!(customers, HashSet::from([id("macro|user@example.com")]));
+    assert_eq!(customers, HashSet::from([id("conation|user@example.com")]));
 }
 
 #[test]

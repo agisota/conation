@@ -21,7 +21,7 @@ use utoipa_swagger_ui::SwaggerUi;
 static MAX_REQUEST_SIZE: usize = 4096;
 
 /// Identity assumed for internal service callers that don't forward an acting user.
-pub const MACRO_INTERNAL_USER_ID: &str = "macro|INTERNAL@macro.com";
+pub const MACRO_INTERNAL_USER_ID: &str = "conation|INTERNAL@conation.dev";
 
 pub async fn setup_and_serve(
     config: Config,

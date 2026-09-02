@@ -1,5 +1,5 @@
+import { formatDateTime, t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
-import { t } from '@app/lib/i18n';
 import { writeClipboardData } from '@core/util/dataTransfer';
 import CalendarCheckIcon from '@phosphor/calendar-check.svg';
 import CaretRightIcon from '@phosphor/caret-right.svg';
@@ -17,13 +17,7 @@ import { useAvailabilityText } from './use-availability-text';
 
 interface TimeOption {
   value: string;
-  label: string;
 }
-
-const timeLabelFormatter = new Intl.DateTimeFormat(undefined, {
-  hour: 'numeric',
-  minute: '2-digit',
-});
 
 /** Half-hour choices between two local hours (inclusive). */
 function timeOptions(fromHour: number, toHour: number): TimeOption[] {
@@ -33,7 +27,6 @@ function timeOptions(fromHour: number, toHour: number): TimeOption[] {
     const minute = minutes % 60;
     options.push({
       value: `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`,
-      label: timeLabelFormatter.format(new Date(2000, 0, 1, hour, minute)),
     });
   }
   return options;
@@ -43,10 +36,12 @@ const START_TIME_OPTIONS = timeOptions(6, 12);
 const END_TIME_OPTIONS = timeOptions(12, 22);
 
 function timeOptionLabel(options: TimeOption[], value: string): string {
-  const known = options.find((option) => option.value === value)?.label;
-  if (known) return known;
-  const [hour = 0, minute = 0] = value.split(':').map(Number);
-  return timeLabelFormatter.format(new Date(2000, 0, 1, hour, minute));
+  const normalized = options.find((option) => option.value === value)?.value;
+  const [hour = 0, minute = 0] = (normalized ?? value).split(':').map(Number);
+  return formatDateTime(new Date(2000, 0, 1, hour, minute), {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 }
 
 function TimeRadioGroup(props: {
@@ -59,7 +54,9 @@ function TimeRadioGroup(props: {
       <For each={props.options}>
         {(option) => (
           <Dropdown.RadioItem closeOnSelect value={option.value}>
-            <span class="flex-1">{option.label}</span>
+            <span class="flex-1">
+              {timeOptionLabel(props.options, option.value)}
+            </span>
             <Dropdown.ItemIndicator>
               <CheckIcon class="size-3.5 text-accent" />
             </Dropdown.ItemIndicator>
@@ -93,16 +90,16 @@ export function CopyAvailabilityButton(props: { class?: string }) {
     try {
       const text = await getAvailabilityText(rangeKey);
       if (!text) {
-        toast.alert('No free time in that range');
+        toast.alert(t('calendar.availability.toast.noFreeTime'));
         return;
       }
       if (await writeClipboardData({ 'text/plain': text })) {
-        toast.success('Availability copied');
+        toast.success(t('calendar.availability.toast.copied'));
       } else {
-        toast.failure('Failed to copy availability');
+        toast.failure(t('calendar.availability.toast.copyFailed'));
       }
     } catch {
-      toast.failure('Failed to load availability');
+      toast.failure(t('calendar.availability.toast.loadFailed'));
     }
   };
 
@@ -116,7 +113,9 @@ export function CopyAvailabilityButton(props: { class?: string }) {
         <Dropdown placement="bottom-start">
           <Dropdown.Trigger class="gap-1.5 bg-transparent px-2 hover:bg-ink/[0.04]">
             <CalendarCheckIcon class="size-3.5 shrink-0" />
-            <span class="truncate text-xs font-medium">{t('auto.copy_availability')}</span>
+            <span class="truncate text-xs font-medium">
+              {t('calendar.availability.copy')}
+            </span>
           </Dropdown.Trigger>
           <Dropdown.Content class="min-w-40">
             <Dropdown.Group>
@@ -126,7 +125,7 @@ export function CopyAvailabilityButton(props: { class?: string }) {
                     closeOnSelect
                     onSelect={() => void copyRange(option.key)}
                   >
-                    <span class="flex-1 truncate">{option.label}</span>
+                    <span class="flex-1 truncate">{t(option.labelKey)}</span>
                   </Dropdown.Item>
                 )}
               </For>
@@ -139,24 +138,30 @@ export function CopyAvailabilityButton(props: { class?: string }) {
         <Dropdown placement="bottom-end">
           <Dropdown.Trigger
             class="bg-transparent p-1 hover:bg-ink/[0.04]"
-            label="Availability settings"
+            label={t('calendar.availability.settingsLabel')}
           >
             <GearIcon class="size-3.5" />
           </Dropdown.Trigger>
           <Dropdown.Content class="w-56 max-w-[calc(100vw-1rem)]">
             <Dropdown.Group>
-              <Dropdown.GroupLabel>{t('auto.availability')}</Dropdown.GroupLabel>
+              <Dropdown.GroupLabel>
+                {t('calendar.availability.title')}
+              </Dropdown.GroupLabel>
               <Dropdown.CheckboxItem
                 checked={settings().excludeWeekends}
                 closeOnSelect={false}
                 onChange={setExcludeWeekends}
               >
-                <span class="flex-1 truncate">{t('auto.exclude_weekends')}</span>
+                <span class="flex-1 truncate">
+                  {t('calendar.availability.excludeWeekends')}
+                </span>
               </Dropdown.CheckboxItem>
 
               <Dropdown.Sub>
                 <Dropdown.SubTrigger>
-                  <span class="min-w-0 flex-1 truncate text-xs text-ink-muted">{t('auto.start_time')}</span>
+                  <span class="min-w-0 flex-1 truncate text-xs text-ink-muted">
+                    {t('calendar.availability.startTime')}
+                  </span>
                   <span class="text-sm font-medium text-ink">
                     {startTimeLabel()}
                   </span>
@@ -175,7 +180,9 @@ export function CopyAvailabilityButton(props: { class?: string }) {
 
               <Dropdown.Sub>
                 <Dropdown.SubTrigger>
-                  <span class="min-w-0 flex-1 truncate text-xs text-ink-muted">{t('auto.end_time')}</span>
+                  <span class="min-w-0 flex-1 truncate text-xs text-ink-muted">
+                    {t('calendar.availability.endTime')}
+                  </span>
                   <span class="text-sm font-medium text-ink">
                     {endTimeLabel()}
                   </span>

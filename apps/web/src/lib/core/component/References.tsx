@@ -1,5 +1,5 @@
-import { navigateToChannelMessage } from '@block-channel/utils/link';
 import { t } from '@app/lib/i18n';
+import { navigateToChannelMessage } from '@block-channel/utils/link';
 import { useGlobalBlockOrchestrator } from '@components/app/GlobalAppState';
 import { SidePanel } from '@components/app/side-panel';
 import { useSplitLayout } from '@components/app/split-layout/layout';
@@ -105,7 +105,9 @@ function ReferenceRow(props: ReferenceRowProps) {
             <span class="ph-no-capture shrink-0 font-medium text-ink truncate max-w-[8rem]">
               {props.senderName}
             </span>
-            <span class="shrink-0 text-ink-muted/70">in</span>
+            <span class="shrink-0 text-ink-muted/70">
+              {t('core.references.in')}
+            </span>
           </Show>
           <div class="min-w-0 flex flex-1 items-center overflow-hidden text-ink-muted">
             {props.source}
@@ -277,7 +279,7 @@ export function References(props: ReferenceProps) {
         blockId,
       });
     } else {
-      toast.failure('Failed to open reference');
+      toast.failure(t('core.references.openFailed'));
     }
   };
 
@@ -292,7 +294,9 @@ export function References(props: ReferenceProps) {
     <Show
       when={sortedReferences().length > 0}
       fallback={
-        <div class="py-8 text-ink-muted text-sm text-center">{t('auto.no_references_found')}</div>
+        <div class="py-8 text-ink-muted text-sm text-center">
+          {t('core.references.empty')}
+        </div>
       }
     >
       <SidePanel.Card>
@@ -322,7 +326,9 @@ export function References(props: ReferenceProps) {
               );
             }
             return (
-              <div class="px-3 py-2 text-xs text-failure">{t('auto.unknown_reference_type')}</div>
+              <div class="px-3 py-2 text-xs text-failure">
+                {t('core.references.unknownType')}
+              </div>
             );
           }}
         </For>

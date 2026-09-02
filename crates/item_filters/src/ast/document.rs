@@ -2,10 +2,10 @@ use crate::{
     DocumentFilters,
     ast::{ExpandErr, date::DateLiteral},
 };
+use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use document_sub_type::DocumentSubType;
 use either::Either;
 use filter_ast::{ExpandFrame, Expr, FoldTree, TryExpandNode};
-use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use model_file_type::{
     Archive, Audio, Canvas, Code, Data, Database, Document, Executable, FileAssociation, FileType,
     Font, Image, Md, Media, Pdf, ThreeD, ValueError, Vector, Video, Vm, Write,

@@ -2,8 +2,8 @@ use crate::api::context::{ApiContext, AuthorizationService};
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Json, Response};
-use email_api_client::domain::models::{EmailApiError, TokenFreshness};
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use email_api_client::domain::models::{EmailApiError, TokenFreshness};
 use model::response::{EmptyResponse, ErrorResponse};
 use models_email::email::service::pubsub::LinkManagerMessage;
 use std::time::Duration;
@@ -58,7 +58,7 @@ pub async fn health_check_handler(
     State(ctx): State<ApiContext>,
     authorization: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
 ) -> Result<Response, HealthCheckError> {
-    let links = email_db_client::links::get::fetch_inboxes_for_conation_id(
+    let links = email_db_client::links::get::fetch_inboxes_for_macro_id(
         &ctx.db,
         &authorization.authorization.user.user_context.user_id,
     )

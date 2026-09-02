@@ -1,5 +1,5 @@
-import { MobileDrawer } from '@components/app/mobile/MobileDrawer';
 import { t } from '@app/lib/i18n';
+import { MobileDrawer } from '@components/app/mobile/MobileDrawer';
 import { EmojiSelector } from '@core/component/Emoji/EmojiSelector';
 import { recordEmojiUsage } from '@core/component/Emoji/emojiUsage';
 import { focusInput } from '@core/directive/focusInput';
@@ -55,7 +55,7 @@ function buildActionItems(
   return [
     {
       id: 'reply',
-      label: 'Reply',
+      label: t('channel.message.actions.reply'),
       icon: ReplyIcon,
       onClick: actions?.onReply,
       getFocusTarget: replyThreadId
@@ -67,19 +67,19 @@ function buildActionItems(
     },
     {
       id: 'copy-message-text',
-      label: 'Copy message text',
+      label: t('channel.message.actions.copyText'),
       icon: CopyIcon,
       onClick: actions?.onCopyMessageText,
     },
     {
       id: 'copy-link',
-      label: 'Copy link',
+      label: t('channel.message.actions.copyLink'),
       icon: LinkIcon,
       onClick: actions?.onCopyLink,
     },
     {
       id: 'create-task',
-      label: 'Create task',
+      label: t('channel.message.actions.createTask'),
       icon: CheckSquareIcon,
       onClick: actions?.onCreateTask,
     },
@@ -127,8 +127,8 @@ function EmojiSearchView(props: {
             ref={inputRef}
             value={query()}
             onInput={(e) => setQuery(e.currentTarget.value)}
-            placeholder={t('auto.search_emojis')}
-            aria-label={t('auto.search_emojis')}
+            placeholder={t('channel.message.searchEmojis')}
+            aria-label={t('channel.message.searchEmojis')}
             class="flex-1 bg-transparent outline-none placeholder:text-ink-placeholder"
           />
         </div>
@@ -205,7 +205,7 @@ export function ActionDrawer() {
       <MobileDrawer.Portal>
         <MobileDrawer.Overlay class="fixed inset-0 z-modal-overlay bg-modal-overlay pattern-diagonal-4 pattern-edge-muted" />
         <MobileDrawer.Content
-          aria-label={t('auto.message_actions')}
+          aria-label={t('channel.message.actions.label')}
           class={showEmojiSearch() ? 'h-[80vh]' : undefined}
         >
           {/* Drag handle */}
@@ -229,8 +229,8 @@ export function ActionDrawer() {
                   {(emoji) => (
                     <button
                       type="button"
-                      title={`React ${emoji}`}
-                      aria-label={`React ${emoji}`}
+                      title={t('channel.message.reactWith', { emoji })}
+                      aria-label={t('channel.message.reactWith', { emoji })}
                       class="size-12 flex items-center justify-center bg-edge rounded-full text-[28px]"
                       onClick={(event) => {
                         recordEmojiUsage(emoji);
@@ -243,8 +243,8 @@ export function ActionDrawer() {
                 </For>
                 <button
                   type="button"
-                  title={t('auto.more_reactions')}
-                  aria-label={t('auto.more_reactions')}
+                  title={t('channel.message.moreReactions')}
+                  aria-label={t('channel.message.moreReactions')}
                   class="size-12 bg-edge rounded-full flex items-center justify-center text-ink-muted"
                   onClick={() => setShowEmojiSearch(true)}
                 >

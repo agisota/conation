@@ -2,6 +2,7 @@
  * @file A plugin in that binds Lexical selection updates to a Solid store.
  */
 
+import type { ElementName } from '@conation/lexical-core';
 import { $isAutoLinkNode, $isLinkNode } from '@lexical/link';
 import type { ListNode } from '@lexical/list';
 // import { mergeRegister } from '@lexical/utils';
@@ -11,7 +12,6 @@ import {
   $isTableCellNode,
   $isTableSelection,
 } from '@lexical/table';
-import type { ElementName } from '@conation/lexical-core';
 import {
   $getSelection,
   $isNodeSelection,

@@ -2,6 +2,7 @@
 
 use std::sync::Arc;
 
+use conation_user_id::user_id::MacroUserIdStr;
 use cowlike::CowLike;
 use document_sub_type::DocumentSubType;
 use email::domain::models::PreviewView;
@@ -12,7 +13,6 @@ use item_filters::ast::{
     crm_company::CrmCompanyLiteral, document::DocumentLiteral, email::EmailLiteral,
     foreign_entity::ForeignEntityLiteral, project::ProjectLiteral,
 };
-use conation_user_id::user_id::MacroUserIdStr;
 use models_pagination::{SimpleSortMethod, TypeEraseCursor};
 use models_soup::item::SoupItem;
 use soup::domain::{

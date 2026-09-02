@@ -1,8 +1,8 @@
 use axum::{Json, extract::State};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use entity_access::domain::models::OwnerTeamRole;
 use entity_access::domain::ports::EntityAccessService;
 use entity_access::inbound::axum_extractors::OptionalMacroUserTeamExtractorV2;
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use serde::Deserialize;
 use utoipa::ToSchema;
 
@@ -51,17 +51,21 @@ pub struct CreateCheckoutSessionV2Request {
         (status = 500, body = ErrorResponse),
     )
 )]
-#[tracing::instrument(skip(ctx, user, optional_team), err, fields(user_id = %user.authorization.user.conation_user_id))]
+#[tracing::instrument(skip(ctx, user, optional_team), err, fields(user_id = %user.authorization.user.macro_user_id))]
 pub async fn create_checkout_session<Eas: EntityAccessService>(
     State(ctx): State<ApiContext>,
     user: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
     optional_team: OptionalMacroUserTeamExtractorV2<OwnerTeamRole, Eas, AuthorizationService>,
     Json(req): Json<CreateCheckoutSessionV2Request>,
 ) -> Result<Json<StripeSessionResponse>, StripeOperationError> {
+    if !ctx.stripe_enabled.0 {
+        return Err(StripeOperationError::StripeBillingDisabled);
+    }
+
     // Get the stripe customer ID from the database
     let stripe_customer_id = conation_db_client::user::get::get_stripe_customer_id_by_user_id(
         &ctx.db,
-        &user.authorization.user.conation_user_id,
+        &user.authorization.user.macro_user_id,
     )
     .await?
     .ok_or(StripeOperationError::MissingStripeId)?;
@@ -120,7 +124,7 @@ pub async fn create_checkout_session<Eas: EntityAccessService>(
 
         metadata.insert(
             "owner_id".to_string(),
-            user.authorization.user.conation_user_id.to_string(),
+            user.authorization.user.macro_user_id.to_string(),
         );
     }
 

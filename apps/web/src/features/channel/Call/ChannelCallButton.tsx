@@ -29,8 +29,12 @@ export function ChannelCallButton(props: { channelId: string }) {
   // inherits this component's lifetime (navigating away closes it).
   const owner = getOwner();
 
-  const tooltip = () => (isCallInProgress() ? 'Join Call' : 'Start Call');
-  const label = () => (isCallInProgress() ? 'Join' : 'Call');
+  const tooltip = () =>
+    isCallInProgress() ? t('channel.call.join') : t('channel.call.start');
+  const label = () =>
+    isCallInProgress()
+      ? t('channel.call.joinShort')
+      : t('channel.call.callShort');
 
   const variant = () => {
     if (isTouchDevice()) return 'ghost';
@@ -40,14 +44,16 @@ export function ChannelCallButton(props: { channelId: string }) {
 
   const confirmTitle = () => {
     const name = channelName();
-    if (!name) return 'Start a call?';
-    return isDm() ? `Call ${name}?` : `Start a call in ${name}?`;
+    if (!name) return t('channel.call.confirm.start');
+    return isDm()
+      ? t('channel.call.confirm.direct', { name })
+      : t('channel.call.confirm.channel', { name });
   };
 
   // A DM title ("Call Jane?") already says who rings; the group-channel case
   // is the one where the blast radius needs spelling out.
   const confirmBody = () =>
-    isDm() ? undefined : 'Everyone in the channel will be notified.';
+    isDm() ? undefined : t('channel.call.confirm.notifyEveryone');
 
   const joinCall = async () => {
     if (call.isJoining()) return;
@@ -86,7 +92,9 @@ export function ChannelCallButton(props: { channelId: string }) {
           tone: 'success' as const,
           confirmLabel: (
             <>
-              <PhoneIcon class="size-5" />{t('auto.start_call')}</>
+              <PhoneIcon class="size-5" />
+              {t('channel.call.start')}
+            </>
           ),
         }),
         { owner }

@@ -8,6 +8,9 @@ use axum::{
     http::request::Parts,
     response::{IntoResponse, Response},
 };
+use conation_authorization::{
+    MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal,
+};
 use entity_access::{
     domain::{
         models::{
@@ -17,7 +20,6 @@ use entity_access::{
     },
     inbound::axum_extractors::{ExtractorError, MacroUserTeamExtractorV2},
 };
-use conation_authorization::{MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal};
 use serde::Deserialize;
 
 use super::DocumentRouterState;
@@ -76,7 +78,7 @@ where
         let entity_access_receipt = state
             .access_service
             .generate_entity_access_receipt::<Level>(
-                &user.authorization.user.conation_user_id,
+                &user.authorization.user.macro_user_id,
                 user.authorization
                     .user
                     .user_context

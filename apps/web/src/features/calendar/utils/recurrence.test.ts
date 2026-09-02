@@ -1,5 +1,6 @@
+import { setLocale } from '@app/lib/i18n';
 import { format } from 'date-fns';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import {
   buildRecurrenceLines,
   defaultCustomConfig,
@@ -11,6 +12,8 @@ import {
   recurrenceConfigsEqual,
   recurrencePresetsFor,
 } from './recurrence';
+
+afterEach(() => setLocale('en'));
 
 describe('parseRecurrenceLines', () => {
   it('parses useful rule fields and explicit recurrence dates', () => {
@@ -183,6 +186,70 @@ describe('formatRecurrenceDescription', () => {
     expect(formatRecurrenceDescription([])).toBeUndefined();
     expect(formatRecurrenceDescription(['EXDATE:20260815'])).toBeUndefined();
     expect(formatRecurrenceDescription(['UNKNOWN:value'])).toBeUndefined();
+  });
+
+  describe('Russian', () => {
+    it.each([
+      {
+        name: 'workweek',
+        lines: ['RRULE:FREQ=WEEKLY;BYDAY=FR,WE,MO,TH,TU'],
+        expected: 'Каждый будний день',
+      },
+      {
+        name: 'selected weekdays',
+        lines: ['RRULE:FREQ=WEEKLY;BYDAY=FR,MO,WE'],
+        expected: 'Еженедельно по понедельникам, средам и пятницам',
+      },
+      {
+        name: 'monthly ordinal weekday',
+        lines: ['RRULE:FREQ=MONTHLY;BYDAY=1MO'],
+        expected: 'Ежемесячно: первый понедельник',
+      },
+      {
+        name: 'interval',
+        lines: ['RRULE:FREQ=WEEKLY;INTERVAL=2'],
+        expected: 'Раз в 2 недели',
+      },
+      {
+        name: 'custom fallback',
+        lines: ['RRULE:FREQ=FORTNIGHTLY'],
+        expected: 'Повторяющееся событие',
+      },
+    ])('formats $name', ({ lines, expected }) => {
+      setLocale('ru');
+      expect(formatRecurrenceDescription(lines)).toBe(expected);
+    });
+
+    it.each([
+      [1, '1 повтор'],
+      [2, '2 повтора'],
+      [5, '5 повторов'],
+      [21, '21 повтор'],
+    ])('uses the correct occurrence form for %i', (count, suffix) => {
+      setLocale('ru');
+      expect(
+        formatRecurrenceDescription([`RRULE:FREQ=DAILY;COUNT=${count}`])
+      ).toBe(`Ежедневно · ${suffix}`);
+    });
+
+    it('formats an end date in the active locale', () => {
+      setLocale('ru');
+      expect(
+        formatRecurrenceDescription([
+          'RRULE:FREQ=WEEKLY;UNTIL=20260831T235959Z',
+        ])
+      ).toBe('Еженедельно · до 31 августа 2026 г.');
+    });
+
+    it('does not mix catalogs and Intl output through the legacy override', () => {
+      setLocale('ru');
+      expect(
+        formatRecurrenceDescription(
+          ['RRULE:FREQ=WEEKLY;BYDAY=MO,WE;UNTIL=20260831T235959Z'],
+          { locale: 'en-US' }
+        )
+      ).toBe('Еженедельно по понедельникам и средам · до 31 августа 2026 г.');
+    });
   });
 });
 

@@ -1,5 +1,4 @@
 import { cleanup, render, screen } from '@solidjs/testing-library';
-import { t } from '@app/lib/i18n';
 import { afterEach, describe, expect, it } from 'vitest';
 import { Badge, badgeClasses, badgeTriggerClasses } from './Badge';
 import { buttonClasses } from './Button';
@@ -49,7 +48,9 @@ describe('Badge', () => {
 
   it('renders a span with resolved variant and size metadata', () => {
     render(() => (
-      <Badge variant="outline" size="sm" title={t('auto.status')}>{t('auto.ready')}</Badge>
+      <Badge variant="outline" size="sm" title="Status">
+        Ready
+      </Badge>
     ));
 
     const badge = screen.getByText('Ready');

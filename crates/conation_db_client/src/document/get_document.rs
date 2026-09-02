@@ -637,7 +637,7 @@ mod tests {
                 .unwrap()
                 .owner
                 .as_ref(),
-            "macro|user@user.com",
+            "conation|user@user.com",
         );
     }
 
@@ -660,7 +660,7 @@ mod tests {
             document_metadata.document_name,
             "test_document_name".to_string()
         );
-        assert_eq!(document_metadata.owner.as_ref(), "macro|user@user.com");
+        assert_eq!(document_metadata.owner.as_ref(), "conation|user@user.com");
     }
 
     #[sqlx::test(fixtures(path = "../../fixtures", scripts("basic_user_with_documents")))]
@@ -675,7 +675,7 @@ mod tests {
             document_metadata.document_name,
             "test_document_name".to_string()
         );
-        assert_eq!(document_metadata.owner.as_ref(), "macro|user@user.com");
+        assert_eq!(document_metadata.owner.as_ref(), "conation|user@user.com");
     }
 
     #[sqlx::test(fixtures(path = "../../fixtures", scripts("basic_user_with_documents")))]
@@ -692,7 +692,7 @@ mod tests {
             document_metadata.document_name,
             "test_document_name".to_string()
         );
-        assert_eq!(document_metadata.owner.as_ref(), "macro|user@user.com");
+        assert_eq!(document_metadata.owner.as_ref(), "conation|user@user.com");
     }
 
     #[sqlx::test(fixtures(path = "../../fixtures", scripts("basic_user_with_documents")))]

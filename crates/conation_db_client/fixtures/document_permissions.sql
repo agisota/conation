@@ -3,13 +3,13 @@ VALUES ('a1111111-1111-1111-1111-111111111111', 'user@user.com', 'user@user.com'
        ('a2222222-2222-2222-2222-222222222222', 'user2@user.com', 'user2@user.com', 'stripe_id2');
 
 INSERT INTO public."User" ("id","email","stripeCustomerId","macro_user_id")
-(SELECT 'macro|user@user.com', 'user@user.com','stripe_id', 'a1111111-1111-1111-1111-111111111111');
+(SELECT 'conation|user@user.com', 'user@user.com','stripe_id', 'a1111111-1111-1111-1111-111111111111');
 
 INSERT INTO public."User" ("id","email","stripeCustomerId","macro_user_id")
-(SELECT 'macro|user2@user.com', 'user2@user.com','stripe_id2', 'a2222222-2222-2222-2222-222222222222');
+(SELECT 'conation|user2@user.com', 'user2@user.com','stripe_id2', 'a2222222-2222-2222-2222-222222222222');
 
 INSERT INTO public."Document" ("id","name","fileType", "owner", "createdAt", "updatedAt")
-(SELECT 'document-one', 'test_document_name','pdf', 'macro|user@user.com', '2019-10-16 00:00:00', '2019-10-16 00:00:00');
+(SELECT 'document-one', 'test_document_name','pdf', 'conation|user@user.com', '2019-10-16 00:00:00', '2019-10-16 00:00:00');
 
 INSERT INTO public."DocumentInstance" ("revisionName", "documentId", "createdAt", "updatedAt", "sha")
 (SELECT 'test_document_name', 'document-one', '2019-10-16 00:00:00', '2019-10-16 00:00:00', 'sha');
@@ -21,7 +21,7 @@ INSERT INTO public."DocumentPermission" ("documentId", "sharePermissionId")
 (SELECT 'document-one', 'sp-1');
 
 INSERT INTO public."Document" ("id","name","fileType", "owner", "createdAt", "updatedAt")
-(SELECT 'document-two', 'test_document_name','pdf', 'macro|user@user.com', '2019-10-16 00:00:00', '2019-10-16 00:00:00');
+(SELECT 'document-two', 'test_document_name','pdf', 'conation|user@user.com', '2019-10-16 00:00:00', '2019-10-16 00:00:00');
 
 INSERT INTO public."DocumentInstance" ("revisionName", "documentId", "createdAt", "updatedAt", "sha")
 (SELECT 'test_document_name', 'document-two', '2019-10-16 00:00:00', '2019-10-16 00:00:00', 'sha');

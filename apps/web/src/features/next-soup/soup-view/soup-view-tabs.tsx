@@ -23,6 +23,7 @@ import {
   VIEW_TAB_LISTS,
 } from '@app/features/next-soup/soup-view/tab-lists';
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
+import { t } from '@app/lib/i18n';
 import { PillTabs } from '@components/app/mobile/PillTabs';
 import { useSplitPanelOrThrow } from '@components/app/split-layout/layoutUtils';
 import type { TabItem } from '@core/component/Tabs';
@@ -231,8 +232,18 @@ export const SoupViewTabs = () => {
 
 /** The Customers view swaps filter tabs for a board/list mode switch. */
 const COMPANY_MODE_TABS: TabItem[] = [
-  { value: 'board', label: 'Board' },
-  { value: 'list', label: 'List' },
+  {
+    value: 'board',
+    get label() {
+      return t('soup.viewMode.board');
+    },
+  },
+  {
+    value: 'list',
+    get label() {
+      return t('soup.viewMode.list');
+    },
+  },
 ];
 
 const CompanyModeTabs = () => {

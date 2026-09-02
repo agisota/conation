@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import type { NotificationType } from '@core/types';
 import { GITHUB_EVENT_TYPES } from '@notifications/github-event-types';
 import { match } from 'ts-pattern';
@@ -99,29 +100,69 @@ export function getUniqueGithubLogins(notifications: Notification[]): string[] {
 export function getActionVerb(type: NotificationType): string {
   return (
     match(type)
-      .with('channel_mention', () => 'mentioned you')
-      .with('document_mention', () => 'shared with you')
-      .with('mentioned_in_document_comment', () => 'mentioned you')
-      .with('replied_to_document_comment_thread', () => 'replied')
-      .with('commented_on_document', () => 'commented')
-      .with('channel_message_reply', () => 'replied')
-      .with('channel_message_send', () => 'sent a message')
-      .with('ai_response', () => 'AI responded')
-      .with('new_email', () => 'sent an email')
-      .with('channel_invite', () => 'invited you')
-      .with('invite_to_team', () => 'invited you')
-      .with('task_assigned', () => 'assigned you')
-      .with('github_pr_status_changed', () => 'updated a pull request')
-      .with('github_pr_check_run', () => 'completed a check')
-      .with('github_review_requested', () => 'requested your review')
-      .with('github_pr_comment', () => 'commented on a pull request')
-      .with('github_pr_mention', () => 'mentioned you on a pull request')
-      .with('github_pr_review', () => 'reviewed your pull request')
-      .with('call_started', () => 'started a call')
+      .with('channel_mention', () =>
+        t('notifications.description.actions.channelMention')
+      )
+      .with('document_mention', () =>
+        t('notifications.description.actions.documentShared')
+      )
+      .with('mentioned_in_document_comment', () =>
+        t('notifications.description.actions.commentMention')
+      )
+      .with('replied_to_document_comment_thread', () =>
+        t('notifications.description.actions.replied')
+      )
+      .with('commented_on_document', () =>
+        t('notifications.description.actions.commented')
+      )
+      .with('channel_message_reply', () =>
+        t('notifications.description.actions.replied')
+      )
+      .with('channel_message_send', () =>
+        t('notifications.description.actions.messageSent')
+      )
+      .with('ai_response', () =>
+        t('notifications.description.actions.aiResponse')
+      )
+      .with('new_email', () => t('notifications.description.actions.emailSent'))
+      .with('channel_invite', () =>
+        t('notifications.description.actions.invited')
+      )
+      .with('invite_to_team', () =>
+        t('notifications.description.actions.invited')
+      )
+      .with('task_assigned', () =>
+        t('notifications.description.actions.taskAssigned')
+      )
+      .with('github_pr_status_changed', () =>
+        t('notifications.description.actions.pullRequestUpdated')
+      )
+      .with('github_pr_check_run', () =>
+        t('notifications.description.actions.checkCompleted')
+      )
+      .with('github_review_requested', () =>
+        t('notifications.description.actions.reviewRequested')
+      )
+      .with('github_pr_comment', () =>
+        t('notifications.description.actions.pullRequestCommented')
+      )
+      .with('github_pr_mention', () =>
+        t('notifications.description.actions.pullRequestMention')
+      )
+      .with('github_pr_review', () =>
+        t('notifications.description.actions.pullRequestReviewed')
+      )
+      .with('call_started', () =>
+        t('notifications.description.actions.callStarted')
+      )
       // Reads as a standalone phrase, not an actor's action — nobody sent it.
-      .with('reminder', () => 'reminder')
-      .with('calendar_event_reminder', () => 'upcoming event')
-      .with('inbox_reauth_required', () => 'needs reconnection')
+      .with('reminder', () => t('notifications.description.actions.reminder'))
+      .with('calendar_event_reminder', () =>
+        t('notifications.description.actions.upcomingEvent')
+      )
+      .with('inbox_reauth_required', () =>
+        t('notifications.description.actions.inboxReconnect')
+      )
       .exhaustive()
   );
 }
@@ -132,43 +173,79 @@ export function getActionVerb(type: NotificationType): string {
  */
 export function getTypeNoun(type: NotificationType, count: number): string {
   return match(type)
-    .with('channel_message_reply', () => (count === 1 ? 'reply' : 'replies'))
-    .with('channel_message_send', () => (count === 1 ? 'message' : 'messages'))
-    .with('ai_response', () => (count === 1 ? 'response' : 'responses'))
-    .with('channel_mention', () => (count === 1 ? 'mention' : 'mentions'))
+    .with('channel_message_reply', () =>
+      t('notifications.description.nouns.reply', { count })
+    )
+    .with('channel_message_send', () =>
+      t('notifications.description.nouns.message', { count })
+    )
+    .with('ai_response', () =>
+      t('notifications.description.nouns.response', { count })
+    )
+    .with('channel_mention', () =>
+      t('notifications.description.nouns.mention', { count })
+    )
     .with('document_mention', () =>
-      count === 1 ? 'document shared' : 'documents shared'
+      t('notifications.description.nouns.documentShared', { count })
     )
     .with('mentioned_in_document_comment', () =>
-      count === 1 ? 'mention' : 'mentions'
+      t('notifications.description.nouns.mention', { count })
     )
     .with('replied_to_document_comment_thread', () =>
-      count === 1 ? 'reply' : 'replies'
+      t('notifications.description.nouns.reply', { count })
     )
-    .with('commented_on_document', () => (count === 1 ? 'comment' : 'comments'))
-    .with('new_email', () => (count === 1 ? 'email' : 'emails'))
-    .with('channel_invite', () => (count === 1 ? 'invite' : 'invites'))
-    .with('invite_to_team', () => (count === 1 ? 'invite' : 'invites'))
-    .with('task_assigned', () => (count === 1 ? 'task' : 'tasks'))
+    .with('commented_on_document', () =>
+      t('notifications.description.nouns.comment', { count })
+    )
+    .with('new_email', () =>
+      t('notifications.description.nouns.email', { count })
+    )
+    .with('channel_invite', () =>
+      t('notifications.description.nouns.invite', { count })
+    )
+    .with('invite_to_team', () =>
+      t('notifications.description.nouns.invite', { count })
+    )
+    .with('task_assigned', () =>
+      t('notifications.description.nouns.task', { count })
+    )
     .with('github_pr_status_changed', () =>
-      count === 1 ? 'pull request' : 'pull requests'
+      t('notifications.description.nouns.pullRequest', { count })
     )
-    .with('github_pr_check_run', () => (count === 1 ? 'check' : 'checks'))
+    .with('github_pr_check_run', () =>
+      t('notifications.description.nouns.check', { count })
+    )
     .with('github_review_requested', () =>
-      count === 1 ? 'review request' : 'review requests'
+      t('notifications.description.nouns.reviewRequest', { count })
     )
-    .with('github_pr_comment', () => (count === 1 ? 'comment' : 'comments'))
-    .with('github_pr_mention', () => (count === 1 ? 'mention' : 'mentions'))
-    .with('github_pr_review', () => (count === 1 ? 'review' : 'reviews'))
-    .with('call_started', () => (count === 1 ? 'call' : 'calls'))
-    .with('reminder', () => (count === 1 ? 'reminder' : 'reminders'))
-    .with('calendar_event_reminder', () => (count === 1 ? 'event' : 'events'))
-    .with('inbox_reauth_required', () => (count === 1 ? 'inbox' : 'inboxes'))
+    .with('github_pr_comment', () =>
+      t('notifications.description.nouns.comment', { count })
+    )
+    .with('github_pr_mention', () =>
+      t('notifications.description.nouns.mention', { count })
+    )
+    .with('github_pr_review', () =>
+      t('notifications.description.nouns.review', { count })
+    )
+    .with('call_started', () =>
+      t('notifications.description.nouns.call', { count })
+    )
+    .with('reminder', () =>
+      t('notifications.description.nouns.reminder', { count })
+    )
+    .with('calendar_event_reminder', () =>
+      t('notifications.description.nouns.event', { count })
+    )
+    .with('inbox_reauth_required', () =>
+      t('notifications.description.nouns.inbox', { count })
+    )
     .exhaustive();
 }
 
 export function getTypePreposition(type: NotificationType): string {
   return match(type)
-    .with('document_mention', () => 'by')
-    .otherwise(() => 'from');
+    .with('document_mention', () =>
+      t('notifications.description.prepositions.by')
+    )
+    .otherwise(() => t('notifications.description.prepositions.from'));
 }

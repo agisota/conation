@@ -10,6 +10,7 @@ import type {
   UploadResult,
 } from '@core/component/AI/types';
 import { toast } from '@core/component/Toast/Toast';
+import { t } from '@core/i18n';
 import { chatRuleset, uploadFile } from '@core/util/upload';
 import {
   fileExtension,
@@ -186,7 +187,10 @@ export function useUploadAttachment(): UploadQueue {
 
           // Show error toast
           toast.failure(
-            `Failed to upload ${filename}: ${error.message || 'Unknown error'}`
+            t('core.upload.fileFailedWithReason', {
+              name: filename,
+              reason: error.message || t('core.errors.unknown'),
+            })
           );
           console.error('Upload error:', error);
         });
@@ -196,7 +200,7 @@ export function useUploadAttachment(): UploadQueue {
   const upload = (files: File[]) => {
     const allValid = files.every(isFileSupported);
     if (files.length === 0 || !allValid) {
-      toast.failure('Invalid attachment file(s)');
+      toast.failure(t('core.upload.invalidAttachments'));
       return [];
     }
 

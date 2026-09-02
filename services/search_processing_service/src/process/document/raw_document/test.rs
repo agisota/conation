@@ -7,7 +7,7 @@ async fn test_generate_upsert() {
     let document_info = DocumentMetadata {
         document_id: "AAA".to_string(),
         document_version_id: 0,
-        owner: MacroUserIdStr::parse_from_str("macro|nobody@macro.com").unwrap(),
+        owner: MacroUserIdStr::parse_from_str("conation|nobody@macro.com").unwrap(),
         document_name: "test_document".to_string(),
         file_type: Some("md".to_string()),
         sha: None,
@@ -52,7 +52,7 @@ async fn test_generate_upsert_with_sub_type() {
     let document_info = DocumentMetadata {
         document_id: "BBB".to_string(),
         document_version_id: 0,
-        owner: MacroUserIdStr::parse_from_str("macro|nobody@macro.com").unwrap(),
+        owner: MacroUserIdStr::parse_from_str("conation|nobody@macro.com").unwrap(),
         document_name: "test_task".to_string(),
         file_type: Some("md".to_string()),
         sha: None,
@@ -86,7 +86,7 @@ fn parent_only_document_info(file_type: Option<&str>) -> DocumentMetadata {
     DocumentMetadata {
         document_id: "CCC".to_string(),
         document_version_id: 0,
-        owner: MacroUserIdStr::parse_from_str("macro|nobody@macro.com").unwrap(),
+        owner: MacroUserIdStr::parse_from_str("conation|nobody@macro.com").unwrap(),
         document_name: "pdf copy".to_string(),
         file_type: file_type.map(|ft| ft.to_string()),
         sha: None,
@@ -112,7 +112,7 @@ fn test_generate_parent_only_upsert() {
 
     assert_eq!(args.document_id, "CCC");
     assert_eq!(args.document_name, "pdf copy");
-    assert_eq!(args.owner_id, "macro|nobody@macro.com");
+    assert_eq!(args.owner_id, "conation|nobody@macro.com");
     assert_eq!(args.file_type, "zip");
     assert_eq!(args.sub_type, None);
     assert_eq!(args.node_id, "");
@@ -134,7 +134,7 @@ fn test_generate_canvas_parent_only_upsert_has_no_content_chunk() {
 
     assert_eq!(args.document_id, "CCC");
     assert_eq!(args.document_name, "pdf copy");
-    assert_eq!(args.owner_id, "macro|nobody@macro.com");
+    assert_eq!(args.owner_id, "conation|nobody@macro.com");
     assert_eq!(args.file_type, "canvas");
     assert_eq!(args.node_id, "");
     assert_eq!(args.content, "");

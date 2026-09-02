@@ -1,5 +1,4 @@
 import { createMethodRegistration } from '@core/orchestrator';
-import { t } from '@app/lib/i18n';
 import { blockHandleSignal } from '@core/signal/load';
 import { useSearchParams } from '@solidjs/router';
 import {

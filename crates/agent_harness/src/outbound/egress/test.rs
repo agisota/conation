@@ -7,12 +7,12 @@ fn slug(name: &str) -> McpServerSlug {
 #[test]
 fn reads_the_repository_out_of_a_configured_url() {
     for url in [
-        "https://github.com/macro-inc/macro",
-        "https://github.com/macro-inc/macro/",
-        "https://github.com/macro-inc/macro.git",
+        "https://github.com/agisota/conation",
+        "https://github.com/agisota/conation/",
+        "https://github.com/agisota/conation.git",
     ] {
         let repo = repo_slug(url).expect(url);
-        assert_eq!(repo.to_string(), "macro-inc/macro", "for {url}");
+        assert_eq!(repo.to_string(), "agisota/conation", "for {url}");
     }
 }
 
@@ -22,10 +22,10 @@ fn refuses_a_url_that_does_not_name_a_repository() {
         "",
         "not a url",
         "https://github.com",
-        "https://github.com/macro-inc",
-        "https://gitlab.com/macro-inc/macro",
-        "https://github.com.evil.example/macro-inc/macro",
-        "https://github.com/macro-inc/macro/tree/main",
+        "https://github.com/agisota",
+        "https://gitlab.com/agisota/conation",
+        "https://github.com.evil.example/agisota/conation",
+        "https://github.com/agisota/conation/tree/main",
     ] {
         assert!(repo_slug(url).is_err(), "accepted {url}");
     }
@@ -89,14 +89,14 @@ async fn lists_enabled_app_slugs_verbatim() {
             connection("datadog", false),
             connection("Not A Slug!", true),
         ])),
-        "https://egress.macro.com",
+        "https://egress.conation.dev",
     );
 
     let provisioned = provisioner
         .provision(
             AgentSessionId::new(),
             &MacroUserIdStr::try_from_email("owner@example.com").expect("a valid user id"),
-            "https://github.com/macro-inc/macro",
+            "https://github.com/agisota/conation",
         )
         .await
         .expect("provisioned");
@@ -116,7 +116,7 @@ async fn lists_enabled_app_slugs_verbatim() {
 async fn restore_wraps_an_existing_token_in_a_fresh_listing() {
     let provisioner = EgressProvisioner::new(
         Arc::new(FixedConnections(vec![connection("linear", true)])),
-        "https://egress.macro.com",
+        "https://egress.conation.dev",
     );
 
     let restored = provisioner
@@ -138,14 +138,14 @@ async fn restore_wraps_an_existing_token_in_a_fresh_listing() {
 
 fn egress(slugs: &[&str]) -> SandboxEgress {
     SandboxEgress {
-        base_url: "https://egress.macro.com".to_owned(),
+        base_url: "https://egress.conation.dev".to_owned(),
         session_token: "session-token".to_owned(),
         mcp_servers: slugs.iter().map(|name| slug(name)).collect(),
     }
 }
 
 /// Every server points at the proxy and carries the session token rather than
-/// any upstream credential; Macro's own server leads the list on its own
+/// any upstream credential; Conation's own server leads the list on its own
 /// route.
 #[test]
 fn points_every_acp_server_at_the_proxy() {
@@ -174,25 +174,25 @@ fn points_every_acp_server_at_the_proxy() {
         rendered,
         [
             (
-                "macro".to_owned(),
-                "https://egress.macro.com/mcp-macro".to_owned(),
+                "conation".to_owned(),
+                "https://egress.conation.dev/mcp-conation".to_owned(),
                 authorization.clone(),
             ),
             (
                 "datadog".to_owned(),
-                "https://egress.macro.com/mcp/datadog".to_owned(),
+                "https://egress.conation.dev/mcp/datadog".to_owned(),
                 authorization.clone(),
             ),
             (
                 "linear".to_owned(),
-                "https://egress.macro.com/mcp/linear".to_owned(),
+                "https://egress.conation.dev/mcp/linear".to_owned(),
                 authorization,
             ),
         ]
     );
 }
 
-/// An owner with no connected apps still gets Macro's own server.
+/// An owner with no connected apps still gets Conation's own server.
 #[test]
 fn an_owner_with_no_connected_apps_still_gets_the_conation_server() {
     let entries: Vec<(String, String)> = egress(&[]).server_entries().collect();
@@ -200,8 +200,8 @@ fn an_owner_with_no_connected_apps_still_gets_the_conation_server() {
     assert_eq!(
         entries,
         [(
-            "macro".to_owned(),
-            "https://egress.macro.com/mcp-macro".to_owned()
+            "conation".to_owned(),
+            "https://egress.conation.dev/mcp-conation".to_owned()
         )]
     );
 }
@@ -214,7 +214,7 @@ fn the_egress_environment_does_not_print_its_secrets() {
 
     let printed = format!("{egress:?}");
     assert!(!printed.contains("session-token"), "{printed}");
-    assert!(printed.contains("https://egress.macro.com"), "{printed}");
+    assert!(printed.contains("https://egress.conation.dev"), "{printed}");
 
     let environment: Vec<String> = egress
         .environment()
@@ -224,8 +224,8 @@ fn the_egress_environment_does_not_print_its_secrets() {
     assert_eq!(
         environment,
         [
-            "MACRO_EGRESS_URL".to_owned(),
-            "MACRO_SESSION_TOKEN".to_owned()
+            "CONATION_EGRESS_URL".to_owned(),
+            "CONATION_SESSION_TOKEN".to_owned()
         ]
     );
 }

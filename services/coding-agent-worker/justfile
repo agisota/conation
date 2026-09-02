@@ -1,4 +1,4 @@
-image := "agent-container"
+image := "conation-agent-container"
 
 typecheck:
     nix develop --command bunx tsc --noEmit
@@ -11,7 +11,28 @@ sdk:
     cd ../../packages/sdk && bun install && bun run build
 
 build-image:
-    cd container && docker build -t {{image}} .
+    #!/usr/bin/env bash
+    set -euo pipefail
+    secret_args=()
+    if [[ -n "${GH_TOKEN:-}" ]]; then
+      secret_args+=(--secret id=github_token,env=GH_TOKEN)
+    elif [[ -n "${GITHUB_TOKEN:-}" ]]; then
+      secret_args+=(--secret id=github_token,env=GITHUB_TOKEN)
+    fi
+    repo_url="${CONATION_REPO_URL:-https://github.com/agisota/conation.git}"
+    case "$repo_url" in
+      https://github.com/*) ;;
+      *) echo "CONATION_REPO_URL must be an https://github.com repository" >&2; exit 2 ;;
+    esac
+    case "$repo_url" in
+      *"@"*|*"?"*|*"#"*) echo "CONATION_REPO_URL must not contain credentials, query, or fragment" >&2; exit 2 ;;
+    esac
+    cd container
+    docker build \
+      "${secret_args[@]}" \
+      --build-arg "CONATION_REPO_URL=$repo_url" \
+      --tag {{image}} \
+      .
 
 serve:
     GITHUB_TOKEN=$(gh auth token) bun run index.ts

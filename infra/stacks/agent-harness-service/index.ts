@@ -3,7 +3,7 @@ import * as pulumi from '@pulumi/pulumi';
 import {
   config,
   getAiToolsInfra,
-  getMacroApiToken,
+  getConationApiToken,
   stack,
 } from '../../packages/shared';
 import { get_coparse_api_vpc } from '../../packages/vpc';
@@ -28,20 +28,20 @@ const jwtSecretKeyArn = aws.secretsmanager
   .getSecretVersionOutput({ secretId: `fusionauth-jwt-secret-${stack}` })
   .apply((secret) => secret.arn);
 
-// The egress proxy mints GitHub App installation tokens and Macro API tokens
+// The egress proxy mints GitHub App installation tokens and Conation API tokens
 // inline, so the task role needs the App's PEM and the signing key - both
 // held as Secrets Manager secret names the service resolves at runtime.
 const githubSyncAppPemArn = aws.secretsmanager
   .getSecretVersionOutput({ secretId: config.require('github_sync_app_pem') })
   .apply((secret) => secret.arn);
 
-const macroApiTokenPrivateKeyArn = aws.secretsmanager
+const conationApiTokenPrivateKeyArn = aws.secretsmanager
   .getSecretVersionOutput({
-    secretId: config.require('macro_api_token_private_secret_key'),
+    secretId: config.require('conation_api_token_private_secret_key'),
   })
   .apply((secret) => secret.arn);
 
-const MACRO_API_TOKENS = getMacroApiToken();
+const CONATION_API_TOKENS = getConationApiToken();
 
 // ── AI tools infra ───────────────────────────────────────────────────────────
 
@@ -92,8 +92,8 @@ const service = new AgentHarnessService(`agent-harness-service-${stack}`, {
   cloudStorageClusterName,
   secretKeyArns: [
     jwtSecretKeyArn,
-    MACRO_API_TOKENS.macroApiTokenPublicKeyArn,
-    macroApiTokenPrivateKeyArn,
+    CONATION_API_TOKENS.conationApiTokenPublicKeyArn,
+    conationApiTokenPrivateKeyArn,
     githubSyncAppPemArn,
     ...aiTools.secretArns,
   ],

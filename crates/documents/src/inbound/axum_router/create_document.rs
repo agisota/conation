@@ -3,11 +3,11 @@
 use std::str::FromStr;
 
 use axum::{Json, extract::State};
-use entity_access::domain::ports::EntityAccessService;
-use entity_access::inbound::axum_extractors::ProjectBodyAccessLevelExtractorV2;
 use conation_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal, UserOrInternalCaller,
 };
+use entity_access::domain::ports::EntityAccessService;
+use entity_access::inbound::axum_extractors::ProjectBodyAccessLevelExtractorV2;
 use model::document::response::CreateDocumentRequest;
 use model::document::{FileType, FileTypeExt};
 use models_permissions::share_permission::access_level::EditAccessLevel;
@@ -36,7 +36,7 @@ use crate::domain::response::CreateDocumentResponse;
         (status = 500, body = model_error_response::ErrorResponse),
     )
 )]
-#[tracing::instrument(skip(state, user, project), fields(user_id=?user.authorization.user.conation_user_id))]
+#[tracing::instrument(skip(state, user, project), fields(user_id=?user.authorization.user.macro_user_id))]
 pub async fn create_document_handler<
     T: DocumentService,
     Svc: EntityAccessService,
@@ -92,7 +92,7 @@ pub async fn create_document_handler<
         id: req.id,
         sha: req.sha,
         document_name,
-        user_id: user.authorization.user.conation_user_id.clone(),
+        user_id: user.authorization.user.macro_user_id.clone(),
         file_type,
         project_id: req.project_id,
         team_id,
@@ -104,7 +104,7 @@ pub async fn create_document_handler<
         attribution: None,
     };
 
-    let user_id = user.authorization.user.conation_user_id.clone();
+    let user_id = user.authorization.user.macro_user_id.clone();
     let response_data = if let Some(email_attachment_id) = req.email_attachment_id {
         state
             .service

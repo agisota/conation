@@ -8,8 +8,8 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use fusionauth::{FusionAuthClient, error::FusionAuthClientError};
 use conation_auth::{error::MacroAuthError, middleware::decode_jwt::JwtValidationArgs};
+use fusionauth::{FusionAuthClient, error::FusionAuthClientError};
 use model::response::UserTokensResponse;
 use std::sync::Arc;
 use tower_cookies::Cookies;
@@ -44,7 +44,7 @@ impl IntoResponse for RefreshError {
 /// You can either have your access token and refresh token in the cookies or in the request
 /// headers
 /// Authorization: Bearer <access_token>
-/// x-macro-refresh-token: <refresh_token>
+/// x-conation-refresh-token: <refresh_token>
 /// This returns the cookies with the new access and refresh token
 #[utoipa::path(
         post,

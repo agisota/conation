@@ -9,13 +9,13 @@ use std::collections::{HashMap, HashSet};
 
 use channels::outbound::channel_name::batch_resolve_channel_names;
 use chrono::{SubsecRound, Utc};
+use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use entity_access::domain::models::AccessLevel;
 use filter_ast::Expr;
 use item_filters::{
     CallStatus,
     ast::{LiteralTree, call::CallLiteral, properties::PropertyMatchValue},
 };
-use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use models_permissions::share_permission::SharePermissionV2;
 use models_permissions::share_permission::channel_share_permission::ChannelSharePermission;
 use sqlx::PgPool;
@@ -1734,8 +1734,8 @@ impl CallRepository for PgCallRepo {
         sqlx::query_scalar!(
             r#"
             SELECT mui.profile_picture
-            FROM conation_user_info mui
-            JOIN "User" u ON mui.conation_user_id = u.conation_user_id
+            FROM macro_user_info mui
+            JOIN "User" u ON mui.macro_user_id = u.macro_user_id
             WHERE u.id = $1 AND mui.profile_picture IS NOT NULL
             LIMIT 1
             "#,
@@ -1756,8 +1756,8 @@ impl CallRepository for PgCallRepo {
             SELECT
                 NULLIF(mui.first_name,  'N/A') AS first_name,
                 NULLIF(mui.last_name,   'N/A') AS last_name
-            FROM conation_user_info mui
-            JOIN "User" u ON mui.conation_user_id = u.conation_user_id
+            FROM macro_user_info mui
+            JOIN "User" u ON mui.macro_user_id = u.macro_user_id
             WHERE u.id = $1
             LIMIT 1
             "#,
@@ -1932,14 +1932,14 @@ impl CallRepository for PgCallRepo {
         Ok(())
     }
 
-    /// Return stable `(conation_user_id, voice_id)` pairs for one archived call.
+    /// Return stable `(macro_user_id, voice_id)` pairs for one archived call.
     ///
     /// `call_record_id` scopes the scan to a single call's archived transcript rows.
     /// A speaker is returned only when every row for that `speaker_id` has the
     /// same non-NULL `diarized_speaker_id`; all distinct non-NULL `voice_id`s
     /// on those rows are returned. Ambiguous, missing, or unresolved speakers
-    /// are skipped. The returned `conation_user_id` is the user's canonical
-    /// `conation_user.id`, suitable for linking to `voice_id` in `conation_user_voice`.
+    /// are skipped. The returned `macro_user_id` is the user's canonical
+    /// `macro_user.id`, suitable for linking to `voice_id` in `macro_user_voice`.
     #[tracing::instrument(err, skip(self))]
     async fn get_stable_speaker_voices_for_call_record(
         &self,
@@ -1949,7 +1949,7 @@ impl CallRepository for PgCallRepo {
             r#"
             WITH per_speaker AS (
                 SELECT
-                    u.conation_user_id,
+                    u.macro_user_id,
                     COUNT(*) AS total_segments,
                     COUNT(t.diarized_speaker_id) AS diarized_segments,
                     COUNT(DISTINCT t.diarized_speaker_id) AS distinct_diarized_speaker_ids,
@@ -1958,11 +1958,11 @@ impl CallRepository for PgCallRepo {
                 FROM call_record_transcripts t
                 JOIN "User" u
                   ON u.id = t.speaker_id
-                 AND u.conation_user_id IS NOT NULL
+                 AND u.macro_user_id IS NOT NULL
                 WHERE t.call_record_id = $1
-                GROUP BY t.speaker_id, u.conation_user_id
+                GROUP BY t.speaker_id, u.macro_user_id
             )
-            SELECT conation_user_id AS "conation_user_id!", voices.voice_id AS "voice_id!"
+            SELECT macro_user_id AS "macro_user_id!", voices.voice_id AS "voice_id!"
             FROM per_speaker
             CROSS JOIN LATERAL UNNEST(voice_ids) AS voices(voice_id)
             WHERE total_segments = diarized_segments
@@ -1976,7 +1976,7 @@ impl CallRepository for PgCallRepo {
 
         Ok(rows
             .into_iter()
-            .map(|row| (row.conation_user_id, row.voice_id))
+            .map(|row| (row.macro_user_id, row.voice_id))
             .collect())
     }
 

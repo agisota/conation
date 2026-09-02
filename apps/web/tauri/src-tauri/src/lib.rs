@@ -1,5 +1,3 @@
-use device::{IsIpad, detect_is_ipad, is_ipad};
-use logger::Logger;
 use conation_bundle_updater_plugin::domain::{
     asset_service::BundleAssetResolver, bundle_routes::BundleRoutes,
 };
@@ -9,6 +7,8 @@ use conation_bundle_updater_plugin::inbound::plugin::{
     allow_update_reload_retry, apply_completed_update_from, start_update_check,
 };
 use conation_bundle_updater_plugin::outbound::fs::FileSystem;
+use device::{IsIpad, detect_is_ipad, is_ipad};
+use logger::Logger;
 use navigation_plugin::scheme::MacroScheme;
 use navigation_plugin::{MacroNavigationPlugin, NavigatePayload};
 use reqwest::cookie::CookieStore;
@@ -24,7 +24,7 @@ use tauri::{AppHandle, Emitter, Manager, RunEvent, Runtime};
 
 mod tauri_protocol;
 
-pub(crate) const APP_SCHEME: &str = "macro";
+pub(crate) const APP_SCHEME: &str = env!("CONATION_TAURI_APP_SCHEME");
 use tauri_plugin_deep_link::DeepLinkExt;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
@@ -34,46 +34,36 @@ mod device;
 mod share_target;
 mod staged_upload;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum AppEnvironment {
-    Development,
-    Production,
+#[path = "../client_profile_config.rs"]
+#[allow(
+    dead_code,
+    reason = "shared with build.rs; the app uses only ClientProfile"
+)]
+mod client_profile_config;
+use client_profile_config::ClientProfile;
+
+fn client_profile() -> ClientProfile {
+    match env!("CONATION_TAURI_CLIENT_PROFILE") {
+        "standalone" => ClientProfile::Standalone,
+        "hosted-legacy" => ClientProfile::HostedLegacy,
+        other => unreachable!("invalid CONATION_TAURI_CLIENT_PROFILE: {other}"),
+    }
 }
 
-impl AppEnvironment {
-    fn current() -> Self {
-        match env!("MACRO_TAURI_APP_ENV") {
-            "development" => Self::Development,
-            "production" => Self::Production,
-            other => unreachable!("invalid MACRO_TAURI_APP_ENV: {other}"),
-        }
-    }
-
-    fn auth_service_url(self) -> &'static str {
-        match self {
-            Self::Development => "https://auth-service-dev.macro.com/",
-            Self::Production => "https://auth-service.macro.com/",
-        }
-    }
-
-    fn bundle_update_base_url(self) -> &'static str {
-        option_env!("MACRO_BUNDLE_UPDATE_BASE_URL")
-            .filter(|url| !url.trim().is_empty())
-            .unwrap_or_else(|| self.auth_service_url())
-    }
-
-    fn web_origin(self) -> &'static str {
-        match self {
-            Self::Development => "https://dev.macro.com",
-            Self::Production => "https://macro.com",
-        }
-    }
+fn app_link_hosts() -> &'static [&'static str] {
+    static HOSTS: std::sync::OnceLock<Box<[&'static str]>> = std::sync::OnceLock::new();
+    HOSTS.get_or_init(|| {
+        env!("CONATION_TAURI_APP_LINK_HOSTS")
+            .split(',')
+            .filter(|host| !host.is_empty())
+            .collect()
+    })
 }
 
 fn embedded_bundle_build() -> u64 {
-    env!("MACRO_EMBEDDED_BUNDLE_BUILD")
+    env!("CONATION_EMBEDDED_BUNDLE_BUILD")
         .parse()
-        .expect("MACRO_EMBEDDED_BUNDLE_BUILD must be an unsigned integer")
+        .expect("CONATION_EMBEDDED_BUNDLE_BUILD must be an unsigned integer")
 }
 
 /// This module provides debuging utilities and should not be compiled in prodiction builds
@@ -99,12 +89,10 @@ static ALLOWED_DOMAINS: &[&str] = &[
     "http://localhost:3009",
 ];
 
-/// hosts whose `/app` urls are Macro app links. Main-frame navigations to
+/// Hosts whose `/app` URLs are Conation app links. Main-frame navigations to
 /// these are routed through the SPA router instead of loading the remote
 /// site in the webview. Keep in parity with the deep-link hosts in
 /// tauri.conf.json.
-static APP_LINK_HOSTS: &[&str] = &["macro.com", "dev.macro.com", "staging.macro.com"];
-
 type Type = std::sync::OnceLock<
     Box<dyn Fn(&str, http::Request<Vec<u8>>, tauri::UriSchemeResponder) + Send + Sync + 'static>,
 >;
@@ -131,10 +119,7 @@ pub fn run() {
     let registry = tracing_subscriber::registry().with(filter).with(fmt_layer);
 
     #[cfg(target_os = "ios")]
-    let registry = registry.with(tracing_oslog::OsLogger::new(
-        "com.macro.app.prod",
-        "default",
-    ));
+    let registry = registry.with(tracing_oslog::OsLogger::new("dev.conation.app", "default"));
 
     registry.init();
 
@@ -192,12 +177,12 @@ pub fn run() {
         .plugin(
             MacroNavigationPlugin::new(ALLOWED_DOMAINS)
                 .expect("Domains must be valid urls")
-                .with_app_link_hosts(APP_LINK_HOSTS),
+                .with_app_link_hosts(app_link_hosts())
+                .with_app_scheme(APP_SCHEME),
         )
         .plugin(
             conation_bundle_updater_plugin::inbound::plugin::MacroBundleUpdaterPlugin::new(
-                AppEnvironment::current()
-                    .bundle_update_base_url()
+                env!("CONATION_BUNDLE_UPDATE_BASE_URL")
                     .parse()
                     .expect("valid url"),
                 embedded_bundle_build,
@@ -369,19 +354,28 @@ fn merge_header_callback<R: Runtime>(url: String, headers: &mut HeaderMap, handl
         return;
     };
 
-    // These services (including the macroverse.workers.dev sync service) validate
-    // Origin for auth, so set it to our web origin unconditionally — independent of
-    // whether cookie state is available.
-    match parsed_url.host_str() {
-        Some("services.macro.com")
-        | Some("services-dev.macro.com")
-        | Some("macroverse.workers.dev") => {
-            headers.insert(
-                ORIGIN,
-                HeaderValue::from_static(AppEnvironment::current().web_origin()),
-            );
-        }
-        _ => {}
+    // Standalone services share the operator host. The explicit hosted-legacy
+    // profile retains its deployed websocket hosts. Both need the public web
+    // origin rather than the synthetic tauri://localhost origin.
+    let should_set_origin = match client_profile() {
+        ClientProfile::Standalone => parsed_url.host_str().is_some_and(|host| {
+            Url::parse(env!("CONATION_TAURI_OPERATOR_ORIGIN"))
+                .ok()
+                .and_then(|operator| operator.host_str().map(str::to_owned))
+                .is_some_and(|operator| operator.eq_ignore_ascii_case(host))
+        }),
+        ClientProfile::HostedLegacy => matches!(
+            parsed_url.host_str(),
+            Some("services.macro.com")
+                | Some("services-dev.macro.com")
+                | Some("macroverse.workers.dev")
+        ),
+    };
+    if should_set_origin {
+        headers.insert(
+            ORIGIN,
+            HeaderValue::from_static(env!("CONATION_TAURI_OPERATOR_ORIGIN")),
+        );
     }
 
     // Cookie forwarding requires the HTTP plugin's cookie jar.
@@ -439,10 +433,11 @@ enum LaunchState {
 /// Convert a deep link url into a `navigate` event for the frontend router.
 #[tracing::instrument(err, skip(handle))]
 fn emit_navigate_for_deep_link(url: Url, handle: &AppHandle) -> Result<(), Report> {
-    // Universal/App links come in as https:// URLs, custom scheme links come in as macro://
+    // Universal/App links come in as https:// URLs; standalone custom links
+    // use conation:// (the explicit hosted legacy profile compiles macro://).
     let conation_scheme = match url.scheme() {
-        s if s == APP_SCHEME => MacroScheme::new(url)?,
-        "http" | "https" => MacroScheme::from_url(&url)?,
+        s if s == APP_SCHEME => MacroScheme::new_with_scheme(url, APP_SCHEME)?,
+        "http" | "https" => MacroScheme::from_url_with_scheme(&url, APP_SCHEME)?,
         scheme => {
             return Err(report!("unexpected deep link scheme: {}", scheme));
         }

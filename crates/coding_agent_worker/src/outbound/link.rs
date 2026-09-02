@@ -17,9 +17,9 @@ pub async fn dial(
     let mut request = gateway_url.into_client_request()?;
     let headers = request.headers_mut();
     let token = bot_token.parse().map_err(bad_header)?;
-    headers.insert("x-macro-bot-token", token);
+    headers.insert("x-conation-bot-token", token);
     let scope = bot_scope.parse().map_err(bad_header)?;
-    headers.insert("x-macro-bot-scope", scope);
+    headers.insert("x-conation-bot-scope", scope);
     let (stream, _response) = tokio_tungstenite::connect_async(request).await?;
     Ok(connect_runtime(stream))
 }

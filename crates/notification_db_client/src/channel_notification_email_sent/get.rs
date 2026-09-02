@@ -16,8 +16,8 @@ pub async fn get_channel_notification_email_sent_bulk(
     channel_id: &str,
     user_ids: &[String],
 ) -> anyhow::Result<HashMap<String, ChannelNotificationEmailSent>> {
-    let channel_id =
-        conation_uuid::string_to_uuid(channel_id).context("could not convert channel_id to uuid")?;
+    let channel_id = conation_uuid::string_to_uuid(channel_id)
+        .context("could not convert channel_id to uuid")?;
 
     let result: Vec<ChannelNotificationEmailSent> = sqlx::query_as!(
         ChannelNotificationEmailSent,

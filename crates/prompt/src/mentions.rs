@@ -1,7 +1,7 @@
 //! Rules for mentioning entities with XML mention tags, and the scope of
-//! Macro's shared Markdown rendering.
+//! Conation's shared Markdown rendering.
 //!
-//! These rules apply everywhere the model authors Markdown in Macro: its own
+//! These rules apply everywhere the model authors Markdown in Conation: its own
 //! conversational replies, `SendChannelMessage` content, `SendEmail` bodies,
 //! and `CreateDocument`/`EditDocument` content for Markdown (`.md`) documents.
 //! The one exclusion is non-Markdown documents created via `CreateDocument`
@@ -17,7 +17,7 @@ use crate::types::StaticPrompt;
 
 static TITLE: &str = "Mentioning documents, channels, channel messages, chats, projects, email threads, and calendar events";
 
-static INSTRUCTIONS: &str = r##"These rules apply everywhere you author Markdown in Macro: your own conversational replies, `SendChannelMessage` content, `SendEmail` bodies, and `CreateDocument`/`EditDocument` content for Markdown (`.md`) documents. They do NOT apply to non-Markdown documents created via `CreateDocument` (e.g. PDF, CSV, PNG, XLSX, DOCX) — those are raw file bytes, never parsed as Markdown, and must never contain mention tags or Markdown syntax.
+static INSTRUCTIONS: &str = r##"These rules apply everywhere you author Markdown in Conation: your own conversational replies, `SendChannelMessage` content, `SendEmail` bodies, and `CreateDocument`/`EditDocument` content for Markdown (`.md`) documents. They do NOT apply to non-Markdown documents created via `CreateDocument` (e.g. PDF, CSV, PNG, XLSX, DOCX) — those are raw file bytes, never parsed as Markdown, and must never contain mention tags or Markdown syntax.
 
 When referencing a document, channel, chat, project, email thread, or calendar event, use XML mention tags with a JSON payload.
 The AI does not need to know the name — an empty string is fine and the frontend will resolve it.

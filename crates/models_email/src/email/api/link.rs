@@ -58,12 +58,14 @@ impl SyncStatus {
 #[serde(rename_all = "UPPERCASE")]
 pub enum UserProvider {
     Gmail,
+    Stalwart,
 }
 
 impl UserProvider {
     pub fn as_str(&self) -> &'static str {
         match self {
             UserProvider::Gmail => "GMAIL",
+            UserProvider::Stalwart => "STALWART",
         }
     }
 }
@@ -78,6 +80,7 @@ impl From<crate::email::service::link::UserProvider> for UserProvider {
     fn from(provider: crate::email::service::link::UserProvider) -> Self {
         match provider {
             crate::email::service::link::UserProvider::Gmail => UserProvider::Gmail,
+            crate::email::service::link::UserProvider::Stalwart => UserProvider::Stalwart,
         }
     }
 }
@@ -86,7 +89,7 @@ impl From<crate::email::service::link::UserProvider> for UserProvider {
 pub struct Link {
     pub id: Uuid,
     #[schema(value_type = String)]
-    pub conation_id: MacroUserIdStr<'static>,
+    pub macro_id: MacroUserIdStr<'static>,
     pub fusionauth_user_id: String,
     #[schema(value_type = String)]
     pub email_address: EmailStr<'static>,
@@ -132,7 +135,7 @@ impl Link {
     ) -> Self {
         Link {
             id: source.id,
-            conation_id: source.conation_id,
+            macro_id: source.macro_id,
             fusionauth_user_id: source.fusionauth_user_id,
             email_address: source.email_address,
             photo_url,

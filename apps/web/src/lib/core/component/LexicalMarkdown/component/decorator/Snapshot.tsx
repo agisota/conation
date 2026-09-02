@@ -1,3 +1,8 @@
+import { t } from '@app/lib/i18n';
+import {
+  $isSnapshotNode,
+  type SnapshotDecoratorProps,
+} from '@conation/lexical-core';
 import { useMaybeBlockId } from '@core/block';
 import { PopupPreview } from '@core/component/DocumentPreview';
 import {
@@ -9,10 +14,6 @@ import { verifyBlockName } from '@core/constant/allBlocks';
 import { matches } from '@core/util/match';
 import { openInNewSplitForMention } from '@core/util/openInNewSplit';
 import { useSplitNavigationHandler } from '@core/util/useSplitNavigationHandler';
-import {
-  $isSnapshotNode,
-  type SnapshotDecoratorProps,
-} from '@conation/lexical-core';
 import EyeSlashDuo from '@phosphor/eye-slash.svg';
 import LoadingSpinner from '@phosphor/spinner.svg';
 import TrashSimple from '@phosphor/trash-simple.svg';
@@ -50,7 +51,9 @@ function Spinner() {
 }
 
 function Loading() {
-  return <MentionContainer icon={<Spinner />} text="Loading" />;
+  return (
+    <MentionContainer icon={<Spinner />} text={t('editor.mention.loading')} />
+  );
 }
 
 export function Snapshot(props: SnapshotDecoratorProps) {
@@ -135,17 +138,27 @@ function SnapshotInner(props: SnapshotDecoratorProps) {
               size="fill"
             />
           }
-          text={props.documentName || 'Untitled'}
+          text={props.documentName || t('editor.document.untitled')}
         />
       );
     }
 
     if (i.access === 'no_access') {
-      return <MentionContainer icon={<EyeSlashDuo />} text="No Access" />;
+      return (
+        <MentionContainer
+          icon={<EyeSlashDuo />}
+          text={t('editor.document.noAccess')}
+        />
+      );
     }
 
     if (i.access === 'does_not_exist') {
-      return <MentionContainer icon={<TrashSimple />} text="Deleted" />;
+      return (
+        <MentionContainer
+          icon={<TrashSimple />}
+          text={t('editor.document.deleted')}
+        />
+      );
     }
 
     return (
@@ -156,7 +169,7 @@ function SnapshotInner(props: SnapshotDecoratorProps) {
             size="fill"
           />
         }
-        text={props.documentName || 'Untitled'}
+        text={props.documentName || t('editor.document.untitled')}
       />
     );
   };
@@ -177,7 +190,10 @@ function SnapshotInner(props: SnapshotDecoratorProps) {
           >
             {renderContent()}
           </span>
-          <MentionTooltip show={isSelectedAsNode()} text="Open" />
+          <MentionTooltip
+            show={isSelectedAsNode()}
+            text={t('editor.mention.open')}
+          />
         </span>
       }
       content={

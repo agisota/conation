@@ -2,11 +2,11 @@ use crate::domain::models::{
     Attachment, Contact, EmailThreadPreview, Label, PreviewCursorQuery, PreviewView,
     PreviewViewStandardLabel,
 };
+use conation_user_id::user_id::MacroUserIdStr;
 use doppleganger::{Doppleganger, Mirror};
 use either::Either;
 use filter_ast::Expr;
 use item_filters::ast::email::EmailLiteral;
-use conation_user_id::user_id::MacroUserIdStr;
 use sqlx::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;

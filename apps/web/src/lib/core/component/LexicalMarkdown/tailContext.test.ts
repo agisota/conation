@@ -1,8 +1,9 @@
 /**
  * @vitest-environment jsdom
  */
-import { $convertFromMarkdownString } from '@lexical/markdown';
+
 import { ALL_TRANSFORMERS, SupportedNodeTypes } from '@conation/lexical-core';
+import { $convertFromMarkdownString } from '@lexical/markdown';
 import { createEditor, type EditorState } from 'lexical';
 import { describe, expect, it } from 'vitest';
 import { tailContext } from './tailContext';

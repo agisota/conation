@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import {
   defineBlock,
   type ExtractLoadType,
@@ -86,8 +87,10 @@ export const definition = defineBlock({
           versionId: documentMetadata.documentVersionId,
         });
       } else {
-        toast.failure('Video playback is not supported for this file type', {
-          subtext: `File type: ${fileType}`,
+        toast.failure(t('video.playback.unsupported'), {
+          subtext: t('video.playback.fileType', {
+            fileType: fileType ?? t('video.playback.unknownFileType'),
+          }),
         });
       }
 

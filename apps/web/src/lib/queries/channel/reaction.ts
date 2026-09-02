@@ -1,5 +1,5 @@
-import { toast } from '@core/component/Toast/Toast';
 import { t } from '@app/lib/i18n';
+import { toast } from '@core/component/Toast/Toast';
 import { throwOnErr } from '@core/util/result';
 import { type MutationCallbacks, withCallbacks } from '@queries/utils';
 import {
@@ -270,7 +270,7 @@ export function useAddReactionMutation(
         },
         onError(error, vars, context) {
           console.error('failed to add reaction', error);
-          toast.failure('Failed to add reaction');
+          toast.failure(t('channel.feedback.reactionAddFailed'));
           if (context) {
             rollbackAddReaction(vars.channelId, context);
           }
@@ -312,7 +312,7 @@ export function useRemoveReactionMutation(
             channel_id: vars.channelId,
             message_id: vars.messageId,
             emoji: vars.emoji,
-            action: t('common.remove'),
+            action: 'Remove',
             nonce: removeReactionNonce.use(vars),
           })
       );
@@ -340,7 +340,7 @@ export function useRemoveReactionMutation(
         },
         onError(error, vars, context) {
           console.error('failed to remove reaction', error);
-          toast.failure('Failed to remove reaction');
+          toast.failure(t('channel.feedback.reactionRemoveFailed'));
           if (context) {
             rollbackRemoveReaction(vars.channelId, context);
           }

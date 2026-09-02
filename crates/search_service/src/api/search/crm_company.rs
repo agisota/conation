@@ -8,6 +8,7 @@
 
 use std::collections::HashMap;
 
+use conation_user_id::user_id::MacroUserIdStr;
 use crm::domain::auth::CrmTeamReceipt;
 use crm::domain::model::CrmCompanyForSoup;
 use crm::domain::search_repo::CrmCompanySearchCursor;
@@ -18,7 +19,6 @@ use entity_access::domain::models::{
 };
 use entity_access::domain::ports::EntityAccessService;
 use item_filters::CrmCompanyFilters;
-use conation_user_id::user_id::MacroUserIdStr;
 use model::user::UserContext;
 use models_opensearch::SearchEntityType;
 use models_search::crm_company::{CrmCompanySearchDomain, CrmCompanySearchResponseItem};

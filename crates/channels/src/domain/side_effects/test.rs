@@ -154,7 +154,7 @@ async fn conation_ai_bot_profile_is_builtin_without_context_lookup() {
         id: Uuid::new_v4(),
         channel_id: Uuid::new_v4(),
         thread_id: None,
-        sender_id: Sender::new_from_bot(bot_id::MACRO_AI_BOT_ID),
+        sender_id: Sender::new_from_bot(bot_id::CONATION_AI_BOT_ID),
         triggered_by: None,
         content: "hello".to_string(),
         created_at: now,
@@ -166,9 +166,9 @@ async fn conation_ai_bot_profile_is_builtin_without_context_lookup() {
     let profile = service
         .bot_profile_for_message(&message)
         .await
-        .expect("Macro AI should have a built-in profile");
+        .expect("Conation AI should have a built-in profile");
 
-    assert_eq!(profile.name, bot_id::MACRO_AI_NAME);
+    assert_eq!(profile.name, bot_id::CONATION_AI_NAME);
     assert_eq!(profile.avatar_url, None);
     assert_eq!(*lookup_count.lock().unwrap(), 0);
 }
@@ -202,7 +202,7 @@ async fn non_conation_bot_profile_uses_context_lookup() {
     let profile = service
         .bot_profile_for_message(&message)
         .await
-        .expect("non-Macro bot profile should come from context");
+        .expect("non-Conation bot profile should come from context");
 
     assert_eq!(profile.name, "Test Bot");
     assert_eq!(*lookup_count.lock().unwrap(), 1);
@@ -503,12 +503,12 @@ async fn message_changed_with_posted_notification_context_sends_notification() {
     service
         .handle(ChannelEvent::MessageChanged {
             channel_id,
-            actor: Sender::new_from_bot(bot_id::MACRO_AI_BOT_ID),
+            actor: Sender::new_from_bot(bot_id::CONATION_AI_BOT_ID),
             message: MutatedMessage {
                 id: message_id,
                 channel_id,
                 thread_id: Some(thread_id),
-                sender_id: Sender::new_from_bot(bot_id::MACRO_AI_BOT_ID),
+                sender_id: Sender::new_from_bot(bot_id::CONATION_AI_BOT_ID),
                 triggered_by: None,
                 content: "final answer".to_string(),
                 created_at: now,
@@ -545,7 +545,7 @@ async fn message_changed_with_posted_notification_context_sends_notification() {
     assert_eq!(
         *sender,
         NotificationSender::Bot {
-            name: bot_id::MACRO_AI_NAME.to_string()
+            name: bot_id::CONATION_AI_NAME.to_string()
         }
     );
     assert!(recipient_ids.contains(&recipient));
@@ -787,7 +787,7 @@ async fn user_message_with_bot_mention_enqueues_bot_trigger() {
                 },
                 ChannelParticipant {
                     channel_id,
-                    user_id: bot_id::MACRO_AI_BOT_ID.into_storage_id().to_string(),
+                    user_id: bot_id::CONATION_AI_BOT_ID.into_storage_id().to_string(),
                     role: ParticipantRole::Member,
                     joined_at: now,
                     left_at: None,
@@ -799,7 +799,7 @@ async fn user_message_with_bot_mention_enqueues_bot_trigger() {
                 thread_id: None,
                 sender_id: Sender::new_from_user(sender),
                 triggered_by: None,
-                content: "@macro help".to_string(),
+                content: "@conation help".to_string(),
                 created_at: now,
                 updated_at: now,
                 edited_at: None,
@@ -807,7 +807,7 @@ async fn user_message_with_bot_mention_enqueues_bot_trigger() {
             },
             mentions: vec![SimpleMention {
                 entity_type: "user".to_string(),
-                entity_id: bot_id::MACRO_AI_BOT_ID.into_storage_id().to_string(),
+                entity_id: bot_id::CONATION_AI_BOT_ID.into_storage_id().to_string(),
             }],
             has_attachments: false,
             attachments: Vec::new(),
@@ -821,7 +821,7 @@ async fn user_message_with_bot_mention_enqueues_bot_trigger() {
         .expect("expected bot trigger");
     assert_eq!(trigger.channel_id, channel_id);
     assert_eq!(trigger.message.id, message_id);
-    assert_eq!(trigger.mentioned_bot_ids, vec![bot_id::MACRO_AI_BOT_ID]);
+    assert_eq!(trigger.mentioned_bot_ids, vec![bot_id::CONATION_AI_BOT_ID]);
     assert!(bot_trigger_receiver.try_recv().is_err());
 }
 
@@ -1089,11 +1089,11 @@ fn mention(entity_type: &str, entity_id: &str) -> SimpleMention {
 
 #[test]
 fn bot_mentions_recognize_bot_and_conation_ai_user_tags() {
-    let conation_ai = bot_id::MACRO_AI_BOT_ID.into_storage_id().to_string();
+    let conation_ai = bot_id::CONATION_AI_BOT_ID.into_storage_id().to_string();
     let other_bot = BotId::new_from_uuid(Uuid::new_v4());
     let other_bot_principal = other_bot.into_storage_id().to_string();
     let mentions = vec![
-        // Macro AI surfaced through the user-mention UI.
+        // Conation AI is surfaced through the user-mention UI.
         mention("user", &conation_ai),
         // Duplicate bot mentions are dispatched once.
         mention("user", &conation_ai),
@@ -1105,7 +1105,7 @@ fn bot_mentions_recognize_bot_and_conation_ai_user_tags() {
     ];
 
     let bots = bot_mention_ids(&mentions);
-    assert_eq!(bots, vec![bot_id::MACRO_AI_BOT_ID, other_bot]);
+    assert_eq!(bots, vec![bot_id::CONATION_AI_BOT_ID, other_bot]);
 }
 
 #[test]
@@ -1113,7 +1113,7 @@ fn bot_mentions_reject_bare_uuid_ids() {
     // Bare UUIDs are a legacy encoding; producers must send `bot|<uuid>`
     // and historical content is normalized by migration.
     let mentions = vec![
-        mention("user", &bot_id::MACRO_AI_BOT_ID.as_uuid().to_string()),
+        mention("user", &bot_id::CONATION_AI_BOT_ID.as_uuid().to_string()),
         mention(BOT_MENTION_ENTITY_TYPE, &Uuid::new_v4().to_string()),
     ];
 
@@ -1124,19 +1124,19 @@ fn bot_mentions_reject_bare_uuid_ids() {
 fn conation_ai_user_mention_is_not_a_user_recipient() {
     assert!(is_bot_user_mention(&mention(
         "user",
-        bot_id::MACRO_AI_BOT_ID.into_storage_id().as_ref()
+        bot_id::CONATION_AI_BOT_ID.into_storage_id().as_ref()
     )));
     // The legacy bare-UUID encoding is no longer treated as a bot mention.
     assert!(!is_bot_user_mention(&mention(
         "user",
-        &bot_id::MACRO_AI_BOT_ID.as_uuid().to_string()
+        &bot_id::CONATION_AI_BOT_ID.as_uuid().to_string()
     )));
     assert!(!is_bot_user_mention(&mention(
         "user",
         "macro|teo@macro.com"
     )));
     assert!(is_bot_principal(
-        bot_id::MACRO_AI_BOT_ID.into_storage_id().as_ref()
+        bot_id::CONATION_AI_BOT_ID.into_storage_id().as_ref()
     ));
     assert!(!is_bot_principal("macro|teo@macro.com"));
 }
@@ -1603,8 +1603,8 @@ fn broker_events_map_message_posted_mentions_per_entity() {
     let bot_principal = BotId::new_from_uuid(Uuid::new_v4())
         .into_storage_id()
         .to_string();
-    let conation_ai_principal = bot_id::MACRO_AI_BOT_ID.into_storage_id().to_string();
-    let conation_coder_principal = bot_id::MACRO_CODER_BOT_ID.into_storage_id().to_string();
+    let conation_ai_principal = bot_id::CONATION_AI_BOT_ID.into_storage_id().to_string();
+    let conation_coder_principal = bot_id::CONATION_CODER_BOT_ID.into_storage_id().to_string();
     let uninstalled_bot_principal = BotId::new_from_uuid(Uuid::new_v4())
         .into_storage_id()
         .to_string();
@@ -1617,9 +1617,9 @@ fn broker_events_map_message_posted_mentions_per_entity() {
             mention(BOT_MENTION_ENTITY_TYPE, &bot_principal),
             // Duplicate mentions of one entity emit a single event.
             mention(BOT_MENTION_ENTITY_TYPE, &bot_principal),
-            // Macro AI surfaced through the user-mention UI still counts.
+            // Conation AI surfaced through the user-mention UI still counts.
             mention("user", &conation_ai_principal),
-            // Macro Coder is globally available without a participant row.
+            // Conation Coder is globally available without a participant row.
             mention(BOT_MENTION_ENTITY_TYPE, &conation_coder_principal),
             // A valid bot principal that is not installed emits nothing.
             mention(BOT_MENTION_ENTITY_TYPE, &uninstalled_bot_principal),

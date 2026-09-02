@@ -2,8 +2,8 @@
 //! This crate defines the [ChannelSender] which is a wrapper type which denotes either a first party macro user, OR, a bot user
 
 use bot_id::{BotId, BotIdStr, cowlike::CowLike};
-use either::Either;
 use conation_user_id::{error::ParseErr, user_id::MacroUserIdStr};
+use either::Either;
 use serde::{Deserialize, Serialize};
 
 #[cfg(test)]

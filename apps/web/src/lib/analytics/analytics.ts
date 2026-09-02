@@ -1,5 +1,4 @@
 import type { AppEventNames, AppEvents } from '@app/lib/analytics/app-events';
-import { t } from '@app/lib/i18n';
 import {
   type GoogleConversionAction,
   googleConversionSendTo,
@@ -8,6 +7,7 @@ import {
   initializeGoogleAnalytics,
   initializeMetaPixel,
 } from '@app/lib/analytics/providers';
+import { getConfiguredStandaloneOperatorOrigin } from '@core/constant/clientProfile';
 import { DEV_MODE_ENV, PROD_MODE_ENV } from '@core/constant/featureFlags';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
 import { getPlatform } from '@core/util/platform';
@@ -97,7 +97,7 @@ const META_STANDARD_EVENT_NAMES = [
   'PageView',
   'Purchase',
   'Schedule',
-  t('common.search'),
+  'Search',
   'StartTrial',
   'SubmitApplication',
   'Subscribe',
@@ -116,13 +116,20 @@ const IGNORABLE_ERRORS = [
 // Privacy filter lists block the upstream filename; the proxy maps this opaque alias back.
 const POSTHOG_RECORDER_SCRIPT_NAME = 'posthog-recorder.js';
 const POSTHOG_RECORDER_PROXY_SCRIPT_NAME = 'runtime.js';
+const hostedLegacy =
+  globalThis.__CONATION_HOSTED_LEGACY__ ??
+  import.meta.env.VITE_CONATION_CLIENT_PROFILE === 'hosted-legacy';
 
 const initializePosthog = (instance: PostHog) => {
   const key = import.meta.env.VITE_POSTHOG_API_KEY;
   if (!key) return;
 
+  const posthogProxy = hostedLegacy
+    ? 'https://macro-prox.macroverse.workers.dev/i/ph'
+    : `${getConfiguredStandaloneOperatorOrigin()}/i/ph`;
+
   instance.init(key, {
-    api_host: 'https://macro-prox.macroverse.workers.dev/i/ph',
+    api_host: posthogProxy,
     ui_host: 'https://us.posthog.com',
     defaults: '2026-01-30',
     prepare_external_dependency_script: (script) => {

@@ -2,7 +2,10 @@
 //!
 //! This is the non-streaming API layer: routing only resolves a model, and the
 //! actual prompting lives here.
-use crate::model::router::{ModelRouter, RoutedModel};
+use crate::error::AgentError;
+use crate::model::router::{
+    FailureDisposition, MAX_SAME_MODEL_RETRIES, ModelRouter, RoutedModel, classify_failure,
+};
 use ai_usage::{UsageContext, UsageRecorder};
 use rig_agent::agent::{AgentBuilder, PromptResponse};
 use rig_agent::completion::Prompt;
@@ -27,20 +30,60 @@ pub async fn complete<M: ToString>(
     recorder: &dyn UsageRecorder,
     ctx: UsageContext,
 ) -> anyhow::Result<String> {
-    let model = model.to_string();
-    let response = match ModelRouter::shared()?.route_or_default(&model) {
-        RoutedModel::Anthropic(m) => {
-            prompt_once(m.completion(), system_prompt, user_message).await?
+    let requested_model = model.to_string();
+    let router = ModelRouter::shared()?;
+    let mut final_error = None;
+
+    for candidate in router.candidate_model_ids(&requested_model) {
+        let mut retries = 0;
+        loop {
+            let response = match router.route(&candidate) {
+                Ok(RoutedModel::Anthropic(m)) => {
+                    prompt_once(m.completion(), system_prompt, user_message).await
+                }
+                Ok(RoutedModel::OpenAiChatCompletions(m)) => {
+                    prompt_once(m.completion(), system_prompt, user_message).await
+                }
+                Ok(RoutedModel::OpenAiResponses(m)) => {
+                    prompt_once(m.completion(), system_prompt, user_message).await
+                }
+                Err(error) => Err(error),
+            };
+
+            match response {
+                Ok(response) => {
+                    record(recorder, ctx, candidate, &response);
+                    return Ok(response.output);
+                }
+                Err(error) => {
+                    let disposition = classify_failure(&error);
+                    tracing::warn!(
+                        model = %candidate,
+                        ?disposition,
+                        "one-shot model failed before producing output"
+                    );
+                    final_error = Some(error);
+                    match disposition {
+                        FailureDisposition::RetryThenFallback
+                            if retries < MAX_SAME_MODEL_RETRIES =>
+                        {
+                            retries += 1;
+                        }
+                        FailureDisposition::RetryThenFallback | FailureDisposition::Fallback => {
+                            break;
+                        }
+                        FailureDisposition::Stop => {
+                            return Err(final_error.take().expect("failure was recorded").into());
+                        }
+                    }
+                }
+            }
         }
-        RoutedModel::OpenAiChatCompletions(m) => {
-            prompt_once(m.completion(), system_prompt, user_message).await?
-        }
-        RoutedModel::OpenAiResponses(m) => {
-            prompt_once(m.completion(), system_prompt, user_message).await?
-        }
-    };
-    record(recorder, ctx, model, &response);
-    Ok(response.output)
+    }
+
+    Err(final_error
+        .unwrap_or_else(|| AgentError::UnknownModel(requested_model))
+        .into())
 }
 
 /// Send a system prompt + conversation history and return the model's text
@@ -55,20 +98,60 @@ pub async fn complete_with_history<M: ToString>(
     recorder: &dyn UsageRecorder,
     ctx: UsageContext,
 ) -> anyhow::Result<String> {
-    let model = model.to_string();
-    let response = match ModelRouter::shared()?.route_or_default(&model) {
-        RoutedModel::Anthropic(m) => {
-            prompt_with_history(m.completion(), system_prompt, messages).await?
+    let requested_model = model.to_string();
+    let router = ModelRouter::shared()?;
+    let mut final_error = None;
+
+    for candidate in router.candidate_model_ids(&requested_model) {
+        let mut retries = 0;
+        loop {
+            let response = match router.route(&candidate) {
+                Ok(RoutedModel::Anthropic(m)) => {
+                    prompt_with_history(m.completion(), system_prompt, messages.clone()).await
+                }
+                Ok(RoutedModel::OpenAiChatCompletions(m)) => {
+                    prompt_with_history(m.completion(), system_prompt, messages.clone()).await
+                }
+                Ok(RoutedModel::OpenAiResponses(m)) => {
+                    prompt_with_history(m.completion(), system_prompt, messages.clone()).await
+                }
+                Err(error) => Err(error),
+            };
+
+            match response {
+                Ok(response) => {
+                    record(recorder, ctx, candidate, &response);
+                    return Ok(response.output);
+                }
+                Err(error) => {
+                    let disposition = classify_failure(&error);
+                    tracing::warn!(
+                        model = %candidate,
+                        ?disposition,
+                        "one-shot history model failed before producing output"
+                    );
+                    final_error = Some(error);
+                    match disposition {
+                        FailureDisposition::RetryThenFallback
+                            if retries < MAX_SAME_MODEL_RETRIES =>
+                        {
+                            retries += 1;
+                        }
+                        FailureDisposition::RetryThenFallback | FailureDisposition::Fallback => {
+                            break;
+                        }
+                        FailureDisposition::Stop => {
+                            return Err(final_error.take().expect("failure was recorded").into());
+                        }
+                    }
+                }
+            }
         }
-        RoutedModel::OpenAiChatCompletions(m) => {
-            prompt_with_history(m.completion(), system_prompt, messages).await?
-        }
-        RoutedModel::OpenAiResponses(m) => {
-            prompt_with_history(m.completion(), system_prompt, messages).await?
-        }
-    };
-    record(recorder, ctx, model, &response);
-    Ok(response.output)
+    }
+
+    Err(final_error
+        .unwrap_or_else(|| AgentError::UnknownModel(requested_model))
+        .into())
 }
 
 /// Record the usage of a one-shot completion.
@@ -90,7 +173,7 @@ async fn prompt_once<M: CompletionModel + 'static>(
     completion_model: M,
     system_prompt: &str,
     user_message: &str,
-) -> anyhow::Result<PromptResponse> {
+) -> Result<PromptResponse, AgentError> {
     let agent = AgentBuilder::new(completion_model)
         .preamble(system_prompt)
         .max_tokens(ONE_SHOT_MAX_TOKENS)
@@ -105,14 +188,16 @@ async fn prompt_with_history<M: CompletionModel + 'static>(
     completion_model: M,
     system_prompt: &str,
     messages: Vec<Message>,
-) -> anyhow::Result<PromptResponse> {
+) -> Result<PromptResponse, AgentError> {
     let agent = AgentBuilder::new(completion_model)
         .preamble(system_prompt)
         .max_tokens(ONE_SHOT_MAX_TOKENS)
         .build();
 
     let Some((prompt, history)) = messages.split_last() else {
-        anyhow::bail!("messages must not be empty");
+        return Err(AgentError::Other(anyhow::anyhow!(
+            "messages must not be empty"
+        )));
     };
 
     Ok(agent

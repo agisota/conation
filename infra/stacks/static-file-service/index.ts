@@ -1,6 +1,6 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
-import { config, getMacroApiToken } from '../../packages/shared';
+import { config, getConationApiToken } from '../../packages/shared';
 import { get_coparse_api_vpc } from '../../packages/vpc';
 import { SERVICE_NAME, StaticFileService } from './static-file-service';
 
@@ -31,7 +31,7 @@ const cloudStorageClusterName: pulumi.Output<string> = cloudStorageStack
   .getOutput('cloudStorageClusterName')
   .apply((arn) => arn as string);
 
-const MACRO_API_TOKENS = getMacroApiToken();
+const CONATION_API_TOKENS = getConationApiToken();
 
 const containerEnvVars = [
   {
@@ -60,7 +60,7 @@ const staticFileService = new StaticFileService(`${SERVICE_NAME}-${stack}`, {
     family: 'linux',
     architecture: 'amd64',
   },
-  secretKeyArns: [jwtSecretKeyArn, MACRO_API_TOKENS.macroApiTokenPublicKeyArn],
+  secretKeyArns: [jwtSecretKeyArn, CONATION_API_TOKENS.conationApiTokenPublicKeyArn],
   healthCheckPath: '/api/health',
   serviceContainerPort: 8080,
   tags,

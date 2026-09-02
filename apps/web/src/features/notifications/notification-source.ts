@@ -1,9 +1,9 @@
+import { createSocketEffect } from '@conation/collaboration/websocket';
 import {
   ENABLE_DOCUMENT_MENTION_NOTIFICATIONS,
   ENABLE_GRAPHQL_SOUP,
 } from '@core/constant/featureFlags';
 import type { Entity } from '@core/types';
-import { createSocketEffect } from '@conation/collaboration/websocket';
 import {
   useMuteItemMutation,
   useUnmuteItemMutation,

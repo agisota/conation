@@ -3,10 +3,10 @@ use std::{collections::HashSet, sync::LazyLock};
 use ::notification::domain::models::UserNotificationRow;
 use axum::extract::State;
 use chrono::{DateTime, Utc};
-use email_formatting::EmailDigestNotification;
-use itertools::{Either, Itertools};
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_user_id::user_id::MacroUserIdStr;
+use email_formatting::EmailDigestNotification;
+use itertools::{Either, Itertools};
 use model_entity::Entity;
 use model_error_response::ErrorResponse;
 use model_notifications::{
@@ -195,7 +195,7 @@ async fn list_typed_notifications<S: ::notification::domain::service::Notificati
         axum::Json<model_error_response::ErrorResponse<'static>>,
     ),
 > {
-    let user_id = user.authorization.user.conation_user_id.clone();
+    let user_id = user.authorization.user.macro_user_id.clone();
     let cleanup_user_id = user_id.clone();
     let axum::Json(response) = ::notification::inbound::http::list_user_notifications::<
         S,

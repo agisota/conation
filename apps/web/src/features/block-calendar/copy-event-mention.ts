@@ -1,5 +1,7 @@
 import type { CalendarEvent } from '@app/features/calendar/types';
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
+import { getConfiguredStandaloneOperatorOrigin } from '@core/constant/clientProfile';
 import { writeClipboardData } from '@core/util/dataTransfer';
 import { CALENDAR_BLOCK_ID } from './types';
 
@@ -45,15 +47,22 @@ export function calendarEventDeepLink(target: {
   eventId: string;
   occurrenceKey?: string;
 }): string {
-  let hostname = window.location.hostname.replace('www.', '').toLowerCase();
-  if (hostname === 'localhost') {
-    hostname = 'dev.macro.com';
-  }
+  const origin = globalThis.__CONATION_HOSTED_LEGACY__
+    ? legacyHostedOrigin()
+    : getConfiguredStandaloneOperatorOrigin();
   const params = new URLSearchParams({
     eventId: target.eventId,
     ...(target.occurrenceKey ? { occurrenceKey: target.occurrenceKey } : {}),
   });
-  return `https://${hostname}/app/calendar/${CALENDAR_BLOCK_ID}?${params.toString()}`;
+  return `${origin}/app/calendar/${CALENDAR_BLOCK_ID}?${params.toString()}`;
+}
+
+function legacyHostedOrigin(): string {
+  let hostname = window.location.hostname.replace('www.', '').toLowerCase();
+  if (hostname === 'localhost') {
+    return getConfiguredStandaloneOperatorOrigin();
+  }
+  return `https://${hostname}`;
 }
 
 /**
@@ -68,9 +77,9 @@ export async function copyCalendarEventMentionTarget(
     'text/plain': calendarEventDeepLink(target),
   });
   if (written) {
-    toast.success('Copied event to clipboard');
+    toast.success(t('calendar.event.toast.copied'));
   } else {
-    toast.failure('Failed to copy event');
+    toast.failure(t('calendar.event.toast.copyFailed'));
   }
 }
 

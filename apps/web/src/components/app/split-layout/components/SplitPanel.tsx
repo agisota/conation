@@ -1,8 +1,8 @@
 import { isListViewID, LIST_VIEW_ID } from '@app/constants/list-views';
-import { t } from '@app/lib/i18n';
 import { createSoupState } from '@app/features/next-soup/create-soup-state';
 import { SoupContextProvider } from '@app/features/next-soup/soup-context';
 import { SoupViewContextProvider } from '@app/features/next-soup/soup-view/soup-view-context';
+import { t } from '@app/lib/i18n';
 import { globalSplitManager } from '@app/signal/splitLayout';
 import { MobileTopEdgeFade } from '@components/app/mobile/MobileEdgeFade';
 import { SplitPanelControllerProvider } from '@components/app/split-panel';

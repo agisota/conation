@@ -14,8 +14,8 @@ type LicenseUpdateMessage = {
 };
 
 const licenseBus = createCrossTabBus<LicenseUpdateMessage>({
-  channelName: 'license-update',
-  storageKey: 'macro.license-update',
+  channelName: 'conation-license-update',
+  storageKey: 'conation.license-update',
   parse: (value) =>
     match(value)
       .with({ type: 'license-updated' }, ({ type }) => ({ type }))

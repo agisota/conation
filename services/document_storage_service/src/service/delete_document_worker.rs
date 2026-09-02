@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use documents_hex::outbound::editing_worker_client::ReqwestEditingWorkerClient;
 use conation_sha_count_client::Redis;
+use documents_hex::outbound::editing_worker_client::ReqwestEditingWorkerClient;
 use sync_service_client::SyncServiceClient;
 
 use crate::{api::context::PropertiesService, service::s3::S3};

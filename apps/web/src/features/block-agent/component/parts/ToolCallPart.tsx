@@ -11,8 +11,8 @@
  * file.
  */
 
-import { RenderTool } from '@core/component/AI/component/tool/handler';
 import { t } from '@app/lib/i18n';
+import { RenderTool } from '@core/component/AI/component/tool/handler';
 import type { MessagePart } from '@service-agent-fold/generated/types';
 import {
   deserializeToolCall,
@@ -167,7 +167,9 @@ function GenericToolCall(props: { part: ToolUsePart }): JSX.Element {
     label: props.part.label,
     status: props.part.status,
     muted: failed(),
-    trailing: failed() ? <span class="text-ink">{t('auto.failed')}</span> : undefined,
+    trailing: failed() ? (
+      <span class="text-ink">{t('agent.status.failed')}</span>
+    ) : undefined,
   });
 
   return match(props.part.detail)

@@ -1,5 +1,5 @@
-import { useSplitLayout } from '@components/app/split-layout/layout';
 import { t } from '@app/lib/i18n';
+import { useSplitLayout } from '@components/app/split-layout/layout';
 import { useBlockId } from '@core/block';
 import { toast } from '@core/component/Toast/Toast';
 import { useBlockDocumentName } from '@core/util/currentBlockDocumentName';
@@ -10,7 +10,8 @@ import { Button, Hotkey } from '@ui';
 import { createSignal, Show } from 'solid-js';
 import { useHistory } from './HistoryContext';
 
-const nameForkedDocument = (name: string) => `${name} (forked)`;
+const nameForkedDocument = (name: string) =>
+  t('markdown.history.forkedName', { name });
 
 export function OldOverlay() {
   const history = useHistory();
@@ -36,7 +37,7 @@ export function OldOverlay() {
     });
     setForking(false);
     if (res.isErr()) {
-      toast.failure('Failed to fork document');
+      toast.failure(t('markdown.history.forkFailed'));
       return;
     }
     insertSplit({ type: 'md', id: res.value.documentId }, 'fork');
@@ -47,11 +48,14 @@ export function OldOverlay() {
     <Show when={history.isOpen()}>
       <div class="flex w-full items-center gap-2 bg-alert-bg px-3 py-2 text-xs text-alert-ink">
         <span class="flex items-center gap-1 flex-1">
-          You are viewing history. Press{' '}
-          <Hotkey shortcut="escape" theme="current" /> to exit.
+          {t('markdown.history.viewing')}{' '}
+          <Hotkey shortcut="escape" theme="current" />{' '}
+          {t('markdown.history.toExit')}
         </span>
         <Button variant="outline" size="sm" onClick={history.exit}>
-          <XIcon />{t('auto.exit')}</Button>
+          <XIcon />
+          {t('markdown.history.exit')}
+        </Button>
         <Button
           variant="accent"
           size="sm"
@@ -64,7 +68,9 @@ export function OldOverlay() {
           }
         >
           <GitFork class="size-3.5 shrink-0" />
-          {forking() ? 'Forking…' : 'Fork'}
+          {forking()
+            ? t('markdown.history.forking')
+            : t('markdown.history.fork')}
         </Button>
       </div>
     </Show>

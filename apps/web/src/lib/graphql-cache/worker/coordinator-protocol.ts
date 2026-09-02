@@ -1024,5 +1024,5 @@ export const tabLivenessLockName = (scope: string, tabId: string): string =>
 export function databaseOwnerLockName(scope: string): string {
   const databaseIdentity = `graphql-cache:${scope}`;
   const byteLength = new TextEncoder().encode(databaseIdentity).byteLength;
-  return `macro:turso-opfs:v1:${byteLength}:${databaseIdentity}`;
+  return `conation:turso-opfs:v1:${byteLength}:${databaseIdentity}`;
 }

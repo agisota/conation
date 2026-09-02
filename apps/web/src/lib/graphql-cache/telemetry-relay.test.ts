@@ -51,7 +51,7 @@ describe('cache telemetry worker relay', () => {
 
     relay.start();
     await Promise.resolve();
-    expect(lockName).toBe('macro:graphql-cache-telemetry-reporter:v1');
+    expect(lockName).toBe('conation:graphql-cache-telemetry-reporter:v1');
     const leadership = lockCallback?.({
       name: lockName,
       mode: 'exclusive',

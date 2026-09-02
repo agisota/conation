@@ -1,25 +1,25 @@
-# Task creation
+# Создание задач
 
-In addition to creating a task with `c -> t` or by typing `/task`, you can turn any checkbox list into a list of tasks by selecting the rows and clicking the `Tasks` button. Here, try it below:
+Помимо сочетания `c`, затем `t`, и команды `/task`, список с флажками можно преобразовать в задачи: выделите строки и нажмите кнопку «Задачи», если она доступна в текущем редакторе. Попробуйте:
 
-- [ ] stop
-- [ ] drop
-- [ ] roll
+- [ ] остановиться
+- [ ] осмотреться
+- [ ] продолжить
 
-Similarly, any Channel message can be turned into a task, by hovering the message and clicking the `Task` button.
+Сообщение в канале тоже можно преобразовать в задачу: наведите указатель на сообщение и выберите действие «Задача».
 
-# GitHub integration
+# Интеграция с GitHub
 
-Macro tasks integrate with GitHub: as you create, review, and merge branches, the task automatically moves to “In Progress,” “In Review,” or “Done,” and the task records which pull request is associated with it.
+Если администратор настроил интеграцию с GitHub, Conation может связать задачу с веткой и pull request, а затем обновлять её статус по этапам разработки и ревью.
 
-To connect your GitHub, go to [the Connections page](https://macro.com/app/settings/connections) in Settings. 
+Подключение находится в разделе **Настройки → Подключения**. Доступные варианты зависят от конфигурации вашего развертывания.
 
-To associate a task with a branch, simply copy a task's branch name, with its special Macro identifier, and use that as your branch name. There's a button for that under the task title, or press `cmd+k` and search "Copy branch name". 
+Чтобы связать ветку с задачей, скопируйте предложенное Conation имя ветки под заголовком задачи. То же действие можно найти через `cmd+k` по запросу «Скопировать имя ветки».
 
-# Macro MCP
+# MCP Conation
 
-[Connect the Macro MCP](https://macro.com/app/settings/mcp-server) to your coding agent to give your agent direct access to your tasks.
+Если MCP-сервер включён в вашем развертывании, подключите его к агенту для работы с доступными вам задачами. Параметры подключения находятся в **Настройки → MCP-сервер**.
 
-# Cloud Agent Integration
+# Внешние агенты
 
-In the Info Panel (which lives on the right when there is enough room, or behind the info button in the top-right at narrower width), in the Actions section, you'll find tools for integrating your tasks with outside agents. You can copy the task as a prompt, or even open up a cloud agent with the press of a button.
+На информационной панели в разделе действий могут быть команды для передачи задачи внешнему агенту. Их набор зависит от подключённых провайдеров и прав доступа: например, можно скопировать задачу как промпт или открыть настроенного облачного агента.

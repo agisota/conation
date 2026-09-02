@@ -1,5 +1,5 @@
+import { formatNumber, t } from '@app/lib/i18n';
 import Buildings from '@phosphor-icons/core/regular/buildings.svg';
-import { t } from '@app/lib/i18n';
 import type { NamedTool } from '@service-cognition/generated/tools/tool';
 import { For, Show } from 'solid-js';
 import { BaseTool } from './BaseTool';
@@ -9,9 +9,6 @@ import { createToolRenderer } from './ToolRenderer';
 type ListCompaniesResponse = NamedTool<'ListCompanies', 'response'>['data'];
 type CompanyListItem = ListCompaniesResponse['companies'][number];
 type GetCompanyResponse = NamedTool<'GetCompany', 'response'>['data'];
-
-const pluralize = (count: number, singular: string, plural = `${singular}s`) =>
-  `${count} ${count === 1 ? singular : plural}`;
 
 function companySubtitle(company: CompanyListItem) {
   const parts: string[] = [];
@@ -45,7 +42,9 @@ function ListCompaniesToolResponse(props: ListCompaniesResponse) {
     <Tool.List>
       <Show
         when={props.companies.length > 0}
-        fallback={<Tool.ListItem>{t('auto.no_matching_crm_companies')}</Tool.ListItem>}
+        fallback={
+          <Tool.ListItem>{t('ai.tools.crm.noMatchingCompanies')}</Tool.ListItem>
+        }
       >
         <For each={props.companies}>
           {(company) => <CompanyRow company={company} />}
@@ -61,8 +60,7 @@ const listCompaniesHandler = createToolRenderer({
     const companies = () => ctx.response?.data.companies ?? [];
     const statusText = () => {
       if (!ctx.response) return undefined;
-      if (companies().length === 0) return 'No results';
-      return pluralize(companies().length, 'company', 'companies');
+      return t('ai.tools.crm.companyCount', { count: companies().length });
     };
 
     return (
@@ -77,11 +75,15 @@ const listCompaniesHandler = createToolRenderer({
         }
       >
         <div class="flex min-w-0 flex-1 items-center justify-between gap-3 overflow-hidden">
-          <span class="min-w-0 truncate">{t('auto.list_crm_companies')}<Show when={ctx.tool.data.search}>
-              {(search) => <> matching "{search()}"</>}
+          <span class="min-w-0 truncate">
+            {t('ai.tools.crm.listCompanies')}
+            <Show when={ctx.tool.data.search}>
+              {(search) => (
+                <> {t('ai.tools.crm.matching', { search: search() })}</>
+              )}
             </Show>
             <Show when={ctx.tool.data.stage}>
-              {(stage) => <> in stage {stage()}</>}
+              {(stage) => <> {t('ai.tools.crm.inStage', { stage: stage() })}</>}
             </Show>
           </span>
           <Show when={statusText()}>
@@ -101,18 +103,31 @@ function GetCompanyToolResponse(props: GetCompanyResponse) {
   const details = () => {
     const rows: { label: string; value: string }[] = [];
     if (props.domains.length > 0) {
-      rows.push({ label: 'Domains', value: props.domains.join(', ') });
+      rows.push({
+        label: t('ai.tools.crm.fields.domains'),
+        value: props.domains.join(', '),
+      });
     }
-    if (props.stage) rows.push({ label: 'Stage', value: props.stage.label });
+    if (props.stage)
+      rows.push({
+        label: t('ai.tools.crm.fields.stage'),
+        value: props.stage.label,
+      });
     if (props.ownerUserId) {
       rows.push({ label: t('common.owner'), value: props.ownerUserId });
     }
     if (props.revenue !== undefined && props.revenue !== null) {
-      rows.push({ label: 'Revenue', value: `$${props.revenue}` });
+      rows.push({
+        label: t('ai.tools.crm.fields.revenue'),
+        value: formatNumber(props.revenue, {
+          style: 'currency',
+          currency: 'USD',
+        }),
+      });
     }
     rows.push({
-      label: 'Contacts',
-      value: pluralize(props.contacts.length, 'contact'),
+      label: t('ai.tools.crm.fields.contacts'),
+      value: t('ai.tools.crm.contactCount', { count: props.contacts.length }),
     });
     return rows;
   };
@@ -168,7 +183,9 @@ const getCompanyHandler = createToolRenderer({
         }
       >
         <div class="flex min-w-0 flex-1 items-center justify-between gap-3 overflow-hidden">
-          <span class="min-w-0 truncate">{t('auto.read_crm_company')}<Show when={ctx.response?.data.name}>
+          <span class="min-w-0 truncate">
+            {t('ai.tools.crm.readCompany')}
+            <Show when={ctx.response?.data.name}>
               {(name) => <> {name()}</>}
             </Show>
           </span>

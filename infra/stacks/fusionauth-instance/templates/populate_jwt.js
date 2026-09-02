@@ -16,14 +16,14 @@ function populate(jwt, user, _registration) {
 
     if (response.status === 200) {
     var jsonResponse = JSON.parse(response.body);
-    jwt.macro_user_id = jsonResponse.user_id;
+    jwt.conation_user_id = jsonResponse.user_id;
 
-    if (jsonResponse.root_macro_id) {
-      jwt.root_macro_id = jsonResponse.root_macro_id;
+    if (jsonResponse.root_conation_id) {
+      jwt.root_conation_id = jsonResponse.root_conation_id;
     }
 
     if(jsonResponse.organization_id){
-      jwt.macro_organization_id = jsonResponse.organization_id;
+      jwt.conation_organization_id = jsonResponse.organization_id;
     }
   } else {
     throw new Error('unable to get user info for jwt');

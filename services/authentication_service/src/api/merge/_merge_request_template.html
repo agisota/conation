@@ -10,7 +10,7 @@
     />
     <meta name="color-scheme" content="light dark" />
     <meta name="supported-color-schemes" content="light dark" />
-    <title>Macro Account Merge Request</title>
+    <title>Conation Account Merge Request</title>
     <style>
       body {
         margin: 0;
@@ -32,6 +32,15 @@
         padding: 56px 40px;
         margin: 0 16px;
         outline: 1px solid #f3f4f6;
+      }
+
+      .brand {
+        color: #111827;
+        font-family: Arial, sans-serif;
+        font-size: 30px;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        text-decoration: none;
       }
 
       .code-display {
@@ -71,7 +80,7 @@
     <div
       role="article"
       aria-roledescription="email"
-      aria-label="Macro Account Merge Request"
+      aria-label="Conation Account Merge Request"
       lang="en"
     >
       <table
@@ -82,14 +91,7 @@
       >
         <tr>
           <td align="center" style="padding: 56px 0 32px">
-            <a href="https://macro.com">
-              <img
-                src="https://coparse-release-artifact-storage-bucket.s3.amazonaws.com/logos/logo.png"
-                width="200"
-                alt="Macro"
-                style="border: 0; max-width: 100%"
-              />
-            </a>
+            <a href="{{APP_URL}}" class="brand">Conation</a>
           </td>
         </tr>
         <tr>
@@ -114,7 +116,7 @@
                   color: #6b7280;
                 "
               >
-                {{EMAIL}} has requested to merge your macro account into theirs. To do so, enter the code below.
+                {{EMAIL}} has requested to merge your Conation account into theirs. To do so, enter the code below.
               </p>
               <div class="code-display">
                 {{CODE}}
@@ -130,9 +132,9 @@
             <p style="margin: 0; font-size: 14px; color: #9ca3af">
               Questions? Email us at
               <a
-                href="mailto:support@macro.com"
+                href="mailto:{{SUPPORT_EMAIL}}"
                 style="color: #6b7280; font-weight: 500; text-decoration: none"
-                >support@macro.com</a
+                >{{SUPPORT_EMAIL}}</a
               >
             </p>
           </td>

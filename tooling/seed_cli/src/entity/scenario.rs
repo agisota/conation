@@ -33,7 +33,7 @@ struct LocalE2eUserAlias {
 
 #[derive(Debug, Deserialize)]
 struct LocalE2eUser {
-    conation_user_id: String,
+    macro_user_id: String,
     user_id: String,
     username: String,
     email: String,
@@ -85,9 +85,9 @@ fn reset_users_sql(users: &[LocalE2eUser]) -> String {
         .map(|user| sql_string(&user.user_id))
         .collect::<Vec<_>>()
         .join(", ");
-    let conation_user_ids = users
+    let macro_user_ids = users
         .iter()
-        .map(|user| sql_string(&user.conation_user_id))
+        .map(|user| sql_string(&user.macro_user_id))
         .collect::<Vec<_>>()
         .join(", ");
     let emails = users
@@ -98,14 +98,14 @@ fn reset_users_sql(users: &[LocalE2eUser]) -> String {
 
     format!(
         r#"DELETE FROM "User" WHERE id IN ({user_ids}) OR email IN ({emails});
-DELETE FROM conation_user WHERE id IN ({conation_user_ids}) OR email IN ({emails});"#,
+DELETE FROM macro_user WHERE id IN ({macro_user_ids}) OR email IN ({emails});"#,
     )
 }
 
 fn seed_users_sql(users: &[LocalE2eUser]) -> String {
-    let conation_user_values = values_sql(users.iter().map(|user| {
+    let macro_user_values = values_sql(users.iter().map(|user| {
         vec![
-            sql_string(&user.conation_user_id),
+            sql_string(&user.macro_user_id),
             sql_string(&user.username),
             sql_string(&user.email),
             sql_string(&user.stripe_customer_id),
@@ -118,7 +118,7 @@ fn seed_users_sql(users: &[LocalE2eUser]) -> String {
             sql_string(&user.user_id),
             sql_string(&user.email),
             sql_string(&user.stripe_customer_id),
-            sql_string(&user.conation_user_id),
+            sql_string(&user.macro_user_id),
             sql_bool(user.tutorial_complete).to_string(),
             sql_bool(user.has_onboarding_documents).to_string(),
         ]
@@ -126,7 +126,7 @@ fn seed_users_sql(users: &[LocalE2eUser]) -> String {
 
     let verification_values = values_sql(users.iter().map(|user| {
         vec![
-            sql_string(&user.conation_user_id),
+            sql_string(&user.macro_user_id),
             sql_string(&user.email),
             sql_bool(user.is_verified).to_string(),
         ]
@@ -134,7 +134,7 @@ fn seed_users_sql(users: &[LocalE2eUser]) -> String {
 
     let info_values = values_sql(users.iter().map(|user| {
         vec![
-            sql_string(&user.conation_user_id),
+            sql_string(&user.macro_user_id),
             sql_string(&user.first_name),
             sql_string(&user.last_name),
         ]
@@ -158,32 +158,32 @@ ON CONFLICT DO NOTHING;"#
     };
 
     format!(
-        r#"INSERT INTO conation_user (id, username, email, stripe_customer_id, has_trialed) VALUES
-  {conation_user_values}
+        r#"INSERT INTO macro_user (id, username, email, stripe_customer_id, has_trialed) VALUES
+  {macro_user_values}
 ON CONFLICT (id) DO UPDATE SET
   username = EXCLUDED.username,
   email = EXCLUDED.email,
   stripe_customer_id = EXCLUDED.stripe_customer_id,
   has_trialed = EXCLUDED.has_trialed;
 
-INSERT INTO "User" (id, email, "stripeCustomerId", conation_user_id, "tutorialComplete", "hasOnboardingDocuments") VALUES
+INSERT INTO "User" (id, email, "stripeCustomerId", macro_user_id, "tutorialComplete", "hasOnboardingDocuments") VALUES
   {user_values}
 ON CONFLICT (id) DO UPDATE SET
   email = EXCLUDED.email,
   "stripeCustomerId" = EXCLUDED."stripeCustomerId",
-  conation_user_id = EXCLUDED.conation_user_id,
+  macro_user_id = EXCLUDED.macro_user_id,
   "tutorialComplete" = EXCLUDED."tutorialComplete",
   "hasOnboardingDocuments" = EXCLUDED."hasOnboardingDocuments";
 
-INSERT INTO conation_user_email_verification (conation_user_id, email, is_verified) VALUES
+INSERT INTO macro_user_email_verification (macro_user_id, email, is_verified) VALUES
   {verification_values}
 ON CONFLICT (email) DO UPDATE SET
-  conation_user_id = EXCLUDED.conation_user_id,
+  macro_user_id = EXCLUDED.macro_user_id,
   is_verified = EXCLUDED.is_verified;
 
-INSERT INTO conation_user_info (conation_user_id, first_name, last_name) VALUES
+INSERT INTO macro_user_info (macro_user_id, first_name, last_name) VALUES
   {info_values}
-ON CONFLICT (conation_user_id) DO UPDATE SET
+ON CONFLICT (macro_user_id) DO UPDATE SET
   first_name = EXCLUDED.first_name,
   last_name = EXCLUDED.last_name;
 {role_insert}"#,

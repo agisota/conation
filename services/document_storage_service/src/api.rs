@@ -5,9 +5,9 @@ use axum::extract::FromRef;
 use axum::extract::Request;
 use axum::http::Method;
 use axum::middleware::Next;
-use github::inbound::github_sync_router::GithubSyncRouterState;
 use conation_axum_utils::compose_layers;
 use conation_tower_layers::MacroRequestIdAndTracingLayer;
+use github::inbound::github_sync_router::GithubSyncRouterState;
 use model::version::{ServiceNameState, VersionedApiServiceName, validate_api_version};
 use search_service::SearchHandlerState;
 use std::time::Duration;
@@ -45,7 +45,7 @@ mod threads;
 
 // Constants
 // auth based constants
-pub const MACRO_INTERNAL_USER_ID: &str = "macro|INTERNAL@macro.com";
+pub const MACRO_INTERNAL_USER_ID: &str = "conation|INTERNAL@conation.dev";
 
 pub async fn setup_and_serve(state: ApiContext) -> anyhow::Result<()> {
     let app = api_router(state.clone())

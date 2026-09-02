@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use async_graphql::Object;
-use email::domain::ports::EmailUserService;
 use conation_user_id::user_id::MacroUserIdStr;
+use email::domain::ports::EmailUserService;
 
 use crate::user_objects::{GraphqlEmailLabel, GraphqlEmailLink};
 

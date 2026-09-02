@@ -3,9 +3,10 @@
   "info": {
     "title": "email_service",
     "description": "",
-    "termsOfService": "https://macro.com/terms",
+    "termsOfService": "https://conation.dev/terms",
     "license": {
-      "name": ""
+      "name": "GNU Affero General Public License v3.0",
+      "identifier": "AGPL-3.0-only"
     },
     "version": "0.1.0"
   },
@@ -6420,7 +6421,7 @@
       },
       "UserProvider": {
         "type": "string",
-        "enum": ["GMAIL"]
+        "enum": ["GMAIL", "STALWART"]
       },
       "Value": {},
       "VisibleCalendar": {
@@ -6480,7 +6481,7 @@
   "tags": [
     {
       "name": "Email Service",
-      "description": "Macro Email Service"
+      "description": "Conation Email Service"
     }
   ]
 }

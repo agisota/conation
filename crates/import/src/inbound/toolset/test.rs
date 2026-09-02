@@ -2,11 +2,33 @@ use super::*;
 use crate::domain::models::ImportEntity;
 use crate::domain::ports::Result;
 use crate::domain::service::{DiscardOutcome, ImportStager, StageOutcome};
+use ai_toolset::schema::generate_validated_input_schema;
 use conation_user_id::user_id::MacroUserIdStr;
 use std::sync::Mutex;
 
 fn user() -> MacroUserIdStr<'static> {
     MacroUserIdStr::try_from("macro|tester@macro.com".to_string()).expect("valid test user id")
+}
+
+#[test]
+fn import_tool_schemas_use_conation_display_brand() {
+    for schema in [
+        generate_validated_input_schema::<CreateImportEntity>()
+            .expect("create import schema should validate"),
+        generate_validated_input_schema::<ImportNotionPage>()
+            .expect("Notion import schema should validate"),
+        generate_validated_input_schema::<FinalizeImport>()
+            .expect("finalize import schema should validate"),
+    ] {
+        let rendered = format!(
+            "{} {}",
+            schema.description,
+            serde_json::to_string(&schema.schema).expect("schema should serialize")
+        );
+        assert!(rendered.contains("Conation"));
+        assert!(!rendered.contains("Macro entity"));
+        assert!(!rendered.contains("Macro document"));
+    }
 }
 
 fn row(source: ImportSource, status: ImportStatus) -> ImportEntity {

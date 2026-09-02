@@ -13,7 +13,7 @@ use serde_json::json;
 use crate::domain::models::TranscriptMessage;
 use crate::domain::ports::InferredTriggerClassifier;
 
-static SYSTEM_PROMPT: &str = r#"You decide whether the latest message in a channel thread expects a response from Macro, an AI agent participating in the thread. The agent normally only responds when explicitly @-mentioned; your job is to catch messages that are clearly directed at the agent without a mention.
+static SYSTEM_PROMPT: &str = r#"You decide whether the latest message in a channel thread expects a response from Conation, an AI agent participating in the thread. The agent normally only responds when explicitly @-mentioned; your job is to catch messages that are clearly directed at the agent without a mention.
 
 Answer true only when the latest message is addressed to the agent, for example:
 - it asks the agent a question or gives it an instruction

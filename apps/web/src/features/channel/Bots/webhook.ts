@@ -1,6 +1,6 @@
 import { SERVER_HOSTS } from '@core/constant/servers';
 
-export const WEBHOOK_TOKEN_HEADER = 'x-macro-channel-bot-token';
+export const WEBHOOK_TOKEN_HEADER = 'x-conation-channel-bot-token';
 
 export function channelWebhookUrl(channelId: string): string {
   return `${SERVER_HOSTS['document-storage-service']}/channels/${channelId}/webhook`;

@@ -5,9 +5,9 @@ use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
 };
+use conation_authorization::MacroAuthorizationService;
 use entity_access::domain::ports::EntityAccessService;
 use entity_access::inbound::axum_extractors::DocumentAccessExtractor;
-use conation_authorization::MacroAuthorizationService;
 use model::document::DocumentBasic;
 use models_permissions::share_permission::access_level::ViewAccessLevel;
 

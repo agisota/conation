@@ -1,5 +1,16 @@
 use super::*;
+use axum::{http::StatusCode, response::IntoResponse};
 use std::cell::Cell;
+
+#[test]
+fn disabled_google_oauth_returns_a_controlled_response() {
+    assert_eq!(
+        InitGmailLinkError::GoogleOAuthDisabled
+            .into_response()
+            .status(),
+        StatusCode::SERVICE_UNAVAILABLE
+    );
+}
 
 /// Stub for the connected-inbox count. Reports a fixed count and records whether
 /// the paywall actually invoked it, so tests can assert the db is only queried
@@ -28,16 +39,16 @@ impl InboxCountSpy {
 }
 
 #[tokio::test]
-async fn paywalls_inbox_at_free_limit_without_professional_features() {
+async fn no_subscription_allows_inboxes_beyond_the_legacy_limit() {
     let inboxes = InboxCountSpy::returning(FREE_INBOX_LIMIT);
 
     let result = enforce_inbox_paywall(false, || inboxes.count()).await;
 
     assert!(
-        inboxes.was_called(),
-        "non-professional users should be checked for connected inbox count"
+        !inboxes.was_called(),
+        "the free-access policy must not query a legacy billing limit"
     );
-    assert!(matches!(result, Err(InitGmailLinkError::PaymentRequired)));
+    assert!(result.is_ok());
 }
 
 #[tokio::test]
@@ -47,8 +58,8 @@ async fn first_inbox_is_free_without_professional_features() {
     let result = enforce_inbox_paywall(false, || inboxes.count()).await;
 
     assert!(
-        inboxes.was_called(),
-        "non-professional users should be checked for connected inbox count"
+        !inboxes.was_called(),
+        "the free-access policy must skip the connected-inbox count"
     );
     assert!(result.is_ok());
 }
@@ -60,8 +71,8 @@ async fn second_inbox_is_free_without_professional_features() {
     let result = enforce_inbox_paywall(false, || inboxes.count()).await;
 
     assert!(
-        inboxes.was_called(),
-        "non-professional users should be checked for connected inbox count"
+        !inboxes.was_called(),
+        "the free-access policy must skip the connected-inbox count"
     );
     assert!(result.is_ok());
 }

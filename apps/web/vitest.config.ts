@@ -41,6 +41,13 @@ export default defineConfig({
         },
       },
       {
+        extends: './src/lib/core/vitest.config.ts',
+        test: {
+          include: ['src/lib/i18n/**/*.{test,spec}.{ts,tsx}'],
+          name: 'i18n',
+        },
+      },
+      {
         // Queries package tests
         extends: './src/lib/queries/vitest.config.ts',
         test: {

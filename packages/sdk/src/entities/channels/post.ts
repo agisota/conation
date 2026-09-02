@@ -61,7 +61,7 @@ export async function postToChannel(
       // be `team`, which a user-owned bot is rejected for. If this route ever
       // moves onto entity access, this breaks — user scope without an acting
       // user is refused there.
-      headers: { 'x-macro-bot-scope': 'user' },
+      headers: { 'x-conation-bot-scope': 'user' },
     }),
   );
   return message_id;

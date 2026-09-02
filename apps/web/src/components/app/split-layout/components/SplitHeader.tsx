@@ -1,7 +1,7 @@
 import { isListViewID, LIST_VIEW_ID } from '@app/constants/list-views';
-import { t } from '@app/lib/i18n';
 import { useSoup } from '@app/features/next-soup/soup-context';
 import { openEntityInSplitFromUnifiedList } from '@app/features/next-soup/utils';
+import { t } from '@app/lib/i18n';
 import { CALENDAR_BLOCK_ID } from '@block-calendar/types';
 import { useSidebarCollapse } from '@components/app/sidebarVisibility';
 import type { BlockName } from '@core/block';
@@ -99,7 +99,7 @@ function SplitBackButton() {
       square
       size="sm"
       class="p-1 rounded-lg touch:active:bg-transparent"
-      label="Go Back"
+      label={t('shell.navigation.goBack')}
       hotkey={TOKENS.split.go.back}
       disabled={!context.handle.canGoBack()}
       onClick={() => {
@@ -120,7 +120,7 @@ function SplitForwardButton() {
       square
       size="sm"
       class="p-1 rounded-lg touch:active:bg-transparent"
-      label="Go Forward"
+      label={t('shell.navigation.goForward')}
       hotkey={TOKENS.split.go.forward}
       disabled={!context.handle.canGoForward()}
       onClick={context.handle.goForward}
@@ -154,7 +154,7 @@ function SidebarExpandButton() {
         class="rounded-lg"
         square
         size="sm"
-        label="Expand Sidebar"
+        label={t('shell.sidebar.expand')}
         hotkey={TOKENS.global.toggleSidebar}
         disabled={!visible()}
         tabindex={visible() ? undefined : -1}
@@ -203,7 +203,9 @@ function SplitCloseButton() {
   const label = createMemo(() => {
     const isOnlySplit = layout.manager.splits().length === 1;
     const isNotUnifiedList = !isListViewID(context.handle.content().id);
-    return isOnlySplit && isNotUnifiedList ? 'Return to list' : t('common.close');
+    return isOnlySplit && isNotUnifiedList
+      ? 'Return to list'
+      : t('common.close');
   });
 
   return (
@@ -275,7 +277,7 @@ function SoupNavigationButtons() {
       <div class="flex items-center gap-0.5">
         <Button
           class="p-1 rounded-lg"
-          label="Previous item"
+          label={t('shell.navigation.previousItem')}
           hotkey={TOKENS.entity.step.start}
           disabled={!canNavigateUp()}
           onClick={() => navigate(-1)}
@@ -284,7 +286,7 @@ function SoupNavigationButtons() {
         </Button>
         <Button
           class="p-1 rounded-lg"
-          label="Next item"
+          label={t('shell.navigation.nextItem')}
           hotkey={TOKENS.entity.step.end}
           disabled={!canNavigateDown()}
           onClick={() => navigate(1)}
@@ -356,10 +358,10 @@ function SplitHeaderContextMenu(props: ParentProps) {
           2
         )
       );
-      toast.success('Debug info copied to clipboard');
+      toast.success(t('shell.split.debugInfoCopied'));
     } catch (error) {
       console.error('Failed to copy split debug info', error);
-      toast.failure('Failed to copy debug info');
+      toast.failure(t('shell.split.debugInfoCopyFailed'));
     }
   };
 
@@ -527,7 +529,9 @@ export function SplitHeader(props: {
                   data-split-header-drop-overlay
                 >
                   <div class="max-w-[min(28rem,calc(100%-3rem))] min-w-0 bg-surface border border-edge rounded-lg shadow-lg shadow-drop-shadow px-4 py-3 flex items-center gap-2 text-sm text-ink">
-                    <span class="shrink-0 text-ink-muted">{t('auto.open_in_this_split')}</span>
+                    <span class="shrink-0 text-ink-muted">
+                      {t('shell.split.openInThisSplit')}
+                    </span>
                   </div>
                 </div>
               </Show>

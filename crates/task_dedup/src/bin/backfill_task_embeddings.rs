@@ -6,13 +6,13 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use anyhow::Context as _;
 use anyhow::{Result, anyhow, bail};
 use clap::Parser;
+use conation_env_var::env_var;
+use conation_service_urls::LexicalServiceUrl;
 use embedding::embedding_provider::openai::TextEmbedding3Small;
 use embedding::entity::Task;
 use embedding::{EmbeddingModel, VectorStore};
 use futures::StreamExt;
 use lexical_client::LexicalClient;
-use conation_env_var::env_var;
-use conation_service_urls::LexicalServiceUrl;
 use secretsmanager_client::{SecretManager, SecretsManager};
 use task_dedup::outbound::postgres::PgTaskVectorDb;
 

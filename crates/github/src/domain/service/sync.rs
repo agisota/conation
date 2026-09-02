@@ -12,15 +12,16 @@ mod notify_pr_checks;
 
 use crate::domain::{
     models::{
-        EnrichedGithubPullRequest, GITHUB_PULL_REQUEST_FOREIGN_ENTITY_SOURCE,
+        ConationTaskId, EnrichedGithubPullRequest, GITHUB_PULL_REQUEST_FOREIGN_ENTITY_SOURCE,
         GithubAppInstallationSource, GithubError, GithubInstallationAccessToken,
         GithubInstallationSetupAction, GithubKey, GithubPullRequestDetails,
-        GithubPullRequestStatus, GithubWebhookEventType, InstallationState, MacroTaskId,
+        GithubPullRequestStatus, GithubWebhookEventType, InstallationState,
         ResolvedTeamTaskReference, TeamTaskReference, ValidatedGithubWebhookEvent,
         sign_installation_state, verify_installation_state,
     },
     ports::{GithubSyncClient, GithubSyncRepo, GithubSyncService},
 };
+use conation_env_var::maybe_env_vars;
 use documents::domain::{models::DocumentError, ports::DocumentService};
 use entity_access::domain::models::{EditAccessLevel, ViewAccessLevel};
 use foreign_entity::domain::{
@@ -28,7 +29,6 @@ use foreign_entity::domain::{
     ports::ForeignEntityService,
 };
 use hmac::{Hmac, Mac};
-use conation_env_var::maybe_env_vars;
 use notification::domain::service::NotificationIngress;
 use sha2::Sha256;
 use std::{
@@ -119,7 +119,7 @@ struct ResolvedTasks {
     /// Markdown links for resolved tasks (used for PR comments).
     task_links: Vec<String>,
     /// Task IDs that were validated as actual task documents.
-    validated_task_ids: Vec<MacroTaskId>,
+    validated_task_ids: Vec<ConationTaskId>,
 }
 
 /// Result of creating or refreshing one source-scoped PR foreign entity row.
@@ -634,16 +634,16 @@ impl<
             .collect()
     }
 
-    /// Extract both legacy `MACRO-{short_uuid}` IDs and team-scoped
+    /// Extract both canonical `CONATION-{short_uuid}` IDs and team-scoped
     /// `{team_slug}-{team_task_id}` references from text.
     #[tracing::instrument(skip(self, event, text))]
     async fn extract_task_ids_from_text(
         &self,
         event: &ValidatedGithubWebhookEvent,
         text: &str,
-    ) -> Vec<MacroTaskId> {
-        let mut task_ids = MacroTaskId::extract_from_text(text);
-        let legacy_task_id_count = task_ids.len();
+    ) -> Vec<ConationTaskId> {
+        let mut task_ids = ConationTaskId::extract_from_text(text);
+        let canonical_task_id_count = task_ids.len();
         let team_task_refs = TeamTaskReference::extract_from_text(text);
 
         if !team_task_refs.is_empty() {
@@ -713,7 +713,7 @@ impl<
 
         let task_ids = dedupe_task_ids(task_ids);
         tracing::trace!(
-            legacy_task_id_count,
+            canonical_task_id_count,
             team_task_ref_count = team_task_refs.len(),
             total_task_id_count = task_ids.len(),
             task_ids = ?task_ids.iter().map(|t| t.to_task_id_string()).collect::<Vec<_>>(),
@@ -725,7 +725,7 @@ impl<
     /// Resolve task IDs to documents, returning doc IDs and markdown links
     /// for all tasks that are actually task-type documents.
     #[tracing::instrument(skip(self, task_ids))]
-    async fn resolve_tasks(&self, task_ids: &[MacroTaskId]) -> ResolvedTasks {
+    async fn resolve_tasks(&self, task_ids: &[ConationTaskId]) -> ResolvedTasks {
         tracing::trace!(
             task_id_count = task_ids.len(),
             "resolving task IDs to documents"
@@ -931,7 +931,9 @@ impl<
 
                 match action {
                     Some("opened" | "reopened") => self.handle_pr_open(webhook_event).await,
-                    Some("edited") => self.handle_pr_edit(webhook_event).await,
+                    Some("edited" | "ready_for_review" | "converted_to_draft") => {
+                        self.handle_pr_edit(webhook_event).await
+                    }
                     Some("closed") => self.handle_pr_close(webhook_event).await,
                     _ => {
                         tracing::debug!(action, "skipping unhandled pull_request action");
@@ -996,16 +998,16 @@ impl<
         }
     }
 
-    #[tracing::instrument(skip(self), fields(conation_user_id = %conation_user_id), err)]
+    #[tracing::instrument(skip(self), fields(macro_user_id = %macro_user_id), err)]
     async fn begin_installation_setup(
         &self,
-        conation_user_id: &conation_user_id::user_id::MacroUserIdStr<'_>,
+        macro_user_id: &conation_user_id::user_id::MacroUserIdStr<'_>,
         team_id: Option<uuid::Uuid>,
     ) -> Result<String, GithubError> {
         if let Some(team_id) = team_id {
             let team_ids = self
                 .repo
-                .get_user_team_ids(conation_user_id.as_ref())
+                .get_user_team_ids(macro_user_id.as_ref())
                 .await
                 .map_err(|error| GithubError::Internal(error.into()))?;
             if !team_ids.contains(&team_id) {
@@ -1014,8 +1016,8 @@ impl<
         }
 
         let state = InstallationState {
-            conation_user_id: conation_user_id::user_id::MacroUserIdStr::try_from(
-                conation_user_id.as_ref().to_string(),
+            macro_user_id: conation_user_id::user_id::MacroUserIdStr::try_from(
+                macro_user_id.as_ref().to_string(),
             )
             .map_err(|error| GithubError::Internal(error.into()))?,
             team_id,
@@ -1088,13 +1090,13 @@ impl<
             .to_string();
         let links = self
             .repo
-            .get_conation_ids_by_github_user_ids(std::slice::from_ref(&github_user_id))
+            .get_macro_ids_by_github_user_ids(std::slice::from_ref(&github_user_id))
             .await
             .map_err(|error| GithubError::Internal(error.into()))?;
-        let completer_is_state_user = links.get(&github_user_id).is_some_and(|conation_ids| {
-            conation_ids
+        let completer_is_state_user = links.get(&github_user_id).is_some_and(|macro_ids| {
+            macro_ids
                 .iter()
-                .any(|id| id == state.conation_user_id.as_ref())
+                .any(|id| id == state.macro_user_id.as_ref())
         });
         if !completer_is_state_user {
             return Err(GithubError::SetupUserNotLinked);
@@ -1102,7 +1104,7 @@ impl<
 
         let source = match state.team_id {
             Some(team_id) => GithubAppInstallationSource::Team(team_id),
-            None => GithubAppInstallationSource::User(state.conation_user_id.into()),
+            None => GithubAppInstallationSource::User(state.macro_user_id.into()),
         };
 
         let Some(installation_id) = installation_id else {
@@ -1151,7 +1153,7 @@ impl<
     }
 }
 
-fn dedupe_task_ids(task_ids: Vec<MacroTaskId>) -> Vec<MacroTaskId> {
+fn dedupe_task_ids(task_ids: Vec<ConationTaskId>) -> Vec<ConationTaskId> {
     let mut seen = HashSet::new();
     let mut deduped = Vec::new();
 

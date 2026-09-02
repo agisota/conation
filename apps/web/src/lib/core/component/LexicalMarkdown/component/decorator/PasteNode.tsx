@@ -1,13 +1,13 @@
-import { MobileDrawer } from '@components/app/mobile/MobileDrawer';
 import { t } from '@app/lib/i18n';
-import { toast } from '@core/component/Toast/Toast';
-import { isMobileWidth } from '@core/mobile/mobileWidth';
-import { blockElementSignal } from '@core/signal/blockElement';
+import { MobileDrawer } from '@components/app/mobile/MobileDrawer';
 import {
   $convertPasteToText,
   $isPasteNode,
   type PasteNodeDecoratorProps,
 } from '@conation/lexical-core';
+import { toast } from '@core/component/Toast/Toast';
+import { isMobileWidth } from '@core/mobile/mobileWidth';
+import { blockElementSignal } from '@core/signal/blockElement';
 import Copy from '@phosphor/copy.svg';
 import DotsThree from '@phosphor/list.svg';
 import TextT from '@phosphor/text-t.svg';
@@ -36,10 +36,12 @@ export function PasteNode(props: PasteNodeDecoratorProps) {
   const [open, setOpen] = createSignal(false);
   const [menuOpen, setMenuOpen] = createSignal(false);
 
-  // The origin value doubles as the pill label: "pasted" or "referenced".
+  // Keep the persisted origin value stable; map it to localized display copy.
   const origin = () => props.origin ?? 'pasted';
+  const originLabel = () =>
+    t('editor.paste.origin.label', { origin: origin() });
   const originTitle = () =>
-    origin() === 'referenced' ? 'Referenced text' : 'Pasted text';
+    t('editor.paste.origin.title', { origin: origin() });
 
   const isSelectedAsNode = () => {
     const sel = selection();
@@ -70,7 +72,7 @@ export function PasteNode(props: PasteNodeDecoratorProps) {
   const copyText = () => {
     try {
       navigator.clipboard.writeText(props.content);
-      toast.success(`Copied ${origin()} text to clipboard`);
+      toast.success(t('editor.paste.copied', { origin: origin() }));
     } catch (e) {
       console.error('Failed to copy pasted text to clipboard', e);
     }
@@ -83,8 +85,7 @@ export function PasteNode(props: PasteNodeDecoratorProps) {
   };
 
   const lineCount = () => props.content.split('\n').length;
-  const lineLabel = () =>
-    `${lineCount()} ${lineCount() === 1 ? 'line' : 'lines'}`;
+  const lineLabel = () => t('editor.paste.lineCount', { count: lineCount() });
 
   const fullText = () => (
     <pre class="font-mono text-sm leading-relaxed bg-message p-4 m-0 whitespace-pre-wrap wrap-break-word overflow-auto">
@@ -122,7 +123,7 @@ export function PasteNode(props: PasteNodeDecoratorProps) {
         {/* Origin pill floating bottom-left: "pasted" for clipboard dumps,
             "referenced" for quote-replies from selected conversation text. */}
         <span class="absolute bottom-2 left-2 inline-flex items-center px-2 py-1 text-xs leading-none rounded-full border border-edge bg-surface">
-          {origin()}
+          {originLabel()}
         </span>
 
         {/* Hamburger menu floating top-right. Hidden in static / read-only
@@ -140,11 +141,15 @@ export function PasteNode(props: PasteNodeDecoratorProps) {
                 <Dropdown.Group>
                   <Dropdown.Item onSelect={copyText}>
                     <Copy class="size-4 shrink-0" />
-                    <span class="flex-1 truncate">{t('auto.copy')}</span>
+                    <span class="flex-1 truncate">
+                      {t('editor.paste.copy')}
+                    </span>
                   </Dropdown.Item>
                   <Dropdown.Item onSelect={convertToText}>
                     <TextT class="size-4 shrink-0" />
-                    <span class="flex-1 truncate">{t('auto.convert_to_text')}</span>
+                    <span class="flex-1 truncate">
+                      {t('editor.paste.convertToText')}
+                    </span>
                   </Dropdown.Item>
                 </Dropdown.Group>
                 <Dropdown.Group>
@@ -178,7 +183,7 @@ export function PasteNode(props: PasteNodeDecoratorProps) {
                   variant="ghost"
                   size="icon-sm"
                   class="text-ink-extra-muted/50"
-                  tooltip="Copy"
+                  tooltip={t('editor.paste.copy')}
                   on:click={() => copyText()}
                 >
                   <Copy />
@@ -202,7 +207,7 @@ export function PasteNode(props: PasteNodeDecoratorProps) {
                     variant="ghost"
                     size="icon-sm"
                     class="text-ink-extra-muted/50"
-                    tooltip="Copy"
+                    tooltip={t('editor.paste.copy')}
                     on:click={() => copyText()}
                   >
                     <Copy />

@@ -20,7 +20,7 @@ const prompt: FoldedMessage = {
   requestId: null,
   agentSessionId: 'session',
   turn: 0,
-  author: { kind: 'user', userId: 'macro|wolf@macro.com' },
+  author: { kind: 'user', userId: 'conation|wolf@conation.dev' },
   parts: [{ kind: 'text', text: 'Say hi' }],
   stop: null,
 };

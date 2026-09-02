@@ -1,57 +1,52 @@
 ---
-title: "Properties"
+title: "Свойства"
 icon: "tags"
-description: "Attach structured fields to documents, tasks, emails, and CRM records with one shared system."
+description: "Структурированные поля для документов, задач, писем и CRM-записей Conation."
 ---
 
-Macro uses properties to attach structured data to any *entity* (email, task, doc, CRM record, etc.). The properties system is unified across blocks, so you can organize different content types using the same fields, or create different fields for different content types. Tasks and CRM obviously have very different sensible properties, but the concepts are the same and the UI is shared, so teams can work together effectively.
+Свойства добавляют структурированные данные к блокам: письмам, задачам, документам, CRM-записям и другим объектам. Система свойств общая для разных блоков, но набор полей может отличаться по типу объекта.
 
-<Frame>
-  <img
-    src="/images/Screenshot-2026-06-09-at-4.24.24-PM.png"
-    alt="The properties card on a task showing Status, Priority, and Assignees"
-    title="Task properties"
-    className="mx-auto"
-    style={{ width:"71%" }}
-  />
-</Frame>
+<Note>
+  Старые скриншоты прежнего интерфейса убраны из активной страницы. Новые
+  иллюстрации свойств нужно подготовить в Conation на синтетических данных.
+</Note>
 
-On tasks, the default properties of Status, Priority, and Assignees are visible in this card to the right of the task. To add additional properties click `Add property`.
+## Типы данных
 
-<Frame>
-  ![The Add property menu listing available property types](/images/Screenshot-2026-06-09-at-4.25.31-PM.png)
-</Frame>
+Блоки, которые поддерживают свойства, могут использовать общие типы данных:
 
-## Supported types
+- **STRING** — текст: телефон, должность, отдел, заметки.
+- **NUMBER** — число: выручка, количество сотрудников, ARR.
+- **BOOLEAN** — переключатель true/false.
+- **DATE** — дата: последний контакт, срок договора, дедлайн.
+- **SELECT_STRING** — один или несколько строковых вариантов с цветами и иконками.
+- **SELECT_NUMBER** — один или несколько числовых вариантов.
+- **ENTITY** — ссылка на другой объект: User, Company, Contact, Document, Project, Channel, Chat, Task или Thread.
+- **LINK** — URL: сайт, профиль, внешний документ.
 
-Every entity that supports properties supports the same data types:
+## Системные и пользовательские свойства
 
-- **STRING** (text): phone, job title, department, notes.
-- **NUMBER**: revenue, employee count, ARR.
-- **BOOLEAN**: toggles.
-- **DATE**: last contacted, contract/renewal date.
-- **SELECT\_STRING**: single/multi-select with string options (custom option colors/icons).
-- **SELECT\_NUMBER**: single/multi-select with numeric options.
-- **ENTITY**: a reference to another entity (User, Company, Contact, Document, Project, Channel, Chat, Task, Thread).
-- **LINK**: URLs (website, LinkedIn, etc.).
+Свойство может быть **system** или **custom**.
 
-## System vs. custom
+System-свойства встроены в продукт и обычно не удаляются: например Status, Priority и Assignees у задач.
 
-A property is either **system** (built in and non-removable, like a task's Status) or **custom** (something you add). Properties can also be flagged as **metadata**, which keeps them out of the main views. There are three editors: inline (click-to-edit in a list or pill), popover (a focused dialog), and modal (batch editing across several fields).
+Custom-свойства создает команда. Их удобно использовать для полей, которые нужны вашему процессу: регион, риск, договор, владелец клиента, дата следующего контакта.
 
-## Pinned properties
+Свойство также может быть metadata. Такие поля доступны системе, но не обязательно показываются в основных списках.
 
-You can pin properties to show them in the card on the right, or in the unified list. If a property is more like hidden metadata that you don't need to see, leave it hidden. Otherwise, pin it. Each block type has its own defaults. For example, tasks pin **Status**, **Priority**, and **Assignees** out of the box.
+## Закрепленные свойства
 
-## Built-in fields by block
+Свойство можно закрепить, чтобы оно отображалось в карточке справа или в unified list. Если поле нужно редко, оставьте его скрытым. Если поле влияет на ежедневную работу, закрепите его.
 
-Some blocks ship with their own system properties:
+У разных блоков могут быть разные defaults. Например, задачи обычно показывают Status, Priority и Assignees.
 
-- **Tasks**: Status, Priority, Assignees, Due Date, Parent Task / Subtasks, Depends On, Effort, Story Points, and Relevant Documents. See [Tasks](/product/tasks).
-- **Documents**: Owner, Folder, Created and Updated timestamps, plus assignable fields like a linked Task and urgency. See [Documents](/product/docs).
-- **CRM companies (Customers)**: Stage (Lead, Qualified, Demo, Trial, Negotiation, Customer, Churned), Owner (a person on your team), and Revenue, plus a Last Interaction timestamp that updates automatically from synced workspace emails.
-- **CRM contacts & companies**: Email, Name, Company, interaction timestamps, Domains, Email Sync, and more.
+## Встроенные поля по блокам
 
-## Agent access
+- **Задачи:** Status, Priority, Assignees, Due Date, Parent Task, Subtasks, Depends On, Effort, Story Points, Relevant Documents. Подробнее: [задачи](/product/tasks).
+- **Документы:** Owner, Folder, Created, Updated и дополнительные привязки через свойства. Подробнее: [документы](/product/docs).
+- **CRM companies:** Stage, Owner, Revenue и Last Interaction, если источник данных настроен и разрешен.
+- **CRM contacts:** Email, Name, Company, interaction timestamps, domains и другие поля, зависящие от конфигурации CRM.
 
-Agents read and write properties through the MCP entity tools: `GetEntityProperties` to read, `SetEntityProperty` to update (status, assignee, dates, custom fields), and `ListEntities` to browse. See the [tool reference](/AI/mcp/tools/index).
+## Доступ агентов
+
+Агенты читают и обновляют свойства через MCP-инструменты для объектов: `GetEntityProperties`, `SetEntityProperty` и `ListEntities`. Агент может работать только с теми объектами и полями, к которым у пользователя есть доступ.

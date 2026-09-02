@@ -13,7 +13,7 @@ async fn frecency_fallback_keeps_calendar_events_with_aggregates(
     sqlx::query!(
         r#"
         INSERT INTO email_links (
-            id, conation_id, fusionauth_user_id, email_address, provider
+            id, macro_id, fusionauth_user_id, email_address, provider
         )
         VALUES ($1, $2, $2, 'calendar-frecency@example.com', 'GMAIL')
         "#,

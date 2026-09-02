@@ -1,6 +1,8 @@
 use axum::extract::{Path, State};
+use conation_authorization::{
+    MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal,
+};
 use entity_access::domain::ports::EntityAccessService;
-use conation_authorization::{MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal};
 use model_error_response::ErrorResponse;
 
 use crate::domain::{model::JoinTeamError, team_repo::TeamService};
@@ -39,7 +41,7 @@ pub async fn handler<T: TeamService, Eas: EntityAccessService, Auth: MacroAuthor
         .service
         .join_team(
             &team_invite_id,
-            &authorization.authorization.user.conation_user_id,
+            &authorization.authorization.user.macro_user_id,
         )
         .await?;
     Ok(())

@@ -3,14 +3,14 @@ use crate::{
     model::response::instructions::CreateInstructionsDocumentResponse,
 };
 use axum::{Json, extract::State};
-use documents_hex::domain::create::{NewDocumentMetadata, NewMarkdownTextDocument};
-use documents_hex::domain::models::DocumentError;
-use documents_hex::domain::ports::create::DocumentCreationService as _;
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_db_client::instructions::create::{
     CreateInstructionsError, insert_instructions_document,
 };
 use conation_db_client::instructions::get::get_instructions_document;
+use documents_hex::domain::create::{NewDocumentMetadata, NewMarkdownTextDocument};
+use documents_hex::domain::models::DocumentError;
+use documents_hex::domain::ports::create::DocumentCreationService as _;
 use model::response::GenericErrorResponse;
 use models_dcs::constants::INSTRUCTIONS_FILE_NAME;
 
@@ -25,12 +25,12 @@ use models_dcs::constants::INSTRUCTIONS_FILE_NAME;
         (status = 500, body = GenericErrorResponse),
     )
 )]
-#[tracing::instrument(skip(ctx, user_context), fields(user_id=%user_context.authorization.user.conation_user_id))]
+#[tracing::instrument(skip(ctx, user_context), fields(user_id=%user_context.authorization.user.macro_user_id))]
 pub async fn create_instructions_handler(
     State(ctx): State<ApiContext>,
     user_context: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
 ) -> Result<Json<CreateInstructionsDocumentResponse>, DocumentError> {
-    let user_id = user_context.authorization.user.conation_user_id.clone();
+    let user_id = user_context.authorization.user.macro_user_id.clone();
 
     if get_instructions_document(&ctx.db, user_id.clone())
         .await

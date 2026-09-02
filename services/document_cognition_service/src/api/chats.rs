@@ -14,9 +14,9 @@ use chat::inbound::http::router::{
     ChatRouterState, chat_create_router, chat_id_router, chat_view_router,
 };
 use chat::outbound::postgres::PgChatRepo;
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use entity_access::domain::service::EntityAccessServiceImpl;
 use entity_access::outbound::PgAccessRepository;
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use tower::ServiceBuilder;
 
 /// Requires an authenticated acting user before the request proceeds.

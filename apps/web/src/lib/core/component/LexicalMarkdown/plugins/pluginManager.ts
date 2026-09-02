@@ -1,11 +1,11 @@
+import type { LoroManager } from '@conation/collaboration/collab/manager';
+import { ALL_TRANSFORMERS, type EditorType } from '@conation/lexical-core';
+import { HR } from '@conation/lexical-core/transformers/transformers';
 import { createEmptyHistoryState, registerHistory } from '@lexical/history';
 import { registerList } from '@lexical/list';
 import { CODE } from '@lexical/markdown';
 import { registerPlainText } from '@lexical/plain-text';
 import { registerRichText } from '@lexical/rich-text';
-import type { LoroManager } from '@conation/collaboration/collab/manager';
-import { ALL_TRANSFORMERS, type EditorType } from '@conation/lexical-core';
-import { HR } from '@conation/lexical-core/transformers/transformers';
 import type { EditorState, LexicalEditor, UpdateListener } from 'lexical';
 import {
   type Accessor,

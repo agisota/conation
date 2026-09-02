@@ -15,6 +15,12 @@ fn test_list_notifications_schema_validation() {
         validated.description.contains("List the current user"),
         "Description should contain expected text"
     );
+
+    let schema = serde_json::to_value(&validated.schema).unwrap();
+    let entities_description = schema["properties"]["entities"]["description"]
+        .as_str()
+        .expect("entities should have a schema description");
+    assert!(entities_description.contains("Example: `[{\"entityType\":\"email_thread\""));
 }
 
 #[test]

@@ -4,7 +4,6 @@
 // 1. Strips the `/app/` base path prefix before embedded asset resolution.
 // 2. Resolves OTA assets through the bundle updater's domain service.
 
-use http::{Response as HttpResponse, StatusCode, header::CONTENT_TYPE};
 use conation_bundle_updater_plugin::domain::{
     asset_service::{
         BundleAssetPath, BundleAssetReadError, BundleAssetResolution, BundleAssetResolver,
@@ -12,6 +11,7 @@ use conation_bundle_updater_plugin::domain::{
     },
     ports::BundleAssetRepo,
 };
+use http::{Response as HttpResponse, StatusCode, header::CONTENT_TYPE};
 use std::time::Duration;
 use tauri::{Runtime, UriSchemeResponder};
 

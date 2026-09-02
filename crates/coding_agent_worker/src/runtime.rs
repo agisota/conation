@@ -166,7 +166,13 @@ async fn dial(
 ) -> Result<RuntimeChannel, tungstenite::Error> {
     RetryIf::start(
         strategy,
-        || link::dial(gateway_url, &conation_api.bot_token, &conation_api.bot_scope),
+        || {
+            link::dial(
+                gateway_url,
+                &conation_api.bot_token,
+                &conation_api.bot_scope,
+            )
+        },
         worth_redialing,
     )
     .await

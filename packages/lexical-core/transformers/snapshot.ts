@@ -82,12 +82,20 @@ export const E_SNAPSHOT_NODE: ElementTransformer = {
       return null;
     }
 
-    // Export as a document link similar to DocumentMention
-    const hostname =
-      window.location.hostname === 'localhost'
-        ? 'dev.macro.com'
-        : window.location.hostname.replace('www.', '').toLowerCase();
-    const documentUrl = `https://${hostname}/app/${blockName}/${documentId}`;
+    // Export as a document link similar to DocumentMention. A standalone
+    // build preserves its current operator origin; the hosted compatibility
+    // build retains its local-development hostname convention.
+    const hostedLegacy =
+      typeof __CONATION_HOSTED_LEGACY__ !== 'undefined' &&
+      __CONATION_HOSTED_LEGACY__;
+    const origin = hostedLegacy
+      ? `https://${
+          window.location.hostname === 'localhost'
+            ? 'dev.macro.com'
+            : window.location.hostname.replace('www.', '').toLowerCase()
+        }`
+      : window.location.origin;
+    const documentUrl = `${origin}/app/${blockName}/${documentId}`;
     return `[${documentName}](${documentUrl})`;
   },
   replace: (

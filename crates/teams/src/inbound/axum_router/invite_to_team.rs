@@ -1,10 +1,10 @@
 use axum::{Json, extract::State, http::StatusCode};
+use conation_authorization::MacroAuthorizationService;
+use conation_user_id::{email::Email, lowercased::Lowercase};
 use entity_access::{
     domain::{models::MemberTeamRole, ports::EntityAccessService},
     inbound::axum_extractors::MacroUserTeamExtractorV2,
 };
-use conation_authorization::MacroAuthorizationService;
-use conation_user_id::{email::Email, lowercased::Lowercase};
 use model_error_response::ErrorResponse;
 
 use crate::domain::{model::InviteUsersToTeamError, team_repo::TeamService};

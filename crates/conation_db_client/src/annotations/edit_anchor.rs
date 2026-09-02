@@ -139,7 +139,7 @@ mod edit_anchor_tests {
         scripts("document_pdf_comments_and_highlights")
     ))]
     async fn test_edit_pdf_free_comment_anchor_success(pool: PgPool) {
-        let user_id = "macro|user@user.com";
+        let user_id = "conation|user@user.com";
         let uuid = Uuid::try_parse("91111111-1111-1111-1111-111111111111").unwrap();
 
         let request = EditPdfPlaceableCommentAnchorRequest {
@@ -178,7 +178,7 @@ mod edit_anchor_tests {
         scripts("document_pdf_comments_and_highlights")
     ))]
     async fn test_edit_pdf_free_comment_anchor_not_found(pool: PgPool) {
-        let user_id = "macro|user@user.com";
+        let user_id = "conation|user@user.com";
         let uuid = Uuid::new_v4(); // Non-existent UUID
 
         let request = EditPdfPlaceableCommentAnchorRequest {
@@ -214,7 +214,7 @@ mod edit_anchor_tests {
         scripts("document_pdf_comments_and_highlights")
     ))]
     async fn test_edit_pdf_free_comment_anchor_invalid_permissions(pool: PgPool) {
-        let unauthorized_user = "macro|unauthorized_user@user.com";
+        let unauthorized_user = "conation|unauthorized_user@user.com";
         let uuid = Uuid::try_parse("91111111-1111-1111-1111-111111111111").unwrap();
 
         let request = EditPdfPlaceableCommentAnchorRequest {
@@ -253,7 +253,7 @@ mod edit_anchor_tests {
         scripts("document_pdf_comments_and_highlights")
     ))]
     async fn test_edit_pdf_free_comment_anchor_no_update_attempt(pool: PgPool) {
-        let user_id = "macro|user@user.com";
+        let user_id = "conation|user@user.com";
         let uuid = Uuid::try_parse("91111111-1111-1111-1111-111111111111").unwrap();
 
         let request = EditPdfPlaceableCommentAnchorRequest {
@@ -292,7 +292,7 @@ mod edit_anchor_tests {
         scripts("document_pdf_comments_and_highlights")
     ))]
     async fn test_edit_pdf_free_comment_anchor_keeps_existing_values(pool: PgPool) {
-        let user_id = "macro|user@user.com";
+        let user_id = "conation|user@user.com";
         let uuid = Uuid::try_parse("91111111-1111-1111-1111-111111111111").unwrap();
 
         let request = EditPdfPlaceableCommentAnchorRequest {

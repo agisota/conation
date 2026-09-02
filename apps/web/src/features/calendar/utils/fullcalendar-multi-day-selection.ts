@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { createPlugin, type EventApi } from '@fullcalendar/core';
 import type {
   CalendarContentProps,
@@ -43,7 +44,7 @@ function createPreviewStore(range: EventInstance['range']): EventStore {
     allDay: true,
     hasEnd: true,
     recurringDef: null,
-    title: 'New event',
+    title: t('calendar.event.new'),
     url: '',
     ui: previewUi,
     interactive: false,

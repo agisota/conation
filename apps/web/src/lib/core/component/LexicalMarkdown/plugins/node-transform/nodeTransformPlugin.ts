@@ -2,6 +2,8 @@
  * @file Plugin that registers NODE_TRANSFORM_<NODE> commands.
  */
 
+import type { ElementName } from '@conation/lexical-core';
+import { CustomCodeNode } from '@conation/lexical-core';
 import { $createCodeNode, CodeNode } from '@lexical/code';
 import { $createLinkNode, LinkNode } from '@lexical/link';
 import {
@@ -18,8 +20,6 @@ import {
   QuoteNode,
 } from '@lexical/rich-text';
 import { $setBlocksType } from '@lexical/selection';
-import type { ElementName } from '@conation/lexical-core';
-import { CustomCodeNode } from '@conation/lexical-core';
 import type {
   ElementNode,
   Klass,

@@ -12,12 +12,12 @@ export type ChannelEvent = Extract<
 >;
 
 /** Wire prefix on a user principal; bots instead arrive as `bot|<uuid>`. */
-const USER_PREFIX = 'macro|';
+const USER_PREFIX = 'conation|';
 
 /**
  * Resolve a channel principal to a user handle, or undefined when it names a
  * bot. Lower-cased to match how the backend stores ids. Note `|` is legal in an
- * email, so `macro|bot|a@b.com` is a user.
+ * email, so `conation|bot|a@b.com` is a user.
  */
 export function userFromPrincipal(client: MacroClient, principalId: string) {
   return principalId.startsWith(USER_PREFIX) &&

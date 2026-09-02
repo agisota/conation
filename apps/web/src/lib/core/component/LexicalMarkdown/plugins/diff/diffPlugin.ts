@@ -1,6 +1,3 @@
-import type { createBlockSignal } from '@core/block';
-import { useUserId } from '@core/context/user';
-import { $wrapNodeInElement, mergeRegister } from '@lexical/utils';
 import type { NodeIdMappings } from '@conation/lexical-core';
 import {
   $createDiffDeleteNode,
@@ -10,6 +7,9 @@ import {
   $getNodeById,
   $isDiffNode,
 } from '@conation/lexical-core';
+import type { createBlockSignal } from '@core/block';
+import { useUserId } from '@core/context/user';
+import { $wrapNodeInElement, mergeRegister } from '@lexical/utils';
 import type { LexicalEditor } from 'lexical';
 import {
   COMMAND_PRIORITY_CRITICAL,

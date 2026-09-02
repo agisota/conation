@@ -7,6 +7,7 @@
  * own. Renders nothing until the harness has advertised its models.
  */
 
+import { t } from '@app/lib/i18n';
 import CaretDown from '@phosphor-icons/core/regular/caret-down.svg?component-solid';
 import type { ModelOption } from '@service-agent-fold/generated/types';
 import { cn, Dropdown } from '@ui';
@@ -34,7 +35,7 @@ export function AgentModelSelector(props: AgentModelSelectorProps) {
   const label = () =>
     props.options.find((option) => option.id === shown())?.name ??
     shown() ??
-    'Model';
+    t('agent.sidePanel.model');
 
   return (
     <Show when={props.options.length > 0}>

@@ -22,7 +22,7 @@ use crate::domain::{
 /// candidate is handled on a spawned task.
 ///
 /// System bots are defined in code and require no database row. Unknown bot ids
-/// are ignored here; only Macro AI is handled by this branch. Non-system bots
+/// are ignored here; only the Conation assistant is handled by this branch. Non-system bots
 /// are notified of mentions out of process via the `channel.mentioned`
 /// webhook event instead (see the `webhook` crate).
 pub struct BotTriggerRouter<C, R, D> {
@@ -87,7 +87,7 @@ where
             };
 
             // System bots are defined in code — no database lookup required.
-            if invocation.bot_id == bot_id::MACRO_AI_BOT_ID {
+            if invocation.bot_id == bot_id::CONATION_AI_BOT_ID {
                 if let Err(err) = self.conation_ai.handle(&event).await {
                     tracing::error!(error=?err, bot_id = %invocation.bot_id, "system bot handler failed");
                 }

@@ -1,17 +1,5 @@
-import { URL_PARAMS as CHANNEL_PARAMS } from '@block-channel/constants';
 import { t } from '@app/lib/i18n';
-import {
-  type PreviewState,
-  useBlockOwner,
-  useMaybeBlockName,
-} from '@core/block';
-import { useItemPreviewData } from '@core/component/ItemPreview';
-import { toast } from '@core/component/Toast/Toast';
-import { resolveBlockAlias, verifyBlockName } from '@core/constant/allBlocks';
-import { ENABLE_BLOCK_IN_BLOCK } from '@core/constant/featureFlags';
-import { canNestBlock, createBlockInstance } from '@core/orchestrator';
-import { blockElementSignal } from '@core/signal/blockElement';
-import { matches } from '@core/util/match';
+import { URL_PARAMS as CHANNEL_PARAMS } from '@block-channel/constants';
 import {
   $convertCardToMention,
   $getId,
@@ -23,6 +11,20 @@ import {
   setDocumentCardPreviewComponent,
   unsetDocumentCardPreviewCache,
 } from '@conation/lexical-core';
+import {
+  type PreviewState,
+  useBlockOwner,
+  useMaybeBlockName,
+} from '@core/block';
+import { useItemPreviewData } from '@core/component/ItemPreview';
+import { toast } from '@core/component/Toast/Toast';
+import { resolveBlockAlias, verifyBlockName } from '@core/constant/allBlocks';
+import { getConfiguredStandaloneOperatorOrigin } from '@core/constant/clientProfile';
+import { ENABLE_BLOCK_IN_BLOCK } from '@core/constant/featureFlags';
+import { canNestBlock, createBlockInstance } from '@core/orchestrator';
+import { blockElementSignal } from '@core/signal/blockElement';
+import { macroIdToEmail, tryMacroId } from '@core/user';
+import { matches } from '@core/util/match';
 import Minimize from '@phosphor/arrows-in.svg';
 import Clipboard from '@phosphor/clipboard.svg';
 import ClockIcon from '@phosphor/clock.svg';
@@ -74,6 +76,23 @@ const stringifyPreviewBox = ([width, height]: PreviewBox): [string, string] => {
   const widthStr = typeof width === 'string' ? width : `${width}px`;
   const heightStr = typeof height === 'string' ? height : `${height}px`;
   return [widthStr, heightStr];
+};
+
+function documentCopyOrigin(): string {
+  if (!globalThis.__CONATION_HOSTED_LEGACY__) {
+    return getConfiguredStandaloneOperatorOrigin();
+  }
+
+  let hostname = window.location.hostname.replace('www.', '').toLowerCase();
+  if (hostname === 'localhost') {
+    return getConfiguredStandaloneOperatorOrigin();
+  }
+  return `https://${hostname}`;
+}
+
+const displayOwner = (ownerId: string): string => {
+  const userId = tryMacroId(ownerId);
+  return userId ? macroIdToEmail(userId) : ownerId;
 };
 
 export function DocumentCard(props: DocumentCardDecoratorProps) {
@@ -277,18 +296,14 @@ function DocumentCardInner(props: DocumentCardDecoratorProps) {
 
   const handleCopy = () => {
     try {
-      let hostname = window.location.hostname.replace('www.', '').toLowerCase();
-      if (hostname === 'localhost') {
-        hostname = 'dev.macro.com';
-      }
-      let link = `https://${hostname}/app/${props.blockName}/${props.documentId}`;
+      let link = `${documentCopyOrigin()}/app/${props.blockName}/${props.documentId}`;
 
       if (props.blockParams && Object.keys(props.blockParams).length > 0) {
         const queryParams = new URLSearchParams(props.blockParams).toString();
         link += `?${queryParams}`;
       }
       navigator.clipboard.writeText(link);
-      toast.success('Copied document link to clipboard');
+      toast.success(t('editor.document.linkCopied'));
     } catch (e) {
       console.error(e);
     }
@@ -369,11 +384,15 @@ function DocumentCardInner(props: DocumentCardDecoratorProps) {
               <Dropdown.Group>
                 <Dropdown.Item onSelect={convertToMention}>
                   <Minimize class="size-4 shrink-0" />
-                  <span class="flex-1 truncate">{t('auto.convert_to_inline_mention')}</span>
+                  <span class="flex-1 truncate">
+                    {t('editor.document.convertToInlineMention')}
+                  </span>
                 </Dropdown.Item>
                 <Dropdown.Item onSelect={handleCopy}>
                   <Clipboard class="size-4 shrink-0" />
-                  <span class="flex-1 truncate">{t('auto.copy_link')}</span>
+                  <span class="flex-1 truncate">
+                    {t('editor.document.copyLink')}
+                  </span>
                 </Dropdown.Item>
               </Dropdown.Group>
               <Dropdown.Group>
@@ -394,7 +413,7 @@ function DocumentCardInner(props: DocumentCardDecoratorProps) {
             {(owner) => (
               <div class="flex items-center text-xs text-ink-extra-muted">
                 <UserIcon class="size-3 mr-1" />
-                <span class="truncate">{owner().replace('macro|', '')}</span>
+                <span class="truncate">{displayOwner(owner())}</span>
               </div>
             )}
           </Show>

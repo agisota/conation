@@ -1,4 +1,5 @@
 import { openChatWithInput } from '@app/features/chat/ChatWithAgentButton';
+import { t } from '@app/lib/i18n';
 import { createActivityTracker } from '@channel/activity-tracker';
 import { DebugSuspense } from '@channel/DebugSuspense';
 import type { ChannelInputProps } from '@channel/Input/ChannelInput';
@@ -25,6 +26,10 @@ import { SwipableRowProvider } from '@components/app/mobile/SwipableRow';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import { useSplitPanel } from '@components/app/split-layout/layoutUtils';
 import {
+  buildMentionMarkdownString,
+  markdownToPlainText,
+} from '@conation/lexical-core';
+import {
   EntityLoadGate,
   toEntityLoadError,
 } from '@core/component/EntityLoadGate';
@@ -43,10 +48,6 @@ import {
   extractUserMentions,
   trimEdgeUserMentions,
 } from '@core/util/taskExtraction';
-import {
-  buildMentionMarkdownString,
-  markdownToPlainText,
-} from '@conation/lexical-core';
 import {
   invalidateChannelsActivity,
   useUpdateChannelsActivityMutation,
@@ -235,8 +236,8 @@ export function Channel(props: ChannelProps) {
         if (!loadAroundMessageId || !isMissingChannelMessageError(error))
           return;
 
-        toast.alert('Message no longer available', {
-          subtext: 'Showing the latest messages instead.',
+        toast.alert(t('channel.feedback.messageUnavailable'), {
+          subtext: t('channel.feedback.showingLatestMessages'),
         });
         clearStaleRestoredChannelData(props.channelId);
         targetMessageController.reset();

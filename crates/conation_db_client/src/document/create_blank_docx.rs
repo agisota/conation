@@ -174,7 +174,7 @@ mod tests {
         let document_metadata = create_blank_docx(
             pool.clone(),
             "document-name",
-            MacroUserIdStr::parse_from_str("macro|user@user.com").unwrap(),
+            MacroUserIdStr::parse_from_str("conation|user@user.com").unwrap(),
             None,
             &SharePermissionV2::new_document_share_permission(Some(FileType::Docx), None),
             vec![SaveBomPart {
@@ -186,7 +186,7 @@ mod tests {
 
         assert!(!document_metadata.document_id.is_empty());
         assert_eq!(document_metadata.document_name, "document-name".to_string());
-        assert_eq!(document_metadata.owner.as_ref(), "macro|user@user.com");
+        assert_eq!(document_metadata.owner.as_ref(), "conation|user@user.com");
 
         Ok(())
     }

@@ -4,9 +4,9 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use fusionauth::error::FusionAuthClientError;
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_middleware::tracking::ClientIp;
+use fusionauth::error::FusionAuthClientError;
 use model::response::ErrorResponse;
 use serde_utils::urlencode::UrlEncoded;
 use url::Url;

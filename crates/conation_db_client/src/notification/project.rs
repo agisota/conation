@@ -35,7 +35,10 @@ mod tests {
         let mut users = get_project_notification_users(&pool, "p1").await?;
         users.sort();
 
-        assert_eq!(users, vec!["macro|user2@user.com", "macro|user@user.com"]);
+        assert_eq!(
+            users,
+            vec!["conation|user2@user.com", "conation|user@user.com"]
+        );
         Ok(())
     }
 }

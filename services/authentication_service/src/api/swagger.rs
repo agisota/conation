@@ -21,7 +21,7 @@ use utoipa::OpenApi;
 use crate::api::cursor_api_key::{CursorApiKeyStatus, put_cursor_api_key::PutCursorApiKeyRequest};
 use crate::api::email::generate_email_link::GenerateEmailLinkRequest;
 use crate::api::email::resend_fusionauth_verify_user_email::ResendFusionauthVerifyUserEmailRequest;
-use crate::api::jwt::conation_api_token::MacroApiTokenResponse;
+use crate::api::jwt::conation_api_token::ConationApiTokenResponse;
 use crate::api::link::create_in_progress_link::CreateInProgressLinkResponse;
 use crate::api::link::github::{GithubLinkStatusResponse, InitGithubLinkResponse};
 use crate::api::link::gmail::{GmailLinkStatusResponse, InitGmailLinkResponse};
@@ -56,7 +56,8 @@ use model::user::{
 #[derive(OpenApi)]
 #[openapi(
         info(
-                terms_of_service = "https://macro.com/terms",
+                terms_of_service = "https://conation.dev/terms",
+                license(name = "GNU Affero General Public License v3.0", identifier = "AGPL-3.0-only"),
         ),
         paths(
                 /// /health
@@ -184,7 +185,7 @@ use model::user::{
                         PostGetNamesRequestBody,
                         UserTokensResponse,
                         UserLinkResponse,
-                        MacroApiTokenResponse,
+                        ConationApiTokenResponse,
                         CreateUserRequest,
                         ResendFusionauthVerifyUserEmailRequest,
                         GenerateEmailLinkRequest,
@@ -248,7 +249,7 @@ use model::user::{
                 ),
         ),
         tags(
-            (name = "auth service", description = "Macro Authentication Service")
+            (name = "auth service", description = "Conation Authentication Service")
         )
     )]
 pub struct ApiDoc;
@@ -290,6 +291,23 @@ mod tests {
                 .get("GithubLinkStatusResponse")
                 .is_some()
         );
+    }
+
+    #[test]
+    fn conation_api_token_openapi_marks_email_as_optional() {
+        let openapi = serde_json::to_value(ApiDoc::openapi()).unwrap();
+        let parameters = &openapi["paths"]["/jwt/conation_api_token"]["get"]["parameters"];
+        let email = parameters
+            .as_array()
+            .and_then(|parameters| {
+                parameters
+                    .iter()
+                    .find(|parameter| parameter["name"] == "email")
+            })
+            .expect("Conation API token email query parameter");
+
+        assert_eq!(email["in"], "query");
+        assert_eq!(email["required"], false);
     }
 
     #[test]

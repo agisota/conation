@@ -44,4 +44,6 @@ pub struct User {
     pub last_name: Option<String>,
     /// Display name, set by the identity provider reconcile lambda on SSO signup
     pub full_name: Option<String>,
+    /// Profile image URL supplied by FusionAuth or the upstream identity provider.
+    pub image_url: Option<String>,
 }

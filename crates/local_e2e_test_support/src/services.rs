@@ -158,11 +158,12 @@ impl LocalE2eServices {
         )
     }
 
-    /// Connection gateway websocket URL with a `macro-api-token` query param.
+    /// Connection gateway websocket URL with a `conation-api-token` query param.
     pub fn connection_gateway_ws_url_with_token(&self, token: &str) -> anyhow::Result<String> {
         let mut url = Url::parse(&self.connection_gateway_ws_url)
             .with_context(|| format!("invalid websocket URL {}", self.connection_gateway_ws_url))?;
-        url.query_pairs_mut().append_pair("macro-api-token", token);
+        url.query_pairs_mut()
+            .append_pair("conation-api-token", token);
         Ok(url.to_string())
     }
 }

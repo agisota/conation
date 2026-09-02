@@ -1,63 +1,53 @@
 ---
-title: "Blocks"
+title: "Блоки"
 icon: "cubes"
-description: "Blocks are at the core of Macro's philosophy. They are designed to work together like legos."
+description: "Блоки — базовая модель Conation для документов, почты, задач, каналов и других рабочих объектов."
 ---
 
-Everything in Macro is a **block**. The current first-party block types are `md` (documents), `email`, `channel`, `chat` (agents), `automation`, `project` (tasks), `contact` (crm), `company` (crm), `call`, `canvas`, `code`, `image`, `video`, `pdf`, and `unknown` (fallback).
+В Conation почти всё рабочее содержимое представлено как **блок**. Блок можно открыть, упомянуть, встроить в документ, найти через общий поиск и связать с другими объектами.
 
-## Splits
+Текущие встроенные типы блоков: `md` (документы), `email`, `channel`, `chat` (агенты), `automation`, `project` (задачи), `contact` (CRM), `company` (CRM), `call`, `canvas`, `code`, `image`, `video`, `pdf` и `unknown` как резервный тип для неизвестных объектов.
 
-On desktop (not on mobile), Macro has its own window manager that lets you multi-task in your browser in one tab. By default when you open Macro you have one _split_.
+<Note>
+  Старые скриншоты прежнего интерфейса удалены из активной страницы. Новые
+  иллюстрации для Conation нужно подготовить отдельно: русская локализация,
+  тестовые данные, без персональной информации.
+</Note>
 
-In general, you can use <kbd>shift</kbd>\+click to open an @mention or list item in a new split.
+## Панели
 
-Each split maintains its own history. Use <kbd>opt</kbd> <kbd>\[</kbd> or <kbd>opt</kbd> <kbd>\]</kbd> to move back and forward, or just press the chevron icons in the top bar of the split.
+В настольной версии Conation работает как рабочая поверхность с несколькими панелями внутри одной вкладки браузера. На мобильных устройствах этот режим не используется.
 
-Create a split with <kbd>cmd</kbd>\+<kbd>\\</kbd>, focus left/right with <kbd>shift</kbd>\+<kbd>h</kbd> / <kbd>shift</kbd>\+<kbd>l</kbd>, maximize with <kbd>shift</kbd>\+<kbd>escape</kbd>, close with <kbd>cmd</kbd>\+<kbd>escape</kbd>.
+Обычно <kbd>shift</kbd> + click по @упоминанию или элементу списка открывает объект в новой панели.
 
-<Frame>
-  ![Multiple splits open side by side in a single Macro tab](/images/Screenshot-2026-06-09-at-4.49.29-PM.png)
-</Frame>
+У каждой панели есть собственная история навигации. Используйте <kbd>opt</kbd> + <kbd>[</kbd> и <kbd>opt</kbd> + <kbd>]</kbd>, чтобы перейти назад или вперед, либо нажимайте кнопки-стрелки в верхней панели.
 
-The number of splits you can have open at once is determined by your monitor size and zoom. If there isn't room for another split, Macro won't open a new one until you close one.
+Создать новую панель: <kbd>cmd</kbd> + <kbd>{"\\"}</kbd>.
 
-## Previews
+Перевести фокус влево или вправо: <kbd>shift</kbd> + <kbd>h</kbd> / <kbd>shift</kbd> + <kbd>l</kbd>.
 
-Most block types have on-hover previews to provide context without needing to click. When you @mention a block in any markdown area (a task, doc, channel, etc.), anyone who hovers over the mention sees the preview. For example, here is a task preview:
+Развернуть текущую панель: <kbd>shift</kbd> + <kbd>escape</kbd>.
 
-<Frame>
-  <img
-    src="/images/Screenshot-2026-06-09-at-4.49.50-PM.png"
-    alt="A hover preview of a task mention showing the task's status and details"
-    title="Task hover preview"
-    className="mx-auto"
-    style={{ width:"81%" }}
-  />
-</Frame>
+Закрыть панель: <kbd>cmd</kbd> + <kbd>escape</kbd>.
 
-## Embeds
+Количество одновременно открытых панелей зависит от размера монитора и масштаба интерфейса. Если места недостаточно, Conation не откроет новую панель, пока вы не закроете одну из текущих.
 
-Most blocks embed read-only in a markdown doc, with editing and markup tools disabled. Note that permissions are not auto-granted for embeds or mentions in documents, unlike mentions in channels, where channel members get access automatically. You'll have to also share the files you embed.
+## Предпросмотр
 
-<Frame>
-  ![A block embedded read-only inside a markdown document](/images/Screenshot-2026-06-09-at-4.50.07-PM.png)
-</Frame>
+У большинства типов блоков есть предпросмотр при наведении: можно быстро понять контекст, не открывая объект полностью. Если упомянуть блок в области Markdown — например в задаче, документе или канале — другие пользователи увидят предпросмотр при наведении.
 
-To create an embed, first create an @mention by hitting `@` or dragging and dropping, then hover and click **Convert to embed**.
+Предпросмотр особенно полезен для задач, документов, email-тредов и файлов: он сокращает переключения между экранами и помогает читать обсуждение без потери контекста.
 
-<Frame>
-  <img
-    src="/images/Screenshot-2026-06-09-at-4.50.18-PM.png"
-    alt="The Convert to embed option shown when hovering an @mention"
-    title="Convert to embed"
-    className="mx-auto"
-    style={{ width:"59%" }}
-  />
-</Frame>
+## Встроенные блоки
 
-## More about blocks
+Большинство блоков можно встроить в markdown-документ в режиме только для чтения. Встроенный блок сохраняет контекст прямо внутри документа, но инструменты редактирования и разметки при этом отключены.
 
-- **References, sharing & permissions**: every block has a References panel (backlinks to everywhere it's mentioned or embedded) and the same share dialog, with owner / editor / commenter / viewer access levels plus public links for documents.
-- **Real-time collaboration**: collaborative blocks (docs, pdf markup) sync through **Loro CRDTs** over a **Cloudflare Durable Objects** backend: the Rust `sync-service` spins up one Durable Object "room" per document, and clients connect over WebSocket to `/document/:id`. This is what gives you multiplayer editing, presence cursors, and full offline support.
-- **Search & Inbox**: one unified [Search](/product/search) index covers every block type, filterable by type and by mentioned person. The unified [Inbox](/product/inbox) pulls open notifications from across blocks into a single recency-sorted list.
+Права доступа не выдаются автоматически для встроенных блоков и упоминаний в документах. Это отличается от упоминаний в каналах, где участники канала получают доступ автоматически. Если вы встраиваете файл или документ, отдельно проверьте настройки доступа.
+
+Чтобы встроить блок, сначала добавьте @упоминание через `@` или перетащите объект в документ, затем наведите курсор и выберите **Встроить блок**.
+
+## Связи между блоками
+
+- **Ссылки, доступ и права:** у каждого блока есть панель References с обратными ссылками на места, где блок упомянут или встроен. Диалог доступа использует общую модель прав: owner, editor, commenter, viewer и public links для документов.
+- **Совместное редактирование:** совместные блоки, например документы и PDF-разметка, синхронизируются через **Loro CRDTs** поверх **Cloudflare Durable Objects**. Rust `sync-service` создает одну Durable Object room на документ, а клиенты подключаются по WebSocket к `/document/:id`.
+- **Search и Inbox:** общий [поиск](/product/search) индексирует все типы блоков и поддерживает фильтры по типу и упомянутым людям. [Единые входящие](/product/inbox) собирают открытые уведомления из разных блоков в один список по времени.

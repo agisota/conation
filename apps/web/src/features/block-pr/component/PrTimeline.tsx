@@ -1,5 +1,5 @@
-import type { InputSnapshot } from '@channel/Input/types';
 import { t } from '@app/lib/i18n';
+import type { InputSnapshot } from '@channel/Input/types';
 import type { DiscussionSource } from '@core/comments/discussion';
 import {
   DiscussionInput,
@@ -65,7 +65,7 @@ export function PrTimeline(props: {
           ) : (
             <CaretRight class="size-3" />
           )}
-          <span class="text-xs">{t('auto.discussion')}</span>
+          <span class="text-xs">{t('pullRequest.discussion.title')}</span>
         </button>
         <div class="flex-1 border-t border-edge-muted" />
         <Show when={botCount() > 0}>
@@ -73,7 +73,7 @@ export function PrTimeline(props: {
             class="shrink-0"
             checked={hideBots()}
             onChange={setHideBots}
-            label={`Hide bots (${botCount()})`}
+            label={t('pullRequest.actions.hideBots', { count: botCount() })}
             labelClass="text-xs text-ink-muted"
           />
         </Show>
@@ -108,7 +108,7 @@ export function PrTimeline(props: {
                   <DiscussionInput
                     input={{
                       mode: 'channel',
-                      placeholder: 'Leave a comment...',
+                      placeholder: t('pullRequest.comment.placeholder'),
                     }}
                     onSend={handleCreateThread}
                     onReady={(handle) => {

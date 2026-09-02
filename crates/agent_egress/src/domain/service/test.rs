@@ -3,15 +3,15 @@ use crate::domain::model::{
     AgentSessionId, BearerToken, GitEndpoint, GitService, McpDestination, McpServerSlug, ProxyBody,
     RepoSlug, SessionGrant, UpstreamCall, UpstreamCredential,
 };
+use conation_user_id::user_id::MacroUserIdStr;
 use http::header::{AUTHORIZATION, HeaderMap, HeaderName, HeaderValue};
 use http::{Method, StatusCode};
 use http_body_util::{BodyExt, Empty};
-use conation_user_id::user_id::MacroUserIdStr;
 use std::sync::Mutex;
 use url::Url;
 
 fn owner() -> MacroUserIdStr<'static> {
-    MacroUserIdStr::try_from_email("owner@macro.com").expect("a valid user id")
+    MacroUserIdStr::try_from_email("owner@example.com").expect("a valid user id")
 }
 
 fn empty_body() -> ProxyBody {
@@ -390,11 +390,11 @@ async fn strips_hop_by_hop_headers_from_the_response() {
     assert_eq!(names(response.headers()), ["mcp-session-id"]);
 }
 
-/// The proxy is staff-only for now: a session owned outside macro.com gets
-/// nothing, whatever its token says - told only, in our words, that staff
-/// membership is what it lacks.
+/// An authenticated session may use its own connections regardless of the
+/// owner's email domain. The owner-scoped grant and upstream credential still
+/// provide the security boundary.
 #[tokio::test]
-async fn a_session_owned_outside_conation_gets_nothing() {
+async fn a_session_owner_on_any_email_domain_uses_only_its_own_credentials() {
     let service = EgressServiceImpl::new(
         StubSessions(Ok(SessionGrant {
             session: AgentSessionId::new(),
@@ -406,24 +406,26 @@ async fn a_session_owned_outside_conation_gets_nothing() {
         SpyForwarder::answering(&[]),
     );
 
-    let refusal = service
+    service
         .proxy(
             &SessionToken::new("token"),
             datadog(),
             request(Method::POST, &[]),
         )
         .await
-        .expect_err("refused");
+        .expect("proxied");
 
     assert!(
-        matches!(refusal, EgressError::Unauthenticated(_)),
-        "{refusal}"
+        service
+            .credentials
+            .asked
+            .lock()
+            .expect("lock")
+            .iter()
+            .any(|(owner, _)| owner == "conation|visitor@example.com"),
+        "credential resolution must use the verified session owner"
     );
-    assert!(
-        service.credentials.asked.lock().expect("lock").is_empty(),
-        "an outside owner must never reach credential resolution"
-    );
-    assert!(!service.forward.was_called());
+    assert!(service.forward.was_called());
 }
 
 /// Resolution reads the owner's connected servers, so an unverified token

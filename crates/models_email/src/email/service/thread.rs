@@ -285,7 +285,7 @@ pub struct UserThreadsPage {
 
 #[derive(Debug, Clone)]
 pub struct UserThreadIds {
-    pub conation_user_id: String,
+    pub macro_user_id: String,
     pub thread_ids: Vec<Uuid>,
 }
 

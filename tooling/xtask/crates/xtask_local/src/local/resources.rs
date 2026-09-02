@@ -38,7 +38,7 @@ pub const STATIC_FILE_TABLE: &str = "static-file-metadata";
 /// An alias rather than a key id: `CreateKey` mints a random id on every run,
 /// so a key id could not be baked into the compose env, while an alias is
 /// stable and KMS accepts one anywhere a key id goes.
-pub const CURSOR_API_KEY_KMS_ALIAS: &str = "alias/macro-local-cursor-api-key";
+pub const CURSOR_API_KEY_KMS_ALIAS: &str = "alias/conation-local-cursor-api-key";
 
 /// The full LocalStack URL for `queue` (docker-network host — services run in
 /// containers and reach LocalStack by its compose alias).
@@ -115,7 +115,10 @@ pub const QUEUES: &[Queue] = &[
     },
     Queue {
         name: conation_queues::WebhookEventQueue::LOCAL,
-        bindings: &[(conation_queues::WebhookEventQueue::OVERRIDE_ENV_VAR_NAME, Url)],
+        bindings: &[(
+            conation_queues::WebhookEventQueue::OVERRIDE_ENV_VAR_NAME,
+            Url,
+        )],
     },
     Queue {
         name: conation_queues::EmailBackfillQueue::LOCAL,
@@ -227,7 +230,7 @@ pub const QUEUES: &[Queue] = &[
 /// Every local S3 bucket and the env var that references it.
 pub const BUCKETS: &[Bucket] = &[
     Bucket {
-        name: "macro-email-attachments",
+        name: "conation-email-attachments",
         env_key: "ATTACHMENT_BUCKET",
     },
     Bucket {
@@ -247,7 +250,7 @@ pub const BUCKETS: &[Bucket] = &[
         env_key: "UPLOAD_STAGING_BUCKET",
     },
     Bucket {
-        name: "macro-call-recording-local",
+        name: "conation-call-recording-local",
         env_key: "CALL_RECORDING_BUCKET_NAME",
     },
 ];

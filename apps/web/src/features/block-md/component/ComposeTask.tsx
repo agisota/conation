@@ -1,5 +1,5 @@
-import { useSplitLayout } from '@components/app/split-layout/layout';
 import { t } from '@app/lib/i18n';
+import { useSplitLayout } from '@components/app/split-layout/layout';
 import { useSplitPanelOrThrow } from '@components/app/split-layout/layoutUtils';
 import { buildConfig } from '@core/component/LexicalMarkdown/builder/MarkdownConfigBuilder';
 import { MarkdownShell } from '@core/component/LexicalMarkdown/builder/MarkdownShell';
@@ -303,7 +303,9 @@ export function ComposeTaskTitleEditor(props: {
         portalScope={props.portalScope}
       />
       <Show when={showPlaceholder()}>
-        <div class="pointer-events-none absolute top-1.5 text-xl font-medium text-ink-placeholder">{t('auto.new_task')}</div>
+        <div class="pointer-events-none absolute top-1.5 text-xl font-medium text-ink-placeholder">
+          {t('markdown.task.new')}
+        </div>
       </Show>
     </div>
   );
@@ -480,18 +482,18 @@ export function ComposeTask(props: ComposeTaskProps) {
       await navigator.clipboard.writeText(url);
       linkCopied = true;
     } catch {
-      toast.failure('Failed to copy link to clipboard');
+      toast.failure(t('markdown.actions.copyLinkFailed'));
     }
 
     const snapshotParams = optimisticSnapshot
       ? { params: { optimisticSnapshot }, preserveParams: true as const }
       : {};
 
-    toast.success('Task created', {
-      subtext: linkCopied ? 'Link copied' : undefined,
+    toast.success(t('markdown.task.created'), {
+      subtext: linkCopied ? t('markdown.actions.linkCopied') : undefined,
       actions: [
         {
-          label: 'Open',
+          label: t('markdown.actions.open'),
           icon: ArrowSquareOutIcon,
           onClick: () => {
             openWithSplit(
@@ -501,7 +503,7 @@ export function ComposeTask(props: ComposeTaskProps) {
           },
         },
         {
-          label: 'Open (New Split)',
+          label: t('markdown.actions.openInNewSplit'),
           icon: SplitIcon,
           onClick: () => {
             openWithSplit(
@@ -521,7 +523,7 @@ export function ComposeTask(props: ComposeTaskProps) {
     const taskContent = content().trim();
 
     if (!taskTitle) {
-      setErrorMessage('Please give this task a title');
+      setErrorMessage(t('markdown.task.titleRequired'));
       return;
     }
     setErrorMessage('');
@@ -745,7 +747,7 @@ export function ComposeTask(props: ComposeTaskProps) {
   registerHotkey({
     hotkey: 'cmd+enter',
     scopeId: composeHotkeyScope,
-    description: 'Create task',
+    description: () => t('markdown.task.create'),
     keyDownHandler: () => {
       handleCreateTask();
       return true;
@@ -756,7 +758,7 @@ export function ComposeTask(props: ComposeTaskProps) {
   const editorConfig = buildConfig('markdown')
     .withMentions()
     .withTags({
-      applyTargetLabel: 'Task',
+      applyTargetLabel: t('markdown.task.title'),
       isApplied: (tag) => composerTags.isApplied(tag.optionId),
       onCreate: (tag) => {
         void composerTags.applyTag(tag.scope, tag.optionId);
@@ -796,7 +798,7 @@ export function ComposeTask(props: ComposeTaskProps) {
               onMouseDown={handleContinueInSplit}
               disabled={isCreating()}
               tabIndex={-1}
-              tooltip="Continue editing in split"
+              tooltip={t('markdown.compose.continueInSplit')}
               size="icon-sm"
             >
               <ArrowsOutIcon />
@@ -807,12 +809,14 @@ export function ComposeTask(props: ComposeTaskProps) {
           <Button
             onMouseDown={handleClearDraft}
             tabIndex={-1}
-            tooltip="Clear Draft"
+            tooltip={t('markdown.task.clearDraft')}
             size="sm"
             variant="outline"
             depth={3}
             class="bg-surface px-3"
-          >{t('auto.clear_draft')}</Button>
+          >
+            {t('markdown.task.clearDraft')}
+          </Button>
         </Show>
         <Show when={splitPanel?.handle.isPopover()}>
           <Button
@@ -867,7 +871,9 @@ export function ComposeTask(props: ComposeTaskProps) {
                   ? undefined
                   : initialState.content || undefined
               }
-              placeholder={props.placeholder ?? 'Add description...'}
+              placeholder={
+                props.placeholder ?? t('markdown.task.descriptionPlaceholder')
+              }
               portalScope={portalScope()}
             />
           </Scroll>
@@ -954,7 +960,7 @@ export function ComposeTask(props: ComposeTaskProps) {
         <Button
           onMouseDown={() => attachInputRef?.click()}
           tabIndex={-1}
-          tooltip="Attach image or video"
+          tooltip={t('markdown.task.attachMedia')}
           size="icon-sm"
         >
           <PaperclipIcon />
@@ -964,7 +970,7 @@ export function ComposeTask(props: ComposeTaskProps) {
             labelClass="text-xs text-ink-muted font-normal whitespace-nowrap"
             onChange={setCreateMore}
             checked={createMore()}
-            label="Create More"
+            label={t('markdown.task.createMore')}
           />
           <Button
             onClick={handleCreateTask}
@@ -972,7 +978,9 @@ export function ComposeTask(props: ComposeTaskProps) {
             variant={title().trim().length === 0 ? 'ghost' : 'accent'}
             depth={3}
             class="gap-3 rounded-lg border-0"
-          >{t('auto.create_task')}<Hotkey shortcut="cmd+enter" theme="current" />
+          >
+            {t('markdown.task.create')}
+            <Hotkey shortcut="cmd+enter" theme="current" />
           </Button>
         </div>
       </div>

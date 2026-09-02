@@ -1,9 +1,9 @@
+import { t } from '@app/lib/i18n';
 import {
   MobileDrawer,
   scrollToFocusedInput,
 } from '@components/app/mobile/MobileDrawer';
 import { pressPulse } from '@components/app/mobile/pressPulse';
-import { t } from '@app/lib/i18n';
 import { ScrollIndicators } from '@core/component/VerticalScrollIndicators';
 import { Accordion } from '@kobalte/core/accordion';
 import ChevronDownIcon from '@phosphor/caret-down.svg';
@@ -76,11 +76,21 @@ function MultiFacetContent(props: { facet: MultiFacet }) {
     <>
       {/* Any-of/all-of segment (e.g. tags), mirroring the desktop chip. */}
       <Show when={props.facet.mode?.visible()}>
-        <div class="flex bg-surface mb-px" role="radiogroup" aria-label={t('auto.match')}>
+        <div
+          class="flex bg-surface mb-px"
+          role="radiogroup"
+          aria-label={t('soup.search.filters.matchLabel')}
+        >
           <For
             each={[
-              { id: 'any', label: 'Match any' } as const,
-              { id: 'all', label: 'Match all' } as const,
+              {
+                id: 'any',
+                label: t('soup.search.filters.matchAny'),
+              } as const,
+              {
+                id: 'all',
+                label: t('soup.search.filters.matchAll'),
+              } as const,
             ]}
           >
             {(option) => {
@@ -169,12 +179,18 @@ function MultiFacetContent(props: { facet: MultiFacet }) {
                     class="shrink-0 px-3 text-xs text-ink-muted hover:text-ink hover:bg-hover transition-colors"
                     aria-label={
                       isSole()
-                        ? `Show all ${props.facet.label.toLowerCase()}`
-                        : `Show only ${option.label}`
+                        ? t('soup.filters.selection.showAll', {
+                            label: props.facet.label,
+                          })
+                        : t('soup.filters.selection.showOnly', {
+                            label: option.label,
+                          })
                     }
                     onClick={() => props.facet.onOnly?.(option.id)}
                   >
-                    {isSole() ? 'All' : 'Only'}
+                    {isSole()
+                      ? t('soup.filters.selection.all')
+                      : t('soup.filters.selection.only')}
                   </button>
                 </Show>
               </div>
@@ -182,7 +198,9 @@ function MultiFacetContent(props: { facet: MultiFacet }) {
           }}
         </For>
         <Show when={filteredOptions().length === 0}>
-          <div class="px-4 py-2 text-sm text-ink-muted">{t('auto.no_results')}</div>
+          <div class="px-4 py-2 text-sm text-ink-muted">
+            {t('soup.search.filters.noResults')}
+          </div>
         </Show>
       </div>
     </>
@@ -264,7 +282,7 @@ export const MobileSearchFilterDrawer = (props: { class?: string }) => {
     >
       <MobileDrawer.Trigger
         as={Button}
-        aria-label={t('auto.open_search_filters')}
+        aria-label={t('soup.search.filters.openLabel')}
         variant="ghost"
         size="sm"
         depth={3}
@@ -284,7 +302,10 @@ export const MobileSearchFilterDrawer = (props: { class?: string }) => {
 
       <MobileDrawer.Portal>
         <MobileDrawer.Overlay class="fixed inset-0 z-modal-overlay bg-modal-overlay pattern-diagonal-4 pattern-edge-muted" />
-        <MobileDrawer.Content aria-label={t('auto.search_filters')} class="h-[80vh]">
+        <MobileDrawer.Content
+          aria-label={t('soup.search.filters.drawerLabel')}
+          class="h-[80vh]"
+        >
           <MobileDrawer.Handle class="pb-1" />
 
           <div class="relative flex-1 min-h-0">
@@ -294,7 +315,9 @@ export const MobileSearchFilterDrawer = (props: { class?: string }) => {
               onFocusIn={(e) => scrollToFocusedInput(e)}
               class="overflow-y-auto scrollbar-hidden h-full pb-1"
             >
-              <MobileDrawer.Label>{t('auto.filters')}</MobileDrawer.Label>
+              <MobileDrawer.Label>
+                {t('soup.search.filters.sectionLabel')}
+              </MobileDrawer.Label>
               <Accordion multiple collapsible defaultValue={['type']}>
                 <For each={facets()}>
                   {(facet) => <FacetSection facet={facet} />}
@@ -311,7 +334,9 @@ export const MobileSearchFilterDrawer = (props: { class?: string }) => {
                 size="sm"
                 class="min-h-10 rounded-lg bg-active!"
               >
-                <XIcon class="size-3!" />{t('auto.clear_all')}</Button>
+                <XIcon class="size-3!" />
+                {t('soup.search.filters.clearAll')}
+              </Button>
             </div>
           </Show>
         </MobileDrawer.Content>

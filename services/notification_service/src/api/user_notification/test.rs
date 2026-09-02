@@ -13,7 +13,7 @@ fn make_row(
     metadata: serde_json::Value,
 ) -> UserNotificationRow<serde_json::Value> {
     UserNotificationRow {
-        owner_id: MacroUserIdStr::parse_from_str("macro|user@example.com").unwrap(),
+        owner_id: MacroUserIdStr::parse_from_str("conation|user@example.com").unwrap(),
         notification_id: uuid::Uuid::nil(),
         notification_event_type: event_type.to_string(),
         entity: EntityType::Document.with_entity_string("entity-1".to_string()),
@@ -25,7 +25,7 @@ fn make_row(
         deleted_at: None,
         notification_metadata: metadata,
         sender_id: Some(
-            MacroUserIdStr::parse_from_str("macro|sender@example.com")
+            MacroUserIdStr::parse_from_str("conation|sender@example.com")
                 .unwrap()
                 .into_owned(),
         ),
@@ -56,7 +56,7 @@ fn to_typed_row_document_mention() {
         "documentName": "doc.pdf",
         "messageContent": "see doc.pdf",
         "messageId": "msg-1",
-        "owner": "macro|owner@example.com"
+        "owner": "conation|owner@example.com"
     });
     let row = make_row("document_mention", metadata);
     let typed = to_typed_row(row).expect("should deserialize document_mention");
@@ -69,7 +69,7 @@ fn to_typed_row_document_mention() {
 #[test]
 fn to_typed_row_channel_invite() {
     let metadata = serde_json::json!({
-        "invitedBy": "macro|admin@example.com",
+        "invitedBy": "conation|admin@example.com",
         "channelType": "Private",
         "channelName": "secret"
     });
@@ -84,7 +84,7 @@ fn to_typed_row_channel_invite() {
 #[test]
 fn to_typed_row_channel_message_send() {
     let metadata = serde_json::json!({
-        "sender": "macro|sender@example.com",
+        "sender": "conation|sender@example.com",
         "messageContent": "hi",
         "messageId": "msg-2",
         "channelType": "DirectMessage",
@@ -103,7 +103,7 @@ fn to_typed_row_channel_message_reply() {
     let metadata = serde_json::json!({
         "threadId": "thread-1",
         "messageId": "msg-3",
-        "userId": "macro|replier@example.com",
+        "userId": "conation|replier@example.com",
         "messageContent": "reply",
         "channelType": "Public",
         "channelName": "general"
@@ -139,7 +139,7 @@ fn to_typed_row_invite_to_team() {
         "teamName": "Engineering",
         "teamId": "00000000-0000-0000-0000-000000000001",
         "teamInviteId": "00000000-0000-0000-0000-000000000002",
-        "invitedBy": "macro|admin@example.com",
+        "invitedBy": "conation|admin@example.com",
         "role": null
     });
     let row = make_row("invite_to_team", metadata);
@@ -155,7 +155,7 @@ fn to_typed_row_task_assigned() {
     let metadata = serde_json::json!({
         "taskId": "task-1",
         "taskName": "Fix bug",
-        "assignedBy": "macro|manager@example.com"
+        "assignedBy": "conation|manager@example.com"
     });
     let row = make_row("task_assigned", metadata);
     let typed = to_typed_row(row).expect("should deserialize task_assigned");
@@ -276,14 +276,14 @@ fn to_typed_row_preserves_row_fields() {
     let metadata = serde_json::json!({
         "taskId": "task-1",
         "taskName": "My Task",
-        "assignedBy": "macro|assigner@example.com"
+        "assignedBy": "conation|assigner@example.com"
     });
     let row = make_row("task_assigned", metadata);
     let typed = to_typed_row(row).expect("should deserialize");
 
     assert_eq!(
         typed.owner_id,
-        MacroUserIdStr::parse_from_str("macro|user@example.com").unwrap()
+        MacroUserIdStr::parse_from_str("conation|user@example.com").unwrap()
     );
     assert_eq!(typed.notification_id, uuid::Uuid::nil());
     assert_eq!(typed.notification_event_type, "task_assigned");
@@ -327,7 +327,7 @@ fn api_user_notification_and_realtime_notif_metadata_serialize_identically() {
 
     // Create ApiUserNotification (used by HTTP API)
     let api_notif = ApiUserNotification {
-        owner_id: MacroUserIdStr::parse_from_str("macro|user@example.com")
+        owner_id: MacroUserIdStr::parse_from_str("conation|user@example.com")
             .unwrap()
             .into_owned(),
         notification_id,
@@ -341,7 +341,7 @@ fn api_user_notification_and_realtime_notif_metadata_serialize_identically() {
         deleted_at: None,
         notification_metadata: NotifEvent::ChannelMention(notif_metadata.clone()),
         sender_id: Some(
-            MacroUserIdStr::parse_from_str("macro|sender@example.com")
+            MacroUserIdStr::parse_from_str("conation|sender@example.com")
                 .unwrap()
                 .into_owned(),
         ),
@@ -360,7 +360,7 @@ fn api_user_notification_and_realtime_notif_metadata_serialize_identically() {
         deleted_at: None,
         notification_metadata: TaggedContent::new(notif_metadata),
         sender_id: Some(
-            MacroUserIdStr::parse_from_str("macro|sender@example.com")
+            MacroUserIdStr::parse_from_str("conation|sender@example.com")
                 .unwrap()
                 .into_owned(),
         ),

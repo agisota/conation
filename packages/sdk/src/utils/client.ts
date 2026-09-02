@@ -53,7 +53,9 @@ export class MacroClient {
     this.hosts = hosts;
     this.localPortmap = localPortmap;
     const envWebUrl =
-      typeof process !== 'undefined' ? process.env.MACRO_WEB_URL : undefined;
+      typeof process !== 'undefined'
+        ? process.env.CONATION_WEB_URL
+        : undefined;
     this.webAppUrl =
       opts.webAppUrl ??
       envWebUrl ??
@@ -90,7 +92,7 @@ export class MacroClient {
 
     const envWebhookSecret =
       typeof process !== 'undefined'
-        ? process.env.MACRO_WEBHOOK_SECRET
+        ? process.env.CONATION_WEBHOOK_SECRET
         : undefined;
     const webhookSecret = opts.webhookSecret ?? envWebhookSecret;
     if (webhookSecret) {
@@ -117,7 +119,7 @@ export class MacroClient {
 
   /**
    * The authenticated caller's mentionable principal — `bot|<uuid>` for bot
-   * auth, `macro|<email>` for user auth — fetched once and cached. Failed
+   * auth, `conation|<email>` for user auth — fetched once and cached. Failed
    * lookups are not cached, so a later call retries.
    */
   myPrincipalId(): Promise<string> {
@@ -138,26 +140,26 @@ export class MacroClient {
       const source = this.authConfig.token;
       const tok = typeof source === 'function' ? await source() : source;
       if (this.authConfig.type === 'bot') {
-        request.headers.set('x-macro-bot-token', tok);
+        request.headers.set('x-conation-bot-token', tok);
         // A per-call scope wins: the channel webhook fallback pins `user`,
         // the only scope a user-owned bot can present (a team scope with no
         // owning team is rejected outright).
-        if (!request.headers.has('x-macro-bot-scope')) {
+        if (!request.headers.has('x-conation-bot-scope')) {
           request.headers.set(
-            'x-macro-bot-scope',
+            'x-conation-bot-scope',
             this.authConfig.scope ?? (this.requestedAs ? 'user' : 'team'),
           );
         }
         if (this.requestedAs) {
           request.headers.set(
-            'x-macro-bot-for-macro-user-id',
+            'x-conation-bot-for-conation-user-id',
             this.requestedAs,
           );
         }
       } else {
         if (tok.startsWith('mbot_')) {
           throw new Error(
-            "bot API key passed as a user token — use auth: { type: 'bot', token } (or MACRO_BOT_TOKEN)",
+            "bot API key passed as a user token — use auth: { type: 'bot', token } (or CONATION_BOT_TOKEN)",
           );
         }
         request.headers.set('Authorization', `Bearer ${tok}`);
@@ -171,11 +173,11 @@ export class MacroClient {
 function resolveEnv(opts: MacroOpts): Env {
   if (opts.env) return opts.env;
   const fromEnv =
-    typeof process !== 'undefined' ? process.env.MACRO_ENV : undefined;
+    typeof process !== 'undefined' ? process.env.CONATION_ENV : undefined;
   if (!fromEnv) return 'dev';
   if (!(fromEnv in HOSTS)) {
     throw new Error(
-      `invalid MACRO_ENV "${fromEnv}" — expected local, dev, or prod`,
+      `invalid CONATION_ENV "${fromEnv}" — expected local, dev, or prod`,
     );
   }
   return fromEnv as Env;
@@ -185,12 +187,12 @@ function resolveAuth(opts: MacroOpts): MacroAuth {
   if (opts.auth) return opts.auth;
   if (opts.token) return { type: 'user', token: opts.token };
   const envApiKey =
-    typeof process !== 'undefined' ? process.env.MACRO_API_KEY : undefined;
+    typeof process !== 'undefined' ? process.env.CONATION_API_KEY : undefined;
   const envBotToken =
-    typeof process !== 'undefined' ? process.env.MACRO_BOT_TOKEN : undefined;
+    typeof process !== 'undefined' ? process.env.CONATION_BOT_TOKEN : undefined;
   if (envApiKey && envBotToken) {
     throw new Error(
-      'both MACRO_API_KEY and MACRO_BOT_TOKEN are set — pass auth to new Macro() to pick one',
+      'both CONATION_API_KEY and CONATION_BOT_TOKEN are set — pass auth to new Macro() to pick one',
     );
   }
   if (envBotToken) return { type: 'bot', token: envBotToken };
@@ -200,7 +202,7 @@ function resolveAuth(opts: MacroOpts): MacroAuth {
       envApiKey ??
       (() => {
         throw new Error(
-          'no Macro API token — set MACRO_API_KEY / MACRO_BOT_TOKEN or pass token/auth to new Macro()',
+          'no Conation API token — set CONATION_API_KEY / CONATION_BOT_TOKEN or pass token/auth to new Macro()',
         );
       }),
   };

@@ -32,19 +32,19 @@ impl GithubRepo for PgGithubRepo {
     #[tracing::instrument(skip(self), err)]
     async fn get_github_link_by_user_id<'a>(
         &self,
-        conation_user_id: &MacroUserId<Lowercase<'a>>,
+        macro_user_id: &MacroUserId<Lowercase<'a>>,
     ) -> Result<GithubLink, Self::Err> {
         let link = sqlx::query!(
         r#"
-        SELECT id, conation_id, fusionauth_user_id as "fusionauth_user_id: Uuid", github_username, github_user_id, created_at, updated_at
+        SELECT id, macro_id, fusionauth_user_id as "fusionauth_user_id: Uuid", github_username, github_user_id, created_at, updated_at
         FROM github_links
-        WHERE conation_id = $1
+        WHERE macro_id = $1
         "#,
-        conation_user_id.as_ref()
+        macro_user_id.as_ref()
         )
         .try_map(|r| Ok(GithubLink{
                 id: r.id,
-                conation_id: MacroUserIdStr::parse_from_str(&r.conation_id)
+                macro_id: MacroUserIdStr::parse_from_str(&r.macro_id)
                 .map_err(|e| sqlx::Error::Decode(Box::new(e)))?
                 .into_owned(),
                 fusionauth_user_id: r.fusionauth_user_id,
@@ -69,7 +69,7 @@ impl GithubRepo for PgGithubRepo {
     ) -> Result<GithubLink, Self::Err> {
         let link = sqlx::query!(
         r#"
-        SELECT id, conation_id, fusionauth_user_id as "fusionauth_user_id: Uuid", github_username, github_user_id, created_at, updated_at
+        SELECT id, macro_id, fusionauth_user_id as "fusionauth_user_id: Uuid", github_username, github_user_id, created_at, updated_at
         FROM github_links
         WHERE github_user_id = $1
         ORDER BY created_at ASC
@@ -79,7 +79,7 @@ impl GithubRepo for PgGithubRepo {
         )
         .try_map(|r| Ok(GithubLink{
                 id: r.id,
-                conation_id: MacroUserIdStr::parse_from_str(&r.conation_id)
+                macro_id: MacroUserIdStr::parse_from_str(&r.macro_id)
                 .map_err(|e| sqlx::Error::Decode(Box::new(e)))?
                 .into_owned(),
                 fusionauth_user_id: r.fusionauth_user_id,
@@ -120,7 +120,7 @@ impl GithubRepo for PgGithubRepo {
     async fn get_github_link_by_id(&self, id: &uuid::Uuid) -> Result<GithubLink, Self::Err> {
         let link = sqlx::query!(
         r#"
-        SELECT id, conation_id, fusionauth_user_id as "fusionauth_user_id: Uuid", github_username, github_user_id, created_at, updated_at
+        SELECT id, macro_id, fusionauth_user_id as "fusionauth_user_id: Uuid", github_username, github_user_id, created_at, updated_at
         FROM github_links
         WHERE id = $1
         "#,
@@ -128,7 +128,7 @@ impl GithubRepo for PgGithubRepo {
         )
         .try_map(|r| Ok(GithubLink{
                 id: r.id,
-                conation_id: MacroUserIdStr::parse_from_str(&r.conation_id)
+                macro_id: MacroUserIdStr::parse_from_str(&r.macro_id)
                 .map_err(|e| sqlx::Error::Decode(Box::new(e)))?
                 .into_owned(),
                 fusionauth_user_id: r.fusionauth_user_id,
@@ -150,11 +150,11 @@ impl GithubRepo for PgGithubRepo {
     async fn insert_github_link(&self, link: &GithubLink) -> Result<(), Self::Err> {
         sqlx::query!(
                   r#"
-                  INSERT INTO github_links (id, conation_id, fusionauth_user_id, github_username, github_user_id, created_at, updated_at)
+                  INSERT INTO github_links (id, macro_id, fusionauth_user_id, github_username, github_user_id, created_at, updated_at)
                   VALUES ($1, $2, $3, $4, $5, $6, $7)
                   "#,
                   link.id,
-                  link.conation_id.as_ref(),
+                  link.macro_id.as_ref(),
                   link.fusionauth_user_id,
                   link.github_username,
                   link.github_user_id,

@@ -2,13 +2,13 @@ use axum::Extension;
 use axum::Router;
 use axum::body::Body;
 use axum::http::{Request, StatusCode, header};
-use entity_access::domain::models::TeamRole;
-use http_body_util::BodyExt;
 use conation_authorization::{
     InternalIdentityClaims, MacroAuthorizationError, MacroAuthorizationService,
     MacroAuthorizationState,
 };
 use conation_user_id::user_id::MacroUserIdStr;
+use entity_access::domain::models::TeamRole;
+use http_body_util::BodyExt;
 use model::chat::ChatBasic;
 use model::response::StringIDResponse;
 use model::user::UserContext;
@@ -24,13 +24,13 @@ use crate::inbound::http::router::{
     ChatRouterState, chat_create_router, chat_id_router, chat_view_router,
 };
 use ai_toolset::tool_object::UserToolResponse;
+use conation_user_id::lowercased::Lowercase;
+use conation_user_id::user_id::MacroUserId;
 use entity_access::domain::models::{
     AccessError, AccessLevel, BotAccessScope, BotId, EditAccessLevel, EntityAccessReceipt,
     EntityPermission, EntityType, OwnerAccessLevel, UserTeamInfo, ViewAccessLevel,
 };
 use entity_access::domain::ports::EntityAccessService;
-use conation_user_id::lowercased::Lowercase;
-use conation_user_id::user_id::MacroUserId;
 
 struct MockService;
 

@@ -13,8 +13,8 @@ import { match, P } from 'ts-pattern';
  * fallback) and the rationale for hand-rolling it.
  */
 
-const CALL_RESOLUTION_CHANNEL = 'macro-call-resolution';
-const CALL_RESOLUTION_STORAGE_KEY = 'macro.call-resolution';
+const CALL_RESOLUTION_CHANNEL = 'conation-call-resolution';
+const CALL_RESOLUTION_STORAGE_KEY = 'conation.call-resolution';
 
 export type CallResolution =
   | {

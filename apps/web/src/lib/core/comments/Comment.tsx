@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { URL_PARAMS as MD_URL_PARAMS } from '@block-md/constants';
 import { useMaybeBlockAliasedName } from '@core/block';
 import { StaticMarkdown } from '@core/component/LexicalMarkdown/component/core/StaticMarkdown';
@@ -105,9 +106,9 @@ export function Comment(
           params
         );
         await navigator.clipboard.writeText(url);
-        toast.success('Link copied to clipboard');
+        toast.success(t('comments.link.copied'));
       } catch (_) {
-        toast.failure('Could not copy link');
+        toast.failure(t('comments.link.copyFailed'));
       }
     };
   };
@@ -221,9 +222,9 @@ export function CommentReply(
           params
         );
         await navigator.clipboard.writeText(url);
-        toast.success('Link copied to clipboard');
+        toast.success(t('comments.link.copied'));
       } catch (_) {
-        toast.failure('Could not copy link');
+        toast.failure(t('comments.link.copyFailed'));
       }
     };
   };

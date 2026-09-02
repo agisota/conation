@@ -1,5 +1,5 @@
-import { LoadingSpinner } from '@core/component/LoadingSpinner';
 import { t } from '@app/lib/i18n';
+import { LoadingSpinner } from '@core/component/LoadingSpinner';
 import { toast } from '@core/component/Toast/Toast';
 import { useChannelsContext } from '@core/context/channels';
 import CaretLeftIcon from '@phosphor/caret-left.svg';
@@ -84,7 +84,7 @@ export function BotCreate(props: { channelId?: string; onBack: () => void }) {
   const submit = () => {
     const teamId = teamOwned() ? currentTeam()?.id : undefined;
     if (teamOwned() && (!teamId || !canCreateTeamBot())) {
-      toast.failure('Only team admins and owners can create team bots');
+      toast.failure(t('channel.bots.team.permissionRequired'));
       return;
     }
 
@@ -126,7 +126,9 @@ export function BotCreate(props: { channelId?: string; onBack: () => void }) {
               setCreatedChannelIds([firstChannelId, ...result.addedChannelIds]);
               if (result.failedCount > 0) {
                 toast.failure(
-                  `${result.failedCount} channel assignment${result.failedCount === 1 ? '' : 's'} could not be completed`
+                  t('channel.bots.create.assignmentFailed', {
+                    count: result.failedCount,
+                  })
                 );
               }
             }
@@ -134,7 +136,7 @@ export function BotCreate(props: { channelId?: string; onBack: () => void }) {
           },
           onError: () => {
             setStage('form');
-            toast.failure('Failed to create bot');
+            toast.failure(t('channel.bots.create.failed'));
           },
         }
       );
@@ -166,7 +168,7 @@ export function BotCreate(props: { channelId?: string; onBack: () => void }) {
         },
         onError: () => {
           setStage('form');
-          toast.failure('Failed to create bot');
+          toast.failure(t('channel.bots.create.failed'));
         },
       }
     );
@@ -186,15 +188,21 @@ export function BotCreate(props: { channelId?: string; onBack: () => void }) {
           disabled={pending()}
           onClick={leave}
         >
-          <CaretLeftIcon />{t('auto.back_to_bots')}</Button>
+          <CaretLeftIcon />
+          {t('channel.bots.backToBots')}
+        </Button>
         <Show when={stage() !== 'ready'}>
           <header class="flex items-center gap-3">
             <div class="flex size-10 shrink-0 items-center justify-center rounded-xl border border-edge-muted bg-ink/[0.025] text-ink-muted">
               <RobotIcon class="size-5" />
             </div>
             <div class="min-w-0">
-              <h1 class="text-lg font-semibold tracking-[-0.01em]">{t('auto.create_a_bot')}</h1>
-              <p class="mt-0.5 text-sm text-ink-muted">{t('auto.give_an_integration_a_profile_')}</p>
+              <h1 class="text-lg font-semibold tracking-[-0.01em]">
+                {t('channel.bots.create.title')}
+              </h1>
+              <p class="mt-0.5 text-sm text-ink-muted">
+                {t('channel.bots.create.subtitle')}
+              </p>
             </div>
           </header>
         </Show>
@@ -208,8 +216,8 @@ export function BotCreate(props: { channelId?: string; onBack: () => void }) {
             }}
           >
             <BotFormSection
-              title={t('auto.profile')}
-              description="This is how the bot appears in channels and mentions."
+              title={t('channel.bots.profile.title')}
+              description={t('channel.bots.profile.createDescription')}
             >
               <BotProfileFields
                 value={form}
@@ -245,53 +253,66 @@ export function BotCreate(props: { channelId?: string; onBack: () => void }) {
             />
 
             <BotFormSection
-              title={t('auto.ownership')}
-              description="Bots are personal by default."
+              title={t('channel.bots.ownership.title')}
+              description={t('channel.bots.ownership.description')}
             >
               <div class="flex items-center justify-between gap-4">
                 <div class="min-w-0">
-                  <div class="text-sm font-medium text-ink">{t('auto.team_bot')}</div>
-                  <p class="mt-0.5 text-xs text-ink-muted">{t('auto.share_this_bot_with_your_team_')}</p>
+                  <div class="text-sm font-medium text-ink">
+                    {t('channel.bots.team.title')}
+                  </div>
+                  <p class="mt-0.5 text-xs text-ink-muted">
+                    {t('channel.bots.team.description')}
+                  </p>
                 </div>
                 <ToggleSwitch
                   size="md"
                   checked={teamOwned()}
                   disabled={currentTeamQuery.isLoading || !canCreateTeamBot()}
                   onChange={setTeamOwned}
-                  label={<span>{t('auto.create_as_a_team_bot')}</span>}
+                  label={<span>{t('channel.bots.team.createToggle')}</span>}
                   labelClass="sr-only"
                 />
               </div>
               <Show when={!currentTeamQuery.isLoading && !canCreateTeamBot()}>
                 <p class="mt-3 border-t border-edge-muted pt-3 text-xs text-ink-extra-muted">
                   {currentTeam()
-                    ? 'Only team admins and owners can create team bots.'
-                    : 'Join or create a team to create a team bot.'}
+                    ? t('channel.bots.team.permissionRequired')
+                    : t('channel.bots.team.joinRequired')}
                 </p>
               </Show>
             </BotFormSection>
 
             <BotFormSection
-              title={t('auto.channels')}
-              description="Add the bot now to get ready-to-use webhook URLs."
+              title={t('channel.bots.channels.title')}
+              description={t('channel.bots.channels.createDescription')}
             >
-              <label class="mb-1.5 block text-xs font-medium">{t('auto.add_to_channels')}<span class="text-ink-muted">· optional</span>
+              <label class="mb-1.5 block text-xs font-medium">
+                {t('channel.bots.channels.add')}{' '}
+                <span class="text-ink-muted">
+                  · {t('channel.bots.optional')}
+                </span>
               </label>
               <ChannelMultiSelect
                 channelIds={selectedChannelIds()}
                 onChange={setSelectedChannelIds}
               />
               <p class="mt-2 text-xs text-ink-muted">
-                Each selected channel gets its own webhook URL. You can change
-                these assignments later.
+                {t('channel.bots.channels.assignmentHelp')}
               </p>
             </BotFormSection>
 
             <div class="flex items-center justify-between gap-4 pt-1">
-              <p class="text-xs text-ink-muted">{t('auto.a_webhook_token_is_generated_a')}</p>
+              <p class="text-xs text-ink-muted">
+                {t('channel.bots.create.tokenGenerated')}
+              </p>
               <div class="flex shrink-0 gap-2">
-                <Button type="button" variant="ghost" size="sm" onClick={leave}>{t('common.cancel')}</Button>
-                <Button type="submit" variant="cta" size="sm">{t('auto.create_bot')}</Button>
+                <Button type="button" variant="ghost" size="sm" onClick={leave}>
+                  {t('common.cancel')}
+                </Button>
+                <Button type="submit" variant="cta" size="sm">
+                  {t('channel.bots.create.submit')}
+                </Button>
               </div>
             </div>
           </form>
@@ -301,8 +322,12 @@ export function BotCreate(props: { channelId?: string; onBack: () => void }) {
           <div class="flex min-h-96 flex-col items-center justify-center gap-4 text-center">
             <LoadingSpinner class="size-16 p-4" />
             <div>
-              <div class="text-sm font-medium">Creating your bot…</div>
-              <div class="mt-1 text-xs text-ink-muted">{t('auto.setting_up_its_profile_channel')}</div>
+              <div class="text-sm font-medium">
+                {t('channel.bots.create.creating')}
+              </div>
+              <div class="mt-1 text-xs text-ink-muted">
+                {t('channel.bots.create.creatingDescription')}
+              </div>
             </div>
           </div>
         </Show>

@@ -1,6 +1,7 @@
 use ai_tools::ToolServiceContext;
 use async_trait::async_trait;
 use attachment::image::ImageData;
+use conation_user_id::user_id::MacroUserIdStr;
 use documents::domain::{
     models::LocationQueryParams, ports::DocumentService, response::LocationResponseV3,
 };
@@ -8,7 +9,6 @@ use entity_access::domain::{
     models::{EntityType, ViewAccessLevel},
     ports::EntityAccessService,
 };
-use conation_user_id::user_id::MacroUserIdStr;
 use rmcp::model::{CallToolResult, Content};
 use std::net::IpAddr;
 use std::sync::OnceLock;

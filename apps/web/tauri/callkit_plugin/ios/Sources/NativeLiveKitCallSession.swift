@@ -852,8 +852,8 @@ final class NativeLiveKitCallSession: NSObject, RoomDelegate, @unchecked Sendabl
 
     private func fallbackParticipantName(identity: String) -> String {
         let trimmedIdentity = identity.trimmingCharacters(in: .whitespacesAndNewlines)
-        let emailOrIdentity = trimmedIdentity.hasPrefix("macro|")
-            ? String(trimmedIdentity.dropFirst("macro|".count))
+        let emailOrIdentity = trimmedIdentity.hasPrefix("conation|")
+            ? String(trimmedIdentity.dropFirst("conation|".count))
             : trimmedIdentity
         if let localPart = emailOrIdentity.split(separator: "@").first, !localPart.isEmpty {
             return String(localPart)

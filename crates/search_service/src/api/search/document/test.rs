@@ -755,7 +755,7 @@ fn test_synthesizes_name_highlight_for_content_only_hit() {
     let input = vec![create_test_document_response(
         doc_id,
         "node_1",
-        Some(vec!["<conation_em>test</conation_em>ing body".to_string()]),
+        Some(vec!["<macro_em>test</macro_em>ing body".to_string()]),
     )];
 
     let mut document_histories = HashMap::new();
@@ -774,7 +774,7 @@ fn test_synthesizes_name_highlight_for_content_only_hit() {
         .expect("synthesized name hit should exist");
     assert_eq!(
         name_hit.highlight.name.as_deref(),
-        Some("<conation_em>test</conation_em>ingfoop")
+        Some("<macro_em>test</macro_em>ingfoop")
     );
     assert!(name_hit.node_id.is_none());
     assert!(name_hit.raw_content.is_none());
@@ -789,7 +789,7 @@ fn test_does_not_synthesize_when_name_hit_already_present() {
         goto: None,
         score: None,
         highlight: Highlight {
-            name: Some("<conation_em>test</conation_em> doc".to_string()),
+            name: Some("<macro_em>test</macro_em> doc".to_string()),
             ..Default::default()
         },
         updated_at: None,
@@ -807,7 +807,7 @@ fn test_does_not_synthesize_when_name_hit_already_present() {
             .highlight
             .name
             .as_deref(),
-        Some("<conation_em>test</conation_em> doc")
+        Some("<macro_em>test</macro_em> doc")
     );
 }
 

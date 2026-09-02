@@ -6,6 +6,7 @@ import {
 } from '@core/component/AI/util/stream';
 import { tailContext } from '@core/component/LexicalMarkdown/tailContext';
 import { toast } from '@core/component/Toast/Toast';
+import { t } from '@core/i18n';
 import type { ChatMessageStream } from '@service-connection/stream';
 import { getEntityStreams } from '@service-connection/stream';
 import type { EditorState } from 'lexical';
@@ -60,7 +61,6 @@ export type ChatController = {
 };
 
 export type ChatControllerOptions = {
-  onShowPaywall?: () => void;
   /**
    * Switch the chat to a model from a different provider. When provided, a
    * provider-outage error toast offers a "Switch model" button that calls this.
@@ -110,20 +110,22 @@ export function createChatController(
           if (canSwitch) {
             toast.failure(e.message, {
               duration: 10000,
-              actions: [{ label: 'Switch model', onClick: onSwitchModel! }],
+              actions: [
+                {
+                  label: t('ai.actions.switchModel'),
+                  onClick: onSwitchModel!,
+                },
+              ],
             });
           } else if (e.offerModelSwitch) {
             // Provider outage but nowhere to fall back to (no accessible model
             // on another provider, or every other provider has already failed
             // this session). Don't offer a dead button — tell the user to wait.
-            toast.failure(
-              'The AI provider is currently unavailable. Please try again later.'
-            );
+            toast.failure(t('ai.errors.providerUnavailableRetryLater'));
           } else {
             toast.failure(e.message);
           }
         })
-        .with({ type: 'show_paywall' }, () => options?.onShowPaywall?.())
         .exhaustive();
     }
   }

@@ -7,10 +7,10 @@ use std::sync::Arc;
 
 use channels::domain::models::ChannelContextMessage;
 use channels::domain::ports::ChannelService;
-use entity_access::domain::models::{EntityType, MemberParticipantRole};
-use entity_access::domain::ports::EntityAccessService;
 use conation_user_id::user_id::MacroUserIdStr;
 use conation_uuid::Uuid;
+use entity_access::domain::models::{EntityType, MemberParticipantRole};
+use entity_access::domain::ports::EntityAccessService;
 
 use crate::domain::error::{HarnessError, Result};
 use crate::domain::model::PriorChannelMessage;

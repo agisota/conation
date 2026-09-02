@@ -1,12 +1,12 @@
 use std::{future::Future, marker::PhantomData, pin::Pin, sync::Arc};
 
 use async_graphql::{Context, ID, InputObject, Object, OutputType};
+use conation_user_id::user_id::MacroUserIdStr;
 use email::domain::{
     models::{EmailErr, UpdateThreadLabelsResult},
     ports::EmailService,
 };
 use graphql_common::{parse_id, require_authenticated_user};
-use conation_user_id::user_id::MacroUserIdStr;
 use uuid::Uuid;
 
 #[cfg(test)]

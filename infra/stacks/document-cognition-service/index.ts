@@ -3,7 +3,7 @@ import * as pulumi from '@pulumi/pulumi';
 import {
   config,
   getAiToolsInfra,
-  getMacroApiToken,
+  getConationApiToken,
   stack,
 } from '../../packages/shared';
 import { Queue } from '../../packages/resources';
@@ -135,7 +135,7 @@ const aiProjectionsRefreshTrigger = new AiProjectionsRefreshTrigger(
 export const aiProjectionsRefreshTriggerLambdaName =
   aiProjectionsRefreshTrigger.lambda.name;
 
-const MACRO_API_TOKENS = getMacroApiToken();
+const CONATION_API_TOKENS = getConationApiToken();
 
 const documentCognitionService = new DocumentCognitionService(
   `document-cognition-service-${stack}`,
@@ -149,7 +149,7 @@ const documentCognitionService = new DocumentCognitionService(
     },
     secretKeyArns: [
       jwtSecretKeyArn,
-      MACRO_API_TOKENS.macroApiTokenPublicKeyArn,
+      CONATION_API_TOKENS.conationApiTokenPublicKeyArn,
       authenticationServiceInternalApiKeyArn,
       ...aiTools.secretArns,
     ],

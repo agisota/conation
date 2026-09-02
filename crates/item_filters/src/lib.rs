@@ -78,7 +78,7 @@ pub struct DocumentFilters {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub project_ids: Vec<String>,
 
-    /// Filter by document owner. Examples: ['macro|user1@user.com'], ['macro|user1@user.com', 'macro|user2@user.com']. Empty to search all owners.
+    /// Filter by document owner. Examples: ['conation|user1@user.com'], ['conation|user1@user.com', 'conation|user2@user.com']. Empty to search all owners.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub owners: Vec<String>,
 
@@ -144,7 +144,7 @@ pub struct ChatFilters {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub project_ids: Vec<String>,
 
-    /// Filter by chat owner. Examples: ['macro|user1@user.com'], ['macro|user1@user.com', 'macro|user2@user.com']. Empty to search all owners.
+    /// Filter by chat owner. Examples: ['conation|user1@user.com'], ['conation|user1@user.com', 'conation|user2@user.com']. Empty to search all owners.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub owners: Vec<String>,
 
@@ -666,7 +666,7 @@ pub struct ProjectFilters {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub include_root: bool,
 
-    /// Filter by project owner. Examples: ['macro|user1@user.com'], ['macro|user1@user.com', 'macro|user2@user.com']. Empty to search all owners.
+    /// Filter by project owner. Examples: ['conation|user1@user.com'], ['conation|user1@user.com', 'conation|user2@user.com']. Empty to search all owners.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub owners: Vec<String>,
 

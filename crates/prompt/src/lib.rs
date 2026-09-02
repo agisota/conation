@@ -5,7 +5,7 @@
 //! lifetime. Prompts chain together via [`StaticPrompt::compose`].
 #![deny(missing_docs)]
 
-pub mod about_macro;
+pub mod about_conation;
 pub mod agent_session;
 pub mod channel_mention;
 pub mod citations;
@@ -23,14 +23,14 @@ mod types;
 
 pub use types::{ComposedPrompt, Section, StaticPrompt};
 
-/// The base prompt: tone, math, citations, mentions, do-not rules, and Macro
+/// The base prompt: tone, math, citations, mentions, do-not rules, and Conation
 /// terms. Contains no tool use instructions.
 pub static BASE_PROMPT: ComposedPrompt = tone::PROMPT
     .compose(&math::PROMPT)
     .compose(&citations::PROMPT)
     .compose(&mentions::PROMPT)
     .compose(&do_not::PROMPT)
-    .compose(&about_macro::PROMPT);
+    .compose(&about_conation::PROMPT);
 
 /// The tool-enabled prompt: [`BASE_PROMPT`] with the tool use instructions,
 /// skill-following rules, document-content linking rules, and email inbox
@@ -41,14 +41,14 @@ pub static TOOL_USE_PROMPT: ComposedPrompt = BASE_PROMPT
     .compose(&document_content_links::PROMPT)
     .compose(&email::PROMPT);
 
-/// Citation, do-not, Macro-terms, and document-content-linking rules surfaced
+/// Citation, do-not, Conation-terms, and document-content-linking rules surfaced
 /// to external MCP clients, composed together. These are static; the
 /// item-linking rules for the model's own replies are not, because they
 /// depend on the runtime app base URL — see [`mcp_instructions`].
 ///
 /// Deliberately omits the in-app [`mentions`] section (MCP clients cannot render
 /// `<m-document-mention>` tags in a chat reply) as well as chat tone/style and
-/// general tool-use instructions, which belong to the host client, not to Macro.
+/// general tool-use instructions, which belong to the host client, not to Conation.
 /// [`document_content_links`] is the exception: it still applies over MCP
 /// because it governs content written *into* a Markdown document (via
 /// `CreateDocument`/`EditDocument`), not the model's chat replies. See
@@ -57,20 +57,20 @@ pub static TOOL_USE_PROMPT: ComposedPrompt = BASE_PROMPT
 /// rules cover.
 static MCP_STATIC_INSTRUCTIONS: ComposedPrompt = citations::PROMPT
     .compose(&do_not::PROMPT)
-    .compose(&about_macro::PROMPT)
+    .compose(&about_conation::PROMPT)
     .compose(&document_content_links::PROMPT);
 
 /// Builds the instructions surfaced to external MCP clients via the server
 /// `instructions` field.
 ///
-/// Carries the formatting/correctness rules Macro features depend on so that AI
+/// Carries the formatting/correctness rules Conation features depend on so that AI
 /// used through MCP produces valid output. Item links in the model's own chat
 /// replies are rendered as plain Markdown URLs (built from `base_url`, the
 /// runtime `APP_BASE_URL` value) and lists of items as Markdown tables — NOT
 /// the in-app `<m-document-mention>` markup, which MCP clients cannot render.
-/// Content the model writes *into* a Macro document via `CreateDocument` or
+/// Content the model writes *into* a Conation document via `CreateDocument` or
 /// `EditDocument` is the opposite: it must still use `<m-document-mention>`
-/// tags (see [`document_content_links`]), since the Macro app renders that
+/// tags (see [`document_content_links`]), since the Conation app renders that
 /// content regardless of which surface created it. `base_url` should already
 /// have any trailing slash trimmed.
 pub fn mcp_instructions(base_url: &str) -> String {
@@ -124,7 +124,7 @@ mod tests {
         let instructions = mcp_instructions("https://macro.com");
 
         // Even though the model's own MCP replies must use plain URLs, content
-        // written into a Macro document via CreateDocument/EditDocument must
+        // written into a Conation document via CreateDocument/EditDocument must
         // still use `<m-document-mention>` tags — the fix for the "CreateDocument
         // over MCP can't link docs correctly" bug.
         assert!(instructions.contains("CreateDocument"));
@@ -135,7 +135,9 @@ mod tests {
         // The plain-URL rule and the mention-tag rule must not silently
         // contradict each other: the plain-URL section explicitly scopes
         // itself to the model's own replies, not to document content.
-        assert!(instructions.contains("does NOT apply to content you write into a Macro document"));
+        assert!(
+            instructions.contains("does NOT apply to content you write into a Conation document")
+        );
     }
 
     #[test]
@@ -176,3 +178,6 @@ mod tests {
         assert!(in_app.contains("apply to your own conversational replies only"));
     }
 }
+
+#[cfg(test)]
+mod rebrand_test;

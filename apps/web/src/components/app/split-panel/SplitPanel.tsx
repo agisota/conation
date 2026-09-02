@@ -1,5 +1,5 @@
-import { TOKENS } from '@core/hotkey/tokens';
 import { t } from '@app/lib/i18n';
+import { TOKENS } from '@core/hotkey/tokens';
 import CaretLeftIcon from '@phosphor/caret-left.svg';
 import CaretRightIcon from '@phosphor/caret-right.svg';
 import CloseIcon from '@phosphor/x.svg';

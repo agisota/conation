@@ -3,9 +3,9 @@ import {
   type TurnOffCalendarTarget,
 } from '@app/features/calendar/components/TurnOffCalendarDialog';
 import { useCalendarUiFlag } from '@app/features/calendar/hooks/use-calendar-ui-flag';
-import { t } from '@app/lib/i18n';
 import { openAddInboxDialog } from '@app/features/inbox/AddInboxDialog';
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import {
   ENABLE_EMAIL_SIGNATURES_FLAG,
@@ -90,9 +90,9 @@ export function EmailCard() {
   const removeInboxMutation = useRemoveInboxMutation({
     onSuccess: (_data, linkId) => {
       clearSignatureState(linkId);
-      toast.success('Inbox removed');
+      toast.success(t('settings.email.toast.removed'));
     },
-    onError: () => toast.failure('Failed to remove inbox. Please try again.'),
+    onError: () => toast.failure(t('settings.email.toast.removeFailed')),
   });
   const [removeTarget, setRemoveTarget] = createSignal<{
     id: string;
@@ -134,11 +134,11 @@ export function EmailCard() {
       (res) => {
         toast.success(
           res.already_in_progress
-            ? 'Sync already in progress'
-            : 'Re-sync started'
+            ? t('settings.email.toast.syncInProgress')
+            : t('settings.email.toast.resyncStarted')
         );
       },
-      () => toast.failure('Failed to start re-sync')
+      () => toast.failure(t('settings.email.toast.resyncFailed'))
     );
     setResyncingIds((prev) => {
       const next = new Set(prev);
@@ -159,17 +159,20 @@ export function EmailCard() {
       <SettingsCard>
         <IntegrationRow
           icon={<GmailIcon />}
-          title={t('auto.gmail')}
-          description="Read, organize, and act on your email."
+          title={t('settings.email.gmail.title')}
+          description={t('settings.email.gmail.description')}
           status={
             <Show when={emailActive()}>
-              <StatusDot state="connected" label="Connected" />
+              <StatusDot
+                state="connected"
+                label={t('settings.email.status.connected')}
+              />
             </Show>
           }
         >
           <Show when={!emailActive()}>
             <ConnectAction
-              label="Connect"
+              label={t('settings.email.actions.connect')}
               onClick={onConnectEmail}
               disabled={isEmailActionPending()}
             />
@@ -243,15 +246,15 @@ export function EmailCard() {
           </For>
           <Show when={multiInboxFlag().enabled}>
             <SettingsRow
-              label="Add another inbox"
-              description="Connect more Gmail accounts."
+              label={t('settings.email.addInbox.label')}
+              description={t('settings.email.addInbox.description')}
             >
-              <Tooltip label="Add inbox">
+              <Tooltip label={t('settings.email.actions.addInbox')}>
                 <Button
                   variant="outline"
                   size="icon-sm"
                   depth={3}
-                  aria-label={t('auto.add_inbox')}
+                  aria-label={t('settings.email.actions.addInbox')}
                   onClick={openAddInboxDialog}
                 >
                   <PlusIcon class="size-4" />
@@ -277,22 +280,21 @@ export function EmailCard() {
       >
         <Panel depth={2} class="rounded-xl">
           <Panel.Header class="px-6">
-            <Dialog.Title class="text-ink text-sm font-semibold">{t('auto.remove_inbox')}</Dialog.Title>
+            <Dialog.Title class="text-ink text-sm font-semibold">
+              {t('settings.email.removeDialog.title')}
+            </Dialog.Title>
           </Panel.Header>
           <Panel.Body class="p-6 font-sans flex flex-col gap-3">
             <Dialog.Description class="text-ink-muted text-sm/tight font-normal">
               <Show
                 when={removeTarget()?.isOwn}
-                fallback={
-                  <>
-                    Remove access to{' '}
-                    <span class="text-ink">{removeTarget()?.email}</span>? The
-                    inbox and its data stay with its owner.
-                  </>
-                }
-              >{t('common.remove')}<span class="text-ink">{removeTarget()?.email}</span>?
-                This clears all of its email data from Macro and cannot be
-                undone.
+                fallback={t('settings.email.removeDialog.sharedDescription', {
+                  email: removeTarget()?.email ?? '',
+                })}
+              >
+                {t('settings.email.removeDialog.ownDescription', {
+                  email: removeTarget()?.email ?? '',
+                })}
               </Show>
             </Dialog.Description>
             <div class="pt-3 justify-end items-center gap-3 inline-flex">
@@ -300,8 +302,12 @@ export function EmailCard() {
                 variant="outline"
                 depth={3}
                 onClick={() => setRemoveTarget(null)}
-              >{t('common.cancel')}</Button>
-              <Button variant="danger" depth={3} onClick={handleRemoveInbox}>{t('common.remove')}</Button>
+              >
+                {t('common.cancel')}
+              </Button>
+              <Button variant="danger" depth={3} onClick={handleRemoveInbox}>
+                {t('common.remove')}
+              </Button>
             </div>
           </Panel.Body>
         </Panel>
@@ -312,11 +318,13 @@ export function EmailCard() {
 
 function syncStatusLabel(status: SyncStatus): string {
   return match(status)
-    .with(SyncStatus.SYNCING, () => 'Syncing…')
-    .with(SyncStatus.UP_TO_DATE, () => 'Up to date')
-    .with(SyncStatus.ERROR, () => 'Error — re-sync')
-    .with(SyncStatus.NEEDS_REAUTH, () => 'Reconnect to resume sync')
-    .with(SyncStatus.INACTIVE, () => 'Disabled')
+    .with(SyncStatus.SYNCING, () => t('settings.email.sync.status.syncing'))
+    .with(SyncStatus.UP_TO_DATE, () => t('settings.email.sync.status.upToDate'))
+    .with(SyncStatus.ERROR, () => t('settings.email.sync.status.error'))
+    .with(SyncStatus.NEEDS_REAUTH, () =>
+      t('settings.email.sync.status.needsReauth')
+    )
+    .with(SyncStatus.INACTIVE, () => t('settings.email.sync.status.disabled'))
     .exhaustive();
 }
 
@@ -326,12 +334,23 @@ function syncStatusLabel(status: SyncStatus): string {
 // Rough "time left" from the recent backfill rate. Rounds up and bins into
 // s / m / h so the estimate doesn't visibly jitter between progress events.
 function formatEta(seconds: number): string {
-  if (seconds < 60) return `~${Math.max(1, Math.ceil(seconds))}s left`;
+  if (seconds < 60) {
+    return t('settings.email.sync.eta.seconds', {
+      count: Math.max(1, Math.ceil(seconds)),
+    });
+  }
   const minutes = Math.ceil(seconds / 60);
-  if (minutes < 60) return `~${minutes}m left`;
+  if (minutes < 60) {
+    return t('settings.email.sync.eta.minutes', { count: minutes });
+  }
   const hours = Math.floor(minutes / 60);
   const remMinutes = minutes % 60;
-  return remMinutes > 0 ? `~${hours}h ${remMinutes}m left` : `~${hours}h left`;
+  return remMinutes > 0
+    ? t('settings.email.sync.eta.hoursMinutes', {
+        hours,
+        minutes: remMinutes,
+      })
+    : t('settings.email.sync.eta.hours', { count: hours });
 }
 
 function BackfillProgressBar(props: { progress: BackfillProgress }) {
@@ -350,12 +369,14 @@ function BackfillProgressBar(props: { progress: BackfillProgress }) {
     <div class="flex w-60 flex-col gap-2">
       <span class="flex items-center gap-1.5 text-xs text-ink-muted">
         <ArrowsClockwiseIcon class="size-3 shrink-0 animate-spin" />
-        Backfilling…
+        {t('settings.email.sync.backfilling')}
       </span>
       <div class="flex items-center gap-6 whitespace-nowrap text-xs text-ink-muted">
         <span>
-          {props.progress.completed.toLocaleString()} of{' '}
-          {props.progress.total.toLocaleString()} threads
+          {t('settings.email.sync.progress', {
+            completed: props.progress.completed,
+            total: props.progress.total,
+          })}
         </span>
         <Show when={etaLabel()}>{(label) => <span>{label()}</span>}</Show>
       </div>
@@ -388,12 +409,16 @@ function DisabledPrimaryRow(props: { email: string; onEnable: () => void }) {
           <span class="ph-no-capture text-sm truncate text-ink-muted">
             {props.email}
           </span>
-          <Chip label="Primary" />
-          <Chip label="Disabled" />
+          <Chip label={t('settings.email.inbox.primary')} />
+          <Chip label={t('settings.email.status.disabled')} />
         </div>
-        <span class="text-xs text-ink-muted">{t('auto.sync_disabled')}</span>
+        <span class="text-xs text-ink-muted">
+          {t('settings.email.sync.disabled')}
+        </span>
       </div>
-      <Button variant="outline" size="sm" depth={3} onClick={props.onEnable}>{t('auto.enable')}</Button>
+      <Button variant="outline" size="sm" depth={3} onClick={props.onEnable}>
+        {t('settings.email.actions.enable')}
+      </Button>
     </div>
   );
 }
@@ -425,10 +450,10 @@ function InboxRow(props: {
               {props.link.email_address}
             </span>
             <Show when={props.isPrimary}>
-              <Chip label="Primary" />
+              <Chip label={t('settings.email.inbox.primary')} />
             </Show>
             <Show when={!props.isPrimary && !props.isOwn}>
-              <Chip label="Shared" />
+              <Chip label={t('settings.email.inbox.shared')} />
             </Show>
           </div>
           <Show when={ENABLE_INBOX_SYNC_STATUS}>
@@ -466,20 +491,24 @@ function InboxRow(props: {
                   props.hasCompletedBackfill
                 }
               >
-                <span class="text-xs text-ink-muted">{t('auto.initial_sync_complete')}</span>
+                <span class="text-xs text-ink-muted">
+                  {t('settings.email.sync.initialComplete')}
+                </span>
               </Match>
             </Switch>
           </Show>
         </div>
         <div class="flex items-center gap-2 shrink-0">
           <Show when={emailSignaturesFlag().enabled && props.isOwn}>
-            <Tooltip label="Edit signature">
+            <Tooltip label={t('settings.email.signature.edit')}>
               <Button
                 variant="outline"
                 size="icon-sm"
                 depth={3}
                 onClick={() => toggleSignatureExpanded(props.link.id)}
-                aria-label={`Edit signature for ${props.link.email_address}`}
+                aria-label={t('settings.email.signature.editFor', {
+                  email: props.link.email_address,
+                })}
                 aria-expanded={showSignature()}
                 aria-controls={signatureSectionId}
               >
@@ -498,8 +527,12 @@ function InboxRow(props: {
               size="sm"
               depth={3}
               onClick={props.onReconnect}
-              aria-label={`Reconnect ${props.link.email_address}`}
-            >{t('auto.reconnect')}</Button>
+              aria-label={t('settings.email.actions.reconnectFor', {
+                email: props.link.email_address,
+              })}
+            >
+              {t('settings.email.actions.reconnect')}
+            </Button>
           </Show>
           {/* Its own consent flow, since Reconnect asks for the Gmail scopes
               only. Shown alongside Reconnect rather than after it: this
@@ -513,8 +546,12 @@ function InboxRow(props: {
               size="sm"
               depth={3}
               onClick={props.onEnableCalendar}
-              aria-label={`Enable calendar for ${props.link.email_address}`}
-            >{t('auto.enable_calendar')}</Button>
+              aria-label={t('settings.email.actions.enableCalendarFor', {
+                email: props.link.email_address,
+              })}
+            >
+              {t('settings.email.actions.enableCalendar')}
+            </Button>
           </Show>
           {/* Only the owner sees this: turning calendar off deletes the
               inbox's calendar data, which a delegate must not do. Offered
@@ -529,20 +566,22 @@ function InboxRow(props: {
                 props.link.has_calendar_data)
             }
           >
-            <Tooltip label="Turn off calendar">
+            <Tooltip label={t('settings.email.actions.turnOffCalendar')}>
               <Button
                 variant="outline"
                 size="icon-sm"
                 depth={3}
                 onClick={props.onTurnOffCalendar}
-                aria-label={`Turn off calendar for ${props.link.email_address}`}
+                aria-label={t('settings.email.actions.turnOffCalendarFor', {
+                  email: props.link.email_address,
+                })}
               >
                 <CalendarSlashIcon class="size-4" />
               </Button>
             </Tooltip>
           </Show>
           <Show when={ENABLE_INBOX_RESYNC}>
-            <Tooltip label="Force sync">
+            <Tooltip label={t('settings.email.actions.forceSync')}>
               <Button
                 variant="outline"
                 size="icon-sm"
@@ -553,19 +592,23 @@ function InboxRow(props: {
                     props.link.sync_status === SyncStatus.SYNCING)
                 }
                 onClick={props.onResync}
-                aria-label={`Force sync ${props.link.email_address}`}
+                aria-label={t('settings.email.actions.forceSyncFor', {
+                  email: props.link.email_address,
+                })}
               >
                 <ArrowsClockwiseIcon class="size-4" />
               </Button>
             </Tooltip>
           </Show>
-          <Tooltip label="Remove inbox">
+          <Tooltip label={t('settings.email.actions.removeInbox')}>
             <Button
               variant="outline"
               size="icon-sm"
               depth={3}
               onClick={props.onRemove}
-              aria-label={`Remove ${props.link.email_address}`}
+              aria-label={t('settings.email.actions.removeFor', {
+                email: props.link.email_address,
+              })}
             >
               <XIcon class="size-4" />
             </Button>

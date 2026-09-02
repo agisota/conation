@@ -1,6 +1,9 @@
 //! Handlers for project permissions and caller access levels.
 
 use axum::{Json, extract::State};
+use conation_authorization::{
+    MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal,
+};
 use entity_access::{
     domain::{
         models::{OwnerAccessLevel, ViewAccessLevel},
@@ -8,7 +11,6 @@ use entity_access::{
     },
     inbound::axum_extractors::ProjectAccessLevelExtractor,
 };
-use conation_authorization::{MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal};
 use models_permissions::share_permission::{SharePermissionV2, access_level::AccessLevel};
 
 use super::ProjectRouterState;
@@ -29,7 +31,7 @@ use crate::domain::{models::ProjectError, ports::ProjectService};
 )]
 #[tracing::instrument(
     skip(state, user, access),
-    fields(user_id = ?user.authorization.user.conation_user_id),
+    fields(user_id = ?user.authorization.user.macro_user_id),
     err
 )]
 pub async fn get_project_permissions_handler<T, Svc, Auth>(
@@ -65,7 +67,7 @@ where
 )]
 #[tracing::instrument(
     skip(state, user, access),
-    fields(user_id = ?user.authorization.user.conation_user_id),
+    fields(user_id = ?user.authorization.user.macro_user_id),
     err
 )]
 pub async fn get_project_access_level_handler<T, Svc, Auth>(

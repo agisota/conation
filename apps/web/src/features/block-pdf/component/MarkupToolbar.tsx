@@ -1,5 +1,5 @@
-import { useOwnedCommentPlaceableSelector } from '@block-pdf/signal/permissions';
 import { t } from '@app/lib/i18n';
+import { useOwnedCommentPlaceableSelector } from '@block-pdf/signal/permissions';
 import {
   activePlaceableIdSignal,
   placeableModeSignal,
@@ -47,7 +47,7 @@ export function MarkupToolbar() {
         <Show when={canEdit()}>
           <Button
             size="icon-sm"
-            label="Text Box"
+            label={t('pdf.markup.textBox')}
             variant="ghost"
             onClick={() => {
               setMode(PayloadMode.FreeTextAnnotation);
@@ -57,7 +57,7 @@ export function MarkupToolbar() {
           </Button>
           <Button
             size="icon-sm"
-            label="Signature"
+            label={t('pdf.markup.signature')}
             variant="ghost"
             onClick={() => setMode(PayloadMode.Signature)}
           >
@@ -66,7 +66,7 @@ export function MarkupToolbar() {
         </Show>
         <Button
           size="icon-sm"
-          label="Comment"
+          label={t('pdf.markup.comment')}
           variant="ghost"
           onClick={() => {
             setMode(PayloadMode.Thread);

@@ -89,10 +89,10 @@ export function useItemPreviewData(entity: Accessor<ItemEntity>) {
     const preview = item();
 
     if (preview.loading || preview.access !== 'access') {
-      return 'Untitled';
+      return t('core.itemPreview.untitled');
     }
 
-    const baseName = preview.name ?? 'Untitled';
+    const baseName = preview.name ?? t('core.itemPreview.untitled');
 
     return baseName;
   };
@@ -140,7 +140,9 @@ function ButtonNoAccess(props: StatusDisplayProps) {
       <div class={cn(DEFAULT_ICON_CLASS, props.iconClass)}>
         <EyeSlash class="text-ink-muted size-3.5" />
       </div>
-      <div class={cn(DEFAULT_TEXT_CLASS, props.textClass)}>{t('auto.no_access')}</div>
+      <div class={cn(DEFAULT_TEXT_CLASS, props.textClass)}>
+        {t('core.itemPreview.noAccess')}
+      </div>
     </div>
   );
 }
@@ -151,7 +153,7 @@ function InlineNoAccess() {
       <span class="relative top-[0.125em] inline-flex size-[1em] shrink-0">
         <EyeSlash class="size-[1em] text-ink-muted" />
       </span>
-      <span class="text-ink-muted">{t('auto.no_access')}</span>
+      <span class="text-ink-muted">{t('core.itemPreview.noAccess')}</span>
     </span>
   );
 }
@@ -168,7 +170,9 @@ function ButtonDeleted(props: StatusDisplayProps) {
       <div class={cn(DEFAULT_ICON_CLASS, props.iconClass)}>
         <TrashSimple class="text-ink-muted size-3.5" />
       </div>
-      <div class={cn(DEFAULT_TEXT_CLASS, props.textClass)}>{t('auto.deleted')}</div>
+      <div class={cn(DEFAULT_TEXT_CLASS, props.textClass)}>
+        {t('core.itemPreview.deleted')}
+      </div>
     </div>
   );
 }
@@ -179,7 +183,7 @@ function InlineDeleted() {
       <span class="relative top-[0.125em] inline-flex size-[1em] shrink-0">
         <TrashSimple class="size-[1em] text-ink-muted" />
       </span>
-      <span class="text-ink-muted">{t('auto.deleted')}</span>
+      <span class="text-ink-muted">{t('core.itemPreview.deleted')}</span>
     </span>
   );
 }
@@ -198,7 +202,9 @@ function ButtonLoading(props: StatusDisplayProps) {
           <LoadingSpinner />
         </div>
       </div>
-      <div class={cn(DEFAULT_TEXT_CLASS, props.textClass)}>{t('common.loading')}</div>
+      <div class={cn(DEFAULT_TEXT_CLASS, props.textClass)}>
+        {t('common.loading')}
+      </div>
     </div>
   );
 }

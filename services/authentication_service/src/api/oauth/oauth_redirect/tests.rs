@@ -3,6 +3,14 @@ use cool_asserts::assert_matches;
 
 use super::*;
 
+#[test]
+fn session_cache_error_display_is_product_neutral() {
+    let error = InnerErr::MacroCacheErr(anyhow::anyhow!("unavailable")).to_string();
+
+    assert_eq!(error, "session cache error: unavailable");
+    assert!(!error.contains("Macro"));
+}
+
 #[tokio::test]
 async fn it_should_deserialize_query_params() {
     let sso_state = SsoState {
@@ -104,7 +112,7 @@ async fn it_writes_session_code_to_db() {
     let mut dummy = DummyCb::default();
     let res = get_redirect_url(
         &Some(SsoState {
-            original_url: Some("https://macro.com".parse().unwrap()),
+            original_url: Some("https://conation.dev".parse().unwrap()),
             is_mobile: true,
             referral_code: None,
         }),
@@ -113,7 +121,7 @@ async fn it_writes_session_code_to_db() {
     .await
     .unwrap();
     assert_eq!(dummy.called, 1);
-    assert_eq!(res.domain(), Some("macro.com"));
+    assert_eq!(res.domain(), Some("conation.dev"));
     assert_eq!(res.scheme(), "https");
     let query = res.query_pairs();
     let p = query.collect::<Vec<_>>();
@@ -145,7 +153,7 @@ async fn it_allows_conation_scheme_original_url() {
     let mut dummy = DummyCb::default();
     let res = get_redirect_url(
         &Some(SsoState {
-            original_url: Some("macro://login".parse().unwrap()),
+            original_url: Some("conation://login".parse().unwrap()),
             is_mobile: false,
             referral_code: None,
         }),
@@ -154,7 +162,7 @@ async fn it_allows_conation_scheme_original_url() {
     .await
     .unwrap();
     assert_eq!(dummy.called, 0);
-    assert_eq!(res.as_str(), "macro://login");
+    assert_eq!(res.as_str(), "conation://login");
 }
 
 #[tokio::test]

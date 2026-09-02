@@ -1,12 +1,11 @@
-pub(crate) static INVITE_USER_SUBJECT: &str = "Invitation to Macro";
+pub(crate) static INVITE_USER_SUBJECT: &str = "Invitation to Conation";
 
 /// Builds the user invite message
-pub(crate) fn build_user_invite_message(org_name: &str, environment: &str) -> String {
-    let prefix = match environment {
-        "prod" => "".to_string(),
-        _ => format!("{}.", environment),
-    };
-
+pub(crate) fn build_user_invite_message(
+    org_name: &str,
+    invite_url: &str,
+    support_email: &str,
+) -> String {
     let result = r#"<!DOCTYPE html>
 <html lang="en" xmlns:v="urn:schemas-microsoft-com:vml">
    <head>
@@ -43,7 +42,7 @@ pub(crate) fn build_user_invite_message(org_name: &str, environment: &str) -> St
          }
       </style>
       <![endif]-->      
-      <title>Macro Access Code</title>
+      <title>Conation Invitation</title>
       <style>.hover-text-gray-600:hover {
          color: #4b5563 !important
          }
@@ -94,19 +93,17 @@ pub(crate) fn build_user_invite_message(org_name: &str, environment: &str) -> St
    </head>
    <body style="word-break: break-word; -webkit-font-smoothing: antialiased; margin: 0; width: 100%; background-color: #f9fafb; padding: 0">
       <div style="display: none">
-         To verify your email address, enter this code in the Macro app.
+         You've been invited to join a workspace in Conation.
          &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847;
       </div>
-      <div role="article" aria-roledescription="email" aria-label="Macro Access Code" lang="en">
+      <div role="article" aria-roledescription="email" aria-label="Conation Invitation" lang="en">
          <table style="width: 100%; font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" cellpadding="0" cellspacing="0" role="presentation">
             <tr>
                <td align="center" style="background-color: #f9fafb">
                   <table style="width: 100%; max-width: 640px; padding-left: 16px; padding-right: 16px" cellpadding="0" cellspacing="0" role="presentation">
                      <tr>
                         <td class="xs-py-8 xs-px-6" style="padding: 56px; text-align: center">
-                           <a href="https://macro.com">
-                           <img src="https://coparse-release-artifact-storage-bucket.s3.amazonaws.com/logos/logo.png" width="200" alt="Macro" style="border: 0; max-width: 100%; vertical-align: middle">
-                           </a>
+                           <a href="{INVITE_URL}" style="color: #111827; font-family: Arial, sans-serif; font-size: 30px; font-weight: 700; letter-spacing: -0.03em; text-decoration: none">Conation</a>
                         </td>
                      </tr>
                      <tr>
@@ -118,10 +115,10 @@ pub(crate) fn build_user_invite_message(org_name: &str, environment: &str) -> St
                                        Welcome Aboard!
                                     </h1>
                                     <h2 class="xs-text-2xl" style="margin-top: 0; margin-bottom: 64px; text-align: center; font-size: 20px; font-weight: 300; color: #374151">
-                                        You've been invited to join {ORG_NAME} on Macro.
+                                        You've been invited to join {ORG_NAME} on Conation.
                                     </h2>
                                     <p style="text-align: center;">
-                                        <a class="CTA" href="https://{PREFIX}macro.com/app/?login=true">Accept Your Invitation</a>
+                                        <a class="CTA" href="{INVITE_URL}">Accept Your Invitation</a>
                                     </p>
                                  </td>
                               </tr>
@@ -132,7 +129,7 @@ pub(crate) fn build_user_invite_message(org_name: &str, environment: &str) -> St
                         <td class="xs-py-10" style="padding-top: 48px; padding-bottom: 48px; text-align: center; font-size: 14px; color: #9ca3af">
                            <p style="margin: 0">
                               Questions? Email us at
-                              <a href="mailto:support@macro.com" class="hover-text-gray-600" style="font-weight: 500; color: #6b7280">support@macro.com</a>
+                              <a href="mailto:{SUPPORT_EMAIL}" class="hover-text-gray-600" style="font-weight: 500; color: #6b7280">{SUPPORT_EMAIL}</a>
                            </p>
                         </td>
                      </tr>
@@ -144,26 +141,11 @@ pub(crate) fn build_user_invite_message(org_name: &str, environment: &str) -> St
    </body>
 </html>"#;
 
-    let result = result.replace("{PREFIX}", prefix.as_str());
-    result.replace("{ORG_NAME}", org_name)
+    result
+        .replace("{INVITE_URL}", invite_url)
+        .replace("{SUPPORT_EMAIL}", support_email)
+        .replace("{ORG_NAME}", org_name)
 }
 
 #[cfg(test)]
-mod tests {
-
-    #[test]
-    fn test_build_user_invite_message() {
-        // let result = build_user_invite_message("prod");
-        // let expected = "Visit <a href=\"https://macro.com/app?login=true\">Macro</a> to login";
-        // assert!(result.contains(expected));
-        //
-        // let result = build_user_invite_message("staging");
-        // let expected =
-        //     "Visit <a href=\"https://staging.macro.com/app?login=true\">Macro</a> to login";
-        // assert!(result.contains(expected));
-        //
-        // let result = build_user_invite_message("dev");
-        // let expected = "Visit <a href=\"https://dev.macro.com/app?login=true\">Macro</a> to login";
-        // assert!(result.contains(expected));
-    }
-}
+mod test;

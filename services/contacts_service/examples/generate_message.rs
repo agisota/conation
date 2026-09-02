@@ -1,6 +1,6 @@
 // Small utility to generate a sample connections message to send to the SQS service
-use contacts::domain::models::messages::ContactsNodes;
 use conation_user_id::user_id::MacroUserIdStr;
+use contacts::domain::models::messages::ContactsNodes;
 use std::{collections::HashSet, env};
 
 fn print_contacts_message(users: HashSet<MacroUserIdStr<'static>>) {
@@ -12,43 +12,43 @@ fn print_contacts_message(users: HashSet<MacroUserIdStr<'static>>) {
 
 async fn genmsg_add_user_to_group() {
     let mut users: HashSet<MacroUserIdStr<'static>> = [
-        "macro|alice@macro.com",
-        "macro|bob@macro.com",
-        "macro|carol@macro.com",
-        "macro|dave@macro.com",
-        "macro|eve@macro.com",
-        "macro|frank@macro.com",
-        "macro|grace@macro.com",
+        "conation|alice@conation.dev",
+        "conation|bob@conation.dev",
+        "conation|carol@conation.dev",
+        "conation|dave@conation.dev",
+        "conation|eve@conation.dev",
+        "conation|frank@conation.dev",
+        "conation|grace@conation.dev",
     ]
     .iter()
     .map(|s| MacroUserIdStr::try_from(s.to_string()).unwrap())
     .collect();
-    users.insert(MacroUserIdStr::try_from("macro|henry@macro.com".to_string()).unwrap());
+    users.insert(MacroUserIdStr::try_from("conation|henry@conation.dev".to_string()).unwrap());
     print_contacts_message(users);
 }
 
 async fn genmsg_add_paul() {
     let mut users: HashSet<MacroUserIdStr<'static>> = [
-        "macro|zeus@olympus.mountain",
-        "macro|athena@olympus.mountain",
-        "macro|apollo@olympus.mountain",
-        "macro|hermes@olympus.mountain",
-        "macro|poseidon@olympus.mountain",
+        "conation|zeus@olympus.mountain",
+        "conation|athena@olympus.mountain",
+        "conation|apollo@olympus.mountain",
+        "conation|hermes@olympus.mountain",
+        "conation|poseidon@olympus.mountain",
     ]
     .iter()
     .map(|s| MacroUserIdStr::try_from(s.to_string()).unwrap())
     .collect();
-    users.insert(MacroUserIdStr::try_from("macro|paul@macro.com".to_string()).unwrap());
+    users.insert(MacroUserIdStr::try_from("conation|paul@conation.dev".to_string()).unwrap());
     print_contacts_message(users);
 }
 
 async fn genmsg_create_group() {
     let users: HashSet<MacroUserIdStr<'static>> = [
-        "macro|jupiter@olympus.mountain",
-        "macro|athena@olympus.mountain",
-        "macro|mercury@olympus.mountain",
-        "macro|neptune@olympus.mountain",
-        "macro|paul@macro.com",
+        "conation|jupiter@olympus.mountain",
+        "conation|athena@olympus.mountain",
+        "conation|mercury@olympus.mountain",
+        "conation|neptune@olympus.mountain",
+        "conation|paul@conation.dev",
     ]
     .iter()
     .map(|s| MacroUserIdStr::try_from(s.to_string()).unwrap())
@@ -58,12 +58,12 @@ async fn genmsg_create_group() {
 
 async fn genmsg_add_participants() {
     let users: HashSet<MacroUserIdStr<'static>> = [
-        "macro|an@uruk.place",
-        "macro|enlil@nippur.place",
-        "macro|enki@eridu.place",
-        "macro|marduk@babylon.place",
-        "macro|paul@macro.com",
-        "macro|poseidon@olympus.mountain",
+        "conation|an@uruk.place",
+        "conation|enlil@nippur.place",
+        "conation|enki@eridu.place",
+        "conation|marduk@babylon.place",
+        "conation|paul@conation.dev",
+        "conation|poseidon@olympus.mountain",
     ]
     .iter()
     .map(|s| MacroUserIdStr::try_from(s.to_string()).unwrap())

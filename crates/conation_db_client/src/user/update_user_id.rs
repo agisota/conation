@@ -32,7 +32,7 @@ pub async fn get_legacy_users(db: &sqlx::PgPool) -> anyhow::Result<Vec<(String, 
         LEFT JOIN
             "Document" d ON u.id = d.owner AND d."fileType" IS DISTINCT FROM 'docx'
         WHERE
-            u.id NOT LIKE 'macro|%'
+            u.id NOT LIKE 'conation|%'
         GROUP BY
             u.id, u.email
         ORDER BY
@@ -53,7 +53,7 @@ mod tests {
 
     #[sqlx::test(fixtures(path = "../../fixtures", scripts("update_legacy_user")))]
     async fn test_update_legacy_user_simple(pool: Pool<Postgres>) -> anyhow::Result<()> {
-        update_legacy_user_id(&pool, "legacy|user2@user.com", "macro|user2@user.com").await?;
+        update_legacy_user_id(&pool, "legacy|user2@user.com", "conation|user2@user.com").await?;
 
         let result = sqlx::query!(
             r#"
@@ -67,13 +67,13 @@ mod tests {
         .fetch_one(&pool)
         .await?;
 
-        assert_eq!(result.id, "macro|user2@user.com");
+        assert_eq!(result.id, "conation|user2@user.com");
         Ok(())
     }
 
     #[sqlx::test(fixtures(path = "../../fixtures", scripts("update_legacy_user")))]
     async fn test_update_legacy_user_with_documnets(pool: Pool<Postgres>) -> anyhow::Result<()> {
-        update_legacy_user_id(&pool, "legacy|user@user.com", "macro|user@user.com").await?;
+        update_legacy_user_id(&pool, "legacy|user@user.com", "conation|user@user.com").await?;
 
         let result = sqlx::query!(
             r#"
@@ -87,7 +87,7 @@ mod tests {
         .fetch_one(&pool)
         .await?;
 
-        assert_eq!(result.id, "macro|user@user.com");
+        assert_eq!(result.id, "conation|user@user.com");
         Ok(())
     }
 }

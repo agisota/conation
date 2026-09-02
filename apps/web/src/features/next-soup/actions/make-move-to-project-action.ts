@@ -1,4 +1,5 @@
 import { openBulkEditModal } from '@app/features/entity/bulk-edit/BulkEditEntityModal';
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import type { EntityData } from '@entity';
 import type { SoupState } from '../create-soup-state';
@@ -22,12 +23,10 @@ export const makeMoveToProjectAction = () => {
       entities,
       onFinish: () => {
         toast.success(
-          entities.length > 1
-            ? `Moved ${entities.length} items`
-            : 'Moved to folder'
+          t('soup.toast.movedToFolder', { count: entities.length })
         );
       },
-      onError: () => toast.failure('Failed to move to folder'),
+      onError: () => toast.failure(t('soup.toast.moveToFolderFailed')),
     });
   };
 
@@ -45,13 +44,11 @@ export const makeMoveToProjectAction = () => {
           soup.focus.set(nextRow.id);
         }
         toast.success(
-          entities.length > 1
-            ? `Moved ${entities.length} items`
-            : 'Moved to folder'
+          t('soup.toast.movedToFolder', { count: entities.length })
         );
         restoreSoupFocus(nextRow?.id);
       },
-      onError: () => toast.failure('Failed to move to folder'),
+      onError: () => toast.failure(t('soup.toast.moveToFolderFailed')),
       onCancel: () => {
         const firstEntity = entities[0];
         if (firstEntity) {

@@ -1,6 +1,6 @@
+import { isConversionOnlyTransformer } from '@conation/lexical-core';
 import { registerMarkdownShortcuts, type Transformer } from '@lexical/markdown';
 import { mergeRegister } from '@lexical/utils';
-import { isConversionOnlyTransformer } from '@conation/lexical-core';
 import {
   $getSelection,
   $isParagraphNode,

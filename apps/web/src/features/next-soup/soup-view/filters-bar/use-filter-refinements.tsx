@@ -1,5 +1,4 @@
 import type { ListView } from '@app/constants/list-views';
-import { t } from '@app/lib/i18n';
 import { isListViewID, TAGGABLE_LIST_VIEWS } from '@app/constants/list-views';
 import {
   type FilterContext,
@@ -23,6 +22,7 @@ import {
   VIEW_TAB_PRESETS,
 } from '@app/features/next-soup/sidebar/soup-filter-presets';
 import { useSoupView } from '@app/features/next-soup/soup-view/soup-view-context';
+import { t } from '@app/lib/i18n';
 import { useDealStages } from '@companies/crm/deal-stages';
 import { CrmStageIcon } from '@companies/crm/StageIcon';
 import { useSplitPanelOrThrow } from '@components/app/split-layout/layoutUtils';
@@ -165,7 +165,7 @@ export function useFilterRefinements() {
         { label: string; icon?: () => JSX.Element }
       >();
       map.set(NO_ASSIGNEE, {
-        label: 'Unassigned',
+        label: t('soup.filters.assignees.unassigned'),
         icon: () => <CircleDashedIcon class="size-3 text-ink-muted" />,
       });
       for (const contact of contacts()) {
@@ -192,7 +192,7 @@ export function useFilterRefinements() {
     const uid = currentUserId();
     const noAssigneeOption: SearchableOption = {
       id: NO_ASSIGNEE,
-      label: 'Unassigned',
+      label: t('soup.filters.assignees.unassigned'),
       icon: () => <CircleDashedIcon class="size-3.5 text-ink-muted" />,
     };
     let meOption: SearchableOption | undefined;
@@ -234,7 +234,7 @@ export function useFilterRefinements() {
         { label: string; icon?: () => JSX.Element }
       >();
       map.set(NO_ASSIGNEE, {
-        label: 'No owner',
+        label: t('soup.filters.owners.none'),
         icon: () => <CircleDashedIcon class="size-3 text-ink-muted" />,
       });
       for (const contact of contacts()) {
@@ -258,7 +258,7 @@ export function useFilterRefinements() {
     const uid = currentUserId();
     const noOwnerOption: SearchableOption = {
       id: NO_ASSIGNEE,
-      label: 'No owner',
+      label: t('soup.filters.owners.none'),
       icon: () => <CircleDashedIcon class="size-3.5 text-ink-muted" />,
     };
     let meOption: SearchableOption | undefined;
@@ -391,7 +391,7 @@ export function useFilterRefinements() {
     })),
     {
       id: NO_STAGE,
-      label: 'No stage',
+      label: t('soup.filters.stages.none'),
       icon: () => <CircleDashedIcon class="size-3.5 text-ink-muted" />,
     },
   ]);
@@ -770,12 +770,12 @@ export function useFilterRefinements() {
           };
           return {
             key,
-            categoryLabel: 'Assignee',
+            categoryLabel: t('soup.fields.assignee'),
             values: getValues,
             searchableOptions: assigneeSearchableOptions,
             activeSearchableIds: assigneeFilter,
             onSearchableChange: handleAssigneeChange,
-            searchPlaceholder: 'Search assignees...',
+            searchPlaceholder: t('soup.filters.assignees.placeholder'),
             isPopupOpen,
             setPopupOpen,
             onRemoveAll: () => handleAssigneeChange([]),
@@ -814,12 +814,12 @@ export function useFilterRefinements() {
           };
           return {
             key,
-            categoryLabel: 'Created by',
+            categoryLabel: t('soup.fields.createdBy'),
             values: getValues,
             searchableOptions: createdBySearchableOptions,
             activeSearchableIds: createdByIds,
             onSearchableChange: handleCreatedByChange,
-            searchPlaceholder: 'Search creators...',
+            searchPlaceholder: t('soup.filters.creators.placeholder'),
             isPopupOpen,
             setPopupOpen,
             onRemoveAll: () => handleCreatedByChange([]),
@@ -859,12 +859,12 @@ export function useFilterRefinements() {
           };
           return {
             key,
-            categoryLabel: 'Tags',
+            categoryLabel: t('soup.fields.tags'),
             values: getValues,
             searchableOptions: tagFilter.options,
             activeSearchableIds: tagFilter.activeIds,
             onSearchableChange: tagFilter.onChange,
-            searchPlaceholder: 'Filter by tag...',
+            searchPlaceholder: t('soup.filters.tags.placeholder'),
             isPopupOpen,
             setPopupOpen,
             onRemoveAll: () => tagFilter.onChange([]),
@@ -912,7 +912,7 @@ export function useFilterRefinements() {
             searchableOptions: ownerSearchableOptions,
             activeSearchableIds: ownerFilter,
             onSearchableChange: handleOwnerChange,
-            searchPlaceholder: 'Search owners...',
+            searchPlaceholder: t('soup.filters.owners.placeholder'),
             isPopupOpen,
             setPopupOpen,
             onRemoveAll: () => handleOwnerChange([]),
@@ -955,12 +955,12 @@ export function useFilterRefinements() {
           };
           return {
             key,
-            categoryLabel: 'Stage',
+            categoryLabel: t('soup.fields.stage'),
             values: getValues,
             searchableOptions: stageSearchableOptions,
             activeSearchableIds: stageFilter,
             onSearchableChange: handleStageChange,
-            searchPlaceholder: 'Filter stages...',
+            searchPlaceholder: t('soup.filters.stages.placeholder'),
             // Stages read as a pipeline — keep canonical order, don't pin
             // checked ones to the top.
             preserveOptionOrder: true,

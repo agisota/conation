@@ -3,11 +3,11 @@ import {
   isEntityMentionNode,
 } from '@block-canvas/model/CanvasModel';
 import { useTextNodeEditors } from '@block-canvas/store/textNodeEditors';
-import { untrackMention } from '@core/signal/mention';
 import {
   $isDocumentMentionNode,
   type DocumentMentionNode,
 } from '@conation/lexical-core/nodes/DocumentMentionNode';
+import { untrackMention } from '@core/signal/mention';
 import { $getRoot, $isElementNode, type LexicalEditor } from 'lexical';
 
 export interface MentionInfo {

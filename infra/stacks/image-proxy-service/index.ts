@@ -1,6 +1,6 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
-import { config, getMacroApiToken, stack } from '../../packages/shared';
+import { config, getConationApiToken, stack } from '../../packages/shared';
 import { get_coparse_api_vpc } from '../../packages/vpc';
 import { ImageProxyService } from './image-proxy-service';
 
@@ -30,11 +30,11 @@ const jwtSecretKeyArn: pulumi.Output<string> = aws.secretsmanager
   .getSecretVersionOutput({ secretId: JWT_SECRET_KEY })
   .apply((secret) => secret.arn);
 
-const MACRO_API_TOKENS = getMacroApiToken();
+const CONATION_API_TOKENS = getConationApiToken();
 
 const secretKeyArns = [
   pulumi.interpolate`${jwtSecretKeyArn}`,
-  pulumi.interpolate`${MACRO_API_TOKENS.macroApiTokenPublicKeyArn}`,
+  pulumi.interpolate`${CONATION_API_TOKENS.conationApiTokenPublicKeyArn}`,
 ];
 
 const imageProxyService = new ImageProxyService(

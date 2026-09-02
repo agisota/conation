@@ -16,7 +16,7 @@ const app = createApp({
   postToChannel: createChannelPoster({
     channelId: process.env.CHANNEL_ID!,
     botToken: process.env.BOT_TOKEN!,
-    env: (process.env.MACRO_ENV as 'prod' | 'dev' | 'local') || 'prod',
+    env: (process.env.CONATION_ENV as 'prod' | 'dev' | 'local') || 'prod',
   }),
 });
 

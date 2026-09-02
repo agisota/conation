@@ -1,5 +1,12 @@
-import { CollabProvider } from '@core/component/LexicalMarkdown/collaboration/CollabProvider';
 import { t } from '@app/lib/i18n';
+import {
+  AwaitNode,
+  CommentNode,
+  createPeerIdValidator,
+  InlineSearchNode,
+  peerIdPlugin,
+} from '@conation/lexical-core';
+import { CollabProvider } from '@core/component/LexicalMarkdown/collaboration/CollabProvider';
 import { DecoratorRenderer } from '@core/component/LexicalMarkdown/component/core/DecoratorRenderer';
 import { EmojiMenu } from '@core/component/LexicalMarkdown/component/menu/EmojiMenu';
 import { MentionsMenu } from '@core/component/LexicalMarkdown/component/menu/MentionsMenu';
@@ -29,13 +36,6 @@ import {
   editorIsEmpty,
   initializeEditorEmpty,
 } from '@core/component/LexicalMarkdown/utils';
-import {
-  AwaitNode,
-  CommentNode,
-  createPeerIdValidator,
-  InlineSearchNode,
-  peerIdPlugin,
-} from '@conation/lexical-core';
 import { onElementConnect } from '@solid-primitives/lifecycle';
 import type { LexicalEditor } from 'lexical';
 import {
@@ -254,7 +254,9 @@ export function CollabMdSurface(props: CollabMdSurfaceProps) {
           )}
         </Show>
         <Show when={session.connectionError()}>
-          <div class="text-alert-ink p-2 bg-alert-bg w-full border-alert/30 border mb-2">{t('auto.failed_to_connect_to_this_surf')}</div>
+          <div class="text-alert-ink p-2 bg-alert-bg w-full border-alert/30 border mb-2">
+            {t('core.collaboration.connectionFailed')}
+          </div>
         </Show>
         <div class="relative" ref={editorContainerRef}>
           <div
@@ -280,7 +282,7 @@ export function CollabMdSurface(props: CollabMdSurfaceProps) {
 
           <Show when={editorReady() && editorHasNoContent()}>
             <div class="pointer-events-none text-ink-placeholder absolute top-0">
-              {props.placeholder ?? 'Start typing…'}
+              {props.placeholder ?? t('core.editor.startTyping')}
             </div>
           </Show>
 

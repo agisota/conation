@@ -2,6 +2,8 @@ import { envsafe, str } from 'envsafe';
 import type { D1Database } from './traces-db';
 
 export type Bindings = {
+  /** Comma-separated exact browser origins. Unset uses Conation/local defaults. */
+  ALLOWED_ORIGINS: string | undefined;
   /** Tags exported spans with deployment.environment (matches DD_ENV). */
   ENVIRONMENT: string | undefined;
   /** OTLP/HTTP traces endpoint; unset disables trace export. */

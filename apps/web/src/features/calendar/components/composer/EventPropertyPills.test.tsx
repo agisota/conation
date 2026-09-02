@@ -2,8 +2,8 @@
  * @vitest-environment jsdom
  */
 
+import { setLocale } from '@app/lib/i18n';
 import { recipientEntityMapper } from '@core/user';
-import { t } from '@app/lib/i18n';
 import { cleanup, render, screen } from '@solidjs/testing-library';
 import userEvent from '@testing-library/user-event';
 import { Dialog } from '@ui';
@@ -34,7 +34,7 @@ vi.mock('@property/editors/selectors/PropertyEntitySelector', () => ({
 
 function guest(email: string, name: string): EventEditorGuestOption {
   return recipientEntityMapper('user')({
-    id: `macro|${email}`,
+    id: `conation|${email}`,
     email,
     name,
   });
@@ -45,7 +45,7 @@ function renderInComposerDialog() {
 
   render(() => (
     <Dialog open>
-      <input aria-label={t('auto.title')} />
+      <input aria-label="Title" />
       <EventComposerGuestsPill
         options={() => [guest('ada@example.com', 'Ada Lovelace')]}
         selected={selected()}
@@ -69,6 +69,7 @@ class WebSocketStub {
 }
 
 beforeEach(() => {
+  setLocale('en');
   vi.stubGlobal('ResizeObserver', ResizeObserverStub);
   vi.stubGlobal('IntersectionObserver', ResizeObserverStub);
   vi.stubGlobal('WebSocket', WebSocketStub);

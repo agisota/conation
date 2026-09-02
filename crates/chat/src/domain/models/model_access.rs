@@ -1,21 +1,23 @@
-//! Model availability for chat, gated by the user's plan.
+//! Model availability for chat.
 //!
-//! Free (non-professional) users may use only [`FREE_MODEL`]; professional
-//! users may use every model in [`CHAT_MODELS`].
+//! Conation self-host has one catalog for every authenticated user. The
+//! legacy free/paid constant names remain API-compatible aliases only.
 
 /// The chat models offered to users, best-first.
 pub const CHAT_MODELS: &[&str] = &[
+    "rox/gemini-2.5-flash",
+    "rox/nemotron-3-ultra",
+    "rox/gpt-5.6-luna",
+    "rox/gpt-5.6-terra",
     "anthropic/claude-sonnet-5",
     "anthropic/claude-opus-5",
     "anthropic/claude-haiku-4-5",
-    "anthropic/claude-opus-4-7",
-    "anthropic/claude-sonnet-4-6",
-    "openai/gpt-5.5",
-    "openai/gpt-5-mini",
+    "openai/gpt-5.6",
+    "openai/gpt-5.6-mini",
 ];
 
-/// The default model for professional (paid) users.
-pub const PAID_DEFAULT_MODEL: &str = "anthropic/claude-sonnet-5";
+/// Compatibility alias for the universal Conation default.
+pub const PAID_DEFAULT_MODEL: &str = "rox/gemini-2.5-flash";
 
-/// The only model available to free (non-professional) users.
-pub const FREE_MODEL: &str = "anthropic/claude-haiku-4-5";
+/// Compatibility alias for the same universal Conation default.
+pub const FREE_MODEL: &str = PAID_DEFAULT_MODEL;

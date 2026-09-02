@@ -5,13 +5,13 @@ mod event;
 mod refresh;
 
 use anyhow::Context;
+use conation_entrypoint::MacroEntrypoint;
 use config::Config;
 use event::RefreshEvent;
 use lambda_runtime::{
     Error, LambdaEvent, run, service_fn,
     tracing::{self},
 };
-use conation_entrypoint::MacroEntrypoint;
 use sqlx::postgres::PgPoolOptions;
 use std::sync::Arc;
 

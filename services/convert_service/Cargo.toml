@@ -42,7 +42,7 @@ model = { path = "../../crates/model" }
 s3_key = { path = "../../crates/s3_key" }
 nix = { version = "0.29.0", features = ["process", "signal"] }
 remote_env_var = { path = "../../crates/remote_env_var" }
-rs-libreoffice-bindings = { git = "https://github.com/macro-inc/rs-libreoffice-bindings", rev = "056a40ddfac1d9650be30b9f0b4b934e9266c7dc" }
+rs-libreoffice-bindings = { git = "https://github.com/whutchinson98/rs-libreoffice-bindings", rev = "056a40ddfac1d9650be30b9f0b4b934e9266c7dc" }
 s3_client = { path = "../../crates/s3_client" }
 secretsmanager_client = { path = "../../crates/secretsmanager_client" }
 serde = { workspace = true }

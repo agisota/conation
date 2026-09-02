@@ -23,7 +23,7 @@ const summary = (over: Partial<ActiveCallSummary>): ActiveCallSummary => ({
   callId: 'call-1',
   channelId: 'channel-1',
   createdAt: '2026-08-21T09:00:00.000Z',
-  createdBy: 'macro|a@test.com',
+  createdBy: 'conation|a@test.com',
   participantCount: 2,
   ...over,
 });
@@ -32,7 +32,7 @@ const started = (over: Partial<CallActiveResponse>): CallActiveResponse => ({
   callId: 'call-new',
   channelId: 'channel-new',
   createdAt: '2026-08-21T10:00:00.000Z',
-  createdBy: 'macro|b@test.com',
+  createdBy: 'conation|b@test.com',
   ...over,
 });
 

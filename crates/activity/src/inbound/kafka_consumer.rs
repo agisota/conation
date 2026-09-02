@@ -15,8 +15,10 @@
 use std::future::Future;
 use std::marker::PhantomData;
 
+use conation_event_broker::{
+    KafkaConsumerAdapter, MacroEventCollection, MacroEventConsumerService,
+};
 use kafka_util::{GroupName, KafkaEventConsumer};
-use conation_event_broker::{KafkaConsumerAdapter, MacroEventCollection, MacroEventConsumerService};
 use rdkafka::consumer::CommitMode;
 use rdkafka::message::{BorrowedMessage, Message as _};
 use rootcause::prelude::{Report, ResultExt as _};

@@ -47,12 +47,53 @@ fn builds_the_configured_tag_when_local_containers_are_on() {
 
 #[test]
 fn docker_build_args_match_the_cli() {
-    let args = build_args(DEFAULT_LOCAL_TAG, Path::new(CONTEXT_REL));
-    assert_eq!(args, ["build", "--tag", DEFAULT_LOCAL_TAG, CONTEXT_REL]);
+    let args = build_args(
+        DEFAULT_LOCAL_TAG,
+        Path::new(CONTEXT_REL),
+        DEFAULT_REPO_URL,
+        false,
+    );
+    assert_eq!(
+        args,
+        [
+            "build",
+            "--build-arg",
+            "CONATION_REPO_URL=https://github.com/agisota/conation.git",
+            "--tag",
+            DEFAULT_LOCAL_TAG,
+            CONTEXT_REL
+        ]
+    );
     assert!(
         !args.iter().any(|arg| arg == "--platform"),
         "pinning a platform would qemu Apple Silicon: {args:?}"
     );
+}
+
+#[test]
+fn docker_build_secret_names_an_environment_variable_not_its_value() {
+    let args = build_args(
+        DEFAULT_LOCAL_TAG,
+        Path::new(CONTEXT_REL),
+        DEFAULT_REPO_URL,
+        true,
+    );
+    assert!(args.windows(2).any(|pair| {
+        pair == [
+            "--secret",
+            "id=github_token,env=CONATION_SANDBOX_GITHUB_TOKEN",
+        ]
+    }));
+}
+
+#[test]
+fn source_repo_must_be_credential_free_github_https() {
+    assert!(safe_repo_url(DEFAULT_REPO_URL));
+    assert!(!safe_repo_url("http://github.com/agisota/conation.git"));
+    assert!(!safe_repo_url(
+        "https://token@github.com/agisota/conation.git"
+    ));
+    assert!(!safe_repo_url("https://example.com/agisota/conation.git"));
 }
 
 #[test]

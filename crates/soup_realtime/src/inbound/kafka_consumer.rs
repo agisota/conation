@@ -16,12 +16,12 @@ use crate::domain::{
 };
 use channels::domain::broker_events::{ChannelMacroEvent, ChannelTopicEvent};
 use chat::domain::events::{ChatMacroEvent, ChatTopicEvent};
-use documents::domain::events::{DocumentMacroEvent, DocumentTopicEvent, InteractionReason};
-use email::domain::events::{EmailMacroEvent, EmailTopicEvent};
-use kafka_util::{GroupName, KafkaEventConsumer};
 use conation_event_broker::{
     KafkaConsumerAdapter, MacroEvent as _, MacroEventCollection as _, MacroEventConsumerService,
 };
+use documents::domain::events::{DocumentMacroEvent, DocumentTopicEvent, InteractionReason};
+use email::domain::events::{EmailMacroEvent, EmailTopicEvent};
+use kafka_util::{GroupName, KafkaEventConsumer};
 use model_entity::{Entity, EntityType};
 use models_properties::EntityType as PropertyEntityType;
 use projects::domain::events::{ProjectMacroEvent, ProjectTopicEvent};

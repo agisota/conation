@@ -9,17 +9,15 @@ use super::*;
 #[test]
 fn allowed_original_urls_are_accepted() {
     for original_url in [
-        "macro://login",
-        "macro:///welcome",
-        "macro:///otherthing",
-        "macro://otherthing/path",
+        "conation://login",
+        "conation:///welcome",
+        "conation:///otherthing",
+        "conation://otherthing/path",
         "tauri://localhost/app/login",
         "http://tauri.localhost/app/login",
-        "https://tauri.localhost/app/login",
         "http://localhost:3000/app/login",
-        "https://localhost/app/login",
-        "https://dev.macro.com/app/login",
-        "https://macro.com/app/login",
+        "https://dev.conation.dev/app/login",
+        "https://conation.dev/app/login",
     ] {
         let original_url = Url::parse(original_url).expect("test URL should parse");
         assert!(
@@ -33,11 +31,15 @@ fn allowed_original_urls_are_accepted() {
 fn untrusted_original_urls_are_rejected() {
     for original_url in [
         "https://example.com/app/login",
+        "macro://login",
+        "https://macro.com/app/login",
         "https://macro.com.example.com/app/login",
         "https://staging.macro.com/app/login",
         "http://macro.com/app/login",
         "http://dev.macro.com/app/login",
         "tauri://example.com/app/login",
+        "https://tauri.localhost/app/login",
+        "https://localhost/app/login",
         "http://127.0.0.1:3000/app/login",
         "javascript:alert('redirected')",
     ] {
@@ -47,6 +49,38 @@ fn untrusted_original_urls_are_rejected() {
             "{original_url} should be rejected"
         );
     }
+}
+
+#[test]
+fn custom_app_origin_is_allowed_exactly() {
+    let app_origin = "https://workspace.example.org";
+    let allowed_origins = vec![app_origin.to_owned()];
+    let trusted = Url::parse("https://workspace.example.org/app/login").unwrap();
+    let lookalike = Url::parse("https://workspace.example.org.attacker.test/app/login").unwrap();
+
+    assert!(is_allowed_original_url_with(
+        &trusted,
+        app_origin,
+        &allowed_origins
+    ));
+    assert!(!is_allowed_original_url_with(
+        &lookalike,
+        app_origin,
+        &allowed_origins
+    ));
+}
+
+#[test]
+fn original_urls_with_userinfo_are_rejected() {
+    let app_origin = "https://conation.dev";
+    let allowed_origins = vec![app_origin.to_owned()];
+    let url = Url::parse("https://attacker@conation.dev/app/login").unwrap();
+
+    assert!(!is_allowed_original_url_with(
+        &url,
+        app_origin,
+        &allowed_origins
+    ));
 }
 
 #[test]
@@ -175,7 +209,7 @@ async fn it_works_with_everything() {
 
 #[tokio::test]
 async fn it_works_with_conation_scheme() {
-    let request = Request::builder().uri("https://example.com/login/sso?original_url=macro%3A%2F%2Flogin&idp_name=google&is_mobile=true").body(Body::from(())).unwrap();
+    let request = Request::builder().uri("https://example.com/login/sso?original_url=conation%3A%2F%2Flogin&idp_name=google&is_mobile=true").body(Body::from(())).unwrap();
 
     let extracted = Query::<LoginQueryParams>::from_request(request, &())
         .await
@@ -190,7 +224,7 @@ async fn it_works_with_conation_scheme() {
        referral_code: _
     }) => {
         assert_eq!(idp_name, "google");
-        assert_eq!(original_url.0.as_str(), "macro://login");
+        assert_eq!(original_url.0.as_str(), "conation://login");
     });
 }
 

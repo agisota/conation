@@ -1,3 +1,4 @@
+import { formatNumber } from '@app/lib/i18n';
 import ChevronDownIcon from '@phosphor/caret-down.svg';
 import CheckCircleIcon from '@phosphor/check-circle.svg';
 import { cn, InlineCheckbox } from '@ui';
@@ -65,7 +66,7 @@ export function SectionHeader(props: {
           when={allComplete()}
           fallback={
             <span class="text-xs tabular-nums text-ink-extra-muted">
-              {props.completed}/{props.total}
+              {formatNumber(props.completed)}/{formatNumber(props.total)}
             </span>
           }
         >

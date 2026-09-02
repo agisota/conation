@@ -1,5 +1,5 @@
-import { buildChannelMessageListMeta } from '@channel/Channel/message-list-meta';
 import { t } from '@app/lib/i18n';
+import { buildChannelMessageListMeta } from '@channel/Channel/message-list-meta';
 import type { InputSnapshot } from '@channel/Input/types';
 import type { ChannelMessageListMeta } from '@channel/Message/list-meta';
 import { Message } from '@channel/Message/Message';
@@ -138,7 +138,7 @@ export function Discussion() {
           ) : (
             <CaretRight class="size-3" />
           )}
-          <span class="text-xs">{t('auto.discussion')}</span>
+          <span class="text-xs">{t('comments.discussion.title')}</span>
         </button>
         <div class="flex-1 border-t border-edge-muted" />
       </div>
@@ -167,7 +167,10 @@ export function Discussion() {
             <Show when={source.canEdit()}>
               <div class="mt-4">
                 <DiscussionInput
-                  input={{ mode: 'channel', placeholder: 'Leave a comment...' }}
+                  input={{
+                    mode: 'channel',
+                    placeholder: t('comments.discussion.leaveComment'),
+                  }}
                   onSend={handleCreateThread}
                   onReady={(handle) => {
                     newThreadInputHandle = handle;
@@ -223,9 +226,9 @@ export function DiscussionThreadView(props: {
       try {
         const url = build(comment);
         await navigator.clipboard.writeText(url);
-        toast.success('Link copied to clipboard');
+        toast.success(t('comments.link.copied'));
       } catch {
-        toast.failure('Could not copy link');
+        toast.failure(t('comments.link.copyFailed'));
       }
     };
   };
@@ -354,7 +357,12 @@ export function DiscussionThreadView(props: {
                             <ThreadReplyInputConnector rail="thread" />
                           </Show>
                           <DiscussionInput
-                            input={{ mode: 'reply', placeholder: 'Reply...' }}
+                            input={{
+                              mode: 'reply',
+                              placeholder: t(
+                                'comments.composer.replyPlaceholder'
+                              ),
+                            }}
                             onSend={handleReply}
                             onClose={() => {
                               setIsReplying(false);
@@ -376,7 +384,7 @@ export function DiscussionThreadView(props: {
                             ) ?? null
                           }
                           onClick={() => setIsReplying(true)}
-                          aria-label={t('auto.reply')}
+                          aria-label={t('comments.actions.reply')}
                         />
                       </Thread.ActionsFooter>
                     </Show>
@@ -447,7 +455,7 @@ function DiscussionMessageView(props: {
               <DiscussionInput
                 input={{
                   mode: 'reply',
-                  placeholder: 'Edit comment...',
+                  placeholder: t('comments.composer.editPlaceholder'),
                   value: props.comment.text,
                 }}
                 onSend={props.onEditSave}

@@ -32,7 +32,7 @@ fn ios_app_group_container_path() -> Option<String> {
     autoreleasepool(|_| unsafe {
         let manager: *mut AnyObject = msg_send![class!(NSFileManager), defaultManager];
 
-        let c_group = CString::new("group.com.macro.app.prod").ok()?;
+        let c_group = CString::new("group.dev.conation.app").ok()?;
         let group_ns: *mut AnyObject = msg_send![
             class!(NSString),
             stringWithUTF8String: c_group.as_ptr() as *const c_char

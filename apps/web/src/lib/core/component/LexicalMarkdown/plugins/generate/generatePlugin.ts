@@ -1,10 +1,10 @@
-import { $unwrapNode, mergeRegister } from '@lexical/utils';
 import {
   $createCompletionNode,
   $isCompletionNode,
   CompletionNode,
   SupportedNodeTypes,
 } from '@conation/lexical-core';
+import { $unwrapNode, mergeRegister } from '@lexical/utils';
 import {
   $addUpdateTag,
   $getNodeByKey,

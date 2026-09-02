@@ -12,8 +12,8 @@ use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::time::Duration;
 
-use either::Either;
 use conation_env::Environment;
+use either::Either;
 use opentelemetry::propagation::{Extractor, Injector};
 use rdkafka::consumer::{CommitMode, Consumer, ConsumerContext, StreamConsumer};
 use rdkafka::error::{KafkaError, KafkaResult};

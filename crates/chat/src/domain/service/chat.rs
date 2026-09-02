@@ -13,13 +13,13 @@ use crate::domain::{
 };
 use agent::types::{AssistantMessagePart, ChatMessageContent};
 use ai_toolset::{AsyncToolCollection, RequestContext, tool_object::UserToolResponse};
+use conation_event_broker::{MacroEventBroker, NoopMacroEventBroker};
+use conation_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::models::{
     AccessLevel, EditAccessLevel, EntityAccessAuth, EntityAccessReceipt, EntityPermission,
     OwnerAccessLevel, ViewAccessLevel,
 };
 use entity_access_management::domain::ports::EntityAccessManagementService;
-use conation_event_broker::{MacroEventBroker, NoopMacroEventBroker};
-use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::EntityType;
 use models_permissions::share_permission::SharePermissionV2;
 use std::sync::Arc;

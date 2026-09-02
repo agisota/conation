@@ -1,7 +1,7 @@
 use chrono::{DateTime, NaiveDate, Utc};
-pub use invite_email::{ChannelInviteMetadata, InviteToTeamMetadata};
 use conation_user_id::cowlike::CowLike;
 use conation_user_id::{email::ReadEmailParts, user_id::MacroUserIdStr};
+pub use invite_email::{ChannelInviteMetadata, InviteToTeamMetadata};
 use mention_utils::parse::{ParsedXmlText, PlainTextFormatter, XmlFormatter};
 use model_entity::Entity;
 use model_entity::EntityType;

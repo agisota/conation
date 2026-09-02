@@ -5,7 +5,7 @@ use conation_env_var::env_vars;
 use secretsmanager_client::LocalOrRemoteSecret;
 
 env_vars! {
-    pub struct MacroDbUrl;
+    pub struct ConationDbUrl;
     pub struct RedisHost;
 }
 
@@ -26,7 +26,7 @@ pub struct Config {
     #[conation_config_default(Environment::new_or_prod())]
     pub environment: Environment,
     pub redis_host: RedisHost,
-    pub conation_db_url: LocalOrRemoteSecret<MacroDbUrl>,
+    pub conation_db_url: LocalOrRemoteSecret<ConationDbUrl>,
     /// The internal api key
     pub internal_api_key: InternalApiKey,
 }

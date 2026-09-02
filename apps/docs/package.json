@@ -1,5 +1,5 @@
 {
-  "name": "@macro/docs",
+  "name": "@conation/docs",
   "private": true,
   "type": "module",
   "scripts": {

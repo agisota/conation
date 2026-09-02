@@ -1,5 +1,4 @@
 import type { EntityType } from '@service-properties/generated/schemas/entityType';
-import { t } from '@app/lib/i18n';
 import {
   type Accessor,
   createContext,
@@ -24,8 +23,8 @@ interface CreatePropertyModalState {
 }
 
 export interface PropertySaveHandler {
-  saveProperty: (property: Property, value: PropertyApiValues) =>Promise<void>;
-  saveDate: (property: Property, date: Date) =>Promise<void>;
+  saveProperty: (property: Property, value: PropertyApiValues) => Promise<void>;
+  saveDate: (property: Property, date: Date) => Promise<void>;
 }
 
 interface PropertiesContextValue {
@@ -40,8 +39,8 @@ interface PropertiesContextValue {
   onPropertyPinned?: (propertyId: string) => void;
   onPropertyUnpinned?: (propertyId: string) => void;
   pinnedPropertyIds?: () => string[];
-  addProperty?: (propertyDefinitionId: string) =>Promise<void>;
-  removeProperty?: (propertyId: string) =>Promise<void>;
+  addProperty?: (propertyDefinitionId: string) => Promise<void>;
+  removeProperty?: (propertyId: string) => Promise<void>;
   saveHandler: PropertySaveHandler;
 
   // Specific modal state accessors
@@ -77,8 +76,8 @@ interface PropertiesProviderProps extends ParentProps {
   onPropertyPinned?: (propertyId: string) => void;
   onPropertyUnpinned?: (propertyId: string) => void;
   pinnedPropertyIds?: () => string[];
-  addProperty?: (propertyDefinitionId: string) =>Promise<void>;
-  removeProperty?: (propertyId: string) =>Promise<void>;
+  addProperty?: (propertyDefinitionId: string) => Promise<void>;
+  removeProperty?: (propertyId: string) => Promise<void>;
   saveHandler: PropertySaveHandler;
 }
 

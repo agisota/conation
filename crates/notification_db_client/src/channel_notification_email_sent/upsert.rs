@@ -11,8 +11,8 @@ pub async fn upsert_channel_notification_email_sent_bulk(
         return Ok(());
     }
 
-    let channel_id =
-        conation_uuid::string_to_uuid(channel_id).context("could not convert channel_id to uuid")?;
+    let channel_id = conation_uuid::string_to_uuid(channel_id)
+        .context("could not convert channel_id to uuid")?;
 
     sqlx::query!(
         r#"

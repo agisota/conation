@@ -3,10 +3,11 @@ import {
   ChatWithAgentIcon,
   openChatWithAgent,
 } from '@app/features/chat/ChatWithAgentButton';
-import { getIsSpecialProject } from '@block-project/isSpecial';
 import { t } from '@app/lib/i18n';
+import { getIsSpecialProject } from '@block-project/isSpecial';
 import { projectBlockDataSignal } from '@block-project/signal/projectBlockData';
 import {
+  BLOCK_TOOL_IDS,
   type BlockTool,
   ResponsivePermissionsBadge,
   ToolButton,
@@ -68,7 +69,7 @@ export function TopBar() {
         id,
       })
     );
-    toast.success('Link copied to clipboard');
+    toast.success(t('file.feedback.linkCopied'));
   }
 
   const ops = createMemo<FileOperation[]>(() => [
@@ -98,7 +99,10 @@ export function TopBar() {
 
   const tools: BlockTool[] = [
     {
-      label: 'Chat',
+      id: BLOCK_TOOL_IDS.chat,
+      get label() {
+        return t('block.actions.chat');
+      },
       icon: ChatWithAgentIcon,
       action: () => openChatWithAgent({ type: 'project', id, name: name() }),
       condition: () => !isSpecialProject,
@@ -107,8 +111,11 @@ export function TopBar() {
       ),
     },
     {
+      id: BLOCK_TOOL_IDS.share,
       group: 'sharing',
-      label: 'Share',
+      get label() {
+        return t('block.actions.share');
+      },
       icon: IconShared,
       action: () => shareCtx.open(),
       condition: () => ENABLE_PROJECT_SHARING && !isSpecialProject,
@@ -116,7 +123,8 @@ export function TopBar() {
       focusTarget: getShareDrawerRecipientInput,
     },
   ];
-  const toolbarTools = () => tools.filter((tool) => tool.label !== 'Share');
+  const toolbarTools = () =>
+    tools.filter((tool) => tool.id !== BLOCK_TOOL_IDS.share);
   const showShare = () => ENABLE_PROJECT_SHARING && !isSpecialProject;
 
   return (

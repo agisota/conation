@@ -1,7 +1,7 @@
 use channels::outbound::channel_name::batch_resolve_channel_names;
+use conation_user_id::user_id::MacroUserIdStr;
 use indexmap::IndexMap;
 use item_filters::CallStatus;
-use conation_user_id::user_id::MacroUserIdStr;
 use models_properties::{EntityReference, EntityType};
 use models_search::call_record::{
     CallRecordMetadata, CallRecordSearchResponseItem, CallRecordSearchResponseItemWithMetadata,
@@ -37,10 +37,11 @@ pub(in crate::api::search) async fn enrich_call_records(
         .filter_map(|r| seen.insert(r.entity_id).then_some(r.entity_id))
         .collect();
 
-    let metadata_rows =
-        conation_db_client::call_record::get::get_call_records_metadata(&ctx.db, user_id, &call_ids)
-            .await
-            .map_err(SearchError::InternalError)?;
+    let metadata_rows = conation_db_client::call_record::get::get_call_records_metadata(
+        &ctx.db, user_id, &call_ids,
+    )
+    .await
+    .map_err(SearchError::InternalError)?;
 
     let viewer_user_id = MacroUserIdStr::parse_from_str(user_id)
         .map_err(|_| SearchError::InvalidUserId(user_id.to_string()))?;

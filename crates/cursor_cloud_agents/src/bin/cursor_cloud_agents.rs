@@ -36,12 +36,12 @@
 //! - `RUST_LOG`: tracing filter (default `info`; `debug` logs every frame
 //!   and SSE event).
 
+use conation_env_var::{env_var, maybe_env_var};
 use cursor_cloud_agents::api::{ApiKey, CursorClient, CursorConfig};
 use cursor_cloud_agents::domain::model::RepoUrl;
 use cursor_cloud_agents::domain::service::CursorSessionService;
 use cursor_cloud_agents::inbound::acp::{AcpNotifier, serve};
 use cursor_cloud_agents::outbound::git::GitRepoResolver;
-use conation_env_var::{env_var, maybe_env_var};
 use std::process::ExitCode;
 use std::sync::Arc;
 use tracing_subscriber::layer::SubscriberExt as _;

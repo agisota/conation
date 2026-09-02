@@ -6,7 +6,7 @@ use models_email::email::service::pubsub::{DetailedError, FailureReason, Process
 
 /// Seeds the team's CRM tables with every contact the user has sent email
 /// to in the past. Triggered when a user is added to a team — the user only
-/// has their conation_id at this point, so this handler resolves the link and
+/// has their macro_id at this point, so this handler resolves the link and
 /// team itself, then fans out one `PopulateCrmContact` job per distinct
 /// recipient of a sent message on that link.
 ///
@@ -14,26 +14,26 @@ use models_email::email::service::pubsub::{DetailedError, FailureReason, Process
 /// membership. The downstream `PopulateCrmContact` consumer is idempotent
 /// and re-checks the team membership + per-domain killswitch, so racing
 /// removals between fan-out and consumption are safe.
-#[tracing::instrument(skip(ctx), err, fields(conation_id = %payload.conation_id))]
+#[tracing::instrument(skip(ctx), err, fields(macro_id = %payload.macro_id))]
 pub async fn populate_crm_for_user(
     ctx: &PubSubContext,
     payload: &PopulateCrmForUserPayload,
 ) -> Result<(), ProcessingError> {
-    let conation_id_str = payload.conation_id.0.as_ref();
+    let macro_id_str = payload.macro_id.0.as_ref();
     // Resolve the user's own inbox — the link whose address matches the email
-    // embedded in the conation_id — not merely the newest link on the conation_id.
-    let email_address = payload.conation_id.email_str();
+    // embedded in the macro_id — not merely the newest link on the macro_id.
+    let email_address = payload.macro_id.email_str();
 
-    let link = email_db_client::links::get::fetch_link_by_conation_id_and_email_address(
+    let link = email_db_client::links::get::fetch_link_by_macro_id_and_email_address(
         &ctx.db,
-        conation_id_str,
+        macro_id_str,
         email_address,
     )
     .await
     .map_err(|e| {
         ProcessingError::Retryable(DetailedError {
             reason: FailureReason::DatabaseQueryFailed,
-            source: e.context("Failed to fetch link by conation_id and email_address"),
+            source: e.context("Failed to fetch link by macro_id and email_address"),
         })
     })?;
 
@@ -44,12 +44,12 @@ pub async fn populate_crm_for_user(
 
     let team_id = ctx
         .crm_service
-        .get_team_id_for_user(conation_id_str)
+        .get_team_id_for_user(macro_id_str)
         .await
         .map_err(|e| {
             ProcessingError::Retryable(DetailedError {
                 reason: FailureReason::DatabaseQueryFailed,
-                source: anyhow::Error::from(e).context("Failed to look up team for conation_id"),
+                source: anyhow::Error::from(e).context("Failed to look up team for macro_id"),
             })
         })?;
 

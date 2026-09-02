@@ -12,6 +12,12 @@ use anthropic::toolset::AnthropicToolContext;
 use anyhow::Context;
 use channels::domain::list_service::ChannelListServiceImpl;
 use channels::outbound::pg_channels_repo::PgChannelsRepo;
+use conation_env::Environment;
+use conation_env_var::{env_var, maybe_env_var};
+use conation_service_urls::{
+    AiEditingWorkerUrl, ConnectionGatewayUrl, DocumentStorageServiceUrl, EmailServiceUrl,
+    LexicalServiceUrl, SyncServiceUrl,
+};
 use connection_gateway_client::ConnectionGatewayClient;
 use documents::domain::models::CloudFrontConfig;
 use documents::inbound::toolset::DocumentToolContext;
@@ -31,12 +37,6 @@ use foreign_entity::{
 use frecency::domain::services::FrecencyQueryServiceImpl;
 use frecency::outbound::postgres::FrecencyPgStorage;
 use lexical_client::LexicalClient;
-use conation_env::Environment;
-use conation_env_var::{env_var, maybe_env_var};
-use conation_service_urls::{
-    AiEditingWorkerUrl, ConnectionGatewayUrl, DocumentStorageServiceUrl, EmailServiceUrl,
-    LexicalServiceUrl, SyncServiceUrl,
-};
 use notification::domain::service::{NotificationReaderService, PlatformArnConfig};
 use notification::outbound::queue::SqsQueue;
 use notification::outbound::repository::DbNotificationRepository;

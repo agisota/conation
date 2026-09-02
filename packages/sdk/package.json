@@ -1,8 +1,8 @@
 {
-  "name": "@macro/sdk",
+  "name": "@conation/sdk",
   "version": "0.0.1",
   "type": "module",
-  "description": "Libary for interacting with Macro.com",
+  "description": "Library for interacting with Conation",
   "main": "./dist/src/macro.js",
   "module": "./dist/src/macro.js",
   "types": "./dist/src/macro.d.ts",

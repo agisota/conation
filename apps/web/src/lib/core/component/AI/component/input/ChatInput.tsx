@@ -1,12 +1,7 @@
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
-import { useHasPaidAccess } from '@core/auth/license';
 import type { ChatSendInput } from '@core/component/AI/component/input/buildRequest';
 import { ModelSelector } from '@core/component/AI/component/input/ModelSelector';
-import {
-  defaultModelForPlan,
-  Model,
-  modelsForPlan,
-} from '@core/component/AI/constant';
+import { DEFAULT_MODEL, Model } from '@core/component/AI/constant';
 import { useChatInputContext } from '@core/component/AI/context';
 import type { ToolSet } from '@core/component/AI/types';
 import { isImageAttachment } from '@core/component/AI/util/attachment';
@@ -15,8 +10,8 @@ import type { EditorConfigBuilder } from '@core/component/LexicalMarkdown/builde
 import { MarkdownShell } from '@core/component/LexicalMarkdown/builder/MarkdownShell';
 import { toast } from '@core/component/Toast/Toast';
 import { fileTypeToBlockName } from '@core/constant/allBlocks';
-import { PaywallKey, usePaywallState } from '@core/constant/PaywallState';
 import { TOKENS } from '@core/hotkey/tokens';
+import { t } from '@core/i18n';
 import { isMobile } from '@core/mobile/isMobile';
 import { isNativeMobilePlatform } from '@core/mobile/isNativeMobilePlatform';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
@@ -63,30 +58,19 @@ export function ChatInput(props: ChatInputComponentProps) {
   const attachments = input.attachments;
   const model = input.model;
   const generating = input.isGenerating;
-  const { showPaywall } = usePaywallState();
-  const hasPaidAccess = useHasPaidAccess();
-
-  // Every model is shown to every user; availability is per-plan. Free users
-  // see the premium models locked (dimmed + lock icon), and clicking one opens
-  // the paywall via `onLocked` rather than sending and being rejected by the
-  // backend. Listing only the free model would mean free users never see the
-  // upsell at all.
-  const modelOptions = createMemo(() => {
-    const allowed = modelsForPlan(hasPaidAccess());
-    return Object.values(Model).map((id) => ({
-      id,
-      available: allowed.includes(id),
-    }));
-  });
+  // Conation self-host exposes one AI catalog to every authenticated user.
+  const modelOptions = createMemo(() =>
+    Object.values(Model).map((id) => ({ id, available: true }))
+  );
 
   // Keep the selected model valid for the current plan: if it isn't a known id
   // (e.g. a stale persisted value) or isn't available to this user (e.g. a free
   // user defaulted to Opus), fall back to the plan default so we never send
-  // something unroutable or something the backend rejects.
+  // something unroutable.
   createEffect(() => {
     const options = modelOptions();
     if (options.some((o) => o.id === model() && o.available)) return;
-    input.setModel(defaultModelForPlan(hasPaidAccess()));
+    input.setModel(DEFAULT_MODEL);
   });
 
   let containerRef!: HTMLDivElement;
@@ -194,7 +178,7 @@ export function ChatInput(props: ChatInputComponentProps) {
     .withFilePaste({
       onPasteFilesAndDirs: (files, directories) => {
         if (directories.length > 0) {
-          toast.failure('Folder upload not supported here');
+          toast.failure(t('core.upload.folderUnsupportedHere'));
           return;
         }
         handleFileFolderDrop(files, directories, (entries) => {
@@ -234,7 +218,7 @@ export function ChatInput(props: ChatInputComponentProps) {
     <Button
       variant="ghost"
       size="icon-sm"
-      label="Stop generating"
+      label={t('ai.composer.stopGenerating')}
       hotkey={TOKENS.chat.stop}
       onClick={() => props.onStop?.()}
       class={cn(
@@ -253,7 +237,7 @@ export function ChatInput(props: ChatInputComponentProps) {
   const sendHidden = () => isMobile() && isEmptyInput();
   const SendButton = () => (
     <UiSendButton
-      tooltip={'Ask AI'}
+      tooltip={t('ai.composer.ask')}
       shortcut="enter"
       tooltipPlacement="top"
       disabled={!canSendMessage()}
@@ -268,7 +252,6 @@ export function ChatInput(props: ChatInputComponentProps) {
         selectedModel={model()}
         models={modelOptions()}
         onSelect={(m) => input.setModel(m)}
-        onLocked={() => showPaywall(PaywallKey.O1_LIMIT)}
         compact={compactSelector()}
       />
       <Show when={generating() && props.onStop} fallback={<SendButton />}>
@@ -385,7 +368,7 @@ export function ChatInput(props: ChatInputComponentProps) {
             >
               <MarkdownShell
                 config={props.editor}
-                placeholder="Ask AI, @mention anything"
+                placeholder={t('ai.composer.placeholder')}
                 initialValue={props.initialValue}
                 autofocus={
                   !isMobile() &&

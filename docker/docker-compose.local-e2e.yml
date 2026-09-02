@@ -16,7 +16,7 @@ x-local-e2e-env: &local-e2e-env
   REDIS_URI: redis://redis:6379
   DOCUMENT_STORAGE_SERVICE_REDIS_URI: redis://redis:6379
 
-  ATTACHMENT_BUCKET: macro-email-attachments
+  ATTACHMENT_BUCKET: conation-email-attachments
   DOCUMENT_STORAGE_BUCKET: doc-storage
   DOCX_DOCUMENT_UPLOAD_BUCKET: docx-upload
   STATIC_STORAGE_BUCKET: static-file-storage

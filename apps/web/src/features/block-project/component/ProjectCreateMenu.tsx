@@ -1,5 +1,5 @@
-import type { BlockTool } from '@components/app/ResponsiveBlockToolbar';
 import { t } from '@app/lib/i18n';
+import type { BlockTool } from '@components/app/ResponsiveBlockToolbar';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import type { BlockAlias, BlockName } from '@core/block';
 import { EntityIcon } from '@core/component/EntityIcon';
@@ -28,18 +28,18 @@ type MenuItemProps = {
 };
 
 type CreateBlockSpec = {
-  label: string;
+  labelKey: string;
   blockName: BlockName | BlockAlias;
   hotkeyToken: HotkeyToken;
   icon: Component;
   loading?: boolean;
-  createFn: (projectId: string) =>Promise<string>;
+  createFn: (projectId: string) => Promise<string>;
   params?: ObjectLike;
 };
 
 const BLOCK_CREATE_SPECS: CreateBlockSpec[] = [
   {
-    label: 'Note',
+    labelKey: 'project.create.types.note',
     blockName: 'md' as BlockName,
     hotkeyToken: TOKENS.create.note,
     icon: () => (
@@ -54,13 +54,13 @@ const BLOCK_CREATE_SPECS: CreateBlockSpec[] = [
         content: '',
         projectId,
       });
-      if (!result) throw new Error('Failed to create markdown file');
+      if (!result) throw new Error(t('project.create.errors.note'));
       return result;
     },
     params: { fromScratch: true },
   },
   {
-    label: 'Task',
+    labelKey: 'project.create.types.task',
     blockName: 'task' as BlockAlias,
     hotkeyToken: TOKENS.create.task,
     icon: () => (
@@ -84,12 +84,12 @@ const BLOCK_CREATE_SPECS: CreateBlockSpec[] = [
           },
         ],
       });
-      if (!result) throw new Error('Failed to create task');
+      if (!result) throw new Error(t('project.create.errors.task'));
       return result;
     },
   },
   {
-    label: 'AI',
+    labelKey: 'project.create.types.aiChat',
     blockName: 'chat' as BlockName,
     hotkeyToken: TOKENS.create.chat,
     icon: () => (
@@ -101,13 +101,13 @@ const BLOCK_CREATE_SPECS: CreateBlockSpec[] = [
       const result = await createChat({ projectId });
       if ('error' in result) {
         console.error(result.error);
-        throw new Error('Failed to create chat');
+        throw new Error(t('project.create.errors.aiChat'));
       }
       return result.chatId;
     },
   },
   {
-    label: 'Canvas',
+    labelKey: 'project.create.types.canvas',
     blockName: 'canvas' as BlockName,
     hotkeyToken: TOKENS.create.canvas,
     icon: () => (
@@ -119,18 +119,18 @@ const BLOCK_CREATE_SPECS: CreateBlockSpec[] = [
     createFn: async (projectId) => {
       const result = await createCanvasFileFromJsonString({
         json: JSON.stringify({ nodes: [], edges: [] }),
-        title: 'New Canvas',
+        title: t('project.create.defaultNames.canvas'),
         projectId,
       });
       if ('error' in result) {
         console.error(result.error);
-        throw new Error('Failed to create canvas');
+        throw new Error(t('project.create.errors.canvas'));
       }
       return result.documentId;
     },
   },
   {
-    label: 'Folder',
+    labelKey: 'project.create.types.folder',
     blockName: 'project' as BlockName,
     hotkeyToken: TOKENS.create.project,
     icon: () => (
@@ -140,10 +140,10 @@ const BLOCK_CREATE_SPECS: CreateBlockSpec[] = [
     ),
     createFn: async (projectId) => {
       const result = await createProject({
-        name: 'New Project',
+        name: t('project.create.defaultNames.folder'),
         parentId: projectId,
       });
-      if (!result) throw new Error('Failed to create folder');
+      if (!result) throw new Error(t('project.create.errors.folder'));
       return result;
     },
   },
@@ -155,7 +155,7 @@ function makeCreateBlock({
 }: Pick<ReturnType<typeof useSplitLayout>, 'replaceSplit' | 'insertSplit'>) {
   return async (spec: {
     blockName: BlockName | BlockAlias;
-    createFn: () =>Promise<string>;
+    createFn: () => Promise<string>;
     loading?: boolean;
     params?: Record<string, unknown>;
   }) => {
@@ -224,7 +224,7 @@ function ProjectCreateDialog(props: {
         <div class="*:max-h-[75vh]">
           <div class="p-2">
             <Dialog.Title class="text-base font-semibold text-ink pb-3">
-              Create in {props.name}
+              {t('project.create.dialogTitle', { name: props.name })}
             </Dialog.Title>
             <For each={BLOCK_CREATE_SPECS}>
               {(spec) => (
@@ -243,7 +243,7 @@ function ProjectCreateDialog(props: {
                   <div class="size-4 shrink-0">
                     <spec.icon />
                   </div>
-                  {spec.label}
+                  {t(spec.labelKey)}
                 </button>
               )}
             </For>
@@ -270,7 +270,9 @@ function MenuContent(props: { projectId: string }) {
   const createBlock = makeCreateBlock({ replaceSplit, insertSplit });
 
   const items: MenuItemProps[] = BLOCK_CREATE_SPECS.map((spec) => ({
-    label: spec.label,
+    get label() {
+      return t(spec.labelKey);
+    },
     Icon: spec.icon,
     action: () =>
       createBlock({
@@ -299,7 +301,9 @@ export function useProjectCreateTools(
 
   const tools: BlockTool[] = [
     {
-      label: 'Create',
+      get label() {
+        return t('project.actions.create');
+      },
       icon: PlusIcon,
       // Using a setTimeout here so that the synthetic click event after the touch doesn't instantly select an item
       action: () => setTimeout(() => setOpen(true), 0),
@@ -330,7 +334,9 @@ export function ProjectCreateMenu(props: { id: string }) {
           class="bg-surface py-3"
           depth={2}
         >
-          <CirclePlus />{t('auto.create')}<CaretDown />
+          <CirclePlus />
+          {t('project.actions.create')}
+          <CaretDown />
         </Dropdown.Trigger>
       </div>
       <MenuContent projectId={props.id} />

@@ -7,22 +7,21 @@ use axum::{
     http::{Request, StatusCode, header},
     routing::get,
 };
+use conation_authorization::{
+    INTERNAL_API_KEY_HEADER, InternalAuthConfig, JwtValidator, MacroAuthorizationError,
+    MacroAuthorizationExtractor, MacroAuthorizationServiceImpl, MacroAuthorizationState,
+    UserOrInternal, ValidatedIdentity,
+};
+use conation_user_id::{
+    lowercased::Lowercase,
+    user_id::{MacroUserId, MacroUserIdStr},
+};
 use entity_access::domain::{
     models::{
         AccessError, AccessLevel, BotAccessScope, BotId, CallChannelInfo, EntityAccessAuth,
         EntityAccessReceipt, EntityPermission, EntityType, RequiredPermission, UserTeamInfo,
     },
     ports::EntityAccessService,
-};
-#[allow(deprecated)]
-use conation_authorization::{
-    INTERNAL_API_KEY_HEADER, InternalAuthConfig, JwtValidator, LEGACY_DSS_INTERNAL_API_KEY_HEADER,
-    MacroAuthorizationError, MacroAuthorizationExtractor, MacroAuthorizationServiceImpl,
-    MacroAuthorizationState, UserOrInternal, ValidatedIdentity,
-};
-use conation_user_id::{
-    lowercased::Lowercase,
-    user_id::{MacroUserId, MacroUserIdStr},
 };
 use rootcause::Report;
 use tower::ServiceExt;
@@ -273,7 +272,7 @@ fn test_router(entity_access_service: FakeEntityAccessService) -> Router {
 async fn required_auth_handler(
     authorization: MacroAuthorizationExtractor<TestAuthorizationService, UserOrInternal>,
 ) -> String {
-    authorization.authorization.user.conation_user_id.to_string()
+    authorization.authorization.user.macro_user_id.to_string()
 }
 
 async fn team_handler(
@@ -384,23 +383,36 @@ async fn property_team_extractor_uses_authorized_user() {
     );
 }
 
-#[allow(deprecated)]
 #[tokio::test]
-async fn standard_and_legacy_internal_headers_use_the_default_user() {
-    for key_header in [INTERNAL_API_KEY_HEADER, LEGACY_DSS_INTERNAL_API_KEY_HEADER] {
-        let request = Request::builder()
-            .uri("/required")
-            .header(key_header, INTERNAL_API_KEY)
-            .body(Body::empty())
-            .expect("request should be valid");
-        let response = test_router(FakeEntityAccessService::default())
-            .oneshot(request)
-            .await
-            .expect("request should complete");
+async fn canonical_internal_header_uses_the_default_user_and_legacy_is_rejected() {
+    let request = Request::builder()
+        .uri("/required")
+        .header(INTERNAL_API_KEY_HEADER, INTERNAL_API_KEY)
+        .body(Body::empty())
+        .expect("request should be valid");
+    let response = test_router(FakeEntityAccessService::default())
+        .oneshot(request)
+        .await
+        .expect("request should complete");
 
-        assert_eq!(response.status(), StatusCode::OK);
-        assert_eq!(response_body(response).await, DEFAULT_INTERNAL_USER_ID);
-    }
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(response_body(response).await, DEFAULT_INTERNAL_USER_ID);
+
+    let legacy_request = Request::builder()
+        .uri("/required")
+        .header("x-document-storage-service-auth-key", INTERNAL_API_KEY)
+        .body(Body::empty())
+        .expect("legacy request should be valid");
+    let response = test_router(FakeEntityAccessService::default())
+        .oneshot(legacy_request)
+        .await
+        .expect("legacy request should complete");
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    assert_eq!(
+        response_body(response).await,
+        r#"{"message":"legacy internal credentials are not supported"}"#
+    );
 }
 
 #[tokio::test]

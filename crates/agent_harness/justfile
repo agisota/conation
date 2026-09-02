@@ -19,7 +19,7 @@
 set dotenv-load := true
 
 # What the image is called: a Daytona snapshot, and a local Docker tag.
-image_name := env_var_or_default("AGENT_HARNESS_IMAGE", "macro-agent-harness")
+image_name := env_var_or_default("AGENT_HARNESS_IMAGE", "conation-agent-harness")
 
 # Snapshot bake size from sandbox_sizes.json. Override with DAYTONA_SNAPSHOT_*.
 snapshot_cpu := env_var_or_default("DAYTONA_SNAPSHOT_CPU", `jq -r .snapshot.cpu sandbox_sizes.json`)
@@ -113,4 +113,22 @@ build-local force="":
       exit 0
     fi
     echo "building $tag (native platform; flake has x86_64-linux and aarch64-linux)"
-    docker build --tag "$tag" container
+    secret_args=()
+    if [[ -n "${GH_TOKEN:-}" ]]; then
+      secret_args+=(--secret id=github_token,env=GH_TOKEN)
+    elif [[ -n "${GITHUB_TOKEN:-}" ]]; then
+      secret_args+=(--secret id=github_token,env=GITHUB_TOKEN)
+    fi
+    repo_url="${CONATION_REPO_URL:-https://github.com/agisota/conation.git}"
+    case "$repo_url" in
+      https://github.com/*) ;;
+      *) echo "CONATION_REPO_URL must be an https://github.com repository" >&2; exit 2 ;;
+    esac
+    case "$repo_url" in
+      *"@"*|*"?"*|*"#"*) echo "CONATION_REPO_URL must not contain credentials, query, or fragment" >&2; exit 2 ;;
+    esac
+    docker build \
+      "${secret_args[@]}" \
+      --build-arg "CONATION_REPO_URL=$repo_url" \
+      --tag "$tag" \
+      container

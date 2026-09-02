@@ -98,7 +98,7 @@ pub async fn get_thread_messages_handler(
 ) -> Result<Response, GetThreadError> {
     let p = process_get_thread_params(&query_params)?;
 
-    let link_ids: HashSet<Uuid> = email_db_client::links::get::fetch_inboxes_for_conation_id(
+    let link_ids: HashSet<Uuid> = email_db_client::links::get::fetch_inboxes_for_macro_id(
         &ctx.db,
         &authorization.authorization.user.user_context.user_id,
     )

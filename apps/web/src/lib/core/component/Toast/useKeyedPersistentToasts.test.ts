@@ -35,7 +35,7 @@ function lastToastOptions(): ToastOptions {
   return mocks.toastCustom.mock.calls.at(-1)?.[1] as ToastOptions;
 }
 
-const PERSIST_KEY = 'macro:test-prompt:dismissed';
+const PERSIST_KEY = 'conation:test-prompt:dismissed';
 
 function persistedKeys(): string[] {
   return JSON.parse(localStorage.getItem(PERSIST_KEY) ?? '[]');

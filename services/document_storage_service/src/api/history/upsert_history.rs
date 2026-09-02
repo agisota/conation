@@ -2,9 +2,9 @@ use crate::api::context::ApiContext;
 use crate::api::context::{AuthorizationService, EntityAccessService};
 use axum::extract::State;
 use axum::{extract::Path, http::StatusCode, response::IntoResponse};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use entity_access::domain::models::EntityPermission;
 use entity_access::inbound::axum_extractors::HistoryAccessExtractor;
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::response::{
     GenericErrorResponse, GenericResponse, GenericSuccessResponse, SuccessResponse,
 };
@@ -32,7 +32,7 @@ pub struct Params {
         (status = 500, body=GenericErrorResponse),
     )
 )]
-#[tracing::instrument(skip(ctx, user, history_access), fields(user_id=?user.authorization.user.conation_user_id))]
+#[tracing::instrument(skip(ctx, user, history_access), fields(user_id=?user.authorization.user.macro_user_id))]
 pub async fn upsert_history_handler(
     history_access: HistoryAccessExtractor<
         ViewAccessLevel,
@@ -85,7 +85,7 @@ pub async fn upsert_history_handler(
 
     if let Err(e) = conation_db_client::history::upsert_user_history(
         &mut transaction,
-        user.authorization.user.conation_user_id.clone(),
+        user.authorization.user.macro_user_id.clone(),
         item_id.as_str(),
         item_type.as_str(),
     )
@@ -103,7 +103,7 @@ pub async fn upsert_history_handler(
         && let Err(e) = conation_db_client::document::track_document::track_document(
             &mut transaction,
             item_id.as_str(),
-            Some(user.authorization.user.conation_user_id.as_ref()),
+            Some(user.authorization.user.macro_user_id.as_ref()),
         )
         .await
     {

@@ -65,7 +65,7 @@ pub enum AgentKind {
     SandboxedCoder,
     /// A Cursor cloud agent, served over an in-process ACP pipe.
     Cursor,
-    /// The in-process (in-memory) "macro(new)" bot, served by `agent_inmem`.
+    /// The in-process Conation (new) bot, served by `agent_inmem`.
     InMemory,
     /// The bot's operator hosts the runtime and dials the gateway; no
     /// deployment here provisions anything for it.
@@ -76,11 +76,11 @@ impl AgentKind {
     /// The kind of runtime serving `bot`'s sessions.
     #[must_use]
     pub fn of(bot: BotId) -> Self {
-        if bot == bot_id::MACRO_CODER_BOT_ID {
+        if bot == bot_id::CONATION_CODER_BOT_ID {
             Self::SandboxedCoder
         } else if bot == bot_id::CURSOR_BOT_ID {
             Self::Cursor
-        } else if bot == bot_id::MACRO_NEW_BOT_ID {
+        } else if bot == bot_id::CONATION_NEW_BOT_ID {
             Self::InMemory
         } else {
             Self::External
@@ -97,11 +97,6 @@ impl AgentKind {
         !matches!(self, Self::External)
     }
 }
-
-/// Whether a user belongs to the Macro staff domain - the egress crate's
-/// predicate, reused so the harness's staff gates and the proxy's can never
-/// disagree about who staff is.
-pub(crate) use agent_egress::domain::model::is_conation_staff;
 
 /// Where a prompt came from, when it came from somewhere the session should
 /// answer back into.
@@ -272,7 +267,7 @@ pub struct SandboxEgress {
     /// The session token, presented on every proxied call.
     pub session_token: String,
     /// The owner's connected MCP servers, by the slug the proxy resolves.
-    /// Macro's own server is not listed: every session has it, on its own
+    /// Conation's own server is not listed: every session has it, on its own
     /// route.
     pub mcp_servers: Vec<McpServerSlug>,
 }
@@ -283,17 +278,17 @@ pub struct SandboxEgress {
 /// with the container: `container/ensure_ready.sh` reads it to build the git
 /// remote it clones from. Like `provision::SIDECAR_PORT`, the agreement between
 /// the two is held by a test rather than by comment.
-pub const EGRESS_URL_VARIABLE: &str = "MACRO_EGRESS_URL";
+pub const EGRESS_URL_VARIABLE: &str = "CONATION_EGRESS_URL";
 
 /// The session token the sandbox presents on every proxied call. Shared with
 /// `container/ensure_ready.sh` on the same terms as [`EGRESS_URL_VARIABLE`].
-pub const SESSION_TOKEN_VARIABLE: &str = "MACRO_SESSION_TOKEN";
+pub const SESSION_TOKEN_VARIABLE: &str = "CONATION_SESSION_TOKEN";
 
-/// The name every session's server list gives Macro's own MCP server.
+/// The name every session's server list gives Conation's own MCP server.
 ///
 /// Purely a display name now - resolution happens by route, not by name - but
 /// kept short and stable because agents namespace tool names under it.
-pub const MACRO_MCP_NAME: &str = "macro";
+pub const CONATION_MCP_NAME: &str = "conation";
 
 impl SandboxEgress {
     /// Where the proxy serves `slug` - the URL a client dials to reach that
@@ -302,10 +297,10 @@ impl SandboxEgress {
         format!("{}/mcp/{slug}", self.base_url)
     }
 
-    /// Where the proxy serves Macro's own MCP server: its own route, so no
+    /// Where the proxy serves Conation's own MCP server: its own route, so no
     /// connected app's slug can ever name it.
     pub fn conation_mcp_url(&self) -> String {
-        format!("{}/mcp-macro", self.base_url)
+        format!("{}/mcp-conation", self.base_url)
     }
 
     /// The `Authorization` value presented on every proxied call.
@@ -327,14 +322,14 @@ impl SandboxEgress {
         ]
     }
 
-    /// Every server the session may dial, as `(name, url)` pairs: Macro's own
+    /// Every server the session may dial, as `(name, url)` pairs: Conation's own
     /// server first, then the owner's connected apps under their Pipedream
     /// slugs.
     ///
     /// The one enumeration behind both renderings - [`Self::acp_servers`] and
     /// the Cursor API's - so the two can never advertise different sets.
     pub fn server_entries(&self) -> impl Iterator<Item = (String, String)> + '_ {
-        std::iter::once((MACRO_MCP_NAME.to_owned(), self.conation_mcp_url())).chain(
+        std::iter::once((CONATION_MCP_NAME.to_owned(), self.conation_mcp_url())).chain(
             self.mcp_servers
                 .iter()
                 .map(|slug| (slug.as_str().to_owned(), self.mcp_url(slug))),
@@ -395,7 +390,7 @@ pub struct SessionDefaults {
     /// trigger path's: `@claude` and `@codex` are separate deployments of one
     /// binary, differing only in the bot they answer for.
     pub bot_id: BotId,
-    /// Model slug, e.g. `claude`.
+    /// Model slug, e.g. `rox/gemini-2.5-flash`.
     pub model: String,
     /// Harness slug, e.g. `opencode`.
     pub harness: String,
@@ -406,7 +401,7 @@ pub struct SessionDefaults {
 /// Session defaults for every bot a deployment answers for.
 ///
 /// One deployment can serve more than one managed bot (the sandboxed coder
-/// bot and the in-process Macro bot), and each stamps different defaults onto
+/// bot and the in-process Conation bot), and each stamps different defaults onto
 /// the sessions it opens.
 #[derive(Debug, Clone)]
 pub struct HarnessDefaults {

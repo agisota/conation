@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { copyCalendarEventMentionTarget } from '@block-calendar/copy-event-mention';
 import { getChannelParams } from '@block-channel/utils/link';
 import { toast } from '@core/component/Toast/Toast';
@@ -69,7 +70,7 @@ export const makeCopyLinkAction = () => {
     if (entity.type === 'calendar_event') {
       await copyCalendarEventMentionTarget({
         ...calendarEventLinkTarget(entity),
-        title: entity.name || '(No title)',
+        title: entity.name || t('soup.inbox.noTitle'),
       });
       return;
     }
@@ -77,7 +78,7 @@ export const makeCopyLinkAction = () => {
     const url = getEntityUrl(entity);
 
     await navigator.clipboard.writeText(url);
-    toast.success('Link copied to clipboard');
+    toast.success(t('soup.actions.linkCopied'));
   };
 
   /** Blocks already know their id and URL discriminator even when their full
@@ -86,7 +87,7 @@ export const makeCopyLinkAction = () => {
     await navigator.clipboard.writeText(
       buildSimpleEntityUrl({ id, type: blockType })
     );
-    toast.success('Link copied to clipboard');
+    toast.success(t('soup.actions.linkCopied'));
   };
 
   const executeWithSoup = async (entities: EntityData[], _soup: SoupState) => {

@@ -33,7 +33,7 @@ vi.mock('../utils', () => ({
 
 import { makeDeleteAction } from './make-delete-action';
 
-const ME = 'macro|me@macro.com';
+const ME = 'conation|me@conation.dev';
 
 const entity = (
   type: EntityData['type'],
@@ -82,7 +82,7 @@ describe('makeDeleteAction.canExecute', () => {
   });
 
   it('refuses entities owned by someone else', () => {
-    expect(canExecute(entity('document', { ownerId: 'macro|other' }))).toBe(
+    expect(canExecute(entity('document', { ownerId: 'conation|other' }))).toBe(
       false
     );
   });

@@ -1,4 +1,5 @@
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { useSendMobileWelcomeEmail } from '@queries/auth';
 import { createSignal, Match, Switch } from 'solid-js';
@@ -33,13 +34,13 @@ export default function MobileWebSignup() {
     const result = await sendWelcomeEmail.mutateAsync(trimmed);
     if (result.isErr()) {
       match(result.error[0]?.code)
-        .with('INVALID_EMAIL', () => toast.failure('Invalid email address.'))
-        .with('RATE_LIMITED', () =>
-          toast.failure('Too many attempts. Please try again later.')
+        .with('INVALID_EMAIL', () =>
+          toast.failure(t('onboarding.mobile.errors.invalidEmail'))
         )
-        .otherwise(() =>
-          toast.failure('Something went wrong. Please try again.')
-        );
+        .with('RATE_LIMITED', () =>
+          toast.failure(t('onboarding.mobile.errors.rateLimited'))
+        )
+        .otherwise(() => toast.failure(t('onboarding.mobile.errors.generic')));
       return;
     }
 

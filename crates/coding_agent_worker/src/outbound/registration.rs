@@ -30,9 +30,9 @@ use crate::config::{MacroApi, Server};
 #[cfg(test)]
 mod test;
 
-const BOT_TOKEN_HEADER: &str = "x-macro-bot-token";
-const BOT_SCOPE_HEADER: &str = "x-macro-bot-scope";
-const BOT_ACTING_USER_HEADER: &str = "x-macro-bot-for-macro-user-id";
+const BOT_TOKEN_HEADER: &str = "x-conation-bot-token";
+const BOT_SCOPE_HEADER: &str = "x-conation-bot-scope";
+const BOT_ACTING_USER_HEADER: &str = "x-conation-bot-for-conation-user-id";
 
 /// The namespace a daemon's feed carries: derived from its bot, so the feed
 /// can be found again without the server marking it as that bot's.

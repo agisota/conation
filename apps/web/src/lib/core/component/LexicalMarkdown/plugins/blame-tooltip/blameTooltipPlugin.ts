@@ -1,6 +1,6 @@
+import { $getId } from '@conation/lexical-core';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
 import { mergeRegister } from '@lexical/utils';
-import { $getId } from '@conation/lexical-core';
 import {
   $getNearestNodeFromDOMNode,
   $isTextNode,

@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { useIsAuthenticated } from '@core/auth';
 import { toast } from '@core/component/Toast/Toast';
 import { thrownResultErrorHasCode, throwOnErr } from '@core/util/result';
@@ -94,7 +95,7 @@ export function useEnsureTagSetMutation(
             return;
           }
           console.error('Failed to provision tag set', error);
-          toast.failure('Failed to set up tags');
+          toast.failure(t('properties.feedback.tagsSetupFailed'));
         },
         onSuccess: () => invalidateTags(),
       },
@@ -183,7 +184,7 @@ export function useUpdatePropertyOptionMutation(
             );
           }
           console.error('Failed to update label', error);
-          toast.failure('Failed to update label');
+          toast.failure(t('properties.feedback.labelUpdateFailed'));
         },
         onSuccess: (data, variables) => {
           const updated = propertyOptionToResponse(data);
@@ -315,7 +316,7 @@ export function useCreateTagMutation(
             );
           }
           console.error('Failed to create tag', error);
-          toast.failure('Failed to create tag');
+          toast.failure(t('properties.feedback.tagCreateFailed'));
         },
         onSuccess(data, _variables, context) {
           const created = propertyOptionToResponse(data.option);
@@ -421,7 +422,7 @@ export function useDeletePropertyOptionMutation(
             );
           }
           console.error('Failed to delete label', error);
-          toast.failure('Failed to delete label');
+          toast.failure(t('properties.feedback.labelDeleteFailed'));
         },
         onSuccess: (_data, variables) => {
           invalidatePropertyOptions(variables.propertyDefinitionId);
@@ -465,7 +466,7 @@ export function usePromoteTagMutation(
           // into the "replace with the team label?" confirmation.
           if (parseTagNameConflict(error)) return;
           console.error('Failed to share label with team', error);
-          toast.failure('Failed to share label with team');
+          toast.failure(t('properties.feedback.labelShareFailed'));
         },
         onSuccess: (option) => onTagRemapped(option),
       },
@@ -503,7 +504,7 @@ export function useMergeTagMutation(
       {
         onError(error) {
           console.error('Failed to replace label with the team label', error);
-          toast.failure('Failed to replace label');
+          toast.failure(t('properties.feedback.labelReplaceFailed'));
         },
         onSuccess: (option) => onTagRemapped(option),
       },

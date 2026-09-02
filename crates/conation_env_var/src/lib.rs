@@ -181,8 +181,8 @@ pub struct VarNameErr {
     err: std::env::VarError,
 }
 
-#[conation_export]
-conation_rules! env_var {
+#[macro_export]
+macro_rules! env_var {
     (
         $(#[$attr:meta])*
         $v:vis struct $n:ident;
@@ -371,8 +371,8 @@ conation_rules! env_var {
 ///
 /// let _url: Result<BaseUrl, _> = BaseUrl::new();
 /// ```
-#[conation_export]
-conation_rules! env_vars {
+#[macro_export]
+macro_rules! env_vars {
     (
         $(
             $(#[$attr:meta])*
@@ -404,8 +404,8 @@ conation_rules! env_vars {
 ///
 /// let _key: Option<OptionalApiKey> = OptionalApiKey::new();
 /// ```
-#[conation_export]
-conation_rules! maybe_env_vars {
+#[macro_export]
+macro_rules! maybe_env_vars {
     (
         $(
             $(#[$attr:meta])*
@@ -457,8 +457,8 @@ conation_rules! maybe_env_vars {
 /// assert_eq!(set.value(), Some("abc"));
 /// assert_eq!(unset.value(), None);
 /// ```
-#[conation_export]
-conation_rules! maybe_env_var {
+#[macro_export]
+macro_rules! maybe_env_var {
     (
         $(#[$attr:meta])*
         $v:vis struct $n:ident;

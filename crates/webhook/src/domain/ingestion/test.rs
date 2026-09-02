@@ -21,6 +21,7 @@ use channels::domain::{
     models::{ChannelType, SimpleMention},
 };
 use chrono::{DateTime, Utc};
+use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId};
 use documents::domain::events::{
     DocumentContentUploadedMetadata, DocumentCopiedMetadata, DocumentCreatedMetadata,
     DocumentDeletedMetadata, DocumentPurgedMetadata, DocumentSyncContentUpdatedMetadata,
@@ -30,7 +31,6 @@ use entity_access::domain::models::{
     AccessLevel, BotAccessScope, BotId, CallChannelInfo, EntityAccessReceipt, EntityPermission,
     RequiredPermission, TeamRole, UserTeamInfo,
 };
-use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId};
 use serde_json::Value;
 use std::{
     collections::BTreeMap,

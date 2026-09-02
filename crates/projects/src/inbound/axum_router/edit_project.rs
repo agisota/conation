@@ -1,11 +1,13 @@
 //! Handler for editing projects.
 
 use axum::{Extension, Json, extract::State};
+use conation_authorization::{
+    MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal,
+};
 use entity_access::{
     domain::{models::EditAccessLevel, ports::EntityAccessService},
     inbound::axum_extractors::{ProjectAccessLevelExtractor, ProjectBodyAccessLevelExtractorV2},
 };
-use conation_authorization::{MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal};
 use model::{
     project::{BasicProject, request::PatchProjectRequestV2},
     response::{GenericSuccessResponse, SuccessResponse},
@@ -30,7 +32,7 @@ use crate::domain::{models::ProjectError, ports::ProjectService};
 )]
 #[tracing::instrument(
     skip(state, user, access, project, body),
-    fields(user_id = ?user.authorization.user.conation_user_id),
+    fields(user_id = ?user.authorization.user.macro_user_id),
     err
 )]
 pub async fn edit_project_handler<T, Svc, Auth>(

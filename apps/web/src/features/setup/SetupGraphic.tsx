@@ -258,7 +258,7 @@ const INVERSE_BLOCKS_TRANSFORM = `translate(${SCENE.blocks.center.x} ${SCENE.blo
 const BLOCKS_TRANSFORM = `translate(${SCENE.blocks.center.x} ${SCENE.blocks.center.y}) scale(${SCENE.blocks.scale}) translate(${-SCENE.blocks.center.x} ${-SCENE.blocks.center.y})`;
 
 /**
- * The isometric empty-state scene for `/setup`: the Macro logo re-imagined as
+ * The isometric empty-state scene for `/setup`: the Conation mark re-imagined as
  * three technical isometric blocks (`front_card`, `middle_card`, `back_card`),
  * with hovering modules around it. Inlined (rather than imported as an asset)
  * so animation can target the named groups.
@@ -921,7 +921,7 @@ export function SetupGraphic(props: {
               points="47.8 388.1 47.8 627.6 143.7 718.5 143.7 480.4"
             />
           </g>
-          {/* Invisible geometry reference: the Macro logo at the exact spot
+          {/* Invisible geometry reference: the Conation mark at the exact spot
               the designer superimposed it over these blocks (authored in the
               source artwork with no transform, so its coords are in the same
               space as the card paths above — hence its place here, inside

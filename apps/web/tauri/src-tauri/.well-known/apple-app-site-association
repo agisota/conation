@@ -2,7 +2,7 @@
   "applinks": {
     "details": [
       {
-        "appIDs": ["TY74Q77JBD.com.macro.app.prod"],
+        "appIDs": ["TY74Q77JBD.dev.conation.app"],
         "components": [
           {
             "/": "/app/*",

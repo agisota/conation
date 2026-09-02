@@ -2,11 +2,11 @@ use std::sync::{Arc, Mutex};
 
 use async_graphql::{EmptySubscription, Object, Schema};
 use channels::domain::models::{Activity, ActivityType};
+use conation_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::models::{
     AccessError, Entity, EntityAccessAuth, EntityAccessReceipt, EntityPermission, EntityType,
     MemberParticipantRole, ParticipantRole,
 };
-use conation_user_id::user_id::MacroUserIdStr;
 use uuid::Uuid;
 
 use super::*;

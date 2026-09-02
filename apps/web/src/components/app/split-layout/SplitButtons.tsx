@@ -16,7 +16,7 @@ export function SplitBackButton() {
     <Button
       variant="ghost"
       size="icon-md"
-      label="Go Back"
+      label={t('shell.navigation.goBack')}
       disabled={!context.handle.canGoBack()}
       onClick={context.handle.goBack}
     >
@@ -32,7 +32,7 @@ export function SplitForwardButton() {
     <Button
       variant="ghost"
       size="icon-md"
-      label="Go Forward"
+      label={t('shell.navigation.goForward')}
       disabled={!context.handle.canGoForward()}
       onClick={context.handle.goForward}
     >
@@ -48,7 +48,7 @@ export function SplitCreateButton() {
     <Button
       variant="ghost"
       size="icon-md"
-      label="Create new split"
+      label={t('shell.split.createNew')}
       onClick={() => {
         context.manager.createNewSplit({
           content: {

@@ -1,8 +1,16 @@
 use super::*;
-use std::collections::BTreeSet;
+use std::{cell::RefCell, collections::BTreeSet};
 
 /// Every mode whose spec we assert invariants over.
 const MODES: &[Mode] = &[Mode::Local, Mode::Dev];
+
+#[test]
+fn package_metadata_uses_conation_display_brand() {
+    let manifest = include_str!("../../Cargo.toml");
+
+    assert!(manifest.contains("xtask local: Conation local & dev stack orchestration"));
+    assert!(!manifest.contains("xtask local: Macro local & dev stack orchestration"));
+}
 
 /// Cross-field design rules every [`ModeSpec`] must satisfy. These encode what
 /// makes a mode *coherent* — a new mode that trips one of these is a bug, not a
@@ -25,6 +33,44 @@ fn mode_specs_are_coherent() {
             s.label
         );
     }
+}
+
+#[test]
+fn support_users_are_provisioned_only_after_backend_health() {
+    let events = RefCell::new(Vec::new());
+
+    wait_then_provision_support_users(
+        || {
+            events.borrow_mut().push("backend-ready");
+            Ok(())
+        },
+        || {
+            events.borrow_mut().push("support-users-provisioned");
+            Ok(())
+        },
+    )
+    .unwrap();
+
+    assert_eq!(
+        events.into_inner(),
+        ["backend-ready", "support-users-provisioned"]
+    );
+}
+
+#[test]
+fn support_user_provisioning_stops_when_backend_health_fails() {
+    let provision_called = std::cell::Cell::new(false);
+
+    let result = wait_then_provision_support_users(
+        || anyhow::bail!("backend unavailable"),
+        || {
+            provision_called.set(true);
+            Ok(())
+        },
+    );
+
+    assert!(result.is_err());
+    assert!(!provision_called.get());
 }
 
 #[test]

@@ -35,7 +35,7 @@ vi.mock('@core/component/Toast/Toast', () => ({
 }));
 
 vi.mock('@core/context/user', () => ({
-  useUserId: () => () => 'macro|current@example.com',
+  useUserId: () => () => 'conation|current@example.com',
 }));
 
 vi.mock('@core/user', () => ({
@@ -90,7 +90,7 @@ describe('UserTooltip CRM contact action', () => {
       <UserTooltip
         displayName="Jane Doe"
         email="jane.doe@example.com"
-        id="macro|jane.doe@example.com"
+        id="conation|jane.doe@example.com"
         onClose={mocks.onClose}
       />
     ));
@@ -153,7 +153,7 @@ describe('UserTooltip CRM contact action', () => {
       <UserTooltip
         displayName="Jane Doe"
         email="jane.doe@example.com"
-        id="macro|jane.doe@example.com"
+        id="conation|jane.doe@example.com"
       />
     ));
 

@@ -1,4 +1,5 @@
 import { analytics } from '@app/lib/analytics';
+import { t } from '@app/lib/i18n';
 import { Tools } from '@block-canvas/constants';
 import type {
   CanvasEntityStyle,
@@ -240,7 +241,7 @@ export const useCanvasFileDrop = () => {
         type: 'canvas_image',
         destination: 'static',
       });
-      toast.failure('Failed to upload image');
+      toast.failure(t('canvas.error.uploadImageFailed'));
       nodes.delete(loadingNode.id, { autosave: true });
     }
   };
@@ -252,7 +253,7 @@ export const useCanvasFileDrop = () => {
     handleFileDrop: async (files: File[], pos?: Vector2) => {
       const file = files[0];
       if (!file) {
-        toast.failure('Invalid file');
+        toast.failure(t('canvas.error.invalidFile'));
         return;
       }
       const position = vec2(

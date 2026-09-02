@@ -1,86 +1,103 @@
 ---
-title: "Bring your own agent"
-sidebarTitle: "Bring Your Own"
+title: "Свой агент"
+sidebarTitle: "Свой агент"
 icon: "terminal"
-tag: "Coming soon"
-description: "Connect a self-hosted ACP agent harness to Macro with macrod."
+tag: "Скоро"
+description: "Как подключить ACP-совместимый исполнитель агента к Conation."
 ---
 
 <Info>
-  Bring Your Own Agent will be available soon.
+  Подключение собственных исполнителей агентов находится в подготовке. Эта
+  страница описывает целевую схему и безопасную конфигурацию для самостоятельно
+  размещенных окружений.
 </Info>
 
-You can run any [Agent Client Protocol (ACP)](https://zed.dev/acp)-compatible agent harness directly in Macro.
+Conation может запускать любой исполнитель агента, совместимый с [Agent Client Protocol (ACP)](https://zed.dev/acp). В этой схеме агент работает на вашей машине или сервере, а Conation отправляет ему задачи, когда вы запускаете сессию или упоминаете бота в канале.
 
-Macro provides `macrod`, a small daemon that runs on your computer and waits for agent sessions. When you start a session or @mention your custom agent, `macrod` launches your configured harness, sends it the prompt, and bridges its ACP connection to Macro.
+Для совместимости с текущим рантаймом используется daemon `macrod`. Название бинаря, секция конфигурации `[macro]` и webhook-путь `/macro-events` пока являются техническими идентификаторами протокола, а не пользовательским брендом.
 
 <Warning>
-  Self-hosted agents can run real commands on your computer. Anyone who can prompt the agent may be able to affect its configured workspace. Use a dedicated workspace and grant channel access carefully.
+  Самостоятельно размещенный агент может выполнять реальные команды в указанной
+  рабочей директории. Любой пользователь, который может отправить ему задачу,
+  потенциально влияет на это окружение. Запускайте агента в отдельной рабочей
+  директории и выдавайте доступ к каналам осознанно.
 </Warning>
 
-## Before you start
+## Что понадобится
 
-You need:
-
-- A machine that can keep an agent harness and `macrod` running
-- An ACP-compatible harness installed and configured on that machine
-- A public HTTPS endpoint that forwards webhooks (in this demo, to port `8790`)
+- Машина или сервер, где постоянно работают исполнитель агента и `macrod`.
+- Установленный ACP-совместимый исполнитель агента.
+- Публичный HTTPS endpoint, который прокидывает webhook-запросы на локальный порт `8790`.
+- Токен бота Conation из **Настройки → Боты**.
 
 <Tip>
-  [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) can provide the HTTPS endpoint needed to receive webhooks without opening a router port. To use it, [install `cloudflared`](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/) and run `cloudflared tunnel --url http://localhost:8790`. Then copy the temporary `https://....trycloudflare.com` URL and append `/macro-events` for the `public_url` below.
+  Для быстрой проверки подойдет [Cloudflare
+  Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/).
+  Установите
+  [`cloudflared`](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/),
+  выполните `cloudflared tunnel --url http://localhost:8790`, скопируйте
+  выданный `https://....trycloudflare.com` URL и добавьте к нему `/macro-events`
+  в поле `public_url`.
 </Tip>
 
 <Steps>
-  <Step title="Create a Macro agent">
-    Open **Settings → Bots → Create bot**. Enable **Make this bot a coding agent**, choose the channels it can join, and create it.
+  <Step title="Создайте агента Conation">
+    Откройте **Настройки → Боты → Создать бота**. Включите режим coding-agent, выберите каналы, в которые бот сможет заходить, и создайте его.
 
-    Copy the agent token when it appears. Macro shows it only once, but you can create a new one later if you lose it.
+    Скопируйте токен агента сразу после создания. Он показывается один раз; если вы потеряете токен, создайте новый.
+
   </Step>
 
-  <Step title="Prepare an agent harness">
-    Install your preferred ACP-compatible agent and identify the command that starts its ACP server. Verify that command before configuring `macrod`.
+  <Step title="Подготовьте исполнителя агента">
+    Установите ACP-совместимый агент и проверьте команду, которая запускает его ACP-сервер. Эту команду нужно проверить вручную до настройки `macrod`.
 
-    These harnesses provide ACP entrypoints:
+    Примеры точек входа ACP:
 
     - **Claude Code:** `npx -y @agentclientprotocol/claude-agent-acp`
     - **Codex:** `npx -y @agentclientprotocol/codex-acp`
-    - **Hermes:** `hermes-acp` (run `hermes-acp --check` first)
+    - **Hermes:** `hermes-acp` (сначала выполните `hermes-acp --check`)
     - **OpenCode:** `opencode acp`
     - **OpenClaw:** `openclaw acp`
 
-    Claude Code and Codex require their linked adapter packages because the base `claude` and `codex` commands do not expose ACP servers directly.
+    Для Claude Code и Codex нужны ACP-адаптеры: базовые команды `claude` и `codex` сами по себе не поднимают ACP-сервер.
+
   </Step>
 
-  <Step title="Download macrod">
-    Open the [latest Macro release](https://github.com/macro-inc/macro/releases/latest) and download the `macrod` archive for your OS and architecture. Currently, we officially support macOS and Linux.
+  <Step title="Получите macrod">
+    Используйте `macrod` из Conation-сборки вашего репозитория или из релизного артефакта, который вы публикуете для своей инфраструктуры. Legacy-релизы старого проекта не являются официальным Conation distribution и не должны использоваться как production-источник.
+
+    Текущая цель поддержки — macOS и Linux. Для других платформ собирайте daemon из исходного кода в контролируемом окружении.
+
   </Step>
 
-  <Step title="Start the HTTPS tunnel">
-    `macrod` listens on port `8790` and receives requests at `POST /macro-events`. Macro must be able to reach that endpoint over public HTTPS.
+  <Step title="Запустите HTTPS-туннель">
+    `macrod` слушает порт `8790` и принимает запросы на `POST /macro-events`. Conation должен доставать этот endpoint по публичному HTTPS.
 
-    For the Cloudflare quick tunnel described above, run:
+    Для быстрого Cloudflare-туннеля:
 
     ```bash
     cloudflared tunnel --url http://localhost:8790
     ```
 
-    Keep this process running and copy the URL it prints.
+    Оставьте процесс запущенным и скопируйте URL из вывода.
 
     <Note>
-      A quick-tunnel URL changes whenever `cloudflared` restarts. Create a [named Cloudflare tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/get-started/create-local-tunnel/) for a stable endpoint.
+      Временный URL туннеля меняется после перезапуска `cloudflared`. Для постоянного окружения создайте [именованный Cloudflare tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/get-started/create-local-tunnel/).
     </Note>
 
-    Alternatively, you can port-forward or deploy your harness to a cloud server.
+    Вместо Cloudflare можно использовать проброс портов или разместить исполнителя агента на сервере.
+
   </Step>
 
-  <Step title="Configure macrod">
-    Create `macro.toml` beside the `macrod` binary:
+  <Step title="Настройте macrod">
+    Создайте рядом с бинарем файл конфигурации. Если ваша сборка `macrod` ожидает совместимое имя, используйте `macro.toml`; в новых обвязках можно хранить тот же формат как `conation-agent.toml`.
 
     ```toml
+    # Совместимое имя секции, которое читает macrod.
     [macro]
-    api_url = "https://agent-harness.macro.com"
-    storage_url = "https://cloud-storage.macro.com"
-    owner_user_id = "macro|you@example.com"
+    api_url = "https://agent-harness.conation.dev"
+    storage_url = "https://storage.conation.dev"
+    owner_user_id = "conation|admin@conation.dev"
     bot_token = "mbot_..."
     bot_scope = "user"
 
@@ -89,28 +106,30 @@ You need:
     public_url = "https://example.trycloudflare.com/macro-events"
 
     [harness]
-    command = "your-acp-agent"
+    command = "conation-acp-agent"
     args = []
 
     [workspace]
-    path = "/absolute/path/to/your/repository"
-    repo_url = "https://github.com/you/your-repository"
+    path = "/absolute/path/to/repository"
+    repo_url = "https://github.com/conation-dev/example-repository"
     ```
 
-    Change `you@example.com` in `owner_user_id` to the email address you use to sign in to Macro. Replace `mbot_...` with the token from the first step. Set `command` and `args` to the ACP launch command from the second step.
+    Замените `admin@conation.dev` на email владельца бота, `mbot_...` — на токен из первого шага, а `command` и `args` — на проверенную команду запуска ACP-исполнителя.
+
   </Step>
 
-  <Step title="Start the agent">
-    Keep the HTTPS tunnel running, then start `macrod` from a shell where your harness command is available:
+  <Step title="Запустите агента">
+    Оставьте HTTPS-туннель включенным и запустите `macrod` из shell, где доступна команда вашего ACP-исполнителя:
 
     ```bash
     ./macrod --config ./macro.toml
     ```
 
-    When `macrod` reports that it is listening for agent triggers, @mention the agent in one of its Macro channels.
+    Когда daemon сообщит, что слушает запросы на запуск агента, упомяните созданного бота в одном из каналов Conation.
+
   </Step>
 </Steps>
 
-## Keep it connected
+## Как держать соединение живым
 
-Both `macrod` and your HTTPS tunnel must stay running for you to start self-hosted agent sessions from Macro.
+`macrod`, ACP-исполнитель и HTTPS-туннель должны работать постоянно. Если любой из этих процессов остановится, новые самостоятельно размещенные сессии не смогут стартовать до восстановления соединения.

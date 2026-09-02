@@ -5,8 +5,8 @@ use crate::domain::{
     models::{CreateDraftInput, CreatedDraft, EmailErr, Link},
     ports::{EmailMessageEnqueuer, EmailRepo},
 };
-use frecency::domain::ports::FrecencyQueryService;
 use conation_event_broker::MacroEventBroker;
+use frecency::domain::ports::FrecencyQueryService;
 
 use super::EmailServiceImpl;
 
@@ -49,7 +49,7 @@ where
         self.publish_email_event(&EmailMacroEvent::message_send_queued(
             MessageSendQueuedMetadata {
                 link_id: link.id,
-                owner: link.conation_id.clone(),
+                owner: link.macro_id.clone(),
                 actor,
                 message_id: created.db_id,
                 thread_id: created.thread_db_id,

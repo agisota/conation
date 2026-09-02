@@ -5,7 +5,7 @@
 
 use anyhow::{Context, Result};
 use bollard::Docker;
-use bollard::models::{NetworkCreateRequest, VolumeCreateRequest};
+use bollard::models::{Ipam, IpamConfig, NetworkCreateRequest, VolumeCreateRequest};
 use conation_env_var::maybe_env_var;
 
 /// Run a future to completion on a throwaway current-thread runtime (xtask's
@@ -31,22 +31,64 @@ fn connect() -> Result<Docker> {
     }
 }
 
-/// Idempotently create a bridge network (no-op if it already exists).
-pub fn ensure_network(name: &str) -> Result<()> {
+/// Idempotently create a bridge network and validate its requested subnet.
+pub fn ensure_network(name: &str, subnet: Option<&str>) -> Result<()> {
     block_on(async {
         let docker = connect()?;
-        match docker
-            .create_network(NetworkCreateRequest {
-                name: name.to_string(),
-                ..Default::default()
-            })
-            .await
-        {
-            Ok(_) => Ok(()),
-            Err(e) if already_exists(&e) => Ok(()),
-            Err(e) => Err(e).with_context(|| format!("creating network {name}")),
+        match docker.inspect_network(name, None).await {
+            Ok(existing) => validate_network_subnet(name, subnet, existing.ipam.as_ref()),
+            Err(e) if not_found(&e) => {
+                let ipam = subnet.map(|subnet| Ipam {
+                    config: Some(vec![IpamConfig {
+                        subnet: Some(subnet.to_string()),
+                        ..Default::default()
+                    }]),
+                    ..Default::default()
+                });
+                docker
+                    .create_network(NetworkCreateRequest {
+                        name: name.to_string(),
+                        driver: Some("bridge".to_string()),
+                        ipam,
+                        ..Default::default()
+                    })
+                    .await
+                    .with_context(|| format!("creating network {name}"))?;
+                Ok(())
+            }
+            Err(e) => Err(e).with_context(|| format!("inspecting network {name}")),
         }
     })
+}
+
+fn validate_network_subnet(name: &str, expected: Option<&str>, ipam: Option<&Ipam>) -> Result<()> {
+    let Some(expected) = expected else {
+        return Ok(());
+    };
+    let matches = ipam
+        .and_then(|ipam| ipam.config.as_ref())
+        .into_iter()
+        .flatten()
+        .filter_map(|config| config.subnet.as_deref())
+        .any(|actual| actual == expected);
+    if matches {
+        Ok(())
+    } else {
+        anyhow::bail!(
+            "network {name} exists with incompatible IPAM; expected subnet {expected}. \
+             Destroy this named local instance and recreate it"
+        )
+    }
+}
+
+fn not_found(e: &bollard::errors::Error) -> bool {
+    matches!(
+        e,
+        bollard::errors::Error::DockerResponseServerError {
+            status_code: 404,
+            ..
+        }
+    )
 }
 
 /// Idempotently create a named volume (no-op if it already exists).

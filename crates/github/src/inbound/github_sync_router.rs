@@ -16,14 +16,14 @@ use axum::{
     response::Redirect,
 };
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
-use entity_access::{
-    domain::{models::MemberTeamRole, ports::EntityAccessService},
-    inbound::axum_extractors::OptionalMacroUserTeamExtractorV2,
-};
 use conation_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOnly,
 };
 use conation_service_urls::AppServiceUrl;
+use entity_access::{
+    domain::{models::MemberTeamRole, ports::EntityAccessService},
+    inbound::axum_extractors::OptionalMacroUserTeamExtractorV2,
+};
 use reqwest::StatusCode;
 use uuid::Uuid;
 
@@ -117,7 +117,7 @@ where
         .map_err(|error| GithubError::Internal(error.into()))?;
     let url = ctx
         .service
-        .begin_installation_setup(&authorization.authorization.conation_user_id, team_id)
+        .begin_installation_setup(&authorization.authorization.macro_user_id, team_id)
         .await?;
 
     Ok(Redirect::temporary(&url))
@@ -130,7 +130,7 @@ pub struct SyncRedirectParams {
     pub code: Option<String>,
     /// GitHub App installation ID.
     pub installation_id: Option<String>,
-    /// Signed Macro installation context.
+    /// Signed Conation installation context.
     pub state: Option<String>,
     /// GitHub's setup result (`install`, `update`, or `request`).
     pub setup_action: Option<String>,
@@ -144,11 +144,11 @@ pub struct SyncRedirectParams {
     params(
         ("code" = Option<String>, Query, description = "OAuth authorization code from GitHub"),
         ("installation_id" = Option<String>, Query, description = "GitHub App installation ID"),
-        ("state" = Option<String>, Query, description = "Signed Macro installation context"),
+        ("state" = Option<String>, Query, description = "Signed Conation installation context"),
         ("setup_action" = Option<String>, Query, description = "GitHub setup result: install, update, or request"),
     ),
     responses(
-        (status = 307, description = "Temporary redirect to Macro; callback failures degrade to this redirect"),
+        (status = 307, description = "Temporary redirect to Conation; callback failures degrade to this redirect"),
     )
 )]
 #[tracing::instrument(skip_all)]

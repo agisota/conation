@@ -23,7 +23,7 @@ use crate::domain::{
     title = "CreateCalendarEvent",
     description = "\
 Prepare an event on the user's calendar, inviting any listed attendees through Google \
-Calendar. In Macro chat this tool opens an inline composer so the user can review, edit, and \
+Calendar. In Conation chat this tool opens an inline composer so the user can review, edit, and \
 confirm the event; use the tool to present the proposal instead of asking for a redundant \
 confirmation in prose. When the pending call is executed, the event is written to Google \
 immediately and attendees receive invitations. Other clients should confirm attendee events \

@@ -1,5 +1,5 @@
-import { StackedAvatarsRow } from '@core/component/StackedAvatarsRow';
 import { t } from '@app/lib/i18n';
+import { StackedAvatarsRow } from '@core/component/StackedAvatarsRow';
 import { useChannelsContext } from '@core/context/channels';
 import PhoneDisconnect from '@icon/wide-call-disconnect.svg';
 import ArrowsOut from '@phosphor/arrows-out.svg';
@@ -110,9 +110,9 @@ export const InCallPanel: Component<InCallPanelProps> = (props) => {
   const activeCallQuery = useActiveCallQuery(() => activeChannelId() ?? '');
   const activeChannelName = createMemo(() => {
     const id = activeChannelId();
-    if (!id) return 'In call';
+    if (!id) return t('channel.call.inCall');
     const channel = channelsCtx.channelsById()[id];
-    return channel?.name ? `#${channel.name}` : 'In call';
+    return channel?.name ? `#${channel.name}` : t('channel.call.inCall');
   });
   const activeChannelLetter = createMemo(() => {
     const id = activeChannelId();
@@ -127,7 +127,7 @@ export const InCallPanel: Component<InCallPanelProps> = (props) => {
   const slimHeaderTooltip = createMemo(() => {
     const duration = callDuration();
     const count = memberCount();
-    const participants = `${count} participant${count === 1 ? '' : 's'}`;
+    const participants = t('channel.call.participantCount', { count });
     return [activeChannelName(), duration, participants]
       .filter(Boolean)
       .join(' - ');
@@ -137,7 +137,7 @@ export const InCallPanel: Component<InCallPanelProps> = (props) => {
     <Show when={() => panel.isActive()}>
       <section
         data-in-call-panel
-        aria-label={t('auto.in_call')}
+        aria-label={t('channel.call.inCall')}
         class="relative isolate overflow-hidden rounded-lg border border-ink-muted/[0.08] bg-ink-muted/[0.025] divide-y divide-ink-muted/[0.08]"
       >
         {/* Header — soup notification vocabulary: muted label, accent pulse,
@@ -187,8 +187,8 @@ export const InCallPanel: Component<InCallPanelProps> = (props) => {
               <button
                 type="button"
                 class="inline-flex items-center justify-center size-6 rounded transition-colors text-ink-muted/70 hover:text-ink hover:bg-ink-muted/[0.06]"
-                title={t('auto.open_full_call_view')}
-                aria-label={t('auto.open_full_call_view')}
+                title={t('channel.call.openFullView')}
+                aria-label={t('channel.call.openFullView')}
                 onClick={() => {
                   const id = panel.callCtx.activeChannelId();
                   if (id) void openChannelCallTab(id);
@@ -262,7 +262,7 @@ export const InCallPanel: Component<InCallPanelProps> = (props) => {
             <button
               class="flex items-center justify-center size-5 shrink-0 rounded-md transition-colors text-failure hover:bg-failure/10"
               onClick={() => void panel.controls.leaveCall()}
-              aria-label={t('auto.leave_call')}
+              aria-label={t('channel.call.leave')}
               type="button"
             >
               <PhoneDisconnect class="size-4" />

@@ -6,14 +6,14 @@ mod task_properties;
 use std::collections::{HashMap, HashSet};
 
 use activity::Actor;
+use conation_event_broker::{MacroEventBroker, NoopMacroEventBroker};
+use conation_user_id::cowlike::CowLike;
+use conation_user_id::user_id::MacroUserIdStr;
 use document_sub_type::DocumentSubType;
 use entity_access::domain::models::{
     BotReceiptScope, EntityAccessAuth, EntityAccessReceipt, EntityType as AccessEntityType,
     RequiredPermission,
 };
-use conation_event_broker::{MacroEventBroker, NoopMacroEventBroker};
-use conation_user_id::cowlike::CowLike;
-use conation_user_id::user_id::MacroUserIdStr;
 use models_properties::DataType;
 use models_properties::api::requests::SetPropertyValue;
 use models_properties::api::{

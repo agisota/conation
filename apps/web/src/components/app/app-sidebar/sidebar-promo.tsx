@@ -1,5 +1,5 @@
-import ClockIcon from '@phosphor/clock.svg';
 import { t } from '@app/lib/i18n';
+import ClockIcon from '@phosphor/clock.svg';
 import XIcon from '@phosphor/x.svg';
 import { Button, cn, Layer } from '@ui';
 import { createSignal, onCleanup, onMount, Show } from 'solid-js';
@@ -36,7 +36,7 @@ export const SidebarPromoCard = (props: SidebarPromoCardProps) => {
                 <Button
                   variant="ghost"
                   class="shrink-0 size-5 rounded-sm p-0 [&_svg]:size-3"
-                  label="Dismiss"
+                  label={t('shell.actions.dismiss')}
                   onClick={(e) => {
                     e.stopPropagation();
                     onDismiss()();
@@ -143,7 +143,7 @@ export const SidebarPromoHint = (props: SidebarPromoHintProps) => {
         <div class="rounded-lg border border-ink-muted/8 bg-ink-muted/2.5 overflow-hidden">
           <div
             role="progressbar"
-            aria-label={t('auto.auto_dismiss_countdown')}
+            aria-label={t('shell.sidebar.autoDismissCountdown')}
             class="h-0.5 w-full bg-ink-muted/8"
           >
             <div
@@ -181,7 +181,9 @@ export const SidebarPromoHint = (props: SidebarPromoHintProps) => {
                   </Button>
                 )}
               </Show>
-              <Button variant="cta" size="sm" onClick={props.onDone}>{t('auto.got_it')}</Button>
+              <Button variant="cta" size="sm" onClick={props.onDone}>
+                {t('shell.actions.gotIt')}
+              </Button>
             </div>
           </div>
         </div>

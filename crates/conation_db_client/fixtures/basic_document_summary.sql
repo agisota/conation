@@ -5,7 +5,7 @@ VALUES ('a1111111-1111-1111-1111-111111111111', 'user', 'user@user.com', 'stripe
 INSERT INTO
   public."User" ("id", "email", "stripeCustomerId", "macro_user_id")
 VALUES (
-  'macro|user@user.com',
+  'conation|user@user.com',
   'user@user.com',
   'stripe_id',
   'a1111111-1111-1111-1111-111111111111'
@@ -26,7 +26,7 @@ VALUES
     'document-one',
     'test_document_one',
     'txt',
-    'macro|user@user.com',
+    'conation|user@user.com',
     '2019-10-16 00:00:00',
     '2019-10-16 00:00:00'
   ),
@@ -34,7 +34,7 @@ VALUES
     'document-two',
     'test_document_two',
     'pdf',
-    'macro|user@user.com',
+    'conation|user@user.com',
     '2019-10-16 01:00:00',
     '2019-10-16 01:00:00'
   ),
@@ -42,7 +42,7 @@ VALUES
     'no-insight-document',
     'no_insight_document',
     'txt',
-    'macro|user@user.com',
+    'conation|user@user.com',
     '2019-10-16 02:00:00',
     '2019-10-16 02:00:00'
   );

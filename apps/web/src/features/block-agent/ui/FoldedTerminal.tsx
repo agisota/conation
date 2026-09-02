@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { Show } from 'solid-js';
 import { FoldedAnsiText } from './FoldedAnsiText';
 
@@ -9,7 +10,9 @@ export function FoldedTerminal(props: {
   return (
     <div class="flex flex-col gap-1">
       <Show when={props.exitCode != null && props.exitCode !== 0}>
-        <span class="text-xs text-failure">Exit code {props.exitCode}</span>
+        <span class="text-xs text-failure">
+          {t('agent.terminal.exitCode', { code: props.exitCode ?? 0 })}
+        </span>
       </Show>
       <pre class="overflow-x-auto rounded bg-surface p-2 font-mono text-xs whitespace-pre-wrap text-ink-muted wrap-break-word">
         <FoldedAnsiText text={props.output} />

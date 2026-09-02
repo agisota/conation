@@ -19,7 +19,7 @@ type ModelSelectorProps = {
   /** Per-model availability. Defaults to all models available. */
   models?: ModelOption[];
   onSelect: (model: TModel) => void;
-  /** Called when an unavailable model is clicked (e.g. to open the paywall). */
+  /** Called when an operationally unavailable model is clicked. */
   onLocked?: (model: TModel) => void;
   /** Collapse the trigger to just the provider icon (narrow inputs). */
   compact?: boolean;
@@ -61,7 +61,7 @@ export function ModelSelector(props: ModelSelectorProps) {
           <For each={options()}>
             {(option) => (
               // Unavailable items stay clickable (not Kobalte-disabled) so the
-              // click can open the paywall; they're just visually dimmed.
+              // caller can explain the temporary restriction.
               <Dropdown.Item
                 class={cn('gap-2', !option.available && 'opacity-50')}
                 onSelect={() => handleSelect(option)}

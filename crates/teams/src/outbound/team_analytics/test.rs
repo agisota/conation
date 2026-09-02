@@ -6,7 +6,7 @@ use serde_json::json;
 use super::*;
 use crate::domain::model::TeamRole;
 
-fn conation_user_id(value: &str) -> MacroUserIdStr<'static> {
+fn macro_user_id(value: &str) -> MacroUserIdStr<'static> {
     MacroUserIdStr::try_from(value.to_string()).expect("valid macro user id")
 }
 
@@ -17,25 +17,25 @@ fn test_events() -> Vec<TeamAnalyticsEvent> {
     vec![
         TeamAnalyticsEvent::TeamCreated {
             team_id,
-            owner_id: conation_user_id("macro|owner@example.com"),
+            owner_id: macro_user_id("conation|owner@example.com"),
             team_name: "Acme".to_string(),
         },
         TeamAnalyticsEvent::TeamInvited {
             team_id,
             team_invite_id,
-            inviter_id: conation_user_id("macro|inviter@example.com"),
+            inviter_id: macro_user_id("conation|inviter@example.com"),
             team_name: Some("Acme".to_string()),
         },
         TeamAnalyticsEvent::TeamJoined {
             team_id,
             team_invite_id,
-            member_id: conation_user_id("macro|member@example.com"),
+            member_id: macro_user_id("conation|member@example.com"),
             role: TeamRole::Member,
         },
         TeamAnalyticsEvent::TeamLeft {
             team_id,
-            member_id: conation_user_id("macro|member@example.com"),
-            removed_by_id: conation_user_id("macro|admin@example.com"),
+            member_id: macro_user_id("conation|member@example.com"),
+            removed_by_id: macro_user_id("conation|admin@example.com"),
             role: TeamRole::Admin,
         },
     ]
@@ -69,18 +69,18 @@ fn maps_team_created_context() {
     let posthog_event =
         PostHogTeamAnalyticsEvent::from_team_event(TeamAnalyticsEvent::TeamCreated {
             team_id: uuid::Uuid::from_u128(1),
-            owner_id: conation_user_id("macro|owner@example.com"),
+            owner_id: macro_user_id("conation|owner@example.com"),
             team_name: "Acme".to_string(),
         });
     let properties = serde_json::to_value(&posthog_event.properties).unwrap();
 
-    assert_eq!(posthog_event.distinct_id, "macro|owner@example.com");
+    assert_eq!(posthog_event.distinct_id, "conation|owner@example.com");
     assert_eq!(
         properties,
         json!({
             "team_id": uuid::Uuid::from_u128(1),
             "team_name": "Acme",
-            "owner_id": "macro|owner@example.com",
+            "owner_id": "conation|owner@example.com",
         })
     );
 }
@@ -91,19 +91,19 @@ fn maps_team_invited_context() {
         PostHogTeamAnalyticsEvent::from_team_event(TeamAnalyticsEvent::TeamInvited {
             team_id: uuid::Uuid::from_u128(1),
             team_invite_id: uuid::Uuid::from_u128(2),
-            inviter_id: conation_user_id("macro|inviter@example.com"),
+            inviter_id: macro_user_id("conation|inviter@example.com"),
             team_name: Some("Acme".to_string()),
         });
     let properties = serde_json::to_value(&posthog_event.properties).unwrap();
 
-    assert_eq!(posthog_event.distinct_id, "macro|inviter@example.com");
+    assert_eq!(posthog_event.distinct_id, "conation|inviter@example.com");
     assert_eq!(
         properties,
         json!({
             "team_id": uuid::Uuid::from_u128(1),
             "team_name": "Acme",
             "team_invite_id": uuid::Uuid::from_u128(2),
-            "inviter_id": "macro|inviter@example.com",
+            "inviter_id": "conation|inviter@example.com",
         })
     );
 }
@@ -114,18 +114,18 @@ fn maps_team_joined_context() {
         PostHogTeamAnalyticsEvent::from_team_event(TeamAnalyticsEvent::TeamJoined {
             team_id: uuid::Uuid::from_u128(1),
             team_invite_id: uuid::Uuid::from_u128(2),
-            member_id: conation_user_id("macro|member@example.com"),
+            member_id: macro_user_id("conation|member@example.com"),
             role: TeamRole::Member,
         });
     let properties = serde_json::to_value(&posthog_event.properties).unwrap();
 
-    assert_eq!(posthog_event.distinct_id, "macro|member@example.com");
+    assert_eq!(posthog_event.distinct_id, "conation|member@example.com");
     assert_eq!(
         properties,
         json!({
             "team_id": uuid::Uuid::from_u128(1),
             "team_invite_id": uuid::Uuid::from_u128(2),
-            "member_id": "macro|member@example.com",
+            "member_id": "conation|member@example.com",
             "role": "member",
         })
     );
@@ -135,19 +135,19 @@ fn maps_team_joined_context() {
 fn maps_team_left_context() {
     let posthog_event = PostHogTeamAnalyticsEvent::from_team_event(TeamAnalyticsEvent::TeamLeft {
         team_id: uuid::Uuid::from_u128(1),
-        member_id: conation_user_id("macro|member@example.com"),
-        removed_by_id: conation_user_id("macro|admin@example.com"),
+        member_id: macro_user_id("conation|member@example.com"),
+        removed_by_id: macro_user_id("conation|admin@example.com"),
         role: TeamRole::Admin,
     });
     let properties = serde_json::to_value(&posthog_event.properties).unwrap();
 
-    assert_eq!(posthog_event.distinct_id, "macro|member@example.com");
+    assert_eq!(posthog_event.distinct_id, "conation|member@example.com");
     assert_eq!(
         properties,
         json!({
             "team_id": uuid::Uuid::from_u128(1),
-            "member_id": "macro|member@example.com",
-            "removed_by_id": "macro|admin@example.com",
+            "member_id": "conation|member@example.com",
+            "removed_by_id": "conation|admin@example.com",
             "role": "admin",
         })
     );
@@ -160,7 +160,7 @@ async fn noop_analytics_client_adapter_returns_ok() {
     analytics
         .track_team_event(TeamAnalyticsEvent::TeamCreated {
             team_id: uuid::Uuid::from_u128(1),
-            owner_id: conation_user_id("macro|owner@example.com"),
+            owner_id: macro_user_id("conation|owner@example.com"),
             team_name: "Acme".to_string(),
         })
         .await

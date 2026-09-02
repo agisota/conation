@@ -1,10 +1,10 @@
+import { t } from '@app/lib/i18n';
 import {
   createBulkRenameDssEntityMutation,
   type EntityData,
   InlineEntity,
 } from '@entity';
 import { Dialog } from '@kobalte/core/dialog';
-import { t } from '@app/lib/i18n';
 import CloseIcon from '@phosphor-icons/core/regular/x.svg?component-solid';
 import { Button, cn, SegmentedControl } from '@ui';
 import { createMemo, createSignal, For, onMount, Show } from 'solid-js';
@@ -34,10 +34,10 @@ export const BulkRenameEntitiesView = (props: {
   );
 
   const modeOptions: { value: RenameMode; label: string }[] = [
-    { value: 'prepend', label: 'Prepend' },
-    { value: 'append', label: 'Append' },
-    { value: 'replace', label: 'Replace' },
-    { value: 'total', label: 'Total' },
+    { value: 'prepend', label: t('entity.rename.mode.prepend') },
+    { value: 'append', label: t('entity.rename.mode.append') },
+    { value: 'replace', label: t('entity.rename.mode.replace') },
+    { value: 'total', label: t('entity.rename.mode.total') },
   ];
 
   const handleKeyDown = (e: KeyboardEvent) => {
@@ -108,7 +108,9 @@ export const BulkRenameEntitiesView = (props: {
         <Dialog.CloseButton as={Button} variant="ghost" size="icon-sm">
           <CloseIcon />
         </Dialog.CloseButton>
-        <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">{t('auto.rename')}</Dialog.Title>
+        <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">
+          {t('entity.rename.title')}
+        </Dialog.Title>
       </div>
 
       <div class="p-2 border-b border-edge-muted">
@@ -129,7 +131,9 @@ export const BulkRenameEntitiesView = (props: {
           </For>
           <Show when={props.entities.length > 2}>
             <div class="text-ink-muted text-xs px-2 py-1">
-              +{props.entities.length - 2} more
+              {t('entity.selection.additionalCount', {
+                count: props.entities.length - 2,
+              })}
             </div>
           </Show>
         </div>
@@ -138,7 +142,7 @@ export const BulkRenameEntitiesView = (props: {
       <div class="p-3 flex flex-col gap-3">
         <Show when={multi()}>
           <SegmentedControl
-            aria-label={t('auto.mode')}
+            aria-label={t('entity.rename.modeLabel')}
             value={mode()}
             options={modeOptions}
             onChange={(value) => setMode(value)}
@@ -163,7 +167,7 @@ export const BulkRenameEntitiesView = (props: {
             class="w-full p-2 text-sm border border-edge bg-surface text-ink
                    placeholder:text-ink-placeholder focus:outline-none focus:bg-active
                    selection:bg-ink selection:text-surface"
-            placeholder={t('auto.enter_new_text')}
+            placeholder={t('entity.rename.textPlaceholder')}
           />
         </div>
 
@@ -171,13 +175,13 @@ export const BulkRenameEntitiesView = (props: {
           <div class="flex flex-col gap-2">
             <input
               class="p-1 text-sm border border-edge bg-surface"
-              placeholder="Find…"
+              placeholder={t('entity.rename.findPlaceholder')}
               value={replaceFind()}
               onInput={(e) => setReplaceFind(e.currentTarget.value)}
             />
             <input
               class="p-1 text-sm border border-edge bg-surface"
-              placeholder="Replace with…"
+              placeholder={t('entity.rename.replaceWithPlaceholder')}
               value={replaceWith()}
               onInput={(e) => setReplaceWith(e.currentTarget.value)}
             />
@@ -186,7 +190,7 @@ export const BulkRenameEntitiesView = (props: {
 
         <Show when={multi() && mode() !== 'total'}>
           <div class="text-xs opacity-70">
-            Preview (first item):
+            {t('entity.rename.previewFirst')}
             <div class="mt-1 p-2 bg-surface border border-edge rounded">
               {previewName()}
             </div>
@@ -194,13 +198,17 @@ export const BulkRenameEntitiesView = (props: {
         </Show>
 
         <div class="flex justify-end gap-2">
-          <Button variant="ghost" class="rounded-xs" onClick={props.onCancel}>{t('common.cancel')}</Button>
+          <Button variant="ghost" class="rounded-xs" onClick={props.onCancel}>
+            {t('common.cancel')}
+          </Button>
           <Button
             type="button"
             variant="outline"
             class="rounded-xs"
             onClick={finishEditing}
-          >{t('auto.rename')}</Button>
+          >
+            {t('entity.rename.submit')}
+          </Button>
         </div>
       </div>
     </>

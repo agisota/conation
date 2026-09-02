@@ -1,4 +1,3 @@
-import { mergeRegister } from '@lexical/utils';
 import type { PeerIdValidator } from '@conation/lexical-core';
 import {
   $collapseInlineSearch,
@@ -10,6 +9,7 @@ import {
   InlineSearchNodesType,
   validTriggerPosition,
 } from '@conation/lexical-core';
+import { mergeRegister } from '@lexical/utils';
 import {
   $insertNodes,
   COMMAND_PRIORITY_CRITICAL,

@@ -1,7 +1,7 @@
 //! PostgreSQL implementation for properties repository.
 
-use document_sub_type::DocumentSubType;
 use conation_user_id::user_id::MacroUserIdStr;
+use document_sub_type::DocumentSubType;
 use models_properties::service::entity_property_with_definition::EntityPropertyWithDefinition;
 use models_properties::service::property_value::PropertyValue;
 use models_properties::{EntityReference, EntityType};

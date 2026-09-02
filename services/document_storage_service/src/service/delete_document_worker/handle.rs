@@ -36,11 +36,14 @@ pub async fn handle(
     if user_id.is_none() {
         tracing::info!(document_id=%document_id, "starting delete process for document");
 
-        let document = conation_db_client::document::get_deleted_document_info(&ctx.db, document_id)
-            .await
-            .inspect_err(
-                |e| tracing::error!(error=?e, document_id=%document_id, "unable to get document"),
-            )?;
+        let document = conation_db_client::document::get_deleted_document_info(
+            &ctx.db,
+            document_id,
+        )
+        .await
+        .inspect_err(
+            |e| tracing::error!(error=?e, document_id=%document_id, "unable to get document"),
+        )?;
 
         let shared_document = document.clone();
         user_id = Some(shared_document.owner.to_string());

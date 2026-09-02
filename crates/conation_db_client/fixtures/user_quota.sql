@@ -2,26 +2,26 @@ INSERT INTO "macro_user" ("id", "username", "email", "stripe_customer_id") VALUE
 ('a1111111-1111-1111-1111-111111111111', 'user', 'user@user.com', 'cus_1234'),
 ('a2222222-2222-2222-2222-222222222222', 'user2', 'user2@user.com', 'cus_12345');
 INSERT INTO "User" ("id", "email", "name", "stripeCustomerId", "macro_user_id") VALUES
-('macro|user@user.com', 'user@user.com', 'User', 'cus_1234', 'a1111111-1111-1111-1111-111111111111'),
-('macro|user2@user.com', 'user2@user.com', 'User2', 'cus_12345', 'a2222222-2222-2222-2222-222222222222');
+('conation|user@user.com', 'user@user.com', 'User', 'cus_1234', 'a1111111-1111-1111-1111-111111111111'),
+('conation|user2@user.com', 'user2@user.com', 'User2', 'cus_12345', 'a2222222-2222-2222-2222-222222222222');
 
 INSERT INTO "RolesOnUsers" ("userId", "roleId") VALUES
-('macro|user@user.com', 'professional_subscriber'),
-('macro|user@user.com', 'corporate'),
-('macro|user2@user.com', 'corporate');
+('conation|user@user.com', 'professional_subscriber'),
+('conation|user@user.com', 'corporate'),
+('conation|user2@user.com', 'corporate');
 
 INSERT INTO "Document" ("id","name","fileType", "owner") VALUES
-('d1', 'test_document_name','pdf', 'macro|user@user.com'),
-('d2', 'test_document_name','pdf', 'macro|user@user.com'),
-('d3', 'test_document_name','pdf', 'macro|user@user.com'),
-('d4', 'test_document_name','pdf', 'macro|user@user.com'),
-('d5', 'test_document_name','pdf', 'macro|user2@user.com');
+('d1', 'test_document_name','pdf', 'conation|user@user.com'),
+('d2', 'test_document_name','pdf', 'conation|user@user.com'),
+('d3', 'test_document_name','pdf', 'conation|user@user.com'),
+('d4', 'test_document_name','pdf', 'conation|user@user.com'),
+('d5', 'test_document_name','pdf', 'conation|user2@user.com');
 
 INSERT INTO "Chat" ("id", "name", "userId") VALUES
-('c1', 'test_chat_name', 'macro|user@user.com'),
-('c2', 'test_chat_name', 'macro|user@user.com'),
-('c3', 'test_chat_name', 'macro|user@user.com'),
-('c4', 'test_chat_name', 'macro|user@user.com');
+('c1', 'test_chat_name', 'conation|user@user.com'),
+('c2', 'test_chat_name', 'conation|user@user.com'),
+('c3', 'test_chat_name', 'conation|user@user.com'),
+('c4', 'test_chat_name', 'conation|user@user.com');
 
 INSERT INTO "ChatMessage" ("id", "chatId", "role", "createdAt", "updatedAt", "content", "model") VALUES
 ('cm1', 'c1', 'user', '2023-01-01 00:00:00', '2023-01-01 00:00:00', '"test"', 'gpt-4.1'),

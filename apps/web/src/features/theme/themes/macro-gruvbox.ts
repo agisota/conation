@@ -1,9 +1,9 @@
 import type { ThemeV3 } from '../types/themeTypes';
 
 /** A dark theme built from the classic Gruvbox palette. */
-export const macroGruvboxTheme = {
-  id: 'Macro-Gruvbox',
-  name: 'Macro-Gruvbox',
+export const conationGruvboxTheme = {
+  id: 'Conation Gruvbox',
+  name: 'Conation Gruvbox',
   version: 3,
   mode: 'dark',
   colorTokens: {

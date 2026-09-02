@@ -8,6 +8,15 @@ use axum::{
     routing::get,
 };
 use chrono::{DateTime, Utc};
+use conation_authorization::{
+    INTERNAL_API_KEY_HEADER, INTERNAL_CONATION_USER_ID_HEADER, InternalAuthConfig, JwtValidator,
+    MacroAuthorizationError, MacroAuthorizationServiceImpl, MacroAuthorizationState,
+    ValidatedIdentity,
+};
+use conation_user_id::{
+    lowercased::Lowercase,
+    user_id::{MacroUserId, MacroUserIdStr},
+};
 use entity_access::domain::{
     models::{
         AccessError, AccessLevel, AnyEntityPermission, BotAccessScope, BotId, CallChannelInfo,
@@ -15,15 +24,6 @@ use entity_access::domain::{
         RequiredPermission, UserTeamInfo, ViewAccessLevel,
     },
     ports::EntityAccessService,
-};
-use conation_authorization::{
-    INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_USER_ID_HEADER, InternalAuthConfig, JwtValidator,
-    MacroAuthorizationError, MacroAuthorizationServiceImpl, MacroAuthorizationState,
-    ValidatedIdentity,
-};
-use conation_user_id::{
-    lowercased::Lowercase,
-    user_id::{MacroUserId, MacroUserIdStr},
 };
 use rootcause::Report;
 use serde_json::{Value, json};
@@ -565,7 +565,7 @@ fn bearer_request(path: &str, token: &str) -> Request<Body> {
 fn internal_request(path: &str, acting_user: Option<&str>) -> Request<Body> {
     let mut request = Request::get(path).header(INTERNAL_API_KEY_HEADER, INTERNAL_KEY);
     if let Some(acting_user) = acting_user {
-        request = request.header(INTERNAL_MACRO_USER_ID_HEADER, acting_user);
+        request = request.header(INTERNAL_CONATION_USER_ID_HEADER, acting_user);
     }
     request.body(Body::empty()).unwrap()
 }

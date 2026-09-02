@@ -9,9 +9,9 @@ export interface CommandRunner {
 }
 
 export interface SpawnOptions {
-  /** Repo to clone into /workspace, e.g. "https://github.com/macro-inc/macro.git" */
+  /** Repo to clone into /workspace, e.g. "https://github.com/agisota/conation.git" */
   repoUrl: string;
-  /** Extra env vars for the sandbox (GITHUB_TOKEN, ANTHROPIC_API_KEY, ...) */
+  /** Extra env vars for the sandbox (GITHUB_TOKEN, ROX_API_KEY, ...) */
   envVars?: Record<string, string>;
 }
 

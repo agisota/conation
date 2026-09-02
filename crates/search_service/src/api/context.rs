@@ -1,9 +1,9 @@
 use axum::extract::FromRef;
-use entity_access::domain::service::EntityAccessServiceImpl;
-use entity_access::outbound::PgAccessRepository;
 use conation_authorization::{
     MacroAuthJwtValidator, MacroAuthorizationServiceImpl, MacroAuthorizationState,
 };
+use entity_access::domain::service::EntityAccessServiceImpl;
+use entity_access::outbound::PgAccessRepository;
 use opensearch_client::OpensearchClient;
 use readonly_pool::ReadOnlyPool;
 use std::sync::Arc;

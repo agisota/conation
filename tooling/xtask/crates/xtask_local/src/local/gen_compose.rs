@@ -34,7 +34,7 @@ const EGRESS_CONTAINER_PORT: u16 = 8102;
 pub const LOCALSTACK_IMAGE: &str = "localstack/localstack:4";
 pub const MAILPIT_IMAGE: &str = "axllent/mailpit:v1.20";
 pub const CADDY_IMAGE: &str = "caddy:2-alpine";
-pub const SDK_WEBHOOK_RELAY_IMAGE: &str = "macro-sdk-webhook-relay:dev";
+pub const SDK_WEBHOOK_RELAY_IMAGE: &str = "conation-sdk-webhook-relay:dev";
 
 /// Base-compose services that bind fixed host ports but aren't in our inventory
 /// (reached via the proxy / container network, not the host). For named
@@ -148,7 +148,9 @@ pub fn generate(
                     .map(|s| s.to_string())
                     .collect(),
                 )),
-                env_file: Some(dct::StringOrList::Simple("${MACRO_ENV_FILE}".to_string())),
+                env_file: Some(dct::StringOrList::Simple(
+                    "${CONATION_ENV_FILE}".to_string(),
+                )),
                 networks: net_aliases(&[("services", &["gmail-forwarder"])]),
                 ..Default::default()
             }),
@@ -554,6 +556,6 @@ pub fn docker_compose(
     }
     cmd.arg("--env-file").arg(generated_env);
     cmd.env("COMPOSE_PROJECT_NAME", instance.project_name());
-    cmd.env("MACRO_ENV_FILE", generated_env);
+    cmd.env("CONATION_ENV_FILE", generated_env);
     cmd
 }

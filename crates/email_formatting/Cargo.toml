@@ -8,7 +8,6 @@ version = "0.1.0"
 askama = { workspace = true }
 chrono = { workspace = true }
 hmac = { workspace = true }
-conation_env = { path = "../conation_env" }
 conation_service_urls = { path = "../conation_service_urls" }
 conation_user_id = { path = "../conation_user_id" }
 model_notifications = { path = "../model_notifications" }

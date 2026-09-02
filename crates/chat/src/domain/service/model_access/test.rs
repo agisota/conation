@@ -1,32 +1,17 @@
 use super::*;
+use crate::domain::models::model_access::{CHAT_MODELS, FREE_MODEL, PAID_DEFAULT_MODEL};
 
-const HAIKU: &str = "anthropic/claude-haiku-4-5";
-const SONNET_5: &str = "anthropic/claude-sonnet-5";
-const OPUS: &str = "anthropic/claude-opus-5";
-const OPUS_4_7: &str = "anthropic/claude-opus-4-7";
-const SONNET_4_6: &str = "anthropic/claude-sonnet-4-6";
-const GPT_5_5: &str = "openai/gpt-5.5";
-const GPT_5_MINI: &str = "openai/gpt-5-mini";
+const DEFAULT: &str = "rox/gemini-2.5-flash";
 
 #[test]
-fn free_user_only_has_haiku() {
+fn every_user_gets_the_same_default_and_all_models() {
     let svc = ModelAccessServiceImpl;
-    assert_eq!(svc.best_model(false), HAIKU);
-    assert!(svc.has_access(false, HAIKU));
-    assert!(!svc.has_access(false, OPUS));
-    assert!(!svc.has_access(false, SONNET_4_6));
-    assert!(!svc.has_access(false, GPT_5_5));
-}
-
-#[test]
-fn professional_user_has_everything() {
-    let svc = ModelAccessServiceImpl;
-    assert_eq!(svc.best_model(true), SONNET_5);
-    assert!(svc.has_access(true, SONNET_5));
-    assert!(svc.has_access(true, HAIKU));
-    assert!(svc.has_access(true, OPUS));
-    assert!(svc.has_access(true, OPUS_4_7));
-    assert!(svc.has_access(true, SONNET_4_6));
-    assert!(svc.has_access(true, GPT_5_5));
-    assert!(svc.has_access(true, GPT_5_MINI));
+    for former_paid_state in [false, true] {
+        assert_eq!(svc.best_model(former_paid_state), DEFAULT);
+        for model in CHAT_MODELS {
+            assert!(svc.has_access(former_paid_state, model));
+        }
+    }
+    assert_eq!(FREE_MODEL, PAID_DEFAULT_MODEL);
+    assert!(!svc.has_access(false, "unknown/not-in-catalog"));
 }

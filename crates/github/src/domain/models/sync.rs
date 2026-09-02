@@ -253,11 +253,25 @@ impl ValidatedGithubWebhookEvent {
             .unwrap_or(false)
     }
 
+    /// Whether the pull request is currently a draft.
+    ///
+    /// GitHub includes this field for pull-request webhooks. Missing values
+    /// are treated as ready for review, matching GitHub's pre-draft payloads
+    /// and keeping old fixtures deterministic.
+    pub fn is_draft_pull_request(&self) -> bool {
+        self.payload
+            .get("pull_request")
+            .and_then(|pr| pr.get("draft"))
+            .and_then(|draft| draft.as_bool())
+            .unwrap_or(false)
+    }
+
     /// Derive the task status string based on the event, if applicable.
     ///
-    /// For `pull_request` events: `opened`/`reopened` → `"In Review"`,
-    /// `closed` + merged → `"Completed"`, `closed` without merge →
-    /// `"Not Started"` (the TODO status).
+    /// For `pull_request` events: a draft open/reopen/edit or
+    /// `converted_to_draft` → `"In Progress"`; a ready open/reopen/edit or
+    /// `ready_for_review` → `"In Review"`; `closed` + merged →
+    /// `"Completed"`; and `closed` without merge → `"Not Started"`.
     ///
     /// For comment/review events that newly associate a task with an open PR,
     /// returns `"In Review"`.
@@ -266,6 +280,11 @@ impl ValidatedGithubWebhookEvent {
     pub fn task_status_for_event(&self) -> Option<&'static str> {
         match self.parsed_event_type() {
             GithubWebhookEventType::PullRequest => match self.action() {
+                Some("converted_to_draft") => Some("In Progress"),
+                Some("ready_for_review") => Some("In Review"),
+                Some("opened" | "reopened" | "edited") if self.is_draft_pull_request() => {
+                    Some("In Progress")
+                }
                 Some("opened" | "reopened" | "edited") => Some("In Review"),
                 Some("closed") if self.is_merged() => Some("Completed"),
                 Some("closed") => Some("Not Started"),
@@ -569,11 +588,13 @@ impl GithubWebhookEventType {
     }
 }
 
-/// Regex matching `MACRO-{short_uuid}` (case-insensitive).
+/// Regex matching `CONATION-{short_uuid}` (case-insensitive).
 /// The capture group contains only the Flickr base58 short UUID portion.
-static MACRO_TASK_ID_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"(?i)macro-([123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ]+)")
-        .expect("valid regex")
+static CONATION_TASK_ID_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"(?i)(?:^|[^a-z0-9])conation-([123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ]+)(?:$|[^a-z0-9])",
+    )
+    .expect("valid regex")
 });
 
 /// Regex matching `{team_slug}-{team_task_id}` references.
@@ -666,17 +687,17 @@ pub struct ResolvedTeamTaskReference {
     /// The team whose slug and task number matched the reference.
     pub team_id: uuid::Uuid,
     /// The task document backing the team task.
-    pub task_id: MacroTaskId,
+    pub task_id: ConationTaskId,
 }
 
-/// A Macro task ID in the form `MACRO-{short_uuid}`.
+/// A Conation task ID in the form `CONATION-{short_uuid}`.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct MacroTaskId {
+pub struct ConationTaskId {
     /// The Flickr base58 short UUID portion
     pub short_uuid: String,
 }
 
-impl MacroTaskId {
+impl ConationTaskId {
     /// Create from a raw short UUID string, validating that all characters
     /// are in the Flickr base58 alphabet.
     pub fn from_short_uuid(s: &str) -> Option<Self> {
@@ -704,19 +725,19 @@ impl MacroTaskId {
         converter.to_uuid(&self.short_uuid)
     }
 
-    /// Returns the canonical `MACRO-{short_uuid}` string.
+    /// Returns the canonical `CONATION-{short_uuid}` string.
     pub fn to_task_id_string(&self) -> String {
-        format!("MACRO-{}", self.short_uuid)
+        format!("CONATION-{}", self.short_uuid)
     }
 
-    /// Extract all unique `MACRO-{short_uuid}` references from text.
-    /// Matching is case-insensitive on the `MACRO-` prefix; the short UUID
+    /// Extract all unique `CONATION-{short_uuid}` references from text.
+    /// Matching is case-insensitive on the `CONATION-` prefix; the short UUID
     /// portion is preserved as captured.
-    pub fn extract_from_text(text: &str) -> Vec<MacroTaskId> {
+    pub fn extract_from_text(text: &str) -> Vec<ConationTaskId> {
         let mut seen = HashSet::new();
         let mut results = Vec::new();
 
-        for caps in MACRO_TASK_ID_RE.captures_iter(text) {
+        for caps in CONATION_TASK_ID_RE.captures_iter(text) {
             let short = &caps[1];
             if seen.insert(short.to_string())
                 && let Some(task_id) = Self::from_short_uuid(short)
@@ -729,8 +750,8 @@ impl MacroTaskId {
     }
 }
 
-impl fmt::Display for MacroTaskId {
+impl fmt::Display for ConationTaskId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "MACRO-{}", self.short_uuid)
+        write!(f, "CONATION-{}", self.short_uuid)
     }
 }

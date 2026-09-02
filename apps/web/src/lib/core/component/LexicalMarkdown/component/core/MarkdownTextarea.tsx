@@ -1,7 +1,7 @@
+import type { EditorType } from '@conation/lexical-core';
 import type { PortalScope } from '@core/component/ScopedPortal';
 import { isNativeMobilePlatform } from '@core/mobile/isNativeMobilePlatform';
 import type { ChannelWithParticipants } from '@core/user';
-import type { EditorType } from '@conation/lexical-core';
 import type { HistoryItem } from '@queries/history/types';
 import { onElementConnect } from '@solid-primitives/lifecycle';
 import { isIOS } from '@solid-primitives/platform';

@@ -1,7 +1,7 @@
 /** A permission request, with the outcome (chosen option) as trailing text. */
 
-import type { MessagePart } from '@service-agent-fold/generated/types';
 import { t } from '@app/lib/i18n';
+import type { MessagePart } from '@service-agent-fold/generated/types';
 import { Show } from 'solid-js';
 import { ToolCard } from '../../ui';
 
@@ -11,18 +11,19 @@ export function PermissionPart(props: {
   const outcome = () => {
     const resolved = props.part.outcome;
     if (!resolved || resolved.kind === 'pending') return undefined;
-    if (resolved.kind === 'cancelled') return 'Cancelled';
-    if (resolved.kind === 'errored') return 'Failed';
-    if (resolved.kind === 'unrecognized') return 'Answered';
+    if (resolved.kind === 'cancelled') return t('agent.permissions.cancelled');
+    if (resolved.kind === 'errored') return t('agent.status.failed');
+    if (resolved.kind === 'unrecognized')
+      return t('agent.permissions.answered');
     const chosen = props.part.options.find(
       (option) => option.id === resolved.optionId
     );
-    return chosen?.name ?? 'Answered';
+    return chosen?.name ?? t('agent.permissions.answered');
   };
 
   return (
     <ToolCard
-      title={t('auto.permission_requested')}
+      title={t('agent.permissions.requested')}
       trailing={
         <Show when={outcome()}>
           {(label) => <span class="text-ink">{label()}</span>}

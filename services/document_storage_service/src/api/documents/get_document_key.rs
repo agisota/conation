@@ -5,8 +5,8 @@ use crate::api::context::{AuthorizationService, EntityAccessService};
 use crate::model::response::documents::get::{GetDocumentKeyResponse, GetDocumentKeyResponseData};
 use axum::extract::State;
 use axum::{Extension, extract::Path, http::StatusCode, response::IntoResponse};
-use entity_access::inbound::axum_extractors::DocumentAccessExtractor;
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use entity_access::inbound::axum_extractors::DocumentAccessExtractor;
 use model::document::FileType;
 use model::response::GenericErrorResponse;
 use model::{document::DocumentBasic, response::GenericResponse};
@@ -34,7 +34,7 @@ pub struct Params {
             (status = 500, body=GenericErrorResponse),
         )
     )]
-#[tracing::instrument(skip(state, user, document_context, _access), fields(user_id=?user.authorization.user.conation_user_id, file_type=?document_context.file_type))]
+#[tracing::instrument(skip(state, user, document_context, _access), fields(user_id=?user.authorization.user.macro_user_id, file_type=?document_context.file_type))]
 pub async fn get_document_key_handler(
     _access: DocumentAccessExtractor<ViewAccessLevel, EntityAccessService, AuthorizationService>,
     State(state): State<ApiContext>,
@@ -65,19 +65,21 @@ pub async fn get_document_key_handler(
 
     let key = match file_type {
         FileType::Pdf => {
-            let document_version_id =
-                match conation_db_client::document::get_document_version_id(&state.db, &document_id)
-                    .await
-                {
-                    Ok(document_version_id) => document_version_id.0,
-                    Err(e) => {
-                        tracing::error!(error=?e, "unable to get document version id");
-                        return GenericResponse::builder()
-                            .message("unable to get document version id")
-                            .is_error(true)
-                            .send(StatusCode::INTERNAL_SERVER_ERROR);
-                    }
-                };
+            let document_version_id = match conation_db_client::document::get_document_version_id(
+                &state.db,
+                &document_id,
+            )
+            .await
+            {
+                Ok(document_version_id) => document_version_id.0,
+                Err(e) => {
+                    tracing::error!(error=?e, "unable to get document version id");
+                    return GenericResponse::builder()
+                        .message("unable to get document version id")
+                        .is_error(true)
+                        .send(StatusCode::INTERNAL_SERVER_ERROR);
+                }
+            };
 
             build_cloud_storage_bucket_document_key(
                 document_context.owner.as_ref(),

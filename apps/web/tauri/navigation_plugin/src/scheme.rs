@@ -11,17 +11,26 @@ pub struct MacroScheme(pub Url);
 
 impl MacroScheme {
     pub fn new(url: Url) -> Result<Self, SchemeError> {
-        let "macro" = url.scheme() else {
+        Self::new_with_scheme(url, "conation")
+    }
+
+    pub fn new_with_scheme(url: Url, expected_scheme: &str) -> Result<Self, SchemeError> {
+        if url.scheme() != expected_scheme {
             return Err(SchemeError::InvalidScheme {
-                expected: "macro".to_string(),
+                expected: expected_scheme.to_string(),
                 found: url.scheme().to_string(),
             });
-        };
+        }
         Ok(Self(url))
     }
-    /// turn a http(s) url into a macro scheme url
+
+    /// Turn an http(s) URL into the canonical Conation scheme URL.
     #[tracing::instrument(err, ret)]
     pub fn from_url(url: &Url) -> Result<Self, SchemeError> {
+        Self::from_url_with_scheme(url, "conation")
+    }
+
+    pub fn from_url_with_scheme(url: &Url, app_scheme: &str) -> Result<Self, SchemeError> {
         let ("http" | "https" | "tauri") = url.scheme() else {
             return Err(SchemeError::InvalidScheme {
                 expected: "http(s) or tauri".to_string(),
@@ -38,8 +47,8 @@ impl MacroScheme {
         }
         let query = url.query();
         let inner = match query {
-            Some(q) => format!("macro:///{rest}?{q}"),
-            None => format!("macro:///{rest}"),
+            Some(q) => format!("{app_scheme}:///{rest}?{q}"),
+            None => format!("{app_scheme}:///{rest}"),
         }
         .parse::<Url>()?;
         Ok(MacroScheme(inner))

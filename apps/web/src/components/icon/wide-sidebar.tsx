@@ -1,5 +1,4 @@
 import { createUniqueId } from 'solid-js';
-import { t } from '@app/lib/i18n';
 
 export const AnimatedSidebarIcon = (props: {
   triggerAnimation?: boolean;
@@ -19,7 +18,6 @@ export const AnimatedSidebarIcon = (props: {
       overflow="visible"
       class={`animated-sidebar-icon ${props.triggerAnimation ? 'animating' : ''} ${props.class ?? ''}`}
     >
-      {/*<title>{t('auto.animated_sidebar_icon')}</title>*/}
       <defs>
         {/* Clip to frame interior */}
         <clipPath id={clipId}>

@@ -1,5 +1,5 @@
-import { useSplitLayout } from '@components/app/split-layout/layout';
 import { t } from '@app/lib/i18n';
+import { useSplitLayout } from '@components/app/split-layout/layout';
 import { toast } from '@core/component/Toast/Toast';
 import { createControlledOpenSignal } from '@core/util/createControlledOpenSignal';
 import { useCreateScheduleMutation } from '@queries/agent-schedule/schedules';
@@ -30,6 +30,7 @@ import {
   INPUT_CLASS,
   isValidTime,
   WEEKDAY_OPTIONS,
+  weekdayLabel,
 } from './automationUtils';
 import type { ScheduleDraft } from './types';
 
@@ -88,15 +89,17 @@ export function AutomationComposer() {
   );
 
   const formError = createMemo(() => {
-    if (!draft().prompt.trim()) return 'Prompt is required.';
-    if (!isValidTime(draft().time)) return 'Choose a valid time.';
+    if (!draft().prompt.trim())
+      return t('automation.validation.promptRequired');
+    if (!isValidTime(draft().time))
+      return t('automation.validation.invalidTime');
     if (draft().frequency === 'week' && draft().daysOfWeek.length === 0) {
-      return 'Select at least one day.';
+      return t('automation.validation.dayRequired');
     }
     if (draft().frequency === 'month') {
       const day = Number(draft().dayOfMonth);
       if (!Number.isInteger(day) || day < 1 || day > 31) {
-        return 'Pick a day between 1 and 31.';
+        return t('automation.validation.dayOfMonth');
       }
     }
     return null;
@@ -112,12 +115,12 @@ export function AutomationComposer() {
           { referredFrom: 'launcher' }
         );
       }
-      toast.success('Automation created', {
-        subtext: 'The automation is now scheduled.',
+      toast.success(t('automation.toast.created'), {
+        subtext: t('automation.toast.scheduled'),
       });
     },
     onError: (error) => {
-      toast.alert('Failed to create automation', {
+      toast.alert(t('automation.error.createFailed'), {
         subtext: getErrorMessage(error),
       });
     },
@@ -149,7 +152,9 @@ export function AutomationComposer() {
         <div class="*:max-h-[75vh]">
           <div class="flex cursor-default flex-col text-ink">
             <div class="flex items-center justify-between border-b border-edge-muted px-3 py-2">
-              <Dialog.Title class="m-0 p-0 text-sm font-semibold">{t('auto.new_automation')}</Dialog.Title>
+              <Dialog.Title class="m-0 p-0 text-sm font-semibold">
+                {t('automation.composer.title')}
+              </Dialog.Title>
               <Dialog.CloseButton as={Button} variant="ghost" size="icon-sm">
                 &times;
               </Dialog.CloseButton>
@@ -157,10 +162,12 @@ export function AutomationComposer() {
 
             <div class="grid max-h-[70vh] gap-3 overflow-y-auto p-3">
               <div class="grid gap-1.5">
-                <label class="text-xs font-medium text-ink-muted cursor-default">{t('auto.name')}</label>
+                <label class="text-xs font-medium text-ink-muted cursor-default">
+                  {t('automation.fields.name')}
+                </label>
                 <input
                   class={INPUT_CLASS}
-                  placeholder="e.g. Morning standup summary"
+                  placeholder={t('automation.fields.namePlaceholder')}
                   value={draft().name}
                   onInput={(event) =>
                     setDraft((current) => ({
@@ -172,7 +179,9 @@ export function AutomationComposer() {
               </div>
 
               <div class="grid gap-1.5">
-                <label class="text-xs font-medium text-ink-muted cursor-default">{t('auto.instructions')}</label>
+                <label class="text-xs font-medium text-ink-muted cursor-default">
+                  {t('automation.fields.instructions')}
+                </label>
                 <AutomationPromptEditor
                   initialValue={initialPrompt()}
                   onChange={(markdown) =>
@@ -186,7 +195,9 @@ export function AutomationComposer() {
 
               <div class="grid gap-3 border border-edge-muted rounded-sm p-3">
                 <div>
-                  <p class="text-sm font-semibold">{t('auto.schedule')}</p>
+                  <p class="text-sm font-semibold">
+                    {t('automation.schedule.title')}
+                  </p>
                   <p class="mt-0.5 text-xs text-ink-muted">
                     {currentSummary()}
                   </p>
@@ -205,7 +216,7 @@ export function AutomationComposer() {
                           }))
                         }
                       >
-                        {option.label}
+                        {t(option.labelKey)}
                       </button>
                     )}
                   </For>
@@ -213,7 +224,9 @@ export function AutomationComposer() {
 
                 <Show when={draft().frequency === 'week'}>
                   <div class="grid gap-1.5">
-                    <label class="text-xs font-medium text-ink-muted cursor-default">{t('auto.days')}</label>
+                    <label class="text-xs font-medium text-ink-muted cursor-default">
+                      {t('automation.schedule.days')}
+                    </label>
                     <div class="flex flex-wrap gap-1">
                       <For each={WEEKDAY_OPTIONS}>
                         {(option) => {
@@ -239,7 +252,7 @@ export function AutomationComposer() {
                                 })
                               }
                             >
-                              {option.label}
+                              {weekdayLabel(option.value)}
                             </button>
                           );
                         }}
@@ -250,7 +263,9 @@ export function AutomationComposer() {
 
                 <Show when={draft().frequency === 'month'}>
                   <div class="grid gap-1.5">
-                    <label class="text-xs font-medium text-ink-muted cursor-default">{t('auto.day_of_month')}</label>
+                    <label class="text-xs font-medium text-ink-muted cursor-default">
+                      {t('automation.schedule.dayOfMonth')}
+                    </label>
                     <input
                       type="number"
                       min="1"
@@ -268,7 +283,9 @@ export function AutomationComposer() {
                 </Show>
 
                 <div class="grid gap-1.5">
-                  <label class="text-xs font-medium text-ink-muted cursor-default">{t('auto.time')}</label>
+                  <label class="text-xs font-medium text-ink-muted cursor-default">
+                    {t('automation.schedule.time')}
+                  </label>
                   <AutomationTimePicker
                     value={draft().time}
                     onChange={(value) =>
@@ -296,7 +313,9 @@ export function AutomationComposer() {
                 size="sm"
                 class="cursor-default"
                 onClick={() => setAutomationComposerOpen(false, false)}
-              >{t('common.cancel')}</Button>
+              >
+                {t('common.cancel')}
+              </Button>
               <Button
                 variant="accent"
                 size="sm"
@@ -304,7 +323,9 @@ export function AutomationComposer() {
                 disabled={createMutation.isPending}
                 onClick={handleCreate}
               >
-                {createMutation.isPending ? 'Creating…' : 'Create'}
+                {createMutation.isPending
+                  ? t('automation.actions.creating')
+                  : t('shell.actions.create')}
               </Button>
             </div>
           </div>

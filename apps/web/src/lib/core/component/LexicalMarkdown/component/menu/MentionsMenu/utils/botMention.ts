@@ -1,4 +1,4 @@
-import { isBotPrincipalId } from '@core/constant/macroAgent';
+import { isBotPrincipalId } from '@core/constant/conationAi';
 import type { UserItem } from '@core/context/quickAccess';
 import type { MentionItem } from '../../../../utils/mentionsUtils';
 

@@ -1,5 +1,5 @@
-import { SplitDrawer } from '@components/app/split-layout/components/SplitDrawer';
 import { t } from '@app/lib/i18n';
+import { SplitDrawer } from '@components/app/split-layout/components/SplitDrawer';
 import { useDrawerControl } from '@components/app/split-layout/components/SplitDrawerContext';
 import clickOutside from '@core/directive/clickOutside';
 import Quotes from '@phosphor/quotes.svg';
@@ -24,6 +24,7 @@ export function ReferencesButton(props: {
     <Button
       size="icon-sm"
       variant="ghost"
+      label={t('core.references.view')}
       onClick={() => {
         props.onOpenChange?.(!drawerControl.isOpen());
         drawerControl.toggle();
@@ -40,9 +41,11 @@ export function ReferencesDrawer(props: {
   entityType?: ItemType;
 }) {
   const title = () => {
-    if (!props.documentName) return 'References';
+    if (!props.documentName) return t('core.references.title');
     return (
-      <>{t('auto.references')}<span class="text-ink-extra-muted">
+      <>
+        {t('core.references.title')}
+        <span class="text-ink-extra-muted">
           {' - '}
           {props.documentName}
         </span>
@@ -88,9 +91,11 @@ function _ReferencesModal(props: ReferencesModalProps) {
   const referenceCount = () => references.data?.length ?? 0;
 
   const title = () => {
-    if (!props.documentName) return 'References';
+    if (!props.documentName) return t('core.references.title');
     return (
-      <>{t('auto.references')}<span class="text-ink-extra-muted">
+      <>
+        {t('core.references.title')}
+        <span class="text-ink-extra-muted">
           {' - '}
           {props.documentName}
         </span>
@@ -99,7 +104,7 @@ function _ReferencesModal(props: ReferencesModalProps) {
   };
   return (
     <>
-      <Tooltip label={'View References'}>
+      <Tooltip label={t('core.references.view')}>
         <div
           class="flex items-center gap-1 py-1 font-mono text-xs text-ink-disabled hover:bg-hover relative"
           tabIndex={0}

@@ -1,6 +1,6 @@
 use ::axum::{
     extract::FromRef,
-    http::{HeaderMap, request::Parts},
+    http::{HeaderMap, StatusCode, request::Parts},
 };
 use rootcause::Report;
 
@@ -8,51 +8,31 @@ use crate::{
     InternalIdentityClaims, MacroAuthorization, MacroAuthorizationError, MacroAuthorizationService,
 };
 
-use super::{MacroAuthorizationRejection, MacroAuthorizationState, authenticated_user, rejection};
+use super::{
+    MacroAuthorizationRejection, MacroAuthorizationState, authenticated_user, rejection,
+    status_rejection,
+};
 
 /// Header carrying the shared key for standard internal service authorization.
 pub const INTERNAL_API_KEY_HEADER: &str = "x-internal-auth-key";
-/// Header carrying the acting Macro user ID for standard internal authorization.
-pub const INTERNAL_MACRO_USER_ID_HEADER: &str = "x-internal-macro-user-id";
+/// Header carrying the acting Conation user ID for internal authorization.
+pub const INTERNAL_CONATION_USER_ID_HEADER: &str = "x-internal-conation-user-id";
 /// Header carrying the acting organization ID for standard internal authorization.
-pub const INTERNAL_MACRO_ORGANIZATION_ID_HEADER: &str = "x-internal-macro-organization-id";
+pub const INTERNAL_CONATION_ORGANIZATION_ID_HEADER: &str = "x-internal-conation-organization-id";
 /// Header carrying the acting FusionAuth user ID for standard internal authorization.
 pub const INTERNAL_FUSIONAUTH_USER_ID_HEADER: &str = "x-internal-fusionauth-user-id";
 
-/// Legacy DSS header carrying the internal service authorization key.
-#[deprecated(note = "migrate callers to INTERNAL_API_KEY_HEADER")]
-pub const LEGACY_DSS_INTERNAL_API_KEY_HEADER: &str = "x-document-storage-service-auth-key";
-/// Legacy DSS header carrying the acting Macro user ID.
-#[deprecated(note = "migrate callers to INTERNAL_MACRO_USER_ID_HEADER")]
-pub const LEGACY_DSS_INTERNAL_MACRO_USER_ID_HEADER: &str = "x-document-storage-service-user-id";
-
-pub(super) struct InternalHeaderConvention {
-    key_header: &'static str,
-    user_id_header: &'static str,
-    organization_id_header: Option<&'static str>,
-    fusion_user_id_header: Option<&'static str>,
-}
-
-#[allow(deprecated)]
-static INTERNAL_HEADER_CONVENTIONS: [InternalHeaderConvention; 2] = [
-    InternalHeaderConvention {
-        key_header: INTERNAL_API_KEY_HEADER,
-        user_id_header: INTERNAL_MACRO_USER_ID_HEADER,
-        organization_id_header: Some(INTERNAL_MACRO_ORGANIZATION_ID_HEADER),
-        fusion_user_id_header: Some(INTERNAL_FUSIONAUTH_USER_ID_HEADER),
-    },
-    InternalHeaderConvention {
-        key_header: LEGACY_DSS_INTERNAL_API_KEY_HEADER,
-        user_id_header: LEGACY_DSS_INTERNAL_MACRO_USER_ID_HEADER,
-        organization_id_header: None,
-        fusion_user_id_header: None,
-    },
+const LEGACY_INTERNAL_HEADERS: &[&str] = &[
+    "x-document-storage-service-auth-key",
+    "x-document-storage-service-user-id",
+    "x-document-storage-service-session-id",
+    "x-internal-macro-user-id",
+    "x-internal-macro-organization-id",
 ];
 
 pub(super) async fn authorize_internal_request<S, Svc>(
     parts: &Parts,
     state: &S,
-    convention: &InternalHeaderConvention,
 ) -> Result<Option<MacroAuthorization>, MacroAuthorizationRejection>
 where
     MacroAuthorizationState<Svc>: FromRef<S>,
@@ -61,10 +41,10 @@ where
 {
     let provided_key = parts
         .headers
-        .get(convention.key_header)
+        .get(INTERNAL_API_KEY_HEADER)
         .and_then(|header| header.to_str().ok())
         .ok_or_else(|| rejection("unauthorized"))?;
-    let claims = internal_identity_claims(&parts.headers, convention);
+    let claims = internal_identity_claims(&parts.headers);
     let authorization = MacroAuthorizationState::<Svc>::from_ref(state);
     let user_context = authorization
         .service
@@ -76,26 +56,38 @@ where
     Ok(Some(MacroAuthorization::Internal(acting_user)))
 }
 
-pub(super) fn internal_header_convention(headers: &HeaderMap) -> Option<&InternalHeaderConvention> {
-    INTERNAL_HEADER_CONVENTIONS
-        .iter()
-        .find(|convention| headers.contains_key(convention.key_header))
+pub(super) fn has_internal_auth_key(headers: &HeaderMap) -> bool {
+    headers.contains_key(INTERNAL_API_KEY_HEADER)
 }
 
-fn internal_identity_claims(
+pub(super) fn reject_legacy_internal_headers(
     headers: &HeaderMap,
-    convention: &InternalHeaderConvention,
-) -> InternalIdentityClaims {
+) -> Result<(), MacroAuthorizationRejection> {
+    if LEGACY_INTERNAL_HEADERS
+        .iter()
+        .any(|header| headers.contains_key(*header))
+    {
+        return Err(status_rejection(
+            StatusCode::BAD_REQUEST,
+            "legacy internal credentials are not supported",
+        ));
+    }
+
+    Ok(())
+}
+
+fn internal_identity_claims(headers: &HeaderMap) -> InternalIdentityClaims {
     InternalIdentityClaims {
-        user_id: header_string(headers, Some(convention.user_id_header)),
-        fusion_user_id: header_string(headers, convention.fusion_user_id_header),
-        organization_id: header_string(headers, convention.organization_id_header)
+        user_id: header_string(headers, INTERNAL_CONATION_USER_ID_HEADER),
+        fusion_user_id: header_string(headers, INTERNAL_FUSIONAUTH_USER_ID_HEADER),
+        organization_id: header_string(headers, INTERNAL_CONATION_ORGANIZATION_ID_HEADER)
             .and_then(|organization_id| organization_id.parse().ok()),
     }
 }
 
-fn header_string(headers: &HeaderMap, name: Option<&str>) -> Option<String> {
-    name.and_then(|name| headers.get(name))
+fn header_string(headers: &HeaderMap, name: &str) -> Option<String> {
+    headers
+        .get(name)
         .and_then(|header| header.to_str().ok())
         .map(str::to_owned)
 }

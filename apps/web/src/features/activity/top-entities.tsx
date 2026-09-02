@@ -23,12 +23,14 @@ export function TopEntities(props: {
   entities: ActivityOverview['topEntities'];
 }) {
   return (
-    <section class="min-w-0" aria-label={t('auto.most_active')}>
-      <SoupSectionHeader>{t('auto.most_active')}</SoupSectionHeader>
+    <section class="min-w-0" aria-label={t('activity.topEntities.title')}>
+      <SoupSectionHeader>{t('activity.topEntities.title')}</SoupSectionHeader>
       <Show
         when={props.entities.length > 0}
         fallback={
-          <p class="px-2 py-2 text-ink-muted text-sm">{t('auto.no_entities_yet')}</p>
+          <p class="px-2 py-2 text-ink-muted text-sm">
+            {t('activity.topEntities.empty')}
+          </p>
         }
       >
         <For each={props.entities}>
@@ -93,10 +95,9 @@ function MappedEntityRow(props: {
 }
 
 function ActionCount(props: { count: number }) {
-  const noun = () => (props.count === 1 ? 'action' : 'actions');
   return (
     <span class="ml-auto shrink-0 text-right font-medium text-ink-extra-muted text-xs tabular-nums">
-      {props.count.toLocaleString()} {noun()}
+      {t('activity.actionCount', { count: props.count })}
     </span>
   );
 }

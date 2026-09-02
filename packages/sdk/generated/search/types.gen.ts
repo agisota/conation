@@ -571,7 +571,7 @@ export type ChatFilters = {
      */
     notification_filters?: NotificationFilters;
     /**
-     * Filter by chat owner. Examples: ['macro|user1@user.com'], ['macro|user1@user.com', 'macro|user2@user.com']. Empty to search all owners.
+     * Filter by chat owner. Examples: ['conation|user1@user.com'], ['conation|user1@user.com', 'conation|user2@user.com']. Empty to search all owners.
      */
     owners?: Array<string>;
     /**
@@ -806,7 +806,7 @@ export type DocumentFilters = {
      */
     notification_filters?: NotificationFilters;
     /**
-     * Filter by document owner. Examples: ['macro|user1@user.com'], ['macro|user1@user.com', 'macro|user2@user.com']. Empty to search all owners.
+     * Filter by document owner. Examples: ['conation|user1@user.com'], ['conation|user1@user.com', 'conation|user2@user.com']. Empty to search all owners.
      */
     owners?: Array<string>;
     /**
@@ -1367,7 +1367,7 @@ export type ProjectFilters = {
      */
     notification_filters?: NotificationFilters;
     /**
-     * Filter by project owner. Examples: ['macro|user1@user.com'], ['macro|user1@user.com', 'macro|user2@user.com']. Empty to search all owners.
+     * Filter by project owner. Examples: ['conation|user1@user.com'], ['conation|user1@user.com', 'conation|user2@user.com']. Empty to search all owners.
      */
     owners?: Array<string>;
     /**

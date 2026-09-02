@@ -1,5 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { copyCalendarEventMentionTarget } from './copy-event-mention';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  calendarEventDeepLink,
+  copyCalendarEventMentionTarget,
+} from './copy-event-mention';
 
 const writeClipboardData = vi.hoisted(() =>
   vi.fn(async (_data: Record<string, string | undefined>) => true)
@@ -66,6 +69,19 @@ describe('copyCalendarEventMentionTarget', () => {
     expect(plain).toContain('eventId=event-1');
     expect(plain).toContain(
       `occurrenceKey=${encodeURIComponent('2026-08-21T18:00:00+00:00')}`
+    );
+  });
+});
+
+describe('calendarEventDeepLink', () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it('uses the standalone operator origin, including for a local stack', () => {
+    vi.stubEnv('VITE_CONATION_CLIENT_PROFILE', 'standalone');
+    vi.stubEnv('VITE_CONATION_OPERATOR_ORIGIN', 'http://localhost:8090');
+
+    expect(calendarEventDeepLink({ eventId: 'event-1' })).toContain(
+      'http://localhost:8090/app/calendar/'
     );
   });
 });

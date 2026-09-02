@@ -8,13 +8,13 @@ use attachment::{
     AttachmentContent, AttachmentError, AttachmentPart, AttachmentService, Attachments,
     ResolutionError,
 };
+use conation_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::{
     models::{EntityAccessReceipt, ViewAccessLevel},
     ports::EntityAccessService,
 };
 use futures::future::join_all;
 use lexical_client::LexicalClient;
-use conation_user_id::user_id::MacroUserIdStr;
 use model::document::DocumentBasic;
 use model_entity::{Entity, EntityType};
 use model_file_type::{FileAssociation, FileType};

@@ -18,7 +18,7 @@ fn jwt_expiring_at(exp: i64) -> String {
     let encode = |bytes: &[u8]| base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(bytes);
     format!(
         "{}.{}.{}",
-        encode(br#"{"alg":"RS256","kid":"macro"}"#),
+        encode(br#"{"alg":"RS256","kid":"conation"}"#),
         encode(format!(r#"{{"exp":{exp}}}"#).as_bytes()),
         encode(b"unverified"),
     )
@@ -43,7 +43,7 @@ impl CountingTokens {
     }
 }
 
-impl MacroApiTokens for &CountingTokens {
+impl ConationApiTokens for &CountingTokens {
     async fn mint(&self, _owner: &MacroUserIdStr<'static>) -> Result<String, EgressError> {
         let count = self.minted.fetch_add(1, Ordering::SeqCst) + 1;
         Ok(format!(
@@ -66,7 +66,7 @@ impl McpCredentials for &SpyInner {
         destination: &McpDestination,
     ) -> Result<UpstreamCall, EgressError> {
         let McpDestination::Connected(slug) = destination else {
-            unreachable!("the decorator answers Macro's own destination itself");
+            unreachable!("the decorator answers Conation's own destination itself");
         };
         self.asked.lock().expect("lock").push(slug.to_string());
         Err(EgressError::UnknownServer(slug.clone()))
@@ -74,24 +74,25 @@ impl McpCredentials for &SpyInner {
 }
 
 fn conation_url() -> Url {
-    Url::parse("https://mcp.macro.com/mcp").expect("url")
+    Url::parse("https://mcp.conation.dev/mcp").expect("url")
 }
 
 #[tokio::test]
-async fn answers_macros_own_destination_with_a_minted_token() {
+async fn answers_conations_own_destination_with_a_minted_token() {
     let tokens = CountingTokens::fresh();
     let inner = SpyInner::default();
-    let credentials = WithMacroMcp::new(&inner, &tokens, conation_url(), false).expect("constructed");
+    let credentials =
+        WithConationMcp::new(&inner, &tokens, conation_url(), false).expect("constructed");
 
     let call = credentials
-        .resolve(&owner(), &McpDestination::Macro)
+        .resolve(&owner(), &McpDestination::Conation)
         .await
         .expect("resolved");
 
-    assert_eq!(call.url().as_str(), "https://mcp.macro.com/mcp");
+    assert_eq!(call.url().as_str(), "https://mcp.conation.dev/mcp");
     assert!(
         inner.asked.lock().expect("lock").is_empty(),
-        "Macro's own destination must never consult the owner's rows"
+        "Conation's own destination must never consult the owner's rows"
     );
 }
 
@@ -101,11 +102,12 @@ async fn answers_macros_own_destination_with_a_minted_token() {
 async fn reuses_a_token_until_it_nears_expiry() {
     let tokens = CountingTokens::fresh();
     let inner = SpyInner::default();
-    let credentials = WithMacroMcp::new(&inner, &tokens, conation_url(), false).expect("constructed");
+    let credentials =
+        WithConationMcp::new(&inner, &tokens, conation_url(), false).expect("constructed");
 
     for _ in 0..3 {
         credentials
-            .resolve(&owner(), &McpDestination::Macro)
+            .resolve(&owner(), &McpDestination::Conation)
             .await
             .expect("resolved");
     }
@@ -118,11 +120,12 @@ async fn a_token_about_to_expire_is_replaced() {
     // Inside the margin from the start, so every resolve re-mints.
     let tokens = CountingTokens::expiring_at(Utc::now() + ChronoDuration::minutes(1));
     let inner = SpyInner::default();
-    let credentials = WithMacroMcp::new(&inner, &tokens, conation_url(), false).expect("constructed");
+    let credentials =
+        WithConationMcp::new(&inner, &tokens, conation_url(), false).expect("constructed");
 
     for _ in 0..2 {
         credentials
-            .resolve(&owner(), &McpDestination::Macro)
+            .resolve(&owner(), &McpDestination::Conation)
             .await
             .expect("resolved");
     }
@@ -134,7 +137,8 @@ async fn a_token_about_to_expire_is_replaced() {
 async fn every_other_slug_delegates_to_the_inner_resolver() {
     let tokens = CountingTokens::fresh();
     let inner = SpyInner::default();
-    let credentials = WithMacroMcp::new(&inner, &tokens, conation_url(), false).expect("constructed");
+    let credentials =
+        WithConationMcp::new(&inner, &tokens, conation_url(), false).expect("constructed");
 
     let refusal = credentials
         .resolve(&owner(), &connected("linear"))
@@ -146,22 +150,22 @@ async fn every_other_slug_delegates_to_the_inner_resolver() {
     assert_eq!(tokens.minted.load(Ordering::SeqCst), 0);
 }
 
-/// A deployed environment pointing Macro's own MCP server at cleartext is
+/// A deployed environment pointing Conation's own MCP server at cleartext is
 /// misconfigured; it must fail at boot, not at the first tool call.
 #[tokio::test]
 async fn refuses_a_cleartext_url_unless_local_dev_permits_it() {
     let tokens = CountingTokens::fresh();
     let url = Url::parse("http://mcp-service:8080/mcp").expect("url");
 
-    let refusal = WithMacroMcp::new(&SpyInner::default(), &tokens, url.clone(), false)
+    let refusal = WithConationMcp::new(&SpyInner::default(), &tokens, url.clone(), false)
         .err()
         .expect("refused");
     assert!(matches!(refusal, EgressError::InsecureUpstream(_)));
 
     let inner = SpyInner::default();
-    let permitted = WithMacroMcp::new(&inner, &tokens, url, true).expect("constructed");
+    let permitted = WithConationMcp::new(&inner, &tokens, url, true).expect("constructed");
     let call = permitted
-        .resolve(&owner(), &McpDestination::Macro)
+        .resolve(&owner(), &McpDestination::Conation)
         .await
         .expect("resolved");
     assert_eq!(call.url().as_str(), "http://mcp-service:8080/mcp");

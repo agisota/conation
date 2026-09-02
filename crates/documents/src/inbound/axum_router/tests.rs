@@ -6,6 +6,11 @@ use axum::{
     body::Body,
     http::{Request, StatusCode, request::Builder},
 };
+use conation_authorization::{
+    INTERNAL_API_KEY_HEADER, INTERNAL_CONATION_USER_ID_HEADER, InternalIdentityClaims,
+    MacroAuthorizationError, MacroAuthorizationService, MacroAuthorizationState,
+};
+use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
 use embedding::embedding_provider::openai::TextEmbedding3Small;
 use entity_access::domain::{
     models::{
@@ -16,11 +21,6 @@ use entity_access::domain::{
 };
 use http_body_util::BodyExt;
 use lexical_client::LexicalClient;
-use conation_authorization::{
-    INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_USER_ID_HEADER, InternalIdentityClaims,
-    MacroAuthorizationError, MacroAuthorizationService, MacroAuthorizationState,
-};
-use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
 use model::{
     document::{DocumentBasic, DocumentMetadata, FileType, response::DocumentResponseMetadata},
     sync_service::SyncServiceVersionID,
@@ -69,7 +69,6 @@ const JWT_TOKEN: &str = "valid-jwt";
 const JWT_USER_ID: &str = "macro|jwt-user@example.com";
 const STANDARD_INTERNAL_KEY: &str = "standard-internal-key";
 const STANDARD_INTERNAL_USER_ID: &str = "macro|standard-internal@example.com";
-const LEGACY_INTERNAL_KEY: &str = "legacy-internal-key";
 const LEGACY_INTERNAL_USER_ID: &str = "macro|legacy-internal@example.com";
 const LEGACY_INTERNAL_API_KEY_HEADER: &str = "x-document-storage-service-auth-key";
 const LEGACY_INTERNAL_USER_ID_HEADER: &str = "x-document-storage-service-user-id";
@@ -769,7 +768,7 @@ impl MacroAuthorizationService for FakeAuthorizationService {
                 claims: claims.clone(),
             });
 
-        if !matches!(provided_key, STANDARD_INTERNAL_KEY | LEGACY_INTERNAL_KEY) {
+        if provided_key != STANDARD_INTERNAL_KEY {
             return Err(Report::new(MacroAuthorizationError::InvalidCredentials));
         }
 
@@ -1136,33 +1135,22 @@ async fn snapshot_upload_requires_internal_api_key() {
 }
 
 #[tokio::test]
-async fn legacy_internal_headers_reach_the_internal_only_creation_path() {
+async fn legacy_internal_headers_are_rejected_before_creation() {
     let email_attachment_id = Uuid::new_v4();
     let (router, document_service, _access_service, authorization_service) = test_router();
     let request = finish_request(
         create_request()
-            .header(LEGACY_INTERNAL_API_KEY_HEADER, LEGACY_INTERNAL_KEY)
+            .header(LEGACY_INTERNAL_API_KEY_HEADER, STANDARD_INTERNAL_KEY)
             .header(LEGACY_INTERNAL_USER_ID_HEADER, LEGACY_INTERNAL_USER_ID),
         Some(email_attachment_id),
     );
 
     let (status, _body) = send(&router, request).await;
 
-    assert_eq!(status, StatusCode::OK);
+    assert_eq!(status, StatusCode::BAD_REQUEST);
     assert!(document_service.create_calls().is_empty());
-    assert_eq!(
-        document_service.import_calls(),
-        [ImportEmailAttachmentCall {
-            user_id: LEGACY_INTERNAL_USER_ID.to_string(),
-            email_attachment_id,
-        }]
-    );
-    assert!(!authorization_service.calls().is_empty());
-    assert!(authorization_service.calls().iter().all(|call| matches!(
-        call,
-        AuthorizationCall::Internal { provided_key, .. }
-            if provided_key == LEGACY_INTERNAL_KEY
-    )));
+    assert!(document_service.import_calls().is_empty());
+    assert!(authorization_service.calls().is_empty());
 }
 
 #[tokio::test]
@@ -1171,7 +1159,7 @@ async fn standard_internal_headers_reach_the_document_service() {
     let request = finish_request(
         create_request()
             .header(INTERNAL_API_KEY_HEADER, STANDARD_INTERNAL_KEY)
-            .header(INTERNAL_MACRO_USER_ID_HEADER, STANDARD_INTERNAL_USER_ID),
+            .header(INTERNAL_CONATION_USER_ID_HEADER, STANDARD_INTERNAL_USER_ID),
         None,
     );
 
@@ -1194,38 +1182,23 @@ async fn standard_internal_headers_reach_the_document_service() {
 }
 
 #[tokio::test]
-async fn standard_internal_headers_take_precedence_over_legacy_headers() {
+async fn legacy_internal_headers_are_rejected_even_alongside_canonical_headers() {
     let (router, document_service, _access_service, authorization_service) = test_router();
     let request = finish_request(
         create_request()
             .header(INTERNAL_API_KEY_HEADER, STANDARD_INTERNAL_KEY)
-            .header(INTERNAL_MACRO_USER_ID_HEADER, STANDARD_INTERNAL_USER_ID)
-            .header(LEGACY_INTERNAL_API_KEY_HEADER, LEGACY_INTERNAL_KEY)
+            .header(INTERNAL_CONATION_USER_ID_HEADER, STANDARD_INTERNAL_USER_ID)
+            .header(LEGACY_INTERNAL_API_KEY_HEADER, STANDARD_INTERNAL_KEY)
             .header(LEGACY_INTERNAL_USER_ID_HEADER, LEGACY_INTERNAL_USER_ID),
         None,
     );
 
     let (status, _body) = send(&router, request).await;
 
-    assert_eq!(status, StatusCode::OK);
-    assert_eq!(
-        document_service.create_calls(),
-        [CreateDocumentCall {
-            user_id: STANDARD_INTERNAL_USER_ID.to_string(),
-        }]
-    );
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert!(document_service.create_calls().is_empty());
     assert!(document_service.import_calls().is_empty());
-    assert!(!authorization_service.calls().is_empty());
-    assert!(authorization_service.calls().iter().all(|call| matches!(
-        call,
-        AuthorizationCall::Internal {
-            provided_key,
-            claims: InternalIdentityClaims {
-                user_id: Some(user_id),
-                ..
-            },
-        } if provided_key == STANDARD_INTERNAL_KEY && user_id == STANDARD_INTERNAL_USER_ID
-    )));
+    assert!(authorization_service.calls().is_empty());
 }
 
 #[tokio::test]

@@ -1,3 +1,5 @@
+import { formatDateTime } from '@core/i18n';
+import { macroIdToEmail, tryMacroId } from '@core/user';
 import { getPropertyOptionLabel } from '@entity/utils/task-properties';
 import { NUMBER_DECIMAL_PLACES } from '../constants';
 import type { Property, PropertyOptionValue } from '../types';
@@ -25,7 +27,7 @@ export function formatNumber(value: number): string {
 export function formatDate(value: Date | string): string {
   const date = typeof value === 'string' ? new Date(value) : value;
 
-  return date.toLocaleDateString('en-US', {
+  return formatDateTime(date, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -88,9 +90,10 @@ export const formatPropertyValue = (
 
   let formattedValue = value.toString();
 
-  // Filter out "macro|" prefix for system owner properties
+  // Render canonical user principals as their email for owner properties.
   if (property.displayName === 'Owner') {
-    formattedValue = formattedValue.replace('macro|', '');
+    const userId = tryMacroId(formattedValue);
+    formattedValue = userId ? macroIdToEmail(userId) : formattedValue;
   }
 
   return formattedValue;

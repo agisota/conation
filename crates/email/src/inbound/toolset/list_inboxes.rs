@@ -4,8 +4,8 @@ use crate::domain::ports::{EmailService, GmailTokenProvider};
 use ai_toolset::{AsyncTool, RequestContext, ServiceContext, ToolCallError, ToolResult};
 use ai_toolset::{ToolAnnotated, ToolAnnotations};
 use async_trait::async_trait;
-use entity_access::domain::ports::EntityAccessService;
 use conation_user_id::user_id::MacroUserIdStr;
+use entity_access::domain::ports::EntityAccessService;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -77,18 +77,18 @@ where
 
         let inboxes = service_context
             .service
-            .get_inboxes_for_conation_id(MacroUserIdStr((*request_context.user_id).clone()))
+            .get_inboxes_for_macro_id(MacroUserIdStr((*request_context.user_id).clone()))
             .await
             .map_err(|e| ToolCallError {
                 description: format!("Failed to list inboxes: {e}"),
                 internal_error: e.into(),
             })?;
 
-        let caller_conation_id = request_context.user_id.to_string();
+        let caller_macro_id = request_context.user_id.to_string();
         let tool_inboxes: Vec<ToolInbox> = inboxes
             .iter()
             .map(|link| {
-                let owned = link.conation_id.to_string() == caller_conation_id;
+                let owned = link.macro_id.to_string() == caller_macro_id;
                 ToolInbox {
                     email_address: link.email_address.0.as_ref().to_string(),
                     is_primary: owned && link.is_primary,

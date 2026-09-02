@@ -50,7 +50,7 @@ export function buildGraphqlSoupWebSocketUrl(
   else if (url.protocol !== 'ws:' && url.protocol !== 'wss:') {
     throw new Error(`unsupported GraphQL websocket protocol ${url.protocol}`);
   }
-  if (apiToken) url.searchParams.set('macro-api-token', apiToken);
+  if (apiToken) url.searchParams.set('conation-api-token', apiToken);
   return url.toString();
 }
 
@@ -71,7 +71,7 @@ export function createGraphqlSoupWebSocketUrlResolver({
   return async () => {
     if (bearerTokenAuth) {
       const apiToken = await getApiToken();
-      if (!apiToken) throw new Error('No Macro API token');
+      if (!apiToken) throw new Error('No Conation API token');
       return buildGraphqlSoupWebSocketUrl(dssHost, apiToken);
     }
 

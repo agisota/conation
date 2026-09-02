@@ -342,14 +342,14 @@ pub trait CompaniesRepository: Clone + Send + Sync + 'static {
         link_id: &uuid::Uuid,
     ) -> impl Future<Output = Result<(), CrmError>> + Send;
 
-    /// Returns the team id that `conation_id` belongs to. When the user is on
+    /// Returns the team id that `macro_id` belongs to. When the user is on
     /// multiple teams the highest-privileged role wins (Postgres orders the
     /// `team_role` enum as `member < admin < owner`), matching the
     /// behavior of `entity_access::ports::get_user_team`. Returns
     /// `Ok(None)` when the user has no team membership.
     fn get_team_id_for_user(
         &self,
-        conation_id: &str,
+        macro_id: &str,
     ) -> impl Future<Output = Result<Option<uuid::Uuid>, CrmError>> + Send;
 
     /// Toggle `crm_companies.email_sync` for `(company_id, team_id)`.

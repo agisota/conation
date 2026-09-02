@@ -1,8 +1,10 @@
-# Macro Docs
+# Документация Conation
 
-This directory contains the Mintlify site for `docs.macro.com`.
+В этом каталоге находится сайт документации Conation на Mintlify. Публичный
+адрес документации пока не считается подтверждённым: локальный предпросмотр
+работает независимо от DNS и TLS.
 
-## Local development
+## Локальная разработка
 
 ```bash
 cd apps/docs
@@ -11,17 +13,23 @@ bun run generate:tools
 bun run dev
 ```
 
-Mintlify currently requires an LTS Node release for CLI commands. If the CLI rejects your runtime, switch to Node 20 or Node 22 before running `mint dev` or `mint broken-links`.
+Для команд Mintlify нужна LTS-версия Node.js. Если CLI отклоняет текущую
+версию, переключитесь на Node.js 20 или 22 перед запуском `mint dev` или
+`mint broken-links`.
 
-## How it works
+## Как устроена документация
 
-- Handwritten pages live directly in `apps/docs/`
-- Generated MCP tool pages are written to `apps/docs/AI/mcp/tools/`
-- The generator rebuilds Rust tool schemas from `crates/ai_tools`
+- Редактируемые вручную страницы находятся непосредственно в `apps/docs/`.
+- Сгенерированные страницы MCP-инструментов записываются в
+  `apps/docs/AI/mcp/tools/`.
+- Генератор читает схемы Rust из `crates/ai_tools`.
 
-## Mintlify monorepo setup
+Не редактируйте сгенерированные MCP-страницы вручную. Исправляйте схему или
+`scripts/generate-mcp-tool-pages.ts`, затем запускайте `bun run generate:tools`.
 
-Configure the Mintlify project as a monorepo and set the docs path to:
+## Настройка monorepo в Mintlify
+
+Настройте проект Mintlify как monorepo и укажите каталог документации:
 
 ```text
 /apps/docs

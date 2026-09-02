@@ -23,7 +23,7 @@ export interface DocumentFilters {
   is_email_attachment?: DocumentFiltersIsEmailAttachment;
   /** Filter by document notification state. */
   notification_filters?: NotificationFilters;
-  /** Filter by document owner. Examples: ['macro|user1@user.com'], ['macro|user1@user.com', 'macro|user2@user.com']. Empty to search all owners. */
+  /** Filter by document owner. Examples: ['conation|user1@user.com'], ['conation|user1@user.com', 'conation|user2@user.com']. Empty to search all owners. */
   owners?: string[];
   /** A list of project ids to search within. Examples: ['project1'].
 filtering. Empty to ignore project filtering. */

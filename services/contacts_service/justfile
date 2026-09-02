@@ -43,7 +43,7 @@ sqs-worker:
 
 # runs contacts query when JWT middlewhere is running.
 # expects a file called "access_token". This can be made by
-# copying the dev-macro-access-token cookie and pasting it into
+# copying the dev-conation-access-token cookie and pasting it into
 
 # access token
 contacts:

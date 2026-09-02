@@ -1,5 +1,5 @@
-import { useMaybeBlockId } from '@core/block';
 import { t } from '@app/lib/i18n';
+import { useMaybeBlockId } from '@core/block';
 import { TabsInset } from '@core/component/TabsInset';
 import { useUserId } from '@core/context/user';
 import type { CollectionNode } from '@kobalte/core';
@@ -59,7 +59,7 @@ type Option<T> = {
 };
 
 type OptionInputProps<T extends string | number> = {
-  options: () =>Option<T>[];
+  options: () => Option<T>[];
   type: 'string' | 'number';
   onRemove: (id: string) => void;
   onUpdate: (id: string, value: T) => void;
@@ -150,7 +150,7 @@ const OptionInput: Component<OptionInputProps<string | number>> = (props) => {
             <Button
               variant="ghost"
               size="icon-sm"
-              label="Remove option"
+              label={t('property.create.removeOption')}
               onClick={() => props.onRemove(option().id)}
               class="shrink-0 rounded-lg text-failure-ink"
             >
@@ -247,7 +247,7 @@ export const CreatePropertyModal: Component<CreatePropertyModalProps> = (
   });
 
   const removeOption = <T extends string | number>(
-    options: () =>Option<T>[],
+    options: () => Option<T>[],
     setOptions: (options: Option<T>[]) => void,
     optionId: string,
     defaultValue: T
@@ -259,7 +259,7 @@ export const CreatePropertyModal: Component<CreatePropertyModalProps> = (
   };
 
   const updateOption = <T extends string | number>(
-    options: () =>Option<T>[],
+    options: () => Option<T>[],
     setOptions: (options: Option<T>[]) => void,
     optionId: string,
     value: T,
@@ -272,7 +272,7 @@ export const CreatePropertyModal: Component<CreatePropertyModalProps> = (
   };
 
   const hasDuplicateOptions = <T extends string | number>(
-    options: () =>Option<T>[]
+    options: () => Option<T>[]
   ): boolean => {
     const values = options().map((opt) =>
       typeof opt.value === 'string' ? opt.value.trim() : opt.value
@@ -551,7 +551,9 @@ export const CreatePropertyModal: Component<CreatePropertyModalProps> = (
           <Dialog.Title
             as="span"
             class="min-w-0 flex-1 truncate text-sm font-semibold text-ink-extra-muted"
-          >{t('auto.create_property')}</Dialog.Title>
+          >
+            {t('property.create.title')}
+          </Dialog.Title>
           <Dialog.CloseButton
             as={Button}
             variant="ghost"
@@ -571,7 +573,7 @@ export const CreatePropertyModal: Component<CreatePropertyModalProps> = (
               </div>
             </Show>
 
-            <EditorRow label="Name">
+            <EditorRow label={t('property.create.nameLabel')}>
               <input
                 id="property-name"
                 ref={propertyNameInputRef}
@@ -583,12 +585,12 @@ export const CreatePropertyModal: Component<CreatePropertyModalProps> = (
                     handleCreateProperty();
                   }
                 }}
-                placeholder={t('auto.property_name')}
+                placeholder={t('property.create.namePlaceholder')}
                 class={inputClass}
               />
             </EditorRow>
 
-            <EditorRow label="Type">
+            <EditorRow label={t('property.create.typeLabel')}>
               <Select<DataTypeOption>
                 options={dataTypeDropdownOptions}
                 value={selectedDataTypeOption()}
@@ -667,8 +669,8 @@ export const CreatePropertyModal: Component<CreatePropertyModalProps> = (
                 <TabsInset
                   depth={0}
                   list={[
-                    { value: 'team', label: 'Team' },
-                    { value: 'user', label: 'Personal' },
+                    { value: 'team', label: t('property.scope.team') },
+                    { value: 'user', label: t('property.scope.personal') },
                   ]}
                   value={selectedPropertyScope()}
                   onChange={(value) => {
@@ -681,12 +683,18 @@ export const CreatePropertyModal: Component<CreatePropertyModalProps> = (
             </Show>
 
             <Show when={shouldShowMultiSelect()}>
-              <EditorRow label="Selection">
+              <EditorRow label={t('property.create.selectionLabel')}>
                 <TabsInset
                   depth={0}
                   list={[
-                    { value: 'single', label: 'Single' },
-                    { value: 'multi', label: 'Multi' },
+                    {
+                      value: 'single',
+                      label: t('property.selection.single'),
+                    },
+                    {
+                      value: 'multi',
+                      label: t('property.selection.multiple'),
+                    },
                   ]}
                   value={isMultiSelect() ? 'multi' : 'single'}
                   onChange={(value) => setIsMultiSelect(value === 'multi')}
@@ -695,7 +703,10 @@ export const CreatePropertyModal: Component<CreatePropertyModalProps> = (
             </Show>
 
             <Show when={shouldShowOptions()}>
-              <EditorRow label="Options" align="start">
+              <EditorRow
+                label={t('property.create.optionsLabel')}
+                align="start"
+              >
                 <div>
                   <Show
                     when={selectedDataType() === 'select_string'}
@@ -720,7 +731,7 @@ export const CreatePropertyModal: Component<CreatePropertyModalProps> = (
                             ''
                           )
                         }
-                        placeholder={t('auto.number')}
+                        placeholder={t('property.create.numberPlaceholder')}
                       />
                     }
                   >
@@ -744,7 +755,7 @@ export const CreatePropertyModal: Component<CreatePropertyModalProps> = (
                           ''
                         )
                       }
-                      placeholder={t('auto.option_value')}
+                      placeholder={t('property.create.optionPlaceholder')}
                     />
                   </Show>
                 </div>
@@ -761,7 +772,9 @@ export const CreatePropertyModal: Component<CreatePropertyModalProps> = (
               class="rounded-lg"
               onClick={close}
               disabled={pending()}
-            >{t('common.cancel')}</Button>
+            >
+              {t('common.cancel')}
+            </Button>
             <Button
               variant={canSubmit() ? 'accent' : 'ghost'}
               depth={3}
@@ -776,10 +789,12 @@ export const CreatePropertyModal: Component<CreatePropertyModalProps> = (
                     <span class="size-3 animate-spin">
                       <LoadingSpinner />
                     </span>
-                    Creating
+                    {t('property.create.creating')}
                   </>
                 }
-              >{t('auto.create')}<Hotkey shortcut="cmd+enter" theme="current" />
+              >
+                {t('property.create.submit')}
+                <Hotkey shortcut="cmd+enter" theme="current" />
               </Show>
             </Button>
           </div>

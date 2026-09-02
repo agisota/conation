@@ -1,4 +1,3 @@
-import { $wrapNodeInElement, mergeRegister } from '@lexical/utils';
 import {
   $collapseInlineSearch,
   $createInlineSearchNode,
@@ -14,6 +13,7 @@ import {
   TagMentionNode,
   validTriggerPosition,
 } from '@conation/lexical-core';
+import { $wrapNodeInElement, mergeRegister } from '@lexical/utils';
 import {
   $createParagraphNode,
   $createTextNode,

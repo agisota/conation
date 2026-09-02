@@ -82,8 +82,8 @@ Summary: `Alex and Priya reviewed Q3 marketing spend and agreed to cut paid \
 search by 20% next quarter.` → `Q3 Marketing Spend Review`
 Summary: `Standup with the platform team. Blocked on the Postgres upgrade; \
 Sam will follow up with infra.` → `Platform Standup: Postgres Upgrade Blocker`
-Summary: `Intro call between Jordan (Macro) and Lee (Acme) about a possible \
-SSO integration.` → `Macro & Acme SSO Intro Call`
+Summary: `Intro call between Jordan (Conation) and Lee (Acme) about a possible \
+SSO integration.` → `Conation & Acme SSO Intro Call`
 Summary: `No speech detected in the transcript.` → `UNTITLED_CALL`";
 
 /// System prompt for assigning archived transcript rows to known Macro users.

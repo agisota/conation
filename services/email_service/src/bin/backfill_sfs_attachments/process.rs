@@ -10,25 +10,25 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 /// Process attachments for a single macro ID
-pub async fn process_conation_id(
+pub async fn process_macro_id(
     config: &config::Config,
     db_pool: &sqlx::PgPool,
     sfs_client: &static_file_service_client::StaticFileServiceClient,
     email_api_repository: &GmailApiClientRepository,
-    conation_id: &str,
+    macro_id: &str,
 ) -> anyhow::Result<(usize, usize)> {
     // Fetch all relevant attachment metadata from the database.
     println!(
         "Fetching unique attachment metadata from database for {}...",
-        conation_id
+        macro_id
     );
-    let attachments = database::fetch_sfs_attachments(db_pool, conation_id)
+    let attachments = database::fetch_sfs_attachments(db_pool, macro_id)
         .await
         .context("Failed to fetch attachment metadata")?;
     println!(
         "Found {} unique attachments to process for {}.",
         attachments.len(),
-        conation_id
+        macro_id
     );
 
     if attachments.is_empty() {
@@ -36,12 +36,12 @@ pub async fn process_conation_id(
     }
 
     // Get fresh Gmail access token for this macro ID
-    let gmail_access_token = auth::get_gmail_access_token(config, conation_id).await?;
-    println!("Successfully obtained Gmail access token for {}", conation_id);
+    let gmail_access_token = auth::get_gmail_access_token(config, macro_id).await?;
+    println!("Successfully obtained Gmail access token for {}", macro_id);
 
-    let link = email_db_client::links::get::fetch_link_by_conation_id(db_pool, conation_id)
+    let link = email_db_client::links::get::fetch_link_by_macro_id(db_pool, macro_id)
         .await?
-        .ok_or_else(|| anyhow::anyhow!("No link found for macro ID: {}", conation_id))?;
+        .ok_or_else(|| anyhow::anyhow!("No link found for macro ID: {}", macro_id))?;
 
     // Process and upload each attachment.
     let email_api = EmailApiClientServiceImpl::new(
@@ -58,62 +58,62 @@ pub async fn process_conation_id(
     let success_count = Arc::new(AtomicUsize::new(0));
     let total_attachments = attachments.len();
 
-    println!("Starting concurrent upload process for {}...", conation_id);
+    println!("Starting concurrent upload process for {}...", macro_id);
 
     stream::iter(attachments.into_iter().enumerate())
         .for_each_concurrent(config.upload_concurrency, |(index, attachment)| {
             let processor: Arc<AttachmentProcessor> = Arc::clone(&processor);
             let success_count = Arc::clone(&success_count);
-            let conation_id = conation_id.to_string();
+            let macro_id = macro_id.to_string();
             let link = link.clone();
 
             async move {
                 match processor.upload(&link, &attachment).await {
                     Ok(_) => {
                         success_count.fetch_add(1, Ordering::Relaxed);
-                        println!("Successfully uploaded '{}' (index: {}) for {}", attachment.filename.unwrap_or("N/A".to_string()), index, conation_id);
+                        println!("Successfully uploaded '{}' (index: {}) for {}", attachment.filename.unwrap_or("N/A".to_string()), index, macro_id);
                     }
                     Err(e) => {
                         let err_str = format!("{e:?}");
 
                         if err_str.contains("404") {
                             println!(
-                                "Attachment upload got 404; skipping and continuing. filename: {}, provider_attachment_id: {}, provider_message_id: {}, index: {}, conation_id: {}, error: {:?}",
+                                "Attachment upload got 404; skipping and continuing. filename: {}, provider_attachment_id: {}, provider_message_id: {}, index: {}, macro_id: {}, error: {:?}",
                                 attachment.filename.clone().unwrap_or("N/A".to_string()),
                                 attachment.provider_attachment_id,
                                 attachment.email_provider_id,
                                 index,
-                                conation_id,
+                                macro_id,
                                 e
                             );
                         } else if err_str.contains("500") {
                             println!(
-                                "Attachment upload got 500; skipping and continuing. filename: {}, provider_attachment_id: {}, provider_message_id: {}, index: {}, conation_id: {}, error: {:?}",
+                                "Attachment upload got 500; skipping and continuing. filename: {}, provider_attachment_id: {}, provider_message_id: {}, index: {}, macro_id: {}, error: {:?}",
                                 attachment.filename.clone().unwrap_or("N/A".to_string()),
                                 attachment.provider_attachment_id,
                                 attachment.email_provider_id,
                                 index,
-                                conation_id,
+                                macro_id,
                                 e
                             );
                         } else if err_str.contains("400") {
                             println!(
-                                "Attachment upload got 400; skipping and continuing. filename: {}, provider_attachment_id: {}, provider_message_id: {}, index: {}, conation_id: {}, error: {:?}",
+                                "Attachment upload got 400; skipping and continuing. filename: {}, provider_attachment_id: {}, provider_message_id: {}, index: {}, macro_id: {}, error: {:?}",
                                 attachment.filename.clone().unwrap_or("N/A".to_string()),
                                 attachment.provider_attachment_id,
                                 attachment.email_provider_id,
                                 index,
-                                conation_id,
+                                macro_id,
                                 e
                             );
                         } else {
                             panic!(
-                                "Failed to upload attachment - filename: {}, provider_attachment_id: {}, provider_message_id: {}, index: {}, conation_id: {}, error: {:?}",
+                                "Failed to upload attachment - filename: {}, provider_attachment_id: {}, provider_message_id: {}, index: {}, macro_id: {}, error: {:?}",
                                 attachment.filename.unwrap_or("N/A".to_string()),
                                 attachment.provider_attachment_id,
                                 attachment.email_provider_id,
                                 index,
-                                conation_id,
+                                macro_id,
                                 e
                             );
                         }

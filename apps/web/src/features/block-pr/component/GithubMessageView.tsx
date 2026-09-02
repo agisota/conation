@@ -1,8 +1,9 @@
+import { ConationMark } from '@app/components/brand';
+import { t } from '@app/lib/i18n';
 import { Message } from '@channel/Message/Message';
 import type { MessageData } from '@channel/Message/types';
 import { Thread } from '@channel/Thread/Thread';
 import { ThreadReplyRail } from '@channel/Thread/ThreadReplyRail';
-import MacroLogo from '@icon/macro-logo.svg';
 import type { GithubPullRequestComment } from '@service-storage/generated/schemas';
 import type { ApiChannelMessage } from '@service-storage/generated/schemas/apiChannelMessage';
 import { Key } from '@solid-primitives/keyed';
@@ -18,7 +19,7 @@ const PREVIEW_MAX_HEIGHT = 180;
 function GithubAvatarFallback() {
   return (
     <div class="size-full rounded-full bg-surface flex items-center justify-center">
-      <MacroLogo class="size-6 text-edge" />
+      <ConationMark class="size-6" />
     </div>
   );
 }
@@ -44,9 +45,9 @@ function GithubAvatar(props: { login: string }) {
 function sourceLabel(source: string): string | null {
   switch (source) {
     case 'review':
-      return 'review';
+      return t('pullRequest.comment.review');
     case 'review_comment':
-      return 'on diff';
+      return t('pullRequest.comment.onDiff');
     default:
       return null;
   }
@@ -203,7 +204,9 @@ function GithubCommentMessage(props: {
               class="mt-2"
               onClick={() => setExpanded(!expanded())}
             >
-              {expanded() ? 'Show less' : 'Show more'}
+              {expanded()
+                ? t('pullRequest.comment.showLess')
+                : t('pullRequest.comment.showMore')}
             </Button>
           </Show>
         </Message.Slot>

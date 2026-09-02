@@ -14,16 +14,16 @@ use axum::{
     http::request::Parts,
     response::{IntoResponse, Response},
 };
-use entity_access::domain::models::{
-    AccessLevel, EditAccessLevel, Entity, EntityAccessAuth, EntityAccessReceipt, EntityPermission,
-    EntityType as AccessEntityType, RequiredPermission, ViewAccessLevel,
-};
-use entity_access::domain::ports::EntityAccessService;
 use conation_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationRejection, MacroAuthorizationService,
     OptionalMacroAuthorizationExtractor, UserOrInternal, UserOrInternalService,
 };
 use conation_user_id::user_id::MacroUserIdStr;
+use entity_access::domain::models::{
+    AccessLevel, EditAccessLevel, Entity, EntityAccessAuth, EntityAccessReceipt, EntityPermission,
+    EntityType as AccessEntityType, RequiredPermission, ViewAccessLevel,
+};
+use entity_access::domain::ports::EntityAccessService;
 use models_properties::api::PropertyTargetEntityType;
 
 use super::{PropertiesRouterState, properties_err_status};
@@ -188,7 +188,7 @@ where
             .authorization
             .as_ref()
             .and_then(|authorization| authorization.acting_user())
-            .map(|user| user.conation_user_id.clone());
+            .map(|user| user.macro_user_id.clone());
 
         let receipt = mint_view_receipt(
             state.entity_access_service.as_ref(),
@@ -226,7 +226,7 @@ where
             .await
             .map_err(ReceiptRejection::from)?;
 
-        let user = authorization.authorization.user.conation_user_id;
+        let user = authorization.authorization.user.macro_user_id;
         let receipt = mint_authenticated_receipt::<EditAccessLevel, A>(
             state.entity_access_service.as_ref(),
             &user,

@@ -18,7 +18,7 @@ use model::response::{GenericErrorResponse, GenericResponse, GenericSuccessRespo
             (status = 500, body=GenericErrorResponse),
         )
     )]
-#[tracing::instrument(skip(user), fields(user_id=?user.authorization.user.conation_user_id))]
+#[tracing::instrument(skip(user), fields(user_id=?user.authorization.user.macro_user_id))]
 pub async fn populate_items_handler(
     user: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
 ) -> impl IntoResponse {

@@ -4,6 +4,7 @@
  * is computed in the viewer's local timezone.
  */
 
+import { formatDateTime, t } from '@app/lib/i18n';
 import type { CalendarOccurrenceItem } from '@service-storage/generated/schemas/calendarOccurrenceItem';
 import type { CalendarTimeFormat } from '../types';
 import { formatCalendarTime } from '../utils/time-format';
@@ -18,12 +19,12 @@ export type AvailabilityRangeKey =
 
 export const AVAILABILITY_RANGE_OPTIONS: Array<{
   key: AvailabilityRangeKey;
-  label: string;
+  labelKey: string;
 }> = [
-  { key: 'today', label: 'Today' },
-  { key: 'thisWeek', label: 'This week' },
-  { key: 'next7Days', label: 'Next 7 days' },
-  { key: 'next14Days', label: 'Next 14 days' },
+  { key: 'today', labelKey: 'calendar.availability.range.today' },
+  { key: 'thisWeek', labelKey: 'calendar.availability.range.thisWeek' },
+  { key: 'next7Days', labelKey: 'calendar.availability.range.next7Days' },
+  { key: 'next14Days', labelKey: 'calendar.availability.range.next14Days' },
 ];
 
 /** Personal copy-availability preferences. Times are local 'HH:MM'. */
@@ -247,12 +248,6 @@ export function computeAvailability(options: {
   return days;
 }
 
-const dayLabelFormatter = new Intl.DateTimeFormat(undefined, {
-  weekday: 'short',
-  month: 'short',
-  day: 'numeric',
-});
-
 /**
  * Formats availability as plain text ready for an email:
  *
@@ -278,8 +273,8 @@ export function formatAvailabilityText(
     boundaries.length > 0 ? boundaries : [now]
   );
   const header = timeZone
-    ? `My availability (${timeZone}):`
-    : 'My availability:';
+    ? t('calendar.availability.shareHeaderWithTimeZone', { timeZone })
+    : t('calendar.availability.shareHeader');
   const lines = days.map((day) => {
     const slots = day.slots
       .map(
@@ -287,7 +282,11 @@ export function formatAvailabilityText(
           `${formatCalendarTime(slot.start, timeFormat)} – ${formatCalendarTime(slot.end, timeFormat)}`
       )
       .join(', ');
-    return `${dayLabelFormatter.format(day.date)}: ${slots}`;
+    return `${formatDateTime(day.date, {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    })}: ${slots}`;
   });
   return [header, ...lines].join('\n');
 }

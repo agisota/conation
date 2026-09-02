@@ -3,10 +3,10 @@
   "info": {
     "title": "Document Cognition Service",
     "description": "",
-    "termsOfService": "https://macro.com/terms",
+    "termsOfService": "https://conation.dev/terms",
     "license": {
-      "name": "Proprietary",
-      "identifier": "Proprietary"
+      "name": "GNU Affero General Public License v3.0",
+      "identifier": "AGPL-3.0-only"
     },
     "version": "1.0.0"
   },
@@ -139,16 +139,6 @@
             }
           },
           "400": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
             "description": "",
             "content": {
               "application/json": {
@@ -1417,11 +1407,11 @@
     "/mcp/servers/auth/client-metadata": {
       "get": {
         "tags": ["mcp"],
-        "summary": "Return Macro's public OAuth Client ID Metadata Document.",
+        "summary": "Return Conation's public OAuth Client ID Metadata Document.",
         "operationId": "mcp_oauth_client_metadata",
         "responses": {
           "200": {
-            "description": "Macro OAuth client metadata document"
+            "description": "Conation OAuth client metadata document"
           }
         }
       }
@@ -1991,9 +1981,6 @@
           "401": {
             "description": "Unauthorized"
           },
-          "402": {
-            "description": "Payment required — user lacks access to the requested model"
-          },
           "403": {
             "description": "Forbidden"
           }
@@ -2077,9 +2064,6 @@
           },
           "401": {
             "description": "Unauthorized"
-          },
-          "402": {
-            "description": "Payment required"
           },
           "500": {
             "description": "Internal error",

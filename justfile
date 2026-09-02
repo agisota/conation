@@ -2,11 +2,15 @@ set positional-arguments
 
 # Freeze Docker Compose resources across checkouts/worktrees. Local setup is
 # single-instance by design; do not derive resource names from the directory.
+# A clean local installation is the Conation profile. Legacy Macro resources
+# are deliberately neither adopted nor removed by these recipes.
 export COMPOSE_PROJECT_NAME := "conation"
 
 compose := "docker compose --project-directory . -f docker/docker-compose.yml"
-database_compose := "docker compose -f docker/docker-compose-databases.yml"
-selfhost_compose := "docker compose -f docker/docker-compose.yml -f docker/docker-compose.selfhost.yml"
+# Load database services through the base Compose include so relative build
+# contexts have one canonical resolution root.
+database_compose := "docker compose --project-directory . -f docker/docker-compose.yml"
+selfhost_compose := "docker compose --project-directory . -f docker/docker-compose.yml -f docker/docker-compose.selfhost.yml"
 
 # Creates global networks that are shared across docker-compose files
 create_networks:
@@ -16,8 +20,8 @@ create_networks:
   docker volume create conation_redis_data 2>/dev/null || true
   docker volume create conation_opensearch_data 2>/dev/null || true
   docker volume create conation_kafka_data 2>/dev/null || true
-  docker volume create fusionauth_db_data 2>/dev/null || true
-  docker volume create fusionauth_config 2>/dev/null || true
+  docker volume create conation_fusionauth_db_data 2>/dev/null || true
+  docker volume create conation_fusionauth_config 2>/dev/null || true
   docker volume create conation_minio_data 2>/dev/null || true
   docker volume create conation_stalwart_data 2>/dev/null || true
   docker volume create conation_caddy_data 2>/dev/null || true
@@ -69,7 +73,7 @@ test-email-rendering-update:
 # Add --force to drop and re-migrate the local database first (pristine world).
 # `just seed-scenario status` reports what's applied and re-prints login links.
 # Pass `--instance <name>` before the scenario subcommand to target a named
-# `run_local` stack. Omitting it targets the default `macro` instance.
+# `run_local` stack. Omitting it targets the default `conation` instance.
 [positional-arguments]
 seed-scenario *ARGS:
   @{{ xtask }} seed-scenario "$@"
@@ -87,47 +91,13 @@ check-node-modules-nix:
   nix build .#js-node-modules --no-link
   nix build .#js-node-modules --no-link --rebuild
 
-# Patches .env with local FusionAuth values if the Pulumi stack exists.
-# Requires FusionAuth to be running — starts it temporarily if needed.
-patch_local_fusionauth_env:
-  #!/usr/bin/env bash
-  set -euo pipefail
-  if [ ! -f .env ]; then
-    echo "Error: .env not found. Run 'just get_environment' first."
-    exit 1
-  fi
-  if ! pulumi stack output macroApplicationClientId -s local -C infra/stacks/fusionauth-instance &>/dev/null; then
-    echo "Warning: Pulumi local stack not found — skipping FusionAuth env patching."
-    echo "         Run 'just setup' if this is a fresh checkout."
-    exit 0
-  fi
-  if [ ! -f infra/stacks/fusionauth-instance/.env ]; then
-    echo "FusionAuth docker env not found; downloading it..."
-    just infra/stacks/fusionauth-instance/get_fusionauth_env
-  fi
-  # FusionAuth must be running to read the client secret
-  NEEDS_STOP=false
-  cleanup() {
-    if [ "$NEEDS_STOP" = true ]; then
-      echo "Stopping temporary FusionAuth..."
-      {{ compose }} stop fusionauth
-    fi
-  }
-  trap cleanup EXIT
-
-  if ! curl -s http://localhost:9011/api/status 2>/dev/null | grep -q '"Ok"'; then
-    echo "Starting FusionAuth temporarily to read config..."
-    NEEDS_STOP=true
-    {{ compose }} up fusionauth -d --wait
-  fi
-  just infra/stacks/fusionauth-instance/insert_local_fusionauth_variables
-
-# Stop all local services (default project; legacy alias).
+# Stop all services in the default Conation Compose profile. The supported
+# full-stack lifecycle is `just stack up` / `just stack down`.
 stop-local:
   {{ compose }} down
 
 stop-databases:
-  {{ database_compose }} down
+  {{ database_compose }} stop postgres redis search kafka
 
 # Import LocalStack recipes
 import 'tooling/just/local_stack.just'
@@ -143,17 +113,18 @@ setup_local_dbs:
   just crates/conation_db_client/create_db
   just crates/conation_db_client/migrate_db
   @echo "Local databases initialized"
-  {{ database_compose }} stop
+  {{ database_compose }} stop postgres redis
 
-# Setup FusionAuth: start containers, wait for healthy, run Pulumi config
-# stop container
+# Provision the local Conation FusionAuth profile through the generated
+# standalone kickstart. This performs no Pulumi bootstrap or remote import.
 setup_fusionauth:
-  just create_networks
-  just infra/stacks/fusionauth-instance/setup
+  just stack up --no-doppler --infra-only
 
-# Stop FusionAuth containers
+# The generated stack owns FusionAuth together with its dependent local
+# services. A partial stop would leave an inconsistent profile.
 stop_fusionauth:
-  docker compose -f infra/stacks/fusionauth-instance/docker-compose.yml down
+  @echo "FusionAuth is managed by the Conation local stack; use 'just stack down'."
+  @exit 2
 
 # Clear all BuildKit build cache (full cold rebuild next time)
 docker_cache_clear:
@@ -169,14 +140,8 @@ docker_cache_usage:
   docker builder du --verbose
 
 setup:
-  just get_environment
-  just create_networks
-  just setup_localstack
-  just setup_local_dbs
-  just infra/stacks/fusionauth-instance/setup
-  just build_dev_service_images
-  @echo "Setup complete."
+  just stack up --no-doppler
+  @echo "Conation local setup complete."
 
 destroy:
-  just infra/stacks/fusionauth-instance/destroy
-  {{ compose }} down -v
+  just stack down

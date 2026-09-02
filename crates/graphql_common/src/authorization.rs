@@ -46,6 +46,6 @@ where
         .authorization
         .as_ref()
         .and_then(UserOrInternalServiceAuthorization::acting_user)
-        .map(|user| user.conation_user_id.clone())
+        .map(|user| user.macro_user_id.clone())
         .ok_or_else(|| async_graphql::Error::new("authentication required"))
 }

@@ -37,8 +37,8 @@ interface EmailFixture {
   container_widths?: number[];
 }
 
-/** Themes to test - uses actual Macro theme definitions */
-const THEMES = ['Macro Dark', 'Macro Light'] as const;
+/** Themes to test - uses actual Conation theme definitions */
+const THEMES = ['Conation Dark', 'Conation Light'] as const;
 
 const DEFAULT_CONTAINER_WIDTH = 600;
 

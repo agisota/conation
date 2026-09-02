@@ -1,5 +1,5 @@
-import { FileSidePanelSections, SidePanel } from '@components/app/side-panel';
 import { t } from '@app/lib/i18n';
+import { FileSidePanelSections, SidePanel } from '@components/app/side-panel';
 import { DocumentBlockContainer } from '@core/component/DocumentBlockContainer';
 import { toast } from '@core/component/Toast/Toast';
 import { useShareDialogContext } from '@core/component/TopBar/ShareButton';
@@ -50,7 +50,7 @@ const Unknown = () => {
       downloadFile(blob, downloadName());
     } catch (e) {
       console.error('error downloading file', e);
-      toast.failure('Error downloading file');
+      toast.failure(t('file.download.failed'));
     }
   });
 
@@ -58,16 +58,19 @@ const Unknown = () => {
     <div class="h-full flex flex-col justify-center items-center">
       <div class="w-fit mx-4 p-4 flex flex-col justify-center items-center gap-4">
         <div class="text-lg text-center">
-          No preview available for{' '}
-          <span class="text-ink-muted">{fileName()}</span>
+          {t('file.preview.unavailable', { fileName: fileName() })}
         </div>
 
         <div class="flex flex-row gap-2 items-center">
           <Button variant="accent" onClick={shareCtx.open}>
-            <ShareFat class="size-4" />{t('auto.share')}</Button>
+            <ShareFat class="size-4" />
+            {t('block.actions.share')}
+          </Button>
 
           <Button variant="accent" onClick={downloadDocument}>
-            <DownloadSimple class="size-4" />{t('auto.download')}</Button>
+            <DownloadSimple class="size-4" />
+            {t('block.actions.download')}
+          </Button>
         </div>
       </div>
     </div>

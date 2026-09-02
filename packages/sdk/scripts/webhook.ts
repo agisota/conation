@@ -70,19 +70,19 @@ async function register(): Promise<void> {
   console.log(`
 Webhook registered.
 
-MACRO_WEBHOOK_ID=${webhook.id}
-MACRO_WEBHOOK_SECRET="${secret}"
+CONATION_WEBHOOK_ID=${webhook.id}
+CONATION_WEBHOOK_SECRET="${secret}"
 
 Start the event printer and validation receiver:
-MACRO_WEBHOOK_SECRET="${secret}" bun run webhook receive ${webhook.id} --env ${env}${userId ? ` --user-id "${userId}"` : ''}
+CONATION_WEBHOOK_SECRET="${secret}" bun run webhook receive ${webhook.id} --env ${env}${userId ? ` --user-id "${userId}"` : ''}
 `);
 }
 
 async function receive(id: string): Promise<void> {
   const env = parseEnv(values.env) ?? fail('--env is required');
   const secret =
-    process.env.MACRO_WEBHOOK_SECRET ??
-    fail('MACRO_WEBHOOK_SECRET is required');
+    process.env.CONATION_WEBHOOK_SECRET ??
+    fail('CONATION_WEBHOOK_SECRET is required');
   const port = Number(
     values.port ?? resolveLocalPortmap()?.sdkWebhookHostReceiverPort ?? 8787,
   );
@@ -128,14 +128,14 @@ Register a webhook or receive and print its events.
 
   webhook register --env <dev|prod|local> --url <endpoint URL>
                    --name <webhook name> --events <event,event>
-                   --scope <user|team> [--user-id <macro-user-id>]
+                   --scope <user|team> [--user-id <conation-user-id>]
                    [--namespace <workspace-unique namespace, random by default>]
 
   webhook receive <webhook-id> --env <dev|prod|local>
-                   [--port <port>] [--user-id <macro-user-id>]
+                   [--port <port>] [--user-id <conation-user-id>]
 
 For just run_local, use ${localEndpoint} for --url. Run receive on the host
-with MACRO_WEBHOOK_SECRET set to the value printed by register.
+with CONATION_WEBHOOK_SECRET set to the value printed by register.
 `);
 }
 
@@ -147,7 +147,7 @@ function required(value: string | undefined, option: string): string {
 function parseEnv(value: string | undefined): Env | undefined {
   if (value === undefined) return undefined;
   if (value === 'dev' || value === 'prod' || value === 'local') return value;
-  fail('Macro environment must be dev, prod, or local');
+  fail('Conation environment must be dev, prod, or local');
 }
 
 function parseEvents(value: string): EventName[] {

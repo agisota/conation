@@ -4,18 +4,18 @@ mod health;
 use std::sync::Arc;
 
 use anyhow::Context;
-use config::{Config, Environment};
-use contacts::domain::service::{ContactsDomainService, ContactsOutboxServiceImpl};
-use contacts::inbound::http::{ApiDoc, ContactsRouterState, contacts_router};
-use contacts::inbound::worker::{ContactsWorker, OutboxWorker};
-use contacts::outbound::gateway::ConnectionGatewayNotifier;
-use contacts::outbound::repository::DbContactsRepository;
 use conation_authorization::{
     InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationServiceImpl,
     MacroAuthorizationState,
 };
 use conation_entrypoint::MacroEntrypoint;
 use conation_service_urls::ConnectionGatewayUrl;
+use config::{Config, Environment};
+use contacts::domain::service::{ContactsDomainService, ContactsOutboxServiceImpl};
+use contacts::inbound::http::{ApiDoc, ContactsRouterState, contacts_router};
+use contacts::inbound::worker::{ContactsWorker, OutboxWorker};
+use contacts::outbound::gateway::ConnectionGatewayNotifier;
+use contacts::outbound::repository::DbContactsRepository;
 use rate_limit::{RateLimitServiceImpl, RedisRateLimitAdapter};
 use sqlx::postgres::PgPoolOptions;
 use sqs_worker::SQSWorker;
@@ -104,11 +104,12 @@ async fn main() -> anyhow::Result<()> {
         outbox_worker.run().await;
     });
 
-    let jwt_args = conation_auth::middleware::decode_jwt::JwtValidationArgs::new_with_secret_manager(
-        config.environment,
-        &secretsmanager_client,
-    )
-    .await?;
+    let jwt_args =
+        conation_auth::middleware::decode_jwt::JwtValidationArgs::new_with_secret_manager(
+            config.environment,
+            &secretsmanager_client,
+        )
+        .await?;
     let authorization_service = MacroAuthorizationServiceImpl::new(
         MacroAuthJwtValidator::new(jwt_args),
         InternalAuthConfig {

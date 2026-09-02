@@ -1,5 +1,5 @@
-import { toast } from '@core/component/Toast/Toast';
 import { t } from '@app/lib/i18n';
+import { toast } from '@core/component/Toast/Toast';
 import { DropdownMenu as KobalteDropdownMenu } from '@kobalte/core/dropdown-menu';
 import CheckIcon from '@phosphor/check.svg';
 import ClipboardIcon from '@phosphor/clipboard.svg';
@@ -54,10 +54,12 @@ import {
 /** Copies a theme's JSON to the clipboard (for sharing / importing elsewhere). */
 function CopyThemeButton(props: { themeId: string; name: string }) {
   return (
-    <Tooltip as="span" label="Copy theme">
+    <Tooltip as="span" label={t('settings.appearance.theme.copy')}>
       <button
         type="button"
-        aria-label={`Copy ${props.name}`}
+        aria-label={t('settings.appearance.theme.copyNamed', {
+          name: props.name,
+        })}
         class="rounded p-0.5 hover:text-ink touch:p-1.5"
         onPointerDown={(e) => e.stopPropagation()}
         onPointerUp={(e) => e.stopPropagation()}
@@ -65,7 +67,7 @@ function CopyThemeButton(props: { themeId: string; name: string }) {
           e.preventDefault();
           e.stopPropagation();
           exportTheme(props.themeId);
-          toast.success('Theme copied to clipboard');
+          toast.success(t('settings.appearance.theme.toast.copied'));
         }}
       >
         <ClipboardIcon class="size-3.5 mobile:size-5" />
@@ -77,10 +79,12 @@ function CopyThemeButton(props: { themeId: string; name: string }) {
 /** Edits a theme in the inline editor (custom → in place, default → forked). */
 function EditThemeButton(props: { name: string; onEdit: () => void }) {
   return (
-    <Tooltip as="span" label="Edit theme">
+    <Tooltip as="span" label={t('settings.appearance.theme.edit')}>
       <button
         type="button"
-        aria-label={`Edit ${props.name}`}
+        aria-label={t('settings.appearance.theme.editNamed', {
+          name: props.name,
+        })}
         class="rounded p-0.5 hover:text-ink touch:p-1.5"
         onClick={(e) => {
           e.preventDefault();
@@ -134,7 +138,9 @@ function createThemeEditorController(onSelect: (id: string) => void) {
     undefined
   );
   // The editable name of the theme being edited.
-  const [themeName, setThemeName] = createSignal('New Theme');
+  const [themeName, setThemeName] = createSignal(
+    t('settings.appearance.theme.newName')
+  );
 
   const closeEditor = () => {
     setEditorOpen(false);
@@ -164,7 +170,7 @@ function createThemeEditorController(onSelect: (id: string) => void) {
     clearThemePreview();
     setEditingThemeId(undefined);
     setIsThemeSaved(false);
-    setThemeName('New Theme');
+    setThemeName(t('settings.appearance.theme.newName'));
     setEditorOpen(true);
   };
 
@@ -178,11 +184,15 @@ function createThemeEditorController(onSelect: (id: string) => void) {
     const isCustom = userThemes().some((t) => t.id === id);
     if (isCustom) {
       setEditingThemeId(id);
-      setThemeName(source?.name ?? 'Theme');
+      setThemeName(source?.name ?? t('settings.appearance.theme.fallbackName'));
     } else {
       setEditingThemeId(undefined);
       setIsThemeSaved(false);
-      setThemeName(`${source?.name ?? 'Theme'} copy`);
+      setThemeName(
+        t('settings.appearance.theme.copyName', {
+          name: source?.name ?? t('settings.appearance.theme.fallbackName'),
+        })
+      );
     }
     setEditorOpen(true);
   };
@@ -190,7 +200,7 @@ function createThemeEditorController(onSelect: (id: string) => void) {
   // Save the live theme: update the bound custom theme in place, or create a new
   // one, point the target at it, and keep editing it.
   const saveCurrentTheme = () => {
-    const name = themeName().trim() || 'New Theme';
+    const name = themeName().trim() || t('settings.appearance.theme.newName');
     const editing = editingThemeId();
     if (editing) {
       updateTheme(editing, name);
@@ -200,7 +210,7 @@ function createThemeEditorController(onSelect: (id: string) => void) {
       setEditingThemeId(newId);
       onSelect(newId);
     }
-    toast.success('Theme saved');
+    toast.success(t('settings.appearance.theme.toast.saved'));
   };
 
   const deleteThemeById = (theme: ThemeV3) => {
@@ -314,7 +324,9 @@ function InterfaceThemeSelect(props: {
         <Show when={editable}>
           <button
             type="button"
-            aria-label={`Edit ${theme.name}`}
+            aria-label={t('settings.appearance.theme.editNamed', {
+              name: theme.name,
+            })}
             class="rounded p-0.5 hover:text-ink"
             onPointerDown={(e) => e.stopPropagation()}
             onPointerUp={(e) => e.stopPropagation()}
@@ -329,7 +341,9 @@ function InterfaceThemeSelect(props: {
           </button>
           <button
             type="button"
-            aria-label={`Delete ${theme.name}`}
+            aria-label={t('settings.appearance.theme.deleteNamed', {
+              name: theme.name,
+            })}
             class="rounded p-0.5 hover:text-failure"
             onPointerDown={(e) => e.stopPropagation()}
             onPointerUp={(e) => e.stopPropagation()}
@@ -366,7 +380,7 @@ function InterfaceThemeSelect(props: {
           // deleted), fall back to the live tokens so the swatch still reflects
           // the current colors and the label reads "Unsaved Theme".
           theme={current() ?? getLiveTheme()}
-          name={current()?.name ?? 'Unsaved Theme'}
+          name={current()?.name ?? t('settings.appearance.theme.unsavedName')}
         />
         <Dropdown.Content
           // Render as a plain div (not Surface) so the edge is a faint ink
@@ -407,7 +421,7 @@ function InterfaceThemeSelect(props: {
                   const item = e.key === 'ArrowDown' ? items[0] : items.at(-1);
                   item?.focus();
                 }}
-                placeholder="Filter themes…"
+                placeholder={t('settings.appearance.theme.filterPlaceholder')}
                 spellcheck={false}
                 class="h-8 w-full rounded-md border border-edge-muted bg-transparent px-2.5 text-sm text-ink outline-none placeholder:text-ink-placeholder focus:border-accent"
               />
@@ -416,13 +430,17 @@ function InterfaceThemeSelect(props: {
             <div class="max-h-64 overflow-y-auto bg-surface">
               <Show when={defaults().length > 0}>
                 <Dropdown.Group>
-                  <Dropdown.GroupLabel>{t('auto.default')}</Dropdown.GroupLabel>
+                  <Dropdown.GroupLabel>
+                    {t('settings.appearance.theme.groups.default')}
+                  </Dropdown.GroupLabel>
                   <For each={defaults()}>{(theme) => themeItem(theme)}</For>
                 </Dropdown.Group>
               </Show>
               <Show when={customs().length > 0}>
                 <Dropdown.Group>
-                  <Dropdown.GroupLabel>{t('auto.custom')}</Dropdown.GroupLabel>
+                  <Dropdown.GroupLabel>
+                    {t('settings.appearance.theme.groups.custom')}
+                  </Dropdown.GroupLabel>
                   <For each={customs()}>
                     {(theme) => themeItem(theme, true)}
                   </For>
@@ -430,7 +448,9 @@ function InterfaceThemeSelect(props: {
               </Show>
               <Show when={defaults().length === 0 && customs().length === 0}>
                 <div class="px-3 py-4 text-center text-xs text-ink-muted">
-                  No themes match “{filter()}”
+                  {t('settings.appearance.theme.noMatches', {
+                    query: filter(),
+                  })}
                 </div>
               </Show>
             </div>
@@ -442,7 +462,9 @@ function InterfaceThemeSelect(props: {
                 onFocus={clearThemePreview}
               >
                 <span class="flex items-center gap-2 text-ink-muted">
-                  <PlusIcon class="size-4" />{t('auto.new_theme')}</span>
+                  <PlusIcon class="size-4" />
+                  {t('settings.appearance.theme.newAction')}
+                </span>
               </Dropdown.Item>
             </Dropdown.Group>
           </Layer>
@@ -451,7 +473,7 @@ function InterfaceThemeSelect(props: {
       <Show when={current()}>
         <ThemePillActions
           themeId={props.value()}
-          name={current()?.name ?? 'Theme'}
+          name={current()?.name ?? t('settings.appearance.theme.fallbackName')}
           onEdit={() =>
             props.editorOpen?.()
               ? props.onCloseEditor?.()
@@ -528,7 +550,9 @@ function ActiveThemeSelect(props: {
         maxLabelWidth="max-w-none"
         theme={activeTheme()}
         name={
-          themeMode() === 'system' ? 'System preference' : activeTheme().name
+          themeMode() === 'system'
+            ? t('settings.appearance.systemPreference')
+            : activeTheme().name
         }
       />
       <Dropdown.Content
@@ -548,9 +572,13 @@ function ActiveThemeSelect(props: {
                 <span class="flex min-w-0 flex-1 items-center gap-2">
                   <ThemeChips theme={systemTheme()} size="sm" />
                   <span class="flex min-w-0 flex-col">
-                    <span class="truncate">{t('auto.system_preference')}</span>
+                    <span class="truncate">
+                      {t('settings.appearance.systemPreference')}
+                    </span>
                     <span class="text-xs text-ink-extra-muted">
-                      Currently {systemMode() === 'dark' ? 'Dark' : 'Light'}
+                      {t('settings.appearance.systemCurrent', {
+                        mode: systemMode(),
+                      })}
                     </span>
                   </span>
                 </span>
@@ -603,13 +631,13 @@ function ActiveThemeRow() {
 
   const activeName = () =>
     themes().find((theme) => theme.id === resolveActiveThemeId())?.name ??
-    'Unsaved Theme';
+    t('settings.appearance.theme.unsavedName');
 
   return (
     <>
       <SettingsRow
-        label="Active theme"
-        description="Match your system, or always use light or dark."
+        label={t('settings.appearance.activeTheme.label')}
+        description={t('settings.appearance.activeTheme.description')}
         stackOnNarrow
       >
         <div class="flex items-center gap-1">
@@ -649,8 +677,8 @@ export function Appearance() {
   return (
     // Soften any stray `b4` edge in the theme editor to the muted `b3` tone.
     <div class="h-full" style={{ '--b4l': 'var(--b3l)' }}>
-      <SettingsPage title={t('auto.appearance')}>
-        <SettingsSection title={t('auto.color_theme')}>
+      <SettingsPage title={t('settings.appearance.title')}>
+        <SettingsSection title={t('settings.appearance.colorTheme.title')}>
           {/* Establish a container so the rows can stack (label/description over
               the picker) when the panel is narrower than 460px. */}
           <SettingsCard class="@container">
@@ -662,15 +690,15 @@ export function Appearance() {
                 isn't System preference), since it fully determines the look. */}
             <Show when={themeMode() === 'system'}>
               <ThemeSelectorRow
-                label="Light theme"
-                description="Used when your system is set to light."
+                label={t('settings.appearance.lightTheme.label')}
+                description={t('settings.appearance.lightTheme.description')}
                 value={lightModeTheme}
                 onSelect={setLightModeTheme}
                 filter={(theme) => theme.mode === 'light'}
               />
               <ThemeSelectorRow
-                label="Dark theme"
-                description="Used when your system is set to dark."
+                label={t('settings.appearance.darkTheme.label')}
+                description={t('settings.appearance.darkTheme.description')}
                 value={darkModeTheme}
                 onSelect={setDarkModeTheme}
                 filter={(theme) => theme.mode === 'dark'}
@@ -679,11 +707,13 @@ export function Appearance() {
           </SettingsCard>
         </SettingsSection>
 
-        <SettingsSection title={t('auto.interface')}>
+        <SettingsSection title={t('settings.appearance.interface.title')}>
           <SettingsCard>
             <SettingsRow
-              label="Monochrome icons"
-              description="Use single-color icons across the app."
+              label={t('settings.appearance.interface.monochrome.label')}
+              description={t(
+                'settings.appearance.interface.monochrome.description'
+              )}
             >
               <ToggleSwitch
                 size="md"
@@ -692,8 +722,10 @@ export function Appearance() {
               />
             </SettingsRow>
             <SettingsRow
-              label="Show tooltips"
-              description="Show hover hints on buttons and controls."
+              label={t('settings.appearance.interface.tooltips.label')}
+              description={t(
+                'settings.appearance.interface.tooltips.description'
+              )}
             >
               <ToggleSwitch
                 size="md"

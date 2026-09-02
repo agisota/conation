@@ -2555,7 +2555,7 @@ export type ChatFilters = {
      */
     notification_filters?: NotificationFilters;
     /**
-     * Filter by chat owner. Examples: ['macro|user1@user.com'], ['macro|user1@user.com', 'macro|user2@user.com']. Empty to search all owners.
+     * Filter by chat owner. Examples: ['conation|user1@user.com'], ['conation|user1@user.com', 'conation|user2@user.com']. Empty to search all owners.
      */
     owners?: Array<string>;
     /**
@@ -3638,7 +3638,7 @@ export type CrmThread = {
  *
  * `custom_speaker = None` clears any existing override for this
  * `diarized_speaker_id`; `Some(macro_user_id)` sets it. The string is
- * expected to parse as a `MacroUserId` (e.g. `macro|alice@example.com`);
+ * expected to parse as a `MacroUserId` (e.g. `conation|alice@example.com`);
  * the service layer rejects malformed values with `400 Bad Request`.
  */
 export type CustomSpeakerAssignment = {
@@ -3898,7 +3898,7 @@ export type DocumentFilters = {
      */
     notification_filters?: NotificationFilters;
     /**
-     * Filter by document owner. Examples: ['macro|user1@user.com'], ['macro|user1@user.com', 'macro|user2@user.com']. Empty to search all owners.
+     * Filter by document owner. Examples: ['conation|user1@user.com'], ['conation|user1@user.com', 'conation|user2@user.com']. Empty to search all owners.
      */
     owners?: Array<string>;
     /**
@@ -6280,7 +6280,7 @@ export type ProjectFilters = {
      */
     notification_filters?: NotificationFilters;
     /**
-     * Filter by project owner. Examples: ['macro|user1@user.com'], ['macro|user1@user.com', 'macro|user2@user.com']. Empty to search all owners.
+     * Filter by project owner. Examples: ['conation|user1@user.com'], ['conation|user1@user.com', 'conation|user2@user.com']. Empty to search all owners.
      */
     owners?: Array<string>;
     /**
@@ -8002,7 +8002,7 @@ export type SoupThreadReply = {
  */
 export type StarterDocumentsResponse = {
     /**
-     * Id of the user's "Macro how to guide".
+     * Id of the user's Conation how-to guide.
      */
     how_to_guide_id: string;
 };
@@ -10156,15 +10156,29 @@ export type PostChannelBotWebhookData = {
     body: ChannelWebhookRequest;
     headers?: {
         /**
-         * Preferred bot authentication token
+         * Bot authentication token
          */
-        'x-macro-bot-token'?: string | null;
+        'x-conation-bot-token'?: string | null;
         /**
-         * Legacy channel-scoped bot authentication token
-         *
-         * @deprecated
+         * Required with x-conation-bot-token: user or team
          */
-        'x-macro-channel-bot-token'?: string | null;
+        'x-conation-bot-scope'?: string | null;
+        /**
+         * Optional Conation user ID the bot claims to act for
+         */
+        'x-conation-bot-for-conation-user-id'?: string | null;
+        /**
+         * Optional FusionAuth user ID the bot claims to act for
+         */
+        'x-conation-bot-for-fusionauth-user-id'?: string | null;
+        /**
+         * Optional organization ID the bot claims to act for
+         */
+        'x-conation-bot-for-organization-id'?: string | null;
+        /**
+         * Channel-scoped bot authentication token
+         */
+        'x-conation-channel-bot-token'?: string | null;
     };
     path: {
         /**

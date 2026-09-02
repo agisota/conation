@@ -3,6 +3,8 @@
  * slot math so the label logic can be exercised against explicit zones.
  */
 
+import { getDateLocale } from '@app/lib/i18n';
+
 function timeZonePart(
   formatter: Intl.DateTimeFormat,
   instant: Date
@@ -25,7 +27,7 @@ export function rangeTimeZoneLabel(
   timeZone?: string
 ): string | undefined {
   if (instants.length === 0) return undefined;
-  const specific = new Intl.DateTimeFormat(undefined, {
+  const specific = new Intl.DateTimeFormat(getDateLocale(), {
     timeZoneName: 'short',
     timeZone,
   });
@@ -36,7 +38,7 @@ export function rangeTimeZoneLabel(
   if (labels.size === 1) return firstLabel;
 
   try {
-    const generic = new Intl.DateTimeFormat(undefined, {
+    const generic = new Intl.DateTimeFormat(getDateLocale(), {
       timeZoneName: 'shortGeneric',
       timeZone,
     });

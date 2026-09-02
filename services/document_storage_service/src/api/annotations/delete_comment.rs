@@ -11,9 +11,9 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use connection_gateway_client::ConnectionGatewayClient;
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_db_client::annotations::delete_comment::delete_document_comment;
+use connection_gateway_client::ConnectionGatewayClient;
 use model::{
     annotations::{
         AnnotationIncrementalUpdate,
@@ -53,7 +53,7 @@ pub async fn delete_comment_handler(
     Path(Params { comment_id }): Path<Params>,
     Json(req): Json<DeleteCommentRequest>,
 ) -> Result<Response, Response> {
-    let user_id = user.authorization.user.conation_user_id.as_ref();
+    let user_id = user.authorization.user.macro_user_id.as_ref();
     match delete_document_comment(&db, comment_id, user_id, req).await {
         Ok(res) => {
             let response: DeleteCommentResponse = res;

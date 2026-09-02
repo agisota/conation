@@ -1,5 +1,6 @@
 import type { EventEditorInitialValues } from '@app/features/calendar/components/composer/event-form-model';
 import type { CalendarEvent } from '@app/features/calendar/types';
+import { t } from '@app/lib/i18n';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import { confirmDialog } from '@ui';
 import { getOwner } from 'solid-js';
@@ -47,10 +48,10 @@ export function useOpenEventComposer() {
             try {
               const confirmed = await confirmDialog(
                 {
-                  title: 'You still have remaining changes',
-                  body: 'Closing this event will discard your changes.',
-                  confirmLabel: 'Discard',
-                  cancelLabel: 'Keep editing',
+                  title: t('calendar.event.discardDialog.title'),
+                  body: t('calendar.event.discardDialog.description'),
+                  confirmLabel: t('calendar.event.discardDialog.confirm'),
+                  cancelLabel: t('calendar.event.discardDialog.cancel'),
                   tone: 'danger',
                 },
                 { owner }

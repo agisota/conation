@@ -1,11 +1,23 @@
-use axum::{
-    extract::Request,
-    middleware::Next,
-    response::{IntoResponse, Response},
-};
+use axum::{extract::Request, middleware::Next, response::Response};
 use axum_extra::extract::Cached;
-use email::{domain::ports::EmailService, inbound::axum::axum_impls::EmailLinkExtractor};
 use conation_authorization::{MacroAuthorizationService, MacroAuthorizationState};
+use email::{domain::ports::EmailService, inbound::axum::axum_impls::EmailLinkExtractor};
+
+#[cfg(test)]
+mod test;
+
+fn service_provider(
+    provider: email::domain::models::UserProvider,
+) -> models_email::email::service::link::UserProvider {
+    match provider {
+        email::domain::models::UserProvider::Gmail => {
+            models_email::email::service::link::UserProvider::Gmail
+        }
+        email::domain::models::UserProvider::Stalwart => {
+            models_email::email::service::link::UserProvider::Stalwart
+        }
+    }
+}
 
 pub(in crate::api) async fn attach_link_context<U, Auth>(
     Cached(EmailLinkExtractor(link, _)): Cached<EmailLinkExtractor<U, Auth>>,
@@ -17,21 +29,11 @@ where
     Auth: MacroAuthorizationService,
     MacroAuthorizationState<Auth>: axum::extract::FromRef<crate::api::ApiContext>,
 {
-    let provider = match link.provider.as_str() {
-        "GMAIL" => models_email::email::service::link::UserProvider::Gmail,
-        other => {
-            tracing::error!(provider = other, "unknown provider in link");
-            return Err((
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                "unknown provider",
-            )
-                .into_response());
-        }
-    };
+    let provider = service_provider(link.provider);
     req.extensions_mut()
         .insert(models_email::email::service::link::Link {
             id: link.id,
-            conation_id: link.conation_id.clone(),
+            macro_id: link.macro_id.clone(),
             fusionauth_user_id: link.fusionauth_user_id.clone(),
             email_address: link.email_address.clone(),
             provider,

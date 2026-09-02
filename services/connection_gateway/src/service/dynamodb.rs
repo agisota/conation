@@ -5,9 +5,9 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use aws_sdk_dynamodb::error::ProvideErrorMetadata;
 use aws_sdk_dynamodb::types::{AttributeValue, ReturnValue};
+use conation_env_var::env_var;
 use ensure_exists::dynamodb::{CreateTableErr, DefineTable, DynamoClientWrapper};
 use ensure_exists::{DoesExist, EnsureExists};
-use conation_env_var::env_var;
 use model_entity::{Entity, EntityType};
 use std::collections::HashMap;
 

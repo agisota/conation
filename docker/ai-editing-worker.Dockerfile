@@ -15,6 +15,7 @@ CMD ["sh", "-c", "\
     \"${ANTHROPIC_API_KEY}\" \
     \"${CEREBRAS_API_KEY}\" \
     > .dev.vars && \
+  if [ -n \"${ALLOWED_ORIGINS}\" ]; then printf 'ALLOWED_ORIGINS=%s\\n' \"${ALLOWED_ORIGINS}\" >> .dev.vars; fi && \
   npx wrangler dev \
     --env local \
     --ip 0.0.0.0 \

@@ -1,5 +1,5 @@
-import { $isListItemNode } from '@lexical/list';
 import { $createDocumentMentionNode } from '@conation/lexical-core';
+import { $isListItemNode } from '@lexical/list';
 import {
   $createParagraphNode,
   $getNodeByKey,

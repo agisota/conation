@@ -1,5 +1,5 @@
-import { recordEmojiUsage } from '@core/component/Emoji/emojiUsage';
 import { t } from '@app/lib/i18n';
+import { recordEmojiUsage } from '@core/component/Emoji/emojiUsage';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
 import StarIcon from '@icon/wide-star.svg';
 import TaskIcon from '@icon/wide-task.svg';

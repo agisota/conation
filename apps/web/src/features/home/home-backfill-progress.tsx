@@ -1,5 +1,5 @@
+import { formatNumber, t } from '@app/lib/i18n';
 import ArrowsClockwiseIcon from '@phosphor-icons/core/regular/arrows-clockwise.svg?component-solid';
-import { t } from '@app/lib/i18n';
 import {
   type BackfillProgress,
   getBackfillProgress,
@@ -56,12 +56,17 @@ export function HomeBackfillProgress() {
         <div class="flex items-center justify-between gap-3">
           <div class="flex min-w-0 items-center gap-2">
             <ArrowsClockwiseIcon class="size-3.5 shrink-0 animate-spin text-ink-muted" />
-            <span class="text-sm text-ink">{t('auto.importing_your_inbox')}</span>
+            <span class="text-sm text-ink">
+              {t('shell.home.importingInbox')}
+            </span>
           </div>
           <Show when={active().length > 0}>
             <span class="shrink-0 text-xs tabular-nums text-ink-muted">
-              {totals().completed.toLocaleString()} of{' '}
-              {totals().total.toLocaleString()} threads
+              {t('shell.home.importingProgress', {
+                completed: formatNumber(totals().completed),
+                total: formatNumber(totals().total),
+                count: totals().total,
+              })}
             </span>
           </Show>
         </div>

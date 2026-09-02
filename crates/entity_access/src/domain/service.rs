@@ -10,10 +10,10 @@ use crate::domain::{
     },
     ports::{AccessRepository, EntityAccessService},
 };
-use futures::{StreamExt, stream};
 use conation_user_id::{
     cowlike::CowLike, lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr,
 };
+use futures::{StreamExt, stream};
 use uuid::Uuid;
 
 const MAX_CONCURRENT_BATCH_ACCESS_CHECKS: usize = 8;

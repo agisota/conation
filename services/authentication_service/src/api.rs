@@ -2,7 +2,7 @@ use crate::api::context::ApiContext;
 use anyhow::Context;
 use axum::Router;
 use axum::http::HeaderName;
-use conation_auth::constant::MACRO_REFRESH_TOKEN_HEADER;
+use conation_auth::constant::CONATION_REFRESH_TOKEN_HEADER;
 use conation_tower_layers::MacroRequestIdAndTracingLayer;
 use native_app_service::inbound::RouterState;
 use std::net::SocketAddr;
@@ -42,10 +42,12 @@ mod webhooks;
 mod middleware;
 pub(crate) mod swagger;
 mod utils;
+pub(crate) use utils::configured_app_base_url;
 
 pub async fn setup_and_serve(state: ApiContext, port: usize) -> anyhow::Result<()> {
+    utils::validate_runtime_web_config().context("invalid browser/auth origin configuration")?;
     let cors = conation_cors::cors_layer_with_headers(vec![HeaderName::from_static(
-        MACRO_REFRESH_TOKEN_HEADER,
+        CONATION_REFRESH_TOKEN_HEADER,
     )]);
 
     let env = state.environment;
@@ -89,7 +91,7 @@ fn api_router(state: ApiContext) -> Router<ApiContext> {
         .nest("/logout", logout::router())
         .nest("/oauth", oauth::router(state.clone()))
         .nest("/oauth2", oauth2::router())
-        .nest("/user", user::router())
+        .nest("/user", user::router(state.stripe_enabled.0))
         .nest("/link", link::router())
         .nest("/cursor-api-key", cursor_api_key::router())
         .nest("/github_pull_requests", github_pull_requests::router())
@@ -118,7 +120,7 @@ fn api_router(state: ApiContext) -> Router<ApiContext> {
         .merge(mobile_welcome_email::router(state.clone()))
         .nest(
             "/webhooks",
-            webhooks::router().layer(axum::middleware::from_fn(
+            webhooks::router(state.stripe_enabled.0).layer(axum::middleware::from_fn(
                 conation_middleware::connection_drop_prevention_handler,
             )),
         )

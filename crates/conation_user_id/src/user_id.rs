@@ -1,25 +1,27 @@
-//! Module defines the [MacroUserId] and the methods to read the email
+//! Module defines the [MacroUserId] and the methods to read the email.
 use crate::{
     cowlike::{ArcCowStr, CowLike},
     email::{Email, ReadEmailParts, email},
     error::ParseErr,
     lowercased::Lowercase,
 };
-use nom::{Finish, IResult, Parser, bytes::complete::tag, character::complete::char};
+use nom::{Finish, IResult, Parser, bytes::complete::tag};
 use serde::{Deserialize, Serialize};
 use std::ops::Deref;
 
 #[cfg(test)]
 mod tests;
 
-const MACRO_PREFIX: &str = "macro";
+/// Canonical namespace used by Conation user-profile identifiers.
+pub const CONATION_USER_ID_NAMESPACE: &str = "conation";
+
+/// Canonical prefix, including its namespace separator.
+pub const CONATION_USER_ID_PREFIX: &str = "conation|";
 
 fn conation_user_id(input: &str) -> IResult<&str, MacroUserId<ArcCowStr<'_>>> {
-    let (rest, ((prefix, pipe), email)) =
-        tag(MACRO_PREFIX).and(char('|')).and(email).parse(input)?;
+    let (rest, (prefix, email)) = tag(CONATION_USER_ID_PREFIX).and(email).parse(input)?;
     let email_part = email.map(|_| ());
-    // add 1 for the length of char
-    let email_part_offset = prefix.len() + pipe.len_utf8();
+    let email_part_offset = prefix.len();
     Ok((
         rest,
         MacroUserId {
@@ -142,9 +144,10 @@ impl<'a> From<MacroUserIdStr<'a>> for MacroUserId<String> {
 }
 
 impl MacroUserIdStr<'static> {
-    /// Create a MacroUserIdStr from an email address by prepending "macro|"
+    /// Create a user ID from an email address by prepending the canonical
+    /// `conation|` namespace.
     pub fn try_from_email(email: &str) -> Result<Self, ParseErr> {
-        Self::try_from(format!("{}|{}", MACRO_PREFIX, email))
+        Self::try_from(format!("{CONATION_USER_ID_PREFIX}{email}"))
     }
 }
 
@@ -269,13 +272,13 @@ where
         &id_str[self.email_part_offset..]
     }
 
-    /// True when this user belongs to the `macro.com` staff domain.
+    /// True when this user belongs to the `conation.dev` staff domain.
     ///
-    /// Plus-aliases such as `name+tag@macro.com` still match.
+    /// Plus-aliases such as `name+tag@conation.dev` still match.
     pub fn is_conation_staff(&self) -> bool {
         self.email_part()
             .domain_part()
-            .eq_ignore_ascii_case("macro.com")
+            .eq_ignore_ascii_case("conation.dev")
     }
 }
 

@@ -32,13 +32,13 @@ describe('describeAction', () => {
     expect(
       describeAction({
         __typename: 'GraphqlActivityParticipantAdded',
-        participant: 'macro|sarah@example.com',
+        participant: 'conation|sarah@example.com',
       })
     ).toBe('added a participant');
     expect(
       describeAction({
         __typename: 'GraphqlActivityParticipantRemoved',
-        participant: 'macro|sarah@example.com',
+        participant: 'conation|sarah@example.com',
       })
     ).toBe('removed a participant');
     expect(
@@ -59,7 +59,7 @@ describe('describeAction', () => {
     expect(
       describeActionForEntity({
         __typename: 'GraphqlActivityParticipantAdded',
-        participant: 'macro|sarah@example.com',
+        participant: 'conation|sarah@example.com',
       })
     ).toEqual({ verb: 'added a participant', connector: 'to' });
     expect(

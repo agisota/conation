@@ -27,7 +27,7 @@ github = { path = "../github", default-features = false, features = [
 http = { workspace = true }
 http-body-util = { workspace = true }
 lru = { workspace = true }
-# Signing Macro API tokens, with the same shared vocabulary
+# Signing Conation API tokens, with the same shared vocabulary
 # `authentication_service` mints through.
 conation_auth = { path = "../conation_auth" }
 # The owner's `User` row, which carries the FusionAuth id the exchange needs.

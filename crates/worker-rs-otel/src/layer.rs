@@ -30,7 +30,7 @@ impl FieldVisitor {
     }
 }
 
-conation_rules! string_visit {
+macro_rules! string_visit {
     ($ty:ty) => {
         impl Visit for $ty {
             fn record_debug(&mut self, field: &Field, value: &dyn std::fmt::Debug) {

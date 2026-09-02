@@ -1,5 +1,5 @@
-import { isMobile } from '@core/mobile/isMobile';
 import { t } from '@app/lib/i18n';
+import { isMobile } from '@core/mobile/isMobile';
 import { interceptMailtoLinks } from '@core/util/interceptMailtoLinks';
 import InfoIcon from '@phosphor/info.svg';
 import CaretDownIcon from '@phosphor-icons/core/regular/caret-down.svg?component-solid';
@@ -71,23 +71,22 @@ export function SignaturePreview(props: {
             <CaretDownIcon
               class="size-3 transition-transform"
               classList={{ '-rotate-90': !expanded() }}
-            />{t('auto.signature')}</button>
+            />
+            {t('blockEmail.compose.signature')}
+          </button>
           {/* Hover-only guidance; hidden on mobile where tooltips never show
               (Settings still points mobile users to desktop). */}
           <Show when={!isMobile()}>
-            <Tooltip
-              label="Edit your signature in Settings -> Connections."
-              as="span"
-            >
+            <Tooltip label={t('blockEmail.signature.editHint')} as="span">
               <InfoIcon class="size-3.5 text-ink-muted" />
             </Tooltip>
           </Show>
         </div>
-        <Tooltip label="Don't include signature" as="span">
+        <Tooltip label={t('blockEmail.signature.exclude')} as="span">
           <button
             type="button"
             class="-m-1 rounded-md p-1 text-ink-muted hover:bg-hover hover:text-ink"
-            aria-label="Don't include signature"
+            aria-label={t('blockEmail.signature.exclude')}
             onClick={() => props.onDismiss()}
           >
             <XIcon class="size-3.5" />

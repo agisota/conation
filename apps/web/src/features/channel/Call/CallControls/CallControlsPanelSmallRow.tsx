@@ -1,5 +1,5 @@
-import { DropdownMenu } from '@kobalte/core/dropdown-menu';
 import { t } from '@app/lib/i18n';
+import { DropdownMenu } from '@kobalte/core/dropdown-menu';
 import Gear from '@phosphor/gear.svg';
 import Microphone from '@phosphor/microphone.svg';
 import MicrophoneSlash from '@phosphor/microphone-slash.svg';
@@ -22,9 +22,9 @@ export function CallControlsPanelSmallRow() {
   const handleToggleShareWithTeam = useToggleShareWithTeam();
   const noiseSuppressionModeLabel = () =>
     match(callCtx.noiseSuppressionMode())
-      .with('krisp', () => 'Krisp')
-      .with('browser', () => 'Browser')
-      .with('off', () => 'Off')
+      .with('krisp', () => t('channel.call.controls.noiseMode.krisp'))
+      .with('browser', () => t('channel.call.controls.noiseMode.browser'))
+      .with('off', () => t('channel.call.controls.noiseMode.off'))
       .exhaustive();
 
   const anyMediaActive = () =>
@@ -41,7 +41,7 @@ export function CallControlsPanelSmallRow() {
       <Dropdown placement="top-start" gutter={6}>
         <DropdownMenu.Trigger
           disabled={isConnecting()}
-          aria-label={t('auto.call_options')}
+          aria-label={t('channel.call.controls.options')}
           class={cn(
             'flex items-center justify-center size-5 shrink-0 rounded-md transition-colors',
             isConnecting() && 'opacity-50 pointer-events-none',
@@ -66,15 +66,15 @@ export function CallControlsPanelSmallRow() {
               </Show>
               <span class="flex-1 truncate">
                 {callCtx.isAudioMuted()
-                  ? 'Unmute microphone'
-                  : 'Mute microphone'}
+                  ? t('channel.call.controls.unmuteMicrophone')
+                  : t('channel.call.controls.muteMicrophone')}
               </span>
             </Dropdown.Item>
 
             <MenuDivider />
 
             <CallDeviceList
-              label="Microphone"
+              label={t('channel.call.controls.microphone')}
               devices={callCtx.audioInputDevices()}
               activeDeviceId={callCtx.activeAudioInputDeviceId()}
               onSelect={(id) => callCtx.switchAudioInput(id)}
@@ -83,7 +83,7 @@ export function CallControlsPanelSmallRow() {
             <Show when={callCtx.audioOutputDevices().length > 0}>
               <MenuDivider />
               <CallDeviceList
-                label="Speaker"
+                label={t('channel.call.controls.speaker')}
                 devices={callCtx.audioOutputDevices()}
                 activeDeviceId={callCtx.activeAudioOutputDeviceId()}
                 onSelect={(id) => callCtx.switchAudioOutput(id)}
@@ -92,12 +92,14 @@ export function CallControlsPanelSmallRow() {
 
             <MenuDivider />
 
-            <MenuLabel>{t('auto.audio_processing')}</MenuLabel>
+            <MenuLabel>{t('channel.call.controls.audioProcessing')}</MenuLabel>
             <Dropdown.Item
               closeOnSelect={false}
               onSelect={() => void callCtx.toggleNoiseSuppression()}
             >
-              <span class="flex-1 truncate">{t('auto.noise_suppression')}</span>
+              <span class="flex-1 truncate">
+                {t('channel.call.controls.noiseSuppression')}
+              </span>
               <span class="text-xs text-ink-muted">
                 {noiseSuppressionModeLabel()}
               </span>
@@ -116,14 +118,16 @@ export function CallControlsPanelSmallRow() {
                 <VideoCamera class={ITEM_ICON_CLASS} />
               </Show>
               <span class="flex-1 truncate">
-                {callCtx.isVideoMuted() ? 'Turn camera on' : 'Turn camera off'}
+                {callCtx.isVideoMuted()
+                  ? t('channel.call.controls.turnCameraOn')
+                  : t('channel.call.controls.turnCameraOff')}
               </span>
             </Dropdown.Item>
 
             <MenuDivider />
 
             <CallDeviceList
-              label="Camera"
+              label={t('channel.call.controls.camera')}
               devices={callCtx.videoInputDevices()}
               activeDeviceId={callCtx.activeVideoInputDeviceId()}
               onSelect={(id) => callCtx.switchVideoInput(id)}
@@ -138,8 +142,8 @@ export function CallControlsPanelSmallRow() {
               <Screencast class={ITEM_ICON_CLASS} />
               <span class="flex-1 truncate">
                 {callCtx.isScreenSharing()
-                  ? 'Stop sharing screen'
-                  : 'Share screen'}
+                  ? t('channel.call.controls.stopScreenShare')
+                  : t('channel.call.controls.shareScreen')}
               </span>
             </Dropdown.Item>
 
@@ -148,7 +152,9 @@ export function CallControlsPanelSmallRow() {
               onSelect={() => void handleToggleShareWithTeam()}
             >
               <InlineCheckbox checked={callCtx.isSharedWithTeam()} />
-              <span class="flex-1 truncate">{t('auto.share_with_team')}</span>
+              <span class="flex-1 truncate">
+                {t('channel.call.shareWithTeam')}
+              </span>
             </Dropdown.Item>
           </Dropdown.Group>
         </Dropdown.Content>

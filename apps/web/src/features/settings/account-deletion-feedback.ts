@@ -7,25 +7,40 @@ export const ACCOUNT_DELETION_FEEDBACK_MAX_LENGTH = 500;
 
 export const ACCOUNT_DELETION_REASON_OPTIONS: ReadonlyArray<{
   value: AccountDeletionReason;
-  label: string;
+  labelKey: `settings.account.delete.reason.${string}`;
 }> = [
-  { value: 'not_using_enough', label: "I don't use Macro enough" },
-  { value: 'missing_features', label: "I'm missing features I need" },
-  { value: 'difficult_to_use', label: 'Macro is difficult to use' },
+  {
+    value: 'not_using_enough',
+    labelKey: 'settings.account.delete.reason.notUsingEnough',
+  },
+  {
+    value: 'missing_features',
+    labelKey: 'settings.account.delete.reason.missingFeatures',
+  },
+  {
+    value: 'difficult_to_use',
+    labelKey: 'settings.account.delete.reason.difficultToUse',
+  },
   {
     value: 'bugs_or_performance',
-    label: "I've experienced bugs or performance issues",
+    labelKey: 'settings.account.delete.reason.bugsOrPerformance',
   },
-  { value: 'too_expensive', label: 'Macro is too expensive' },
+  {
+    value: 'too_expensive',
+    labelKey: 'settings.account.delete.reason.tooExpensive',
+  },
   {
     value: 'prefer_another_product',
-    label: 'I prefer another product',
+    labelKey: 'settings.account.delete.reason.preferAnotherProduct',
   },
   {
     value: 'privacy_or_security_concerns',
-    label: 'I have privacy or security concerns',
+    labelKey: 'settings.account.delete.reason.privacyOrSecurity',
   },
-  { value: 'other', label: 'Other' },
+  {
+    value: 'other',
+    labelKey: 'settings.account.delete.reason.other',
+  },
 ];
 
 export function buildAccountDeletionFeedbackPayload(

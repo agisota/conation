@@ -6,7 +6,6 @@ import {
   soupItemMatchesTagFilter,
 } from '@app/constants/list-views';
 import { SearchState } from '@app/features/command/mobile/mobileSearchState';
-import { t } from '@app/lib/i18n';
 import {
   createSoupState,
   type GroupMeta,
@@ -44,6 +43,7 @@ import { useSoupFilterPersistence } from '@app/features/next-soup/use-soup-filte
 import { deduplicateEntities } from '@app/features/next-soup/utils';
 import { withEntityNotifications } from '@app/features/soup/entity-notifications';
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
+import { t } from '@app/lib/i18n';
 import { makeFlaggedPersisted } from '@app/preferences/make-flagged-persisted';
 import { useDealStages } from '@companies/crm/deal-stages';
 import { useGlobalNotificationSource } from '@components/app/GlobalAppState';
@@ -122,7 +122,7 @@ type DataSource<T> = {
    * Full refresh (e.g. mobile pull-to-refresh): invalidate every soup query
    * plus notification state. Resolves once the active refetches settle.
    */
-  refresh: () =>Promise<void>;
+  refresh: () => Promise<void>;
 };
 
 type SoupViewInitializeOptions = {
@@ -183,7 +183,7 @@ interface SoupViewContextValues {
   readFilter: Accessor<ReadFilter>;
   setReadFilter: Setter<ReadFilter>;
   groupByField: Accessor<GroupByField | undefined>;
-  fetchNextGroupPage: (groupKey: string) =>Promise<void>;
+  fetchNextGroupPage: (groupKey: string) => Promise<void>;
   isFetchingGroupPage: (groupKey: string) => boolean;
   hasNextGroupPage: (groupKey: string) => boolean;
 }
@@ -1291,7 +1291,10 @@ export const SoupViewContextProvider: FlowComponent<
         const groupMeta: GroupMeta = {
           key,
           value: key,
-          label: key === '' ? 'Not set' : (resolveGroupLabel(key) ?? key),
+          label:
+            key === ''
+              ? t('soup.group.notSet')
+              : (resolveGroupLabel(key) ?? key),
           count: groupEntities.length,
           isExpanded: () => soup.grouping.isExpanded(key),
           toggle: () => soup.grouping.toggle(key),

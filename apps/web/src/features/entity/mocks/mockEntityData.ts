@@ -1,5 +1,4 @@
 import { applyDurationToDate } from '@core/util/dateSearch/dateParser';
-import { t } from '@app/lib/i18n';
 import type { Property } from '@property/types';
 import type {
   ChannelEntity,
@@ -13,15 +12,15 @@ import type { Notification, WithNotification } from '../types/notification';
 import type { WithSearch } from '../types/search';
 
 const MOCK_USER_IDS = {
-  owner: 'macro|alex@example.com',
-  sharedUser: 'macro|sam@example.com',
-  teamMember1: 'macro|jordan@example.com',
-  teamMember2: 'macro|casey@example.com',
-  currentUser: 'macro|current@example.com',
+  owner: 'conation|alex@example.com',
+  sharedUser: 'conation|sam@example.com',
+  teamMember1: 'conation|jordan@example.com',
+  teamMember2: 'conation|casey@example.com',
+  currentUser: 'conation|current@example.com',
 } as const;
 
 export const MOCK_USERS = [
-  { id: MOCK_USER_IDS.owner, firstName: 'Alex', lastName: t('common.owner') },
+  { id: MOCK_USER_IDS.owner, firstName: 'Alex', lastName: 'Owner' },
   { id: MOCK_USER_IDS.sharedUser, firstName: 'Sam', lastName: 'Shared' },
   { id: MOCK_USER_IDS.teamMember1, firstName: 'Jordan', lastName: 'Team' },
   { id: MOCK_USER_IDS.teamMember2, firstName: 'Casey', lastName: 'Member' },

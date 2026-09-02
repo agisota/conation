@@ -1,7 +1,10 @@
 import type { ListView } from '@app/constants/list-views';
+import { getConfiguredStandaloneOperatorOrigin } from '@core/constant/clientProfile';
 
 /** Base URL for the public documentation site. */
-export const DOCS_BASE = 'https://docs.macro.com';
+export const DOCS_BASE = globalThis.__CONATION_HOSTED_LEGACY__
+  ? `${getConfiguredStandaloneOperatorOrigin()}/docs`
+  : `${getConfiguredStandaloneOperatorOrigin()}/docs`;
 
 /**
  * Public documentation page for each list view. Views without an entry have no

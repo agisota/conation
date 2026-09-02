@@ -194,7 +194,7 @@ impl From<AttendeeInput> for CalendarAttendeeInput {
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct EventReminderOverrideInput {
-    /// Provider reminder method. `popup` creates a Macro notification.
+    /// Provider reminder method. `popup` creates a Conation notification.
     pub method: String,
     /// Minutes before the event start.
     pub minutes: u32,
@@ -247,7 +247,7 @@ pub struct ToolEventAttendee {
 #[derive(Debug, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ToolCalendarEvent {
-    /// Macro calendar event id, used by UpdateCalendarEvent and
+    /// Conation calendar event id, used by UpdateCalendarEvent and
     /// DeleteCalendarEvent.
     pub event_id: uuid::Uuid,
     /// Display title.
@@ -396,7 +396,7 @@ fn mutation_tool_error(action: &str, error: CalendarMutationError) -> ToolCallEr
             "The calendar service is temporarily unavailable. Try again shortly.".to_string()
         }
         CalendarMutationError::PersistFailed(_) => {
-            "The change reached Google Calendar, but Macro's copy lagged behind. It will appear \
+            "The change reached Google Calendar, but Conation's copy lagged behind. It will appear \
              after the next sync."
                 .to_string()
         }

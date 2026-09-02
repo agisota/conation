@@ -213,7 +213,7 @@ impl AuthorizationPolicy for UserOrInternal {
     fn acting_entity(output: &Self::Output) -> Self::ActingEntity<'_> {
         match output.caller {
             UserOrInternalCaller::User => {
-                UserOrInternalEntity::User(output.user.conation_user_id.as_ref())
+                UserOrInternalEntity::User(output.user.macro_user_id.as_ref())
             }
             UserOrInternalCaller::Internal => UserOrInternalEntity::Internal,
         }
@@ -239,7 +239,7 @@ impl AuthorizationPolicy for UserOrInternalService {
     fn acting_entity(output: &Self::Output) -> Self::ActingEntity<'_> {
         match output {
             UserOrInternalServiceAuthorization::User(user) => {
-                UserOrInternalEntity::User(user.conation_user_id.as_ref())
+                UserOrInternalEntity::User(user.macro_user_id.as_ref())
             }
             UserOrInternalServiceAuthorization::Internal(_) => UserOrInternalEntity::Internal,
         }
@@ -283,7 +283,7 @@ impl AuthorizationPolicy for UserOnly {
     }
 
     fn acting_entity(output: &Self::Output) -> Self::ActingEntity<'_> {
-        output.conation_user_id.as_ref()
+        output.macro_user_id.as_ref()
     }
 }
 
@@ -304,7 +304,7 @@ impl AuthorizationPolicy for UserOrBot {
     fn acting_entity(output: &Self::Output) -> Self::ActingEntity<'_> {
         match output {
             UserOrBotAuthorization::User(user) => {
-                UserOrBotEntity::User(user.conation_user_id.as_ref())
+                UserOrBotEntity::User(user.macro_user_id.as_ref())
             }
             UserOrBotAuthorization::Bot(bot) => UserOrBotEntity::Bot(bot.bot_id),
         }

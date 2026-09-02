@@ -14,11 +14,13 @@ use crate::{
     process::{context::SearchProcessingContext, worker::run_search_processing_workers},
 };
 use anyhow::Context;
-use config::{Config, Environment};
-use lexical_client::LexicalClient;
-use conation_authorization::{InternalAuthConfig, MacroAuthorizationState, NoopMacroAuthJwtValidator};
+use conation_authorization::{
+    InternalAuthConfig, MacroAuthorizationState, NoopMacroAuthJwtValidator,
+};
 use conation_entrypoint::MacroEntrypoint;
 use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
+use config::{Config, Environment};
+use lexical_client::LexicalClient;
 use opensearch_client::OpensearchClient;
 #[cfg(feature = "pdf")]
 use rust_embed::RustEmbed;

@@ -1,38 +1,34 @@
 ---
-title: "Unified Search"
+title: "Поиск"
 icon: "magnifying-glass"
-description: "Macro's unified search makes it possible to find anything in <50ms across email, tasks, docs, calls transcripts, agents, and files."
+description: "Единый поиск Conation по почте, задачам, документам, звонкам, агентам и файлам."
 ---
 
-<Frame>
-  ![Search Screenshot](/images/search_screenshot-1.png)
-</Frame>
+Поиск — самый быстрый способ найти рабочий объект в Conation. Он ищет не только по названиям: индексируются тексты документов, цепочки писем, сообщения каналов, расшифровки звонков и содержимое файлов.
 
-Search is the easiest way to find specific files in Macro. When using search for multiple terms, use quotations for an exact match. Otherwise, the default is to independently match terms in a document.
+<Note>
+  Старые скриншоты прежнего интерфейса убраны из активной страницы. Для
+  публичной документации нужны новые изображения Conation на тестовых данных.
+</Note>
 
-> Use the <kbd>/</kbd> shortcut to open up search or the <kbd>cmd</kbd>+<kbd>k</kbd> menu to search by name.
+## Быстрый запуск
 
-Use the filter button in the upper right corner to sort results into different types (agent results, messages, etc). To see a result preview in search, use <kbd>l</kbd> to expand and <kbd>h</kbd> to close.
+Откройте поиск клавишей <kbd>/</kbd> или через меню <kbd>cmd</kbd> + <kbd>k</kbd>.
 
-<Frame>
-  <img
-    src="/images/betterFilter.png"
-    alt="The search filter menu showing result type options"
-    title="Search filters"
-    className="mx-auto"
-    style={{ width:"33%" }}
-  />
-</Frame>
+Если нужно найти точную фразу, заключите ее в кавычки. Без кавычек поиск сопоставляет слова независимо и поднимает наиболее релевантные результаты.
 
-To further narrow search results, combine your keywords with an @mention of a specific person.
+## Фильтры
 
-Search covers more than titles: document bodies, email threads, channel messages, call transcripts, and file contents are all indexed. You can also ask an [agent](/product/agents) to find things for you; agents use the same index.
+Кнопка фильтров в правом верхнем углу сужает выдачу по типу объекта: документы, письма, каналы, задачи, звонки, агенты, файлы и другие блоки.
 
-## Filtering by tags
+Чтобы быстро посмотреть результат, используйте <kbd>l</kbd> для предпросмотра. Если объект нужно открыть рядом с текущей работой, откройте его в новой панели.
 
-Open the filter menu and select the **Tags** chip to narrow results to items carrying specific [tags](/concepts/properties). Once you've selected two or more tags, a match-mode toggle appears on the chip:
+## Поиск по людям и тегам
 
-- **Any** — return items that have any of the selected tags. This is the default.
-- **All** — return items that have every selected tag.
+Запрос можно уточнить @упоминанием человека. Это полезно, когда вы помните участника обсуждения, но не точное название документа или задачи.
 
-Use **All** to zero in on the intersection of several tags (for example, everything tagged both `urgent` and `finance`), and **Any** to cast a wider net across related tags.
+Для поиска по тегам откройте фильтр и выберите chip **Tags**. Если выбрано несколько тегов, Conation позволяет переключить режим совпадения: найти объекты с любым из тегов или только объекты, где присутствуют все выбранные теги.
+
+## Поиск через агента
+
+Если нужен не список результатов, а готовый ответ, задайте вопрос [агенту](/product/agents). Агент использует единую память, поэтому может прочитать связанные документы, письма, задачи и обсуждения, а затем вернуть краткое резюме со ссылками на источники.

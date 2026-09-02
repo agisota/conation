@@ -129,8 +129,8 @@ pub async fn handler(
             ctx.conation_event_broker.as_ref(),
             &EmailMacroEvent::message_send_cancelled(MessageSendCancelledMetadata {
                 link_id: link.id,
-                owner: link.conation_id.clone(),
-                actor: Some(link.conation_id.clone()),
+                owner: link.macro_id.clone(),
+                actor: Some(link.macro_id.clone()),
                 message_id,
                 thread_id,
                 reason: SendCancelReason::Undo,

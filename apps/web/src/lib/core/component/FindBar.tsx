@@ -1,5 +1,5 @@
-import CaretDown from '@phosphor/caret-down.svg';
 import { t } from '@app/lib/i18n';
+import CaretDown from '@phosphor/caret-down.svg';
 import CaretUp from '@phosphor/caret-up.svg';
 import MagnifyingGlass from '@phosphor/magnifying-glass.svg';
 import X from '@phosphor/x.svg';
@@ -169,7 +169,7 @@ function FindBarInput(props: { placeholder?: string; autofocus?: boolean }) {
       ref={inputEl}
       type="text"
       class="min-w-0 flex-1 bg-transparent border-0 px-1 text-sm text-ink placeholder:text-ink-placeholder focus:outline-none focus:ring-0"
-      placeholder={props.placeholder ?? 'Find'}
+      placeholder={props.placeholder ?? t('core.find.placeholder')}
       value={controller.query()}
       onInput={(e) => controller.setQuery(e.currentTarget.value)}
       onKeyDown={handleKeyDown}
@@ -200,7 +200,11 @@ function FindBarPreviousButton() {
     <Button
       size="icon-sm"
       variant="ghost"
-      aria-label={direction() === 'desc' ? 'Next match' : 'Previous match'}
+      aria-label={
+        direction() === 'desc'
+          ? t('core.find.nextMatch')
+          : t('core.find.previousMatch')
+      }
       disabled={
         direction() === 'desc'
           ? !controller.canNext()
@@ -221,7 +225,11 @@ function FindBarNextButton() {
     <Button
       size="icon-sm"
       variant="ghost"
-      aria-label={direction() === 'desc' ? 'Previous match' : 'Next match'}
+      aria-label={
+        direction() === 'desc'
+          ? t('core.find.previousMatch')
+          : t('core.find.nextMatch')
+      }
       disabled={
         direction() === 'desc'
           ? !controller.canPrevious()
@@ -242,7 +250,7 @@ function FindBarCloseButton() {
     <Button
       size="icon-sm"
       variant="ghost"
-      aria-label={t('auto.close_find_bar')}
+      aria-label={t('core.find.close')}
       onClick={() => controller.close()}
     >
       <X />

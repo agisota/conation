@@ -246,11 +246,19 @@ export const I_DOCUMENT_MENTION: TextMatchTransformer = {
 // External Document Mentions
 
 function cleanHostname(rawHostname: string): string {
-  const hostname = rawHostname.replace('www.', '').toLowerCase();
-  if (hostname === 'localhost') {
-    return 'dev.macro.com';
+  return rawHostname.replace('www.', '').toLowerCase();
+}
+
+function documentLinkOrigin(): string {
+  const hostedLegacy =
+    typeof __CONATION_HOSTED_LEGACY__ !== 'undefined' &&
+    __CONATION_HOSTED_LEGACY__;
+  if (!hostedLegacy) {
+    return window.location.origin;
   }
-  return hostname;
+
+  const hostname = window.location.hostname.replace('www.', '').toLowerCase();
+  return `https://${hostname === 'localhost' ? 'dev.macro.com' : hostname}`;
 }
 
 function currentBrowserHostname(): string | null {
@@ -261,7 +269,7 @@ function currentBrowserHostname(): string | null {
   ) {
     return null;
   }
-  return cleanHostname(window.location.hostname);
+  return window.location.hostname;
 }
 
 export const E_DOCUMENT_MENTION: ElementTransformer = {
@@ -279,8 +287,7 @@ export const E_DOCUMENT_MENTION: ElementTransformer = {
       return null;
     }
 
-    const hostname = cleanHostname(window.location.hostname);
-    const documentUrl = `https://${hostname}/app/${blockType}/${documentId}`;
+    const documentUrl = `${documentLinkOrigin()}/app/${blockType}/${documentId}`;
     return `[${documentName}](${documentUrl})`;
   },
   replace: (

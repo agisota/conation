@@ -2,21 +2,21 @@
 name = "email_provider"
 version = "0.1.0"
 edition = "2021"
-description = "Abstraction over email providers: Gmail (legacy) and Stalwart JMAP (Conation default)"
+description = "Experimental email-provider abstraction: legacy Gmail and self-hosted Stalwart JMAP"
 
 [dependencies]
 async-trait = { workspace = true }
+conation_env_var = { path = "../conation_env_var" }
 serde = { workspace = true }
-serde_json = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
-reqwest = { workspace = true }
-rootcause = { workspace = true }
-uuid = { workspace = true }
+url = { workspace = true }
 
-# For Stalwart JMAP
-base64 = { workspace = true }
 chrono = { workspace = true }
+reqwest = { workspace = true }
+serde_json = { workspace = true }
+workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+wiremock = { workspace = true }

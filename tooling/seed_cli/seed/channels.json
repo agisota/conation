@@ -4,9 +4,9 @@
     "channel_name": "general",
     "channel_type": "public",
     "participants": [
-      "macro|bob@example.com",
-      "macro|charlie@example.com",
-      "macro|dana@example.com"
+      "conation|bob@example.com",
+      "conation|charlie@example.com",
+      "conation|dana@example.com"
     ]
   },
   {
@@ -14,8 +14,8 @@
     "channel_name": "announcements",
     "channel_type": "public",
     "participants": [
-      "macro|bob@example.com",
-      "macro|charlie@example.com"
+      "conation|bob@example.com",
+      "conation|charlie@example.com"
     ]
   },
   {
@@ -23,9 +23,9 @@
     "channel_name": "random",
     "channel_type": "public",
     "participants": [
-      "macro|bob@example.com",
-      "macro|dana@example.com",
-      "macro|eve@example.com"
+      "conation|bob@example.com",
+      "conation|dana@example.com",
+      "conation|eve@example.com"
     ]
   },
   {
@@ -33,8 +33,8 @@
     "channel_name": "leadership",
     "channel_type": "private",
     "participants": [
-      "macro|bob@example.com",
-      "macro|charlie@example.com"
+      "conation|bob@example.com",
+      "conation|charlie@example.com"
     ]
   },
   {
@@ -42,47 +42,47 @@
     "channel_name": "project-alpha",
     "channel_type": "private",
     "participants": [
-      "macro|charlie@example.com",
-      "macro|dana@example.com",
-      "macro|eve@example.com"
+      "conation|charlie@example.com",
+      "conation|dana@example.com",
+      "conation|eve@example.com"
     ]
   },
   {
     "channel_id": "00000000-0000-0000-0000-000000000006",
     "channel_type": "private",
     "participants": [
-      "macro|bob@example.com",
-      "macro|charlie@example.com",
-      "macro|dana@example.com"
+      "conation|bob@example.com",
+      "conation|charlie@example.com",
+      "conation|dana@example.com"
     ]
   },
   {
     "channel_id": "00000000-0000-0000-0000-000000000007",
     "channel_type": "private",
     "participants": [
-      "macro|dana@example.com",
-      "macro|eve@example.com"
+      "conation|dana@example.com",
+      "conation|eve@example.com"
     ]
   },
   {
     "channel_id": "00000000-0000-0000-0000-000000000008",
     "channel_type": "direct_message",
     "participants": [
-      "macro|bob@example.com"
+      "conation|bob@example.com"
     ]
   },
   {
     "channel_id": "00000000-0000-0000-0000-000000000009",
     "channel_type": "direct_message",
     "participants": [
-      "macro|charlie@example.com"
+      "conation|charlie@example.com"
     ]
   },
   {
     "channel_id": "00000000-0000-0000-0000-00000000000a",
     "channel_type": "direct_message",
     "participants": [
-      "macro|dana@example.com"
+      "conation|dana@example.com"
     ]
   }
 ]

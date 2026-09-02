@@ -1,8 +1,8 @@
 use async_graphql::{Context, ID, Object};
+use conation_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::models::{EditAccessLevel, ViewAccessLevel};
 use entity_access::domain::ports::EntityAccessService;
 use graphql_common::{GraphqlPropertyEntityType, parse_id};
-use conation_user_id::user_id::MacroUserIdStr;
 use models_properties::api::requests::SetPropertyValue;
 use models_properties::service::entity_property_with_definition::EntityPropertyWithDefinition;
 use models_properties::shared::EntityReference;

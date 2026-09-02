@@ -17,7 +17,7 @@ VALUES ('a1111111-1111-1111-1111-111111111111', 'user@test.com', 'user@test.com'
 
 -- Insert user
 INSERT INTO public."User" ("id", "email", "stripeCustomerId", "organizationId", "macro_user_id")
-VALUES ('macro|user-1@test.com', 'user@test.com', 'stripe_id_1', 1, 'a1111111-1111-1111-1111-111111111111')
+VALUES ('conation|user-1@test.com', 'user@test.com', 'stripe_id_1', 1, 'a1111111-1111-1111-1111-111111111111')
 ON CONFLICT DO NOTHING;
 
 ---------------------------------
@@ -25,10 +25,10 @@ ON CONFLICT DO NOTHING;
 ---------------------------------
 
 INSERT INTO public."Project" ("id", "name", "userId", "parentId", "createdAt", "updatedAt")
-VALUES ('aaaaaaaa-ffff-ffff-ffff-ffffffffffff', 'Project A (User has VIEW)', 'macro|user-1@test.com', NULL, '2023-01-01 10:00:00', '2023-01-01 10:00:00');
+VALUES ('aaaaaaaa-ffff-ffff-ffff-ffffffffffff', 'Project A (User has VIEW)', 'conation|user-1@test.com', NULL, '2023-01-01 10:00:00', '2023-01-01 10:00:00');
 
 INSERT INTO public."Project" ("id", "name", "userId", "parentId", "createdAt", "updatedAt")
-VALUES ('bbbbbbbb-ffff-ffff-ffff-ffffffffffff', 'Project B (Child of A)', 'macro|user-1@test.com', 'aaaaaaaa-ffff-ffff-ffff-ffffffffffff', '2023-01-01 11:00:00', '2023-01-01 11:00:00');
+VALUES ('bbbbbbbb-ffff-ffff-ffff-ffffffffffff', 'Project B (Child of A)', 'conation|user-1@test.com', 'aaaaaaaa-ffff-ffff-ffff-ffffffffffff', '2023-01-01 11:00:00', '2023-01-01 11:00:00');
 
 ---------------------------------------------------
 --  DOCUMENTS AND THEIR DEPENDENCIES
@@ -39,8 +39,8 @@ VALUES (1, '11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),
        (2, '11111111-bbbb-bbbb-bbbb-bbbbbbbbbbbb');
 
 INSERT INTO public."Document" ("id", "name", "owner", "projectId", "documentFamilyId", "fileType", "createdAt", "updatedAt")
-VALUES ('11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Document in A', 'macro|user-1@test.com', 'aaaaaaaa-ffff-ffff-ffff-ffffffffffff', 1, 'pdf', '2023-01-05 10:00:00', '2023-01-05 10:00:00'),
-       ('11111111-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Document in B', 'macro|user-1@test.com', 'bbbbbbbb-ffff-ffff-ffff-ffffffffffff', 2, 'pdf', '2023-01-05 11:00:00', '2023-01-05 11:00:00');
+VALUES ('11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Document in A', 'conation|user-1@test.com', 'aaaaaaaa-ffff-ffff-ffff-ffffffffffff', 1, 'pdf', '2023-01-05 10:00:00', '2023-01-05 10:00:00'),
+       ('11111111-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Document in B', 'conation|user-1@test.com', 'bbbbbbbb-ffff-ffff-ffff-ffffffffffff', 2, 'pdf', '2023-01-05 11:00:00', '2023-01-05 11:00:00');
 
 INSERT INTO public."DocumentInstance" ("id", "documentId", "sha", "createdAt", "updatedAt")
 VALUES (1, '11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'sha_A', '2023-01-05 10:00:00', '2023-01-05 10:00:00'),
@@ -54,13 +54,13 @@ VALUES (1, '11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'sha_A', '2023-01-05 10:00:00
 INSERT INTO public.entity_access ("entity_id", "entity_type", "source_id", "source_type", "access_level", "granted_from_project_id")
 VALUES
 -- Direct access to project-A (view)
-('aaaaaaaa-ffff-ffff-ffff-ffffffffffff', 'project', 'macro|user-1@test.com', 'user', 'view', NULL),
+('aaaaaaaa-ffff-ffff-ffff-ffffffffffff', 'project', 'conation|user-1@test.com', 'user', 'view', NULL),
 -- Inherited access to project-B and items from project-A
-('bbbbbbbb-ffff-ffff-ffff-ffffffffffff', 'project', 'macro|user-1@test.com', 'user', 'view', 'aaaaaaaa-ffff-ffff-ffff-ffffffffffff'),
-('11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'macro|user-1@test.com', 'user', 'view', 'aaaaaaaa-ffff-ffff-ffff-ffffffffffff'),
-('11111111-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'document', 'macro|user-1@test.com', 'user', 'view', 'aaaaaaaa-ffff-ffff-ffff-ffffffffffff'),
+('bbbbbbbb-ffff-ffff-ffff-ffffffffffff', 'project', 'conation|user-1@test.com', 'user', 'view', 'aaaaaaaa-ffff-ffff-ffff-ffffffffffff'),
+('11111111-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'conation|user-1@test.com', 'user', 'view', 'aaaaaaaa-ffff-ffff-ffff-ffffffffffff'),
+('11111111-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'document', 'conation|user-1@test.com', 'user', 'view', 'aaaaaaaa-ffff-ffff-ffff-ffffffffffff'),
 -- Direct 'edit' on doc-in-B (higher than inherited 'view')
-('11111111-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'document', 'macro|user-1@test.com', 'user', 'edit', NULL);
+('11111111-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'document', 'conation|user-1@test.com', 'user', 'edit', NULL);
 
 ---------------------------------------------------
 --  ENTITY PROPERTIES FOR DOCUMENTS AND PROJECTS

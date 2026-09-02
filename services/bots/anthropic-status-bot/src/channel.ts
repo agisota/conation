@@ -5,7 +5,7 @@ import { unwrap } from '../../../../packages/sdk/src/utils';
 export type ChannelConfig = {
   /** UUID of the channel the bot posts to. */
   channelId: string;
-  /** Bot API key (mbot_...), sent as x-macro-bot-token. */
+  /** Bot API key (mbot_...), sent as x-conation-bot-token. */
   botToken: string;
   /** Macro environment. Defaults to prod. */
   env?: Env;
@@ -17,7 +17,7 @@ export type ChannelPoster = (content: string) => Promise<void>;
 /**
  * Post channel messages via the Macro SDK's channel bot webhook.
  *
- * Uses bot auth (x-macro-bot-token, user scope) — the preferred auth for
+ * Uses bot auth (x-conation-bot-token, user scope) — the preferred auth for
  * POST /channels/{channel_id}/webhook. The bot must be a participant of the
  * channel; the user scope requires no acting user for this endpoint.
  */

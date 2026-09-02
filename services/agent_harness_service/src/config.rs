@@ -2,9 +2,9 @@
 //! `conation_config` pattern.
 
 use anyhow::Context;
-use database_env_vars::DatabaseUrl;
 pub use conation_env::Environment;
 use conation_uuid::Uuid;
+use database_env_vars::DatabaseUrl;
 
 use secretsmanager_client::LocalOrRemoteSecret;
 
@@ -14,16 +14,16 @@ conation_env_var::env_vars!(
     pub struct KafkaBrokers;
     /// PEM private key of the GitHub App installation tokens are minted with.
     pub struct GithubSyncAppPemSecretKey;
-    /// RSA key Macro API tokens are signed with - the same one
+    /// RSA key Conation API tokens are signed with - the same one
     /// `authentication_service` signs with. The egress proxy mints
     /// short-lived tokens for session owners inline.
-    pub struct MacroApiTokenPrivateSecretKey;
-    /// Issuer stamped into minted Macro API tokens; must match what the
+    pub struct ConationApiTokenPrivateSecretKey;
+    /// Issuer stamped into minted Conation API tokens; must match what the
     /// validators expect.
-    pub struct MacroApiTokenIssuer;
+    pub struct ConationApiTokenIssuer;
     /// OAuth client ID for the Pipedream API. The same credentials
     /// `document_cognition_service` uses: the connections a sandbox spends
-    /// are the ones the person connected in Macro, in the same rows.
+    /// are the ones the person connected in Conation, in the same rows.
     pub struct PipedreamClientId;
     /// OAuth client secret for the Pipedream API.
     pub struct PipedreamClientSecret;
@@ -62,15 +62,13 @@ pub struct Config {
     /// Name of the prebuilt Daytona snapshot to create sandboxes from. The
     /// image is expected to be built and pushed as a snapshot out of band,
     /// keeping image builds off the first-prompt critical path.
-    #[conation_config_default(String::from("macro-agent-harness"))]
+    #[conation_config_default(String::from("conation-agent-harness"))]
     pub daytona_snapshot: String,
-    /// API key sandboxes run Anthropic models with. Injected into the
-    /// sandbox environment at creation, where it activates opencode's
-    /// `anthropic` provider — the only provider
-    /// `crates/agent_harness/container/opencode.json` enables. Empty means
-    /// sandboxes advertise no models and managed sessions cannot prompt.
+    /// API key sandboxes use for Conation's OpenAI-compatible OmniRoute.
+    /// Injected only into the sandbox environment at creation. Empty leaves
+    /// managed sessions unable to prompt; external sessions still work.
     #[conation_config_default(String::new())]
-    pub anthropic_api_key: String,
+    pub rox_api_key: String,
     /// Run sandboxes on the local Docker daemon instead of Daytona.
     ///
     /// Default off: a deployed harness must keep using Daytona even if this
@@ -83,7 +81,7 @@ pub struct Config {
     #[conation_config_default(String::from("docker"))]
     pub local_container_docker_binary: String,
     /// Image the local provider creates sandboxes from.
-    #[conation_config_default(String::from("macro-agent-harness:latest"))]
+    #[conation_config_default(String::from("conation-agent-harness:latest"))]
     pub local_container_image: String,
     /// Compose network local sandboxes join so this service can dial them.
     ///
@@ -106,26 +104,26 @@ pub struct Config {
     /// mentions.
     pub harness_bot_id: Uuid,
     /// Model slug stamped onto sessions this deployment opens.
-    #[conation_config_default(String::from("claude"))]
+    #[conation_config_default(String::from("rox/gemini-2.5-flash"))]
     pub harness_model: String,
     /// Harness slug stamped onto sessions this deployment opens.
     #[conation_config_default(String::from("opencode"))]
     pub harness_slug: String,
     /// Repository sessions run against, until it becomes per-request data.
-    #[conation_config_default(String::from("https://github.com/macro-inc/macro"))]
+    #[conation_config_default(String::from("https://github.com/agisota/conation"))]
     pub harness_repo_url: String,
     /// Repository `@cursor` sessions work on. Temporary hardcoding, same as
     /// `harness_repo_url` — and one repository for everyone is a real limit
     /// here, since each session runs on its own owner's Cursor account and
     /// only works if *their* GitHub App installation can see this repo.
-    #[conation_config_default(String::from("https://github.com/macro-inc/macro"))]
+    #[conation_config_default(String::from("https://github.com/agisota/conation"))]
     pub cursor_repo_url: String,
     /// Model id stamped onto sessions the in-memory bot opens. Unknown ids
     /// fall back to the agent loop's default model.
     #[conation_config_default(String::from("claude-sonnet-5"))]
     pub inmem_model: String,
     /// Harness slug stamped onto sessions the in-memory bot opens.
-    #[conation_config_default(String::from("macro-inmem"))]
+    #[conation_config_default(String::from("conation-inmem"))]
     pub inmem_harness_slug: String,
     /// Key for internal service-to-service calls (the connection gateway).
     pub internal_api_key: String,
@@ -135,7 +133,7 @@ pub struct Config {
     /// Port the sandbox-facing egress proxy is served on.
     ///
     /// A second listener rather than more routes on `port`: the control routes
-    /// are authenticated as Macro users and reached from inside the platform,
+    /// are authenticated as Conation users and reached from inside the platform,
     /// and the egress routes are authenticated by session token and reached
     /// from a sandbox running model-authored code. Separate ports keep the two
     /// separable at the network as well as in the code.
@@ -161,15 +159,16 @@ pub struct Config {
     /// URL of Pipedream's remote MCP server.
     #[conation_config_default(String::from(pipedream_mcp::outbound::api::DEFAULT_MCP_URL))]
     pub pipedream_mcp_url: String,
-    /// Where the egress proxy reaches Macro's own MCP server (`mcp_service`),
-    /// endpoint path included - e.g. `https://mcp.macro.com/mcp`, or the
+    /// Where the egress proxy reaches Conation's own MCP server (`mcp_service`),
+    /// endpoint path included - e.g. `https://mcp.conation.dev/mcp`, or the
     /// in-network `http://mcp-service:8080/mcp` on a local stack. Cleartext is
     /// refused at boot unless `ENVIRONMENT=local`.
     pub conation_mcp_url: String,
-    /// RSA key Macro API tokens are signed with.
-    pub conation_api_token_private_secret_key: LocalOrRemoteSecret<MacroApiTokenPrivateSecretKey>,
-    /// Issuer stamped into minted Macro API tokens.
-    pub conation_api_token_issuer: MacroApiTokenIssuer,
+    /// RSA key Conation API tokens are signed with.
+    pub conation_api_token_private_secret_key:
+        LocalOrRemoteSecret<ConationApiTokenPrivateSecretKey>,
+    /// Issuer stamped into minted Conation API tokens.
+    pub conation_api_token_issuer: ConationApiTokenIssuer,
     /// Client id of the GitHub App installation tokens are minted for.
     pub github_sync_app_client_id: String,
     /// PEM private key of that App.

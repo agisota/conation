@@ -1,6 +1,6 @@
 import { DOCS_BASE } from '@app/constants/docs-links';
-import { t } from '@app/lib/i18n';
 import { LIST_VIEW_PATHS } from '@app/constants/list-views';
+import { t } from '@app/lib/i18n';
 import { globalSplitManager } from '@app/signal/splitLayout';
 import { useGlobalNotificationSource } from '@components/app/GlobalAppState';
 import { useChatInputContext } from '@core/component/AI/context';
@@ -34,12 +34,19 @@ import { replaceHomeComposerSelection } from './home-composer-selection';
 import type { HomePreferences } from './home-prefs';
 import { SetupRow } from './home-rows';
 
-const STATUS: Record<RecommendedAction, { label: string; accent: boolean }> = {
-  reply_now: { label: 'Reply now', accent: true },
-  reply_later: { label: 'Reply later', accent: false },
-  review: { label: 'Review', accent: false },
-  discuss: { label: 'Discuss', accent: false },
-};
+const STATUS: Record<RecommendedAction, { labelKey: string; accent: boolean }> =
+  {
+    reply_now: {
+      labelKey: 'shell.home.recommendations.replyNow',
+      accent: true,
+    },
+    reply_later: {
+      labelKey: 'shell.home.recommendations.replyLater',
+      accent: false,
+    },
+    review: { labelKey: 'shell.home.recommendations.review', accent: false },
+    discuss: { labelKey: 'shell.home.recommendations.discuss', accent: false },
+  };
 
 /** Show the "Connect your tools" row until this many connections exist. */
 const CONNECTION_GOAL = 4;
@@ -132,12 +139,16 @@ export function RecommendedSection() {
   return (
     <section>
       <div class="mb-2 flex items-center justify-between px-1">
-        <span class="text-sm text-ink-muted">{t('auto.recommended')}</span>
+        <span class="text-sm text-ink-muted">
+          {t('shell.home.recommendations.title')}
+        </span>
         <button
           type="button"
           class="text-xs text-ink-extra-muted transition-colors hover:text-ink-muted"
           onClick={() => navigate(LIST_VIEW_PATHS.inbox)}
-        >{t('auto.show_all')}</button>
+        >
+          {t('shell.actions.showAll')}
+        </button>
       </div>
       <div class="flex flex-col gap-2">
         <Switch>
@@ -154,14 +165,20 @@ export function RecommendedSection() {
           <Match when={view().kind === 'error'}>
             <div class="group flex w-full items-center gap-3.5 rounded-xl border border-edge-muted bg-active px-4 py-3 text-left">
               <div class="min-w-0 flex-1">
-                <div class="text-sm font-medium text-ink">{t('auto.recommendations_are_unavailabl')}</div>
-                <div class="text-xs text-ink-muted">{t('auto.check_your_connection_and_try_')}</div>
+                <div class="text-sm font-medium text-ink">
+                  {t('shell.home.recommendations.unavailable')}
+                </div>
+                <div class="text-xs text-ink-muted">
+                  {t('shell.home.recommendations.checkConnection')}
+                </div>
               </div>
               <button
                 type="button"
                 class="shrink-0 text-sm text-accent hover:text-accent/80"
                 onClick={retry}
-              >{t('auto.try_again')}</button>
+              >
+                {t('shell.actions.tryAgain')}
+              </button>
             </div>
           </Match>
           <Match when={view().kind === 'items'}>
@@ -182,19 +199,23 @@ export function RecommendedSection() {
               onClick={() => openSettings('Email')}
             >
               <div class="min-w-0 flex-1">
-                <div class="truncate text-sm font-medium text-ink">{t('auto.connect_your_inbox')}</div>
+                <div class="truncate text-sm font-medium text-ink">
+                  {t('shell.home.recommendations.connectInbox')}
+                </div>
                 <div class="truncate text-xs text-ink-muted">
-                  Macro reads & triages your email in seconds
+                  {t('shell.home.recommendations.connectInboxDescription')}
                 </div>
               </div>
               <span class="flex shrink-0 items-center gap-2 text-sm text-accent">
-                <span class="size-1.5 rounded-full bg-accent" />{t('auto.connect')}</span>
+                <span class="size-1.5 rounded-full bg-accent" />
+                {t('shell.actions.connect')}
+              </span>
               <ChevronRightIcon class="size-4 shrink-0 text-ink-extra-muted" />
             </button>
           </Match>
           <Match when={view().kind === 'caught-up'}>
             <div class="group flex w-full items-center gap-3.5 rounded-xl border border-edge-muted bg-active px-4 py-3 text-left text-sm text-ink-muted">
-              You're all caught up.
+              {t('shell.home.recommendations.caughtUp')}
             </div>
           </Match>
         </Switch>
@@ -231,11 +252,13 @@ export function GettingStartedSection(props: { preferences: HomePreferences }) {
     <Show when={!isMobile() && !props.preferences.isDismissed('setup')}>
       <section>
         <div class="mb-2 flex items-center justify-between px-1">
-          <span class="text-sm text-ink-muted">{t('auto.getting_started')}</span>
+          <span class="text-sm text-ink-muted">
+            {t('shell.gettingStarted.title')}
+          </span>
           <button
             type="button"
             class="rounded-md p-1 text-ink-extra-muted transition-colors hover:bg-hover hover:text-ink-muted"
-            aria-label={t('auto.dismiss_getting_started')}
+            aria-label={t('shell.gettingStarted.dismiss')}
             onClick={() => props.preferences.dismiss('setup')}
           >
             <XIcon class="size-3.5" />
@@ -245,8 +268,8 @@ export function GettingStartedSection(props: { preferences: HomePreferences }) {
           <Show when={showConnectRow()}>
             <SetupRow
               icon={<PlusIcon class="size-4" />}
-              title={t('auto.connect_your_tools')}
-              desc="Link your inbox, Linear, Notion, GitHub & more"
+              title={t('shell.gettingStarted.connectToolsTitle')}
+              desc={t('shell.gettingStarted.connectToolsDescription')}
               trailing={
                 <span class="flex items-center gap-2">
                   <span class="text-xs tabular-nums text-ink-extra-muted">
@@ -261,8 +284,8 @@ export function GettingStartedSection(props: { preferences: HomePreferences }) {
           </Show>
           <SetupRow
             icon={<BookOpenIcon class="size-4" />}
-            title={t('auto.learn_the_basics')}
-            desc="Mentions, search, shortcuts & more"
+            title={t('shell.gettingStarted.learnBasicsTitle')}
+            desc={t('shell.gettingStarted.learnBasicsDescription')}
             trailing={
               <ArrowUpRightIcon class="size-4 shrink-0 text-ink-extra-muted" />
             }
@@ -280,6 +303,7 @@ function RecommendedRow(props: {
   onOpen: () => void;
 }) {
   const status = () => STATUS[props.item.action];
+  const statusLabel = () => t(status().labelKey);
   return (
     <div class="group flex w-full items-stretch overflow-hidden rounded-xl border border-edge-muted bg-active transition-colors hover:border-edge">
       <div class="flex min-w-0 flex-1 items-center gap-3.5 px-4 py-3">
@@ -303,9 +327,12 @@ function RecommendedRow(props: {
           type="button"
           class="rounded-lg px-2 py-1.5 text-xs font-medium text-accent transition-colors hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
           onClick={props.onSelect}
-          aria-label={`${status().label} with AI about ${props.item.title}`}
+          aria-label={t('shell.home.recommendations.actionAria', {
+            action: statusLabel(),
+            title: props.item.title,
+          })}
         >
-          {status().label}
+          {statusLabel()}
         </button>
         <button
           type="button"
@@ -314,8 +341,10 @@ function RecommendedRow(props: {
             event.stopPropagation();
             props.onOpen();
           }}
-          aria-label={`Open ${props.item.title}`}
-        >{t('auto.open')}</button>
+          aria-label={t('shell.actions.openNamed', { name: props.item.title })}
+        >
+          {t('shell.actions.open')}
+        </button>
       </div>
     </div>
   );

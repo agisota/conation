@@ -777,14 +777,14 @@ mod tests {
         assert_eq!(args.create.user_id.as_ref(), "macro|owner@example.com");
         assert_eq!(
             args.resolved_attribution(),
-            Attribution::direct(Actor::new_from_bot(bot_id::MACRO_SYSTEM_BOT_ID))
+            Attribution::direct(Actor::new_from_bot(bot_id::CONATION_SYSTEM_BOT_ID))
         );
     }
 
     #[test]
     fn creation_attribution_can_be_set_without_changing_owner() {
         let attribution =
-            Attribution::delegated(Actor::new_from_bot(bot_id::MACRO_SYSTEM_BOT_ID), owner());
+            Attribution::delegated(Actor::new_from_bot(bot_id::CONATION_SYSTEM_BOT_ID), owner());
         let args = NewDocumentMetadata::builder("welcome")
             .attribution(attribution.clone())
             .build()

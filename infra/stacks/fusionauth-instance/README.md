@@ -1,35 +1,40 @@
-# FusionAuth Instance Stack
+# Локальный компонент FusionAuth
 
-This pulumi stack contains everything you need to be able to setup a "macro compliant" fusionauth instance.
+Единственный поддерживаемый способ поднять локальный Conation-стек — из
+корня репозитория:
 
-Supports easy setup for local development.
-
-# Prerequisites
-
-The following are required tools you need to have setup ahead of time:
-
-`docker` and `docker-compose`
-`pulumi`
-`aws-cli`
-`just`
-
-# Usage
-**Important** do not use `macro-inc/` prefix when you make your fusionauth-instance local stack. This is meant to be stored on __your__ pulumi account only (local to you) not on the organization.
-
-## Deploy Local Fusionauth Instance
-
-Make sure you've already created your main **.env** file in the root of the repo via `just get_environment`.
-
-Run `just setup` to setup the local fusionauth instance and get everything ready to be run.
-
-Important Keys:
-
-```
-username: admin@macro.com
-password: macroIsGreat!
-api-key: bf69486b-4733-4954-a44e-2e1b5f2c8a91
+```bash
+just stack up
 ```
 
-# TODO
-- [ ] configure idps
-- [ ] sync prod with pulumi stack
+Эта команда запускает `xtask` (`cargo x stack up`). Он одновременно
+генерирует изолированные для инстанса Compose-override, окружение сервисов и
+FusionAuth kickstart в `infra/local/generated/<instance>/kickstart/`. Поэтому
+сервисы и FusionAuth всегда используют одну Conation identity-конфигурацию, а
+старый ручной путь не может прочитать application secret и записать его в
+корневой `.env`.
+
+`docker-compose.yml` в этой директории — только низкоуровневая база, которую
+`xtask` дополняет сгенерированным override. Не запускайте его напрямую:
+базовый файл намеренно не содержит kickstart, API-ключей, JWT-ключей, клиента
+OAuth или учётной записи администратора. Без override он не является
+настроенным продуктовым контуром.
+
+Устаревшие recipes именно из этого nested justfile (например,
+`just --justfile infra/stacks/fusionauth-instance/justfile setup`, `start`,
+`import_dev` и `insert_local_fusionauth_variables`) специально завершаются с
+ошибкой и указывают на `just stack up`. Это не относится к `just setup` в
+корне репозитория: root recipe использует новый stack flow.
+
+## Границы Pulumi
+
+Файлы `Pulumi.dev.yaml`, `Pulumi.prod.yaml` и TypeScript-источник рядом с ними
+относятся к прежней удалённой инфраструктуре Macro и сохранены только для
+аудита и планируемой миграции. Они **не** описывают развёртывание Conation и
+не должны применяться (`pulumi up`) для локальной разработки или production.
+Для production потребуется отдельный Conation tenant, DNS, OAuth-клиенты,
+секреты и управляемая миграция; повторное использование старых идентификаторов
+или секретов недопустимо.
+
+Локальный passwordless-вход создаёт пользователя по требованию. Статического
+администратора и статического пароля в репозитории больше нет.

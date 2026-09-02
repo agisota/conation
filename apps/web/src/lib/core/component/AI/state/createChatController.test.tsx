@@ -10,6 +10,7 @@ import {
   type TModel,
 } from '@core/component/AI/constant';
 import type { ChatMessageWithAttachments } from '@core/component/AI/types';
+import { t } from '@core/i18n';
 import { createRoot, createSignal } from 'solid-js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -79,7 +80,7 @@ describe('createChatController: provider-failure toast', () => {
 
     const actions = lastToastActions();
     expect(actions).toBeDefined();
-    expect(actions![0].label).toBe('Switch model');
+    expect(actions![0].label).toBe(t('ai.actions.switchModel'));
 
     // Clicking the button invokes the supplied switch handler.
     actions![0].onClick();
@@ -90,7 +91,7 @@ describe('createChatController: provider-failure toast', () => {
   it('the switch action swaps the active model to a different provider', () => {
     // Mirror exactly how Chat.tsx wires onSwitchModel: the chat's model signal
     // is the single source of truth, swapped via alternateProviderModel against
-    // the user's accessible (paid) models.
+    // the universal Conation model catalog.
     const [model, setModel] = createSignal<TModel>(Model.opus5);
     const onSwitchModel = () => {
       const alt = alternateProviderModel(model(), {
@@ -106,7 +107,7 @@ describe('createChatController: provider-failure toast', () => {
 
     // After clicking, the active model is from a different provider.
     expect(MODEL_PROVIDER[model()]).not.toBe('anthropic');
-    expect(MODEL_PROVIDER[model()]).toBe('openai');
+    expect(MODEL_PROVIDER[model()]).toBe('rox');
     dispose();
   });
 
@@ -130,7 +131,7 @@ describe('createChatController: provider-failure toast', () => {
 
     const [message] = mocks.failure.mock.calls.at(-1)!;
     expect(lastToastActions()).toBeUndefined(); // no dead button
-    expect(String(message)).toMatch(/try again later/i);
+    expect(message).toBe(t('ai.errors.providerUnavailableRetryLater'));
     dispose();
   });
 
@@ -139,7 +140,7 @@ describe('createChatController: provider-failure toast', () => {
       onSwitchModel: () => {},
       hasAlternateModel: () => true,
     });
-    expect(lastToastActions()?.[0].label).toBe('Switch model');
+    expect(lastToastActions()?.[0].label).toBe(t('ai.actions.switchModel'));
     dispose();
   });
 });

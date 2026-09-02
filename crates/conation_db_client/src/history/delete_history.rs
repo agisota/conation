@@ -27,7 +27,7 @@ mod tests {
 
     #[sqlx::test(fixtures(path = "../../fixtures", scripts("basic_user_history")))]
     async fn test_delete_user_history(pool: Pool<Postgres>) {
-        delete_user_history(&pool, "macro|user@user.com", "document-one", "document")
+        delete_user_history(&pool, "conation|user@user.com", "document-one", "document")
             .await
             .unwrap();
 
@@ -35,7 +35,7 @@ mod tests {
             r#"
             SELECT "itemId" as item_id FROM "UserHistory" WHERE "userId" = $1 AND "itemId" = $2
             "#,
-            "macro|user@user.com",
+            "conation|user@user.com",
             "document-one"
         )
         .fetch_one(&pool.clone())

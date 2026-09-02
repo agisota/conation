@@ -1,5 +1,4 @@
 import type { Location } from '@solidjs/router';
-import { t } from '@app/lib/i18n';
 import type { Mutex } from 'async-mutex';
 import {
   type Accessor,
@@ -51,7 +50,7 @@ function getBlockDefinition(type: BlockName) {
 }
 
 type BlockMap = Record<string, Block>;
-type BlockMethodCaller<T> = () =>Promise<T>;
+type BlockMethodCaller<T> = () => Promise<T>;
 
 /**
  * A method on a block exposable to other blocks via the [BlockOrchestrator]
@@ -247,10 +246,10 @@ export type BlockInstanceHandle = {
 type BlockHandle<S> = {
   block: Block;
   isMethodAvailable: (methodName: string) => boolean;
-  awaitMethodAvailable: (methodName: string, timeout?: number) =>Promise<void>;
+  awaitMethodAvailable: (methodName: string, timeout?: number) => Promise<void>;
 } & {
   [K in keyof S]: S[K] extends (...args: any[]) => any
-    ? (...args: Parameters<S[K]>) =>Promise<Awaited<ReturnType<S[K]>>>
+    ? (...args: Parameters<S[K]>) => Promise<Awaited<ReturnType<S[K]>>>
     : never;
 };
 
@@ -476,7 +475,7 @@ export function createBlockOrchestrator(): BlockOrchestrator {
 }
 
 type MakeOptionalAsyncMethod<T> = {
-  [K in keyof T]: T[K] extends (...args: infer A) =>Promise<infer R>
+  [K in keyof T]: T[K] extends (...args: infer A) => Promise<infer R>
     ? (...args: A) => R | Promise<R>
     : T[K] extends (...args: infer A) => infer R
       ? (...args: A) => R | Promise<R>

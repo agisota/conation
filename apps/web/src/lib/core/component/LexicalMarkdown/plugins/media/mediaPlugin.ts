@@ -1,3 +1,12 @@
+import {
+  $createImageNode,
+  $createVideoNode,
+  $isImageNode,
+  $isVideoNode,
+  type ImageNode,
+  type MediaType,
+  type VideoNode,
+} from '@conation/lexical-core';
 import { blockNameToFileExtensionSet } from '@core/constant/allBlocks';
 import { staticFileIdEndpoint } from '@core/constant/servers';
 import { heicConversionService } from '@core/heic/service';
@@ -10,17 +19,7 @@ import {
   getUploadFileCacheKey,
   type UploadFile,
 } from '@core/util/uploadFile';
-
 import { mergeRegister } from '@lexical/utils';
-import {
-  $createImageNode,
-  $createVideoNode,
-  $isImageNode,
-  $isVideoNode,
-  type ImageNode,
-  type MediaType,
-  type VideoNode,
-} from '@conation/lexical-core';
 import { fetchBinaryDocumentData } from '@queries/storage/binary-document';
 import { fileExtension } from '@service-storage/util/filename';
 import {

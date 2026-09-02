@@ -10,6 +10,7 @@
  *   team can open it (the link carries only view state, never data).
  */
 
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { useUserId } from '@core/context/user';
 import { throwOnErr } from '@core/util/result';
@@ -117,7 +118,7 @@ export function usePersonalCrmViews() {
     onSuccess: () => invalidate(),
     onError: (error: Error) => {
       console.error('Failed to save view', error);
-      toast.failure('Failed to save view');
+      toast.failure(t('companies.views.saveFailed'));
     },
   }));
 
@@ -133,7 +134,7 @@ export function usePersonalCrmViews() {
     onSuccess: () => invalidate(),
     onError: (error: Error) => {
       console.error('Failed to rename view', error);
-      toast.failure('Failed to rename view');
+      toast.failure(t('companies.views.renameFailed'));
     },
   }));
 
@@ -146,7 +147,7 @@ export function usePersonalCrmViews() {
     onSuccess: () => invalidate(),
     onError: (error: Error) => {
       console.error('Failed to delete view', error);
-      toast.failure('Failed to delete view');
+      toast.failure(t('companies.views.deleteFailed'));
     },
   }));
 
@@ -178,7 +179,7 @@ export function usePersonalCrmViews() {
     onSuccess: () => invalidate(),
     onError: (error: Error) => {
       console.error('Failed to set default view', error);
-      toast.failure('Failed to set default view');
+      toast.failure(t('companies.views.defaultFailed'));
     },
   }));
 
@@ -212,7 +213,7 @@ export function useTeamCrmViews() {
       {
         onError: (error: Error) => {
           console.error('Failed to set default team view', error);
-          toast.failure('Failed to set default team view');
+          toast.failure(t('companies.views.teamDefaultFailed'));
         },
       }
     );
@@ -233,7 +234,7 @@ export function useTeamCrmViews() {
       {
         onError: (error: Error) => {
           console.error('Failed to save team view', error);
-          toast.failure('Failed to save team view');
+          toast.failure(t('companies.views.teamSaveFailed'));
         },
       }
     );
@@ -251,7 +252,7 @@ export function useTeamCrmViews() {
       {
         onError: (error: Error) => {
           console.error('Failed to delete team view', error);
-          toast.failure('Failed to delete team view');
+          toast.failure(t('companies.views.teamDeleteFailed'));
         },
       }
     );

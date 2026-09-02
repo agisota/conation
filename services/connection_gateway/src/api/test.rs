@@ -7,14 +7,12 @@ use axum::{
     http::{Method, Request, StatusCode},
     routing::{get, post},
 };
-use http_body_util::BodyExt;
 use conation_auth::middleware::decode_jwt::JwtValidationArgs;
-#[allow(deprecated)]
-use conation_authorization::LEGACY_DSS_INTERNAL_API_KEY_HEADER;
 use conation_authorization::{
     INTERNAL_API_KEY_HEADER, InternalAuthConfig, InternalOnly, MacroAuthJwtValidator,
     MacroAuthorizationExtractor, MacroAuthorizationServiceImpl, MacroAuthorizationState,
 };
+use http_body_util::BodyExt;
 use serde_json::{Value, json};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tower::ServiceExt;
@@ -27,6 +25,7 @@ use crate::{
 
 const TEST_INTERNAL_API_KEY: &str = "connection-gateway-test-internal-key";
 const WRONG_INTERNAL_API_KEY: &str = "wrong-internal-key";
+const LEGACY_DSS_INTERNAL_API_KEY_HEADER: &str = "x-document-storage-service-auth-key";
 const WEBSOCKET_PATH: &str = "/";
 const UNAUTHORIZED_BODY: &str = r#"{"message":"unauthorized"}"#;
 
@@ -277,22 +276,30 @@ fn find_bytes(haystack: &[u8], needle: &[u8]) -> Option<usize> {
         .position(|window| window == needle)
 }
 
-#[allow(deprecated)]
 #[tokio::test]
-async fn internal_probe_accepts_both_header_conventions_and_rejects_wrong_keys() {
-    for header in [INTERNAL_API_KEY_HEADER, LEGACY_DSS_INTERNAL_API_KEY_HEADER] {
-        let valid_request = Request::get("/internal-auth-probe")
-            .header(header, TEST_INTERNAL_API_KEY)
-            .body(Body::empty())
-            .expect("valid probe request should build");
-        let (status, body) = send(valid_request).await;
-        assert_eq!(status, StatusCode::OK);
-        assert_eq!(body, json!({ "authorized": true }));
+async fn internal_probe_accepts_canonical_header_and_rejects_legacy_headers() {
+    let valid_request = Request::get("/internal-auth-probe")
+        .header(INTERNAL_API_KEY_HEADER, TEST_INTERNAL_API_KEY)
+        .body(Body::empty())
+        .expect("valid probe request should build");
+    let (status, body) = send(valid_request).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body, json!({ "authorized": true }));
 
-        let invalid_request = Request::get("/internal-auth-probe")
-            .header(header, WRONG_INTERNAL_API_KEY)
-            .body(Body::empty())
-            .expect("invalid probe request should build");
-        assert_unauthorized(send(invalid_request).await);
-    }
+    let invalid_request = Request::get("/internal-auth-probe")
+        .header(INTERNAL_API_KEY_HEADER, WRONG_INTERNAL_API_KEY)
+        .body(Body::empty())
+        .expect("invalid probe request should build");
+    assert_unauthorized(send(invalid_request).await);
+
+    let legacy_request = Request::get("/internal-auth-probe")
+        .header(LEGACY_DSS_INTERNAL_API_KEY_HEADER, TEST_INTERNAL_API_KEY)
+        .body(Body::empty())
+        .expect("legacy probe request should build");
+    let (status, body) = send(legacy_request).await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert_eq!(
+        body,
+        json!({ "message": "legacy internal credentials are not supported" })
+    );
 }

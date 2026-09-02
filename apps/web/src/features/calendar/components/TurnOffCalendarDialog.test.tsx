@@ -2,8 +2,8 @@
  * @vitest-environment jsdom
  */
 
+import { setLocale, t } from '@app/lib/i18n';
 import { render, screen } from '@solidjs/testing-library';
-import { t } from '@app/lib/i18n';
 import { QueryClient, QueryClientProvider } from '@tanstack/solid-query';
 import { ok } from 'neverthrow';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -19,7 +19,9 @@ vi.mock('@core/component/Toast/Toast', () => ({
   toast: { success: vi.fn(), failure: vi.fn() },
 }));
 
-vi.mock('@core/context/user', () => ({ useUserId: () => () => 'macro|self' }));
+vi.mock('@core/context/user', () => ({
+  useUserId: () => () => 'conation|self',
+}));
 vi.mock('@queries/calendar/sync', () => ({
   invalidateCalendarViews: vi.fn(),
 }));
@@ -37,6 +39,7 @@ vi.mock('@queries/client', () => ({
 }));
 
 beforeEach(() => {
+  setLocale('en');
   vi.clearAllMocks();
   testQueryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },

@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import type {
   DiscussionComment,
   DiscussionSource,
@@ -124,7 +125,7 @@ export function useCrmDiscussionSource(
         setThreads((prev) => upsertThread(prev, thread));
       } catch (error) {
         console.error('Unable to create CRM comment', error);
-        toast.failure('Could not post comment');
+        toast.failure(t('companies.comments.postFailed'));
       }
     },
     async createReply(threadId, text) {
@@ -140,7 +141,7 @@ export function useCrmDiscussionSource(
         setThreads((prev) => upsertThread(prev, thread));
       } catch (error) {
         console.error('Unable to reply to CRM comment', error);
-        toast.failure('Could not post reply');
+        toast.failure(t('companies.comments.replyFailed'));
       }
     },
     async editComment(comment, text) {
@@ -152,7 +153,7 @@ export function useCrmDiscussionSource(
         replaceComment(updated);
       } catch (error) {
         console.error('Unable to edit CRM comment', error);
-        toast.failure('Could not edit comment');
+        toast.failure(t('companies.comments.editFailed'));
       }
     },
     async deleteComment(comment) {
@@ -176,7 +177,7 @@ export function useCrmDiscussionSource(
         );
       } catch (error) {
         console.error('Unable to delete CRM comment', error);
-        toast.failure('Could not delete comment');
+        toast.failure(t('companies.comments.deleteFailed'));
       }
     },
   };

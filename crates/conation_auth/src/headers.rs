@@ -7,12 +7,15 @@ use axum_extra::{
     extract::CookieJar,
     headers::{Authorization, authorization::Bearer},
 };
-use cookie::Cookie;
 use conation_env::Environment;
+use cookie::Cookie;
 
 use crate::constant::{
-    MACRO_ACCESS_TOKEN_COOKIE, MACRO_REFRESH_TOKEN_COOKIE, MACRO_REFRESH_TOKEN_HEADER,
+    CONATION_ACCESS_TOKEN_COOKIE, CONATION_REFRESH_TOKEN_COOKIE, CONATION_REFRESH_TOKEN_HEADER,
 };
+
+#[cfg(test)]
+mod test;
 
 /// Extracts the access token from a cookie. Returns `UNAUTHORIZED` if the cookie is missing.
 pub struct AccessTokenCookieExtractor(pub Cookie<'static>);
@@ -30,9 +33,9 @@ where
         let jar: CookieJar = parts.extract().await.expect("This extractor is infallible");
         static ACCESS_COOKIE_NAME: LazyLock<String> =
             LazyLock::new(|| match Environment::new_or_prod() {
-                Environment::Production => MACRO_ACCESS_TOKEN_COOKIE.to_string(),
-                Environment::Develop => format!("dev-{MACRO_ACCESS_TOKEN_COOKIE}"),
-                Environment::Local => format!("local-{MACRO_ACCESS_TOKEN_COOKIE}"),
+                Environment::Production => CONATION_ACCESS_TOKEN_COOKIE.to_string(),
+                Environment::Develop => format!("dev-{CONATION_ACCESS_TOKEN_COOKIE}"),
+                Environment::Local => format!("local-{CONATION_ACCESS_TOKEN_COOKIE}"),
             });
 
         match jar.get(&ACCESS_COOKIE_NAME) {
@@ -57,9 +60,9 @@ where
         let jar: CookieJar = parts.extract().await.expect("This extractor is infallible");
         static REFRESH_COOKIE_NAME: LazyLock<String> =
             LazyLock::new(|| match Environment::new_or_prod() {
-                Environment::Production => MACRO_REFRESH_TOKEN_COOKIE.to_string(),
-                Environment::Develop => format!("dev-{MACRO_REFRESH_TOKEN_COOKIE}"),
-                Environment::Local => format!("local-{MACRO_REFRESH_TOKEN_COOKIE}"),
+                Environment::Production => CONATION_REFRESH_TOKEN_COOKIE.to_string(),
+                Environment::Develop => format!("dev-{CONATION_REFRESH_TOKEN_COOKIE}"),
+                Environment::Local => format!("local-{CONATION_REFRESH_TOKEN_COOKIE}"),
             });
 
         match jar.get(&REFRESH_COOKIE_NAME) {
@@ -121,7 +124,7 @@ where
     ) -> Result<Self, Self::Rejection> {
         let Some(header) = parts
             .headers
-            .get(MACRO_REFRESH_TOKEN_HEADER)
+            .get(CONATION_REFRESH_TOKEN_HEADER)
             .and_then(|h| h.to_str().ok())
         else {
             return Err(StatusCode::BAD_REQUEST);

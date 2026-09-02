@@ -44,6 +44,6 @@ according to `tauri.conf.json`.
 Use the helpers in `@core/util/platform` (`isTauri()`, `getPlatform()`,
 `isMobilePlatform()`, etc.) anywhere you need to branch behaviour, register
 extra routes, or mount native-only UI. Pair those checks with the
-`MaybeTauriProvider` from `@macro/tauri` to keep native-specific wiring
+`MaybeTauriProvider` from `@conation/tauri` to keep native-specific wiring
 localized while rendering everything through the shared `src` entry
 point.

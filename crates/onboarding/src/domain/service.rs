@@ -9,11 +9,11 @@
 
 use super::models::{ConnectedServer, OnboardingRow, OnboardingState, OnboardingStatus};
 use super::ports::{OnboardingError, OnboardingRepo, Result};
+use conation_user_id::email::ReadEmailParts;
+use conation_user_id::user_id::MacroUserIdStr;
 use generic_email_domains::is_generic_email_domain;
 use import::domain::models::{ImportSource, Initiator};
 use import::domain::service::ImportService;
-use conation_user_id::email::ReadEmailParts;
-use conation_user_id::user_id::MacroUserIdStr;
 use mcp_client::domain::ports::McpServerStore;
 use std::sync::Arc;
 

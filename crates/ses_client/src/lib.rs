@@ -28,7 +28,8 @@ enum Transport {
 pub struct SesClient {
     transport: Transport,
     invite_email: Option<String>,
-    environment: String,
+    invite_url: String,
+    support_email: String,
 }
 
 #[cfg_attr(test, automock)]
@@ -36,7 +37,7 @@ impl SesClient {
     /// Construct from the environment: route to local SMTP (Mailpit) when
     /// `SMTP_HOST` is set, otherwise SES. The SES client is still passed in (and
     /// kept for the SES path) so callers don't branch.
-    pub fn from_env(inner: ses::Client, environment: &str) -> Self {
+    pub fn from_env(inner: ses::Client, _environment: &str) -> Self {
         let transport = match SmtpHost::new().and_then(|host| host.value().map(str::to_string)) {
             Some(host) if !host.is_empty() => {
                 let port = SmtpPort::new()
@@ -49,7 +50,8 @@ impl SesClient {
         Self {
             transport,
             invite_email: None,
-            environment: environment.to_string(),
+            invite_url: "https://conation.dev/app/?login=true".to_owned(),
+            support_email: "pythia@conation.dev".to_owned(),
         }
     }
 
@@ -59,13 +61,29 @@ impl SesClient {
         self
     }
 
+    /// Sets the browser-facing invitation URL.
+    pub fn invite_url(mut self, invite_url: &str) -> Self {
+        self.invite_url = invite_url.to_owned();
+        self
+    }
+
+    /// Sets the operator-owned support address rendered into invitations.
+    pub fn support_email(mut self, support_email: &str) -> Self {
+        self.support_email = support_email.to_owned();
+        self
+    }
+
     /// Sends an invitation email to the user
     #[tracing::instrument(skip(self))]
     pub async fn invite_user(&self, organization_name: &str, email: &str) -> anyhow::Result<()> {
         let Some(invite_email) = self.invite_email.clone() else {
             return Err(anyhow::anyhow!("invite_email is not set"));
         };
-        let html = invite_user::build_user_invite_message(organization_name, &self.environment);
+        let html = invite_user::build_user_invite_message(
+            organization_name,
+            &self.invite_url,
+            &self.support_email,
+        );
         self.deliver(
             &invite_email,
             email,

@@ -1,0 +1,32 @@
+[
+  {
+    "fusionAuthId": "70000000-0000-4000-8000-000000000001",
+    "email": "pythia@conation.dev",
+    "username": "pythia",
+    "firstName": "Пифия",
+    "lastName": null,
+    "fullName": "Пифия",
+    "role": "Служба поддержки",
+    "avatarPath": "/support-avatars/pythia.svg"
+  },
+  {
+    "fusionAuthId": "70000000-0000-4000-8000-000000000002",
+    "email": "tars@conation.dev",
+    "username": "tars",
+    "firstName": "Тарс",
+    "lastName": null,
+    "fullName": "Тарс",
+    "role": "Технический директор",
+    "avatarPath": "/support-avatars/tars.svg"
+  },
+  {
+    "fusionAuthId": "70000000-0000-4000-8000-000000000003",
+    "email": "ramzan.kadyrov@conation.dev",
+    "username": "ramzan.kadyrov",
+    "firstName": "Рамзан",
+    "lastName": "Кадыров",
+    "fullName": "Рамзан Кадыров",
+    "role": "Генеральный директор",
+    "avatarPath": "/support-avatars/ramzan-kadyrov.svg"
+  }
+]

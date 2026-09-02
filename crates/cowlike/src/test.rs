@@ -1,6 +1,6 @@
 use bot_id::{BotIdStr, cowlike::CowLike};
-use either::Either;
 use conation_user_id::user_id::MacroUserIdStr;
+use either::Either;
 
 #[test]
 fn either_left_bot_id_str_into_owned_and_copied_preserve_contents() {
@@ -18,7 +18,7 @@ fn either_left_bot_id_str_into_owned_and_copied_preserve_contents() {
 }
 
 #[test]
-fn either_right_conation_user_id_str_into_owned_and_copied_preserve_contents() {
+fn either_right_macro_user_id_str_into_owned_and_copied_preserve_contents() {
     let storage = "macro|alice@example.com";
 
     let copied_value: Either<BotIdStr<'_>, MacroUserIdStr<'_>> =

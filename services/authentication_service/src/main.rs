@@ -16,6 +16,13 @@ use channels::{
         pg_channels_repo::PgChannelsRepo, pg_side_effect_context::PgChannelSideEffectContext,
     },
 };
+use conation_auth::middleware::decode_jwt::JwtValidationArgs;
+use conation_authorization::{InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationState};
+use conation_entrypoint::MacroEntrypoint;
+use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
+use conation_service_urls::{
+    AppServiceUrl, ConnectionGatewayUrl, DocumentStorageServiceUrl, EmailServiceUrl,
+};
 use config::{Config, Environment};
 use connection_gateway_client::ConnectionGatewayClient;
 use contacts::{domain::service::SqsContactsIngress, outbound::ingress::SqsContactsQueue};
@@ -33,13 +40,6 @@ use github::{
     },
 };
 use loops_client::LoopsClient;
-use conation_auth::middleware::decode_jwt::JwtValidationArgs;
-use conation_authorization::{InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationState};
-use conation_entrypoint::MacroEntrypoint;
-use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
-use conation_service_urls::{
-    AppServiceUrl, ConnectionGatewayUrl, DocumentStorageServiceUrl, EmailServiceUrl,
-};
 use native_app_service::{
     domain::{models::PlatformData, service::NativeAppServiceImpl},
     outbound::DefaultBundleFetcher,
@@ -69,8 +69,8 @@ use referral::{
 
 use crate::{
     api::context::{
-        ApiContext, AuthorizationService, MacroApiTokenContext, MacroApiTokenExpirySeconds,
-        MacroApiTokenIssuer, MacroApiTokenPrivateSecretKey, StripeWebhookSecretKey,
+        ApiContext, AuthorizationService, ConationApiTokenContext, ConationApiTokenExpirySeconds,
+        ConationApiTokenIssuer, ConationApiTokenPrivateSecretKey, StripeWebhookSecretKey,
     },
     microsoft_token_cipher::{
         EnvelopeMicrosoftTokenCipher, KmsDataKeyProvider, MicrosoftTokenCipher,
@@ -98,9 +98,18 @@ async fn main() -> anyhow::Result<()> {
 
     // Parse our configuration from the environment.
     let config = Config::from_env().context("expected to be able to generate config")?;
+    let mail_identity = config
+        .mail_identity()
+        .context("invalid outbound mail identity configuration")?;
     let microsoft_credentials = config
         .microsoft_credentials()
         .context("invalid Microsoft OAuth configuration")?;
+    let google_credentials = config
+        .google_credentials()
+        .context("invalid Google OAuth configuration")?;
+    let stripe_credentials = config
+        .stripe_credentials()
+        .context("invalid Stripe billing configuration")?;
     let microsoft_token_cipher = microsoft_credentials.as_ref().map(|credentials| {
         Arc::new(EnvelopeMicrosoftTokenCipher::new(KmsDataKeyProvider::new(
             aws_sdk_kms::Client::new(&aws_config),
@@ -145,9 +154,9 @@ async fn main() -> anyhow::Result<()> {
         "initialized db connection"
     );
 
-    // Macro API token
+    // Conation API token
     let conation_api_token_private_key = secretsmanager_client
-        .get_maybe_secret_value(config.environment, MacroApiTokenPrivateSecretKey::new()?)
+        .get_maybe_secret_value(config.environment, ConationApiTokenPrivateSecretKey::new()?)
         .await?;
 
     let fusionauth_api_key = match config.environment {
@@ -168,22 +177,28 @@ async fn main() -> anyhow::Result<()> {
             .to_string(),
     };
 
-    let stripe_client_secret = match config.environment {
-        Environment::Local => config.stripe_secret_key.to_string().clone(),
-        _ => secretsmanager_client
-            .get_secret_value(&config.stripe_secret_key)
-            .await
-            .context("unable to get secret")?
-            .to_string(),
+    let stripe_client_secret = match stripe_credentials.as_ref() {
+        Some(credentials) => match config.environment {
+            Environment::Local => credentials.secret_key.clone(),
+            _ => secretsmanager_client
+                .get_secret_value(&credentials.secret_key)
+                .await
+                .context("unable to get Stripe secret")?
+                .to_string(),
+        },
+        None => "disabled-stripe-client".to_owned(),
     };
 
-    let google_client_secret = match config.environment {
-        Environment::Local => config.google_client_secret_key.to_string().clone(),
-        _ => secretsmanager_client
-            .get_secret_value(&config.google_client_secret_key)
-            .await
-            .context("unable to get google client secret")?
-            .to_string(),
+    let google_client_secret = match google_credentials.as_ref() {
+        Some(credentials) => match config.environment {
+            Environment::Local => credentials.client_secret.clone(),
+            _ => secretsmanager_client
+                .get_secret_value(&credentials.client_secret)
+                .await
+                .context("unable to get Google client secret")?
+                .to_string(),
+        },
+        None => String::new(),
     };
 
     let fusionauth_public_url = config
@@ -197,7 +212,10 @@ async fn main() -> anyhow::Result<()> {
         fusionauth_client_secret,
         config.fusionauth_base_url.to_string().clone(),
         config.fusionauth_oauth_redirect_uri.to_string().clone(),
-        config.google_client_id.to_string().clone(),
+        google_credentials
+            .as_ref()
+            .map(|credentials| credentials.client_id.clone())
+            .unwrap_or_default(),
         google_client_secret,
     )
     .with_public_url(fusionauth_public_url);
@@ -227,13 +245,25 @@ async fn main() -> anyhow::Result<()> {
     tracing::trace!("initialized redis client");
 
     let stripe_client = stripe::Client::new(stripe_client_secret);
-    tracing::trace!("initialized stripe client");
+    tracing::trace!(
+        stripe_enabled = stripe_credentials.is_some(),
+        "initialized stripe client"
+    );
 
     // `from_env` routes to local SMTP (Mailpit) when SMTP_HOST is set, else SES.
+    let app_base_url =
+        api::configured_app_base_url().context("failed to resolve invitation app URL")?;
+    let mut invite_app_url = app_base_url.clone();
+    invite_app_url
+        .query_pairs_mut()
+        .append_pair("login", "true");
     let ses_client = ses_client::Ses::from_env(
         aws_sdk_sesv2::Client::new(&aws_config),
         &config.environment.to_string(),
-    );
+    )
+    .invite_email(&mail_identity.auth_sender_email)
+    .invite_url(invite_app_url.as_str())
+    .support_email(&mail_identity.support_email);
 
     let jwt_args =
         JwtValidationArgs::new_with_secret_manager(config.environment, &secretsmanager_client)
@@ -336,7 +366,10 @@ async fn main() -> anyhow::Result<()> {
     let teams_repo_impl = TeamRepositoryImpl::new(db.clone());
     let customer_repo_impl = CustomerRepositoryImpl::new(
         stripe_client.clone(),
-        config.stripe_price_id.to_string().clone(),
+        stripe_credentials
+            .as_ref()
+            .map(|credentials| credentials.price_id.clone())
+            .unwrap_or_default(),
     );
     let favorites_service = favorites::domain::service::FavoritesServiceImpl::new(
         favorites::outbound::pg_favorites_repo::PgFavoritesRepo::new(db.clone()),
@@ -438,9 +471,13 @@ async fn main() -> anyhow::Result<()> {
             cursor_api_key_cipher,
             conation_cache_client: Arc::new(conation_cache_client),
             stripe_client: Arc::new(stripe_client),
+            stripe_enabled: api::context::StripeBillingEnabled(stripe_credentials.is_some()),
+            google_oauth_enabled: api::context::GoogleOAuthEnabled(google_credentials.is_some()),
             document_storage_service_client: Arc::new(document_storage_service_client),
             email_service_client: Arc::new(email_service_client),
             ses_client: Arc::new(ses_client),
+            mail_identity,
+            app_base_url,
             notification_ingress_service,
             sqs_client,
             environment: config.environment,
@@ -448,13 +485,13 @@ async fn main() -> anyhow::Result<()> {
             calendar_scope_enabled: config.calendar_scope_enabled,
             jwt_args,
             authorization_state,
-            token_context: MacroApiTokenContext {
-                issuer: MacroApiTokenIssuer::new()?,
+            token_context: ConationApiTokenContext {
+                issuer: ConationApiTokenIssuer::new()?,
                 conation_api_token_private_key,
-                expiry_seconds: MacroApiTokenExpirySeconds::new()?
+                expiry_seconds: ConationApiTokenExpirySeconds::new()?
                     .as_ref()
                     .parse()
-                    .context("failed to parse MACRO_API_TOKEN_EXPIRY_SECONDS as usize")?,
+                    .context("failed to parse CONATION_API_TOKEN_EXPIRY_SECONDS as usize")?,
             },
             internal_api_key,
             stripe_webhook_secret,
@@ -482,7 +519,10 @@ async fn main() -> anyhow::Result<()> {
             }),
             loops_client: Arc::new(loops_client),
             analytics_client,
-            stripe_price_id: config.stripe_price_id.to_string(),
+            stripe_price_id: stripe_credentials
+                .as_ref()
+                .map(|credentials| credentials.price_id.clone())
+                .unwrap_or_default(),
         },
         config.port,
     )
@@ -509,4 +549,4 @@ const EVENT_BROKER_DRAIN_TIMEOUT: Duration = Duration::from_secs(10);
 // SAFETY: this is not a secret value
 const IOS_DEVELOPMENT_TEAM_ID: &str = "TY74Q77JBD";
 // SAFETY: this is not a secret value
-const IOS_APP_BUNDLE_ID: &str = "com.macro.app.prod";
+const IOS_APP_BUNDLE_ID: &str = "dev.conation.app";

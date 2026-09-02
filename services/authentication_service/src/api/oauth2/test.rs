@@ -3,11 +3,11 @@ use super::*;
 #[test]
 fn callback_original_url_allows_trusted_destinations() {
     for original_url in [
-        "macro://login",
+        "conation://login",
         "tauri://localhost/app/login",
-        "http://localhost/app/login",
-        "https://dev.macro.com/app/login",
-        "https://macro.com/app/login",
+        "http://localhost:3000/app/login",
+        "https://dev.conation.dev/app/login",
+        "https://conation.dev/app/login",
     ] {
         assert!(
             validate_original_url(Some(original_url)).is_ok(),
@@ -20,6 +20,8 @@ fn callback_original_url_allows_trusted_destinations() {
 fn callback_original_url_rejects_untrusted_destinations() {
     for original_url in [
         "https://evil.example.com/phish",
+        "macro://login",
+        "https://macro.com/phish",
         "https://macro.com.example.com/phish",
         "http://macro.com/phish",
         "javascript:alert('redirected')",

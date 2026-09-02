@@ -1,5 +1,4 @@
 import { NativeCallProvider } from '@channel/Call/native-call-state';
-import { t } from '@app/lib/i18n';
 import { useCallKitSetup } from '@channel/Call/use-callkit';
 import { NativeAppUpdateRequiredDialog } from '@core/mobile/NativeAppUpdateRequiredDialog';
 import { isPlatform, isTauri } from '@core/util/platform';
@@ -52,7 +51,7 @@ const TauriContext = createContext<TauriContextValue | undefined>(undefined);
 const LOADED_BUNDLE_BUILD = (() => {
   if (typeof document === 'undefined') return undefined;
   const value = document
-    .querySelector<HTMLMetaElement>('meta[name="macro-bundle-build"]')
+    .querySelector<HTMLMetaElement>('meta[name="conation-bundle-build"]')
     ?.getAttribute('content');
   if (value === undefined || value === null || !/^\d+$/.test(value)) {
     return undefined;

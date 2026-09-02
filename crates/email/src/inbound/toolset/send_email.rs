@@ -7,8 +7,8 @@ use crate::domain::{
 use ai_toolset::{AsyncTool, RequestContext, ServiceContext, ToolCallError, ToolResult};
 use ai_toolset::{ToolAnnotated, ToolAnnotations};
 use async_trait::async_trait;
-use entity_access::domain::ports::EntityAccessService;
 use conation_user_id::user_id::MacroUserIdStr;
+use entity_access::domain::ports::EntityAccessService;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;

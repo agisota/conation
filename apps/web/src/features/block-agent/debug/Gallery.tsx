@@ -5,7 +5,6 @@
  */
 
 import { StaticMarkdownContext } from '@core/component/LexicalMarkdown/component/core/StaticMarkdown';
-import { t } from '@app/lib/i18n';
 import type {
   FoldedMessage,
   ToolStatus,
@@ -52,7 +51,9 @@ function ReplyToSelectionDemo() {
 
   return (
     <div class="flex flex-col gap-3">
-      <p class="text-xs text-ink-muted">{t('auto.select_any_of_the_message_text')}</p>
+      <p class="text-xs text-ink-muted">
+        Select any of the message text to quote it in the composer.
+      </p>
       <div ref={setContainer} class="relative">
         <Message message={FIXTURE_MESSAGE} />
         <ReplyToSelection
@@ -61,7 +62,7 @@ function ReplyToSelectionDemo() {
         />
       </div>
       <AgentInput
-        placeholder={t('auto.referenced_text_lands_here')}
+        placeholder="Referenced text lands here"
         onSend={(content) => console.info('[gallery] send', content)}
         registerQuoteInsert={(insert) => {
           quoteInsert = insert;
@@ -126,7 +127,7 @@ const FIXTURE_MESSAGE: FoldedMessage = {
       rawInput: null,
       rawOutput: null,
       id: 'demo-search',
-      label: t('common.search'),
+      label: 'Search',
       status: 'completed',
       detail: {
         kind: 'search',
@@ -139,7 +140,7 @@ const FIXTURE_MESSAGE: FoldedMessage = {
       rawInput: null,
       rawOutput: null,
       id: 'demo-edit',
-      label: t('common.edit'),
+      label: 'Edit',
       status: 'completed',
       detail: { kind: 'edit', diffs: [FIXTURE_DIFF] },
     },
@@ -200,18 +201,18 @@ export default function AgentUiGallery() {
 
           <Item label="ToolCard">
             <ToolCard
-              title={t('auto.bash')}
+              title="Bash"
               subtitle="cargo test -p agent_fold"
               status={status()}
             />
             <ToolCard
-              title={t('auto.read')}
+              title="Read"
               subtitle="crates/agent_fold/src/domain/fold.rs"
               args={{ limit: '200' }}
               status="completed"
             />
             <ToolCard
-              title={t('common.edit')}
+              title="Edit"
               subtitle={FIXTURE_DIFF.path}
               trailing={<DiffChanges additions={4} deletions={3} />}
               status="completed"

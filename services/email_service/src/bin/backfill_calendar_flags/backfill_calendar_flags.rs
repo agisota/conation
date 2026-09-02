@@ -19,8 +19,8 @@ mod config;
 mod process;
 
 use anyhow::Context;
-use futures::stream::{self, StreamExt};
 use conation_entrypoint::MacroEntrypoint;
+use futures::stream::{self, StreamExt};
 use sqlx::postgres::PgPoolOptions;
 
 #[tokio::main]
@@ -37,41 +37,41 @@ async fn main() -> anyhow::Result<()> {
         .await
         .context("Could not connect to db")?;
 
-    let conation_ids: Vec<String> = match &config.conation_ids {
+    let macro_ids: Vec<String> = match &config.macro_ids {
         Some(ids) => ids.split(',').map(|id| id.trim().to_string()).collect(),
-        None => process::fetch_all_conation_ids(&db_pool)
+        None => process::fetch_all_macro_ids(&db_pool)
             .await
             .context("Failed to fetch macro IDs")?,
     };
 
-    let total_users = conation_ids.len();
+    let total_users = macro_ids.len();
     println!(
         "Processing {total_users} macro IDs with concurrency {}",
         config.concurrency
     );
 
-    let results: Vec<(String, anyhow::Result<u64>)> = stream::iter(conation_ids)
-        .map(|conation_id| {
+    let results: Vec<(String, anyhow::Result<u64>)> = stream::iter(macro_ids)
+        .map(|macro_id| {
             let db_pool = db_pool.clone();
             async move {
-                let result = process::process_conation_id(&db_pool, &conation_id).await;
-                (conation_id, result)
+                let result = process::process_macro_id(&db_pool, &macro_id).await;
+                (macro_id, result)
             }
         })
         .buffer_unordered(config.concurrency)
         .enumerate()
-        .map(|(index, (conation_id, result))| {
+        .map(|(index, (macro_id, result))| {
             match &result {
                 Ok(flagged) => println!(
-                    "=== Completed {conation_id} ({}/{total_users}): flagged {flagged} threads ===",
+                    "=== Completed {macro_id} ({}/{total_users}): flagged {flagged} threads ===",
                     index + 1
                 ),
                 Err(e) => println!(
-                    "=== Failed {conation_id} ({}/{total_users}): {e:?} ===",
+                    "=== Failed {macro_id} ({}/{total_users}): {e:?} ===",
                     index + 1
                 ),
             }
-            (conation_id, result)
+            (macro_id, result)
         })
         .collect()
         .await;

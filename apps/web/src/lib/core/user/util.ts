@@ -1,5 +1,5 @@
 import { getDisplayName } from './displayName';
-import { tryMacroId } from './macroId';
+import { emailToMacroId, macroIdToEmail, tryMacroId } from './macroId';
 import type { IUser } from './types';
 
 // TODO: consolidate idToEmail, see idToEmail in email.ts
@@ -8,7 +8,8 @@ import type { IUser } from './types';
  * @deprecated Use `macroIdToEmail` with a validated `MacroId` instead.
  */
 export function idToEmail(id: string): string {
-  return id.replace('macro|', '');
+  const userId = tryMacroId(id);
+  return userId ? macroIdToEmail(userId) : id;
 }
 
 /**
@@ -16,7 +17,7 @@ export function idToEmail(id: string): string {
  * @deprecated Use `emailToMacroId` instead for type-safe MacroId creation.
  */
 export function emailToId(email: string): string {
-  return `macro|${email}`;
+  return emailToMacroId(email) ?? email;
 }
 
 export function idToDisplayName(id: string): string {

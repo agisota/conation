@@ -24,10 +24,10 @@
 //! ```
 
 use anyhow::Context as _;
-use kafka_util::{GroupName, KafkaEventConsumer};
 use conation_event_broker::{
     KafkaConsumerAdapter, MacroEvent as _, MacroEventCollection as _, MacroEventConsumerService,
 };
+use kafka_util::{GroupName, KafkaEventConsumer};
 use projects::domain::events::{ProjectMacroEvent, ProjectTopicEvent};
 use rdkafka::consumer::CommitMode;
 use rdkafka::message::Message;

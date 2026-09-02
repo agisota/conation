@@ -14,44 +14,44 @@ fn truncate_preserving_tags_within_limit() {
 
 #[test]
 fn truncate_preserving_tags_with_highlight() {
-    let result = truncate_preserving_tags("say <conation_em>hello</conation_em> world", 20);
-    assert_eq!(result, "say <conation_em>hello</conation_em> world");
+    let result = truncate_preserving_tags("say <macro_em>hello</macro_em> world", 20);
+    assert_eq!(result, "say <macro_em>hello</macro_em> world");
 }
 
 #[test]
 fn truncate_preserving_tags_cuts_after_highlight() {
-    let result = truncate_preserving_tags("say <conation_em>hello</conation_em> world foo bar", 12);
-    assert_eq!(result, "say <conation_em>hello</conation_em> wo...");
+    let result = truncate_preserving_tags("say <macro_em>hello</macro_em> world foo bar", 12);
+    assert_eq!(result, "say <macro_em>hello</macro_em> wo...");
 }
 
 #[test]
 fn truncate_preserving_tags_closes_open_tag() {
-    let result = truncate_preserving_tags("<conation_em>hello world</conation_em>", 7);
-    assert_eq!(result, "<conation_em>hello w</conation_em>...");
+    let result = truncate_preserving_tags("<macro_em>hello world</macro_em>", 7);
+    assert_eq!(result, "<macro_em>hello w</macro_em>...");
 }
 
 #[test]
 fn truncate_preserving_tags_excludes_tags_from_count() {
-    let input = "a<conation_em>b</conation_em>c";
+    let input = "a<macro_em>b</macro_em>c";
     let result = truncate_preserving_tags(input, 3);
-    assert_eq!(result, "a<conation_em>b</conation_em>c");
+    assert_eq!(result, "a<macro_em>b</macro_em>c");
 }
 
 #[test]
 fn window_highlight_near_start() {
-    let input = "say <conation_em>hello</conation_em> world";
+    let input = "say <macro_em>hello</macro_em> world";
     let result = window_around_highlight(input, 300);
-    assert_eq!(result, "say <conation_em>hello</conation_em> world");
+    assert_eq!(result, "say <macro_em>hello</macro_em> world");
 }
 
 #[test]
 fn window_highlight_far_from_start() {
     let padding = "x".repeat(300);
-    let input = format!("{padding} say <conation_em>hello</conation_em> world end");
+    let input = format!("{padding} say <macro_em>hello</macro_em> world end");
     let result = window_around_highlight(&input, 1000);
     assert!(result.starts_with("..."));
-    assert!(result.contains("<conation_em>hello</conation_em>"));
-    let before_tag = result.find("<conation_em>").unwrap();
+    assert!(result.contains("<macro_em>hello</macro_em>"));
+    let before_tag = result.find("<macro_em>").unwrap();
     let visible_before: usize = result[..before_tag]
         .replace(OPEN_TAG, "")
         .replace(CLOSE_TAG, "")
@@ -75,7 +75,7 @@ fn window_no_highlight_tag() {
 #[test]
 fn window_trims_on_word_boundary() {
     let padding = "word ".repeat(100);
-    let input = format!("{padding}<conation_em>match</conation_em> end");
+    let input = format!("{padding}<macro_em>match</macro_em> end");
     let result = window_around_highlight(&input, 1000);
     assert!(result.starts_with("..."));
     let after_ellipsis = &result[3..];
@@ -94,23 +94,23 @@ fn normalize_strips_invisible_and_collapses_whitespace() {
 
 #[test]
 fn normalize_preserves_highlight_tags() {
-    let input = "say <conation_em>hello</conation_em> world";
+    let input = "say <macro_em>hello</macro_em> world";
     let result = normalize_highlight_fragment(input);
-    assert_eq!(result, "say <conation_em>hello</conation_em> world");
+    assert_eq!(result, "say <macro_em>hello</macro_em> world");
 }
 
 #[test]
 fn normalize_windows_when_highlight_is_far() {
     let padding = "a ".repeat(200);
-    let input = format!("{padding}<conation_em>match</conation_em> end");
+    let input = format!("{padding}<macro_em>match</macro_em> end");
     let result = normalize_highlight_fragment(&input);
-    assert!(result.contains("<conation_em>match</conation_em>"));
+    assert!(result.contains("<macro_em>match</macro_em>"));
     assert!(result.starts_with("..."));
 }
 
 #[test]
 fn find_tag_aware_byte_offset_skips_tags() {
-    let s = "ab<conation_em>cd</conation_em>ef";
+    let s = "ab<macro_em>cd</macro_em>ef";
     let offset = find_tag_aware_byte_offset(s, 4);
     let remaining = &s[offset..];
     assert_eq!(remaining.replace(OPEN_TAG, "").replace(CLOSE_TAG, ""), "ef");
@@ -132,48 +132,48 @@ fn find_tag_aware_byte_offset_handles_utf8() {
 
 #[test]
 fn merge_highlights_across_at_joins_email_tokens() {
-    let input = "sent to <conation_em>hutch</conation_em>@<conation_em>macro.com</conation_em> today";
+    let input = "sent to <macro_em>hutch</macro_em>@<macro_em>macro.com</macro_em> today";
     let result = merge_highlights_across_at(input);
-    assert_eq!(result, "sent to <conation_em>hutch@macro.com</conation_em> today");
+    assert_eq!(result, "sent to <macro_em>hutch@macro.com</macro_em> today");
 }
 
 #[test]
 fn merge_highlights_across_at_leaves_standalone_highlights() {
-    let input = "say <conation_em>hello</conation_em> world";
+    let input = "say <macro_em>hello</macro_em> world";
     let result = merge_highlights_across_at(input);
-    assert_eq!(result, "say <conation_em>hello</conation_em> world");
+    assert_eq!(result, "say <macro_em>hello</macro_em> world");
 }
 
 #[test]
 fn merge_highlights_across_at_leaves_plain_at_symbol() {
-    let input = "contact us @ <conation_em>macro</conation_em>";
+    let input = "contact us @ <macro_em>macro</macro_em>";
     let result = merge_highlights_across_at(input);
-    assert_eq!(result, "contact us @ <conation_em>macro</conation_em>");
+    assert_eq!(result, "contact us @ <macro_em>macro</macro_em>");
 }
 
 #[test]
 fn merge_highlights_across_at_multiple_pairs() {
-    let input = "<conation_em>a</conation_em>@<conation_em>b.com</conation_em> and <conation_em>c</conation_em>@<conation_em>d.org</conation_em>";
+    let input = "<macro_em>a</macro_em>@<macro_em>b.com</macro_em> and <macro_em>c</macro_em>@<macro_em>d.org</macro_em>";
     let result = merge_highlights_across_at(input);
     assert_eq!(
         result,
-        "<conation_em>a@b.com</conation_em> and <conation_em>c@d.org</conation_em>"
+        "<macro_em>a@b.com</macro_em> and <macro_em>c@d.org</macro_em>"
     );
 }
 
 #[test]
 fn normalize_merges_email_highlight_tokens() {
-    let input = "hi <conation_em>hutch</conation_em>@<conation_em>macro.com</conation_em> thanks";
+    let input = "hi <macro_em>hutch</macro_em>@<macro_em>macro.com</macro_em> thanks";
     let result = normalize_highlight_fragment(input);
-    assert_eq!(result, "hi <conation_em>hutch@macro.com</conation_em> thanks");
+    assert_eq!(result, "hi <macro_em>hutch@macro.com</macro_em> thanks");
 }
 
 #[test]
 fn window_real_world_email_fragment() {
-    let input = "Hi Gabriel, We often need to copy email to other tools — our notes, todo list, or Slack. In Gmail and Outlook, this is error prone and tedious. In Superhuman Mail, it is accurate and instantaneous: Hit Cmd+C (Mac) or Ctrl+C (Windows) to copy the current message. Hit it again to copy the conversation. Hit Cmd+V (Mac) or Ctrl+V (Windows) to paste wherever you want. You can even paste straight into Superhuman Mail! No selecting, no dragging, no fuss. I'd love to hear what you think: please reply and say <conation_em>hello</conation_em> :) Speak soon, Rahul";
+    let input = "Hi Gabriel, We often need to copy email to other tools — our notes, todo list, or Slack. In Gmail and Outlook, this is error prone and tedious. In Superhuman Mail, it is accurate and instantaneous: Hit Cmd+C (Mac) or Ctrl+C (Windows) to copy the current message. Hit it again to copy the conversation. Hit Cmd+V (Mac) or Ctrl+V (Windows) to paste wherever you want. You can even paste straight into Superhuman Mail! No selecting, no dragging, no fuss. I'd love to hear what you think: please reply and say <macro_em>hello</macro_em> :) Speak soon, Rahul";
     let result = window_around_highlight(input, MAX_VISIBLE_FRAGMENT_CHARS);
-    assert!(result.contains("<conation_em>hello</conation_em>"));
-    let tag_pos = result.find("<conation_em>").unwrap();
+    assert!(result.contains("<macro_em>hello</macro_em>"));
+    let tag_pos = result.find("<macro_em>").unwrap();
     let visible_before: usize = result[..tag_pos]
         .replace(OPEN_TAG, "")
         .replace(CLOSE_TAG, "")

@@ -12,8 +12,8 @@ use agent_runtime_protocol::domain::ports::{
 };
 use agent_runtime_protocol::domain::schema::v0::ToRuntimeMessage;
 use agent_runtime_protocol::domain::schema::v0::{AcpMessage, ToServerMessage};
-use entity_access::domain::models::{EntityAccessReceipt, EntityType, OwnerAccessLevel};
 use conation_uuid::Uuid;
+use entity_access::domain::models::{EntityAccessReceipt, EntityType, OwnerAccessLevel};
 use std::sync::{Arc, Mutex};
 use tokio::sync::Notify;
 use tracing::instrument::WithSubscriber as _;

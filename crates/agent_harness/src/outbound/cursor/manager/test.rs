@@ -11,8 +11,8 @@ use agent_session::domain::model::{
     SandboxSize, SessionBot, SessionStatus,
 };
 use bot_id::BotId;
-use cursor_api_key::cipher::CursorApiKey;
 use conation_user_id::user_id::MacroUserIdStr;
+use cursor_api_key::cipher::CursorApiKey;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
@@ -64,7 +64,7 @@ impl AgentSessionRepo for StubSessions {
     async fn get(&self, id: AgentSessionId) -> SessionResult<AgentSession> {
         Ok(AgentSession {
             id,
-            owner_id: MacroUserIdStr::try_from("macro|owner@macro.com".to_owned())
+            owner_id: MacroUserIdStr::try_from("conation|owner@conation.dev".to_owned())
                 .expect("valid user id"),
             thread_id: None,
             thread_channel_id: None,
@@ -338,7 +338,7 @@ fn manager_with_keys(
     sessions: StubSessions,
     keys: StubKeys,
 ) -> CursorContainerManager<StubSessions, StubKeys> {
-    let repo = CursorRepoUrl::parse("https://github.com/macro-inc/macro").expect("valid repo");
+    let repo = CursorRepoUrl::parse("https://github.com/agisota/conation").expect("valid repo");
     CursorContainerManager::new(keys, base_url, repo, sessions)
 }
 
@@ -536,8 +536,8 @@ async fn session_new_mcp_servers_reach_the_created_agent() {
             "mcpServers":[
                 {
                     "type": "http",
-                    "name": "macro",
-                    "url": "https://egress.test/mcp-macro",
+                    "name": "conation",
+                    "url": "https://egress.test/mcp-conation",
                     "headers": [{"name": "Authorization", "value": "Bearer test-session-token"}],
                 },
                 {
@@ -573,9 +573,9 @@ async fn session_new_mcp_servers_reach_the_created_agent() {
         body["mcpServers"],
         serde_json::json!([
             {
-                "name": "macro",
+                "name": "conation",
                 "type": "http",
-                "url": "https://egress.test/mcp-macro",
+                "url": "https://egress.test/mcp-conation",
                 "headers": { "Authorization": "Bearer test-session-token" },
             },
             {

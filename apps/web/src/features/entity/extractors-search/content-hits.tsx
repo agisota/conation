@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { Show } from 'solid-js';
 import { CollapsibleList } from '../components/CollapsibleList';
 import type { EntityData } from '../types/entity';
@@ -28,7 +29,7 @@ export function ContentHits(props: ExtractorContentHitsProps) {
       <CollapsibleList
         items={contentHits()}
         visibleCount={props.visibleCount ?? 1}
-        expandText={(count) => `Show more [${count}]`}
+        expandText={(count) => t('entity.search.showMore', { count })}
       >
         {(hit, index, count) => (
           <SearchContentHitRow

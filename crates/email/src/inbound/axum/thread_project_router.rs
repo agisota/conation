@@ -1,12 +1,12 @@
 use axum::{
     Json, Router, extract::State, http::StatusCode, response::IntoResponse, routing::patch,
 };
+use conation_authorization::MacroAuthorizationService;
 use entity_access::domain::models::EditAccessLevel;
 use entity_access::domain::ports::EntityAccessService;
 use entity_access::inbound::axum_extractors::{
     ProjectBodyAccessLevelExtractorV2, ThreadAccessLevelExtractor,
 };
-use conation_authorization::MacroAuthorizationService;
 use model_error_response::ErrorResponse;
 use thiserror::Error;
 

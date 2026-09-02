@@ -1,12 +1,12 @@
-import { MACRO_AGENT_BOT_ID } from '@core/constant/macroAgent';
-import { getDisplayName, tryMacroId } from '@core/user';
-import { ThrownResultError } from '@core/util/result';
 import { isAiPeer } from '@conation/collaboration/collab/ai-peer';
 import {
   buildDiffState,
   buildWhoMap,
   diffStates,
 } from '@conation/lexical-core';
+import { CONATION_AI_BOT_ID } from '@core/constant/conationAi';
+import { getDisplayName, tryMacroId } from '@core/user';
+import { ThrownResultError } from '@core/util/result';
 import { useDocumentPeersQuery } from '@queries/sync/document-peers';
 import type { HistorySession, HistoryVersionId } from '@service-sync/client';
 import { syncServiceClient } from '@service-sync/client';
@@ -125,11 +125,11 @@ export function HistoryProvider(props: {
   );
 
   // AI peers are recognizable from the peer id alone (reserved block) and all
-  // collapse into the single Macro identity. Checked before the peer map,
+  // collapse into the single Conation identity. Checked before the peer map,
   // which may attribute them to whoever's token the AI worker connected with.
   const resolvePeerUser = (peers: Map<string, string>, peer: string): string =>
     isAiPeer(BigInt(peer))
-      ? MACRO_AGENT_BOT_ID
+      ? CONATION_AI_BOT_ID
       : (peers.get(peer) ?? 'unknown');
 
   // Non-suspending reads of the loaded doc and peer map. Reading the resource

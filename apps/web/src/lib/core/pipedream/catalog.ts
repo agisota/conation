@@ -1,5 +1,6 @@
 import { pipedreamAppAvailableInEnv } from '@core/component/AI/constant/mcpServers';
 import { toast } from '@core/component/Toast/Toast';
+import { t } from '@core/i18n';
 import {
   connectPipedreamApp,
   usePipedreamCatalogQuery,
@@ -73,10 +74,12 @@ export function createPipedreamCatalogConnect(options: {
       if (outcome === 'connected') {
         options.onConnected?.(entry);
       } else if (outcome === 'unsupported') {
-        toast.failure('Connectors are not available on this deployment');
+        toast.failure(t('core.connectors.unavailable'));
       }
     } catch {
-      toast.failure(`Failed to connect ${entry.display_name}`);
+      toast.failure(
+        t('core.connectors.connectFailed', { name: entry.display_name })
+      );
     } finally {
       setBusy(false);
     }

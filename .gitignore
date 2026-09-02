@@ -31,11 +31,19 @@ run-local.fish
 # Per-instance generated local-stack artifacts (compose override, env, kickstart, Caddyfile).
 infra/local/generated/
 **/target/
+/target
+/previous.md
 **/ai_tools/schemas/
 .pi/outputs/
 .commandcode/
 **/.webhook.json
 /artifacts
+
+# User-supplied brand originals are preserved at the workspace root. Canonical
+# byte-identical masters live under apps/web/public/brand and are tracked.
+/con copy.png
+/cona copy.png
+/conation C copy.png
 
 # Raw SSE captures from CURSOR_ACP_RECORD_DIR; sanitize into
 # crates/cursor_acp/fixtures/real/ before committing one.

@@ -59,14 +59,13 @@ use models_dcs::api::ChatHistoryBatchMessagesRequest;
 use models_permissions::share_permission::channel_share_permission::UpdateOperation;
 use utoipa::OpenApi;
 
-// TODO: update to a real license - I added this bc it's required by orval
 #[derive(OpenApi)]
 #[openapi(
         info(
             title = "Document Cognition Service",
             version = "1.0.0",
-            terms_of_service = "https://macro.com/terms",
-            license(name = "Proprietary", identifier = "Proprietary"),
+            terms_of_service = "https://conation.dev/terms",
+            license(name = "GNU Affero General Public License v3.0", identifier = "AGPL-3.0-only"),
         ),
         paths(
             health::health_handler,

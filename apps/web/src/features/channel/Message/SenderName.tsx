@@ -3,7 +3,7 @@ import { senderFromStorageId } from '@queries/channel/message-sender';
 import type { ApiMessageSender } from '@service-storage/generated/schemas/apiMessageSender';
 import { cn } from '@ui';
 import { Show } from 'solid-js';
-import { MACRO_AI_BOT_ID, MACRO_AI_NAME } from '../macroAi';
+import { CONATION_AI_BOT_ID, CONATION_AI_NAME } from '../conationAi';
 import { useMessage } from './context';
 import type { MessageData } from './types';
 
@@ -20,7 +20,7 @@ function botName(
   const parsed = sender ?? senderFromStorageId(senderId);
   if (parsed.type !== 'bot') return undefined;
   if (parsed.name) return parsed.name;
-  return parsed.id === MACRO_AI_BOT_ID ? MACRO_AI_NAME : 'Bot';
+  return parsed.id === CONATION_AI_BOT_ID ? CONATION_AI_NAME : 'Bot';
 }
 
 export function MessageSenderName(props: SenderNameProps) {

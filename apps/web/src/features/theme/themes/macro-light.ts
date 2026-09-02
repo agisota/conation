@@ -1,8 +1,8 @@
 import type { ThemeV3 } from '../types/themeTypes';
 
-export const macroLightTheme = {
-  id: 'Macro Light',
-  name: 'Macro Light',
+export const conationLightTheme = {
+  id: 'Conation Light',
+  name: 'Conation Light',
   version: 3,
   mode: 'light',
   colorTokens: {

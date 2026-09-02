@@ -33,7 +33,7 @@
         "@fullcalendar/daygrid": "^6.1.21",
         "@fullcalendar/interaction": "^6.1.21",
         "@fullcalendar/timegrid": "^6.1.21",
-        "@inkibra/tauri-plugins": "git+https://github.com/macro-inc/tauri-plugins.git#6ddd6600e20436388f169e936b610fe93944b7b0",
+        "@inkibra/tauri-plugins": "git+https://github.com/inKibra/tauri-plugins.git#6ddd6600e20436388f169e936b610fe93944b7b0",
         "@kobalte/core": "^0.13.11",
         "@leeoniya/ufuzzy": "^1.0.19",
         "@lexical/history": "0.45.0",
@@ -66,6 +66,7 @@
         "@solidjs/router": "^0.15.3",
         "@tailwindcss/vite": "^4.2.4",
         "@tanstack/pacer": "^0.17.3",
+        "@tanstack/query-core": "5.90.2",
         "@tanstack/solid-query": "5.90.3",
         "@tanstack/solid-virtual": "^3.13.13",
         "@tauri-apps/api": "^2.8.0",
@@ -92,6 +93,7 @@
         "emojibase-data": "^17.0.0",
         "emojilib": "^4.0.2",
         "graphql-ws": "^6.1.0",
+        "intl-messageformat": "11.2.14",
         "katex": "^0.16.22",
         "lexical": "0.45.0",
         "libheif-js": "^1.19.8",
@@ -100,7 +102,7 @@
         "loro-crdt": "catalog:",
         "nanoid": "^3.3.7",
         "neverthrow": "^8.2.0",
-        "pdfjs-dist": "github:macro-inc/pdf.js#v2.16.52-web",
+        "pdfjs-dist": "github:mozilla/pdf.js#0265ecba1b16edbaa6a803e9d783cb2fbdea3e21",
         "posthog-js": "^1.387.0",
         "quill": "^2.0.3",
         "short-uuid": "^5.2.0",
@@ -795,6 +797,12 @@
 
     "@fontsource-variable/roboto-mono": ["@fontsource-variable/roboto-mono@5.3.0", "", {}, "sha512-h5r+KY/6qy8JEOj33JgcrFO81YAnvrc1EAwMpl/EPJLb2OIvOy0/jmB5M7qs7x/uXk5JUP5Ux4LrkeOK7faHkQ=="],
 
+    "@formatjs/fast-memoize": ["@formatjs/fast-memoize@3.1.7", "", {}, "sha512-zXfhLpvA6T7+efdt9JLbBwZ00tT7NsBMDVnDu8rpHeNNv8KfRZAMo2gkG0k9lK/Nzc//3kJ9pImsfuJxk3KhUA=="],
+
+    "@formatjs/icu-messageformat-parser": ["@formatjs/icu-messageformat-parser@3.5.17", "", { "dependencies": { "@formatjs/icu-skeleton-parser": "2.1.11" } }, "sha512-cN9jhVqT7u0K9tix43fhjoUwL0nazyW6zsNIXs2QdPADr+nurPfYyssUiMqcSCGlPcCiqnYVxgSn7zBSuI+5Bg=="],
+
+    "@formatjs/icu-skeleton-parser": ["@formatjs/icu-skeleton-parser@2.1.11", "", {}, "sha512-j8cUmOJzVgkHuS0QiQ6ga76UIoLOFSAMWhs7aZJztH3aAdCOAE6vpC8KVvFB4cU10ON0y2/5oOVmPJ43s2lTwA=="],
+
     "@fullcalendar/core": ["@fullcalendar/core@6.1.21", "", { "dependencies": { "preact": "~10.12.1" } }, "sha512-t3u/+sqh3Iq7TWtUnVLcGDUE6OWZh0UD3c04bI/l7lSLAgAKr3kngBmhHiQD1QXpwC8ZN5iNqG7a7gOVixhSKQ=="],
 
     "@fullcalendar/daygrid": ["@fullcalendar/daygrid@6.1.21", "", { "peerDependencies": { "@fullcalendar/core": "~6.1.21" } }, "sha512-QYb1y40RGYLlOxKpYWg8O+7njEnKnFG8Tt7qjnubJGR35s1phQg67E+81y2TyAbbm59p2JFOCXGDk9t6KDujIA=="],
@@ -951,7 +959,7 @@
 
     "@img/sharp-win32-x64": ["@img/sharp-win32-x64@0.34.5", "", { "os": "win32", "cpu": "x64" }, "sha512-+29YMsqY2/9eFEiW93eqWnuLcWcufowXewwSNIT6UwZdUUCrM3oFjMWH/Z6/TMmb4hlFenmfAVbpWeup2jryCw=="],
 
-    "@inkibra/tauri-plugins": ["@inkibra/tauri-plugins@github:macro-inc/tauri-plugins#6ddd660", { "dependencies": { "react": "^18.3.1", "react-dom": "^18.3.1" } }, "macro-inc-tauri-plugins-6ddd660", "sha512-7+0ebEOYqedkOY67Clwu65Np3qJ3aJc/H/NjNxmjgA/7HIu0C+DSoKAArG7HTdTVpdcAtHyhrqsJujdEAyJf6Q=="],
+    "@inkibra/tauri-plugins": ["@inkibra/tauri-plugins@github:inKibra/tauri-plugins#6ddd660", { "dependencies": { "react": "^18.3.1", "react-dom": "^18.3.1" } }, "inKibra-tauri-plugins-6ddd660", "sha512-EroeCXj1hKe3dXf7weEAqWb8jV79Y8jUZmsY4o84LVUeFlXXHjqZSXX0T6c0aWx17B4Lfak1VWdD9dVArK+w9w=="],
 
     "@inquirer/ansi": ["@inquirer/ansi@2.0.7", "", {}, "sha512-3eTuUO1vH2cZm2ZKHeQxnOqlTi9EfZDGgIe3BL3I4u+rJHocr9Fz86M4fjYABPvFnQG/gGK551HqDiIcETwU6Q=="],
 
@@ -2333,6 +2341,8 @@
 
     "internmap": ["internmap@2.0.3", "", {}, "sha512-5Hh7Y1wQbvY5ooGgPbDaL5iYLAPzMTUrjMulskHLH6wnv/A+1q5rgEaiuqEjB+oxGXIVZs1FF+R/KPN3ZSQYYg=="],
 
+    "intl-messageformat": ["intl-messageformat@11.2.14", "", { "dependencies": { "@formatjs/fast-memoize": "3.1.7", "@formatjs/icu-messageformat-parser": "3.5.17" } }, "sha512-9f2VD1HFuxUvMw0RxsaP8WmMns6JRTnsNB/zghTFrp11ZktiXWwVDeZBPQchBKEmo+Gx/ZhxI7Qht7YglFD4PA=="],
+
     "invariant": ["invariant@2.2.4", "", { "dependencies": { "loose-envify": "^1.0.0" } }, "sha512-phJfQVBuaJM5raOpJjSfkiD6BpbCE4Ns//LaXl6wGYtUBY83nWS6Rf9tXm2e8VaK60JEjYldbPif/A2B1C2gNA=="],
 
     "ip-address": ["ip-address@10.2.0", "", {}, "sha512-/+S6j4E9AHvW9SWMSEY9Xfy66O5PWvVEJ08O0y5JGyEKQpojb0K0GKpz/v5HJ/G0vi3D2sjGK78119oXZeE0qA=="],
@@ -2795,7 +2805,7 @@
 
     "pathval": ["pathval@2.0.1", "", {}, "sha512-//nshmD55c46FuFw26xV/xFAaB5HF9Xdap7HJBBnrKdAd6/GxDBaNA1870O79+9ueg61cZLSVc+OaFlfmObYVQ=="],
 
-    "pdfjs-dist": ["pdfjs-dist@github:macro-inc/pdf.js#f9b2ce6", { "dependencies": { "dommatrix": "^1.0.3", "web-streams-polyfill": "^3.2.1" }, "peerDependencies": { "worker-loader": "^3.0.8" }, "optionalPeers": ["worker-loader"] }, "macro-inc-pdf.js-f9b2ce6", "sha512-HDFaPbCxLG2GHpf1smUG97nku5aPGBGaCcIbK05dGdp07TBLUlDcXsM4WcE82mO5W4RBPIBVYobX5N/6M6NFrA=="],
+    "pdfjs-dist": ["pdfjs-dist@github:mozilla/pdf.js#0265ecb", { "dependencies": { "dommatrix": "^1.0.3", "web-streams-polyfill": "^3.2.1" }, "peerDependencies": { "worker-loader": "^3.0.8" }, "optionalPeers": ["worker-loader"] }, "mozilla-pdf.js-0265ecb", "sha512-u17usEn3Muq7cNKMcIBC9AzHwydq4r0ee4qXGJeR+EC8zP85nSkFxdOWLQFU2V21cgjwK2WA1IbmlfQNo8yM+w=="],
 
     "performance-now": ["performance-now@2.1.0", "", {}, "sha512-7EAHlyLHI56VEIdK57uwHdHKIaAGbnXPiw0yWbarQZOKaKpvUIgW0jWRVLiatnM+XXlSwsanIBH/hzGMJulMow=="],
 

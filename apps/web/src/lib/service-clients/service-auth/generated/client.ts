@@ -6,6 +6,8 @@
  */
 import type {
   AppleLoginRequest,
+  ConationApiTokenParams,
+  ConationApiTokenResponse,
   CreateAccountMergeRequest,
   CreateCheckoutSessionV2Request,
   CreateInProgressLinkResponse,
@@ -34,8 +36,6 @@ import type {
   InitOutlookLinkParams,
   InitOutlookLinkResponse,
   InviteToTeamRequest,
-  MacroApiTokenParams,
-  MacroApiTokenResponse,
   PasswordlessCallbackParams,
   PasswordlessRequest,
   PasswordlessStartedResponse,
@@ -88,18 +88,10 @@ export type getCursorApiKeyResponse401 = {
   status: 401;
 };
 
-export type getCursorApiKeyResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
 export type getCursorApiKeyResponseSuccess = getCursorApiKeyResponse200 & {
   headers: Headers;
 };
-export type getCursorApiKeyResponseError = (
-  | getCursorApiKeyResponse401
-  | getCursorApiKeyResponse403
-) & {
+export type getCursorApiKeyResponseError = getCursorApiKeyResponse401 & {
   headers: Headers;
 };
 
@@ -151,18 +143,12 @@ export type putCursorApiKeyResponse401 = {
   status: 401;
 };
 
-export type putCursorApiKeyResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
 export type putCursorApiKeyResponseSuccess = putCursorApiKeyResponse200 & {
   headers: Headers;
 };
 export type putCursorApiKeyResponseError = (
   | putCursorApiKeyResponse400
   | putCursorApiKeyResponse401
-  | putCursorApiKeyResponse403
 ) & {
   headers: Headers;
 };
@@ -215,19 +201,11 @@ export type deleteCursorApiKeyResponse401 = {
   status: 401;
 };
 
-export type deleteCursorApiKeyResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
 export type deleteCursorApiKeyResponseSuccess =
   deleteCursorApiKeyResponse200 & {
     headers: Headers;
   };
-export type deleteCursorApiKeyResponseError = (
-  | deleteCursorApiKeyResponse401
-  | deleteCursorApiKeyResponse403
-) & {
+export type deleteCursorApiKeyResponseError = deleteCursorApiKeyResponse401 & {
   headers: Headers;
 };
 
@@ -275,11 +253,6 @@ export type putCursorDefaultModelResponse401 = {
   status: 401;
 };
 
-export type putCursorDefaultModelResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
 export type putCursorDefaultModelResponse409 = {
   data: ErrorResponse;
   status: 409;
@@ -291,7 +264,6 @@ export type putCursorDefaultModelResponseSuccess =
   };
 export type putCursorDefaultModelResponseError = (
   | putCursorDefaultModelResponse401
-  | putCursorDefaultModelResponse403
   | putCursorDefaultModelResponse409
 ) & {
   headers: Headers;
@@ -346,11 +318,6 @@ export type listCursorModelsResponse401 = {
   status: 401;
 };
 
-export type listCursorModelsResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
 export type listCursorModelsResponse409 = {
   data: ErrorResponse;
   status: 409;
@@ -366,7 +333,6 @@ export type listCursorModelsResponseSuccess = listCursorModelsResponse200 & {
 };
 export type listCursorModelsResponseError = (
   | listCursorModelsResponse401
-  | listCursorModelsResponse403
   | listCursorModelsResponse409
   | listCursorModelsResponse502
 ) & {
@@ -716,42 +682,42 @@ export const healthHandler = async (
 };
 
 /**
- * @summary Generates a macro-api-token using the user's macro-access-token
+ * @summary Generates a Conation API token using the user's access token.
 You can either have your access token in the cookies or in the request
 headers
 Authorization: Bearer <access_token>
-This returns a new macro-api-token
+This returns a new Conation API token.
  */
-export type macroApiTokenResponse200 = {
-  data: MacroApiTokenResponse;
+export type conationApiTokenResponse200 = {
+  data: ConationApiTokenResponse;
   status: 200;
 };
 
-export type macroApiTokenResponse401 = {
+export type conationApiTokenResponse401 = {
   data: string;
   status: 401;
 };
 
-export type macroApiTokenResponse500 = {
+export type conationApiTokenResponse500 = {
   data: string;
   status: 500;
 };
 
-export type macroApiTokenResponseSuccess = macroApiTokenResponse200 & {
+export type conationApiTokenResponseSuccess = conationApiTokenResponse200 & {
   headers: Headers;
 };
-export type macroApiTokenResponseError = (
-  | macroApiTokenResponse401
-  | macroApiTokenResponse500
+export type conationApiTokenResponseError = (
+  | conationApiTokenResponse401
+  | conationApiTokenResponse500
 ) & {
   headers: Headers;
 };
 
-export type macroApiTokenResponse =
-  | macroApiTokenResponseSuccess
-  | macroApiTokenResponseError;
+export type conationApiTokenResponse =
+  | conationApiTokenResponseSuccess
+  | conationApiTokenResponseError;
 
-export const getMacroApiTokenUrl = (params: MacroApiTokenParams) => {
+export const getConationApiTokenUrl = (params?: ConationApiTokenParams) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -763,27 +729,27 @@ export const getMacroApiTokenUrl = (params: MacroApiTokenParams) => {
   const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0
-    ? `/jwt/macro_api_token?${stringifiedParams}`
-    : `/jwt/macro_api_token`;
+    ? `/jwt/conation_api_token?${stringifiedParams}`
+    : `/jwt/conation_api_token`;
 };
 
-export const macroApiToken = async (
-  params: MacroApiTokenParams,
+export const conationApiToken = async (
+  params?: ConationApiTokenParams,
   options?: RequestInit
-): Promise<macroApiTokenResponse> => {
-  const res = await fetch(getMacroApiTokenUrl(params), {
+): Promise<conationApiTokenResponse> => {
+  const res = await fetch(getConationApiTokenUrl(params), {
     ...options,
     method: 'GET',
   });
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: macroApiTokenResponse['data'] = body ? JSON.parse(body) : {};
+  const data: conationApiTokenResponse['data'] = body ? JSON.parse(body) : {};
   return {
     data,
     status: res.status,
     headers: res.headers,
-  } as macroApiTokenResponse;
+  } as conationApiTokenResponse;
 };
 
 /**
@@ -791,7 +757,7 @@ export const macroApiToken = async (
 You can either have your access token and refresh token in the cookies or in the request
 headers
 Authorization: Bearer <access_token>
-x-macro-refresh-token: <refresh_token>
+x-conation-refresh-token: <refresh_token>
 This returns the cookies with the new access and refresh token
  */
 export type refreshResponse200 = {

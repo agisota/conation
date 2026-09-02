@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { TextField } from '@kobalte/core/text-field';
 import MagnifyingGlassIcon from '@phosphor/magnifying-glass.svg';
 import XIcon from '@phosphor/x.svg';
@@ -84,7 +85,7 @@ export function SearchBar(props: SearchBarProps) {
             type="button"
             size="sm"
             square
-            label="Clear search"
+            label={t('shell.actions.clearSearch')}
             class="rounded-lg"
             onPointerDown={(event) => event.preventDefault()}
             onClick={clear}

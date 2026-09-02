@@ -7,7 +7,7 @@ pub struct InteractiveUserExistenceChecker;
 
 impl UserExistenceChecker for InteractiveUserExistenceChecker {
     async fn user_exists<'a>(&self, id: MacroUserIdStr<'a>) -> Result<bool, Report> {
-        let exists = inquire::Confirm::new(&format!("Does user \"{id}\" have a Macro account?"))
+        let exists = inquire::Confirm::new(&format!("Does user \"{id}\" have a Conation account?"))
             .with_default(true)
             .prompt()
             .map_err(|e| rootcause::report!("{e}"))?;

@@ -3,7 +3,7 @@
 //! A bold `[+]` section header, then per-stage lines: an `indicatif` spinner
 //! that clears before its `✓ Done <elapsed>` / `✗ Failed <elapsed>` result is
 //! printed as ordinary scrollback, a captured-output dump on failure, and
-//! respect for `MACRO_LOCAL_VERBOSE`, `MACRO_LOCAL_DRY_RUN`, and `NO_COLOR`.
+//! respect for `CONATION_LOCAL_VERBOSE`, `CONATION_LOCAL_DRY_RUN`, and `NO_COLOR`.
 //!
 //! Only the subprocess capture is hand-rolled, on purpose: stdout and stderr
 //! are drained on dedicated threads so a chatty child (e.g. `cargo zigbuild`)
@@ -113,14 +113,14 @@ impl Stage {
         console::set_colors_enabled(!no_color);
         Stage {
             is_tty,
-            verbose: env_flag("MACRO_LOCAL_VERBOSE"),
-            dry_run: env_flag("MACRO_LOCAL_DRY_RUN"),
+            verbose: env_flag("CONATION_LOCAL_VERBOSE"),
+            dry_run: env_flag("CONATION_LOCAL_DRY_RUN"),
             quiet: false,
         }
     }
 
     /// Like [`Stage::from_env`], plus an explicit `--verbose` flag OR-ed with the
-    /// `MACRO_LOCAL_VERBOSE` env var.
+    /// `CONATION_LOCAL_VERBOSE` env var.
     pub fn from_env_cli(verbose: bool) -> Self {
         let mut s = Self::from_env();
         s.verbose = s.verbose || verbose;

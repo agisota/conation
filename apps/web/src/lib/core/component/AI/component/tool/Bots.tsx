@@ -1,5 +1,5 @@
-import { MintCredential } from '@channel/Bots/MintCredential';
 import { t } from '@app/lib/i18n';
+import { MintCredential } from '@channel/Bots/MintCredential';
 import Key from '@phosphor-icons/core/regular/key.svg';
 import Link from '@phosphor-icons/core/regular/link.svg';
 import List from '@phosphor-icons/core/regular/list.svg';
@@ -117,7 +117,7 @@ const listBotsHandler = createToolRenderer({
         }
       >
         <div class="flex min-w-0 flex-1 items-center justify-between gap-3">
-          <span>{t('auto.list_manageable_bots')}</span>
+          <span>{t('ai.tools.bots.listManageable')}</span>
           <Tool.ResultToggle
             expanded={expanded()}
             onToggle={() => setExpanded((value) => !value)}
@@ -308,7 +308,7 @@ const getBotWebhooksHandler = createToolRenderer({
         }
       >
         <div class="flex min-w-0 flex-1 items-center justify-between gap-3">
-          <span>{t('auto.get_bot_webhooks')}</span>
+          <span>{t('ai.tools.bots.getWebhooks')}</span>
           <Tool.ResultToggle
             expanded={expanded()}
             onToggle={() => setExpanded((value) => !value)}

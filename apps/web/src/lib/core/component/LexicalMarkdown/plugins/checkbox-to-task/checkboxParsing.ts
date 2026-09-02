@@ -1,13 +1,10 @@
-import type { ListItemNode } from '@lexical/list';
-import {
-  $isDateMentionNode,
-  $isUserMentionNode,
-} from '@conation/lexical-core';
+import { $isDateMentionNode, $isUserMentionNode } from '@conation/lexical-core';
 import {
   parseContactMentions,
   parseDocumentMentions,
   parseGroupMentions,
 } from '@conation/lexical-core/utils/parsers';
+import type { ListItemNode } from '@lexical/list';
 import { isValid } from 'date-fns';
 import { $isElementNode, type LexicalNode } from 'lexical';
 import { $elementNodeToMarkdown } from '../../utils';

@@ -3,14 +3,14 @@ use anyhow::Context;
 use crate::MacroCache;
 
 /// Generates the rate limit key for channel invites for a given ip
-conation_rules! conation_passwordless_login_code {
+macro_rules! conation_passwordless_login_code {
     ($email:expr) => {
         format!("rtl_code:{}", $email)
     };
 }
 
 /// Generates the rate limit key for channel invites for a given ip
-conation_rules! conation_passwordless_daily_login_code {
+macro_rules! conation_passwordless_daily_login_code {
     ($email:expr) => {
         format!("rtl_code_daily:{}", $email)
     };

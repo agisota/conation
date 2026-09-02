@@ -1,5 +1,5 @@
+import { getDateLocale, t } from '@app/lib/i18n';
 import { formatDateAndTime } from '@entity';
-import { t } from '@app/lib/i18n';
 import BellSimple from '@phosphor-icons/core/regular/bell-simple.svg';
 import Check from '@phosphor-icons/core/regular/check.svg';
 import Trash from '@phosphor-icons/core/regular/trash.svg';
@@ -19,31 +19,57 @@ type ToolReminder = NamedTool<
   'response'
 >['data']['reminders'][number];
 
-const ENTITY_TYPE_LABELS: Record<ReminderEntityType, string> = {
-  document: 'a document',
-  ai_chat: 'a chat',
-  project: 'a project',
-  email: 'an email thread',
-  channel: 'a channel',
-  call: 'a call',
-  calendar_event: 'a calendar event',
+const ENTITY_TYPE_KEYS: Record<ReminderEntityType, string> = {
+  document: 'ai.tools.reminders.entities.document',
+  ai_chat: 'ai.tools.reminders.entities.chat',
+  project: 'ai.tools.reminders.entities.project',
+  email: 'ai.tools.reminders.entities.email',
+  channel: 'ai.tools.reminders.entities.channel',
+  call: 'ai.tools.reminders.entities.call',
+  calendar_event: 'ai.tools.reminders.entities.calendarEvent',
 };
+
+const entityTypeLabel = (entityType: ReminderEntityType) =>
+  t(ENTITY_TYPE_KEYS[entityType]);
+
+const formatList = (items: string[]) =>
+  new Intl.ListFormat(getDateLocale(), {
+    style: 'long',
+    type: 'conjunction',
+  }).format(items);
 
 /** What the list call asked for, in the same voice as the notification tools. */
 const formatReminderFilters = (filters: ListRemindersTool) => {
   if (filters.reminderIds?.length) {
-    const count = filters.reminderIds.length;
-    return `${count} reminder${count === 1 ? '' : 's'} by id`;
+    return t('ai.tools.reminders.filters.byId', {
+      count: filters.reminderIds.length,
+    });
   }
 
-  const parts = [filters.completed ? 'done' : 'not done'];
+  const parts = [
+    t(
+      filters.completed
+        ? 'ai.tools.reminders.filters.done'
+        : 'ai.tools.reminders.filters.notDone'
+    ),
+  ];
   if (filters.overdue != null) {
-    parts.push(filters.overdue ? 'overdue' : 'upcoming');
+    parts.push(
+      t(
+        filters.overdue
+          ? 'ai.tools.reminders.filters.overdue'
+          : 'ai.tools.reminders.filters.upcoming'
+      )
+    );
   }
 
-  let text = `filtered by ${parts.join(' and ')}`;
+  let text = t('ai.tools.reminders.filters.filteredBy', {
+    filters: formatList(parts),
+  });
   if (filters.entityType) {
-    text += ` for ${ENTITY_TYPE_LABELS[filters.entityType]}`;
+    text += ` ${t('ai.tools.reminders.filters.forEntity', {
+      entity: entityTypeLabel(filters.entityType),
+    })}`;
   }
   return text;
 };
@@ -55,12 +81,21 @@ const formatReminderFilters = (filters: ListRemindersTool) => {
  */
 const formatReminderUpdate = (update: UpdateReminderTool) => {
   const changes: string[] = [];
-  if (update.completed === true) changes.push('mark done');
-  if (update.completed === false) changes.push('reopen');
+  if (update.completed === true)
+    changes.push(t('ai.tools.reminders.update.markDone'));
+  if (update.completed === false)
+    changes.push(t('ai.tools.reminders.update.reopen'));
   if (update.remindAt)
-    changes.push(`move to ${formatDateAndTime(update.remindAt)}`);
-  if (update.description != null) changes.push('reword');
-  return changes.length > 0 ? changes.join(', ') : 'update';
+    changes.push(
+      t('ai.tools.reminders.update.moveTo', {
+        date: formatDateAndTime(update.remindAt),
+      })
+    );
+  if (update.description != null)
+    changes.push(t('ai.tools.reminders.update.reword'));
+  return changes.length > 0
+    ? changes.join(', ')
+    : t('ai.tools.reminders.update.update');
 };
 
 const ReminderList = (props: { reminders: ToolReminder[] }) => (
@@ -80,7 +115,9 @@ const ReminderList = (props: { reminders: ToolReminder[] }) => (
                   'text-ink-muted': reminder.overdue,
                 }}
               >
-                {reminder.overdue ? 'Overdue · ' : ''}
+                {reminder.overdue
+                  ? `${t('ai.tools.reminders.overdue')} · `
+                  : ''}
                 {formatDateAndTime(reminder.nextRunAt)}
               </span>
             </div>
@@ -100,8 +137,7 @@ const listRemindersHandler = createToolRenderer({
     const statusText = () => {
       if (!ctx.response) return undefined;
       const count = reminders().length;
-      if (count === 0) return 'No Results';
-      return `${count} reminder${count === 1 ? '' : 's'}`;
+      return t('ai.tools.reminders.resultCount', { count });
     };
 
     return (
@@ -118,7 +154,7 @@ const listRemindersHandler = createToolRenderer({
       >
         <div class="flex min-w-0 flex-1 flex-col gap-1">
           <div class="flex min-w-0 items-center justify-between gap-3 overflow-hidden">
-            <span class="min-w-0 truncate">{t('auto.read_reminders')}</span>
+            <span class="min-w-0 truncate">{t('ai.tools.reminders.read')}</span>
             <Tool.ResultToggle
               expanded={isExpanded()}
               onToggle={() => setIsExpanded((expanded) => !expanded)}
@@ -147,7 +183,11 @@ const createReminderHandler = createToolRenderer({
       <div class="flex min-w-0 flex-1 flex-col gap-1">
         <div class="flex min-w-0 items-center gap-1.5 overflow-hidden">
           <span class="shrink-0">
-            {ctx.response ? 'Created reminder' : 'Create reminder'}
+            {t(
+              ctx.response
+                ? 'ai.tools.reminders.created'
+                : 'ai.tools.reminders.create'
+            )}
           </span>
           <span class="min-w-0 truncate text-ink">
             {ctx.response?.data.description ?? ctx.tool.data.description}
@@ -158,7 +198,15 @@ const createReminderHandler = createToolRenderer({
             ctx.response?.data.nextRunAt ?? ctx.tool.data.remindAt
           )}
           <Show when={ctx.tool.data.entityType}>
-            {(entityType) => <> · about {ENTITY_TYPE_LABELS[entityType()]}</>}
+            {(entityType) => (
+              <>
+                {' '}
+                ·{' '}
+                {t('ai.tools.reminders.aboutEntity', {
+                  entity: entityTypeLabel(entityType()),
+                })}
+              </>
+            )}
           </Show>
         </div>
       </div>
@@ -178,7 +226,11 @@ const updateReminderHandler = createToolRenderer({
       <div class="flex min-w-0 flex-1 flex-col gap-1">
         <div class="flex min-w-0 items-center gap-1.5 overflow-hidden">
           <span class="shrink-0">
-            {ctx.response ? 'Updated reminder' : 'Update reminder'}
+            {t(
+              ctx.response
+                ? 'ai.tools.reminders.updated'
+                : 'ai.tools.reminders.update.title'
+            )}
           </span>
           <Show when={ctx.response?.data.description}>
             {(description) => (
@@ -189,7 +241,15 @@ const updateReminderHandler = createToolRenderer({
         <div class="min-w-0 truncate text-xs text-ink-placeholder">
           {formatReminderUpdate(ctx.tool.data)}
           <Show when={ctx.response?.data.nextRunAt}>
-            {(nextRunAt) => <> · fires {formatDateAndTime(nextRunAt())}</>}
+            {(nextRunAt) => (
+              <>
+                {' '}
+                ·{' '}
+                {t('ai.tools.reminders.firesAt', {
+                  date: formatDateAndTime(nextRunAt()),
+                })}
+              </>
+            )}
           </Show>
         </div>
       </div>
@@ -201,7 +261,11 @@ const deleteReminderHandler = createToolRenderer({
   name: 'DeleteReminder',
   render: (ctx) => (
     <BaseTool icon={Trash} renderContext={ctx.renderContext} type="call">
-      {ctx.response ? 'Deleted reminder' : 'Delete reminder'}
+      {t(
+        ctx.response
+          ? 'ai.tools.reminders.deleted'
+          : 'ai.tools.reminders.delete'
+      )}
     </BaseTool>
   ),
 });

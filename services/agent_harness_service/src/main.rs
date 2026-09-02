@@ -16,9 +16,9 @@ mod trigger;
 use std::{future::Future, pin::Pin, sync::Arc};
 
 use agent_egress::domain::service::EgressServiceImpl;
+use agent_egress::outbound::conation_mcp::{ConationApiTokenSigner, WithConationMcp};
 use agent_egress::outbound::forwarder::ReqwestForwarder;
 use agent_egress::outbound::github_tokens::GithubAppTokens;
-use agent_egress::outbound::conation_mcp::{MacroApiTokenSigner, WithMacroMcp};
 use agent_egress::outbound::mcp_credentials::PipedreamMcpCredentials;
 use agent_egress::outbound::session_authority::StoredTokenSessionAuthority;
 use agent_fold::domain::service::FoldedMessageService;
@@ -32,8 +32,8 @@ use agent_harness::outbound::channel_prompt_context::ChannelPromptContextAdapter
 use agent_harness::outbound::containers::HarnessContainers;
 use agent_harness::outbound::cursor::{CursorContainerManager, PgCursorApiKeys};
 use agent_harness::outbound::daytona::{
-    AnthropicApiKey as AnthropicApiKeySecret, DaytonaApiKey as DaytonaApiKeySecret,
-    DaytonaContainerManager, DaytonaSettings, Snapshot,
+    DaytonaApiKey as DaytonaApiKeySecret, DaytonaContainerManager, DaytonaSettings,
+    RoxApiKey as RoxApiKeySecret, Snapshot,
 };
 use agent_harness::outbound::egress::EgressProvisioner;
 use agent_harness::outbound::local::{LocalContainerManager, LocalSettings};
@@ -62,17 +62,6 @@ use channels::outbound::contacts_dispatcher::ContactsChannelDispatcher;
 use channels::outbound::notification_sender::NotificationChannelSender;
 use channels::outbound::pg_channels_repo::PgChannelsRepo;
 use channels::outbound::pg_side_effect_context::PgChannelSideEffectContext;
-use config::{Config, Environment};
-use connection_gateway_client::ConnectionGatewayClient;
-use containers::{InMemRuntime, RoutedContainers};
-use cursor_api_key::cipher::{AwsKmsCiphertexts, KmsCursorApiKeyCipher};
-use cursor_cloud_agents::api::CURSOR_API_BASE_URL;
-use cursor_cloud_agents::domain::model::RepoUrl as CursorRepoUrl;
-use github::domain::service::{InstallationTokenConfig, InstallationTokenService};
-use github::outbound::github_sync_client::GithubSyncClientImpl;
-use github::outbound::pg_github_sync_repo::PgGithubSyncRepo;
-use kafka_util::{GroupName, KafkaEventConsumer, consumer_span, record_span_error};
-use lexical_client::LexicalClient;
 use conation_auth::middleware::decode_jwt::JwtValidationArgs;
 use conation_authorization::{
     InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationServiceImpl,
@@ -84,6 +73,17 @@ use conation_event_broker::{
     MacroEventCollection as _, MacroEventConsumerService,
 };
 use conation_service_urls::{ConnectionGatewayUrl, LexicalServiceUrl};
+use config::{Config, Environment};
+use connection_gateway_client::ConnectionGatewayClient;
+use containers::{InMemRuntime, RoutedContainers};
+use cursor_api_key::cipher::{AwsKmsCiphertexts, KmsCursorApiKeyCipher};
+use cursor_cloud_agents::api::CURSOR_API_BASE_URL;
+use cursor_cloud_agents::domain::model::RepoUrl as CursorRepoUrl;
+use github::domain::service::{InstallationTokenConfig, InstallationTokenService};
+use github::outbound::github_sync_client::GithubSyncClientImpl;
+use github::outbound::pg_github_sync_repo::PgGithubSyncRepo;
+use kafka_util::{GroupName, KafkaEventConsumer, consumer_span, record_span_error};
+use lexical_client::LexicalClient;
 use pipedream_mcp::outbound::api::{PipedreamClient, PipedreamConfig};
 use pipedream_mcp::outbound::pg_connection_repo::PgConnectionRepo;
 use rdkafka::consumer::CommitMode;
@@ -144,15 +144,15 @@ async fn run() -> anyhow::Result<()> {
         .await
         .context("failed to resolve agent harness service secrets")?;
     let bot_id = BotId::new_from_uuid(config.harness_bot_id);
-    // The in-process "macro(new)" bot is a compile-time identity, not
-    // configuration: it is always `bot_id::MACRO_NEW_BOT_ID`, so the only real
+    // The in-process "Conation (new)" bot is a compile-time identity, not
+    // configuration: it is always `bot_id::CONATION_NEW_BOT_ID`, so the only real
     // question is whether this environment serves it. Production stays off
     // until its AI tool config lands - `build_tool_service_context_from_env`
     // below is fatal, so turning it on without that config would refuse to
-    // boot. (`@macro` itself is not served here at all: its mentions get the
+    // boot. (`@conation` itself is not served here at all: its mentions get the
     // classic in-channel reply from `document_storage_service`.)
     let inmem_bot = match config.environment {
-        Environment::Local | Environment::Develop => Some(bot_id::MACRO_NEW_BOT_ID),
+        Environment::Local | Environment::Develop => Some(bot_id::CONATION_NEW_BOT_ID),
         Environment::Production => None,
     };
 
@@ -191,16 +191,15 @@ async fn run() -> anyhow::Result<()> {
     // Containers: the sandbox provider (local Docker when a developer has
     // opted in, Daytona otherwise) plus Cursor cloud agents for the `@cursor`
     // bot, routed per session.
-    // The Anthropic key rides into every sandbox's environment; without it the
-    // runtime has no model provider at all (`container/opencode.json` enables
-    // only `anthropic`), so managed sessions would advertise no models and
-    // fail every prompt.
-    if config.anthropic_api_key.trim().is_empty() {
+    // The OmniRoute key rides into every sandbox's environment; the image
+    // enables only the custom `rox` provider, so empty leaves managed prompts
+    // deliberately unarmed rather than selecting an unrelated free provider.
+    if config.rox_api_key.trim().is_empty() {
         tracing::warn!(
-            "ANTHROPIC_API_KEY is unset: managed sandboxes have no model provider; external agent sessions are unaffected"
+            "ROX_API_KEY is unset: managed sandboxes have no model provider; external agent sessions are unaffected"
         );
     }
-    let anthropic_api_key = AnthropicApiKeySecret::new(config.anthropic_api_key.clone());
+    let rox_api_key = RoxApiKeySecret::new(config.rox_api_key.clone());
     let sandbox = if config.dev_dangerous_local_containers {
         if !matches!(config.environment, Environment::Local) {
             anyhow::bail!("DEV_DANGEROUS_LOCAL_CONTAINERS is only allowed when ENVIRONMENT=local");
@@ -215,7 +214,7 @@ async fn run() -> anyhow::Result<()> {
             docker_binary: config.local_container_docker_binary.clone(),
             image: config.local_container_image.clone(),
             network: network.to_owned(),
-            anthropic_api_key: anthropic_api_key.clone(),
+            rox_api_key: rox_api_key.clone(),
         }))
     } else {
         // Credential-less boot is deliberate: external sessions need no
@@ -230,7 +229,7 @@ async fn run() -> anyhow::Result<()> {
             api_url: config.daytona_api_url.clone(),
             api_key: DaytonaApiKeySecret::new(config.daytona_api_key.clone()),
             snapshot: Snapshot::new(config.daytona_snapshot.clone()),
-            anthropic_api_key,
+            rox_api_key,
         }))
     };
     let container_shutdown = sandbox.clone();
@@ -378,7 +377,7 @@ async fn run() -> anyhow::Result<()> {
     }
 
     // MCP connections: the same rows the chat tool path reads, so an app
-    // connected in Macro is an app the sandbox can reach, with nothing to
+    // connected in Conation is an app the sandbox can reach, with nothing to
     // keep in sync. The rows hold no secrets - Pipedream owns the grants.
     let mcp_connections = Arc::new(PgConnectionRepo::new(pool.clone()));
 
@@ -470,24 +469,25 @@ async fn run() -> anyhow::Result<()> {
         config.internal_api_key.clone(),
     ));
 
-    // Every session's MCP servers: Macro's own under the reserved `macro`
-    // slug, then the owner's Pipedream connections. The `macro` credential is
+    // Every session's MCP servers: Conation's own under the reserved
+    // `conation` slug, then the owner's Pipedream connections. The `conation`
+    // credential is
     // signed inline with the same key authentication_service holds; what this
     // process hands out is always single-user and minutes from expiry.
-    let mcp_credentials = WithMacroMcp::new(
+    let mcp_credentials = WithConationMcp::new(
         PipedreamMcpCredentials::new(mcp_connections, pipedream),
-        MacroApiTokenSigner::new(
+        ConationApiTokenSigner::new(
             pool.clone(),
             config.conation_api_token_issuer.as_ref(),
             config.conation_api_token_private_secret_key.as_ref(),
         ),
-        url::Url::parse(&config.conation_mcp_url).context("MACRO_MCP_URL is not a url")?,
+        url::Url::parse(&config.conation_mcp_url).context("CONATION_MCP_URL is not a url")?,
         // The one gate on cleartext: a local stack's mcp-service is dialed
         // across the compose bridge, where TLS would be theater. Everywhere
         // else, an http URL refuses to boot.
         matches!(config.environment, Environment::Local),
     )
-    .context("the macro MCP upstream is misconfigured")?;
+    .context("the Conation MCP upstream is misconfigured")?;
 
     // The egress proxy: one binary today, its own listener from the start.
     let egress = EgressServiceImpl::new(

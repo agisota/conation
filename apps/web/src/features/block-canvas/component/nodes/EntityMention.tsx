@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { useToolManager } from '@block-canvas/signal/toolManager';
 import { useRenderState } from '@block-canvas/store/RenderState';
 import { useSplitLayout } from '@components/app/split-layout/layout';
@@ -52,7 +53,7 @@ function ErrorMessage(props: {
               width={18 * (props.node.width / fileWidth) + 'px'}
               class="mx-1 fill-failure bg-surface rounded-full"
             />
-            Unauthorized: Invalid file permissions
+            {t('canvas.file.unauthorized')}
           </div>
         </Match>
         <Match when={props.error === 'MISSING'}>
@@ -61,7 +62,7 @@ function ErrorMessage(props: {
               width={18 * (props.node.width / fileWidth) + 'px'}
               class="mx-1 fill-ink-extra-muted bg-surface rounded-full"
             />
-            Error: Missing file
+            {t('canvas.file.missing')}
           </div>
         </Match>
         <Match when={props.error === 'INVALID'}>
@@ -70,7 +71,7 @@ function ErrorMessage(props: {
               width={18 * (props.node.width / fileWidth) + 'px'}
               class="mx-1 fill-ink-extra-muted bg-surface rounded-full"
             />
-            Error: Invalid file
+            {t('canvas.file.invalid')}
           </div>
         </Match>
         <Match when={props.error === 'LOADING'}>

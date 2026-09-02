@@ -1,5 +1,5 @@
-import { SYSTEM_PROPERTY_IDS } from '@property/constants';
 import { t } from '@app/lib/i18n';
+import { SYSTEM_PROPERTY_IDS } from '@property/constants';
 import { DataType } from '@service-storage/generated/schemas/dataType';
 import { EntityType } from '@service-storage/generated/schemas/entityType';
 
@@ -11,7 +11,9 @@ import { EntityType } from '@service-storage/generated/schemas/entityType';
 export const COMPANY_GRID_COLUMNS = [
   {
     id: 'stage',
-    label: 'Stage',
+    get label() {
+      return t('soup.fields.stage');
+    },
     defId: SYSTEM_PROPERTY_IDS.STAGE,
     dataType: DataType.SELECT_STRING,
     isMultiSelect: false,
@@ -20,7 +22,9 @@ export const COMPANY_GRID_COLUMNS = [
   },
   {
     id: 'owner',
-    label: t('common.owner'),
+    get label() {
+      return t('common.owner');
+    },
     defId: SYSTEM_PROPERTY_IDS.COMPANY_OWNER,
     dataType: DataType.ENTITY,
     isMultiSelect: false,
@@ -29,7 +33,9 @@ export const COMPANY_GRID_COLUMNS = [
   },
   {
     id: 'revenue',
-    label: 'Revenue',
+    get label() {
+      return t('soup.fields.revenue');
+    },
     defId: SYSTEM_PROPERTY_IDS.REVENUE,
     dataType: DataType.NUMBER,
     isMultiSelect: false,

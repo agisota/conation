@@ -3,10 +3,12 @@
 
 use axum::{Json, extract::State};
 use chrono::{DateTime, Utc};
-use conation_authorization::{MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal};
+use conation_authorization::{
+    MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal,
+};
 
 use crate::domain::{
-    ai_projection_service::{AiProjectionService, requires_professional_features},
+    ai_projection_service::AiProjectionService,
     model::{
         Expiry, ProjectionStatus, RefreshCadence, TargetType, UpsertProjectionError,
         UpsertProjectionParams, UserAiProjection,
@@ -91,7 +93,6 @@ impl From<UserAiProjection> for ProjectionStateResponse {
     responses(
         (status = 200, body = ProjectionStateResponse),
         (status = 400, body = model_error_response::ErrorResponse),
-        (status = 403, body = model_error_response::ErrorResponse),
         (status = 500, body = model_error_response::ErrorResponse),
     ),
 )]
@@ -103,21 +104,10 @@ pub async fn handler<T: AiProjectionService, Auth: MacroAuthorizationService>(
 ) -> Result<Json<ProjectionStateResponse>, UpsertProjectionError> {
     let user = user.authorization.user;
 
-    // Free-tier models are available to everyone; anything else (including
-    // the default smart model when no model is named) is premium-only.
-    if requires_professional_features(req.model.as_deref())
-        && !state
-            .service
-            .has_professional_features(&user.conation_user_id)
-            .await?
-    {
-        return Err(UpsertProjectionError::ProfessionalFeaturesRequired);
-    }
-
     let target_projection = state
         .service
         .upsert_projection(
-            &user.conation_user_id,
+            &user.macro_user_id,
             UpsertProjectionParams {
                 id: req.id,
                 prompt: req.prompt,

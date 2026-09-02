@@ -2,6 +2,7 @@ import { whenSplitManagerReady } from '@app/signal/splitLayout';
 import { registerPushRegistrationLifecycle } from '@core/auth/push-registration-lifecycle';
 import { ENABLE_CALLKIT } from '@core/constant/featureFlags';
 import { useChannelsContext } from '@core/context/channels';
+import { tryMacroId } from '@core/user';
 import { isPlatform, isTauri } from '@core/util/platform';
 import { useUserNamesQuery } from '@queries/auth';
 import { invalidateActiveCallQueries } from '@queries/call/call';
@@ -813,8 +814,7 @@ function uniqueParticipantIds(ids: string[]): string[] {
 function isMacroParticipantIdentity(identity: string): boolean {
   const trimmedIdentity = identity.trim();
   return (
-    normalizeParticipantIdentity(trimmedIdentity).startsWith('macro|') &&
-    trimmedIdentity.includes('@')
+    tryMacroId(normalizeParticipantIdentity(trimmedIdentity)) !== undefined
   );
 }
 

@@ -26,7 +26,7 @@ describe('GraphQL Soup websocket auth', () => {
         'token+/='
       )
     ).toBe(
-      'wss://cloud-storage.macro.com/items/soup/graphql/ws?macro-api-token=token%2B%2F%3D'
+      'wss://cloud-storage.macro.com/items/soup/graphql/ws?conation-api-token=token%2B%2F%3D'
     );
     expect(buildGraphqlSoupWebSocketUrl('http://localhost:8086')).toBe(
       'ws://localhost:8086/items/soup/graphql/ws'
@@ -63,8 +63,8 @@ describe('GraphQL Soup websocket auth', () => {
       refreshCookieAuth,
     });
 
-    await expect(resolveUrl()).resolves.toContain('macro-api-token=first');
-    await expect(resolveUrl()).resolves.toContain('macro-api-token=second');
+    await expect(resolveUrl()).resolves.toContain('conation-api-token=first');
+    await expect(resolveUrl()).resolves.toContain('conation-api-token=second');
     expect(refreshCookieAuth).not.toHaveBeenCalled();
   });
 });

@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { useMaybeBlockId } from '@core/block';
 import { ScopedPortal } from '@core/component/ScopedPortal';
 import { Property } from '@property';
@@ -213,7 +214,7 @@ function KeyPropertiesRow(props: {
                       fallback={
                         <>
                           <Property.Empty
-                            label="None"
+                            label={t('entity.property.none')}
                             class="@max-2xl/u-list:hidden"
                           />
                           <Property.Empty class="hidden @max-2xl/u-list:inline-flex" />

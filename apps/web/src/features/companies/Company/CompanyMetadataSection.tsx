@@ -1,5 +1,5 @@
-import { type CrmCompanyEntity, formatDateAndTime } from '@entity';
 import { t } from '@app/lib/i18n';
+import { type CrmCompanyEntity, formatDateAndTime } from '@entity';
 import { For, type JSX, Show } from 'solid-js';
 
 function Field(props: { label: string; children: JSX.Element }) {
@@ -19,20 +19,24 @@ export function CompanyMetadataSection(props: { company?: CrmCompanyEntity }) {
     >
       {(company) => (
         <div class="flex flex-col gap-3">
-          <Field label="Domains">
+          <Field label={t('companies.fields.domains')}>
             <For
               each={company().domains}
-              fallback={<span class="text-ink-muted">{t('auto.none')}</span>}
+              fallback={
+                <span class="text-ink-muted">{t('companies.common.none')}</span>
+              }
             >
               {(domain) => <div class="truncate">{domain.domain}</div>}
             </For>
           </Field>
           {/* `updatedAt` carries `crm_companies.last_interaction`, which the
               backend keeps fresh from synced workspace emails. */}
-          <Field label="Last interaction">
+          <Field label={t('companies.fields.lastInteraction')}>
             <Show
               when={company().updatedAt}
-              fallback={<span class="text-ink-muted">{t('auto.none')}</span>}
+              fallback={
+                <span class="text-ink-muted">{t('companies.common.none')}</span>
+              }
             >
               {(ts) => <span>{formatDateAndTime(ts())}</span>}
             </Show>

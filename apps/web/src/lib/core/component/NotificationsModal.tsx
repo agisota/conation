@@ -1,5 +1,5 @@
-import { SplitDrawer } from '@components/app/split-layout/components/SplitDrawer';
 import { t } from '@app/lib/i18n';
+import { SplitDrawer } from '@components/app/split-layout/components/SplitDrawer';
 import { useDrawerControl } from '@components/app/split-layout/components/SplitDrawerContext';
 import clickOutside from '@core/directive/clickOutside';
 import type { Entity } from '@core/types';
@@ -37,7 +37,7 @@ function _NotificationsButton(props: {
           drawerControl.isOpen() &&
             'bg-accent/20 hover:bg-accent/30 text-accent'
         )}
-        tooltip="View notifications"
+        tooltip={t('core.notifications.view')}
         onClick={() => {
           props.onOpenChange?.(!drawerControl.isOpen());
           drawerControl.toggle();
@@ -69,8 +69,12 @@ export function NotificationsDrawer(props: {
     () => notifications().filter((n) => !n.viewed_at).length
   );
   const title = () => (
-    <>{t('auto.notifications')}<span class="text-ink-extra-muted">
-        {unreadCount() > 0 ? ` - ${unreadCount()} unread` : ''}
+    <>
+      {t('core.notifications.title')}
+      <span class="text-ink-extra-muted">
+        {unreadCount() > 0
+          ? t('core.notifications.unreadSuffix', { count: unreadCount() })
+          : ''}
       </span>
     </>
   );

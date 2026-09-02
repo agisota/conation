@@ -270,12 +270,16 @@ function SkillsMenuInner(props: SkillsMenuProps) {
             depth={2}
             class="pt-2 pb-1.5 shadow-lg shadow-drop-shadow rounded-xl"
           >
-            <div class="px-3.5 pb-1 text-xs font-medium text-ink-muted">{t('auto.skills')}</div>
+            <div class="px-3.5 pb-1 text-xs font-medium text-ink-muted">
+              {t('editor.skills.title')}
+            </div>
             <Show
               when={skills().length > 0}
               fallback={
                 <div class="px-3.5 pb-1 text-ink-extra-muted">
-                  {searchTerm() ? 'No results' : 'No skills yet'}
+                  {searchTerm()
+                    ? t('editor.skills.noResults')
+                    : t('editor.skills.empty')}
                 </div>
               }
             >
@@ -319,7 +323,9 @@ function SkillsMenuInner(props: SkillsMenuProps) {
                 <div class="mr-2 flex items-center">
                   <PlusIcon class="size-4 text-ink-muted" />
                 </div>
-                <span class="text-ink text-xs sm:text-sm font-medium">{t('auto.new_skill')}</span>
+                <span class="text-ink text-xs sm:text-sm font-medium">
+                  {t('editor.skills.new')}
+                </span>
               </div>
             </div>
           </Surface>

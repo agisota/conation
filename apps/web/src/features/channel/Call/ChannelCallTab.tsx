@@ -1,5 +1,5 @@
-import { useChannelTab } from '@channel/Channel/ChannelTabContext';
 import { t } from '@app/lib/i18n';
+import { useChannelTab } from '@channel/Channel/ChannelTabContext';
 import { UserGroup } from '@core/component/UserGroup';
 import { getDisplayName, tryMacroId } from '@core/user';
 import PhoneIcon from '@icon/wide-call.svg';
@@ -10,33 +10,39 @@ import { CallOverlay } from './CallOverlay';
 import { getCallJoinTab, getCallLeaveTab } from './call-tabs';
 import { useCall } from './use-call';
 
-function ParticipantFirstName(props: { id: string }) {
-  const name = createMemo(() => {
-    const fullName = getDisplayName(tryMacroId(props.id));
-    return fullName.trim().split(/\s+/)[0] || fullName || 'Someone';
-  });
-
-  return <>{name()}</>;
+function participantFirstName(id: string) {
+  const fullName = getDisplayName(tryMacroId(id));
+  return (
+    fullName.trim().split(/\s+/)[0] ||
+    fullName ||
+    t('channel.call.participants.someone')
+  );
 }
 
 function ParticipantNamesLine(props: { ids: string[] }) {
   const count = () => props.ids.length;
   const remaining = () => Math.max(0, count() - 2);
+  const first = () => participantFirstName(props.ids[0]);
+  const second = () => participantFirstName(props.ids[1]);
 
   return (
     <Show when={count() > 0}>
       <p class="max-w-sm text-sm text-ink-muted">
         <Show when={count() === 1}>
-          <ParticipantFirstName id={props.ids[0]} /> is in this call.
+          {t('channel.call.participants.one', { name: first() })}
         </Show>
         <Show when={count() === 2}>
-          <ParticipantFirstName id={props.ids[0]} /> and{' '}
-          <ParticipantFirstName id={props.ids[1]} /> are in this call.
+          {t('channel.call.participants.two', {
+            first: first(),
+            second: second(),
+          })}
         </Show>
         <Show when={count() > 2}>
-          <ParticipantFirstName id={props.ids[0]} />,{' '}
-          <ParticipantFirstName id={props.ids[1]} />, and {remaining()} other
-          {remaining() === 1 ? '' : 's'} are in this call.
+          {t('channel.call.participants.many', {
+            first: first(),
+            second: second(),
+            count: remaining(),
+          })}
         </Show>
       </p>
     </Show>
@@ -70,7 +76,7 @@ function JoinCallEmptyState(props: {
           showTooltip
         />
         <div class="flex flex-col items-center gap-1">
-          <h2 class="text-lg font-semibold">{t('auto.call_in_progress')}</h2>
+          <h2 class="text-lg font-semibold">{t('channel.call.inProgress')}</h2>
           <ParticipantNamesLine ids={participantIds()} />
         </div>
       </div>
@@ -83,7 +89,9 @@ function JoinCallEmptyState(props: {
         disabled={props.isJoining}
       >
         <PhoneIcon class="size-5" />
-        {props.isJoining ? 'Connecting...' : 'Join call'}
+        {props.isJoining
+          ? t('channel.call.connecting')
+          : t('channel.call.join')}
       </Button>
     </div>
   );
@@ -135,7 +143,7 @@ export function ChannelCallTab(props: {
           <p class="text-center">{call.joinError()}</p>
           <Show when={call.isJoining()}>
             <p class="text-xs text-ink-extra-muted animate-pulse">
-              Connecting…
+              {t('channel.call.connecting')}
             </p>
           </Show>
           <button
@@ -143,11 +151,15 @@ export function ChannelCallTab(props: {
             onClick={handleRetry}
             disabled={call.isJoining()}
             class="rounded-lg bg-surface-2 px-4 py-2 text-sm text-ink hover:bg-surface-3 transition-colors disabled:opacity-50 disabled:pointer-events-none"
-          >{t('auto.try_again')}</button>
+          >
+            {t('channel.call.tryAgain')}
+          </button>
         </div>
       </Match>
       <Match when={props.pendingJoin?.()}>
-        <div class="flex size-full items-center justify-center text-ink-muted">{t('auto.joining_call')}</div>
+        <div class="flex size-full items-center justify-center text-ink-muted">
+          {t('channel.call.joining')}
+        </div>
       </Match>
     </Switch>
   );

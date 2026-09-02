@@ -93,16 +93,16 @@ where
             .authorization
             .as_ref()
             .is_some_and(MacroAuthorization::is_internal);
-        let conation_user_id = authorization
+        let macro_user_id = authorization
             .authorization
             .as_ref()
             .and_then(MacroAuthorization::acting_user)
-            .map(|user| user.conation_user_id.clone());
+            .map(|user| user.macro_user_id.clone());
 
         // An internal service with no acting user is trusted: it is the
         // harness and its own machinery, not a person whose grants we could
         // look up.
-        if conation_user_id.is_none() && is_internal_access {
+        if macro_user_id.is_none() && is_internal_access {
             return Ok(Self {
                 entity_access_receipt: EntityAccessReceipt {
                     entity: Entity {
@@ -119,13 +119,13 @@ where
             });
         }
 
-        let Some(conation_user_id) = conation_user_id else {
+        let Some(macro_user_id) = macro_user_id else {
             return Err(ExtractorError::Unauthorized);
         };
 
         let permission = service
             .get_entity_permission(
-                Some(&conation_user_id),
+                Some(&macro_user_id),
                 &session_id,
                 EntityType::AgentSession,
                 None,
@@ -143,7 +143,7 @@ where
                     entity_id: session_id,
                     entity_type: EntityType::AgentSession,
                 },
-                auth: EntityAccessAuth::Authenticated(conation_user_id),
+                auth: EntityAccessAuth::Authenticated(macro_user_id),
                 entity_permission: permission,
                 _marker: PhantomData,
             },

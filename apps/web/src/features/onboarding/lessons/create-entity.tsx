@@ -7,8 +7,8 @@ import {
   createSoupState,
   type SoupState,
 } from '@app/features/next-soup/create-soup-state';
-import { createHotkeyGroup, registerHotkey } from '@core/hotkey/hotkeys';
 import { t } from '@app/lib/i18n';
+import { createHotkeyGroup, registerHotkey } from '@core/hotkey/hotkeys';
 import { AnimatedPlusIcon } from '@icon/wide-plus';
 import { Dialog } from '@kobalte/core/dialog';
 import {
@@ -78,7 +78,7 @@ function CreateEntityContent(props: LessonContentProps) {
     registerHotkey({
       scopeId: props.scopeId,
       hotkey: 'c',
-      description: 'Open Create menu',
+      description: t('onboarding.hotkeys.openCreateMenu'),
       keyDownHandler: () => {
         setLauncherOpen((open) => !open);
         return true;
@@ -110,19 +110,17 @@ function CreateEntityContent(props: LessonContentProps) {
       tabIndex={0}
       class="flex flex-col gap-8 outline-none onboarding-stagger"
     >
-      <p class="mt-2">{t('auto.the')}<strong>{t('auto.create_launcher')}</strong> lets you create Macro Editor
-        quickly, from anywhere.
-      </p>
+      <p class="mt-2">{t('onboarding.lessons.create.description')}</p>
       <div class="flex flex-col gap-3">
         <HotkeyCallout keys={['C']} label="" completed={completed()} />
         <div class="flex items-center gap-3 text-sm text-ink/40">
           <div class="h-px w-8 bg-edge-muted" />
-          or
+          {t('onboarding.callout.or')}
           <div class="h-px flex-1 bg-edge-muted" />
         </div>
         <ClickCallout
           icon={AnimatedPlusIcon}
-          label="in the sidebar"
+          label={t('onboarding.callout.inSidebar')}
           completed={completed()}
         />
       </div>
@@ -219,8 +217,8 @@ function CreateEntityDemo(props: LessonContentProps) {
 
 export const createEntityLesson: LessonDefinition = {
   id: 'create-entity',
-  title: 'Create',
-  subtitle: 'Use the launcher to create docs, emails, and more.',
+  title: 'onboarding.lessons.create.title',
+  subtitle: 'onboarding.lessons.create.subtitle',
   content: CreateEntityContent,
   demo: CreateEntityDemo,
   order: 40,

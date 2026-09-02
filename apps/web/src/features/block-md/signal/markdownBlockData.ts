@@ -1,3 +1,4 @@
+import type { NodeIdMappings } from '@conation/lexical-core/plugins/nodeIdPlugin';
 import { blockDataSignalAs, createBlockStore } from '@core/block';
 import type {
   PluginManager,
@@ -5,7 +6,6 @@ import type {
   SelectionData,
   WordcountStats,
 } from '@core/component/LexicalMarkdown/plugins';
-import type { NodeIdMappings } from '@conation/lexical-core/plugins/nodeIdPlugin';
 import { createCallback } from '@solid-primitives/rootless';
 import type { LexicalEditor } from 'lexical';
 import type { Store } from 'solid-js/store';

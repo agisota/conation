@@ -1,6 +1,6 @@
--- Normalize Macro-bot mention ids to the canonical `bot|<uuid>` principal form.
+-- Normalize Conation-bot mention ids to the canonical `bot|<uuid>` principal form.
 --
--- Historically the frontend surfaced the Macro AI bot through the user-mention
+-- Historically the frontend surfaced the Conation AI bot through the user-mention
 -- typeahead with a bare UUID id (`00000000-0000-0000-0000-00000000a1a1`), so:
 --   * persisted message content contains
 --     `<m-user-mention>{"userId":"<bare uuid>", ...}</m-user-mention>`,
@@ -17,8 +17,8 @@
 -- messages still need a reindex via
 -- `POST /internal/backfill/channels` on search_processing_service.
 
--- 1. Rewrite bare-UUID Macro mention ids inside persisted message content.
---    Only the Macro AI bot was ever produced with a bare UUID (channel bots
+-- 1. Rewrite bare-UUID Conation mention ids inside persisted message content.
+--    Only the Conation AI bot was ever produced with a bare UUID (channel bots
 --    already used `bot|<uuid>` participant ids), so the rewrite is scoped to
 --    its constant id. Whitespace around the JSON colon is tolerated and the
 --    match is case-insensitive; already-normalized `bot|<uuid>` ids do not
@@ -41,9 +41,9 @@ SET entity_id = 'bot|' || entity_id
 WHERE entity_type = 'bot'
   AND entity_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$';
 
--- 3. Retag legacy `user`-tagged Macro mention rows (from clients that predate
---    the bot re-tagging at send time). A bare Macro UUID is never a real user
---    id, so these rows can only be Macro bot mentions.
+-- 3. Retag legacy `user`-tagged Conation mention rows (from clients that predate
+--    the bot re-tagging at send time). A bare Conation UUID is never a real user
+--    id, so these rows can only be Conation bot mentions.
 UPDATE comms_entity_mentions
 SET entity_type = 'bot',
     entity_id   = 'bot|' || entity_id

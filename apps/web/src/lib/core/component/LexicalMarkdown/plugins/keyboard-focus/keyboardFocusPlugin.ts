@@ -1,5 +1,5 @@
-import { mergeRegister } from '@lexical/utils';
 import { $isSelectionInsideCode } from '@conation/lexical-core';
+import { mergeRegister } from '@lexical/utils';
 import {
   $getRoot,
   $getSelection,

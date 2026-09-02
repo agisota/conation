@@ -3,8 +3,8 @@
 //! The environment-aware Kafka producer transport lives in `kafka_util`; this
 //! adapter maps that transport onto the macro event broker's domain port.
 
-use kafka_util::{KafkaEventProducer, KafkaProducerError};
 use conation_event_topics::Topic;
+use kafka_util::{KafkaEventProducer, KafkaProducerError};
 use rdkafka::Message;
 
 use crate::MessageParts;

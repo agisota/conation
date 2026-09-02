@@ -1,7 +1,7 @@
+import type { EditorType } from '@conation/lexical-core';
 import type { PortalScope } from '@core/component/ScopedPortal';
 import type { ChannelWithParticipants } from '@core/user';
 import type { EmailEntity } from '@entity';
-import type { EditorType } from '@conation/lexical-core';
 import type { HistoryItem } from '@queries/history/history';
 import type { LexicalEditor, SerializedEditorState } from 'lexical';
 import type { Store } from 'solid-js/store';

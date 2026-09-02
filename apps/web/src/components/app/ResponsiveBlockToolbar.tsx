@@ -3,8 +3,9 @@ import { isTouchDevice } from '@core/mobile/isTouchDevice';
 import type { EntityData } from '@entity';
 import type { ItemType } from '@service-storage/client';
 import { Button, cn } from '@ui';
-import { type Component, For, type JSX, Show } from 'solid-js';
+import { type Component, createMemo, For, type JSX, Show } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
+import { arrangeResponsiveBlockTools } from './responsiveBlockToolbarTools';
 import { HeaderIsland } from './split-layout/components/HeaderIsland';
 import {
   type FileOperation,
@@ -24,7 +25,11 @@ import type {
   SplitFileMenuActionGroup,
 } from './split-layout/context';
 
+export { BLOCK_TOOL_IDS } from './responsiveBlockToolbarTools';
+
 export type BlockTool = {
+  /** Stable semantic identity; never derive it from the translated label. */
+  id?: string;
   label: string | (() => string);
   icon: Component;
   action: () => void;
@@ -62,10 +67,6 @@ export function ToolButton(props: { tool: BlockTool }) {
       />
     </Button>
   );
-}
-
-function getToolLabel(tool: BlockTool) {
-  return typeof tool.label === 'function' ? tool.label() : tool.label;
 }
 
 export function ResponsivePermissionsBadge() {
@@ -107,31 +108,14 @@ interface BlockToolbarProps {
  * Handles the standard arrangement of file ops and block tools on desktop and mobile. On mobile, they are condensed together into a dropdown menu in the SplitHeader.
  */
 export function ResponsiveBlockToolbar(props: BlockToolbarProps) {
-  const isShareTool = (tool: BlockTool) => getToolLabel(tool) === 'Share';
-  const isHiddenTool = (tool: BlockTool) => {
-    const label = getToolLabel(tool);
-    return (
-      label === 'Chat' ||
-      label === 'Dispatch to Agent' ||
-      label === 'References'
-    );
-  };
-  const visibleTools = () => props.tools.filter((tool) => !isHiddenTool(tool));
-  const headerTools = () => visibleTools().filter(isShareTool);
-  const toolbarTools = () =>
-    visibleTools().filter((tool) => !isShareTool(tool));
+  const arrangedTools = createMemo(() =>
+    arrangeResponsiveBlockTools(props.tools, props.menuTools)
+  );
+  const headerTools = () => arrangedTools().headerTools;
+  const toolbarTools = () => arrangedTools().toolbarTools;
   const activeToolbarTools = () =>
     toolbarTools().filter((tool) => !tool.condition || tool.condition());
-  const fileMenuTools = () => {
-    if (!props.menuTools) return visibleTools();
-
-    const menuToolLabels = new Set(props.menuTools.map(getToolLabel));
-    const missingShareTools = visibleTools().filter(
-      (tool) => isShareTool(tool) && !menuToolLabels.has(getToolLabel(tool))
-    );
-
-    return [...props.menuTools, ...missingShareTools];
-  };
+  const fileMenuTools = () => arrangedTools().fileMenuTools;
 
   return (
     <Show

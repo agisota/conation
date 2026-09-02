@@ -21,7 +21,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ToolTeamMember {
-    /// The user's Macro user id.
+    /// The user's Conation user id.
     pub user_id: String,
     /// The user's workspace permission role (owner/admin/member). An app
     /// permission level, not a job title or evidence of company ownership.

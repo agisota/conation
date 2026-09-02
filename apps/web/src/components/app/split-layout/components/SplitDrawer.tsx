@@ -1,5 +1,5 @@
-import { ScopedPortal } from '@core/component/ScopedPortal';
 import { t } from '@app/lib/i18n';
+import { ScopedPortal } from '@core/component/ScopedPortal';
 import { registerHotkey } from '@core/hotkey/hotkeys';
 import { TOKENS } from '@core/hotkey/tokens';
 import CloseIcon from '@phosphor/x.svg';

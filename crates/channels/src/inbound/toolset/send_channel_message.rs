@@ -16,9 +16,9 @@ use entity_access::domain::ports::EntityAccessService;
     description = "Send or reply to a channel on behalf of the user. Only use this when explicitly asked to send a message"
 )]
 pub struct SendChannelMessage {
-    /// macro markdown
+    /// Conation Markdown.
     #[schemars(
-        description = "Message content in macro markdown format. This uses the same syntax as markdown documents"
+        description = "Message content in Conation Markdown format. This uses the same syntax as Markdown documents."
     )]
     pub content: String,
     /// the channel to send to
@@ -57,9 +57,9 @@ where
             .require_channel_member(&request_context, self.channel_id)
             .await?;
 
-        // AI sends as the Macro agent bot; the triggering user is recorded
+        // AI sends as the Conation system bot; the triggering user is recorded
         // separately so the client can render a "from <user>" pill.
-        let actor = Sender::new_from_bot(bot_id::MACRO_AI_BOT_ID);
+        let actor = Sender::new_from_bot(bot_id::CONATION_AI_BOT_ID);
         let triggered_by = Some(request_context.user_id.as_ref().to_string());
 
         let req = PostMessageRequest {

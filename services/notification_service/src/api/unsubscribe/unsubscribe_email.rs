@@ -5,6 +5,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_user_id::user_id::MacroUserIdStr;
 use model::response::{EmptyResponse, ErrorResponse};
 
 use crate::api::context::{ApiContext, AuthorizationService};
@@ -25,12 +26,20 @@ pub async fn handler(
     State(ctx): State<ApiContext>,
     user: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
 ) -> Result<Response, Response> {
-    let email = user
-        .authorization
-        .user
-        .user_context
-        .user_id
-        .replace("macro|", "");
+    let user_id = &user.authorization.user.user_context.user_id;
+    let email = MacroUserIdStr::parse_from_str(user_id)
+        .map_err(|e| {
+            tracing::error!(error=?e, %user_id, "invalid Conation user id");
+            (
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse {
+                    message: "invalid Conation user id".into(),
+                }),
+            )
+                .into_response()
+        })?
+        .email_str()
+        .to_owned();
     notification_db_client::unsubscribe::email::upsert_email_unsubscribe(&ctx.db, &email)
         .await
         .map_err(|e| {

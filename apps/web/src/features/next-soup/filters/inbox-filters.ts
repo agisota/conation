@@ -4,17 +4,14 @@ import type { EntityData } from '@entity';
 const PRIORITY_LABELS = [
   {
     key: 'CATEGORY_PERSONAL',
-    label: 'Personal',
     defaultValue: true,
   },
   {
     key: 'SENT',
-    label: 'Sent',
     defaultValue: true,
   },
   {
     key: 'IMPORTANT',
-    label: 'Signal',
     defaultValue: false,
   },
 ];
@@ -22,22 +19,18 @@ const PRIORITY_LABELS = [
 const DEPRIORITY_LABELS = [
   {
     key: 'CATEGORY_UPDATES',
-    label: 'Updates',
     defaultValue: true,
   },
   {
     key: 'CATEGORY_PROMOTIONS',
-    label: 'Promotions',
     defaultValue: true,
   },
   {
     key: 'CATEGORY_SOCIAL',
-    label: 'Social',
     defaultValue: true,
   },
   {
     key: 'CATEGORY_FORUMS',
-    label: 'Forums',
     defaultValue: true,
   },
 ];

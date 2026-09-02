@@ -27,7 +27,9 @@ async function migrateDatabase(mf: Miniflare) {
   }
 }
 
-export async function setupMiniflare() {
+export async function setupMiniflare(
+  additionalBindings: Record<string, string | boolean> = {}
+) {
   const mf = new Miniflare({
     d1Databases: {
       USER_PEER_MAPPING: 'user-peer-mapping-database-id',
@@ -58,6 +60,7 @@ export async function setupMiniflare() {
       SPS_API_SECRET_KEY: "local",
       SPS_URL:"http://localhost:8090",
       local:true,
+      ...additionalBindings,
     },
     compatibilityDate: '2025-03-05'
   });

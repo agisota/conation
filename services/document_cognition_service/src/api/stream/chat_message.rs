@@ -24,12 +24,12 @@ use axum::middleware::Next;
 use axum::response::IntoResponse;
 use chat::domain::events::{ChatCreatedMetadata, ChatMacroEvent};
 use chat::domain::ports::MessageService;
-use futures::StreamExt;
 use conation_auth::headers::AccessTokenExtractor;
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_db_client::dcs::create_chat;
 use conation_event_broker::MacroEventBroker;
 use conation_user_id::user_id::MacroUserIdStr;
+use futures::StreamExt;
 use memory::domain::MemoryService;
 use model_entity::{Entity, EntityType};
 use models_permissions::share_permission::SharePermissionV2;
@@ -132,11 +132,10 @@ impl IntoResponse for ChatMessageError {
         (status = 200, description = "Stream initiated successfully", body = SendChatMessageResponse),
         (status = 400, description = "Bad request", body = ChatMessageError),
         (status = 401, description = "Unauthorized"),
-        (status = 402, description = "Payment required — user lacks access to the requested model"),
         (status = 403, description = "Forbidden"),
     )
 )]
-#[tracing::instrument(skip(state, model_access, user, bearer, request), fields(chat_id=?request.chat_id, user_id = %user.authorization.user.conation_user_id, attachment_ids=?request.attachments.as_ref().map(|a| a.iter().map(|att| att.entity_id.as_ref()).collect::<Vec<_>>()).unwrap_or_default()), ret, err)]
+#[tracing::instrument(skip(state, model_access, user, bearer, request), fields(chat_id=?request.chat_id, user_id = %user.authorization.user.macro_user_id, attachment_ids=?request.attachments.as_ref().map(|a| a.iter().map(|att| att.entity_id.as_ref()).collect::<Vec<_>>()).unwrap_or_default()), ret, err)]
 pub async fn send_chat_message(
     State(state): State<ApiContext>,
     model_access: DcsChatModelAccess,
@@ -147,7 +146,7 @@ pub async fn send_chat_message(
     Box::pin(send_chat_message_inner(
         state,
         model_access,
-        user.authorization.user.conation_user_id.clone(),
+        user.authorization.user.macro_user_id.clone(),
         bearer,
         request,
     ))
@@ -174,8 +173,9 @@ async fn send_chat_message_inner(
     // Determine chat_id - use provided or we'll create a new chat
     let requested_chat_id = request.chat_id.clone().unwrap_or_default();
 
-    // The frontend selects the model; enforce the user's entitlement here.
-    // Free users get Haiku; professional users get everything.
+    // The frontend selects the model. Conation's universal model access
+    // service accepts every authenticated user; the check remains as a policy
+    // boundary for future operational allowlists, not billing.
     if !model_access.has_access(&request.model) {
         return Err(ChatMessageError {
             error: format!("No access to model {}", request.model),

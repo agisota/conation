@@ -103,13 +103,6 @@ impl IntoResponse for UpsertProjectionError {
                 }),
             )
                 .into_response(),
-            UpsertProjectionError::ProfessionalFeaturesRequired => (
-                StatusCode::FORBIDDEN,
-                Json(ErrorResponse {
-                    message: "professional features required".into(),
-                }),
-            )
-                .into_response(),
             UpsertProjectionError::AiProjectionError(err) => err.into_response(),
         }
     }

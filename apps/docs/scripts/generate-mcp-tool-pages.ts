@@ -2,6 +2,7 @@ import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { $ } from 'bun';
+import { format } from 'prettier';
 
 type JsonSchema = Record<string, unknown>;
 
@@ -33,8 +34,12 @@ const toolJsonPath = path.join(aiToolsDir, 'schemas', 'tools.json');
 const outputDir = path.join(docsDir, 'AI', 'mcp', 'tools');
 const navOutputPath = path.join(docsDir, 'config', 'tool-pages.json');
 const docsJsonPath = path.join(docsDir, 'docs.json');
-/** Nav group in `docs.json` whose page list this script owns. */
-const NAV_GROUP = 'Tool Reference';
+/** Stable first route in the `docs.json` nav group this script owns. */
+const NAV_ROOT_PAGE = 'AI/mcp/tools/index';
+
+async function formatJson(value: unknown) {
+  return format(JSON.stringify(value), { parser: 'json' });
+}
 
 function slugifyToolName(name: string) {
   return name
@@ -59,7 +64,8 @@ function isNullSchema(schema: JsonSchema) {
 function constUnion(schema: JsonSchema): string[] | undefined {
   if (Array.isArray(schema.enum)) {
     const values = schema.enum.filter((v) => typeof v === 'string') as string[];
-    if (values.length > 0 && values.length === schema.enum.length) return values;
+    if (values.length > 0 && values.length === schema.enum.length)
+      return values;
   }
 
   const variants = (schema.oneOf ?? schema.anyOf) as JsonSchema[] | undefined;
@@ -80,7 +86,7 @@ function constUnion(schema: JsonSchema): string[] | undefined {
 function describeType(
   schema: JsonSchema | undefined,
   defs: Record<string, JsonSchema>,
-  depth = 0
+  depth = 0,
 ): string {
   if (!schema || depth > 4) return 'any';
 
@@ -96,8 +102,7 @@ function describeType(
   if (consts) return consts.map((c) => `\`"${c}"\``).join(' \\| ');
 
   const wrapper = (schema.allOf ?? schema.anyOf ?? schema.oneOf) as
-    | JsonSchema[]
-    | undefined;
+    JsonSchema[] | undefined;
   if (Array.isArray(wrapper)) {
     const parts = wrapper
       .filter((entry) => !isNullSchema(entry))
@@ -127,7 +132,7 @@ function describeType(
 /** Property description, falling back to the description on a `$ref` target. */
 function describeProp(
   schema: JsonSchema,
-  defs: Record<string, JsonSchema>
+  defs: Record<string, JsonSchema>,
 ): string {
   const own = schema.description;
   if (typeof own === 'string') return own;
@@ -147,21 +152,64 @@ function describeProp(
   return '';
 }
 
+/**
+ * Prevent prose braces and angle brackets from becoming MDX expressions or
+ * JSX tags while leaving fenced and inline code spans unchanged. Rust schema
+ * descriptions frequently include JSON and placeholder examples, so treating
+ * their prose as plain Markdown is not sufficient.
+ */
+export function escapeMdxExpressions(text: string) {
+  let output = '';
+  let codeDelimiterLength = 0;
+
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text[index];
+    if (character === '`') {
+      let runLength = 1;
+      while (text[index + runLength] === '`') runLength += 1;
+      output += '`'.repeat(runLength);
+
+      if (codeDelimiterLength === 0) codeDelimiterLength = runLength;
+      else if (runLength === codeDelimiterLength) codeDelimiterLength = 0;
+
+      index += runLength - 1;
+      continue;
+    }
+
+    if (
+      codeDelimiterLength === 0 &&
+      (character === '{' ||
+        character === '}' ||
+        character === '<' ||
+        character === '>')
+    ) {
+      output += `\\${character}`;
+      continue;
+    }
+
+    output += character;
+  }
+
+  return output;
+}
+
 function escapeCell(text: string) {
-  return text.replaceAll('\n', ' ').replaceAll('|', '\\|').trim();
+  return escapeMdxExpressions(text)
+    .replaceAll('\n', ' ')
+    .replaceAll('|', '\\|')
+    .trim();
 }
 
 function renderParamsTable(
   schema: JsonSchema,
-  defs: Record<string, JsonSchema>
+  defs: Record<string, JsonSchema>,
 ): string {
   const properties = schema.properties as
-    | Record<string, JsonSchema>
-    | undefined;
+    Record<string, JsonSchema> | undefined;
   if (!properties || Object.keys(properties).length === 0) return '';
 
   const required = new Set(
-    Array.isArray(schema.required) ? (schema.required as string[]) : []
+    Array.isArray(schema.required) ? (schema.required as string[]) : [],
   );
 
   const rows = Object.entries(properties).map(([name, prop]) => {
@@ -189,7 +237,7 @@ async function loadSchemas(): Promise<ToolSchemaFile> {
   const parsed = JSON.parse(raw) as Partial<ToolSchemaFile>;
   if (!Array.isArray(parsed.tools) || !parsed.$defs) {
     throw new Error(
-      `${toolJsonPath} is not in the expected { $defs, tools } shape — the Rust schema format changed.`
+      `${toolJsonPath} is not in the expected { $defs, tools } shape — the Rust schema format changed.`,
     );
   }
   return parsed as ToolSchemaFile;
@@ -201,7 +249,7 @@ function resolveTools(file: ToolSchemaFile): ResolvedTool[] {
     const inputSchema = file.$defs[tool.input];
     if (!inputSchema) {
       throw new Error(
-        `tool ${tool.name} references missing input schema $defs/${tool.input}`
+        `tool ${tool.name} references missing input schema $defs/${tool.input}`,
       );
     }
     const description = inputSchema.description;
@@ -221,7 +269,8 @@ async function resetGeneratedPages() {
 function renderToolPage(tool: ResolvedTool, defs: Record<string, JsonSchema>) {
   const slug = slugifyToolName(tool.name);
   const description =
-    tool.description ?? 'Generated from the Macro Rust tool registry.';
+    tool.description ?? 'Generated from the Conation Rust tool registry.';
+  const mdxDescription = escapeMdxExpressions(description);
   const paramsTable = renderParamsTable(tool.inputSchema, defs);
 
   return {
@@ -233,22 +282,22 @@ description: "${description.replaceAll('\n', ' ').replaceAll('"', '\\"')}"
 
 # ${tool.name}
 
-${description}
+${mdxDescription}
 ${paramsTable ? `\n## Parameters\n\n${paramsTable}\n` : ''}`,
   };
 }
 
 async function writeIndexPage(
-  toolPages: Array<{ slug: string; name: string }>
+  toolPages: Array<{ slug: string; name: string }>,
 ) {
   const page = `---
 title: Tool Reference
-description: Generated reference pages for Macro MCP tools.
+description: Generated reference pages for Conation MCP tools.
 ---
 
 # Tool Reference
 
-These pages are generated from Macro's Rust MCP tool registry.
+These pages are generated from Conation's Rust MCP tool registry.
 
 ## Tools
 
@@ -258,7 +307,7 @@ ${toolPages.map((tool) => `- [${tool.name}](/AI/mcp/tools/${tool.slug})`).join('
 }
 
 /**
- * Replace the `pages` of the `Tool Reference` nav group in `docs.json`.
+ * Replace the `pages` of the generated-tool nav group in `docs.json`.
  * Mintlify does not resolve `$ref` in `docs.json`, so the page list has to be
  * inlined there — this keeps that copy in sync instead of hand-maintained.
  */
@@ -274,7 +323,7 @@ async function writeNavigation(navPages: string[]) {
     }
     if (!node || typeof node !== 'object') return;
     const obj = node as Record<string, unknown>;
-    if (obj.group === NAV_GROUP && Array.isArray(obj.pages)) {
+    if (Array.isArray(obj.pages) && obj.pages.includes(NAV_ROOT_PAGE)) {
       obj.pages = navPages;
       patched = true;
       return;
@@ -285,11 +334,11 @@ async function writeNavigation(navPages: string[]) {
 
   if (!patched) {
     throw new Error(
-      `no "${NAV_GROUP}" nav group with a pages array found in ${docsJsonPath} — restore it or update NAV_GROUP.`
+      `no nav group containing "${NAV_ROOT_PAGE}" found in ${docsJsonPath} — restore the generated-tool group.`,
     );
   }
 
-  await writeFile(docsJsonPath, `${JSON.stringify(docsJson, null, 2)}\n`);
+  await writeFile(docsJsonPath, await formatJson(docsJson));
 }
 
 async function main() {
@@ -310,9 +359,9 @@ async function main() {
   }
 
   await writeIndexPage(toolPages);
-  await writeFile(`${navOutputPath}`, `${JSON.stringify(navPages, null, 2)}\n`);
+  await writeFile(navOutputPath, await formatJson(navPages));
   await writeNavigation(navPages);
   console.log(`Generated ${tools.length} tool pages in ${outputDir}`);
 }
 
-await main();
+if (import.meta.main) await main();

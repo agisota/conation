@@ -1,7 +1,7 @@
 //! Admin-only HTTP API for querying AI cost and re-pricing models.
 //!
-//! Every route is restricted to Macro admins — callers whose user id resolves
-//! to an `@macro.com` email.
+//! Every route is restricted to Conation admins — callers whose user id
+//! resolves to an `@conation.dev` email.
 
 use crate::domain::{AiFeature, UsageApiParams, UsageService, UsageSummary};
 use axum::{
@@ -20,8 +20,8 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use utoipa::ToSchema;
 
-/// Domain suffix that identifies a Macro admin.
-const ADMIN_EMAIL_SUFFIX: &str = "@macro.com";
+/// Domain suffix that identifies a Conation admin.
+const ADMIN_EMAIL_SUFFIX: &str = "@conation.dev";
 
 /// Request body for [`get_usage_handler`].
 #[derive(Debug, Default, Deserialize, ToSchema)]
@@ -100,14 +100,14 @@ where
         .with_state(state)
 }
 
-/// Returns `Some(403)` unless the caller is a Macro admin.
+/// Returns `Some(403)` unless the caller is a Conation admin.
 fn admin_rejection<Auth>(
     user: &MacroAuthorizationExtractor<Auth, UserOrInternal>,
 ) -> Option<Response> {
     if user
         .authorization
         .user
-        .conation_user_id
+        .macro_user_id
         .email_str()
         .ends_with(ADMIN_EMAIL_SUFFIX)
     {

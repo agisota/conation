@@ -13,7 +13,6 @@ export const AnimatedNoiseIcon = (props: {
       xmlns="http://www.w3.org/2000/svg"
       class={`animated-noise-icon ${props.triggerAnimation ? 'animating' : ''} ${props.class ?? ''}`}
     >
-      {/*<title>{t('auto.animated_noise_icon')}</title>*/}
       <style>{`
         @keyframes grow-shrink {
           0% {

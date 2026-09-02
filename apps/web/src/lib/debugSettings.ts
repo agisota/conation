@@ -32,7 +32,7 @@ export const DEBUG_SETTINGS: DebugSettingDef[] = [
   },
 ];
 
-const STORAGE_KEY = 'macro:debug-settings';
+const STORAGE_KEY = 'conation:debug-settings';
 
 function readPersisted(): Record<string, boolean> {
   try {

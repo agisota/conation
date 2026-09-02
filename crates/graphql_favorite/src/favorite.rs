@@ -1,8 +1,8 @@
 use std::{collections::HashMap, sync::Arc};
 
 use async_graphql::{Context, dataloader::DataLoader};
-use favorites::domain::ports::FavoritesService;
 use conation_user_id::user_id::MacroUserIdStr;
+use favorites::domain::ports::FavoritesService;
 use model_entity::{Entity, OwnedEntity};
 use rootcause::markers::{Cloneable, Dynamic};
 

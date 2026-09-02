@@ -1,5 +1,5 @@
-import { SidePanel } from '@components/app/side-panel/SidePanel';
 import { t } from '@app/lib/i18n';
+import { SidePanel } from '@components/app/side-panel/SidePanel';
 import { formatRelativeTimestamp } from '@entity/utils/timestamp';
 import CaretRightIcon from '@phosphor/caret-right.svg';
 import {
@@ -54,7 +54,11 @@ function EntityActivitySection(props: EntityActivitySectionProps) {
 
   return (
     <Show when={query.isEnabled()}>
-      <SidePanel.Section id="activity" title={t('auto.activity')} order={props.order}>
+      <SidePanel.Section
+        id="activity"
+        title={t('activity.title')}
+        order={props.order}
+      >
         {/* Two loading layers: the urql store never suspends, so the query's
             own fetch/error need explicit branches (or they'd render as a
             false "No activity yet"), while the Suspense boundary scopes
@@ -64,11 +68,15 @@ function EntityActivitySection(props: EntityActivitySectionProps) {
           <Show when={!query.result.isLoading} fallback={<SidePanel.Loading />}>
             <Show
               when={!query.result.isError}
-              fallback={<SidePanel.EmptyPill label="Activity is unavailable" />}
+              fallback={
+                <SidePanel.EmptyPill label={t('activity.entity.unavailable')} />
+              }
             >
               <Show
                 when={events().length > 0}
-                fallback={<SidePanel.EmptyPill label="No activity yet" />}
+                fallback={
+                  <SidePanel.EmptyPill label={t('activity.entity.empty')} />
+                }
               >
                 <div class="text-xs">
                   <SidePanel.Card>
@@ -91,8 +99,10 @@ function EntityActivitySection(props: EntityActivitySectionProps) {
                       />
                       <span>
                         {expanded()
-                          ? 'Show less'
-                          : `Show all (${events().length})`}
+                          ? t('activity.entity.showLess')
+                          : t('activity.entity.showAll', {
+                              count: events().length,
+                            })}
                       </span>
                     </button>
                   </Show>

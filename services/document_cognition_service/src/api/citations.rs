@@ -47,7 +47,7 @@ pub async fn get_citation_handler(
         .authorization
         .as_ref()
         .and_then(UserOrInternalServiceAuthorization::acting_user)
-        .map(|user| user.conation_user_id.as_ref());
+        .map(|user| user.macro_user_id.as_ref());
     match get_part_by_id(db, id.as_str()).await {
         Ok(Some(part)) => Ok(Json(part)),
         Ok(None) => Err((

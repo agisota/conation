@@ -11,8 +11,8 @@ mod edit;
 mod markdown_backfill;
 mod share;
 
-use document_sub_type::DocumentSubType;
 use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use document_sub_type::DocumentSubType;
 use model::document::{DocumentBasic, DocumentMetadata};
 use models_permissions::share_permission::{SharePermissionV2, TeamLinkShareDefault};
 use sqlx::PgPool;
@@ -797,7 +797,7 @@ impl DocumentRepo for PgDocumentRepo {
             LEFT JOIN LATERAL (
                 SELECT github_username
                 FROM github_links
-                WHERE conation_id = request_user.user_id
+                WHERE macro_id = request_user.user_id
                 ORDER BY updated_at DESC
                 LIMIT 1
             ) gl ON true

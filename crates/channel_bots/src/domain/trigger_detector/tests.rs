@@ -132,11 +132,11 @@ impl InferredTriggerClassifier for TestClassifier {
 }
 
 fn user_id(email: &str) -> MacroUserIdStr<'static> {
-    MacroUserIdStr::try_from(format!("macro|{email}")).unwrap()
+    MacroUserIdStr::try_from(format!("conation|{email}")).unwrap()
 }
 
 fn conation_ai_sender_id() -> String {
-    bot_id::MACRO_AI_BOT_ID.into_storage_id().to_string()
+    bot_id::CONATION_AI_BOT_ID.into_storage_id().to_string()
 }
 
 fn candidate(
@@ -216,7 +216,7 @@ fn thread_with_agent_reply(channel_id: Uuid, parent_id: Uuid) -> TestChannelServ
         parent: Some(parent_message(
             channel_id,
             parent_id,
-            "macro|alice@example.com",
+            "conation|alice@example.com",
             "notifications are broken",
         )),
         thread_replies: vec![thread_reply(
@@ -244,8 +244,8 @@ async fn mention_triggers_each_mentioned_bot_without_classification() {
             channel_id,
             None,
             Sender::new_from_user(user_id("alice@example.com")),
-            "@macro help",
-            vec![bot_id::MACRO_AI_BOT_ID, other_bot],
+            "@conation help",
+            vec![bot_id::CONATION_AI_BOT_ID, other_bot],
         ))
         .await;
 
@@ -253,7 +253,7 @@ async fn mention_triggers_each_mentioned_bot_without_classification() {
         invocations,
         vec![
             BotInvocation {
-                bot_id: bot_id::MACRO_AI_BOT_ID,
+                bot_id: bot_id::CONATION_AI_BOT_ID,
                 trigger: BotTrigger::Mention,
             },
             BotInvocation {
@@ -279,7 +279,7 @@ async fn bot_authored_message_never_triggers() {
         .detect(&candidate(
             channel_id,
             Some(parent_id),
-            Sender::new_from_bot(bot_id::MACRO_AI_BOT_ID),
+            Sender::new_from_bot(bot_id::CONATION_AI_BOT_ID),
             "I fixed it",
             Vec::new(),
         ))
@@ -306,7 +306,7 @@ async fn top_level_message_is_never_inferred() {
             channel_id,
             None,
             Sender::new_from_user(user_id("alice@example.com")),
-            "macro agent respond",
+            "conation agent respond",
             Vec::new(),
         ))
         .await;
@@ -325,10 +325,10 @@ async fn thread_without_agent_message_is_never_inferred() {
             parent: Some(parent_message(
                 channel_id,
                 parent_id,
-                "macro|alice@example.com",
+                "conation|alice@example.com",
                 "anyone looked at this?",
             )),
-            thread_replies: vec![thread_reply("macro|bob@example.com", "not yet")],
+            thread_replies: vec![thread_reply("conation|bob@example.com", "not yet")],
         },
         classifier.clone(),
     );
@@ -370,7 +370,7 @@ async fn thread_reply_after_agent_message_infers_when_classifier_agrees() {
     assert_eq!(
         invocations,
         vec![BotInvocation {
-            bot_id: bot_id::MACRO_AI_BOT_ID,
+            bot_id: bot_id::CONATION_AI_BOT_ID,
             trigger: BotTrigger::Inferred,
         }]
     );
@@ -386,7 +386,7 @@ async fn thread_reply_after_agent_message_infers_when_classifier_agrees() {
             },
             TranscriptMessage {
                 from_agent: true,
-                sender: bot_id::MACRO_AI_NAME.to_string(),
+                sender: bot_id::CONATION_AI_NAME.to_string(),
                 content: "what is broken exactly?".to_string(),
             },
             TranscriptMessage {

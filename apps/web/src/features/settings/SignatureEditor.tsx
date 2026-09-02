@@ -184,7 +184,8 @@ export default function SignatureEditor(props: {
     // Quill still builds the icons/pickers into it and wires the default handlers.
     quill = new Quill(editorEl, {
       theme: 'snow',
-      placeholder: props.placeholder ?? 'Add a signature…',
+      placeholder:
+        props.placeholder ?? t('settings.email.signature.editor.placeholder'),
       modules: {
         toolbar: {
           container: toolbarEl,
@@ -226,8 +227,11 @@ export default function SignatureEditor(props: {
     <div class="signature-editor">
       <div ref={toolbarEl}>
         <span class="ql-formats">
-          <Tooltip label="Font" as="span">
-            <select class="ql-font" aria-label={t('auto.font')}>
+          <Tooltip label={t('settings.email.signature.editor.font')} as="span">
+            <select
+              class="ql-font"
+              aria-label={t('settings.email.signature.editor.font')}
+            >
               <For each={FONT_OPTIONS}>
                 {(font) =>
                   font === false ? <option /> : <option value={font} />
@@ -235,8 +239,14 @@ export default function SignatureEditor(props: {
               </For>
             </select>
           </Tooltip>
-          <Tooltip label="Size" as="span">
-            <select class="ql-size" aria-label={t('auto.font_size')}>
+          <Tooltip
+            label={t('settings.email.signature.editor.fontSize')}
+            as="span"
+          >
+            <select
+              class="ql-size"
+              aria-label={t('settings.email.signature.editor.fontSize')}
+            >
               <For each={SIZE_OPTIONS}>
                 {(size) =>
                   size === false ? <option /> : <option value={size} />
@@ -246,32 +256,69 @@ export default function SignatureEditor(props: {
           </Tooltip>
         </span>
         <span class="ql-formats">
-          <ToolbarButton format="bold" label="Bold" shortcut="cmd+b" />
-          <ToolbarButton format="italic" label="Italic" shortcut="cmd+i" />
+          <ToolbarButton
+            format="bold"
+            label={t('settings.email.signature.editor.bold')}
+            shortcut="cmd+b"
+          />
+          <ToolbarButton
+            format="italic"
+            label={t('settings.email.signature.editor.italic')}
+            shortcut="cmd+i"
+          />
           <ToolbarButton
             format="underline"
-            label="Underline"
+            label={t('settings.email.signature.editor.underline')}
             shortcut="cmd+u"
           />
         </span>
         <span class="ql-formats">
-          <Tooltip label="Text color" as="span">
-            <select class="ql-color" aria-label={t('auto.text_color')} />
+          <Tooltip
+            label={t('settings.email.signature.editor.textColor')}
+            as="span"
+          >
+            <select
+              class="ql-color"
+              aria-label={t('settings.email.signature.editor.textColor')}
+            />
           </Tooltip>
-          <Tooltip label="Highlight color" as="span">
-            <select class="ql-background" aria-label={t('auto.highlight_color')} />
+          <Tooltip
+            label={t('settings.email.signature.editor.highlightColor')}
+            as="span"
+          >
+            <select
+              class="ql-background"
+              aria-label={t('settings.email.signature.editor.highlightColor')}
+            />
           </Tooltip>
         </span>
         <span class="ql-formats">
-          <ToolbarButton format="list" value="ordered" label="Numbered list" />
-          <ToolbarButton format="list" value="bullet" label="Bulleted list" />
+          <ToolbarButton
+            format="list"
+            value="ordered"
+            label={t('settings.email.signature.editor.numberedList')}
+          />
+          <ToolbarButton
+            format="list"
+            value="bullet"
+            label={t('settings.email.signature.editor.bulletedList')}
+          />
         </span>
         <span class="ql-formats">
-          <ToolbarButton format="link" label="Link" />
-          <ToolbarButton format="image" label="Image" />
+          <ToolbarButton
+            format="link"
+            label={t('settings.email.signature.editor.link')}
+          />
+          <ToolbarButton
+            format="image"
+            label={t('settings.email.signature.editor.image')}
+          />
         </span>
         <span class="ql-formats">
-          <ToolbarButton format="clean" label="Clear formatting" />
+          <ToolbarButton
+            format="clean"
+            label={t('settings.email.signature.editor.clearFormatting')}
+          />
         </span>
       </div>
       <div ref={editorEl} />

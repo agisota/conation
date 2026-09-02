@@ -1,5 +1,18 @@
 use super::*;
 use crate::local::e2e::LocalE2eSuite;
+use clap::CommandFactory;
+
+#[test]
+fn run_local_help_advertises_the_conation_default_instance() {
+    let mut command = Cli::command();
+    let run_local = command
+        .find_subcommand_mut("run-local")
+        .expect("run-local command exists");
+    let help = run_local.render_long_help().to_string();
+
+    assert!(help.contains("Absent (or `conation`) is the default instance"));
+    assert!(!help.contains("Absent (or `macro`) is the default instance"));
+}
 
 #[test]
 fn local_e2e_accepts_suite_and_trailing_test_arguments() {

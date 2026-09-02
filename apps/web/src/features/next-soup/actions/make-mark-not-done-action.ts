@@ -3,6 +3,7 @@ import {
   executeMarkEntitiesUndone,
   resolveMarkEntitiesDoneVariables,
 } from '@app/features/next-soup/utils';
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import type { EntityData } from '@entity';
 import type { NotificationSource } from '@notifications';
@@ -34,14 +35,12 @@ const uncompleteReminders = async (reminders: EntityData[]) => {
       reminderIds,
     });
     toast.success(
-      reminderIds.length > 1
-        ? `Marked ${reminderIds.length} reminders as not done`
-        : 'Marked as not done',
+      t('soup.toast.remindersMarkedNotDone', { count: reminderIds.length }),
       { duration: 3_000, stack: true, hideOnMobile: true }
     );
   } catch {
     optimistic.rollback();
-    toast.failure('Failed to mark as not done');
+    toast.failure(t('soup.toast.markNotDoneFailed'));
   }
 };
 
@@ -81,9 +80,9 @@ export const makeMarkNotDoneAction = (options: MakeMarkNotDoneOptions) => {
 
     if (targets.length === 0) {
       toast.alert(
-        candidates.length > 1
-          ? 'These threads have no received messages, so they stay done'
-          : 'This thread has no received messages, so it stays done',
+        t('soup.toast.threadCannotMarkNotDone', {
+          count: candidates.length,
+        }),
         { duration: 4_000 }
       );
       return;
@@ -113,12 +112,11 @@ export const makeMarkNotDoneAction = (options: MakeMarkNotDoneOptions) => {
       });
       // Match the mark-done action's success feedback (and the direct
       // unarchive fallback's toast in EmailContext).
-      toast.success(
-        targets.length > 1
-          ? `Marked ${targets.length} items as not done`
-          : 'Marked as not done',
-        { duration: 3_000, stack: true, hideOnMobile: true }
-      );
+      toast.success(t('soup.toast.markedNotDone', { count: targets.length }), {
+        duration: 3_000,
+        stack: true,
+        hideOnMobile: true,
+      });
       // Restore the rows deterministically: refetch each thread's soup item
       // and upsert it into the caches (flat, grouped parents, and expanded
       // group queries), then refetch the lists so done-filtered views
@@ -129,7 +127,7 @@ export const makeMarkNotDoneAction = (options: MakeMarkNotDoneOptions) => {
       invalidateAllSoup();
     } catch (err) {
       optimistic.rollback();
-      toast.failure('Failed to mark as not done');
+      toast.failure(t('soup.toast.markNotDoneFailed'));
       // Rethrow (matching makeMarkDoneAction's mutateAsync) so wrappers like
       // trackExternalThreadArchive can restore their own caches; UI feedback
       // is already handled above.

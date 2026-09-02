@@ -40,12 +40,12 @@ impl ReferralRepo for PgReferralRepo {
     ) -> Result<ReferralCode, Self::Err> {
         let fusion_user_id = sqlx::query!(
             r#"
-                SELECT conation_user_id FROM "User"
+                SELECT macro_user_id FROM "User"
                 WHERE id = $1
             "#,
             user_id.as_ref()
         )
-        .map(|r| r.conation_user_id)
+        .map(|r| r.macro_user_id)
         .fetch_one(&self.pool)
         .await?;
 
@@ -66,17 +66,17 @@ impl ReferralRepo for PgReferralRepo {
 
         // make sure this user exists
         sqlx::query!(
-            "SELECT 1 as exists FROM conation_user WHERE id = $1",
+            "SELECT 1 as exists FROM macro_user WHERE id = $1",
             &referrer_id
         )
         .fetch_one(&self.pool)
         .await?;
 
         let referred_id = sqlx::query!(
-            r#"SELECT conation_user_id FROM "User" WHERE id = $1"#,
+            r#"SELECT macro_user_id FROM "User" WHERE id = $1"#,
             referred_user_id.as_ref()
         )
-        .map(|s| s.conation_user_id)
+        .map(|s| s.macro_user_id)
         .fetch_one(&self.pool)
         .await?;
 
@@ -113,17 +113,17 @@ impl ReferralRepo for PgReferralRepo {
 
         // make sure this user exists
         sqlx::query!(
-            "SELECT 1 as exists FROM conation_user WHERE id = $1",
+            "SELECT 1 as exists FROM macro_user WHERE id = $1",
             &referrer_id
         )
         .fetch_one(&self.pool)
         .await?;
 
         let referred_id = sqlx::query!(
-            r#"SELECT conation_user_id FROM "User" WHERE id = $1"#,
+            r#"SELECT macro_user_id FROM "User" WHERE id = $1"#,
             referred_user_id.as_ref()
         )
-        .map(|s| s.conation_user_id)
+        .map(|s| s.macro_user_id)
         .fetch_one(&self.pool)
         .await?;
 
@@ -155,7 +155,7 @@ impl ReferralRepo for PgReferralRepo {
 
         sqlx::query!(
             r#"
-            SELECT stripe_customer_id FROM conation_user
+            SELECT stripe_customer_id FROM macro_user
             WHERE id = $1
         "#,
             fusion_user_id,
@@ -179,8 +179,8 @@ impl ReferralRepo for PgReferralRepo {
                     ELSE NULL
                 END AS "profile_picture_url?: String",
                 NULLIF(TRIM(CONCAT_WS(' ', NULLIF(first_name, 'N/A'), NULLIF(last_name, 'N/A'))), '') AS "display_name?: String"
-            FROM conation_user_info mui
-            JOIN "User" u ON u.conation_user_id = mui.conation_user_id
+            FROM macro_user_info mui
+            JOIN "User" u ON u.macro_user_id = mui.macro_user_id
             WHERE u.id = $1
             "#,
             user_id.as_ref()

@@ -1,3 +1,4 @@
+import { formatNumber, t } from '@app/lib/i18n';
 import {
   useCurrentPageNumber,
   viewerHasVisiblePagesSignal,
@@ -32,7 +33,21 @@ function Tab(props: IInternalTabProps) {
 
   // TODO (seamus) Tab label should be able to pull information from pdf
   // section data.
-  const label = () => (active() ? `Page ${currentPageNumber()}` : props.label);
+  const label = () => {
+    if (active()) {
+      return t('pdf.tabs.page', {
+        page: formatNumber(currentPageNumber()),
+      });
+    }
+
+    // Page labels are stored in their compatibility-safe English form. Format
+    // them for display without mutating the persisted/block-scoped value.
+    const pageMatch = /^Page (\d+)$/.exec(props.label);
+    if (!pageMatch) return props.label;
+    return t('pdf.tabs.page', {
+      page: formatNumber(Number(pageMatch[1])),
+    });
+  };
 
   return (
     <div
@@ -43,6 +58,7 @@ function Tab(props: IInternalTabProps) {
       <span class="truncate text-sm font-medium">{label()}</span>
       <Show when={props.tabCount > 1}>
         <XIcon
+          aria-label={t('pdf.tabs.close')}
           width={16}
           height={16}
           class="text-ink-muted shrink-0 ml-3 hover:bg-hover hover-transition-bg p-0.5 rounded"
@@ -79,6 +95,8 @@ export function Tabs() {
         </For>
         <Show when={tabs.length < MAX_TAB_COUNT}>
           <button
+            aria-label={t('pdf.tabs.add')}
+            type="button"
             onClick={() => createTab()}
             class="shrink-0 p-2 aspect-square rounded-lg flex items-center justify-center hover:bg-hover hover-transition-bg"
           >

@@ -19,8 +19,8 @@ use agent::{AgentLoop, StreamAccumulator, to_rig_messages};
 use agent::{PredefinedModel, structured_output::DynamicSchema};
 use ai_tools::{AiToolSet, ToolServiceContext, ToolSetWithPrompt};
 use ai_usage::{AiFeature, UsageContext};
-use futures::StreamExt;
 use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use futures::StreamExt;
 
 use crate::domain::{
     model::AiProjectionError,

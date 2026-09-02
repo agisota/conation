@@ -9,9 +9,9 @@ use axum::{
 };
 use conation_authorization::{
     BOT_SCOPE_HEADER, BOT_TOKEN_HEADER, BotActingUserClaims, BotAuthentication, BotScope,
-    INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_ORGANIZATION_ID_HEADER, INTERNAL_MACRO_USER_ID_HEADER,
-    InternalIdentityClaims, MacroAuthorizationError, MacroAuthorizationService,
-    MacroAuthorizationState,
+    INTERNAL_API_KEY_HEADER, INTERNAL_CONATION_ORGANIZATION_ID_HEADER,
+    INTERNAL_CONATION_USER_ID_HEADER, InternalIdentityClaims, MacroAuthorizationError,
+    MacroAuthorizationService, MacroAuthorizationState,
 };
 use conation_user_id::{
     lowercased::Lowercase,
@@ -662,8 +662,8 @@ async fn internal_request_with_acting_user_looks_up_the_users_permission() {
     let request = empty_body(
         request(&format!("/entity/document/{ENTITY_ID}"))
             .header(INTERNAL_API_KEY_HEADER, INTERNAL_KEY)
-            .header(INTERNAL_MACRO_USER_ID_HEADER, INTERNAL_USER_ID)
-            .header(INTERNAL_MACRO_ORGANIZATION_ID_HEADER, "84"),
+            .header(INTERNAL_CONATION_USER_ID_HEADER, INTERNAL_USER_ID)
+            .header(INTERNAL_CONATION_ORGANIZATION_ID_HEADER, "84"),
     );
 
     let (status, body) = send(&router, request).await;

@@ -46,7 +46,7 @@ mod tests {
 
     #[sqlx::test(fixtures(path = "../../fixtures", scripts("basic_user_with_permissions")))]
     async fn test_get_user_permissions(pool: Pool<Postgres>) {
-        let permissions = get_user_permissions(&pool, "macro|user@user.com")
+        let permissions = get_user_permissions(&pool, "conation|user@user.com")
             .await
             .unwrap();
 
@@ -54,7 +54,7 @@ mod tests {
         assert!(permissions.contains(&String::from("permission-one")));
         assert!(permissions.contains(&String::from("permission-three")));
 
-        let permissions = get_user_permissions(&pool, "macro|user2@user.com")
+        let permissions = get_user_permissions(&pool, "conation|user2@user.com")
             .await
             .unwrap();
 

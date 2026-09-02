@@ -103,7 +103,7 @@ pub async fn send_message_handler<T: EmailService, Auth: MacroAuthorizationServi
     let mut input = body.into_domain();
     // Attribute the send to the authenticated caller, who is not necessarily
     // the link owner (delegated inboxes).
-    input.actor = Some(authorization.authorization.user.conation_user_id.clone());
+    input.actor = Some(authorization.authorization.user.macro_user_id.clone());
     let created = state
         .inner
         .send_message(&link, &accessible_inboxes, input)

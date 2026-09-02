@@ -10,7 +10,7 @@ VALUES ('a1111111-1111-1111-1111-111111111111', 'owner', 'owner@user.com', 'stri
 
 INSERT INTO public."User" ("id", "email", "stripeCustomerId", "organizationId", "macro_user_id")
 VALUES (
-    'macro|owner@user.com',
+    'conation|owner@user.com',
     'owner@user.com',
     'stripe_owner',
     1,
@@ -23,7 +23,7 @@ VALUES (
     '11111111-1111-1111-1111-111111111111',
     'Public Doc',
     'pdf',
-    'macro|owner@user.com',
+    'conation|owner@user.com',
     '2022-01-01 00:00:00',
     '2022-01-01 00:00:00'
 );
@@ -40,7 +40,7 @@ VALUES (
     '22222222-2222-2222-2222-222222222222',
     'Private Doc',
     'pdf',
-    'macro|owner@user.com',
+    'conation|owner@user.com',
     '2022-01-01 00:00:00',
     '2022-01-01 00:00:00'
 );

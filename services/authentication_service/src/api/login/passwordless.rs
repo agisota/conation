@@ -8,9 +8,12 @@ use conation_middleware::tracking::ClientIp;
 
 use std::borrow::Cow;
 
-use crate::{api::context::ApiContext, generate_password::generate_random_password};
+use crate::{
+    api::{context::ApiContext, login::sso::parse_allowed_original_url},
+    generate_password::generate_random_password,
+};
+use conation_user_id::user_id::MacroUserIdStr;
 use fusionauth::error::FusionAuthClientError;
-use conation_user_id::user_id::MacroUserId;
 use model::{
     authentication::login::{
         request::PasswordlessRequest,
@@ -44,6 +47,11 @@ pub async fn handler(
     if !email_validator::is_valid_email(&req.email) {
         tracing::error!(email=%req.email, "invalid email");
         return Err((StatusCode::BAD_REQUEST, "invalid email").into_response());
+    }
+
+    if parse_allowed_original_url(&req.redirect_uri).is_none() {
+        tracing::warn!("passwordless redirect_uri is not allowed");
+        return Err((StatusCode::BAD_REQUEST, "redirect_uri is not allowed").into_response());
     }
 
     let lowercase_email = req.email.to_lowercase();
@@ -116,26 +124,21 @@ pub async fn handler(
 
                     if let Some(referral_code) = req.referral_code {
                         tracing::trace!(referral_code, "referral code found");
-                        let conation_user_id = format!("macro|{}", req.email.to_lowercase());
-                        let referrerd_user_id = MacroUserId::parse_from_str(&conation_user_id)
+                        let referred_user_id = MacroUserIdStr::try_from_email(&lowercase_email)
                             .map_err(|_| {
                                 (
                                     StatusCode::BAD_REQUEST,
                                     Json(ErrorResponse {
-                                        message: "invalid macro user id".into(),
+                                        message: "invalid Conation user id".into(),
                                     }),
                                 )
                                     .into_response()
-                            })?
-                            .lowercase();
+                            })?;
 
                         // initiates tracking the referral
                         let _ = ctx
                             .referral_service
-                            .track_referral(
-                                &referrerd_user_id,
-                                &ReferralCode(referral_code.clone()),
-                            )
+                            .track_referral(&referred_user_id, &ReferralCode(referral_code.clone()))
                             .await
                             .inspect_err(|e| {
                                 tracing::error!(error=?e, "unable to track referral");

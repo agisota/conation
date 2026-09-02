@@ -5,13 +5,13 @@ mod config;
 use std::sync::Arc;
 
 use anyhow::Context;
-use config::Config;
 use conation_auth::middleware::decode_jwt::JwtValidationArgs;
 use conation_authorization::{
     InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationServiceImpl,
     MacroAuthorizationState,
 };
 use conation_entrypoint::MacroEntrypoint;
+use config::Config;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

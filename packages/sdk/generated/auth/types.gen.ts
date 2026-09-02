@@ -29,6 +29,13 @@ export type CheckoutSessionMetadata = {
     gaClientId?: string | null;
 };
 
+export type ConationApiTokenResponse = {
+    /**
+     * The newly created Conation API token.
+     */
+    conation_api_token: string;
+};
+
 export type CreateAccountMergeRequest = {
     /**
      * The email address to generate the merge link for.
@@ -566,13 +573,6 @@ export type InviteToTeamRequest = {
  */
 export type LinkShare = 'PUBLIC' | 'TEAM';
 
-export type MacroApiTokenResponse = {
-    /**
-     * The newly created macro_api_token
-     */
-    macro_api_token: string;
-};
-
 export type PasswordRequest = {
     /**
      * The email to login with
@@ -1032,7 +1032,6 @@ export type DeleteCursorApiKeyData = {
 
 export type DeleteCursorApiKeyErrors = {
     401: string;
-    403: ErrorResponse;
 };
 
 export type DeleteCursorApiKeyError = DeleteCursorApiKeyErrors[keyof DeleteCursorApiKeyErrors];
@@ -1052,7 +1051,6 @@ export type GetCursorApiKeyData = {
 
 export type GetCursorApiKeyErrors = {
     401: string;
-    403: ErrorResponse;
 };
 
 export type GetCursorApiKeyError = GetCursorApiKeyErrors[keyof GetCursorApiKeyErrors];
@@ -1073,7 +1071,6 @@ export type PutCursorApiKeyData = {
 export type PutCursorApiKeyErrors = {
     400: ErrorResponse;
     401: string;
-    403: ErrorResponse;
 };
 
 export type PutCursorApiKeyError = PutCursorApiKeyErrors[keyof PutCursorApiKeyErrors];
@@ -1093,7 +1090,6 @@ export type PutCursorDefaultModelData = {
 
 export type PutCursorDefaultModelErrors = {
     401: string;
-    403: ErrorResponse;
     409: ErrorResponse;
 };
 
@@ -1114,7 +1110,6 @@ export type ListCursorModelsData = {
 
 export type ListCursorModelsErrors = {
     401: string;
-    403: ErrorResponse;
     409: ErrorResponse;
     502: ErrorResponse;
 };
@@ -1252,30 +1247,30 @@ export type HealthHandlerResponses = {
 
 export type HealthHandlerResponse = HealthHandlerResponses[keyof HealthHandlerResponses];
 
-export type MacroApiTokenData = {
+export type ConationApiTokenData = {
     body?: never;
     path?: never;
-    query: {
+    query?: {
         /**
-         * The email to generate the macro-api-token for. If not provided, we use your default profile.
+         * The email to generate the Conation API token for. If not provided, the default profile is used.
          */
-        email: string;
+        email?: string;
     };
-    url: '/jwt/macro_api_token';
+    url: '/jwt/conation_api_token';
 };
 
-export type MacroApiTokenErrors = {
+export type ConationApiTokenErrors = {
     401: string;
     500: string;
 };
 
-export type MacroApiTokenError = MacroApiTokenErrors[keyof MacroApiTokenErrors];
+export type ConationApiTokenError = ConationApiTokenErrors[keyof ConationApiTokenErrors];
 
-export type MacroApiTokenResponses = {
-    200: MacroApiTokenResponse;
+export type ConationApiTokenResponses = {
+    200: ConationApiTokenResponse;
 };
 
-export type MacroApiTokenResponse2 = MacroApiTokenResponses[keyof MacroApiTokenResponses];
+export type ConationApiTokenResponse2 = ConationApiTokenResponses[keyof ConationApiTokenResponses];
 
 export type RefreshData = {
     body?: never;

@@ -9,7 +9,7 @@ use axum::{
 };
 use conation_authorization::{
     BOT_SCOPE_HEADER, BOT_TOKEN_HEADER, BotActingUserClaims, BotAuthentication, BotScope,
-    INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_USER_ID_HEADER, InternalIdentityClaims,
+    INTERNAL_API_KEY_HEADER, INTERNAL_CONATION_USER_ID_HEADER, InternalIdentityClaims,
     MacroAuthorizationError, MacroAuthorizationService, MacroAuthorizationState,
 };
 use conation_user_id::user_id::MacroUserIdStr;
@@ -291,7 +291,7 @@ async fn internal_acting_user_uses_the_users_acl() {
         .oneshot(
             request()
                 .header(INTERNAL_API_KEY_HEADER, INTERNAL_KEY)
-                .header(INTERNAL_MACRO_USER_ID_HEADER, USER_ID)
+                .header(INTERNAL_CONATION_USER_ID_HEADER, USER_ID)
                 .body(Body::empty())
                 .unwrap(),
         )

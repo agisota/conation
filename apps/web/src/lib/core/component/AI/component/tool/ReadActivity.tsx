@@ -1,4 +1,5 @@
 import { ActivityTimelineRow } from '@app/features/activity/activity-timeline-row';
+import { formatDateTime, t } from '@app/lib/i18n';
 import { StaticMarkdownContext } from '@core/component/LexicalMarkdown/component/core/StaticMarkdown';
 import ClockCounterClockwise from '@phosphor-icons/core/regular/clock-counter-clockwise.svg';
 import type { ActivityEvent } from '@queries/activity/graphql/entity';
@@ -95,7 +96,7 @@ function activityEvent(activity: Activity, index: number): ActivityEvent {
 }
 
 function formatRangeTimestamp(value: string): string {
-  return new Date(value).toLocaleString(undefined, {
+  return formatDateTime(new Date(value), {
     dateStyle: 'medium',
     timeStyle: 'short',
   });
@@ -113,10 +114,11 @@ const handler = createToolRenderer({
     const statusText = () => {
       if (!ctx.response) return undefined;
       const count = activities().length;
-      if (count === 0) return 'No Results';
-      if (ctx.response.data.truncated) return `${count}+ activities`;
-      if (count === 1) return '1 activity';
-      return `${count} activities`;
+      if (count === 0) return t('ai.tools.activity.noResults');
+      return t('ai.tools.activity.resultCount', {
+        count,
+        truncated: ctx.response.data.truncated ? 'true' : 'false',
+      });
     };
 
     return (
@@ -140,14 +142,10 @@ const handler = createToolRenderer({
       >
         <div class="flex min-w-0 flex-1 items-center justify-between gap-3 overflow-hidden">
           <span class="min-w-0 truncate">
-            Read activity from{' '}
-            <span class="text-ink">
-              {formatRangeTimestamp(ctx.tool.data.from)}
-            </span>{' '}
-            to{' '}
-            <span class="text-ink">
-              {formatRangeTimestamp(ctx.tool.data.to)}
-            </span>
+            {t('ai.tools.activity.range', {
+              from: formatRangeTimestamp(ctx.tool.data.from),
+              to: formatRangeTimestamp(ctx.tool.data.to),
+            })}
           </span>
           <Tool.ResultToggle
             expanded={isExpanded()}

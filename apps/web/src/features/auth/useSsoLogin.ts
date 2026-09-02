@@ -1,6 +1,8 @@
 import type { AnalyticsProvider } from '@app/lib/analytics';
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
+import { getConfiguredNativeAppScheme } from '@core/constant/clientProfile';
 import { SERVER_HOSTS } from '@core/constant/servers';
 import { useEmailLinks } from '@core/email-link';
 import { isNativeMobilePlatform } from '@core/mobile/isNativeMobilePlatform';
@@ -42,7 +44,8 @@ export function useSsoLogin(opts?: { signupMode?: boolean }) {
     if (getNativeMobilePlatform() === 'ios') {
       // iOS: use ASWebAuthenticationSession via tauri-plugin-auth
       // so the auth flow stays in-app (required by App Store)
-      authUrl.searchParams.set('original_url', 'macro://login');
+      const callbackScheme = getConfiguredNativeAppScheme();
+      authUrl.searchParams.set('original_url', `${callbackScheme}://login`);
 
       const result = await invoke<{
         success: boolean;
@@ -51,7 +54,7 @@ export function useSsoLogin(opts?: { signupMode?: boolean }) {
       }>('plugin:auth|authenticate', {
         payload: {
           authUrl: authUrl.toString(),
-          callbackScheme: 'macro',
+          callbackScheme,
           ephemeralSession: true,
         },
       });
@@ -60,7 +63,7 @@ export function useSsoLogin(opts?: { signupMode?: boolean }) {
         // A canceled sheet is a deliberate user action, not a failure.
         if (result.error !== 'User canceled login') {
           console.error('Authentication failed:', result.error);
-          toast.failure('Sign-in failed. Please try again.');
+          toast.failure(t('auth.errors.signInFailed'));
         }
         return;
       }
@@ -85,7 +88,7 @@ export function useSsoLogin(opts?: { signupMode?: boolean }) {
         );
       } else {
         console.error('Failed to redeem session code', res.error);
-        toast.failure('Sign-in failed. Please try again.');
+        toast.failure(t('auth.errors.signInFailed'));
       }
 
       analytics.track(analyticsEvent, { method: idp_name }, analyticsProviders);

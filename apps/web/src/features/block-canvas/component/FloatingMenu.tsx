@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { useAlign } from '@block-canvas/signal/align';
 import { clamp } from '@block-canvas/util/math';
 import { vec2 } from '@block-canvas/util/vector2';
@@ -151,11 +152,14 @@ function Divider() {
 
 function AlignmentOption(props: {
   alignment: number;
+  label: string;
   icon: Component<JSX.SvgSVGAttributes<SVGSVGElement>>;
   onClick: (alignemnt: number) => void;
 }) {
   return (
-    <div
+    <button
+      type="button"
+      aria-label={props.label}
       class="size-6 mx-1 flex justify-center items-center rounded-sm hover:bg-hover hover-transition-bg"
       onClick={() => {
         props.onClick(props.alignment);
@@ -169,7 +173,7 @@ function AlignmentOption(props: {
         width={20}
         height={20}
       />
-    </div>
+    </button>
   );
 }
 
@@ -178,7 +182,7 @@ function ReverseEdgeButton() {
   const { selectedEdges } = useSelection();
 
   return (
-    <Tooltip label="Reverse connection">
+    <Tooltip label={t('canvas.connection.reverse')}>
       <button
         class={cn(
           themeColors['base'],
@@ -232,6 +236,7 @@ function MobileDeleteButton() {
         <Button
           variant="ghost"
           size="icon-md"
+          label={t('common.delete')}
           onClick={deleteSelection}
           class="text-failure"
         >
@@ -242,125 +247,125 @@ function MobileDeleteButton() {
   );
 }
 
-const strokeWidthPresets: DropdownPreset[] = [
+const strokeWidthPresets = (): DropdownPreset[] => [
   {
     value: '0',
-    displayName: 'None',
+    displayName: t('canvas.preset.none'),
   },
   {
     value: '1',
-    displayName: 'Thin',
+    displayName: t('canvas.preset.thin'),
   },
   {
     value: '2',
-    displayName: 'Regular',
+    displayName: t('canvas.preset.regular'),
   },
   {
     value: '4',
-    displayName: 'Thick',
+    displayName: t('canvas.preset.thick'),
   },
   {
     value: '8',
-    displayName: 'Extra thick',
+    displayName: t('canvas.preset.extraThick'),
   },
 ];
 
-const cornerRadiusPresets: DropdownPreset[] = [
+const cornerRadiusPresets = (): DropdownPreset[] => [
   {
     value: '0',
-    displayName: 'None',
+    displayName: t('canvas.preset.none'),
   },
   {
     value: '4',
-    displayName: 'Extra Small',
+    displayName: t('canvas.preset.extraSmall'),
   },
   {
     value: '8',
-    displayName: 'Small',
+    displayName: t('canvas.preset.small'),
   },
   {
     value: '16',
-    displayName: 'Medium',
+    displayName: t('canvas.preset.medium'),
   },
   {
     value: '32',
-    displayName: 'Larrge',
+    displayName: t('canvas.preset.large'),
   },
   {
     value: '64',
-    displayName: 'Extra Large',
+    displayName: t('canvas.preset.extraLarge'),
   },
   {
     value: '100',
-    displayName: 'Full',
+    displayName: t('canvas.preset.full'),
   },
 ];
 
-const textSizePresets: DropdownPreset[] = [
+const textSizePresets = (): DropdownPreset[] => [
   {
     value: '12',
-    displayName: 'Extra Small',
+    displayName: t('canvas.preset.extraSmall'),
   },
   {
     value: '14',
-    displayName: 'Small',
+    displayName: t('canvas.preset.small'),
   },
   {
     value: '16',
-    displayName: 'Base',
+    displayName: t('canvas.preset.base'),
   },
   {
     value: '24',
-    displayName: 'Large',
+    displayName: t('canvas.preset.large'),
   },
   {
     value: '36',
-    displayName: 'Extra Large',
+    displayName: t('canvas.preset.extraLarge'),
   },
 ];
 
-const arrowStylePresets: DropdownPreset[] = [
+const arrowStylePresets = (): DropdownPreset[] => [
   {
     value: '0',
-    displayName: 'Line',
+    displayName: t('canvas.connection.line'),
     icon: ArrowLine,
   },
   {
     value: '1',
-    displayName: 'Arrow',
+    displayName: t('canvas.connection.arrow'),
     icon: ArrowCaret,
   },
   {
     value: '2',
-    displayName: 'Arrow Filled',
+    displayName: t('canvas.connection.arrowFilled'),
     icon: ArrowTriangle,
   },
   {
     value: '3',
-    displayName: 'Circle',
+    displayName: t('canvas.connection.circle'),
     icon: ArrowCircle,
   },
   {
     value: '4',
-    displayName: 'Dot',
+    displayName: t('canvas.connection.dot'),
     icon: ArrowCircleSmall,
   },
 ];
 
-const connectionStylePresets: DropdownPreset[] = [
+const connectionStylePresets = (): DropdownPreset[] => [
   {
     value: '0',
-    displayName: 'Straight',
+    displayName: t('canvas.connection.straight'),
     icon: ConnectorStraight,
   },
   {
     value: '1',
-    displayName: 'Bent',
+    displayName: t('canvas.connection.bent'),
     icon: ConnectorStepped,
   },
   {
     value: '2',
-    displayName: 'Curved',
+    displayName: t('canvas.connection.curved'),
     icon: ConnectorBezier,
   },
 ];
@@ -529,16 +534,16 @@ export function FloatingMenu() {
               <Divider />
             </Show>
             <div class="flex flex-row h-10 justify-between items-center">
-              <GroupLabel label="Line Styles" />
+              <GroupLabel label={t('canvas.connection.lineStyles')} />
               <ReverseEdgeButton />
             </div>
             <div class="flex flex-row justify-between">
               <SlidableNumberInput
                 icon={
                   sharedStyles().get('fromEndStyle')
-                    ? arrowStylePresets[sharedStyles().get('fromEndStyle')]
+                    ? arrowStylePresets()[sharedStyles().get('fromEndStyle')]
                         .icon!
-                    : arrowStylePresets[0].icon!
+                    : arrowStylePresets()[0].icon!
                 }
                 inputChanged={(newValue: string) => {
                   const parsedValue = Number.parseInt(newValue);
@@ -546,23 +551,23 @@ export function FloatingMenu() {
                 }}
                 currentValue={
                   sharedStyles().get('fromEndStyle')
-                    ? arrowStylePresets[sharedStyles().get('fromEndStyle')]
+                    ? arrowStylePresets()[sharedStyles().get('fromEndStyle')]
                         .value!
-                    : arrowStylePresets[0].value!
+                    : arrowStylePresets()[0].value!
                 }
                 width="sm"
-                presets={arrowStylePresets}
+                presets={arrowStylePresets()}
                 showPresets={true}
                 fullIcon={true}
-                tooltip="Line start"
+                tooltip={t('canvas.connection.lineStart')}
               />
               <SlidableNumberInput
                 icon={
                   sharedStyles().get('connectionStyle')
-                    ? connectionStylePresets[
+                    ? connectionStylePresets()[
                         sharedStyles().get('connectionStyle')
                       ].icon!
-                    : connectionStylePresets[0].icon!
+                    : connectionStylePresets()[0].icon!
                 }
                 inputChanged={(newValue: string) => {
                   const parsedValue = Number.parseInt(newValue);
@@ -570,23 +575,24 @@ export function FloatingMenu() {
                 }}
                 currentValue={
                   sharedStyles().get('connectionStyle')
-                    ? connectionStylePresets[
+                    ? connectionStylePresets()[
                         sharedStyles().get('connectionStyle')
                       ].value!
-                    : connectionStylePresets[0].value!
+                    : connectionStylePresets()[0].value!
                 }
                 width="sm"
-                presets={connectionStylePresets}
+                presets={connectionStylePresets()}
                 showPresets={true}
                 hideValue={true}
                 fullIcon={true}
-                tooltip="Connection type"
+                tooltip={t('canvas.connection.type')}
               />
               <SlidableNumberInput
                 icon={
                   sharedStyles().get('toEndStyle')
-                    ? arrowStylePresets[sharedStyles().get('toEndStyle')].icon!
-                    : arrowStylePresets[0].icon!
+                    ? arrowStylePresets()[sharedStyles().get('toEndStyle')]
+                        .icon!
+                    : arrowStylePresets()[0].icon!
                 }
                 inputChanged={(newValue: string) => {
                   const parsedValue = Number.parseInt(newValue);
@@ -594,16 +600,17 @@ export function FloatingMenu() {
                 }}
                 currentValue={
                   sharedStyles().get('toEndStyle')
-                    ? arrowStylePresets[sharedStyles().get('toEndStyle')].value!
-                    : arrowStylePresets[0].value!
+                    ? arrowStylePresets()[sharedStyles().get('toEndStyle')]
+                        .value!
+                    : arrowStylePresets()[0].value!
                 }
                 width="sm"
-                presets={arrowStylePresets}
+                presets={arrowStylePresets()}
                 showPresets={true}
                 hideValue={true}
                 fullIcon={true}
                 flip={true}
-                tooltip="Line end"
+                tooltip={t('canvas.connection.lineEnd')}
               />
             </div>
           </Show>
@@ -611,10 +618,11 @@ export function FloatingMenu() {
             <Show when={!alignmentOnly()}>
               <Divider />
             </Show>
-            <GroupLabel label="Align objects" />
+            <GroupLabel label={t('canvas.alignment.title')} />
             <div class="flex flex-wrap justify-center">
               <AlignmentOption
                 alignment={0}
+                label={t('canvas.alignment.left')}
                 icon={AlignLeft}
                 onClick={(alignment) => {
                   align(alignment, true);
@@ -622,6 +630,7 @@ export function FloatingMenu() {
               />
               <AlignmentOption
                 alignment={1}
+                label={t('canvas.alignment.centerHorizontal')}
                 icon={AlignCenterHorizontal}
                 onClick={(alignment) => {
                   align(alignment, true);
@@ -629,6 +638,7 @@ export function FloatingMenu() {
               />
               <AlignmentOption
                 alignment={2}
+                label={t('canvas.alignment.right')}
                 icon={AlignRight}
                 onClick={(alignment) => {
                   align(alignment, true);
@@ -636,6 +646,7 @@ export function FloatingMenu() {
               />
               <AlignmentOption
                 alignment={3}
+                label={t('canvas.alignment.top')}
                 icon={AlignTop}
                 onClick={(alignment) => {
                   align(alignment, true);
@@ -643,6 +654,7 @@ export function FloatingMenu() {
               />
               <AlignmentOption
                 alignment={4}
+                label={t('canvas.alignment.centerVertical')}
                 icon={AlignCenterVertical}
                 onClick={(alignment) => {
                   align(alignment, true);
@@ -650,6 +662,7 @@ export function FloatingMenu() {
               />
               <AlignmentOption
                 alignment={5}
+                label={t('canvas.alignment.bottom')}
                 icon={AlignBottom}
                 onClick={(alignment) => {
                   align(alignment, true);
@@ -678,7 +691,7 @@ export function FloatingMenu() {
               <Show when={validMenus().has('strokeWidth')}>
                 <div class={cn(!isMobileWidth() && 'mr-3.5')}>
                   <SlidableNumberInput
-                    label={'Line weight'}
+                    label={t('canvas.style.lineWeight')}
                     labelPosition="top"
                     icon={LineWeight}
                     inputChanged={(newValue: string) => {
@@ -717,7 +730,7 @@ export function FloatingMenu() {
                         ? 'lg'
                         : 'sm'
                     }
-                    presets={strokeWidthPresets}
+                    presets={strokeWidthPresets()}
                     showPresets={true}
                     isSlidable={true}
                   />
@@ -725,7 +738,7 @@ export function FloatingMenu() {
               </Show>
               <Show when={!isMobileWidth() && validMenus().has('cornerRadius')}>
                 <SlidableNumberInput
-                  label={'Corner rounding'}
+                  label={t('canvas.style.cornerRounding')}
                   labelPosition="top"
                   icon={CornersOut}
                   inputChanged={(newValue: string) => {
@@ -760,7 +773,7 @@ export function FloatingMenu() {
                   currentValue={sharedStyles().get('cornerRadius') ?? '-'}
                   range={vec2(0, 100)}
                   width="sm"
-                  presets={cornerRadiusPresets}
+                  presets={cornerRadiusPresets()}
                   showPresets={true}
                   isSlidable={true}
                 />
@@ -777,7 +790,7 @@ export function FloatingMenu() {
                 )}
               >
                 <SlidableNumberInput
-                  label={'Font size'}
+                  label={t('canvas.style.fontSize')}
                   labelPosition="top"
                   icon={TextAa}
                   onSlideStart={() => {
@@ -812,7 +825,7 @@ export function FloatingMenu() {
                   currentValue={sharedStyles().get('textSize') ?? '-'}
                   range={vec2(5, 72)}
                   width={isMobileWidth() ? 'sm' : 'lg'}
-                  presets={textSizePresets}
+                  presets={textSizePresets()}
                   showPresets={true}
                   isSlidable={true}
                 />

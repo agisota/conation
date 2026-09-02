@@ -1,4 +1,4 @@
-import { formatOrdinal, plural } from '@core/util/string';
+import { formatDateTime, getDateLocale, t } from '@app/lib/i18n';
 import { TZDateMini } from '@date-fns/tz';
 import { format } from 'date-fns';
 
@@ -17,13 +17,13 @@ const RECURRENCE_FREQUENCIES = [
 ] as const;
 
 const WEEKDAYS = {
-  MO: { day: 1, name: 'Monday' },
-  TU: { day: 2, name: 'Tuesday' },
-  WE: { day: 3, name: 'Wednesday' },
-  TH: { day: 4, name: 'Thursday' },
-  FR: { day: 5, name: 'Friday' },
-  SA: { day: 6, name: 'Saturday' },
-  SU: { day: 7, name: 'Sunday' },
+  MO: { day: 1, gender: 'masculine' },
+  TU: { day: 2, gender: 'masculine' },
+  WE: { day: 3, gender: 'feminine' },
+  TH: { day: 4, gender: 'masculine' },
+  FR: { day: 5, gender: 'feminine' },
+  SA: { day: 6, gender: 'feminine' },
+  SU: { day: 7, gender: 'neuter' },
 } as const;
 
 const WORKWEEK_CODES = ['MO', 'TU', 'WE', 'TH', 'FR'] as const;
@@ -184,49 +184,41 @@ function formatBaseFrequency(
   frequency: ParsedRecurrenceFrequency,
   interval: number
 ) {
-  if (interval > 1) {
-    const unit = {
-      SECONDLY: 'second',
-      MINUTELY: 'minute',
-      HOURLY: 'hour',
-      DAILY: 'day',
-      WEEKLY: 'week',
-      MONTHLY: 'month',
-      YEARLY: 'year',
-    }[frequency];
-    return `Every ${interval} ${plural(unit, interval)}`;
-  }
-
-  return {
-    SECONDLY: 'Every second',
-    MINUTELY: 'Every minute',
-    HOURLY: 'Hourly',
-    DAILY: 'Daily',
-    WEEKLY: 'Weekly',
-    MONTHLY: 'Monthly',
-    YEARLY: 'Yearly',
-  }[frequency];
+  return t('calendar.recurrence.description.baseFrequency', {
+    frequency,
+    interval,
+  });
 }
 
-function ordinalWord(value: number) {
-  const words: Record<number, string> = {
+type OrdinalGender = (typeof WEEKDAYS)[ParsedWeekdayCode]['gender'];
+
+function ordinalWord(value: number, gender: OrdinalGender) {
+  const names: Record<number, string> = {
     1: 'first',
     2: 'second',
     3: 'third',
     4: 'fourth',
     5: 'fifth',
     [-1]: 'last',
-    [-2]: 'second-to-last',
-    [-3]: 'third-to-last',
-    [-4]: 'fourth-to-last',
-    [-5]: 'fifth-to-last',
+    [-2]: 'secondToLast',
+    [-3]: 'thirdToLast',
+    [-4]: 'fourthToLast',
+    [-5]: 'fifthToLast',
   };
-  return (
-    words[value] ??
-    (value > 0
-      ? formatOrdinal(value)
-      : `${formatOrdinal(Math.abs(value))}-to-last`)
-  );
+  const name = names[value];
+  if (name) {
+    return t(`calendar.recurrence.description.ordinal.${gender}`, {
+      ordinal: name,
+    });
+  }
+
+  const ordinal = t('calendar.recurrence.description.ordinal.numeric', {
+    gender,
+    value: Math.abs(value),
+  });
+  return value > 0
+    ? ordinal
+    : t('calendar.recurrence.description.ordinal.fromEnd', { ordinal });
 }
 
 function listFormatter(locale?: Intl.LocalesArgument) {
@@ -255,8 +247,15 @@ function formatByDay(
   locale?: Intl.LocalesArgument
 ) {
   const labels = sortedByDays(byDay).map(({ ordinal, weekday }) => {
-    const day = WEEKDAYS[weekday].name;
-    return ordinal === undefined ? day : `${ordinalWord(ordinal)} ${day}`;
+    if (ordinal === undefined) {
+      return t('calendar.recurrence.description.weekdayRecurring', {
+        weekday,
+      });
+    }
+    return t('calendar.recurrence.description.ordinalWeekday', {
+      ordinal: ordinalWord(ordinal, WEEKDAYS[weekday].gender),
+      weekday: t('calendar.recurrence.description.weekday', { weekday }),
+    });
   });
   return listFormatter(locale).format(labels);
 }
@@ -264,10 +263,15 @@ function formatByDay(
 function formatMonthDays(days: number[], locale?: Intl.LocalesArgument) {
   const labels = days.map((day) =>
     day > 0
-      ? formatOrdinal(day)
+      ? t('calendar.recurrence.description.ordinal.numeric', {
+          gender: 'neuter',
+          value: day,
+        })
       : day === -1
-        ? 'last day'
-        : `${ordinalWord(day)} day`
+        ? t('calendar.recurrence.description.lastDay')
+        : t('calendar.recurrence.description.monthDayFromEnd', {
+            ordinal: ordinalWord(day, 'masculine'),
+          })
   );
   return listFormatter(locale).format(labels);
 }
@@ -294,24 +298,34 @@ function formatRuleDetails(
     (frequency === 'DAILY' || frequency === 'WEEKLY') &&
     isWorkweek(rule.byDay)
   ) {
-    return 'Every weekday';
+    return t('calendar.recurrence.description.everyWeekday');
   }
 
   const base = formatBaseFrequency(frequency, rule.interval);
   const days = rule.byDay.length > 0 ? formatByDay(rule.byDay, locale) : '';
+  const hasOrdinalDay = rule.byDay.some((day) => day.ordinal !== undefined);
 
-  if (frequency === 'WEEKLY' && days) return `${base} on ${days}`;
-  if (frequency === 'DAILY' && days) return `${base} on ${days}`;
+  if ((frequency === 'WEEKLY' || frequency === 'DAILY') && days) {
+    return t('calendar.recurrence.description.onDays', {
+      base,
+      days,
+      ordinal: String(hasOrdinalDay),
+    });
+  }
 
   if (frequency === 'MONTHLY') {
     if (rule.byMonthDay.length > 0) {
-      return `${base} on the ${formatMonthDays(rule.byMonthDay, locale)}`;
+      return t('calendar.recurrence.description.onMonthDays', {
+        base,
+        days: formatMonthDays(rule.byMonthDay, locale),
+      });
     }
     if (days) {
-      const article = rule.byDay.some((day) => day.ordinal !== undefined)
-        ? 'the '
-        : '';
-      return `${base} on ${article}${days}`;
+      return t('calendar.recurrence.description.onDays', {
+        base,
+        days,
+        ordinal: String(hasOrdinalDay),
+      });
     }
   }
 
@@ -322,26 +336,48 @@ function formatRuleDetails(
 
     if (months && monthDay !== undefined) {
       if (rule.byMonth.length === 1 && monthDay > 0) {
-        return `${base} on ${months} ${monthDay}`;
+        const date = new Intl.DateTimeFormat(locale, {
+          month: 'long',
+          day: 'numeric',
+          timeZone: 'UTC',
+        }).format(new Date(Date.UTC(2020, rule.byMonth[0] - 1, monthDay)));
+        return t('calendar.recurrence.description.onDate', { base, date });
       }
-      if (monthDay === -1) return `${base} on the last day of ${months}`;
-      return `${base} on day ${monthDay} in ${months}`;
+      if (monthDay === -1) {
+        return t('calendar.recurrence.description.onLastDayOfMonths', {
+          base,
+          months,
+        });
+      }
+      return t('calendar.recurrence.description.onDayInMonths', {
+        base,
+        day: monthDay,
+        months,
+      });
     }
     if (months && days) {
-      const article = rule.byDay.some((day) => day.ordinal !== undefined)
-        ? 'the '
-        : '';
-      return `${base} on ${article}${days} in ${months}`;
+      return t('calendar.recurrence.description.onDaysInMonths', {
+        base,
+        days,
+        months,
+        ordinal: String(hasOrdinalDay),
+      });
     }
-    if (months) return `${base} in ${months}`;
+    if (months) {
+      return t('calendar.recurrence.description.inMonths', { base, months });
+    }
     if (days) {
-      const article = rule.byDay.some((day) => day.ordinal !== undefined)
-        ? 'the '
-        : '';
-      return `${base} on ${article}${days}`;
+      return t('calendar.recurrence.description.onDays', {
+        base,
+        days,
+        ordinal: String(hasOrdinalDay),
+      });
     }
     if (rule.byMonthDay.length > 0) {
-      return `${base} on the ${formatMonthDays(rule.byMonthDay, locale)}`;
+      return t('calendar.recurrence.description.onMonthDays', {
+        base,
+        days: formatMonthDays(rule.byMonthDay, locale),
+      });
     }
   }
 
@@ -363,18 +399,23 @@ function parseUntilDate(value: string) {
     : undefined;
 }
 
-/** Options for formatting a recurrence description. */
+/**
+ * Legacy options accepted for source compatibility.
+ *
+ * @deprecated Recurrence descriptions always use the selected application
+ * locale so ICU messages, dates, months, and lists cannot disagree.
+ */
 export interface RecurrenceDescriptionOptions {
-  /** Locale used for weekday, month, date, and list formatting. */
+  /** @deprecated Ignored; select the application locale with `setLocale`. */
   locale?: Intl.LocalesArgument;
 }
 
-/** Formats recurrence properties as concise, human-readable text. */
+/** Formats recurrence properties in the selected application locale. */
 export function formatRecurrenceDescription(
   lines: string[],
-  options: RecurrenceDescriptionOptions = {}
+  _legacyOptions: RecurrenceDescriptionOptions = {}
 ): string | undefined {
-  const { locale } = options;
+  const locale = getDateLocale();
   const parsed = parseRecurrenceLines(lines);
   let description = parsed.rule
     ? formatRuleDetails(parsed.rule, locale)
@@ -382,38 +423,48 @@ export function formatRecurrenceDescription(
 
   if (!description && parsed.additionalDates.length > 0) {
     const count = parsed.additionalDates.length;
-    description = `Repeats on ${count} additional ${plural('date', count)}`;
+    description = t('calendar.recurrence.description.onAdditionalDates', {
+      count,
+    });
   }
 
-  if (!description && parsed.hasRecurrenceRule) description = 'Recurring event';
+  if (!description && parsed.hasRecurrenceRule) {
+    description = t('calendar.recurrence.recurringEvent');
+  }
   if (!description) return undefined;
 
   const suffixes: string[] = [];
   if (parsed.rule?.count) {
     suffixes.push(
-      `${parsed.rule.count} ${plural('occurrence', parsed.rule.count)}`
+      t('calendar.recurrence.description.occurrences', {
+        count: parsed.rule.count,
+      })
     );
   }
   if (parsed.rule?.until) {
     const until = parseUntilDate(parsed.rule.until);
     if (until) {
       suffixes.push(
-        `until ${new Intl.DateTimeFormat(locale, {
-          month: 'long',
-          day: 'numeric',
-          year: 'numeric',
-          timeZone: 'UTC',
-        }).format(until)}`
+        t('calendar.recurrence.description.until', {
+          date: new Intl.DateTimeFormat(locale, {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+            timeZone: 'UTC',
+          }).format(until),
+        })
       );
     }
   }
   if (parsed.rule && parsed.additionalDates.length > 0) {
     const count = parsed.additionalDates.length;
-    suffixes.push(`${count} additional ${plural('date', count)}`);
+    suffixes.push(
+      t('calendar.recurrence.description.additionalDates', { count })
+    );
   }
   if (parsed.excludedDates.length > 0) {
     const count = parsed.excludedDates.length;
-    suffixes.push(`${count} ${plural('exception', count)}`);
+    suffixes.push(t('calendar.recurrence.description.exceptions', { count }));
   }
 
   return [description, ...suffixes].join(' · ');
@@ -621,17 +672,20 @@ const ORDINAL_LABELS: Record<number, string> = {
 /** Google Calendar's preset list, phrased from the event's start date. */
 export function recurrencePresetsFor(start: Date): RecurrencePreset[] {
   const weekday = WEEKDAY_CODES[start.getDay()] as WeekdayCode;
-  const weekdayName = format(start, 'EEEE');
+  const weekdayName = formatDateTime(start, { weekday: 'long' });
   const monthly = monthlyOrdinalFor(start);
+  const ordinal = ORDINAL_LABELS[monthly.ordinal] ?? 'last';
   return [
     {
       id: 'daily',
-      label: 'Daily',
+      label: t('calendar.recurrence.preset.daily'),
       config: { frequency: 'DAILY', interval: 1, byDay: [], ends: NEVER },
     },
     {
       id: 'weekly',
-      label: `Weekly on ${weekdayName}`,
+      label: t('calendar.recurrence.preset.weekly', {
+        weekday: weekdayName,
+      }),
       config: {
         frequency: 'WEEKLY',
         interval: 1,
@@ -641,7 +695,10 @@ export function recurrencePresetsFor(start: Date): RecurrencePreset[] {
     },
     {
       id: 'monthly',
-      label: `Monthly on the ${ORDINAL_LABELS[monthly.ordinal]} ${weekdayName}`,
+      label: t('calendar.recurrence.preset.monthly', {
+        ordinal: t('calendar.recurrence.preset.ordinal', { ordinal }),
+        weekday: weekdayName,
+      }),
       config: {
         frequency: 'MONTHLY',
         interval: 1,
@@ -652,12 +709,14 @@ export function recurrencePresetsFor(start: Date): RecurrencePreset[] {
     },
     {
       id: 'annually',
-      label: `Annually on ${format(start, 'MMMM d')}`,
+      label: t('calendar.recurrence.preset.annually', {
+        date: formatDateTime(start, { month: 'long', day: 'numeric' }),
+      }),
       config: { frequency: 'YEARLY', interval: 1, byDay: [], ends: NEVER },
     },
     {
       id: 'weekdays',
-      label: 'Every weekday (Monday to Friday)',
+      label: t('calendar.recurrence.preset.weekdays'),
       config: {
         frequency: 'WEEKLY',
         interval: 1,

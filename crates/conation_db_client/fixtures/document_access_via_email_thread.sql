@@ -23,7 +23,7 @@ VALUES ('user-thread-access', 'user_thread@test.com', 'a1111111-1111-1111-1111-1
 -- Email infrastructure: link, thread, message, attachment
 ------------------------------------------------------------
 INSERT INTO email_links (id, macro_id, fusionauth_user_id, email_address, provider, is_sync_active, created_at, updated_at)
-VALUES ('a0000000-0000-0000-0000-000000000001', 'macro|owner@test.com', 'a0000000-0000-0000-0000-000000000001',
+VALUES ('a0000000-0000-0000-0000-000000000001', 'conation|owner@test.com', 'a0000000-0000-0000-0000-000000000001',
         'owner@test.com', 'GMAIL', true, NOW(), NOW());
 
 INSERT INTO email_threads (id, link_id, inbox_visible, is_read, created_at, updated_at)

@@ -1,4 +1,5 @@
 import { analytics } from '@app/lib/analytics';
+import { t } from '@app/lib/i18n';
 import { useChannelsContext } from '@core/context/channels';
 import { useUserId } from '@core/context/user';
 import { throwOnErr } from '@core/util/result';
@@ -111,7 +112,7 @@ export function useCall(channelId: () => string, options?: UseCallOptions) {
     }
 
     autoRejoinAttempts += 1;
-    callCtx.setJoinError('Call disconnected. Reconnecting…');
+    callCtx.setJoinError(t('channel.call.error.reconnecting'));
     autoRejoinTimer = globalThis.setTimeout(() => {
       autoRejoinTimer = null;
       joinCall().catch((e) => console.error('auto-rejoin call failed', e));
@@ -241,9 +242,7 @@ export function useCall(channelId: () => string, options?: UseCallOptions) {
     onError: (_err, channelId: string, _ctx: JoinCallContext | undefined) => {
       cancelCurrentJoin();
       callCtx.rollbackOptimisticJoin();
-      callCtx.setJoinError(
-        'Unable to join the call. Please check your connection.'
-      );
+      callCtx.setJoinError(t('channel.call.error.unableToJoin'));
       void (async () => {
         try {
           await callCtx.disconnectSession({ endNativeCall: false });

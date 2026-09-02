@@ -1,18 +1,18 @@
-pub async fn upsert_conation_user_id(
+pub async fn upsert_macro_user_id(
     transaction: &mut sqlx::Transaction<'_, sqlx::Postgres>,
     user_id: &str,
-    conation_user_id: &str,
+    macro_user_id: &str,
 ) -> anyhow::Result<()> {
-    let conation_user_id = conation_uuid::string_to_uuid(conation_user_id)?;
+    let macro_user_id = conation_uuid::string_to_uuid(macro_user_id)?;
 
     sqlx::query!(
         r#"
         UPDATE "User"
-        SET conation_user_id = $2
+        SET macro_user_id = $2
         WHERE id = $1
         "#,
         user_id,
-        &conation_user_id,
+        &macro_user_id,
     )
     .execute(transaction.as_mut())
     .await?;
@@ -30,7 +30,7 @@ struct UserProfileInfo {
     pub profile_picture_hash: Option<String>,
 }
 
-pub async fn migrate_conation_user_info(
+pub async fn migrate_macro_user_info(
     transaction: &mut sqlx::Transaction<'_, sqlx::Postgres>,
     fusionauth_user_id: &str,
     user_id: &str,
@@ -38,7 +38,7 @@ pub async fn migrate_conation_user_info(
     let fusionauth_user_id = conation_uuid::string_to_uuid(fusionauth_user_id)?;
 
     // Get the current user profile info
-    // Upsert to conation_user_info table
+    // Upsert to macro_user_info table
     // On conflict, do nothing
     //
     let user_profile_info: UserProfileInfo = sqlx::query_as!(
@@ -61,9 +61,9 @@ pub async fn migrate_conation_user_info(
 
     sqlx::query!(
         r#"
-        INSERT INTO conation_user_info (conation_user_id, industry, title, first_name, last_name, profile_picture, profile_picture_hash)
+        INSERT INTO macro_user_info (macro_user_id, industry, title, first_name, last_name, profile_picture, profile_picture_hash)
         VALUES ($1, $2, $3, $4, $5, $6, $7)
-        ON CONFLICT (conation_user_id) DO NOTHING
+        ON CONFLICT (macro_user_id) DO NOTHING
         "#,
         &fusionauth_user_id,
         user_profile_info.industry,

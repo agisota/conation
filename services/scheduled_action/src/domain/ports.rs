@@ -35,7 +35,7 @@ pub trait ScheduledActionRepo: Send + Sync + 'static {
     fn delete_action(
         &self,
         id: &Uuid,
-        conation_user_id: MacroUserIdStr<'static>,
+        macro_user_id: MacroUserIdStr<'static>,
     ) -> impl Future<Output = Result<()>> + Send;
 
     fn claim_action(&self, id: &Uuid) -> impl Future<Output = Result<()>> + Send;
@@ -75,25 +75,25 @@ pub trait ScheduledActionService: Send + Sync + 'static {
     fn update_action(
         &self,
         action: ScheduledAction,
-        conation_user_id: MacroUserIdStr<'static>,
+        macro_user_id: MacroUserIdStr<'static>,
     ) -> impl Future<Output = Result<ScheduledAction>> + Send;
 
     fn delete_action(
         &self,
         id: &Uuid,
-        conation_user_id: MacroUserIdStr<'static>,
+        macro_user_id: MacroUserIdStr<'static>,
     ) -> impl Future<Output = Result<()>> + Send;
 
     fn execute_action_now(
         &self,
         id: &Uuid,
-        conation_user_id: MacroUserIdStr<'static>,
+        macro_user_id: MacroUserIdStr<'static>,
     ) -> impl Future<Output = Result<InProgressExecution>> + Send;
 
     fn get_execution_records(
         &self,
         id: &Uuid,
-        conation_user_id: MacroUserIdStr<'static>,
+        macro_user_id: MacroUserIdStr<'static>,
     ) -> impl Future<Output = Result<Vec<ActionExecutionRecord>>> + Send;
 }
 

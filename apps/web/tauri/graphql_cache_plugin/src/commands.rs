@@ -2,7 +2,7 @@
 //! `CacheHost` (`apps/web/src/lib/graphql-cache/host/tauri-host.ts`).
 //!
 //! Lives in its own module because `#[tauri::command]` emits a
-//! `#[conation_export]` helper macro whose crate-root re-import collides with
+//! `#[macro_export]` helper macro whose crate-root re-import collides with
 //! the function item when the command is defined directly in `lib.rs`.
 //!
 //! Errors cross the boundary as strings (the host rejects the pending call;

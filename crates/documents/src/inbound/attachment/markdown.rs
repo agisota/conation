@@ -2,11 +2,11 @@
 
 use attachment::image::ImageData;
 use attachment::{AttachmentContent, AttachmentError, AttachmentPart, ResolutionError};
+use conation_user_id::user_id::MacroUserIdStr;
 use document_sub_type::DocumentSubType;
 use entity_access::domain::ports::EntityAccessService;
 use futures::future::join_all;
 use lexical_client::types::NewMdNode;
-use conation_user_id::user_id::MacroUserIdStr;
 use model::document::DocumentBasic;
 use model_entity::EntityType;
 use non_empty::NonEmpty;

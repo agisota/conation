@@ -4,13 +4,13 @@ use std::{
 };
 
 use axum::{Router, http::Request};
-use hmac::{Hmac, Mac};
-use http_body_util::BodyExt;
 use conation_authorization::{
-    INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_USER_ID_HEADER, InternalIdentityClaims,
+    INTERNAL_API_KEY_HEADER, INTERNAL_CONATION_USER_ID_HEADER, InternalIdentityClaims,
     MacroAuthorizationError, MacroAuthorizationService, MacroAuthorizationState,
 };
 use conation_user_id::user_id::MacroUserIdStr;
+use hmac::{Hmac, Mac};
+use http_body_util::BodyExt;
 use model_entity::Entity;
 use model_user::UserContext;
 use models_pagination::{CreatedAt, Paginated, Query};
@@ -35,6 +35,7 @@ use crate::domain::{
 };
 
 use super::NotificationRouterState;
+use super::preferences::signed_request_url;
 
 const VALID_BEARER_TOKEN: &str = "valid-token";
 const VALID_AUTHORIZATION_HEADER: &str = "Bearer valid-token";
@@ -538,7 +539,7 @@ async fn valid_internal_key_and_acting_user_reach_per_user_handler() {
             None,
             &[
                 (INTERNAL_API_KEY_HEADER, VALID_INTERNAL_KEY),
-                (INTERNAL_MACRO_USER_ID_HEADER, VALID_USER_ID),
+                (INTERNAL_CONATION_USER_ID_HEADER, VALID_USER_ID),
             ],
         )
         .await,
@@ -687,7 +688,21 @@ impl NotificationReader for PresignedTestService {
 const HMAC_KEY: &[u8] = b"test-key";
 
 /// The base URL that `Environment::new_or_prod()` (Production) resolves to.
-const NOTIFICATION_BASE_URL: &str = "https://notifications.macro.com";
+const NOTIFICATION_BASE_URL: &str = "https://notifications.conation.dev";
+
+#[test]
+fn signed_request_url_preserves_reverse_proxy_path_prefix() {
+    let url = signed_request_url(
+        "https://conation.example/notification".parse().unwrap(),
+        "/user_notifications/preferences/email_digest/disable?id=conation%7Cuser%40example.com",
+    )
+    .expect("valid public URL and request path must join");
+
+    assert_eq!(
+        url.as_str(),
+        "https://conation.example/notification/user_notifications/preferences/email_digest/disable?id=conation%7Cuser%40example.com"
+    );
+}
 
 fn presigned_router() -> Router {
     let hmac_key = Hmac::<Sha256>::new_from_slice(HMAC_KEY).unwrap();
@@ -709,7 +724,7 @@ fn presigned_router() -> Router {
 
 /// Build a presigned disable URL path+query for use as a request URI.
 ///
-/// Signs the full absolute URL (`https://notifications.macro.com/...`) and
+/// Signs the full absolute URL (`https://notifications.conation.dev/...`) and
 /// returns only the path+query portion (e.g. `/user_notifications/preferences/...?id=...&sig=...`).
 fn signed_disable_uri(notification_type: &str, user_id: &str) -> String {
     let hmac_key = Hmac::<Sha256>::new_from_slice(HMAC_KEY).unwrap();
@@ -729,7 +744,7 @@ fn signed_disable_uri(notification_type: &str, user_id: &str) -> String {
 #[tokio::test]
 async fn presigned_disable_succeeds_without_jwt() {
     let router = presigned_router();
-    let uri = signed_disable_uri("test_type", "macro|user@example.com");
+    let uri = signed_disable_uri("test_type", "conation|user@example.com");
 
     let req = Request::builder()
         .uri(&uri)
@@ -742,7 +757,7 @@ async fn presigned_disable_succeeds_without_jwt() {
     let body = resp.into_body().collect().await.unwrap().to_bytes();
     let text = String::from_utf8_lossy(&body);
     assert!(
-        text.contains("unsubscribed"),
+        text.contains("Вы отписались"),
         "expected success HTML, got: {text}"
     );
 }
@@ -750,7 +765,7 @@ async fn presigned_disable_succeeds_without_jwt() {
 #[tokio::test]
 async fn presigned_disable_succeeds_with_valid_hmac() {
     let router = presigned_router();
-    let uri = signed_disable_uri("test_type", "macro|user@example.com");
+    let uri = signed_disable_uri("test_type", "conation|user@example.com");
 
     let resp = router
         .oneshot(
@@ -771,7 +786,7 @@ async fn presigned_disable_fails_with_invalid_hmac() {
     let router = presigned_router();
     // Construct a URI with a bogus signature
     let uri = "/user_notifications/preferences/test_type/disable\
-               ?id=macro|user@example.com&sig=0000000000000000000000000000000000000000000000000000000000000000";
+               ?id=conation|user@example.com&sig=0000000000000000000000000000000000000000000000000000000000000000";
 
     let resp = router
         .oneshot(

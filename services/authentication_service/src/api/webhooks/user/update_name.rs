@@ -5,6 +5,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
+use conation_user_id::user_id::MacroUserIdStr;
 
 use crate::api::context::{ApiContext, AuthorizationService};
 
@@ -39,7 +40,12 @@ pub async fn handler(
     _internal_authorization: MacroAuthorizationExtractor<AuthorizationService, InternalOnly>,
     extract::Json(req): extract::Json<UpdateNameWebhook>,
 ) -> Result<Response, Response> {
-    let user_id = "macro|".to_string() + &req.email;
+    let user_id = MacroUserIdStr::try_from_email(&req.email)
+        .map_err(|e| {
+            tracing::error!(error=?e, email=%req.email, "invalid Conation user email");
+            (StatusCode::BAD_REQUEST, "invalid Conation user email").into_response()
+        })?
+        .to_string();
     let first_name = req.first_name;
     let last_name = req.last_name;
 

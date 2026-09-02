@@ -9,6 +9,8 @@ use channels::domain::{
 };
 use chat::domain::events::{ChatMessageDeletedMetadata, ChatTopicEvent, ChatUpdatedMetadata};
 use chrono::Utc;
+use conation_event_broker::{Event, EventBrokerError, MacroEventCollection as _, MessageParts};
+use conation_user_id::user_id::MacroUserIdStr;
 use documents::domain::events::{
     DocumentContentUploadedMetadata, DocumentCreatedMetadata, DocumentDeletedMetadata,
     DocumentInteractionMetadata, DocumentPurgedMetadata, DocumentSyncContentUpdatedMetadata,
@@ -19,8 +21,6 @@ use email::domain::events::{
     ThreadReadMetadata, ThreadSpamChangedMetadata, ThreadTrashedMetadata, ThreadsReindexReason,
     ThreadsReindexRequestedMetadata,
 };
-use conation_event_broker::{Event, EventBrokerError, MacroEventCollection as _, MessageParts};
-use conation_user_id::user_id::MacroUserIdStr;
 use projects::domain::events::{ProjectDeletedMetadata, ProjectTopicEvent};
 use properties::domain::events::{
     EntityPropertiesClearedMetadata, EntityPropertyDeletedMetadata, EntityPropertyUpdatedMetadata,

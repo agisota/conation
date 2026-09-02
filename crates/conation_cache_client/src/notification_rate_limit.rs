@@ -5,7 +5,7 @@ use anyhow::Context;
 use crate::MacroCache;
 
 /// Generates the rate limit key for channel creation for a given user by their email
-conation_rules! conation_rate_limit_channel_invite {
+macro_rules! conation_rate_limit_channel_invite {
     ($email:expr) => {
         format!("rtl_channel_invite:{}", $email)
     };
@@ -13,21 +13,21 @@ conation_rules! conation_rate_limit_channel_invite {
 
 /// Generates the rate limit key for channel invites for a given user by their email and the email
 /// for the user that invited them
-conation_rules! conation_rate_limit_channel_invited {
+macro_rules! conation_rate_limit_channel_invited {
     ($email:expr, $invited_by_email:expr) => {
         format!("rtl_channel_invited:{}_{}", $email, $invited_by_email)
     };
 }
 
 /// Generates the rate limit key for channel invites for a given ip
-conation_rules! conation_rate_limit_channel_invite_ip {
+macro_rules! conation_rate_limit_channel_invite_ip {
     ($ip:expr) => {
         format!("rtl_channel_invite_ip:{}", $ip)
     };
 }
 
 /// Generates the rate limit key for invite to team for a given email
-conation_rules! conation_rate_limit_invite_to_team {
+macro_rules! conation_rate_limit_invite_to_team {
     ($email:expr) => {
         format!("rtl_invite_to_team:{}", $email)
     };
@@ -101,8 +101,11 @@ impl MacroCache {
     /// This is the number of times a given ip has made a channel invite event during the keys
     /// lifetime.
     pub async fn get_channel_invite_ip_rate_limit(&self, ip: &str) -> anyhow::Result<Option<u64>> {
-        conation_redis::get::get_optional::<u64>(&self.inner, &conation_rate_limit_channel_invite_ip!(ip))
-            .await
+        conation_redis::get::get_optional::<u64>(
+            &self.inner,
+            &conation_rate_limit_channel_invite_ip!(ip),
+        )
+        .await
     }
 
     /// Increments the channel invite rate limit for a given ip.

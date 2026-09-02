@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import ChevronDownIcon from '@phosphor/caret-down.svg?component-solid';
 import { cn } from '@ui';
 import { createSignal, For, type JSX, Show } from 'solid-js';
@@ -30,7 +31,7 @@ function ToggleButton(props: ToggleButtonProps) {
             'rotate-180': props.showAll,
           })}
         />
-        <Show when={!props.showAll} fallback="Show less">
+        <Show when={!props.showAll} fallback={t('entity.collapsible.showLess')}>
           {props.getExpandTextFn(props.itemsLength - props.visibleCount)}
         </Show>
       </button>
@@ -87,7 +88,8 @@ export function CollapsibleList<T>(props: CollapsibleListProps<T>) {
   const position = () => props.togglePosition ?? 'top';
 
   const getExpandTextFn = () =>
-    props.expandText ?? ((count: number) => `Show ${count} More`);
+    props.expandText ??
+    ((count: number) => t('entity.collapsible.showMore', { count }));
 
   // Let the virtualizer (virtua) handle scroll anchoring on item resize via
   // its built-in ACTION_ITEM_RESIZE logic and overflow-anchor: none. Manually

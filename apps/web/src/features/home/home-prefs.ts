@@ -5,7 +5,7 @@ import { createEffect, createSignal, on } from 'solid-js';
 /** Dismissible home surfaces. Dismissals persist in localStorage. */
 export type HomeCard = 'examples' | 'setup';
 
-const storage = createUserScopedStorage('macro:home:dismissed');
+const storage = createUserScopedStorage('conation:home:dismissed');
 const HOME_CARDS: readonly HomeCard[] = ['examples', 'setup'];
 
 export function parseDismissedCards(raw: string | null): HomeCard[] {

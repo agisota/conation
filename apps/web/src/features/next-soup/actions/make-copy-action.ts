@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import type { EntityData } from '@entity';
 import { createBulkCopyDssEntityMutation } from '@entity';
@@ -25,9 +26,7 @@ export const makeCopyAction = () => {
       entities,
       name: (name) => name,
     });
-    toast.success(
-      entities.length > 1 ? `Copied ${entities.length} items` : 'Copied'
-    );
+    toast.success(t('soup.toast.copied', { count: entities.length }));
   };
 
   const executeWithSoup = async (entities: EntityData[], soup: SoupState) => {

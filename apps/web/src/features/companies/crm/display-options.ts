@@ -4,8 +4,8 @@
  * same mechanism as other sticky view settings.
  */
 
-import { makePersisted } from '@solid-primitives/storage';
 import { t } from '@app/lib/i18n';
+import { makePersisted } from '@solid-primitives/storage';
 import { createSignal } from 'solid-js';
 
 export type CrmListColumnId = 'stage' | 'owner' | 'revenue';
@@ -20,9 +20,15 @@ export const DEFAULT_CRM_DISPLAY_OPTIONS: CrmDisplayOptions = {
 };
 
 export const CRM_LIST_COLUMN_LABELS: Record<CrmListColumnId, string> = {
-  stage: 'Stage',
-  owner: t('common.owner'),
-  revenue: 'Revenue',
+  get stage() {
+    return t('soup.fields.stage');
+  },
+  get owner() {
+    return t('common.owner');
+  },
+  get revenue() {
+    return t('soup.fields.revenue');
+  },
 };
 
 // One shared signal for the whole app (module-level), so toggling in the
@@ -31,7 +37,7 @@ export const CRM_LIST_COLUMN_LABELS: Record<CrmListColumnId, string> = {
 // shares the localStorage key — updates would not propagate until reload.
 const [displayOptions, setDisplayOptions] = makePersisted(
   createSignal<CrmDisplayOptions>(DEFAULT_CRM_DISPLAY_OPTIONS),
-  { name: 'macro:pref:crm:display' }
+  { name: 'conation:pref:crm:display' }
 );
 
 export function useCrmDisplayOptions() {

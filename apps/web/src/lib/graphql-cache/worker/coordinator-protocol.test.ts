@@ -390,10 +390,10 @@ describe('coordinator runtime protocol', () => {
 
   it('derives the exact UTF-8 canonical turso-opfs lock name', () => {
     expect(databaseOwnerLockName('scope')).toBe(
-      'macro:turso-opfs:v1:19:graphql-cache:scope'
+      'conation:turso-opfs:v1:19:graphql-cache:scope'
     );
     expect(databaseOwnerLockName('é')).toBe(
-      'macro:turso-opfs:v1:16:graphql-cache:é'
+      'conation:turso-opfs:v1:16:graphql-cache:é'
     );
   });
 });

@@ -1,6 +1,7 @@
+import { formatNumber, t } from '@app/lib/i18n';
 import type { BlockTool } from '@components/app/ResponsiveBlockToolbar';
-import { t } from '@app/lib/i18n';
 import {
+  BLOCK_TOOL_IDS,
   ResponsiveBlockToolbar,
   ResponsivePermissionsBadge,
 } from '@components/app/ResponsiveBlockToolbar';
@@ -54,7 +55,7 @@ export function TopBar() {
 
     const toastId = toast.custom(
       {
-        title: `Downloading ${fileName}`,
+        title: t('file.download.downloading', { fileName }),
         icon: () => <Spinner class="text-accent size-5 animate-spin" />,
         color: 'var(--color-accent)',
         content: () => <DownloadProgressBar progress={progress()} />,
@@ -66,17 +67,19 @@ export function TopBar() {
       const blob = await getBlob({ onProgress: setProgress });
       downloadFile(blob, fileName);
       toast.dismiss(toastId);
-      toast.success(`Downloaded ${fileName}`);
+      toast.success(t('file.download.downloaded', { fileName }));
     } catch (e) {
       toast.dismiss(toastId);
       console.error('error downloading file', e);
-      toast.failure('Error downloading file');
+      toast.failure(t('file.download.failed'));
     }
   });
 
   const ops: FileOperation[] = [
     {
-      label: t('common.details'),
+      get label() {
+        return t('common.details');
+      },
       icon: Info,
       action: detailsControl.toggle,
     },
@@ -85,7 +88,9 @@ export function TopBar() {
     { op: 'moveToProject' },
     {
       group: 'file',
-      label: 'Download',
+      get label() {
+        return t('block.actions.download');
+      },
       icon: Download,
       action: downloadDocument,
     },
@@ -94,7 +99,10 @@ export function TopBar() {
 
   const tools: BlockTool[] = [
     {
-      label: 'References',
+      id: BLOCK_TOOL_IDS.references,
+      get label() {
+        return t('block.actions.references');
+      },
       icon: Quotes,
       action: referencesControl.toggle,
       condition: () => !!isAuth() && ENABLE_REFERENCES_MODAL,
@@ -107,8 +115,11 @@ export function TopBar() {
       ),
     },
     {
+      id: BLOCK_TOOL_IDS.share,
       group: 'sharing',
-      label: 'Share',
+      get label() {
+        return t('block.actions.share');
+      },
       icon: IconShared,
       action: () => shareCtx.open(),
       buttonComponent: () => <ShareTrigger />,
@@ -145,7 +156,10 @@ function formatBytes(bytes: number): string {
   );
   const value = bytes / 1024 ** exp;
   const decimals = exp === 0 || value >= 100 ? 0 : value >= 10 ? 1 : 2;
-  return `${value.toFixed(decimals)} ${SIZE_UNITS[exp]}`;
+  return `${formatNumber(value, {
+    maximumFractionDigits: decimals,
+    minimumFractionDigits: decimals,
+  })} ${SIZE_UNITS[exp]}`;
 }
 
 function DownloadProgressBar(props: {
@@ -170,9 +184,18 @@ function DownloadProgressBar(props: {
         />
       </div>
       <div class="text-xs text-ink-extra-muted">
-        {hasTotal() ? `${percent()}% — ` : ''}
-        {formatBytes(props.progress.loaded)}
-        {hasTotal() ? ` of ${formatBytes(props.progress.total)}` : ''}
+        {hasTotal()
+          ? `${formatNumber(percent() / 100, {
+              maximumFractionDigits: 0,
+              style: 'percent',
+            })} — `
+          : ''}
+        {hasTotal()
+          ? t('file.download.progressOf', {
+              loaded: formatBytes(props.progress.loaded),
+              total: formatBytes(props.progress.total),
+            })
+          : formatBytes(props.progress.loaded)}
       </div>
     </div>
   );

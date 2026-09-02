@@ -18,7 +18,7 @@ INSERT INTO
         "macro_user_id"
     ) (
         SELECT
-            'macro|user@user.com',
+            'conation|user@user.com',
             'user@user.com',
             'stripe_id',
             1,
@@ -28,7 +28,7 @@ INSERT INTO
 INSERT INTO
     public."User" ("id", "email", "stripeCustomerId", "macro_user_id") (
         SELECT
-            'macro|user2@user.com',
+            'conation|user2@user.com',
             'user2@user.com',
             'stripe_id2',
             'a2222222-2222-2222-2222-222222222222'
@@ -40,7 +40,7 @@ INSERT INTO
             'document-one',
             'test_document_name',
             'txt',
-            'macro|user@user.com'
+            'conation|user@user.com'
     );
 
 INSERT INTO
@@ -64,7 +64,7 @@ INSERT INTO
             'document-two',
             'test_document_name',
             'pdf',
-            'macro|user@user.com'
+            'conation|user@user.com'
     );
 
 INSERT INTO
@@ -133,7 +133,7 @@ INSERT INTO
             'document-three',
             'test_document_name',
             'pdf',
-            'macro|user@user.com',
+            'conation|user@user.com',
             '2019-10-16 00:00:00',
             '2019-10-16 00:00:00'
     );
@@ -143,7 +143,7 @@ INSERT INTO
         SELECT
             'new-project',
             'test_project_name',
-            'macro|user@user.com'
+            'conation|user@user.com'
     );
 
 INSERT INTO
@@ -159,7 +159,7 @@ INSERT INTO
             'document-four',
             'test_document_name',
             NULL,
-            'macro|user@user.com',
+            'conation|user@user.com',
             '2019-10-16 00:00:00',
             '2019-10-16 00:00:00'
     );

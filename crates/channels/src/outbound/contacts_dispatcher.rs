@@ -1,8 +1,8 @@
 //! Contacts adapter for channel side effects.
 
 use crate::domain::ports::ChannelContactsDispatcher;
-use contacts::domain::ports::ContactsIngress;
 use conation_user_id::user_id::MacroUserIdStr;
+use contacts::domain::ports::ContactsIngress;
 use std::{collections::HashSet, sync::Arc};
 
 /// Contacts ingress adapter.

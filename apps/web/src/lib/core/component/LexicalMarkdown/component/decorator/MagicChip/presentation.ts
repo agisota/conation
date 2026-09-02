@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import type { MagicChipStatus } from '@conation/lexical-core';
 import type {
   FoldedMessage,
@@ -44,24 +45,28 @@ function toolActivity(
   return match(part.detail)
     .with({ kind: 'terminal' }, (detail) => ({
       label: failed
-        ? 'Command failed'
+        ? t('editor.magicChip.command.failed')
         : busy
-          ? 'Running command'
-          : 'Command finished',
+          ? t('editor.magicChip.command.running')
+          : t('editor.magicChip.command.finished'),
       detail: detail.command ?? part.label,
       busy,
     }))
     .with({ kind: 'edit' }, (detail) => ({
-      label: failed ? 'Edit failed' : busy ? 'Editing files' : 'Files updated',
+      label: failed
+        ? t('editor.magicChip.edit.failed')
+        : busy
+          ? t('editor.magicChip.edit.running')
+          : t('editor.magicChip.edit.finished'),
       detail: detail.diffs.at(-1)?.path ?? part.label,
       busy,
     }))
     .with({ kind: 'read' }, (detail) => ({
       label: failed
-        ? 'Read failed'
+        ? t('editor.magicChip.read.failed')
         : busy
-          ? 'Reading files'
-          : 'Finished reading',
+          ? t('editor.magicChip.read.running')
+          : t('editor.magicChip.read.finished'),
       detail: detail.paths.at(-1) ?? part.label,
       busy,
     }))
@@ -70,13 +75,17 @@ function toolActivity(
       { kind: 'move' },
       { kind: 'search' },
       (detail) => ({
-        label: failed ? `${part.label} failed` : part.label,
+        label: failed
+          ? t('editor.magicChip.toolFailed', { label: part.label })
+          : part.label,
         detail: detail.paths.at(-1) ?? part.label,
         busy,
       })
     )
     .with({ kind: 'fetch' }, { kind: 'think' }, { kind: 'other' }, () => ({
-      label: failed ? `${part.label} failed` : part.label,
+      label: failed
+        ? t('editor.magicChip.toolFailed', { label: part.label })
+        : part.label,
       busy,
     }))
     .exhaustive();
@@ -84,44 +93,47 @@ function toolActivity(
 
 function partActivity(part: MessagePart): MagicChipActivity {
   return match(part)
-    .with({ kind: 'text' }, () => ({ label: 'Writing response', busy: true }))
+    .with({ kind: 'text' }, () => ({
+      label: t('editor.magicChip.response.writing'),
+      busy: true,
+    }))
     .with({ kind: 'thought' }, ({ text }) => ({
-      label: 'Thinking',
+      label: t('editor.magicChip.thinking'),
       detail: text.trim() || undefined,
       busy: true,
     }))
     .with({ kind: 'tool_use' }, toolActivity)
     .with({ kind: 'permission', outcome: { kind: 'cancelled' } }, () => ({
-      label: 'Permission cancelled',
+      label: t('editor.magicChip.permission.cancelled'),
       busy: false,
     }))
     .with({ kind: 'permission', outcome: { kind: 'selected' } }, () => ({
-      label: 'Resuming work',
+      label: t('editor.magicChip.permission.resuming'),
       busy: true,
     }))
     .with({ kind: 'permission', outcome: { kind: 'pending' } }, () => ({
-      label: 'Permission needed',
+      label: t('editor.magicChip.permission.needed'),
       busy: false,
     }))
     .with({ kind: 'permission', outcome: { kind: 'errored' } }, () => ({
-      label: 'Permission failed',
+      label: t('editor.magicChip.permission.failed'),
       busy: false,
     }))
     .with({ kind: 'permission', outcome: { kind: 'unrecognized' } }, () => ({
-      label: 'Permission unavailable',
+      label: t('editor.magicChip.permission.unavailable'),
       busy: false,
     }))
     .with({ kind: 'control', control: { kind: 'set_model' } }, (part) => ({
-      label: 'Model changed',
+      label: t('editor.magicChip.modelChanged'),
       detail: part.control.model,
       busy: false,
     }))
     .with({ kind: 'control', control: { kind: 'compact' } }, () => ({
-      label: 'Context compacted',
+      label: t('editor.magicChip.contextCompacted'),
       busy: false,
     }))
     .with({ kind: 'control', control: { kind: 'stop' } }, () => ({
-      label: 'Stop requested',
+      label: t('editor.magicChip.stopRequested'),
       busy: false,
     }))
     .with({ kind: 'plan' }, ({ entries }) => {
@@ -130,7 +142,10 @@ function partActivity(part: MessagePart): MagicChipActivity {
       ).length;
       const current = entries.find((entry) => entry.status === 'in_progress');
       return {
-        label: `Todos ${completed}/${entries.length}`,
+        label: t('editor.magicChip.todos', {
+          completed,
+          total: entries.length,
+        }),
         detail: current?.content,
         busy: completed < entries.length,
       };
@@ -149,27 +164,30 @@ function turnEndedActivity(
       .with({ kind: 'end_turn' }, () => ({
         // A clean end with prose settles before activity is consulted, so
         // reaching this arm means the agent closed the turn empty-handed.
-        label: 'Agent finished without a response',
+        label: t('editor.magicChip.ended.empty'),
         busy: false,
       }))
-      .with({ kind: 'cancelled' }, () => ({ label: 'Stopped', busy: false }))
+      .with({ kind: 'cancelled' }, () => ({
+        label: t('editor.magicChip.ended.stopped'),
+        busy: false,
+      }))
       .with({ kind: 'refusal' }, () => ({
-        label: 'Request refused',
+        label: t('editor.magicChip.ended.refused'),
         busy: false,
       }))
       .with({ kind: 'max_tokens' }, () => ({
-        label: 'Response limit reached',
+        label: t('editor.magicChip.ended.responseLimit'),
         busy: false,
       }))
       .with({ kind: 'max_turn_requests' }, () => ({
-        label: 'Turn limit reached',
+        label: t('editor.magicChip.ended.turnLimit'),
         busy: false,
       }))
       .with({ kind: 'other' }, ({ reason }) => ({ label: reason, busy: false }))
       // The runtime errored the prompt. The chip has one line, so it says that
       // much and leaves the runtime's message to the session itself.
       .with({ kind: 'failed' }, () => ({
-        label: "Agent couldn't answer",
+        label: t('editor.magicChip.ended.failed'),
         busy: false,
       }))
       .exhaustive()
@@ -206,16 +224,25 @@ function turnInFlightActivity(
 /** The session's persisted lifecycle, when the fold has nothing livelier. */
 function statusActivity(status: MagicChipStatus): MagicChipActivity {
   return match(status)
-    .with('no_messages', () => ({ label: 'Starting session', busy: false }))
+    .with('no_messages', () => ({
+      label: t('editor.magicChip.session.starting'),
+      busy: false,
+    }))
     .with('booting', () => ({
-      label: 'Booting agent',
-      detail: 'Preparing workspace',
+      label: t('editor.magicChip.session.booting'),
+      detail: t('editor.magicChip.session.preparingWorkspace'),
       busy: true,
     }))
-    .with('acp_ready', () => ({ label: 'Waiting for harness', busy: true }))
-    .with('shutting_down', () => ({ label: 'Wrapping up', busy: false }))
+    .with('acp_ready', () => ({
+      label: t('editor.magicChip.session.waitingForHarness'),
+      busy: true,
+    }))
+    .with('shutting_down', () => ({
+      label: t('editor.magicChip.session.wrappingUp'),
+      busy: false,
+    }))
     .with('disconnected', () => ({
-      label: 'Session disconnected',
+      label: t('editor.magicChip.session.disconnected'),
       busy: false,
     }))
     .exhaustive();
@@ -265,7 +292,9 @@ export function deriveMagicChipPresentation(
     turnEndedActivity(response) ??
     liveEventActivity(latestEvent, 'disconnected') ??
     turnInFlightActivity(response) ??
-    (prompt ? { label: 'Waiting for agent', busy: true } : undefined) ??
+    (prompt
+      ? { label: t('editor.magicChip.waitingForAgent'), busy: true }
+      : undefined) ??
     liveEventActivity(latestEvent, 'acp_ready') ??
     statusActivity(persistedStatus);
 

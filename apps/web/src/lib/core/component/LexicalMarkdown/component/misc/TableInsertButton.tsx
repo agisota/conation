@@ -243,7 +243,9 @@ export function TableInsertButton() {
               class="fixed z-20 flex size-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-edge bg-surface text-ink-muted shadow-sm hover:border-accent hover:bg-accent hover:text-surface"
               style={{ left: `${target().x}px`, top: `${target().y}px` }}
               aria-label={
-                target().type === 'row' ? 'Insert row' : 'Insert column'
+                target().type === 'row'
+                  ? t('editor.table.insertRow')
+                  : t('editor.table.insertColumn')
               }
               onPointerDown={(e) => e.preventDefault()}
               onPointerEnter={() => setButtonHovered(true)}
@@ -261,3 +263,5 @@ export function TableInsertButton() {
     </Show>
   );
 }
+
+import { t } from '@app/lib/i18n';

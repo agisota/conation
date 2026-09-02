@@ -1,11 +1,10 @@
 import { AskMacroButton } from '@app/features/chat/ChatWithAgentButton';
-import { t } from '@app/lib/i18n';
+import { formatDateTime, t } from '@app/lib/i18n';
 import { SidePanel } from '@components/app/side-panel';
 import { useBlockId } from '@core/block';
 import { CustomScrollbar } from '@core/component/CustomScrollbar';
 import { isMobile } from '@core/mobile/isMobile';
 import type { CallRecord } from '@service-storage/generated/schemas/callRecord';
-import { format } from 'date-fns';
 import type { Accessor } from 'solid-js';
 import { createEffect, createMemo, createSignal, on, Show } from 'solid-js';
 import { formatCallDuration } from '../../utils';
@@ -121,13 +120,19 @@ export function CallRecordingBody(props: {
   );
 
   const callTitle = createMemo(
-    () => record().customName ?? record().channelName ?? 'Call Recording'
+    () =>
+      record().customName ??
+      record().channelName ??
+      t('call.recording.defaultName')
   );
 
   const formattedDate = createMemo(() => {
     const ended = record().endedAt;
     if (!ended) return null;
-    return format(new Date(ended), 'MMM d, yyyy · h:mm a');
+    return formatDateTime(new Date(ended), {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
   });
 
   const formattedDuration = createMemo(() => {
@@ -142,7 +147,7 @@ export function CallRecordingBody(props: {
       <div class="relative flex-1 min-h-0 overflow-hidden">
         <SidePanel.Section
           id="call-ai-actions"
-          title={t('auto.actions')}
+          title={t('call.actions.title')}
           defaultOpen
           order={0}
         >
@@ -183,7 +188,9 @@ export function CallRecordingBody(props: {
                     )}
                   </Show>
                   <Show when={record().isActive}>
-                    <span class="text-success font-medium">{t('auto.in_progress')}</span>
+                    <span class="text-success font-medium">
+                      {t('call.status.inProgress')}
+                    </span>
                   </Show>
                 </div>
               </header>
@@ -195,7 +202,9 @@ export function CallRecordingBody(props: {
               <Show when={record().recordingUrl}>
                 {(url) => (
                   <section class="flex flex-col gap-3">
-                    <h3 class="text-sm font-semibold text-ink">{t('auto.recording')}</h3>
+                    <h3 class="text-sm font-semibold text-ink">
+                      {t('call.recording.title')}
+                    </h3>
                     <div class="overflow-hidden rounded border border-edge-muted/50">
                       <CallRecordingVideo
                         url={url()}
@@ -210,7 +219,9 @@ export function CallRecordingBody(props: {
 
               <Show when={hasTranscripts()}>
                 <section class="flex flex-col gap-3">
-                  <h3 class="text-sm font-semibold text-ink">{t('auto.transcript')}</h3>
+                  <h3 class="text-sm font-semibold text-ink">
+                    {t('call.recording.transcript')}
+                  </h3>
                   <div class="flex flex-col max-h-[min(600px,60vh)] overflow-hidden rounded border border-edge-muted/50">
                     <CallTranscript
                       transcript={record().transcript}

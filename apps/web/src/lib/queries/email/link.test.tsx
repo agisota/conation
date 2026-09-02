@@ -22,7 +22,9 @@ vi.mock('@queries/auth/user-info', () => ({ invalidateUserInfo: vi.fn() }));
 vi.mock('@queries/soup/normalized-cache', () => ({
   invalidateAllSoup: vi.fn(),
 }));
-vi.mock('@core/context/user', () => ({ useUserId: () => () => 'macro|self' }));
+vi.mock('@core/context/user', () => ({
+  useUserId: () => () => 'conation|self',
+}));
 
 let testQueryClient: QueryClient;
 
@@ -35,7 +37,7 @@ vi.mock('../client', () => ({
 const link = (id: string): EmailLink =>
   ({
     id,
-    macro_id: 'macro|self',
+    macro_id: 'conation|self',
     email_address: `${id}@example.com`,
     needs_calendar_permission: false,
     calendar_disabled: false,

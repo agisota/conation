@@ -1,4 +1,5 @@
 import type { ListView } from '@app/constants/list-views';
+import { t } from '@app/lib/i18n';
 import type { TabItem } from '@core/component/Tabs';
 
 /** Views that have tab definitions. Shared between VIEW_TAB_LISTS and VIEW_TAB_PRESETS. */
@@ -18,58 +19,228 @@ export type TabbedListView = Extract<
 /** Tab definitions for each list view. */
 export const VIEW_TAB_LISTS: Record<TabbedListView, TabItem[]> = {
   inbox: [
-    { value: 'signal', label: 'Signal' },
-    { value: 'noise', label: 'Noise' },
-    { value: 'all', label: 'All' },
+    {
+      value: 'signal',
+      get label() {
+        return t('soup.tabs.signal');
+      },
+    },
+    {
+      value: 'noise',
+      get label() {
+        return t('soup.tabs.noise');
+      },
+    },
+    {
+      value: 'all',
+      get label() {
+        return t('soup.tabs.all');
+      },
+    },
     // Hidden from every tab surface for unflagged users (see
     // `useVisibleViewTabs`); listed here so the tab/preset consistency tests
     // still cover it.
-    { value: 'reminders', label: 'Reminders' },
+    {
+      value: 'reminders',
+      get label() {
+        return t('soup.tabs.reminders');
+      },
+    },
   ],
   agents: [
-    { value: 'owned', label: 'Owned' },
-    { value: 'running', label: 'Running' },
-    { value: 'shared', label: 'Shared' },
-    { value: 'automations', label: 'Automations' },
-    { value: 'skills', label: 'Skills' },
+    {
+      value: 'owned',
+      get label() {
+        return t('soup.tabs.owned');
+      },
+    },
+    {
+      value: 'running',
+      get label() {
+        return t('soup.tabs.running');
+      },
+    },
+    {
+      value: 'shared',
+      get label() {
+        return t('soup.tabs.shared');
+      },
+    },
+    {
+      value: 'automations',
+      get label() {
+        return t('soup.tabs.automations');
+      },
+    },
+    {
+      value: 'skills',
+      get label() {
+        return t('soup.tabs.skills');
+      },
+    },
   ],
   mail: [
-    { value: 'important', label: 'Signal' },
-    { value: 'noise', label: 'Noise' },
-    { value: 'sent', label: 'Sent' },
-    { value: 'calendar', label: 'Calendar' },
-    { value: 'drafts', label: 'Drafts' },
-    { value: 'shared', label: 'Shared' },
-    { value: 'all', label: 'All' },
+    {
+      value: 'important',
+      get label() {
+        return t('soup.tabs.signal');
+      },
+    },
+    {
+      value: 'noise',
+      get label() {
+        return t('soup.tabs.noise');
+      },
+    },
+    {
+      value: 'sent',
+      get label() {
+        return t('soup.tabs.sent');
+      },
+    },
+    {
+      value: 'calendar',
+      get label() {
+        return t('soup.tabs.calendar');
+      },
+    },
+    {
+      value: 'drafts',
+      get label() {
+        return t('soup.tabs.drafts');
+      },
+    },
+    {
+      value: 'shared',
+      get label() {
+        return t('soup.tabs.shared');
+      },
+    },
+    {
+      value: 'all',
+      get label() {
+        return t('soup.tabs.all');
+      },
+    },
   ],
   documents: [
-    { value: 'owned', label: 'Owned' },
-    { value: 'shared', label: 'Shared' },
-    { value: 'attachments', label: 'Attachments' },
-    { value: 'folders', label: 'Folders' },
-    { value: 'all', label: 'All' },
+    {
+      value: 'owned',
+      get label() {
+        return t('soup.tabs.owned');
+      },
+    },
+    {
+      value: 'shared',
+      get label() {
+        return t('soup.tabs.shared');
+      },
+    },
+    {
+      value: 'attachments',
+      get label() {
+        return t('soup.tabs.attachments');
+      },
+    },
+    {
+      value: 'folders',
+      get label() {
+        return t('soup.tabs.folders');
+      },
+    },
+    {
+      value: 'all',
+      get label() {
+        return t('soup.tabs.all');
+      },
+    },
   ],
   tasks: [
-    { value: 'my-tasks', label: 'My tasks' },
-    { value: 'all', label: 'All' },
+    {
+      value: 'my-tasks',
+      get label() {
+        return t('soup.tabs.myTasks');
+      },
+    },
+    {
+      value: 'all',
+      get label() {
+        return t('soup.tabs.all');
+      },
+    },
   ],
   channels: [
-    { value: 'recent', label: 'Recent' },
-    { value: 'people', label: 'People' },
-    { value: 'teams', label: 'Teams' },
+    {
+      value: 'recent',
+      get label() {
+        return t('soup.tabs.recent');
+      },
+    },
+    {
+      value: 'people',
+      get label() {
+        return t('soup.tabs.people');
+      },
+    },
+    {
+      value: 'teams',
+      get label() {
+        return t('soup.tabs.teams');
+      },
+    },
   ],
   calls: [
-    { value: 'all', label: 'All' },
-    { value: 'missed', label: 'Missed' },
-    { value: 'unattended', label: 'Unattended' },
+    {
+      value: 'all',
+      get label() {
+        return t('soup.tabs.all');
+      },
+    },
+    {
+      value: 'missed',
+      get label() {
+        return t('soup.tabs.missed');
+      },
+    },
+    {
+      value: 'unattended',
+      get label() {
+        return t('soup.tabs.unattended');
+      },
+    },
   ],
   folders: [
-    { value: 'owned', label: 'Owned' },
-    { value: 'all', label: 'All' },
+    {
+      value: 'owned',
+      get label() {
+        return t('soup.tabs.owned');
+      },
+    },
+    {
+      value: 'all',
+      get label() {
+        return t('soup.tabs.all');
+      },
+    },
   ],
   reminders: [
-    { value: 'active', label: 'Active' },
-    { value: 'scheduled', label: 'Scheduled' },
-    { value: 'done', label: 'Done' },
+    {
+      value: 'active',
+      get label() {
+        return t('soup.tabs.active');
+      },
+    },
+    {
+      value: 'scheduled',
+      get label() {
+        return t('soup.tabs.scheduled');
+      },
+    },
+    {
+      value: 'done',
+      get label() {
+        return t('soup.tabs.done');
+      },
+    },
   ],
 };

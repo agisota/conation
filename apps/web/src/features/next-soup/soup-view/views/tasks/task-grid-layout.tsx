@@ -1,4 +1,5 @@
 import { useMaybeSoupView } from '@app/features/next-soup/soup-view/soup-view-context';
+import { t } from '@app/lib/i18n';
 import { UserIcon } from '@core/component/UserIcon';
 import { getDisplayNameParts, tryMacroId } from '@core/user';
 import {
@@ -75,8 +76,8 @@ export function TaskGridLayout(props: LayoutProps) {
   const ownerDisplayName = () =>
     isShared()
       ? getDisplayNameParts(tryMacroId(props.entity.ownerId)).firstName ||
-        'Unknown'
-      : 'Me';
+        t('soup.people.unknown')
+      : t('soup.people.me');
 
   const propertyMap = createMemo(() => {
     const map = new Map<string, Property>();

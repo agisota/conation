@@ -100,13 +100,13 @@ where
             .authorization
             .as_ref()
             .is_some_and(MacroAuthorization::is_internal);
-        let conation_user_id = authorization
+        let macro_user_id = authorization
             .authorization
             .as_ref()
             .and_then(MacroAuthorization::acting_user)
-            .map(|user| user.conation_user_id.clone());
+            .map(|user| user.macro_user_id.clone());
 
-        if conation_user_id.is_none() && is_internal_access {
+        if macro_user_id.is_none() && is_internal_access {
             return Ok(Self {
                 entity_access_receipt: EntityAccessReceipt {
                     entity: Entity {
@@ -124,7 +124,7 @@ where
         }
 
         // Check ownership only if authenticated
-        if let Some(ref user_id) = conation_user_id
+        if let Some(ref user_id) = macro_user_id
             && document_context.owner == *user_id
         {
             return Ok(Self {
@@ -152,7 +152,7 @@ where
 
         let access_level = match service
             .get_access_level(
-                conation_user_id.as_deref(),
+                macro_user_id.as_deref(),
                 &document_context.document_id,
                 EntityType::Document,
             )
@@ -174,7 +174,7 @@ where
                     entity_id: document_context.document_id.clone(),
                     entity_type: EntityType::Document,
                 },
-                auth: conation_user_id
+                auth: macro_user_id
                     .map(EntityAccessAuth::Authenticated)
                     .unwrap_or(EntityAccessAuth::Unauthenticated),
                 entity_permission: permission,

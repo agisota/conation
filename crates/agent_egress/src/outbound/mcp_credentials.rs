@@ -87,13 +87,13 @@ where
         owner: &MacroUserIdStr<'static>,
         destination: &McpDestination,
     ) -> Result<UpstreamCall, EgressError> {
-        // Macro's own server is the composition root's to layer on with
-        // [`crate::outbound::conation_mcp::WithMacroMcp`]; these rows can never
+        // Conation's own server is the composition root's to layer on with
+        // [`crate::outbound::conation_mcp::WithConationMcp`]; these rows can never
         // answer for it.
         let McpDestination::Connected(slug) = destination else {
             return Err(EgressError::Internal(rootcause::report!(
-                "the Pipedream resolver was asked for Macro's own MCP server; \
-                 the composition root did not layer WithMacroMcp"
+                "the Pipedream resolver was asked for Conation's own MCP server; \
+                 the composition root did not layer WithConationMcp"
             )));
         };
         let record = self.connection(owner, slug).await?;

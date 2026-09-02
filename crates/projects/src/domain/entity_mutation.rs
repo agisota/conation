@@ -2,6 +2,7 @@
 
 use std::collections::HashSet;
 
+use conation_event_broker::MacroEventBroker;
 use entity_access::domain::models::{
     AccessError, EditAccessLevel, EntityAccessReceipt, OwnerAccessLevel,
 };
@@ -11,7 +12,6 @@ use entity_mutation::{
     RenameEntity, RestoreEntity, TrashEntity, UpdateEntitySharePolicy,
     capability::MoveEntityRequest,
 };
-use conation_event_broker::MacroEventBroker;
 use model::project::{BasicProject, request::PatchProjectRequestV2};
 use model_entity::{Entity, EntityType};
 use models_permissions::share_permission::UpdateSharePermissionRequestV2;

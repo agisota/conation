@@ -1,7 +1,7 @@
 //! PR open/edit/close event handlers.
 
 use crate::domain::{
-    models::{GithubError, MacroTaskId, ValidatedGithubWebhookEvent},
+    models::{ConationTaskId, GithubError, ValidatedGithubWebhookEvent},
     ports::{GithubSyncClient, GithubSyncRepo},
 };
 use documents::domain::ports::DocumentService;
@@ -41,7 +41,7 @@ impl<
         }
 
         // Resolve all extracted IDs against the document service to validate
-        // they are actual task documents (filters out false positives like "macro-inc")
+        // they are actual task documents (filters out invalid Conation references)
         let resolved_all = self.resolve_tasks(&task_ids).await;
 
         if resolved_all.validated_task_ids.is_empty() {
@@ -64,7 +64,7 @@ impl<
 
         // Post comment for newly discovered tasks
         if !new_task_ids.is_empty() {
-            let new_task_id_set: HashSet<&MacroTaskId> = new_task_ids.iter().collect();
+            let new_task_id_set: HashSet<&ConationTaskId> = new_task_ids.iter().collect();
             let new_task_links: Vec<_> = resolved_all
                 .validated_task_ids
                 .iter()
@@ -88,8 +88,11 @@ impl<
                 .ok();
         }
 
-        // Update status for all validated tasks
-        self.update_task_statuses(&resolved_all.doc_ids, "In Review")
+        // Draft PRs represent active implementation; ready PRs represent
+        // review. The event model owns that mapping so every webhook adapter
+        // uses one status contract.
+        let status = event.task_status_for_event().unwrap_or("In Review");
+        self.update_task_statuses(&resolved_all.doc_ids, status)
             .await;
 
         tracing::trace!("PR open handler complete");
@@ -100,7 +103,8 @@ impl<
     ///
     /// Searches PR title/body/branch for task IDs, uses the repo to
     /// deduplicate, posts a bot comment for newly discovered tasks, and
-    /// sets status to "In Review".
+    /// sets status to `"In Progress"` for drafts or `"In Review"` for ready
+    /// pull requests.
     #[tracing::instrument(skip(self, event), err)]
     pub(crate) async fn handle_pr_edit(
         &self,
@@ -122,7 +126,7 @@ impl<
         }
 
         // Resolve all extracted IDs against the document service to validate
-        // they are actual task documents (filters out false positives like "macro-inc")
+        // they are actual task documents (filters out invalid Conation references)
         let resolved_all = self.resolve_tasks(&task_ids).await;
 
         if resolved_all.validated_task_ids.is_empty() {
@@ -145,7 +149,7 @@ impl<
 
         // Post comment for newly discovered tasks
         if !new_task_ids.is_empty() {
-            let new_task_id_set: HashSet<&MacroTaskId> = new_task_ids.iter().collect();
+            let new_task_id_set: HashSet<&ConationTaskId> = new_task_ids.iter().collect();
             let new_task_links: Vec<_> = resolved_all
                 .validated_task_ids
                 .iter()
@@ -169,8 +173,8 @@ impl<
                 .ok();
         }
 
-        // Update status for all validated tasks
-        self.update_task_statuses(&resolved_all.doc_ids, "In Review")
+        let status = event.task_status_for_event().unwrap_or("In Review");
+        self.update_task_statuses(&resolved_all.doc_ids, status)
             .await;
 
         tracing::trace!("PR edit handler complete");
@@ -196,7 +200,7 @@ impl<
         // Gather task IDs from PR title/body/branch
         let searchable_texts = event.extract_searchable_text();
         let combined = searchable_texts.join(" ");
-        let mut task_id_set: HashSet<MacroTaskId> = self
+        let mut task_id_set: HashSet<ConationTaskId> = self
             .extract_task_ids_from_text(event, &combined)
             .await
             .into_iter()

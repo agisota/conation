@@ -16,7 +16,6 @@ export const AnimatedSquareSidebarIcon = (props: {
       overflow="visible"
       class={`animated-square-sidebar-icon ${props.triggerAnimation ? 'animating' : ''} ${props.class ?? ''}`}
     >
-      {/*<title>{t('auto.animated_square_sidebar_icon')}</title>*/}
       <style>{`
         @keyframes square-sidebar-slide {
           0% { transform: translateX(0); }

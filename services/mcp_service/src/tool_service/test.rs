@@ -6,7 +6,7 @@ fn empty_service() -> AuthenticatedToolService<()> {
     AuthenticatedToolService::new(
         Arc::new(AsyncToolCollection::new()),
         (),
-        "https://macro.com".to_owned(),
+        "https://conation.dev".to_owned(),
     )
 }
 
@@ -14,8 +14,8 @@ fn empty_service() -> AuthenticatedToolService<()> {
 async fn server_info_advertises_conation_tools() {
     let info = empty_service().get_info();
 
-    assert_eq!(info.server_info.name, "macro-tools");
-    assert_eq!(info.server_info.title.as_deref(), Some("Macro"));
+    assert_eq!(info.server_info.name, "conation-tools");
+    assert_eq!(info.server_info.title.as_deref(), Some("Conation"));
     assert_eq!(info.server_info.version, env!("CARGO_PKG_VERSION"));
     assert!(
         info.server_info
@@ -27,7 +27,7 @@ async fn server_info_advertises_conation_tools() {
 }
 
 #[tokio::test]
-async fn server_info_advertises_the_web_app_favicon() {
+async fn server_info_advertises_the_web_app_icon() {
     let info = empty_service().get_info();
 
     let icons = info
@@ -38,10 +38,13 @@ async fn server_info_advertises_the_web_app_favicon() {
         panic!("server should advertise exactly one icon");
     };
 
-    // The same file the web app's <link rel="icon"> points at.
-    assert_eq!(icon.src, "https://macro.com/app/macro-favicon.svg");
-    assert_eq!(icon.mime_type.as_deref(), Some("image/svg+xml"));
-    assert_eq!(icon.sizes.as_deref(), Some(["any".to_owned()].as_slice()));
+    // The canonical Conation app icon, advertised directly for MCP clients.
+    assert_eq!(icon.src, "https://conation.dev/app/logo192.png");
+    assert_eq!(icon.mime_type.as_deref(), Some("image/png"));
+    assert_eq!(
+        icon.sizes.as_deref(),
+        Some(["192x192".to_owned()].as_slice())
+    );
 }
 
 #[tokio::test]
@@ -52,7 +55,7 @@ async fn server_instructions_describe_available_workflows() {
         .expect("server should provide MCP instructions");
 
     for expected_text in [
-        "Macro workspace",
+        "Conation workspace",
         "ContentSearch",
         "NameSearch",
         "ReadContent",
@@ -77,7 +80,7 @@ async fn server_instructions_link_items_as_urls_not_mention_tags() {
 
     // MCP responses must link items with plain URLs built from the app base URL.
     assert!(
-        instructions.contains("https://macro.com/app/"),
+        instructions.contains("https://conation.dev/app/"),
         "instructions should build item links from the app base url"
     );
     // And must steer the model away from the in-app mention markup.
@@ -177,7 +180,7 @@ fn additive_tools_set_neither_hint() {
 
 #[test]
 fn authenticated_user_id_is_read_from_http_request_parts() {
-    let expected_user_id = MacroUserIdStr::try_from_email("User@macro.com").unwrap();
+    let expected_user_id = MacroUserIdStr::try_from_email("User@conation.dev").unwrap();
     let mut parts = http::Request::new(()).into_parts().0;
     parts.extensions.insert(expected_user_id.clone());
 

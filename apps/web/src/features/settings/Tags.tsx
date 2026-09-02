@@ -1,5 +1,5 @@
-import PencilIcon from '@phosphor/pencil-simple.svg';
 import { t } from '@app/lib/i18n';
+import PencilIcon from '@phosphor/pencil-simple.svg';
 import PlusIcon from '@phosphor/plus.svg';
 import SpinnerIcon from '@phosphor/spinner.svg';
 import TrashIcon from '@phosphor/trash.svg';
@@ -58,7 +58,7 @@ type ShareConflict = {
 function EmptyTagRows(props: { scope: TagScope }) {
   return (
     <div class="px-6 py-8 text-center text-sm text-ink-extra-muted">
-      No {props.scope === 'team' ? 'team' : 'personal'} tags
+      {t('settings.tags.empty', { scope: props.scope })}
     </div>
   );
 }
@@ -90,7 +90,9 @@ function TagListSection(props: {
           class="rounded-xs"
           onClick={() => props.onCreate(props.scope)}
         >
-          <PlusIcon class="size-4" />{t('auto.new_tag')}</Button>
+          <PlusIcon class="size-4" />
+          {t('settings.tags.actions.new')}
+        </Button>
       }
     >
       <SettingsCard>
@@ -114,10 +116,15 @@ function TagListSection(props: {
                       <div class="flex shrink-0 items-center gap-1">
                         <Show when={props.onShare}>
                           {(onShare) => (
-                            <Tooltip label="Share with team">
+                            <Tooltip label={t('settings.tags.actions.share')}>
                               <button
                                 type="button"
-                                aria-label={`Share ${optionLabel(option)} with team`}
+                                aria-label={t(
+                                  'settings.tags.actions.shareNamed',
+                                  {
+                                    name: optionLabel(option),
+                                  }
+                                )}
                                 class="flex size-7 shrink-0 items-center justify-center rounded-md text-ink-extra-muted outline-none hover:bg-hover hover:text-ink focus-visible:border focus-visible:border-accent disabled:opacity-30"
                                 disabled={
                                   props.deleting ||
@@ -135,10 +142,12 @@ function TagListSection(props: {
                             </Tooltip>
                           )}
                         </Show>
-                        <Tooltip label="Edit tag">
+                        <Tooltip label={t('settings.tags.actions.edit')}>
                           <button
                             type="button"
-                            aria-label={`Edit ${optionLabel(option)}`}
+                            aria-label={t('settings.tags.actions.editNamed', {
+                              name: optionLabel(option),
+                            })}
                             class="flex size-7 shrink-0 items-center justify-center rounded-md text-ink-extra-muted outline-none hover:bg-hover hover:text-ink focus-visible:border focus-visible:border-accent"
                             disabled={props.deleting}
                             onClick={() => props.onEdit(tag())}
@@ -146,10 +155,12 @@ function TagListSection(props: {
                             <PencilIcon class="size-4" />
                           </button>
                         </Tooltip>
-                        <Tooltip label="Delete tag">
+                        <Tooltip label={t('settings.tags.actions.delete')}>
                           <button
                             type="button"
-                            aria-label={`Delete ${optionLabel(option)}`}
+                            aria-label={t('settings.tags.actions.deleteNamed', {
+                              name: optionLabel(option),
+                            })}
                             class="flex size-7 shrink-0 items-center justify-center rounded-md text-ink-extra-muted outline-none hover:bg-failure/10 hover:text-failure focus-visible:border focus-visible:border-failure disabled:opacity-30"
                             disabled={props.deleting}
                             onClick={() => props.onDelete(tag())}
@@ -207,7 +218,9 @@ function ConfirmDialog(props: {
               class="rounded-xs"
               disabled={props.pending}
               onClick={props.onClose}
-            >{t('common.cancel')}</Button>
+            >
+              {t('common.cancel')}
+            </Button>
             <Button
               variant="accent"
               class="rounded-xs"
@@ -243,7 +256,8 @@ export function Tags() {
 
   const tagSet = (scope: TagScope) =>
     tagsQuery.data?.find((set) => set.scope === scope);
-  const teamName = () => teamQuery.data?.team.name?.trim() || 'Team';
+  const teamName = () =>
+    teamQuery.data?.team.name?.trim() || t('settings.tags.teamFallback');
   const hasTeam = () =>
     tagsQuery.data?.some((set) => set.scope === 'team') ||
     Boolean(teamQuery.data?.team);
@@ -313,8 +327,8 @@ export function Tags() {
 
   return (
     <SettingsPage
-      title={t('auto.tags')}
-      description="Manage personal labels and shared team labels."
+      title={t('settings.tags.title')}
+      description={t('settings.tags.description')}
       actions={
         <Button
           variant="cta"
@@ -322,11 +336,13 @@ export function Tags() {
           depth={3}
           onClick={() => openCreate('user')}
         >
-          <PlusIcon class="size-4" />{t('auto.new_tag')}</Button>
+          <PlusIcon class="size-4" />
+          {t('settings.tags.actions.new')}
+        </Button>
       }
     >
       <TagListSection
-        title={t('auto.personal')}
+        title={t('settings.tags.personal.title')}
         scope="user"
         set={tagSet('user')}
         onCreate={openCreate}
@@ -338,7 +354,7 @@ export function Tags() {
       />
       <Show when={hasTeam()}>
         <TagListSection
-          title={t('auto.team')}
+          title={t('settings.tags.team.title')}
           description={teamName()}
           scope="team"
           set={tagSet('team')}
@@ -358,34 +374,29 @@ export function Tags() {
 
       <ConfirmDialog
         open={pendingShare() !== null}
-        title={t('auto.share_with_team')}
-        confirmLabel="Share"
+        title={t('settings.tags.shareDialog.title')}
+        confirmLabel={t('settings.tags.actions.shareConfirm')}
         pending={promoteTag.isPending}
         onConfirm={confirmShare}
         onClose={() => setPendingShare(null)}
       >
-        <span class="font-medium text-ink">
-          {optionLabel(pendingShare()?.option)}
-        </span>{' '}
-        moves into the {teamName()} team tag set. This action cannot be
-        reversed.
+        {t('settings.tags.shareDialog.description', {
+          name: optionLabel(pendingShare()?.option),
+          team: teamName(),
+        })}
       </ConfirmDialog>
 
       <ConfirmDialog
         open={conflict() !== null}
-        title={t('auto.team_label_already_exists')}
-        confirmLabel="Use team label"
+        title={t('settings.tags.conflictDialog.title')}
+        confirmLabel={t('settings.tags.conflictDialog.confirm')}
         pending={mergeTag.isPending}
         onConfirm={confirmMerge}
         onClose={() => setConflict(null)}
       >
-        Your team already has a label named{' '}
-        <span class="font-medium text-ink">
-          {optionLabel(conflict()?.conflictingOption)}
-        </span>
-        . Everything tagged with your personal label will be retagged with the
-        team's, and your personal label will be removed. This action cannot be
-        reversed.
+        {t('settings.tags.conflictDialog.description', {
+          name: optionLabel(conflict()?.conflictingOption),
+        })}
       </ConfirmDialog>
     </SettingsPage>
   );

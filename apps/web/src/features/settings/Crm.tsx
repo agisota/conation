@@ -1,7 +1,7 @@
 /** CRM settings tab: team admins enable or disable the CRM here. */
 
-import { toast } from '@core/component/Toast/Toast';
 import { t } from '@app/lib/i18n';
+import { toast } from '@core/component/Toast/Toast';
 import { SERVER_HOSTS } from '@core/constant/servers';
 import { throwOnErr } from '@core/util/result';
 import SpinnerIcon from '@phosphor/spinner.svg';
@@ -60,7 +60,9 @@ function ConfirmDialog(props: {
               class="rounded-xs"
               disabled={props.pending}
               onClick={props.onClose}
-            >{t('common.cancel')}</Button>
+            >
+              {t('common.cancel')}
+            </Button>
             <Button
               variant="danger"
               class="rounded-xs"
@@ -98,16 +100,20 @@ function usePatchTeamCrmSettingsMutation() {
       ),
     onSuccess: (data: PatchTeamCrmSettingsResponse) => {
       invalidateUserTeams();
-      toast.success(data.enabled ? 'CRM enabled' : 'CRM disabled');
+      toast.success(
+        data.enabled
+          ? t('settings.crm.toast.enabled')
+          : t('settings.crm.toast.disabled')
+      );
     },
     onError: (error: Error) => {
       console.error('Failed to update CRM settings', error);
-      toast.failure('Failed to update CRM settings');
+      toast.failure(t('settings.crm.toast.updateFailed'));
     },
   }));
 }
 
-const DISABLE_CRM_PHRASE = 'Disable CRM';
+const disableCrmPhrase = () => t('settings.crm.disable.confirmPhrase');
 
 function CrmEnablementSection() {
   const isTeamAdmin = useIsTeamAdmin();
@@ -155,24 +161,32 @@ function CrmEnablementSection() {
   };
 
   return (
-    <SettingsSection title={t('auto.general')}>
+    <SettingsSection title={t('settings.crm.general.title')}>
       <SettingsCard>
         <SettingsRow
-          label={crmEnabled() ? 'Disable CRM' : 'Enable CRM'}
-          description={`Turn the CRM ${crmEnabled() ? 'off' : 'on'} for everyone on your team.`}
+          label={
+            crmEnabled()
+              ? t('settings.crm.actions.disable')
+              : t('settings.crm.actions.enable')
+          }
+          description={t('settings.crm.toggleDescription', {
+            state: crmEnabled() ? 'off' : 'on',
+          })}
           hideDescriptionOnMobile
         >
           <Show
             when={isTeamAdmin()}
             fallback={
-              <Tooltip label="Only team admins can change CRM settings.">
+              <Tooltip label={t('settings.crm.adminOnly.tooltip')}>
                 <span>
                   <Button
                     variant="outline"
                     size="sm"
                     class="rounded-xs"
                     disabled
-                  >{t('auto.admins_only')}</Button>
+                  >
+                    {t('settings.crm.adminOnly.action')}
+                  </Button>
                 </span>
               </Tooltip>
             }
@@ -188,7 +202,9 @@ function CrmEnablementSection() {
                 disabled={patchCrmMutation.isPending}
                 onClick={() => handleToggle(!crmEnabled())}
               >
-                {crmEnabled() ? 'Disable CRM' : 'Enable CRM'}
+                {crmEnabled()
+                  ? t('settings.crm.actions.disable')
+                  : t('settings.crm.actions.enable')}
               </Button>
             </div>
           </Show>
@@ -204,20 +220,21 @@ function CrmEnablementSection() {
             <Dialog.CloseButton as={Button} variant="ghost" size="icon-sm">
               <XIcon />
             </Dialog.CloseButton>
-            <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">{t('auto.enable_crm')}</Dialog.Title>
+            <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">
+              {t('settings.crm.enable.title')}
+            </Dialog.Title>
           </Panel.Header>
           <Panel.Body class="p-3 flex flex-col gap-3">
-            <p>
-              Start the CRM from your team's existing email, or from a clean
-              slate.
-            </p>
+            <p>{t('settings.crm.enable.description')}</p>
             <div class="flex justify-end gap-1 pt-2">
               <Button
                 variant="ghost"
                 class="rounded-xs"
                 disabled={patchCrmMutation.isPending}
                 onClick={() => setShowEnableModal(false)}
-              >{t('common.cancel')}</Button>
+              >
+                {t('common.cancel')}
+              </Button>
               <Button
                 variant="outline"
                 class="rounded-xs"
@@ -228,7 +245,7 @@ function CrmEnablementSection() {
                   when={
                     enableChoice() === 'fresh' && patchCrmMutation.isPending
                   }
-                  fallback="Start from now"
+                  fallback={t('settings.crm.enable.startFresh')}
                 >
                   <SpinnerIcon class="size-4 animate-spin" />
                 </Show>
@@ -243,7 +260,7 @@ function CrmEnablementSection() {
                   when={
                     enableChoice() === 'backfill' && patchCrmMutation.isPending
                   }
-                  fallback="Backfill existing emails"
+                  fallback={t('settings.crm.enable.backfill')}
                 >
                   <SpinnerIcon class="size-4 animate-spin" />
                 </Show>
@@ -255,25 +272,24 @@ function CrmEnablementSection() {
 
       <ConfirmDialog
         open={showDisableModal()}
-        title={t('auto.disable_crm')}
-        confirmLabel="Disable CRM"
+        title={t('settings.crm.disable.title')}
+        confirmLabel={t('settings.crm.actions.disable')}
         pending={patchCrmMutation.isPending}
-        confirmDisabled={disableConfirmation() !== DISABLE_CRM_PHRASE}
+        confirmDisabled={disableConfirmation() !== disableCrmPhrase()}
         onConfirm={handleDisable}
         onClose={() => setShowDisableModal(false)}
       >
-        <p>{t('auto.disabling_the_crm')}<span class="font-medium">permanently purges</span>{' '}
-          your team's CRM data — companies, contacts, and their history.
-          Re-enabling later lets you backfill again or start fresh.
-        </p>
-        <p class="text-sm text-ink-muted">{t('auto.type')}<span class="font-medium text-ink">{DISABLE_CRM_PHRASE}</span> to
-          confirm.
+        <p>{t('settings.crm.disable.description')}</p>
+        <p class="text-sm text-ink-muted">
+          {t('settings.crm.disable.confirmPrompt', {
+            phrase: disableCrmPhrase(),
+          })}
         </p>
         <input
           type="text"
           value={disableConfirmation()}
           onInput={(e) => setDisableConfirmation(e.currentTarget.value)}
-          placeholder={DISABLE_CRM_PHRASE}
+          placeholder={disableCrmPhrase()}
           class="settings-input w-full"
         />
       </ConfirmDialog>
@@ -287,10 +303,12 @@ function CrmEnablementSection() {
 
 function NoTeamState() {
   return (
-    <SettingsPage title={t('auto.crm')}>
+    <SettingsPage title={t('settings.crm.title')}>
       <SettingsSection>
         <SettingsCard>
-          <div class="px-6 py-8 text-center text-sm text-ink-muted">{t('auto.join_or_create_a_team_to_set_u')}</div>
+          <div class="px-6 py-8 text-center text-sm text-ink-muted">
+            {t('settings.crm.noTeam')}
+          </div>
         </SettingsCard>
       </SettingsSection>
     </SettingsPage>
@@ -303,8 +321,8 @@ function CrmContent() {
   return (
     <Show when={teamQuery.data} fallback={<NoTeamState />}>
       <SettingsPage
-        title={t('auto.crm')}
-        description="Enable or disable your team's CRM."
+        title={t('settings.crm.title')}
+        description={t('settings.crm.description')}
       >
         <CrmEnablementSection />
       </SettingsPage>

@@ -1,5 +1,5 @@
-import { formatCallDuration } from '@block-call/utils';
 import { t } from '@app/lib/i18n';
+import { formatCallDuration } from '@block-call/utils';
 import { UserIcon } from '@core/component/UserIcon';
 import { matches } from '@core/util/match';
 import UserCircleIcon from '@phosphor/user-circle.svg';
@@ -39,7 +39,7 @@ function ParticipantsTooltip(props: { participantIds: string[] }) {
     <div class="min-w-48 max-w-72">
       <div class="flex items-center gap-2 text-ink-muted border-b border-edge-muted/50 pb-1.5 mb-1.5">
         <UserCircleIcon class="size-3.5 text-ink-muted" />
-        <span class="text-xs">{t('auto.participants')}</span>
+        <span class="text-xs">{t('entity.call.participants')}</span>
       </div>
       <div class="flex flex-col gap-1.5 max-h-64 overflow-y-auto">
         <For each={props.participantIds}>

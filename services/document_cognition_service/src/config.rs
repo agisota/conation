@@ -7,6 +7,9 @@ use secretsmanager_client::LocalOrRemoteSecret;
 
 use crate::core::constants::DEFAULT_DOCUMENT_BATCH_LIMIT;
 
+#[cfg(test)]
+mod test;
+
 env_vars!(
     pub struct DatabaseUrl;
     pub struct DocumentStorageBucket;
@@ -46,8 +49,8 @@ maybe_env_vars!(
     pub struct PipedreamMcpUrl;
     /// Comma-separated browser origins allowed to embed Pipedream's hosted
     /// Connect UI (sent as the Connect token's `allowed_origins`). Defaults
-    /// by deploy environment: the app origin (`https://macro.com` /
-    /// `https://dev.macro.com`) plus localhost outside production.
+    /// by deploy environment: the Conation app origin plus localhost outside
+    /// production.
     pub struct PipedreamAllowedOrigins;
 );
 
@@ -119,7 +122,26 @@ pub struct Config {
 impl Config {
     #[tracing::instrument(err, skip_all)]
     pub fn from_env() -> anyhow::Result<Self> {
-        conation_config::ConfigLoader::load::<Config>().context("failed to load config")
+        let config =
+            conation_config::ConfigLoader::load::<Config>().context("failed to load config")?;
+        config.resolved_pipedream_allowed_origins()?;
+        Ok(config)
+    }
+
+    pub(crate) fn resolved_pipedream_allowed_origins(&self) -> anyhow::Result<Vec<String>> {
+        match self.pipedream_allowed_origins.value() {
+            Some(origins) => conation_cors::parse_allowed_origins(origins)
+                .map_err(anyhow::Error::msg)
+                .context("invalid PIPEDREAM_ALLOWED_ORIGINS"),
+            None => Ok(match self.environment {
+                Environment::Production => vec!["https://conation.dev".to_owned()],
+                Environment::Develop => vec![
+                    "https://dev.conation.dev".to_owned(),
+                    "http://localhost:3000".to_owned(),
+                ],
+                Environment::Local => vec!["http://localhost:3000".to_owned()],
+            }),
+        }
     }
 
     #[cfg(test)]

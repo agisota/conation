@@ -1,5 +1,5 @@
-use document_sub_type::DocumentSubType;
 use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use document_sub_type::DocumentSubType;
 use model::chat::Chat;
 use model::document::{BasicDocument, BasicDocumentSubType};
 use model::item::Item;

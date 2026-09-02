@@ -5,12 +5,12 @@ VALUES
 
 INSERT INTO public."User" ("id","email","stripeCustomerId","macro_user_id")
 VALUES
-('macro|user@user.com', 'user@user.com','stripe_id', 'a1111111-1111-1111-1111-111111111111'),
-('macro|user2@user.com', 'user2@user.com','stripe_id2', 'a2222222-2222-2222-2222-222222222222');
+('conation|user@user.com', 'user@user.com','stripe_id', 'a1111111-1111-1111-1111-111111111111'),
+('conation|user2@user.com', 'user2@user.com','stripe_id2', 'a2222222-2222-2222-2222-222222222222');
 
 INSERT INTO public."Project" ("id","name","userId","parentId","createdAt","updatedAt")
 VALUES
-('p1', 'test_project_name','macro|user@user.com', NULL, '2019-10-16 00:00:00', '2019-10-16 00:00:00');
+('p1', 'test_project_name','conation|user@user.com', NULL, '2019-10-16 00:00:00', '2019-10-16 00:00:00');
 
 INSERT INTO public."SharePermission" ("id", "linkShare", "linkShareAccessLevel", "createdAt", "updatedAt")
 VALUES
@@ -30,7 +30,7 @@ VALUES
 
 INSERT INTO public."Project" ("id","name","userId","parentId","createdAt","updatedAt")
 VALUES
-('p2', 'test_project_name','macro|user2@user.com', NULL, '2019-10-16 00:00:00', '2019-10-16 00:00:00');
+('p2', 'test_project_name','conation|user2@user.com', NULL, '2019-10-16 00:00:00', '2019-10-16 00:00:00');
 
 INSERT INTO public."SharePermission" ("id", "linkShare", "linkShareAccessLevel", "createdAt", "updatedAt")
 VALUES
@@ -42,8 +42,8 @@ VALUES
 
 INSERT INTO public."Document" ("id","name","owner", "fileType")
 VALUES
-('d1', 'test_document_name','macro|user@user.com', 'docx'),
-('d2', 'test_document_name','macro|user2@user.com', 'pdf');
+('d1', 'test_document_name','conation|user@user.com', 'docx'),
+('d2', 'test_document_name','conation|user2@user.com', 'pdf');
 
 INSERT INTO public."SharePermission" ("id", "linkShare", "linkShareAccessLevel")
 VALUES
@@ -62,8 +62,8 @@ VALUES
 
 INSERT INTO public."Chat" ("id", "name", "userId", "createdAt", "updatedAt")
 VALUES
-('c1', 'test_chat_name','macro|user@user.com', '2019-10-16 00:00:00', '2019-10-16 00:00:00'),
-('c2', 'test_chat_name','macro|user2@user.com', '2019-10-16 00:00:00', '2019-10-16 00:00:00');
+('c1', 'test_chat_name','conation|user@user.com', '2019-10-16 00:00:00', '2019-10-16 00:00:00'),
+('c2', 'test_chat_name','conation|user2@user.com', '2019-10-16 00:00:00', '2019-10-16 00:00:00');
 
 INSERT INTO public."SharePermission" ("id", "linkShare", "linkShareAccessLevel", "createdAt", "updatedAt")
 VALUES

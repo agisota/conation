@@ -6,10 +6,10 @@
 //! and prod environments, surfacing any missing or mistyped values at CI time.
 
 use anyhow::Context;
-use database_env_vars::DatabaseUrl;
 pub use conation_auth::InternalApiKey;
 pub use conation_env::Environment;
 use conation_env_var::{env_vars, maybe_env_vars};
+use database_env_vars::DatabaseUrl;
 
 maybe_env_vars! {
     /// Browser-reachable FusionAuth origin used for OAuth authorization redirects.
@@ -38,23 +38,16 @@ env_vars! {
     pub struct FusionauthBaseUrl;
     /// FusionAuth client id.
     pub struct FusionauthClientId;
-    /// FusionAuth tenant id.
-    /// Secrets Manager secret name for the FusionAuth API key.
-    pub struct FusionauthApiKeySecretKey;
     /// Secrets Manager secret name for the FusionAuth client secret.
     pub struct FusionauthClientSecretKey;
-    /// Google OAuth client id.
-    pub struct GoogleClientId;
-    /// Secrets Manager secret name for the Google OAuth client secret.
-    pub struct GoogleClientSecretKey;
     /// Redis URL used by the MCP auth proxy for in-flight OAuth state.
     pub struct RedisUrl;
-    /// Base URL of the Macro web app (e.g. `https://macro.com`), used to build
-    /// links to Macro items in MCP responses.
+    /// Base URL of the Conation web app (e.g. `https://conation.dev`), used to
+    /// build links to Conation items in MCP responses.
     pub struct AppBaseUrl;
     /// JWT secret for minting document permission tokens for the editing worker.
     pub struct DocumentPermissionJwt;
-    /// Comma-separated Kafka bootstrap servers for the macro event broker.
+    /// Comma-separated Kafka bootstrap servers for the Conation event broker.
     pub struct KafkaBrokers;
 }
 
@@ -85,10 +78,7 @@ pub struct Config {
     /// Browser-reachable FusionAuth URL. Falls back to the API base URL when unset.
     pub fusionauth_public_url: FusionauthPublicUrl,
     pub fusionauth_client_id: FusionauthClientId,
-    pub fusionauth_api_key_secret_key: FusionauthApiKeySecretKey,
     pub fusionauth_client_secret_key: FusionauthClientSecretKey,
-    pub google_client_id: GoogleClientId,
-    pub google_client_secret_key: GoogleClientSecretKey,
     pub redis_url: RedisUrl,
     pub app_base_url: AppBaseUrl,
     /// The internal api key

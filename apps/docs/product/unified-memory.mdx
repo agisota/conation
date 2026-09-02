@@ -1,26 +1,40 @@
 ---
-title: "Unified Memory"
+title: "Единая память"
 icon: "brain"
-description: "Personal and team-level memory across mail, messages, tasks, docs and connectors."
+description: "Персональная и командная память Conation по почте, сообщениям, задачам, документам и подключенным сервисам."
 ---
 
-ChatGPT and Claude create memory over your chats. Macro creates memory over everything you and your team are working on: email, messages, tasks, docs, calls, and anything you've connected via MCP. There's not too much to document here because it all runs in the background with limited configurability.
+Обычные AI-чаты помнят только переписку с моделью. Conation строит память по реальной работе: письмам, сообщениям, задачам, документам, звонкам, файлам и подключенным сервисам.
 
-<Frame>
-  <img
-    src="/images/unified-memory-diagram.svg"
-    alt="Diagram of Macro's blocks — email, messages, tasks, docs, calls, files, canvas, and pull requests — all feeding one unified memory that agents read and write"
-  />
-</Frame>
+<Note>
+  Старые диаграммы прежнего бренда убраны из активной страницы. Новую схему
+  памяти Conation нужно подготовить отдельно на русских подписях и нейтральных
+  тестовых данных.
+</Note>
 
-Every night, Macro refreshes this memory from the day's activity. When you ask an agent "what's the latest status of project alamo?", it answers from the most recent emails, messages, tasks, docs, and call transcripts. You don't have to point it at anything.
+## Как это работает
 
-### Personal vs. team memory
+Conation регулярно обновляет память из активности рабочего пространства. Когда вы спрашиваете агента «какой актуальный статус у проекта?», он отвечает не только по истории чата, а по последним письмам, задачам, каналам, документам и расшифровкам звонков, к которым у вас есть доступ.
 
-Every Macro user has a personal memory built from their own work. If you're on a team, there's also a shared team-level memory:
+## Персональная и командная память
 
-- **Tasks** are added to team memory by default, so everyone can see what others are working on.
-- **Calls** are recorded, transcribed, and shared to team memory by default. You can opt out per call (see [Calls](/product/calls)), in which case the call goes to your personal memory only.
-- **Emails** are auto-shared with the team where it makes sense, for example in the CRM module.
+У каждого пользователя есть персональная память по его собственной работе. Если пользователь состоит в команде, появляется и командная память.
 
-This is what makes agents in Macro different from a personal chat assistant: they remember what your whole team has been doing, not just your own chat history.
+- **Задачи** по умолчанию попадают в командную память, чтобы участники видели, над чем идет работа.
+- **Звонки** могут попадать в командную память вместе с расшифровкой и summary. Если звонок помечен как личный, он остается в персональной области.
+- **Письма** используются там, где это уместно для командного контекста, например в CRM-сценариях и общих обсуждениях.
+
+## Права доступа
+
+Агенты наследуют права пользователя. Если у вас нет доступа к документу, письму или каналу, агент не должен использовать этот объект при ответе. Это правило важно для white-label/self-host развертываний: память усиливает продукт, но не отменяет модель доступа.
+
+## Практические запросы
+
+```text
+Собери последние изменения по проекту Atlas за неделю:
+задачи, письма, решения в каналах и звонки. Покажи блокеры и ссылки.
+```
+
+```text
+Что я обещал клиенту в последней переписке и какие задачи уже заведены?
+```

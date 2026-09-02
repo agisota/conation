@@ -65,10 +65,10 @@ where
 fn query_user_credential_present(parts: &Parts) -> bool {
     parts.uri.query().is_some_and(|query| {
         query.split('&').any(|parameter| {
-            parameter
+            let name = parameter
                 .split_once('=')
-                .map_or(parameter, |(name, _value)| name)
-                == "macro-api-token"
+                .map_or(parameter, |(name, _value)| name);
+            name == "conation-api-token"
         })
     })
 }

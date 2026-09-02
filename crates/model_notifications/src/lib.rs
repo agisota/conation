@@ -110,7 +110,7 @@ impl DeviceEndpoint {
 /// Because the enum and the assertions share the same variant list, adding a new
 /// variant without a matching `Notification` impl — or with a mismatched
 /// `TYPE_NAME` — is a compile error.
-conation_rules! define_notif_event {
+macro_rules! define_notif_event {
     (
         $(#[$enum_meta:meta])*
         $vis:vis enum $Name:ident {

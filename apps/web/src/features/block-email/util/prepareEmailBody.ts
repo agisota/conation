@@ -1,8 +1,3 @@
-import { scrubActiveContent } from '@core/email';
-import { formatEmailDate } from '@core/util/date';
-import { $generateHtmlFromNodes, $generateNodesFromDOM } from '@lexical/html';
-import { $createQuoteNode } from '@lexical/rich-text';
-import { $dfsIterator } from '@lexical/utils';
 import {
   $createClassedBlockNode,
   $createDocumentMentionNode,
@@ -11,6 +6,11 @@ import {
   type ClassedBlockNode,
   type DocumentMentionInfo,
 } from '@conation/lexical-core';
+import { scrubActiveContent } from '@core/email';
+import { formatEmailDate } from '@core/util/date';
+import { $generateHtmlFromNodes, $generateNodesFromDOM } from '@lexical/html';
+import { $createQuoteNode } from '@lexical/rich-text';
+import { $dfsIterator } from '@lexical/utils';
 import type { ApiMessage } from '@service-email/generated/schemas';
 import {
   $addUpdateTag,

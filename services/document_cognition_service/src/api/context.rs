@@ -12,15 +12,15 @@ use channels::outbound::pg_channels_repo::PgChannelsRepo;
 use chat::domain::service::MessageServiceImpl;
 use chat::inbound::attachment::ChatAttachmentService;
 use chat::outbound::postgres::PgChatRepo;
+use conation_auth::InternalApiKey;
+use conation_authorization::{
+    MacroAuthJwtValidator, MacroAuthorizationServiceImpl, MacroAuthorizationState,
+};
 use connection_gateway::service::connection::ConnectionRepo;
 use document_storage_service_client::DocumentStorageServiceClient;
 use documents::inbound::attachment::DocumentAttachmentService;
 use email::inbound::attachment::EmailAttachmentService;
 use entity_access::{domain::service::EntityAccessServiceImpl, outbound::PgAccessRepository};
-use conation_auth::InternalApiKey;
-use conation_authorization::{
-    MacroAuthJwtValidator, MacroAuthorizationServiceImpl, MacroAuthorizationState,
-};
 use notification::domain::service::SqsNotificationIngress;
 use notification::outbound::queue::SqsQueue;
 use notification::outbound::websocket::ConnectionGatewayClient;

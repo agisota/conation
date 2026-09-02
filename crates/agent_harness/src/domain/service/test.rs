@@ -50,10 +50,6 @@ fn sender() -> MacroUserIdStr<'static> {
     MacroUserIdStr::try_from_email("asker@example.com").expect("a valid user id")
 }
 
-fn staff_sender() -> MacroUserIdStr<'static> {
-    MacroUserIdStr::try_from_email("asker@macro.com").expect("a valid staff user id")
-}
-
 fn open_command() -> OpenSession {
     let thread_id = conation_uuid::generate_uuid_v7();
     OpenSession {
@@ -214,7 +210,7 @@ fn harness_with_edges(
             bot_id: BotId::TEST_A,
             model: "claude".to_owned(),
             harness: "opencode".to_owned(),
-            repo_url: "https://github.com/macro-inc/macro".to_owned(),
+            repo_url: "https://github.com/agisota/conation".to_owned(),
         },
     );
     (service, repo, containers, announcer, runtimes)
@@ -300,7 +296,7 @@ async fn disconnected_session(
 ) -> AgentSessionId {
     let OpenSession { origin, .. } = open_command();
     // The coder bot: resume-on-disconnect only exists for managed sessions.
-    let bot_id = bot_id::MACRO_CODER_BOT_ID;
+    let bot_id = bot_id::CONATION_CODER_BOT_ID;
     let id = AgentSessionId::new();
     agent_session::domain::ports::AgentSessionRepo::create(
         repo,
@@ -312,7 +308,7 @@ async fn disconnected_session(
             originating_message_id: Some(origin.message_id),
             model: "claude".to_owned(),
             harness: "opencode".to_owned(),
-            repo_url: Some("https://github.com/macro-inc/macro".to_owned()),
+            repo_url: Some("https://github.com/agisota/conation".to_owned()),
             workspace: "/workspace".to_owned(),
             sandbox_size: agent_session::domain::model::SandboxSize::Default,
             instructions: None,
@@ -942,7 +938,6 @@ async fn live_cursor_session(
 ) -> ContainerMock {
     let mut command = open_command();
     command.bot_id = bot_id::CURSOR_BOT_ID;
-    command.origin.sender = staff_sender();
     let open = service.execute(id, HarnessCommand::Open(command));
     let drive = async {
         loop {
@@ -963,21 +958,11 @@ async fn live_cursor_session(
 }
 
 #[tokio::test]
-async fn a_non_staff_sender_cannot_open_a_cursor_session() {
+async fn any_authenticated_sender_can_open_a_cursor_session() {
     let (service, _repo, containers, _announcer, _runtimes) = harness();
-    let mut command = open_command();
-    command.bot_id = bot_id::CURSOR_BOT_ID;
-
-    let error = service
-        .execute(AgentSessionId::new(), HarnessCommand::Open(command))
-        .await
-        .expect_err("non-staff must not open cursor sessions");
-
-    assert!(matches!(
-        error,
-        HarnessError::Session(AgentSessionError::Forbidden)
-    ));
-    assert_eq!(containers.spawned(), 0);
+    let id = AgentSessionId::new();
+    let _container = live_cursor_session(&service, &containers, id).await;
+    assert_eq!(containers.spawned(), 1);
 }
 
 #[tokio::test]
@@ -1078,28 +1063,7 @@ async fn a_prompt_through_control_reaches_the_agent_without_announcing() {
 }
 
 #[tokio::test]
-async fn a_non_staff_control_event_cannot_drive_a_cursor_session() {
-    let (service, _repo, containers, _announcer, _runtimes) = harness();
-    let id = AgentSessionId::new();
-    let container = live_cursor_session(&service, &containers, id).await;
-
-    let error = service
-        .control_event(
-            id,
-            ControlEvent {
-                action: AgentAction::prompt("spend cursor credits"),
-                actor: Some(sender()),
-            },
-        )
-        .await
-        .expect_err("non-staff must not control cursor sessions");
-
-    assert!(matches!(error, AgentSessionError::Forbidden));
-    assert_eq!(prompts(&container.agent()).len(), 1);
-}
-
-#[tokio::test]
-async fn a_staff_control_event_can_drive_a_cursor_session() {
+async fn any_authenticated_actor_can_drive_a_cursor_session() {
     let (service, _repo, containers, _announcer, _runtimes) = harness();
     let id = AgentSessionId::new();
     let container = live_cursor_session(&service, &containers, id).await;
@@ -1109,11 +1073,11 @@ async fn a_staff_control_event_can_drive_a_cursor_session() {
             id,
             ControlEvent {
                 action: AgentAction::prompt("continue"),
-                actor: Some(staff_sender()),
+                actor: Some(sender()),
             },
         )
         .await
-        .expect("staff may control cursor sessions");
+        .expect("authenticated actors may control cursor sessions");
 
     assert_eq!(prompts(&container.agent()).len(), 2);
 }
@@ -1420,15 +1384,15 @@ async fn a_managed_session_opens_as_the_managed_default_bot() {
             bot_id: BotId::TEST_A,
             model: "claude".to_owned(),
             harness: "opencode".to_owned(),
-            repo_url: "https://github.com/macro-inc/macro".to_owned(),
+            repo_url: "https://github.com/agisota/conation".to_owned(),
         })
         .with_bot(
             inmem_bot,
             SessionDefaults {
                 bot_id: inmem_bot,
                 model: "fast-model".to_owned(),
-                harness: "macro-inmem".to_owned(),
-                repo_url: "https://github.com/macro-inc/macro".to_owned(),
+                harness: "conation-inmem".to_owned(),
+                repo_url: "https://github.com/agisota/conation".to_owned(),
             },
         )
         .with_managed_bot(inmem_bot),
@@ -1445,7 +1409,7 @@ async fn a_managed_session_opens_as_the_managed_default_bot() {
 
     assert_eq!(session.bot_id, inmem_bot);
     assert_eq!(session.model, "fast-model");
-    assert_eq!(session.harness, "macro-inmem");
+    assert_eq!(session.harness, "conation-inmem");
 }
 
 #[tokio::test]

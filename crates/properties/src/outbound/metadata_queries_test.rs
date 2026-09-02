@@ -1,8 +1,8 @@
 //! Integration tests for document metadata fact queries.
 
 use super::metadata_queries;
-use document_sub_type::DocumentSubType;
 use conation_db_migrator::MACRO_DB_MIGRATIONS;
+use document_sub_type::DocumentSubType;
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;
 

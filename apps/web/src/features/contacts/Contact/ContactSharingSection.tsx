@@ -1,5 +1,5 @@
-import { toast } from '@core/component/Toast/Toast';
 import { t } from '@app/lib/i18n';
+import { toast } from '@core/component/Toast/Toast';
 import { useSetContactHiddenMutation } from '@queries/crm/contacts';
 import type { CrmContactResponse } from '@service-storage/generated/schemas/crmContactResponse';
 import { cn, InlineCheckbox } from '@ui';
@@ -26,11 +26,11 @@ export function ContactSharingSection(props: { contact?: CrmContactResponse }) {
         hidden: willHide,
       });
       if (willHide) {
-        toast.success('Contact hidden.');
+        toast.success(t('contacts.sharing.hidden'));
       }
     } catch (error) {
       console.error('failed to update contact sharing', error);
-      toast.failure('Could not update contact visibility');
+      toast.failure(t('contacts.sharing.updateFailed'));
     }
   };
 
@@ -53,11 +53,12 @@ export function ContactSharingSection(props: { contact?: CrmContactResponse }) {
                 class={cn(TOGGLE_BUTTON_CLASS)}
               >
                 <InlineCheckbox checked={isShared()} />
-                <span class="whitespace-nowrap">{t('auto.visible_in_crm')}</span>
+                <span class="whitespace-nowrap">
+                  {t('contacts.sharing.visibleInCrm')}
+                </span>
               </button>
               <p class="text-ink-muted leading-5">
-                Shows this contact in their company's contact list. Hide
-                contacts that aren't relevant to your team's CRM.
+                {t('contacts.sharing.description')}
               </p>
             </div>
           </div>

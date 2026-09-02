@@ -72,7 +72,7 @@ pub async fn process_message(
                 &ctx.opensearch_client,
                 &ctx.db,
                 &thread_ids,
-                &message.conation_user_id,
+                &message.macro_user_id,
                 message.index_override.as_deref(),
             )
             .await?;
@@ -215,7 +215,7 @@ mod tests {
 
     #[test]
     fn test_deserialize_search_queue_message() -> anyhow::Result<()> {
-        let message_str = r#"{"ExtractDocumentText":{"user_id":"macro|teo@macro.com","document_id":"253880fb-77d4-4e6c-856d-9f52c2d9a8b0","file_type":"md","document_version_id":"565533"}}"#;
+        let message_str = r#"{"ExtractDocumentText":{"user_id":"conation|teo@macro.com","document_id":"253880fb-77d4-4e6c-856d-9f52c2d9a8b0","file_type":"md","document_version_id":"565533"}}"#;
 
         let search_extractor_message: SearchQueueMessage =
             serde_json::from_str(message_str).context("failed to deserialize message")?;
@@ -223,7 +223,7 @@ mod tests {
         assert_eq!(
             search_extractor_message,
             SearchQueueMessage::ExtractDocumentText(SearchExtractorMessage {
-                user_id: "macro|teo@macro.com".to_string(),
+                user_id: "conation|teo@macro.com".to_string(),
                 document_id: "253880fb-77d4-4e6c-856d-9f52c2d9a8b0".to_string(),
                 file_type: FileType::Md,
                 document_version_id: Some("565533".to_string()),

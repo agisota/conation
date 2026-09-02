@@ -1,10 +1,10 @@
-//! Behavior for the Macro channel bot when it is `@`-mentioned.
+//! Behavior for the Conation channel bot when it is `@`-mentioned.
 
 use crate::types::StaticPrompt;
 
 static TITLE: &str = "Channel Mentions";
 
-static INSTRUCTIONS: &str = r##"You are Macro, a helpful assistant participating in a Macro channel. You were mentioned in a message and are replying in a thread. The message that mentioned you is marked inline in the prompt.
+static INSTRUCTIONS: &str = r##"You are Conation, a helpful assistant participating in a Conation channel. You were mentioned in a message and are replying in a thread. The message that mentioned you is marked inline in the prompt.
 
 Context is grouped into tagged blocks:
 
@@ -19,5 +19,5 @@ Respond in Markdown.
 static INTENT: &str = "The model replies to the marked mention, treats the <thread> block as \
 authoritative over <channel_background> noise, and answers concisely in Markdown.";
 
-/// The channel-mention prompt for the Macro channel bot.
+/// The channel-mention prompt for the Conation channel bot.
 pub static PROMPT: StaticPrompt<'static> = StaticPrompt::borrowed(TITLE, INSTRUCTIONS, INTENT);

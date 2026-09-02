@@ -97,17 +97,20 @@ async function run(
     onBoot?: () => unknown;
   }
 ): Promise<void> {
-  // agent_proxy serves the runtime websocket on the same host as its HTTP
+  // agent_harness serves the runtime websocket on the same host as its HTTP
   // API, so the SDK's resolved host (env defaults / local portmap) is the
   // default; UPSTREAM_WS_URL only overrides it for the dev fixture.
   const upstreamUrl =
     env.UPSTREAM_WS_URL ||
-    `${macro._client.hosts['agent-proxy'].replace(/^http/, 'ws')}/runtime`;
+    `${macro._client.hosts['agent-harness'].replace(/^http/, 'ws')}/runtime`;
 
   const link = new UpstreamLink(upstreamUrl, sessionId);
   let sandbox: AgentSandbox | null = null;
   try {
-    await macro.agents.byId(opts.agentId).prompt(opts.prompt);
+    await macro.agentSessions.byId(opts.agentId).control({
+      type: 'prompt',
+      prompt: opts.prompt,
+    });
 
     link.status('booting');
     console.log(`[session ${sessionId}] spawning sandbox`, {
@@ -118,9 +121,7 @@ async function run(
       repoUrl: opts.repoUrl,
       envVars: {
         GITHUB_TOKEN: env.GITHUB_TOKEN,
-        ...(env.ANTHROPIC_API_KEY
-          ? { ANTHROPIC_API_KEY: env.ANTHROPIC_API_KEY }
-          : {}),
+        ...(env.ROX_API_KEY ? { ROX_API_KEY: env.ROX_API_KEY } : {}),
       },
     });
     console.log(

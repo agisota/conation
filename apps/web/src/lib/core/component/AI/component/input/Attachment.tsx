@@ -2,6 +2,7 @@ import type { Attachment, AttachmentPreview } from '@core/component/AI/types';
 import { isImageAttachment } from '@core/component/AI/util/attachment';
 import { ImagePreview } from '@core/component/ImagePreview';
 import { toast } from '@core/component/Toast/Toast';
+import { t } from '@core/i18n';
 import XIcon from '@phosphor/x.svg';
 import Spinner from '@phosphor-icons/core/bold/spinner-gap-bold.svg?component-solid';
 import type { Accessor } from 'solid-js';
@@ -35,14 +36,14 @@ export function AttachmentList(props: AttachmentListProps) {
 
 function uploadingFilename(preview: AttachmentPreview): string {
   const metadata = preview.metadata;
-  if (!metadata) return 'File';
+  if (!metadata) return t('common.file');
   if (metadata.type === 'document' && 'document_name' in metadata) {
     return metadata.document_name;
   }
   if (metadata.type === 'image' && 'image_name' in metadata) {
     return metadata.image_name;
   }
-  return 'File';
+  return t('common.file');
 }
 
 function UploadingAttachment(props: AttachmentPreview) {
@@ -87,7 +88,7 @@ function ImageAttachment(props: {
         isDss={false}
         onError={(e) => {
           console.error('Failed to load image', e);
-          toast.failure('Failed to load image');
+          toast.failure(t('core.images.loadFailed'));
           props.onRemove();
         }}
       />

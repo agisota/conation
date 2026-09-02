@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { getDisplayNameParts, tryMacroId } from '@core/user';
 import type { HistorySession } from '@service-sync/client';
 import { cn } from '@ui';
@@ -29,7 +30,7 @@ function UserList(props: { userIds: readonly string[] }) {
           <>
             <Show when={index() > 0}>
               {index() === visible().length - 1 && overflow() <= 0
-                ? ' and '
+                ? t('markdown.history.userConjunction')
                 : ', '}
             </Show>
             <UserName userId={userId} />
@@ -37,7 +38,7 @@ function UserList(props: { userIds: readonly string[] }) {
         )}
       </For>
       <Show when={overflow() > 0}>
-        {` and ${overflow()} ${overflow() === 1 ? 'other' : 'others'}`}
+        {t('markdown.history.otherEditors', { count: overflow() })}
       </Show>
     </>
   );
@@ -56,7 +57,7 @@ export function HistorySessionList(props: HistorySessionListProps) {
             {(row) => {
               const isSelected = () => selectedMs() === row.endMs;
               const edits = () =>
-                `${row.count} ${row.count === 1 ? 'edit' : 'edits'}`;
+                t('markdown.history.editCount', { count: row.count });
               return (
                 <button
                   type="button"
@@ -91,7 +92,8 @@ export function HistorySessionList(props: HistorySessionListProps) {
                   </span>
                   <span class="min-w-0 flex-1">
                     <span class="block text-ink text-xs">
-                      <UserList userIds={row.userIds} /> edited {row.label}
+                      <UserList userIds={row.userIds} />{' '}
+                      {t('markdown.history.edited')} {row.label}
                     </span>
                     <span class="block text-ink-muted text-[11px]">
                       {edits()}

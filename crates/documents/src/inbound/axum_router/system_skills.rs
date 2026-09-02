@@ -1,7 +1,9 @@
 //! Handler for `GET /documents/system_skills`.
 
 use axum::Json;
-use conation_authorization::{MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal};
+use conation_authorization::{
+    MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal,
+};
 
 use crate::domain::models::{SystemSkillSummary, SystemSkillsResponse};
 

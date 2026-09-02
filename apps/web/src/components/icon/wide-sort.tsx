@@ -13,7 +13,6 @@ export const AnimatedSortIcon = (props: {
       overflow="visible"
       class={`animated-sort-icon ${props.triggerAnimation ? 'animating' : ''} ${props.class ?? ''}`}
     >
-      {/*<title>{t('auto.animated_sort_icon')}</title>*/}
       <style>{`
         .animated-sort-icon {
           .line-top {

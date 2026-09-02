@@ -6,9 +6,9 @@ use axum::extract::FromRef;
 use axum::http::Request;
 use axum::http::StatusCode;
 use axum::routing::get;
-use http_body_util::BodyExt;
 use conation_auth::headers::{AccessTokenCookieExtractor, AccessTokenExtractor};
 use conation_auth::middleware::decode_jwt::JwtValidationArgs;
+use http_body_util::BodyExt;
 use tower::util::ServiceExt;
 
 use super::*;
@@ -40,7 +40,7 @@ fn create_access_token(
         "tid": "tenant_id",
         "email": email,
         "fusion_user_id": "fusion_testing",
-        "conation_user_id": format!("macro|{email}"),
+        "conation_user_id": format!("conation|{email}"),
         "conation_organization_id": 1,
     });
 
@@ -101,10 +101,17 @@ fn no_extractor() -> Result<AccessTokenExtractor, StatusCode> {
 #[test]
 fn query_extractor_decodes_percent_encoded_token() {
     let token = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.abc";
-    let encoded = format!("macro-api-token={}", urlencoding::encode(token));
+    let encoded = format!("conation-api-token={}", urlencoding::encode(token));
 
     let params: Params = serde_urlencoded::from_str(&encoded).unwrap();
     assert_eq!(params.conation_api_token.as_deref(), Some(token));
+}
+
+#[test]
+fn query_extractor_accepts_conation_api_token() {
+    let params: Params = serde_urlencoded::from_str("conation-api-token=transitional").unwrap();
+
+    assert_eq!(params.conation_api_token.as_deref(), Some("transitional"));
 }
 
 /// The old code collected into a `HashMap<String, String>` via
@@ -114,7 +121,7 @@ fn query_extractor_decodes_percent_encoded_token() {
 #[test]
 fn query_extractor_matches_form_urlencoded_parse() {
     let token = "header.payload.signature";
-    let query = format!("macro-api-token={token}&other=value");
+    let query = format!("conation-api-token={token}&other=value");
 
     // Old approach
     let old: HashMap<String, String> = url::form_urlencoded::parse(query.as_bytes())
@@ -125,7 +132,7 @@ fn query_extractor_matches_form_urlencoded_parse() {
     let new: Params = serde_urlencoded::from_str(&query).unwrap();
 
     assert_eq!(
-        old.get("macro-api-token").unwrap(),
+        old.get("conation-api-token").unwrap(),
         new.conation_api_token.as_ref().unwrap()
     );
 }
@@ -133,7 +140,7 @@ fn query_extractor_matches_form_urlencoded_parse() {
 /// Percent-encoded special characters (e.g. `%2B` for `+`) must be decoded.
 #[test]
 fn query_extractor_decodes_special_characters() {
-    let query = "macro-api-token=a%2Bb%3Dc";
+    let query = "conation-api-token=a%2Bb%3Dc";
 
     let old: HashMap<String, String> = url::form_urlencoded::parse(query.as_bytes())
         .into_owned()
@@ -141,7 +148,7 @@ fn query_extractor_decodes_special_characters() {
 
     let new: Params = serde_urlencoded::from_str(query).unwrap();
 
-    assert_eq!(old.get("macro-api-token").unwrap(), "a+b=c");
+    assert_eq!(old.get("conation-api-token").unwrap(), "a+b=c");
     assert_eq!(new.conation_api_token.as_deref(), Some("a+b=c"));
 }
 
@@ -177,11 +184,11 @@ fn valid_token_in_header_returns_decoded_jwt() {
     let token = valid_token();
     let jwt = DecodedJwt::new(extractor_from_token(&token), no_params(), &args).unwrap();
 
-    assert_eq!(jwt.user_context.user_id, "macro|user@test.com");
+    assert_eq!(jwt.user_context.user_id, "conation|user@test.com");
     assert_eq!(jwt.user_context.organization_id, Some(1));
     assert!(jwt.jwt_context.is_some());
     assert_eq!(jwt.jwt_context.unwrap().audience, TEST_AUDIENCE);
-    assert_eq!(jwt.conation_user_id.as_ref(), "macro|user@test.com");
+    assert_eq!(jwt.macro_user_id.as_ref(), "conation|user@test.com");
 }
 
 #[test]
@@ -194,7 +201,7 @@ fn valid_token_via_query_param_returns_decoded_jwt() {
     // Even with no header extractor, query param should work
     let jwt = DecodedJwt::new(no_extractor(), params, &args).unwrap();
 
-    assert_eq!(jwt.user_context.user_id, "macro|user@test.com");
+    assert_eq!(jwt.user_context.user_id, "conation|user@test.com");
 }
 
 #[test]
@@ -207,7 +214,7 @@ fn query_param_takes_precedence_over_header() {
     // Header has garbage, but query param has a valid token — query wins
     let jwt = DecodedJwt::new(extractor_from_token("garbage"), params, &args).unwrap();
 
-    assert_eq!(jwt.user_context.user_id, "macro|user@test.com");
+    assert_eq!(jwt.user_context.user_id, "conation|user@test.com");
 }
 
 #[test]
@@ -268,14 +275,14 @@ fn wrong_issuer_returns_invalid() {
 }
 
 #[test]
-fn invalid_conation_user_id_in_token_returns_invalid_user_id() {
+fn invalid_macro_user_id_in_token_returns_invalid_user_id() {
     let exp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
         .as_secs() as usize
         + 3600;
 
-    // Build a token whose conation_user_id lacks the required "macro|" prefix
+    // Build a token whose conation_user_id lacks the required `conation|` prefix.
     let claims = serde_json::json!({
         "aud": TEST_AUDIENCE,
         "exp": exp,
@@ -297,6 +304,36 @@ fn invalid_conation_user_id_in_token_returns_invalid_user_id() {
 
     let args = test_args();
     let result = DecodedJwt::new(extractor_from_token(&token), no_params(), &args);
+    assert!(matches!(result, Err(DecodeJwtError::InvalidUserId(_))));
+}
+
+#[test]
+fn legacy_macro_user_namespace_in_token_returns_invalid_user_id() {
+    let exp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as usize
+        + 3600;
+    let claims = serde_json::json!({
+        "aud": TEST_AUDIENCE,
+        "exp": exp,
+        "iss": TEST_ISSUER,
+        "tid": "tenant_id",
+        "email": "user@test.com",
+        "fusion_user_id": "fusion_testing",
+        "conation_user_id": "macro|user@test.com",
+    });
+    let mut header = jsonwebtoken::Header::new(jsonwebtoken::Algorithm::HS256);
+    header.kid = Some("fromFusionauth".to_string());
+    let token = jsonwebtoken::encode(
+        &header,
+        &claims,
+        &jsonwebtoken::EncodingKey::from_secret(TEST_SECRET.as_ref()),
+    )
+    .unwrap();
+
+    let result = DecodedJwt::new(extractor_from_token(&token), no_params(), &test_args());
+
     assert!(matches!(result, Err(DecodeJwtError::InvalidUserId(_))));
 }
 
@@ -341,7 +378,7 @@ async fn response_body(router: &Router, req: Request<axum::body::Body>) -> Strin
 }
 
 /// The access token cookie name used in Production environment (the default).
-const ACCESS_TOKEN_COOKIE: &str = "macro-access-token";
+const ACCESS_TOKEN_COOKIE: &str = "conation-access-token";
 
 #[tokio::test]
 async fn router_no_token_returns_401() {
@@ -391,7 +428,7 @@ async fn router_valid_bearer_returns_200() {
         .body(axum::body::Body::empty())
         .unwrap();
     let body = response_body(&router, req).await;
-    assert_eq!(body, "macro|user@test.com");
+    assert_eq!(body, "conation|user@test.com");
 }
 
 #[tokio::test]
@@ -403,7 +440,7 @@ async fn router_valid_cookie_returns_200() {
         .body(axum::body::Body::empty())
         .unwrap();
     let body = response_body(&router, req).await;
-    assert_eq!(body, "macro|user@test.com");
+    assert_eq!(body, "conation|user@test.com");
 }
 
 #[tokio::test]
@@ -423,16 +460,16 @@ async fn router_invalid_cookie_returns_401() {
 async fn router_valid_query_param_returns_200() {
     let router = test_router();
     let token = valid_token();
-    let uri = format!("/protected?macro-api-token={token}");
+    let uri = format!("/protected?conation-api-token={token}");
     let req = Request::get(&uri).body(axum::body::Body::empty()).unwrap();
     let body = response_body(&router, req).await;
-    assert_eq!(body, "macro|user@test.com");
+    assert_eq!(body, "conation|user@test.com");
 }
 
 #[tokio::test]
 async fn router_invalid_query_param_returns_401() {
     let router = test_router();
-    let req = Request::get("/protected?macro-api-token=garbage")
+    let req = Request::get("/protected?conation-api-token=garbage")
         .body(axum::body::Body::empty())
         .unwrap();
     assert_eq!(
@@ -445,14 +482,14 @@ async fn router_invalid_query_param_returns_401() {
 async fn router_query_param_takes_precedence_over_bearer() {
     let router = test_router();
     let good_token = valid_token();
-    let uri = format!("/protected?macro-api-token={good_token}");
+    let uri = format!("/protected?conation-api-token={good_token}");
     // Bearer header is garbage, but query param is valid — query wins
     let req = Request::get(&uri)
         .header("authorization", "Bearer garbage.token")
         .body(axum::body::Body::empty())
         .unwrap();
     let body = response_body(&router, req).await;
-    assert_eq!(body, "macro|user@test.com");
+    assert_eq!(body, "conation|user@test.com");
 }
 
 #[tokio::test]
@@ -466,7 +503,7 @@ async fn router_bearer_takes_precedence_over_cookie() {
         .body(axum::body::Body::empty())
         .unwrap();
     let body = response_body(&router, req).await;
-    assert_eq!(body, "macro|user@test.com");
+    assert_eq!(body, "conation|user@test.com");
 }
 
 #[tokio::test]

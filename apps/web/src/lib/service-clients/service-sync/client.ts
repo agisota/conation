@@ -1,3 +1,4 @@
+import { InitializeFromSnapshotRequest } from '@conation/collaboration/sync-service/generated/schema';
 import { SYNC_SERVICE_HOSTS } from '@core/constant/servers';
 import { getPermissionToken } from '@core/signal/token';
 import {
@@ -8,16 +9,13 @@ import { isTauri } from '@core/util/platform';
 import { platformFetch } from '@core/util/platformFetch';
 import type { ObjectLike, ResultError } from '@core/util/result';
 import type { SafeFetchInit } from '@core/util/safeFetch';
-import { InitializeFromSnapshotRequest } from '@conation/collaboration/sync-service/generated/schema';
+import { getWebOrigin } from '@core/util/webOrigin';
 import type { SerializedEditorState } from 'lexical';
 import { err, ok, type Result } from 'neverthrow';
 
 const SYNC_SERVICE_WORKER_URL = `${SYNC_SERVICE_HOSTS['worker']}`;
 
-const SYNC_ORIGIN =
-  import.meta.env.MODE === 'development'
-    ? 'https://dev.macro.com'
-    : 'https://macro.com';
+const SYNC_ORIGIN = getWebOrigin();
 
 const WAKEUP_TTL = 55 * 1000;
 const WAKEUP_DEBOUNCE_MS = 200;

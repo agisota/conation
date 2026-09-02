@@ -9,9 +9,6 @@ use channels::domain::{
     models::{ChannelType, CreateChannelRequest, Sender},
     ports::{ChannelMutationErr, ChannelService},
 };
-use entity_access::domain::models::{
-    AdminTeamRole, EntityAccessReceipt, MemberTeamRole, OwnerTeamRole,
-};
 use conation_event_broker::{MacroEventBroker, NoopMacroEventBroker};
 use conation_user_id::{
     cowlike::CowLike,
@@ -19,7 +16,12 @@ use conation_user_id::{
     lowercased::Lowercase,
     user_id::MacroUserIdStr,
 };
-use roles_and_permissions::domain::{model::RoleId, port::UserRolesAndPermissionsService};
+use entity_access::domain::models::{
+    AdminTeamRole, EntityAccessReceipt, MemberTeamRole, OwnerTeamRole,
+};
+use roles_and_permissions::domain::{
+    access_policy::CONATION_ACCESS_POLICY, model::RoleId, port::UserRolesAndPermissionsService,
+};
 
 #[cfg(feature = "ports")]
 use model_entity::EntityType;
@@ -417,9 +419,9 @@ where
     }
 
     /// Runs [`Self::backfill_legacy_team_subscription`], treating "the owner
-    /// simply has no active subscription" as a benign outcome: the team is a
-    /// free team (capped at [`FREE_TEAM_MAX_MEMBERS`]) rather than an error.
-    /// Every other failure still propagates.
+    /// simply has no active subscription" as a benign outcome. This legacy
+    /// billing helper is dormant under Conation's free-access policy. Every
+    /// other failure still propagates when a paid policy enables the path.
     async fn backfill_legacy_team_subscription_or_free(
         &self,
         team_id: &uuid::Uuid,
@@ -670,13 +672,15 @@ where
             .get_team_enterprise_status(&team_id)
             .await?;
 
-        if !enterprise
+        if CONATION_ACCESS_POLICY.requires_payment_for_features()
+            && !enterprise
             && !self
                 .team_repository
                 .get_team_payment_status(&team_id)
                 .await?
         {
-            // If the team has a subscription id and they are set to not paying continue to error
+            // A linked but non-paying legacy subscription blocks access
+            // only when the selected product policy requires payment.
             if self
                 .team_repository
                 .get_team_subscription_id(&team_id)
@@ -711,31 +715,16 @@ where
             }
         }
 
-        let team_plan = self.team_repository.get_team_plan(&team_id).await?;
-        let seat_count = self.team_repository.get_team_seat_count(&team_id).await?;
-
         let new_invites = self
             .team_repository
             .get_new_invites(&team_id, invites.clone())
             .await?;
 
-        if let Some(team_plan) = team_plan
-            && seat_count + new_invites.len() as i32 > team_plan.seat_cap()
-        {
-            return Err(InviteUsersToTeamError::NotEnoughOpenSeats);
-        }
-
-        // Free teams (no subscription) are capped at FREE_TEAM_MAX_MEMBERS.
-        if !enterprise
-            && team_plan.is_none()
-            && self
-                .team_repository
-                .get_team_subscription_id(&team_id)
-                .await?
-                .is_none()
-            && seat_count + new_invites.len() as i32 > FREE_TEAM_MAX_MEMBERS
-        {
-            return Err(InviteUsersToTeamError::NotEnoughOpenSeats);
+        if let Some(member_limit) = CONATION_ACCESS_POLICY.team_member_limit() {
+            let seat_count = self.team_repository.get_team_seat_count(&team_id).await?;
+            if seat_count.saturating_add(new_invites.len() as i32) > member_limit {
+                return Err(InviteUsersToTeamError::NotEnoughOpenSeats);
+            }
         }
 
         let new_invite_emails: HashSet<String> = new_invites
@@ -841,10 +830,9 @@ where
             .remove_user_from_team(&team_id, user_id)
             .await?;
 
-        let subscription_id = if enterprise {
+        let subscription_id = if enterprise || !CONATION_ACCESS_POLICY.sync_subscription_seats() {
             None
         } else {
-            // Free teams have no linked subscription - nothing to decrement.
             match self
                 .team_repository
                 .get_team_subscription_id(&team_id)
@@ -980,7 +968,7 @@ where
             tracing::error!(
                 error = ?e,
                 team_id = %team_id,
-                conation_id = %user_id,
+                macro_id = %user_id,
                 "Failed to enqueue DepopulateCrmForUser after remove_user_from_team; CRM rows owned by the removed user's link will be left in place until manual cleanup"
             );
         }
@@ -1084,12 +1072,13 @@ where
             .map(|member| member.user_id.clone().into_owned())
             .collect();
 
+        // Keep historical billing cleanup intact even though subscriptions do
+        // not grant access or track seats in the Conation distribution.
         let subscription_id = self
             .team_repository
             .get_team_subscription_id(&team_id)
             .await?;
         if let Some(subscription_id) = subscription_id {
-            // Cancel subscription
             self.customer_repository
                 .cancel_subscription(&subscription_id)
                 .await
@@ -1162,7 +1151,7 @@ where
             }
         };
 
-        let subscription_id = if enterprise {
+        let subscription_id = if enterprise || !CONATION_ACCESS_POLICY.sync_subscription_seats() {
             None
         } else {
             let team_payment_status = match self
@@ -1263,9 +1252,9 @@ where
             };
 
             match team_subscription_id {
-                // Free team: no seat billing, but the member count (which
-                // already includes this newly accepted member) must stay
-                // within the free limit.
+                // Billing-enabled compatibility mode without a subscription:
+                // enforce its legacy fallback limit. Conation's free-access
+                // policy never enters this branch.
                 None => {
                     let seat_count = match self
                         .team_repository
@@ -1295,7 +1284,7 @@ where
                             .inspect_err(|rollback_err| {
                                 tracing::error!(
                                     error=?rollback_err,
-                                    "unable to rollback accepted team invite after the free member limit check"
+                                    "unable to rollback accepted team invite after the team member limit check"
                                 );
                             })
                             .ok();
@@ -1328,9 +1317,10 @@ where
             }
         };
 
-        // Premium roles come with a paid or enterprise team; free-team
-        // members keep their existing (free) entitlements.
-        let grants_premium = enterprise || subscription_id.is_some();
+        // These legacy roles remain useful to downstream compatibility code,
+        // but Conation grants them independently of subscription state.
+        let grants_premium = CONATION_ACCESS_POLICY
+            .grants_professional_features(enterprise || subscription_id.is_some());
         let roles_to_add = vec![RoleId::TeamSubscriber, RoleId::SubOpus];
 
         if grants_premium {
@@ -1424,7 +1414,7 @@ where
             tracing::error!(
                 error = ?e,
                 team_id = %team_member.team_id,
-                conation_id = %user_id,
+                macro_id = %user_id,
                 "Failed to enqueue PopulateCrmForUser after join_team; CRM tables will not be seeded from sent-mail history (per-message fan-out will still cover future sends)"
             );
         }
@@ -1461,6 +1451,12 @@ where
         &self,
         team_id: &uuid::Uuid,
     ) -> Result<(), RevokePermissionsForTeamMembersError> {
+        // Stripe cancellation/past-due events may continue updating billing
+        // metadata, but they cannot revoke product access in Conation.
+        if CONATION_ACCESS_POLICY.grants_professional_features(false) {
+            return Ok(());
+        }
+
         let members = self.team_repository.get_team_members(team_id).await?;
 
         if members.is_empty() {
@@ -1693,7 +1689,7 @@ where
                         tracing::error!(
                             error = ?e,
                             team_id = %team_id,
-                            conation_id = %member.user_id,
+                            macro_id = %member.user_id,
                             "Failed to enqueue PopulateCrmForUser during team CRM enable"
                         );
                     }
@@ -1782,12 +1778,10 @@ where
             .get_team_enterprise_status(&team_id)
             .await?;
 
-        // Mirror the seat-cap check from invite_users_to_team - an
-        // auto-join must not push the team past its plan's seat cap.
-        if let Some(team_plan) = self.team_repository.get_team_plan(&team_id).await? {
+        if let Some(member_limit) = CONATION_ACCESS_POLICY.team_member_limit() {
             let seat_count = self.team_repository.get_team_seat_count(&team_id).await?;
-            if seat_count + 1 > team_plan.seat_cap() {
-                tracing::info!(%team_id, %user_id, "skipping team auto-join: team is at its seat cap");
+            if seat_count.saturating_add(1) > member_limit {
+                tracing::info!(%team_id, %user_id, "skipping team auto-join: team is at its member limit");
                 return Ok(None);
             }
         }
@@ -1804,7 +1798,7 @@ where
             return Ok(None);
         };
 
-        let subscription_id = if enterprise {
+        let subscription_id = if enterprise || !CONATION_ACCESS_POLICY.sync_subscription_seats() {
             None
         } else {
             let team_payment_status =
@@ -1874,10 +1868,9 @@ where
             };
 
             match team_subscription_id {
-                // Free team: no seat billing. The member count (already
-                // bumped by add_user_to_team) must stay within the free
-                // limit - over the cap, skip the auto-join silently like
-                // the plan seat-cap check above.
+                // Billing-enabled compatibility mode without a subscription:
+                // enforce its legacy fallback limit. Conation's free-access
+                // policy never enters this branch.
                 None => {
                     let seat_count = match self.team_repository.get_team_seat_count(&team_id).await
                     {
@@ -1894,11 +1887,11 @@ where
                     };
 
                     if seat_count > FREE_TEAM_MAX_MEMBERS {
-                        tracing::info!(%team_id, %user_id, "skipping team auto-join: free team is at its member limit");
+                        tracing::info!(%team_id, %user_id, "skipping team auto-join: compatibility member limit reached");
                         self.rollback_add_user_to_team(
                             &team_id,
                             user_id,
-                            "the free member limit check",
+                            "the team member limit check",
                         )
                         .await;
                         return Ok(None);
@@ -1926,9 +1919,8 @@ where
             }
         };
 
-        // Premium roles come with a paid or enterprise team; free-team
-        // members keep their existing (free) entitlements.
-        let grants_premium = enterprise || subscription_id.is_some();
+        let grants_premium = CONATION_ACCESS_POLICY
+            .grants_professional_features(enterprise || subscription_id.is_some());
         let roles_to_add = vec![RoleId::TeamSubscriber, RoleId::SubOpus];
 
         if grants_premium {
@@ -2003,7 +1995,7 @@ where
             tracing::error!(
                 error = ?e,
                 team_id = %team_id,
-                conation_id = %user_id,
+                macro_id = %user_id,
                 "Failed to enqueue PopulateCrmForUser after team auto-join; CRM tables will not be seeded from sent-mail history (per-message fan-out will still cover future sends)"
             );
         }

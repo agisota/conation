@@ -1,5 +1,4 @@
 import { createCalendarEventFormController } from '@app/features/calendar/components/composer/create-calendar-event-form-controller';
-import { t } from '@app/lib/i18n';
 import { EventForm } from '@app/features/calendar/components/composer/EventForm';
 import type { EventEditorSubmitValues } from '@app/features/calendar/components/composer/event-form-model';
 import { DEFAULT_CALENDAR_SOURCE } from '@app/features/calendar/types';
@@ -7,6 +6,7 @@ import {
   calendarDisplayLabel,
   spansMultipleInboxes,
 } from '@app/features/calendar/utils/calendar-label';
+import { t } from '@app/lib/i18n';
 import { useChatContext } from '@core/component/AI/context';
 import type { AssistantMessagePart } from '@core/component/AI/types';
 import { toast } from '@core/component/Toast/Toast';
@@ -104,11 +104,11 @@ function CalendarChatComposeFallback() {
     <Layer depth={2}>
       <div
         role="status"
-        aria-label={t('auto.loading_calendar_editor')}
+        aria-label={t('ai.tools.calendar.loadingEditor')}
         aria-busy="true"
         class="flex min-h-64 animate-pulse flex-col gap-6 rounded-xl border border-edge-muted bg-surface p-4 shadow-sm"
       >
-        <span class="sr-only">{t('auto.loading_calendar_editor')}</span>
+        <span class="sr-only">{t('ai.tools.calendar.loadingEditor')}</span>
 
         <div class="flex flex-col gap-4">
           <div class="flex items-center gap-2">
@@ -229,7 +229,7 @@ function CalendarChatComposeContent(props: CalendarChatComposeProps) {
       if (lastEnqueuedSnapshot === snapshot) {
         lastEnqueuedSnapshot = lastPersistedSnapshot;
       }
-      toast.failure('Failed to save calendar event changes');
+      toast.failure(t('ai.tools.calendar.saveFailed'));
     });
 
     return persistenceQueue;
@@ -276,14 +276,14 @@ function CalendarChatComposeContent(props: CalendarChatComposeProps) {
 
     if (result.isErr()) {
       setOperation(undefined);
-      toast.failure('Failed to create calendar event');
+      toast.failure(t('ai.tools.calendar.createFailed'));
       return;
     }
 
     const event = createdEvent(result.value);
     if (!event) {
       setOperation(undefined);
-      toast.failure('Failed to create calendar event', {
+      toast.failure(t('ai.tools.calendar.createFailed'), {
         subtext: toolError(result.value),
       });
       return;
@@ -293,8 +293,13 @@ function CalendarChatComposeContent(props: CalendarChatComposeProps) {
     setOperation(undefined);
     updateLocalResponse(result.value as CreateCalendarEventResponse, args);
     void invalidateCalendarOccurrences();
-    toast.success('Calendar event created', {
-      actions: [{ label: 'Open', onClick: () => openToolCalendarEvent(event) }],
+    toast.success(t('ai.tools.calendar.created'), {
+      actions: [
+        {
+          label: t('ai.tools.calendar.open'),
+          onClick: () => openToolCalendarEvent(event),
+        },
+      ],
     });
   }
 
@@ -311,7 +316,7 @@ function CalendarChatComposeContent(props: CalendarChatComposeProps) {
     });
     if (result.isErr()) {
       setOperation(undefined);
-      toast.failure('Failed to cancel calendar event');
+      toast.failure(t('ai.tools.calendar.cancelFailed'));
       return;
     }
 
@@ -330,7 +335,9 @@ function CalendarChatComposeContent(props: CalendarChatComposeProps) {
           class="flex min-h-80 max-h-128 min-w-0 flex-col gap-3 rounded-xl border border-edge-muted bg-surface p-4 text-ink shadow-sm"
         >
           <Show when={showOwnerDisabledMessage()}>
-            <p class="text-xs text-ink-extra-muted/60">{t('auto.only_the_chat_owner_can_create')}</p>
+            <p class="text-xs text-ink-extra-muted/60">
+              {t('ai.tools.calendar.ownerOnly')}
+            </p>
           </Show>
           <Show when={props.streamLocked && !showOwnerDisabledMessage()}>
             <p class="text-xs text-ink-extra-muted/60">
@@ -354,7 +361,9 @@ function CalendarChatComposeContent(props: CalendarChatComposeProps) {
         </div>
         <ErrorBoundary
           fallback={
-            <div class="flex h-96 items-center justify-center rounded-xl border border-edge-muted bg-surface p-4 text-center text-xs text-ink-muted shadow-sm">{t('auto.calendar_preview_unavailable')}</div>
+            <div class="flex h-96 items-center justify-center rounded-xl border border-edge-muted bg-surface p-4 text-center text-xs text-ink-muted shadow-sm">
+              {t('ai.tools.calendar.previewUnavailable')}
+            </div>
           }
         >
           <CalendarToolEventPreview

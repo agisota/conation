@@ -1,9 +1,11 @@
+import {
+  ConationLockup,
+  ConationMark as LogoIcon,
+} from '@app/components/brand';
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
 import { t } from '@app/lib/i18n';
 import { globalSplitManager } from '@app/signal/splitLayout';
-import MacroLogo from '@core/component/MacroLogo';
 import { isMobile } from '@core/mobile/isMobile';
-import LogoIcon from '@icon/macro-logo.svg';
 import ArrowRightIcon from '@phosphor/arrow-right.svg';
 import CloseIcon from '@phosphor/x.svg';
 import { useCompleteTutorialMutation } from '@queries/auth/tutorial';
@@ -45,8 +47,8 @@ function LessonContent(props: {
 function DemoFallback() {
   return (
     <div class="flex items-center justify-center h-full">
-      <div class="w-full m-12 opacity-10 max-w-80">
-        <MacroLogo class="fill-ink" />
+      <div class="w-full m-12 max-w-80">
+        <ConationLockup alt="" class="aspect-[3/1] w-full opacity-25" />
       </div>
     </div>
   );
@@ -79,26 +81,38 @@ function StartScreen(props: { onStart: () => void; onSkip: () => void }) {
           fallback={
             <>
               <div class="flex flex-col gap-2">
-                <h3 class="text-3xl font-semibold text-ink">{t('auto.tutorial_unavailable_on_mobile')}</h3>
-                <p class="text-base text-ink/60 text-balance">{t('auto.try_the_tutorial_on_web_for_th')}</p>
+                <h3 class="text-3xl font-semibold text-ink">
+                  {t('onboarding.tutorial.mobileUnavailable.title')}
+                </h3>
+                <p class="text-base text-ink/60 text-balance">
+                  {t('onboarding.tutorial.mobileUnavailable.description')}
+                </p>
               </div>
               <div class="w-full max-w-xs flex flex-col gap-2 pt-2">
-                <Button variant="cta" size="xl" onClick={props.onSkip}>{t('auto.continue')}<ArrowRightIcon />
+                <Button variant="cta" size="xl" onClick={props.onSkip}>
+                  {t('onboarding.actions.continue')}
+                  <ArrowRightIcon />
                 </Button>
               </div>
             </>
           }
         >
           <div class="flex flex-col gap-2">
-            <h3 class="text-3xl font-semibold text-ink">{t('auto.welcome_to_macro')}</h3>
+            <h3 class="text-3xl font-semibold text-ink">
+              {t('onboarding.tutorial.welcome.title')}
+            </h3>
             <p class="text-base text-ink/60 text-balance">
-              Take a quick tour of Macro’s core features.
+              {t('onboarding.tutorial.welcome.description')}
             </p>
           </div>
           <div class="w-full max-w-xs flex flex-col gap-2 pt-2">
-            <Button variant="cta" size="xl" onClick={props.onStart}>{t('auto.play_tutorial')}<ArrowRightIcon />
+            <Button variant="cta" size="xl" onClick={props.onStart}>
+              {t('onboarding.tutorial.play')}
+              <ArrowRightIcon />
             </Button>
-            <Button variant="ghost" size="xl" onClick={props.onSkip}>{t('auto.skip_tutorial')}</Button>
+            <Button variant="ghost" size="xl" onClick={props.onSkip}>
+              {t('onboarding.tutorial.skip')}
+            </Button>
           </div>
         </Show>
       </div>
@@ -112,17 +126,21 @@ function EndScreen(props: { onFinish: () => void; onReplay: () => void }) {
       <div class="max-w-xl flex flex-col items-center text-center gap-5 onboarding-stagger">
         <LogoIcon class="size-16 text-accent" />
         <div class="flex flex-col gap-2">
-          <h3 class="text-3xl font-semibold text-ink">You’re ready to go</h3>
+          <h3 class="text-3xl font-semibold text-ink">
+            {t('onboarding.tutorial.complete.title')}
+          </h3>
           <p class="text-base text-ink/60 text-balance">
-            You can revisit these lessons anytime if you want a refresher.
+            {t('onboarding.tutorial.complete.description')}
           </p>
         </div>
         <div class="w-full max-w-xs flex flex-col gap-2 pt-2">
           <Button variant="cta" size="xl" onClick={props.onFinish}>
-            Let’s go
+            {t('onboarding.tutorial.complete.action')}
             <ArrowRightIcon />
           </Button>
-          <Button variant="ghost" size="xl" onClick={props.onReplay}>{t('auto.replay_tutorial')}</Button>
+          <Button variant="ghost" size="xl" onClick={props.onReplay}>
+            {t('onboarding.tutorial.replay')}
+          </Button>
         </div>
       </div>
     </div>
@@ -151,7 +169,9 @@ function ModalFooter(props: { lesson: LessonState }) {
             variant="ghost"
             size="xl"
             onClick={onboarding.handleSkipLesson}
-          >{t('auto.skip_lesson')}</Button>
+          >
+            {t('onboarding.tutorial.skipLesson')}
+          </Button>
           <Button
             ref={onboarding.setContinueButtonRef}
             variant="cta"
@@ -159,7 +179,7 @@ function ModalFooter(props: { lesson: LessonState }) {
             onClick={onboarding.handleContinue}
             disabled={!onboarding.readyToContinue()}
           >
-            {onboarding.continueLabel() ?? 'Continue'}
+            {onboarding.continueLabel() ?? t('onboarding.actions.continue')}
             <Hotkey shortcut="cmd+enter" />
           </Button>
         </div>
@@ -192,11 +212,11 @@ function LessonsScreen(props: { onFinish: () => void; onReplay: () => void }) {
                     {currentLesson().index + 1}
                   </div>
                   <h3 class="text-3xl font-semibold text-ink-muted">
-                    {currentLesson().definition.title}
+                    {t(currentLesson().definition.title)}
                   </h3>
                   <Show when={currentLesson().definition.subtitle}>
                     <p class="text-sm text-ink/60 mt-4">
-                      {currentLesson().definition.subtitle}
+                      {t(currentLesson().definition.subtitle ?? '')}
                     </p>
                   </Show>
                   <div class="mt-5">

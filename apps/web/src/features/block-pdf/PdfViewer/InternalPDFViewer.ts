@@ -1,5 +1,5 @@
-import { ENABLE_SCRIPTING } from '@core/constant/featureFlags';
 import { t } from '@app/lib/i18n';
+import { ENABLE_SCRIPTING } from '@core/constant/featureFlags';
 import { showMessageBoxSync } from '@core/util/dialog';
 import debounce from 'lodash/debounce';
 import { AnnotationMode, type PageViewport } from 'pdfjs-dist';
@@ -1312,7 +1312,7 @@ export class InternalPDFViewer {
         case 'alert': {
           return showMessageBoxSync({
             type: 'warning',
-            title: 'Macro',
+            title: 'Conation',
             message: args[0],
             buttons: ['OK'],
             defaultId: 0,
@@ -1322,7 +1322,7 @@ export class InternalPDFViewer {
           return (
             showMessageBoxSync({
               type: 'question',
-              title: 'Macro',
+              title: 'Conation',
               message: args[0],
               buttons: ['OK', t('common.cancel')],
               defaultId: 0,

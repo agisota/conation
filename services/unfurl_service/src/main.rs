@@ -8,8 +8,8 @@ use ::unfurl::{
     outbound::ReqwestUnfurlFetcher,
 };
 use anyhow::Context;
-use config::Config;
 use conation_entrypoint::MacroEntrypoint;
+use config::Config;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

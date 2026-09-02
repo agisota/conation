@@ -2,6 +2,8 @@ import { useFeatureFlag } from '@app/lib/analytics/posthog';
 import { t } from '@app/lib/i18n';
 import { applyAiOps } from '@block-md/ai-edit/applyAiOps';
 import { useSplitLayout } from '@components/app/split-layout/layout';
+import type { NodeIdMappings } from '@conation/lexical-core';
+import { $getId } from '@conation/lexical-core/plugins/nodeIdPlugin';
 import { useIsAuthenticated } from '@core/auth';
 import { useBlockId } from '@core/block';
 import type { Completion } from '@core/client/completion';
@@ -52,8 +54,6 @@ import { useBlockDocumentName } from '@core/util/currentBlockDocumentName';
 import { debouncedDependent } from '@core/util/debounce';
 import { getScrollParentElement } from '@core/util/scrollParent';
 import MacroGridLoader from '@icon/macro-grid-noise-loader-4.svg';
-import type { NodeIdMappings } from '@conation/lexical-core';
-import { $getId } from '@conation/lexical-core/plugins/nodeIdPlugin';
 import GridIcon from '@phosphor/grid-four.svg';
 import CheckIcon from '@phosphor-icons/core/bold/check-bold.svg?component-solid';
 import ClipboardIcon from '@phosphor-icons/core/bold/clipboard-bold.svg?component-solid';
@@ -325,7 +325,11 @@ export function MarkdownPopup(props: {
       const title = await generateTitle(content);
       const documentId = await createMarkdownFile({
         content,
-        title: title ?? `${name()} - AI Explanation`,
+        title:
+          title ??
+          t('markdown.ai.explanationTitle', {
+            name: name(),
+          }),
       });
 
       if (!documentId) {
@@ -356,7 +360,7 @@ export function MarkdownPopup(props: {
           const successCount = results.filter((r) => r.isOk()).length;
           if (successCount > 0) {
             toast.success(
-              `Created ${successCount} task${successCount > 1 ? 's' : ''}`
+              t('markdown.task.createdCount', { count: successCount })
             );
           }
           setPopupVisible(false);
@@ -411,7 +415,7 @@ export function MarkdownPopup(props: {
       if (!instruction) return;
       const nodeIds = resolveSelectedNodeIds();
       if (nodeIds.length === 0) {
-        toast.failure('Could not resolve the selected nodes');
+        toast.failure(t('markdown.ai.selectionResolveFailed'));
         return;
       }
       // The highlight is already tracking the selection; flagging the run
@@ -424,7 +428,7 @@ export function MarkdownPopup(props: {
         onOps: (ops) => applyAiOps(editor, props.lexicalMapping, ops),
       })
         .then((result) => {
-          if (result === 'failed') toast.failure('AI edit failed');
+          if (result === 'failed') toast.failure(t('markdown.ai.editFailed'));
         })
         .finally(() => {
           setAiEditLocation(null);
@@ -525,7 +529,9 @@ export function MarkdownPopup(props: {
                 component={isConverting() ? LoadingIcon : CheckSquareIcon}
                 class="size-4"
               />
-              {isConverting() ? 'Converting...' : 'Tasks'}
+              {isConverting()
+                ? t('markdown.task.converting')
+                : t('markdown.task.pluralTitle')}
             </Button>
           </Show>
           <Show when={canEdit() && convertibleListKey()}>
@@ -535,7 +541,7 @@ export function MarkdownPopup(props: {
                 class="rounded-md"
                 depth={3}
                 variant="ghost"
-                tooltip="Convert list to table"
+                tooltip={t('markdown.format.convertListToTable')}
                 onClick={() => {
                   const converted = editor.dispatchCommand(
                     LIST_TO_TABLE_COMMAND,
@@ -544,7 +550,9 @@ export function MarkdownPopup(props: {
                   if (converted) setPopupVisible(false);
                 }}
               >
-                <GridIcon class="size-4" />{t('auto.table')}</Button>
+                <GridIcon class="size-4" />
+                {t('markdown.format.table')}
+              </Button>
             )}
           </Show>
           <Button
@@ -565,7 +573,9 @@ export function MarkdownPopup(props: {
             <Dynamic
               component={locationCopied() ? CheckIcon : LinkIcon}
               class={locationCopied() ? 'text-success-ink size-4' : 'size-4'}
-            />{t('auto.share')}</Button>
+            />
+            {t('markdown.sharing.share')}
+          </Button>
         </div>
 
         <Show when={inlineAiEditing().enabled && canEdit()}>
@@ -574,7 +584,7 @@ export function MarkdownPopup(props: {
             <textarea
               class="grow resize-none overflow-hidden bg-transparent text-sm placeholder:text-ink-placeholder focus:outline-none"
               rows={1}
-              placeholder={t('auto.ask_macro_to_edit_this_selecti')}
+              placeholder={t('markdown.ai.editSelectionPlaceholder')}
               ref={(el) => {
                 aiInputRef = el;
               }}
@@ -605,7 +615,7 @@ export function MarkdownPopup(props: {
                   class="rounded-md"
                   depth={3}
                   variant="ghost"
-                  tooltip="Ask Macro"
+                  tooltip={t('markdown.ai.askConation')}
                   disabled={!aiEditInput().trim()}
                   onClick={handleAiEditSubmit}
                 >
@@ -618,7 +628,7 @@ export function MarkdownPopup(props: {
                 class="rounded-md"
                 depth={3}
                 variant="ghost"
-                tooltip="Stop AI edit"
+                tooltip={t('markdown.ai.stopEdit')}
                 onClick={() => cancelAiEdit(blockId)}
               >
                 <div class="size-2.5 rounded-xs bg-current" />
@@ -629,14 +639,16 @@ export function MarkdownPopup(props: {
 
         <Show when={!completion() && completionType() === 'rewrite'}>
           <div class="flex flex-col border-t border-edge mt-1 pt-2 w-full">
-            <p class="text-ink-muted font-medium pt-1 pl-3 text-sm">{t('auto.how_would_you_like_this_text_r')}</p>
+            <p class="text-ink-muted font-medium pt-1 pl-3 text-sm">
+              {t('markdown.ai.rewritePrompt')}
+            </p>
             <div class="flex flex-row items-center space-x-2 w-full px-2">
               <textarea
                 class="resize-none rounded-xs w-full p-2 my-3 text-sm max-h-[800px] overflow-hidden border border-edge bg-hover"
                 ref={setRewriteInputRef}
                 rows={1}
                 onSubmit={(e) => e.preventDefault()}
-                placeholder={'Check for spelling and grammar errors'}
+                placeholder={t('markdown.ai.proofreadPlaceholder')}
                 onInput={(e) => {
                   setInputVal(e.currentTarget.value);
                   e.target.style.height = 'auto';
@@ -734,7 +746,7 @@ export function MarkdownPopup(props: {
                             {' '}
                             <PencilIcon class="size-3" />{' '}
                           </Show>{' '}
-                          <p>{t('auto.accept_changes')}</p>{' '}
+                          <p>{t('markdown.ai.acceptChanges')}</p>{' '}
                         </button>{' '}
                       </div>
                     </Show>
@@ -751,7 +763,7 @@ export function MarkdownPopup(props: {
                         >
                           <NotesIcon class="size-3 text-note" />
                         </Show>
-                        <p>{t('auto.edit_in_notes')}</p>
+                        <p>{t('markdown.ai.editInNotes')}</p>
                       </button>
                     </div>
                     <div class="w-fit">
@@ -770,7 +782,11 @@ export function MarkdownPopup(props: {
                             <ClipboardIcon class="size-3" />
                           </Show>
                         </Show>
-                        <p>{copied() ? 'Copied!' : 'Copy'}</p>
+                        <p>
+                          {copied()
+                            ? t('markdown.actions.copied')
+                            : t('markdown.actions.copy')}
+                        </p>
                       </button>
                     </div>
                   </div>

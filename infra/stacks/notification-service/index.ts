@@ -4,7 +4,7 @@ import { Queue } from '../../packages/resources';
 import {
   config,
   getKafkaClusterPolicy,
-  getMacroApiToken,
+  getConationApiToken,
   stack,
 } from '../../packages/shared';
 import { get_coparse_api_vpc } from '../../packages/vpc';
@@ -145,7 +145,7 @@ export const notificationSnsPlatformArns = [
 ];
 export const notificationApnsVoipPlatformArn = notificationApnsVoipPlatform.arn;
 
-const MACRO_API_TOKENS = getMacroApiToken();
+const CONATION_API_TOKENS = getConationApiToken();
 
 const notificationService = new NotificationService('notification-service', {
   vpc: coparse_api_vpc,
@@ -154,7 +154,7 @@ const notificationService = new NotificationService('notification-service', {
   cloudStorageClusterName,
   secretKeyArns: [
     jwtSecretKeyArn,
-    MACRO_API_TOKENS.macroApiTokenPublicKeyArn,
+    CONATION_API_TOKENS.conationApiTokenPublicKeyArn,
     authenticationServiceInternalApiKeyArn,
     unsubscribeHmacSecretArn,
   ],

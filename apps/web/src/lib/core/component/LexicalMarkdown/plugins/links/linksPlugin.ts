@@ -1,3 +1,4 @@
+import { $createUnlinkedTextNode } from '@conation/lexical-core/nodes/UnlinkedTextNode';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
 import { openExternalUrl } from '@core/util/url';
 import {
@@ -14,7 +15,6 @@ import {
   $wrapNodeInElement,
   mergeRegister,
 } from '@lexical/utils';
-import { $createUnlinkedTextNode } from '@conation/lexical-core/nodes/UnlinkedTextNode';
 import type { LexicalEditor } from 'lexical';
 import {
   $createParagraphNode,

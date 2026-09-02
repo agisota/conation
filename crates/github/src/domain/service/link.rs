@@ -1,11 +1,11 @@
 //! Github Link Service implemenation
 
 use chrono::Utc;
-use foreign_entity::domain::{models::PatchForeignEntity, ports::ForeignEntityService};
 use conation_user_id::{
     lowercased::Lowercase,
     user_id::{MacroUserId, MacroUserIdStr},
 };
+use foreign_entity::domain::{models::PatchForeignEntity, ports::ForeignEntityService};
 
 use crate::domain::{
     models::{
@@ -67,19 +67,19 @@ impl<R: GithubRepo, U: GithubOauth, F: Auth, E: ForeignEntityService>
 
     async fn get_user_link_for_validation(
         &self,
-        conation_user_id: &MacroUserId<Lowercase<'static>>,
+        macro_user_id: &MacroUserId<Lowercase<'static>>,
     ) -> Result<GithubLink, GithubError> {
         self.repo
-            .get_github_link_by_user_id(conation_user_id)
+            .get_github_link_by_user_id(macro_user_id)
             .await
             .map_err(Self::link_lookup_error)
     }
 
     async fn validated_access_token(
         &self,
-        conation_user_id: &MacroUserId<Lowercase<'static>>,
+        macro_user_id: &MacroUserId<Lowercase<'static>>,
     ) -> Result<GithubAccessToken, GithubError> {
-        let link = self.get_user_link_for_validation(conation_user_id).await?;
+        let link = self.get_user_link_for_validation(macro_user_id).await?;
 
         let access_token = self
             .auth
@@ -175,10 +175,10 @@ impl<R: GithubRepo, U: GithubOauth, F: Auth, E: ForeignEntityService> GithubLink
     #[tracing::instrument(skip(self), err)]
     async fn get_user_link(
         &self,
-        conation_user_id: &MacroUserId<Lowercase<'static>>,
+        macro_user_id: &MacroUserId<Lowercase<'static>>,
     ) -> Result<GithubLink, GithubError> {
         self.repo
-            .get_github_link_by_user_id(conation_user_id)
+            .get_github_link_by_user_id(macro_user_id)
             .await
             .map_err(|e| GithubError::Internal(e.into()))
     }
@@ -186,23 +186,23 @@ impl<R: GithubRepo, U: GithubOauth, F: Auth, E: ForeignEntityService> GithubLink
     #[tracing::instrument(skip(self), err)]
     async fn check_user_link_token(
         &self,
-        conation_user_id: &MacroUserId<Lowercase<'static>>,
+        macro_user_id: &MacroUserId<Lowercase<'static>>,
     ) -> Result<(), GithubError> {
-        self.validated_access_token(conation_user_id).await?;
+        self.validated_access_token(macro_user_id).await?;
         Ok(())
     }
 
     #[tracing::instrument(skip(self, pull_requests), err)]
     async fn enrich_pull_requests(
         &self,
-        conation_user_id: &MacroUserId<Lowercase<'static>>,
+        macro_user_id: &MacroUserId<Lowercase<'static>>,
         pull_requests: Vec<GithubPullRequestRef>,
     ) -> Result<Vec<EnrichedGithubPullRequest>, GithubError> {
         if pull_requests.is_empty() {
             return Ok(Vec::new());
         }
 
-        let access_token = self.validated_access_token(conation_user_id).await?;
+        let access_token = self.validated_access_token(macro_user_id).await?;
 
         let mut enriched_pull_requests = Vec::with_capacity(pull_requests.len());
 
@@ -247,10 +247,10 @@ impl<R: GithubRepo, U: GithubOauth, F: Auth, E: ForeignEntityService> GithubLink
     #[tracing::instrument(skip(self), err)]
     async fn delete_user_link(
         &self,
-        conation_user_id: &MacroUserId<Lowercase<'static>>,
+        macro_user_id: &MacroUserId<Lowercase<'static>>,
     ) -> Result<(), GithubError> {
         // Get link
-        let link = match self.repo.get_github_link_by_user_id(conation_user_id).await {
+        let link = match self.repo.get_github_link_by_user_id(macro_user_id).await {
             Ok(link) => link,
             Err(e) => {
                 let e: anyhow::Error = e.into();
@@ -346,7 +346,7 @@ impl<R: GithubRepo, U: GithubOauth, F: Auth, E: ForeignEntityService> GithubLink
             && existing.github_user_id == gh_id
         {
             // Idempotent re-link of the SAME account by the SAME user: skip auth + skip
-            // insert (avoids violating the new (conation_id, github_user_id) unique). Still
+            // insert (avoids violating the new (macro_id, github_user_id) unique). Still
             // clean up the in-progress link, then return the existing link.
             let _ = self
                 .repo
@@ -404,7 +404,7 @@ impl<R: GithubRepo, U: GithubOauth, F: Auth, E: ForeignEntityService> GithubLink
         // create github link
         let link = GithubLink {
             id: conation_uuid::generate_uuid_v7(),
-            conation_id: MacroUserIdStr(user_id.clone()),
+            macro_id: MacroUserIdStr(user_id.clone()),
             fusionauth_user_id: row_fusionauth_user_id,
             github_username: user_info.login.clone(),
             github_user_id: gh_id,

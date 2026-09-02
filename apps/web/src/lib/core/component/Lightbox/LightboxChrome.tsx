@@ -1,5 +1,5 @@
-import { isTouchDevice } from '@core/mobile/isTouchDevice';
 import { t } from '@app/lib/i18n';
+import { isTouchDevice } from '@core/mobile/isTouchDevice';
 import ChevronLeftIcon from '@phosphor/caret-left.svg';
 import ChevronRightIcon from '@phosphor/caret-right.svg';
 import { cn } from '@ui';
@@ -29,7 +29,7 @@ export function LightboxChrome(props: LightboxChromeProps) {
             style={{ 'z-index': 'calc(var(--z-index-modal) + 1)' }}
             onClick={props.onPrevious}
             disabled={!props.onPrevious}
-            aria-label={t('auto.previous_image')}
+            aria-label={t('core.images.previous')}
           >
             <ChevronLeftIcon class="size-5 text-ink" />
           </button>
@@ -39,7 +39,7 @@ export function LightboxChrome(props: LightboxChromeProps) {
             style={{ 'z-index': 'calc(var(--z-index-modal) + 1)' }}
             onClick={props.onNext}
             disabled={!props.onNext}
-            aria-label={t('auto.next_image')}
+            aria-label={t('core.images.next')}
           >
             <ChevronRightIcon class="size-5 text-ink" />
           </button>

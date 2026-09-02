@@ -1,5 +1,5 @@
+import { formatDateTime as formatLocalizedDateTime, t } from '@app/lib/i18n';
 import { useChannelName } from '@core/context/channels';
-import { t } from '@app/lib/i18n';
 import EyeIcon from '@phosphor-icons/core/regular/eye.svg';
 import {
   addDays,
@@ -23,11 +23,11 @@ function parseDate(value: string | null | undefined) {
 }
 
 function formatDay(date: Date) {
-  if (isToday(date)) return 'Today';
-  if (isYesterday(date)) return 'Yesterday';
+  if (isToday(date)) return t('ai.tools.channel.today');
+  if (isYesterday(date)) return t('ai.tools.channel.yesterday');
 
   const now = new Date();
-  return date.toLocaleDateString(undefined, {
+  return formatLocalizedDateTime(date, {
     month: 'short',
     day: 'numeric',
     year: isSameYear(date, now) ? undefined : 'numeric',
@@ -35,7 +35,7 @@ function formatDay(date: Date) {
 }
 
 function formatTime(date: Date) {
-  return date.toLocaleTimeString(undefined, {
+  return formatLocalizedDateTime(date, {
     hour: 'numeric',
     minute: '2-digit',
   });
@@ -67,9 +67,11 @@ function formatTimeRange(
     return `${formatDateTime(from)} → ${formatDateTime(to)}`;
   }
 
-  if (from) return `after ${formatDateTime(from)}`;
-  if (to) return `before ${formatDateTime(to)}`;
-  return 'time range';
+  if (from)
+    return t('ai.tools.channel.window.after', { date: formatDateTime(from) });
+  if (to)
+    return t('ai.tools.channel.window.before', { date: formatDateTime(to) });
+  return t('ai.tools.channel.window.timeRange');
 }
 
 function formatReadChannelWindow(args: {
@@ -79,25 +81,34 @@ function formatReadChannelWindow(args: {
   direction?: 'older' | 'newer' | null;
 }) {
   return match(args)
-    .with(
-      { windowType: 'timeRange' },
-      ({ from, to }) => `filtered by activity ${formatTimeRange(from, to)}`
+    .with({ windowType: 'timeRange' }, ({ from, to }) =>
+      t('ai.tools.channel.window.filteredActivity', {
+        range: formatTimeRange(from, to),
+      })
     )
     .with(
       { windowType: 'page', direction: P.union('older', 'newer') },
-      ({ direction }) => `page ${direction}`
+      ({ direction }) =>
+        t('ai.tools.channel.window.pageDirection', { direction })
     )
-    .with({ windowType: 'page' }, () => 'page')
-    .with({ windowType: 'aroundMessage' }, () => 'around message')
-    .with({ windowType: 'messages' }, () => 'specific messages')
-    .with({ windowType: 'latest' }, () => 'latest')
+    .with({ windowType: 'page' }, () => t('ai.tools.channel.window.page'))
+    .with({ windowType: 'aroundMessage' }, () =>
+      t('ai.tools.channel.window.aroundMessage')
+    )
+    .with({ windowType: 'messages' }, () =>
+      t('ai.tools.channel.window.specificMessages')
+    )
+    .with({ windowType: 'latest' }, () => t('ai.tools.channel.window.latest'))
     .exhaustive();
 }
 
 export const readChannelMessagesHandler = createToolRenderer({
   name: 'ReadChannelMessages',
   render: (ctx) => {
-    const channelName = useChannelName(ctx.tool.data.channelId, 'Channel');
+    const channelName = useChannelName(
+      ctx.tool.data.channelId,
+      t('ai.tools.channel.fallbackName')
+    );
     const messageCount = () => ctx.response?.data.messages?.length ?? 0;
     const windowLabel = () =>
       formatReadChannelWindow({
@@ -118,11 +129,15 @@ export const readChannelMessagesHandler = createToolRenderer({
       >
         <div class="flex min-w-0 flex-1 flex-col gap-1">
           <div class="flex min-w-0 items-center justify-between gap-3 overflow-hidden">
-            <span class="min-w-0 truncate">{t('auto.read_messages_in')}<span class="text-ink">{channelName()}</span>
+            <span class="min-w-0 truncate">
+              {t('ai.tools.channel.readMessagesIn')}{' '}
+              <span class="text-ink">{channelName()}</span>
             </span>
             {ctx.response && (
               <span class="shrink-0 whitespace-nowrap text-xs text-ink-extra-muted">
-                {messageCount()} messages
+                {t('ai.tools.channel.messageCount', {
+                  count: messageCount(),
+                })}
               </span>
             )}
           </div>
@@ -138,12 +153,18 @@ export const readChannelMessagesHandler = createToolRenderer({
 export const readChannelMessageContextHandler = createToolRenderer({
   name: 'ReadChannelMessageContext',
   render: (ctx) => {
-    const channelName = useChannelName(ctx.tool.data.channelId, 'Channel');
+    const channelName = useChannelName(
+      ctx.tool.data.channelId,
+      t('ai.tools.channel.fallbackName')
+    );
 
     return (
       <BaseTool type="call" icon={EyeIcon} renderContext={ctx.renderContext}>
         <div class="flex min-w-0 flex-1 items-center justify-between gap-3 overflow-hidden">
-          <span class="min-w-0 truncate">{t('auto.read')}<span class="text-ink">{channelName()}</span> message context
+          <span class="min-w-0 truncate">
+            {t('ai.tools.channel.readMessageContext', {
+              channel: channelName(),
+            })}
           </span>
         </div>
       </BaseTool>
@@ -154,17 +175,21 @@ export const readChannelMessageContextHandler = createToolRenderer({
 export const readChannelThreadHandler = createToolRenderer({
   name: 'ReadChannelThread',
   render: (ctx) => {
-    const channelName = useChannelName(ctx.tool.data.channelId, 'Channel');
+    const channelName = useChannelName(
+      ctx.tool.data.channelId,
+      t('ai.tools.channel.fallbackName')
+    );
     const replyCount = () => ctx.response?.data.replies?.length ?? 0;
 
     return (
       <BaseTool type="call" icon={EyeIcon} renderContext={ctx.renderContext}>
         <div class="flex min-w-0 flex-1 items-center justify-between gap-3 overflow-hidden">
-          <span class="min-w-0 truncate">{t('auto.read')}<span class="text-ink">{channelName()}</span> thread
+          <span class="min-w-0 truncate">
+            {t('ai.tools.channel.readThread', { channel: channelName() })}
           </span>
           {ctx.response && (
             <span class="shrink-0 whitespace-nowrap text-xs text-ink-extra-muted">
-              {replyCount()} replies
+              {t('ai.tools.channel.replyCount', { count: replyCount() })}
             </span>
           )}
         </div>

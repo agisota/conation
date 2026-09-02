@@ -1,5 +1,5 @@
-import { MACRO_EMAIL_SIGNATURE } from '@block-email/constants';
-import { useHasPaidAccess } from '@core/auth';
+import { t } from '@app/lib/i18n';
+import { useHasFeatureAccess } from '@core/auth';
 import { PaywallKey, usePaywallState } from '@core/constant/PaywallState';
 import { useUserContext } from '@core/context/user';
 import { Tooltip } from '@ui';
@@ -11,11 +11,11 @@ interface MacroSignatureButtonProps {
 
 export const MacroSignatureButton = (props: MacroSignatureButtonProps) => {
   const paywall = usePaywallState();
-  const hasPaidAccess = useHasPaidAccess();
+  const hasFeatureAccess = useHasFeatureAccess();
   const { isLoading } = useUserContext();
   return (
-    <Show when={!isLoading() && !hasPaidAccess()}>
-      <Tooltip label="Subscribe to remove watermark">
+    <Show when={!isLoading() && !hasFeatureAccess()}>
+      <Tooltip label={t('blockEmail.signature.removeUpsell')}>
         <button
           type="button"
           class="hover:bg-hover pointer-events-auto"
@@ -28,7 +28,7 @@ export const MacroSignatureButton = (props: MacroSignatureButtonProps) => {
             paywall.showPaywall(PaywallKey.REMOVE_SIGNATURE);
           }}
         >
-          {props.signature ?? MACRO_EMAIL_SIGNATURE}
+          {props.signature ?? t('blockEmail.compose.conationSignature')}
         </button>
       </Tooltip>
     </Show>

@@ -76,7 +76,7 @@ pub struct ScheduledMessage {
     /// whether the message is currently being processed by the background job.
     pub processing: bool,
     /// The authenticated user who initiated the send, as a principal string
-    /// (`macro|…`). `None` for rows created before actor tracking existed.
+    /// (`conation|…`). `None` for rows created before actor tracking existed.
     pub actor_id: Option<String>,
 }
 

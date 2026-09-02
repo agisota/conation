@@ -443,6 +443,11 @@
           binaries = [ "agent_trigger_service" ];
         }
         {
+          serviceName = "local-scheduled-action-service";
+          packageName = "scheduled_action";
+          binaries = [ "scheduled_action_service" ];
+        }
+        {
           serviceName = "local-seed-cli";
           packageName = "seed_cli";
           binaries = [ "seed_cli" ];
@@ -523,6 +528,7 @@
         "document-storage-service"
         "email-service"
         "image-proxy-service"
+        "mcp-server"
         "notification-service"
         "static-file-service"
         "unfurl-service"

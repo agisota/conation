@@ -1,11 +1,15 @@
-export const MACRO_MCP_URL = 'https://mcp-server.macro.com/mcp';
+import { getConfiguredStandaloneOperatorOrigin } from '@core/constant/clientProfile';
 
-export const MACRO_MCP_CONFIG = JSON.stringify(
+const mcpServerName = 'conation';
+
+export const CONATION_MCP_URL = `${getConfiguredStandaloneOperatorOrigin()}/mcp`;
+
+export const CONATION_MCP_CONFIG = JSON.stringify(
   {
     mcpServers: {
-      macro: {
+      [mcpServerName]: {
         type: 'http',
-        url: MACRO_MCP_URL,
+        url: CONATION_MCP_URL,
       },
     },
   },
@@ -17,12 +21,12 @@ export const CLI_COMMANDS = [
   {
     key: 'claude-cli',
     label: 'Claude Code',
-    command: `claude mcp add --transport http macro ${MACRO_MCP_URL}`,
+    command: `claude mcp add --transport http ${mcpServerName} ${CONATION_MCP_URL}`,
   },
   {
     key: 'codex-cli',
     label: 'Codex CLI',
-    command: `codex mcp add macro --url ${MACRO_MCP_URL}`,
+    command: `codex mcp add ${mcpServerName} --url ${CONATION_MCP_URL}`,
   },
 ] as const;
 

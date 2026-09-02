@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import type { FeaturedMcpServer } from '@core/component/AI/constant/mcpServers';
 import { toast } from '@core/component/Toast/Toast';
 import { usePipedreamMcpFlag } from '@core/pipedream/flag';
@@ -51,10 +52,14 @@ export function createConnectorConnect(options: {
           serverName: options.server.server_name,
         });
         if (outcome === 'unsupported') {
-          toast.failure('Connectors are not available on this deployment');
+          toast.failure(t('setup.connectors.unavailable'));
         }
       } catch {
-        toast.failure(`Failed to connect ${options.server.server_name}`);
+        toast.failure(
+          t('setup.connectors.connectFailed', {
+            connector: options.server.server_name,
+          })
+        );
       } finally {
         setBusy(false);
       }
@@ -84,7 +89,11 @@ export function createConnectorConnect(options: {
       }
     } catch {
       popup?.close();
-      toast.failure(`Failed to connect ${options.server.server_name}`);
+      toast.failure(
+        t('setup.connectors.connectFailed', {
+          connector: options.server.server_name,
+        })
+      );
     } finally {
       setBusy(false);
     }

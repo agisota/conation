@@ -5,6 +5,9 @@ use email::domain::models::{
 };
 use uuid::Uuid;
 
+#[cfg(test)]
+mod test;
+
 /// Canonical normalized GraphQL email label used by both email threads and
 /// the authenticated user's label catalog.
 #[derive(SimpleObject)]
@@ -85,12 +88,15 @@ impl From<LinkLabel> for GraphqlEmailLabel {
 pub enum GraphqlEmailProvider {
     /// Google Gmail.
     Gmail,
+    /// Conation-hosted Stalwart mail.
+    Stalwart,
 }
 
 impl From<UserProvider> for GraphqlEmailProvider {
     fn from(provider: UserProvider) -> Self {
         match provider {
             UserProvider::Gmail => Self::Gmail,
+            UserProvider::Stalwart => Self::Stalwart,
         }
     }
 }
@@ -146,7 +152,7 @@ pub struct GraphqlEmailLink {
     /// Stable email link identifier.
     id: ID,
     /// Macro user that owns the inbox.
-    conation_id: String,
+    macro_id: String,
     /// Provider email address for the inbox.
     email_address: String,
     /// SFS URL of the inbox's self-contact photo, when available.
@@ -173,7 +179,7 @@ impl From<UserEmailLink> for GraphqlEmailLink {
     fn from(link: UserEmailLink) -> Self {
         Self {
             id: ID(link.id.to_string()),
-            conation_id: link.conation_id.to_string(),
+            macro_id: link.macro_id.to_string(),
             email_address: link.email_address.0.as_ref().to_owned(),
             photo_url: link.photo_url,
             provider: link.provider.into(),

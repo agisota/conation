@@ -1,3 +1,5 @@
+import { getDateLocale, t } from '@core/i18n';
+
 /**
  * Cron expressions as the Rust backend reads them.
  *
@@ -28,13 +30,69 @@ export const DEFAULT_TIME = '09:00';
 // Day-of-week values match the `cron` crate convention:
 //   1 = Sun, 2 = Mon, 3 = Tue, 4 = Wed, 5 = Thu, 6 = Fri, 7 = Sat
 export const WEEKDAY_OPTIONS = [
-  { value: '1', label: 'Sun', fullLabel: 'Sunday' },
-  { value: '2', label: 'Mon', fullLabel: 'Monday' },
-  { value: '3', label: 'Tue', fullLabel: 'Tuesday' },
-  { value: '4', label: 'Wed', fullLabel: 'Wednesday' },
-  { value: '5', label: 'Thu', fullLabel: 'Thursday' },
-  { value: '6', label: 'Fri', fullLabel: 'Friday' },
-  { value: '7', label: 'Sat', fullLabel: 'Saturday' },
+  {
+    value: '1',
+    get label() {
+      return t('core.cron.weekday.sunday.short');
+    },
+    get fullLabel() {
+      return t('core.cron.weekday.sunday.full');
+    },
+  },
+  {
+    value: '2',
+    get label() {
+      return t('core.cron.weekday.monday.short');
+    },
+    get fullLabel() {
+      return t('core.cron.weekday.monday.full');
+    },
+  },
+  {
+    value: '3',
+    get label() {
+      return t('core.cron.weekday.tuesday.short');
+    },
+    get fullLabel() {
+      return t('core.cron.weekday.tuesday.full');
+    },
+  },
+  {
+    value: '4',
+    get label() {
+      return t('core.cron.weekday.wednesday.short');
+    },
+    get fullLabel() {
+      return t('core.cron.weekday.wednesday.full');
+    },
+  },
+  {
+    value: '5',
+    get label() {
+      return t('core.cron.weekday.thursday.short');
+    },
+    get fullLabel() {
+      return t('core.cron.weekday.thursday.full');
+    },
+  },
+  {
+    value: '6',
+    get label() {
+      return t('core.cron.weekday.friday.short');
+    },
+    get fullLabel() {
+      return t('core.cron.weekday.friday.full');
+    },
+  },
+  {
+    value: '7',
+    get label() {
+      return t('core.cron.weekday.saturday.short');
+    },
+    get fullLabel() {
+      return t('core.cron.weekday.saturday.full');
+    },
+  },
 ];
 
 const DOW_VALUES = WEEKDAY_OPTIONS.map((option) => option.value);
@@ -125,7 +183,7 @@ export function formatTimeLabel(value: string): string {
   if (!isValidTime(value)) return value;
   const [hour, minute] = value.split(':').map(Number);
   const date = new Date(2026, 0, 1, hour, minute);
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(getDateLocale(), {
     hour: 'numeric',
     minute: '2-digit',
   }).format(date);
@@ -133,39 +191,24 @@ export function formatTimeLabel(value: string): string {
 
 /** A day-of-week selection in words, collapsing the sets that have a name. */
 function formatDayList(daysOfWeek: string[]): string {
-  if (daysOfWeek.length === 0) return 'no days';
+  if (daysOfWeek.length === 0) return t('core.cron.days.none');
   const sorted = [...daysOfWeek].sort(
     (a, b) => DOW_VALUES.indexOf(a) - DOW_VALUES.indexOf(b)
   );
-  if (sorted.length === 7) return 'every day';
+  if (sorted.length === 7) return t('core.cron.days.everyDay');
   if (
     sorted.length === 5 &&
     sorted.every((d) => DEFAULT_WEEKDAYS.includes(d))
   ) {
-    return 'weekdays';
+    return t('core.cron.days.weekdays');
   }
   if (sorted.length === 2 && sorted.includes('1') && sorted.includes('7')) {
-    return 'weekends';
+    return t('core.cron.days.weekends');
   }
   return sorted
     .map((d) => WEEKDAY_OPTIONS.find((opt) => opt.value === d)?.fullLabel)
     .filter(Boolean)
     .join(', ');
-}
-
-function nthSuffix(n: number): string {
-  const tens = n % 100;
-  if (tens >= 11 && tens <= 13) return 'th';
-  switch (n % 10) {
-    case 1:
-      return 'st';
-    case 2:
-      return 'nd';
-    case 3:
-      return 'rd';
-    default:
-      return 'th';
-  }
 }
 
 /**
@@ -180,14 +223,22 @@ export function describeCron(parts: CronParts, timezone?: string): string {
   const zone = timezone ? ` (${timezone})` : '';
 
   if (parts.frequency === 'week') {
-    return `${formatDayList(parts.daysOfWeek)} at ${timeLabel}${zone}`;
+    return t('core.cron.summary.weekly', {
+      days: formatDayList(parts.daysOfWeek),
+      time: timeLabel,
+      zone,
+    });
   }
 
   const day = Number(parts.dayOfMonth);
   if (Number.isInteger(day) && day >= 1 && day <= 31) {
-    return `${day}${nthSuffix(day)} of each month at ${timeLabel}${zone}`;
+    return t('core.cron.summary.monthlyOnDay', {
+      day,
+      time: timeLabel,
+      zone,
+    });
   }
-  return `each month at ${timeLabel}${zone}`;
+  return t('core.cron.summary.monthly', { time: timeLabel, zone });
 }
 
 /**

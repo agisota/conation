@@ -1,6 +1,6 @@
 use crate::links::get::{
-    fetch_inbox_details_for_conation_id, fetch_inboxes_for_conation_id, fetch_link_by_email,
-    fetch_link_by_conation_id_and_email_address, fetch_owned_link_for_message,
+    fetch_inbox_details_for_macro_id, fetch_inboxes_for_macro_id, fetch_link_by_email,
+    fetch_link_by_macro_id_and_email_address, fetch_owned_link_for_message,
     fetch_owned_link_for_thread,
 };
 use conation_db_migrator::MACRO_DB_MIGRATIONS;
@@ -15,28 +15,28 @@ const CHILD: &str = "macro|sharedbox@corp.test"; // owns the inbox
 const PRIMARY: &str = "macro|primary@corp.test"; // delegate
 const STRANGER: &str = "macro|stranger@corp.test"; // no relationship
 
-fn conation_id(s: &str) -> MacroUserIdStr<'_> {
+fn macro_id(s: &str) -> MacroUserIdStr<'_> {
     MacroUserIdStr::try_from(s).unwrap()
 }
 
-/// conation_user + "User" rows so conation_user_links FKs resolve.
-async fn insert_user(pool: &Pool<Postgres>, conation_id: &str, email: &str) {
+/// macro_user + "User" rows so macro_user_links FKs resolve.
+async fn insert_user(pool: &Pool<Postgres>, macro_id: &str, email: &str) {
     let conation_uuid = Uuid::new_v4();
     sqlx::query!(
-        r#"INSERT INTO conation_user (id, username, email, stripe_customer_id)
+        r#"INSERT INTO macro_user (id, username, email, stripe_customer_id)
            VALUES ($1, $2, $3, $4)"#,
         conation_uuid,
-        conation_id,
+        macro_id,
         email,
-        conation_id,
+        macro_id,
     )
     .execute(pool)
     .await
     .unwrap();
 
     sqlx::query!(
-        r#"INSERT INTO "User" (id, email, conation_user_id) VALUES ($1, $2, $3)"#,
-        conation_id,
+        r#"INSERT INTO "User" (id, email, macro_user_id) VALUES ($1, $2, $3)"#,
+        macro_id,
         email,
         conation_uuid,
     )
@@ -45,11 +45,11 @@ async fn insert_user(pool: &Pool<Postgres>, conation_id: &str, email: &str) {
     .unwrap();
 }
 
-/// A link owned by `conation_id` with one thread and one message on it.
+/// A link owned by `macro_id` with one thread and one message on it.
 /// Returns `(link_id, thread_id, message_id)`.
 async fn insert_inbox_with_thread_and_message(
     pool: &Pool<Postgres>,
-    conation_id: &str,
+    macro_id: &str,
     email: &str,
 ) -> (Uuid, Uuid, Uuid) {
     let link_id = Uuid::new_v4();
@@ -58,10 +58,10 @@ async fn insert_inbox_with_thread_and_message(
     let message_id = Uuid::new_v4();
 
     sqlx::query!(
-        r#"INSERT INTO email_links (id, conation_id, fusionauth_user_id, email_address, provider)
+        r#"INSERT INTO email_links (id, macro_id, fusionauth_user_id, email_address, provider)
            VALUES ($1, $2, $2, $3, 'GMAIL')"#,
         link_id,
-        conation_id,
+        macro_id,
         email,
     )
     .execute(pool)
@@ -124,7 +124,7 @@ async fn insert_settings(
 async fn insert_backfill_job(
     pool: &Pool<Postgres>,
     link_id: Uuid,
-    conation_id: &str,
+    macro_id: &str,
     status: db::backfill::BackfillJobStatus,
     age_minutes: i32,
 ) {
@@ -133,7 +133,7 @@ async fn insert_backfill_job(
            VALUES ($1, $2, $3, $4, now() - make_interval(mins => $5))"#,
         Uuid::new_v4(),
         link_id,
-        conation_id,
+        macro_id,
         status as _,
         age_minutes,
     )
@@ -175,7 +175,7 @@ async fn insert_contact_with_photo(
 
 async fn insert_delegation(pool: &Pool<Postgres>, primary: &str, child: &str, link_id: Uuid) {
     sqlx::query!(
-        r#"INSERT INTO conation_user_links (primary_conation_id, child_conation_id, link_id)
+        r#"INSERT INTO macro_user_links (primary_macro_id, child_macro_id, link_id)
            VALUES ($1, $2, $3)"#,
         primary,
         child,
@@ -256,7 +256,7 @@ async fn scoped_delegation_sees_only_its_link(pool: Pool<Postgres>) -> anyhow::R
     let (link_b, thread_b, message_b) =
         insert_inbox_with_thread_and_message(&pool, CHILD, "second@corp.test").await;
 
-    let inbox_ids: Vec<Uuid> = fetch_inboxes_for_conation_id(&pool, PRIMARY)
+    let inbox_ids: Vec<Uuid> = fetch_inboxes_for_macro_id(&pool, PRIMARY)
         .await?
         .into_iter()
         .map(|l| l.id)
@@ -275,7 +275,7 @@ async fn scoped_delegation_sees_only_its_link(pool: Pool<Postgres>) -> anyhow::R
     );
 
     // The child still owns both inboxes.
-    let mut child_inboxes: Vec<Uuid> = fetch_inboxes_for_conation_id(&pool, CHILD)
+    let mut child_inboxes: Vec<Uuid> = fetch_inboxes_for_macro_id(&pool, CHILD)
         .await?
         .into_iter()
         .map(|l| l.id)
@@ -325,7 +325,7 @@ async fn fetch_inbox_details_joins_settings_backfill_and_photo(
     )
     .await;
 
-    let details = fetch_inbox_details_for_conation_id(&pool, &conation_id(CHILD)).await?;
+    let details = fetch_inbox_details_for_macro_id(&pool, &macro_id(CHILD)).await?;
     assert_eq!(details.len(), 1);
     let inbox = &details[0];
     assert_eq!(inbox.link.id, link_id);
@@ -367,7 +367,7 @@ async fn fetch_inbox_details_reads_google_scopes_from_side_table(
     .execute(&pool)
     .await?;
 
-    let details = fetch_inbox_details_for_conation_id(&pool, &conation_id(CHILD)).await?;
+    let details = fetch_inbox_details_for_macro_id(&pool, &macro_id(CHILD)).await?;
     assert_eq!(details.len(), 1);
     assert_eq!(details[0].google_granted_scopes, granted_scopes);
     assert!(!details[0].calendar_disabled);
@@ -379,7 +379,7 @@ async fn fetch_inbox_details_reads_google_scopes_from_side_table(
     .execute(&pool)
     .await?;
 
-    let details = fetch_inbox_details_for_conation_id(&pool, &conation_id(CHILD)).await?;
+    let details = fetch_inbox_details_for_macro_id(&pool, &macro_id(CHILD)).await?;
     assert!(
         details[0].calendar_disabled,
         "an opted-out inbox reads as deliberately disabled, not merely ungranted"
@@ -392,7 +392,7 @@ async fn fetch_inbox_details_reads_google_scopes_from_side_table(
     .execute(&pool)
     .await?;
 
-    let details = fetch_inbox_details_for_conation_id(&pool, &conation_id(CHILD)).await?;
+    let details = fetch_inbox_details_for_macro_id(&pool, &macro_id(CHILD)).await?;
     assert_eq!(details.len(), 1);
     assert!(details[0].google_granted_scopes.is_empty());
     assert!(!details[0].calendar_disabled);
@@ -413,7 +413,7 @@ async fn fetch_inbox_details_includes_delegated_inbox_with_optional_fields_absen
 
     // No backfill jobs and no self-contact — the delegate still sees the inbox,
     // with the optional details absent.
-    let details = fetch_inbox_details_for_conation_id(&pool, &conation_id(PRIMARY)).await?;
+    let details = fetch_inbox_details_for_macro_id(&pool, &macro_id(PRIMARY)).await?;
     assert_eq!(details.len(), 1);
     let inbox = &details[0];
     assert_eq!(inbox.link.id, link_id);
@@ -456,7 +456,7 @@ async fn fetch_inbox_details_orders_newest_first_and_pairs_rows_per_inbox(
     )
     .await;
 
-    let details = fetch_inbox_details_for_conation_id(&pool, &conation_id(CHILD)).await?;
+    let details = fetch_inbox_details_for_macro_id(&pool, &macro_id(CHILD)).await?;
     let ids: Vec<Uuid> = details.iter().map(|d| d.link.id).collect();
     assert_eq!(ids, vec![link_b, link_a]);
 
@@ -487,12 +487,12 @@ async fn fetch_inbox_details_dedupes_inbox_that_is_both_owned_and_delegated(
         insert_inbox_with_thread_and_message(&pool, CHILD, "sharedbox@corp.test").await;
     insert_settings(&pool, link_id, false, None).await;
 
-    // CHILD owns the inbox AND appears as its delegate via conation_user_links
+    // CHILD owns the inbox AND appears as its delegate via macro_user_links
     // (the check constraint forbids self-rows, so the grant's child is another
     // user). Both UNION branches match and must collapse to one row.
     insert_delegation(&pool, CHILD, PRIMARY, link_id).await;
 
-    let details = fetch_inbox_details_for_conation_id(&pool, &conation_id(CHILD)).await?;
+    let details = fetch_inbox_details_for_macro_id(&pool, &macro_id(CHILD)).await?;
     assert_eq!(details.len(), 1);
     assert_eq!(details[0].link.id, link_id);
 
@@ -522,7 +522,7 @@ async fn fetch_inbox_details_photo_ignores_matching_email_on_other_link(
     )
     .await;
 
-    let details = fetch_inbox_details_for_conation_id(&pool, &conation_id(CHILD)).await?;
+    let details = fetch_inbox_details_for_macro_id(&pool, &macro_id(CHILD)).await?;
     assert_eq!(details.len(), 1);
     assert!(details[0].photo_url.is_none());
 
@@ -541,7 +541,7 @@ async fn fetch_inbox_details_photo_absent_when_self_contact_has_no_photo(
     // Self-contact row exists but has no SFS photo yet.
     insert_contact_with_photo(&pool, link_id, "sharedbox@corp.test", None).await;
 
-    let details = fetch_inbox_details_for_conation_id(&pool, &conation_id(CHILD)).await?;
+    let details = fetch_inbox_details_for_macro_id(&pool, &macro_id(CHILD)).await?;
     assert_eq!(details.len(), 1);
     assert!(details[0].photo_url.is_none());
 
@@ -585,7 +585,7 @@ async fn fetch_inbox_details_maps_each_backfill_status(pool: Pool<Postgres>) -> 
         expected_by_link.push((link_id, expected));
     }
 
-    let details = fetch_inbox_details_for_conation_id(&pool, &conation_id(CHILD)).await?;
+    let details = fetch_inbox_details_for_macro_id(&pool, &macro_id(CHILD)).await?;
     assert_eq!(details.len(), expected_by_link.len());
     for (link_id, expected) in expected_by_link {
         let inbox = details.iter().find(|d| d.link.id == link_id).unwrap();
@@ -601,7 +601,7 @@ async fn fetch_inbox_details_empty_for_user_without_inboxes(
 ) -> anyhow::Result<()> {
     insert_user(&pool, CHILD, "sharedbox@corp.test").await;
 
-    let details = fetch_inbox_details_for_conation_id(&pool, &conation_id(CHILD)).await?;
+    let details = fetch_inbox_details_for_macro_id(&pool, &macro_id(CHILD)).await?;
     assert!(details.is_empty());
 
     Ok(())
@@ -617,7 +617,7 @@ async fn fetch_inbox_details_defaults_settings_when_row_missing(
 
     // A legacy link with no email_settings row must still be listed, with
     // default settings.
-    let details = fetch_inbox_details_for_conation_id(&pool, &conation_id(CHILD)).await?;
+    let details = fetch_inbox_details_for_macro_id(&pool, &macro_id(CHILD)).await?;
     assert_eq!(details.len(), 1);
     let inbox = &details[0];
     assert_eq!(inbox.link.id, link_id);
@@ -628,19 +628,19 @@ async fn fetch_inbox_details_defaults_settings_when_row_missing(
 }
 
 #[sqlx::test(migrator = "MACRO_DB_MIGRATIONS")]
-async fn fetch_link_by_email_finds_link_owned_by_another_conation_user(
+async fn fetch_link_by_email_finds_link_owned_by_another_macro_user(
     pool: Pool<Postgres>,
 ) -> anyhow::Result<()> {
     // A shared external mailbox connected by one macro user as a data-source link
-    // (owner's conation_id, mailbox email). A second user connecting the same mailbox
-    // discovers it across all conation_ids — the trigger for the 409 / shared-inbox promote.
+    // (owner's macro_id, mailbox email). A second user connecting the same mailbox
+    // discovers it across all macro_ids — the trigger for the 409 / shared-inbox promote.
     insert_user(&pool, CHILD, "support@external.test").await;
     let (link_id, _, _) =
         insert_inbox_with_thread_and_message(&pool, CHILD, "support@external.test").await;
 
     let found = fetch_link_by_email(&pool, "support@external.test", UserProvider::Gmail).await?;
     assert_eq!(
-        found.map(|l| (l.id, l.conation_id.as_ref().to_string())),
+        found.map(|l| (l.id, l.macro_id.as_ref().to_string())),
         Some((link_id, CHILD.to_string()))
     );
 
@@ -659,56 +659,84 @@ async fn fetch_link_by_email_none_when_mailbox_unconnected(
 }
 
 #[sqlx::test(migrator = "MACRO_DB_MIGRATIONS")]
-async fn fetch_link_by_conation_id_and_email_address_picks_own_inbox_not_newest(
+async fn fetch_link_by_email_decodes_stalwart_provider(pool: Pool<Postgres>) -> anyhow::Result<()> {
+    const STALWART_USER: &str = "conation|stalwart@conation.test";
+    const STALWART_EMAIL: &str = "stalwart@conation.test";
+
+    insert_user(&pool, STALWART_USER, STALWART_EMAIL).await;
+    let link_id = Uuid::new_v4();
+    sqlx::query!(
+        r#"INSERT INTO email_links (
+               id, macro_id, fusionauth_user_id, email_address, provider
+           ) VALUES ($1, $2, $3, $4, 'STALWART')"#,
+        link_id,
+        STALWART_USER,
+        "fa-stalwart-user",
+        STALWART_EMAIL,
+    )
+    .execute(&pool)
+    .await?;
+
+    let found = fetch_link_by_email(&pool, STALWART_EMAIL, UserProvider::Stalwart)
+        .await?
+        .expect("Stalwart link should decode");
+
+    assert_eq!(found.id, link_id);
+    assert_eq!(found.provider, UserProvider::Stalwart);
+    Ok(())
+}
+
+#[sqlx::test(migrator = "MACRO_DB_MIGRATIONS")]
+async fn fetch_link_by_macro_id_and_email_address_picks_own_inbox_not_newest(
     pool: Pool<Postgres>,
 ) -> anyhow::Result<()> {
-    // A user with two inboxes under one conation_id. CRM backfill must resolve the
-    // inbox that IS the user (address == the conation_id email), not the newest
-    // link — which is what a plain conation_id lookup would return.
+    // A user with two inboxes under one macro_id. CRM backfill must resolve the
+    // inbox that IS the user (address == the macro_id email), not the newest
+    // link — which is what a plain macro_id lookup would return.
     insert_user(&pool, CHILD, "sharedbox@corp.test").await;
 
     // Own inbox first...
     let (own_link, _, _) =
         insert_inbox_with_thread_and_message(&pool, CHILD, "sharedbox@corp.test").await;
-    // ...then a second, newer inbox on the same conation_id.
+    // ...then a second, newer inbox on the same macro_id.
     let (other_link, _, _) =
         insert_inbox_with_thread_and_message(&pool, CHILD, "other@corp.test").await;
     assert_ne!(own_link, other_link);
 
     let found =
-        fetch_link_by_conation_id_and_email_address(&pool, CHILD, "sharedbox@corp.test").await?;
+        fetch_link_by_macro_id_and_email_address(&pool, CHILD, "sharedbox@corp.test").await?;
     assert_eq!(found.map(|l| l.id), Some(own_link));
 
     Ok(())
 }
 
 #[sqlx::test(migrator = "MACRO_DB_MIGRATIONS")]
-async fn fetch_link_by_conation_id_and_email_address_is_case_insensitive(
+async fn fetch_link_by_macro_id_and_email_address_is_case_insensitive(
     pool: Pool<Postgres>,
 ) -> anyhow::Result<()> {
-    // The conation_id email is always lowercased, but a stored email_address may
+    // The macro_id email is always lowercased, but a stored email_address may
     // preserve its original casing — the match must still succeed.
     insert_user(&pool, CHILD, "sharedbox@corp.test").await;
     let (link_id, _, _) =
         insert_inbox_with_thread_and_message(&pool, CHILD, "SharedBox@Corp.Test").await;
 
     let found =
-        fetch_link_by_conation_id_and_email_address(&pool, CHILD, "sharedbox@corp.test").await?;
+        fetch_link_by_macro_id_and_email_address(&pool, CHILD, "sharedbox@corp.test").await?;
     assert_eq!(found.map(|l| l.id), Some(link_id));
 
     Ok(())
 }
 
 #[sqlx::test(migrator = "MACRO_DB_MIGRATIONS")]
-async fn fetch_link_by_conation_id_and_email_address_none_when_no_match(
+async fn fetch_link_by_macro_id_and_email_address_none_when_no_match(
     pool: Pool<Postgres>,
 ) -> anyhow::Result<()> {
-    // Macro_id has a link, but none whose address matches the conation_id email.
+    // Macro_id has a link, but none whose address matches the macro_id email.
     insert_user(&pool, CHILD, "sharedbox@corp.test").await;
     insert_inbox_with_thread_and_message(&pool, CHILD, "delegated@corp.test").await;
 
     let found =
-        fetch_link_by_conation_id_and_email_address(&pool, CHILD, "sharedbox@corp.test").await?;
+        fetch_link_by_macro_id_and_email_address(&pool, CHILD, "sharedbox@corp.test").await?;
     assert!(found.is_none());
 
     Ok(())
@@ -725,7 +753,7 @@ async fn fetch_inbox_details_reports_calendar_data_from_the_account_row(
     let (link_id, _, _) =
         insert_inbox_with_thread_and_message(&pool, CHILD, "sharedbox@corp.test").await;
 
-    let details = fetch_inbox_details_for_conation_id(&pool, &conation_id(CHILD)).await?;
+    let details = fetch_inbox_details_for_macro_id(&pool, &macro_id(CHILD)).await?;
     assert!(!details[0].has_calendar_data);
 
     sqlx::query!(
@@ -742,7 +770,7 @@ async fn fetch_inbox_details_reports_calendar_data_from_the_account_row(
     .execute(&pool)
     .await?;
 
-    let details = fetch_inbox_details_for_conation_id(&pool, &conation_id(CHILD)).await?;
+    let details = fetch_inbox_details_for_macro_id(&pool, &macro_id(CHILD)).await?;
     assert!(details[0].has_calendar_data);
     assert!(
         details[0].google_granted_scopes.is_empty(),

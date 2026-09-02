@@ -1,5 +1,5 @@
-import { SplitDrawer } from '@components/app/split-layout/components/SplitDrawer';
 import { t } from '@app/lib/i18n';
+import { SplitDrawer } from '@components/app/split-layout/components/SplitDrawer';
 import { EntityIcon } from '@core/component/EntityIcon';
 import { openDocument } from '@core/component/LexicalMarkdown/component/core/BlockLink';
 import { UserIcon } from '@core/component/UserIcon';
@@ -21,7 +21,12 @@ type DetailsTarget =
 
 export function DetailsDrawer(props: DetailsTarget) {
   return (
-    <SplitDrawer id={DETAILS_DRAWER_ID} side="left" size={360} title={t('common.details')}>
+    <SplitDrawer
+      id={DETAILS_DRAWER_ID}
+      side="left"
+      size={360}
+      title={t('common.details')}
+    >
       <Suspense fallback={<DetailsLoading />}>
         <Switch>
           <Match when={'projectId' in props ? props.projectId : undefined}>

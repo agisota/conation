@@ -1,5 +1,5 @@
-import { SYSTEM_PROPERTY_IDS } from '@property/constants';
 import { t } from '@app/lib/i18n';
+import { SYSTEM_PROPERTY_IDS } from '@property/constants';
 
 export type GroupOptionId =
   | 'none'
@@ -14,15 +14,60 @@ export interface GroupOption {
 }
 
 const GROUP_OPTIONS = [
-  { value: 'none', label: 'None' },
-  { value: 'date', label: 'Date' },
-  { value: 'entity_type', label: 'Type' },
-  { value: 'project', label: 'Project' },
-  { value: `property:${SYSTEM_PROPERTY_IDS.STATUS}`, label: 'Status' },
-  { value: `property:${SYSTEM_PROPERTY_IDS.PRIORITY}`, label: 'Priority' },
-  { value: `property:${SYSTEM_PROPERTY_IDS.ASSIGNEES}`, label: 'Assignee' },
-  { value: 'project', label: 'Project' },
-  { value: 'date', label: 'Date' },
+  {
+    value: 'none',
+    get label() {
+      return t('soup.group.none');
+    },
+  },
+  {
+    value: 'date',
+    get label() {
+      return t('soup.group.date');
+    },
+  },
+  {
+    value: 'entity_type',
+    get label() {
+      return t('soup.group.type');
+    },
+  },
+  {
+    value: 'project',
+    get label() {
+      return t('soup.group.project');
+    },
+  },
+  {
+    value: `property:${SYSTEM_PROPERTY_IDS.STATUS}`,
+    get label() {
+      return t('soup.fields.status');
+    },
+  },
+  {
+    value: `property:${SYSTEM_PROPERTY_IDS.PRIORITY}`,
+    get label() {
+      return t('soup.fields.priority');
+    },
+  },
+  {
+    value: `property:${SYSTEM_PROPERTY_IDS.ASSIGNEES}`,
+    get label() {
+      return t('soup.fields.assignee');
+    },
+  },
+  {
+    value: 'project',
+    get label() {
+      return t('soup.group.project');
+    },
+  },
+  {
+    value: 'date',
+    get label() {
+      return t('soup.group.date');
+    },
+  },
 ] as const satisfies GroupOption[];
 
 const _buildGroupOptions = (
@@ -42,42 +87,157 @@ const _buildGroupOptions = (
 };
 
 const _DEFAULT_GROUP_OPTIONS: GroupOption[] = [
-  { value: 'none', label: 'None' },
-  { value: 'entity_type', label: 'Type' },
-  { value: 'project', label: 'Project' },
+  {
+    value: 'none',
+    get label() {
+      return t('soup.group.none');
+    },
+  },
+  {
+    value: 'entity_type',
+    get label() {
+      return t('soup.group.type');
+    },
+  },
+  {
+    value: 'project',
+    get label() {
+      return t('soup.group.project');
+    },
+  },
 ];
 
 export const TASK_GROUP_OPTIONS: GroupOption[] = [
-  { value: 'none', label: 'None' },
-  { value: `property:${SYSTEM_PROPERTY_IDS.STATUS}`, label: 'Status' },
-  { value: `property:${SYSTEM_PROPERTY_IDS.PRIORITY}`, label: 'Priority' },
-  { value: `property:${SYSTEM_PROPERTY_IDS.ASSIGNEES}`, label: 'Assignee' },
-  { value: 'project', label: 'Project' },
-  { value: 'date', label: 'Date' },
+  {
+    value: 'none',
+    get label() {
+      return t('soup.group.none');
+    },
+  },
+  {
+    value: `property:${SYSTEM_PROPERTY_IDS.STATUS}`,
+    get label() {
+      return t('soup.fields.status');
+    },
+  },
+  {
+    value: `property:${SYSTEM_PROPERTY_IDS.PRIORITY}`,
+    get label() {
+      return t('soup.fields.priority');
+    },
+  },
+  {
+    value: `property:${SYSTEM_PROPERTY_IDS.ASSIGNEES}`,
+    get label() {
+      return t('soup.fields.assignee');
+    },
+  },
+  {
+    value: 'project',
+    get label() {
+      return t('soup.group.project');
+    },
+  },
+  {
+    value: 'date',
+    get label() {
+      return t('soup.group.date');
+    },
+  },
 ];
 
 export const COMPANY_GROUP_OPTIONS: GroupOption[] = [
-  { value: 'none', label: 'None' },
-  { value: `property:${SYSTEM_PROPERTY_IDS.STAGE}`, label: 'Stage' },
-  { value: `property:${SYSTEM_PROPERTY_IDS.COMPANY_OWNER}`, label: t('common.owner') },
+  {
+    value: 'none',
+    get label() {
+      return t('soup.group.none');
+    },
+  },
+  {
+    value: `property:${SYSTEM_PROPERTY_IDS.STAGE}`,
+    get label() {
+      return t('soup.fields.stage');
+    },
+  },
+  {
+    value: `property:${SYSTEM_PROPERTY_IDS.COMPANY_OWNER}`,
+    get label() {
+      return t('common.owner');
+    },
+  },
 ];
 
 export const TAG_VIEW_GROUP_OPTIONS: GroupOption[] = [
-  { value: 'none', label: 'None' },
-  { value: 'entity_type', label: 'Type' },
-  { value: 'project', label: 'Project' },
-  { value: 'date', label: 'Date' },
+  {
+    value: 'none',
+    get label() {
+      return t('soup.group.none');
+    },
+  },
+  {
+    value: 'entity_type',
+    get label() {
+      return t('soup.group.type');
+    },
+  },
+  {
+    value: 'project',
+    get label() {
+      return t('soup.group.project');
+    },
+  },
+  {
+    value: 'date',
+    get label() {
+      return t('soup.group.date');
+    },
+  },
 ];
 
 const _EMAIL_GROUP_OPTIONS: GroupOption[] = [
-  { value: 'none', label: 'None' },
-  { value: 'date', label: 'Date' },
-  { value: 'project', label: 'Project' },
+  {
+    value: 'none',
+    get label() {
+      return t('soup.group.none');
+    },
+  },
+  {
+    value: 'date',
+    get label() {
+      return t('soup.group.date');
+    },
+  },
+  {
+    value: 'project',
+    get label() {
+      return t('soup.group.project');
+    },
+  },
 ];
 
 const _INBOX_GROUP_OPTIONS: GroupOption[] = [
-  { value: 'none', label: 'None' },
-  { value: 'date', label: 'Date' },
-  { value: 'entity_type', label: 'Type' },
-  { value: 'project', label: 'Project' },
+  {
+    value: 'none',
+    get label() {
+      return t('soup.group.none');
+    },
+  },
+  {
+    value: 'date',
+    get label() {
+      return t('soup.group.date');
+    },
+  },
+  {
+    value: 'entity_type',
+    get label() {
+      return t('soup.group.type');
+    },
+  },
+  {
+    value: 'project',
+    get label() {
+      return t('soup.group.project');
+    },
+  },
 ];

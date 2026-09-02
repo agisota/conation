@@ -539,8 +539,9 @@ async fn handle_customer_subscription_event(
     }
 
     if subscription_status == "trialing" {
-        // set has_trialed in conation_user table
-        conation_db_client::user::patch::update_conation_user_has_trialed(&ctx.db, &email, true).await?;
+        // set has_trialed in macro_user table
+        conation_db_client::user::patch::update_macro_user_has_trialed(&ctx.db, &email, true)
+            .await?;
 
         // Add has_trialed: true to stripe customer metadata
         let mut params = stripe::UpdateCustomer::new();
@@ -608,13 +609,16 @@ async fn check_and_process_referral(
     ctx: &ApiContext,
     email: &Email<conation_user_id::lowercased::Lowercase<'_>>,
 ) -> anyhow::Result<()> {
-    let (conation_user_id, user_id_str) =
-        conation_db_client::user::get::get_user_conation_user_id_and_id_by_email(&ctx.db, email.as_ref())
-            .await?;
+    let (macro_user_id, user_id_str) =
+        conation_db_client::user::get::get_user_macro_user_id_and_id_by_email(
+            &ctx.db,
+            email.as_ref(),
+        )
+        .await?;
 
     let Some(referral_code) = ctx
         .referral_service
-        .get_referred_by(&conation_user_id)
+        .get_referred_by(&macro_user_id)
         .await
         .map_err(|e| anyhow::anyhow!(e))?
     else {
@@ -648,8 +652,9 @@ async fn handle_team_subscription_event<'a>(
     tracing::trace!("handling team subscription");
 
     if subscription_status == "trialing" {
-        // set has_trialed in conation_user table
-        conation_db_client::user::patch::update_conation_user_has_trialed(&ctx.db, email, true).await?;
+        // set has_trialed in macro_user table
+        conation_db_client::user::patch::update_macro_user_has_trialed(&ctx.db, email, true)
+            .await?;
     }
 
     let subscription_id = stripe::SubscriptionId::from_str(subscription_id).unwrap();
@@ -763,7 +768,7 @@ fn track_stripe_subscription(
                 ..MetaUserData::default()
             };
             let event_id = Some(subscription_id.as_str());
-            // PostHog distinct id must be the "macro|{email}" id the app
+            // PostHog distinct id must be the "conation|{email}" id the app
             // identifies with; a bare email lands events on orphaned person
             // profiles disconnected from product usage. This only links to the
             // right person when the Stripe customer email matches the Macro

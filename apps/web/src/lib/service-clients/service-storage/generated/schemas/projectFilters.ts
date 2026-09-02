@@ -18,7 +18,7 @@ export interface ProjectFilters {
   include_root?: boolean;
   /** Filter by project notification state. */
   notification_filters?: NotificationFilters;
-  /** Filter by project owner. Examples: ['macro|user1@user.com'], ['macro|user1@user.com', 'macro|user2@user.com']. Empty to search all owners. */
+  /** Filter by project owner. Examples: ['conation|user1@user.com'], ['conation|user1@user.com', 'conation|user2@user.com']. Empty to search all owners. */
   owners?: string[];
   /** Project IDs to search within. Examples: ['project1']. Empty to search all accessible projects.
 By default matches children of these projects; set `include_root` to also match the projects themselves. */

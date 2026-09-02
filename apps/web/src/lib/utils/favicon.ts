@@ -1,25 +1,17 @@
-import FaviconSvg from '@icon/macro-logo.svg?raw';
-import FaviconBadgeSvg from '@icon/macro-logo-badge.svg?raw';
-
 const FAVICON_SIZE = 48;
+const FAVICON_ASSET_PATH = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/icon.png`;
 
 let currentFaviconLink: HTMLLinkElement | null = null;
 
-/** escapes a color value for use in SVG */
-function escapeColorForSvg(color: string): string {
-  return color.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
-
-/** insert color and url encode SVG */
-function processSvg(svg: string, color: string) {
-  return `data:image/svg+xml,${encodeURIComponent(svg.replace(/currentColor/g, escapeColorForSvg(color)))}`;
-}
-
 /**
- * Return a data url for the macro logo svg filled with the given color.
+ * Return the environment-specific Conation orbit icon URL.
+ *
+ * `color` remains part of the public signature because callers use the same
+ * theme signal for the notification badge. The supplied photographic brand
+ * mark has fixed colors and therefore is not recolored at runtime.
  */
-export function getFaviconUrl(color: string) {
-  return processSvg(FaviconSvg, color);
+export function getFaviconUrl(_color: string) {
+  return FAVICON_ASSET_PATH;
 }
 
 /**
@@ -44,21 +36,27 @@ export function updateFavicon(
   canvas.height = FAVICON_SIZE;
 
   const img = new Image();
-  img.src = processSvg(hasBadge ? FaviconBadgeSvg : FaviconSvg, faviconColor);
+  img.src = getFaviconUrl(faviconColor);
 
   img.onload = () => {
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
     if (hasBadge) {
       const badgeRadius = 6;
+      const badgeX = canvas.width - badgeRadius;
+      const badgeY = badgeRadius;
+
+      // Clear the artwork behind the badge so its state remains legible over
+      // the metallic sphere on the right edge of the orbit mark.
+      ctx.save();
+      ctx.globalCompositeOperation = 'destination-out';
       ctx.beginPath();
-      ctx.arc(
-        canvas.width - badgeRadius,
-        badgeRadius,
-        badgeRadius,
-        0,
-        2 * Math.PI
-      );
+      ctx.arc(badgeX, badgeY, badgeRadius + 1, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.restore();
+
+      ctx.beginPath();
+      ctx.arc(badgeX, badgeY, badgeRadius, 0, 2 * Math.PI);
       ctx.fillStyle = badgeColor || faviconColor;
       ctx.fill();
     }

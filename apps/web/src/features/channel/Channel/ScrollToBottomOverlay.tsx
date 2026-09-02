@@ -1,5 +1,5 @@
-import { cn } from '@ui';
 import { t } from '@app/lib/i18n';
+import { cn } from '@ui';
 import { type Accessor, Show } from 'solid-js';
 import type { ThreadListScrollState } from './ThreadList';
 
@@ -33,7 +33,9 @@ export function ScrollToBottomOverlay(props: ScrollToBottomOverlayProps) {
         onClick={() => {
           props.onScrollToBottom();
         }}
-      >{t('auto.scroll_to_bottom')}</button>
+      >
+        {t('channel.message.scrollToBottom')}
+      </button>
     </Show>
   );
 }

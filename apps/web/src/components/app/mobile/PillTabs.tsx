@@ -1,5 +1,5 @@
-import { hapticImpact } from '@core/mobile/haptics';
 import { t } from '@app/lib/i18n';
+import { hapticImpact } from '@core/mobile/haptics';
 import DotsThreeIcon from '@phosphor/dots-three.svg';
 import { createElementSize } from '@solid-primitives/resize-observer';
 import { cn } from '@ui';
@@ -475,7 +475,9 @@ function MenuOverflowPillTabs<T extends string>(props: PillTabsProps<T>) {
                 )}
               </For>
               <MobileTouchMenu.Separator />
-              <MobileTouchMenu.Footer>{t('auto.tabs')}</MobileTouchMenu.Footer>
+              <MobileTouchMenu.Footer>
+                {t('shell.mobile.tabs')}
+              </MobileTouchMenu.Footer>
             </MobileTouchMenu.Content>
           </MobileTouchMenu>
         </MobileDockIsland>

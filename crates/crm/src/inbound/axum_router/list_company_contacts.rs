@@ -3,8 +3,8 @@ use axum::{
     extract::{Path, State},
 };
 use chrono::{DateTime, Utc};
-use entity_access::domain::{models::ViewAccessLevel, ports::EntityAccessService};
 use conation_authorization::MacroAuthorizationService;
+use entity_access::domain::{models::ViewAccessLevel, ports::EntityAccessService};
 use model_error_response::ErrorResponse;
 use serde::Serialize;
 use utoipa::ToSchema;

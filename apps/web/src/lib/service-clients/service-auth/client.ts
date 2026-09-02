@@ -1,3 +1,4 @@
+import { Telemetry } from '@conation/observability';
 import { ENABLE_BEARER_TOKEN_AUTH } from '@core/constant/featureFlags';
 import { SERVER_HOSTS } from '@core/constant/servers';
 import { fetchWithToken } from '@core/util/fetchWithToken';
@@ -8,7 +9,6 @@ import {
   type SafeFetchInit,
   safeFetch,
 } from '@core/util/safeFetch';
-import { Telemetry } from '@conation/observability';
 
 import { makePersisted } from '@solid-primitives/storage';
 import { err, ok } from 'neverthrow';
@@ -28,6 +28,7 @@ import type {
   UserQuota,
 } from './generated/schemas';
 import type { AppleLoginRequest } from './generated/schemas/appleLoginRequest';
+import type { ConationApiTokenResponse } from './generated/schemas/conationApiTokenResponse';
 import type { CreateTeamRequest } from './generated/schemas/createTeamRequest';
 import type { EmptyResponse } from './generated/schemas/emptyResponse';
 import type { GenericSuccessResponse } from './generated/schemas/genericSuccessResponse';
@@ -35,7 +36,6 @@ import type { GetLegacyUserPermissionsResponse } from './generated/schemas/getLe
 import type { GetProfilePicturesRequestBody } from './generated/schemas/getProfilePicturesRequestBody';
 import type { GetUserInfo } from './generated/schemas/getUserInfo';
 import type { InviteToTeamRequest } from './generated/schemas/inviteToTeamRequest';
-import type { MacroApiTokenResponse } from './generated/schemas/macroApiTokenResponse';
 import type { PasswordRequest } from './generated/schemas/passwordRequest';
 import type { PatchTeamRequest } from './generated/schemas/patchTeamRequest';
 import type { PatchUserGroupRequest } from './generated/schemas/patchUserGroupRequest';
@@ -84,7 +84,7 @@ type Token = {
 const [accessTokenData, setAccessTokenData] = makePersisted(
   createSignal<Token | null>(null),
   {
-    name: 'macroAccessToken',
+    name: 'conationAccessToken',
   }
 );
 
@@ -296,7 +296,7 @@ export const authServiceClient = {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${args.accessToken}`,
-        'x-macro-refresh-token': args.refreshToken,
+        'x-conation-refresh-token': args.refreshToken,
       },
     });
   },
@@ -384,18 +384,21 @@ export const authServiceClient = {
       )
     ).map((result) => result);
   },
-  async macroApiToken() {
+  async conationApiToken() {
     const accessToken = await getAccessToken();
     if (!accessToken) {
       Telemetry.warn('No access token found, fetching with cookies');
-      return authApiFetch<MacroApiTokenResponse>('/jwt/macro_api_token');
+      return authApiFetch<ConationApiTokenResponse>('/jwt/conation_api_token');
     }
 
-    return await authApiFetch<MacroApiTokenResponse>('/jwt/macro_api_token', {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    return await authApiFetch<ConationApiTokenResponse>(
+      '/jwt/conation_api_token',
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
   },
   async userQuota() {
     const result = await (

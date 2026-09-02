@@ -54,8 +54,8 @@ pub type ChannelBotTriggerSender = UnboundedSender<ChannelBotTrigger>;
 
 /// Collect the bot ids mentioned in a message.
 ///
-/// Bot mentions normally arrive tagged `bot`, but Macro AI is surfaced through
-/// the user-mention UI, so a `user` mention whose id is exactly the Macro AI
+/// Bot mentions normally arrive tagged `bot`, but Conation AI is surfaced through
+/// the user-mention UI, so a `user` mention whose id is exactly the Conation AI
 /// bot is recognized as a bot mention too.
 ///
 /// Ids must be in the canonical `bot|<uuid>` principal form; bare UUIDs are
@@ -72,7 +72,7 @@ pub fn bot_mention_ids(mentions: &[SimpleMention]) -> Vec<BotId> {
         .filter_map(|mention| match mention.entity_type.as_str() {
             BOT_MENTION_ENTITY_TYPE => mention_bot_id(&mention.entity_id),
             "user" => {
-                mention_bot_id(&mention.entity_id).filter(|id| *id == bot_id::MACRO_AI_BOT_ID)
+                mention_bot_id(&mention.entity_id).filter(|id| *id == bot_id::CONATION_AI_BOT_ID)
             }
             _ => None,
         })
@@ -99,8 +99,8 @@ fn active_bot_mention_ids(
         .collect();
     // Code-defined system bots are available in every channel and have no
     // participant rows.
-    active_bot_ids.insert(bot_id::MACRO_AI_BOT_ID);
-    active_bot_ids.insert(bot_id::MACRO_CODER_BOT_ID);
+    active_bot_ids.insert(bot_id::CONATION_AI_BOT_ID);
+    active_bot_ids.insert(bot_id::CONATION_CODER_BOT_ID);
 
     bot_mention_ids(mentions)
         .into_iter()
@@ -116,12 +116,12 @@ fn mention_bot_id(entity_id: &str) -> Option<BotId> {
 }
 
 /// Whether a `user`-tagged mention actually targets a bot (and so must not be
-/// treated as a user recipient). Real user ids are `macro|<email>` strings,
-/// never `bot|<uuid>` principals, so this only matches the Macro AI bot
+/// treated as a user recipient). Real user ids are `conation|<email>` strings,
+/// never `bot|<uuid>` principals, so this only matches the Conation AI bot
 /// surfaced through the user-mention UI.
 fn is_bot_user_mention(mention: &SimpleMention) -> bool {
     mention.entity_type == "user"
-        && mention_bot_id(&mention.entity_id) == Some(bot_id::MACRO_AI_BOT_ID)
+        && mention_bot_id(&mention.entity_id) == Some(bot_id::CONATION_AI_BOT_ID)
 }
 
 /// Realtime update requested by the channel domain.
@@ -415,7 +415,7 @@ impl<C, R, N, K, B> ChannelSideEffectService<C, R, N, K, B> {
         participants: &[ChannelParticipant],
     ) {
         // Only user-authored messages can trigger bots; this prevents bots
-        // (including Macro AI) from triggering each other in a loop.
+        // (including Conation AI) from triggering each other in a loop.
         if message.sender_id.as_user().is_none() {
             return;
         }
@@ -723,9 +723,9 @@ where
     /// Resolve the public bot profile when the message sender is a bot.
     async fn bot_profile_for_message(&self, message: &MutatedMessage) -> Option<BotSenderProfile> {
         let bot_id = message.sender_id.as_bot()?.bot_id();
-        if bot_id == bot_id::MACRO_AI_BOT_ID {
+        if bot_id == bot_id::CONATION_AI_BOT_ID {
             return Some(BotSenderProfile {
-                name: bot_id::MACRO_AI_NAME.to_string(),
+                name: bot_id::CONATION_AI_NAME.to_string(),
                 avatar_url: None,
             });
         }
@@ -852,7 +852,7 @@ where
             (Vec::new(), Vec::new()),
             |(mut users, mut docs), mention| {
                 match mention.entity_type.as_str() {
-                    // The Macro AI bot is mentioned via the user-mention UI; it
+                    // The Conation AI bot is mentioned via the user-mention UI; it
                     // is handled as a bot trigger, not a user notification.
                     "user" if !is_bot_user_mention(&mention) => users.push(mention.entity_id),
                     "document" => docs.push(mention.entity_id),

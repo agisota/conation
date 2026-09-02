@@ -6,7 +6,7 @@
 
 import type { CommandRunner } from './interfaces';
 
-/** Macro dev shell baked into the image at build time (see the Dockerfile);
+/** Conation dev shell baked into the image at build time (see the Dockerfile);
  * absent on images built without the github_token secret. */
 const REPO_ENV_FILE = '/env/repo-dev-env.sh';
 const SIDECAR_LOG = '/tmp/acp-sidecar.log';
@@ -24,6 +24,12 @@ export function assertSafeRepoUrl(url: string): void {
     throw new Error(`invalid repoUrl: ${url}`);
   }
   if (u.protocol !== 'https:') throw new Error('repoUrl must be https');
+  if (u.hostname !== 'github.com' || u.port)
+    throw new Error('repoUrl must use github.com');
+  if (u.username || u.password || u.search || u.hash)
+    throw new Error('repoUrl must not contain credentials, query, or fragment');
+  if (u.pathname.split('/').filter(Boolean).length !== 2)
+    throw new Error('repoUrl must name one GitHub repo');
   if (/[\s"'`$\\;|&<>()]/.test(url))
     throw new Error('repoUrl contains illegal characters');
 }

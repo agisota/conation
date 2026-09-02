@@ -1,12 +1,11 @@
-import type { SendBuilder } from '@block-chat/blockClient';
 import { t } from '@app/lib/i18n';
+import type { SendBuilder } from '@block-chat/blockClient';
 import { TopBar } from '@block-chat/component/TopBar';
 import type { ChatData } from '@block-chat/definition';
 import { pendingLocationParamsSignal } from '@block-chat/signal/pendingLocationParams';
 import { FloatRegionOrInline } from '@components/app/mobile/float-regions/FloatRegion';
 import { useCanAutofocusSplitContent } from '@components/app/split-layout/layoutUtils';
 import { useNavigatedFromJK } from '@components/app/useNavigatedFromJK';
-import { useHasPaidAccess } from '@core/auth/license';
 import { useBlockId, useIsNestedBlock } from '@core/block';
 import { DragDropWrapper } from '@core/component/AI/component/DragDrop';
 import { buildChatEditor } from '@core/component/AI/component/input/buildChatEditor';
@@ -41,7 +40,6 @@ import {
   storeChatState,
 } from '@core/component/AI/util/storage';
 import { CustomScrollbar } from '@core/component/CustomScrollbar';
-import { usePaywallState } from '@core/constant/PaywallState';
 import { TOKENS } from '@core/hotkey/tokens';
 import { registerScopeSignalHotkey } from '@core/hotkey/utils';
 import { createMethodRegistration } from '@core/orchestrator';
@@ -96,9 +94,7 @@ function ChatWithController(props: {
   data: ChatData;
   loadedInputText: string | undefined;
 }) {
-  const { showPaywall } = usePaywallState();
   const input = useChatInputContext();
-  const hasPaidAccess = useHasPaidAccess();
 
   // Providers that have failed during this chat session. We avoid bouncing the
   // user back to a provider we already know is down (e.g. Anthropic → OpenAI →
@@ -106,10 +102,10 @@ function ChatWithController(props: {
   const failedProviders = new Set<string>();
 
   // The model we'd fall back to if the current one failed: a different,
-  // non-failed provider drawn from the user's accessible models.
+  // non-failed provider drawn from the universal Conation catalog.
   const nextModel = () =>
     alternateProviderModel(input.model(), {
-      candidates: [...modelsForPlan(hasPaidAccess())],
+      candidates: [...modelsForPlan(false)],
       failedProviders,
     });
 
@@ -126,7 +122,6 @@ function ChatWithController(props: {
       chatId={props.data.chat.id}
       messages={props.data.chat.messages}
       controllerOptions={{
-        onShowPaywall: showPaywall,
         onSwitchModel,
         hasAlternateModel: () => nextModel() !== undefined,
       }}
@@ -223,10 +218,7 @@ function ChatInner(props: {
     });
 
     if ('error' in result) {
-      chat.dispatch({
-        type: 'send_failed',
-        paymentError: result.paymentError,
-      });
+      chat.dispatch({ type: 'send_failed' });
       return;
     }
 
@@ -334,7 +326,10 @@ function ChatInner(props: {
       </Show>
       <Show when={showStreamDebug()}>
         <div class="px-2 py-1 bg-surface border-b border-edge text-ink font-mono text-sm">
-          <Show when={chat.stream()} fallback={<div>{t('auto.no_active_stream')}</div>}>
+          <Show
+            when={chat.stream()}
+            fallback={<div>{t('chat.stream.none')}</div>}
+          >
             {(stream) => (
               <div class="flex gap-x-4">
                 <span>chunks: {stream().data().length}</span>

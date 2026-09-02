@@ -91,7 +91,7 @@ describe('ring coordination', () => {
       audible: true,
     });
     expect(
-      JSON.parse(localStorage.getItem('macro.call-ring') ?? '')
+      JSON.parse(localStorage.getItem('conation.call-ring') ?? '')
     ).toMatchObject({ type: 'claim', callId: 'call-1' });
 
     await vi.advanceTimersByTimeAsync(2_000);
@@ -122,7 +122,7 @@ describe('ring coordination', () => {
     module.attachRingCoordination();
     window.dispatchEvent(
       new StorageEvent('storage', {
-        key: 'macro.call-ring',
+        key: 'conation.call-ring',
         newValue: JSON.stringify(foreignClaim()),
       })
     );
@@ -255,7 +255,7 @@ describe('ring coordination', () => {
     expect(onEnd).toHaveBeenCalledTimes(1);
     expect(publishedMessages('silence')).toHaveLength(1);
     expect(
-      JSON.parse(localStorage.getItem('macro.call-ring') ?? '')
+      JSON.parse(localStorage.getItem('conation.call-ring') ?? '')
     ).toMatchObject({ type: 'silence', callId: 'call-1' });
   });
 

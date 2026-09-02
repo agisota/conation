@@ -12,11 +12,11 @@ ios-dev: ios-prepare
 
 # iOS: prod-facing build, with bundle auto-update turned off, for testing locally on actual iPhone
 ios-build-no-update: ios-prepare
-    cd tauri/src-tauri && cargo tauri ios build --open -- --no-default-features
+    bun scripts/run-tauri-build.ts ios --open -- --no-default-features
 
 # iOS: build for release
 ios-build: ios-prepare
-    cd tauri/src-tauri && cargo tauri ios build --open
+    bun scripts/run-tauri-build.ts ios --open
 
 # iOS generated project prep. Keep native bundle metadata in sync with
 # tauri.ios.conf.json, then prepare ignored local Swift dependencies.
@@ -32,7 +32,7 @@ ios-prepare-tauri-api:
 # Tauri build hook (run automatically via beforeDevCommand) — not meant to be run directly
 [private]
 dev-tauri: ensure-cache-wasm
-    printf development > tauri/src-tauri/.macro-tauri-env
+    CONATION_TAURI_APP_ENV=development bun scripts/tauri-rust-profile.ts
     bun run --bun dev
 
 # List available local service names
@@ -48,7 +48,7 @@ local:
     PORT='{{port}}' VITE_LOCAL_SERVERS='{{servers}}' bun run --bun dev
 
 local-sync-playground:
-    VITE_LOCAL_SERVERS='ALL' VITE_SYNC_SERVICE_HOST='sync-service-playground.macroverse.workers.dev' bun run --bun dev
+    VITE_CONATION_CLIENT_PROFILE='hosted-legacy' VITE_LOCAL_SERVERS='ALL' VITE_SYNC_SERVICE_HOST='sync-service-playground.macroverse.workers.dev' bun run --bun dev
 
 local-dcs:
     VITE_LOCAL_SERVERS='cognition-service,cognition-websocket-service' bun run --bun dev
@@ -72,22 +72,40 @@ local-email: ensure-cache-wasm
 node_heap := "--max-old-space-size=6144"
 
 build-dev: build-cache-wasm build-agent-fold-wasm
-    MODE=development NODE_ENV=production NODE_OPTIONS="{{node_heap}}" bun run --bun build
+    VITE_CONATION_CLIENT_PROFILE=hosted-legacy MODE=development NODE_ENV=production NODE_OPTIONS="{{node_heap}}" bun run --bun build
     bun scripts/cache-wasm/cli.ts package-dist --dist dist
 
 build-staging: build-cache-wasm build-agent-fold-wasm
-    MODE=staging NODE_ENV=production NODE_OPTIONS="{{node_heap}}" bun run --bun build
+    VITE_CONATION_CLIENT_PROFILE=hosted-legacy MODE=staging NODE_ENV=production NODE_OPTIONS="{{node_heap}}" bun run --bun build
     bun scripts/cache-wasm/cli.ts package-dist --dist dist
 
 build-prod: build-cache-wasm build-agent-fold-wasm
-    MODE=production NODE_ENV=production NODE_OPTIONS="{{node_heap}}" bun run --bun build
+    VITE_CONATION_CLIENT_PROFILE=standalone VITE_CONATION_OPERATOR_ORIGIN=same-origin MODE=production NODE_ENV=production NODE_OPTIONS="{{node_heap}}" bun run --bun build
     bun scripts/cache-wasm/cli.ts package-dist --dist dist
+    bun scripts/assert-standalone-artifact.ts dist
+
+# Explicit compatibility artifact for the former managed deployment.
+build-hosted-legacy: build-cache-wasm build-agent-fold-wasm
+    VITE_CONATION_CLIENT_PROFILE=hosted-legacy MODE=production NODE_ENV=production NODE_OPTIONS="{{node_heap}}" bun run --bun build
+    bun scripts/cache-wasm/cli.ts package-dist --dist dist
+
+check-standalone-artifact:
+    bun scripts/assert-standalone-artifact.ts dist
+
+# Native standalone bundles default to https://conation.dev. Override with
+# CONATION_OPERATOR_ORIGIN and, only when required for direct object URLs,
+# comma-separated CONATION_TAURI_HTTP_ORIGINS.
+tauri-build-standalone:
+    CONATION_CLIENT_PROFILE=standalone bun scripts/run-tauri-build.ts desktop
+
+tauri-build-hosted-legacy:
+    CONATION_CLIENT_PROFILE=hosted-legacy bun scripts/run-tauri-build.ts desktop
 
 # Tauri build hook (run automatically via beforeBuildCommand) — not meant to be run directly
 [private]
 build-tauri: build-cache-wasm build-agent-fold-wasm
-    printf production > tauri/src-tauri/.macro-tauri-env
-    MODE=production NODE_ENV=production NODE_OPTIONS="{{node_heap}}" bun run --bun build
+    CONATION_TAURI_APP_ENV=production bun scripts/tauri-rust-profile.ts
+    VITE_CONATION_CLIENT_PROFILE="${VITE_CONATION_CLIENT_PROFILE:-${CONATION_CLIENT_PROFILE:-standalone}}" VITE_CONATION_OPERATOR_ORIGIN="${VITE_CONATION_OPERATOR_ORIGIN:-${CONATION_OPERATOR_ORIGIN:-https://conation.dev}}" MODE=production NODE_ENV=production NODE_OPTIONS="{{node_heap}}" bun run --bun build
     bun scripts/cache-wasm/cli.ts package-dist --dist dist
     bun scripts/cache-wasm/cli.ts remove-sidecar --dist dist
 

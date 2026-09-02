@@ -1,5 +1,5 @@
-import { UserIcon } from '@core/component/UserIcon';
 import { t } from '@app/lib/i18n';
+import { UserIcon } from '@core/component/UserIcon';
 import { type IUser, idToEmail, recipientEntityMapper } from '@core/user';
 import { Popover } from '@kobalte/core/popover';
 import BellSimpleIcon from '@phosphor/bell-simple.svg';
@@ -74,7 +74,7 @@ function guestsAsProperty(
   return {
     propertyId: GUESTS_PROPERTY_ID,
     propertyDefinitionId: GUESTS_PROPERTY_ID,
-    displayName: 'Guests',
+    displayName: t('calendar.event.form.guests.label'),
     isMultiSelect: true,
     owner: { scope: 'system' },
     specificEntityType: 'USER',
@@ -102,8 +102,12 @@ function guestDisplayName(guest: SelectedEventEditorGuest) {
 }
 
 function guestPropertyLabel(selected: SelectedEventEditorGuest[]) {
-  if (selected.length === 0) return 'Guests';
-  if (selected.length > 1) return `${selected.length} guests`;
+  if (selected.length === 0) return t('calendar.event.form.guests.label');
+  if (selected.length > 1) {
+    return t('calendar.event.form.guests.summary', {
+      count: selected.length,
+    });
+  }
   return guestDisplayName(selected[0]);
 }
 
@@ -119,10 +123,13 @@ function ReadOnlyEventComposerGuestsPill(props: EventComposerGuestsPillProps) {
       flip
       slide
     >
-      <Tooltip label="View event guests" placement="bottom">
+      <Tooltip
+        label={t('calendar.event.form.guests.viewTooltip')}
+        placement="bottom"
+      >
         <Popover.Trigger
           disabled={props.disabled}
-          aria-label={t('auto.guests')}
+          aria-label={t('calendar.event.form.guests.label')}
           aria-readonly="true"
           class={cn(PROPERTY_TRIGGER_CLASS, 'max-w-48 overflow-hidden')}
         >
@@ -146,11 +153,15 @@ function ReadOnlyEventComposerGuestsPill(props: EventComposerGuestsPillProps) {
       <Popover.Portal>
         <Layer depth={3}>
           <Popover.Content class="z-action-menu w-72 max-w-[calc(100vw-1rem)] rounded-xl border border-edge bg-menu p-1.5 text-sm shadow-menu menu-open-animation">
-            <Popover.Title class="sr-only">{t('auto.event_guests')}</Popover.Title>
+            <Popover.Title class="sr-only">
+              {t('calendar.event.form.guests.dialogTitle')}
+            </Popover.Title>
             <Show
               when={props.selected.length > 0}
               fallback={
-                <p class="px-2 py-4 text-center text-sm text-ink-muted">{t('auto.no_guests')}</p>
+                <p class="px-2 py-4 text-center text-sm text-ink-muted">
+                  {t('calendar.event.form.guests.empty')}
+                </p>
               }
             >
               <div class="flex max-h-64 flex-col overflow-y-auto">
@@ -217,12 +228,12 @@ function GuestsPillTrigger(props: EventComposerGuestsPillProps) {
   const ctx = useProperty();
   return (
     <Tooltip
-      label="Add guests to this event"
+      label={t('calendar.event.form.guests.addTooltip')}
       placement="bottom"
       disabled={ctx.editorOpen() || props.disabled}
     >
       <PropertyPill
-        aria-label={t('auto.guests')}
+        aria-label={t('calendar.event.form.guests.label')}
         aria-expanded={ctx.editorOpen()}
         data-expanded={ctx.editorOpen() ? '' : undefined}
         class={cn(PROPERTY_TRIGGER_CLASS, 'max-w-48 overflow-hidden')}
@@ -258,7 +269,7 @@ function GuestsPopoverEditor(props: {
         <PropertyEntitySelector
           config={{
             isMultiSelect: true,
-            placeholder: 'Add guests...',
+            placeholder: t('calendar.event.form.guests.placeholder'),
             specificEntityType: 'USER',
             users: props.users,
             allowCustomEmail: true,
@@ -315,10 +326,13 @@ export function EventComposerLocationPill(
       flip
       slide
     >
-      <Tooltip label="Set the event location" placement="bottom">
+      <Tooltip
+        label={t('calendar.event.form.location.tooltip')}
+        placement="bottom"
+      >
         <Popover.Trigger
           disabled={props.disabled}
-          aria-label={t('auto.location')}
+          aria-label={t('calendar.event.form.location.label')}
           class={cn(PROPERTY_TRIGGER_CLASS, 'max-w-48 overflow-hidden')}
         >
           <Show when={!props.hideIcon}>
@@ -331,7 +345,7 @@ export function EventComposerLocationPill(
               props.value ? 'text-current' : 'text-ink-extra-muted'
             )}
           >
-            {props.value || 'Add location'}
+            {props.value || t('calendar.event.form.location.add')}
           </span>
           <CaretDownIcon class="size-3 shrink-0 text-ink-extra-muted" />
         </Popover.Trigger>
@@ -345,14 +359,16 @@ export function EventComposerLocationPill(
               queueMicrotask(() => input?.focus());
             }}
           >
-            <Popover.Title class="sr-only">{t('auto.event_location')}</Popover.Title>
+            <Popover.Title class="sr-only">
+              {t('calendar.event.form.location.dialogTitle')}
+            </Popover.Title>
             <input
               ref={input}
               type="text"
               value={props.value}
               onInput={(event) => props.onChange(event.currentTarget.value)}
-              placeholder={t('auto.add_location')}
-              aria-label={t('auto.location')}
+              placeholder={t('calendar.event.form.location.placeholder')}
+              aria-label={t('calendar.event.form.location.label')}
               disabled={props.disabled}
               class="h-8 w-full rounded-md border border-edge-muted bg-surface px-2 text-sm text-ink outline-none placeholder:text-ink-placeholder focus:border-accent"
             />
@@ -365,21 +381,23 @@ export function EventComposerLocationPill(
 
 interface EventComposerConferenceOption {
   value: EventEditorConferenceChoice;
-  label: string;
 }
 
 const GOOGLE_MEET_OPTION: EventComposerConferenceOption = {
   value: 'google_meet',
-  label: 'Google Meet',
 };
 const NO_CONFERENCING_OPTION: EventComposerConferenceOption = {
   value: 'none',
-  label: 'No meeting link',
 };
 const EXISTING_CONFERENCING_OPTION: EventComposerConferenceOption = {
   value: 'existing',
-  label: 'Current conferencing',
 };
+
+function conferenceOptionLabel(option: EventComposerConferenceOption) {
+  return t('calendar.event.form.conference.option', {
+    choice: option.value,
+  });
+}
 
 export interface EventComposerConferencePillProps {
   value: EventEditorConferenceChoice;
@@ -406,12 +424,15 @@ export function EventComposerConferencePill(
       value={selectedOption()}
       onChange={(option) => option && props.onChange(option.value)}
       optionValue="value"
-      optionTextValue="label"
+      optionTextValue={conferenceOptionLabel}
       disabled={props.disabled}
     >
-      <Tooltip label="Set event video conferencing" placement="bottom">
+      <Tooltip
+        label={t('calendar.event.form.conference.tooltip')}
+        placement="bottom"
+      >
         <Select.Trigger
-          aria-label={t('auto.video_conferencing')}
+          aria-label={t('calendar.event.form.videoConferencing')}
           class={cn(PROPERTY_TRIGGER_CLASS, 'max-w-48 overflow-hidden')}
         >
           <VideoCameraIcon class="size-3.5 shrink-0 text-ink-extra-muted" />
@@ -425,8 +446,8 @@ export function EventComposerConferencePill(
                 )}
               >
                 {props.value === 'none'
-                  ? 'Add meeting link'
-                  : selectState.selectedOption().label}
+                  ? t('calendar.event.form.conference.add')
+                  : conferenceOptionLabel(selectState.selectedOption())}
               </span>
             )}
           </Select.Value>
@@ -473,9 +494,13 @@ function reminderOptions(customMinutesKey: string) {
 }
 
 function reminderPropertyLabel(minutes: number[]) {
-  if (minutes.length === 0) return 'Choose reminders';
+  if (minutes.length === 0) {
+    return t('calendar.event.form.reminders.choose');
+  }
   if (minutes.length === 1) return formatReminderOffset(minutes[0]);
-  return `${minutes.length} notifications`;
+  return t('calendar.event.form.reminders.summary', {
+    count: minutes.length,
+  });
 }
 
 /** Compact multi-select for event popup notification offsets. */
@@ -520,7 +545,7 @@ export function EventComposerRemindersPill(
       }
       closeOnSelection={false}
       selectionBehavior="toggle"
-      placeholder={t('auto.choose_reminders')}
+      placeholder={t('calendar.event.form.reminders.choose')}
       disabled={props.disabled}
       itemComponent={(itemProps) => (
         <Select.Item item={itemProps.item}>
@@ -536,9 +561,12 @@ export function EventComposerRemindersPill(
         </Select.Item>
       )}
     >
-      <Tooltip label="Set event notifications" placement="bottom">
+      <Tooltip
+        label={t('calendar.event.form.reminders.tooltip')}
+        placement="bottom"
+      >
         <Select.Trigger
-          aria-label={t('auto.notifications')}
+          aria-label={t('calendar.event.form.reminders.label')}
           class={cn(PROPERTY_TRIGGER_CLASS, 'max-w-48 overflow-hidden')}
         >
           <BellSimpleIcon class="size-3.5 shrink-0 text-ink-extra-muted" />
@@ -558,9 +586,12 @@ export function EventComposerRemindersPill(
       </Tooltip>
       <Select.Content class="w-56 p-0">
         <div class="flex items-center justify-between border-edge-muted border-b px-3 py-2 text-xs text-ink-muted">
-          <span>{t('auto.choose_reminders')}</span>
+          <span>{t('calendar.event.form.reminders.choose')}</span>
           <span
-            aria-label={`${props.usedSlots} of ${REMINDER_OVERRIDES_MAX} notifications selected`}
+            aria-label={t('calendar.event.form.reminders.selectedCount', {
+              count: props.usedSlots,
+              max: REMINDER_OVERRIDES_MAX,
+            })}
           >
             {props.usedSlots} / {REMINDER_OVERRIDES_MAX}
           </span>
@@ -596,9 +627,12 @@ export function EventComposerRecurrencePill(
       optionDisabled={() => props.readOnly === true}
       disabled={props.disabled}
     >
-      <Tooltip label="Set how this event repeats" placement="bottom">
+      <Tooltip
+        label={t('calendar.event.form.recurrence.tooltip')}
+        placement="bottom"
+      >
         <Select.Trigger
-          aria-label={t('auto.repeats')}
+          aria-label={t('calendar.event.form.recurrence.label')}
           aria-readonly={props.readOnly || undefined}
           class={cn(PROPERTY_TRIGGER_CLASS, 'max-w-48')}
         >
@@ -642,9 +676,12 @@ export function EventComposerCalendarPill(
       optionDisabled={() => props.readOnly === true}
       disabled={props.disabled}
     >
-      <Tooltip label="Choose the calendar for this event" placement="bottom">
+      <Tooltip
+        label={t('calendar.event.form.calendar.tooltip')}
+        placement="bottom"
+      >
         <Select.Trigger
-          aria-label={t('auto.calendar')}
+          aria-label={t('calendar.event.form.calendar.label')}
           aria-readonly={props.readOnly || undefined}
           class={cn(PROPERTY_TRIGGER_CLASS, 'w-40')}
         >

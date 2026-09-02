@@ -1,13 +1,13 @@
-import CaretRight from '@phosphor-icons/core/bold/caret-right-bold.svg?component-solid';
 import { t } from '@app/lib/i18n';
+import CaretRight from '@phosphor-icons/core/bold/caret-right-bold.svg?component-solid';
 import CheckIcon from '@phosphor-icons/core/bold/check-bold.svg?component-solid';
 import ClipboardIcon from '@phosphor-icons/core/bold/clipboard-bold.svg?component-solid';
 import { Button, cn } from '@ui';
 import { createSignal, For, Show } from 'solid-js';
 import {
   CLI_COMMANDS,
-  MACRO_MCP_CONFIG,
-  MACRO_MCP_URL,
+  CONATION_MCP_CONFIG,
+  CONATION_MCP_URL,
   WEB_CLIENTS,
 } from './mcpConstants';
 import { useClipboardCopy } from './useClipboardCopy';
@@ -59,10 +59,14 @@ function CollapsibleCard(props: {
             >
               {isCopied() ? (
                 <>
-                  <CheckIcon class="size-3.5" />{t('auto.copied')}</>
+                  <CheckIcon class="size-3.5" />
+                  {t('ai.actions.copied')}
+                </>
               ) : (
                 <>
-                  <ClipboardIcon class="size-3.5" />{t('auto.copy')}</>
+                  <ClipboardIcon class="size-3.5" />
+                  {t('ai.actions.copy')}
+                </>
               )}
             </Button>
           </div>
@@ -95,7 +99,7 @@ export function McpSetupCards(props: { class?: string }) {
             label={item.label}
             hint={item.hint}
             copyKey={item.key}
-            copyValue={MACRO_MCP_URL}
+            copyValue={CONATION_MCP_URL}
             copiedKey={copiedKey}
             onCopy={copy}
           />
@@ -105,7 +109,7 @@ export function McpSetupCards(props: { class?: string }) {
       <CollapsibleCard
         label="IDE"
         copyKey="json"
-        copyValue={MACRO_MCP_CONFIG}
+        copyValue={CONATION_MCP_CONFIG}
         copiedKey={copiedKey}
         onCopy={copy}
       />

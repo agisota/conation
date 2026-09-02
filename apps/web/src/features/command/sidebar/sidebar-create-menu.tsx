@@ -1,7 +1,7 @@
 import { CREATE_MENU_COMMAND_SCOPE } from '@app/constants/hotkeys';
-import { t } from '@app/lib/i18n';
 import { useCreateMenuBlocks } from '@app/features/command/Launcher';
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import { useHotkeyInterceptor } from '@app/signal/hotkeyRoot';
 import { setActiveScope } from '@core/hotkey/state';
 import { TOKENS } from '@core/hotkey/tokens';
@@ -81,7 +81,7 @@ export const SidebarCreateMenu = (props: {
             fullWidth
             tooltipPlacement="right"
             tooltipDisabled={!props.isSlim()}
-            label="Create"
+            label={t('shell.actions.create')}
             hotkey={TOKENS.global.createCommand}
             onMouseDown={(e: MouseEvent) => {
               if (e.button !== 0) return;
@@ -91,7 +91,9 @@ export const SidebarCreateMenu = (props: {
             <div class="size-4 shrink-0">
               <PlusIcon class="size-4" />
             </div>
-            <span class="whitespace-nowrap group-data-[slim=true]/sidebar:hidden">{t('auto.create')}</span>
+            <span class="whitespace-nowrap group-data-[slim=true]/sidebar:hidden">
+              {t('shell.actions.create')}
+            </span>
             <Show when={open()}>
               <div class="text-xxs text-ink-extra-muted/50 rounded-sm ml-auto border border-ink/5 px-1.5 py-px -my-1 group-data-[slim=true]/sidebar:hidden">
                 <Hotkey
@@ -109,7 +111,7 @@ export const SidebarCreateMenu = (props: {
           size="icon-sm"
           depth={1}
           class="size-[26px] rounded-full bg-surface shadow-md shadow-drop-shadow [&_svg]:size-4!"
-          label="Create"
+          label={t('shell.actions.create')}
           hotkey={TOKENS.global.createCommand}
           onMouseDown={(e: MouseEvent) => {
             if (e.button !== 0) return;

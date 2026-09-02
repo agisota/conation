@@ -3,8 +3,8 @@ import {
   defineQueryFilters,
   queryStateFrom,
 } from '@app/features/next-soup/filters/filter-store';
-import { globalSplitManager } from '@app/signal/splitLayout';
 import { t } from '@app/lib/i18n';
+import { globalSplitManager } from '@app/signal/splitLayout';
 import { navigateToChannelMessage } from '@block-channel/utils/link';
 import { ReadonlyThread } from '@channel/StandaloneThread';
 import {
@@ -522,7 +522,7 @@ export const ChannelsRecentWidget = (props: {
             </For>
             <Show when={showAllCaughtUp()}>
               <div class="flex h-7 w-full items-center gap-2 px-2 py-1 text-sm font-medium text-ink-extra-muted/60">
-                <span class="truncate">{t('auto.all_caught_up')}</span>
+                <span class="truncate">{t('channel.sidebar.caughtUp')}</span>
               </div>
             </Show>
           </div>
@@ -584,7 +584,9 @@ export const ChannelsRecentWidget = (props: {
                     onChange={setUnreadOnly}
                     size="xs"
                     label={
-                      <span class="text-[11px] font-medium leading-none text-ink-extra-muted/60">{t('auto.unread')}</span>
+                      <span class="text-[11px] font-medium leading-none text-ink-extra-muted/60">
+                        {t('channel.sidebar.unread')}
+                      </span>
                     }
                     labelClass="flex items-center"
                     controlClass="bg-ink-extra-muted/25 data-checked:bg-accent"

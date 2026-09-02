@@ -1,3 +1,4 @@
+import { formatDateTime, getDateLocale, t } from '@core/i18n';
 import { tz } from '@date-fns/tz';
 import {
   compareAsc,
@@ -34,16 +35,21 @@ export const formatTime = (
 ): string => {
   if (!date) return '';
   const d = date instanceof Date ? date : toDate(date);
-  // Conation: locale-aware, default to system locale (undefined) which respects ru-RU vs en-US
-  // Keep hour12 for en, but ru uses 24h via Intl automatically when locale is ru-RU.
-  const loc = locale ?? (typeof navigator !== 'undefined' ? navigator.language : undefined);
-  return d.toLocaleTimeString(loc, {
+  const options: Intl.DateTimeFormatOptions = {
     hour: 'numeric',
     minute: '2-digit',
-    hour12: loc?.startsWith('ru') ? false : true,
     timeZone,
-  });
+  };
+  return locale
+    ? new Intl.DateTimeFormat(locale, options).format(d)
+    : formatDateTime(d, options);
 };
+
+function joinDateAndTime(date: string, time: string): string {
+  return getDateLocale() === 'ru-RU'
+    ? `${date}, ${time}`
+    : `${date} at ${time}`;
+}
 
 /**
  * Formats a date to a human readable string.
@@ -69,27 +75,27 @@ export const formatDate = (
   }
 
   if (isYesterday(date, timeZoneOpts)) {
-    // locale-aware via html lang
-    const isRu = typeof document !== 'undefined' && document.documentElement.lang === 'ru';
-    if (isRu) return `Вчера в ${time}`;
-    return `${shortWeekday ? 'Yest' : 'Yesterday'} at ${time}`;
+    const formatted = t('time.yesterday', { time });
+    return shortWeekday && getDateLocale().startsWith('en')
+      ? formatted.replace(/^Yesterday/, 'Yest')
+      : formatted;
   }
 
   if (differenceInWeeks(now, date) < 1) {
-    const weekday = d.toLocaleDateString(undefined, {
+    const weekday = formatDateTime(d, {
       weekday: shortWeekday ? 'short' : 'long',
       timeZone,
     });
-    return showTime ? `${weekday} at ${time}` : weekday;
+    return showTime ? joinDateAndTime(weekday, time) : weekday;
   }
 
-  const displayDate = d.toLocaleDateString(undefined, {
+  const displayDate = formatDateTime(d, {
     month: '2-digit',
     day: '2-digit',
     year: '2-digit',
     timeZone,
   });
-  return showTime ? `${displayDate} at ${time}` : displayDate;
+  return showTime ? joinDateAndTime(displayDate, time) : displayDate;
 };
 
 /**
@@ -99,20 +105,36 @@ export const formatDate = (
  */
 export const formatEmailDate = (date: DateValue, locale?: string) => {
   const d = toDate(date);
-  const loc = locale ?? (typeof document !== 'undefined' ? document.documentElement.lang : undefined) ?? 'ru-RU';
-  const weekday = d.toLocaleDateString(loc, { weekday: 'short' });
-  const month = d.toLocaleDateString(loc, { month: 'short' });
-  const day = d.getDate();
-  const year = d.getFullYear();
-  const time = d.toLocaleTimeString(loc, {
+  if (locale) {
+    return new Intl.DateTimeFormat(locale, {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    }).format(d);
+  }
+
+  const dateParts = new Intl.DateTimeFormat(getDateLocale(), {
+    weekday: 'short',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  }).formatToParts(d);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    dateParts.find((candidate) => candidate.type === type)?.value ?? '';
+  const time = formatDateTime(d, {
     hour: 'numeric',
     minute: '2-digit',
-    hour12: loc.startsWith('ru') ? false : true,
   });
-  const isRu = loc.startsWith('ru');
-  return isRu
-    ? `${weekday}, ${day} ${month} ${year} в ${time}`
-    : `${weekday}, ${month} ${day}, ${year} at ${time}`;
+  return t('date.email', {
+    weekday: part('weekday'),
+    month: part('month'),
+    day: part('day'),
+    year: part('year'),
+    time,
+  });
 };
 
 /**

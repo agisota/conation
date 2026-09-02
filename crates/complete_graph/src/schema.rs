@@ -5,6 +5,11 @@ use std::{marker::PhantomData, sync::Arc};
 
 use async_graphql::{Context, ID, MergedObject, MergedSubscription, Object, Schema, Subscription};
 use axum::extract::FromRef;
+use conation_authorization::{
+    InternalAuthConfig, MacroAuthorizationService, MacroAuthorizationServiceImpl,
+    MacroAuthorizationState, NoopMacroAuthJwtValidator,
+};
+use conation_user_id::user_id::MacroUserIdStr;
 use email::{
     domain::ports::{EmailService, EmailUserService, NoOpEmailService},
     inbound::axum::previews_router::EmailRouterState,
@@ -40,11 +45,6 @@ use graphql_soup::{
     SoupEntityEdges, SoupInput, SoupPage, SoupPatch, resolve_grouped_soup, resolve_soup,
     resolve_soup_email_thread, resolve_soup_updates,
 };
-use conation_authorization::{
-    InternalAuthConfig, MacroAuthorizationService, MacroAuthorizationServiceImpl,
-    MacroAuthorizationState, NoopMacroAuthJwtValidator,
-};
-use conation_user_id::user_id::MacroUserIdStr;
 use model_notifications::NotifEvent;
 use notification::domain::{
     models::NotificationSubscriptionUpdate,

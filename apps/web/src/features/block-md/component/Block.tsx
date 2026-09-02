@@ -1,12 +1,6 @@
 import { useBlockEntityCommands } from '@app/features/next-soup/actions';
-import { t } from '@app/lib/i18n';
 import { useGlobalNotificationSource } from '@components/app/GlobalAppState';
 import { SidePanel } from '@components/app/side-panel';
-import { useBlockId } from '@core/block';
-import { DocumentBlockContainer } from '@core/component/DocumentBlockContainer';
-import { ENABLE_MARKDOWN_SIDE_PANEL } from '@core/constant/featureFlags';
-import { blockErrorSignal, blockSyncSourceSignal } from '@core/signal/load';
-import { useCanEdit } from '@core/signal/permissions';
 import {
   createLoroManager,
   type LoroManager,
@@ -22,6 +16,11 @@ import {
 } from '@conation/collaboration/collab/wal';
 import { MARKDOWN_LORO_SCHEMA } from '@conation/lexical-core/markdown-loro-schema';
 import type { Span } from '@conation/observability';
+import { useBlockId } from '@core/block';
+import { DocumentBlockContainer } from '@core/component/DocumentBlockContainer';
+import { ENABLE_MARKDOWN_SIDE_PANEL } from '@core/constant/featureFlags';
+import { blockErrorSignal, blockSyncSourceSignal } from '@core/signal/load';
+import { useCanEdit } from '@core/signal/permissions';
 import { DocumentDebouncedNotificationReadMarker } from '@notifications';
 import { useInstructionsMdIdQuery } from '@queries/storage/instructions-md';
 import { storageServiceClient } from '@service-storage/client';
@@ -72,7 +71,7 @@ function startSnapshotIngest(
   parentSpan: Span | undefined,
   source: SnapshotSource,
   loroManager: MarkdownLoroManager,
-  ingest: () =>Promise<SnapshotResult>
+  ingest: () => Promise<SnapshotResult>
 ): void {
   parentSpan?.event('doc.snapshot.attempt', {
     'snapshot.source': source,

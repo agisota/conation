@@ -26,7 +26,7 @@ pub struct Params {
             (status = 500, body=GenericErrorResponse),
         )
     )]
-#[tracing::instrument(skip(ctx, user), fields(user_id=?user.authorization.user.conation_user_id))]
+#[tracing::instrument(skip(ctx, user), fields(user_id=?user.authorization.user.macro_user_id))]
 pub async fn delete_history_handler(
     State(ctx): State<ApiContext>,
     user: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
@@ -34,13 +34,13 @@ pub async fn delete_history_handler(
 ) -> impl IntoResponse {
     if let Err(e) = conation_db_client::history::delete_user_history(
         &ctx.db,
-        user.authorization.user.conation_user_id.as_ref(),
+        user.authorization.user.macro_user_id.as_ref(),
         item_id.as_str(),
         item_type.as_str(),
     )
     .await
     {
-        tracing::error!(error=?e, user_id=?user.authorization.user.conation_user_id, "unable to delete history");
+        tracing::error!(error=?e, user_id=?user.authorization.user.macro_user_id, "unable to delete history");
         return GenericResponse::builder()
             .message("unable to delete history")
             .is_error(true)

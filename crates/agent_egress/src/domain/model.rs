@@ -13,11 +13,10 @@ use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD as BASE64URL_NO_PAD;
 use bytes::Bytes;
+use conation_user_id::user_id::MacroUserIdStr;
 use http::header::{self, HeaderMap, HeaderName};
 use http::{HeaderValue, Method};
 use http_body_util::combinators::UnsyncBoxBody;
-use conation_user_id::email::ReadEmailParts;
-use conation_user_id::user_id::MacroUserIdStr;
 use rand::RngCore;
 use sha2::{Digest, Sha256};
 use std::fmt;
@@ -197,20 +196,6 @@ impl fmt::Debug for UpstreamCredential {
             Self::Basic { username, .. } => write!(f, "Basic({username}, [REDACTED])"),
         }
     }
-}
-
-/// The email domain Macro staff live under.
-const STAFF_EMAIL_DOMAIN: &str = "macro.com";
-
-/// Whether a user belongs to the Macro staff domain.
-///
-/// The proxy is staff-only for now: every credential it stamps spends real
-/// upstream access on the owner's behalf, and until that has earned broader
-/// trust, "owned by somebody @macro.com" is the whole admission policy. In
-/// the domain rather than deployment configuration so it cannot be switched
-/// off by an unset env var.
-pub fn is_conation_staff(user: &MacroUserIdStr<'_>) -> bool {
-    user.email_part().domain_part() == STAFF_EMAIL_DOMAIN
 }
 
 /// What a verified session token entitles its holder to.
@@ -468,7 +453,7 @@ impl EgressTarget {
     /// What to call this target in a log line.
     pub fn name(&self) -> String {
         match self {
-            Self::McpServer(McpDestination::Macro) => "macro".to_owned(),
+            Self::McpServer(McpDestination::Conation) => "conation".to_owned(),
             Self::McpServer(McpDestination::Connected(slug)) => slug.as_str().to_owned(),
             Self::GitHubGit { endpoint } => format!("git {}", endpoint.path_and_query()),
         }
@@ -477,13 +462,13 @@ impl EgressTarget {
 
 /// Which MCP server a request names.
 ///
-/// Macro's own server and the owner's connected apps live on different
-/// routes (`/mcp-macro` vs `/mcp/{slug}`), so they can never collide: there
+/// Conation's own server and the owner's connected apps live on different
+/// routes (`/mcp-conation` vs `/mcp/{slug}`), so they can never collide: there
 /// is no reserved word to shadow, and no connected app a name could hide.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum McpDestination {
-    /// Macro's own MCP server, available to every session.
-    Macro,
+    /// Conation's own MCP server, available to every session.
+    Conation,
     /// One of the owner's Pipedream-connected apps.
     Connected(McpServerSlug),
 }
@@ -511,7 +496,7 @@ impl UpstreamCall {
     /// A call authorized by a bearer token, permitted over cleartext http.
     ///
     /// The one sanctioned exception to the https rule, for a destination that
-    /// never leaves the machine: a local dev stack's own Macro MCP server,
+    /// never leaves the machine: a local dev stack's own Conation MCP server,
     /// dialed across the compose bridge. TLS there would be theater - the
     /// bytes never touch a wire anyone else can see - and the alternative,
     /// looping through a public tunnel for a same-host hop, only *adds* an

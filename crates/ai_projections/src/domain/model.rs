@@ -292,9 +292,6 @@ pub enum UpsertProjectionError {
     /// The request was invalid.
     #[error("bad request: {0}")]
     BadRequest(String),
-    /// The requested model requires the `read:professional_features` permission.
-    #[error("professional features required")]
-    ProfessionalFeaturesRequired,
     /// Underlying storage error.
     #[error(transparent)]
     AiProjectionError(#[from] AiProjectionError),

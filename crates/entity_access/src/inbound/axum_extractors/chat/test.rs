@@ -8,7 +8,7 @@ use axum::{
 };
 use conation_authorization::{
     BOT_SCOPE_HEADER, BOT_TOKEN_HEADER, BotActingUserClaims, BotAuthentication, BotScope,
-    INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_USER_ID_HEADER, InternalIdentityClaims,
+    INTERNAL_API_KEY_HEADER, INTERNAL_CONATION_USER_ID_HEADER, InternalIdentityClaims,
     MacroAuthorizationError, MacroAuthorizationService, MacroAuthorizationState,
 };
 use conation_user_id::user_id::MacroUserIdStr;
@@ -191,7 +191,7 @@ fn internal_request(user_id: Option<&str>, chat: ChatBasic) -> Request<Body> {
     );
     if let Some(user_id) = user_id {
         request.headers_mut().insert(
-            INTERNAL_MACRO_USER_ID_HEADER,
+            INTERNAL_CONATION_USER_ID_HEADER,
             user_id.parse().expect("user id should be valid"),
         );
     }

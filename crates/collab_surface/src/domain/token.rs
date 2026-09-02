@@ -10,9 +10,9 @@
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use entity_access::domain::models::EntityPermission;
 use conation_sync_service_jwt::{DocumentPermissionToken, ISSUER, TOKEN_TTL_SECS};
 use conation_user_id::user_id::MacroUserIdStr;
+use entity_access::domain::models::EntityPermission;
 use model::document::DocumentPermissionsToken;
 use models_permissions::share_permission::access_level::AccessLevel;
 

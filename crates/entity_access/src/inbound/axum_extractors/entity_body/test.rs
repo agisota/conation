@@ -6,7 +6,7 @@ use axum::{
 };
 use conation_authorization::{
     BOT_SCOPE_HEADER, BOT_TOKEN_HEADER, BotScope, INTERNAL_API_KEY_HEADER,
-    INTERNAL_MACRO_USER_ID_HEADER,
+    INTERNAL_CONATION_USER_ID_HEADER,
 };
 use serde::Deserialize;
 use tower::ServiceExt;
@@ -126,7 +126,7 @@ async fn acting_user_internal_access_uses_the_acting_users_acl() {
         .oneshot(
             request("/view")
                 .header(INTERNAL_API_KEY_HEADER, INTERNAL_KEY)
-                .header(INTERNAL_MACRO_USER_ID_HEADER, USER_ID)
+                .header(INTERNAL_CONATION_USER_ID_HEADER, USER_ID)
                 .body(body("document", ENTITY_ID))
                 .unwrap(),
         )

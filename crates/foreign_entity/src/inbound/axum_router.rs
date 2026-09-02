@@ -12,11 +12,11 @@ use axum::{
     response::IntoResponse,
     routing::get,
 };
+use conation_authorization::{MacroAuthorizationService, MacroAuthorizationState};
 use entity_access::{
     domain::{models::ViewAccessLevel, ports::EntityAccessService},
     inbound::axum_extractors::ForeignEntityAccessLevelExtractor,
 };
-use conation_authorization::{MacroAuthorizationService, MacroAuthorizationState};
 use model_error_response::ErrorResponse;
 
 use crate::domain::{

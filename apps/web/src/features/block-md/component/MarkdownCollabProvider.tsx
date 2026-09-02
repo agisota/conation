@@ -1,12 +1,12 @@
 import { markdownBlockErrorSignal } from '@block-md/signal/error';
+import type { LoroManager } from '@conation/collaboration/collab/manager';
+import type { NodeIdMappings } from '@conation/lexical-core';
 import { CollabProvider } from '@core/component/LexicalMarkdown/collaboration/CollabProvider';
 import type { MarkdownEditorErrors } from '@core/component/LexicalMarkdown/constants';
 import type { PluginManager } from '@core/component/LexicalMarkdown/plugins';
 import { blockSourceSignal, blockSyncSourceSignal } from '@core/signal/load';
 import { useCanComment, useCanEdit } from '@core/signal/permissions';
 import { isSourceSyncService } from '@core/util/source';
-import type { LoroManager } from '@conation/collaboration/collab/manager';
-import type { NodeIdMappings } from '@conation/lexical-core';
 import type { LexicalEditor } from 'lexical';
 import type { Accessor, Setter } from 'solid-js';
 import { endDocumentSpan, resumeDocumentSpan } from '../observability';

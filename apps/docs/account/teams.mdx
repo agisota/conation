@@ -1,50 +1,71 @@
 ---
-title: "Teams & Admin"
+title: "Команды и роли"
 icon: "users"
-description: "Creating a team, inviting members, roles, and what admins can do."
+description: "Создание команды, приглашения, роли и правила общего доступа."
 ---
 
-Macro works solo, but everything is better with friends. Teams get auto-shared tasks and calls, the [CRM](/product/crm), and [team memory](/product/unified-memory) for your agents.
+Conation подходит для личной и командной работы. Команды доступны бесплатно:
+платные места и продуктовая подписка не требуются. Расходы на инфраструктуру и
+внешние API несёт оператор развёртывания.
 
-<iframe src="https://www.youtube.com/embed/5d2K_NYs50k" title="YouTube video player" frameborder="0" className="w-full aspect-video rounded-xl" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen />
+## Создать команду и пригласить участников
 
-## Create a team and invite people
-
-Click **Team** in the bottom left to create a team. You can add the first members right there, or invite more later by email from **Settings → Team**. Invitees see the pending invitation when they sign in. Owners can also copy an invite link for any pending invite and share it directly, instead of relying on email.
+Откройте **Команда** в нижней части боковой панели и создайте команду. Первых
+участников можно пригласить сразу, остальных — позднее через
+**Настройки → Команда**. Приглашение отправляется по email либо передаётся
+ссылкой, если такая возможность включена оператором.
 
 <Note>
-  There's no free plan for teams; every member needs a paid seat. See [Billing & plans](/account/billing).
+  В локальной среде транзакционные письма попадают в Mailpit. Для внешней
+  доставки приглашений оператор должен настроить SMTP-провайдера и проверить
+  DNS/доставляемость.
 </Note>
 
-## Auto-join on domain
+## Автоматическое присоединение по домену
 
-Rather than invite coworkers one at a time, admins and owners can turn on **Auto-join on domain** from **Settings → Team**. When it's on, anyone who signs up for Macro with an email on the team owner's domain (for example `@acme.com`) is added to the team automatically. Toggle it off at any time to return to invite-only; existing members are unaffected either way.
+Администратор или владелец может включить **Автовступление по домену**. После
+этого пользователь с email на домене владельца команды, например
+`@example.com`, может быть добавлен автоматически. Перед включением убедитесь,
+что домен надёжно подтверждает принадлежность пользователя к организации.
 
-## Roles
+Отключение настройки возвращает режим приглашений и не удаляет существующих
+участников.
 
-Teams have three roles, in increasing order of access:
+## Роли
 
-| Role | What it adds |
-| --- | --- |
-| **Member** | Everything shared with the team: team tasks, shared calls, visible CRM records |
-| **Admin** | Manage CRM visibility: toggle [Email Sync](/product/crm) per company, hide or unhide records |
-| **Owner** | Everything above, plus inviting and removing members |
+| Роль              | Возможности                                                                  |
+| ----------------- | ---------------------------------------------------------------------------- |
+| **Участник**      | Работает с материалами, доступными команде и его каналам                     |
+| **Администратор** | Управляет доступными административными настройками и видимостью CRM          |
+| **Владелец**      | Приглашает и удаляет участников, а также получает возможности администратора |
 
-Owners can remove any member except themselves. When someone is removed, they lose team-shared content automatically, and removing them from [channels](/permissions) revokes everything that was shared there.
+Перед эксплуатацией проверьте точную матрицу разрешений на используемой версии.
+Удаление человека из команды или канала должно отзывать доступ, полученный
+через эту группу, но не обязательно затрагивает материалы, которыми поделились
+отдельно.
 
-## What's shared with a team
+## Что может быть общим
 
-Joining a team changes the default sharing for a few block types. Everything else stays private until you share it:
+Поведение зависит от включённых сервисов и настроек команды:
 
-- **Tasks** are visible to the whole team by default.
-- **Calls** are recorded, transcribed, and shared to team memory by default; anyone can opt a call out, which keeps it in their personal memory only.
-- **Emails** with tracked customers are shared through the [CRM](/product/crm) when Email Sync is on for that company.
-- **[Snippets](/product/snippets)** stay personal until you turn on **Share with team** in the snippet's side panel; a shared snippet appears in every teammate's <kbd>;</kbd> menu and they can edit it.
+- задачи могут быть видны всей команде по умолчанию;
+- записи и расшифровки звонков могут попадать в team memory, если сервис
+  звонков настроен и пользователь не отключил общий доступ;
+- письма могут появляться в CRM при включённой синхронизации для компании;
+- [сниппеты](/product/snippets) остаются личными, пока пользователь явно не
+  включит общий доступ;
+- упоминание блока в канале может выдать доступ участникам этого канала.
 
-See [Permissions](/permissions) for the full sharing model.
+Не помещайте чувствительные данные в командный канал, пока не проверили его
+участников. Полная пользовательская модель описана в
+[разделе разрешений](/permissions).
 
-## Sign-in and enterprise
+## Вход и внешние интеграции
 
-Macro signs in with your Google account, the same one your Gmail or Google Workspace email syncs from. For a GDPR data processing agreement, a HIPAA Business Associate Agreement, or EU hosting, contact [support@macro.com](mailto:support@macro.com). For FedRAMP or running Macro on your own infrastructure, contact [self-host@macro.com](mailto:self-host@macro.com).
+Локальный контур поддерживает вход по одноразовому коду через FusionAuth и
+Mailpit. Google OAuth, Gmail, GitHub и внешние способы входа требуют собственных
+credentials оператора. Наличие пункта в интерфейсе не подтверждает, что
+интеграция уже настроена.
 
-[Security](/security) covers encryption, certifications, retention, and how agents handle team data.
+[Раздел безопасности](/security) описывает обязанности оператора, хранение
+секретов и ограничения текущего self-host контура.

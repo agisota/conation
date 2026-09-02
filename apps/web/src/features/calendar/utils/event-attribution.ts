@@ -98,8 +98,10 @@ export function eventAttribution(event: CalendarEvent): EventAttribution {
     organizer !== undefined && !sameAsCalendar(organizer, event.calendar);
 
   return {
-    calendarName: event.calendar.name || 'Calendar',
+    calendarName: event.calendar.name || t('calendar.label'),
     creator: showCreator ? creator : undefined,
     organizer: showOrganizer ? organizer : undefined,
   };
 }
+
+import { t } from '@app/lib/i18n';

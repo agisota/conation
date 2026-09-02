@@ -17,11 +17,11 @@
 /// Domain layer: models, ports, and service.
 pub mod domain;
 
-pub use domain::models::{Event, EventBrokerError, MacroEvent, MessageWrapper, TopicEvent};
 pub use conation_event_topics::{
     MacroChannelsTopic, MacroDocumentsTopic, MacroEmailTopic, MacroExampleTopic,
     MacroProjectsTopic, Topic,
 };
+pub use domain::models::{Event, EventBrokerError, MacroEvent, MessageWrapper, TopicEvent};
 
 pub use domain::ports::{
     EventConsumer, EventPublisher, MacroEventBroker, MacroEventCollection, MessageParts, Spawner,

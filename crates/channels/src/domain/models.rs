@@ -1,13 +1,13 @@
 pub use channel_sender::ChannelSender;
 use chrono::{DateTime, Utc};
+#[cfg(any(feature = "list", feature = "outbound"))]
+use conation_user_id::email::ReadEmailParts;
+use conation_user_id::user_id::MacroUserIdStr;
 #[cfg(feature = "list")]
 use item_filters::ast::{
     LiteralTree,
     channel::{ChannelLiteral, ChannelThreadLiteral},
 };
-#[cfg(any(feature = "list", feature = "outbound"))]
-use conation_user_id::email::ReadEmailParts;
-use conation_user_id::user_id::MacroUserIdStr;
 use models_pagination::{CreatedAt, CursorVal, Identify, SortOn};
 #[cfg(feature = "list")]
 use models_pagination::{Query, SimpleSortMethod};
@@ -1192,7 +1192,7 @@ pub(crate) fn fallback_user_name(user_id: &MacroUserIdStr<'_>) -> String {
 #[derive(Debug)]
 pub struct GetChannelsRequest {
     /// Requesting user id.
-    pub conation_id: MacroUserIdStr<'static>,
+    pub macro_id: MacroUserIdStr<'static>,
     /// Optional result limit.
     pub limit: Option<u32>,
     /// Whether aggregate frecency should be loaded for the returned channels.
@@ -1206,7 +1206,7 @@ impl GetChannelsRequest {
     /// Convert into repository params.
     pub fn into_params(self) -> GetChannelsParams {
         GetChannelsParams {
-            conation_id: self.conation_id,
+            macro_id: self.macro_id,
             limit: self.limit,
             query: self.query,
         }
@@ -1217,7 +1217,7 @@ impl GetChannelsRequest {
 #[cfg(feature = "list")]
 #[derive(Debug)]
 pub struct GetChannelsParams {
-    conation_id: MacroUserIdStr<'static>,
+    macro_id: MacroUserIdStr<'static>,
     limit: Option<u32>,
     query: Query<Uuid, SimpleSortMethod, LiteralTree<ChannelLiteral>>,
 }
@@ -1227,7 +1227,7 @@ pub struct GetChannelsParams {
 #[derive(Debug)]
 pub struct GetThreadReplyRowsRequest {
     /// Requesting user id.
-    pub conation_id: MacroUserIdStr<'static>,
+    pub macro_id: MacroUserIdStr<'static>,
     /// Optional result limit.
     pub limit: Option<u32>,
     /// Cursor, sort, and channel-thread-level filter.
@@ -1239,7 +1239,7 @@ impl GetThreadReplyRowsRequest {
     /// Convert into repository params.
     pub fn into_params(self) -> GetThreadReplyRowsParams {
         GetThreadReplyRowsParams {
-            conation_id: self.conation_id,
+            macro_id: self.macro_id,
             limit: self.limit,
             query: self.query,
         }
@@ -1250,7 +1250,7 @@ impl GetThreadReplyRowsRequest {
 #[cfg(feature = "list")]
 #[derive(Debug)]
 pub struct GetThreadReplyRowsParams {
-    conation_id: MacroUserIdStr<'static>,
+    macro_id: MacroUserIdStr<'static>,
     limit: Option<u32>,
     query: Query<Uuid, SimpleSortMethod, LiteralTree<ChannelThreadLiteral>>,
 }
@@ -1259,7 +1259,7 @@ pub struct GetThreadReplyRowsParams {
 impl GetThreadReplyRowsParams {
     /// Requesting user id.
     pub fn user(&self) -> &MacroUserIdStr<'static> {
-        &self.conation_id
+        &self.macro_id
     }
 
     /// Optional result limit.
@@ -1277,7 +1277,7 @@ impl GetThreadReplyRowsParams {
 impl GetChannelsParams {
     /// Requesting user id.
     pub fn user(&self) -> &MacroUserIdStr<'static> {
-        &self.conation_id
+        &self.macro_id
     }
 
     /// Optional result limit.

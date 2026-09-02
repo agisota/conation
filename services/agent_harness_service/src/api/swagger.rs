@@ -11,7 +11,10 @@ use utoipa::OpenApi;
 
 #[derive(OpenApi)]
 #[openapi(
-    info(terms_of_service = "https://macro.com/terms"),
+    info(
+        terms_of_service = "https://conation.dev/terms",
+        license(name = "GNU Affero General Public License v3.0", identifier = "AGPL-3.0-only")
+    ),
     paths(
         axum_router::create_agent_session_handler,
         axum_router::get_agent_session_handler,

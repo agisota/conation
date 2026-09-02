@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 
+use conation_user_id::user_id::MacroUserIdStr;
 use sqlx::{Pool, Postgres};
 
 /// Creates a new user in the database and attaches provided roles
@@ -20,9 +21,9 @@ pub async fn create_user(
     let mut transaction = db.begin().await?;
 
     // Create macro user
-    let conation_user_id = sqlx::query!(
+    let macro_user_id = sqlx::query!(
         r#"
-        INSERT INTO "conation_user" ("id", "username", "stripe_customer_id", "email", "has_trialed")
+        INSERT INTO "macro_user" ("id", "username", "stripe_customer_id", "email", "has_trialed")
         VALUES ($1, $2, $3, $4, $5)
         RETURNING id
         "#,
@@ -38,7 +39,7 @@ pub async fn create_user(
 
     sqlx::query!(
         r#"
-        INSERT INTO "conation_user_email_verification" ("conation_user_id", "email", "is_verified")
+        INSERT INTO "macro_user_email_verification" ("macro_user_id", "email", "is_verified")
         VALUES ($1, $2, $3)
         "#,
         &id,
@@ -49,11 +50,11 @@ pub async fn create_user(
     .await?;
 
     // Create user profile
-    let id = format!("macro|{}", email);
+    let id = MacroUserIdStr::try_from_email(email)?.to_string();
 
     let user_id = sqlx::query!(
         r#"
-        INSERT INTO "User" ("id", "email", "stripeCustomerId", "organizationId", "conation_user_id")
+        INSERT INTO "User" ("id", "email", "stripeCustomerId", "organizationId", "macro_user_id")
         VALUES ($1, $2, $3, $4, $5)
         RETURNING id
         "#,
@@ -61,7 +62,7 @@ pub async fn create_user(
         email,
         stripe_customer_id,
         organization_id,
-        &conation_user_id
+        &macro_user_id
     )
     .map(|row| row.id)
     .fetch_one(&mut *transaction)
@@ -94,21 +95,21 @@ pub async fn create_user_profile(
     organization_id: Option<i32>,
     roles: HashSet<String>,
 ) -> anyhow::Result<()> {
-    let conation_user_id = conation_uuid::string_to_uuid(id)?;
-    let user_profile_id = format!("macro|{}", email);
+    let macro_user_id = conation_uuid::string_to_uuid(id)?;
+    let user_profile_id = MacroUserIdStr::try_from_email(email)?.to_string();
 
     let mut transaction = db.begin().await?;
 
     let user_id = sqlx::query!(
         r#"
-        INSERT INTO "User" ("id", "email", "organizationId", "conation_user_id")
+        INSERT INTO "User" ("id", "email", "organizationId", "macro_user_id")
         VALUES ($1, $2, $3, $4)
         RETURNING id
         "#,
         &user_profile_id,
         email,
         organization_id,
-        &conation_user_id
+        &macro_user_id
     )
     .map(|row| row.id)
     .fetch_one(&mut *transaction)

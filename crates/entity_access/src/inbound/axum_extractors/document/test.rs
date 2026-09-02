@@ -20,12 +20,8 @@ use axum::{
 };
 use conation_authorization::{
     BOT_SCOPE_HEADER, BOT_TOKEN_HEADER, BotActingUserClaims, BotAuthentication, BotScope,
-    INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_USER_ID_HEADER, InternalIdentityClaims,
+    INTERNAL_API_KEY_HEADER, INTERNAL_CONATION_USER_ID_HEADER, InternalIdentityClaims,
     MacroAuthorizationError, MacroAuthorizationService, MacroAuthorizationState,
-};
-#[allow(deprecated)]
-use conation_authorization::{
-    LEGACY_DSS_INTERNAL_API_KEY_HEADER, LEGACY_DSS_INTERNAL_MACRO_USER_ID_HEADER,
 };
 use conation_user_id::user_id::MacroUserIdStr;
 use model::document::DocumentBasic;
@@ -156,7 +152,7 @@ fn owner_scoped_bot_authentication() -> BotAuthentication {
         .acting_user
         .as_mut()
         .expect("user-scoped bot should have an acting user");
-    acting_user.conation_user_id =
+    acting_user.macro_user_id =
         MacroUserIdStr::parse_from_str(OWNER_ID).expect("owner id should be valid");
     acting_user.user_context = user_context(OWNER_ID);
     authentication
@@ -335,21 +331,29 @@ async fn assert_internal_act_as_uses_acl(
 async fn standard_internal_act_as_uses_ordinary_acl_evaluation() {
     assert_internal_act_as_uses_acl(
         INTERNAL_API_KEY_HEADER,
-        INTERNAL_MACRO_USER_ID_HEADER,
+        INTERNAL_CONATION_USER_ID_HEADER,
         STANDARD_ACT_AS_ID,
     )
     .await;
 }
 
-#[allow(deprecated)]
 #[tokio::test]
-async fn legacy_internal_act_as_uses_ordinary_acl_evaluation() {
-    assert_internal_act_as_uses_acl(
-        LEGACY_DSS_INTERNAL_API_KEY_HEADER,
-        LEGACY_DSS_INTERNAL_MACRO_USER_ID_HEADER,
-        LEGACY_ACT_AS_ID,
+async fn legacy_internal_headers_are_rejected_before_acl_evaluation() {
+    let state = TestState::new(Some(AccessLevel::Edit));
+    let error = extract::<EditAccessLevel>(
+        internal_request(
+            "x-document-storage-service-auth-key",
+            Some("x-document-storage-service-user-id"),
+            Some(LEGACY_ACT_AS_ID),
+            document(false),
+        ),
+        &state,
     )
-    .await;
+    .await
+    .expect_err("legacy internal headers should be rejected");
+
+    assert_eq!(error.into_response().status(), StatusCode::BAD_REQUEST);
+    assert!(state.entity_access.calls().is_empty());
 }
 
 #[tokio::test]

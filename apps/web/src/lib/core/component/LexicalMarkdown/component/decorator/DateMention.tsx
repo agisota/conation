@@ -1,8 +1,8 @@
-import { DatePicker } from '@core/component/DatePicker';
-import { t } from '@app/lib/i18n';
-import { formatRelativeDay } from '@core/util/dateParser';
 import type { DateMentionDecoratorProps } from '@conation/lexical-core';
 import { $isDateMentionNode } from '@conation/lexical-core';
+import { DatePicker } from '@core/component/DatePicker';
+import { formatDateTime, t } from '@core/i18n';
+import { formatRelativeDay } from '@core/util/dateParser';
 import ClockIcon from '@phosphor/clock.svg';
 import { differenceInCalendarDays } from 'date-fns';
 import {
@@ -30,9 +30,8 @@ function formatTooltipDate(date: Date): string {
   if (diff <= 5) {
     options.hour = 'numeric';
     options.minute = '2-digit';
-    options.hour12 = true;
   }
-  return date.toLocaleDateString('en-US', options);
+  return formatDateTime(date, options);
 }
 
 export function DateMention(props: DateMentionDecoratorProps) {

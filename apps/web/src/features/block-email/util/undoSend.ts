@@ -1,5 +1,6 @@
-import { toast } from '@core/component/Toast/Toast';
+import { t } from '@app/lib/i18n';
 import { Telemetry } from '@conation/observability';
+import { toast } from '@core/component/Toast/Toast';
 import { queryClient } from '@queries/client';
 import { emailKeys } from '@queries/email/keys';
 import { invalidateSoupEntity } from '@queries/soup/cache';
@@ -89,9 +90,7 @@ export async function runUndoSend(options: {
         (e) => e.code === 'HTTP_ERROR' && e.message.includes('status: 400')
       );
       toast.failure(
-        alreadySent
-          ? 'Too late to undo — the email was already sent'
-          : 'Failed to undo send'
+        alreadySent ? t('blockEmail.undo.tooLate') : t('blockEmail.undo.failed')
       );
       return;
     }
@@ -101,7 +100,7 @@ export async function runUndoSend(options: {
 
     await options.onUndone();
 
-    toast.success('Send cancelled');
+    toast.success(t('blockEmail.undo.cancelled'));
     invalidateSoupEntity(draftId);
   } catch (e) {
     endUndoSend(draftId);
@@ -110,7 +109,7 @@ export async function runUndoSend(options: {
         ? e
         : new Error(`Failed to undo send for draft ${draftId}`)
     );
-    toast.failure('Failed to undo send');
+    toast.failure(t('blockEmail.undo.failed'));
   }
 }
 

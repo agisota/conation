@@ -20,7 +20,7 @@ fn parse_channel_create_minimal() {
         "channel",
         "create",
         "--channel-owner",
-        "macro|alice@example.com",
+        "conation|alice@example.com",
         "--channel-type",
         "public",
     ])
@@ -29,7 +29,7 @@ fn parse_channel_create_minimal() {
     match cli.command {
         crate::entity::EntityCommand::Channel(args) => match args.command {
             ChannelCommand::Create(create) => {
-                assert_eq!(create.channel_owner, "macro|alice@example.com");
+                assert_eq!(create.channel_owner, "conation|alice@example.com");
                 assert!(matches!(create.channel_type, CliChannelType::Public));
                 assert!(create.channel_name.is_none());
                 assert!(create.channel_members.is_empty());
@@ -49,11 +49,11 @@ fn parse_channel_create_full() {
         "--channel-name",
         "general",
         "--channel-owner",
-        "macro|alice@example.com",
+        "conation|alice@example.com",
         "--channel-type",
         "private",
         "--channel-members",
-        "macro|bob@example.com,macro|charlie@example.com",
+        "conation|bob@example.com,conation|charlie@example.com",
     ])
     .unwrap();
 
@@ -61,11 +61,11 @@ fn parse_channel_create_full() {
         crate::entity::EntityCommand::Channel(args) => match args.command {
             ChannelCommand::Create(create) => {
                 assert_eq!(create.channel_name.as_deref(), Some("general"));
-                assert_eq!(create.channel_owner, "macro|alice@example.com");
+                assert_eq!(create.channel_owner, "conation|alice@example.com");
                 assert!(matches!(create.channel_type, CliChannelType::Private));
                 assert_eq!(
                     create.channel_members,
-                    vec!["macro|bob@example.com", "macro|charlie@example.com"]
+                    vec!["conation|bob@example.com", "conation|charlie@example.com"]
                 );
             }
             other => panic!("expected Create, got {other:?}"),
@@ -81,7 +81,7 @@ fn parse_channel_create_direct_message_type() {
         "channel",
         "create",
         "--channel-owner",
-        "macro|alice@example.com",
+        "conation|alice@example.com",
         "--channel-type",
         "direct-message",
     ])
@@ -111,7 +111,7 @@ fn parse_channel_create_missing_type_fails() {
         "channel",
         "create",
         "--channel-owner",
-        "macro|alice@example.com",
+        "conation|alice@example.com",
     ]);
     assert!(result.is_err());
 }
@@ -123,7 +123,7 @@ fn parse_channel_create_invalid_type_fails() {
         "channel",
         "create",
         "--channel-owner",
-        "macro|alice@example.com",
+        "conation|alice@example.com",
         "--channel-type",
         "bogus",
     ]);
@@ -137,7 +137,7 @@ fn parse_channel_create_organization_type_fails() {
         "channel",
         "create",
         "--channel-owner",
-        "macro|alice@example.com",
+        "conation|alice@example.com",
         "--channel-type",
         "organization",
     ]);
@@ -151,7 +151,7 @@ fn parse_channel_create_org_id_argument_fails() {
         "channel",
         "create",
         "--channel-owner",
-        "macro|alice@example.com",
+        "conation|alice@example.com",
         "--channel-type",
         "private",
         "--org-id",
@@ -167,14 +167,14 @@ fn parse_channel_seed() {
         "channel",
         "seed",
         "--user-id",
-        "macro|alice@example.com",
+        "conation|alice@example.com",
     ])
     .unwrap();
 
     match cli.command {
         crate::entity::EntityCommand::Channel(args) => match args.command {
             ChannelCommand::Seed(seed) => {
-                assert_eq!(seed.user_id, "macro|alice@example.com");
+                assert_eq!(seed.user_id, "conation|alice@example.com");
             }
             other => panic!("expected Seed, got {other:?}"),
         },
@@ -216,7 +216,7 @@ async fn create_channel_success() {
         .times(1)
         .withf(|opts| {
             opts.name.as_deref() == Some("general")
-                && opts.owner_id == "macro|alice@example.com"
+                && opts.owner_id == "conation|alice@example.com"
                 && opts.channel_type == ChannelType::Public
         })
         .returning(|_| Ok(uuid::Uuid::nil()));
@@ -224,9 +224,9 @@ async fn create_channel_success() {
     let args = ChannelArgs {
         command: ChannelCommand::Create(CreateArgs {
             channel_name: Some("general".to_string()),
-            channel_owner: "macro|alice@example.com".to_string(),
+            channel_owner: "conation|alice@example.com".to_string(),
             channel_type: CliChannelType::Public,
-            channel_members: vec!["macro|bob@example.com".to_string()],
+            channel_members: vec!["conation|bob@example.com".to_string()],
         }),
     };
 
@@ -246,9 +246,9 @@ async fn create_channel_without_name() {
     let args = ChannelArgs {
         command: ChannelCommand::Create(CreateArgs {
             channel_name: None,
-            channel_owner: "macro|alice@example.com".to_string(),
+            channel_owner: "conation|alice@example.com".to_string(),
             channel_type: CliChannelType::DirectMessage,
-            channel_members: vec!["macro|bob@example.com".to_string()],
+            channel_members: vec!["conation|bob@example.com".to_string()],
         }),
     };
 
@@ -267,7 +267,7 @@ async fn create_channel_db_failure_propagates_error() {
     let args = ChannelArgs {
         command: ChannelCommand::Create(CreateArgs {
             channel_name: Some("general".to_string()),
-            channel_owner: "macro|alice@example.com".to_string(),
+            channel_owner: "conation|alice@example.com".to_string(),
             channel_type: CliChannelType::Public,
             channel_members: vec![],
         }),
@@ -289,12 +289,12 @@ async fn seed_creates_all_channels() {
             "channel_id": id1,
             "channel_name": "general",
             "channel_type": "public",
-            "participants": ["macro|bob@example.com", "macro|charlie@example.com"]
+            "participants": ["conation|bob@example.com", "conation|charlie@example.com"]
         },
         {
             "channel_id": id2,
             "channel_type": "direct_message",
-            "participants": ["macro|bob@example.com"]
+            "participants": ["conation|bob@example.com"]
         }
     ])
     .to_string();
@@ -307,7 +307,7 @@ async fn seed_creates_all_channels() {
         .returning(|opts| Ok(opts.channel_id));
 
     let args = SeedArgs {
-        user_id: "macro|alice@example.com".to_string(),
+        user_id: "conation|alice@example.com".to_string(),
         file_path: None,
     };
 
@@ -323,7 +323,7 @@ async fn seed_sets_user_id_as_owner_and_appends_to_participants() {
             "channel_id": id,
             "channel_name": "general",
             "channel_type": "public",
-            "participants": ["macro|bob@example.com"]
+            "participants": ["conation|bob@example.com"]
         }
     ])
     .to_string();
@@ -334,18 +334,18 @@ async fn seed_sets_user_id_as_owner_and_appends_to_participants() {
         .expect_seed_channel()
         .times(1)
         .withf(|opts| {
-            opts.owner_id == "macro|alice@example.com"
+            opts.owner_id == "conation|alice@example.com"
                 && opts
                     .participants
-                    .contains(&"macro|alice@example.com".to_string())
+                    .contains(&"conation|alice@example.com".to_string())
                 && opts
                     .participants
-                    .contains(&"macro|bob@example.com".to_string())
+                    .contains(&"conation|bob@example.com".to_string())
         })
         .returning(|opts| Ok(opts.channel_id));
 
     let args = SeedArgs {
-        user_id: "macro|alice@example.com".to_string(),
+        user_id: "conation|alice@example.com".to_string(),
         file_path: None,
     };
 
@@ -361,7 +361,7 @@ async fn seed_does_not_duplicate_user_in_participants() {
             "channel_id": id,
             "channel_name": "general",
             "channel_type": "public",
-            "participants": ["macro|alice@example.com", "macro|bob@example.com"]
+            "participants": ["conation|alice@example.com", "conation|bob@example.com"]
         }
     ])
     .to_string();
@@ -374,14 +374,14 @@ async fn seed_does_not_duplicate_user_in_participants() {
         .withf(|opts| {
             opts.participants
                 .iter()
-                .filter(|p| *p == "macro|alice@example.com")
+                .filter(|p| *p == "conation|alice@example.com")
                 .count()
                 == 1
         })
         .returning(|opts| Ok(opts.channel_id));
 
     let args = SeedArgs {
-        user_id: "macro|alice@example.com".to_string(),
+        user_id: "conation|alice@example.com".to_string(),
         file_path: None,
     };
 
@@ -397,7 +397,7 @@ async fn seed_empty_json_fails() {
     let mock_db = Db::default();
 
     let args = SeedArgs {
-        user_id: "macro|alice@example.com".to_string(),
+        user_id: "conation|alice@example.com".to_string(),
         file_path: None,
     };
 
@@ -441,7 +441,7 @@ async fn seed_continues_on_failure() {
     });
 
     let args = SeedArgs {
-        user_id: "macro|alice@example.com".to_string(),
+        user_id: "conation|alice@example.com".to_string(),
         file_path: None,
     };
 

@@ -6,11 +6,11 @@ use axum::{
     extract::ConnectInfo,
     http::{StatusCode, header},
 };
-use http_body_util::BodyExt;
 use conation_authorization::{
-    INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_USER_ID_HEADER, InternalIdentityClaims,
+    INTERNAL_API_KEY_HEADER, INTERNAL_CONATION_USER_ID_HEADER, InternalIdentityClaims,
     MacroAuthorizationError, MacroAuthorizationService, MacroAuthorizationState,
 };
+use http_body_util::BodyExt;
 use model_user::UserContext;
 use rate_limit::{
     RateLimitConfig, RateLimitExceeded, RateLimitKey, RateLimitResult, RateLimitServiceImpl,
@@ -59,7 +59,9 @@ struct MockReferralService {
 impl ReferralService for MockReferralService {
     async fn get_referral_code_for_user<'a>(
         &self,
-        _user_id: &conation_user_id::user_id::MacroUserId<conation_user_id::lowercased::Lowercase<'a>>,
+        _user_id: &conation_user_id::user_id::MacroUserId<
+            conation_user_id::lowercased::Lowercase<'a>,
+        >,
     ) -> Result<ReferralCode, ReferralError> {
         match &self.result {
             Ok(code) => Ok(code.clone()),
@@ -235,7 +237,7 @@ async fn test_get_referral_code_accepts_internal_acting_user() {
     let app = build_router(ok_service(), allowing_rate_limiter());
     let request = axum::http::Request::get("/code")
         .header(INTERNAL_API_KEY_HEADER, VALID_INTERNAL_KEY)
-        .header(INTERNAL_MACRO_USER_ID_HEADER, INTERNAL_ACTING_USER_ID)
+        .header(INTERNAL_CONATION_USER_ID_HEADER, INTERNAL_ACTING_USER_ID)
         .body(axum::body::Body::empty())
         .unwrap();
 

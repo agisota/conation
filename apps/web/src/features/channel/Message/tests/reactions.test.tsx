@@ -15,7 +15,7 @@ vi.mock('@core/context/user', () => ({
 }));
 
 vi.mock('@core/user', () => ({
-  idToDisplayName: (id: string) => id.replace('macro|', ''),
+  idToDisplayName: (id: string) => id.replace('conation|', ''),
 }));
 
 const baseMessage: MessageData = {
@@ -87,21 +87,21 @@ describe('formatReactorNames', () => {
   });
 
   it('shows the display name for a single other user', () => {
-    expect(formatReactorNames(['macro|alice@test.com'], 'user-1')).toBe(
+    expect(formatReactorNames(['conation|alice@test.com'], 'user-1')).toBe(
       'alice@test.com'
     );
   });
 
   it('joins two users with "and"', () => {
     expect(
-      formatReactorNames(['user-1', 'macro|alice@test.com'], 'user-1')
+      formatReactorNames(['user-1', 'conation|alice@test.com'], 'user-1')
     ).toBe('You and alice@test.com');
   });
 
   it('uses Oxford comma for three or more users', () => {
     expect(
       formatReactorNames(
-        ['user-1', 'macro|alice@test.com', 'macro|bob@test.com'],
+        ['user-1', 'conation|alice@test.com', 'conation|bob@test.com'],
         'user-1'
       )
     ).toBe('You, alice@test.com, and bob@test.com');
@@ -110,7 +110,7 @@ describe('formatReactorNames', () => {
   it('handles no current user match', () => {
     expect(
       formatReactorNames(
-        ['macro|alice@test.com', 'macro|bob@test.com'],
+        ['conation|alice@test.com', 'conation|bob@test.com'],
         'other-user'
       )
     ).toBe('alice@test.com and bob@test.com');
@@ -118,12 +118,12 @@ describe('formatReactorNames', () => {
 
   it('puts current user first regardless of input order', () => {
     expect(
-      formatReactorNames(['macro|alice@test.com', 'user-1'], 'user-1')
+      formatReactorNames(['conation|alice@test.com', 'user-1'], 'user-1')
     ).toBe('You and alice@test.com');
 
     expect(
       formatReactorNames(
-        ['macro|alice@test.com', 'macro|bob@test.com', 'user-1'],
+        ['conation|alice@test.com', 'conation|bob@test.com', 'user-1'],
         'user-1'
       )
     ).toBe('You, alice@test.com, and bob@test.com');

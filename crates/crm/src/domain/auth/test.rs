@@ -123,8 +123,8 @@ fn comment_receipt_derives_entity_and_rejects_non_crm() {
 
 #[test]
 fn team_receipt_hidden_gate_derives_from_team_role() {
-    use entity_access::domain::models::{Entity, EntityPermission, MemberTeamRole, TeamRole};
     use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+    use entity_access::domain::models::{Entity, EntityPermission, MemberTeamRole, TeamRole};
 
     let team = team_uuid();
     let user = MacroUserIdStr::parse_from_str("macro|user@example.com")

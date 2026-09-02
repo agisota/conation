@@ -6,8 +6,8 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Response},
 };
-use http_body_util::BodyExt;
 use conation_middleware::tracking::ClientIp;
+use http_body_util::BodyExt;
 use std::borrow::Cow;
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]

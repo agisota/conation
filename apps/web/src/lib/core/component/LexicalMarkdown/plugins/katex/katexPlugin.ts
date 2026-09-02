@@ -1,5 +1,5 @@
-import { $wrapNodeInElement, mergeRegister } from '@lexical/utils';
 import { $createEquationNode, $isEquationNode } from '@conation/lexical-core';
+import { $wrapNodeInElement, mergeRegister } from '@lexical/utils';
 import {
   $createParagraphNode,
   $getNodeByKey,

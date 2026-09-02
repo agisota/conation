@@ -1,7 +1,7 @@
 use crate::api::context::ApiContext;
 use crate::api::context::{AuthorizationService, EntityAccessService};
-use entity_access::inbound::axum_extractors::DocumentAccessExtractor;
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use entity_access::inbound::axum_extractors::DocumentAccessExtractor;
 use models_permissions::share_permission::access_level::ViewAccessLevel;
 use rayon::prelude::*;
 use std::{
@@ -49,7 +49,7 @@ static DOCUMENT_DOES_NOT_EXIST: &str = "document does not exist in s3";
         (status = 500, body=GenericErrorResponse),
     )
 )]
-#[tracing::instrument(skip(state, user, document_context, _access_level), fields(user_id=?user.authorization.user.conation_user_id))]
+#[tracing::instrument(skip(state, user, document_context, _access_level), fields(user_id=?user.authorization.user.macro_user_id))]
 pub async fn get_location_handler(
     _access_level: DocumentAccessExtractor<
         ViewAccessLevel,
@@ -217,8 +217,11 @@ async fn get_docx_urls(
     let start_shas = std::time::Instant::now();
     // Get all shas
     let shas: Vec<String> = if let Some(document_version_id) = document_version_id {
-        conation_db_client::document::document_shas::get_document_shas(&state.db, document_version_id)
-            .await?
+        conation_db_client::document::document_shas::get_document_shas(
+            &state.db,
+            document_version_id,
+        )
+        .await?
     } else {
         conation_db_client::document::document_shas::get_document_shas_by_document_id(
             &state.db,

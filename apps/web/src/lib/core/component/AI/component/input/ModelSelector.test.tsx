@@ -5,7 +5,6 @@
 import {
   MODEL_PRETTYNAME,
   Model,
-  modelsForPlan,
   type TModel,
 } from '@core/component/AI/constant';
 import { fireEvent, render } from '@solidjs/testing-library';
@@ -15,7 +14,7 @@ import { type ModelOption, ModelSelector } from './ModelSelector';
 
 // Render the Kobalte dropdown as a transparent passthrough so the menu items
 // are always in the DOM — we're testing ModelSelector's own logic (which models
-// render, lock state, select vs. paywall routing), not the dropdown primitive.
+// render, lock state, and select vs. unavailable routing), not the dropdown primitive.
 vi.mock('@ui', () => {
   const cn = (...args: unknown[]) =>
     args.flat(Infinity).filter(Boolean).join(' ');
@@ -49,7 +48,7 @@ vi.mock('@phosphor-icons/core/regular/lock-simple.svg?component-solid', () => ({
   default: () => <span data-testid="lock-icon" />,
 }));
 
-const ALL_PAID: ModelOption[] = (Object.values(Model) as TModel[]).map(
+const ALL_AVAILABLE: ModelOption[] = (Object.values(Model) as TModel[]).map(
   (id) => ({ id, available: true })
 );
 
@@ -68,18 +67,16 @@ function itemFor(container: HTMLElement, model: TModel): HTMLElement {
 describe('ModelSelector: availability', () => {
   it('lists every provided model', () => {
     const { container } = render(() => (
-      <ModelSelector models={ALL_PAID} onSelect={() => {}} />
+      <ModelSelector models={ALL_AVAILABLE} onSelect={() => {}} />
     ));
     expect(container.querySelectorAll('[role="menuitem"]')).toHaveLength(
-      ALL_PAID.length
+      ALL_AVAILABLE.length
     );
   });
 
   it('grays out and locks inaccessible models, leaving accessible ones clean', () => {
-    // A free user: only the fast model is available.
-    const freeAllowed = modelsForPlan(false);
     const options: ModelOption[] = (Object.values(Model) as TModel[]).map(
-      (id) => ({ id, available: freeAllowed.includes(id) })
+      (id) => ({ id, available: id !== Model.opus5 })
     );
     const { container } = render(() => (
       <ModelSelector models={options} onSelect={() => {}} />
@@ -101,7 +98,7 @@ describe('ModelSelector: selection routing', () => {
     const onLocked = vi.fn();
     const { container } = render(() => (
       <ModelSelector
-        models={ALL_PAID}
+        models={ALL_AVAILABLE}
         onSelect={onSelect}
         onLocked={onLocked}
       />
@@ -112,18 +109,17 @@ describe('ModelSelector: selection routing', () => {
     expect(onLocked).not.toHaveBeenCalled();
   });
 
-  it('selecting an inaccessible model triggers the paywall (onLocked), not a send', () => {
+  it('selecting an unavailable model calls onLocked, not onSelect', () => {
     const onSelect = vi.fn();
     const onLocked = vi.fn();
-    const freeAllowed = modelsForPlan(false);
     const options: ModelOption[] = (Object.values(Model) as TModel[]).map(
-      (id) => ({ id, available: freeAllowed.includes(id) })
+      (id) => ({ id, available: id !== Model.opus5 })
     );
     const { container } = render(() => (
       <ModelSelector models={options} onSelect={onSelect} onLocked={onLocked} />
     ));
 
-    fireEvent.click(itemFor(container, Model.opus5)); // locked for a free user
+    fireEvent.click(itemFor(container, Model.opus5));
     expect(onLocked).toHaveBeenCalledWith(Model.opus5);
     expect(onSelect).not.toHaveBeenCalled();
   });
@@ -141,7 +137,7 @@ describe('ModelSelector: what is shown is what is sent', () => {
         <span data-testid="would-send">{model()}</span>
         <ModelSelector
           selectedModel={model()}
-          models={ALL_PAID}
+          models={ALL_AVAILABLE}
           onSelect={setModel}
         />
       </>
@@ -163,13 +159,12 @@ describe('ModelSelector: what is shown is what is sent', () => {
     expect(trigger.textContent).toContain(MODEL_PRETTYNAME[Model.sonnet5]);
   });
 
-  it('a free user cannot select an inaccessible model into the would-send value', () => {
+  it('an unavailable option cannot become the would-send value', () => {
     const onLocked = vi.fn();
-    const freeAllowed = modelsForPlan(false);
     const options: ModelOption[] = (Object.values(Model) as TModel[]).map(
-      (id) => ({ id, available: freeAllowed.includes(id) })
+      (id) => ({ id, available: id !== Model.opus5 })
     );
-    function FreeHarness() {
+    function AvailabilityHarness() {
       const [model, setModel] = createSignal<TModel>(Model.haiku45);
       return (
         <>
@@ -183,22 +178,22 @@ describe('ModelSelector: what is shown is what is sent', () => {
         </>
       );
     }
-    const { container, getByTestId } = render(() => <FreeHarness />);
+    const { container, getByTestId } = render(() => <AvailabilityHarness />);
 
     fireEvent.click(itemFor(container, Model.opus5)); // locked
-    // The would-send value is unchanged; only the paywall fired.
+    // The would-send value is unchanged; only the unavailable callback fired.
     expect(getByTestId('would-send').textContent).toBe(Model.haiku45);
     expect(onLocked).toHaveBeenCalledWith(Model.opus5);
   });
 });
 
 // GAP / out of unit scope: the on-mount reconcile that forces a *persisted or
-// chat-provided* inaccessible model down to the plan default lives in
+// chat-provided* unknown model down to the universal default lives in
 // ChatInput's effect (src/lib/core/.../input/ChatInput.tsx), and the
 // stored-draft > chat-model > default precedence lives in Chat.tsx (block-chat,
 // outside this test runner's projects). Both are exercised here only indirectly
-// via modelsForPlan + the selector's locking. Cover them with a ChatInput-level
+// via the selector's availability contract. Cover them with a ChatInput-level
 // render test (heavy: editor/markdown/upload mocks) when that harness exists.
 it.todo(
-  'ChatInput reconciles a persisted/chat inaccessible model down to the plan default on mount'
+  'ChatInput reconciles a persisted/chat unknown model down to the default on mount'
 );

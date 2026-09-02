@@ -198,7 +198,7 @@ mod tests {
 
     #[sqlx::test(fixtures(path = "../../fixtures", scripts("basic_user_with_lots_of_documents")))]
     async fn test_get_user_documents(pool: Pool<Postgres>) {
-        let documents = get_user_documents(&pool, &"macro|user@user.com", 3, 0, None)
+        let documents = get_user_documents(&pool, &"conation|user@user.com", 3, 0, None)
             .await
             .unwrap();
 
@@ -220,7 +220,7 @@ mod tests {
             ]
         );
 
-        let documents = get_user_documents(&pool, &"macro|user@user.com", 3, 3, None)
+        let documents = get_user_documents(&pool, &"conation|user@user.com", 3, 3, None)
             .await
             .unwrap();
 
@@ -240,7 +240,7 @@ mod tests {
                 ("document-two".to_string(), 2),
             ]
         );
-        let documents = get_user_documents(&pool, &"macro|user@user.com", 3, 6, None)
+        let documents = get_user_documents(&pool, &"conation|user@user.com", 3, 6, None)
             .await
             .unwrap();
 
@@ -252,7 +252,7 @@ mod tests {
     async fn test_get_user_documents_with_filters(pool: Pool<Postgres>) {
         let documents = get_user_documents(
             &pool,
-            &"macro|user@user.com",
+            &"conation|user@user.com",
             3,
             0,
             Some("docx".to_string()),
@@ -263,10 +263,15 @@ mod tests {
         assert_eq!(documents.0.len(), 1);
         assert_eq!(documents.1, 1);
 
-        let documents =
-            get_user_documents(&pool, &"macro|user@user.com", 3, 0, Some("pdf".to_string()))
-                .await
-                .unwrap();
+        let documents = get_user_documents(
+            &pool,
+            &"conation|user@user.com",
+            3,
+            0,
+            Some("pdf".to_string()),
+        )
+        .await
+        .unwrap();
 
         assert_eq!(documents.0.len(), 3);
         assert_eq!(documents.1, 5);

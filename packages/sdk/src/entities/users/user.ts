@@ -6,7 +6,7 @@ import { Channel } from '../channels/channel';
 import { PropertiedEntity } from '../entity';
 
 /**
- * A Macro user. Identity lives in the auth service, so details like the
+ * A Conation user. Identity lives in the auth service, so details like the
  * display name are fetched on demand. Can be dropped into a {@link msg}
  * template to @-mention the user.
  */
@@ -41,7 +41,7 @@ export class User extends PropertiedEntity<UserName> implements Mentionable {
 
   /**
    * This user's display name, fetched from the auth service (falling back to
-   * your email contacts when the Macro profile has none).
+   * your email contacts when the Conation profile has none).
    *
    * @returns The full name, or `undefined` if the user has no name on record.
    */
@@ -52,14 +52,17 @@ export class User extends PropertiedEntity<UserName> implements Mentionable {
   }
 
   /**
-   * This user's email address. Macro user ids encode it as `macro|<email>`,
+   * This user's email address. Conation user ids encode it as `conation|<email>`,
    * so this reads straight off the id — no auth-service endpoint returns
    * emails for arbitrary users.
    *
    * @returns The email, or `undefined` if the id is not email-derived.
    */
   email(): string | undefined {
-    const email = this.id.startsWith('macro|') ? this.id.slice(6) : undefined;
+    const prefix = 'conation|';
+    const email = this.id.startsWith(prefix)
+      ? this.id.slice(prefix.length)
+      : undefined;
     return email?.includes('@') ? email : undefined;
   }
 

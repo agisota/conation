@@ -6,7 +6,7 @@ use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::document_storage_service_internal::{ValidateItemIDsRequest, ValidateItemIDsResponse};
 
 /// Validates the user has access to the provided list of item ids
-#[tracing::instrument(skip(ctx, user), fields(user_id=?user.authorization.user.conation_user_id))]
+#[tracing::instrument(skip(ctx, user), fields(user_id=?user.authorization.user.macro_user_id))]
 pub async fn handler(
     State(ctx): State<ApiContext>,
     user: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,

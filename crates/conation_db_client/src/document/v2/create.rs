@@ -1,8 +1,8 @@
 use crate::history::{upsert_item_last_accessed_timestamp, upsert_user_history_timestamp};
 use crate::share_permission::create::create_document_permission;
-use document_sub_type::DocumentSubType;
 use conation_user_id::cowlike::CowLike;
 use conation_user_id::user_id::MacroUserIdStr;
+use document_sub_type::DocumentSubType;
 use model::document::DocumentMetadata;
 use model::document::FileType;
 use model::document::ID;
@@ -334,7 +334,7 @@ mod tests {
             r#"INSERT INTO "Project" ("id", "name", "userId") VALUES ($1, $2, $3)"#,
             "project-one",
             "name",
-            "macro|user@user.com"
+            "conation|user@user.com"
         )
         .execute(&pool)
         .await?;
@@ -347,7 +347,7 @@ mod tests {
                 id: None,
                 sha: "sha",
                 document_name: "document-name",
-                user_id: MacroUserIdStr::parse_from_str("macro|user@user.com").unwrap(),
+                user_id: MacroUserIdStr::parse_from_str("conation|user@user.com").unwrap(),
                 file_type: Some(FileType::Pdf),
                 project_id: Some("project-one"),
                 project_name: None,
@@ -365,7 +365,7 @@ mod tests {
 
         assert!(!document_metadata.document_id.is_empty());
         assert_eq!(document_metadata.document_name, "document-name".to_string());
-        assert_eq!(document_metadata.owner.as_ref(), "macro|user@user.com");
+        assert_eq!(document_metadata.owner.as_ref(), "conation|user@user.com");
         assert_eq!(document_metadata.project_id.as_deref(), Some("project-one"));
         assert_eq!(document_metadata.project_name.as_deref(), Some("name"));
         assert_eq!(document_metadata.created_at, Some(ts));
@@ -377,7 +377,7 @@ mod tests {
                 id: None,
                 sha: "sha",
                 document_name: "document-name",
-                user_id: MacroUserIdStr::parse_from_str("macro|user@user.com").unwrap(),
+                user_id: MacroUserIdStr::parse_from_str("conation|user@user.com").unwrap(),
                 file_type: Some(FileType::Docx),
                 project_id: None,
                 project_name: None,
@@ -395,7 +395,7 @@ mod tests {
 
         assert!(!document_metadata.document_id.is_empty());
         assert_eq!(document_metadata.document_name, "document-name".to_string());
-        assert_eq!(document_metadata.owner.as_ref(), "macro|user@user.com");
+        assert_eq!(document_metadata.owner.as_ref(), "conation|user@user.com");
 
         Ok(())
     }
@@ -406,7 +406,7 @@ mod tests {
             r#"INSERT INTO "Project" ("id", "name", "userId") VALUES ($1, $2, $3)"#,
             "project-one",
             "name",
-            "macro|user@user.com"
+            "conation|user@user.com"
         )
         .execute(&pool)
         .await?;
@@ -419,7 +419,7 @@ mod tests {
                 id: Some("20f603c2-99db-aaaa-0000-1d8b9f95a52f"),
                 sha: "sha",
                 document_name: "document-name",
-                user_id: MacroUserIdStr::parse_from_str("macro|user@user.com").unwrap(),
+                user_id: MacroUserIdStr::parse_from_str("conation|user@user.com").unwrap(),
                 file_type: Some(FileType::Pdf),
                 project_id: Some("project-one"),
                 project_name: None,
@@ -440,7 +440,7 @@ mod tests {
             "20f603c2-99db-aaaa-0000-1d8b9f95a52f"
         );
         assert_eq!(document_metadata.document_name, "document-name".to_string());
-        assert_eq!(document_metadata.owner.as_ref(), "macro|user@user.com");
+        assert_eq!(document_metadata.owner.as_ref(), "conation|user@user.com");
         assert_eq!(document_metadata.project_id.as_deref(), Some("project-one"));
         assert_eq!(document_metadata.project_name.as_deref(), Some("name"));
         assert_eq!(document_metadata.created_at, Some(ts));
@@ -452,7 +452,7 @@ mod tests {
                 id: Some("20f603c2-99db-4f02-aaaa-1d8b9f95a52f"),
                 sha: "sha",
                 document_name: "document-name",
-                user_id: MacroUserIdStr::parse_from_str("macro|user@user.com").unwrap(),
+                user_id: MacroUserIdStr::parse_from_str("conation|user@user.com").unwrap(),
                 file_type: Some(FileType::Docx),
                 project_id: None,
                 project_name: None,
@@ -473,7 +473,7 @@ mod tests {
             "20f603c2-99db-4f02-aaaa-1d8b9f95a52f"
         );
         assert_eq!(document_metadata.document_name, "document-name".to_string());
-        assert_eq!(document_metadata.owner.as_ref(), "macro|user@user.com");
+        assert_eq!(document_metadata.owner.as_ref(), "conation|user@user.com");
 
         Ok(())
     }
@@ -486,7 +486,7 @@ mod tests {
                 id: None,
                 sha: "sha",
                 document_name: "document-name",
-                user_id: MacroUserIdStr::parse_from_str("macro|non-existent-user@fake.com")
+                user_id: MacroUserIdStr::parse_from_str("conation|non-existent-user@fake.com")
                     .unwrap(),
                 file_type: Some(FileType::Pdf),
                 project_id: None,
@@ -514,7 +514,7 @@ mod tests {
     #[sqlx::test(fixtures(path = "../../../fixtures", scripts("basic_user_with_documents")))]
     async fn test_insert_document_with_duplicate_id(pool: Pool<Postgres>) -> anyhow::Result<()> {
         let test_id = "duplicate-document-id";
-        let user_id = MacroUserIdStr::parse_from_str("macro|user@user.com").unwrap();
+        let user_id = MacroUserIdStr::parse_from_str("conation|user@user.com").unwrap();
 
         // First, create a document with the test ID
         let mut transaction = pool.begin().await?;

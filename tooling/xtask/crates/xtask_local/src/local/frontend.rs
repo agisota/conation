@@ -13,6 +13,11 @@ use anyhow::{Context, Result};
 use super::instance::{Instance, Port};
 use super::{Mode, proxy, repo_root, stage::Stage};
 
+#[cfg(test)]
+mod test;
+
+const FRONTEND_BUILD_NODE_HEAP_MIB: u16 = 8192;
+
 /// The app dir where the Vite dev server runs.
 fn app_dir() -> std::path::PathBuf {
     repo_root().join("apps/web")
@@ -52,12 +57,17 @@ pub fn static_dir(instance: &Instance) -> std::path::PathBuf {
 pub fn build_static(stage: &Stage, instance: &Instance, mode: Mode) -> Result<()> {
     let dist = {
         let mut cmd = Command::new("bun");
+        let inherited_node_options = conation_env_var::maybe_read_env("NODE_OPTIONS");
         cmd.current_dir(app_dir())
             .args(["run", "--bun", "build"])
             .env("MODE", "development")
             .env("NODE_ENV", "production")
             .env("VITE_LOCAL_SERVERS", "ALL")
-            .env("VITE_LOCAL_BACKEND_ORIGIN", "same-origin");
+            .env("VITE_LOCAL_BACKEND_ORIGIN", "same-origin")
+            .env(
+                "NODE_OPTIONS",
+                frontend_build_node_options(inherited_node_options.as_deref()),
+            );
         if mode.spec().runs_local_infra {
             cmd.env("VITE_AI_EDITING_WORKER_URL", "/ai-editing");
         }
@@ -89,6 +99,24 @@ pub fn build_static(stage: &Stage, instance: &Instance, mode: Mode) -> Result<()
         anyhow::ensure!(status.success(), "cp -a exited with {status}");
         Ok(())
     })
+}
+
+/// Supplies enough V8 heap for the production bundle without overriding an
+/// operator-provided heap policy.
+fn frontend_build_node_options(inherited: Option<&str>) -> String {
+    let inherited = inherited.unwrap_or_default().trim();
+    let has_explicit_heap = inherited.split_whitespace().any(|option| {
+        option == "--max-old-space-size" || option.starts_with("--max-old-space-size=")
+    });
+    if has_explicit_heap {
+        return inherited.to_string();
+    }
+    let heap = format!("--max-old-space-size={FRONTEND_BUILD_NODE_HEAP_MIB}");
+    if inherited.is_empty() {
+        heap
+    } else {
+        format!("{inherited} {heap}")
+    }
 }
 
 /// The env the dev server runs with. Both local and dev point the whole app at

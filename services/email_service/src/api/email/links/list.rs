@@ -52,9 +52,9 @@ pub async fn list_links_handler(
     State(ctx): State<ApiContext>,
     authorization: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
 ) -> Result<Response, ListLinksError> {
-    let inboxes = email_db_client::links::get::fetch_inbox_details_for_conation_id(
+    let inboxes = email_db_client::links::get::fetch_inbox_details_for_macro_id(
         &ctx.db,
-        &authorization.authorization.user.conation_user_id,
+        &authorization.authorization.user.macro_user_id,
     )
     .await
     .map_err(ListLinksError::DatabaseError)?;

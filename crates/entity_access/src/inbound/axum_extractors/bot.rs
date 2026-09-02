@@ -21,7 +21,7 @@ pub(super) fn map_bot_access_scope(
             )?;
 
             Ok(BotAccessScope::User {
-                user_id: acting_user.conation_user_id.clone(),
+                user_id: acting_user.macro_user_id.clone(),
                 user_org_id: acting_user.user_context.organization_id.map(i64::from),
             })
         }

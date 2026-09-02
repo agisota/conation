@@ -8,8 +8,8 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use entity_access::inbound::axum_extractors::DocumentAccessExtractor;
 use conation_db_client::annotations::get::{get_document_comments, get_pdf_anchors};
+use entity_access::inbound::axum_extractors::DocumentAccessExtractor;
 use model::{
     annotations::Anchor,
     document::{DocumentBasic, FileType},

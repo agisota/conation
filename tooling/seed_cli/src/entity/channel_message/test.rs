@@ -42,7 +42,7 @@ fn parse_channel_message_create_minimal() {
         "--channel-id",
         &channel_id,
         "--sender-id",
-        "macro|alice@example.com",
+        "conation|alice@example.com",
         "--content",
         "Hello, world!",
     ])
@@ -52,7 +52,7 @@ fn parse_channel_message_create_minimal() {
         crate::entity::EntityCommand::ChannelMessage(args) => match args.command {
             ChannelMessageCommand::Create(create) => {
                 assert_eq!(create.channel_id, Uuid::nil());
-                assert_eq!(create.sender_id, "macro|alice@example.com");
+                assert_eq!(create.sender_id, "conation|alice@example.com");
                 assert_eq!(create.content, "Hello, world!");
                 assert!(create.thread_id.is_none());
             }
@@ -73,7 +73,7 @@ fn parse_channel_message_create_with_thread_id() {
         "--channel-id",
         &channel_id,
         "--sender-id",
-        "macro|alice@example.com",
+        "conation|alice@example.com",
         "--content",
         "This is a reply",
         "--thread-id",
@@ -85,7 +85,7 @@ fn parse_channel_message_create_with_thread_id() {
         crate::entity::EntityCommand::ChannelMessage(args) => match args.command {
             ChannelMessageCommand::Create(create) => {
                 assert_eq!(create.channel_id, Uuid::nil());
-                assert_eq!(create.sender_id, "macro|alice@example.com");
+                assert_eq!(create.sender_id, "conation|alice@example.com");
                 assert_eq!(create.content, "This is a reply");
                 assert_eq!(create.thread_id, Some(Uuid::from_u128(1)));
             }
@@ -102,7 +102,7 @@ fn parse_channel_message_create_missing_channel_id_fails() {
         "channel-message",
         "create",
         "--sender-id",
-        "macro|alice@example.com",
+        "conation|alice@example.com",
         "--content",
         "Hello",
     ]);
@@ -134,7 +134,7 @@ fn parse_channel_message_create_missing_content_fails() {
         "--channel-id",
         &channel_id,
         "--sender-id",
-        "macro|alice@example.com",
+        "conation|alice@example.com",
     ]);
     assert!(result.is_err());
 }
@@ -148,7 +148,7 @@ fn parse_channel_message_create_invalid_channel_id_fails() {
         "--channel-id",
         "not-a-uuid",
         "--sender-id",
-        "macro|alice@example.com",
+        "conation|alice@example.com",
         "--content",
         "Hello",
     ]);
@@ -185,7 +185,7 @@ async fn create_message_success() {
         .times(1)
         .withf(move |opts| {
             opts.channel_id == channel_id
-                && opts.sender_id == "macro|alice@example.com"
+                && opts.sender_id == "conation|alice@example.com"
                 && opts.content == "Hello, world!"
                 && opts.thread_id.is_none()
         })
@@ -194,7 +194,7 @@ async fn create_message_success() {
     let args = ChannelMessageArgs {
         command: ChannelMessageCommand::Create(CreateArgs {
             channel_id,
-            sender_id: "macro|alice@example.com".to_string(),
+            sender_id: "conation|alice@example.com".to_string(),
             content: "Hello, world!".to_string(),
             thread_id: None,
         }),
@@ -215,7 +215,7 @@ async fn create_message_with_thread_id() {
         .times(1)
         .withf(move |opts| {
             opts.channel_id == channel_id
-                && opts.sender_id == "macro|alice@example.com"
+                && opts.sender_id == "conation|alice@example.com"
                 && opts.content == "This is a reply"
                 && opts.thread_id == Some(thread_id)
         })
@@ -224,7 +224,7 @@ async fn create_message_with_thread_id() {
     let args = ChannelMessageArgs {
         command: ChannelMessageCommand::Create(CreateArgs {
             channel_id,
-            sender_id: "macro|alice@example.com".to_string(),
+            sender_id: "conation|alice@example.com".to_string(),
             content: "This is a reply".to_string(),
             thread_id: Some(thread_id),
         }),
@@ -245,7 +245,7 @@ async fn create_message_db_failure_propagates_error() {
     let args = ChannelMessageArgs {
         command: ChannelMessageCommand::Create(CreateArgs {
             channel_id: Uuid::nil(),
-            sender_id: "macro|alice@example.com".to_string(),
+            sender_id: "conation|alice@example.com".to_string(),
             content: "Hello".to_string(),
             thread_id: None,
         }),
@@ -267,13 +267,13 @@ async fn seed_creates_all_messages() {
         {
             "message_id": msg1,
             "channel_id": channel_id,
-            "sender_id": "macro|alice@example.com",
+            "sender_id": "conation|alice@example.com",
             "content": "Hello world"
         },
         {
             "message_id": msg2,
             "channel_id": channel_id,
-            "sender_id": "macro|bob@example.com",
+            "sender_id": "conation|bob@example.com",
             "content": "Hi there"
         }
     ])
@@ -298,7 +298,7 @@ async fn seed_uses_provided_message_id() {
         {
             "message_id": msg_id,
             "channel_id": channel_id,
-            "sender_id": "macro|alice@example.com",
+            "sender_id": "conation|alice@example.com",
             "content": "Test message"
         }
     ])
@@ -325,7 +325,7 @@ async fn seed_with_thread_id() {
         {
             "message_id": msg_id,
             "channel_id": channel_id,
-            "sender_id": "macro|alice@example.com",
+            "sender_id": "conation|alice@example.com",
             "content": "Thread reply",
             "thread_id": thread_id
         }
@@ -366,19 +366,19 @@ async fn seed_continues_on_failure() {
         {
             "message_id": msg1,
             "channel_id": channel_id,
-            "sender_id": "macro|alice@example.com",
+            "sender_id": "conation|alice@example.com",
             "content": "Good 1"
         },
         {
             "message_id": msg2,
             "channel_id": channel_id,
-            "sender_id": "macro|bad@example.com",
+            "sender_id": "conation|bad@example.com",
             "content": "Bad"
         },
         {
             "message_id": msg3,
             "channel_id": channel_id,
-            "sender_id": "macro|bob@example.com",
+            "sender_id": "conation|bob@example.com",
             "content": "Good 2"
         }
     ])
@@ -387,7 +387,7 @@ async fn seed_continues_on_failure() {
 
     let mut mock_db = Db::default();
     mock_db.expect_seed_message().times(3).returning(|opts| {
-        if opts.sender_id == "macro|bad@example.com" {
+        if opts.sender_id == "conation|bad@example.com" {
             Err(anyhow::anyhow!("db error"))
         } else {
             Ok(opts.message_id)
@@ -408,11 +408,11 @@ async fn seed_with_mentions_calls_create_message_mentions() {
         {
             "message_id": msg_id,
             "channel_id": channel_id,
-            "sender_id": "macro|alice@example.com",
+            "sender_id": "conation|alice@example.com",
             "content": "Check this doc",
             "entity_mentions": [
                 { "entity_type": "document", "entity_id": "doc-123" },
-                { "entity_type": "user", "entity_id": "macro|bob@example.com" }
+                { "entity_type": "user", "entity_id": "conation|bob@example.com" }
             ]
         }
     ])
@@ -438,7 +438,7 @@ async fn seed_with_mentions_calls_create_message_mentions() {
                 && mentions[1]
                     == (SimpleMention {
                         entity_type: "user".to_string(),
-                        entity_id: "macro|bob@example.com".to_string(),
+                        entity_id: "conation|bob@example.com".to_string(),
                     })
         })
         .returning(|_, _| Ok(vec![]));
@@ -462,7 +462,7 @@ async fn seed_without_mentions_does_not_call_mention_methods() {
         {
             "message_id": msg_id,
             "channel_id": channel_id,
-            "sender_id": "macro|alice@example.com",
+            "sender_id": "conation|alice@example.com",
             "content": "No mentions here"
         }
     ])
@@ -496,7 +496,7 @@ async fn seed_mention_failure_does_not_prevent_message_creation() {
         {
             "message_id": msg1,
             "channel_id": channel_id,
-            "sender_id": "macro|alice@example.com",
+            "sender_id": "conation|alice@example.com",
             "content": "With mentions",
             "entity_mentions": [
                 { "entity_type": "document", "entity_id": "doc-123" }
@@ -505,7 +505,7 @@ async fn seed_mention_failure_does_not_prevent_message_creation() {
         {
             "message_id": msg2,
             "channel_id": channel_id,
-            "sender_id": "macro|bob@example.com",
+            "sender_id": "conation|bob@example.com",
             "content": "After mention fail"
         }
     ])

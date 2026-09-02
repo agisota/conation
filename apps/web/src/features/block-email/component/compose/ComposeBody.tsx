@@ -1,15 +1,15 @@
-import { EmailAttachmentPill } from '@block-email/component/AttachmentPill';
 import { t } from '@app/lib/i18n';
+import { EmailAttachmentPill } from '@block-email/component/AttachmentPill';
 import type { DraftFormAttachment } from '@block-email/component/createEmailFormState';
 import { MacroSignatureButton } from '@block-email/component/MacroSignatureButton';
 import { addUserMentionToCc } from '@block-email/util/mentionToCc';
 import { useSplitPanel } from '@components/app/split-layout/layoutUtils';
+import { Telemetry } from '@conation/observability';
 import { FileDropOverlay } from '@core/component/FileDropOverlay';
 import { MarkdownTextarea } from '@core/component/LexicalMarkdown/component/core/MarkdownTextarea';
 import { createFilesReadyHandler } from '@core/component/LexicalMarkdown/utils/fileUploadUtils';
 import { fileFolderDrop } from '@core/directive/fileFolderDrop';
 import { handleFileFolderDrop } from '@core/util/upload';
-import { Telemetry } from '@conation/observability';
 
 import { cn, Scroll } from '@ui';
 import type { LexicalEditor } from 'lexical';
@@ -157,7 +157,9 @@ export function ComposeBody(props: {
           }}
         >
           <div class={cn('absolute inset-0', !isDragging() && 'hidden')}>
-            <FileDropOverlay>{t('auto.drop_file_s_to_attach')}</FileDropOverlay>
+            <FileDropOverlay>
+              {t('blockEmail.compose.dropFiles')}
+            </FileDropOverlay>
           </div>
 
           <Scroll>
@@ -171,7 +173,7 @@ export function ComposeBody(props: {
               initialValue={ctx.initialMarkdown?.()}
               class="text-sm wrap-break-word text-ink h-auto overflow-visible"
               editable={() => !ctx.disabled()}
-              placeholder="Use `@` to reference files"
+              placeholder={t('blockEmail.compose.bodyPlaceholder')}
               watermark={
                 !ctx.hasPaidAccess() ? <MacroSignatureButton /> : undefined
               }

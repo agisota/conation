@@ -77,7 +77,7 @@ pub async fn update_thread_metadata(
         &ctx.conation_event_broker,
         &EmailMacroEvent::thread_backfilled(ThreadBackfilledMetadata {
             link_id: link.id,
-            owner: link.conation_id.clone(),
+            owner: link.macro_id.clone(),
             thread_id: p.thread_db_id,
         }),
     );

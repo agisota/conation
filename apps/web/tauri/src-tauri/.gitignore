@@ -4,3 +4,5 @@
 /gen/schemas
 google-services.json
 .macro-tauri-env
+.conation-tauri-env
+.conation-tauri-profile.json

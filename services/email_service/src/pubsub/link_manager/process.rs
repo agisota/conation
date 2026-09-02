@@ -202,18 +202,18 @@ async fn handle_notify_reauth_required(
     ctx: &LinkManagerContext,
     link: &Link,
 ) -> anyhow::Result<()> {
-    let primaries = conation_db_client::conation_user_links::get_primaries_for_link(
+    let primaries = conation_db_client::macro_user_links::get_primaries_for_link(
         &ctx.db,
-        link.conation_id.as_ref(),
+        link.macro_id.as_ref(),
         link.id,
     )
     .await
     .context("Failed to fetch delegated primaries for reauth notification")?;
 
-    let recipient_ids = build_notification_recipients(&link.conation_id, primaries);
+    let recipient_ids = build_notification_recipients(&link.macro_id, primaries);
 
     let request = SendNotificationRequestBuilder {
-        notification_entity: EntityType::User.with_entity_string(link.conation_id.to_string()),
+        notification_entity: EntityType::User.with_entity_string(link.macro_id.to_string()),
         secondary_notification_entity: None,
         notification: InboxReauthRequiredMetadata {
             email_address: link.email_address.0.as_ref().to_string(),
@@ -235,7 +235,7 @@ async fn handle_notify_reauth_required(
         &ctx.conation_event_broker,
         &EmailMacroEvent::link_reauth_required(LinkReauthRequiredMetadata {
             link_id: link.id,
-            owner: link.conation_id.clone(),
+            owner: link.macro_id.clone(),
             email_address: link.email_address.0.as_ref().to_string(),
             observed_at: link.last_sync_error_at.unwrap_or_else(chrono::Utc::now),
         }),
@@ -341,8 +341,8 @@ async fn handle_delete(
     // (the `crm_contact_sources` FK to `email_links` cascades on the
     // upcoming `delete_link_by_id`, so the link-scoped source rows go
     // away regardless), so we log and continue rather than bailing.
-    let conation_id_str = link.conation_id.to_string();
-    match ctx.crm_service.get_team_id_for_user(&conation_id_str).await {
+    let macro_id_str = link.macro_id.to_string();
+    match ctx.crm_service.get_team_id_for_user(&macro_id_str).await {
         Ok(Some(team_id)) => {
             if let Err(e) = ctx
                 .crm_service
@@ -369,7 +369,7 @@ async fn handle_delete(
     // now that the rows are gone — a client showing this inbox can drop its data.
     cg_refresh_email(
         &ctx.connection_gateway_client,
-        link.conation_id.as_ref(),
+        link.macro_id.as_ref(),
         RefreshEmailEvent::LinkRemoved { link_id: link.id },
     )
     .await;
@@ -378,7 +378,7 @@ async fn handle_delete(
         &ctx.conation_event_broker,
         &EmailMacroEvent::link_disconnected(LinkDisconnectedMetadata {
             link_id: link.id,
-            owner: link.conation_id.clone(),
+            owner: link.macro_id.clone(),
             email_address: link.email_address.0.as_ref().to_string(),
             reason: match deletion_reason {
                 DeletionReason::Unused => LinkDisconnectReason::Unused,
@@ -411,7 +411,7 @@ async fn handle_delete(
         Ok(mut conn) => {
             match conation_db_client::shared_inbox::delete_promoted_mailbox_user(
                 &mut conn,
-                link.conation_id.as_ref(),
+                link.macro_id.as_ref(),
             )
             .await
             {

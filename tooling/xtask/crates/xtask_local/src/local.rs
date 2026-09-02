@@ -45,6 +45,7 @@ pub mod stack;
 pub mod stage;
 pub mod status;
 pub mod summary;
+pub mod support_users;
 pub mod validate;
 
 #[cfg(test)]
@@ -200,7 +201,7 @@ pub fn run_stack(mode: Mode, args: &cli::RunArgs) -> Result<()> {
     let stage = Stage::from_env_cli(args.verbose);
     let instance = Instance::derive(args.instance.instance.as_deref(), args.instance.port_base)?;
     stage.section(&format!(
-        "macro {} stack — instance {}",
+        "conation {} stack — instance {}",
         mode.label(),
         instance.name()
     ));
@@ -327,7 +328,7 @@ pub fn run_stack(mode: Mode, args: &cli::RunArgs) -> Result<()> {
     // Both modes run at least Redis + LocalStack locally, and those reference the
     // instance's `external` volumes/networks — which must exist before compose
     // `up`. Unconditional + idempotent, mirroring the unconditional teardown (dev
-    // was tearing `conation_redis_data` down each run but never recreating it).
+    // previously tore down its Redis volume on each run without recreating it).
     ensure_external_resources(&stage, &instance)?;
 
     // Bring the backend infra up and fully ready — DB created + migrated,
@@ -344,6 +345,15 @@ pub fn run_stack(mode: Mode, args: &cli::RunArgs) -> Result<()> {
         })?;
     }
     bring_up_app(&stage, mode, &instance, &env)?;
+    if mode.spec().runs_local_infra {
+        let avatar_origin = format!("http://localhost:{}", instance.port(Port::Frontend));
+        provision_support_users_after_backend_ready(
+            &stage,
+            &instance,
+            &env.merged,
+            &avatar_origin,
+        )?;
+    }
     let _sdk_webhook_tunnel = (mode == Mode::Local && !stage.is_dry_run())
         .then(|| sdk_webhook::start(&instance))
         .transpose()?;
@@ -417,6 +427,37 @@ pub fn run_stack(mode: Mode, args: &cli::RunArgs) -> Result<()> {
         None => {}
     }
     Ok(())
+}
+
+/// Wait until authentication-service can process FusionAuth's transactional
+/// user webhook, then reconcile the deployment-owned support accounts.
+///
+/// Both interactive `run_local` and headless `stack up` use this exact
+/// boundary so a support identity can never be created as an auth-only phantom
+/// participant. The supplied instance controls every URL; this function does
+/// not start, stop, or recreate any Compose project.
+pub(super) fn provision_support_users_after_backend_ready(
+    stage: &Stage,
+    instance: &Instance,
+    env: &std::collections::BTreeMap<String, String>,
+    default_avatar_base_url: &str,
+) -> Result<()> {
+    wait_then_provision_support_users(
+        || frontend::wait_backend_ready(stage, instance),
+        || support_users::provision(stage, instance, env, default_avatar_base_url),
+    )
+}
+
+fn wait_then_provision_support_users<Wait, Provision>(
+    wait_backend: Wait,
+    provision: Provision,
+) -> Result<()>
+where
+    Wait: FnOnce() -> Result<()>,
+    Provision: FnOnce() -> Result<()>,
+{
+    wait_backend()?;
+    provision()
 }
 
 /// Print the hotkey legend shown while attached to a running stack.
@@ -1009,11 +1050,17 @@ fn teardown(stage: &Stage, instance: &Instance) -> Result<()> {
 /// Create the per-instance external networks and volumes the compose files
 /// reference (idempotent — replaces the old `just create_networks`).
 fn ensure_external_resources(stage: &Stage, instance: &Instance) -> Result<()> {
-    let networks = instance_networks(instance);
+    let networks = [
+        (
+            instance.network_databases(),
+            instance.network_databases_subnet(),
+        ),
+        (instance.network_auth(), instance.network_auth_subnet()),
+    ];
     let volumes = instance_volumes(instance);
     stage.run_step("Ensuring networks & volumes", || {
-        for n in &networks {
-            docker::ensure_network(n)?;
+        for (name, subnet) in &networks {
+            docker::ensure_network(name, subnet.as_deref())?;
         }
         for v in &volumes {
             docker::ensure_volume(v)?;

@@ -1,5 +1,5 @@
-import { useChannelsContext } from '@core/context/channels';
 import { t } from '@app/lib/i18n';
+import { useChannelsContext } from '@core/context/channels';
 import {
   Combobox,
   type ComboboxRootItemComponentProps,
@@ -62,7 +62,7 @@ export function ChannelMultiSelect(props: {
       onChange={(channels) =>
         props.onChange(channels.map((channel) => channel.id))
       }
-      placeholder="Search channels…"
+      placeholder={t('channel.bots.channels.searchPlaceholder')}
       itemComponent={ChannelItem}
       placement="bottom-start"
       closeOnSelection={false}
@@ -79,7 +79,9 @@ export function ChannelMultiSelect(props: {
                   <span class="truncate">{channel.name}</span>
                   <button
                     type="button"
-                    aria-label={`Remove ${channel.name}`}
+                    aria-label={t('channel.bots.channels.remove', {
+                      name: channel.name,
+                    })}
                     class="rounded p-0.5 text-ink-extra-muted hover:bg-hover hover:text-ink"
                     onPointerDown={(event) => event.preventDefault()}
                     onClick={(event) => {
@@ -108,7 +110,9 @@ export function ChannelMultiSelect(props: {
           <Show
             when={options().length > 0}
             fallback={
-              <div class="px-2 py-5 text-center text-xs text-ink-muted">{t('auto.no_available_channels')}</div>
+              <div class="px-2 py-5 text-center text-xs text-ink-muted">
+                {t('channel.bots.channels.empty')}
+              </div>
             }
           >
             <Combobox.Listbox class="max-h-56 overflow-y-auto" />

@@ -1,4 +1,5 @@
 import { useCalendarUiFlag } from '@app/features/calendar/hooks/use-calendar-ui-flag';
+import { t } from '@app/lib/i18n';
 import WideCalendarIcon from '@icon/wide-calendar.svg';
 import { AnimatedCallIcon } from '@icon/wide-call';
 import { AnimatedChannelIcon } from '@icon/wide-channel';
@@ -31,20 +32,65 @@ export type MobileDockView = {
  * per-surface additions at the edges.
  */
 const MOBILE_DOCK_VIEWS: MobileDockView[] = [
-  { id: 'inbox', label: 'Inbox', icon: AnimatedInboxIcon, pillIcon: BellIcon },
+  {
+    id: 'inbox',
+    get label() {
+      return t('shell.navigation.inbox');
+    },
+    icon: AnimatedInboxIcon,
+    pillIcon: BellIcon,
+  },
   {
     id: 'calendar',
-    label: 'Calendar',
+    get label() {
+      return t('shell.navigation.calendar');
+    },
     icon: WideCalendarIcon,
     animateIcon: false,
     pillIcon: WideCalendarIcon,
   },
-  { id: 'mail', label: 'Email', icon: AnimatedEmailIcon },
-  { id: 'channels', label: 'Channels', icon: AnimatedChannelIcon },
-  { id: 'documents', label: 'Files', icon: AnimatedFileMdIcon },
-  { id: 'agents', label: 'Agents', icon: AnimatedStarIcon },
-  { id: 'tasks', label: 'Tasks', icon: AnimatedTaskIcon },
-  { id: 'calls', label: 'Calls', icon: AnimatedCallIcon },
+  {
+    id: 'mail',
+    get label() {
+      return t('shell.navigation.email');
+    },
+    icon: AnimatedEmailIcon,
+  },
+  {
+    id: 'channels',
+    get label() {
+      return t('shell.navigation.channels');
+    },
+    icon: AnimatedChannelIcon,
+  },
+  {
+    id: 'documents',
+    get label() {
+      return t('shell.navigation.files');
+    },
+    icon: AnimatedFileMdIcon,
+  },
+  {
+    id: 'agents',
+    get label() {
+      return t('shell.navigation.agents');
+    },
+    icon: AnimatedStarIcon,
+  },
+  {
+    id: 'tasks',
+    get label() {
+      return t('shell.navigation.tasks');
+    },
+    icon: AnimatedTaskIcon,
+  },
+  {
+    id: 'calls',
+    get label() {
+      return t('shell.navigation.calls');
+    },
+    icon: AnimatedCallIcon,
+  },
 ];
 
 /** The dock views with feature gating applied (the calendar UI flag). */

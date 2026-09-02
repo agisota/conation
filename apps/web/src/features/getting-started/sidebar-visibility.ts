@@ -14,7 +14,9 @@ export interface GettingStartedSidebarStore {
   save(userId: string, hidden: boolean): Promise<void>;
 }
 
-const storage = createUserScopedStorage('macro:getting-started-sidebar-hidden');
+const storage = createUserScopedStorage(
+  'conation:getting-started-sidebar-hidden'
+);
 
 export const localStorageGettingStartedSidebarStore: GettingStartedSidebarStore =
   {

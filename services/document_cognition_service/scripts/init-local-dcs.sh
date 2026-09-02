@@ -12,8 +12,14 @@ if [ -z "$USER_ID" ]; then
     exit 1
 fi
 
-# Extract email from user ID (format: macro|email@domain.com)
-EMAIL="${USER_ID#macro|}"
+# Extract email from user ID (format: conation|email@domain.com)
+case "$USER_ID" in
+  conation\|*@*) EMAIL="${USER_ID#conation|}" ;;
+  *)
+    echo "Error: user ID must have the form conation|email@domain.com"
+    exit 1
+    ;;
+esac
 STRIPE_ID="cus_LOCAL_DEV_$(echo $EMAIL | tr '[:lower:]' '[:upper:]' | tr -d '@.-')"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

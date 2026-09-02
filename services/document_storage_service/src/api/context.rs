@@ -36,6 +36,7 @@ use channels::{
         pg_channels_repo::PgChannelsRepo, pg_side_effect_context::PgChannelSideEffectContext,
     },
 };
+use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
 use connection::{
     domain::service::ConnectionServiceImpl,
     outbound::connection_gateway_client::ConnectionGatewayImpl,
@@ -61,13 +62,18 @@ use favorites::{
     domain::service::FavoritesServiceImpl, inbound::axum_router::FavoritesRouterState,
     outbound::pg_favorites_repo::PgFavoritesRepo,
 };
-use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
 
 use collab_surface::{
     domain::service::CollabSurfaceServiceImpl, inbound::axum_router::CollabSurfaceRouterState,
     outbound::pg_collab_surface_repo::PgCollabSurfaceRepo,
     outbound::surface_init::LexicalSyncSurfaceInitializer,
 };
+use conation_auth::middleware::decode_jwt::JwtValidationArgs;
+use conation_authorization::{
+    MacroAuthJwtValidator, MacroAuthorizationServiceImpl, MacroAuthorizationState,
+};
+use conation_env_var::env_var;
+use conation_sha_count_client::Redis;
 use foreign_entity::{
     domain::service::ForeignEntityServiceImpl, inbound::axum_router::ForeignEntityRouterState,
     outbound::pg_foreign_entity_repo::PgForeignEntityRepo,
@@ -76,12 +82,6 @@ use frecency::{domain::services::FrecencyQueryServiceImpl, outbound::postgres::F
 use github::domain::service::GithubSyncServiceImpl;
 use github::outbound::github_sync_client::GithubSyncClientImpl;
 use github::outbound::pg_github_sync_repo::PgGithubSyncRepo;
-use conation_auth::middleware::decode_jwt::JwtValidationArgs;
-use conation_authorization::{
-    MacroAuthJwtValidator, MacroAuthorizationServiceImpl, MacroAuthorizationState,
-};
-use conation_env_var::env_var;
-use conation_sha_count_client::Redis;
 use notification::domain::service::SqsNotificationIngress;
 use notification::outbound::queue::SqsQueue;
 use opensearch_client::OpensearchClient;

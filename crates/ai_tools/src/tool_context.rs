@@ -24,6 +24,11 @@ use channels::outbound::{
 use chat::domain::service::ChatServiceImpl;
 use chat::inbound::toolset::ChatToolContext;
 use chat::outbound::postgres::PgChatRepo;
+use conation_event_broker::{
+    EventBrokerError, KafkaEventPublisher, MacroEvent, MacroEventBroker, MacroEventBrokerService,
+    NoopMacroEventBroker,
+};
+use conation_user_id::user_id::MacroUserIdStr;
 use connection::domain::ports::ConnectionService;
 use connection_gateway_client::ConnectionGatewayClient;
 use contacts::{domain::service::SqsContactsIngress, outbound::ingress::SqsContactsQueue};
@@ -39,11 +44,6 @@ use foreign_entity::{
     outbound::pg_foreign_entity_repo::PgForeignEntityRepo,
 };
 use lexical_mention_extractor::LexicalMentionExtractor;
-use conation_event_broker::{
-    EventBrokerError, KafkaEventPublisher, MacroEvent, MacroEventBroker, MacroEventBrokerService,
-    NoopMacroEventBroker,
-};
-use conation_user_id::user_id::MacroUserIdStr;
 use notification::domain::service::SqsNotificationIngress;
 use notification::inbound::ai_tool::NotificationToolContext;
 use projects::inbound::toolset::ProjectToolContext;
@@ -953,7 +953,7 @@ impl ToolEntityCreator {
         let document = documents::domain::create::NewPlainTextDocument::builder(
             documents::domain::create::NewDocumentMetadata::builder(name.to_string())
                 .attribution(activity::Attribution::delegated(
-                    activity::Actor::new_from_bot(bot_id::MACRO_AI_BOT_ID),
+                    activity::Actor::new_from_bot(bot_id::CONATION_AI_BOT_ID),
                     user.clone(),
                 ))
                 .build(),

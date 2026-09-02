@@ -14,21 +14,15 @@ import {
 const PROVIDER_OF = (m: TModel) => MODEL_PROVIDER[m];
 
 describe('modelsForPlan / defaultModelForPlan', () => {
-  it('gives paid users every model and an Anthropic-smart default', () => {
-    const paid = modelsForPlan(true);
-    // Every known model is selectable for a paid user.
-    expect([...paid].sort()).toEqual([...Object.values(Model)].sort());
-    expect(DEFAULT_MODEL).toBe(Model.sonnet5);
-    expect(defaultModelForPlan(true)).toBe(DEFAULT_MODEL);
-  });
-
-  it('gives free users only the fast model, defaulted to it', () => {
-    const free = modelsForPlan(false);
-    expect(free).toEqual([FREE_DEFAULT_MODEL]);
-    expect(defaultModelForPlan(false)).toBe(FREE_DEFAULT_MODEL);
-    // The premium models are *not* in a free user's selectable set.
-    expect(free).not.toContain(Model.opus5);
-    expect(free).not.toContain(Model.gpt56);
+  it('gives every user the full catalog and the Rox fallback entrypoint', () => {
+    for (const formerPaidState of [false, true]) {
+      expect([...modelsForPlan(formerPaidState)].sort()).toEqual(
+        [...Object.values(Model)].sort()
+      );
+      expect(defaultModelForPlan(formerPaidState)).toBe(DEFAULT_MODEL);
+    }
+    expect(DEFAULT_MODEL).toBe(Model.geminiFlash);
+    expect(FREE_DEFAULT_MODEL).toBe(DEFAULT_MODEL);
   });
 });
 
@@ -97,17 +91,23 @@ describe('alternateProviderModel', () => {
       failedProviders,
     });
     expect(first).toBeDefined();
-    expect(PROVIDER_OF(first!)).toBe('openai');
+    expect(PROVIDER_OF(first!)).toBe('rox');
     current = first!;
 
-    // OpenAI then also fails → there is no un-failed provider left, so we must
-    // NOT bounce the user back to Anthropic (which already failed this session).
+    // Rox then also fails → OpenAI remains available.
     failedProviders.add(PROVIDER_OF(current));
     const second = alternateProviderModel(current, {
       candidates,
       failedProviders,
     });
-    expect(second).toBeUndefined();
+    expect(PROVIDER_OF(second!)).toBe('openai');
+
+    // Once all three providers have failed, never bounce back to one of them.
+    current = second!;
+    failedProviders.add(PROVIDER_OF(current));
+    expect(
+      alternateProviderModel(current, { candidates, failedProviders })
+    ).toBeUndefined();
   });
 
   it('still avoids the current provider when no failures are recorded', () => {
@@ -115,6 +115,6 @@ describe('alternateProviderModel', () => {
       candidates: [...Object.values(Model)] as TModel[],
       failedProviders: new Set(),
     });
-    expect(PROVIDER_OF(alt!)).toBe('openai');
+    expect(PROVIDER_OF(alt!)).toBe('rox');
   });
 });

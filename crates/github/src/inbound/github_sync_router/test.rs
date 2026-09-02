@@ -2,13 +2,6 @@ use std::sync::{Arc, Mutex};
 
 use axum::{Router, http::Request};
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
-use entity_access::domain::{
-    models::{
-        AccessError, AccessLevel, BotAccessScope, BotId, CallChannelInfo, EntityAccessReceipt,
-        EntityPermission, EntityType, RequiredPermission, TeamRole, UserTeamInfo,
-    },
-    ports::EntityAccessService,
-};
 use conation_authorization::{
     InternalIdentityClaims, MacroAuthorizationError, MacroAuthorizationService,
     MacroAuthorizationState,
@@ -17,6 +10,13 @@ use conation_service_urls::AppServiceUrl;
 use conation_user_id::{
     lowercased::Lowercase,
     user_id::{MacroUserId, MacroUserIdStr},
+};
+use entity_access::domain::{
+    models::{
+        AccessError, AccessLevel, BotAccessScope, BotId, CallChannelInfo, EntityAccessReceipt,
+        EntityPermission, EntityType, RequiredPermission, TeamRole, UserTeamInfo,
+    },
+    ports::EntityAccessService,
 };
 use model_user::UserContext;
 use rootcause::Report;
@@ -32,7 +32,7 @@ use crate::domain::{
 
 use super::{GithubSyncRouterState, github_sync_router};
 
-const USER_ID: &str = "macro|github-installer@example.com";
+const USER_ID: &str = "conation|github-installer@example.com";
 
 #[derive(Clone)]
 struct TestAuthorizationService;
@@ -168,7 +168,7 @@ impl EntityAccessService for TestEntityAccessService {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct BeginCall {
-    conation_user_id: String,
+    macro_user_id: String,
     team_id: Option<Uuid>,
 }
 
@@ -221,11 +221,11 @@ impl GithubSyncService for MockGithubSyncService {
 
     async fn begin_installation_setup(
         &self,
-        conation_user_id: &MacroUserIdStr<'_>,
+        macro_user_id: &MacroUserIdStr<'_>,
         team_id: Option<Uuid>,
     ) -> Result<String, GithubError> {
         self.begin_calls.lock().unwrap().push(BeginCall {
-            conation_user_id: conation_user_id.to_string(),
+            macro_user_id: macro_user_id.to_string(),
             team_id,
         });
         Ok("https://github.com/apps/my-sync-app/installations/new?state=signed".to_string())
@@ -298,7 +298,7 @@ fn authenticated_request(uri: &str) -> Request<axum::body::Body> {
 
 fn callback_state(team_id: Option<Uuid>) -> String {
     let state = InstallationState {
-        conation_user_id: MacroUserIdStr::try_from(USER_ID.to_string()).unwrap(),
+        macro_user_id: MacroUserIdStr::try_from(USER_ID.to_string()).unwrap(),
         team_id,
         exp: i64::MAX,
     };
@@ -346,14 +346,14 @@ async fn install_sync_uses_the_authenticated_users_optional_team() {
     assert_eq!(
         personal_service.begin_calls(),
         vec![BeginCall {
-            conation_user_id: USER_ID.to_string(),
+            macro_user_id: USER_ID.to_string(),
             team_id: None,
         }]
     );
     assert_eq!(
         team_service.begin_calls(),
         vec![BeginCall {
-            conation_user_id: USER_ID.to_string(),
+            macro_user_id: USER_ID.to_string(),
             team_id: Some(team_id),
         }]
     );

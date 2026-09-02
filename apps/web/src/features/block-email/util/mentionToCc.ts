@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import type { EmailRecipient } from '@block-email/component/EmailContext';
 import { convertContactInfoToEmailRecipient } from '@block-email/util/recipientConversion';
 import type { UserMentionRecord } from '@core/component/LexicalMarkdown/utils/mentionsUtils';
@@ -38,5 +39,5 @@ export function addUserMentionToCc(params: {
     convertContactInfoToEmailRecipient({ email: mentionEmail });
 
   setCc([...ccRecipients, userOption]);
-  toast.success(`${mentionEmail} added to CC`);
+  toast.success(t('blockEmail.recipients.addedToCc', { email: mentionEmail }));
 }

@@ -114,7 +114,7 @@ impl MacroAuthorizationService for FakeAuthorizationService {
         let acting_user = acting_user
             .and_then(|claims| claims.user_id)
             .map(|user_id| conation_authorization::MacroUserAuthentication {
-                conation_user_id: MacroUserIdStr::try_from(user_id).unwrap(),
+                macro_user_id: MacroUserIdStr::try_from(user_id).unwrap(),
                 user_context: UserContext::default(),
             });
         Ok(conation_authorization::BotAuthentication {

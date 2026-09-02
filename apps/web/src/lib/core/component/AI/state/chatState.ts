@@ -1,4 +1,5 @@
 import type { ChatMessageWithAttachments } from '@core/component/AI/types';
+import { t } from '@core/i18n';
 import type { Entity } from '@service-cognition/generated/schemas/entity';
 import { match, P } from 'ts-pattern';
 
@@ -16,7 +17,7 @@ export type ChatEvent =
       type: 'send_started';
       optimisticMessage: ChatMessageWithAttachments;
     }
-  | { type: 'send_failed'; paymentError?: boolean }
+  | { type: 'send_failed' }
   | { type: 'stream_connected' }
   | {
       type: 'stream_user_message';
@@ -33,14 +34,12 @@ export type ChatEvent =
       streamError: string | undefined;
     };
 
-export type SideEffect =
-  | {
-      type: 'toast';
-      message: string;
-      /** When set, the toast offers a "Switch model" action button. */
-      offerModelSwitch?: boolean;
-    }
-  | { type: 'show_paywall' };
+export type SideEffect = {
+  type: 'toast';
+  message: string;
+  /** When set, the toast offers a "Switch model" action button. */
+  offerModelSwitch?: boolean;
+};
 
 // --- Transition result ---
 
@@ -58,17 +57,16 @@ function streamErrorToast(streamError: string | undefined): SideEffect {
     case 'provider_error':
       return {
         type: 'toast',
-        message:
-          'The AI provider may be down. Try switching to a different model.',
+        message: t('ai.errors.providerUnavailableWithAlternative'),
         offerModelSwitch: true,
       };
     case 'model_context_overflow':
       return {
         type: 'toast',
-        message: 'Too much context. Remove attachments or start a new chat',
+        message: t('ai.errors.contextOverflow'),
       };
     default:
-      return { type: 'toast', message: 'Failed to respond to message' };
+      return { type: 'toast', message: t('ai.errors.responseFailed') };
   }
 }
 
@@ -94,11 +92,9 @@ export function transition(
       effects: [],
     }))
 
-    .with([{ type: 'sending' }, { type: 'send_failed' }], ([, e]) => ({
+    .with([{ type: 'sending' }, { type: 'send_failed' }], () => ({
       phase: { type: 'idle' as const },
-      effects: e.paymentError
-        ? ([{ type: 'show_paywall' }] as SideEffect[])
-        : [],
+      effects: [],
     }))
 
     .with(

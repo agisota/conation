@@ -53,7 +53,7 @@ fn example_scenario_parses() {
     let spec = example();
     assert_eq!(spec.scenario, "team-perms");
     assert_eq!(spec.users.len(), 6);
-    assert_eq!(spec.user_id("alice"), "macro|alice@seed.macro.local");
+    assert_eq!(spec.user_id("alice"), "conation|alice@seed.macro.local");
 
     let handbook = &spec.documents["handbook"];
     assert_eq!(handbook.link_share, Some(LinkShare::Public));

@@ -14,14 +14,14 @@ use std::path::{Path, PathBuf};
 /// The repository Cargo workspace root.
 ///
 /// Commands can run from any directory inside the repository. Packaged xtask
-/// binaries can set `MACRO_REPO_ROOT` when they run against a staged copy or
+/// binaries can set `CONATION_REPO_ROOT` when they run against a staged copy or
 /// from outside the repository.
 pub fn workspace_root() -> PathBuf {
     repo_root_override()
         .or_else(discover_repo_root)
         .unwrap_or_else(|| {
             panic!(
-                "could not discover the repository root from the current directory or executable path; set MACRO_REPO_ROOT"
+                "could not discover the repository root from the current directory or executable path; set CONATION_REPO_ROOT"
             )
         })
 }
@@ -59,7 +59,7 @@ pub fn repo_root() -> PathBuf {
 /// both inside and outside the service runtime, including packaged binaries.
 #[allow(clippy::disallowed_methods)]
 fn repo_root_override() -> Option<PathBuf> {
-    std::env::var_os("MACRO_REPO_ROOT").map(PathBuf::from)
+    std::env::var_os("CONATION_REPO_ROOT").map(PathBuf::from)
 }
 
 /// A UTF-8, repository-relative path that must resolve to a regular file.
@@ -221,7 +221,7 @@ impl<'a> RuntimePath<'a> {
     }
 }
 
-conation_rules! impl_path_string_conversions {
+macro_rules! impl_path_string_conversions {
     ($type:ident) => {
         impl fmt::Display for $type<'_> {
             fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -332,8 +332,8 @@ const fn is_glob_meta(byte: u8) -> bool {
 }
 
 /// Construct a compile-time checked [`RepoFile`] literal.
-#[conation_export]
-conation_rules! repo_file {
+#[macro_export]
+macro_rules! repo_file {
     ($path:literal) => {{
         const PATH: $crate::RepoFile<'static> = $crate::RepoFile::new($path);
         PATH
@@ -341,8 +341,8 @@ conation_rules! repo_file {
 }
 
 /// Construct a compile-time checked [`RepoDir`] literal.
-#[conation_export]
-conation_rules! repo_dir {
+#[macro_export]
+macro_rules! repo_dir {
     ($path:literal) => {{
         const PATH: $crate::RepoDir<'static> = $crate::RepoDir::new($path);
         PATH
@@ -350,8 +350,8 @@ conation_rules! repo_dir {
 }
 
 /// Construct a compile-time checked [`RepoGlob`] literal.
-#[conation_export]
-conation_rules! repo_glob {
+#[macro_export]
+macro_rules! repo_glob {
     ($path:literal) => {{
         const PATH: $crate::RepoGlob<'static> = $crate::RepoGlob::new($path);
         PATH
@@ -359,8 +359,8 @@ conation_rules! repo_glob {
 }
 
 /// Construct a compile-time checked, non-empty [`RuntimePath`] literal.
-#[conation_export]
-conation_rules! runtime_path {
+#[macro_export]
+macro_rules! runtime_path {
     ($path:literal) => {{
         const PATH: $crate::RuntimePath<'static> = $crate::RuntimePath::new($path);
         PATH

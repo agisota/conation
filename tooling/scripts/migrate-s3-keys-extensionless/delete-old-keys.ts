@@ -12,14 +12,15 @@ import {
   existsSync,
 } from "fs";
 import { createInterface } from "readline";
+import { readConationPrefix } from "./prefix";
 
 const S3_BUCKET = process.env.S3_BUCKET;
 const DRY_RUN = process.env.DRY_RUN === "true";
-const PREFIX = process.env.PREFIX ?? "macro|";
+let PREFIX: string;
 const CONCURRENCY = parseInt(process.env.CONCURRENCY ?? "20", 10);
 const PAGE_SIZE = parseInt(process.env.PAGE_SIZE ?? "1000", 10);
 const LIMIT = process.env.LIMIT ? parseInt(process.env.LIMIT, 10) : undefined;
-const USER = process.env.USER_PREFIX;
+let USER: string | undefined;
 const DOCUMENT_ID = process.env.DOCUMENT_ID;
 const KEYS_FILE = process.env.KEYS_FILE;
 const SKIP_VERIFY = process.env.SKIP_VERIFY === "true";
@@ -30,6 +31,12 @@ if (!S3_BUCKET) {
   process.exit(1);
 }
 
+try {
+  ({ prefix: PREFIX, userPrefix: USER } = readConationPrefix());
+} catch (error) {
+  console.error(error instanceof Error ? error.message : error);
+  process.exit(1);
+}
 const s3 = new S3Client({});
 
 const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -243,6 +250,7 @@ async function main() {
   log("=== Deleting old legacy S3 keys ===");
   log(`Bucket: ${S3_BUCKET}`);
   if (KEYS_FILE) log(`Keys file: ${KEYS_FILE}`);
+  if (!KEYS_FILE) log(`Prefix: ${PREFIX}`);
   if (SKIP_VERIFY) log(`Skipping extensionless verification`);
   if (USER) log(`User: ${USER}`);
   if (DOCUMENT_ID) log(`Document: ${DOCUMENT_ID}`);

@@ -60,7 +60,7 @@
       };
 
       cacheWasmPackage = craneLib.mkCargoDerivation {
-        pname = "macro-cache-wasm";
+        pname = "conation-cache-wasm";
         version = appVersion;
         src = jsSrc;
         cargoArtifacts = null;
@@ -95,7 +95,7 @@
       };
 
       frontend = pkgs.stdenvNoCC.mkDerivation {
-        pname = "macro-tauri-frontend";
+        pname = "conation-tauri-frontend";
         version = appVersion;
         src = jsSrc;
 
@@ -121,12 +121,17 @@
                 "          // NIX_TAURI_ALIAS" \
                 '          { find: /^@tauri-apps\/api/, replacement: resolve(__dirname, "../../node_modules/@tauri-apps/api") },'
 
-            printf production > apps/web/tauri/src-tauri/.macro-tauri-env
+            printf production > apps/web/tauri/src-tauri/.conation-tauri-env
+            printf '%s' '{"profile":"standalone","operatorOrigin":"https://conation.dev"}' \
+              > apps/web/tauri/src-tauri/.conation-tauri-profile.json
             mkdir -p apps/web/src/lib/graphql-cache/wasm
             cp -a ${cacheWasmPackage}/. apps/web/src/lib/graphql-cache/wasm/
             (
               cd apps/web
-              MODE=production NODE_ENV=production bun ../../node_modules/vite/bin/vite.js build -c vite.config.ts
+              VITE_CONATION_CLIENT_PROFILE=standalone \
+                VITE_CONATION_OPERATOR_ORIGIN=same-origin \
+                MODE=production NODE_ENV=production \
+                bun ../../node_modules/vite/bin/vite.js build -c vite.config.ts
               printf '${appVersion}+${gitRev}\n' > dist/semver.txt
               BUNDLE_BUILD_NUMBER=1 MIN_NATIVE_BUILD=0 bun scripts/write-bundle-manifest.mjs
             )
@@ -145,21 +150,21 @@
         src = ../apps/web/tauri;
         cargoLock = ../apps/web/tauri/Cargo.lock;
         outputHashes = {
-          "git+https://github.com/macro-inc/tauri-plugins?rev=6ddd6600e20436388f169e936b610fe93944b7b0#6ddd6600e20436388f169e936b610fe93944b7b0" =
+          "git+https://github.com/inKibra/tauri-plugins?rev=6ddd6600e20436388f169e936b610fe93944b7b0#6ddd6600e20436388f169e936b610fe93944b7b0" =
             "sha256-5ErLW2po5ZlTTuJjsCExwC//rHYcQo2tKXiyz3w/0kQ=";
-          "git+https://github.com/macro-inc/plugins-workspace?rev=06474e4c446600627cf37a11f0c22c27bcf764ca#06474e4c446600627cf37a11f0c22c27bcf764ca" =
+          "git+https://github.com/tauri-apps/plugins-workspace?rev=06474e4c446600627cf37a11f0c22c27bcf764ca#06474e4c446600627cf37a11f0c22c27bcf764ca" =
             "sha256-ngH5sltERe8DlP/zjsin9jmlGOZFeABk8SxJ5AnZG18=";
           "git+https://github.com/tursodatabase/turso?rev=79163249538197d01dec5ea7f65519454ed792e2#79163249538197d01dec5ea7f65519454ed792e2" =
             "sha256-7Noz7RMN+4nhlU5BBLzxZZ53nNFGewrr8BFMO1adkCo=";
           "git+https://github.com/seanaye/tauri?rev=95a7521b#95a7521b8c565cfba568319ddd8ba79c9ce244e2" =
             "sha256-5HamTWAZPtUSWOfP3TgtiqFJvunlPXy9/C0TLHQpXlU=";
-          "git+https://github.com/voxelbee/tauri-plugin-virtual-keyboard?branch=main#70e8e8325b5ff7d681ef5f3b996ac083d4fc5a01" =
+          "git+https://github.com/voxelbee/tauri-plugin-virtual-keyboard?rev=70e8e8325b5ff7d681ef5f3b996ac083d4fc5a01#70e8e8325b5ff7d681ef5f3b996ac083d4fc5a01" =
             "sha256-OdEp5mw0l5Euj0ry7gzNVxdB0jlGUq0N7XINXUhtE+c=";
         };
       };
 
       tauri = crane-tauri.lib.buildTauriApp { inherit pkgs craneLib; } {
-        pname = "macro-tauri-desktop";
+        pname = "conation-tauri-desktop";
         version = appVersion;
         binaryName = "app";
         src = ../apps/web/tauri;
@@ -206,7 +211,7 @@
       gioTlsModulePath = "${pkgs.glib-networking}/lib/gio/modules";
 
       wrappedTauriDesktop = pkgs.symlinkJoin {
-        name = "macro-tauri-desktop-${appVersion}";
+        name = "conation-tauri-desktop-${appVersion}";
         paths = [ tauri.app ];
         nativeBuildInputs = [ pkgs.makeWrapper ];
         postBuild = ''
@@ -245,18 +250,18 @@
               ]
             }"
 
-          install -Dm0644 ${../apps/web/tauri/src-tauri/icons/32x32.png} "$out/share/icons/hicolor/32x32/apps/macro.png"
-          install -Dm0644 ${../apps/web/tauri/src-tauri/icons/64x64.png} "$out/share/icons/hicolor/64x64/apps/macro.png"
-          install -Dm0644 ${../apps/web/tauri/src-tauri/icons/128x128.png} "$out/share/icons/hicolor/128x128/apps/macro.png"
-          install -Dm0644 ${../apps/web/tauri/src-tauri/icons/icon.png} "$out/share/icons/hicolor/256x256/apps/macro.png"
-          install -Dm0644 /dev/stdin "$out/share/applications/macro.desktop" <<EOF
+          install -Dm0644 ${../apps/web/tauri/src-tauri/icons/32x32.png} "$out/share/icons/hicolor/32x32/apps/conation.png"
+          install -Dm0644 ${../apps/web/tauri/src-tauri/icons/64x64.png} "$out/share/icons/hicolor/64x64/apps/conation.png"
+          install -Dm0644 ${../apps/web/tauri/src-tauri/icons/128x128.png} "$out/share/icons/hicolor/128x128/apps/conation.png"
+          install -Dm0644 ${../apps/web/tauri/src-tauri/icons/icon.png} "$out/share/icons/hicolor/256x256/apps/conation.png"
+          install -Dm0644 /dev/stdin "$out/share/applications/conation.desktop" <<EOF
           [Desktop Entry]
           Type=Application
-          Name=Macro
+          Name=Conation
           Exec=$out/bin/app %U
-          Icon=macro
+          Icon=conation
           Categories=Office;Utility;
-          MimeType=x-scheme-handler/macro;
+          MimeType=x-scheme-handler/conation;
           EOF
         '';
         meta.mainProgram = "app";
@@ -335,13 +340,13 @@
               return 1;
             }
 
-            char *hook_path = malloc(strlen(hooks_dir) + strlen("/macro-gio-tls.sh") + 2);
+            char *hook_path = malloc(strlen(hooks_dir) + strlen("/conation-gio-tls.sh") + 2);
             if (hook_path == NULL) {
               perror("malloc TLS hook path");
               free(hooks_dir);
               return 1;
             }
-            sprintf(hook_path, "%s/macro-gio-tls.sh", hooks_dir);
+            sprintf(hook_path, "%s/conation-gio-tls.sh", hooks_dir);
 
             FILE *hook = fopen(hook_path, "w");
             if (hook == NULL) {
@@ -591,7 +596,7 @@
         tauri.commonArgs
         // {
           cargoArtifacts = tauri.cargoArtifacts;
-          pname = "macro-tauri-desktop-dmg";
+          pname = "conation-tauri-desktop-dmg";
           TAURI_CONFIG = tauriDesktopDmgConfig;
           APPLE_SIGNING_IDENTITY = tauriDesktopDmgSigningIdentity;
           # Nix's cctools ld crashes with SIGTRAP while linking the large final
@@ -719,9 +724,9 @@
             sign_darwin_app "$appPath"
 
             mkdir -p "$out"
-            dmgPath="$out/Macro-${appVersion}-${system}.dmg"
+            dmgPath="$out/Conation-${appVersion}-${system}.dmg"
             hdiutil create \
-              -volname "Macro" \
+              -volname "Conation" \
               -srcfolder "$appPath" \
               -ov \
               -format UDZO \
@@ -742,7 +747,7 @@
         tauri.commonArgs
         // {
           cargoArtifacts = tauri.cargoArtifacts;
-          pname = "macro-tauri-desktop-appimage";
+          pname = "conation-tauri-desktop-appimage";
           TAURI_CONFIG = tauriAppImageConfig;
           nativeBuildInputs = tauri.commonArgs.nativeBuildInputs ++ [
             pkgs.cargo-tauri
@@ -856,8 +861,8 @@
             fi
 
             mkdir -p "$out"
-            cp "$appimagePath" "$out/Macro-${appVersion}-${system}.AppImage"
-            chmod 0755 "$out/Macro-${appVersion}-${system}.AppImage"
+            cp "$appimagePath" "$out/Conation-${appVersion}-${system}.AppImage"
+            chmod 0755 "$out/Conation-${appVersion}-${system}.AppImage"
           '';
           doInstallCargoArtifacts = false;
         }
@@ -868,7 +873,7 @@
         tauri-desktop = {
           type = "app";
           program = "${wrappedTauriDesktop}/bin/app";
-          meta.description = "Run the Macro Tauri desktop app";
+          meta.description = "Run the Conation Tauri desktop app";
         };
       };
 

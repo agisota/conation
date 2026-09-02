@@ -1,5 +1,5 @@
-import { isMobile } from '@core/mobile/isMobile';
 import { t } from '@app/lib/i18n';
+import { isMobile } from '@core/mobile/isMobile';
 import { cn } from '@ui';
 import { createSignal, Show } from 'solid-js';
 import { useCompose } from './ComposeContext';
@@ -43,7 +43,9 @@ export function ComposeSubject(props: {
           isMobile() ? 'min-h-7 flex items-center' : 'w-14'
         )}
       >
-        {isMobile() ? 'Subject:' : 'Subject'}
+        {isMobile()
+          ? `${t('blockEmail.fields.subject')}:`
+          : t('blockEmail.fields.subject')}
       </div>
       <div class="flex-1 min-w-0">
         <Show
@@ -53,7 +55,7 @@ export function ComposeSubject(props: {
               ref={props.inputRef}
               type="text"
               value={ctx.subject()}
-              placeholder={t('auto.subject')}
+              placeholder={t('blockEmail.fields.subject')}
               class="w-full resize-none text-sm placeholder:text-ink-placeholder p-1"
               onInput={(e) => ctx.setSubject(e.currentTarget.value)}
               onKeyDown={blurOnEscape}

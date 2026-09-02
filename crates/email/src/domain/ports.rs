@@ -8,8 +8,8 @@ use crate::domain::models::{
     UpsertEmailFilterInput, UpsertedContacts, UserEmailLink, UserProvider,
 };
 use chrono::{DateTime, Utc};
-use entity_access::domain::models::{EditAccessLevel, EntityAccessReceipt, ViewAccessLevel};
 use conation_user_id::user_id::MacroUserIdStr;
+use entity_access::domain::models::{EditAccessLevel, EntityAccessReceipt, ViewAccessLevel};
 use models_pagination::{PaginatedCursor, SimpleSortMethod};
 use std::collections::HashMap;
 use uuid::Uuid;
@@ -69,10 +69,10 @@ pub struct LinkEmailSettings {
 /// The port returns persisted facts only. Accessible-inbox aggregation and
 /// synchronization-status policy remain in the email domain service.
 pub trait EmailUserRepo: Send + Sync + 'static {
-    /// Resolve every owned or delegated inbox accessible to `conation_id`.
+    /// Resolve every owned or delegated inbox accessible to `macro_id`.
     fn user_accessible_inboxes(
         &self,
-        conation_id: MacroUserIdStr<'static>,
+        macro_id: MacroUserIdStr<'static>,
     ) -> impl Future<Output = Result<Vec<Link>, EmailErr>> + Send;
 
     /// Fetch all labels belonging to one already-authorized inbox.
@@ -84,7 +84,7 @@ pub trait EmailUserRepo: Send + Sync + 'static {
     /// Fetch enriched persisted facts for every owned or delegated inbox.
     fn user_inbox_details(
         &self,
-        conation_id: MacroUserIdStr<'static>,
+        macro_id: MacroUserIdStr<'static>,
     ) -> impl Future<Output = Result<Vec<EmailInboxDetails>, EmailErr>> + Send;
 }
 
@@ -111,16 +111,16 @@ pub trait EmailRepo: Send + Sync + 'static {
         thread_ids: &[Uuid],
     ) -> impl Future<Output = Result<Vec<Label>, Self::Err>> + Send;
 
-    fn link_by_fusionauth_and_conation_id(
+    fn link_by_fusionauth_and_macro_id(
         &self,
         fusionauth_user_id: &str,
-        conation_id: MacroUserIdStr<'_>,
+        macro_id: MacroUserIdStr<'_>,
         provider: UserProvider,
     ) -> impl Future<Output = Result<Option<Link>, Self::Err>> + Send;
 
-    fn link_by_conation_id(
+    fn link_by_macro_id(
         &self,
-        conation_id: MacroUserIdStr<'_>,
+        macro_id: MacroUserIdStr<'_>,
     ) -> impl Future<Output = Result<Option<Link>, Self::Err>> + Send;
 
     /// Resolve the inbox owning a thread, only when that inbox belongs to the
@@ -128,14 +128,14 @@ pub trait EmailRepo: Send + Sync + 'static {
     fn owned_link_for_thread(
         &self,
         thread_id: Uuid,
-        conation_id: MacroUserIdStr<'_>,
+        macro_id: MacroUserIdStr<'_>,
     ) -> impl Future<Output = Result<Option<Link>, Self::Err>> + Send;
 
-    /// Returns every inbox accessible to `conation_id`: their own email_links plus
-    /// any reachable via a `conation_user_links` edge (narrow-graph multi-inbox).
-    fn inboxes_for_conation_id(
+    /// Returns every inbox accessible to `macro_id`: their own email_links plus
+    /// any reachable via a `macro_user_links` edge (narrow-graph multi-inbox).
+    fn inboxes_for_macro_id(
         &self,
-        conation_id: MacroUserIdStr<'_>,
+        macro_id: MacroUserIdStr<'_>,
     ) -> impl Future<Output = Result<Vec<Link>, Self::Err>> + Send;
 
     /// Fetch a thread by its database ID (without messages).
@@ -466,13 +466,13 @@ pub trait EmailUserService: Send + Sync + 'static {
     /// List labels across every owned or delegated inbox accessible to the user.
     fn get_user_email_labels(
         &self,
-        conation_id: MacroUserIdStr<'static>,
+        macro_id: MacroUserIdStr<'static>,
     ) -> impl Future<Output = Result<Vec<LinkLabel>, EmailErr>> + Send;
 
     /// List enriched owned or delegated email links accessible to the user.
     fn get_user_email_links(
         &self,
-        conation_id: MacroUserIdStr<'static>,
+        macro_id: MacroUserIdStr<'static>,
     ) -> impl Future<Output = Result<Vec<UserEmailLink>, EmailErr>> + Send;
 }
 
@@ -487,23 +487,23 @@ pub trait EmailService: Send + Sync + 'static {
         >,
     > + Send;
 
-    fn get_link_by_auth_id_and_conation_id(
+    fn get_link_by_auth_id_and_macro_id(
         &self,
         auth_id: &str,
-        conation_id: MacroUserIdStr<'_>,
+        macro_id: MacroUserIdStr<'_>,
     ) -> impl Future<Output = Result<Option<Link>, EmailErr>> + Send;
 
     /// Fetch the email link for a user by their macro ID only.
-    fn get_link_by_conation_id(
+    fn get_link_by_macro_id(
         &self,
-        conation_id: MacroUserIdStr<'_>,
+        macro_id: MacroUserIdStr<'_>,
     ) -> impl Future<Output = Result<Option<Link>, EmailErr>> + Send;
 
     /// Fetch every inbox the caller can read — their own email_links rows plus
-    /// any rows reachable via a `conation_user_links` edge (narrow-graph multi-inbox).
-    fn get_inboxes_for_conation_id(
+    /// any rows reachable via a `macro_user_links` edge (narrow-graph multi-inbox).
+    fn get_inboxes_for_macro_id(
         &self,
-        conation_id: MacroUserIdStr<'_>,
+        macro_id: MacroUserIdStr<'_>,
     ) -> impl Future<Output = Result<Vec<Link>, EmailErr>> + Send;
 
     /// Resolve the inbox owning a thread, scoped to the caller's own and
@@ -511,7 +511,7 @@ pub trait EmailService: Send + Sync + 'static {
     /// the thread instead of an `X-Email-Link-Id` header.
     fn get_owned_link_for_thread(
         &self,
-        conation_id: MacroUserIdStr<'_>,
+        macro_id: MacroUserIdStr<'_>,
         thread_id: Uuid,
     ) -> impl Future<Output = Result<Option<Link>, EmailErr>> + Send;
 
@@ -570,7 +570,7 @@ pub trait EmailService: Send + Sync + 'static {
     /// Mark a caller-accessible thread as seen and read.
     fn mark_thread_seen(
         &self,
-        _conation_id: MacroUserIdStr<'static>,
+        _macro_id: MacroUserIdStr<'static>,
         _thread_id: Uuid,
     ) -> impl Future<Output = Result<(), EmailErr>> + Send {
         async { Err(no_op_email_err()) }
@@ -579,7 +579,7 @@ pub trait EmailService: Send + Sync + 'static {
     /// Add or remove a label from a caller-accessible thread.
     fn update_thread_labels_for_user(
         &self,
-        _conation_id: MacroUserIdStr<'static>,
+        _macro_id: MacroUserIdStr<'static>,
         _thread_id: Uuid,
         _label_id: Uuid,
         _add: bool,
@@ -723,14 +723,14 @@ fn no_op_email_err() -> EmailErr {
 impl EmailUserService for NoOpEmailService {
     async fn get_user_email_labels(
         &self,
-        _conation_id: MacroUserIdStr<'static>,
+        _macro_id: MacroUserIdStr<'static>,
     ) -> Result<Vec<LinkLabel>, EmailErr> {
         Err(no_op_email_err())
     }
 
     async fn get_user_email_links(
         &self,
-        _conation_id: MacroUserIdStr<'static>,
+        _macro_id: MacroUserIdStr<'static>,
     ) -> Result<Vec<UserEmailLink>, EmailErr> {
         Err(no_op_email_err())
     }
@@ -745,31 +745,31 @@ impl EmailService for NoOpEmailService {
         Err(no_op_email_err())
     }
 
-    async fn get_link_by_auth_id_and_conation_id(
+    async fn get_link_by_auth_id_and_macro_id(
         &self,
         _auth_id: &str,
-        _conation_id: MacroUserIdStr<'_>,
+        _macro_id: MacroUserIdStr<'_>,
     ) -> Result<Option<Link>, EmailErr> {
         Err(no_op_email_err())
     }
 
-    async fn get_link_by_conation_id(
+    async fn get_link_by_macro_id(
         &self,
-        _conation_id: MacroUserIdStr<'_>,
+        _macro_id: MacroUserIdStr<'_>,
     ) -> Result<Option<Link>, EmailErr> {
         Err(no_op_email_err())
     }
 
-    async fn get_inboxes_for_conation_id(
+    async fn get_inboxes_for_macro_id(
         &self,
-        _conation_id: MacroUserIdStr<'_>,
+        _macro_id: MacroUserIdStr<'_>,
     ) -> Result<Vec<Link>, EmailErr> {
         Err(no_op_email_err())
     }
 
     async fn get_owned_link_for_thread(
         &self,
-        _conation_id: MacroUserIdStr<'_>,
+        _macro_id: MacroUserIdStr<'_>,
         _thread_id: Uuid,
     ) -> Result<Option<Link>, EmailErr> {
         Err(no_op_email_err())

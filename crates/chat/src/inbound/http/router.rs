@@ -9,12 +9,12 @@ use axum::{
     http::StatusCode,
     routing::{delete, get, post, put},
 };
-use entity_access::domain::models::{EditAccessLevel, OwnerAccessLevel, ViewAccessLevel};
-use entity_access::domain::ports::EntityAccessService;
-use entity_access::inbound::axum_extractors::ChatAccessLevelExtractor;
 use conation_authorization::{
     ActingUser, MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState,
 };
+use entity_access::domain::models::{EditAccessLevel, OwnerAccessLevel, ViewAccessLevel};
+use entity_access::domain::ports::EntityAccessService;
+use entity_access::inbound::axum_extractors::ChatAccessLevelExtractor;
 use model::response::StringIDResponse;
 use models_permissions::share_permission::SharePermissionV2;
 use roles_and_permissions::domain::port::UserRolesAndPermissionsService;
@@ -218,7 +218,6 @@ pub async fn create_chat_handler<
 >(
     State(state): State<ChatRouterState<S, Svc, Auth, P>>,
     user: MacroAuthorizationExtractor<Auth, ActingUser>,
-    // 402 on no perms
     _access: ChatModelAccess<Auth, P>,
     Json(req): Json<CreateChatRequest>,
 ) -> Result<Json<StringIDResponse>> {
@@ -227,7 +226,7 @@ pub async fn create_chat_handler<
     let id = state
         .inner
         .create(
-            user.conation_user_id.clone(),
+            user.macro_user_id.clone(),
             CreateChatArgs {
                 name: req.name.unwrap_or_else(|| "New Chat".to_string()),
                 project_id: req.project_id,

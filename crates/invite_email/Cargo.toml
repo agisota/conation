@@ -8,6 +8,7 @@ version = "0.1.0"
 [dependencies]
 askama = { workspace = true }
 conation_env = { path = "../conation_env" }
+conation_env_var = { path = "../conation_env_var" }
 conation_user_id = { path = "../conation_user_id" }
 model-entity = { path = "../model-entity" }
 notification = { path = "../notification" }

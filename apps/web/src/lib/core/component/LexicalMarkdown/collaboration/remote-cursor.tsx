@@ -1,6 +1,4 @@
-import { DEV_MODE_ENV } from '@core/constant/featureFlags';
-import { idToEmail } from '@core/user';
-import { createDOMRange, createRectsFromDOMRange } from '@lexical/selection';
+import { t } from '@app/lib/i18n';
 import {
   type Awareness,
   isAwarenessWithSelection,
@@ -8,6 +6,9 @@ import {
 } from '@conation/collaboration/collab/awareness';
 import type { LoroManager } from '@conation/collaboration/collab/manager';
 import type { NodeIdMappings } from '@conation/lexical-core';
+import { DEV_MODE_ENV } from '@core/constant/featureFlags';
+import { idToEmail } from '@core/user';
+import { createDOMRange, createRectsFromDOMRange } from '@lexical/selection';
 import { cn } from '@ui';
 import { $getNodeByKey, $isTextNode, type LexicalEditor } from 'lexical';
 import {
@@ -287,9 +288,10 @@ function RemoteCursorsOverlay(props: RemoteCursorsOverlayProps) {
       <For each={props.remoteCursors()}>
         {(cursor) => {
           const userKey = cursor.user ?? 'Anonymous';
-          const userName = cursor.user
-            ? idToEmail(cursor.user).split('@')[0]
-            : 'Anonymous';
+          const userName =
+            cursor.user && cursor.user !== 'Anonymous'
+              ? idToEmail(cursor.user).split('@')[0]
+              : t('editor.collaboration.anonymous');
 
           const startStyle = cursor.style[0];
 

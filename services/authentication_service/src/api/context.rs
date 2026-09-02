@@ -15,6 +15,14 @@ use channels::{
         pg_channels_repo::PgChannelsRepo, pg_side_effect_context::PgChannelSideEffectContext,
     },
 };
+use conation_auth::{InternalApiKey, middleware::decode_jwt::JwtValidationArgs};
+use conation_authorization::{
+    MacroAuthJwtValidator, MacroAuthorizationServiceImpl, MacroAuthorizationState,
+};
+use conation_cache_client::MacroCache;
+use conation_env::Environment;
+use conation_env_var::env_var;
+use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
 use contacts::{domain::service::SqsContactsIngress, outbound::ingress::SqsContactsQueue};
 use entity_access::domain::service::EntityAccessServiceImpl;
 use entity_access::outbound::PgAccessRepository;
@@ -25,14 +33,6 @@ use github::outbound::github_auth_client::GithubAuthImpl;
 use github::outbound::github_oauth_client::GithubOauthImpl;
 use github::outbound::pg_github_repo::PgGithubRepo;
 use loops_client::LoopsClient;
-use conation_auth::{InternalApiKey, middleware::decode_jwt::JwtValidationArgs};
-use conation_authorization::{
-    MacroAuthJwtValidator, MacroAuthorizationServiceImpl, MacroAuthorizationState,
-};
-use conation_cache_client::MacroCache;
-use conation_env::Environment;
-use conation_env_var::env_var;
-use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
 use native_app_service::{domain::service::NativeAppServiceImpl, outbound::DefaultBundleFetcher};
 use notification::outbound::queue::SqsQueue;
 use notification::{
@@ -50,6 +50,7 @@ use roles_and_permissions::{
 use sqlx::PgPool;
 use tokio_util::task::TaskTracker;
 
+use crate::config::MailIdentity;
 use crate::microsoft_token_cipher::MicrosoftTokenCipher;
 use cursor_api_key::cipher::CursorApiKeyCipher;
 
@@ -109,6 +110,14 @@ pub(crate) type FavoritesServiceType = favorites::domain::service::FavoritesServ
 
 pub(crate) type AuthorizationService = MacroAuthorizationServiceImpl<MacroAuthJwtValidator>;
 
+/// Whether hosted Stripe billing is configured for this deployment.
+#[derive(Clone, Copy)]
+pub(crate) struct StripeBillingEnabled(pub(crate) bool);
+
+/// Whether Google OAuth is configured for Gmail account linking.
+#[derive(Clone, Copy)]
+pub(crate) struct GoogleOAuthEnabled(pub(crate) bool);
+
 #[derive(Clone, FromRef)]
 pub(crate) struct ApiContext {
     pub db: PgPool,
@@ -119,16 +128,22 @@ pub(crate) struct ApiContext {
     pub cursor_api_key_cipher: Arc<dyn CursorApiKeyCipher>,
     pub conation_cache_client: Arc<MacroCache>,
     pub stripe_client: Arc<stripe::Client>,
+    pub stripe_enabled: StripeBillingEnabled,
+    pub google_oauth_enabled: GoogleOAuthEnabled,
     pub document_storage_service_client:
         Arc<document_storage_service_client::DocumentStorageServiceClient>,
     pub email_service_client: Arc<email::outbound::EmailServiceHttpClient>,
     pub ses_client: Arc<ses_client::Ses>,
+    /// Validated sender and support addresses owned by this deployment.
+    pub mail_identity: MailIdentity,
+    /// Validated browser-facing application URL used in transactional mail.
+    pub app_base_url: url::Url,
     pub notification_ingress_service: Arc<NotificationIngressType>,
     pub sqs_client: Arc<sqs_client::SQS>,
     pub environment: Environment,
     pub jwt_args: JwtValidationArgs,
     pub authorization_state: MacroAuthorizationState<AuthorizationService>,
-    pub token_context: MacroApiTokenContext,
+    pub token_context: ConationApiTokenContext,
     pub internal_api_key: InternalApiKey,
     pub stripe_webhook_secret: LocalOrRemoteSecret<StripeWebhookSecretKey>,
     pub user_roles_and_permissions_service:
@@ -155,24 +170,24 @@ env_var! {
 
 env_var! {
     #[derive(Clone)]
-    pub struct MacroApiTokenIssuer;
+pub struct ConationApiTokenIssuer;
 }
 env_var! {
     #[derive(Clone)]
-    pub struct MacroApiTokenPrivateSecretKey;
+pub struct ConationApiTokenPrivateSecretKey;
 }
 
 env_var! {
     #[derive(Clone)]
-    pub struct MacroApiTokenExpirySeconds;
+pub struct ConationApiTokenExpirySeconds;
 }
 
 #[derive(Clone)]
-pub struct MacroApiTokenContext {
-    /// The issuer of the macro-api-token
-    pub issuer: MacroApiTokenIssuer,
-    /// The macro api token private key used to sign macro-api tokens
-    pub conation_api_token_private_key: LocalOrRemoteSecret<MacroApiTokenPrivateSecretKey>,
+pub struct ConationApiTokenContext {
+    /// The issuer of the Conation API token.
+    pub issuer: ConationApiTokenIssuer,
+    /// The private key used to sign Conation API tokens.
+    pub conation_api_token_private_key: LocalOrRemoteSecret<ConationApiTokenPrivateSecretKey>,
     /// The token expiry duration in seconds
     pub expiry_seconds: usize,
 }

@@ -6,8 +6,10 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
+use conation_authorization::{
+    MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal,
+};
 use entity_access::domain::ports::EntityAccessService;
-use conation_authorization::{MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal};
 use models_properties::api::{AddPropertyOptionRequest, UpdatePropertyOptionRequest};
 use models_properties::service::property_option::PropertyOption;
 use thiserror::Error;
@@ -66,7 +68,7 @@ pub async fn get_property_options<
     user: MacroAuthorizationExtractor<Auth, UserOrInternal>,
     team: PropertyTeamExtractor<A, Auth>,
 ) -> Result<Json<Vec<PropertyOption>>, GetPropertyOptionsErr> {
-    let user = user.authorization.user.conation_user_id;
+    let user = user.authorization.user.macro_user_id;
     tracing::info!("retrieving property options");
 
     let options = state
@@ -135,7 +137,7 @@ pub async fn add_property_option<
     team: PropertyTeamExtractor<A, Auth>,
     Json(request): Json<AddPropertyOptionRequest>,
 ) -> Result<(StatusCode, Json<PropertyOption>), AddPropertyOptionErr> {
-    let user = user.authorization.user.conation_user_id;
+    let user = user.authorization.user.macro_user_id;
     tracing::info!("adding property option");
 
     let option = state
@@ -208,7 +210,7 @@ pub async fn update_property_option<
     team: PropertyTeamExtractor<A, Auth>,
     Json(request): Json<UpdatePropertyOptionRequest>,
 ) -> Result<(StatusCode, Json<PropertyOption>), UpdatePropertyOptionErr> {
-    let user = user.authorization.user.conation_user_id;
+    let user = user.authorization.user.macro_user_id;
     let updated = state
         .properties_service
         .update_property_option(
@@ -275,7 +277,7 @@ pub async fn delete_property_option<
     user: MacroAuthorizationExtractor<Auth, UserOrInternal>,
     team: PropertyTeamExtractor<A, Auth>,
 ) -> Result<StatusCode, DeletePropertyOptionErr> {
-    let user = user.authorization.user.conation_user_id;
+    let user = user.authorization.user.macro_user_id;
     tracing::info!("deleting property option");
 
     state

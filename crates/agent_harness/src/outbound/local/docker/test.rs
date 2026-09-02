@@ -2,12 +2,12 @@ use super::*;
 
 fn spec() -> RunSpec {
     RunSpec {
-        image: "macro-agent-harness:latest".to_owned(),
-        name: "macro-agent-abc".to_owned(),
-        labels: vec![("macro.agent_session_id".to_owned(), "abc".to_owned())],
+        image: "conation-agent-harness:latest".to_owned(),
+        name: "conation-agent-abc".to_owned(),
+        labels: vec![("conation.agent_session_id".to_owned(), "abc".to_owned())],
         env: vec![(
             "REPO_URL".to_owned(),
-            "https://github.com/macro-inc/macro".to_owned(),
+            "https://github.com/agisota/conation".to_owned(),
         )],
         network: "conation_services".to_owned(),
     }
@@ -23,7 +23,7 @@ fn run_detaches_and_keeps_the_container_alive() {
     assert!(args.contains(&"--detach".to_owned()));
     assert_eq!(
         &args[args.len() - 3..],
-        ["macro-agent-harness:latest", "sleep", "infinity"]
+        ["conation-agent-harness:latest", "sleep", "infinity"]
     );
 }
 
@@ -32,9 +32,12 @@ fn run_passes_labels_and_environment_as_key_equals_value() {
     let args = run_args(&spec());
 
     let label = args.iter().position(|arg| arg == "--label").unwrap();
-    assert_eq!(args[label + 1], "macro.agent_session_id=abc");
+    assert_eq!(args[label + 1], "conation.agent_session_id=abc");
     let env = args.iter().position(|arg| arg == "--env").unwrap();
-    assert_eq!(args[env + 1], "REPO_URL=https://github.com/macro-inc/macro");
+    assert_eq!(
+        args[env + 1],
+        "REPO_URL=https://github.com/agisota/conation"
+    );
 }
 
 /// The harness is itself a container, so a published host port would be on the
@@ -53,8 +56,8 @@ fn a_sandbox_joins_the_compose_network_and_publishes_nothing() {
 #[test]
 fn exec_runs_the_command_through_a_login_shell() {
     assert_eq!(
-        exec_args("macro-agent-abc", "echo hi"),
-        ["exec", "macro-agent-abc", "bash", "-lc", "echo hi"]
+        exec_args("conation-agent-abc", "echo hi"),
+        ["exec", "conation-agent-abc", "bash", "-lc", "echo hi"]
     );
 }
 
@@ -62,26 +65,26 @@ fn exec_runs_the_command_through_a_login_shell() {
 /// lookup must not be limited to running ones.
 #[test]
 fn finding_by_label_includes_stopped_containers() {
-    let args = find_by_label_args("macro.agent_session_id", "abc");
+    let args = find_by_label_args("conation.agent_session_id", "abc");
 
     assert!(args.contains(&"--all".to_owned()));
-    assert!(args.contains(&"label=macro.agent_session_id=abc".to_owned()));
+    assert!(args.contains(&"label=conation.agent_session_id=abc".to_owned()));
 }
 
 /// Shutdown has to see stopped sandboxes too, or a Ctrl-C after idle leaves
 /// them behind.
 #[test]
 fn listing_by_label_key_includes_stopped_containers() {
-    let args = find_all_by_label_key_args("macro.agent_session_id");
+    let args = find_all_by_label_key_args("conation.agent_session_id");
 
     assert!(args.contains(&"--all".to_owned()));
-    assert!(args.contains(&"label=macro.agent_session_id".to_owned()));
+    assert!(args.contains(&"label=conation.agent_session_id".to_owned()));
 }
 
 #[test]
 fn image_inspect_names_the_image() {
     assert_eq!(
-        image_inspect_args("macro-agent-harness:latest"),
-        ["image", "inspect", "macro-agent-harness:latest"]
+        image_inspect_args("conation-agent-harness:latest"),
+        ["image", "inspect", "conation-agent-harness:latest"]
     );
 }

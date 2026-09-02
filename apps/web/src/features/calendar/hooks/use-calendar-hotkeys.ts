@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { createHotkeyGroup, registerHotkey } from '@core/hotkey/hotkeys';
 import { TOKENS } from '@core/hotkey/tokens';
 import { onCleanup } from 'solid-js';
@@ -15,25 +16,25 @@ const VIEW_HOTKEYS = [
   {
     hotkey: 'd',
     token: TOKENS.calendar.view.day,
-    description: 'Day view',
+    descriptionKey: 'calendar.hotkey.dayView',
     view: 'timeGridDay',
   },
   {
     hotkey: 'w',
     token: TOKENS.calendar.view.week,
-    description: 'Week view',
+    descriptionKey: 'calendar.hotkey.weekView',
     view: 'timeGridWeek',
   },
   {
     hotkey: 'm',
     token: TOKENS.calendar.view.month,
-    description: 'Month view',
+    descriptionKey: 'calendar.hotkey.monthView',
     view: 'dayGridMonth',
   },
 ] as const satisfies ReadonlyArray<{
   hotkey: 'd' | 'w' | 'm';
   token: (typeof TOKENS.calendar.view)[keyof typeof TOKENS.calendar.view];
-  description: string;
+  descriptionKey: string;
   view: CalendarPeriodView;
 }>;
 
@@ -47,7 +48,7 @@ export function useCalendarHotkeys(handlers: CalendarHotkeyHandlers) {
         scopeId: handlers.scopeId,
         hotkey: command.hotkey,
         hotkeyToken: command.token,
-        description: command.description,
+        description: t(command.descriptionKey),
         keyDownHandler: () => {
           handlers.changeView(command.view);
           return true;
@@ -63,7 +64,7 @@ export function useCalendarHotkeys(handlers: CalendarHotkeyHandlers) {
       scopeId: handlers.scopeId,
       hotkey: ['p', 'k'],
       hotkeyToken: TOKENS.calendar.period.previous,
-      description: 'Previous period',
+      description: t('calendar.hotkey.previousPeriod'),
       keyDownHandler: () => {
         void handlers.previousPeriod();
         return true;
@@ -76,7 +77,7 @@ export function useCalendarHotkeys(handlers: CalendarHotkeyHandlers) {
       scopeId: handlers.scopeId,
       hotkey: ['n', 'j'],
       hotkeyToken: TOKENS.calendar.period.next,
-      description: 'Next period',
+      description: t('calendar.hotkey.nextPeriod'),
       keyDownHandler: () => {
         void handlers.nextPeriod();
         return true;
@@ -89,7 +90,7 @@ export function useCalendarHotkeys(handlers: CalendarHotkeyHandlers) {
       scopeId: handlers.scopeId,
       hotkey: 't',
       hotkeyToken: TOKENS.calendar.period.today,
-      description: 'Go to today',
+      description: t('calendar.navigation.goToToday'),
       keyDownHandler: () => {
         handlers.navigateToToday();
         return true;

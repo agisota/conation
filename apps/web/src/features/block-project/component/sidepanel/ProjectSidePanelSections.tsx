@@ -1,9 +1,9 @@
 import { EntityActivitySectionConditional } from '@app/features/activity/EntityActivitySection';
-import { t } from '@app/lib/i18n';
 import {
   EntityPropertiesSection,
   EntityTagsSection,
 } from '@app/features/property/side-panel/properties';
+import { t } from '@app/lib/i18n';
 import { SidePanel } from '@components/app/side-panel';
 import { useBlockId } from '@core/block';
 import { useCanEdit } from '@core/signal/permissions';
@@ -17,7 +17,12 @@ export function ProjectSidePanelSections() {
 
   return (
     <>
-      <SidePanel.Section id="details" title={t('common.details')} defaultOpen order={10}>
+      <SidePanel.Section
+        id="details"
+        title={t('common.details')}
+        defaultOpen
+        order={10}
+      >
         <Suspense fallback={<SidePanel.Loading />}>
           <EntityPropertiesSection
             entityId={projectId}

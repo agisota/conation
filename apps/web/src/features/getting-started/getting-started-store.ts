@@ -13,7 +13,7 @@ export interface GettingStartedStore {
   save(userId: string, snapshot: GettingStartedSnapshot): void;
 }
 
-const storage = createUserScopedStorage('macro:getting-started');
+const storage = createUserScopedStorage('conation:getting-started');
 
 function stringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];

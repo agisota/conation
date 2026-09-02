@@ -40,25 +40,27 @@ describe('call resolution signaling', () => {
     const resolution = {
       type: 'answered' as const,
       callId: 'call-1',
-      answeredBy: 'macro|person@example.com',
+      answeredBy: 'conation|person@example.com',
     };
 
     publishCallResolution(resolution);
 
     expect(handler).toHaveBeenCalledWith(resolution);
-    expect(MockBroadcastChannel.instance?.name).toBe('macro-call-resolution');
+    expect(MockBroadcastChannel.instance?.name).toBe(
+      'conation-call-resolution'
+    );
     expect(MockBroadcastChannel.instance?.postMessage).toHaveBeenCalledWith(
       resolution
     );
     expect(
-      JSON.parse(localStorage.getItem('macro.call-resolution') ?? '')
+      JSON.parse(localStorage.getItem('conation.call-resolution') ?? '')
     ).toEqual(resolution);
 
     // Both transports can deliver the same cross-tab message.
     MockBroadcastChannel.instance?.emit(resolution);
     window.dispatchEvent(
       new StorageEvent('storage', {
-        key: 'macro.call-resolution',
+        key: 'conation.call-resolution',
         newValue: JSON.stringify(resolution),
       })
     );
@@ -73,7 +75,7 @@ describe('call resolution signaling', () => {
     const answered = {
       type: 'answered',
       callId: 'call-1',
-      answeredBy: 'macro|person@example.com',
+      answeredBy: 'conation|person@example.com',
     };
     const ended = {
       type: 'ended',
@@ -85,7 +87,7 @@ describe('call resolution signaling', () => {
     MockBroadcastChannel.instance?.emit({ type: 'answered' });
     window.dispatchEvent(
       new StorageEvent('storage', {
-        key: 'macro.call-resolution',
+        key: 'conation.call-resolution',
         newValue: JSON.stringify(ended),
       })
     );
@@ -132,18 +134,18 @@ describe('getCallRecordResolution', () => {
           isActive: true,
           participants: [
             {
-              userId: 'macro|person@example.com',
+              userId: 'conation|person@example.com',
               joinedAt: '2026-08-10T10:00:00.000Z',
               leftAt: '2026-08-10T10:01:00.000Z',
             },
           ],
         },
-        'macro|person@example.com'
+        'conation|person@example.com'
       )
     ).toEqual({
       type: 'answered',
       callId: 'call-1',
-      answeredBy: 'macro|person@example.com',
+      answeredBy: 'conation|person@example.com',
     });
   });
 
@@ -158,13 +160,13 @@ describe('getCallRecordResolution', () => {
           isActive: true,
           participants: [
             {
-              userId: 'macro|someone-else@example.com',
+              userId: 'conation|someone-else@example.com',
               joinedAt: '2026-08-10T10:00:00.000Z',
               leftAt: '2026-08-10T10:01:00.000Z',
             },
           ],
         },
-        'macro|person@example.com'
+        'conation|person@example.com'
       )
     ).toBeNull();
   });
@@ -179,12 +181,12 @@ describe('getCallRecordResolution', () => {
     };
 
     expect(
-      getCallRecordResolution(unansweredRecord, 'macro|person@example.com')
+      getCallRecordResolution(unansweredRecord, 'conation|person@example.com')
     ).toBeNull();
     expect(
       getCallRecordResolution(
         { ...unansweredRecord, isActive: false },
-        'macro|person@example.com'
+        'conation|person@example.com'
       )
     ).toEqual({
       type: 'ended',

@@ -104,7 +104,7 @@ impl AgentSessionRepo for FixedBotSessions {
     async fn get(&self, id: AgentSessionId) -> SessionResult<AgentSession> {
         Ok(AgentSession {
             id,
-            owner_id: MacroUserIdStr::try_from("macro|owner@macro.com".to_owned())
+            owner_id: MacroUserIdStr::try_from("conation|owner@conation.dev".to_owned())
                 .expect("valid user id"),
             thread_id: None,
             thread_channel_id: None,

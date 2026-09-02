@@ -11,10 +11,10 @@
 //! them as well.
 
 use anyhow::Context;
-use database_env_vars::DatabaseUrl;
 use conation_auth::InternalApiKey;
 pub use conation_env::Environment;
 use conation_env_var::env_vars;
+use database_env_vars::DatabaseUrl;
 
 env_vars! {
     /// Auth key used by the document storage / search / lexical clients.

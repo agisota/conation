@@ -20,10 +20,10 @@ use crate::domain::ports::{
     EmailSender, NotificationEgress, NotificationQueue, NotificationRepository, NotificationSender,
     RateLimitService, RealtimeSender,
 };
+use conation_user_id::user_id::MacroUserIdStr;
 use cowlike::CowLike;
 use either::Either;
 use futures::stream::{FuturesUnordered, StreamExt};
-use conation_user_id::user_id::MacroUserIdStr;
 use rootcause::prelude::ResultExt;
 use rootcause::{Report, report};
 use std::time::Duration;

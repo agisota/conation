@@ -1,5 +1,7 @@
 use std::sync::{Arc, Mutex};
 
+use conation_event_broker::{EventBrokerError, MacroEvent, MacroEventBroker};
+use conation_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::models::{
     EditAccessLevel, Entity, EntityAccessAuth, EntityAccessReceipt, EntityPermission, EntityType,
     OwnerAccessLevel, ViewAccessLevel,
@@ -7,8 +9,6 @@ use entity_access::domain::models::{
 use entity_access_management::domain::models::EntityAccessManagementError;
 use entity_access_management::domain::ports::EntityAccessManagementService;
 use entity_mutation::{EntityMutationEffect, RestoreEntity};
-use conation_event_broker::{EventBrokerError, MacroEvent, MacroEventBroker};
-use conation_user_id::user_id::MacroUserIdStr;
 use model::document::{ContentType, DocumentMetadata, FileType};
 use model::folder::{
     FileSystemNodeWithIds, FolderItem, S3Destination, UploadFolderRequest,

@@ -82,5 +82,5 @@ fn ai_feature_roundtrips_through_snake_case() {
 
 #[test]
 fn system_user_is_valid() {
-    assert_eq!(SYSTEM_USER_ID.as_ref(), "macro|ai-system@macro.com");
+    assert_eq!(SYSTEM_USER_ID.as_ref(), "conation|ai-system@conation.dev");
 }

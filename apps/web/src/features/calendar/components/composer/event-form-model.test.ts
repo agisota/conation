@@ -3,6 +3,7 @@ import {
   defaultEditorInitialValues,
   type EventEditorInitialValues,
   eventHasEnded,
+  initialGuestOptions,
 } from './event-form-model';
 
 const NOW = new Date('2026-08-25T12:00:00');
@@ -56,5 +57,31 @@ describe('eventHasEnded', () => {
     expect(
       eventHasEnded(values({ allDay: true, start: '', end: '' }), NOW)
     ).toBe(false);
+  });
+});
+
+describe('initialGuestOptions', () => {
+  it('uses the canonical Conation user-id namespace for typed guest emails', () => {
+    const [guest] = initialGuestOptions('person@example.com', []);
+
+    expect(guest).toMatchObject({
+      kind: 'custom',
+      id: 'conation|person@example.com',
+      data: {
+        id: 'conation|person@example.com',
+        email: 'person@example.com',
+        invalid: false,
+      },
+    });
+  });
+
+  it('does not manufacture a user id for malformed guest input', () => {
+    const [guest] = initialGuestOptions('not-an-email', []);
+
+    expect(guest).toMatchObject({
+      kind: 'custom',
+      id: 'not-an-email',
+      data: { invalid: true },
+    });
   });
 });

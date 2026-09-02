@@ -47,7 +47,7 @@ impl<
         };
 
         let participant_user_ids = self
-            .pull_request_participant_conation_user_ids(pull_request, upserts)
+            .pull_request_participant_macro_user_ids(pull_request, upserts)
             .await;
         if participant_user_ids.is_empty() {
             return;

@@ -3,6 +3,12 @@ import { t } from '@app/lib/i18n';
 import { openCalendarEventSplit } from '@block-calendar/open-calendar-event';
 import { URL_PARAMS as CHANNEL_PARAMS } from '@block-channel/constants';
 import {
+  $convertMentionToCard,
+  $isDocumentMentionNode,
+  DocumentCardNode,
+  type DocumentMentionDecoratorProps,
+} from '@conation/lexical-core';
+import {
   type BlockAlias,
   type BlockName,
   useMaybeBlockId,
@@ -28,12 +34,6 @@ import { formatDate } from '@core/util/date';
 import { matches } from '@core/util/match';
 import { openInNewSplitForMention } from '@core/util/openInNewSplit';
 import { useSplitNavigationHandler } from '@core/util/useSplitNavigationHandler';
-import {
-  $convertMentionToCard,
-  $isDocumentMentionNode,
-  DocumentCardNode,
-  type DocumentMentionDecoratorProps,
-} from '@conation/lexical-core';
 import EyeSlashDuo from '@phosphor/eye-slash.svg';
 import TrashSimple from '@phosphor/trash-simple.svg';
 import { PropertyValueIcon } from '@property/component/propertyValue/PropertyValueIcon';
@@ -274,7 +274,10 @@ function InlinePreview(props: {
                   data-document-name={props.documentName}
                   class="opacity-50"
                 >
-                  <Show when={props.documentName} fallback={t('common.loading')}>
+                  <Show
+                    when={props.documentName}
+                    fallback={t('common.loading')}
+                  >
                     {(name) => name().replaceAll('\n', ' ').trim()}
                   </Show>
                 </span>
@@ -306,7 +309,10 @@ function InlinePreview(props: {
                   data-block-name={props.blockName}
                   data-document-name={props.documentName}
                 >
-                  <Show when={props.documentName} fallback={'Unknown'}>
+                  <Show
+                    when={props.documentName}
+                    fallback={t('editor.mention.unknown')}
+                  >
                     {(name) => name().replaceAll('\n', ' ').trim()}
                   </Show>
                   <span class="relative text-[0.8em] text-current/50 rounded-md">
@@ -426,10 +432,16 @@ function InlinePreview(props: {
         )}
       </Match>
       <Match when={(item() as PreviewItemNoAccess).access === 'no_access'}>
-        <MentionContainer icon={<EyeSlashDuo />} text="No Access" />
+        <MentionContainer
+          icon={<EyeSlashDuo />}
+          text={t('editor.document.noAccess')}
+        />
       </Match>
       <Match when={(item() as PreviewItemNoAccess).access === 'does_not_exist'}>
-        <MentionContainer icon={<TrashSimple />} text="Deleted" />
+        <MentionContainer
+          icon={<TrashSimple />}
+          text={t('editor.document.deleted')}
+        />
       </Match>
     </Switch>
   );
@@ -712,7 +724,10 @@ function DocumentMentionInner(props: DocumentMentionDecoratorProps) {
               </Match>
             </Switch>
           </span>
-          <MentionTooltip show={isSelectedAsNode()} text="Open" />
+          <MentionTooltip
+            show={isSelectedAsNode()}
+            text={t('editor.mention.open')}
+          />
         </span>
       }
       content={

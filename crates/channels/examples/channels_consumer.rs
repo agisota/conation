@@ -25,10 +25,10 @@
 
 use anyhow::Context as _;
 use channels::domain::broker_events::{ChannelMacroEvent, ChannelTopicEvent};
-use kafka_util::{GroupName, KafkaEventConsumer};
 use conation_event_broker::{
     KafkaConsumerAdapter, MacroEvent as _, MacroEventCollection as _, MacroEventConsumerService,
 };
+use kafka_util::{GroupName, KafkaEventConsumer};
 use rdkafka::consumer::CommitMode;
 use rdkafka::message::Message;
 use tokio::sync::mpsc;

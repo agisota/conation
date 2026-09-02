@@ -29,6 +29,23 @@ export class AgentSession extends MacroEntity<AgentSessionResponse> {
     return new AgentSession(client, session.id, session);
   }
 
+  /** Create a session served by an externally hosted runtime. */
+  static async createExternal(
+    client: MacroClient,
+    opts: { repoUrl?: string; workspace: string; instructions?: string },
+  ): Promise<AgentSession> {
+    const { session } = unwrap(
+      await client.agentHarness.createAgentSession({
+        body: {
+          repoUrl: opts.repoUrl,
+          workspace: opts.workspace,
+          instructions: opts.instructions,
+        },
+      }),
+    );
+    return new AgentSession(client, session.id, session);
+  }
+
   protected async fetch(): Promise<AgentSessionResponse> {
     return unwrap(
       await this.client.agentHarness.getAgentSession({

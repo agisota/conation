@@ -1,7 +1,7 @@
 import { analytics } from '@app/lib/analytics';
-import { toast } from '@core/component/Toast/Toast';
-
+import { t } from '@app/lib/i18n';
 import { Telemetry } from '@conation/observability';
+import { toast } from '@core/component/Toast/Toast';
 
 import { storageServiceClient } from '@service-storage/client';
 
@@ -25,8 +25,8 @@ export const makeAttachmentPublic = async (attachmentId: string) => {
     },
   });
   if (!result.isErr()) {
-    toast.success('Recipients can now view this file', {
-      subtext: 'File share permissions have been updated to public view-only',
+    toast.success(t('blockEmail.attachments.shared'), {
+      subtext: t('blockEmail.attachments.sharedDescription'),
     });
     analytics.track('share_entity', {
       entityType: 'email_attachment',
@@ -35,8 +35,8 @@ export const makeAttachmentPublic = async (attachmentId: string) => {
       accessLevel: 'view',
     });
   } else {
-    toast.alert('Recipients may not be able to view this file', {
-      subtext: 'Please consult the document owner to change share permissions',
+    toast.alert(t('blockEmail.attachments.shareWarning'), {
+      subtext: t('blockEmail.attachments.shareWarningDescription'),
     });
     Telemetry.error('Failed to make attachment public', {
       errors: JSON.stringify(result.error),

@@ -9,13 +9,13 @@ use axum::{
     http::{Request, StatusCode, header},
 };
 use chrono::{TimeZone, Utc};
-use http_body_util::BodyExt;
 use conation_authorization::{
-    INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_USER_ID_HEADER, InternalAuthConfig, JwtValidator,
+    INTERNAL_API_KEY_HEADER, INTERNAL_CONATION_USER_ID_HEADER, InternalAuthConfig, JwtValidator,
     MacroAuthorizationError, MacroAuthorizationServiceImpl, MacroAuthorizationState,
     ValidatedIdentity,
 };
 use conation_user_id::user_id::MacroUserIdStr;
+use http_body_util::BodyExt;
 use models_pagination::Base64Str;
 use rootcause::Report;
 use tower::ServiceExt;
@@ -72,7 +72,7 @@ impl ChannelListService for FakeChannelListService {
         let (cursor_id, _) = request.query.vals();
         let limit = request.limit.map_or(usize::MAX, |limit| limit as usize);
         self.tracker.record(ServiceCall::GetChannels {
-            user_id: request.conation_id.to_string(),
+            user_id: request.macro_id.to_string(),
             limit: request.limit,
             cursor_id: cursor_id.copied(),
         });
@@ -179,7 +179,7 @@ async fn standard_internal_credentials_pass_acting_user_to_channel_list_service(
     let (router, tracker) = test_router(None);
     let request = Request::get("/channels")
         .header(INTERNAL_API_KEY_HEADER, VALID_INTERNAL_KEY)
-        .header(INTERNAL_MACRO_USER_ID_HEADER, ACTING_USER_ID)
+        .header(INTERNAL_CONATION_USER_ID_HEADER, ACTING_USER_ID)
         .body(Body::empty())
         .unwrap();
 

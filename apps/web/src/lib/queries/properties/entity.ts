@@ -1,5 +1,6 @@
 import { analytics } from '@app/lib/analytics';
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import {
   ENABLE_GRAPHQL_SOUP,
@@ -364,7 +365,7 @@ export function useDeleteEntityPropertyMutation(
           ),
         onError(error, variables) {
           console.error('Failed to delete property', error);
-          toast.failure('Failed to delete property');
+          toast.failure(t('properties.feedback.deleteFailed'));
           return invalidatePropertiesForEntity(
             variables.entityType,
             variables.entityId
@@ -402,7 +403,7 @@ function useRestAddEntityPropertyMutation(
           ),
         onError(error, variables) {
           console.error('Failed to add property', error);
-          toast.failure('Failed to add property');
+          toast.failure(t('properties.feedback.addFailed'));
           return invalidatePropertiesForEntity(
             variables.entityType,
             variables.entityId
@@ -444,7 +445,7 @@ export function useAddEntityPropertyMutation(
     },
     onError: async (error, variables, context) => {
       console.error('Failed to add property', error);
-      toast.failure('Failed to add property');
+      toast.failure(t('properties.feedback.addFailed'));
       await invalidatePropertiesForEntity(
         variables.entityType,
         variables.entityId
@@ -510,6 +511,7 @@ type EntityPropertyOptionContext = {
 
 function entityPropertyOptionCallbacks(
   failureMessage: string,
+  failureToast: () => string,
   callbacks?: MutationCallbacks<
     void,
     Error,
@@ -547,7 +549,7 @@ function entityPropertyOptionCallbacks(
         context?.soupTxn?.rollback();
         invalidateSoupEntity(variables.entityId);
         console.error(failureMessage, error);
-        toast.failure(failureMessage);
+        toast.failure(failureToast());
         return invalidatePropertiesForEntity(
           variables.entityType,
           variables.entityId
@@ -583,7 +585,11 @@ export function useAddEntityPropertyOptionMutation(
           })
       );
     },
-    ...entityPropertyOptionCallbacks('Failed to add tag', callbacks),
+    ...entityPropertyOptionCallbacks(
+      'Failed to add tag',
+      () => t('properties.feedback.tagAddFailed'),
+      callbacks
+    ),
   }));
 }
 
@@ -611,7 +617,11 @@ export function useRemoveEntityPropertyOptionMutation(
           })
       );
     },
-    ...entityPropertyOptionCallbacks('Failed to remove tag', callbacks),
+    ...entityPropertyOptionCallbacks(
+      'Failed to remove tag',
+      () => t('properties.feedback.tagRemoveFailed'),
+      callbacks
+    ),
   }));
 }
 
@@ -733,8 +743,8 @@ export function useBulkUpdateEntityPropertyOptionsMutation(
           console.error('Failed to update tags', error);
           toast.failure(
             thrownResultErrorHasCode(error, 'FORBIDDEN')
-              ? 'Edit permissions are required to update tags'
-              : 'Failed to update tags'
+              ? t('properties.feedback.tagsEditPermissionRequired')
+              : t('properties.feedback.tagsUpdateFailed')
           );
           return invalidatePropertiesForEntity(
             variables.entityType,
@@ -843,7 +853,7 @@ function handleCommittedPropertySave(
 
 function reportBulkPropertySaveFailure(error: Error): void {
   console.error('Failed to bulk save properties', error);
-  toast.failure('Failed to save properties');
+  toast.failure(t('properties.feedback.saveFailed'));
 }
 
 function rollbackBulkSoupTransactions(

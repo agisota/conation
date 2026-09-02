@@ -1,11 +1,13 @@
 //! Handler for creating projects.
 
 use axum::{Json, extract::State};
+use conation_authorization::{
+    MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal,
+};
 use entity_access::{
     domain::{models::EditAccessLevel, ports::EntityAccessService},
     inbound::axum_extractors::ProjectBodyAccessLevelExtractorV2,
 };
-use conation_authorization::{MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal};
 use model::project::{request::CreateProjectRequest, response::CreateProjectResponse};
 
 use super::ProjectRouterState;
@@ -25,7 +27,7 @@ use crate::domain::{models::ProjectError, ports::ProjectService};
 )]
 #[tracing::instrument(
     skip(state, user, project),
-    fields(user_id = ?user.authorization.user.conation_user_id),
+    fields(user_id = ?user.authorization.user.macro_user_id),
     err
 )]
 pub async fn create_project_handler<T, Svc, Auth>(
@@ -41,7 +43,7 @@ where
     let data = state
         .service
         .create_project(
-            user.authorization.user.conation_user_id.clone(),
+            user.authorization.user.macro_user_id.clone(),
             project.into_inner(),
         )
         .await?;

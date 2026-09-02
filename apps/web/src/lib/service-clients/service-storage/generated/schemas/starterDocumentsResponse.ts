@@ -9,6 +9,6 @@
  * The deterministic starter document ids for the current user.
  */
 export interface StarterDocumentsResponse {
-  /** Id of the user's "Macro how to guide". */
+  /** Id of the user's Conation how-to guide. */
   how_to_guide_id: string;
 }

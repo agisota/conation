@@ -17,14 +17,12 @@ describe('CORS middleware tests', async () => {
       'http://localhost:20010',
       'http://localhost:60000',
       'http://host.local:3000',
-      'https://dev.macro.com',
-      'https://staging.macro.com',
-      'https://www.macro.com',
-      'https://macro.com',
+      'https://dev.conation.dev',
+      'https://staging.conation.dev',
+      'https://www.conation.dev',
+      'https://app.conation.dev',
+      'https://conation.dev',
       'capacitor://localhost',
-      'https://apollo-testing.macro.com',
-      'https://my-feature-branch.preview.macro.com',
-      'https://fix-123.preview.macro.com',
     ];
 
     const token = getTokenForDocument('test-doc', 'test-user', 'owner');
@@ -57,7 +55,7 @@ describe('CORS middleware tests', async () => {
       {
         method: 'OPTIONS',
         headers: {
-          Origin: 'https://dev.macro.com',
+          Origin: 'https://dev.conation.dev',
           'Access-Control-Request-Method': 'GET',
           'Access-Control-Request-Headers': 'authorization, content-type',
         },
@@ -68,7 +66,7 @@ describe('CORS middleware tests', async () => {
 
     // Check preflight response headers
     expect(response.headers.get('Access-Control-Allow-Origin')).toBe(
-      'https://dev.macro.com'
+      'https://dev.conation.dev'
     );
     expect(response.headers.get('Access-Control-Allow-Credentials')).toBe(
       'true'
@@ -93,6 +91,7 @@ describe('CORS middleware tests', async () => {
   test('should reject requests from non-whitelisted origins', async () => {
     const disallowedOrigins = [
       'https://malicious.com',
+      'https://macro.com',
       'http://localhost:8080',
       'https://evil.macro.com',
       'https://fake-dashboard.macro.com',
@@ -122,7 +121,7 @@ describe('CORS middleware tests', async () => {
 
   test('should allow all HTTP methods for whitelisted origins', async () => {
     const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
-    const origin = 'https://dev.macro.com';
+    const origin = 'https://dev.conation.dev';
 
     for (const method of methods) {
       const response = await mf.dispatchFetch(
@@ -150,7 +149,7 @@ describe('CORS middleware tests', async () => {
       {
         method: 'OPTIONS',
         headers: {
-          Origin: 'https://dev.macro.com',
+          Origin: 'https://dev.conation.dev',
           'Access-Control-Request-Method': 'GET',
           'Access-Control-Request-Headers': 'authorization',
         },
@@ -173,7 +172,7 @@ describe('CORS middleware tests', async () => {
       {
         method: 'OPTIONS',
         headers: {
-          Origin: 'https://dev.macro.com',
+          Origin: 'https://dev.conation.dev',
           'Access-Control-Request-Method': 'GET',
           'Access-Control-Request-Headers': 'authorization,traceparent',
         },
@@ -201,7 +200,7 @@ describe('CORS middleware tests', async () => {
       {
         headers: {
           Authorization: 'Bearer ' + token,
-          Origin: 'https://dev.macro.com',
+          Origin: 'https://dev.conation.dev',
           'Content-Type': 'application/json',
         },
       }
@@ -214,7 +213,7 @@ describe('CORS middleware tests', async () => {
     expect(metadata.id).toBe('cors-test-doc');
 
     expect(response.headers.get('Access-Control-Allow-Origin')).toBe(
-      'https://dev.macro.com'
+      'https://dev.conation.dev'
     );
     expect(response.headers.get('Access-Control-Allow-Credentials')).toBe(
       'true'
@@ -243,6 +242,45 @@ describe('CORS middleware tests', async () => {
     expect(response.headers.get('Access-Control-Allow-Credentials')).toBe(
       'true'
     );
+  });
+
+  test('should use an exact operator-configured origin allowlist', async () => {
+    mf = await setupMiniflare({
+      ALLOWED_ORIGINS: 'https://workspace.example.org/',
+    });
+    const token = getTokenForDocument('test-doc', 'test-user', 'owner');
+
+    const allowed = await mf.dispatchFetch(
+      'http://localhost:8787/document/test-doc/metadata',
+      {
+        headers: {
+          Authorization: 'Bearer ' + token,
+          Origin: 'https://workspace.example.org',
+        },
+      }
+    );
+    expect(allowed.headers.get('Access-Control-Allow-Origin')).toBe(
+      'https://workspace.example.org'
+    );
+
+    for (const origin of [
+      'https://workspace.example.org.attacker.test',
+      'http://workspace.example.org',
+      'https://conation.dev',
+    ]) {
+      const rejected = await mf.dispatchFetch(
+        'http://localhost:8787/document/test-doc/metadata',
+        {
+          headers: {
+            Authorization: 'Bearer ' + token,
+            Origin: origin,
+          },
+        }
+      );
+      expect(rejected.headers.get('Access-Control-Allow-Origin')).not.toBe(
+        origin
+      );
+    }
   });
 
   test('should handle requests without Origin header', async () => {

@@ -1,5 +1,5 @@
-import { useAddInboxFlow } from '@core/email-link';
 import { t } from '@app/lib/i18n';
+import { useAddInboxFlow } from '@core/email-link';
 import { Button, Dialog, Panel } from '@ui';
 import { createSignal, onCleanup } from 'solid-js';
 
@@ -51,23 +51,31 @@ export function AddInboxDialog() {
     >
       <Panel depth={2} class="rounded-xl">
         <Panel.Header class="px-6">
-          <Dialog.Title class="text-ink text-sm font-semibold">{t('auto.add_inbox')}</Dialog.Title>
+          <Dialog.Title class="text-ink text-sm font-semibold">
+            {t('inbox.add.title')}
+          </Dialog.Title>
         </Panel.Header>
         <Panel.Body class="p-6 font-sans flex flex-col gap-3">
-          <Dialog.Description class="text-ink-muted text-sm/tight font-normal">{t('auto.connect_another_gmail_account_')}</Dialog.Description>
+          <Dialog.Description class="text-ink-muted text-sm/tight font-normal">
+            {t('inbox.add.description')}
+          </Dialog.Description>
           <div class="pt-3 justify-end items-center gap-3 inline-flex">
             <Button
               variant="outline"
               depth={3}
               disabled={pending()}
               onClick={() => setIsOpen(false)}
-            >{t('common.cancel')}</Button>
+            >
+              {t('common.cancel')}
+            </Button>
             <Button
               variant="accent"
               depth={3}
               disabled={pending()}
               onClick={handleConfirm}
-            >{t('auto.add_inbox')}</Button>
+            >
+              {t('inbox.add.submit')}
+            </Button>
           </div>
         </Panel.Body>
       </Panel>

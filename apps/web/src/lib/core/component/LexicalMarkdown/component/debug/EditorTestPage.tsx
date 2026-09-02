@@ -1,5 +1,4 @@
 import { SplitHeaderLeft } from '@components/app/split-layout/components/SplitHeader';
-import { t } from '@app/lib/i18n';
 import { StaticSplitLabel } from '@components/app/split-layout/components/SplitLabel';
 import { buildMentionMarkdownString } from '@conation/lexical-core/utils/mentions';
 import type { LexicalEditor } from 'lexical';
@@ -15,7 +14,7 @@ import { MarkdownTextarea } from '../core/MarkdownTextarea';
 import { StaticMarkdown, StaticMarkdownContext } from '../core/StaticMarkdown';
 
 const testMdText = `user mention:
-<m-user-mention>{"userId":"macro|seamus@macro.com","email":"seamus@macro.com"}</m-user-mention>
+<m-user-mention>{"userId":"conation|pythia@conation.dev","email":"pythia@conation.dev"}</m-user-mention>
 
 
 
@@ -131,7 +130,9 @@ export default function EditorTestPage() {
         <Container label="With Suspense">
           <Suspense
             fallback={
-              <div class="flex items-center justify-center h-full text-ink-muted">{t('auto.loading_markdown_editor')}</div>
+              <div class="flex items-center justify-center h-full text-ink-muted">
+                Loading markdown editor
+              </div>
             }
           >
             <DelayedMarkdownComponent />
@@ -153,7 +154,7 @@ export default function EditorTestPage() {
           <MarkdownTextarea
             type="chat"
             editable={() => true}
-            placeholder={t('auto.cool_placeholder')}
+            placeholder="Cool placeholder"
           />
         </Container>
 
@@ -218,7 +219,7 @@ export default function EditorTestPage() {
             initialValue={[
               buildMentionMarkdownString({
                 type: 'user',
-                userId: 'macro|seamus@macro.com',
+                userId: 'conation|pythia@conation.dev',
                 email: 'seamus@macro.com',
               }),
               buildMentionMarkdownString({

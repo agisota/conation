@@ -1,5 +1,5 @@
-import { useSplitLayout } from '@components/app/split-layout/layout';
 import { t } from '@app/lib/i18n';
+import { useSplitLayout } from '@components/app/split-layout/layout';
 import { CustomScrollbar } from '@core/component/CustomScrollbar';
 import { RecipientSelector } from '@core/component/RecipientSelector';
 import { TabsInset } from '@core/component/TabsInset';
@@ -26,9 +26,9 @@ import { createMemo, createSignal, For, Show } from 'solid-js';
 const [newChannelModalOpen, setNewChannelModalOpen] = createSignal(false);
 const newChannelModalFocusLock = useFocusLock('create-channel');
 
-const CHANNEL_TYPE_TABS = [
-  { value: 'private', label: 'Private' },
-  { value: 'team', label: 'Team' },
+const channelTypeTabs = () => [
+  { value: 'private', label: t('channel.create.type.private') },
+  { value: 'team', label: t('channel.create.type.team') },
 ];
 
 type CreatableChannelType = 'private' | 'team';
@@ -106,7 +106,7 @@ export function CreateChannelModal() {
     event.preventDefault();
     const trimmedName = channelName();
     if (!trimmedName) {
-      setError('Enter a channel name');
+      setError(t('channel.create.error.nameRequired'));
       return;
     }
 
@@ -116,7 +116,7 @@ export function CreateChannelModal() {
     const isTeamChannel = selectedChannelType === 'team';
     const selectedTeam = team();
     if (isTeamChannel && !selectedTeam) {
-      setError('Select a team to create a team channel');
+      setError(t('channel.create.error.teamRequired'));
       return;
     }
 
@@ -139,8 +139,8 @@ export function CreateChannelModal() {
       replaceOrInsertSplit({ type: 'channel', id });
     } catch (cause) {
       console.error('Failed to create channel', cause);
-      setError('Failed to create channel. Try again.');
-      toast.failure('Failed to create channel');
+      setError(t('channel.create.error.failedWithRetry'));
+      toast.failure(t('channel.create.error.failed'));
     }
   }
 
@@ -156,7 +156,7 @@ export function CreateChannelModal() {
               <Show when={team()}>
                 <TabsInset
                   depth={2}
-                  list={CHANNEL_TYPE_TABS}
+                  list={channelTypeTabs()}
                   value={channelType()}
                   onChange={(value) => {
                     if (value !== 'private' && value !== 'team') return;
@@ -179,8 +179,12 @@ export function CreateChannelModal() {
 
             <div class="flex flex-col gap-4">
               <div class="flex items-center gap-2 px-2">
-                <Dialog.Title class="sr-only">{t('auto.create_a_channel')}</Dialog.Title>
-                <label for="new-channel-name" class="sr-only">{t('auto.name')}</label>
+                <Dialog.Title class="sr-only">
+                  {t('channel.create.title')}
+                </Dialog.Title>
+                <label for="new-channel-name" class="sr-only">
+                  {t('channel.create.nameLabel')}
+                </label>
                 <HashIcon
                   aria-hidden="true"
                   class="size-5 shrink-0 text-ink-placeholder"
@@ -193,31 +197,36 @@ export function CreateChannelModal() {
                     setName(event.currentTarget.value);
                     setError(undefined);
                   }}
-                  placeholder={t('auto.channel_name')}
+                  placeholder={t('channel.create.namePlaceholder')}
                   autocomplete="off"
                   data-1p-ignore
-                  aria-invalid={error() === 'Enter a channel name'}
+                  aria-invalid={!!error()}
                   class="h-10 w-full border-none bg-transparent px-0 text-xl font-medium text-ink outline-none placeholder:text-ink-placeholder focus:ring-0"
                 />
               </div>
 
               <div class="flex flex-col gap-2 px-2">
                 <div class="flex items-center gap-2">
-                  <span class="text-xs font-medium text-ink-muted">{t('auto.invite_people')}</span>
-                  <span class="rounded-full bg-ink/5 px-1.5 py-0.5 text-xxs font-medium text-ink-extra-muted">{t('auto.optional')}</span>
+                  <span class="text-xs font-medium text-ink-muted">
+                    {t('channel.create.invitePeople')}
+                  </span>
+                  <span class="rounded-full bg-ink/5 px-1.5 py-0.5 text-xxs font-medium text-ink-extra-muted">
+                    {t('channel.create.optional')}
+                  </span>
                 </div>
                 <RecipientSelector<'user' | 'contact'>
                   options={recipientOptions}
                   selectedOptions={selectedRecipients()}
                   setSelectedOptions={setSelectedRecipients}
-                  placeholder="To: Macro users or email addresses"
+                  placeholder={t('channel.create.recipientsPlaceholder')}
                 />
                 <Show when={channelType() === 'team' && autoJoinTeam()}>
                   <div class="mt-2 flex flex-col gap-2">
                     <div class="flex items-center gap-1">
-                      <span class="text-xs font-medium text-ink-muted">{t('auto.included_team_members')}</span>
-                      <span class="text-xs text-ink-extra-muted">
-                        ({teamMembers().length})
+                      <span class="text-xs font-medium text-ink-muted">
+                        {t('channel.create.includedTeamMembers', {
+                          count: teamMembers().length,
+                        })}
                       </span>
                     </div>
                     <div class="relative max-h-56 rounded-lg border border-edge-muted">
@@ -256,7 +265,9 @@ export function CreateChannelModal() {
 
             <div class="flex shrink-0 items-center justify-end gap-3 px-2">
               <Show when={channelType() === 'private'}>
-                <p class="mr-auto text-xs text-ink-extra-muted">{t('auto.only_people_you_invite_can_see')}</p>
+                <p class="mr-auto text-xs text-ink-extra-muted">
+                  {t('channel.create.privateVisibility')}
+                </p>
               </Show>
               <Show when={channelType() === 'team' && team()}>
                 <div class="mr-auto flex items-center gap-1.5">
@@ -264,15 +275,15 @@ export function CreateChannelModal() {
                     labelClass="text-xs text-ink-muted font-normal whitespace-nowrap"
                     onChange={setAutoJoinTeam}
                     checked={autoJoinTeam()}
-                    label="Team Auto-Join"
+                    label={t('channel.create.teamAutoJoin')}
                   />
                   <Tooltip
                     as="span"
                     placement="bottom"
                     label={
                       autoJoinTeam()
-                        ? 'Current and new team members will join automatically.'
-                        : 'Team members can choose whether to join this channel.'
+                        ? t('channel.create.teamAutoJoinEnabledHelp')
+                        : t('channel.create.teamAutoJoinDisabledHelp')
                     }
                   >
                     <InfoIcon class="size-3.5 text-ink-extra-muted" />
@@ -287,8 +298,8 @@ export function CreateChannelModal() {
                 disabled={!canSubmit()}
               >
                 {createChannelMutation.isPending
-                  ? 'Creating…'
-                  : 'Create Channel'}
+                  ? t('channel.create.creating')
+                  : t('channel.create.submit')}
               </Button>
             </div>
           </form>

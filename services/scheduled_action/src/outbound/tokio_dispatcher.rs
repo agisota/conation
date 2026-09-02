@@ -2,9 +2,9 @@ use std::collections::HashMap;
 use std::pin::Pin;
 
 use chrono::Utc;
+use conation_uuid::Uuid;
 use futures::StreamExt;
 use futures::stream::FuturesUnordered;
-use conation_uuid::Uuid;
 use tokio::sync::mpsc::{Receiver, Sender};
 
 use crate::domain::models::{DispatchEvent, InProgressExecution, ScheduledAction};

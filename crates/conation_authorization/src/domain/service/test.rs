@@ -124,10 +124,10 @@ fn bot_authentication() -> BotAuthentication {
         bot_scope: BotScope::Team,
         team_id: Some(TEAM_ID),
         acting_user: Some(MacroUserAuthentication {
-            conation_user_id: MacroUserIdStr::try_from("macro|acting@example.com".to_string())
+            macro_user_id: MacroUserIdStr::try_from("conation|acting@example.com".to_string())
                 .expect("valid Macro user id"),
             user_context: UserContext {
-                user_id: "macro|acting@example.com".to_string(),
+                user_id: "conation|acting@example.com".to_string(),
                 fusion_user_id: "fusion-acting-user".to_string(),
                 permissions: None,
                 organization_id: Some(42),
@@ -147,10 +147,13 @@ fn assert_bot_authentication(bot: &BotAuthentication) {
         .as_ref()
         .expect("expected a verified acting user");
     assert_eq!(
-        acting_user.conation_user_id.as_ref(),
-        "macro|acting@example.com"
+        acting_user.macro_user_id.as_ref(),
+        "conation|acting@example.com"
     );
-    assert_eq!(acting_user.user_context.user_id, "macro|acting@example.com");
+    assert_eq!(
+        acting_user.user_context.user_id,
+        "conation|acting@example.com"
+    );
     assert_eq!(
         acting_user.user_context.fusion_user_id,
         "fusion-acting-user"
@@ -166,7 +169,7 @@ async fn no_bot_authorizer_rejects_bot_credentials() {
             "bot-token",
             BotScope::User,
             Some(BotActingUserClaims {
-                user_id: Some("macro|acting@example.com".to_string()),
+                user_id: Some("conation|acting@example.com".to_string()),
                 fusion_user_id: None,
                 organization_id: None,
             }),
@@ -209,7 +212,7 @@ async fn authorization_service_impl_rejects_bots_with_explicit_no_bot_authorizer
 #[tokio::test]
 async fn authorize_bot_delegates_token_and_exact_acting_user_claims() {
     let claims = BotActingUserClaims {
-        user_id: Some("macro|acting@example.com".to_string()),
+        user_id: Some("conation|acting@example.com".to_string()),
         fusion_user_id: Some("fusion-acting-user".to_string()),
         organization_id: Some(42),
     };
@@ -269,7 +272,7 @@ async fn authorize_constructs_user_context_from_validated_identity() {
     let service = MacroAuthorizationServiceImpl::new(
         FakeJwtValidator {
             result: Ok(ValidatedIdentity {
-                user_id: "macro|user@example.com".to_string(),
+                user_id: "conation|user@example.com".to_string(),
                 fusion_user_id: "fusion-user-id".to_string(),
                 organization_id: Some(42),
                 permissions: Some(permissions.clone()),
@@ -281,7 +284,7 @@ async fn authorize_constructs_user_context_from_validated_identity() {
 
     let context = service.authorize("valid-jwt").await.unwrap();
 
-    assert_eq!(context.user_id, "macro|user@example.com");
+    assert_eq!(context.user_id, "conation|user@example.com");
     assert_eq!(context.fusion_user_id, "fusion-user-id");
     assert_eq!(context.organization_id, Some(42));
     assert_eq!(context.permissions, Some(permissions));
@@ -304,13 +307,13 @@ async fn authorize_internal_rejects_an_incorrect_key() {
 
 #[tokio::test]
 async fn authorize_internal_maps_explicit_identity_claims() {
-    let service = service_with_internal_auth(Some("macro|default@example.com"));
+    let service = service_with_internal_auth(Some("conation|default@example.com"));
 
     let context = service
         .authorize_internal(
             INTERNAL_API_KEY,
             InternalIdentityClaims {
-                user_id: Some("macro|acting@example.com".to_string()),
+                user_id: Some("conation|acting@example.com".to_string()),
                 fusion_user_id: Some("fusion-user-id".to_string()),
                 organization_id: Some(42),
             },
@@ -319,7 +322,7 @@ async fn authorize_internal_maps_explicit_identity_claims() {
         .unwrap()
         .expect("explicit user claim should establish an identity");
 
-    assert_eq!(context.user_id, "macro|acting@example.com");
+    assert_eq!(context.user_id, "conation|acting@example.com");
     assert_eq!(context.fusion_user_id, "fusion-user-id");
     assert_eq!(context.organization_id, Some(42));
     assert_eq!(context.permissions, None);
@@ -327,7 +330,7 @@ async fn authorize_internal_maps_explicit_identity_claims() {
 
 #[tokio::test]
 async fn authorize_internal_uses_the_configured_default_user() {
-    let service = service_with_internal_auth(Some("macro|default@example.com"));
+    let service = service_with_internal_auth(Some("conation|default@example.com"));
 
     let context = service
         .authorize_internal(INTERNAL_API_KEY, InternalIdentityClaims::default())
@@ -335,7 +338,7 @@ async fn authorize_internal_uses_the_configured_default_user() {
         .unwrap()
         .expect("configured default user should establish an identity");
 
-    assert_eq!(context.user_id, "macro|default@example.com");
+    assert_eq!(context.user_id, "conation|default@example.com");
     assert_eq!(context.fusion_user_id, "");
     assert_eq!(context.organization_id, None);
     assert_eq!(context.permissions, None);

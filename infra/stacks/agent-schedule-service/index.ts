@@ -3,7 +3,7 @@ import * as pulumi from '@pulumi/pulumi';
 import {
   config,
   getAiToolsInfra,
-  getMacroApiToken,
+  getConationApiToken,
   stack,
 } from '../../packages/shared';
 import { get_coparse_api_vpc } from '../../packages/vpc';
@@ -24,7 +24,7 @@ const jwtSecretKeyArn = aws.secretsmanager
   .getSecretVersionOutput({ secretId: JWT_SECRET_KEY })
   .apply((secret) => secret.arn);
 
-const MACRO_API_TOKENS = getMacroApiToken();
+const CONATION_API_TOKENS = getConationApiToken();
 
 // ── AI tools infra ───────────────────────────────────────────────────────────
 
@@ -59,7 +59,7 @@ const service = new AgentScheduleService(`agent-schedule-service-${stack}`, {
   cloudStorageClusterName,
   secretKeyArns: [
     jwtSecretKeyArn,
-    MACRO_API_TOKENS.macroApiTokenPublicKeyArn,
+    CONATION_API_TOKENS.conationApiTokenPublicKeyArn,
     ...aiTools.secretArns,
   ],
   queueArns: [...aiTools.queueArns],

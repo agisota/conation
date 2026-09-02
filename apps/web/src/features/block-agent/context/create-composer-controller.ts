@@ -14,6 +14,7 @@
  * either way, so queueing is not a special case.
  */
 
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { agentHarnessServiceClient } from '@service-agent-harness/client';
 import { type Accessor, batch, createEffect, onCleanup } from 'solid-js';
@@ -120,7 +121,7 @@ export function createComposerController(options: {
       // The prompt stays at the head of the queue — visible and retryable,
       // never dropped. The latch stops the drain until the user acts.
       setState('post', { type: 'failed', promptId: prompt.id });
-      toast.failure('Message could not be sent');
+      toast.failure(t('agent.error.sendFailed'));
       return;
     }
     batch(() => {
@@ -139,7 +140,7 @@ export function createComposerController(options: {
         setState('requestedModel', undefined);
         setState('requestedActionId', undefined);
       });
-      toast.failure('The model could not be changed');
+      toast.failure(t('agent.error.modelChangeFailed'));
       return;
     }
     // The POST returning only means the service accepted it; resolution is
@@ -158,7 +159,7 @@ export function createComposerController(options: {
       .catch(() => undefined);
     if (result === undefined || result.isErr()) {
       setState('stopping', false);
-      toast.failure('The agent could not be stopped');
+      toast.failure(t('agent.error.stopFailed'));
     }
     // Success is observed through the fold: the turn settles and `working`
     // flips false, which re-runs the drain and releases the latch.
@@ -213,7 +214,7 @@ export function createComposerController(options: {
       setState('requestedModel', undefined);
       setState('requestedActionId', undefined);
     });
-    toast.failure(`Couldn't switch to ${requested}`);
+    toast.failure(t('agent.control.model.switchFailed', { model: requested }));
   });
 
   // `awaiting_turn` resolves on whichever comes first: the fold reports the

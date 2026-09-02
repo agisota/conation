@@ -22,7 +22,7 @@ import {
   AddInboxDialog,
   isAddInboxDialogOpen,
 } from '@app/features/inbox/AddInboxDialog';
-import { MacroMcpSetupModal } from '@app/features/integrations/mcp-setup/MacroMcpSetupModal';
+import { ConationMcpSetupModal } from '@app/features/integrations/mcp-setup/ConationMcpSetupModal';
 import { Paywall } from '@app/features/paywall/Paywall';
 import { PropertyEditorModal } from '@app/features/property/editor/PropertyEditorModal';
 import { ReminderComposerModal } from '@app/features/reminders/ReminderComposerModal';
@@ -453,7 +453,7 @@ function LayoutInner(props: RouteSectionProps) {
           <GlobalBulkEditEntityModal />
           <GlobalShareModal />
           <IosShareSheet />
-          <MacroMcpSetupModal />
+          <ConationMcpSetupModal />
           <CreateChannelModal />
           <CreateCompanyModal />
           <CreateContactModal />

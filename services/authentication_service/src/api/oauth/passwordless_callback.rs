@@ -9,6 +9,7 @@ use tower_cookies::Cookies;
 
 use crate::api::{
     context::ApiContext,
+    login::sso::parse_allowed_original_url,
     utils::{
         append_signed_up_param_if_new_user, create_access_token_cookie, create_refresh_token_cookie,
     },
@@ -158,21 +159,17 @@ pub async fn handler(
             .into_response());
     }
 
-    let mut redirect_uri = passwordless_response.state.redirect_uri.clone();
-    match url::Url::parse(&redirect_uri) {
-        Ok(mut url) => {
-            append_signed_up_param_if_new_user(
-                &ctx.conation_cache_client,
-                &passwordless_response.user.email.to_lowercase(),
-                &mut url,
-            )
-            .await;
-            redirect_uri = url.to_string();
-        }
-        Err(e) => {
-            tracing::error!(error=?e, "unable to parse redirect uri for signup attribution");
-        }
-    }
+    let mut redirect_uri = parse_allowed_original_url(&passwordless_response.state.redirect_uri)
+        .ok_or_else(|| {
+            tracing::warn!("passwordless callback redirect_uri is not allowed");
+            (StatusCode::BAD_REQUEST, "redirect_uri is not allowed").into_response()
+        })?;
+    append_signed_up_param_if_new_user(
+        &ctx.conation_cache_client,
+        &passwordless_response.user.email.to_lowercase(),
+        &mut redirect_uri,
+    )
+    .await;
 
-    Ok(Redirect::to(&redirect_uri).into_response())
+    Ok(Redirect::to(redirect_uri.as_str()).into_response())
 }

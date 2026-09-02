@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { internalDrag } from '@core/directive/internalDragState';
 import Spinner from '@phosphor-icons/core/bold/spinner-gap-bold.svg?component-solid';
 import { cn } from '@ui';
@@ -102,7 +103,7 @@ function Image(props: {
             <img
               class={cn(props.class)}
               src={previewSrc()}
-              alt="preview"
+              alt={t('channel.media.previewAlt')}
               width={props.width}
               height={props.height}
               style={props.style}
@@ -116,7 +117,7 @@ function Image(props: {
         class={cn(props.class)}
         classList={{ invisible: !loaded(), absolute: !loaded() }}
         src={props.src}
-        alt="preview"
+        alt={t('channel.media.previewAlt')}
         width={props.width}
         height={props.height}
         style={props.style}

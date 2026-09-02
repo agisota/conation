@@ -1,5 +1,4 @@
 import { hapticImpact } from '@core/mobile/haptics';
-import { t } from '@app/lib/i18n';
 import { cn } from '@ui';
 import {
   type Accessor,
@@ -74,7 +73,7 @@ type SwipeTouchState = {
 type SwipableRowContextValue = {
   stateFor: (id: string) => SwipableRowState;
   clearState: (id: string) => void;
-  collapseRow: (id: string) =>Promise<void>;
+  collapseRow: (id: string) => Promise<void>;
   registerRowHandler: (
     id: string,
     handlers: { onSwipeLeft?: () => void; onSwipeRight?: () => void }
@@ -98,7 +97,7 @@ export function SwipableRowProvider(
      * actions that keep it in place (e.g. reply to a message).
      */
     triggerBehavior?: 'fly-out' | 'spring-back';
-    setCollapseEntity?: Setter<((id: string) =>Promise<void>) | undefined>;
+    setCollapseEntity?: Setter<((id: string) => Promise<void>) | undefined>;
   }>
 ) {
   const [stateById, setStateById] = createSignal<

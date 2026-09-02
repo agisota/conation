@@ -54,12 +54,12 @@ pub async fn process_candidate(
 
     let team_id = ctx
         .crm_service
-        .get_team_id_for_user(&link.conation_id.to_string())
+        .get_team_id_for_user(&link.macro_id.to_string())
         .await
         .map_err(|e| {
             ProcessingError::Retryable(DetailedError {
                 reason: FailureReason::DatabaseQueryFailed,
-                source: anyhow::Error::from(e).context("Failed to look up team for link.conation_id"),
+                source: anyhow::Error::from(e).context("Failed to look up team for link.macro_id"),
             })
         })?;
 

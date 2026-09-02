@@ -3,10 +3,10 @@
 use ai_toolset::{AsyncTool, RequestContext, ServiceContext, ToolCallError, ToolResult};
 use ai_toolset::{ToolAnnotated, ToolAnnotations};
 use async_trait::async_trait;
+use conation_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::models::EditAccessLevel;
 use entity_access::domain::ports::EntityAccessService;
 use entity_mutation::{EntityMutationErrorCode, MoveEntity, capability::MoveEntityRequest};
-use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::{Entity, EntityType};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};

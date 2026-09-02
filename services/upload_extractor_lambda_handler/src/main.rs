@@ -1,6 +1,9 @@
 use anyhow::{Context, Result};
 use aws_lambda_events::{event::sqs::SqsEvent, sqs::SqsMessage};
 use aws_sdk_s3::{Client as S3Client, primitives::ByteStream};
+use conation_entrypoint::MacroEntrypoint;
+use conation_env_var::env_vars;
+use conation_service_urls::ConnectionGatewayUrl;
 use connection_gateway_client::client::ConnectionGatewayClient;
 use document_storage_service_client::DocumentStorageServiceClient;
 use dynamodb_client::DynamodbClient;
@@ -12,9 +15,6 @@ use lambda_runtime::{
     Error, LambdaEvent, run, service_fn,
     tracing::{self},
 };
-use conation_entrypoint::MacroEntrypoint;
-use conation_env_var::env_vars;
-use conation_service_urls::ConnectionGatewayUrl;
 use model::{
     document::{FileType, FileTypeExt},
     folder::{FileSystemNodeWithIds, FolderItem, S3Destination, S3DestinationMap},

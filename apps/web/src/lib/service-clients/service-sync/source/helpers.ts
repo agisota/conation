@@ -1,5 +1,4 @@
 import { resumeDocumentSpan } from '@block-md/observability';
-import { SYNC_SERVICE_HOSTS } from '@core/constant/servers';
 import type {
   InitialSync,
   LiveSyncSource,
@@ -15,6 +14,7 @@ import {
 } from '@conation/collaboration/sync-service/source';
 import type { UrlResolver } from '@conation/collaboration/websocket';
 import { createWebsocketStateSignal } from '@conation/collaboration/websocket/solid/state-signal';
+import { SYNC_SERVICE_HOSTS } from '@core/constant/servers';
 import { storageServiceClient } from '@service-storage/client';
 import type { ResultAsync } from 'neverthrow';
 

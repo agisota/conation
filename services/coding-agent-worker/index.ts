@@ -1,4 +1,4 @@
-import { msg } from '@macro/sdk';
+import { msg } from '@conation/sdk';
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
 import { macro } from './src/macro';
@@ -39,14 +39,19 @@ macro.events.on('channel.message_posted', async ({ metadata, message }) => {
   if (!match) return;
   const [, repoUrl, prompt] = match;
 
-  const agent = await macro.agents.create({ name: repoName(repoUrl) });
+  const session = await macro.agentSessions.createExternal({
+    repoUrl,
+    workspace: '/workspace',
+    instructions: repoName(repoUrl),
+  });
   startSession({
-    agentId: agent.id,
+    agentId: session.id,
     repoUrl,
     prompt: prompt ?? 'Look around the repo and summarize it.',
-    onBoot: () => message.reply(msg`${agent} is booted and working`),
+    onBoot: () =>
+      message.reply(msg`Сессия ${session.id} запущена и готова к работе.`),
   });
-  await message.reply(msg`AI flow been started! Check it out: ${agent}`);
+  await message.reply(msg`AI-сессия запущена: ${session.id}`);
 });
 const receiver = macro.events.webhook();
 app.post('/macro-events', (c) => receiver(c.req.raw));

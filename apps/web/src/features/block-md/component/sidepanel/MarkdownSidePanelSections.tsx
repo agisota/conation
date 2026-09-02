@@ -1,9 +1,9 @@
 import { EntityActivitySectionConditional } from '@app/features/activity/EntityActivitySection';
-import { t } from '@app/lib/i18n';
 import {
   EntityPropertiesSection,
   EntityTagsSection,
 } from '@app/features/property/side-panel/properties';
+import { t } from '@app/lib/i18n';
 import { useGlobalNotificationSource } from '@components/app/GlobalAppState';
 import {
   GithubPullRequestDetailsRows,
@@ -96,7 +96,12 @@ export function MarkdownSidePanelSections(
 
   return (
     <>
-      <SidePanel.Section id="details" title={t('common.details')} defaultOpen order={10}>
+      <SidePanel.Section
+        id="details"
+        title={t('common.details')}
+        defaultOpen
+        order={10}
+      >
         <DetailsSectionContent />
       </SidePanel.Section>
       <Show when={isSnippet()}>
@@ -120,12 +125,20 @@ export function MarkdownSidePanelSections(
         />
       </SidePanel.Section>
       <Show when={!isTask()}>
-        <SidePanel.Section id="stats" title={t('auto.stats')} order={30}>
+        <SidePanel.Section
+          id="stats"
+          title={t('markdown.sidePanel.stats')}
+          order={30}
+        >
           <StatsSectionContent />
         </SidePanel.Section>
       </Show>
       <Show when={ENABLE_HISTORY_COMPONENT()}>
-        <SidePanel.Section id="history" title={t('auto.history')} order={35}>
+        <SidePanel.Section
+          id="history"
+          title={t('markdown.sidePanel.history')}
+          order={35}
+        >
           <HistorySectionContent />
         </SidePanel.Section>
       </Show>
@@ -182,7 +195,9 @@ function HistorySectionContent() {
             class="text-xs text-ink-muted"
             title={history.error() ?? undefined}
           >
-            {history.error() ? "Couldn't load history" : 'No history yet'}
+            {history.error()
+              ? t('markdown.history.loadFailed')
+              : t('markdown.history.empty')}
           </p>
         }
       >
@@ -207,7 +222,9 @@ function HistorySectionContent() {
                     )}
                   />
                   <span>
-                    {isShowingSessions() ? 'Activity' : 'Show activity'}
+                    {isShowingSessions()
+                      ? t('markdown.history.activity')
+                      : t('markdown.history.showActivity')}
                   </span>
                 </button>
                 <Show when={isShowingSessions()}>
@@ -275,7 +292,12 @@ function SnippetSharingTeamSectionConditional(props: { documentId: string }) {
 
   return (
     <Show when={teamShareQuery.data?.teamId}>
-      <SidePanel.Section id="sharing" title={t('auto.sharing')} defaultOpen order={15}>
+      <SidePanel.Section
+        id="sharing"
+        title={t('markdown.sidePanel.sharing')}
+        defaultOpen
+        order={15}
+      >
         <SnippetSharingSectionContent documentId={props.documentId} />
       </SidePanel.Section>
     </Show>
@@ -313,11 +335,12 @@ function SnippetSharingSectionContent(props: { documentId: string }) {
         )}
       >
         <InlineCheckbox checked={isShared()} />
-        <span class="whitespace-nowrap">{t('auto.share_with_team')}</span>
+        <span class="whitespace-nowrap">
+          {t('markdown.sharing.shareWithTeam')}
+        </span>
       </button>
       <p class="text-ink-muted leading-5">
-        Lets everyone on your team insert this snippet from the ; menu and edit
-        it.
+        {t('markdown.sharing.teamDescription')}
       </p>
     </div>
   );
@@ -363,21 +386,21 @@ function DetailsGrid(props: {
       </Show>
       <Show when={props.folder()}>
         {(folder) => (
-          <SidePanel.Row label="Folder">
+          <SidePanel.Row label={t('markdown.details.folder')}>
             <FolderLink projectId={folder().id} projectName={folder().name} />
           </SidePanel.Row>
         )}
       </Show>
       <Show when={props.createdAt()}>
         {(created) => (
-          <SidePanel.Row label="Created">
+          <SidePanel.Row label={t('markdown.details.created')}>
             <DateValueDisplay value={created()} />
           </SidePanel.Row>
         )}
       </Show>
       <Show when={props.updatedAt()}>
         {(updated) => (
-          <SidePanel.Row label="Last updated">
+          <SidePanel.Row label={t('markdown.details.lastUpdated')}>
             <DateValueDisplay value={updated()} />
           </SidePanel.Row>
         )}
@@ -513,22 +536,24 @@ function StatsSectionContent() {
     <Show
       when={md.wordcountStats}
       fallback={
-        <div class="text-ink-muted text-xs py-2">{t('auto.no_stats_available')}</div>
+        <div class="text-ink-muted text-xs py-2">
+          {t('markdown.stats.unavailable')}
+        </div>
       }
     >
       {(stats) => (
         <Wordcount.Root stats={stats()}>
           <SidePanel.Grid>
-            <SidePanel.Row label="Words">
+            <SidePanel.Row label={t('markdown.stats.words')}>
               <Wordcount.Words />
             </SidePanel.Row>
-            <SidePanel.Row label="Characters">
+            <SidePanel.Row label={t('markdown.stats.characters')}>
               <Wordcount.Characters />
             </SidePanel.Row>
             <Show when={md.progressStats}>
               {(progressStats) => (
                 <Show when={progressStats().total > 0}>
-                  <SidePanel.Row label="Progress">
+                  <SidePanel.Row label={t('markdown.stats.progress')}>
                     <ProgressMeter stats={progressStats()} />
                   </SidePanel.Row>
                 </Show>
@@ -561,7 +586,10 @@ function NotificationsSectionConditional(props: { entity: Entity }) {
       <SidePanel.Section
         id="notifications"
         title={
-          <SidePanel.CountTitle label="Notifications" count={unreadCount()} />
+          <SidePanel.CountTitle
+            label={t('markdown.sidePanel.notifications')}
+            count={unreadCount()}
+          />
         }
         order={40}
       >
@@ -592,7 +620,12 @@ function ReferencesSectionConditional(props: { documentId: string }) {
     <Show when={count() > 0}>
       <SidePanel.Section
         id="references"
-        title={<SidePanel.CountTitle label="References" count={count()} />}
+        title={
+          <SidePanel.CountTitle
+            label={t('markdown.sidePanel.references')}
+            count={count()}
+          />
+        }
         order={33}
       >
         <div class="text-xs">

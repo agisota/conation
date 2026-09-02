@@ -6,7 +6,7 @@ import type { Accessor } from 'solid-js';
 import { authKeys } from './keys';
 
 const USER_NAMES_STALE_TIME = 10 * 60 * 1000;
-const MACRO_ID_PREFIX = 'macro|';
+const CONATION_ID_PREFIX = 'conation|';
 
 type UseUserNamesQueryOptions = {
   userIds: Accessor<readonly string[]>;
@@ -43,8 +43,8 @@ function uniqueUserNameQueryIds(userIds: readonly string[]): string[] {
 function isMacroUserNameQueryId(userId: string): boolean {
   const trimmed = userId.trim().toLowerCase();
   return (
-    trimmed.startsWith(MACRO_ID_PREFIX) &&
-    trimmed.slice(MACRO_ID_PREFIX.length).includes('@')
+    trimmed.startsWith(CONATION_ID_PREFIX) &&
+    trimmed.slice(CONATION_ID_PREFIX.length).includes('@')
   );
 }
 

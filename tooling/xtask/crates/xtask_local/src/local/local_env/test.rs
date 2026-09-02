@@ -40,7 +40,7 @@ fn emits_required_keys() {
         // Boot-blocking stubs — service config loaders require these even in a
         // no-doppler stack (see `BootStubEnv`).
         "REDIS_HOST",
-        "MACRO_DB_URL",
+        "CONATION_DB_URL",
         "INTERNAL_API_KEY",
         "AUTHENTICATION_SERVICE_SECRET_KEY",
         "OPENSEARCH_USERNAME",
@@ -57,10 +57,13 @@ fn emits_required_keys() {
         "STRIPE_SECRET_KEY",
         "STRIPE_PRICE_ID",
         "STRIPE_WEBHOOK_SECRET_KEY",
-        "MACRO_API_TOKEN_ISSUER",
-        "MACRO_API_TOKEN_PUBLIC_KEY",
-        "MACRO_API_TOKEN_PRIVATE_SECRET_KEY",
-        "MACRO_API_TOKEN_EXPIRY_SECONDS",
+        "CONATION_API_TOKEN_ISSUER",
+        "CONATION_API_TOKEN_PUBLIC_KEY",
+        "CONATION_API_TOKEN_PRIVATE_SECRET_KEY",
+        "CONATION_API_TOKEN_EXPIRY_SECONDS",
+        "PIPEDREAM_CLIENT_ID",
+        "PIPEDREAM_CLIENT_SECRET",
+        "PIPEDREAM_PROJECT_ID",
         "GMAIL_GCP_QUEUE",
         "APOLLO_API_KEY",
         "EMAIL_SERVICE_CLOUDFRONT_DISTRIBUTION_URL",
@@ -127,7 +130,8 @@ fn boot_stubs_are_local_only() {
         Some("redis://redis:6379")
     );
     assert_eq!(
-        env.get("MACRO_DB_URL").map(String::as_str),
+        env.get("CONATION_DB_URL").map(String::as_str),
+        // `macrodb` remains the database/schema compatibility identifier.
         Some("postgres://user:password@postgres:5432/macrodb")
     );
     // INTERNAL_API_KEY must agree with the internal-auth key other services
@@ -144,7 +148,7 @@ fn boot_stubs_are_local_only() {
     );
     assert_eq!(
         env.get("OPENSEARCH_USERNAME").map(String::as_str),
-        Some("macrouser")
+        Some("conationuser")
     );
 }
 
@@ -166,12 +170,12 @@ fn internal_auth_values_are_authoritative_local_env() {
 
 /// Local must never point at real dev/prod infrastructure: endpoints are docker
 /// aliases / localhost, and creds are the LocalStack dummies. (Note `ISSUER` is
-/// the local `local.macro.com` JWT issuer — a value, not an endpoint — so we
-/// match the *deployed* markers specifically, not a bare `.macro.com`.)
+/// the local `local.conation.dev` JWT issuer — a value, not an endpoint — so we
+/// match the *deployed* markers specifically, not a bare `.conation.dev`.)
 #[test]
 fn values_are_local_only() {
     for (key, value) in local_env() {
-        for marker in ["amazonaws.com", "-dev.macro.com", ".workers.dev"] {
+        for marker in ["amazonaws.com", "-dev.conation.dev", ".workers.dev"] {
             assert!(
                 !value.contains(marker),
                 "{key} points at deployed infra ({marker}): {value}"
@@ -326,21 +330,21 @@ fn local_sandboxes_join_the_instances_compose_network() {
     );
     assert_eq!(
         default_env.get("LOCAL_CONTAINER_IMAGE").map(String::as_str),
-        Some("macro-agent-harness:latest")
+        Some("conation-agent-harness:latest")
     );
 }
 
 #[test]
-fn mcp_public_url_uses_the_proxy_cognition_route() {
+fn mcp_public_url_uses_the_proxy_origin() {
     let default = Instance::derive(None, None).unwrap();
     let named = Instance::derive(Some("2508"), None).unwrap();
     let default_env = LocalEnv::for_instance(Mode::Local, &default, true, None).to_env();
     let named_env = LocalEnv::for_instance(Mode::Local, &named, true, None).to_env();
-    let named_public_url = format!("http://localhost:{}/cognition", named.port(Port::Proxy));
+    let named_public_url = format!("http://localhost:{}", named.port(Port::Proxy));
 
     assert_eq!(
         default_env.get("MCP_PUBLIC_URL").map(String::as_str),
-        Some("http://localhost:8090/cognition")
+        Some("http://localhost:8090")
     );
     assert_eq!(
         named_env.get("MCP_PUBLIC_URL").map(String::as_str),
@@ -361,4 +365,9 @@ fn the_egress_base_url_is_the_hyphenated_in_network_alias() {
         named_env.get("EGRESS_BASE_URL").map(String::as_str),
         Some("http://agent-harness-service:8102")
     );
+    assert_eq!(
+        named_env.get("CONATION_MCP_URL").map(String::as_str),
+        Some("http://mcp-service:8080/mcp")
+    );
+    assert!(!named_env.contains_key("MACRO_MCP_URL"));
 }

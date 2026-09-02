@@ -1,4 +1,4 @@
-import LogoIcon from '@icon/macro-logo.svg';
+import { ConationMark as LogoIcon } from '@app/components/brand';
 import { onCleanup, onMount } from 'solid-js';
 import { Portal } from 'solid-js/web';
 
@@ -14,31 +14,22 @@ export type HandoffRect = {
 export type BrandHandoffSource = {
   /** Viewport bounds of the powered loading SVG. */
   scene: HandoffRect;
-  /** Square Macro-logo box inside {@link scene}, in scene-relative pixels. */
+  /** Square Conation-mark box inside {@link scene}, in scene-relative pixels. */
   logo: HandoffRect;
   /** Serialized powered loading SVG, used by the transient overlay. */
   snapshot: string;
 };
 
 /**
- * `macro-logo.svg` is a *square* 24×24 viewBox, but its mark only occupies
- * y 4→20 — the full width, two thirds of the height. So rendering it in a
- * square box of side S paints the mark at width S, height S·2/3, inset S/6
- * from the box's top. Sizing the box to the mark's rect (the obvious thing)
- * therefore draws the mark a third too small.
- */
-const LOGO_VIEWBOX = 24;
-const LOGO_MARK_TOP = 4;
-
-/**
- * The square box to render {@link LogoIcon} in so its *mark* lands exactly on
- * `mark`. Anchored on width, which the mark spans edge to edge.
+ * Centre the square Conation application mark inside the isometric scene's
+ * rectangular logo reference. The crossfade starts late enough that the
+ * geometric change is hidden by the scene's scale-down motion.
  */
 export function logoBoxForMark(mark: HandoffRect): HandoffRect {
-  const side = mark.width;
+  const side = Math.min(mark.width, mark.height);
   return {
-    x: mark.x,
-    y: mark.y - side * (LOGO_MARK_TOP / LOGO_VIEWBOX),
+    x: mark.x + (mark.width - side) / 2,
+    y: mark.y + (mark.height - side) / 2,
     width: side,
     height: side,
   };
@@ -58,15 +49,15 @@ const TARGET_RETRY_LIMIT = 60;
 
 /**
  * Building → summary brand handoff: the powered-up loading scene shrinks to
- * the summary header's logo slot, dissolving into the real Macro logo *as* it
- * travels — the movement covers the fact that the isometric mark and the flat
- * logo aren't quite the same geometry.
+ * the summary header's logo slot, dissolving into the Conation mark as it
+ * travels — the movement covers the fact that the
+ * isometric scene and the application icon aren't quite the same geometry.
  *
  * The overlay is the scene's own frame (a clone of the powered graphic filling
  * it, with the logo laid over the mark inside it), so scaling the frame moves
  * graphic and logo in lockstep and the two marks stay aligned for the whole
  * crossfade. The transform is solved so the *logo* lands on the target: both
- * it and the header slot are square boxes rendering the same square viewBox,
+ * it and the header slot are square boxes rendering the same square asset,
  * so matching them centre-to-centre with a uniform scale necessarily matches
  * the marks inside.
  *

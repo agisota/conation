@@ -1,9 +1,9 @@
 import { EntityActivitySectionConditional } from '@app/features/activity/EntityActivitySection';
-import { t } from '@app/lib/i18n';
 import {
   EntityPropertiesSection,
   EntityTagsSection,
 } from '@app/features/property/side-panel/properties';
+import { t } from '@app/lib/i18n';
 import {
   DateValueDisplay,
   FolderLink,
@@ -22,7 +22,12 @@ export function ChatSidePanelSections() {
 
   return (
     <>
-      <SidePanel.Section id="details" title={t('common.details')} defaultOpen order={10}>
+      <SidePanel.Section
+        id="details"
+        title={t('common.details')}
+        defaultOpen
+        order={10}
+      >
         <Suspense fallback={<SidePanel.Loading />}>
           <ChatDetailsContent chatId={chatId} />
         </Suspense>
@@ -76,21 +81,21 @@ function ChatDetailsContent(props: { chatId: string }) {
         })()}
       >
         {(folder) => (
-          <SidePanel.Row label="Folder">
+          <SidePanel.Row label={t('chat.sidePanel.folder')}>
             <FolderLink projectId={folder().id} projectName={folder().name} />
           </SidePanel.Row>
         )}
       </Show>
       <Show when={chat()?.createdAt}>
         {(created) => (
-          <SidePanel.Row label="Created">
+          <SidePanel.Row label={t('chat.sidePanel.created')}>
             <DateValueDisplay value={created()} />
           </SidePanel.Row>
         )}
       </Show>
       <Show when={chat()?.updatedAt}>
         {(updated) => (
-          <SidePanel.Row label="Last updated">
+          <SidePanel.Row label={t('chat.sidePanel.lastUpdated')}>
             <DateValueDisplay value={updated()} />
           </SidePanel.Row>
         )}

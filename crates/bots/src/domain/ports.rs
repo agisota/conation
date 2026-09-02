@@ -6,8 +6,8 @@ use super::models::{
     CreateChannelScopedBotRequest, CreateChannelScopedBotResponse, PatchBotRequest,
 };
 use bot_token::HashedBotToken;
-use entity_access::domain::models::{EntityAccessReceipt, MemberParticipantRole};
 use conation_user_id::user_id::MacroUserIdStr;
+use entity_access::domain::models::{EntityAccessReceipt, MemberParticipantRole};
 use std::future::Future;
 use uuid::Uuid;
 

@@ -1,6 +1,7 @@
+import { t } from '@app/lib/i18n';
+import type { DiffStatus } from '@conation/lexical-core';
 import { buildConfig } from '@core/component/LexicalMarkdown/builder/MarkdownConfigBuilder';
 import { MarkdownShell } from '@core/component/LexicalMarkdown/builder/MarkdownShell';
-import type { DiffStatus } from '@conation/lexical-core';
 import type { SerializedEditorState } from 'lexical';
 import { createMemo, createSignal, onCleanup, onMount, Show } from 'solid-js';
 import { diffAuthorColorPlugin } from './diffAuthorColorPlugin';
@@ -83,9 +84,11 @@ export function HistoryOverlay(props: {
   };
 
   const authorTagLabel = (name: string, status: DiffStatus | undefined) => {
-    if (status === 'delete') return `Deleted by ${name}`;
-    if (status === 'insert') return `Added by ${name}`;
-    return `Edited by ${name}`;
+    if (status === 'delete') {
+      return t('markdown.history.deletedBy', { name });
+    }
+    if (status === 'insert') return t('markdown.history.addedBy', { name });
+    return t('markdown.history.editedBy', { name });
   };
 
   return (

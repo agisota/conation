@@ -44,10 +44,10 @@ mod tests {
 
     #[sqlx::test(fixtures(path = "../../fixtures", scripts("users")))]
     async fn test_get_onboarding_status(pool: Pool<Postgres>) {
-        let is_onboarded1 = get_onboarding_status(&pool, "macro|user@user.com")
+        let is_onboarded1 = get_onboarding_status(&pool, "conation|user@user.com")
             .await
             .unwrap();
-        let is_onboarded2 = get_onboarding_status(&pool, "macro|user2@user.com")
+        let is_onboarded2 = get_onboarding_status(&pool, "conation|user2@user.com")
             .await
             .unwrap();
         assert!(!is_onboarded1);

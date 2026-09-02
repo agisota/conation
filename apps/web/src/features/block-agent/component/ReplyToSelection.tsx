@@ -7,8 +7,8 @@
  * menus use. This component only decides when the chip is allowed to mount.
  */
 
-import { floatWithSelection } from '@core/component/LexicalMarkdown/directive/floatWithSelection';
 import { t } from '@app/lib/i18n';
+import { floatWithSelection } from '@core/component/LexicalMarkdown/directive/floatWithSelection';
 import { ScopedPortal } from '@core/component/ScopedPortal';
 import { isMobile } from '@core/mobile/isMobile';
 import { debouncedDependent } from '@core/util/debounce';
@@ -72,7 +72,9 @@ export function ReplyToSelection(props: {
             }}
             onClick={reply}
           >
-            <Quote class="size-3.5 shrink-0" />{t('auto.reply_to_this')}</button>
+            <Quote class="size-3.5 shrink-0" />
+            {t('agent.actions.replyToSelection')}
+          </button>
         </ScopedPortal>
       )}
     </Show>

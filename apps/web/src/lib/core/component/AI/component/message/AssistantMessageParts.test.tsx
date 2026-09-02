@@ -3,7 +3,6 @@
  */
 
 import { asChatMessage } from '@core/component/AI/util/message';
-import { t } from '@app/lib/i18n';
 import type { ChatStream } from '@service-cognition/generated/schemas';
 import type { AssistantMessagePart } from '@service-cognition/generated/schemas/assistantMessagePart';
 import { fireEvent, render, waitFor } from '@solidjs/testing-library';
@@ -348,7 +347,7 @@ describe('AssistantMessageParts streaming identity', () => {
       {
         id: 'tool-1',
         json: { query: 'mentions' },
-        name: t('common.search'),
+        name: 'Search',
         type: 'toolCall',
       },
     ];
@@ -469,13 +468,13 @@ describe('AssistantMessageParts streaming identity', () => {
       response({
         id: 'tool-1',
         json: { query: 'mentions' },
-        name: t('common.search'),
+        name: 'Search',
         type: 'toolCall',
       })
     );
     await waitFor(() =>
       expect(rendered.getByTestId('activity-preview').textContent).toBe(
-        t('common.search')
+        'Search'
       )
     );
 
@@ -534,7 +533,7 @@ describe('AssistantMessageParts streaming identity', () => {
       response({
         id: 'tool-1',
         json: { query: 'mentions' },
-        name: t('common.search'),
+        name: 'Search',
         type: 'toolCall',
       })
     );
@@ -550,7 +549,7 @@ describe('AssistantMessageParts streaming identity', () => {
       response({
         id: 'tool-1',
         json: { results: [] },
-        name: t('common.search'),
+        name: 'Search',
         type: 'toolCallResponseJson',
       })
     );

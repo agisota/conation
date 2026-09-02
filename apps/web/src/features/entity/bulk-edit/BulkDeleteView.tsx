@@ -1,10 +1,10 @@
+import { t } from '@app/lib/i18n';
 import {
   createBulkDeleteDssItemsMutation,
   type EntityData,
   InlineEntity,
 } from '@entity';
 import { Dialog } from '@kobalte/core/dialog';
-import { t } from '@app/lib/i18n';
 import CloseIcon from '@phosphor-icons/core/regular/x.svg?component-solid';
 import { Button, cn } from '@ui';
 import { For, onMount, Show } from 'solid-js';
@@ -47,10 +47,7 @@ export const BulkDeleteView = (props: {
           <CloseIcon />
         </Dialog.CloseButton>
         <Dialog.Title as="span" class="text-sm font-medium p-0 m-0">
-          Delete{' '}
-          {props.entities.length === 1
-            ? 'Item'
-            : `${props.entities.length} Items`}
+          {t('entity.delete.title', { count: props.entities.length })}
         </Dialog.Title>
       </div>
 
@@ -72,7 +69,9 @@ export const BulkDeleteView = (props: {
           </For>
           <Show when={props.entities.length > 2}>
             <div class="text-ink-muted text-xs px-2 py-1">
-              +{props.entities.length - 2} more
+              {t('entity.selection.additionalCount', {
+                count: props.entities.length - 2,
+              })}
             </div>
           </Show>
         </div>
@@ -80,13 +79,13 @@ export const BulkDeleteView = (props: {
 
       <div class="p-3 flex flex-col gap-3">
         <p class="text-sm text-ink-muted">
-          {props.entities.length === 1
-            ? 'You are about to delete this item. This action cannot be undone.'
-            : `You are about to delete ${props.entities.length} items. This action cannot be undone.`}
+          {t('entity.delete.confirmation', { count: props.entities.length })}
         </p>
 
         <div class="flex justify-end gap-2">
-          <Button variant="ghost" onClick={handleCancel}>{t('common.cancel')}</Button>
+          <Button variant="ghost" onClick={handleCancel}>
+            {t('common.cancel')}
+          </Button>
           <Button
             ref={(el: HTMLButtonElement) => {
               deleteButton = el;
@@ -95,7 +94,9 @@ export const BulkDeleteView = (props: {
             type="button"
             variant="danger"
             onClick={handleDelete}
-          >{t('common.delete')}</Button>
+          >
+            {t('common.delete')}
+          </Button>
         </div>
       </div>
     </>

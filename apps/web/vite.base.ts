@@ -11,6 +11,11 @@ import tsconfigpaths from 'vite-tsconfig-paths';
 // @ts-ignore
 import { version } from './package.json';
 import { keepImportMetaDev } from './scripts/keep-import-meta-dev';
+import {
+  parseConationClientProfile,
+  validateStandaloneOperatorOriginInput,
+  validateStandaloneServiceUrlInput,
+} from './src/lib/core/constant/clientProfile';
 
 function readShortSha(): string {
   try {
@@ -71,6 +76,30 @@ export const createAppViteConfig = (): UserConfigFn => {
   return ({ command, mode }) => {
     const ENV_MODE = process.env.MODE ?? mode;
     const NO_MINIFY = process.env.NO_MINIFY === 'true';
+    const clientProfile = parseConationClientProfile(
+      process.env.VITE_CONATION_CLIENT_PROFILE
+    );
+    const standaloneOriginDefault =
+      command === 'serve'
+        ? process.env.VITE_LOCAL_BACKEND_ORIGIN === 'same-origin'
+          ? 'http://localhost:8090'
+          : process.env.VITE_LOCAL_BACKEND_ORIGIN || 'http://localhost:8090'
+        : 'same-origin';
+    const operatorOrigin =
+      clientProfile === 'standalone'
+        ? validateStandaloneBuildOriginInput(
+            process.env.VITE_CONATION_OPERATOR_ORIGIN ?? standaloneOriginDefault
+          )
+        : '';
+    const aiEditingWorkerOrigin =
+      clientProfile === 'standalone' && process.env.VITE_AI_EDITING_WORKER_URL
+        ? validateStandaloneServiceUrlInput(
+            process.env.VITE_AI_EDITING_WORKER_URL
+          )
+        : process.env.VITE_AI_EDITING_WORKER_URL;
+    const generateSourceMaps =
+      clientProfile === 'hosted-legacy' ||
+      process.env.VITE_CONATION_SOURCEMAPS === 'true';
 
     return {
       base: command === 'serve' ? '/' : '/app',
@@ -93,7 +122,13 @@ export const createAppViteConfig = (): UserConfigFn => {
         }),
         gitBranchHmrPlugin(),
       ],
-      define: defineEnv(ENV_MODE, command),
+      define: defineEnv(
+        ENV_MODE,
+        command,
+        clientProfile,
+        operatorOrigin,
+        aiEditingWorkerOrigin
+      ),
       clearScreen: false,
       worker: {
         format: 'es',
@@ -146,7 +181,10 @@ export const createAppViteConfig = (): UserConfigFn => {
           if (filePath.includes('.wasm')) return false;
           if (filePath.includes('/lok/')) return false;
         },
-        sourcemap: true,
+        // Hosted upload jobs retain their historical sourcemaps. Standalone
+        // bundles omit them unless explicitly requested: they expose source
+        // and push Rollup over Node's default heap on this application.
+        sourcemap: generateSourceMaps,
       },
       esbuild: {
         supported: {
@@ -229,7 +267,13 @@ function getAssetsPath(mode: string, command: string): string {
   }
 }
 
-function defineEnv(mode: string, command: string) {
+function defineEnv(
+  mode: string,
+  command: string,
+  clientProfile: 'standalone' | 'hosted-legacy',
+  operatorOrigin: string,
+  aiEditingWorkerOrigin: string | undefined
+) {
   // `vite build` compiles DEV from NODE_ENV, not MODE. Local-backend static
   // bundles already set VITE_LOCAL_BACKEND_ORIGIN (stack up);
   // keep DEV so those artifacts match `just run_local` (vite serve). Hosted
@@ -240,12 +284,21 @@ function defineEnv(mode: string, command: string) {
     localBackendOrigin: process.env.VITE_LOCAL_BACKEND_ORIGIN,
   });
   return {
+    __CONATION_HOSTED_LEGACY__: clientProfile === 'hosted-legacy',
+    'globalThis.__CONATION_HOSTED_LEGACY__': clientProfile === 'hosted-legacy',
     'import.meta.env.__APP_VERSION__': JSON.stringify(appVersion),
     'import.meta.env.ASSETS_PATH': JSON.stringify(getAssetsPath(mode, command)),
     'import.meta.env.__LOCAL_DOCKER__': process.env.LOCAL_DOCKER === 'true',
     'import.meta.env.__LOCAL_JWT__': JSON.stringify(process.env.LOCAL_JWT),
     'import.meta.env.__GIT_BRANCH__': JSON.stringify(
       command === 'serve' ? readGitBranch() : ''
+    ),
+    'import.meta.env.VITE_CONATION_CLIENT_PROFILE':
+      JSON.stringify(clientProfile),
+    'import.meta.env.VITE_CONATION_OPERATOR_ORIGIN':
+      JSON.stringify(operatorOrigin),
+    'import.meta.env.VITE_AI_EDITING_WORKER_URL': JSON.stringify(
+      aiEditingWorkerOrigin
     ),
     ...(keepDev
       ? {
@@ -254,4 +307,31 @@ function defineEnv(mode: string, command: string) {
         }
       : {}),
   };
+}
+
+function validateStandaloneBuildOriginInput(
+  configured: string | undefined
+): 'same-origin' | string {
+  const origin = validateStandaloneOperatorOriginInput(configured);
+  if (origin === 'same-origin') return origin;
+  const hostname = new URL(origin).hostname.toLowerCase();
+  const managedLegacySuffix = 'macro.com';
+  if (
+    hostname === managedLegacySuffix ||
+    hostname.endsWith(`.${managedLegacySuffix}`)
+  ) {
+    throw new Error(
+      `Standalone Conation cannot target managed legacy host ${hostname}`
+    );
+  }
+  const managedWorkerSuffix = 'macroverse.workers.dev';
+  if (
+    hostname === managedWorkerSuffix ||
+    hostname.endsWith(`.${managedWorkerSuffix}`)
+  ) {
+    throw new Error(
+      `Standalone Conation cannot target managed legacy host ${hostname}`
+    );
+  }
+  return origin;
 }

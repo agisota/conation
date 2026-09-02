@@ -9,9 +9,9 @@ import {
 } from './telemetry';
 import { createOtelCacheTelemetrySink } from './telemetry-otel';
 
-const CACHE_TELEMETRY_CHANNEL = 'macro:graphql-cache-telemetry:v1';
+const CACHE_TELEMETRY_CHANNEL = 'conation:graphql-cache-telemetry:v1';
 const CACHE_TELEMETRY_REPORTER_LOCK =
-  'macro:graphql-cache-telemetry-reporter:v1';
+  'conation:graphql-cache-telemetry-reporter:v1';
 
 type BroadcastChannelLike = Pick<
   BroadcastChannel,

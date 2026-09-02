@@ -100,7 +100,7 @@ mod tests {
             r#"
             SELECT "createdAt" as created_at, "updatedAt" as updated_at FROM "UserHistory" WHERE "userId" = $1 AND "itemId" = $2
             "#,
-            "macro|user@user.com",
+            "conation|user@user.com",
             "document-one"
         )
         .fetch_one(&pool)
@@ -117,7 +117,7 @@ mod tests {
         sqlx::query!(
             r#"
             INSERT INTO "Project" ("id", "name", "userId", "deletedAt")
-            VALUES ('p1', 'd', 'macro|user@user.com', '2019-10-16 00:00:00')
+            VALUES ('p1', 'd', 'conation|user@user.com', '2019-10-16 00:00:00')
             "#
         )
         .execute(&pool)
@@ -156,7 +156,7 @@ mod tests {
         sqlx::query!(
             r#"
             INSERT INTO "Project" ("id", "name", "userId")
-            VALUES ('p1', 'd', 'macro|user@user.com')
+            VALUES ('p1', 'd', 'conation|user@user.com')
             "#
         )
         .execute(&pool)

@@ -1,6 +1,7 @@
-import type { BlockTool } from '@components/app/ResponsiveBlockToolbar';
 import { t } from '@app/lib/i18n';
+import type { BlockTool } from '@components/app/ResponsiveBlockToolbar';
 import {
+  BLOCK_TOOL_IDS,
   ResponsiveBlockToolbar,
   ResponsivePermissionsBadge,
 } from '@components/app/ResponsiveBlockToolbar';
@@ -53,13 +54,15 @@ export function TopBar() {
       downloadFile(blob, downloadName());
     } catch (e) {
       console.error('error downloading file', e);
-      toast.failure('Error downloading file');
+      toast.failure(t('file.download.failed'));
     }
   });
 
   const ops: FileOperation[] = [
     {
-      label: t('common.details'),
+      get label() {
+        return t('common.details');
+      },
       icon: Info,
       action: detailsControl.toggle,
     },
@@ -68,7 +71,9 @@ export function TopBar() {
     { op: 'moveToProject' },
     {
       group: 'file',
-      label: 'Download',
+      get label() {
+        return t('block.actions.download');
+      },
       icon: DownloadSimple,
       action: downloadDocument,
     },
@@ -77,7 +82,10 @@ export function TopBar() {
 
   const tools: BlockTool[] = [
     {
-      label: 'References',
+      id: BLOCK_TOOL_IDS.references,
+      get label() {
+        return t('block.actions.references');
+      },
       icon: Quotes,
       action: referencesControl.toggle,
       condition: () => !!isAuth() && ENABLE_REFERENCES_MODAL,
@@ -90,8 +98,11 @@ export function TopBar() {
       ),
     },
     {
+      id: BLOCK_TOOL_IDS.share,
       group: 'sharing',
-      label: 'Share',
+      get label() {
+        return t('block.actions.share');
+      },
       icon: IconShared,
       action: () => shareCtx.open(),
       buttonComponent: () => <ShareTrigger />,

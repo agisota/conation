@@ -1,5 +1,4 @@
 import { LIST_VIEW_DOCS_URL } from '@app/constants/docs-links';
-import { t } from '@app/lib/i18n';
 import { isListViewID, type ListView } from '@app/constants/list-views';
 import { SoupChatInput } from '@app/features/chat/SoupChatInput';
 import {
@@ -60,6 +59,7 @@ import {
   preventDuplicatePreviewEntityOpen,
 } from '@app/features/next-soup/utils';
 import { DEBUG_SETTING_KEYS, useDebugSetting } from '@app/lib/debugSettings';
+import { t } from '@app/lib/i18n';
 import { usePreference } from '@app/preferences/use-preference';
 import { useDealStages } from '@companies/crm/deal-stages';
 import { CrmStageIcon } from '@companies/crm/StageIcon';
@@ -342,11 +342,11 @@ export const SoupView = (props: SoupViewProps) => {
     | undefined;
 
   const [sortPref, setSortPref] = usePreference<string[]>(
-    `macro:pref:soup:${contentId}:sort`,
+    `conation:pref:soup:${contentId}:sort`,
     { default: [] }
   );
   const [previewOpenPreference, setPreviewOpenPreference] =
-    usePreference<boolean>(`macro:pref:soup:${contentId}:preview-open`, {
+    usePreference<boolean>(`conation:pref:soup:${contentId}:preview-open`, {
       default: true,
     });
 
@@ -606,7 +606,7 @@ export const SoupView = (props: SoupViewProps) => {
                     <Button
                       variant="ghost"
                       class="p-0.5 rounded-sm text-ink-extra-muted hover:text-ink-muted @max-[380px]/split-header:hidden"
-                      label="View documentation"
+                      label={t('soup.documentation.open')}
                       onClick={() => openExternalUrl(url())}
                     >
                       <InfoIcon class="size-3.5" />
@@ -677,7 +677,7 @@ export const SoupView = (props: SoupViewProps) => {
                     <div class="grow ml-2 min-w-0 [contain:inline-size]">
                       <SoupSearchbar
                         variant="secondary"
-                        placeholder="Search, @mention contacts"
+                        placeholder={t('soup.search.placeholderWithMentions')}
                         initialValue={props.initialSearchText}
                       />
                     </div>
@@ -699,7 +699,10 @@ export const SoupView = (props: SoupViewProps) => {
                     <Show
                       when={!isCollapsed()}
                       fallback={
-                        <Tooltip label={t('common.search')} hotkey={TOKENS.soup.openSearch}>
+                        <Tooltip
+                          label={t('common.search')}
+                          hotkey={TOKENS.soup.openSearch}
+                        >
                           <Button
                             variant="outline"
                             class="p-1 size-7 rounded-lg ml-2 bg-surface"
@@ -1341,7 +1344,9 @@ const SoupViewListContent = (props: SoupViewListProps) => {
                   }
                 >
                   <div class="flex items-center gap-2 p-3 text-xs text-ink-muted touch:mt-(--mobile-content-inset-top) touch:mb-(--mobile-content-inset-bottom)">
-                    <Spinner class="size-3 animate-spin" />{t('auto.searching')}</div>
+                    <Spinner class="size-3 animate-spin" />
+                    {t('soup.search.loading')}
+                  </div>
                 </Match>
                 <Match when={showEmptyState()}>
                   <div
@@ -1430,7 +1435,9 @@ const SoupViewListContent = (props: SoupViewListProps) => {
                             <>
                               <Show when={i() === 0 && featuredCount() > 0}>
                                 <SoupSectionHeader>
-                                  <span class="truncate">{t('auto.featured_results')}</span>
+                                  <span class="truncate">
+                                    {t('soup.search.featuredResults')}
+                                  </span>
                                 </SoupSectionHeader>
                               </Show>
                               <Show
@@ -1439,7 +1446,9 @@ const SoupViewListContent = (props: SoupViewListProps) => {
                                 }
                               >
                                 <SoupSectionHeader>
-                                  <span class="truncate">{t('auto.more_results')}</span>
+                                  <span class="truncate">
+                                    {t('soup.search.moreResults')}
+                                  </span>
                                 </SoupSectionHeader>
                               </Show>
 
@@ -1495,7 +1504,9 @@ const SoupViewListContent = (props: SoupViewListProps) => {
                                               })}
                                               disabled
                                             >
-                                              <Spinner class="size-3 animate-spin" />{t('common.loading')}</Button>
+                                              <Spinner class="size-3 animate-spin" />
+                                              {t('common.loading')}
+                                            </Button>
                                           }
                                         >
                                           <Button
@@ -1511,7 +1522,9 @@ const SoupViewListContent = (props: SoupViewListProps) => {
                                               fetchNextGroupPage(group().key);
                                             }}
                                           >
-                                            <CaretDownIcon class="size-2.5" />{t('auto.load_more')}</Button>
+                                            <CaretDownIcon class="size-2.5" />
+                                            {t('soup.search.loadMore')}
+                                          </Button>
                                         </Show>
                                       </div>
                                     );
@@ -1609,8 +1622,8 @@ const SoupViewListContent = (props: SoupViewListProps) => {
                                 <div class="flex items-center gap-2 p-3 text-xs text-ink-muted">
                                   <Spinner class="size-3 animate-spin" />
                                   {source.isFetchingNextPage()
-                                    ? 'Loading more...'
-                                    : 'Searching...'}
+                                    ? t('soup.search.loadingMore')
+                                    : t('soup.search.loading')}
                                 </div>
                               </Show>
                               <Show when={i() === rows().length - 1}>

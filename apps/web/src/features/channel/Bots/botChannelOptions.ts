@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import type { ApiChannelWithLatest } from '@service-storage/channel-list-types';
 import { ChannelType } from '@service-storage/generated/schemas/channelType';
 
@@ -24,7 +25,7 @@ export function botAssignableChannelOptions(
     )
     .map((channel) => ({
       id: channel.id,
-      name: channel.name?.trim() || 'Unnamed channel',
+      name: channel.name?.trim() || t('channel.bots.channels.unnamed'),
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }

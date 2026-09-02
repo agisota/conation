@@ -6,11 +6,28 @@ use axum::{
     http::{StatusCode, request::Parts},
     response::{IntoResponse, Response},
 };
-use conation_authorization::{MacroAuthorizationExtractor, MacroAuthorizationState, UserOrInternal};
+use conation_authorization::{
+    MacroAuthorizationExtractor, MacroAuthorizationState, UserOrInternal,
+};
 use model::response::ErrorResponse;
+use roles_and_permissions::domain::{access_policy::CONATION_ACCESS_POLICY, model::PermissionId};
 use sqlx::PgPool;
 
 use crate::api::context::AuthorizationService;
+
+#[cfg(test)]
+mod test;
+
+fn apply_product_access_policy(mut permissions: HashSet<String>) -> HashSet<String> {
+    let professional_features = PermissionId::ReadProfessionalFeatures.to_string();
+    let has_paid_entitlement = permissions.contains(&professional_features);
+
+    if CONATION_ACCESS_POLICY.grants_professional_features(has_paid_entitlement) {
+        permissions.insert(professional_features);
+    }
+
+    permissions
+}
 
 /// An authorized user and their current database-backed permissions.
 pub(crate) struct DbPermissionsExtractor {
@@ -34,25 +51,27 @@ where
                 .await
                 .map_err(IntoResponse::into_response)?;
         let db = PgPool::from_ref(state);
-        let permissions = conation_db_client::user::get_permissions::get_user_permissions(
-            &db,
-            &authorization.authorization.user.user_context.user_id,
-        )
-        .await
-        .map_err(|error| {
-            tracing::error!(
-                error = ?error,
-                user_id = %authorization.authorization.user.user_context.user_id,
-                "unable to get user permissions"
-            );
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResponse {
-                    message: "internal error".into(),
-                }),
+        let permissions = apply_product_access_policy(
+            conation_db_client::user::get_permissions::get_user_permissions(
+                &db,
+                &authorization.authorization.user.user_context.user_id,
             )
-                .into_response()
-        })?;
+            .await
+            .map_err(|error| {
+                tracing::error!(
+                    error = ?error,
+                    user_id = %authorization.authorization.user.user_context.user_id,
+                    "unable to get user permissions"
+                );
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse {
+                        message: "internal error".into(),
+                    }),
+                )
+                    .into_response()
+            })?,
+        );
 
         Ok(Self {
             authorization,

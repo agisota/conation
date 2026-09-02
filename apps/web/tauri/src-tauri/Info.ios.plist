@@ -9,7 +9,7 @@
 	</array>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
-		<string>macro</string>
+		<string>conation</string>
 	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>This app needs access to the camera to take photos and videos for attachments.</string>
@@ -27,10 +27,10 @@
 		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>macro</string>
+				<string>conation</string>
 			</array>
 			<key>CFBundleURLName</key>
-			<string>macro</string>
+			<string>conation</string>
 		</dict>
 	</array>
 </dict>

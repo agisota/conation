@@ -1,30 +1,35 @@
 ---
-title: "Get the App"
+title: "Приложения и платформы"
 icon: "display"
+description: "Где можно запустить Conation и какие ограничения есть у каждой платформы."
 ---
 
-## Web
+## Веб-приложение
 
-Macro runs in any modern browser at [macro.com](https://macro.com), with no install required. Desktop is the full Macro experience: the keyboard-driven workflow, and a built-in window manager that lets you multi-task in [splits](/concepts/blocks#splits) inside a single tab, so Macro can replace a pile of browser tabs.
+Основной интерфейс Conation — приложение SolidJS/Vite для современного
+браузера. В локальном контуре оно доступно по адресу
+`http://localhost:3000/app`. Для внешнего развёртывания оператор должен сам
+настроить backend, единый ingress, TLS и собственный домен.
 
-## iOS
+Веб-интерфейс поддерживает клавиатурную навигацию и размещение блоков рядом в
+[разделённых областях](/concepts/blocks#splits). Доступность конкретной функции
+зависит от сервисов, включённых в развёртывании.
 
-<Frame>
-  ![Macro Big QR](/images/Macro-Big-QR.png)
-</Frame>
+## Desktop
 
-The Macro iOS app is on the [App Store](https://apps.apple.com/us/app/macro-app/id6743133649). It connects to the same workspace: inbox, email, channels, tasks, docs, and agents on your phone. You can also grab it from **Settings → Mobile App** in the web app, which shows a QR code.
+Оболочка Tauri использует тот же веб-клиент. Исходный код можно собрать под
+адрес своего оператора, но подписанный и notarized выпуск для macOS пока не
+подтверждён. Сборка из исходников не публикует приложение в магазине и не
+создаёт сертификаты Apple автоматически.
 
-A few things stay desktop-only by design:
+## iOS и Android
 
-- **Splits**: the side-by-side window manager needs screen width; on mobile you work one block at a time.
-- **Keyboard shortcuts**: the <kbd>c</kbd> launcher and <kbd>j</kbd>/<kbd>k</kbd> navigation are desktop features.
-- **Some settings**: managing email inboxes and connectors is done from desktop.
-
-## Android
-
-An Android app isn't available yet.
+В репозитории есть мобильная оболочка, но отдельный опубликованный выпуск
+Conation в App Store или Google Play этой документацией не подтверждается.
+Старое приложение Macro и его QR-код не являются дистрибутивом Conation.
 
 <Note>
-  Self-hosters: the hosted version of Macro is the one with Apple, Google Mail, and GitHub approvals. See the [FAQ](/faq) for what that means for your own deployment.
+  Собственная сборка мобильного клиента требует ваших bundle identifiers,
+  signing credentials, universal/app links и одобрений внешних провайдеров.
+  Текущее состояние самостоятельного запуска описано в [FAQ](/faq).
 </Note>

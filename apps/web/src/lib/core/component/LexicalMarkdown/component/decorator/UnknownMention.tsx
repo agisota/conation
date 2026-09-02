@@ -23,7 +23,9 @@ export function UnknownMention(props: UnknownMentionDecoratorProps) {
       <span class="relative top-[0.125em] size-[1em] inline-flex mx-1 opacity-50">
         <Fallback />
       </span>
-      <span>{props.name || 'Unknown'}</span>
+      <span>{props.name || t('editor.mention.unknown')}</span>
     </span>
   );
 }
+
+import { t } from '@app/lib/i18n';

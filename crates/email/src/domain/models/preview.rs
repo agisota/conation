@@ -1,8 +1,8 @@
 use chrono::{DateTime, Utc};
+use conation_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::models::{EntityAccessReceipt, MemberTeamRole};
 use frecency::domain::models::AggregateFrecency;
 use item_filters::ast::{CrmScope, LiteralTree, email::EmailLiteral};
-use conation_user_id::user_id::MacroUserIdStr;
 use models_pagination::{Identify, Query, SimpleSortMethod, SortOn};
 use serde_with::{DeserializeFromStr, SerializeDisplay};
 use std::str::FromStr;
@@ -140,9 +140,9 @@ pub struct GetEmailsRequest {
     pub view: PreviewView,
     /// Every inbox the caller can read for this request. Multi-element when
     /// the caller has linked secondary inboxes or has been delegated access
-    /// via conation_user_links.
+    /// via macro_user_links.
     pub link_ids: Vec<Uuid>,
-    pub conation_id: MacroUserIdStr<'static>,
+    pub macro_id: MacroUserIdStr<'static>,
     pub limit: Option<u32>,
     pub query: Query<Uuid, SimpleSortMethod, LiteralTree<EmailLiteral>>,
     /// Whether aggregate frecency should be loaded for the returned threads.

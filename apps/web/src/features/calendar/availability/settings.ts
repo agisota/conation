@@ -19,7 +19,7 @@ import {
 const [storedSettings, setStoredSettings] = makePersisted(
   createSignal<AvailabilitySettings>(DEFAULT_AVAILABILITY_SETTINGS),
   {
-    name: 'macro:pref:calendar:availability',
+    name: 'conation:pref:calendar:availability',
     // Persisted storage is user-editable and may predate fields added later:
     // malformed JSON or invalid values must never throw or reach the time
     // formatters, so everything read back is sanitized to a valid shape.

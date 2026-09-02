@@ -18,41 +18,41 @@ export type ServiceName =
   | 'unfurl';
 
 export const WEB_APP_URLS: Record<Env, string> = {
-  dev: 'https://dev.macro.com',
-  prod: 'https://macro.com',
+  dev: 'https://dev.conation.dev',
+  prod: 'https://conation.dev',
   local: 'http://localhost:3000',
 };
 
 export const HOSTS: Record<Env, Record<ServiceName, string>> = {
   dev: {
-    'agent-harness': 'https://agent-harness-dev.macro.com',
-    storage: 'https://cloud-storage-dev.macro.com',
-    auth: 'https://auth-service-dev.macro.com',
-    email: 'https://email-service-dev.macro.com',
-    cognition: 'https://document-cognition-dev.macro.com',
-    notification: 'https://notifications-dev.macro.com',
-    properties: 'https://cloud-storage-dev.macro.com',
-    search: 'https://cloud-storage-dev.macro.com',
-    'scheduled-action': 'https://agent-schedule-dev.macro.com',
-    'static-files': 'https://static-file-service-dev.macro.com',
-    connection: 'https://connection-gateway-dev.macro.com',
-    contacts: 'https://contacts-dev.macro.com',
-    unfurl: 'https://unfurl-service-dev.macro.com',
+    'agent-harness': 'https://agent-harness-dev.conation.dev',
+    storage: 'https://cloud-storage-dev.conation.dev',
+    auth: 'https://auth-service-dev.conation.dev',
+    email: 'https://email-service-dev.conation.dev',
+    cognition: 'https://document-cognition-dev.conation.dev',
+    notification: 'https://notifications-dev.conation.dev',
+    properties: 'https://cloud-storage-dev.conation.dev',
+    search: 'https://cloud-storage-dev.conation.dev',
+    'scheduled-action': 'https://agent-schedule-dev.conation.dev',
+    'static-files': 'https://static-file-service-dev.conation.dev',
+    connection: 'https://connection-gateway-dev.conation.dev',
+    contacts: 'https://contacts-dev.conation.dev',
+    unfurl: 'https://unfurl-service-dev.conation.dev',
   },
   prod: {
-    'agent-harness': 'https://agent-harness.macro.com',
-    storage: 'https://cloud-storage.macro.com',
-    auth: 'https://auth-service.macro.com',
-    email: 'https://email-service.macro.com',
-    cognition: 'https://document-cognition.macro.com',
-    notification: 'https://notifications.macro.com',
-    properties: 'https://cloud-storage.macro.com',
-    search: 'https://cloud-storage.macro.com',
-    'scheduled-action': 'https://agent-schedule.macro.com',
-    'static-files': 'https://static-file-service.macro.com',
-    connection: 'https://connection-gateway.macro.com',
-    contacts: 'https://contacts.macro.com',
-    unfurl: 'https://unfurl-service.macro.com',
+    'agent-harness': 'https://agent-harness.conation.dev',
+    storage: 'https://cloud-storage.conation.dev',
+    auth: 'https://auth-service.conation.dev',
+    email: 'https://email-service.conation.dev',
+    cognition: 'https://document-cognition.conation.dev',
+    notification: 'https://notifications.conation.dev',
+    properties: 'https://cloud-storage.conation.dev',
+    search: 'https://cloud-storage.conation.dev',
+    'scheduled-action': 'https://agent-schedule.conation.dev',
+    'static-files': 'https://static-file-service.conation.dev',
+    connection: 'https://connection-gateway.conation.dev',
+    contacts: 'https://contacts.conation.dev',
+    unfurl: 'https://unfurl-service.conation.dev',
   },
   local: {
     'agent-harness': 'http://localhost:8101',
@@ -80,11 +80,11 @@ export type TokenSource = string | (() => string | Promise<string>);
  * bot's owning team's access (team-owned bots only). */
 export type BotScope = 'user' | 'team';
 
-/** How the SDK authenticates with Macro.
+/** How the SDK authenticates with Conation.
  *
- * - `user`: a human's Macro API token, sent as `Authorization: Bearer`.
- * - `bot`: an `mbot_` API key, sent as `x-macro-bot-token` together with
- *   `x-macro-bot-scope`. When `scope` is omitted it defaults to `user` when
+ * - `user`: a human's Conation API token, sent as `Authorization: Bearer`.
+ * - `bot`: an `mbot_` API key, sent as `x-conation-bot-token` together with
+ *   `x-conation-bot-scope`. When `scope` is omitted it defaults to `user` when
  *   `requestedAs` is set (user scope requires an acting user) and `team`
  *   otherwise.
  */
@@ -95,21 +95,21 @@ export type MacroAuth =
 /** Options passed to `new Macro(opts)` and stored on `MacroClient`. */
 export interface MacroOpts {
   /** How to authenticate. Takes precedence over `token`. Falls back to the
-   * MACRO_API_KEY (user auth) or MACRO_BOT_TOKEN (bot auth) env var. */
+   * CONATION_API_KEY (user auth) or CONATION_BOT_TOKEN (bot auth) env var. */
   auth?: MacroAuth;
   /** Shorthand for `auth: { type: 'user', token }`. */
   token?: TokenSource;
-  /** Which Macro environment to talk to. Falls back to the MACRO_ENV env
+  /** Which Conation environment to talk to. Falls back to the CONATION_ENV env
    * var, then `'dev'`. */
   env?: Env;
   /** Override individual service hosts (e.g. point one at localhost). */
   hosts?: Partial<Record<ServiceName, string>>;
-  /** Override the web app base URL (e.g. for local frontend dev). Also reads MACRO_WEB_URL. */
+  /** Override the web app base URL (e.g. for local frontend dev). Also reads CONATION_WEB_URL. */
   webAppUrl?: string;
-  /** Signing secret for verifying incoming webhooks. Falls back to MACRO_WEBHOOK_SECRET. */
+  /** Signing secret for verifying incoming webhooks. Falls back to CONATION_WEBHOOK_SECRET. */
   webhookSecret?: string;
   wsVerify?: string;
-  /** User id the bot acts for, sent as `x-macro-bot-for-macro-user-id` on
+  /** User id the bot acts for, sent as `x-conation-bot-for-conation-user-id` on
    * every request. Bot auth only. Set via `macro.requestedAs(user)` rather
    * than directly. */
   requestedAs?: string;

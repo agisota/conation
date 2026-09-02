@@ -1,3 +1,4 @@
+import { ALL_TRANSFORMERS } from '@conation/lexical-core';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
 import { $convertFromMarkdownString } from '@lexical/markdown';
 import {
@@ -6,7 +7,6 @@ import {
   type TableSelection,
 } from '@lexical/table';
 import { mergeRegister } from '@lexical/utils';
-import { ALL_TRANSFORMERS } from '@conation/lexical-core';
 import {
   $createParagraphNode,
   $getEditor,

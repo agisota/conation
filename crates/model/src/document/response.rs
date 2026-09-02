@@ -1,8 +1,8 @@
 mod location;
 
+use conation_user_id::user_id::MacroUserIdStr;
 use document_sub_type::DocumentSubType;
 pub use location::LocationResponseV3;
-use conation_user_id::user_id::MacroUserIdStr;
 use std::str::FromStr;
 
 use crate::document::{BomPart, FileType};

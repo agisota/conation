@@ -5,8 +5,8 @@ use crate::domain::{
 use ai_toolset::{AsyncTool, RequestContext, ServiceContext, ToolCallError, ToolResult};
 use ai_toolset::{ToolAnnotated, ToolAnnotations};
 use async_trait::async_trait;
-use entity_access::domain::ports::EntityAccessService;
 use conation_user_id::user_id::MacroUserIdStr;
+use entity_access::domain::ports::EntityAccessService;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -128,7 +128,7 @@ where
             None => {
                 let inboxes = service_context
                     .service
-                    .get_inboxes_for_conation_id(MacroUserIdStr((*request_context.user_id).clone()))
+                    .get_inboxes_for_macro_id(MacroUserIdStr((*request_context.user_id).clone()))
                     .await
                     .map_err(|e| ToolCallError {
                         description: format!("Failed to resolve inboxes: {e}"),

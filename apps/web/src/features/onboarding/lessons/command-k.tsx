@@ -1,6 +1,7 @@
 import type { CategoryFilter } from '@app/features/command';
 import { CommandMenuInner, CommandState } from '@app/features/command';
 import { createSoupState } from '@app/features/next-soup/create-soup-state';
+import { t } from '@app/lib/i18n';
 import { IS_MAC } from '@core/constant/isMac';
 import { createFreshSearch } from '@core/util/freshSort';
 import { Dialog } from '@kobalte/core/dialog';
@@ -43,8 +44,7 @@ function CommandKContent(_props: LessonContentProps) {
   return (
     <div class="flex flex-col gap-8 onboarding-stagger">
       <p class="text-ink-muted mt-2">
-        The Command Menu allows you to search for documents, tasks, channels,
-        and more — and navigate to them instantly.
+        {t('onboarding.lessons.commandMenu.description')}
       </p>
       <div class="flex flex-col gap-3">
         <HotkeyCallout
@@ -166,7 +166,7 @@ function CommandKDemo(props: LessonContentProps) {
 
 export const commandKLesson: LessonDefinition = {
   id: 'command-k',
-  title: 'Command Menu',
+  title: 'onboarding.lessons.commandMenu.title',
   content: CommandKContent,
   demo: CommandKDemo,
   order: 45,

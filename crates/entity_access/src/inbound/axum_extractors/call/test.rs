@@ -10,7 +10,7 @@ use axum::{
 };
 use conation_authorization::{
     BOT_SCOPE_HEADER, BOT_TOKEN_HEADER, BotActingUserClaims, BotAuthentication, BotScope,
-    INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_USER_ID_HEADER, InternalIdentityClaims,
+    INTERNAL_API_KEY_HEADER, INTERNAL_CONATION_USER_ID_HEADER, InternalIdentityClaims,
     MacroAuthorizationError, MacroAuthorizationService, MacroAuthorizationState,
 };
 use conation_user_id::{
@@ -523,7 +523,7 @@ fn internal_request(path: String, user_id: Option<&str>) -> Request<Body> {
         .uri(path)
         .header(INTERNAL_API_KEY_HEADER, INTERNAL_KEY);
     if let Some(user_id) = user_id {
-        request = request.header(INTERNAL_MACRO_USER_ID_HEADER, user_id);
+        request = request.header(INTERNAL_CONATION_USER_ID_HEADER, user_id);
     }
     request
         .body(Body::empty())

@@ -1,5 +1,5 @@
-use document_sub_type::DocumentSubType;
 use conation_user_id::user_id::MacroUserIdStr;
+use document_sub_type::DocumentSubType;
 use model::document::{DocumentMetadata, FileType, VersionIDWithTimeStamps};
 use models_permissions::share_permission::SharePermissionV2;
 

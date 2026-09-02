@@ -1,5 +1,4 @@
 import { DEFAULT_ROUTE } from '@app/constants/defaultRoute';
-import { t } from '@app/lib/i18n';
 import { ROUTER_BASE } from '@app/constants/routerBase';
 import { makeEmailAuthComponents } from '@app/features/auth/EmailAuth';
 import { Login } from '@app/features/auth/Login';
@@ -21,6 +20,7 @@ import {
 } from '@app/lib/analytics/analytics-context';
 import { PosthogProvider, usePosthog } from '@app/lib/analytics/posthog';
 import { trackSignupCompletion } from '@app/lib/analytics/signupCompletion';
+import { t } from '@app/lib/i18n';
 import { useInvalidateQueriesOnReconnect } from '@app/lib/queries/invalidate-on-reconnect';
 import { useSoupBackfills } from '@app/lib/queries/soup/backfill';
 import { setHotkeyRoot } from '@app/signal/hotkeyRoot';
@@ -33,6 +33,9 @@ import { GlobalAppStateProvider } from '@components/app/GlobalAppState';
 import { Layout } from '@components/app/Layout';
 import { ReactiveFavicon } from '@components/app/ReactiveFavicon';
 import { LAYOUT_ROUTE } from '@components/app/split-layout/SplitLayoutRoute';
+import { Telemetry } from '@conation/observability';
+import { MaybeTauriProvider } from '@conation/tauri';
+import { TauriRouteListener } from '@conation/tauri/TauriProvider';
 import { publishLoginSuccess } from '@core/auth/login-events';
 import { ChatAttachmentsInit } from '@core/component/AI/signal/globalAttachments';
 import { LoadingBlock } from '@core/component/LoadingBlock';
@@ -64,9 +67,6 @@ import { licenseChannel } from '@core/util/licenseUpdateBroadcastChannel';
 import { isTauri } from '@core/util/platform';
 import { transformShortIdInUrlPathname } from '@core/util/url';
 import { EntityProvider } from '@entity';
-import { MaybeTauriProvider } from '@macro/tauri';
-import { TauriRouteListener } from '@macro/tauri/TauriProvider';
-import { Telemetry } from '@conation/observability';
 import {
   BrowserNotificationModal,
   createNotificationSource,
@@ -318,7 +318,9 @@ const ROUTES: RouteDefinition[] = [
                 publishLoginSuccess();
                 window.close();
               }}
-            >{t('common.close')}</Button>
+            >
+              {t('common.close')}
+            </Button>
           </div>
         </div>
       );

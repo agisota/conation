@@ -1,8 +1,8 @@
 use anyhow::Context;
+use conation_entrypoint::MacroEntrypoint;
 use contacts::domain::service::ContactsDomainService;
 use contacts::inbound::worker::ContactsWorker;
 use contacts::outbound::repository::DbContactsRepository;
-use conation_entrypoint::MacroEntrypoint;
 use sqlx::postgres::PgPoolOptions;
 use std::sync::Arc;
 

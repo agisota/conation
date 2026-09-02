@@ -12,12 +12,12 @@ use channels::domain::{
     models::{Activity, ActivityType},
     ports::{ChannelMutationErr, ChannelService},
 };
+use conation_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::{
     models::{AccessError, EntityAccessReceipt, EntityType, MemberParticipantRole},
     ports::EntityAccessService,
 };
 use graphql_common::{parse_id, require_authenticated_user};
-use conation_user_id::user_id::MacroUserIdStr;
 use uuid::Uuid;
 
 /// Domain-facing capability required by the channel activity mutation.

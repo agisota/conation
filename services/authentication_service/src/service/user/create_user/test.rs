@@ -2,7 +2,10 @@ use std::sync::Mutex;
 
 use conation_env_var::optional_read_env_var;
 
-use super::{LOCAL_STRIPE_SECRET_STUB, is_local_stripe_stub, local_stripe_customer_id};
+use super::{
+    LOCAL_STRIPE_SECRET_STUB, is_local_stripe_stub, should_create_stripe_customer,
+    unmanaged_stripe_customer_id,
+};
 
 /// Tests mutate the process env, which is process-global; serialize them so
 /// they can't interleave.
@@ -53,9 +56,16 @@ fn missing_key_is_not_detected_as_stub() {
 }
 
 #[test]
-fn local_stripe_customer_id_is_unique_per_email() {
-    let alice = local_stripe_customer_id("alice@seed.macro.local");
-    let bob = local_stripe_customer_id("bob@seed.macro.local");
+fn unmanaged_stripe_customer_id_is_unique_per_email() {
+    let alice = unmanaged_stripe_customer_id("alice@seed.conation.local");
+    let bob = unmanaged_stripe_customer_id("bob@seed.conation.local");
     assert_ne!(alice, bob);
-    assert!(alice.contains("alice@seed.macro.local"));
+    assert!(alice.contains("alice@seed.conation.local"));
+}
+
+#[test]
+fn missing_stripe_client_never_creates_a_remote_customer() {
+    with_stripe_key(None, || {
+        assert!(!should_create_stripe_customer(None));
+    });
 }

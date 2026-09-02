@@ -3,24 +3,24 @@
  * Tries: post message → react 😊 → thread reply, reporting each step.
  *
  * Usage:
- *   MACRO_BOT_TOKEN=mbot_... bun examples/channel-probe.ts <channel-id> <acting-user-id>
+ *   CONATION_BOT_TOKEN=mbot_... bun examples/channel-probe.ts <channel-id> <acting-user-id>
  *
  * The acting user must be a member of the channel (access is theirs; the
- * message is attributed to the bot). Set MACRO_ENV for dev/prod/local.
+ * message is attributed to the bot). Set CONATION_ENV for dev/prod/local.
  */
 import type { Env } from '../src/config';
 import { Macro } from '../src/macro';
 
 const [channelId, actAs] = process.argv.slice(2);
-const botToken = process.env.MACRO_BOT_TOKEN;
+const botToken = process.env.CONATION_BOT_TOKEN;
 if (!channelId || !actAs || !botToken) {
   console.error(
-    'usage: MACRO_BOT_TOKEN=mbot_... bun examples/channel-probe.ts <channel-id> <acting-user-id>',
+    'usage: CONATION_BOT_TOKEN=mbot_... bun examples/channel-probe.ts <channel-id> <acting-user-id>',
   );
   process.exit(1);
 }
 
-const env = (process.env.MACRO_ENV ?? 'dev') as Env;
+const env = (process.env.CONATION_ENV ?? 'dev') as Env;
 const bot = new Macro({ env, auth: { type: 'bot', token: botToken } });
 const macro = bot.requestedAs(bot.users.byId(actAs));
 const channel = macro.channels.byId(channelId);

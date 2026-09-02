@@ -1,7 +1,7 @@
 //! Issue comment, PR review, and PR review comment event handlers.
 
 use crate::domain::{
-    models::{GithubError, MacroTaskId, ValidatedGithubWebhookEvent},
+    models::{ConationTaskId, GithubError, ValidatedGithubWebhookEvent},
     ports::{GithubSyncClient, GithubSyncRepo},
 };
 use documents::domain::ports::DocumentService;
@@ -96,7 +96,7 @@ impl<
         );
 
         if !truly_new.is_empty() {
-            let new_task_id_set: std::collections::HashSet<&MacroTaskId> =
+            let new_task_id_set: std::collections::HashSet<&ConationTaskId> =
                 truly_new.iter().collect();
             let new_task_links: Vec<_> = resolved
                 .validated_task_ids

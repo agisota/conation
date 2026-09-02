@@ -1,3 +1,24 @@
+import { createAwareness } from '@conation/collaboration/collab/awareness';
+import { createSyncEngine } from '@conation/collaboration/collab/engine';
+import { logSyncService } from '@conation/collaboration/collab/logger';
+import type { LoroManager } from '@conation/collaboration/collab/manager';
+import {
+  IDBSnapshotStore,
+  LORO_SNAPSHOT_DB_NAME,
+} from '@conation/collaboration/collab/snapshot-store';
+import type { LiveSyncSource } from '@conation/collaboration/collab/source';
+import { createWALSyncSource } from '@conation/collaboration/collab/wal';
+import {
+  $isCustomCodeNode,
+  $updateAllNodeIds,
+  COLLABORATION_TAG,
+  CustomCodeNode,
+  LOCAL_STATUS_TAG,
+  type NodeIdMappings,
+  SKIP_DOM_SELECTION_TAG,
+  SKIP_SCROLL_INTO_VIEW_TAG,
+} from '@conation/lexical-core';
+import type { Span } from '@conation/observability';
 import {
   $convertLexicalSelectionToCursors,
   $createSelectionFromPeerAwareness,
@@ -24,27 +45,6 @@ import {
   CodeNode,
 } from '@lexical/code';
 import { mergeRegister } from '@lexical/utils';
-import { createAwareness } from '@conation/collaboration/collab/awareness';
-import { createSyncEngine } from '@conation/collaboration/collab/engine';
-import { logSyncService } from '@conation/collaboration/collab/logger';
-import type { LoroManager } from '@conation/collaboration/collab/manager';
-import {
-  IDBSnapshotStore,
-  LORO_SNAPSHOT_DB_NAME,
-} from '@conation/collaboration/collab/snapshot-store';
-import type { LiveSyncSource } from '@conation/collaboration/collab/source';
-import { createWALSyncSource } from '@conation/collaboration/collab/wal';
-import {
-  $isCustomCodeNode,
-  $updateAllNodeIds,
-  COLLABORATION_TAG,
-  CustomCodeNode,
-  LOCAL_STATUS_TAG,
-  type NodeIdMappings,
-  SKIP_DOM_SELECTION_TAG,
-  SKIP_SCROLL_INTO_VIEW_TAG,
-} from '@conation/lexical-core';
-import type { Span } from '@conation/observability';
 import type { NodeKey, UpdateListenerPayload } from 'lexical';
 import {
   $addUpdateTag,

@@ -1,9 +1,9 @@
 import { EntityActivitySectionConditional } from '@app/features/activity/EntityActivitySection';
-import { t } from '@app/lib/i18n';
 import {
   EntityPropertiesSection,
   EntityTagsSection,
 } from '@app/features/property/side-panel/properties';
+import { t } from '@app/lib/i18n';
 import { SidePanel } from '@components/app/side-panel';
 import { References } from '@core/component/References';
 import { useAttachmentReferencesQuery } from '@queries/storage/attachment-references';
@@ -66,7 +66,12 @@ function ReferencesSectionConditional(props: { threadId: string }) {
     <Show when={count() > 0}>
       <SidePanel.Section
         id="references"
-        title={<SidePanel.CountTitle label="References" count={count()} />}
+        title={
+          <SidePanel.CountTitle
+            label={t('blockEmail.sidePanel.references')}
+            count={count()}
+          />
+        }
         order={50}
       >
         <Suspense fallback={<SidePanel.Loading />}>

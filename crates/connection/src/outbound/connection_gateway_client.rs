@@ -1,10 +1,10 @@
 //! Implementation of GW port using the ConnectionGatewayClient
 
-use connection_gateway_client::ConnectionGatewayClient;
 use conation_user_id::{
     lowercased::Lowercase,
     user_id::{MacroUserId, MacroUserIdStr},
 };
+use connection_gateway_client::ConnectionGatewayClient;
 
 use crate::domain::{
     models::{INVALIDATION_MESSAGE_TYPE, InvalidationEvent},

@@ -3,7 +3,7 @@ import * as pulumi from '@pulumi/pulumi';
 import { createBucket, Queue } from '../../packages/resources';
 import {
   config,
-  getMacroApiToken,
+  getConationApiToken,
   getMacroNotify,
   getSearchEventQueue,
   getServiceUrl,
@@ -239,7 +239,7 @@ export const calendarReminderDispatchQueueArn =
 export const calendarReminderDispatchQueueName =
   calendarReminderDispatchQueue.queue.name;
 
-const MACRO_API_TOKENS = getMacroApiToken();
+const CONATION_API_TOKENS = getConationApiToken();
 
 const GITHUB_WEBHOOK_SECRET_KEY = config.require('github_webhook_secret_key');
 const githubWebhookSecretKeyArn: pulumi.Output<string> = aws.secretsmanager
@@ -304,7 +304,7 @@ const cloudStorageService = new CloudStorageService(
       documentStoragePermissionsKeyArn,
       cloudfrontPrivateKeySecretArn,
       syncServiceAuthKeyArn,
-      MACRO_API_TOKENS.macroApiTokenPublicKeyArn,
+      CONATION_API_TOKENS.conationApiTokenPublicKeyArn,
       githubWebhookSecretKeyArn,
       githubSyncAppPemArn,
       calWebhookSecretKeyArn,

@@ -1,5 +1,4 @@
 import { createUniqueId } from 'solid-js';
-import { t } from '@app/lib/i18n';
 
 export const AnimatedProfileIcon = (props: {
   triggerAnimation?: boolean;
@@ -19,7 +18,6 @@ export const AnimatedProfileIcon = (props: {
       overflow="visible"
       class={`animated-profile-icon ${props.triggerAnimation ? 'animating' : ''} ${props.class ?? ''}`}
     >
-      {/*<title>{t('auto.animated_profile_icon')}</title>*/}
       <defs>
         {/* Mask to hide frame behind person */}
         <mask id={frameMaskId} maskUnits="userSpaceOnUse">

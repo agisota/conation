@@ -14,7 +14,7 @@ use bot_id::BotId;
 
 use crate::domain::model::{
     AgentKind, AnnounceOrigin, AnnouncePrompt, DeliverAction, HarnessCommand, MentionOrigin,
-    OpenSession, is_conation_staff,
+    OpenSession,
 };
 
 #[cfg(test)]
@@ -42,8 +42,6 @@ pub enum Skipped {
     /// vocabulary is non-exhaustive on purpose, and unknown shapes are
     /// skipped rather than wedging the partition.
     Unrecognized,
-    /// We are in beta and only allow Macro employees to use this new harness system.
-    NotMacroStaff,
 }
 
 /// Route one trigger event: work for this deployment, or a reason it was
@@ -51,7 +49,7 @@ pub enum Skipped {
 ///
 /// Opens are only ours when the mentioned bot is one of `our_bots` - external
 /// bots' runtimes open their own sessions over the API. A deployment serves
-/// the sandboxed coder bot, the in-memory Macro bot when configured, and,
+/// the sandboxed coder bot, the in-memory Conation bot when configured, and,
 /// when it holds a Cursor API key, the Cursor bot too, which is why this is a
 /// set rather than one id. Events for sessions that already exist always
 /// carry work: a prompt to deliver when the session is managed here, or just
@@ -62,19 +60,6 @@ pub fn route_agent_trigger(
 ) -> Result<RoutedTrigger, Skipped> {
     match event {
         AgentTriggerTopicEvent::New(NewAgentSessionEvent::TopLevelMentioned(mentioned)) => {
-            // TODO: remove once the beta gate opens. Both managed bots are
-            // staff-only for the same reason — neither is finished — and a
-            // Cursor session now runs on the mentioner's own Cursor account,
-            // so nothing about the credential keeps it restricted.
-            if mentioned
-                .message
-                .sender
-                .as_user()
-                .is_some_and(|user| !is_conation_staff(user))
-            {
-                return Err(Skipped::NotMacroStaff);
-            }
-
             if !our_bots.contains(&mentioned.bot_id) {
                 return Err(Skipped::ForeignBot);
             }
@@ -120,21 +105,6 @@ pub fn route_agent_trigger(
                 // of the way entirely.
                 if !our_bots.contains(&bot_id) {
                     return Err(Skipped::ForeignBot);
-                }
-                // The open gate alone is not enough: the mentioning channel
-                // holds editor access to the session, so anyone in the
-                // thread can prompt it. A prompt to a Cursor session is spend
-                // on its *owner's* Cursor account, by someone who is not
-                // necessarily the owner - staff only while that is true, and
-                // a sender that is not a user at all is refused rather than
-                // waved through.
-                if kind == AgentKind::Cursor
-                    && !message
-                        .sender
-                        .as_user()
-                        .is_some_and(|user| is_conation_staff(user))
-                {
-                    return Err(Skipped::NotMacroStaff);
                 }
                 return Ok(RoutedTrigger::Command(
                     session_id,

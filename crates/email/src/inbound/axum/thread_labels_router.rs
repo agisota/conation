@@ -112,20 +112,20 @@ where
         (status = 500, body = ErrorResponse),
     )
 )]
-#[tracing::instrument(err, skip(state, conation_user, body))]
+#[tracing::instrument(err, skip(state, macro_user, body))]
 pub async fn update_thread_labels_handler<T: EmailService, Auth: MacroAuthorizationService>(
     State(state): State<EmailRouterState<T>>,
-    Cached(conation_user): Cached<MacroAuthorizationExtractor<Auth, UserOrInternal>>,
+    Cached(macro_user): Cached<MacroAuthorizationExtractor<Auth, UserOrInternal>>,
     Path(thread_id): Path<Uuid>,
     Json(body): Json<UpdateThreadLabelRequest>,
 ) -> Result<Json<UpdateThreadLabelsResponse>, UpdateThreadLabelError> {
     // Resolve the inbox from the thread (scoped to the caller's own and delegated
     // inboxes). No Gmail token is needed here — provider sync goes through the
     // gmail_ops queue, which authenticates itself.
-    let user = &conation_user.authorization.user;
+    let user = &macro_user.authorization.user;
     let link = state
         .inner
-        .get_owned_link_for_thread(user.conation_user_id.clone(), thread_id)
+        .get_owned_link_for_thread(user.macro_user_id.clone(), thread_id)
         .await?
         .ok_or_else(|| UpdateThreadLabelError::NotFound("Thread not found".to_string()))?;
 

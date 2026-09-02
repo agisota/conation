@@ -5,9 +5,9 @@ use super::*;
 #[test]
 fn it_should_parse() {
     let valid_emails = [
-        "macro|sean@macro.com",
-        "macro|sean+testing.thing@example.gc.ca",
-        "macro|###hello###+weird@something-strange.world.tour",
+        "conation|sean@conation.dev",
+        "conation|sean+testing.thing@example.gc.ca",
+        "conation|###hello###+weird@something-strange.world.tour",
     ];
     let res: Result<Vec<_>, _> = valid_emails
         .iter()
@@ -20,13 +20,13 @@ fn it_should_parse() {
 #[test]
 fn it_should_fail() {
     let invalid_emails = [
-        "macro|sean@macro.com ",
-        "macro| sean@macro.com",
-        "macro|sean@macro.com\n",
-        "macro|\nsean@macro.com",
-        "macro|sean..aye@macro.com",
-        "macro|sean@@macro.com",
-        "schmacro|sean@macro.com",
+        "conation|sean@conation.dev ",
+        "conation| sean@conation.dev",
+        "conation|sean@conation.dev\n",
+        "conation|\nsean@conation.dev",
+        "conation|sean..aye@conation.dev",
+        "conation|sean@@conation.dev",
+        "conationish|sean@conation.dev",
     ];
     invalid_emails
         .iter()
@@ -38,8 +38,15 @@ fn it_should_fail() {
 }
 
 #[test]
+fn legacy_macro_namespace_is_rejected() {
+    let result = MacroUserId::parse_from_str("macro|sean@macro.com");
+
+    assert!(result.is_err());
+}
+
+#[test]
 fn email_works() {
-    let id = MacroUserId::parse_from_str("macro|###hello###+weird@something-strange.world.tour")
+    let id = MacroUserId::parse_from_str("conation|###hello###+weird@something-strange.world.tour")
         .unwrap();
 
     dbg!(&id);
@@ -52,7 +59,7 @@ fn email_works() {
 
 #[test]
 fn domain_part_works() {
-    let id = MacroUserId::parse_from_str("macro|###hello###+weird@something-strange.world.tour")
+    let id = MacroUserId::parse_from_str("conation|###hello###+weird@something-strange.world.tour")
         .unwrap();
 
     dbg!(&id);
@@ -65,7 +72,7 @@ fn domain_part_works() {
 
 #[test]
 fn local_part_works() {
-    let id = MacroUserId::parse_from_str("macro|###hello###+weird@something-strange.world.tour")
+    let id = MacroUserId::parse_from_str("conation|###hello###+weird@something-strange.world.tour")
         .unwrap();
 
     dbg!(&id);
@@ -75,20 +82,21 @@ fn local_part_works() {
 
 #[test]
 fn casing_matters_for_prefix() {
-    let _id = MacroUserId::parse_from_str("macRo|###hello###+weird@something-strange.world.tour")
-        .unwrap_err();
+    let _id =
+        MacroUserId::parse_from_str("conAtion|###hello###+weird@something-strange.world.tour")
+            .unwrap_err();
 }
 
 #[test]
 fn incomplete_input_does_not_panic() {
     assert!(MacroUserId::parse_from_str("").is_err());
-    assert!(MacroUserId::parse_from_str("macro").is_err());
-    assert!(MacroUserId::parse_from_str("macro|").is_err());
+    assert!(MacroUserId::parse_from_str("conation").is_err());
+    assert!(MacroUserId::parse_from_str("conation|").is_err());
 }
 
 #[test]
 fn casing_ignored_for_email() {
-    let id = MacroUserId::parse_from_str("macro|###hello###+WEIRD@something-strange.world.tour")
+    let id = MacroUserId::parse_from_str("conation|###hello###+WEIRD@something-strange.world.tour")
         .unwrap();
 
     assert_eq!(id.email_part().local_part(), "###hello###+WEIRD");
@@ -96,27 +104,43 @@ fn casing_ignored_for_email() {
 
 #[test]
 fn debug_output_is_simple_string() {
-    let id = MacroUserId::parse_from_str("macro|hutch@macro.com").unwrap();
-    assert_eq!(format!("{:?}", id), "macro|hutch@macro.com");
+    let id = MacroUserId::parse_from_str("conation|pythia@conation.dev").unwrap();
+    assert_eq!(format!("{:?}", id), "conation|pythia@conation.dev");
 
-    let id_str = MacroUserIdStr::parse_from_str("macro|hutch@macro.com").unwrap();
-    assert_eq!(format!("{:?}", id_str), "macro|hutch@macro.com");
+    let id_str = MacroUserIdStr::parse_from_str("conation|pythia@conation.dev").unwrap();
+    assert_eq!(format!("{:?}", id_str), "conation|pythia@conation.dev");
 }
 
 #[test]
-fn conation_com_users_are_staff() {
-    let id = MacroUserIdStr::parse_from_str("macro|teo@macro.com").unwrap();
+fn from_email_uses_only_the_conation_namespace_and_lowercases() {
+    let id = MacroUserIdStr::try_from_email("Pythia@Conation.Dev").unwrap();
+
+    assert_eq!(id.as_ref(), "conation|pythia@conation.dev");
+    assert_eq!(id.email_str(), "pythia@conation.dev");
+    assert_eq!(CONATION_USER_ID_NAMESPACE, "conation");
+    assert_eq!(CONATION_USER_ID_PREFIX, "conation|");
+}
+
+#[test]
+fn conation_dev_users_are_staff() {
+    let id = MacroUserIdStr::parse_from_str("conation|tars@conation.dev").unwrap();
     assert!(id.is_conation_staff());
 }
 
 #[test]
-fn conation_com_plus_aliases_are_staff() {
-    let id = MacroUserIdStr::parse_from_str("macro|teo+notify@macro.com").unwrap();
+fn conation_dev_plus_aliases_are_staff() {
+    let id = MacroUserIdStr::parse_from_str("conation|tars+notify@conation.dev").unwrap();
     assert!(id.is_conation_staff());
 }
 
 #[test]
 fn non_conation_domains_are_not_staff() {
-    let id = MacroUserIdStr::parse_from_str("macro|teo@example.com").unwrap();
+    let id = MacroUserIdStr::parse_from_str("conation|teo@example.com").unwrap();
+    assert!(!id.is_conation_staff());
+}
+
+#[test]
+fn legacy_macro_domain_is_not_staff() {
+    let id = MacroUserIdStr::parse_from_str("conation|legacy@macro.com").unwrap();
     assert!(!id.is_conation_staff());
 }

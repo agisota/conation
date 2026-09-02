@@ -2,8 +2,8 @@ import {
   EntityPropertiesSection,
   EntityTagsSection,
 } from '@app/features/property/side-panel/properties';
-import { useBlockId } from '@core/block';
 import { t } from '@app/lib/i18n';
+import { useBlockId } from '@core/block';
 import { EntityIcon } from '@core/component/EntityIcon';
 import { openDocument } from '@core/component/LexicalMarkdown/component/core/BlockLink';
 import { UserIcon } from '@core/component/UserIcon';
@@ -105,21 +105,21 @@ function DetailsSectionContent() {
         })()}
       >
         {(folder) => (
-          <SidePanel.Row label="Folder">
+          <SidePanel.Row label={t('shell.metadata.folder')}>
             <FolderLink projectId={folder().id} projectName={folder().name} />
           </SidePanel.Row>
         )}
       </Show>
       <Show when={metadata()?.createdAt}>
         {(created) => (
-          <SidePanel.Row label="Created">
+          <SidePanel.Row label={t('shell.metadata.created')}>
             <DateValueDisplay value={created()} />
           </SidePanel.Row>
         )}
       </Show>
       <Show when={metadata()?.updatedAt}>
         {(updated) => (
-          <SidePanel.Row label="Last updated">
+          <SidePanel.Row label={t('shell.metadata.lastUpdated')}>
             <DateValueDisplay value={updated()} />
           </SidePanel.Row>
         )}

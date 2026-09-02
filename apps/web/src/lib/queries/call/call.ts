@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { ENABLE_CALLS } from '@core/constant/featureFlags';
 import { ThrownResultError, throwOnErr } from '@core/util/result';
@@ -95,12 +96,12 @@ function _useJoinCallMutation() {
         error instanceof ThrownResultError &&
         error.errors[0]?.code === 'CONFLICT'
       ) {
-        toast.alert("You're already in another call", {
-          subtext: 'Leave your current call before joining a new one.',
+        toast.alert(t('call.feedback.alreadyInCall'), {
+          subtext: t('call.feedback.leaveCurrentCallFirst'),
         });
         return;
       }
-      toast.failure('Failed to join call');
+      toast.failure(t('call.feedback.joinFailed'));
       console.error('failed to join call', error);
     },
   }));

@@ -1,5 +1,5 @@
-import { createDOMRange } from '@lexical/selection';
 import type { NodeIdMappings } from '@conation/lexical-core';
+import { createDOMRange } from '@lexical/selection';
 import { cn } from '@ui';
 import {
   $getNodeByKey,

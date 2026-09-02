@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import {
   type BlockTool,
   ResponsiveBlockToolbar,
@@ -30,7 +31,7 @@ import {
 
 /** 'claude-code' → 'Claude Code'; the fallback when the fold has no title. */
 export function harnessTitle(harness: string | undefined): string {
-  if (!harness) return 'Agent session';
+  if (!harness) return t('agent.session.defaultName');
   return harness
     .split(/[-_]/)
     .filter(Boolean)
@@ -67,7 +68,7 @@ export function AgentSplitHeader(props: {
     if (!id) return;
     const result = await agentHarnessServiceClient.rename(id, name);
     if (result.isErr()) {
-      toast.failure('Failed to rename agent session');
+      toast.failure(t('agent.session.renameFailed'));
       return;
     }
     handleAgentSessionRenamed({ agentSessionId: id, name });
@@ -79,12 +80,12 @@ export function AgentSplitHeader(props: {
     await navigator.clipboard.writeText(
       buildSimpleEntityUrl({ type: 'agent', id })
     );
-    toast.success('Link copied to clipboard');
+    toast.success(t('agent.session.linkCopied'));
   };
 
   const tools: BlockTool[] = [
     {
-      label: 'Discussion Thread',
+      label: t('agent.session.discussionThread'),
       icon: TreeStructure,
       action: originThreadDrawer.toggle,
       isActive: originThreadDrawer.isOpen,
@@ -93,8 +94,10 @@ export function AgentSplitHeader(props: {
     {
       label: () => {
         const provider = props.session?.external?.provider;
-        if (!provider) return 'Open externally';
-        return `Open in ${provider.charAt(0).toUpperCase()}${provider.slice(1)}`;
+        if (!provider) return t('agent.session.openExternally');
+        return t('agent.session.openInProvider', {
+          provider: `${provider.charAt(0).toUpperCase()}${provider.slice(1)}`,
+        });
       },
       icon: ArrowSquareOut,
       action: () => {
@@ -104,7 +107,7 @@ export function AgentSplitHeader(props: {
       condition: () => Boolean(props.session?.external?.url),
     },
     {
-      label: 'Copy link',
+      label: t('agent.session.copyLink'),
       icon: LinkIcon,
       action: copyLink,
       // Nothing to link to until the session exists.
@@ -114,7 +117,7 @@ export function AgentSplitHeader(props: {
 
   const ops: FileOperation[] = [
     {
-      label: 'Open repository',
+      label: t('agent.session.openRepository'),
       icon: GitBranch,
       action: () => {
         const url = props.session?.repoUrl;
@@ -130,7 +133,7 @@ export function AgentSplitHeader(props: {
           iconType="agent"
           label={title()}
           onRename={props.session?.ownerId === userId() ? rename : undefined}
-          renameAriaLabel="Agent session name"
+          renameAriaLabel={t('agent.session.nameAria')}
         />
       </SplitHeaderLeft>
 

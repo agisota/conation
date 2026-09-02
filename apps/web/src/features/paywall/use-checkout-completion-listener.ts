@@ -1,4 +1,5 @@
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { useUserInfoQuery } from '@queries/auth/user-info';
 import { useSearchParams } from '@solidjs/router';
@@ -27,7 +28,7 @@ export function useCheckoutCompletionListener() {
 
   onMount(() => {
     if (subscriptionSuccess === 'true') {
-      toast.success('Your plan has been activated!');
+      toast.success(t('shell.paywall.planActivated'));
       analytics.track('subscription_success', { type: searchParams.type });
 
       void (async () => {

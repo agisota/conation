@@ -45,8 +45,8 @@ use axum::{
     response::{IntoResponse, Response},
     routing::{delete, get, patch, post},
 };
-use entity_access::domain::ports::EntityAccessService;
 use conation_authorization::{MacroAuthorizationService, MacroAuthorizationState};
+use entity_access::domain::ports::EntityAccessService;
 use model_error_response::ErrorResponse;
 
 use crate::domain::{
@@ -261,8 +261,7 @@ impl IntoResponse for InviteUsersToTeamError {
             InviteUsersToTeamError::NotEnoughOpenSeats => (
                 StatusCode::BAD_REQUEST,
                 Json(ErrorResponse {
-                    message: "free team member limit reached; upgrade to invite more members"
-                        .into(),
+                    message: "team member limit reached".into(),
                 }),
             ),
             InviteUsersToTeamError::CustomerError(_) => (
@@ -294,8 +293,7 @@ impl IntoResponse for JoinTeamError {
             JoinTeamError::FreeTeamLimitReached => (
                 StatusCode::FORBIDDEN,
                 Json(ErrorResponse {
-                    message: "team is at the free member limit - upgrade to add more members"
-                        .into(),
+                    message: "team member limit reached".into(),
                 }),
             ),
             _ => (

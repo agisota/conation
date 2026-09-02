@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { ZOOM_TARGETS } from '@block-canvas/constants';
 import { isMobileWidth } from '@core/mobile/mobileWidth';
 import Minus from '@phosphor/minus.svg';
@@ -70,7 +71,7 @@ export function ZoomWidget() {
           <Minus class="size-4" />
         </div>
       </Show>
-      <Tooltip placement="top" label="Reset zoom">
+      <Tooltip placement="top" label={t('canvas.actions.resetZoom')}>
         <div
           class="text-ink-muted text-center w-12 h-6 select-none"
           on:click={resetZoom}

@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import type { AccessLevel } from '@service-storage/generated/schemas/accessLevel';
 import type { LinkShare } from '@service-storage/generated/schemas/linkShare';
 import type { UpdateSharePermissionRequestV2 } from '@service-storage/generated/schemas/updateSharePermissionRequestV2';
@@ -17,35 +18,17 @@ type LinkShareScopeCopy = {
 };
 
 export type ShareStatus = {
-  label: 'Public' | 'Team' | 'Shared' | 'Just me';
+  kind: 'public' | 'team' | 'shared' | 'private';
+  label: string;
   tooltip: string;
 };
 
-const LINK_SHARE_SCOPE_COPY: Record<LinkShareScope, LinkShareScopeCopy> = {
-  NONE: {
-    label: 'None',
-    title: 'Link sharing off',
-    description:
-      'Only people and channels you explicitly share with can access this item.',
-  },
-  PUBLIC: {
-    label: 'Public',
-    title: 'Public link',
-    description: 'Anyone with the link can access this item.',
-  },
-  TEAM: {
-    label: 'Team',
-    title: 'Team link',
-    description:
-      "Members of the owner's team with the link can access this item. This does not share it directly with a team or channel.",
-  },
-};
-
+/** Stable scope values with English labels retained for compatibility callers. */
 export const LINK_SHARE_SCOPE_OPTIONS = (
   ['NONE', 'PUBLIC', 'TEAM'] as const
 ).map((scope) => ({
   value: scope,
-  label: LINK_SHARE_SCOPE_COPY[scope].label,
+  label: scope === 'NONE' ? 'None' : scope === 'PUBLIC' ? 'Public' : 'Team',
 }));
 
 export function getLinkShareScope(
@@ -84,7 +67,12 @@ export function buildLinkShareScopePayload(
 export function getLinkShareScopeCopy(
   scope: LinkShareScope
 ): LinkShareScopeCopy {
-  return LINK_SHARE_SCOPE_COPY[scope];
+  const key = scope.toLowerCase();
+  return {
+    label: t(`core.sharing.link.${key}.label`),
+    title: t(`core.sharing.link.${key}.title`),
+    description: t(`core.sharing.link.${key}.description`),
+  };
 }
 
 export function getShareStatus(
@@ -93,27 +81,31 @@ export function getShareStatus(
 ): ShareStatus {
   if (linkShare === 'PUBLIC') {
     return {
-      label: 'Public',
-      tooltip: LINK_SHARE_SCOPE_COPY.PUBLIC.description,
+      kind: 'public',
+      label: t('core.sharing.link.public.label'),
+      tooltip: getLinkShareScopeCopy('PUBLIC').description,
     };
   }
 
   if (linkShare === 'TEAM') {
     return {
-      label: 'Team',
-      tooltip: LINK_SHARE_SCOPE_COPY.TEAM.description,
+      kind: 'team',
+      label: t('core.sharing.link.team.label'),
+      tooltip: getLinkShareScopeCopy('TEAM').description,
     };
   }
 
   if (hasExplicitShares) {
     return {
-      label: 'Shared',
-      tooltip: 'Shared with specific people or channels.',
+      kind: 'shared',
+      label: t('core.sharing.status.shared.label'),
+      tooltip: t('core.sharing.status.shared.tooltip'),
     };
   }
 
   return {
-    label: 'Just me',
-    tooltip: 'Only you can access this item.',
+    kind: 'private',
+    label: t('core.sharing.status.private.label'),
+    tooltip: t('core.sharing.status.private.tooltip'),
   };
 }

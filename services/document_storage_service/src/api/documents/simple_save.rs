@@ -12,8 +12,8 @@ use axum::{
     http::StatusCode,
     response::IntoResponse,
 };
-use entity_access::inbound::axum_extractors::DocumentAccessExtractor;
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use entity_access::inbound::axum_extractors::DocumentAccessExtractor;
 use model::document::response::DocumentResponseMetadata;
 use model::{
     document::{DocumentBasic, FileType, FileTypeExt},
@@ -46,7 +46,7 @@ pub struct Params {
             (status = 500, body=GenericErrorResponse),
         )
     )]
-#[tracing::instrument(skip(_access, state, user, document_context, multipart), fields(user_id=?user.authorization.user.conation_user_id))]
+#[tracing::instrument(skip(_access, state, user, document_context, multipart), fields(user_id=?user.authorization.user.macro_user_id))]
 pub async fn handler(
     _access: DocumentAccessExtractor<EditAccessLevel, EntityAccessService, AuthorizationService>,
     State(state): State<ApiContext>,

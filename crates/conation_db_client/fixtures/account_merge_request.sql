@@ -8,5 +8,5 @@ VALUES ('11111111-1111-1111-1111-111111111111', 'test@macro.com', true),
 
 
 INSERT INTO "User" ("id", "email", "macro_user_id")
-VALUES ('macro|test@macro.com', 'test@macro.com', '11111111-1111-1111-1111-111111111111'),
-       ('macro|test2@macro.com', 'test2@macro.com', '22222222-2222-2222-2222-222222222222');
+VALUES ('conation|test@macro.com', 'test@macro.com', '11111111-1111-1111-1111-111111111111'),
+       ('conation|test2@macro.com', 'test2@macro.com', '22222222-2222-2222-2222-222222222222');

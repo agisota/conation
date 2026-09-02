@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { Tooltip } from '@ui';
 import { onMount } from 'solid-js';
 import { useToolManager } from '../signal/toolManager';
@@ -15,7 +16,7 @@ export function PanWidget() {
   return (
     <div class="cursor-auto absolute bottom-4 right-4 flex flex-row items-center h-10">
       <div class="rounded-xl gap-1 p-2 min-w-24 text-center" ref={widgetRef}>
-        <Tooltip placement="top" label="Reset view">
+        <Tooltip placement="top" label={t('canvas.actions.resetView')}>
           <div
             class="text-ink-muted w-full select-none"
             on:mousedown={(e) => {

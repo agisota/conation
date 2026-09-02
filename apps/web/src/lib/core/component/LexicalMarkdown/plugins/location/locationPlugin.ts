@@ -1,6 +1,6 @@
+import { $getId, type NodeIdMappings } from '@conation/lexical-core';
 import type { BlockName } from '@core/block';
 import { mergeRegister } from '@lexical/utils';
-import { $getId, type NodeIdMappings } from '@conation/lexical-core';
 import {
   $getNodeByKey,
   $getRoot,

@@ -7,22 +7,22 @@ use crate::domain::{
     ports::{BotError, BotService},
     service::BotServiceImpl,
 };
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_event_broker::{EventBrokerError, MacroEvent, MacroEventBroker, NoopMacroEventBroker};
 use entity_access::domain::models::{
     Entity, EntityAccessReceipt, EntityPermission, EntityType, MemberParticipantRole,
     ParticipantRole,
 };
-use conation_db_migrator::MACRO_DB_MIGRATIONS;
-use conation_event_broker::{EventBrokerError, MacroEvent, MacroEventBroker, NoopMacroEventBroker};
 use serde_json::{Value, json};
 use sqlx::PgPool;
 use std::sync::{Arc, Mutex};
 
-const USER_OWNER: &str = "macro|bot-owner@example.com";
-const USER_OTHER: &str = "macro|bot-other@example.com";
-const TEAM_MEMBER: &str = "macro|bot-team-member@example.com";
-const TEAM_ADMIN: &str = "macro|bot-team-admin@example.com";
-const TEAM_OWNER: &str = "macro|bot-team-owner@example.com";
-const TEAM_OTHER: &str = "macro|bot-team-other@example.com";
+const USER_OWNER: &str = "conation|bot-owner@example.com";
+const USER_OTHER: &str = "conation|bot-other@example.com";
+const TEAM_MEMBER: &str = "conation|bot-team-member@example.com";
+const TEAM_ADMIN: &str = "conation|bot-team-admin@example.com";
+const TEAM_OWNER: &str = "conation|bot-team-owner@example.com";
+const TEAM_OTHER: &str = "conation|bot-team-other@example.com";
 fn user_id(value: &str) -> MacroUserIdStr<'static> {
     MacroUserIdStr::try_from(value.to_string()).expect("valid macro user id")
 }
@@ -164,18 +164,18 @@ fn assert_no_token_material(payload: &Value, known_token: Option<&str>) {
 }
 
 async fn insert_user(pool: &PgPool, user_id: &str) -> anyhow::Result<()> {
-    let conation_user_id = Uuid::new_v4();
-    let email = user_id.strip_prefix("macro|").unwrap_or(user_id);
-    let stripe_customer_id = format!("stripe_{conation_user_id}");
+    let macro_user_id = Uuid::new_v4();
+    let email = user_id.strip_prefix("conation|").unwrap_or(user_id);
+    let stripe_customer_id = format!("stripe_{macro_user_id}");
 
     sqlx::query(
         r#"
-        INSERT INTO conation_user (id, username, email, stripe_customer_id)
+        INSERT INTO macro_user (id, username, email, stripe_customer_id)
         VALUES ($1, $2, $3, $4)
         ON CONFLICT (id) DO NOTHING
         "#,
     )
-    .bind(conation_user_id)
+    .bind(macro_user_id)
     .bind(email)
     .bind(email)
     .bind(stripe_customer_id)
@@ -184,14 +184,14 @@ async fn insert_user(pool: &PgPool, user_id: &str) -> anyhow::Result<()> {
 
     sqlx::query(
         r#"
-        INSERT INTO "User" (id, email, conation_user_id)
+        INSERT INTO "User" (id, email, macro_user_id)
         VALUES ($1, $2, $3)
         ON CONFLICT (id) DO NOTHING
         "#,
     )
     .bind(user_id)
     .bind(email)
-    .bind(conation_user_id)
+    .bind(macro_user_id)
     .execute(pool)
     .await?;
 

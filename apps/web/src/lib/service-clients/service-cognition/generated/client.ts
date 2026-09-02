@@ -194,11 +194,6 @@ export type upsertAiProjectionResponse400 = {
   status: 400;
 };
 
-export type upsertAiProjectionResponse403 = {
-  data: ErrorResponse;
-  status: 403;
-};
-
 export type upsertAiProjectionResponse500 = {
   data: ErrorResponse;
   status: 500;
@@ -210,7 +205,6 @@ export type upsertAiProjectionResponseSuccess =
   };
 export type upsertAiProjectionResponseError = (
   | upsertAiProjectionResponse400
-  | upsertAiProjectionResponse403
   | upsertAiProjectionResponse500
 ) & {
   headers: Headers;
@@ -1725,7 +1719,7 @@ export const mcpAuthCallback = async (
 };
 
 /**
- * @summary Return Macro's public OAuth Client ID Metadata Document.
+ * @summary Return Conation's public OAuth Client ID Metadata Document.
  */
 export type mcpOauthClientMetadataResponse200 = {
   data: void;
@@ -2415,11 +2409,6 @@ export type sendChatMessageResponse401 = {
   status: 401;
 };
 
-export type sendChatMessageResponse402 = {
-  data: void;
-  status: 402;
-};
-
 export type sendChatMessageResponse403 = {
   data: void;
   status: 403;
@@ -2431,7 +2420,6 @@ export type sendChatMessageResponseSuccess = sendChatMessageResponse200 & {
 export type sendChatMessageResponseError = (
   | sendChatMessageResponse400
   | sendChatMessageResponse401
-  | sendChatMessageResponse402
   | sendChatMessageResponse403
 ) & {
   headers: Headers;
@@ -2533,11 +2521,6 @@ export type structuredCompletionResponse401 = {
   status: 401;
 };
 
-export type structuredCompletionResponse402 = {
-  data: void;
-  status: 402;
-};
-
 export type structuredCompletionResponse500 = {
   data: StructuredCompletionError;
   status: 500;
@@ -2550,7 +2533,6 @@ export type structuredCompletionResponseSuccess =
 export type structuredCompletionResponseError = (
   | structuredCompletionResponse400
   | structuredCompletionResponse401
-  | structuredCompletionResponse402
   | structuredCompletionResponse500
 ) & {
   headers: Headers;

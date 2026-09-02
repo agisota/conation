@@ -6,7 +6,7 @@ import {
 import type { Accessor } from 'solid-js';
 
 /**
- * Whether the AI agents surfaces are enabled: the Macro Coder `@`-mention
+ * Whether the AI agents surfaces are enabled: the Conation Coder `@`-mention
  * entry and the folded agent-session view in channels. Reactive, so the
  * gated surfaces appear once PostHog answers rather than only on remount.
  */

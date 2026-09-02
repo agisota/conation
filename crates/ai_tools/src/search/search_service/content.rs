@@ -6,9 +6,9 @@ use super::types::{
 use ai_toolset::{AsyncTool, RequestContext, ServiceContext, ToolCallError, ToolResult};
 use ai_toolset::{ToolAnnotated, ToolAnnotations};
 use async_trait::async_trait;
+use conation_user_id::user_id::MacroUserIdStr;
 use email::domain::ports::EmailService;
 use item_filters::{EmailFilters, EntityFilters};
-use conation_user_id::user_id::MacroUserIdStr;
 use models_properties::service::tag_sets::{TagFilter, TagMatch};
 use models_search::unified::{
     UnifiedSearchIndex, UnifiedSearchRequest, entity_filters_from_include,
@@ -101,7 +101,7 @@ impl AsyncTool<SearchToolContext> for ContentSearch {
         {
             let inboxes = search_context
                 .email_service
-                .get_inboxes_for_conation_id(MacroUserIdStr((*request_context.user_id).clone()))
+                .get_inboxes_for_macro_id(MacroUserIdStr((*request_context.user_id).clone()))
                 .await
                 .map_err(|e| ToolCallError {
                     description: format!("Failed to resolve inboxes: {e}"),

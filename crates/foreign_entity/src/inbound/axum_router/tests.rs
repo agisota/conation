@@ -8,14 +8,6 @@ use axum::{
     response::Response,
 };
 use chrono::{DateTime, Utc};
-use entity_access::domain::{
-    models::{
-        AccessError, AccessLevel, BotAccessScope, BotId, CallChannelInfo, EntityAccessReceipt,
-        EntityPermission, EntityType, RequiredPermission, UserTeamInfo, ViewAccessLevel,
-    },
-    ports::EntityAccessService,
-};
-use http_body_util::BodyExt;
 use conation_authorization::{
     INTERNAL_API_KEY_HEADER, InternalIdentityClaims, MacroAuthorizationError,
     MacroAuthorizationService, MacroAuthorizationState,
@@ -24,6 +16,14 @@ use conation_user_id::{
     lowercased::Lowercase,
     user_id::{MacroUserId, MacroUserIdStr},
 };
+use entity_access::domain::{
+    models::{
+        AccessError, AccessLevel, BotAccessScope, BotId, CallChannelInfo, EntityAccessReceipt,
+        EntityPermission, EntityType, RequiredPermission, UserTeamInfo, ViewAccessLevel,
+    },
+    ports::EntityAccessService,
+};
+use http_body_util::BodyExt;
 use model_user::UserContext;
 use rootcause::Report;
 use serde_json::{Value, json};

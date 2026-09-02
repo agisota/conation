@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import {
   type StackedAvatarInput,
   StackedAvatarsDefaultEmptyPlaceholder,
@@ -32,14 +33,16 @@ export const InCallStripAvatarImage: Component<{
 
   const nameLabel = () => {
     props.trackCall?.();
-    if (props.image.stripLocalPending) return 'You';
+    if (props.image.stripLocalPending) return t('channel.call.you');
     const fromProfile = displayName()?.trim();
     if (fromProfile) return fromProfile;
     const liveKit = props.image.tooltip?.trim();
     if (liveKit) return liveKit;
     return (
       props.image.userId?.split('|').at(1)?.split('@')[0] ||
-      (props.image.stripMemberKind === 'remote' ? 'Participant' : 'You')
+      (props.image.stripMemberKind === 'remote'
+        ? t('channel.call.participant')
+        : t('channel.call.you'))
     );
   };
 

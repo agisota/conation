@@ -195,11 +195,11 @@ dependencies = [
 name = "app"
 version = "0.1.0"
 dependencies = [
+ "conation_bundle_updater_plugin",
  "graphql_cache_plugin",
  "http",
  "log",
  "logger",
- "macro_bundle_updater_plugin",
  "mime_guess",
  "navigation_plugin",
  "nom",
@@ -965,6 +965,31 @@ checksum = "ba5a308b75df32fe02788e748662718f03fde005016435c444eea572398219fd"
 dependencies = [
  "bytes",
  "memchr",
+]
+
+[[package]]
+name = "conation_bundle_updater_plugin"
+version = "0.1.0"
+dependencies = [
+ "digest",
+ "futures",
+ "jni",
+ "ndk-context",
+ "objc2 0.5.2",
+ "reqwest",
+ "rootcause",
+ "semver",
+ "serde",
+ "serde_json",
+ "sha2",
+ "strum 0.27.2",
+ "tauri",
+ "tauri-plugin-device-info",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "url",
+ "zip",
 ]
 
 [[package]]
@@ -3367,31 +3392,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "macro_bundle_updater_plugin"
-version = "0.1.0"
-dependencies = [
- "digest",
- "futures",
- "jni",
- "ndk-context",
- "objc2 0.5.2",
- "reqwest",
- "rootcause",
- "semver",
- "serde",
- "serde_json",
- "sha2",
- "strum 0.27.2",
- "tauri",
- "tauri-plugin-device-info",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
- "url",
- "zip",
-]
-
-[[package]]
 name = "markup5ever"
 version = "0.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5534,9 +5534,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.149"
+version = "1.0.151"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83fc039473c5595ace860d8c4fafa220ff474b3fc6bfdb4293327f1a37e94d86"
+checksum = "c841b55ecdae098c80dcae9cf767f6f8a0c2cdb3416bbef72181df4d0fe73f14"
 dependencies = [
  "itoa",
  "memchr",
@@ -6312,7 +6312,7 @@ dependencies = [
 [[package]]
 name = "tauri-plugin-auth"
 version = "0.1.0"
-source = "git+https://github.com/macro-inc/tauri-plugins?rev=6ddd6600e20436388f169e936b610fe93944b7b0#6ddd6600e20436388f169e936b610fe93944b7b0"
+source = "git+https://github.com/inKibra/tauri-plugins?rev=6ddd6600e20436388f169e936b610fe93944b7b0#6ddd6600e20436388f169e936b610fe93944b7b0"
 dependencies = [
  "serde",
  "tauri",
@@ -6373,7 +6373,7 @@ dependencies = [
 [[package]]
 name = "tauri-plugin-fs"
 version = "2.5.1"
-source = "git+https://github.com/macro-inc/plugins-workspace?rev=06474e4c446600627cf37a11f0c22c27bcf764ca#06474e4c446600627cf37a11f0c22c27bcf764ca"
+source = "git+https://github.com/tauri-apps/plugins-workspace?rev=06474e4c446600627cf37a11f0c22c27bcf764ca#06474e4c446600627cf37a11f0c22c27bcf764ca"
 dependencies = [
  "anyhow",
  "dunce",
@@ -6410,7 +6410,7 @@ dependencies = [
 [[package]]
 name = "tauri-plugin-http"
 version = "2.5.9"
-source = "git+https://github.com/macro-inc/plugins-workspace?rev=06474e4c446600627cf37a11f0c22c27bcf764ca#06474e4c446600627cf37a11f0c22c27bcf764ca"
+source = "git+https://github.com/tauri-apps/plugins-workspace?rev=06474e4c446600627cf37a11f0c22c27bcf764ca#06474e4c446600627cf37a11f0c22c27bcf764ca"
 dependencies = [
  "bytes",
  "cookie_store",
@@ -6491,7 +6491,7 @@ dependencies = [
 [[package]]
 name = "tauri-plugin-notifications"
 version = "0.1.0"
-source = "git+https://github.com/macro-inc/tauri-plugins?rev=6ddd6600e20436388f169e936b610fe93944b7b0#6ddd6600e20436388f169e936b610fe93944b7b0"
+source = "git+https://github.com/inKibra/tauri-plugins?rev=6ddd6600e20436388f169e936b610fe93944b7b0#6ddd6600e20436388f169e936b610fe93944b7b0"
 dependencies = [
  "serde",
  "tauri",
@@ -6590,7 +6590,7 @@ dependencies = [
 [[package]]
 name = "tauri-plugin-virtual-keyboard"
 version = "0.1.0"
-source = "git+https://github.com/voxelbee/tauri-plugin-virtual-keyboard?branch=main#70e8e8325b5ff7d681ef5f3b996ac083d4fc5a01"
+source = "git+https://github.com/voxelbee/tauri-plugin-virtual-keyboard?rev=70e8e8325b5ff7d681ef5f3b996ac083d4fc5a01#70e8e8325b5ff7d681ef5f3b996ac083d4fc5a01"
 dependencies = [
  "serde",
  "tauri",
@@ -6601,7 +6601,7 @@ dependencies = [
 [[package]]
 name = "tauri-plugin-websocket"
 version = "2.4.2"
-source = "git+https://github.com/macro-inc/plugins-workspace?rev=06474e4c446600627cf37a11f0c22c27bcf764ca#06474e4c446600627cf37a11f0c22c27bcf764ca"
+source = "git+https://github.com/tauri-apps/plugins-workspace?rev=06474e4c446600627cf37a11f0c22c27bcf764ca#06474e4c446600627cf37a11f0c22c27bcf764ca"
 dependencies = [
  "futures-util",
  "http",
@@ -6698,7 +6698,7 @@ dependencies = [
  "serde_with",
  "swift-rs",
  "thiserror 2.0.18",
- "toml 1.1.2+spec-1.1.0",
+ "toml 0.9.12+spec-1.1.0",
  "url",
  "urlpattern",
  "uuid",
@@ -6887,9 +6887,9 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tokio"
-version = "1.52.1"
+version = "1.53.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b67dee974fe86fd92cc45b7a95fdd2f99a36a6d7b0d431a231178d3d670bbcc6"
+checksum = "202caea871b69668250d242070849eb495be178ed697a3e98aebce5bc81a0bed"
 dependencies = [
  "bytes",
  "libc",

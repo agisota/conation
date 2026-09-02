@@ -16,15 +16,15 @@ use ::notification::outbound::rate_limit::RedisRateLimitAdapter;
 use ::notification::outbound::websocket::{ConnectionGatewayClient, WebSocketGatewayAdapter};
 use ::rate_limit::RateLimitServiceImpl;
 use anyhow::Context;
-use config::Config;
-use email_formatting::EmailDigestNotification;
-use hmac::{Hmac, Mac};
 use conation_auth::middleware::decode_jwt::JwtValidationArgs;
 use conation_authorization::{InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationState};
 use conation_entrypoint::MacroEntrypoint;
 use conation_env::Environment;
 use conation_event_broker::{GlobalSpawner, KafkaEventPublisher, MacroEventBrokerService};
-use conation_service_urls::ConnectionGatewayUrl;
+use conation_service_urls::{ConnectionGatewayUrl, NotificationServiceUrl};
+use config::Config;
+use email_formatting::{DigestEmailUrls, EmailDigestNotification};
+use hmac::{Hmac, Mac};
 use secretsmanager_client::SecretManager;
 use sha2::Sha256;
 use sqlx::postgres::PgPoolOptions;
@@ -42,6 +42,21 @@ pub async fn main() -> anyhow::Result<()> {
 
     // Parse our configuration from the environment.
     let config = Config::from_env().context("expected to be able to generate config")?;
+    let public_email_urls = invite_email::configured_public_email_urls().map_err(|error| {
+        anyhow::anyhow!("invalid public invitation email URL configuration: {error}")
+    })?;
+    let notification_service_url = NotificationServiceUrl::new()
+        .context("expected notification service public URL")?
+        .parse_url()
+        .context("notification service public URL must be an absolute URL")?;
+    let digest_email_urls = DigestEmailUrls::new(
+        public_email_urls.app_base_url().clone(),
+        public_email_urls.brand_asset_url(),
+        notification_service_url,
+    )
+    .map_err(|error| {
+        anyhow::anyhow!("invalid public notification digest URL configuration: {error}")
+    })?;
 
     tracing::trace!("initialized config");
 
@@ -274,9 +289,9 @@ pub async fn main() -> anyhow::Result<()> {
         worker_clone.run_notifications().await
     });
 
-    let env = config.environment;
+    let digest_email_urls = digest_email_urls.clone();
     let digest_batch_to_email = move |batch: DigestBatch| {
-        EmailDigestNotification::new_from_digest_batch(batch, env, hmac_key.clone())
+        EmailDigestNotification::new_from_digest_batch(batch, &digest_email_urls, hmac_key.clone())
     };
 
     tokio::spawn(async move {

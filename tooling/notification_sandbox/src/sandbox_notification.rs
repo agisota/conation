@@ -1,5 +1,5 @@
-use email_formatting::EmailDigestNotification;
 use conation_user_id::user_id::MacroUserIdStr;
+use email_formatting::EmailDigestNotification;
 use notification::domain::models::apple::APNSPushNotification;
 use notification::domain::models::mobile::NotifCollapseKey;
 use notification::domain::models::queue_message::EmailContent;

@@ -10,7 +10,7 @@ import {
   config,
   DopplerEcsEnvironment,
   getKafkaClusterPolicy,
-  getMacroApiToken,
+  getConationApiToken,
   getMacroNotify,
   getSearchEventQueue,
   stack,
@@ -263,7 +263,7 @@ const contactsQueueArn: pulumi.Output<string> = contactsServiceStack
   .getOutput('contactsQueueArn')
   .apply((arn) => arn as string);
 
-const MACRO_API_TOKENS = getMacroApiToken();
+const CONATION_API_TOKENS = getConationApiToken();
 
 const cfKeyPair = new tls.PrivateKey(`cf-dist-email-key-pair-${stack}`, {
   algorithm: 'RSA',
@@ -280,7 +280,7 @@ const secretKeyArns = [
   authenticationServiceInternalApiKeyArn,
   internalAuthKeyArn,
   macroDbUrlArn,
-  MACRO_API_TOKENS.macroApiTokenPublicKeyArn,
+  CONATION_API_TOKENS.conationApiTokenPublicKeyArn,
   cloudfrontSecretKey.arn,
   apolloApiKeySecretArn,
 ];

@@ -1,5 +1,5 @@
-import { useIsAuthenticated } from '@core/auth';
 import { t } from '@app/lib/i18n';
+import { useIsAuthenticated } from '@core/auth';
 import { useNavigate } from '@solidjs/router';
 import { Button } from '@ui';
 
@@ -21,14 +21,18 @@ export function LoginButton() {
         size="sm"
         class="rounded-xs"
         onClick={() => navigate(`/login${window.location.search}`)}
-      >{t('auto.login')}</Button>
-      <span class="text-xs text-ink-muted italic">or</span>
+      >
+        {t('core.auth.login')}
+      </Button>
+      <span class="text-xs text-ink-muted italic">{t('core.auth.or')}</span>
       <Button
         variant="accent"
         size="sm"
         class="rounded-xs"
         onClick={() => navigate(`/welcome${window.location.search}`)}
-      >{t('auto.sign_up')}</Button>
+      >
+        {t('core.auth.signUp')}
+      </Button>
     </div>
   );
 }

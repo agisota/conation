@@ -8,9 +8,9 @@ use serde::Serialize;
 use uuid::Uuid;
 
 /// Preferred header used to authenticate bot webhook requests.
-pub const BOT_WEBHOOK_TOKEN_HEADER: &str = "x-macro-bot-token";
+pub const BOT_WEBHOOK_TOKEN_HEADER: &str = "x-conation-bot-token";
 /// Header selecting the authorization scope for bot webhook requests.
-pub const BOT_WEBHOOK_SCOPE_HEADER: &str = "x-macro-bot-scope";
+pub const BOT_WEBHOOK_SCOPE_HEADER: &str = "x-conation-bot-scope";
 /// User scope works for both user- and team-owned bots on channel webhooks.
 pub const BOT_WEBHOOK_SCOPE: &str = "user";
 
@@ -20,7 +20,7 @@ pub const BOT_WEBHOOK_SCOPE: &str = "user";
 pub enum BotOwnerSummary {
     /// Bot owned by one user.
     User {
-        /// Macro user id of the owner.
+        /// Conation user id of the owner.
         user_id: String,
     },
     /// Bot owned by a team.

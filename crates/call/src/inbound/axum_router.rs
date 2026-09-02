@@ -17,6 +17,9 @@ use axum::{
     response::IntoResponse,
     routing::{get, patch, post},
 };
+use conation_authorization::{
+    MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
+};
 use entity_access::{
     domain::{
         models::{EditAccessLevel, MemberParticipantRole, ViewAccessLevel},
@@ -26,9 +29,6 @@ use entity_access::{
         CallAccessLevelExtractor, CallWithChannelIdAccessLevelExtractor,
         ChannelAccessLevelExtractor,
     },
-};
-use conation_authorization::{
-    MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
 };
 use model_error_response::ErrorResponse;
 use uuid::Uuid;
@@ -300,7 +300,7 @@ pub async fn get_or_create_call_handler<
 
     let response = state
         .service
-        .get_or_create_call(&channel_id, user.authorization.user.conation_user_id.clone())
+        .get_or_create_call(&channel_id, user.authorization.user.macro_user_id.clone())
         .await?;
 
     Ok(Json(response))
@@ -367,7 +367,7 @@ pub async fn get_active_calls_handler<
 ) -> Result<Json<ActiveCallsResponse>, CallError> {
     let response = state
         .service
-        .get_active_calls(user.authorization.user.conation_user_id.clone())
+        .get_active_calls(user.authorization.user.macro_user_id.clone())
         .await?;
     Ok(Json(response))
 }
@@ -585,7 +585,7 @@ pub async fn get_batch_call_record_preview_handler<
 
     let response = state
         .service
-        .get_batch_call_record_previews(request, user.authorization.user.conation_user_id.clone())
+        .get_batch_call_record_previews(request, user.authorization.user.macro_user_id.clone())
         .await?;
     Ok(Json(response))
 }
@@ -619,7 +619,7 @@ pub async fn leave_or_end_call_handler<
 
     let response = state
         .service
-        .leave_or_end_call(&channel_id, user.authorization.user.conation_user_id.clone())
+        .leave_or_end_call(&channel_id, user.authorization.user.macro_user_id.clone())
         .await?;
 
     Ok(Json(response))

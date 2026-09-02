@@ -1,5 +1,5 @@
-import { Lightbox, LightboxToolbar } from '@core/component/Lightbox';
 import { t } from '@app/lib/i18n';
+import { Lightbox, LightboxToolbar } from '@core/component/Lightbox';
 
 import { isMobile } from '@core/mobile/isMobile';
 import { Dialog } from '@kobalte/core/dialog';
@@ -101,7 +101,7 @@ function VideoViewerContent(props: {
             style={{ 'z-index': 'calc(var(--z-index-modal) + 1)' }}
             onClick={props.onPrevious}
             disabled={!props.onPrevious}
-            aria-label={t('auto.previous_media')}
+            aria-label={t('channel.media.previous')}
           >
             <ChevronLeftIcon class="size-5 text-ink" />
           </button>
@@ -111,7 +111,7 @@ function VideoViewerContent(props: {
             style={{ 'z-index': 'calc(var(--z-index-modal) + 1)' }}
             onClick={props.onNext}
             disabled={!props.onNext}
-            aria-label={t('auto.next_media')}
+            aria-label={t('channel.media.next')}
           >
             <ChevronRightIcon class="size-5 text-ink" />
           </button>

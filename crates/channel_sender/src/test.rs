@@ -5,10 +5,15 @@ use super::*;
 
 #[test]
 fn sender_round_trips_user_storage_string() {
-    let sender = ChannelSender::parse_from_str("macro|alice@example.com").unwrap();
+    let sender = ChannelSender::parse_from_str("conation|alice@example.com").unwrap();
 
-    assert_eq!(sender.as_ref(), "macro|alice@example.com");
+    assert_eq!(sender.as_ref(), "conation|alice@example.com");
     assert!(matches!(sender.0, InnerVal::Right(_)));
+}
+
+#[test]
+fn sender_rejects_legacy_macro_user_namespace() {
+    assert!(ChannelSender::parse_from_str("macro|alice@example.com").is_err());
 }
 
 #[test]
@@ -28,7 +33,7 @@ fn sender_round_trips_bot_storage_string() {
 
 #[test]
 fn fallback_user_name_uses_email_local_part() {
-    let user_id = MacroUserIdStr::parse_from_str("macro|shepherd.hatton@gmail.com").unwrap();
+    let user_id = MacroUserIdStr::parse_from_str("conation|shepherd.hatton@gmail.com").unwrap();
 
     assert_eq!(user_id.email_part().local_part(), "shepherd.hatton");
 }

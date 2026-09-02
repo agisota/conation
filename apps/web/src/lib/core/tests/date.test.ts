@@ -1,10 +1,13 @@
+import { setLocale } from '@core/i18n';
 import { max } from 'date-fns';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   compareDateAsc,
   compareDateDesc,
   convertIsoString,
   formatDate,
+  formatEmailDate,
+  formatTime,
 } from '../util/date';
 
 // Use June 14, 2025 at 10:15 AM New York time (EDT/UTC-4) as a reference time.
@@ -17,9 +20,36 @@ describe('Date Utilities (core/utils/date.ts)', () => {
     process.env.TZ = 'UTC';
 
     vi.setSystemTime(mockNow);
+    setLocale('en');
   });
 
+  afterEach(() => setLocale('en'));
+
   describe('formatDate', () => {
+    it('uses the selected Russian locale for dates and times', () => {
+      setLocale('ru');
+
+      expect(formatTime(mockNow, 'UTC')).toBe('14:15');
+      expect(formatDate(new Date('2025-06-13T23:00:00.000Z'))).toBe(
+        'Вчера в 23:00'
+      );
+      expect(formatDate(new Date('2025-06-12T15:30:00.000Z'))).toBe('четверг');
+    });
+
+    it('honors an explicit time locale override', () => {
+      setLocale('ru');
+
+      expect(formatTime(mockNow, 'UTC', 'en')).toMatch(/2:15\s?PM/i);
+    });
+
+    it('uses the selected locale for forwarded email dates', () => {
+      const date = new Date('2025-07-04T00:20:00.000Z');
+
+      expect(formatEmailDate(date)).toBe('Fri, Jul 4, 2025 at 12:20 AM');
+      setLocale('ru');
+      expect(formatEmailDate(date)).toBe('пт, 4 июл. 2025 в 0:20');
+    });
+
     it('should should show only time at Date.now()', () => {
       const now = new Date();
       const result = formatDate(now);

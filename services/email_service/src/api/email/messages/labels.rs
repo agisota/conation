@@ -5,9 +5,9 @@ use axum::Json;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use email::domain::events::{EmailEventOrigin, EmailMacroEvent, LabelRef};
 use email_service::pubsub::publish_email_event;
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::response::ErrorResponse;
 use models_email::service;
 use sqlx::types::Uuid;
@@ -237,14 +237,14 @@ pub async fn handler(
 
     // Publish semantic macro.email events, rolled up to one per affected
     // thread (the batch may span several threads in the same inbox).
-    let actor = Some(link.conation_id.clone());
+    let actor = Some(link.macro_id.clone());
     let mut event_thread_ids: Vec<Uuid> = db_messages.iter().map(|m| m.thread_db_id).collect();
     event_thread_ids.sort_unstable();
     event_thread_ids.dedup();
     for thread_id in event_thread_ids {
         let event = EmailMacroEvent::thread_label_change(
             link.id,
-            link.conation_id.clone(),
+            link.macro_id.clone(),
             actor.clone(),
             thread_id,
             LabelRef {

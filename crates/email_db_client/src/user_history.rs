@@ -70,7 +70,7 @@ pub async fn get_thread_summary_info(
                 uh.updated_at as "viewed_at?",
                 latest_msg.snippet,
                 earliest_msg.subject as "subject?",
-                l.conation_id,
+                l.macro_id,
                 t.link_id,
                 latest_msg.sender as sender,
                 latest_msg.pretty_sender as "pretty_sender!",
@@ -162,7 +162,7 @@ pub async fn get_thread_summary_info(
         }
         let summary_info = ThreadHistoryInfo {
             item_id: row.thread_id,
-            user_id: row.conation_id,
+            user_id: row.macro_id,
             link_id: row.link_id,
             subject: row.subject,
             snippet: row.snippet,

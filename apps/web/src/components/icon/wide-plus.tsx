@@ -16,7 +16,6 @@ export const AnimatedPlusIcon = (props: {
       overflow="visible"
       class={`animated-plus-icon ${props.triggerAnimation ? 'animating' : ''} ${props.class ?? ''}`}
     >
-      {/*<title>{t('auto.animated_plus_icon')}</title>*/}
       <style>{`
         .animated-plus-icon {
           .bg-fill { opacity: 0; transition: opacity 0.3s ease; }

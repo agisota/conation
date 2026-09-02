@@ -1,5 +1,5 @@
-import { PIPEDREAM_ICON_MAP } from '@core/component/AI/constant/mcpServers';
 import { t } from '@app/lib/i18n';
+import { PIPEDREAM_ICON_MAP } from '@core/component/AI/constant/mcpServers';
 import { toast } from '@core/component/Toast/Toast';
 import { PipedreamConnectorIcon } from '@core/pipedream/ConnectorIcon';
 import {
@@ -33,7 +33,9 @@ function ServerRow(props: { server: PipedreamConnectionResponse }) {
       { app_slug: props.server.app_slug, enabled: !props.server.enabled },
       {
         onError: () => {
-          toast.failure('Failed to update connector');
+          toast.failure(
+            t('settings.integrations.connector.toast.updateFailed')
+          );
         },
       }
     );
@@ -44,11 +46,13 @@ function ServerRow(props: { server: PipedreamConnectionResponse }) {
       { app_slug: props.server.app_slug },
       {
         onSuccess: () => {
-          toast.success('Connector removed');
+          toast.success(t('settings.integrations.connector.toast.removed'));
           setConfirmDelete(false);
         },
         onError: () => {
-          toast.failure('Failed to remove connector');
+          toast.failure(
+            t('settings.integrations.connector.toast.removeFailed')
+          );
           setConfirmDelete(false);
         },
       }
@@ -71,7 +75,11 @@ function ServerRow(props: { server: PipedreamConnectionResponse }) {
         checked={props.server.enabled}
         disabled={updateMutation.isPending}
         onChange={handleToggleEnabled}
-        label={props.server.enabled ? 'Enabled' : 'Disabled'}
+        label={
+          props.server.enabled
+            ? t('settings.integrations.status.enabled')
+            : t('settings.integrations.status.disabled')
+        }
         labelClass="inline-block w-14 text-left text-xs text-ink-muted whitespace-nowrap"
       />
 
@@ -86,14 +94,18 @@ function ServerRow(props: { server: PipedreamConnectionResponse }) {
               disabled={deleteMutation.isPending}
               onClick={handleDelete}
             >
-              {deleteMutation.isPending ? 'Removing...' : 'Confirm'}
+              {deleteMutation.isPending
+                ? t('settings.integrations.actions.removing')
+                : t('settings.integrations.actions.confirm')}
             </Button>
             <Button
               variant="outline"
               size="sm"
               depth={3}
               onClick={() => setConfirmDelete(false)}
-            >{t('common.cancel')}</Button>
+            >
+              {t('common.cancel')}
+            </Button>
           </div>
         }
       >
@@ -119,7 +131,12 @@ function ServerRow(props: { server: PipedreamConnectionResponse }) {
 function CatalogRow(props: { entry: PipedreamCatalogEntryResponse }) {
   const { connect, busy } = createPipedreamCatalogConnect({
     entry: () => props.entry,
-    onConnected: (entry) => toast.success(`${entry.display_name} connected`),
+    onConnected: (entry) =>
+      toast.success(
+        t('settings.integrations.connector.toast.connected', {
+          name: entry.display_name,
+        })
+      ),
   });
 
   return (
@@ -134,7 +151,7 @@ function CatalogRow(props: { entry: PipedreamCatalogEntryResponse }) {
       description={props.entry.description ?? props.entry.app_slug}
     >
       <ConnectAction
-        label="Connect"
+        label={t('settings.integrations.actions.connect')}
         onClick={() => void connect()}
         loading={busy()}
       />
@@ -161,18 +178,22 @@ export function PipedreamIntegrationsSection() {
 
   return (
     <SettingsSection
-      title={t('auto.mcp_integrations')}
-      description="Connect the tools your team already uses to give Macro's agent access to them."
+      title={t('settings.integrations.title')}
+      description={t('settings.integrations.catalog.description')}
     >
       <Show when={serversQuery.isError}>
         <SettingsCard>
-          <div class="px-6 py-8 text-center text-sm text-ink-muted">{t('auto.failed_to_load_integrations')}<Button
+          <div class="px-6 py-8 text-center text-sm text-ink-muted">
+            {t('settings.integrations.loadFailed')}
+            <Button
               variant="outline"
               size="sm"
               depth={3}
               onClick={() => serversQuery.refetch()}
               class="ml-2"
-            >{t('common.retry')}</Button>
+            >
+              {t('common.retry')}
+            </Button>
           </div>
         </SettingsCard>
       </Show>
@@ -190,7 +211,7 @@ export function PipedreamIntegrationsSection() {
           <input
             type="search"
             class="settings-input w-full"
-            placeholder={t('auto.search_all_connectors')}
+            placeholder={t('settings.integrations.catalog.searchPlaceholder')}
             value={catalog.searchInput()}
             onInput={(e) => catalog.onSearchInput(e.currentTarget.value)}
           />
@@ -198,14 +219,16 @@ export function PipedreamIntegrationsSection() {
 
         <Show when={catalogQuery.isError}>
           <div class="px-6 py-6 text-center text-sm text-ink-muted">
-            Couldn't load the connector catalog.
+            {t('settings.integrations.catalog.loadFailed')}
             <Button
               variant="outline"
               size="sm"
               depth={3}
               onClick={() => catalogQuery.refetch()}
               class="ml-2"
-            >{t('common.retry')}</Button>
+            >
+              {t('common.retry')}
+            </Button>
           </div>
         </Show>
 
@@ -215,7 +238,9 @@ export function PipedreamIntegrationsSection() {
           </For>
 
           <Show when={catalogQuery.isFetching && browseResults().length === 0}>
-            <div class="px-6 py-6 text-center text-sm text-ink-muted">{t('auto.loading_connectors')}</div>
+            <div class="px-6 py-6 text-center text-sm text-ink-muted">
+              {t('settings.integrations.catalog.loading')}
+            </div>
           </Show>
 
           <Show
@@ -226,7 +251,9 @@ export function PipedreamIntegrationsSection() {
             }
           >
             <div class="px-6 py-6 text-center text-sm text-ink-muted">
-              No connectors found for "{catalog.search().trim()}".
+              {t('settings.integrations.catalog.noResults', {
+                query: catalog.search().trim(),
+              })}
             </div>
           </Show>
 
@@ -239,7 +266,9 @@ export function PipedreamIntegrationsSection() {
                 disabled={catalogQuery.isFetchingNextPage}
                 onClick={() => void catalogQuery.fetchNextPage()}
               >
-                {catalogQuery.isFetchingNextPage ? t('common.loading') : 'Load more'}
+                {catalogQuery.isFetchingNextPage
+                  ? t('common.loading')
+                  : t('settings.integrations.catalog.loadMore')}
               </Button>
             </div>
           </Show>

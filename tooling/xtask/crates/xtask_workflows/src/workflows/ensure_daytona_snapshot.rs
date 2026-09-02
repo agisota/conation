@@ -88,7 +88,7 @@ pub fn ensure_daytona_snapshot() -> Workflow {
 fn ensure_snapshot() -> Job {
     let (cpu, memory, disk) = snapshot_quota();
     Job::default()
-        .name("Ensure macro-agent-harness snapshot")
+        .name("Ensure conation-agent-harness snapshot")
         .runs_on(runners::Runner::Small.to_string())
         // PRs only need the GHCR publish; Daytona snapshot create is main-only.
         .cond(Expression::new("github.event_name != 'pull_request'"))
@@ -155,11 +155,14 @@ if [ "${{GITHUB_REF:-}}" = "refs/heads/main" ]; then
 fi
 docker buildx build \
   --platform linux/amd64 \
+  --secret id=github_token,env=GITHUB_TOKEN \
+  --build-arg CONATION_REPO_URL=https://github.com/agisota/conation.git \
   "${{tags[@]}}" \
   --push \
   crates/agent_harness/container
 "#
                 ))
-                .shell("bash"),
+                .shell("bash")
+                .add_env(("GITHUB_TOKEN", "${{ secrets.GITHUB_TOKEN }}")),
         )
 }

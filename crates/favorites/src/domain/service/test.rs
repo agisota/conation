@@ -2,8 +2,8 @@ use std::collections::HashSet;
 use std::sync::{Arc, Mutex};
 
 use chrono::Utc;
-use entity_access::domain::models::{EntityAccessReceipt, ViewAccessLevel};
 use conation_user_id::user_id::MacroUserIdStr;
+use entity_access::domain::models::{EntityAccessReceipt, ViewAccessLevel};
 use model_entity::{Entity, EntityType};
 
 use super::{FavoritesServiceImpl, MAX_FAVORITES_PER_COLLECTION};

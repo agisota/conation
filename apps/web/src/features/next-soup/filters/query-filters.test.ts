@@ -61,17 +61,19 @@ describe('soupItemMatchesQuery', () => {
   it('accepts any in-type item when the type is scoped by a non-id field', () => {
     // Referencing the document target via owner keeps documentId un-nil-filled,
     // so a new document owned by that user still matches optimistically.
-    const query: Query = { include: { documentOwnerId: ['macro|me@x.com'] } };
+    const query: Query = {
+      include: { documentOwnerId: ['conation|me@x.com'] },
+    };
 
     expect(
       soupItemMatchesQuery(
-        documentItem('doc-new', { ownerId: 'macro|me@x.com' }),
+        documentItem('doc-new', { ownerId: 'conation|me@x.com' }),
         query
       )
     ).toBe(true);
     expect(
       soupItemMatchesQuery(
-        documentItem('doc-other', { ownerId: 'macro|other@x.com' }),
+        documentItem('doc-other', { ownerId: 'conation|other@x.com' }),
         query
       )
     ).toBe(false);

@@ -1,5 +1,5 @@
-import { StaticMarkdown } from '@core/component/LexicalMarkdown/component/core/StaticMarkdown';
 import { t } from '@app/lib/i18n';
+import { StaticMarkdown } from '@core/component/LexicalMarkdown/component/core/StaticMarkdown';
 import {
   searchContentHitMarkdownTheme,
   singleLineMarkdownTheme,
@@ -34,7 +34,11 @@ export function SearchContent(props: SearchContentProps) {
       {(text) => (
         <Show
           when={text().trim()}
-          fallback={<span class="italic text-ink-disabled">{t('auto.no_content')}</span>}
+          fallback={
+            <span class="italic text-ink-disabled">
+              {t('entity.search.noContent')}
+            </span>
+          }
         >
           {(trimmedContent) => (
             <StaticMarkdown markdown={trimmedContent()} theme={theme()} />

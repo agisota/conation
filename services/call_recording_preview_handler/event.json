@@ -20,11 +20,11 @@
         "s3SchemaVersion": "1.0",
         "configurationId": "call-recording-preview",
         "bucket": {
-          "name": "macro-call-recording-local",
+          "name": "conation-call-recording-local",
           "ownerIdentity": {
             "principalId": "EXAMPLE"
           },
-          "arn": "arn:aws:s3:::macro-call-recording-local"
+          "arn": "arn:aws:s3:::conation-call-recording-local"
         },
         "object": {
           "key": "calls/example-room/2026-06-04T00%3A00%3A00Z.mp4",

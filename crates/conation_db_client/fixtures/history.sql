@@ -4,7 +4,7 @@ VALUES ('a1111111-1111-1111-1111-111111111111', 'user', 'user@user.com', 'stripe
 INSERT INTO
   public."User" ("id", "email", "stripeCustomerId", "macro_user_id") (
     SELECT
-      'macro|user@user.com',
+      'conation|user@user.com',
       'user@user.com',
       'stripe_id',
       'a1111111-1111-1111-1111-111111111111'
@@ -15,7 +15,7 @@ INSERT INTO
     SELECT
       'project-one',
       'test_project_name',
-      'macro|user@user.com'
+      'conation|user@user.com'
   );
 
 INSERT INTO
@@ -32,7 +32,7 @@ INSERT INTO
       'document-one',
       'test_document_name',
       'txt',
-      'macro|user@user.com',
+      'conation|user@user.com',
       '2019-10-16 00:00:00',
       '2019-10-16 00:00:00',
       'project-one'
@@ -67,7 +67,7 @@ INSERT INTO
       'document-two',
       'test_document_name',
       'pdf',
-      'macro|user@user.com',
+      'conation|user@user.com',
       '2019-10-16 00:10:00',
       '2019-10-16 00:10:00'
   );
@@ -101,7 +101,7 @@ INSERT INTO
       'document-three',
       'test_document_name',
       'pdf',
-      'macro|user@user.com',
+      'conation|user@user.com',
       '2019-10-16 00:20:00',
       '2019-10-16 00:20:00'
   );
@@ -120,7 +120,7 @@ INSERT INTO
       'document-deleted',
       'test_document_name',
       'pdf',
-      'macro|user@user.com',
+      'conation|user@user.com',
       '2019-10-16 00:20:00',
       '2024-08-08 11:10:00',
       '2024-08-08 11:11:00'
@@ -147,7 +147,7 @@ INSERT INTO
     SELECT
       'chat-one',
       'test-chat',
-      'macro|user@user.com',
+      'conation|user@user.com',
       '2019-10-16 00:21:00',
       '2019-10-16 00:21:00'
   );
@@ -181,7 +181,7 @@ INSERT INTO
       'document-four',
       'test_document_name',
       'pdf',
-      'macro|user@user.com',
+      'conation|user@user.com',
       '2019-10-16 00:40:00',
       '2019-10-16 00:40:00'
   );
@@ -215,7 +215,7 @@ INSERT INTO
       'document-five',
       'test_document_name',
       'pdf',
-      'macro|user@user.com',
+      'conation|user@user.com',
       '2019-10-16 00:50:00',
       '2019-10-16 00:50:00'
   );
@@ -249,7 +249,7 @@ INSERT INTO
       'document-six',
       'test_document_name',
       'pdf',
-      'macro|user@user.com',
+      'conation|user@user.com',
       '2019-10-16 01:00:00',
       '2019-10-16 01:00:00'
   );
@@ -283,7 +283,7 @@ INSERT INTO
       'document-seven',
       'document-seven',
       'docx',
-      'macro|user@user.com',
+      'conation|user@user.com',
       '2019-10-16 01:01:00',
       '2019-10-16 01:01:00'
   );
@@ -334,7 +334,7 @@ INSERT INTO
     SELECT
       'chat-two',
       'test-chat',
-      'macro|user@user.com',
+      'conation|user@user.com',
       '2019-10-16 01:02:00',
       '2019-10-16 01:02:00'
   );
@@ -360,7 +360,7 @@ INSERT INTO
     SELECT
       'chat-three',
       'test-chat',
-      'macro|user@user.com',
+      'conation|user@user.com',
       '2019-10-16 02:00:00',
       '2019-10-16 02:00:00'
   );
@@ -390,7 +390,7 @@ INSERT INTO
     "updatedAt"
   ) (
     SELECT
-      'macro|user@user.com',
+      'conation|user@user.com',
       'document-one',
       'document',
       '2019-10-16 00:00:00',
@@ -406,7 +406,7 @@ INSERT INTO
     "updatedAt"
   ) (
     SELECT
-      'macro|user@user.com',
+      'conation|user@user.com',
       'document-two',
       'document',
       '2019-10-16 00:10:00',
@@ -422,7 +422,7 @@ INSERT INTO
     "updatedAt"
   ) (
     SELECT
-      'macro|user@user.com',
+      'conation|user@user.com',
       'document-three',
       'document',
       '2019-10-16 00:30:00',
@@ -438,7 +438,7 @@ INSERT INTO
     "updatedAt"
   ) (
     SELECT
-      'macro|user@user.com',
+      'conation|user@user.com',
       'document-four',
       'document',
       '2019-10-16 00:40:00',
@@ -454,7 +454,7 @@ INSERT INTO
     "updatedAt"
   ) (
     SELECT
-      'macro|user@user.com',
+      'conation|user@user.com',
       'document-five',
       'document',
       '2019-10-16 00:50:00',
@@ -470,7 +470,7 @@ INSERT INTO
     "updatedAt"
   ) (
     SELECT
-      'macro|user@user.com',
+      'conation|user@user.com',
       'document-six',
       'document',
       '2019-10-16 01:00:00',
@@ -486,7 +486,7 @@ INSERT INTO
     "updatedAt"
   ) (
     SELECT
-      'macro|user@user.com',
+      'conation|user@user.com',
       'chat-three',
       'chat',
       '2019-10-16 03:00:00',
@@ -502,7 +502,7 @@ INSERT INTO
     "updatedAt"
   ) (
     SELECT
-      'macro|user@user.com',
+      'conation|user@user.com',
       'project-one',
       'project',
       '2019-10-16 04:00:00',

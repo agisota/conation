@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { throwOnErr } from '@core/util/result';
 import { invalidateAllSoup, refetchSoupEntity } from '@queries/soup/cache';
@@ -43,7 +44,7 @@ export function useSaveDraftMutation(
       {
         onError(error) {
           console.error('Failed to save draft', error);
-          toast.failure('Failed to save draft');
+          toast.failure(t('email.feedback.draftSaveFailed'));
         },
         onSuccess(data, vars) {
           queryClient.invalidateQueries({
@@ -93,7 +94,7 @@ export function useDeleteDraftMutation(
       {
         onError(error) {
           console.error('Failed to delete draft', error);
-          toast.failure('Failed to delete draft');
+          toast.failure(t('email.feedback.draftDeleteFailed'));
         },
         onSuccess(_data, vars) {
           queryClient.invalidateQueries({

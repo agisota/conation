@@ -2,13 +2,13 @@
 
 use std::sync::Arc;
 
+use conation_user_id::cowlike::CowLike;
+use conation_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::models::{
     AccessError, Entity, EntityAccessAuth, EntityAccessReceipt, EntityPermission,
     EntityType as AccessEntityType,
 };
 use entity_access::domain::ports::EntityAccessService;
-use conation_user_id::cowlike::CowLike;
-use conation_user_id::user_id::MacroUserIdStr;
 use models_permissions::share_permission::access_level::AccessLevel;
 use models_properties::EntityType as StorageEntityType;
 use sqlx::{Pool, Postgres};
@@ -66,7 +66,7 @@ impl<Svc: EntityAccessService> PermissionServiceImpl<Svc> {
             && let Some(user_id) = user_id
             && let Ok(thread_id) = Uuid::parse_str(entity_id)
         {
-            match permission_queries::get_conation_id_from_thread_id(&self.db, thread_id).await {
+            match permission_queries::get_macro_id_from_thread_id(&self.db, thread_id).await {
                 Ok(Some(owner_id)) if owner_id == user_id.as_ref() => {
                     tracing::debug!("user owns thread via link_id, granting owner access");
                     return Ok(Some(AccessLevel::Owner));

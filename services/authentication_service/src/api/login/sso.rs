@@ -1,4 +1,4 @@
-use crate::api::context::ApiContext;
+use crate::api::{context::ApiContext, utils::configured_app_origin};
 use axum::{
     Json,
     extract::{Query, State},
@@ -36,23 +36,41 @@ pub(crate) struct LoginQueryParams {
 }
 
 pub(crate) fn is_allowed_original_url(url: &Url) -> bool {
+    let Ok(app_origin) = configured_app_origin() else {
+        return false;
+    };
+    let Ok(allowed_origins) = conation_cors::configured_allowed_origins() else {
+        return false;
+    };
+
+    is_allowed_original_url_with(url, &app_origin, &allowed_origins)
+}
+
+fn is_allowed_original_url_with(url: &Url, app_origin: &str, allowed_origins: &[String]) -> bool {
+    if !url.username().is_empty() || url.password().is_some() {
+        return false;
+    }
+
     match url.scheme() {
-        // The app owns the custom scheme and handles all macro URI routes itself.
-        "macro" => true,
+        // The desktop/mobile app owns this custom scheme and handles its routes.
+        "conation" => true,
         "tauri" => url.host_str() == Some("localhost"),
-        "http" => matches!(url.host_str(), Some("localhost" | "tauri.localhost")),
-        "https" => matches!(
-            url.host_str(),
-            Some("localhost" | "tauri.localhost" | "dev.macro.com" | "macro.com")
-        ),
+        "http" | "https" => {
+            let origin = url.origin().ascii_serialization();
+            origin == app_origin || conation_cors::is_origin_allowed_with(&origin, allowed_origins)
+        }
         _ => false,
     }
 }
 
+pub(crate) fn parse_allowed_original_url(value: &str) -> Option<Url> {
+    Url::parse(value).ok().filter(is_allowed_original_url)
+}
+
 /// Strips the userinfo, query, and fragment from an `original_url` so it is
 /// safe to log — all are client-controlled and may carry credentials, tokens,
-/// or PII. The path is kept because it distinguishes e.g. macro://login from
-/// macro:///login.
+/// or PII. The path is kept because it distinguishes e.g. conation://login
+/// from conation:///login.
 pub(crate) fn redact_original_url_for_logging(url: &Url) -> Url {
     let mut redacted_url = url.clone();
     redacted_url.set_query(None);

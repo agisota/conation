@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
+use conation_user_id::user_id::MacroUserIdStr;
 use doppleganger::{Doppleganger, Mirror};
 use frecency::domain::models::AggregateFrecency;
-use conation_user_id::user_id::MacroUserIdStr;
 use models_pagination::PaginatedOpaqueCursor;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;

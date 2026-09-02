@@ -56,6 +56,50 @@ fn document_content_services_are_available_through_the_proxy() {
     assert!(caddy.contains("reverse_proxy ai-editing-worker:8933"));
 }
 
+#[test]
+fn mcp_transport_and_oauth_routes_preserve_protocol_paths() {
+    let caddy = caddyfile(Mode::Local, false);
+
+    assert!(caddy.contains("@mcp path /mcp /mcp/*"));
+    assert!(caddy.contains("reverse_proxy mcp_service:8080"));
+    assert!(!caddy.contains("uri strip_prefix /mcp"));
+    for path in [
+        "/authorize",
+        "/register",
+        "/token",
+        "/oauth/callback",
+        "/.well-known/oauth-protected-resource",
+        "/.well-known/oauth-protected-resource/mcp",
+        "/.well-known/oauth-authorization-server",
+        "/.well-known/oauth-authorization-server/mcp",
+    ] {
+        assert!(
+            caddy.contains(path),
+            "Caddyfile is missing MCP OAuth route {path}"
+        );
+    }
+    assert!(
+        !caddy.contains("/.well-known/*"),
+        "MCP must not claim unrelated well-known resources"
+    );
+    assert!(caddy.contains("respond \"Conation local proxy\" 200"));
+}
+
+#[test]
+fn public_proxy_rejects_non_public_mcp_egress_routes() {
+    let caddy = caddyfile(Mode::Local, false);
+
+    let rejected_routes = "@non_public_mcp_egress path /mcp-conation /mcp-conation/*";
+    assert!(caddy.contains(rejected_routes));
+    assert!(
+        caddy.contains("handle @non_public_mcp_egress {\n        respond \"Not Found\" 404\n    }")
+    );
+    assert!(
+        caddy.find(rejected_routes).unwrap() < caddy.find("@mcp path /mcp /mcp/*").unwrap(),
+        "the negative matcher must run before public MCP ingress"
+    );
+}
+
 /// The static-file block is the one route that differs by mode: LocalStack S3
 /// fan-out locally, the dev-pointed service in dev.
 #[test]
@@ -108,4 +152,21 @@ fn static_frontend_block_is_opt_in() {
 
     let headless_dev = caddyfile(Mode::Dev, true);
     assert!(!headless_dev.contains("handle /mailpit/*"));
+}
+
+#[test]
+fn headless_support_avatar_urls_are_served_by_static_frontend() {
+    let headless = caddyfile(Mode::Local, true);
+    let instance = Instance::derive(Some("headless-support"), Some(31_000)).unwrap();
+    let avatar_url = format!(
+        "{}/support-avatars/pythia.svg",
+        super::super::frontend::static_url(&instance).trim_end_matches('/')
+    );
+
+    assert_eq!(
+        avatar_url,
+        "http://localhost:31009/app/support-avatars/pythia.svg"
+    );
+    assert!(headless.contains("handle_path /app/* {"));
+    assert!(headless.contains("file_server"));
 }

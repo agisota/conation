@@ -43,7 +43,7 @@ pub async fn handler(
     tracing::info!("verify_merge_request");
     let user_context = &authorization.authorization.user.user_context;
 
-    let (account_merge_request_id, to_merge_conation_user_id) =
+    let (account_merge_request_id, to_merge_macro_user_id) =
         conation_db_client::account_merge_request::get_merge_request_info(
             &ctx.db,
             &user_context.fusion_user_id,
@@ -76,7 +76,7 @@ pub async fn handler(
     // grab existing links
     let links = ctx
         .auth_client
-        .get_links(&to_merge_conation_user_id, None)
+        .get_links(&to_merge_macro_user_id, None)
         .await
         .map_err(|e| {
             tracing::error!(error=?e, "unable to get links");
@@ -85,7 +85,7 @@ pub async fn handler(
 
     // get stripe customer
     let stripe_customer =
-        conation_db_client::conation_user::get_conation_user(&ctx.db, &to_merge_conation_user_id)
+        conation_db_client::macro_user::get_macro_user(&ctx.db, &to_merge_macro_user_id)
             .await
             .map_err(|e| {
                 tracing::error!(error=?e, "unable to get macro user");
@@ -108,7 +108,7 @@ pub async fn handler(
     conation_db_client::account_merge_request::merge_accounts(
         &mut transaction,
         &user_context.fusion_user_id,
-        &to_merge_conation_user_id,
+        &to_merge_macro_user_id,
     )
     .await
     .map_err(|e| {
@@ -126,7 +126,7 @@ pub async fn handler(
     // NOTE: this will **not** delete any macrodb items for the user because we have a record in
     // `account_merge_request` to cause the delete user webhook to early exit
     ctx.auth_client
-        .delete_user(&to_merge_conation_user_id)
+        .delete_user(&to_merge_macro_user_id)
         .await
         .map_err(|e| {
             tracing::error!(error=?e, "unable to delete fusionauth user");
@@ -175,7 +175,7 @@ pub async fn handler(
     // though in reality there should be no reason commiting the transaction would fail since we
     // have no deferred constraints
     transaction.commit().await.map_err(|e| {
-        tracing::error!(error=?e, to_merge_conation_user_id=?to_merge_conation_user_id, conation_user_id=?user_context.fusion_user_id, "failed to commit transaction");
+        tracing::error!(error=?e, to_merge_macro_user_id=?to_merge_macro_user_id, macro_user_id=?user_context.fusion_user_id, "failed to commit transaction");
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ErrorResponse {
@@ -188,7 +188,9 @@ pub async fn handler(
     // TODO: @evanhutnik email_service
 
     // delete stripe customer
-    if let Some(stripe_customer_id) = stripe_customer {
+    if ctx.stripe_enabled.0
+        && let Some(stripe_customer_id) = stripe_customer
+    {
         tracing::trace!(stripe_customer_id, "delete_stripe_customer");
         if let Ok(customer_id) = stripe_customer_id.parse()
             && let Err(e) = stripe::Customer::delete(&ctx.stripe_client, &customer_id).await

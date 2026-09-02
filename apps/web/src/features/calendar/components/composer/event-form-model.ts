@@ -1,8 +1,10 @@
+import { t } from '@app/lib/i18n';
 import {
   type CombinedRecipientItem,
+  emailToMacroId,
   recipientEntityMapper,
   type WithCustomUserInput,
-} from '@core/user/combinedRecipient';
+} from '@core/user';
 import { TZDateMini } from '@date-fns/tz';
 import type { ConferenceChange } from '@service-email/generated/schemas/conferenceChange';
 import type { EventTime } from '@service-email/generated/schemas/eventTime';
@@ -253,8 +255,9 @@ export function buildEventTime(
 }
 
 /** Copy shown when guests would be invited to an event that already ended. */
-export const PAST_EVENT_GUESTS_WARNING =
-  'This event has already ended — guests will still be invited.';
+export function currentPastEventGuestsWarning() {
+  return t('calendar.event.form.pastEventGuestsWarning');
+}
 
 /** When the edited range ends, or `undefined` while the range does not parse. */
 export function eventEndsAt(state: EventEditorInitialValues): Date | undefined {
@@ -297,14 +300,14 @@ export function initialGuestOptions(
     const existing = options.find(
       (option) => guestEmail(option).toLowerCase() === email.toLowerCase()
     );
-    return (
-      existing ??
-      recipientEntityMapper('custom')({
-        id: `macro|${email}`,
-        email,
-        invalid: false,
-      })
-    );
+    if (existing) return existing;
+
+    const id = emailToMacroId(email);
+    return recipientEntityMapper('custom')({
+      id: id ?? email,
+      email,
+      invalid: id === undefined,
+    });
   });
 }
 
@@ -400,7 +403,10 @@ export function createEventEditorState(options: CreateEventEditorStateOptions) {
   );
   const recurrenceOptions = createMemo<EventEditorRecurrenceOption[]>(() => {
     const values = [
-      { value: 'none', label: 'Does not repeat' },
+      {
+        value: 'none',
+        label: t('calendar.recurrence.doesNotRepeat'),
+      },
       ...presets().map((preset) => ({
         value: preset.id,
         label: preset.label,
@@ -409,13 +415,17 @@ export function createEventEditorState(options: CreateEventEditorStateOptions) {
     if (hasUnrepresentableRule()) {
       values.push({
         value: 'existing',
-        label: `Custom: ${
-          formatRecurrenceDescription(initialValues().recurrenceLines) ??
-          'existing rule'
-        } (unchanged)`,
+        label: t('calendar.recurrence.existingCustom', {
+          description:
+            formatRecurrenceDescription(initialValues().recurrenceLines) ??
+            t('calendar.recurrence.existingRule'),
+        }),
       });
     }
-    values.push({ value: 'custom', label: 'Custom' });
+    values.push({
+      value: 'custom',
+      label: t('calendar.recurrence.custom'),
+    });
     return values;
   });
   const selectedRecurrenceOption = () =>
@@ -472,7 +482,7 @@ export function createEventEditorState(options: CreateEventEditorStateOptions) {
     if (!current.start || !current.end) return undefined;
     if (current.allDay) {
       return current.end < current.start
-        ? 'End date cannot be before the start date.'
+        ? t('calendar.event.form.error.endDateBeforeStart')
         : undefined;
     }
     const start = new Date(current.start);
@@ -480,7 +490,9 @@ export function createEventEditorState(options: CreateEventEditorStateOptions) {
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
       return undefined;
     }
-    return end <= start ? 'End time must be after the start time.' : undefined;
+    return end <= start
+      ? t('calendar.event.form.error.endTimeBeforeStart')
+      : undefined;
   });
   const eventTime = createMemo(() => buildEventTime(options.state()));
   const canSave = () =>

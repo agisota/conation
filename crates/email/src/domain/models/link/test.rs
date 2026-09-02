@@ -1,4 +1,10 @@
-use super::{EmailBackfillStatus, EmailSyncStatus};
+use super::{EmailBackfillStatus, EmailSyncStatus, UserProvider};
+
+#[test]
+fn provider_contract_exposes_stalwart_without_transport_policy() {
+    assert_eq!(UserProvider::Gmail.as_str(), "GMAIL");
+    assert_eq!(UserProvider::Stalwart.as_str(), "STALWART");
+}
 
 #[test]
 fn inactive_sync_takes_precedence_over_other_facts() {

@@ -1,5 +1,5 @@
-import type { IUser } from '@core/user';
 import { t } from '@app/lib/i18n';
+import type { IUser } from '@core/user';
 import { idToDisplayName, idToEmail } from '@core/user/util';
 import { SYSTEM_PROPERTY_IDS } from '@property/constants';
 import {
@@ -91,7 +91,9 @@ function EntityEditorBody(props: EntityEditorProps) {
     <EditorPopover onClose={closeAndSave}>
       <Suspense
         fallback={
-          <div class="px-3 py-4 text-sm text-ink-muted">{t('common.loading')}</div>
+          <div class="px-3 py-4 text-sm text-ink-muted">
+            {t('common.loading')}
+          </div>
         }
       >
         <PropertyEntitySelector

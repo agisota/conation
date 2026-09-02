@@ -90,16 +90,16 @@ impl VoiceRepository for PgVoiceRepo {
 
     async fn link_user_voice(
         &self,
-        conation_user_id: &Uuid,
+        macro_user_id: &Uuid,
         voice_id: &Uuid,
     ) -> Result<(), Self::Err> {
         sqlx::query!(
             r#"
-            INSERT INTO conation_user_voice (conation_user_id, voice_id)
+            INSERT INTO macro_user_voice (macro_user_id, voice_id)
             VALUES ($1, $2)
-            ON CONFLICT (conation_user_id, voice_id) DO NOTHING
+            ON CONFLICT (macro_user_id, voice_id) DO NOTHING
             "#,
-            conation_user_id,
+            macro_user_id,
             voice_id,
         )
         .execute(&self.pool)
@@ -107,12 +107,12 @@ impl VoiceRepository for PgVoiceRepo {
         Ok(())
     }
 
-    async fn get_user_voices(&self, conation_user_id: &Uuid) -> Result<Vec<Uuid>, Self::Err> {
+    async fn get_user_voices(&self, macro_user_id: &Uuid) -> Result<Vec<Uuid>, Self::Err> {
         let rows = sqlx::query!(
             r#"
-            SELECT voice_id FROM conation_user_voice WHERE conation_user_id = $1
+            SELECT voice_id FROM macro_user_voice WHERE macro_user_id = $1
             "#,
-            conation_user_id,
+            macro_user_id,
         )
         .fetch_all(&self.pool)
         .await?;
@@ -122,13 +122,13 @@ impl VoiceRepository for PgVoiceRepo {
     async fn find_user_by_voice(&self, voice_id: &Uuid) -> Result<Option<Uuid>, Self::Err> {
         let row = sqlx::query!(
             r#"
-            SELECT conation_user_id FROM conation_user_voice WHERE voice_id = $1 LIMIT 1
+            SELECT macro_user_id FROM macro_user_voice WHERE voice_id = $1 LIMIT 1
             "#,
             voice_id,
         )
         .fetch_optional(&self.pool)
         .await?;
-        Ok(row.map(|r| r.conation_user_id))
+        Ok(row.map(|r| r.macro_user_id))
     }
 
     async fn find_nearest_user(
@@ -142,9 +142,9 @@ impl VoiceRepository for PgVoiceRepo {
         let threshold = threshold as f64;
         let row = sqlx::query!(
             r#"
-            SELECT muv.conation_user_id
+            SELECT muv.macro_user_id
             FROM voice v
-            JOIN conation_user_voice muv ON muv.voice_id = v.id
+            JOIN macro_user_voice muv ON muv.voice_id = v.id
             WHERE (v.embedding <=> $1) <= $2
             ORDER BY v.embedding <=> $1 ASC
             LIMIT 1
@@ -154,7 +154,7 @@ impl VoiceRepository for PgVoiceRepo {
         )
         .fetch_optional(&self.pool)
         .await?;
-        Ok(row.map(|r| r.conation_user_id))
+        Ok(row.map(|r| r.macro_user_id))
     }
 
     async fn find_nearest_user_for_voice(
@@ -168,9 +168,9 @@ impl VoiceRepository for PgVoiceRepo {
         let row = sqlx::query!(
             r#"
             WITH target AS (SELECT embedding FROM voice WHERE id = $1)
-            SELECT muv.conation_user_id
+            SELECT muv.macro_user_id
             FROM voice v
-            JOIN conation_user_voice muv ON muv.voice_id = v.id
+            JOIN macro_user_voice muv ON muv.voice_id = v.id
             WHERE (v.embedding <=> (SELECT embedding FROM target)) <= $2
             ORDER BY v.embedding <=> (SELECT embedding FROM target) ASC
             LIMIT 1
@@ -180,6 +180,6 @@ impl VoiceRepository for PgVoiceRepo {
         )
         .fetch_optional(&self.pool)
         .await?;
-        Ok(row.map(|r| r.conation_user_id))
+        Ok(row.map(|r| r.macro_user_id))
     }
 }

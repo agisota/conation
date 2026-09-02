@@ -124,6 +124,7 @@ impl AgentResponder for TestResponder {
 /// missing (deleted while the agent ran).
 struct MutationChannelService {
     thinking_deleted: bool,
+    posted: Mutex<Vec<String>>,
     posted_policies: Mutex<Vec<PostMessageNotificationPolicy>>,
     patched: Mutex<Vec<String>>,
     patched_policies: Mutex<Vec<PatchMessageNotificationPolicy>>,
@@ -133,6 +134,7 @@ impl MutationChannelService {
     fn new(thinking_deleted: bool) -> Self {
         Self {
             thinking_deleted,
+            posted: Mutex::new(Vec::new()),
             posted_policies: Mutex::new(Vec::new()),
             patched: Mutex::new(Vec::new()),
             patched_policies: Mutex::new(Vec::new()),
@@ -221,6 +223,7 @@ impl ChannelService for MutationChannelService {
         _channel_id: Uuid,
         req: PostMessageRequest,
     ) -> impl Future<Output = Result<PostMessageResponse, ChannelMutationErr>> + Send {
+        self.posted.lock().unwrap().push(req.content.clone());
         self.posted_policies
             .lock()
             .unwrap()
@@ -273,7 +276,7 @@ impl AgentResponder for FixedResponder {
 }
 
 fn user_id(email: &str) -> MacroUserIdStr<'static> {
-    MacroUserIdStr::try_from(format!("macro|{email}")).unwrap()
+    MacroUserIdStr::try_from(format!("conation|{email}")).unwrap()
 }
 
 fn context_message(
@@ -371,11 +374,15 @@ async fn handle_patches_thinking_message_with_reply() {
             Uuid::new_v4(),
             None,
             "teo@example.com",
-            "@macro help",
+            "@conation help",
         ))
         .await
         .unwrap();
 
+    assert_eq!(
+        channels.posted.lock().unwrap().clone(),
+        vec![r#"<m-await>{"text":"Conation is thinking…","inline":true}</m-await>"#.to_string()]
+    );
     assert_eq!(
         channels.posted_policies.lock().unwrap().clone(),
         vec![PostMessageNotificationPolicy::Silent]
@@ -402,7 +409,7 @@ async fn handle_drops_reply_when_thinking_message_was_deleted() {
             Uuid::new_v4(),
             None,
             "teo@example.com",
-            "@macro help",
+            "@conation help",
         ))
         .await
         .unwrap();
@@ -419,14 +426,19 @@ async fn top_level_prompt_marks_trigger_inline_in_channel_context() {
     let channels = Arc::new(TestChannelService {
         around_args: Mutex::new(None),
         around_messages: vec![
-            context_message(channel_id, before_id, "macro|alice@example.com", "before"),
+            context_message(
+                channel_id,
+                before_id,
+                "conation|alice@example.com",
+                "before",
+            ),
             context_message(
                 channel_id,
                 trigger_id,
-                "macro|teo@example.com",
-                "@macro help",
+                "conation|teo@example.com",
+                "@conation help",
             ),
-            context_message(channel_id, after_id, "macro|bob@example.com", "after"),
+            context_message(channel_id, after_id, "conation|bob@example.com", "after"),
         ],
         thread_replies: Vec::new(),
     });
@@ -436,7 +448,7 @@ async fn top_level_prompt_marks_trigger_inline_in_channel_context() {
         trigger_id,
         None,
         "teo@example.com",
-        "@macro help",
+        "@conation help",
     );
 
     let prompt = handler.build_prompt(&event).await;
@@ -450,14 +462,14 @@ async fn top_level_prompt_marks_trigger_inline_in_channel_context() {
             CONTEXT_MESSAGES_AFTER
         ))
     );
-    assert!(prompt.contains("mentioned you (@macro) in a channel."));
+    assert!(prompt.contains("mentioned you (@conation) in a channel."));
     assert!(prompt.contains("<channel_context>"));
     assert!(prompt.contains("</channel_context>"));
     assert!(prompt.contains("alice: before"));
     assert!(prompt.contains("bob: after"));
-    assert!(prompt.contains("teo [this message mentioned you]: @macro help"));
+    assert!(prompt.contains("teo [this message mentioned you]: @conation help"));
     // The trigger appears once, inline, not repeated at the end.
-    assert_eq!(prompt.matches("@macro help").count(), 1);
+    assert_eq!(prompt.matches("@conation help").count(), 1);
     assert!(!prompt.contains("<thread>"));
     assert!(prompt.ends_with("Reply to teo."));
 }
@@ -472,8 +484,8 @@ async fn thread_prompt_puts_thread_first_and_demotes_channel_noise() {
     let mut trigger_context = context_message(
         channel_id,
         trigger_id,
-        "macro|austin@example.com",
-        "@macro can you make a task out of this?",
+        "conation|austin@example.com",
+        "@conation can you make a task out of this?",
     );
     trigger_context.thread_id = Some(parent_id);
 
@@ -483,21 +495,21 @@ async fn thread_prompt_puts_thread_first_and_demotes_channel_noise() {
             context_message(
                 channel_id,
                 parent_id,
-                "macro|peter@example.com",
+                "conation|peter@example.com",
                 "We stopped persisting filter/sort across refresh",
             ),
             context_message(
                 channel_id,
                 unrelated_id,
-                "macro|carol@example.com",
+                "conation|carol@example.com",
                 "unrelated tasks view chatter",
             ),
             trigger_context,
         ],
         thread_replies: vec![thread_reply(
             trigger_id,
-            "macro|austin@example.com",
-            "@macro can you make a task out of this?",
+            "conation|austin@example.com",
+            "@conation can you make a task out of this?",
         )],
     });
     let handler = MacroAiHandler::new(channels.clone(), Arc::new(TestResponder));
@@ -506,23 +518,21 @@ async fn thread_prompt_puts_thread_first_and_demotes_channel_noise() {
         trigger_id,
         Some(parent_id),
         "austin@example.com",
-        "@macro can you make a task out of this?",
+        "@conation can you make a task out of this?",
     );
 
     let prompt = handler.build_prompt(&event).await;
 
-    assert!(prompt.contains("austin mentioned you (@macro) in a channel thread."));
+    assert!(prompt.contains("austin mentioned you (@conation) in a channel thread."));
 
     // Thread block comes first and contains parent + marked trigger.
     let thread_start = prompt.find("<thread>").expect("thread block");
     let thread_end = prompt.find("</thread>").expect("thread block end");
     let thread_block = &prompt[thread_start..thread_end];
     assert!(thread_block.contains("peter: We stopped persisting filter/sort across refresh"));
-    assert!(
-        thread_block.contains(
-            "austin [this message mentioned you]: @macro can you make a task out of this?"
-        )
-    );
+    assert!(thread_block.contains(
+        "austin [this message mentioned you]: @conation can you make a task out of this?"
+    ));
     assert!(!thread_block.contains("carol"));
 
     // Channel noise is demoted to the background block, with thread messages excluded.
@@ -541,7 +551,7 @@ async fn thread_prompt_puts_thread_first_and_demotes_channel_noise() {
     // The trigger appears exactly once across the whole prompt.
     assert_eq!(
         prompt
-            .matches("@macro can you make a task out of this?")
+            .matches("@conation can you make a task out of this?")
             .count(),
         1
     );
@@ -553,19 +563,19 @@ async fn inferred_thread_prompt_does_not_claim_a_mention() {
     let channel_id = Uuid::new_v4();
     let parent_id = Uuid::new_v4();
     let trigger_id = Uuid::new_v4();
-    let conation_ai = bot_id::MACRO_AI_BOT_ID.into_storage_id().to_string();
+    let conation_ai = bot_id::CONATION_AI_BOT_ID.into_storage_id().to_string();
 
     let channels = Arc::new(TestChannelService {
         around_args: Mutex::new(None),
         around_messages: vec![context_message(
             channel_id,
             parent_id,
-            "macro|alice@example.com",
+            "conation|alice@example.com",
             "notifications are broken",
         )],
         thread_replies: vec![
             thread_reply(Uuid::new_v4(), &conation_ai, "what is broken exactly?"),
-            thread_reply(trigger_id, "macro|alice@example.com", "it fires twice"),
+            thread_reply(trigger_id, "conation|alice@example.com", "it fires twice"),
         ],
     });
     let handler = MacroAiHandler::new(channels.clone(), Arc::new(TestResponder));
@@ -581,7 +591,7 @@ async fn inferred_thread_prompt_does_not_claim_a_mention() {
     let prompt = handler.build_prompt(&event).await;
 
     assert!(prompt.contains("alice replied in a channel thread you are part of."));
-    assert!(!prompt.contains("mentioned you (@macro)"));
+    assert!(!prompt.contains("mentioned you (@conation)"));
     assert!(prompt.contains("alice [respond to this message]: it fires twice"));
     assert!(!prompt.contains("[this message mentioned you]"));
     assert!(prompt.ends_with("Reply to alice."));
@@ -598,7 +608,7 @@ async fn thread_prompt_includes_trigger_when_reply_fetch_fails_to_return_it() {
         around_messages: vec![context_message(
             channel_id,
             parent_id,
-            "macro|peter@example.com",
+            "conation|peter@example.com",
             "parent message",
         )],
         thread_replies: Vec::new(),
@@ -609,11 +619,11 @@ async fn thread_prompt_includes_trigger_when_reply_fetch_fails_to_return_it() {
         trigger_id,
         Some(parent_id),
         "austin@example.com",
-        "@macro help with this",
+        "@conation help with this",
     );
 
     let prompt = handler.build_prompt(&event).await;
 
     assert!(prompt.contains("peter: parent message"));
-    assert!(prompt.contains("austin [this message mentioned you]: @macro help with this"));
+    assert!(prompt.contains("austin [this message mentioned you]: @conation help with this"));
 }

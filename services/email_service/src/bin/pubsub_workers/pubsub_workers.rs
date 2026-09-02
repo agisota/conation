@@ -1,5 +1,11 @@
 #![recursion_limit = "256"]
 use anyhow::Context;
+use conation_entrypoint::{MacroEntrypoint, shutdown_signal};
+use conation_env::Environment;
+use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
+use conation_service_urls::{
+    AuthServiceUrl, ConnectionGatewayUrl, DocumentStorageServiceUrl, StaticFileServiceUrl,
+};
 use document_storage_service_client::DocumentStorageServiceClient;
 use email_api_client::GmailApiClientRepository;
 use email_service::config::Config;
@@ -8,12 +14,6 @@ use email_service::outbound::email_api::{
 };
 use email_service::pubsub::CrmMetadataResolver;
 use email_service::util::redis::RedisClient;
-use conation_entrypoint::{MacroEntrypoint, shutdown_signal};
-use conation_env::Environment;
-use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
-use conation_service_urls::{
-    AuthServiceUrl, ConnectionGatewayUrl, DocumentStorageServiceUrl, StaticFileServiceUrl,
-};
 use notification::domain::service::SqsNotificationIngress;
 use notification::outbound::queue::SqsQueue;
 use sqlx::PgPool;
@@ -80,14 +80,14 @@ async fn main() -> anyhow::Result<()> {
     let db = PgPoolOptions::new()
         .min_connections(min_connections)
         .max_connections(max_connections)
-        .connect(&config.conation_db_url)
+        .connect(config.conation_db_url.as_ref())
         .await
         .context("could not connect to db")?;
 
     let db_backfill = PgPoolOptions::new()
         .min_connections(min_connections_backfill)
         .max_connections(max_connections_backfill)
-        .connect(&config.conation_db_url)
+        .connect(config.conation_db_url.as_ref())
         .await
         .context("could not connect to backfill db")?;
 

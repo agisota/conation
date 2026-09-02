@@ -19,7 +19,7 @@ import {
 import { registerCacheHost } from '@graphql-cache/lifecycle';
 import { getBrowserTursoCacheRolloutDecision } from '@graphql-cache/rollout';
 import { getOrCreateCacheScope } from '@graphql-cache/scope';
-import { getMacroApiToken } from '@service-auth/fetch';
+import { getConationApiToken } from '@service-auth/fetch';
 import type { ApiUserNotification } from '@service-notification/generated/schemas/apiUserNotification';
 import type { ChannelType } from '@service-notification/generated/schemas/channelType';
 import type { GithubPrCheckRunState } from '@service-notification/generated/schemas/githubPrCheckRunState';
@@ -88,7 +88,7 @@ async function authorizedDssGraphqlFetch(
   init?: RequestInit
 ): Promise<Response> {
   if (ENABLE_BEARER_TOKEN_AUTH) {
-    const apiToken = await getMacroApiToken();
+    const apiToken = await getConationApiToken();
     return await platformFetch(input, {
       ...init,
       headers: mergeHeaders(init?.headers, {
@@ -218,7 +218,7 @@ function createGraphqlSoupWebSocketClient(): GraphqlWsClient {
   const resolveWebSocketUrl = createGraphqlSoupWebSocketUrlResolver({
     dssHost,
     bearerTokenAuth: ENABLE_BEARER_TOKEN_AUTH,
-    getApiToken: getMacroApiToken,
+    getApiToken: getConationApiToken,
     refreshCookieAuth: async () => {
       const result = await fetchToken();
       if (result.isErr()) {

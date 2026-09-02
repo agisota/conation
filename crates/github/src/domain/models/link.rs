@@ -32,7 +32,7 @@ pub struct GithubLink {
     /// Unique ID for this link
     pub id: uuid::Uuid,
     /// Macro user ID
-    pub conation_id: MacroUserIdStr<'static>,
+    pub macro_id: MacroUserIdStr<'static>,
     /// FusionAuth user ID
     pub fusionauth_user_id: uuid::Uuid,
     /// GitHub username

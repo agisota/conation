@@ -1,7 +1,7 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
 import { Redis } from '../../packages/resources';
-import { config, getMacroApiToken, stack } from '../../packages/shared';
+import { config, getConationApiToken, stack } from '../../packages/shared';
 import { get_coparse_api_vpc } from '../../packages/vpc';
 import { ConnectionGateway } from './connection_gateway';
 import { getConnectionGatewayTable } from './connection_table';
@@ -46,7 +46,7 @@ const connectionGatewayRedis = new Redis('connection-gateway-redis', {
   },
 });
 
-const MACRO_API_TOKENS = getMacroApiToken();
+const CONATION_API_TOKENS = getConationApiToken();
 
 const MACRO_DB_URL = config.require(`macro_db_secret_key`);
 const macroDbUrlArn: pulumi.Output<string> = aws.secretsmanager
@@ -63,7 +63,7 @@ const connectionGateway = new ConnectionGateway(`connection-gateway-${stack}`, {
   },
   secretKeyArns: [
     jwtSecretKeyArn,
-    MACRO_API_TOKENS.macroApiTokenPublicKeyArn,
+    CONATION_API_TOKENS.conationApiTokenPublicKeyArn,
     macroDbUrlArn,
   ],
   serviceContainerPort: 8080,

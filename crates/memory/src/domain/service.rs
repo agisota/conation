@@ -3,8 +3,8 @@ use agent::types::{ChatMessage, ChatMessageContent, Role};
 use agent::{AgentLoop, PredefinedModel, StreamPart};
 use ai_tools::{ToolServiceContext, ToolSetWithPrompt};
 use chrono::Utc;
-use futures::stream::StreamExt;
 use conation_env::Environment;
+use futures::stream::StreamExt;
 use serde::Deserialize;
 use std::sync::Arc;
 

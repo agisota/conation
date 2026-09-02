@@ -4,8 +4,8 @@ import {
   useCalendarPager,
 } from '@app/features/calendar/components/CalendarPagerContext';
 import { useCalendarView } from '@app/features/calendar/components/CalendarViewContext';
-import { t } from '@app/lib/i18n';
 import { RangeUnavailableBanner } from '@app/features/calendar/components/RangeUnavailableBanner';
+import { t } from '@app/lib/i18n';
 import { SidePanel } from '@components/app/side-panel/SidePanel';
 import { useSplitPanelOrThrow } from '@components/app/split-layout/layoutUtils';
 import { isMobile } from '@core/mobile/isMobile';
@@ -59,7 +59,7 @@ function CalendarPages() {
           ref={setViewport}
           class="relative flex min-w-0 min-h-0 flex-1"
           role="region"
-          aria-label={t('auto.calendar_periods')}
+          aria-label={t('calendar.navigation.periodsLabel')}
         >
           <Pager.Viewport class="size-full min-w-0 min-h-0">
             <For each={CALENDAR_PAGE_IDS}>
@@ -100,7 +100,7 @@ function WorkspaceContent() {
   const panel = useSplitPanelOrThrow();
   const calendarView = useCalendarView();
 
-  onMount(() => panel.handle.setDisplayName('Calendar'));
+  onMount(() => panel.handle.setDisplayName(t('calendar.label')));
 
   return (
     <>

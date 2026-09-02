@@ -5,7 +5,7 @@ use http::header::AUTHORIZATION;
 
 use crate::domain::error::EgressError;
 use crate::domain::model::{
-    EgressTarget, ProxyRequest, ProxyResponse, SessionToken, ensure_method_allowed, is_conation_staff,
+    EgressTarget, ProxyRequest, ProxyResponse, SessionToken, ensure_method_allowed,
     sanitize_request_headers, sanitize_response_headers,
 };
 use crate::domain::ports::{Forwarder, GithubTokens, McpCredentials, SessionAuthority};
@@ -88,17 +88,6 @@ where
         let span = tracing::Span::current();
         span.record("session", tracing::field::display(&grant.session));
         span.record("owner", tracing::field::display(&grant.owner));
-
-        // Staff-only for now, checked here so every target - git, connected
-        // MCP servers, Macro's own - passes one gate. The refusal names
-        // itself ("not Macro staff") so the sandbox can report an actionable
-        // reason; the reason is our own static wording, never the request's.
-        if !is_conation_staff(&grant.owner) {
-            tracing::warn!(owner = %grant.owner, "refusing egress for a session owned outside macro.com");
-            return Err(EgressError::Unauthenticated(
-                "the session owner is not Macro staff",
-            ));
-        }
 
         let call = match &target {
             EgressTarget::McpServer(destination) => {

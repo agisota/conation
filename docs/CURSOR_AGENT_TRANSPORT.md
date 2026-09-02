@@ -6,12 +6,12 @@ that no longer exists.
 
 ## Goal
 
-Let a user register their Cursor API key in Macro settings, then `@cursor` in any
-channel and get an agent session that behaves like Macro Coder — same thread
+Let a user register their Cursor API key in Conation settings, then `@cursor` in any
+channel and get an agent session that behaves like Conation Coder — same thread
 announcement, same session page, same log — except the work runs on a Cursor
 cloud agent instead of a sandbox we provision.
 
-Second goal, which shapes the first: `@cursor` and `@macro` must work **at the
+Second goal, which shapes the first: `@cursor` and `@conation` must work **at the
 same time, in the same deployment, in the same channel**. This is the first time
 the harness has had two live container providers rather than one chosen at boot.
 
@@ -90,12 +90,12 @@ A field to enter a Cursor API key. On submit we validate it before storing:
 `GET /v1/me` with the key. A `crsr_`-prefixed key that authenticates is stored;
 anything else is rejected with a useful message rather than silently saved.
 
-The stored record is per Macro user. Deleting it is supported and revokes
+The stored record is per Conation user. Deleting it is supported and revokes
 `@cursor` for that user.
 
 ### 2. `@cursor` in any channel
 
-Behaves exactly like Macro Coder: mention it, a session opens, the bot posts the
+Behaves exactly like Conation Coder: mention it, a session opens, the bot posts the
 magic-chip announcement into the thread, the mention text becomes the first
 prompt, follow-up mentions in the thread route to the same session.
 
@@ -240,7 +240,7 @@ Cursor, anything else to the sandbox provider.
 
 ```rust
 pub fn is_managed_bot(bot: BotId) -> bool {
-    bot == bot_id::MACRO_CODER_BOT_ID
+    bot == bot_id::CONATION_CODER_BOT_ID
 }
 ```
 
@@ -342,7 +342,7 @@ CREATE TABLE cursor_api_key (
 a later move to the envelope be additive rather than a rewrite.
 
 Encryption context: `{ macro:purpose = "cursor-api-key", macro:encryption-version,
-macro:user-id }`. Bind to the Macro user id only — **not** to any Cursor-side
+macro:user-id }`. Bind to the persisted Macro user ID only — **not** to any Cursor-side
 identity, which changes if they swap Cursor accounts and would strand the row.
 
 **Use a separate KMS key from the Microsoft one.** The deciding argument is IAM,
@@ -402,7 +402,7 @@ mode to design against.
 
 **Not taken.** It deletes the secret-at-rest problem by deleting the property
 the feature is for: the agent would run as a service account acting *for* a
-teammate rather than as the teammate, and the repo scope would be Macro's
+teammate rather than as the teammate, and the repo scope would be Conation's
 rather than theirs. The per-user key is the whole point, so the residency
 discipline above is the cost of admission.
 
@@ -425,7 +425,7 @@ Consequences worth being explicit about:
 
 - **Archive, not delete.** `DELETE /v1/agents/{id}` is irreversible and destroys
   the user's own work in *their* Cursor account. Archive is reversible and
-  idempotent. Teardown of a Macro session should not vaporize a Cursor agent the
+  idempotent. Teardown of a Conation session should not vaporize a Cursor agent the
   user may still want; archive is the right default and delete should not be
   reachable from session teardown at all.
 - **Cancel is terminal in Cursor**, but ACP cancel just ends a turn. `cursor_acp`
@@ -531,7 +531,7 @@ without it; add it if stale rows turn out to bite.
 
 ## Honest limitations
 
-Things `@cursor` will not do that `@macro` does, worth knowing before they are
+Things `@cursor` will not do that `@conation` does, worth knowing before they are
 reported as bugs:
 
 - **Repo access is the user's, not ours.** Cursor cloud agents reach GitHub
@@ -549,15 +549,15 @@ reported as bugs:
   up is liveness and per-tool-call detail, never the outcome. `Last-Event-ID`
   resumption (picking a broken stream back up mid-run without losing detail)
   remains a follow-up.
-- **Turns driven from cursor.com mirror into Macro within about a second.**
+- **Turns driven from cursor.com mirror into Conation within about a second.**
   While a session's pipe is up, the manager polls the agent's runs once a
   second (Cursor's v1 API has no webhooks yet) and replays anything it did
   not drive itself through the run's own stream — the cursor.com prompt
   (quoted, attributed), thoughts, tool calls, and answer, at the same
-  fidelity as a Macro-driven turn. Degradations, in order: a run whose
+  fidelity as a Conation-driven turn. Degradations, in order: a run whose
   stream has left the retention window mirrors as its recorded final text
   only; a restored session has no watermark and does not replay history it
-  cannot tell from missed runs; and a mirror that lands after newer Macro
+  cannot tell from missed runs; and a mirror that lands after newer Conation
   messages appends late, because the log is append-only — with the 1s poll
   that inversion effectively requires the session's pipe to have been down.
 - **Idle pipes retire themselves, Daytona-reaper style.** Five minutes

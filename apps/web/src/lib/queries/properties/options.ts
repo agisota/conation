@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { throwOnErr } from '@core/util/result';
 import { useMutation, useQuery } from '@tanstack/solid-query';
@@ -83,7 +84,7 @@ export function useUpdatePropertyOptionMutation(
       {
         onError(error) {
           console.error('Failed to update property option', error);
-          toast.failure('Failed to update option');
+          toast.failure(t('properties.feedback.optionUpdateFailed'));
         },
         onSuccess: (_data, variables) => {
           invalidatePropertyOptions(variables.propertyDefinitionId);
@@ -116,7 +117,7 @@ export function useDeletePropertyOptionMutation(
       {
         onError(error) {
           console.error('Failed to delete property option', error);
-          toast.failure('Failed to delete option');
+          toast.failure(t('properties.feedback.optionDeleteFailed'));
         },
         onSuccess: (_data, variables) => {
           invalidatePropertyOptions(variables.propertyDefinitionId);
@@ -145,7 +146,7 @@ export function useAddPropertyOptionMutation(
       {
         onError(error) {
           console.error('Failed to add property option', error);
-          toast.failure('Failed to add option');
+          toast.failure(t('properties.feedback.optionAddFailed'));
         },
         onSuccess: (_data, variables) => {
           invalidatePropertyOptions(variables.propertyDefinitionId);

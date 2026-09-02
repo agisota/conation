@@ -1,30 +1,68 @@
+mod client_profile_config;
+
+use client_profile_config::{AppEnvironment, resolve_client_profile};
+use serde::Deserialize;
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct BuildProfile {
+    profile: Option<String>,
+    operator_origin: Option<String>,
+    bundle_update_base_url: Option<String>,
+}
+
 fn main() {
-    println!("cargo:rerun-if-changed=.macro-tauri-env");
+    println!("cargo:rerun-if-changed=.conation-tauri-env");
+    println!("cargo:rerun-if-changed=.conation-tauri-profile.json");
     println!("cargo:rerun-if-changed=../../dist/bundle-manifest.json");
-    println!("cargo:rerun-if-env-changed=MACRO_BUNDLE_UPDATE_BASE_URL");
+    let contents = std::fs::read_to_string(".conation-tauri-env")
+        .unwrap_or_else(|_| "development".to_string());
+    let environment =
+        AppEnvironment::parse(contents.trim()).unwrap_or_else(|error| panic!("{error}"));
 
-    let contents = std::fs::read_to_string(".macro-tauri-env").unwrap_or_default();
-    let raw_app_env = contents.trim();
+    let build_profile = read_build_profile()
+        .unwrap_or_else(|error| panic!("invalid Conation Tauri build profile: {error}"));
+    let config = resolve_client_profile(
+        environment,
+        build_profile.profile.as_deref(),
+        build_profile.operator_origin.as_deref(),
+        build_profile.bundle_update_base_url.as_deref(),
+    )
+    .unwrap_or_else(|error| panic!("invalid Conation Tauri client profile: {error}"));
 
-    // A missing or blank file falls back to the safe `production` default;
-    // any other content must be a valid environment name.
-    let app_env = match raw_app_env {
-        "" => "production",
-        other => other,
+    let app_environment = match environment {
+        AppEnvironment::Development => "development",
+        AppEnvironment::Production => "production",
     };
-
-    match app_env {
-        "development" | "production" => {
-            println!("cargo:rustc-env=MACRO_TAURI_APP_ENV={app_env}");
-        }
-        other => {
-            panic!(".macro-tauri-env must contain `development` or `production`, found `{other}`");
-        }
-    }
+    println!("cargo:rustc-env=CONATION_TAURI_APP_ENV={app_environment}");
+    println!(
+        "cargo:rustc-env=CONATION_TAURI_CLIENT_PROFILE={}",
+        config.profile.as_str()
+    );
+    println!(
+        "cargo:rustc-env=CONATION_TAURI_OPERATOR_ORIGIN={}",
+        config.operator_origin
+    );
+    println!(
+        "cargo:rustc-env=CONATION_TAURI_AUTH_SERVICE_URL={}",
+        config.auth_service_url
+    );
+    println!(
+        "cargo:rustc-env=CONATION_BUNDLE_UPDATE_BASE_URL={}",
+        config.bundle_update_base_url
+    );
+    println!(
+        "cargo:rustc-env=CONATION_TAURI_APP_LINK_HOSTS={}",
+        config.app_link_hosts.join(",")
+    );
+    println!(
+        "cargo:rustc-env=CONATION_TAURI_APP_SCHEME={}",
+        config.app_scheme
+    );
 
     let embedded_bundle_build = match read_embedded_bundle_build() {
         Ok(bundle_build) => bundle_build,
-        Err(error) if app_env == "production" => {
+        Err(error) if environment == AppEnvironment::Production => {
             panic!("{error}");
         }
         Err(error) => {
@@ -32,15 +70,19 @@ fn main() {
             0
         }
     };
-    println!("cargo:rustc-env=MACRO_EMBEDDED_BUNDLE_BUILD={embedded_bundle_build}");
-    if let Ok(bundle_update_base_url) = std::env::var("MACRO_BUNDLE_UPDATE_BASE_URL") {
-        let bundle_update_base_url = bundle_update_base_url.trim();
-        if !bundle_update_base_url.is_empty() {
-            println!("cargo:rustc-env=MACRO_BUNDLE_UPDATE_BASE_URL={bundle_update_base_url}");
-        }
-    }
+    println!("cargo:rustc-env=CONATION_EMBEDDED_BUNDLE_BUILD={embedded_bundle_build}");
 
     tauri_build::build()
+}
+
+fn read_build_profile() -> Result<BuildProfile, String> {
+    let path = ".conation-tauri-profile.json";
+    match std::fs::read_to_string(path) {
+        Ok(contents) => serde_json::from_str(&contents)
+            .map_err(|error| format!("failed to parse {path}: {error}")),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(BuildProfile::default()),
+        Err(error) => Err(format!("failed to read {path}: {error}")),
+    }
 }
 
 fn read_embedded_bundle_build() -> Result<u64, String> {

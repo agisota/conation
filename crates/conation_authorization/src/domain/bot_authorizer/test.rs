@@ -10,7 +10,7 @@ use crate::domain::{
 };
 
 const RAW_TOKEN: &str = "mbot_test_secret";
-const OWNER_ID: &str = "macro|owner@example.com";
+const OWNER_ID: &str = "conation|owner@example.com";
 const FUSION_USER_ID: &str = "fusion-owner";
 const ORGANIZATION_ID: i32 = 42;
 
@@ -114,7 +114,7 @@ impl BotAuthorizationRepo for FakeRepo {
 
 fn resolved_user() -> ResolvedBotActingUser {
     ResolvedBotActingUser {
-        conation_user_id: MacroUserIdStr::try_from(OWNER_ID.to_string()).unwrap(),
+        macro_user_id: MacroUserIdStr::try_from(OWNER_ID.to_string()).unwrap(),
         fusion_user_id: FUSION_USER_ID.to_string(),
         organization_id: Some(ORGANIZATION_ID),
     }
@@ -167,7 +167,7 @@ async fn authorizes_exact_user_owner_with_consistent_claims() {
     assert_eq!(authentication.bot_scope, BotScope::User);
     assert_eq!(authentication.team_id, None);
     let acting_user = authentication.acting_user.unwrap();
-    assert_eq!(acting_user.conation_user_id.as_ref(), OWNER_ID);
+    assert_eq!(acting_user.macro_user_id.as_ref(), OWNER_ID);
     assert_eq!(acting_user.user_context.user_id, OWNER_ID);
     assert_eq!(acting_user.user_context.fusion_user_id, FUSION_USER_ID);
     assert_eq!(
@@ -253,12 +253,12 @@ async fn authorizes_current_team_member_and_rejects_non_member() {
 #[tokio::test]
 async fn rejects_consistent_claims_for_a_user_who_is_not_the_owner() {
     let non_owner = ResolvedBotActingUser {
-        conation_user_id: MacroUserIdStr::try_from("macro|other@example.com".to_string()).unwrap(),
+        macro_user_id: MacroUserIdStr::try_from("conation|other@example.com".to_string()).unwrap(),
         fusion_user_id: "fusion-other".to_string(),
         organization_id: Some(ORGANIZATION_ID),
     };
     let claims = BotActingUserClaims {
-        user_id: Some(non_owner.conation_user_id.as_ref().to_string()),
+        user_id: Some(non_owner.macro_user_id.as_ref().to_string()),
         fusion_user_id: Some(non_owner.fusion_user_id.clone()),
         organization_id: non_owner.organization_id,
     };

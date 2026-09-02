@@ -1,5 +1,6 @@
 //! Unified entity-mutation capability impls for calls.
 
+use conation_event_broker::MacroEventBroker;
 use entity_access::domain::models::{
     AccessError, EditAccessLevel, EntityAccessReceipt, ViewAccessLevel,
 };
@@ -7,7 +8,6 @@ use entity_mutation::{
     DeleteEntityPermanently, EntityMutationEffect, EntityMutationErrorCode, RenameEntity,
     UpdateEntitySharePolicy,
 };
-use conation_event_broker::MacroEventBroker;
 use model_entity::Entity;
 use models_permissions::share_permission::UpdateSharePermissionRequestV2;
 

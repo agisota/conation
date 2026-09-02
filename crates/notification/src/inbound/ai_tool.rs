@@ -18,8 +18,8 @@ use ai_toolset::{
 };
 use ai_toolset::{ToolAnnotated, ToolAnnotations};
 use async_trait::async_trait;
-use cowlike::CowLike;
 use conation_user_id::user_id::MacroUserIdStr;
+use cowlike::CowLike;
 use model_entity::{Entity, EntityType};
 use models_pagination::CreatedAt;
 use rootcause::compat::boxed_error::IntoBoxedError;
@@ -167,7 +167,7 @@ pub struct ListNotifications {
 
     /// Filter to notifications for specific entities. If omitted, returns notifications for all entities.
     #[schemars(
-        description = "Filter to notifications for specific entities. Pair each id with its canonical entityType to avoid ambiguity. Example: [{\"entityType\":\"email_thread\",\"id\":\"...\"}] returns notifications for one email thread."
+        description = "Filter to notifications for specific entities. Pair each id with its canonical entityType to avoid ambiguity. Example: `[{\"entityType\":\"email_thread\",\"id\":\"...\"}]` returns notifications for one email thread."
     )]
     #[serde(default)]
     pub entities: Option<Vec<NotificationEntityFilter>>,

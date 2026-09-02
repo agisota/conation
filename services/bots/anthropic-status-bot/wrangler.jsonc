@@ -5,7 +5,7 @@
  * Single prod deployment only — there is no dev environment.
  *
  * Secrets (set with `wrangler secret put <NAME>`):
- *   BOT_TOKEN       - channel-scoped bot token (x-macro-channel-bot-token)
+ *   BOT_TOKEN       - channel-scoped bot token (x-conation-channel-bot-token)
  *   WEBHOOK_SECRET  - shared secret embedded in the webhook URL path
  */
 {

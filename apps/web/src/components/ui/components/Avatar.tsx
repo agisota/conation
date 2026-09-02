@@ -1,5 +1,4 @@
 import { type JSX, type ParentProps, splitProps } from 'solid-js';
-import { t } from '@app/lib/i18n';
 import { cn } from '../utils/classname';
 
 export type AvatarSize = 'sm' | 'md' | 'lg' | 'fill';
@@ -29,7 +28,7 @@ const AVATAR_SVG_CLASSES = cn(
  * Avatar root. Provides sizing and styling context for children.
  * @example
  * <Avatar size="lg">
- *   <Avatar.Image src={url} alt={t('auto.user')} />
+ *   <Avatar.Image src={url} alt="User" />
  *   <Avatar.Fallback>JD</Avatar.Fallback>
  * </Avatar>
  */

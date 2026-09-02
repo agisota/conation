@@ -3,9 +3,10 @@
   "info": {
     "title": "authentication_service",
     "description": "",
-    "termsOfService": "https://macro.com/terms",
+    "termsOfService": "https://conation.dev/terms",
     "license": {
-      "name": ""
+      "name": "GNU Affero General Public License v3.0",
+      "identifier": "AGPL-3.0-only"
     },
     "version": "0.1.0"
   },
@@ -33,16 +34,6 @@
               "text/plain": {
                 "schema": {
                   "type": "string"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -94,16 +85,6 @@
                 }
               }
             }
-          },
-          "403": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
           }
         }
       },
@@ -129,16 +110,6 @@
               "text/plain": {
                 "schema": {
                   "type": "string"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -183,16 +154,6 @@
               }
             }
           },
-          "403": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "409": {
             "description": "",
             "content": {
@@ -229,16 +190,6 @@
               "text/plain": {
                 "schema": {
                   "type": "string"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -522,17 +473,17 @@
         }
       }
     },
-    "/jwt/macro_api_token": {
+    "/jwt/conation_api_token": {
       "get": {
-        "tags": ["jwt::macro_api_token"],
-        "summary": "Generates a macro-api-token using the user's macro-access-token\nYou can either have your access token in the cookies or in the request\nheaders\nAuthorization: Bearer <access_token>\nThis returns a new macro-api-token",
-        "operationId": "macro_api_token",
+        "tags": ["jwt::conation_api_token"],
+        "summary": "Generates a Conation API token using the user's access token.\nYou can either have your access token in the cookies or in the request\nheaders\nAuthorization: Bearer <access_token>\nThis returns a new Conation API token.",
+        "operationId": "conation_api_token",
         "parameters": [
           {
             "name": "email",
             "in": "query",
-            "description": "The email to generate the macro-api-token for. If not provided, we use your default profile.",
-            "required": true,
+            "description": "The email to generate the Conation API token for. If not provided, the default profile is used.",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -544,7 +495,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MacroApiTokenResponse"
+                  "$ref": "#/components/schemas/ConationApiTokenResponse"
                 }
               }
             }
@@ -575,7 +526,7 @@
     "/jwt/refresh": {
       "post": {
         "tags": ["jwt::refresh"],
-        "summary": "Refreshes a JWT token\nYou can either have your access token and refresh token in the cookies or in the request\nheaders\nAuthorization: Bearer <access_token>\nx-macro-refresh-token: <refresh_token>\nThis returns the cookies with the new access and refresh token",
+        "summary": "Refreshes a JWT token\nYou can either have your access token and refresh token in the cookies or in the request\nheaders\nAuthorization: Bearer <access_token>\nx-conation-refresh-token: <refresh_token>\nThis returns the cookies with the new access and refresh token",
         "operationId": "refresh",
         "responses": {
           "200": {
@@ -3822,6 +3773,16 @@
           }
         }
       },
+      "ConationApiTokenResponse": {
+        "type": "object",
+        "required": ["conation_api_token"],
+        "properties": {
+          "conation_api_token": {
+            "type": "string",
+            "description": "The newly created Conation API token."
+          }
+        }
+      },
       "CreateAccountMergeRequest": {
         "type": "object",
         "required": ["email"],
@@ -4498,16 +4459,6 @@
         "description": "Defines who can access an item through its share link.",
         "enum": ["PUBLIC", "TEAM"]
       },
-      "MacroApiTokenResponse": {
-        "type": "object",
-        "required": ["macro_api_token"],
-        "properties": {
-          "macro_api_token": {
-            "type": "string",
-            "description": "The newly created macro_api_token"
-          }
-        }
-      },
       "PasswordRequest": {
         "type": "object",
         "required": ["email", "password"],
@@ -5131,7 +5082,7 @@
   "tags": [
     {
       "name": "auth service",
-      "description": "Macro Authentication Service"
+      "description": "Conation Authentication Service"
     }
   ]
 }

@@ -1,4 +1,8 @@
-WORKSPACE_ROOT='/workspace'
+# Default to the checkout that owns this script. Cursor Cloud historically
+# mounted it at /workspace, but local/self-host operators may clone elsewhere.
+# A caller can still pin a different checkout explicitly.
+CLOUD_LIB_DIR="$(\cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+WORKSPACE_ROOT="${WORKSPACE_ROOT:-$(\cd -- "${CLOUD_LIB_DIR}/.." && pwd)}"
 CACHE_ROOT="${HOME}/.cache/conation-cloud"
 TARGET_CACHE="${CACHE_ROOT}/target"
 export CONATION_STACK_SNAPSHOT_DIR="${CACHE_ROOT}/stack-snapshots"
@@ -6,8 +10,10 @@ export CONATION_STACK_SNAPSHOT_DIR="${CACHE_ROOT}/stack-snapshots"
 export MACRO_STACK_SNAPSHOT_DIR="${CONATION_STACK_SNAPSHOT_DIR}"
 
 LOG_DIR="${HOME}/.cursor-cloud"
-MACRODB_URL='postgres://user:password@localhost:5432/conationdb'
-DATABASE_URL_CONATION='postgres://user:password@localhost:5432/conationdb'
+# `macrodb` is a persisted compatibility identifier. Rebranding the product
+# does not rename an existing PostgreSQL database without a data migration.
+MACRODB_URL='postgres://user:password@localhost:5432/macrodb'
+DATABASE_URL_CONATION='postgres://user:password@localhost:5432/macrodb'
 DOCKER_SOCK='/var/run/docker.sock'
 DOCKER_IPTABLES_BACKEND='/usr/sbin/iptables-legacy'
 DOCKER_IP6TABLES_BACKEND='/usr/sbin/ip6tables-legacy'
@@ -19,6 +25,14 @@ LOCAL_STACK_BINS="${CACHE_ROOT}/local-stack-bins"
 export DATABASE_URL="${MACRODB_URL}"
 
 mkdir -p "${LOG_DIR}" "${TARGET_CACHE}" "${MACRO_STACK_SNAPSHOT_DIR}"
+
+# The pinned dev shell exports a Nix `LD_LIBRARY_PATH`. Passing that to the
+# host's sudo binary mixes Nix glibc with host PAM/audit libraries and can make
+# every privileged setup command fail before sudo starts. Keep the dev-shell
+# environment for normal tools, but launch the host sudo with its host loader.
+sudo() {
+  /usr/bin/env -u LD_LIBRARY_PATH /usr/bin/sudo "$@"
+}
 
 nix_base_conf() {
   echo 'experimental-features = nix-command flakes'
@@ -115,9 +129,10 @@ ensure_nix_daemon() {
 
 ensure_docker_iptables_backend() {
   # Compose puts Postgres/Redis/services on custom bridges. With
-  # bridge-nf-call-iptables=1, that ICC walks iptables FORWARD. Dockerd
-  # programs the legacy table; if iptables-legacy is missing it only
-  # wires docker0, and auth/storage time out reaching postgres.
+  # bridge-nf-call-iptables=1, that ICC walks iptables FORWARD. A running
+  # daemon must keep using the backend where it created the DOCKER chains;
+  # changing alternatives underneath it breaks all subsequent port mappings.
+  # Fresh cloud daemons use legacy because that is what the baked image tests.
   if [ ! -x "${DOCKER_IPTABLES_BACKEND}" ] \
     || [ ! -x "${DOCKER_IP6TABLES_BACKEND}" ]; then
     if [ ! -x /usr/bin/apt-get ]; then
@@ -127,6 +142,14 @@ ensure_docker_iptables_backend() {
     echo "cursor-cloud: installing iptables (legacy backend)"
     sudo DEBIAN_FRONTEND=noninteractive apt-get update -qq
     sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq iptables
+  fi
+
+  if docker info >/dev/null 2>&1 \
+    && [ -x /usr/sbin/iptables-nft ] \
+    && sudo /usr/sbin/iptables-nft -t nat -nL DOCKER >/dev/null 2>&1 \
+    && ! sudo /usr/sbin/iptables-legacy -t nat -nL DOCKER >/dev/null 2>&1; then
+    DOCKER_IPTABLES_BACKEND='/usr/sbin/iptables-nft'
+    DOCKER_IP6TABLES_BACKEND='/usr/sbin/ip6tables-nft'
   fi
 
   if [ -x /usr/bin/update-alternatives ]; then

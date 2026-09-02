@@ -1,5 +1,5 @@
-import { useSplitLayout } from '@components/app/split-layout/layout';
 import { t } from '@app/lib/i18n';
+import { useSplitLayout } from '@components/app/split-layout/layout';
 import { useSplitPanel } from '@components/app/split-layout/layoutUtils';
 import { ContextMenuContent, MenuItem } from '@core/component/ContextMenu';
 import { ContextMenu } from '@kobalte/core/context-menu';
@@ -74,16 +74,20 @@ function TagChip(props: {
           <ContextMenuContent class="text-xs text-ink-muted">
             <MenuItem
               icon={FunnelIcon}
-              text="View all items with tag"
+              text={t('property.tags.viewAll')}
               onClick={viewTaggedItems}
             />
             <Show when={props.canEdit}>
               <MenuItem
                 icon={PencilIcon}
-                text="Edit tag"
+                text={t('property.tags.editTooltip')}
                 onClick={() => props.onEdit(props.tag)}
               />
-              <MenuItem icon={XIcon} text="Remove tag" onClick={removeTag} />
+              <MenuItem
+                icon={XIcon}
+                text={t('property.tags.remove')}
+                onClick={removeTag}
+              />
             </Show>
           </ContextMenuContent>
         </ContextMenu.Portal>
@@ -144,7 +148,7 @@ export function TagsRow(props: {
         when={props.canEdit}
         fallback={
           <Show when={docTags.appliedTags().length === 0}>
-            <span class="text-ink-extra-muted">{t('auto.no_tags')}</span>
+            <span class="text-ink-extra-muted">{t('property.tags.none')}</span>
           </Show>
         }
       >
@@ -157,10 +161,10 @@ export function TagsRow(props: {
                 size: 'sm',
                 class: 'm-px gap-1.5',
               })}
-              triggerLabel="Add tags"
+              triggerLabel={t('property.tags.add')}
             >
               <PlusIcon class="size-3" />
-              <span>{t('auto.add_tags')}</span>
+              <span>{t('property.tags.add')}</span>
             </TagPicker>
           </Match>
           <Match when={true}>
@@ -171,7 +175,7 @@ export function TagsRow(props: {
                 size: 'sm',
                 class: 'm-px size-6 p-0',
               })}
-              triggerLabel="Add tags"
+              triggerLabel={t('property.tags.add')}
             >
               <PlusIcon class="size-3" />
             </TagPicker>

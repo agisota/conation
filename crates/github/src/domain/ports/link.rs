@@ -20,7 +20,7 @@ pub trait GithubRepo: Send + Sync + 'static {
     /// Gets the github link by the macro user id
     fn get_github_link_by_user_id<'a>(
         &self,
-        conation_user_id: &MacroUserId<Lowercase<'a>>,
+        macro_user_id: &MacroUserId<Lowercase<'a>>,
     ) -> impl Future<Output = Result<GithubLink, Self::Err>> + Send;
 
     /// Gets the github link by the github user id

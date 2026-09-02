@@ -6,8 +6,8 @@
 #[cfg(test)]
 mod test;
 
-use futures::future;
 use conation_user_id::user_id::MacroUserIdStr;
+use futures::future;
 use rootcause::Report;
 use std::collections::HashSet;
 

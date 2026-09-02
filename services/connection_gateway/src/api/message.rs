@@ -9,11 +9,11 @@ use axum::{
     http::StatusCode,
     routing::post,
 };
+use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
 use connection_gateway_models::{
     BatchSendMessageBody, BatchSendUniqueMessagesBody, SendMessageBody, SendMessageResponse,
 };
 use futures::future::try_join_all;
-use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
 use model_entity::Entity;
 
 pub fn router<S>(state: AppState) -> Router<S>

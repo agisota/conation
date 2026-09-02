@@ -1,9 +1,8 @@
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
-import { t } from '@app/lib/i18n';
+import { formatNumber, t } from '@app/lib/i18n';
 import { useHasPaidAccess } from '@core/auth';
 import { type PaywallKey, PaywallMessages } from '@core/constant/PaywallState';
 import { useUserId } from '@core/context/user';
-import { plural } from '@core/util/string';
 import ArrowSquareOutIcon from '@phosphor/arrow-square-out.svg';
 import CheckIcon from '@phosphor/check.svg';
 import { useCurrentTeamQuery } from '@queries/team/teams';
@@ -12,7 +11,7 @@ import { Button, Tooltip } from '@ui';
 import { createMemo, For, Show } from 'solid-js';
 
 export interface PaywallProps {
-  cb: () =>Promise<void> | void;
+  cb: () => Promise<void> | void;
   handleGuest?: () => void;
   isOnboarding?: boolean;
   errorKey?: PaywallKey | null;
@@ -21,14 +20,14 @@ export interface PaywallProps {
 }
 
 const PAYWALL_PREMIUM_FEATURES = [
-  'All agents',
-  'All models',
-  'No watermark',
-  'AI projections',
-  'Multiple email inboxes',
-  'Calls',
-  'Teams',
-  '1 TB storage',
+  'shell.paywall.features.allAgents',
+  'shell.paywall.features.allModels',
+  'shell.paywall.features.noWatermark',
+  'shell.paywall.features.aiProjections',
+  'shell.paywall.features.multipleInboxes',
+  'shell.paywall.features.calls',
+  'shell.paywall.features.teams',
+  'shell.paywall.features.storage',
 ];
 
 const PremiumFeatures = () => (
@@ -37,7 +36,7 @@ const PremiumFeatures = () => (
       {(label) => (
         <li class="flex items-center gap-2">
           <CheckIcon class="size-3 text-success" />
-          <span class="text-ink-muted text-xs">{label}</span>
+          <span class="text-ink-muted text-xs">{t(label)}</span>
         </li>
       )}
     </For>
@@ -100,20 +99,30 @@ const PaywallComponent = (props: PaywallProps) => {
     handleCheckout();
   };
 
-  const ctaLabel = () => (hasPaid() ? 'Manage Subscription' : 'Upgrade now');
+  const ctaLabel = () =>
+    hasPaid()
+      ? t('shell.paywall.manageSubscription')
+      : t('shell.paywall.upgradeNow');
   const paywallMetadata = () =>
     props.errorKey ? PaywallMessages[props.errorKey] : undefined;
+  const paywallDescription = () =>
+    props.errorKey
+      ? t(`shell.paywall.limit.${props.errorKey}.description`)
+      : t('shell.paywall.description');
+  const learnMoreSubject = () =>
+    props.errorKey
+      ? t(`shell.paywall.limit.${props.errorKey}.subject`)
+      : t('shell.paywall.premium');
 
   return (
     <section class="relative flex w-full flex-col gap-6">
       <div class="grid grid-cols-1 gap-6 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] p-6 sm:px-8 sm:pt-8 sm:pb-4">
         <section class="flex flex-col gap-4">
           <div class="flex flex-col gap-2">
-            <h2 class="text-2xl text-ink font-semibold">{t('auto.unlock_premium_features')}</h2>
-            <p class="text-sm text-ink-extra-muted">
-              {paywallMetadata()?.description ??
-                'Upgrade your workspace with more AI power, team collaboration, and room to grow.'}
-            </p>
+            <h2 class="text-2xl text-ink font-semibold">
+              {t('shell.paywall.title')}
+            </h2>
+            <p class="text-sm text-ink-extra-muted">{paywallDescription()}</p>
             <Show when={paywallMetadata()?.learnMoreUrl}>
               {(learnMoreUrl) => (
                 <a
@@ -122,8 +131,9 @@ const PaywallComponent = (props: PaywallProps) => {
                   target="_blank"
                   rel="noopener"
                 >
-                  Learn more about{' '}
-                  {paywallMetadata()!.learnMoreSubject ?? 'Premium'}
+                  {t('shell.paywall.learnMoreAbout', {
+                    subject: learnMoreSubject(),
+                  })}
                   <ArrowSquareOutIcon class="size-4" />
                 </a>
               )}
@@ -134,7 +144,9 @@ const PaywallComponent = (props: PaywallProps) => {
         <section class="h-full flex flex-col gap-3">
           <div class="flex flex-1 flex-col gap-4 rounded-lg bg-active p-4">
             <div class="flex flex-col">
-              <h3 class="text-sm text-ink">{t('auto.premium_features')}</h3>
+              <h3 class="text-sm text-ink">
+                {t('shell.paywall.featuresTitle')}
+              </h3>
             </div>
             <PremiumFeatures />
           </div>
@@ -143,14 +155,22 @@ const PaywallComponent = (props: PaywallProps) => {
 
       <div class="border-t border-t-edge px-8 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-baseline gap-1.5 text-xs text-ink/60">
-          <span class="text-ink font-semibold text-xl leading-6">$40</span>
-          <span>per seat / per month</span>
+          <span class="text-ink font-semibold text-xl leading-6">
+            {formatNumber(40, {
+              style: 'currency',
+              currency: 'USD',
+              maximumFractionDigits: 0,
+            })}
+          </span>
+          <span>{t('shell.paywall.perSeatPerMonth')}</span>
 
           <Show when={teamRole() === 'owner' && team.data}>
             {(team) => (
               <span class="text-ink-extra-muted text-xs">
-                • {team().members.length}{' '}
-                {plural('user', team().members.length)}
+                •{' '}
+                {t('shell.paywall.memberCount', {
+                  count: team().members.length,
+                })}
               </span>
             )}
           </Show>
@@ -161,7 +181,9 @@ const PaywallComponent = (props: PaywallProps) => {
             depth={3}
             class="rounded-full sm:w-auto px-3 py-1.5"
             onClick={props.cb}
-          >{t('auto.dismiss')}</Button>
+          >
+            {t('shell.actions.dismiss')}
+          </Button>
           <Show
             when={upgradeDisabled()}
             fallback={
@@ -174,10 +196,7 @@ const PaywallComponent = (props: PaywallProps) => {
               </Button>
             }
           >
-            <Tooltip
-              label="Your subscription is managed by your team owner. Contact them to make changes."
-              placement="top"
-            >
+            <Tooltip label={t('shell.paywall.ownerManaged')} placement="top">
               <span>
                 <Button
                   variant={hasPaid() ? 'outline' : 'cta'}

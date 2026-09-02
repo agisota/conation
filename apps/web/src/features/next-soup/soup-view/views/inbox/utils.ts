@@ -1,3 +1,4 @@
+import { formatDateTime, t } from '@app/lib/i18n';
 import type { EntityData, Notification, WithNotification } from '@entity';
 import {
   getSortedKeyProperties,
@@ -10,7 +11,6 @@ import {
   differenceInMonths,
   differenceInWeeks,
   differenceInYears,
-  format,
 } from 'date-fns';
 import { match } from 'ts-pattern';
 
@@ -182,24 +182,31 @@ export function formatCompactRelativeTimestamp(value: string) {
   const now = new Date();
   const ageMs = Math.max(0, differenceInMilliseconds(now, date));
   const seconds = Math.floor(ageMs / 1000);
-  if (seconds < 60) return format(date, 'p');
+  if (seconds < 60)
+    return formatDateTime(date, { hour: 'numeric', minute: '2-digit' });
 
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m`;
+  if (minutes < 60)
+    return t('soup.inbox.timestamp.minutes', { count: minutes });
 
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h`;
+  if (hours < 24) return t('soup.inbox.timestamp.hours', { count: hours });
 
   const days = differenceInDays(now, date);
-  if (days < 7) return `${Math.max(1, days)}d`;
+  if (days < 7)
+    return t('soup.inbox.timestamp.days', { count: Math.max(1, days) });
 
   const weeks = differenceInWeeks(now, date);
-  if (weeks < 5) return `${Math.max(1, weeks)}w`;
+  if (weeks < 5)
+    return t('soup.inbox.timestamp.weeks', { count: Math.max(1, weeks) });
 
   const months = differenceInMonths(now, date);
-  if (months < 12) return `${Math.max(1, months)}mo`;
+  if (months < 12)
+    return t('soup.inbox.timestamp.months', { count: Math.max(1, months) });
 
-  return `${Math.max(1, differenceInYears(now, date))}y`;
+  return t('soup.inbox.timestamp.years', {
+    count: Math.max(1, differenceInYears(now, date)),
+  });
 }
 
 export function getFirstName(value: string) {

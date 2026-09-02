@@ -1,7 +1,18 @@
-use crate::model::PredefinedModel;
 use crate::model::router::*;
-use crate::model::types::Model;
 use rig_core::providers::{anthropic, openai};
+
+#[test]
+fn conation_default_chain_is_verified_rox_catalog_order() {
+    assert_eq!(
+        DEFAULT_ROX_MODEL_CHAIN,
+        [
+            "rox/gemini-2.5-flash",
+            "rox/nemotron-3-ultra",
+            "rox/gpt-5.6-luna",
+        ]
+    );
+    assert_eq!(DEFAULT_ROX_MODEL, DEFAULT_ROX_MODEL_CHAIN[0]);
+}
 
 fn test_router() -> ModelRouter {
     let anthropic = anthropic::Client::builder()
@@ -32,39 +43,6 @@ fn openai_provider_routes_to_responses() {
 }
 
 #[test]
-fn unroutable_ids_fall_back_to_the_smart_model() {
-    let router = test_router();
-
-    // Ids stored before dynamic model routing (bare api names, semantic tier
-    // names) and ids naming an unregistered provider are all unroutable. Each
-    // must fail to route, then fall back to the known Smart model — and the
-    // fallback must put the *bare* api id on the wire: a provider-qualified
-    // `anthropic/...` string 404s on the Anthropic API.
-    let unroutable = [
-        "claude-opus-4-6", // bare api id of a retired model
-        "claude-opus-4-8", // bare api id of a current model
-        "smart",           // semantic tier name
-        "",                // empty
-        "unregistered-provider/some-model",
-    ];
-
-    let smart = Model::from(PredefinedModel::Smart);
-    for id in unroutable {
-        assert!(router.route(id).is_err(), "`{id}` should not route");
-
-        let RoutedModel::Anthropic(fallback) = router.route_or_default(id) else {
-            panic!("`{id}` fallback should be native Anthropic");
-        };
-        let wire_id = fallback.completion().model;
-        assert_eq!(
-            wire_id,
-            smart.name(),
-            "`{id}` must fall back to the Smart model's bare api id, got `{wire_id}`"
-        );
-    }
-}
-
-#[test]
 fn registered_openai_compatible_provider_routes_to_chat_completions() {
     let router = test_router();
 
@@ -72,4 +50,61 @@ fn registered_openai_compatible_provider_routes_to_chat_completions() {
         router.route("local/llama-3.3-70b").unwrap(),
         RoutedModel::OpenAiChatCompletions(_)
     ));
+}
+
+#[test]
+fn default_candidates_fall_forward_without_restarting_the_chain() {
+    let router = test_router();
+
+    assert_eq!(
+        router.candidate_model_ids("rox/gemini-2.5-flash"),
+        DEFAULT_ROX_MODEL_CHAIN
+    );
+    assert_eq!(
+        router.candidate_model_ids("rox/nemotron-3-ultra"),
+        ["rox/nemotron-3-ultra", "rox/gpt-5.6-luna"]
+    );
+    assert_eq!(
+        router.candidate_model_ids("unknown/model"),
+        DEFAULT_ROX_MODEL_CHAIN
+    );
+    assert_eq!(
+        router.candidate_model_ids("local/llama-3.3-70b"),
+        ["local/llama-3.3-70b"]
+    );
+}
+
+#[test]
+fn fallback_http_policy_distinguishes_retry_skip_and_terminal_errors() {
+    for status in [408, 409, 425, 429, 500, 502, 599] {
+        assert_eq!(
+            classify_status(status),
+            FailureDisposition::RetryThenFallback,
+            "status {status}"
+        );
+    }
+    for status in [404, 422] {
+        assert_eq!(
+            classify_status(status),
+            FailureDisposition::Fallback,
+            "status {status}"
+        );
+    }
+    for status in [400, 401, 403, 405, 413] {
+        assert_eq!(
+            classify_status(status),
+            FailureDisposition::Stop,
+            "status {status}"
+        );
+    }
+}
+
+#[test]
+fn fallback_chain_override_rejects_empty_or_malformed_ids() {
+    assert!(test_router().with_fallback_chain(Vec::new()).is_err());
+    assert!(
+        test_router()
+            .with_fallback_chain(vec!["bare-model".to_owned()])
+            .is_err()
+    );
 }

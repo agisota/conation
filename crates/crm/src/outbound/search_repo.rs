@@ -121,7 +121,7 @@ impl CrmSearchRepository for CrmSearchRepositoryImpl {
                 COALESCE(m.custom_name, pd.display_name, '') AS "name!",
                 regexp_replace(
                     COALESCE(m.custom_name, pd.display_name, ''),
-                    $6, '<conation_em>\1</conation_em>', 'gi'
+                    $6, '<macro_em>\1</macro_em>', 'gi'
                 )                                     AS "name_highlighted!",
                 m.updated_at                          AS "updated_at!"
             FROM matched m

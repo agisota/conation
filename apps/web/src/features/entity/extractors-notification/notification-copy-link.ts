@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { copyCalendarEventMentionTarget } from '@block-calendar/copy-event-mention';
 import { toast } from '@core/component/Toast/Toast';
 import { buildSimpleEntityUrl } from '@core/util/url';
@@ -32,5 +33,5 @@ export async function copyNotificationLink(notification: UnifiedNotification) {
       params
     )
   );
-  toast.success('Link copied to clipboard');
+  toast.success(t('notifications.feedback.linkCopied'));
 }

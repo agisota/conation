@@ -20,9 +20,9 @@ where
 {
     async fn get_user_email_labels(
         &self,
-        conation_id: MacroUserIdStr<'static>,
+        macro_id: MacroUserIdStr<'static>,
     ) -> Result<Vec<LinkLabel>, EmailErr> {
-        let inboxes = self.email_repo.user_accessible_inboxes(conation_id).await?;
+        let inboxes = self.email_repo.user_accessible_inboxes(macro_id).await?;
         let mut labels = Vec::new();
 
         // Preserve the REST analog's stable inbox order and each inbox's
@@ -37,11 +37,11 @@ where
 
     async fn get_user_email_links(
         &self,
-        conation_id: MacroUserIdStr<'static>,
+        macro_id: MacroUserIdStr<'static>,
     ) -> Result<Vec<UserEmailLink>, EmailErr> {
         Ok(self
             .email_repo
-            .user_inbox_details(conation_id)
+            .user_inbox_details(macro_id)
             .await?
             .into_iter()
             .map(UserEmailLink::from)

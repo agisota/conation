@@ -39,23 +39,42 @@ fn bot_id_str_from_bot_id_creates_storage_string() {
 #[test]
 fn system_bot_id_is_stable_and_distinct_from_ai_personas() {
     assert_eq!(
-        MACRO_SYSTEM_BOT_ID.into_storage_id().as_ref(),
+        CONATION_SYSTEM_BOT_ID.into_storage_id().as_ref(),
         "bot|00000000-0000-0000-0000-000000005759"
     );
-    assert_ne!(MACRO_SYSTEM_BOT_ID, MACRO_AI_BOT_ID);
-    assert_ne!(MACRO_SYSTEM_BOT_ID, MACRO_CODER_BOT_ID);
+    assert_ne!(CONATION_SYSTEM_BOT_ID, CONATION_AI_BOT_ID);
+    assert_ne!(CONATION_SYSTEM_BOT_ID, CONATION_CODER_BOT_ID);
 }
 
 #[test]
-fn conation_new_id_is_stable_and_distinct_from_macro() {
+fn conation_new_id_is_stable_and_distinct_from_classic_assistant() {
     assert_eq!(
-        MACRO_NEW_BOT_ID.into_storage_id().as_ref(),
+        CONATION_NEW_BOT_ID.into_storage_id().as_ref(),
         "bot|00000000-0000-0000-0000-00000000a2a2"
     );
-    assert_ne!(MACRO_NEW_BOT_ID, MACRO_AI_BOT_ID);
+    assert_ne!(CONATION_NEW_BOT_ID, CONATION_AI_BOT_ID);
     // The classic bot answers in channel; only its replacement opens sessions.
-    assert!(!system_bot(MACRO_AI_BOT_ID).unwrap().has_agent);
-    assert!(system_bot(MACRO_NEW_BOT_ID).unwrap().has_agent);
+    assert!(!system_bot(CONATION_AI_BOT_ID).unwrap().has_agent);
+    assert!(system_bot(CONATION_NEW_BOT_ID).unwrap().has_agent);
+}
+
+#[test]
+fn system_bot_display_names_and_handles_use_conation() {
+    assert_eq!(CONATION_AI_NAME, "Conation");
+    assert_eq!(CONATION_NEW_NAME, "Conation (new)");
+    assert_eq!(CONATION_CODER_NAME, "Conation Coder");
+    assert_eq!(CONATION_SYSTEM_NAME, "Conation System");
+
+    assert_eq!(system_bot(CONATION_AI_BOT_ID).unwrap().handle, "conation");
+    assert_eq!(
+        system_bot(CONATION_NEW_BOT_ID).unwrap().handle,
+        "conation-new"
+    );
+    assert_eq!(system_bot(CONATION_CODER_BOT_ID).unwrap().handle, "coder");
+    assert_eq!(
+        system_bot(CONATION_SYSTEM_BOT_ID).unwrap().handle,
+        "conation-system"
+    );
 }
 
 #[test]

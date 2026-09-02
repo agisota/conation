@@ -31,7 +31,7 @@ fn team_owner() -> BotOwner {
 
 fn user_owner() -> BotOwner {
     BotOwner::User {
-        user_id: "macro|owner@example.com".to_string(),
+        user_id: "conation|owner@example.com".to_string(),
     }
 }
 
@@ -44,7 +44,7 @@ fn created_metadata() -> BotCreatedMetadata {
         handle: "deploy-bot".to_string(),
         description: None,
         avatar_url: None,
-        created_by_user_id: user_id("macro|creator@example.com"),
+        created_by_user_id: user_id("conation|creator@example.com"),
         channel_id: None,
         created_at: timestamp("2026-07-20T17:01:02Z"),
     }
@@ -54,7 +54,7 @@ fn updated_metadata() -> BotUpdatedMetadata {
     BotUpdatedMetadata {
         bot_id: bot_id(),
         owner: user_owner(),
-        actor_user_id: user_id("macro|editor@example.com"),
+        actor_user_id: user_id("conation|editor@example.com"),
         name: None,
         handle: Some("release-bot".to_string()),
         description: Some("Ships releases".to_string()),
@@ -67,7 +67,7 @@ fn deleted_metadata() -> BotDeletedMetadata {
     BotDeletedMetadata {
         bot_id: bot_id(),
         owner: team_owner(),
-        actor_user_id: user_id("macro|deleter@example.com"),
+        actor_user_id: user_id("conation|deleter@example.com"),
     }
 }
 
@@ -92,7 +92,7 @@ fn created_event_has_exact_sanitized_wire_shape() {
                 "handle": "deploy-bot",
                 "description": null,
                 "avatar_url": null,
-                "created_by_user_id": "macro|creator@example.com",
+                "created_by_user_id": "conation|creator@example.com",
                 "channel_id": null,
                 "created_at": "2026-07-20T17:01:02Z",
             },
@@ -117,9 +117,9 @@ fn updated_event_has_exact_sanitized_wire_shape() {
                 "bot_id": BOT_ID,
                 "owner": {
                     "type": "user",
-                    "user_id": "macro|owner@example.com",
+                    "user_id": "conation|owner@example.com",
                 },
-                "actor_user_id": "macro|editor@example.com",
+                "actor_user_id": "conation|editor@example.com",
                 "name": null,
                 "handle": "release-bot",
                 "description": "Ships releases",
@@ -146,7 +146,7 @@ fn deleted_event_has_exact_wire_shape() {
             "metadata": {
                 "bot_id": BOT_ID,
                 "owner": { "type": "team", "team_id": TEAM_ID },
-                "actor_user_id": "macro|deleter@example.com",
+                "actor_user_id": "conation|deleter@example.com",
             },
         })
     );

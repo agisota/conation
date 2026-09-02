@@ -1,9 +1,9 @@
+import { t } from '@app/lib/i18n';
 import {
   EntityIcon,
   type EntityWithValidIcon,
 } from '@core/component/EntityIcon';
 import { OldMenu } from '@core/component/OldMenu';
-import { t } from '@app/lib/i18n';
 import { blockAcceptedFileExtensionSet } from '@core/constant/allBlocks';
 import { onKeyDownClick, onKeyUpClick } from '@core/util/click';
 import FileText from '@phosphor-icons/core/regular/file-text.svg?component-solid';
@@ -95,7 +95,7 @@ export function FileSelector() {
       <Dropdown.Trigger
         variant="ghost"
         size="icon-md"
-        label="File"
+        label={t('canvas.tools.file')}
         tabIndex={-1}
       >
         <FileText />
@@ -107,7 +107,9 @@ export function FileSelector() {
               <Show
                 when={userFiles().length > 0}
                 fallback={
-                  <div class="p-4 text-center text-sm">{t('auto.no_files_found')}</div>
+                  <div class="p-4 text-center text-sm">
+                    {t('canvas.files.empty')}
+                  </div>
                 }
               >
                 <VList

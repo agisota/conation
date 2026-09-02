@@ -9,10 +9,12 @@ export interface BackContext {
 
 export interface LessonDefinition {
   id: LessonId;
+  /** Semantic i18n key for the lesson heading. */
   title: string;
+  /** Semantic i18n key for the optional lesson summary. */
   subtitle?: string;
   content: Component<LessonContentProps>;
-  /** Optional component rendered in the right demo panel. When omitted the Macro logo is shown. */
+  /** Optional component rendered in the right demo panel. When omitted the Conation mark is shown. */
   demo?: Component<LessonContentProps>;
   order?: number;
   /** ID of the lesson to navigate back to, or a function that returns it (or undefined to hide the button). When set, a back button appears in the sidebar. */

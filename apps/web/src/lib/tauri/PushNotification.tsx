@@ -3,7 +3,6 @@ import {
   syncPushRegistrations,
 } from '@core/auth/push-registration-lifecycle';
 import { hasLoginCookie } from '@core/util/cookies';
-import { t } from '@app/lib/i18n';
 import { whenSettled } from '@core/util/whenSettled';
 import {
   checkPermissions,
@@ -245,7 +244,7 @@ export function MaybePushNotificationRegistration(props: {
 
   // now we compose the standard tauri notif plugin with the push notification plugin
   function curriedTauriPushNotification(
-    setDisabled: () =>Promise<void>
+    setDisabled: () => Promise<void>
   ): PlatformNotificationInterface {
     const {
       requestPermission,

@@ -1,3 +1,17 @@
+import {
+  $isDocumentMentionNode,
+  $isMentionNode,
+  $isWatermarkNode,
+  ALL_TRANSFORMERS,
+  EXTERNAL_TRANSFORMERS,
+  INITIALIZE_LOCAL_STATUS,
+  INTERNAL_TRANSFORMERS,
+} from '@conation/lexical-core';
+import { SKIP_SCROLL_INTO_VIEW_TAG } from '@conation/lexical-core/constants';
+import {
+  $getId,
+  INITIALIZE_DOCUMENT_IDS,
+} from '@conation/lexical-core/plugins/nodeIdPlugin';
 import { ENABLE_MARKDOWN_SEARCH_TEXT } from '@core/constant/featureFlags';
 import { $isCodeNode } from '@lexical/code';
 import { $generateNodesFromDOM } from '@lexical/html';
@@ -20,20 +34,6 @@ import {
   $findMatchingParent,
   mergeRegister,
 } from '@lexical/utils';
-import {
-  $isDocumentMentionNode,
-  $isMentionNode,
-  $isWatermarkNode,
-  ALL_TRANSFORMERS,
-  EXTERNAL_TRANSFORMERS,
-  INITIALIZE_LOCAL_STATUS,
-  INTERNAL_TRANSFORMERS,
-} from '@conation/lexical-core';
-import { SKIP_SCROLL_INTO_VIEW_TAG } from '@conation/lexical-core/constants';
-import {
-  $getId,
-  INITIALIZE_DOCUMENT_IDS,
-} from '@conation/lexical-core/plugins/nodeIdPlugin';
 import {
   $addUpdateTag,
   $createParagraphNode,

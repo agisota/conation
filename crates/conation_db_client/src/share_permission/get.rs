@@ -218,9 +218,9 @@ pub async fn get_chat_share_permission(
 }
 
 #[tracing::instrument(skip(db))]
-pub async fn get_conation_share_permission(
+pub async fn get_macro_share_permission(
     db: &sqlx::Pool<sqlx::Postgres>,
-    conation_prompt_id: &str,
+    macro_prompt_id: &str,
 ) -> anyhow::Result<SharePermissionV2> {
     let result = sqlx::query!(
         r#"
@@ -239,14 +239,14 @@ pub async fn get_conation_share_permission(
             FROM
                 "MacroPromptPermission" mpp
             JOIN "SharePermission" sp ON mpp."share_permission_id" = sp.id
-            JOIN "MacroPrompt" m ON mpp."conation_prompt_id" = m.id
+            JOIN "MacroPrompt" m ON mpp."macro_prompt_id" = m.id
             LEFT JOIN "ChannelSharePermission" csp ON csp."share_permission_id" = sp.id
             WHERE
-                mpp."conation_prompt_id" = $1
+                mpp."macro_prompt_id" = $1
             GROUP BY
                 sp.id, m."user_id"
         "#,
-        conation_prompt_id,
+        macro_prompt_id,
     )
     .fetch_one(db)
     .await?;
@@ -291,15 +291,15 @@ pub async fn get_email_thread_permission(
 /// THIS IS COPIED FROM EMAIL_DB_CLIENT and is needed in the `insert_thread_share_permission`
 /// in conation_middleware crate
 #[tracing::instrument(skip(pool))]
-pub async fn get_conation_id_from_thread_id(
+pub async fn get_macro_id_from_thread_id(
     pool: &sqlx::Pool<sqlx::Postgres>,
     thread_id: &str,
 ) -> anyhow::Result<Option<String>> {
     let thread_id = conation_uuid::string_to_uuid(thread_id).context("invalid uuid")?;
 
-    let conation_id = sqlx::query_scalar!(
+    let macro_id = sqlx::query_scalar!(
         r#"
-        SELECT l.conation_id
+        SELECT l.macro_id
         FROM email_threads t
         JOIN email_links l ON t.link_id = l.id
         WHERE t.id = $1
@@ -308,9 +308,9 @@ pub async fn get_conation_id_from_thread_id(
     )
     .fetch_optional(pool)
     .await
-    .with_context(|| format!("Failed to fetch conation_id for thread ID {}", thread_id))?;
+    .with_context(|| format!("Failed to fetch macro_id for thread ID {}", thread_id))?;
 
-    Ok(conation_id)
+    Ok(macro_id)
 }
 
 /// COPIED FROM COMMS_DB_CLIENT

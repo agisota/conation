@@ -38,14 +38,14 @@ import {
   Switch,
 } from 'solid-js';
 import {
+  conationAiMentionUser,
+  conationCoderMentionUser,
+  conationNewMentionUser,
   cursorMentionUser,
-  isMacroAiId,
-  isMacroCoderId,
-  isMacroNewId,
-  macroAiMentionUser,
-  macroCoderMentionUser,
-  macroNewMentionUser,
-} from '../macroAi';
+  isConationAiId,
+  isConationCoderId,
+  isConationNewId,
+} from '../conationAi';
 import { CHANNEL_FILE_PICKER_ACCEPT } from './accepted-file-types';
 import { createInputAttachmentTracker } from './attachment-tracker';
 import { createConfiguredChannelMarkdownEditor } from './configured-markdown-editor';
@@ -261,7 +261,7 @@ export function ChannelInput(props: ChannelInputProps) {
   const canUseCursor = useCursorAgentsAccess();
   const cursorApiKey = useCursorApiKeyStatusQuery();
 
-  // Macro AI and Macro Coder (flag-gated) are mentionable in every channel,
+  // Conation and Conation Coder (flag-gated) are mentionable in every channel,
   // and any bot added to the channel is mentionable too. All are surfaced
   // through the same `@`-mention typeahead as participants and re-tagged as
   // bot mentions at send time.
@@ -274,26 +274,21 @@ export function ChannelInput(props: ChannelInputProps) {
     ].filter((user) => cursorEnabled || !isCursorBotId(user.id));
     if (
       ENABLE_CHAT_V3_AGENTS() &&
-      !base.some((user) => isMacroCoderId(user.id))
+      !base.some((user) => isConationCoderId(user.id))
     ) {
-      base.unshift(macroCoderMentionUser());
+      base.unshift(conationCoderMentionUser());
     }
     if (
       ENABLE_CHAT_V3_AGENTS() &&
-      !base.some((user) => isMacroNewId(user.id))
+      !base.some((user) => isConationNewId(user.id))
     ) {
-      base.unshift(macroNewMentionUser());
+      base.unshift(conationNewMentionUser());
     }
-    if (
-      cursorEnabled &&
-      // Hiding it is not enforcement — a mention can still arrive from a
-      // copied message or another client — so the harness refuses these too.
-      !base.some((user) => isCursorBotId(user.id))
-    ) {
+    if (cursorEnabled && !base.some((user) => isCursorBotId(user.id))) {
       base.unshift(cursorMentionUser());
     }
-    if (!base.some((user) => isMacroAiId(user.id))) {
-      base.unshift(macroAiMentionUser());
+    if (!base.some((user) => isConationAiId(user.id))) {
+      base.unshift(conationAiMentionUser());
     }
     return uniqueByKey(base, (user) => user.id);
   };

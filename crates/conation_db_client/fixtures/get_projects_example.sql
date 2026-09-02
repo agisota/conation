@@ -3,7 +3,7 @@ INSERT INTO
         SELECT
             'p1',
             'a',
-            'macro|user@user.com',
+            'conation|user@user.com',
             '2019-10-16 00:00:00',
             '2019-10-16 00:00:00'
     );
@@ -13,7 +13,7 @@ INSERT INTO
         SELECT
             'p1',
             'project',
-            'macro|user@user.com'
+            'conation|user@user.com'
     );
 
 INSERT INTO
@@ -21,7 +21,7 @@ INSERT INTO
         SELECT
             'pb1',
             'b',
-            'macro|user@user.com',
+            'conation|user@user.com',
             '2019-10-16 00:00:00',
             '2019-10-16 01:00:00'
     );
@@ -31,7 +31,7 @@ INSERT INTO
         SELECT
             'pb1',
             'project',
-            'macro|user@user.com'
+            'conation|user@user.com'
     );
 
 -- Should be ignored
@@ -47,7 +47,7 @@ INSERT INTO
         SELECT
             'p2',
             'a1',
-            'macro|user2@user.com',
+            'conation|user2@user.com',
             'p1',
             '2019-10-16 00:00:00',
             '2019-10-16 02:00:00'
@@ -58,7 +58,7 @@ INSERT INTO
         SELECT
             'p11',
             'f1',
-            'macro|user2@user.com',
+            'conation|user2@user.com',
             'p2',
             '2019-10-16 02:00:00'
     );
@@ -68,7 +68,7 @@ INSERT INTO
         SELECT
             'p11',
             'project',
-            'macro|user@user.com'
+            'conation|user@user.com'
     );
 
 INSERT INTO
@@ -85,7 +85,7 @@ INSERT INTO
         SELECT
             'p3',
             'a1',
-            'macro|user@user.com',
+            'conation|user@user.com',
             NULL,
             '2019-10-16 00:00:00',
             '2019-10-16 02:00:00',

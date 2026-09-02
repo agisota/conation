@@ -3,16 +3,17 @@ use super::*;
 #[test]
 fn local_binaries_are_unique_and_complete() {
     let bins = local_binaries();
-    // 16 distinct binaries (the bundled set, including the local-only
+    // 17 distinct binaries (the bundled set, including the local-only
     // search_processing_service, agent harness, mcp_service, and the seed_cli
     // shipped for the gmail_forwarder sidecar).
-    assert_eq!(bins.len(), 16, "{bins:?}");
+    assert_eq!(bins.len(), 17, "{bins:?}");
     assert!(bins.contains(&"pubsub_workers"));
     assert!(bins.contains(&"seed_cli"));
     assert!(bins.contains(&"document_upload_finalizer_local_worker"));
     assert!(bins.contains(&"search_processing_service"));
     assert!(bins.contains(&"agent_harness_service"));
     assert!(bins.contains(&"mcp_service"));
+    assert!(bins.contains(&"scheduled_action_service"));
     let mut sorted = bins.clone();
     sorted.dedup();
     assert_eq!(sorted.len(), bins.len(), "binaries must be deduplicated");
@@ -46,6 +47,30 @@ fn agent_harness_has_an_instance_port() {
         .find(|svc| svc.compose_name == "agent_harness_service")
         .unwrap();
     assert_eq!(svc.host_port, Some(Port::AgentHarness));
+}
+
+#[test]
+fn mcp_is_proxy_only_and_has_no_direct_host_port() {
+    let svc = RUST_SERVICES
+        .iter()
+        .find(|svc| svc.compose_name == "mcp_service")
+        .unwrap();
+    assert!(svc.host_port.is_none());
+    assert!(svc.path_prefix.is_none());
+    assert!(svc.in_mode(Mode::Local));
+    assert!(!svc.in_mode(Mode::Dev));
+}
+
+#[test]
+fn scheduled_action_is_in_the_complete_local_stack() {
+    let svc = RUST_SERVICES
+        .iter()
+        .find(|svc| svc.compose_name == "scheduled_action_service")
+        .unwrap();
+    assert_eq!(svc.host_port, Some(Port::ScheduledAction));
+    assert_eq!(svc.path_prefix, Some("/scheduled-action"));
+    assert!(svc.in_mode(Mode::Local));
+    assert!(!svc.in_mode(Mode::Dev));
 }
 
 #[test]

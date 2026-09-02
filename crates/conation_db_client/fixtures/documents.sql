@@ -1,5 +1,5 @@
 INSERT INTO public."Document" ("id","name","fileType", "owner", "createdAt", "updatedAt", "projectId")
-(SELECT 'd1', 'test_document_name','pdf', 'macro|user@user.com', '2019-10-16 00:00:00', '2019-10-16 00:00:00', 'p1');
+(SELECT 'd1', 'test_document_name','pdf', 'conation|user@user.com', '2019-10-16 00:00:00', '2019-10-16 00:00:00', 'p1');
 INSERT INTO public."DocumentInstance" ("revisionName", "documentId", "createdAt", "updatedAt", "sha")
 (SELECT 'test_document_name', 'd1', '2019-10-16 00:00:00', '2019-10-16 00:00:00', 'sha');
 INSERT INTO public."SharePermission" ("id", "linkShare", "linkShareAccessLevel", "createdAt", "updatedAt")
@@ -9,7 +9,7 @@ INSERT INTO public."DocumentPermission" ("documentId", "sharePermissionId")
 
 -- ensure we get item in sub project
 INSERT INTO public."Document" ("id","name","fileType", "owner", "createdAt", "updatedAt", "projectId")
-(SELECT 'd2', 'test_document_name','docx', 'macro|user2@user.com', '2019-10-16 00:10:00', '2019-10-16 00:10:00', 'p6');
+(SELECT 'd2', 'test_document_name','docx', 'conation|user2@user.com', '2019-10-16 00:10:00', '2019-10-16 00:10:00', 'p6');
 INSERT INTO public."DocumentBom" ("documentId", "createdAt", "updatedAt")
 (SELECT 'd2', '2019-10-16 00:10:00', '2019-10-16 00:10:00');
 INSERT INTO public."SharePermission" ("id", "linkShare", "linkShareAccessLevel", "createdAt", "updatedAt")
@@ -19,7 +19,7 @@ INSERT INTO public."DocumentPermission" ("documentId", "sharePermissionId")
 
 -- ensure we don't get item that should not be visible
 INSERT INTO public."Document" ("id","name","fileType", "owner", "createdAt", "updatedAt", "projectId")
-(SELECT 'd3', 'test_document_name','md', 'macro|user2@user.com', '2019-10-16 00:20:00', '2019-10-16 00:20:00', 'p1');
+(SELECT 'd3', 'test_document_name','md', 'conation|user2@user.com', '2019-10-16 00:20:00', '2019-10-16 00:20:00', 'p1');
 INSERT INTO public."DocumentInstance" ("revisionName", "documentId", "createdAt", "updatedAt", "sha")
 (SELECT 'test_document_name', 'd3', '2019-10-16 00:10:00', '2019-10-16 00:10:00', 'sha');
 INSERT INTO public."SharePermission" ("id", "linkShare", "linkShareAccessLevel", "createdAt", "updatedAt")
@@ -28,7 +28,7 @@ INSERT INTO public."DocumentPermission" ("documentId", "sharePermissionId")
 (SELECT 'd3', 'sp-document3');
 
 INSERT INTO public."Document" ("id","name","fileType", "owner", "createdAt", "updatedAt", "projectId")
-(SELECT 'd4', 'test_document_name','md', 'macro|user@user.com', '2019-10-16 00:20:00', '2019-10-16 00:20:00', 'p11');
+(SELECT 'd4', 'test_document_name','md', 'conation|user@user.com', '2019-10-16 00:20:00', '2019-10-16 00:20:00', 'p11');
 INSERT INTO public."DocumentInstance" ("revisionName", "documentId", "createdAt", "updatedAt", "sha")
 (SELECT 'test_document_name', 'd4', '2019-10-16 00:10:00', '2019-10-16 00:10:00', 'sha');
 INSERT INTO public."SharePermission" ("id", "linkShare", "linkShareAccessLevel", "createdAt", "updatedAt")
@@ -37,7 +37,7 @@ INSERT INTO public."DocumentPermission" ("documentId", "sharePermissionId")
 (SELECT 'd4', 'sp-document4');
 
 INSERT INTO public."Document" ("id","name","fileType", "owner", "createdAt", "updatedAt", "projectId")
-(SELECT 'd5', 'test_document_name','md', 'macro|user2@user.com', '2019-10-16 00:20:00', '2019-10-16 00:20:00', 'p11');
+(SELECT 'd5', 'test_document_name','md', 'conation|user2@user.com', '2019-10-16 00:20:00', '2019-10-16 00:20:00', 'p11');
 INSERT INTO public."DocumentInstance" ("revisionName", "documentId", "createdAt", "updatedAt", "sha")
 (SELECT 'test_document_name', 'd5', '2019-10-16 00:10:00', '2019-10-16 00:10:00', 'sha');
 INSERT INTO public."SharePermission" ("id", "linkShare", "linkShareAccessLevel", "createdAt", "updatedAt")

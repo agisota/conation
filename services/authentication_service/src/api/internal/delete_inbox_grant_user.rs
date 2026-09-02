@@ -4,8 +4,8 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use fusionauth::error::FusionAuthClientError;
 use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
+use fusionauth::error::FusionAuthClientError;
 use model::response::{EmptyResponse, ErrorResponse};
 
 use crate::api::context::{ApiContext, AuthorizationService};

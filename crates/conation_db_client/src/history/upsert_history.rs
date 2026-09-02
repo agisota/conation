@@ -167,7 +167,7 @@ mod tests {
         let mut transaction = pool.begin().await.unwrap();
         upsert_user_history(
             &mut transaction,
-            MacroUserIdStr::parse_from_str("macro|user@user.com").unwrap(),
+            MacroUserIdStr::parse_from_str("conation|user@user.com").unwrap(),
             "document-one",
             "document",
         )
@@ -179,7 +179,7 @@ mod tests {
             r#"
             SELECT "createdAt" as created_at, "updatedAt" as updated_at FROM "UserHistory" WHERE "userId" = $1 AND "itemId" = $2
             "#,
-            "macro|user@user.com",
+            "conation|user@user.com",
             "document-one"
         )
         .fetch_one(&pool.clone())
@@ -191,7 +191,7 @@ mod tests {
         let mut transaction = pool.begin().await.unwrap();
         upsert_user_history(
             &mut transaction,
-            MacroUserIdStr::parse_from_str("macro|user@user.com").unwrap(),
+            MacroUserIdStr::parse_from_str("conation|user@user.com").unwrap(),
             "document-two",
             "document",
         )
@@ -203,7 +203,7 @@ mod tests {
             r#"
             SELECT "createdAt" as created_at, "updatedAt" as updated_at FROM "UserHistory" WHERE "userId" = $1 AND "itemId" = $2
             "#,
-            "macro|user@user.com",
+            "conation|user@user.com",
             "document-two"
         )
         .fetch_one(&pool.clone())
@@ -215,7 +215,7 @@ mod tests {
 
     #[sqlx::test(fixtures(path = "../../fixtures", scripts("basic_user_history")))]
     async fn test_add_user_history_for_project_tree(pool: Pool<Postgres>) -> anyhow::Result<()> {
-        let user_id = MacroUserIdStr::parse_from_str("macro|user@user.com").unwrap();
+        let user_id = MacroUserIdStr::parse_from_str("conation|user@user.com").unwrap();
 
         let mut transaction = pool.begin().await?;
 

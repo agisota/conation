@@ -179,7 +179,7 @@ mod tests {
     ))]
     async fn test_create_document_comment(pool: Pool<Postgres>) -> anyhow::Result<()> {
         let document_id = "document-with-comments";
-        let owner = "macro|user@user.com";
+        let owner = "conation|user@user.com";
         let req = CreateCommentRequest {
             text: "This is a test comment".to_string(),
             thread_id: None,
@@ -200,7 +200,7 @@ mod tests {
         );
         let comment = &comment_thread.comments[0];
         assert_eq!(comment.text, "This is a test comment");
-        assert_eq!(comment.owner, "macro|user@user.com".to_string());
+        assert_eq!(comment.owner, "conation|user@user.com".to_string());
         assert_eq!(comment.metadata, None);
 
         // Fetch the comments to verify they were inserted correctly
@@ -222,7 +222,7 @@ mod tests {
         pool: Pool<Postgres>,
     ) -> anyhow::Result<()> {
         let document_id = "document-with-comments";
-        let owner = "macro|user@user.com";
+        let owner = "conation|user@user.com";
         let req = CreateCommentRequest {
             text: "This is another test comment".to_string(),
             thread_id: Some(1001),

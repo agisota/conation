@@ -1,5 +1,5 @@
-import { URL_PARAMS as CHANNEL_PARAMS } from '@block-channel/constants';
 import { t } from '@app/lib/i18n';
+import { URL_PARAMS as CHANNEL_PARAMS } from '@block-channel/constants';
 import { EntityIcon as CoreEntityIcon } from '@core/component/EntityIcon';
 import { UserIcon } from '@core/component/UserIcon';
 import { fileTypeToBlockName } from '@core/constant/allBlocks';

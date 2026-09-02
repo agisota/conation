@@ -1,50 +1,53 @@
 ---
-title: "Unified Inbox"
+title: "Единые входящие"
 icon: "inbox"
-description: "All your email accounts, messages, and @mentions in a single inbox."
+description: "Письма, сообщения, упоминания, задачи и результаты агентов в одном списке."
 ---
 
-The idea behind Macro's unified inbox is that you should only have to check one thing to understand what is going on at your company, instead of 7\+ different apps. Inspired by Superhuman/Gmail's shortcuts, but extended to everything in your workspace.
+Единые входящие Conation нужны для того, чтобы не проверять семь разных приложений ради понимания, что происходит в команде. Один список собирает рабочие события из почты, каналов, документов, задач, файлов и агентов.
 
-- **Emails**, from all connected accounts
-- **Messages** from all channels and DM's
-- **Agents**, when they finish running
-- @mentions in **document** comments
-- **Tasks** assigned to you
-- **Files** shared with you
+- **Письма** из подключенных почтовых аккаунтов.
+- **Сообщения** из каналов и личных диалогов.
+- **Агенты**, когда они завершили задачу или ждут ответа.
+- **@упоминания** в комментариях к документам.
+- **Задачи**, назначенные на вас.
+- **Файлы**, которыми с вами поделились.
 
-<Frame>
-  ![Inbox Full](/images/inbox_full.png)
-</Frame>
+<Note>
+  Старые скриншоты прежнего интерфейса убраны с этой страницы. Для публичной
+  документации Conation нужны новые изображения на синтетических данных и с
+  русским интерфейсом.
+</Note>
 
-The shortcut to get to your inbox is <kbd>g</kbd> \+ <kbd>i</kbd>.
+## Навигация
 
-Use <kbd>j</kbd> and <kbd>k</kbd> or arrow keys to toggle up and down through different inbox items.
+Открыть входящие можно сочетанием <kbd>g</kbd> + <kbd>i</kbd>.
 
-Press <kbd>space</kbd> to preview the selected list item in split-screen, <kbd>enter</kbd> to open it fullscreen. You can still use  <kbd>j</kbd> and <kbd>k</kbd>  when in preview or fullscreen.
+Используйте <kbd>j</kbd> и <kbd>k</kbd> или стрелки, чтобы перемещаться по списку.
 
-Use <kbd>shift\+enter</kbd> to open in a new split view. This is useful if you want to multi-task.
+Нажмите <kbd>space</kbd>, чтобы открыть выбранный элемент в панели предпросмотра, или <kbd>enter</kbd>, чтобы открыть его на всю панель. Навигация <kbd>j</kbd>/<kbd>k</kbd> продолжает работать и в предпросмотре, и в полноэкранном режиме.
 
-Press <kbd>e</kbd> to mark an item as "done" and remove it from your inbox.
+<kbd>shift</kbd> + <kbd>enter</kbd> открывает элемент в новой панели. Это
+удобно, когда нужно держать рядом письмо, задачу и документ.
 
-## Signal vs. Noise
+<kbd>e</kbd> помечает элемент как завершенный и убирает его из входящих.
 
-From your inbox, you can filter by Signal or Noise. Signal holds your important notifications and Noise is for spammy emails and other things you probably don't need to see but should still check from time to time (AI can make mistakes).
+## Signal и Noise
 
-<Frame>
-  ![Inbox Screenshot](/images/inbox_screenshot.png)
-</Frame>
+Фильтр **Signal** показывает то, что требует внимания: важные письма, прямые упоминания, задачи и результаты агентов. **Noise** хранит менее срочные события: рассылки, второстепенные уведомления и всё, что полезно проверить позже.
 
-You can think of the Signal view as your _action list_. It's the tab you'll have open most often throughout the day. It shows the things across Macro that currently need your attention.
+Signal можно воспринимать как рабочий список действий на день. Это список, который чаще всего открыт во время работы: он показывает, что в Conation сейчас требует решения.
 
-## How we use it
+AI-классификация может ошибаться, поэтому Noise стоит периодически просматривать вручную.
 
-The Superhuman email client popularized the concept of "Inbox Zero", and we stole it here and applied it to your entire workspace. We strongly recommend using <kbd>e</kbd> to mark-done notifications when you've viewed them. If you get a little behind you can use <kbd>shift</kbd> <kbd>↓</kbd> to select multiple notifications then <kbd>e</kbd> to mark all as done.
+## Рабочий ритм
 
-## Date grouping
+Рекомендуемый процесс простой: открыть Signal, разобрать элементы сверху вниз и нажимать <kbd>e</kbd> после просмотра или выполнения действия. Если накопилось много однотипных уведомлений, выделите несколько элементов через <kbd>shift</kbd> + <kbd>↓</kbd>, затем нажмите <kbd>e</kbd>, чтобы убрать их пачкой.
 
-Your inbox and email lists group items by date, so recent activity stays together at the top and older items fall into their own sections as you scroll. This keeps a busy list scannable without changing any of your filters or sorting.
+## Группировка по датам
 
-## On mobile
+Входящие и почтовые списки группируют элементы по датам. Свежая активность остается сверху, а более старые элементы уходят в отдельные секции по мере прокрутки. Это сохраняет читаемость длинного списка без изменения фильтров и сортировки.
 
-On mobile, pull down from the top of any list — inbox, mail, documents, tasks, customers, or search — to refresh it. A spinner drops in while the list refetches and retracts once it's up to date.
+## На мобильных устройствах
+
+На мобильном устройстве потяните список вниз, чтобы обновить данные. Это работает во входящих, почте, документах, задачах, клиентах и поиске: индикатор появляется во время обновления и скрывается, когда список синхронизирован.

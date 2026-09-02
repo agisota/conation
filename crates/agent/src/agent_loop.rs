@@ -1,8 +1,7 @@
 /// The main entry point: [`AgentLoop`] and [`Session`].
 use crate::error::AgentError;
 use crate::hook::{RegisterFn, ToolRouter};
-use crate::model::PredefinedModel;
-use crate::model::router::{ModelRouter, ProviderAgent};
+use crate::model::router::{DEFAULT_ROX_MODEL, ModelRouter, ProviderAgent};
 use crate::stream::ChatCompletionStream;
 use crate::tool_adapter::DynToolSetAdapter;
 use ai_toolset::{RequestContext, SearchableTool, ToolLoader, ToolSet as AiToolSet};
@@ -22,7 +21,8 @@ const DEFAULT_MAX_TOKENS: u64 = 16_000;
 /// Routes each session to the provider serving the selected model id (see
 /// [`ModelRouter`]). The model is a
 /// plain api-id string so the frontend can select it directly; backend
-/// callers may pass a [`PredefinedModel`] via `with_model` (it is `ToString`).
+/// callers may pass a [`crate::model::PredefinedModel`] via `with_model` (it is
+/// `ToString`).
 /// Tools and system prompt are provided per-session since they vary by request
 /// (MCP tools are per-user, system prompt depends on toolset selection).
 pub struct AgentLoop {
@@ -34,15 +34,16 @@ pub struct AgentLoop {
 
 impl AgentLoop {
     /// Create an `AgentLoop` with provider clients from `APP_SECRETS_JSON` or the environment and
-    /// the default model (Opus 4.7).
+    /// the default Conation model (Gemini 2.5 Flash through Rox/OmniRoute).
     ///
     /// `recorder` is the [`UsageRecorder`] every session created from this loop
     /// logs token usage to — it is required so that no AI call goes unrecorded.
     ///
-    /// `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` are required.
+    /// `ROX_API_KEY` is required. Provider-specific keys are optional unless a
+    /// caller explicitly selects that provider.
     pub fn new(recorder: Arc<dyn UsageRecorder>) -> Self {
         Self {
-            model: PredefinedModel::default().to_string(),
+            model: DEFAULT_ROX_MODEL.to_owned(),
             max_turns: DEFAULT_MAX_TURNS,
             max_tokens: DEFAULT_MAX_TOKENS,
             recorder,
@@ -203,17 +204,10 @@ impl AgentLoop {
             })
         };
 
-        // Tell the model which model it is. Done here (not on the frontend)
-        // so the system prompt always reflects the model actually serving the
-        // request. A model's training data predates its own release, so a
-        // newly released model doesn't recognize its own id and may fall back
-        // to identifying as a predecessor — tell it to trust the id.
-        let mut system_prompt = format!(
-            "{system_prompt}\n\nYou are the {} model. If this model id is unfamiliar, \
-             that is because it was released after your training data cutoff — trust \
-             this id over your training data when identifying yourself.",
-            self.model
-        );
+        // ModelRouter appends the exact candidate id to each provider prompt.
+        // Keeping the base prompt model-neutral is necessary because a single
+        // request may move to the next candidate before emitting output.
+        let mut system_prompt = system_prompt.to_owned();
         // Tell the model which connected integrations it can reach via tool
         // search. The prompt text lives in the `prompt` crate; the toolset names
         // are the dynamic data injected here. Omitted when nothing is connected.

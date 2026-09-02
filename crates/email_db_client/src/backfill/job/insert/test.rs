@@ -6,7 +6,7 @@ use sqlx::{Pool, Postgres};
 
 async fn insert_link(pool: &Pool<Postgres>, link_id: Uuid) {
     sqlx::query!(
-        r#"INSERT INTO email_links (id, conation_id, fusionauth_user_id, email_address, provider)
+        r#"INSERT INTO email_links (id, macro_id, fusionauth_user_id, email_address, provider)
            VALUES ($1, $2, $2, $3, 'GMAIL')"#,
         link_id,
         "macro|conflict@corp.test",

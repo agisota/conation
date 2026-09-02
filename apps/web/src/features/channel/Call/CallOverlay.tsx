@@ -1,5 +1,5 @@
-import { useSplitPanel } from '@components/app/split-layout/layoutUtils';
 import { t } from '@app/lib/i18n';
+import { useSplitPanel } from '@components/app/split-layout/layoutUtils';
 import { UserIcon } from '@core/component/UserIcon';
 import { useAuthor, useUserId } from '@core/context/user';
 import { useProfilePictureUrl } from '@core/signal/profilePicture';
@@ -133,10 +133,18 @@ function LocalParticipantTile(props: {
         <TrackView track={props.track} mirror />
       </Show>
 
-      <MutedMicrophoneBadge muted={props.isAudioMuted} label="You are muted" />
+      <MutedMicrophoneBadge
+        muted={props.isAudioMuted}
+        label={t('channel.call.muted.you')}
+      />
 
-      <Show when={props.isConnecting} fallback={<VideoTag>{t('auto.you')}</VideoTag>}>
-        <div class="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-surface/70 text-ink-muted text-xs">{t('auto.connecting')}</div>
+      <Show
+        when={props.isConnecting}
+        fallback={<VideoTag>{t('channel.call.you')}</VideoTag>}
+      >
+        <div class="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-surface/70 text-ink-muted text-xs">
+          {t('channel.call.connecting')}
+        </div>
       </Show>
     </ParticipantTileWrapper>
   );
@@ -191,7 +199,7 @@ function ParticipantTile(props: { participant: RemoteParticipant }) {
 
       <MutedMicrophoneBadge
         muted={isAudioMuted()}
-        label={`${displayName()} is muted`}
+        label={t('channel.call.muted.participant', { name: displayName() })}
       />
 
       <VideoTag variant="truncated">{displayName()}</VideoTag>
@@ -213,7 +221,9 @@ function ScreenShareTile(props: { participant: RemoteParticipant }) {
     <div class="relative size-full flex items-center justify-center rounded-lg overflow-hidden bg-message border border-edge-muted">
       <TrackView track={screenTrack()} fit="contain" />
 
-      <VideoTag variant="truncated">{displayName()}'s screen</VideoTag>
+      <VideoTag variant="truncated">
+        {t('channel.call.participantScreen', { name: displayName() })}
+      </VideoTag>
     </div>
   );
 }
@@ -289,7 +299,7 @@ export function CallOverlay(props: { onLeave: () => void }) {
               <div class="relative size-full">
                 <TrackView track={localScreenTrack()} fit="contain" />
 
-                <VideoTag>{t('auto.your_screen')}</VideoTag>
+                <VideoTag>{t('channel.call.yourScreen')}</VideoTag>
               </div>
             </Show>
             <For each={remoteScreenShares()}>
@@ -353,8 +363,8 @@ export function CallOverlay(props: { onLeave: () => void }) {
             placement="top"
             label={
               callCtx.isSharedWithTeam()
-                ? 'Everyone can view the transcript and AI summary'
-                : 'Let everyone view the transcript and AI summary'
+                ? t('channel.call.shareWithTeamEnabledHelp')
+                : t('channel.call.shareWithTeamDisabledHelp')
             }
           >
             <button
@@ -373,7 +383,9 @@ export function CallOverlay(props: { onLeave: () => void }) {
             >
               <InlineCheckbox checked={callCtx.isSharedWithTeam()} />
               <Show when={!isMediumNarrow()}>
-                <span class="whitespace-nowrap">{t('auto.share_with_team')}</span>
+                <span class="whitespace-nowrap">
+                  {t('channel.call.shareWithTeam')}
+                </span>
               </Show>
             </button>
           </Tooltip>

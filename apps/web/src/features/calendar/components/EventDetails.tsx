@@ -1,12 +1,11 @@
+import { formatDateTime, t } from '@app/lib/i18n';
 import { UserIcon, type UserIconProps } from '@core/component/UserIcon';
-import { t } from '@app/lib/i18n';
 import { ScrollIndicators } from '@core/component/VerticalScrollIndicators';
 import {
   emailToMacroId,
   getDisplayName,
   getInitialsFromName,
 } from '@core/user';
-import { plural } from '@core/util/string';
 import { openExternalUrl } from '@core/util/url';
 import { Collapsible } from '@kobalte/core/collapsible';
 import ArrowSquareOutIcon from '@phosphor/arrow-square-out.svg';
@@ -57,34 +56,22 @@ import {
   formatCalendarTime,
 } from '../utils/time-format';
 
-const formatDate = new Intl.DateTimeFormat(undefined, {
-  weekday: 'short',
-  month: 'long',
-  day: 'numeric',
-});
-const formatShortDate = new Intl.DateTimeFormat(undefined, {
-  month: 'short',
-  day: 'numeric',
-});
 const ATTENDEE_RESPONSE = {
   accepted: {
-    label: 'Accepted',
     class: 'text-success',
     icon: CheckIcon,
   },
   declined: {
-    label: 'Declined',
     class: 'text-failure',
     icon: XIcon,
   },
   tentative: {
-    label: 'Tentative',
     class: 'text-warning',
     icon: QuestionMarkIcon,
   },
 } satisfies Record<
   Exclude<AttendeeResponseStatus, 'needs_action'>,
-  { label: string; class: string; icon: typeof CheckIcon }
+  { class: string; icon: typeof CheckIcon }
 >;
 
 function isUsableDisplayName(value: string, email: string) {
@@ -168,7 +155,7 @@ function CalendarUserItem(props: {
           )}
         >
           {props.displayName()}
-          <Show when={props.isSelf}> (you)</Show>
+          <Show when={props.isSelf}> {t('calendar.event.attendee.you')}</Show>
         </span>
         <Show
           when={secondaryLabelPosition() === 'below' && props.secondaryLabel}
@@ -197,10 +184,10 @@ function CalendarAttendeeItem(props: {
     attendee.isOrganizer || attendee.isOptional ? (
       <>
         <Show when={attendee.isOrganizer}>
-          <span>{t('auto.organizer')}</span>
+          <span>{t('calendar.event.role.organizer')}</span>
         </Show>
         <Show when={attendee.isOptional}>
-          <span>{t('auto.optional')}</span>
+          <span>{t('calendar.event.role.optional')}</span>
         </Show>
       </>
     ) : undefined;
@@ -212,8 +199,12 @@ function CalendarAttendeeItem(props: {
   const trailing = response ? (
     <span
       role="img"
-      aria-label={response.label}
-      title={response.label}
+      aria-label={t('calendar.event.attendee.response', {
+        response: attendee.responseStatus,
+      })}
+      title={t('calendar.event.attendee.response', {
+        response: attendee.responseStatus,
+      })}
       class={`shrink-0 ${response.class}`}
     >
       <Dynamic component={response.icon} aria-hidden="true" class="size-3.5" />
@@ -300,18 +291,40 @@ function formatEventSchedule(
 ) {
   const start = parseCalendarDate(event.start);
   const end = parseCalendarDate(event.end);
+  const longDate = (date: Date) =>
+    formatDateTime(date, {
+      weekday: 'short',
+      month: 'long',
+      day: 'numeric',
+    });
+  const shortDate = (date: Date) =>
+    formatDateTime(date, { month: 'short', day: 'numeric' });
 
   if (event.allDay) {
     const inclusiveEnd = new Date(end);
     inclusiveEnd.setDate(inclusiveEnd.getDate() - 1);
     return isSameLocalDate(start, inclusiveEnd)
-      ? `${formatDate.format(start)} · All day`
-      : `${formatShortDate.format(start)}–${formatShortDate.format(inclusiveEnd)} · All day`;
+      ? t('calendar.event.schedule.allDaySingle', {
+          date: longDate(start),
+        })
+      : t('calendar.event.schedule.allDayRange', {
+          start: shortDate(start),
+          end: shortDate(inclusiveEnd),
+        });
   }
 
   return isSameLocalDate(start, end)
-    ? `${formatDate.format(start)} · ${formatCalendarTime(start, timeFormat)}–${formatCalendarTime(end, timeFormat)}`
-    : `${formatDate.format(start)}, ${formatCalendarTime(start, timeFormat)}–${formatDate.format(end)}, ${formatCalendarTime(end, timeFormat)}`;
+    ? t('calendar.event.schedule.timedSingle', {
+        date: longDate(start),
+        startTime: formatCalendarTime(start, timeFormat),
+        endTime: formatCalendarTime(end, timeFormat),
+      })
+    : t('calendar.event.schedule.timedRange', {
+        startDate: longDate(start),
+        startTime: formatCalendarTime(start, timeFormat),
+        endDate: longDate(end),
+        endTime: formatCalendarTime(end, timeFormat),
+      });
 }
 
 function safeConferenceUrl(value: string | undefined) {
@@ -388,7 +401,9 @@ function EventRemindersItem(props: {
             {(reminder) => (
               <span>
                 {formatReminderOffset(reminder.minutes)}
-                {reminder.method === REMINDER_METHOD_POPUP ? '' : ' (email)'}
+                {reminder.method === REMINDER_METHOD_POPUP
+                  ? ''
+                  : t('calendar.reminder.emailSuffix')}
               </span>
             )}
           </For>
@@ -429,7 +444,7 @@ function CalendarSourceItem(props: {
         <Show when={createdBy()}>
           {(name) => (
             <div class="text-xs text-ink-extra-muted sm:text-xxs">
-              Created by: {name()}
+              {t('calendar.event.createdBy', { name: name() })}
             </div>
           )}
         </Show>
@@ -458,7 +473,7 @@ function CalendarOrganizerItem(props: { organizer: CalendarPerson }) {
           displayName={displayName}
           iconProps={iconProps}
           isSelf={props.organizer.isSelf}
-          secondaryLabel="Organizer"
+          secondaryLabel={t('calendar.event.role.organizer')}
           secondaryLabelPosition="above"
         />
       </div>
@@ -473,14 +488,19 @@ function formatOriginalTimeZone(
   if (event.allDay || !event.timeZone) return undefined;
 
   try {
-    const time = new Intl.DateTimeFormat(undefined, {
+    const time = formatDateTime(parseCalendarDate(event.start), {
       ...CALENDAR_TIME_FORMAT_OPTIONS[timeFormat],
       timeZone: event.timeZone,
       timeZoneName: 'short',
-    }).format(parseCalendarDate(event.start));
-    return `Original time: ${time} · ${event.timeZone}`;
+    });
+    return t('calendar.event.originalTime', {
+      time,
+      timeZone: event.timeZone,
+    });
   } catch {
-    return `Original timezone: ${event.timeZone}`;
+    return t('calendar.event.originalTimeZone', {
+      timeZone: event.timeZone,
+    });
   }
 }
 
@@ -495,8 +515,8 @@ export function EventDetails(props: {
   );
   const conferenceLabel = () =>
     props.event.conferenceProvider === 'google_meet'
-      ? 'Join Google Meet'
-      : 'Join meeting';
+      ? t('calendar.event.conference.joinGoogleMeet')
+      : t('calendar.event.conference.joinMeeting');
   const attribution = createMemo(() => eventAttribution(props.event));
   const originalTimeZone = createMemo(() =>
     formatOriginalTimeZone(props.event, props.timeFormat)
@@ -509,7 +529,7 @@ export function EventDetails(props: {
 
     return props.event.recurrenceLines.length > 0 ||
       props.event.recurrenceId !== undefined
-      ? 'Recurring event'
+      ? t('calendar.recurrence.recurringEvent')
       : undefined;
   });
 
@@ -612,8 +632,9 @@ export function EventAttendeesSection(props: {
         <Collapsible.Trigger class="group flex w-full items-center gap-4 px-4 py-4 text-left hover:bg-hover hover:text-ink sm:gap-3">
           <UsersIcon class="size-5 shrink-0 text-ink-extra-muted sm:size-4" />
           <span>
-            {props.attendees.length}{' '}
-            {plural('attendee', props.attendees.length)}
+            {t('calendar.event.attendee.count', {
+              count: props.attendees.length,
+            })}
           </span>
           <CaretDownIcon
             aria-hidden="true"

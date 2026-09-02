@@ -4,11 +4,11 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
+use conation_authorization::MacroAuthorizationService;
 use entity_access::{
     domain::{models::MemberTeamRole, ports::EntityAccessService},
     inbound::axum_extractors::OptionalMacroUserTeamExtractorV2,
 };
-use conation_authorization::MacroAuthorizationService;
 use model_error_response::ErrorResponse;
 
 use crate::domain::{

@@ -7,26 +7,26 @@ VALUES
 INSERT INTO
     public."User" (id, email, macro_user_id)
 VALUES
-    ('macro|user@user.com', 'testuser@test.com', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'::uuid),
-    ('macro|owner2@user.com', 'owner2@test.com', 'cccccccc-cccc-cccc-cccc-cccccccccccc'::uuid);
+    ('conation|user@user.com', 'testuser@test.com', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'::uuid),
+    ('conation|owner2@user.com', 'owner2@test.com', 'cccccccc-cccc-cccc-cccc-cccccccccccc'::uuid);
 
 INSERT INTO
     public.team (id, name, owner_id, slug)
 VALUES
-    ('dddddddd-dddd-dddd-dddd-dddddddddddd'::uuid, 'Engineering', 'macro|user@user.com', 'ENG'),
-    ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'::uuid, 'Platform API', 'macro|owner2@user.com', 'PLATFORM_API');
+    ('dddddddd-dddd-dddd-dddd-dddddddddddd'::uuid, 'Engineering', 'conation|user@user.com', 'ENG'),
+    ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'::uuid, 'Platform API', 'conation|owner2@user.com', 'PLATFORM_API');
 
 INSERT INTO
     public.team_user (user_id, team_id, team_role)
 VALUES
-    ('macro|user@user.com', 'dddddddd-dddd-dddd-dddd-dddddddddddd'::uuid, 'owner'),
-    ('macro|owner2@user.com', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'::uuid, 'owner');
+    ('conation|user@user.com', 'dddddddd-dddd-dddd-dddd-dddddddddddd'::uuid, 'owner'),
+    ('conation|owner2@user.com', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'::uuid, 'owner');
 
 INSERT INTO
     public."Document" (id, name, "fileType", owner)
 VALUES
-    ('0d0dc589-f301-43f1-8b11-4ab448ca4bb4', 'Known Task', 'md', 'macro|user@user.com'),
-    ('11111111-1111-1111-1111-111111111111', 'Platform Task', 'md', 'macro|user@user.com');
+    ('0d0dc589-f301-43f1-8b11-4ab448ca4bb4', 'Known Task', 'md', 'conation|user@user.com'),
+    ('11111111-1111-1111-1111-111111111111', 'Platform Task', 'md', 'conation|user@user.com');
 
 INSERT INTO
     public.document_sub_type (document_id, sub_type)

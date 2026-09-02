@@ -4,12 +4,14 @@ import { EmailAttachmentPill } from '@block-email/component/AttachmentPill';
 import type { DraftFormAttachment } from '@block-email/component/createEmailFormState';
 import { EmailDateSelector } from '@block-email/component/email-date-selector';
 import { MacroSignatureButton } from '@block-email/component/MacroSignatureButton';
-import {
-  MACRO_EMAIL_SIGNATURE,
-  MAX_ATTACHMENTS_BYTES_SIZE,
-} from '@block-email/constants';
+import { MAX_ATTACHMENTS_BYTES_SIZE } from '@block-email/constants';
 import { addUserMentionToCc } from '@block-email/util/mentionToCc';
-import { useHasPaidAccess } from '@core/auth';
+import {
+  $appendWatermarkNodeToLast,
+  $removeAllWatermarkNodes,
+} from '@conation/lexical-core';
+import { Telemetry } from '@conation/observability';
+import { useHasFeatureAccess } from '@core/auth';
 import { useBlockId } from '@core/block';
 import { FileDropOverlay } from '@core/component/FileDropOverlay';
 import { buildConfig } from '@core/component/LexicalMarkdown/builder/MarkdownConfigBuilder';
@@ -38,15 +40,9 @@ import { isNativeMobilePlatform } from '@core/mobile/isNativeMobilePlatform';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
 import { useTouchOutsideToDismissKeyboard } from '@core/mobile/useTouchOutsideToDismissKeyboard';
 import { trackMention } from '@core/signal/mention';
-import { plural } from '@core/util/string';
 import { handleFileFolderDrop } from '@core/util/upload';
 import { ToggleButton as KToggleButton } from '@kobalte/core/toggle-button';
 import { $generateHtmlFromNodes } from '@lexical/html';
-import {
-  $appendWatermarkNodeToLast,
-  $removeAllWatermarkNodes,
-} from '@conation/lexical-core';
-import { Telemetry } from '@conation/observability';
 import ChevronDown from '@phosphor/caret-down.svg';
 import CaretRight from '@phosphor/caret-right.svg';
 import DotsThree from '@phosphor/dots-three.svg';
@@ -585,7 +581,7 @@ export function BaseInput(props: {
     markDoneUndoHandle = undefined;
     if (doneHandle) {
       await doneHandle.undo({
-        onError: () => toast.failure('Failed to restore thread to inbox'),
+        onError: () => toast.failure(t('blockEmail.trash.restoreInboxFailed')),
       });
     }
     if (threadId) {
@@ -614,11 +610,11 @@ export function BaseInput(props: {
       // This send opens a fresh undo cycle for the draft id.
       if (draftId) endUndoSend(draftId);
       const sendLinkId = vars.linkId;
-      const toastId = toast.success('Email sent', {
+      const toastId = toast.success(t('blockEmail.status.sent'), {
         actions: draftId
           ? [
               {
-                label: 'Undo',
+                label: t('blockEmail.actions.undo'),
                 icon: ArrowCounterClockwise,
                 onClick: () => {
                   if (toastId != null) toast.dismiss(toastId);
@@ -654,7 +650,7 @@ export function BaseInput(props: {
       if (draftSaveTimer) window.clearTimeout(draftSaveTimer);
       pendingSend = false;
       pendingMarkDoneNavigationTargetId = undefined;
-      toast.failure('Failed to send email');
+      toast.failure(t('blockEmail.status.sendFailed'));
     },
   });
 
@@ -1064,7 +1060,7 @@ export function BaseInput(props: {
     });
   });
 
-  const hasPaidAccess = useHasPaidAccess();
+  const hasFeatureAccess = useHasFeatureAccess();
 
   // Set up hotkey scope for the compose message component
   const [attachComposeHotkeys, composeHotkeyScope] =
@@ -1081,7 +1077,7 @@ export function BaseInput(props: {
     const bcc = form().recipients().bcc.map(convertEmailRecipientToContactInfo);
 
     if ((to?.length ?? 0) + (cc?.length ?? 0) + (bcc?.length ?? 0) === 0) {
-      toast.failure('Email failed to send. No recipients provided');
+      toast.failure(t('blockEmail.validation.recipientRequired'));
       return;
     }
 
@@ -1090,12 +1086,12 @@ export function BaseInput(props: {
 
     if (!currentThread && !newMessage) {
       Telemetry.error(new Error("Can't send email, no email thread found"));
-      toast.failure('Email failed to send');
+      toast.failure(t('blockEmail.status.sendFailed'));
       return;
     }
 
     if (newMessage && currentThread) {
-      toast.failure('Email failed to send');
+      toast.failure(t('blockEmail.status.sendFailed'));
       Telemetry.error('New message and thread cannot be provided together');
       return;
     }
@@ -1103,19 +1099,19 @@ export function BaseInput(props: {
     let linkId: string | undefined = currentThread?.link_id;
     if (newMessage || !linkId) {
       if (emailLinksQuery.isPending) {
-        toast.alert('Loading email accounts...');
+        toast.alert(t('blockEmail.accounts.loading'));
         return;
       }
 
       if (emailLinksQuery.isError) {
-        toast.failure('Email failed to send: Could not load email accounts');
+        toast.failure(t('blockEmail.accounts.loadFailed'));
         Telemetry.error('Failed to load email links');
         return;
       }
 
       const linksData = emailLinksQuery.data;
       if (!linksData || linksData.links.length < 1) {
-        toast.failure('Email failed to send: No email account connected');
+        toast.failure(t('blockEmail.accounts.noneConnected'));
         Telemetry.error('No links found');
         return;
       }
@@ -1177,7 +1173,9 @@ export function BaseInput(props: {
     // leave orphaned watermark nodes in the editor tree.
     const cleanupWatermark = $appendWatermarkNodeToLast(
       currentEditor,
-      !hasPaidAccess() ? MACRO_EMAIL_SIGNATURE : undefined
+      !hasFeatureAccess()
+        ? t('blockEmail.compose.conationSignature')
+        : undefined
     );
 
     const replyingTo = props.replyingTo();
@@ -1304,7 +1302,7 @@ export function BaseInput(props: {
       registerHotkey({
         hotkey: 'cmd+enter',
         scopeId: composeHotkeyScope,
-        description: 'Send email',
+        description: () => t('blockEmail.actions.send'),
         keyDownHandler: () => {
           if (form().sendTime()) return false;
           sendEmail();
@@ -1318,7 +1316,7 @@ export function BaseInput(props: {
       registerHotkey({
         hotkey: 'shift+cmd+enter',
         scopeId: composeHotkeyScope,
-        description: 'Send and mark done',
+        description: () => t('blockEmail.hotkeys.sendAndMarkDone'),
         keyDownHandler: () => {
           if (form().sendTime()) return false;
           sendEmail(true);
@@ -1332,7 +1330,7 @@ export function BaseInput(props: {
       registerHotkey({
         hotkey: 'arrowup',
         scopeId: composeHotkeyScope,
-        description: 'Select last message',
+        description: () => t('blockEmail.hotkeys.selectLastMessage'),
         runWithInputFocused: true,
         condition: () => {
           const ed = editor();
@@ -1366,7 +1364,7 @@ export function BaseInput(props: {
       registerHotkey({
         hotkey: 'escape',
         scopeId: composeHotkeyScope,
-        description: 'Close reply',
+        description: () => t('blockEmail.hotkeys.closeReply'),
         keyDownHandler: () => {
           const draft = collectDraft();
           const isEmpty = draft === null;
@@ -1422,7 +1420,9 @@ export function BaseInput(props: {
     const attachmentsToAddByteSize = files.reduce((sum, f) => sum + f.size, 0);
 
     if (attachmentsToAddByteSize >= MAX_ATTACHMENTS_BYTES_SIZE) {
-      toast.failure(`${plural('Attachment', files.length)} exceed 18MB`);
+      toast.failure(
+        t('blockEmail.attachments.tooLarge', { count: files.length })
+      );
       return;
     }
 
@@ -1435,8 +1435,8 @@ export function BaseInput(props: {
       currentAttachmentsByteSize + attachmentsToAddByteSize >=
       MAX_ATTACHMENTS_BYTES_SIZE
     ) {
-      toast.failure("Can't add more attachments", {
-        subtext: 'Total attachments exceed 18MB limit',
+      toast.failure(t('blockEmail.attachments.limitReached'), {
+        subtext: t('blockEmail.attachments.limitDescription'),
       });
       return;
     }
@@ -1485,10 +1485,10 @@ export function BaseInput(props: {
 
   const unscheduleMessageMutation = useUnscheduleMessageMutation({
     onSuccess: () => {
-      toast.success('Email unscheduled');
+      toast.success(t('blockEmail.schedule.unscheduled'));
     },
     onError: () => {
-      toast.failure('Failed to unschedule email');
+      toast.failure(t('blockEmail.schedule.unscheduleFailed'));
     },
   });
 
@@ -1512,8 +1512,8 @@ export function BaseInput(props: {
       // Ensure draft is saved before scheduling
       const draftID = currentDraft ?? (await executeSaveDraft());
       if (!draftID) {
-        toast.failure('Failed to schedule message', {
-          subtext: 'Draft required',
+        toast.failure(t('blockEmail.schedule.failed'), {
+          subtext: t('blockEmail.schedule.draftRequired'),
         });
         return;
       }
@@ -1581,13 +1581,20 @@ export function BaseInput(props: {
       ...form().recipients().bcc,
     ];
     const firstRecipient = recipients[0];
-    const action =
-      effectiveReplyType() === 'forward' ? 'Forwarding' : 'Replying to';
+    const isForward = effectiveReplyType() === 'forward';
+    const action = isForward
+      ? t('blockEmail.reply.forwarding')
+      : t('blockEmail.reply.replyingTo');
     if (!firstRecipient) return action;
 
     const remainingCount = recipients.length - 1;
-    const suffix = remainingCount > 0 ? ` + ${remainingCount}` : '';
-    return `${action} ${getRecipientDisplayName(firstRecipient)}${suffix}`;
+    const values = {
+      name: getRecipientDisplayName(firstRecipient),
+      count: remainingCount,
+    };
+    return isForward
+      ? t('blockEmail.reply.forwardingSummary', values)
+      : t('blockEmail.reply.replyingSummary', values);
   };
   const mobileRecipientSelectorClass =
     'min-w-0 flex-1 bg-transparent rounded-none! [&_input]:ml-0! [&_input]:min-w-0! [&_input]:text-[17px] [&_input]:leading-6 [&_input]:text-ink [&_input]:placeholder:text-ink-placeholder';
@@ -1697,7 +1704,7 @@ export function BaseInput(props: {
       size="icon-sm"
       variant={buttonProps?.variant}
       class={buttonProps?.class}
-      tooltip="Attach"
+      tooltip={t('blockEmail.actions.attach')}
     >
       <Paperclip />
     </Button>
@@ -1729,7 +1736,11 @@ export function BaseInput(props: {
                 variant="ghost"
                 size="icon-sm"
                 class="rounded-full border border-edge-muted/70 bg-transparent"
-                tooltip={savedDraftId() ? 'Delete draft' : 'Discard draft'}
+                tooltip={
+                  savedDraftId()
+                    ? t('blockEmail.compose.deleteDraft')
+                    : t('blockEmail.compose.discardDraft')
+                }
                 onClick={deleteDraftAndReset}
               >
                 <Trash class="size-4" />
@@ -1744,6 +1755,7 @@ export function BaseInput(props: {
                 disabled={sendActionDisabled() || sendActionHidden()}
                 pending={sendMutation.isPending}
                 onClick={() => sendEmail()}
+                tooltip={t('blockEmail.actions.send')}
               />
             </div>
           </div>
@@ -1779,7 +1791,9 @@ export function BaseInput(props: {
                 <div class="min-w-0 w-full">
                   <div class="flex items-center gap-2 min-w-0 border-b border-edge-muted">
                     <div class="flex items-center gap-2 min-w-0 flex-1 py-3">
-                      <div class="w-14 shrink-0 text-sm text-ink-placeholder">{t('auto.from')}</div>
+                      <div class="w-14 shrink-0 text-sm text-ink-placeholder">
+                        {t('blockEmail.fields.from')}
+                      </div>
                       <FromInboxSelector
                         pill
                         class="min-w-0"
@@ -1799,7 +1813,7 @@ export function BaseInput(props: {
                             queueMicrotask(() => ccRef()?.focus());
                           }}
                         >
-                          Cc
+                          {t('blockEmail.fields.cc')}
                         </Button>
                       </Show>
                       <Show when={!showBcc()}>
@@ -1810,7 +1824,9 @@ export function BaseInput(props: {
                             setShowBcc(true);
                             queueMicrotask(() => bccRef()?.focus());
                           }}
-                        >{t('auto.bcc')}</Button>
+                        >
+                          {t('blockEmail.fields.bcc')}
+                        </Button>
                       </Show>
                     </div>
                   </div>
@@ -1822,7 +1838,7 @@ export function BaseInput(props: {
                     onDrop={handleRecipientDrop}
                   >
                     <div class="w-14 shrink-0 text-sm text-ink-placeholder">
-                      To
+                      {t('blockEmail.fields.to')}
                     </div>
                     <RecipientSelector<EmailRecipient['kind']>
                       openOnFocus={false}
@@ -1853,7 +1869,7 @@ export function BaseInput(props: {
                       onDrop={handleRecipientDrop}
                     >
                       <div class="w-14 shrink-0 text-sm text-ink-placeholder">
-                        Cc
+                        {t('blockEmail.fields.cc')}
                       </div>
                       <RecipientSelector<EmailRecipient['kind']>
                         openOnFocus={false}
@@ -1884,7 +1900,9 @@ export function BaseInput(props: {
                       dragState={recipientDragState}
                       onDrop={handleRecipientDrop}
                     >
-                      <div class="w-14 shrink-0 text-sm text-ink-placeholder">{t('auto.bcc')}</div>
+                      <div class="w-14 shrink-0 text-sm text-ink-placeholder">
+                        {t('blockEmail.fields.bcc')}
+                      </div>
                       <RecipientSelector<EmailRecipient['kind']>
                         openOnFocus={false}
                         class="min-w-0 bg-transparent rounded-none! [&_input]:ml-0!"
@@ -1915,7 +1933,9 @@ export function BaseInput(props: {
                 props.isEditingExisting || props.newMessage ? 'flex' : 'hidden'
               )}
             >
-              <div class="text-sm min-w-16 pl-4">{t('auto.subject')}</div>
+              <div class="text-sm min-w-16 pl-4">
+                {t('blockEmail.fields.subject')}
+              </div>
               <input
                 type="text"
                 class="flex-1 text-sm bg-transparent outline-none border-0 px-3 py-1"
@@ -1929,7 +1949,7 @@ export function BaseInput(props: {
                   e.preventDefault();
                   e.currentTarget.blur();
                 }}
-                placeholder={t('auto.subject')}
+                placeholder={t('blockEmail.fields.subject')}
               />
             </div>
           </>
@@ -1942,7 +1962,9 @@ export function BaseInput(props: {
             dragState={recipientDragState}
             onDrop={handleRecipientDrop}
           >
-            <div class="shrink-0 text-ink-placeholder">To:</div>
+            <div class="shrink-0 text-ink-placeholder">
+              {t('blockEmail.fields.to')}:
+            </div>
             <RecipientSelector<EmailRecipient['kind']>
               openOnFocus={false}
               class={mobileRecipientSelectorClass}
@@ -1967,7 +1989,11 @@ export function BaseInput(props: {
               variant="ghost"
               size="icon-sm"
               class="shrink-0 rounded-full bg-transparent text-ink-placeholder"
-              tooltip={mobileDrawerCcBccOpen() ? 'Hide Cc/Bcc' : 'Show Cc/Bcc'}
+              tooltip={
+                mobileDrawerCcBccOpen()
+                  ? t('blockEmail.fields.hideCcBcc')
+                  : t('blockEmail.fields.showCcBcc')
+              }
               aria-expanded={mobileDrawerCcBccOpen()}
               onClick={toggleMobileDrawerCcBcc}
             >
@@ -1987,7 +2013,9 @@ export function BaseInput(props: {
               dragState={recipientDragState}
               onDrop={handleRecipientDrop}
             >
-              <div class="shrink-0 text-ink-placeholder">Cc:</div>
+              <div class="shrink-0 text-ink-placeholder">
+                {t('blockEmail.fields.cc')}:
+              </div>
               <RecipientSelector<EmailRecipient['kind']>
                 openOnFocus={false}
                 class={mobileRecipientSelectorClass}
@@ -2018,7 +2046,9 @@ export function BaseInput(props: {
               dragState={recipientDragState}
               onDrop={handleRecipientDrop}
             >
-              <div class="shrink-0 text-ink-placeholder">Bcc:</div>
+              <div class="shrink-0 text-ink-placeholder">
+                {t('blockEmail.fields.bcc')}:
+              </div>
               <RecipientSelector<EmailRecipient['kind']>
                 openOnFocus={false}
                 class={mobileRecipientSelectorClass}
@@ -2046,7 +2076,9 @@ export function BaseInput(props: {
             class="min-h-14 border-b border-edge-muted/70 flex items-center min-w-0"
             data-corvu-no-drag=""
           >
-            <span class="shrink-0 text-ink-placeholder">From:&nbsp;</span>
+            <span class="shrink-0 text-ink-placeholder">
+              {t('blockEmail.fields.from')}:&nbsp;
+            </span>
             <FromInboxSelector
               compact
               class="min-w-0 truncate text-ink-muted"
@@ -2071,7 +2103,7 @@ export function BaseInput(props: {
                 e.preventDefault();
                 e.currentTarget.blur();
               }}
-              placeholder="Subject:"
+              placeholder={`${t('blockEmail.fields.subject')}:`}
             />
           </div>
         </div>
@@ -2140,7 +2172,9 @@ export function BaseInput(props: {
           <div
             class={cn('absolute size-full inset-0', !isDragging() && 'hidden')}
           >
-            <FileDropOverlay>{t('auto.drop_file_s_to_attach')}</FileDropOverlay>
+            <FileDropOverlay>
+              {t('blockEmail.compose.dropFiles')}
+            </FileDropOverlay>
           </div>
           <MarkdownShell
             config={editorConfig}
@@ -2157,14 +2191,14 @@ export function BaseInput(props: {
             initialValue={initialHtml() ? undefined : props.preloadedBody}
             placeholder={
               isMobileDrawer()
-                ? 'Use `@` to reference files'
-                : 'Reply — @mention to share or cc people'
+                ? t('blockEmail.compose.bodyPlaceholder')
+                : t('blockEmail.reply.bodyPlaceholder')
             }
             portalScope={isMobileDrawer() ? 'local' : 'split'}
             refFn={(el) => props.markdownDomRef?.(el)}
             onConnect={handleEditorConnect}
           />
-          <Show when={!hasPaidAccess()}>
+          <Show when={!hasFeatureAccess()}>
             <div class="text-ink/50 mt-[1lh]" data-watermark>
               <MacroSignatureButton />
             </div>
@@ -2195,7 +2229,7 @@ export function BaseInput(props: {
               variant="ghost"
               size="icon-sm"
               class="rounded-md text-ink-extra-muted hover:text-ink-muted hover:bg-active"
-              tooltip="Show quoted text"
+              tooltip={t('blockEmail.reply.showQuotedText')}
               onclick={(e: MouseEvent) => {
                 e.stopPropagation();
                 setQuoteCollapsed(false);
@@ -2220,7 +2254,9 @@ export function BaseInput(props: {
           >
             <Tooltip
               label={
-                form().replyAppended() ? 'Hide quoted text' : 'Show quoted text'
+                form().replyAppended()
+                  ? t('blockEmail.reply.hideQuotedText')
+                  : t('blockEmail.reply.showQuotedText')
               }
             >
               <KToggleButton
@@ -2266,7 +2302,11 @@ export function BaseInput(props: {
 
               <Button
                 onclick={deleteDraftAndReset}
-                tooltip={savedDraftId() ? 'Delete draft' : 'Discard'}
+                tooltip={
+                  savedDraftId()
+                    ? t('blockEmail.compose.deleteDraft')
+                    : t('blockEmail.compose.discard')
+                }
                 size="icon-sm"
               >
                 <Trash />
@@ -2291,6 +2331,7 @@ export function BaseInput(props: {
                 pending={sendMutation.isPending}
                 hidden={sendActionHidden()}
                 onClick={() => sendEmail()}
+                tooltip={t('blockEmail.actions.send')}
               />
             </div>
           </div>

@@ -3,10 +3,10 @@ use axum::{
     extract::State,
     response::{IntoResponse, Json, Response},
 };
-use futures::StreamExt;
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_event_broker::MacroEventBroker;
 use conation_user_id::cowlike::CowLike;
+use futures::StreamExt;
 use model::{
     document::BasicDocument,
     response::{ErrorResponse, GenericErrorResponse, GenericSuccessResponse},
@@ -17,10 +17,26 @@ use reqwest::StatusCode;
 use s3_key::build_cloud_storage_bucket_document_key;
 
 const ONBOARDING_FOLDER_NAME: &str = "ONBOARDING_DOCUMENTS";
-const PROJECT_NAME: &str = "Starter Docs";
+const PROJECT_NAME: &str = "Знакомство с Conation";
 
 const MARKDOWN_TEMPLATE: &str = include_str!("./template/markdown_template.md");
 const CANVAS_TEMPLATE: &str = include_str!("./template/canvas_template.canvas");
+
+#[cfg(test)]
+mod test;
+
+/// Russian-first display names for the fixed legacy onboarding samples. The
+/// S3 source key is retained separately, so changing the visible title does
+/// not break lookup of the deployed object.
+fn legacy_onboarding_display_name(source_name: &str, file_type: &str) -> String {
+    let normalized_file_type = file_type.to_ascii_lowercase();
+    match (source_name, normalized_file_type.as_str()) {
+        ("Sample PDF", "pdf") => "Пример PDF".to_string(),
+        ("New Code File", "py") => "Пример кода".to_string(),
+        ("Macro Enterprise", "jpg") => "Пример изображения".to_string(),
+        _ => source_name.to_string(),
+    }
+}
 
 #[utoipa::path(
         tag = "document",
@@ -34,7 +50,7 @@ const CANVAS_TEMPLATE: &str = include_str!("./template/canvas_template.canvas");
             (status = 500, body=GenericErrorResponse),
         )
     )]
-#[tracing::instrument(skip(state, user_context), fields(user_id=?user_context.authorization.user.conation_user_id))]
+#[tracing::instrument(skip(state, user_context), fields(user_id=?user_context.authorization.user.macro_user_id))]
 pub async fn handler(
     State(state): State<ApiContext>,
     user_context: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
@@ -43,8 +59,10 @@ pub async fn handler(
     let start_time = std::time::Instant::now();
     tracing::debug!("initializing user documents");
 
-    // Contains all documents that will be referenced in the markdown file
-    let mut documents = state
+    // Keep deployed S3 keys separate from localized display names. Previously
+    // the database title doubled as the source key, which made rebranding the
+    // legacy samples break object copies.
+    let source_documents = state
         .s3_client
         .get_folder_content_names(format!("{ONBOARDING_FOLDER_NAME}/").as_str())
         .await
@@ -59,9 +77,23 @@ pub async fn handler(
                 .into_response()
         })?;
 
+    let mut documents = Vec::with_capacity(source_documents.len() + 2);
+    let mut source_keys = Vec::with_capacity(source_documents.len() + 2);
+    for (source_name, file_type) in source_documents {
+        let encoded_source_name = urlencoding::encode(&source_name);
+        source_keys.push(Some(format!(
+            "{ONBOARDING_FOLDER_NAME}/{encoded_source_name}.{file_type}"
+        )));
+        documents.push((
+            legacy_onboarding_display_name(&source_name, &file_type),
+            file_type,
+        ));
+    }
+
     // Need to explicitly add the markdown file to this list
-    documents.push(("Why use Macro?".to_string(), "md".to_string()));
-    documents.push(("Macro Canvas".to_string(), "canvas".to_string()));
+    documents.push(("Зачем нужен Conation?".to_string(), "md".to_string()));
+    documents.push(("Холст Conation".to_string(), "canvas".to_string()));
+    source_keys.extend([None, None]);
 
     tracing::trace!(documents=?documents, elapsed_time=?start_time.elapsed(), "got documents");
 
@@ -85,7 +117,7 @@ pub async fn handler(
     let project =
         conation_db_client::document::initialize_onboarding_documents::create_project_transaction(
             &mut transaction,
-            user_context.authorization.user.conation_user_id.copied(),
+            user_context.authorization.user.macro_user_id.copied(),
             PROJECT_NAME,
             None,
             &share_permission,
@@ -108,7 +140,7 @@ pub async fn handler(
     let db_documents =
         conation_db_client::document::initialize_onboarding_documents::create_onboarding_documents(
             &mut transaction,
-            user_context.authorization.user.conation_user_id.clone(),
+            user_context.authorization.user.macro_user_id.clone(),
             &project.id,
             &share_permission,
             documents,
@@ -158,20 +190,15 @@ pub async fn handler(
     let shared_s3_client = &state.s3_client;
     let shared_markdown_template = markdown_template.clone();
     let shared_canvas_template = canvas_template.clone();
-    let results: Vec<anyhow::Result<()>> = futures::stream::iter(db_documents)
-        .map(|document| {
+    let results: Vec<anyhow::Result<()>> =
+        futures::stream::iter(db_documents.into_iter().zip(source_keys))
+        .map(|(document, source_key)| {
             let s3_client = shared_s3_client.clone(); // Clone the client for parallel usage
             let markdown_template = shared_markdown_template.clone();
             let canvas_template = shared_canvas_template.clone();
-            let user_id = user_context.authorization.user.conation_user_id.clone();
+            let user_id = user_context.authorization.user.macro_user_id.clone();
             async move {
-                let uri_document_name = urlencoding::encode(document.document_name.as_str());
                 let deref_file_type = document.file_type.as_deref();
-
-                let source_key = match deref_file_type {
-                    Some(file_type) => format!("{ONBOARDING_FOLDER_NAME}/{}.{}", uri_document_name, file_type),
-                    None => format!("{ONBOARDING_FOLDER_NAME}/{}", uri_document_name),
-                };
 
                 let target_key = build_cloud_storage_bucket_document_key(
                     user_id.as_ref(),
@@ -192,6 +219,9 @@ pub async fn handler(
                         tracing::trace!("skipping because docx is not a standard file");
                     },
                     _ => {
+                        let Some(source_key) = source_key else {
+                            anyhow::bail!("missing source key for legacy onboarding document");
+                        };
                         tracing::trace!(source_key, target_key, "copying document");
                         let copy_start = std::time::Instant::now();
                         s3_client.copy_document(&source_key, &target_key).await?;
@@ -221,7 +251,7 @@ pub async fn handler(
     // Set the onboarding status to true so we don't do this again
     conation_db_client::user::onboarding_status::set_onboarding_status(
         &mut transaction,
-        user_context.authorization.user.conation_user_id.as_ref(),
+        user_context.authorization.user.macro_user_id.as_ref(),
     )
     .await
     .map_err(|e| {
@@ -253,7 +283,7 @@ pub async fn handler(
         project.id.clone(),
         ProjectCreatedMetadata {
             project_id: project.id.clone(),
-            owner: user_context.authorization.user.conation_user_id.clone(),
+            owner: user_context.authorization.user.macro_user_id.clone(),
             name: PROJECT_NAME.to_string(),
             parent_project_id: None,
             created_at: project.created_at,

@@ -9,7 +9,11 @@ import OpenAiIcon from '@core/component/AI/assets/openai.svg';
  * strings.
  */
 export const Model = {
-  // Conation default — rox.one (OpenAI-compatible)
+  // Conation's default Rox/OmniRoute chain, in server retry order.
+  geminiFlash: 'rox/gemini-2.5-flash',
+  nemotron: 'rox/nemotron-3-ultra',
+  luna: 'rox/gpt-5.6-luna',
+  // Additional selectable Rox model.
   terra: 'rox/gpt-5.6-terra',
   sonnet5: 'anthropic/claude-sonnet-5',
   opus5: 'anthropic/claude-opus-5',
@@ -28,6 +32,9 @@ type ExhaustiveMap = {
 };
 
 export const MODEL_PRETTYNAME: ExhaustiveMap = {
+  'rox/gemini-2.5-flash': 'Gemini 2.5 Flash',
+  'rox/nemotron-3-ultra': 'Nemotron 3 Ultra',
+  'rox/gpt-5.6-luna': 'Luna 5.6',
   'rox/gpt-5.6-terra': 'Terra 5.6',
   'anthropic/claude-sonnet-5': 'Sonnet 5',
   'anthropic/claude-opus-5': 'Opus 5',
@@ -37,6 +44,9 @@ export const MODEL_PRETTYNAME: ExhaustiveMap = {
 } as const;
 
 export const MODEL_PROVIDER_ICON: ExhaustiveMap = {
+  'rox/gemini-2.5-flash': OpenAiIcon,
+  'rox/nemotron-3-ultra': OpenAiIcon,
+  'rox/gpt-5.6-luna': OpenAiIcon,
   'rox/gpt-5.6-terra': OpenAiIcon,
   'anthropic/claude-sonnet-5': AnthropicIcon,
   'anthropic/claude-opus-5': AnthropicIcon,
@@ -45,39 +55,41 @@ export const MODEL_PROVIDER_ICON: ExhaustiveMap = {
   'openai/gpt-5.6-mini': OpenAiIcon,
 };
 
-/** Default model for paid users. — Conation: rox terra */
-export const DEFAULT_MODEL: TModel = Model.terra;
+/** Default request model; the backend falls through Nemotron then Luna. */
+export const DEFAULT_MODEL: TModel = Model.geminiFlash;
 
 /**
- * Default model for free users. Free users aren't entitled to the premium
- * "smart" models (which the backend rejects with a 403), so they start on the
- * fast model instead of Opus.
+ * Compatibility name retained for callers that still pass plan state.
+ * Conation has one model catalog for every authenticated user.
  */
-export const FREE_DEFAULT_MODEL: TModel = Model.haiku45;
+export const FREE_DEFAULT_MODEL: TModel = DEFAULT_MODEL;
 
-/** Models a paid user may select — the full set. */
+/** Models any authenticated user may select. */
 export const PAID_MODELS: readonly TModel[] = Object.values(Model);
 
 /**
- * Models a free user may select. Free users only get the fast model
- * (`FREE_DEFAULT_MODEL`); every other model is paid-only and shows locked in
- * the selector, where selecting one opens the paywall instead of being sent
- * and rejected by the backend.
+ * Compatibility name retained for plan-aware call sites. It intentionally
+ * aliases the full catalog: Conation has no paid AI tier.
  */
-export const FREE_MODELS: readonly TModel[] = [FREE_DEFAULT_MODEL];
+export const FREE_MODELS: readonly TModel[] = PAID_MODELS;
 
 /** The default model for a user given their paid entitlement. */
 export function defaultModelForPlan(hasPaidAccess: boolean): TModel {
-  return hasPaidAccess ? DEFAULT_MODEL : FREE_DEFAULT_MODEL;
+  void hasPaidAccess;
+  return DEFAULT_MODEL;
 }
 
 /** The selectable models for a user given their paid entitlement. */
 export function modelsForPlan(hasPaidAccess: boolean): readonly TModel[] {
-  return hasPaidAccess ? PAID_MODELS : FREE_MODELS;
+  void hasPaidAccess;
+  return PAID_MODELS;
 }
 
 /** Provider serving each model — mirrors the backend `provider` field. */
 export const MODEL_PROVIDER: ExhaustiveMap = {
+  'rox/gemini-2.5-flash': 'rox',
+  'rox/nemotron-3-ultra': 'rox',
+  'rox/gpt-5.6-luna': 'rox',
   'rox/gpt-5.6-terra': 'rox',
   'anthropic/claude-sonnet-5': 'anthropic',
   'anthropic/claude-opus-5': 'anthropic',

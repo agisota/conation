@@ -13,6 +13,9 @@ use utoipa::ToSchema;
 /// Shared error type for Stripe operations
 #[derive(Debug, Error)]
 pub enum StripeOperationError {
+    #[error("Stripe billing is not configured")]
+    /// Stripe billing is disabled for this deployment.
+    StripeBillingDisabled,
     #[error("Failed to parse user id")]
     ParseId(#[from] conation_user_id::error::ParseErr),
     #[error("Internal server error")]
@@ -38,6 +41,7 @@ pub enum StripeOperationError {
 impl IntoResponse for StripeOperationError {
     fn into_response(self) -> Response {
         let status = match &self {
+            StripeOperationError::StripeBillingDisabled => StatusCode::SERVICE_UNAVAILABLE,
             // ParseId and StripeIdParse come from trusted server-side sources (JWT-populated
             // user id, DB-stored Stripe customer id) — a parse failure is a server/auth
             // misconfiguration, not bad client input. Map to 500 so metrics don't blame callers.

@@ -3,9 +3,10 @@
   "info": {
     "title": "search_service",
     "description": "",
-    "termsOfService": "https://macro.com/terms",
+    "termsOfService": "https://conation.dev/terms",
     "license": {
-      "name": ""
+      "name": "GNU Affero General Public License v3.0",
+      "identifier": "AGPL-3.0-only"
     },
     "version": "0.1.0"
   },
@@ -1085,7 +1086,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Filter by chat owner. Examples: ['macro|user1@user.com'], ['macro|user1@user.com', 'macro|user2@user.com']. Empty to search all owners."
+            "description": "Filter by chat owner. Examples: ['conation|user1@user.com'], ['conation|user1@user.com', 'conation|user2@user.com']. Empty to search all owners."
           },
           "project_ids": {
             "type": "array",
@@ -1434,7 +1435,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Filter by document owner. Examples: ['macro|user1@user.com'], ['macro|user1@user.com', 'macro|user2@user.com']. Empty to search all owners."
+            "description": "Filter by document owner. Examples: ['conation|user1@user.com'], ['conation|user1@user.com', 'conation|user2@user.com']. Empty to search all owners."
           },
           "project_ids": {
             "type": "array",
@@ -2629,7 +2630,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Filter by project owner. Examples: ['macro|user1@user.com'], ['macro|user1@user.com', 'macro|user2@user.com']. Empty to search all owners."
+            "description": "Filter by project owner. Examples: ['conation|user1@user.com'], ['conation|user1@user.com', 'conation|user2@user.com']. Empty to search all owners."
           },
           "project_ids": {
             "type": "array",
@@ -4494,7 +4495,7 @@
   "tags": [
     {
       "name": "search service",
-      "description": "Macro Search Service"
+      "description": "Conation Search Service"
     }
   ]
 }

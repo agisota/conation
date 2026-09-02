@@ -11,7 +11,7 @@ async fn returns_persistent_and_ephemeral_chat_message_metadata(
     assert_eq!(persistent.name, "persistent chat");
     assert_eq!(persistent.content, "codebase brighter");
     assert_eq!(persistent.role, "user");
-    assert_eq!(persistent.owner_user_id, "macro|user@user.com");
+    assert_eq!(persistent.owner_user_id, "conation|user@user.com");
     assert_eq!(
         persistent.created_at,
         "2024-01-02T03:04:05.123Z".parse::<DateTime<Utc>>()?
@@ -28,7 +28,7 @@ async fn returns_persistent_and_ephemeral_chat_message_metadata(
     assert_eq!(ephemeral.name, "ephemeral chat");
     assert_eq!(ephemeral.content, "another message");
     assert_eq!(ephemeral.role, "assistant");
-    assert_eq!(ephemeral.owner_user_id, "macro|user@user.com");
+    assert_eq!(ephemeral.owner_user_id, "conation|user@user.com");
     assert_eq!(
         ephemeral.created_at,
         "2024-02-02T03:04:05.123Z".parse::<DateTime<Utc>>()?
@@ -51,7 +51,7 @@ async fn returns_soft_deleted_chat_message_metadata(pool: Pool<Postgres>) -> any
     assert_eq!(message.name, "deleted chat");
     assert_eq!(message.content, "remove from search");
     assert_eq!(message.role, "assistant");
-    assert_eq!(message.owner_user_id, "macro|user@user.com");
+    assert_eq!(message.owner_user_id, "conation|user@user.com");
     assert_eq!(
         message.created_at,
         "2024-03-02T03:04:05.123Z".parse::<DateTime<Utc>>()?

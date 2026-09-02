@@ -9,8 +9,8 @@ use crate::{MacroAuthorization, MacroAuthorizationService};
 
 use super::{
     AuthorizationPolicy, MacroAuthorizationRejection, MacroAuthorizationState,
-    bot::{BOT_TOKEN_HEADER, authorize_optional_bot_request},
-    internal::{authorize_internal_request, internal_header_convention},
+    bot::{BOT_TOKEN_HEADER, authorize_optional_bot_request, reject_legacy_bot_headers},
+    internal::{authorize_internal_request, has_internal_auth_key, reject_legacy_internal_headers},
     rejection, status_rejection,
     user::{authorize_optional_user_request, explicit_user_credential_present},
 };
@@ -69,10 +69,13 @@ where
     Svc: MacroAuthorizationService,
     S: Send + Sync + 'static,
 {
-    let internal_convention = internal_header_convention(&parts.headers);
+    reject_legacy_bot_headers(&parts.headers)?;
+    reject_legacy_internal_headers(&parts.headers)?;
+
+    let has_internal_auth_key = has_internal_auth_key(&parts.headers);
     let has_bot_token = parts.headers.contains_key(BOT_TOKEN_HEADER);
     let has_explicit_user_credential = explicit_user_credential_present(parts);
-    let explicit_credential_count = usize::from(internal_convention.is_some())
+    let explicit_credential_count = usize::from(has_internal_auth_key)
         + usize::from(has_bot_token)
         + usize::from(has_explicit_user_credential);
 
@@ -83,8 +86,8 @@ where
         ));
     }
 
-    if let Some(convention) = internal_convention {
-        return authorize_internal_request::<S, Svc>(parts, state, convention).await;
+    if has_internal_auth_key {
+        return authorize_internal_request::<S, Svc>(parts, state).await;
     }
 
     if has_bot_token {

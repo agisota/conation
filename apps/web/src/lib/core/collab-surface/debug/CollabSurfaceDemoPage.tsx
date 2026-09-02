@@ -1,5 +1,4 @@
 import { Block, type BlockName } from '@core/block';
-import { t } from '@app/lib/i18n';
 import { createSignal, Show } from 'solid-js';
 import { CollabMdSurface } from '../CollabMdSurface';
 import type { CollabSurfaceParent } from '../createCollabSurface';
@@ -55,10 +54,12 @@ export default function CollabSurfaceDemoPage() {
 
   return (
     <div class="flex flex-col gap-4 p-6 max-w-2xl mx-auto overflow-y-auto">
-      <h1 class="text-lg font-semibold">{t('auto.collab_surface_demo')}</h1>
+      <h1 class="text-lg font-semibold">Collab surface demo</h1>
 
       <div class="flex flex-col gap-2 border border-ink/10 rounded p-4">
-        <label class="flex items-center gap-2 text-sm">{t('auto.parent_type')}<select
+        <label class="flex items-center gap-2 text-sm">
+          Parent type
+          <select
             class="border border-ink/20 rounded px-2 py-1 bg-transparent"
             value={parentType()}
             onChange={(e) =>
@@ -75,14 +76,18 @@ export default function CollabSurfaceDemoPage() {
             <option value="call">call</option>
           </select>
         </label>
-        <label class="flex items-center gap-2 text-sm">{t('auto.parent_id')}<input
+        <label class="flex items-center gap-2 text-sm">
+          Parent id
+          <input
             class="border border-ink/20 rounded px-2 py-1 grow bg-transparent font-mono"
             placeholder="uuid of an entity you can access"
             value={parentId()}
             onInput={(e) => setParentId(e.currentTarget.value)}
           />
         </label>
-        <label class="flex items-center gap-2 text-sm">{t('auto.surface_id')}<input
+        <label class="flex items-center gap-2 text-sm">
+          Surface id
+          <input
             class="border border-ink/20 rounded px-2 py-1 grow bg-transparent font-mono"
             value={surfaceId()}
             onInput={(e) => setSurfaceId(e.currentTarget.value)}
@@ -91,14 +96,20 @@ export default function CollabSurfaceDemoPage() {
             type="button"
             class="border border-ink/20 rounded px-3 py-1 text-sm hover:bg-ink/5"
             onClick={() => setSurfaceId(crypto.randomUUID())}
-          >{t('auto.generate')}</button>
+          >
+            Generate
+          </button>
           <button
             type="button"
             class="border border-ink/20 rounded px-3 py-1 text-sm hover:bg-ink/5"
             onClick={() => navigator.clipboard.writeText(surfaceId())}
-          >{t('auto.copy')}</button>
+          >
+            Copy
+          </button>
         </label>
-        <label class="flex items-center gap-2 text-sm">{t('auto.seed_markdown')}<input
+        <label class="flex items-center gap-2 text-sm">
+          Seed markdown
+          <input
             class="border border-ink/20 rounded px-2 py-1 grow bg-transparent font-mono"
             value={seedMarkdown()}
             onInput={(e) => setSeedMarkdown(e.currentTarget.value)}
@@ -109,7 +120,9 @@ export default function CollabSurfaceDemoPage() {
           class="self-start border border-ink/20 rounded px-3 py-1 text-sm hover:bg-ink/5 disabled:opacity-50"
           disabled={!parentId().trim() || !surfaceId().trim()}
           onClick={open}
-        >{t('auto.open_load_or_create')}</button>
+        >
+          Open (load or create)
+        </button>
       </div>
 
       <Show when={mounted()} keyed>

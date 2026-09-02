@@ -44,40 +44,40 @@ async fn main() -> anyhow::Result<()> {
     let email_api_repository =
         email_api_client::GmailApiClientRepository::from_subscription_topic("unused");
 
-    let conation_ids: Vec<String> = config
-        .conation_ids
+    let macro_ids: Vec<String> = config
+        .macro_ids
         .split(',')
         .map(|id| id.trim().to_string())
         .collect();
 
-    println!("Processing {} macro IDs: {:?}", conation_ids.len(), conation_ids);
+    println!("Processing {} macro IDs: {:?}", macro_ids.len(), macro_ids);
 
-    for (index, conation_id) in conation_ids.iter().enumerate() {
+    for (index, macro_id) in macro_ids.iter().enumerate() {
         println!(
             "\n=== Processing macro ID {} ({}/{}) at {} ===",
-            conation_id,
+            macro_id,
             index + 1,
-            conation_ids.len(),
+            macro_ids.len(),
             chrono::Local::now().format("%Y-%m-%d %H:%M:%S")
         );
 
-        match process::process_conation_id(
+        match process::process_macro_id(
             &config,
             &db_pool,
             &sfs_client,
             &email_api_repository,
-            conation_id,
+            macro_id,
         )
         .await
         {
             Ok((success_count, total_attachments)) => {
                 println!(
                     "Completed processing for {}. Successfully uploaded {} out of {} attachments.",
-                    conation_id, success_count, total_attachments
+                    macro_id, success_count, total_attachments
                 );
             }
             Err(e) => {
-                println!("Failed to process macro ID {}: {:?}", conation_id, e);
+                println!("Failed to process macro ID {}: {:?}", macro_id, e);
                 // Continue with next macro ID instead of failing completely
             }
         }

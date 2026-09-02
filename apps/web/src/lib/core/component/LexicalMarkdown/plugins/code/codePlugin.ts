@@ -1,15 +1,15 @@
 import {
+  $createCustomCodeNode,
+  $isCustomCodeNode,
+  CustomCodeNode,
+} from '@conation/lexical-core';
+import {
   $isCodeHighlightNode,
   $isCodeNode,
   CodeNode,
   registerCodeHighlighting,
 } from '@lexical/code';
 import { $findMatchingParent, mergeRegister } from '@lexical/utils';
-import {
-  $createCustomCodeNode,
-  $isCustomCodeNode,
-  CustomCodeNode,
-} from '@conation/lexical-core';
 import {
   $createParagraphNode,
   $getSelection,

@@ -30,7 +30,7 @@ async fn access_level_for(
 async fn shares_public_link_document_with_mentioned_users(
     pool: Pool<Postgres>,
 ) -> anyhow::Result<()> {
-    let mentioned = MacroUserIdStr::try_from("macro|mentioned@user.com".to_string()).unwrap();
+    let mentioned = MacroUserIdStr::try_from("conation|mentioned@user.com".to_string()).unwrap();
 
     share_link_shared_document_with_mentioned_users(
         &pool,
@@ -55,7 +55,7 @@ async fn shares_team_link_document_with_off_team_mentioned_user(
     sqlx::query!(
         r#"
         INSERT INTO team (id, name, owner_id)
-        VALUES ('33333333-3333-3333-3333-333333333333', 'Owner Team', 'macro|owner@user.com')
+        VALUES ('33333333-3333-3333-3333-333333333333', 'Owner Team', 'conation|owner@user.com')
         "#,
     )
     .execute(&pool)
@@ -64,7 +64,7 @@ async fn shares_team_link_document_with_off_team_mentioned_user(
         r#"
         INSERT INTO team_user (user_id, team_id, team_role)
         VALUES (
-            'macro|owner@user.com',
+            'conation|owner@user.com',
             '33333333-3333-3333-3333-333333333333',
             'owner'
         )
@@ -85,7 +85,7 @@ async fn shares_team_link_document_with_off_team_mentioned_user(
 
     // This user has no team_user row and is therefore outside the owner's team.
     let off_team_mentioned =
-        MacroUserIdStr::try_from("macro|off-team@user.com".to_string()).unwrap();
+        MacroUserIdStr::try_from("conation|off-team@user.com".to_string()).unwrap();
 
     share_link_shared_document_with_mentioned_users(
         &pool,
@@ -104,7 +104,7 @@ async fn shares_team_link_document_with_off_team_mentioned_user(
 
 #[sqlx::test(fixtures(path = "../../fixtures", scripts("share_on_mention")))]
 async fn does_not_share_private_document(pool: Pool<Postgres>) -> anyhow::Result<()> {
-    let mentioned = MacroUserIdStr::try_from("macro|mentioned@user.com".to_string()).unwrap();
+    let mentioned = MacroUserIdStr::try_from("conation|mentioned@user.com".to_string()).unwrap();
 
     share_link_shared_document_with_mentioned_users(
         &pool,
@@ -124,7 +124,7 @@ async fn does_not_share_private_document(pool: Pool<Postgres>) -> anyhow::Result
 
 #[sqlx::test(fixtures(path = "../../fixtures", scripts("share_on_mention")))]
 async fn does_not_downgrade_existing_access(pool: Pool<Postgres>) -> anyhow::Result<()> {
-    let mentioned = MacroUserIdStr::try_from("macro|mentioned@user.com".to_string()).unwrap();
+    let mentioned = MacroUserIdStr::try_from("conation|mentioned@user.com".to_string()).unwrap();
     let entity_id = conation_uuid::string_to_uuid(PUBLIC_DOC).unwrap();
 
     // The user already has edit access to the PUBLIC-link document.

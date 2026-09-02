@@ -5,12 +5,12 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use documents_hex::domain::permission_token::encode_permission_token;
-use entity_access::domain::models::EntityPermission;
-use entity_access::inbound::axum_extractors::DocumentAccessExtractor;
 use conation_authorization::{
     OptionalMacroAuthorizationExtractor, UserOrInternalService, UserOrInternalServiceAuthorization,
 };
+use documents_hex::domain::permission_token::encode_permission_token;
+use entity_access::domain::models::EntityPermission;
+use entity_access::inbound::axum_extractors::DocumentAccessExtractor;
 use model::response::ErrorResponse;
 use models_permissions::share_permission::access_level::{AccessLevel, ViewAccessLevel};
 use serde::Deserialize;
@@ -66,7 +66,7 @@ pub async fn handler(
         .authorization
         .as_ref()
         .and_then(UserOrInternalServiceAuthorization::acting_user)
-        .map(|user| user.conation_user_id.to_string());
+        .map(|user| user.macro_user_id.to_string());
 
     let access_level = match users_access_level.entity_access_receipt.entity_permission() {
         EntityPermission::AccessLevel { access_level } => *access_level,

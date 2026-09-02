@@ -1,5 +1,5 @@
-import CheckIcon from '@phosphor/check.svg';
 import { t } from '@app/lib/i18n';
+import CheckIcon from '@phosphor/check.svg';
 import { cn, Layer } from '@ui';
 import {
   type Component,
@@ -109,7 +109,11 @@ export function HotkeyCallout(props: HotkeyCalloutProps) {
   });
 
   return (
-    <CalloutShell leader="Type" label={props.label} completed={props.completed}>
+    <CalloutShell
+      leader={t('onboarding.callout.type')}
+      label={props.label}
+      completed={props.completed}
+    >
       <style>{`
         @keyframes hotkey-pulse {
           0%   { outline: 2px solid rgb(from var(--color-accent) r g b / 0.8); outline-offset: 0px; }
@@ -182,7 +186,7 @@ interface ClickCalloutProps {
 export function ClickCallout(props: ClickCalloutProps) {
   return (
     <CalloutShell
-      leader="Click"
+      leader={t('onboarding.callout.click')}
       label={props.label}
       completed={props.completed}
     >
@@ -226,7 +230,7 @@ export function ContinueButton(props: ContinueButtonProps) {
       )}
       onClick={props.onClick}
     >
-      {props.label ?? 'Continue'}
+      {props.label ?? t('onboarding.actions.continue')}
       {/*<span
         class={cn(
           'text-sm px-3 py-1 border rounded-sm flex items-center gap-1 border-surface/50 text-surface',
@@ -235,7 +239,7 @@ export function ContinueButton(props: ContinueButtonProps) {
       >
         <Hotkey shortcut="cmd" />
         <span>+</span>
-        <span>{t('auto.enter')}</span>
+        <span>{t('onboarding.keys.enter')}</span>
       </span>*/}
     </button>
   );

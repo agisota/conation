@@ -4,7 +4,7 @@ use wasm_bindgen::JsValue;
 use worker::{Env, Error, Headers, Method, Request, RequestInit, Response, Result, Stub};
 
 use crate::{
-    constants::header_names::{AUTHORIZATION, MACRO_INTERNAL_AUTH_KEY_HEADER_KEY},
+    constants::header_names::{AUTHORIZATION, INTERNAL_AUTH_KEY_HEADER},
     durable_object::{CopyDocumentRequest, GetSnapshotRequest, response, status_codes},
     error::ResultExt,
     generated::schema::InitializeFromSnapshotRequest,
@@ -71,11 +71,7 @@ pub async fn copy_handler(env: Env, mut req: Request, document_id: &str) -> Resu
 
         let headers = Headers::new();
         mv_header(og_req.headers(), &headers, AUTHORIZATION)?;
-        mv_header(
-            og_req.headers(),
-            &headers,
-            MACRO_INTERNAL_AUTH_KEY_HEADER_KEY,
-        )?;
+        mv_header(og_req.headers(), &headers, INTERNAL_AUTH_KEY_HEADER)?;
         mv_header(og_req.headers(), &headers, worker_rs_otel::TRACEPARENT)?;
         ss_req.with_headers(headers);
 

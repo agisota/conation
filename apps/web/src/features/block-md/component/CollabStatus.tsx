@@ -1,8 +1,8 @@
-import { HeaderIsland } from '@components/app/split-layout/components/HeaderIsland';
 import { t } from '@app/lib/i18n';
+import { HeaderIsland } from '@components/app/split-layout/components/HeaderIsland';
 import { SplitHeaderRight } from '@components/app/split-layout/components/SplitHeader';
-import { blockSyncSourceSignal } from '@core/signal/load';
 import { SyncSourceStatus } from '@conation/collaboration/collab/source';
+import { blockSyncSourceSignal } from '@core/signal/load';
 import CloudIcon from '@phosphor/cloud.svg';
 import CloudWarningIcon from '@phosphor/cloud-warning.svg';
 import { Button } from '@ui';
@@ -28,8 +28,8 @@ export function CollabStatus() {
               <Button
                 variant="outline"
                 size="icon-sm"
-                aria-label={t('auto.offline')}
-                tooltip="You're offline. Changes will sync when you reconnect."
+                aria-label={t('markdown.collaboration.offline')}
+                tooltip={t('markdown.collaboration.offlineDescription')}
                 class="bg-alert-bg border-alert/20"
               >
                 <CloudWarningIcon class="text-alert-ink" />
@@ -39,8 +39,8 @@ export function CollabStatus() {
               <Button
                 variant="ghost"
                 size="icon-sm"
-                aria-label={t('auto.reconnecting')}
-                tooltip="Reconnecting to the document…"
+                aria-label={t('markdown.collaboration.reconnecting')}
+                tooltip={t('markdown.collaboration.reconnectingDescription')}
               >
                 <CloudIcon class="text-ink-extra-muted animate-pulse" />
               </Button>

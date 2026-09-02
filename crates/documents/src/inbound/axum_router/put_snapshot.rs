@@ -6,8 +6,10 @@ use axum::{
     http::StatusCode,
     response::IntoResponse,
 };
+use conation_authorization::{
+    InternalOnly, MacroAuthorizationExtractor, MacroAuthorizationService,
+};
 use entity_access::domain::ports::EntityAccessService;
-use conation_authorization::{InternalOnly, MacroAuthorizationExtractor, MacroAuthorizationService};
 
 use super::{DocumentRouterState, Params};
 use crate::domain::ports::DocumentService;

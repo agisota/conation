@@ -9,11 +9,9 @@ use axum::{
     http::{Request, StatusCode, header},
     response::{IntoResponse, Response},
 };
-#[allow(deprecated)]
-use conation_authorization::LEGACY_DSS_INTERNAL_API_KEY_HEADER;
 use conation_authorization::{
     BOT_SCOPE_HEADER, BOT_TOKEN_HEADER, BotActingUserClaims, BotAuthentication, BotScope,
-    INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_USER_ID_HEADER, InternalIdentityClaims,
+    INTERNAL_API_KEY_HEADER, INTERNAL_CONATION_USER_ID_HEADER, InternalIdentityClaims,
     MacroAuthorizationError, MacroAuthorizationService, MacroAuthorizationState,
 };
 use conation_user_id::{
@@ -40,7 +38,6 @@ use crate::{
 
 const USER_ID: &str = "macro|team-member@example.com";
 const ACT_AS_USER_ID: &str = "macro|internal-team-member@example.com";
-const DSS_DEFAULT_USER_ID: &str = "macro|INTERNAL@macro.com";
 const INTERNAL_KEY: &str = "valid-internal-key";
 const TEAM_ID: Uuid = Uuid::from_u128(0x6d67fd9b_9906_40aa_9c0e_cab546cb80ad);
 
@@ -441,7 +438,7 @@ async fn required_v2_accepts_internal_acting_user_credentials() {
     );
     let request = Request::builder()
         .header(INTERNAL_API_KEY_HEADER, INTERNAL_KEY)
-        .header(INTERNAL_MACRO_USER_ID_HEADER, ACT_AS_USER_ID)
+        .header(INTERNAL_CONATION_USER_ID_HEADER, ACT_AS_USER_ID)
         .body(Body::empty())
         .expect("request should be valid");
 
@@ -826,7 +823,7 @@ async fn internal_act_as_identity_uses_ordinary_team_membership() {
     );
     let request = Request::builder()
         .header(INTERNAL_API_KEY_HEADER, INTERNAL_KEY)
-        .header(INTERNAL_MACRO_USER_ID_HEADER, ACT_AS_USER_ID)
+        .header(INTERNAL_CONATION_USER_ID_HEADER, ACT_AS_USER_ID)
         .body(Body::empty())
         .expect("request should be valid");
 
@@ -840,23 +837,27 @@ async fn internal_act_as_identity_uses_ordinary_team_membership() {
     assert_receipt(&receipt, ACT_AS_USER_ID, TeamRole::Owner);
 }
 
-#[allow(deprecated)]
 #[tokio::test]
-async fn dss_default_identity_without_team_returns_no_receipt() {
+async fn legacy_dss_internal_header_is_rejected() {
     let state = state(
         FakeEntityAccessService::default(),
-        FakeAuthorizationService::with_default_internal_user(DSS_DEFAULT_USER_ID),
+        FakeAuthorizationService::default(),
     );
     let request = Request::builder()
-        .header(LEGACY_DSS_INTERNAL_API_KEY_HEADER, INTERNAL_KEY)
+        .header("x-document-storage-service-auth-key", INTERNAL_KEY)
         .body(Body::empty())
         .expect("request should be valid");
 
-    let extracted = extract_v2(request, &state)
+    let error = extract_v2(request, &state)
         .await
-        .expect("configured DSS default identity should authorize");
+        .expect_err("legacy DSS internal header should be rejected");
+    let (status, body) = response_parts(error.into_response()).await;
 
-    assert!(extracted.entity_access_receipt.is_none());
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert_eq!(
+        body,
+        r#"{"message":"legacy internal credentials are not supported"}"#
+    );
 }
 
 #[tokio::test]

@@ -2,22 +2,22 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 pub(super) async fn seed_team(pool: &PgPool, team_id: Uuid, owner_id: &str) -> sqlx::Result<()> {
-    let conation_user_id = Uuid::now_v7();
+    let macro_user_id = Uuid::now_v7();
 
     sqlx::query(
-        r#"INSERT INTO conation_user (id, username, email, stripe_customer_id) VALUES ($1, $2, $3, $4)"#,
+        r#"INSERT INTO macro_user (id, username, email, stripe_customer_id) VALUES ($1, $2, $3, $4)"#,
     )
-    .bind(conation_user_id)
+    .bind(macro_user_id)
     .bind(owner_id)
     .bind(owner_id)
-    .bind(format!("stripe_{conation_user_id}"))
+    .bind(format!("stripe_{macro_user_id}"))
     .execute(pool)
     .await?;
 
-    sqlx::query(r#"INSERT INTO "User" (id, email, conation_user_id) VALUES ($1, $2, $3)"#)
+    sqlx::query(r#"INSERT INTO "User" (id, email, macro_user_id) VALUES ($1, $2, $3)"#)
         .bind(owner_id)
         .bind(owner_id)
-        .bind(conation_user_id)
+        .bind(macro_user_id)
         .execute(pool)
         .await?;
 
@@ -68,7 +68,7 @@ pub(super) async fn insert_email_link(
 ) -> sqlx::Result<Uuid> {
     let link_id = Uuid::now_v7();
     sqlx::query(
-        r#"INSERT INTO email_links (id, conation_id, fusionauth_user_id, email_address, provider)
+        r#"INSERT INTO email_links (id, macro_id, fusionauth_user_id, email_address, provider)
            VALUES ($1, $2, $3, $4, 'GMAIL')"#,
     )
     .bind(link_id)

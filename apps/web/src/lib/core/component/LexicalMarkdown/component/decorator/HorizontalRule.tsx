@@ -1,5 +1,5 @@
-import type { HorizontalRuleDecoratorProps } from '@conation/lexical-core';
 import { t } from '@app/lib/i18n';
+import type { HorizontalRuleDecoratorProps } from '@conation/lexical-core';
 import Trash from '@phosphor/x.svg';
 import { debounce } from '@solid-primitives/scheduled';
 import { Button } from '@ui';

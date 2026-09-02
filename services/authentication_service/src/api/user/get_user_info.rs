@@ -22,14 +22,14 @@ use model::response::ErrorResponse;
             (status = 500, body=ErrorResponse),
         )
     )]
-#[tracing::instrument(skip(ctx, authorization), fields(user_id=%authorization.authorization.user.conation_user_id))]
+#[tracing::instrument(skip(ctx, authorization), fields(user_id=%authorization.authorization.user.macro_user_id))]
 pub async fn handler(
     State(ctx): State<ApiContext>,
     authorization: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
 ) -> Result<Response, Response> {
     let permissions = conation_db_client::user::get_permissions::get_user_permissions(
         &ctx.db,
-        authorization.authorization.user.conation_user_id.as_ref(),
+        authorization.authorization.user.macro_user_id.as_ref(),
     )
     .await
     .map_err(|e| {
@@ -46,7 +46,7 @@ pub async fn handler(
     Ok((
         StatusCode::OK,
         Json(GetUserInfo {
-            user_id: authorization.authorization.user.conation_user_id.to_string(),
+            user_id: authorization.authorization.user.macro_user_id.to_string(),
             organization_id: authorization
                 .authorization
                 .user

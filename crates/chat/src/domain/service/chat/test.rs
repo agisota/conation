@@ -5,8 +5,8 @@ use ai_toolset::{
     AsyncTool, RequestContext, ServiceContext, ToolAnnotated, ToolAnnotations, ToolResult,
 };
 use attachment::FormattedParts;
-use entity_access_management::domain::models::EntityAccessManagementError;
 use conation_event_broker::{EventBrokerError, MacroEvent};
+use entity_access_management::domain::models::EntityAccessManagementError;
 use model::chat::Chat;
 
 use super::*;

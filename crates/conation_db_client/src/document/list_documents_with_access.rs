@@ -119,7 +119,7 @@ mod tests {
         let filters = DocumentListFilters::default();
         let documents = list_documents_with_access(
             &pool,
-            "macro|user@user.com",
+            "conation|user@user.com",
             &filters,
             AccessLevel::View,
             0,
@@ -133,7 +133,7 @@ mod tests {
         // All returned documents should have the user as owner or have access
         for doc in &documents {
             assert!(
-                doc.owner == "macro|user@user.com" || doc.access_level >= AccessLevel::View,
+                doc.owner == "conation|user@user.com" || doc.access_level >= AccessLevel::View,
                 "Document {} should be owned by user or have access",
                 doc.document_id
             );
@@ -150,7 +150,7 @@ mod tests {
 
         let documents = list_documents_with_access(
             &pool,
-            "macro|user@user.com",
+            "conation|user@user.com",
             &filters,
             AccessLevel::View,
             0,
@@ -178,7 +178,7 @@ mod tests {
         // Get first page
         let page1 = list_documents_with_access(
             &pool,
-            "macro|user@user.com",
+            "conation|user@user.com",
             &filters,
             AccessLevel::View,
             0,
@@ -189,7 +189,7 @@ mod tests {
         // Get second page
         let page2 = list_documents_with_access(
             &pool,
-            "macro|user@user.com",
+            "conation|user@user.com",
             &filters,
             AccessLevel::View,
             3,

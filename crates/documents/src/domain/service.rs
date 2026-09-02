@@ -18,6 +18,8 @@ use unicode_segmentation::UnicodeSegmentation;
 use activity::Attribution;
 use anyhow::anyhow;
 use cloudfront_sign::{SignedOptions, get_signed_url};
+use conation_event_broker::MacroEventBroker;
+use conation_user_id::user_id::MacroUserIdStr;
 use connection::domain::models::{InvalidationEvent, InvalidationReason};
 use connection::domain::ports::ConnectionService;
 use document_sub_type::DocumentSubType;
@@ -27,8 +29,6 @@ use entity_access::domain::models::{
 };
 use foreign_entity::domain::models::{ForeignEntity, SourceId};
 use foreign_entity::domain::ports::ForeignEntityService;
-use conation_event_broker::MacroEventBroker;
-use conation_user_id::user_id::MacroUserIdStr;
 use model::document::response::{DocumentResponseMetadata, LocationResponseData};
 use model::document::{
     ContentType, DocumentBasic, DocumentMetadata, FileAssociation, FileType, FileTypeExt,
@@ -548,9 +548,12 @@ impl<
 
     /// Publish a document lifecycle event; failures are logged and dropped.
     fn publish_document_event(&self, event: &DocumentMacroEvent) {
-        let _ = self.conation_event_broker.send_event(event).inspect_err(|e| {
-            tracing::error!(error=?e, "failed to publish document event");
-        });
+        let _ = self
+            .conation_event_broker
+            .send_event(event)
+            .inspect_err(|e| {
+                tracing::error!(error=?e, "failed to publish document event");
+            });
     }
 
     fn map_create_repo_error<E: Into<anyhow::Error>>(e: E) -> DocumentError {

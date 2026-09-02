@@ -1,5 +1,5 @@
-import { getEntityClickContent } from '@channel/Attachments/attachment-utils';
 import { t } from '@app/lib/i18n';
+import { getEntityClickContent } from '@channel/Attachments/attachment-utils';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import { buildEntityData, EntityRowIcon, EntityRowTitle } from '@entity';
 import MagnifyingGlass from '@phosphor-icons/core/regular/magnifying-glass.svg';
@@ -89,10 +89,16 @@ const createHandler = (name: SkillToolName) =>
             <div class="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
               <Show
                 when={'name' in ctx.tool.data && ctx.tool.data.name}
-                fallback={<span class="min-w-0 truncate">{t('auto.list_skills')}</span>}
+                fallback={
+                  <span class="min-w-0 truncate">
+                    {t('ai.tools.skills.list')}
+                  </span>
+                }
               >
                 {(query) => (
-                  <span class="min-w-0 truncate">{t('auto.search_skills')}<span class="text-ink"> {query()} </span>
+                  <span class="min-w-0 truncate">
+                    {t('ai.tools.skills.search')}{' '}
+                    <span class="text-ink">{query()}</span>
                   </span>
                 )}
               </Show>

@@ -1,5 +1,5 @@
+import { formatDateTime, t } from '@app/lib/i18n';
 import CaretLeft from '@phosphor/caret-left.svg';
-import { t } from '@app/lib/i18n';
 import CaretRight from '@phosphor/caret-right.svg';
 import CheckIcon from '@phosphor/check.svg';
 import { endOfDay } from 'date-fns/endOfDay';
@@ -16,22 +16,21 @@ type DatePickerUIProps = {
   showTimePicker?: boolean;
 };
 
-const MONTHS = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
+const monthNames = (format: 'long' | 'short') =>
+  Array.from({ length: 12 }, (_, month) =>
+    formatDateTime(Date.UTC(2020, month, 1), {
+      month: format,
+      timeZone: 'UTC',
+    })
+  );
 
-const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+const weekdayNames = () =>
+  Array.from({ length: 7 }, (_, weekday) =>
+    formatDateTime(Date.UTC(2020, 5, 7 + weekday), {
+      weekday: 'short',
+      timeZone: 'UTC',
+    })
+  );
 
 type PickerMode = 'calendar' | 'month' | 'year';
 
@@ -196,6 +195,7 @@ export function DatePickerUI(props: DatePickerUIProps) {
             type="button"
             class="p-1 rounded-md hover:bg-active transition-colors"
             onClick={handlePrevMonth}
+            aria-label={t('core.datePicker.previousMonth')}
           >
             <CaretLeft class="size-4" />
           </button>
@@ -205,13 +205,18 @@ export function DatePickerUI(props: DatePickerUIProps) {
             class="font-semibold rounded-md hover:bg-active px-2 py-1 transition-colors"
             onClick={() => setPickerMode('month')}
           >
-            {MONTHS[displayMonth()]} {displayYear()}
+            {formatDateTime(Date.UTC(displayYear(), displayMonth(), 1), {
+              month: 'long',
+              year: 'numeric',
+              timeZone: 'UTC',
+            })}
           </button>
 
           <button
             type="button"
             class="p-1 rounded-md hover:bg-active transition-colors"
             onClick={handleNextMonth}
+            aria-label={t('core.datePicker.nextMonth')}
           >
             <CaretRight class="size-4" />
           </button>
@@ -219,7 +224,7 @@ export function DatePickerUI(props: DatePickerUIProps) {
 
         {/* Weekday headers */}
         <div class="grid grid-cols-7 gap-1 mb-2">
-          <For each={WEEKDAYS}>
+          <For each={weekdayNames()}>
             {(day) => (
               <div class="text-center font-medium text-ink-muted">{day}</div>
             )}
@@ -274,7 +279,7 @@ export function DatePickerUI(props: DatePickerUIProps) {
         </div>
 
         <div class="grid grid-cols-3 gap-2">
-          <For each={MONTHS}>
+          <For each={monthNames('short')}>
             {(month, index) => (
               <button
                 type="button"
@@ -285,7 +290,7 @@ export function DatePickerUI(props: DatePickerUIProps) {
                 }}
                 onClick={() => handleMonthSelect(index())}
               >
-                {month.slice(0, 3)}
+                {month}
               </button>
             )}
           </For>
@@ -295,7 +300,9 @@ export function DatePickerUI(props: DatePickerUIProps) {
       <Show when={pickerMode() === 'year'}>
         {/* Year picker */}
         <div class="mb-3">
-          <div class="font-semibold text-center">{t('auto.select_year')}</div>
+          <div class="font-semibold text-center">
+            {t('core.datePicker.selectYear')}
+          </div>
         </div>
 
         <div class="h-64 overflow-y-auto">
@@ -326,7 +333,7 @@ export function DatePickerUI(props: DatePickerUIProps) {
               type="text"
               inputmode="numeric"
               maxLength={2}
-              aria-label={t('auto.hour')}
+              aria-label={t('core.datePicker.hour')}
               class="w-10 text-center bg-active border border-edge-muted rounded-md p-1 text-sm focus:outline-none focus:border-accent"
               value={hourDisplay()}
               onKeyDown={(e) => {
@@ -351,7 +358,7 @@ export function DatePickerUI(props: DatePickerUIProps) {
               type="text"
               inputmode="numeric"
               maxLength={2}
-              aria-label={t('auto.minute')}
+              aria-label={t('core.datePicker.minute')}
               class="w-10 text-center bg-active border border-edge-muted rounded-md p-1 text-sm focus:outline-none focus:border-accent"
               value={minuteDisplay()}
               onKeyDown={(e) => {
@@ -398,7 +405,7 @@ export function DatePickerUI(props: DatePickerUIProps) {
           </div>
           <button
             type="button"
-            aria-label={t('auto.confirm_scheduled_time')}
+            aria-label={t('core.datePicker.confirmTime')}
             class="p-1 rounded-md bg-surface text-accent hover:bg-active transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             disabled={isTimeInPast()}
             onClick={() => props.onChange(buildDateWithTime(selectedDate()))}

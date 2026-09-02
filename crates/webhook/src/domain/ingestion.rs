@@ -16,12 +16,12 @@ use crate::domain::{
 use agent_trigger::domain::broker_events::AgentTriggerTopicEvent;
 use channels::domain::broker_events::ChannelTopicEvent;
 use chrono::Utc;
+use conation_event_broker::Event;
+use conation_user_id::user_id::MacroUserIdStr;
 use documents::domain::events::DocumentTopicEvent;
 use entity_access::domain::models::{AccessError, EntityType};
 use entity_access::domain::ports::EntityAccessService;
 use futures::future::join_all;
-use conation_event_broker::Event;
-use conation_user_id::user_id::MacroUserIdStr;
 use std::future::Future;
 use std::sync::Arc;
 use tracing::Instrument as _;

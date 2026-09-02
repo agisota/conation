@@ -1,6 +1,6 @@
 name: app
 options:
-  bundleIdPrefix: com.macro.app.prod
+  bundleIdPrefix: dev.conation
   deploymentTarget:
     iOS: 14.0
 packages:
@@ -13,8 +13,8 @@ configs:
 settingGroups:
   app:
     base:
-      PRODUCT_NAME: macro
-      PRODUCT_BUNDLE_IDENTIFIER: com.macro.app.prod
+      PRODUCT_NAME: Conation
+      PRODUCT_BUNDLE_IDENTIFIER: dev.conation.app
       DEVELOPMENT_TEAM: TY74Q77JBD
       CODE_SIGN_STYLE: Automatic
       CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION: YES
@@ -62,8 +62,8 @@ targets:
         CFBundleVersion: "179"
         CFBundleURLTypes:
           - CFBundleURLSchemes:
-              - macro
-            CFBundleURLName: macro
+              - conation
+            CFBundleURLName: conation
         NSUserActivityTypes:
           - INSendMessageIntent
           - NSUserActivityTypeBrowsingWeb
@@ -71,7 +71,7 @@ targets:
         NSMicrophoneUsageDescription: "This app needs access to the microphone to record videos for attachments."
         NSPhotoLibraryUsageDescription: "This app needs access to your photo library to upload attachments."
         LSApplicationQueriesSchemes:
-          - macro
+          - conation
         UIBackgroundModes:
           - audio
           - voip
@@ -80,13 +80,11 @@ targets:
       properties:
         aps-environment: production
         com.apple.developer.associated-domains:
-          - applinks:macro.com
-          - applinks:dev.macro.com
-          - applinks:staging.macro.com
+          - applinks:conation.dev
         com.apple.developer.usernotifications.communication: true
         com.apple.developer.usernotifications.time-sensitive: true
         com.apple.security.application-groups:
-          - group.com.macro.app.prod
+          - group.dev.conation.app
     scheme:
       environmentVariables:
         RUST_BACKTRACE: full
@@ -135,11 +133,11 @@ targets:
     info:
       path: ShareExtension/Info.plist
       properties:
-        CFBundleDisplayName: Share to Macro
+        CFBundleDisplayName: Поделиться в Conation
         CFBundleShortVersionString: 2.0.7
         CFBundleVersion: "179"
         LSApplicationQueriesSchemes:
-          - macro
+          - conation
         NSExtension:
           NSExtensionAttributes:
             NSExtensionActivationRule:
@@ -152,10 +150,10 @@ targets:
       path: ShareExtension/ShareExtension.entitlements
       properties:
         com.apple.security.application-groups:
-          - group.com.macro.app.prod
+          - group.dev.conation.app
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.macro.app.prod.ShareExtension
+        PRODUCT_BUNDLE_IDENTIFIER: dev.conation.app.ShareExtension
         DEVELOPMENT_TEAM: TY74Q77JBD
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION: YES
@@ -178,7 +176,7 @@ targets:
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).NotificationService
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.macro.app.prod.NotificationServiceExtension
+        PRODUCT_BUNDLE_IDENTIFIER: dev.conation.app.NotificationServiceExtension
         DEVELOPMENT_TEAM: TY74Q77JBD
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION: YES

@@ -52,13 +52,14 @@ impl TeamPlan {
     }
 }
 
-/// Maximum number of members (including the owner) a team may have without a
-/// Stripe subscription. Teams at or under this size are free; growing past it
-/// requires the owner to subscribe.
+/// Legacy fallback member limit for billing-enabled compatibility policies.
+///
+/// Conation's free-access policy has no team member limit and does not consult
+/// this value.
 pub const FREE_TEAM_MAX_MEMBERS: i32 = 5;
 
 /// Slug assigned when a team name cannot be converted to a valid team slug.
-pub const DEFAULT_TEAM_SLUG: &str = "MACRO";
+pub const DEFAULT_TEAM_SLUG: &str = "CONATION";
 
 const MAX_TEAM_SLUG_LEN: usize = 20;
 
@@ -667,8 +668,8 @@ pub enum JoinTeamError {
     #[error("Underlying user roles and permissions error")]
     /// Underlying user roles and permissions error
     AddRolesToUserError(#[from] UserRolesAndPermissionsError),
-    /// The team has no subscription and is already at the free member limit
-    #[error("Team is at the free member limit of {FREE_TEAM_MAX_MEMBERS}")]
+    /// The team is already at the configured member limit.
+    #[error("Team is at the member limit of {FREE_TEAM_MAX_MEMBERS}")]
     FreeTeamLimitReached,
 }
 

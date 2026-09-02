@@ -6,21 +6,21 @@ const client = {} as MacroClient;
 
 describe('userFromPrincipal', () => {
   test('resolves user principals, normalizing case', () => {
-    expect(userFromPrincipal(client, 'macro|User@Example.COM')?.id).toBe(
-      'macro|user@example.com',
+    expect(userFromPrincipal(client, 'conation|User@Example.COM')?.id).toBe(
+      'conation|user@example.com',
     );
   });
 
   test('only treats a leading bot| as a bot, since | is legal in an email', () => {
-    expect(userFromPrincipal(client, 'macro|bot|user@example.com')?.id).toBe(
-      'macro|bot|user@example.com',
+    expect(userFromPrincipal(client, 'conation|bot|user@example.com')?.id).toBe(
+      'conation|bot|user@example.com',
     );
   });
 
   test('gives no user for bots or empty principals', () => {
     for (const id of [
       'bot|00000000-0000-0000-0000-000000000001',
-      'macro|',
+      'conation|',
       '',
     ]) {
       expect(userFromPrincipal(client, id)).toBeUndefined();

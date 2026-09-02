@@ -4,7 +4,9 @@ use axum::{
     http::{Request, StatusCode},
     routing::get,
 };
-use conation_authorization::{BOT_SCOPE_HEADER, BOT_TOKEN_HEADER, BotScope, INTERNAL_API_KEY_HEADER};
+use conation_authorization::{
+    BOT_SCOPE_HEADER, BOT_TOKEN_HEADER, BotScope, INTERNAL_API_KEY_HEADER,
+};
 use conation_user_id::user_id::MacroUserIdStr;
 use tower::ServiceExt;
 

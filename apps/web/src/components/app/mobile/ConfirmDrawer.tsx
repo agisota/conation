@@ -1,5 +1,5 @@
-import { Button, type ConfirmDialogProps } from '@ui';
 import { t } from '@app/lib/i18n';
+import { Button, type ConfirmDialogProps } from '@ui';
 import { createSignal, Show } from 'solid-js';
 import { MobileDrawer } from './MobileDrawer';
 
@@ -44,7 +44,7 @@ export function ConfirmDrawer(props: ConfirmDialogProps) {
     >
       <MobileDrawer.Portal>
         <MobileDrawer.Overlay class="fixed inset-0 z-modal-overlay bg-modal-overlay pattern-diagonal-4 pattern-edge-muted" />
-        <MobileDrawer.Content aria-label={t('auto.confirmation')}>
+        <MobileDrawer.Content aria-label={t('shell.dialog.confirmation')}>
           <MobileDrawer.Handle />
           <div class="flex flex-col gap-1 px-4 pb-4 pt-1">
             <div class="text-base font-semibold text-ink">{props.title}</div>
@@ -60,7 +60,7 @@ export function ConfirmDrawer(props: ConfirmDialogProps) {
               class="w-full rounded-lg"
               onClick={confirm}
             >
-              {props.confirmLabel ?? 'Confirm'}
+              {props.confirmLabel ?? t('shell.actions.confirm')}
             </Button>
             <MobileDrawer.Close
               as={Button}

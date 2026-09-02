@@ -19,7 +19,7 @@ INSERT INTO
     )
 VALUES
     (
-        'macro|user@user.com',
+        'conation|user@user.com',
         'user@user.com',
         'stripe_id',
         1,
@@ -30,7 +30,7 @@ INSERT INTO
     public."User" ("id", "email", "stripeCustomerId", "macro_user_id")
 VALUES
     (
-        'macro|user2@user.com',
+        'conation|user2@user.com',
         'user2@user.com',
         'stripe_id2',
         'a2222222-2222-2222-2222-222222222222'
@@ -54,7 +54,7 @@ VALUES
         'document-with-comments',
         'Document With Comments',
         'pdf',
-        'macro|user@user.com',
+        'conation|user@user.com',
         '2022-01-01 00:00:00',
         '2022-01-01 00:00:00'
     );
@@ -114,7 +114,7 @@ INSERT INTO
 VALUES
     (
         1001,
-        'macro|user@user.com',
+        'conation|user@user.com',
         'document-with-comments',
         '2022-01-10 10:00:00',
         '2022-01-10 10:00:00',
@@ -123,7 +123,7 @@ VALUES
     ),
     (
         1002,
-        'macro|user@user.com',
+        'conation|user@user.com',
         'document-with-comments',
         '2022-01-10 11:30:00',
         '2022-01-10 11:30:00',
@@ -132,7 +132,7 @@ VALUES
     ),
     (
         1003,
-        'macro|user@user.com',
+        'conation|user@user.com',
         'document-with-comments',
         '2022-01-10 14:45:00',
         '2022-01-10 14:45:00',
@@ -141,7 +141,7 @@ VALUES
     ),
     (
         1004,
-        'macro|user@user.com',
+        'conation|user@user.com',
         'document-with-comments',
         '2022-01-10 14:45:00',
         '2022-01-10 14:45:00',
@@ -150,7 +150,7 @@ VALUES
     ),
     (
         1005,
-        'macro|user@user.com',
+        'conation|user@user.com',
         'document-with-comments',
         '2022-01-10 14:45:00',
         '2022-01-10 14:45:00',
@@ -182,7 +182,7 @@ VALUES
     (
         'document-with-comments',
         '91111111-1111-1111-1111-111111111111',
-        'macro|user@user.com',
+        'conation|user@user.com',
         1,
         1,
         0,
@@ -200,7 +200,7 @@ VALUES
     (
         'document-with-comments',
         '81111111-1111-1111-1111-111111111111',
-        'macro|user@user.com',
+        'conation|user@user.com',
         2,
         2,
         1,
@@ -218,7 +218,7 @@ VALUES
     (
         'document-with-comments',
         '71111111-1111-1111-1111-111111111111',
-        'macro|user@user.com',
+        'conation|user@user.com',
         3,
         3,
         2,
@@ -250,7 +250,7 @@ VALUES
     (
         10001,
         1001,
-        'macro|user@user.com',
+        'conation|user@user.com',
         'user@user.com',
         'Initial question on page 1',
         '2022-01-10 10:00:00',
@@ -259,7 +259,7 @@ VALUES
     (
         10002,
         1001,
-        'macro|user@user.com',
+        'conation|user@user.com',
         'user2@user.com',
         'Response to question on page 1',
         '2022-01-10 10:15:00',
@@ -268,7 +268,7 @@ VALUES
     (
         10003,
         1001,
-        'macro|user@user.com',
+        'conation|user@user.com',
         'user@user.com',
         'Follow up question',
         '2022-01-10 10:30:00',
@@ -277,7 +277,7 @@ VALUES
     (
         10004,
         1002,
-        'macro|user@user.com',
+        'conation|user@user.com',
         'user@user.com',
         'Question about diagram on page 2',
         '2022-01-10 11:30:00',
@@ -286,7 +286,7 @@ VALUES
     (
         10005,
         1002,
-        'macro|user@user.com',
+        'conation|user@user.com',
         'user2@user.com',
         'Answer about the diagram',
         '2022-01-10 11:45:00',
@@ -295,7 +295,7 @@ VALUES
     (
         10006,
         1002,
-        'macro|user@user.com',
+        'conation|user@user.com',
         'user@user.com',
         'Thanks, marking as resolved',
         '2022-01-10 12:00:00',
@@ -304,7 +304,7 @@ VALUES
     (
         10007,
         1003,
-        'macro|user2@user.com',
+        'conation|user2@user.com',
         'user2@user.com',
         'Feedback on page 3',
         '2022-01-10 14:45:00',
@@ -313,7 +313,7 @@ VALUES
     (
         10008,
         1005,
-        'macro|user@user.com',
+        'conation|user@user.com',
         'user@user.com',
         'Comment on page 3',
         '2022-01-10 14:45:00',
@@ -482,7 +482,7 @@ VALUES
         'document-for-updates',
         'Document For Updates',
         'pdf',
-        'macro|user@user.com',
+        'conation|user@user.com',
         '2022-01-02 00:00:00',
         '2022-01-02 00:00:00'
     );
@@ -518,7 +518,7 @@ INSERT INTO
 VALUES
     (
         2001,
-        'macro|user@user.com',
+        'conation|user@user.com',
         'document-for-updates',
         '2022-01-15 09:00:00',
         '2022-01-15 09:00:00',
@@ -549,7 +549,7 @@ VALUES
     (
         'document-for-updates',
         '61111111-1111-1111-1111-111111111111',
-        'macro|user@user.com',
+        'conation|user@user.com',
         1,
         1,
         0,
@@ -580,7 +580,7 @@ VALUES
     (
         20001,
         2001,
-        'macro|user@user.com',
+        'conation|user@user.com',
         'user@user.com',
         'Initial comment for thread',
         '2022-01-15 09:00:00',
@@ -653,7 +653,7 @@ VALUES
         'document-delete-test',
         'Document Delete Test',
         'pdf',
-        'macro|user@user.com',
+        'conation|user@user.com',
         '2022-01-03 00:00:00',
         '2022-01-03 00:00:00'
     );
@@ -689,7 +689,7 @@ INSERT INTO
 VALUES
     (
         3001,
-        'macro|user@user.com',
+        'conation|user@user.com',
         'document-delete-test',
         '2022-01-20 10:00:00',
         '2022-01-20 10:00:00',
@@ -697,7 +697,7 @@ VALUES
     ),
     (
         3002,
-        'macro|user@user.com',
+        'conation|user@user.com',
         'document-delete-test',
         '2022-01-20 11:00:00',
         '2022-01-20 11:00:00',
@@ -728,7 +728,7 @@ VALUES
     (
         'document-delete-test',
         '51111111-1111-1111-1111-111111111111',
-        'macro|user@user.com',
+        'conation|user@user.com',
         1,
         1,
         0,
@@ -746,7 +746,7 @@ VALUES
     (
         'document-delete-test',
         '41111111-1111-1111-1111-111111111111',
-        'macro|user@user.com',
+        'conation|user@user.com',
         2,
         2,
         1,
@@ -777,7 +777,7 @@ VALUES
     (
         30001,
         3001,
-        'macro|user@user.com',
+        'conation|user@user.com',
         'user@user.com',
         'Comment in thread 1',
         '2022-01-20 10:00:00',
@@ -786,7 +786,7 @@ VALUES
     (
         30002,
         3002,
-        'macro|user@user.com',
+        'conation|user@user.com',
         'user@user.com',
         'Comment in thread 2',
         '2022-01-20 11:00:00',
@@ -866,7 +866,7 @@ VALUES
     (
         '11111111-1111-1111-1111-111111111111',
         'document-with-comments',
-        'macro|user@user.com',
+        'conation|user@user.com',
         1001,
         1,
         255,
@@ -884,7 +884,7 @@ VALUES
     (
         '22222222-2222-2222-2222-222222222222',
         'document-with-comments',
-        'macro|user@user.com',
+        'conation|user@user.com',
         1002,
         2,
         0,
@@ -902,7 +902,7 @@ VALUES
     (
         '33333333-3333-3333-3333-333333333333',
         'document-with-comments',
-        'macro|user@user.com',
+        'conation|user@user.com',
         NULL,
         3,
         0,

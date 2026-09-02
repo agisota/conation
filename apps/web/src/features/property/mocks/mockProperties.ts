@@ -7,7 +7,7 @@ const now = new Date();
 const systemOwner = { scope: 'system' } as const;
 const userOwner = {
   scope: 'user',
-  user_id: 'macro|current@example.com',
+  user_id: 'conation|current@example.com',
 } as const;
 
 const statusOptions: PropertyOption[] = [
@@ -81,9 +81,9 @@ const priorityOptions: PropertyOption[] = [
 ];
 
 const MOCK_USER_IDS = [
-  'macro|alex@example.com',
-  'macro|sam@example.com',
-  'macro|jordan@example.com',
+  'conation|alex@example.com',
+  'conation|sam@example.com',
+  'conation|jordan@example.com',
 ] as const;
 
 const base = {

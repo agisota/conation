@@ -22,7 +22,7 @@ fn sandbox_list_deserializes_the_paginated_daytona_response() {
             "state": "started",
             "errorReason": null,
             "labels": {
-                "macro.agent_session_id": "session-1"
+                "conation.agent_session_id": "session-1"
             }
         }],
         "nextCursor": null
@@ -38,14 +38,14 @@ fn sandbox_list_deserializes_the_paginated_daytona_response() {
 
 #[test]
 fn create_request_omits_cpu_memory_and_disk() {
-    let snapshot = Snapshot::new("macro-agent-harness".into());
+    let snapshot = Snapshot::new("conation-agent-harness".into());
     let request = configuration_parameters(
         &snapshot,
         Env::from(HashMap::new()),
         Labels::from(HashMap::new()),
     );
     let json = serde_json::to_value(&request).expect("create request should serialize");
-    assert_eq!(json["snapshot"], "macro-agent-harness");
+    assert_eq!(json["snapshot"], "conation-agent-harness");
     assert_eq!(json["autoStopInterval"], 0);
     assert!(json.get("cpu").is_none());
     assert!(json.get("memory").is_none());
@@ -86,7 +86,7 @@ async fn live_hot_resize_increases_cpu_and_memory_without_touching_disk() {
     };
     let snapshot = live_env::DaytonaSnapshot::new()
         .and_then(|snapshot| optional_env(snapshot.value()))
-        .unwrap_or_else(|| "macro-agent-harness".to_owned());
+        .unwrap_or_else(|| "conation-agent-harness".to_owned());
     let api_url = live_env::DaytonaApiUrl::new()
         .and_then(|url| optional_env(url.value()))
         .unwrap_or_else(|| "https://app.daytona.io/api".to_owned());

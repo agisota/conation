@@ -1,9 +1,11 @@
 #![recursion_limit = "256"]
 use crate::api::context::{ApiContext, AuthorizationService};
 use anyhow::Context;
-use config::{Config, Environment};
-use conation_authorization::{InternalAuthConfig, MacroAuthorizationState, NoopMacroAuthJwtValidator};
+use conation_authorization::{
+    InternalAuthConfig, MacroAuthorizationState, NoopMacroAuthJwtValidator,
+};
 use conation_entrypoint::MacroEntrypoint;
+use config::{Config, Environment};
 use process::runner::run_worker;
 use sqlx::postgres::PgPoolOptions;
 use std::sync::Arc;

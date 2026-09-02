@@ -12,8 +12,8 @@ use agent_runtime_protocol::domain::channel::Channel;
 use agent_runtime_protocol::domain::connection::{RuntimeConnection, ServerChannel};
 use agent_runtime_protocol::domain::schema::v0::SystemEvent;
 use agent_session::domain::model::AgentSessionId;
-use dashmap::DashMap;
 use conation_user_id::user_id::MacroUserIdStr;
+use dashmap::DashMap;
 
 use crate::domain::agent::{AgentState, serve};
 use crate::domain::engine::TurnEngine;

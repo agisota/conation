@@ -14,7 +14,7 @@
 //!
 //! Snapshots are tarballs of the Docker volumes, written by a throwaway helper
 //! container, stored under `infra/local/generated/.snapshots/<key>/` (override
-//! with `MACRO_STACK_SNAPSHOT_DIR` — CI and Cloud install can bake this dir).
+//! with `CONATION_STACK_SNAPSHOT_DIR` — CI and Cloud install can bake this dir).
 
 use std::path::PathBuf;
 use std::process::Command;
@@ -35,7 +35,9 @@ use super::{env_layer, fusionauth, gen_compose, repo_root, workspace_root};
 /// be mid-flight (the readiness gate only checked `/api/status`, so a save
 /// could freeze a tenant-less FusionAuth DB — and the key never changed, so
 /// the bad snapshot was sticky).
-const FORMAT: u32 = 3;
+/// 4: the clean local profile moved stateful Docker volumes from `macro_*` to
+/// `conation_*`; an old archive must never be restored into the new profile.
+const FORMAT: u32 = 4;
 
 /// The throwaway container image used to tar/untar volumes. Alpine for its
 /// size; only needs `tar` + `sh`.
@@ -61,13 +63,13 @@ fn archives(instance: &Instance) -> [(&'static str, String); 5] {
 /// archives are written so the files are consistent.
 const STATEFUL_SERVICES: &[&str] = &["postgres", "search", "kafka", "fusionauth", "db"];
 
-/// Where snapshots live. `MACRO_STACK_SNAPSHOT_DIR` overrides for CI and Cloud
+/// Where snapshots live. `CONATION_STACK_SNAPSHOT_DIR` overrides for CI and Cloud
 /// install bakes; the default sits inside the gitignored generated dir.
 // xtask is host tooling, not a service reading APP_SECRETS_JSON, so reading the
 // process environment directly is correct here.
 #[allow(clippy::disallowed_methods)]
 pub fn root_dir() -> PathBuf {
-    std::env::var_os("MACRO_STACK_SNAPSHOT_DIR")
+    std::env::var_os("CONATION_STACK_SNAPSHOT_DIR")
         .map(PathBuf::from)
         .unwrap_or_else(|| repo_root().join("infra/local/generated/.snapshots"))
 }

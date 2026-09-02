@@ -5,6 +5,7 @@
  * while the turn is in flight — expanding to the reasoning text.
  */
 
+import { t } from '@app/lib/i18n';
 import CaretRight from '@phosphor/caret-right.svg';
 import { createSignal, Show } from 'solid-js';
 import { TextShimmer } from './TextShimmer';
@@ -31,7 +32,9 @@ export function Thought(props: ThoughtProps) {
           classList={{ 'rotate-90': expanded() }}
         />
         <TextShimmer
-          text={props.active ? 'Thinking' : 'Thought'}
+          text={
+            props.active ? t('agent.thought.thinking') : t('agent.thought.done')
+          }
           active={props.active ?? false}
         />
       </button>

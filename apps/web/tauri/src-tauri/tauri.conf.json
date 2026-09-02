@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "conation",
+  "productName": "Conation",
   "version": "../../package.json",
   "identifier": "dev.conation.app",
   "build": {
@@ -28,6 +28,10 @@
     ],
     "security": {
       "csp": null,
+      "capabilities": [
+        "default",
+        "mobile-capability"
+      ],
       "assetProtocol": {
         "enable": true,
         "scope": {
@@ -66,18 +70,6 @@
         },
         {
           "host": "conation.dev",
-          "pathPrefix": [
-            "/app"
-          ]
-        },
-        {
-          "host": "dev.conation.dev",
-          "pathPrefix": [
-            "/app"
-          ]
-        },
-        {
-          "host": "staging.conation.dev",
           "pathPrefix": [
             "/app"
           ]

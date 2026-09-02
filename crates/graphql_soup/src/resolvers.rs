@@ -3,6 +3,8 @@ use std::{future::Future, marker::PhantomData, pin::Pin, sync::Arc};
 use async_graphql::Context;
 use axum::extract::FromRef;
 use axum_extra::extract::Cached;
+use conation_authorization::{MacroAuthorizationService, MacroAuthorizationState};
+use conation_user_id::user_id::MacroUserIdStr;
 use email::{
     domain::ports::EmailService,
     inbound::axum::{axum_impls::MultiEmailLinkExtractor, previews_router::EmailRouterState},
@@ -14,8 +16,6 @@ use entity_access::{
 use futures::Stream;
 use graphql_common::{extract_part, require_authorized_user};
 use graphql_email::EmailThreadMutationOutput;
-use conation_authorization::{MacroAuthorizationService, MacroAuthorizationState};
-use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::EntityType;
 use models_pagination::TypeEraseCursor;
 use soup::domain::{models::grouping::NestedSoupGroups, ports::SoupService};
@@ -44,8 +44,8 @@ where
     St: Clone + Send + Sync + 'static,
     Edges: SoupEntityEdges,
 {
-    let conation_user_id = require_authorized_user::<Auth, St>(ctx).await?;
-    let mut receiver = service.subscribe(conation_user_id.clone());
+    let macro_user_id = require_authorized_user::<Auth, St>(ctx).await?;
+    let mut receiver = service.subscribe(macro_user_id.clone());
     const BUFFER_SIZE: usize = 10;
     let mut buf = Vec::with_capacity(BUFFER_SIZE);
 
@@ -53,7 +53,7 @@ where
         while let x @ 1.. = receiver.recv_many(&mut buf, BUFFER_SIZE).await {
             let patches = buf
                 .drain(..x)
-                .map(|patch| SoupPatch::new(conation_user_id.clone(), patch))
+                .map(|patch| SoupPatch::new(macro_user_id.clone(), patch))
                 .collect();
             yield patches;
         }
@@ -73,8 +73,8 @@ where
     St: Clone + Send + Sync + 'static,
     Edges: SoupEntityEdges,
 {
-    let conation_user_id = require_authorized_user::<Auth, St>(ctx).await?;
-    let request = input.into_request(conation_user_id)?;
+    let macro_user_id = require_authorized_user::<Auth, St>(ctx).await?;
+    let request = input.into_request(macro_user_id)?;
     let sort_method = *request.cursor.sort_method();
     let filters = request.cursor.filter().clone();
     let items = service.get_user_soup_grouped(request).await?;
@@ -148,11 +148,11 @@ where
     MacroAuthorizationState<Auth>: FromRef<St>,
     Edges: SoupEntityEdges,
 {
-    let conation_user_id = require_authorized_user::<Auth, St>(ctx).await?;
+    let macro_user_id = require_authorized_user::<Auth, St>(ctx).await?;
     let Cached(MultiEmailLinkExtractor(links, _)) =
         extract_part::<Cached<MultiEmailLinkExtractor<E, Auth>>, St>(ctx).await?;
     let link_ids = links.into_iter().map(|link| link.id).collect();
-    let request = input.into_request(conation_user_id, link_ids)?;
+    let request = input.into_request(macro_user_id, link_ids)?;
 
     // Always forward the optional team receipt: Soup uses it for all
     // team-scoped foreign entities, not only CRM-scoped filters.

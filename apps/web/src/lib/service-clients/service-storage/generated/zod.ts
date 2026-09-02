@@ -1558,7 +1558,7 @@ export const editCallTranscriptBody = zod
               ),
           })
           .describe(
-            'One per-diarized-speaker override, used in [`EditCallTranscriptRequest`].\n\n`custom_speaker = None` clears any existing override for this\n`diarized_speaker_id`; `Some(macro_user_id)` sets it. The string is\nexpected to parse as a `MacroUserId` (e.g. `macro|alice@example.com`);\nthe service layer rejects malformed values with `400 Bad Request`.'
+            'One per-diarized-speaker override, used in [`EditCallTranscriptRequest`].\n\n`custom_speaker = None` clears any existing override for this\n`diarized_speaker_id`; `Some(macro_user_id)` sets it. The string is\nexpected to parse as a `MacroUserId` (e.g. `conation|alice@example.com`);\nthe service layer rejects malformed values with `400 Bad Request`.'
           )
       )
       .describe('The set of per-diarized-speaker overrides to apply.'),
@@ -3258,14 +3258,30 @@ export const postChannelBotWebhookParams = zod.object({
 });
 
 export const postChannelBotWebhookHeader = zod.object({
-  'x-macro-bot-token': zod
+  'x-conation-bot-token': zod
     .string()
     .nullish()
-    .describe('Preferred bot authentication token'),
-  'x-macro-channel-bot-token': zod
+    .describe('Bot authentication token'),
+  'x-conation-bot-scope': zod
     .string()
     .nullish()
-    .describe('Legacy channel-scoped bot authentication token'),
+    .describe('Required with x-conation-bot-token: user or team'),
+  'x-conation-bot-for-conation-user-id': zod
+    .string()
+    .nullish()
+    .describe('Optional Conation user ID the bot claims to act for'),
+  'x-conation-bot-for-fusionauth-user-id': zod
+    .string()
+    .nullish()
+    .describe('Optional FusionAuth user ID the bot claims to act for'),
+  'x-conation-bot-for-organization-id': zod
+    .string()
+    .nullish()
+    .describe('Optional organization ID the bot claims to act for'),
+  'x-conation-channel-bot-token': zod
+    .string()
+    .nullish()
+    .describe('Channel-scoped bot authentication token'),
 });
 
 export const postChannelBotWebhookBody = zod
@@ -5705,7 +5721,7 @@ export const handlerResponse = zod
   .object({
     how_to_guide_id: zod
       .string()
-      .describe('Id of the user\'s \"Macro how to guide\".'),
+      .describe("Id of the user's Conation how-to guide."),
   })
   .describe('The deterministic starter document ids for the current user.');
 
@@ -11365,7 +11381,7 @@ export const postItemsSoupBody = zod
           .array(zod.string())
           .optional()
           .describe(
-            "Filter by chat owner. Examples: ['macro|user1@user.com'], ['macro|user1@user.com', 'macro|user2@user.com']. Empty to search all owners."
+            "Filter by chat owner. Examples: ['conation|user1@user.com'], ['conation|user1@user.com', 'conation|user2@user.com']. Empty to search all owners."
           ),
         project_ids: zod
           .array(zod.string())
@@ -11450,7 +11466,7 @@ export const postItemsSoupBody = zod
           .array(zod.string())
           .optional()
           .describe(
-            "Filter by document owner. Examples: ['macro|user1@user.com'], ['macro|user1@user.com', 'macro|user2@user.com']. Empty to search all owners."
+            "Filter by document owner. Examples: ['conation|user1@user.com'], ['conation|user1@user.com', 'conation|user2@user.com']. Empty to search all owners."
           ),
         project_ids: zod
           .array(zod.string())
@@ -11669,7 +11685,7 @@ export const postItemsSoupBody = zod
           .array(zod.string())
           .optional()
           .describe(
-            "Filter by project owner. Examples: ['macro|user1@user.com'], ['macro|user1@user.com', 'macro|user2@user.com']. Empty to search all owners."
+            "Filter by project owner. Examples: ['conation|user1@user.com'], ['conation|user1@user.com', 'conation|user2@user.com']. Empty to search all owners."
           ),
         project_ids: zod
           .array(zod.string())

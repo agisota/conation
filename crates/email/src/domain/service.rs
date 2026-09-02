@@ -24,13 +24,13 @@ use crate::domain::{
         EmailThreadMetadataService,
     },
 };
+use conation_event_broker::{MacroEventBroker, NoopMacroEventBroker};
 use crm::domain::service::CrmService;
 use entity_access::domain::models::{
     AccessLevel, EditAccessLevel, EntityAccessReceipt, EntityPermission, ViewAccessLevel,
 };
 use entity_access_management::domain::ports::EntityAccessManagementService;
 use frecency::domain::ports::FrecencyQueryService;
-use conation_event_broker::{MacroEventBroker, NoopMacroEventBroker};
 use model_entity::EntityType;
 use models_pagination::{PaginatedCursor, SimpleSortMethod};
 use std::collections::{HashMap, HashSet};
@@ -208,42 +208,42 @@ where
         self.get_email_thread_previews_impl(req).await
     }
 
-    async fn get_link_by_auth_id_and_conation_id(
+    async fn get_link_by_auth_id_and_macro_id(
         &self,
         auth_id: &str,
-        conation_id: conation_user_id::user_id::MacroUserIdStr<'_>,
+        macro_id: conation_user_id::user_id::MacroUserIdStr<'_>,
     ) -> Result<Option<crate::domain::models::Link>, EmailErr> {
-        self.get_link_by_auth_id_and_conation_id_impl(auth_id, conation_id)
+        self.get_link_by_auth_id_and_macro_id_impl(auth_id, macro_id)
             .await
     }
 
-    async fn get_link_by_conation_id(
+    async fn get_link_by_macro_id(
         &self,
-        conation_id: conation_user_id::user_id::MacroUserIdStr<'_>,
+        macro_id: conation_user_id::user_id::MacroUserIdStr<'_>,
     ) -> Result<Option<crate::domain::models::Link>, EmailErr> {
         self.email_repo
-            .link_by_conation_id(conation_id)
+            .link_by_macro_id(macro_id)
             .await
             .map_err(|e| EmailErr::RepoErr(e.into()))
     }
 
-    async fn get_inboxes_for_conation_id(
+    async fn get_inboxes_for_macro_id(
         &self,
-        conation_id: conation_user_id::user_id::MacroUserIdStr<'_>,
+        macro_id: conation_user_id::user_id::MacroUserIdStr<'_>,
     ) -> Result<Vec<crate::domain::models::Link>, EmailErr> {
         self.email_repo
-            .inboxes_for_conation_id(conation_id)
+            .inboxes_for_macro_id(macro_id)
             .await
             .map_err(|e| EmailErr::RepoErr(e.into()))
     }
 
     async fn get_owned_link_for_thread(
         &self,
-        conation_id: conation_user_id::user_id::MacroUserIdStr<'_>,
+        macro_id: conation_user_id::user_id::MacroUserIdStr<'_>,
         thread_id: uuid::Uuid,
     ) -> Result<Option<crate::domain::models::Link>, EmailErr> {
         self.email_repo
-            .owned_link_for_thread(thread_id, conation_id)
+            .owned_link_for_thread(thread_id, macro_id)
             .await
             .map_err(|e| EmailErr::RepoErr(e.into()))
     }
@@ -307,20 +307,20 @@ where
 
     async fn mark_thread_seen(
         &self,
-        conation_id: conation_user_id::user_id::MacroUserIdStr<'static>,
+        macro_id: conation_user_id::user_id::MacroUserIdStr<'static>,
         thread_id: Uuid,
     ) -> Result<(), EmailErr> {
-        self.mark_thread_seen_impl(conation_id, thread_id).await
+        self.mark_thread_seen_impl(macro_id, thread_id).await
     }
 
     async fn update_thread_labels_for_user(
         &self,
-        conation_id: conation_user_id::user_id::MacroUserIdStr<'static>,
+        macro_id: conation_user_id::user_id::MacroUserIdStr<'static>,
         thread_id: Uuid,
         label_id: Uuid,
         add: bool,
     ) -> Result<UpdateThreadLabelsResult, EmailErr> {
-        self.update_thread_labels_for_user_impl(conation_id, thread_id, label_id, add)
+        self.update_thread_labels_for_user_impl(macro_id, thread_id, label_id, add)
             .await
     }
 
@@ -415,7 +415,7 @@ where
                         self.publish_email_event(&EmailMacroEvent::thread_project_changed(
                             ThreadProjectChangedMetadata {
                                 link_id: link.id,
-                                owner: link.conation_id.clone(),
+                                owner: link.macro_id.clone(),
                                 actor: actor.clone(),
                                 thread_id,
                                 previous_project_id: old_project_id.clone(),

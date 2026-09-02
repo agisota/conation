@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="{{ language_tag }}" xmlns:v="urn:schemas-microsoft-com:vml">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="format-detection"
+      content="telephone=no, date=no, address=no, email=no"
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="supported-color-schemes" content="light dark" />
+    <title>{{ copy.document_title }}</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100% !important;
+        background-color: #f9fafb !important;
+      }
+      .email-container {
+        width: 100%;
+        max-width: 640px;
+        margin: 0 auto;
+        background-color: #f9fafb;
+      }
+      .content-block {
+        background-color: #ffffff;
+        border-radius: 8px;
+        padding: 56px 40px;
+        margin: 0 16px;
+        outline: 1px solid #f3f4f6;
+      }
+      .brand {
+        color: #111827;
+        font-family: Arial, sans-serif;
+        font-size: 30px;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        text-decoration: none;
+      }
+      .button-container {
+        text-align: center;
+        margin: 40px 0;
+      }
+      .button {
+        display: inline-block;
+        background-color: #3b82f6;
+        color: #ffffff !important;
+        text-decoration: none !important;
+        padding: 16px 32px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        text-align: center;
+        border: none;
+        min-width: 120px;
+      }
+      .button:hover {
+        background-color: #2563eb !important;
+      }
+      .button-fallback {
+        background-color: #3b82f6;
+        border-radius: 8px;
+        text-align: center;
+      }
+      .button-fallback a {
+        display: block;
+        color: #ffffff !important;
+        text-decoration: none !important;
+        padding: 16px 32px;
+        font-size: 16px;
+        font-weight: 600;
+      }
+      @media (max-width: 425px) {
+        .content-block {
+          padding: 32px 16px;
+          margin: 0 8px;
+        }
+        .button {
+          padding: 14px 24px;
+          font-size: 15px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      role="article"
+      aria-roledescription="{{ copy.role_description }}"
+      aria-label="{{ copy.aria_label }}"
+      lang="{{ language_tag }}"
+    >
+      <table
+        class="email-container"
+        cellpadding="0"
+        cellspacing="0"
+        role="presentation"
+      >
+        <tr>
+          <td align="center" style="padding: 56px 0 32px">
+            <span class="brand">Conation</span>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div class="content-block">
+              <h1
+                style="margin: 0 0 16px; text-align: center; font-size: 36px; font-weight: 600; color: #374151"
+              >
+                {{ copy.heading }}
+              </h1>
+              <p
+                style="margin: 0 0 40px; text-align: center; font-size: 16px; color: #6b7280"
+              >
+                {{ copy.introduction }}
+              </p>
+              <div class="button-container">
+                <a href="{{ verification_url }}" class="button">
+                  {{ copy.action }}
+                </a>
+              </div>
+              <!--[if mso]>
+              <table cellpadding="0" cellspacing="0" role="presentation" style="margin: 40px auto;">
+                <tr>
+                  <td class="button-fallback">
+                    <a href="{{ verification_url }}" style="color: #ffffff !important; text-decoration: none !important; display: block; padding: 16px 32px; font-size: 16px; font-weight: 600;">
+                      {{ copy.fallback_action }}
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              <![endif]-->
+              <p
+                style="text-align: center; font-size: 16px; color: #6b7280; margin: 40px 0 0"
+              >
+                {{ copy.ignore_notice }}
+              </p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 48px 0; text-align: center">
+            <p style="margin: 0; font-size: 14px; color: #9ca3af">
+              {{ copy.support_prompt }}
+              <a
+                href="mailto:{{ support_email }}"
+                style="color: #6b7280; font-weight: 500; text-decoration: none"
+                >{{ support_email }}</a
+              >
+            </p>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>

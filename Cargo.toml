@@ -10,6 +10,7 @@ members = [
   "crates/agent_trigger",
   "crates/ai_projections",
   "crates/ai_usage",
+  "crates/backend_i18n",
   "crates/bot_id",
   "crates/bot_token",
   "crates/bots",
@@ -198,7 +199,7 @@ image = "0.25"
 indexmap = "2"
 inquire = "0.7"
 itertools = "0.14"
-jsonwebtoken = { git = "https://github.com/whutchinson98/jsonwebtoken", features = [
+jsonwebtoken = { git = "https://github.com/whutchinson98/jsonwebtoken", rev = "c8c0d19511a0e7ba9d456e21437a79d321e99f16", features = [
   "rust_crypto",
 ] }
 lambda_runtime = "0.13.0"

@@ -189,7 +189,7 @@ async fn returns_messages_with_thread_info() {
 #[tokio::test]
 async fn attaches_bot_profiles_to_bot_authored_messages() {
     let seeded_bot = BotId::new_from_uuid(Uuid::new_v4());
-    let unseeded_bot = bot_id::MACRO_AI_BOT_ID;
+    let unseeded_bot = bot_id::CONATION_AI_BOT_ID;
     let parent_id = Uuid::new_v4();
     let conation_ai_msg_id = Uuid::new_v4();
 
@@ -272,9 +272,13 @@ async fn attaches_bot_profiles_to_bot_authored_messages() {
     assert_eq!(bot_msg.bot_profile, Some(profile.clone()));
     assert_eq!(bot_msg.thread.preview[0].bot_profile, Some(profile));
 
-    // The Macro AI system bot has no `bots` row, so it stays unenriched and the
+    // The Conation AI system bot has no `bots` row, so it stays unenriched and the
     // frontend falls back to its built-in special case.
-    let conation_ai_msg = page.items.iter().find(|m| m.id == conation_ai_msg_id).unwrap();
+    let conation_ai_msg = page
+        .items
+        .iter()
+        .find(|m| m.id == conation_ai_msg_id)
+        .unwrap();
     assert!(conation_ai_msg.bot_profile.is_none());
 }
 
@@ -559,7 +563,7 @@ impl ChannelRepo for FakeMutationRepo {
                 state
                     .participants
                     .iter()
-                    .map(|participant| conation_id(&participant.user_id)),
+                    .map(|participant| macro_id(&participant.user_id)),
             );
         }
         let mut participant_user_ids: Vec<_> = participant_user_ids.into_iter().collect();
@@ -971,12 +975,12 @@ fn mutation_service(
     ChannelServiceImpl::with_dependencies(repo, events, share)
 }
 
-fn conation_id(user_id: &str) -> MacroUserIdStr<'static> {
+fn macro_id(user_id: &str) -> MacroUserIdStr<'static> {
     MacroUserIdStr::try_from(user_id.to_string()).unwrap()
 }
 
 fn sender(user_id: &str) -> Sender {
-    Sender::new_from_user(conation_id(user_id))
+    Sender::new_from_user(macro_id(user_id))
 }
 
 #[tokio::test]
@@ -2143,8 +2147,8 @@ async fn add_participants_touches_channel_once_when_any_membership_changes() {
         channel_id,
         AddParticipantsRequest {
             participants: HashSet::from([
-                conation_id("macro|recipient@test.com"),
-                conation_id("macro|new@test.com"),
+                macro_id("macro|recipient@test.com"),
+                macro_id("macro|new@test.com"),
             ]),
         },
     )
@@ -2171,8 +2175,8 @@ async fn add_participants_does_not_touch_channel_when_memberships_are_already_ac
         channel_id,
         AddParticipantsRequest {
             participants: HashSet::from([
-                conation_id("macro|sender@test.com"),
-                conation_id("macro|recipient@test.com"),
+                macro_id("macro|sender@test.com"),
+                macro_id("macro|recipient@test.com"),
             ]),
         },
     )
@@ -2200,7 +2204,7 @@ async fn add_participants_propagates_channel_touch_errors() {
             sender("macro|sender@test.com"),
             channel_id,
             AddParticipantsRequest {
-                participants: HashSet::from([conation_id("macro|new@test.com")]),
+                participants: HashSet::from([macro_id("macro|new@test.com")]),
             },
         )
         .await
@@ -2284,7 +2288,7 @@ async fn create_channel_event_carries_channel_name() {
             channel_type: ChannelType::Private,
             team_id: None,
             auto_join_team: false,
-            participants: HashSet::from([conation_id("macro|recipient@test.com")]),
+            participants: HashSet::from([macro_id("macro|recipient@test.com")]),
         },
     )
     .await
@@ -2300,8 +2304,8 @@ async fn create_channel_event_carries_channel_name() {
 #[tokio::test]
 async fn ensure_dms_dispatches_created_channel_once() {
     let channel_id = Uuid::new_v4();
-    let joiner = conation_id("macro|joiner@test.com");
-    let teammate = conation_id("macro|teammate@test.com");
+    let joiner = macro_id("macro|joiner@test.com");
+    let teammate = macro_id("macro|teammate@test.com");
     let repo = FakeMutationRepo::new(channel_id, joiner.as_ref());
     let events = FakeEvents::default();
     let service = mutation_service(repo, events.clone(), FakeReferenceSharing::default());
@@ -2341,8 +2345,8 @@ async fn ensure_dms_dispatches_created_channel_once() {
 #[tokio::test]
 async fn ensure_dms_does_not_dispatch_for_existing_channel() {
     let channel_id = Uuid::new_v4();
-    let joiner = conation_id("macro|joiner@test.com");
-    let teammate = conation_id("macro|teammate@test.com");
+    let joiner = macro_id("macro|joiner@test.com");
+    let teammate = macro_id("macro|teammate@test.com");
     let mut repo = MockChannelRepo::new();
     repo.expect_maybe_get_dm()
         .once()
@@ -2372,7 +2376,7 @@ async fn ensure_dms_does_not_dispatch_for_existing_channel() {
 
 #[tokio::test]
 async fn get_or_create_dm_rejects_self_pair() {
-    let user = conation_id("macro|same@test.com");
+    let user = macro_id("macro|same@test.com");
     let repo = FakeMutationRepo::new(Uuid::new_v4(), user.as_ref());
     let service = mutation_service(repo, FakeEvents::default(), FakeReferenceSharing::default());
 
@@ -2394,8 +2398,8 @@ async fn get_or_create_dm_rejects_self_pair() {
 #[tokio::test]
 async fn get_or_create_dm_returns_get_for_existing_pair() {
     let channel_id = Uuid::new_v4();
-    let actor = conation_id("macro|actor@test.com");
-    let recipient = conation_id("macro|recipient@test.com");
+    let actor = macro_id("macro|actor@test.com");
+    let recipient = macro_id("macro|recipient@test.com");
     let mut repo = MockChannelRepo::new();
     repo.expect_maybe_get_dm()
         .once()
@@ -2447,7 +2451,7 @@ async fn create_private_channel_allows_no_invited_participants() {
     assert!(matches!(
         events.as_slice(),
         [ChannelEvent::ChannelCreated { participant_user_ids, .. }]
-            if participant_user_ids == &[conation_id("macro|sender@test.com")]
+            if participant_user_ids == &[macro_id("macro|sender@test.com")]
     ));
 }
 
@@ -2466,7 +2470,7 @@ async fn create_auto_join_team_channel_event_includes_current_team_members() {
             channel_type: ChannelType::Team,
             team_id: Some(Uuid::new_v4()),
             auto_join_team: true,
-            participants: HashSet::from([conation_id("macro|sender@test.com")]),
+            participants: HashSet::from([macro_id("macro|sender@test.com")]),
         },
     )
     .await
@@ -2477,8 +2481,8 @@ async fn create_auto_join_team_channel_event_includes_current_team_members() {
         events.as_slice(),
         [ChannelEvent::ChannelCreated { participant_user_ids, .. }]
             if participant_user_ids.len() == 2
-                && participant_user_ids.contains(&conation_id("macro|sender@test.com"))
-                && participant_user_ids.contains(&conation_id("macro|recipient@test.com"))
+                && participant_user_ids.contains(&macro_id("macro|sender@test.com"))
+                && participant_user_ids.contains(&macro_id("macro|recipient@test.com"))
     ));
 }
 
@@ -2523,7 +2527,7 @@ async fn create_channel_rejects_auto_join_for_non_team_channel() {
 async fn auto_join_by_team_id_does_not_touch_channel_recency() {
     let channel_id = Uuid::new_v4();
     let team_id = Uuid::new_v4();
-    let user_id = conation_id("macro|member@test.com");
+    let user_id = macro_id("macro|member@test.com");
     let repo = FakeMutationRepo::new(channel_id, "macro|sender@test.com");
     let svc = mutation_service(
         repo.clone(),
@@ -2540,7 +2544,7 @@ async fn auto_join_by_team_id_does_not_touch_channel_recency() {
 async fn team_membership_operations_delegate_to_repo() {
     let team_id = Uuid::new_v4();
     let channel_ids = vec![Uuid::new_v4(), Uuid::new_v4()];
-    let user_id = conation_id("macro|member@test.com");
+    let user_id = macro_id("macro|member@test.com");
     let mut repo = MockChannelRepo::new();
     repo.expect_auto_join_by_team_id()
         .withf({
@@ -2591,7 +2595,7 @@ async fn team_membership_operations_delegate_to_repo() {
 #[tokio::test]
 async fn team_membership_operations_delegate_repo_errors() {
     let team_id = Uuid::new_v4();
-    let user_id = conation_id("macro|member@test.com");
+    let user_id = macro_id("macro|member@test.com");
     let mut repo = MockChannelRepo::new();
     repo.expect_auto_join_by_team_id()
         .once()
@@ -2642,7 +2646,7 @@ async fn patch_channel_dispatches_channel_updated() {
     assert!(matches!(
         events.as_slice(),
         [ChannelEvent::ChannelUpdated { previous_name: Some(previous), channel_name: Some(new), actor, .. }]
-            if previous == "Project" && new == "Renamed" && actor == &conation_id("macro|sender@test.com")
+            if previous == "Project" && new == "Renamed" && actor == &macro_id("macro|sender@test.com")
     ));
 }
 
@@ -2927,8 +2931,8 @@ async fn remove_participants_dispatches_participants_removed() {
     assert!(matches!(
         events.as_slice(),
         [ChannelEvent::ParticipantsRemoved { actor, removed_user_ids, .. }]
-            if actor == &conation_id("macro|sender@test.com")
-                && removed_user_ids == &vec![conation_id("macro|recipient@test.com")]
+            if actor == &macro_id("macro|sender@test.com")
+                && removed_user_ids == &vec![macro_id("macro|recipient@test.com")]
     ));
 }
 
@@ -2959,8 +2963,8 @@ async fn leave_channel_dispatches_participants_removed_for_self() {
     assert!(matches!(
         events.as_slice(),
         [ChannelEvent::ParticipantsRemoved { actor, removed_user_ids, .. }]
-            if actor == &conation_id("macro|recipient@test.com")
-                && removed_user_ids == &vec![conation_id("macro|recipient@test.com")]
+            if actor == &macro_id("macro|recipient@test.com")
+                && removed_user_ids == &vec![macro_id("macro|recipient@test.com")]
     ));
 }
 

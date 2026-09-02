@@ -3,11 +3,11 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::{Extension, Json};
+use conation_user_id::user_id::MacroUserIdStr;
 use email_service::util::upload_attachment::{
     UploadAttachmentContext, UploadAttachmentError, upload_attachment,
 };
 use entity_access::domain::ports::EntityAccessService;
-use conation_user_id::user_id::MacroUserIdStr;
 use model::response::ErrorResponse;
 use model_entity::EntityType;
 use models_email::db::address::EmailRecipientType;
@@ -155,7 +155,7 @@ async fn verify_access_and_get_owner(
     }
 
     // Verify shared access to the thread
-    let user_id = MacroUserIdStr::parse_from_str(link.conation_id.as_ref())
+    let user_id = MacroUserIdStr::parse_from_str(link.macro_id.as_ref())
         .map_err(|e| GetAttachmentDocumentIdError::DatabaseError(anyhow::anyhow!(e)))?;
     ctx.entity_access_service
         .get_access_level(

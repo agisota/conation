@@ -7,17 +7,28 @@ import {
   ensureReadyCommand,
 } from './provision';
 
+const dockerfile = await Bun.file(
+  new URL('../container/Dockerfile', import.meta.url)
+).text();
+const openCodeConfig = await Bun.file(
+  new URL('../container/opencode.json', import.meta.url)
+).json();
+
 test('accepts a plain https repo url', () => {
   expect(() =>
-    assertSafeRepoUrl('https://github.com/macro-inc/macro.git')
+    assertSafeRepoUrl('https://github.com/agisota/conation.git')
   ).not.toThrow();
 });
 
 test.each([
   ['not a url', 'nonsense'],
-  ['non-https', 'http://github.com/macro-inc/macro.git'],
-  ['shell metacharacters', 'https://github.com/macro-inc/macro.git;rm -rf /'],
-  ['command substitution', 'https://github.com/$(whoami)/macro.git'],
+  ['non-https', 'http://github.com/agisota/conation.git'],
+  ['non-GitHub host', 'https://example.com/agisota/conation.git'],
+  ['embedded credential', 'https://token@github.com/agisota/conation.git'],
+  ['query string', 'https://github.com/agisota/conation.git?token=unsafe'],
+  ['non-repository path', 'https://github.com/agisota/conation/tree/main'],
+  ['shell metacharacters', 'https://github.com/agisota/conation.git;rm -rf /'],
+  ['command substitution', 'https://github.com/$(whoami)/conation.git'],
 ])('rejects %s', (_label, url) => {
   expect(() => assertSafeRepoUrl(url)).toThrow();
 });
@@ -54,5 +65,33 @@ test('ensureReady runs the script with the ensure timeout', async () => {
   await ensureReady(runner);
   expect(calls).toEqual([
     { command: ensureReadyCommand(), timeoutS: ENSURE_TIMEOUT_S },
+  ]);
+});
+
+test('image bake authenticates the private Conation clone only through BuildKit', () => {
+  expect(dockerfile).toContain('--mount=type=secret,id=github_token');
+  expect(dockerfile).toContain('GIT_ASKPASS');
+  expect(dockerfile).toContain('https://github.com/agisota/conation.git');
+  expect(dockerfile).not.toContain('ARG GITHUB_TOKEN');
+  expect(dockerfile).not.toContain('github.com/macro-inc/macro');
+
+  const secretStep = dockerfile
+    .split("RUN --mount=type=secret,id=github_token bash <<'EOF'\n")[1]
+    ?.split('\nEOF\n')[0];
+  expect(secretStep).toContain('git -c credential.helper= clone');
+  expect(secretStep).not.toContain('nix develop');
+});
+
+test('OpenCode exposes only the configured OmniRoute models', () => {
+  expect(openCodeConfig.enabled_providers).toEqual(['rox']);
+  expect(openCodeConfig.model).toBe('rox/gemini-2.5-flash');
+  expect(openCodeConfig.provider.rox.options).toEqual({
+    baseURL: 'https://api.rox.one/v1',
+    apiKey: '{env:ROX_API_KEY}',
+  });
+  expect(Object.keys(openCodeConfig.provider.rox.models)).toEqual([
+    'gemini-2.5-flash',
+    'nemotron-3-ultra',
+    'gpt-5.6-luna',
   ]);
 });

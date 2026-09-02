@@ -6,7 +6,14 @@ publish = false
 
 [[bin]]
 name = "service"
-path = "src/bins/service.rs"
+path = "src/bins/service_entrypoint.rs"
+
+# Stable, workspace-unique binary name for the local/self-host orchestrator.
+# Keep the historical `service` target above for the existing AWS deployment
+# until that stack is migrated explicitly.
+[[bin]]
+name = "scheduled_action_service"
+path = "src/bins/scheduled_action_service.rs"
 
 [[bin]]
 name = "scheduled_action_openapi"

@@ -1,6 +1,6 @@
 import type { SystemSortOption } from '@app/features/next-soup/soup-view/sort-options';
-import { t } from '@app/lib/i18n';
 import { useSoupView } from '@app/features/next-soup/soup-view/soup-view-context';
+import { t } from '@app/lib/i18n';
 import { useListLayout } from '@entity/composed/list-entity/shared';
 import StatusInProgress from '@icon/square-task-in-progress-circle.svg';
 import PriorityHigh from '@icon/wide-priority-high.svg';
@@ -82,7 +82,9 @@ function TaskListHeader(props: { class?: string }) {
       }}
     >
       <div style={{ 'grid-area': 'indicator' }} />
-      <div style={{ 'grid-area': 'content' }} class="truncate">{t('auto.task')}</div>
+      <div style={{ 'grid-area': 'content' }} class="truncate">
+        {t('soup.tasks.columns.task')}
+      </div>
       <For each={TASK_GRID_COLUMNS}>
         {(col) => {
           const sortKey = COLUMN_SORT_KEYS[col.id];
@@ -105,12 +107,12 @@ function TaskListHeader(props: { class?: string }) {
       {/* Created By column - only shown on wide containers (>1220px) */}
       <HeaderCell
         gridArea="createdBy"
-        label="Created By"
+        label={t('soup.tasks.columns.createdBy')}
         class="hidden @min-[1221px]/u-list:flex truncate"
       />
       <HeaderCell
         gridArea="timestamp"
-        label="Updated"
+        label={t('soup.tasks.columns.updated')}
         sortKey="updated_at"
         active={activeSort()?.id === 'updated_at'}
         reversed={activeSort()?.reversed ?? false}

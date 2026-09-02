@@ -3,11 +3,11 @@ use axum::{
     body::Body,
     http::{Request, header},
 };
-use http_body_util::BodyExt;
 use conation_authorization::{
-    INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_USER_ID_HEADER, InternalAuthConfig, JwtValidator,
+    INTERNAL_API_KEY_HEADER, INTERNAL_CONATION_USER_ID_HEADER, InternalAuthConfig, JwtValidator,
     MacroAuthorizationError, MacroAuthorizationServiceImpl, ValidatedIdentity,
 };
+use http_body_util::BodyExt;
 use rate_limit::{
     RateLimitConfig, RateLimitExceeded, RateLimitKey, RateLimitResult, RateLimitServiceImpl,
     domain::models::RateLimitOk,
@@ -239,7 +239,7 @@ async fn internal_acting_user_is_authenticated() {
     let (api, validator) = build_test_router(false);
     let request = Request::get("/contacts")
         .header(INTERNAL_API_KEY_HEADER, VALID_INTERNAL_KEY)
-        .header(INTERNAL_MACRO_USER_ID_HEADER, FOUND_USER_ID)
+        .header(INTERNAL_CONATION_USER_ID_HEADER, FOUND_USER_ID)
         .body(Body::empty())
         .unwrap();
 

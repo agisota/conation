@@ -1,8 +1,8 @@
 use anyhow::Context;
-use database_env_vars::{DatabaseUrl, RedisUri};
 use conation_auth::InternalApiKey;
 pub use conation_env::Environment;
 use conation_env_var::{env_vars, maybe_env_vars};
+use database_env_vars::{DatabaseUrl, RedisUri};
 
 env_vars! {
     pub struct BaseUrl;

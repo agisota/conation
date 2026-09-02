@@ -1,5 +1,5 @@
-import { MobileDrawer } from '@components/app/mobile/MobileDrawer';
 import { t } from '@app/lib/i18n';
+import { MobileDrawer } from '@components/app/mobile/MobileDrawer';
 import CaretDownIcon from '@phosphor/caret-down.svg';
 import { Button, CalendarMonthMenu, formatCalendarMonth } from '@ui';
 import { createSignal } from 'solid-js';
@@ -34,7 +34,7 @@ export function MonthDrawer(props: MonthDrawerProps) {
     >
       <MobileDrawer.Trigger
         as={Button}
-        aria-label={t('auto.choose_month')}
+        aria-label={t('calendar.navigation.chooseMonth')}
         class="max-w-full min-w-0 justify-start gap-1 rounded-full border-none bg-transparent px-1 text-base font-semibold text-ink hover:bg-hover"
       >
         <span class="min-w-0 truncate">{formatCalendarMonth(props.month)}</span>
@@ -43,7 +43,7 @@ export function MonthDrawer(props: MonthDrawerProps) {
 
       <MobileDrawer.Portal>
         <MobileDrawer.Overlay class="fixed inset-0 z-modal-overlay bg-modal-overlay pattern-diagonal-4 pattern-edge-muted" />
-        <MobileDrawer.Content aria-label={t('auto.choose_month')}>
+        <MobileDrawer.Content aria-label={t('calendar.navigation.chooseMonth')}>
           <MobileDrawer.Handle />
           <MobileDrawer.Section class="mb-3 overflow-visible">
             <CalendarMonthMenu

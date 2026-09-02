@@ -152,7 +152,7 @@ export function BuildingStep(props: {
 
     // Capture the powered SVG after a beat, then let the parent mount a
     // portal overlay which moves this exact scene while dissolving it into the
-    // flat Macro logo. Capturing rather than re-rendering avoids a one-frame
+    // flat Conation mark. Capturing rather than re-rendering avoids a one-frame
     // reset of the SVG's CSS/WAAPI state at the handoff boundary.
     const handoffAt = powerAt + POWERED_HOLD_MS * scale;
     const handoffTimer = setTimeout(() => {
@@ -171,8 +171,8 @@ export function BuildingStep(props: {
           height: scene.height,
         },
         // This is relative to the SVG's box because the portal frame starts
-        // at that same box. `logoBoxForMark` accounts for the SVG icon's
-        // vertical viewBox padding, so the *painted* logo aligns to the mark.
+        // at that same box. `logoBoxForMark` centres the square application
+        // icon inside the scene's rectangular logo reference.
         logo: logoBoxForMark({
           x: mark.x - scene.x,
           y: mark.y - scene.y,

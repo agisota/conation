@@ -1,7 +1,7 @@
 import { useSoupView } from '@app/features/next-soup/soup-view/soup-view-context';
-import { t } from '@app/lib/i18n';
 import { useApplyPreset } from '@app/features/next-soup/soup-view/soup-view-tabs';
 import { useApplyCrmView } from '@app/features/next-soup/soup-view/views/companies/use-apply-crm-view';
+import { t } from '@app/lib/i18n';
 import {
   CRM_LIST_COLUMN_LABELS,
   type CrmListColumnId,
@@ -31,8 +31,8 @@ import { unwrap } from 'solid-js/store';
 const copyShareLink = (config: CrmViewConfig) => {
   navigator.clipboard
     .writeText(buildCrmViewShareUrl(config))
-    .then(() => toast.success('Link copied to clipboard'))
-    .catch(() => toast.failure('Failed to copy link'));
+    .then(() => toast.success(t('soup.actions.linkCopied')))
+    .catch(() => toast.failure(t('soup.actions.copyLinkFailed')));
 };
 
 /**
@@ -61,11 +61,21 @@ const SavedViewRow = (props: {
     </Show>
     <Show when={props.onSetDefault}>
       {(onSetDefault) => (
-        <Tooltip label={props.isDefault ? 'Remove default' : 'Set as default'}>
+        <Tooltip
+          label={
+            props.isDefault
+              ? t('soup.views.removeDefault')
+              : t('soup.views.setDefault')
+          }
+        >
           <Button
             variant="ghost"
             size="icon-sm"
-            label={props.isDefault ? 'Remove default' : 'Set as default'}
+            label={
+              props.isDefault
+                ? t('soup.views.removeDefault')
+                : t('soup.views.setDefault')
+            }
             class={cn(
               'size-6 shrink-0 rounded-md p-1 text-ink-muted',
               !props.isDefault &&
@@ -78,11 +88,11 @@ const SavedViewRow = (props: {
         </Tooltip>
       )}
     </Show>
-    <Tooltip label="Copy link">
+    <Tooltip label={t('soup.actions.copyLink')}>
       <Button
         variant="ghost"
         size="icon-sm"
-        label="Copy link"
+        label={t('soup.actions.copyLink')}
         class="size-6 shrink-0 rounded-md p-1 text-ink-muted opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
         onClick={props.onCopyLink}
       >
@@ -91,11 +101,11 @@ const SavedViewRow = (props: {
     </Tooltip>
     <Show when={props.onDelete}>
       {(onDelete) => (
-        <Tooltip label="Delete view">
+        <Tooltip label={t('soup.views.delete')}>
           <Button
             variant="ghost"
             size="icon-sm"
-            label="Delete view"
+            label={t('soup.views.delete')}
             class="size-6 shrink-0 rounded-md p-1 text-ink-muted opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
             onClick={() => onDelete()()}
           >
@@ -175,7 +185,7 @@ export function CompanyViewsMenu(props: { hideLabel?: boolean } = {}) {
     setSaveFormOpen(false);
     setSaveName('');
     setOpen(false);
-    toast.success('View saved');
+    toast.success(t('soup.views.saved'));
   };
 
   const canDeleteTeamView = (createdBy: string | undefined) =>
@@ -194,21 +204,25 @@ export function CompanyViewsMenu(props: { hideLabel?: boolean } = {}) {
       <Dropdown.Trigger
         depth={2}
         class="bg-surface"
-        label={props.hideLabel ? 'Views' : undefined}
-        aria-label={props.hideLabel ? 'Views' : undefined}
+        label={props.hideLabel ? t('soup.views.menuLabel') : undefined}
+        aria-label={props.hideLabel ? t('soup.views.menuLabel') : undefined}
       >
         <StackIcon />
         <Show when={!props.hideLabel}>
-          <span>{t('auto.views')}</span>
+          <span>{t('soup.views.menuLabel')}</span>
         </Show>
       </Dropdown.Trigger>
 
       <Dropdown.Content class="w-64 shadow-menu">
         <Dropdown.Group>
-          <Dropdown.GroupLabel>{t('auto.my_views')}</Dropdown.GroupLabel>
+          <Dropdown.GroupLabel>
+            {t('soup.views.personalGroup')}
+          </Dropdown.GroupLabel>
           <For
             each={personal.views()}
-            fallback={<EmptyViewsHint>{t('auto.no_saved_views')}</EmptyViewsHint>}
+            fallback={
+              <EmptyViewsHint>{t('soup.views.noPersonalViews')}</EmptyViewsHint>
+            }
           >
             {(view) => (
               <SavedViewRow
@@ -228,10 +242,12 @@ export function CompanyViewsMenu(props: { hideLabel?: boolean } = {}) {
         </Dropdown.Group>
 
         <Dropdown.Group>
-          <Dropdown.GroupLabel>{t('auto.team_views')}</Dropdown.GroupLabel>
+          <Dropdown.GroupLabel>{t('soup.views.teamGroup')}</Dropdown.GroupLabel>
           <For
             each={team.views()}
-            fallback={<EmptyViewsHint>{t('auto.no_team_views')}</EmptyViewsHint>}
+            fallback={
+              <EmptyViewsHint>{t('soup.views.noTeamViews')}</EmptyViewsHint>
+            }
           >
             {(view) => (
               <SavedViewRow
@@ -266,7 +282,9 @@ export function CompanyViewsMenu(props: { hideLabel?: boolean } = {}) {
                 onSelect={() => setSaveFormOpen(true)}
               >
                 <FloppyDiskIcon class="size-3.5 shrink-0 text-ink-muted" />
-                <span class="flex-1 truncate">Save current view…</span>
+                <span class="flex-1 truncate">
+                  {t('soup.views.saveCurrent')}
+                </span>
               </Dropdown.Item>
             }
           >
@@ -282,7 +300,7 @@ export function CompanyViewsMenu(props: { hideLabel?: boolean } = {}) {
                   e.stopPropagation();
                   if (e.key === 'Enter') saveCurrentView();
                 }}
-                placeholder={t('auto.view_name')}
+                placeholder={t('soup.views.namePlaceholder')}
                 class={cn(
                   'w-full rounded-md border border-edge-muted bg-transparent px-2 py-1 text-sm',
                   'outline-none focus:border-accent placeholder:text-ink-placeholder'
@@ -291,12 +309,18 @@ export function CompanyViewsMenu(props: { hideLabel?: boolean } = {}) {
               <div class="flex items-center justify-between gap-1.5">
                 <SegmentedControl
                   size="sm"
-                  aria-label={t('auto.view_visibility')}
+                  aria-label={t('soup.views.visibilityLabel')}
                   value={saveScope()}
                   onChange={(value) => setSaveScope(value)}
                   options={[
-                    { value: 'personal', label: 'Personal' },
-                    { value: 'team', label: 'Team' },
+                    {
+                      value: 'personal',
+                      label: t('soup.views.visibility.personal'),
+                    },
+                    {
+                      value: 'team',
+                      label: t('soup.views.visibility.team'),
+                    },
                   ]}
                 />
                 <Button
@@ -304,7 +328,9 @@ export function CompanyViewsMenu(props: { hideLabel?: boolean } = {}) {
                   size="sm"
                   disabled={!saveName().trim()}
                   onClick={saveCurrentView}
-                >{t('common.save')}</Button>
+                >
+                  {t('common.save')}
+                </Button>
               </div>
             </div>
           </Show>
@@ -313,7 +339,9 @@ export function CompanyViewsMenu(props: { hideLabel?: boolean } = {}) {
             onSelect={() => copyShareLink(captureCurrentView())}
           >
             <LinkIcon class="size-3.5 shrink-0 text-ink-muted" />
-            <span class="flex-1 truncate">{t('auto.copy_link_to_current_view')}</span>
+            <span class="flex-1 truncate">
+              {t('soup.views.copyCurrentLink')}
+            </span>
           </Dropdown.Item>
         </Dropdown.Group>
       </Dropdown.Content>
@@ -342,11 +370,11 @@ export function CompanyDisplayMenu() {
   return (
     <Show when={hasContent()}>
       <Dropdown>
-        <Tooltip label="Display options">
+        <Tooltip label={t('soup.companies.display.options')}>
           <Dropdown.Trigger
             depth={2}
             class="bg-surface"
-            label="Display options"
+            label={t('soup.companies.display.options')}
           >
             <SlidersIcon />
           </Dropdown.Trigger>
@@ -356,7 +384,9 @@ export function CompanyDisplayMenu() {
           {/* Column visibility only applies to the list. */}
           <Show when={viewMode() === 'list'}>
             <Dropdown.Group>
-              <Dropdown.GroupLabel>{t('auto.list_columns')}</Dropdown.GroupLabel>
+              <Dropdown.GroupLabel>
+                {t('soup.companies.display.listColumns')}
+              </Dropdown.GroupLabel>
               <For
                 each={Object.keys(CRM_LIST_COLUMN_LABELS) as CrmListColumnId[]}
               >
@@ -367,7 +397,7 @@ export function CompanyDisplayMenu() {
                     closeOnSelect={false}
                   >
                     <span class="flex-1 truncate">
-                      {CRM_LIST_COLUMN_LABELS[column]}
+                      {t(`soup.fields.${column}`)}
                     </span>
                   </Dropdown.CheckboxItem>
                 )}
@@ -388,7 +418,9 @@ export function CompanyDisplayMenu() {
                 }
                 closeOnSelect={false}
               >
-                <span class="flex-1 truncate">{t('auto.show_hidden_companies')}</span>
+                <span class="flex-1 truncate">
+                  {t('soup.companies.display.showHidden')}
+                </span>
               </Dropdown.CheckboxItem>
             </Dropdown.Group>
           </Show>

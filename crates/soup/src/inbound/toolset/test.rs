@@ -20,9 +20,14 @@ fn test_list_entities_schema_validation() {
     assert!(
         validated
             .description
-            .contains("Browse the user's Macro workspace"),
+            .contains("Browse the user's Conation workspace"),
         "Description should contain expected text"
     );
+    let schema_json = serde_json::to_string(&validated.schema).unwrap();
+    assert!(schema_json.contains("Conation document"));
+    assert!(schema_json.contains("Conation project"));
+    assert!(!schema_json.contains("Macro document"));
+    assert!(!schema_json.contains("Macro project"));
 }
 
 #[test]
@@ -32,7 +37,7 @@ fn test_list_entities_schema_guides_conation_task_queries() {
 
     assert!(
         schema_json.contains("prefer this tool over external task trackers such as Linear"),
-        "schema should prefer Macro tasks over Linear for unqualified task requests"
+        "schema should prefer Conation tasks over Linear for unqualified task requests"
     );
     assert!(
         schema_json.contains("00000001-0000-0000-0000-000000000001"),

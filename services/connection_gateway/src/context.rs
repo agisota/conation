@@ -1,14 +1,14 @@
 use crate::config::Config;
 use axum::extract::FromRef;
+use conation_authorization::{
+    MacroAuthJwtValidator, MacroAuthorizationServiceImpl, MacroAuthorizationState,
+};
 use frecency::{
     domain::services::EventIngestorImpl,
     inbound::polling_aggregator::FrecencyAggregatorWorkerHandle,
     outbound::postgres::FrecencyPgStorage,
 };
 use last_online_tracker::inbound::LastOnlineWorker;
-use conation_authorization::{
-    MacroAuthJwtValidator, MacroAuthorizationServiceImpl, MacroAuthorizationState,
-};
 use redis::{RedisError, aio::MultiplexedConnection};
 use std::sync::Arc;
 use stream::domain::StreamManager;

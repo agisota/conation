@@ -1,3 +1,5 @@
+import { formatDateTime, t } from '@app/lib/i18n';
+
 export type ActivitySession = {
   userId: string;
   startMs: number;
@@ -50,26 +52,29 @@ const ACTIVITY_TIERS = [
 
 function activityLabel(endMs: number, nowMs: number) {
   const ageMs = Math.max(0, nowMs - endMs);
-  if (ageMs < MINUTE_MS) return 'just now';
+  if (ageMs < MINUTE_MS) return t('markdown.history.justNow');
   if (ageMs < HOUR_MS) {
     const minutes = Math.max(1, Math.floor(ageMs / MINUTE_MS));
-    return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'} ago`;
+    return t('markdown.history.minutesAgo', { count: minutes });
   }
   if (ageMs < DAY_MS) {
     const hours = Math.max(1, Math.floor(ageMs / HOUR_MS));
-    return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
+    return t('markdown.history.hoursAgo', { count: hours });
   }
   if (ageMs < WEEK_MS) {
     const days = Math.max(1, Math.floor(ageMs / DAY_MS));
-    return days === 1 ? 'yesterday' : `${days} days ago`;
+    return days === 1
+      ? t('markdown.history.yesterday')
+      : t('markdown.history.daysAgo', { count: days });
   }
   const weeks = Math.max(1, Math.floor(ageMs / WEEK_MS));
   if (ageMs < 8 * WEEK_MS) {
-    return weeks === 1 ? 'last week' : `${weeks} weeks ago`;
+    return weeks === 1
+      ? t('markdown.history.lastWeek')
+      : t('markdown.history.weeksAgo', { count: weeks });
   }
 
-  const date = new Date(endMs);
-  return date.toLocaleDateString(undefined, {
+  return formatDateTime(new Date(endMs), {
     month: 'short',
     day: 'numeric',
     year: 'numeric',

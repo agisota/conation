@@ -24,11 +24,11 @@
 //! ```
 
 use anyhow::Context as _;
-use documents::domain::events::{DocumentMacroEvent, DocumentTopicEvent};
-use kafka_util::{GroupName, KafkaEventConsumer};
 use conation_event_broker::{
     KafkaConsumerAdapter, MacroEvent as _, MacroEventCollection as _, MacroEventConsumerService,
 };
+use documents::domain::events::{DocumentMacroEvent, DocumentTopicEvent};
+use kafka_util::{GroupName, KafkaEventConsumer};
 use rdkafka::consumer::CommitMode;
 use rdkafka::message::Message;
 use tokio::sync::mpsc;

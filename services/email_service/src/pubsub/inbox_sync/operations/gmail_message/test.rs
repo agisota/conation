@@ -7,7 +7,7 @@ async fn insert_email_link(pool: &PgPool) -> (Uuid, String) {
     sqlx::query!(
         r#"
         INSERT INTO email_links (
-            id, conation_id, fusionauth_user_id, email_address, provider
+            id, macro_id, fusionauth_user_id, email_address, provider
         )
         VALUES ($1, $2, $2, $3, 'GMAIL')
         "#,

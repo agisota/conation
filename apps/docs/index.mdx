@@ -1,90 +1,103 @@
 ---
-title: "Welcome to Macro"
+title: "Добро пожаловать в Conation"
 icon: "house"
-description: "Extremely fast, unified interface for all your work, all linked together in one database."
+description: "Русскоязычное рабочее пространство для документов, сообщений, задач, почты и AI-инструментов."
 ---
 
-<iframe src="https://www.youtube.com/embed/Fn5hdzXsQQ8" title="YouTube video player" frameborder="0" className="w-full aspect-video rounded-xl" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen />
+Conation объединяет рабочие материалы в одном интерфейсе: документы, каналы,
+задачи, файлы, поиск, почту и AI-инструменты. Веб-клиент написан на SolidJS,
+backend — на Rust. Desktop-оболочка Tauri использует тот же клиент.
 
-Macro unifies your email, messaging, tasks, docs, and files into a single system, all linked together in one database. We built it with a Solid frontend and a Rust backend, so it's fast.
+<Warning>
+  Проект находится в активной миграции с upstream Macro. Локальный контур
+  собирается и запускается, но готовое публичное production-развёртывание на
+  домене `conation.dev` пока не подтверждено. Доступность интеграций зависит от
+  конфигурации оператора.
+</Warning>
 
-<Card title="Getting started" icon="rocket" href="/getting-started" horizontal>
-  New to Macro? Go from a fresh account to a working setup in about 15 minutes.
+<Card title="Начало работы" icon="rocket" href="/getting-started" horizontal>
+  Запустите локальный контур, войдите в приложение и познакомьтесь с основными
+  сценариями.
 </Card>
 
-## Core Blocks
+## Основные блоки
 
-For each block, we've studied the best prior art and tried to make it even better. For example, Email is faster than Superhuman with a unified inbox. Messaging is designed to be more focused, and less noisy, than Slack. Docs are simpler than Notion. Tasks steal from Linear but are less ceremonious (cycles, points, etc. are there if you _really want_ but we advise not).
-
-**All of this works together as a single integrated system: one interface, one bidirectional database with shared memory for your agents.**
-
-<Frame>
-  <img
-    src="/images/Screenshot-2026-06-09-at-11.33.57-AM.png"
-    alt="The Macro unified inbox showing the available blocks"
-  />
-</Frame>
-
-The following are the core first-party blocks available in Macro today. Each card links to that block's documentation page, with videos where applicable.
+Блок — базовая сущность Conation. Документ, задача, сообщение, письмо или файл
+можно открыть рядом с другими материалами, найти через поиск и связать с
+помощью @mention. Набор доступных блоков зависит от включённых сервисов.
 
 <CardGroup cols={2}>
-  <Card title="Email" icon="envelope" href="/product/email">
-    Multi-account unified inbox, keyboard shortcuts, and shared inboxes. Gmail.
+  <Card title="Документы" icon="file-text" href="/product/docs">
+    Совместные документы с Markdown, комментариями и @mention.
   </Card>
 
-  <Card title="Messages" icon="comments" href="/product/channels">
-    Channels and direct messages designed for technical discussions.
-  </Card>
+<Card title="Каналы" icon="comments" href="/product/channels">
+  Командные обсуждения и личные сообщения, связанные с другими блоками.
+</Card>
 
-  <Card title="Tasks" icon="check-square" href="/product/tasks">
-    Linear-inspired tasks tightly integrated with channels, email and agents.
-  </Card>
+<Card title="Задачи" icon="check-square" href="/product/tasks">
+  Задачи, статусы и связи с каналами, документами и агентами.
+</Card>
 
-  <Card title="Docs" icon="file-text" href="/product/docs">
-    Real-time collaborative, markdown-native docs using CRDTs, @mentions.
-  </Card>
+<Card title="Файлы" icon="folder" href="/product/folders">
+  Хранение, выдача доступа и поиск файлов.
+</Card>
 
-  <Card title="Canvas" icon="diagram-project" href="/product/canvas">
-    2D board with embedded @links to tasks, files, and emails. 
-  </Card>
+<Card title="Почта" icon="envelope" href="/product/email">
+  Единый интерфейс для подключённых почтовых аккаунтов. Сейчас рабочий inbox
+  требует Gmail/Google Workspace и собственных OAuth credentials оператора.
+</Card>
 
-  <Card title="Agents" icon="sparkles" href="/product/agents">
-    Unified memory, team-level memory. Can take action on your behalf.
-  </Card>
+<Card title="Агенты" icon="sparkles" href="/product/agents">
+  AI-сценарии с доступом в пределах разрешений пользователя. Нужен настроенный
+  модельный провайдер.
+</Card>
 
-  <Card title="Calls" icon="video" href="/product/calls">
-    Recorded, transcribed and logged to team-level memory for agents.
-  </Card>
+<Card title="Поиск" icon="magnifying-glass" href="/product/search">
+  Поиск по индексируемым материалам рабочего пространства.
+</Card>
 
-  <Card title="File Storage" icon="folder" href="/product/folders">
-    Store and share files, auto-imported from email and channels, fully searchable.
-  </Card>
-
-  <Card title="Pull Requests" icon="code-merge" href="/integrations/github">
-    Linked to tasks, embeddable in channels, available to agents.
-  </Card>
-
-  <Card title="CRM" icon="chart-network" href="/product/crm">
-    Customer & Contact objects, custom properties, email sync, enrichment.
+  <Card title="GitHub" icon="code-merge" href="/integrations/github">
+    Связь pull request с задачами после настройки GitHub OAuth/App.
   </Card>
 </CardGroup>
 
-## Key Features
+## Как связаны данные
 
-### Bidirectional @linking
+### Двунаправленные @mention
 
-When you @mention a document in a channel message, both the message and the document know about each other, so you can always trace where something has been discussed. This works across every block type: docs, tasks, emails, files, calls, etc.
+Когда вы упоминаете блок в другом блоке, Conation сохраняет связь между ними.
+Это помогает перейти от обсуждения к документу или задаче и вернуться к месту,
+где материал использовали.
 
-### Intelligent permissions
+### Разрешения
 
-Permissions inherit from channels. @mention something in a channel and every member automatically gets access, so nobody has to ask "hey can you share this with me?"
+Доступ может наследоваться через каналы и команды. Перед публикацией данных
+проверьте состав участников, настройки публичных ссылок и правила конкретного
+развёртывания. Подробнее — в разделе [«Разрешения»](/permissions).
 
-### Built for speed
+### Русский интерфейс
 
-Macro has a Rust backend and a Solid frontend. Search is instant, collaboration is real-time, and everything has a keyboard shortcut.
+Для нового профиля русский язык выбран по умолчанию. Пользователь может
+переключиться на английский; язык сохраняется в браузере. Непереведённые строки
+получают английский fallback.
 
-## Demos & Case Studies
+## Куда перейти дальше
 
-- [Demo](https://www.youtube.com/watch?v=Fn5hdzXsQQ8&t=1s) - Founder and CEO, Jacob Beckerman, walks you through Macro's core features
-- [Live Onboarding](https://cal.com/team/macro/macro-demo-call?metadata%5Bfbp%5D=fb.1.1776871324003.617255820779493826&month=2026-06) - Book a time for a member of our team to guide you through onboarding and any questions
-- [How Desync Uses Macro](https://www.youtube.com/watch?v=fZFIW2toHwk) - Watch Desync explain how their engineer-heavy company runs on Macro
+<CardGroup cols={2}>
+  <Card title="Приложения и платформы" icon="display" href="/apps">
+    Веб, Tauri и текущие ограничения мобильных выпусков.
+  </Card>
+
+<Card title="Основные понятия" icon="cubes" href="/concepts/blocks">
+  Блоки, упоминания, свойства и связи.
+</Card>
+
+<Card title="MCP" icon="plug" href="/AI/mcp/overview">
+  Подключение MCP-клиента к своему развёртыванию.
+</Card>
+
+  <Card title="FAQ" icon="circle-question" href="/faq">
+    Self-hosting, почта, лицензия и внешние интеграции.
+  </Card>
+</CardGroup>

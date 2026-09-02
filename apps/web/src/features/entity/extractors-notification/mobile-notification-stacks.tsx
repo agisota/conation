@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { globalSplitManager } from '@app/signal/splitLayout';
 import { useGlobalNotificationSource } from '@components/app/GlobalAppState';
 import {
@@ -234,7 +235,7 @@ export function MobileNotificationStackRows(
       items={stacks}
       visibleCount={props.visibleCount ?? 3}
       togglePosition="bottom"
-      expandText={(count) => `Show ${count} more`}
+      expandText={(count) => t('entity.collapsible.showMore', { count })}
       persistKey={`notif-stacks:${props.entity.id}`}
     >
       {(stack) => (

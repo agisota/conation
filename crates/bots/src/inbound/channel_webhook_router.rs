@@ -22,6 +22,11 @@ use channels::domain::{
     models::{PostMessageRequest, PostMessageResponse, Sender},
     ports::{ChannelMutationErr, ChannelService},
 };
+use conation_authorization::{
+    BOT_TOKEN_HEADER, BotAuthentication, BotOnly, MacroAuthorizationRejection,
+    MacroAuthorizationService, MacroAuthorizationState, OptionalMacroAuthorizationExtractor,
+};
+use conation_user_id::user_id::MacroUserIdStr;
 use entity_access::{
     domain::{
         models::{EntityAccessReceipt, MemberParticipantRole},
@@ -29,17 +34,14 @@ use entity_access::{
     },
     inbound::axum_extractors::ChannelAccessLevelExtractor,
 };
-use conation_authorization::{
-    BOT_TOKEN_HEADER, BotAuthentication, BotOnly, MacroAuthorizationRejection,
-    MacroAuthorizationService, MacroAuthorizationState, OptionalMacroAuthorizationExtractor,
-};
-use conation_user_id::user_id::MacroUserIdStr;
 use model_error_response::ErrorResponse;
 use std::{future::Future, marker::PhantomData, sync::Arc};
 use uuid::Uuid;
 
 /// Header used to authenticate channel bot webhook requests.
-pub const CHANNEL_BOT_TOKEN_HEADER: &str = "x-macro-channel-bot-token";
+pub const CHANNEL_BOT_TOKEN_HEADER: &str = "x-conation-channel-bot-token";
+
+const LEGACY_CHANNEL_BOT_TOKEN_HEADER: &str = "x-macro-channel-bot-token";
 
 /// Narrow adapter for posting channel messages from bot webhooks.
 pub trait ChannelMessagePoster: Clone + Send + Sync + 'static {
@@ -146,6 +148,13 @@ where
     type Rejection = MacroAuthorizationRejection;
 
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        if parts.headers.contains_key(LEGACY_CHANNEL_BOT_TOKEN_HEADER) {
+            return Err(MacroAuthorizationRejection {
+                status: StatusCode::BAD_REQUEST,
+                message: "legacy bot credentials are not supported".into(),
+            });
+        }
+
         if parts.headers.contains_key(BOT_TOKEN_HEADER)
             && parts.headers.contains_key(CHANNEL_BOT_TOKEN_HEADER)
         {
@@ -267,8 +276,12 @@ where
     path = "/channels/{channel_id}/webhook",
     params(
         ("channel_id" = Uuid, Path, description = "Channel ID"),
-        ("x-macro-bot-token" = Option<String>, Header, description = "Preferred bot authentication token"),
-        ("x-macro-channel-bot-token" = Option<String>, Header, deprecated, description = "Legacy channel-scoped bot authentication token")
+        ("x-conation-bot-token" = Option<String>, Header, description = "Bot authentication token"),
+        ("x-conation-bot-scope" = Option<String>, Header, description = "Required with x-conation-bot-token: user or team"),
+        ("x-conation-bot-for-conation-user-id" = Option<String>, Header, description = "Optional Conation user ID the bot claims to act for"),
+        ("x-conation-bot-for-fusionauth-user-id" = Option<String>, Header, description = "Optional FusionAuth user ID the bot claims to act for"),
+        ("x-conation-bot-for-organization-id" = Option<String>, Header, description = "Optional organization ID the bot claims to act for"),
+        ("x-conation-channel-bot-token" = Option<String>, Header, description = "Channel-scoped bot authentication token")
     ),
     request_body = ChannelWebhookRequest,
     responses(
@@ -367,7 +380,7 @@ fn record_preferred_bot(bot: &BotAuthentication) {
     if let Some(acting_user) = &bot.acting_user {
         span.record(
             "acting_user_id",
-            tracing::field::display(&acting_user.conation_user_id),
+            tracing::field::display(&acting_user.macro_user_id),
         );
     }
 }

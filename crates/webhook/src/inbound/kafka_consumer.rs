@@ -28,11 +28,11 @@ use crate::domain::{
 use agent_trigger::domain::broker_events::AgentSessionMacroEvent;
 use anyhow::Context as _;
 use channels::domain::broker_events::ChannelMacroEvent;
-use documents::domain::events::DocumentMacroEvent;
-use kafka_util::{GroupName, KafkaEventConsumer};
 use conation_event_broker::{
     KafkaConsumerAdapter, MacroEvent as _, MacroEventCollection as _, MacroEventConsumerService,
 };
+use documents::domain::events::DocumentMacroEvent;
+use kafka_util::{GroupName, KafkaEventConsumer};
 use rdkafka::consumer::CommitMode;
 use rdkafka::message::{BorrowedMessage, Message};
 use std::future::Future;

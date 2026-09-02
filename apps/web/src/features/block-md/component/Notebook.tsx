@@ -1,6 +1,6 @@
 import { AskMacroButton } from '@app/features/chat/ChatWithAgentButton';
-import { t } from '@app/lib/i18n';
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
+import { t } from '@app/lib/i18n';
 import { CommentMargin } from '@block-md/comments/CommentMargin';
 import {
   commentsStore,
@@ -11,6 +11,7 @@ import { mdStore } from '@block-md/signal/markdownBlockData';
 import { SidePanel } from '@components/app/side-panel';
 import { useCanAutofocusSplitContent } from '@components/app/split-layout/layoutUtils';
 import { useNavigatedFromJK } from '@components/app/useNavigatedFromJK';
+import type { LoroManager } from '@conation/collaboration/collab/manager';
 import { useBlockAliasedName, useBlockId } from '@core/block';
 import {
   editorFocusSignal,
@@ -36,7 +37,6 @@ import {
 import { tempRedirectLocation } from '@core/signal/location';
 import { useCanEdit } from '@core/signal/permissions';
 import { useBlockDocumentName } from '@core/util/currentBlockDocumentName';
-import type { LoroManager } from '@conation/collaboration/collab/manager';
 import { makeResizeObserver } from '@solid-primitives/resize-observer';
 import { makePersisted } from '@solid-primitives/storage';
 import {
@@ -225,7 +225,7 @@ export function Notebook(props: {
         hotkey: 'enter',
         scopeId: scopeId(),
         hotkeyToken: TOKENS.block.focus,
-        description: 'Focus Title or Markdown Editor',
+        description: () => t('markdown.editor.focus'),
         keyDownHandler: () => {
           const titleEditor = md.titleEditor;
           const markdownEditor = md.editor;
@@ -362,7 +362,7 @@ export function Notebook(props: {
       >
         <SidePanel.Section
           id="document-ai-actions"
-          title={t('auto.actions')}
+          title={t('markdown.sidePanel.actions')}
           defaultOpen
           order={0}
         >

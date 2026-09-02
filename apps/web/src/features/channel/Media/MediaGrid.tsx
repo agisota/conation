@@ -1,5 +1,5 @@
-import { constrainImageDimensions } from '@conation/lexical-core/utils/media';
 import { t } from '@app/lib/i18n';
+import { constrainImageDimensions } from '@conation/lexical-core/utils/media';
 import ExpandIcon from '@phosphor/arrows-out-simple.svg';
 import { Button, cn } from '@ui';
 import { createMemo, createSignal, For, Match, Show, Switch } from 'solid-js';
@@ -32,7 +32,7 @@ function MessageImageTile(props: {
       type="button"
       class="relative flex rounded-2xl"
       onClick={props.onOpen}
-      aria-label={t('auto.open_image_viewer')}
+      aria-label={t('channel.media.openImageViewer')}
     >
       <MediaImage.Image
         src={props.item.src}
@@ -94,7 +94,7 @@ function MessageVideoTile(props: { item: MediaItem; onOpen: () => void }) {
               type="button"
               class="block max-w-full"
               onClick={props.onOpen}
-              aria-label={t('auto.open_video_viewer')}
+              aria-label={t('channel.media.openVideoViewer')}
             >
               <MediaVideo.Preview
                 src={props.item.src}
@@ -111,7 +111,9 @@ function MessageVideoTile(props: { item: MediaItem; onOpen: () => void }) {
                 event.stopPropagation();
                 setIsInlinePlaying(true);
               }}
-            >{t('auto.play_inline')}</button>
+            >
+              {t('channel.media.playInline')}
+            </button>
           </>
         }
       >

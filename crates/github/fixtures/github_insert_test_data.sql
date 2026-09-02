@@ -6,4 +6,4 @@ VALUES
 INSERT INTO
     public."User" (id, email, macro_user_id)
 VALUES
-    ('macro|new@user.com', 'new@user.com', 'ffffffff-ffff-ffff-ffff-ffffffffffff'::uuid);
+    ('conation|new@user.com', 'new@user.com', 'ffffffff-ffff-ffff-ffff-ffffffffffff'::uuid);

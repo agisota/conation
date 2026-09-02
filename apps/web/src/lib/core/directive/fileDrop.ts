@@ -1,4 +1,5 @@
 import { toast } from '@core/component/Toast/Toast';
+import { t } from '@core/i18n';
 import { extractFileSystemEntries } from '@core/util/dataTransfer';
 import { fileExtension } from '@service-storage/util/filename';
 import { type Accessor, onCleanup } from 'solid-js';
@@ -164,7 +165,7 @@ export function fileDrop(
     // Check for directories using dataTransfer.items
     const { directoryEntries } = extractFileSystemEntries(e.dataTransfer);
     if (directoryEntries.length > 0) {
-      toast.failure('Folder upload not supported here');
+      toast.failure(t('core.upload.folderUnsupportedHere'));
       return;
     }
 
@@ -173,7 +174,7 @@ export function fileDrop(
       const validFiles = Array.from(files).filter(isFileValid);
       const valid = validFiles.length === files.length;
       if (!valid) {
-        toast.failure('Invalid attachment file(s)');
+        toast.failure(t('core.upload.invalidAttachments'));
         return;
       }
       options?.onDrop?.(validFiles, e);
@@ -222,7 +223,7 @@ export function fileDrop(
       }
     }
 
-    toast.failure('Invalid attachment file(s)');
+    toast.failure(t('core.upload.invalidAttachments'));
   };
 
   let input = document.createElement('input');

@@ -1,8 +1,8 @@
 mod config;
 use anyhow::{Context, Result};
+use conation_env_var::env_vars;
 use futures::{SinkExt, StreamExt};
 use http::uri::Uri;
-use conation_env_var::env_vars;
 use serde::{Deserialize, Serialize};
 use std::{sync::Arc, time::Duration};
 use tokio_tungstenite::{connect_async, tungstenite::Message};

@@ -6,12 +6,12 @@ use axum::{
     body::Body,
     http::{Request, StatusCode, header},
 };
-use http_body_util::BodyExt;
 use conation_authorization::{
     InternalIdentityClaims, MacroAuthorizationError, MacroAuthorizationService,
     MacroAuthorizationState,
 };
 use conation_user_id::user_id::MacroUserIdStr;
+use http_body_util::BodyExt;
 use model_user::UserContext;
 use rootcause::Report;
 use tower::ServiceExt;
@@ -101,7 +101,7 @@ impl AiProjectionService for MockService {
 
 fn test_user_context() -> UserContext {
     UserContext {
-        user_id: "macro|test@test.com".to_string(),
+        user_id: "conation|test@example.com".to_string(),
         fusion_user_id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb".to_string(),
         permissions: None,
         organization_id: None,
@@ -147,7 +147,7 @@ fn post_request_with_model(model: Option<&str>) -> axum::http::Request<axum::bod
 }
 
 #[tokio::test]
-async fn upsert_projection_returns_cold_state_for_professional_user() {
+async fn upsert_projection_returns_cold_state_for_authenticated_user() {
     let app = build_router(true);
 
     let response = app.oneshot(post_request()).await.unwrap();
@@ -161,23 +161,23 @@ async fn upsert_projection_returns_cold_state_for_professional_user() {
 }
 
 #[tokio::test]
-async fn upsert_projection_is_forbidden_without_professional_features() {
+async fn upsert_projection_allows_default_model_without_professional_features() {
     let app = build_router(false);
 
-    // No model requested -> server default (smart tier) -> premium only.
+    // No model requested -> server default, available to everyone.
     let response = app.oneshot(post_request()).await.unwrap();
-    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+    assert_eq!(response.status(), StatusCode::OK);
 }
 
 #[tokio::test]
-async fn upsert_projection_forbids_premium_models_without_professional_features() {
+async fn upsert_projection_allows_every_model_without_professional_features() {
     let app = build_router(false);
 
     let response = app
         .oneshot(post_request_with_model(Some("cerebras/llama-3.3-70b")))
         .await
         .unwrap();
-    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+    assert_eq!(response.status(), StatusCode::OK);
 }
 
 #[tokio::test]

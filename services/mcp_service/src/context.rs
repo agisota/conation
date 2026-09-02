@@ -8,6 +8,11 @@ use anyhow::Context;
 use channels::{
     domain::list_service::ChannelListServiceImpl, outbound::pg_channels_repo::PgChannelsRepo,
 };
+use conation_auth::middleware::decode_jwt::JwtValidationArgs;
+use conation_service_urls::{
+    AiEditingWorkerUrl, ConnectionGatewayUrl, DocumentStorageServiceUrl, EmailServiceUrl,
+    LexicalServiceUrl, SyncServiceUrl,
+};
 use documents::{
     domain::models::CloudFrontConfig,
     inbound::toolset::DocumentToolContext,
@@ -27,11 +32,6 @@ use foreign_entity::{
 };
 use frecency::domain::services::FrecencyQueryServiceImpl;
 use frecency::outbound::postgres::FrecencyPgStorage;
-use conation_auth::middleware::decode_jwt::JwtValidationArgs;
-use conation_service_urls::{
-    AiEditingWorkerUrl, ConnectionGatewayUrl, DocumentStorageServiceUrl, EmailServiceUrl,
-    LexicalServiceUrl, SyncServiceUrl,
-};
 use mcp_auth_proxy::{
     domain::service::McpAuthProxyServiceImpl,
     outbound::{fusionauth::FusionAuthOAuthProvider, redis::RedisInflightAuth},
@@ -424,13 +424,6 @@ async fn build_auth_proxy(
     let mcp_public_url: String = config.mcp_public_url.as_ref().to_owned();
     let mcp_oauth_redirect_uri = format!("{mcp_public_url}/oauth/callback");
 
-    let fusionauth_api_key = LocalOrRemoteSecret::new_from_secret_manager(
-        config.fusionauth_api_key_secret_key.as_ref().to_owned(),
-        secretsmanager_client,
-    )
-    .await
-    .context("failed to load FusionAuth API key")?;
-
     let fusionauth_client_secret = LocalOrRemoteSecret::new_from_secret_manager(
         config.fusionauth_client_secret_key.as_ref().to_owned(),
         secretsmanager_client,
@@ -438,32 +431,20 @@ async fn build_auth_proxy(
     .await
     .context("failed to load FusionAuth client secret")?;
 
-    let google_client_secret = LocalOrRemoteSecret::new_from_secret_manager(
-        config.google_client_secret_key.as_ref().to_owned(),
-        secretsmanager_client,
-    )
-    .await
-    .context("failed to load Google client secret")?;
-
     let fusionauth_public_url = config
         .fusionauth_public_url
         .value()
         .unwrap_or(config.fusionauth_base_url.as_ref())
         .to_owned();
-    let fusionauth_client = fusionauth::FusionAuthClient::new(
-        fusionauth_api_key.as_ref().to_owned(),
+    let fusionauth_client = fusionauth::oauth::FusionAuthOAuthClient::new(
         config.fusionauth_client_id.as_ref().to_owned(),
         fusionauth_client_secret.as_ref().to_owned(),
         config.fusionauth_base_url.as_ref().to_owned(),
         mcp_oauth_redirect_uri,
-        config.google_client_id.as_ref().to_owned(),
-        google_client_secret.as_ref().to_owned(),
     )
     .with_public_url(fusionauth_public_url);
 
-    let auth_provider = FusionAuthOAuthProvider::new(fusionauth_client)
-        .await
-        .context("failed to initialize MCP auth provider")?;
+    let auth_provider = FusionAuthOAuthProvider::new(fusionauth_client);
     let redis_client = redis::Client::open(config.redis_url.as_ref().to_owned())
         .context("failed to initialize redis client for MCP auth proxy")?;
 

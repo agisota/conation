@@ -7,8 +7,8 @@
  * github.com/sst/opencode, MIT © 2025 opencode — adapted to Macro tokens.
  */
 
-import { For } from 'solid-js';
 import { t } from '@app/lib/i18n';
+import { For } from 'solid-js';
 import type { AnsweredQuestion } from './types';
 
 export interface QuestionAnswersProps {
@@ -26,7 +26,9 @@ export function QuestionAnswers(props: QuestionAnswersProps) {
               {item.answers.length > 0 ? (
                 item.answers.join(', ')
               ) : (
-                <span class="text-ink-placeholder">{t('auto.no_answer')}</span>
+                <span class="text-ink-placeholder">
+                  {t('agent.questions.noAnswer')}
+                </span>
               )}
             </div>
           </div>

@@ -1,13 +1,13 @@
 use crate::outbound::email_api::GmailApi;
 use crate::pubsub::util::publish_email_event;
 use anyhow::{Context, anyhow};
+use conation_event_broker::MacroEventBroker;
+use conation_user_id::user_id::MacroUserIdStr;
 use email::domain::events::{
     EmailMacroEvent, ThreadsReindexReason, ThreadsReindexRequestedMetadata,
 };
 use email_api_client::domain::models::EmailApiError;
 use futures::{StreamExt, stream};
-use conation_event_broker::MacroEventBroker;
-use conation_user_id::user_id::MacroUserIdStr;
 use models_email::service::contact::{Contact, ContactList};
 use models_email::service::link::Link;
 use models_email::service::pubsub::SFSUploaderMessage;
@@ -305,7 +305,7 @@ async fn reindex_threads_for_changed_contacts<B: MacroEventBroker>(
         "Re-indexing threads for contacts with name changes"
     );
 
-    publish_thread_reindex_batches(conation_event_broker, link.id, &link.conation_id, &thread_ids);
+    publish_thread_reindex_batches(conation_event_broker, link.id, &link.macro_id, &thread_ids);
 }
 
 fn publish_thread_reindex_batches<B: MacroEventBroker>(

@@ -1,4 +1,5 @@
 /** Document-storage mutations used by entity surfaces. */
+import { t } from '@app/lib/i18n';
 import {
   copyItem,
   deleteItem,
@@ -106,7 +107,7 @@ export function createBulkDeleteDssItemsMutation() {
       context?.soupSnapshot.rollback();
       context?.searchSnapshot.rollback();
       console.error(`Failed to delete dss items`, entities, error);
-      toast.failure('Failed to delete items');
+      toast.failure(t('entity.feedback.deleteFailed'));
     },
   }));
 }
@@ -118,7 +119,7 @@ function invalidateAfterMove(
   failed?: boolean
 ) {
   if (failed) {
-    toast.failure('Failed to move item');
+    toast.failure(t('entity.feedback.moveFailed'));
   }
 
   // Covers queries already containing the entities (including the source folder's list)
@@ -263,7 +264,7 @@ export function createBulkRemoveFromProjectDssEntityMutation() {
           entities,
           error
         );
-        toast.failure('Failed to remove items from folder');
+        toast.failure(t('entity.feedback.removeFromFolderFailed'));
       }
 
       // Queries still containing the entities
@@ -340,7 +341,7 @@ export function createBulkCopyDssEntityMutation() {
     onSettled: (data, error, { entities }) => {
       if (error) {
         console.error(`Failed bulk copy`, entities, data, error);
-        toast.failure('Failed to copy items');
+        toast.failure(t('entity.feedback.copyFailed'));
       }
 
       // Trigger refetch so new items appear

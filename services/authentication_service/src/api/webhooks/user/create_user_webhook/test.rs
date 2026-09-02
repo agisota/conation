@@ -9,7 +9,7 @@ fn support_channel_name_uses_email_local_part() {
 
     assert_eq!(
         support_channel_name(&email),
-        "Macro Support x new.user+trial"
+        "Поддержка Conation — new.user+trial"
     );
 }
 
@@ -26,6 +26,7 @@ fn webhook_user(
         first_name: first_name.map(str::to_string),
         last_name: last_name.map(str::to_string),
         full_name: full_name.map(str::to_string),
+        image_url: None,
     }
 }
 

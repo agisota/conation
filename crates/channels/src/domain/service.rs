@@ -24,8 +24,8 @@ use crate::domain::{
 use bot_id::BotIdStr;
 use bot_id::cowlike::CowLike;
 use channel_sender::ChannelSender;
-use entity_access::domain::models::{EntityAccessReceipt, EntityType, MemberParticipantRole};
 use conation_user_id::user_id::MacroUserIdStr;
+use entity_access::domain::models::{EntityAccessReceipt, EntityType, MemberParticipantRole};
 use models_pagination::{CreatedAt, PaginateOn, Query};
 use std::collections::{HashMap, HashSet};
 use uuid::Uuid;
@@ -364,7 +364,7 @@ where
         let org_id = None;
         if req.participants.is_empty() && req.channel_type != ChannelType::Private {
             return Err(ChannelMutationErr::BadRequest(
-                "participants must be a non-empty list of 'macro|<email>'".to_string(),
+                "participants must be a non-empty list of 'conation|<email>'".to_string(),
             ));
         }
 
@@ -441,7 +441,7 @@ where
         let actor = require_user_actor(&actor)?;
         if req.recipients.is_empty() {
             return Err(ChannelMutationErr::BadRequest(
-                "recipients must be a non-empty list of 'macro|<email>'".to_string(),
+                "recipients must be a non-empty list of 'conation|<email>'".to_string(),
             ));
         }
 
@@ -742,7 +742,7 @@ where
         } = req;
 
         // As in post_message: bots don't track a mention list, so when a bot
-        // replaces message content (e.g. Macro AI swapping its "thinking"
+        // replaces message content (e.g. Conation AI swapping its "thinking"
         // placeholder for the reply), derive the mentions from the new content.
         let replacement_mentions = match (replacement_mentions, &content) {
             (None, Some(content)) if actor.as_bot().is_some() => {

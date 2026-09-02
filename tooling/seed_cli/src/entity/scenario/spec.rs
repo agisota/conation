@@ -12,6 +12,7 @@ mod test;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 
+use conation_user_id::user_id::MacroUserIdStr;
 use models_permissions::share_permission::LinkShare;
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
@@ -507,14 +508,16 @@ impl ScenarioSpec {
         Ok(spec)
     }
 
-    /// The `macro|email` user id for a user key.
+    /// The canonical `conation|email` user id for a user key.
     pub fn user_id(&self, key: &str) -> String {
-        format!("macro|{}", self.users[key].email)
+        MacroUserIdStr::try_from_email(&self.users[key].email)
+            .expect("validated scenario email must produce a user id")
+            .to_string()
     }
 
-    /// The derived `conation_user` uuid for a user key.
-    pub fn conation_user_uuid(&self, key: &str) -> Uuid {
-        derive_id(&self.scenario, "conation_user", key)
+    /// The derived `macro_user` uuid for a user key.
+    pub fn macro_user_uuid(&self, key: &str) -> Uuid {
+        derive_id(&self.scenario, "macro_user", key)
     }
 
     /// The derived team uuid for a team key.

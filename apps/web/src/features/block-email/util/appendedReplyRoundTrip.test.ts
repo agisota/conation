@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
-import { $generateNodesFromDOM } from '@lexical/html';
+
 import {
   $isClassedBlockNode,
   SupportedNodeTypes,
 } from '@conation/lexical-core';
+import { $generateNodesFromDOM } from '@lexical/html';
 import type { ApiMessage } from '@service-email/generated/schemas';
 import {
   $createParagraphNode,

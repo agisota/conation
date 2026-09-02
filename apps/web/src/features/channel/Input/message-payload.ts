@@ -1,5 +1,5 @@
 import type { ItemMention } from '@core/component/LexicalMarkdown/plugins';
-import { isBotPrincipalId } from '@core/constant/macroAgent';
+import { isBotPrincipalId } from '@core/constant/conationAi';
 import { STATIC_IMAGE, STATIC_VIDEO } from '@core/store/cacheChannelInput';
 import type { NewChannelAttachment as NewAttachment } from '@service-storage/generated/schemas/newChannelAttachment';
 import type { PostMessageRequest } from '@service-storage/generated/schemas/postMessageRequest';
@@ -59,7 +59,7 @@ export function expandMentions(
     } else if (mention.itemType === 'user') {
       if (seenUserIds.has(mention.itemId)) continue;
       seenUserIds.add(mention.itemId);
-      // Bots (Macro AI and channel bots) ride the user-mention machinery in
+      // Bots (Conation and channel bots) ride the user-mention machinery in
       // the editor; re-tag them so the backend dispatches bot triggers and
       // webhook events.
       result.push({

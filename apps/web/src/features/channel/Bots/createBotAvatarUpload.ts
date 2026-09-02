@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { staticFileIdEndpoint } from '@core/constant/servers';
 import { openFilePicker, uploadFile } from '@core/util/upload';
@@ -15,7 +16,7 @@ export function createBotAvatarUpload(onUploaded: (url: string) => void) {
         try {
           const result = await uploadFile(file, 'static');
           if (result.failed || result.destination !== 'static') {
-            toast.failure('Failed to upload avatar');
+            toast.failure(t('channel.bots.profile.uploadFailed'));
             return;
           }
           onUploaded(staticFileIdEndpoint(result.id));

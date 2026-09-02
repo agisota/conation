@@ -1,5 +1,5 @@
-import { isInBlock, useBlockAliasedName } from '@core/block';
 import { t } from '@app/lib/i18n';
+import { isInBlock, useBlockAliasedName } from '@core/block';
 import {
   ContextMenuContent,
   MenuItem,
@@ -100,8 +100,10 @@ export function StaticSplitLabel(props: {
                 <span onClick={(event) => event.stopPropagation()}>
                   <InlineTitleEditor
                     value={props.label}
-                    placeholder={t('auto.untitled')}
-                    ariaLabel={props.renameAriaLabel ?? 'Rename'}
+                    placeholder={t('shell.split.untitled')}
+                    ariaLabel={
+                      props.renameAriaLabel ?? t('shell.actions.rename')
+                    }
                     onRename={onRename()}
                     class="text-sm"
                   />

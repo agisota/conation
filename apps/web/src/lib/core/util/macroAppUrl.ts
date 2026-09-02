@@ -1,9 +1,13 @@
-import { isTauri } from './platform';
+import { isTauri } from '@core/util/platform';
+import { getConfiguredStandaloneOperatorOrigin } from '../constant/clientProfile';
 
-const Hosts = {
+const LegacyHostedAppHosts = {
   Prod: 'macro.com',
   Dev: 'dev.macro.com',
   Staging: 'staging.macro.com',
+} as const;
+
+const NativeLocalHosts = {
   Localhost: 'localhost',
   // The webview's own origin under the http asset scheme (e.g. Windows/Android),
   // where `window.location.hostname` is `tauri.localhost` rather than `localhost`.
@@ -24,23 +28,44 @@ export function isValidMacroAppHostname(hostname: string): boolean {
   if (current === target) {
     return true;
   }
-  if (
-    (target === Hosts.Dev && current === Hosts.Localhost) ||
-    (target === Hosts.Localhost && current === Hosts.Dev)
-  ) {
-    return true;
+  const hostedLegacy =
+    globalThis.__CONATION_HOSTED_LEGACY__ ??
+    import.meta.env.VITE_CONATION_CLIENT_PROFILE === 'hosted-legacy';
+  if (hostedLegacy) {
+    if (
+      (target === LegacyHostedAppHosts.Dev &&
+        current === NativeLocalHosts.Localhost) ||
+      (target === NativeLocalHosts.Localhost &&
+        current === LegacyHostedAppHosts.Dev)
+    ) {
+      return true;
+    }
+    // The old hosted profile remains available only when explicitly selected.
+    if (
+      isTauri() &&
+      (current === NativeLocalHosts.Localhost ||
+        current === NativeLocalHosts.TauriLocalhost)
+    ) {
+      return (
+        target === LegacyHostedAppHosts.Prod ||
+        target === LegacyHostedAppHosts.Dev ||
+        target === LegacyHostedAppHosts.Staging
+      );
+    }
+    return false;
   }
-  // On Tauri, window.location.hostname is 'localhost' (custom tauri:// scheme)
-  // or 'tauri.localhost' (http asset scheme, e.g. Windows/Android), but Macro
-  // links are built with the real web origin (macro.com, dev.macro.com, or
-  // staging.macro.com). Accept any recognized Macro host when running inside
-  // the native Tauri app (mirrors APP_LINK_HOSTS on the Rust side).
+
+  // Native webviews have a synthetic localhost origin. Only the configured
+  // standalone operator host is an app-link host; no managed host aliases are
+  // accepted.
   if (
     isTauri() &&
-    (current === Hosts.Localhost || current === Hosts.TauriLocalhost)
+    (current === NativeLocalHosts.Localhost ||
+      current === NativeLocalHosts.TauriLocalhost)
   ) {
     return (
-      target === Hosts.Prod || target === Hosts.Dev || target === Hosts.Staging
+      target ===
+      cleanHostname(new URL(getConfiguredStandaloneOperatorOrigin()).hostname)
     );
   }
   return false;
@@ -52,12 +77,11 @@ type InternalAppLink = {
 };
 
 /**
- * Parses an absolute URL pointing at the Macro web app (e.g.
- * `https://macro.com/app/channel/<id>?message=<id>`) into a router path and
- * query. Returns null for anything that is not a Macro `/app` URL.
+ * Parses an absolute URL pointing at the configured Conation web app into a
+ * router path and query. Returns null for any foreign `/app` URL.
  *
  * The `/app` prefix is stripped because the Tauri router uses `/` as its
- * base (mirrors `MacroScheme::from_url` on the Rust side).
+ * base (mirrors the native navigation scheme parser on the Rust side).
  */
 export function parseInternalAppLink(url: string): InternalAppLink | null {
   let parsed: URL;

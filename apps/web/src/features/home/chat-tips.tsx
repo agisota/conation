@@ -21,27 +21,29 @@ export function ChatTipsSection() {
   return (
     <section>
       <div class="mb-2 flex items-center px-1">
-        <span class="text-sm text-ink-muted">{t('auto.tips')}</span>
+        <span class="text-sm text-ink-muted">{t('shell.home.tips.title')}</span>
       </div>
       <div class="flex flex-col gap-2">
         <SetupRow
           icon={<AtIcon class="size-4" />}
-          title="@mention anything"
-          desc="Attach files, documents, emails & more as context for the AI"
+          title={t('shell.home.tips.mentionTitle')}
+          desc={t('shell.home.tips.mentionDescription')}
         />
         <SetupRow
           icon={<PaperPlaneTiltIcon class="size-4" />}
-          title={t('auto.send_in_the_background')}
+          title={t('shell.home.tips.backgroundTitle')}
           desc={
-            <>{t('auto.press')}<Hotkey shortcut="meta+enter" theme="subtle" /> to send and
-              get notified when the AI responds
+            <>
+              {t('shell.home.tips.backgroundPrefix')}
+              <Hotkey shortcut="meta+enter" theme="subtle" />
+              {t('shell.home.tips.backgroundSuffix')}
             </>
           }
         />
         <SetupRow
           icon={<PlugsConnectedIcon class="size-4" />}
-          title={t('auto.connect_your_tools')}
-          desc="Give the agent access to Linear, Notion, PostHog & more"
+          title={t('shell.home.tips.connectToolsTitle')}
+          desc={t('shell.home.tips.connectToolsDescription')}
           trailing={
             <ChevronRightIcon class="size-4 shrink-0 text-ink-extra-muted" />
           }
@@ -49,8 +51,8 @@ export function ChatTipsSection() {
         />
         <SetupRow
           icon={<PuzzlePieceIcon class="size-4" />}
-          title={t('auto.connect_your_own_agents')}
-          desc="Use Macro as a tool from Claude Code, Cursor, or any MCP client"
+          title={t('shell.home.tips.connectAgentsTitle')}
+          desc={t('shell.home.tips.connectAgentsDescription')}
           trailing={
             <ChevronRightIcon class="size-4 shrink-0 text-ink-extra-muted" />
           }
@@ -58,8 +60,8 @@ export function ChatTipsSection() {
         />
         <SetupRow
           icon={<BookOpenIcon class="size-4" />}
-          title={t('auto.learn_about_the_agent')}
-          desc="What it can do and how to get the most out of it"
+          title={t('shell.home.tips.learnAgentTitle')}
+          desc={t('shell.home.tips.learnAgentDescription')}
           trailing={
             <ArrowUpRightIcon class="size-4 shrink-0 text-ink-extra-muted" />
           }

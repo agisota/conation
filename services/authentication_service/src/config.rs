@@ -1,10 +1,11 @@
 use std::sync::LazyLock;
 
 use anyhow::Context;
-use database_env_vars::{DatabaseUrl, RedisUri};
 use conation_auth::InternalApiKey;
 pub use conation_env::Environment;
 use conation_env_var::{env_vars, maybe_env_vars};
+use database_env_vars::{DatabaseUrl, RedisUri};
+use url::Url;
 
 // BASE_URL config value. This is validated when creating the config in main.rs
 pub static BASE_URL: LazyLock<String> = LazyLock::new(|| {
@@ -21,14 +22,10 @@ env_vars! {
     pub struct FusionAuthClientSecretKey;
     pub struct FusionAuthBaseUrl;
     pub struct FusionAuthOauthRedirectUri;
-    pub struct GoogleClientId;
-    pub struct GoogleClientSecretKey;
-    pub struct StripeSecretKey;
     pub struct ServiceInternalAuthKey;
     pub struct GithubClientId;
     pub struct GithubClientSecret;
     pub struct GithubIdpId;
-    pub struct StripePriceId;
     /// Comma-separated Kafka bootstrap servers for the macro event broker.
     pub struct KafkaBrokers;
 }
@@ -36,6 +33,16 @@ env_vars! {
 maybe_env_vars! {
     /// Browser-reachable FusionAuth origin used for OAuth authorization redirects.
     pub struct FusionAuthPublicUrl;
+    /// Transactional sender used for authentication and account-merge mail.
+    pub struct AuthSenderEmail;
+    /// Operator-owned support mailbox rendered into transactional mail.
+    pub struct SupportEmail;
+    /// Google OAuth is enabled only when both credentials are configured.
+    pub struct GoogleClientId;
+    pub struct GoogleClientSecretKey;
+    /// Stripe billing is enabled only when its key and price are configured.
+    pub struct StripeSecretKey;
+    pub struct StripePriceId;
     pub struct MicrosoftClientId;
     pub struct MicrosoftClientSecret;
     pub struct MicrosoftTenantId;
@@ -91,6 +98,10 @@ pub struct Config {
     pub fusionauth_public_url: FusionAuthPublicUrl,
     /// FusionAuth oauth redirect uri
     pub fusionauth_oauth_redirect_uri: FusionAuthOauthRedirectUri,
+    /// Optional override for the authentication mail sender.
+    pub auth_sender_email: AuthSenderEmail,
+    /// Optional override for the support mailbox shown in mail content.
+    pub support_email: SupportEmail,
     /// Google client id
     pub google_client_id: GoogleClientId,
     /// Google client secret key
@@ -161,10 +172,41 @@ pub(crate) struct MicrosoftCredentials {
     pub(crate) token_kms_key_id: String,
 }
 
+/// Complete Google OAuth credentials used to enable Gmail account linking.
+pub(crate) struct GoogleCredentials {
+    pub(crate) client_id: String,
+    pub(crate) client_secret: String,
+}
+
+/// Complete Stripe credentials used to enable hosted billing.
+pub(crate) struct StripeCredentials {
+    pub(crate) secret_key: String,
+    pub(crate) price_id: String,
+}
+
+const DEFAULT_AUTH_SENDER_EMAIL: &str = "auth@conation.dev";
+const DEFAULT_SUPPORT_EMAIL: &str = "pythia@conation.dev";
+// Keep this in parity with local FusionAuth kickstart: a no-Doppler value can
+// name a secret but is not itself a Google OAuth client secret.
+const GOOGLE_WEB_CLIENT_SECRET_PREFIX: &str = "GOCSPX-";
+
+/// Validated operator-owned identities used by outbound authentication mail.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(crate) struct MailIdentity {
+    pub(crate) auth_sender_email: String,
+    pub(crate) support_email: String,
+}
+
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
-        conation_config::ConfigLoader::load::<Config>()
-            .context("failed to load authentication service config")
+        let config = conation_config::ConfigLoader::load::<Config>()
+            .context("failed to load authentication service config")?;
+        validate_public_url_config(
+            config.base_url.as_ref(),
+            config.fusionauth_oauth_redirect_uri.as_ref(),
+            config.fusionauth_public_url.value(),
+        )?;
+        Ok(config)
     }
 
     /// The KMS key that encrypts Cursor API keys.
@@ -196,6 +238,99 @@ impl Config {
             &self.microsoft_token_kms_key_id,
         )
     }
+
+    /// Resolves Google OAuth credentials, enforcing that both values are configured together.
+    pub(crate) fn google_credentials(&self) -> anyhow::Result<Option<GoogleCredentials>> {
+        resolve_google_credentials(
+            self.google_client_id.value(),
+            self.google_client_secret_key.value(),
+        )
+    }
+
+    /// Resolves Stripe billing credentials, enforcing that both values are configured together.
+    pub(crate) fn stripe_credentials(&self) -> anyhow::Result<Option<StripeCredentials>> {
+        let credentials = resolve_stripe_credentials(
+            self.stripe_secret_key.value(),
+            self.stripe_price_id.value(),
+        )?;
+
+        Ok(credentials.filter(|credentials| {
+            stripe_billing_is_enabled_for_environment(self.environment, credentials)
+        }))
+    }
+
+    /// Resolves and validates the sender and support mailboxes.
+    pub(crate) fn mail_identity(&self) -> anyhow::Result<MailIdentity> {
+        resolve_mail_identity(self.auth_sender_email.value(), self.support_email.value())
+    }
+}
+
+fn resolve_mail_identity(
+    auth_sender_email: Option<&str>,
+    support_email: Option<&str>,
+) -> anyhow::Result<MailIdentity> {
+    Ok(MailIdentity {
+        auth_sender_email: resolve_mailbox(
+            "AUTH_SENDER_EMAIL",
+            auth_sender_email,
+            DEFAULT_AUTH_SENDER_EMAIL,
+        )?,
+        support_email: resolve_mailbox("SUPPORT_EMAIL", support_email, DEFAULT_SUPPORT_EMAIL)?,
+    })
+}
+
+fn resolve_mailbox(name: &str, configured: Option<&str>, default: &str) -> anyhow::Result<String> {
+    let value = match configured {
+        Some(value) if !value.trim().is_empty() => value.trim(),
+        Some(_) => anyhow::bail!("{name} must not be blank"),
+        None => default,
+    };
+
+    if !email_validator::is_valid_email(value) {
+        anyhow::bail!("{name} must be a valid email address");
+    }
+
+    Ok(value.to_ascii_lowercase())
+}
+
+fn parse_public_http_url(name: &str, value: &str) -> anyhow::Result<Url> {
+    let url = Url::parse(value).with_context(|| format!("{name} must be an absolute URL"))?;
+    if !matches!(url.scheme(), "http" | "https")
+        || url.host_str().is_none()
+        || !url.username().is_empty()
+        || url.password().is_some()
+        || url.query().is_some()
+        || url.fragment().is_some()
+    {
+        anyhow::bail!(
+            "{name} must contain an http(s) scheme, host, optional port, and optional path only"
+        );
+    }
+    Ok(url)
+}
+
+fn validate_public_url_config(
+    base_url: &str,
+    fusionauth_oauth_redirect_uri: &str,
+    fusionauth_public_url: Option<&str>,
+) -> anyhow::Result<()> {
+    let base_url = parse_public_http_url("BASE_URL", base_url)?;
+    let redirect_url = parse_public_http_url(
+        "FUSIONAUTH_OAUTH_REDIRECT_URI",
+        fusionauth_oauth_redirect_uri,
+    )?;
+    let expected_redirect = format!("{}/oauth/redirect", base_url.as_str().trim_end_matches('/'));
+    if redirect_url.as_str() != expected_redirect {
+        anyhow::bail!(
+            "FUSIONAUTH_OAUTH_REDIRECT_URI must equal BASE_URL + /oauth/redirect (expected {expected_redirect})"
+        );
+    }
+
+    if let Some(public_url) = nonblank_value(fusionauth_public_url) {
+        parse_public_http_url("FUSIONAUTH_PUBLIC_URL", public_url)?;
+    }
+
+    Ok(())
 }
 
 fn resolve_microsoft_credentials(
@@ -224,6 +359,71 @@ fn resolve_microsoft_credentials(
         }
         _ => anyhow::bail!(
             "MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET, and MICROSOFT_TENANT_ID must all be set to nonblank values or all be unset"
+        ),
+    }
+}
+
+fn resolve_google_credentials(
+    client_id: Option<&str>,
+    client_secret: Option<&str>,
+) -> anyhow::Result<Option<GoogleCredentials>> {
+    resolve_credentials_pair(
+        "GOOGLE_CLIENT_ID",
+        client_id,
+        "GOOGLE_CLIENT_SECRET_KEY",
+        client_secret,
+    )
+    .map(|credentials| {
+        credentials.and_then(|(client_id, client_secret)| {
+            client_secret
+                .starts_with(GOOGLE_WEB_CLIENT_SECRET_PREFIX)
+                .then(|| GoogleCredentials {
+                    client_id: client_id.to_owned(),
+                    client_secret: client_secret.to_owned(),
+                })
+        })
+    })
+}
+
+fn resolve_stripe_credentials(
+    secret_key: Option<&str>,
+    price_id: Option<&str>,
+) -> anyhow::Result<Option<StripeCredentials>> {
+    resolve_credentials_pair("STRIPE_SECRET_KEY", secret_key, "STRIPE_PRICE_ID", price_id).map(
+        |credentials| {
+            credentials.map(|(secret_key, price_id)| StripeCredentials {
+                secret_key: secret_key.to_owned(),
+                price_id: price_id.to_owned(),
+            })
+        },
+    )
+}
+
+fn stripe_billing_is_enabled_for_environment(
+    environment: Environment,
+    credentials: &StripeCredentials,
+) -> bool {
+    match environment {
+        // `run_local --no-doppler` provides a non-secret placeholder so the
+        // process can start. Only genuine Stripe API keys enable billing locally.
+        Environment::Local => {
+            credentials.secret_key.starts_with("sk_") || credentials.secret_key.starts_with("rk_")
+        }
+        Environment::Production | Environment::Develop => true,
+    }
+}
+
+fn resolve_credentials_pair<'a>(
+    first_name: &str,
+    first: Option<&'a str>,
+    second_name: &str,
+    second: Option<&'a str>,
+) -> anyhow::Result<Option<(&'a str, &'a str)>> {
+    match (nonblank_value(first), nonblank_value(second)) {
+        (None, None) => Ok(None),
+        (Some(first), Some(second)) => Ok(Some((first, second))),
+        _ => anyhow::bail!(
+            "{first_name} and {second_name} must both be set to nonblank values or both be unset"
         ),
     }
 }

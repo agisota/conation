@@ -58,7 +58,7 @@ describe('inbox link return layout', () => {
   });
 
   it('returns undefined for corrupt stored data', () => {
-    sessionStorage.setItem('macro:inbox-link:return-layout', 'not json');
+    sessionStorage.setItem('conation:inbox-link:return-layout', 'not json');
 
     expect(consumeInboxLinkReturn(LINK_ID)).toBeUndefined();
   });

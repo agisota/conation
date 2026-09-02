@@ -1,36 +1,35 @@
 ---
-title: "Calls"
+title: "Звонки"
 icon: "phone"
+description: "Видеозвонки, расшифровки и summary, которые остаются внутри Conation."
 ---
 
-Video calls with transcriptions that live inside Macro.
+Звонки помогают памяти Conation оставаться актуальной: обсуждения превращаются в расшифровки, summary и связанные задачи, а не теряются после созвона.
 
-<iframe src="https://www.youtube.com/embed/MMG00RA7kU0" title="YouTube video player" frameborder="0" className="w-full aspect-video rounded-xl" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen />
+<Note>
+  Старые скриншоты прежнего интерфейса убраны из активной страницы. Новые
+  материалы по звонкам должны быть сняты в Conation на тестовых участниках.
+</Note>
 
-Calls are one of the core ways Macro's memory keeps up with your workspace.
+## Как начать звонок
 
-To start a call, use the button at the top of the calls tab, or open the channel with the intended participants and press the call button. Participants hear a ring when a call starts.
+Начать звонок можно из вкладки звонков или из канала с нужными участниками. Участники получают звонок и могут присоединиться из интерфейса Conation.
 
-<Frame>
-  ![Calls Screenshot](/images/calls_screenshot.png)
-</Frame>
+## Память и доступ
 
-> ### Important Call Sharing Information
->
-> Every call a member of your team has is added to the calls tab, whether or not you attended it. The default is to share each call to team memory, but you can opt out per call. When you opt out, the call is added to your personal memory but not the team's.
+По умолчанию командные звонки могут попадать в командную память: запись, расшифровка и summary становятся доступными участникам с нужными правами.
 
-To opt out of a call being shared with the team, uncheck the button in the bottom left of an active call.
+Если звонок не должен попадать в командный контекст, отключите sharing до или во время звонка. В таком случае материалы остаются в персональной области согласно настройкам доступа.
 
-<Frame>
-  <img
-    src="/images/calls_off_switch.png"
-    alt="Calls Off Switch"
-    title="Calls Off Switch"
-    className="mx-auto"
-    style={{ width:"51%" }}
-  />
-</Frame>
+## После звонка
 
-After a call ends, it's auto-transcribed and an AI summary is generated. The recording and a readable transcript are always available at the bottom of the call.
+После завершения звонка Conation сохраняет запись, готовит расшифровку и AI-summary. Эти материалы можно открыть из карточки звонка, упомянуть в документе или передать агенту как контекст.
 
-From the calls tab, you can ask AI to help you work through your calls: searching transcripts, summarizing, and more.
+```text
+Разбери последний звонок с клиентом, выпиши решения,
+создай задачи по поручениям и свяжи их со звонком.
+```
+
+## Практические ограничения
+
+Для production self-host развертывания заранее проверьте медиа-инфраструктуру, TURN/STUN, хранение записей и политику доступа к расшифровкам. Документация не должна обещать готовую compliance-конфигурацию без отдельного аудита.

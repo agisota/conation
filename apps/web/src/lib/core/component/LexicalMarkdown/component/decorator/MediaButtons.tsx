@@ -1,5 +1,5 @@
-import { isMobile } from '@core/mobile/isMobile';
 import { t } from '@app/lib/i18n';
+import { isMobile } from '@core/mobile/isMobile';
 import { Dialog } from '@kobalte/core/dialog';
 import NewTab from '@phosphor/arrow-square-out.svg';
 import ArrowsOut from '@phosphor/arrows-out-simple.svg';
@@ -45,7 +45,7 @@ export function MediaButtons(props: MediaButtonsProps) {
           as={Button}
           variant="ghost"
           size="icon-sm"
-          tooltip="View full screen"
+          tooltip={t('editor.media.viewFullscreen')}
           on:mousedown={(e: MouseEvent) => {
             e.preventDefault();
             e.stopPropagation();
@@ -59,7 +59,7 @@ export function MediaButtons(props: MediaButtonsProps) {
         <Button
           variant="ghost"
           size="icon-sm"
-          tooltip="Open in new tab"
+          tooltip={t('editor.media.openInNewTab')}
           on:mousedown={(e: MouseEvent) => {
             e.preventDefault();
             e.stopPropagation();
@@ -101,7 +101,7 @@ export function MediaButtons(props: MediaButtonsProps) {
             <Dropdown.Trigger
               size="icon-sm"
               variant="ghost"
-              tooltip="More options"
+              tooltip={t('editor.media.moreOptions')}
             >
               <ThreeDotsIcon />
             </Dropdown.Trigger>
@@ -115,7 +115,9 @@ export function MediaButtons(props: MediaButtonsProps) {
                     }}
                   >
                     <ArrowsOut class="size-4 shrink-0" />
-                    <span class="flex-1 truncate">{t('auto.view_full_screen')}</span>
+                    <span class="flex-1 truncate">
+                      {t('editor.media.viewFullscreen')}
+                    </span>
                   </Dropdown.Item>
                 </Show>
                 <Show when={props.newTab && !isMobile()}>
@@ -126,7 +128,9 @@ export function MediaButtons(props: MediaButtonsProps) {
                     }}
                   >
                     <NewTab class="size-4 shrink-0" />
-                    <span class="flex-1 truncate">{t('auto.open_in_new_tab')}</span>
+                    <span class="flex-1 truncate">
+                      {t('editor.media.openInNewTab')}
+                    </span>
                   </Dropdown.Item>
                 </Show>
               </Dropdown.Group>

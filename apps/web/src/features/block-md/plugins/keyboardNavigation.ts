@@ -2,12 +2,12 @@
  * @file Handle focus change between title editor and main editor for the markdown block.
  */
 
+import { $isSelectionInsideCode } from '@conation/lexical-core';
 import {
   $getCaretRect,
   isRectFlushWith,
 } from '@core/component/LexicalMarkdown/utils';
 import { mergeRegister } from '@lexical/utils';
-import { $isSelectionInsideCode } from '@conation/lexical-core';
 import {
   $getNodeByKey,
   $getRoot,

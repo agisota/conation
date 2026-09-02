@@ -1,5 +1,4 @@
 import { createUniqueId } from 'solid-js';
-import { t } from '@app/lib/i18n';
 
 export const AnimatedSlidersIcon = (props: {
   triggerAnimation?: boolean;
@@ -18,7 +17,6 @@ export const AnimatedSlidersIcon = (props: {
       overflow="visible"
       class={`animated-sliders-icon ${props.triggerAnimation ? 'animating' : ''} ${props.class ?? ''}`}
     >
-      {/*<title>{t('auto.animated_sliders_icon')}</title>*/}
       <style>{`
         @keyframes v-slide-left {
           0%, 100% { transform: translateY(0); }

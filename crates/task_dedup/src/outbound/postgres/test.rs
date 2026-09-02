@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use embedding::embedding_provider::openai::DIMS;
 use embedding::{
     Content, Embeddable, EmbeddingModel, LabeledEmbedding, RerankModel, Reranked, SearchResults,
 };
-use conation_db_migrator::MACRO_DB_MIGRATIONS;
 use sqlx::PgPool;
 
 use super::*;

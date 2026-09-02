@@ -5,8 +5,8 @@ use crate::domain::{
     ports::ChannelReferenceSharePermissions,
 };
 use anyhow::Context;
-use entity_access::domain::{models::EntityType, ports::EntityAccessService};
 use conation_user_id::user_id::MacroUserIdStr;
+use entity_access::domain::{models::EntityType, ports::EntityAccessService};
 use models_permissions::share_permission::{
     access_level::AccessLevel,
     channel_share_permission::{UpdateChannelSharePermission, UpdateOperation},

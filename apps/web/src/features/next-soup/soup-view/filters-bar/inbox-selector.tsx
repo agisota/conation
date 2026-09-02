@@ -1,7 +1,7 @@
 import { openAddInboxDialog } from '@app/features/inbox/AddInboxDialog';
-import { t } from '@app/lib/i18n';
 import { useSoupView } from '@app/features/next-soup/soup-view/soup-view-context';
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
+import { t } from '@app/lib/i18n';
 import { CollapsibleHeaderItem } from '@components/app/split-layout/components/CollapsibleItem';
 import { ENABLE_MULTI_INBOX_OVERRIDE } from '@core/constant/featureFlags';
 import { useSettingsState } from '@core/constant/SettingsState';
@@ -41,11 +41,14 @@ export function InboxSelector() {
 
   const label = () => {
     const ids = inboxFilter();
-    if (ids === undefined) return 'All inboxes';
-    if (ids.length === 0) return 'No inboxes';
+    if (ids === undefined) return t('soup.filters.inboxes.all');
+    if (ids.length === 0) return t('soup.filters.inboxes.none');
     if (ids.length === 1)
-      return picker.options().find((o) => o.id === ids[0])?.label ?? '1 inbox';
-    return `${ids.length} inboxes`;
+      return (
+        picker.options().find((o) => o.id === ids[0])?.label ??
+        t('soup.filters.inboxes.count', { count: 1 })
+      );
+    return t('soup.filters.inboxes.count', { count: ids.length });
   };
 
   const Selector = (selectorProps: { hideLabel?: boolean }) => (
@@ -54,12 +57,12 @@ export function InboxSelector() {
       activeIds={picker.activeIds}
       onChange={(ids) => (ids.length ? picker.onChange(ids) : picker.reset())}
       onOnly={picker.selectOnly}
-      placeholder={t('auto.search_inboxes')}
+      placeholder={t('soup.filters.inboxes.searchPlaceholder')}
       preserveOrder
       action={
         multiInboxFlag().enabled
           ? {
-              label: 'Add inbox',
+              label: t('soup.filters.inboxes.add'),
               icon: () => <PlusIcon class="size-4" />,
               onSelect: startAddInboxFlow,
             }
@@ -91,14 +94,22 @@ export function InboxSelector() {
       variant="outline"
       size="sm"
       depth={2}
-      aria-label={buttonProps.hideLabel ? 'Connect another email' : undefined}
-      tooltip={buttonProps.hideLabel ? 'Connect another email' : undefined}
+      aria-label={
+        buttonProps.hideLabel
+          ? t('soup.filters.inboxes.connectAnother')
+          : undefined
+      }
+      tooltip={
+        buttonProps.hideLabel
+          ? t('soup.filters.inboxes.connectAnother')
+          : undefined
+      }
       class={cn('bg-surface gap-1', buttonProps.hideLabel && 'px-1')}
       onClick={startAddInboxFlow}
     >
       <TrayIcon />
       <Show when={!buttonProps.hideLabel}>
-        <span class="truncate">{t('auto.connect_another_email')}</span>
+        <span class="truncate">{t('soup.filters.inboxes.connectAnother')}</span>
       </Show>
     </Button>
   );

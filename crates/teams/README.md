@@ -60,16 +60,16 @@ A complete invite-accepted membership envelope has this shape:
   "event_type": "team.member_joined",
   "metadata": {
     "team_id": "3f6f8b0a-6f9f-4a3f-9c3a-2b1e5d4c7a90",
-    "member_id": "macro|joiner@acme.com",
+    "member_id": "conation|joiner@acme.com",
     "teammate_ids": [
-      "macro|admin@acme.com",
-      "macro|owner@acme.com"
+      "conation|admin@acme.com",
+      "conation|owner@acme.com"
     ],
     "role": "member",
     "join_method": {
       "type": "invite_accepted",
       "invite_id": "0197f776-6e7b-7c69-a251-780ae754d3e4",
-      "invited_by": "macro|admin@acme.com"
+      "invited_by": "conation|admin@acme.com"
     }
   }
 }

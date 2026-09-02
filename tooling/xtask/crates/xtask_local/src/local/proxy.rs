@@ -9,6 +9,7 @@
 use std::path::PathBuf;
 
 use anyhow::{Context, Result};
+use sha2::{Digest, Sha256};
 
 use super::gen_compose::caddyfile_path;
 use super::instance::{Instance, Port};
@@ -33,6 +34,13 @@ pub fn write_caddyfile(instance: &Instance, mode: Mode, static_frontend: bool) -
     std::fs::write(&path, caddyfile(mode, static_frontend))
         .with_context(|| format!("writing {}", path.display()))?;
     Ok(path)
+}
+
+/// Stable marker for the generated Caddyfile shape. Stored in stack state only
+/// after the proxy container has been recreated against this content.
+pub(super) fn caddyfile_fingerprint(mode: Mode, static_frontend: bool) -> String {
+    let digest = Sha256::digest(caddyfile(mode, static_frontend).as_bytes());
+    format!("caddyfile-v1:{digest:x}")
 }
 
 /// Assemble the Caddyfile: the listener head, the generated per-service routes
@@ -60,7 +68,10 @@ fn caddyfile(mode: Mode, static_frontend: bool) -> String {
 
 /// Generate the reverse-proxy routes for every inventoried service that exposes
 /// a path prefix. The inventory is the single source, so adding a service's
-/// proxy route is one field there — not a hand-edit here that can drift.
+/// proxy route is one field there — not a hand-edit here that can drift. MCP is
+/// the one protocol ingress defined in [`SPECIAL_ROUTES`]: unlike application
+/// API prefixes, its `/mcp` path must reach the service without being stripped
+/// and its OAuth endpoints live at the origin root.
 fn service_routes() -> String {
     let mut out = String::new();
     for svc in inventory::RUST_SERVICES {
@@ -137,6 +148,25 @@ const SPECIAL_ROUTES: &str = r#"    @websocket path /websocket /websocket/*
     handle_path /ai-editing/* {
         reverse_proxy ai-editing-worker:8933
     }
+    # These are sandbox-egress routes, never public MCP ingress. Reject the
+    # internal Conation route instead of letting the generic local-proxy
+    # fallback make it look like a healthy endpoint.
+    @non_public_mcp_egress path /mcp-conation /mcp-conation/*
+    handle @non_public_mcp_egress {
+        respond "Not Found" 404
+    }
+    # MCP's streamable transport owns /mcp and expects that prefix unchanged.
+    # Its OAuth broker also owns these exact origin-root endpoints. Keep the
+    # well-known matcher narrow so unrelated association files remain available
+    # to the frontend/ingress.
+    @mcp path /mcp /mcp/*
+    handle @mcp {
+        reverse_proxy mcp_service:8080
+    }
+    @mcp_oauth path /authorize /register /token /oauth/callback /.well-known/oauth-protected-resource /.well-known/oauth-protected-resource/mcp /.well-known/oauth-authorization-server /.well-known/oauth-authorization-server/mcp
+    handle @mcp_oauth {
+        reverse_proxy mcp_service:8080
+    }
 "#;
 
 const MAILPIT_ROUTE: &str = r#"    # Mailpit serves itself under /mailpit (MP_WEBROOT), so no prefix strip —
@@ -181,7 +211,7 @@ const FRONTEND_STATIC: &str = r#"    redir / "/app/?{query}" 302
 "#;
 
 const CADDY_TAIL: &str = r#"
-    respond "macro local proxy" 200
+    respond "Conation local proxy" 200
 }
 "#;
 

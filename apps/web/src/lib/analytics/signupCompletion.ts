@@ -30,7 +30,7 @@ import {
 } from './leadValues';
 
 const SIGNED_UP_PARAM = 'signed_up';
-const TRACKED_STORAGE_PREFIX = 'macro_sign_up_tracked:';
+const TRACKED_STORAGE_PREFIX = 'conation_sign_up_tracked:';
 
 /**
  * Returns true if the URL carries `signed_up=true`, and removes it (from both

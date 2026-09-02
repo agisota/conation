@@ -1,3 +1,21 @@
+import {
+  getConfiguredStandaloneOperatorOrigin,
+  httpOriginToWebSocketOrigin,
+} from './clientProfile';
+import {
+  createStandaloneServers,
+  createStandaloneSyncServiceHosts,
+  type Servers,
+  type SyncServiceHosts,
+} from './serverProfile';
+
+const hostedLegacy =
+  globalThis.__CONATION_HOSTED_LEGACY__ ??
+  import.meta.env.VITE_CONATION_CLIENT_PROFILE === 'hosted-legacy';
+const standaloneOperatorOrigin = hostedLegacy
+  ? undefined
+  : getConfiguredStandaloneOperatorOrigin();
+
 const serverHostLocal: Servers = {
   'auth-service': 'http://localhost:8080',
   'auth-logout': 'http://localhost:3000', // TODO: make work with local fusionauth later
@@ -12,7 +30,7 @@ const serverHostLocal: Servers = {
   contacts: 'http://localhost:8083',
   'email-service': 'http://localhost:8087',
   'image-proxy-service': 'http://localhost:8097',
-  'scheduled-action': 'http://localhost:8098',
+  'scheduled-action': 'http://localhost:8103',
   'agent-harness': 'http://localhost:8101',
 } as const;
 
@@ -41,8 +59,6 @@ const serverHostRemote = {
   'agent-harness': `https://agent-harness${devServerSuffix}.macro.com`,
 } as const;
 
-type Servers = Record<keyof typeof serverHostRemote, string>;
-
 // Single-origin local backend: when the xtask orchestrator's reverse proxy is
 // in use it sets VITE_LOCAL_BACKEND_ORIGIN to the proxy origin, and the whole
 // app talks to it via path prefixes instead of many direct host ports. Unset =>
@@ -61,7 +77,9 @@ const proxyOrigin: string | undefined =
   rawLocalBackendOrigin === 'same-origin'
     ? globalThis.location?.origin
     : resolveProxyOrigin(rawLocalBackendOrigin);
-const wsProxyOrigin = proxyOrigin?.replace(/^http/, 'ws');
+const wsProxyOrigin = proxyOrigin
+  ? httpOriginToWebSocketOrigin(proxyOrigin)
+  : undefined;
 
 // Follow the page's hostname (keeping the proxy's port) so the app works from
 // any `*.localhost` alias. Hostnames get separate cookie jars while ports
@@ -78,10 +96,11 @@ function resolveProxyOrigin(configured: string | undefined) {
   }
 }
 
-export const SERVER_HOSTS: Servers =
-  import.meta.env.MODE === 'development'
+export const SERVER_HOSTS: Servers = hostedLegacy
+  ? import.meta.env.MODE === 'development'
     ? selectLocalServers()
-    : serverHostRemote;
+    : serverHostRemote
+  : createStandaloneServers(standaloneOperatorOrigin as string);
 
 function proxyServers(): Servers | undefined {
   if (!proxyOrigin || !wsProxyOrigin) return undefined;
@@ -100,12 +119,13 @@ function proxyServers(): Servers | undefined {
     contacts: `${proxyOrigin}/contacts`,
     'email-service': `${proxyOrigin}/email`,
     'image-proxy-service': `${proxyOrigin}/image-proxy`,
-    'scheduled-action': serverHostLocal['scheduled-action'], // no local container
+    'scheduled-action': `${proxyOrigin}/scheduled-action`,
   };
 }
 
 function selectLocalServers(): Servers {
-  const selectedLocalServers: string = import.meta.env.VITE_LOCAL_SERVERS;
+  const selectedLocalServers: string | undefined = import.meta.env
+    .VITE_LOCAL_SERVERS;
   if (!selectedLocalServers || selectedLocalServers.length === 0) {
     return serverHostRemote;
   }
@@ -156,10 +176,10 @@ const syncServiceHostRemote = {
   ws: `wss://sync-service${syncServiceSuffix}.macroverse.workers.dev`,
 } as const;
 
-function selectSyncServiceHost():
+function selectHostedSyncServiceHost():
   | typeof syncServiceHostRemote
   | typeof syncServiceHostLocal
-  | { worker: string; ws: string } {
+  | SyncServiceHosts {
   const overrideHost: string | undefined = import.meta.env
     .VITE_SYNC_SERVICE_HOST;
   if (overrideHost) {
@@ -171,7 +191,8 @@ function selectSyncServiceHost():
   if (import.meta.env.MODE !== 'development') {
     return syncServiceHostRemote;
   }
-  const selectedLocalServers: string = import.meta.env.VITE_LOCAL_SERVERS;
+  const selectedLocalServers: string | undefined = import.meta.env
+    .VITE_LOCAL_SERVERS;
   if (
     selectedLocalServers === 'ALL' ||
     selectedLocalServers?.includes('sync-service')
@@ -185,7 +206,9 @@ function selectSyncServiceHost():
   return syncServiceHostRemote;
 }
 
-export const SYNC_SERVICE_HOSTS = selectSyncServiceHost();
+export const SYNC_SERVICE_HOSTS = hostedLegacy
+  ? selectHostedSyncServiceHost()
+  : createStandaloneSyncServiceHosts(standaloneOperatorOrigin as string);
 
 /**
  * The DSS host to use for sync-service permission tokens.
@@ -193,7 +216,7 @@ export const SYNC_SERVICE_HOSTS = selectSyncServiceHost();
  * because they need to be signed with the matching JWT secret.
  */
 export const SYNC_PERMISSION_TOKEN_DSS_HOST =
-  SYNC_SERVICE_HOSTS === syncServiceHostRemote
+  hostedLegacy && SYNC_SERVICE_HOSTS === syncServiceHostRemote
     ? serverHostRemote['document-storage-service']
     : SERVER_HOSTS['document-storage-service'];
 

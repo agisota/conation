@@ -3,7 +3,7 @@ import * as pulumi from '@pulumi/pulumi';
 import {
   config,
   getAiToolsInfra,
-  getMacroApiToken,
+  getConationApiToken,
   stack,
 } from '../../packages/shared';
 import { get_coparse_api_vpc } from '../../packages/vpc';
@@ -39,7 +39,7 @@ const googleClientSecretArn: pulumi.Output<string> = aws.secretsmanager
   .getSecretVersionOutput({ secretId: GOOGLE_CLIENT_SECRET })
   .apply((secret) => secret.arn);
 
-const MACRO_API_TOKENS = getMacroApiToken();
+const CONATION_API_TOKENS = getConationApiToken();
 
 // ── AI tools infra ───────────────────────────────────────────────────────────
 
@@ -76,7 +76,7 @@ const mcpServer = new McpServer(`mcp-server-${stack}`, {
     fusionauthClientSecretArn,
     fusionauthApiKeyArn,
     googleClientSecretArn,
-    MACRO_API_TOKENS.macroApiTokenPublicKeyArn,
+    CONATION_API_TOKENS.conationApiTokenPublicKeyArn,
     ...aiTools.secretArns,
   ],
   queueArns: [...aiTools.queueArns],

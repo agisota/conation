@@ -22,10 +22,11 @@ pub use pull_request::{
     GithubPullRequestRef, GithubPullRequestStatus,
 };
 pub use sync::{
-    GithubAppInstallationSource, GithubAuthenticatedUser, GithubInstallationAccessToken,
-    GithubInstallationSetupAction, GithubKey, GithubSetupAccessToken, GithubUserInstallation,
-    GithubUserInstallationsPage, GithubWebhookEventType, MacroTaskId, ResolvedTeamTaskReference,
-    TeamTaskReference, ValidatedGithubWebhookEvent, extract_github_mentions, strip_markdown_code,
+    ConationTaskId, GithubAppInstallationSource, GithubAuthenticatedUser,
+    GithubInstallationAccessToken, GithubInstallationSetupAction, GithubKey,
+    GithubSetupAccessToken, GithubUserInstallation, GithubUserInstallationsPage,
+    GithubWebhookEventType, ResolvedTeamTaskReference, TeamTaskReference,
+    ValidatedGithubWebhookEvent, extract_github_mentions, strip_markdown_code,
 };
 /// Errors that can occur during github operations.
 #[derive(Debug, thiserror::Error)]

@@ -1,5 +1,5 @@
-import type { EventContentArg } from '@fullcalendar/core';
 import { t } from '@app/lib/i18n';
+import type { EventContentArg } from '@fullcalendar/core';
 import ExclamationIcon from '@phosphor/exclamation-mark.svg';
 import { cn } from '@ui';
 import { Show } from 'solid-js';
@@ -102,8 +102,8 @@ export function EventContent(props: EventContentProps) {
           <Show when={everyoneElseDeclined()}>
             <span
               role="img"
-              aria-label={t('auto.everyone_else_declined')}
-              title={t('auto.everyone_else_declined')}
+              aria-label={t('calendar.event.attendance.everyoneElseDeclined')}
+              title={t('calendar.event.attendance.everyoneElseDeclined')}
               class="calendar-event-everyone-declined-indicator flex size-2.5 shrink-0 items-center justify-center rounded-[2px]"
             >
               <ExclamationIcon aria-hidden="true" class="size-2" />

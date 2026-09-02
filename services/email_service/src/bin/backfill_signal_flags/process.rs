@@ -7,18 +7,18 @@ use sqlx::types::Uuid;
 /// `FullRecompute` also clears stale true flags (clear + re-set in one
 /// transaction per link); `Verify` is read-only and counts disagreements.
 /// Returns the number of threads flagged (or mismatched, for `Verify`).
-pub async fn process_conation_id(
+pub async fn process_macro_id(
     pool: &sqlx::PgPool,
-    conation_id: &str,
+    macro_id: &str,
     mode: BackfillMode,
 ) -> anyhow::Result<u64> {
     let link_ids: Vec<Uuid> =
-        sqlx::query_scalar!("SELECT id FROM email_links WHERE conation_id = $1", conation_id)
+        sqlx::query_scalar!("SELECT id FROM email_links WHERE macro_id = $1", macro_id)
             .fetch_all(pool)
             .await?;
 
     if link_ids.is_empty() {
-        println!("No email links found for {conation_id}.");
+        println!("No email links found for {macro_id}.");
         return Ok(0);
     }
 
@@ -26,7 +26,7 @@ pub async fn process_conation_id(
     for link_id in link_ids {
         if mode == BackfillMode::Verify {
             let mismatched = verify_link(pool, link_id).await?;
-            println!("[{conation_id}] link {link_id}: {mismatched} threads mismatched");
+            println!("[{macro_id}] link {link_id}: {mismatched} threads mismatched");
             total += mismatched;
             continue;
         }
@@ -48,7 +48,7 @@ pub async fn process_conation_id(
             .execute(&mut *tx)
             .await?
             .rows_affected();
-            println!("[{conation_id}] link {link_id}: cleared {cleared} flags for recompute");
+            println!("[{macro_id}] link {link_id}: cleared {cleared} flags for recompute");
         }
 
         // Mirrors sync_thread_signal_flag (email_db_client/threads/update.rs)
@@ -159,9 +159,9 @@ pub async fn process_conation_id(
         // FullRecompute clears first, so its count is "threads that ended
         // true", not rows changed.
         if mode == BackfillMode::FullRecompute {
-            println!("[{conation_id}] link {link_id}: computed {flagged} signal threads");
+            println!("[{macro_id}] link {link_id}: computed {flagged} signal threads");
         } else {
-            println!("[{conation_id}] link {link_id}: flagged {flagged} threads");
+            println!("[{macro_id}] link {link_id}: flagged {flagged} threads");
         }
         total += flagged;
     }
@@ -275,11 +275,11 @@ async fn verify_link(pool: &sqlx::PgPool, link_id: Uuid) -> anyhow::Result<u64> 
 }
 
 /// Every macro ID that owns at least one email link. Connected secondary
-/// mailboxes carry their own conation_id row in email_links, so iterating these
+/// mailboxes carry their own macro_id row in email_links, so iterating these
 /// covers every link exactly once.
-pub async fn fetch_all_conation_ids(pool: &sqlx::PgPool) -> anyhow::Result<Vec<String>> {
+pub async fn fetch_all_macro_ids(pool: &sqlx::PgPool) -> anyhow::Result<Vec<String>> {
     Ok(
-        sqlx::query_scalar!("SELECT DISTINCT conation_id FROM email_links ORDER BY conation_id")
+        sqlx::query_scalar!("SELECT DISTINCT macro_id FROM email_links ORDER BY macro_id")
             .fetch_all(pool)
             .await?,
     )

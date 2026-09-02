@@ -11,7 +11,7 @@ use clap::{Args, Parser, Subcommand};
 use super::Mode;
 
 #[derive(Parser)]
-#[command(name = "cargo-x", about = "Macro local & dev orchestration")]
+#[command(name = "cargo-x", about = "Conation local & dev orchestration")]
 struct Cli {
     #[command(subcommand)]
     command: Cmd,
@@ -71,7 +71,7 @@ pub enum StackCmd {
 
 #[derive(Args, Clone, Default)]
 pub struct InstanceArgs {
-    /// Stack name. Absent (or `macro`) is the default instance.
+    /// Stack name. Absent (or `conation`) is the default instance.
     #[arg(long)]
     pub instance: Option<String>,
     /// Override the derived port base.

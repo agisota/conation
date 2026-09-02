@@ -1,8 +1,8 @@
 use anyhow::Context;
-use database_env_vars::{DatabaseUrl, RedisUri};
 use conation_auth::InternalApiKey;
 use conation_env::Environment;
 use conation_env_var::{env_var, env_vars, maybe_env_var};
+use database_env_vars::{DatabaseUrl, RedisUri};
 use std::sync::LazyLock;
 
 // We load this through `conation_config` at startup as part of [`Config`]. This lazy is retained for

@@ -1,9 +1,8 @@
 use askama::Template;
 use chrono::{DateTime, Utc};
-use hmac::Hmac;
-use conation_env::Environment;
-use conation_service_urls::NotificationServiceUrl;
+use conation_service_urls::Url;
 use conation_user_id::cowlike::CowLike;
+use hmac::Hmac;
 use model_notifications::NotifEvent;
 use notification::domain::models::{
     Notification, NotificationExtEmail, NotificationTitle, RateLimitConfig, RateLimitKey,
@@ -15,12 +14,18 @@ use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 use std::time::Duration;
 
+#[cfg(test)]
+mod test;
+
 #[derive(Template)]
 #[template(path = "digest.html")]
 struct DigestTemplate {
     notifs: Vec<NotifPreview>,
     num_truncated: usize,
-    total_count: usize,
+    heading: String,
+    truncated_summary: String,
+    app_url: Url,
+    brand_asset_url: Url,
     /// the signed url which allows a client to unsubscribe from the email in an unauthenticated context
     unsubscribe_url: SignedUrl,
 }
@@ -33,6 +38,131 @@ struct NotifPreview {
 
 const TRUNCATE_LEN: usize = 15;
 const BODY_MAX_CHARS: usize = 500;
+
+/// Validated public URLs used when rendering a notification digest.
+///
+/// The application URL and image URL are supplied by the service at startup from the shared
+/// public-email configuration. The notification URL is the externally reachable origin (or
+/// origin plus reverse-proxy path prefix) used for HMAC-signed unsubscribe links.
+#[derive(Debug, Clone)]
+pub struct DigestEmailUrls {
+    app_url: Url,
+    brand_asset_url: Url,
+    notification_service_url: Url,
+}
+
+impl DigestEmailUrls {
+    /// Validates the browser-facing URLs used in digest mail.
+    pub fn new(
+        app_url: Url,
+        brand_asset_url: Url,
+        notification_service_url: Url,
+    ) -> Result<Self, Report> {
+        validate_public_url("APP_BASE_URL", &app_url)?;
+        validate_public_url("INVITE_EMAIL_ASSET_BASE_URL", &brand_asset_url)?;
+        validate_public_url(
+            "OVERRIDE_NOTIFICATION_SERVICE_URL",
+            &notification_service_url,
+        )?;
+
+        Ok(Self {
+            app_url,
+            brand_asset_url,
+            notification_service_url: directory_base_url(notification_service_url),
+        })
+    }
+
+    fn unsubscribe_url(
+        &self,
+        notification_type: &str,
+        user_id: &str,
+        sha: Hmac<Sha256>,
+    ) -> SignedUrl {
+        let relative_path = format!("user_notifications/preferences/{notification_type}/disable");
+        let mut unsubscribe_url = self
+            .notification_service_url
+            .join(&relative_path)
+            .expect("a validated public notification URL can join a static route");
+        unsubscribe_url.query_pairs_mut().append_pair("id", user_id);
+        SignedUrl::new(unsubscribe_url, sha)
+    }
+}
+
+fn validate_public_url(variable: &str, url: &Url) -> Result<(), Report> {
+    if !matches!(url.scheme(), "http" | "https")
+        || url.host_str().is_none()
+        || !url.username().is_empty()
+        || url.password().is_some()
+        || url.query().is_some()
+        || url.fragment().is_some()
+    {
+        return Err(report!(
+            "{variable} must be an absolute http(s) URL without userinfo, query, or fragment"
+        ));
+    }
+
+    let host = url
+        .host_str()
+        .expect("the host was checked before reading it")
+        .trim_end_matches('.')
+        .to_ascii_lowercase();
+    if host == "macro.com" || host.ends_with(".macro.com") {
+        return Err(report!("{variable} must not use a legacy Macro host"));
+    }
+
+    Ok(())
+}
+
+fn directory_base_url(mut url: Url) -> Url {
+    if !url.path().ends_with('/') {
+        url.path_segments_mut()
+            .expect("a validated http(s) URL is a base URL")
+            .push("");
+    }
+    url
+}
+
+#[derive(Clone, Copy)]
+enum RussianNumberForm {
+    One,
+    Few,
+    Many,
+}
+
+fn russian_number_form(count: usize) -> RussianNumberForm {
+    if (11..=14).contains(&(count % 100)) {
+        return RussianNumberForm::Many;
+    }
+
+    match count % 10 {
+        1 => RussianNumberForm::One,
+        2..=4 => RussianNumberForm::Few,
+        _ => RussianNumberForm::Many,
+    }
+}
+
+fn notification_phrase(count: usize) -> String {
+    match russian_number_form(count) {
+        RussianNumberForm::One => format!("{count} новое уведомление"),
+        RussianNumberForm::Few => format!("{count} новых уведомления"),
+        RussianNumberForm::Many => format!("{count} новых уведомлений"),
+    }
+}
+
+fn notification_noun(count: usize) -> &'static str {
+    match russian_number_form(count) {
+        RussianNumberForm::One => "уведомление",
+        RussianNumberForm::Few => "уведомления",
+        RussianNumberForm::Many => "уведомлений",
+    }
+}
+
+fn digest_subject(notification_count: usize) -> String {
+    format!(
+        "У вас {} в Conation",
+        notification_phrase(notification_count)
+    )
+}
 
 fn truncate_body(s: String) -> String {
     if s.chars().count() <= BODY_MAX_CHARS {
@@ -76,11 +206,11 @@ pub struct EmailDigestNotification {
 impl EmailDigestNotification {
     pub fn new_from_digest_batch(
         digest: DigestBatch,
-        env: Environment,
+        urls: &DigestEmailUrls,
         sha: Hmac<Sha256>,
     ) -> Result<Self, Report> {
         let DigestBatch {
-            user_id: _,
+            user_id,
             notifications,
             ..
         } = digest;
@@ -106,36 +236,22 @@ impl EmailDigestNotification {
         }
         let num_truncated = input_len - preview_len;
 
-        let mut unsubscribe_url = NotificationServiceUrl::new_for_environment(env)?.parse_url()?;
-        unsubscribe_url.set_path(&format!(
-            "/user_notifications/preferences/{}/disable",
-            Self::TYPE_NAME
-        ));
-        unsubscribe_url
-            .query_pairs_mut()
-            .append_pair("id", digest.user_id.as_ref())
-            .finish();
-        let unsubscribe_url = SignedUrl::new(unsubscribe_url, sha);
+        let unsubscribe_url = urls.unsubscribe_url(Self::TYPE_NAME, user_id.as_ref(), sha);
 
         let inner_html_string = DigestTemplate {
             notifs,
             num_truncated,
-            total_count: input_len,
+            heading: format!("У вас {}", notification_phrase(input_len)),
+            truncated_summary: format!("Ещё {num_truncated} {}", notification_noun(num_truncated)),
+            app_url: urls.app_url.clone(),
+            brand_asset_url: urls.brand_asset_url.clone(),
             unsubscribe_url,
         }
         .render()?;
 
-        // Locale-aware subject — Conation ru default
-        let subject = if input_len == 1 {
-            format!("У вас {input_len} новое уведомление в Conation")
-        } else if input_len % 10 >= 2 && input_len % 10 <= 4 && (input_len % 100 < 10 || input_len % 100 >= 20) {
-            format!("У вас {input_len} новых уведомления в Conation")
-        } else {
-            format!("У вас {input_len} новых уведомлений в Conation")
-        };
         Ok(EmailDigestNotification {
             inner_html_string,
-            subject,
+            subject: digest_subject(input_len),
         })
     }
 }

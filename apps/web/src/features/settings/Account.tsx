@@ -1,7 +1,8 @@
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
-import { t } from '@app/lib/i18n';
 import type { AccountDeletionReason } from '@app/lib/analytics/app-events';
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
+import { getLocale, type Locale, setLocale, t } from '@app/lib/i18n';
+import { type BundleUpdateStatus, useTauri } from '@conation/tauri';
 import { useLogout } from '@core/auth/logout';
 import { toast } from '@core/component/Toast/Toast';
 import { UserIcon } from '@core/component/UserIcon';
@@ -26,7 +27,6 @@ import {
 } from '@core/signal/profilePicture';
 import { createStaticFile } from '@core/util/create';
 import { openFilePicker } from '@core/util/upload';
-import { type BundleUpdateStatus, useTauri } from '@macro/tauri';
 import {
   type SupportedNotificationSettings,
   useNotificationSettings,
@@ -78,7 +78,7 @@ async function uploadProfilePicture(
   file: File
 ): Promise<{ id: string; url: string } | void> {
   if (file.size > MAX_PROFILE_PICTURE_SIZE) {
-    return toast.failure('Image size too large');
+    return toast.failure(t('settings.account.profilePicture.error.tooLarge'));
   }
 
   try {
@@ -86,11 +86,15 @@ async function uploadProfilePicture(
     const url = staticFileIdEndpoint(id);
     const response = await authServiceClient.putProfilePicture({ url });
     if (response.isErr()) {
-      return toast.failure('Failed to upload profile picture');
+      return toast.failure(
+        t('settings.account.profilePicture.error.uploadFailed')
+      );
     }
     return { id, url };
   } catch (_error) {
-    return toast.failure('Failed to upload profile picture');
+    return toast.failure(
+      t('settings.account.profilePicture.error.uploadFailed')
+    );
   }
 }
 
@@ -98,12 +102,12 @@ async function removeProfilePicture(): Promise<boolean> {
   try {
     const response = await authServiceClient.putProfilePicture({ url: '' });
     if (response.isErr()) {
-      toast.failure('Failed to remove profile picture');
+      toast.failure(t('settings.account.profilePicture.error.removeFailed'));
       return false;
     }
     return true;
   } catch (_error) {
-    toast.failure('Failed to remove profile picture');
+    toast.failure(t('settings.account.profilePicture.error.removeFailed'));
     return false;
   }
 }
@@ -111,27 +115,33 @@ async function removeProfilePicture(): Promise<boolean> {
 function formatBundleUpdateStatus(status: BundleUpdateStatus): string {
   switch (status.status) {
     case 'Idle':
-      return 'Idle';
+      return t('settings.account.update.status.idle');
     case 'CheckingForUpdate':
-      return 'Checking for update...';
+      return t('settings.account.update.status.checking');
     case 'UpdateFound':
-      return `Update available: v${status.data.version}`;
+      return t('settings.account.update.status.available', {
+        version: status.data.version,
+      });
     case 'NoUpdateNeeded':
-      return 'Up to date';
+      return t('settings.account.update.status.upToDate');
     case 'WaitingForWifi':
-      return 'Waiting for Wi-Fi to download';
+      return t('settings.account.update.status.waitingForWifi');
     case 'Downloading':
-      return `Downloading: ${Math.round(status.data.progress)}%`;
+      return t('settings.account.update.status.downloading', {
+        progress: Math.round(status.data.progress),
+      });
     case 'Unzipping':
-      return `Installing: ${Math.round(status.data.progress)}%`;
+      return t('settings.account.update.status.installing', {
+        progress: Math.round(status.data.progress),
+      });
     case 'ClearRequired':
-      return 'Cached update revoked';
+      return t('settings.account.update.status.cachedUpdateRevoked');
     case 'NativeUpdateRequired':
-      return 'App update required';
+      return t('settings.account.update.status.appUpdateRequired');
     case 'Completed':
-      return 'Update ready';
+      return t('settings.account.update.status.ready');
     case 'Error':
-      return 'An error occurred when checking for updates';
+      return t('settings.account.update.status.error');
   }
 }
 
@@ -210,7 +220,7 @@ function ProfilePictureRow(props: { userId: string }) {
 
   return (
     <>
-      <Row label="Profile Picture">
+      <Row label={t('settings.account.profilePicture.label')}>
         <div class="relative size-12 shrink-0">
           <Show
             when={profilePictureUrl()}
@@ -220,7 +230,7 @@ function ProfilePictureRow(props: { userId: string }) {
               <span
                 tabindex="0"
                 role="button"
-                aria-label={t('auto.upload_profile_picture')}
+                aria-label={t('settings.account.profilePicture.upload')}
                 onClick={pickProfilePicture}
                 class="flex size-full items-center justify-center rounded-full bg-edge text-ink-muted transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
@@ -234,7 +244,7 @@ function ProfilePictureRow(props: { userId: string }) {
               <Dropdown.Trigger
                 as="div"
                 tabindex="0"
-                aria-label={t('auto.edit_profile_picture')}
+                aria-label={t('settings.account.profilePicture.edit')}
                 class="group block size-full rounded-full outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 <div class="size-full overflow-hidden rounded-full">
@@ -254,12 +264,16 @@ function ProfilePictureRow(props: { userId: string }) {
               <Dropdown.Content class="w-48">
                 <Dropdown.Group>
                   <Dropdown.Item onSelect={pickProfilePicture}>
-                    <IconUpload class="size-4" />{t('auto.upload_new_picture')}</Dropdown.Item>
+                    <IconUpload class="size-4" />
+                    {t('settings.account.profilePicture.uploadNew')}
+                  </Dropdown.Item>
                   <Dropdown.Item
                     class="text-failure"
                     onSelect={() => setShowRemoveConfirmModal(true)}
                   >
-                    <TrashIcon class="size-4" />{t('auto.remove_picture')}</Dropdown.Item>
+                    <TrashIcon class="size-4" />
+                    {t('settings.account.profilePicture.remove')}
+                  </Dropdown.Item>
                 </Dropdown.Group>
               </Dropdown.Content>
             </Dropdown>
@@ -274,23 +288,31 @@ function ProfilePictureRow(props: { userId: string }) {
       >
         <Panel depth={2} class="rounded-xl">
           <Panel.Header class="px-6">
-            <Dialog.Title class="text-ink text-sm font-semibold">{t('auto.remove_profile_picture')}</Dialog.Title>
+            <Dialog.Title class="text-ink text-sm font-semibold">
+              {t('settings.account.profilePicture.removeDialog.title')}
+            </Dialog.Title>
           </Panel.Header>
           <Panel.Body class="p-6 font-sans flex flex-col gap-3">
-            <Dialog.Description class="text-ink-muted text-sm/tight font-normal">{t('auto.remove_your_current_profile_pi')}</Dialog.Description>
+            <Dialog.Description class="text-ink-muted text-sm/tight font-normal">
+              {t('settings.account.profilePicture.removeDialog.description')}
+            </Dialog.Description>
             <div class="pt-3 justify-end items-center gap-3 inline-flex">
               <Button
                 variant="outline"
                 depth={3}
                 disabled={isRemoving()}
                 onClick={() => setShowRemoveConfirmModal(false)}
-              >{t('common.cancel')}</Button>
+              >
+                {t('common.cancel')}
+              </Button>
               <Button
                 variant="danger"
                 depth={3}
                 disabled={isRemoving()}
                 onClick={handleRemove}
-              >{t('common.remove')}</Button>
+              >
+                {t('common.remove')}
+              </Button>
             </div>
           </Panel.Body>
         </Panel>
@@ -392,16 +414,16 @@ export function Account() {
 
       if (!deleted) {
         setIsDeleting(false);
-        toast.failure('Unable to delete your account. Please try again.');
+        toast.failure(t('settings.account.delete.error'));
       }
     } catch {
       setIsDeleting(false);
-      toast.failure('Unable to delete your account. Please try again.');
+      toast.failure(t('settings.account.delete.error'));
     }
   };
 
   return (
-    <SettingsPage title={t('auto.account')}>
+    <SettingsPage title={t('settings.account.title')}>
       <SettingsSection>
         <SettingsCard>
           <Show when={ENABLE_PROFILE_PICTURES}>
@@ -410,13 +432,13 @@ export function Account() {
             </Show>
           </Show>
 
-          <Row label="Email">
+          <Row label={t('settings.account.email.label')}>
             <span class="ph-no-capture text-sm text-ink-muted">
               {email() ?? ''}
             </span>
           </Row>
 
-          <Row label="First Name">
+          <Row label={t('settings.account.firstName.label')}>
             <NameInput
               value={firstName()}
               onSave={(newValue) =>
@@ -427,11 +449,11 @@ export function Account() {
                   setUpdatedFirstName
                 )
               }
-              placeholder={t('auto.enter_first_name')}
+              placeholder={t('settings.account.firstName.placeholder')}
             />
           </Row>
 
-          <Row label="Last Name">
+          <Row label={t('settings.account.lastName.label')}>
             <NameInput
               value={lastName()}
               onSave={(newValue) =>
@@ -442,8 +464,28 @@ export function Account() {
                   setUpdatedLastName
                 )
               }
-              placeholder={t('auto.enter_last_name')}
+              placeholder={t('settings.account.lastName.placeholder')}
             />
+          </Row>
+
+          <Row label={t('settings.account.language.label')}>
+            <select
+              aria-label={t('settings.account.language.label')}
+              class="settings-input min-w-36"
+              value={getLocale()}
+              onChange={(event) => {
+                const nextLocale = event.currentTarget.value as Locale;
+                if (nextLocale === getLocale()) return;
+                setLocale(nextLocale);
+              }}
+            >
+              <option value="en">
+                {t('settings.account.language.option', { locale: 'en' })}
+              </option>
+              <option value="ru">
+                {t('settings.account.language.option', { locale: 'ru' })}
+              </option>
+            </select>
           </Row>
 
           <Show when={autoUpdateUIEnabled()}>
@@ -467,17 +509,19 @@ export function Account() {
                 depth={4}
                 onClick={() => logout()}
               >
-                <SignOutIcon class="size-4" />{t('auto.log_out')}</Button>
+                <SignOutIcon class="size-4" />
+                {t('settings.account.logout')}
+              </Button>
             </div>
           </SettingsCard>
         </SettingsSection>
       </Show>
 
-      <SettingsSection title={t('auto.danger_zone')}>
+      <SettingsSection title={t('settings.account.danger.title')}>
         <SettingsCard>
           <SettingsRow
-            label="Delete account"
-            description="Permanently delete your account and all associated data."
+            label={t('settings.account.delete.label')}
+            description={t('settings.account.delete.description')}
           >
             <Button
               variant="danger"
@@ -486,7 +530,9 @@ export function Account() {
                 resetDeleteFlow();
                 setShowDeleteModal(true);
               }}
-            >{t('auto.delete_account')}</Button>
+            >
+              {t('settings.account.delete.action')}
+            </Button>
           </SettingsRow>
         </SettingsCard>
       </SettingsSection>
@@ -501,18 +547,21 @@ export function Account() {
       >
         <Panel depth={2} class="rounded-xl">
           <Panel.Header class="px-6">
-            <Dialog.Title class="text-ink text-sm font-semibold">{t('auto.delete_account')}</Dialog.Title>
+            <Dialog.Title class="text-ink text-sm font-semibold">
+              {t('settings.account.delete.dialog.title')}
+            </Dialog.Title>
           </Panel.Header>
           <Panel.Body class="p-6 font-sans flex flex-col gap-3">
             <Dialog.Description class="text-ink-muted text-sm/tight font-normal">
-              Are you sure you want to delete your account? This action is
-              permanent and cannot be undone.
+              {t('settings.account.delete.dialog.description')}
             </Dialog.Description>
             <div class="flex flex-col gap-3 pt-2">
               <label class="flex flex-col gap-1.5 text-sm" for="delete-reason">
                 <span>
-                  Why are you leaving?{' '}
-                  <span class="text-ink-muted">(optional)</span>
+                  {t('settings.account.delete.reason.label')}{' '}
+                  <span class="text-ink-muted">
+                    ({t('settings.account.optional')})
+                  </span>
                 </span>
                 <select
                   id="delete-reason"
@@ -526,10 +575,12 @@ export function Account() {
                     )
                   }
                 >
-                  <option value="">{t('auto.select_a_reason')}</option>
+                  <option value="">
+                    {t('settings.account.delete.reason.placeholder')}
+                  </option>
                   <For each={ACCOUNT_DELETION_REASON_OPTIONS}>
                     {(option) => (
-                      <option value={option.value}>{option.label}</option>
+                      <option value={option.value}>{t(option.labelKey)}</option>
                     )}
                   </For>
                 </select>
@@ -539,8 +590,10 @@ export function Account() {
                 for="delete-feedback"
               >
                 <span>
-                  Anything else you'd like us to know?{' '}
-                  <span class="text-ink-muted">(optional)</span>
+                  {t('settings.account.delete.feedback.label')}{' '}
+                  <span class="text-ink-muted">
+                    ({t('settings.account.optional')})
+                  </span>
                 </span>
                 <textarea
                   id="delete-feedback"
@@ -551,10 +604,12 @@ export function Account() {
                   onInput={(event) =>
                     setDeleteFeedback(event.currentTarget.value)
                   }
-                  placeholder={t('auto.your_feedback_helps_us_improve')}
+                  placeholder={t(
+                    'settings.account.delete.feedback.placeholder'
+                  )}
                 />
                 <span class="text-ink-extra-muted text-xs">
-                  Please don't include sensitive information.
+                  {t('settings.account.delete.feedback.sensitiveWarning')}
                 </span>
               </label>
             </div>
@@ -566,7 +621,9 @@ export function Account() {
                   setShowDeleteModal(false);
                   resetDeleteFlow();
                 }}
-              >{t('common.cancel')}</Button>
+              >
+                {t('common.cancel')}
+              </Button>
               <Button
                 variant="danger"
                 depth={3}
@@ -574,7 +631,9 @@ export function Account() {
                   setShowDeleteConfirmModal(true);
                   setShowDeleteModal(false);
                 }}
-              >{t('auto.continue')}</Button>
+              >
+                {t('settings.account.delete.continue')}
+              </Button>
             </div>
           </Panel.Body>
         </Panel>
@@ -590,12 +649,13 @@ export function Account() {
       >
         <Panel depth={2} class="rounded-xl">
           <Panel.Header class="px-6">
-            <Dialog.Title class="text-ink text-sm font-semibold">{t('auto.are_you_absolutely_sure')}</Dialog.Title>
+            <Dialog.Title class="text-ink text-sm font-semibold">
+              {t('settings.account.delete.confirm.title')}
+            </Dialog.Title>
           </Panel.Header>
           <Panel.Body class="p-6 font-sans flex flex-col gap-3">
             <Dialog.Description class="text-ink-muted text-sm/tight font-normal">
-              This will permanently delete your account and all associated data.
-              This cannot be undone.
+              {t('settings.account.delete.confirm.description')}
             </Dialog.Description>
             <div class="pt-3 justify-end items-center gap-3 inline-flex">
               <Button
@@ -606,16 +666,21 @@ export function Account() {
                   setShowDeleteConfirmModal(false);
                   resetDeleteFlow();
                 }}
-              >{t('common.cancel')}</Button>
+              >
+                {t('common.cancel')}
+              </Button>
               <Button
                 variant="danger"
                 depth={3}
                 disabled={isDeleting()}
                 onClick={deleteAccountHandler}
               >
-                <Show when={isDeleting()} fallback="Delete My Account">
+                <Show
+                  when={isDeleting()}
+                  fallback={t('settings.account.delete.confirm.action')}
+                >
                   <SpinnerIcon class="size-4 animate-spin" />
-                  Deleting…
+                  {t('settings.account.delete.confirm.deleting')}
                 </Show>
               </Button>
             </div>
@@ -659,7 +724,7 @@ function NotificationSettings(props: {
   };
 
   return (
-    <Row label="Notifications">
+    <Row label={t('settings.account.notifications.label')}>
       <ToggleSwitch
         size="md"
         checked={props.settings.isEnabled()}
@@ -671,8 +736,10 @@ function NotificationSettings(props: {
 
 function NotificationNotSupported() {
   return (
-    <Row label="Notifications">
-      <span class="text-sm text-ink-muted">{t('auto.not_supported_on_this_device')}</span>
+    <Row label={t('settings.account.notifications.label')}>
+      <span class="text-sm text-ink-muted">
+        {t('settings.account.notifications.notSupported')}
+      </span>
     </Row>
   );
 }
@@ -683,7 +750,7 @@ function NameInput(props: {
   value?: string;
   placeholder?: string;
   /** Returns whether the save succeeded so we can show status / revert. */
-  onSave: (value: string) =>Promise<boolean>;
+  onSave: (value: string) => Promise<boolean>;
 }) {
   const [inputValue, setInputValue] = createSignal(props.value ?? '');
   const [isFocused, setIsFocused] = createSignal(false);
@@ -766,7 +833,10 @@ function NameInput(props: {
               <CheckIcon class="size-3.5 text-success" />
             </Match>
             <Match when={status() === 'error'}>
-              <Tooltip label="Couldn't save — try again" placement="top">
+              <Tooltip
+                label={t('settings.account.name.saveError')}
+                placement="top"
+              >
                 <WarningCircleIcon class="size-3.5 text-failure" />
               </Tooltip>
             </Match>
@@ -786,19 +856,34 @@ function bundleUpdateAction(
   switch (status.status) {
     case 'Idle':
       return {
-        label: 'Check for Update',
+        label: t('settings.account.update.action.check'),
         action: () => invoke('check_for_update'),
       };
     case 'Error':
-      return { label: t('common.retry'), action: () => invoke('check_for_update') };
+      return {
+        label: t('common.retry'),
+        action: () => invoke('check_for_update'),
+      };
     case 'UpdateFound':
-      return { label: 'Download', action: grantBundleUpdate };
+      return {
+        label: t('settings.account.update.action.download'),
+        action: grantBundleUpdate,
+      };
     case 'WaitingForWifi':
-      return { label: 'Download anyway', action: grantBundleUpdate };
+      return {
+        label: t('settings.account.update.action.downloadAnyway'),
+        action: grantBundleUpdate,
+      };
     case 'ClearRequired':
-      return { label: 'Reload', action: () => invoke('perform_update') };
+      return {
+        label: t('settings.account.update.action.reload'),
+        action: () => invoke('perform_update'),
+      };
     case 'Completed':
-      return { label: 'Update', action: () => invoke('perform_update') };
+      return {
+        label: t('settings.account.update.action.install'),
+        action: () => invoke('perform_update'),
+      };
     default:
       return null;
   }
@@ -823,8 +908,11 @@ function BundleVersionRow() {
     <Show when={bundleDebugInfo()}>
       {(info) => (
         <>
-          <Row label="Version">
-            {info().bundleBuild} ({info().source === 'embedded' ? 'app' : 'ota'}
+          <Row label={t('settings.account.update.version.label')}>
+            {info().bundleBuild} (
+            {info().source === 'embedded'
+              ? t('settings.account.update.version.source.app')
+              : t('settings.account.update.version.source.ota')}
             ) - {info().nativeBuild}
           </Row>
         </>
@@ -840,7 +928,7 @@ function BundleUpdateRow() {
     tauri?.bundleUpdateStatus() ?? { status: 'Idle' };
   const action = () => bundleUpdateAction(status());
   return (
-    <Row label="App Update">
+    <Row label={t('settings.account.update.label')}>
       <div class="flex items-center gap-3">
         <span class="text-sm text-ink-muted">
           {formatBundleUpdateStatus(status())}

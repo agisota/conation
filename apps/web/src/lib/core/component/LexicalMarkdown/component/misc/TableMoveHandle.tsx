@@ -1,5 +1,5 @@
-import { mdStore } from '@block-md/signal/markdownBlockData';
 import { t } from '@app/lib/i18n';
+import { mdStore } from '@block-md/signal/markdownBlockData';
 import { ScopedPortal } from '@core/component/ScopedPortal';
 import clickOutside from '@core/directive/clickOutside';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
@@ -60,7 +60,7 @@ false && floatWithElement;
 const DRAG_THRESHOLD_PX = 4;
 
 type MenuItem = {
-  label: string;
+  labelKey: string;
   icon: Component<ComponentProps<'svg'>>;
   action: (cell: TableCellNode) => void;
 };
@@ -68,22 +68,22 @@ type MenuItem = {
 // 2×2 grid: column inserts side by side on top, row inserts below.
 const INSERT_ITEMS: MenuItem[] = [
   {
-    label: 'Insert column left',
+    labelKey: 'editor.table.insertColumnLeft',
     icon: ColumnsPlusLeftIcon,
     action: () => $insertTableColumnAtSelection(false),
   },
   {
-    label: 'Insert column right',
+    labelKey: 'editor.table.insertColumnRight',
     icon: ColumnsPlusRightIcon,
     action: () => $insertTableColumnAtSelection(true),
   },
   {
-    label: 'Insert row below',
+    labelKey: 'editor.table.insertRowBelow',
     icon: RowsPlusBottomIcon,
     action: () => $insertTableRowAtSelection(true),
   },
   {
-    label: 'Insert row above',
+    labelKey: 'editor.table.insertRowAbove',
     icon: RowsPlusTopIcon,
     action: () => $insertTableRowAtSelection(false),
   },
@@ -92,12 +92,12 @@ const INSERT_ITEMS: MenuItem[] = [
 // Bottom row: delete the row/column the selection is in.
 const DELETE_ITEMS: MenuItem[] = [
   {
-    label: 'Delete row',
+    labelKey: 'editor.table.deleteRow',
     icon: RowsIcon,
     action: () => $deleteTableRowAtSelection(),
   },
   {
-    label: 'Delete column',
+    labelKey: 'editor.table.deleteColumn',
     icon: ColumnsIcon,
     action: () => $deleteTableColumnAtSelection(),
   },
@@ -435,8 +435,8 @@ export function TableMoveHandle() {
   const menuItemButton = (item: MenuItem, danger?: boolean) => (
     <button
       type="button"
-      aria-label={item.label}
-      title={item.label}
+      aria-label={t(item.labelKey)}
+      title={t(item.labelKey)}
       class="flex items-center justify-center rounded-md py-2 ring-1 ring-edge active:bg-accent/10"
       classList={{ 'text-failure': danger, 'text-ink-muted': !danger }}
       onClick={() => runMenuAction(item.action)}
@@ -539,7 +539,7 @@ export function TableMoveHandle() {
             <button
               ref={setHandleElem}
               type="button"
-              aria-label={t('auto.move_cells')}
+              aria-label={t('editor.table.moveCells')}
               class="fixed z-20 flex size-6 -translate-x-[calc(100%-3px)] -translate-y-[3px] items-center justify-center rounded-full border border-edge bg-surface text-ink-muted shadow-sm touch-none"
               classList={{
                 'cursor-grab': !dragging(),
@@ -556,8 +556,8 @@ export function TableMoveHandle() {
               {(corner) => (
                 <button
                   type="button"
-                  aria-label={t('auto.delete_table')}
-                  title={t('auto.delete_table')}
+                  aria-label={t('editor.table.deleteTable')}
+                  title={t('editor.table.deleteTable')}
                   class="fixed z-20 flex size-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-edge bg-surface text-failure shadow-sm active:border-failure active:bg-failure active:text-surface"
                   style={{ left: `${corner().x}px`, top: `${corner().y}px` }}
                   onPointerDown={(e) => e.preventDefault()}
@@ -593,13 +593,13 @@ export function TableMoveHandle() {
                 <Show when={anchorCellMerged()}>
                   <button
                     type="button"
-                    aria-label={t('auto.split_cell')}
-                    title={t('auto.split_cell')}
+                    aria-label={t('editor.table.splitCell')}
+                    title={t('editor.table.splitCell')}
                     class="col-span-2 flex items-center justify-center gap-1.5 rounded-md py-2 ring-1 ring-edge active:bg-accent/10 text-ink-muted"
                     onClick={() => runMenuAction(() => $unmergeCell())}
                   >
                     <CornersOutIcon class="size-4" />
-                    <span class="text-xs">{t('auto.split_cell')}</span>
+                    <span class="text-xs">{t('editor.table.splitCell')}</span>
                   </button>
                 </Show>
               </div>

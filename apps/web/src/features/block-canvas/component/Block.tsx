@@ -1,4 +1,5 @@
 import { useBlockEntityCommands } from '@app/features/next-soup/actions';
+import { t } from '@app/lib/i18n';
 import { createNumericParser } from '@block-canvas/util/parse';
 import { FileSidePanelSections, SidePanel } from '@components/app/side-panel';
 import {
@@ -277,7 +278,7 @@ export default function BlockCanvas(props: BlockCanvasProps) {
       setDataState('initialized');
     } catch (e) {
       setDataState('error');
-      toast.failure('Failed to parse canvas file');
+      toast.failure(t('canvas.error.parseFailed'));
       console.error(e);
     }
     return file;

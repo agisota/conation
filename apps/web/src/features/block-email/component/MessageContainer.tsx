@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { EmailAttachmentPill } from '@block-email/component/AttachmentPill';
 import { CollapsedMessage } from '@block-email/component/CollapsedMessage';
 import { useEmailContext } from '@block-email/component/EmailContext';
@@ -6,6 +7,7 @@ import { EmailMessageBody } from '@block-email/component/EmailMessageBody';
 import { EmailMessageTopBar } from '@block-email/component/EmailMessageTopBar';
 import { getSenderMacroId } from '@block-email/util/emailUser';
 import { useSplitLayout } from '@components/app/split-layout/layout';
+import { Telemetry } from '@conation/observability';
 import { FloatingInputLoader } from '@core/component/FloatingInputLoader';
 import { ImageGalleryPreview } from '@core/component/ImageGalleryPreview';
 import { toast } from '@core/component/Toast/Toast';
@@ -13,7 +15,6 @@ import { UserIcon, type UserIconProps } from '@core/component/UserIcon';
 import { VideoPreview } from '@core/component/VideoPreview';
 import { fileTypeToBlockName } from '@core/constant/allBlocks';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
-import { Telemetry } from '@conation/observability';
 import { refetchSoupEntity } from '@queries/soup/cache';
 import { emailClient } from '@service-email/client';
 import type { ApiMessage, Attachment } from '@service-email/generated/schemas';
@@ -166,7 +167,7 @@ export function MessageContainer(props: MessageContainerProps) {
       id: dbId,
     });
     if (response.isErr()) {
-      toast.failure('Failed to get attachment. Please try again.');
+      toast.failure(t('blockEmail.attachments.openFailed'));
       return Telemetry.error(
         new Error(
           'Failed to get or create attachment document id: ' + response.error
@@ -180,7 +181,7 @@ export function MessageContainer(props: MessageContainerProps) {
         documentId: document_id,
       });
     if (maybeDocumentMetadata.isErr()) {
-      toast.failure('Failed to get attachment. Please try again.');
+      toast.failure(t('blockEmail.attachments.openFailed'));
       return Telemetry.error(
         new Error(
           'Failed to get or create attachment document metadata: ' +
@@ -355,7 +356,7 @@ export function MessageContainer(props: MessageContainerProps) {
                 <Show when={props.isLastMessage && !isTouchDevice()}>
                   <FloatingInputLoader
                     isLoading={context.query.isFetching}
-                    loadingText="Loading messages"
+                    loadingText={t('blockEmail.loading.messages')}
                   />
                 </Show>
                 <div class="px-4">

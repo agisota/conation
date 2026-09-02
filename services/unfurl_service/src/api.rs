@@ -69,8 +69,8 @@ mod tests {
         body::Body,
         http::{Request, StatusCode},
     };
-    use http_body_util::BodyExt; // for `collect`
     use conation_env::Environment;
+    use http_body_util::BodyExt; // for `collect`
     use tower::ServiceExt;
 
     fn test_state() -> ApiContext {

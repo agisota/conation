@@ -9,6 +9,16 @@ use call::outbound::s3_recording_storage::S3RecordingStorage;
 use channels::{
     domain::list_service::ChannelListServiceImpl, outbound::pg_channels_repo::PgChannelsRepo,
 };
+use conation_auth::middleware::decode_jwt::JwtValidationArgs;
+use conation_authorization::{
+    InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationServiceImpl,
+    MacroAuthorizationState,
+};
+use conation_entrypoint::MacroEntrypoint;
+use conation_service_urls::{
+    ConnectionGatewayUrl, DocumentStorageServiceUrl, EmailServiceUrl, LexicalServiceUrl,
+    StaticFileServiceUrl, SyncServiceUrl,
+};
 use config::{Config, Environment};
 use document_storage_service_client::DocumentStorageServiceClient;
 use documents::{
@@ -27,16 +37,6 @@ use foreign_entity::{
 };
 use frecency::domain::services::FrecencyQueryServiceImpl;
 use frecency::outbound::postgres::FrecencyPgStorage;
-use conation_auth::middleware::decode_jwt::JwtValidationArgs;
-use conation_authorization::{
-    InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationServiceImpl,
-    MacroAuthorizationState,
-};
-use conation_entrypoint::MacroEntrypoint;
-use conation_service_urls::{
-    ConnectionGatewayUrl, DocumentStorageServiceUrl, EmailServiceUrl, LexicalServiceUrl,
-    StaticFileServiceUrl, SyncServiceUrl,
-};
 use notification::domain::service::{
     NotificationReaderService, PlatformArnConfig, SqsNotificationIngress,
 };
@@ -489,21 +489,7 @@ async fn main() -> anyhow::Result<()> {
                         .value()
                         .unwrap_or(pipedream_mcp::outbound::api::DEFAULT_MCP_URL)
                         .to_owned(),
-                    allowed_origins: match config.pipedream_allowed_origins.value() {
-                        Some(origins) => origins
-                            .split(',')
-                            .map(|origin| origin.trim().to_owned())
-                            .filter(|origin| !origin.is_empty())
-                            .collect(),
-                        None => match config.environment {
-                            Environment::Production => vec!["https://macro.com".to_owned()],
-                            Environment::Develop => vec![
-                                "https://dev.macro.com".to_owned(),
-                                "http://localhost:3000".to_owned(),
-                            ],
-                            Environment::Local => vec!["http://localhost:3000".to_owned()],
-                        },
-                    },
+                    allowed_origins: config.resolved_pipedream_allowed_origins()?,
                 },
             )
             .context("failed to build Pipedream client")?,

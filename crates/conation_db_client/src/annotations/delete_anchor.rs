@@ -149,7 +149,7 @@ mod delete_anchor_tests {
         scripts("document_pdf_comments_and_highlights")
     ))]
     async fn test_delete_unthreaded_highlight_anchor_success(pool: PgPool) {
-        let user_id = "macro|user@user.com";
+        let user_id = "conation|user@user.com";
         let uuid = Uuid::try_parse("33333333-3333-3333-3333-333333333333").unwrap(); // Threaded highlight (linked to thread 1001)
 
         let request =
@@ -182,7 +182,7 @@ mod delete_anchor_tests {
         scripts("document_pdf_comments_and_highlights")
     ))]
     async fn test_remove_unthreaded_highlight_anchor_success(pool: PgPool) {
-        let user_id = "macro|user@user.com";
+        let user_id = "conation|user@user.com";
         let uuid = Uuid::try_parse("33333333-3333-3333-3333-333333333333").unwrap(); // Threaded highlight (linked to thread 1001)
 
         let mut transaction = pool.begin().await.unwrap();
@@ -238,7 +238,7 @@ mod delete_anchor_tests {
         scripts("document_pdf_comments_and_highlights")
     ))]
     async fn test_detach_unthreaded_highlight_anchor_success(pool: PgPool) {
-        let user_id = "macro|user@user.com";
+        let user_id = "conation|user@user.com";
         let uuid = Uuid::try_parse("33333333-3333-3333-3333-333333333333").unwrap(); // Threaded highlight (linked to thread 1001)
 
         let mut transaction = pool.begin().await.unwrap();
@@ -290,7 +290,7 @@ mod delete_anchor_tests {
         scripts("document_pdf_comments_and_highlights")
     ))]
     async fn test_detach_threaded_highlight_anchor_success(pool: PgPool) {
-        let user_id = "macro|user@user.com";
+        let user_id = "conation|user@user.com";
         let uuid = Uuid::try_parse("33333333-3333-3333-3333-333333333333").unwrap(); // Threaded highlight (linked to thread 1001)
         let thread_id = 1005;
 
@@ -370,7 +370,7 @@ mod delete_anchor_tests {
         scripts("document_pdf_comments_and_highlights")
     ))]
     async fn test_delete_threaded_highlight_anchor_success(pool: PgPool) {
-        let user_id = "macro|user@user.com";
+        let user_id = "conation|user@user.com";
         let uuid = Uuid::try_parse("11111111-1111-1111-1111-111111111111").unwrap(); // Threaded highlight (linked to thread 1001)
 
         let request =
@@ -423,7 +423,7 @@ mod delete_anchor_tests {
         scripts("document_pdf_comments_and_highlights")
     ))]
     async fn test_delete_anchor_not_found(pool: PgPool) {
-        let user_id = "macro|user@user.com";
+        let user_id = "conation|user@user.com";
         let uuid = Uuid::new_v4(); // Random UUID
 
         let request =
@@ -446,7 +446,7 @@ mod delete_anchor_tests {
         scripts("document_pdf_comments_and_highlights")
     ))]
     async fn test_delete_anchor_invalid_permissions(pool: PgPool) {
-        let unauthorized_user = "macro|unauthorized_user@user.com"; // User not allowed to delete this anchor
+        let unauthorized_user = "conation|unauthorized_user@user.com"; // User not allowed to delete this anchor
         let uuid = Uuid::try_parse("11111111-1111-1111-1111-111111111111").unwrap(); // Threaded highlight (linked to thread 1001)
 
         let request =

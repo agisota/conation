@@ -35,20 +35,22 @@ export function ContactEmailsSection(props: { contact?: CrmContactResponse }) {
   return (
     <div class="flex flex-col gap-2">
       <div class="flex items-center justify-between gap-2">
-        <h2 class="text-sm font-medium text-ink-muted">{t('auto.emails')}</h2>
+        <h2 class="text-sm font-medium text-ink-muted">
+          {t('contacts.emails.title')}
+        </h2>
         <div class="flex items-center gap-2.5">
           <TabsInset
             list={[
-              { value: 'signal', label: 'Signal' },
-              { value: 'all', label: 'All' },
+              { value: 'signal', label: t('contacts.emails.filter.signal') },
+              { value: 'all', label: t('contacts.emails.filter.all') },
             ]}
             value={signalView()}
             onChange={(v) => setSignalView(v as EmailSignalView)}
           />
           <TabsInset
             list={[
-              { value: 'team', label: 'Team' },
-              { value: 'me', label: 'Me' },
+              { value: 'team', label: t('contacts.emails.scope.team') },
+              { value: 'me', label: t('contacts.emails.scope.me') },
             ]}
             value={view()}
             onChange={(v) => setView(v as EmailView)}
@@ -58,14 +60,19 @@ export function ContactEmailsSection(props: { contact?: CrmContactResponse }) {
       <Show
         when={props.contact && !emailsQuery.isLoading}
         fallback={
-          <div class="p-6 text-center text-sm text-ink-muted">{t('common.loading')}</div>
+          <div class="p-6 text-center text-sm text-ink-muted">
+            {t('common.loading')}
+          </div>
         }
       >
         <Show
           when={emails().length > 0}
           fallback={
             <div class="rounded-lg border border-dashed border-edge-muted p-6 text-center text-sm text-ink-muted">
-              {`No ${signalView() === 'signal' ? 'signal emails' : 'emails'} with this contact ${view() === 'me' ? 'in your inbox' : 'yet'}.`}
+              {t('contacts.emails.empty', {
+                signal: signalView(),
+                view: view(),
+              })}
             </div>
           }
         >
@@ -92,7 +99,7 @@ export function ContactEmailsSection(props: { contact?: CrmContactResponse }) {
             </Show>
             <Show when={emailsQuery.isFetchingNextPage}>
               <div class="p-3 text-center text-xs text-ink-muted">
-                Loading more…
+                {t('contacts.emails.loadingMore')}
               </div>
             </Show>
           </div>

@@ -1,5 +1,5 @@
-import { toast } from '@core/component/Toast/Toast';
 import { t } from '@app/lib/i18n';
+import { toast } from '@core/component/Toast/Toast';
 import CheckIcon from '@phosphor/check.svg';
 import CopyIcon from '@phosphor/copy.svg';
 import { Button } from '@ui';
@@ -18,7 +18,9 @@ export function CredentialField(props: {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1500);
     } catch {
-      toast.failure(`Failed to copy ${props.label.toLowerCase()}`);
+      toast.failure(
+        t('channel.bots.credentials.copyFailed', { label: props.label })
+      );
     }
   };
 
@@ -41,11 +43,13 @@ export function CredentialField(props: {
           type="button"
           variant={copied() ? 'success' : 'ghost'}
           size="sm"
-          label={`Copy ${props.label.toLowerCase()}`}
+          label={t('channel.bots.credentials.copy', { label: props.label })}
           onClick={copy}
         >
           <Show when={copied()} fallback={<CopyIcon />}>
-            <CheckIcon />{t('auto.copied')}</Show>
+            <CheckIcon />
+            {t('channel.bots.credentials.copied')}
+          </Show>
         </Button>
       </div>
     </div>

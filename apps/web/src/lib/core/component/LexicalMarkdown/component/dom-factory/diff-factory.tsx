@@ -1,6 +1,6 @@
-import { useUserId } from '@core/context/user';
 import { t } from '@app/lib/i18n';
 import { DiffNode, setDOMFactory } from '@conation/lexical-core';
+import { useUserId } from '@core/context/user';
 import CheckIcon from '@phosphor/check.svg';
 import XIcon from '@phosphor/x.svg';
 import { render } from 'solid-js/web';
@@ -50,7 +50,9 @@ export function registerDiffNodeFactory() {
                 container.classList.toggle('opt-reject', false);
               }}
             >
-              <XIcon class="size-4 text-failure" />{t('auto.reject')}</button>
+              <XIcon class="size-4 text-failure" />
+              {t('editor.suggestion.reject')}
+            </button>
             <button
               class="px-2 py-0.5 rounded text-sm flex border border-edge bg-edge items-center gap-2 hover:bg-hover hover-transition-bg"
               onClick={handleAccept}
@@ -61,7 +63,9 @@ export function registerDiffNodeFactory() {
                 container.classList.toggle('opt-accept', false);
               }}
             >
-              <CheckIcon class="size-4 text-success" />{t('auto.accept')}</button>
+              <CheckIcon class="size-4 text-success" />
+              {t('editor.suggestion.accept')}
+            </button>
           </div>
         </div>
       );

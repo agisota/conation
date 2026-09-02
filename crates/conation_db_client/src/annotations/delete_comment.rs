@@ -143,7 +143,7 @@ mod delete_comment_tests {
     ))]
     async fn test_successful_comment_deletion(pool: Pool<Postgres>) -> anyhow::Result<()> {
         let comment_id = 10001; // Comment in thread 1001
-        let owner = "macro|user@user.com";
+        let owner = "conation|user@user.com";
 
         delete_document_comment(&pool, comment_id, owner, DeleteCommentRequest::default()).await?;
 
@@ -171,7 +171,7 @@ mod delete_comment_tests {
     ))]
     async fn test_cannot_delete_deleted_comment(pool: Pool<Postgres>) -> anyhow::Result<()> {
         let comment_id = 10001; // Comment in thread 1001
-        let owner = "macro|user@user.com";
+        let owner = "conation|user@user.com";
 
         delete_document_comment(&pool, comment_id, owner, DeleteCommentRequest::default()).await?;
 
@@ -203,8 +203,8 @@ mod delete_comment_tests {
         scripts("document_pdf_comments_and_highlights")
     ))]
     async fn test_unauthorized_comment_deletion(pool: Pool<Postgres>) -> anyhow::Result<()> {
-        let comment_id = 10001; // Comment owned by macro|user@user.com
-        let unauthorized_user = "macro|user2@user.com"; // Not the owner
+        let comment_id = 10001; // Comment owned by conation|user@user.com
+        let unauthorized_user = "conation|user2@user.com"; // Not the owner
 
         let result = delete_document_comment(
             &pool,
@@ -228,7 +228,7 @@ mod delete_comment_tests {
     ))]
     async fn test_root_comment_deletion_deletes_thread(pool: Pool<Postgres>) -> anyhow::Result<()> {
         let comment_id = 10001; // Root comment in thread 1001
-        let owner = "macro|user@user.com";
+        let owner = "conation|user@user.com";
 
         let delete_response =
             delete_document_comment(&pool, comment_id, owner, DeleteCommentRequest::default())
@@ -297,7 +297,7 @@ mod delete_comment_tests {
         pool: Pool<Postgres>,
     ) -> anyhow::Result<()> {
         let comment_id = 10002; // Non-root comment in thread 1001
-        let owner = "macro|user@user.com";
+        let owner = "conation|user@user.com";
 
         let delete_response =
             delete_document_comment(&pool, comment_id, owner, DeleteCommentRequest::default())
@@ -360,7 +360,7 @@ mod delete_comment_tests {
         pool: Pool<Postgres>,
     ) -> anyhow::Result<()> {
         let comment_id = 10008; // root comment in thread 1005
-        let owner = "macro|user@user.com";
+        let owner = "conation|user@user.com";
 
         let delete_response =
             delete_document_comment(&pool, comment_id, owner, DeleteCommentRequest::default())
@@ -379,7 +379,7 @@ mod delete_comment_tests {
         pool: Pool<Postgres>,
     ) -> anyhow::Result<()> {
         let comment_id = 10007;
-        let document_owner = "macro|user@user.com";
+        let document_owner = "conation|user@user.com";
 
         delete_document_comment(
             &pool,
@@ -400,7 +400,7 @@ mod delete_comment_tests {
         pool: Pool<Postgres>,
     ) -> anyhow::Result<()> {
         let comment_id = 10007;
-        let owner = "macro|user2@user.com";
+        let owner = "conation|user2@user.com";
 
         delete_document_comment(&pool, comment_id, owner, DeleteCommentRequest::default()).await?;
 
@@ -415,7 +415,7 @@ mod delete_comment_tests {
         pool: Pool<Postgres>,
     ) -> anyhow::Result<()> {
         let comment_id = 10007;
-        let non_owner = "macro|user3@user.com";
+        let non_owner = "conation|user3@user.com";
 
         let result = delete_document_comment(
             &pool,

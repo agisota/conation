@@ -1,5 +1,5 @@
-import type { ChatMessageStream } from '@service-connection/stream';
 import { t } from '@app/lib/i18n';
+import type { ChatMessageStream } from '@service-connection/stream';
 import { cn } from '@ui';
 import { Match, Switch } from 'solid-js';
 
@@ -14,18 +14,28 @@ export function StreamStatus(props: Props) {
       <Switch>
         <Match when={props.stream()}>
           {(stream) => (
-            <div>{t('auto.stream_state')}<div class="flex items-center space-x-2">
-                <span> chunks: {stream().data().length}</span>
+            <div>
+              {t('ai.debug.stream.state')}
+              <div class="flex items-center space-x-2">
+                <span>
+                  {t('ai.debug.stream.chunkCount', {
+                    count: stream().data().length,
+                  })}
+                </span>
               </div>
               <div class="flex items-center space-x-2">
                 <Dot active={stream().isDone()} />
-                <span>isDone: {String(stream().isDone())}</span>
+                <span>
+                  {t('ai.debug.stream.done', {
+                    state: stream().isDone() ? 'yes' : 'no',
+                  })}
+                </span>
               </div>
             </div>
           )}
         </Match>
         <Match when={!props.stream()}>
-          <div>{t('auto.no_stream')}</div>
+          <div>{t('ai.debug.stream.none')}</div>
         </Match>
       </Switch>
     </div>

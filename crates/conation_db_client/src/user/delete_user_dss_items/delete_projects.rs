@@ -89,7 +89,7 @@ mod tests {
     ))]
     async fn test_delete_user_projects(pool: Pool<Postgres>) -> anyhow::Result<()> {
         let mut transaction = pool.begin().await?;
-        delete_user_projects(&mut transaction, "macro|user@user.com").await?;
+        delete_user_projects(&mut transaction, "conation|user@user.com").await?;
         transaction.commit().await?;
 
         let project_ids = sqlx::query!(
@@ -101,7 +101,7 @@ mod tests {
             WHERE
                 p."userId" = $1
             "#,
-            "macro|user@user.com"
+            "conation|user@user.com"
         )
         .fetch_all(&pool)
         .await?;

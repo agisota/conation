@@ -23,6 +23,7 @@ pub struct Config {
 
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
-        conation_config::ConfigLoader::load::<Config>().context("failed to load unfurl service config")
+        conation_config::ConfigLoader::load::<Config>()
+            .context("failed to load unfurl service config")
     }
 }

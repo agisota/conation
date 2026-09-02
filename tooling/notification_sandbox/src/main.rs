@@ -6,11 +6,10 @@ use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use email_formatting::EmailDigestNotification;
-use hmac::{Hmac, Mac};
-use conation_env::Environment;
 use conation_user_id::cowlike::CowLike;
 use conation_user_id::user_id::MacroUserIdStr;
+use email_formatting::{DigestEmailUrls, EmailDigestNotification};
+use hmac::{Hmac, Mac};
 use model_entity::EntityType;
 use model_notifications::ChannelMessageSendMetadata;
 use notification::domain::models::email_notification_digest::ports::MessageId;
@@ -142,7 +141,7 @@ async fn main() -> Result<(), Report> {
             endpoint_arn: _,
         } => SandboxMobileSender::Real(MobilePushAdapter {
             push_service: sns_client.clone(),
-            apns_bundle_id: "com.macro.app.prod".to_string(),
+            apns_bundle_id: "dev.conation.app".to_string(),
             voip_bundle_id: None,
         }),
     };
@@ -385,12 +384,20 @@ async fn poll_email_digests(egress: &impl NotificationEgress) -> Result<(), Repo
             .unwrap_or_else(|_| "sandbox-default-hmac-secret".to_string());
         let hmac_key = Hmac::<sha2::Sha256>::new_from_slice(secret.as_bytes())
             .expect("HMAC accepts any key size");
+        let digest_urls = DigestEmailUrls::new(
+            "http://localhost:3000/app"
+                .parse()
+                .expect("sandbox app URL must be valid"),
+            "http://localhost:3000/app/logo192.png"
+                .parse()
+                .expect("sandbox brand asset URL must be valid"),
+            "http://localhost:8089"
+                .parse()
+                .expect("sandbox notification URL must be valid"),
+        )
+        .expect("sandbox digest URLs must be valid");
         Ok(SandboxNotification {
-            inner: EmailDigestNotification::new_from_digest_batch(
-                batch,
-                Environment::Local,
-                hmac_key,
-            )?,
+            inner: EmailDigestNotification::new_from_digest_batch(batch, &digest_urls, hmac_key)?,
         })
     }
 

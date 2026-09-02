@@ -1,4 +1,9 @@
+import { formatDateTime, formatRelativeTime, getDateLocale } from '@core/i18n';
 import type { DateValue } from './date';
+
+function capitalizeRelativeTime(value: string): string {
+  return `${value.charAt(0).toLocaleUpperCase(getDateLocale())}${value.slice(1)}`;
+}
 
 /**
  * Formats a date string according to relative time rules, eg:
@@ -16,36 +21,41 @@ export function formatRelativeDate(value: DateValue): string {
 
   // Same day
   if (isSameDay(date, now)) {
-    return 'Today';
+    return capitalizeRelativeTime(
+      formatRelativeTime(0, 'day', { numeric: 'auto' })
+    );
   }
 
   // Within last week
   const weekAgo = new Date(now);
   weekAgo.setDate(weekAgo.getDate() - 7);
   if (date > weekAgo) {
-    return `${date.toLocaleDateString('en-US', { weekday: 'long' })}`;
+    return formatDateTime(date, { weekday: 'long' });
   }
 
   // Same year
   if (date.getFullYear() === now.getFullYear()) {
-    return `${date.toLocaleDateString('en-US', { month: 'short' })} ${date.getDate()}`;
+    return formatDateTime(date, { month: 'short', day: 'numeric' });
   }
 
   // Different year
-  return `${date.toLocaleDateString('en-US', { month: 'short' })} ${date.getDate()}, ${date.getFullYear().toString()}`;
+  return formatDateTime(date, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }
 
 /**
- * Formats a time string in 12-hour format with am/pm
+ * Formats a time string using the selected locale's hour cycle.
  * @param value Date object or ISO date string to format
- * @returns Time string like "4:26 PM" or "12:30 PM"
+ * @returns A localized time string, such as "4:26 PM" or "16:26"
  */
 function _formatTime(value: DateValue): string {
   const date = value instanceof Date ? value : new Date(value);
-  return date.toLocaleTimeString('en-US', {
+  return formatDateTime(date, {
     hour: 'numeric',
     minute: '2-digit',
-    hour12: true,
   });
 }
 

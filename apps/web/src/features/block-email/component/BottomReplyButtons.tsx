@@ -1,5 +1,5 @@
-import { FloatRegionOrInline } from '@components/app/mobile/float-regions/FloatRegion';
 import { t } from '@app/lib/i18n';
+import { FloatRegionOrInline } from '@components/app/mobile/float-regions/FloatRegion';
 import { inboxIconProps } from '@core/component/inboxIcon';
 import { UserIcon } from '@core/component/UserIcon';
 import { useEmail } from '@core/context/user';
@@ -96,7 +96,7 @@ export function BottomReplyButtons(props: { lastMessage: ApiMessage }) {
               showTooltip={false}
               suppressClick
             />
-            <span class="truncate">{t('auto.reply')}</span>
+            <span class="truncate">{t('blockEmail.actions.reply')}</span>
           </button>
         </div>
       }
@@ -107,12 +107,12 @@ export function BottomReplyButtons(props: { lastMessage: ApiMessage }) {
             <div class="flex flex-row items-center gap-2">
               <ReplyActionButton
                 icon={ArrowBendUpLeft}
-                label="Reply"
+                label={t('blockEmail.actions.reply')}
                 onClick={open('reply-all')}
               />
               <ReplyActionButton
                 icon={ArrowBendUpRight}
-                label="Forward"
+                label={t('blockEmail.actions.forward')}
                 onClick={open('forward')}
               />
             </div>
@@ -127,7 +127,11 @@ export function BottomReplyButtons(props: { lastMessage: ApiMessage }) {
                     <CheckBoldIcon class={cn(iconProps.class, 'text-accent')} />
                   </Show>
                 )}
-                ariaLabel={isDone() ? 'Mark as not done' : 'Mark done'}
+                ariaLabel={
+                  isDone()
+                    ? t('blockEmail.actions.markNotDone')
+                    : t('blockEmail.actions.markDone')
+                }
                 onClick={toggleMarkDone}
               />
             </Show>

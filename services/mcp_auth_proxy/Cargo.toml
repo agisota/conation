@@ -38,3 +38,4 @@ workspace-hack = { version = "0.1", path = "../../crates/workspace-hack" }
 
 [dev-dependencies]
 tokio = { workspace = true }
+wiremock = { workspace = true }

@@ -9,7 +9,7 @@ async fn test_get_entity_name_and_owner(pool: sqlx::Pool<sqlx::Postgres>) -> any
         entity_name,
         (
             Some("document".to_string()),
-            "macro|user@user.com".to_string()
+            "conation|user@user.com".to_string()
         )
     );
 
@@ -17,7 +17,10 @@ async fn test_get_entity_name_and_owner(pool: sqlx::Pool<sqlx::Postgres>) -> any
         get_entity_name_and_owner(&pool, &entity_id, &SearchEntityType::Chats).await?;
     assert_eq!(
         entity_name,
-        (Some("chat".to_string()), "macro|user@user.com".to_string())
+        (
+            Some("chat".to_string()),
+            "conation|user@user.com".to_string(),
+        )
     );
 
     let entity_name =
@@ -26,7 +29,7 @@ async fn test_get_entity_name_and_owner(pool: sqlx::Pool<sqlx::Postgres>) -> any
         entity_name,
         (
             Some("subject".to_string()),
-            "macro|user@user.com".to_string()
+            "conation|user@user.com".to_string()
         )
     );
 

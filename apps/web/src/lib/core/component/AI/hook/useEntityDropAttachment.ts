@@ -3,6 +3,7 @@ import type { Attachment, Attachments } from '@core/component/AI/types';
 import type { ChatAttachmentMention } from '@core/component/AI/util/chatAttachmentMention';
 import { toast } from '@core/component/Toast/Toast';
 import { fileTypeToBlockName } from '@core/constant/allBlocks';
+import { t } from '@core/i18n';
 import { isEntityDragData, isEntityDragEvent } from '@entity';
 import { createDroppable, useDragDropContext } from '@thisbeyond/solid-dnd';
 import { type Accessor, createMemo } from 'solid-js';
@@ -66,7 +67,7 @@ export function useEntityDropAttachment(
     // Determine block name and check if it's a supported attachment type
     const blockName = fileTypeToBlockName(fileType ?? entityType, true);
     if (!SUPPORTED_CHAT_ATTACHMENT_BLOCKS.includes(blockName)) {
-      toast.failure('This file type cannot be attached to chat');
+      toast.failure(t('ai.attachments.unsupportedType'));
       return;
     }
 

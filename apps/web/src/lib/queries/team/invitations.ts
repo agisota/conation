@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import { throwOnErr } from '@core/util/result';
 import { authServiceClient } from '@service-auth/client';
@@ -45,12 +46,12 @@ export function useJoinTeamMutation(callbacks?: JoinTeamCallbacks) {
         onSuccess: () => {
           invalidateUserTeams();
           invalidateUserInvites();
-          toast.success('Joined team');
+          toast.success(t('team.feedback.joined'));
         },
 
         onError: (error, _vars, context) => {
           console.error('Failed to join team', error);
-          toast.failure('Failed to join team');
+          toast.failure(t('team.feedback.joinFailed'));
 
           if (context?.previousInvites) {
             queryClient.setQueryData(
@@ -94,12 +95,12 @@ export function useRejectInvitationMutation(
       {
         onSuccess: () => {
           invalidateUserInvites();
-          toast.success('Invitation declined');
+          toast.success(t('team.feedback.invitationDeclined'));
         },
 
         onError: (error, _vars, context) => {
           console.error('Failed to reject invitation', error);
-          toast.failure('Failed to reject invitation');
+          toast.failure(t('team.feedback.invitationDeclineFailed'));
 
           if (context?.previousInvites) {
             queryClient.setQueryData(

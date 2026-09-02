@@ -140,7 +140,8 @@ use utoipa::OpenApi;
 #[derive(OpenApi)]
 #[openapi(
     info(
-        terms_of_service = "https://macro.com/terms",
+        terms_of_service = "https://conation.dev/terms",
+        license(name = "GNU Affero General Public License v3.0", identifier = "AGPL-3.0-only"),
     ),
     paths(
         health::health_handler,
@@ -686,7 +687,7 @@ use utoipa::OpenApi;
         ),
     ),
     tags(
-            (name = "macro cloud storage service", description = "Macro Cloud Storage Service")
+            (name = "macro cloud storage service", description = "Conation Cloud Storage Service")
     )
 )]
 pub struct ApiDoc;

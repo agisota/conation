@@ -128,6 +128,27 @@ async fn routes_a_slug_to_an_mcp_target() {
     );
 }
 
+#[tokio::test]
+async fn routes_the_reserved_conation_mcp_path_to_conation() {
+    let service = SpyService::accepting();
+    let response = call(&service, get("/mcp-conation", Some("Bearer session"))).await;
+
+    assert_eq!(response.status(), StatusCode::ACCEPTED);
+    assert_eq!(
+        service.targets(),
+        [EgressTarget::McpServer(McpDestination::Conation)]
+    );
+}
+
+#[tokio::test]
+async fn does_not_serve_the_legacy_macro_mcp_path() {
+    let service = SpyService::accepting();
+    let response = call(&service, get("/mcp-macro", Some("Bearer session"))).await;
+
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+    assert!(service.targets().is_empty());
+}
+
 /// git speaks to us through a credential helper, which can only present a
 /// token as a Basic password. Both spellings have to reach the same session.
 #[tokio::test]
@@ -254,7 +275,7 @@ async fn an_unauthenticated_git_request_is_told_to_use_basic() {
             .headers()
             .get(http::header::WWW_AUTHENTICATE)
             .and_then(|value| value.to_str().ok()),
-        Some(r#"Basic realm="Macro egress", charset="UTF-8""#)
+        Some(r#"Basic realm="Conation egress", charset="UTF-8""#)
     );
 }
 

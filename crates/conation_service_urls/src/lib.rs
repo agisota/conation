@@ -243,8 +243,8 @@ impl ServiceUrlVarErr {
 ///
 /// document_storage_service_url_example().unwrap();
 /// ```
-#[conation_export]
-conation_rules! service_url {
+#[macro_export]
+macro_rules! service_url {
     (
         $(#[$attr:meta])*
         $v:vis struct $n:ident {
@@ -553,8 +553,8 @@ service_url! {
         /// Notification service API URL.
         pub NotificationServiceUrl {
             local: "http://localhost:8089",
-            dev: "https://notifications-dev.macro.com",
-            prod: "https://notifications.macro.com",
+            dev: "https://notifications-dev.conation.dev",
+            prod: "https://notifications.conation.dev",
         },
         /// Static file service/CDN URL.
         pub StaticFileServiceUrl {

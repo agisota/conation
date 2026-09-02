@@ -2,7 +2,7 @@ use super::*;
 use crate::scheme::MacroScheme;
 
 /// Mirrors the app's real config: the allowlist holds only the SPA's own
-/// origins, and the macro hosts are app-link hosts.
+/// origins, and the configured Conation host is the app-link host.
 fn test_plugin() -> MacroNavigationPlugin {
     MacroNavigationPlugin::new(&[
         "tauri://localhost",
@@ -10,13 +10,13 @@ fn test_plugin() -> MacroNavigationPlugin {
         "http://localhost:3000",
     ])
     .unwrap()
-    .with_app_link_hosts(&["macro.com", "dev.macro.com", "staging.macro.com"])
+    .with_app_link_hosts(&["conation.dev"])
 }
 
 #[test]
 fn get_destination_app_link_for_conation_app_path() {
     let plugin = test_plugin();
-    let url = Url::parse("https://macro.com/app/component/doc123").unwrap();
+    let url = Url::parse("https://conation.dev/app/component/doc123").unwrap();
     match plugin.get_destination(&url) {
         NavigationOutput::AppLink(scheme) => {
             assert_eq!(scheme.path(), "/component/doc123");
@@ -29,7 +29,7 @@ fn get_destination_app_link_for_conation_app_path() {
 #[test]
 fn get_destination_app_link_preserves_query() {
     let plugin = test_plugin();
-    let url = Url::parse("https://dev.macro.com/app/component/doc123?foo=bar").unwrap();
+    let url = Url::parse("https://conation.dev/app/component/doc123?foo=bar").unwrap();
     match plugin.get_destination(&url) {
         NavigationOutput::AppLink(scheme) => {
             assert_eq!(scheme.path(), "/component/doc123");
@@ -42,7 +42,7 @@ fn get_destination_app_link_preserves_query() {
 #[test]
 fn get_destination_app_link_strips_www() {
     let plugin = test_plugin();
-    let url = Url::parse("https://www.macro.com/app/component/doc123").unwrap();
+    let url = Url::parse("https://www.conation.dev/app/component/doc123").unwrap();
     assert!(matches!(
         plugin.get_destination(&url),
         NavigationOutput::AppLink(_)
@@ -52,7 +52,7 @@ fn get_destination_app_link_strips_www() {
 #[test]
 fn get_destination_external_for_non_app_path_on_conation_host() {
     let plugin = test_plugin();
-    for url in ["https://macro.com/pricing", "https://dev.macro.com/pricing"] {
+    for url in ["https://conation.dev/pricing", "https://conation.dev/about"] {
         assert!(
             matches!(
                 plugin.get_destination(&Url::parse(url).unwrap()),
@@ -66,7 +66,7 @@ fn get_destination_external_for_non_app_path_on_conation_host() {
 #[test]
 fn get_destination_external_for_app_path_on_foreign_host() {
     let plugin = test_plugin();
-    let url = Url::parse("https://auth-service.macro.com/app/component/doc123").unwrap();
+    let url = Url::parse("https://evil.example/app/component/doc123").unwrap();
     assert!(matches!(
         plugin.get_destination(&url),
         NavigationOutput::External(_)
@@ -96,15 +96,15 @@ fn get_destination_internal_for_spa_origins() {
 /// in the webview — the app-link check runs before the allowlist.
 #[test]
 fn get_destination_app_link_wins_over_allowlist() {
-    let plugin = MacroNavigationPlugin::new(&["https://macro.com"])
+    let plugin = MacroNavigationPlugin::new(&["https://conation.dev"])
         .unwrap()
-        .with_app_link_hosts(&["macro.com"]);
-    let app_url = Url::parse("https://macro.com/app/component/doc123").unwrap();
+        .with_app_link_hosts(&["conation.dev"]);
+    let app_url = Url::parse("https://conation.dev/app/component/doc123").unwrap();
     assert!(matches!(
         plugin.get_destination(&app_url),
         NavigationOutput::AppLink(_)
     ));
-    let site_url = Url::parse("https://macro.com/pricing").unwrap();
+    let site_url = Url::parse("https://conation.dev/pricing").unwrap();
     assert!(matches!(
         plugin.get_destination(&site_url),
         NavigationOutput::Internal
@@ -113,8 +113,8 @@ fn get_destination_app_link_wins_over_allowlist() {
 
 #[test]
 fn get_destination_no_app_link_hosts_keeps_old_behavior() {
-    let plugin = MacroNavigationPlugin::new(&["https://macro.com"]).unwrap();
-    let url = Url::parse("https://macro.com/app/component/doc123").unwrap();
+    let plugin = MacroNavigationPlugin::new(&["https://conation.dev"]).unwrap();
+    let url = Url::parse("https://conation.dev/app/component/doc123").unwrap();
     assert!(matches!(
         plugin.get_destination(&url),
         NavigationOutput::Internal
@@ -123,15 +123,26 @@ fn get_destination_no_app_link_hosts_keeps_old_behavior() {
 
 #[test]
 fn from_url_extracts_correct_path_from_universal_link() {
-    let url = Url::parse("https://macro.com/app/component/doc123").unwrap();
+    let url = Url::parse("https://conation.dev/app/component/doc123").unwrap();
     let result = MacroScheme::from_url(&url).unwrap();
+    assert_eq!(result.scheme(), "conation");
     assert_eq!(result.path(), "/component/doc123");
     assert_eq!(result.query(), None);
 }
 
 #[test]
+fn custom_scheme_is_conation_by_default_and_legacy_only_when_explicit() {
+    assert!(MacroScheme::new(Url::parse("conation://app/component/doc123").unwrap()).is_ok());
+    assert!(MacroScheme::new(Url::parse("macro://app/component/doc123").unwrap()).is_err());
+    assert!(
+        MacroScheme::new_with_scheme(Url::parse("macro://app/component/doc123").unwrap(), "macro")
+            .is_ok()
+    );
+}
+
+#[test]
 fn from_url_extracts_path_and_query_from_universal_link() {
-    let url = Url::parse("https://macro.com/app/component/doc123?foo=bar").unwrap();
+    let url = Url::parse("https://conation.dev/app/component/doc123?foo=bar").unwrap();
     let result = MacroScheme::from_url(&url).unwrap();
     assert_eq!(result.path(), "/component/doc123");
     assert_eq!(result.query(), Some("foo=bar"));
@@ -139,14 +150,14 @@ fn from_url_extracts_path_and_query_from_universal_link() {
 
 #[test]
 fn from_url_strips_bare_app_path() {
-    let url = Url::parse("https://macro.com/app").unwrap();
+    let url = Url::parse("https://conation.dev/app").unwrap();
     let result = MacroScheme::from_url(&url).unwrap();
     assert_eq!(result.path(), "/");
 }
 
 #[test]
 fn from_url_handles_nested_path() {
-    let url = Url::parse("https://macro.com/app/component/nested/path/here").unwrap();
+    let url = Url::parse("https://conation.dev/app/component/nested/path/here").unwrap();
     let result = MacroScheme::from_url(&url).unwrap();
     assert_eq!(result.path(), "/component/nested/path/here");
 }

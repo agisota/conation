@@ -674,8 +674,16 @@ export const useEntityActionHotkeys = (
   // Set stage / owner / revenue for CRM companies (command menu only, no
   // keybindings) — company counterpart of the task property commands above.
   const companyPropertyCommands = [
-    { token: TOKENS.entity.action.stage, field: 'stage', label: 'Set stage' },
-    { token: TOKENS.entity.action.owner, field: 'owner', label: 'Set owner' },
+    {
+      token: TOKENS.entity.action.stage,
+      field: 'stage',
+      label: 'Set stage',
+    },
+    {
+      token: TOKENS.entity.action.owner,
+      field: 'owner',
+      label: 'Set owner',
+    },
     {
       token: TOKENS.entity.action.revenue,
       field: 'revenue',

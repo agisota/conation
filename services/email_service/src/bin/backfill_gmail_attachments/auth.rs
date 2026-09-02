@@ -1,18 +1,21 @@
 use crate::config::Config;
 use anyhow::Context;
+use conation_user_id::user_id::CONATION_USER_ID_PREFIX;
 
 /// Gets a fresh Gmail access token by:
 /// 1. Looking up the user in FusionAuth
 /// 2. Getting their identity provider link with refresh token
 /// 3. Using that refresh token to get a new Gmail access token
-pub async fn get_gmail_access_token(config: &Config, conation_id: &str) -> anyhow::Result<String> {
+pub async fn get_gmail_access_token(config: &Config, macro_id: &str) -> anyhow::Result<String> {
     let client = reqwest::Client::builder().build()?;
 
     // First request: Get user by email
     let mut headers = reqwest::header::HeaderMap::new();
     headers.insert("Authorization", config.fusionauth_api_key.parse()?);
 
-    let user_email = conation_id.strip_prefix("macro|").unwrap();
+    let user_email = macro_id
+        .strip_prefix(CONATION_USER_ID_PREFIX)
+        .context("user id must use the canonical Conation namespace")?;
 
     let url = format!(
         "{}/api/user?email={}",

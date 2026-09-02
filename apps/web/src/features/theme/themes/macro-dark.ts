@@ -38,7 +38,7 @@ const tokens: ThemeV2Tokens = isTouchDevice()
       c4: { l: 0.55, c: 0, h: 59 },
     };
 
-export const macroDarkTheme = defineLegacyDefaultTheme({
-  id: 'Macro Dark',
+export const conationDarkTheme = defineLegacyDefaultTheme({
+  id: 'Conation Dark',
   tokens,
 });

@@ -11,6 +11,7 @@ import {
   useCanAutofocusSplitContent,
   useSplitPanel,
 } from '@components/app/split-layout/layoutUtils';
+import { buildMentionMarkdownString } from '@conation/lexical-core';
 import { CustomScrollbar } from '@core/component/CustomScrollbar';
 import { useEmail, useUserContext } from '@core/context/user';
 import { TOKENS } from '@core/hotkey/tokens';
@@ -21,7 +22,6 @@ import {
   blockHotkeyScopeSignal,
 } from '@core/signal/blockElement';
 import { AnimatedTaskIcon } from '@icon/wide-task';
-import { buildMentionMarkdownString } from '@conation/lexical-core';
 import type { ApiMessage } from '@service-email/generated/schemas';
 import { createCallback } from '@solid-primitives/rootless';
 import { Button } from '@ui';
@@ -531,7 +531,7 @@ function EmailContent(props: EmailViewProps) {
 
   registerScopeSignalHotkey(scopeId, {
     hotkey: 'enter',
-    description: 'Reply to message',
+    description: () => t('blockEmail.hotkeys.replyToMessage'),
     keyDownHandler: () => {
       const focusedId = context.messages.focusedID();
       const target = getHotkeyTarget();
@@ -559,7 +559,7 @@ function EmailContent(props: EmailViewProps) {
 
   registerScopeSignalHotkey(scopeId, {
     hotkey: 'escape',
-    description: 'Collapse message',
+    description: () => t('blockEmail.hotkeys.collapseMessage'),
     keyDownHandler: () => {
       // Skip if focus is in an editable area (compose input handles its own Escape)
       const activeEl = document.activeElement;
@@ -719,7 +719,7 @@ function EmailContent(props: EmailViewProps) {
                 />
                 <SidePanel.Section
                   id="email-ai-actions"
-                  title={t('auto.actions')}
+                  title={t('blockEmail.actions.title')}
                   defaultOpen
                   order={0}
                 >
@@ -805,7 +805,7 @@ function EmailTaskButton(props: { onClick: () => void }) {
 
   return (
     <Button
-      tooltip="Create Task"
+      tooltip={t('blockEmail.actions.createTask')}
       variant="ghost"
       size="sm"
       onMouseEnter={() => setHovering(true)}
@@ -815,7 +815,7 @@ function EmailTaskButton(props: { onClick: () => void }) {
       class="gap-1.5 rounded-full border border-edge-muted px-2 text-ink-extra-muted"
     >
       <AnimatedTaskIcon triggerAnimation={hovering()} />
-      <span class="text-xs font-semibold">{t('auto.task')}</span>
+      <span class="text-xs font-semibold">{t('blockEmail.task.title')}</span>
     </Button>
   );
 }

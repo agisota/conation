@@ -1,5 +1,5 @@
-import { clamp } from '@block-canvas/util/math';
 import { t } from '@app/lib/i18n';
+import { clamp } from '@block-canvas/util/math';
 import { LoadErrors } from '@core/block';
 import { CircleSpinner } from '@core/component/CircleSpinner';
 import { staticFileIdEndpoint } from '@core/constant/servers';
@@ -77,7 +77,9 @@ function ErrorMessage(props: {
             />
             {!tooSmall() ? (
               <div class={textColor}>
-                Unauthorized: <br />{t('auto.invalid_permissions')}</div>
+                {t('canvas.media.unauthorized')} <br />
+                {t('canvas.media.invalidPermissions')}
+              </div>
             ) : null}
           </div>
         </Match>
@@ -91,7 +93,7 @@ function ErrorMessage(props: {
               }}
             />
             {!tooSmall() ? (
-              <div class={textColor}>Error: Missing image</div>
+              <div class={textColor}>{t('canvas.media.missingImage')}</div>
             ) : null}
           </div>
         </Match>
@@ -105,7 +107,7 @@ function ErrorMessage(props: {
               }}
             />
             {!tooSmall() ? (
-              <div class={textColor}>Error: Invalid image</div>
+              <div class={textColor}>{t('canvas.media.invalidImage')}</div>
             ) : null}
           </div>
         </Match>

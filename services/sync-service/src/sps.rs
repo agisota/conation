@@ -1,4 +1,4 @@
-use crate::constants::header_names::MACRO_INTERNAL_AUTH_KEY_HEADER_KEY;
+use crate::constants::header_names::INTERNAL_AUTH_KEY_HEADER;
 use serde_json::json;
 use tracing::{debug, error};
 use worker::{Fetch, Method, Request, RequestInit};
@@ -30,7 +30,7 @@ pub async fn update(document_id: &str, env: &worker::Env) -> worker::Result<()> 
 
     let headers = request.headers_mut()?;
     headers.set("Content-Type", "application/json")?;
-    headers.set(MACRO_INTERNAL_AUTH_KEY_HEADER_KEY, &internal_auth_key)?;
+    headers.set(INTERNAL_AUTH_KEY_HEADER, &internal_auth_key)?;
 
     let mut response = Fetch::Request(request).send().await?;
     if response.status_code() != 200 {

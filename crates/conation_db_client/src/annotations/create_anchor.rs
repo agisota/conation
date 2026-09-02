@@ -380,7 +380,7 @@ mod create_comment_anchor_tests {
     async fn test_create_pdf_placeable_anchor(pool: PgPool) {
         let mut transaction = pool.begin().await.unwrap();
         let document_id = "document-with-comments";
-        let owner = "macro|user@user.com";
+        let owner = "conation|user@user.com";
 
         let anchor_request = PdfPlaceableCommentAnchorRequest {
             uuid: None,
@@ -408,7 +408,7 @@ mod create_comment_anchor_tests {
         .await;
         let anchor = result.unwrap();
 
-        assert_eq!(anchor.owner, "macro|user@user.com");
+        assert_eq!(anchor.owner, "conation|user@user.com");
         assert_eq!(anchor.thread_id, 1001);
         assert_eq!(anchor.page, 1);
         assert_eq!(anchor.original_page, 1);
@@ -430,7 +430,7 @@ mod create_comment_anchor_tests {
     async fn test_create_pdf_highlight_anchor(pool: PgPool) {
         let mut transaction = pool.begin().await.unwrap();
         let document_id = "document-with-comments";
-        let owner = "macro|user@user.com";
+        let owner = "conation|user@user.com";
 
         let highlight_anchor_request = PdfHighlightAnchorRequest {
             uuid: Some(Uuid::new_v4()),
@@ -477,7 +477,7 @@ mod create_comment_anchor_tests {
     async fn test_create_comment_anchor_invalid_thread_id(pool: PgPool) {
         let mut transaction = pool.begin().await.unwrap();
         let document_id = "document-with-comments";
-        let owner = "macro|user@user.com";
+        let owner = "conation|user@user.com";
 
         let anchor_request = AnchorRequest::Pdf(PdfAnchorRequest::FreeComment(
             PdfPlaceableCommentAnchorRequest {
@@ -511,7 +511,7 @@ mod create_comment_anchor_tests {
     async fn test_create_free_comment_anchor_with_deleted_thread_id(pool: PgPool) {
         let mut transaction = pool.begin().await.unwrap();
         let document_id = "document-with-comments";
-        let owner = "macro|user@user.com";
+        let owner = "conation|user@user.com";
         let deleted_thread_id = 1004;
 
         let anchor_request = AnchorRequest::Pdf(PdfAnchorRequest::FreeComment(
@@ -550,7 +550,7 @@ mod create_comment_anchor_tests {
     async fn test_create_highlight_anchor_with_invalid_thread_id(pool: PgPool) {
         let mut transaction = pool.begin().await.unwrap();
         let document_id = "document-with-comments";
-        let owner = "macro|user@user.com";
+        let owner = "conation|user@user.com";
 
         let anchor_request =
             AnchorRequest::Pdf(PdfAnchorRequest::Highlight(PdfHighlightAnchorRequest {
@@ -589,7 +589,7 @@ mod create_comment_anchor_tests {
     async fn test_create_highlight_anchor_with_deleted_thread_id(pool: PgPool) {
         let mut transaction = pool.begin().await.unwrap();
         let document_id = "document-with-comments";
-        let owner = "macro|user@user.com";
+        let owner = "conation|user@user.com";
         let deleted_thread_id = 1004;
 
         let anchor_request =
@@ -630,7 +630,7 @@ mod create_comment_anchor_tests {
     ))]
     async fn test_create_independent_pdf_highlight_anchor(pool: PgPool) {
         let document_id = "document-with-comments";
-        let owner = "macro|user@user.com";
+        let owner = "conation|user@user.com";
 
         let anchor_request = CreateUnthreadedAnchorRequest::Pdf(
             CreateUnthreadedPdfAnchorRequest::Highlight(PdfHighlightAnchorRequest {
@@ -669,7 +669,7 @@ mod create_comment_anchor_tests {
     ))]
     async fn test_attach_highlight_anchor(pool: Pool<Postgres>) {
         let document_id = "document-with-comments";
-        let owner = "macro|user@user.com";
+        let owner = "conation|user@user.com";
 
         let anchor_request = CreateUnthreadedAnchorRequest::Pdf(
             CreateUnthreadedPdfAnchorRequest::Highlight(PdfHighlightAnchorRequest {
@@ -728,7 +728,7 @@ mod create_comment_anchor_tests {
     ))]
     async fn test_cannot_attach_to_existing_anchored_thread(pool: Pool<Postgres>) {
         let document_id = "document-with-comments";
-        let owner = "macro|user@user.com";
+        let owner = "conation|user@user.com";
 
         let anchor_request = CreateUnthreadedAnchorRequest::Pdf(
             CreateUnthreadedPdfAnchorRequest::Highlight(PdfHighlightAnchorRequest {
@@ -775,7 +775,7 @@ mod create_comment_anchor_tests {
     ))]
     async fn test_attach_highlight_anchor_uuid_not_found(pool: Pool<Postgres>) {
         let document_id = "document-with-comments";
-        let owner = "macro|user@user.com";
+        let owner = "conation|user@user.com";
 
         let anchor_request = CreateUnthreadedAnchorRequest::Pdf(
             CreateUnthreadedPdfAnchorRequest::Highlight(PdfHighlightAnchorRequest {

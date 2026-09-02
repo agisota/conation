@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { Popover } from '@kobalte/core/popover';
 import ArrowRightIcon from '@phosphor/arrow-right.svg';
 import CalendarBlankIcon from '@phosphor/calendar-blank.svg';
@@ -9,23 +10,25 @@ import { cn } from '@ui/utils/classname';
 import { createSignal, createUniqueId } from 'solid-js';
 import { formatLocalDate, parseLocalDate } from '../../utils/calendar-date';
 import {
-  dateLabelFormatter,
   EventTimeInput,
+  formatEventDateLabel,
+  formatEventTimeLabel,
   splitLocalDateTime,
-  timeLabelFormatter,
   withLocalDate,
   withLocalTime,
 } from './EventDateTimeInputs';
 
 function formatTime(value: string) {
   const [hour, minute] = value.split(':').map(Number);
-  if (hour === undefined || minute === undefined) return 'Time';
-  return timeLabelFormatter.format(new Date(2000, 0, 1, hour, minute));
+  if (hour === undefined || minute === undefined) {
+    return t('calendar.event.form.dateTime.time');
+  }
+  return formatEventTimeLabel(new Date(2000, 0, 1, hour, minute));
 }
 
 interface EventDateTimeDropdownProps {
   id: string;
-  label: 'Start' | 'End';
+  label: string;
   value: string;
   allDay: boolean;
   onDateChange: (value: string) => void;
@@ -43,8 +46,8 @@ function EventDateTimeDropdown(props: EventDateTimeDropdownProps) {
   const label = () => {
     const date = selectedDate();
     const dateLabel = date
-      ? dateLabelFormatter.format(date)
-      : `${props.label} date`;
+      ? formatEventDateLabel(date)
+      : t('calendar.event.form.dateTime.dateLabel', { field: props.label });
     return props.allDay
       ? dateLabel
       : `${dateLabel} ${formatTime(parts().time)}`;
@@ -61,7 +64,9 @@ function EventDateTimeDropdown(props: EventDateTimeDropdownProps) {
     >
       <Popover.Trigger
         disabled={props.fieldDisabled}
-        aria-label={`Edit event ${props.label.toLowerCase()} date and time`}
+        aria-label={t('calendar.event.form.dateTime.edit', {
+          field: props.label,
+        })}
         aria-invalid={props.invalid || undefined}
         aria-describedby={props.describedBy}
         class={cn(
@@ -104,7 +109,10 @@ function EventDateTimeDropdown(props: EventDateTimeDropdownProps) {
             onCloseAutoFocus={(event) => event.preventDefault()}
           >
             <Popover.Title class="px-3 pt-3 text-xs font-medium text-ink">
-              {props.label} {props.allDay ? 'date' : 'date and time'}
+              {t('calendar.event.form.dateTime.dialogTitle', {
+                field: props.label,
+                allDay: String(props.allDay),
+              })}
             </Popover.Title>
             <div class="p-3">
               <Calendar
@@ -122,7 +130,9 @@ function EventDateTimeDropdown(props: EventDateTimeDropdownProps) {
               <div class={cn(props.allDay && 'opacity-50')}>
                 <EventTimeInput
                   id={props.id}
-                  label={`${props.label} time`}
+                  label={t('calendar.event.form.dateTime.timeLabel', {
+                    field: props.label,
+                  })}
                   value={parts().time}
                   onChange={props.onTimeChange}
                   disabled={props.fieldDisabled || props.allDay}
@@ -159,7 +169,7 @@ export function EventDateTimeRangeFields(props: EventDateTimeRangeFieldsProps) {
       <div class="flex min-w-0 items-center gap-2">
         <EventDateTimeDropdown
           id={`composer-start-time-${fieldId}`}
-          label="Start"
+          label={t('calendar.event.form.dateTime.start')}
           value={props.start}
           allDay={props.allDay}
           onDateChange={(date) =>
@@ -176,7 +186,7 @@ export function EventDateTimeRangeFields(props: EventDateTimeRangeFieldsProps) {
           placement="bottom-start"
         />
         <ArrowRightIcon
-          aria-label="to"
+          aria-label={t('calendar.event.form.dateTime.to')}
           class={cn(
             'size-3.5 shrink-0 text-ink-extra-muted',
             props.invalid && 'text-failure'
@@ -184,7 +194,7 @@ export function EventDateTimeRangeFields(props: EventDateTimeRangeFieldsProps) {
         />
         <EventDateTimeDropdown
           id={`composer-end-time-${fieldId}`}
-          label="End"
+          label={t('calendar.event.form.dateTime.end')}
           value={props.end}
           allDay={props.allDay}
           onDateChange={(date) =>
@@ -206,7 +216,7 @@ export function EventDateTimeRangeFields(props: EventDateTimeRangeFieldsProps) {
         disabled={props.allDayDisabled}
         onChange={props.onAllDayChange}
         size="sm"
-        label="All day"
+        label={t('calendar.event.allDay')}
         labelClass="whitespace-nowrap text-xs text-ink-muted"
         class="shrink-0"
       />

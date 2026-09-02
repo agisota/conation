@@ -1,5 +1,5 @@
-import { LoadingSpinner } from '@core/component/LoadingSpinner';
 import { t } from '@app/lib/i18n';
+import { LoadingSpinner } from '@core/component/LoadingSpinner';
 import { toast } from '@core/component/Toast/Toast';
 import { useChannelsContext } from '@core/context/channels';
 import CaretLeftIcon from '@phosphor/caret-left.svg';
@@ -84,7 +84,7 @@ export function BotDetail(props: { botId: string; onBack: () => void }) {
       name:
         channelsById[channel.channel_id]?.name?.trim() ||
         channel.name?.trim() ||
-        'Unnamed channel',
+        t('channel.bots.channels.unnamed'),
     }));
   });
   const isDirty = createMemo(() => {
@@ -141,14 +141,16 @@ export function BotDetail(props: { botId: string; onBack: () => void }) {
         setChannelIds(actualChannelIds);
         setInitialChannelIds(actualChannelIds);
         toast.failure(
-          `${channelResult.failedCount} channel change${channelResult.failedCount === 1 ? '' : 's'} could not be saved`
+          t('channel.bots.save.channelChangesFailed', {
+            count: channelResult.failedCount,
+          })
         );
       } else {
         setInitialChannelIds([...channelIds()]);
-        toast.success('Bot updated');
+        toast.success(t('channel.bots.save.success'));
       }
     } catch {
-      toast.failure('Failed to update bot');
+      toast.failure(t('channel.bots.save.failed'));
     } finally {
       setSaving(false);
     }
@@ -163,10 +165,10 @@ export function BotDetail(props: { botId: string; onBack: () => void }) {
         ),
       });
       setDeleteOpen(false);
-      toast.success('Bot deleted');
+      toast.success(t('channel.bots.delete.success'));
       props.onBack();
     } catch {
-      toast.failure('Failed to delete bot');
+      toast.failure(t('channel.bots.delete.failed'));
     }
   };
 
@@ -185,7 +187,9 @@ export function BotDetail(props: { botId: string; onBack: () => void }) {
             disabled={pending()}
             onClick={leave}
           >
-            <CaretLeftIcon />{t('auto.back_to_bots')}</Button>
+            <CaretLeftIcon />
+            {t('channel.bots.backToBots')}
+          </Button>
           <Show
             when={initialized() && botQuery.data}
             fallback={
@@ -222,8 +226,8 @@ export function BotDetail(props: { botId: string; onBack: () => void }) {
 
                 <BotFormSection
                   class="mt-3"
-                  title={t('auto.profile')}
-                  description="Update how this bot appears in channels and mentions."
+                  title={t('channel.bots.profile.title')}
+                  description={t('channel.bots.profile.updateDescription')}
                 >
                   <BotProfileFields
                     value={form}
@@ -257,8 +261,8 @@ export function BotDetail(props: { botId: string; onBack: () => void }) {
                 />
 
                 <BotFormSection
-                  title={t('auto.channels')}
-                  description="Choose every channel this bot can post to."
+                  title={t('channel.bots.channels.title')}
+                  description={t('channel.bots.channels.updateDescription')}
                 >
                   <ChannelMultiSelect
                     channelIds={channelIds()}
@@ -266,7 +270,9 @@ export function BotDetail(props: { botId: string; onBack: () => void }) {
                     onChange={setChannelIds}
                     disabled={saving()}
                   />
-                  <p class="mt-2 text-xs text-ink-muted">{t('auto.each_assigned_channel_has_a_se')}</p>
+                  <p class="mt-2 text-xs text-ink-muted">
+                    {t('channel.bots.channels.separateWebhook')}
+                  </p>
                 </BotFormSection>
 
                 <BotWebhooksSection

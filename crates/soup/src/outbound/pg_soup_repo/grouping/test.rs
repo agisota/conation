@@ -2,13 +2,13 @@ use super::*;
 use crate::outbound::pg_soup_repo::expanded::dynamic::{
     GroupedDynamicCursorArgs, expanded_dynamic_cursor_soup_grouped,
 };
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use filter_ast::Expr;
 use item_filters::ast::{
     EntityFilterAst, calendar_event::CalendarEventLiteral, chat::ChatLiteral,
     document::DocumentLiteral,
 };
-use conation_db_migrator::MACRO_DB_MIGRATIONS;
-use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use models_grouping::date_bucket_sql_key;
 use models_grouping::{GroupingConfig, date_bucket_order};
 use models_pagination::{Identify, Query, SimpleSortMethod};
@@ -324,7 +324,7 @@ async fn tagged_calendar_event_participates_in_grouped_property_soup(
     sqlx::query!(
         r#"
         INSERT INTO email_links (
-            id, conation_id, fusionauth_user_id, email_address, provider
+            id, macro_id, fusionauth_user_id, email_address, provider
         )
         VALUES ($1, $2, $2, 'calendar-grouping@example.com', 'GMAIL')
         "#,
@@ -562,7 +562,7 @@ async fn grouped_soup_renders_bind_bearing_calendar_literals(
     sqlx::query!(
         r#"
         INSERT INTO email_links (
-            id, conation_id, fusionauth_user_id, email_address, provider
+            id, macro_id, fusionauth_user_id, email_address, provider
         )
         VALUES ($1, $2, $2, 'calendar-binds-soup@example.com', 'GMAIL')
         "#,
@@ -666,7 +666,7 @@ async fn grouped_soup_filters_calendar_events_by_notification_done(
     sqlx::query!(
         r#"
         INSERT INTO email_links (
-            id, conation_id, fusionauth_user_id, email_address, provider
+            id, macro_id, fusionauth_user_id, email_address, provider
         )
         VALUES ($1, $2, $2, 'calendar-notif-soup@example.com', 'GMAIL')
         "#,

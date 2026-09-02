@@ -29,6 +29,7 @@ chrono = { workspace = true }
 database_env_vars = { path = "../../crates/database_env_vars" }
 email_formatting = { path = "../../crates/email_formatting" }
 hmac = { workspace = true }
+invite_email = { path = "../../crates/invite_email" }
 http-body-util = { workspace = true }
 itertools = { workspace = true }
 last_online_tracker = { path = "../../crates/last_online_tracker" }

@@ -6,8 +6,8 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Json, Response},
 };
-use entity_access::inbound::axum_extractors::DocumentAccessExtractor;
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use entity_access::inbound::axum_extractors::DocumentAccessExtractor;
 use model::response::GenericErrorResponse;
 use model::version::ApiVersionEnum;
 use models_permissions::share_permission::access_level::OwnerAccessLevel;

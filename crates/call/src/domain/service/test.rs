@@ -4,14 +4,14 @@ use std::sync::{Arc, Mutex, OnceLock};
 use std::time::Duration;
 
 use chrono::{DateTime, Utc};
+use conation_event_broker::{EventBrokerError, MacroEvent, MacroEventBroker};
+use conation_user_id::cowlike::CowLike;
+use conation_user_id::user_id::MacroUserIdStr;
 use connection::domain::models::{ConnectionError, InvalidationEvent};
 use connection::domain::ports::ConnectionService;
 use entity_access::domain::models::{EditAccessLevel, EntityAccessReceipt, EntityType};
 use entity_access::domain::ports::NoOpEntityAccessService;
 use entity_mutation::DeleteEntityPermanently;
-use conation_event_broker::{EventBrokerError, MacroEvent, MacroEventBroker};
-use conation_user_id::cowlike::CowLike;
-use conation_user_id::user_id::MacroUserIdStr;
 use notification::domain::models::apple::VoipPushPayload;
 use notification::domain::service::NotificationIngress;
 use serde_json::json;
@@ -2189,33 +2189,33 @@ async fn insert_voice(
 async fn insert_user_mapping(
     pool: &sqlx::Pool<sqlx::Postgres>,
     user_id: &MacroUserIdStr<'_>,
-    conation_user_id: Uuid,
+    macro_user_id: Uuid,
 ) -> anyhow::Result<()> {
     sqlx::query(
         r#"
-        INSERT INTO conation_user (id, username, email, stripe_customer_id)
+        INSERT INTO macro_user (id, username, email, stripe_customer_id)
         VALUES ($1, $2, $3, $4)
         ON CONFLICT (id) DO NOTHING
         "#,
     )
-    .bind(conation_user_id)
+    .bind(macro_user_id)
     .bind(user_id.as_ref())
     .bind(user_id.email_str())
-    .bind(format!("cus_{conation_user_id}"))
+    .bind(format!("cus_{macro_user_id}"))
     .execute(pool)
     .await?;
 
     sqlx::query(
         r#"
-        INSERT INTO "User" (id, email, "stripeCustomerId", conation_user_id)
+        INSERT INTO "User" (id, email, "stripeCustomerId", macro_user_id)
         VALUES ($1, $2, $3, $4)
-        ON CONFLICT (id) DO UPDATE SET conation_user_id = EXCLUDED.conation_user_id
+        ON CONFLICT (id) DO UPDATE SET macro_user_id = EXCLUDED.macro_user_id
         "#,
     )
     .bind(user_id.as_ref())
     .bind(user_id.email_str())
-    .bind(format!("cus_{conation_user_id}"))
-    .bind(conation_user_id)
+    .bind(format!("cus_{macro_user_id}"))
+    .bind(macro_user_id)
     .execute(pool)
     .await?;
 

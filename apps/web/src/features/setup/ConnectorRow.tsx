@@ -1,5 +1,5 @@
-import type { FeaturedMcpServer } from '@core/component/AI/constant/mcpServers';
 import { t } from '@app/lib/i18n';
+import type { FeaturedMcpServer } from '@core/component/AI/constant/mcpServers';
 import ArrowUpRightIcon from '@phosphor/arrow-up-right.svg';
 import SpinnerIcon from '@phosphor/spinner-gap.svg';
 import { cn, Layer } from '@ui';
@@ -28,8 +28,12 @@ export function ConnectorRow(props: {
         type="button"
         title={
           props.authenticated
-            ? `${props.server.server_name} is connected`
-            : props.server.tagline
+            ? t('setup.connectors.connectedTitle', {
+                connector: props.server.server_name,
+              })
+            : t('setup.connectors.connectTitle', {
+                connector: props.server.server_name,
+              })
         }
         onClick={() => void connect()}
         class={cn(
@@ -47,18 +51,22 @@ export function ConnectorRow(props: {
         <span class="ml-auto shrink-0">
           <Switch
             fallback={
-              <span class="flex items-center gap-1 text-xs font-medium text-ink-muted group-hover:text-ink">{t('auto.connect')}<ArrowUpRightIcon class="size-3 shrink-0" />
+              <span class="flex items-center gap-1 text-xs font-medium text-ink-muted group-hover:text-ink">
+                {t('setup.connectors.connect')}
+                <ArrowUpRightIcon class="size-3 shrink-0" />
               </span>
             }
           >
             <Match when={props.authenticated}>
               <span class="flex items-center gap-1.5 text-xs text-ink-muted">
-                <StatusDot state="connected" />{t('auto.connected')}</span>
+                <StatusDot state="connected" />
+                {t('setup.connectors.connected')}
+              </span>
             </Match>
             <Match when={busy()}>
               <span class="flex items-center gap-1.5 text-xs text-ink-muted">
                 <SpinnerIcon class="size-3 shrink-0 animate-spin" />
-                Connecting…
+                {t('setup.connectors.connecting')}
               </span>
             </Match>
           </Switch>

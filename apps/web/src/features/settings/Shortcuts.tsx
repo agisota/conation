@@ -1,5 +1,5 @@
-import { IS_MAC } from '@core/constant/isMac';
 import { t } from '@app/lib/i18n';
+import { IS_MAC } from '@core/constant/isMac';
 import { cn, Hotkey, ToggleSwitch } from '@ui';
 import {
   enableScreencastHotkeys,
@@ -1063,10 +1063,12 @@ function ShortcutSectionComponent(props: { section: ShortcutSection }) {
 export function Shortcuts() {
   return (
     <SettingsPage
-      title={t('auto.keyboard_shortcuts')}
+      title={t('settings.shortcuts.title')}
       actions={
         <div class="flex items-center gap-2">
-          <span class="text-sm text-ink-muted">{t('auto.screencast_keys')}</span>
+          <span class="text-sm text-ink-muted">
+            {t('settings.shortcuts.screencastKeys')}
+          </span>
           <ToggleSwitch
             size="md"
             onChange={setEnableScreencastHotkeys}

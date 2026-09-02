@@ -77,7 +77,7 @@ mod tests {
     ))]
     async fn test_delete_user_documents(pool: Pool<Postgres>) -> anyhow::Result<()> {
         let mut transaction = pool.begin().await?;
-        let mut result = delete_user_documents(&mut transaction, "macro|user@user.com").await?;
+        let mut result = delete_user_documents(&mut transaction, "conation|user@user.com").await?;
 
         result.sort();
 

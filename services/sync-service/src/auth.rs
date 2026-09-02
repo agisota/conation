@@ -79,10 +79,7 @@ pub fn decode_jwt(
     let token = match token_from {
         TokenFrom::Headers => {
             // NB: rewrite with if/let chain on edition 2024
-            let is_admin = match req
-                .headers()
-                .get(header_names::MACRO_INTERNAL_AUTH_KEY_HEADER_KEY)?
-            {
+            let is_admin = match req.headers().get(header_names::INTERNAL_AUTH_KEY_HEADER)? {
                 // sholud we warn when false?
                 Some(internal_key) => {
                     let res = internal_key == secrets.internal_api_secret;

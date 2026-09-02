@@ -8,6 +8,7 @@ import {
   resolveMarkEntitiesDoneVariables,
   restoreSoupFocus,
 } from '@app/features/next-soup/utils';
+import { t } from '@app/lib/i18n';
 import { useSplitPanel } from '@components/app/split-layout/layoutUtils';
 import { toast } from '@core/component/Toast/Toast';
 import { ENABLE_GRAPHQL_SOUP } from '@core/constant/featureFlags';
@@ -136,7 +137,7 @@ export const makeMarkDoneAction = (options: MakeMarkDoneOptions) => {
     },
     onError: (_err, _variables, context) => {
       context?.rollback();
-      toast.failure('Failed to mark as done');
+      toast.failure(t('soup.toast.markDoneFailed'));
     },
     undoFn: async (variables, context) => {
       context?.applyUndone();
@@ -164,13 +165,12 @@ export const makeMarkDoneAction = (options: MakeMarkDoneOptions) => {
         throw err;
       }
     },
-    undoLabel: 'Mark Done',
+    undoLabel: t('soup.actions.markDone'),
     onPushed: (handle, variables) => {
       variables.onUndoHandle?.(handle);
       const firstEntityId = variables.entities[0]?.id;
       const count = variables.entities.length;
-      const message =
-        count > 1 ? `Marked ${count} items as done` : 'Marked as done';
+      const message = t('soup.toast.markedDone', { count });
       let toastId: number | undefined;
 
       const showToast = () => {
@@ -178,11 +178,11 @@ export const makeMarkDoneAction = (options: MakeMarkDoneOptions) => {
         toastId = toast.success(message, {
           actions: [
             {
-              label: 'Undo',
+              label: t('soup.actions.undo'),
               icon: ArrowCounterClockwise,
               onClick: () => {
                 handle.undo({
-                  onError: () => toast.failure('Failed to undo'),
+                  onError: () => toast.failure(t('soup.toast.undoFailed')),
                 });
               },
             },

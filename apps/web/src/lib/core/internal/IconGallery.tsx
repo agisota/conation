@@ -1,5 +1,4 @@
 import { SplitHeaderLeft } from '@components/app/split-layout/components/SplitHeader';
-import { t } from '@app/lib/i18n';
 import { StaticSplitLabel } from '@components/app/split-layout/components/SplitLabel';
 import { type Component, createSignal, For, Show } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
@@ -245,7 +244,7 @@ export default function IconGallery() {
             </div>
             {/* Custom color option */}
             <div class="mt-1.5 flex items-center gap-1.5">
-              <span class="text-xxs text-ink-muted">{t('auto.custom')}</span>
+              <span class="text-xxs text-ink-muted">Custom</span>
               <label
                 class="relative size-2.5 rounded-[1px] transition-transform hover:scale-125"
                 classList={{
@@ -293,13 +292,15 @@ export default function IconGallery() {
             <button
               onClick={triggerAllAnimations}
               class="border border-ink bg-transparent px-2 py-1 text-xxs text-ink hover:opacity-70"
-            >{t('auto.trigger_all_animations')}</button>
+            >
+              Trigger All Animations
+            </button>
           </div>
         </div>
 
         {/* Icons with animated versions */}
         <h2 class="mb-3 flex items-center gap-3 text-xs font-semibold text-ink">
-          <span>{t('auto.icons_with_animations')}</span>
+          <span>Icons with animations</span>
           <span class="h-px flex-1 bg-edge-muted" />
         </h2>
         <div class="mb-6 flex flex-wrap gap-3">
@@ -349,7 +350,7 @@ export default function IconGallery() {
                           [pair.name]: false,
                         }))
                       }
-                      title={t('auto.hover_to_animate')}
+                      title="Hover to animate"
                     >
                       <pair.animated
                         triggerAnimation={animationTriggers()[pair.name]}
@@ -360,7 +361,7 @@ export default function IconGallery() {
                       <button
                         onClick={() => triggerAnimation(pair.name)}
                         class="flex size-2.5 items-center justify-center rounded-full border border-current text-ink-muted transition-colors hover:bg-ink/10 hover:text-ink"
-                        title={t('auto.play_animation')}
+                        title="Play animation"
                       >
                         <svg
                           width="4"
@@ -381,7 +382,7 @@ export default function IconGallery() {
 
         {/* Static-only icons */}
         <h2 class="mb-3 flex items-center gap-3 text-xs font-semibold text-ink">
-          <span>{t('auto.static_only_icons')}</span>
+          <span>Static only icons</span>
           <span class="h-px flex-1 bg-edge-muted" />
         </h2>
         <div class="flex flex-wrap gap-3">

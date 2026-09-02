@@ -12,7 +12,7 @@ use tracing::Instrument as _;
 
 use super::client::DaytonaClient;
 use super::errors::DaytonaError;
-use super::types::{AnthropicApiKey, DaytonaSettings, Env, Labels, PortPreview, Snapshot};
+use super::types::{DaytonaSettings, Env, Labels, PortPreview, RoxApiKey, Snapshot};
 use crate::domain::error::{HarnessError, Result};
 use crate::domain::model::SpawnContainer;
 use crate::domain::ports::ContainerManager;
@@ -85,7 +85,7 @@ impl DaytonaContainerManagerState {
 pub struct DaytonaContainerManager {
     client: DaytonaClient,
     snapshot: Snapshot,
-    anthropic_api_key: AnthropicApiKey,
+    rox_api_key: RoxApiKey,
     managed: Arc<DaytonaContainerManagerState>,
 }
 
@@ -97,7 +97,7 @@ impl DaytonaContainerManager {
             api_url,
             api_key,
             snapshot,
-            anthropic_api_key,
+            rox_api_key,
         } = settings;
         let client = DaytonaClient::new(api_url, api_key);
         let managed = Arc::new(DaytonaContainerManagerState::new());
@@ -107,7 +107,7 @@ impl DaytonaContainerManager {
         Self {
             client,
             snapshot,
-            anthropic_api_key,
+            rox_api_key,
             managed,
         }
     }
@@ -361,14 +361,13 @@ impl ContainerManager for DaytonaContainerManager {
             egress,
             ..
         } = command;
-        // `ANTHROPIC_API_KEY` is what activates opencode's `anthropic`
-        // provider — with `enabled_providers` pinned in
-        // `container/opencode.json`, it is the sandbox's only model source.
+        // `ROX_API_KEY` activates OpenCode's custom `rox` provider. The image
+        // pins that provider so no unmanaged/free model source is selected.
         // Nothing else goes in: the repository and its credential now reach
         // the sandbox through the egress proxy.
         let mut env = HashMap::from([(
-            "ANTHROPIC_API_KEY".to_owned(),
-            self.anthropic_api_key.expose().to_owned(),
+            "ROX_API_KEY".to_owned(),
+            self.rox_api_key.expose().to_owned(),
         )]);
         env.extend(egress.environment());
         let env = Env::from(env);

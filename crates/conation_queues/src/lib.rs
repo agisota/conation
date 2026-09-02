@@ -207,8 +207,8 @@ impl<'a> fmt::Display for Queue<'a> {
 /// let queue = ExampleQueue::new();
 /// assert_eq!(queue.override_env_var_name(), "OVERRIDE_EXAMPLE_QUEUE");
 /// ```
-#[conation_export]
-conation_rules! queue {
+#[macro_export]
+macro_rules! queue {
     (
         $(#[$attr:meta])*
         $v:vis struct $n:ident {

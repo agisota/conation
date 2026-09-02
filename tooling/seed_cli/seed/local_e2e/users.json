@@ -2,7 +2,7 @@
   {
     "macro_user_id": "00000000-0000-0000-0003-000000000001",
     "fusion_user_id": "00000000-0000-0000-0003-000000000001",
-    "user_id": "macro|e2e@macro.local",
+    "user_id": "conation|e2e@macro.local",
     "username": "e2e",
     "email": "e2e@macro.local",
     "stripe_customer_id": "stripe-local-e2e",
@@ -17,7 +17,7 @@
   {
     "macro_user_id": "00000000-0000-0000-0003-000000000002",
     "fusion_user_id": "00000000-0000-0000-0003-000000000002",
-    "user_id": "macro|bob@example.com",
+    "user_id": "conation|bob@example.com",
     "username": "bob",
     "email": "bob@example.com",
     "stripe_customer_id": "stripe-local-bob",
@@ -32,7 +32,7 @@
   {
     "macro_user_id": "00000000-0000-0000-0003-000000000003",
     "fusion_user_id": "00000000-0000-0000-0003-000000000003",
-    "user_id": "macro|charlie@example.com",
+    "user_id": "conation|charlie@example.com",
     "username": "charlie",
     "email": "charlie@example.com",
     "stripe_customer_id": "stripe-local-charlie",
@@ -47,7 +47,7 @@
   {
     "macro_user_id": "00000000-0000-0000-0003-000000000004",
     "fusion_user_id": "00000000-0000-0000-0003-000000000004",
-    "user_id": "macro|dana@example.com",
+    "user_id": "conation|dana@example.com",
     "username": "dana",
     "email": "dana@example.com",
     "stripe_customer_id": "stripe-local-dana",
@@ -62,7 +62,7 @@
   {
     "macro_user_id": "00000000-0000-0000-0003-000000000005",
     "fusion_user_id": "00000000-0000-0000-0003-000000000005",
-    "user_id": "macro|eve@example.com",
+    "user_id": "conation|eve@example.com",
     "username": "eve",
     "email": "eve@example.com",
     "stripe_customer_id": "stripe-local-eve",

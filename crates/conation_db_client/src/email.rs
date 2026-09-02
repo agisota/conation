@@ -4,14 +4,14 @@ use conation_user_id::user_id::MacroUserIdStr;
 #[tracing::instrument(skip(db))]
 pub async fn check_user_email_link(
     db: &sqlx::Pool<sqlx::Postgres>,
-    conation_user_id: &MacroUserIdStr<'static>,
+    macro_user_id: &MacroUserIdStr<'static>,
 ) -> anyhow::Result<bool> {
     let link_id = sqlx::query!(
         r#"
     SELECT id FROM email_links
-    WHERE conation_id = $1
+    WHERE macro_id = $1
     "#,
-        conation_user_id.as_ref()
+        macro_user_id.as_ref()
     )
     .map(|row| row.id)
     .fetch_optional(db)

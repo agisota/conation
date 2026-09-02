@@ -262,13 +262,27 @@ pub const RUST_SERVICES: &[RustService] = &[
         compose_name: "mcp_service",
         cargo_bin: "mcp_service",
         package: "mcp_service",
-        // No host port and no proxy route: its one local client is the agent
-        // egress proxy, which dials it across the compose network as
-        // `mcp-service`. (Interactive MCP clients like claude.ai only exist
-        // against deployed environments.)
+        // No direct host port. The generated proxy exposes its protocol-shaped
+        // ingress (`/mcp` plus root OAuth endpoints) as a bespoke non-stripping
+        // route; agent egress can still dial the exact `mcp-service:8080`
+        // internal authority on the compose network.
         host_port: None,
         path_prefix: None,
         is_websocket: false,
+        modes: &[Mode::Local],
+        opt_in: false,
+        no_default_features: false,
+    },
+    RustService {
+        compose_name: "scheduled_action_service",
+        cargo_bin: "scheduled_action_service",
+        package: "scheduled_action",
+        host_port: Some(Port::ScheduledAction),
+        path_prefix: Some("/scheduled-action"),
+        is_websocket: false,
+        // This is part of the complete self-contained product stack. Dev mode
+        // continues to use its deployed service until the standalone profile
+        // replaces every managed endpoint together.
         modes: &[Mode::Local],
         opt_in: false,
         no_default_features: false,

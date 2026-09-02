@@ -1,9 +1,4 @@
 import {
-  $createTableNode,
-  $createTableRowNode,
-  $isTableNode,
-} from '@lexical/table';
-import {
   $createImageNode,
   $isImageNode,
 } from '@conation/lexical-core/nodes/ImageNode';
@@ -11,6 +6,11 @@ import {
   $createVideoNode,
   $isVideoNode,
 } from '@conation/lexical-core/nodes/VideoNode';
+import {
+  $createTableNode,
+  $createTableRowNode,
+  $isTableNode,
+} from '@lexical/table';
 import type { LexicalEditor } from 'lexical';
 import { describe, expect, it } from 'vitest';
 import {

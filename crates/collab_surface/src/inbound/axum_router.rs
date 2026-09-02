@@ -9,14 +9,14 @@ use axum::{
     response::IntoResponse,
     routing::{delete, get, post, put},
 };
-use entity_access::domain::{
-    models::{AccessError, AnyEntityPermission, EntityAccessReceipt},
-    ports::EntityAccessService,
-};
 use conation_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
 };
 use conation_user_id::user_id::MacroUserIdStr;
+use entity_access::domain::{
+    models::{AccessError, AnyEntityPermission, EntityAccessReceipt},
+    ports::EntityAccessService,
+};
 use model_entity::{Entity, EntityType};
 use model_error_response::ErrorResponse;
 use serde::{Deserialize, Serialize};
@@ -224,7 +224,7 @@ fn caller_identity<Auth: MacroAuthorizationService>(
     user: &MacroAuthorizationExtractor<Auth, UserOrInternal>,
 ) -> (&MacroUserIdStr<'static>, Option<i64>) {
     (
-        &user.authorization.user.conation_user_id,
+        &user.authorization.user.macro_user_id,
         // Organization channels grant access by matching org, so the org must
         // be carried through or a member of one reads as a non-participant.
         user.authorization

@@ -17,6 +17,7 @@ use crate::domain::{
 use ai_toolset::{AsyncTool, RequestContext, ServiceContext};
 use bot_id::BotId;
 use chrono::Utc;
+use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
 use entity_access::domain::{
     models::{
         AccessError, AccessLevel, BotAccessScope, CallChannelInfo, EntityAccessReceipt,
@@ -25,14 +26,13 @@ use entity_access::domain::{
     },
     ports::{EntityAccessService, NoOpEntityAccessService},
 };
-use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
 use std::sync::{
     Arc, Mutex,
     atomic::{AtomicUsize, Ordering},
 };
 use uuid::Uuid;
 
-const TEST_USER_ID: &str = "macro|bot-manager@example.com";
+const TEST_USER_ID: &str = "conation|bot-manager@example.com";
 
 fn user_id() -> MacroUserIdStr<'static> {
     MacroUserIdStr::try_from(TEST_USER_ID.to_string()).expect("valid macro user id")
@@ -346,7 +346,7 @@ fn bot_summary_preserves_team_scope_and_profile() {
         handle: "build-bot".to_string(),
         description: Some("Builds things".to_string()),
         avatar_url: Some("https://static.example/bot.png".to_string()),
-        created_by: Some("macro|owner@example.com".to_string()),
+        created_by: Some("conation|owner@example.com".to_string()),
         created_at: now,
         updated_at: now,
         deleted_at: None,
@@ -497,7 +497,7 @@ async fn create_bot_for_channel_returns_webhook_and_credential_proposal() {
         setup.webhook.webhook_url,
         format!("https://storage.example.com/channels/{channel_id}/webhook")
     );
-    assert_eq!(setup.credential_header, "x-macro-bot-token");
+    assert_eq!(setup.credential_header, "x-conation-bot-token");
     assert_eq!(access_calls.load(Ordering::SeqCst), 1);
     assert!(created.lock().expect("create lock").is_some());
     assert!(added.lock().expect("add lock").is_some());
@@ -636,8 +636,8 @@ async fn webhook_response_uses_preferred_bot_authentication_headers() {
     .await
     .expect("manageable bot channels should produce webhook metadata");
 
-    assert_eq!(response.credential_header, "x-macro-bot-token");
-    assert_eq!(response.credential_scope_header, "x-macro-bot-scope");
+    assert_eq!(response.credential_header, "x-conation-bot-token");
+    assert_eq!(response.credential_scope_header, "x-conation-bot-scope");
     assert_eq!(response.credential_scope, "user");
     assert_eq!(
         response.webhooks[0].webhook_url,

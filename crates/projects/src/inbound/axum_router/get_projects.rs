@@ -1,8 +1,10 @@
 //! Handlers for listing projects.
 
 use axum::{Json, extract::State};
+use conation_authorization::{
+    MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal,
+};
 use entity_access::domain::ports::EntityAccessService;
-use conation_authorization::{MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal};
 use model::{project::response::GetProjectsResponse, response::TypedSuccessResponse};
 
 use super::ProjectRouterState;
@@ -24,7 +26,7 @@ pub type PendingProjectsResponse = TypedSuccessResponse<Vec<model::project::Pend
 )]
 #[tracing::instrument(
     skip(state, user),
-    fields(user_id = ?user.authorization.user.conation_user_id),
+    fields(user_id = ?user.authorization.user.macro_user_id),
     err
 )]
 pub async fn get_projects_handler<T, Svc, Auth>(
@@ -38,7 +40,7 @@ where
 {
     let projects = state
         .service
-        .list_projects(user.authorization.user.conation_user_id.clone())
+        .list_projects(user.authorization.user.macro_user_id.clone())
         .await?;
     Ok(Json(GetProjectsResponse {
         error: false,
@@ -59,7 +61,7 @@ where
 )]
 #[tracing::instrument(
     skip(state, user),
-    fields(user_id = ?user.authorization.user.conation_user_id),
+    fields(user_id = ?user.authorization.user.macro_user_id),
     err
 )]
 pub async fn get_pending_projects_handler<T, Svc, Auth>(
@@ -73,7 +75,7 @@ where
 {
     let projects = state
         .service
-        .list_pending_projects(user.authorization.user.conation_user_id.clone())
+        .list_pending_projects(user.authorization.user.macro_user_id.clone())
         .await?;
     Ok(Json(PendingProjectsResponse {
         error: false,

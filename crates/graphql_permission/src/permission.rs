@@ -1,12 +1,12 @@
 use std::{collections::HashMap, sync::Arc};
 
 use async_graphql::{Context, Enum, SimpleObject, Union, dataloader::DataLoader};
+use conation_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::{
     models::{AccessError, AccessLevel, EntityPermission, ParticipantRole, TeamRole},
     ports::EntityAccessService,
 };
 use futures::{StreamExt, stream};
-use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::{Entity, OwnedEntity};
 use rootcause::markers::{Cloneable, Dynamic};
 

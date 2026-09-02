@@ -6,9 +6,9 @@ use axum::{
     http::{Response, StatusCode},
     response::IntoResponse,
 };
+use conation_authorization::MacroAuthorizationService;
 use entity_access::domain::ports::EntityAccessService;
 use entity_access::inbound::axum_extractors::DocumentAccessExtractor;
-use conation_authorization::MacroAuthorizationService;
 use models_permissions::share_permission::access_level::ViewAccessLevel;
 
 use super::{DocumentRouterState, Params};

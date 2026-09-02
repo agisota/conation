@@ -1,9 +1,11 @@
 //! Handler for `POST /documents/create_markdown`.
 
 use axum::{Json, extract::State};
+use conation_authorization::{
+    MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal,
+};
 use entity_access::domain::ports::EntityAccessService;
 use entity_access::inbound::axum_extractors::ProjectBodyAccessLevelExtractorV2;
-use conation_authorization::{MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal};
 use models_permissions::share_permission::access_level::{AccessLevel, EditAccessLevel};
 
 use super::DocumentRouterState;
@@ -29,7 +31,7 @@ use crate::domain::ports::create::DocumentCreationService;
         (status = 500, body = model_error_response::ErrorResponse),
     )
 )]
-#[tracing::instrument(skip(state, user, project), fields(user_id=?user.authorization.user.conation_user_id))]
+#[tracing::instrument(skip(state, user, project), fields(user_id=?user.authorization.user.macro_user_id))]
 pub async fn create_markdown_handler<
     T: DocumentService + DocumentCreationService,
     Svc: EntityAccessService,
@@ -57,7 +59,7 @@ pub async fn create_markdown_handler<
     let created = state
         .creator
         .create_markdown_text(
-            user.authorization.user.conation_user_id.clone(),
+            user.authorization.user.macro_user_id.clone(),
             NewMarkdownTextDocument {
                 metadata: metadata.build(),
                 markdown: req.markdown.unwrap_or_default(),
@@ -75,7 +77,7 @@ pub async fn create_markdown_handler<
         .clone();
 
     let token = encode_permission_token(
-        Some(user.authorization.user.conation_user_id.as_ref().to_string()),
+        Some(user.authorization.user.macro_user_id.as_ref().to_string()),
         document_id.clone(),
         AccessLevel::Edit,
         &state.document_permission_jwt_secret,

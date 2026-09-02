@@ -10,6 +10,6 @@ export type TempRedirectLocation = {
 export const [tempRedirectLocation, setTempRedirectLocation] = makePersisted(
   createSignal<TempRedirectLocation>(),
   {
-    name: 'macro-temp-redirect-location',
+    name: 'conation-temp-redirect-location',
   }
 );
