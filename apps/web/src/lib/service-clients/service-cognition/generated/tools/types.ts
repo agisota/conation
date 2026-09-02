@@ -47,7 +47,7 @@ export type ToolPropertyTargetEntityType =
 export type BotOwnerSummary =
   | {
       /**
-       * Macro user id of the owner.
+       * Conation user id of the owner.
        */
       user_id: string;
       type: 'user';
@@ -2570,7 +2570,7 @@ export interface GetCompanyResponse {
    */
   stage?: ToolCompanyStage | null;
   /**
-   * Macro user id of the company's owner, if set.
+   * Conation user id of the company's owner, if set.
    */
   ownerUserId?: string | null;
   /**
@@ -3160,7 +3160,7 @@ export interface CompanyListItem {
    */
   stage?: ToolCompanyStage | null;
   /**
-   * Macro user id of the company's owner, if set.
+   * Conation user id of the company's owner, if set.
    */
   ownerUserId?: string | null;
   /**
@@ -3411,7 +3411,7 @@ export interface ListNotifications {
    */
   includeTypes?: NotificationCategory[] | null;
   /**
-   * Filter to notifications for specific entities. Pair each id with its canonical entityType to avoid ambiguity. Example: [{"entityType":"email_thread","id":"..."}] returns notifications for one email thread.
+   * Filter to notifications for specific entities. Pair each id with its canonical entityType to avoid ambiguity. Example: `[{"entityType":"email_thread","id":"..."}]` returns notifications for one email thread.
    */
   entities?: NotificationEntityFilter[] | null;
 }
@@ -3636,7 +3636,7 @@ export interface ListTeamMembersResponse {
  */
 export interface ToolTeamMember {
   /**
-   * The user's Macro user id.
+   * The user's Conation user id.
    */
   userId: string;
   /**
@@ -4879,7 +4879,7 @@ export interface SearchToolsResponse {
   additional_matches: ToolMatch[];
 }
 /**
- * Learn what Conation is and how it works. Call this whenever the user asks an open-ended question about Conation itself — what it is, what it's for, what it can do, or how to do something in Conation — instead of answering from memory (your training data may be stale). Takes no arguments. Returns an overview of Conation and a map of links into the official docs at docs.macro.com; every docs page is readable as Markdown (append `.md` to its URL), so follow up with WebFetch on the relevant page for details and cite it.
+ * Learn what Conation is and how it works. Call this whenever the user asks an open-ended question about Conation itself — what it is, what it's for, what it can do, or how to do something in Conation — instead of answering from memory (your training data may be stale). Takes no arguments. Returns an overview of Conation and a map of links into the official docs at docs.conation.dev; every docs page is readable as Markdown (append `.md` to its URL), so follow up with WebFetch on the relevant page for details and cite it.
  */
 export type SelfKnowledge = {};
 /**
@@ -4887,7 +4887,7 @@ export type SelfKnowledge = {};
  */
 export interface SelfKnowledgeResponse {
   /**
-   * An overview of Conation and a routing map into the docs at docs.macro.com.
+   * An overview of Conation and a routing map into the docs at docs.conation.dev.
    */
   about: string;
 }
@@ -4896,7 +4896,7 @@ export interface SelfKnowledgeResponse {
  */
 export interface SendChannelMessage {
   /**
-   * Message content in macro markdown format. This uses the same syntax as markdown documents
+   * Message content in Conation Markdown format. This uses the same syntax as Markdown documents.
    */
   content: string;
   /**
