@@ -55,10 +55,8 @@ const CURSOR_API_KEY_READER_ROLE_ARNS = [
 const FUSIONAUTH_CLIENT_SECRET_KEY = config.require(
   `fusionauth_client_secret_key`
 );
-const STRIPE_SECRET_KEY = config.require(`stripe_secret_key`);
 
-// Using the 5 secret names
-// We need to grab their arns so we can create a policy to allow them to be retrieved by service
+// Resolve the application secrets to ARNs for the service's retrieval policy.
 const jwtSecretKeyArn: pulumi.Output<string> = aws.secretsmanager
   .getSecretVersionOutput({ secretId: JWT_SECRET_KEY })
   .apply((secret) => secret.arn);
@@ -78,10 +76,6 @@ const fusionauthClientSecretKeyArn: pulumi.Output<string> = aws.secretsmanager
   .getSecretVersionOutput({ secretId: FUSIONAUTH_CLIENT_SECRET_KEY })
   .apply((secret) => secret.arn);
 
-const stripeSecretKeyArn: pulumi.Output<string> = aws.secretsmanager
-  .getSecretVersionOutput({ secretId: STRIPE_SECRET_KEY })
-  .apply((secret) => secret.arn);
-
 const GOOGLE_CLIENT_SECRET_KEY = config.require(`google_client_secret_key`);
 const googleClientSecretKeyArn: pulumi.Output<string> = aws.secretsmanager
   .getSecretVersionOutput({ secretId: GOOGLE_CLIENT_SECRET_KEY })
@@ -95,11 +89,6 @@ const conationApiTokenSecretPrivateKeyArn: pulumi.Output<string> =
     .getSecretVersionOutput({ secretId: CONATION_API_TOKEN_PRIVATE_SECRET_KEY })
     .apply((secret) => secret.arn);
 
-const stripeWebhookSecretKey = config.require(`stripe_webhook_secret_key`);
-const stripeWebhookSecretKeyArn: pulumi.Output<string> = aws.secretsmanager
-  .getSecretVersionOutput({ secretId: stripeWebhookSecretKey })
-  .apply((secret) => secret.arn);
-
 const CONATION_API_TOKENS = getConationApiToken();
 
 const secretKeyArns = [
@@ -107,17 +96,23 @@ const secretKeyArns = [
   pulumi.interpolate`${fusionauthApiKeySecretKeyArn}`,
   pulumi.interpolate`${authenticationServiceInternalApiKeyArn}`,
   pulumi.interpolate`${fusionauthClientSecretKeyArn}`,
-  pulumi.interpolate`${stripeSecretKeyArn}`,
   pulumi.interpolate`${googleClientSecretKeyArn}`,
   pulumi.interpolate`${CONATION_API_TOKENS.conationApiTokenPublicKeyArn}`,
   pulumi.interpolate`${conationApiTokenSecretPrivateKeyArn}`,
-  pulumi.interpolate`${stripeWebhookSecretKeyArn}`,
 ];
 
 const vpc = get_coparse_api_vpc();
 
+// Authentication runs in the ECS cluster exported by FusionAuth. Resolve that
+// fully qualified stack reference from per-environment configuration so a
+// standalone Conation deployment selects its own Pulumi state explicitly.
+const fusionauthStackRef = config.require('fusionauth_stack_ref').trim();
+if (!fusionauthStackRef) {
+  throw new Error('fusionauth_stack_ref must name the FusionAuth Pulumi stack');
+}
+
 const fusionAuthStack = new pulumi.StackReference('fusion-auth-stack', {
-  name: `macro-inc/fusion-auth/${stack}`,
+  name: fusionauthStackRef,
 });
 
 const contactsServiceStack = new pulumi.StackReference(

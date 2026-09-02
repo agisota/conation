@@ -52,8 +52,19 @@ const aiTools =
 
 // ── Stack references ─────────────────────────────────────────────────────────
 
+// The ECS cluster is owned by the document-storage stack. Keep the fully
+// qualified reference in per-stack Pulumi configuration: a standalone
+// Conation deployment must explicitly select its own state rather than falling
+// back to an upstream organization.
+const cloudStorageStackRef = config.require('cloud_storage_stack_ref').trim();
+if (!cloudStorageStackRef) {
+  throw new Error(
+    'cloud_storage_stack_ref must name the document-storage Pulumi stack'
+  );
+}
+
 const cloudStorageStack = new pulumi.StackReference('cloud-storage-stack', {
-  name: `macro-inc/document-storage/${stack}`,
+  name: cloudStorageStackRef,
 });
 
 const cloudStorageClusterArn = cloudStorageStack
