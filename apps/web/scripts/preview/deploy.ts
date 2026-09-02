@@ -14,9 +14,13 @@ import { execFileSync, execSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  buildPreviewAppUrl,
+  resolvePreviewDeploymentConfig,
+  type PreviewDeploymentConfig,
+} from './config';
 
 const SCRIPT_DIRECTORY = fileURLToPath(new URL('.', import.meta.url));
-const PREVIEW_BUCKET = 'macro-preview-assets-dev';
 const DIST_PATH = resolve(SCRIPT_DIRECTORY, '../../dist');
 const CACHE_WASM_UPLOAD_SCRIPT = resolve(
   SCRIPT_DIRECTORY,
@@ -29,13 +33,14 @@ const CACHE_WASM_PRUNE_SCRIPT = resolve(
 
 export function previewSyncArguments(
   previewId: string,
+  bucket: string,
   distPath = DIST_PATH
 ): string[] {
   return [
     's3',
     'sync',
     `${distPath}/`,
-    `s3://${PREVIEW_BUCKET}/${previewId}/app/`,
+    `s3://${bucket}/${previewId}/app/`,
     '--delete',
     '--cache-control',
     'public, max-age=31536000, immutable',
@@ -74,22 +79,15 @@ function parseArgs(): { previewId: string; skipBuild: boolean } {
       .slice(0, 30);
 
     const nanoid = Math.random().toString(36).slice(2, 8);
-    previewId = `${branch}-${nanoid}`;
+    previewId = `${branch || 'preview'}-${nanoid}`;
     console.log(`Generated preview ID: ${previewId}`);
   }
 
   return { previewId, skipBuild };
 }
 
-function validateBucket(bucket: string): void {
-  if (bucket !== 'macro-preview-assets-dev') {
-    console.error('ERROR: Can only deploy to macro-preview-assets-dev');
-    process.exit(1);
-  }
-}
-
 function build(): void {
-  console.log('\nBuilding app (same as dev.macro.com)...\n');
+  console.log('\nBuilding Conation preview bundle...\n');
   execSync('bun run build:dev', {
     cwd: resolve(import.meta.dir, '../..'),
     stdio: 'inherit',
@@ -103,14 +101,15 @@ type PreviewCommandRunner = (
 
 export function publishPreviewAssets(
   previewId: string,
+  bucket: string,
   distPath = DIST_PATH,
   run: PreviewCommandRunner = (executable, argumentsList) => {
     execFileSync(executable, [...argumentsList], { stdio: 'inherit' });
   }
 ): void {
-  const s3Prefix = `s3://${PREVIEW_BUCKET}/${previewId}/app`;
+  const s3Prefix = `s3://${bucket}/${previewId}/app`;
   run('bash', [CACHE_WASM_UPLOAD_SCRIPT, distPath, s3Prefix]);
-  run('aws', previewSyncArguments(previewId, distPath));
+  run('aws', previewSyncArguments(previewId, bucket, distPath));
   run('aws', [
     's3',
     'cp',
@@ -122,9 +121,7 @@ export function publishPreviewAssets(
   run('bash', [CACHE_WASM_PRUNE_SCRIPT, distPath, s3Prefix]);
 }
 
-function deploy(previewId: string): void {
-  validateBucket(PREVIEW_BUCKET);
-
+function deploy(previewId: string, config: PreviewDeploymentConfig): void {
   if (!existsSync(DIST_PATH)) {
     console.error(`ERROR: Build output not found at ${DIST_PATH}`);
     console.error(
@@ -133,21 +130,19 @@ function deploy(previewId: string): void {
     process.exit(1);
   }
 
-  console.log(`\nDeploying to s3://${PREVIEW_BUCKET}/${previewId}/app/\n`);
+  console.log(`\nDeploying to s3://${config.bucket}/${previewId}/app/\n`);
 
   // Upload current bytes, publish assets/index, and only then prune old keys.
-  publishPreviewAssets(previewId);
+  publishPreviewAssets(previewId, config.bucket);
 
-  const previewUrl = `https://${previewId}.preview.macro.com`;
+  const previewUrl = buildPreviewAppUrl(previewId, config.hostSuffix);
   console.log(`\nPreview deployed: ${previewUrl}\n`);
 }
 
-function cleanup(previewId: string): void {
-  validateBucket(PREVIEW_BUCKET);
+function cleanup(previewId: string, config: PreviewDeploymentConfig): void {
+  console.log(`\nCleaning up s3://${config.bucket}/${previewId}/\n`);
 
-  console.log(`\nCleaning up s3://${PREVIEW_BUCKET}/${previewId}/\n`);
-
-  execSync(`aws s3 rm s3://${PREVIEW_BUCKET}/${previewId}/ --recursive`, {
+  execFileSync('aws', ['s3', 'rm', `s3://${config.bucket}/${previewId}/`, '--recursive'], {
     stdio: 'inherit',
   });
 
@@ -156,11 +151,12 @@ function cleanup(previewId: string): void {
 
 if (import.meta.main) {
   const { previewId, skipBuild } = parseArgs();
+  const config = resolvePreviewDeploymentConfig();
 
   if (process.argv.includes('--cleanup')) {
-    cleanup(previewId);
+    cleanup(previewId, config);
   } else {
     if (!skipBuild) build();
-    deploy(previewId);
+    deploy(previewId, config);
   }
 }

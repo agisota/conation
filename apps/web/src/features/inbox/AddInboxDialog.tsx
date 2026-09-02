@@ -10,10 +10,9 @@ const [isOpen, setIsOpen] = createSignal(false);
  * (Layout), gated on this signal, so it opens immediately and independent of
  * the settings surface.
  *
- * Entitlement is enforced by the backend: `POST /link/gmail` answers 402 when
- * the user isn't allowed another inbox, and `useAddInboxFlow` maps that to the
- * multi-inbox paywall — so callers can invoke the add-inbox flow directly
- * without a client-side gate that would have to mirror the backend's rule.
+ * Conation does not use the dialog as an entitlement gate. Callers can start
+ * the flow directly; `useAddInboxFlow` reports operational failures such as
+ * an unfinished-OAuth rate limit without presenting a paid upgrade path.
  */
 export const openAddInboxDialog = () => setIsOpen(true);
 

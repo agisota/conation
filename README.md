@@ -24,13 +24,12 @@
 | Локальная разработка      | Репозиторий поднимает Postgres/pgvector, Redis, OpenSearch, Kafka, FusionAuth, LocalStack, Mailpit, API и workers. Это контур разработки и проверки, а не защищённый публичный production. |
 | Standalone web build      | Профиль `standalone` использует same-origin API и не должен незаметно обращаться к управляемым сервисам Macro. Оператор всё равно должен развернуть backend и настроить ingress.           |
 | Desktop                   | Общий web-клиент упаковывается оболочкой Tauri. Исходная сборка доступна, но подписанный и notarized macOS-релиз пока не подтверждён.                                                      |
-| Hosted legacy             | Отдельный явный профиль совместимости для прежней управляемой инфраструктуры. Он не является рекомендуемым режимом Conation.                                                               |
 
 Да: Conation работает не только как desktop-приложение. Основной интерфейс —
 веб-клиент; Tauri использует тот же клиент в нативной оболочке.
 
 Публичный домен `conation.dev` сейчас отвечает служебным JSON, а не готовым
-web-приложением. `docs.conation.dev` и `mcp-server.conation.dev` разрешаются в
+web-приложением. `docs.conation.dev` и `mcp.conation.dev` разрешаются в
 DNS, но их TLS/приложение не были подтверждены этой проверкой. Поэтому ссылки
 на них пока считаются планируемыми, а не опубликованными пользовательскими
 точками входа.
@@ -97,12 +96,9 @@ origin, с которого отдан SPA. Если оператору нуже
 VITE_CONATION_OPERATOR_ORIGIN=https://conation.example just build-prod
 ```
 
-`conation.example` здесь — пример, а не существующий сервис. Профиль прежнего
-managed-развёртывания включается только явно:
-
-```bash
-just build-hosted-legacy
-```
+`conation.example` здесь — пример, а не существующий сервис. Conation
+поддерживает только standalone-сборку: старое значение
+`VITE_CONATION_CLIENT_PROFILE=hosted-legacy` намеренно отклоняется.
 
 ## Сборка desktop на macOS
 

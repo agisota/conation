@@ -116,17 +116,12 @@ const IGNORABLE_ERRORS = [
 // Privacy filter lists block the upstream filename; the proxy maps this opaque alias back.
 const POSTHOG_RECORDER_SCRIPT_NAME = 'posthog-recorder.js';
 const POSTHOG_RECORDER_PROXY_SCRIPT_NAME = 'runtime.js';
-const hostedLegacy =
-  globalThis.__CONATION_HOSTED_LEGACY__ ??
-  import.meta.env.VITE_CONATION_CLIENT_PROFILE === 'hosted-legacy';
 
 const initializePosthog = (instance: PostHog) => {
   const key = import.meta.env.VITE_POSTHOG_API_KEY;
   if (!key) return;
 
-  const posthogProxy = hostedLegacy
-    ? 'https://macro-prox.macroverse.workers.dev/i/ph'
-    : `${getConfiguredStandaloneOperatorOrigin()}/i/ph`;
+  const posthogProxy = `${getConfiguredStandaloneOperatorOrigin()}/i/ph`;
 
   instance.init(key, {
     api_host: posthogProxy,

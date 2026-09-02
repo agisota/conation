@@ -256,7 +256,7 @@ just run_local --no-doppler --env-file ./local.env
 чистого развёртывания не оставляйте прежний ключ как alias: обновите секрет во
 всех deployment-конфигурациях одновременно.
 
-## Standalone и hosted-legacy
+## Standalone
 
 `standalone` — профиль адресации клиента. В production web-сборке он по
 умолчанию использует same-origin маршруты. Оператор должен направить их в
@@ -280,15 +280,9 @@ CONATION_OPERATOR_ORIGIN=https://conation.example just tauri-build-standalone
 В обоих примерах `conation.example` нужно заменить на реально контролируемый
 HTTPS origin. Сборка отклоняет managed Macro hosts в standalone-профиле.
 
-`hosted-legacy` сохраняет прежние managed endpoints только для явной
-совместимости и upstream sync:
-
-```bash
-\cd apps/web
-just build-hosted-legacy
-```
-
-Не используйте этот профиль как доказательство независимого self-host.
+Conation поддерживает только standalone-профиль. Старое значение
+`VITE_CONATION_CLIENT_PROFILE=hosted-legacy` отклоняется до сборки, чтобы
+артефакт не мог получить managed Macro endpoints или app links.
 
 ## Что ещё не подтверждено для production
 

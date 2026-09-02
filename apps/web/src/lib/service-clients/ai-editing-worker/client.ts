@@ -14,17 +14,9 @@ import { createSignal } from 'solid-js';
 const overrideUrl: string | undefined = import.meta.env
   .VITE_AI_EDITING_WORKER_URL;
 
-const hostedLegacy =
-  globalThis.__CONATION_HOSTED_LEGACY__ ??
-  import.meta.env.VITE_CONATION_CLIENT_PROFILE === 'hosted-legacy';
-const AI_EDITING_WORKER_HOST = hostedLegacy
-  ? (overrideUrl?.replace(/\/$/, '') ??
-    (import.meta.env.MODE === 'development'
-      ? 'https://ai-editing-worker-dev.macroverse.workers.dev'
-      : 'https://ai-editing-worker.macroverse.workers.dev'))
-  : overrideUrl
-    ? validateStandaloneServiceUrlInput(overrideUrl)
-    : `${getConfiguredStandaloneOperatorOrigin()}/ai-editing`;
+const AI_EDITING_WORKER_HOST = overrideUrl
+  ? validateStandaloneServiceUrlInput(overrideUrl)
+  : `${getConfiguredStandaloneOperatorOrigin()}/ai-editing`;
 
 /**
  * Model fallback chains per worker role. Mirrors the chains the backend

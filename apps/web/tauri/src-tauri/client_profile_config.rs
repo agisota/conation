@@ -21,14 +21,12 @@ impl AppEnvironment {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum ClientProfile {
     Standalone,
-    HostedLegacy,
 }
 
 impl ClientProfile {
     pub(crate) fn as_str(self) -> &'static str {
         match self {
             Self::Standalone => "standalone",
-            Self::HostedLegacy => "hosted-legacy",
         }
     }
 }
@@ -54,7 +52,7 @@ fn is_managed_legacy_host(hostname: &str) -> bool {
         })
 }
 
-fn parse_root_origin(value: &str, reject_managed: bool) -> Result<Url, String> {
+fn parse_root_origin(value: &str) -> Result<Url, String> {
     let parsed = Url::parse(value)
         .map_err(|error| format!("operator origin must be an absolute URL: {error}"))?;
     if !matches!(parsed.scheme(), "http" | "https") {
@@ -69,7 +67,7 @@ fn parse_root_origin(value: &str, reject_managed: bool) -> Result<Url, String> {
     let host = parsed
         .host_str()
         .ok_or_else(|| "operator origin must contain a host".to_string())?;
-    if reject_managed && is_managed_legacy_host(host) {
+    if is_managed_legacy_host(host) {
         return Err(format!(
             "standalone Conation cannot target managed legacy host {host}"
         ));
@@ -77,7 +75,7 @@ fn parse_root_origin(value: &str, reject_managed: bool) -> Result<Url, String> {
     Ok(parsed)
 }
 
-fn normalize_update_base(value: &str, reject_managed: bool) -> Result<String, String> {
+fn normalize_update_base(value: &str) -> Result<String, String> {
     let mut parsed = Url::parse(value)
         .map_err(|error| format!("bundle update base URL must be absolute: {error}"))?;
     if !matches!(parsed.scheme(), "http" | "https") {
@@ -95,7 +93,7 @@ fn normalize_update_base(value: &str, reject_managed: bool) -> Result<String, St
     let host = parsed
         .host_str()
         .ok_or_else(|| "bundle update base URL must contain a host".to_string())?;
-    if reject_managed && is_managed_legacy_host(host) {
+    if is_managed_legacy_host(host) {
         return Err(format!(
             "standalone Conation bundle updates cannot target managed legacy host {host}"
         ));
@@ -114,77 +112,48 @@ pub(crate) fn resolve_client_profile(
 ) -> Result<ClientProfileConfig, String> {
     let profile = match profile {
         None | Some("") | Some("standalone") => ClientProfile::Standalone,
-        Some("hosted-legacy") => ClientProfile::HostedLegacy,
+        Some("hosted-legacy") => {
+            return Err(
+                "CONATION_CLIENT_PROFILE=hosted-legacy has been removed; use standalone"
+                    .to_string(),
+            );
+        }
         Some(other) => {
             return Err(format!(
-                "CONATION_CLIENT_PROFILE must be `standalone` or `hosted-legacy`, found `{other}`"
+                "CONATION_CLIENT_PROFILE must be `standalone`, found `{other}`"
             ));
         }
     };
 
-    match profile {
-        ClientProfile::Standalone => {
-            let default_origin = match environment {
-                AppEnvironment::Development => "http://localhost:8090",
-                AppEnvironment::Production => "https://conation.dev",
-            };
-            let requested_origin = match operator_origin {
-                Some(value) if value.trim().is_empty() => {
-                    return Err("CONATION_OPERATOR_ORIGIN must not be blank".to_string());
-                }
-                Some(value) => value.trim(),
-                None => default_origin,
-            };
-            let origin = parse_root_origin(requested_origin, true)?;
-            let origin_string = origin.origin().ascii_serialization();
-            let auth_service_url = format!("{origin_string}/auth/");
-            let bundle_update_base_url = match bundle_update_base_url {
-                Some(value) if value.trim().is_empty() => {
-                    return Err("CONATION_BUNDLE_UPDATE_BASE_URL must not be blank".to_string());
-                }
-                Some(value) => normalize_update_base(value.trim(), true)?,
-                None => auth_service_url.clone(),
-            };
-            Ok(ClientProfileConfig {
-                profile,
-                operator_origin: origin_string,
-                auth_service_url,
-                bundle_update_base_url,
-                app_link_hosts: vec![origin.host_str().expect("validated host").to_string()],
-                app_scheme: "conation",
-            })
+    let default_origin = match environment {
+        AppEnvironment::Development => "http://localhost:8090",
+        AppEnvironment::Production => "https://conation.dev",
+    };
+    let requested_origin = match operator_origin {
+        Some(value) if value.trim().is_empty() => {
+            return Err("CONATION_OPERATOR_ORIGIN must not be blank".to_string());
         }
-        ClientProfile::HostedLegacy => {
-            let (operator_origin, auth_service_url) = match environment {
-                AppEnvironment::Development => (
-                    "https://dev.macro.com",
-                    "https://auth-service-dev.macro.com/",
-                ),
-                AppEnvironment::Production => {
-                    ("https://macro.com", "https://auth-service.macro.com/")
-                }
-            };
-            let bundle_update_base_url = match bundle_update_base_url {
-                Some(value) if value.trim().is_empty() => {
-                    return Err("CONATION_BUNDLE_UPDATE_BASE_URL must not be blank".to_string());
-                }
-                Some(value) => normalize_update_base(value.trim(), false)?,
-                None => auth_service_url.to_string(),
-            };
-            Ok(ClientProfileConfig {
-                profile,
-                operator_origin: operator_origin.to_string(),
-                auth_service_url: auth_service_url.to_string(),
-                bundle_update_base_url,
-                app_link_hosts: vec![
-                    "macro.com".to_string(),
-                    "dev.macro.com".to_string(),
-                    "staging.macro.com".to_string(),
-                ],
-                app_scheme: "macro",
-            })
+        Some(value) => value.trim(),
+        None => default_origin,
+    };
+    let origin = parse_root_origin(requested_origin)?;
+    let origin_string = origin.origin().ascii_serialization();
+    let auth_service_url = format!("{origin_string}/auth/");
+    let bundle_update_base_url = match bundle_update_base_url {
+        Some(value) if value.trim().is_empty() => {
+            return Err("CONATION_BUNDLE_UPDATE_BASE_URL must not be blank".to_string());
         }
-    }
+        Some(value) => normalize_update_base(value.trim())?,
+        None => auth_service_url.clone(),
+    };
+    Ok(ClientProfileConfig {
+        profile,
+        operator_origin: origin_string,
+        auth_service_url,
+        bundle_update_base_url,
+        app_link_hosts: vec![origin.host_str().expect("validated host").to_string()],
+        app_scheme: "conation",
+    })
 }
 
 #[cfg(test)]
@@ -254,16 +223,14 @@ mod tests {
     }
 
     #[test]
-    fn hosted_values_require_explicit_profile() {
-        let config = resolve_client_profile(
+    fn hosted_legacy_profile_is_rejected() {
+        let error = resolve_client_profile(
             AppEnvironment::Production,
             Some("hosted-legacy"),
             None,
             None,
         )
-        .unwrap();
-        assert_eq!(config.profile, ClientProfile::HostedLegacy);
-        assert_eq!(config.operator_origin, "https://macro.com");
-        assert_eq!(config.app_scheme, "macro");
+        .unwrap_err();
+        assert!(error.contains("has been removed"));
     }
 }

@@ -2,7 +2,8 @@
 # Source: tooling/xtask/crates/xtask_workflows/src/workflows/cleanup_preview.rs
 name: Cleanup Preview
 env:
-  PREVIEW_BUCKET: macro-preview-assets-dev
+  CONATION_PREVIEW_BUCKET: ${{ vars.CONATION_PREVIEW_BUCKET }}
+  CONATION_PREVIEW_HOST_SUFFIX: ${{ vars.CONATION_PREVIEW_HOST_SUFFIX }}
 'on':
   pull_request:
     types:

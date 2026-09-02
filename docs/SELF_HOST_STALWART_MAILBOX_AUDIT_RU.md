@@ -84,8 +84,9 @@ Fake-CLI harness покрывает первый create, повторный за
 
 Аудит composition root и provider paths показывает:
 
-1. `crates/email/src/domain/models/link.rs` содержит единственный вариант
-   `UserProvider::Gmail`.
+1. `crates/email/src/domain/models/link.rs` и PostgreSQL adapter уже содержат
+   варианты `UserProvider::Gmail` и `UserProvider::Stalwart`; это поддержка
+   модели/хранения, а не подключение провайдера к runtime.
 2. `services/email_service/src/main.rs` всегда создаёт
    `GmailApiClientRepository`, Gmail token provider и очереди `gmail_*`.
 3. `services/email_service/src/api/email/init.rs` создаёт только Gmail link и
@@ -105,15 +106,18 @@ Fake-CLI harness покрывает первый create, повторный за
 сервера. Они **не отображаются** во встроенном inbox Conation и не могут из
 него отвечать. Gmail можно не подключать, если нужен только внутренний канал
 поддержки Conation или внешний отдельный mail client. Для существующей функции
-Conation Inbox Gmail пока обязателен: добавленный JMAP transport adapter сам по
-себе не создаёт link, не хранит cursor/token и не подключён к runtime service.
+Conation Inbox Gmail пока обязателен: он остаётся единственным runtime backend,
+тогда как добавленный JMAP transport adapter сам по себе не создаёт link, не
+хранит cursor/token и не подключён к runtime service. Mailpit принимает только
+локальные транзакционные SMTP-письма и не является пользовательским inbox.
 
 Чтобы убрать Gmail именно из встроенного inbox, нужен отдельный production
-slice: вариант `UserProvider::Stalwart`, JMAP session/auth adapter, Email/query
-и Email/get, initial/incremental sync cursor, push/event delivery, labels,
-attachments, contacts, EmailSubmission/reply, token storage/rotation,
-backfill/retry semantics и end-to-end тесты. SMTP transport для
-транзакционных писем не заменяет этот JMAP adapter.
+slice: подключить уже существующий `UserProvider::Stalwart` и JMAP
+session/auth/list/get/send adapter к `email_service`, затем добавить
+signup-provisioning, initial/incremental sync cursor, push/event delivery,
+labels, attachments, contacts, token storage/rotation, backfill/retry semantics
+и end-to-end тесты. SMTP transport для транзакционных писем не заменяет этот
+JMAP adapter.
 
 ## Что остаётся оператору для реальной Internet-почты
 

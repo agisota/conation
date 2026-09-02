@@ -29,6 +29,12 @@ const BUCKETS: u32 = 120; // 20000..=31999
 // bridge subnet that may be routed away from Docker on the host.
 const DATABASE_NETWORK_PREFIX: &str = "198.18";
 const AUTH_NETWORK_PREFIX: &str = "198.19";
+// These two networks are Compose-managed, unlike the external `databases` and
+// `auth` networks above. Keeping them in separate /16s makes the service plane
+// and FusionAuth's private database plane unambiguously non-overlapping while
+// retaining a stable /24 per named instance.
+const SERVICES_NETWORK_PREFIX: &str = "10.254";
+const AUTH_INTERNAL_NETWORK_PREFIX: &str = "10.253";
 
 /// A validated instance name: lowercase ASCII alphanumerics, hyphen, and
 /// underscore, starting alphanumeric, non-empty, <= 40 chars. The newtype
@@ -218,6 +224,24 @@ impl Instance {
     /// Deterministic IPv4 subnet for the named instance's FusionAuth network.
     pub fn network_auth_subnet(&self) -> Option<String> {
         self.named_network_subnet(AUTH_NETWORK_PREFIX)
+    }
+
+    /// Deterministic IPv4 subnet for the Compose-managed service network.
+    ///
+    /// The default instance intentionally keeps the base Compose behavior.
+    /// Named instances receive a stable subnet so Docker's automatic address
+    /// allocation cannot choose a route claimed by a host VPN.
+    pub fn network_services_subnet(&self) -> Option<String> {
+        self.named_network_subnet(SERVICES_NETWORK_PREFIX)
+    }
+
+    /// Deterministic IPv4 subnet for FusionAuth's Compose-managed private
+    /// database network.
+    ///
+    /// This is distinct from [`Self::network_auth_subnet`], which describes the
+    /// external application-facing `auth` network.
+    pub fn network_auth_internal_subnet(&self) -> Option<String> {
+        self.named_network_subnet(AUTH_INTERNAL_NETWORK_PREFIX)
     }
 
     pub fn volume_postgres(&self) -> String {

@@ -1,4 +1,5 @@
-export type ConationClientProfile = 'standalone' | 'hosted-legacy';
+/** The greenfield client has one supported runtime: standalone Conation. */
+export type ConationClientProfile = 'standalone';
 
 // Keep this list in every bundle. Standalone origin validation must reject a
 // legacy managed host even after Vite replaces __CONATION_HOSTED_LEGACY__ with
@@ -6,16 +7,24 @@ export type ConationClientProfile = 'standalone' | 'hosted-legacy';
 // validation entry points.
 const MANAGED_LEGACY_HOST_SUFFIXES = ['macro.com'];
 
-/** The browser profile is standalone unless the legacy hosted service is explicit. */
+/**
+ * Reject the retired managed profile explicitly rather than silently falling
+ * back: a stale CI variable must not produce an artifact with Macro endpoints
+ * or deep links.
+ */
 export function parseConationClientProfile(
   value: string | undefined
 ): ConationClientProfile {
   if (value === undefined || value === '' || value === 'standalone') {
     return 'standalone';
   }
-  if (value === 'hosted-legacy') return value;
+  if (value === 'hosted-legacy') {
+    throw new Error(
+      'VITE_CONATION_CLIENT_PROFILE=hosted-legacy has been removed; use standalone'
+    );
+  }
   throw new Error(
-    `VITE_CONATION_CLIENT_PROFILE must be "standalone" or "hosted-legacy", found ${JSON.stringify(value)}`
+    `VITE_CONATION_CLIENT_PROFILE must be "standalone", found ${JSON.stringify(value)}`
   );
 }
 
@@ -140,13 +149,13 @@ export function getConfiguredStandaloneOperatorOrigin(): string {
   );
 }
 
-/** Native callback scheme selected by the explicit client profile. */
+/** Native callbacks use the Conation scheme in every supported build. */
 export function nativeAppSchemeForProfile(
-  profile: ConationClientProfile
-): 'conation' | 'macro' {
-  return profile === 'standalone' ? 'conation' : 'macro';
+  _profile: ConationClientProfile
+): 'conation' {
+  return 'conation';
 }
 
-export function getConfiguredNativeAppScheme(): 'conation' | 'macro' {
+export function getConfiguredNativeAppScheme(): 'conation' {
   return nativeAppSchemeForProfile(getConfiguredClientProfile());
 }

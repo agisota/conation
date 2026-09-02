@@ -6,6 +6,12 @@
  *   bun scripts/preview/post-comment.ts --pr 123 --repo owner/repo --token $GITHUB_TOKEN --preview-id my-feature-abc123 --sha abc1234
  */
 
+import {
+  buildPreviewAppUrl,
+  isPreviewUrlInBody,
+  resolvePreviewDeploymentConfig,
+} from './config';
+
 interface Args {
   pr: number;
   repo: string;
@@ -52,21 +58,25 @@ function parseArgs(): Args {
   return result as Args;
 }
 
-export function buildPreviewUrl(previewId: string): string {
-  return `https://${previewId}.preview.macro.com/app`;
+export function buildPreviewUrl(previewId: string, hostSuffix: string): string {
+  return buildPreviewAppUrl(previewId, hostSuffix);
 }
 
-export function buildCommentBody(previewId: string, sha: string): string {
-  const previewUrl = buildPreviewUrl(previewId);
+export function buildCommentBody(
+  previewId: string,
+  sha: string,
+  hostSuffix: string
+): string {
+  const previewUrl = buildPreviewUrl(previewId, hostSuffix);
   const shortSha = sha.slice(0, 7);
   return `**Preview:** [${previewUrl}](${previewUrl}) (${shortSha})`;
 }
 
 async function main() {
   const args = parseArgs();
+  const config = resolvePreviewDeploymentConfig();
   const [owner, repo] = args.repo.split('/');
-  const previewUrl = buildPreviewUrl(args.previewId);
-  const shortSha = args.sha.slice(0, 7);
+  const previewUrl = buildPreviewUrl(args.previewId, config.hostSuffix);
 
   // Check for existing preview comment
   const commentsResponse = await fetch(
@@ -91,10 +101,13 @@ async function main() {
   }>;
 
   const existingComment = comments.find(
-    (c) => c.body?.includes('.preview.macro.com') && c.user?.type === 'Bot'
+    (c) =>
+      c.body !== undefined &&
+      isPreviewUrlInBody(c.body, config.hostSuffix) &&
+      c.user?.type === 'Bot'
   );
 
-  const body = `**Preview:** [${previewUrl}](${previewUrl}) (${shortSha})`;
+  const body = buildCommentBody(args.previewId, args.sha, config.hostSuffix);
 
   if (existingComment) {
     // Update existing comment

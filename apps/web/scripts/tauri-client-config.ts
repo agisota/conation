@@ -17,9 +17,9 @@ export type TauriClientConfigInput = {
   extraHttpOrigins?: string[];
 };
 
-function readCapability(name: 'default' | 'hosted-legacy'): Capability {
+function readCapability(): Capability {
   const url = new URL(
-    `../tauri/src-tauri/capabilities/${name}.json`,
+    '../tauri/src-tauri/capabilities/default.json',
     import.meta.url
   );
   return JSON.parse(readFileSync(url, 'utf8')) as Capability;
@@ -41,27 +41,7 @@ function httpPermission(capability: Capability) {
 
 /** Build the Tauri merge config applied before native manifests are generated. */
 export function buildTauriClientConfig(input: TauriClientConfigInput) {
-  const profile = parseConationClientProfile(input.profile);
-  if (profile === 'hosted-legacy') {
-    return {
-      app: {
-        security: {
-          capabilities: ['hosted-legacy', 'mobile-capability'],
-        },
-      },
-      plugins: {
-        'deep-link': {
-          mobile: [
-            { scheme: ['macro'], appLink: false },
-            { host: 'macro.com', pathPrefix: ['/app'] },
-            { host: 'dev.macro.com', pathPrefix: ['/app'] },
-            { host: 'staging.macro.com', pathPrefix: ['/app'] },
-          ],
-          desktop: { schemes: ['macro'] },
-        },
-      },
-    };
-  }
+  parseConationClientProfile(input.profile);
 
   const operatorOrigin = resolveStandaloneOperatorOrigin(
     input.operatorOrigin ?? 'https://conation.dev',
@@ -72,7 +52,7 @@ export function buildTauriClientConfig(input: TauriClientConfigInput) {
     resolveStandaloneOperatorOrigin(origin, undefined)
   );
   const allowedOrigins = [...new Set([operatorOrigin, ...additionalOrigins])];
-  const capability = structuredClone(readCapability('default'));
+  const capability = structuredClone(readCapability());
   httpPermission(capability).allow = [
     ...allowedOrigins.map((origin) => ({ url: `${origin}/**` })),
     { url: 'http://localhost:*' },

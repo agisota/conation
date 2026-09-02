@@ -436,7 +436,13 @@ fn apply_tags(value: &mut Value, mode: Mode, instance: &Instance) {
     }
 }
 
-/// Define the per-instance external networks and volumes (named-instance only).
+/// Define the per-instance networks and volumes (named-instance only).
+///
+/// `databases` and `auth` remain external resources: the stack orchestration
+/// owns their lifecycle. `services` and FusionAuth's included `auth-internal`
+/// network are instead Compose-managed, so their deterministic IPAM belongs in
+/// the generated override. This prevents Docker's automatic address allocator
+/// from selecting a VPN-routed subnet for a concurrent named stack.
 fn set_external_networks_and_volumes(value: &mut Value, instance: &Instance) {
     let ext = |name: String| {
         let mut m = serde_yaml::Mapping::new();
@@ -444,16 +450,39 @@ fn set_external_networks_and_volumes(value: &mut Value, instance: &Instance) {
         m.insert("name".into(), name.into());
         Value::Mapping(m)
     };
+    let managed = |subnet: String| {
+        let mut ipam_config = serde_yaml::Mapping::new();
+        ipam_config.insert("subnet".into(), subnet.into());
+
+        let mut ipam = serde_yaml::Mapping::new();
+        ipam.insert(
+            "config".into(),
+            Value::Sequence(vec![Value::Mapping(ipam_config)]),
+        );
+
+        let mut network = serde_yaml::Mapping::new();
+        network.insert("driver".into(), "bridge".into());
+        network.insert("ipam".into(), Value::Mapping(ipam));
+        Value::Mapping(network)
+    };
+    let services_subnet = instance
+        .network_services_subnet()
+        .expect("named Compose override requires a services subnet");
+    let auth_internal_subnet = instance
+        .network_auth_internal_subnet()
+        .expect("named Compose override requires an auth-internal subnet");
     let map = value.as_mapping_mut().expect("compose root is a mapping");
     map.insert(
         "networks".into(),
         Value::Mapping(
             [
-                ("databases", instance.network_databases()),
-                ("auth", instance.network_auth()),
+                ("services", managed(services_subnet)),
+                ("auth-internal", managed(auth_internal_subnet)),
+                ("databases", ext(instance.network_databases())),
+                ("auth", ext(instance.network_auth())),
             ]
             .into_iter()
-            .map(|(k, n)| (Value::from(k), ext(n)))
+            .map(|(k, network)| (Value::from(k), network))
             .collect(),
         ),
     );
@@ -530,6 +559,9 @@ fn ports_only(ports: Vec<String>) -> dct::Service {
         ..Default::default()
     }
 }
+
+#[cfg(test)]
+mod test;
 
 /// The ordered compose file list run-local/run-dev/validate all use: the base
 /// compose then the per-instance generated override.

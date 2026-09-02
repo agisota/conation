@@ -32,6 +32,8 @@ fn default_instance_uses_fixed_ports() {
     assert_eq!(inst.network_databases(), "databases");
     assert_eq!(inst.network_databases_subnet(), None);
     assert_eq!(inst.network_auth_subnet(), None);
+    assert_eq!(inst.network_services_subnet(), None);
+    assert_eq!(inst.network_auth_internal_subnet(), None);
     assert_eq!(inst.volume_postgres(), "conation_postgres_data");
     assert_eq!(inst.volume_redis(), "conation_redis_data");
     assert_eq!(inst.volume_opensearch(), "conation_opensearch_data");
@@ -56,16 +58,51 @@ fn named_instance_is_isolated_and_deterministic() {
     assert_eq!(a1.network_databases(), "databases-agent-a");
     assert_eq!(a1.network_databases_subnet(), a2.network_databases_subnet());
     assert_eq!(a1.network_auth_subnet(), a2.network_auth_subnet());
+    assert_eq!(a1.network_services_subnet(), a2.network_services_subnet());
+    assert_eq!(
+        a1.network_auth_internal_subnet(),
+        a2.network_auth_internal_subnet()
+    );
     assert!(
         a1.network_databases_subnet()
             .unwrap()
             .starts_with("198.18.")
     );
     assert!(a1.network_auth_subnet().unwrap().starts_with("198.19."));
+    assert_eq!(
+        a1.network_services_subnet().as_deref(),
+        Some("10.254.112.0/24")
+    );
+    assert_eq!(
+        a1.network_auth_internal_subnet().as_deref(),
+        Some("10.253.112.0/24")
+    );
     assert_eq!(a1.volume_postgres(), "conation_postgres_data_agent-a");
     assert_eq!(a1.volume_redis(), "conation_redis_data_agent-a");
     assert_eq!(a1.volume_opensearch(), "conation_opensearch_data_agent-a");
     assert_eq!(a1.volume_kafka(), "conation_kafka_data_agent-a");
+}
+
+#[test]
+fn named_instance_compose_network_ranges_are_distinct() {
+    let agent_a = Instance::derive(Some("agent-a"), None).unwrap();
+    let agent_b = Instance::derive(Some("agent-b"), None).unwrap();
+
+    assert_ne!(
+        agent_a.network_services_subnet(),
+        agent_a.network_auth_internal_subnet(),
+        "a stack's application and FusionAuth-private networks must not overlap"
+    );
+    assert_ne!(
+        agent_a.network_services_subnet(),
+        agent_b.network_services_subnet(),
+        "distinct named instances use distinct deterministic service ranges"
+    );
+    assert_ne!(
+        agent_a.network_auth_internal_subnet(),
+        agent_b.network_auth_internal_subnet(),
+        "distinct named instances use distinct deterministic FusionAuth-private ranges"
+    );
 }
 
 #[test]

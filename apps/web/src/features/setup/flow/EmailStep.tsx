@@ -17,6 +17,7 @@ import {
   Show,
 } from 'solid-js';
 import { StatusDot } from '../../settings/integration-ui';
+import { getEmailConnectSlotKinds } from './emailConnectSlots';
 import { ContinueButton, SkipButton } from './shared';
 
 /** How often the step re-checks for freshly-linked inboxes while visible. */
@@ -26,6 +27,21 @@ const LINKS_POLL_MS = 5_000;
  * round-trip reloads the page, so detecting "a link landed" after the
  * return needs a pre-redirect baseline that survives the reload. */
 const CONNECT_BASELINE_KEY = 'onboarding-flow-email-baseline';
+
+const CONNECT_SLOT_COPY = {
+  primary: {
+    analyticsName: 'Connect primary account',
+    labelKey: 'setup.email.connectPrimary',
+  },
+  secondary: {
+    analyticsName: 'Connect secondary account',
+    labelKey: 'setup.email.connectSecondary',
+  },
+  another: {
+    analyticsName: 'Connect another email',
+    labelKey: 'setup.email.connectAnother',
+  },
+} as const;
 
 /** Connect Google accounts. On web the add-inbox flow is a full-page OAuth
  * redirect; the flow's persisted step brings the user back here. */
@@ -50,7 +66,7 @@ export function EmailStep(props: {
     onCleanup(() => clearInterval(interval));
   });
 
-  // No macro_id ownership filter: linking a mailbox owned by another Macro
+  // No macro_id ownership filter: linking a mailbox owned by another Conation
   // user creates a SHARED link carrying the owner's macro_id — filtering
   // would hide an inbox the user just connected.
   const links = createMemo(() => {
@@ -62,28 +78,14 @@ export function EmailStep(props: {
     );
   });
 
-  // Connecting more than two accounts is a premium feature, and the plan
-  // step hasn't happened yet — past two, stop offering connect slots.
+  // Conation does not put mailbox connection behind a plan or a local inbox
+  // count. The backend still owns operational safeguards such as the cap on
+  // concurrent, unfinished OAuth attempts.
   const connectSlots = createMemo(() => {
-    const connected = links().length;
-    if (connected >= 2) return [];
-    return connected === 0
-      ? [
-          {
-            analyticsName: 'Connect primary account',
-            label: t('setup.email.connectPrimary'),
-          },
-          {
-            analyticsName: 'Connect secondary account',
-            label: t('setup.email.connectSecondary'),
-          },
-        ]
-      : [
-          {
-            analyticsName: 'Connect another email',
-            label: t('setup.email.connectAnother'),
-          },
-        ];
+    return getEmailConnectSlotKinds(links().length).map((kind) => {
+      const copy = CONNECT_SLOT_COPY[kind];
+      return { ...copy, label: t(copy.labelKey) };
+    });
   });
 
   // Detects a landed link via the persisted pre-redirect baseline (the

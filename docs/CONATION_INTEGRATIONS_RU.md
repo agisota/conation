@@ -112,19 +112,25 @@ Gmail публикует только notification/history ID. Содержим�
 почты всё ещё реализованы через Gmail API.
 
 Экспериментальный Stalwart-контейнер и `StalwartProvider` пока не заменяют этот
-путь: JMAP-операции намеренно возвращают `Unsupported`, а account provisioning,
-credentials, outbound identity, push events и повторная синхронизация не связаны
-с `email_service`. Поэтому допустимы только два честных production-профиля:
+путь. В изолированном adapter уже реализованы JMAP session discovery,
+`Email/query`, `Email/get` и отправка MIME через upload/import/submission; они
+проверяются контрактными тестами с WireMock, а не работающим Stalwart-сервером.
+Этот adapter не включён в composition root `email_service`. Для него пока нет
+signup-provisioning пользовательских ящиков, JMAP push/watch, cursor recovery,
+initial/incremental backfill, UI-integration или end-to-end проверки. Mailpit
+остаётся локальным SMTP sink для системных писем, а не inbox. Поэтому допустимы
+только два честных production-профиля:
 
 1. `gmail`: включить OAuth/Pub/Sub по шагам выше и получить работающий inbox;
 2. `no-inbox`: не показывать пользователю встроенную почту, оставить SMTP для
    системных писем и явно пометить inbox как отключённый.
 
-Профиль `stalwart` станет поддерживаемым после реализации JMAP adapter для
-list/query/get/send/drafts, защищённого provisioning, cursor recovery,
-push/event delivery и end-to-end теста «создать пользователя → получить письмо
-→ ответить → увидеть ответ в Conation». До прохождения этого теста Gmail нельзя
-объявлять необязательным для inbox-функциональности.
+Профиль `stalwart` станет поддерживаемым после подключения существующего adapter
+к runtime `email_service`, реализации защищённого signup-provisioning, cursor
+recovery, push/event delivery, backfill и UI-потока, а также end-to-end теста
+«создать пользователя → получить письмо → ответить → увидеть ответ в
+Conation». До прохождения этого теста Gmail — единственный runtime backend
+нынешнего Conation Inbox; без Gmail встроенная почта не работает.
 
 ## GitHub login и Conation Tasks
 

@@ -18,7 +18,6 @@ afterEach(() => {
 });
 
 beforeEach(() => {
-  vi.stubEnv('VITE_CONATION_CLIENT_PROFILE', 'standalone');
   vi.stubEnv('VITE_CONATION_OPERATOR_ORIGIN', 'https://conation.dev');
 });
 
@@ -49,7 +48,7 @@ describe('parseInternalAppLink', () => {
     });
   });
 
-  it('does not treat a mid-string www. as a macro host', () => {
+  it('does not treat a mid-string www. as an operator host', () => {
     // Only a leading `www.` is stripped, so a mid-string occurrence must not
     // collapse to the configured operator host.
     setTauri(true);
@@ -113,12 +112,12 @@ describe('parseInternalAppLink', () => {
     }
   });
 
-  it('keeps old hosts only behind the explicit hosted legacy profile', () => {
+  it('rejects managed links even when a stale legacy profile variable exists', () => {
     vi.stubEnv('VITE_CONATION_CLIENT_PROFILE', 'hosted-legacy');
     setTauri(true);
-    expect(parseInternalAppLink('https://macro.com/app/component/abc')).toEqual(
-      { path: '/component/abc', query: '' }
-    );
+    expect(
+      parseInternalAppLink('https://macro.com/app/component/abc')
+    ).toBeNull();
   });
 
   it('rejects invalid urls', () => {

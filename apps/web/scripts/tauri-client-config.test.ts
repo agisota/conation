@@ -28,9 +28,9 @@ describe('Tauri client config', () => {
     ).toThrow('managed legacy host');
   });
 
-  it('includes old hosts only for an explicit hosted legacy profile', () => {
-    const config = buildTauriClientConfig({ profile: 'hosted-legacy' });
-    expect(JSON.stringify(config)).toContain('macro.com');
-    expect(config.plugins['deep-link'].desktop.schemes).toEqual(['macro']);
+  it('rejects the removed hosted legacy profile', () => {
+    expect(() =>
+      buildTauriClientConfig({ profile: 'hosted-legacy' })
+    ).toThrow('has been removed');
   });
 });

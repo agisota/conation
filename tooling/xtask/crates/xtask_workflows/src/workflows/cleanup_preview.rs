@@ -9,13 +9,18 @@ use gh_workflow::{
 
 use crate::workflows::{runners, vars};
 
-const PREVIEW_BUCKET: &str = "macro-preview-assets-dev";
-
 /// Build the workflow.
 pub fn cleanup_preview() -> Workflow {
     Workflow::new("Cleanup Preview")
         .on(Event::default().pull_request(PullRequest::default().add_type(PullRequestType::Closed)))
-        .add_env(("PREVIEW_BUCKET", PREVIEW_BUCKET))
+        .add_env((
+            "CONATION_PREVIEW_BUCKET",
+            "${{ vars.CONATION_PREVIEW_BUCKET }}",
+        ))
+        .add_env((
+            "CONATION_PREVIEW_HOST_SUFFIX",
+            "${{ vars.CONATION_PREVIEW_HOST_SUFFIX }}",
+        ))
         .add_job("cleanup", cleanup())
 }
 

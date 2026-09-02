@@ -15,8 +15,8 @@ import type { Accessor } from 'solid-js';
 export const PIPEDREAM_MCP_FLAG = 'pipedream-mcp';
 
 /**
- * On in dev without waiting on PostHog — otherwise local and dev.macro.com
- * fall back to the native stack's fixed preset list and the searchable
+ * On in development without waiting on PostHog — otherwise local and
+ * operator-managed development deployments fall back to the native stack's fixed preset list and the searchable
  * Pipedream catalog is unreachable. Override either way with
  * VITE_ENABLE_PIPEDREAM_MCP; `undefined` defers to PostHog (production).
  */

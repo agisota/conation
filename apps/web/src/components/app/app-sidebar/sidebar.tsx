@@ -24,7 +24,6 @@ import {
   setInviteModalOpen,
 } from '@app/features/team-invitations/invite-modal';
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
-import { useFeatureFlag } from '@app/lib/analytics/posthog';
 import { t } from '@app/lib/i18n';
 import { useHotkeyInterceptor } from '@app/signal/hotkeyRoot';
 import { globalSplitManager } from '@app/signal/splitLayout';
@@ -35,27 +34,19 @@ import {
   CollapsibleSidebarSection,
   type CollapsibleSidebarSectionItem,
 } from '@components/app/app-sidebar/collapsible-sidebar-section';
-import {
-  SidebarPromoCard,
-  SidebarPromoHint,
-} from '@components/app/app-sidebar/sidebar-promo';
+import { SidebarPromoCard } from '@components/app/app-sidebar/sidebar-promo';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import type {
   ReferredFrom,
   SplitContent,
   SplitHandle,
 } from '@components/app/split-layout/layoutManager';
-import { useHasFeatureAccess } from '@core/auth';
 import { useLogout } from '@core/auth/logout';
 import { ContextMenuContent, MenuItem } from '@core/component/ContextMenu';
 import { inboxIconProps } from '@core/component/inboxIcon';
 import { toast } from '@core/component/Toast/Toast';
 import { UserIcon } from '@core/component/UserIcon';
-import {
-  ENABLE_CALLS,
-  ENABLE_CRM,
-  ENABLE_NEW_PRICING_OVERRIDE,
-} from '@core/constant/featureFlags';
+import { ENABLE_CALLS, ENABLE_CRM } from '@core/constant/featureFlags';
 import {
   type SettingsTab,
   useSettingsState,
@@ -567,9 +558,6 @@ export const GoToHotkeys = () => {
 
   return null;
 };
-
-/** Session-only signal so a hint shows after dismissal until the user acknowledges or the timer expires. */
-const [premiumHintVisible, setPremiumHintVisible] = createSignal(false);
 
 const SidebarSectionMenu = (props: {
   label: string;
@@ -1197,18 +1185,6 @@ export const AppSidebar = (props: AppSidebarProps) => {
   );
   const callCtx = useCallContextOptional();
 
-  const hasFeatureAccess = useHasFeatureAccess();
-
-  /** Persisted dismissal for the Premium upgrade promo card. */
-  const [premiumCardDismissed, setPremiumCardDismissed] = makePersisted(
-    createSignal<boolean>(false),
-    { name: 'sidebar-premium-card-dismissed' }
-  );
-
-  const newPricingFF = useFeatureFlag('enable-new-pricing', {
-    enabledOverride: ENABLE_NEW_PRICING_OVERRIDE,
-  });
-
   const gettingStartedEnabled = useGettingStartedEnabled();
   const calendarUiEnabled = useCalendarUiFlag();
   const activityFeedEnabled = useActivityFeedFlag();
@@ -1661,57 +1637,6 @@ export const AppSidebar = (props: AppSidebarProps) => {
         </Show>
         <Show keyed when={isExpandedView() ? firstTeamInvite() : undefined}>
           {(invite) => <TeamInviteSidebarPromo invite={invite} />}
-        </Show>
-        <Show
-          when={
-            !hasFeatureAccess() &&
-            isExpandedView() &&
-            !userInvitesQuery.isLoading &&
-            !firstTeamInvite() &&
-            !premiumCardDismissed() &&
-            newPricingFF().enabled
-          }
-        >
-          <SidebarPromoCard
-            label={t('shell.paywall.upgradeToPremium')}
-            description={t('shell.paywall.sidebarDescription')}
-            onDismiss={() => {
-              setPremiumCardDismissed(true);
-              setPremiumHintVisible(true);
-            }}
-            primaryAction={{
-              label: t('shell.actions.upgrade'),
-              onClick: () => openSettingsTab('Billing'),
-            }}
-            secondaryAction={{
-              label: t('shell.actions.later'),
-              onClick: () => {
-                setPremiumCardDismissed(true);
-                setPremiumHintVisible(true);
-              },
-            }}
-          />
-        </Show>
-        <Show
-          when={
-            !hasFeatureAccess() &&
-            isExpandedView() &&
-            !userInvitesQuery.isLoading &&
-            !firstTeamInvite() &&
-            premiumHintVisible() &&
-            premiumCardDismissed() &&
-            newPricingFF().enabled
-          }
-        >
-          <SidebarPromoHint
-            title={t('shell.actions.maybeLater')}
-            message={t('shell.paywall.upgradeAnytime')}
-            onDone={() => setPremiumHintVisible(false)}
-            secondaryAction={{
-              label: t('shell.actions.takeMeThere'),
-              onClick: () => openSettingsTab('Account'),
-            }}
-          />
         </Show>
         <Show when={isExpandedView() && tryItems().length > 0}>
           <TryCard items={tryItems()} onDismiss={dismissTrySection} />

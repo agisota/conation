@@ -85,21 +85,16 @@ export const createAppViteConfig = (): UserConfigFn => {
           ? 'http://localhost:8090'
           : process.env.VITE_LOCAL_BACKEND_ORIGIN || 'http://localhost:8090'
         : 'same-origin';
-    const operatorOrigin =
-      clientProfile === 'standalone'
-        ? validateStandaloneBuildOriginInput(
-            process.env.VITE_CONATION_OPERATOR_ORIGIN ?? standaloneOriginDefault
-          )
-        : '';
+    const operatorOrigin = validateStandaloneBuildOriginInput(
+      process.env.VITE_CONATION_OPERATOR_ORIGIN ?? standaloneOriginDefault
+    );
     const aiEditingWorkerOrigin =
-      clientProfile === 'standalone' && process.env.VITE_AI_EDITING_WORKER_URL
+      process.env.VITE_AI_EDITING_WORKER_URL
         ? validateStandaloneServiceUrlInput(
             process.env.VITE_AI_EDITING_WORKER_URL
           )
-        : process.env.VITE_AI_EDITING_WORKER_URL;
-    const generateSourceMaps =
-      clientProfile === 'hosted-legacy' ||
-      process.env.VITE_CONATION_SOURCEMAPS === 'true';
+        : undefined;
+    const generateSourceMaps = process.env.VITE_CONATION_SOURCEMAPS === 'true';
 
     return {
       base: command === 'serve' ? '/' : '/app',
@@ -181,9 +176,8 @@ export const createAppViteConfig = (): UserConfigFn => {
           if (filePath.includes('.wasm')) return false;
           if (filePath.includes('/lok/')) return false;
         },
-        // Hosted upload jobs retain their historical sourcemaps. Standalone
-        // bundles omit them unless explicitly requested: they expose source
-        // and push Rollup over Node's default heap on this application.
+        // Bundles omit source maps unless explicitly requested: they expose
+        // source and push Rollup over Node's default heap on this application.
         sourcemap: generateSourceMaps,
       },
       esbuild: {
@@ -270,22 +264,21 @@ function getAssetsPath(mode: string, command: string): string {
 function defineEnv(
   mode: string,
   command: string,
-  clientProfile: 'standalone' | 'hosted-legacy',
+  clientProfile: 'standalone',
   operatorOrigin: string,
   aiEditingWorkerOrigin: string | undefined
 ) {
   // `vite build` compiles DEV from NODE_ENV, not MODE. Local-backend static
   // bundles already set VITE_LOCAL_BACKEND_ORIGIN (stack up);
-  // keep DEV so those artifacts match `just run_local` (vite serve). Hosted
-  // `just build-dev` does not set the origin, so DEV stays false.
+  // keep DEV so those artifacts match `just run_local` (vite serve).
   const keepDev = keepImportMetaDev({
     command,
     mode,
     localBackendOrigin: process.env.VITE_LOCAL_BACKEND_ORIGIN,
   });
   return {
-    __CONATION_HOSTED_LEGACY__: clientProfile === 'hosted-legacy',
-    'globalThis.__CONATION_HOSTED_LEGACY__': clientProfile === 'hosted-legacy',
+    __CONATION_HOSTED_LEGACY__: false,
+    'globalThis.__CONATION_HOSTED_LEGACY__': false,
     'import.meta.env.__APP_VERSION__': JSON.stringify(appVersion),
     'import.meta.env.ASSETS_PATH': JSON.stringify(getAssetsPath(mode, command)),
     'import.meta.env.__LOCAL_DOCKER__': process.env.LOCAL_DOCKER === 'true',

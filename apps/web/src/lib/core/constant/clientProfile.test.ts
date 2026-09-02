@@ -10,10 +10,12 @@ import {
 } from './clientProfile';
 
 describe('Conation client profile', () => {
-  it('defaults to standalone and requires an explicit legacy selection', () => {
+  it('defaults to standalone and rejects the retired managed selection', () => {
     expect(parseConationClientProfile(undefined)).toBe('standalone');
     expect(parseConationClientProfile('standalone')).toBe('standalone');
-    expect(parseConationClientProfile('hosted-legacy')).toBe('hosted-legacy');
+    expect(() => parseConationClientProfile('hosted-legacy')).toThrow(
+      'has been removed'
+    );
     expect(() => parseConationClientProfile('hosted')).toThrow(
       'VITE_CONATION_CLIENT_PROFILE'
     );
@@ -90,8 +92,7 @@ describe('Conation client profile', () => {
     );
   });
 
-  it('keeps the legacy callback scheme behind the explicit legacy profile', () => {
+  it('uses the Conation callback scheme', () => {
     expect(nativeAppSchemeForProfile('standalone')).toBe('conation');
-    expect(nativeAppSchemeForProfile('hosted-legacy')).toBe('macro');
   });
 });

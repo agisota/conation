@@ -6,7 +6,7 @@ describe('Conation paywall state', () => {
     const paywall = usePaywallState();
     paywall.hidePaywall();
 
-    paywall.showPaywall(PaywallKey.MULTI_INBOX);
+    paywall.showPaywall(PaywallKey.TEAMS);
 
     expect(paywall.paywallOpen()).toBe(false);
     expect(paywall.paywallKey()).toBeNull();

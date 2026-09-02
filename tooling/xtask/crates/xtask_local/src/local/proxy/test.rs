@@ -110,23 +110,23 @@ fn static_file_block_is_mode_specific() {
 }
 
 /// Drift gate across the Rust↔TypeScript seam: every proxied service's prefix
-/// must be wired into `proxyServers()` in `servers.ts`, or the frontend can't
-/// reach it through the single-origin proxy. servers.ts can't be derived from
-/// Rust, so this test is what keeps the two in sync.
+/// must be wired into `createStandaloneServers()` in `serverProfile.ts`, or
+/// the frontend can't reach it through the single-origin proxy. The frontend
+/// profile can't be derived from Rust, so this test keeps the two in sync.
 #[test]
 fn frontend_wires_every_inventory_prefix() {
-    let servers = repo_root().join("apps/web/src/lib/core/constant/servers.ts");
-    let src = std::fs::read_to_string(&servers)
-        .unwrap_or_else(|e| panic!("reading {}: {e}", servers.display()));
+    let profile = repo_root().join("apps/web/src/lib/core/constant/serverProfile.ts");
+    let src = std::fs::read_to_string(&profile)
+        .unwrap_or_else(|e| panic!("reading {}: {e}", profile.display()));
     for svc in inventory::RUST_SERVICES {
         let Some(prefix) = svc.path_prefix else {
             continue;
         };
-        let http = format!("${{proxyOrigin}}{prefix}");
-        let ws = format!("${{wsProxyOrigin}}{prefix}");
+        let http = format!("${{origin}}{prefix}");
+        let ws = format!("${{wsOrigin}}{prefix}");
         assert!(
             src.contains(&http) || src.contains(&ws),
-            "servers.ts proxyServers() is missing prefix {prefix} (for {}); \
+            "serverProfile.ts createStandaloneServers() is missing prefix {prefix} (for {}); \
              the frontend can't reach it through the proxy",
             svc.compose_name
         );

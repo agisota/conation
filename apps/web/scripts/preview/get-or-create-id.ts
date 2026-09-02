@@ -13,6 +13,11 @@
  */
 
 import { execSync } from 'node:child_process';
+import {
+  createPreviewUrlRegex,
+  isPreviewUrlInBody,
+  resolvePreviewDeploymentConfig,
+} from './config';
 
 interface Args {
   pr?: number;
@@ -70,17 +75,23 @@ export function generatePreviewId(branchOverride?: string): string {
     .slice(0, 30);
 
   const nanoid = Math.random().toString(36).slice(2, 8);
-  return `${sanitized}-${nanoid}`;
+  return `${sanitized || 'preview'}-${nanoid}`;
 }
 
-export const PREVIEW_URL_REGEX = /https:\/\/([a-z0-9-]+)\.preview\.macro\.com/;
-
-export function extractPreviewIdFromBody(body: string): string | null {
-  const match = body.match(PREVIEW_URL_REGEX);
+export function extractPreviewIdFromBody(
+  body: string,
+  hostSuffix: string
+): string | null {
+  const match = body.match(createPreviewUrlRegex(hostSuffix));
   return match?.[1] ?? null;
 }
 
-async function getExistingPreviewId(pr: number, repo: string, token: string): Promise<string | null> {
+async function getExistingPreviewId(
+  pr: number,
+  repo: string,
+  token: string,
+  hostSuffix: string
+): Promise<string | null> {
   const [owner, repoName] = repo.split('/');
 
   const response = await fetch(
@@ -101,11 +112,14 @@ async function getExistingPreviewId(pr: number, repo: string, token: string): Pr
   const comments = (await response.json()) as Array<{ body?: string; user?: { type?: string } }>;
 
   const previewComment = comments.find(
-    (c) => c.body?.includes('.preview.macro.com') && c.user?.type === 'Bot'
+    (c) =>
+      c.body !== undefined &&
+      isPreviewUrlInBody(c.body, hostSuffix) &&
+      c.user?.type === 'Bot'
   );
 
   if (previewComment?.body) {
-    return extractPreviewIdFromBody(previewComment.body);
+    return extractPreviewIdFromBody(previewComment.body, hostSuffix);
   }
 
   return null;
@@ -116,7 +130,13 @@ async function main() {
 
   // If we have PR info, try to get existing preview ID
   if (args.pr && args.repo && args.token) {
-    const existingId = await getExistingPreviewId(args.pr, args.repo, args.token);
+    const config = resolvePreviewDeploymentConfig();
+    const existingId = await getExistingPreviewId(
+      args.pr,
+      args.repo,
+      args.token,
+      config.hostSuffix
+    );
     if (existingId) {
       console.log(existingId);
       return;

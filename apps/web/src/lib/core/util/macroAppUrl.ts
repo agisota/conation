@@ -1,12 +1,6 @@
 import { isTauri } from '@core/util/platform';
 import { getConfiguredStandaloneOperatorOrigin } from '../constant/clientProfile';
 
-const LegacyHostedAppHosts = {
-  Prod: 'macro.com',
-  Dev: 'dev.macro.com',
-  Staging: 'staging.macro.com',
-} as const;
-
 const NativeLocalHosts = {
   Localhost: 'localhost',
   // The webview's own origin under the http asset scheme (e.g. Windows/Android),
@@ -17,8 +11,8 @@ const NativeLocalHosts = {
 function cleanHostname(hostname: string): string {
   // Strip only a leading `www.` (parity with the Rust `strip_prefix("www.")`);
   // a bare `replace('www.', '')` would also collapse a mid-string occurrence,
-  // e.g. `macro.www.com` -> `macro.com`, letting a foreign host masquerade as
-  // a Macro one.
+  // e.g. `conation.www.dev` -> `conation.dev`, letting a foreign host
+  // masquerade as the operator one.
   return hostname.toLowerCase().replace(/^www\./, '');
 }
 
@@ -28,36 +22,8 @@ export function isValidMacroAppHostname(hostname: string): boolean {
   if (current === target) {
     return true;
   }
-  const hostedLegacy =
-    globalThis.__CONATION_HOSTED_LEGACY__ ??
-    import.meta.env.VITE_CONATION_CLIENT_PROFILE === 'hosted-legacy';
-  if (hostedLegacy) {
-    if (
-      (target === LegacyHostedAppHosts.Dev &&
-        current === NativeLocalHosts.Localhost) ||
-      (target === NativeLocalHosts.Localhost &&
-        current === LegacyHostedAppHosts.Dev)
-    ) {
-      return true;
-    }
-    // The old hosted profile remains available only when explicitly selected.
-    if (
-      isTauri() &&
-      (current === NativeLocalHosts.Localhost ||
-        current === NativeLocalHosts.TauriLocalhost)
-    ) {
-      return (
-        target === LegacyHostedAppHosts.Prod ||
-        target === LegacyHostedAppHosts.Dev ||
-        target === LegacyHostedAppHosts.Staging
-      );
-    }
-    return false;
-  }
-
   // Native webviews have a synthetic localhost origin. Only the configured
-  // standalone operator host is an app-link host; no managed host aliases are
-  // accepted.
+  // standalone operator host is an app-link host.
   if (
     isTauri() &&
     (current === NativeLocalHosts.Localhost ||

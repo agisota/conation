@@ -35,32 +35,12 @@ dev-tauri: ensure-cache-wasm
     CONATION_TAURI_APP_ENV=development bun scripts/tauri-rust-profile.ts
     bun run --bun dev
 
-# List available local service names
-local-services:
-    @sed -n "s/.*'\([a-z][-a-z]*\)':.*/\1/p" src/lib/core/constant/servers.ts | sort -u
-
-# Run the app with local services (defaults to ALL)
-# This assumes you have followed the docs/RUNNING_LOCALLY.md instructions
-servers := 'ALL'
+# Run the app through the standalone local reverse proxy.
+# This assumes you have followed the docs/RUNNING_LOCALLY.md instructions.
 port := '3000'
 
 local:
-    PORT='{{port}}' VITE_LOCAL_SERVERS='{{servers}}' bun run --bun dev
-
-local-sync-playground:
-    VITE_CONATION_CLIENT_PROFILE='hosted-legacy' VITE_LOCAL_SERVERS='ALL' VITE_SYNC_SERVICE_HOST='sync-service-playground.macroverse.workers.dev' bun run --bun dev
-
-local-dcs:
-    VITE_LOCAL_SERVERS='cognition-service,cognition-websocket-service' bun run --bun dev
-
-local-dss:
-    VITE_LOCAL_SERVERS='document-storage-service' bun run --bun dev
-
-local-search: ensure-cache-wasm
-    VITE_LOCAL_SERVERS='search-service' bun run --bun dev
-
-local-email: ensure-cache-wasm
-    VITE_LOCAL_SERVERS='email-service' bun run --bun dev
+    PORT='{{port}}' VITE_CONATION_OPERATOR_ORIGIN='http://localhost:8090' bun run --bun dev
 
 # All app builds need the gitignored wasm pkg (src/lib/graphql-cache/wasm):
 # without it the cache worker's dynamic import 404s at runtime and the
@@ -72,22 +52,17 @@ local-email: ensure-cache-wasm
 node_heap := "--max-old-space-size=6144"
 
 build-dev: build-cache-wasm build-agent-fold-wasm
-    VITE_CONATION_CLIENT_PROFILE=hosted-legacy MODE=development NODE_ENV=production NODE_OPTIONS="{{node_heap}}" bun run --bun build
+    VITE_CONATION_CLIENT_PROFILE=standalone VITE_CONATION_OPERATOR_ORIGIN=same-origin MODE=development NODE_ENV=production NODE_OPTIONS="{{node_heap}}" bun run --bun build
     bun scripts/cache-wasm/cli.ts package-dist --dist dist
 
 build-staging: build-cache-wasm build-agent-fold-wasm
-    VITE_CONATION_CLIENT_PROFILE=hosted-legacy MODE=staging NODE_ENV=production NODE_OPTIONS="{{node_heap}}" bun run --bun build
+    VITE_CONATION_CLIENT_PROFILE=standalone VITE_CONATION_OPERATOR_ORIGIN=same-origin MODE=staging NODE_ENV=production NODE_OPTIONS="{{node_heap}}" bun run --bun build
     bun scripts/cache-wasm/cli.ts package-dist --dist dist
 
 build-prod: build-cache-wasm build-agent-fold-wasm
     VITE_CONATION_CLIENT_PROFILE=standalone VITE_CONATION_OPERATOR_ORIGIN=same-origin MODE=production NODE_ENV=production NODE_OPTIONS="{{node_heap}}" bun run --bun build
     bun scripts/cache-wasm/cli.ts package-dist --dist dist
     bun scripts/assert-standalone-artifact.ts dist
-
-# Explicit compatibility artifact for the former managed deployment.
-build-hosted-legacy: build-cache-wasm build-agent-fold-wasm
-    VITE_CONATION_CLIENT_PROFILE=hosted-legacy MODE=production NODE_ENV=production NODE_OPTIONS="{{node_heap}}" bun run --bun build
-    bun scripts/cache-wasm/cli.ts package-dist --dist dist
 
 check-standalone-artifact:
     bun scripts/assert-standalone-artifact.ts dist
@@ -97,9 +72,6 @@ check-standalone-artifact:
 # comma-separated CONATION_TAURI_HTTP_ORIGINS.
 tauri-build-standalone:
     CONATION_CLIENT_PROFILE=standalone bun scripts/run-tauri-build.ts desktop
-
-tauri-build-hosted-legacy:
-    CONATION_CLIENT_PROFILE=hosted-legacy bun scripts/run-tauri-build.ts desktop
 
 # Tauri build hook (run automatically via beforeBuildCommand) — not meant to be run directly
 [private]

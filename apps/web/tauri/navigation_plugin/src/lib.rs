@@ -23,8 +23,8 @@ enum NavigationOutput<'a> {
     /// the dev server, ...) — the webview is allowed to load it directly.
     /// This is what permits the SPA's own page loads.
     Internal,
-    /// A link to content inside the Macro app whose literal [Url] points at
-    /// the remote website (e.g. `https://macro.com/app/...`). The webview
+    /// A link to content inside the Conation app whose literal [Url] points at
+    /// the configured operator website (e.g. `https://app.conation.example/app/...`). The webview
     /// must not load it — that would replace the running SPA with the live
     /// site — so the navigation is cancelled and re-emitted as a `navigate`
     /// event for the SPA router to handle in-place.
@@ -99,7 +99,7 @@ impl MacroNavigationPlugin {
 
     #[tracing::instrument(ret, level = tracing::Level::DEBUG, skip(self))]
     fn get_destination<'a>(&self, url: &'a Url) -> NavigationOutput<'a> {
-        // checked before the allowlist: app link hosts (e.g. dev.macro.com)
+        // checked before the allowlist: configured app-link hosts
         // are not necessarily allowlisted webview domains
         if let Some(scheme) = self.as_app_link(url) {
             return NavigationOutput::AppLink(scheme);

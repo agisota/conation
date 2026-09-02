@@ -12,15 +12,12 @@ import { Widget as WidgetNS } from './widget';
  * plus a few composed views — the same data shape the eventual `compose_view` AI
  * tool will emit. No AI involved: everything below is hand-written fixtures.
  *
- * The `list`/`timeline` entity refs below are REAL ids from dev-assets
- * (the macro-db-dev RDS the running app talks to), owned by eric.hayes@macro.com,
- * so they resolve to real previews via ItemPreview. Swap them for other ids as
- * needed.
+ * The `list`/`timeline` entity refs below are development fixture ids. They
+ * resolve only when the active Conation operator has matching data; replace
+ * them with ids from the local/self-hosted dataset as needed.
  */
 
-// --- real entity refs from dev-assets (macro-db-dev RDS), owned by
-// conation|eric.hayes@conation.dev — the account logged into the running app — so they
-// resolve to real previews via ItemPreview.
+// --- development entity refs; replace for a fresh self-hosted dataset.
 const DOC_SHOWCASE = '019e943b-ffbd-7a2b-b81d-7fe694f493b2'; // "Mentions and Citations Showcase"
 const DOC_STABILIZE = '019e8f7d-2105-7d37-b4fd-8a5e35caff90'; // "Stabilize the tool render component during chat streaming"
 const TASK_GROUP_TOOLS = '019e8f7f-283a-7d61-99c3-7f94033ec73e'; // "Group tool calls like claude code"

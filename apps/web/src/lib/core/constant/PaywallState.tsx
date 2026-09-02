@@ -11,7 +11,6 @@ export enum PaywallKey {
   CANVAS_CLIKED = 'CANVAS_CLIKED',
   SAVED_PROMPT = 'SAVED_PROMPT',
   REMOVE_SIGNATURE = 'REMOVE_SIGNATURE',
-  MULTI_INBOX = 'MULTI_INBOX',
   TEAMS = 'TEAMS',
 }
 
@@ -19,8 +18,9 @@ export type PaywallMessageMetadata = {
   learnMoreUrl: string;
 };
 
-// User-visible paywall copy is locale-owned in `shell.paywall.limit.*`.
-// This map contains only stable documentation destinations.
+// Legacy limit reasons remain for API compatibility, but Conation's free
+// access policy never opens a user-visible paywall. This map contains only
+// stable documentation destinations for non-commercial callers.
 export const PaywallMessages: Partial<
   Record<PaywallKey, PaywallMessageMetadata>
 > = {
@@ -44,9 +44,6 @@ export const PaywallMessages: Partial<
   },
   [PaywallKey.REMOVE_SIGNATURE]: {
     learnMoreUrl: `${DOCS_BASE}/product/email`,
-  },
-  [PaywallKey.MULTI_INBOX]: {
-    learnMoreUrl: `${DOCS_BASE}/product/inbox`,
   },
   [PaywallKey.TEAMS]: {
     learnMoreUrl: `${DOCS_BASE}/account/teams`,

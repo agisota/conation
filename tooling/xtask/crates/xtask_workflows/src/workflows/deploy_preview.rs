@@ -3,8 +3,9 @@
 //! `deploy-preview.yml`; safe to rename since this is deliberately not a
 //! required status check).
 //!
-//! Deploys a preview build to `<branch>-<nanoid>-preview.macro.com`, built
-//! identically to dev.macro.com (MODE=development, points at dev services).
+//! Deploys a preview build to `<preview-id>.<operator-configured-DNS-suffix>`.
+//! The bucket and DNS suffix are explicit GitHub Actions Variables owned by
+//! the Conation operator; the preview scripts reject absent or legacy values.
 //!
 //! NOTE: this workflow must NOT be added to required status checks — PRs
 //! should be mergeable regardless of preview deploy status.
@@ -16,7 +17,16 @@ use gh_workflow::{
 
 use crate::workflows::{runners, steps, vars, web_artifact_paths::WEB_ARTIFACT_PATHS};
 
-const PREVIEW_BUCKET: &str = "macro-preview-assets-dev";
+#[cfg(test)]
+mod test;
+
+/// Preview deployments use repository secrets and may publish public assets.
+/// Restrict them to pull requests both opened from this repository and authored
+/// by its owner before any checkout or credential-bearing step can run.
+const TRUSTED_PREVIEW_PR: &str = concat!(
+    "github.event.pull_request.head.repo.full_name == github.repository && ",
+    "github.event.pull_request.author_association == 'OWNER'"
+);
 
 /// Build the workflow.
 pub fn deploy_preview() -> Workflow {
@@ -28,7 +38,14 @@ pub fn deploy_preview() -> Workflow {
             ))
             .cancel_in_progress(true),
         )
-        .add_env(("PREVIEW_BUCKET", PREVIEW_BUCKET))
+        .add_env((
+            "CONATION_PREVIEW_BUCKET",
+            "${{ vars.CONATION_PREVIEW_BUCKET }}",
+        ))
+        .add_env((
+            "CONATION_PREVIEW_HOST_SUFFIX",
+            "${{ vars.CONATION_PREVIEW_HOST_SUFFIX }}",
+        ))
         .add_job("deploy", deploy())
 }
 
@@ -44,6 +61,7 @@ fn pull_request_event() -> PullRequest {
 fn deploy() -> Job {
     Job::default()
         .runs_on(runners::Runner::Mid.with_cache_tag(vars::WEB_CI_CACHE_TAG))
+        .cond(Expression::new(TRUSTED_PREVIEW_PR))
         .permissions(
             Permissions::default()
                 .contents(Level::Read)
@@ -56,7 +74,6 @@ fn deploy() -> Job {
         .add_step(build())
         .add_step(configure_aws_credentials())
         .add_step(get_or_create_preview_id())
-        .add_step(validate_bucket_name())
         .add_step(deploy_to_s3())
         .add_step(comment_on_pr())
         .add_step(steps::teardown_nix())
@@ -101,21 +118,13 @@ fn get_or_create_preview_id() -> Step<Run> {
               --pr ${{ github.event.pull_request.number }} \
               --repo ${{ github.repository }} \
               --token ${{ secrets.GITHUB_TOKEN }} \
-              --branch "${{ github.head_ref }}")
+              --branch "$BRANCH")
             echo "id=$PREVIEW_ID" >> $GITHUB_OUTPUT
             echo "Preview ID: $PREVIEW_ID"
         "#})
         .id("preview-id")
         .working_directory(xtask_paths::repo_dir!("apps/web"))
-}
-
-fn validate_bucket_name() -> Step<Run> {
-    Step::new("Validate bucket name").run(indoc::indoc! {r#"
-        if [[ "${{ env.PREVIEW_BUCKET }}" != "macro-preview-assets-dev" ]]; then
-          echo "ERROR: PREVIEW_BUCKET must be 'macro-preview-assets-dev'"
-          exit 1
-        fi
-    "#})
+        .add_env(Env::new("BRANCH", "${{ github.head_ref }}"))
 }
 
 fn deploy_to_s3() -> Step<Run> {

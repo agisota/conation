@@ -1,18 +1,68 @@
-import { config } from "dotenv";
+export const LOCAL_FUSIONAUTH_ORIGIN = "http://localhost:9011";
+const LEGACY_MANAGED_HOST_SUFFIXES = ["macro.com", "macroverse.workers.dev"];
 
-// Load environment variables from .env file
-config();
+function isLegacyManagedHost(hostname: string): boolean {
+  return LEGACY_MANAGED_HOST_SUFFIXES.some(
+    (suffix) => hostname === suffix || hostname.endsWith(`.${suffix}`)
+  );
+}
 
-const FUSIONAUTH_DOMAIN = process.env.FUSIONAUTH_DOMAIN ?? "https://fusionauth-dev.macro.com";
+/**
+ * Resolves the FusionAuth origin used by local developer tooling.
+ *
+ * The local self-hosted FusionAuth service is the only fallback. An operator
+ * must set FUSIONAUTH_DOMAIN explicitly for any non-local environment.
+ */
+export function resolveFusionAuthOrigin(
+  configuredOrigin = process.env.FUSIONAUTH_DOMAIN
+): string {
+  const rawOrigin = configuredOrigin?.trim() || LOCAL_FUSIONAUTH_ORIGIN;
+  let parsed: URL;
 
-async function generateAccessToken(): Promise<string> {
-  const refreshToken = process.env.REFRESH_TOKEN;
+  try {
+    parsed = new URL(rawOrigin);
+  } catch {
+    throw new Error(
+      "FUSIONAUTH_DOMAIN must be an absolute http(s) origin, for example https://auth.conation.example"
+    );
+  }
+
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new Error("FUSIONAUTH_DOMAIN must use http or https");
+  }
+
+  if (
+    parsed.username ||
+    parsed.password ||
+    parsed.pathname !== "/" ||
+    parsed.search ||
+    parsed.hash
+  ) {
+    throw new Error(
+      "FUSIONAUTH_DOMAIN must be an origin without credentials, path, query, or fragment"
+    );
+  }
+
+  const hostname = parsed.hostname.toLowerCase();
+  if (isLegacyManagedHost(hostname)) {
+    throw new Error(
+      `FUSIONAUTH_DOMAIN cannot target managed legacy host ${hostname}`
+    );
+  }
+
+  return parsed.origin;
+}
+
+export async function generateAccessToken(
+  fusionAuthOrigin = resolveFusionAuthOrigin(),
+  refreshToken = process.env.REFRESH_TOKEN
+): Promise<string> {
 
   if (!refreshToken) {
     throw new Error("REFRESH_TOKEN environment variable is not set");
   }
 
-  const response = await fetch(`${FUSIONAUTH_DOMAIN}/api/jwt/refresh`, {
+  const response = await fetch(`${fusionAuthOrigin}/api/jwt/refresh`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -39,6 +89,8 @@ async function generateAccessToken(): Promise<string> {
   return data.token;
 }
 
-const token = await generateAccessToken();
-console.log("Access Token:");
-console.log(token);
+if (import.meta.main) {
+  const token = await generateAccessToken();
+  console.log("Access Token:");
+  console.log(token);
+}

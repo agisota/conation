@@ -9,6 +9,15 @@ const shellKeys = (catalog: Record<string, string>) =>
     .filter((key) => key.startsWith('shell.'))
     .sort();
 
+const sidebarSources = import.meta.glob(
+  '../../components/app/app-sidebar/sidebar.tsx',
+  {
+    eager: true,
+    import: 'default',
+    query: '?raw',
+  }
+) as Record<string, string>;
+
 describe('app shell localization', () => {
   afterEach(() => setLocale('en'));
 
@@ -66,24 +75,19 @@ describe('app shell localization', () => {
     expect(formatRecentSessionTime(earlier, now)).toBe('2 часа назад');
   });
 
-  test('provides translated descriptions for every paywall reason', () => {
-    const reasons = [
-      'PROJECT_LIMIT',
-      'FILE_LIMIT',
-      'IMAGE_LIMIT',
-      'CHAT_LIMIT',
-      'O1_LIMIT',
-      'CANVAS_CLIKED',
-      'SAVED_PROMPT',
-      'REMOVE_SIGNATURE',
-      'MULTI_INBOX',
-      'TEAMS',
-    ];
-
-    setLocale('ru');
-    for (const reason of reasons) {
-      const key = `shell.paywall.limit.${reason}.description`;
-      expect(t(key)).not.toBe(key);
+  test('does not retain a paid plan or paywall catalog under the free policy', () => {
+    for (const catalog of [en, ru]) {
+      expect(
+        shellKeys(catalog).filter((key) => key.startsWith('shell.paywall.'))
+      ).toEqual([]);
+      expect(catalog).not.toHaveProperty('shell.actions.upgrade');
     }
+  });
+
+  test('does not retain a sidebar path to deleted paid copy', () => {
+    const [sidebarSource] = Object.values(sidebarSources);
+    expect(sidebarSource).toBeDefined();
+    expect(sidebarSource).not.toContain('shell.paywall.');
+    expect(sidebarSource).not.toContain('shell.actions.upgrade');
   });
 });

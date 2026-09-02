@@ -34,21 +34,13 @@ mod device;
 mod share_target;
 mod staged_upload;
 
+#[cfg(test)]
 #[path = "../client_profile_config.rs"]
 #[allow(
     dead_code,
-    reason = "shared with build.rs; the app uses only ClientProfile"
+    reason = "the build-profile module is included solely to run its unit tests"
 )]
 mod client_profile_config;
-use client_profile_config::ClientProfile;
-
-fn client_profile() -> ClientProfile {
-    match env!("CONATION_TAURI_CLIENT_PROFILE") {
-        "standalone" => ClientProfile::Standalone,
-        "hosted-legacy" => ClientProfile::HostedLegacy,
-        other => unreachable!("invalid CONATION_TAURI_CLIENT_PROFILE: {other}"),
-    }
-}
 
 fn app_link_hosts() -> &'static [&'static str] {
     static HOSTS: std::sync::OnceLock<Box<[&'static str]>> = std::sync::OnceLock::new();
@@ -354,24 +346,11 @@ fn merge_header_callback<R: Runtime>(url: String, headers: &mut HeaderMap, handl
         return;
     };
 
-    // Standalone services share the operator host. The explicit hosted-legacy
-    // profile retains its deployed websocket hosts. Both need the public web
-    // origin rather than the synthetic tauri://localhost origin.
-    let should_set_origin = match client_profile() {
-        ClientProfile::Standalone => parsed_url.host_str().is_some_and(|host| {
-            Url::parse(env!("CONATION_TAURI_OPERATOR_ORIGIN"))
-                .ok()
-                .and_then(|operator| operator.host_str().map(str::to_owned))
-                .is_some_and(|operator| operator.eq_ignore_ascii_case(host))
-        }),
-        ClientProfile::HostedLegacy => matches!(
-            parsed_url.host_str(),
-            Some("services.macro.com")
-                | Some("services-dev.macro.com")
-                | Some("macroverse.workers.dev")
-        ),
-    };
-    if should_set_origin {
+    // Standalone services share the operator host and need its public web
+    // origin rather than the synthetic tauri://localhost origin. Compare a
+    // complete origin mapping, not just the hostname: localhost services on
+    // distinct ports are distinct security origins.
+    if websocket_matches_operator_origin(&parsed_url, env!("CONATION_TAURI_OPERATOR_ORIGIN")) {
         headers.insert(
             ORIGIN,
             HeaderValue::from_static(env!("CONATION_TAURI_OPERATOR_ORIGIN")),
@@ -393,6 +372,57 @@ fn merge_header_callback<R: Runtime>(url: String, headers: &mut HeaderMap, handl
     if let Some(cookie) = s.inner().cookies_jar.as_ref().cookies(&parsed_url) {
         tracing::trace!("inserting cookie value for {parsed_url}");
         headers.insert(COOKIE, cookie);
+    }
+}
+
+/// Returns whether a WebSocket URL is the WS equivalent of the public
+/// operator origin. HTTP operators are reached over `ws`, HTTPS operators over
+/// `wss`; hostname comparison is case-insensitive and ports include defaults.
+fn websocket_matches_operator_origin(websocket: &Url, operator_origin: &str) -> bool {
+    let Ok(operator) = Url::parse(operator_origin) else {
+        return false;
+    };
+    let expected_websocket_scheme = match operator.scheme() {
+        "http" => "ws",
+        "https" => "wss",
+        _ => return false,
+    };
+
+    websocket.scheme() == expected_websocket_scheme
+        && websocket
+            .host_str()
+            .zip(operator.host_str())
+            .is_some_and(|(websocket_host, operator_host)| {
+                websocket_host.eq_ignore_ascii_case(operator_host)
+            })
+        && websocket.port_or_known_default() == operator.port_or_known_default()
+}
+
+#[cfg(test)]
+mod websocket_origin_tests {
+    use super::websocket_matches_operator_origin;
+    use url::Url;
+
+    #[test]
+    fn only_sets_the_public_origin_for_the_matching_websocket_origin() {
+        let cases = [
+            ("ws://localhost:8090/websocket", "http://localhost:8090", true),
+            ("wss://operator.example.test/websocket", "https://operator.example.test", true),
+            ("wss://OPERATOR.example.test/websocket", "https://operator.example.test", true),
+            ("wss://operator.example.test/websocket", "https://operator.example.test:443", true),
+            ("ws://localhost:9999/websocket", "http://localhost:8090", false),
+            ("wss://operator.example.test/websocket", "http://operator.example.test", false),
+            ("ws://operator.example.test/websocket", "https://operator.example.test", false),
+            ("wss://other.example.test/websocket", "https://operator.example.test", false),
+        ];
+
+        for (websocket, operator, expected) in cases {
+            assert_eq!(
+                websocket_matches_operator_origin(&Url::parse(websocket).unwrap(), operator),
+                expected,
+                "websocket={websocket}, operator={operator}"
+            );
+        }
     }
 }
 
@@ -433,8 +463,8 @@ enum LaunchState {
 /// Convert a deep link url into a `navigate` event for the frontend router.
 #[tracing::instrument(err, skip(handle))]
 fn emit_navigate_for_deep_link(url: Url, handle: &AppHandle) -> Result<(), Report> {
-    // Universal/App links come in as https:// URLs; standalone custom links
-    // use conation:// (the explicit hosted legacy profile compiles macro://).
+    // Universal/App links come in as https:// URLs; custom links use
+    // conation://.
     let conation_scheme = match url.scheme() {
         s if s == APP_SCHEME => MacroScheme::new_with_scheme(url, APP_SCHEME)?,
         "http" | "https" => MacroScheme::from_url_with_scheme(&url, APP_SCHEME)?,

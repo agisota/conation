@@ -44,8 +44,25 @@ legacy endpoints и устаревшую URL-схему. Это статичес
 VITE_CONATION_OPERATOR_ORIGIN=https://conation.example just build-prod
 ```
 
-Замените `conation.example` на реально контролируемый HTTPS origin. Для
-самостоятельного развёртывания не используйте hosted-legacy профиль.
+Замените `conation.example` на реально контролируемый HTTPS origin. Conation
+поддерживает только `standalone`: любой иной runtime-профиль, включая
+`hosted-legacy`, намеренно отклоняется при сборке.
+
+## Удалённые preview-окружения (опционально)
+
+Preview-скрипты не имеют managed default. Перед публикацией или очисткой
+удалённого preview оператор обязан явно указать собственные S3 bucket и DNS
+suffix:
+
+```bash
+export CONATION_PREVIEW_BUCKET=conation-preview-assets
+export CONATION_PREVIEW_HOST_SUFFIX=preview.conation.example
+bun scripts/preview/deploy.ts --preview-id feature-abc123
+```
+
+`CONATION_PREVIEW_HOST_SUFFIX` — только DNS suffix без протокола или пути;
+комментарии PR и URL preview строятся исключительно из него. Старый
+`PREVIEW_BUCKET` не является fallback-конфигурацией.
 
 ## Локальный продуктовый стек
 

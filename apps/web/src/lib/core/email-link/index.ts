@@ -2,7 +2,6 @@ import { ROUTER_BASE_CONCAT, toBaseRelative } from '@app/constants/routerBase';
 import { updateUserAuth } from '@core/auth';
 import { toast } from '@core/component/Toast/Toast';
 import { getConfiguredNativeAppScheme } from '@core/constant/clientProfile';
-import { PaywallKey, usePaywallState } from '@core/constant/PaywallState';
 import { currentSettingsReturnTo } from '@core/constant/SettingsState';
 import { t } from '@core/i18n';
 import { getNativeMobilePlatform } from '@core/util/platform';
@@ -190,17 +189,6 @@ export function initAndStartEmailSync() {
 }
 
 /**
- * The backend gates additional inboxes behind a paid subscription and answers
- * `POST /link/gmail` with 402 when the user isn't entitled. The auth client maps
- * that to a `PAYMENT_REQUIRED` error code; the add-inbox flow surfaces the
- * paywall instead of a generic failure so the backend stays the source of truth
- * on entitlement.
- */
-function isPaymentRequired(errors: ReadonlyArray<{ code: string }>): boolean {
-  return errors.some((error) => error.code === 'PAYMENT_REQUIRED');
-}
-
-/**
  * The backend answers `POST /link/gmail` with 429 when the user has too many
  * incomplete link attempts in flight (each abandoned OAuth leaves a pending row
  * that expires after 24h). The auth client maps that to `TOO_MANY_PENDING_LINKS`
@@ -235,7 +223,6 @@ function isTooManyPendingLinks(
 export function useAddInboxFlow() {
   const initGmailLink = useInitGmailLink();
   const { query, initEmailLink } = useEmailLinks();
-  const { showPaywall } = usePaywallState();
 
   const completeNativeLink = async (linkId: string, forceShare: boolean) => {
     await initEmailLink({ linkId, forceShare }).match(
@@ -268,10 +255,6 @@ export function useAddInboxFlow() {
       scopes,
     });
     if (result.isErr()) {
-      if (isPaymentRequired(result.error)) {
-        showPaywall(PaywallKey.MULTI_INBOX);
-        return;
-      }
       if (isTooManyPendingLinks(result.error)) {
         toast.failure(t('core.inbox.tooManyPending'));
         return;
@@ -326,8 +309,6 @@ export function useAddInboxFlow() {
         settingsReturnTo: currentSettingsReturnTo(),
       });
       window.location.href = result.value.authorization_url;
-    } else if (isPaymentRequired(result.error)) {
-      showPaywall(PaywallKey.MULTI_INBOX);
     } else if (isTooManyPendingLinks(result.error)) {
       toast.failure(t('core.inbox.tooManyPending'));
     } else {

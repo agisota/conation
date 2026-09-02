@@ -72,7 +72,7 @@ The `import Worker from './w?worker'` import itself is harmless — only `new Wo
 
 2. **Stream the app's logs in one terminal:**
    ```sh
-   /usr/bin/log stream --predicate 'process == "macro"' --info --debug --style compact
+   /usr/bin/log stream --predicate 'process == "Conation"' --info --debug --style compact
    ```
    Use the full `/usr/bin/log` path — zsh shadows `log` as a builtin and silently misroutes the call. Leave this running across rebuilds; the filter is by process name so it survives app relaunches.
 
