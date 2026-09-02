@@ -3,9 +3,9 @@
 #   just serve
 #   RUST_LOG=coding_agent_worker=trace just serve   # tap the ACP wire
 #
-# Reads the repo-root macro.toml by default; override with CONFIG=/path/to.toml.
+# Reads the repo-root conation.toml by default; override with CONFIG=/path/to.toml.
 
-CONFIG := env("CONFIG", justfile_directory() + "/../../macro.toml")
+CONFIG := env("CONFIG", justfile_directory() + "/../../conation.toml")
 
 ROOT := justfile_directory() + "/../.."
 SCRIPTS := ROOT + "/tooling/xtask/crates/xtask_workflows/src/workflows/scripts"
@@ -14,7 +14,7 @@ SCRIPTS := ROOT + "/tooling/xtask/crates/xtask_workflows/src/workflows/scripts"
 serve:
     SQLX_OFFLINE=true cargo run -p coding_agent_worker -- --config {{ CONFIG }}
 
-# Build the release `macrod` the way the tag workflow does, and prove it is as
+# Build the release `conationd` the way the tag workflow does, and prove it is as
 # self-contained as it claims. Runs the workflow's own scripts rather than a
 # copy of them, so a green run here means the same steps are green in CI.
 #
@@ -29,5 +29,5 @@ build-static TARGET=(arch() + "-unknown-linux-musl"):
         bash {{ SCRIPTS }}/package_agent_daemon.sh
     @# Both land at the workspace root, which is not where you ran this from.
     @cd {{ ROOT }} && echo "" \
-        && echo "binary:  $(pwd)/target/{{ TARGET }}/release/macrod" \
-        && echo "tarball: $(pwd)/artifacts/macrod-dev-local.tar.gz"
+        && echo "binary:  $(pwd)/target/{{ TARGET }}/release/conationd" \
+        && echo "tarball: $(pwd)/artifacts/conationd-dev-local.tar.gz"

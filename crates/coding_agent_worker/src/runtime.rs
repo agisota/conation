@@ -19,7 +19,7 @@ use tokio_retry::RetryIf;
 use tokio_retry::strategy::{ExponentialBackoff, FixedInterval};
 use tokio_tungstenite::tungstenite;
 
-use crate::config::{Harness, MacroApi};
+use crate::config::{ConationApi, Harness};
 use crate::harness;
 use crate::outbound::link;
 
@@ -41,7 +41,7 @@ const REBUILD_ATTEMPTS: usize = 4;
 /// unset dials, and the task serving the connection clears it on the way out,
 /// so "set" always means "somebody is serving, or about to be".
 pub struct Runtime {
-    conation_api: MacroApi,
+    conation_api: ConationApi,
     harness: Harness,
     live: Arc<AtomicBool>,
 }
@@ -49,7 +49,7 @@ pub struct Runtime {
 impl Runtime {
     /// A runtime that dials with the given credentials and spawns the given
     /// harness.
-    pub fn new(conation_api: MacroApi, harness: Harness) -> Self {
+    pub fn new(conation_api: ConationApi, harness: Harness) -> Self {
         Self {
             conation_api,
             harness,
@@ -96,7 +96,7 @@ impl Runtime {
 async fn serve(
     gateway_url: String,
     channel: RuntimeChannel,
-    conation_api: MacroApi,
+    conation_api: ConationApi,
     harness: Harness,
     live: Arc<AtomicBool>,
 ) {
@@ -115,7 +115,7 @@ async fn serve(
 
 /// Dial and serve again, as one retried operation: ending cleanly stops it, as
 /// does a gateway verdict no retry can change.
-async fn rebuild(gateway_url: &str, conation_api: &MacroApi, harness: &Harness) {
+async fn rebuild(gateway_url: &str, conation_api: &ConationApi, harness: &Harness) {
     let outcome = RetryIf::start(
         rebuild_strategy(),
         || async {
@@ -160,7 +160,7 @@ fn worth_rebuilding(error: &ServeError) -> bool {
 
 /// Dial the gateway, retrying on the failures a retry can fix.
 async fn dial(
-    conation_api: &MacroApi,
+    conation_api: &ConationApi,
     gateway_url: &str,
     strategy: impl IntoIterator<Item = Duration>,
 ) -> Result<RuntimeChannel, tungstenite::Error> {

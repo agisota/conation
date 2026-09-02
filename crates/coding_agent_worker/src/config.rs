@@ -12,9 +12,9 @@ mod test;
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
-    /// The Macro deployment this bot's sessions live in.
-    #[serde(rename = "macro")]
-    pub conation_api: MacroApi,
+    /// The Conation deployment this bot's sessions live in.
+    #[serde(rename = "conation")]
+    pub conation_api: ConationApi,
     /// The webhook server this daemon listens on.
     pub server: Server,
     /// The harness process spawned per session.
@@ -23,11 +23,11 @@ pub struct Config {
     pub workspace: Workspace,
 }
 
-/// The Macro deployment this bot's sessions live in, and how to act as the
+/// The Conation deployment this bot's sessions live in, and how to act as the
 /// bot there.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct MacroApi {
+pub struct ConationApi {
     /// Base URL of the agent-harness service, e.g.
     /// `http://localhost:50009/agent-harness`. Sessions are created and
     /// prompted here, and its `ws(s)` twin hosts the runtime gateway.
@@ -45,7 +45,7 @@ pub struct MacroApi {
     pub bot_scope: String,
 }
 
-impl MacroApi {
+impl ConationApi {
     /// The dial-in URL for a session on this deployment's runtime gateway:
     /// the API base with a websocket scheme.
     pub fn gateway_url(&self) -> String {
@@ -61,11 +61,11 @@ impl MacroApi {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Server {
-    /// Port `POST /macro-events` is served on.
+    /// Port `POST /conation-events` is served on.
     pub port: u16,
     /// The URL webhook deliveries reach this daemon at - what the feed is
     /// registered with. Locally that is the stack's relay
-    /// (`http://sdk-webhook-relay:8787/macro-events`); in production, a
+    /// (`http://sdk-webhook-relay:8787/conation-events`); in production, a
     /// public HTTPS endpoint.
     pub public_url: String,
     /// Explicit signing secret, overriding boot-time feed registration.

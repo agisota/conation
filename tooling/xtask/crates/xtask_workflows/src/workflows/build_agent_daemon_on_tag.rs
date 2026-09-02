@@ -1,4 +1,4 @@
-//! `Build Agent Daemon on Tag` — self-contained `macrod` binaries for Linux
+//! `Build Conation Agent Daemon on Tag` — self-contained `conationd` binaries for Linux
 //! and macOS, attached to the release its tag names.
 //!
 //! Unlike everything else this repo builds, the daemon runs on a machine we
@@ -71,7 +71,7 @@ const MACOS_TARGETS: &[DaemonTarget] = &[
 
 /// Build the workflow.
 pub fn build_agent_daemon_on_tag() -> Workflow {
-    let mut workflow = Workflow::new("Build Agent Daemon on Tag")
+    let mut workflow = Workflow::new("Build Conation Agent Daemon on Tag")
         .on(daemon_events())
         .concurrency(
             Concurrency::new(Expression::new(
@@ -219,7 +219,7 @@ fn package_step(target: &DaemonTarget) -> Step<Run> {
 fn upload_step(target: &DaemonTarget) -> Step<gh_workflow::Use> {
     steps::upload_artifact(
         &format!(
-            "macrod-{}-${{{{ steps.metadata.outputs.safe_tag }}}}",
+            "conationd-{}-${{{{ steps.metadata.outputs.safe_tag }}}}",
             target.slug
         ),
         xtask_paths::runtime_path!("artifacts/*"),

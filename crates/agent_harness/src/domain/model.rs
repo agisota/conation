@@ -55,7 +55,7 @@ pub struct OpenSession {
 /// ACP supplies none: `session/new` carries a working directory, MCP servers
 /// and `_meta`, and nothing else. [`Self::SandboxedCoder`] will get a
 /// per-session file listed alongside `SYSTEM.md` in `container/opencode.json`,
-/// [`Self::External`] `_meta` on `session/new` for macrod to translate, and
+/// [`Self::External`] `_meta` on `session/new` for conationd to translate, and
 /// [`Self::Cursor`] - whose API takes a prompt and nothing more - has to fold
 /// them into the prompt body's hidden agent-context node.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

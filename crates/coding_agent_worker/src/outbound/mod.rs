@@ -1,4 +1,4 @@
-//! The daemon's adapters to the Macro backend.
+//! The daemon's adapters to the Conation backend.
 //!
 //! Everything here is a client this daemon calls out with, and every request
 //! and response body is the server's own type imported from the owning crate

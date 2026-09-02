@@ -12,11 +12,11 @@ type WebhookState = { id: string; secret: string };
  * registers fresh when there is none or it was deleted server-side. */
 export async function ensureWebhook(deliveryUrl: string): Promise<string> {
   const base = new Macro({});
-  const macro = base.requestedAs(base.users.byId(env.CONATION_USER_ID));
+  const conation = base.requestedAs(base.users.byId(env.CONATION_USER_ID));
 
   const saved = await readState();
   if (saved) {
-    const hook = macro.webhooks.byId(saved.id);
+    const hook = conation.webhooks.byId(saved.id);
     try {
       if ((await hook.endpointUrl()) !== deliveryUrl)
         await hook.setUrl(deliveryUrl);
@@ -37,7 +37,7 @@ export async function ensureWebhook(deliveryUrl: string): Promise<string> {
     }
   }
 
-  const hook = await macro.webhooks.create({
+  const hook = await conation.webhooks.create({
     url: deliveryUrl,
     namespace: WEBHOOK_NAME,
     name: WEBHOOK_NAME,

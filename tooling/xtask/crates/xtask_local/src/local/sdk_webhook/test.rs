@@ -4,6 +4,11 @@ use std::process::Command;
 use crate::local::instance::Instance;
 
 #[test]
+fn relay_url_uses_the_canonical_conation_webhook_path() {
+    assert_eq!(relay_url(), "http://sdk-webhook-relay:8787/conation-events");
+}
+
+#[test]
 fn isolated_ssh_ignores_apple_usekeychain() {
     let config = std::env::temp_dir().join(format!(
         "sdk-webhook-usekeychain-{}-{}.conf",

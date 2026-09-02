@@ -1,7 +1,7 @@
 import type { AnyMessage, Stream } from '@agentclientprotocol/sdk';
+import { conation } from './conation';
 import { env } from './env';
 import type { AgentSandbox } from './interfaces';
-import { macro } from './macro';
 import type { AcpMessage } from './protocol/generated';
 import { DaytonaProvider } from './providers/daytona';
 import { UpstreamLink } from './upstream';
@@ -102,12 +102,12 @@ async function run(
   // default; UPSTREAM_WS_URL only overrides it for the dev fixture.
   const upstreamUrl =
     env.UPSTREAM_WS_URL ||
-    `${macro._client.hosts['agent-harness'].replace(/^http/, 'ws')}/runtime`;
+    `${conation._client.hosts['agent-harness'].replace(/^http/, 'ws')}/runtime`;
 
   const link = new UpstreamLink(upstreamUrl, sessionId);
   let sandbox: AgentSandbox | null = null;
   try {
-    await macro.agentSessions.byId(opts.agentId).control({
+    await conation.agentSessions.byId(opts.agentId).control({
       type: 'prompt',
       prompt: opts.prompt,
     });

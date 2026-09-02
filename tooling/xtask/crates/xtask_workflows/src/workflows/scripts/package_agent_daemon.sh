@@ -6,7 +6,7 @@ set -euo pipefail
 # exactly the failure this whole pipeline exists to prevent, so it is checked
 # here rather than assumed.
 
-binary="target/$TARGET/release/macrod"
+binary="target/$TARGET/release/conationd"
 if [ ! -x "$binary" ]; then
   echo "no daemon binary at $binary" >&2
   exit 1
@@ -52,10 +52,10 @@ else
 fi
 
 mkdir -p artifacts
-name="macrod-${SAFE_TAG}-${SLUG}"
+name="conationd-${SAFE_TAG}-${SLUG}"
 stage=$(mktemp -d)
-install -m 755 "$binary" "$stage/macrod"
-tar -czf "artifacts/${name}.tar.gz" -C "$stage" macrod
+install -m 755 "$binary" "$stage/conationd"
+tar -czf "artifacts/${name}.tar.gz" -C "$stage" conationd
 rm -rf "$stage"
 
 # coreutils on Linux, BSD/perl on macOS.

@@ -126,10 +126,10 @@ pub struct WebhookState<Executor> {
     pub signing_secret: String,
 }
 
-/// Build the router serving `POST /macro-events`.
+/// Build the router serving `POST /conation-events`.
 pub fn webhook_router<Executor: WorkExecutor>(state: WebhookState<Executor>) -> Router {
     Router::new()
-        .route("/macro-events", post(ingest::<Executor>))
+        .route("/conation-events", post(ingest::<Executor>))
         .with_state(Arc::new(state))
 }
 

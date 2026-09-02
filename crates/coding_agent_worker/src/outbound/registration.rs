@@ -25,7 +25,7 @@ use webhook::domain::models::{
     WebhookScope,
 };
 
-use crate::config::{MacroApi, Server};
+use crate::config::{ConationApi, Server};
 
 #[cfg(test)]
 mod test;
@@ -128,7 +128,7 @@ pub fn state_path(config_path: &Path) -> PathBuf {
 pub(crate) struct FeedReconciler<S = FileFeedStateStore> {
     http: reqwest::Client,
     base: String,
-    conation_api: MacroApi,
+    conation_api: ConationApi,
     owner_user_id: String,
     public_url: String,
     state_store: S,
@@ -136,7 +136,7 @@ pub(crate) struct FeedReconciler<S = FileFeedStateStore> {
 
 impl FeedReconciler<FileFeedStateStore> {
     /// Build a reconciler from the daemon's config.
-    pub fn new(conation_api: &MacroApi, server: &Server, config_path: &Path) -> Self {
+    pub fn new(conation_api: &ConationApi, server: &Server, config_path: &Path) -> Self {
         Self {
             http: reqwest::Client::new(),
             base: conation_api.storage_url.trim_end_matches('/').to_owned(),

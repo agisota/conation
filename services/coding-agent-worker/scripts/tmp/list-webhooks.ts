@@ -2,8 +2,8 @@ import { Macro } from '@conation/sdk';
 import { env } from '../../src/env';
 
 const base = new Macro({});
-const macro = base.requestedAs(base.users.byId(env.CONATION_USER_ID));
-const hooks = await macro.webhooks.list();
+const conation = base.requestedAs(base.users.byId(env.CONATION_USER_ID));
+const hooks = await conation.webhooks.list();
 for (const h of hooks) {
   console.log({
     id: h.id,

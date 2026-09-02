@@ -5,6 +5,7 @@ use channels::domain::broker_events::ChannelMessagePostedMetadata;
 use channels::domain::models::ChannelType;
 use chrono::Utc;
 use std::sync::Mutex;
+use tower::ServiceExt as _;
 
 const SECRET: &str = "signing-secret";
 
@@ -191,4 +192,31 @@ async fn failed_work_asks_for_redelivery() {
     let status = ingest(State(state(executor.clone())), headers, body).await;
 
     assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+}
+
+#[tokio::test]
+async fn router_accepts_only_the_conation_webhook_path() {
+    let executor = std::sync::Arc::new(RecordingExecutor::default());
+    let (headers, body) = delivery(&mention("fix it"), SECRET);
+    let mut request = axum::http::Request::builder()
+        .method("POST")
+        .uri("/conation-events")
+        .body(axum::body::Body::from(body))
+        .unwrap();
+    *request.headers_mut() = headers;
+
+    let app = webhook_router(WebhookState {
+        executor: executor.clone(),
+        signing_secret: SECRET.to_owned(),
+    });
+    let response = app.clone().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(executor.executed.lock().unwrap().len(), 1);
+
+    let legacy_request = axum::http::Request::builder()
+        .uri("/macro-events")
+        .body(axum::body::Body::empty())
+        .unwrap();
+    let legacy_response = app.oneshot(legacy_request).await.unwrap();
+    assert_eq!(legacy_response.status(), StatusCode::NOT_FOUND);
 }

@@ -11,7 +11,7 @@ use agent_session::inbound::axum_router::{
 use conation_user_id::user_id::MacroUserIdStr;
 use reqwest::StatusCode;
 
-use crate::config::MacroApi;
+use crate::config::ConationApi;
 
 const BOT_TOKEN_HEADER: &str = "x-conation-bot-token";
 const BOT_SCOPE_HEADER: &str = "x-conation-bot-scope";
@@ -49,7 +49,7 @@ pub struct HarnessApi {
 
 impl HarnessApi {
     /// Build a client from the daemon's config.
-    pub fn new(config: &MacroApi) -> Self {
+    pub fn new(config: &ConationApi) -> Self {
         Self {
             http: reqwest::Client::new(),
             base: config.api_url.trim_end_matches('/').to_owned(),

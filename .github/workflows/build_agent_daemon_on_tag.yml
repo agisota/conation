@@ -1,6 +1,6 @@
 # DO NOT EDIT — regenerate with `cargo x workflows` (from the repository root).
 # Source: tooling/xtask/crates/xtask_workflows/src/workflows/build_agent_daemon_on_tag.rs
-name: Build Agent Daemon on Tag
+name: Build Conation Agent Daemon on Tag
 'on':
   push:
     tags:
@@ -174,7 +174,7 @@ jobs:
         # exactly the failure this whole pipeline exists to prevent, so it is checked
         # here rather than assumed.
 
-        binary="target/$TARGET/release/macrod"
+        binary="target/$TARGET/release/conationd"
         if [ ! -x "$binary" ]; then
           echo "no daemon binary at $binary" >&2
           exit 1
@@ -220,10 +220,10 @@ jobs:
         fi
 
         mkdir -p artifacts
-        name="macrod-${SAFE_TAG}-${SLUG}"
+        name="conationd-${SAFE_TAG}-${SLUG}"
         stage=$(mktemp -d)
-        install -m 755 "$binary" "$stage/macrod"
-        tar -czf "artifacts/${name}.tar.gz" -C "$stage" macrod
+        install -m 755 "$binary" "$stage/conationd"
+        tar -czf "artifacts/${name}.tar.gz" -C "$stage" conationd
         rm -rf "$stage"
 
         # coreutils on Linux, BSD/perl on macOS.
@@ -243,10 +243,10 @@ jobs:
         SLUG: linux-x86_64
         SAFE_TAG: ${{ steps.metadata.outputs.safe_tag }}
         SMOKE_RUN: '1'
-    - name: Upload macrod-linux-x86_64-${{ steps.metadata.outputs.safe_tag }} artifact
+    - name: Upload conationd-linux-x86_64-${{ steps.metadata.outputs.safe_tag }} artifact
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
       with:
-        name: macrod-linux-x86_64-${{ steps.metadata.outputs.safe_tag }}
+        name: conationd-linux-x86_64-${{ steps.metadata.outputs.safe_tag }}
         path: artifacts/*
         if-no-files-found: error
         retention-days: '30'
@@ -358,7 +358,7 @@ jobs:
         # exactly the failure this whole pipeline exists to prevent, so it is checked
         # here rather than assumed.
 
-        binary="target/$TARGET/release/macrod"
+        binary="target/$TARGET/release/conationd"
         if [ ! -x "$binary" ]; then
           echo "no daemon binary at $binary" >&2
           exit 1
@@ -404,10 +404,10 @@ jobs:
         fi
 
         mkdir -p artifacts
-        name="macrod-${SAFE_TAG}-${SLUG}"
+        name="conationd-${SAFE_TAG}-${SLUG}"
         stage=$(mktemp -d)
-        install -m 755 "$binary" "$stage/macrod"
-        tar -czf "artifacts/${name}.tar.gz" -C "$stage" macrod
+        install -m 755 "$binary" "$stage/conationd"
+        tar -czf "artifacts/${name}.tar.gz" -C "$stage" conationd
         rm -rf "$stage"
 
         # coreutils on Linux, BSD/perl on macOS.
@@ -427,10 +427,10 @@ jobs:
         SLUG: linux-aarch64
         SAFE_TAG: ${{ steps.metadata.outputs.safe_tag }}
         SMOKE_RUN: '0'
-    - name: Upload macrod-linux-aarch64-${{ steps.metadata.outputs.safe_tag }} artifact
+    - name: Upload conationd-linux-aarch64-${{ steps.metadata.outputs.safe_tag }} artifact
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
       with:
-        name: macrod-linux-aarch64-${{ steps.metadata.outputs.safe_tag }}
+        name: conationd-linux-aarch64-${{ steps.metadata.outputs.safe_tag }}
         path: artifacts/*
         if-no-files-found: error
         retention-days: '30'
@@ -502,7 +502,7 @@ jobs:
         # exactly the failure this whole pipeline exists to prevent, so it is checked
         # here rather than assumed.
 
-        binary="target/$TARGET/release/macrod"
+        binary="target/$TARGET/release/conationd"
         if [ ! -x "$binary" ]; then
           echo "no daemon binary at $binary" >&2
           exit 1
@@ -548,10 +548,10 @@ jobs:
         fi
 
         mkdir -p artifacts
-        name="macrod-${SAFE_TAG}-${SLUG}"
+        name="conationd-${SAFE_TAG}-${SLUG}"
         stage=$(mktemp -d)
-        install -m 755 "$binary" "$stage/macrod"
-        tar -czf "artifacts/${name}.tar.gz" -C "$stage" macrod
+        install -m 755 "$binary" "$stage/conationd"
+        tar -czf "artifacts/${name}.tar.gz" -C "$stage" conationd
         rm -rf "$stage"
 
         # coreutils on Linux, BSD/perl on macOS.
@@ -571,10 +571,10 @@ jobs:
         SLUG: macos-aarch64
         SAFE_TAG: ${{ steps.metadata.outputs.safe_tag }}
         SMOKE_RUN: '1'
-    - name: Upload macrod-macos-aarch64-${{ steps.metadata.outputs.safe_tag }} artifact
+    - name: Upload conationd-macos-aarch64-${{ steps.metadata.outputs.safe_tag }} artifact
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
       with:
-        name: macrod-macos-aarch64-${{ steps.metadata.outputs.safe_tag }}
+        name: conationd-macos-aarch64-${{ steps.metadata.outputs.safe_tag }}
         path: artifacts/*
         if-no-files-found: error
         retention-days: '30'
@@ -643,7 +643,7 @@ jobs:
         # exactly the failure this whole pipeline exists to prevent, so it is checked
         # here rather than assumed.
 
-        binary="target/$TARGET/release/macrod"
+        binary="target/$TARGET/release/conationd"
         if [ ! -x "$binary" ]; then
           echo "no daemon binary at $binary" >&2
           exit 1
@@ -689,10 +689,10 @@ jobs:
         fi
 
         mkdir -p artifacts
-        name="macrod-${SAFE_TAG}-${SLUG}"
+        name="conationd-${SAFE_TAG}-${SLUG}"
         stage=$(mktemp -d)
-        install -m 755 "$binary" "$stage/macrod"
-        tar -czf "artifacts/${name}.tar.gz" -C "$stage" macrod
+        install -m 755 "$binary" "$stage/conationd"
+        tar -czf "artifacts/${name}.tar.gz" -C "$stage" conationd
         rm -rf "$stage"
 
         # coreutils on Linux, BSD/perl on macOS.
@@ -712,10 +712,10 @@ jobs:
         SLUG: macos-x86_64
         SAFE_TAG: ${{ steps.metadata.outputs.safe_tag }}
         SMOKE_RUN: '0'
-    - name: Upload macrod-macos-x86_64-${{ steps.metadata.outputs.safe_tag }} artifact
+    - name: Upload conationd-macos-x86_64-${{ steps.metadata.outputs.safe_tag }} artifact
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
       with:
-        name: macrod-macos-x86_64-${{ steps.metadata.outputs.safe_tag }}
+        name: conationd-macos-x86_64-${{ steps.metadata.outputs.safe_tag }}
         path: artifacts/*
         if-no-files-found: error
         retention-days: '30'

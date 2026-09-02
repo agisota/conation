@@ -48,7 +48,7 @@ fn ssh_client_flags(private_key: &Path, ssh_port: u16, host_receiver_port: u16) 
 }
 
 pub fn relay_url() -> &'static str {
-    "http://sdk-webhook-relay:8787/macro-events"
+    "http://sdk-webhook-relay:8787/conation-events"
 }
 
 pub fn ssh_port(instance: &Instance) -> u16 {
