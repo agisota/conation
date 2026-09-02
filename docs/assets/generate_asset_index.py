@@ -3,16 +3,53 @@
 
 from __future__ import annotations
 
+import argparse
+from collections import Counter
 import hashlib
 import re
 import struct
 import subprocess
+import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
 OUTPUT = ROOT / "docs/assets/ASSET_MACHINE_INDEX.tsv"
+VISUAL_INVENTORY_BATCHES = (
+    ROOT / "docs/assets/ASSET_VISUAL_INVENTORY_BATCH1.tsv",
+    ROOT / "docs/assets/ASSET_VISUAL_INVENTORY_BATCH2.tsv",
+    ROOT / "docs/assets/ASSET_VISUAL_INVENTORY_BATCH3.tsv",
+    ROOT / "docs/assets/ASSET_VISUAL_INVENTORY_BATCH4.tsv",
+)
+# These rows are real repository images and stay in the technical index, but
+# are deliberately outside the one-path-per-production-asset visual review.
+# Keeping the boundary here makes it executable instead of prose-only.
+NON_PRODUCT_ASSET_GROUPS = {
+    "brand deployment artifacts": frozenset(
+        {
+            "apps/docs/brand/conation-app-icon-master-v1.png",
+            "apps/docs/brand/conation-combined-lockup-master-v1.png",
+            "apps/docs/brand/conation-favicon.png",
+        }
+    ),
+    "email rendering test fixtures": frozenset(
+        {
+            "apps/web/src/lib/core/email/tests/snapshots/email-rendering.pw.ts/github-pr-review-macro-dark.png",
+            "apps/web/src/lib/core/email/tests/snapshots/email-rendering.pw.ts/github-pr-review-macro-light.png",
+            "apps/web/src/lib/core/email/tests/snapshots/email-rendering.pw.ts/google-calendar-invite-macro-dark.png",
+            "apps/web/src/lib/core/email/tests/snapshots/email-rendering.pw.ts/google-calendar-invite-macro-light.png",
+            "apps/web/src/lib/core/email/tests/snapshots/email-rendering.pw.ts/nested-quotes-macro-dark.png",
+            "apps/web/src/lib/core/email/tests/snapshots/email-rendering.pw.ts/nested-quotes-macro-light.png",
+            "apps/web/src/lib/core/email/tests/snapshots/email-rendering.pw.ts/styled-email-macro-dark.png",
+            "apps/web/src/lib/core/email/tests/snapshots/email-rendering.pw.ts/styled-email-macro-light.png",
+            "apps/web/src/lib/core/email/tests/snapshots/email-rendering.pw.ts/wide-table-360-macro-dark.png",
+            "apps/web/src/lib/core/email/tests/snapshots/email-rendering.pw.ts/wide-table-360-macro-light.png",
+            "apps/web/src/lib/core/email/tests/snapshots/email-rendering.pw.ts/wide-table-800-macro-dark.png",
+            "apps/web/src/lib/core/email/tests/snapshots/email-rendering.pw.ts/wide-table-800-macro-light.png",
+        }
+    ),
+}
 IMAGE_SUFFIXES = {
     ".avif",
     ".bmp",
@@ -246,7 +283,7 @@ def metadata(path: Path) -> tuple[str, str, str, str, str, str]:
         return suffix.removeprefix(".").upper(), "unknown", "unknown", "unknown", "unknown", str(error)
 
 
-def main() -> None:
+def index_text() -> str:
     rows = []
     for path in repository_assets():
         asset_format, width, height, frames, duration, status = metadata(path)
@@ -283,9 +320,121 @@ def main() -> None:
         ]
     )
     # Keep the generated index deterministic: sorted paths, LF endings, and a
-    # final newline. The script reads assets but never modifies them.
-    OUTPUT.write_text(header + "\n" + "\n".join(rows) + "\n", encoding="utf-8")
+    # final newline. The script reads assets but never modifies them here.
+    return header + "\n" + "\n".join(rows) + "\n"
+
+
+def tsv_paths(text: str, *, source: Path, path_column: str) -> list[str]:
+    """Return paths from a tab-separated inventory with a required header."""
+    rows = text.splitlines()
+    if not rows:
+        raise ValueError(f"{source.relative_to(ROOT)} is empty")
+    header = rows[0].split("\t")
+    try:
+        path_index = header.index(path_column)
+    except ValueError as error:
+        raise ValueError(
+            f"{source.relative_to(ROOT)} has no {path_column!r} column"
+        ) from error
+
+    paths = []
+    for row_number, row in enumerate(rows[1:], start=2):
+        columns = row.split("\t")
+        if len(columns) <= path_index:
+            raise ValueError(
+                f"{source.relative_to(ROOT)}:{row_number} has no path value"
+            )
+        paths.append(columns[path_index])
+    return paths
+
+
+def validate_visual_inventory(generated_index: str) -> list[str]:
+    """Check that the hand-reviewed batches cover the defined asset boundary."""
+    errors: list[str] = []
+    index_paths = tsv_paths(generated_index, source=OUTPUT, path_column="path")
+    indexed = set(index_paths)
+    duplicate_index_paths = sorted(path for path, count in Counter(index_paths).items() if count > 1)
+    if duplicate_index_paths:
+        errors.append(f"machine index has duplicate paths: {', '.join(duplicate_index_paths)}")
+
+    for group, paths in NON_PRODUCT_ASSET_GROUPS.items():
+        missing = sorted(paths - indexed)
+        if missing:
+            errors.append(f"{group} missing from machine index: {', '.join(missing)}")
+
+    excluded = set().union(*NON_PRODUCT_ASSET_GROUPS.values())
+    canonical = indexed - excluded
+    reviewed_paths: list[str] = []
+    for batch in VISUAL_INVENTORY_BATCHES:
+        try:
+            reviewed_paths.extend(tsv_paths(batch.read_text(encoding="utf-8"), source=batch, path_column="path"))
+        except ValueError as error:
+            errors.append(str(error))
+
+    reviewed = set(reviewed_paths)
+    duplicate_reviewed_paths = sorted(
+        path for path, count in Counter(reviewed_paths).items() if count > 1
+    )
+    if duplicate_reviewed_paths:
+        errors.append(
+            "visual inventory has duplicate paths: " + ", ".join(duplicate_reviewed_paths)
+        )
+
+    unexpected_reviewed = sorted(reviewed - canonical)
+    if unexpected_reviewed:
+        errors.append(
+            "visual inventory includes excluded or unknown paths: "
+            + ", ".join(unexpected_reviewed)
+        )
+    missing_reviewed = sorted(canonical - reviewed)
+    if missing_reviewed:
+        errors.append(
+            "canonical paths missing from visual inventory: " + ", ".join(missing_reviewed)
+        )
+
+    if not errors:
+        group_counts = ", ".join(
+            f"{len(paths)} {group}" for group, paths in NON_PRODUCT_ASSET_GROUPS.items()
+        )
+        print(
+            "Asset inventory validated: "
+            f"{len(indexed)} indexed asset paths; {group_counts}; "
+            f"{len(canonical)} canonical paths reviewed exactly once."
+        )
+    return errors
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="verify the generated index and visual-review boundary without writing files",
+    )
+    args = parser.parse_args()
+    generated_index = index_text()
+
+    if args.check:
+        errors = validate_visual_inventory(generated_index)
+        try:
+            current_index = OUTPUT.read_text(encoding="utf-8")
+        except OSError as error:
+            errors.append(f"cannot read {OUTPUT.relative_to(ROOT)}: {error}")
+        else:
+            if current_index != generated_index:
+                errors.append(
+                    f"{OUTPUT.relative_to(ROOT)} is stale; rerun "
+                    "python3 docs/assets/generate_asset_index.py"
+                )
+        if errors:
+            for error in errors:
+                print(f"asset inventory check failed: {error}", file=sys.stderr)
+            return 1
+        return 0
+
+    OUTPUT.write_text(generated_index, encoding="utf-8")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

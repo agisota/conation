@@ -75,8 +75,8 @@ GIF-файлов среди текущих или удалённых ссыло�
 ## Машинный индекс и полный визуальный реестр assets
 
 Файл [`assets/ASSET_MACHINE_INDEX.tsv`](assets/ASSET_MACHINE_INDEX.tsv)
-содержит текущие 312 строк машинного индекса для PNG, JPEG, GIF, WebP, SVG, ICO,
-BMP и AVIF. Для каждой записи записаны формат, число байтов, размеры, SHA-256,
+содержит 312 физических строк машинного индекса: заголовок и 311 asset-row для PNG, JPEG, GIF, WebP, SVG, ICO,
+BMP и AVIF. Для каждой asset-row записаны формат, число байтов, размеры, SHA-256,
 число кадров и длительность там, где формат позволяет получить их без
 декодирования изображения. Индекс воспроизводится командой:
 
@@ -87,18 +87,30 @@ python3 docs/assets/generate_asset_index.py
 Колонка `human_visual_review` в машинном индексе намеренно равна `required`:
 этот файл фиксирует метаданные, а результаты отдельной визуальной проверки не
 подменяют машинный статус. Граница канонического product-набора зафиксирована в
-[`assets/BATCH4_RU.md`](assets/BATCH4_RU.md): из 312 строк исключены 15
-не-product записей — три поздние копии в `apps/docs/brand/` и 12 PNG fixtures
-email-rendering. Поэтому полный набор содержит 297 canonical production-ассетов.
+[`assets/BATCH4_RU.md`](assets/BATCH4_RU.md): из 311 asset-row исключены 15
+не-product записей — 3 активных Conation brand deployment-артефакта в
+`apps/docs/brand/` (две copies masters и favicon derivative) и 12 PNG
+email-rendering fixtures. Они остаются в техническом индексе и не считаются
+пропавшими. Поэтому полный набор содержит 296 canonical production-ассетов.
 
-Все 297 canonical production-ассетов открыты и описаны вручную ровно один раз в
+Все 296 canonical production-ассетов открыты и описаны вручную ровно один раз в
 четырёх связанных частях реестра:
 
-- [batch 1 — 73 ассета](assets/ASSET_VISUAL_INVENTORY_RU.md), включая все 66
+- [batch 1 — 72 ассета](assets/ASSET_VISUAL_INVENTORY_RU.md), включая все 66
   кадров единственного GIF;
 - [batch 2 — 73 ассета](assets/BATCH2_RU.md);
 - [batch 3 — 75 ассетов](assets/BATCH3_RU.md);
 - [batch 4 — 76 ассетов](assets/BATCH4_RU.md).
+
+Для регрессии после изменения файлов запустите также:
+
+```bash
+python3 docs/assets/generate_asset_index.py --check
+```
+
+Проверка не изменяет файлы: она сверяет актуальность индекса и точное покрытие
+296 canonical paths четырьмя TSV. Покадровое описание единственного GIF уже
+находится в batch 1, поэтому этот check не подменяет его машинной сводкой.
 
 Пользовательские Conation masters и platform-derivatives также перечислены с
 точными SHA в [`../apps/web/public/brand/README.md`](../apps/web/public/brand/README.md).

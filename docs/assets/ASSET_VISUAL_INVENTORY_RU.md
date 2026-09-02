@@ -1,6 +1,6 @@
 # Визуальный реестр продуктовых ассетов — batch 1
 
-Дата ручной проверки: 2026-09-02. Это первая ограниченная партия: ровно 73 наиболее заметных пользователю production-ассета из [`ASSET_MACHINE_INDEX.tsv`](./ASSET_MACHINE_INDEX.tsv). Точное членство партии дублирует машиночитаемый [`ASSET_VISUAL_INVENTORY_BATCH1.tsv`](./ASSET_VISUAL_INVENTORY_BATCH1.tsv). Все 73 файла были открыты и визуально проверены; GIF № 42 проверен по всем 66 кадрам. Тестовые fixtures, email-rendering snapshots, сгенерированные Android/Apple/Tauri-копии и внешние захваченные страницы не включены.
+Дата ручной проверки: 2026-09-02. Это первая ограниченная партия: 72 наиболее заметных пользователю production-ассета из [`ASSET_MACHINE_INDEX.tsv`](./ASSET_MACHINE_INDEX.tsv). Точное членство партии дублирует машиночитаемый [`ASSET_VISUAL_INVENTORY_BATCH1.tsv`](./ASSET_VISUAL_INVENTORY_BATCH1.tsv). Все 72 файла были открыты и визуально проверены; GIF № 42 проверен по всем 66 кадрам и описан диапазонами F01–F66 ниже. Номер 11 намеренно не перенумерован: соответствующий удалённый legacy loader больше не является asset-row, а сохранение остальных ordinal-номеров сохраняет ссылки на уже проверенный GIF. Тестовые fixtures, email-rendering snapshots, сгенерированные Android/Apple/Tauri-копии и внешние захваченные страницы не включены.
 
 `alpha: да` означает наличие альфа-канала или прозрачного SVG-холста, а не гарантированное наличие полупрозрачных пикселей. `Статика` у SVG означает отсутствие обнаруженной временной анимации. Для SVG с SMIL число дискретных кадров неприменимо. OCR ниже ручной и выборочный: он фиксирует видимый бренд-долг, но не заменяет исходный текст интерфейса.
 
@@ -14,7 +14,7 @@
 
 ## Канонические masters, предоставленные пользователем
 
-Эти файлы появились позже снимка `ASSET_MACHINE_INDEX.tsv`, поэтому они не входят в счётчик 73 и не дублируются как новые копии:
+Технический индекс уже содержит эти masters и производные, но они выделены из canonical one-path-per-production-asset coverage отдельно: это исходные/деплойные брендовые файлы, а не пропущенные product surfaces. Их первоисточник и активное применение фиксируются здесь:
 
 - `apps/web/public/brand/conation-app-icon-master-v1.png` — 1254×1254, SHA-256 `111156e7dec032c9725f5efe7ad94bebe07f00e4dc9a537e62f6a83f59030dea`.
 - `apps/web/public/brand/conation-combined-lockup-master-v1.png` — 2172×724, SHA-256 `974b4c71965df3e2266c74d6545621bc580b4270d12aa1512d31a7a2d46ce453`.
@@ -640,5 +640,5 @@
 - **Replace required:** № 1–3 — подтверждённые старые glyphs документации (это не accepted Conation assets); № 5–7, 11–15 и 41–73 — старый Macro brand, неизвестные avatars либо англоязычные/персонализированные docs surfaces. Их SHA фиксируют состояние до замены.
 - **Keep candidate после проверки:** № 10–12 и 19–32. Для support avatars нужна запись о правообладателе; empty-state art можно сохранить, если доступные подписи и контраст подтверждены.
 - **Third-party rights review:** № 18 и 33–42. Наличие файла не означает право использовать знак или готовность интеграции.
-- **Machine-only remainder:** текущий canonical snapshot содержит 297 asset-row; после интеграции Conation masters и новых derivatives текущий `ASSET_MACHINE_INDEX.tsv` содержит 312 строк. Этот batch покрывает ровно 73 canonical production-ассета; ещё 239 текущих путей не входят в batch 1. Основные категории следующей партии: остальные product-doc screenshots/diagrams/WebP, функциональные UI icons, затем platform-generated app icons. Test snapshots и byte-identical derivatives следует учитывать отдельно, а не выдавать за новое визуальное покрытие.
-- Три user-supplied masters сверху и две активные docs-копии визуально проверены отдельно от 73-строчного baseline; их точные SHA и active-use mapping зафиксированы выше. Машинный индекс после замены пересобран.
+- **Machine-only remainder:** `ASSET_MACHINE_INDEX.tsv` имеет 312 физических строк: одну строку заголовка и 311 asset-row. Из них 15 не входят в canonical coverage: 3 брендовых deployment-артефакта и 12 email-rendering test fixtures. Значит, canonical-набор содержит 296 путей; этот batch покрывает 72 из них, ещё 224 находятся в batch 2–4. Основные категории последующих партий: остальные product-doc screenshots/diagrams/WebP, функциональные UI icons, затем platform-generated app icons. Test snapshots и byte-identical derivatives учитываются отдельно, а не выдаются за новое визуальное покрытие.
+- Три user-supplied masters сверху и три активных Docs deployment-файла (две byte-identical copies masters и favicon derivative) визуально проверены отдельно от 72-строчного baseline; их точные SHA и active-use mapping зафиксированы выше. Машинный индекс после замены пересобран; `python3 docs/assets/generate_asset_index.py --check` сверяет границу 311 − 15 = 296 с четырьмя TSV.

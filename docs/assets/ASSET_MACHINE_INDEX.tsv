@@ -104,12 +104,12 @@ apps/web/public/support-avatars/pythia.svg	SVG	1077	512	512	n/a	747a50ea243cc8f5
 apps/web/public/support-avatars/ramzan-kadyrov.svg	SVG	984	512	512	n/a	9e183d68faa11266917f161e0e28ae33d746cbdb7a9f3bf960dff47ba9b00c0d	n/a	ok	required
 apps/web/public/support-avatars/tars.svg	SVG	1097	512	512	n/a	9eca70ae017c5bbbea452e5bb0e03ec9d11f675745b7ac7a753a716c6abac425	n/a	ok	required
 apps/web/public/teo.png	PNG	128273	400	366	1	7e2c0de16f526a770ff2541d6cbea333d74a15352f9c0f54113eb07a3fc84d56	n/a	ok	required
-apps/web/src/components/icon/dots-three-large.svg	SVG	221	256	256	n/a	22935259f2bb6d7c0bbd5780fadcdff3829e0c46ed2ae3541e922a9aefe70e37	n/a	ok	required
 apps/web/src/components/icon/conation-apple.svg	SVG	907	24	24	n/a	203393faf9ce9d8a67ce7a7cbb977afa3fce7a058214fbf6dc3d84325f862b46	n/a	ok	required
+apps/web/src/components/icon/conation-google.svg	SVG	817	24	24	n/a	c7af97ef7602c0855b914e5ab20c31b01b4fa55453a4f1c95ecfb2ae389796dd	n/a	ok	required
+apps/web/src/components/icon/dots-three-large.svg	SVG	221	256	256	n/a	22935259f2bb6d7c0bbd5780fadcdff3829e0c46ed2ae3541e922a9aefe70e37	n/a	ok	required
 apps/web/src/components/icon/macro-brand-loader.svg	SVG	2236	480	480	unknown	d7f5ab218235b25e950ca2338763da0bd1869756da4bdd7756fd5a442a1baf77	n/a	ok	required
 apps/web/src/components/icon/macro-embed.svg	SVG	371	24	24	n/a	e1d1dafb03fc67878153b3af1bc013a73ed549234be3b65eb8f165a6a47c4ce8	n/a	ok	required
 apps/web/src/components/icon/macro-gear.svg	SVG	527	24	24	n/a	c1b38b0e87eac9b7bc9bcc9d9f531cd86930c86e32b0ce3382da4158bdd26fbc	n/a	ok	required
-apps/web/src/components/icon/conation-google.svg	SVG	817	24	24	n/a	c7af97ef7602c0855b914e5ab20c31b01b4fa55453a4f1c95ecfb2ae389796dd	n/a	ok	required
 apps/web/src/components/icon/macro-grid-noise-loader-4.svg	SVG	1405	32	32	n/a	2f19bfb2fbf8a1aef975f17e8c8784a9cf98ce7597f8ac712903939bf4c04f38	n/a	ok	required
 apps/web/src/components/icon/macro-grid-noise-loader.svg	SVG	7240	32	32	n/a	7c2464da64b81168e94b999d0efdc8c3d66fa99d758bb5840cbbe51c6dabbd39	n/a	ok	required
 apps/web/src/components/icon/macro-light-dark.svg	SVG	256	24	24	n/a	43c858f9b2231386c5b27f97eba532b6e3cdf5bba2e7f0c563a2ba0c0bda5ccd	n/a	ok	required
@@ -210,7 +210,7 @@ apps/web/src/components/icon/wide-users.svg	SVG	405	18	12	n/a	47fe931ab8e13c37f8
 apps/web/src/components/icon/wide-video-slash.svg	SVG	513	18	18	n/a	d3e58a677d82a5523420a7d179daf78d751f3a1e88c1892c255e1538f8cce8a5	n/a	ok	required
 apps/web/src/components/icon/wide-video.svg	SVG	301	18	18	n/a	0eb3a2406fab9aa5a2a04313d7af687058a071dd1b74c44eeb481eecb03315b2	n/a	ok	required
 apps/web/src/components/icon/wide-zed-ide.svg	SVG	623	24	24	n/a	9cc3c9eba2aa21ea00b8f728bde447dfe5e93bcccf559dc5a648bee86b3e7314	n/a	ok	required
-apps/web/src/lib/core/assets/favicon.ico	ICO	15086	48	48	n/a	0e726a381fd5c7ee7e57960f9ea5ff6a354071055dd071bf130052ad5a899e3d	n/a	ok	required
+apps/web/src/lib/core/assets/favicon.ico	ICO	58675	256	256	n/a	277d8e2399b08fe7cd0abb1099ce8bbda78c70e53e57f4f176d65cbe4c1043f0	n/a	ok	required
 apps/web/src/lib/core/component/AI/assets/anthropic.svg	SVG	252	92.2	65	n/a	869b21e5493346edefbb51c8143a1bf08388c6f1d5c93a5505cff6a6b8ca2533	n/a	ok	required
 apps/web/src/lib/core/component/AI/assets/openai.svg	SVG	1357	24	24	n/a	739f19e0287ef80e16576c82597f05969921f15e35e6a8dd923a70833d134db2	n/a	ok	required
 apps/web/src/lib/core/email/tests/snapshots/email-rendering.pw.ts/github-pr-review-macro-dark.png	PNG	50717	664	800	1	78e621aed0ee08a824a10d452d3dba8dc96a8e7cb9c107d7bbb9156bd838761f	n/a	ok	required

@@ -1,10 +1,17 @@
 # Визуальный реестр продуктовых ассетов — batch 4
 
-Дата ручной проверки: 2026-09-02. Это финальные 76 ещё не рассмотренных canonical production-ассетов. Вместе с тремя предыдущими партиями реестр покрывает все 297 из 297 canonical path ровно один раз.
+Дата ручной проверки: 2026-09-02. Это финальные 76 ещё не рассмотренных canonical production-ассетов. Вместе с тремя предыдущими партиями реестр покрывает все 296 из 296 canonical path ровно один раз.
 
 ## Граница canonical-набора и метод
 
-Текущий ASSET_MACHINE_INDEX.tsv содержит 312 строк. Для неизменяемого canonical-набора исключены только 15 не-product строк: три поздние copies в apps/docs/brand и 12 PNG fixtures в apps/web/src/lib/core/email/tests/snapshots. Поэтому 312 − 15 = 297. До этой партии Batch 1–3 покрывали 221 путь, остаток составляет 76.
+Текущий `ASSET_MACHINE_INDEX.tsv` содержит 312 физических строк: заголовок и 311 asset-row. Для неизменяемого canonical-набора исключены только 15 не-product asset-row, причём они не «исчезли»: 3 — активные Conation brand deployment-артефакта, а 12 — PNG fixtures для email-rendering test. Брендовая группа состоит из byte-identical docs copies двух canonical masters (`conation-app-icon-master-v1.png`, `conation-combined-lockup-master-v1.png`) и отдельного 32×32 favicon derivative (`conation-favicon.png`); они описаны в [Batch 1](./ASSET_VISUAL_INVENTORY_RU.md#канонические-masters-предоставленные-пользователем). Поэтому 311 − 15 = 296. До этой партии Batch 1–3 покрывали 220 путей, остаток составляет 76.
+
+### Полный mapping исключённых technical rows (15)
+
+| Класс | Точные repository-relative paths | Почему не входят в canonical visual coverage |
+|---|---|---|
+| Conation brand deployment artifacts (3) | `apps/docs/brand/conation-app-icon-master-v1.png`<br>`apps/docs/brand/conation-combined-lockup-master-v1.png`<br>`apps/docs/brand/conation-favicon.png` | Первые два — byte-identical Docs copies canonical masters из `apps/web/public/brand/`; третий — 32×32 favicon derivative. Все три активно задействованы `apps/docs/docs.json`, имеют метаданные в машинном индексе и отдельно описаны как брендовые файлы; они не являются тремя независимыми product surfaces. |
+| email-rendering Playwright fixtures (12) | `apps/web/src/lib/core/email/tests/snapshots/email-rendering.pw.ts/github-pr-review-macro-dark.png`<br>`apps/web/src/lib/core/email/tests/snapshots/email-rendering.pw.ts/github-pr-review-macro-light.png`<br>`apps/web/src/lib/core/email/tests/snapshots/email-rendering.pw.ts/google-calendar-invite-macro-dark.png`<br>`apps/web/src/lib/core/email/tests/snapshots/email-rendering.pw.ts/google-calendar-invite-macro-light.png`<br>`apps/web/src/lib/core/email/tests/snapshots/email-rendering.pw.ts/nested-quotes-macro-dark.png`<br>`apps/web/src/lib/core/email/tests/snapshots/email-rendering.pw.ts/nested-quotes-macro-light.png`<br>`apps/web/src/lib/core/email/tests/snapshots/email-rendering.pw.ts/styled-email-macro-dark.png`<br>`apps/web/src/lib/core/email/tests/snapshots/email-rendering.pw.ts/styled-email-macro-light.png`<br>`apps/web/src/lib/core/email/tests/snapshots/email-rendering.pw.ts/wide-table-360-macro-dark.png`<br>`apps/web/src/lib/core/email/tests/snapshots/email-rendering.pw.ts/wide-table-360-macro-light.png`<br>`apps/web/src/lib/core/email/tests/snapshots/email-rendering.pw.ts/wide-table-800-macro-dark.png`<br>`apps/web/src/lib/core/email/tests/snapshots/email-rendering.pw.ts/wide-table-800-macro-light.png` | Это эталонные PNG для автоматического email-rendering test, а не assets, которые поставляются в пользовательский UI или Docs. Они остаются indexed, чтобы изменения байтов, размеров и SHA были видимы, но не требуют отдельного product visual review. |
 
 Каждый из 76 файлов был открыт и визуально проверен: SVG отрендерены, PNG просмотрены в platform-resolution contact sheets; для обоих ICO извлечены и просмотрены все embedded sizes. GIF, APNG и animated WebP в партии отсутствуют. Поэтому покадровое описание GIF для каждой строки — «неприменимо», а для PNG зафиксирован ровно один статический кадр; ICO содержит наборы разрешений, но не временную анимацию.
 
@@ -127,14 +134,16 @@
 | 74 | [icon.iconset/icon_512x512.png](../../apps/web/tauri/src-tauri/icons/icon.iconset/icon_512x512.png)<br>PNG; 14,838 B; 512×512 px; 1 static frame; SHA-256 6e5a70e1696f903c331ceecc5e8d250f8fca6d1b58c24e53e8bd21b9ef7cf4fb | U; legacy, unreferenced intermediate; byte-identical to #71. Вид: оранжевый Macro-M. | **replace_required**. |
 | 75 | [icon.iconset/icon_512x512@2x.png](../../apps/web/tauri/src-tauri/icons/icon.iconset/icon_512x512@2x.png)<br>PNG; 39,697 B; 1024×1024 px; 1 static frame; SHA-256 3d3a75f65c8b73a08056f61292b187e1aeb317ea650f3139238be83ffeb2a022 | U; legacy, unreferenced intermediate. Вид: крупнейший оранжевый Macro-M на чёрном квадрате. | **replace_required**. |
 
-## Coverage assertion — 297/297 exactly once
+## Coverage assertion — 296/296 exactly once
 
 Проверка должна строиться по path, а не по SHA: platform derivatives сознательно могут быть byte-identical, но являются отдельными package paths.
 
-- canonical = ASSET_MACHINE_INDEX.tsv − 3 apps/docs/brand copies − 12 email-rendering snapshot fixtures = **297** путей;
-- Batch 1 = 73, Batch 2 = 73, Batch 3 = 75, Batch 4 = 76; суммарно **297** строк;
-- объединение всех четырёх TSV содержит **297 unique paths**;
+- canonical = 311 asset-row из ASSET_MACHINE_INDEX.tsv − 3 brand deployment artifacts − 12 email-rendering snapshot fixtures = **296** путей;
+- Batch 1 = 72 (ordinal 11 удалён вместе с legacy loader), Batch 2 = 73, Batch 3 = 75, Batch 4 = 76; суммарно **296** строк;
+- объединение всех четырёх TSV содержит **296 unique paths**;
 - каждая пара batch имеет пересечение **0**, а symmetric difference canonical и объединения равна **0**;
 - GIF в Batch 4: **0**, поэтому frame-by-frame GIF entry для каждого из 76 файлов: **неприменимо**.
+
+Проверка воспроизводится без открытия изображений: `python3 docs/assets/generate_asset_index.py --check` одновременно убеждается, что индекс не устарел и что все 296 canonical paths представлены в TSV ровно один раз. Единственный GIF находится в Batch 1; его покадровое описание уже приведено диапазонами F01–F66 в [ASSET_VISUAL_INVENTORY_RU.md](./ASSET_VISUAL_INVENTORY_RU.md).
 
 Эта последняя проверка фиксирует покрытие inventory; она не является разрешением на использование upstream/third-party artwork, помеченного review или replace_required.
