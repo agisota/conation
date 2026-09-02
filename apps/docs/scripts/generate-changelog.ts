@@ -1,5 +1,6 @@
 /**
- * Pulls releases from macro-inc/macro matching the vYYYY.M.D.N format
+ * Pulls releases from the configured Conation repository matching the
+ * vYYYY.M.D.N format
  * and generates changelog MDX pages using <Update> components: one
  * landing page (introduction.mdx) with the latest month's releases, plus
  * one archive page per month so no single route carries every release.
@@ -12,8 +13,17 @@
 import { mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync } from "fs";
 import { join } from "path";
 
-const REPO = "macro-inc/macro";
-const CHANGELOG_DIR = join(import.meta.dirname, "../changelog");
+// A clean Conation deployment owns its release history. Operators that use a
+// different private mirror can set this to `owner/repository` in CI; upstream
+// release history remains an archive and is never rewritten by this generator.
+const REPO = process.env.CONATION_CHANGELOG_REPOSITORY ?? "agisota/conation";
+// Generated Conation releases live apart from the imported upstream archive in
+// `changelog/`. Never let a refresh erase attributed upstream history.
+const CONATION_CHANGELOG_DIR = join(
+  import.meta.dirname,
+  "../changelog/conation"
+);
+const CONATION_CHANGELOG_ROUTE = "changelog/conation";
 const DOCS_JSON_PATH = join(import.meta.dirname, "../docs.json");
 const TAG_PATTERN = /^v\d{4}\.\d{1,2}\.\d{1,2}\.\d+$/;
 
@@ -61,19 +71,19 @@ function escapeForMdx(text: string): string {
   );
 }
 
-const MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
+const MONTHS = [
+  { title: "Январь", inPeriod: "январь" },
+  { title: "Февраль", inPeriod: "февраль" },
+  { title: "Март", inPeriod: "март" },
+  { title: "Апрель", inPeriod: "апрель" },
+  { title: "Май", inPeriod: "май" },
+  { title: "Июнь", inPeriod: "июнь" },
+  { title: "Июль", inPeriod: "июль" },
+  { title: "Август", inPeriod: "август" },
+  { title: "Сентябрь", inPeriod: "сентябрь" },
+  { title: "Октябрь", inPeriod: "октябрь" },
+  { title: "Ноябрь", inPeriod: "ноябрь" },
+  { title: "Декабрь", inPeriod: "декабрь" },
 ];
 
 /** Year and month parsed from a vYYYY.M.D.N tag. */
@@ -83,9 +93,82 @@ function tagMonth(tag: string): { year: number; month: number } {
 }
 
 function renderUpdate(r: Release, current: boolean): string {
-  const label = current ? `${r.tag_name} (Current)` : r.tag_name;
+  const label = current ? `${r.tag_name} (текущий)` : r.tag_name;
   const body = escapeForMdx((r.body ?? "").trim());
   return `    <Update label="${label}">\n${body}\n    </Update>`;
+}
+
+export type NavigationEntry = string | { group?: unknown; pages?: unknown };
+
+function isNavigationGroup(
+  entry: NavigationEntry
+): entry is { group: string; pages: NavigationEntry[] } {
+  return (
+    typeof entry !== "string" &&
+    typeof entry.group === "string" &&
+    Array.isArray(entry.pages)
+  );
+}
+
+function isChangelogNavigationGroup(entry: NavigationEntry): boolean {
+  if (typeof entry === "string" || typeof entry.group !== "string") {
+    return false;
+  }
+
+  const group = entry.group.toLocaleLowerCase("ru-RU");
+  return group === "changelog" || group === "история изменений";
+}
+
+function isConationReleaseGroup(entry: NavigationEntry): boolean {
+  return (
+    typeof entry !== "string" &&
+    typeof entry.group === "string" &&
+    entry.group.toLocaleLowerCase("ru-RU") === "релизы conation"
+  );
+}
+
+function labelUpstreamArchiveEntry(entry: NavigationEntry): NavigationEntry {
+  if (!isNavigationGroup(entry)) return entry;
+  if (entry.group.endsWith(" · исходный проект")) return entry;
+
+  return { ...entry, group: `${entry.group} · исходный проект` };
+}
+
+/** Build the mixed Conation/upstream changelog navigation without mutating it. */
+export function buildChangelogNavigation(
+  navigationPages: NavigationEntry[],
+  conationPages: string[]
+): NavigationEntry[] {
+  const upstreamArchive: NavigationEntry[] = [];
+  const nonChangelogPages = navigationPages.filter((entry) => {
+    if (!isChangelogNavigationGroup(entry)) return true;
+
+    if (isNavigationGroup(entry)) {
+      upstreamArchive.push(
+        ...entry.pages.filter((page) => !isConationReleaseGroup(page))
+      );
+    }
+    return false;
+  });
+
+  return [
+    ...nonChangelogPages,
+    {
+      group: "История изменений",
+      pages: [
+        { group: "Релизы Conation", pages: conationPages },
+        ...upstreamArchive.map(labelUpstreamArchiveEntry),
+      ],
+    },
+  ];
+}
+
+export function monthForArchive(month: number) {
+  const monthName = MONTHS[month - 1];
+  if (!monthName) {
+    throw new Error(`Release tag contains an invalid month: ${month}`);
+  }
+  return monthName;
 }
 
 async function main() {
@@ -103,10 +186,10 @@ async function main() {
     `Found ${releases.length} releases matching ${TAG_PATTERN.source}`
   );
 
-  // Clean out old generated MDX files
-  mkdirSync(CHANGELOG_DIR, { recursive: true });
-  for (const file of readdirSync(CHANGELOG_DIR)) {
-    rmSync(join(CHANGELOG_DIR, file));
+  const docsJson = JSON.parse(readFileSync(DOCS_JSON_PATH, "utf-8"));
+  const navigationPages = docsJson.navigation?.pages;
+  if (!Array.isArray(navigationPages)) {
+    throw new Error("docs.json must contain navigation.pages before generating a changelog");
   }
 
   // Group releases by tag month, newest month first (releases are already
@@ -114,91 +197,105 @@ async function main() {
   const months = new Map<string, Release[]>();
   for (const r of releases) {
     const { year, month } = tagMonth(r.tag_name);
+    monthForArchive(month);
     const key = `${year}-${String(month).padStart(2, "0")}`;
     (months.get(key) ?? months.set(key, []).get(key)!).push(r);
   }
 
   const monthKeys = [...months.keys()];
   const [latestKey, ...archiveKeys] = monthKeys;
+  const archiveMonths = archiveKeys.map((key) => {
+    const [year, month] = key.split("-").map(Number);
+    const releasesForMonth = months.get(key);
+    if (!releasesForMonth) {
+      throw new Error(`Missing release group for ${key}`);
+    }
+    return {
+      key,
+      year,
+      monthName: monthForArchive(month),
+      releases: releasesForMonth,
+    };
+  });
+
+  const conationYearGroups: Array<{ group: string; pages: string[] }> = [];
+  for (const { key, year } of archiveMonths) {
+    let group = conationYearGroups.find(
+      (candidate) => candidate.group === String(year)
+    );
+    if (!group) {
+      group = { group: String(year), pages: [] };
+      conationYearGroups.push(group);
+    }
+    group.pages.push(`${CONATION_CHANGELOG_ROUTE}/${key}`);
+  }
+
+  docsJson.navigation.pages = buildChangelogNavigation(
+    navigationPages as NavigationEntry[],
+    [
+      `${CONATION_CHANGELOG_ROUTE}/introduction`,
+      ...conationYearGroups.flatMap((group) => group.pages),
+    ]
+  );
+
+  // All input/configuration validation happens above this line. The generator
+  // owns only this directory; imported upstream MDX pages stay untouched.
+  mkdirSync(CONATION_CHANGELOG_DIR, { recursive: true });
+  for (const file of readdirSync(CONATION_CHANGELOG_DIR)) {
+    rmSync(join(CONATION_CHANGELOG_DIR, file));
+  }
 
   // Landing page: the latest month's releases
   const latestReleases = months.get(latestKey) ?? [];
   const latestUpdates = latestReleases.map((r, i) => renderUpdate(r, i === 0));
 
   const intro = `---
-title: Changelog
+title: Журнал изменений Conation
 icon: clock-rotate-left
-description: All notable changes to Macro, pulled from GitHub Releases.
+description: Все заметные изменения Conation, собранные из GitHub Releases.
 ---
 
-All notable changes to Macro, pulled from [GitHub Releases](https://github.com/${REPO}/releases).
+Все заметные изменения Conation, собранные из [GitHub Releases](https://github.com/${REPO}/releases).
 
-Releases follow the format \`vYYYY.M.D.patch\`. Earlier months are in the sidebar.
+Релизы используют формат \`vYYYY.M.D.patch\`. Импортированная история исходного проекта доступна отдельным архивом в боковой панели.
 
 ${latestUpdates.join("\n\n")}
 `;
 
-  writeFileSync(join(CHANGELOG_DIR, "introduction.mdx"), intro);
+  writeFileSync(join(CONATION_CHANGELOG_DIR, "introduction.mdx"), intro);
   console.log(
-    `Wrote changelog/introduction.mdx (${latestReleases.length} releases)`
+    `Wrote ${CONATION_CHANGELOG_ROUTE}/introduction.mdx (${latestReleases.length} releases)`
   );
 
   // One archive page per earlier month
-  for (const key of archiveKeys) {
-    const [year, month] = key.split("-").map(Number);
-    const title = `${MONTH_NAMES[month - 1]} ${year}`;
-    const monthReleases = months.get(key)!;
+  for (const { key, year, monthName, releases: monthReleases } of archiveMonths) {
+    const title = `${monthName.title} ${year}`;
     const updates = monthReleases.map((r) => renderUpdate(r, false));
 
     const mdx = `---
 title: "${title}"
-description: "Macro releases from ${title}."
+description: "Релизы Conation за ${monthName.inPeriod} ${year} года."
 ---
 
 ${updates.join("\n\n")}
 `;
 
-    writeFileSync(join(CHANGELOG_DIR, `${key}.mdx`), mdx);
-    console.log(`Wrote changelog/${key}.mdx (${monthReleases.length} releases)`);
+    writeFileSync(join(CONATION_CHANGELOG_DIR, `${key}.mdx`), mdx);
+    console.log(
+      `Wrote ${CONATION_CHANGELOG_ROUTE}/${key}.mdx (${monthReleases.length} releases)`
+    );
   }
 
-  // Update docs.json with changelog tab: latest month up top, then one
-  // group per year of archive pages
-  const docsJson = JSON.parse(readFileSync(DOCS_JSON_PATH, "utf-8"));
-  const tabs = docsJson.navigation.tabs as Array<Record<string, unknown>>;
-
-  const filtered = tabs.filter(
-    (t) => (t.tab as string).toLowerCase() !== "changelog"
-  );
-
-  const yearGroups: Array<{ group: string; pages: string[] }> = [];
-  for (const key of archiveKeys) {
-    const year = key.split("-")[0];
-    let group = yearGroups.find((g) => g.group === year);
-    if (!group) {
-      group = { group: year, pages: [] };
-      yearGroups.push(group);
-    }
-    group.pages.push(`changelog/${key}`);
-  }
-
-  filtered.push({
-    tab: "Changelog",
-    groups: [
-      {
-        group: "Releases",
-        pages: ["changelog/introduction"],
-      },
-      ...yearGroups,
-    ],
-  });
-
-  docsJson.navigation.tabs = filtered;
+  // The Mintlify navigation uses root pages with grouped entries, not legacy
+  // navigation tabs. It was fully constructed before output files were
+  // cleared, so a stale config cannot erase a changelog archive.
   writeFileSync(DOCS_JSON_PATH, JSON.stringify(docsJson, null, 2) + "\n");
   console.log("Updated docs.json");
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+if (import.meta.main) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
