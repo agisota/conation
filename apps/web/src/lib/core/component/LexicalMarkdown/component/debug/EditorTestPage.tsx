@@ -220,7 +220,7 @@ export default function EditorTestPage() {
               buildMentionMarkdownString({
                 type: 'user',
                 userId: 'conation|pythia@conation.dev',
-                email: 'seamus@macro.com',
+                email: 'pythia@conation.dev',
               }),
               buildMentionMarkdownString({
                 type: 'document',

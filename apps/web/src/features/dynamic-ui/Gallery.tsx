@@ -44,7 +44,7 @@ const CATALOG: Array<{ label: string; widget: Widget }> = [
     widget: {
       type: 'md',
       markdown:
-        '## Weekly summary\n\nYou shipped **4 PRs** and closed *6 tickets*. See the [tracker](https://macro.com) for the full breakdown.\n\n- Auth race fix\n- Tool render stabilization\n\n> Nice momentum this week.',
+        '## Weekly summary\n\nYou shipped **4 PRs** and closed *6 tickets*. See the [tracker](https://conation.dev) for the full breakdown.\n\n- Auth race fix\n- Tool render stabilization\n\n> Nice momentum this week.',
     },
   },
   {

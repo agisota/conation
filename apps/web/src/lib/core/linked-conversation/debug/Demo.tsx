@@ -90,7 +90,7 @@ export default function LinkedConversationDemo() {
           Paste a message link (fills the ids below)
           <input
             class={inputClass}
-            placeholder="https://macro.com/app/channel/…?channel_message_id=…"
+            placeholder="https://conation.dev/app/channel/…?channel_message_id=…"
             onInput={(e) => handleLinkPaste(e.currentTarget.value)}
           />
         </label>

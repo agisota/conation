@@ -236,7 +236,7 @@ export const PROPERTIES_FILLED: Property[] = [
     displayName: 'Links',
     isMultiSelect: true,
     valueType: 'LINK',
-    value: ['https://macro.com', 'https://github.com'],
+    value: ['https://conation.dev', 'https://github.com'],
   },
 ];
 
