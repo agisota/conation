@@ -213,6 +213,23 @@ async fn router_accepts_only_the_conation_webhook_path() {
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(executor.executed.lock().unwrap().len(), 1);
 
+    let health_request = axum::http::Request::builder()
+        .method("GET")
+        .uri("/healthz")
+        .body(axum::body::Body::empty())
+        .unwrap();
+    let health_response = app.clone().oneshot(health_request).await.unwrap();
+    assert_eq!(health_response.status(), StatusCode::OK);
+
+    let unsigned_request = axum::http::Request::builder()
+        .method("POST")
+        .uri("/conation-events")
+        .body(axum::body::Body::empty())
+        .unwrap();
+    let unsigned_response = app.clone().oneshot(unsigned_request).await.unwrap();
+    assert_eq!(unsigned_response.status(), StatusCode::UNAUTHORIZED);
+    assert_eq!(executor.executed.lock().unwrap().len(), 1);
+
     let legacy_request = axum::http::Request::builder()
         .uri("/macro-events")
         .body(axum::body::Body::empty())

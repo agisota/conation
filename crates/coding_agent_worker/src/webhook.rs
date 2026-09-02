@@ -16,7 +16,7 @@ use axum::Router;
 use axum::body::Bytes;
 use axum::extract::State;
 use axum::http::{HeaderMap, StatusCode};
-use axum::routing::post;
+use axum::routing::{get, post};
 use conation_event_broker::Event;
 use conation_user_id::user_id::MacroUserIdStr;
 use conation_uuid::Uuid;
@@ -126,11 +126,17 @@ pub struct WebhookState<Executor> {
     pub signing_secret: String,
 }
 
-/// Build the router serving `POST /conation-events`.
+/// Build the router serving `GET /healthz` and `POST /conation-events`.
 pub fn webhook_router<Executor: WorkExecutor>(state: WebhookState<Executor>) -> Router {
     Router::new()
+        .route("/healthz", get(healthz))
         .route("/conation-events", post(ingest::<Executor>))
         .with_state(Arc::new(state))
+}
+
+/// Report that the process is able to accept webhook deliveries.
+async fn healthz() -> StatusCode {
+    StatusCode::OK
 }
 
 /// Verify, decode, translate, execute.
