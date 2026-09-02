@@ -24,6 +24,86 @@ Conation создаёт приватный канал поддержки для 
 режиме код находится в Mailpit. После входа аккаунт может отвечать в канале как
 любой другой пользователь.
 
+## Read-only preflight для оператора
+
+Перед открытием self-host стека для пользователей выполните проверку без
+мутаций:
+
+```bash
+bash tooling/scripts/preflight-conation-support-accounts.sh --static
+```
+
+`--static` не требует секретов или сети: он проверяет фиксированный manifest
+трёх Conation identities и локальные SVG-аватары. Результат `PASS` в этом режиме
+говорит только о состоянии файлов в репозитории, а не о запущенном FusionAuth или БД.
+
+Когда FusionAuth и authentication-service уже доступны, ключ FusionAuth должен
+попасть в окружение из secret manager или защищённого env-файла, а не из shell
+history. Затем выполните online-проверку:
+
+```bash
+# FUSIONAUTH_API_KEY уже передан безопасным способом в окружение процесса.
+FUSIONAUTH_URL="https://auth.conation.dev" \
+FUSIONAUTH_APPLICATION_ID="<UUID приложения Conation>" \
+CONATION_SUPPORT_AVATAR_BASE_URL="https://app.conation.dev" \
+CONATION_AUTH_HEALTH_URL="https://app.conation.dev/auth/health" \
+bash tooling/scripts/preflight-conation-support-accounts.sh --online
+```
+
+`--online` делает только `GET`-запросы. Он сверяет application и её tenant,
+транзакционные события `user.create`/`user.create.complete`, endpoint webhook
+`/webhooks/user`, наличие заголовка внутренней авторизации, все три профиля и
+их registrations. Он также проверяет health authentication-service. Он не
+создаёт и не обновляет FusionAuth users, registrations, каналы или сообщения.
+
+Если оператор безопасно передаст в окружение
+`CONATION_SUPPORT_PREFLIGHT_WEBHOOK_KEY`, проверка дополнительно сравнит это
+значение с `x-internal-auth-key` webhook, не выводя значение. Без этой переменной
+результат честно содержит `NOT VERIFIED`: наличие непустого заголовка доказано,
+но его равенство секрету authentication-service — нет.
+
+Онлайн-успех всё ещё не доказывает, что webhook когда-либо выполнился. Для
+runtime-доказательства сначала завершите signup **нового обычного** тестового
+пользователя и дождитесь фонового создания его канала. Затем используйте
+отдельную read-only PostgreSQL роль. Передайте libpq service name, а не URL с
+паролем:
+
+```ini
+# Файл PGSERVICEFILE с правами 0600; пароль хранится отдельно, например в .pgpass
+# с правами 0600 или в клиентском сертификате.
+[conation-support-readonly]
+host=<postgres-host>
+port=5432
+dbname=macrodb
+user=conation_support_audit
+sslmode=require
+```
+
+Этой роли достаточно `USAGE` на schema `public` и `SELECT` только на таблицы
+`"User"`, `comms_channels`, `comms_channel_participants` и `comms_messages`.
+После того как необходимые FusionAuth-переменные из предыдущего шага всё ещё
+находятся в окружении, запустите:
+
+```bash
+PGSERVICEFILE="/secure/path/pg_service.conf" \
+CONATION_SUPPORT_PREFLIGHT_PG_SERVICE="conation-support-readonly" \
+CONATION_SUPPORT_PREFLIGHT_PROBE_EMAIL="new.user@your-domain.example" \
+bash tooling/scripts/preflight-conation-support-accounts.sh --runtime
+```
+
+`--runtime` повторяет online-проверку и запускает единственный SQL-сеанс с
+`BEGIN READ ONLY`. Он подтверждает профиль probe-пользователя, три профиля
+поддержки, private channel с активным membership всех четырёх участников и
+приветствие Пифии. Он не создаёт probe-пользователя и не пытается исправлять
+отсутствующие записи. Если канал ещё не появился, это не повод обходить ошибку:
+дождитесь завершения background-задачи и повторите проверку.
+
+Даже runtime `PASS` не является обещанием «учётные записи точно могут отвечать
+из любого ingress»: он не выполняет login от имени Пифии и не отправляет
+сообщение. Поле `canReply` в FusionAuth проверяется как metadata профиля, но
+само по себе не выдаёт доступ к каналам; доступ подтверждается активным
+membership.
+
 ## Повторный запуск или отдельный self-host
 
 После запуска FusionAuth и authentication-service выполните:
@@ -51,11 +131,11 @@ webhook `user.create`. Именно backend после такого создан
 FusionAuth metadata, позволяет Пифии, Тарсу и Рамзану отвечать через обычный
 интерфейс Conation.
 
-Перед запуском на отдельном self-host проверьте конфигурацию endpoint и событий
-`user.create` в FusionAuth самостоятельно. Скрипт проверяет лишь health URL
-authentication-service; он не проверяет webhook, его внутреннюю авторизацию,
-профили в БД или созданные memberships. Он также не создаёт каналы задним
-числом для пользователей, уже существовавших до включения этой функции.
+Перед запуском на отдельном self-host выполните описанный выше read-only
+preflight: режим `--online` проверяет endpoint, события `user.create`, webhook
+и профили FusionAuth, а `--runtime` дополнительно проверяет профиль в БД и
+созданные memberships. Проверка не создаёт каналы задним числом для
+пользователей, уже существовавших до включения этой функции.
 
 В production лучше передавать секрет через secret manager или временный env-файл
 с правами `0600`, а не записывать значение прямо в shell history. Скрипт не

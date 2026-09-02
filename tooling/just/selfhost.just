@@ -161,9 +161,16 @@ selfhost-provision-support-mailboxes:
 selfhost-test-support-mailboxes:
     bash tooling/scripts/tests/provision-conation-stalwart-mailboxes.test.sh
 
+# Pure fake-service harnesses: neither command contacts a deployment.
+selfhost-test-support-accounts:
+    bash tooling/scripts/tests/provision-conation-support-users.test.sh
+    bash tooling/scripts/tests/preflight-conation-support-accounts.test.sh
+
 selfhost-check ENV_FILE=".env.selfhost.example":
     bash -n .cursor/cloud-lib.sh .cursor/infra.sh .cursor/stack.sh .cursor/rebuild.sh
     bash tooling/scripts/tests/provision-conation-stalwart-mailboxes.test.sh
+    bash tooling/scripts/tests/provision-conation-support-users.test.sh
+    bash tooling/scripts/tests/preflight-conation-support-accounts.test.sh
     just selfhost-overlay-check {{ quote(ENV_FILE) }}
 
 # Public DNS, TLS, and Internet mail require an operator security design and
