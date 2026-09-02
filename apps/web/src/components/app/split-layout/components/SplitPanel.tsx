@@ -358,7 +358,7 @@ export function SplitPanel(props: SplitPanelProps) {
                   'rounded-r-none': hasTuckedViewer(),
                 }
               )}
-              depth={isTouchDevice() ? 0 : 1}
+              depth={1}
             >
               <Show
                 when={usesComposableLayout()}
