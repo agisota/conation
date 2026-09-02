@@ -111,6 +111,43 @@ HTTP(S)-адреса и отклоняет управляемые хосты Mac
 доступное только на loopback; дистрибутив с доступом из Интернета также должен
 сделать базовую конфигурацию только входной и убрать прямые привязки сервисов.
 
+### Строгий профиль URL сервисов (экспериментальный)
+
+`CONATION_SERVICE_URL_PROFILE=strict-self-host` — явный opt-in для проверки,
+что код, использующий типизированные URL сервисов, не молча возьмёт managed
+default. Он **не** делает самостоятельное развёртывание production-ready и не
+настраивает Compose, ingress, DNS, TLS, секреты или маршруты. Рабочее
+развёртывание с доступом из Интернета остаётся неподдерживаемым.
+
+Скопируйте [`strict-service-urls.env.example`](./strict-service-urls.env.example)
+в принадлежащее оператору secret/config store и замените все placeholder DNS
+имена. Это не готовый `.env`: шаблон намеренно содержит не секреты, а
+неработающие без собственных ingress-маршрутов адреса. В нём перечислены все 19
+нынешних `OVERRIDE_*` URL-переменных. Для HTTP(S) сервисов он использует
+ожидаемые same-origin path prefixes: `/auth`, `/pdf`, `/dss`,
+`/connection-gateway`, `/cognition`, `/notification`, `/static-file`,
+`/agent-harness`, `/unfurl`, `/contacts`, `/email`, `/image-proxy`, `/lexical`
+и `/ai-editing`; WebSocket endpoints используют `/websocket`,
+`/connection-gateway` и `/sync`. Оператор обязан реализовать и проверить каждый
+из этих маршрутов. `OVERRIDE_AGENT_PROXY_WEBSOCKET_URL` также обязателен для
+полного шаблона, хотя локальный ingress не публикует такой маршрут и сам endpoint
+сейчас не используется.
+
+При `strict-self-host` каждый разрешаемый URL требует соответствующий
+`OVERRIDE_*`; отсутствие значения — ошибка запуска вместо fallback на managed
+host. Значение должно быть абсолютным URL с host: HTTP-службы принимают только
+`http`/`https`, WebSocket-службы — только `ws`/`wss`. Проверка отклоняет userinfo,
+query, fragment, а также `macro.com`, любой его subdomain, `macroverse.workers.dev`
+и его subdomain. Принимаемый path prefix не доказывает, что ingress действительно
+маршрутизирует запрос: это отдельная обязанность оператора.
+
+Допустимы только значения профиля `managed` и `strict-self-host`; unset равен
+`managed`. Откат профиля — удалить `CONATION_SERVICE_URL_PROFILE` либо задать
+`managed`, затем перезапустить все затронутые процессы. В `managed` существующие
+`OVERRIDE_*` остаются активными; чтобы вернуться именно к environment defaults,
+удалите и overrides. Эти defaults могут вести в managed-инфраструктуру, поэтому
+не используйте такой откат как подтверждение работоспособного production пути.
+
 ## Базовая топология
 
 | Возможность | Локальный компонент | Состояние и ответственность |
