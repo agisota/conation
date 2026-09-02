@@ -72,11 +72,11 @@ GIF-файлов среди текущих или удалённых ссыло�
 Инвентарь описывает проверенные сетевые ответы и содержимое файлов, но не
 приписывает им неподтверждённое авторство.
 
-## Машинный индекс остальных assets
+## Машинный индекс и полный визуальный реестр assets
 
 Файл [`assets/ASSET_MACHINE_INDEX.tsv`](assets/ASSET_MACHINE_INDEX.tsv)
-содержит 316 путей, найденных текущим `rg --files`, для PNG, JPEG, GIF, WebP, SVG, ICO,
-BMP и AVIF. Для каждого пути записаны формат, число байтов, размеры, SHA-256,
+содержит текущие 312 строк машинного индекса для PNG, JPEG, GIF, WebP, SVG, ICO,
+BMP и AVIF. Для каждой записи записаны формат, число байтов, размеры, SHA-256,
 число кадров и длительность там, где формат позволяет получить их без
 декодирования изображения. Индекс воспроизводится командой:
 
@@ -86,15 +86,25 @@ python3 docs/assets/generate_asset_index.py
 
 Колонка `human_visual_review` в машинном индексе намеренно равна `required`:
 этот файл фиксирует метаданные, а результаты отдельной визуальной проверки не
-подменяют машинный статус. Первые 75 production-ассетов, включая все 66 кадров
-единственного GIF, описаны вручную в
-[`assets/ASSET_VISUAL_INVENTORY_RU.md`](assets/ASSET_VISUAL_INVENTORY_RU.md).
-Добавленные после исходного 301-файлового snapshot Conation masters и platform-
-derivatives также перечислены с точными SHA в
-[`../apps/web/public/brand/README.md`](../apps/web/public/brand/README.md).
+подменяют машинный статус. Граница канонического product-набора зафиксирована в
+[`assets/BATCH4_RU.md`](assets/BATCH4_RU.md): из 312 строк исключены 15
+не-product записей — три поздние копии в `apps/docs/brand/` и 12 PNG fixtures
+email-rendering. Поэтому полный набор содержит 297 canonical production-ассетов.
+
+Все 297 canonical production-ассетов открыты и описаны вручную ровно один раз в
+четырёх связанных частях реестра:
+
+- [batch 1 — 73 ассета](assets/ASSET_VISUAL_INVENTORY_RU.md), включая все 66
+  кадров единственного GIF;
+- [batch 2 — 73 ассета](assets/BATCH2_RU.md);
+- [batch 3 — 75 ассетов](assets/BATCH3_RU.md);
+- [batch 4 — 76 ассетов](assets/BATCH4_RU.md).
+
+Пользовательские Conation masters и platform-derivatives также перечислены с
+точными SHA в [`../apps/web/public/brand/README.md`](../apps/web/public/brand/README.md).
 
 Tauri-файл `apps/web/tauri/src-tauri/icons/icon.icns` не входит в этот
-316-файловый набор расширений. Он и остальные platform-копии были штатно
+312-строчный набор расширений. Он и остальные platform-копии были штатно
 перегенерированы Tauri CLI из квадратного Conation master; их provenance,
 размеры и representative SHA приведены в brand README.
 
