@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   httpOriginToWebSocketOrigin,
   isManagedLegacyHostname,
@@ -42,6 +42,24 @@ describe('Conation client profile', () => {
       expect(() => validateStandaloneOperatorOriginInput(value)).toThrow();
     }
     expect(isManagedLegacyHostname('notmacro.com')).toBe(false);
+  });
+
+  it('keeps managed Macro hosts blocked in a compiled standalone bundle', async () => {
+    vi.stubGlobal('__CONATION_HOSTED_LEGACY__', false);
+    vi.resetModules();
+
+    try {
+      const { validateStandaloneOperatorOriginInput } = await import(
+        './clientProfile'
+      );
+
+      expect(() =>
+        validateStandaloneOperatorOriginInput('https://macro.com')
+      ).toThrow('Standalone Conation cannot target managed legacy host');
+    } finally {
+      vi.unstubAllGlobals();
+      vi.resetModules();
+    }
   });
 
   it('allows a standalone service path without weakening origin validation', () => {

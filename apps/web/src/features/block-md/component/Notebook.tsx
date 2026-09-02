@@ -22,11 +22,11 @@ import {
   DEV_MODE_ENV,
   ENABLE_HISTORY_COMPONENT,
   ENABLE_MARKDOWN_COMMENTS,
+  getFeatureFlagOverride,
   INLINE_AI_EDITING_FLAG,
   INLINE_AI_EDITING_OVERRIDE,
   LOCAL_ONLY,
 } from '@core/constant/featureFlags';
-import { useIsMacroTeam } from '@core/context/team';
 import { registerHotkey } from '@core/hotkey/hotkeys';
 import { TOKENS } from '@core/hotkey/tokens';
 import { isMobile } from '@core/mobile/isMobile';
@@ -56,6 +56,7 @@ import { DocumentDiscussion } from './DocumentDiscussion';
 import { InlineTaskGithubPullRequests } from './InlineTaskGithubPullRequests';
 import { InlineTaskProperties } from './InlineTaskProperties';
 import { InstructionsEditor } from './InstructionsEditor';
+import { isLexicalStateDebuggerEnabled } from './lexicalStateDebuggerPolicy';
 import { MarkdownEditor } from './MarkdownEditor';
 import {
   MARKDOWN_OUTLINE_WIDTH,
@@ -109,11 +110,13 @@ const widthToMode = (width: number): CommentLayoutMode => {
 };
 
 function useCanUseLexicalStateDebugger() {
-  const isMacroTeam = useIsMacroTeam();
-  return createMemo(() => {
-    if (LOCAL_ONLY || DEV_MODE_ENV) return true;
-    return isMacroTeam();
-  });
+  return createMemo(() =>
+    isLexicalStateDebuggerEnabled({
+      localOnly: LOCAL_ONLY,
+      development: DEV_MODE_ENV,
+      operatorOverride: getFeatureFlagOverride('ENABLE_LEXICAL_STATE_DEBUGGER'),
+    })
+  );
 }
 
 export function Notebook(props: {

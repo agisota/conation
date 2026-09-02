@@ -38,13 +38,10 @@ import {
   Switch,
 } from 'solid-js';
 import {
+  applyConationAgentMentionPolicy,
   conationAiMentionUser,
-  conationCoderMentionUser,
-  conationNewMentionUser,
   cursorMentionUser,
   isConationAiId,
-  isConationCoderId,
-  isConationNewId,
 } from '../conationAi';
 import { CHANNEL_FILE_PICKER_ACCEPT } from './accepted-file-types';
 import { createInputAttachmentTracker } from './attachment-tracker';
@@ -268,22 +265,11 @@ export function ChannelInput(props: ChannelInputProps) {
   const mentionUsers: Accessor<IUser[]> = () => {
     const cursorEnabled =
       canUseCursor() && (cursorApiKey.data?.registered ?? false);
-    const base = [
+    let base = [
       ...(props.participants?.() ?? []),
       ...(props.bots?.() ?? []),
     ].filter((user) => cursorEnabled || !isCursorBotId(user.id));
-    if (
-      ENABLE_CHAT_V3_AGENTS() &&
-      !base.some((user) => isConationCoderId(user.id))
-    ) {
-      base.unshift(conationCoderMentionUser());
-    }
-    if (
-      ENABLE_CHAT_V3_AGENTS() &&
-      !base.some((user) => isConationNewId(user.id))
-    ) {
-      base.unshift(conationNewMentionUser());
-    }
+    base = applyConationAgentMentionPolicy(base, ENABLE_CHAT_V3_AGENTS());
     if (cursorEnabled && !base.some((user) => isCursorBotId(user.id))) {
       base.unshift(cursorMentionUser());
     }

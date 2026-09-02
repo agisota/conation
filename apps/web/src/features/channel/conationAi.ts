@@ -5,10 +5,12 @@ import {
 import {
   CONATION_CODER_NAME,
   CONATION_CODER_PRINCIPAL_ID,
+  isConationCoderId,
 } from '@core/constant/conationCoder';
 import {
   CONATION_NEW_NAME,
   CONATION_NEW_PRINCIPAL_ID,
+  isConationNewId,
 } from '@core/constant/conationNew';
 import {
   CURSOR_BOT_NAME,
@@ -42,6 +44,30 @@ export function conationCoderMentionUser(): IUser {
     name: CONATION_CODER_NAME,
     email: CONATION_CODER_NAME,
   };
+}
+
+/**
+ * Applies the runtime contract for first-party agent mentions.
+ *
+ * The in-process Conation (new) runtime is deliberately not served in
+ * production. A browser feature flag cannot establish that a deployment has
+ * that runtime, so it is never offered as a mention candidate. Conation Coder
+ * remains available whenever the established coding-agent flag is enabled.
+ */
+export function applyConationAgentMentionPolicy(
+  users: IUser[],
+  codingAgentEnabled: boolean
+): IUser[] {
+  const runtimeBackedUsers = users.filter((user) => !isConationNewId(user.id));
+
+  if (
+    !codingAgentEnabled ||
+    runtimeBackedUsers.some((user) => isConationCoderId(user.id))
+  ) {
+    return runtimeBackedUsers;
+  }
+
+  return [conationCoderMentionUser(), ...runtimeBackedUsers];
 }
 
 /** A synthetic mention user for the in-process Conation agent. */

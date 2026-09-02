@@ -1,13 +1,10 @@
 export type ConationClientProfile = 'standalone' | 'hosted-legacy';
 
-// In a standalone browser build, Vite substitutes the global with `false` and
-// Rollup removes this compatibility list. Outside a browser bundle (notably
-// Vite's config-time validation and unit tests), the value is absent.
-const MANAGED_LEGACY_HOST_SUFFIXES =
-  typeof globalThis.__CONATION_HOSTED_LEGACY__ === 'boolean' &&
-  !globalThis.__CONATION_HOSTED_LEGACY__
-    ? []
-    : ['macro.com'];
+// Keep this list in every bundle. Standalone origin validation must reject a
+// legacy managed host even after Vite replaces __CONATION_HOSTED_LEGACY__ with
+// `false` at build time. The legacy-hosted profile does not use the standalone
+// validation entry points.
+const MANAGED_LEGACY_HOST_SUFFIXES = ['macro.com'];
 
 /** The browser profile is standalone unless the legacy hosted service is explicit. */
 export function parseConationClientProfile(
