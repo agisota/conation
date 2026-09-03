@@ -157,14 +157,46 @@ fn notification_noun(count: usize) -> &'static str {
     }
 }
 
-fn digest_subject(notification_count: usize) -> String {
-    // Product-default Russian: recipient locale is not persisted (no user.locale).
+fn digest_subject(notification_count: usize, locale: &str) -> String {
+    // Recipient locale is persisted on User.locale (en|ru). Default Russian.
     // Do not infer from the sender. Accept-Language is only negotiated on
     // recipient-initiated verification mail.
-    format!(
-        "У вас {} в Conation",
-        notification_phrase(notification_count)
-    )
+    if locale == "en" {
+        if notification_count == 1 {
+            "You have 1 new notification in Conation".to_string()
+        } else {
+            format!("You have {notification_count} new notifications in Conation")
+        }
+    } else {
+        format!(
+            "У вас {} в Conation",
+            notification_phrase(notification_count)
+        )
+    }
+}
+
+fn digest_heading(notification_count: usize, locale: &str) -> String {
+    if locale == "en" {
+        if notification_count == 1 {
+            "You have 1 new notification".to_string()
+        } else {
+            format!("You have {notification_count} new notifications")
+        }
+    } else {
+        format!("У вас {}", notification_phrase(notification_count))
+    }
+}
+
+fn digest_truncated_summary(num_truncated: usize, locale: &str) -> String {
+    if locale == "en" {
+        if num_truncated == 1 {
+            "1 more notification".to_string()
+        } else {
+            format!("{num_truncated} more notifications")
+        }
+    } else {
+        format!("Ещё {num_truncated} {}", notification_noun(num_truncated))
+    }
 }
 
 fn truncate_body(s: String) -> String {
@@ -211,6 +243,7 @@ impl EmailDigestNotification {
         digest: DigestBatch,
         urls: &DigestEmailUrls,
         sha: Hmac<Sha256>,
+        locale: &str,
     ) -> Result<Self, Report> {
         let DigestBatch {
             user_id,
@@ -244,8 +277,8 @@ impl EmailDigestNotification {
         let inner_html_string = DigestTemplate {
             notifs,
             num_truncated,
-            heading: format!("У вас {}", notification_phrase(input_len)),
-            truncated_summary: format!("Ещё {num_truncated} {}", notification_noun(num_truncated)),
+            heading: digest_heading(input_len, locale),
+            truncated_summary: digest_truncated_summary(num_truncated, locale),
             app_url: urls.app_url.clone(),
             brand_asset_url: urls.brand_asset_url.clone(),
             unsubscribe_url,
@@ -254,7 +287,7 @@ impl EmailDigestNotification {
 
         Ok(EmailDigestNotification {
             inner_html_string,
-            subject: digest_subject(input_len),
+            subject: digest_subject(input_len, locale),
         })
     }
 }

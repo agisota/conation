@@ -32,6 +32,7 @@ use crate::api::user::get_legacy_user_permissions::GetLegacyUserPermissionsRespo
 use crate::api::user::get_user_link_exists::UserLinkResponse;
 use crate::api::user::get_user_organization::UserOrganizationResponse;
 use crate::api::user::patch_tutorial::PatchUserTutorialRequest;
+use crate::api::user::patch_locale::PatchUserLocaleRequest;
 use crate::api::user::patch_user_group::PatchUserGroupRequest;
 use crate::api::user::patch_user_onboarding::PatchUserOnboardingRequest;
 use crate::api::user::post_get_names::PostGetNamesRequestBody;
@@ -121,6 +122,7 @@ use model::user::{
                 user::get_user_quota::handler,
                 user::get_legacy_user_permissions::handler,
                 user::patch_tutorial::handler,
+                user::patch_locale::handler,
 
                 /// /session
                 session::session_login::handler,
@@ -206,6 +208,7 @@ use model::user::{
                         UserOrganizationResponse,
                         GetLegacyUserPermissionsResponse,
                         PatchUserTutorialRequest,
+                        PatchUserLocaleRequest,
 
                         // User onboarding
                         PatchUserGroupRequest,

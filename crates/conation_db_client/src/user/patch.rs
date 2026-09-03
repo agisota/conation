@@ -96,6 +96,32 @@ pub async fn patch_user_tutorial(
     Ok(())
 }
 
+/// Updates the user's locale (`en` or `ru`; CHECK is in the migration).
+#[tracing::instrument(skip(db))]
+pub async fn patch_user_locale(
+    db: &sqlx::Pool<sqlx::Postgres>,
+    user_id: &MacroUserId<Lowercase<'_>>,
+    locale: &str,
+) -> anyhow::Result<()> {
+    let result = sqlx::query!(
+        r#"
+            UPDATE "User"
+            SET locale = $1
+            WHERE id = $2
+        "#,
+        locale,
+        user_id.as_ref(),
+    )
+    .execute(db)
+    .await?;
+
+    if result.rows_affected() == 0 {
+        anyhow::bail!("user not found");
+    }
+
+    Ok(())
+}
+
 /// Updates the user's AI data consent flag.
 #[tracing::instrument(skip(db), err)]
 pub async fn patch_ai_consent(

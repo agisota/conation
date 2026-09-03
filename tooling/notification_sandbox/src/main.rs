@@ -397,7 +397,7 @@ async fn poll_email_digests(egress: &impl NotificationEgress) -> Result<(), Repo
         )
         .expect("sandbox digest URLs must be valid");
         Ok(SandboxNotification {
-            inner: EmailDigestNotification::new_from_digest_batch(batch, &digest_urls, hmac_key)?,
+            inner: EmailDigestNotification::new_from_digest_batch(batch, &digest_urls, hmac_key, "ru")?,
         })
     }
 

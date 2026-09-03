@@ -38,6 +38,7 @@ conation_authorization = { path = "../../crates/conation_authorization" }
 conation_aws_config = { path = "../../crates/conation_aws_config" }
 conation_config = { path = "../../crates/conation_config" }
 conation_cors = { path = "../../crates/conation_cors" }
+conation_db_client = { path = "../../crates/conation_db_client", default-features = false }
 conation_entrypoint = { path = "../../crates/conation_entrypoint" }
 conation_env = { path = "../../crates/conation_env" }
 conation_env_var = { path = "../../crates/conation_env_var" }

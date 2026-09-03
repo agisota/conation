@@ -290,8 +290,23 @@ pub async fn main() -> anyhow::Result<()> {
     });
 
     let digest_email_urls = digest_email_urls.clone();
+    let digest_db = db.clone();
     let digest_batch_to_email = move |batch: DigestBatch| {
-        EmailDigestNotification::new_from_digest_batch(batch, &digest_email_urls, hmac_key.clone())
+        let locale = tokio::task::block_in_place(|| {
+            tokio::runtime::Handle::current().block_on(
+                conation_db_client::user::get::get_user_locale(&digest_db, batch.user_id.as_ref()),
+            )
+        })
+        .unwrap_or_else(|error| {
+            tracing::error!(error = ?error, "failed to load digest recipient locale");
+            String::from("ru")
+        });
+        EmailDigestNotification::new_from_digest_batch(
+            batch,
+            &digest_email_urls,
+            hmac_key.clone(),
+            &locale,
+        )
     };
 
     tokio::spawn(async move {

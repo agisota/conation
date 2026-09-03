@@ -271,3 +271,24 @@ pub async fn get_user_emails(
 
     Ok((users, count))
 }
+
+/// Recipient locale (`en` or `ru`). Defaults to `ru` if the user row is missing.
+#[tracing::instrument(skip(db))]
+pub async fn get_user_locale(
+    db: &sqlx::Pool<sqlx::Postgres>,
+    user_id: &str,
+) -> anyhow::Result<String> {
+    let locale = sqlx::query!(
+        r#"
+        SELECT locale
+        FROM "User"
+        WHERE id = $1
+        "#,
+        user_id
+    )
+    .map(|row| row.locale)
+    .fetch_optional(db)
+    .await?;
+
+    Ok(locale.unwrap_or_else(|| "ru".to_string()))
+}

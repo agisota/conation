@@ -52,7 +52,7 @@ fn render_digest(total_count: usize, num_truncated: usize) -> String {
 fn singular_digest_uses_russian_conation_copy_and_operator_urls() {
     let body = render_digest(1, 0);
 
-    assert_eq!(digest_subject(1), "У вас 1 новое уведомление в Conation");
+    assert_eq!(digest_subject(1, "ru"), "У вас 1 новое уведомление в Conation");
     assert!(body.contains("У вас 1 новое уведомление"));
     assert!(body.contains("Открыть Conation"));
     assert!(body.contains("Отписаться от дайджестов"));
@@ -66,7 +66,7 @@ fn singular_digest_uses_russian_conation_copy_and_operator_urls() {
 fn many_digest_uses_russian_plural_forms() {
     let body = render_digest(17, 2);
 
-    assert_eq!(digest_subject(17), "У вас 17 новых уведомлений в Conation");
+    assert_eq!(digest_subject(17, "ru"), "У вас 17 новых уведомлений в Conation");
     assert!(body.contains("У вас 17 новых уведомлений"));
     assert!(body.contains("Ещё 2 уведомления"));
     assert!(has_cyrillic(&body));

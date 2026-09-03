@@ -1,5 +1,6 @@
 import IntlMessageFormat, { type PrimitiveType } from 'intl-messageformat';
 import { createSignal } from 'solid-js';
+import { SERVER_HOSTS } from '@core/constant/servers';
 import en from './locales/en.json';
 import ru from './locales/ru.json';
 
@@ -72,6 +73,24 @@ export function setLocale(nextLocale: Locale) {
     globalThis.localStorage?.setItem(LOCALE_STORAGE_KEY, nextLocale);
   } catch {
     // The in-memory selection remains valid when persistence is unavailable.
+  }
+  persistLocaleToServer(nextLocale);
+}
+
+function persistLocaleToServer(nextLocale: Locale) {
+  if (typeof window === 'undefined') return;
+  const authHost = SERVER_HOSTS['auth-service'];
+  try {
+    void fetch(`${authHost}/user/locale`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ locale: nextLocale }),
+    }).catch(() => {
+      // Fire-and-forget: UI already switched even if the server write fails.
+    });
+  } catch {
+    // Fetch may be unavailable in restricted environments.
   }
 }
 

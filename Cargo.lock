@@ -10968,6 +10968,7 @@ dependencies = [
  "conation_aws_config",
  "conation_config",
  "conation_cors",
+ "conation_db_client",
  "conation_entrypoint",
  "conation_env",
  "conation_env_var",
