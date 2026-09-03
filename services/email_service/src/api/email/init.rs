@@ -21,6 +21,7 @@ use email_provider::{EmailProvider, EmailProviderKind, ProviderMessage, Stalwart
 use email_service::pubsub::publish_email_event;
 use model::response::ErrorResponse;
 use models_email::email::service::address::ContactInfo;
+use models_email::email::service::attachment::Attachment;
 use models_email::email::service::backfill::{
     BackfillOperation, BackfillPubsubMessage, InitPayload, JobScopedPayload,
 };
@@ -1128,7 +1129,20 @@ fn seed_stalwart_message(
         body_text: message.body_text.or(message.snippet),
         body_html_sanitized: message.body_html,
         body_macro: None,
-        attachments: vec![],
+        attachments: message
+            .attachments
+            .into_iter()
+            .map(|attachment| Attachment {
+                db_id: conation_uuid::generate_uuid_v7(),
+                provider_id: Some(attachment.blob_id),
+                filename: attachment.name,
+                mime_type: Some(attachment.mime_type),
+                size_bytes: Some(attachment.size as i64),
+                data_url: None,
+                sfs_id: None,
+                content_id: None,
+            })
+            .collect(),
         attachments_draft: vec![],
         attachments_forwarded: vec![],
         headers_json: None,

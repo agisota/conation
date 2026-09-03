@@ -11,6 +11,8 @@ use conation_user_id::user_id::MacroUserIdStr;
 use email::domain::events::{EmailEventOrigin, EmailMacroEvent, MessageSentMetadata};
 use email_api_client::domain::models::{SendRequest, SentIds};
 use email_db_client::messages::scheduled::get::get_and_start_processing_scheduled_message;
+use email_provider::{EmailProvider, StalwartProvider};
+use models_email::service::link::UserProvider;
 use models_email::service::message::MessageToSend;
 use models_email::service::pubsub::ScheduledPubsubMessage;
 use sqlx_core::any::AnyConnectionBackend;
@@ -153,18 +155,34 @@ async fn process_scheduled_message_inner(
         parent_message_id,
         references,
     };
-    let sent_ids = ctx
-        .email_api
-        .send_message(
-            link.id,
-            &send_request,
-            message_to_send.provider_thread_id.as_deref(),
-        )
-        .await
-        .context(format!(
-            "Failed to send message to gmail api for message_id {}",
-            data.message_id
-        ))?;
+    let sent_ids = match link.provider {
+        UserProvider::Stalwart => {
+            let mime = send_request.build_mime()?;
+            let sent = StalwartProvider::from_env()?
+                .send_message(
+                    "",
+                    &mime,
+                    message_to_send.provider_thread_id.as_deref(),
+                )
+                .await?;
+            SentIds {
+                provider_message_id: sent.message_id,
+                provider_thread_id: sent.thread_id,
+            }
+        }
+        UserProvider::Gmail => ctx
+            .email_api
+            .send_message(
+                link.id,
+                &send_request,
+                message_to_send.provider_thread_id.as_deref(),
+            )
+            .await
+            .context(format!(
+                "Failed to send message to gmail api for message_id {}",
+                data.message_id
+            ))?,
+    };
     apply_sent_ids(&mut message_to_send, sent_ids);
 
     let mut tx = ctx

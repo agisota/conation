@@ -78,6 +78,22 @@ pub struct ProviderMessage {
     /// HTML body from JMAP `bodyValues` (first `text/html` part)
     #[serde(default)]
     pub body_html: Option<String>,
+    /// Attachment metadata from JMAP `attachments` (name, type, size, blobId)
+    #[serde(default)]
+    pub attachments: Vec<ProviderAttachment>,
+}
+
+/// Provider-agnostic attachment metadata.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProviderAttachment {
+    /// JMAP `blobId` used to fetch the attachment bytes
+    pub blob_id: String,
+    /// Filename from JMAP `name`
+    pub name: Option<String>,
+    /// MIME type from JMAP `type`
+    pub mime_type: String,
+    /// Size in bytes from JMAP `size`
+    pub size: u64,
 }
 
 /// Provider trait — implemented by Gmail and Stalwart.
@@ -249,6 +265,8 @@ struct JmapEmail {
     html_body: Vec<JmapBodyPart>,
     #[serde(default)]
     body_values: HashMap<String, JmapBodyValue>,
+    #[serde(default)]
+    attachments: Vec<JmapBodyPart>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -262,6 +280,10 @@ struct JmapBodyPart {
     part_id: Option<String>,
     #[serde(rename = "type", default)]
     content_type: Option<String>,
+    blob_id: Option<String>,
+    name: Option<String>,
+    #[serde(default)]
+    size: u64,
 }
 
 #[derive(Debug, Deserialize)]
@@ -321,6 +343,21 @@ impl From<JmapEmail> for ProviderMessage {
             snippet: value.preview,
             body_text,
             body_html,
+            attachments: value
+                .attachments
+                .into_iter()
+                .filter_map(|part| {
+                    let blob_id = part.blob_id?;
+                    Some(ProviderAttachment {
+                        blob_id,
+                        name: part.name,
+                        mime_type: part
+                            .content_type
+                            .unwrap_or_else(|| "application/octet-stream".to_owned()),
+                        size: part.size,
+                    })
+                })
+                .collect(),
         }
     }
 }
@@ -559,7 +596,7 @@ impl EmailProvider for StalwartProvider {
                     "ids": ids,
                     "fetchTextBodyValues": true,
                     "fetchHTMLBodyValues": true,
-                    "properties": ["id", "threadId", "subject", "from", "to", "receivedAt", "hasAttachment", "keywords", "preview", "textBody", "htmlBody", "bodyValues"],
+                    "properties": ["id", "threadId", "subject", "from", "to", "receivedAt", "hasAttachment", "keywords", "preview", "textBody", "htmlBody", "bodyValues", "attachments"],
                 }),
             )
             .await?;
@@ -589,7 +626,7 @@ impl EmailProvider for StalwartProvider {
                     "ids": [message_id],
                     "fetchTextBodyValues": true,
                     "fetchHTMLBodyValues": true,
-                    "properties": ["id", "threadId", "subject", "from", "to", "receivedAt", "hasAttachment", "keywords", "preview", "textBody", "htmlBody", "bodyValues"],
+                    "properties": ["id", "threadId", "subject", "from", "to", "receivedAt", "hasAttachment", "keywords", "preview", "textBody", "htmlBody", "bodyValues", "attachments"],
                 }),
             )
             .await?;

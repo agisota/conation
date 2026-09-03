@@ -58,10 +58,10 @@ async fn lists_recent_threads_via_standard_jmap_query_then_get() {
         .and(path("/jmap/"))
         .and(body_json(json!({
             "using": [JMAP_CORE, JMAP_MAIL],
-            "methodCalls": [["Email/get", {"accountId": "u1", "ids": ["m1"], "fetchTextBodyValues": true, "fetchHTMLBodyValues": true, "properties": ["id", "threadId", "subject", "from", "to", "receivedAt", "hasAttachment", "keywords", "preview", "textBody", "htmlBody", "bodyValues"]}, "c1"]]
+            "methodCalls": [["Email/get", {"accountId": "u1", "ids": ["m1"], "fetchTextBodyValues": true, "fetchHTMLBodyValues": true, "properties": ["id", "threadId", "subject", "from", "to", "receivedAt", "hasAttachment", "keywords", "preview", "textBody", "htmlBody", "bodyValues", "attachments"]}, "c1"]]
         })))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "methodResponses": [["Email/get", {"list": [{"id": "m1", "threadId": "t1", "subject": "Здравствуйте", "from": [{"email": "pythia@conation.dev"}], "to": [{"email": "user@example.test"}], "receivedAt": "2026-09-02T12:00:00Z", "hasAttachment": true, "keywords": {"$seen": true, "$flagged": false}}]}, "c1"]]
+            "methodResponses": [["Email/get", {"list": [{"id": "m1", "threadId": "t1", "subject": "Здравствуйте", "from": [{"email": "pythia@conation.dev"}], "to": [{"email": "user@example.test"}], "receivedAt": "2026-09-02T12:00:00Z", "hasAttachment": true, "keywords": {"$seen": true, "$flagged": false}, "attachments": [{"blobId": "att-1", "name": "brief.pdf", "type": "application/pdf", "size": 1024}]}]}, "c1"]]
         })))
         .mount(&server).await;
     let messages = provider(&server)
@@ -72,6 +72,12 @@ async fn lists_recent_threads_via_standard_jmap_query_then_get() {
     assert_eq!(messages[0].thread_id, "t1");
     assert_eq!(messages[0].from.as_deref(), Some("pythia@conation.dev"));
     assert_eq!(messages[0].labels, vec!["$seen"]);
+    assert!(messages[0].has_attachments);
+    assert_eq!(messages[0].attachments.len(), 1);
+    assert_eq!(messages[0].attachments[0].blob_id, "att-1");
+    assert_eq!(messages[0].attachments[0].name.as_deref(), Some("brief.pdf"));
+    assert_eq!(messages[0].attachments[0].mime_type, "application/pdf");
+    assert_eq!(messages[0].attachments[0].size, 1024);
 }
 
 #[tokio::test]
