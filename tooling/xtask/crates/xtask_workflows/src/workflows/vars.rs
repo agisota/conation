@@ -1,0 +1,103 @@
+//! Shared workflow environment: secrets, the repo-wide env block, concurrency,
+//! and Namespace cache names. This is the "environment" file.
+
+use gh_workflow::{Concurrency, Expression, Workflow};
+
+/// Declares a `${{ secrets.NAME }}` reference as a `&str` const named `NAME`, so
+/// secret usage is greppable and typo-proof.
+macro_rules! secret {
+    ($name:ident) => {
+        pub const $name: &str = concat!("${{ secrets.", stringify!($name), " }}");
+    };
+}
+
+secret!(AWS_ACCESS_KEY);
+secret!(AWS_SECRET_ACCESS_KEY);
+secret!(CLOUDFLARE_API_TOKEN);
+secret!(DAYTONA_API_KEY);
+secret!(DD_API_KEY);
+secret!(DD_APP_KEY);
+secret!(DOPPLER_TOKEN);
+secret!(MACOS_DEVELOPER_ID_CERTIFICATE_BASE64);
+secret!(MACOS_DEVELOPER_ID_CERTIFICATE_PASSWORD);
+secret!(NIX_CACHE_SIGNING_KEY);
+secret!(POSTHOG_API_KEY);
+secret!(PULUMI_ACCESS_TOKEN);
+secret!(SEGMENT_WRITE_KEY);
+secret!(SEGMENT_WRITE_KEY_PRODUCTION);
+
+/// Cloudflare account id. A repo *variable* (not a secret), matching the
+/// hand-written `deploy-lexical-service.yml`.
+pub const CLOUDFLARE_ACCOUNT_ID: &str = "${{ vars.CLOUDFLARE_ACCOUNT_ID }}";
+
+/// S3 nix binary cache store URL, a repo *variable* — e.g.
+/// `s3://macro-nix-cache?region=us-east-1`. The substituter role Cachix used
+/// to play: any /nix cache-volume miss becomes a signed-narinfo download
+/// instead of a from-source rebuild. Empty/unset disables all nix-cache
+/// wiring (setup skips the substituter config; push steps no-op), so the
+/// workflows are safe to run before the bucket exists.
+pub const NIX_CACHE_URL: &str = "${{ vars.NIX_CACHE_URL }}";
+
+/// Public counterpart of [`NIX_CACHE_SIGNING_KEY`], a repo *variable* — e.g.
+/// `nix-cache.macro.com-1:BASE64...`. Trusted by the nix daemon so substituted
+/// paths verify.
+pub const NIX_CACHE_PUBLIC_KEY: &str = "${{ vars.NIX_CACHE_PUBLIC_KEY }}";
+
+/// Nextest thread count for the test job. Tuned for the previous
+/// `linux-extra-beefy` runner; revisit if `namespace-profile-linux-mid` is
+/// smaller.
+pub const NEXTEST_TEST_THREADS: u32 = 32;
+
+/// Explicit Namespace cache-volume tag for the heavy compile jobs (check +
+/// test). A fixed tag (instead of the default per-branch scoping) makes the
+/// Cargo/Nix volume global across all branches — see
+/// [`crate::workflows::runners::Runner::with_cache_tag`]. The legacy tag name is
+/// retained so the existing warm volume is not invalidated.
+pub const CI_CACHE_TAG: &str = "sccache-ci";
+
+/// Namespace remote sccache shared by the cloud-storage compile/test jobs and
+/// the workspace dependency checks.
+pub const CI_SCCACHE_NAME: &str = "sccache-ci";
+
+/// Namespace cache tag for the web-app jobs (PR checks + preview deploys).
+/// Cache volumes are keyed workspace-wide by tag alone, so a dedicated tag
+/// gives the frontend its own volume — isolated both from the Rust CI volume
+/// ([`CI_CACHE_TAG`]) and from the deploy workflows' heavily-churned default
+/// `linux-mid` volume.
+pub const WEB_CI_CACHE_TAG: &str = "web-ci";
+
+/// Namespace remote sccache used when the web checks compile Rust API schema
+/// generators. Kept separate from [`CI_SCCACHE_NAME`] because these jobs have
+/// a different workload and runner profile.
+pub const WEB_SCCACHE_NAME: &str = "web-ci";
+
+/// Namespace cache tag for the sync-service worker deploy. Its own pool: this
+/// job compiles for `wasm32-unknown-unknown`, so nothing in the host-target
+/// volumes ([`CI_CACHE_TAG`]) would serve it anyway.
+pub const SYNC_SERVICE_CACHE_TAG: &str = "sync-service-deploy";
+
+/// Bun's global package cache. Mounted explicitly because Bun is supplied by
+/// the Nix dev shell and is not available to Namespace's cache planner yet.
+pub const BUN_CACHE_VOLUME_DIR: &str = "/home/runner/.bun/install/cache";
+
+/// GHCR repository for the agent-harness sandbox image (the same Dockerfile
+/// Daytona snapshots). Pushed as `:$SHA` on PRs and `:$SHA` + `:latest` on main.
+pub const AGENT_HARNESS_GHCR_IMAGE: &str = "ghcr.io/conation-dev/conation-agent-harness";
+
+/// The repo-wide env block (mirrors the original top-level `env:`). Defaults the
+/// linker to `lld`; the heavy jobs override `RUSTFLAGS` to use `mold`.
+pub fn with_global_env(workflow: Workflow) -> Workflow {
+    workflow
+        .add_env(("CARGO_INCREMENTAL", "0"))
+        .add_env(("CARGO_TERM_COLOR", "always"))
+        .add_env(("CARGO_PROFILE_DEV_DEBUG", "limited"))
+        .add_env(("CARGO_PROFILE_TEST_DEBUG", "limited"))
+        .add_env(("RUST_BACKTRACE", "1"))
+        .add_env(("RUSTFLAGS", "-C link-arg=-fuse-ld=lld"))
+}
+
+/// Cancel superseded runs of this workflow on the same git ref.
+pub fn concurrency(prefix: &str) -> Concurrency {
+    Concurrency::new(Expression::new(format!("{prefix}-${{{{ github.ref }}}}")))
+        .cancel_in_progress(true)
+}

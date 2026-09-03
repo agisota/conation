@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Пифия — поддержка Conation</title>
+  <desc id="desc">Абстрактный круглый аватар с буквой П и светящимся оракулом.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#34236d"/>
+      <stop offset="1" stop-color="#8a5cf6"/>
+    </linearGradient>
+    <radialGradient id="glow">
+      <stop offset="0" stop-color="#fff" stop-opacity=".95"/>
+      <stop offset="1" stop-color="#e6dcff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="256" cy="256" r="248" fill="url(#bg)"/>
+  <circle cx="256" cy="210" r="150" fill="url(#glow)"/>
+  <path d="M118 352c34-73 86-110 138-110s104 37 138 110" fill="none" stroke="#cbb9ff" stroke-width="24" stroke-linecap="round" opacity=".65"/>
+  <text x="256" y="319" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="210" font-weight="700" fill="#fff">П</text>
+</svg>

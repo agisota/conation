@@ -1,0 +1,27 @@
+# Override host ports to avoid conflict with rox-platform (postgres 5432, redis 6379)
+services:
+  postgres:
+    ports:
+      - "5433:5432"
+  redis:
+    ports:
+      - "6380:6379"
+      - "8002:8001"
+  kafka:
+    ports:
+      - "9093:9092"
+  search:
+    ports:
+      - "9201:9200"
+      - "9601:9600"
+  minio:
+    ports:
+      - "9002:9000"
+      - "9003:9001"
+  stalwart:
+    ports:
+      - "2525:25"
+      - "5872:587"
+      - "9932:993"
+      - "4192:4190"
+      - "8082:8080"

@@ -1,0 +1,47 @@
+//! Database layer property definition model.
+
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+
+use crate::shared::{DataType, EntityType};
+
+/// Property definition model (database representation).
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct PropertyDefinition {
+    pub id: Uuid,
+    pub team_id: Option<Uuid>,
+    pub user_id: Option<String>,
+    pub display_name: String,
+    pub data_type: DataType,
+    pub is_multi_select: bool,
+    pub specific_entity_type: Option<EntityType>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub is_system: bool,
+}
+
+// ===== Conversions =====
+
+impl From<PropertyDefinition> for crate::service::property_definition::PropertyDefinition {
+    fn from(db: PropertyDefinition) -> Self {
+        use crate::shared::PropertyOwner;
+
+        let owner = PropertyOwner::from_optional_ids(db.team_id, db.user_id, db.is_system);
+
+        Self {
+            id: db.id,
+            owner,
+            display_name: db.display_name,
+            data_type: db.data_type,
+            is_multi_select: db.is_multi_select,
+            specific_entity_type: db.specific_entity_type,
+            created_at: db.created_at,
+            updated_at: db.updated_at,
+            is_system: db.is_system,
+            // is_metadata is a service layer concept for computed properties
+            // Default to false (stored property)
+            is_metadata: false,
+        }
+    }
+}

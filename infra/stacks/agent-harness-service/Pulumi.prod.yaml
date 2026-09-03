@@ -1,0 +1,6 @@
+config:
+  aws-native:region: us-east-1
+  aws:region: us-east-1
+  agent-harness-service:cloud_storage_stack_ref: conation-dev/document-storage/prod
+  agent-harness-service:github_sync_app_pem: github-sync-app-pem-prod
+  agent-harness-service:conation_api_token_private_secret_key: conation-api-token-private-key-prod

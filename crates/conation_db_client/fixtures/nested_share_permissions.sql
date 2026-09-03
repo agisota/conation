@@ -1,0 +1,75 @@
+INSERT INTO public."macro_user" ("id", "username", "email", "stripe_customer_id")
+VALUES ('a1111111-1111-1111-1111-111111111111', 'user@user.com', 'user@user.com', 'stripe_id'),
+       ('a2222222-2222-2222-2222-222222222222', 'user2@user.com', 'user2@user.com', 'stripe_id2');
+
+INSERT INTO public."User" ("id","email","stripeCustomerId","macro_user_id")
+VALUES
+('conation|user@user.com', 'user@user.com','stripe_id', 'a1111111-1111-1111-1111-111111111111'),
+('conation|user2@user.com', 'user2@user.com','stripe_id2', 'a2222222-2222-2222-2222-222222222222');
+
+
+-- Make projects
+INSERT INTO public."Project" ("id","name","userId","createdAt","updatedAt", "parentId")
+VALUES
+('p1', 'test_project_name','conation|user@user.com', '2019-10-16 00:00:00', '2019-10-16 00:00:00', NULL),
+('p2', 'test_project_name','conation|user2@user.com', '2019-10-16 00:00:00', '2019-10-16 00:00:00', 'p1');
+
+-- Make project share permissions
+INSERT INTO public."SharePermission" ("id", "linkShare", "linkShareAccessLevel", "createdAt", "updatedAt")
+VALUES
+('sp-p1', 'PUBLIC', 'edit', '2019-10-16 00:00:00', '2019-10-16 00:00:00'),
+('sp-p2', NULL, NULL, '2019-10-16 00:00:00', '2019-10-16 00:00:00');
+
+INSERT INTO public."ProjectPermission" ("projectId", "sharePermissionId")
+VALUES
+('p1', 'sp-p1'),
+('p2', 'sp-p2');
+
+INSERT INTO public."ChannelSharePermission" ("share_permission_id", "channel_id", "access_level")
+VALUES
+('sp-p1', 'c1', 'view'),
+('sp-p1', 'c2', 'edit');
+
+
+-- Make documents
+INSERT INTO public."Document" ("id","name","owner", "fileType", "projectId")
+VALUES
+('d1', 'test_document_name','conation|user@user.com', 'docx', NULL),
+('d2', 'test_document_name','conation|user2@user.com', 'pdf', 'p2');
+
+INSERT INTO public."SharePermission" ("id", "linkShare", "linkShareAccessLevel")
+VALUES
+('sp-d1', 'PUBLIC', 'edit'),
+('sp-d2', NULL, NULL);
+
+INSERT INTO public."DocumentPermission" ("documentId", "sharePermissionId")
+VALUES
+('d1', 'sp-d1'),
+('d2', 'sp-d2');
+
+INSERT INTO public."ChannelSharePermission" ("share_permission_id", "channel_id", "access_level")
+VALUES
+('sp-d1', 'c1', 'view'),
+('sp-d1', 'c2', 'edit');
+
+
+-- Make chats
+INSERT INTO public."Chat" ("id", "name", "userId", "createdAt", "updatedAt", "projectId")
+VALUES
+('c1', 'test_chat_name','conation|user@user.com', '2019-10-16 00:00:00', '2019-10-16 00:00:00', NULL),
+('c2', 'test_chat_name','conation|user2@user.com', '2019-10-16 00:00:00', '2019-10-16 00:00:00', 'p2');
+
+INSERT INTO public."SharePermission" ("id", "linkShare", "linkShareAccessLevel", "createdAt", "updatedAt")
+VALUES
+('sp-c1', 'PUBLIC', 'edit', '2019-10-16 00:00:00', '2019-10-16 00:00:00'),
+('sp-c2', NULL, NULL, '2019-10-16 00:00:00', '2019-10-16 00:00:00');
+
+INSERT INTO public."ChatPermission" ("chatId", "sharePermissionId")
+VALUES
+('c1', 'sp-c1'),
+('c2', 'sp-c2');
+
+INSERT INTO public."ChannelSharePermission" ("share_permission_id", "channel_id", "access_level")
+VALUES
+('sp-c1', 'c1', 'view'),
+('sp-c1', 'c2', 'edit');

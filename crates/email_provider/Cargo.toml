@@ -1,0 +1,22 @@
+[package]
+name = "email_provider"
+version = "0.1.0"
+edition = "2021"
+description = "Experimental email-provider abstraction: legacy Gmail and self-hosted Stalwart JMAP"
+
+[dependencies]
+async-trait = { workspace = true }
+conation_env_var = { path = "../conation_env_var" }
+serde = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+url = { workspace = true }
+
+chrono = { workspace = true }
+reqwest = { workspace = true }
+serde_json = { workspace = true }
+workspace-hack = { version = "0.1", path = "../workspace-hack" }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+wiremock = { workspace = true }

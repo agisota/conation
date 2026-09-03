@@ -1,0 +1,41 @@
+import { throwOnErr } from '@core/util/result';
+import {
+  type ApiChannelParticipant,
+  storageServiceClient,
+} from '@service-storage/client';
+import { useQuery } from '@tanstack/solid-query';
+import type { Accessor } from 'solid-js';
+import { queryClient } from '../client';
+import { channelKeys } from './keys';
+
+function channelParticipantsQueryOptions(channelId: string) {
+  return {
+    queryKey: channelKeys.participants(channelId).queryKey,
+    queryFn: async (): Promise<ApiChannelParticipant[]> => {
+      return await throwOnErr(
+        async () =>
+          await storageServiceClient.getChannelParticipants({
+            channel_id: channelId,
+          })
+      );
+    },
+    staleTime: Infinity,
+  };
+}
+
+export function useChannelParticipantsQuery(channelId: Accessor<string>) {
+  return useQuery(() => channelParticipantsQueryOptions(channelId()));
+}
+
+export function invalidateChannelParticipants(channelId: string) {
+  return queryClient.invalidateQueries({
+    queryKey: channelKeys.participants(channelId).queryKey,
+  });
+}
+
+export function softInvalidateChannelParticipants(channelId: string) {
+  return queryClient.invalidateQueries({
+    queryKey: channelKeys.participants(channelId).queryKey,
+    refetchType: 'inactive',
+  });
+}

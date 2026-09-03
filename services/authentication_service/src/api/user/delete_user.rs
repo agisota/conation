@@ -1,0 +1,85 @@
+use axum::{
+    Json,
+    extract::State,
+    http::StatusCode,
+    response::{IntoResponse, Response},
+};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_user_id::user_id::MacroUserIdStr;
+use tower_cookies::Cookies;
+
+use crate::api::{
+    context::{ApiContext, AuthorizationService},
+    jwt_session::JwtSessionContext,
+    utils::{create_access_token_cookie, create_refresh_token_cookie},
+};
+
+use model::response::{ErrorResponse, GenericSuccessResponse};
+
+/// Deletes the user who calls this endpoint
+#[utoipa::path(
+        delete,
+        path = "/user/me",
+        operation_id = "delete_user",
+        responses(
+            (status = 200, body=GenericSuccessResponse),
+            (status = 401, body=ErrorResponse),
+            (status = 500, body=ErrorResponse),
+        )
+    )]
+#[tracing::instrument(skip(ctx, authorization, jwt_session, cookies), fields(user_id=%authorization.authorization.user.user_context.user_id))]
+pub async fn handler(
+    State(ctx): State<ApiContext>,
+    authorization: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
+    JwtSessionContext(jwt_session): JwtSessionContext,
+    cookies: Cookies,
+) -> Result<Response, Response> {
+    let user_context = &authorization.authorization.user.user_context;
+    let user_id = &*user_context.user_id;
+    // Perform a logout for the user
+    // Remove access token cookie
+    let mut access_token_cookie = create_access_token_cookie("");
+    access_token_cookie.set_expires(Some(time::OffsetDateTime::now_utc()));
+    cookies.add(access_token_cookie);
+
+    // Remove refresh token cookie
+    let mut refresh_token_cookie = create_refresh_token_cookie("");
+    refresh_token_cookie.set_expires(Some(time::OffsetDateTime::now_utc()));
+    cookies.add(refresh_token_cookie);
+
+    // Logout of fusionauth when the request used a FusionAuth session.
+    if let Some(jwt_context) = jwt_session
+        && let Err(e) = ctx.auth_client.logout(&jwt_context.tid).await
+    {
+        tracing::warn!(error=?e, "error logging out");
+    }
+
+    let email = MacroUserIdStr::parse_from_str(user_id)
+        .map_err(|e| {
+            tracing::error!(error=?e, user_id, "invalid Conation user id");
+            (StatusCode::BAD_REQUEST, "invalid Conation user id").into_response()
+        })?
+        .email_str()
+        .to_owned();
+
+    // Delete the user from fusionauth
+    // This will trigger the delete user webhook to clear out the user's items from the db async
+    let fusion_auth_user_id = ctx
+        .auth_client
+        .get_user_id_by_email(&email)
+        .await
+        .map_err(|e| {
+            tracing::error!(error=?e, email, "unable to get user id by email");
+            (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
+        })?;
+
+    ctx.auth_client
+        .delete_user(&fusion_auth_user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error=?e, user_id, fusion_auth_user_id, email, "unable to delete user");
+            (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
+        })?;
+
+    Ok((StatusCode::OK, Json(GenericSuccessResponse::default())).into_response())
+}

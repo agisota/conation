@@ -1,0 +1,241 @@
+import { useFeatureFlag } from '@app/lib/analytics/posthog';
+import { t } from '@app/lib/i18n';
+import { UserIcon } from '@core/component/UserIcon';
+import { hasValidHotkey } from '@core/hotkey/utils';
+import { Entity, type EntityData } from '@entity';
+import SearchIcon from '@icon/macro-magnifying-glass.svg';
+import WideStar from '@icon/wide-star.svg';
+import Terminal from '@phosphor-icons/core/regular/terminal.svg?component-solid';
+import {
+  BULK_DOCUMENT_WAKEUP_FEATURE_FLAG,
+  enqueueDocumentWakeup,
+  isWakeableDocument,
+} from '@queries/preview';
+import { CommandMenuListItem, Hotkey } from '@ui';
+import { createEffect, For, Match, Show, Switch } from 'solid-js';
+import { Dynamic } from 'solid-js/web';
+import type { DisplayHotkeyStep } from './types';
+import {
+  type AskAiItem,
+  type CommandMenuItem,
+  isAskAiItem,
+  isCommandItem,
+  isEntityItem,
+  isSearchItem,
+  isUserItem,
+  type SearchItem,
+  type UserItem,
+} from './useCommandItems';
+
+interface CommandItemProps {
+  item: CommandMenuItem;
+  index: number;
+  selected: boolean;
+  onSelect: (item: CommandMenuItem, openInNewSplit: boolean) => void;
+  onMouseMove?: (index: number) => void;
+}
+
+function CommandItemHotkey(props: { item: CommandMenuItem }) {
+  const commandItem = () => (isCommandItem(props.item) ? props.item : null);
+  const command = () => commandItem()?.data ?? null;
+  const token = () => command()?.hotkeyToken;
+  const sequence = () => commandItem()?.displayHotkeySequence;
+
+  const shortcut = () => {
+    const item = commandItem();
+    const cmd = item?.data;
+    if (!cmd) return undefined;
+    if (hasValidHotkey(token())) return undefined;
+    return item?.displayHotkey ?? cmd.hotkeys?.[0];
+  };
+
+  const hasHotkey = () =>
+    hasValidHotkey(token()) ||
+    Boolean(shortcut()) ||
+    Boolean(sequence()?.length);
+
+  const StepHotkey = (step: DisplayHotkeyStep) => (
+    <div class="p-2 py-0.5 border border-edge-muted rounded-md">
+      <Hotkey
+        token={step.token}
+        shortcut={step.shortcut}
+        class="flex gap-1 items-center"
+      />
+    </div>
+  );
+
+  return (
+    <Show when={hasHotkey()}>
+      <div class="pr-2 flex items-center justify-center text-[0.75rem] font-medium text-ink-extra-muted">
+        <Show
+          when={sequence()?.length}
+          fallback={
+            <div class="p-2 py-0.5 border border-edge-muted rounded-md">
+              <Hotkey
+                token={token()}
+                shortcut={shortcut()}
+                class="flex gap-1 items-center"
+              />
+            </div>
+          }
+        >
+          <div class="flex items-center gap-1">
+            <For each={sequence()}>
+              {(step, index) => (
+                <>
+                  {StepHotkey(step)}
+                  <Show when={index() < (sequence()?.length ?? 0) - 1}>
+                    <span class="text-ink-extra-muted">then</span>
+                  </Show>
+                </>
+              )}
+            </For>
+          </div>
+        </Show>
+      </div>
+    </Show>
+  );
+}
+
+function CommandDisplay(props: { item: CommandMenuItem }) {
+  const command = () => (isCommandItem(props.item) ? props.item.data : null);
+
+  const description = () => {
+    const cmd = command();
+    if (!cmd) return '';
+    return typeof cmd.description === 'function'
+      ? cmd.description()
+      : cmd.description;
+  };
+
+  return (
+    <div class="flex items-center gap-2 flex-1 min-w-0">
+      <div class="size-5 flex items-center justify-center text-ink-muted shrink-0">
+        <Show
+          when={command()?.commandPaletteIcon}
+          fallback={
+            <Show when={command()?.icon} fallback={<Terminal class="size-4" />}>
+              {(icon) => <Dynamic component={icon()} class="size-4" />}
+            </Show>
+          }
+        >
+          {(Icon) => <Dynamic component={Icon()} class="size-4" />}
+        </Show>
+      </div>
+      <Show
+        when={command()?.displayComponent}
+        fallback={<span class="truncate">{description()}</span>}
+      >
+        {(comp) => <Dynamic component={comp()} />}
+      </Show>
+    </div>
+  );
+}
+
+function EntityDisplay(props: { entity: EntityData }) {
+  const bulkWakeupEnabled = useFeatureFlag(BULK_DOCUMENT_WAKEUP_FEATURE_FLAG);
+
+  createEffect(() => {
+    if (!bulkWakeupEnabled().enabled) return;
+    if (!isWakeableDocument(props.entity)) return;
+
+    enqueueDocumentWakeup(props.entity);
+  });
+
+  return (
+    <div class="flex items-center gap-2 flex-1 min-w-0">
+      <div class="size-5 p-0.5 flex items-center justify-center text-ink-muted shrink-0">
+        <Entity.Icon entity={props.entity} />
+      </div>
+      <Entity.Title entity={props.entity} />
+    </div>
+  );
+}
+
+function UserDisplay(props: { item: UserItem }) {
+  const name = () => props.item.data.name;
+  const email = () => props.item.data.email;
+  const showEmail = () => Boolean(name()) && name() !== email();
+
+  return (
+    <div class="flex items-center gap-2 flex-1 min-w-0">
+      <div class="size-5 flex items-center justify-center shrink-0">
+        <UserIcon id={props.item.id} size="sm" isDeleted={false} />
+      </div>
+      <span class="truncate">
+        <Show when={showEmail()} fallback={email()}>
+          {name()}
+          <span class="ml-[0.5em] opacity-50">{email()}</span>
+        </Show>
+      </span>
+    </div>
+  );
+}
+
+function SearchDisplay(props: { item: SearchItem }) {
+  return (
+    <div class="flex items-center gap-2 flex-1 min-w-0">
+      <div class="size-5 flex items-center justify-center text-ink-muted shrink-0">
+        <SearchIcon class="size-4" />
+      </div>
+      <span class="truncate text-ink">
+        {t('shell.command.searchFor', { query: props.item.query })}
+      </span>
+    </div>
+  );
+}
+
+function AskAiDisplay(props: { item: AskAiItem }) {
+  return (
+    <div class="flex items-center gap-2 flex-1 min-w-0">
+      <div class="size-5 flex items-center justify-center text-ink-muted shrink-0">
+        <WideStar class="size-4" />
+      </div>
+      <span class="truncate text-ink">
+        {t('shell.command.askAiAbout', { query: props.item.query })}
+      </span>
+    </div>
+  );
+}
+
+function ItemDisplay(props: { item: CommandMenuItem }) {
+  return (
+    <Switch>
+      <Match when={isSearchItem(props.item) && props.item}>
+        {(item) => <SearchDisplay item={item()} />}
+      </Match>
+      <Match when={isAskAiItem(props.item) && props.item}>
+        {(item) => <AskAiDisplay item={item()} />}
+      </Match>
+      <Match when={isCommandItem(props.item) && props.item}>
+        {(item) => <CommandDisplay item={item()} />}
+      </Match>
+      <Match when={isEntityItem(props.item) && props.item}>
+        {(item) => <EntityDisplay entity={item().data} />}
+      </Match>
+      <Match when={isUserItem(props.item) && props.item}>
+        {(item) => <UserDisplay item={item()} />}
+      </Match>
+    </Switch>
+  );
+}
+
+export function CommandItem(props: CommandItemProps) {
+  return (
+    <CommandMenuListItem
+      as="div"
+      selected={props.selected}
+      onMouseMove={() => props.onMouseMove?.(props.index)}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        props.onSelect(props.item, e.shiftKey);
+      }}
+    >
+      <ItemDisplay item={props.item} />
+      <div class="ml-auto">
+        <CommandItemHotkey item={props.item} />
+      </div>
+    </CommandMenuListItem>
+  );
+}

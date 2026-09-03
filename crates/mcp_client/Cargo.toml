@@ -1,0 +1,42 @@
+[package]
+name = "mcp_client"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[features]
+default = ["providers"]
+providers = ["conation_env_var"]
+
+[dependencies]
+aes-gcm = "0.10"
+agent = { path = "../agent" }
+ai_toolset = { path = "../ai_toolset" }
+anyhow.workspace = true
+async-trait.workspace = true
+oauth2 = { version = "5.0", default-features = false }
+base64.workspace = true
+async-openai.workspace = true
+axum.workspace = true
+futures.workspace = true
+conation_authorization = { path = "../conation_authorization", default-features = false, features = [
+  "axum",
+] }
+conation_env_var = { path = "../conation_env_var", optional = true }
+conation_user_id = { path = "../conation_user_id" }
+model-error-response = { path = "../model-error-response" }
+redis = { workspace = true, features = ["aio", "tokio-comp"] }
+reqwest.workspace = true
+rmcp = { workspace = true, features = ["auth", "client", "transport-streamable-http-client-reqwest"] }
+schemars.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sqlx.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+utoipa.workspace = true
+workspace-hack = { version = "0.1", path = "../workspace-hack" }
+
+[dev-dependencies]
+regex.workspace = true
+tokio.workspace = true

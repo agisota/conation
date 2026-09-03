@@ -1,0 +1,101 @@
+import { formatDateTime, t } from '@app/lib/i18n';
+import { DateSelector } from '@block-email/component/date-selector';
+import { isMobile } from '@core/mobile/isMobile';
+import ClockIcon from '@phosphor/clock.svg';
+import IconX from '@phosphor/x.svg';
+import { Button, Tooltip } from '@ui';
+import { addYears } from 'date-fns/addYears';
+import { type JSX, Show, type VoidComponent } from 'solid-js';
+
+interface EmailDateSelectorProps {
+  sendTime?: Date | null;
+  onSendTimeChange?: (date: Date | null) => void;
+  /** Only show the clock icon, no date text or clear button */
+  compact?: boolean;
+  /** Render content inline instead of in a portal */
+  disablePortal?: boolean;
+  /** Disable the schedule button */
+  disabled?: boolean;
+  trigger?: (state: {
+    selectedDate: Date | null;
+    formattedDate: string | undefined;
+  }) => JSX.Element;
+}
+export const EmailDateSelector: VoidComponent<EmailDateSelectorProps> = (
+  props
+) => {
+  const isCompact = () => props.compact || isMobile();
+
+  return (
+    <DateSelector
+      selectedDate={props.sendTime}
+      onSelectDate={props.onSendTimeChange}
+      disabled={props.disabled}
+      disablePriorToDate={new Date()}
+      disableAfterDate={addYears(new Date(), 1)}
+      disablePortal={props.disablePortal}
+      trigger={(state) => {
+        const formattedDate = () =>
+          state.selectedDate
+            ? formatDateTime(state.selectedDate, {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+              })
+            : undefined;
+        const showExpanded = () => !isCompact() && !!formattedDate();
+
+        if (props.trigger) {
+          return props.trigger({
+            selectedDate: state.selectedDate,
+            formattedDate: formattedDate(),
+          });
+        }
+
+        return (
+          <Show
+            when={showExpanded()}
+            fallback={
+              <Tooltip
+                label={
+                  state.selectedDate
+                    ? t('blockEmail.schedule.scheduledFor', {
+                        date: formattedDate() ?? '',
+                      })
+                    : t('blockEmail.schedule.action')
+                }
+              >
+                <Button size="icon-sm" disabled={props.disabled}>
+                  <ClockIcon class={state.selectedDate ? 'text-accent' : ''} />
+                </Button>
+              </Tooltip>
+            }
+          >
+            <Button
+              size="icon-sm"
+              disabled={props.disabled}
+              class="size-auto gap-1 bg-accent/20 text-accent hover:bg-accent/15! hover:text-accent!"
+            >
+              <ClockIcon />
+              <span class="text-sm">{formattedDate()}</span>
+              <Tooltip label={t('blockEmail.dateSelector.clear')}>
+                <div
+                  tabIndex={0}
+                  class="hover:bg-accent/30"
+                  onPointerDown={(e) => {
+                    e.stopPropagation();
+                  }}
+                  onClick={() => props.onSendTimeChange?.(null)}
+                >
+                  <IconX class="size-5" />
+                </div>
+              </Tooltip>
+            </Button>
+          </Show>
+        );
+      }}
+    />
+  );
+};

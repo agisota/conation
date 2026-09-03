@@ -1,0 +1,48 @@
+import { t } from '@app/lib/i18n';
+import { type CrmCompanyEntity, formatDateAndTime } from '@entity';
+import { For, type JSX, Show } from 'solid-js';
+
+function Field(props: { label: string; children: JSX.Element }) {
+  return (
+    <div class="flex flex-col gap-0.5">
+      <span class="text-xs text-ink-muted">{props.label}</span>
+      <div class="text-sm">{props.children}</div>
+    </div>
+  );
+}
+
+export function CompanyMetadataSection(props: { company?: CrmCompanyEntity }) {
+  return (
+    <Show
+      when={props.company}
+      fallback={<div class="text-sm text-ink-muted">{t('common.loading')}</div>}
+    >
+      {(company) => (
+        <div class="flex flex-col gap-3">
+          <Field label={t('companies.fields.domains')}>
+            <For
+              each={company().domains}
+              fallback={
+                <span class="text-ink-muted">{t('companies.common.none')}</span>
+              }
+            >
+              {(domain) => <div class="truncate">{domain.domain}</div>}
+            </For>
+          </Field>
+          {/* `updatedAt` carries `crm_companies.last_interaction`, which the
+              backend keeps fresh from synced workspace emails. */}
+          <Field label={t('companies.fields.lastInteraction')}>
+            <Show
+              when={company().updatedAt}
+              fallback={
+                <span class="text-ink-muted">{t('companies.common.none')}</span>
+              }
+            >
+              {(ts) => <span>{formatDateAndTime(ts())}</span>}
+            </Show>
+          </Field>
+        </div>
+      )}
+    </Show>
+  );
+}

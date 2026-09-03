@@ -1,0 +1,36 @@
+import { t } from '@app/lib/i18n';
+import { useHasFeatureAccess } from '@core/auth';
+import { PaywallKey, usePaywallState } from '@core/constant/PaywallState';
+import { useUserContext } from '@core/context/user';
+import { Tooltip } from '@ui';
+import { Show } from 'solid-js';
+
+interface MacroSignatureButtonProps {
+  signature?: string;
+}
+
+export const MacroSignatureButton = (props: MacroSignatureButtonProps) => {
+  const paywall = usePaywallState();
+  const hasFeatureAccess = useHasFeatureAccess();
+  const { isLoading } = useUserContext();
+  return (
+    <Show when={!isLoading() && !hasFeatureAccess()}>
+      <Tooltip label={t('blockEmail.signature.removeUpsell')}>
+        <button
+          type="button"
+          class="hover:bg-hover pointer-events-auto"
+          tabindex={-1}
+          // The text area uses non delegated events to capture on click and restore focus
+          // to the editor. We want to capture the click here so we can open the paywall.
+          // That's why we use `on:click` instead of `onClick`
+          on:click={(e) => {
+            e.stopImmediatePropagation();
+            paywall.showPaywall(PaywallKey.REMOVE_SIGNATURE);
+          }}
+        >
+          {props.signature ?? t('blockEmail.compose.conationSignature')}
+        </button>
+      </Tooltip>
+    </Show>
+  );
+};

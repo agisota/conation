@@ -1,0 +1,65 @@
+//! Rendering tests for the composed prompts exported from the crate root.
+
+use prompt::{BASE_PROMPT, TOOL_USE_PROMPT};
+
+const BASE_TITLES: [&str; 6] = [
+    "# Tone and Style",
+    "# Math Rendering Rules",
+    "# Citation Rules",
+    "# Mentioning documents, channels, channel messages, chats, projects, email threads, and calendar events",
+    "# Do Not Rules",
+    "# Terms",
+];
+
+#[test]
+fn base_prompt_renders_all_sections_in_order() {
+    let rendered = BASE_PROMPT.to_string();
+    let mut last = 0;
+    for title in BASE_TITLES {
+        let position = rendered[last..]
+            .find(title)
+            .unwrap_or_else(|| panic!("missing or out-of-order section: {title}"));
+        last += position + title.len();
+    }
+    assert!(!rendered.contains("# Tool Use"));
+}
+
+#[test]
+fn base_prompt_includes_channel_message_mention_format() {
+    let rendered = BASE_PROMPT.to_string();
+    assert!(
+        rendered.contains(
+            r#""blockName":"channel","blockParams":{"channel_message_id":"{message_id}"}"#
+        )
+    );
+    assert!(
+        rendered.contains(
+            "Do not link only the channel unless you are referring to the whole channel."
+        )
+    );
+}
+
+#[test]
+fn tool_use_prompt_appends_tool_section_to_base() {
+    let rendered = TOOL_USE_PROMPT.to_string();
+    assert!(rendered.starts_with(&BASE_PROMPT.to_string()));
+    assert!(rendered.contains("# Tool Use"));
+    assert!(rendered.contains("read the appropriate resource using the read tool."));
+    assert!(
+        rendered.contains("Only fall back to searching by name if you cannot resolve an address.")
+    );
+}
+
+#[test]
+fn tool_use_prompt_appends_email_section_after_tool_use() {
+    let rendered = TOOL_USE_PROMPT.to_string();
+    assert!(rendered.contains("# Email Inboxes"));
+    assert!(
+        rendered
+            .trim_end()
+            .ends_with("or omit both for the primary inbox.")
+    );
+    let tool_use_idx = rendered.find("# Tool Use").expect("tool use section");
+    let email_idx = rendered.find("# Email Inboxes").expect("email section");
+    assert!(tool_use_idx < email_idx, "email section must come last");
+}

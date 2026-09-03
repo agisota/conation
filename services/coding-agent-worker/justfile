@@ -1,0 +1,21 @@
+image := "conation-agent-container"
+
+typecheck:
+    nix develop --command bunx tsc --noEmit
+
+# Regenerate src/protocol/generated.ts from the Rust types with Specta.
+gen-protocol:
+    nix develop --command cargo run -p agent_runtime_protocol --bin export_types
+
+sdk:
+    cd ../../packages/sdk && bun install && bun run build
+
+build-image:
+    cd container
+    docker build --tag {{image}} .
+
+serve:
+    bun run index.ts
+
+client *args:
+    bun scripts/client.tsx {{args}}

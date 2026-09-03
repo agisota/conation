@@ -1,0 +1,26 @@
+import type { NotificationType } from '@core/types';
+
+export const NOTIFICATION_LABEL_BY_TYPE: Record<NotificationType, string> = {
+  channel_mention: 'MENTION',
+  channel_message_send: 'MESSAGE',
+  channel_message_reply: 'REPLY',
+  document_mention: 'MENTION',
+  mentioned_in_document_comment: 'MENTION',
+  replied_to_document_comment_thread: 'REPLY',
+  commented_on_document: 'COMMENT',
+  channel_invite: 'INVITE',
+  new_email: 'EMAIL',
+  invite_to_team: 'INVITE',
+  task_assigned: 'ASSIGNED',
+  ai_response: 'AI',
+  github_pr_status_changed: 'GITHUB',
+  github_pr_check_run: 'CHECK',
+  github_review_requested: 'REVIEW',
+  github_pr_comment: 'COMMENT',
+  github_pr_mention: 'MENTION',
+  github_pr_review: 'REVIEW',
+  call_started: 'CALL',
+  reminder: 'REMINDER',
+  calendar_event_reminder: 'EVENT',
+  inbox_reauth_required: 'EMAIL',
+} as const;

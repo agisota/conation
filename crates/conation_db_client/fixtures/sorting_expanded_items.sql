@@ -1,0 +1,72 @@
+-- This fixture creates a project hierarchy with multiple items.
+-- Timestamps are deliberately different for createdAt, updatedAt, and UserHistory.updatedAt
+-- to test all three sorting methods for the EXPANDED (hierarchical) query.
+-- One item ('chat-in-B') is intentionally given NO UserHistory entry to test the
+-- 'viewed_at' filter.
+
+-- Expected Order for CreatedAt:   doc-B, chat-A, doc-A
+-- Expected Order for UpdatedAt:   chat-A, doc-A, doc-B
+-- Expected Order for LastViewed:  doc-A, doc-B, chat-A, project-B, chat-B, project-A (epoch items tiebroken by id DESC)
+
+SET session_replication_role = 'replica';
+
+-- Base Setup
+INSERT INTO public."Organization" ("id", "name", "status")
+VALUES (1, 'Test Org', 'PILOT')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public."macro_user" ("id", "username", "email", "stripe_customer_id")
+VALUES ('a1111111-1111-1111-1111-111111111111', 'user@test.com', 'user@test.com', 'stripe_id_1');
+
+INSERT INTO public."User" ("id", "email", "stripeCustomerId", "organizationId", "macro_user_id")
+VALUES ('conation|user-1@test.com', 'user@test.com', 'stripe_id_1', '1', 'a1111111-1111-1111-1111-111111111111');
+
+-- Project Hierarchy (A -> B)
+INSERT INTO public."Project" ("id", "name", "userId", "parentId", "createdAt", "updatedAt")
+VALUES ('aaaaaaaa-ffff-ffff-ffff-ffffffffffff', 'Project A', 'conation|user-1@test.com', NULL, '2024-01-01 09:00:00', '2024-01-01 09:00:00'),
+       ('bbbbbbbb-ffff-ffff-ffff-ffffffffffff', 'Project B', 'conation|user-1@test.com', 'aaaaaaaa-ffff-ffff-ffff-ffffffffffff', '2024-01-01 09:30:00', '2024-01-01 09:30:00');
+
+-- Give user access to the top-level project and all inherited items
+INSERT INTO public.entity_access ("entity_id", "entity_type", "source_id", "source_type", "access_level", "granted_from_project_id")
+VALUES
+-- Direct access to project-A
+('aaaaaaaa-ffff-ffff-ffff-ffffffffffff', 'project', 'conation|user-1@test.com', 'user', 'owner', NULL),
+-- Inherited access to project-B and all items in A and B
+('bbbbbbbb-ffff-ffff-ffff-ffffffffffff', 'project', 'conation|user-1@test.com', 'user', 'owner', 'aaaaaaaa-ffff-ffff-ffff-ffffffffffff'),
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'conation|user-1@test.com', 'user', 'owner', 'aaaaaaaa-ffff-ffff-ffff-ffffffffffff'),
+('aaaaaaaa-cccc-cccc-cccc-cccccccccccc', 'chat', 'conation|user-1@test.com', 'user', 'owner', 'aaaaaaaa-ffff-ffff-ffff-ffffffffffff'),
+('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'document', 'conation|user-1@test.com', 'user', 'owner', 'aaaaaaaa-ffff-ffff-ffff-ffffffffffff'),
+('bbbbbbbb-cccc-cccc-cccc-cccccccccccc', 'chat', 'conation|user-1@test.com', 'user', 'owner', 'aaaaaaaa-ffff-ffff-ffff-ffffffffffff');
+
+-- Item Creation
+-- Document A (in Project A): Oldest created, Middle updated, Newest viewed
+INSERT INTO public."Document" ("id", "name", "owner", "projectId", "createdAt", "updatedAt")
+VALUES ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Doc A', 'conation|user-1@test.com', 'aaaaaaaa-ffff-ffff-ffff-ffffffffffff', '2024-01-10 10:00:00', '2024-02-11 10:00:00');
+
+-- Chat A (in Project A): Middle created, Newest updated, Oldest viewed
+INSERT INTO public."Chat" ("id", "name", "userId", "projectId", "createdAt", "updatedAt")
+VALUES ('aaaaaaaa-cccc-cccc-cccc-cccccccccccc', 'Chat A', 'conation|user-1@test.com', 'aaaaaaaa-ffff-ffff-ffff-ffffffffffff', '2024-01-11 10:00:00', '2024-02-12 10:00:00');
+
+-- Document B (in Project B): Newest created, Oldest updated, Middle viewed
+INSERT INTO public."Document" ("id", "name", "owner", "projectId", "createdAt", "updatedAt")
+VALUES ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Doc B', 'conation|user-1@test.com', 'bbbbbbbb-ffff-ffff-ffff-ffffffffffff', '2024-01-12 10:00:00', '2024-02-10 10:00:00');
+
+-- Chat B (in Project B): Accessible, but has NO UserHistory entry.
+INSERT INTO public."Chat" ("id", "name", "userId", "projectId", "createdAt", "updatedAt")
+VALUES ('bbbbbbbb-cccc-cccc-cccc-cccccccccccc', 'Chat B', 'conation|user-1@test.com', 'bbbbbbbb-ffff-ffff-ffff-ffffffffffff', '2024-01-13 10:00:00', '2024-02-09 10:00:00');
+
+-- Dependencies
+INSERT INTO public."DocumentFamily" ("id", "rootDocumentId")
+VALUES (1, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),
+       (2, 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb');
+INSERT INTO public."DocumentInstance" ("id", "documentId", "sha")
+VALUES (1, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'sha-a'),
+       (2, 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'sha-b');
+
+-- User History with its own distinct ordering. Note that 'chat-B' is missing.
+INSERT INTO public."UserHistory" ("userId", "itemId", "itemType", "updatedAt")
+VALUES ('conation|user-1@test.com', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', '2024-03-12 10:00:00'), -- Newest viewed
+       ('conation|user-1@test.com', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'document', '2024-03-11 10:00:00'), -- Middle viewed
+       ('conation|user-1@test.com', 'aaaaaaaa-cccc-cccc-cccc-cccccccccccc', 'chat', '2024-03-10 10:00:00'); -- Oldest viewed
+
+SET session_replication_role = 'origin';

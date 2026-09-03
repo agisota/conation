@@ -1,0 +1,32 @@
+config:
+  aws-native:region: us-east-1
+  aws:region: us-east-1
+  authentication-service:fusionauth_stack_ref: conation-dev/fusion-auth/dev
+  authentication-service:macro_db_secret_key: macro-db-dev
+  authentication-service:fusionauth_api_key_secret_key: fusionauth-api-key-dev
+  authentication-service:authentication_service_internal_api_key: authentication-service-internal-api-key-dev
+  # Keep Microsoft OAuth credentials in the authentication_service Doppler config.
+  # Pulumi injects MICROSOFT_TOKEN_KMS_KEY_ID from the per-stack key; it is not a secret config value.
+  authentication-service:microsoft_token_kms_deletion_window_days: 7
+  # Pulumi injects CURSOR_API_KEY_KMS_KEY_ID from the per-stack key; it is not a secret.
+  authentication-service:cursor_api_key_kms_deletion_window_days: 7
+  authentication-service:service_internal_auth_key: document-storage-service-auth-key-dev
+  authentication-service:fusionauth_client_secret_key: fusionauth-client-secret-dev
+  authentication-service:macro_cache_secret_key: macro-cache-dev
+  authentication-service:jwt_secret_key: fusionauth-jwt-secret-dev
+  authentication-service:fusionauth_client_id: fusionauth-client-id-key-dev
+  authentication-service:fusionauth_issuer: fusionauth-dev.macro.com
+  authentication-service:google_client_id: google-client-id-dev
+  authentication-service:google_client_secret_key: google-client-secret-dev
+  authentication-service:conation_api_token_private_secret_key: conation-api-token-private-key-dev
+  authentication-service:conation_api_token_expiry_seconds: 3600
+  authentication-service:fusionauth_tenant_id: 5e13f524-8d32-0454-81f8-061936256aa4
+  authentication-service:github_client_id_key: github-client-id-dev
+  authentication-service:github_client_secret_key: github-client-secret-dev
+  authentication-service:github_idp_id_key: github-idp-id-dev
+  authentication-service:ga_measurement_id: G-52HPEL3FTV
+  authentication-service:ga_api_secret: ga-api-secret
+  authentication-service:meta_pixel_id: 639142540393286
+  authentication-service:meta_access_token: meta-access-token
+  authentication-service:posthog_host: https://us.i.posthog.com
+  authentication-service:posthog_api_key: posthog-api-key

@@ -1,0 +1,69 @@
+import { t } from '@app/lib/i18n';
+import { toast } from '@core/component/Toast/Toast';
+import { useSetContactHiddenMutation } from '@queries/crm/contacts';
+import type { CrmContactResponse } from '@service-storage/generated/schemas/crmContactResponse';
+import { cn, InlineCheckbox } from '@ui';
+import { Show } from 'solid-js';
+
+const TOGGLE_BUTTON_CLASS =
+  'inline-flex items-center gap-2 rounded-md h-7 px-2.5 text-xs select-none w-fit border border-ink-muted/[0.08] bg-ink-muted/[0.025] text-ink hover:bg-ink-muted/[0.06]';
+
+/**
+ * Admin-only (the parent gates the whole section on `useIsTeamAdmin`):
+ * if a non-admin can see the contact at all, it's already visible to them.
+ */
+export function ContactSharingSection(props: { contact?: CrmContactResponse }) {
+  const hiddenMutation = useSetContactHiddenMutation();
+
+  const handleToggle = async (
+    contact: CrmContactResponse,
+    nextShared: boolean
+  ) => {
+    const willHide = !nextShared;
+    try {
+      await hiddenMutation.mutateAsync({
+        contactId: contact.id,
+        hidden: willHide,
+      });
+      if (willHide) {
+        toast.success(t('contacts.sharing.hidden'));
+      }
+    } catch (error) {
+      console.error('failed to update contact sharing', error);
+      toast.failure(t('contacts.sharing.updateFailed'));
+    }
+  };
+
+  return (
+    <Show
+      when={props.contact}
+      fallback={<div class="text-xs text-ink-muted">{t('common.loading')}</div>}
+    >
+      {(contact) => {
+        const isShared = () => !contact().hidden;
+        return (
+          <div class="flex flex-col gap-4 text-xs">
+            <div class="flex flex-col gap-2">
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={isShared()}
+                disabled={hiddenMutation.isPending}
+                onClick={() => void handleToggle(contact(), !isShared())}
+                class={cn(TOGGLE_BUTTON_CLASS)}
+              >
+                <InlineCheckbox checked={isShared()} />
+                <span class="whitespace-nowrap">
+                  {t('contacts.sharing.visibleInCrm')}
+                </span>
+              </button>
+              <p class="text-ink-muted leading-5">
+                {t('contacts.sharing.description')}
+              </p>
+            </div>
+          </div>
+        );
+      }}
+    </Show>
+  );
+}

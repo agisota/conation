@@ -1,0 +1,51 @@
+import { t } from '@app/lib/i18n';
+import { GOOGLE_GMAIL_IDP } from '@core/auth/email';
+import IconGoogle from '@icon/conation-google.svg';
+import { useNavigate } from '@solidjs/router';
+import { Button } from '@ui';
+import { useSsoLogin } from '../useSsoLogin';
+
+/**
+ * Onboarding step 0 — create the account by connecting the primary Gmail via
+ * SSO sign-in. There is no Continue button here: once the SSO flow completes
+ * `useIsAuthenticated()` flips true and `MobileOnboarding` auto-advances to the
+ * next step. The escape hatch creates an account without connecting email.
+ */
+export function OnboardingCreateAccount() {
+  const navigate = useNavigate();
+  const startSsoLogin = useSsoLogin({ signupMode: true });
+
+  return (
+    <div class="flex flex-col gap-6">
+      <div class="flex flex-col gap-4">
+        <h1 class="text-2xl font-semibold tracking-tight text-ink">
+          {t('auth.welcome.title')}
+        </h1>
+        <p class="text-sm/relaxed text-ink-muted">
+          {t('auth.mobile.createAccount.gmailDescription')}
+        </p>
+        <p class="text-sm/relaxed text-ink-muted">
+          {t('auth.mobile.createAccount.primaryDescription')}
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-2 pt-2">
+        <Button
+          variant="strong"
+          size="xl"
+          onClick={() => startSsoLogin(GOOGLE_GMAIL_IDP)}
+        >
+          <IconGoogle class="size-5" />
+          {t('auth.mobile.connectGmail')}
+        </Button>
+        <button
+          type="button"
+          class="self-start pt-4 text-xs text-ink-muted/70 underline hover:text-ink/70"
+          onClick={() => navigate('/signup')}
+        >
+          {t('auth.mobile.createWithoutEmail')}
+        </button>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,470 @@
+//! PostgreSQL implementation of the [`GithubSyncRepo`] port.
+
+#[cfg(test)]
+mod test;
+
+use std::collections::HashSet;
+
+use conation_user_id::user_id::MacroUserIdStr;
+use sqlx::PgPool;
+
+use crate::domain::{
+    models::{
+        ConationTaskId, GithubAppInstallationSource, GithubKey, ResolvedTeamTaskReference,
+        TeamTaskReference,
+    },
+    ports::GithubSyncRepo,
+};
+
+/// PostgreSQL-backed github repository.
+#[derive(Clone)]
+pub struct PgGithubSyncRepo {
+    pool: PgPool,
+}
+
+impl PgGithubSyncRepo {
+    /// Create a new repository backed by the given connection pool.
+    pub fn new(pool: PgPool) -> Self {
+        Self { pool }
+    }
+}
+
+impl GithubSyncRepo for PgGithubSyncRepo {
+    type Err = sqlx::Error;
+
+    #[tracing::instrument(skip(self), err)]
+    async fn get_task_ids(&self, github_key: GithubKey) -> Result<Vec<ConationTaskId>, Self::Err> {
+        let task_ids: Vec<String> = sqlx::query!(
+            r#"
+            SELECT task_id FROM github_pr_tasks
+            WHERE github_key = $1
+            "#,
+            github_key.as_ref(),
+        )
+        .map(|r| r.task_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(task_ids
+            .into_iter()
+            .filter_map(|t| ConationTaskId::from_short_uuid(&t))
+            .collect())
+    }
+
+    #[tracing::instrument(skip(self), err)]
+    async fn upsert_task_ids(
+        &self,
+        github_key: GithubKey,
+        task_ids: &[ConationTaskId],
+    ) -> Result<(), Self::Err> {
+        let short_ids: Vec<String> = task_ids.iter().map(|t| t.short_uuid.clone()).collect();
+        let ids: Vec<uuid::Uuid> = short_ids
+            .iter()
+            .map(|_| conation_uuid::generate_uuid_v7())
+            .collect();
+        // Full-UUID document ids used to look up each task's owning team;
+        // an unconvertible short UUID simply matches no team_task row.
+        let document_ids: Vec<String> = task_ids
+            .iter()
+            .map(|t| t.to_uuid().map(|uuid| uuid.to_string()).unwrap_or_default())
+            .collect();
+        let github_key = github_key.as_ref();
+        let github_keys: Vec<&str> = std::iter::repeat_n(github_key, short_ids.len()).collect();
+
+        sqlx::query!(
+            r#"
+        INSERT INTO github_pr_tasks (id, github_key, task_id, team_id)
+        SELECT u.id, u.github_key, u.task_id, tt.team_id
+        FROM UNNEST($1::uuid[], $2::text[], $3::text[], $4::text[])
+            AS u(id, github_key, task_id, document_id)
+        LEFT JOIN team_task tt ON tt.document_id = u.document_id
+        ON CONFLICT (github_key, task_id)
+            DO UPDATE SET team_id = COALESCE(github_pr_tasks.team_id, EXCLUDED.team_id)
+        "#,
+            &ids,
+            &github_keys as &[&str],
+            &short_ids,
+            &document_ids
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(self), err)]
+    async fn filter_duplicate_tasks(
+        &self,
+        github_key: GithubKey,
+        task_ids: &[ConationTaskId],
+    ) -> Result<Vec<ConationTaskId>, Self::Err> {
+        let short_ids: Vec<String> = task_ids.iter().map(|t| t.short_uuid.clone()).collect();
+
+        let existing: Vec<String> = sqlx::query_scalar!(
+            r#"
+        SELECT task_id
+        FROM github_pr_tasks
+        WHERE github_key = $1
+          AND task_id = ANY($2::text[])
+        "#,
+            github_key.as_ref(),
+            &short_ids
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        let existing_set: HashSet<String> = existing.into_iter().collect();
+
+        Ok(task_ids
+            .iter()
+            .filter(|t| !existing_set.contains(&t.short_uuid))
+            .cloned()
+            .collect())
+    }
+
+    #[tracing::instrument(skip(self, references), err)]
+    async fn resolve_team_task_references(
+        &self,
+        installation_id: &str,
+        references: &[TeamTaskReference],
+    ) -> Result<Vec<ResolvedTeamTaskReference>, Self::Err> {
+        if references.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        let team_slugs: Vec<String> = references.iter().map(|r| r.team_slug.clone()).collect();
+        let team_task_ids: Vec<i32> = references.iter().map(|r| r.team_task_id).collect();
+
+        let rows = sqlx::query!(
+            r#"
+            SELECT DISTINCT
+                refs.team_slug AS "team_slug!",
+                refs.task_num AS "task_num!",
+                t.id AS "team_id!",
+                tt.document_id AS "document_id!"
+            FROM UNNEST($2::text[], $3::int4[]) AS refs(team_slug, task_num)
+            JOIN github_app_installation gai
+                ON gai.id = $1
+                AND gai.source_type = 'team'::github_app_installation_source_type
+            JOIN team t
+                ON t.id = gai.source_id::uuid
+                AND LOWER(t.slug) = LOWER(refs.team_slug)
+            JOIN team_task tt ON tt.team_id = t.id AND tt.task_num = refs.task_num
+            "#,
+            installation_id,
+            &team_slugs,
+            &team_task_ids
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows
+            .into_iter()
+            .filter_map(|row| {
+                let reference = TeamTaskReference::new(&row.team_slug, row.task_num)?;
+                match uuid::Uuid::parse_str(&row.document_id) {
+                    Ok(uuid) => Some(ResolvedTeamTaskReference {
+                        reference,
+                        team_id: row.team_id,
+                        task_id: ConationTaskId::from_uuid(&uuid),
+                    }),
+                    Err(e) => {
+                        tracing::warn!(
+                            document_id = row.document_id,
+                            error=?e,
+                            "team task document id is not a UUID"
+                        );
+                        None
+                    }
+                }
+            })
+            .collect())
+    }
+
+    #[tracing::instrument(skip(self), err)]
+    async fn get_macro_ids_by_github_user_ids(
+        &self,
+        github_user_ids: &[String],
+    ) -> Result<std::collections::HashMap<String, Vec<String>>, Self::Err> {
+        if github_user_ids.is_empty() {
+            return Ok(std::collections::HashMap::new());
+        }
+
+        let rows = sqlx::query!(
+            r#"
+            SELECT github_user_id, macro_id
+            FROM github_links
+            WHERE github_user_id = ANY($1::text[])
+            "#,
+            github_user_ids,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut links: std::collections::HashMap<String, Vec<String>> =
+            std::collections::HashMap::new();
+        for row in rows {
+            links
+                .entry(row.github_user_id)
+                .or_default()
+                .push(row.macro_id);
+        }
+
+        Ok(links)
+    }
+
+    #[tracing::instrument(skip(self), err)]
+    async fn get_macro_ids_by_github_logins(
+        &self,
+        github_logins: &[String],
+    ) -> Result<std::collections::HashMap<String, Vec<String>>, Self::Err> {
+        if github_logins.is_empty() {
+            return Ok(std::collections::HashMap::new());
+        }
+
+        let lowercased: Vec<String> = github_logins
+            .iter()
+            .map(|login| login.to_lowercase())
+            .collect();
+        let rows = sqlx::query!(
+            r#"
+            SELECT LOWER(github_username) AS "login!", macro_id
+            FROM github_links
+            WHERE LOWER(github_username) = ANY($1::text[])
+            "#,
+            &lowercased,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut links: std::collections::HashMap<String, Vec<String>> =
+            std::collections::HashMap::new();
+        for row in rows {
+            links.entry(row.login).or_default().push(row.macro_id);
+        }
+
+        Ok(links)
+    }
+
+    #[tracing::instrument(skip(self), err)]
+    async fn get_user_team_ids(&self, macro_id: &str) -> Result<Vec<uuid::Uuid>, Self::Err> {
+        let team_ids = sqlx::query_scalar!(
+            r#"
+            SELECT team_id
+            FROM team_user
+            WHERE user_id = $1
+            "#,
+            macro_id,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(team_ids)
+    }
+
+    #[tracing::instrument(skip(self), err)]
+    async fn get_team_member_ids(
+        &self,
+        team_id: uuid::Uuid,
+    ) -> Result<Vec<MacroUserIdStr<'static>>, Self::Err> {
+        let user_ids: Vec<String> = sqlx::query_scalar!(
+            r#"
+            SELECT user_id
+            FROM team_user
+            WHERE team_id = $1
+            ORDER BY user_id
+            "#,
+            team_id,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(user_ids
+            .into_iter()
+            .filter_map(|user_id| match MacroUserIdStr::try_from(user_id.clone()) {
+                Ok(user_id) => Some(user_id),
+                Err(error) => {
+                    tracing::warn!(
+                        team_id=%team_id,
+                        user_id,
+                        error=?error,
+                        "team_user.user_id is not a Macro user ID"
+                    );
+                    None
+                }
+            })
+            .collect())
+    }
+
+    #[tracing::instrument(skip(self), err)]
+    async fn get_installation_sources(
+        &self,
+        installation_id: &str,
+    ) -> Result<Vec<GithubAppInstallationSource>, Self::Err> {
+        let rows = sqlx::query!(
+            r#"
+            SELECT source_id AS "source_id!", source_type::text AS "source_type!"
+            FROM github_app_installation
+            WHERE id = $1
+            ORDER BY source_type, source_id
+            "#,
+            installation_id,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut sources = Vec::new();
+        for row in rows {
+            let source_id = row.source_id;
+            let source_type = row.source_type;
+            match source_type.as_str() {
+                "team" => match uuid::Uuid::parse_str(&source_id) {
+                    Ok(team_id) => sources.push(GithubAppInstallationSource::Team(team_id)),
+                    Err(error) => tracing::warn!(
+                        installation_id,
+                        source_id,
+                        error=?error,
+                        "github_app_installation team source_id is not a UUID"
+                    ),
+                },
+                "user" => sources.push(GithubAppInstallationSource::User(source_id)),
+                _ => tracing::warn!(
+                    installation_id,
+                    source_id,
+                    source_type,
+                    "github_app_installation has unknown source_type"
+                ),
+            }
+        }
+
+        Ok(sources)
+    }
+
+    #[tracing::instrument(skip(self), err)]
+    async fn upsert_installation_sources(
+        &self,
+        installation_id: &str,
+        sources: &[GithubAppInstallationSource],
+    ) -> Result<(), Self::Err> {
+        let source_ids: Vec<String> = sources.iter().map(|source| source.source_id()).collect();
+        let source_types: Vec<&str> = sources.iter().map(|source| source.source_type()).collect();
+
+        sqlx::query!(
+            r#"
+            INSERT INTO github_app_installation (id, source_id, source_type)
+            SELECT $1::text, source_id, source_type::github_app_installation_source_type
+            FROM UNNEST($2::text[], $3::text[])
+                AS source_rows(source_id, source_type)
+            ON CONFLICT (id, source_id, source_type) DO NOTHING
+            "#,
+            installation_id,
+            &source_ids,
+            &source_types as &[&str],
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(self), err)]
+    async fn delete_installation_sources(&self, installation_id: &str) -> Result<(), Self::Err> {
+        sqlx::query!(
+            r#"
+            DELETE FROM github_app_installation
+            WHERE id = $1
+            "#,
+            installation_id,
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(self), err)]
+    async fn upsert_installation_request(
+        &self,
+        github_user_id: &str,
+        source: &GithubAppInstallationSource,
+    ) -> Result<(), Self::Err> {
+        sqlx::query!(
+            r#"
+            INSERT INTO github_app_installation_request (github_user_id, source_id, source_type)
+            VALUES ($1, $2, $3::github_app_installation_source_type)
+            ON CONFLICT (github_user_id) DO UPDATE
+                SET source_id = EXCLUDED.source_id,
+                    source_type = EXCLUDED.source_type,
+                    updated_at = NOW()
+            "#,
+            github_user_id,
+            source.source_id(),
+            source.source_type() as &str,
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(self), err)]
+    async fn get_installation_request(
+        &self,
+        github_user_id: &str,
+    ) -> Result<Option<GithubAppInstallationSource>, Self::Err> {
+        let row = sqlx::query!(
+            r#"
+            SELECT source_id AS "source_id!", source_type::text AS "source_type!"
+            FROM github_app_installation_request
+            WHERE github_user_id = $1
+            "#,
+            github_user_id,
+        )
+        .fetch_optional(&self.pool)
+        .await?;
+
+        let Some(row) = row else {
+            return Ok(None);
+        };
+
+        match row.source_type.as_str() {
+            "team" => match uuid::Uuid::parse_str(&row.source_id) {
+                Ok(team_id) => Ok(Some(GithubAppInstallationSource::Team(team_id))),
+                Err(error) => {
+                    tracing::warn!(
+                        github_user_id,
+                        source_id = row.source_id,
+                        error=?error,
+                        "github_app_installation_request team source_id is not a UUID"
+                    );
+                    Ok(None)
+                }
+            },
+            "user" => Ok(Some(GithubAppInstallationSource::User(row.source_id))),
+            _ => {
+                tracing::warn!(
+                    github_user_id,
+                    source_id = row.source_id,
+                    source_type = row.source_type,
+                    "github_app_installation_request has unknown source_type"
+                );
+                Ok(None)
+            }
+        }
+    }
+
+    #[tracing::instrument(skip(self), err)]
+    async fn delete_installation_request(&self, github_user_id: &str) -> Result<(), Self::Err> {
+        sqlx::query!(
+            r#"
+            DELETE FROM github_app_installation_request
+            WHERE github_user_id = $1
+            "#,
+            github_user_id,
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+}

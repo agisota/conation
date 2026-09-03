@@ -1,0 +1,109 @@
+import { useMaybeSoup } from '@app/features/next-soup/soup-context';
+import { restoreSoupFocus } from '@app/features/next-soup/utils';
+import { t } from '@app/lib/i18n';
+import { useGlobalNotificationSource } from '@components/app/GlobalAppState';
+import { toast } from '@core/component/Toast/Toast';
+import type { NotificationStack, UnifiedNotification } from '@notifications';
+import {
+  executeMarkNotificationsDone,
+  executeMarkNotificationsUndone,
+  getAllNotificationsFromGroup,
+} from '@notifications';
+import ArrowCounterClockwise from '@phosphor-icons/core/regular/arrow-counter-clockwise.svg?component-solid';
+import { useUndoableMutation } from '@queries/undo';
+
+interface NotificationActionsProps {
+  stack: NotificationStack;
+  entityId?: string;
+  onMarkAsDone?: () => void;
+  onMarkAsRead?: () => void;
+}
+
+interface SingleNotificationActionsProps {
+  notification: UnifiedNotification;
+  onMarkAsDone?: () => void;
+  onMarkAsRead?: () => void;
+}
+
+type MarkStackDoneVariables = { notificationIds: string[] };
+
+export function useNotificationStackActions(props: NotificationActionsProps) {
+  const notificationSource = useGlobalNotificationSource();
+  const soup = useMaybeSoup();
+
+  const mutation = useUndoableMutation<void, Error, MarkStackDoneVariables>(
+    () => ({
+      mutationFn: (vars) => executeMarkNotificationsDone(vars.notificationIds),
+      onError: () => {
+        toast.failure(t('notifications.feedback.markDoneFailed'));
+      },
+      undoFn: (vars) => executeMarkNotificationsUndone(vars.notificationIds),
+      redoFn: (vars) => executeMarkNotificationsDone(vars.notificationIds),
+      undoLabel: t('notifications.actions.markDone'),
+      onPushed: (handle) => {
+        let toastId: number | undefined;
+
+        const showToast = () => {
+          toastId = toast.success(t('notifications.feedback.markedDone'), {
+            actions: [
+              {
+                label: t('notifications.actions.undo'),
+                icon: ArrowCounterClockwise,
+                onClick: () => {
+                  handle.undo({
+                    onError: () =>
+                      toast.failure(t('notifications.feedback.undoFailed')),
+                  });
+                  if (props.entityId) soup?.focus.set(props.entityId);
+                  restoreSoupFocus(props.entityId);
+                },
+              },
+            ],
+            duration: 10_000,
+            stack: true,
+            hideOnMobile: true,
+          });
+        };
+
+        showToast();
+        props.onMarkAsDone?.();
+
+        return {
+          onUndone: () => {
+            if (toastId !== undefined) toast.dismiss(toastId);
+          },
+          onRedone: showToast,
+        };
+      },
+    })
+  );
+
+  const markStackAsDone = () => {
+    const notifications = getAllNotificationsFromGroup(props.stack);
+    mutation.mutate({ notificationIds: notifications.map((n) => n.id) });
+  };
+
+  const markStackAsRead = async () => {
+    const notifications = getAllNotificationsFromGroup(props.stack);
+    await notificationSource.bulkMarkAsRead(notifications);
+    props.onMarkAsRead?.();
+  };
+
+  return { markStackAsDone, markStackAsRead };
+}
+
+export function useNotificationActions(props: SingleNotificationActionsProps) {
+  const notificationSource = useGlobalNotificationSource();
+
+  const markAsDone = async () => {
+    await notificationSource.markAsDone(props.notification);
+    props.onMarkAsDone?.();
+  };
+
+  const markAsRead = async () => {
+    await notificationSource.markAsRead(props.notification);
+    props.onMarkAsRead?.();
+  };
+
+  return { markAsDone, markAsRead };
+}

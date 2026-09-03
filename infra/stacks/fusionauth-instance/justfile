@@ -1,0 +1,47 @@
+# Local FusionAuth is owned by `cargo x stack up` / `just stack up`.
+#
+# This directory still contains the low-level Compose base and the legacy
+# remote Pulumi source for audit/migration work, but it must not be used to
+# bootstrap a local product stack. The old recipes imported Macro resources,
+# read an application secret back from FusionAuth, and patched the repository
+# `.env`; all three behaviours are deliberately retired.
+
+legacy_bootstrap_is_retired:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  echo "The hand-managed FusionAuth/Pulumi bootstrap has been retired." >&2
+  echo 'Use `just stack up` from the repository root; xtask generates the Conation kickstart and service environment together.' >&2
+  exit 1
+
+# Keep the old public recipe names as explicit failures. This is clearer than
+# an unknown-recipe error and prevents old scripts from silently falling back
+# to a manual Compose/Pulumi path.
+get_fusionauth_env:
+  @just --justfile "{{justfile_directory()}}/justfile" legacy_bootstrap_is_retired
+
+start *ARGS:
+  @just --justfile "{{justfile_directory()}}/justfile" legacy_bootstrap_is_retired
+
+stop *ARGS:
+  @just --justfile "{{justfile_directory()}}/justfile" legacy_bootstrap_is_retired
+
+destroy_local_stack:
+  @just --justfile "{{justfile_directory()}}/justfile" legacy_bootstrap_is_retired
+
+destroy:
+  @just --justfile "{{justfile_directory()}}/justfile" legacy_bootstrap_is_retired
+
+setup_local_stack:
+  @just --justfile "{{justfile_directory()}}/justfile" legacy_bootstrap_is_retired
+
+import_dev:
+  @just --justfile "{{justfile_directory()}}/justfile" legacy_bootstrap_is_retired
+
+healthcheck:
+  @just --justfile "{{justfile_directory()}}/justfile" legacy_bootstrap_is_retired
+
+setup:
+  @just --justfile "{{justfile_directory()}}/justfile" legacy_bootstrap_is_retired
+
+insert_local_fusionauth_variables:
+  @just --justfile "{{justfile_directory()}}/justfile" legacy_bootstrap_is_retired

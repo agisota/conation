@@ -1,0 +1,151 @@
+pub(crate) static INVITE_USER_SUBJECT: &str = "Приглашение в Conation";
+
+/// Builds the user invite message
+pub(crate) fn build_user_invite_message(
+    org_name: &str,
+    invite_url: &str,
+    support_email: &str,
+) -> String {
+    let result = r#"<!DOCTYPE html>
+<html lang="ru" xmlns:v="urn:schemas-microsoft-com:vml">
+   <head>
+      <meta charset="utf-8">
+      <meta name="x-apple-disable-message-reformatting">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
+      <meta name="color-scheme" content="light dark">
+      <meta name="supported-color-schemes" content="light dark">
+      <!--[if mso]>
+      <noscript>
+         <xml>
+            <o:OfficeDocumentSettings
+               xmlns:o="urn:schemas-microsoft-com:office:office"
+               >
+               <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+         </xml>
+      </noscript>
+      <style>
+         td,
+         th,
+         div,
+         p,
+         a,
+         h1,
+         h2,
+         h3,
+         h4,
+         h5,
+         h6 {
+         font-family: "Segoe UI", sans-serif;
+         mso-line-height-rule: exactly;
+         }
+      </style>
+      <![endif]-->      
+      <title>Приглашение в Conation</title>
+      <style>.hover-text-gray-600:hover {
+         color: #4b5563 !important
+         }
+         @media (max-width: 425px) {
+         .xs-my-10 {
+         margin-top: 40px !important;
+         margin-bottom: 40px !important
+         }
+         .xs-py-8 {
+         padding-top: 32px !important;
+         padding-bottom: 32px !important
+         }
+         .xs-px-6 {
+         padding-left: 24px !important;
+         padding-right: 24px !important
+         }
+         .xs-py-12 {
+         padding-top: 48px !important;
+         padding-bottom: 48px !important
+         }
+         .xs-py-10 {
+         padding-top: 40px !important;
+         padding-bottom: 40px !important
+         }
+         .xs-py-6 {
+         padding-top: 24px !important;
+         padding-bottom: 24px !important
+         }
+         .xs-text-3xl {
+         font-size: 30px !important
+         }
+         .xs-text-4xl {
+         font-size: 36px !important
+         }
+         .xs-tracking-0_3em {
+         letter-spacing: 0.3em !important
+         }
+         }
+         .CTA {
+             text-decoration: none;
+             padding: 10px 16px;
+             border-radius: 8px;
+             color: white !important;
+             background-color: rgba(14, 165, 233);
+             font-weight: 500;
+         }
+      </style>
+   </head>
+   <body style="word-break: break-word; -webkit-font-smoothing: antialiased; margin: 0; width: 100%; background-color: #f9fafb; padding: 0">
+      <div style="display: none">
+         Вас пригласили присоединиться к рабочему пространству в Conation.
+         &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847;
+      </div>
+      <div role="article" aria-roledescription="электронное письмо" aria-label="Приглашение в Conation" lang="ru">
+         <table style="width: 100%; font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" cellpadding="0" cellspacing="0" role="presentation">
+            <tr>
+               <td align="center" style="background-color: #f9fafb">
+                  <table style="width: 100%; max-width: 640px; padding-left: 16px; padding-right: 16px" cellpadding="0" cellspacing="0" role="presentation">
+                     <tr>
+                        <td class="xs-py-8 xs-px-6" style="padding: 56px; text-align: center">
+                           <a href="{INVITE_URL}" style="color: #111827; font-family: Arial, sans-serif; font-size: 30px; font-weight: 700; letter-spacing: -0.03em; text-decoration: none">Conation</a>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td align="center">
+                           <table style="width: 100%" cellpadding="0" cellspacing="0" role="presentation">
+                              <tr>
+                                 <td class="xs-py-12 xs-px-6" style="border-radius: 8px; background-color: #fff; padding-top: 56px; padding-bottom: 56px; padding-left: 40px; padding-right: 40px; outline-style: solid; outline-width: 1px; outline-color: #f3f4f6">
+                                    <h1 class="xs-text-3xl" style="margin-top: 0; margin-bottom: 16px; text-align: center; font-size: 36px; font-weight: 600; color: #374151">
+                                       Добро пожаловать!
+                                    </h1>
+                                    <h2 class="xs-text-2xl" style="margin-top: 0; margin-bottom: 64px; text-align: center; font-size: 20px; font-weight: 300; color: #374151">
+                                        Вас пригласили присоединиться к {ORG_NAME} в Conation.
+                                    </h2>
+                                    <p style="text-align: center;">
+                                        <a class="CTA" href="{INVITE_URL}">Принять приглашение</a>
+                                    </p>
+                                 </td>
+                              </tr>
+                           </table>
+                        </td>
+                     </tr>
+                     <tr>
+                        <td class="xs-py-10" style="padding-top: 48px; padding-bottom: 48px; text-align: center; font-size: 14px; color: #9ca3af">
+                           <p style="margin: 0">
+                              Есть вопросы? Напишите нам:
+                              <a href="mailto:{SUPPORT_EMAIL}" class="hover-text-gray-600" style="font-weight: 500; color: #6b7280">{SUPPORT_EMAIL}</a>
+                           </p>
+                        </td>
+                     </tr>
+                  </table>
+               </td>
+            </tr>
+         </table>
+      </div>
+   </body>
+</html>"#;
+
+    result
+        .replace("{INVITE_URL}", invite_url)
+        .replace("{SUPPORT_EMAIL}", support_email)
+        .replace("{ORG_NAME}", org_name)
+}
+
+#[cfg(test)]
+mod test;

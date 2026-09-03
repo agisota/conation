@@ -1,0 +1,127 @@
+import * as aws from '@pulumi/aws';
+import * as pulumi from '@pulumi/pulumi';
+import { Lambda } from '../../packages/lambda';
+import { CLOUD_TRAIL_SNS_TOPIC_ARN, stack } from '../../packages/shared';
+
+const LAMBA_BASE_NAME = 'search_upload_handler';
+const REPO_ROOT = '../../..';
+const HANDLER_BASE = `${REPO_ROOT}/services/${LAMBA_BASE_NAME}`;
+const ZIP_LOCATION = `${REPO_ROOT}/target/lambda/${LAMBA_BASE_NAME}/bootstrap.zip`;
+
+type EnvVars = {
+  ENVIRONMENT: pulumi.Output<string> | string;
+  RUST_LOG: pulumi.Output<string> | string;
+  DOCUMENT_STORAGE_SERVICE_URL: pulumi.Output<string> | string;
+  DOCUMENT_STORAGE_SERVICE_AUTH_KEY: pulumi.Output<string> | string;
+};
+
+type Args = {
+  envVars: EnvVars;
+  tags: { [key: string]: string };
+};
+
+export class SearchUploadHandler extends pulumi.ComponentResource {
+  role: aws.iam.Role;
+  lambda: aws.lambda.Function;
+  tags: { [key: string]: string };
+  constructor(
+    name: string,
+    args: Args,
+    opts?: pulumi.ComponentResourceOptions
+  ) {
+    super('my:components:SearchUploadHandler', name, {}, opts);
+    const { envVars, tags } = args;
+
+    this.tags = tags;
+
+    this.role = new aws.iam.Role(
+      `${LAMBA_BASE_NAME}-role`,
+      {
+        name: `${LAMBA_BASE_NAME}-role-${stack}`,
+        assumeRolePolicy: JSON.stringify({
+          Version: '2012-10-17',
+          Statement: [
+            {
+              Action: 'sts:AssumeRole',
+              Effect: 'Allow',
+              Principal: {
+                Service: 'lambda.amazonaws.com',
+              },
+            },
+          ],
+        }),
+        managedPolicyArns: [
+          aws.iam.ManagedPolicy.AWSLambdaBasicExecutionRole,
+          aws.iam.ManagedPolicy.AWSLambdaRole,
+          aws.iam.ManagedPolicy.CloudWatchLogsFullAccess,
+        ],
+        tags: this.tags,
+      },
+      { parent: this }
+    );
+
+    const lambda = new Lambda<EnvVars>(
+      `${LAMBA_BASE_NAME}-lambda`,
+      {
+        baseName: LAMBA_BASE_NAME,
+        handlerBase: HANDLER_BASE,
+        zipLocation: ZIP_LOCATION,
+        envVars,
+        role: this.role,
+        reservedConcurrentExecutions: stack === 'prod' ? 500 : 50,
+        tags: this.tags,
+      },
+      { parent: this }
+    );
+
+    this.lambda = lambda.lambda;
+
+    this.setupLambdaAlarms();
+  }
+
+  setupLambdaAlarms() {
+    new aws.cloudwatch.MetricAlarm(
+      `${LAMBA_BASE_NAME}-throttle-alarm`,
+      {
+        name: `${LAMBA_BASE_NAME}-throttle-count-${stack}`,
+        metricName: 'Throttles',
+        namespace: 'AWS/Lambda',
+        statistic: 'Sum',
+        period: 300,
+        evaluationPeriods: 1,
+        threshold: 50,
+        comparisonOperator: 'GreaterThanOrEqualToThreshold',
+        dimensions: {
+          FunctionName: this.lambda.name,
+        },
+        alarmDescription: `Alarm when ${LAMBA_BASE_NAME} lambda experiences throttling.`,
+        actionsEnabled: true,
+        alarmActions: [CLOUD_TRAIL_SNS_TOPIC_ARN],
+        tags: this.tags,
+      },
+      { parent: this }
+    );
+
+    new aws.cloudwatch.MetricAlarm(
+      `${LAMBA_BASE_NAME}-error-alarm`,
+      {
+        name: `${LAMBA_BASE_NAME}-error-count-${stack}`,
+        metricName: 'Errors',
+        namespace: 'AWS/Lambda',
+        statistic: 'Sum',
+        period: 300,
+        evaluationPeriods: 1,
+        threshold: 100,
+        comparisonOperator: 'GreaterThanOrEqualToThreshold',
+        dimensions: {
+          FunctionName: this.lambda.name,
+        },
+        alarmDescription: `Alarm when ${LAMBA_BASE_NAME} lambda experiences errors.`,
+        actionsEnabled: true,
+        alarmActions: [CLOUD_TRAIL_SNS_TOPIC_ARN],
+        tags: this.tags,
+      },
+      { parent: this }
+    );
+  }
+}

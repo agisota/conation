@@ -1,0 +1,119 @@
+import { t } from '@app/lib/i18n';
+import { useOwnedCommentPlaceableSelector } from '@block-pdf/signal/permissions';
+import {
+  activePlaceableIdSignal,
+  placeableModeSignal,
+} from '@block-pdf/signal/placeables';
+import { isThreadPlaceable } from '@block-pdf/store/comments/freeComments';
+import {
+  useCanComment,
+  useCanEdit,
+  useIsDocumentOwner,
+} from '@core/signal/permissions';
+import ChatTeardrop from '@phosphor/chat-teardrop.svg';
+import Signature from '@phosphor/signature.svg';
+import Textbox from '@phosphor/textbox.svg';
+import Trash from '@phosphor/trash-simple.svg';
+import Cancel from '@phosphor/x.svg';
+import { Button } from '@ui';
+import { createMemo, Show } from 'solid-js';
+import { placeableIdMap, useDeletePlaceable } from '../store/placeables';
+import { PayloadMode } from '../type/placeables';
+
+export function MarkupToolbar() {
+  const canEdit = useCanEdit();
+  const canComment = useCanComment();
+  const isDocumentOwner = useIsDocumentOwner();
+
+  const [mode, setMode] = placeableModeSignal;
+
+  const activePlaceableId = activePlaceableIdSignal.get;
+  const deletePlaceable = useDeletePlaceable();
+  const showCancel = () => mode() !== PayloadMode.NoMode;
+  const ownedCommentSelector = useOwnedCommentPlaceableSelector();
+  const showDelete = createMemo(() => {
+    const uuid = activePlaceableId();
+    if (!uuid) return false;
+    const activePlaceable = placeableIdMap()?.[uuid];
+    if (!activePlaceable) return false;
+    if (isDocumentOwner()) return true;
+    if (!isThreadPlaceable(activePlaceable)) return true;
+    return ownedCommentSelector(uuid);
+  });
+
+  return (
+    <Show when={canComment()}>
+      <div class="flex flex-row items-center">
+        <Show when={canEdit()}>
+          <Button
+            size="icon-sm"
+            label={t('pdf.markup.textBox')}
+            variant="ghost"
+            onClick={() => {
+              setMode(PayloadMode.FreeTextAnnotation);
+            }}
+          >
+            <Textbox />
+          </Button>
+          <Button
+            size="icon-sm"
+            label={t('pdf.markup.signature')}
+            variant="ghost"
+            onClick={() => setMode(PayloadMode.Signature)}
+          >
+            <Signature />
+          </Button>
+        </Show>
+        <Button
+          size="icon-sm"
+          label={t('pdf.markup.comment')}
+          variant="ghost"
+          onClick={() => {
+            setMode(PayloadMode.Thread);
+          }}
+        >
+          <ChatTeardrop />
+        </Button>
+        <Show
+          when={showCancel()}
+          fallback={
+            <Show
+              when={showDelete()}
+              fallback={
+                <div class="invisible">
+                  <Button size="icon-sm">
+                    <Cancel />
+                  </Button>
+                </div>
+              }
+            >
+              <Button
+                size="icon-sm"
+                variant="danger"
+                tooltip={t('common.delete')}
+                onClick={() => {
+                  const activePlaceableIndex_ = activePlaceableId();
+                  if (activePlaceableIndex_ == null) return;
+                  deletePlaceable(activePlaceableIndex_);
+                }}
+              >
+                <Trash />
+              </Button>
+            </Show>
+          }
+        >
+          <Button
+            size="icon-sm"
+            variant="danger"
+            tooltip={t('common.cancel')}
+            onClick={() => {
+              setMode(PayloadMode.NoMode);
+            }}
+          >
+            <Cancel />
+          </Button>
+        </Show>
+      </div>
+    </Show>
+  );
+}

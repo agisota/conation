@@ -1,0 +1,33 @@
+[package]
+edition = "2024"
+name = "ai_projections_refresh_handler"
+publish = false
+version = "0.1.0"
+
+[dependencies]
+anyhow = { workspace = true }
+aws-sdk-sqs = { workspace = true }
+conation_aws_config = { path = "../../crates/conation_aws_config" }
+aws-smithy-types = { workspace = true }
+chrono = { workspace = true }
+futures = { workspace = true }
+lambda_runtime = { workspace = true }
+conation_entrypoint = { path = "../../crates/conation_entrypoint" }
+conation_env = { path = "../../crates/conation_env" }
+conation_env_var = { path = "../../crates/conation_env_var" }
+conation_queues = { path = "../../crates/conation_queues" }
+models_ai_projection = { path = "../../crates/models_ai_projection" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sqlx = { workspace = true }
+sqs_client = { path = "../../crates/sqs_client", default-features = false, features = [
+  "ai_projection",
+] }
+tokio = { workspace = true }
+tracing = { workspace = true }
+workspace-hack = { version = "0.1", path = "../../crates/workspace-hack" }
+conation_config = { path = "../../crates/conation_config" }
+
+[dev-dependencies]
+conation_db_migrator = { path = "../../crates/conation_db_migrator" }
+tokio = { workspace = true }

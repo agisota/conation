@@ -1,0 +1,12 @@
+[package]
+edition = "2024"
+name = "model_user"
+publish = false
+version = "0.1.0"
+
+[dependencies]
+conation_user_id = { path = "../conation_user_id" }
+serde = { workspace = true }
+utoipa = { workspace = true }
+uuid = { workspace = true }
+workspace-hack = { version = "0.1", path = "../workspace-hack" }

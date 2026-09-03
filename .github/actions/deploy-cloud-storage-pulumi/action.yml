@@ -1,0 +1,201 @@
+name: Deploy cloud storage pulumi stack
+description: Deploy a pulumi stack from cloud-storage pulumi
+
+inputs:
+  use-docker:
+    description: 'Whether to setup docker'
+    required: false
+    default: 'true'
+  use-namespace-builder:
+    description: >-
+      Use a Namespace remote Docker builder (persistent layer cache, so heavy
+      bases like LibreOffice/Collabora stay warm across deploys). Requires the
+      nsc CLI (preinstalled on Namespace runners); defaults to the stock
+      docker/setup-buildx-action.
+    required: false
+    default: 'false'
+  use-lfs:
+    description: 'Whether to checkout LFS content'
+    required: false
+    default: 'false'
+  environment:
+    description: 'Environment to deploy to'
+    required: false
+    default: 'dev'
+  aws-access-key:
+    description: 'AWS access key'
+    required: true
+  aws-secret-key:
+    description: 'AWS secret key'
+    required: true
+  aws-region:
+    description: 'AWS region'
+    required: false
+    default: 'us-east-1'
+  pulumi-access-token:
+    description: 'The access token for pulumi'
+    required: true
+  pulumi-service-name:
+    description: 'The name of the pulumi service to deploy. This will be the exact name of the folder containing your stacks.'
+    required: true
+  dd-app-key:
+    description: 'Datadog app key'
+    required: true
+  dd-api-key:
+    description: 'Datadog api key'
+    required: true
+  dd-host:
+    description: 'Datadog host'
+    required: false
+    default: 'https://api.us5.datadoghq.com/'
+  prebuilt-binaries-artifact:
+    description: 'Optional GitHub artifact containing prebuilt service binaries to copy into Docker images'
+    required: false
+    default: ''
+  lambda-artifacts:
+    description: 'Optional GitHub artifact containing built Lambda artifacts under target/lambda'
+    required: false
+    default: ''
+  prebuilt-binaries-tar:
+    description: 'Optional path to a prebuilt-binaries.tar.gz already present on disk (e.g. downloaded from Namespace artifact storage). When set, takes precedence over prebuilt-binaries-artifact and skips the GitHub artifact download.'
+    required: false
+    default: ''
+  lambda-artifacts-tar:
+    description: 'Optional path to a lambda-artifacts.tar.gz already present on disk (e.g. downloaded from Namespace artifact storage). When set, takes precedence over lambda-artifacts and skips the GitHub artifact download.'
+    required: false
+    default: ''
+  cloud-storage-service-name:
+    description: 'Optional service key from .github/services-config.json; builds Lambda artifacts inline when lambda-artifacts is not provided'
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    # checkout the repo
+    - uses: actions/checkout@v6
+      with:
+        lfs: ${{ inputs.use-lfs }}
+
+    - name: Download prebuilt service binaries
+      if: ${{ inputs.prebuilt-binaries-artifact != '' }}
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      with:
+        name: ${{ inputs.prebuilt-binaries-artifact }}
+        path: prebuilt-artifact
+
+    - name: Extract prebuilt service binaries
+      if: ${{ inputs.prebuilt-binaries-artifact != '' || inputs.prebuilt-binaries-tar != '' }}
+      shell: bash
+      env:
+        TAR_PATH: ${{ inputs.prebuilt-binaries-tar }}
+      run: |
+        set -euo pipefail
+        mkdir -p prebuilt
+        # Prefer an on-disk tar (sticky-disk handoff); fall back to the downloaded artifact.
+        src="${TAR_PATH:-prebuilt-artifact/prebuilt-binaries.tar.gz}"
+        if [[ ! -f "$src" ]]; then
+          echo "::error::prebuilt binaries tar missing at $src — the handoff download/extract chain broke upstream; check this job's download step and the build job's upload receipt."
+          echo "--- $(dirname "$src") contents ---"; ls -la "$(dirname "$src")" || true
+          exit 1
+        fi
+        echo "handoff receipt: $(sha256sum "$src" | cut -d' ' -f1) ($(stat -c%s "$src") bytes)"
+        tar -xzf "$src" -C prebuilt
+
+    - name: Download Lambda artifacts
+      if: ${{ inputs.lambda-artifacts != '' }}
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      with:
+        name: ${{ inputs.lambda-artifacts }}
+        path: lambda-artifact
+
+    - name: Extract Lambda artifacts
+      if: ${{ inputs.lambda-artifacts != '' || inputs.lambda-artifacts-tar != '' }}
+      shell: bash
+      env:
+        TAR_PATH: ${{ inputs.lambda-artifacts-tar }}
+      run: |
+        set -euo pipefail
+        # Prefer an on-disk tar (sticky-disk handoff); fall back to the downloaded artifact.
+        src="${TAR_PATH:-lambda-artifact/lambda-artifacts.tar.gz}"
+        if [[ ! -f "$src" ]]; then
+          echo "::error::lambda artifacts tar missing at $src — the handoff download/extract chain broke upstream; check this job's download step and the build job's upload receipt."
+          echo "--- $(dirname "$src") contents ---"; ls -la "$(dirname "$src")" || true
+          exit 1
+        fi
+        echo "handoff receipt: $(sha256sum "$src" | cut -d' ' -f1) ($(stat -c%s "$src") bytes)"
+        tar -xzf "$src" -C .
+
+    - name: Check Lambda config for inline build
+      if: ${{ inputs.lambda-artifacts == '' && inputs.lambda-artifacts-tar == '' && inputs.cloud-storage-service-name != '' }}
+      id: check-lambdas
+      shell: bash
+      env:
+        SERVICE: ${{ inputs.cloud-storage-service-name }}
+      run: |
+        has_lambdas=$(jq -r --arg service "$SERVICE" '((.services[$service].deploy_lambdas // []) | length) > 0' .github/services-config.json)
+        echo "has_lambdas=$has_lambdas" >> "$GITHUB_OUTPUT"
+
+    - name: Build Lambda artifacts inline
+      if: ${{ inputs.lambda-artifacts == '' && inputs.lambda-artifacts-tar == '' && inputs.cloud-storage-service-name != '' && steps.check-lambdas.outputs.has_lambdas == 'true' }}
+      shell: bash
+      env:
+        SERVICE: ${{ inputs.cloud-storage-service-name }}
+      run: |
+        .github/scripts/build-cloud-storage-lambdas-nix.sh
+        rm -rf target/lambda
+        tar -xzf lambda-artifacts.tar.gz -C .
+
+    # setup docker -- a Namespace remote builder keeps a persistent buildkit
+    # layer cache (so heavy bases like LibreOffice/Collabora stay warm across
+    # runs instead of re-pulling ~hundreds of MB from ECR each time);
+    # otherwise the stock buildx builder. Pulumi's docker-build provider uses
+    # whichever is set as the default builder.
+    - name: Set up Namespace Docker builder
+      if: ${{ inputs.use-docker == 'true' && inputs.use-namespace-builder == 'true' }}
+      uses: namespacelabs/nscloud-setup-buildx-action@d059ed7184f0bc7c8b27e8810cea153d02bcc6dd # v0.0.23
+
+    - uses: docker/setup-buildx-action@v3
+      if: ${{ inputs.use-docker == 'true' && inputs.use-namespace-builder != 'true' }}
+
+    # install bun
+    - uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: 1.2.0
+
+    # install dependencies in infra folder
+    # TODO: setup cache for bun
+    - name: install infra dependencies
+      shell: bash
+      run: |
+        cd infra 
+        bun install
+
+    # configure aws credentials
+    - uses: aws-actions/configure-aws-credentials@e7f100cf4c008499ea8adda475de1042d6975c7b
+      with:
+        aws-access-key-id: ${{ inputs.aws-access-key }}
+        aws-secret-access-key: ${{ inputs.aws-secret-key }}
+        aws-region: ${{ inputs.aws-region }}
+
+    # login to ecr to allow pulumi to pull down services for caching
+    - name: login to ecr
+      shell: bash
+      run: |
+        aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 569036502058.dkr.ecr.us-east-1.amazonaws.com
+
+    # deploy
+    - uses: pulumi/actions@8e5e406f4007fca908480587cb9893c07090f58d
+      with:
+        command: up
+        stack-name: macro-inc/${{ inputs.environment }}
+        work-dir: ./infra/stacks/${{ inputs.pulumi-service-name }}
+        # Create the stack on first deploy of a new service; no-op for
+        # existing stacks.
+        upsert: true
+      env:
+        PULUMI_ACCESS_TOKEN: ${{ inputs.pulumi-access-token }}
+        DD_APP_KEY: ${{ inputs.dd-app-key }}
+        DD_API_KEY: ${{ inputs.dd-api-key }}
+        DD_HOST: ${{ inputs.dd-host }}
+        USE_PREBUILT_SERVICE_BINARIES: ${{ (inputs.prebuilt-binaries-artifact != '' || inputs.prebuilt-binaries-tar != '') && 'true' || 'false' }}

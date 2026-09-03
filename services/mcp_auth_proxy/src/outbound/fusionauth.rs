@@ -1,0 +1,81 @@
+//! FusionAuth adapter for the MCP OAuth broker.
+
+use std::sync::Arc;
+use tracing::Instrument;
+
+use crate::domain::{
+    models::{RefreshToken, UpstreamTokens},
+    ports::{OAuthProvider, UpstreamTokensFuture},
+};
+
+/// FusionAuth-backed OAuth provider for the MCP auth proxy.
+#[derive(Clone)]
+pub struct FusionAuthOAuthProvider {
+    client: Arc<fusionauth::oauth::FusionAuthOAuthClient>,
+}
+
+impl FusionAuthOAuthProvider {
+    /// Creates a provider backed by FusionAuth's standard application OAuth flow.
+    ///
+    /// No identity provider is selected here. FusionAuth authenticates the
+    /// browser using its configured login methods and only then issues an
+    /// authorization code for the MCP application.
+    pub fn new(client: fusionauth::oauth::FusionAuthOAuthClient) -> Self {
+        Self {
+            client: Arc::new(client),
+        }
+    }
+}
+
+impl OAuthProvider for FusionAuthOAuthProvider {
+    #[tracing::instrument(skip(self), err)]
+    fn construct_authorize_url(&self, state: &str) -> anyhow::Result<String> {
+        self.client.construct_authorize_url(Some(state.to_owned()))
+    }
+
+    fn exchange_authorization_code<'a>(&'a self, code: &'a str) -> UpstreamTokensFuture<'a> {
+        let span = tracing::debug_span!("FusionAuthOAuthProvider::exchange_authorization_code");
+        Box::pin(
+            async move {
+                let grant = self
+                    .client
+                    .complete_authorization_code_grant(code)
+                    .await
+                    .map_err(anyhow::Error::from)?;
+
+                Ok(UpstreamTokens {
+                    access_token: grant.access_token.into(),
+                    refresh_token: grant.refresh_token.into(),
+                    expires_in: grant.expires_in,
+                })
+            }
+            .instrument(span),
+        )
+    }
+
+    fn refresh_access_token<'a>(
+        &'a self,
+        refresh_token: &'a RefreshToken,
+    ) -> UpstreamTokensFuture<'a> {
+        let span = tracing::debug_span!("FusionAuthOAuthProvider::refresh_access_token");
+        Box::pin(
+            async move {
+                let grant = self
+                    .client
+                    .complete_refresh_token_grant(refresh_token.as_str())
+                    .await
+                    .map_err(anyhow::Error::from)?;
+
+                Ok(UpstreamTokens {
+                    access_token: grant.access_token.into(),
+                    refresh_token: grant.refresh_token.into(),
+                    expires_in: grant.expires_in,
+                })
+            }
+            .instrument(span),
+        )
+    }
+}
+
+#[cfg(test)]
+mod test;

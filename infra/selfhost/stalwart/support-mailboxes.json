@@ -1,0 +1,49 @@
+{
+  "domain": {
+    "name": "conation.dev",
+    "description": "Почтовый домен Conation",
+    "isEnabled": true,
+    "aliases": {},
+    "certificateManagement": {
+      "@type": "Manual"
+    },
+    "dkimManagement": {
+      "@type": "Automatic"
+    },
+    "dnsManagement": {
+      "@type": "Manual"
+    },
+    "subAddressing": {
+      "@type": "Enabled"
+    }
+  },
+  "accounts": [
+    {
+      "localPart": "pythia",
+      "email": "pythia@conation.dev",
+      "displayName": "Пифия",
+      "productRole": "Служба поддержки",
+      "description": "Пифия — служба поддержки Conation",
+      "locale": "ru-RU",
+      "passwordEnv": "CONATION_STALWART_PYTHIA_PASSWORD"
+    },
+    {
+      "localPart": "tars",
+      "email": "tars@conation.dev",
+      "displayName": "Тарс",
+      "productRole": "Технический директор",
+      "description": "Тарс — технический директор Conation",
+      "locale": "ru-RU",
+      "passwordEnv": "CONATION_STALWART_TARS_PASSWORD"
+    },
+    {
+      "localPart": "ramzan.kadyrov",
+      "email": "ramzan.kadyrov@conation.dev",
+      "displayName": "Рамзан Кадыров",
+      "productRole": "Генеральный директор",
+      "description": "Рамзан Кадыров — генеральный директор Conation",
+      "locale": "ru-RU",
+      "passwordEnv": "CONATION_STALWART_RAMZAN_KADYROV_PASSWORD"
+    }
+  ]
+}

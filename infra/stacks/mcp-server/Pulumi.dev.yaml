@@ -1,0 +1,20 @@
+config:
+  aws-native:region: us-east-1
+  aws:region: us-east-1
+  mcp-server:app_base_url: https://dev.conation.dev
+  mcp-server:fusionauth_base_url: https://fusionauth-dev.conation.dev
+  mcp-server:fusionauth_client_id: fusionauth-client-id-key-dev
+  mcp-server:fusionauth_client_secret: fusionauth-client-secret-dev
+  mcp-server:fusionauth_tenant_id: 5e13f524-8d32-0454-81f8-061936256aa4
+  mcp-server:fusionauth_api_key: fusionauth-api-key-dev
+  mcp-server:fusionauth_issuer: fusionauth-dev.conation.dev
+  mcp-server:google_client_id: google-client-id-dev
+  mcp-server:google_client_secret: google-client-secret-dev
+  mcp-server:internal_auth_key: document-storage-service-auth-key-dev
+  mcp-server:jwt_secret_key: fusionauth-jwt-secret-dev
+  mcp-server:macro_cache_secret_key: macro-cache-dev
+  mcp-server:macro_db_secret_key: macro-db-dev
+  mcp-server:sync_service_auth_key: sync-service-key-dev
+  mcp-server:anthropic_api_key: anthropic-api-key-dev
+  mcp-server:openai_api_key: openai-key
+  datadog:validate: "false"

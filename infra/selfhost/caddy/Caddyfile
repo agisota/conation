@@ -1,0 +1,18 @@
+# Experimental local-only Conation facade.
+#
+# The supported stack already generates its routing-aware Caddy proxy on the
+# host. This facade forwards to that single origin instead of duplicating its
+# service route table. Plain HTTP is deliberate: Internet TLS/CDN operation is
+# not supported by this overlay yet.
+
+http://{$CONATION_DOMAIN:conation.localhost}, http://app.{$CONATION_DOMAIN:conation.localhost}, http://api.{$CONATION_DOMAIN:conation.localhost} {
+	reverse_proxy host.docker.internal:{$LOCAL_PROXY_PORT:8090}
+}
+
+http://mail.{$CONATION_DOMAIN:conation.localhost} {
+	reverse_proxy stalwart:8080
+}
+
+http://storage.{$CONATION_DOMAIN:conation.localhost} {
+	reverse_proxy minio:9001
+}

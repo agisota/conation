@@ -1,0 +1,12 @@
+[package]
+edition = "2024"
+name = "conation_service_urls"
+publish = false
+version = "0.1.0"
+
+[dependencies]
+conation_env = { path = "../conation_env" }
+paste = { workspace = true }
+thiserror = { workspace = true }
+url = { workspace = true }
+workspace-hack = { version = "0.1", path = "../workspace-hack" }

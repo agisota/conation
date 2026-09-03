@@ -1,0 +1,219 @@
+//! The per-instance single-origin reverse proxy (Caddy).
+//!
+//! One backend origin the frontend points at via `VITE_LOCAL_BACKEND_ORIGIN`.
+//! Path prefixes mirror the `serverHostLocal` keys in `servers.ts`; Caddy
+//! `reverse_proxy` upgrades WebSockets transparently (connection-gateway,
+//! websocket-service, sync-service). The `/static-file/*` block reproduces the
+//! nginx CDN fan-out (S3 via LocalStack + the static-file service).
+
+use std::path::PathBuf;
+
+use anyhow::{Context, Result};
+use sha2::{Digest, Sha256};
+
+use super::gen_compose::caddyfile_path;
+use super::instance::{Instance, Port};
+use super::{Mode, inventory};
+
+/// The host-facing proxy origin.
+pub fn url(instance: &Instance) -> String {
+    format!("http://localhost:{}", instance.port(Port::Proxy))
+}
+
+/// Write the instance Caddyfile and return its path. Both local and dev route
+/// the frontend through this single origin to the local service containers; the
+/// only difference is the static-file block (dev has no local LocalStack).
+/// With `static_frontend` the proxy also serves the built app bundle at `/app`,
+/// making it the one origin for the whole product.
+pub fn write_caddyfile(instance: &Instance, mode: Mode, static_frontend: bool) -> Result<PathBuf> {
+    let path = caddyfile_path(instance);
+    if let Some(dir) = path.parent() {
+        std::fs::create_dir_all(dir)
+            .with_context(|| format!("creating proxy dir {}", dir.display()))?;
+    }
+    std::fs::write(&path, caddyfile(mode, static_frontend))
+        .with_context(|| format!("writing {}", path.display()))?;
+    Ok(path)
+}
+
+/// Stable marker for the generated Caddyfile shape. Stored in stack state only
+/// after the proxy container has been recreated against this content.
+pub(super) fn caddyfile_fingerprint(mode: Mode, static_frontend: bool) -> String {
+    let digest = Sha256::digest(caddyfile(mode, static_frontend).as_bytes());
+    format!("caddyfile-v1:{digest:x}")
+}
+
+/// Assemble the Caddyfile: the listener head, the generated per-service routes
+/// (from the inventory), the special non-inventory routes, the mode's
+/// static-file block, the optional static-frontend block, then the tail.
+/// Service routes are identical across modes (they hit the local containers);
+/// only the static-file and frontend blocks differ.
+fn caddyfile(mode: Mode, static_frontend: bool) -> String {
+    let static_block = if mode.spec().static_files_via_localstack {
+        STATIC_FILE_LOCAL
+    } else {
+        STATIC_FILE_DEV
+    };
+    let mailpit_block = if static_frontend && mode.spec().runs_local_infra {
+        MAILPIT_ROUTE
+    } else {
+        ""
+    };
+    let frontend_block = if static_frontend { FRONTEND_STATIC } else { "" };
+    format!(
+        "{CADDY_HEAD}{routes}{SPECIAL_ROUTES}{mailpit_block}{static_block}{frontend_block}{CADDY_TAIL}",
+        routes = service_routes()
+    )
+}
+
+/// Generate the reverse-proxy routes for every inventoried service that exposes
+/// a path prefix. The inventory is the single source, so adding a service's
+/// proxy route is one field there — not a hand-edit here that can drift. MCP is
+/// the one protocol ingress defined in [`SPECIAL_ROUTES`]: unlike application
+/// API prefixes, its `/mcp` path must reach the service without being stripped
+/// and its OAuth endpoints live at the origin root.
+fn service_routes() -> String {
+    let mut out = String::new();
+    for svc in inventory::RUST_SERVICES {
+        if let Some(prefix) = svc.path_prefix {
+            out.push_str(&route_block(prefix, svc.compose_name, svc.is_websocket));
+        }
+    }
+    out
+}
+
+/// One Caddy route to a service container (always on `:8080`). HTTP uses
+/// `handle_path` (which strips the prefix); WebSocket needs the bare-prefix
+/// `@matcher` + explicit strip so the frontend's trailing-slash-less connect URL
+/// still matches. The target is the canonical compose service name, which always
+/// resolves on the proxy's networks.
+fn route_block(prefix: &str, target: &str, is_websocket: bool) -> String {
+    if is_websocket {
+        let m = matcher_name(prefix);
+        format!(
+            "    {m} path {prefix} {prefix}/*\n    handle {m} {{\n        uri strip_prefix {prefix}\n        reverse_proxy {target}:8080\n    }}\n"
+        )
+    } else {
+        format!("    handle_path {prefix}/* {{\n        reverse_proxy {target}:8080\n    }}\n")
+    }
+}
+
+/// A Caddy named-matcher token from a path prefix (drop the slash; hyphens →
+/// underscores so it's a single bare token).
+fn matcher_name(prefix: &str) -> String {
+    format!("@{}", prefix.trim_start_matches('/').replace('-', "_"))
+}
+
+/// Caddy listens on `{$PROXY_PORT}` (set in the compose service env). Static
+/// content, plaintext HTTP, automatic WebSocket upgrade. The per-service routes
+/// (generated from the inventory), the special routes, the static-file block,
+/// and the closing brace follow.
+const CADDY_HEAD: &str = r#"# GENERATED by `cargo x` — do not edit.
+{
+    auto_https off
+    admin off
+}
+
+:{$PROXY_PORT} {
+    # Caddy requires the block body on its own lines (no single-line `{ ... }`).
+"#;
+
+/// Routes for services that aren't in the Rust inventory (external / base-compose
+/// services on their own ports), so they can't be generated from it. The
+/// WebSocket routes match the bare prefix too (the frontend connects without a
+/// trailing slash, which `handle_path /x/*` would miss).
+const SPECIAL_ROUTES: &str = r#"    @websocket path /websocket /websocket/*
+    handle @websocket {
+        uri strip_prefix /websocket
+        reverse_proxy websocket-service:6969
+    }
+    @sync path /sync /sync/*
+    handle @sync {
+        uri strip_prefix /sync
+        reverse_proxy sync-service:8787
+    }
+    # Analytics/telemetry proxy worker (PostHog and OTLP traces/logs).
+    # No prefix strip: the worker itself routes on the /i/{ph,dd,otlp} prefix,
+    # and it listens on 8098, not the :8080 the generated routes assume.
+    # Set CF-Connecting-IP (absent without Cloudflare's edge in front) so the
+    # worker's rate-limit keying has a client IP instead of erroring.
+    handle /i/* {
+        reverse_proxy analytics-proxy:8098 {
+            header_up CF-Connecting-IP {http.request.remote.host}
+        }
+    }
+    handle_path /lexical/* {
+        reverse_proxy lexical-service:8096
+    }
+    handle_path /ai-editing/* {
+        reverse_proxy ai-editing-worker:8933
+    }
+    # These are sandbox-egress routes, never public MCP ingress. Reject the
+    # internal Conation route instead of letting the generic local-proxy
+    # fallback make it look like a healthy endpoint.
+    @non_public_mcp_egress path /mcp-conation /mcp-conation/*
+    handle @non_public_mcp_egress {
+        respond "Not Found" 404
+    }
+    # MCP's streamable transport owns /mcp and expects that prefix unchanged.
+    # Its OAuth broker also owns these exact origin-root endpoints. Keep the
+    # well-known matcher narrow so unrelated association files remain available
+    # to the frontend/ingress.
+    @mcp path /mcp /mcp/*
+    handle @mcp {
+        reverse_proxy mcp_service:8080
+    }
+    @mcp_oauth path /authorize /register /token /oauth/callback /.well-known/oauth-protected-resource /.well-known/oauth-protected-resource/mcp /.well-known/oauth-authorization-server /.well-known/oauth-authorization-server/mcp
+    handle @mcp_oauth {
+        reverse_proxy mcp_service:8080
+    }
+"#;
+
+const MAILPIT_ROUTE: &str = r#"    # Mailpit serves itself under /mailpit (MP_WEBROOT), so no prefix strip —
+    # this is how a headless stack reads its passwordless login codes.
+    handle /mailpit/* {
+        reverse_proxy mailpit:8025
+    }
+    redir /mailpit /mailpit/ 308
+
+"#;
+
+/// Local: /api and /internal go to the service, everything else to the S3 bucket
+/// via LocalStack (mirrors infra/local/nginx/static-file-cdn.conf).
+const STATIC_FILE_LOCAL: &str = r#"    route /static-file/* {
+        uri strip_prefix /static-file
+        @svc path /api/* /internal/*
+        reverse_proxy @svc static-file-service:8080
+        rewrite * /static-file-storage{uri}
+        reverse_proxy localstack:4566
+    }
+"#;
+
+/// Dev: no local LocalStack — route all static-file paths through the local
+/// static-file-service (which is pointed at dev S3).
+const STATIC_FILE_DEV: &str = r#"    handle_path /static-file/* {
+        reverse_proxy static-file-service:8080
+    }
+"#;
+
+/// Headless mode: the proxy serves the built app bundle (mounted at
+/// `/srv/frontend` — see `gen_compose::add_proxy_service`). The bundle is built
+/// with `base: /app`, so URL space `/app/*` maps onto the dist root after the
+/// prefix strip; unknown paths fall back to `index.html` (SPA routing). Caddy
+/// sorts `redir` before `handle_path`, so the exact-path redirects win first.
+const FRONTEND_STATIC: &str = r#"    redir / "/app/?{query}" 302
+    redir /app /app/ 308
+    handle_path /app/* {
+        root * /srv/frontend
+        try_files {path} /index.html
+        file_server
+    }
+"#;
+
+const CADDY_TAIL: &str = r#"
+    respond "Conation local proxy" 200
+}
+"#;
+
+#[cfg(test)]
+mod test;

@@ -1,0 +1,27 @@
+[package]
+edition = "2024"
+name = "sha_cleanup_worker"
+publish = false
+version = "0.1.0"
+
+[features]
+local = []
+redis_client_test = []
+
+[dependencies]
+anyhow = { workspace = true }
+aws-sdk-s3 = { workspace = true }
+conation_aws_config = { path = "../../crates/conation_aws_config", features = ["s3"] }
+futures = { workspace = true }
+conation_entrypoint = { path = "../../crates/conation_entrypoint" }
+conation_env = { path = "../../crates/conation_env" }
+conation_env_var = { path = "../../crates/conation_env_var" }
+mockall = { workspace = true }
+redis = { workspace = true, features = [
+  "aio",
+  "tokio-rustls-comp",
+] }
+sqlx = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+workspace-hack = { version = "0.1", path = "../../crates/workspace-hack" }

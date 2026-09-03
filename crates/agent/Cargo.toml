@@ -1,0 +1,41 @@
+[package]
+edition = "2024"
+name = "agent"
+publish = false
+version = "0.1.0"
+
+[features]
+debug-messages = []
+
+[dependencies]
+anyhow = { workspace = true }
+async-openai = { workspace = true }
+async-stream = { workspace = true }
+async-trait = { workspace = true }
+futures = { workspace = true }
+regex = { workspace = true }
+rig-core = "0.41.0"
+rig-agent = "0.41.0"
+schemars = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+strum = { workspace = true }
+thiserror = { workspace = true }
+utoipa = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+ai_usage = { path = "../ai_usage" }
+ai_toolset = { path = "../ai_toolset" }
+attachment = { path = "../attachment" }
+conation_env_var = { path = "../conation_env_var" }
+conation_user_id = { path = "../conation_user_id" }
+prompt = { path = "../prompt" }
+workspace-hack = { version = "0.1", path = "../workspace-hack" }
+tokio-util.workspace = true
+
+[dev-dependencies]
+model-entity = { path = "../model-entity" }
+non_empty = { path = "../non_empty" }
+# Enable rig's scripted MockCompletionModel for tests (fake AI streams).
+rig-core = { version = "0.41.0", features = ["test-utils"] }
+rig-agent = { version = "0.41.0", features = ["test-utils"] }

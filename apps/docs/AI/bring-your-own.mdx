@@ -1,0 +1,137 @@
+---
+title: "Свой агент"
+sidebarTitle: "Свой агент"
+icon: "terminal"
+tag: "Скоро"
+description: "Как подключить ACP-совместимый исполнитель агента к Conation."
+---
+
+<Info>
+  Подключение собственных исполнителей агентов находится в подготовке. Эта
+  страница описывает целевую схему и безопасную конфигурацию для самостоятельно
+  размещенных окружений.
+</Info>
+
+Conation может запускать любой исполнитель агента, совместимый с [Agent Client Protocol (ACP)](https://zed.dev/acp). В этой схеме агент работает на вашей машине или сервере, а Conation отправляет ему задачи, когда вы запускаете сессию или упоминаете бота в канале.
+
+Для самостоятельно размещённого запуска используется daemon `conationd`.
+Имя бинаря, секция конфигурации `[conation]` и webhook-путь
+`/conation-events` — единственный поддерживаемый контракт Conation;
+Macro-алиасы не поддерживаются.
+
+<Warning>
+  Самостоятельно размещенный агент может выполнять реальные команды в указанной
+  рабочей директории. Любой пользователь, который может отправить ему задачу,
+  потенциально влияет на это окружение. Запускайте агента в отдельной рабочей
+  директории и выдавайте доступ к каналам осознанно.
+</Warning>
+
+## Что понадобится
+
+- Машина или сервер, где постоянно работают исполнитель агента и `conationd`.
+- Установленный ACP-совместимый исполнитель агента.
+- Публичный HTTPS endpoint, который прокидывает webhook-запросы на локальный порт `8790`.
+- Токен бота Conation из **Настройки → Боты**.
+
+<Tip>
+  Для быстрой проверки подойдет [Cloudflare
+  Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/).
+  Установите
+  [`cloudflared`](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/),
+  выполните `cloudflared tunnel --url http://localhost:8790`, скопируйте
+  выданный `https://....trycloudflare.com` URL и добавьте к нему `/conation-events`
+  в поле `public_url`.
+</Tip>
+
+<Steps>
+  <Step title="Создайте агента Conation">
+    Откройте **Настройки → Боты → Создать бота**. Включите режим coding-agent, выберите каналы, в которые бот сможет заходить, и создайте его.
+
+    Скопируйте токен агента сразу после создания. Он показывается один раз; если вы потеряете токен, создайте новый.
+
+  </Step>
+
+  <Step title="Подготовьте исполнителя агента">
+    Установите ACP-совместимый агент и проверьте команду, которая запускает его ACP-сервер. Эту команду нужно проверить вручную до настройки `conationd`.
+
+    Примеры точек входа ACP:
+
+    - **Claude Code:** `npx -y @agentclientprotocol/claude-agent-acp`
+    - **Codex:** `npx -y @agentclientprotocol/codex-acp`
+    - **Hermes:** `hermes-acp` (сначала выполните `hermes-acp --check`)
+    - **OpenCode:** `opencode acp`
+    - **OpenClaw:** `openclaw acp`
+
+    Для Claude Code и Codex нужны ACP-адаптеры: базовые команды `claude` и `codex` сами по себе не поднимают ACP-сервер.
+
+  </Step>
+
+  <Step title="Получите conationd">
+    Используйте `conationd` из Conation-сборки вашего репозитория или из релизного артефакта, который вы публикуете для своей инфраструктуры. Релизы старого проекта не являются официальным распространением Conation и не должны использоваться в production.
+
+    Текущая цель поддержки — macOS и Linux. Для других платформ собирайте daemon из исходного кода в контролируемом окружении.
+
+  </Step>
+
+  <Step title="Запустите HTTPS-туннель">
+    `conationd` слушает порт `8790` и принимает запросы на `POST /conation-events`. Conation должен доставать этот endpoint по публичному HTTPS.
+
+    Для быстрого Cloudflare-туннеля:
+
+    ```bash
+    cloudflared tunnel --url http://localhost:8790
+    ```
+
+    Оставьте процесс запущенным и скопируйте URL из вывода.
+
+    <Note>
+      Временный URL туннеля меняется после перезапуска `cloudflared`. Для постоянного окружения создайте [именованный Cloudflare tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/get-started/create-local-tunnel/).
+    </Note>
+
+    Вместо Cloudflare можно использовать проброс портов или разместить исполнителя агента на сервере.
+
+  </Step>
+
+  <Step title="Настройте conationd">
+    Создайте рядом с бинарем файл `conation.toml`.
+
+    ```toml
+    [conation]
+    api_url = "https://agent-harness.conation.dev"
+    storage_url = "https://storage.conation.dev"
+    owner_user_id = "conation|admin@conation.dev"
+    bot_token = "mbot_..."
+    bot_scope = "user"
+
+    [server]
+    port = 8790
+    public_url = "https://example.trycloudflare.com/conation-events"
+
+    [harness]
+    command = "conation-acp-agent"
+    args = []
+
+    [workspace]
+    path = "/absolute/path/to/repository"
+    repo_url = "https://github.com/conation-dev/example-repository"
+    ```
+
+    Замените `admin@conation.dev` на email владельца бота, `mbot_...` — на токен из первого шага, а `command` и `args` — на проверенную команду запуска ACP-исполнителя.
+
+  </Step>
+
+  <Step title="Запустите агента">
+    Оставьте HTTPS-туннель включенным и запустите `conationd` из shell, где доступна команда вашего ACP-исполнителя:
+
+    ```bash
+    ./conationd --config ./conation.toml
+    ```
+
+    Когда daemon сообщит, что слушает запросы на запуск агента, упомяните созданного бота в одном из каналов Conation.
+
+  </Step>
+</Steps>
+
+## Как держать соединение живым
+
+`conationd`, ACP-исполнитель и HTTPS-туннель должны работать постоянно. Если любой из этих процессов остановится, новые самостоятельно размещенные сессии не смогут стартовать до восстановления соединения.

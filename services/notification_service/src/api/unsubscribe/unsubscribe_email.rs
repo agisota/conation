@@ -1,0 +1,57 @@
+use axum::{
+    Json,
+    extract::State,
+    http::StatusCode,
+    response::{IntoResponse, Response},
+};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_user_id::user_id::MacroUserIdStr;
+use model::response::{EmptyResponse, ErrorResponse};
+
+use crate::api::context::{ApiContext, AuthorizationService};
+
+/// Unsubscribes a user from receiving emails
+#[utoipa::path(
+        post,
+        operation_id = "unsubscribe_email",
+        path = "/unsubscribe/email",
+        responses(
+            (status = 200, body=EmptyResponse),
+            (status = 404, body=ErrorResponse),
+            (status = 500, body=ErrorResponse),
+        )
+    )]
+#[tracing::instrument(skip(ctx, user))]
+pub async fn handler(
+    State(ctx): State<ApiContext>,
+    user: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
+) -> Result<Response, Response> {
+    let user_id = &user.authorization.user.user_context.user_id;
+    let email = MacroUserIdStr::parse_from_str(user_id)
+        .map_err(|e| {
+            tracing::error!(error=?e, %user_id, "invalid Conation user id");
+            (
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse {
+                    message: "invalid Conation user id".into(),
+                }),
+            )
+                .into_response()
+        })?
+        .email_str()
+        .to_owned();
+    notification_db_client::unsubscribe::email::upsert_email_unsubscribe(&ctx.db, &email)
+        .await
+        .map_err(|e| {
+            tracing::error!(error=?e, email=?email, "unable to unsubscribe email");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    message: "unable to unsubscribe email".into(),
+                }),
+            )
+                .into_response()
+        })?;
+
+    Ok((StatusCode::OK, Json(EmptyResponse {})).into_response())
+}

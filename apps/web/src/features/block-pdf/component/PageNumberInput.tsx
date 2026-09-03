@@ -1,0 +1,99 @@
+import { blockElementSignal } from '@core/signal/blockElement';
+import { createCallback } from '@solid-primitives/rootless';
+import { cn } from '@ui';
+import { createEffect, createSignal, onCleanup, Show } from 'solid-js';
+import {
+  pageCount,
+  useCurrentPageNumber,
+  useGetRootViewer,
+} from '../signal/pdfViewer';
+
+export function PageNumberInput() {
+  // const context = useContext(BarContext);
+  // if (!context) throw new Error('PageNumberInput must be used within a Bar');
+  // const truncation = context.truncation;
+
+  const getRootViewer = useGetRootViewer();
+  const currentPageNumber = useCurrentPageNumber();
+  let inputRef: HTMLInputElement | undefined;
+  const [intermediateVal, setIntermediate] = createSignal<string>('');
+
+  const inputValue = () => intermediateVal() || currentPageNumber();
+  const getPageCount = () => pageCount() ?? 1;
+
+  const getWidthClass = (value: number | string) => {
+    const strLength = value.toString().length;
+    if (strLength < 2) return 'w-8';
+    if (strLength < 3) return 'w-9';
+    return 'w-11';
+  };
+
+  const onBlur = createCallback((_e: FocusEvent) => {
+    const pageNumber = parseInt(intermediateVal(), 10);
+    if (Number.isInteger(pageNumber)) {
+      getRootViewer()?.scrollTo({ pageNumber });
+    } else if (inputRef) {
+      inputRef.value = currentPageNumber().toString();
+    }
+    setIntermediate('');
+  });
+
+  const handleKeyDown = createCallback((e: KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'g') {
+      e.preventDefault();
+      inputRef?.focus();
+      inputRef?.select();
+    }
+  });
+
+  const blockElement = blockElementSignal.get;
+  createEffect(() => {
+    const element = blockElement();
+    if (!element) return;
+
+    element.addEventListener('keydown', handleKeyDown);
+    onCleanup(() => {
+      element.removeEventListener('keydown', handleKeyDown);
+    });
+  });
+
+  return (
+    <Show when={getPageCount() > 0}>
+      <div class="text-sm font-medium text-ink flex align-middle items-center justify-start">
+        <div
+          class="flex flex-row items-center justify-center gap-1.5"
+          onClick={() => inputRef?.select()}
+        >
+          <div class="cursor-default">
+            <input
+              class={cn(
+                'rounded-md border border-edge-muted bg-transparent px-2 text-sm text-ink outline-none placeholder:text-ink-placeholder focus:border-accent',
+                'font-medium cursor-default text-center',
+                getWidthClass(currentPageNumber())
+              )}
+              step="1"
+              min="1"
+              max={getPageCount().toString()}
+              ref={inputRef}
+              id="page-number"
+              data-testid="topbar-page-number"
+              type="number"
+              value={inputValue()}
+              onChange={(e) => setIntermediate(e.currentTarget.value)}
+              onFocus={() => inputRef?.select()}
+              onBlur={onBlur}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape' || e.key === 'Enter') {
+                  inputRef?.blur();
+                }
+              }}
+            />
+          </div>
+          <div class="select-none whitespace-nowrap text-ink-muted">
+            /&thinsp;{getPageCount()}
+          </div>
+        </div>
+      </div>
+    </Show>
+  );
+}

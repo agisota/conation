@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Тарс — технический директор Conation</title>
+  <desc id="desc">Абстрактный круглый графитовый аватар с буквой Т и технической сеткой.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#151923"/>
+      <stop offset="1" stop-color="#465065"/>
+    </linearGradient>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0v48" fill="none" stroke="#9ee7ff" stroke-width="2" opacity=".22"/>
+    </pattern>
+  </defs>
+  <circle cx="256" cy="256" r="248" fill="url(#bg)"/>
+  <circle cx="256" cy="256" r="220" fill="url(#grid)"/>
+  <path d="M128 144h256M256 144v232" fill="none" stroke="#64d8ff" stroke-width="22" stroke-linecap="round" opacity=".8"/>
+  <text x="256" y="342" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="238" font-weight="700" fill="#fff">Т</text>
+</svg>

@@ -1,0 +1,198 @@
+import * as aws from '@pulumi/aws';
+import * as pulumi from '@pulumi/pulumi';
+import {
+  config,
+  getBackfillQueue,
+  getLinkManagerQueue,
+  getConationApiToken,
+  getMacroNotify,
+  getSearchEventQueue,
+  stack,
+} from '../../packages/shared';
+import { get_coparse_api_vpc } from '../../packages/vpc';
+import { AuthenticationService } from './service';
+import { UserLinkCleanupHandler } from './user-link-cleanup-lambda';
+
+const tags = {
+  environment: stack,
+  tech_lead: 'hutch',
+  project: 'authentication-service',
+};
+
+const DATABASE_URL = aws.secretsmanager
+  .getSecretVersionOutput({
+    secretId: config.require(`macro_db_secret_key`),
+  })
+  .apply((secret) => secret.secretString);
+
+const JWT_SECRET_KEY = config.require(`jwt_secret_key`);
+const FUSIONAUTH_API_KEY_SECRET_KEY = config.require(
+  `fusionauth_api_key_secret_key`
+);
+const AUTHENTICATION_SERVICE_INTERNAL_API_KEY = config.require(
+  `authentication_service_internal_api_key`
+);
+const MICROSOFT_TOKEN_KMS_DELETION_WINDOW_IN_DAYS = config.requireNumber(
+  'microsoft_token_kms_deletion_window_days'
+);
+const CURSOR_API_KEY_KMS_DELETION_WINDOW_IN_DAYS = config.requireNumber(
+  'cursor_api_key_kms_deletion_window_days'
+);
+// Role ARNs allowed to decrypt Cursor API keys. The agent harness is the one
+// reader there is: it decrypts a session owner's key on every spawn and
+// resume, so without this grant every `@cursor` session fails at KMS. Taken
+// from the harness stack's own export rather than a hand-copied ARN, so a
+// re-created role cannot silently leave the policy pointing at a dead one.
+const agentHarnessStack = new pulumi.StackReference('agent-harness-stack', {
+  name: `macro-inc/agent-harness-service/${stack}`,
+});
+const CURSOR_API_KEY_READER_ROLE_ARNS = [
+  agentHarnessStack
+    .getOutput('agentHarnessServiceRoleArn')
+    .apply((value) => value as string),
+];
+
+const FUSIONAUTH_CLIENT_SECRET_KEY = config.require(
+  `fusionauth_client_secret_key`
+);
+
+// Resolve the application secrets to ARNs for the service's retrieval policy.
+const jwtSecretKeyArn: pulumi.Output<string> = aws.secretsmanager
+  .getSecretVersionOutput({ secretId: JWT_SECRET_KEY })
+  .apply((secret) => secret.arn);
+
+const fusionauthApiKeySecretKeyArn: pulumi.Output<string> = aws.secretsmanager
+  .getSecretVersionOutput({ secretId: FUSIONAUTH_API_KEY_SECRET_KEY })
+  .apply((secret) => secret.arn);
+
+const authenticationServiceInternalApiKeyArn: pulumi.Output<string> =
+  aws.secretsmanager
+    .getSecretVersionOutput({
+      secretId: AUTHENTICATION_SERVICE_INTERNAL_API_KEY,
+    })
+    .apply((secret) => secret.arn);
+
+const fusionauthClientSecretKeyArn: pulumi.Output<string> = aws.secretsmanager
+  .getSecretVersionOutput({ secretId: FUSIONAUTH_CLIENT_SECRET_KEY })
+  .apply((secret) => secret.arn);
+
+const GOOGLE_CLIENT_SECRET_KEY = config.require(`google_client_secret_key`);
+const googleClientSecretKeyArn: pulumi.Output<string> = aws.secretsmanager
+  .getSecretVersionOutput({ secretId: GOOGLE_CLIENT_SECRET_KEY })
+  .apply((secret) => secret.arn);
+
+const CONATION_API_TOKEN_PRIVATE_SECRET_KEY = config.require(
+  `conation_api_token_private_secret_key`
+);
+const conationApiTokenSecretPrivateKeyArn: pulumi.Output<string> =
+  aws.secretsmanager
+    .getSecretVersionOutput({ secretId: CONATION_API_TOKEN_PRIVATE_SECRET_KEY })
+    .apply((secret) => secret.arn);
+
+const CONATION_API_TOKENS = getConationApiToken();
+
+const secretKeyArns = [
+  pulumi.interpolate`${jwtSecretKeyArn}`,
+  pulumi.interpolate`${fusionauthApiKeySecretKeyArn}`,
+  pulumi.interpolate`${authenticationServiceInternalApiKeyArn}`,
+  pulumi.interpolate`${fusionauthClientSecretKeyArn}`,
+  pulumi.interpolate`${googleClientSecretKeyArn}`,
+  pulumi.interpolate`${CONATION_API_TOKENS.conationApiTokenPublicKeyArn}`,
+  pulumi.interpolate`${conationApiTokenSecretPrivateKeyArn}`,
+];
+
+const vpc = get_coparse_api_vpc();
+
+// Authentication runs in the ECS cluster exported by FusionAuth. Resolve that
+// fully qualified stack reference from per-environment configuration so a
+// standalone Conation deployment selects its own Pulumi state explicitly.
+const fusionauthStackRef = config.require('fusionauth_stack_ref').trim();
+if (!fusionauthStackRef) {
+  throw new Error('fusionauth_stack_ref must name the FusionAuth Pulumi stack');
+}
+
+const fusionAuthStack = new pulumi.StackReference('fusion-auth-stack', {
+  name: fusionauthStackRef,
+});
+
+const contactsServiceStack = new pulumi.StackReference(
+  'contacts-service-stack',
+  {
+    name: `macro-inc/contacts-service/${stack}`,
+  }
+);
+
+const contactsQueueArn: pulumi.Output<string> = contactsServiceStack
+  .getOutput('contactsQueueArn')
+  .apply((arn) => arn as string);
+
+const fusionAuthClusterArn: pulumi.Output<string> = fusionAuthStack
+  .getOutput('fusionAuthClusterArn')
+  .apply((fusionAuthClusterArn) => fusionAuthClusterArn as string);
+
+const fusionAuthClusterName: pulumi.Output<string> = fusionAuthStack
+  .getOutput('fusionAuthClusterName')
+  .apply((fusionAuthClusterName) => fusionAuthClusterName as string);
+
+const { notificationIngressQueueArn } = getMacroNotify();
+
+const { searchEventQueueArn } = getSearchEventQueue();
+
+const { linkManagerQueueArn } = getLinkManagerQueue();
+
+const { backfillQueueArn } = getBackfillQueue();
+
+const service = new AuthenticationService('authentication-service', {
+  secretKeyArns,
+  clusterName: fusionAuthClusterName,
+  ecsClusterArn: fusionAuthClusterArn,
+  vpc,
+  platform: {
+    family: 'linux',
+    architecture: 'amd64',
+  },
+  serviceContainerPort: 8080,
+  isPrivate: false,
+  healthCheckPath: '/health',
+  tags,
+  queueArns: [
+    notificationIngressQueueArn,
+    searchEventQueueArn,
+    linkManagerQueueArn,
+    backfillQueueArn,
+    contactsQueueArn,
+  ],
+  microsoftTokenKmsDeletionWindowInDays:
+    MICROSOFT_TOKEN_KMS_DELETION_WINDOW_IN_DAYS,
+  cursorApiKeyKmsDeletionWindowInDays:
+    CURSOR_API_KEY_KMS_DELETION_WINDOW_IN_DAYS,
+  cursorApiKeyReaderRoleArns: CURSOR_API_KEY_READER_ROLE_ARNS,
+  containerEnvVars: [
+    // Configure MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET, and
+    // MICROSOFT_TENANT_ID together in the authentication_service Doppler
+    // config.
+    { name: 'ENVIRONMENT', value: stack },
+    { name: 'DOPPLER_PROJECT', value: 'authentication_service' },
+    // OpenTelemetry / Datadog tracing configuration
+    {
+      name: 'DD_SERVICE',
+      value: 'authentication-service',
+    },
+    {
+      name: 'DD_ENV',
+      value: stack,
+    },
+  ],
+});
+
+new UserLinkCleanupHandler('user-link-cleanup-handler', {
+  envVars: {
+    DATABASE_URL: pulumi.interpolate`${DATABASE_URL}`,
+    ENVIRONMENT: stack,
+    RUST_LOG: 'user_link_cleanup_handler=info,macro_http_request=info',
+  },
+  vpc,
+  tags,
+});
+
+export const authenticationServiceUrl = pulumi.interpolate`${service.domain}`;

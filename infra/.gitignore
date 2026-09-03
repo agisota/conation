@@ -1,0 +1,12 @@
+.turbo
+*.js
+!.eslintrc.js
+!.prettierrc.js
+!library.js
+!**/appRouteLambda/**/*.js
+!**/contentEncodingLambda/**/*.js
+package-lock.json
+local/generated
+
+node_modules
+dist

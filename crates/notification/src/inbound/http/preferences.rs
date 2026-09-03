@@ -1,0 +1,264 @@
+//! HTTP handlers for notification type preferences (enable/disable).
+
+use axum::{
+    Json,
+    extract::{OriginalUri, Path, Query, State},
+    http::{StatusCode, uri::PathAndQuery},
+    response::Html,
+};
+use conation_authorization::{
+    MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal,
+};
+use conation_service_urls::{NotificationServiceUrl, Url};
+use conation_user_id::user_id::MacroUserIdStr;
+use model_error_response::ErrorResponse;
+use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
+
+use crate::domain::{models::signing::SignedUrl, service::NotificationReader};
+
+use super::NotificationRouterState;
+
+/// Path parameter for a notification event type.
+#[derive(Deserialize)]
+pub struct NotificationEventTypePath {
+    /// The notification event type (e.g. "channel_message_send").
+    pub notification_event_type: String,
+}
+
+/// Response for listing disabled notification types.
+#[derive(Debug, Serialize, ToSchema)]
+pub struct GetNotificationTypePreferencesResponse {
+    /// The notification types that the user has disabled.
+    pub disabled_types: Vec<String>,
+}
+
+/// Get the notification types that the user has disabled.
+#[utoipa::path(
+    get,
+    operation_id = "get_notification_type_preferences",
+    path = "/v1/user_notifications/preferences",
+    responses(
+        (status = 200, body = GetNotificationTypePreferencesResponse),
+        (status = 401, body = ErrorResponse),
+        (status = 500, body = ErrorResponse),
+    )
+)]
+pub async fn get_notification_type_preferences<
+    S: NotificationReader,
+    Auth: MacroAuthorizationService,
+>(
+    State(state): State<NotificationRouterState<S, Auth>>,
+    user: MacroAuthorizationExtractor<Auth, UserOrInternal>,
+) -> Result<Json<GetNotificationTypePreferencesResponse>, (StatusCode, Json<ErrorResponse<'static>>)>
+{
+    let disabled = state
+        .inner
+        .get_disabled_notification_types(user.authorization.user.macro_user_id)
+        .await
+        .map_err(|e| {
+            tracing::error!(error=?e, "failed to get notification type preferences");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    message: "failed to get notification type preferences".into(),
+                }),
+            )
+        })?;
+
+    Ok(Json(GetNotificationTypePreferencesResponse {
+        disabled_types: disabled
+            .into_iter()
+            .map(|d| d.notification_event_type)
+            .collect(),
+    }))
+}
+
+/// Disable a notification type for the authenticated user.
+#[utoipa::path(
+    put,
+    operation_id = "disable_notification_type",
+    path = "/v1/user_notifications/preferences/{notification_event_type}/disable",
+    params(
+        ("notification_event_type" = String, Path, description = "The notification event type to disable"),
+    ),
+    responses(
+        (status = 200),
+        (status = 400, body = ErrorResponse),
+        (status = 401, body = ErrorResponse),
+        (status = 500, body = ErrorResponse),
+    )
+)]
+pub async fn disable_notification_type<S: NotificationReader, Auth: MacroAuthorizationService>(
+    State(state): State<NotificationRouterState<S, Auth>>,
+    user: MacroAuthorizationExtractor<Auth, UserOrInternal>,
+    Path(NotificationEventTypePath {
+        notification_event_type,
+    }): Path<NotificationEventTypePath>,
+) -> Result<Json<()>, (StatusCode, Json<ErrorResponse<'static>>)> {
+    disable_notification_type_inner(
+        &state,
+        user.authorization.user.macro_user_id,
+        notification_event_type.as_str(),
+    )
+    .await
+    .map(Json)
+}
+
+/// The query param value to extract the macro user id
+#[derive(Deserialize)]
+pub struct PresignedQueryParams {
+    id: MacroUserIdStr<'static>,
+}
+
+/// Reconstruct the public URL used to create a signed preferences link.
+///
+/// The notification service may be mounted below a reverse-proxy path prefix.
+/// Treating the incoming request path as relative preserves that prefix, so the
+/// verifier uses the exact URL that the digest renderer signed.
+pub(super) fn signed_request_url(
+    mut notification_service_url: Url,
+    path_and_query: &str,
+) -> Result<Url, ()> {
+    if !notification_service_url.path().ends_with('/') {
+        notification_service_url.path_segments_mut()?.push("");
+    }
+    notification_service_url
+        .join(path_and_query.trim_start_matches('/'))
+        .map_err(|_| ())
+}
+
+/// Disable a notification type for the authenticated user via a GET request with a presigned url.
+/// This guarantees the signed url was produced in a trusted environment
+pub async fn presigned_disable_notification_type<
+    S: NotificationReader,
+    Auth: MacroAuthorizationService,
+>(
+    State(state): State<NotificationRouterState<S, Auth>>,
+    Path(NotificationEventTypePath {
+        notification_event_type,
+    }): Path<NotificationEventTypePath>,
+    Query(params): Query<PresignedQueryParams>,
+    original_uri: OriginalUri,
+) -> Result<Html<String>, (StatusCode, Html<String>)> {
+    let notification_service_url = NotificationServiceUrl::new().map_err(|err| {
+        tracing::error!(error=?err, "failed to resolve notification service URL");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Html("Invalid link".to_string()),
+        )
+    })?;
+    let notification_service_url = notification_service_url.parse_url().map_err(|err| {
+        tracing::error!(error=?err, "failed to parse notification service URL");
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Html("Invalid link".to_string()),
+        )
+    })?;
+    let path_and_query = original_uri
+        .path_and_query()
+        .map(PathAndQuery::as_str)
+        .unwrap_or("/");
+    let to_verify = signed_request_url(notification_service_url, path_and_query);
+
+    let Ok(to_verify) = to_verify else {
+        return Err((StatusCode::BAD_REQUEST, Html("Invalid link".to_string())));
+    };
+
+    let Some(_verified) = SignedUrl::verify(to_verify, state.hmac_signing_key.clone()) else {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Html("Invalid signature".to_string()),
+        ));
+    };
+
+    disable_notification_type_inner(&state, params.id, notification_event_type.as_str())
+        .await
+        .map(|()| {
+            Html(format!(
+                "Вы отписались от уведомлений типа {notification_event_type}"
+            ))
+        })
+        .map_err(|(status, Json(ErrorResponse { message }))| (status, Html(message.to_string())))
+}
+
+/// internal implementation of the GET/PUT methods to DRY up the code
+async fn disable_notification_type_inner<S: NotificationReader, Auth: MacroAuthorizationService>(
+    state: &NotificationRouterState<S, Auth>,
+    calling_user: MacroUserIdStr<'_>,
+    notification_event_type: &str,
+) -> Result<(), (StatusCode, Json<ErrorResponse<'static>>)> {
+    // make sure the notification to block is one that matches the list
+    let true = state
+        .blockable_notification_typenames
+        .contains(notification_event_type)
+    else {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse {
+                message: format!(
+                    "Cannot block notification type {notification_event_type}. Expected one of {:?}",
+                    state.blockable_notification_typenames
+                )
+                .into(),
+            }),
+        ));
+    };
+
+    state
+        .inner
+        .disable_notification_type(calling_user, notification_event_type)
+        .await
+        .map_err(|e| {
+            tracing::error!(error=?e, "failed to disable notification type");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    message: "failed to disable notification type".into(),
+                }),
+            )
+        })?;
+
+    Ok(())
+}
+
+/// Re-enable a notification type for the authenticated user.
+#[utoipa::path(
+    put,
+    operation_id = "enable_notification_type",
+    path = "/v1/user_notifications/preferences/{notification_event_type}/enable",
+    params(
+        ("notification_event_type" = String, Path, description = "The notification event type to enable"),
+    ),
+    responses(
+        (status = 200),
+        (status = 401, body = ErrorResponse),
+        (status = 500, body = ErrorResponse),
+    )
+)]
+pub async fn enable_notification_type<S: NotificationReader, Auth: MacroAuthorizationService>(
+    State(state): State<NotificationRouterState<S, Auth>>,
+    user: MacroAuthorizationExtractor<Auth, UserOrInternal>,
+    Path(NotificationEventTypePath {
+        notification_event_type,
+    }): Path<NotificationEventTypePath>,
+) -> Result<Json<()>, (StatusCode, Json<ErrorResponse<'static>>)> {
+    state
+        .inner
+        .enable_notification_type(
+            user.authorization.user.macro_user_id,
+            &notification_event_type,
+        )
+        .await
+        .map_err(|e| {
+            tracing::error!(error=?e, "failed to enable notification type");
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    message: "failed to enable notification type".into(),
+                }),
+            )
+        })?;
+
+    Ok(Json(()))
+}

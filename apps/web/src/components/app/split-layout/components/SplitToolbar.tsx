@@ -1,0 +1,104 @@
+import { mergeRefs } from '@solid-primitives/refs';
+import {
+  createRenderEffect,
+  createSignal,
+  type ParentProps,
+  type Setter,
+  Show,
+} from 'solid-js';
+import { Portal } from 'solid-js/web';
+import { useSplitPanelOrThrow } from '../layoutUtils';
+import {
+  type PriorityCollapseController,
+  PriorityCollapseOverflowSensor,
+} from './PriorityCollapseOverflowSensor';
+
+export function SplitToolbar(props: {
+  ref: Setter<HTMLDivElement | null>;
+  collapseController: PriorityCollapseController;
+}) {
+  const panel = useSplitPanelOrThrow();
+
+  // Layout / spacing / border / min-height live on <Panel.Toolbar> in
+  // SplitPanel. This wrapper only mounts the portal targets so consumers
+  // (<SplitToolbarLeft />, <SplitToolbarRight />) have somewhere to render
+  // into.
+  return (
+    <div
+      class="flex items-center justify-between w-full"
+      data-split-toolbar
+      ref={mergeRefs(props.collapseController.setRow, props.ref)}
+    >
+      <PriorityCollapseOverflowSensor
+        controller={props.collapseController}
+        class="min-w-0 flex-1 overflow-hidden"
+        contentClass="flex items-center gap-1"
+        contentRef={(element) => {
+          panel.layoutRefs.toolbarLeft = element;
+        }}
+      />
+      <div
+        class="flex items-center gap-1"
+        ref={(ref) => {
+          panel.layoutRefs.toolbarRight = ref;
+        }}
+      />
+    </div>
+  );
+}
+
+export function SplitToolbarLeft(
+  props: ParentProps<{
+    class?: string;
+  }>
+) {
+  const panel = useSplitPanelOrThrow();
+  const [portalRef, setPortalRef] = createSignal<HTMLDivElement | null>(null);
+
+  createRenderEffect(() => {
+    const ref = portalRef();
+    if (!ref) return;
+    ref.style.width = '100%';
+    if (props.class) {
+      ref.classList.add(props.class);
+    }
+  });
+
+  return (
+    <Show when={panel.layoutRefs.toolbarLeft}>
+      <Portal
+        ref={(div) => {
+          setPortalRef(div);
+          div.style.display = 'contents';
+        }}
+        mount={panel.layoutRefs.toolbarLeft}
+      >
+        {props.children}
+      </Portal>
+    </Show>
+  );
+}
+
+export function SplitToolbarRight(props: ParentProps<{ order?: number }>) {
+  const panel = useSplitPanelOrThrow();
+  const [portalRef, setPortalRef] = createSignal<HTMLDivElement | null>(null);
+
+  createRenderEffect(() => {
+    const ref = portalRef();
+    if (!ref) return;
+    ref.style.order = props.order?.toString() ?? '0';
+  });
+  return (
+    <Show when={panel.layoutRefs.toolbarRight}>
+      <Portal
+        ref={(div) => {
+          setPortalRef(div);
+          div.style.display = 'contents';
+        }}
+        mount={panel.layoutRefs.toolbarRight}
+      >
+        {props.children}
+      </Portal>
+    </Show>
+  );
+}

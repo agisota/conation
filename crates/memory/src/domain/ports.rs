@@ -1,0 +1,56 @@
+use agent::AgentError;
+use chrono::{DateTime, Utc};
+use conation_user_id::user_id::MacroUserIdStr;
+use conation_uuid::Uuid;
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum MemoryError {
+    #[error(transparent)]
+    AgentError(#[from] AgentError),
+    #[error("Nothing was generated")]
+    NoGeneration,
+    #[error("memory rejected by judge: {0}")]
+    Rejected(String),
+    #[error("database error: {0}")]
+    Db(rootcause::Report),
+    #[error(transparent)]
+    Other(#[from] anyhow::Error),
+}
+
+pub type Result<T> = std::result::Result<T, MemoryError>;
+
+pub type Memory = String;
+
+/// A memory record with its latest refresh timestamp.
+#[derive(Debug)]
+pub struct MemoryRecord {
+    /// The memory text.
+    pub memory: Memory,
+    /// When this memory was last generated or refreshed.
+    pub updated_at: DateTime<Utc>,
+}
+
+pub trait MemoryRepo: Send + Sync + 'static {
+    fn save_memory(
+        &self,
+        memory: &Memory,
+        user: MacroUserIdStr,
+    ) -> impl Future<Output = Result<Uuid>> + Send;
+    fn get_latest_memory(
+        &self,
+        user: MacroUserIdStr,
+    ) -> impl Future<Output = Result<Option<MemoryRecord>>> + Send;
+    fn get_memory_by_id(
+        &self,
+        user: MacroUserIdStr,
+        id: Uuid,
+    ) -> impl Future<Output = Result<Memory>> + Send;
+}
+
+pub trait MemoryService: Send + Sync + 'static {
+    fn get_or_generate_memory(
+        &self,
+        user: MacroUserIdStr<'static>,
+    ) -> impl Future<Output = Result<Option<Memory>>> + Send;
+}

@@ -1,0 +1,100 @@
+---
+title: "GitHub"
+icon: "github"
+description: "Настройка GitHub OAuth/App и проверяемый контракт статусов задач Conation."
+---
+
+Conation умеет связывать GitHub pull requests с задачами. Интеграция не
+активируется автоматически: каждому оператору нужны собственные GitHub OAuth
+App и GitHub App, секреты, callback URLs и публичный HTTPS ingress.
+
+<Warning>
+  Локальный stack использует безопасные заглушки. Они позволяют сервисам
+  запуститься, но не дают доступа к GitHub. Публичная интеграция на домене
+  `conation.dev` этой страницей не считается проверенной.
+</Warning>
+
+## Два разных приложения GitHub
+
+| Компонент        | Назначение                                                                        |
+| ---------------- | --------------------------------------------------------------------------------- |
+| GitHub OAuth App | Вход или привязка GitHub identity через FusionAuth                                |
+| GitHub App       | Установка в repositories, webhooks, задачи, pull requests и coding-agent операции |
+
+Не используйте client secret OAuth App как webhook secret или private key
+GitHub App. Это независимые credentials с разными scopes и жизненным циклом.
+
+## OAuth App для привязки аккаунта
+
+Создайте OAuth App в **GitHub → Settings → Developer settings → OAuth Apps**.
+Для операторского origin `https://conation.example` укажите callback:
+
+```text
+https://conation.example/auth/oauth2/github/callback
+```
+
+Замените пример на точный HTTPS origin. Сохраните значения вне Git:
+
+- Client ID → `GITHUB_CLIENT_ID`;
+- Client secret → `GITHUB_CLIENT_SECRET`;
+- ID созданного GitHub identity provider в FusionAuth → `GITHUB_IDP_ID`.
+
+## GitHub App для задач и pull requests
+
+Создайте GitHub App в **GitHub → Settings → Developer settings → GitHub
+Apps**. Для того же примерного origin используйте:
+
+```text
+Setup URL:   https://conation.example/dss/github/sync-redirect
+Webhook URL: https://conation.example/dss/github/webhook
+```
+
+Включите SSL verification и создайте случайный webhook secret. Запрашивайте
+только permissions, необходимые вашим сценариям. Реализованный код использует
+metadata, contents, pull requests, issues/comments и checks; право записи в
+contents нужно только coding-agent операциям.
+
+Операторская конфигурация использует:
+
+- `GITHUB_SYNC_APP_URL`;
+- `GITHUB_SYNC_APP_CLIENT_ID`;
+- `GITHUB_SYNC_APP_CLIENT_SECRET`;
+- `GITHUB_WEBHOOK_SECRET_KEY`;
+- `GITHUB_INSTALLATION_STATE_SECRET`;
+- `GITHUB_SYNC_APP_PEM_SECRET_KEY`.
+
+Никогда не помещайте secret или PEM в frontend, документацию либо Git.
+
+## Статусы задач
+
+Domain- и webhook-тесты фиксируют следующий контракт:
+
+| Событие GitHub                    | Статус задачи |
+| --------------------------------- | ------------- |
+| Draft pull request                | `In Progress` |
+| Ready/open pull request           | `In Review`   |
+| Merged pull request               | `Completed`   |
+| Closed, но не merged pull request | `Not Started` |
+
+Обработчик также различает события `ready_for_review` и `converted_to_draft`.
+Это контракт реализации, а не обещание работоспособности конкретного
+развёртывания: после настройки выполните реальный webhook smoke test.
+
+## Проверка после настройки
+
+1. Привяжите GitHub account в настройках Conation.
+2. Установите GitHub App только в тестовый repository.
+3. Создайте задачу и получите для неё branch reference средствами интерфейса.
+4. Создайте draft PR и проверьте переход в `In Progress`.
+5. Переведите PR в ready и проверьте `In Review`.
+6. Выполните merge и проверьте `Completed`.
+7. Повторите сценарий с закрытием без merge и проверьте `Not Started`.
+8. Убедитесь, что webhook с неверной подписью отклоняется, а секрет не
+   появляется в логах.
+
+Если статус не меняется, проверьте delivery в GitHub App, HTTP status ответа,
+подпись webhook, installation permissions и журналы document storage service.
+
+Pull request остаётся блоком Conation: после успешной синхронизации его можно
+связывать с задачами, документами и каналами через @mention. Подробнее о
+пользовательском сценарии — в разделе [«Задачи»](/product/tasks).

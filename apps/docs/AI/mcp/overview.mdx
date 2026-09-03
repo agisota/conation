@@ -1,0 +1,93 @@
+---
+title: "Настройка MCP"
+icon: "plug"
+description: "Подключение MCP-клиента к локальному или операторскому endpoint Conation."
+---
+
+MCP endpoint Conation имеет путь `/mcp`. В локальном контуре он доступен через
+единый backend proxy:
+
+```text
+http://localhost:8090/mcp
+```
+
+Публичный адрес определяет оператор. Например, если приложение обслуживается с
+`https://conation.example`, ожидаемый same-origin endpoint будет:
+
+```text
+https://conation.example/mcp
+```
+
+`conation.example` — только пример. Не заменяйте его на `conation.dev`, пока
+публичные DNS, TLS, ingress и OAuth flow не проверены.
+
+<Warning>
+  Unit/integration-тесты подтверждают маршруты и ограничения конфигурации, но не
+  заменяют browser-based OAuth smoke test конкретного развёртывания.
+</Warning>
+
+## Claude Code
+
+Для запущенного локального стека:
+
+```bash
+claude mcp add --transport http conation http://localhost:8090/mcp
+```
+
+Запустите Claude Code и выберите MCP server `conation`. Если клиент открывает
+браузер, завершите вход через FusionAuth. Для публичного окружения замените URL
+на проверенный HTTPS endpoint оператора.
+
+## Codex CLI
+
+```bash
+codex mcp add conation --url http://localhost:8090/mcp
+```
+
+Затем запустите Codex CLI, обратитесь к server `conation` и завершите вход,
+если клиент запросит авторизацию.
+
+## JSON-конфигурация
+
+Клиенту, который принимает `mcpServers`, передайте:
+
+```json
+{
+  "mcpServers": {
+    "conation": {
+      "type": "http",
+      "url": "http://localhost:8090/mcp"
+    }
+  }
+}
+```
+
+Ключ `conation` — локальное имя подключения в клиенте. Оно не меняет имена
+MCP tools и их аргументы.
+
+## Что должен настроить оператор
+
+- выставить `MCP_PUBLIC_URL` в точный публичный origin без path;
+- направить `/mcp` на `mcp_service` без удаления префикса;
+- направить OAuth discovery, `/authorize`, `/register`, `/token` и
+  `/oauth/callback` на тот же origin;
+- зарегистрировать точный callback URL в FusionAuth;
+- включить доверенный TLS и запретить прямой внешний доступ к внутреннему
+  `mcp-service:8080`;
+- выполнить полный вход из реального MCP-клиента и проверить доступ только к
+  разрешённым инструментам.
+
+MCP-доступ в Conation не ограничивается продуктовым тарифом. Используемый
+AI-клиент, модельный провайдер и инфраструктура могут иметь собственную цену.
+
+## Диагностика
+
+Если соединение не устанавливается:
+
+1. проверьте, что локальный stack здоров и `http://localhost:8090/mcp`
+   достигается с машины клиента;
+2. сравните внешний origin с `MCP_PUBLIC_URL`;
+3. проверьте callback URL, issuer и client registration в FusionAuth;
+4. убедитесь, что proxy не переписывает `/mcp` и не отправляет OAuth routes в
+   другой сервис;
+5. проверьте журналы proxy, `mcp_service` и FusionAuth без публикации tokens.

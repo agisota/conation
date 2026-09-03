@@ -1,0 +1,329 @@
+//! SQL operations for editing call-record share permissions.
+
+use entity_access_db_utils::{AccessLevel, EntityAccessSourceType};
+use model_entity::EntityType;
+use models_permissions::share_permission::UpdateSharePermissionRequestV2;
+use models_permissions::share_permission::channel_share_permission::UpdateOperation;
+use sqlx::{Postgres, QueryBuilder, Transaction};
+use uuid::Uuid;
+
+use crate::domain::models::CustomSpeakerAssignment;
+
+/// Update share permissions for a call record.
+///
+/// Looks up the call's share permission ID from either the active `calls`
+/// table or the archived `call_records` table (both carry `share_permission_id`),
+/// then updates the `SharePermission` and `ChannelSharePermission` tables.
+pub(super) async fn update_share_permission(
+    transaction: &mut Transaction<'_, Postgres>,
+    call_id: &Uuid,
+    share_permission: &UpdateSharePermissionRequestV2,
+) -> Result<(), sqlx::Error> {
+    let share_permission_id = sqlx::query_scalar!(
+        r#"
+        SELECT share_permission_id as "share_permission_id!"
+        FROM (
+            SELECT share_permission_id FROM calls WHERE id = $1
+            UNION ALL
+            SELECT share_permission_id FROM call_records WHERE id = $1
+        ) t
+        LIMIT 1
+        "#,
+        call_id,
+    )
+    .fetch_one(transaction.as_mut())
+    .await?;
+
+    update_share_permission_row(transaction, &share_permission_id, share_permission).await?;
+
+    if let Some(channel_perms) = &share_permission.channel_share_permissions {
+        update_channel_share_permissions(transaction, &share_permission_id, channel_perms).await?;
+
+        entity_access_db_utils::update_entity_access_channel_share_permissions(
+            transaction,
+            call_id,
+            EntityType::Call,
+            channel_perms,
+        )
+        .await?;
+    }
+
+    Ok(())
+}
+
+/// Grant or revoke the call creator's team's View access on the call.
+///
+/// The team is resolved from the call's `created_by` in either the active
+/// `calls` table or the archived `call_records` table — not from the acting
+/// user. If the creator has no team, this is a no-op. Also keeps the
+/// `calls.share_with_team` and `call_records.share_with_team` flags in sync so
+/// reads and future archiving reflect the latest choice.
+pub(super) async fn set_share_with_team(
+    transaction: &mut Transaction<'_, Postgres>,
+    call_id: &Uuid,
+    share: bool,
+) -> Result<(), sqlx::Error> {
+    let created_by: String = sqlx::query_scalar!(
+        r#"
+        SELECT created_by as "created_by!"
+        FROM (
+            SELECT created_by FROM calls WHERE id = $1
+            UNION ALL
+            SELECT created_by FROM call_records WHERE id = $1
+        ) t
+        LIMIT 1
+        "#,
+        call_id,
+    )
+    .fetch_one(transaction.as_mut())
+    .await?;
+
+    sqlx::query!(
+        r#"UPDATE calls SET share_with_team = $2 WHERE id = $1"#,
+        call_id,
+        share,
+    )
+    .execute(transaction.as_mut())
+    .await?;
+
+    sqlx::query!(
+        r#"UPDATE call_records SET share_with_team = $2 WHERE id = $1"#,
+        call_id,
+        share,
+    )
+    .execute(transaction.as_mut())
+    .await?;
+
+    let team_id: Option<Uuid> = sqlx::query_scalar!(
+        r#"
+        SELECT team_id
+        FROM team_user
+        WHERE user_id = $1
+        LIMIT 1
+        "#,
+        &created_by,
+    )
+    .fetch_optional(transaction.as_mut())
+    .await?;
+
+    let Some(team_id) = team_id else {
+        return Ok(());
+    };
+
+    if share {
+        sqlx::query!(
+            r#"
+            INSERT INTO entity_access (entity_id, entity_type, source_id, source_type, access_level)
+            VALUES ($1, $2, $3, $4, $5)
+            ON CONFLICT DO NOTHING
+            "#,
+            call_id,
+            EntityType::Call.as_ref(),
+            &team_id.to_string(),
+            EntityAccessSourceType::Team as _,
+            AccessLevel::View as _,
+        )
+        .execute(transaction.as_mut())
+        .await?;
+    } else {
+        sqlx::query!(
+            r#"
+            DELETE FROM entity_access
+            WHERE entity_id = $1
+              AND entity_type = $2
+              AND source_id = $3
+              AND source_type = $4
+              AND granted_from_project_id IS NULL
+            "#,
+            call_id,
+            EntityType::Call.as_ref(),
+            &team_id.to_string(),
+            EntityAccessSourceType::Team as _,
+        )
+        .execute(transaction.as_mut())
+        .await?;
+    }
+
+    Ok(())
+}
+
+/// Set or clear the user-supplied display name on an archived call record.
+/// No-op if no `call_records` row matches `call_id` (the call may still be
+/// active in the `calls` table — that table does not carry `custom_name`).
+pub(super) async fn set_custom_name(
+    transaction: &mut Transaction<'_, Postgres>,
+    call_id: &Uuid,
+    custom_name: Option<&str>,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"UPDATE call_records SET custom_name = $2 WHERE id = $1"#,
+        call_id,
+        custom_name,
+    )
+    .execute(transaction.as_mut())
+    .await?;
+    Ok(())
+}
+
+/// Set `call_records.custom_name` only when the existing value is `NULL`.
+///
+/// Used by the AI auto-naming flow so a user-set name is never overwritten.
+/// Returns whether the conditional update persisted the name.
+pub(super) async fn set_custom_name_if_null(
+    transaction: &mut Transaction<'_, Postgres>,
+    call_id: &Uuid,
+    custom_name: &str,
+) -> Result<bool, sqlx::Error> {
+    let result = sqlx::query!(
+        r#"UPDATE call_records SET custom_name = $2 WHERE id = $1 AND custom_name IS NULL"#,
+        call_id,
+        custom_name,
+    )
+    .execute(transaction.as_mut())
+    .await?;
+    Ok(result.rows_affected() > 0)
+}
+
+/// Apply per-(call_record_id, diarized_speaker_id) `custom_speaker` overrides.
+///
+/// Each entry sets `custom_speaker` for every row in the call whose
+/// `diarized_speaker_id` matches; `custom_speaker = None` clears the
+/// override. Rows whose `diarized_speaker_id` doesn't match any entry —
+/// including rows with `diarized_speaker_id IS NULL` — are untouched.
+pub(super) async fn set_custom_speakers(
+    transaction: &mut Transaction<'_, Postgres>,
+    call_record_id: &Uuid,
+    assignments: &[CustomSpeakerAssignment],
+) -> Result<(), sqlx::Error> {
+    if assignments.is_empty() {
+        return Ok(());
+    }
+    let diarized_ids: Vec<&str> = assignments
+        .iter()
+        .map(|a| a.diarized_speaker_id.as_str())
+        .collect();
+    let custom_speakers: Vec<Option<&str>> = assignments
+        .iter()
+        .map(|a| a.custom_speaker.as_deref().map(|c| c.as_ref()))
+        .collect();
+    sqlx::query!(
+        r#"
+        UPDATE call_record_transcripts AS t
+        SET custom_speaker = u.custom_speaker
+        FROM UNNEST($2::text[], $3::text[]) AS u(diarized_speaker_id, custom_speaker)
+        WHERE t.call_record_id = $1
+          AND t.diarized_speaker_id = u.diarized_speaker_id
+        "#,
+        call_record_id,
+        &diarized_ids as &[&str],
+        &custom_speakers as &[Option<&str>],
+    )
+    .execute(transaction.as_mut())
+    .await?;
+    Ok(())
+}
+
+/// Update the SharePermission row.
+#[allow(
+    clippy::disallowed_methods,
+    reason = "the optional fields require a dynamic SET clause; identifiers are trusted and values are bound"
+)]
+async fn update_share_permission_row(
+    transaction: &mut Transaction<'_, Postgres>,
+    share_permission_id: &str,
+    share_permission: &UpdateSharePermissionRequestV2,
+) -> Result<(), sqlx::Error> {
+    let mut query =
+        QueryBuilder::<Postgres>::new(r#"UPDATE "SharePermission" SET "updatedAt" = NOW()"#);
+
+    if let Some(link_share) = share_permission.link_share {
+        let access_level = link_share.map(|_| {
+            share_permission
+                .link_share_access_level
+                .flatten()
+                .unwrap_or(AccessLevel::View)
+        });
+
+        query
+            .push(r#", "linkShare" = "#)
+            .push_bind(link_share.map(|value| value.to_string()))
+            .push(r#", "linkShareAccessLevel" = "#)
+            .push_bind(access_level);
+    } else if let Some(access_level) = share_permission.link_share_access_level {
+        query
+            .push(r#", "linkShareAccessLevel" = CASE WHEN "linkShare" IS NULL THEN NULL ELSE "#)
+            .push_bind(access_level.unwrap_or(AccessLevel::View))
+            .push(" END");
+    }
+
+    query
+        .push(" WHERE id = ")
+        .push_bind(share_permission_id)
+        .build()
+        .execute(transaction.as_mut())
+        .await?;
+
+    Ok(())
+}
+
+/// Update channel share permissions (add/replace/remove).
+async fn update_channel_share_permissions(
+    transaction: &mut Transaction<'_, Postgres>,
+    share_permission_id: &str,
+    channel_perms: &[models_permissions::share_permission::channel_share_permission::UpdateChannelSharePermission],
+) -> Result<(), sqlx::Error> {
+    let mut upsert_channel_ids = Vec::new();
+    let mut upsert_access_levels = Vec::new();
+    let mut remove_channel_ids = Vec::new();
+
+    for perm in channel_perms {
+        match perm.operation {
+            UpdateOperation::Add | UpdateOperation::Replace => {
+                upsert_channel_ids.push(perm.channel_id.clone());
+                upsert_access_levels.push(
+                    perm.access_level
+                        .unwrap_or(
+                            models_permissions::share_permission::access_level::AccessLevel::View,
+                        )
+                        .to_string(),
+                );
+            }
+            UpdateOperation::Remove => {
+                remove_channel_ids.push(perm.channel_id.clone());
+            }
+        }
+    }
+
+    if !remove_channel_ids.is_empty() {
+        sqlx::query!(
+            r#"
+            DELETE FROM "ChannelSharePermission"
+            WHERE "share_permission_id" = $1
+            AND "channel_id" = ANY($2)
+            "#,
+            share_permission_id,
+            &remove_channel_ids,
+        )
+        .execute(transaction.as_mut())
+        .await?;
+    }
+
+    if !upsert_channel_ids.is_empty() {
+        sqlx::query!(
+            r#"
+            INSERT INTO "ChannelSharePermission" ("share_permission_id", "channel_id", "access_level")
+            SELECT $1, channel_id, access_level::"AccessLevel"
+            FROM UNNEST($2::text[], $3::text[]) AS t(channel_id, access_level)
+            ON CONFLICT ("share_permission_id", "channel_id")
+            DO UPDATE SET "access_level" = EXCLUDED."access_level"
+            "#,
+            share_permission_id,
+            &upsert_channel_ids,
+            &upsert_access_levels,
+        )
+        .execute(transaction.as_mut())
+        .await?;
+    }
+
+    Ok(())
+}

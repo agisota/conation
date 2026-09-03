@@ -1,0 +1,244 @@
+import { SERVER_HOSTS } from '@core/constant/servers';
+import {
+  type FetchWithTokenErrorCode,
+  fetchWithToken,
+} from '@core/util/fetchWithToken';
+import type { ObjectLike, ResultError } from '@core/util/result';
+import type { SafeFetchInit } from '@core/util/safeFetch';
+import type { Result } from 'neverthrow';
+import { z } from 'zod';
+import type {
+  BulkGetByEventItemIdsRequest,
+  GetAllUserNotificationsResponse,
+} from './generated/schemas';
+import type { ApiUserNotification } from './generated/schemas/apiUserNotification';
+import type { DeviceRequest } from './generated/schemas/deviceRequest';
+import type { GetNotificationTypePreferencesResponse } from './generated/schemas/getNotificationTypePreferencesResponse';
+import type { NotificationBulkRequest } from './generated/schemas/notificationBulkRequest';
+import type { UserUnsubscribe } from './generated/schemas/userUnsubscribe';
+
+const notificationHost: string = SERVER_HOSTS['notification-service'];
+// const notificationHost: string = 'http://localhost:8086';
+
+const _NOTIFICATION_WEBSOCKET_EVENT = 'notification';
+
+type WithEventItemId = { event_item_id: string };
+type WithItem = { item_id: string; item_type: string };
+
+function notificationFetch(
+  url: string,
+  init?: SafeFetchInit
+): Promise<Result<void, ResultError<FetchWithTokenErrorCode>[]>>;
+function notificationFetch<T extends ObjectLike>(
+  url: string,
+  init?: SafeFetchInit
+): Promise<Result<T, ResultError<FetchWithTokenErrorCode>[]>>;
+function notificationFetch<T extends ObjectLike = never>(
+  url: string,
+  init?: SafeFetchInit
+):
+  | Promise<Result<T, ResultError<FetchWithTokenErrorCode>[]>>
+  | Promise<Result<void, ResultError<FetchWithTokenErrorCode>[]>> {
+  return fetchWithToken<T>(`${notificationHost}${url}`, init);
+}
+
+// message id is set by the notification service
+
+const _channelMentionMetadata = z.object({
+  message_id: z.string(),
+});
+
+// this metadata is provided by the front end
+export type DocumentMentionMetadata = z.infer<typeof documentMentionMetadata>;
+export type DocumentMentionLocation = NonNullable<
+  DocumentMentionMetadata['location']
+>;
+export const documentMentionMetadata = z.object({
+  mention_id: z.string(),
+  location: z
+    .discriminatedUnion('type', [
+      z.object({
+        type: z.literal('create-comment'),
+        commentId: z.number(),
+        threadId: z.number(),
+        text: z.string(),
+      }),
+      z.object({
+        type: z.literal('edit-comment'),
+        commentId: z.number(),
+        threadId: z.number(),
+        text: z.string(),
+      }),
+    ])
+    .optional(),
+});
+
+type NotificationParams = { cursor?: string; limit?: number };
+
+/**
+ * Params for the user-notifications list. `done` filters by done status —
+ * the server defaults to `false` (active notifications only) when omitted;
+ * pass `true` to page through already-done notifications instead.
+ */
+type UserNotificationParams = NotificationParams & { done?: boolean };
+
+export const notificationServiceClient = {
+  async userNotifications(args: UserNotificationParams) {
+    const { limit, cursor, done } = args;
+    return (
+      await notificationFetch<GetAllUserNotificationsResponse>(
+        `/user_notifications?limit=${limit}${cursor ? `&cursor=${cursor}` : ''}${done !== undefined ? `&done=${done}` : ''}`,
+        {
+          method: 'GET',
+        }
+      )
+    ).map((result) => {
+      return result;
+    });
+  },
+  async getUserNotificationById(notificationId: string) {
+    return (
+      await notificationFetch<ApiUserNotification>(
+        `/user_notifications/${notificationId}`,
+        { method: 'GET' }
+      )
+    ).map((result) => result);
+  },
+  async bulkGetUserNotificationsByEventItemId(
+    args: UserNotificationParams & BulkGetByEventItemIdsRequest
+  ) {
+    const { limit, cursor, done } = args;
+    return (
+      await notificationFetch<GetAllUserNotificationsResponse>(
+        `/user_notifications/item/bulk?limit=${limit}${cursor ? `&cursor=${cursor}` : ''}${done !== undefined ? `&done=${done}` : ''}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ eventItemIds: args.eventItemIds }),
+        }
+      )
+    ).map((result) => {
+      return result;
+    });
+  },
+  async markNotificationAsSeen(args: NotificationBulkRequest) {
+    const { notificationIds } = args;
+    return (
+      await notificationFetch<any>(`/user_notifications/bulk/seen`, {
+        method: 'PATCH',
+        body: JSON.stringify({ notificationIds }),
+      })
+    ).map((result) => result);
+  },
+  async markNotificationAsDone(args: NotificationBulkRequest) {
+    const { notificationIds } = args;
+    return (
+      await notificationFetch<any>(`/user_notifications/bulk/done`, {
+        method: 'PATCH',
+        body: JSON.stringify({ notificationIds }),
+      })
+    ).map((result) => result);
+  },
+  async bulkMarkNotificationAsSeen(args: NotificationBulkRequest) {
+    const { notificationIds } = args;
+    return (
+      await notificationFetch<any>(`/user_notifications/bulk/seen`, {
+        method: 'PATCH',
+        body: JSON.stringify({ notificationIds }),
+      })
+    ).map((result) => result);
+  },
+  async bulkMarkNotificationAsDone(args: NotificationBulkRequest) {
+    const { notificationIds } = args;
+    return (
+      await notificationFetch<any>(`/user_notifications/bulk/done`, {
+        method: 'PATCH',
+        body: JSON.stringify({ notificationIds }),
+      })
+    ).map((result) => result);
+  },
+  async bulkMarkNotificationAsUndone(args: NotificationBulkRequest) {
+    const { notificationIds } = args;
+    return (
+      await notificationFetch<any>(`/user_notifications/bulk/undone`, {
+        method: 'PATCH',
+        body: JSON.stringify({ notificationIds }),
+      })
+    ).map((result) => result);
+  },
+  async markNotificationEntityAsSeen(args: WithEventItemId) {
+    const { event_item_id } = args;
+    return (
+      await notificationFetch<{}>(
+        `/user_notifications/item/${event_item_id}/seen`,
+        {
+          method: 'PATCH',
+        }
+      )
+    ).map((result) => result);
+  },
+  async markNotificationEntityAsDone(args: WithEventItemId) {
+    const { event_item_id } = args;
+    return (
+      await notificationFetch<{}>(
+        `/user_notifications/item/${event_item_id}/done`,
+        {
+          method: 'PATCH',
+        }
+      )
+    ).map((result) => result);
+  },
+  async registerDevice(args: DeviceRequest) {
+    return notificationFetch<{}>('/device/register', {
+      method: 'POST',
+      body: JSON.stringify(args),
+    });
+  },
+  async unregisterDevice(args: DeviceRequest) {
+    return notificationFetch<{}>('/device/unregister', {
+      method: 'DELETE',
+      body: JSON.stringify(args),
+    });
+  },
+  async getNotificationTypePreferences() {
+    return notificationFetch<GetNotificationTypePreferencesResponse>(
+      '/user_notifications/preferences',
+      { method: 'GET' }
+    );
+  },
+  async disableNotificationType(notificationEventType: string) {
+    return notificationFetch<{}>(
+      `/user_notifications/preferences/${encodeURIComponent(notificationEventType)}/disable`,
+      { method: 'PUT' }
+    );
+  },
+  async enableNotificationType(notificationEventType: string) {
+    return notificationFetch<{}>(
+      `/user_notifications/preferences/${encodeURIComponent(notificationEventType)}/enable`,
+      { method: 'PUT' }
+    );
+  },
+  async getUnsubscribes() {
+    return (
+      await notificationFetch<UserUnsubscribe[]>('/unsubscribe', {
+        method: 'GET',
+      })
+    ).map((result) => ({ data: result }));
+  },
+  async unsubscribeItem(args: WithItem) {
+    return notificationFetch<{}>(
+      `/unsubscribe/item/${args.item_type}/${args.item_id}`,
+      {
+        method: 'POST',
+      }
+    );
+  },
+  async removeUnsubscribeItem(args: WithItem) {
+    return notificationFetch<{}>(
+      `/unsubscribe/item/${args.item_type}/${args.item_id}`,
+      {
+        method: 'DELETE',
+      }
+    );
+  },
+};

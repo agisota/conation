@@ -1,0 +1,356 @@
+import { t } from '@app/lib/i18n';
+import { globalSplitManager } from '@app/signal/splitLayout';
+import type { ComposeTaskSuccess } from '@block-md/component/ComposeTask';
+import {
+  $createDocumentMentionNode,
+  AwaitNode,
+  CustomCodeNode,
+  DocumentMentionNode,
+  EquationNode,
+  HorizontalRuleNode,
+  ImageNode,
+  VideoNode,
+} from '@conation/lexical-core';
+import { trackMention } from '@core/signal/mention';
+import { LinkNode } from '@lexical/link';
+import { ListNode } from '@lexical/list';
+import { HeadingNode, QuoteNode } from '@lexical/rich-text';
+import { INSERT_TABLE_COMMAND, TableNode } from '@lexical/table';
+import CheckSquare from '@phosphor/check-square.svg';
+import CodeBlock from '@phosphor/code-block.svg';
+import VideoIcon from '@phosphor/file-video.svg';
+import MathIcon from '@phosphor/function.svg';
+import TableIcon from '@phosphor/grid-four.svg';
+import ImageIcon from '@phosphor/image.svg';
+import LinkIcon from '@phosphor/link.svg';
+import ListBullets from '@phosphor/list-bullets.svg';
+import ListChecks from '@phosphor/list-checks.svg';
+import ListNumbers from '@phosphor/list-numbers.svg';
+import Minus from '@phosphor/minus.svg';
+import Quote from '@phosphor/quotes.svg';
+import TextH1 from '@phosphor/text-h-one.svg';
+import TextH3 from '@phosphor/text-h-three.svg';
+import TextH2 from '@phosphor/text-h-two.svg';
+import TextT from '@phosphor/text-t.svg';
+import type { LexicalEditor } from 'lexical';
+import { nanoid } from 'nanoid';
+import {
+  INSERT_AWAIT_NODE_COMMAND,
+  REPLACE_AWAIT_NODE_COMMAND,
+} from '../await';
+import { INSERT_HORIZONTAL_RULE_COMMAND } from '../horizontal-rules/horizontalRulePlugin';
+import { TRY_INSERT_EQUATION_COMMAND } from '../katex';
+import { TRY_INSERT_LINK_COMMAND } from '../links';
+import { TRY_INSERT_MEDIA_UPLOAD_COMMAND } from '../media';
+import { INSERT_DOCUMENT_MENTION_COMMAND } from '../mentions/mentionsPlugin';
+import { NODE_TRANSFORM } from '../node-transform';
+import { TRY_INSERT_TABLE_PICKER_COMMAND } from '../tables';
+import { type Action, ActionCategory, type ActionContext } from './types';
+
+async function trackSlashTaskMention(
+  context: ActionContext | undefined,
+  documentId: string
+) {
+  if (
+    !context?.sourceDocumentId ||
+    context.disableMentionTracking ||
+    context.sourceBlockName === 'channel' ||
+    context.sourceBlockName === 'chat'
+  ) {
+    return undefined;
+  }
+
+  return await trackMention(context.sourceDocumentId, 'document', documentId);
+}
+
+export const ACTIONS: Action[] = [
+  {
+    id: 'paragraph',
+    get name() {
+      return t('editor.actions.normalText');
+    },
+    keywords: ['paragraph', 'text', 'none', 'normal'],
+    category: ActionCategory.ELEMENT,
+    icon: TextT,
+    action: (editor: LexicalEditor) => {
+      editor.dispatchCommand(NODE_TRANSFORM, 'paragraph');
+    },
+  },
+  {
+    id: 'heading1',
+    get name() {
+      return t('editor.format.heading.level1');
+    },
+    keywords: ['h1', 'title', 'large', 'header'],
+    category: ActionCategory.FORMAT,
+    icon: TextH1,
+    shortcut: '#',
+    action: (editor: LexicalEditor) => {
+      editor.dispatchCommand(NODE_TRANSFORM, 'heading1');
+    },
+    dependencies: [HeadingNode],
+  },
+  {
+    id: 'heading2',
+    get name() {
+      return t('editor.format.heading.level2');
+    },
+    keywords: ['h2', 'title', 'medium', 'header'],
+    category: ActionCategory.FORMAT,
+    icon: TextH2,
+    shortcut: '##',
+    action: (editor: LexicalEditor) => {
+      editor.dispatchCommand(NODE_TRANSFORM, 'heading2');
+    },
+    dependencies: [HeadingNode],
+  },
+  {
+    id: 'heading3',
+    get name() {
+      return t('editor.format.heading.level3');
+    },
+    keywords: ['h3', 'title', 'medium', 'header'],
+    category: ActionCategory.FORMAT,
+    icon: TextH3,
+    shortcut: '###',
+    action: (editor: LexicalEditor) => {
+      editor.dispatchCommand(NODE_TRANSFORM, 'heading3');
+    },
+    dependencies: [HeadingNode],
+  },
+  {
+    id: 'quote',
+    get name() {
+      return t('editor.format.quote');
+    },
+    keywords: ['quote'],
+    category: ActionCategory.ELEMENT,
+    icon: Quote,
+    shortcut: '>',
+    action: (editor: LexicalEditor) => {
+      editor.dispatchCommand(NODE_TRANSFORM, 'quote');
+    },
+    dependencies: [QuoteNode],
+  },
+  {
+    id: 'code',
+    get name() {
+      return t('editor.format.codeBlock');
+    },
+    keywords: ['code', 'pre', 'programming'],
+    category: ActionCategory.ELEMENT,
+    icon: CodeBlock,
+    shortcut: '```',
+    action: (editor: LexicalEditor) => {
+      editor.dispatchCommand(NODE_TRANSFORM, 'code');
+    },
+    dependencies: [CustomCodeNode],
+  },
+  {
+    id: 'list-bullet',
+    get name() {
+      return t('editor.format.list.bulleted');
+    },
+    keywords: ['bullet', 'list', 'unordered'],
+    category: ActionCategory.ELEMENT,
+    icon: ListBullets,
+    shortcut: '-',
+    action: (editor: LexicalEditor) => {
+      editor.dispatchCommand(NODE_TRANSFORM, 'list-bullet');
+    },
+    dependencies: [ListNode],
+  },
+  {
+    id: 'list-number',
+    get name() {
+      return t('editor.format.list.numbered');
+    },
+    keywords: ['numbered', 'list', 'ordered'],
+    category: ActionCategory.ELEMENT,
+    icon: ListNumbers,
+    shortcut: '1.',
+    action: (editor: LexicalEditor) => {
+      editor.dispatchCommand(NODE_TRANSFORM, 'list-number');
+    },
+    dependencies: [ListNode],
+  },
+  {
+    id: 'list-check',
+    get name() {
+      return t('editor.format.list.checklist');
+    },
+    keywords: ['checklist', 'list', 'checked'],
+    category: ActionCategory.ELEMENT,
+    icon: ListChecks,
+    shortcut: '[]',
+    action: (editor: LexicalEditor) => {
+      editor.dispatchCommand(NODE_TRANSFORM, 'list-check');
+    },
+    dependencies: [ListNode],
+  },
+  {
+    id: 'task',
+    get name() {
+      return t('editor.actions.task');
+    },
+    keywords: ['task', 'todo', 'create'],
+    category: ActionCategory.ELEMENT,
+    icon: CheckSquare,
+    action: (editor: LexicalEditor, context?: ActionContext) => {
+      const splitManager = globalSplitManager();
+      if (!splitManager) return;
+      const awaitId = nanoid(21);
+      let placeholderInserted = false;
+      splitManager.createPopoverSplit({
+        content: {
+          type: 'component',
+          id: 'task-compose',
+          params: {
+            onCreateStart: ({ title }: { title: string }) => {
+              const handled = editor.dispatchCommand(
+                INSERT_AWAIT_NODE_COMMAND,
+                {
+                  awaitId,
+                  text: t('editor.actions.creatingTask', { title }),
+                }
+              );
+              placeholderInserted = handled;
+            },
+            onCreateFailure: () => {
+              if (!placeholderInserted) return;
+              editor.dispatchCommand(REPLACE_AWAIT_NODE_COMMAND, { awaitId });
+              placeholderInserted = false;
+            },
+            onSuccess: async (result: ComposeTaskSuccess) => {
+              const mentionUuid = await trackSlashTaskMention(
+                context,
+                result.documentId
+              );
+              if (placeholderInserted) {
+                editor.dispatchCommand(REPLACE_AWAIT_NODE_COMMAND, {
+                  awaitId,
+                  $createReplacement: () =>
+                    $createDocumentMentionNode({
+                      documentId: result.documentId,
+                      documentName: result.title,
+                      blockName: 'task',
+                      createdAt: Date.now(),
+                      mentionUuid,
+                    }),
+                });
+                placeholderInserted = false;
+                return;
+              }
+              editor.dispatchCommand(INSERT_DOCUMENT_MENTION_COMMAND, {
+                documentId: result.documentId,
+                documentName: result.title,
+                blockName: 'task',
+                mentionUuid,
+              });
+            },
+          },
+        },
+      });
+    },
+    dependencies: [DocumentMentionNode, AwaitNode],
+  },
+  {
+    id: 'image',
+    get name() {
+      return t('editor.actions.image');
+    },
+    keywords: ['picture', 'photo', 'img', 'upload'],
+    category: ActionCategory.MEDIA,
+    icon: ImageIcon,
+    action: (editor: LexicalEditor) => {
+      queueMicrotask(() => {
+        editor.dispatchCommand(TRY_INSERT_MEDIA_UPLOAD_COMMAND, 'all');
+      });
+    },
+    dependencies: [ImageNode, VideoNode],
+  },
+  {
+    id: 'video',
+    get name() {
+      return t('editor.actions.video');
+    },
+    keywords: ['video', 'movie', 'film', 'upload'],
+    category: ActionCategory.MEDIA,
+    icon: VideoIcon,
+    action: (editor: LexicalEditor) => {
+      queueMicrotask(() => {
+        editor.dispatchCommand(TRY_INSERT_MEDIA_UPLOAD_COMMAND, 'all');
+      });
+    },
+    dependencies: [ImageNode, VideoNode],
+  },
+  {
+    id: 'link',
+    get name() {
+      return t('editor.actions.link');
+    },
+    keywords: ['link', 'url'],
+    icon: LinkIcon,
+    category: ActionCategory.MEDIA,
+    action: (editor: LexicalEditor) => {
+      queueMicrotask(() => {
+        editor.dispatchCommand(TRY_INSERT_LINK_COMMAND, undefined);
+      });
+    },
+    dependencies: [LinkNode],
+  },
+  {
+    id: 'latex',
+    get name() {
+      return t('editor.actions.math');
+    },
+    keywords: ['math', 'latex', 'equation'],
+    icon: MathIcon,
+    category: ActionCategory.MEDIA,
+    action: (editor: LexicalEditor) => {
+      queueMicrotask(() => {
+        editor.dispatchCommand(TRY_INSERT_EQUATION_COMMAND, undefined);
+      });
+    },
+    dependencies: [EquationNode],
+  },
+  {
+    id: 'table',
+    get name() {
+      return t('editor.actions.table');
+    },
+    keywords: ['table', 'grid'],
+    icon: TableIcon,
+    category: ActionCategory.MEDIA,
+    action: (editor: LexicalEditor) => {
+      queueMicrotask(() => {
+        const pickerOpened = editor.dispatchCommand(
+          TRY_INSERT_TABLE_PICKER_COMMAND,
+          undefined
+        );
+        if (!pickerOpened) {
+          editor.dispatchCommand(INSERT_TABLE_COMMAND, {
+            columns: '3',
+            rows: '3',
+            includeHeaders: false,
+          });
+        }
+      });
+    },
+    dependencies: [TableNode],
+  },
+  {
+    id: 'hr',
+    get name() {
+      return t('editor.actions.divider');
+    },
+    keywords: ['hr', 'horizontal', 'line', 'divider'],
+    icon: Minus,
+    shortcut: '---',
+    category: ActionCategory.ELEMENT,
+    action: (editor: LexicalEditor) => {
+      editor.dispatchCommand(INSERT_HORIZONTAL_RULE_COMMAND, undefined);
+    },
+    dependencies: [HorizontalRuleNode],
+  },
+];

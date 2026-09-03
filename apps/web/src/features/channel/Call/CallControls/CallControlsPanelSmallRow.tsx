@@ -1,0 +1,164 @@
+import { t } from '@app/lib/i18n';
+import { DropdownMenu } from '@kobalte/core/dropdown-menu';
+import Gear from '@phosphor/gear.svg';
+import Microphone from '@phosphor/microphone.svg';
+import MicrophoneSlash from '@phosphor/microphone-slash.svg';
+import Screencast from '@phosphor/screencast.svg';
+import VideoCamera from '@phosphor/video-camera.svg';
+import VideoCameraSlash from '@phosphor/video-camera-slash.svg';
+import { cn, Dropdown, InlineCheckbox } from '@ui';
+import { Show } from 'solid-js';
+import { match } from 'ts-pattern';
+import { useCallContext } from '../CallContext';
+import { CallDeviceList } from '../CallDeviceList';
+import { useToggleShareWithTeam } from '../use-toggle-share-with-team';
+import { MenuDivider, MenuLabel } from './CallMenuPrimitives';
+
+const ITEM_ICON_CLASS = 'size-3.5 shrink-0 text-ink-muted';
+
+export function CallControlsPanelSmallRow() {
+  const callCtx = useCallContext();
+  const isConnecting = () => callCtx.isConnecting();
+  const handleToggleShareWithTeam = useToggleShareWithTeam();
+  const noiseSuppressionModeLabel = () =>
+    match(callCtx.noiseSuppressionMode())
+      .with('krisp', () => t('channel.call.controls.noiseMode.krisp'))
+      .with('browser', () => t('channel.call.controls.noiseMode.browser'))
+      .with('off', () => t('channel.call.controls.noiseMode.off'))
+      .exhaustive();
+
+  const anyMediaActive = () =>
+    !callCtx.isAudioMuted() ||
+    !callCtx.isVideoMuted() ||
+    callCtx.isScreenSharing();
+
+  return (
+    <div
+      data-call-controls
+      data-call-controls-panel-small
+      class="flex flex-row flex-wrap items-center justify-center gap-0.5"
+    >
+      <Dropdown placement="top-start" gutter={6}>
+        <DropdownMenu.Trigger
+          disabled={isConnecting()}
+          aria-label={t('channel.call.controls.options')}
+          class={cn(
+            'flex items-center justify-center size-5 shrink-0 rounded-md transition-colors',
+            isConnecting() && 'opacity-50 pointer-events-none',
+            !isConnecting() && anyMediaActive() ? 'text-ink' : 'text-ink-muted',
+            !isConnecting() && 'hover:text-ink hover:bg-ink-muted/[0.06]'
+          )}
+        >
+          <Gear class="size-4" />
+        </DropdownMenu.Trigger>
+
+        <Dropdown.Content class="min-w-56">
+          <Dropdown.Group>
+            <Dropdown.Item
+              closeOnSelect={false}
+              onSelect={() => void callCtx.toggleAudio()}
+            >
+              <Show
+                when={!callCtx.isAudioMuted()}
+                fallback={<MicrophoneSlash class={ITEM_ICON_CLASS} />}
+              >
+                <Microphone class={ITEM_ICON_CLASS} />
+              </Show>
+              <span class="flex-1 truncate">
+                {callCtx.isAudioMuted()
+                  ? t('channel.call.controls.unmuteMicrophone')
+                  : t('channel.call.controls.muteMicrophone')}
+              </span>
+            </Dropdown.Item>
+
+            <MenuDivider />
+
+            <CallDeviceList
+              label={t('channel.call.controls.microphone')}
+              devices={callCtx.audioInputDevices()}
+              activeDeviceId={callCtx.activeAudioInputDeviceId()}
+              onSelect={(id) => callCtx.switchAudioInput(id)}
+            />
+
+            <Show when={callCtx.audioOutputDevices().length > 0}>
+              <MenuDivider />
+              <CallDeviceList
+                label={t('channel.call.controls.speaker')}
+                devices={callCtx.audioOutputDevices()}
+                activeDeviceId={callCtx.activeAudioOutputDeviceId()}
+                onSelect={(id) => callCtx.switchAudioOutput(id)}
+              />
+            </Show>
+
+            <MenuDivider />
+
+            <MenuLabel>{t('channel.call.controls.audioProcessing')}</MenuLabel>
+            <Dropdown.Item
+              closeOnSelect={false}
+              onSelect={() => void callCtx.toggleNoiseSuppression()}
+            >
+              <span class="flex-1 truncate">
+                {t('channel.call.controls.noiseSuppression')}
+              </span>
+              <span class="text-xs text-ink-muted">
+                {noiseSuppressionModeLabel()}
+              </span>
+            </Dropdown.Item>
+
+            <MenuDivider />
+
+            <Dropdown.Item
+              closeOnSelect={false}
+              onSelect={() => void callCtx.toggleVideo()}
+            >
+              <Show
+                when={!callCtx.isVideoMuted()}
+                fallback={<VideoCameraSlash class={ITEM_ICON_CLASS} />}
+              >
+                <VideoCamera class={ITEM_ICON_CLASS} />
+              </Show>
+              <span class="flex-1 truncate">
+                {callCtx.isVideoMuted()
+                  ? t('channel.call.controls.turnCameraOn')
+                  : t('channel.call.controls.turnCameraOff')}
+              </span>
+            </Dropdown.Item>
+
+            <MenuDivider />
+
+            <CallDeviceList
+              label={t('channel.call.controls.camera')}
+              devices={callCtx.videoInputDevices()}
+              activeDeviceId={callCtx.activeVideoInputDeviceId()}
+              onSelect={(id) => callCtx.switchVideoInput(id)}
+            />
+
+            <MenuDivider />
+
+            <Dropdown.Item
+              closeOnSelect={false}
+              onSelect={() => void callCtx.toggleScreenShare()}
+            >
+              <Screencast class={ITEM_ICON_CLASS} />
+              <span class="flex-1 truncate">
+                {callCtx.isScreenSharing()
+                  ? t('channel.call.controls.stopScreenShare')
+                  : t('channel.call.controls.shareScreen')}
+              </span>
+            </Dropdown.Item>
+
+            <Dropdown.Item
+              closeOnSelect={false}
+              onSelect={() => void handleToggleShareWithTeam()}
+            >
+              <InlineCheckbox checked={callCtx.isSharedWithTeam()} />
+              <span class="flex-1 truncate">
+                {t('channel.call.shareWithTeam')}
+              </span>
+            </Dropdown.Item>
+          </Dropdown.Group>
+        </Dropdown.Content>
+      </Dropdown>
+    </div>
+  );
+}

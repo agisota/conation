@@ -1,0 +1,50 @@
+.direnv/*
+.envrc
+**/.env*
+**/*.env
+**/*.env.*
+**/.dev.vars*
+.idea/
+**/.DS_Store
+.run/
+.claude/.local
+temp/
+run-local.fish
+**/node_modules
+**/.wrangler
+**/dist
+**/test-results
+**/playwright-report
+**/coverage
+!packages/sdk/src/coverage/
+!packages/sdk/src/coverage/**
+**/.nyc_output
+**/.cache
+**/.vite
+**/build
+**/*.tsbuildinfo
+**/*.log
+**/result
+**/result-*
+.pi/plan/
+.pi/plans/
+# Per-instance generated local-stack artifacts (compose override, env, kickstart, Caddyfile).
+infra/local/generated/
+**/target/
+/target
+/previous.md
+**/ai_tools/schemas/
+.pi/outputs/
+.commandcode/
+**/.webhook.json
+/artifacts
+
+# User-supplied brand originals are preserved at the workspace root. Canonical
+# byte-identical masters live under apps/web/public/brand and are tracked.
+/con copy.png
+/cona copy.png
+/conation C copy.png
+
+# Raw SSE captures from CURSOR_ACP_RECORD_DIR; sanitize into
+# crates/cursor_acp/fixtures/real/ before committing one.
+/recordings/

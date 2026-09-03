@@ -1,0 +1,158 @@
+# Experimental Conation self-host add-ons.
+#
+# This file is config-validated by `just selfhost-overlay-check`; it is not the
+# supported application runner. Use `.cursor/stack.sh` for the working local,
+# no-managed-cloud baseline. MinIO and Stalwart remain isolated evaluations
+# until service-specific S3 endpoints and a production JMAP adapter are wired.
+name: conation
+
+services:
+  # ---------------------------------------------------------------------------
+  # MinIO — isolated S3-compatibility evaluation target. The application still
+  # uses LocalStack because LOCAL_AWS_URL is shared by S3/SQS/DynamoDB/KMS.
+  # ---------------------------------------------------------------------------
+  minio:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
+    command: server /data --console-address ":9001"
+    ports:
+      - "${SELFHOST_BIND_ADDRESS:-127.0.0.1}:${MINIO_API_PORT:-9000}:9000"
+      - "${SELFHOST_BIND_ADDRESS:-127.0.0.1}:${MINIO_CONSOLE_PORT:-9001}:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?set MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio_data:/data
+    networks:
+      - databases
+      - services
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Create buckets on startup (idempotent)
+  minio-setup:
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?set MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD}
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set myminio http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}" &&
+      /usr/bin/mc mb myminio/doc-storage --ignore-existing &&
+      /usr/bin/mc mb myminio/conation-email-attachments --ignore-existing &&
+      /usr/bin/mc mb myminio/docx-upload --ignore-existing &&
+      /usr/bin/mc mb myminio/static-file-storage --ignore-existing &&
+      /usr/bin/mc mb myminio/bulk-upload-staging --ignore-existing &&
+      /usr/bin/mc mb myminio/conation-call-recording-local --ignore-existing &&
+      echo 'MinIO buckets ready'
+      "
+    networks:
+      - databases
+
+  # ---------------------------------------------------------------------------
+  # Stalwart — isolated JMAP/IMAP/SMTP evaluation target. Support mailbox
+  # provisioning is an explicit post-bootstrap operator action; inbox sync and
+  # outbound application mail remain unwired.
+  # ---------------------------------------------------------------------------
+  stalwart:
+    image: stalwartlabs/stalwart:v0.16@sha256:74ca4f7f6885fe302f38a99381f36a208547afce1033d8734d9e6d8d3eba7446
+    ports:
+      - "${SELFHOST_BIND_ADDRESS:-127.0.0.1}:${STALWART_SMTP_PORT:-2525}:25"
+      - "${SELFHOST_BIND_ADDRESS:-127.0.0.1}:${STALWART_SUBMISSION_PORT:-2587}:587"
+      - "${SELFHOST_BIND_ADDRESS:-127.0.0.1}:${STALWART_IMAPS_PORT:-2993}:993"
+      - "${SELFHOST_BIND_ADDRESS:-127.0.0.1}:${STALWART_SIEVE_PORT:-4190}:4190"
+      - "${SELFHOST_BIND_ADDRESS:-127.0.0.1}:${STALWART_HTTP_PORT:-18081}:8080"
+    environment:
+      STALWART_HOSTNAME: mail.${CONATION_DOMAIN:-conation.localhost}
+      # Pin the recovery credential from the self-host environment. Never bake
+      # a production password into the compose file.
+      STALWART_RECOVERY_ADMIN: ${STALWART_RECOVERY_ADMIN:?set STALWART_RECOVERY_ADMIN}
+    volumes:
+      - stalwart_data:/opt/stalwart-mail
+    networks:
+      - databases
+      - services
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/ >/dev/null"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Caddy — local HTTP facade over the supported stack proxy plus Stalwart and
+  # MinIO. Public TLS/CDN behavior is intentionally out of scope for this file.
+  # ---------------------------------------------------------------------------
+  caddy:
+    image: caddy:2.11.4-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
+    ports:
+      - "${SELFHOST_BIND_ADDRESS:-127.0.0.1}:${SELFHOST_HTTP_PORT:-8088}:80"
+    volumes:
+      - ./infra/selfhost/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      CONATION_DOMAIN: ${CONATION_DOMAIN:-conation.localhost}
+      LOCAL_PROXY_PORT: ${LOCAL_PROXY_PORT:-8090}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      minio:
+        condition: service_healthy
+      stalwart:
+        condition: service_healthy
+    networks:
+      - services
+      - databases
+    restart: unless-stopped
+
+  # LocalStack remains the working application AWS emulator. A single
+  # LOCAL_AWS_URL configures every AWS SDK client, so pointing it at MinIO would
+  # also misroute SQS, DynamoDB, and KMS calls.
+  localstack:
+    image: localstack/localstack:4@sha256:3ebc37595918b8accb852f8048fef2aff047d465167edd655528065b07bc364a
+    ports:
+      - "${SELFHOST_BIND_ADDRESS:-127.0.0.1}:${LOCALSTACK_PORT:-4566}:4566"
+    environment:
+      SERVICES: sqs,dynamodb,s3,kms
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+    volumes:
+      - localstack_data:/var/lib/localstack
+    networks:
+      - databases
+      - services
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:4566/_localstack/health >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  minio_data:
+    name: conation_minio_data
+  stalwart_data:
+    name: conation_stalwart_data
+  caddy_data:
+    name: conation_caddy_data
+  caddy_config:
+    name: conation_caddy_config
+  localstack_data:
+    name: conation_localstack_data
+
+networks:
+  services:
+    driver: bridge
+  databases:
+    external: true
+  auth:
+    external: true
