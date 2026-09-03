@@ -58,7 +58,7 @@ async fn lists_recent_threads_via_standard_jmap_query_then_get() {
         .and(path("/jmap/"))
         .and(body_json(json!({
             "using": [JMAP_CORE, JMAP_MAIL],
-            "methodCalls": [["Email/get", {"accountId": "u1", "ids": ["m1"], "properties": ["id", "threadId", "subject", "from", "to", "receivedAt", "hasAttachment", "keywords"]}, "c1"]]
+            "methodCalls": [["Email/get", {"accountId": "u1", "ids": ["m1"], "properties": ["id", "threadId", "subject", "from", "to", "receivedAt", "hasAttachment", "keywords", "preview"]}, "c1"]]
         })))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "methodResponses": [["Email/get", {"list": [{"id": "m1", "threadId": "t1", "subject": "Здравствуйте", "from": [{"email": "pythia@conation.dev"}], "to": [{"email": "user@example.test"}], "receivedAt": "2026-09-02T12:00:00Z", "hasAttachment": true, "keywords": {"$seen": true, "$flagged": false}}]}, "c1"]]

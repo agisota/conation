@@ -70,6 +70,8 @@ pub struct ProviderMessage {
     pub has_attachments: bool,
     /// Labels (Gmail labels or JMAP keywords)
     pub labels: Vec<String>,
+    /// Short preview of the message body (JMAP `preview`)
+    pub snippet: Option<String>,
 }
 
 /// Provider trait — implemented by Gmail and Stalwart.
@@ -234,6 +236,7 @@ struct JmapEmail {
     received_at: Option<chrono::DateTime<chrono::Utc>>,
     has_attachment: bool,
     keywords: HashMap<String, bool>,
+    preview: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -263,6 +266,7 @@ impl From<JmapEmail> for ProviderMessage {
                 .into_iter()
                 .filter_map(|(keyword, enabled)| enabled.then_some(keyword))
                 .collect(),
+            snippet: value.preview,
         }
     }
 }
@@ -499,7 +503,7 @@ impl EmailProvider for StalwartProvider {
                 json!({
                     "accountId": account_id,
                     "ids": ids,
-                    "properties": ["id", "threadId", "subject", "from", "to", "receivedAt", "hasAttachment", "keywords"],
+                    "properties": ["id", "threadId", "subject", "from", "to", "receivedAt", "hasAttachment", "keywords", "preview"],
                 }),
             )
             .await?;
@@ -527,7 +531,7 @@ impl EmailProvider for StalwartProvider {
                 json!({
                     "accountId": account_id,
                     "ids": [message_id],
-                    "properties": ["id", "threadId", "subject", "from", "to", "receivedAt", "hasAttachment", "keywords"],
+                    "properties": ["id", "threadId", "subject", "from", "to", "receivedAt", "hasAttachment", "keywords", "preview"],
                 }),
             )
             .await?;

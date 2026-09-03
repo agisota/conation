@@ -17,12 +17,15 @@ use email::domain::models::UserProvider;
 use email::domain::ports::EmailRepo;
 use email::outbound::EmailPgRepo;
 use email_api_client::domain::models::{EmailApiError, TokenFreshness};
-use email_provider::{EmailProvider, EmailProviderKind, StalwartProvider};
+use email_provider::{EmailProvider, EmailProviderKind, ProviderMessage, StalwartProvider};
 use email_service::pubsub::publish_email_event;
 use model::response::ErrorResponse;
+use models_email::email::service::address::ContactInfo;
 use models_email::email::service::backfill::{
     BackfillOperation, BackfillPubsubMessage, InitPayload, JobScopedPayload,
 };
+use models_email::email::service::message::Message;
+use models_email::email::service::thread::Thread;
 use models_email::service::link;
 use models_email::service::link::Link;
 use strum_macros::AsRefStr;
@@ -1013,25 +1016,106 @@ async fn seed_stalwart_threads(db: &sqlx::PgPool, link_id: Uuid) {
             return;
         }
     };
-    let mut seen = std::collections::HashSet::new();
+
+    let mut by_thread: std::collections::HashMap<String, Vec<ProviderMessage>> =
+        std::collections::HashMap::new();
     for message in messages {
-        if !seen.insert(message.thread_id.clone()) {
-            continue;
-        }
-        if let Err(error) = email_db_client::threads::insert::insert_blank_thread(
-            db,
-            &message.thread_id,
+        by_thread
+            .entry(message.thread_id.clone())
+            .or_default()
+            .push(message);
+    }
+
+    for (thread_id, thread_messages) in by_thread {
+        let latest = thread_messages
+            .iter()
+            .filter_map(|message| message.date)
+            .max();
+        let now = chrono::Utc::now();
+        let thread_db_id = conation_uuid::generate_uuid_v7();
+        let service_messages = thread_messages
+            .into_iter()
+            .map(|message| seed_stalwart_message(thread_db_id, link_id, message))
+            .collect();
+        let thread = Thread {
+            db_id: thread_db_id,
+            provider_id: Some(thread_id.clone()),
             link_id,
-        )
-        .await
+            inbox_visible: true,
+            is_read: false,
+            latest_inbound_message_ts: latest,
+            latest_outbound_message_ts: None,
+            latest_non_spam_message_ts: latest,
+            created_at: latest.unwrap_or(now),
+            updated_at: latest.unwrap_or(now),
+            messages: service_messages,
+        };
+        if let Err(error) =
+            email_db_client::threads::insert::insert_thread_and_messages(db, thread, link_id).await
         {
             tracing::warn!(
                 error = ?error,
-                thread_id = %message.thread_id,
+                thread_id = %thread_id,
                 link_id = %link_id,
-                "Failed to insert Stalwart blank thread"
+                "Failed to insert Stalwart thread"
             );
         }
+    }
+}
+
+fn seed_stalwart_message(
+    thread_db_id: Uuid,
+    link_id: Uuid,
+    message: ProviderMessage,
+) -> Message {
+    let date = message.date;
+    let now = date.unwrap_or_else(chrono::Utc::now);
+    Message {
+        db_id: conation_uuid::generate_uuid_v7(),
+        provider_id: Some(message.id),
+        thread_db_id,
+        provider_thread_id: Some(message.thread_id),
+        replying_to_id: None,
+        global_id: None,
+        link_id,
+        subject: message.subject,
+        snippet: message.snippet,
+        provider_history_id: None,
+        internal_date_ts: date,
+        sent_at: date,
+        size_estimate: None,
+        is_read: false,
+        is_starred: false,
+        is_sent: false,
+        is_draft: false,
+        scheduled_send_time: None,
+        has_attachments: message.has_attachments,
+        from: message.from.map(|email| ContactInfo {
+            email,
+            name: None,
+            photo_url: None,
+        }),
+        to: message
+            .to
+            .into_iter()
+            .map(|email| ContactInfo {
+                email,
+                name: None,
+                photo_url: None,
+            })
+            .collect(),
+        cc: vec![],
+        bcc: vec![],
+        labels: vec![],
+        body_text: None,
+        body_html_sanitized: None,
+        body_macro: None,
+        attachments: vec![],
+        attachments_draft: vec![],
+        attachments_forwarded: vec![],
+        headers_json: None,
+        created_at: now,
+        updated_at: now,
     }
 }
 
