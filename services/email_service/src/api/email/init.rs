@@ -24,6 +24,7 @@ use models_email::email::service::address::ContactInfo;
 use models_email::email::service::backfill::{
     BackfillOperation, BackfillPubsubMessage, InitPayload, JobScopedPayload,
 };
+use models_email::email::service::label::{Label, LabelType};
 use models_email::email::service::message::Message;
 use models_email::email::service::thread::Thread;
 use models_email::service::link;
@@ -1070,6 +1071,23 @@ fn seed_stalwart_message(
 ) -> Message {
     let date = message.date;
     let now = date.unwrap_or_else(chrono::Utc::now);
+    let is_read = message.labels.iter().any(|kw| kw == "$seen");
+    let is_starred = message.labels.iter().any(|kw| kw == "$flagged");
+    let labels = message
+        .labels
+        .into_iter()
+        .filter(|kw| kw != "$seen" && kw != "$flagged")
+        .map(|kw| Label {
+            id: None,
+            link_id,
+            provider_label_id: kw.clone(),
+            name: Some(kw),
+            created_at: now,
+            message_list_visibility: None,
+            label_list_visibility: None,
+            type_: Some(LabelType::User),
+        })
+        .collect();
     Message {
         db_id: conation_uuid::generate_uuid_v7(),
         provider_id: Some(message.id),
@@ -1079,13 +1097,13 @@ fn seed_stalwart_message(
         global_id: None,
         link_id,
         subject: message.subject,
-        snippet: message.snippet,
+        snippet: message.snippet.clone(),
         provider_history_id: None,
         internal_date_ts: date,
         sent_at: date,
         size_estimate: None,
-        is_read: false,
-        is_starred: false,
+        is_read,
+        is_starred,
         is_sent: false,
         is_draft: false,
         scheduled_send_time: None,
@@ -1106,9 +1124,9 @@ fn seed_stalwart_message(
             .collect(),
         cc: vec![],
         bcc: vec![],
-        labels: vec![],
-        body_text: None,
-        body_html_sanitized: None,
+        labels,
+        body_text: message.body_text.or(message.snippet),
+        body_html_sanitized: message.body_html,
         body_macro: None,
         attachments: vec![],
         attachments_draft: vec![],

@@ -72,6 +72,12 @@ pub struct ProviderMessage {
     pub labels: Vec<String>,
     /// Short preview of the message body (JMAP `preview`)
     pub snippet: Option<String>,
+    /// Plain-text body from JMAP `bodyValues` (first `text/plain` part)
+    #[serde(default)]
+    pub body_text: Option<String>,
+    /// HTML body from JMAP `bodyValues` (first `text/html` part)
+    #[serde(default)]
+    pub body_html: Option<String>,
 }
 
 /// Provider trait — implemented by Gmail and Stalwart.
@@ -237,6 +243,12 @@ struct JmapEmail {
     has_attachment: bool,
     keywords: HashMap<String, bool>,
     preview: Option<String>,
+    #[serde(default)]
+    text_body: Vec<JmapBodyPart>,
+    #[serde(default)]
+    html_body: Vec<JmapBodyPart>,
+    #[serde(default)]
+    body_values: HashMap<String, JmapBodyValue>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -244,8 +256,48 @@ struct JmapAddress {
     email: String,
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct JmapBodyPart {
+    part_id: Option<String>,
+    #[serde(rename = "type", default)]
+    content_type: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct JmapBodyValue {
+    value: String,
+}
+
+fn content_type_matches(ty: &str, mime: &str) -> bool {
+    ty.split(';')
+        .next()
+        .unwrap_or(ty)
+        .trim()
+        .eq_ignore_ascii_case(mime)
+}
+
+fn first_body_value(
+    parts: &[JmapBodyPart],
+    body_values: &HashMap<String, JmapBodyValue>,
+    mime: &str,
+) -> Option<String> {
+    parts.iter().find_map(|part| {
+        let ty = part.content_type.as_deref().unwrap_or(mime);
+        if !content_type_matches(ty, mime) {
+            return None;
+        }
+        part.part_id
+            .as_ref()
+            .and_then(|id| body_values.get(id))
+            .map(|body| body.value.clone())
+    })
+}
+
 impl From<JmapEmail> for ProviderMessage {
     fn from(value: JmapEmail) -> Self {
+        let body_text = first_body_value(&value.text_body, &value.body_values, "text/plain");
+        let body_html = first_body_value(&value.html_body, &value.body_values, "text/html");
         Self {
             id: value.id,
             thread_id: value.thread_id,
@@ -267,6 +319,8 @@ impl From<JmapEmail> for ProviderMessage {
                 .filter_map(|(keyword, enabled)| enabled.then_some(keyword))
                 .collect(),
             snippet: value.preview,
+            body_text,
+            body_html,
         }
     }
 }
@@ -503,7 +557,9 @@ impl EmailProvider for StalwartProvider {
                 json!({
                     "accountId": account_id,
                     "ids": ids,
-                    "properties": ["id", "threadId", "subject", "from", "to", "receivedAt", "hasAttachment", "keywords", "preview"],
+                    "fetchTextBodyValues": true,
+                    "fetchHTMLBodyValues": true,
+                    "properties": ["id", "threadId", "subject", "from", "to", "receivedAt", "hasAttachment", "keywords", "preview", "textBody", "htmlBody", "bodyValues"],
                 }),
             )
             .await?;
@@ -531,7 +587,9 @@ impl EmailProvider for StalwartProvider {
                 json!({
                     "accountId": account_id,
                     "ids": [message_id],
-                    "properties": ["id", "threadId", "subject", "from", "to", "receivedAt", "hasAttachment", "keywords", "preview"],
+                    "fetchTextBodyValues": true,
+                    "fetchHTMLBodyValues": true,
+                    "properties": ["id", "threadId", "subject", "from", "to", "receivedAt", "hasAttachment", "keywords", "preview", "textBody", "htmlBody", "bodyValues"],
                 }),
             )
             .await?;
