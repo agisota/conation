@@ -29,7 +29,7 @@ export function AiChatEmptyState() {
             {(item) => (
               <div class="overflow-hidden rounded-md border border-edge-muted bg-surface/70">
                 <div class="flex items-center justify-between gap-3 border-b border-edge-muted px-4 py-2">
-                  <span class="text-sm text-ink-muted">{item.label}</span>
+                  <span class="text-sm text-ink-muted">{t(item.labelKey)}</span>
                   <Button
                     variant={copiedKey() === item.key ? 'outline' : 'ghost'}
                     size="sm"

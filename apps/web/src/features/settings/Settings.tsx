@@ -136,7 +136,7 @@ export function SettingsPanel(props: SettingsPanelProps) {
   // Register Escape key to close settings
   registerHotkey({
     keyDownHandler: handleEscapeKey,
-    description: t('settings.navigation.hotkeys.close'),
+    description: t('settings.shell.hotkeys.close'),
     scopeId: settingsHotkeyScope,
     hotkey: 'escape',
   });
@@ -178,14 +178,14 @@ export function SettingsPanel(props: SettingsPanelProps) {
   registerHotkey({
     hotkey: 'tab',
     scopeId: settingsHotkeyScope,
-    description: t('settings.navigation.hotkeys.nextTab'),
+    description: t('settings.shell.hotkeys.nextTab'),
     keyDownHandler: handleNextTab,
     hide: true,
   });
 
   // Register Shift+Tab for previous tab navigation
   registerHotkey({
-    description: t('settings.navigation.hotkeys.previousTab'),
+    description: t('settings.shell.hotkeys.previousTab'),
     keyDownHandler: handlePreviousTab,
     scopeId: settingsHotkeyScope,
     hotkey: 'shift+tab',
@@ -199,7 +199,7 @@ export function SettingsPanel(props: SettingsPanelProps) {
       return navigateToTabIndex(keyNum - 1);
     }
     registerHotkey({
-      description: t('settings.navigation.hotkeys.goToTab', {
+      description: t('settings.shell.hotkeys.goToTab', {
         number: keyNum,
       }),
       hotkey: `${keyNum}` as ValidHotkey,
@@ -231,7 +231,7 @@ export function SettingsPanel(props: SettingsPanelProps) {
     >
       <CaretLeftIcon class="size-4 shrink-0" />
       <span class="whitespace-nowrap">
-        {t('settings.navigation.backToApp')}
+        {t('settings.shell.backToApp')}
       </span>
     </button>
   );
@@ -239,7 +239,7 @@ export function SettingsPanel(props: SettingsPanelProps) {
   const moveToSplitButton = () => (
     <Button
       class="p-1 rounded-md"
-      label={t('settings.navigation.moveToSplit')}
+      label={t('settings.shell.moveToSplit')}
       onClick={() => moveSettingsToSplit()}
     >
       <ArrowsIn class="size-4" />
@@ -278,7 +278,7 @@ export function SettingsPanel(props: SettingsPanelProps) {
             <HeaderIsland>
               <div class="h-full flex gap-3 items-center">
                 <h1 class="font-semibold text-ink select-none text-sm shrink-0">
-                  {t('settings.navigation.title')}
+                  {t('settings.shell.title')}
                 </h1>
               </div>
             </HeaderIsland>
@@ -302,7 +302,7 @@ export function SettingsPanel(props: SettingsPanelProps) {
           <SplitHeaderRight>
             <Button
               class="p-1 rounded-lg"
-              label={t('settings.navigation.openFullscreen')}
+              label={t('settings.shell.openFullscreen')}
               onClick={() => moveSettingsToSolo()}
             >
               <ArrowsOut class="size-4" />
@@ -354,7 +354,7 @@ export function SettingsPanel(props: SettingsPanelProps) {
               >
                 <SignOutIcon class="size-4 shrink-0" />
                 <span class="whitespace-nowrap">
-                  {t('settings.navigation.logout')}
+                  {t('settings.shell.logout')}
                 </span>
               </button>
             </div>

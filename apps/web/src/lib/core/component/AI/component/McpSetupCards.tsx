@@ -84,7 +84,7 @@ export function McpSetupCards(props: { class?: string }) {
       <For each={CLI_COMMANDS}>
         {(item) => (
           <CollapsibleCard
-            label={item.label}
+            label={t(item.labelKey)}
             copyKey={item.key}
             copyValue={item.command}
             copiedKey={copiedKey}
@@ -96,8 +96,8 @@ export function McpSetupCards(props: { class?: string }) {
       <For each={WEB_CLIENTS}>
         {(item) => (
           <CollapsibleCard
-            label={item.label}
-            hint={item.hint}
+            label={t(item.labelKey)}
+            hint={t(item.hintKey)}
             copyKey={item.key}
             copyValue={CONATION_MCP_URL}
             copiedKey={copiedKey}
@@ -107,7 +107,7 @@ export function McpSetupCards(props: { class?: string }) {
       </For>
 
       <CollapsibleCard
-        label="IDE"
+        label={t('settings.agent.ide.label')}
         copyKey="json"
         copyValue={CONATION_MCP_CONFIG}
         copiedKey={copiedKey}

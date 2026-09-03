@@ -2,6 +2,7 @@ import { useSoupFilterPersistence } from '@app/features/next-soup/use-soup-filte
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
 import {
   clearAllDebugSettings,
+  DEBUG_SETTING_KEYS,
   DEBUG_SETTINGS,
   type DebugSettingDef,
   debugSettings,
@@ -17,13 +18,24 @@ import { Button, ToggleSwitch } from '@ui';
 import { For, Show } from 'solid-js';
 import { SettingsCard, SettingsPage, SettingsRow } from './primitives';
 
+const DEBUG_SETTING_I18N: Record<
+  DebugSettingDef['key'],
+  { label: string; description: string }
+> = {
+  [DEBUG_SETTING_KEYS.FORCE_EMPTY_STATES]: {
+    label: 'settings.admin.forceEmptyStates.label',
+    description: 'settings.admin.forceEmptyStates.description',
+  },
+};
+
 function DebugSettingRow(props: { setting: DebugSettingDef }) {
   const checked = () => getDebugSetting(props.setting.key);
+  const i18n = DEBUG_SETTING_I18N[props.setting.key];
 
   return (
     <SettingsRow
-      label={props.setting.label}
-      description={props.setting.description}
+      label={t(i18n.label)}
+      description={t(i18n.description)}
     >
       <ToggleSwitch
         size="md"
@@ -62,8 +74,8 @@ export function Admin() {
       <Show when={soupFilterPersistenceFlag().enabled}>
         <SettingsCard>
           <SettingsRow
-            label="Persist list filters"
-            description="Keep soup filters and the last selected tab across reloads on this device."
+            label={t('settings.admin.persistFilters.label')}
+            description={t('settings.admin.persistFilters.description')}
           >
             <ToggleSwitch
               size="md"

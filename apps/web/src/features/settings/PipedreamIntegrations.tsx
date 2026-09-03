@@ -34,7 +34,7 @@ function ServerRow(props: { server: PipedreamConnectionResponse }) {
       {
         onError: () => {
           toast.failure(
-            t('settings.integrations.connector.toast.updateFailed')
+            t('settings.pipedream.toast.updateFailed')
           );
         },
       }
@@ -46,12 +46,12 @@ function ServerRow(props: { server: PipedreamConnectionResponse }) {
       { app_slug: props.server.app_slug },
       {
         onSuccess: () => {
-          toast.success(t('settings.integrations.connector.toast.removed'));
+          toast.success(t('settings.pipedream.toast.removed'));
           setConfirmDelete(false);
         },
         onError: () => {
           toast.failure(
-            t('settings.integrations.connector.toast.removeFailed')
+            t('settings.pipedream.toast.removeFailed')
           );
           setConfirmDelete(false);
         },
@@ -77,8 +77,8 @@ function ServerRow(props: { server: PipedreamConnectionResponse }) {
         onChange={handleToggleEnabled}
         label={
           props.server.enabled
-            ? t('settings.integrations.status.enabled')
-            : t('settings.integrations.status.disabled')
+            ? t('settings.pipedream.status.enabled')
+            : t('settings.pipedream.status.disabled')
         }
         labelClass="inline-block w-14 text-left text-xs text-ink-muted whitespace-nowrap"
       />
@@ -95,8 +95,8 @@ function ServerRow(props: { server: PipedreamConnectionResponse }) {
               onClick={handleDelete}
             >
               {deleteMutation.isPending
-                ? t('settings.integrations.actions.removing')
-                : t('settings.integrations.actions.confirm')}
+                ? t('settings.pipedream.actions.removing')
+                : t('settings.pipedream.actions.confirm')}
             </Button>
             <Button
               variant="outline"
@@ -133,7 +133,7 @@ function CatalogRow(props: { entry: PipedreamCatalogEntryResponse }) {
     entry: () => props.entry,
     onConnected: (entry) =>
       toast.success(
-        t('settings.integrations.connector.toast.connected', {
+        t('settings.pipedream.toast.connected', {
           name: entry.display_name,
         })
       ),
@@ -151,7 +151,7 @@ function CatalogRow(props: { entry: PipedreamCatalogEntryResponse }) {
       description={props.entry.description ?? props.entry.app_slug}
     >
       <ConnectAction
-        label={t('settings.integrations.actions.connect')}
+        label={t('settings.pipedream.actions.connect')}
         onClick={() => void connect()}
         loading={busy()}
       />
@@ -178,13 +178,13 @@ export function PipedreamIntegrationsSection() {
 
   return (
     <SettingsSection
-      title={t('settings.integrations.title')}
-      description={t('settings.integrations.catalog.description')}
+      title={t('settings.pipedream.title')}
+      description={t('settings.pipedream.catalog.description')}
     >
       <Show when={serversQuery.isError}>
         <SettingsCard>
           <div class="px-6 py-8 text-center text-sm text-ink-muted">
-            {t('settings.integrations.loadFailed')}
+            {t('settings.pipedream.loadFailed')}
             <Button
               variant="outline"
               size="sm"
@@ -211,7 +211,7 @@ export function PipedreamIntegrationsSection() {
           <input
             type="search"
             class="settings-input w-full"
-            placeholder={t('settings.integrations.catalog.searchPlaceholder')}
+            placeholder={t('settings.pipedream.catalog.searchPlaceholder')}
             value={catalog.searchInput()}
             onInput={(e) => catalog.onSearchInput(e.currentTarget.value)}
           />
@@ -219,7 +219,7 @@ export function PipedreamIntegrationsSection() {
 
         <Show when={catalogQuery.isError}>
           <div class="px-6 py-6 text-center text-sm text-ink-muted">
-            {t('settings.integrations.catalog.loadFailed')}
+            {t('settings.pipedream.catalog.loadFailed')}
             <Button
               variant="outline"
               size="sm"
@@ -239,7 +239,7 @@ export function PipedreamIntegrationsSection() {
 
           <Show when={catalogQuery.isFetching && browseResults().length === 0}>
             <div class="px-6 py-6 text-center text-sm text-ink-muted">
-              {t('settings.integrations.catalog.loading')}
+              {t('settings.pipedream.catalog.loading')}
             </div>
           </Show>
 
@@ -251,7 +251,7 @@ export function PipedreamIntegrationsSection() {
             }
           >
             <div class="px-6 py-6 text-center text-sm text-ink-muted">
-              {t('settings.integrations.catalog.noResults', {
+              {t('settings.pipedream.catalog.noResults', {
                 query: catalog.search().trim(),
               })}
             </div>
@@ -268,7 +268,7 @@ export function PipedreamIntegrationsSection() {
               >
                 {catalogQuery.isFetchingNextPage
                   ? t('common.loading')
-                  : t('settings.integrations.catalog.loadMore')}
+                  : t('settings.pipedream.catalog.loadMore')}
               </Button>
             </div>
           </Show>

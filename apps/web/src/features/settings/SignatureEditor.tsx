@@ -157,7 +157,7 @@ export default function SignatureEditor(props: {
         quill.insertEmbed(at, 'image', staticFileIdEndpoint(id), 'user');
         at += 1;
       } catch {
-        toast.failure('Failed to upload image');
+        toast.failure(t('settings.signatureEditor.toast.uploadFailed'));
       }
     }
     quill.setSelection(at, 0, 'silent');

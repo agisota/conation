@@ -1,4 +1,4 @@
-pub(crate) static INVITE_USER_SUBJECT: &str = "Invitation to Conation";
+pub(crate) static INVITE_USER_SUBJECT: &str = "Приглашение в Conation";
 
 /// Builds the user invite message
 pub(crate) fn build_user_invite_message(
@@ -7,7 +7,7 @@ pub(crate) fn build_user_invite_message(
     support_email: &str,
 ) -> String {
     let result = r#"<!DOCTYPE html>
-<html lang="en" xmlns:v="urn:schemas-microsoft-com:vml">
+<html lang="ru" xmlns:v="urn:schemas-microsoft-com:vml">
    <head>
       <meta charset="utf-8">
       <meta name="x-apple-disable-message-reformatting">
@@ -42,7 +42,7 @@ pub(crate) fn build_user_invite_message(
          }
       </style>
       <![endif]-->      
-      <title>Conation Invitation</title>
+      <title>Приглашение в Conation</title>
       <style>.hover-text-gray-600:hover {
          color: #4b5563 !important
          }
@@ -93,10 +93,10 @@ pub(crate) fn build_user_invite_message(
    </head>
    <body style="word-break: break-word; -webkit-font-smoothing: antialiased; margin: 0; width: 100%; background-color: #f9fafb; padding: 0">
       <div style="display: none">
-         You've been invited to join a workspace in Conation.
+         Вас пригласили присоединиться к рабочему пространству в Conation.
          &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847;
       </div>
-      <div role="article" aria-roledescription="email" aria-label="Conation Invitation" lang="en">
+      <div role="article" aria-roledescription="электронное письмо" aria-label="Приглашение в Conation" lang="ru">
          <table style="width: 100%; font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" cellpadding="0" cellspacing="0" role="presentation">
             <tr>
                <td align="center" style="background-color: #f9fafb">
@@ -112,13 +112,13 @@ pub(crate) fn build_user_invite_message(
                               <tr>
                                  <td class="xs-py-12 xs-px-6" style="border-radius: 8px; background-color: #fff; padding-top: 56px; padding-bottom: 56px; padding-left: 40px; padding-right: 40px; outline-style: solid; outline-width: 1px; outline-color: #f3f4f6">
                                     <h1 class="xs-text-3xl" style="margin-top: 0; margin-bottom: 16px; text-align: center; font-size: 36px; font-weight: 600; color: #374151">
-                                       Welcome Aboard!
+                                       Добро пожаловать!
                                     </h1>
                                     <h2 class="xs-text-2xl" style="margin-top: 0; margin-bottom: 64px; text-align: center; font-size: 20px; font-weight: 300; color: #374151">
-                                        You've been invited to join {ORG_NAME} on Conation.
+                                        Вас пригласили присоединиться к {ORG_NAME} в Conation.
                                     </h2>
                                     <p style="text-align: center;">
-                                        <a class="CTA" href="{INVITE_URL}">Accept Your Invitation</a>
+                                        <a class="CTA" href="{INVITE_URL}">Принять приглашение</a>
                                     </p>
                                  </td>
                               </tr>
@@ -128,7 +128,7 @@ pub(crate) fn build_user_invite_message(
                      <tr>
                         <td class="xs-py-10" style="padding-top: 48px; padding-bottom: 48px; text-align: center; font-size: 14px; color: #9ca3af">
                            <p style="margin: 0">
-                              Questions? Email us at
+                              Есть вопросы? Напишите нам:
                               <a href="mailto:{SUPPORT_EMAIL}" class="hover-text-gray-600" style="font-weight: 500; color: #6b7280">{SUPPORT_EMAIL}</a>
                            </p>
                         </td>

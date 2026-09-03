@@ -127,7 +127,9 @@ function AddServerForm(props: {
               <input
                 type="url"
                 class="settings-input w-full"
-                placeholder="https://example.com/mcp"
+                placeholder={t(
+                  'settings.integrations.addDialog.urlPlaceholder'
+                )}
                 value={url()}
                 onInput={(e) => setUrl(e.currentTarget.value)}
                 onKeyDown={(e) => {

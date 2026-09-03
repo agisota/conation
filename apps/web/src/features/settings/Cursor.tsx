@@ -120,7 +120,7 @@ export function CursorCard() {
           // the paste-a-key input at someone who has one already.
           when={!status.isPlaceholderData}
           fallback={
-            <span class="text-xs text-ink-muted">{t('common.loading')}</span>
+            <span class="text-xs text-ink-muted">{t('settings.cursor.status.loading')}</span>
           }
         >
           <Switch
@@ -144,7 +144,7 @@ export function CursorCard() {
                   disabled={apiKey().length === 0 || saveKey.isPending}
                   onClick={handleSave}
                 >
-                  {t('common.save')}
+                  {t('settings.cursor.actions.save')}
                 </Button>
               </div>
             }
