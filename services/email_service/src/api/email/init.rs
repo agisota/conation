@@ -17,6 +17,7 @@ use email::domain::models::UserProvider;
 use email::domain::ports::EmailRepo;
 use email::outbound::EmailPgRepo;
 use email_api_client::domain::models::{EmailApiError, TokenFreshness};
+use email_provider::{EmailProvider, EmailProviderKind, StalwartProvider};
 use email_service::pubsub::publish_email_event;
 use model::response::ErrorResponse;
 use models_email::email::service::backfill::{
@@ -368,8 +369,12 @@ async fn init_user(
                     .context("child macro user disappeared before self-link bootstrap")?
                     .to_string();
 
-            let provisional_link =
-                new_gmail_link(child_fusion_id, child_macro_id_owned, linked_email.clone())?;
+            let provisional_link = new_gmail_link(
+                child_fusion_id,
+                child_macro_id_owned,
+                linked_email.clone(),
+                link::UserProvider::Gmail,
+            )?;
             let subscription = ctx
                 .email_api
                 .register_subscription_without_cache(&provisional_link)
@@ -558,6 +563,7 @@ async fn init_user(
                 user_context.fusion_user_id.clone(),
                 macro_user_id.clone(),
                 linked_email.clone(),
+                link::UserProvider::Gmail,
             )?;
             let subscription = ctx
                 .email_api
@@ -582,11 +588,17 @@ async fn init_user(
             (link, linked_email)
         }
     } else {
+        let provider_kind = email_provider_kind_from_env();
+        let domain_provider = match provider_kind {
+            EmailProviderKind::Gmail => UserProvider::Gmail,
+            EmailProviderKind::Stalwart => UserProvider::Stalwart,
+        };
+
         let existing_link = pg_repo
             .link_by_fusionauth_and_macro_id(
                 &user_context.fusion_user_id,
                 macro_user_id.clone(),
-                UserProvider::Gmail,
+                domain_provider,
             )
             .await
             .context("Failed to fetch existing link")?;
@@ -602,7 +614,37 @@ async fn init_user(
             user_context.fusion_user_id.clone(),
             macro_user_id.clone(),
             email,
+            match provider_kind {
+                EmailProviderKind::Gmail => link::UserProvider::Gmail,
+                EmailProviderKind::Stalwart => link::UserProvider::Stalwart,
+            },
         )?;
+
+        if provider_kind == EmailProviderKind::Stalwart {
+            let mut tx = ctx
+                .db
+                .begin()
+                .await
+                .context("Failed to begin link transaction")?;
+            let link = email_db_client::links::insert::upsert_link(tx.as_mut(), provisional_link)
+                .await
+                .context("Failed to upsert link")?;
+            tx.commit()
+                .await
+                .context("Failed to commit link transaction")?;
+
+            seed_stalwart_threads(&ctx.db, link.id).await;
+
+            return Ok((
+                StatusCode::OK,
+                Json(InitResponse {
+                    link_id: link.id,
+                    backfill_job_id: None,
+                }),
+            )
+                .into_response());
+        }
+
         let subscription = ctx
             .email_api
             .register_subscription_without_cache(&provisional_link)
@@ -924,10 +966,18 @@ fn classify_provider_init_error(error: EmailApiError) -> InitError {
     }
 }
 
+fn email_provider_kind_from_env() -> EmailProviderKind {
+    std::env::var("EMAIL_PROVIDER")
+        .ok()
+        .and_then(|value| value.parse().ok())
+        .unwrap_or_default()
+}
+
 fn new_gmail_link(
     fusion_user_id: String,
     macro_id: MacroUserIdStr<'static>,
     email_address: String,
+    provider: link::UserProvider,
 ) -> Result<Link, InitError> {
     let email_address = EmailStr::try_from(email_address)?;
     let is_primary = Link::derive_is_primary(&macro_id, &email_address);
@@ -936,7 +986,7 @@ fn new_gmail_link(
         macro_id,
         fusionauth_user_id: fusion_user_id,
         email_address,
-        provider: link::UserProvider::Gmail,
+        provider,
         is_sync_active: true,
         is_primary,
         needs_reauth: false,
@@ -944,6 +994,45 @@ fn new_gmail_link(
         created_at: Default::default(),
         updated_at: Default::default(),
     })
+}
+
+/// Best-effort Stalwart inbox seed. Link creation already succeeded; listing or
+/// insert failures must not fail `/email/init`.
+async fn seed_stalwart_threads(db: &sqlx::PgPool, link_id: Uuid) {
+    let Ok(provider) = StalwartProvider::from_env() else {
+        return;
+    };
+    let messages = match provider.list_threads("", 100, None).await {
+        Ok(messages) => messages,
+        Err(error) => {
+            tracing::warn!(
+                error = ?error,
+                link_id = %link_id,
+                "Failed to list Stalwart threads; returning initialized link"
+            );
+            return;
+        }
+    };
+    let mut seen = std::collections::HashSet::new();
+    for message in messages {
+        if !seen.insert(message.thread_id.clone()) {
+            continue;
+        }
+        if let Err(error) = email_db_client::threads::insert::insert_blank_thread(
+            db,
+            &message.thread_id,
+            link_id,
+        )
+        .await
+        {
+            tracing::warn!(
+                error = ?error,
+                thread_id = %message.thread_id,
+                link_id = %link_id,
+                "Failed to insert Stalwart blank thread"
+            );
+        }
+    }
 }
 
 /// Persists a provisionally registered link and its initial provider cursor atomically.

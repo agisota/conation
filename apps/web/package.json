@@ -125,7 +125,7 @@
     "linkify-it": "^5.0.0",
     "livekit-client": "^2.18.0",
     "loro-crdt": "catalog:",
-    "nanoid": "^3.3.7",
+    "nanoid": "^3.3.18",
     "neverthrow": "^8.2.0",
     "pdfjs-dist": "github:mozilla/pdf.js#0265ecba1b16edbaa6a803e9d783cb2fbdea3e21",
     "posthog-js": "^1.387.0",
