@@ -10,6 +10,7 @@ use entity_access::domain::models::{
 };
 use models_properties::service::entity_property::EntityProperty;
 use models_properties::service::property_definition::PropertyDefinition;
+use models_properties::service::property_definition_with_options::PropertyDefinitionWithOptions;
 use models_properties::service::property_option::{PropertyOption, PropertyOptionValue};
 use models_properties::service::property_value::PropertyValue;
 use models_properties::{DataType, EntityReference, EntityType, PropertyOwner};
@@ -316,8 +317,8 @@ pub enum EntityOptionUpdateOutcome {
 /// Outcome of creating a property definition.
 #[derive(Debug, Clone)]
 pub enum CreatePropertyDefinitionOutcome {
-    /// The definition (and any options) were created.
-    Created(PropertyDefinition),
+    /// The definition and its options were created atomically.
+    Created(PropertyDefinitionWithOptions),
     /// The owner already has a definition with this display name.
     DuplicateDisplayName,
 }
