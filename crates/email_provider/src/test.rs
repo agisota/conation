@@ -14,6 +14,7 @@ fn session(server: &MockServer) -> Value {
     json!({
         "apiUrl": format!("{}/jmap/", server.uri()),
         "uploadUrl": format!("{}/jmap/upload/{{accountId}}/", server.uri()),
+        "downloadUrl": format!("{}/jmap/download/{{accountId}}/{{blobId}}/{{name}}", server.uri()),
         "capabilities": { JMAP_CORE: {}, JMAP_MAIL: {}, JMAP_SUBMISSION: {} },
         "accounts": { "u1": { "accountCapabilities": { JMAP_MAIL: {} } } },
         "primaryAccounts": { JMAP_MAIL: "u1" }
@@ -206,4 +207,21 @@ async fn removed_principal_api_provisioning_fails_closed() {
             .await,
         Err(ProviderError::Unsupported(_))
     ));
+}
+
+#[tokio::test]
+async fn downloads_small_jmap_blob() {
+    let server = MockServer::start().await;
+    mount_session(&server).await;
+    Mock::given(method("GET"))
+        .and(path("/jmap/download/u1/b1/note.txt"))
+        .and(header("authorization", "Bearer per-user-test-token"))
+        .respond_with(ResponseTemplate::new(200).set_body_bytes(b"hello-blob".as_slice()))
+        .mount(&server)
+        .await;
+    let bytes = provider(&server)
+        .download_blob(TOKEN, "b1", Some("note.txt"))
+        .await
+        .expect("download");
+    assert_eq!(bytes, b"hello-blob");
 }

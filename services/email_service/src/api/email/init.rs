@@ -2,6 +2,8 @@ use crate::api::ApiContext;
 use crate::api::context::{AuthorizationService, CalendarGrantService};
 use crate::utils::extract_email_with_response;
 use anyhow::Context;
+use base64::Engine as _;
+use base64::engine::general_purpose::STANDARD;
 use axum::{
     extract::{Query, State},
     http::StatusCode,
@@ -1035,10 +1037,14 @@ async fn seed_stalwart_threads(db: &sqlx::PgPool, link_id: Uuid) {
             .max();
         let now = chrono::Utc::now();
         let thread_db_id = conation_uuid::generate_uuid_v7();
-        let service_messages = thread_messages
-            .into_iter()
-            .map(|message| seed_stalwart_message(thread_db_id, link_id, message))
-            .collect();
+        let mut service_messages = Vec::with_capacity(thread_messages.len());
+        for message in thread_messages {
+            let mut seeded = seed_stalwart_message(thread_db_id, link_id, message);
+            for attachment in &mut seeded.attachments {
+                seed_stalwart_attachment_data_url(&provider, attachment).await;
+            }
+            service_messages.push(seeded);
+        }
         let thread = Thread {
             db_id: thread_db_id,
             provider_id: Some(thread_id.clone()),
@@ -1148,6 +1154,46 @@ fn seed_stalwart_message(
         headers_json: None,
         created_at: now,
         updated_at: now,
+    }
+}
+
+const MAX_SEEDED_BLOB_BYTES: i64 = 262144;
+
+/// Best-effort JMAP blob fetch into `data_url`. Oversized blobs and download
+/// failures stay metadata-only so seed cannot fail `/email/init`.
+async fn seed_stalwart_attachment_data_url(
+    provider: &StalwartProvider,
+    attachment: &mut Attachment,
+) {
+    let Some(size) = attachment.size_bytes else {
+        return;
+    };
+    if !(0..=MAX_SEEDED_BLOB_BYTES).contains(&size) {
+        return;
+    }
+    let Some(blob_id) = attachment.provider_id.clone() else {
+        return;
+    };
+    let filename = attachment.filename.clone();
+    match provider
+        .download_blob("", &blob_id, filename.as_deref())
+        .await
+    {
+        Ok(bytes) => {
+            let mime = attachment
+                .mime_type
+                .as_deref()
+                .filter(|mime| !mime.is_empty())
+                .unwrap_or("application/octet-stream");
+            attachment.data_url = Some(format!("data:{mime};base64,{}", STANDARD.encode(bytes)));
+        }
+        Err(error) => {
+            tracing::warn!(
+                error = ?error,
+                blob_id,
+                "Failed to download Stalwart attachment blob"
+            );
+        }
     }
 }
 

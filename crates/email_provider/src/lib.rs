@@ -225,6 +225,66 @@ impl StalwartProvider {
             "Stalwart v0.16 runtime account provisioning is not wired; use the explicit operator CLI recipe",
         ))
     }
+
+    /// Downloads a JMAP blob, rejecting payloads larger than 256 KiB.
+    pub async fn download_blob(
+        &self,
+        access_token: &str,
+        blob_id: &str,
+        name: Option<&str>,
+    ) -> Result<Vec<u8>, ProviderError> {
+        const MAX_BLOB_BYTES: usize = 262_144;
+        let session = self.session(access_token).await?;
+        let account_id = Self::account_id(&session)?;
+        let download_url = session.download_url.as_deref().ok_or_else(|| {
+            ProviderError::Provider("JMAP session does not advertise downloadUrl".to_owned())
+        })?;
+        let download_url = download_url
+            .replace("{accountId}", account_id)
+            .replace("{blobId}", blob_id)
+            .replace("{name}", name.unwrap_or(""));
+        let download_url = Url::parse(&download_url).map_err(|error| {
+            ProviderError::Provider(format!("invalid JMAP downloadUrl: {error}"))
+        })?;
+        self.validate_bearer_endpoint(&download_url, "downloadUrl")?;
+        let response = self
+            .client
+            .get(download_url)
+            .bearer_auth(access_token)
+            .send()
+            .await
+            .map_err(|error| ProviderError::Transport(error.to_string()))?;
+        let mut response = checked_response(response).await?;
+        if let Some(len) = response
+            .headers()
+            .get(reqwest::header::CONTENT_LENGTH)
+            .and_then(|value| value.to_str().ok())
+            .and_then(|value| value.parse::<u64>().ok())
+        {
+            if len > MAX_BLOB_BYTES as u64 {
+                return Err(ProviderError::Provider(format!(
+                    "JMAP blob exceeds {MAX_BLOB_BYTES} bytes"
+                )));
+            }
+        }
+        let mut body = Vec::new();
+        loop {
+            let chunk = response
+                .chunk()
+                .await
+                .map_err(|error| ProviderError::Transport(error.to_string()))?;
+            let Some(chunk) = chunk else {
+                break;
+            };
+            if body.len().saturating_add(chunk.len()) > MAX_BLOB_BYTES {
+                return Err(ProviderError::Provider(format!(
+                    "JMAP blob exceeds {MAX_BLOB_BYTES} bytes"
+                )));
+            }
+            body.extend_from_slice(&chunk);
+        }
+        Ok(body)
+    }
 }
 
 const JMAP_CORE: &str = "urn:ietf:params:jmap:core";
@@ -236,6 +296,7 @@ const JMAP_SUBMISSION: &str = "urn:ietf:params:jmap:submission";
 struct JmapSession {
     api_url: Url,
     upload_url: Option<String>,
+    download_url: Option<String>,
     capabilities: HashMap<String, Value>,
     accounts: HashMap<String, JmapAccount>,
     primary_accounts: HashMap<String, String>,
