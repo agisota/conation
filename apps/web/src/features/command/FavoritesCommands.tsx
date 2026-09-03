@@ -3,6 +3,7 @@ import { favoriteDisplayName, favoriteSplitContent } from '@app/util/favorites';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import { createHotkeyGroup, registerHotkey } from '@core/hotkey/hotkeys';
 import { registerScope } from '@core/hotkey/utils';
+import { t } from '@app/lib/i18n';
 import Star from '@phosphor/star.svg';
 import { useFavoritesData } from '@queries/favorites/favorites';
 import type { Favorite } from '@service-storage/generated/schemas/favorite';
@@ -47,14 +48,14 @@ export function FavoritesCommands() {
   staticGroup.addDisposer(
     CommandState.registerCommandScopePlaceholder(
       FAVORITES_COMMAND_SCOPE,
-      'Open favorite...'
+      t('shell.sidebar.favorites')
     )
   );
 
   staticGroup.add(
     registerHotkey({
       scopeId: 'global',
-      description: 'Favorites',
+      description: t('shell.sidebar.favorites'),
       // An empty sub-view is a dead end, so hide the command until the user
       // has favorites.
       condition: () => (favoritesData()?.favorites.length ?? 0) > 0,

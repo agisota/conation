@@ -1,7 +1,7 @@
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
 import type { AccountDeletionReason } from '@app/lib/analytics/app-events';
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
-import { getLocale, type Locale, setLocale, t } from '@app/lib/i18n';
+import { LocaleSelect, t } from '@app/lib/i18n';
 import { type BundleUpdateStatus, useTauri } from '@conation/tauri';
 import { useLogout } from '@core/auth/logout';
 import { toast } from '@core/component/Toast/Toast';
@@ -469,23 +469,7 @@ export function Account() {
           </Row>
 
           <Row label={t('settings.account.language.label')}>
-            <select
-              aria-label={t('settings.account.language.label')}
-              class="settings-input min-w-36"
-              value={getLocale()}
-              onChange={(event) => {
-                const nextLocale = event.currentTarget.value as Locale;
-                if (nextLocale === getLocale()) return;
-                setLocale(nextLocale);
-              }}
-            >
-              <option value="en">
-                {t('settings.account.language.option', { locale: 'en' })}
-              </option>
-              <option value="ru">
-                {t('settings.account.language.option', { locale: 'ru' })}
-              </option>
-            </select>
+            <LocaleSelect />
           </Row>
 
           <Show when={autoUpdateUIEnabled()}>

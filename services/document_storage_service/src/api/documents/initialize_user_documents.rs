@@ -33,7 +33,7 @@ fn legacy_onboarding_display_name(source_name: &str, file_type: &str) -> String 
     match (source_name, normalized_file_type.as_str()) {
         ("Sample PDF", "pdf") => "Пример PDF".to_string(),
         ("New Code File", "py") => "Пример кода".to_string(),
-        ("Macro Enterprise", "jpg") => "Пример изображения".to_string(),
+        ("Macro Enterprise", "jpg" | "jpeg") => "Пример изображения".to_string(),
         _ => source_name.to_string(),
     }
 }

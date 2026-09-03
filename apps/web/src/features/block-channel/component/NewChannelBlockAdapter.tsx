@@ -166,9 +166,10 @@ function NewTop(props: { channelId: string }) {
     return filtered;
   };
   const tabs = () =>
-    availableTabs().map((tab) =>
-      tab.value === 'call' ? { ...tab, label: <CallTabLabel /> } : tab
-    );
+    availableTabs().map((tab) => ({
+      value: tab.value,
+      label: tab.value === 'call' ? <CallTabLabel /> : t(tab.labelKey),
+    }));
 
   // The generic rename op is gated on the document block-load signals, which
   // the channel block never sets — so the menu offers a channel-local rename
@@ -179,7 +180,7 @@ function NewTop(props: { channelId: string }) {
     if (!ch) return undefined;
     return buildEntityData({
       id: props.channelId,
-      name: ch.name ?? 'New Channel',
+      name: ch.name ?? t('channel.defaultName'),
       blockName: 'channel',
       channelType: ch.channel_type,
       ownerId: ch.owner_id,
@@ -190,7 +191,7 @@ function NewTop(props: { channelId: string }) {
   // them instead, as a titled radio group mirroring the active tab. Built
   // from tabs() so the call tab keeps its live-call label.
   const mobileViews = () => ({
-    title: 'View',
+    title: t('channel.view'),
     options: tabs().map((tab) => ({
       value: tab.value,
       label: tab.label,
@@ -206,7 +207,7 @@ function NewTop(props: { channelId: string }) {
         channelId={props.channelId}
         channelType={channelType()!}
         participants={participants() ?? []}
-        channelName={channelName() ?? 'New Channel'}
+        channelName={channelName() ?? t('channel.defaultName')}
         tabs={tabs()}
         activeTab={activeTab()}
         onTabChange={setActiveTab}
@@ -215,7 +216,7 @@ function NewTop(props: { channelId: string }) {
         <SplitFileMenu
           id={props.channelId}
           itemType="channel"
-          name={channelName() ?? 'New Channel'}
+          name={channelName() ?? t('channel.defaultName')}
           ops={[]}
           // Generic chrome can't reconstruct a ChannelEntity (it lacks the
           // channelType), so supply it for the menu's entity-gated items.
@@ -224,7 +225,7 @@ function NewTop(props: { channelId: string }) {
           tools={[
             {
               group: 'file',
-              label: 'Rename',
+              label: t('channel.rename'),
               icon: RenameIcon,
               hotkeyToken: TOKENS.entity.action.rename,
               action: () => {

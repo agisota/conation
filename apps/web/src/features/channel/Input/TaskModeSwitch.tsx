@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { ToggleSwitch } from '@ui';
 
 /**
@@ -14,7 +15,7 @@ export function TaskModeSwitch(props: {
     <ToggleSwitch
       checked={props.checked}
       onChange={props.onChange}
-      label="Task"
+      label={t('channel.composer.task')}
       // Concentric rounding: the h-4 switch has an 8px radius, so a uniform
       // 6px ring around it needs a 14px outer radius (h-7 rounded-full) and
       // matching 6px padding on the switch side.

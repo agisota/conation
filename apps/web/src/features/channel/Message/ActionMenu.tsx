@@ -107,13 +107,13 @@ function ActionMenuContent(props: ActionMenuProps) {
   const composeActions: ActionItem[] = [
     {
       id: 'create-task',
-      label: 'Task',
+      label: t('channel.composer.task'),
       icon: TaskIcon,
       onClick: actions?.onCreateTask,
     },
     {
       id: 'chat',
-      label: 'Chat with Agent',
+      label: t('channel.message.actions.chat'),
       icon: StarIcon,
       onClick: actions?.onChat,
     },
@@ -121,21 +121,21 @@ function ActionMenuContent(props: ActionMenuProps) {
   const otherActions: ActionItem[] = [
     {
       id: 'reply',
-      label: 'Reply',
+      label: t('channel.message.actions.reply'),
       icon: ReplyIcon,
       onClick: actions?.onReply,
       iconClass: 'size-4',
     },
     {
       id: 'copy-link',
-      label: 'Copy Link',
+      label: t('channel.message.actions.copyLink'),
       icon: LinkIcon,
       onClick: actions?.onCopyLink,
       iconClass: 'size-4',
     },
     {
       id: 'copy-message-text',
-      label: 'Copy Text',
+      label: t('channel.message.actions.copyText'),
       icon: CopyIcon,
       onClick: actions?.onCopyMessageText,
       iconClass: 'size-4',
@@ -190,8 +190,8 @@ function ActionMenuContent(props: ActionMenuProps) {
                       recordEmojiUsage(emoji);
                       handleReaction(emoji, event);
                     }}
-                    tooltip={`React ${emoji}`}
-                    aria-label={`React ${emoji}`}
+                    tooltip={t('channel.message.reactWith', { emoji })}
+                    aria-label={t('channel.message.reactWith', { emoji })}
                     data-message-action="react-quick"
                     data-emoji={emoji}
                   >
@@ -209,9 +209,9 @@ function ActionMenuContent(props: ActionMenuProps) {
                 }}
                 trigger={renderIcon(AddEmojiIcon, 'size-4')}
                 triggerProps={{
-                  title: 'More reactions',
-                  'aria-label': 'More reactions',
-                  tooltip: 'More reactions',
+                  title: t('channel.message.moreReactions'),
+                  'aria-label': t('channel.message.moreReactions'),
+                  tooltip: t('channel.message.moreReactions'),
                   variant: 'ghost',
                   size: 'icon-sm',
                 }}

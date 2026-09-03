@@ -19,6 +19,17 @@ describe('standalone artifact validation', () => {
         'https://mcp-server.macro.com/mcp macro://login'
       )
     ).toEqual(['macro.com', 'macro://']);
+    expect(findForbiddenStandaloneLiterals('https://macro.com')).toEqual([
+      'macro.com',
+    ]);
+  });
+
+  it('ignores host-suffix denylists and non-URL substrings', () => {
+    expect(
+      findForbiddenStandaloneLiterals(
+        "const MANAGED_LEGACY_HOST_SUFFIXES = ['macro.com']; macromolecule notmacro.com ada@macro.com"
+      )
+    ).toEqual([]);
   });
 
   it('scans every textual release asset while excluding binary payloads', () => {

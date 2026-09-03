@@ -1,3 +1,4 @@
+import { cn } from '@ui';
 import type { JSX } from 'solid-js';
 
 const BRAND_ASSET_ROOT = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/brand`;
@@ -43,7 +44,10 @@ type ConationLockupProps = {
 export function ConationLockup(props: ConationLockupProps) {
   return (
     <span
-      class={`inline-flex items-center justify-center overflow-hidden rounded-xl bg-black ring-1 ring-white/10 ${props.class ?? ''}`}
+      class={cn(
+        'inline-flex items-center justify-center overflow-hidden rounded-xl',
+        props.class
+      )}
     >
       <img
         src={`${BRAND_ASSET_ROOT}/conation-combined-lockup-master-v1.png`}

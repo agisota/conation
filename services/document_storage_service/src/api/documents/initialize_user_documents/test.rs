@@ -48,5 +48,9 @@ fn legacy_sample_titles_are_localized_without_changing_source_names() {
         legacy_onboarding_display_name("Macro Enterprise", "jpg"),
         "Пример изображения"
     );
+    assert_eq!(
+        legacy_onboarding_display_name("Macro Enterprise", "jpeg"),
+        "Пример изображения"
+    );
     assert_eq!(legacy_onboarding_display_name("Таблица", "xlsx"), "Таблица");
 }

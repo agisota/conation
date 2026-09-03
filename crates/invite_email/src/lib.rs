@@ -258,13 +258,16 @@ fn directory_base_url(mut url: Url) -> Url {
 
 impl NotificationExtEmail for InviteToMacro {
     fn format_email(&self) -> EmailContent {
+        // Invitees have no stored locale. Render the product default (Russian)
+        // rather than the sender's Accept-Language. Recipient-initiated
+        // verification mail is the path that negotiates Accept-Language.
         let sender = self
             .sender_name
             .as_deref()
             .or(self.sender_email.as_deref())
-            .unwrap_or("A Conation user");
+            .unwrap_or("Пользователь Conation");
         EmailContent {
-            subject: format!("{sender} has invited you to join Conation"),
+            subject: format!("{sender} приглашает вас в Conation"),
             body: self
                 .render()
                 .expect("InviteToMacro template render failed in format_email"),
@@ -337,7 +340,7 @@ impl NotificationTitle for ChannelInviteMetadata {
         let email = self.invited_by.email_part();
         let sender = email.email_str();
         Ok(format!(
-            "{sender} invited you to join #{}",
+            "{sender} приглашает вас в #{}",
             self.channel_name
         ))
     }
@@ -346,7 +349,7 @@ impl NotificationTitle for ChannelInviteMetadata {
         &self,
         _sender_id: Option<MacroUserIdStr<'_>>,
     ) -> Result<String, rootcause::Report> {
-        Ok("Open Conation to continue".to_string())
+        Ok("Откройте Conation, чтобы продолжить".to_string())
     }
 }
 
@@ -354,7 +357,7 @@ impl NotificationExtEmail for ChannelInviteMetadata {
     fn format_email(&self) -> EmailContent {
         let sender = self.sender_display();
         EmailContent {
-            subject: format!("{sender} has invited you to join #{}", self.channel_name),
+            subject: format!("{sender} приглашает вас в #{}", self.channel_name),
             body: self
                 .render()
                 .expect("ChannelInviteMetadata template render failed in format_email"),
@@ -465,7 +468,7 @@ impl NotificationExtEmail for InviteToTeamMetadata {
     fn format_email(&self) -> EmailContent {
         EmailContent {
             subject: format!(
-                "{} has invited you to the {} team on Conation",
+                "{} приглашает вас в команду {} в Conation",
                 self.invited_by.email_part().as_ref(),
                 self.team_name
             ),

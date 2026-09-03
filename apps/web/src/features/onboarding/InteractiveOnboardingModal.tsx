@@ -5,12 +5,20 @@ import {
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
 import { t } from '@app/lib/i18n';
 import { globalSplitManager } from '@app/signal/splitLayout';
+import { getConfiguredClientProfile } from '@core/constant/clientProfile';
 import { isMobile } from '@core/mobile/isMobile';
 import ArrowRightIcon from '@phosphor/arrow-right.svg';
 import CloseIcon from '@phosphor/x.svg';
 import { useCompleteTutorialMutation } from '@queries/auth/tutorial';
 import { Button, Dialog, Hotkey } from '@ui';
-import { type Component, createSignal, Match, Show, Switch } from 'solid-js';
+import {
+  type Component,
+  createEffect,
+  createSignal,
+  Match,
+  Show,
+  Switch,
+} from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import InteractiveOnboarding from './InteractiveOnboarding';
 import { OnboardingProgress } from './OnboardingProgress';
@@ -47,8 +55,8 @@ function LessonContent(props: {
 function DemoFallback() {
   return (
     <div class="flex items-center justify-center h-full">
-      <div class="w-full m-12 max-w-80">
-        <ConationLockup alt="" class="aspect-[3/1] w-full opacity-25" />
+      <div class="w-full m-12 max-w-sm">
+        <ConationLockup alt="" class="aspect-[3/1] w-full" />
       </div>
     </div>
   );
@@ -302,8 +310,13 @@ export function InteractiveOnboardingModal(
     props.defaultOpen ?? false
   );
   const completeTutorial = useCompleteTutorialMutation();
+  const skipStandaloneOverlay =
+    getConfiguredClientProfile() === 'standalone' &&
+    props.isFirstTimeOnboarding === true;
+  let standaloneSkipLocked = false;
 
-  const open = () => props.open ?? internalOpen();
+  const open = () =>
+    skipStandaloneOverlay ? false : (props.open ?? internalOpen());
 
   // NOTE: signup/acquisition conversions used to fire when this modal closed.
   // The tutorial is optional, so acquisition tracking now fires at actual
@@ -315,6 +328,13 @@ export function InteractiveOnboardingModal(
     setInternalOpen(nextOpen);
     props.onOpenChange?.(nextOpen);
   };
+
+  createEffect(() => {
+    if (!skipStandaloneOverlay || standaloneSkipLocked) return;
+    if ((props.open ?? internalOpen()) !== true) return;
+    standaloneSkipLocked = true;
+    setOpen(false);
+  });
 
   return (
     <Dialog

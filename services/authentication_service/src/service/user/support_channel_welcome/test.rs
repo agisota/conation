@@ -80,6 +80,7 @@ async fn posts_the_welcome_message() {
         &channel_id.to_string(),
         user_id("new.user@example.com"),
         &SupportTeam::conation_default().unwrap(),
+        None,
     )
     .await
     .unwrap();
@@ -95,6 +96,7 @@ async fn posts_the_welcome_message() {
         Some(&user_id("pythia@conation.dev"))
     );
     assert_eq!(welcome.request.content, expected_welcome());
+    assert!(!welcome.request.content.contains("Macro"));
     assert_eq!(
         welcome.request.mentions,
         vec![SimpleMention::user(&user_id("new.user@example.com"))]
@@ -110,6 +112,44 @@ async fn posts_the_welcome_message() {
 }
 
 #[tokio::test]
+async fn posts_the_welcome_message_with_how_to_guide() {
+    let channel_id = Uuid::new_v4();
+    let gateway = RecordingGateway::default();
+    let guide_id = "c2f62cd8-cd0a-504b-a3c0-9ca0d850f560";
+    let guide_name = "Знакомство с Conation";
+
+    post_support_channel_welcome(
+        &gateway,
+        &channel_id.to_string(),
+        user_id("new.user@example.com"),
+        &SupportTeam::conation_default().unwrap(),
+        Some((guide_id, guide_name)),
+    )
+    .await
+    .unwrap();
+
+    let posted = gateway.posted.lock().unwrap();
+    let [welcome] = posted.as_slice() else {
+        panic!("expected exactly one posted message, got {}", posted.len());
+    };
+
+    let guide_mention = document_mention(guide_id, guide_name).unwrap();
+    assert!(welcome.request.content.contains(&guide_mention));
+    assert!(welcome.request.content.contains("краткого руководства"));
+    assert!(!welcome.request.content.contains("Macro"));
+    assert_eq!(
+        welcome.request.mentions,
+        vec![
+            SimpleMention::user(&user_id("new.user@example.com")),
+            SimpleMention {
+                entity_type: "document".to_string(),
+                entity_id: guide_id.to_string(),
+            },
+        ]
+    );
+}
+
+#[tokio::test]
 async fn rejects_an_invalid_channel_id_without_posting() {
     let gateway = RecordingGateway::default();
 
@@ -118,6 +158,7 @@ async fn rejects_an_invalid_channel_id_without_posting() {
         "not-a-uuid",
         user_id("new.user@example.com"),
         &SupportTeam::conation_default().unwrap(),
+        None,
     )
     .await
     .unwrap_err();

@@ -1,4 +1,5 @@
 import { FavoriteIcon } from '@app/features/favorites/FavoriteIcon';
+import { t } from '@app/lib/i18n';
 import { globalSplitManager } from '@app/signal/splitLayout';
 import {
   favoriteIconType,
@@ -217,7 +218,7 @@ export const FavoritesSection = (props: {
     <Show when={props.sidebarState === 'expanded' && favorites().length > 0}>
       <div class="w-full shrink-0">
         <FavoritesGroup
-          label="Favorites"
+          label={t('shell.sidebar.favorites')}
           favorites={favorites()}
           persistKey="sidebar-favorites-expanded"
           onContextMenuOpenChange={props.onContextMenuOpenChange}

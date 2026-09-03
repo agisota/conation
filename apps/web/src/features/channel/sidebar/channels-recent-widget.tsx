@@ -564,7 +564,7 @@ export const ChannelsRecentWidget = (props: {
     >
       <Show when={recentChannels().length > 0}>
         <CollapsibleSidebarSection
-          label="Latest"
+          label={t('shell.sidebar.latest')}
           persistKey="recent-channels"
           items={sectionItems()}
           headerWrapper={props.headerWrapper}

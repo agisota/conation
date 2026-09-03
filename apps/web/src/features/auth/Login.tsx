@@ -3,8 +3,9 @@ import { OnboardingFlow } from '@app/features/setup/flow/OnboardingFlow';
 import { NoiseBackground } from '@app/features/setup/flow/shared';
 import { useOnboardingV4Flag } from '@app/features/setup/flow/useOnboardingV4Flag';
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
-import { t } from '@app/lib/i18n';
+import { LocaleSelect, t } from '@app/lib/i18n';
 import { GOOGLE_GMAIL_IDP } from '@core/auth/email';
+import { getConfiguredClientProfile } from '@core/constant/clientProfile';
 import { LoadingBlock } from '@core/component/LoadingBlock';
 import { toast } from '@core/component/Toast/Toast';
 import { useEmailLinks } from '@core/email-link';
@@ -113,6 +114,8 @@ function LoginPicker(props: {
   // Apple sign-in is iOS-only: it's required there for App Store review,
   // and intentionally absent on desktop.
   const showApple = getNativeMobilePlatform() === 'ios';
+  // Standalone/self-host has no Google IdP; the button only 500s.
+  const showGoogle = getConfiguredClientProfile() !== 'standalone';
 
   const continueWithEmail = () => {
     if (props.signupMode) {
@@ -123,15 +126,17 @@ function LoginPicker(props: {
 
   return (
     <div class="flex flex-col gap-3">
-      <Button
-        variant="cta"
-        size="xl"
-        autofocus
-        onClick={() => startSsoLogin(GOOGLE_GMAIL_IDP)}
-      >
-        <IconGoogle class="size-fit" />
-        {t('auth.methods.continueWithGoogle')}
-      </Button>
+      <Show when={showGoogle}>
+        <Button
+          variant="cta"
+          size="xl"
+          autofocus
+          onClick={() => startSsoLogin(GOOGLE_GMAIL_IDP)}
+        >
+          <IconGoogle class="size-fit" />
+          {t('auth.methods.continueWithGoogle')}
+        </Button>
+      </Show>
 
       <Show when={showApple}>
         <Button
@@ -146,9 +151,10 @@ function LoginPicker(props: {
       </Show>
 
       <Button
-        variant="outline"
+        variant={showGoogle ? 'outline' : 'cta'}
         size="xl"
-        class="bg-surface"
+        class={showGoogle ? 'bg-surface' : undefined}
+        autofocus={!showGoogle}
         onClick={continueWithEmail}
       >
         {t('auth.methods.continueWithEmail')}
@@ -618,13 +624,16 @@ export function Login(props: { signupMode?: boolean }) {
         }</style>
 
         <NoiseBackground />
+        <div class="absolute top-4 right-4 z-20">
+          <LocaleSelect variant="compact" />
+        </div>
 
         <div class="relative z-10 w-full max-w-sm sm:max-w-lg ln-card">
           <div class="px-4 sm:px-8 flex flex-col gap-12">
             <div class="flex flex-col gap-8">
               <Show when={!virtualKeyboardVisible()}>
                 <div class="flex flex-col gap-1.5">
-                  <ConationLockup alt="" class="mb-3 h-16 w-64 max-w-full" />
+                  <ConationLockup alt="" class="mb-4 h-24 w-[22rem] max-w-full brightness-0" />
                   <h1 class="font-semibold tracking-tight text-ink text-2xl">
                     {t('auth.welcome.title')}
                   </h1>

@@ -48,6 +48,12 @@ const PREVIEW_CONTROLLER_CONTENT_CONFIG: readonly PreviewControllerContentConfig
       type: 'component',
       id: LIST_VIEW_ID.channels,
       redistributionWidth: { preferredPx: 300 },
+      get emptyState() {
+        return {
+          title: t('shell.channels.empty.title'),
+          description: t('shell.channels.empty.description'),
+        };
+      },
     },
     {
       type: 'component',

@@ -3,6 +3,7 @@ import { CommandState } from '@app/features/command';
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
 import { t } from '@app/lib/i18n';
 import { useSplitPanel } from '@components/app/split-layout/layoutUtils';
+import { getConfiguredClientProfile } from '@core/constant/clientProfile';
 import { useTutorialCompleted } from '@core/context/user';
 import { registerHotkey, useHotkeyDOMScope } from '@core/hotkey/hotkeys';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
@@ -33,6 +34,16 @@ interface InteractiveOnboardingProps {
 export default function InteractiveOnboarding(
   props: InteractiveOnboardingProps
 ) {
+  const skipStandaloneOverlay =
+    getConfiguredClientProfile() === 'standalone' &&
+    props.isFirstTimeOnboarding === true &&
+    (typeof window === 'undefined' ||
+      !new URLSearchParams(window.location.search).has('test'));
+
+  if (skipStandaloneOverlay) {
+    return <StandaloneOnboardingSkip onDismiss={props.onDismiss} />;
+  }
+
   return (
     <InteractiveOnboardingInner
       onDismiss={props.onDismiss}
@@ -42,6 +53,35 @@ export default function InteractiveOnboarding(
       {props.children}
     </InteractiveOnboardingInner>
   );
+}
+
+/** Self-host: do not overlay the mock tutorial on the live shell. */
+function StandaloneOnboardingSkip(props: { onDismiss?: () => void }) {
+  const analytics = useAnalytics();
+  const splitPanel = useSplitPanel();
+  const completeTutorial = useCompleteTutorialMutation();
+
+  const leave = () => {
+    if (props.onDismiss) {
+      props.onDismiss();
+      return;
+    }
+    if (splitPanel) {
+      splitPanel.handle.replace({
+        next: { type: 'component', id: 'getting-started' },
+      });
+      return;
+    }
+    window.location.replace(ROUTER_BASE);
+  };
+
+  onMount(() => {
+    analytics.track('tutorial_skipped', { isFirstTime: true });
+    completeTutorial.mutate(undefined);
+    leave();
+  });
+
+  return null;
 }
 
 function InteractiveOnboardingInner(props: InteractiveOnboardingProps) {
@@ -94,7 +134,7 @@ function InteractiveOnboardingInner(props: InteractiveOnboardingProps) {
       props.onDismiss();
     } else if (splitPanel) {
       splitPanel.handle.replace({
-        next: { type: 'component', id: 'unified-list' },
+        next: { type: 'component', id: 'getting-started' },
       });
     } else {
       window.location.replace(ROUTER_BASE);
@@ -358,7 +398,11 @@ function InteractiveOnboardingInner(props: InteractiveOnboardingProps) {
     on(
       () => state.dismissed(),
       (dismissed) => {
-        if (dismissed) navigateAway();
+        if (!dismissed) return;
+        if (props.isFirstTimeOnboarding) {
+          completeTutorial.mutate(undefined);
+        }
+        navigateAway();
       }
     )
   );

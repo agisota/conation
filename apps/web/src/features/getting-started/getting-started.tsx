@@ -242,7 +242,8 @@ function GettingStartedContent() {
         icon: example.icon,
         title: t(example.titleKey),
         description: t(example.descriptionKey),
-        onActivate: () => openChatPrompt(example.prompt),
+        onActivate: () =>
+          openChatPrompt(t(example.promptKey, example.promptValues)),
       })),
     },
   ];

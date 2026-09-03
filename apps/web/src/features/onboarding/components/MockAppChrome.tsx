@@ -157,7 +157,10 @@ export function MockAppChrome(props: MockAppChromeProps) {
   onCleanup(() => group.dispose());
 
   return (
-    <div class="size-full p-4 bg-surface">
+    <div class="size-full p-4 bg-surface relative">
+      <div class="absolute top-1 left-1/2 -translate-x-1/2 z-10 rounded-full bg-ink/80 px-2 py-0.5 text-[10px] font-medium tracking-wide text-surface">
+        {t('onboarding.tutorial.demoLabel')}
+      </div>
       <style>{`
         @keyframes sidebar-glow-pulse {
           0%, 100% { box-shadow: 0 0 0 0 rgb(from var(--color-accent) r g b / 0.7), 0 0 6px 1px rgb(from var(--color-accent) r g b / 0.7), 0 0 12px 3px rgb(from var(--color-accent) r g b / 0.4); }

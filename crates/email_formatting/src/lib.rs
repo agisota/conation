@@ -158,6 +158,9 @@ fn notification_noun(count: usize) -> &'static str {
 }
 
 fn digest_subject(notification_count: usize) -> String {
+    // Product-default Russian: recipient locale is not persisted (no user.locale).
+    // Do not infer from the sender. Accept-Language is only negotiated on
+    // recipient-initiated verification mail.
     format!(
         "У вас {} в Conation",
         notification_phrase(notification_count)

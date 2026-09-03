@@ -50,6 +50,7 @@ import {
   ENABLE_REMINDERS_FLAG,
   ENABLE_REMINDERS_OVERRIDE,
 } from '@core/constant/featureFlags';
+import { getConfiguredClientProfile } from '@core/constant/clientProfile';
 import { isSoloSettings } from '@core/constant/SettingsState';
 import { attachGlobalDOMScope } from '@core/hotkey/hotkeys';
 import { isMobile } from '@core/mobile/isMobile';
@@ -57,6 +58,7 @@ import { isNativeMobilePlatform } from '@core/mobile/isNativeMobilePlatform';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
 import { virtualKeyboardVisible } from '@core/mobile/virtualKeyboard';
 import { updateCookie } from '@core/util/cookies';
+import { useCompleteTutorialMutation } from '@queries/auth/tutorial';
 import { useUserInfoQuery } from '@queries/auth/user-info';
 import { makePersisted } from '@solid-primitives/storage';
 import {
@@ -304,19 +306,47 @@ function CollapsedSidebarIncomingCallWidget(props: {
  * Sends first-time desktop users into the onboarding flow at /onboarding.
  * Fires from anywhere in the app (marketing SSO lands on /app, not /login),
  * but never off auth/full-screen routes — /onboarding itself included.
+ *
+ * Standalone/self-host skips that overlay: v4 onboarding is Gmail/PostHog
+ * gated, and the mock tutorial is not the live shell. Skip/finish still
+ * writes tutorialComplete so Layout and /onboarding cannot ping-pong.
  */
 function NewOnboardingRedirect() {
   const userInfoQuery = useUserInfoQuery();
   const navigate = useNavigate();
   const location = useLocation();
   const onboardingV4 = useOnboardingV4Flag();
+  const completeTutorial = useCompleteTutorialMutation();
+  let standaloneTutorialLock = false;
 
   createEffect(() => {
+    const data = userInfoQuery.data;
+    if (data?.authenticated !== true) {
+      return;
+    }
+
+    if (getConfiguredClientProfile() === 'standalone') {
+      const onboardingSurface =
+        location.pathname === `${ROUTER_BASE_CONCAT}onboarding` ||
+        location.pathname === `${ROUTER_BASE_CONCAT}setup`;
+
+      if (data.tutorialComplete === false && !standaloneTutorialLock) {
+        standaloneTutorialLock = true;
+        void completeTutorial.mutateAsync().catch(() => {
+          standaloneTutorialLock = false;
+        });
+      }
+
+      if (onboardingSurface) {
+        navigate(DEFAULT_ROUTE, { replace: true });
+      }
+      return;
+    }
+
     if (!onboardingV4().enabled || isMobile() || isNativeMobilePlatform()) {
       return;
     }
-    const data = userInfoQuery.data;
-    if (data?.authenticated !== true || data.tutorialComplete !== false) {
+    if (data.tutorialComplete !== false) {
       return;
     }
     if (AUTH_URLS.includes(location.pathname)) return;

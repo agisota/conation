@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { openExternalUrl } from '@core/util/url';
 import { type Component, type JSXElement, Show } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
@@ -112,7 +113,7 @@ export function EmptyStatePanel(props: EmptyStatePanelProps) {
                   tone="subtle"
                   onClick={() => openExternalUrl(url())}
                 >
-                  {props.documentationLabel ?? 'Documentation'}
+                  {props.documentationLabel ?? t('soup.empty.documentation')}
                 </PillButton>
               )}
             </Show>

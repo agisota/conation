@@ -15,8 +15,8 @@ export type AgentExample = {
   icon: Component<{ class?: string }>;
   titleKey: string;
   descriptionKey: string;
-  /** Stable instruction sent to the agent; this is behavior, not display copy. */
-  prompt: string;
+  promptKey: string;
+  promptValues?: { link: string };
 };
 
 /** App links the example prompts ask the agent to include in its reply. */
@@ -36,28 +36,30 @@ export const AGENT_EXAMPLES: AgentExample[] = [
     icon: TagIcon,
     titleKey: 'shell.gettingStarted.examples.organizeInboxTitle',
     descriptionKey: 'shell.gettingStarted.examples.organizeInboxDescription',
-    prompt: `Categorize and tag recent emails in my inbox. Link me to ${MANAGE_TAGS_LINK} where I can manage all of my tags.`,
+    promptKey: 'shell.gettingStarted.examples.organizeInboxPrompt',
+    promptValues: { link: MANAGE_TAGS_LINK },
   },
   {
     id: 'example-pull-tasks',
     icon: AnimatedTaskIcon,
     titleKey: 'shell.gettingStarted.examples.pullTasksTitle',
     descriptionKey: 'shell.gettingStarted.examples.pullTasksDescription',
-    prompt: `Find my most important recent emails and create tasks from them. Link me to ${TASKS_LIST_LINK} where I can see all of my tasks.`,
+    promptKey: 'shell.gettingStarted.examples.pullTasksPrompt',
+    promptValues: { link: TASKS_LIST_LINK },
   },
   {
     id: 'example-weekly-brief',
     icon: AnimatedFileMdIcon,
     titleKey: 'shell.gettingStarted.examples.weeklyBriefTitle',
     descriptionKey: 'shell.gettingStarted.examples.weeklyBriefDescription',
-    prompt:
-      'Review my recent emails, documents, and tasks from the past week. Identify key decisions, open questions, blockers, and next steps, then create a concise weekly briefing document with links to the original sources.',
+    promptKey: 'shell.gettingStarted.examples.weeklyBriefPrompt',
   },
   {
     id: 'example-auto-tag-tasks',
     icon: TagIcon,
     titleKey: 'shell.gettingStarted.examples.tagTasksTitle',
     descriptionKey: 'shell.gettingStarted.examples.tagTasksDescription',
-    prompt: `Review my open tasks and apply helpful tags to organize them. Link me to ${MANAGE_TAGS_LINK} where I can manage all of my tags.`,
+    promptKey: 'shell.gettingStarted.examples.tagTasksPrompt',
+    promptValues: { link: MANAGE_TAGS_LINK },
   },
 ];

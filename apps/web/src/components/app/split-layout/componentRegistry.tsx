@@ -178,7 +178,7 @@ registerComponent(
     const preset = getViewPreset('inbox');
     return (
       <SoupView
-        viewName="Inbox"
+        viewName={t('shell.navigation.inbox')}
         initialFilters={preset?.filters}
         initialClientFilters={preset?.clientFilters}
         initialGroupBy={preset?.groupBy}
@@ -195,7 +195,7 @@ function TrackedRecentView() {
   const preset = getViewPreset('recent');
   return (
     <SoupView
-      viewName="Recent"
+      viewName={t('shell.navigation.recent')}
       initialFilters={preset?.filters}
       initialClientFilters={preset?.clientFilters}
       // Rows carry the server's touched_at, so sorting on it preserves
@@ -277,7 +277,7 @@ registerComponent(
     const preset = getViewPreset('reminders');
     return (
       <SoupView
-        viewName="Reminders"
+        viewName={t('shell.navigation.reminders')}
         initialFilters={preset?.filters}
         initialClientFilters={preset?.clientFilters}
         initialGroupBy={preset?.groupBy}
@@ -308,7 +308,7 @@ registerComponent(
     const automationEntities = useAutomationEntities();
     return (
       <SoupView
-        viewName="Agents"
+        viewName={t('shell.navigation.agents')}
         initialFilters={preset?.filters}
         initialClientFilters={preset?.clientFilters}
         initialGroupBy={preset?.groupBy}
@@ -325,7 +325,7 @@ registerComponent(
     const preset = getViewPreset('mail');
     return (
       <SoupView
-        viewName="Email"
+        viewName={t('shell.navigation.email')}
         initialFilters={preset?.filters}
         initialClientFilters={preset?.clientFilters}
         initialGroupBy={preset?.groupBy}
@@ -353,7 +353,7 @@ registerComponent(
     );
     return (
       <SoupView
-        viewName="Files"
+        viewName={t('shell.navigation.files')}
         initialFilters={initialFilters}
         initialClientFilters={initialClientFilters}
         initialGroupBy={preset?.groupBy}
@@ -373,7 +373,7 @@ registerComponent(
     });
     return (
       <SoupView
-        viewName="Tasks"
+        viewName={t('shell.navigation.tasks')}
         initialFilters={preset?.filters}
         initialClientFilters={preset?.clientFilters}
         initialGroupBy={preset?.groupBy}
@@ -389,7 +389,7 @@ registerComponent(
     const preset = getViewPreset('channels');
     return (
       <SoupView
-        viewName="Channels"
+        viewName={t('shell.navigation.channels')}
         initialFilters={preset?.filters}
         initialClientFilters={preset?.clientFilters}
         initialGroupBy={preset?.groupBy}
@@ -405,7 +405,7 @@ registerComponent(
     const preset = getViewPreset('calls');
     return (
       <SoupView
-        viewName="Calls"
+        viewName={t('shell.navigation.calls')}
         initialFilters={preset?.filters}
         initialClientFilters={preset?.clientFilters}
         initialGroupBy={preset?.groupBy}
@@ -434,7 +434,7 @@ registerComponent(
       : undefined;
     return (
       <SoupView
-        viewName="Customers"
+        viewName={t('shell.navigation.customers')}
         initialFilters={preset?.filters}
         initialClientFilters={preset?.clientFilters}
         initialGroupBy={preset?.groupBy}
@@ -455,7 +455,7 @@ registerComponent(
     });
     return (
       <SoupView
-        viewName="Folders"
+        viewName={t('shell.navigation.folders')}
         initialFilters={preset?.filters}
         initialClientFilters={preset?.clientFilters}
         initialGroupBy={preset?.groupBy}
@@ -512,10 +512,10 @@ registerComponent('preview-empty', () => {
   return (
     <EmptyStatePanel
       graphic={EmptyStatePreviewIcon}
-      title={emptyState()?.title ?? 'No content selected'}
+      title={emptyState()?.title ?? t('shell.split.previewEmpty.title')}
       description={
         emptyState()?.description ??
-        'Select an item from the connected list to preview it here'
+        t('shell.split.previewEmpty.description')
       }
       centered
     />

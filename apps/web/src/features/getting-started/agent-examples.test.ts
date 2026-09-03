@@ -2,10 +2,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 afterEach(() => vi.unstubAllEnvs());
 
-async function prompts() {
+async function promptLinks() {
   vi.resetModules();
-  return (await import('./agent-examples')).AGENT_EXAMPLES.map(
-    (example) => example.prompt
+  return (await import('./agent-examples')).AGENT_EXAMPLES.flatMap(
+    (example) => (example.promptValues?.link ? [example.promptValues.link] : [])
   );
 }
 
@@ -17,14 +17,10 @@ describe('agent examples', () => {
       'https://operator.example.test'
     );
 
-    expect(await prompts()).toEqual(
+    expect(await promptLinks()).toEqual(
       expect.arrayContaining([
-        expect.stringContaining(
-          'https://operator.example.test/app/settings/tags'
-        ),
-        expect.stringContaining(
-          'https://operator.example.test/app/component/tasks'
-        ),
+        'https://operator.example.test/app/settings/tags',
+        'https://operator.example.test/app/component/tasks',
       ])
     );
   });

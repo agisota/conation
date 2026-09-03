@@ -16,7 +16,10 @@ export type MessageValues = Record<string, PrimitiveType>;
 const messages: Record<Locale, MessageCatalog> = { en, ru };
 const messageFormatCache = new Map<string, IntlMessageFormat>();
 
-function normalizeLocale(value: string | null | undefined): Locale | undefined {
+/** Parses a language tag or storage value into a supported locale. */
+export function parseLocale(
+  value: string | null | undefined
+): Locale | undefined {
   const language = value?.trim().toLowerCase().split(/[-_]/, 1)[0];
   return SUPPORTED_LOCALES.find((locale) => locale === language);
 }
@@ -26,7 +29,7 @@ export function resolveLocale(
   preferences: readonly (string | null | undefined)[]
 ): Locale {
   for (const preference of preferences) {
-    const resolved = normalizeLocale(preference);
+    const resolved = parseLocale(preference);
     if (resolved) return resolved;
   }
   return DEFAULT_LOCALE;
@@ -81,7 +84,7 @@ export function initI18n() {
   initialized = true;
   window.addEventListener('storage', (event) => {
     if (event.key !== LOCALE_STORAGE_KEY) return;
-    const nextLocale = normalizeLocale(event.newValue);
+    const nextLocale = parseLocale(event.newValue);
     if (!nextLocale || nextLocale === getLocale()) return;
     setLocaleSignal(nextLocale);
     syncDocumentLanguage(nextLocale);
@@ -210,3 +213,5 @@ export function formatRelativeTime(
 export function getAcceptLanguage(): string {
   return getDateLocale();
 }
+
+export { LocaleSelect } from './LocaleSelect';

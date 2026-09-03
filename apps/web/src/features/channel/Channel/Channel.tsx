@@ -386,7 +386,9 @@ export function Channel(props: ChannelProps) {
 
   const inputPlaceholder = () => {
     const name = inputPlaceholderName();
-    return name ? `Type @ to share with ${name}` : 'Type @ to share';
+    return name
+      ? t('channel.composer.sharePlaceholderWithName', { name })
+      : t('channel.composer.sharePlaceholder');
   };
 
   const buildChannelMessageMention = (message: {
@@ -671,10 +673,10 @@ export function Channel(props: ChannelProps) {
         // composer (retrying there would create a duplicate) — point at the
         // task instead.
         onError: () => {
-          toast.failure('Task created, but sharing it to the channel failed', {
+          toast.failure(t('channel.feedback.taskShareFailed'), {
             actions: [
               {
-                label: 'Open task',
+                label: t('channel.openTask'),
                 onClick: () =>
                   openWithSplit(
                     { type: 'task', id: task.documentId },
@@ -710,7 +712,7 @@ export function Channel(props: ChannelProps) {
   return (
     <EntityLoadGate
       result={messagesLoadResult}
-      loadErrorTitle="Unable to load this channel"
+      loadErrorTitle={t('channel.loadFailed')}
       onRetry={() => void messagesQuery.refetch()}
     >
       <DebugSuspense name="Channel.root">

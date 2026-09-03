@@ -1,11 +1,12 @@
 <!doctype html>
 <html
+  lang="ru"
   xmlns:o="urn:schemas-microsoft-com:office:office"
   xmlns:v="urn:schemas-microsoft-com:vml"
   xmlns="http://www.w3.org/1999/xhtml"
 >
   <head>
-    <title>You're Invited to Conation</title>
+    <title>Вас пригласили в Conation</title>
     <!--[if !mso]><!-->
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <!--<![endif]-->
@@ -139,7 +140,7 @@
                       Courier, monospace;
                   "
                   >&lt;{{ email }}&gt;</span
-                >{% else %}A Conation user{% endif %}{% endif %} has invited you to Conation
+                >{% else %}Пользователь Conation{% endif %}{% endif %} приглашает вас в Conation
               </td>
             </tr>
           </tbody>
@@ -171,9 +172,9 @@
                   monospace;
               "
               >&lt;{{ email }}&gt;</span
-            >{% else %}A Conation user{% endif %}{% endif %} has invited you to join them on Conation. Collaborate on
-            documents. Stay in sync with tasks. Search over everything. AI
-            Assistance with anything.
+            >{% else %}Пользователь Conation{% endif %}{% endif %} приглашает вас присоединиться к Conation. Работайте вместе над
+            документами, следите за задачами, ищите по всему пространству. ИИ-помощник — для
+            любых вопросов.
           </div>
 
           <table
@@ -212,7 +213,7 @@
                     href="{{ referral_url() }}"
                     target="_blank"
                   >
-                    Join {% if let Some(name) = sender_name %}{{ name }}{% else
+                    Присоединиться к {% if let Some(name) = sender_name %}{{ name }}{% else
                     %}{% if let Some(email) = sender_email %}{{ email }}{% else %}Conation{% endif %}{% endif %}
                   </a>
                 </td>

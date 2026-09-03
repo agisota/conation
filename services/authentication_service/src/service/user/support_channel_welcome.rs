@@ -5,7 +5,7 @@ use channels::domain::{
     ports::ChannelService,
 };
 use conation_user_id::user_id::MacroUserIdStr;
-use mention_utils::serialize::user_mention;
+use mention_utils::serialize::{document_mention, user_mention};
 use rootcause::{Report, prelude::ResultExt};
 use uuid::Uuid;
 
@@ -102,23 +102,38 @@ fn support_user(role: &str, email: &str) -> Result<MacroUserIdStr<'static>, Repo
 }
 
 /// Post the support host's welcome message in a newly created support channel.
+///
+/// `how_to_guide` is `(document_id, display_name)` of the starter how-to
+/// document seeded for this user. When present, the message links it so the
+/// first support thread points at Conation's guide rather than leaving the
+/// user to hunt through favorites.
 pub async fn post_support_channel_welcome(
     gateway: &impl SupportChannelMessageGateway,
     channel_id: &str,
     new_user: MacroUserIdStr<'static>,
     support_team: &SupportTeam,
+    how_to_guide: Option<(&str, &str)>,
 ) -> Result<(), Report> {
     let channel_id =
         Uuid::parse_str(channel_id).context("support channel returned an invalid id")?;
 
     let new_user_mention = user_mention(&new_user)?;
+    let how_to_guide_line = match how_to_guide {
+        Some((document_id, document_name)) => {
+            let guide_mention = document_mention(document_id, document_name)?;
+            format!(
+                "\n\nНачните с {guide_mention} — краткого руководства по работе в Conation."
+            )
+        }
+        None => String::new(),
+    };
 
     let welcome = format!(
         "Привет, {new_user_mention}!\n\
 \n\
 Добро пожаловать в Conation! Мы рады, что вы с нами.\n\
 \n\
-Это ваш личный канал поддержки. Здесь вам помогут {} (генеральный директор), {} (технический директор) и я.\n\
+Это ваш личный канал поддержки. Здесь вам помогут {} (генеральный директор), {} (технический директор) и я.{how_to_guide_line}\n\
 \n\
 Если у вас появятся вопросы, предложения или вы найдёте ошибку — напишите нам здесь.",
         user_mention(&support_team.chief_executive)?,
@@ -127,8 +142,15 @@ pub async fn post_support_channel_welcome(
     // Keep the executive and technical lead visually mentioned without
     // tracking them: tracked mentions would notify them on every signup. The
     // support host is the sender, so the channel notification policy excludes
-    // that account automatically.
-    let mentions = [&new_user].into_iter().map(SimpleMention::user).collect();
+    // that account automatically. The how-to document mention is tracked so
+    // the References panel links the welcome message to the starter guide.
+    let mut mentions = vec![SimpleMention::user(&new_user)];
+    if let Some((document_id, _)) = how_to_guide {
+        mentions.push(SimpleMention {
+            entity_type: "document".to_string(),
+            entity_id: document_id.to_string(),
+        });
+    }
 
     gateway
         .post_message(

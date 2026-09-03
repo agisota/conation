@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import type { ChannelTabId } from '@channel/Channel/channel-tabs';
 import { CollapsibleHeaderItem } from '@components/app/split-layout/components/CollapsibleItem';
 import { HeaderIsland } from '@components/app/split-layout/components/HeaderIsland';
@@ -75,7 +76,7 @@ export function ChannelTopLeft(props: ChannelTopLeftProps) {
   const blockId = useBlockId();
   const channelName = useChannelName(
     blockId,
-    props.channelName ?? 'New Channel'
+    props.channelName ?? t('channel.defaultName')
   );
 
   const iconTabList = () =>
@@ -98,7 +99,7 @@ export function ChannelTopLeft(props: ChannelTopLeftProps) {
             participants={props.participants}
           />
           <SplitLabel
-            label={channelName() ?? 'New Channel'}
+            label={channelName() ?? t('channel.defaultName')}
             lockRename={props.lockRename}
             renameOverrides={{ channelType: props.channelType }}
             maxDisplayLength={48}

@@ -8,6 +8,7 @@ import {
 import { t } from '@app/lib/i18n';
 import { openNewChannelModal } from '@channel/CreateChannelModal';
 import { useSettingsState } from '@core/constant/SettingsState';
+import { getConfiguredClientProfile } from '@core/constant/clientProfile';
 import { useAddInboxFlow, useEmailLinksStatus } from '@core/email-link';
 import EmptyStateAiGraphic from '@design/empty-state-ai.svg';
 import EmptyStateAutomationsGraphic from '@design/empty-state-automations.svg';
@@ -121,6 +122,9 @@ export function EmptyState(props: {
   const crmEnabled = () => teamQuery.data?.team.crm_enabled ?? false;
   const hasNoTeam = () => teamQuery.data === null;
 
+  const canConnectEmail = getConfiguredClientProfile() !== 'standalone';
+  const documentationLabel = t('soup.empty.documentation');
+
   const onConnectEmail = () => {
     void startAddInbox();
   };
@@ -140,6 +144,7 @@ export function EmptyState(props: {
           }
           description={t('soup.empty.search.queryDescription')}
           documentationUrl={`${DOCS_BASE}/product/search`}
+          documentationLabel={documentationLabel}
         />
       </Match>
 
@@ -187,6 +192,7 @@ export function EmptyState(props: {
               : undefined
           }
           documentationUrl={`${DOCS_BASE}/product/inbox`}
+          documentationLabel={documentationLabel}
         />
       </Match>
 
@@ -194,12 +200,21 @@ export function EmptyState(props: {
         <EmptyStatePanel
           graphic={EmptyStateInboxTrayGraphic}
           title={t('soup.empty.inbox.disconnectedTitle')}
-          description={t('soup.empty.mail.connectDescription')}
-          primaryAction={{
-            label: t('soup.empty.mail.connectAction'),
-            onClick: onConnectEmail,
-          }}
+          description={
+            canConnectEmail
+              ? t('soup.empty.mail.connectDescription')
+              : t('soup.empty.inbox.disconnectedDescription')
+          }
+          primaryAction={
+            canConnectEmail
+              ? {
+                  label: t('soup.empty.mail.connectAction'),
+                  onClick: onConnectEmail,
+                }
+              : undefined
+          }
           documentationUrl={`${DOCS_BASE}/product/inbox`}
+          documentationLabel={documentationLabel}
         />
       </Match>
 
@@ -207,12 +222,21 @@ export function EmptyState(props: {
         <EmptyStatePanel
           graphic={EmptyStateEmailGraphic}
           title={t('soup.empty.mail.disconnectedTitle')}
-          description={t('soup.empty.mail.connectDescription')}
-          primaryAction={{
-            label: t('soup.empty.mail.connectAction'),
-            onClick: onConnectEmail,
-          }}
+          description={
+            canConnectEmail
+              ? t('soup.empty.mail.connectDescription')
+              : t('soup.empty.inbox.disconnectedDescription')
+          }
+          primaryAction={
+            canConnectEmail
+              ? {
+                  label: t('soup.empty.mail.connectAction'),
+                  onClick: onConnectEmail,
+                }
+              : undefined
+          }
           documentationUrl={`${DOCS_BASE}/product/email`}
+          documentationLabel={documentationLabel}
         />
       </Match>
 
@@ -249,6 +273,7 @@ export function EmptyState(props: {
               title={title}
               description={description}
               documentationUrl={`${DOCS_BASE}/product/inbox`}
+              documentationLabel={documentationLabel}
             />
           );
         })()}
@@ -260,6 +285,7 @@ export function EmptyState(props: {
           title={t('soup.empty.mail.zeroTitle')}
           description={t('soup.empty.mail.zeroDescription')}
           documentationUrl={`${DOCS_BASE}/product/email`}
+          documentationLabel={documentationLabel}
         />
       </Match>
 
@@ -274,6 +300,7 @@ export function EmptyState(props: {
             onClick: () => runCreateAction('task'),
           }}
           documentationUrl={`${DOCS_BASE}/product/tasks`}
+          documentationLabel={documentationLabel}
         />
       </Match>
 
@@ -290,6 +317,7 @@ export function EmptyState(props: {
             onClick: () => runCreateAction('automation'),
           }}
           documentationUrl={`${DOCS_BASE}/product/agents`}
+          documentationLabel={documentationLabel}
         />
       </Match>
 
@@ -306,6 +334,7 @@ export function EmptyState(props: {
             onClick: () => runCreateAction('skill'),
           }}
           documentationUrl={`${DOCS_BASE}/product/agents`}
+          documentationLabel={documentationLabel}
         />
       </Match>
 
@@ -320,6 +349,7 @@ export function EmptyState(props: {
             onClick: () => runCreateAction('chat'),
           }}
           documentationUrl={`${DOCS_BASE}/product/agents`}
+          documentationLabel={documentationLabel}
         />
       </Match>
 
@@ -389,6 +419,7 @@ export function EmptyState(props: {
             onClick: () => runCreateAction('project'),
           }}
           documentationUrl={`${DOCS_BASE}/product/folders`}
+          documentationLabel={documentationLabel}
         >
           <FolderDropZone />
         </EmptyStatePanel>
@@ -401,6 +432,7 @@ export function EmptyState(props: {
           title={t('soup.empty.search.title')}
           description={t('soup.empty.search.description')}
           documentationUrl={`${DOCS_BASE}/product/search`}
+          documentationLabel={documentationLabel}
         />
       </Match>
 
@@ -437,6 +469,7 @@ export function EmptyState(props: {
               description={fallback.description}
               primaryAction={createAction()}
               documentationUrl={fallback.documentationUrl}
+              documentationLabel={documentationLabel}
             />
           );
         })()}

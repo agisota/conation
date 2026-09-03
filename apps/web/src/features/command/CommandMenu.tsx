@@ -414,7 +414,7 @@ export function CommandMenuInner(props: {
   const navDownHotkey = registerHotkey({
     hotkey: ['arrowdown', 'ctrl+j'],
     scopeId: hotkeyScope,
-    description: 'Move selection down',
+    description: t('shell.command.menu.moveSelectionDown'),
     keyDownHandler: () => {
       const items = filteredItems();
       if (items.length === 0) return false;
@@ -434,7 +434,7 @@ export function CommandMenuInner(props: {
   const navUpHotkey = registerHotkey({
     hotkey: ['arrowup', 'ctrl+k'],
     scopeId: hotkeyScope,
-    description: 'Move selection up',
+    description: t('shell.command.menu.moveSelectionUp'),
     keyDownHandler: () => {
       const items = filteredItems();
       if (items.length === 0) return false;
@@ -447,7 +447,7 @@ export function CommandMenuInner(props: {
   const confirmHotkey = registerHotkey({
     hotkey: 'enter',
     scopeId: hotkeyScope,
-    description: 'Select item',
+    description: t('shell.command.menu.selectItem'),
     keyDownHandler: () => {
       const item = selectedItem();
       if (item) {
@@ -462,7 +462,7 @@ export function CommandMenuInner(props: {
   const confirmSplitHotkey = registerHotkey({
     hotkey: 'shift+enter',
     scopeId: hotkeyScope,
-    description: 'Open in new split',
+    description: t('shell.command.menu.openInNewSplit'),
     keyDownHandler: () => {
       const item = selectedItem();
       if (item) {
@@ -477,7 +477,7 @@ export function CommandMenuInner(props: {
   const escapeHotkey = registerHotkey({
     hotkey: 'escape',
     scopeId: hotkeyScope,
-    description: 'Close command menu',
+    description: t('shell.command.menu.close'),
     keyDownHandler: () => {
       // If in command scope, go back to main menu
       if (CommandState.commandScopeCommands().length > 0) {
@@ -498,7 +498,7 @@ export function CommandMenuInner(props: {
   const backspaceHotkey = registerHotkey({
     hotkey: 'backspace',
     scopeId: hotkeyScope,
-    description: 'Go back',
+    description: t('shell.command.menu.goBack'),
     keyDownHandler: () => {
       // Only handle if query is empty
       if (CommandState.query() !== '') {
@@ -521,7 +521,7 @@ export function CommandMenuInner(props: {
   const tabHotkey = registerHotkey({
     hotkey: 'tab',
     scopeId: hotkeyScope,
-    description: 'Next category',
+    description: t('shell.command.menu.nextCategory'),
     keyDownHandler: () => {
       const currentIndex = CATEGORIES.findIndex(
         (c) => c.id === CommandState.categoryFilter()
@@ -537,7 +537,7 @@ export function CommandMenuInner(props: {
   registerHotkey({
     hotkey: 'shift+tab',
     scopeId: hotkeyScope,
-    description: 'Previous category',
+    description: t('shell.command.menu.previousCategory'),
     keyDownHandler: () => {
       const currentIndex = CATEGORIES.findIndex(
         (c) => c.id === CommandState.categoryFilter()
@@ -790,7 +790,7 @@ function EntityActionPreview(props: { entities: EntityData[] }) {
       </For>
       <Show when={remainingCount() > 0}>
         <div class="text-ink-muted text-xs px-2 py-1">
-          +{remainingCount()} more
+          {t('shell.command.moreRemaining', { count: remainingCount() })}
         </div>
       </Show>
     </>

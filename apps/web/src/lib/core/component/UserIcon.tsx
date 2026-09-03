@@ -30,6 +30,40 @@ import {
 import { HoverCard } from './HoverCard';
 import { UserTooltip } from './UserTooltip';
 
+const CONATION_ID_PREFIX = 'conation|';
+const CONATION_CORP_AVATAR_EMAILS: Record<string, true> = {
+  'pythia@conation.dev': true,
+  'tars@conation.dev': true,
+  'ramzan.kadyrov@conation.dev': true,
+};
+
+function conationIdentityEmail(idOrEmail: string | undefined): string | undefined {
+  if (!idOrEmail) return undefined;
+  const normalized = idOrEmail.trim().toLowerCase();
+  const email = normalized.startsWith(CONATION_ID_PREFIX)
+    ? normalized.slice(CONATION_ID_PREFIX.length)
+    : normalized;
+  return email.includes('@') ? email : undefined;
+}
+
+/** Pythia / Tars / Ramzan share the product orbit mark, not initials or portraits. */
+function isConationCorpAvatar(id?: string, email?: string): boolean {
+  const fromId = conationIdentityEmail(id);
+  const fromEmail = conationIdentityEmail(email);
+  return (
+    (fromId !== undefined && CONATION_CORP_AVATAR_EMAILS[fromId] === true) ||
+    (fromEmail !== undefined && CONATION_CORP_AVATAR_EMAILS[fromEmail] === true)
+  );
+}
+
+function CorpOrbitMark() {
+  return (
+    <Avatar.Fallback>
+      <ConationMark class="size-[62%] rounded-[22%]" alt="" />
+    </Avatar.Fallback>
+  );
+}
+
 export type UserIconSize = AvatarSize;
 
 export type UserIconProps = {
@@ -117,6 +151,9 @@ function UserIconContent(props: {
     <Switch>
       <Match when={props.isDeleted}>
         <Trash />
+      </Match>
+      <Match when={isConationCorpAvatar(props.id, props.email)}>
+        <CorpOrbitMark />
       </Match>
       <Match when={props.id} keyed>
         {(id) => <ProfileImage id={id} photoUrl={props.photoUrl} />}

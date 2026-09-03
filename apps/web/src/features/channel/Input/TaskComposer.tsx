@@ -228,7 +228,7 @@ export function TaskComposer(props: {
   const editorConfig = buildConfig('markdown')
     .withMentions()
     .withTags({
-      applyTargetLabel: 'Task',
+      applyTargetLabel: t('channel.composer.task'),
       isApplied: (tag) => composerTags.isApplied(tag.optionId),
       onCreate: (tag) => {
         void composerTags.applyTag(tag.scope, tag.optionId);

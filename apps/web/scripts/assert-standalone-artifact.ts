@@ -24,9 +24,20 @@ export const STANDALONE_FORBIDDEN_LITERALS = [
   '__MACRO_BUNDLE_BUILD__',
 ] as const;
 
+function containsForbiddenUrlHost(contents: string, host: string): boolean {
+  const escaped = host.replace(/\./g, '\\.');
+  // Scheme or protocol-relative URL with a host-label boundary. Bare suffix
+  // denylists, emails, and substrings like macromolecule must not match.
+  return new RegExp(
+    `(?:[a-z][a-z0-9+.-]*:)?//(?:[^/\\s"'<>@]*@)?(?:[^/\\s"'<>]*\\.)?${escaped}(?=[/:?#\\s"'<>]|$)`,
+  ).test(contents);
+}
+
 export function findForbiddenStandaloneLiterals(contents: string): string[] {
   return STANDALONE_FORBIDDEN_LITERALS.filter((literal) =>
-    contents.includes(literal)
+    literal === 'macro.com' || literal === 'macroverse.workers.dev'
+      ? containsForbiddenUrlHost(contents, literal)
+      : contents.includes(literal)
   );
 }
 

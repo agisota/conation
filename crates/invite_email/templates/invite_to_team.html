@@ -1,11 +1,12 @@
 <!doctype html>
 <html
+  lang="ru"
   xmlns:o="urn:schemas-microsoft-com:office:office"
   xmlns:v="urn:schemas-microsoft-com:vml"
   xmlns="http://www.w3.org/1999/xhtml"
 >
   <head>
-    <title>You're Invited to Join {{ team_name }} on Conation</title>
+    <title>Вас пригласили в команду {{ team_name }} в Conation</title>
     <!--[if !mso]><!-->
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <!--<![endif]-->
@@ -131,7 +132,7 @@
               </td>
               {% endif %}
               <td style="vertical-align: middle; line-height: 1.2">
-                {{ invited_by.email_part().as_ref() }} has invited you to the <strong>{{ team_name }}</strong> team
+                {{ invited_by.email_part().as_ref() }} приглашает вас в команду <strong>{{ team_name }}</strong>
               </td>
             </tr>
           </tbody>
@@ -146,10 +147,10 @@
               line-height: 1.4;
             "
           >
-            You've been invited to join the <strong>{{ team_name }}</strong> team on Conation.{% if let Some(r) = role %}
-            Your role will be <strong>{{ r }}</strong>.{% endif %}
-            Collaborate on documents. Stay in sync with tasks. Search over
-            everything. AI Assistance with anything.
+            Вас пригласили в команду <strong>{{ team_name }}</strong> в Conation.{% if let Some(r) = role %}
+            Ваша роль — <strong>{{ r }}</strong>.{% endif %}
+            Работайте вместе над документами, следите за задачами, ищите по
+            всему пространству. ИИ-помощник — для любых вопросов.
           </div>
 
           <table
@@ -188,7 +189,7 @@
                     href="{{ invite_url() }}"
                     target="_blank"
                   >
-                    Join {{ team_name }}
+                    Присоединиться к {{ team_name }}
                   </a>
                 </td>
                 <td

@@ -445,7 +445,9 @@ export const CREATABLE_BLOCKS: CreatableBlock[] = [
     },
     icon: WideEmail,
     animatedIcon: AnimatedEmailIcon,
-    description: 'Create email',
+    get description() {
+      return t('shell.command.create.email.label');
+    },
     keywords: ['new', 'make', 'add', 'compose'],
     blockName: 'email',
     hotkeyToken: TOKENS.create.email,
@@ -465,7 +467,9 @@ export const CREATABLE_BLOCKS: CreatableBlock[] = [
     },
     icon: WideStar,
     animatedIcon: AnimatedStarIcon,
-    description: 'Create agent chat',
+    get description() {
+      return t('shell.command.create.agentChat.label');
+    },
     get launcherHint() {
       return t('shell.command.create.agentChat.hint');
     },
@@ -489,7 +493,9 @@ export const CREATABLE_BLOCKS: CreatableBlock[] = [
       return t('shell.command.create.automation.label');
     },
     icon: WideAutomation,
-    description: 'Create automation',
+    get description() {
+      return t('shell.command.create.automation.label');
+    },
     get launcherHint() {
       return t('shell.command.create.automation.hint');
     },
@@ -507,7 +513,9 @@ export const CREATABLE_BLOCKS: CreatableBlock[] = [
       return t('shell.command.create.codingAgent.label');
     },
     icon: Robot,
-    description: 'Create agent session',
+    get description() {
+      return t('shell.command.create.codingAgent.label');
+    },
     get launcherHint() {
       return t('shell.command.create.codingAgent.hint');
     },
@@ -528,7 +536,9 @@ export const CREATABLE_BLOCKS: CreatableBlock[] = [
       return t('shell.command.create.skill.label');
     },
     icon: SkillIcon,
-    description: 'Create skill',
+    get description() {
+      return t('shell.command.create.skill.label');
+    },
     get launcherHint() {
       return t('shell.command.create.skill.hint');
     },
@@ -547,7 +557,9 @@ export const CREATABLE_BLOCKS: CreatableBlock[] = [
     },
     icon: WideFileMd,
     animatedIcon: AnimatedFileMdIcon,
-    description: 'Create doc',
+    get description() {
+      return t('shell.command.create.document.label');
+    },
     keywords: ['new', 'make', 'add', 'document', 'note'],
     blockName: 'md',
     hotkeyToken: TOKENS.create.note,
@@ -564,7 +576,9 @@ export const CREATABLE_BLOCKS: CreatableBlock[] = [
     },
     icon: WideTask,
     animatedIcon: AnimatedTaskIcon,
-    description: 'Create task',
+    get description() {
+      return t('shell.command.create.task.label');
+    },
     keywords: ['new', 'make', 'add', 'todo'],
     blockName: 'task',
     hotkeyToken: TOKENS.create.task,
@@ -580,7 +594,9 @@ export const CREATABLE_BLOCKS: CreatableBlock[] = [
       return t('shell.command.create.reminder.label');
     },
     icon: BellSimpleIcon,
-    description: 'Create reminder',
+    get description() {
+      return t('shell.command.create.reminder.label');
+    },
     get launcherHint() {
       return t('shell.command.create.reminder.hint');
     },
@@ -602,7 +618,9 @@ export const CREATABLE_BLOCKS: CreatableBlock[] = [
     },
     icon: WideSnippet,
     animatedIcon: AnimatedSnippetIcon,
-    description: 'Create snippet',
+    get description() {
+      return t('shell.command.create.snippet.label');
+    },
     get launcherHint() {
       return t('shell.command.create.snippet.hint');
     },
@@ -622,7 +640,9 @@ export const CREATABLE_BLOCKS: CreatableBlock[] = [
     },
     icon: WideChat,
     animatedIcon: AnimatedChatIcon,
-    description: 'Create message',
+    get description() {
+      return t('shell.command.create.message.label');
+    },
     get launcherHint() {
       return t('shell.command.create.message.hint');
     },
@@ -642,7 +662,9 @@ export const CREATABLE_BLOCKS: CreatableBlock[] = [
     },
     icon: WideChannel,
     animatedIcon: AnimatedChannelIcon,
-    description: 'Create channel',
+    get description() {
+      return t('shell.command.create.channel.label');
+    },
     get launcherHint() {
       return t('shell.command.create.channel.hint');
     },
@@ -662,7 +684,9 @@ export const CREATABLE_BLOCKS: CreatableBlock[] = [
     },
     icon: WideDiagram,
     animatedIcon: AnimatedDiagramIcon,
-    description: 'Create canvas',
+    get description() {
+      return t('shell.command.create.canvas.label');
+    },
     keywords: ['new', 'make', 'add', 'diagram'],
     blockName: 'canvas',
     hotkeyToken: TOKENS.create.canvas,
@@ -681,7 +705,9 @@ export const CREATABLE_BLOCKS: CreatableBlock[] = [
     },
     icon: WideFolder,
     animatedIcon: AnimatedFolderIcon,
-    description: 'Create folder',
+    get description() {
+      return t('shell.command.create.folder.label');
+    },
     keywords: ['new', 'make', 'add', 'project'],
     blockName: 'project',
     hotkeyToken: TOKENS.create.project,
@@ -698,7 +724,9 @@ export const CREATABLE_BLOCKS: CreatableBlock[] = [
     },
     icon: WideFileCode,
     animatedIcon: AnimatedFileCodeIcon,
-    description: 'Create code file',
+    get description() {
+      return t('shell.command.create.code.label');
+    },
     keywords: ['new', 'make', 'add'],
     blockName: 'code',
     hotkeyToken: TOKENS.create.code,
@@ -918,7 +946,9 @@ export const LauncherInner = (props: LauncherInnerProps) => {
         hotkeyToken: item.altHotkeyToken,
         hotkey: `shift+${item.hotkey}` as ValidHotkey,
         scopeId: launcherScope,
-        description: `${item.description} in new split`,
+        description: t('shell.command.launcher.openNamedInNewSplit', {
+          description: item.description,
+        }),
         keyDownHandler: () => {
           return runLauncherItem(item);
         },
@@ -929,7 +959,7 @@ export const LauncherInner = (props: LauncherInnerProps) => {
   registerHotkey({
     hotkey: 'c',
     scopeId: launcherScope,
-    description: 'Close Launcher',
+    description: t('shell.command.launcher.close'),
     condition: createMenuOpen,
     keyDownHandler: () => {
       setCreateMenuOpen(false);
@@ -940,7 +970,7 @@ export const LauncherInner = (props: LauncherInnerProps) => {
   const navUpHotkey = registerHotkey({
     hotkey: ['arrowup', 'ctrl+k', 'shift+tab'],
     scopeId: launcherScope,
-    description: 'Navigate up',
+    description: t('shell.command.launcher.navigateUp'),
     keyDownHandler: (event) => {
       event?.preventDefault();
       return listController.selectPrevious();
@@ -951,7 +981,7 @@ export const LauncherInner = (props: LauncherInnerProps) => {
   const navDownHotkey = registerHotkey({
     hotkey: ['arrowdown', 'ctrl+j', 'tab'],
     scopeId: launcherScope,
-    description: 'Navigate down',
+    description: t('shell.command.launcher.navigateDown'),
     keyDownHandler: (event) => {
       event?.preventDefault();
       return listController.selectNext();
@@ -962,7 +992,7 @@ export const LauncherInner = (props: LauncherInnerProps) => {
   const searchModeHotkey = registerHotkey({
     hotkey: '/',
     scopeId: launcherScope,
-    description: 'Toggle search mode',
+    description: t('shell.command.launcher.toggleSearchMode'),
     keyDownHandler: () => {
       setLauncherSearchMode(!searchMode());
       return true;
@@ -974,7 +1004,7 @@ export const LauncherInner = (props: LauncherInnerProps) => {
   registerHotkey({
     hotkey: 'escape',
     scopeId: launcherScope,
-    description: 'Exit',
+    description: t('shell.command.launcher.exit'),
     keyDownHandler: () => {
       props.onClose();
       return true;
@@ -984,7 +1014,7 @@ export const LauncherInner = (props: LauncherInnerProps) => {
   registerHotkey({
     hotkey: 'shift+enter',
     scopeId: launcherScope,
-    description: 'Open in new split',
+    description: t('shell.command.launcher.openInNewSplit'),
     keyDownHandler: () => {
       return runLauncherItem(blocks()[focusedIndex()]);
     },
@@ -995,7 +1025,7 @@ export const LauncherInner = (props: LauncherInnerProps) => {
   const confirmHotkey = registerHotkey({
     hotkey: 'enter' as ValidHotkey,
     scopeId: launcherScope,
-    description: 'Open in current split',
+    description: t('shell.command.launcher.openInCurrentSplit'),
     keyDownHandler: () => {
       return runLauncherItem(blocks()[focusedIndex()]);
     },
