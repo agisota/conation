@@ -27,6 +27,7 @@ import {
   SYSTEM_PROPERTY_IDS,
 } from '@property/constants';
 import type { Property } from '@property/types';
+import { localizedPropertyOptionLabel } from '@property/utils/formatting';
 import { useListPropertiesQuery } from '@queries/properties/definitions';
 import type { PropertyDefinitionResponse } from '@service-properties/generated/schemas/propertyDefinitionResponse';
 import type { PropertyDefinitionWithOptions } from '@service-properties/generated/schemas/propertyDefinitionWithOptions';
@@ -281,7 +282,9 @@ export function useDealStages(): DealStages {
   };
 
   const stageLabel = (optionId: string): string | undefined =>
-    labelById().get(optionId) ?? getPropertyOptionLabel(optionId);
+    localizedPropertyOptionLabel(optionId) ??
+    labelById().get(optionId) ??
+    getPropertyOptionLabel(optionId);
 
   return {
     stages,
