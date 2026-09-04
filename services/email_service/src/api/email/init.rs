@@ -622,32 +622,18 @@ async fn init_user(
         if provider_kind == EmailProviderKind::Stalwart {
             let mailbox = stalwart_mailbox_from_login_email(&email);
             let random_password = conation_uuid::generate_uuid_v7().to_string();
-            match StalwartProvider::from_env() {
-                Ok(provider) => {
-                    if let Err(error) = provider
-                        .provision_account(&mailbox, &random_password)
-                        .await
-                    {
-                        tracing::warn!(
-                            error = %error,
-                            mailbox = %mailbox,
-                            "Failed to provision Stalwart mailbox; continuing /email/init"
-                        );
-                    }
-                }
-                Err(error) => {
-                    tracing::warn!(
-                        error = %error,
-                        mailbox = %mailbox,
-                        "Failed to load Stalwart provider for mailbox provision; continuing /email/init"
-                    );
-                }
-            }
+            let provider = StalwartProvider::from_env().map_err(|error| {
+                anyhow::anyhow!("Failed to load Stalwart provider for mailbox provision: {error}")
+            })?;
+            provider
+                .provision_account(&mailbox, &random_password)
+                .await
+                .context("Failed to provision Stalwart mailbox")?;
 
             let provisional_link = new_gmail_link(
                 user_context.fusion_user_id.clone(),
                 macro_user_id.clone(),
-                mailbox,
+                mailbox.clone(),
                 link::UserProvider::Stalwart,
             )?;
             let mut tx = ctx
@@ -662,7 +648,7 @@ async fn init_user(
                 .await
                 .context("Failed to commit link transaction")?;
 
-            seed_stalwart_threads(&ctx.db, &ctx.sfs_client, link.id).await;
+            seed_stalwart_threads(&ctx.db, &ctx.sfs_client, link.id, &mailbox).await;
 
             return Ok((
                 StatusCode::OK,
@@ -1039,11 +1025,12 @@ async fn seed_stalwart_threads(
     db: &sqlx::PgPool,
     sfs_client: &StaticFileServiceClient,
     link_id: Uuid,
+    mailbox: &str,
 ) {
     let Ok(provider) = StalwartProvider::from_env() else {
         return;
     };
-    let messages = match provider.list_threads("", 100, None).await {
+    let messages = match provider.list_threads(mailbox, 100, None).await {
         Ok(messages) => messages,
         Err(error) => {
             tracing::warn!(

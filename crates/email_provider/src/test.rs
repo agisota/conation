@@ -205,7 +205,7 @@ async fn removed_principal_api_provisioning_fails_closed() {
         provider(&server)
             .provision_account("pythia@conation.dev", "not-sent")
             .await,
-        Ok(())
+        Err(ProviderError::Configuration(_) | ProviderError::Transport(_) | ProviderError::Provider(_))
     ));
     assert!(server
         .received_requests()
@@ -230,4 +230,16 @@ async fn downloads_small_jmap_blob() {
         .await
         .expect("download");
     assert_eq!(bytes, b"hello-blob");
+}
+
+#[test]
+fn from_address_from_mime_reads_angle_addr_and_bare_addr() {
+    assert_eq!(
+        from_address_from_mime(b"From: Hi <hi@conation.dev>\r\n\r\nbody").unwrap(),
+        "hi@conation.dev"
+    );
+    assert_eq!(
+        from_address_from_mime(b"From: ib@conation.dev\r\nSubject: x\r\n\r\n").unwrap(),
+        "ib@conation.dev"
+    );
 }

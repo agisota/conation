@@ -8,7 +8,7 @@ use email_api_client::domain::models::{AccessToken, TokenError, TokenFreshness};
 use email_api_client::domain::ports::ProviderTokenSource;
 use models_email::email::service::cache::TokenCacheKey;
 use models_email::email::service::pubsub::LinkManagerMessage;
-use models_email::service::link::Link;
+use models_email::service::link::{Link, UserProvider};
 use redis::aio::MultiplexedConnection;
 use sqlx::PgPool;
 use sqs_client::SQS;
@@ -116,6 +116,10 @@ impl EmailServiceTokenSource {
     }
 
     async fn fetch_token(&self, link: &Link, freshness: TokenFreshness) -> anyhow::Result<String> {
+        if link.provider == UserProvider::Stalwart {
+            return Ok(link.email_address.0.as_ref().to_owned());
+        }
+
         let key = TokenCacheKey::new(
             &link.fusionauth_user_id,
             link.email_address.0.as_ref(),

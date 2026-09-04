@@ -25,6 +25,8 @@ mod environment {
     conation_env_var::maybe_env_vars! {
         pub(super) struct EmailProvider;
         pub(super) struct StalwartToken;
+        pub(super) struct StalwartUser;
+        pub(super) struct StalwartPassword;
     }
 }
 
@@ -234,47 +236,48 @@ impl StalwartProvider {
 
     /// Creates a Stalwart Account/User through the JMAP management API.
     ///
-    /// Uses `Account/set` or `Principal/set` with the mailbox local-part, email,
+    /// Uses `x:Account/set` (Stalwart v0.16) with the mailbox local-part, domain,
     /// password secret, and the User role. An existing mailbox is treated as
-    /// success. Missing admin credentials or management capability logs a
-    /// warning and returns `Ok(())` so `/email/init` can still link the inbox.
+    /// success. Missing admin credentials or a failed JMAP session is an error:
+    /// `/email/init` must not link an inbox that cannot receive mail.
     /// The removed `/api/principal` REST path is never called.
     pub async fn provision_account(
         &self,
         email: &str,
         password: &str,
     ) -> Result<(), ProviderError> {
-        let token = environment::StalwartToken::new()
-            .map(|value| value.as_ref().to_owned())
-            .filter(|value| !value.is_empty())
-            .unwrap_or_default();
-        let session = match self.session_document(&token).await {
-            Ok(session) => session,
-            Err(error) => {
-                tracing::warn!(
-                    error = ?error,
-                    "Stalwart JMAP session is unavailable; skipping mailbox provisioning"
-                );
-                return Ok(());
-            }
-        };
+        let auth = admin_auth_from_env()?;
+        let session = self.admin_session_document(&auth).await?;
         let methods = management_set_methods(&session);
         if methods.is_empty() {
-            tracing::warn!(
-                "Stalwart JMAP session has no admin management capability; skipping mailbox provisioning"
-            );
-            return Ok(());
+            return Err(ProviderError::Provider(
+                "Stalwart JMAP session has no admin management capability".to_owned(),
+            ));
         }
 
         let local_part = email.split_once('@').map_or(email, |(local, _)| local);
+        let domain_name = email
+            .split_once('@')
+            .map(|(_, domain)| domain)
+            .filter(|domain| !domain.is_empty())
+            .ok_or_else(|| {
+                ProviderError::Provider(format!("mailbox email is missing a domain: {email}"))
+            })?;
+        let domain_id = self
+            .stalwart_domain_id(&session, &auth, domain_name)
+            .await?;
         let mut arguments = json!({
             "create": {
                 "account": {
                     "@type": "User",
                     "name": local_part,
-                    "emails": [email],
-                    "secrets": [password],
-                    "roles": ["user"],
+                    "domainId": domain_id,
+                    "credentials": {"0": {"@type": "Password", "secret": password}},
+                    "memberGroupIds": {},
+                    "roles": {"@type": "User"},
+                    "permissions": {"@type": "Inherit"},
+                    "quotas": {},
+                    "aliases": {},
                 }
             }
         });
@@ -285,7 +288,7 @@ impl StalwartProvider {
         let mut unknown_method = false;
         for (method, using) in methods {
             match self
-                .call(&session, &token, using, method, arguments.clone())
+                .admin_call(&session, &auth, using, method, arguments.clone())
                 .await
             {
                 Ok(body) => return provision_set_result(body),
@@ -297,11 +300,13 @@ impl StalwartProvider {
             }
         }
         if unknown_method {
-            tracing::warn!(
-                "Stalwart JMAP session has no admin management capability; skipping mailbox provisioning"
-            );
+            return Err(ProviderError::Provider(
+                "Stalwart JMAP session has no admin management capability".to_owned(),
+            ));
         }
-        Ok(())
+        Err(ProviderError::Provider(
+            "Stalwart mailbox provisioning returned no create result".to_owned(),
+        ))
     }
 
     /// Downloads a JMAP blob, rejecting payloads larger than 256 KiB.
@@ -616,34 +621,200 @@ impl StalwartProvider {
         method_response(body, method)
     }
 
-    async fn drafts_mailbox_id(
+    async fn admin_session_document(
+        &self,
+        auth: &AdminAuth,
+    ) -> Result<JmapSession, ProviderError> {
+        let response = apply_admin_auth(self.client.get(self.session_url()?), auth)
+            .send()
+            .await
+            .map_err(|error| ProviderError::Transport(error.to_string()))?;
+        let response = checked_response(response).await?;
+        let session = response
+            .json::<JmapSession>()
+            .await
+            .map_err(|error| ProviderError::Provider(format!("invalid JMAP session: {error}")))?;
+        self.validate_bearer_endpoint(&session.api_url, "apiUrl")?;
+        Ok(session)
+    }
+
+    async fn admin_call(
+        &self,
+        session: &JmapSession,
+        auth: &AdminAuth,
+        using: Vec<&str>,
+        method: &str,
+        arguments: Value,
+    ) -> Result<Value, ProviderError> {
+        let response = apply_admin_auth(self.client.post(session.api_url.as_str()), auth)
+            .json(&json!({
+                "using": using,
+                "methodCalls": [[method, arguments, "c1"]],
+            }))
+            .send()
+            .await
+            .map_err(|error| ProviderError::Transport(error.to_string()))?;
+        let response = checked_response(response).await?;
+        let body = response
+            .json::<Value>()
+            .await
+            .map_err(|error| ProviderError::Provider(format!("invalid JMAP response: {error}")))?;
+        method_response(body, method)
+    }
+
+    async fn jmap_method(
         &self,
         session: &JmapSession,
         access_token: &str,
-        account_id: &str,
+        admin: Option<&AdminAuth>,
+        using: Vec<&str>,
+        method: &str,
+        arguments: Value,
+    ) -> Result<Value, ProviderError> {
+        match admin {
+            Some(auth) => {
+                self.admin_call(session, auth, using, method, arguments)
+                    .await
+            }
+            None => self.call(session, access_token, using, method, arguments).await,
+        }
+    }
+
+    async fn stalwart_account_id_for_email(
+        &self,
+        session: &JmapSession,
+        auth: &AdminAuth,
+        email: &str,
     ) -> Result<String, ProviderError> {
-        let mailboxes = self
-            .call(
+        let management_account_id = admin_account_id(session).ok_or_else(|| {
+            ProviderError::Provider("JMAP session has no management account".to_owned())
+        })?;
+        let accounts = self
+            .admin_call(
                 session,
-                access_token,
-                vec![JMAP_CORE, JMAP_MAIL],
-                "Mailbox/get",
-                json!({ "accountId": account_id, "properties": ["id", "role"] }),
+                auth,
+                vec![JMAP_CORE, JMAP_MANAGEMENT],
+                "x:Account/get",
+                json!({
+                    "accountId": management_account_id,
+                    "ids": null,
+                    "properties": ["id", "emailAddress"],
+                }),
             )
             .await?;
-        mailboxes
+        let needle = email.to_ascii_lowercase();
+        accounts
             .get("list")
             .and_then(Value::as_array)
-            .and_then(|mailboxes| {
-                mailboxes.iter().find_map(|mailbox| {
-                    (mailbox.get("role").and_then(Value::as_str) == Some("drafts"))
-                        .then(|| mailbox.get("id").and_then(Value::as_str))
-                        .flatten()
-                })
+            .into_iter()
+            .flatten()
+            .find_map(|account| {
+                let address = account
+                    .get("emailAddress")
+                    .and_then(Value::as_str)
+                    .unwrap_or("")
+                    .to_ascii_lowercase();
+                (address == needle)
+                    .then(|| account.get("id").and_then(Value::as_str).map(str::to_owned))
+                    .flatten()
             })
-            .map(str::to_owned)
-            .ok_or_else(|| ProviderError::Provider("JMAP account has no Drafts mailbox".to_owned()))
+            .ok_or_else(|| {
+                ProviderError::Provider(format!("Stalwart mailbox {email} does not exist"))
+            })
     }
+
+    fn mailbox_selector(token: &str) -> Option<&str> {
+        let token = token.trim();
+        if token.contains('@') && !token.contains(char::is_whitespace) && token.len() <= 320 {
+            Some(token)
+        } else {
+            None
+        }
+    }
+
+    async fn open_mailbox(
+        &self,
+        access_token: &str,
+        fallback_email: Option<&str>,
+    ) -> Result<(JmapSession, Option<AdminAuth>, String), ProviderError> {
+        let selector = Self::mailbox_selector(access_token);
+        if access_token.is_empty() || selector.is_some() {
+            let auth = admin_auth_from_env()?;
+            let session = self.admin_session_document(&auth).await?;
+            if !session.capabilities.contains_key(JMAP_MAIL) {
+                return Err(ProviderError::Provider(
+                    "JMAP session does not advertise mail capability".to_owned(),
+                ));
+            }
+            let email = selector
+                .map(|value| value.to_ascii_lowercase())
+                .or_else(|| fallback_email.map(str::to_ascii_lowercase))
+                .ok_or_else(|| {
+                    ProviderError::Provider("Stalwart mailbox email is required".to_owned())
+                })?;
+            let account_id = self
+                .stalwart_account_id_for_email(&session, &auth, &email)
+                .await?;
+            Ok((session, Some(auth), account_id))
+        } else {
+            let session = self.session(access_token).await?;
+            let account_id = Self::account_id(&session)?.to_owned();
+            Ok((session, None, account_id))
+        }
+    }
+
+    async fn stalwart_domain_id(
+        &self,
+        session: &JmapSession,
+        auth: &AdminAuth,
+        domain_name: &str,
+    ) -> Result<String, ProviderError> {
+        let account_id = admin_account_id(session).ok_or_else(|| {
+            ProviderError::Provider("JMAP session has no management account".to_owned())
+        })?;
+        let query = self
+            .admin_call(
+                session,
+                auth,
+                vec![JMAP_CORE, JMAP_MANAGEMENT],
+                "x:Domain/query",
+                json!({ "accountId": account_id }),
+            )
+            .await?;
+        let ids = query
+            .get("ids")
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default();
+        if ids.is_empty() {
+            return Err(ProviderError::Provider(format!(
+                "Stalwart has no domain objects; expected {domain_name}"
+            )));
+        }
+        let domains = self
+            .admin_call(
+                session,
+                auth,
+                vec![JMAP_CORE, JMAP_MANAGEMENT],
+                "x:Domain/get",
+                json!({ "accountId": account_id, "ids": ids }),
+            )
+            .await?;
+        domains
+            .get("list")
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+            .find_map(|domain| {
+                (domain.get("name").and_then(Value::as_str) == Some(domain_name))
+                    .then(|| domain.get("id").and_then(Value::as_str).map(str::to_owned))
+                    .flatten()
+            })
+            .ok_or_else(|| {
+                ProviderError::Provider(format!("Stalwart domain {domain_name} does not exist"))
+            })
+    }
+
 }
 
 async fn checked_response(response: reqwest::Response) -> Result<reqwest::Response, ProviderError> {
@@ -704,15 +875,91 @@ fn method_response(body: Value, expected_method: &str) -> Result<Value, Provider
     Ok(arguments)
 }
 
+fn from_address_from_mime(mime: &[u8]) -> Result<String, ProviderError> {
+    let text = std::str::from_utf8(mime).map_err(|_| {
+        ProviderError::Provider("MIME message is not valid UTF-8".to_owned())
+    })?;
+    let headers = text.split("\r\n\r\n").next().unwrap_or(text);
+    for line in headers.lines() {
+        let Some(value) = line
+            .strip_prefix("From:")
+            .or_else(|| line.strip_prefix("from:"))
+        else {
+            continue;
+        };
+        if let Some(start) = value.rfind('<') {
+            if let Some(end) = value[start + 1..].find('>') {
+                let email = value[start + 1..start + 1 + end].trim();
+                if email.contains('@') {
+                    return Ok(email.to_ascii_lowercase());
+                }
+            }
+        }
+        let email = value.trim().trim_matches('"');
+        if email.contains('@') {
+            return Ok(email.to_ascii_lowercase());
+        }
+    }
+    Err(ProviderError::Provider(
+        "MIME message has no From address".to_owned(),
+    ))
+}
+
+enum AdminAuth {
+    Bearer(String),
+    Basic { user: String, password: String },
+}
+
+fn admin_auth_from_env() -> Result<AdminAuth, ProviderError> {
+    let token = environment::StalwartToken::new()
+        .map(|value| value.as_ref().to_owned())
+        .filter(|value| !value.is_empty());
+    if let Some(token) = token {
+        return Ok(AdminAuth::Bearer(token));
+    }
+    let user = environment::StalwartUser::new()
+        .map(|value| value.as_ref().to_owned())
+        .filter(|value| !value.is_empty());
+    let password = environment::StalwartPassword::new()
+        .map(|value| value.as_ref().to_owned())
+        .filter(|value| !value.is_empty());
+    match (user, password) {
+        (Some(user), Some(password)) => Ok(AdminAuth::Basic { user, password }),
+        _ => Err(ProviderError::Configuration(
+            "STALWART_TOKEN or STALWART_USER/STALWART_PASSWORD required to provision mailboxes"
+                .to_owned(),
+        )),
+    }
+}
+
+fn apply_admin_auth(
+    request: reqwest::RequestBuilder,
+    auth: &AdminAuth,
+) -> reqwest::RequestBuilder {
+    match auth {
+        AdminAuth::Bearer(token) => request.bearer_auth(token),
+        AdminAuth::Basic { user, password } => request.basic_auth(user, Some(password)),
+    }
+}
+
+fn session_has_capability(session: &JmapSession, capability: &str) -> bool {
+    session.capabilities.contains_key(capability)
+        || session.primary_accounts.contains_key(capability)
+        || session
+            .accounts
+            .values()
+            .any(|account| account.account_capabilities.contains_key(capability))
+}
+
 fn management_set_methods(session: &JmapSession) -> Vec<(&'static str, Vec<&'static str>)> {
     let mut methods = Vec::new();
-    if session.capabilities.contains_key(JMAP_MANAGEMENT) {
-        methods.push(("Account/set", vec![JMAP_CORE, JMAP_MANAGEMENT]));
+    if session_has_capability(session, JMAP_MANAGEMENT) {
         methods.push(("x:Account/set", vec![JMAP_CORE, JMAP_MANAGEMENT]));
+        methods.push(("Account/set", vec![JMAP_CORE, JMAP_MANAGEMENT]));
     }
-    if session.capabilities.contains_key(JMAP_PRINCIPAL) {
+    if session_has_capability(session, JMAP_PRINCIPAL) {
         methods.push(("Principal/set", vec![JMAP_CORE, JMAP_PRINCIPAL]));
-    } else if session.capabilities.contains_key(JMAP_ADMIN) {
+    } else if session_has_capability(session, JMAP_ADMIN) {
         methods.push(("Principal/set", vec![JMAP_CORE, JMAP_ADMIN]));
     }
     methods
@@ -760,7 +1007,9 @@ fn provision_set_result(arguments: Value) -> Result<(), ProviderError> {
             .unwrap_or("JMAP account create failed");
         return Err(ProviderError::Provider(description.to_owned()));
     }
-    Ok(())
+    Err(ProviderError::Provider(
+        "JMAP account create returned no created mailbox".to_owned(),
+    ))
 }
 
 fn is_already_exists_value(value: &Value) -> bool {
@@ -811,12 +1060,12 @@ impl EmailProvider for StalwartProvider {
             })
             .transpose()?
             .unwrap_or(0);
-        let session = self.session(access_token).await?;
-        let account_id = Self::account_id(&session)?;
+        let (session, admin, account_id) = self.open_mailbox(access_token, None).await?;
         let query = self
-            .call(
+            .jmap_method(
                 &session,
                 access_token,
+                admin.as_ref(),
                 vec![JMAP_CORE, JMAP_MAIL],
                 "Email/query",
                 json!({
@@ -835,9 +1084,10 @@ impl EmailProvider for StalwartProvider {
             return Ok(Vec::new());
         }
         let messages = self
-            .call(
+            .jmap_method(
                 &session,
                 access_token,
+                admin.as_ref(),
                 vec![JMAP_CORE, JMAP_MAIL],
                 "Email/get",
                 json!({
@@ -862,12 +1112,12 @@ impl EmailProvider for StalwartProvider {
         access_token: &str,
         message_id: &str,
     ) -> Result<Option<ProviderMessage>, ProviderError> {
-        let session = self.session(access_token).await?;
-        let account_id = Self::account_id(&session)?;
+        let (session, admin, account_id) = self.open_mailbox(access_token, None).await?;
         let response = self
-            .call(
+            .jmap_method(
                 &session,
                 access_token,
+                admin.as_ref(),
                 vec![JMAP_CORE, JMAP_MAIL],
                 "Email/get",
                 json!({
@@ -893,16 +1143,37 @@ impl EmailProvider for StalwartProvider {
         mime: &[u8],
         _thread_id: Option<&str>,
     ) -> Result<SendResult, ProviderError> {
-        let session = self.session(access_token).await?;
+        let from = from_address_from_mime(mime).ok();
+        let (session, admin, account_id) = self
+            .open_mailbox(access_token, from.as_deref())
+            .await?;
         if !session.capabilities.contains_key(JMAP_SUBMISSION) {
             return Err(ProviderError::Provider(
                 "JMAP session does not advertise submission capability".to_owned(),
             ));
         }
-        let account_id = Self::account_id(&session)?.to_owned();
-        let drafts_mailbox_id = self
-            .drafts_mailbox_id(&session, access_token, &account_id)
+        let mailboxes = self
+            .jmap_method(
+                &session,
+                access_token,
+                admin.as_ref(),
+                vec![JMAP_CORE, JMAP_MAIL],
+                "Mailbox/get",
+                json!({ "accountId": account_id, "properties": ["id", "role"] }),
+            )
             .await?;
+        let drafts_mailbox_id = mailboxes
+            .get("list")
+            .and_then(Value::as_array)
+            .and_then(|mailboxes| {
+                mailboxes.iter().find_map(|mailbox| {
+                    (mailbox.get("role").and_then(Value::as_str) == Some("drafts"))
+                        .then(|| mailbox.get("id").and_then(Value::as_str))
+                        .flatten()
+                })
+            })
+            .ok_or_else(|| ProviderError::Provider("JMAP account has no Drafts mailbox".to_owned()))?
+            .to_owned();
         let upload_url = session.upload_url.as_deref().ok_or_else(|| {
             ProviderError::Provider("JMAP session does not advertise uploadUrl".to_owned())
         })?;
@@ -910,12 +1181,16 @@ impl EmailProvider for StalwartProvider {
         let upload_url = Url::parse(&upload_url)
             .map_err(|error| ProviderError::Provider(format!("invalid JMAP uploadUrl: {error}")))?;
         self.validate_bearer_endpoint(&upload_url, "uploadUrl")?;
-        let upload = self
+        let upload_request = self
             .client
             .post(upload_url)
-            .bearer_auth(access_token)
             .header(reqwest::header::CONTENT_TYPE, "message/rfc822")
-            .body(mime.to_vec())
+            .body(mime.to_vec());
+        let upload_request = match admin.as_ref() {
+            Some(auth) => apply_admin_auth(upload_request, auth),
+            None => upload_request.bearer_auth(access_token),
+        };
+        let upload = upload_request
             .send()
             .await
             .map_err(|error| ProviderError::Transport(error.to_string()))?;
@@ -930,9 +1205,10 @@ impl EmailProvider for StalwartProvider {
                 ProviderError::Provider("JMAP upload response has no blobId".to_owned())
             })?;
         let imported = self
-            .call(
+            .jmap_method(
                 &session,
                 access_token,
+                admin.as_ref(),
                 vec![JMAP_CORE, JMAP_MAIL],
                 "Email/import",
                 json!({
@@ -948,11 +1224,13 @@ impl EmailProvider for StalwartProvider {
             .and_then(Value::as_str)
             .ok_or_else(|| {
                 ProviderError::Provider("JMAP Email/import did not create an email".to_owned())
-            })?;
+            })?
+            .to_owned();
         let identities = self
-            .call(
+            .jmap_method(
                 &session,
                 access_token,
+                admin.as_ref(),
                 vec![JMAP_CORE, JMAP_MAIL, JMAP_SUBMISSION],
                 "Identity/get",
                 json!({ "accountId": account_id, "properties": ["id"] }),
@@ -968,9 +1246,10 @@ impl EmailProvider for StalwartProvider {
                 ProviderError::Provider("JMAP account has no sending identity".to_owned())
             })?;
         let submitted = self
-            .call(
+            .jmap_method(
                 &session,
                 access_token,
+                admin.as_ref(),
                 vec![JMAP_CORE, JMAP_MAIL, JMAP_SUBMISSION],
                 "EmailSubmission/set",
                 json!({
@@ -997,10 +1276,11 @@ impl EmailProvider for StalwartProvider {
         let thread_id = submission
             .get("threadId")
             .and_then(Value::as_str)
-            .unwrap_or(email_id);
+            .map(str::to_owned)
+            .unwrap_or_else(|| email_id.clone());
         Ok(SendResult {
-            message_id: email_id.to_owned(),
-            thread_id: thread_id.to_owned(),
+            message_id: email_id,
+            thread_id,
         })
     }
 
