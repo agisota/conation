@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { usePropertyEditor } from '@property/hooks/usePropertyEditor';
 import {
   useAddPropertyOptionMutation,
@@ -88,7 +89,13 @@ function SelectEditorBody() {
         <PropertyOptionSelector
           config={{
             isMultiSelect: property.isMultiSelect,
-            placeholder: `${property.isMultiSelect ? 'Add' : 'Change'} ${property.displayName.toLowerCase()}...`,
+            placeholder: property.isMultiSelect
+              ? t('property.editor.addValuePlaceholder', {
+                  property: property.displayName.toLowerCase(),
+                })
+              : t('property.editor.setValuePlaceholder', {
+                  property: property.displayName.toLowerCase(),
+                }),
             inputType:
               property.valueType === 'SELECT_NUMBER' ? 'number' : 'text',
             canAddOption: property.isSystemProperty ? undefined : canAddOption,
@@ -105,7 +112,9 @@ function SelectEditorBody() {
           clearOption={
             !property.isMultiSelect && !property.isRequired
               ? {
-                  label: `No ${property.displayName.toLowerCase()}`,
+                  label: t('property.editor.noProperty', {
+                    property: property.displayName.toLowerCase(),
+                  }),
                   onClear: editor.clearOptions,
                 }
               : undefined
