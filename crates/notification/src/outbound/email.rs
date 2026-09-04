@@ -8,6 +8,9 @@ use rootcause::Report;
 use crate::domain::models::queue_message::EmailContent;
 use crate::domain::ports::EmailSender;
 
+#[cfg(test)]
+mod test;
+
 /// Email notification adapter.
 ///
 /// This adapter sends email notifications through the configured email service.
@@ -80,6 +83,20 @@ impl EmailServiceOps for aws_sdk_sesv2::Client {
             })?;
 
         Ok(())
+    }
+}
+
+impl EmailServiceOps for ses_client::SesClient {
+    async fn send_email(
+        &self,
+        from_email: &str,
+        to_email: &str,
+        subject: &str,
+        html_body: &str,
+    ) -> Result<(), Report> {
+        ses_client::SesClient::send_email(self, from_email, to_email, subject, html_body)
+            .await
+            .map_err(|error| rootcause::report!("outbound email delivery failed: {error:#}"))
     }
 }
 

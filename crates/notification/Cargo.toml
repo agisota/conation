@@ -57,6 +57,7 @@ redis = { workspace = true, features = [
   "tokio-comp",
   "tokio-rustls-comp",
 ] }
+ses_client = { path = "../ses_client" }
 rdkafka = { workspace = true }
 reqwest = { workspace = true }
 rootcause = { workspace = true }
