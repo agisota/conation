@@ -15,7 +15,12 @@ vi.mock('@core/constant/SettingsState', () => ({
   useSettingsState: () => ({ openSettings: vi.fn() }),
 }));
 vi.mock('@core/email-link', () => ({
+  hasStalwartMailbox: () => false,
   useAddInboxFlow: () => vi.fn(),
+  useEmailLinks: () => ({
+    query: { data: undefined },
+    initEmailLink: () => ({ match: () => undefined }),
+  }),
   useEmailLinksStatus: () => () => false,
 }));
 vi.mock('@queries/team/teams', () => ({
