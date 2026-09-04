@@ -1,3 +1,5 @@
+import { useUserId } from '@core/context/user';
+import { createUserScopedStorage } from '@core/util/userScopedStorage';
 import type { Accessor } from 'solid-js';
 import { createSignal } from 'solid-js';
 import {
@@ -7,16 +9,26 @@ import {
 
 type UiDisabled = 'disabled-in-ui';
 
-function createPersistedDismissed(
-  key: string
+const promptDismissedStorage = createUserScopedStorage(
+  'conation:notification-prompt-dismissed'
+);
+
+export function createPersistedDismissed(
+  userId: Accessor<string | undefined>
 ): [isDismissed: Accessor<boolean>, dismiss: () => void] {
-  const [isDismissed, setIsDismissed] = createSignal(
-    !!localStorage.getItem(key)
-  );
+  const [sessionDismissed, setSessionDismissed] = createSignal(false);
+
+  const isDismissed = () => {
+    if (sessionDismissed()) return true;
+    const id = userId();
+    if (!id) return false;
+    return promptDismissedStorage.read(id) === 'true';
+  };
 
   const dismiss = () => {
-    localStorage.setItem(key, 'true');
-    setIsDismissed(true);
+    setSessionDismissed(true);
+    const id = userId();
+    if (id) promptDismissedStorage.write(id, 'true');
   };
 
   return [isDismissed, dismiss];
@@ -61,8 +73,6 @@ function createToggle(
   };
 }
 
-const PROMPT_DISMISSED_KEY = 'notification-prompt-dismissed';
-
 export type SupportedNotificationSettings = {
   isSupported: true;
   /** Whether notifications are currently enabled (granted and not disabled in UI) */
@@ -87,13 +97,13 @@ export type NotificationSettings =
 
 export function useNotificationSettings(): NotificationSettings {
   const state = usePlatformNotificationState();
+  const userId = useUserId();
 
   if (state === 'not-supported') {
     return { isSupported: false };
   }
 
-  const [isDismissed, dismissPrompt] =
-    createPersistedDismissed(PROMPT_DISMISSED_KEY);
+  const [isDismissed, dismissPrompt] = createPersistedDismissed(userId);
 
   const canPrompt = createCanPrompt(state.permission);
 
