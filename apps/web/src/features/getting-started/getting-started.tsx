@@ -10,22 +10,24 @@ import { defaultModelForPlan } from '@core/component/AI/constant';
 import { setPendingSendData } from '@core/component/AI/signal/pendingSend';
 import { deriveChatName } from '@core/component/AI/util/deriveName';
 import { toast } from '@core/component/Toast/Toast';
+import { getConfiguredClientProfile } from '@core/constant/clientProfile';
 import {
   type SettingsTab,
   useSettingsState,
 } from '@core/constant/SettingsState';
 import { useUserId, useUserInfo } from '@core/context/user';
+import { useEmailLinks } from '@core/email-link';
 import { isMobile } from '@core/mobile/isMobile';
 import { setActiveTabId } from '@core/signal/settingsTab';
 import { createChat } from '@core/util/create';
 import { AnimatedProfileIcon } from '@icon/wide-profile';
 import BookOpenIcon from '@phosphor/book-open.svg';
+import EnvelopeIcon from '@phosphor/envelope.svg';
 import PaletteIcon from '@phosphor/palette.svg';
 import PlayCircleIcon from '@phosphor/play-circle.svg';
 import PlugsIcon from '@phosphor/plugs.svg';
 import { useGithubLinkStatusQuery } from '@queries/auth/github-link';
 import { isRealNamePart, useOwnUserName } from '@queries/auth/user-name-self';
-import { useEmailLinksQuery } from '@queries/email/link';
 import { useMcpServersQuery } from '@queries/mcp-servers';
 import { usePipedreamConnectionsQuery } from '@queries/pipedream-connectors';
 import { useStarterDocsQuery } from '@queries/starter-docs';
@@ -82,7 +84,7 @@ function GettingStartedContent() {
     refetchInterval: 4_000,
     neverSuspend: true,
   });
-  const emailLinks = useEmailLinksQuery();
+  const { query: emailLinks, initEmailLink } = useEmailLinks();
   const githubLink = useGithubLinkStatusQuery();
   const userInfo = useUserInfo();
   const ownUserName = useOwnUserName();
@@ -155,26 +157,62 @@ function GettingStartedContent() {
   const howToGuideId = () =>
     starterDocs.isSuccess ? starterDocs.data.howToGuideId : undefined;
 
+  const standalone = getConfiguredClientProfile() === 'standalone';
+
+  const connectToolsAction: GettingStartedAction = {
+    id: 'connect-tools',
+    icon: PlugsIcon,
+    title: t('shell.gettingStarted.connectToolsTitle'),
+    description: t('shell.gettingStarted.connectToolsDescription'),
+    onActivate: () => openSettingsTab('Connected'),
+    // Hosted: a second inbox (onboarding links the first), GitHub, or MCP.
+    // Standalone: mailbox is a separate first action, so extra tools only.
+    isComplete: () => {
+      const extraTools =
+        githubLink.data?.status === 'linked' ||
+        (pipedreamConnections.data ?? []).length > 0 ||
+        (mcpServers.data ?? []).some((server) => server.authenticated);
+      return standalone
+        ? extraTools
+        : (emailLinks.data?.links.length ?? 0) > 1 || extraTools;
+    },
+  };
+
+  const createMailboxAction: GettingStartedAction = {
+    id: 'create-mailbox',
+    icon: EnvelopeIcon,
+    title: t('shell.gettingStarted.createMailboxTitle'),
+    description: t('shell.gettingStarted.createMailboxDescription', {
+      local: userInfo()?.email?.split('@')[0] || 'you',
+    }),
+    onActivate: async () => {
+      let succeeded = false;
+      await initEmailLink().match(
+        async () => {
+          await emailLinks.refetch();
+          succeeded = true;
+        },
+        async (err) => {
+          if (err.tag === 'AlreadyInitialized') {
+            await emailLinks.refetch();
+            succeeded = true;
+            return;
+          }
+          toast.failure(t('auth.errors.mailboxCreateFailed'));
+        }
+      );
+      return succeeded;
+    },
+    isComplete: () => (emailLinks.data?.links.length ?? 0) >= 1,
+  };
+
   const sections: GettingStartedSectionConfig[] = [
     {
       id: 'connect-tools',
       title: t('shell.gettingStarted.connectToolsTitle'),
-      actions: [
-        {
-          id: 'connect-tools',
-          icon: PlugsIcon,
-          title: t('shell.gettingStarted.connectToolsTitle'),
-          description: t('shell.gettingStarted.connectToolsDescription'),
-          onActivate: () => openSettingsTab('Connected'),
-          // Any real connection counts: a second inbox (onboarding links the
-          // first), the GitHub account link, or any authenticated MCP server.
-          isComplete: () =>
-            (emailLinks.data?.links.length ?? 0) > 1 ||
-            githubLink.data?.status === 'linked' ||
-            (pipedreamConnections.data ?? []).length > 0 ||
-            (mcpServers.data ?? []).some((server) => server.authenticated),
-        },
-      ],
+      actions: standalone
+        ? [createMailboxAction, connectToolsAction]
+        : [connectToolsAction],
     },
     {
       id: 'basics',

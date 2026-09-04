@@ -7,9 +7,15 @@ import {
 } from '@app/features/command/Launcher';
 import { t } from '@app/lib/i18n';
 import { openNewChannelModal } from '@channel/CreateChannelModal';
+import { toast } from '@core/component/Toast/Toast';
 import { useSettingsState } from '@core/constant/SettingsState';
 import { getConfiguredClientProfile } from '@core/constant/clientProfile';
-import { useAddInboxFlow, useEmailLinksStatus } from '@core/email-link';
+import { useEmail } from '@core/context/user';
+import {
+  useAddInboxFlow,
+  useEmailLinks,
+  useEmailLinksStatus,
+} from '@core/email-link';
 import EmptyStateAiGraphic from '@design/empty-state-ai.svg';
 import EmptyStateAutomationsGraphic from '@design/empty-state-automations.svg';
 import EmptyStateCallsGraphic from '@design/empty-state-calls.svg';
@@ -106,6 +112,8 @@ export function EmptyState(props: {
   onClearFilters?: () => void;
 }) {
   const emailActive = useEmailLinksStatus();
+  const { initEmailLink } = useEmailLinks();
+  const userEmail = useEmail();
   const startAddInbox = useAddInboxFlow();
   const soup = useSoupView();
   const teamQuery = useCurrentTeamQuery();
@@ -122,11 +130,23 @@ export function EmptyState(props: {
   const crmEnabled = () => teamQuery.data?.team.crm_enabled ?? false;
   const hasNoTeam = () => teamQuery.data === null;
 
-  const canConnectEmail = getConfiguredClientProfile() !== 'standalone';
+  const standalone = getConfiguredClientProfile() === 'standalone';
+  const canConnectEmail = !standalone;
   const documentationLabel = t('soup.empty.documentation');
 
   const onConnectEmail = () => {
     void startAddInbox();
+  };
+
+  const onCreateMailbox = () => {
+    void initEmailLink().match(
+      () => undefined,
+      (err) => {
+        if (err.tag !== 'AlreadyInitialized') {
+          toast.failure(t('auth.errors.mailboxCreateFailed'));
+        }
+      }
+    );
   };
 
   return (
@@ -199,19 +219,32 @@ export function EmptyState(props: {
       <Match when={props.listView === 'inbox' && !emailActive()}>
         <EmptyStatePanel
           graphic={EmptyStateInboxTrayGraphic}
-          title={t('soup.empty.inbox.disconnectedTitle')}
+          title={
+            standalone
+              ? t('soup.empty.mail.createTitle')
+              : t('soup.empty.inbox.disconnectedTitle')
+          }
           description={
-            canConnectEmail
-              ? t('soup.empty.mail.connectDescription')
-              : t('soup.empty.inbox.disconnectedDescription')
+            standalone
+              ? t('soup.empty.mail.createDescription', {
+                  local: userEmail()?.split('@')[0] || 'you',
+                })
+              : canConnectEmail
+                ? t('soup.empty.mail.connectDescription')
+                : t('soup.empty.inbox.disconnectedDescription')
           }
           primaryAction={
-            canConnectEmail
+            standalone
               ? {
-                  label: t('soup.empty.mail.connectAction'),
-                  onClick: onConnectEmail,
+                  label: t('soup.empty.mail.createAction'),
+                  onClick: onCreateMailbox,
                 }
-              : undefined
+              : canConnectEmail
+                ? {
+                    label: t('soup.empty.mail.connectAction'),
+                    onClick: onConnectEmail,
+                  }
+                : undefined
           }
           documentationUrl={`${DOCS_BASE}/product/inbox`}
           documentationLabel={documentationLabel}
@@ -221,19 +254,32 @@ export function EmptyState(props: {
       <Match when={props.listView === 'mail' && !emailActive()}>
         <EmptyStatePanel
           graphic={EmptyStateEmailGraphic}
-          title={t('soup.empty.mail.disconnectedTitle')}
+          title={
+            standalone
+              ? t('soup.empty.mail.createTitle')
+              : t('soup.empty.mail.disconnectedTitle')
+          }
           description={
-            canConnectEmail
-              ? t('soup.empty.mail.connectDescription')
-              : t('soup.empty.inbox.disconnectedDescription')
+            standalone
+              ? t('soup.empty.mail.createDescription', {
+                  local: userEmail()?.split('@')[0] || 'you',
+                })
+              : canConnectEmail
+                ? t('soup.empty.mail.connectDescription')
+                : t('soup.empty.inbox.disconnectedDescription')
           }
           primaryAction={
-            canConnectEmail
+            standalone
               ? {
-                  label: t('soup.empty.mail.connectAction'),
-                  onClick: onConnectEmail,
+                  label: t('soup.empty.mail.createAction'),
+                  onClick: onCreateMailbox,
                 }
-              : undefined
+              : canConnectEmail
+                ? {
+                    label: t('soup.empty.mail.connectAction'),
+                    onClick: onConnectEmail,
+                  }
+                : undefined
           }
           documentationUrl={`${DOCS_BASE}/product/email`}
           documentationLabel={documentationLabel}

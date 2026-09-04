@@ -484,6 +484,7 @@ export function Login(props: { signupMode?: boolean }) {
     searchParams.email ? Stage.Email : Stage.None
   );
   const userInfo = useUserInfo();
+  const { initEmailLink, query: emailLinks } = useEmailLinks();
   const analytics = useAnalytics();
   const authenticatedUserId = createMemo(() => {
     const user = userInfo();
@@ -504,6 +505,27 @@ export function Login(props: { signupMode?: boolean }) {
       email: user.email,
       os: platform?.os?.replaceAll(' ', ''),
     });
+  };
+
+  const initMailboxOnLogin = async () => {
+    const standalone = getConfiguredClientProfile() === 'standalone';
+    await initEmailLink().match(
+      async () => {
+        if (!standalone) return;
+        const result = await emailLinks.refetch();
+        const mailbox = result.data?.links[0]?.email_address;
+        if (mailbox) {
+          toast.success(t('auth.mailbox.created', { email: mailbox }));
+        }
+      },
+      (err) => {
+        if (err.tag === 'AlreadyInitialized') return;
+        console.error('Failed to init email link on login', err);
+        if (standalone) {
+          toast.failure(t('auth.errors.mailboxCreateFailed'));
+        }
+      }
+    );
   };
 
   createEffect(
@@ -527,14 +549,7 @@ export function Login(props: { signupMode?: boolean }) {
           // visibility-triggered refresh re-latches under the new generation.
           unsetTokenPromise();
           await invalidateAllAfterLogin();
-          await initEmailLink().match(
-            () => {},
-            (err) => {
-              if (err.tag !== 'AlreadyInitialized') {
-                console.error('Failed to init email link on login', err);
-              }
-            }
-          );
+          await initMailboxOnLogin();
         } else {
           console.error('Failed to redeem session code', res.error);
           toast.failure(t('auth.errors.signInFailed'));
@@ -543,19 +558,10 @@ export function Login(props: { signupMode?: boolean }) {
     }
   });
 
-  const { initEmailLink } = useEmailLinks();
-
   const onComplete = async () => {
     unsetTokenPromise();
     await invalidateAllAfterLogin();
-    await initEmailLink().match(
-      () => {},
-      (err) => {
-        if (err.tag !== 'AlreadyInitialized') {
-          console.error('Failed to init email link on login', err);
-        }
-      }
-    );
+    await initMailboxOnLogin();
     const user = userInfo();
 
     if (!user || !user.authenticated) return;
