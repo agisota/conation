@@ -41,6 +41,13 @@ describe('companies localization', () => {
     );
   });
 
+  it('renders CRM stage catalog keys', () => {
+    setLocale('ru');
+    expect(t('soup.crm.stage.lead')).toBe('Лид');
+    setLocale('en');
+    expect(t('soup.crm.stage.lead')).toBe('Lead');
+  });
+
   it('does not use opaque localization keys in company source', () => {
     for (const [path, source] of Object.entries(companySources)) {
       expect(source, path).not.toMatch(/\bt\(['"]auto\./);
