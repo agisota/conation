@@ -1,8 +1,13 @@
 import { setLocale, t } from '@app/lib/i18n';
 import en from '@app/lib/i18n/locales/en.json';
 import ru from '@app/lib/i18n/locales/ru.json';
+import { PROPERTY_OPTION_IDS } from '@property/constants';
 import { afterEach, describe, expect, it } from 'vitest';
 import { getPropertyDataTypeDropdownOptions } from './utils/display';
+import {
+  formatOptionValue,
+  localizedPropertyOptionLabel,
+} from './utils/formatting';
 
 const propertyKeys = (catalog: Record<string, string>) =>
   Object.keys(catalog)
@@ -68,5 +73,32 @@ describe('property localization', () => {
     expect(
       english.find((option) => option.value === 'entity:USER')?.label
     ).toBe('User');
+  });
+
+  it('localizes system status and priority option labels', () => {
+    setLocale('ru');
+    expect(
+      localizedPropertyOptionLabel(PROPERTY_OPTION_IDS.STATUS.NOT_STARTED)
+    ).toBe('Не начата');
+    expect(
+      localizedPropertyOptionLabel(PROPERTY_OPTION_IDS.PRIORITY.HIGH)
+    ).toBe('Высокий');
+    expect(
+      formatOptionValue({
+        id: PROPERTY_OPTION_IDS.STATUS.IN_PROGRESS,
+        value: { type: 'string', value: 'In Progress' },
+      })
+    ).toBe('В работе');
+
+    setLocale('en');
+    expect(
+      localizedPropertyOptionLabel(PROPERTY_OPTION_IDS.STATUS.NOT_STARTED)
+    ).toBe('Not started');
+    expect(
+      formatOptionValue({
+        id: PROPERTY_OPTION_IDS.STATUS.IN_PROGRESS,
+        value: { type: 'string', value: 'In Progress' },
+      })
+    ).toBe('In progress');
   });
 });

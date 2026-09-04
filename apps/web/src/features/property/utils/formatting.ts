@@ -1,8 +1,29 @@
+import { t } from '@app/lib/i18n';
 import { formatDateTime } from '@core/i18n';
 import { macroIdToEmail, tryMacroId } from '@core/user';
 import { getPropertyOptionLabel } from '@entity/utils/task-properties';
-import { NUMBER_DECIMAL_PLACES } from '../constants';
+import { NUMBER_DECIMAL_PLACES, PROPERTY_OPTION_IDS } from '../constants';
 import type { Property, PropertyOptionValue } from '../types';
+
+const PROPERTY_OPTION_I18N_KEYS: Record<string, string> = {
+  [PROPERTY_OPTION_IDS.STATUS.NOT_STARTED]: 'soup.taskStatus.notStarted',
+  [PROPERTY_OPTION_IDS.STATUS.IN_PROGRESS]: 'soup.taskStatus.inProgress',
+  [PROPERTY_OPTION_IDS.STATUS.IN_REVIEW]: 'soup.taskStatus.inReview',
+  [PROPERTY_OPTION_IDS.STATUS.COMPLETED]: 'soup.taskStatus.completed',
+  [PROPERTY_OPTION_IDS.STATUS.CANCELED]: 'soup.taskStatus.canceled',
+  [PROPERTY_OPTION_IDS.PRIORITY.URGENT]: 'soup.priority.urgent',
+  [PROPERTY_OPTION_IDS.PRIORITY.HIGH]: 'soup.priority.highShort',
+  [PROPERTY_OPTION_IDS.PRIORITY.MEDIUM]: 'soup.priority.mediumShort',
+  [PROPERTY_OPTION_IDS.PRIORITY.LOW]: 'soup.priority.lowShort',
+};
+
+/** Localized label for a known system status/priority option id. */
+export function localizedPropertyOptionLabel(
+  optionId: string
+): string | undefined {
+  const key = PROPERTY_OPTION_I18N_KEYS[optionId];
+  return key ? t(key) : undefined;
+}
 
 type PropertyValueUnion = string | number | Date | boolean;
 
@@ -111,6 +132,8 @@ const formatOptionValueById = (
   optionId: string,
   options: Array<{ id: string; value: PropertyOptionValue }> | undefined
 ): string => {
+  const localized = localizedPropertyOptionLabel(optionId);
+  if (localized) return localized;
   const option = options?.find((opt) => opt.id === optionId);
   if (option) return formatOptionValue(option);
   return getPropertyOptionLabel(optionId) ?? optionId;
@@ -121,8 +144,13 @@ const formatOptionValueById = (
  * Takes a PropertyOption object and extracts its display value
  */
 export const formatOptionValue = (option: {
+  id?: string;
   value: PropertyOptionValue;
 }): string => {
+  if (option.id) {
+    const localized = localizedPropertyOptionLabel(option.id);
+    if (localized) return localized;
+  }
   const optionValue = option.value;
   if ('type' in optionValue && 'value' in optionValue) {
     if (optionValue.type === 'string') {

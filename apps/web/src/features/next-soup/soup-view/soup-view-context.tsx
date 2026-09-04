@@ -70,6 +70,7 @@ import {
   unreadFilterFn,
 } from '@entity';
 import { SYSTEM_PROPERTY_IDS } from '@property/constants';
+import { localizedPropertyOptionLabel } from '@property/utils/formatting';
 import { useQueryClient } from '@queries/client';
 import { invalidateUserNotifications } from '@queries/notification/user-notifications';
 import { createGroupedSoupQueries } from '@queries/soup/grouped/create-grouped-soup-queries';
@@ -1200,7 +1201,7 @@ export const SoupViewContextProvider: FlowComponent<
     if (isOwnerGrouping()) {
       return idToDisplayName(key) || undefined;
     }
-    return getPropertyOptionLabel(key);
+    return localizedPropertyOptionLabel(key) ?? getPropertyOptionLabel(key);
   };
 
   const buildGroupMeta = (group: ApiGroupMeta): GroupMeta => {
