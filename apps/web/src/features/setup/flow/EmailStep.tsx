@@ -4,8 +4,10 @@ import { useUserId } from '@core/context/user';
 import { useAddInboxFlow } from '@core/email-link';
 import GmailIcon from '@icon/mcp-gmail.svg';
 import ArrowUpRightIcon from '@phosphor/arrow-up-right.svg';
+import EnvelopeIcon from '@phosphor/envelope.svg';
 import SpinnerIcon from '@phosphor/spinner-gap.svg';
 import { invalidateEmailLinks, useEmailLinksQuery } from '@queries/email/link';
+import { UserProvider } from '@service-email/generated/schemas/userProvider';
 import { cn, Layer } from '@ui';
 import {
   createEffect,
@@ -128,7 +130,13 @@ export function EmailStep(props: {
               <div class="flex h-11 w-full items-center gap-2.5 rounded-xl border border-ink/[0.05] bg-surface px-3.5 text-sm">
                 <Show
                   when={typeof link.photo_url === 'string' && link.photo_url}
-                  fallback={<GmailIcon class="size-4 shrink-0" />}
+                  fallback={
+                    link.provider === UserProvider.STALWART ? (
+                      <EnvelopeIcon class="size-4 shrink-0" />
+                    ) : (
+                      <GmailIcon class="size-4 shrink-0" />
+                    )
+                  }
                 >
                   {(photoUrl) => (
                     <img

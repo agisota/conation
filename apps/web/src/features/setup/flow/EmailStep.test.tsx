@@ -94,4 +94,32 @@ describe('EmailStep', () => {
       { slot: 'Connect another email' }
     );
   });
+
+  it('does not present Gmail as the required primary when a Stalwart mailbox is linked', () => {
+    mocks.useEmailLinksQuery.mockReturnValue({
+      data: {
+        links: [
+          {
+            id: 'inbox-stalwart',
+            email_address: 'you@conation.dev',
+            is_primary: true,
+            macro_id: 'conation|me@example.com',
+            provider: 'STALWART',
+          },
+        ],
+      },
+    });
+
+    render(() => (
+      <EmailStep onContinue={() => undefined} onSkip={() => undefined} />
+    ));
+
+    expect(
+      screen.queryByRole('button', { name: /Connect primary account/ })
+    ).toBeNull();
+    expect(
+      screen.getByRole('button', { name: /Connect another email/ })
+    ).toBeTruthy();
+    expect(screen.getByText('you@conation.dev')).toBeTruthy();
+  });
 });

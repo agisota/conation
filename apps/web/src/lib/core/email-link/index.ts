@@ -25,6 +25,7 @@ import { err, okAsync, ResultAsync } from 'neverthrow';
 import { createMemo, createSignal } from 'solid-js';
 import { rememberInboxLinkReturn } from './return-layout';
 import { requestShareInboxConfirmation } from './share-conflict';
+export { hasStalwartMailbox } from './mailbox-empty-copy';
 
 const [emailRefetchInterval, setEmailRefetchInterval] = createSignal<
   number | undefined
