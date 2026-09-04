@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { badgeTriggerClasses, cn } from '@ui';
 import { useProperty } from '../core/context';
 
@@ -39,7 +40,9 @@ export function PropertyAddButton(props: Props) {
         size: 'sm',
         class: cn('size-6 p-0', props.class),
       })}
-      aria-label={`Add ${ctx.property().displayName}`}
+      aria-label={t('property.editor.addAria', {
+        property: ctx.property().displayName,
+      })}
     >
       +
     </button>
