@@ -21,9 +21,35 @@
 `https://app.conation.dev/auth`. Из него код строит callback:
 `https://app.conation.dev/auth/oauth2/{provider}/callback`.
 
-## Google OAuth и Gmail
+## Продуктовый ящик: Stalwart `@conation.dev`
 
-Официальные инструкции Google:
+Встроенный inbox Conation по умолчанию — ящик `@conation.dev` на Stalwart, а не
+Gmail. При `/email/init` без явного Gmail-link, если задан `STALWART_JMAP_URL`
+или `EMAIL_PROVIDER` равен `stalwart` / `jmap` / `conation`, сервис:
+
+- создаёт аккаунт в Stalwart и link `UserProvider::Stalwart`;
+- мапит login-email на `local@conation.dev` (адрес уже на `@conation.dev`
+  оставляется как есть);
+- читает тело, флаги и вложения и отправляет через JMAP.
+
+Это реальный продуктовый mailbox на signup. Google OAuth для него не нужен.
+Gmail остаётся **необязательной** интеграцией: шаги в следующем разделе
+сохраняются только для подключения чужого Gmail (и связанных Google
+Calendar/People scopes).
+
+Кодовый fallback без `STALWART_JMAP_URL` и без `EMAIL_PROVIDER` всё ещё
+выбирает Gmail. Для greenfield `conation.dev` оператор должен задать
+`STALWART_JMAP_URL`, чтобы signup шёл в Stalwart.
+
+Публичная internet-доставляемость (MX, SPF, DKIM, DMARC, PTR, исходящий relay)
+в этом срезе **не** заявлена. Ящик существует внутри продукта; внешняя почта —
+отдельная операторская работа. JMAP push/watch для Stalwart пока fail-closed.
+
+## Google OAuth и Gmail (необязательная интеграция)
+
+Этот контур нужен, чтобы подключить пользовательский Gmail. Он **не** является
+условием работы встроенного inbox Conation: продуктовый ящик — Stalwart
+`@conation.dev`, см. раздел выше. Официальные инструкции Google:
 
 - <https://developers.google.com/workspace/gmail/api/auth/web-server>
 - <https://developers.google.com/workspace/gmail/api/guides/push>
@@ -103,34 +129,20 @@ Gmail публикует только notification/history ID. Содержим�
    и передаёт события во внутренний endpoint
    `http://email-service:8080/gmail/webhook` (не публиковать его напрямую).
 
-### Можно ли отказаться от Gmail
+### Когда этот контур обязателен, а когда нет
 
-На текущем состоянии исходников — **нет, если нужен встроенный полноценный
-почтовый ящик**. Транзакционные письма (одноразовые коды, подтверждение адреса)
-уже могут уходить через SMTP и локально попадают в Mailpit, но чтение папок,
-поиск, черновики, отправка, history cursor и push-синхронизация пользовательской
-почты всё ещё реализованы через Gmail API.
+Gmail **не** обязателен для встроенной почты Conation. Честные профили:
 
-Экспериментальный Stalwart-контейнер и `StalwartProvider` пока не заменяют этот
-путь. В изолированном adapter уже реализованы JMAP session discovery,
-`Email/query`, `Email/get` и отправка MIME через upload/import/submission; они
-проверяются контрактными тестами с WireMock, а не работающим Stalwart-сервером.
-Этот adapter не включён в composition root `email_service`. Для него пока нет
-signup-provisioning пользовательских ящиков, JMAP push/watch, cursor recovery,
-initial/incremental backfill, UI-integration или end-to-end проверки. Mailpit
-остаётся локальным SMTP sink для системных писем, а не inbox. Поэтому допустимы
-только два честных production-профиля:
+1. `stalwart` — продуктовый default: signup выдаёт `@conation.dev`; Google
+   client/secret/Pub/Sub можно не настраивать, пока не нужен Gmail или Google
+   Calendar.
+2. `gmail` — выполнить шаги 1–5 выше; inbox синхронизируется через Gmail API и
+   Pub/Sub. Нужен, если `EMAIL_PROVIDER=gmail` или не задан `STALWART_JMAP_URL`.
+3. Оба — Stalwart остаётся ящиком Conation; Gmail подключается отдельным link.
 
-1. `gmail`: включить OAuth/Pub/Sub по шагам выше и получить работающий inbox;
-2. `no-inbox`: не показывать пользователю встроенную почту, оставить SMTP для
-   системных писем и явно пометить inbox как отключённый.
-
-Профиль `stalwart` станет поддерживаемым после подключения существующего adapter
-к runtime `email_service`, реализации защищённого signup-provisioning, cursor
-recovery, push/event delivery, backfill и UI-потока, а также end-to-end теста
-«создать пользователя → получить письмо → ответить → увидеть ответ в
-Conation». До прохождения этого теста Gmail — единственный runtime backend
-нынешнего Conation Inbox; без Gmail встроенная почта не работает.
+Не используйте профиль «выключить inbox», чтобы обойти отсутствие Gmail: ящик
+Conation уже создаётся без Google. Не утверждайте, что без Gmail встроенная
+почта не работает, и не утверждайте, что internet MX/DKIM уже настроены.
 
 ## GitHub login и Conation Tasks
 
