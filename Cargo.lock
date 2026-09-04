@@ -3046,6 +3046,7 @@ dependencies = [
  "conation_event_broker",
  "conation_event_topics",
  "conation_user_id",
+ "email_provider",
  "futures",
  "model-entity",
  "model_notifications",

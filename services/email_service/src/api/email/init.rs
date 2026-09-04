@@ -649,6 +649,13 @@ async fn init_user(
                 .context("Failed to commit link transaction")?;
 
             seed_stalwart_threads(&ctx.db, &ctx.sfs_client, link.id, &mailbox).await;
+            if let Err(error) = provision_stalwart_calendar(&ctx.db, &link).await {
+                tracing::warn!(
+                    error = %error,
+                    link_id = %link.id,
+                    "Failed to provision Stalwart calendar account"
+                );
+            }
 
             return Ok((
                 StatusCode::OK,
@@ -1126,6 +1133,51 @@ async fn seed_stalwart_threads(
         }
     }
 }
+
+async fn provision_stalwart_calendar(
+    db: &sqlx::PgPool,
+    link: &Link,
+) -> anyhow::Result<()> {
+    let account_id = conation_uuid::generate_uuid_v7();
+    sqlx::query(
+        r#"
+        INSERT INTO calendar_accounts (
+            id, owner_id, email_link_id, provider, provider_account_id, sync_status
+        )
+        VALUES ($1, $2, $3, 'stalwart', $4, 'ready')
+        ON CONFLICT (email_link_id) DO NOTHING
+        "#,
+    )
+    .bind(account_id)
+    .bind(link.macro_id.as_ref())
+    .bind(link.id)
+    .bind(link.email_address.0.as_ref())
+    .execute(db)
+    .await?;
+
+    let account_id = sqlx::query_scalar::<_, uuid::Uuid>(
+        "SELECT id FROM calendar_accounts WHERE email_link_id = $1",
+    )
+    .bind(link.id)
+    .fetch_one(db)
+    .await?;
+
+    sqlx::query(
+        r#"
+        INSERT INTO calendars (
+            id, account_id, provider_calendar_id, name, access_role, is_primary, is_selected
+        )
+        VALUES ($1, $2, 'b', 'Календарь', 'owner', true, true)
+        ON CONFLICT (account_id, provider_calendar_id) DO NOTHING
+        "#,
+    )
+    .bind(conation_uuid::generate_uuid_v7())
+    .bind(account_id)
+    .execute(db)
+    .await?;
+    Ok(())
+}
+
 
 fn seed_stalwart_message(
     thread_db_id: Uuid,

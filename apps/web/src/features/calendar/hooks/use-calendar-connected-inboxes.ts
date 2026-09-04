@@ -1,6 +1,7 @@
 import { useUserId } from '@core/context/user';
 import { useEmailLinksQuery } from '@queries/email/link';
 import type { Link as EmailLink } from '@service-email/generated/schemas';
+import { UserProvider } from '@service-email/generated/schemas/userProvider';
 import { createMemo } from 'solid-js';
 
 /**
@@ -19,7 +20,9 @@ export function useCalendarConnectedInboxes() {
     (linksQuery.data?.links ?? []).filter(
       (link) =>
         link.macro_id === userId() &&
-        (!link.needs_calendar_permission || link.has_calendar_data)
+        (link.provider === UserProvider.STALWART ||
+          !link.needs_calendar_permission ||
+          link.has_calendar_data)
     )
   );
 }

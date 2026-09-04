@@ -11,10 +11,12 @@ use uuid::Uuid;
 
 use super::{
     models::{
-        ActorInboxes, AttendeeResponseStatus, CalendarAttendeeInput, CalendarEvent,
-        CalendarEventDraft, CalendarEventMutationTarget, CalendarEventPatch, CalendarEventUpsert,
-        DisconnectedGoogleCalendar, EventReminders, EventTime, OccurrenceRange,
-        REMINDER_METHOD_EMAIL, REMINDER_METHOD_POPUP, REMINDER_MINUTES_MAX, REMINDER_OVERRIDES_MAX,
+        ActorInboxes, AttendeeResponseStatus, CalendarAttendee, CalendarAttendeeInput,
+        CalendarEvent, CalendarEventDraft, CalendarEventMutationTarget, CalendarEventPatch,
+        CalendarEventSource, CalendarEventUpsert, CalendarOccurrence, DisconnectedGoogleCalendar,
+        EventReminders, EventStatus, EventTime, EventTransparency, EventType, EventVisibility,
+        GoogleEventSource, OccurrenceRange, REMINDER_METHOD_EMAIL, REMINDER_METHOD_POPUP,
+        REMINDER_MINUTES_MAX, REMINDER_OVERRIDES_MAX,
     },
     ports::{
         CalendarAccessTokenProvider, CalendarDeletionScope, CalendarEventChange,
@@ -182,6 +184,33 @@ where
             return Err(CalendarMutationError::ReadOnly);
         }
         ensure_organizer_attendee(&mut draft.attendees, &target.token_identity.email_address);
+        if !target
+            .token_identity
+            .provider
+            .eq_ignore_ascii_case("GMAIL")
+        {
+            let mut provider_event_id = Uuid::now_v7().to_string();
+            if let EventTime::Timed {
+                starts_at, ends_at, ..
+            } = draft.time
+            {
+                let duration_secs = (ends_at - starts_at).num_seconds().max(60);
+                if let Ok(stalwart) = email_provider::StalwartProvider::from_env()
+                    && let Ok(id) = stalwart
+                        .create_calendar_event(
+                            &target.token_identity.email_address,
+                            &draft.title,
+                            starts_at,
+                            duration_secs,
+                        )
+                        .await
+                {
+                    provider_event_id = id;
+                }
+            }
+            let upsert = stalwart_upsert_from_draft(&target, &draft, provider_event_id);
+            return self.persist_echo(target.actor.as_ref(), upsert).await;
+        }
         let access_token = self.fetch_token(&target.token_identity).await?;
         let upsert = self
             .provider
@@ -609,6 +638,79 @@ fn provider_error(error: GoogleProviderError) -> CalendarMutationError {
 
 fn internal(error: rootcause::Report) -> CalendarMutationError {
     CalendarMutationError::Retryable(format!("{error:?}"))
+}
+
+fn stalwart_upsert_from_draft(
+    target: &crate::domain::models::CalendarCreationTarget,
+    draft: &CalendarEventDraft,
+    provider_event_id: String,
+) -> CalendarEventUpsert {
+    let event_id = Uuid::now_v7();
+    let attendees = draft
+        .attendees
+        .iter()
+        .map(|attendee| CalendarAttendee {
+            email: attendee.email.clone(),
+            display_name: None,
+            response_status: attendee
+                .response_status
+                .unwrap_or(AttendeeResponseStatus::NeedsAction),
+            is_organizer: attendee
+                .email
+                .eq_ignore_ascii_case(&target.token_identity.email_address),
+            is_optional: attendee.is_optional,
+            is_self: attendee
+                .email
+                .eq_ignore_ascii_case(&target.token_identity.email_address),
+            comment: None,
+        })
+        .collect();
+    CalendarEventUpsert {
+        event: CalendarEvent {
+            id: event_id,
+            owner_id: target.owner_id.clone(),
+            ical_uid: format!("{event_id}@conation.dev"),
+            calendar_id: Some(target.calendar_id),
+            title: draft.title.clone(),
+            description: draft.description.clone(),
+            location: draft.location.clone(),
+            status: EventStatus::Confirmed,
+            visibility: draft.visibility.unwrap_or(EventVisibility::Default),
+            transparency: draft.transparency.unwrap_or(EventTransparency::Opaque),
+            event_type: EventType::Default,
+            time: draft.time.clone(),
+            recurrence_lines: draft.recurrence_lines.clone(),
+            organizer_email: Some(target.token_identity.email_address.clone()),
+            organizer_name: None,
+            creator_email: Some(target.token_identity.email_address.clone()),
+            creator_name: None,
+            conference_url: None,
+            conference_provider: None,
+            sequence: 0,
+            is_read_only: false,
+            attendees,
+            reminders: draft.reminders.clone().unwrap_or_default(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        },
+        source: CalendarEventSource::Google(GoogleEventSource {
+            email_link_id: target.email_link_id,
+            account_id: target.account_id,
+            calendar_id: target.calendar_id,
+            provider_event_id,
+            provider_recurring_event_id: None,
+            provider_etag: None,
+            raw_payload: serde_json::json!({ "provider": "stalwart" }),
+        }),
+        overrides: Vec::new(),
+        occurrences: vec![CalendarOccurrence {
+            event_id,
+            occurrence_key: "main".to_string(),
+            recurrence_id: None,
+            time: draft.time.clone(),
+            is_cancelled: false,
+        }],
+    }
 }
 
 #[cfg(test)]

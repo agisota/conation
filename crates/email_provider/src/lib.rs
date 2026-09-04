@@ -387,6 +387,7 @@ const JMAP_SUBMISSION: &str = "urn:ietf:params:jmap:submission";
 const JMAP_MANAGEMENT: &str = "urn:stalwart:jmap";
 const JMAP_PRINCIPAL: &str = "urn:ietf:params:jmap:principals";
 const JMAP_ADMIN: &str = "urn:stalwart:params:jmap:admin";
+const JMAP_CALENDARS: &str = "urn:ietf:params:jmap:calendars";
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -815,6 +816,70 @@ impl StalwartProvider {
             })
     }
 
+    /// Create a timed event on the mailbox's default Stalwart calendar.
+    pub async fn create_calendar_event(
+        &self,
+        mailbox_email: &str,
+        title: &str,
+        start: chrono::DateTime<chrono::Utc>,
+        duration_secs: i64,
+    ) -> Result<String, ProviderError> {
+        let auth = admin_auth_from_env()?;
+        let session = self.admin_session_document(&auth).await?;
+        let account_id = self
+            .stalwart_account_id_for_email(&session, &auth, mailbox_email)
+            .await?;
+        let calendars = self
+            .admin_call(
+                &session,
+                &auth,
+                vec![JMAP_CORE, JMAP_CALENDARS],
+                "Calendar/get",
+                json!({ "accountId": account_id }),
+            )
+            .await?;
+        let calendar_id = calendars
+            .get("list")
+            .and_then(Value::as_array)
+            .and_then(|list| {
+                list.iter()
+                    .find(|calendar| calendar.get("isDefault").and_then(Value::as_bool) == Some(true))
+                    .or_else(|| list.first())
+                    .and_then(|calendar| calendar.get("id").and_then(Value::as_str))
+            })
+            .ok_or_else(|| {
+                ProviderError::Provider(format!("Stalwart mailbox {mailbox_email} has no calendar"))
+            })?;
+        let created = self
+            .admin_call(
+                &session,
+                &auth,
+                vec![JMAP_CORE, JMAP_CALENDARS],
+                "CalendarEvent/set",
+                json!({
+                    "accountId": account_id,
+                    "create": {
+                        "e1": {
+                            "calendarIds": { calendar_id: true },
+                            "title": title,
+                            "start": start.format("%Y-%m-%dT%H:%M:%S").to_string(),
+                            "duration": format!("PT{}S", duration_secs.max(60)),
+                            "timeZone": "UTC",
+                        }
+                    }
+                }),
+            )
+            .await?;
+        created
+            .get("created")
+            .and_then(|created| created.get("e1"))
+            .and_then(|event| event.get("id"))
+            .and_then(Value::as_str)
+            .map(str::to_owned)
+            .ok_or_else(|| {
+                ProviderError::Provider("Stalwart CalendarEvent/set did not create an event".to_owned())
+            })
+    }
 }
 
 async fn checked_response(response: reqwest::Response) -> Result<reqwest::Response, ProviderError> {
