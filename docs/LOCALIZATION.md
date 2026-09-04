@@ -88,24 +88,30 @@ channel.thread.moreReplies
 
 ## Непокрытая backend-граница
 
-Персональная русская локализация асинхронных invitation, digest, notification,
-push и большинства email пока не подтверждена. Locale получателя ещё не
-сохраняется как пользовательская настройка в основной БД и не проходит через
-все async envelopes.
+`User.locale` exists и сохраняется в основной БД: колонка `"User".locale`
+(`en` или `ru`, default `ru`). Браузерный выбор живёт в `conation-locale`.
+`setLocale` обновляет Solid signal, пишет `conation-locale` и синхронизирует
+предпочтение на authentication service запросом `PATCH /user/locale`
+(`PATCH /auth/user/locale` from `setLocale`).
 
-Особенно опасно брать locale отправителя или текущего HTTP request: один job
-может рассылать один и тот же текст получателям с разными языками. Правильный
-порядок дальнейшей миграции:
+Оставшийся разрыв — асинхронный fan-out digest/push/invite по **получателю**
+(per **recipient**). Персональная русская локализация invitation, digest,
+notification и push ещё не проходит через все async envelopes: один job не
+должен клонировать один body всем адресатам.
 
-1. Добавить locale preference в существующую пользовательскую schema через
-   сгенерированную SQLx migration. Имя таблицы `macro_user` пока является
-   внутренним schema-контрактом; новые пользовательские principals при этом
-   используют канонический prefix `conation|`.
-2. Добавить authenticated read/update API и синхронизацию браузерного выбора.
-3. Разрешать locale отдельно для каждого получателя до рендеринга текста.
-4. Передавать locale через jobs/queues с backward-compatible Russian default.
-5. Рендерить mixed-locale fan-out по получателям, а не клонировать один body.
-6. Отдельно настроить FusionAuth, push и внешние mail templates.
+Особенно опасно брать locale отправителя или текущего HTTP request: получатели
+в одной рассылке могут иметь разные языки. Правильный порядок дальнейшей
+миграции:
+
+1. Разрешать locale отдельно для каждого получателя до рендеринга текста
+   digest/push/invite.
+2. Передавать locale через jobs/queues с backward-compatible Russian-first
+   default.
+3. Рендерить mixed-locale fan-out по получателям, а не клонировать один body.
+4. Отдельно настроить FusionAuth, push и внешние mail templates.
+
+Имя таблицы `macro_user` пока является внутренним schema-контрактом; новые
+пользовательские principals используют канонический prefix `conation|`.
 
 Адрес отправителя, DNS domain, queue field, metadata tag и database column —
 не переводимые строки. Их rebrand требует configuration/migration и проверки
