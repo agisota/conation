@@ -8,7 +8,7 @@ fn renders_conation_brand_with_explicit_operator_values() {
         "help@workspace.example",
     );
 
-    assert!(message.contains("join Example Team on Conation"));
+    assert!(message.contains("присоединиться к Example Team в Conation"));
     assert!(message.contains("https://workspace.example/app/?login=true"));
     assert!(message.contains("mailto:help@workspace.example"));
     assert!(!message.contains("on Macro"));

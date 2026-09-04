@@ -920,7 +920,7 @@ export const UnifiedFilterDropdown = (
   const stageOptions = createMemo((): SearchableOption[] => [
     ...dealStages.filterStages().map((stage, index) => ({
       id: stage.id,
-      label: stage.label,
+      label: dealStages.stageLabel(stage.id) ?? stage.label,
       icon: () => (
         <CrmStageIcon optionId={stage.id} index={index} class="size-3.5" />
       ),
