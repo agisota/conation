@@ -555,7 +555,7 @@ export const ENABLE_CREATE_PROPERTY = resolveFeatureFlag(
   true
 );
 
-export const ENABLE_HOME_OVERRIDE = DEV_MODE_ENV ? true : undefined;
+export const ENABLE_HOME_OVERRIDE = resolveFeatureFlag('ENABLE_HOME', true);
 
 // AI-generated recommendations on Home. Keep the whole data-owning component
 // behind this gate so disabled users do not fetch notifications or start AI
