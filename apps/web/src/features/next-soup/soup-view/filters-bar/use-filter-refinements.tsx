@@ -591,13 +591,34 @@ export function useFilterRefinements() {
           }
         }
         if (group.showTabDefaults) {
-          const order = new Map([
-            ['task-in-progress', 0],
-            ['task-not-started', 1],
-            ['task-in-review', 2],
-          ]);
+          const openIds = [
+            'task-not-started',
+            'task-in-progress',
+            'task-in-review',
+          ] as const;
+          const openOrder: Record<string, number> = {
+            'task-not-started': 0,
+            'task-in-progress': 1,
+            'task-in-review': 2,
+          };
+          const activeIds = new Set(result.map((value) => value.id));
+          if (
+            result.length === openIds.length &&
+            openIds.every((id) => activeIds.has(id))
+          ) {
+            const lead =
+              result.find((value) => value.id === 'task-not-started') ??
+              result[0];
+            return [
+              {
+                id: 'task-open',
+                label: t('soup.taskStatus.open'),
+                icon: lead?.icon,
+              },
+            ];
+          }
           result.sort(
-            (a, b) => (order.get(a.id) ?? 3) - (order.get(b.id) ?? 3)
+            (a, b) => (openOrder[a.id] ?? 3) - (openOrder[b.id] ?? 3)
           );
         }
         return result;

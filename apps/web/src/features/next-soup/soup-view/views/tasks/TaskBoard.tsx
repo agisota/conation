@@ -8,7 +8,7 @@ import {
   openEntityInSplitFromUnifiedList,
   preventDuplicatePreviewEntityOpen,
 } from '@app/features/next-soup/utils';
-import { t } from '@app/lib/i18n';
+import { formatDateTime, t } from '@app/lib/i18n';
 import { useSplitPanelOrThrow } from '@components/app/split-layout/layoutUtils';
 import { CustomScrollbar } from '@core/component/CustomScrollbar';
 import { UserIcon } from '@core/component/UserIcon';
@@ -22,6 +22,7 @@ import {
 } from '@entity';
 import { soupPropertyToProperty } from '@entity/extractors-property';
 import { getTaskPriorityOptionId } from '@entity/utils/task-properties';
+import CalendarBlank from '@phosphor/calendar-blank.svg';
 import CircleDashed from '@phosphor/circle-dashed.svg';
 import { PropertyValueIcon } from '@property/component/propertyValue';
 import { PROPERTY_OPTION_IDS, SYSTEM_PROPERTY_IDS } from '@property/constants';
@@ -354,6 +355,9 @@ export function TaskBoard() {
                     )}
                   </Show>
                   <span class="truncate">{column.label}</span>
+                  <span class="ml-auto tabular-nums text-ink-extra-muted font-medium">
+                    {column.entities.length}
+                  </span>
                 </div>
                 <div class="min-h-0 flex-1 overflow-y-auto scrollbar-hidden flex flex-col gap-2 px-2 pb-2">
                   <For each={column.entities}>
@@ -424,11 +428,11 @@ function TaskBoardCard(props: {
           props.dragging && 'opacity-40'
         )}
       >
-        <div class="flex items-center gap-2 min-w-0">
+        <div class="flex items-start gap-2 min-w-0">
           <div class="size-4 shrink-0">
             <Entity.Icon entity={props.entity} />
           </div>
-          <span class="ph-no-capture truncate font-semibold min-w-0">
+          <span class="ph-no-capture line-clamp-2 font-semibold min-w-0">
             <Entity.Title entity={props.entity} />
           </span>
         </div>
@@ -436,6 +440,21 @@ function TaskBoardCard(props: {
           <Show when={priorityId()}>
             {(id) => (
               <PropertyValueIcon optionId={id()} class="size-3.5 shrink-0" />
+            )}
+          </Show>
+          <Show when={getTaskDueDate(task())}>
+            {(due) => (
+              <span
+                class={cn(
+                  'inline-flex items-center gap-1 text-xs text-ink-extra-muted min-w-0',
+                  isBefore(due(), startOfDay(new Date())) && 'text-failure'
+                )}
+              >
+                <CalendarBlank class="size-3 shrink-0" />
+                <span class="truncate">
+                  {formatDateTime(due(), { month: 'short', day: 'numeric' })}
+                </span>
+              </span>
             )}
           </Show>
           <div class="ml-auto flex items-center -space-x-1 shrink-0">

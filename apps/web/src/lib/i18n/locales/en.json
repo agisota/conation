@@ -1771,6 +1771,7 @@
   "soup.taskStatus.inProgress": "In progress",
   "soup.taskStatus.inReview": "In review",
   "soup.taskStatus.notStarted": "Not started",
+  "soup.taskStatus.open": "Open",
   "soup.tasks.board.canceled": "Canceled",
   "soup.tasks.board.completed": "Completed",
   "soup.tasks.board.inProgress": "In Progress",

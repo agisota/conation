@@ -21,6 +21,7 @@ describe('next-soup localization', () => {
     setLocale('ru');
 
     expect(t('soup.filters.openLabel')).toBe('Открыть фильтры');
+    expect(t('soup.taskStatus.open')).toBe('Открытые');
     expect(t('soup.empty.crm.joinTeamTitle')).toBe(
       'Вступите в команду, чтобы включить CRM'
     );

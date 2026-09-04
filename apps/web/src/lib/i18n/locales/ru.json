@@ -1777,6 +1777,7 @@
   "soup.taskStatus.inProgress": "В работе",
   "soup.taskStatus.inReview": "На проверке",
   "soup.taskStatus.notStarted": "Не начата",
+  "soup.taskStatus.open": "Открытые",
   "soup.tasks.board.canceled": "Отменена",
   "soup.tasks.board.completed": "Выполнена",
   "soup.tasks.board.inProgress": "В работе",
