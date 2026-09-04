@@ -110,7 +110,7 @@ fn cloudfront_signed_url(
 impl RecordingStorage for S3RecordingStorage {
     async fn presign_recording_url(&self, recording_key: &str) -> anyhow::Result<String> {
         let object_key = recording_object_key(recording_key);
-        if conation_aws_config::is_local_aws() {
+        if conation_aws_config::s3_uses_localstack() {
             self.presign_s3_url(&object_key).await
         } else {
             self.presign_get_url(&object_key)
@@ -119,7 +119,7 @@ impl RecordingStorage for S3RecordingStorage {
 
     async fn presign_recording_preview_url(&self, preview_key: &str) -> anyhow::Result<String> {
         let object_key = preview_object_key(preview_key);
-        if conation_aws_config::is_local_aws() {
+        if conation_aws_config::s3_uses_localstack() {
             self.presign_s3_url(object_key).await
         } else {
             self.presign_get_url(object_key)

@@ -313,7 +313,7 @@ impl<
         let constructed_url = format!("{}/{}", self.cloudfront_config.distribution_url, key);
         let options = self.get_signed_options();
 
-        let signed_url = if !conation_aws_config::is_local_aws() {
+        let signed_url = if !conation_aws_config::s3_uses_localstack() {
             get_signed_url(&constructed_url, &options)?
         } else {
             constructed_url

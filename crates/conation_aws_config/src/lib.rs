@@ -10,12 +10,69 @@ maybe_env_var! {
     pub struct LocalAwsUrl;
 }
 
-/// Creates an S3 client
+maybe_env_var! {
+    struct S3EndpointUrl;
+}
+
+#[cfg(feature = "s3")]
+#[derive(Debug, Eq, PartialEq)]
+enum S3ConfigSource {
+    SharedAws,
+    ExplicitEndpoint,
+}
+
+#[cfg(feature = "s3")]
+fn s3_config_source(s3_endpoint_url: Option<&str>) -> S3ConfigSource {
+    if s3_endpoint_url.is_some() {
+        S3ConfigSource::ExplicitEndpoint
+    } else {
+        S3ConfigSource::SharedAws
+    }
+}
+
+#[cfg(feature = "s3")]
+async fn get_s3_aws_config(source: S3ConfigSource) -> aws_config::SdkConfig {
+    match source {
+        S3ConfigSource::SharedAws => get_conation_aws_config().await,
+        S3ConfigSource::ExplicitEndpoint => {
+            aws_config::defaults(aws_config::BehaviorVersion::latest())
+                .region("us-east-1")
+                .load()
+                .await
+        }
+    }
+}
+
+#[cfg(feature = "s3")]
+fn s3_config_builder(
+    builder: aws_sdk_s3::config::Builder,
+    s3_endpoint_url: Option<&str>,
+    s3_uses_localstack: bool,
+) -> aws_sdk_s3::config::Builder {
+    let builder = builder.force_path_style(s3_uses_localstack || s3_endpoint_url.is_some());
+    if let Some(s3_endpoint_url) = s3_endpoint_url {
+        builder.endpoint_url(s3_endpoint_url)
+    } else {
+        builder
+    }
+}
+
+/// Creates an S3 client.
+///
+/// An explicit `S3_ENDPOINT_URL` uses the normal AWS credential chain rather
+/// than the fixed LocalStack test credentials selected by `LOCAL_AWS_URL`.
 #[cfg(feature = "s3")]
 pub async fn s3_client() -> aws_sdk_s3::Client {
-    let s3_config = aws_sdk_s3::config::Builder::from(&get_conation_aws_config().await)
-        .force_path_style(is_local_aws())
-        .build();
+    let s3_endpoint_url = S3EndpointUrl::new();
+    let source = s3_config_source(s3_endpoint_url.as_deref());
+    let s3_uses_localstack =
+        s3_uses_localstack_with_endpoint(is_localstack(), s3_endpoint_url.as_deref());
+    let s3_config = s3_config_builder(
+        aws_sdk_s3::config::Builder::from(&get_s3_aws_config(source).await),
+        s3_endpoint_url.as_deref(),
+        s3_uses_localstack,
+    )
+    .build();
     aws_sdk_s3::Client::from_conf(s3_config)
 }
 
@@ -25,10 +82,10 @@ pub async fn sqs_client() -> aws_sdk_sqs::Client {
     aws_sdk_sqs::Client::new(&get_conation_aws_config().await)
 }
 
-/// Creates a aws_config to use.
-/// If you provide `LOCAL_AWS_URL` environment variable we create a local aws
-/// config with test credentials.
-/// Otherwise we load normally.
+/// Creates an AWS SDK config.
+///
+/// `LOCAL_AWS_URL` configures all AWS SDK clients to use LocalStack with test
+/// credentials. S3-only endpoints are configured separately by [`s3_client`].
 pub async fn get_conation_aws_config() -> aws_config::SdkConfig {
     if let Some(local_aws_url) = LocalAwsUrl::new() {
         local_aws_config(local_aws_url.as_ref()).await
@@ -50,9 +107,24 @@ pub async fn local_aws_config(local_aws_url: &str) -> aws_config::SdkConfig {
         .await
 }
 
-/// Returns if the aws config is local or not
-pub fn is_local_aws() -> bool {
+fn is_localstack() -> bool {
     LocalAwsUrl::new().is_some()
+}
+
+fn s3_uses_localstack_with_endpoint(
+    localstack_enabled: bool,
+    s3_endpoint_url: Option<&str>,
+) -> bool {
+    localstack_enabled && s3_endpoint_url.is_none()
+}
+
+/// Returns whether S3 requests use LocalStack.
+///
+/// An explicit `S3_ENDPOINT_URL` takes precedence over `LOCAL_AWS_URL`, so
+/// S3-only endpoints such as MinIO do not use LocalStack URL transformations
+/// or local-storage skips.
+pub fn s3_uses_localstack() -> bool {
+    s3_uses_localstack_with_endpoint(is_localstack(), S3EndpointUrl::new().as_deref())
 }
 
 /// internal method to transform the local aws url
@@ -80,11 +152,12 @@ fn transform_local_url(url: &str) -> String {
     format!("http://localhost:{port}/{asset}{path}{query}")
 }
 
-/// Transforms a localstack url into one that will work within the app
-/// For example, presigned urls for localstack come out as `http://{BUCKET_NAME}.localstack:{PORT}`
-/// but we need them to be formulated as `http://localhost:{PORT}/bucket-name`.
+/// Transforms a LocalStack S3 URL into one a browser can reach.
+///
+/// No-op unless S3 uses LocalStack; explicit endpoints such as MinIO remain
+/// unchanged.
 pub fn transform_aws_url(url: &str) -> String {
-    if is_local_aws() {
+    if s3_uses_localstack() {
         return transform_local_url(url);
     }
     url.to_string()
@@ -111,16 +184,16 @@ fn transform_internal_url(url: &str) -> String {
     url.to_string()
 }
 
-/// Transforms a browser-facing local URL into one reachable from inside the
-/// app's own containers when fetching an object server-side.
+/// Transforms a browser-facing LocalStack S3 URL into one reachable from
+/// inside the app's own containers when fetching an object server-side.
 ///
 /// The inverse of [`transform_aws_url`]: presigned and distribution URLs are
 /// minted with the `localhost` host so the browser on the host machine can
 /// reach LocalStack, but a service fetching the same object from inside the
-/// Docker network must use the `localstack` service hostname instead. No-op
-/// outside local AWS.
+/// Docker network must use the `localstack` service hostname. No-op unless S3
+/// uses LocalStack.
 pub fn transform_aws_url_for_internal_fetch(url: &str) -> String {
-    if is_local_aws() {
+    if s3_uses_localstack() {
         return transform_internal_url(url);
     }
     url.to_string()

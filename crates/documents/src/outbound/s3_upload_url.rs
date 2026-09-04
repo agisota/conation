@@ -73,7 +73,7 @@ impl PresignedUploadUrlPort for S3UploadUrlAdapter {
 
     #[tracing::instrument(skip(self), err)]
     async fn copy_object(&self, source_key: &str, destination_key: &str) -> anyhow::Result<()> {
-        if conation_aws_config::is_local_aws() {
+        if conation_aws_config::s3_uses_localstack() {
             return Ok(());
         }
 
@@ -118,7 +118,7 @@ impl PresignedUploadUrlPort for S3UploadUrlAdapter {
 
     #[tracing::instrument(skip(self, bytes), err)]
     async fn upload_snapshot(&self, document_id: &str, bytes: Vec<u8>) -> anyhow::Result<()> {
-        if conation_aws_config::is_local_aws() {
+        if conation_aws_config::s3_uses_localstack() {
             return Ok(());
         }
 
