@@ -47,8 +47,8 @@ pub enum InitGithubLinkError {
     /// Internal github error
     #[error("internal error occurred")]
     GithubServiceError(#[from] GithubError),
-    /// The identity provider was not found
-    #[error("identity provider not found")]
+    /// FusionAuth has no GitHub identity provider (OAuth app not configured).
+    #[error("GitHub is not configured")]
     IdentityProviderNotFound,
 }
 
@@ -58,9 +58,10 @@ impl IntoResponse for InitGithubLinkError {
         let status_code: StatusCode = match &self {
             InitGithubLinkError::InvalidUserId(_) => StatusCode::BAD_REQUEST,
             InitGithubLinkError::TooManyInProgressLinks => StatusCode::TOO_MANY_REQUESTS,
-            InitGithubLinkError::InternalError(_)
-            | InitGithubLinkError::GithubServiceError(_)
-            | InitGithubLinkError::IdentityProviderNotFound => StatusCode::INTERNAL_SERVER_ERROR,
+            InitGithubLinkError::IdentityProviderNotFound => StatusCode::SERVICE_UNAVAILABLE,
+            InitGithubLinkError::InternalError(_) | InitGithubLinkError::GithubServiceError(_) => {
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
         };
 
         (
@@ -189,6 +190,9 @@ pub async fn init_github_link_handler(
         .auth_client
         .get_identity_provider_id_by_name("github")
         .await
+        .inspect_err(|error| {
+            tracing::error!(error=?error, "GitHub identity provider is not configured");
+        })
         .map_err(|_| InitGithubLinkError::IdentityProviderNotFound)?;
 
     // Build OAuth state

@@ -127,6 +127,11 @@ export async function fetchWithAuth<
           code: 'SERVER_ERROR',
           message: 'Internal server error',
         };
+      case 503:
+        return {
+          code: 'SERVICE_UNAVAILABLE',
+          message: 'Service unavailable',
+        };
       default:
         return {
           code: 'HTTP_ERROR',

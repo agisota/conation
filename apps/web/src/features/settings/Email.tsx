@@ -38,6 +38,7 @@ import {
   BackfillJobStatus,
   type Link as EmailLink,
   SyncStatus,
+  UserProvider,
 } from '@service-email/generated/schemas';
 import { Button, Dialog, Panel, Tooltip } from '@ui';
 import { createMemo, createSignal, For, Match, Show, Switch } from 'solid-js';
@@ -519,6 +520,7 @@ function InboxRow(props: {
           <Show
             when={
               ENABLE_INBOX_SYNC_STATUS &&
+              props.link.provider === UserProvider.GMAIL &&
               props.link.sync_status === SyncStatus.NEEDS_REAUTH
             }
           >

@@ -2093,6 +2093,7 @@
   "settings.github.status.reconnectRequired": "Требуется переподключение",
   "settings.github.status.connected": "Подключено",
   "settings.github.errors.connect": "Не удалось начать подключение к GitHub",
+  "settings.github.errors.notConfigured": "GitHub не настроен на этом сервере. Создайте OAuth App в GitHub и задайте GITHUB_CLIENT_ID и GITHUB_CLIENT_SECRET.",
   "settings.github.errors.disconnect": "Не удалось отключить GitHub",
   "settings.github.errors.reconnect": "Не удалось начать переподключение к GitHub",
   "settings.github.account.label": "Аккаунт",

@@ -2087,6 +2087,7 @@
   "settings.github.status.reconnectRequired": "Reconnect required",
   "settings.github.status.connected": "Connected",
   "settings.github.errors.connect": "Failed to start GitHub connect flow",
+  "settings.github.errors.notConfigured": "GitHub is not configured on this server. Register a GitHub OAuth App and set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET.",
   "settings.github.errors.disconnect": "Failed to disconnect GitHub",
   "settings.github.errors.reconnect": "Failed to start GitHub reconnect flow",
   "settings.github.account.label": "Account",

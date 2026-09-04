@@ -97,6 +97,7 @@ export type BaseFetchErrorCode =
   | 'FORBIDDEN'
   | 'CONFLICT'
   | 'SERVER_ERROR'
+  | 'SERVICE_UNAVAILABLE'
   | 'INVALID_JSON'
   | 'UNKNOWN_ERROR'
   | 'GONE';

@@ -1,5 +1,6 @@
 import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
+import { thrownResultErrorHasCode } from '@core/util/result';
 import { SERVER_HOSTS } from '@core/constant/servers';
 import GithubIcon from '@icon/mcp-github.svg';
 import ArrowUpRightIcon from '@phosphor/arrow-up-right.svg';
@@ -44,8 +45,13 @@ export function GitHubCard() {
       window.location.href = await initGithubLink.mutateAsync(
         window.location.href
       );
-    } catch {
-      toast.failure(t('settings.github.errors.connect'));
+    } catch (error) {
+      toast.failure(
+        thrownResultErrorHasCode(error, 'SERVER_ERROR') ||
+          thrownResultErrorHasCode(error, 'SERVICE_UNAVAILABLE')
+          ? t('settings.github.errors.notConfigured')
+          : t('settings.github.errors.connect')
+      );
     }
   };
 
