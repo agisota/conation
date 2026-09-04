@@ -88,11 +88,12 @@ channel.thread.moreReplies
 
 ## Непокрытая backend-граница
 
-`User.locale` exists и сохраняется в основной БД: колонка `"User".locale`
-(`en` или `ru`, default `ru`). Браузерный выбор живёт в `conation-locale`.
-`setLocale` обновляет Solid signal, пишет `conation-locale` и синхронизирует
-предпочтение на authentication service запросом `PATCH /user/locale`
-(`PATCH /auth/user/locale` from `setLocale`).
+`User.locale` сохраняется в основной БД: колонка `"User".locale`
+(`en` или `ru`, по умолчанию `ru`). Браузерный выбор живёт в
+`conation-locale`. `setLocale` обновляет Solid signal, пишет
+`conation-locale` и синхронизирует предпочтение запросом
+`PATCH /user/locale` на authentication service
+(`https://…/auth/user/locale`).
 
 Оставшийся разрыв — асинхронный fan-out digest/push/invite по **получателю**
 (per **recipient**). Персональная русская локализация invitation, digest,

@@ -98,7 +98,8 @@ export function CompanyKanban() {
     },
   });
 
-  const { stages, filterStages, stageProperty, resolveStage } = useDealStages();
+  const { stages, filterStages, stageProperty, resolveStage, stageLabel } =
+    useDealStages();
   const { canEditCrm, canMoveClosedDeals } = useCrmPermissions();
   const closedStageIds = useClosedStageIds(stages);
 
@@ -117,7 +118,10 @@ export function CompanyKanban() {
     // stages plus retired legacy stages on the system default), then
     // "No stage" — checked columns always render in this fixed order.
     const candidates: StageColumn[] = [
-      ...filterStages().map((stage) => ({ key: stage.id, label: stage.label })),
+      ...filterStages().map((stage) => ({
+        key: stage.id,
+        label: stageLabel(stage.id) ?? stage.label,
+      })),
       { key: NO_STAGE_KEY, label: t('soup.filters.stages.none') },
     ];
     // An active stage filter removes the filtered-out columns entirely,

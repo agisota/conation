@@ -9,7 +9,9 @@
 
 Причина в коде, не в «ещё не нарисовали»:
 
-1. `DEFAULT_ROUTE` был `/component/inbox`. Inbox в runtime — **только Gmail**. Без Google-гранта это пустой viewer.
+1. На 2026-09-02 `DEFAULT_ROUTE` был `/component/inbox`, а inbox в runtime
+   требовал Gmail. **Сейчас это устарело:** signup создаёт ящик Stalwart
+   (`UserProvider::Stalwart`), стартовый маршрут — getting-started / Home.
 2. Preview Pair открывает соседний Viewer с placeholder «Select an item…». Без строк в списке viewer пустой.
 3. Интерактивный туториал (`InteractiveOnboarding`) рисует **песочницу**, не живое пространство. Вкладки в демо не навигируют продукт. Fallback демо — lockup с `opacity-25` на тёмном поле: «блеклый логотип на чёрном».
 4. Онбординг v4 (`/onboarding`) завязан на PostHog-флаг `enable-onboarding-v4` и OAuth-коннекторы (Gmail, Linear, …). На self-host флаг/коннекторы отсутствуют → поток обрезан.
