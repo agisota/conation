@@ -138,11 +138,19 @@ rebrand:
   required, especially for secondary block views and developer-only surfaces;
   fixtures and protocol strings must not be translated merely because they
   contain English or Macro text.
-- Backend Russian rendering is intentionally narrow. The authenticated custom
-  verification-link email negotiates `Accept-Language`, while recipient locale
-  is not yet persisted or propagated through digest, invite, notification,
-  push, and multi-recipient fan-out paths. Those paths retain a coherent
-  English fallback rather than guessing the sender's locale.
+- Backend Russian rendering is still narrow, but recipient locale is now
+  persisted. `User.locale` stores `en` or `ru` (default `ru`); `setLocale`
+  writes browser `conation-locale` and PATCHes the auth-service
+  `/user/locale`. Verification-link email still negotiates
+  `Accept-Language`. The remaining gap is async fan-out (digest, push,
+  invite) per recipient — not a missing database column. Invitees have no
+  stored locale and keep the Russian product default; do not guess the
+  sender's locale.
+- Signup provisions a Stalwart mailbox and a `UserProvider::Stalwart` link;
+  JMAP body, flags, attachments, and send exist on this tree. Gmail is an
+  optional Google integration, not the required inbox. Public MX, DKIM,
+  TLS, and internet deliverability remain unsupported; a Conation mailbox
+  is not proof of Internet mail.
 - Native display metadata and exact-source platform artwork now say Conation.
   A standalone Tauri profile with isolated Conation endpoints, bundle/deep-link
   settings, and fail-closed configuration is being validated separately from
