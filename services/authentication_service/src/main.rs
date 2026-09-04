@@ -277,7 +277,6 @@ async fn main() -> anyhow::Result<()> {
         "initialized stripe client"
     );
 
-    // `from_env` routes to local SMTP (Mailpit) when SMTP_HOST is set, else SES.
     let app_base_url =
         api::configured_app_base_url().context("failed to resolve invitation app URL")?;
     let mut invite_app_url = app_base_url.clone();
@@ -288,6 +287,7 @@ async fn main() -> anyhow::Result<()> {
         aws_sdk_sesv2::Client::new(&aws_config),
         &config.environment.to_string(),
     )
+    .context("invalid outbound SMTP configuration")?
     .invite_email(&mail_identity.auth_sender_email)
     .invite_url(invite_app_url.as_str())
     .support_email(&mail_identity.support_email);

@@ -1,15 +1,13 @@
-//! SMTP delivery for local mode. Sends to a plaintext SMTP sink (Mailpit) so
-//! local email flows are inspectable without SES or real credentials.
+//! SMTP delivery through a transport configured during service startup.
 
 use anyhow::{Context, Result};
 use lettre::message::Mailbox;
 use lettre::message::header::ContentType;
 use lettre::{Address, AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor};
 
-/// Send an HTML email over plaintext SMTP (no TLS/auth — Mailpit accepts any).
+/// Send an HTML email through an already configured SMTP transport.
 pub async fn send_email_smtp(
-    host: &str,
-    port: u16,
+    mailer: &AsyncSmtpTransport<Tokio1Executor>,
     from_email: &str,
     to_email: &str,
     subject: &str,
@@ -25,11 +23,6 @@ pub async fn send_email_smtp(
         .header(ContentType::TEXT_HTML)
         .body(content.to_string())
         .context("building SMTP message")?;
-
-    let mailer: AsyncSmtpTransport<Tokio1Executor> =
-        AsyncSmtpTransport::<Tokio1Executor>::builder_dangerous(host)
-            .port(port)
-            .build();
 
     mailer.send(email).await.context("sending via SMTP")?;
     Ok(())
