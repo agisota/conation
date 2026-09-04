@@ -15,9 +15,16 @@ const PROPERTY_OPTION_I18N_KEYS: Record<string, string> = {
   [PROPERTY_OPTION_IDS.PRIORITY.HIGH]: 'soup.priority.highShort',
   [PROPERTY_OPTION_IDS.PRIORITY.MEDIUM]: 'soup.priority.mediumShort',
   [PROPERTY_OPTION_IDS.PRIORITY.LOW]: 'soup.priority.lowShort',
+  [PROPERTY_OPTION_IDS.STAGE.LEAD]: 'soup.crm.stage.lead',
+  [PROPERTY_OPTION_IDS.STAGE.QUALIFIED]: 'soup.crm.stage.qualified',
+  [PROPERTY_OPTION_IDS.STAGE.DEMO]: 'soup.crm.stage.demo',
+  [PROPERTY_OPTION_IDS.STAGE.TRIAL]: 'soup.crm.stage.trial',
+  [PROPERTY_OPTION_IDS.STAGE.NEGOTIATION]: 'soup.crm.stage.negotiation',
+  [PROPERTY_OPTION_IDS.STAGE.CUSTOMER]: 'soup.crm.stage.customer',
+  [PROPERTY_OPTION_IDS.STAGE.CHURNED]: 'soup.crm.stage.churned',
 };
 
-/** Localized label for a known system status/priority option id. */
+/** Localized label for a known system status/priority/stage option id. */
 export function localizedPropertyOptionLabel(
   optionId: string
 ): string | undefined {
@@ -59,7 +66,7 @@ export function formatDate(value: Date | string): string {
  * Format a boolean value for display
  */
 export function formatBoolean(value: boolean): string {
-  return value ? 'True' : 'False';
+  return value ? t('property.boolean.true') : t('property.boolean.false');
 }
 
 /**
