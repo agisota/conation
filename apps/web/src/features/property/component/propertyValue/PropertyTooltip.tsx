@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { UserIcon } from '@core/component/UserIcon';
 import { useUnfurl } from '@core/signal/unfurl';
 import LinkIcon from '@phosphor/link.svg';
@@ -77,7 +78,13 @@ const TooltipWrapper = (props: {
   return (
     <Show
       when={hasValue()}
-      fallback={<div class="text-xs">No {props.property.displayName} set</div>}
+      fallback={
+        <div class="text-xs">
+          {t('property.editor.noProperty', {
+            property: props.property.displayName,
+          })}
+        </div>
+      }
     >
       <div
         classList={{
