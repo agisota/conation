@@ -2,15 +2,12 @@ import {
   isCanceled,
   isCompleted,
 } from '@app/features/next-soup/filters/predicates';
-import { EmptyState } from '@app/features/next-soup/soup-view/empty-states';
-import { useFilterRefinements } from '@app/features/next-soup/soup-view/filters-bar/use-filter-refinements';
 import { SoupEntityContextMenu } from '@app/features/next-soup/soup-view/soup-entity-context-menu';
 import { useSoupView } from '@app/features/next-soup/soup-view/soup-view-context';
 import {
   openEntityInSplitFromUnifiedList,
   preventDuplicatePreviewEntityOpen,
 } from '@app/features/next-soup/utils';
-import { DEBUG_SETTING_KEYS, useDebugSetting } from '@app/lib/debugSettings';
 import { t } from '@app/lib/i18n';
 import { useSplitPanelOrThrow } from '@components/app/split-layout/layoutUtils';
 import { CustomScrollbar } from '@core/component/CustomScrollbar';
@@ -151,13 +148,8 @@ function withCachedProperties(
  * update STATUS (SELECT_STRING). Timeline is view-only.
  */
 export function TaskBoard() {
-  const { source, soup, searchText, viewMode } = useSoupView();
+  const { source, soup, viewMode } = useSoupView();
   const panel = useSplitPanelOrThrow();
-  const { hasActiveRefinements, hasHiddenItems, resetToTabDefaults } =
-    useFilterRefinements();
-  const forceEmptyState = useDebugSetting(
-    DEBUG_SETTING_KEYS.FORCE_EMPTY_STATES
-  );
 
   const isStatusBoard = () => viewMode() === 'board';
 
@@ -195,26 +187,18 @@ export function TaskBoard() {
     },
   });
 
-  const tasks = createMemo(() =>
-    source.data().filter(isTaskEntity).map(withCachedProperties)
-  );
+  const tasks = createMemo(() => {
+    const fromRows = soup
+      .rows()
+      .filter((row) => !row.getIsGrouped() && !row.getIsLoadMore())
+      .map((row) => row.original);
+    const fromSource = source.data();
+    const merged = fromRows.length > 0 ? fromRows : fromSource;
+    return merged.filter(isTaskEntity).map(withCachedProperties);
+  });
 
   const effectiveStatus = (task: TaskEntityWithProperties) =>
     statusOverrides().get(task.id) ?? statusColumnKey(task);
-
-  createEffect(() => {
-    const overrides = statusOverrides();
-    if (overrides.size === 0) return;
-    for (const task of tasks()) {
-      const override = overrides.get(task.id);
-      if (override !== undefined && statusColumnKey(task) === override) {
-        clearStatusOverride(task.id);
-      }
-    }
-  });
-
-  const showEmptyState = () =>
-    (!source.isFetching() && tasks().length === 0) || forceEmptyState();
 
   const boardColumns = createMemo((): BoardColumn[] => {
     if (isStatusBoard()) {
@@ -311,120 +295,107 @@ export function TaskBoard() {
   };
 
   return (
-    <Show
-      when={!showEmptyState()}
-      fallback={
-        <EmptyState
-          listView="tasks"
-          search={!!searchText()}
-          hasRefinementsFromBase={hasActiveRefinements()}
-          hasHiddenItems={hasHiddenItems()}
-          onClearFilters={resetToTabDefaults}
-        />
-      }
-    >
-      <div class="relative size-full min-w-0">
-        <div
-          ref={setScrollRef}
-          class="size-full overflow-x-auto overflow-y-hidden scrollbar-hidden"
-        >
-          <div class="flex h-full gap-3 p-3">
-            <For each={columns()}>
-              {(column) => (
-                <div
-                  class={cn(
-                    'flex h-full min-w-56 flex-1 flex-col rounded-lg border border-edge-muted bg-surface',
-                    dropTarget() === column.key &&
-                      draggedId() &&
-                      'border-accent/50 bg-accent/5'
-                  )}
-                  style={
-                    columnWidth() !== undefined
-                      ? { width: `${columnWidth()}px`, flex: 'none' }
-                      : undefined
+    <div class="relative size-full min-w-0">
+      <div
+        ref={setScrollRef}
+        class="size-full overflow-x-auto overflow-y-hidden scrollbar-hidden"
+      >
+        <div class="flex h-full gap-3 p-3">
+          <For each={columns()}>
+            {(column) => (
+              <div
+                class={cn(
+                  'flex h-full min-w-56 flex-1 flex-col rounded-lg border border-edge-muted bg-surface',
+                  dropTarget() === column.key &&
+                    draggedId() &&
+                    'border-accent/50 bg-accent/5'
+                )}
+                style={
+                  columnWidth() !== undefined
+                    ? { width: `${columnWidth()}px`, flex: 'none' }
+                    : undefined
+                }
+                onDragOver={(e) => {
+                  if (!isStatusBoard() || !draggedId()) return;
+                  e.preventDefault();
+                  setDropTarget(column.key);
+                }}
+                onDragLeave={(e) => {
+                  if (
+                    e.relatedTarget instanceof Node &&
+                    e.currentTarget.contains(e.relatedTarget)
+                  ) {
+                    return;
                   }
-                  onDragOver={(e) => {
-                    if (!isStatusBoard() || !draggedId()) return;
-                    e.preventDefault();
-                    setDropTarget(column.key);
-                  }}
-                  onDragLeave={(e) => {
-                    if (
-                      e.relatedTarget instanceof Node &&
-                      e.currentTarget.contains(e.relatedTarget)
-                    ) {
-                      return;
+                  if (dropTarget() === column.key) setDropTarget(undefined);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (!isStatusBoard()) return;
+                  const id =
+                    draggedId() ?? e.dataTransfer?.getData('text/plain');
+                  setDropTarget(undefined);
+                  setDraggedId(undefined);
+                  if (id) moveToStatus(id, column.key);
+                }}
+              >
+                <div class="flex items-center gap-2 px-3 py-2.5 text-xs font-semibold text-ink-muted">
+                  <Show
+                    when={column.optionId}
+                    fallback={
+                      <CircleDashed class="size-3.5 text-ink-extra-muted" />
                     }
-                    if (dropTarget() === column.key) setDropTarget(undefined);
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    if (!isStatusBoard()) return;
-                    const id =
-                      draggedId() ?? e.dataTransfer?.getData('text/plain');
-                    setDropTarget(undefined);
-                    setDraggedId(undefined);
-                    if (id) moveToStatus(id, column.key);
-                  }}
-                >
-                  <div class="flex items-center gap-2 px-3 py-2.5 text-xs font-semibold text-ink-muted">
-                    <Show
-                      when={column.optionId}
-                      fallback={
-                        <CircleDashed class="size-3.5 text-ink-extra-muted" />
-                      }
-                    >
-                      {(optionId) => (
-                        <PropertyValueIcon
-                          optionId={optionId()}
-                          class="size-3.5"
-                        />
-                      )}
-                    </Show>
-                    <span class="truncate">{column.label}</span>
-                  </div>
-                  <div class="min-h-0 flex-1 overflow-y-auto scrollbar-hidden flex flex-col gap-2 px-2 pb-2">
-                    <For each={column.entities}>
-                      {(entity) => (
-                        <div class="shrink-0">
-                          <SoupEntityContextMenu entity={entity}>
-                            <TaskBoardCard
-                              entity={entity}
-                              draggable={isStatusBoard()}
-                              dragging={draggedId() === entity.id}
-                              onDragStart={(e) => {
-                                if (!isStatusBoard()) return;
-                                e.dataTransfer?.setData('text/plain', entity.id);
-                                if (e.dataTransfer) {
-                                  e.dataTransfer.effectAllowed = 'move';
-                                }
-                                setDraggedId(entity.id);
-                              }}
-                              onDragEnd={() => {
-                                setDraggedId(undefined);
-                                setDropTarget(undefined);
-                              }}
-                              onClick={(e) => openTask(entity, e)}
-                            />
-                          </SoupEntityContextMenu>
-                        </div>
-                      )}
-                    </For>
-                  </div>
+                  >
+                    {(optionId) => (
+                      <PropertyValueIcon
+                        optionId={optionId()}
+                        class="size-3.5"
+                      />
+                    )}
+                  </Show>
+                  <span class="truncate">{column.label}</span>
                 </div>
-              )}
-            </For>
-          </div>
+                <div class="min-h-0 flex-1 overflow-y-auto scrollbar-hidden flex flex-col gap-2 px-2 pb-2">
+                  <For each={column.entities}>
+                    {(entity) => (
+                      <div class="shrink-0">
+                        <SoupEntityContextMenu entity={entity}>
+                          <TaskBoardCard
+                            entity={entity}
+                            draggable={isStatusBoard()}
+                            dragging={draggedId() === entity.id}
+                            onDragStart={(e) => {
+                              if (!isStatusBoard()) return;
+                              e.dataTransfer?.setData('text/plain', entity.id);
+                              if (e.dataTransfer) {
+                                e.dataTransfer.effectAllowed = 'move';
+                              }
+                              setDraggedId(entity.id);
+                            }}
+                            onDragEnd={() => {
+                              setDraggedId(undefined);
+                              setDropTarget(undefined);
+                            }}
+                            onClick={(e) => openTask(entity, e)}
+                          />
+                        </SoupEntityContextMenu>
+                      </div>
+                    )}
+                  </For>
+                </div>
+              </div>
+            )}
+          </For>
         </div>
-        <CustomScrollbar
-          scrollContainer={scrollRef}
-          horizontal
-          revealZone={48}
-          gutterSize={20}
-          watchContent
-        />
       </div>
-    </Show>
+      <CustomScrollbar
+        scrollContainer={scrollRef}
+        horizontal
+        revealZone={48}
+        gutterSize={20}
+        watchContent
+      />
+    </div>
   );
 }
 

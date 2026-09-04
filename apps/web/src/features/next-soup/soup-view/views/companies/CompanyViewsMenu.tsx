@@ -160,7 +160,7 @@ export function CompanyViewsMenu(props: { hideLabel?: boolean } = {}) {
     searchText: searchText(),
     groupBy: soup.grouping.activeGroupId() ?? null,
     sort: soup.sort.active().map((s) => s.id),
-    viewMode: viewMode(),
+    viewMode: viewMode() === 'list' ? 'list' : 'board',
     stageFilter: [...stageFilter()],
     ownerFilter: [...ownerFilter()],
     activeTab: activeTab(),

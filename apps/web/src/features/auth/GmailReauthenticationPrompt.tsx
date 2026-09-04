@@ -5,6 +5,7 @@ import {
   useEmailLinksQuery,
   useInboxHealthProbeQuery,
 } from '@queries/email/link';
+import { UserProvider } from '@service-email/generated/schemas/userProvider';
 
 /**
  * Surfaces a per-inbox "Reconnect Gmail" prompt for every linked inbox whose grant
@@ -23,7 +24,9 @@ export function GmailReauthenticationPrompt() {
 
   useKeyedPersistentToasts({
     items: () =>
-      (linksQuery.data?.links ?? []).filter((link) => link.needs_reauth),
+      (linksQuery.data?.links ?? []).filter(
+        (link) => link.provider === UserProvider.GMAIL && link.needs_reauth
+      ),
     key: (link) => link.id,
     toast: (link, dismiss) => ({
       title: t('auth.gmailPrompt.title'),
