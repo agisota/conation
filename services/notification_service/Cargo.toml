@@ -62,6 +62,7 @@ notification = { path = "../../crates/notification", features = ["axum"] }
 notification_db_client = { path = "../../crates/notification_db_client" }
 paste = { workspace = true }
 rate_limit = { path = "../../crates/rate_limit" }
+ses_client = { path = "../../crates/ses_client" }
 redis = { workspace = true }
 regex = { workspace = true }
 secretsmanager_client = { path = "../../crates/secretsmanager_client" }
