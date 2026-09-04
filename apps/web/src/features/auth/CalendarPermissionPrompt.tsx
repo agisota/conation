@@ -6,6 +6,7 @@ import { t } from '@app/lib/i18n';
 import { useKeyedPersistentToasts } from '@core/component/Toast/useKeyedPersistentToasts';
 import { useAddInboxFlow } from '@core/email-link';
 import { useEmailLinksQuery } from '@queries/email/link';
+import { UserProvider } from '@service-email/generated/schemas/userProvider';
 
 /**
  * Surfaces a per-inbox "Enable calendar" prompt for every linked inbox whose
@@ -36,6 +37,7 @@ export function CalendarPermissionPrompt() {
       calendarUiEnabled() && promptAllowed()
         ? (linksQuery.data?.links ?? []).filter(
             (link) =>
+              link.provider === UserProvider.GMAIL &&
               link.needs_calendar_permission &&
               !link.needs_reauth &&
               !link.calendar_disabled
