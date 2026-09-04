@@ -299,14 +299,19 @@ export const SoupView = (props: SoupViewProps) => {
   const isInboxView = useIsInboxView();
   const openFocusedEntityInPreview = () => {
     const focusedRow = soup.focus.row();
-    if (
-      !focusedRow ||
-      focusedRow.getIsGrouped() ||
-      focusedRow.getIsLoadMore()
-    ) {
+    const row =
+      focusedRow && !focusedRow.getIsGrouped() && !focusedRow.getIsLoadMore()
+        ? focusedRow
+        : soupView.rows().find((candidate) => {
+            return !candidate.getIsGrouped() && !candidate.getIsLoadMore();
+          });
+    if (!row) {
       return;
     }
-    void openEntityInSplitFromUnifiedList(focusedRow.original, {
+    if (row !== focusedRow) {
+      soup.focus.set(row.original.id);
+    }
+    void openEntityInSplitFromUnifiedList(row.original, {
       splitHandle: panel.handle,
     });
   };
@@ -480,9 +485,24 @@ export const SoupView = (props: SoupViewProps) => {
     // Split redistribution may still be reconciling after a hotkey-driven
     // replacement. Keep the effect live until engagement actually succeeds.
     if (!panel.handle.canEngagePreview()) return;
-    soup.focus.clear();
     panel.handle.engagePreview();
     if (panel.handle.isControllerSplit()) initialPreviewResolved = true;
+  });
+
+  let autoOpenedPreviewEntity = false;
+  createEffect(() => {
+    if (autoOpenedPreviewEntity) return;
+    if (!panel.handle.isControllerSplit()) return;
+    if (!hasPreviewItems()) return;
+    if (
+      soupView.source.isLoading() ||
+      soupView.source.isFetching() ||
+      soupView.source.isPlaceholderData()
+    ) {
+      return;
+    }
+    autoOpenedPreviewEntity = true;
+    openFocusedEntityInPreview();
   });
 
   onMount(() => {

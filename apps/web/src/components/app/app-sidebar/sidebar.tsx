@@ -1784,6 +1784,7 @@ const ChannelsActiveCallIcon = () => {
 
 const SidebarLinkRow = (props: SidebarLinkProps) => {
   const [isHovering, setIsHovering] = createSignal(false);
+  let openedByPointer = false;
 
   const analytics = useAnalytics();
   const layout = useSplitLayout();
@@ -1835,6 +1836,7 @@ const SidebarLinkRow = (props: SidebarLinkProps) => {
         });
 
         e.preventDefault();
+        openedByPointer = true;
         let currentContentHandle = globalSplitManager()?.activeSplit();
 
         const currentContent = currentContentHandle?.content();
@@ -1860,6 +1862,39 @@ const SidebarLinkRow = (props: SidebarLinkProps) => {
           requestSearchFocus(currentContentHandle.id);
         }
 
+        globalSplitManager()?.returnFocus();
+      }}
+      onClick={(e) => {
+        if (openedByPointer) {
+          openedByPointer = false;
+          e.preventDefault();
+          return;
+        }
+        analytics.track('sidebar_click', {
+          view: props.id,
+        });
+        e.preventDefault();
+        let currentContentHandle = globalSplitManager()?.activeSplit();
+        const currentContent = currentContentHandle?.content();
+        const expectedContent = content();
+        const isSameContent =
+          currentContent?.type === expectedContent.type &&
+          currentContent.id === expectedContent.id;
+        if (!isSameContent || e.shiftKey) {
+          currentContentHandle = navigateToSidebarView({
+            viewId: props.id,
+            params: props.params,
+            shiftKey: e.shiftKey,
+            activeSplit: currentContentHandle,
+            openWithSplit: layout.openWithSplit,
+            referredFrom: 'sidebar',
+          });
+        } else {
+          props.onActiveClick?.();
+        }
+        if (props.id === 'search' && currentContentHandle) {
+          requestSearchFocus(currentContentHandle.id);
+        }
         globalSplitManager()?.returnFocus();
       }}
     >
