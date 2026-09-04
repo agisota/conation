@@ -3,6 +3,7 @@ import { isCalendarRangeSupported } from '@app/features/calendar/utils/calendar-
 import { t } from '@app/lib/i18n';
 import { useAddInboxFlow } from '@core/email-link';
 import { useEmailLinksQuery } from '@queries/email/link';
+import { UserProvider } from '@service-email/generated/schemas/userProvider';
 import { Button } from '@ui';
 import { createMemo, Show } from 'solid-js';
 
@@ -29,21 +30,23 @@ export function SetupStatus() {
       return undefined;
     }
 
-    const links = linksQuery.data?.links ?? [];
-    if (links.length === 0) return 'connect';
+    const gmailLinks = (linksQuery.data?.links ?? []).filter(
+      (link) => link.provider === UserProvider.GMAIL
+    );
+    if (gmailLinks.length === 0) return 'connect';
 
-    const hasAvailableCalendar = links.some(
+    const hasAvailableCalendar = gmailLinks.some(
       (link) =>
         link.is_sync_active &&
         !link.needs_calendar_permission &&
         !link.needs_reauth
     );
     if (hasAvailableCalendar) return undefined;
-    if (links.some((link) => link.needs_reauth)) return 'reauth';
-    if (links.some((link) => link.needs_calendar_permission)) {
+    if (gmailLinks.some((link) => link.needs_reauth)) return 'reauth';
+    if (gmailLinks.some((link) => link.needs_calendar_permission)) {
       // A calendar the user turned off is not a missing upgrade; say so, and
       // still offer the way back since they came to the calendar view.
-      return links.every(
+      return gmailLinks.every(
         (link) => !link.needs_calendar_permission || link.calendar_disabled
       )
         ? 'disabled'
