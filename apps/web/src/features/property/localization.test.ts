@@ -5,6 +5,7 @@ import { PROPERTY_OPTION_IDS } from '@property/constants';
 import { afterEach, describe, expect, it } from 'vitest';
 import { getPropertyDataTypeDropdownOptions } from './utils/display';
 import {
+  formatBoolean,
   formatOptionValue,
   localizedPropertyOptionLabel,
 } from './utils/formatting';
@@ -100,5 +101,13 @@ describe('property localization', () => {
         value: { type: 'string', value: 'In Progress' },
       })
     ).toBe('In progress');
+  });
+
+  it('localizes CRM stages and booleans', () => {
+    setLocale('ru');
+    expect(
+      localizedPropertyOptionLabel(PROPERTY_OPTION_IDS.STAGE.LEAD)
+    ).toBe('Лид');
+    expect(formatBoolean(true)).toBe('Да');
   });
 });
