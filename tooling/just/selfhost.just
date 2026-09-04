@@ -20,6 +20,20 @@ selfhost-rebuild:
 selfhost-status *ARGS:
     just stack status "$@"
 
+# Probe only an already-running local stack with unauthenticated, read-only HTTP
+# requests. The script requires 2xx health/discovery responses, a 308 redirect
+# from /app, a 2xx response from /app/, and exactly HTTP 401 from the MCP
+# endpoint; it never invokes Docker or Compose.
+selfhost-smoke:
+    /usr/bin/env -i \
+        PATH=/usr/bin:/bin \
+        SELFHOST_PROXY_ORIGIN="${SELFHOST_PROXY_ORIGIN-}" \
+        SELFHOST_FRONTEND_ORIGIN="${SELFHOST_FRONTEND_ORIGIN-}" \
+        SELFHOST_LOCALSTACK_ORIGIN="${SELFHOST_LOCALSTACK_ORIGIN-}" \
+        SELFHOST_SMOKE_CONNECT_TIMEOUT_SECONDS="${SELFHOST_SMOKE_CONNECT_TIMEOUT_SECONDS-}" \
+        SELFHOST_SMOKE_REQUEST_TIMEOUT_SECONDS="${SELFHOST_SMOKE_REQUEST_TIMEOUT_SECONDS-}" \
+        /usr/bin/bash tooling/scripts/selfhost-smoke.sh
+
 # Stop the supported stack while retaining its persistent volumes.
 selfhost-down:
     just stack down --keep-data
