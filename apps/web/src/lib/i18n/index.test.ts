@@ -44,6 +44,20 @@ describe('i18n locale ownership', () => {
     expect(getAcceptLanguage()).toBe('ru-RU');
   });
 
+  test('resets to the default locale when another tab removes the preference', () => {
+    initI18n();
+    window.dispatchEvent(
+      new StorageEvent('storage', {
+        key: LOCALE_STORAGE_KEY,
+        newValue: null,
+      })
+    );
+
+    expect(getAcceptLanguage()).toBe('ru-RU');
+    expect(t('settings.account.language.label')).toBe('Язык');
+    expect(document.documentElement.lang).toBe('ru');
+  });
+
   test('falls back to the English source message', () => {
     const translated = ruCatalog['common.close'];
     delete ruCatalog['common.close'];

@@ -103,8 +103,8 @@ export function initI18n() {
   initialized = true;
   window.addEventListener('storage', (event) => {
     if (event.key !== LOCALE_STORAGE_KEY) return;
-    const nextLocale = parseLocale(event.newValue);
-    if (!nextLocale || nextLocale === getLocale()) return;
+    const nextLocale = parseLocale(event.newValue) ?? DEFAULT_LOCALE;
+    if (nextLocale === getLocale()) return;
     setLocaleSignal(nextLocale);
     syncDocumentLanguage(nextLocale);
   });
