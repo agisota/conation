@@ -2,7 +2,6 @@ import { createBlockSignal, useBlockId } from '@core/block';
 import { DEV_MODE_ENV } from '@core/constant/featureFlags';
 import { trackMention } from '@core/signal/mention';
 import { copiedItem } from '@core/state/clipboard';
-import type { ItemType } from '@service-storage/client';
 import { unwrap } from 'solid-js/store';
 import { OPERATION_LOGGING, Tools } from '../constants';
 import type { EntityMentionNode } from '../model/CanvasModel';
@@ -15,7 +14,7 @@ import type { Vector2 } from '../util/vector2';
 import type { Operation, Operator } from './operation';
 
 export const selectedFileSignal = createBlockSignal<{
-  type?: ItemType;
+  type?: EntityMentionNode['entityType'];
   id?: string;
 }>({
   type: undefined,
@@ -81,7 +80,7 @@ export const useFile = sharedInstance((): Operator => {
       if (!id) {
         if (copiedItem()) {
           id = copiedItem()!.id;
-          type = copiedItem()!.type;
+          type = copiedItem()!.type as EntityMentionNode['entityType'];
         } else {
           console.warn('No source File found');
           return;
@@ -91,12 +90,7 @@ export const useFile = sharedInstance((): Operator => {
         {
           type: 'entitymention',
           file: id,
-          entityType: type as
-            | 'document'
-            | 'chat'
-            | 'project'
-            | 'channel'
-            | 'email',
+          entityType: type as EntityMentionNode['entityType'],
           x: mousePos.x - fileWidth / 2,
           y: mousePos.y - fileHeight / 2,
           width: fileWidth,

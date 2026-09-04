@@ -100,7 +100,15 @@ export function File(props: { node: EntityMentionNode; mode: RenderMode }) {
 
   const [item] = useItemPreview(() => ({
     id: props.node.file,
-    type: props.node.entityType,
+    type:
+      props.node.entityType === 'chat' ||
+      props.node.entityType === 'project' ||
+      props.node.entityType === 'email' ||
+      props.node.entityType === 'channel'
+        ? props.node.entityType
+        : props.node.entityType === 'dm'
+          ? 'channel'
+          : 'document',
   }));
 
   createEffect(() => {
