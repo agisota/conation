@@ -145,3 +145,62 @@ fn test_internal_fetch_leaves_remote_url_untouched() {
     let result = transform_internal_url(input);
     assert_eq!(result, expected);
 }
+
+#[test]
+fn explicit_s3_endpoint_disables_localstack_s3_behavior() {
+    assert!(!s3_uses_localstack_with_endpoint(
+        true,
+        Some("http://minio:9000")
+    ));
+    assert!(s3_uses_localstack_with_endpoint(true, None));
+    assert!(!s3_uses_localstack_with_endpoint(false, None));
+}
+
+#[cfg(feature = "s3")]
+#[tokio::test]
+async fn explicit_s3_endpoint_overrides_localstack_for_presigned_urls() {
+    use std::time::Duration;
+
+    use aws_sdk_s3::config::{BehaviorVersion, Credentials, Region};
+
+    let s3_endpoint_url = "http://minio:9000";
+    let config = s3_config_builder(
+        aws_sdk_s3::config::Builder::new()
+            .behavior_version(BehaviorVersion::latest())
+            .region(Region::new("us-east-1"))
+            .credentials_provider(Credentials::new("test", "test", None, None, "test"))
+            .endpoint_url("http://localstack:4566"),
+        Some(s3_endpoint_url),
+        s3_uses_localstack_with_endpoint(true, Some(s3_endpoint_url)),
+    )
+    .build();
+
+    let presigned_url = aws_sdk_s3::Client::from_conf(config)
+        .get_object()
+        .bucket("doc-storage")
+        .key("path/file.txt")
+        .presigned(
+            aws_sdk_s3::presigning::PresigningConfig::expires_in(Duration::from_secs(60))
+                .expect("valid presigning duration"),
+        )
+        .await
+        .expect("presigning succeeds without network access");
+
+    assert!(
+        presigned_url
+            .uri()
+            .starts_with("http://minio:9000/doc-storage/path/file.txt?"),
+        "{}",
+        presigned_url.uri()
+    );
+}
+
+#[cfg(feature = "s3")]
+#[test]
+fn explicit_s3_endpoint_uses_its_own_credential_configuration() {
+    assert_eq!(
+        s3_config_source(Some("http://minio:9000")),
+        S3ConfigSource::ExplicitEndpoint
+    );
+    assert_eq!(s3_config_source(None), S3ConfigSource::SharedAws);
+}

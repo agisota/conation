@@ -48,3 +48,16 @@ fn generated_environment_detects_a_canonical_key_rename() {
         generated_env_fingerprint(&canonical)
     );
 }
+
+#[test]
+fn dev_overrides_remove_explicit_s3_endpoint() {
+    let instance = Instance::derive(Some("dev-s3-endpoint"), None).unwrap();
+    let mut env = BTreeMap::from([(
+        "S3_ENDPOINT_URL".to_string(),
+        "http://minio.internal:9000".to_string(),
+    )]);
+
+    apply_dev_overrides(&instance, &mut env);
+
+    assert!(!env.contains_key("S3_ENDPOINT_URL"));
+}
