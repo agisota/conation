@@ -146,8 +146,8 @@ type SoupViewInitializeOptions = {
 
 export type ReadFilter = 'all' | 'unread' | 'read';
 
-/** List/board display mode — currently only the Customers view offers a board. */
-export type SoupViewMode = 'list' | 'board';
+/** List/board/timeline display mode — tasks offer board+timeline. */
+export type SoupViewMode = 'list' | 'board' | 'timeline';
 
 interface SoupViewContextValues {
   soup: SoupState;
@@ -602,10 +602,11 @@ export const SoupViewContextProvider: FlowComponent<
     })
   );
 
-  // List/board display mode — per-entry state so back/forward restores the
-  // mode the user left each entry with.
+  // List/board/timeline display mode — per-entry state so back/forward restores
+  // the mode the user left each entry with. Customers default to board; tasks
+  // (and every other view) default to list.
   const [viewMode, setViewMode] = useEntryState<SoupViewMode>('soup.viewMode', {
-    default: 'board',
+    default: initialView === 'companies' ? 'board' : 'list',
   });
   const [readFilter, setReadFilter] = makeFlaggedPersisted(
     useEntryState<ReadFilter>('soup.readFilter', { default: 'all' }),

@@ -222,7 +222,15 @@ export const SoupViewTabs = () => {
       <For each={Object.keys(VIEW_TAB_LISTS) as TabbedListView[]}>
         {(v) => (
           <Match when={listView() === v}>
-            <ViewTabs view={v} />
+            <Show
+              when={v === 'tasks'}
+              fallback={<ViewTabs view={v} />}
+            >
+              <div class="flex items-center gap-2.5">
+                <ViewTabs view={v} />
+                <TaskModeTabs />
+              </div>
+            </Show>
           </Match>
         )}
       </For>
@@ -245,6 +253,40 @@ const COMPANY_MODE_TABS: TabItem[] = [
     },
   },
 ];
+
+const TASK_MODE_TABS: TabItem[] = [
+  {
+    value: 'list',
+    get label() {
+      return t('soup.viewMode.list');
+    },
+  },
+  {
+    value: 'board',
+    get label() {
+      return t('soup.viewMode.board');
+    },
+  },
+  {
+    value: 'timeline',
+    get label() {
+      return t('soup.viewMode.timeline');
+    },
+  },
+];
+
+const TaskModeTabs = () => {
+  const { viewMode, setViewMode } = useSoupView();
+
+  return (
+    <TabsInset
+      list={TASK_MODE_TABS}
+      value={viewMode()}
+      defaultValue="list"
+      onChange={(value) => setViewMode(value as SoupViewMode)}
+    />
+  );
+};
 
 const CompanyModeTabs = () => {
   const { viewMode, setViewMode } = useSoupView();
@@ -308,17 +350,42 @@ export const CollapsedSoupViewTabs = () => {
         />
       }
     >
-      <TabsInsetDropdown
-        list={list()}
-        value={activeTab()}
-        defaultValue={defaultValue()}
-        onChange={(value) => {
-          const v = view();
-          if (v) {
-            applyTabPreset(v, value);
-          }
-        }}
-      />
+      <Show
+        when={listView() !== 'tasks'}
+        fallback={
+          <div class="flex items-center gap-2.5">
+            <TabsInsetDropdown
+              list={list()}
+              value={activeTab()}
+              defaultValue={defaultValue()}
+              onChange={(value) => {
+                const v = view();
+                if (v) {
+                  applyTabPreset(v, value);
+                }
+              }}
+            />
+            <TabsInsetDropdown
+              list={TASK_MODE_TABS}
+              value={viewMode()}
+              defaultValue="list"
+              onChange={(value) => setViewMode(value as SoupViewMode)}
+            />
+          </div>
+        }
+      >
+        <TabsInsetDropdown
+          list={list()}
+          value={activeTab()}
+          defaultValue={defaultValue()}
+          onChange={(value) => {
+            const v = view();
+            if (v) {
+              applyTabPreset(v, value);
+            }
+          }}
+        />
+      </Show>
     </Show>
   );
 };
@@ -386,20 +453,32 @@ const MobileCompanyModeTabs = () => {
 
 const MobileViewTabs = (props: { view: TabbedListView }) => {
   const { applyTabPreset } = useApplyPreset();
-  const { activeTab } = useSoupView();
+  const { activeTab, viewMode, setViewMode } = useSoupView();
   const visibleViewTabs = useVisibleViewTabs();
   const activeValue = () => activeTab() ?? VIEW_TAB_PRESETS[props.view].default;
 
   return (
-    <PillTabs
-      scrollable
-      class={MOBILE_TAB_STRIP_CLASS}
-      contentClass={MOBILE_TAB_CONTENT_CLASS}
-      leading={<MobileFilterDrawer />}
-      items={visibleViewTabs(props.view)}
-      value={activeValue()}
-      onChange={(value) => applyTabPreset(props.view, value)}
-    />
+    <>
+      <PillTabs
+        scrollable
+        class={MOBILE_TAB_STRIP_CLASS}
+        contentClass={MOBILE_TAB_CONTENT_CLASS}
+        leading={<MobileFilterDrawer />}
+        items={visibleViewTabs(props.view)}
+        value={activeValue()}
+        onChange={(value) => applyTabPreset(props.view, value)}
+      />
+      <Show when={props.view === 'tasks'}>
+        <PillTabs
+          scrollable
+          class={MOBILE_TAB_STRIP_CLASS}
+          contentClass={MOBILE_TAB_CONTENT_CLASS}
+          items={TASK_MODE_TABS}
+          value={viewMode()}
+          onChange={(value) => setViewMode(value as SoupViewMode)}
+        />
+      </Show>
+    </>
   );
 };
 

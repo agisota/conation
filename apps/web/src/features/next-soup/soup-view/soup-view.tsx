@@ -48,6 +48,7 @@ import { CompanyListEntity } from '@app/features/next-soup/soup-view/views/compa
 import { ResponsiveCompanyListHeader } from '@app/features/next-soup/soup-view/views/companies/CompanyListHeader';
 import { CrmDefaultViewLoader } from '@app/features/next-soup/soup-view/views/companies/CrmDefaultView';
 import { InboxListEntity } from '@app/features/next-soup/soup-view/views/inbox/InboxListEntity';
+import { TaskBoard } from '@app/features/next-soup/soup-view/views/tasks/TaskBoard';
 import { TaskListEntity } from '@app/features/next-soup/soup-view/views/tasks/TaskListEntity';
 import { ResponsiveTaskListHeader } from '@app/features/next-soup/soup-view/views/tasks/TaskListHeader';
 import { TaskGroupHeader } from '@app/features/next-soup/soup-view/views/tasks/task-group-header';
@@ -573,6 +574,12 @@ export const SoupView = (props: SoupViewProps) => {
     () => activeListView() === 'companies' && soupView.viewMode() === 'board'
   );
 
+  const isTaskBoardMode = createMemo(() => {
+    if (activeListView() !== 'tasks') return false;
+    const mode = soupView.viewMode();
+    return mode === 'board' || mode === 'timeline';
+  });
+
   // When CRM is unavailable (no team / disabled) the board renders the
   // empty state instead of columns, so board-only chrome tweaks (like
   // hiding the AI bar) shouldn't apply.
@@ -764,9 +771,14 @@ export const SoupView = (props: SoupViewProps) => {
       </Show>
       <div class="relative grow min-h-1 flex max-sm:flex-col flex-row size-full">
         <Suspense>
-          <Show when={!isBoardMode()} fallback={<CompanyKanban />}>
-            <SoupViewList />
-          </Show>
+          <Switch fallback={<SoupViewList />}>
+            <Match when={isBoardMode()}>
+              <CompanyKanban />
+            </Match>
+            <Match when={isTaskBoardMode()}>
+              <TaskBoard />
+            </Match>
+          </Switch>
         </Suspense>
       </div>
       <Suspense>
@@ -779,6 +791,7 @@ export const SoupView = (props: SoupViewProps) => {
             !isInboxView() &&
             !panel.handle.isControllerSplit() &&
             !isBoardRendered() &&
+            !isTaskBoardMode() &&
             !isComponentListView('search')
           }
         >
