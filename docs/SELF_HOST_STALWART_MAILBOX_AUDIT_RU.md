@@ -1,8 +1,10 @@
 # Ящики поддержки Stalwart и встроенный inbox Conation
 
 Статус этого документа: проверенный контур провиженирования для закреплённого
-Stalwart `v0.16` и честная граница текущей интеграции. Создание почтового ящика
-не означает, что он автоматически появился во встроенном inbox Conation.
+Stalwart `v0.16` и актуальная граница composition root. `/email/init` создаёт
+Stalwart-ссылки (`UserProvider::Stalwart`); они появляются во встроенном inbox
+Conation. Оставшаяся операторская граница — публичные DNS/TLS и исходящий SMTP
+relay, а не отсутствие ссылок.
 
 ## Что реализовано
 
@@ -80,44 +82,48 @@ nix develop --command just selfhost-test-support-mailboxes
 Fake-CLI harness покрывает первый create, повторный запуск, отсутствующий
 пароль до первой account-записи и отсутствие secret-значений в выводе/логах.
 
-## Почему это пока не заменяет Gmail во встроенном inbox
+## Composition root: `/email/init` создаёт Stalwart-ссылки
 
-Аудит composition root и provider paths показывает:
+Аудит composition root и provider paths на текущем дереве:
 
-1. `crates/email/src/domain/models/link.rs` и PostgreSQL adapter уже содержат
-   варианты `UserProvider::Gmail` и `UserProvider::Stalwart`; это поддержка
-   модели/хранения, а не подключение провайдера к runtime.
-2. `services/email_service/src/main.rs` всегда создаёт
-   `GmailApiClientRepository`, Gmail token provider и очереди `gmail_*`.
-3. `services/email_service/src/api/email/init.rs` создаёт только Gmail link и
-   требует завершённый Google OAuth grant/history cursor.
-4. Входящие изменения приходят через Google Pub/Sub webhook и Gmail history;
-   отправка/reply идёт через Gmail API.
-5. `crates/email_provider` не включён в composition root `email_service`.
-   Его transport adapter уже умеет JMAP session discovery, `Email/query`,
-   `Email/get` и стандартную отправку MIME через `Mailbox/get` (роль Drafts) →
-   upload → `Email/import` → `Identity/get` → `EmailSubmission/set`. Bearer-
-   запросы к URL из session document разрешены только на настроенный Stalwart
-   origin. Результат пока не вызывается встроенным inbox; JMAP push/watches
+1. `crates/email/src/domain/models/link.rs` и PostgreSQL adapter содержат
+   варианты `UserProvider::Gmail` и `UserProvider::Stalwart`.
+2. `services/email_service/src/main.rs` по-прежнему собирает
+   `GmailApiClientRepository`, Gmail token provider и очереди `gmail_*` — это
+   путь **опциональной** Google-интеграции, не единственный runtime backend.
+3. `services/email_service/src/api/email/init.rs`: если клиент не передаёт
+   `link_id`, `EmailProviderKind::from_env()` выбирает backend (`EMAIL_PROVIDER`;
+   иначе наличие `STALWART_JMAP_URL` → Stalwart; иначе Gmail). Для Stalwart init:
+   - мапит login email в ящик `…@conation.dev` (`stalwart_mailbox_from_login_email`);
+   - best-effort `StalwartProvider::provision_account` (ошибка provision не валит
+     `/email/init`);
+   - `upsert_link` с `UserProvider::Stalwart` и `is_sync_active: true`;
+   - best-effort `seed_stalwart_threads` (JMAP `list_threads`, тела, вложения
+     `data_url`/SFS);
+   - отвечает `InitResponse { link_id, backfill_job_id: None }`.
+   Ссылка появляется во встроенном inbox Conation. Gmail-init по-прежнему
+   требует завершённый Google OAuth grant/history cursor, **если** выбран Gmail.
+4. Отправка с `UserProvider::Stalwart` идёт через
+   `StalwartProvider::send_message` в
+   `services/email_service/src/pubsub/scheduled/process.rs` (JMAP
+   EmailSubmission). Входящие Gmail-изменения и Gmail-отправка остаются на
+   Google Pub/Sub / Gmail API.
+5. `crates/email_provider` **подключён** к `email_service`. Transport adapter
+   умеет JMAP session discovery, `Email/query`, `Email/get` и стандартную
+   отправку MIME через `Mailbox/get` (роль Drafts) → upload → `Email/import` →
+   `Identity/get` → `EmailSubmission/set`. Bearer-запросы к URL из session
+   document разрешены только на настроенный Stalwart origin. JMAP push/watches
    остаются явно `Unsupported`.
 
-Следствие: после провиженирования этими ящиками можно пользоваться через
-поддерживаемый Stalwart JMAP/IMAP/SMTP-клиент после полноценной настройки
-сервера. Они **не отображаются** во встроенном inbox Conation и не могут из
-него отвечать. Gmail можно не подключать, если нужен только внутренний канал
-поддержки Conation или внешний отдельный mail client. Для существующей функции
-Conation Inbox Gmail пока обязателен: он остаётся единственным runtime backend,
-тогда как добавленный JMAP transport adapter сам по себе не создаёт link, не
-хранит cursor/token и не подключён к runtime service. Mailpit принимает только
-локальные транзакционные SMTP-письма и не является пользовательским inbox.
+Следствие: рецепт support-ящиков создаёт операторские аккаунты в Stalwart.
+Пользовательский Conation mailbox при signup/init — отдельный путь: composition
+root создаёт Stalwart-ссылку, и треды сидятся во встроенный inbox. Gmail
+подключать не обязательно. Mailpit принимает только локальные транзакционные
+SMTP-письма и не является пользовательским inbox.
 
-Чтобы убрать Gmail именно из встроенного inbox, нужен отдельный production
-slice: подключить уже существующий `UserProvider::Stalwart` и JMAP
-session/auth/list/get/send adapter к `email_service`, затем добавить
-signup-provisioning, initial/incremental sync cursor, push/event delivery,
-labels, attachments, contacts, token storage/rotation, backfill/retry semantics
-и end-to-end тесты. SMTP transport для транзакционных писем не заменяет этот
-JMAP adapter.
+Публичная Internet-доставляемость (MX, TLS, DKIM, relay) этим init не
+закрывается — см. следующий раздел. Транзакционный SMTP relay не заменяет
+JMAP-адаптер и не доказывает Internet MX.
 
 ## Что остаётся оператору для реальной Internet-почты
 
@@ -138,8 +144,8 @@ JMAP adapter.
    backup/restore и мониторинг очереди;
 8. выполнить внешние receive/send/reply round trips минимум с Gmail и Outlook.
 
-FusionAuth и Stalwart сейчас имеют разные credentials. Для единого входа нужен
-отдельно настроенный Stalwart OIDC directory/client с issuer, client ID/secret,
-redirect URI и стабильным email claim. Даже после этого Conation Inbox всё ещё
-потребует JMAP OAuth/token propagation: одно только OIDC-подключение Stalwart
-не создаёт application adapter.
+FusionAuth и Stalwart сейчас имеют разные credentials. Для единого входа в
+админку или внешний клиент Stalwart нужен отдельно настроенный OIDC
+directory/client с issuer, client ID/secret, redirect URI и стабильным email
+claim. Это не блокирует появление Stalwart-ссылок в Conation inbox: `/email/init`
+создаёт их без Google OAuth. OIDC Stalwart не заменяет публичные DNS/TLS/relay.
