@@ -4,6 +4,7 @@ use crate::utils::extract_email_with_response;
 use anyhow::Context;
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD;
+use bytes::Bytes;
 use axum::{
     extract::{Query, State},
     http::StatusCode,
@@ -23,7 +24,7 @@ use email_provider::{EmailProvider, EmailProviderKind, ProviderMessage, Stalwart
 use email_service::pubsub::publish_email_event;
 use model::response::ErrorResponse;
 use models_email::email::service::address::ContactInfo;
-use models_email::email::service::attachment::Attachment;
+use models_email::email::service::attachment::{Attachment, AttachmentSfs};
 use models_email::email::service::backfill::{
     BackfillOperation, BackfillPubsubMessage, InitPayload, JobScopedPayload,
 };
@@ -33,6 +34,7 @@ use models_email::email::service::thread::Thread;
 use models_email::service::link;
 use models_email::service::link::Link;
 use strum_macros::AsRefStr;
+use static_file_service_client::StaticFileServiceClient;
 use thiserror::Error;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -640,7 +642,7 @@ async fn init_user(
                 .await
                 .context("Failed to commit link transaction")?;
 
-            seed_stalwart_threads(&ctx.db, link.id).await;
+            seed_stalwart_threads(&ctx.db, &ctx.sfs_client, link.id).await;
 
             return Ok((
                 StatusCode::OK,
@@ -1005,7 +1007,11 @@ fn new_gmail_link(
 
 /// Best-effort Stalwart inbox seed. Link creation already succeeded; listing or
 /// insert failures must not fail `/email/init`.
-async fn seed_stalwart_threads(db: &sqlx::PgPool, link_id: Uuid) {
+async fn seed_stalwart_threads(
+    db: &sqlx::PgPool,
+    sfs_client: &StaticFileServiceClient,
+    link_id: Uuid,
+) {
     let Ok(provider) = StalwartProvider::from_env() else {
         return;
     };
@@ -1042,6 +1048,7 @@ async fn seed_stalwart_threads(db: &sqlx::PgPool, link_id: Uuid) {
             let mut seeded = seed_stalwart_message(thread_db_id, link_id, message);
             for attachment in &mut seeded.attachments {
                 seed_stalwart_attachment_data_url(&provider, attachment).await;
+                seed_stalwart_attachment_sfs(&provider, sfs_client, attachment).await;
             }
             service_messages.push(seeded);
         }
@@ -1058,15 +1065,49 @@ async fn seed_stalwart_threads(db: &sqlx::PgPool, link_id: Uuid) {
             updated_at: latest.unwrap_or(now),
             messages: service_messages,
         };
-        if let Err(error) =
-            email_db_client::threads::insert::insert_thread_and_messages(db, thread, link_id).await
+        let sfs_rows: Vec<(Uuid, Uuid)> = thread
+            .messages
+            .iter()
+            .flat_map(|message| message.attachments.iter())
+            .filter_map(|attachment| {
+                attachment
+                    .sfs_id
+                    .map(|sfs_id| (attachment.db_id, sfs_id))
+            })
+            .collect();
+        match email_db_client::threads::insert::insert_thread_and_messages(db, thread, link_id)
+            .await
         {
-            tracing::warn!(
-                error = ?error,
-                thread_id = %thread_id,
-                link_id = %link_id,
-                "Failed to insert Stalwart thread"
-            );
+            Ok(_) => {
+                for (attachment_id, sfs_id) in sfs_rows {
+                    if let Err(error) = email_db_client::attachments::sfs::insert_attachment_sfs(
+                        db,
+                        &AttachmentSfs {
+                            id: conation_uuid::generate_uuid_v7(),
+                            attachment_id: Some(attachment_id),
+                            sfs_id,
+                        },
+                    )
+                    .await
+                    {
+                        tracing::warn!(
+                            error = ?error,
+                            attachment_id = %attachment_id,
+                            sfs_id = %sfs_id,
+                            link_id = %link_id,
+                            "Failed to insert Stalwart attachment SFS row"
+                        );
+                    }
+                }
+            }
+            Err(error) => {
+                tracing::warn!(
+                    error = ?error,
+                    thread_id = %thread_id,
+                    link_id = %link_id,
+                    "Failed to insert Stalwart thread"
+                );
+            }
         }
     }
 }
@@ -1158,6 +1199,7 @@ fn seed_stalwart_message(
 }
 
 const MAX_SEEDED_BLOB_BYTES: i64 = 262144;
+const MAX_SEEDED_SFS_BLOB_BYTES: i64 = 10485760;
 
 /// Best-effort JMAP blob fetch into `data_url`. Oversized blobs and download
 /// failures stay metadata-only so seed cannot fail `/email/init`.
@@ -1192,6 +1234,71 @@ async fn seed_stalwart_attachment_data_url(
                 error = ?error,
                 blob_id,
                 "Failed to download Stalwart attachment blob"
+            );
+        }
+    }
+}
+
+/// Best-effort JMAP blob fetch into SFS for attachments larger than the
+/// `data_url` limit. Oversized blobs and upload failures stay metadata-only
+/// so seed cannot fail `/email/init`.
+async fn seed_stalwart_attachment_sfs(
+    provider: &StalwartProvider,
+    sfs_client: &StaticFileServiceClient,
+    attachment: &mut Attachment,
+) {
+    let Some(size) = attachment.size_bytes else {
+        return;
+    };
+    if size <= MAX_SEEDED_BLOB_BYTES || size > MAX_SEEDED_SFS_BLOB_BYTES {
+        return;
+    }
+    let Some(blob_id) = attachment.provider_id.clone() else {
+        return;
+    };
+    let filename = attachment.filename.clone();
+    let bytes = match provider
+        .download_blob_up_to("", &blob_id, filename.as_deref(), 10485760)
+        .await
+    {
+        Ok(bytes) => bytes,
+        Err(error) => {
+            tracing::warn!(
+                error = ?error,
+                blob_id,
+                "Failed to download Stalwart attachment blob for SFS"
+            );
+            return;
+        }
+    };
+    let mime = attachment
+        .mime_type
+        .as_deref()
+        .filter(|mime| !mime.is_empty())
+        .unwrap_or("application/octet-stream")
+        .to_string();
+    match sfs_client
+        .put_file_with_bytes("a", Bytes::from(bytes), mime)
+        .await
+    {
+        Ok(sfs_response) => match Uuid::parse_str(&sfs_response.id) {
+            Ok(sfs_id) => {
+                attachment.sfs_id = Some(sfs_id);
+            }
+            Err(error) => {
+                tracing::warn!(
+                    error = ?error,
+                    blob_id,
+                    sfs_id = %sfs_response.id,
+                    "Failed to parse SFS id for Stalwart attachment"
+                );
+            }
+        },
+        Err(error) => {
+            tracing::warn!(
+                error = ?error,
+                blob_id,
+                "Failed to upload Stalwart attachment to SFS"
             );
         }
     }

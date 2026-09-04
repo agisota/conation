@@ -233,7 +233,18 @@ impl StalwartProvider {
         blob_id: &str,
         name: Option<&str>,
     ) -> Result<Vec<u8>, ProviderError> {
-        const MAX_BLOB_BYTES: usize = 262_144;
+        self.download_blob_up_to(access_token, blob_id, name, 262_144)
+            .await
+    }
+
+    /// Downloads a JMAP blob, rejecting payloads larger than `max_bytes`.
+    pub async fn download_blob_up_to(
+        &self,
+        access_token: &str,
+        blob_id: &str,
+        name: Option<&str>,
+        max_bytes: usize,
+    ) -> Result<Vec<u8>, ProviderError> {
         let session = self.session(access_token).await?;
         let account_id = Self::account_id(&session)?;
         let download_url = session.download_url.as_deref().ok_or_else(|| {
@@ -261,9 +272,9 @@ impl StalwartProvider {
             .and_then(|value| value.to_str().ok())
             .and_then(|value| value.parse::<u64>().ok())
         {
-            if len > MAX_BLOB_BYTES as u64 {
+            if len > max_bytes as u64 {
                 return Err(ProviderError::Provider(format!(
-                    "JMAP blob exceeds {MAX_BLOB_BYTES} bytes"
+                    "JMAP blob exceeds {max_bytes} bytes"
                 )));
             }
         }
@@ -276,9 +287,9 @@ impl StalwartProvider {
             let Some(chunk) = chunk else {
                 break;
             };
-            if body.len().saturating_add(chunk.len()) > MAX_BLOB_BYTES {
+            if body.len().saturating_add(chunk.len()) > max_bytes {
                 return Err(ProviderError::Provider(format!(
-                    "JMAP blob exceeds {MAX_BLOB_BYTES} bytes"
+                    "JMAP blob exceeds {max_bytes} bytes"
                 )));
             }
             body.extend_from_slice(&chunk);
