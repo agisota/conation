@@ -22,8 +22,9 @@ mod environment {
         pub(super) struct StalwartJmapUrl;
     }
 
-    conation_env_var::maybe_env_var! {
+    conation_env_var::maybe_env_vars! {
         pub(super) struct EmailProvider;
+        pub(super) struct StalwartToken;
     }
 }
 
@@ -47,6 +48,27 @@ impl std::str::FromStr for EmailProviderKind {
             _ => Err(format!(
                 "unknown email provider: {s} (expected gmail|stalwart)"
             )),
+        }
+    }
+}
+
+impl EmailProviderKind {
+    /// Resolves the active backend from `EMAIL_PROVIDER`, then `STALWART_JMAP_URL`.
+    ///
+    /// An explicit `EMAIL_PROVIDER` value wins. Otherwise a configured Stalwart
+    /// JMAP endpoint selects Stalwart. Gmail remains the default when neither is
+    /// set, including when `EMAIL_PROVIDER=gmail`.
+    #[must_use]
+    pub fn from_env() -> Self {
+        if let Some(value) = environment::EmailProvider::new() {
+            if let Ok(kind) = value.as_ref().parse() {
+                return kind;
+            }
+        }
+        if environment::StalwartJmapUrl::new().is_ok() {
+            Self::Stalwart
+        } else {
+            Self::Gmail
         }
     }
 }
@@ -210,20 +232,76 @@ impl StalwartProvider {
         )?))
     }
 
-    /// Refuses the removed pre-v0.16 principal provisioning path.
+    /// Creates a Stalwart Account/User through the JMAP management API.
     ///
-    /// Stalwart v0.16 manages accounts through its JMAP management API. Conation
-    /// provisions the fixed support mailboxes through the explicit operator CLI
-    /// recipe; runtime signup provisioning is not wired yet.
+    /// Uses `Account/set` or `Principal/set` with the mailbox local-part, email,
+    /// password secret, and the User role. An existing mailbox is treated as
+    /// success. Missing admin credentials or management capability logs a
+    /// warning and returns `Ok(())` so `/email/init` can still link the inbox.
+    /// The removed `/api/principal` REST path is never called.
     pub async fn provision_account(
         &self,
         email: &str,
         password: &str,
     ) -> Result<(), ProviderError> {
-        let _ = (email, password);
-        Err(ProviderError::Unsupported(
-            "Stalwart v0.16 runtime account provisioning is not wired; use the explicit operator CLI recipe",
-        ))
+        let token = environment::StalwartToken::new()
+            .map(|value| value.as_ref().to_owned())
+            .filter(|value| !value.is_empty())
+            .unwrap_or_default();
+        let session = match self.session_document(&token).await {
+            Ok(session) => session,
+            Err(error) => {
+                tracing::warn!(
+                    error = ?error,
+                    "Stalwart JMAP session is unavailable; skipping mailbox provisioning"
+                );
+                return Ok(());
+            }
+        };
+        let methods = management_set_methods(&session);
+        if methods.is_empty() {
+            tracing::warn!(
+                "Stalwart JMAP session has no admin management capability; skipping mailbox provisioning"
+            );
+            return Ok(());
+        }
+
+        let local_part = email.split_once('@').map_or(email, |(local, _)| local);
+        let mut arguments = json!({
+            "create": {
+                "account": {
+                    "@type": "User",
+                    "name": local_part,
+                    "emails": [email],
+                    "secrets": [password],
+                    "roles": ["user"],
+                }
+            }
+        });
+        if let Some(account_id) = admin_account_id(&session) {
+            arguments["accountId"] = json!(account_id);
+        }
+
+        let mut unknown_method = false;
+        for (method, using) in methods {
+            match self
+                .call(&session, &token, using, method, arguments.clone())
+                .await
+            {
+                Ok(body) => return provision_set_result(body),
+                Err(error) if is_already_exists_error(&error) => return Ok(()),
+                Err(error) if is_unknown_method(&error) => {
+                    unknown_method = true;
+                }
+                Err(error) => return Err(error),
+            }
+        }
+        if unknown_method {
+            tracing::warn!(
+                "Stalwart JMAP session has no admin management capability; skipping mailbox provisioning"
+            );
+        }
+        Ok(())
     }
 
     /// Downloads a JMAP blob, rejecting payloads larger than 256 KiB.
@@ -301,6 +379,9 @@ impl StalwartProvider {
 const JMAP_CORE: &str = "urn:ietf:params:jmap:core";
 const JMAP_MAIL: &str = "urn:ietf:params:jmap:mail";
 const JMAP_SUBMISSION: &str = "urn:ietf:params:jmap:submission";
+const JMAP_MANAGEMENT: &str = "urn:stalwart:jmap";
+const JMAP_PRINCIPAL: &str = "urn:ietf:params:jmap:principals";
+const JMAP_ADMIN: &str = "urn:stalwart:params:jmap:admin";
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -451,6 +532,16 @@ impl StalwartProvider {
     }
 
     async fn session(&self, access_token: &str) -> Result<JmapSession, ProviderError> {
+        let session = self.session_document(access_token).await?;
+        if !session.capabilities.contains_key(JMAP_MAIL) {
+            return Err(ProviderError::Provider(
+                "JMAP session does not advertise mail capability".to_owned(),
+            ));
+        }
+        Ok(session)
+    }
+
+    async fn session_document(&self, access_token: &str) -> Result<JmapSession, ProviderError> {
         let response = self
             .client
             .get(self.session_url()?)
@@ -464,11 +555,6 @@ impl StalwartProvider {
             .await
             .map_err(|error| ProviderError::Provider(format!("invalid JMAP session: {error}")))?;
         self.validate_bearer_endpoint(&session.api_url, "apiUrl")?;
-        if !session.capabilities.contains_key(JMAP_MAIL) {
-            return Err(ProviderError::Provider(
-                "JMAP session does not advertise mail capability".to_owned(),
-            ));
-        }
         Ok(session)
     }
 
@@ -600,11 +686,15 @@ fn method_response(body: Value, expected_method: &str) -> Result<Value, Provider
         ProviderError::Provider("JMAP response method arguments are missing".to_owned())
     })?;
     if name == "error" {
+        let typ = arguments.get("type").and_then(Value::as_str).unwrap_or("");
         let description = arguments
             .get("description")
             .and_then(Value::as_str)
             .unwrap_or("JMAP method failed");
-        return Err(ProviderError::Provider(description.to_owned()));
+        if typ.is_empty() {
+            return Err(ProviderError::Provider(description.to_owned()));
+        }
+        return Err(ProviderError::Provider(format!("{typ}: {description}")));
     }
     if name != expected_method {
         return Err(ProviderError::Provider(format!(
@@ -612,6 +702,93 @@ fn method_response(body: Value, expected_method: &str) -> Result<Value, Provider
         )));
     }
     Ok(arguments)
+}
+
+fn management_set_methods(session: &JmapSession) -> Vec<(&'static str, Vec<&'static str>)> {
+    let mut methods = Vec::new();
+    if session.capabilities.contains_key(JMAP_MANAGEMENT) {
+        methods.push(("Account/set", vec![JMAP_CORE, JMAP_MANAGEMENT]));
+        methods.push(("x:Account/set", vec![JMAP_CORE, JMAP_MANAGEMENT]));
+    }
+    if session.capabilities.contains_key(JMAP_PRINCIPAL) {
+        methods.push(("Principal/set", vec![JMAP_CORE, JMAP_PRINCIPAL]));
+    } else if session.capabilities.contains_key(JMAP_ADMIN) {
+        methods.push(("Principal/set", vec![JMAP_CORE, JMAP_ADMIN]));
+    }
+    methods
+}
+
+fn admin_account_id(session: &JmapSession) -> Option<&str> {
+    [JMAP_MANAGEMENT, JMAP_PRINCIPAL, JMAP_ADMIN, JMAP_CORE]
+        .into_iter()
+        .find_map(|capability| {
+            session
+                .primary_accounts
+                .get(capability)
+                .map(String::as_str)
+                .filter(|id| !id.is_empty())
+        })
+        .or_else(|| {
+            session.accounts.iter().find_map(|(id, account)| {
+                (account
+                    .account_capabilities
+                    .contains_key(JMAP_MANAGEMENT)
+                    || account
+                        .account_capabilities
+                        .contains_key(JMAP_PRINCIPAL)
+                    || account.account_capabilities.contains_key(JMAP_ADMIN))
+                .then_some(id.as_str())
+            })
+        })
+}
+
+fn provision_set_result(arguments: Value) -> Result<(), ProviderError> {
+    if arguments
+        .get("created")
+        .and_then(Value::as_object)
+        .is_some_and(|created| !created.is_empty())
+    {
+        return Ok(());
+    }
+    if let Some(not_created) = arguments.get("notCreated").and_then(Value::as_object) {
+        if not_created.values().any(is_already_exists_value) {
+            return Ok(());
+        }
+        let description = not_created
+            .values()
+            .find_map(|value| value.get("description").and_then(Value::as_str))
+            .unwrap_or("JMAP account create failed");
+        return Err(ProviderError::Provider(description.to_owned()));
+    }
+    Ok(())
+}
+
+fn is_already_exists_value(value: &Value) -> bool {
+    let typ = value.get("type").and_then(Value::as_str).unwrap_or("");
+    let description = value
+        .get("description")
+        .and_then(Value::as_str)
+        .unwrap_or("");
+    already_exists_text(typ) || already_exists_text(description)
+}
+
+fn is_already_exists_error(error: &ProviderError) -> bool {
+    matches!(error, ProviderError::Provider(message) if already_exists_text(message))
+}
+
+fn is_unknown_method(error: &ProviderError) -> bool {
+    match error {
+        ProviderError::Provider(message) => {
+            let lower = message.to_ascii_lowercase();
+            lower.contains("unknownmethod") || lower.contains("unknown method")
+        }
+        _ => false,
+    }
+}
+
+fn already_exists_text(text: &str) -> bool {
+    let lower = text.to_ascii_lowercase();
+    lower.contains("alreadyexists") || lower.contains("already exist")
 }
 
 #[async_trait]
@@ -846,12 +1023,7 @@ impl EmailProvider for StalwartProvider {
 /// crate. Selecting Gmail returns an explicit error and callers must use
 /// `gmail_client`.
 pub fn provider_from_env() -> Result<Box<dyn EmailProvider>, ProviderError> {
-    let kind = environment::EmailProvider::new()
-        .map(|value| value.as_ref().parse())
-        .transpose()
-        .map_err(ProviderError::Configuration)?
-        .unwrap_or_default();
-    match kind {
+    match EmailProviderKind::from_env() {
         EmailProviderKind::Gmail => Err(ProviderError::Unsupported(
             "Gmail remains on the gmail_client integration",
         )),

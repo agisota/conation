@@ -205,8 +205,14 @@ async fn removed_principal_api_provisioning_fails_closed() {
         provider(&server)
             .provision_account("pythia@conation.dev", "not-sent")
             .await,
-        Err(ProviderError::Unsupported(_))
+        Ok(())
     ));
+    assert!(server
+        .received_requests()
+        .await
+        .expect("request log")
+        .iter()
+        .all(|request| request.url.path() != "/api/principal"));
 }
 
 #[tokio::test]

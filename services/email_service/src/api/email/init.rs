@@ -597,7 +597,7 @@ async fn init_user(
             (link, linked_email)
         }
     } else {
-        let provider_kind = email_provider_kind_from_env();
+        let provider_kind = EmailProviderKind::from_env();
         let domain_provider = match provider_kind {
             EmailProviderKind::Gmail => UserProvider::Gmail,
             EmailProviderKind::Stalwart => UserProvider::Stalwart,
@@ -619,17 +619,37 @@ async fn init_user(
         let email = extract_email_with_response(&user_context.user_id)
             .map_err(|_| InitError::BadRequest("Failed to extract email".to_string()))?;
 
-        let provisional_link = new_gmail_link(
-            user_context.fusion_user_id.clone(),
-            macro_user_id.clone(),
-            email,
-            match provider_kind {
-                EmailProviderKind::Gmail => link::UserProvider::Gmail,
-                EmailProviderKind::Stalwart => link::UserProvider::Stalwart,
-            },
-        )?;
-
         if provider_kind == EmailProviderKind::Stalwart {
+            let mailbox = stalwart_mailbox_from_login_email(&email);
+            let random_password = conation_uuid::generate_uuid_v7().to_string();
+            match StalwartProvider::from_env() {
+                Ok(provider) => {
+                    if let Err(error) = provider
+                        .provision_account(&mailbox, &random_password)
+                        .await
+                    {
+                        tracing::warn!(
+                            error = %error,
+                            mailbox = %mailbox,
+                            "Failed to provision Stalwart mailbox; continuing /email/init"
+                        );
+                    }
+                }
+                Err(error) => {
+                    tracing::warn!(
+                        error = %error,
+                        mailbox = %mailbox,
+                        "Failed to load Stalwart provider for mailbox provision; continuing /email/init"
+                    );
+                }
+            }
+
+            let provisional_link = new_gmail_link(
+                user_context.fusion_user_id.clone(),
+                macro_user_id.clone(),
+                mailbox,
+                link::UserProvider::Stalwart,
+            )?;
             let mut tx = ctx
                 .db
                 .begin()
@@ -653,6 +673,13 @@ async fn init_user(
             )
                 .into_response());
         }
+
+        let provisional_link = new_gmail_link(
+            user_context.fusion_user_id.clone(),
+            macro_user_id.clone(),
+            email,
+            link::UserProvider::Gmail,
+        )?;
 
         let subscription = ctx
             .email_api
@@ -975,11 +1002,12 @@ fn classify_provider_init_error(error: EmailApiError) -> InitError {
     }
 }
 
-fn email_provider_kind_from_env() -> EmailProviderKind {
-    std::env::var("EMAIL_PROVIDER")
-        .ok()
-        .and_then(|value| value.parse().ok())
-        .unwrap_or_default()
+fn stalwart_mailbox_from_login_email(login_email: &str) -> String {
+    match login_email.rsplit_once('@') {
+        Some((_, host)) if host.eq_ignore_ascii_case("conation.dev") => login_email.to_string(),
+        Some((local, _)) if !local.is_empty() => format!("{local}@conation.dev"),
+        _ => login_email.to_string(),
+    }
 }
 
 fn new_gmail_link(
