@@ -34,6 +34,19 @@ fn falls_back_to_russian_for_an_invalid_header_value() {
 }
 
 #[test]
+fn falls_back_to_russian_for_missing_or_unsupported_language() {
+    assert_eq!(
+        requested_locale(&HeaderMap::new()),
+        SupportedLocale::Russian
+    );
+
+    let mut headers = HeaderMap::new();
+    headers.insert(ACCEPT_LANGUAGE, HeaderValue::from_static("fr-CA, fr;q=0.9"));
+
+    assert_eq!(requested_locale(&headers), SupportedLocale::Russian);
+}
+
+#[test]
 fn builds_a_deployment_relative_localized_verification_email() {
     let verification_id = Uuid::parse_str("018f1f61-7b2e-7ee1-bd5d-d18ebaeac73a").unwrap();
     let rendered = verification_email_for_delivery(

@@ -40,9 +40,10 @@ fn requested_locale(headers: &HeaderMap) -> SupportedLocale {
         .collect::<Result<Vec<_>, _>>();
 
     match values {
-        Ok(values) if !values.is_empty() => {
-            let combined = values.join(",");
-            negotiate_accept_language(Some(&combined))
+        Ok(mut values) if !values.is_empty() => {
+            // Lowest non-zero valid quality: explicit supported languages still win.
+            values.push("ru;q=0.001");
+            negotiate_accept_language(Some(&values.join(",")))
         }
         _ => SupportedLocale::default(),
     }
