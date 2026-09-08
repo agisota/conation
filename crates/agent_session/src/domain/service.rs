@@ -58,7 +58,8 @@ use super::model::{
 use super::ports::{
     AgentConnector, AgentSessionLifecyclePublisher, AgentSessionLogRepo, AgentSessionLogWriter,
     AgentSessionNameGenerator, AgentSessionQueueChanged, AgentSessionRealtime, AgentSessionRepo,
-    Appended, NoOpAgentSessionNameGenerator, SessionOwnership, SessionTurnObserver,
+    Appended, NoOpAgentSessionNameGenerator, NoOpToolCatalog, SessionOwnership, SessionToolCatalog,
+    SessionTurnObserver,
 };
 use super::session::actors::{SessionActor, SessionCommand, Stepped};
 use super::session::{CloseReason, Input};
@@ -288,6 +289,9 @@ pub struct AgentSessionServiceImpl<R, Folds, Rt, Namer = NoOpAgentSessionNameGen
     /// Where lifecycle facts go - renames, from here; everything else from
     /// the harness. Erased for the same reason as the observer.
     lifecycle_publisher: Arc<dyn AgentSessionLifecyclePublisher>,
+    /// Lists a session's MCP tools for its telemetry. Erased like the
+    /// observer, for the same reason.
+    tool_catalog: Arc<dyn SessionToolCatalog>,
     active: Arc<ActiveSessions>,
     /// This service's identity in the session-management lease. Minted at
     /// construction: a restarted process is a new replica, and its claims
@@ -329,12 +333,21 @@ impl<R, Folds, Rt, Namer> AgentSessionServiceImpl<R, Folds, Rt, Namer> {
             name_generator,
             turn_observer,
             lifecycle_publisher,
+            tool_catalog: Arc::new(NoOpToolCatalog),
             active: Arc::new(DashMap::new()),
             replica,
             tasks: TaskTracker::new(),
             cancellation: CancellationToken::new(),
             lifecycle: Arc::new(Mutex::new(())),
         }
+    }
+
+    /// Replace the no-op tool catalog with one that lists a session's MCP
+    /// tools, so its turns' spans carry the tools the agent could choose from.
+    #[must_use]
+    pub fn with_tool_catalog(mut self, tool_catalog: Arc<dyn SessionToolCatalog>) -> Self {
+        self.tool_catalog = tool_catalog;
+        self
     }
 
     /// This service's identity in the session-management lease, for the
@@ -437,6 +450,7 @@ impl<R, Folds, Rt, Namer> AgentSessionServiceImpl<R, Folds, Rt, Namer> {
             command_rx,
             attachment.handshake,
             Arc::clone(&self.turn_observer),
+            Arc::clone(&self.tool_catalog),
         );
         self.tasks.spawn(
             run_session(
