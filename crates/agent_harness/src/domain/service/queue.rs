@@ -490,6 +490,10 @@ where
     /// necessarily: entries can linger from a drain that failed, and FIFO
     /// order holds regardless. The outcome reports what happened to *this*
     /// action - still waiting, or on the wire.
+    ///
+    /// A prompt that has to wait still posts its magic chip now: the thread
+    /// should answer immediately, the same way a free session does. Dispatch
+    /// later skips a chip that is already up.
     pub(super) async fn enqueue_then_dispatch(
         &self,
         session_id: AgentSessionId,
@@ -501,6 +505,8 @@ where
             _ => None,
         };
         let actor = command.actor.clone();
+        let action = command.action.clone();
+        let announce = command.announce.clone();
         queue_result(
             self.queues.enqueue(
                 session_id,
@@ -518,12 +524,13 @@ where
         // Mentions are a fact about the prompt, not the turn: published as
         // soon as the prompt is accepted, whether it dispatches now or waits.
         if let Some(prompt) = prompt {
-            self.publish_mentions(session_id, action_id, actor, &prompt)
+            self.publish_mentions(session_id, action_id, actor.clone(), &prompt)
                 .await;
         }
 
         let dispatched = if self.busy.is_pending(session_id) {
-            Ok(())
+            self.announce_while_queued(session_id, action_id, &action, actor.as_ref(), announce)
+                .await
         } else {
             // Marked before dispatching, not only once `dispatch_next`'s own
             // delivery succeeds: this closes the window between "a command
@@ -551,6 +558,41 @@ where
         })
     }
 
+    /// Post the magic chip for a prompt that will wait behind a running turn.
+    ///
+    /// Turn ids are reserved in queue order so two waiting chips do not
+    /// share a fold key: each waiter occupies a turn, so the nth is
+    /// `next_turn + n`. A failed post leaves `announced` unset so dispatch
+    /// can retry.
+    pub(super) async fn announce_while_queued(
+        &self,
+        session_id: AgentSessionId,
+        action_id: AgentActionId,
+        action: &AgentAction,
+        actor: Option<&MacroUserIdStr<'static>>,
+        announce: Option<AnnounceOrigin>,
+    ) -> Result<()> {
+        let reserved = self.queues.waiting_ahead(session_id, action_id);
+        let mut prompted_message_id = self.sessions.next_prompt_message_id(session_id).await?;
+        prompted_message_id.turn.0 += reserved;
+        let Some(announcement) = self
+            .announcement(
+                session_id,
+                action,
+                actor,
+                announce,
+                prompted_message_id,
+            )
+            .await?
+        else {
+            return Ok(());
+        };
+        let announced = self.announcer.announce(announcement).await?;
+        self.queues
+            .mark_announced(session_id, action_id, announced.message_id);
+        Ok(())
+    }
+
     /// Push the queue as it now stands to the session's viewers.
     ///
     /// Best-effort, like every realtime publish: a dropped snapshot costs a
@@ -576,12 +618,13 @@ where
     /// Deliver the oldest queued action, marking the session busy on success.
     ///
     /// Composition runs first so a lexical failure never posts a chip for a
-    /// prompt that will not reach the agent. The chip is then announced
-    /// (from the raw text) before delivery, so it exists to anchor the turn
-    /// the agent streams into - and it is announced *at most once* per
-    /// entry: the claimed entry remembers a successful announce, so a
-    /// dispatch that fails after the chip posted retries without posting a
-    /// second one.
+    /// prompt that will not reach the agent — unless the chip was already
+    /// posted when the prompt was accepted behind a running turn. The chip
+    /// is otherwise announced (from the raw text) before delivery, so it
+    /// exists to anchor the turn the agent streams into - and it is
+    /// announced *at most once* per entry: the claimed entry remembers a
+    /// successful announce, so a dispatch that fails after the chip posted
+    /// retries without posting a second one.
     ///
     /// A failed dispatch puts the entry back at the front: it stays next in
     /// line for the next turn end or the next prompt, and stays visible in

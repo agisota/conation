@@ -161,6 +161,36 @@ fn removal_skips_the_removed_entry_at_dispatch() {
 }
 
 #[test]
+fn waiting_ahead_is_the_position_in_line() {
+    let queues = SessionQueues::new();
+    let session = AgentSessionId::TEST_A;
+    let first = prompt_entry("first");
+    let second = prompt_entry("second");
+    queues.enqueue(session, first.clone()).unwrap();
+    queues.enqueue(session, second.clone()).unwrap();
+
+    assert_eq!(queues.waiting_ahead(session, first.action_id), 0);
+    assert_eq!(queues.waiting_ahead(session, second.action_id), 1);
+    assert_eq!(
+        queues.waiting_ahead(session, AgentActionId::mint()),
+        0,
+        "an unknown id is not waiting"
+    );
+}
+
+#[test]
+fn mark_announced_is_remembered_through_claim() {
+    let queues = SessionQueues::new();
+    let session = AgentSessionId::TEST_A;
+    let entry = prompt_entry("work");
+    queues.enqueue(session, entry.clone()).unwrap();
+    let chip = Uuid::from_u128(1);
+    queues.mark_announced(session, entry.action_id, chip);
+
+    assert_eq!(queues.claim_next(session).unwrap().announced, Some(chip));
+}
+
+#[test]
 fn a_requeued_entry_is_next_in_line() {
     let queues = SessionQueues::new();
     let session = AgentSessionId::TEST_A;
