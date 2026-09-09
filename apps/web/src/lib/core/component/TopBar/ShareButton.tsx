@@ -277,7 +277,8 @@ function GroupChannelLabel(props: { channelId: string; fallbackName: string }) {
 interface LinkSharingControlsProps {
   linkShare: LinkShare | null | undefined;
   linkShareAccessLevel: AccessLevel | null | undefined;
-  hasExplicitShares: boolean;
+  teamShareAccessLevel: AccessLevel | null | undefined;
+  hasPeopleOrChannelShares: boolean;
   setLinkShareScope: (scope: LinkShareScope) => void;
   setLinkShareAccessLevel: (accessLevel: AccessLevel | null) => void;
   copyLink: () => void;
@@ -287,7 +288,11 @@ function LinkSharingControls(props: LinkSharingControlsProps) {
   const scope = () => getLinkShareScope(props.linkShare);
   const scopeCopy = () => getLinkShareScopeCopy(scope());
   const shareStatus = () =>
-    getShareStatus(props.linkShare, props.hasExplicitShares);
+    getShareStatus({
+      linkShare: props.linkShare,
+      teamShareAccessLevel: props.teamShareAccessLevel,
+      hasPeopleOrChannelShares: props.hasPeopleOrChannelShares,
+    });
 
   return (
     <div class="flex flex-col gap-3 p-4 text-sm text-ink">
@@ -298,7 +303,7 @@ function LinkSharingControls(props: LinkSharingControlsProps) {
             <div
               class={cn(
                 'flex items-center justify-center rounded-xl border px-2 py-0.5',
-                shareStatus().label === 'Just me'
+                shareStatus().label === 'Link off'
                   ? 'border-edge-muted bg-edge-muted text-ink-extra-muted'
                   : 'border-accent/30 bg-accent/10 text-accent'
               )}
@@ -353,6 +358,7 @@ interface MobileShareDrawerProps {
   formattedOwner: string;
   linkShare: LinkShare | null | undefined;
   linkShareAccessLevel: AccessLevel | null | undefined;
+  teamShareAccessLevel: AccessLevel | null | undefined;
   refetch: () => void;
   navigateToChannel: (channelId: string) => void;
   removeChannelAccess: (channelId: string) => void;
@@ -577,7 +583,8 @@ function MobileShareDrawer(props: MobileShareDrawerProps) {
             <LinkSharingControls
               linkShare={props.linkShare}
               linkShareAccessLevel={props.linkShareAccessLevel}
-              hasExplicitShares={(props.recipients?.length ?? 0) > 0}
+              teamShareAccessLevel={props.teamShareAccessLevel}
+              hasPeopleOrChannelShares={(props.recipients?.length ?? 0) > 0}
               setLinkShareScope={props.setLinkShareScope}
               setLinkShareAccessLevel={props.setLinkShareAccessLevel}
               copyLink={props.copyLink}
@@ -888,6 +895,13 @@ export function ShareModal(props: ShareModalProps) {
     return currentPermissions.value.linkShareAccessLevel;
   });
 
+  const teamShareAccessLevel = () => {
+    const currentPermissions = permissionsResource.latest;
+    if (!currentPermissions || currentPermissions.isErr()) return;
+
+    return currentPermissions.value.teamShareAccessLevel;
+  };
+
   const updateLinkSharePermissions = createCallback(
     async (sharePermission: LinkSharePayload) => {
       const scope = getLinkShareScope(sharePermission.linkShare);
@@ -922,8 +936,8 @@ export function ShareModal(props: ShareModalProps) {
 
       refetch();
       if (scope === 'NONE') {
-        toast.success(`Made ${entityLabel} private`, {
-          subtext: `Only shared users can access this ${entityLabel}`,
+        toast.success(`Disabled link sharing for this ${entityLabel}`, {
+          subtext: getLinkShareScopeCopy('NONE').description,
         });
         return;
       }
@@ -996,6 +1010,7 @@ export function ShareModal(props: ShareModalProps) {
           formattedOwner={formattedOwner()}
           linkShare={linkShare()}
           linkShareAccessLevel={linkShareAccessLevel()}
+          teamShareAccessLevel={teamShareAccessLevel()}
           refetch={refetch}
           navigateToChannel={navigateToChannel}
           removeChannelAccess={removeChannelAccess}
@@ -1220,7 +1235,8 @@ export function ShareModal(props: ShareModalProps) {
                     <LinkSharingControls
                       linkShare={linkShare()}
                       linkShareAccessLevel={linkShareAccessLevel()}
-                      hasExplicitShares={(recipients()?.length ?? 0) > 0}
+                      teamShareAccessLevel={teamShareAccessLevel()}
+                      hasPeopleOrChannelShares={(recipients()?.length ?? 0) > 0}
                       setLinkShareScope={setLinkShareScope}
                       setLinkShareAccessLevel={setLinkShareAccessLevel}
                       copyLink={copyLink}
@@ -1303,10 +1319,12 @@ export function ShareTrigger(props: { id?: string; copyLink?: () => void }) {
     if (!result || result.isErr()) return;
 
     const sharePermission = result.value;
-    return getShareStatus(
-      sharePermission.linkShare,
-      (sharePermission.channelSharePermissions?.length ?? 0) > 0
-    );
+    return getShareStatus({
+      linkShare: sharePermission.linkShare,
+      teamShareAccessLevel: sharePermission.teamShareAccessLevel,
+      hasPeopleOrChannelShares:
+        (sharePermission.channelSharePermissions?.length ?? 0) > 0,
+    });
   });
 
   return (
