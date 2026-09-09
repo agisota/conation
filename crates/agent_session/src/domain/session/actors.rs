@@ -266,7 +266,7 @@ where
 
         while let Some(effect) = effects.pop_front() {
             match effect {
-                Effect::Send { from, message } => {
+                Effect::Send { from, mut message } => {
                     let command_span = effects.front().and_then(|effect| match effect {
                         Effect::Complete { token, .. } => Some(token.span.clone()),
                         _ => None,
@@ -274,7 +274,8 @@ where
                     // Before delivery, so the turn's span starts when the
                     // prompt leaves. A delivery that fails closes the
                     // connection, which ends the turn in error below.
-                    self.telemetry.on_outbound(&message, command_span.as_ref());
+                    self.telemetry
+                        .on_outbound(&mut message, command_span.as_ref());
                     let delivery = self.deliver(from, message);
                     let (result, close_reason) =
                         match (command_span.as_ref(), handshake_span.as_ref()) {
