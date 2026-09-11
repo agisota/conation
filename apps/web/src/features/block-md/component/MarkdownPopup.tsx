@@ -1,9 +1,6 @@
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
 import { applyAiOps } from '@block-md/ai-edit/applyAiOps';
-import {
-  activeCommentThreadSignal,
-  highlightedCommentThreadsSignal,
-} from '@block-md/comments/commentStore';
+import { useCommentState } from '@block-md/comments/commentStore';
 import { MobileDrawer } from '@components/app/mobile/MobileDrawer';
 import { useBlockId } from '@core/block';
 import { GeneralizedPopup } from '@core/component/GeneralizedPopup/Popup';
@@ -93,6 +90,7 @@ import {
   useContext,
 } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
+import { useMarkdownDocument } from '../context/markdown-document-context';
 import { FormatTools } from './FormatTools';
 import { TouchSelectionToolbar } from './TouchSelectionToolbar';
 
@@ -102,7 +100,10 @@ export function MarkdownPopup(props: {
   highlightLayerRef: HTMLDivElement;
   lexicalMapping: NodeIdMappings;
 }) {
-  const blockId = useBlockId();
+  const markdownDocument = useMarkdownDocument();
+  const blockId = markdownDocument.documentId;
+  const name = () =>
+    markdownDocument.persistedName() || markdownDocument.fallbackName();
 
   const { editor, plugins } = useContext(LexicalWrapperContext) ?? {};
   if (!editor || !plugins) {
@@ -188,13 +189,13 @@ export function MarkdownPopup(props: {
     setNativeEditMenuSuppressed(false);
   });
 
-  const canEdit = useCanEdit();
+  const canEdit = markdownDocument.permissions.canEdit;
   const inlineAiEditing = useFeatureFlag(enableInlineAiEditing);
-  const canComment = useCanComment();
+  const canComment = markdownDocument.permissions.canComment;
   const currentUserId = useUserId();
 
-  const highlightedCommentThreads = highlightedCommentThreadsSignal.get;
-  const setActiveCommentThread = activeCommentThreadSignal.set;
+  const { highlightedCommentThreads, setActiveCommentThread } =
+    useCommentState();
 
   const [locationCopied, setLocationCopied] = createSignal(false);
   const [isConverting, setIsConverting] = createSignal(false);

@@ -1,4 +1,4 @@
-import { markdownBlockErrorSignal } from '@block-md/signal/error';
+import { useMarkdownBlockError } from '@block-md/signal/error';
 import {
   INSERT_HORIZONTAL_RULE_COMMAND,
   NODE_TRANSFORM,
@@ -84,10 +84,8 @@ import {
   Show,
 } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
-import {
-  generatedAndWaitingSignal,
-  isGeneratingSignal,
-} from '../signal/generateSignal';
+import { useMarkdownDocument } from '../context/markdown-document-context';
+import { useGenerateState } from '../signal/generateSignal';
 import { mdStore } from '../signal/markdownBlockData';
 import { MediaSelector } from './MediaSelector';
 import { TableInsert } from './TableInsert';
@@ -366,7 +364,8 @@ export function FormatTools(props: {
   const editor = () => mdData.editor;
   const titleEditor = () => mdData.titleEditor;
   const selection = () => mdData.selection;
-  const [editorError] = markdownBlockErrorSignal;
+  const [editorError] = useMarkdownBlockError();
+  const { isGenerating, generatedAndWaiting } = useGenerateState();
 
   const [editorHasFocus, setEditorHasFocus] = createSignal(false);
   const [, setTitleEditorHasFocus] = createSignal(false);
@@ -376,24 +375,27 @@ export function FormatTools(props: {
   const [lastFocusedEditor, setLastFocusedEditor] =
     createSignal<LexicalEditor>();
 
-  const editAccess = useCanEdit();
+  const permissions = useMarkdownDocument().permissions;
+  const editAccess = permissions.canEdit;
   const canEdit = () => editAccess();
 
-  const canComment = ENABLE_MARKDOWN_COMMENTS ? useCanComment() : () => false;
+  const canComment = ENABLE_MARKDOWN_COMMENTS
+    ? permissions.canComment
+    : () => false;
 
   const buttonIsDisabled = createMemo(() => {
     return !(
       canEdit() &&
-      !isGeneratingSignal() &&
-      !generatedAndWaitingSignal() &&
+      !isGenerating() &&
+      !generatedAndWaiting() &&
       editorError() === null
     );
   });
   const commentButtonIsDisabled = createMemo(() => {
     return !(
       canComment() &&
-      !isGeneratingSignal() &&
-      !generatedAndWaitingSignal() &&
+      !isGenerating() &&
+      !generatedAndWaiting() &&
       editorError() === null
     );
   });
