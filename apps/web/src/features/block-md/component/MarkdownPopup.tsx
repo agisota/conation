@@ -193,8 +193,8 @@ export function MarkdownPopup(props: {
   const canComment = markdownDocument.permissions.canComment;
   const currentUserId = useUserId();
 
-  const { highlightedCommentThreads, setActiveCommentThread } =
-    markdownDocument.state.comments;
+  const commentState = markdownDocument.state.comments;
+  const setCommentState = markdownDocument.state.setCommentState;
 
   const [locationCopied, setLocationCopied] = createSignal(false);
   const [isConverting, setIsConverting] = createSignal(false);
@@ -474,8 +474,10 @@ export function MarkdownPopup(props: {
     // clear the selection first.
     editor.update(() => $setSelection(null));
     editor.blur();
-    const [threadId] = highlightedCommentThreads();
-    if (threadId != null) setActiveCommentThread(threadId);
+    const [threadId] = commentState.highlightedCommentThreads;
+    if (threadId != null) {
+      setCommentState('activeCommentThread', threadId);
+    }
     setPopupVisible(false);
   };
 
@@ -729,7 +731,9 @@ export function MarkdownPopup(props: {
             showTasksOption={shouldShowCheckboxToTaskButton()}
             showTableOption={shouldShowTableButton()}
             showEditWithAiOption={shouldShowEditWithAiButton()}
-            showOpenCommentOption={highlightedCommentThreads().length > 0}
+            showOpenCommentOption={
+              commentState.highlightedCommentThreads.length > 0
+            }
             locationCopied={locationCopied()}
             setPopupVisible={setPopupVisible}
             onConvertToTasks={handleConvertToTasks}
