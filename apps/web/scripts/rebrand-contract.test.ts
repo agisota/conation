@@ -39,9 +39,15 @@ describe('Conation rebrand compatibility contract', () => {
   it('keeps browser and PWA display metadata on Conation with resolvable icons', () => {
     const html = readFileSync(resolve(webRoot, 'index.html'), 'utf8');
     const document = new JSDOM(html).window.document;
-    const manifest = JSON.parse(
-      readFileSync(resolve(publicRoot, 'manifest.json'), 'utf8')
-    ) as Manifest;
+    const manifestLink = document.querySelector<HTMLLinkElement>(
+      'link[rel="manifest"]'
+    );
+    expect(manifestLink).not.toBeNull();
+    const manifestHref = manifestLink?.getAttribute('href');
+    expect(manifestHref).toBeTruthy();
+    const manifestPath = resolve(publicRoot, manifestHref!.replace(/^\/+/, ''));
+    expect(existsSync(manifestPath)).toBe(true);
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as Manifest;
 
     expect(
       document.querySelector('meta[name="description"]')?.getAttribute('content')

@@ -47,6 +47,28 @@ fn falls_back_to_russian_for_missing_or_unsupported_language() {
 }
 
 #[test]
+fn honors_an_explicit_russian_exclusion_when_other_languages_are_unsupported() {
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        ACCEPT_LANGUAGE,
+        HeaderValue::from_static("ru;q=0., fr;q=0.9"),
+    );
+
+    assert_eq!(requested_locale(&headers), SupportedLocale::English);
+}
+
+#[test]
+fn honors_an_explicit_english_exclusion_when_other_languages_are_unsupported() {
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        ACCEPT_LANGUAGE,
+        HeaderValue::from_static("en;q=0., fr;q=0.9"),
+    );
+
+    assert_eq!(requested_locale(&headers), SupportedLocale::Russian);
+}
+
+#[test]
 fn builds_a_deployment_relative_localized_verification_email() {
     let verification_id = Uuid::parse_str("018f1f61-7b2e-7ee1-bd5d-d18ebaeac73a").unwrap();
     let rendered = verification_email_for_delivery(
