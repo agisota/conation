@@ -276,7 +276,7 @@ impl Harness {
         let inflight = Arc::new(FakeInflightAuth::default());
         let registry = Arc::new(FakeClientRegistry::default());
         let service = McpAuthProxyServiceImpl::new(McpAuthProxyServiceDeps {
-            public_url: "https://mcp.macro.com".to_owned(),
+            public_url: "https://mcp.conation.dev".to_owned(),
             redirect_uri_policy: RedirectUriPolicy::new(["claude.ai"]),
             inflight_auth: Arc::clone(&inflight),
             client_registrations: Arc::clone(&registry) as Arc<dyn ClientRegistrationStore>,

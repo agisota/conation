@@ -24,7 +24,7 @@ maybe_env_vars! {
 /// Hosts trusted to receive an MCP authorization code when
 /// `MCP_ALLOWED_REDIRECT_HOSTS` is unset.
 ///
-/// These are the browser-based MCP clients Macro supports, and match the
+/// These are the browser-based MCP clients Conation supports, and match the
 /// origins the FusionAuth application already allows. A host absent from this
 /// list cannot be used as a redirect destination, which is what stops an
 /// attacker from registering a client pointing at a callback they control.
