@@ -161,8 +161,10 @@ nix develop --command just selfhost-provision-support-mailboxes
 Она использует JMAP management CLI, не меняет пароли уже существующих ящиков и
 не запускается автоматически при старте Compose. Необходимые переменные,
 ограничения профиля и доказательный аудит встроенного inbox описаны в
-`docs/SELF_HOST_STALWART_MAILBOX_AUDIT_RU.md`. Важно: наличие Stalwart-ящика
-пока не делает его доступным в web inbox Conation, который остаётся на Gmail.
+`docs/SELF_HOST_STALWART_MAILBOX_AUDIT_RU.md`. Signup-ящик Stalwart появляется
+во встроенном inbox как `UserProvider::Stalwart`. Gmail — необязательная
+интеграция, не условие работы почты. Публичная internet-доставляемость
+(MX/DKIM) этим рецептом не заявлена; см. `docs/CONATION_INTEGRATIONS_RU.md`.
 
 Аватары принадлежат репозиторию и раздаются web-приложением из
 `apps/web/public/support-avatars/`; внешнего CDN Macro нет.
