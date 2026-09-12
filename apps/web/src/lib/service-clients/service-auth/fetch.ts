@@ -8,19 +8,34 @@ import {
   type TextResponse,
 } from '@core/util/safeFetch';
 import { err, ok, type Result } from 'neverthrow';
-import { authServiceClient } from './client';
+import { authServiceClient, getExpiresAt } from './client';
 
 function isExpired(token: string) {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    const exp = payload.exp * 1000;
-    return Date.now() > exp;
-  } catch {
-    return true;
-  }
+  const expiresAt = getExpiresAt(token);
+  return expiresAt <= 0 || Date.now() >= expiresAt;
 }
 
 let conationApiTokenPromise: Promise<string> | null = null;
+
+function requestConationApiToken() {
+  const promise = authServiceClient.conationApiToken().then((result) => {
+    if (result.isErr()) {
+      throw result.error;
+    }
+    return result.value.conation_api_token;
+  });
+
+  conationApiTokenPromise = promise;
+  void promise.catch(() => {
+    // A failed request must not poison the cache permanently. Keep the
+    // identity check so an older rejection cannot clear a newer request.
+    if (conationApiTokenPromise === promise) {
+      conationApiTokenPromise = null;
+    }
+  });
+  return promise;
+}
+
 export async function getConationApiToken() {
   if (LOCAL_ONLY) {
     const apiToken = import.meta.env.__LOCAL_JWT__;
@@ -28,22 +43,25 @@ export async function getConationApiToken() {
       return apiToken;
     }
   }
-  const apiToken = await conationApiTokenPromise;
-  if (apiToken && !isExpired(apiToken)) {
+
+  const cachedPromise = conationApiTokenPromise;
+  if (!cachedPromise) {
+    return requestConationApiToken();
+  }
+
+  const apiToken = await cachedPromise;
+  if (!isExpired(apiToken)) {
     return apiToken;
   }
 
-  conationApiTokenPromise = new Promise((resolve, reject) =>
-    authServiceClient.conationApiToken().then((result) => {
-      if (result.isErr()) {
-        conationApiTokenPromise = null;
-        reject(result.error);
-      } else {
-        resolve(result.value.conation_api_token);
-      }
-    })
-  );
-  return conationApiTokenPromise;
+  // Another caller may already have replaced the expired entry while this
+  // caller was suspended awaiting it. Reuse that replacement instead of
+  // issuing a duplicate request.
+  if (conationApiTokenPromise !== cachedPromise) {
+    return getConationApiToken();
+  }
+
+  return requestConationApiToken();
 }
 
 type TextContentType = `text/${string}`;
