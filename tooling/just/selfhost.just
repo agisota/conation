@@ -30,6 +30,7 @@ selfhost-smoke:
         SELFHOST_PROXY_ORIGIN="${SELFHOST_PROXY_ORIGIN-}" \
         SELFHOST_FRONTEND_ORIGIN="${SELFHOST_FRONTEND_ORIGIN-}" \
         SELFHOST_LOCALSTACK_ORIGIN="${SELFHOST_LOCALSTACK_ORIGIN-}" \
+        SELFHOST_STALWART_ORIGIN="${SELFHOST_STALWART_ORIGIN-}" \
         SELFHOST_SMOKE_CONNECT_TIMEOUT_SECONDS="${SELFHOST_SMOKE_CONNECT_TIMEOUT_SECONDS-}" \
         SELFHOST_SMOKE_REQUEST_TIMEOUT_SECONDS="${SELFHOST_SMOKE_REQUEST_TIMEOUT_SECONDS-}" \
         /usr/bin/bash tooling/scripts/selfhost-smoke.sh
@@ -202,6 +203,7 @@ selfhost-check ENV_FILE=".env.selfhost.example":
     bash tooling/scripts/tests/provision-conation-support-users.test.sh
     bash tooling/scripts/tests/preflight-conation-support-accounts.test.sh
     bash tooling/scripts/tests/stack-diagnose.test.sh
+    bash tooling/scripts/tests/selfhost-smoke.test.sh
     just selfhost-overlay-check {{ quote(ENV_FILE) }}
 
 # Public DNS, TLS, and Internet mail require an operator security design and
