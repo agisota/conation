@@ -2147,6 +2147,8 @@
   "settings.appearance.interface.monochrome.description": "Использовать одноцветные значки во всём приложении.",
   "settings.appearance.interface.tooltips.label": "Показывать подсказки",
   "settings.appearance.interface.tooltips.description": "Показывать подсказки при наведении на кнопки и элементы управления.",
+  "settings.appearance.interface.linkPreviews.label": "Показывать превью ссылок",
+  "settings.appearance.interface.linkPreviews.description": "Показывать карточки превью ссылок в сообщениях.",
   "settings.billing.title": "Доступ",
   "settings.billing.support.prefix": "Нужна помощь с доступом или настройкой?",
   "settings.billing.support.action": "свяжитесь с нами",
