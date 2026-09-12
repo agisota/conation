@@ -5,6 +5,7 @@ set -euo pipefail
 proxy_origin="${SELFHOST_PROXY_ORIGIN:-http://localhost:8090}"
 frontend_origin="${SELFHOST_FRONTEND_ORIGIN:-http://localhost:3000}"
 localstack_origin="${SELFHOST_LOCALSTACK_ORIGIN:-http://localhost:4566}"
+stalwart_origin="${SELFHOST_STALWART_ORIGIN:-}"
 connect_timeout_seconds="${SELFHOST_SMOKE_CONNECT_TIMEOUT_SECONDS:-3}"
 request_timeout_seconds="${SELFHOST_SMOKE_REQUEST_TIMEOUT_SECONDS:-10}"
 
@@ -94,9 +95,24 @@ require_exact_status() {
     printf 'PASS %s (HTTP %s)\n' "$label" "$status"
 }
 
+require_redirect_or_success() {
+    local label="$1"
+    local url="$2"
+    local status
+
+    status="$(request_status "$label" "$url")"
+    if [[ ! "$status" =~ ^[23][0-9][0-9]$ ]]; then
+        fail "$label returned HTTP $status; expected a 2xx or 3xx bootstrap response from $url"
+    fi
+    printf 'PASS %s (HTTP %s)\n' "$label" "$status"
+}
+
 require_origin "SELFHOST_PROXY_ORIGIN" "$proxy_origin"
 require_origin "SELFHOST_FRONTEND_ORIGIN" "$frontend_origin"
 require_origin "SELFHOST_LOCALSTACK_ORIGIN" "$localstack_origin"
+if [[ -n "$stalwart_origin" ]]; then
+    require_origin "SELFHOST_STALWART_ORIGIN" "$stalwart_origin"
+fi
 require_positive_integer "SELFHOST_SMOKE_CONNECT_TIMEOUT_SECONDS" "$connect_timeout_seconds"
 require_positive_integer "SELFHOST_SMOKE_REQUEST_TIMEOUT_SECONDS" "$request_timeout_seconds"
 
@@ -107,5 +123,9 @@ require_exact_status "MCP endpoint" "401" "${proxy_origin%/}/mcp"
 require_success "LocalStack health" "${localstack_origin%/}/_localstack/health"
 require_exact_status "browser-facing app redirect" "308" "${frontend_origin%/}/app"
 require_success "browser-facing app" "${frontend_origin%/}/app/"
+if [[ -n "$stalwart_origin" ]]; then
+    # Stalwart v0.16 bootstrap serves 302 to the setup form until configured.
+    require_redirect_or_success "Stalwart HTTP" "${stalwart_origin%/}/"
+fi
 
 printf 'selfhost-smoke: all read-only endpoint assertions passed.\n'
