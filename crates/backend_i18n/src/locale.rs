@@ -24,6 +24,21 @@ impl SupportedLocale {
     }
 }
 
+/// Parses a persisted `User.locale` value (`en` / `ru`, plus `en-*` tags).
+///
+/// Unknown, blank, or missing values use the Russian product default. Do not
+/// pass a sender `Accept-Language` here; that header is only negotiated on
+/// recipient-initiated verification mail.
+#[must_use]
+pub fn parse_stored_locale(value: &str) -> SupportedLocale {
+    let tag = value.trim();
+    if tag.eq_ignore_ascii_case("en") || tag.to_ascii_lowercase().starts_with("en-") {
+        SupportedLocale::English
+    } else {
+        SupportedLocale::Russian
+    }
+}
+
 impl fmt::Display for SupportedLocale {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter.write_str(self.language_tag())

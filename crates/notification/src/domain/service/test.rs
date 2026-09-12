@@ -78,8 +78,19 @@ impl NotificationExtIos for TestNotification {
 
 impl NotificationExtEmail for TestNotification {
     fn format_email(&self) -> crate::domain::models::queue_message::EmailContent {
+        self.format_email_for_locale("ru")
+    }
+
+    fn format_email_for_locale(
+        &self,
+        locale: &str,
+    ) -> crate::domain::models::queue_message::EmailContent {
         EmailContent {
-            subject: "Test".to_string(),
+            subject: if locale == "en" {
+                "Hello".to_string()
+            } else {
+                "Привет".to_string()
+            },
             body: self.message.clone(),
         }
     }
@@ -107,6 +118,7 @@ struct MockRepository {
     unsubscribed_users: HashSet<MacroUserIdStr<'static>>,
     type_disabled_users: HashSet<MacroUserIdStr<'static>>,
     device_endpoints: HashMap<MacroUserIdStr<'static>, Vec<DeviceEndpoint>>,
+    user_locales: HashMap<MacroUserIdStr<'static>, String>,
     created_notifications: Mutex<Vec<Uuid>>,
     stored_collapse_keys: Mutex<Vec<(Uuid, Option<String>)>>,
     basic_notifications: Vec<NotificationIdAndCollapseKey>,
@@ -126,6 +138,7 @@ impl MockRepository {
             unsubscribed_users: HashSet::new(),
             type_disabled_users: HashSet::new(),
             device_endpoints: HashMap::new(),
+            user_locales: HashMap::new(),
             created_notifications: Mutex::new(Vec::new()),
             stored_collapse_keys: Mutex::new(Vec::new()),
             basic_notifications: Vec::new(),
@@ -152,6 +165,11 @@ impl MockRepository {
         ids: impl IntoIterator<Item = Uuid>,
     ) -> Self {
         self.digest_eligible_notification_ids = Some(ids.into_iter().collect());
+        self
+    }
+
+    fn with_user_locale(mut self, user_id: MacroUserIdStr<'static>, locale: &str) -> Self {
+        self.user_locales.insert(user_id, locale.to_string());
         self
     }
 
@@ -246,6 +264,13 @@ impl NotificationRepository for MockRepository {
         _user_ids: &[MacroUserIdStr<'a>],
     ) -> Result<HashSet<MacroUserIdStr<'static>>, Report> {
         Ok(self.muted_users.clone())
+    }
+
+    async fn get_user_locales<'a>(
+        &self,
+        _user_ids: &[MacroUserIdStr<'a>],
+    ) -> Result<HashMap<MacroUserIdStr<'static>, String>, Report> {
+        Ok(self.user_locales.clone())
     }
 
     async fn get_unsubscribed_users<'a>(
@@ -531,6 +556,13 @@ impl NotificationRepository for std::sync::Arc<MockRepository> {
         user_ids: &[MacroUserIdStr<'a>],
     ) -> Result<HashSet<MacroUserIdStr<'static>>, Report> {
         (**self).get_muted_users(user_ids).await
+    }
+
+    async fn get_user_locales<'a>(
+        &self,
+        user_ids: &[MacroUserIdStr<'a>],
+    ) -> Result<HashMap<MacroUserIdStr<'static>, String>, Report> {
+        (**self).get_user_locales(user_ids).await
     }
 
     async fn get_unsubscribed_users<'a>(
@@ -1062,7 +1094,61 @@ async fn test_queue_message_email_per_recipient() {
     for msg in &published {
         assert_eq!(msg["message_type"], "test_notification");
         assert!(msg["content"]["Email"].is_object());
+        assert_eq!(msg["content"]["Email"]["content"]["subject"], "Привет");
     }
+}
+
+#[tokio::test]
+async fn test_queue_message_email_uses_each_recipient_locale() {
+    use std::sync::Arc;
+
+    let recipient_en = test_user_id("english@example.com");
+    let recipient_ru = test_user_id("russian@example.com");
+    let queue = Arc::new(MockQueue::new());
+    let repo = MockRepository::new()
+        .with_user_locale(recipient_en.clone(), "en")
+        .with_user_locale(recipient_ru.clone(), "ru");
+    let service = NotificationIngressService::new(repo, queue.clone(), MockStateMachine);
+
+    let request = SendNotificationRequestBuilder {
+        notification_entity: EntityType::Document.with_entity_str("entity_1"),
+        secondary_notification_entity: None,
+        notification: TestNotification {
+            message: "Hello".to_string(),
+        },
+        sender_id: None,
+        recipient_ids: HashSet::from([recipient_en.clone(), recipient_ru.clone()]),
+    }
+    .into_request()
+    .with_email();
+
+    service.send_notification(request).await.unwrap();
+
+    let published = queue.get_published();
+    assert_eq!(published.len(), 2);
+
+    let mut subjects: Vec<_> = published
+        .iter()
+        .map(|msg| {
+            (
+                msg["content"]["Email"]["to"].as_str().unwrap().to_string(),
+                msg["content"]["Email"]["content"]["subject"]
+                    .as_str()
+                    .unwrap()
+                    .to_string(),
+            )
+        })
+        .collect();
+    subjects.sort();
+
+    assert!(
+        subjects.iter().any(|(_, subject)| subject == "Hello"),
+        "english recipient must get the English subject, got {subjects:?}"
+    );
+    assert!(
+        subjects.iter().any(|(_, subject)| subject == "Привет"),
+        "russian recipient must get the Russian subject, got {subjects:?}"
+    );
 }
 
 #[tokio::test]

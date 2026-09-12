@@ -8,7 +8,7 @@
 mod locale;
 mod verification_email;
 
-pub use locale::{SupportedLocale, negotiate_accept_language};
+pub use locale::{SupportedLocale, negotiate_accept_language, parse_stored_locale};
 pub use verification_email::{
     RenderedVerificationEmail, VerificationEmail, render_verification_email,
 };

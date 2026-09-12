@@ -55,6 +55,12 @@ impl NotificationRepository for MockNotifRepo {
     {
         unimplemented!()
     }
+    async fn get_user_locales<'a>(
+        &self,
+        _: &[conation_user_id::user_id::MacroUserIdStr<'a>],
+    ) -> Result<HashMap<conation_user_id::user_id::MacroUserIdStr<'static>, String>, Report> {
+        Ok(HashMap::new())
+    }
     async fn get_unsubscribed_users<'a>(
         &self,
         _: &str,

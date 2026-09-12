@@ -399,6 +399,15 @@ pub trait NotificationExtEmail: Notification {
     /// Convert this notification into email content.
     fn format_email(&self) -> EmailContent;
 
+    /// Render email for a specific recipient locale (`en` or `ru`).
+    ///
+    /// Default implementations clone the unlocalized body. Types that carry
+    /// bilingual copy must override this so mixed-locale fan-out does not
+    /// reuse the sender's or first recipient's language.
+    fn format_email_for_locale(&self, _locale: &str) -> EmailContent {
+        self.format_email()
+    }
+
     /// The configuration for how often the notification can be triggered on a certain key.
     fn rate_limit_config() -> RateLimitConfig;
     /// The actual key for the rate limit bucket.

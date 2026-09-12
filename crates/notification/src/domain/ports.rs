@@ -62,6 +62,12 @@ pub trait NotificationRepository: Send + Sync + 'static {
         user_ids: &[MacroUserIdStr<'a>],
     ) -> impl Future<Output = Result<HashSet<MacroUserIdStr<'static>>, Report>> + Send;
 
+    /// Load persisted recipient locales (`en` or `ru`). Missing users default to Russian.
+    fn get_user_locales<'a>(
+        &self,
+        user_ids: &[MacroUserIdStr<'a>],
+    ) -> impl Future<Output = Result<HashMap<MacroUserIdStr<'static>, String>, Report>> + Send;
+
     /// Get users who have unsubscribed from notifications for a specific item.
     fn get_unsubscribed_users<'a>(
         &self,

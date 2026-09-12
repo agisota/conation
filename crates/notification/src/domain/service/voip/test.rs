@@ -103,6 +103,12 @@ impl NotificationRepository for MockRepo {
     ) -> Result<std::collections::HashSet<MacroUserIdStr<'static>>, Report> {
         unimplemented!()
     }
+    async fn get_user_locales<'a>(
+        &self,
+        _: &[MacroUserIdStr<'a>],
+    ) -> Result<HashMap<MacroUserIdStr<'static>, String>, Report> {
+        Ok(HashMap::new())
+    }
     async fn get_unsubscribed_users<'a>(
         &self,
         _: &str,

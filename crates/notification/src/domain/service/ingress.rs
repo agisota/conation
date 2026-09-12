@@ -393,12 +393,19 @@ where
             }
         }
 
-        // Email: 1:1 (one message per recipient)
+        // Email: 1:1 (one message per recipient, rendered for that recipient's locale)
         if let Some(ref build_email) = notification.build_email {
+            let email_recipients: Vec<_> = notification.req.recipient_ids.iter().cloned().collect();
+            let locales = self
+                .repository
+                .get_user_locales(&email_recipients)
+                .await
+                .context(SendNotificationError::Other)?;
             for recipient in &notification.req.recipient_ids {
+                let locale = locales.get(recipient).map(String::as_str).unwrap_or("ru");
                 let email_content = build_email.clone();
                 messages.push(QueueMessage::new_from_email(
-                    email_content.with_recipient(recipient.clone()),
+                    email_content.with_recipient_locale(recipient.clone(), locale),
                     typename,
                 ));
             }

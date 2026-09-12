@@ -41,6 +41,19 @@ maybe_env_vars! {
 
 const INVITE_EMAIL_BRAND_ASSET: &str = "logo192.png";
 
+fn default_recipient_locale() -> String {
+    "ru".to_string()
+}
+
+fn recipient_locale_tag(locale: &str) -> &'static str {
+    let tag = locale.trim();
+    if tag.eq_ignore_ascii_case("en") || tag.to_ascii_lowercase().starts_with("en-") {
+        "en"
+    } else {
+        "ru"
+    }
+}
+
 /// Wrapper for the referral code to make it type safe
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(transparent)]
@@ -62,9 +75,82 @@ pub struct InviteToMacro {
     /// The sender's email address.
     #[serde(default)]
     pub sender_email: Option<String>,
+    /// Recipient locale (`en` or `ru`). Missing payloads default to Russian.
+    #[serde(default = "default_recipient_locale")]
+    pub locale: String,
 }
 
 impl InviteToMacro {
+    fn html_lang(&self) -> &'static str {
+        recipient_locale_tag(&self.locale)
+    }
+
+    fn is_english(&self) -> bool {
+        self.html_lang() == "en"
+    }
+
+    fn page_title(&self) -> &'static str {
+        if self.is_english() {
+            "You are invited to Conation"
+        } else {
+            "Вас пригласили в Conation"
+        }
+    }
+
+    fn generic_sender(&self) -> &'static str {
+        if self.is_english() {
+            "A Conation user"
+        } else {
+            "Пользователь Conation"
+        }
+    }
+
+    fn sender_label(&self) -> String {
+        self.sender_name
+            .clone()
+            .or_else(|| self.sender_email.clone())
+            .unwrap_or_else(|| self.generic_sender().to_string())
+    }
+
+    fn headline_verb(&self) -> &'static str {
+        if self.is_english() {
+            "has invited you to Conation"
+        } else {
+            "приглашает вас в Conation"
+        }
+    }
+
+    fn body_tail(&self) -> &'static str {
+        if self.is_english() {
+            "has invited you to Conation. Collaborate on documents, track tasks, and search your workspace. The AI assistant is there for any question."
+        } else {
+            "приглашает вас присоединиться к Conation. Работайте вместе над документами, следите за задачами, ищите по всему пространству. ИИ-помощник — для любых вопросов."
+        }
+    }
+
+    fn cta_join_prefix(&self) -> &'static str {
+        if self.is_english() {
+            "Join"
+        } else {
+            "Присоединиться к"
+        }
+    }
+
+    fn subject_line(&self) -> String {
+        let sender = self.sender_label();
+        if self.is_english() {
+            format!("{sender} has invited you to join Conation")
+        } else {
+            format!("{sender} приглашает вас в Conation")
+        }
+    }
+
+    fn with_locale(&self, locale: &str) -> Self {
+        let mut clone = self.clone();
+        clone.locale = recipient_locale_tag(locale).to_string();
+        clone
+    }
+
     fn referral_url(&self) -> Url {
         configured_public_email_urls()
             .expect("invite email public URLs must be valid at service startup")
@@ -258,17 +344,16 @@ fn directory_base_url(mut url: Url) -> Url {
 
 impl NotificationExtEmail for InviteToMacro {
     fn format_email(&self) -> EmailContent {
-        // Invitees have no stored locale. Render the product default (Russian)
-        // rather than the sender's Accept-Language. Recipient-initiated
-        // verification mail is the path that negotiates Accept-Language.
-        let sender = self
-            .sender_name
-            .as_deref()
-            .or(self.sender_email.as_deref())
-            .unwrap_or("Пользователь Conation");
+        self.format_email_for_locale(&self.locale)
+    }
+
+    fn format_email_for_locale(&self, locale: &str) -> EmailContent {
+        // Unknown invitees have no User.locale. Russian is the product default.
+        // Do not use the sender's Accept-Language for a mixed-recipient fan-out.
+        let rendered = self.with_locale(locale);
         EmailContent {
-            subject: format!("{sender} приглашает вас в Conation"),
-            body: self
+            subject: rendered.subject_line(),
+            body: rendered
                 .render()
                 .expect("InviteToMacro template render failed in format_email"),
         }
@@ -308,9 +393,59 @@ pub struct ChannelInviteMetadata {
     /// The sender's profile picture URL, if available.
     #[serde(default)]
     pub sender_profile_picture_url: Option<String>,
+    /// Recipient locale (`en` or `ru`). Missing payloads default to Russian.
+    #[serde(default = "default_recipient_locale")]
+    pub locale: String,
 }
 
 impl ChannelInviteMetadata {
+    fn html_lang(&self) -> &'static str {
+        recipient_locale_tag(&self.locale)
+    }
+
+    fn is_english(&self) -> bool {
+        self.html_lang() == "en"
+    }
+
+    fn page_title(&self) -> String {
+        if self.is_english() {
+            format!("You are invited to #{} on Conation", self.channel_name)
+        } else {
+            format!("Вас пригласили в #{} в Conation", self.channel_name)
+        }
+    }
+
+    fn headline_verb(&self) -> &'static str {
+        if self.is_english() {
+            "has invited you to"
+        } else {
+            "приглашает вас в"
+        }
+    }
+
+    fn cta_label(&self) -> String {
+        if self.is_english() {
+            format!("Join #{}", self.channel_name)
+        } else {
+            format!("Присоединиться к #{}", self.channel_name)
+        }
+    }
+
+    fn subject_line(&self) -> String {
+        let sender = self.sender_display();
+        if self.is_english() {
+            format!("{sender} has invited you to join #{}", self.channel_name)
+        } else {
+            format!("{sender} приглашает вас в #{}", self.channel_name)
+        }
+    }
+
+    fn with_locale(&self, locale: &str) -> Self {
+        let mut clone = self.clone();
+        clone.locale = recipient_locale_tag(locale).to_string();
+        clone
+    }
+
     fn signup_url(&self) -> Url {
         configured_public_email_urls()
             .expect("invite email public URLs must be valid at service startup")
@@ -339,26 +474,38 @@ impl NotificationTitle for ChannelInviteMetadata {
     ) -> Result<String, rootcause::Report> {
         let email = self.invited_by.email_part();
         let sender = email.email_str();
-        Ok(format!(
-            "{sender} приглашает вас в #{}",
-            self.channel_name
-        ))
+        if self.is_english() {
+            Ok(format!(
+                "{sender} has invited you to #{}",
+                self.channel_name
+            ))
+        } else {
+            Ok(format!("{sender} приглашает вас в #{}", self.channel_name))
+        }
     }
 
     fn format_body(
         &self,
         _sender_id: Option<MacroUserIdStr<'_>>,
     ) -> Result<String, rootcause::Report> {
-        Ok("Откройте Conation, чтобы продолжить".to_string())
+        if self.is_english() {
+            Ok("Open Conation to continue".to_string())
+        } else {
+            Ok("Откройте Conation, чтобы продолжить".to_string())
+        }
     }
 }
 
 impl NotificationExtEmail for ChannelInviteMetadata {
     fn format_email(&self) -> EmailContent {
-        let sender = self.sender_display();
+        self.format_email_for_locale(&self.locale)
+    }
+
+    fn format_email_for_locale(&self, locale: &str) -> EmailContent {
+        let rendered = self.with_locale(locale);
         EmailContent {
-            subject: format!("{sender} приглашает вас в #{}", self.channel_name),
-            body: self
+            subject: rendered.subject_line(),
+            body: rendered
                 .render()
                 .expect("ChannelInviteMetadata template render failed in format_email"),
         }
@@ -443,9 +590,58 @@ pub struct InviteToTeamMetadata {
     #[serde(default)]
     #[schema(value_type = Option<String>)]
     pub sender_profile_picture_url: Option<Url>,
+    /// Recipient locale (`en` or `ru`). Missing payloads default to Russian.
+    #[serde(default = "default_recipient_locale")]
+    pub locale: String,
 }
 
 impl InviteToTeamMetadata {
+    fn html_lang(&self) -> &'static str {
+        recipient_locale_tag(&self.locale)
+    }
+
+    fn is_english(&self) -> bool {
+        self.html_lang() == "en"
+    }
+
+    fn page_title(&self) -> String {
+        if self.is_english() {
+            format!("You are invited to the {} team on Conation", self.team_name)
+        } else {
+            format!("Вас пригласили в команду {} в Conation", self.team_name)
+        }
+    }
+
+    fn cta_label(&self) -> String {
+        if self.is_english() {
+            format!("Join {}", self.team_name)
+        } else {
+            format!("Присоединиться к {}", self.team_name)
+        }
+    }
+
+    fn subject_line(&self) -> String {
+        let sender = self.invited_by.email_part();
+        let sender = sender.as_ref();
+        if self.is_english() {
+            format!(
+                "{sender} has invited you to the {} team on Conation",
+                self.team_name
+            )
+        } else {
+            format!(
+                "{sender} приглашает вас в команду {} в Conation",
+                self.team_name
+            )
+        }
+    }
+
+    fn with_locale(&self, locale: &str) -> Self {
+        let mut clone = self.clone();
+        clone.locale = recipient_locale_tag(locale).to_string();
+        clone
+    }
+
     /// Returns the team invite URL for the current environment.
     pub fn invite_url(&self) -> Url {
         configured_public_email_urls()
@@ -466,13 +662,14 @@ impl Notification for InviteToTeamMetadata {
 
 impl NotificationExtEmail for InviteToTeamMetadata {
     fn format_email(&self) -> EmailContent {
+        self.format_email_for_locale(&self.locale)
+    }
+
+    fn format_email_for_locale(&self, locale: &str) -> EmailContent {
+        let rendered = self.with_locale(locale);
         EmailContent {
-            subject: format!(
-                "{} приглашает вас в команду {} в Conation",
-                self.invited_by.email_part().as_ref(),
-                self.team_name
-            ),
-            body: self
+            subject: rendered.subject_line(),
+            body: rendered
                 .render()
                 .expect("InviteToTeamMetadata template render failed in format_email"),
         }

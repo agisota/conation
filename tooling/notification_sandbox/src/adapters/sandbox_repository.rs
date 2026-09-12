@@ -48,6 +48,13 @@ impl NotificationRepository for SandboxNotificationRepository {
         self.inner.get_muted_users(user_ids).await
     }
 
+    async fn get_user_locales<'a>(
+        &self,
+        user_ids: &[MacroUserIdStr<'a>],
+    ) -> Result<HashMap<MacroUserIdStr<'static>, String>, Report> {
+        self.inner.get_user_locales(user_ids).await
+    }
+
     async fn get_unsubscribed_users<'a>(
         &self,
         item_id: &str,

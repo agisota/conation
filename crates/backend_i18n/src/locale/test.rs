@@ -103,3 +103,18 @@ fn skips_a_malformed_item_when_a_valid_choice_remains() {
         SupportedLocale::Russian
     );
 }
+
+#[test]
+fn stored_locale_defaults_to_russian() {
+    assert_eq!(parse_stored_locale(""), SupportedLocale::Russian);
+    assert_eq!(parse_stored_locale("ru"), SupportedLocale::Russian);
+    assert_eq!(parse_stored_locale("RU-ru"), SupportedLocale::Russian);
+    assert_eq!(parse_stored_locale("fr"), SupportedLocale::Russian);
+}
+
+#[test]
+fn stored_locale_accepts_english_tags() {
+    assert_eq!(parse_stored_locale("en"), SupportedLocale::English);
+    assert_eq!(parse_stored_locale("EN"), SupportedLocale::English);
+    assert_eq!(parse_stored_locale("en-US"), SupportedLocale::English);
+}
