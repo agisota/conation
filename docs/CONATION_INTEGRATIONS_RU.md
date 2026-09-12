@@ -144,6 +144,10 @@ Gmail **не** обязателен для встроенной почты Conat
 Conation уже создаётся без Google. Не утверждайте, что без Gmail встроенная
 почта не работает, и не утверждайте, что internet MX/DKIM уже настроены.
 
+Операторские рецепты поддержки (`docs/self-hosting-support-accounts.md`) не
+должны повторять устаревшее «inbox остаётся на Gmail»: support-ящики Stalwart
+и signup-mailbox — один продуктовый контур, Gmail к нему не обязателен.
+
 ## GitHub login и Conation Tasks
 
 Официальные инструкции:
