@@ -78,7 +78,7 @@ export function splitContentUrl(content: SplitContent): string {
  *
  * Content params (a prefiltered list, say) are not part of the URL, so the new
  * tab opens the view in its default state. Inside the native shell there are no
- * tabs: `openExternalUrl`'s Macro-link interceptor routes the link into the
+ * tabs: `openExternalUrl`'s Conation-link interceptor routes the link into the
  * current window instead of handing it to the system browser.
  */
 export function openSplitContentInNewTab(content: SplitContent) {
