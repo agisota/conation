@@ -501,6 +501,32 @@ fn authorization_code_request(code: &str, client_id: &str) -> TokenRequest {
     }
 }
 
+#[test]
+fn protected_resource_metadata_includes_rfc9728_resource() {
+    let meta = service(FakeInflightAuth::default()).protected_resource_metadata();
+
+    assert_eq!(
+        meta.get("resource").and_then(|v| v.as_str()),
+        Some("https://mcp.example.com/mcp")
+    );
+    assert_eq!(
+        meta.get("authorization_server").and_then(|v| v.as_str()),
+        Some("https://mcp.example.com")
+    );
+    assert_eq!(
+        meta.get("authorization_servers"),
+        Some(&serde_json::json!(["https://mcp.example.com"]))
+    );
+    assert_eq!(
+        meta.get("resource_name").and_then(|v| v.as_str()),
+        Some("Conation MCP")
+    );
+    assert!(
+        meta.get("scopes_supported").is_none(),
+        "must not invent scopes_supported; got {meta}"
+    );
+}
+
 #[tokio::test]
 async fn authorization_code_exchange_returns_remaining_lifetime() {
     // Issued five minutes ago, so the client should be told what is left rather
