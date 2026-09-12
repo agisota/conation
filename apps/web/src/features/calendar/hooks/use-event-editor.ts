@@ -6,6 +6,7 @@ import {
   useCreateCalendarEventMutation,
   useUpdateCalendarEventMutation,
 } from '@queries/calendar/mutations';
+import type { CalendarUpdateScope } from '@service-email/client';
 import { type Accessor, createMemo } from 'solid-js';
 import {
   calendarEventToEditorInitialValues,
@@ -96,7 +97,10 @@ export function useEventEditor(props: UseEventEditorProps) {
 
   const pending = () => create.isPending || update.isPending;
 
-  const save = (values: EventEditorSubmitValues) => {
+  const save = (
+    values: EventEditorSubmitValues,
+    scope?: CalendarUpdateScope
+  ) => {
     if (pending()) return;
 
     const event = props.event();
@@ -105,8 +109,21 @@ export function useEventEditor(props: UseEventEditorProps) {
         values.recurrenceLines !== undefined &&
         values.recurrenceLines.join('\n') !== initialLines().join('\n');
 
+      // A single occurrence has no recurrence of its own, so editing the
+      // recurrence rule is always a whole-series change regardless of the
+      // chosen scope.
+      const effectiveScope: CalendarUpdateScope = recurrenceChanged
+        ? 'all'
+        : (scope ?? 'all');
+      const targetsOneOccurrence = effectiveScope === 'this_event';
+
       update.mutate({
         eventId: event.eventId,
+        scope: effectiveScope,
+        recurrenceId: targetsOneOccurrence
+          ? (event.recurrenceId ?? event.occurrenceKey)
+          : undefined,
+        occurrenceKey: targetsOneOccurrence ? event.occurrenceKey : undefined,
         patch: {
           title: values.title,
           time: values.time,

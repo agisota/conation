@@ -1,7 +1,14 @@
 import { t } from '@app/lib/i18n';
 import SpinnerIcon from '@phosphor/spinner.svg';
+import type { CalendarUpdateScope } from '@service-email/client';
 import { Button, cn, Layer } from '@ui';
-import { createEffect, createUniqueId, Show } from 'solid-js';
+import {
+  createEffect,
+  createSignal,
+  createUniqueId,
+  For,
+  Show,
+} from 'solid-js';
 import type { CalendarEventFormController } from './create-calendar-event-form-controller';
 import { EventDateTimeRangeFields } from './EventDateTimeRangeFields';
 import {
@@ -30,8 +37,23 @@ export interface EventFormProps {
   onCalendarChange?: (calendarId: string, color: string) => void;
   onDirtyChange?: (dirty: boolean) => void;
   onCancel: () => void;
-  onSubmit: (values: EventEditorSubmitValues) => void;
+  onSubmit: (
+    values: EventEditorSubmitValues,
+    scope?: CalendarUpdateScope
+  ) => void;
 }
+
+/** Whether edits to a recurring event patch one occurrence or the whole series. */
+const RECURRING_EDIT_SCOPE_OPTIONS = [
+  {
+    scope: 'this_event',
+    labelKey: 'calendar.event.form.recurringEditThisEvent',
+  },
+  { scope: 'all', labelKey: 'calendar.event.form.recurringEditAllEvents' },
+] as const satisfies readonly {
+  scope: CalendarUpdateScope;
+  labelKey: string;
+}[];
 
 /** Create/edit event form laid out like the standalone task composer. */
 export function EventForm(props: EventFormProps) {
@@ -44,6 +66,10 @@ export function EventForm(props: EventFormProps) {
   const state = controller.state;
   const isEdit = () => props.isEdit ?? false;
   const formIsDisabled = () => props.pending || props.disabled === true;
+
+  // Recurring edits default to the whole series, matching the long-standing
+  // behavior; "this event" writes a single-occurrence exception.
+  const [editScope, setEditScope] = createSignal<CalendarUpdateScope>('all');
 
   // An invalid range already speaks for itself; only one line shows at a time.
   const pastEventWarning = () =>
@@ -67,7 +93,10 @@ export function EventForm(props: EventFormProps) {
   const submit = () => {
     const values = controller.submitValues();
     if (!values || formIsDisabled()) return;
-    props.onSubmit(values);
+    props.onSubmit(
+      values,
+      props.showRecurringEditNotice ? editScope() : undefined
+    );
   };
 
   return (
@@ -172,7 +201,11 @@ export function EventForm(props: EventFormProps) {
               value={controller.selectedRecurrenceOption()}
               onChange={controller.changeRecurrenceChoice}
               disabled={formIsDisabled()}
-              readOnly={fieldIsReadOnly('recurrence')}
+              // A single occurrence has no recurrence rule of its own, so the
+              // recurrence cannot be edited while the scope is one event.
+              readOnly={
+                fieldIsReadOnly('recurrence') || editScope() === 'this_event'
+              }
             />
             <EventComposerGuestsPill
               options={controller.guestOptions}
@@ -226,9 +259,26 @@ export function EventForm(props: EventFormProps) {
 
       <div class="flex shrink-0 items-center justify-end gap-3">
         <Show when={props.showRecurringEditNotice}>
-          <p class="mr-auto text-xs text-ink-extra-muted">
-            {t('calendar.event.form.recurringChangesApplyToAll')}
-          </p>
+          <div
+            role="radiogroup"
+            aria-label={t('calendar.event.form.recurringEditScope')}
+            class="mr-auto flex items-center gap-3 text-xs text-ink-muted"
+          >
+            <For each={RECURRING_EDIT_SCOPE_OPTIONS}>
+              {(option) => (
+                <label class="flex items-center gap-1.5">
+                  <input
+                    type="radio"
+                    name="event-edit-scope"
+                    checked={editScope() === option.scope}
+                    onChange={() => setEditScope(option.scope)}
+                    disabled={formIsDisabled()}
+                  />
+                  {t(option.labelKey)}
+                </label>
+              )}
+            </For>
+          </div>
         </Show>
         <Button
           type="button"
