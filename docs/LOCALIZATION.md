@@ -95,21 +95,25 @@ channel.thread.moreReplies
 `PATCH /user/locale` на authentication service
 (`https://…/auth/user/locale`).
 
-Оставшийся разрыв — асинхронный fan-out digest/push/invite по **получателю**
-(per **recipient**). Персональная русская локализация invitation, digest,
-notification и push ещё не проходит через все async envelopes: один job не
-должен клонировать один body всем адресатам.
+Асинхронные пути (факт кода, не пожелание):
 
-Особенно опасно брать locale отправителя или текущего HTTP request: получатели
-в одной рассылке могут иметь разные языки. Правильный порядок дальнейшей
-миграции:
+| Путь | Откуда берётся locale | Статус |
+| --- | --- | --- |
+| Digest email | `get_user_locale` по `batch.user_id` в `notification_service` | Готово: per **recipient**, default `ru` |
+| Invite email | У invitee ещё нет `"User"` row | Готово: продуктовый default `ru`, **не** `Accept-Language` отправителя (`invite_email`) |
+| Verification / passwordless | `Accept-Language` получателя на его же HTTP request | Готово: `backend_i18n` + authentication service |
+| Push / FusionAuth / внешние mail templates | Не читают `"User".locale` | Разрыв |
 
-1. Разрешать locale отдельно для каждого получателя до рендеринга текста
-   digest/push/invite.
+Оставшийся разрыв — push и внешние шаблоны, не digest/invite. Один job по-прежнему
+не должен клонировать один body всем адресатам на ещё не мигрированных путях.
+
+Порядок оставшейся миграции:
+
+1. Разрешать locale отдельно для каждого получателя push/FusionAuth до рендера.
 2. Передавать locale через jobs/queues с backward-compatible Russian-first
    default.
 3. Рендерить mixed-locale fan-out по получателям, а не клонировать один body.
-4. Отдельно настроить FusionAuth, push и внешние mail templates.
+4. Не брать locale отправителя или текущего HTTP request чужого пользователя.
 
 Имя таблицы `macro_user` пока является внутренним schema-контрактом; новые
 пользовательские principals используют канонический prefix `conation|`.
