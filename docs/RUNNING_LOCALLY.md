@@ -111,6 +111,15 @@ proxy и Vite. По окончании запуска откройте:
 - Mailpit — `http://localhost:8025`;
 - LocalStack — `http://localhost:4566`.
 
+Если на той же машине уже заняты порты rox-platform (Postgres 5432, Redis 6379,
+Redis Stack UI 8001–8003), подключите overlay с другими host-портами. Redis
+Stack UI слушает **8005**, не 8002:
+
+```bash
+docker compose -f docker/docker-compose.yml \
+  -f docker/docker-compose.override-ports.yml up -d
+```
+
 `--no-doppler` означает, что внешние интеграции получают безопасные stubs.
 Локальный вход по одноразовому коду работает, но Google/Gmail, GitHub, реальные
 AI-провайдеры и Internet mail delivery без credentials не заработают.
