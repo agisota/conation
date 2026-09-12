@@ -10,7 +10,7 @@ import { $generateHtmlFromNodes } from '@lexical/html';
 import {
   $appendWatermarkNodeToLast,
   $removeAllWatermarkNodes,
-} from '@macro-inc/lexical-core';
+} from '@conation/lexical-core';
 import type { LexicalEditor } from 'lexical';
 import { $addUpdateTag, $getRoot } from 'lexical';
 import {

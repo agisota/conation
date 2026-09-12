@@ -17,7 +17,7 @@ import {
   blockHotkeyScopeSignal,
 } from '@core/signal/blockElement';
 import { blockHandleSignal } from '@core/signal/load';
-import { buildMentionMarkdownString } from '@macro-inc/lexical-core';
+import { buildMentionMarkdownString } from '@conation/lexical-core';
 import { useSearchParams } from '@solidjs/router';
 import {
   type Accessor,

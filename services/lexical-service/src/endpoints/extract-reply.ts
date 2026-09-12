@@ -1,4 +1,4 @@
-import { extractExplicitReply } from "@macro-inc/lexical-core/utils/explicit-reply";
+import { extractExplicitReply } from "@conation/lexical-core/utils/explicit-reply";
 import { OpenAPIRoute } from "chanfana";
 import type { Context } from "hono";
 import { z } from "zod";

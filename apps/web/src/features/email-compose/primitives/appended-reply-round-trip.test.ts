@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { $generateNodesFromDOM } from '@lexical/html';
-import { ClassedBlockNode } from '@macro-inc/lexical-core';
+import { ClassedBlockNode } from '@conation/lexical-core';
 import { $getRoot, $nodesOfType } from 'lexical';
 import { describe, expect, it } from 'vitest';
 import { message } from '../../email-message/tests/messages';

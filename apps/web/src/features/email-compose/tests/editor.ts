@@ -1,4 +1,4 @@
-import { SupportedNodeTypes } from '@macro-inc/lexical-core';
+import { SupportedNodeTypes } from '@conation/lexical-core';
 import {
   $createParagraphNode,
   $createTextNode,

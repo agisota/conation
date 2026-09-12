@@ -5,7 +5,7 @@ import {
 } from '@core/constant/featureFlags';
 import type { Entity } from '@core/types';
 import { muteItemForRef } from '@entity/utils/notification';
-import { createSocketEffect } from '@macro-inc/collaboration/websocket';
+import { createSocketEffect } from '@conation/collaboration/websocket';
 import {
   useMuteItemMutation,
   useUnmuteItemMutation,

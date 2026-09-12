@@ -57,8 +57,8 @@ import {
 import { useCanComment, useCanEdit } from '@core/signal/permissions';
 import { debouncedDependent } from '@core/util/debounce';
 import { getScrollParentElement } from '@core/util/scrollParent';
-import type { NodeIdMappings } from '@macro-inc/lexical-core';
-import { $getId } from '@macro-inc/lexical-core/plugins/nodeIdPlugin';
+import type { NodeIdMappings } from '@conation/lexical-core';
+import { $getId } from '@conation/lexical-core/plugins/nodeIdPlugin';
 import ArrowUp from '@phosphor/arrow-up.svg';
 import ChatTeardrop from '@phosphor/chat-teardrop.svg';
 import GridIcon from '@phosphor/grid-four.svg';

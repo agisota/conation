@@ -18,8 +18,8 @@ import { $convertFromMarkdownString } from "@lexical/markdown";
 import {
 	NodeReplacements,
 	SupportedNodeTypes,
-} from "@macro-inc/lexical-core/node-list";
-import { ALL_TRANSFORMERS } from "@macro-inc/lexical-core/transformers";
+} from "@conation/lexical-core/node-list";
+import { ALL_TRANSFORMERS } from "@conation/lexical-core/transformers";
 import { $getRoot } from "lexical";
 import { parseHTML } from "linkedom";
 

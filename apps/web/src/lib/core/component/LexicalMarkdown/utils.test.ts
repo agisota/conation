@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { SupportedNodeTypes } from '@macro-inc/lexical-core';
+import { SupportedNodeTypes } from '@conation/lexical-core';
 import { $getRoot, $isParagraphNode, createEditor } from 'lexical';
 import { describe, expect, it, vi } from 'vitest';
 import { setEditorStateFromHtml } from './utils';

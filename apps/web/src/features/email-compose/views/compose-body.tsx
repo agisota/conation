@@ -2,7 +2,7 @@ import { EmailAttachmentPill } from '@app/features/email-message/components/atta
 import { FileDropOverlay } from '@core/component/FileDropOverlay';
 import { MarkdownTextarea } from '@core/component/LexicalMarkdown/component/core/MarkdownTextarea';
 import { fileFolderDrop } from '@core/directive/fileFolderDrop';
-import { Telemetry } from '@macro-inc/observability';
+import { Telemetry } from '@conation/observability';
 import { cn, Scroll } from '@ui';
 import type { LexicalEditor } from 'lexical';
 import {

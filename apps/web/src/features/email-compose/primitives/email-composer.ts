@@ -3,7 +3,7 @@ import { $generateHtmlFromNodes } from '@lexical/html';
 import {
   $appendWatermarkNodeToLast,
   $removeAllWatermarkNodes,
-} from '@macro-inc/lexical-core';
+} from '@conation/lexical-core';
 import * as EmailValidator from 'email-validator';
 import type { LexicalEditor } from 'lexical';
 import { type Accessor, createMemo, createSignal } from 'solid-js';

@@ -49,7 +49,7 @@ vi.mock('@core/cross-tab/tab-leader', () => ({
   createTabLeaderSignal: leaderMocks.createTabLeaderSignal,
 }));
 
-vi.mock('@macro-inc/observability', () => ({
+vi.mock('@conation/observability', () => ({
   Telemetry: { anonymousSpan: telemetryMocks.anonymousSpan },
 }));
 

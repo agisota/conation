@@ -143,10 +143,18 @@ function ReadOnlyEventComposerGuestsPill(props: EventComposerGuestsPillProps) {
           aria-readonly="true"
           class={cn(PROPERTY_TRIGGER_CLASS, 'max-w-48 overflow-hidden')}
         >
-          {guestPropertyLabel(props.selected)}
-        </span>
-        <CaretDownIcon class="size-3 shrink-0 text-ink-extra-muted" />
-      </Popover.Trigger>
+          <span
+            class={cn(
+              'min-w-0 truncate',
+              PROPERTY_VALUE_CLASS,
+              props.selected.length > 0 ? 'text-current' : 'text-ink-extra-muted'
+            )}
+          >
+            {guestPropertyLabel(props.selected)}
+          </span>
+          <CaretDownIcon class="size-3 shrink-0 text-ink-extra-muted" />
+        </Popover.Trigger>
+      </Tooltip>
       <Popover.Portal>
         <Layer depth={3}>
           <Popover.Content class="z-action-menu w-72 max-w-[calc(100vw-1rem)] rounded-xl border border-edge bg-menu p-1.5 text-sm shadow-menu menu-open-animation">
@@ -235,10 +243,18 @@ function GuestsPillTrigger(props: EventComposerGuestsPillProps) {
         data-expanded={ctx.editorOpen() ? '' : undefined}
         class={cn(PROPERTY_TRIGGER_CLASS, 'max-w-48 overflow-hidden')}
       >
-        {guestPropertyLabel(props.selected)}
-      </span>
-      <PropertyCaret class="text-ink-extra-muted" />
-    </PropertyPill>
+        <span
+          class={cn(
+            'min-w-0 truncate',
+            PROPERTY_VALUE_CLASS,
+            props.selected.length > 0 ? 'text-current' : 'text-ink-extra-muted'
+          )}
+        >
+          {guestPropertyLabel(props.selected)}
+        </span>
+        <PropertyCaret class="text-ink-extra-muted" />
+      </PropertyPill>
+    </Tooltip>
   );
 }
 

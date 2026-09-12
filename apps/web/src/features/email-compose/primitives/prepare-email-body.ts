@@ -5,14 +5,14 @@ import { $generateHtmlFromNodes, $generateNodesFromDOM } from '@lexical/html';
 import { $createQuoteNode } from '@lexical/rich-text';
 import { $dfsIterator } from '@lexical/utils';
 import { sanitizeEmailHtml } from '@macro-inc/email-renderer';
-import type { DocumentMentionInfo } from '@macro-inc/lexical-core';
+import type { DocumentMentionInfo } from '@conation/lexical-core';
 import {
   $createClassedBlockNode,
   $createDocumentMentionNode,
   $createHtmlRenderNode,
   $isClassedBlockNode,
   type ClassedBlockNode,
-} from '@macro-inc/lexical-core';
+} from '@conation/lexical-core';
 import {
   $addUpdateTag,
   $createLineBreakNode,
