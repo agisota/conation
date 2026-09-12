@@ -147,6 +147,15 @@ fn test_internal_fetch_leaves_remote_url_untouched() {
 }
 
 #[test]
+fn test_internal_fetch_leaves_minio_url_untouched() {
+    let input = "http://minio:9000/doc-storage/key?X-Amz-Signature=abc";
+    let expected = "http://minio:9000/doc-storage/key?X-Amz-Signature=abc";
+
+    let result = transform_internal_url(input);
+    assert_eq!(result, expected);
+}
+
+#[test]
 fn explicit_s3_endpoint_disables_localstack_s3_behavior() {
     assert!(!s3_uses_localstack_with_endpoint(
         true,

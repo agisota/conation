@@ -509,8 +509,8 @@ impl BootStubEnv {
         env.insert("OPENSEARCH_USERNAME".into(), "conationuser".into());
         env.insert("OPENSEARCH_PASSWORD".into(), "local".into());
         // document_storage_service's presigned-URL config. Locally the
-        // `is_local_aws()` branch skips CloudFront signing entirely, so only a
-        // well-formed base URL is needed.
+        // `s3_uses_localstack()` branch skips CloudFront signing entirely, so
+        // only a well-formed base URL is needed.
         env.insert(
             "DOCUMENT_STORAGE_SERVICE_CLOUDFRONT_DISTRIBUTION_URL".into(),
             "https://app.conation.dev/s3/doc-storage".into(),
