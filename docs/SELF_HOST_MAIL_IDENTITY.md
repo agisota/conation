@@ -44,10 +44,23 @@ OVERRIDE_NOTIFICATION_SERVICE_URL=https://conation.example/notification
 за reverse proxy под `/notification`, этот path prefix входит в URL подписи и
 должен сохраняться при проксировании запроса.
 
-Локальная разработка направляет транзакционные письма в Mailpit, когда задан
-`SMTP_HOST`. Успешный health check Mailpit или Stalwart доказывает только
-локальную SMTP-отправку или локальный JMAP: он не доказывает доставку в
-Internet.
+Транспорт выбирается при старте `authentication_service` (`SesClient::from_env`).
+`SMTP_HOST` включает SMTP вместо AWS SESv2. В `ENVIRONMENT=local` это
+неаутентифицированный plaintext Mailpit (`SMTP_PORT` по умолчанию `1025`,
+учётные данные не нужны). Во **всех остальных** окружениях тот же флаг требует
+аутентифицированный обязательный STARTTLS:
+
+| Переменная | Назначение |
+| --- | --- |
+| `SMTP_HOST` | Имя хоста реле **без** порта. `host:587` отклоняется — порт только в `SMTP_PORT`. |
+| `SMTP_PORT` | Обязателен вне `local`. Целое 1–65535. |
+| `SMTP_USERNAME` | Обязателен вне `local`. Не может быть пустым или из одних пробелов. |
+| `SMTP_PASSWORD` | Обязателен вне `local`. Не может быть пустым или из одних пробелов. Секрет — не в Git. |
+
+Не задавайте `SMTP_HOST` в `dev`/`prod`, если реле ещё не готово: сервис не
+стартует с неполной конфигурацией. Успешный health check Mailpit или Stalwart
+доказывает только локальную SMTP-отправку или локальный JMAP: он не доказывает
+доставку в Internet.
 
 До публикации sender/support адресов в Internet оператор должен:
 
