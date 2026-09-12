@@ -541,7 +541,11 @@ function InboxRow(props: {
               request is a superset, so one consent repairs a dead grant and
               enables calendar, sparing a full revoke two round trips. */}
           <Show
-            when={calendarUiEnabled() && props.link.needs_calendar_permission}
+            when={
+              calendarUiEnabled() &&
+              props.link.provider === UserProvider.GMAIL &&
+              props.link.needs_calendar_permission
+            }
           >
             <Button
               variant="accent"
@@ -564,6 +568,7 @@ function InboxRow(props: {
             when={
               calendarUiEnabled() &&
               props.isOwn &&
+              props.link.provider === UserProvider.GMAIL &&
               (!props.link.needs_calendar_permission ||
                 props.link.has_calendar_data)
             }
