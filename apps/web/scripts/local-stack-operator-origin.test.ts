@@ -21,6 +21,9 @@ describe('local-stack operator origin', () => {
     expect(() =>
       resolveLocalStackOperatorOrigin('https://conation.dev/')
     ).toThrow('operator proxy');
+    expect(() =>
+      resolveLocalStackOperatorOrigin('https://app.conation.dev')
+    ).toThrow('operator proxy');
   });
 
   it('accepts a LAN or loopback operator proxy', () => {

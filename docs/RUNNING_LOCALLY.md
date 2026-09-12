@@ -286,6 +286,18 @@ VITE_CONATION_OPERATOR_ORIGIN=https://conation.example just build-prod
 CONATION_OPERATOR_ORIGIN=https://conation.example just tauri-build-standalone
 ```
 
+Чтобы native-сборка ходила в локальный стек на этой машине (прокси
+`just stack` / `just run_local` на порту **8090**), а не в публичный
+`https://conation.dev`, используйте рецепт, который требует явный origin:
+
+```bash
+\cd apps/web
+CONATION_OPERATOR_ORIGIN=http://<this-host>:8090 just tauri-build-local-stack
+```
+
+`<this-host>` — адрес, с которого клиент достигает этот сервер. Рецепт
+отклоняет пустой origin, `same-origin` и hosted `conation.dev`.
+
 В обоих примерах `conation.example` нужно заменить на реально контролируемый
 HTTPS origin. Сборка отклоняет managed Macro hosts в standalone-профиле.
 
