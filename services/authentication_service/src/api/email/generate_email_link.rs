@@ -42,11 +42,61 @@ fn requested_locale(headers: &HeaderMap) -> SupportedLocale {
     match values {
         Ok(mut values) if !values.is_empty() => {
             // Lowest non-zero valid quality: explicit supported languages still win.
-            values.push("ru;q=0.001");
+            // Do not reintroduce a language the client marked q=0.
+            if !values
+                .iter()
+                .any(|value| explicitly_excludes_language(value, "ru"))
+            {
+                values.push("ru;q=0.001");
+            } else if !values
+                .iter()
+                .any(|value| explicitly_excludes_language(value, "en"))
+            {
+                values.push("en;q=0.001");
+            }
             negotiate_accept_language(Some(&values.join(",")))
         }
         _ => SupportedLocale::default(),
     }
+}
+
+fn explicitly_excludes_language(value: &str, language: &str) -> bool {
+    value.split(',').any(|item| {
+        let mut parts = item.trim().split(';');
+        let Some(range) = parts.next().map(str::trim) else {
+            return false;
+        };
+        let Some(quality) = parts.next().and_then(|parameter| {
+            let (name, value) = parameter.trim().split_once('=')?;
+            name.trim()
+                .eq_ignore_ascii_case("q")
+                .then_some(value.trim())
+        }) else {
+            return false;
+        };
+        let mut subtags = range.split('-');
+        let Some(primary) = subtags.next() else {
+            return false;
+        };
+
+        parts.next().is_none()
+            && is_zero_quality(quality)
+            && primary.len() <= 8
+            && primary.bytes().all(|byte| byte.is_ascii_alphabetic())
+            && primary.eq_ignore_ascii_case(language)
+            && subtags.all(|subtag| {
+                !subtag.is_empty()
+                    && subtag.len() <= 8
+                    && subtag.bytes().all(|byte| byte.is_ascii_alphanumeric())
+            })
+    })
+}
+
+fn is_zero_quality(value: &str) -> bool {
+    value == "0"
+        || value.strip_prefix("0.").is_some_and(|fractional| {
+            fractional.len() <= 3 && fractional.bytes().all(|byte| byte == b'0')
+        })
 }
 
 fn verification_email_for_delivery(
