@@ -2140,6 +2140,8 @@
   "settings.appearance.interface.monochrome.description": "Use single-color icons across the app.",
   "settings.appearance.interface.tooltips.label": "Show tooltips",
   "settings.appearance.interface.tooltips.description": "Show hover hints on buttons and controls.",
+  "settings.appearance.interface.linkPreviews.label": "Show link previews",
+  "settings.appearance.interface.linkPreviews.description": "Show rich previews of links shared in messages.",
   "settings.billing.title": "Access",
   "settings.billing.support.prefix": "Need help with access or setup?",
   "settings.billing.support.action": "contact us",

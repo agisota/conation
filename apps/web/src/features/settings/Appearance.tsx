@@ -738,8 +738,10 @@ export function Appearance() {
               />
             </SettingsRow>
             <SettingsRow
-              label="Show link previews"
-              description="Show rich previews of links shared in messages."
+              label={t('settings.appearance.interface.linkPreviews.label')}
+              description={t(
+                'settings.appearance.interface.linkPreviews.description'
+              )}
             >
               <ToggleSwitch
                 size="md"
