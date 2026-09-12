@@ -8,6 +8,9 @@ import {
 import { toast } from '@core/component/Toast/Toast';
 import { openExternalUrl } from '@core/util/url';
 import CheckIcon from '@phosphor-icons/core/regular/check.svg?component-solid';
+import EyeIcon from '@phosphor-icons/core/regular/eye.svg?component-solid';
+import EyeSlashIcon from '@phosphor-icons/core/regular/eye-slash.svg?component-solid';
+import SlidersHorizontalIcon from '@phosphor-icons/core/regular/sliders-horizontal.svg?component-solid';
 import PlugIcon from '@phosphor-icons/core/regular/plug.svg?component-solid';
 import PlusIcon from '@phosphor-icons/core/regular/plus.svg?component-solid';
 import XIcon from '@phosphor-icons/core/regular/x.svg?component-solid';
@@ -36,18 +39,97 @@ function hostFromUrl(url: string): string {
   }
 }
 
+/** Header names that carry a static credential, so the server does not need OAuth. */
+const AUTH_HEADER_NAMES = new Set([
+  'authorization',
+  'x-api-key',
+  'api-key',
+  'x-auth-token',
+]);
+
+/** True when any header looks like a static API key / bearer token. */
+function hasAuthHeader(headers?: Record<string, string>): boolean {
+  if (!headers) return false;
+  return Object.keys(headers).some((key) =>
+    AUTH_HEADER_NAMES.has(key.trim().toLowerCase())
+  );
+}
+
+/** A single key-value header entry. */
+function HeaderRow(props: {
+  pair: { key: string; value: string };
+  onChange: (pair: { key: string; value: string }) => void;
+  onRemove: () => void;
+}) {
+  const [revealValue, setRevealValue] = createSignal(false);
+  return (
+    <div class="flex items-center gap-2">
+      <input
+        type="text"
+        class="settings-input flex-1"
+        placeholder="Header name"
+        value={props.pair.key}
+        onInput={(e) =>
+          props.onChange({ key: e.currentTarget.value, value: props.pair.value })
+        }
+      />
+      <span class="text-ink-muted text-xs">:</span>
+      <input
+        type={revealValue() ? 'text' : 'password'}
+        class="settings-input flex-1"
+        placeholder="Value"
+        autocomplete="off"
+        value={props.pair.value}
+        onInput={(e) =>
+          props.onChange({ key: props.pair.key, value: e.currentTarget.value })
+        }
+      />
+      <Button
+        variant="base"
+        size="sm"
+        depth={3}
+        tooltip={revealValue() ? 'Hide value' : 'Show value'}
+        onClick={() => setRevealValue((v) => !v)}
+      >
+        {revealValue() ? (
+          <EyeSlashIcon class="size-3.5" />
+        ) : (
+          <EyeIcon class="size-3.5" />
+        )}
+      </Button>
+      <Button
+        variant="base"
+        size="sm"
+        depth={3}
+        tooltip="Remove header"
+        onClick={props.onRemove}
+      >
+        <XIcon class="size-3.5" />
+      </Button>
+    </div>
+  );
+}
+
 function AddServerForm(props: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const [name, setName] = createSignal('');
   const [url, setUrl] = createSignal('');
+  const [headers, setHeaders] = createSignal<{ key: string; value: string }[]>(
+    []
+  );
   const addMutation = useAddMcpServerMutation();
   const authMutation = useStartMcpAuthMutation();
 
   const reset = () => {
     setName('');
     setUrl('');
+    setHeaders([]);
+  };
+
+  const addHeader = () => {
+    setHeaders((prev) => [...prev, { key: '', value: '' }]);
   };
 
   const startAuth = (serverName: string, serverUrl: string) => {
@@ -64,16 +146,29 @@ function AddServerForm(props: {
     );
   };
 
+  const headersObject = (): Record<string, string> | undefined => {
+    const entries = headers()
+      .filter((h) => h.key.trim() !== '')
+      .map((h) => [h.key.trim(), h.value] as const);
+    return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+  };
+
   const handleSubmit = () => {
     const n = name().trim();
     const u = url().trim();
     if (!n || !u) return;
 
     addMutation.mutate(
-      { server_name: n, url: u },
+      { server_name: n, url: u, headers: headersObject() },
       {
         onSuccess: () => {
-          startAuth(n, u);
+          // Skip auto-OAuth only when the user attached an auth-shaped header
+          // (API key / bearer token); those servers authenticate via the
+          // header directly. Non-auth headers (e.g. gateway routing) still
+          // fall through to the OAuth flow.
+          if (!hasAuthHeader(headersObject())) {
+            startAuth(n, u);
+          }
           reset();
           props.onOpenChange(false);
         },
@@ -89,7 +184,7 @@ function AddServerForm(props: {
       open={props.open}
       onOpenChange={(open) => !open && props.onOpenChange(false)}
       position="center"
-      class="w-100"
+      class="w-120"
     >
       <Panel depth={2} class="rounded-xl">
         <Panel.Header class="px-6">
@@ -141,6 +236,37 @@ function AddServerForm(props: {
                 }}
               />
             </label>
+
+            {/* Custom headers section */}
+            <div class="flex flex-col gap-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-ink-muted">Custom Headers</span>
+                <Button
+                  variant="base"
+                  size="sm"
+                  depth={3}
+                  onClick={addHeader}
+                >
+                  <PlusIcon class="size-3" />
+                  Add
+                </Button>
+              </div>
+              <For each={headers()}>
+                {(pair, index) => (
+                  <HeaderRow
+                    pair={pair}
+                    onChange={(updated) =>
+                      setHeaders((prev) =>
+                        prev.map((h, i) => (i === index() ? updated : h))
+                      )
+                    }
+                    onRemove={() =>
+                      setHeaders((prev) => prev.filter((_, i) => i !== index()))
+                    }
+                  />
+                )}
+              </For>
+            </div>
           </div>
 
           <div class="flex justify-end gap-2 pt-1">
@@ -197,6 +323,109 @@ function writeAuthAttempted(url: string, attempted: boolean): void {
   }
 }
 
+function HeadersConfigDialog(props: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  server: ServerResponse;
+  onSave: (headers: Record<string, string>) => void;
+  saving: boolean;
+}) {
+  const initialHeaders = (): { key: string; value: string }[] => {
+    const h = props.server.headers ?? {};
+    return Object.entries(h).map(([key, value]) => ({ key, value }));
+  };
+  // Remounted on each open (see the keyed <Show> in ServerRow), so the pairs
+  // always initialize from the latest server headers without an effect.
+  const [pairs, setPairs] = createSignal<
+    { key: string; value: string }[]
+  >(initialHeaders());
+
+  const addHeader = () => {
+    setPairs((prev) => [...prev, { key: '', value: '' }]);
+  };
+
+  const handleSave = () => {
+    const entries = pairs()
+      .filter((h) => h.key.trim() !== '')
+      .map((h) => [h.key.trim(), h.value] as const);
+    props.onSave(Object.fromEntries(entries));
+  };
+
+  return (
+    <Dialog
+      open={props.open}
+      onOpenChange={(open) => !open && props.onOpenChange(false)}
+      position="center"
+      class="w-120"
+    >
+      <Panel depth={2} class="rounded-xl">
+        <Panel.Header class="px-6">
+          <span class="text-ink text-sm font-semibold">
+            Configure Headers — {props.server.server_name}
+          </span>
+        </Panel.Header>
+        <Panel.Body class="p-6 flex flex-col gap-5">
+          <div class="flex flex-col gap-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-ink-muted">
+                Custom headers sent with every request to this MCP server.
+              </span>
+              <Button variant="base" size="sm" depth={3} onClick={addHeader}>
+                <PlusIcon class="size-3" />
+                Add
+              </Button>
+            </div>
+            <Show
+              when={pairs().length > 0}
+              fallback={
+                <p class="py-4 text-center text-xs text-ink-muted">
+                  No custom headers configured.
+                </p>
+              }
+            >
+              <For each={pairs()}>
+                {(pair, index) => (
+                  <HeaderRow
+                    pair={pair}
+                    onChange={(updated) =>
+                      setPairs((prev) =>
+                        prev.map((h, i) => (i === index() ? updated : h))
+                      )
+                    }
+                    onRemove={() =>
+                      setPairs((prev) => prev.filter((_, i) => i !== index()))
+                    }
+                  />
+                )}
+              </For>
+            </Show>
+          </div>
+
+          <div class="flex justify-end gap-2 pt-1">
+            <Button
+              variant="base"
+              size="sm"
+              depth={3}
+              onClick={() => props.onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="active"
+              size="sm"
+              depth={3}
+              disabled={props.saving}
+              onClick={handleSave}
+            >
+              {props.saving ? 'Saving...' : 'Save'}
+            </Button>
+          </div>
+        </Panel.Body>
+      </Panel>
+    </Dialog>
+  );
+}
+
 function ServerRow(props: { server: ServerResponse }) {
   const updateMutation = useUpdateMcpServerMutation();
   const deleteMutation = useDeleteMcpServerMutation();
@@ -205,6 +434,7 @@ function ServerRow(props: { server: ServerResponse }) {
   const [attempted, setAttempted] = createSignal(
     readAuthAttempted(props.server.url)
   );
+  const [showHeadersDialog, setShowHeadersDialog] = createSignal(false);
 
   // A recorded attempt on a still-disconnected server means the last connect
   // attempt didn't succeed. Clear the flag once the server authenticates.
@@ -215,7 +445,16 @@ function ServerRow(props: { server: ServerResponse }) {
     }
   });
 
-  const connectionFailed = () => !props.server.authenticated && attempted();
+  // A server reads as connected when it has OAuth credentials or usable
+  // static headers (e.g. an API key sent via the Authorization header).
+  const hasHeaders = () =>
+    props.server.headers && Object.keys(props.server.headers).length > 0;
+  const connected = () => props.server.authenticated || hasHeaders();
+
+  // OAuth-specific attempt tracking: a failed OAuth flow on a server without
+  // static headers leaves the row disconnected and "try again"-able.
+  const authAttemptFailed = () => !props.server.authenticated && attempted();
+  const connectionFailed = () => !connected() && attempted();
 
   const handleToggleEnabled = () => {
     updateMutation.mutate(
@@ -267,6 +506,21 @@ function ServerRow(props: { server: ServerResponse }) {
     );
   };
 
+  const handleSaveHeaders = (headers: Record<string, string>) => {
+    updateMutation.mutate(
+      { url: props.server.url, headers },
+      {
+        onSuccess: () => {
+          setShowHeadersDialog(false);
+          toast.success('Headers updated');
+        },
+        onError: () => {
+          toast.failure('Failed to update headers');
+        },
+      }
+    );
+  };
+
   const Icon = (): SvgIcon =>
     QUICK_CONNECT_ICON_MAP.get(props.server.url) ?? (PlugIcon as SvgIcon);
 
@@ -279,7 +533,7 @@ function ServerRow(props: { server: ServerResponse }) {
       title={
         <span class="flex items-center gap-1.5">
           <span class="min-w-0 truncate">{props.server.server_name}</span>
-          <Show when={props.server.authenticated}>
+          <Show when={connected()}>
             <CheckIcon class="size-3 shrink-0 text-success" />
           </Show>
           <Show when={connectionFailed()}>
@@ -304,13 +558,13 @@ function ServerRow(props: { server: ServerResponse }) {
         >
           {authMutation.isPending
             ? t('settings.integrations.actions.connecting')
-            : connectionFailed()
+            : authAttemptFailed()
               ? t('settings.integrations.actions.tryAgain')
               : t('settings.integrations.actions.connect')}
         </Button>
       </Show>
 
-      <Show when={props.server.authenticated}>
+      <Show when={connected()}>
         <ToggleSwitch
           size="md"
           checked={props.server.enabled}
@@ -324,6 +578,18 @@ function ServerRow(props: { server: ServerResponse }) {
           labelClass="inline-block w-14 text-left text-xs text-ink-muted whitespace-nowrap"
         />
       </Show>
+
+      <Button
+        variant="base"
+        size="sm"
+        depth={3}
+        tooltip="Configure headers"
+        onClick={() => setShowHeadersDialog(true)}
+      >
+        <SlidersHorizontalIcon
+          class={hasHeaders() ? 'size-4 text-accent' : 'size-4'}
+        />
+      </Button>
 
       <Show
         when={!confirmDelete()}
@@ -360,6 +626,16 @@ function ServerRow(props: { server: ServerResponse }) {
         >
           <XIcon class="size-4" />
         </Button>
+      </Show>
+
+      <Show when={showHeadersDialog()} keyed>
+        <HeadersConfigDialog
+          open
+          onOpenChange={setShowHeadersDialog}
+          server={props.server}
+          onSave={handleSaveHeaders}
+          saving={updateMutation.isPending}
+        />
       </Show>
     </IntegrationRow>
   );
