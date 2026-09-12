@@ -33,4 +33,17 @@ describe('Tauri client config', () => {
       buildTauriClientConfig({ profile: 'hosted-legacy' })
     ).toThrow('has been removed');
   });
+
+  it('allows a LAN operator proxy and keeps loopback HTTP', () => {
+    const serialized = JSON.stringify(
+      buildTauriClientConfig({
+        profile: 'standalone',
+        operatorOrigin: 'http://192.0.2.10:8090',
+      })
+    );
+    expect(serialized).toContain('http://192.0.2.10:8090/**');
+    expect(serialized).toContain('http://localhost:*');
+    expect(serialized).not.toContain('macro.com');
+    expect(serialized).not.toContain('conation.dev');
+  });
 });

@@ -116,6 +116,21 @@ cargo tauri ios dev
 CONATION_OPERATOR_ORIGIN=https://conation.example just tauri-build-standalone
 ```
 
+Чтобы macOS-сборка с ноутбука ходила в локальный стек на этом сервере
+(прокси `just stack` / `just run_local` на порту **8090**), задайте origin
+явно и используйте рецепт, который не подставляет `https://conation.dev`:
+
+```bash
+cd apps/web
+CONATION_OPERATOR_ORIGIN=http://<this-host>:8090 just tauri-build-local-stack
+```
+
+`<this-host>` — адрес, с которого MacBook достигает сервер (LAN IP или
+hostname). Прокси и firewall должны принимать соединения на `8090`.
+`http://localhost:8090` годится только если приложение запускается на той
+же машине, что и стек. При необходимости добавьте прямые object-URL через
+`CONATION_TAURI_HTTP_ORIGINS`.
+
 Сборка исходников не равна готовому store/release артефакту. Перед публичным
 macOS/iOS/Android выпуском владелец Conation должен создать собственные App
 IDs, signing certificates, provisioning profiles, APNS/SNS настройки и пройти

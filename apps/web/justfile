@@ -73,6 +73,15 @@ check-standalone-artifact:
 tauri-build-standalone:
     CONATION_CLIENT_PROFILE=standalone bun scripts/run-tauri-build.ts desktop
 
+# Desktop/macOS bundle aimed at a running local operator proxy (just stack /
+# just run_local, typically :8090). Refuses to default to conation.dev so a
+# Mac build cannot silently talk to the public host. Required:
+#   CONATION_OPERATOR_ORIGIN=http://<this-host>:8090
+# Optional extra allowlist:
+#   CONATION_TAURI_HTTP_ORIGINS=http://<minio-or-object-host>:9000
+tauri-build-local-stack:
+    CONATION_CLIENT_PROFILE=standalone CONATION_NATIVE_TARGET=local-stack bun scripts/run-tauri-build.ts desktop
+
 # Tauri build hook (run automatically via beforeBuildCommand) — not meant to be run directly
 [private]
 build-tauri: build-cache-wasm build-agent-fold-wasm
