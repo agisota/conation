@@ -154,6 +154,20 @@ fn rejects_blank_smtp_host() {
 }
 
 #[test]
+fn builds_authenticated_starttls_relay_mailer() {
+    let config = SmtpConfig::Relay {
+        host: "smtp.example.test".to_owned(),
+        port: 587,
+        username: "relay-user".to_owned(),
+        password: "relay-password".to_owned(),
+    };
+
+    config
+        .into_mailer()
+        .expect("valid STARTTLS hostname must build a mailer without sending");
+}
+
+#[test]
 fn rejects_zero_or_non_numeric_nonlocal_relay_ports() {
     for port in ["0", "not-a-port"] {
         let error = SmtpConfig::from_values(
