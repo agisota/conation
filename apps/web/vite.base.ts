@@ -222,6 +222,8 @@ export const createAppViteConfig = (): UserConfigFn => {
         port: Number(process.env.PORT || 3000),
         host: '0.0.0.0',
         strictPort: true,
+        // LAN / Tailscale / public-IP access from a MacBook browser.
+        allowedHosts: true,
         hmr: {
           protocol: 'ws',
           host: process.env.TAURI_DEV_HOST || 'localhost',
