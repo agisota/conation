@@ -256,6 +256,32 @@ just run_local --no-doppler --env-file ./local.env
 чистого развёртывания не оставляйте прежний ключ как alias: обновите секрет во
 всех deployment-конфигурациях одновременно.
 
+## macOS desktop → Linux local stack
+
+Desktop Tauri выбирает API/WS/auth через `CONATION_OPERATOR_ORIGIN` (и
+одноимённый `VITE_CONATION_OPERATOR_ORIGIN` в web-бандле). На этом сервере
+`127.0.0.1:8090` — dynacat; Conation слушает `:24009`, а публичный IPv4 и
+Tailscale `:8090` проксируют туда.
+
+С MacBook, в Nix shell (не `http://localhost:8090`):
+
+```bash
+./scripts/macos-connect-local-server.sh --write
+set -a && source .env.desktop.local && set +a
+\cd apps/web
+CONATION_OPERATOR_ORIGIN=http://100.89.19.82:8090 just tauri-build-local-stack
+```
+
+Публичный IP, если MacBook не в Tailscale:
+
+```bash
+CONATION_OPERATOR_ORIGIN=http://173.212.222.197:8090 just tauri-build-local-stack
+```
+
+Шаблон с IP — [`.env.desktop.local.example`](../.env.desktop.local.example).
+Рецепт `tauri-build-local-stack` отклоняет пустой origin, `same-origin` и
+hosted `conation.dev` / `app.conation.dev`. Подробности: `.cursor-fleet/LOCAL_INFRA.md`.
+
 ## Standalone
 
 `standalone` — профиль адресации клиента. В production web-сборке он по

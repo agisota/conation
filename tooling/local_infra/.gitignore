@@ -1,0 +1,3 @@
+macos-operator.local
+*.local
+!.gitignore

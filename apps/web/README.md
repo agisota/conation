@@ -125,6 +125,10 @@ CONATION_OPERATOR_ORIGIN=https://conation.example just tauri-build-standalone
 CONATION_OPERATOR_ORIGIN=http://<this-host>:8090 just tauri-build-local-stack
 ```
 
+This server (Sep 2026): Tailscale `http://100.89.19.82:8090` or public
+`http://173.212.222.197:8090`. Do **not** use `http://localhost:8090` from a
+Mac (on the Linux host that port is dynacat). See `.cursor-fleet/LOCAL_INFRA.md`.
+
 `<this-host>` — адрес, с которого MacBook достигает сервер (LAN IP или
 hostname). Прокси и firewall должны принимать соединения на `8090`.
 `http://localhost:8090` годится только если приложение запускается на той
