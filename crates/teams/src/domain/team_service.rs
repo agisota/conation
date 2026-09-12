@@ -762,6 +762,7 @@ where
                             team_name: team_name.clone(),
                             role: None,
                             sender_profile_picture_url: None,
+                            locale: "ru".to_string(),
                         },
                     )
                     .await

@@ -124,6 +124,7 @@ impl<
                 .and_then(|s| url::Url::parse(&s).ok()),
             sender_name,
             sender_email,
+            locale: "ru".to_string(),
         };
 
         let _res = self

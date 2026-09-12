@@ -107,6 +107,7 @@ export function initI18n() {
     if (nextLocale === getLocale()) return;
     setLocaleSignal(nextLocale);
     syncDocumentLanguage(nextLocale);
+    persistLocaleToServer(nextLocale);
   });
 }
 

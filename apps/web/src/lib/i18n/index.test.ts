@@ -1,5 +1,5 @@
 import IntlMessageFormat from 'intl-messageformat';
-import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import {
   DEFAULT_LOCALE,
   formatDateTime,
@@ -45,7 +45,11 @@ describe('i18n locale ownership', () => {
   });
 
   test('resets to the default locale when another tab removes the preference', () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal('fetch', fetchMock);
     initI18n();
+    setLocale('en');
+    fetchMock.mockClear();
     window.dispatchEvent(
       new StorageEvent('storage', {
         key: LOCALE_STORAGE_KEY,
@@ -56,6 +60,13 @@ describe('i18n locale ownership', () => {
     expect(getAcceptLanguage()).toBe('ru-RU');
     expect(t('settings.account.language.label')).toBe('Язык');
     expect(document.documentElement.lang).toBe('ru');
+    expect(fetchMock).toHaveBeenCalled();
+    const [, init] = fetchMock.mock.calls[0] ?? [];
+    expect(init).toMatchObject({
+      method: 'PATCH',
+      body: JSON.stringify({ locale: 'ru' }),
+    });
+    vi.unstubAllGlobals();
   });
 
   test('falls back to the English source message', () => {

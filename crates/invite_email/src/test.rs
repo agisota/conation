@@ -7,6 +7,7 @@ fn make_invite() -> InviteToMacro {
         sender_profile_picture_url: None,
         sender_name: Some("Test User".to_string()),
         sender_email: Some("sender@example.com".to_string()),
+        locale: "en".to_string(),
     }
 }
 
@@ -21,6 +22,7 @@ fn make_channel_invite() -> ChannelInviteMetadata {
         channel_name: "engineering".to_string(),
         message_content: None,
         sender_profile_picture_url: None,
+        locale: "en".to_string(),
     }
 }
 
@@ -32,6 +34,7 @@ fn make_team_invite() -> InviteToTeamMetadata {
         invited_by: MacroUserIdStr::try_from_email("sender@example.com").unwrap(),
         role: Some("Member".to_string()),
         sender_profile_picture_url: None,
+        locale: "en".to_string(),
     }
 }
 
@@ -241,4 +244,45 @@ fn deserialization_without_sender_email_uses_none() {
     }"#;
     let deserialized: InviteToMacro = serde_json::from_str(json).unwrap();
     assert!(deserialized.sender_email.is_none());
+    assert_eq!(deserialized.locale, "ru");
+}
+
+#[test]
+fn missing_locale_renders_russian_product_default() {
+    let invite = InviteToMacro {
+        locale: String::new(),
+        ..make_invite()
+    };
+    let email = invite.format_email();
+    assert_eq!(email.subject, "Test User приглашает вас в Conation");
+    assert!(has_cyrillic(&email.subject));
+    assert!(has_cyrillic(&email.body));
+    assert!(email.body.contains("lang=\"ru\""));
+    assert!(!email.body.contains("has invited you"));
+}
+
+#[test]
+fn channel_and_team_invites_follow_recipient_locale_not_sender() {
+    let mut russian_channel = make_channel_invite();
+    russian_channel.locale = "ru".to_string();
+    let channel_email = russian_channel.format_email();
+    assert_eq!(
+        channel_email.subject,
+        "sender@example.com приглашает вас в #engineering"
+    );
+    assert_eq!(
+        russian_channel.format_body(None).unwrap(),
+        "Откройте Conation, чтобы продолжить"
+    );
+    assert!(has_cyrillic(&channel_email.body));
+
+    let mut russian_team = make_team_invite();
+    russian_team.locale = "ru".to_string();
+    let team_email = russian_team.format_email();
+    assert_eq!(
+        team_email.subject,
+        "sender@example.com приглашает вас в команду Platform в Conation"
+    );
+    assert!(has_cyrillic(&team_email.body));
+    assert!(team_email.body.contains("lang=\"ru\""));
 }

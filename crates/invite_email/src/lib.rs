@@ -7,8 +7,12 @@
 
 #[cfg(test)]
 mod test;
+mod catalog;
 
 use askama::Template;
+use catalog::{
+    InviteLocale, channel_copy, default_recipient_locale, referral_copy, team_copy,
+};
 use conation_env::Environment;
 use conation_env_var::maybe_env_vars;
 use conation_user_id::cowlike::CowLike;
@@ -62,9 +66,17 @@ pub struct InviteToMacro {
     /// The sender's email address.
     #[serde(default)]
     pub sender_email: Option<String>,
+    /// Recipient locale (`en` or `ru`). Invitees without a stored preference
+    /// keep the Russian product default; never copy the sender's language.
+    #[serde(default = "default_recipient_locale")]
+    pub locale: String,
 }
 
 impl InviteToMacro {
+    fn invite_locale(&self) -> InviteLocale {
+        InviteLocale::parse(&self.locale)
+    }
+
     fn referral_url(&self) -> Url {
         configured_public_email_urls()
             .expect("invite email public URLs must be valid at service startup")
@@ -75,6 +87,37 @@ impl InviteToMacro {
         configured_public_email_urls()
             .expect("invite email public URLs must be valid at service startup")
             .brand_asset_url()
+    }
+
+    fn html_lang(&self) -> &'static str {
+        self.invite_locale().language_tag()
+    }
+
+    fn document_title(&self) -> &'static str {
+        referral_copy(self.invite_locale()).document_title
+    }
+
+    fn fallback_sender(&self) -> &'static str {
+        referral_copy(self.invite_locale()).fallback_sender
+    }
+
+    fn invites_you(&self) -> &'static str {
+        referral_copy(self.invite_locale()).invites_you
+    }
+
+    fn body_copy(&self) -> &'static str {
+        referral_copy(self.invite_locale()).body
+    }
+
+    fn join_prefix(&self) -> &'static str {
+        referral_copy(self.invite_locale()).join_conation
+    }
+
+    fn sender_label(&self) -> &str {
+        self.sender_name
+            .as_deref()
+            .or(self.sender_email.as_deref())
+            .unwrap_or_else(|| self.fallback_sender())
     }
 }
 
@@ -258,16 +301,15 @@ fn directory_base_url(mut url: Url) -> Url {
 
 impl NotificationExtEmail for InviteToMacro {
     fn format_email(&self) -> EmailContent {
-        // Invitees have no stored locale. Render the product default (Russian)
-        // rather than the sender's Accept-Language. Recipient-initiated
-        // verification mail is the path that negotiates Accept-Language.
-        let sender = self
-            .sender_name
-            .as_deref()
-            .or(self.sender_email.as_deref())
-            .unwrap_or("Пользователь Conation");
+        // Render from the invitee's locale. Missing/invalid values stay on the
+        // Russian product default — never the sender's Accept-Language.
+        let sender = self.sender_label();
+        let subject = match self.invite_locale() {
+            InviteLocale::English => format!("{sender} has invited you to join Conation"),
+            InviteLocale::Russian => format!("{sender} приглашает вас в Conation"),
+        };
         EmailContent {
-            subject: format!("{sender} приглашает вас в Conation"),
+            subject,
             body: self
                 .render()
                 .expect("InviteToMacro template render failed in format_email"),
@@ -308,9 +350,16 @@ pub struct ChannelInviteMetadata {
     /// The sender's profile picture URL, if available.
     #[serde(default)]
     pub sender_profile_picture_url: Option<String>,
+    /// Recipient locale (`en` or `ru`). Defaults to Russian.
+    #[serde(default = "default_recipient_locale")]
+    pub locale: String,
 }
 
 impl ChannelInviteMetadata {
+    fn invite_locale(&self) -> InviteLocale {
+        InviteLocale::parse(&self.locale)
+    }
+
     fn signup_url(&self) -> Url {
         configured_public_email_urls()
             .expect("invite email public URLs must be valid at service startup")
@@ -326,6 +375,45 @@ impl ChannelInviteMetadata {
     fn sender_display(&self) -> &str {
         self.invited_by.email_str()
     }
+
+    fn html_lang(&self) -> &'static str {
+        self.invite_locale().language_tag()
+    }
+
+    fn document_title(&self) -> String {
+        match self.invite_locale() {
+            InviteLocale::English => format!(
+                "{}{} on Conation",
+                channel_copy(self.invite_locale()).document_title_prefix,
+                self.channel_name
+            ),
+            InviteLocale::Russian => format!(
+                "{}{} в Conation",
+                channel_copy(self.invite_locale()).document_title_prefix,
+                self.channel_name
+            ),
+        }
+    }
+
+    fn invites_you_to(&self) -> &'static str {
+        channel_copy(self.invite_locale()).invites_you_to
+    }
+
+    fn default_body_before(&self) -> &'static str {
+        channel_copy(self.invite_locale()).default_body_before
+    }
+
+    fn default_body_after(&self) -> &'static str {
+        channel_copy(self.invite_locale()).default_body_after
+    }
+
+    fn join_button(&self) -> String {
+        format!(
+            "{}{}",
+            channel_copy(self.invite_locale()).join_prefix,
+            self.channel_name
+        )
+    }
 }
 
 impl Notification for ChannelInviteMetadata {
@@ -339,25 +427,33 @@ impl NotificationTitle for ChannelInviteMetadata {
     ) -> Result<String, rootcause::Report> {
         let email = self.invited_by.email_part();
         let sender = email.email_str();
-        Ok(format!(
-            "{sender} приглашает вас в #{}",
-            self.channel_name
-        ))
+        Ok(match self.invite_locale() {
+            InviteLocale::English => {
+                format!("{sender} has invited you to join #{}", self.channel_name)
+            }
+            InviteLocale::Russian => format!("{sender} приглашает вас в #{}", self.channel_name),
+        })
     }
 
     fn format_body(
         &self,
         _sender_id: Option<MacroUserIdStr<'_>>,
     ) -> Result<String, rootcause::Report> {
-        Ok("Откройте Conation, чтобы продолжить".to_string())
+        Ok(channel_copy(self.invite_locale()).continue_body.to_owned())
     }
 }
 
 impl NotificationExtEmail for ChannelInviteMetadata {
     fn format_email(&self) -> EmailContent {
         let sender = self.sender_display();
+        let subject = match self.invite_locale() {
+            InviteLocale::English => {
+                format!("{sender} has invited you to join #{}", self.channel_name)
+            }
+            InviteLocale::Russian => format!("{sender} приглашает вас в #{}", self.channel_name),
+        };
         EmailContent {
-            subject: format!("{sender} приглашает вас в #{}", self.channel_name),
+            subject,
             body: self
                 .render()
                 .expect("ChannelInviteMetadata template render failed in format_email"),
@@ -443,9 +539,16 @@ pub struct InviteToTeamMetadata {
     #[serde(default)]
     #[schema(value_type = Option<String>)]
     pub sender_profile_picture_url: Option<Url>,
+    /// Recipient locale (`en` or `ru`). Defaults to Russian.
+    #[serde(default = "default_recipient_locale")]
+    pub locale: String,
 }
 
 impl InviteToTeamMetadata {
+    fn invite_locale(&self) -> InviteLocale {
+        InviteLocale::parse(&self.locale)
+    }
+
     /// Returns the team invite URL for the current environment.
     pub fn invite_url(&self) -> Url {
         configured_public_email_urls()
@@ -458,6 +561,51 @@ impl InviteToTeamMetadata {
             .expect("invite email public URLs must be valid at service startup")
             .brand_asset_url()
     }
+
+    fn html_lang(&self) -> &'static str {
+        self.invite_locale().language_tag()
+    }
+
+    fn document_title(&self) -> String {
+        match self.invite_locale() {
+            InviteLocale::English => {
+                format!(
+                    "{} {} team on Conation",
+                    team_copy(self.invite_locale()).document_title_prefix,
+                    self.team_name
+                )
+            }
+            InviteLocale::Russian => format!(
+                "{} {} в Conation",
+                team_copy(self.invite_locale()).document_title_prefix,
+                self.team_name
+            ),
+        }
+    }
+
+    fn invites_you_to_team(&self) -> &'static str {
+        team_copy(self.invite_locale()).invites_you_to_team
+    }
+
+    fn body_before(&self) -> &'static str {
+        team_copy(self.invite_locale()).body_before
+    }
+
+    fn body_after(&self) -> &'static str {
+        team_copy(self.invite_locale()).body_after
+    }
+
+    fn role_before(&self) -> &'static str {
+        team_copy(self.invite_locale()).role_before
+    }
+
+    fn join_button(&self) -> String {
+        format!(
+            "{} {}",
+            team_copy(self.invite_locale()).join_prefix,
+            self.team_name
+        )
+    }
 }
 
 impl Notification for InviteToTeamMetadata {
@@ -466,12 +614,20 @@ impl Notification for InviteToTeamMetadata {
 
 impl NotificationExtEmail for InviteToTeamMetadata {
     fn format_email(&self) -> EmailContent {
-        EmailContent {
-            subject: format!(
-                "{} приглашает вас в команду {} в Conation",
-                self.invited_by.email_part().as_ref(),
+        let sender = self.invited_by.email_part();
+        let sender = sender.as_ref();
+        let subject = match self.invite_locale() {
+            InviteLocale::English => format!(
+                "{sender} has invited you to the {} team on Conation",
                 self.team_name
             ),
+            InviteLocale::Russian => format!(
+                "{sender} приглашает вас в команду {} в Conation",
+                self.team_name
+            ),
+        };
+        EmailContent {
+            subject,
             body: self
                 .render()
                 .expect("InviteToTeamMetadata template render failed in format_email"),

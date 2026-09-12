@@ -1,12 +1,12 @@
 <!doctype html>
 <html
-  lang="ru"
+  lang="{{ html_lang() }}"
   xmlns:o="urn:schemas-microsoft-com:office:office"
   xmlns:v="urn:schemas-microsoft-com:vml"
   xmlns="http://www.w3.org/1999/xhtml"
 >
   <head>
-    <title>Вас пригласили в #{{ channel_name }} в Conation</title>
+    <title>{{ document_title() }}</title>
     <!--[if !mso]><!-->
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <!--<![endif]-->
@@ -140,7 +140,7 @@
                       Courier, monospace;
                   "
                   >{{ sender_display() }}</span
-                > приглашает вас в <strong>#{{ channel_name }}</strong>
+                > {{ invites_you_to() }} <strong>#{{ channel_name }}</strong>
               </td>
             </tr>
           </tbody>
@@ -158,9 +158,8 @@
             {% if let Some(content) = message_content %}
             {{ content }}
             {% else %}
-            Вас пригласили в канал <strong>#{{ channel_name }}</strong> в Conation.
-            Работайте вместе над документами, следите за задачами, ищите по
-            всему пространству. ИИ-помощник — для любых вопросов.
+            {{ default_body_before() }} <strong>#{{ channel_name }}</strong>
+            {{ default_body_after() }}
             {% endif %}
           </div>
 
@@ -200,7 +199,7 @@
                     href="{{ signup_url() }}"
                     target="_blank"
                   >
-                    Присоединиться к #{{ channel_name }}
+                    {{ join_button() }}
                   </a>
                 </td>
                 <td

@@ -1,12 +1,12 @@
 <!doctype html>
 <html
-  lang="ru"
+  lang="{{ html_lang() }}"
   xmlns:o="urn:schemas-microsoft-com:office:office"
   xmlns:v="urn:schemas-microsoft-com:vml"
   xmlns="http://www.w3.org/1999/xhtml"
 >
   <head>
-    <title>Вас пригласили в команду {{ team_name }} в Conation</title>
+    <title>{{ document_title() }}</title>
     <!--[if !mso]><!-->
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <!--<![endif]-->
@@ -132,7 +132,7 @@
               </td>
               {% endif %}
               <td style="vertical-align: middle; line-height: 1.2">
-                {{ invited_by.email_part().as_ref() }} приглашает вас в команду <strong>{{ team_name }}</strong>
+                {{ invited_by.email_part().as_ref() }} {{ invites_you_to_team() }} <strong>{{ team_name }}</strong>
               </td>
             </tr>
           </tbody>
@@ -147,10 +147,8 @@
               line-height: 1.4;
             "
           >
-            Вас пригласили в команду <strong>{{ team_name }}</strong> в Conation.{% if let Some(r) = role %}
-            Ваша роль — <strong>{{ r }}</strong>.{% endif %}
-            Работайте вместе над документами, следите за задачами, ищите по
-            всему пространству. ИИ-помощник — для любых вопросов.
+            {{ body_before() }} <strong>{{ team_name }}</strong> {{ body_after() }}{% if let Some(r) = role %}
+            {{ role_before() }} <strong>{{ r }}</strong>.{% endif %}
           </div>
 
           <table
@@ -189,7 +187,7 @@
                     href="{{ invite_url() }}"
                     target="_blank"
                   >
-                    Присоединиться к {{ team_name }}
+                    {{ join_button() }}
                   </a>
                 </td>
                 <td
