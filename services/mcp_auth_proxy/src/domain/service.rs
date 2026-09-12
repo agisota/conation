@@ -205,8 +205,10 @@ where
         tracing::debug!("oauth-protected-resource metadata requested");
         let base = &self.public_url;
         serde_json::json!({
+            "resource": format!("{base}/mcp"),
             "authorization_server": base,
             "authorization_servers": [base],
+            "resource_name": "Conation MCP",
         })
     }
 
