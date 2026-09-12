@@ -1,6 +1,10 @@
 import { resolveStandaloneOperatorOrigin } from '../src/lib/core/constant/clientProfile';
 
-const HOSTED_DEFAULT_HOSTS = new Set(['conation.dev', 'www.conation.dev']);
+const HOSTED_DEFAULT_HOSTS = new Set([
+  'conation.dev',
+  'www.conation.dev',
+  'app.conation.dev',
+]);
 
 const LOCAL_STACK_ORIGIN_HINT =
   'Set CONATION_OPERATOR_ORIGIN to this host\'s operator proxy, typically http://<lan-host>:8090';

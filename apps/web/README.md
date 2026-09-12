@@ -121,7 +121,7 @@ CONATION_OPERATOR_ORIGIN=https://conation.example just tauri-build-standalone
 явно и используйте рецепт, который не подставляет `https://conation.dev`:
 
 ```bash
-cd apps/web
+\cd apps/web
 CONATION_OPERATOR_ORIGIN=http://<this-host>:8090 just tauri-build-local-stack
 ```
 
