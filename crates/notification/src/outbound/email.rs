@@ -78,7 +78,7 @@ impl EmailServiceOps for aws_sdk_sesv2::Client {
             .map_err(|e| {
                 rootcause::report!(
                     "SES send failed: {}",
-                    aws_sdk_sns::error::DisplayErrorContext(&e)
+                    aws_sdk_sesv2::error::DisplayErrorContext(&e)
                 )
             })?;
 
@@ -112,5 +112,8 @@ impl<E: EmailServiceOps + Send + Sync + 'static> EmailSender for EmailAdapter<E>
         self.email_service
             .send_email(&self.from_email, to_email, &content.subject, &content.body)
             .await
+            .inspect_err(|error| {
+                tracing::error!(error = ?error, "outbound notification email failed");
+            })
     }
 }

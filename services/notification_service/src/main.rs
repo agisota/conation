@@ -244,9 +244,14 @@ pub async fn main() -> anyhow::Result<()> {
 
     let email_service = ses_client::Ses::from_env(
         aws_sdk_sesv2::Client::new(&aws_config),
-        &config.environment.to_string(),
+        &crate::env::smtp_environment_slug(config.environment),
     )
     .context("invalid outbound SMTP configuration")?;
+    tracing::info!(
+        from = %crate::env::SENDER_ADDRESS.as_str(),
+        email_service = ?email_service,
+        "configured outbound notification email"
+    );
     let email_adapter = EmailAdapter::new(email_service, crate::env::SENDER_ADDRESS.clone());
 
     let redis_multiplexed_conn = redis_client
