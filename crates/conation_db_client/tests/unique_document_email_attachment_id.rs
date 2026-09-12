@@ -1,7 +1,7 @@
 use sqlx::{Pool, Postgres};
 
 const MIGRATION: &str =
-    include_str!("../migrations/20260825224506_unique_document_email_attachment_id.sql");
+    include_str!("../migrations/20260913013000_unique_document_email_attachment_id.sql");
 const SHARED_ATTACHMENT_ID: &str = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
 const OTHER_ATTACHMENT_ID: &str = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
 const SOLO_ATTACHMENT_ID: &str = "cccccccc-cccc-cccc-cccc-cccccccccccc";
