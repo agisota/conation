@@ -21,11 +21,16 @@ Three original initiatives look “done” in commits and operator docs, but:
 3. Self-host is a local/dev baseline (LocalStack), not a production topology.
 4. Russian UI is incomplete on CRM stages, property editors, and secondary
    surfaces.
-5. Parallel worktrees (`conation/parallel-*`) were never integrated.
-6. Rebrand/history topology (`main` vs `clean-history` vs `overlay`) is
-   unresolved.
+5. Parallel worktrees (`conation/parallel-*`) were never integrated
+   (ports landed on `conation/w-port-*` and merged; do not cherry-pick the
+   orphan `parallel-*` snapshots).
+6. Rebrand/history topology (`main` vs `clean-history` vs `overlay`) —
+   **resolved:** product line is `conation/main` (crate rename). Overlay
+   keep-`macro_*` and orphan `clean-history` are skip/archive. Contract:
+   [History topology](./REBRAND_CONATION.md#history-topology).
 
-Users and operators cannot tell what is real.
+Git topology is no longer ambiguous. Remaining operator-facing gaps are
+the requirements below.
 
 ## Goals
 

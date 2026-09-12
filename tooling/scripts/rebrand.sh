@@ -13,6 +13,10 @@ if [[ "${1:-}" != "--check" || "$#" -ne 1 ]]; then
   cat >&2 <<EOF
 Automated rebranding is disabled because it can corrupt compatibility contracts.
 
+--reapply (conation/overlay keep-macro_* workflow) is retired. Product line
+is conation/main with crate-rename members (crates/conation_*), not a textual
+re-apply over crates/macro_*.
+
 Review the migration mapping first:
   $MAPPING
 

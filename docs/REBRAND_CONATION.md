@@ -2,11 +2,13 @@
 
 This document is a migration guardrail for the current repository, not a
 certificate that the rebrand is complete. `Conation` is the product name and
-the clean-history standalone branch is a greenfield deployment: it writes only
-Conation product identities and deliberately does not accept the historical
-`macro|` user-ID namespace. The upstream-sync branch has a different job: it
-must preserve or explicitly migrate existing persistent and external contracts
-while upstream work is reconciled.
+**`conation/main` is the product line**: it writes Conation product identities
+and rejects the historical `macro|` user-ID namespace. The experimental
+`conation/overlay` (keep `macro_*` crates) and orphan `conation/clean-history`
+snapshots are not merge fuel — see [History topology](#history-topology).
+The upstream-sync branch has a different job: it must preserve or explicitly
+migrate existing persistent and external contracts while upstream work is
+reconciled.
 
 A remaining `Macro` match is therefore not automatically a defect, but it must
 be classified. Internal schema/type names, immutable third-party provenance,
@@ -29,10 +31,27 @@ the naming and compatibility implications of that deployment.
 | Historical or external name | Dependency repository owners, published release links, historical changelogs                                                                                       | Keep it unchanged unless the external object actually moved and a verified replacement exists. Do not rewrite history or provenance.                                                                                                                                            |
 | Uncertain match             | A name whose consumers or persistence are not demonstrated                                                                                                         | Mark it audit-required. Do not infer safety from spelling or file location.                                                                                                                                                                                                     |
 
-`tooling/scripts/rebrand.sh` is now a read-only guard that points here. Its
-former broad replacement table was removed because indiscriminate textual
-replacement of identifiers and domains is not a valid migration mechanism for
-the compatibility classes above.
+`tooling/scripts/rebrand.sh` is now a read-only guard that points here
+(`--check` only). `--reapply` from the overlay lineage is retired: a
+repository-wide text replacement cannot distinguish compatibility contracts
+from product-owned display copy.
+
+## History topology
+
+These git lines are not interchangeable. Do not merge them into each other
+to “finish the rebrand.”
+
+| Line | Tip intent | Product status |
+| --- | --- | --- |
+| `conation/main` | Crate-rename greenfield: workspace members such as `crates/conation_authorization`, public IDs `conation\|`, native scheme `conation` | **Product.** All new work branches from here. |
+| `conation/overlay` | Shallow visible/infra/self-host overlay that **keeps** `crates/macro_*` so Macro upstream can merge, then `rebrand.sh --reapply` | **Skip.** Experimental. Conflicts with the crate-rename product line. Unique overlay files that still applied (self-host compose, `email_provider`, i18n catalogs) were re-implemented on `conation/main`. |
+| `conation/clean-history` / `standalone-snapshot` | Orphan snapshot with no shared history vs current Macro main | **Skip.** Topology experiment, not a merge source. |
+| `conation/upstream-sync` (old) | Alternate 13-commit rebrand including mass `auto.*` i18n | **Skip as-is.** New upstream work starts from current `conation/main` only. Mass `auto.*` extraction is a PRD non-goal. |
+
+Private unpublished crates on the product line use the `conation_*` package
+name (for example `conation_aws_config`, `conation_env_var`). The overlay
+strategy of leaving `macro_authorization` / `macro_config` / `macro_queues`
+in the workspace is not the supported tree.
 
 ## What can use Conation now
 

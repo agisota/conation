@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,6 +12,7 @@ import { emailToMacroId, tryMacroId } from '../src/lib/core/user/macroId';
 import { buildTauriClientConfig } from './tauri-client-config';
 
 const webRoot = fileURLToPath(new URL('..', import.meta.url));
+const repoRoot = resolve(webRoot, '../..');
 const publicRoot = resolve(webRoot, 'public');
 const assetsPath = '%ASSETS_PATH%/';
 
@@ -127,5 +129,52 @@ describe('Conation rebrand compatibility contract', () => {
     expect(standalone.plugins['deep-link'].desktop.schemes).toEqual([
       'conation',
     ]);
+  });
+
+  it('keeps crate-rename workspace members, not the overlay keep-macro_* layout', () => {
+    const cargo = readFileSync(resolve(repoRoot, 'Cargo.toml'), 'utf8');
+    const awsConfig = readFileSync(
+      resolve(repoRoot, 'crates/conation_aws_config/Cargo.toml'),
+      'utf8'
+    );
+
+    expect(cargo).toContain('"crates/conation_authorization"');
+    expect(cargo).toContain('"crates/conation_event_topics"');
+    expect(cargo).toContain('"crates/conation_queues"');
+    expect(cargo).not.toContain('"crates/macro_authorization"');
+    expect(cargo).not.toContain('"crates/macro_event_topics"');
+    expect(cargo).not.toContain('"crates/macro_queues"');
+    expect(awsConfig).toMatch(/^name = "conation_aws_config"$/m);
+    expect(existsSync(resolve(repoRoot, 'crates/macro_authorization'))).toBe(
+      false
+    );
+  });
+
+  it('retires overlay rebrand.sh --reapply and indexes history topology', () => {
+    const rebrandSh = resolve(repoRoot, 'tooling/scripts/rebrand.sh');
+    const mapping = readFileSync(
+      resolve(repoRoot, 'docs/REBRAND_CONATION.md'),
+      'utf8'
+    );
+    const docsIndex = readFileSync(resolve(repoRoot, 'docs/README.md'), 'utf8');
+
+    const reapply = spawnSync('bash', [rebrandSh, '--reapply'], {
+      encoding: 'utf8',
+    });
+    expect(reapply.status).toBe(64);
+    expect(reapply.stderr).toContain('--reapply');
+    expect(reapply.stderr).toContain('retired');
+
+    const check = spawnSync('bash', [rebrandSh, '--check'], {
+      encoding: 'utf8',
+    });
+    expect(check.status).toBe(0);
+    expect(check.stdout).toContain('No files will be modified');
+
+    expect(mapping).toContain('## History topology');
+    expect(mapping).toContain('`conation/overlay`');
+    expect(mapping).toContain('**Skip.** Experimental.');
+    expect(docsIndex).toContain('REBRAND_CONATION.md#history-topology');
+    expect(docsIndex).toContain('conation/main');
   });
 });
