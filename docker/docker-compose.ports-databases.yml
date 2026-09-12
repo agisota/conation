@@ -1,3 +1,6 @@
+# Database-only sibling of docker-compose.override-ports.yml. Same host
+# remaps: postgres 5433, redis 6380, Redis Stack UI 8005 (rox uses 8001-8003),
+# kafka 9093, OpenSearch 9201/9601.
 services:
   postgres:
     ports:
@@ -5,7 +8,7 @@ services:
   redis:
     ports:
       - "6380:6379"
-      - "8002:8001"
+      - "8005:8001"
   kafka:
     ports:
       - "9093:9092"
