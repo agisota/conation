@@ -95,10 +95,13 @@ channel.thread.moreReplies
 `PATCH /user/locale` на authentication service
 (`https://…/auth/user/locale`).
 
-Оставшийся разрыв — асинхронный fan-out digest/push/invite по **получателю**
-(per **recipient**). Персональная русская локализация invitation, digest,
-notification и push ещё не проходит через все async envelopes: один job не
-должен клонировать один body всем адресатам.
+Digest и invite email уже рендерятся **по получателю**: `User.locale` читается
+в notification ingress/digest worker, а `format_email_for_locale` держит
+отдельные `en`/`ru` тела. Invite без аккаунта остаётся Russian-first.
+
+Оставшийся разрыв — in-app/push title catalogs (GitHub PR, mention и т.д.) и
+внешние FusionAuth/mail templates. Один APNS payload всё ещё общий для всех
+получателей одного job; смешанный locale там пока не разводится.
 
 Особенно опасно брать locale отправителя или текущего HTTP request: получатели
 в одной рассылке могут иметь разные языки. Правильный порядок дальнейшей

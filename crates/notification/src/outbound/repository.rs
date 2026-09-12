@@ -397,6 +397,12 @@ pub trait NotificationDbOps: DeviceRegistrationDbOps + Send + Sync + 'static {
         user_ids: &[MacroUserIdStr<'a>],
     ) -> impl std::future::Future<Output = Result<HashSet<MacroUserIdStr<'static>>, Report>> + Send;
 
+    /// Load persisted recipient locales (`en` or `ru`). Missing users default to Russian.
+    fn get_user_locales<'a>(
+        &self,
+        user_ids: &[MacroUserIdStr<'a>],
+    ) -> impl std::future::Future<Output = Result<HashMap<MacroUserIdStr<'static>, String>, Report>> + Send;
+
     /// Get users who have unsubscribed from notifications for a specific item.
     fn get_unsubscribed_users<'a>(
         &self,
@@ -587,6 +593,39 @@ impl NotificationDbOps for PgPool {
             .collect();
 
         Ok(result)
+    }
+
+    async fn get_user_locales<'a>(
+        &self,
+        user_ids: &[MacroUserIdStr<'a>],
+    ) -> Result<HashMap<MacroUserIdStr<'static>, String>, Report> {
+        let ids: Vec<String> = user_ids.iter().map(|id| id.to_string()).collect();
+        let rows: Vec<(String, Option<String>)> =
+            sqlx::query_as(r#"SELECT id, locale FROM "User" WHERE id = ANY($1)"#)
+                .bind(&ids)
+                .fetch_all(self)
+                .await?;
+
+        let mut locales = HashMap::new();
+        for (id, locale) in rows {
+            let Some(user_id) = MacroUserIdStr::parse_from_str(&id)
+                .ok()
+                .map(CowLike::into_owned)
+            else {
+                continue;
+            };
+            let tag = match locale.as_deref().map(str::trim) {
+                Some(value)
+                    if value.eq_ignore_ascii_case("en")
+                        || value.to_ascii_lowercase().starts_with("en-") =>
+                {
+                    "en"
+                }
+                _ => "ru",
+            };
+            locales.insert(user_id.into_owned(), tag.to_string());
+        }
+        Ok(locales)
     }
 
     async fn get_unsubscribed_users<'a>(
@@ -1556,6 +1595,13 @@ impl<D: NotificationDbOps + Send + Sync> NotificationRepository for DbNotificati
         user_ids: &[MacroUserIdStr<'a>],
     ) -> Result<HashSet<MacroUserIdStr<'static>>, Report> {
         self.db.get_muted_users(user_ids).await
+    }
+
+    async fn get_user_locales<'a>(
+        &self,
+        user_ids: &[MacroUserIdStr<'a>],
+    ) -> Result<HashMap<MacroUserIdStr<'static>, String>, Report> {
+        self.db.get_user_locales(user_ids).await
     }
 
     async fn get_unsubscribed_users<'a>(

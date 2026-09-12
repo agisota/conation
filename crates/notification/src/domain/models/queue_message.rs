@@ -67,8 +67,11 @@ pub struct EmailNotification<'a> {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct EmailCreateBundle {
-    /// The email content (subject and body).
+    /// Default (Russian) email content. Older queue payloads only have this field.
     content: EmailContent,
+    /// English email content. Absent on legacy payloads; those reuse `content`.
+    #[serde(default)]
+    content_en: Option<EmailContent>,
 
     /// the configuration for the rate limit of the email
     rate_limit_config: RateLimitConfig,
@@ -77,24 +80,47 @@ pub(crate) struct EmailCreateBundle {
     rate_limit_key: RateLimitKey,
 }
 
+fn recipient_locale_tag(locale: &str) -> &'static str {
+    let tag = locale.trim();
+    if tag.eq_ignore_ascii_case("en") || tag.to_ascii_lowercase().starts_with("en-") {
+        "en"
+    } else {
+        "ru"
+    }
+}
+
 impl EmailCreateBundle {
     pub(crate) fn new<T: NotificationExtEmail>(notif: &T) -> Self {
         let rate_limit_config = T::rate_limit_config();
         let rate_limit_key = notif.rate_limit_key();
-        let content = notif.format_email();
         EmailCreateBundle {
-            content,
+            content: notif.format_email_for_locale("ru"),
+            content_en: Some(notif.format_email_for_locale("en")),
             rate_limit_config,
             rate_limit_key,
         }
     }
 
     pub(crate) fn with_recipient<'a>(self, to: MacroUserIdStr<'a>) -> EmailNotification<'a> {
+        self.with_recipient_locale(to, "ru")
+    }
+
+    pub(crate) fn with_recipient_locale<'a>(
+        self,
+        to: MacroUserIdStr<'a>,
+        locale: &str,
+    ) -> EmailNotification<'a> {
         let EmailCreateBundle {
             content,
+            content_en,
             rate_limit_config,
             rate_limit_key,
         } = self;
+        let content = if recipient_locale_tag(locale) == "en" {
+            content_en.unwrap_or(content)
+        } else {
+            content
+        };
         EmailNotification {
             to,
             content,

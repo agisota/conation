@@ -7,6 +7,7 @@ fn make_invite() -> InviteToMacro {
         sender_profile_picture_url: None,
         sender_name: Some("Test User".to_string()),
         sender_email: Some("sender@example.com".to_string()),
+        locale: "ru".to_string(),
     }
 }
 
@@ -21,6 +22,7 @@ fn make_channel_invite() -> ChannelInviteMetadata {
         channel_name: "engineering".to_string(),
         message_content: None,
         sender_profile_picture_url: None,
+        locale: "ru".to_string(),
     }
 }
 
@@ -32,6 +34,7 @@ fn make_team_invite() -> InviteToTeamMetadata {
         invited_by: MacroUserIdStr::try_from_email("sender@example.com").unwrap(),
         role: Some("Member".to_string()),
         sender_profile_picture_url: None,
+        locale: "ru".to_string(),
     }
 }
 
@@ -128,17 +131,22 @@ fn format_email_with_sender_name() {
     let invite = make_invite();
     let referral_url = invite.referral_url().to_string();
     let email = invite.format_email();
-    assert_eq!(email.subject, "Test User has invited you to join Conation");
+    assert_eq!(email.subject, "Test User приглашает вас в Conation");
     assert!(
         email.body.contains(&referral_url),
         "email body should contain the referral URL"
     );
-    assert!(email.body.contains("has invited you to Conation"));
-    assert!(!email.body.contains("A Conation user"));
+    assert!(
+        email
+            .body
+            .contains("приглашает вас присоединиться к Conation")
+    );
+    assert!(!email.body.contains("Пользователь Conation"));
     assert!(email.body.contains("/logo192.png"));
     assert!(!email.body.contains("macro.com"));
-    assert!(!has_cyrillic(&email.subject));
-    assert!(!has_cyrillic(&email.body));
+    assert!(has_cyrillic(&email.subject));
+    assert!(has_cyrillic(&email.body));
+    assert!(email.body.contains("lang=\"ru\""));
 }
 
 #[test]
@@ -150,7 +158,7 @@ fn format_email_falls_back_to_email_when_no_name() {
     let email = invite.format_email();
     assert_eq!(
         email.subject,
-        "sender@example.com has invited you to join Conation"
+        "sender@example.com приглашает вас в Conation"
     );
     assert!(email.body.contains("sender@example.com"));
 }
@@ -165,11 +173,26 @@ fn format_email_falls_back_to_generic_when_no_name_or_email() {
     let email = invite.format_email();
     assert_eq!(
         email.subject,
-        "A Conation user has invited you to join Conation"
+        "Пользователь Conation приглашает вас в Conation"
     );
-    assert!(email.body.contains("A Conation user"));
+    assert!(email.body.contains("Пользователь Conation"));
+    assert!(has_cyrillic(&email.subject));
+    assert!(has_cyrillic(&email.body));
+}
+
+#[test]
+fn format_email_for_locale_renders_english_without_cloning_russian() {
+    let invite = make_invite();
+    let email = invite.format_email_for_locale("en");
+    assert_eq!(email.subject, "Test User has invited you to join Conation");
+    assert!(email.body.contains("has invited you to Conation"));
+    assert!(email.body.contains("lang=\"en\""));
     assert!(!has_cyrillic(&email.subject));
     assert!(!has_cyrillic(&email.body));
+    assert_eq!(
+        invite.format_email().subject,
+        "Test User приглашает вас в Conation"
+    );
 }
 
 #[test]
@@ -179,18 +202,26 @@ fn channel_invite_uses_conation_display_copy_and_public_links() {
 
     assert_eq!(
         invite.format_body(None).unwrap(),
-        "Open Conation to continue"
+        "Откройте Conation, чтобы продолжить"
     );
     assert_eq!(
         email.subject,
-        "sender@example.com has invited you to join #engineering"
+        "sender@example.com приглашает вас в #engineering"
     );
-    assert!(email.body.contains("on Conation"));
+    assert!(email.body.contains("в Conation"));
     assert!(email.body.contains("/app/signup"));
     assert!(email.body.contains("/logo192.png"));
     assert!(!email.body.contains("macro.com"));
-    assert!(!has_cyrillic(&email.subject));
-    assert!(!has_cyrillic(&email.body));
+    assert!(has_cyrillic(&email.subject));
+    assert!(has_cyrillic(&email.body));
+
+    let english = invite.format_email_for_locale("en");
+    assert_eq!(
+        english.subject,
+        "sender@example.com has invited you to join #engineering"
+    );
+    assert!(english.body.contains("on Conation"));
+    assert!(!has_cyrillic(&english.subject));
 }
 
 #[test]
@@ -200,14 +231,26 @@ fn team_invite_subject_and_body_use_conation_display_name() {
 
     assert_eq!(
         email.subject,
-        "sender@example.com has invited you to the Platform team on Conation"
+        "sender@example.com приглашает вас в команду Platform в Conation"
     );
-    assert!(email.body.contains("Platform</strong> team on Conation"));
+    assert!(
+        email
+            .body
+            .contains("команду <strong>Platform</strong> в Conation")
+    );
     assert!(email.body.contains("/app/team-invite?id="));
     assert!(email.body.contains("/logo192.png"));
     assert!(!email.body.contains("macro.com"));
-    assert!(!has_cyrillic(&email.subject));
-    assert!(!has_cyrillic(&email.body));
+    assert!(has_cyrillic(&email.subject));
+    assert!(has_cyrillic(&email.body));
+
+    let english = invite.format_email_for_locale("en");
+    assert_eq!(
+        english.subject,
+        "sender@example.com has invited you to the Platform team on Conation"
+    );
+    assert!(english.body.contains("Platform</strong> team on Conation"));
+    assert!(!has_cyrillic(&english.subject));
 }
 
 #[test]
