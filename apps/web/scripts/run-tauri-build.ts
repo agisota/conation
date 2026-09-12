@@ -1,5 +1,9 @@
 import { fileURLToPath } from 'node:url';
 import {
+  isLocalStackNativeTarget,
+  resolveLocalStackOperatorOrigin,
+} from './local-stack-operator-origin';
+import {
   buildTauriClientConfig,
   splitConfiguredOrigins,
 } from './tauri-client-config';
@@ -13,8 +17,11 @@ if (!['desktop', 'ios', 'android'].includes(platform)) {
 }
 
 const profile = process.env.CONATION_CLIENT_PROFILE || 'standalone';
-const operatorOrigin =
-  process.env.CONATION_OPERATOR_ORIGIN || 'https://conation.dev';
+const operatorOrigin = isLocalStackNativeTarget(
+  process.env.CONATION_NATIVE_TARGET
+)
+  ? resolveLocalStackOperatorOrigin(process.env.CONATION_OPERATOR_ORIGIN)
+  : process.env.CONATION_OPERATOR_ORIGIN || 'https://conation.dev';
 const config = buildTauriClientConfig({
   profile,
   operatorOrigin,
