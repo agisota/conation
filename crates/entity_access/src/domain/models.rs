@@ -9,8 +9,16 @@ use conation_user_id::user_id::MacroUserIdStr;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+#[cfg(feature = "explain_binary")]
+mod access_explanation;
+
+#[cfg(feature = "explain_binary")]
+pub use access_explanation::{
+    AccessExplanation, AccessGrant, EmailAttachmentReason, ForeignEntityAuthEntity,
+};
 pub use bot_id::{BotId, BotIdStr};
 pub use model_entity::EntityType;
+pub use models_entity_access_management::EntityAccessSourceType;
 pub use models_permissions::share_permission::access_level::AccessLevel;
 pub use models_permissions::share_permission::access_level::{
     CommentAccessLevel, EditAccessLevel, OwnerAccessLevel, ViewAccessLevel,
@@ -34,6 +42,15 @@ pub enum BotAccessScope {
 }
 
 impl BotAccessScope {
+    /// User scope for a caller that knows only the acting user, such as an AI
+    /// tool request, which carries no organization context.
+    pub fn user(user_id: MacroUserIdStr<'static>) -> Self {
+        Self::User {
+            user_id,
+            user_org_id: None,
+        }
+    }
+
     /// Returns the verified acting user's identifier for user scope.
     pub fn user_id(&self) -> Option<&MacroUserIdStr<'static>> {
         match self {
@@ -199,7 +216,7 @@ pub trait RequiredPermission: std::fmt::Debug + Send + Sync + 'static {
 ///
 /// Items (documents, chats, projects, threads) use access levels.
 /// Channels use view-only permission or participant roles.
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "schema", derive(utoipa::ToSchema))]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum EntityPermission {
@@ -369,7 +386,7 @@ pub enum ChannelRoleResult {
 }
 
 /// A given entity
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Entity {
     /// The id of the entity
     pub entity_id: String,

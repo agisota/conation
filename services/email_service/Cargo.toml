@@ -114,7 +114,9 @@ infer = "0.19.0"
 item_filters = { path = "../../crates/item_filters" }
 lol_html = { workspace = true }
 conation_auth = { path = "../../crates/conation_auth" }
-conation_authorization = { path = "../../crates/conation_authorization" }
+conation_authorization = { path = "../../crates/conation_authorization", features = [
+  "postgres",
+] }
 conation_cors = { path = "../../crates/conation_cors" }
 conation_config = { path = "../../crates/conation_config" }
 conation_db_client = { path = "../../crates/conation_db_client" }
@@ -180,6 +182,7 @@ urlencoding = { workspace = true }
 utoipa = { workspace = true }
 utoipa-swagger-ui = { workspace = true }
 uuid = { workspace = true }
+subtle = { workspace = true }
 
 conation_service_urls = { path = "../../crates/conation_service_urls" }
 workspace-hack = { version = "0.1", path = "../../crates/workspace-hack" }

@@ -3,6 +3,16 @@ import type {
   TextMatchTransformer,
 } from '@lexical/markdown';
 import type { ElementNode, LexicalNode, TextNode } from 'lexical';
+import {
+  $createAgentSessionMentionNode,
+  AgentSessionMentionNode,
+  buildAgentSessionMentionMarkdown,
+} from '../nodes/AgentSessionMentionNode';
+import {
+  CONNECT_APP_TAG,
+  ConnectAppNode,
+  isConnectAppSlug,
+} from '../nodes/ConnectAppNode';
 import { ContactMentionNode } from '../nodes/ContactMentionNode';
 import { DateMentionNode } from '../nodes/DateMentionNode';
 import { DocumentCardNode } from '../nodes/DocumentCardNode';
@@ -364,6 +374,73 @@ export const E_PR_MENTION: ElementTransformer = {
   },
 };
 
+// Internal Agent Session Mentions
+
+export const I_AGENT_SESSION_MENTION: TextMatchTransformer = {
+  dependencies: [AgentSessionMentionNode, UnknownMentionNode],
+  type: 'text-match',
+  regExp: /<m-agent-session-mention>(.*?)<\/m-agent-session-mention>/,
+  importRegExp: /<m-agent-session-mention>(.*?)<\/m-agent-session-mention>/,
+  export: (node) => {
+    if (!(node instanceof AgentSessionMentionNode)) return null;
+    return buildAgentSessionMentionMarkdown({
+      id: node.getId(),
+      label: node.getLabel(),
+      mentionUuid: node.getMentionUuid(),
+      ...(node.isExpanded() ? { expanded: true } : {}),
+    });
+  },
+  replace: (node: TextNode, match: RegExpMatchArray) => {
+    try {
+      const data = JSON.parse(match[1]);
+      if (!('id' in data) || typeof data.id !== 'string') {
+        throw new Error('Missing field id');
+      }
+      node.replace(
+        $createAgentSessionMentionNode({
+          id: data.id,
+          label: typeof data.label === 'string' ? data.label : undefined,
+          mentionUuid:
+            typeof data.mentionUuid === 'string' ? data.mentionUuid : undefined,
+          expanded: data.expanded === true,
+        })
+      );
+    } catch (e) {
+      console.error('Error in I_AGENT_SESSION_MENTION replace:', e);
+      replaceTextWithUnknownMention(node, 'Unknown Agent Session');
+    }
+  },
+};
+
+// External Agent Session Mentions
+
+export const E_AGENT_SESSION_MENTION: ElementTransformer = {
+  dependencies: [AgentSessionMentionNode],
+  type: 'element',
+  regExp: /$^/,
+  export: (node) => {
+    if (!(node instanceof AgentSessionMentionNode)) return null;
+
+    const id = node.getId();
+    if (!id) return null;
+
+    const label = node.getLabel() || 'Agent session';
+    const hostname = currentBrowserHostname();
+    if (!hostname) return label;
+
+    const prUrl = `https://${hostname}/app/agent/${id}`;
+    return `[${label}](${prUrl})`;
+  },
+  replace: (
+    _parentNode: ElementNode,
+    _children: Array<LexicalNode>,
+    _match: Array<string>,
+    _isImport: boolean
+  ) => {
+    return false;
+  },
+};
+
 // Internal Group Mentions (e.g., @here)
 export const I_GROUP_MENTION: TextMatchTransformer = {
   dependencies: [GroupMentionNode, UnknownMentionNode],
@@ -492,6 +569,42 @@ export const I_THEME_MENTION: TextMatchTransformer = {
     } catch (e) {
       console.error('Error in I_THEME_MENTION replace:', e);
       replaceTextWithUnknownMention(node, 'Unknown Theme');
+    }
+  },
+};
+
+// Connect-app chips: an agent's "this app is not connected, here is how"
+// affordance. Same JSON-in-body shape as every other m-* tag.
+export const I_CONNECT_APP: TextMatchTransformer = {
+  dependencies: [ConnectAppNode, UnknownMentionNode],
+  type: 'text-match',
+  regExp: new RegExp(`<${CONNECT_APP_TAG}>(.*?)</${CONNECT_APP_TAG}>`),
+  importRegExp: new RegExp(`<${CONNECT_APP_TAG}>(.*?)</${CONNECT_APP_TAG}>`),
+  export: (node) => {
+    if (!(node instanceof ConnectAppNode)) return null;
+    const data = JSON.stringify({
+      appSlug: node.getAppSlug(),
+      name: node.getName(),
+    });
+    return `<${CONNECT_APP_TAG}>${data}</${CONNECT_APP_TAG}>`;
+  },
+  replace: (node: TextNode, match: RegExpMatchArray) => {
+    try {
+      const parsed: unknown = JSON.parse(match[1]);
+      if (typeof parsed !== 'object' || parsed === null) {
+        throw new Error('Invalid connect-app JSON');
+      }
+      const { appSlug, name } = parsed as Record<string, unknown>;
+      // The slug ends up in a URL and is model-authored: only the charset the
+      // proxy routes on is accepted, anything else falls back to the
+      // unknown-mention chip rather than being repaired.
+      if (!isConnectAppSlug(appSlug) || typeof name !== 'string' || !name) {
+        throw new Error('Invalid connect-app payload');
+      }
+      node.replace(new ConnectAppNode(appSlug, name));
+    } catch (e) {
+      console.error('Error in I_CONNECT_APP replace:', e);
+      replaceTextWithUnknownMention(node, 'Connect app');
     }
   },
 };

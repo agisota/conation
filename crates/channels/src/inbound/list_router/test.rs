@@ -134,6 +134,7 @@ fn test_router_with_channels(
             default_user_id: default_user_id.map(str::to_owned),
         },
         conation_authorization::NoBotAuthorizer,
+        conation_authorization::NoUserApiKeyAuthorizer,
     );
     let state = ChannelListRouterState::new(
         list_service,

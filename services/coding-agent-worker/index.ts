@@ -1,4 +1,4 @@
-import { msg } from '@conation/sdk';
+import { msg } from '@macro-inc/sdk';
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
 import { conation } from './src/conation';

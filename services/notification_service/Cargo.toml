@@ -13,6 +13,10 @@ path = "src/main.rs"
 name = "notification_service_openapi"
 path = "src/openapi.rs"
 
+[[bin]]
+name = "notification_service_doppler_config"
+path = "src/doppler_config.rs"
+
 [features]
 default = ["push_notification_event_handler"]
 local_queue = []
@@ -34,9 +38,12 @@ http-body-util = { workspace = true }
 itertools = { workspace = true }
 last_online_tracker = { path = "../../crates/last_online_tracker" }
 conation_auth = { path = "../../crates/conation_auth" }
-conation_authorization = { path = "../../crates/conation_authorization" }
+conation_authorization = { path = "../../crates/conation_authorization", features = [
+  "postgres",
+] }
 conation_aws_config = { path = "../../crates/conation_aws_config" }
 conation_config = { path = "../../crates/conation_config" }
+doppler-config = { workspace = true }
 conation_cors = { path = "../../crates/conation_cors" }
 conation_db_client = { path = "../../crates/conation_db_client", default-features = false }
 conation_entrypoint = { path = "../../crates/conation_entrypoint" }

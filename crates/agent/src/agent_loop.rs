@@ -1,7 +1,8 @@
 /// The main entry point: [`AgentLoop`] and [`Session`].
 use crate::error::AgentError;
-use crate::hook::{RegisterFn, ToolRouter};
-use crate::model::router::{DEFAULT_ROX_MODEL, ModelRouter, ProviderAgent};
+use crate::hook::{BridgeInputs, RegisterFn, ToolRouter, UserToolFinisher};
+use crate::model::PredefinedModel;
+use crate::model::router::{ModelRouter, ProviderAgent};
 use crate::stream::ChatCompletionStream;
 use crate::tool_adapter::DynToolSetAdapter;
 use ai_toolset::{RequestContext, SearchableTool, ToolLoader, ToolSet as AiToolSet};
@@ -21,8 +22,7 @@ const DEFAULT_MAX_TOKENS: u64 = 16_000;
 /// Routes each session to the provider serving the selected model id (see
 /// [`ModelRouter`]). The model is a
 /// plain api-id string so the frontend can select it directly; backend
-/// callers may pass a [`crate::model::PredefinedModel`] via `with_model` (it is
-/// `ToString`).
+/// callers may pass a [`PredefinedModel`] via `with_model` (it is `ToString`).
 /// Tools and system prompt are provided per-session since they vary by request
 /// (MCP tools are per-user, system prompt depends on toolset selection).
 pub struct AgentLoop {
@@ -30,24 +30,39 @@ pub struct AgentLoop {
     max_turns: usize,
     max_tokens: u64,
     recorder: Arc<dyn UsageRecorder>,
+    user_tool_finisher: Option<UserToolFinisher>,
 }
 
 impl AgentLoop {
     /// Create an `AgentLoop` with provider clients from `APP_SECRETS_JSON` or the environment and
-    /// the default Conation model (Gemini 2.5 Flash through Rox/OmniRoute).
+    /// the default model (Opus 4.7).
     ///
     /// `recorder` is the [`UsageRecorder`] every session created from this loop
     /// logs token usage to — it is required so that no AI call goes unrecorded.
     ///
-    /// `ROX_API_KEY` is required. Provider-specific keys are optional unless a
-    /// caller explicitly selects that provider.
+    /// `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` are required.
     pub fn new(recorder: Arc<dyn UsageRecorder>) -> Self {
         Self {
-            model: DEFAULT_ROX_MODEL.to_owned(),
+            model: PredefinedModel::default().to_string(),
             max_turns: DEFAULT_MAX_TURNS,
             max_tokens: DEFAULT_MAX_TOKENS,
             recorder,
+            user_tool_finisher: None,
         }
+    }
+
+    /// Finish user tools inside the turn.
+    ///
+    /// A user tool (`ai_toolset::UserTool`) answers `"PendingUserExecution"`
+    /// and leaves the call for the host to finish. Without a finisher that
+    /// answer reaches the model as-is and the host finishes the call later,
+    /// as chat does over HTTP. With one, the bridge hands each pending call
+    /// to `finisher` before the model reads it, and the model sees what the
+    /// user decided instead - the shape a host that can reach its user
+    /// mid-turn wants.
+    pub fn with_user_tool_finisher(mut self, finisher: UserToolFinisher) -> Self {
+        self.user_tool_finisher = Some(finisher);
+        self
     }
 
     /// Override the model.
@@ -204,10 +219,17 @@ impl AgentLoop {
             })
         };
 
-        // ModelRouter appends the exact candidate id to each provider prompt.
-        // Keeping the base prompt model-neutral is necessary because a single
-        // request may move to the next candidate before emitting output.
-        let mut system_prompt = system_prompt.to_owned();
+        // Tell the model which model it is. Done here (not on the frontend)
+        // so the system prompt always reflects the model actually serving the
+        // request. A model's training data predates its own release, so a
+        // newly released model doesn't recognize its own id and may fall back
+        // to identifying as a predecessor — tell it to trust the id.
+        let mut system_prompt = format!(
+            "{system_prompt}\n\nYou are the {} model. If this model id is unfamiliar, \
+             that is because it was released after your training data cutoff — trust \
+             this id over your training data when identifying yourself.",
+            self.model
+        );
         // Tell the model which connected integrations it can reach via tool
         // search. The prompt text lives in the `prompt` crate; the toolset names
         // are the dynamic data injected here. Omitted when nothing is connected.
@@ -222,9 +244,12 @@ impl AgentLoop {
             agent,
             history: Vec::new(),
             max_turns: self.max_turns,
-            routing,
-            loaded_buffer,
-            register_loaded,
+            bridge_inputs: BridgeInputs {
+                routing,
+                loaded_buffer,
+                register_loaded,
+                user_tool_finisher: self.user_tool_finisher.clone(),
+            },
             recorder: self.recorder.clone(),
             usage_ctx,
             model: self.model.clone(),
@@ -267,11 +292,9 @@ pub struct Session {
     agent: ProviderAgent,
     history: Vec<Message>,
     max_turns: usize,
-    routing: ToolRouter,
-    /// Tools `SearchTools` asked to load, shared with the stream bridge.
-    loaded_buffer: Arc<Mutex<Vec<SearchableTool>>>,
-    /// Registers loaded tools with the live tool server (see [`RegisterFn`]).
-    register_loaded: RegisterFn,
+    /// What every turn's stream bridge is built from: tool routing, the
+    /// on-demand tool loading pair, and the user-tool finisher if any.
+    bridge_inputs: BridgeInputs,
     recorder: Arc<dyn UsageRecorder>,
     usage_ctx: UsageContext,
     model: String,
@@ -307,9 +330,7 @@ impl Session {
                 prompt.clone(),
                 history.to_vec(),
                 self.max_turns,
-                self.routing.clone(),
-                self.loaded_buffer.clone(),
-                self.register_loaded.clone(),
+                self.bridge_inputs.clone(),
                 self.recorder.clone(),
                 self.usage_ctx.clone(),
                 self.model.clone(),

@@ -17,7 +17,10 @@ use ::notification::outbound::websocket::{ConnectionGatewayClient, WebSocketGate
 use ::rate_limit::RateLimitServiceImpl;
 use anyhow::Context;
 use conation_auth::middleware::decode_jwt::JwtValidationArgs;
-use conation_authorization::{InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationState};
+use conation_authorization::{
+    InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationState,
+    PgUserApiKeyAuthorizationRepo, PgUserApiKeyAuthorizer,
+};
 use conation_entrypoint::MacroEntrypoint;
 use conation_env::Environment;
 use conation_event_broker::{GlobalSpawner, KafkaEventPublisher, MacroEventBrokerService};
@@ -157,6 +160,7 @@ pub async fn main() -> anyhow::Result<()> {
             default_user_id: None,
         },
         conation_authorization::NoBotAuthorizer,
+        PgUserApiKeyAuthorizer::new(PgUserApiKeyAuthorizationRepo::new(db.clone())),
     )));
 
     let notification_repository =

@@ -25,6 +25,7 @@ import UploadIcon from '@phosphor/upload-simple.svg';
 import { Button, cn, Dropdown } from '@ui';
 import { createMemo, For, Show } from 'solid-js';
 import { NewCallButton } from './NewCallButton';
+import { useMaybeSoupView } from './soup-view-context';
 
 // Which blocks to show as create options per view, in order
 const VIEW_CREATE_BLOCKNAMES: Partial<Record<ListView, CreatableName[]>> = {
@@ -156,6 +157,7 @@ export const SoupViewCreateButton = () => {
   const panel = useSplitPanelOrThrow();
   const handleFileUpload = useHandleFileUpload();
   const isCreatableEnabled = useCreatableEnabled();
+  const soupView = useMaybeSoupView();
 
   const currentView = createMemo(() => {
     const content = panel.handle.content();
@@ -163,8 +165,19 @@ export const SoupViewCreateButton = () => {
     return isListViewID(content.id) ? content.id : undefined;
   });
 
-  const options = createMemo<CreateOption[]>(() => {
+  // The inbox's Reminders tab is not a ListView of its own, but it offers the
+  // same create button the standalone Reminders view does — a reminder is the
+  // one thing you make from that list rather than triage into it.
+  const createView = createMemo(() => {
     const view = currentView();
+    if (view === 'inbox' && soupView?.activeTab() === 'reminders') {
+      return 'reminders';
+    }
+    return view;
+  });
+
+  const options = createMemo<CreateOption[]>(() => {
+    const view = createView();
     if (!view) return [];
     return getViewCreateOptions(view, isCreatableEnabled);
   });

@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { ControlAgentSessionData, ControlAgentSessionErrors, ControlAgentSessionResponses, CreateAgentSessionData, CreateAgentSessionErrors, CreateAgentSessionResponses, DeleteAgentSessionData, DeleteAgentSessionErrors, DeleteAgentSessionResponses, GetAgentSandboxSizeData, GetAgentSandboxSizeErrors, GetAgentSandboxSizeResponses, GetAgentSessionData, GetAgentSessionErrors, GetAgentSessionLogData, GetAgentSessionLogErrors, GetAgentSessionLogResponses, GetAgentSessionResponses, PutAgentSandboxSizeData, PutAgentSandboxSizeErrors, PutAgentSandboxSizeResponses, PutAgentSessionSandboxSizeData, PutAgentSessionSandboxSizeErrors, PutAgentSessionSandboxSizeResponses, RenameAgentSessionData, RenameAgentSessionErrors, RenameAgentSessionResponses } from './types.gen';
+import type { ControlAgentSessionData, ControlAgentSessionErrors, ControlAgentSessionResponses, CreateAgentSessionData, CreateAgentSessionErrors, CreateAgentSessionResponses, DeleteAgentSessionData, DeleteAgentSessionErrors, DeleteAgentSessionResponses, EditQueuedActionData, EditQueuedActionErrors, EditQueuedActionResponses, GetAgentSandboxSizeData, GetAgentSandboxSizeErrors, GetAgentSandboxSizeResponses, GetAgentSessionData, GetAgentSessionErrors, GetAgentSessionLogData, GetAgentSessionLogErrors, GetAgentSessionLogResponses, GetAgentSessionQueueData, GetAgentSessionQueueErrors, GetAgentSessionQueueResponses, GetAgentSessionResponses, LoadAgentModelsHandlerData, LoadAgentModelsHandlerErrors, LoadAgentModelsHandlerResponses, PreviewAgentSessionsData, PreviewAgentSessionsErrors, PreviewAgentSessionsResponses, PutAgentSandboxSizeData, PutAgentSandboxSizeErrors, PutAgentSandboxSizeResponses, PutAgentSessionSandboxSizeData, PutAgentSessionSandboxSizeErrors, PutAgentSessionSandboxSizeResponses, RemoveQueuedActionData, RemoveQueuedActionErrors, RemoveQueuedActionResponses, RenameAgentSessionData, RenameAgentSessionErrors, RenameAgentSessionResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -58,6 +58,21 @@ export class Sdk extends HeyApiClient {
     }
     
     /**
+     * Probe one provider's model catalog without creating an agent session.
+     */
+    public loadAgentModelsHandler<ThrowOnError extends boolean = false>(options: Options<LoadAgentModelsHandlerData, ThrowOnError>): RequestResult<LoadAgentModelsHandlerResponses, LoadAgentModelsHandlerErrors, ThrowOnError> {
+        return (options.client ?? this.client).post<LoadAgentModelsHandlerResponses, LoadAgentModelsHandlerErrors, ThrowOnError>({
+            security: [{ scheme: 'bearer', type: 'http' }],
+            url: '/agent-models/load',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
      * Read the caller's default sandbox size for new `@coder` sessions.
      */
     public getAgentSandboxSize<ThrowOnError extends boolean = false>(options?: Options<GetAgentSandboxSizeData, ThrowOnError>): RequestResult<GetAgentSandboxSizeResponses, GetAgentSandboxSizeErrors, ThrowOnError> {
@@ -99,6 +114,25 @@ export class Sdk extends HeyApiClient {
     }
     
     /**
+     * Preview a batch of agent sessions for rendering chips.
+     *
+     * No per-id access extractor: a chip has to render for a session the caller
+     * cannot open, so access is answered per id in the body rather than
+     * enforced on the request. The caller learns the fields a chip shows for
+     * sessions they may view, and only existence for the rest.
+     */
+    public previewAgentSessions<ThrowOnError extends boolean = false>(options: Options<PreviewAgentSessionsData, ThrowOnError>): RequestResult<PreviewAgentSessionsResponses, PreviewAgentSessionsErrors, ThrowOnError> {
+        return (options.client ?? this.client).post<PreviewAgentSessionsResponses, PreviewAgentSessionsErrors, ThrowOnError>({
+            url: '/agent-sessions/preview',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
      * Delete an agent session and its live resources.
      */
     public deleteAgentSession<ThrowOnError extends boolean = false>(options: Options<DeleteAgentSessionData, ThrowOnError>): RequestResult<DeleteAgentSessionResponses, DeleteAgentSessionErrors, ThrowOnError> {
@@ -114,6 +148,9 @@ export class Sdk extends HeyApiClient {
     
     /**
      * Perform a control operation on a live agent session.
+     *
+     * Edit access suffices: whoever can prompt the bot through its thread can
+     * prompt it here.
      */
     public controlAgentSession<ThrowOnError extends boolean = false>(options: Options<ControlAgentSessionData, ThrowOnError>): RequestResult<ControlAgentSessionResponses, ControlAgentSessionErrors, ThrowOnError> {
         return (options.client ?? this.client).post<ControlAgentSessionResponses, ControlAgentSessionErrors, ThrowOnError>({
@@ -129,9 +166,9 @@ export class Sdk extends HeyApiClient {
     /**
      * The raw protocol log of one agent session.
      *
-     * Served unfolded, and whole: the fold is a left fold over the frames from
-     * the beginning, so a reader that skipped any of them would derive different
-     * turn numbering.
+     * Served unfolded from the latest successful load initialization, or the
+     * beginning when no load succeeded. Consumers stage load attempts so failed
+     * or interrupted replay does not become visible conversation content.
      *
      * An unknown session is an error: the response has to name the session's
      * agent, and a session that never existed has none to name.
@@ -146,6 +183,35 @@ export class Sdk extends HeyApiClient {
     public renameAgentSession<ThrowOnError extends boolean = false>(options: Options<RenameAgentSessionData, ThrowOnError>): RequestResult<RenameAgentSessionResponses, RenameAgentSessionErrors, ThrowOnError> {
         return (options.client ?? this.client).put<RenameAgentSessionResponses, RenameAgentSessionErrors, ThrowOnError>({
             url: '/agent-sessions/{session_id}/name',
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            }
+        });
+    }
+    
+    /**
+     * The actions waiting to dispatch in this session, oldest first.
+     */
+    public getAgentSessionQueue<ThrowOnError extends boolean = false>(options: Options<GetAgentSessionQueueData, ThrowOnError>): RequestResult<GetAgentSessionQueueResponses, GetAgentSessionQueueErrors, ThrowOnError> {
+        return (options.client ?? this.client).get<GetAgentSessionQueueResponses, GetAgentSessionQueueErrors, ThrowOnError>({ url: '/agent-sessions/{session_id}/queue', ...options });
+    }
+    
+    /**
+     * Remove a queued action before it dispatches. There is no un-sending: an
+     * action that already went out answers 404.
+     */
+    public removeQueuedAction<ThrowOnError extends boolean = false>(options: Options<RemoveQueuedActionData, ThrowOnError>): RequestResult<RemoveQueuedActionResponses, RemoveQueuedActionErrors, ThrowOnError> {
+        return (options.client ?? this.client).delete<RemoveQueuedActionResponses, RemoveQueuedActionErrors, ThrowOnError>({ url: '/agent-sessions/{session_id}/queue/{action_id}', ...options });
+    }
+    
+    /**
+     * Replace a queued prompt's text before it dispatches.
+     */
+    public editQueuedAction<ThrowOnError extends boolean = false>(options: Options<EditQueuedActionData, ThrowOnError>): RequestResult<EditQueuedActionResponses, EditQueuedActionErrors, ThrowOnError> {
+        return (options.client ?? this.client).put<EditQueuedActionResponses, EditQueuedActionErrors, ThrowOnError>({
+            url: '/agent-sessions/{session_id}/queue/{action_id}',
             ...options,
             headers: {
                 'Content-Type': 'application/json',

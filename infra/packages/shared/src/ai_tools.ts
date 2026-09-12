@@ -54,7 +54,7 @@ export function getAiToolsInfra(): AiToolsInfra {
     .getOutput('docxUploadBucketArn')
     .apply((v) => v as string);
 
-  // Queue names come from the `macro_queues` crate at runtime; we only need the
+  // Queue names come from the `conation_queues` crate at runtime; we only need the
   // ARNs here for the IAM send/receive grants below.
   const emailScheduledQueueArn: pulumi.Output<string> = emailServiceStack
     .getOutput('scheduledQueueArn')
@@ -147,6 +147,8 @@ export function getAiToolsServiceRoleArns(): pulumi.Output<string>[] {
     agentScheduleServiceStack
       .getOutput('agentScheduleServiceRoleArn')
       .apply((v) => v as string),
-    ...agentHarnessServiceRoleArns,
+    agentHarnessServiceStack
+      .getOutput('agentHarnessServiceRoleArn')
+      .apply((v) => v as string),
   ];
 }

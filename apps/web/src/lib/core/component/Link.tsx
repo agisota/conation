@@ -1,13 +1,10 @@
 import { t } from '@app/lib/i18n';
 import { openExternalUrl } from '@core/util/url';
-import CaretDown from '@phosphor/caret-down.svg';
-import CaretRight from '@phosphor/caret-right.svg';
-import GlobeIcon from '@phosphor/globe-simple.svg';
 import LinkIcon from '@phosphor/link.svg';
 import { proxyResource } from '@service-unfurl/client';
 import type { GetUnfurlResponse } from '@service-unfurl/generated/schemas/getUnfurlResponse';
 import { cn } from '@ui';
-import { createSignal, For, Show } from 'solid-js';
+import { Show } from 'solid-js';
 import { createStore } from 'solid-js/store';
 
 function extractDomain(url: string) {
@@ -24,6 +21,50 @@ type UnfurlLinkProps = {
   unfurled: GetUnfurlResponse;
   size?: 'xs' | 'sm';
 };
+
+type LinkHoverCardProps = {
+  unfurled: GetUnfurlResponse;
+};
+
+/**
+ * The shared card shown when hovering a link in rendered or editable Markdown.
+ */
+export function LinkHoverCard(props: LinkHoverCardProps) {
+  const domain = extractDomain(props.unfurled.url);
+  const title = () => props.unfurled.title || domain;
+
+  return (
+    <div class="flex w-80 max-w-[calc(100vw-1rem)] items-start gap-1 rounded-xl glass bg-menu-glass p-2 text-left">
+      <div class="flex size-6 shrink-0 items-center justify-center">
+        <Show
+          when={props.unfurled.favicon_url}
+          fallback={<LinkIcon class="size-4 text-ink-muted" />}
+        >
+          {(icon) => (
+            <Show
+              when={!badLinks[icon()]}
+              fallback={<LinkIcon class="size-4 text-ink-muted" />}
+            >
+              <img
+                src={proxyResource(icon())}
+                class="size-5 rounded-md object-cover"
+                crossorigin="anonymous"
+                alt=""
+                on:error={() => {
+                  setBadLinks(icon(), true);
+                }}
+              />
+            </Show>
+          )}
+        </Show>
+      </div>
+      <div class="min-w-0 flex-1">
+        <div class="truncate text-sm/6 font-medium text-ink">{title()}</div>
+        <div class="truncate text-xs text-ink-muted">{domain}</div>
+      </div>
+    </div>
+  );
+}
 
 export function UnfurlLink(props: UnfurlLinkProps) {
   const domain = extractDomain(props.unfurled.url);

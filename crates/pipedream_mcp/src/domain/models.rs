@@ -1,7 +1,3 @@
-use rmcp::RoleClient;
-use rmcp::model::{ClientInfo, Implementation};
-use rmcp::service::RunningService;
-
 pub use conation_user_id::user_id::MacroUserIdStr;
 
 /// Our MCP client publishes this name to servers on-connect.
@@ -86,12 +82,4 @@ pub struct CatalogPage {
 }
 
 /// Errors from Pipedream MCP tool dispatch.
-#[derive(Debug, thiserror::Error)]
-pub enum Error {
-    /// The requested tool was not found on any connected server.
-    #[error("unknown tool: {0}")]
-    UnknownTool(String),
-    /// A tool invocation failed.
-    #[error("tool call failed: {0}")]
-    ToolCall(String),
-}
+pub use mcp_toolset::Error;

@@ -1,6 +1,5 @@
 import { AskMacroButton } from '@app/features/chat/ChatWithAgentButton';
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
-import { t } from '@app/lib/i18n';
 import { CommentMargin } from '@block-md/comments/CommentMargin';
 import {
   commentsStore,
@@ -11,7 +10,6 @@ import { mdStore } from '@block-md/signal/markdownBlockData';
 import { SidePanel } from '@components/app/side-panel';
 import { useCanAutofocusSplitContent } from '@components/app/split-layout/layoutUtils';
 import { useNavigatedFromJK } from '@components/app/useNavigatedFromJK';
-import type { LoroManager } from '@conation/collaboration/collab/manager';
 import { useBlockAliasedName, useBlockId } from '@core/block';
 import {
   editorFocusSignal,
@@ -20,13 +18,13 @@ import {
 import { ParamsProvider } from '@core/component/ParamsProvider';
 import {
   DEV_MODE_ENV,
-  ENABLE_HISTORY_COMPONENT,
   ENABLE_MARKDOWN_COMMENTS,
-  getFeatureFlagOverride,
-  INLINE_AI_EDITING_FLAG,
-  INLINE_AI_EDITING_OVERRIDE,
+  enableHistoryComponent,
+  enableInlineAiEditing,
+  isFeatureEnabled,
   LOCAL_ONLY,
 } from '@core/constant/featureFlags';
+import { useIsMacroTeam } from '@core/context/team';
 import { registerHotkey } from '@core/hotkey/hotkeys';
 import { TOKENS } from '@core/hotkey/tokens';
 import { isMobile } from '@core/mobile/isMobile';
@@ -37,6 +35,7 @@ import {
 import { tempRedirectLocation } from '@core/signal/location';
 import { useCanEdit } from '@core/signal/permissions';
 import { useBlockDocumentName } from '@core/util/currentBlockDocumentName';
+import type { LoroManager } from '@macro-inc/collaboration/collab/manager';
 import { makeResizeObserver } from '@solid-primitives/resize-observer';
 import { makePersisted } from '@solid-primitives/storage';
 import {
@@ -56,7 +55,6 @@ import { DocumentDiscussion } from './DocumentDiscussion';
 import { InlineTaskGithubPullRequests } from './InlineTaskGithubPullRequests';
 import { InlineTaskProperties } from './InlineTaskProperties';
 import { InstructionsEditor } from './InstructionsEditor';
-import { isLexicalStateDebuggerEnabled } from './lexicalStateDebuggerPolicy';
 import { MarkdownEditor } from './MarkdownEditor';
 import {
   MARKDOWN_OUTLINE_WIDTH,
@@ -110,13 +108,11 @@ const widthToMode = (width: number): CommentLayoutMode => {
 };
 
 function useCanUseLexicalStateDebugger() {
-  return createMemo(() =>
-    isLexicalStateDebuggerEnabled({
-      localOnly: LOCAL_ONLY,
-      development: DEV_MODE_ENV,
-      operatorOverride: getFeatureFlagOverride('ENABLE_LEXICAL_STATE_DEBUGGER'),
-    })
-  );
+  const isMacroTeam = useIsMacroTeam();
+  return createMemo(() => {
+    if (LOCAL_ONLY || DEV_MODE_ENV) return true;
+    return isMacroTeam();
+  });
 }
 
 export function Notebook(props: {
@@ -136,9 +132,7 @@ export function Notebook(props: {
   const canAutofocusSplitContent = useCanAutofocusSplitContent();
   const documentId = props.documentId;
   const canEdit = useCanEdit();
-  const inlineAiEditing = useFeatureFlag(INLINE_AI_EDITING_FLAG, {
-    enabledOverride: INLINE_AI_EDITING_OVERRIDE,
-  });
+  const inlineAiEditing = useFeatureFlag(enableInlineAiEditing);
 
   let notebookRef!: HTMLDivElement;
   let commentMarginRef: HTMLDivElement | undefined;
@@ -163,7 +157,10 @@ export function Notebook(props: {
     if (!ENABLE_MARKDOWN_COMMENTS) return false;
     return Object.keys(comments).length > 0;
   });
-  const showComments = () => hasComment() && !history.isOpen();
+  // On phones the margin is hidden entirely (no minimized rail); the touch
+  // comment drawer is the only comment surface. CommentMargin stays mounted
+  // inside the hidden wrapper — it hosts the drawer.
+  const showComments = () => hasComment() && !history.isOpen() && !isMobile();
 
   const currentEditorState = () => {
     const editor = md.editor;
@@ -195,8 +192,13 @@ export function Notebook(props: {
     observe(notebookRef);
   });
 
+  // Component scope on purpose: the hook registers an onCleanup that ends
+  // its pending wait-for-mark. Called inside the createEffect below, that
+  // cleanup would belong to the effect's computation and run on every
+  // re-run — tying the deep-link scroll's lifetime to re-run ordering.
+  const goToTempRedirect = useGoToTempRedirect();
+
   createEffect(() => {
-    const goToTempRedirect = useGoToTempRedirect();
     const recentState = tempRedirectLocation();
     if (!recentState) return;
 
@@ -228,7 +230,7 @@ export function Notebook(props: {
         hotkey: 'enter',
         scopeId: scopeId(),
         hotkeyToken: TOKENS.block.focus,
-        description: () => t('markdown.editor.focus'),
+        description: 'Focus Title or Markdown Editor',
         keyDownHandler: () => {
           const titleEditor = md.titleEditor;
           const markdownEditor = md.editor;
@@ -365,7 +367,7 @@ export function Notebook(props: {
       >
         <SidePanel.Section
           id="document-ai-actions"
-          title={t('markdown.sidePanel.actions')}
+          title="Actions"
           defaultOpen
           order={0}
         >
@@ -405,7 +407,7 @@ export function Notebook(props: {
                 setShowLexicalStateDebugger(false)
               }
             />
-            <Show when={ENABLE_HISTORY_COMPONENT()}>
+            <Show when={isFeatureEnabled(enableHistoryComponent)}>
               <HistoryOverlay
                 currentState={currentEditorState}
                 selectedAt={history.selectedAt()}

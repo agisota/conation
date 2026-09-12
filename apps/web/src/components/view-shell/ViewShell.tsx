@@ -58,7 +58,7 @@ export type ViewShellLayout = {
 
 type ViewShellInternal = ViewShellLayout & { id: string };
 
-const RESIZE_GUTTER = 8;
+const RESIZE_GUTTER = 1;
 
 const ViewShellContext = createContext<ViewShellInternal>();
 
@@ -268,9 +268,39 @@ function Root(props: ViewShellRootProps) {
  * Sizing region for navigation. Renders a div, not aside.
  * ViewSidebar.Root inside keeps the landmark.
  */
-function Aside(props: JSX.HTMLAttributes<HTMLDivElement>) {
-  const [local, rest] = splitProps(props, ['children', 'class']);
+type ViewShellAsideProps = JSX.HTMLAttributes<HTMLDivElement> & {
+  /** Called with the solved aside width after a drag or keyboard resize. */
+  onWidthChangeEnd?: (width: number) => void;
+};
+
+function Aside(props: ViewShellAsideProps) {
+  const [local, rest] = splitProps(props, [
+    'children',
+    'class',
+    'onWidthChangeEnd',
+  ]);
   const ws = useViewShellInternal();
+  const redistributionPreferredSize = () => {
+    const layout = ws.aside.layout();
+    if (layout.preserveDuringResize !== false) return layout.width;
+
+    const shellWidth = ws.width();
+    const mainLayout = ws.main.layout();
+    if (
+      shellWidth === undefined ||
+      mainLayout.preferredWidth === undefined ||
+      ws.detail.placement() === 'inline'
+    ) {
+      return layout.width;
+    }
+
+    const availableForAside =
+      shellWidth -
+      RESIZE_GUTTER -
+      Math.max(mainLayout.preferredWidth, mainLayout.min);
+
+    return Math.min(layout.width, Math.max(layout.min, availableForAside));
+  };
 
   return (
     <Resize.Panel
@@ -278,8 +308,10 @@ function Aside(props: JSX.HTMLAttributes<HTMLDivElement>) {
       index={0}
       minSize={ws.aside.layout().min}
       maxSize={ws.aside.layout().max}
+      redistributionPreferredSize={redistributionPreferredSize()}
       target={{ kind: 'px', px: ws.aside.layout().width }}
       collapsed={() => ws.aside.isCollapsed()}
+      onSizeChangeEnd={local.onWidthChangeEnd}
     >
       <div
         {...rest}
@@ -323,13 +355,31 @@ function Main(props: JSX.HTMLAttributes<HTMLElement>) {
   );
 }
 
+function TopBar(props: JSX.HTMLAttributes<HTMLDivElement>) {
+  const [local, rest] = splitProps(props, ['children', 'class']);
+  return (
+    <div
+      {...rest}
+      class={cn(
+        'flex h-12 min-w-0 shrink-0 items-center border-b border-edge px-4 py-3 touch:hidden',
+        local.class
+      )}
+      data-view-shell-top-bar=""
+    >
+      <h1 class="min-w-0 truncate text-sm font-semibold tracking-[-0.03em] text-ink">
+        {local.children}
+      </h1>
+    </div>
+  );
+}
+
 function Header(props: JSX.HTMLAttributes<HTMLElement>) {
   const [local, rest] = splitProps(props, ['children', 'class']);
   return (
     <header
       {...rest}
       class={cn(
-        'shrink-0 px-4 pb-5 pt-4 @max-[760px]/view-shell:px-3 @max-[480px]/view-shell:px-2',
+        'shrink-0 border-b border-edge touch:border-b-0 px-4 py-4 touch:px-(--mobile-chrome-gutter) touch:pt-[calc(var(--safe-top,0px)+0.5rem)]',
         local.class
       )}
       data-view-shell-header=""
@@ -348,7 +398,7 @@ function Content(props: JSX.HTMLAttributes<HTMLDivElement>) {
       <div
         {...rest}
         class={cn(
-          'min-h-0 min-w-0 flex-1 px-4 pb-4 @max-[760px]/view-shell:px-3 @max-[480px]/view-shell:px-2',
+          'min-h-0 min-w-0 flex-1 px-4 pb-4 @max-[760px]/view-shell:px-3 @max-[720px]/view-shell:pb-2 @max-[480px]/view-shell:px-2',
           local.class
         )}
         data-view-shell-content=""
@@ -363,6 +413,14 @@ function Detail(props: JSX.HTMLAttributes<HTMLDivElement>) {
   const [local, rest] = splitProps(props, ['children', 'class']);
   const ws = useViewShellInternal();
   const layout = ws.detail.layout;
+  const target = () => {
+    const initialWidth = layout().initialWidth;
+    if (initialWidth === 'auto') return undefined;
+    return {
+      kind: 'px' as const,
+      px: initialWidth ?? layout().width,
+    };
+  };
 
   return (
     <Switch>
@@ -372,7 +430,7 @@ function Detail(props: JSX.HTMLAttributes<HTMLDivElement>) {
           index={2}
           minSize={layout().min}
           maxSize={layout().max}
-          target={{ kind: 'px', px: layout().width }}
+          target={target()}
         >
           <div
             {...rest}
@@ -416,6 +474,7 @@ export const ViewShell = Object.assign(Root, {
   Root,
   Aside,
   Main,
+  TopBar,
   Header,
   Content,
   Detail,

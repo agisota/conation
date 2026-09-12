@@ -16,7 +16,9 @@
  * they already handle while the GET is in flight.
  */
 
+import { markMessageSent } from '@core/util/message-send-motion';
 import { agentHarnessServiceClient } from '@service-agent-harness/client';
+import type { CreateAgentSessionRequest } from '@service-agent-harness/generated/schemas';
 import { type Accessor, createSignal } from 'solid-js';
 
 /**
@@ -40,23 +42,62 @@ export function isPlaceholderSessionId(id: string): boolean {
 }
 
 /**
+ * Options captured by the preflight composer before a session exists.
+ */
+export type StartPendingSessionOptions = {
+  /** Persisted managed persona to run; omitted for Macro Coder. */
+  botId?: string;
+  /** First prompt, delivered after any model override. */
+  prompt?: string;
+  /** Optional model switch applied before the first prompt. */
+  modelOverride?: string;
+};
+
+/**
  * Start creating a managed session and return the placeholder to open a block
  * against right now. The POST runs unattended; nothing awaits it.
  */
-export function startPendingSession(): string {
+export function startPendingSession(
+  options: StartPendingSessionOptions = {}
+): string {
   const placeholder = `${PLACEHOLDER_PREFIX}${crypto.randomUUID()}`;
   const [sessionId, setSessionId] = createSignal<string>();
   const [failed, setFailed] = createSignal(false);
   pending.set(placeholder, { sessionId, failed });
 
   void agentHarnessServiceClient
-    .create({})
-    .then((result) => {
+    .create({
+      ...(options.botId ? { botId: options.botId } : {}),
+    } satisfies CreateAgentSessionRequest)
+    .then(async (result) => {
       if (result.isErr()) {
         setFailed(true);
         return;
       }
-      setSessionId(result.value.session.id);
+      const id = result.value.session.id;
+      if (options.modelOverride) {
+        const changed = await agentHarnessServiceClient.control(id, {
+          type: 'setModel',
+          model: options.modelOverride,
+        });
+        if (changed.isErr()) {
+          setFailed(true);
+          return;
+        }
+      }
+      const prompt = options.prompt?.trim();
+      if (prompt) {
+        const delivered = await agentHarnessServiceClient.control(id, {
+          type: 'prompt',
+          prompt,
+        });
+        if (delivered.isErr()) {
+          setFailed(true);
+          return;
+        }
+        markMessageSent(`agent:${id}:${delivered.value.actionId}`);
+      }
+      setSessionId(id);
     })
     .catch(() => setFailed(true));
 

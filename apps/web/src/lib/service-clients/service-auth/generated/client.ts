@@ -3383,6 +3383,11 @@ export type createUserResponse400 = {
   status: 400;
 };
 
+export type createUserResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
 export type createUserResponse500 = {
   data: ErrorResponse;
   status: 500;
@@ -3393,6 +3398,7 @@ export type createUserResponseSuccess = createUserResponse200 & {
 };
 export type createUserResponseError = (
   | createUserResponse400
+  | createUserResponse403
   | createUserResponse500
 ) & {
   headers: Headers;

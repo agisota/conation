@@ -2,6 +2,7 @@ import { t } from '@app/lib/i18n';
 import { useMessageActionDrawer } from '@channel/Mobile/message-action-drawer-context';
 import { touchHandler } from '@core/directive/touchHandler';
 import type { IUser } from '@core/user/types';
+import { messageSendMotion } from '@core/util/message-send-motion';
 import TrashIcon from '@icon/square-trash.svg';
 import { type Accessor, type JSX, Match, Show, Switch } from 'solid-js';
 import type { MessageEditor } from '../Channel/create-message-editor';
@@ -195,15 +196,14 @@ export function ChannelMessage(props: ChannelMessageProps) {
             isEditingMessage(props.messageEditor, props.message.id))
         }
         onClick={props.onClick}
-        ref={(el) =>
+        ref={(el) => {
+          messageSendMotion(el, () => `channel:${props.message.id}`);
           touchHandler(el, () => ({
             touchClassName: 'channel-message-long-press-highlight',
-            // Yield to the native image callout when long-pressing an image.
-            skipSelectors: ['img'],
             onLongPress: () =>
               drawerManager?.open(props.message, props.actions),
-          }))
-        }
+          }));
+        }}
       >
         <Switch>
           <Match when={props.message.deleted_at != null}>

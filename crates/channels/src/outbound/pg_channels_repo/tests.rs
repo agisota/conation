@@ -6,13 +6,14 @@ use crate::domain::models::{
 };
 use crate::domain::ports::{ChannelListRepo, ChannelRepo};
 use crate::outbound::pg_channels_repo::PgChannelsRepo;
-use conation_db_migrator::MACRO_DB_MIGRATIONS;
-use conation_user_id::user_id::MacroUserIdStr;
+use chrono::{DateTime, Utc};
 use filter_ast::Expr;
 use item_filters::ast::{
     LiteralTree,
     channel::{ChannelLiteral, ChannelThreadLiteral},
 };
+use conation_db_migrator::MACRO_DB_MIGRATIONS;
+use conation_user_id::user_id::MacroUserIdStr;
 use models_pagination::{CreatedAt, Cursor, CursorVal, Query, SimpleSortMethod};
 use sqlx::{Pool, Postgres};
 use std::{
@@ -24,18 +25,17 @@ use uuid::Uuid;
 const NO_FILTERS: ChannelMessageFilters = ChannelMessageFilters {
     message_ids: Vec::new(),
     created_after: None,
+    created_after_exclusive: None,
     created_before: None,
     activity_after: None,
     activity_before: None,
-    notification_filters: NotificationFilters {
-        done: None,
-        seen: None,
-    },
+    notification_filters: NotificationFilters { states: vec![] },
 };
 
 const CH1: Uuid = Uuid::from_u128(0x00000000_0000_0000_0000_000000000c01);
 const CH2: Uuid = Uuid::from_u128(0x00000000_0000_0000_0000_000000000c02);
 const CH3: Uuid = Uuid::from_u128(0x00000000_0000_0000_0000_000000000c03);
+const CH5_NO_ACTIVITY: Uuid = Uuid::from_u128(0x00000000_0000_0000_0000_000000000c05);
 const TEAM_A: Uuid = Uuid::from_u128(0x11111111_1111_1111_1111_111111111111);
 const TEAM_A_AUTO_ACTIVE: Uuid = Uuid::from_u128(0x00000000_0000_0000_0000_000000000c11);
 const TEAM_A_AUTO_LEFT: Uuid = Uuid::from_u128(0x00000000_0000_0000_0000_000000000c12);
@@ -67,7 +67,7 @@ fn repo(pool: Pool<Postgres>) -> PgChannelsRepo {
     PgChannelsRepo::new(pool)
 }
 
-fn macro_user_id(user_id: &str) -> MacroUserIdStr<'static> {
+fn conation_user_id(user_id: &str) -> MacroUserIdStr<'static> {
     MacroUserIdStr::try_from(user_id.to_owned()).expect("valid macro user id")
 }
 
@@ -78,7 +78,7 @@ fn thread_rows_request(
     limit: u32,
 ) -> GetThreadReplyRowsRequest {
     GetThreadReplyRowsRequest {
-        macro_id: macro_user_id(user_id),
+        macro_id: conation_user_id(user_id),
         limit: Some(limit),
         query: Query::Sort(sort, filter),
     }
@@ -94,7 +94,7 @@ fn report_err(e: rootcause::Report) -> anyhow::Error {
 
 fn channels_params(user_id: &str, filter: LiteralTree<ChannelLiteral>) -> GetChannelsParams {
     GetChannelsRequest {
-        macro_id: macro_user_id(user_id),
+        macro_id: conation_user_id(user_id),
         limit: Some(50),
         include_frecency: false,
         query: Query::Sort(SimpleSortMethod::UpdatedAt, filter),
@@ -104,6 +104,31 @@ fn channels_params(user_id: &str, filter: LiteralTree<ChannelLiteral>) -> GetCha
 
 fn channel_filter(literal: ChannelLiteral) -> LiteralTree<ChannelLiteral> {
     Some(Arc::new(Expr::val(literal)))
+}
+
+fn channel_list_fixture_viewed_at(channel_id: Uuid) -> Option<DateTime<Utc>> {
+    match channel_id {
+        CH1 => Some("2024-01-01T00:00:00Z".parse().unwrap()),
+        CH3 => Some("2024-01-04T00:00:00Z".parse().unwrap()),
+        CH5_NO_ACTIVITY => None,
+        id => panic!("unexpected channel {id}"),
+    }
+}
+
+fn channel_list_sort_timestamp(
+    channel: &ChannelWithParticipants,
+    sort: SimpleSortMethod,
+) -> DateTime<Utc> {
+    match sort {
+        SimpleSortMethod::CreatedAt => channel.channel.created_at,
+        SimpleSortMethod::UpdatedAt => channel.channel.updated_at,
+        SimpleSortMethod::ViewedAt => {
+            channel_list_fixture_viewed_at(channel.channel.id).unwrap_or_default()
+        }
+        SimpleSortMethod::ViewedUpdated => {
+            channel_list_fixture_viewed_at(channel.channel.id).unwrap_or(channel.channel.updated_at)
+        }
+    }
 }
 
 fn participant_roles(channel: &ChannelWithParticipants) -> Vec<(String, ParticipantRole)> {
@@ -266,13 +291,18 @@ async fn channel_list_cursor_pagination_matches_unpaginated_results(pool: Pool<P
     let repo = repo(pool);
 
     for (sort, expected_ids) in [
-        (SimpleSortMethod::CreatedAt, vec![CH3, CH1]),
-        (SimpleSortMethod::UpdatedAt, vec![CH1, CH3]),
+        (SimpleSortMethod::CreatedAt, vec![CH3, CH5_NO_ACTIVITY, CH1]),
+        (SimpleSortMethod::UpdatedAt, vec![CH1, CH5_NO_ACTIVITY, CH3]),
+        (SimpleSortMethod::ViewedAt, vec![CH3, CH1, CH5_NO_ACTIVITY]),
+        (
+            SimpleSortMethod::ViewedUpdated,
+            vec![CH3, CH5_NO_ACTIVITY, CH1],
+        ),
     ] {
         let unpaginated = repo
             .get_user_channels_with_participants(
                 GetChannelsRequest {
-                    macro_id: macro_user_id(USER_A),
+                    macro_id: conation_user_id(USER_A),
                     limit: Some(50),
                     include_frecency: false,
                     query: Query::Sort(sort, None),
@@ -293,7 +323,7 @@ async fn channel_list_cursor_pagination_matches_unpaginated_results(pool: Pool<P
             let page = repo
                 .get_user_channels_with_participants(
                     GetChannelsRequest {
-                        macro_id: macro_user_id(USER_A),
+                        macro_id: conation_user_id(USER_A),
                         limit: Some(1),
                         include_frecency: false,
                         query,
@@ -306,17 +336,18 @@ async fn channel_list_cursor_pagination_matches_unpaginated_results(pool: Pool<P
                 break;
             };
             assert_eq!(page.len(), 1);
+            assert_eq!(
+                Some(last.channel.id),
+                expected_ids.get(paginated.len()).copied(),
+                "one-row {sort:?} page was out of order"
+            );
 
             query = Query::Cursor(Cursor {
                 id: last.channel.id,
                 limit: 1,
                 val: CursorVal {
                     sort_type: sort,
-                    last_val: match sort {
-                        SimpleSortMethod::CreatedAt => last.channel.created_at,
-                        SimpleSortMethod::UpdatedAt => last.channel.updated_at,
-                        _ => unreachable!("channel list test only uses supported sort methods"),
-                    },
+                    last_val: channel_list_sort_timestamp(last, sort),
                 },
                 filter: None,
             });
@@ -346,7 +377,9 @@ async fn channel_list_cursor_pagination_matches_unpaginated_results(pool: Pool<P
                     (USER_B.to_string(), ParticipantRole::Admin),
                     (USER_C.to_string(), ParticipantRole::Member),
                 ],
-                CH3 => vec![(USER_A.to_string(), ParticipantRole::Owner)],
+                CH3 | CH5_NO_ACTIVITY => {
+                    vec![(USER_A.to_string(), ParticipantRole::Owner)]
+                }
                 id => panic!("unexpected channel {id}"),
             };
             assert_eq!(participant_roles(actual), expected_participants);
@@ -363,7 +396,7 @@ async fn create_channel_persists_auto_join_team_and_adds_current_members(pool: P
 
     let enabled_channel_id = repo
         .create_channel(
-            macro_user_id(USER_A),
+            conation_user_id(USER_A),
             None,
             CreateChannelRequest {
                 name: Some("enabled".to_string()),
@@ -377,7 +410,7 @@ async fn create_channel_persists_auto_join_team_and_adds_current_members(pool: P
         .unwrap();
     let disabled_channel_id = repo
         .create_channel(
-            macro_user_id(USER_A),
+            conation_user_id(USER_A),
             None,
             CreateChannelRequest {
                 name: Some("disabled".to_string()),
@@ -444,7 +477,7 @@ async fn create_channel_persists_auto_join_team_and_adds_current_members(pool: P
     assert_eq!(disabled_participants, vec![USER_A]);
     assert_eq!(
         enabled_channel_id.participant_user_ids,
-        vec![macro_user_id(LEFT_USER), macro_user_id(USER_A)]
+        vec![conation_user_id(LEFT_USER), conation_user_id(USER_A)]
     );
 }
 
@@ -454,8 +487,8 @@ async fn create_channel_persists_auto_join_team_and_adds_current_members(pool: P
 )]
 async fn maybe_get_dm_finds_channel_regardless_of_argument_order(pool: Pool<Postgres>) {
     let repo = repo(pool.clone());
-    let user_a = macro_user_id(USER_A);
-    let user_b = macro_user_id(USER_B);
+    let user_a = conation_user_id(USER_A);
+    let user_b = conation_user_id(USER_B);
 
     let created = repo
         .create_channel(
@@ -527,7 +560,7 @@ async fn patch_channel_rename_advances_updated_at(pool: Pool<Postgres>) {
 )]
 async fn patch_channel_converts_to_team_and_updates_auto_join_members(pool: Pool<Postgres>) {
     let repo = repo(pool.clone());
-    let user_id = macro_user_id(TEAM_OWNER_A);
+    let user_id = conation_user_id(TEAM_OWNER_A);
     sqlx::query!(
         r#"
         INSERT INTO team_user (user_id, team_id, team_role)
@@ -699,7 +732,7 @@ async fn patch_team_channel_converts_to_private_and_clears_team_settings(pool: P
 )]
 async fn auto_join_is_enabled_team_scoped_and_idempotent(pool: Pool<Postgres>) {
     let repo = repo(pool.clone());
-    let user_id = macro_user_id(NON_MEMBER);
+    let user_id = conation_user_id(NON_MEMBER);
 
     repo.auto_join_by_team_id(&TEAM_A, &user_id).await.unwrap();
     repo.auto_join_by_team_id(&TEAM_A, &user_id).await.unwrap();
@@ -730,7 +763,7 @@ async fn auto_join_reactivates_left_members_without_changing_active_memberships(
     pool: Pool<Postgres>,
 ) {
     let repo = repo(pool.clone());
-    let user_id = macro_user_id(LEFT_USER);
+    let user_id = conation_user_id(LEFT_USER);
     let active_before = sqlx::query!(
         r#"
         SELECT role AS "role: ParticipantRole", joined_at
@@ -797,7 +830,7 @@ async fn auto_join_reactivates_left_members_without_changing_active_memberships(
 )]
 async fn leave_soft_leaves_all_team_channels_and_returns_only_changes(pool: Pool<Postgres>) {
     let repo = repo(pool.clone());
-    let user_id = macro_user_id(LEFT_USER);
+    let user_id = conation_user_id(LEFT_USER);
     let original_left_at = sqlx::query_scalar!(
         r#"
         SELECT left_at::timestamptz
@@ -871,7 +904,7 @@ async fn leave_soft_leaves_all_team_channels_and_returns_only_changes(pool: Pool
 )]
 async fn rollback_restores_exact_channels_without_changing_role_or_joined_at(pool: Pool<Postgres>) {
     let repo = repo(pool.clone());
-    let user_id = macro_user_id(LEFT_USER);
+    let user_id = conation_user_id(LEFT_USER);
     let before = sqlx::query!(
         r#"
         SELECT channel_id, role AS "role: ParticipantRole", joined_at
@@ -937,23 +970,23 @@ async fn add_participant_atomically_adds_or_reactivates(pool: Pool<Postgres>) {
 
     assert!(
         !repo
-            .add_participant(CH1, macro_user_id(USER_A), ParticipantRole::Member)
+            .add_participant(CH1, conation_user_id(USER_A), ParticipantRole::Member)
             .await
             .unwrap()
     );
     assert!(
-        repo.add_participant(CH1, macro_user_id(LEFT_USER), ParticipantRole::Member)
+        repo.add_participant(CH1, conation_user_id(LEFT_USER), ParticipantRole::Member)
             .await
             .unwrap()
     );
     assert!(
         !repo
-            .add_participant(CH1, macro_user_id(LEFT_USER), ParticipantRole::Member)
+            .add_participant(CH1, conation_user_id(LEFT_USER), ParticipantRole::Member)
             .await
             .unwrap()
     );
     assert!(
-        repo.add_participant(CH1, macro_user_id(NON_MEMBER), ParticipantRole::Member)
+        repo.add_participant(CH1, conation_user_id(NON_MEMBER), ParticipantRole::Member)
             .await
             .unwrap()
     );
@@ -1093,13 +1126,14 @@ async fn insert_user_notification(
 ) -> anyhow::Result<()> {
     sqlx::query!(
         r#"
-        INSERT INTO user_notification (user_id, notification_id, created_at, seen_at, done)
+        INSERT INTO user_notification (user_id, notification_id, created_at, seen_at, state)
         VALUES (
             $1,
             $2,
             '2024-01-02 00:00:00'::timestamp,
             CASE WHEN $3::bool THEN '2024-01-02 00:00:00'::timestamp ELSE NULL END,
-            $4
+            CASE WHEN $4::bool THEN 'done'::notification_state
+                 WHEN $3 THEN 'seen'::notification_state ELSE 'unseen'::notification_state END
         )
         "#,
         user_id,
@@ -1285,7 +1319,7 @@ async fn channel_thread_rows_filter_by_root_sender(pool: Pool<Postgres>) -> anyh
         .get_thread_messages(
             thread_rows_request(
                 USER_A,
-                thread_filter(ChannelThreadLiteral::RootSender(macro_user_id(USER_A))),
+                thread_filter(ChannelThreadLiteral::RootSender(conation_user_id(USER_A))),
                 SimpleSortMethod::UpdatedAt,
                 50,
             )
@@ -1308,7 +1342,7 @@ async fn threads_matching_participant(
         .get_thread_messages(
             thread_rows_request(
                 querying_user,
-                thread_filter(ChannelThreadLiteral::Participant(macro_user_id(
+                thread_filter(ChannelThreadLiteral::Participant(conation_user_id(
                     participant,
                 ))),
                 SimpleSortMethod::UpdatedAt,
@@ -1393,7 +1427,9 @@ async fn channel_thread_rows_filter_by_notification_done_secondary_entity(
         .get_thread_messages(
             thread_rows_request(
                 USER_A,
-                thread_filter(ChannelThreadLiteral::NotificationDone(true)),
+                thread_filter(ChannelThreadLiteral::NotificationState(
+                    item_filters::NotificationState::Done,
+                )),
                 SimpleSortMethod::UpdatedAt,
                 50,
             )
@@ -1422,7 +1458,9 @@ async fn channel_thread_rows_filter_by_notification_seen_secondary_entity(
         .get_thread_messages(
             thread_rows_request(
                 USER_A,
-                thread_filter(ChannelThreadLiteral::NotificationSeen(true)),
+                thread_filter(ChannelThreadLiteral::NotificationState(
+                    item_filters::NotificationState::Seen,
+                )),
                 SimpleSortMethod::UpdatedAt,
                 50,
             )
@@ -1454,7 +1492,7 @@ async fn channel_thread_rows_apply_cursor(pool: Pool<Postgres>) -> anyhow::Resul
     let second_page = repo
         .get_thread_messages(
             GetThreadReplyRowsRequest {
-                macro_id: macro_user_id(USER_A),
+                macro_id: conation_user_id(USER_A),
                 limit: Some(50),
                 query: Query::Cursor(Cursor {
                     id: first_page[0].id,
@@ -1716,6 +1754,154 @@ async fn top_level_message_ids_filter_limits_to_subset(pool: Pool<Postgres>) -> 
 
     let ids: Vec<Uuid> = result.rows.iter().map(|r| r.id).collect();
     assert_eq!(ids, vec![MSG3, MSG1]);
+    Ok(())
+}
+
+fn ts(rfc3339: &str) -> DateTime<Utc> {
+    DateTime::parse_from_rfc3339(rfc3339)
+        .unwrap()
+        .with_timezone(&Utc)
+}
+
+#[sqlx::test(
+    fixtures(path = "../../../fixtures", scripts("channels_repo")),
+    migrator = "MACRO_DB_MIGRATIONS"
+)]
+async fn top_level_created_after_exclusive_drops_boundary_row(
+    pool: Pool<Postgres>,
+) -> anyhow::Result<()> {
+    let repo = repo(pool);
+    let bound = ts("2024-01-01T11:00:00Z");
+    let exclusive = ChannelMessageFilters {
+        created_after_exclusive: Some(bound),
+        ..Default::default()
+    };
+    let inclusive = ChannelMessageFilters {
+        created_after: Some(bound),
+        ..Default::default()
+    };
+    for (direction, query) in [
+        (MessagePageDirection::Older, Query::Sort(CreatedAt, ())),
+        (
+            MessagePageDirection::Newer,
+            Query::Cursor(Cursor {
+                id: MSG1,
+                limit: 50,
+                val: CursorVal {
+                    sort_type: CreatedAt,
+                    last_val: ts("2024-01-01T10:00:00Z"),
+                },
+                filter: (),
+            }),
+        ),
+    ] {
+        let exclusive_ids: Vec<Uuid> = repo
+            .get_top_level_messages(CH1, &query, direction, 50, &exclusive, None)
+            .await?
+            .rows
+            .into_iter()
+            .map(|r| r.id)
+            .collect();
+        assert_eq!(exclusive_ids, vec![MSG3], "{direction:?}: exclusive bound");
+
+        let inclusive_ids: Vec<Uuid> = repo
+            .get_top_level_messages(CH1, &query, direction, 50, &inclusive, None)
+            .await?
+            .rows
+            .into_iter()
+            .map(|r| r.id)
+            .collect();
+        assert_eq!(
+            inclusive_ids,
+            vec![MSG3, MSG2],
+            "{direction:?}: inclusive bound"
+        );
+    }
+    Ok(())
+}
+
+async fn insert_catch_up_messages(pool: &Pool<Postgres>, count: i64) -> anyhow::Result<Vec<Uuid>> {
+    let mut ids = Vec::with_capacity(usize::try_from(count)?);
+    let base = ts("2024-01-01T13:00:00Z");
+    for i in 1..=count {
+        let id = Uuid::now_v7();
+        let created_at = base + chrono::Duration::seconds(i);
+        sqlx::query!(
+            r#"
+            INSERT INTO comms_messages (
+                id, channel_id, thread_id, sender_id, content, created_at, updated_at
+            )
+            VALUES ($1, $2, NULL, $3, $4, $5, $5)
+            "#,
+            id,
+            CH1,
+            USER_A,
+            format!("catch-up {i}"),
+            created_at,
+        )
+        .execute(pool)
+        .await?;
+        ids.push(id);
+    }
+    Ok(ids)
+}
+
+#[sqlx::test(
+    fixtures(path = "../../../fixtures", scripts("channels_repo")),
+    migrator = "MACRO_DB_MIGRATIONS"
+)]
+async fn top_level_created_after_exclusive_holds_across_cursor_pages(
+    pool: Pool<Postgres>,
+) -> anyhow::Result<()> {
+    let seeded = insert_catch_up_messages(&pool, 60).await?;
+    let repo = repo(pool);
+    let bound = ts("2024-01-01T12:30:00Z");
+    let filters = ChannelMessageFilters {
+        created_after_exclusive: Some(bound),
+        ..Default::default()
+    };
+    let page_one = repo
+        .get_top_level_messages(
+            CH1,
+            &Query::Sort(CreatedAt, ()),
+            MessagePageDirection::Older,
+            50,
+            &filters,
+            None,
+        )
+        .await?;
+    assert_eq!(page_one.rows.len(), 50);
+    let last = page_one.rows.last().expect("page one has rows");
+    let page_two = repo
+        .get_top_level_messages(
+            CH1,
+            &Query::Cursor(Cursor {
+                id: last.id,
+                limit: 50,
+                val: CursorVal {
+                    sort_type: CreatedAt,
+                    last_val: last.created_at,
+                },
+                filter: (),
+            }),
+            MessagePageDirection::Older,
+            50,
+            &filters,
+            None,
+        )
+        .await?;
+    assert_eq!(page_two.rows.len(), 10);
+    let all_ids: HashSet<Uuid> = page_one
+        .rows
+        .iter()
+        .chain(page_two.rows.iter())
+        .map(|r| r.id)
+        .collect();
+    assert_eq!(all_ids.len(), 60);
+    assert!(seeded.iter().all(|id| all_ids.contains(id)));
+    for row in page_one.rows.iter().chain(page_two.rows.iter()) {
+        assert!(row.created_at > bound);
+    }
     Ok(())
 }
 
@@ -2379,8 +2565,7 @@ async fn notification_done_filter_matches_top_level_messages_and_thread_replies(
 
     let filters = ChannelMessageFilters {
         notification_filters: NotificationFilters {
-            done: Some(true),
-            seen: None,
+            states: vec![item_filters::NotificationState::Done],
         },
         ..Default::default()
     };
@@ -2391,7 +2576,7 @@ async fn notification_done_filter_matches_top_level_messages_and_thread_replies(
             MessagePageDirection::Older,
             50,
             &filters,
-            Some(macro_user_id(USER_A)),
+            Some(conation_user_id(USER_A)),
         )
         .await?;
 
@@ -2413,8 +2598,10 @@ async fn notification_not_done_filter_matches_top_level_messages_and_thread_repl
 
     let filters = ChannelMessageFilters {
         notification_filters: NotificationFilters {
-            done: Some(false),
-            seen: None,
+            states: vec![
+                item_filters::NotificationState::Unseen,
+                item_filters::NotificationState::Seen,
+            ],
         },
         ..Default::default()
     };
@@ -2425,7 +2612,7 @@ async fn notification_not_done_filter_matches_top_level_messages_and_thread_repl
             MessagePageDirection::Older,
             50,
             &filters,
-            Some(macro_user_id(USER_A)),
+            Some(conation_user_id(USER_A)),
         )
         .await?;
 
@@ -2447,8 +2634,10 @@ async fn notification_seen_filter_matches_top_level_messages_and_thread_replies(
 
     let filters = ChannelMessageFilters {
         notification_filters: NotificationFilters {
-            done: None,
-            seen: Some(true),
+            states: vec![
+                item_filters::NotificationState::Seen,
+                item_filters::NotificationState::Done,
+            ],
         },
         ..Default::default()
     };
@@ -2459,7 +2648,7 @@ async fn notification_seen_filter_matches_top_level_messages_and_thread_replies(
             MessagePageDirection::Older,
             50,
             &filters,
-            Some(macro_user_id(USER_A)),
+            Some(conation_user_id(USER_A)),
         )
         .await?;
 
@@ -2481,8 +2670,7 @@ async fn notification_not_seen_filter_matches_top_level_messages_and_thread_repl
 
     let filters = ChannelMessageFilters {
         notification_filters: NotificationFilters {
-            done: None,
-            seen: Some(false),
+            states: vec![item_filters::NotificationState::Unseen],
         },
         ..Default::default()
     };
@@ -2493,7 +2681,7 @@ async fn notification_not_seen_filter_matches_top_level_messages_and_thread_repl
             MessagePageDirection::Older,
             50,
             &filters,
-            Some(macro_user_id(USER_A)),
+            Some(conation_user_id(USER_A)),
         )
         .await?;
 
@@ -2506,16 +2694,19 @@ async fn notification_not_seen_filter_matches_top_level_messages_and_thread_repl
     fixtures(path = "../../../fixtures", scripts("channels_repo")),
     migrator = "MACRO_DB_MIGRATIONS"
 )]
-async fn notification_done_and_seen_filters_match_soup_independent_exists_semantics(
+async fn notification_state_union_matches_any_selected_state(
     pool: Pool<Postgres>,
 ) -> anyhow::Result<()> {
-    insert_channel_message_notification(&pool, USER_A, CH1, MSG3, false, true).await?;
-    insert_channel_message_notification(&pool, USER_A, CH1, MSG3, true, false).await?;
+    // Either of the selected exact states may witness the filter.
+    insert_channel_message_notification(&pool, USER_A, CH1, MSG3, false, false).await?;
+    insert_channel_message_notification(&pool, USER_A, CH1, MSG3, true, true).await?;
 
     let filters = ChannelMessageFilters {
         notification_filters: NotificationFilters {
-            done: Some(false),
-            seen: Some(false),
+            states: vec![
+                item_filters::NotificationState::Unseen,
+                item_filters::NotificationState::Done,
+            ],
         },
         ..Default::default()
     };
@@ -2526,7 +2717,7 @@ async fn notification_done_and_seen_filters_match_soup_independent_exists_semant
             MessagePageDirection::Older,
             50,
             &filters,
-            Some(macro_user_id(USER_A)),
+            Some(conation_user_id(USER_A)),
         )
         .await?;
 
@@ -2546,8 +2737,10 @@ async fn notification_filter_is_scoped_to_requesting_user(
 
     let filters = ChannelMessageFilters {
         notification_filters: NotificationFilters {
-            done: Some(false),
-            seen: None,
+            states: vec![
+                item_filters::NotificationState::Unseen,
+                item_filters::NotificationState::Seen,
+            ],
         },
         ..Default::default()
     };
@@ -2558,7 +2751,7 @@ async fn notification_filter_is_scoped_to_requesting_user(
             MessagePageDirection::Older,
             50,
             &filters,
-            Some(macro_user_id(USER_A)),
+            Some(conation_user_id(USER_A)),
         )
         .await?;
 
@@ -2570,8 +2763,10 @@ async fn notification_filter_is_scoped_to_requesting_user(
 async fn notification_filter_requires_requesting_user(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let filters = ChannelMessageFilters {
         notification_filters: NotificationFilters {
-            done: Some(false),
-            seen: None,
+            states: vec![
+                item_filters::NotificationState::Unseen,
+                item_filters::NotificationState::Seen,
+            ],
         },
         ..Default::default()
     };
@@ -2987,4 +3182,56 @@ async fn bot_profiles_includes_soft_deleted_bots(pool: Pool<Postgres>) -> anyhow
     );
     assert!(!profiles.contains_key(&missing));
     Ok(())
+}
+
+#[sqlx::test(migrator = "MACRO_DB_MIGRATIONS")]
+async fn delete_channel_cascades_contacts_backfill_outbox_rows(pool: Pool<Postgres>) {
+    let repo = repo(pool.clone());
+    let created = repo
+        .create_channel(
+            conation_user_id(USER_A),
+            None,
+            CreateChannelRequest {
+                name: Some("delete-with-outbox".to_string()),
+                channel_type: ChannelType::Private,
+                team_id: None,
+                auto_join_team: false,
+                participants: HashSet::new(),
+            },
+        )
+        .await
+        .unwrap();
+
+    sqlx::query!(
+        "INSERT INTO contacts_backfill_outbox (comms_channel_id, user_ids) \
+         VALUES ($1, '[\"macro|user-a@test.com\"]'::jsonb)",
+        created.id,
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
+
+    repo.delete_channel(created.id, USER_A.to_string())
+        .await
+        .expect("channel delete must succeed when contacts_backfill_outbox references the channel");
+
+    let channel_count = sqlx::query_scalar!(
+        "SELECT count(*) FROM comms_channels WHERE id = $1",
+        created.id,
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap()
+    .unwrap();
+    assert_eq!(channel_count, 0);
+
+    let outbox_count = sqlx::query_scalar!(
+        "SELECT count(*) FROM contacts_backfill_outbox WHERE comms_channel_id = $1",
+        created.id,
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap()
+    .unwrap();
+    assert_eq!(outbox_count, 0);
 }

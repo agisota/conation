@@ -21,7 +21,7 @@ use utoipa_swagger_ui::SwaggerUi;
 static MAX_REQUEST_SIZE: usize = 4096;
 
 /// Identity assumed for internal service callers that don't forward an acting user.
-pub const MACRO_INTERNAL_USER_ID: &str = "conation|INTERNAL@conation.dev";
+pub const CONATION_INTERNAL_USER_ID: &str = "conation|INTERNAL@conation.dev";
 
 pub async fn setup_and_serve(
     config: Config,
@@ -50,9 +50,10 @@ pub async fn setup_and_serve(
         MacroAuthJwtValidator::new(jwt_validation_args),
         InternalAuthConfig {
             api_key: config.internal_api_key.as_ref().to_string(),
-            default_user_id: Some(MACRO_INTERNAL_USER_ID.to_string()),
+            default_user_id: Some(CONATION_INTERNAL_USER_ID.to_string()),
         },
         conation_authorization::NoBotAuthorizer,
+        conation_authorization::NoUserApiKeyAuthorizer,
     )));
 
     let state = AppState {

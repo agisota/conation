@@ -1,6 +1,11 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
-import { config, getConationApiToken, stack } from '../../packages/shared';
+import {
+  BASE_DOMAIN,
+  config,
+  getMacroApiToken,
+  stack,
+} from '../../packages/shared';
 import { get_coparse_api_vpc } from '../../packages/vpc';
 import { ImageProxyService } from './image-proxy-service';
 
@@ -30,11 +35,11 @@ const jwtSecretKeyArn: pulumi.Output<string> = aws.secretsmanager
   .getSecretVersionOutput({ secretId: JWT_SECRET_KEY })
   .apply((secret) => secret.arn);
 
-const CONATION_API_TOKENS = getConationApiToken();
+const MACRO_API_TOKENS = getMacroApiToken();
 
 const secretKeyArns = [
   pulumi.interpolate`${jwtSecretKeyArn}`,
-  pulumi.interpolate`${CONATION_API_TOKENS.conationApiTokenPublicKeyArn}`,
+  pulumi.interpolate`${MACRO_API_TOKENS.macroApiTokenPublicKeyArn}`,
 ];
 
 const imageProxyService = new ImageProxyService(
@@ -65,11 +70,11 @@ const imageProxyService = new ImageProxyService(
         value: stack,
       },
     ],
-    isPrivate: false,
     tags,
   }
 );
 
 export const imageProxyServiceSgId = imageProxyService.serviceSg.id;
-export const imageProxyServiceAlbSgId = imageProxyService.serviceAlbSg.id;
-export const imageProxyServiceUrl = pulumi.interpolate`${imageProxyService.domain}`;
+export const imageProxyServiceUrl = `https://${
+  stack === 'prod' ? '' : `${stack}-`
+}gateway.${BASE_DOMAIN}/image-proxy`;

@@ -1,4 +1,4 @@
-import { Macro } from '@conation/sdk';
+import { Macro } from '@macro-inc/sdk';
 import { env } from '../../src/env';
 
 const base = new Macro({});

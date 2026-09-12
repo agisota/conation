@@ -48,3 +48,4 @@ loro = "1.13"
 conation_sync_service_jwt = { path = "../../crates/conation_sync_service_jwt" }
 matchit =  "0.8.4"
 worker-rs-otel = { path = "../../crates/worker-rs-otel" }
+subtle = { workspace = true }

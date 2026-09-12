@@ -667,6 +667,32 @@ pub trait ChannelService: Send + Sync + 'static {
         }
     }
 
+    /// Create a channel owned by `owner` on the platform's initiative (e.g.
+    /// signup). The activity is attributed to the system bot acting for
+    /// `owner`; ownership and permissions are unchanged.
+    fn create_system_channel(
+        &self,
+        owner: MacroUserIdStr<'static>,
+        req: CreateChannelRequest,
+    ) -> impl Future<Output = Result<CreateChannelResponse, ChannelMutationErr>> + Send {
+        self.create_channel_on_behalf(owner, bot_id::MACRO_SYSTEM_BOT_ID, req)
+    }
+
+    /// Create a channel owned by `owner` with Created attributed to `actor`
+    /// acting for that owner. Ownership and permissions stay with `owner`.
+    fn create_channel_on_behalf(
+        &self,
+        _owner: MacroUserIdStr<'static>,
+        _actor: BotId,
+        _req: CreateChannelRequest,
+    ) -> impl Future<Output = Result<CreateChannelResponse, ChannelMutationErr>> + Send {
+        async move {
+            Err(ChannelMutationErr::NotFound(
+                "channel mutations are not configured".to_string(),
+            ))
+        }
+    }
+
     /// Add or reactivate a user in every auto-join channel for a team.
     fn auto_join_by_team_id(
         &self,
@@ -1116,9 +1142,10 @@ pub trait ChannelReferenceSharePermissions: Send + Sync + 'static {
     /// Error type for reference share-permission operations.
     type Err: Into<anyhow::Error> + Send;
 
-    /// Update channel share permissions for referenced items that `actor` can view.
+    /// Update channel share permissions according to the referenced entity's policy.
     ///
     /// Implementations must not grant access for an item the actor cannot already view.
+    /// Agent sessions require ownership and grant edit access; other references grant view.
     fn update_channel_share_permissions_for_referenced_items(
         &self,
         actor: MacroUserIdStr<'static>,

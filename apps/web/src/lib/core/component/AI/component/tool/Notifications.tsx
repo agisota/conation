@@ -1,4 +1,3 @@
-import { getDateLocale, t } from '@app/lib/i18n';
 import Check from '@phosphor-icons/core/regular/check.svg';
 import List from '@phosphor-icons/core/regular/list.svg';
 import type { ListNotifications as ListNotificationsTool } from '@service-cognition/generated/tools/types';
@@ -10,61 +9,44 @@ type NotificationFilterType = NonNullable<
   ListNotificationsTool['includeTypes']
 >[number];
 
-const NOTIFICATION_TYPE_KEYS: Record<NotificationFilterType, string> = {
-  email: 'ai.tools.notifications.types.email',
-  message: 'ai.tools.notifications.types.message',
-  channel: 'ai.tools.notifications.types.channel',
-  document: 'ai.tools.notifications.types.document',
-  project: 'ai.tools.notifications.types.project',
-  chat: 'ai.tools.notifications.types.chat',
-  call: 'ai.tools.notifications.types.call',
-  task: 'ai.tools.notifications.types.task',
-  github: 'ai.tools.notifications.types.github',
-  reminder: 'ai.tools.notifications.types.reminder',
-  calendar: 'ai.tools.notifications.types.calendar',
+const NOTIFICATION_TYPE_LABELS: Record<NotificationFilterType, string> = {
+  email: 'emails',
+  message: 'messages',
+  channel: 'channels',
+  document: 'documents',
+  project: 'projects',
+  chat: 'chats',
+  call: 'calls',
+  task: 'tasks',
+  github: 'GitHub',
+  reminder: 'reminders',
+  calendar: 'calendar events',
+  agent: 'agent sessions',
 };
 
 const formatList = (items: string[]) => {
-  return new Intl.ListFormat(getDateLocale(), {
-    style: 'long',
-    type: 'conjunction',
-  }).format(items);
+  if (items.length === 0) return '';
+  if (items.length === 1) return items[0];
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(', ')}, and ${items.at(-1)}`;
 };
 
 const formatNotificationFilters = (filters: ListNotificationsTool) => {
-  const statusFilters = [
-    t(
-      filters.done
-        ? 'ai.tools.notifications.filters.done'
-        : 'ai.tools.notifications.filters.notDone'
-    ),
-  ];
-  if (filters.seen != null) {
-    statusFilters.push(
-      t(
-        filters.seen
-          ? 'ai.tools.notifications.filters.seen'
-          : 'ai.tools.notifications.filters.unseen'
-      )
-    );
-  }
-
-  let text = t('ai.tools.notifications.filters.filteredBy', {
-    filters: formatList(statusFilters),
-  });
+  const states = filters.states ?? ['unseen', 'seen'];
+  let text = states.length
+    ? `filtered by ${states.join(' or ')}`
+    : 'all notification states';
 
   if (filters.includeTypes?.length) {
-    text += ` ${t('ai.tools.notifications.filters.inTypes', {
-      types: formatList(
-        filters.includeTypes.map((type) => t(NOTIFICATION_TYPE_KEYS[type]))
-      ),
-    })}`;
+    text += ` in ${formatList(
+      filters.includeTypes.map((type) => NOTIFICATION_TYPE_LABELS[type])
+    )}`;
   }
 
   if (filters.entities?.length) {
-    text += ` ${t('ai.tools.notifications.filters.entityCount', {
-      count: filters.entities.length,
-    })}`;
+    text += ` for ${filters.entities.length} ${
+      filters.entities.length === 1 ? 'entity' : 'entities'
+    }`;
   }
 
   return text;
@@ -76,7 +58,9 @@ const listNotificationsHandler = createToolRenderer({
     const count = () => ctx.response?.data.notifications.length ?? 0;
     const statusText = () => {
       if (!ctx.response) return undefined;
-      return t('ai.tools.notifications.readCount', { count: count() });
+      if (count() === 0) return 'No notifications read';
+      if (count() === 1) return 'Read 1 notification';
+      return `Read ${count()} notifications`;
     };
 
     return (
@@ -88,9 +72,7 @@ const listNotificationsHandler = createToolRenderer({
       >
         <div class="flex min-w-0 flex-1 flex-col gap-1">
           <div class="flex min-w-0 items-center justify-between gap-3 overflow-hidden">
-            <span class="min-w-0 truncate">
-              {t('ai.tools.notifications.read')}
-            </span>
+            <span class="min-w-0 truncate">Read notifications</span>
             <Show when={statusText()}>
               {(text) => (
                 <span class="shrink-0 whitespace-nowrap text-xs text-ink-extra-muted">
@@ -112,9 +94,8 @@ const markNotificationsSeenHandler = createToolRenderer({
   name: 'MarkNotificationsSeen',
   render: (ctx) => (
     <BaseTool icon={Check} renderContext={ctx.renderContext} type="call">
-      {t('ai.tools.notifications.markSeen', {
-        count: ctx.tool.data.notificationIds.length,
-      })}
+      Mark <span class="text-ink">{ctx.tool.data.notificationIds.length}</span>{' '}
+      notification{ctx.tool.data.notificationIds.length === 1 ? '' : 's'} seen
     </BaseTool>
   ),
 });
@@ -123,10 +104,9 @@ const markNotificationsDoneHandler = createToolRenderer({
   name: 'MarkNotificationsDone',
   render: (ctx) => (
     <BaseTool icon={Check} renderContext={ctx.renderContext} type="call">
-      {t('ai.tools.notifications.markDone', {
-        count: ctx.tool.data.notificationIds.length,
-        state: ctx.tool.data.done ? 'done' : 'notDone',
-      })}
+      Mark <span class="text-ink">{ctx.tool.data.notificationIds.length}</span>{' '}
+      notification{ctx.tool.data.notificationIds.length === 1 ? '' : 's'}{' '}
+      {ctx.tool.data.done ? 'done' : 'not done'}
     </BaseTool>
   ),
 });

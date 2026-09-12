@@ -4,8 +4,8 @@ use crate::testing::helpers::egress::test_egress;
 use agent_runtime_protocol::domain::schema::v0::{ToRuntimeMessage, ToServerMessage};
 use agent_session::domain::error::Result as SessionResult;
 use agent_session::domain::model::{
-    AgentSession, ChannelSession, CreateAgentSessionParams, DEFAULT_AGENT_SESSION_NAME,
-    SandboxSize, SessionBot, SessionStatus,
+    AgentSession, AgentSessionPreview, ChannelSession, CreateAgentSessionParams,
+    DEFAULT_AGENT_SESSION_NAME, SandboxSize, SessionBot, SessionStatus,
 };
 use bot_id::BotId;
 use conation_user_id::user_id::MacroUserIdStr;
@@ -56,14 +56,24 @@ impl TaggedManager {
 impl ContainerManager for TaggedManager {
     type Transport = TaggedTransport;
 
-    async fn spawn(&self, _command: SpawnContainer) -> Result<TaggedTransport> {
+    async fn spawn(
+        &self,
+        _command: SpawnContainer,
+    ) -> Result<agent_session::domain::connection::RuntimeAttachment<TaggedTransport>> {
         self.record("spawn");
-        Ok(TaggedTransport)
+        Ok(agent_session::domain::connection::RuntimeAttachment::solo(
+            TaggedTransport,
+        ))
     }
 
-    async fn resume(&self, _session: AgentSessionId) -> Result<TaggedTransport> {
+    async fn resume(
+        &self,
+        _session: AgentSessionId,
+    ) -> Result<agent_session::domain::connection::RuntimeAttachment<TaggedTransport>> {
         self.record("resume");
-        Ok(TaggedTransport)
+        Ok(agent_session::domain::connection::RuntimeAttachment::solo(
+            TaggedTransport,
+        ))
     }
 
     async fn session_token(&self, _session: AgentSessionId) -> Result<Option<String>> {
@@ -101,6 +111,14 @@ impl AgentSessionRepo for FixedBotSessions {
         unimplemented!("the router never looks sessions up by egress token")
     }
 
+    async fn preview(
+        &self,
+        _viewer: &MacroUserIdStr<'static>,
+        _ids: &[AgentSessionId],
+    ) -> SessionResult<Vec<AgentSessionPreview>> {
+        unimplemented!("the router never previews sessions")
+    }
+
     async fn get(&self, id: AgentSessionId) -> SessionResult<AgentSession> {
         Ok(AgentSession {
             id,
@@ -117,6 +135,7 @@ impl AgentSessionRepo for FixedBotSessions {
             name: DEFAULT_AGENT_SESSION_NAME.to_owned(),
             sandbox_size: SandboxSize::Default,
             instructions: None,
+            mcp_servers: Default::default(),
             acp_session_id: None,
             external: None,
             status: SessionStatus::NoMessages,
@@ -211,12 +230,12 @@ async fn the_cursor_bot_routes_to_cursor_and_everything_else_to_the_sandbox() {
         .spawn(spawn_for(AgentKind::Cursor))
         .await
         .expect("spawn");
-    assert!(matches!(spawned, RoutedTransport::Cursor(_)));
+    spawned.map_transport(|transport| assert!(matches!(transport, RoutedTransport::Cursor(_))));
     let spawned = router
         .spawn(spawn_for(AgentKind::SandboxedCoder))
         .await
         .expect("spawn");
-    assert!(matches!(spawned, RoutedTransport::Sandbox(_)));
+    spawned.map_transport(|transport| assert!(matches!(transport, RoutedTransport::Sandbox(_))));
     assert_eq!(cursor.calls(), ["cursor:spawn"]);
     assert_eq!(sandbox.calls(), ["sandbox:spawn"]);
 }
@@ -237,5 +256,26 @@ async fn resume_and_teardown_route_by_the_stored_bot() {
     router.resume(session).await.expect("resume");
     router.teardown(session).await.expect("teardown");
     assert_eq!(cursor.calls(), ["cursor:resume", "cursor:teardown"]);
+    assert!(sandbox.calls().is_empty());
+}
+
+#[tokio::test]
+async fn a_database_backed_cursor_agent_routes_by_its_stored_harness() {
+    let sandbox = TaggedManager::new("sandbox");
+    let cursor = TaggedManager::new("cursor");
+    let router = RoutedContainerManager::new(
+        sandbox.clone(),
+        cursor.clone(),
+        FixedBotSessions(BotId::TEST_A),
+    );
+
+    let session = AgentSessionId::new();
+    router.resume(session).await.expect("resume");
+    router.session_token(session).await.expect("session token");
+    router.teardown(session).await.expect("teardown");
+    assert_eq!(
+        cursor.calls(),
+        ["cursor:resume", "cursor:session_token", "cursor:teardown"]
+    );
     assert!(sandbox.calls().is_empty());
 }

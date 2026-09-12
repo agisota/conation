@@ -12,6 +12,10 @@ path = "src/main.rs"
 name = "agent_harness_service_openapi"
 path = "src/openapi.rs"
 
+[[bin]]
+name = "agent_harness_service_doppler_config"
+path = "src/doppler_config.rs"
+
 [dependencies]
 agent_egress = { path = "../../crates/agent_egress" }
 agent_fold = { path = "../../crates/agent_fold" }
@@ -20,17 +24,20 @@ agent_inmem = { path = "../../crates/agent_inmem" }
 ai_tools = { path = "../../crates/ai_tools" }
 agent_runtime_protocol = { path = "../../crates/agent_runtime_protocol", features = ["utoipa"] }
 agent_session = { path = "../../crates/agent_session" }
-agent_trigger = { path = "../../crates/agent_trigger" }
+agent_trigger = { path = "../../crates/agent_trigger", features = ["outbound"] }
 ai_usage = { path = "../../crates/ai_usage" }
 aws-sdk-sqs = { workspace = true }
 bot_id = { path = "../../crates/bot_id" }
 bots = { path = "../../crates/bots" }
+harness_id = { path = "../../crates/harness_id" }
+harnesses = { path = "../../crates/harnesses", default-features = false, features = ["outbound", "ports"] }
 connection_gateway_client = { path = "../../crates/connection_gateway_client" }
 aws-sdk-kms = { workspace = true }
 cursor_api_key = { path = "../../crates/cursor_api_key" }
 cursor_cloud_agents = { path = "../../crates/cursor_cloud_agents" }
 database_env_vars = { path = "../../crates/database_env_vars" }
 entity_access = { path = "../../crates/entity_access" }
+futures = { workspace = true }
 github = { path = "../../crates/github", default-features = false, features = [
   "outbound",
   "ports",
@@ -47,6 +54,7 @@ conation_service_urls = { path = "../../crates/conation_service_urls" }
 conation_tower_layers = { path = "../../crates/conation_tower_layers" }
 notification = { path = "../../crates/notification" }
 rdkafka = { workspace = true }
+rootcause = { workspace = true }
 channels = { path = "../../crates/channels", features = ["ports", "outbound"] }
 anyhow = { workspace = true }
 conation_user_id = { path = "../../crates/conation_user_id" }
@@ -61,20 +69,26 @@ conation_authorization = { path = "../../crates/conation_authorization", default
 ] }
 conation_cors = { path = "../../crates/conation_cors" }
 secretsmanager_client = { path = "../../crates/secretsmanager_client" }
-serde_json = { workspace = true }
+redis = { workspace = true, features = ["aio", "tokio-comp"] }
 utoipa = { workspace = true }
 utoipa-swagger-ui = { workspace = true }
 conation_config = { path = "../../crates/conation_config" }
+doppler-config = { workspace = true }
 conation_entrypoint = { path = "../../crates/conation_entrypoint" }
 conation_env = { path = "../../crates/conation_env" }
 conation_env_var = { path = "../../crates/conation_env_var" }
 conation_uuid = { path = "../../crates/conation_uuid" }
 serde = { workspace = true }
+serde_json = { workspace = true }
 sqlx = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread", "time"] }
+tokio-retry = { workspace = true }
 tokio-util = { workspace = true, features = ["rt"] }
+tower = { workspace = true }
 tracing = { workspace = true }
 workspace-hack = { version = "0.1", path = "../../crates/workspace-hack" }
 
 [dev-dependencies]
+agent-client-protocol = { workspace = true }
 agent_session = { path = "../../crates/agent_session", features = ["test-utils"] }
+harness_id = { path = "../../crates/harness_id", features = ["test-utils"] }

@@ -270,6 +270,7 @@ impl IntoResponse for EgressError {
             Self::UnknownServer(_) | Self::Unroutable(_) => StatusCode::NOT_FOUND,
             Self::RepoUnavailable(_) => StatusCode::FORBIDDEN,
             Self::MethodNotAllowed(_) => StatusCode::METHOD_NOT_ALLOWED,
+            Self::RequestTooLarge => StatusCode::PAYLOAD_TOO_LARGE,
             // The named upstream is unusable as configured. Someone has to
             // fix the URL; the agent cannot.
             Self::InsecureUpstream(_) => StatusCode::BAD_GATEWAY,
@@ -294,6 +295,7 @@ impl IntoResponse for EgressError {
                 "This session's repository is not reachable with Conation's GitHub App."
             }
             Self::MethodNotAllowed(_) => "That method is not allowed here.",
+            Self::RequestTooLarge => "That request body is too large.",
             Self::InsecureUpstream(_) => "That upstream is misconfigured and cannot be reached.",
             Self::Upstream(_) => "The upstream could not be reached.",
             Self::Internal(_) => "Egress failed.",

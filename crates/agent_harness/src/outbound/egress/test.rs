@@ -1,4 +1,5 @@
 use super::*;
+use agent_session::domain::model::AgentMcpServer;
 
 fn slug(name: &str) -> McpServerSlug {
     McpServerSlug::parse(name).expect("a valid app slug")
@@ -7,12 +8,12 @@ fn slug(name: &str) -> McpServerSlug {
 #[test]
 fn reads_the_repository_out_of_a_configured_url() {
     for url in [
-        "https://github.com/agisota/conation",
-        "https://github.com/agisota/conation/",
-        "https://github.com/agisota/conation.git",
+        "https://github.com/macro-inc/macro",
+        "https://github.com/macro-inc/macro/",
+        "https://github.com/macro-inc/macro.git",
     ] {
         let repo = repo_slug(url).expect(url);
-        assert_eq!(repo.to_string(), "agisota/conation", "for {url}");
+        assert_eq!(repo.to_string(), "macro-inc/macro", "for {url}");
     }
 }
 
@@ -22,10 +23,10 @@ fn refuses_a_url_that_does_not_name_a_repository() {
         "",
         "not a url",
         "https://github.com",
-        "https://github.com/agisota",
-        "https://gitlab.com/agisota/conation",
-        "https://github.com.evil.example/agisota/conation",
-        "https://github.com/agisota/conation/tree/main",
+        "https://github.com/macro-inc",
+        "https://gitlab.com/macro-inc/macro",
+        "https://github.com.evil.example/macro-inc/macro",
+        "https://github.com/macro-inc/macro/tree/main",
     ] {
         assert!(repo_slug(url).is_err(), "accepted {url}");
     }
@@ -89,14 +90,15 @@ async fn lists_enabled_app_slugs_verbatim() {
             connection("datadog", false),
             connection("Not A Slug!", true),
         ])),
-        "https://egress.conation.dev",
+        "https://egress.macro.com",
     );
 
     let provisioned = provisioner
         .provision(
             AgentSessionId::new(),
             &MacroUserIdStr::try_from_email("owner@example.com").expect("a valid user id"),
-            "https://github.com/agisota/conation",
+            "https://github.com/macro-inc/macro",
+            &AgentMcpServers::OwnerConnections,
         )
         .await
         .expect("provisioned");
@@ -116,13 +118,14 @@ async fn lists_enabled_app_slugs_verbatim() {
 async fn restore_wraps_an_existing_token_in_a_fresh_listing() {
     let provisioner = EgressProvisioner::new(
         Arc::new(FixedConnections(vec![connection("linear", true)])),
-        "https://egress.conation.dev",
+        "https://egress.macro.com",
     );
 
     let restored = provisioner
         .restore(
             &MacroUserIdStr::try_from_email("owner@example.com").expect("a valid user id"),
             "already-minted-token".to_owned(),
+            &AgentMcpServers::OwnerConnections,
         )
         .await
         .expect("restored");
@@ -136,22 +139,104 @@ async fn restore_wraps_an_existing_token_in_a_fresh_listing() {
     assert_eq!(slugs, ["linear"]);
 }
 
+fn selected(slugs: &[&str]) -> AgentMcpServers {
+    AgentMcpServers::Selected {
+        servers: slugs
+            .iter()
+            .map(|slug| AgentMcpServer {
+                app_slug: (*slug).to_owned(),
+                server_name: (*slug).to_owned(),
+            })
+            .collect(),
+    }
+}
+
+/// A selected list is advertised whole, in the agent's order, whatever the
+/// owner has connected: an unconnected app is still dialable, because the
+/// proxy answers it with a "not connected" tool result rather than refusing
+/// it, and a connected-but-unselected app is not offered at all.
+#[tokio::test]
+async fn a_selected_list_is_advertised_regardless_of_connections() {
+    let provisioner = EgressProvisioner::new(
+        Arc::new(FixedConnections(vec![
+            connection("datadog", true),
+            connection("linear", false),
+        ])),
+        "https://egress.macro.com",
+    );
+
+    let provisioned = provisioner
+        .provision(
+            AgentSessionId::new(),
+            &MacroUserIdStr::try_from_email("owner@example.com").expect("a valid user id"),
+            "https://github.com/macro-inc/macro",
+            &selected(&["notion", "linear", "Not A Slug!"]),
+        )
+        .await
+        .expect("provisioned");
+
+    let slugs: Vec<String> = provisioned
+        .sandbox
+        .mcp_servers
+        .iter()
+        .map(ToString::to_string)
+        .collect();
+    assert_eq!(slugs, ["notion", "linear"]);
+
+    let restored = provisioner
+        .restore(
+            &MacroUserIdStr::try_from_email("owner@example.com").expect("a valid user id"),
+            "already-minted-token".to_owned(),
+            &selected(&["notion"]),
+        )
+        .await
+        .expect("restored");
+    let slugs: Vec<String> = restored
+        .mcp_servers
+        .iter()
+        .map(ToString::to_string)
+        .collect();
+    assert_eq!(slugs, ["notion"]);
+}
+
+/// An explicitly empty selection is the agent author's choice: nothing of the
+/// owner's is offered in its place.
+#[tokio::test]
+async fn an_empty_selection_offers_nothing_of_the_owners() {
+    let provisioner = EgressProvisioner::new(
+        Arc::new(FixedConnections(vec![connection("datadog", true)])),
+        "https://egress.macro.com",
+    );
+
+    let provisioned = provisioner
+        .provision(
+            AgentSessionId::new(),
+            &MacroUserIdStr::try_from_email("owner@example.com").expect("a valid user id"),
+            "https://github.com/macro-inc/macro",
+            &selected(&[]),
+        )
+        .await
+        .expect("provisioned");
+    assert!(provisioned.sandbox.mcp_servers.is_empty());
+}
+
 fn egress(slugs: &[&str]) -> SandboxEgress {
     SandboxEgress {
-        base_url: "https://egress.conation.dev".to_owned(),
+        base_url: "https://egress.macro.com".to_owned(),
         session_token: "session-token".to_owned(),
         mcp_servers: slugs.iter().map(|name| slug(name)).collect(),
     }
 }
 
 /// Every server points at the proxy and carries the session token rather than
-/// any upstream credential; Conation's own server leads the list on its own
+/// any upstream credential; Macro's own server leads the list on its own
 /// route.
 #[test]
 fn points_every_acp_server_at_the_proxy() {
     let servers = egress(&["datadog", "linear"]).acp_servers();
 
-    let rendered: Vec<(String, String, Vec<(String, String)>)> = servers
+    type RenderedServer = (String, String, Vec<(String, String)>);
+    let rendered: Vec<RenderedServer> = servers
         .into_iter()
         .map(|server| match server {
             agent_client_protocol::schema::v1::McpServer::Http(http) => (
@@ -174,34 +259,34 @@ fn points_every_acp_server_at_the_proxy() {
         rendered,
         [
             (
-                "conation".to_owned(),
-                "https://egress.conation.dev/mcp-conation".to_owned(),
+                "macro".to_owned(),
+                "https://egress.macro.com/mcp-macro".to_owned(),
                 authorization.clone(),
             ),
             (
                 "datadog".to_owned(),
-                "https://egress.conation.dev/mcp/datadog".to_owned(),
+                "https://egress.macro.com/mcp/datadog".to_owned(),
                 authorization.clone(),
             ),
             (
                 "linear".to_owned(),
-                "https://egress.conation.dev/mcp/linear".to_owned(),
+                "https://egress.macro.com/mcp/linear".to_owned(),
                 authorization,
             ),
         ]
     );
 }
 
-/// An owner with no connected apps still gets Conation's own server.
+/// An owner with no connected apps still gets Macro's own server.
 #[test]
-fn an_owner_with_no_connected_apps_still_gets_the_conation_server() {
+fn an_owner_with_no_connected_apps_still_gets_the_macro_server() {
     let entries: Vec<(String, String)> = egress(&[]).server_entries().collect();
 
     assert_eq!(
         entries,
         [(
-            "conation".to_owned(),
-            "https://egress.conation.dev/mcp-conation".to_owned()
+            "macro".to_owned(),
+            "https://egress.macro.com/mcp-macro".to_owned()
         )]
     );
 }
@@ -214,7 +299,7 @@ fn the_egress_environment_does_not_print_its_secrets() {
 
     let printed = format!("{egress:?}");
     assert!(!printed.contains("session-token"), "{printed}");
-    assert!(printed.contains("https://egress.conation.dev"), "{printed}");
+    assert!(printed.contains("https://egress.macro.com"), "{printed}");
 
     let environment: Vec<String> = egress
         .environment()
@@ -224,10 +309,8 @@ fn the_egress_environment_does_not_print_its_secrets() {
     assert_eq!(
         environment,
         [
-            "CONATION_EGRESS_URL".to_owned(),
-            "CONATION_SESSION_TOKEN".to_owned(),
-            "CONATION_MODEL_PROXY_URL".to_owned(),
-            "CONATION_MODEL_SESSION_TOKEN".to_owned(),
+            "MACRO_EGRESS_URL".to_owned(),
+            "MACRO_SESSION_TOKEN".to_owned()
         ]
     );
 }

@@ -52,6 +52,7 @@ use tokio_util::task::TaskTracker;
 
 use crate::config::MailIdentity;
 use crate::microsoft_token_cipher::MicrosoftTokenCipher;
+use authentication_service::service::signup_policy::SignupPolicy;
 use cursor_api_key::cipher::CursorApiKeyCipher;
 
 pub(crate) type NotificationIngressType = SqsNotificationIngress<SqsQueue>;
@@ -141,6 +142,7 @@ pub(crate) struct ApiContext {
     pub notification_ingress_service: Arc<NotificationIngressType>,
     pub sqs_client: Arc<sqs_client::SQS>,
     pub environment: Environment,
+    pub signup_policy: Arc<SignupPolicy>,
     pub jwt_args: JwtValidationArgs,
     pub authorization_state: MacroAuthorizationState<AuthorizationService>,
     pub token_context: ConationApiTokenContext,

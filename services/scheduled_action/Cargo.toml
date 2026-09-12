@@ -33,7 +33,9 @@ serde_json = { workspace = true }
 conation_env_var = { path = "../../crates/conation_env_var" }
 conation_queues = { path = "../../crates/conation_queues" }
 conation_config = { path = "../../crates/conation_config" }
-conation_authorization = { path = "../../crates/conation_authorization" }
+conation_authorization = { path = "../../crates/conation_authorization", features = [
+  "postgres",
+] }
 database_env_vars = { path = "../../crates/database_env_vars" }
 doppler-config = { workspace = true }
 sqlx = { workspace = true }
@@ -65,6 +67,7 @@ model_notifications = { path = "../../crates/model_notifications" }
 notification = { path = "../../crates/notification" }
 utoipa = { workspace = true, features = ["axum_extras", "chrono"] }
 utoipa-swagger-ui = { workspace = true }
+tower = { workspace = true }
 
 conation_aws_config = { path = "../../crates/conation_aws_config" }
 conation_cors = { path = "../../crates/conation_cors" }

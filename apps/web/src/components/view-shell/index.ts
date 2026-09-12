@@ -3,6 +3,10 @@ export {
   type CollapsibleSectionRootProps,
 } from './CollapsibleSection';
 export {
+  createCollapsedSidebarSectionsStorage,
+  setSidebarSectionCollapsed,
+} from './collapsed-sections';
+export {
   type ListControlOption,
   ListFilterDropdown,
   type ListFilterDropdownProps,
@@ -12,7 +16,17 @@ export {
   ListSortDropdown,
   type ListSortDropdownProps,
 } from './ListDropdowns';
+export { MobileFilterDrawer } from './MobileFilterDrawer';
 export { SearchBar, type SearchBarProps } from './SearchBar';
+export {
+  type UseViewControlHotkeysOptions,
+  useViewControlHotkeys,
+  type ViewControlHotkeyAction,
+} from './use-view-control-hotkeys';
+export {
+  type UseViewTabHotkeysOptions,
+  useViewTabHotkeys,
+} from './use-view-tab-hotkeys';
 export {
   useViewShell,
   ViewShell,

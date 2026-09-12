@@ -1,3 +1,10 @@
+//! Configuration for the notification service, loaded via the standard
+//! `conation_config` pattern so it gets a `doppler_config` validation binary.
+//!
+//! Required env vars are declared here as typed fields. The `doppler_config`
+//! binary loads this `Config` from Doppler for both the dev and prod
+//! environments, surfacing any missing or mistyped values at CI time.
+
 use anyhow::Context;
 use conation_auth::InternalApiKey;
 use conation_env::Environment;
@@ -15,8 +22,6 @@ pub static BASE_URL: LazyLock<String> = LazyLock::new(|| {
 });
 
 env_vars! {
-    #[derive(Debug, Clone)]
-    pub(crate) struct BaseUrl;
     #[derive(Debug, Clone)]
     pub(crate) struct AppleBundleId;
     #[derive(Debug, Clone)]
@@ -48,10 +53,6 @@ env_var!(
 #[derive(conation_config::MacroConfig)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Config {
-    /// The service's base url including the scheme.
-    #[allow(dead_code)]
-    pub(crate) base_url: BaseUrl,
-
     /// The connection URL for the Postgres database this application should use.
     pub(crate) database_url: DatabaseUrl,
 

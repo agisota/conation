@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use subtle::ConstantTimeEq;
 use tracing::error;
 use worker::Error;
 
@@ -33,6 +34,8 @@ pub struct AuthToken {
     pub user_id: Option<String>,
     document_id: String,
     pub access_level: AccessLevel,
+    #[serde(default)]
+    pub actor: Option<String>,
 }
 
 impl AuthToken {
@@ -82,13 +85,13 @@ pub fn decode_jwt(
             let is_admin = match req.headers().get(header_names::INTERNAL_AUTH_KEY_HEADER)? {
                 // sholud we warn when false?
                 Some(internal_key) => {
-                    let res = internal_key == secrets.internal_api_secret;
+                    let res: bool = internal_key
+                        .as_bytes()
+                        .ct_eq(secrets.internal_api_secret.as_bytes())
+                        .into();
+
                     if !res {
-                        error!(
-                            "provided header: {internal_key}
-did not match expected value: {}",
-                            secrets.internal_api_secret
-                        );
+                        error!("provided header: {internal_key} did not match expected value");
                     }
                     res
                 }
@@ -100,6 +103,7 @@ did not match expected value: {}",
                     user_id: None,
                     document_id: "TODO should be option".to_string(),
                     access_level: AccessLevel::Admin,
+                    actor: None,
                 });
             }
 

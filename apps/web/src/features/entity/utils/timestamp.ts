@@ -1,34 +1,17 @@
-import { formatDateTime, t } from '@app/lib/i18n';
 import type { DateValue } from '@core/util/date';
 import {
+  differenceInDays,
   differenceInHours,
+  differenceInMilliseconds,
   differenceInMinutes,
+  differenceInMonths,
+  differenceInWeeks,
+  differenceInYears,
+  format,
   isSameYear,
   isToday,
   isYesterday,
 } from 'date-fns';
-
-function asDate(value: DateValue): Date {
-  return value instanceof Date ? value : new Date(value);
-}
-
-function formatTime(date: Date): string {
-  return formatDateTime(date, { hour: 'numeric', minute: '2-digit' });
-}
-
-function formatCompactTime(date: Date): string {
-  return formatTime(date).replace(/\s+(?=[A-Za-zА-Яа-яЁё.]+$)/u, '');
-}
-
-function formatCalendarDate(date: Date): string {
-  return isSameYear(date, new Date())
-    ? formatDateTime(date, { month: 'short', day: 'numeric' })
-    : formatDateTime(date, {
-        year: '2-digit',
-        month: 'numeric',
-        day: 'numeric',
-      });
-}
 
 /**
  * Formats a timestamp into a human-readable string.
@@ -37,10 +20,15 @@ function formatCalendarDate(date: Date): string {
  * - Older: Shows full date (e.g., "1/27/24")
  */
 export function formatTimestamp(date: DateValue): string {
-  const value = asDate(date);
-  if (isToday(value)) return formatTime(value);
+  if (isToday(date)) {
+    return format(date, 'h:mm a');
+  }
 
-  return formatCalendarDate(value);
+  if (isSameYear(date, new Date())) {
+    return format(date, 'MMM d');
+  }
+
+  return format(date, 'M/d/yy');
 }
 
 /**
@@ -54,45 +42,67 @@ export function formatRelativeTimestamp(
   date: DateValue,
   options?: { condensed?: boolean }
 ): string {
-  const value = asDate(date);
   const now = new Date();
   const condensed = options?.condensed ?? false;
 
-  const minutesAgo = differenceInMinutes(now, value);
+  const minutesAgo = differenceInMinutes(now, date);
 
   if (minutesAgo < 1) {
-    return t('entity.timestamp.justNow');
+    return 'just now';
   }
 
   if (minutesAgo < 60) {
-    return t(
-      condensed
-        ? 'entity.timestamp.minutesAgoCondensed'
-        : 'entity.timestamp.minutesAgo',
-      { count: minutesAgo }
-    );
+    const unit = condensed ? 'min' : minutesAgo === 1 ? 'minute' : 'minutes';
+    return `${minutesAgo} ${unit} ago`;
   }
 
-  const hoursAgo = differenceInHours(now, value);
+  const hoursAgo = differenceInHours(now, date);
 
   if (hoursAgo < 24) {
-    return t(
-      condensed
-        ? 'entity.timestamp.hoursAgoCondensed'
-        : 'entity.timestamp.hoursAgo',
-      { count: hoursAgo }
-    );
+    const unit = condensed ? 'hr' : hoursAgo === 1 ? 'hour' : 'hours';
+    return `${hoursAgo} ${unit} ago`;
   }
 
-  if (isYesterday(value)) {
-    return condensed
-      ? t('entity.timestamp.yesterdayCondensed')
-      : t('entity.timestamp.yesterdayAt', {
-          time: formatCompactTime(value),
-        });
+  if (isYesterday(date)) {
+    return condensed ? 'yest' : `${format(date, 'h:mma')} yesterday`;
   }
 
-  return formatCalendarDate(value);
+  if (isSameYear(date, now)) {
+    return format(date, 'MMM d');
+  }
+
+  return format(date, 'M/d/yy');
+}
+
+/**
+ * The shortest relative age for dense rows: `now`, `5m`, `17h`, `8d`, `3w`,
+ * `1mo`, `2y`. An unparseable value is returned as is.
+ */
+export function formatCompactRelativeTimestamp(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  const now = new Date();
+  const ageMs = Math.max(0, differenceInMilliseconds(now, date));
+  const seconds = Math.floor(ageMs / 1000);
+  if (seconds < 60) return 'now';
+
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+
+  const days = differenceInDays(now, date);
+  if (days < 7) return `${Math.max(1, days)}d`;
+
+  const weeks = differenceInWeeks(now, date);
+  if (weeks < 5) return `${Math.max(1, weeks)}w`;
+
+  const months = differenceInMonths(now, date);
+  if (months < 12) return `${Math.max(1, months)}mo`;
+
+  return `${Math.max(1, differenceInYears(now, date))}y`;
 }
 
 /**
@@ -101,19 +111,10 @@ export function formatRelativeTimestamp(
  * next-run times).
  */
 export function formatDateAndTime(date: DateValue): string {
-  const value = asDate(date);
-  return isSameYear(value, new Date())
-    ? formatDateTime(value, {
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-      })
-    : formatDateTime(value, {
-        year: '2-digit',
-        month: 'numeric',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-      });
+  const d = typeof date === 'string' ? new Date(date) : date;
+  const dateLabel = isSameYear(d, new Date())
+    ? format(d, 'MMM d')
+    : format(d, 'M/d/yy');
+  const timeLabel = format(d, 'h:mm a');
+  return `${dateLabel}, ${timeLabel}`;
 }

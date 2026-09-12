@@ -1,3 +1,4 @@
+import { match, P } from 'ts-pattern';
 import { Sdk as AgentHarnessSdk } from '../../generated/agent-harness/sdk.gen';
 import { Sdk as AuthSdk } from '../../generated/auth/sdk.gen';
 import { Sdk as CognitionSdk } from '../../generated/cognition/sdk.gen';
@@ -15,12 +16,81 @@ import {
   type MacroAuth,
   type MacroOpts,
   type ServiceName,
+  type TokenSource,
   WEB_APP_URLS,
 } from '../config';
 import { BotsNamespace } from '../entities/bots/namespace';
 import { User } from '../entities/users/user';
 import { MacroEvents } from '../events/receiver';
 import { type LocalPortmap, resolveLocalPortmap } from '../local-portmap';
+
+const USER_API_KEY_HEADER = 'x-macro-user-api-key';
+const USER_API_KEY_PREFIX = 'mak_';
+const BOT_TOKEN_PREFIX = 'mbot_';
+
+type CredentialHeader = readonly [name: string, value: string];
+
+function userCredentialHeader(secret: string): CredentialHeader {
+  return match(secret)
+    .with(P.string.startsWith(BOT_TOKEN_PREFIX), () => {
+      throw new Error(
+        "bot token passed as a user credential. Use auth: { type: 'bot', token } or MACRO_BOT_TOKEN.",
+      );
+    })
+    .with(
+      P.string.startsWith(USER_API_KEY_PREFIX),
+      (key): CredentialHeader => [USER_API_KEY_HEADER, key],
+    )
+    .otherwise(
+      (token): CredentialHeader => ['Authorization', `Bearer ${token}`],
+    );
+}
+
+async function resolveToken(source: TokenSource): Promise<string> {
+  return typeof source === 'function' ? await source() : source;
+}
+
+export async function requestAuthHeaders(
+  auth: MacroAuth,
+  requestedAs?: string,
+  existing?: { hasBotScope?: boolean },
+): Promise<ReadonlyArray<readonly [string, string]>> {
+  return match(auth)
+    .with({ type: 'bot' }, async (botAuth) => {
+      const tok = await resolveToken(botAuth.token);
+      if (!tok.startsWith(BOT_TOKEN_PREFIX)) {
+        throw new Error(
+          "user API key passed as a bot token. Use auth: { type: 'user', apiKey } or MACRO_API_KEY.",
+        );
+      }
+      const headers: Array<readonly [string, string]> = [
+        ['x-macro-bot-token', tok],
+      ];
+      if (!existing?.hasBotScope) {
+        headers.push([
+          'x-macro-bot-scope',
+          botAuth.scope ?? (requestedAs ? 'user' : 'team'),
+        ]);
+      }
+      if (requestedAs) {
+        headers.push(['x-macro-bot-for-conation-user-id', requestedAs]);
+      }
+      return headers;
+    })
+    .with({ type: 'user', apiKey: P.string }, ({ apiKey }) => {
+      if (apiKey.startsWith(BOT_TOKEN_PREFIX)) {
+        throw new Error(
+          "bot token passed as a user credential. Use auth: { type: 'bot', token } or MACRO_BOT_TOKEN.",
+        );
+      }
+      return [[USER_API_KEY_HEADER, apiKey] as const];
+    })
+    .with({ type: 'user' }, async ({ token }) => {
+      const pair = userCredentialHeader(await resolveToken(token));
+      return [pair];
+    })
+    .exhaustive();
+}
 
 export class MacroClient {
   readonly agentHarness: AgentHarnessSdk;
@@ -34,7 +104,7 @@ export class MacroClient {
   readonly storage: StorageSdk;
   readonly webAppUrl: string;
   readonly wsVerify?: string;
-  readonly events?: MacroEvents;
+  readonly events: MacroEvents;
   /** Resolved authentication config (distinct from `auth`, the auth-service SDK). */
   readonly authConfig: MacroAuth;
   /** Resolved service base urls: env defaults, then the local-stack portmap,
@@ -53,9 +123,7 @@ export class MacroClient {
     this.hosts = hosts;
     this.localPortmap = localPortmap;
     const envWebUrl =
-      typeof process !== 'undefined'
-        ? process.env.CONATION_WEB_URL
-        : undefined;
+      typeof process !== 'undefined' ? process.env.MACRO_WEB_URL : undefined;
     this.webAppUrl =
       opts.webAppUrl ??
       envWebUrl ??
@@ -92,12 +160,10 @@ export class MacroClient {
 
     const envWebhookSecret =
       typeof process !== 'undefined'
-        ? process.env.CONATION_WEBHOOK_SECRET
+        ? process.env.MACRO_WEBHOOK_SECRET
         : undefined;
     const webhookSecret = opts.webhookSecret ?? envWebhookSecret;
-    if (webhookSecret) {
-      this.events = new MacroEvents(this, webhookSecret);
-    }
+    this.events = new MacroEvents(this, webhookSecret);
   }
 
   /** Whether requests have a user identity accepted by acting-user endpoints. */
@@ -119,7 +185,7 @@ export class MacroClient {
 
   /**
    * The authenticated caller's mentionable principal — `bot|<uuid>` for bot
-   * auth, `conation|<email>` for user auth — fetched once and cached. Failed
+   * auth, `macro|<email>` for user auth — fetched once and cached. Failed
    * lookups are not cached, so a later call retries.
    */
   myPrincipalId(): Promise<string> {
@@ -137,32 +203,13 @@ export class MacroClient {
   private makeClient(baseUrl: string) {
     const c = createClient({ baseUrl });
     c.interceptors.request.use(async (request) => {
-      const source = this.authConfig.token;
-      const tok = typeof source === 'function' ? await source() : source;
-      if (this.authConfig.type === 'bot') {
-        request.headers.set('x-conation-bot-token', tok);
-        // A per-call scope wins: the channel webhook fallback pins `user`,
-        // the only scope a user-owned bot can present (a team scope with no
-        // owning team is rejected outright).
-        if (!request.headers.has('x-conation-bot-scope')) {
-          request.headers.set(
-            'x-conation-bot-scope',
-            this.authConfig.scope ?? (this.requestedAs ? 'user' : 'team'),
-          );
-        }
-        if (this.requestedAs) {
-          request.headers.set(
-            'x-conation-bot-for-conation-user-id',
-            this.requestedAs,
-          );
-        }
-      } else {
-        if (tok.startsWith('mbot_')) {
-          throw new Error(
-            "bot API key passed as a user token — use auth: { type: 'bot', token } (or CONATION_BOT_TOKEN)",
-          );
-        }
-        request.headers.set('Authorization', `Bearer ${tok}`);
+      const headers = await requestAuthHeaders(
+        this.authConfig,
+        this.requestedAs,
+        { hasBotScope: request.headers.has('x-macro-bot-scope') },
+      );
+      for (const [name, value] of headers) {
+        request.headers.set(name, value);
       }
       return request;
     });
@@ -173,11 +220,11 @@ export class MacroClient {
 function resolveEnv(opts: MacroOpts): Env {
   if (opts.env) return opts.env;
   const fromEnv =
-    typeof process !== 'undefined' ? process.env.CONATION_ENV : undefined;
-  if (!fromEnv) return 'dev';
+    typeof process !== 'undefined' ? process.env.MACRO_ENV : undefined;
+  if (!fromEnv) return 'prod';
   if (!(fromEnv in HOSTS)) {
     throw new Error(
-      `invalid CONATION_ENV "${fromEnv}" — expected local, dev, or prod`,
+      `invalid MACRO_ENV "${fromEnv}" — expected local, dev, or prod`,
     );
   }
   return fromEnv as Env;
@@ -187,12 +234,12 @@ function resolveAuth(opts: MacroOpts): MacroAuth {
   if (opts.auth) return opts.auth;
   if (opts.token) return { type: 'user', token: opts.token };
   const envApiKey =
-    typeof process !== 'undefined' ? process.env.CONATION_API_KEY : undefined;
+    typeof process !== 'undefined' ? process.env.MACRO_API_KEY : undefined;
   const envBotToken =
-    typeof process !== 'undefined' ? process.env.CONATION_BOT_TOKEN : undefined;
+    typeof process !== 'undefined' ? process.env.MACRO_BOT_TOKEN : undefined;
   if (envApiKey && envBotToken) {
     throw new Error(
-      'both CONATION_API_KEY and CONATION_BOT_TOKEN are set — pass auth to new Macro() to pick one',
+      'both MACRO_API_KEY and MACRO_BOT_TOKEN are set — pass auth to new Macro() to pick one',
     );
   }
   if (envBotToken) return { type: 'bot', token: envBotToken };
@@ -202,7 +249,7 @@ function resolveAuth(opts: MacroOpts): MacroAuth {
       envApiKey ??
       (() => {
         throw new Error(
-          'no Conation API token — set CONATION_API_KEY / CONATION_BOT_TOKEN or pass token/auth to new Macro()',
+          'no Macro credential. Set MACRO_API_KEY (API key or bearer token) or MACRO_BOT_TOKEN, or pass token/auth to new Macro().',
         );
       }),
   };

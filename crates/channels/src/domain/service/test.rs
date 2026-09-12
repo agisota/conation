@@ -997,10 +997,16 @@ async fn post_message_emits_message_posted_event_and_updates_share_permissions()
             channel_id,
             PostMessageRequest {
                 content: "hello world".to_string(),
-                mentions: vec![SimpleMention {
-                    entity_type: "document".to_string(),
-                    entity_id: "doc-1".to_string(),
-                }],
+                mentions: vec![
+                    SimpleMention {
+                        entity_type: "document".to_string(),
+                        entity_id: "doc-1".to_string(),
+                    },
+                    SimpleMention {
+                        entity_type: "agent_session".to_string(),
+                        entity_id: "session-1".to_string(),
+                    },
+                ],
                 thread_id: None,
                 attachments: vec![NewChannelAttachment {
                     entity_type: "chat".to_string(),
@@ -1043,6 +1049,10 @@ async fn post_message_emits_message_posted_event_and_updates_share_permissions()
     drop(emitted);
 
     let shared = share.items.lock().unwrap();
+    assert!(shared.contains(&ReferencedShareItem::new(
+        "session-1",
+        ReferencedShareItemType::AgentSession
+    )));
     assert!(shared.contains(&ReferencedShareItem::new(
         "chat-1",
         ReferencedShareItemType::Chat
@@ -1796,6 +1806,96 @@ async fn clamps_limit() {
 }
 
 #[tokio::test]
+async fn catch_up_filter_short_page_has_no_next_cursor() {
+    let after = Utc::now();
+    let mut repo = MockChannelRepo::new();
+    repo.expect_get_top_level_messages()
+        .withf(move |_, _, _, limit, filters, _| {
+            *limit == 50 && filters.created_after_exclusive == Some(after)
+        })
+        .returning(|_, _, _, _, _, _| {
+            Box::pin(async {
+                Ok(TopLevelMessagesQueryResult {
+                    rows: vec![
+                        make_row(Uuid::new_v4(), 2),
+                        make_row(Uuid::new_v4(), 1),
+                        make_row(Uuid::new_v4(), 0),
+                    ],
+                    has_more_newer: false,
+                })
+            })
+        });
+    repo.expect_get_thread_data()
+        .returning(|_, _| Box::pin(async { Ok(HashMap::new()) }));
+    repo.expect_get_reactions_batch()
+        .returning(|_| Box::pin(async { Ok(HashMap::new()) }));
+    repo.expect_get_attachments_batch()
+        .returning(|_| Box::pin(async { Ok(HashMap::new()) }));
+
+    let svc = ChannelServiceImpl::new(repo);
+    let result = svc
+        .get_channel_messages(
+            Uuid::nil(),
+            Query::Sort(CreatedAt, ()),
+            MessagePageDirection::Older,
+            50,
+            &ChannelMessageFilters {
+                created_after_exclusive: Some(after),
+                ..Default::default()
+            },
+            None,
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(result.page.items.len(), 3);
+    assert!(result.page.next_cursor.is_none());
+}
+
+#[tokio::test]
+async fn catch_up_filter_full_page_has_next_cursor() {
+    let after = Utc::now();
+    let mut repo = MockChannelRepo::new();
+    repo.expect_get_top_level_messages()
+        .withf(move |_, _, _, limit, filters, _| {
+            *limit == 50 && filters.created_after_exclusive == Some(after)
+        })
+        .returning(|_, _, _, _, _, _| {
+            Box::pin(async {
+                Ok(TopLevelMessagesQueryResult {
+                    rows: (0..50).map(|i| make_row(Uuid::new_v4(), i)).collect(),
+                    has_more_newer: false,
+                })
+            })
+        });
+    repo.expect_get_thread_data()
+        .returning(|_, _| Box::pin(async { Ok(HashMap::new()) }));
+    repo.expect_get_reactions_batch()
+        .returning(|_| Box::pin(async { Ok(HashMap::new()) }));
+    repo.expect_get_attachments_batch()
+        .returning(|_| Box::pin(async { Ok(HashMap::new()) }));
+
+    let svc = ChannelServiceImpl::new(repo);
+    let result = svc
+        .get_channel_messages(
+            Uuid::nil(),
+            Query::Sort(CreatedAt, ()),
+            MessagePageDirection::Older,
+            50,
+            &ChannelMessageFilters {
+                created_after_exclusive: Some(after),
+                ..Default::default()
+            },
+            None,
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(result.page.items.len(), 50);
+    assert!(result.page.next_cursor.is_some());
+}
+
+#[tokio::test]
 async fn returns_empty_attachments_page() {
     let svc = ChannelServiceImpl::new(empty_repo());
     let page = svc
@@ -2274,6 +2374,107 @@ async fn remove_participants_allows_removing_non_owner() {
 }
 
 #[tokio::test]
+async fn create_system_channel_event_uses_system_actor() {
+    let channel_id = Uuid::new_v4();
+    let repo = FakeMutationRepo::new(channel_id, "macro|owner@test.com");
+    let events = FakeEvents::default();
+    let svc = mutation_service(repo, events.clone(), FakeReferenceSharing::default());
+
+    svc.create_system_channel(
+        macro_id("macro|owner@test.com"),
+        crate::domain::models::CreateChannelRequest {
+            name: Some("Macro Support x owner".to_string()),
+            channel_type: ChannelType::Private,
+            team_id: None,
+            auto_join_team: false,
+            participants: HashSet::from([macro_id("macro|teo@macro.com")]),
+        },
+    )
+    .await
+    .unwrap();
+
+    let events = events.events.lock().unwrap();
+    assert!(matches!(
+        events.as_slice(),
+        [ChannelEvent::ChannelCreated {
+            actor,
+            on_behalf_of: Some(owner),
+            channel_name: Some(name),
+            ..
+        }] if actor == &Sender::new_from_bot(bot_id::MACRO_SYSTEM_BOT_ID)
+            && owner.as_ref() == "macro|owner@test.com"
+            && name == "Macro Support x owner"
+    ));
+}
+
+#[tokio::test]
+async fn create_channel_on_behalf_attributes_created_to_the_bot() {
+    let channel_id = Uuid::new_v4();
+    let repo = FakeMutationRepo::new(channel_id, "macro|owner@test.com");
+    let events = FakeEvents::default();
+    let svc = mutation_service(repo, events.clone(), FakeReferenceSharing::default());
+
+    svc.create_channel_on_behalf(
+        macro_id("macro|owner@test.com"),
+        bot_id::MACRO_AI_BOT_ID,
+        crate::domain::models::CreateChannelRequest {
+            name: Some("Planning".to_string()),
+            channel_type: ChannelType::Private,
+            team_id: None,
+            auto_join_team: false,
+            participants: HashSet::from([macro_id("macro|teo@macro.com")]),
+        },
+    )
+    .await
+    .unwrap();
+
+    let events = events.events.lock().unwrap();
+    assert!(matches!(
+        events.as_slice(),
+        [ChannelEvent::ChannelCreated {
+            actor,
+            on_behalf_of: Some(owner),
+            channel_name: Some(name),
+            ..
+        }] if actor == &Sender::new_from_bot(bot_id::MACRO_AI_BOT_ID)
+            && owner.as_ref() == "macro|owner@test.com"
+            && name == "Planning"
+    ));
+}
+
+/// Signup on main called `create_channel(Sender::new_from_user(owner))`.
+/// That is the path that made "Created # Macro Support x …" render as You.
+#[tokio::test]
+async fn signup_support_channel_via_user_create_channel_attributes_created_to_owner() {
+    let channel_id = Uuid::new_v4();
+    let repo = FakeMutationRepo::new(channel_id, "macro|owner@test.com");
+    let events = FakeEvents::default();
+    let svc = mutation_service(repo, events.clone(), FakeReferenceSharing::default());
+
+    svc.create_channel(
+        sender("macro|owner@test.com"),
+        None,
+        crate::domain::models::CreateChannelRequest {
+            name: Some("Macro Support x owner".to_string()),
+            channel_type: ChannelType::Private,
+            team_id: None,
+            auto_join_team: false,
+            participants: HashSet::from([macro_id("macro|teo@macro.com")]),
+        },
+    )
+    .await
+    .unwrap();
+
+    let events = events.events.lock().unwrap();
+    assert!(matches!(
+        events.as_slice(),
+        [ChannelEvent::ChannelCreated { actor, channel_name: Some(name), .. }]
+            if actor == &sender("macro|owner@test.com")
+                && name == "Macro Support x owner"
+    ));
+}
+
+#[tokio::test]
 async fn create_channel_event_carries_channel_name() {
     let channel_id = Uuid::new_v4();
     let repo = FakeMutationRepo::new(channel_id, "macro|sender@test.com");
@@ -2332,6 +2533,7 @@ async fn ensure_dms_dispatches_created_channel_once() {
         [ChannelEvent::ChannelCreated {
             channel_id: actual_channel_id,
             actor,
+            on_behalf_of: None,
             channel_type: ChannelType::DirectMessage,
             channel_name: None,
             participant_user_ids,

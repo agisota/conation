@@ -1,9 +1,11 @@
-import { createSocketEffect } from '@conation/collaboration/websocket';
 import {
   ENABLE_DOCUMENT_MENTION_NOTIFICATIONS,
-  ENABLE_GRAPHQL_SOUP,
+  enableGraphqlSoup,
+  isFeatureEnabled,
 } from '@core/constant/featureFlags';
 import type { Entity } from '@core/types';
+import { muteItemForRef } from '@entity/utils/notification';
+import { createSocketEffect } from '@macro-inc/collaboration/websocket';
 import {
   useMuteItemMutation,
   useUnmuteItemMutation,
@@ -32,9 +34,11 @@ import {
   createRoot,
   createSignal,
   onCleanup,
+  untrack,
 } from 'solid-js';
 import { createStore, reconcile } from 'solid-js/store';
 import { fromZodError } from 'zod-validation-error';
+import { nextNotificationState } from './notification-state';
 import { createMutedEntitiesQuery } from './queries/muted-entities-query';
 import {
   type CompositeEntity,
@@ -102,23 +106,47 @@ const QUERY_LIMIT = 500;
 // In-flight infinite-query page fetches can land after an optimistic cache
 // flip and overwrite it with stale server data; this map keeps the UI
 // consistent regardless of what the cache says.
+type DoneOverride = { done: boolean; reopened: boolean };
 const [doneOverrides, setDoneOverrides] = createRoot(() =>
-  createSignal<ReadonlyMap<string, boolean>>(new Map())
+  createSignal<ReadonlyMap<string, DoneOverride>>(new Map())
 );
 
 export function setDoneOverride(
   ids: readonly string[],
   done: boolean | undefined
 ) {
-  if (ids.length === 0) return;
+  if (ids.length === 0) return () => undefined;
+  const previous = untrack(
+    () => new Map(ids.map((id) => [id, doneOverrides().get(id)]))
+  );
+  const applied = new Map<string, DoneOverride | undefined>();
   setDoneOverrides((prev) => {
     const next = new Map(prev);
     for (const id of ids) {
       if (done === undefined) next.delete(id);
-      else next.set(id, done);
+      else
+        next.set(id, {
+          done,
+          reopened:
+            !done &&
+            (prev.get(id)?.done === true || prev.get(id)?.reopened === true),
+        });
+      applied.set(id, next.get(id));
     }
     return next;
   });
+  // A failed older mutation must not undo a newer local action.
+  return () =>
+    setDoneOverrides((current) => {
+      const next = new Map(current);
+      for (const id of ids) {
+        if (current.get(id) !== applied.get(id)) continue;
+        const before = previous.get(id);
+        if (before === undefined) next.delete(id);
+        else next.set(id, before);
+      }
+      return next;
+    });
 }
 
 // Client-asserted seen state, the `doneOverrides` twin for `viewed_at`. Seen
@@ -128,15 +156,37 @@ export function setDoneOverride(
 // resurrects pre-write state when it lands. Entries are removed on mutation
 // failure (that rollback is deliberate) and pruned once the cache confirms
 // the seen state at a quiet moment.
+type SeenOverride = { viewedAt: string; token: symbol };
 const [seenOverrides, setSeenOverrides] = createRoot(() =>
-  createStore<Record<string, string | undefined>>({})
+  createStore<Record<string, SeenOverride | undefined>>({})
 );
 
 function setSeenOverride(ids: readonly string[], viewedAt: string | undefined) {
-  if (ids.length === 0) return;
+  if (ids.length === 0) return () => undefined;
+  const token = Symbol();
+  const previous = untrack(
+    () =>
+      new Map(
+        ids.map((id) => {
+          const entry = seenOverrides[id];
+          return [id, entry ? { ...entry } : undefined] as const;
+        })
+      )
+  );
   batch(() => {
-    for (const id of ids) setSeenOverrides(id, viewedAt);
+    for (const id of ids)
+      setSeenOverrides(
+        id,
+        viewedAt === undefined ? undefined : { viewedAt, token }
+      );
   });
+  return () =>
+    batch(() => {
+      for (const id of ids) {
+        if (seenOverrides[id]?.token === token)
+          setSeenOverrides(id, previous.get(id));
+      }
+    });
 }
 
 export function createNotificationSource(
@@ -145,7 +195,10 @@ export function createNotificationSource(
 ): NotificationSource {
   const subscriptions: Set<SubscribeFn> = new Set();
 
-  const [mutedEntities, setMutedEntities] = createSignal<UserUnsubscribe[]>([]);
+  const [mutedEntitiesStore, setMutedEntities] = createStore<UserUnsubscribe[]>(
+    []
+  );
+  const mutedEntities = createMemo(() => [...mutedEntitiesStore]);
 
   const notificationsQuery = useUserNotificationsQuery(() => ({
     limit: QUERY_LIMIT,
@@ -167,19 +220,32 @@ export function createNotificationSource(
     const done = doneOverrides();
     return raw.map((notification) => {
       const doneOverride = done.get(notification.id);
-      if (notification.viewed_at && doneOverride === undefined) {
+      if (notification.state !== 'unseen' && doneOverride === undefined) {
         return notification;
       }
 
       return {
         ...notification,
-        ...(doneOverride !== undefined ? { done: doneOverride } : {}),
-        // Keep seen overrides granular. Reading one notification's viewed_at
+        get state() {
+          const state = doneOverride?.done
+            ? 'done'
+            : doneOverride?.reopened
+              ? 'seen'
+              : doneOverride
+                ? nextNotificationState(notification.state, 'MARK_UNDONE')
+                : notification.state;
+          return state === 'unseen' && seenOverrides[notification.id]
+            ? 'seen'
+            : state;
+        },
+        // Keep seen overrides granular. Reading one notification's state/viewed_at
         // subscribes only to that id instead of invalidating the complete
         // notifications array and every channel/favorite consumer.
         get viewed_at() {
           if (notification.viewed_at) return notification.viewed_at;
-          return seenOverrides[notification.id] ?? notification.viewed_at;
+          return (
+            seenOverrides[notification.id]?.viewedAt ?? notification.viewed_at
+          );
         },
       };
     });
@@ -222,7 +288,7 @@ export function createNotificationSource(
     for (const id of seenIds) {
       const row = byId.get(id);
       if (!row) toPrune.push(id);
-      else if (row.viewed_at && quiet) toPrune.push(id);
+      else if (row.state !== 'unseen' && quiet) toPrune.push(id);
     }
     if (toPrune.length > 0) setSeenOverride(toPrune, undefined);
   });
@@ -244,7 +310,7 @@ export function createNotificationSource(
     // TODO(dev-rb/notifications): Remove this legacy eager pagination when the
     // REST notification source is retired. GraphQL consumers should use Soup
     // notification edges or dedicated notification queries instead.
-    if (ENABLE_GRAPHQL_SOUP()) return;
+    if (isFeatureEnabled(enableGraphqlSoup)) return;
     if (!notificationsQuery.data) return;
     if (notificationsQuery.hasNextPage && !notificationsQuery.isFetching) {
       notificationsQuery.fetchNextPage();
@@ -256,8 +322,8 @@ export function createNotificationSource(
   };
 
   createEffect(() => {
-    if (!mutedEntitiesQuery.isSuccess) return;
-    const mutedEntities = mutedEntitiesQuery?.data ?? [];
+    const mutedEntities = mutedEntitiesQuery.data;
+    if (!mutedEntities) return;
     setMutedEntities(reconcile(mutedEntities));
   });
 
@@ -266,7 +332,8 @@ export function createNotificationSource(
   if (!ENABLE_DOCUMENT_MENTION_NOTIFICATIONS) {
     createEffect(() => {
       const toDiscard = notifications().filter(
-        (n) => n.notification_event_type === 'document_mention' && !n.done
+        (n) =>
+          n.notification_event_type === 'document_mention' && n.state !== 'done'
       );
       if (toDiscard.length === 0) return;
       void markNotificationsAsDoneMutation.mutateAsync({
@@ -319,7 +386,7 @@ export function createNotificationSource(
 
   const unsubscribeFromGraphql = subscribeToGraphqlNotificationPatches(
     (patch) => {
-      if (!ENABLE_GRAPHQL_SOUP()) return;
+      if (!isFeatureEnabled(enableGraphqlSoup)) return;
       scheduleGraphqlNotificationRefetch();
       if (patch.__typename !== 'GraphqlNewNotification') return;
       dispatchIncomingNotification(mapGraphqlNotification(patch.notification));
@@ -341,13 +408,20 @@ export function createNotificationSource(
   };
 
   createSocketEffect(ws, (wsData) => {
-    if (wsData.type !== NOTIFICATION_EVENT_TYPE || ENABLE_GRAPHQL_SOUP()) {
+    if (
+      wsData.type !== NOTIFICATION_EVENT_TYPE ||
+      isFeatureEnabled(enableGraphqlSoup)
+    ) {
       return;
     }
     let parsedNotification: UnifiedNotification;
     try {
       const raw = JSON.parse(wsData.data) as ConnGatewayNotificationPayload;
       const unsafeMapped = mapWebsocketNotification(raw);
+      // Metadata fallback must never admit a missing or invalid lifecycle state.
+      if (!['unseen', 'seen', 'done'].includes(unsafeMapped.state)) {
+        throw new Error('Invalid notification state');
+      }
       const parseResult = unifiedNotificationSchema.safeParse(unsafeMapped);
       if (!parseResult.success) {
         console.warn(
@@ -376,13 +450,13 @@ export function createNotificationSource(
   const bulkMarkAsDone = async (notifications: UnifiedNotification[]) => {
     if (notifications.length === 0) return;
     const ids = notifications.map((n) => n.id);
-    setDoneOverride(ids, true);
+    const rollback = setDoneOverride(ids, true);
     try {
       await markNotificationsAsDoneMutation.mutateAsync({
         notificationIds: ids,
       });
     } catch (err) {
-      setDoneOverride(ids, false);
+      rollback();
       throw err;
     }
   };
@@ -390,13 +464,13 @@ export function createNotificationSource(
   const bulkMarkAsRead = async (notifications: UnifiedNotification[]) => {
     if (notifications.length === 0) return;
     const ids = notifications.map((n) => n.id);
-    setSeenOverride(ids, new Date().toISOString());
+    const rollback = setSeenOverride(ids, new Date().toISOString());
     try {
       await markNotificationsAsSeenMutation.mutateAsync({
         notificationIds: ids,
       });
     } catch (err) {
-      setSeenOverride(ids, undefined);
+      rollback();
       throw err;
     }
   };
@@ -409,18 +483,17 @@ export function createNotificationSource(
     await bulkMarkAsRead([notification]);
   };
 
+  // Canonicalize the type where we know how to; otherwise pass it through so
+  // legacy callers keep working unchanged.
+  const toMuteItem = (entity: Entity): UserUnsubscribe =>
+    muteItemForRef(entity) ?? { item_id: entity.id, item_type: entity.type };
+
   const muteEntity = async (entity: Entity) => {
-    await muteItem.mutateAsync({
-      item_id: entity.id,
-      item_type: entity.type,
-    });
+    await muteItem.mutateAsync(toMuteItem(entity));
   };
 
   const unmuteEntity = async (entity: Entity) => {
-    await unmuteItem.mutateAsync({
-      item_id: entity.id,
-      item_type: entity.type,
-    });
+    await unmuteItem.mutateAsync(toMuteItem(entity));
   };
 
   const subscribe = (subscribeFn: SubscribeFn) => {

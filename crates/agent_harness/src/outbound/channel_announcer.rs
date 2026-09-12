@@ -6,10 +6,10 @@
 //! through the channel API. The composition root decides which
 //! `ChannelService` implementation (and side-effect stack) this wraps.
 //!
-//! The announcement quotes the prompting message above the session's magic
-//! chip. The content is composed by the lexical service — the one place that
-//! builds message markdown from real Lexical nodes — so this adapter never
-//! formats markdown itself.
+//! The announcement places a structured reply target above the session's
+//! magic chip. The content is composed by the lexical service — the one place
+//! that builds message markdown from real Lexical nodes — so this adapter
+//! never formats markdown itself.
 
 #[cfg(test)]
 mod test;
@@ -20,11 +20,12 @@ use channel_sender::ChannelSender;
 use channels::domain::models::{PostMessageNotificationPolicy, PostMessageRequest};
 use channels::domain::ports::ChannelService;
 use lexical_client::LexicalClient;
-use lexical_client::parse_markdown::AgentAnnouncementChip;
+use lexical_client::parse_markdown::{AgentAnnouncementChip, AgentAnnouncementReplyTarget};
 
 use crate::domain::error::{HarnessError, Result};
-use crate::domain::model::SessionAnnouncement;
+use crate::domain::model::{AnnouncedMessage, SessionAnnouncement};
 use crate::domain::ports::SessionAnnouncer;
+use macro_uuid::Uuid;
 
 fn announcement_chip(announcement: &SessionAnnouncement) -> AgentAnnouncementChip {
     AgentAnnouncementChip {
@@ -32,6 +33,16 @@ fn announcement_chip(announcement: &SessionAnnouncement) -> AgentAnnouncementChi
         channel_id: None,
         prompted_message: announcement.prompted_message_id,
         status: "booting".to_owned(),
+    }
+}
+
+fn announcement_reply_target(announcement: &SessionAnnouncement) -> AgentAnnouncementReplyTarget {
+    AgentAnnouncementReplyTarget {
+        channel_id: announcement.origin_channel_id.to_string(),
+        target_message_id: announcement.origin_message_id.to_string(),
+        target_thread_id: announcement.origin_thread_id.to_string(),
+        display_text: announcement.prompted_content.clone(),
+        sender_id: announcement.triggered_by.as_ref().to_owned(),
     }
 }
 
@@ -54,15 +65,17 @@ impl<Channels> SessionAnnouncer for ChannelAnnouncer<Channels>
 where
     Channels: ChannelService + Send + Sync + 'static,
 {
-    async fn announce(&self, announcement: SessionAnnouncement) -> Result<()> {
+    async fn announce(&self, announcement: SessionAnnouncement) -> Result<AnnouncedMessage> {
+        let reply_target = announcement_reply_target(&announcement);
         let chip = announcement_chip(&announcement);
         let content = self
             .lexical
-            .compose_agent_announcement(&announcement.prompted_content, &chip)
+            .compose_agent_announcement(&reply_target, &chip)
             .await
             .map_err(|error| HarnessError::Announce(rootcause::report!(error).into()))?;
 
-        self.channels
+        let posted = self
+            .channels
             .post_message(
                 ChannelSender::new_from_bot(announcement.bot_id),
                 announcement.origin_channel_id,
@@ -72,7 +85,10 @@ where
                     thread_id: Some(announcement.origin_thread_id),
                     attachments: Vec::new(),
                     nonce: None,
-                    notification_policy: PostMessageNotificationPolicy::default(),
+                    // The chip is a pointer, not news: the thread hears
+                    // about the session when it finishes or asks, through
+                    // the lifecycle notifications, not when it boots.
+                    notification_policy: PostMessageNotificationPolicy::Silent,
                     // Attributed to whoever mentioned the bot, so the reply
                     // reads as their agent answering.
                     triggered_by: Some(announcement.triggered_by.as_ref().to_owned()),
@@ -81,6 +97,18 @@ where
             .await
             .map_err(|error| HarnessError::Announce(rootcause::report!(error).into()))?;
 
-        Ok(())
+        // Message ids are uuids everywhere in the channels domain; anything
+        // else here is a bug in the poster, not a shape to tolerate.
+        let message_id = Uuid::parse_str(&posted.id).map_err(|error| {
+            HarnessError::Announce(
+                rootcause::report!(error)
+                    .context(format!(
+                        "announcement posted a non-uuid message id {}",
+                        posted.id
+                    ))
+                    .into(),
+            )
+        })?;
+        Ok(AnnouncedMessage { message_id })
     }
 }

@@ -12,7 +12,7 @@ use channels::domain::ports::{ChannelMutationErr, ChannelService};
 use uuid::Uuid;
 
 use super::models::{BotEvent, BotTrigger};
-use super::ports::AgentResponder;
+use super::ports::{AgentResponder, UserTimeZones};
 use super::sender_label;
 
 /// How many channel messages to include around the trigger.
@@ -85,33 +85,67 @@ fn append_block(
     let _ = writeln!(prompt, "</{tag}>");
 }
 
-/// Message Conation posts immediately, then replaces with its answer.
+/// Message Macro posts immediately, then replaces with its answer.
 ///
 /// Rendered by the channel markdown as the existing pulsing AwaitNode.
-const THINKING_MESSAGE: &str =
-    r#"<m-await>{"text":"Conation is thinking…","inline":true}</m-await>"#;
+const THINKING_MESSAGE: &str = r#"<m-await>{"text":"Macro is thinking…","inline":true}</m-await>"#;
 const EMPTY_RESPONSE_FALLBACK: &str = "I wasn't able to come up with a response.";
 const ERROR_FALLBACK: &str = "Sorry — I ran into an error while responding.";
 
-/// In-process handler for the Conation AI system bot.
+/// Render the `<current_time>` block: now in the user's primary calendar
+/// time zone when one is known and parseable, UTC otherwise.
+fn current_time_block(now: chrono::DateTime<chrono::Utc>, time_zone: Option<&str>) -> String {
+    const FORMAT: &str = "%A, %B %-d, %Y, %-I:%M %p";
+    let parsed = time_zone.map(|name| {
+        (
+            name,
+            name.parse::<chrono_tz::Tz>().inspect_err(|error| {
+                tracing::warn!(error=?error, time_zone = name, "unparseable calendar time zone");
+            }),
+        )
+    });
+    let line = match parsed {
+        Some((name, Ok(tz))) => format!(
+            "{} — {name}, the time zone of the user's primary calendar",
+            now.with_timezone(&tz).format(FORMAT)
+        ),
+        // A calendar IS connected here, so the no-calendar wording would
+        // mislead the model into denying the connection.
+        Some((_, Err(_))) => format!(
+            "{} — UTC; the user's own time zone is unknown (their calendar's time \
+             zone could not be interpreted)",
+            now.format(FORMAT)
+        ),
+        None => format!(
+            "{} — UTC; the user's own time zone is unknown (no connected calendar)",
+            now.format(FORMAT)
+        ),
+    };
+    format!("\n<current_time>\n{line}\n</current_time>\n")
+}
+
+/// In-process handler for the Macro AI system bot.
 ///
 /// Posts an immediate "thinking" reply in a thread, runs the agent loop, then
 /// edits that same message with the final answer.
-pub struct MacroAiHandler<C, R> {
+pub struct MacroAiHandler<C, R, Z> {
     channels: Arc<C>,
     responder: Arc<R>,
+    time_zones: Arc<Z>,
 }
 
-impl<C, R> MacroAiHandler<C, R>
+impl<C, R, Z> MacroAiHandler<C, R, Z>
 where
     C: ChannelService,
     R: AgentResponder,
+    Z: UserTimeZones,
 {
-    /// Create a Conation AI handler.
-    pub fn new(channels: Arc<C>, responder: Arc<R>) -> Self {
+    /// Create a Macro AI handler.
+    pub fn new(channels: Arc<C>, responder: Arc<R>, time_zones: Arc<Z>) -> Self {
         Self {
             channels,
             responder,
+            time_zones,
         }
     }
 
@@ -180,23 +214,30 @@ where
         let mentioner = sender_label(event.requesting_user.as_ref());
         let trigger_id = event.message.id;
 
-        let nearby = self
-            .channels
-            .get_message_context(
-                event.channel_id,
-                trigger_id,
-                CONTEXT_MESSAGES_BEFORE,
-                CONTEXT_MESSAGES_AFTER,
-            )
-            .await
-            .inspect_err(|err| tracing::warn!(error=?err, "failed to load local channel context"))
-            .unwrap_or_default();
+        let (nearby, time_zone) = futures::join!(
+            async {
+                self.channels
+                    .get_message_context(
+                        event.channel_id,
+                        trigger_id,
+                        CONTEXT_MESSAGES_BEFORE,
+                        CONTEXT_MESSAGES_AFTER,
+                    )
+                    .await
+                    .inspect_err(
+                        |err| tracing::warn!(error=?err, "failed to load local channel context"),
+                    )
+                    .unwrap_or_default()
+            },
+            self.time_zones
+                .primary_time_zone(event.requesting_user.as_ref()),
+        );
 
         let mut prompt = String::new();
         if let Some(parent_id) = event.message.thread_id {
             let (intro, thread_instruction, marker) = match event.trigger {
                 BotTrigger::Mention => (
-                    format!("{mentioner} mentioned you (@conation) in a channel thread."),
+                    format!("{mentioner} mentioned you (@macro) in a channel thread."),
                     MENTION_THREAD_INSTRUCTION,
                     MENTION_TRIGGER_MARKER,
                 ),
@@ -236,10 +277,7 @@ where
                 &background,
             );
         } else {
-            let _ = writeln!(
-                prompt,
-                "{mentioner} mentioned you (@conation) in a channel."
-            );
+            let _ = writeln!(prompt, "{mentioner} mentioned you (@macro) in a channel.");
             let mut lines: Vec<PromptLine> = nearby
                 .iter()
                 .filter(|message| message.deleted_at.is_none())
@@ -263,14 +301,19 @@ where
             );
         }
 
+        prompt.push_str(&current_time_block(
+            chrono::Utc::now(),
+            time_zone.as_deref(),
+        ));
+
         let _ = write!(prompt, "\nReply to {mentioner}.");
         prompt
     }
 
-    /// React to a Conation AI mention.
+    /// React to a Macro AI mention.
     #[tracing::instrument(skip(self, event), fields(channel_id = %event.channel_id), err)]
     pub(crate) async fn handle(&self, event: &BotEvent) -> anyhow::Result<()> {
-        let actor = Sender::new_from_bot(bot_id::CONATION_AI_BOT_ID);
+        let actor = Sender::new_from_bot(bot_id::MACRO_AI_BOT_ID);
 
         // 1. Gather conversational context (before posting, so our own
         //    "thinking" message is not included).
@@ -304,7 +347,7 @@ where
             Ok(text) if !text.trim().is_empty() => text,
             Ok(_) => EMPTY_RESPONSE_FALLBACK.to_string(),
             Err(err) => {
-                tracing::error!(error=?err, "conation ai responder failed");
+                tracing::error!(error=?err, "macro ai responder failed");
                 ERROR_FALLBACK.to_string()
             }
         };

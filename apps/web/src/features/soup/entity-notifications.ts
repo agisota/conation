@@ -1,6 +1,7 @@
 import type { EntityData } from '@entity/types/entity';
 import type { WithNotification } from '@entity/types/notification';
 import { toNotificationEntity } from '@entity/utils/notification';
+import { channelThreadRootId } from '@notifications/channel-thread-root';
 import type { NotificationSource } from '@notifications/notification-source';
 import {
   getAllNotificationsFromGroup,
@@ -26,17 +27,7 @@ function channelThreadNotificationIds(
           { tag: 'channel_message_send' },
           (metadata) => metadata.content.messageId === threadId
         )
-        .with(
-          { tag: 'channel_mention' },
-          (metadata) =>
-            (metadata.content.threadId ?? metadata.content.messageId) ===
-            threadId
-        )
-        .with(
-          { tag: 'channel_message_reply' },
-          (metadata) => metadata.content.threadId === threadId
-        )
-        .otherwise(() => false);
+        .otherwise(() => channelThreadRootId(notification) === threadId);
       if (belongsToThread) ids.add(notification.id);
     }
     return ids;
@@ -82,7 +73,7 @@ export function scopeChannelNotificationsForEntity(
   return notifications;
 }
 
-type EntityWithRawNotifications = EntityData & {
+type EntityWithRawNotifications<T extends EntityData> = T & {
   notifications?: UnifiedNotification[] | Accessor<UnifiedNotification[]>;
 };
 
@@ -90,11 +81,11 @@ type EntityWithRawNotifications = EntityData & {
  * Normalizes GraphQL notification arrays and the global notification source
  * into the accessor shape expected by reusable list-entity components.
  */
-export function withEntityNotifications(
-  entity: EntityWithRawNotifications,
+export function withEntityNotifications<T extends EntityData>(
+  entity: EntityWithRawNotifications<T>,
   source: NotificationSource,
   options: { scopeChannelThreads?: boolean } = {}
-): WithNotification<EntityData> {
+): WithNotification<T> {
   const attached = entity.notifications;
   const read = (): UnifiedNotification[] => {
     if (typeof attached === 'function') return attached();

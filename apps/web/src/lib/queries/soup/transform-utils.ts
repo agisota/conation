@@ -10,6 +10,7 @@ import {
   mergeAdjacentMacroEmTags,
 } from '@core/util/searchHighlight';
 import type {
+  AgentSessionEntity,
   CalendarEventEntity,
   CalendarEventEntityTime,
   CallEntity,
@@ -31,6 +32,7 @@ import type {
   SearchData,
   WithSearch,
 } from '@entity';
+import { resolveNotifiedAt } from '@queries/soup/normalized-cache/notified-floor';
 import { resolveOwnTouch } from '@queries/soup/normalized-cache/own-touch';
 import type {
   CallRecordSearchResult,
@@ -53,6 +55,7 @@ import { formatDocumentName } from '@service-storage/util/filename';
 import type { UseQueryResult } from '@tanstack/solid-query';
 import { differenceInMilliseconds } from 'date-fns';
 import { match, P } from 'ts-pattern';
+import { mapAgentSessionSearchResult } from './agent-session-search';
 
 type InnerSearchResult =
   | DocumentSearchResult
@@ -66,6 +69,7 @@ type DisplayableSoupItem = SoupPage['items'][number];
 type SoupDocument = Extract<DisplayableSoupItem, { tag: 'document' }>['data'];
 
 type SoupEntity =
+  | AgentSessionEntity
   | DocumentEntity
   | ChatEntity
   | ProjectEntity
@@ -312,6 +316,8 @@ export const useSearchResponseItemMapper = () => {
     searchQuery: string
   ): (WithSearch<EntityData> | undefined)[] => {
     switch (result.type) {
+      case 'agentSession':
+        return [mapAgentSessionSearchResult(result)];
       case 'company': {
         const primaryDomain = result.domains[0]?.domain;
         const nameHighlight = result.nameHighlighted
@@ -697,6 +703,7 @@ function toReferencedEntity(
       P.union(
         'document',
         'chat',
+        'agent_session',
         'project',
         'channel',
         'channel_message',
@@ -720,6 +727,12 @@ export const mapApiSoupItemToEntity = (
   item: DisplayableSoupItem
 ): SoupEntity => {
   const entity = match(item)
+    .with({ tag: 'agentSession' }, (item) => ({
+      ...item.data,
+      type: 'agent_session' as const,
+      name: item.data.name || 'Agent session',
+      frecencyScore: item.frecency_score,
+    }))
     .with({ tag: 'chat' }, (item) => ({
       ...item.data,
       createdAt: item.data.createdAt,
@@ -1020,8 +1033,13 @@ export const mapApiSoupItemToEntity = (
   // activity consumer can't move a freshly-touched row back down.
   const touchedAt = resolveOwnTouch(entity.id, item.touched_at ?? null);
   const touched = touchedAt ? { ...entity, touchedAt } : entity;
+  // Likewise only notified_at pages carry this one; the inbox sorts and
+  // date-buckets on it. Resolved through the notified floor so a page that
+  // was in flight when a notification landed can't move the row back down.
+  const notifiedAt = resolveNotifiedAt(entity.id, item.notified_at ?? null);
+  const notified = notifiedAt ? { ...touched, notifiedAt } : touched;
 
-  return withRawNotifications(touched, item);
+  return withRawNotifications(notified, item);
 };
 
 const toCalendarEventTime = (

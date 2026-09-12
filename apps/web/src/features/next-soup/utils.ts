@@ -1,4 +1,6 @@
 import { isListViewID } from '@app/constants/list-views';
+import { URL_PARAMS as EMAIL_PARAMS } from '@app/features/email-thread/core/location';
+import { withListNavigationSource } from '@app/features/soup/collection/list-navigation-source';
 import { scopeChannelNotificationsForEntity } from '@app/features/soup/entity-notifications';
 import { t } from '@app/lib/i18n';
 import { globalSplitManager } from '@app/signal/splitLayout';
@@ -14,7 +16,6 @@ import {
   goToChannelLatest,
   goToChannelMessage,
 } from '@block-channel/utils/link';
-import { URL_PARAMS as EMAIL_PARAMS } from '@block-email/constants';
 import { URL_PARAMS as MD_PARAMS } from '@block-md/constants';
 import { URL_PARAMS as PDF_PARAMS } from '@block-pdf/constants';
 import type {
@@ -25,7 +26,8 @@ import type {
 import { toast } from '@core/component/Toast/Toast';
 import { fileTypeToBlockName } from '@core/constant/allBlocks';
 import {
-  ENABLE_CALENDAR_UI,
+  enableCalendarUi,
+  isFeatureEnabled,
   USE_MACRO_PR_SUMMARY_BLOCK,
 } from '@core/constant/featureFlags';
 import {
@@ -222,14 +224,16 @@ export const openEntityInNewTab = ({
   entity: EntityData;
   location?: SearchLocation;
 }) => {
-  // A reminder has no route of its own — it opens what it references, the
-  // same as the split paths. A standalone one references nothing, so there is
-  // no tab to open.
+  location ??= getRowClickFallbackLocation(entity);
+  // A reminder opens its own editor — a `reminder-view` component split with a
+  // URL of its own — the same as the split paths, even a standalone one that
+  // references nothing.
   if (entity.type === 'reminder') {
-    const target = reminderSplitTarget(entity);
-    if (!target) return;
     openExternalUrl(
-      new URL(`/app/${target.type}/${target.id}`, window.location.origin).href
+      new URL(
+        `/app/component/reminder-view~${entity.id}`,
+        window.location.origin
+      ).href
     );
     return;
   }
@@ -261,6 +265,13 @@ export const openEntityInNewTab = ({
     }
   } else if (location) {
     switch (location.type) {
+      case 'agent':
+        for (const [key, value] of Object.entries(
+          agentMessageParams(location)
+        )) {
+          entityUrl.searchParams.set(key, value);
+        }
+        break;
       case 'channel':
         if (location.messageId) {
           entityUrl.searchParams.set(
@@ -374,6 +385,11 @@ interface OpenEntityOptions {
   mergeHistory?: boolean;
   allowDuplicate?: boolean;
   referredFrom?: ReferredFrom;
+  /**
+   * Notification source used to keep REST-backed unread state optimistic when
+   * opening a channel row. Callers that can open channels must provide it.
+   */
+  notificationSource?: NotificationSource;
 }
 
 /** Whether this entity is open outside the controller's own preview viewer. */
@@ -526,6 +542,22 @@ export async function navigateChannelEntityToTarget(
   );
 }
 
+/** Retargets the singleton Calendar block to a calendar event row. */
+export async function navigateCalendarEntityToTarget(
+  entity: EntityData,
+  blockOrchestrator: BlockOrchestrator
+): Promise<void> {
+  if (entity.type !== 'calendar_event') return;
+
+  const calendarHandle = await blockOrchestrator.getBlockHandle(
+    CALENDAR_BLOCK_ID,
+    'calendar'
+  );
+  await calendarHandle?.goToLocationFromParams(
+    calendarBlockParamsForEntity(entity)
+  );
+}
+
 /**
  * Location a plain row click falls back to when no explicit location is given.
  * Email rows open like plain soup rows — at the latest message, expanded —
@@ -535,9 +567,11 @@ export async function navigateChannelEntityToTarget(
 export const getRowClickFallbackLocation = (
   entity: EntityData
 ): SearchLocation | undefined =>
-  isHitSnippetEntity(entity) && !isEmailEntity(entity)
-    ? getSnippetHit(entity)?.location
-    : undefined;
+  entity.type === 'agent_session' && isSearchEntity(entity)
+    ? entity.search.contentHitData?.[0]?.location
+    : isHitSnippetEntity(entity) && !isEmailEntity(entity)
+      ? getSnippetHit(entity)?.location
+      : undefined;
 
 /**
  * Opens an entity in a split, handling navigation to specific locations within the entity.
@@ -618,19 +652,21 @@ export const openEntityInSplitFromUnifiedList = async (
 
   const blockOrchestrator = splitManager.getOrchestrator();
 
-  // A standalone reminder points at nothing, so there is nothing to open.
-  if (entity.type === 'reminder' && !entity.referencedEntity) return;
-
   // Calendar is a singleton block. Event opens retarget that one instance
   // with a locator range, including repeat clicks on an already-open split.
   if (entity.type === 'calendar_event') {
-    if (!ENABLE_CALENDAR_UI()) return;
+    if (!isFeatureEnabled(enableCalendarUi)) return;
     const params = calendarBlockParamsForEntity(entity);
     const existing = splitManager.getSplitByContent(
       'calendar',
       CALENDAR_BLOCK_ID
     );
-    if (existing) {
+    const existingIsViewer =
+      existing &&
+      splitHandle?.isControllerSplit() &&
+      splitHandle.viewerId() === existing.id;
+
+    if (existing && !existingIsViewer) {
       existing.activate();
     } else {
       splitManager.openWithSplit(
@@ -639,15 +675,13 @@ export const openEntityInSplitFromUnifiedList = async (
           activate: true,
           referredFrom: null,
           preferNewSplit: openInNewSplit,
+          replacePreview,
           handle: splitHandle,
+          mergeHistory,
         }
       );
     }
-    const calendarHandle = await blockOrchestrator.getBlockHandle(
-      CALENDAR_BLOCK_ID,
-      'calendar'
-    );
-    await calendarHandle?.goToLocationFromParams(params);
+    await navigateCalendarEntityToTarget(entity, blockOrchestrator);
     return;
   }
 
@@ -668,8 +702,14 @@ export const openEntityInSplitFromUnifiedList = async (
     channelTarget?.kind === 'message' ? channelTarget : undefined;
   const openChannelAtLatest = channelTarget?.kind === 'latest';
 
+  if (options.notificationSource) {
+    markChannelNotificationsSeenOnOpen(entity, options.notificationSource);
+  }
+
   let params: Record<string, string> | undefined;
-  if (entity.type === 'channel' && location?.type === 'channel') {
+  if (entity.type === 'agent_session' && location?.type === 'agent') {
+    params = agentMessageParams(location);
+  } else if (entity.type === 'channel' && location?.type === 'channel') {
     params = getChannelParams(location.messageId, location.threadId);
   } else if (channelMessageTarget) {
     params = getChannelParams(
@@ -690,6 +730,9 @@ export const openEntityInSplitFromUnifiedList = async (
   const referredFrom = options.referredFrom ?? sourceListView;
 
   let splitContent: SplitContent = { ...content, params };
+  if (splitHandle && referredFrom && isListViewID(referredFrom)) {
+    splitContent = withListNavigationSource(splitContent, splitHandle);
+  }
   // Preview source metadata belongs on Viewer entries; a replacement takes the
   // Preview Pair's place, so its entry is ordinary split history.
   if (splitHandle?.isControllerSplit() && !replacePreview) {
@@ -733,32 +776,35 @@ export const openEntityInSplitFromUnifiedList = async (
 };
 
 /**
- * Mark the attached notification that caused a channel row to target a message.
+ * Mark every unread notification represented by an opened channel Soup row.
  *
- * The row's Soup edge is authoritative here. The channel block's message marker
- * discovers notifications through the separately paginated global source, so
- * an older notification can drive navigation without being present there.
+ * The row's attached Soup edge is authoritative. The channel block's message
+ * marker discovers notifications through the separately paginated global
+ * source, so it cannot reliably clear older notifications. Passing the row's
+ * attached notifications through the source keeps its REST cache and durable
+ * seen overrides in sync while the configured mutation updates GraphQL edges.
  */
-export function markChannelTargetSeenOnOpen(
+export function markChannelNotificationsSeenOnOpen(
   entity: EntityData,
   notificationSource: NotificationSource
 ) {
-  const target = getChannelEntityTarget(entity);
-  if (target?.kind !== 'message' || !isWithNotification(entity)) return;
+  if (
+    (entity.type !== 'channel' &&
+      entity.type !== 'channel_message' &&
+      entity.type !== 'channel_thread') ||
+    !isWithNotification(entity)
+  ) {
+    return;
+  }
 
   const notifications = scopeChannelNotificationsForEntity(
     entity,
     entity.notifications?.() ?? []
-  ).filter((notification) => {
-    if (notificationIsRead(notification)) return false;
-    return (
-      getChannelNotificationParams(notification).messageId === target.messageId
-    );
-  });
+  ).filter((notification) => !notificationIsRead(notification));
   if (notifications.length === 0) return;
 
   void notificationSource.bulkMarkAsRead(notifications).catch((error) => {
-    console.error('Failed to mark message notifications as read', error);
+    console.error('Failed to mark channel notifications as read', error);
   });
 }
 
@@ -787,7 +833,6 @@ export function markReminderSeenOnOpen(
   });
 }
 
-/** Build the singleton block params for an event row's target occurrence. */
 /**
  * The event and instance a calendar row points at, resolved exactly as the
  * open path resolves it so a copied link lands where a click would.
@@ -799,7 +844,8 @@ export function calendarEventLinkTarget(
   return { eventId: eventId ?? entity.id, occurrenceKey };
 }
 
-function calendarBlockParamsForEntity(
+/** Build singleton calendar block parameters for an event row's occurrence. */
+export function calendarBlockParamsForEntity(
   entity: Extract<EntityData, { type: 'calendar_event' }>
 ): CalendarBlockProps {
   const notifications = isWithNotification(entity)
@@ -830,9 +876,10 @@ function calendarBlockParamsForEntity(
 }
 
 /**
- * The split a reminder opens: the entity it references, never itself.
- * `undefined` for a standalone reminder, which points at nothing — callers use
- * that to decide whether opening is possible at all.
+ * The entity a reminder references, as block content. A reminder itself opens
+ * its own `reminder-view` editor (see `getEntitySplitContent`); this is only
+ * the reference, used where the reference is shown directly (PreviewPanel).
+ * `undefined` for a standalone reminder, which points at nothing.
  *
  * `fileType`/`subType` come resolved from the server, so a referenced document
  * lands on its real block rather than 'unknown'.
@@ -867,6 +914,10 @@ function getEntitySplitContent(entity: EntityData) {
       .with({ type: 'foreign' }, (entity) => {
         return { type: 'unknown' as const, id: entity.id };
       })
+      .with({ type: 'agent_session' }, (entity) => ({
+        type: 'agent' as const,
+        id: entity.id,
+      }))
       .with({ type: 'crm_company' }, (entity) => {
         return { type: 'company' as const, id: entity.id };
       })
@@ -874,12 +925,14 @@ function getEntitySplitContent(entity: EntityData) {
         return { type: 'contact' as const, id: entity.id };
       })
       .with({ type: 'reminder' }, (entity) => {
-        return (
-          reminderSplitTarget(entity) ?? {
-            type: 'unknown' as const,
-            id: entity.id,
-          }
-        );
+        // A reminder has no block of its own; it opens its editor as a
+        // component split. The reminder id rides in the content id (component
+        // params are dropped on URL restore, and split identity is keyed on the
+        // id, so each reminder needs a distinct one) — see `resolveComponent`.
+        return {
+          type: 'component' as const,
+          id: `reminder-view~${entity.id}`,
+        };
       })
       // Calendar events open the singleton calendar block; the open path
       // branches before reaching here, so this only serves duplicate checks.
@@ -904,6 +957,10 @@ async function navigateToLocation(
   if (!blockHandle) return;
 
   switch (location.type) {
+    case 'agent': {
+      await blockHandle.goToLocationFromParams(agentMessageParams(location));
+      break;
+    }
     case 'channel': {
       // NOTE: this is handled by the channel block params but this can be used to re-flash an open channel
       await blockHandle.goToLocationFromParams(
@@ -1546,3 +1603,5 @@ export async function executeMarkEntitiesUndone(args: {
     ),
   ]);
 }
+
+import { agentMessageParams } from '@app/features/block-agent/core/search-location';

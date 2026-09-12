@@ -1,4 +1,3 @@
-import { ConationMark as LogoIcon } from '@app/components/brand';
 import { GO_TO_COMMAND_SCOPE, GO_TO_LEADER_KEY } from '@app/constants/hotkeys';
 import { LIST_VIEW_PATHS, type ListView } from '@app/constants/list-views';
 import { useActivityFeedFlag } from '@app/features/activity/use-activity-feed-flag';
@@ -24,7 +23,7 @@ import {
   setInviteModalOpen,
 } from '@app/features/team-invitations/invite-modal';
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
-import { t } from '@app/lib/i18n';
+import { useFeatureFlag } from '@app/lib/analytics/posthog';
 import { useHotkeyInterceptor } from '@app/signal/hotkeyRoot';
 import { globalSplitManager } from '@app/signal/splitLayout';
 import { CALENDAR_BLOCK_ID } from '@block-calendar/types';
@@ -34,19 +33,28 @@ import {
   CollapsibleSidebarSection,
   type CollapsibleSidebarSectionItem,
 } from '@components/app/app-sidebar/collapsible-sidebar-section';
-import { SidebarPromoCard } from '@components/app/app-sidebar/sidebar-promo';
+import {
+  SidebarPromoCard,
+  SidebarPromoHint,
+} from '@components/app/app-sidebar/sidebar-promo';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import type {
   ReferredFrom,
   SplitContent,
   SplitHandle,
 } from '@components/app/split-layout/layoutManager';
+import { useHasPaidAccess } from '@core/auth';
 import { useLogout } from '@core/auth/logout';
 import { ContextMenuContent, MenuItem } from '@core/component/ContextMenu';
 import { inboxIconProps } from '@core/component/inboxIcon';
 import { toast } from '@core/component/Toast/Toast';
 import { UserIcon } from '@core/component/UserIcon';
-import { ENABLE_CALLS, ENABLE_CRM } from '@core/constant/featureFlags';
+import {
+  ENABLE_CALLS,
+  enableCrm,
+  enableNewPricing,
+  isFeatureEnabled,
+} from '@core/constant/featureFlags';
 import {
   type SettingsTab,
   useSettingsState,
@@ -63,6 +71,7 @@ import { type HotkeyToken, TOKENS } from '@core/hotkey/tokens';
 import type { ValidHotkey } from '@core/hotkey/types';
 import { activateClosestDOMScope } from '@core/hotkey/utils';
 import { getDisplayName, tryMacroId } from '@core/user';
+import LogoIcon from '@icon/macro-logo.svg';
 import { AnimatedActivityIcon } from '@icon/wide-activity';
 import WideCalendarIcon from '@icon/wide-calendar.svg';
 import { AnimatedCallIcon } from '@icon/wide-call';
@@ -88,7 +97,7 @@ import UsersThreeIcon from '@phosphor/users-three.svg';
 import XIcon from '@phosphor/x.svg';
 import { isRealNamePart, useOwnUserName } from '@queries/auth/user-name-self';
 import { useActiveCallsQuery } from '@queries/call/call';
-import { useEmailLinksQuery } from '@queries/email/link';
+import { useMailAccountsQuery } from '@queries/email/mail-accounts';
 import {
   useJoinTeamMutation,
   useRejectInvitationMutation,
@@ -116,7 +125,8 @@ import {
 import { Dynamic } from 'solid-js/web';
 import { CalendarSidebarPreview } from './calendar-sidebar-preview';
 
-interface SidebarItem {
+// TODO(sidebar-next): move to app-sidebar/navigation.tsx once SidebarRail ships.
+export interface SidebarItem {
   id: ListView | (string & {});
   label: string;
   href: string;
@@ -179,9 +189,7 @@ const markdownDocumentsQuery = buildDocumentTypeQuery(['doc-markdown']);
 const SIDEBAR_LINKS = [
   {
     id: 'inbox',
-    get label() {
-      return t('shell.navigation.inbox');
-    },
+    label: 'Notifications',
     href: LIST_VIEW_PATHS.inbox,
     icon: AnimatedInboxIcon,
     hotkey: 'i',
@@ -189,9 +197,7 @@ const SIDEBAR_LINKS = [
   },
   {
     id: 'search',
-    get label() {
-      return t('common.search');
-    },
+    label: 'Search',
     href: LIST_VIEW_PATHS.search,
     icon: AnimatedSearchIcon,
     hotkey: '/',
@@ -201,9 +207,7 @@ const SIDEBAR_LINKS = [
   },
   {
     id: 'agents',
-    get label() {
-      return t('shell.navigation.agents');
-    },
+    label: 'Agents',
     href: LIST_VIEW_PATHS.agents,
     icon: AnimatedStarIcon,
     hotkey: 'a',
@@ -211,9 +215,7 @@ const SIDEBAR_LINKS = [
   },
   {
     id: 'mail',
-    get label() {
-      return t('shell.navigation.email');
-    },
+    label: 'Email',
     href: LIST_VIEW_PATHS.mail,
     icon: AnimatedEmailIcon,
     hotkey: 'e',
@@ -221,9 +223,7 @@ const SIDEBAR_LINKS = [
   },
   {
     id: 'documents',
-    get label() {
-      return t('shell.navigation.files');
-    },
+    label: 'Files',
     href: LIST_VIEW_PATHS.documents,
     icon: AnimatedFileMdIcon,
     hotkey: 'f',
@@ -231,9 +231,7 @@ const SIDEBAR_LINKS = [
   },
   {
     id: 'documents',
-    get label() {
-      return t('shell.navigation.documents');
-    },
+    label: 'Documents',
     href: LIST_VIEW_PATHS.documents,
     params: {
       initialFilters: markdownDocumentsQuery ?? {},
@@ -249,9 +247,7 @@ const SIDEBAR_LINKS = [
   },
   {
     id: 'tasks',
-    get label() {
-      return t('shell.navigation.tasks');
-    },
+    label: 'Tasks',
     href: LIST_VIEW_PATHS.tasks,
     icon: AnimatedTaskIcon,
     hotkey: 't',
@@ -259,9 +255,7 @@ const SIDEBAR_LINKS = [
   },
   {
     id: 'calendar',
-    get label() {
-      return t('shell.navigation.calendar');
-    },
+    label: 'Calendar',
     href: '/calendar',
     icon: WideCalendarIcon,
     hotkey: 'r',
@@ -269,9 +263,7 @@ const SIDEBAR_LINKS = [
   },
   {
     id: 'channels',
-    get label() {
-      return t('shell.navigation.channels');
-    },
+    label: 'Channels',
     href: LIST_VIEW_PATHS.channels,
     icon: AnimatedChannelIcon,
     hotkey: 'c',
@@ -314,7 +306,7 @@ const isMarkdownDocumentsParams = (
   return initialClientFilters?.or?.includes('doc-markdown') ?? false;
 };
 
-function sidebarContent(
+export function sidebarContent(
   viewId: SidebarItem['id'],
   params?: SidebarItem['params']
 ): SplitContent {
@@ -328,7 +320,7 @@ function sidebarContent(
  * Holding shift opens it in a new split. Use in-app back/forward to return to
  * prior entries.
  */
-function navigateToSidebarView(args: {
+export function navigateToSidebarView(args: {
   viewId: SidebarItem['id'];
   params?: SidebarItem['params'];
   shiftKey: boolean;
@@ -363,7 +355,7 @@ function navigateToSidebarView(args: {
   });
 }
 
-const registerSidebarHotkeys = ({
+export const registerSidebarHotkeys = ({
   isSlim,
   onOpenChange,
 }: SidebarHotkeyDeps) => {
@@ -559,6 +551,9 @@ export const GoToHotkeys = () => {
   return null;
 };
 
+/** Session-only signal so a hint shows after dismissal until the user acknowledges or the timer expires. */
+const [premiumHintVisible, setPremiumHintVisible] = createSignal(false);
+
 const SidebarSectionMenu = (props: {
   label: string;
   options: { id: SidebarSectionLinkId; label: string; checked: boolean }[];
@@ -573,7 +568,7 @@ const SidebarSectionMenu = (props: {
     <Dropdown.Trigger
       variant="ghost"
       class="opacity-0 group-hover/section:opacity-100 focus-visible:opacity-100 transition-opacity rounded-md size-5 min-h-0 p-0 bg-transparent hover:bg-ink/6 [&_svg]:size-3.5"
-      label={t('shell.sidebar.customizeSection', { section: props.label })}
+      label={`Customize ${props.label}`}
       onMouseDown={(e: MouseEvent) => {
         if (e.button !== 0) return;
         e.preventDefault();
@@ -583,11 +578,9 @@ const SidebarSectionMenu = (props: {
     >
       <DotsThreeIcon />
     </Dropdown.Trigger>
-    <Dropdown.Content class="w-56 shadow-menu">
+    <Dropdown.Content class="w-56">
       <Dropdown.Group>
-        <Dropdown.GroupLabel>
-          {t('shell.sidebar.customize')}
-        </Dropdown.GroupLabel>
+        <Dropdown.GroupLabel>Customize</Dropdown.GroupLabel>
         <For each={props.options}>
           {(option) => (
             <Dropdown.CheckboxItem
@@ -640,19 +633,16 @@ const TryCard = (props: {
   onDismiss: () => void;
 }) => (
   <Layer depth={1}>
-    <section
-      aria-label={t('shell.sidebar.quickStart')}
-      class="relative group/try-card w-full"
-    >
+    <section aria-label="Quick Start" class="relative group/try-card w-full">
       <div class="rounded-lg border border-ink-muted/8 bg-ink-muted/2.5 overflow-hidden">
         <header class="flex items-center gap-2 min-w-0 px-2.5 py-1.5 border-b border-ink-muted/8">
           <h3 class="flex-1 min-w-0 text-xs font-medium text-ink leading-tight m-0">
-            {t('shell.sidebar.quickStart')}
+            Quick Start
           </h3>
           <Button
             variant="ghost"
             class="shrink-0 size-5 rounded-sm p-0 [&_svg]:size-3"
-            label={t('shell.sidebar.dismissQuickStart')}
+            label="Dismiss Quick Start"
             onClick={(e) => {
               e.stopPropagation();
               props.onDismiss();
@@ -813,7 +803,7 @@ const SidebarHeaderSearchButton = (props: { link: SidebarItem }) => {
     <Button
       size="icon-sm"
       class="[&_svg]:size-4!"
-      label={t('common.search')}
+      label="Search"
       hotkey={props.link.hotkeyToken}
       onMouseDown={(e) => {
         if (e.button !== 0) return;
@@ -836,9 +826,15 @@ type SidebarSettingsWidgetProps = {
    * menu once the user removes its dedicated row.
    */
   gettingStartedLink?: SidebarItem;
+  /**
+   * Icon-only: drops the trigger's leading padding and start alignment so the
+   * avatar centres in its square, and grows the avatar to nearly fill it. For
+   * `SidebarRail`, where the name and caret are hidden anyway.
+   */
+  compact?: boolean;
 };
 
-const SidebarSettingsWidget = (props: SidebarSettingsWidgetProps) => {
+export const SidebarSettingsWidget = (props: SidebarSettingsWidgetProps) => {
   const userId = useUserId();
   const email = useEmail();
   const logout = useLogout();
@@ -866,9 +862,7 @@ const SidebarSettingsWidget = (props: SidebarSettingsWidgetProps) => {
     const parts = [name?.first_name, name?.last_name]
       .map((part) => part?.trim())
       .filter((part): part is string => isRealNamePart(part));
-    return parts.length > 0
-      ? parts.join(' ')
-      : (email() ?? t('shell.sidebar.conationUser'));
+    return parts.length > 0 ? parts.join(' ') : (email() ?? 'Macro User');
   });
 
   return (
@@ -881,7 +875,9 @@ const SidebarSettingsWidget = (props: SidebarSettingsWidgetProps) => {
         variant="ghost"
         class={cn(
           'flex items-center rounded-md cursor-default text-ink-extra-muted not-disabled:hover:bg-ink/3 h-9',
-          'justify-start gap-3 px-1.5 py-1'
+          props.compact
+            ? 'justify-center gap-0 p-0'
+            : 'justify-start gap-3 px-1.5 py-1'
         )}
         label={displayName()}
         fullWidth
@@ -894,10 +890,17 @@ const SidebarSettingsWidget = (props: SidebarSettingsWidgetProps) => {
       >
         <Show
           when={userId()}
-          fallback={<div class="size-5 shrink-0 rounded-full bg-ink/10" />}
+          fallback={
+            <div
+              class={cn(
+                'shrink-0 rounded-full bg-ink/10',
+                props.compact ? 'size-8' : 'size-5'
+              )}
+            />
+          }
         >
           {(id) => (
-            <div class="size-5 shrink-0">
+            <div class={cn('shrink-0', props.compact ? 'size-8' : 'size-5')}>
               <UserIcon
                 id={id()}
                 size="fill"
@@ -916,7 +919,7 @@ const SidebarSettingsWidget = (props: SidebarSettingsWidgetProps) => {
         The menu is shrink-to-fit, so without a cap a long name or email
         stretches it instead of engaging the `truncate` below.
       */}
-      <Dropdown.Content class="min-w-[min(16rem,calc(100vw-1rem))] max-w-[min(20rem,calc(100vw-1rem))] shadow-menu">
+      <Dropdown.Content class="min-w-[min(16rem,calc(100vw-1rem))] max-w-[min(20rem,calc(100vw-1rem))]">
         <Dropdown.Group class="p-1.5 gap-0">
           <div class="flex items-center gap-3 px-1 py-1">
             <Show
@@ -971,9 +974,7 @@ const SidebarSettingsWidget = (props: SidebarSettingsWidgetProps) => {
             <span class="size-5 flex items-center justify-center text-ink-extra-muted">
               ⌘
             </span>
-            <span class="flex-1 text-ink">
-              {t('shell.sidebar.commandMenu')}
-            </span>
+            <span class="flex-1 text-ink">Command menu</span>
             <Hotkey
               token={TOKENS.global.commandMenu}
               theme="subtle"
@@ -987,9 +988,7 @@ const SidebarSettingsWidget = (props: SidebarSettingsWidgetProps) => {
             <span class="size-5 flex items-center justify-center">
               <GearIcon class="size-4 shrink-0 text-ink-extra-muted" />
             </span>
-            <span class="flex-1 text-ink">
-              {t('shell.navigation.settings')}
-            </span>
+            <span class="flex-1 text-ink">Settings</span>
             <Hotkey
               token={TOKENS.global.toggleSettings}
               theme="subtle"
@@ -1003,7 +1002,7 @@ const SidebarSettingsWidget = (props: SidebarSettingsWidgetProps) => {
             <span class="size-5 flex items-center justify-center">
               <SignOutIcon class="size-4 shrink-0" />
             </span>
-            <span>{t('shell.sidebar.logOut')}</span>
+            <span>Log out</span>
           </Dropdown.Item>
         </Dropdown.Group>
       </Dropdown.Content>
@@ -1013,9 +1012,7 @@ const SidebarSettingsWidget = (props: SidebarSettingsWidgetProps) => {
 
 const CALLS_LINK: SidebarItem = {
   id: 'calls',
-  get label() {
-    return t('shell.navigation.calls');
-  },
+  label: 'Calls',
   href: LIST_VIEW_PATHS.calls,
   icon: AnimatedCallIcon,
   hotkey: 'l',
@@ -1024,9 +1021,7 @@ const CALLS_LINK: SidebarItem = {
 
 const COMPANIES_LINK: SidebarItem = {
   id: 'companies',
-  get label() {
-    return t('shell.navigation.customers');
-  },
+  label: 'Customers',
   href: LIST_VIEW_PATHS.companies,
   icon: AnimatedCompanyIcon,
   hotkey: 'o',
@@ -1035,9 +1030,7 @@ const COMPANIES_LINK: SidebarItem = {
 
 const DASHBOARD_LINK: SidebarItem = {
   id: 'home',
-  get label() {
-    return t('shell.navigation.home');
-  },
+  label: 'Home',
   href: '/home',
   icon: AnimatedHomeIcon,
   hotkey: 'h',
@@ -1046,9 +1039,7 @@ const DASHBOARD_LINK: SidebarItem = {
 
 const GETTING_STARTED_LINK: SidebarItem = {
   id: 'getting-started',
-  get label() {
-    return t('shell.gettingStarted.title');
-  },
+  label: 'Getting Started',
   href: '/getting-started',
   icon: CompassIcon,
   hotkey: 's',
@@ -1057,9 +1048,7 @@ const GETTING_STARTED_LINK: SidebarItem = {
 
 const ACTIVITY_LINK: SidebarItem = {
   id: 'activity',
-  get label() {
-    return t('shell.navigation.activity');
-  },
+  label: 'Activity',
   href: '/activity',
   icon: AnimatedActivityIcon,
   hotkey: 'y',
@@ -1068,9 +1057,7 @@ const ACTIVITY_LINK: SidebarItem = {
 
 const RECENT_LINK: SidebarItem = {
   id: 'recent',
-  get label() {
-    return t('shell.navigation.recent');
-  },
+  label: 'Recent',
   href: LIST_VIEW_PATHS.recent,
   icon: AnimatedActivityIcon,
   // `r` is Calendar and `e`/`c`/`t` are taken; `n` is the only letter of
@@ -1085,7 +1072,7 @@ const RECENT_LINK: SidebarItem = {
  * their correct positions.
  * Shared by the rendered sidebar (`AppSidebar.visibleLinks`) and the
  * always-mounted `GoToHotkeys` registrar so their link sets can't drift. Call
- * from a reactive context — it reads `ENABLE_CALLS()` / `ENABLE_CRM()`.
+ * from a reactive context — it reads `ENABLE_CALLS` / `isFeatureEnabled(enableCrm)`.
  * `showGettingStarted` is the account-age gate (`useGettingStartedEnabled`),
  * passed in because this runs outside a component; when false the link is
  * fully absent — row, `g s` hotkey, and command menu entry.
@@ -1120,14 +1107,14 @@ const buildSidebarLinks = (
     ];
   }
 
-  if (ENABLE_CALLS()) {
+  if (ENABLE_CALLS) {
     const idx = links.findIndex((l) => l.id === 'channels');
     links = [...links.slice(0, idx + 1), CALLS_LINK, ...links.slice(idx + 1)];
   }
 
-  if (ENABLE_CRM()) {
+  if (isFeatureEnabled(enableCrm)) {
     // Customers sits just after Channels (and Calls when present).
-    const anchorId = ENABLE_CALLS() ? 'calls' : 'channels';
+    const anchorId = ENABLE_CALLS ? 'calls' : 'channels';
     const idx = links.findIndex((l) => l.id === anchorId);
     links = [
       ...links.slice(0, idx + 1),
@@ -1148,19 +1135,16 @@ const TeamInviteSidebarPromo = (props: { invite: TeamInviteDetails }) => {
 
   return (
     <SidebarPromoCard
-      label={t('shell.sidebar.teamInvitation')}
-      description={t('shell.sidebar.teamInvitationDescription', {
-        inviter: inviterName() || t('shell.sidebar.aTeammate'),
-        role: props.invite.team_role,
-      })}
+      label="Team invitation"
+      description={`${inviterName() || 'A teammate'} invited you to join a team as ${props.invite.team_role}.`}
       primaryAction={{
-        label: t('shell.actions.accept'),
+        label: 'Accept',
         disabled: mutationPending(),
         onClick: () =>
           joinTeamMutation.mutate({ teamInviteId: props.invite.id }),
       }}
       secondaryAction={{
-        label: t('shell.actions.decline'),
+        label: 'Decline',
         disabled: mutationPending(),
         onClick: () =>
           rejectInvitationMutation.mutate({ teamInviteId: props.invite.id }),
@@ -1184,6 +1168,16 @@ export const AppSidebar = (props: AppSidebarProps) => {
     { name: 'sidebar-try-visibility' }
   );
   const callCtx = useCallContextOptional();
+
+  const hasPaidAccess = useHasPaidAccess();
+
+  /** Persisted dismissal for the Premium upgrade promo card. */
+  const [premiumCardDismissed, setPremiumCardDismissed] = makePersisted(
+    createSignal<boolean>(false),
+    { name: 'sidebar-premium-card-dismissed' }
+  );
+
+  const newPricingFF = useFeatureFlag(enableNewPricing);
 
   const gettingStartedEnabled = useGettingStartedEnabled();
   const calendarUiEnabled = useCalendarUiFlag();
@@ -1339,14 +1333,15 @@ export const AppSidebar = (props: AppSidebarProps) => {
       removeAction={
         link.id === 'getting-started'
           ? {
-              tooltip: t('shell.sidebar.removeFromSidebar'),
+              tooltip: 'Remove from sidebar',
               onRemove: () => {
                 gettingStartedVisibility.hide();
                 // Hiding drops the row only — the go-to hotkey and its
                 // command-menu entry stay registered (see buildSidebarLinks),
                 // so this stays true.
-                toast.success(t('shell.sidebar.removedFromSidebar'), {
-                  subtext: t('shell.sidebar.gettingStartedStillAvailable'),
+                toast.success('Removed from sidebar', {
+                  subtext:
+                    'You can always find Getting Started in the account menu or command menu.',
                 });
               },
             }
@@ -1450,18 +1445,18 @@ export const AppSidebar = (props: AppSidebarProps) => {
 
     const connected = getSettingsTabItem('Connected');
     if (connected && isTabAvailable('Connected')) {
-      addTryItem('connect', t('shell.actions.connect'), connected.icon, () =>
+      addTryItem('connect', 'Connect', connected.icon, () =>
         openSettingsTab('Connected')
       );
     }
 
-    addTryItem('invite', t('shell.actions.invite'), UsersThreeIcon, () =>
+    addTryItem('invite', 'Invite', UsersThreeIcon, () =>
       setInviteModalOpen(true)
     );
 
     const mobile = getSettingsTabItem('Mobile App');
     if (mobile && isTabAvailable('Mobile App')) {
-      addTryItem('mobile', t('shell.sidebar.mobile'), mobile.icon, () =>
+      addTryItem('mobile', 'Mobile', mobile.icon, () =>
         openSettingsTab('Mobile App')
       );
     }
@@ -1501,7 +1496,8 @@ export const AppSidebar = (props: AppSidebarProps) => {
       {...hotkeyScopeNeutralAttribute}
       class={cn(
         'group/sidebar flex flex-col gap-0 overflow-hidden bg-surface px-3 pb-3 pt-4 text-[13px]',
-        isExpanded() && 'relative h-full shrink-0 max-w-55 w-55 opacity-100',
+        isExpanded() &&
+          'relative h-full shrink-0 max-w-55 w-55 border-r border-thread-rail opacity-100',
         props.sidebarState === 'hidden' &&
           'fixed left-0 top-0 bottom-0 h-full -translate-x-full max-w-0 w-0 opacity-0 pointer-events-none',
         isCollapsed() && 'fixed z-modal-content',
@@ -1570,13 +1566,13 @@ export const AppSidebar = (props: AppSidebarProps) => {
           class="size-full overflow-y-auto flex flex-col gap-3"
         >
           <CollapsibleSidebarSection
-            label={t('shell.sidebar.workspace')}
+            label="Workspace"
             persistKey="workspace"
             items={workspaceItems()}
             headerMenu={() => (
               <div class="pointer-events-auto">
                 <SidebarSectionMenu
-                  label={t('shell.sidebar.workspace')}
+                  label="Workspace"
                   options={sectionMenuOptionsFor(WORKSPACE_LINK_IDS)}
                   onToggle={toggleSectionVisibility}
                   onOpenChange={handleWorkspaceContextMenuOpenChange}
@@ -1638,6 +1634,57 @@ export const AppSidebar = (props: AppSidebarProps) => {
         <Show keyed when={isExpandedView() ? firstTeamInvite() : undefined}>
           {(invite) => <TeamInviteSidebarPromo invite={invite} />}
         </Show>
+        <Show
+          when={
+            !hasPaidAccess() &&
+            isExpandedView() &&
+            !userInvitesQuery.isLoading &&
+            !firstTeamInvite() &&
+            !premiumCardDismissed() &&
+            newPricingFF().enabled
+          }
+        >
+          <SidebarPromoCard
+            label="Upgrade to Premium"
+            description="Unlock MCP integrations, better AI models, and team collaboration."
+            onDismiss={() => {
+              setPremiumCardDismissed(true);
+              setPremiumHintVisible(true);
+            }}
+            primaryAction={{
+              label: 'Upgrade',
+              onClick: () => openSettingsTab('Billing'),
+            }}
+            secondaryAction={{
+              label: 'Later',
+              onClick: () => {
+                setPremiumCardDismissed(true);
+                setPremiumHintVisible(true);
+              },
+            }}
+          />
+        </Show>
+        <Show
+          when={
+            !hasPaidAccess() &&
+            isExpandedView() &&
+            !userInvitesQuery.isLoading &&
+            !firstTeamInvite() &&
+            premiumHintVisible() &&
+            premiumCardDismissed() &&
+            newPricingFF().enabled
+          }
+        >
+          <SidebarPromoHint
+            title="Maybe later"
+            message="You can upgrade anytime from Account settings."
+            onDone={() => setPremiumHintVisible(false)}
+            secondaryAction={{
+              label: 'Take me there',
+              onClick: () => openSettingsTab('Account'),
+            }}
+          />
+        </Show>
         <Show when={isExpandedView() && tryItems().length > 0}>
           <TryCard items={tryItems()} onDismiss={dismissTrySection} />
         </Show>
@@ -1696,6 +1743,12 @@ interface SidebarOpenInSplitMenuProps {
    */
   onOpened?: (split: SplitHandle, action: SidebarOpenAction) => void;
   onOpenChange?: (open: boolean) => void;
+  /**
+   * Overrides the trigger's default `h-7`, which otherwise clips triggers of a
+   * different shape (`SidebarRail`'s are 36px squares). Merged with `cn`, so a
+   * size utility here wins.
+   */
+  triggerClass?: string;
   children: JSX.Element;
 }
 
@@ -1704,7 +1757,7 @@ interface SidebarOpenInSplitMenuProps {
  * split, in a new split, or fullscreen. Wraps any sidebar row — the top-level
  * links and the nested Email account rows both use it.
  */
-const SidebarOpenInSplitMenu = (props: SidebarOpenInSplitMenuProps) => {
+export const SidebarOpenInSplitMenu = (props: SidebarOpenInSplitMenuProps) => {
   const analytics = useAnalytics();
   const layout = useSplitLayout();
 
@@ -1746,7 +1799,7 @@ const SidebarOpenInSplitMenu = (props: SidebarOpenInSplitMenuProps) => {
 
   return (
     <ContextMenu onOpenChange={props.onOpenChange}>
-      <ContextMenu.Trigger class="w-full h-7">
+      <ContextMenu.Trigger class={cn('w-full h-7', props.triggerClass)}>
         {props.children}
       </ContextMenu.Trigger>
 
@@ -1784,7 +1837,6 @@ const ChannelsActiveCallIcon = () => {
 
 const SidebarLinkRow = (props: SidebarLinkProps) => {
   const [isHovering, setIsHovering] = createSignal(false);
-  let openedByPointer = false;
 
   const analytics = useAnalytics();
   const layout = useSplitLayout();
@@ -1836,7 +1888,6 @@ const SidebarLinkRow = (props: SidebarLinkProps) => {
         });
 
         e.preventDefault();
-        openedByPointer = true;
         let currentContentHandle = globalSplitManager()?.activeSplit();
 
         const currentContent = currentContentHandle?.content();
@@ -1862,39 +1913,6 @@ const SidebarLinkRow = (props: SidebarLinkProps) => {
           requestSearchFocus(currentContentHandle.id);
         }
 
-        globalSplitManager()?.returnFocus();
-      }}
-      onClick={(e) => {
-        if (openedByPointer) {
-          openedByPointer = false;
-          e.preventDefault();
-          return;
-        }
-        analytics.track('sidebar_click', {
-          view: props.id,
-        });
-        e.preventDefault();
-        let currentContentHandle = globalSplitManager()?.activeSplit();
-        const currentContent = currentContentHandle?.content();
-        const expectedContent = content();
-        const isSameContent =
-          currentContent?.type === expectedContent.type &&
-          currentContent.id === expectedContent.id;
-        if (!isSameContent || e.shiftKey) {
-          currentContentHandle = navigateToSidebarView({
-            viewId: props.id,
-            params: props.params,
-            shiftKey: e.shiftKey,
-            activeSplit: currentContentHandle,
-            openWithSplit: layout.openWithSplit,
-            referredFrom: 'sidebar',
-          });
-        } else {
-          props.onActiveClick?.();
-        }
-        if (props.id === 'search' && currentContentHandle) {
-          requestSearchFocus(currentContentHandle.id);
-        }
         globalSplitManager()?.returnFocus();
       }}
     >
@@ -2065,7 +2083,7 @@ const SidebarLink = (props: SidebarLinkProps) => {
  */
 const SidebarMailLink = (props: SidebarLinkProps) => {
   const layout = useSplitLayout();
-  const linksQuery = useEmailLinksQuery();
+  const linksQuery = useMailAccountsQuery();
   const [expanded, setExpanded] = makePersisted(createSignal(false), {
     name: 'sidebar-mail-accounts-expanded',
   });

@@ -1,8 +1,10 @@
 import { t } from '@app/lib/i18n';
 import TrashIcon from '@phosphor/trash.svg';
 import { Button } from '@ui';
+import { Show } from 'solid-js';
 
 type BotDetailActionsProps = {
+  canDelete: boolean;
   dirty: boolean;
   pending: boolean;
   saving: boolean;

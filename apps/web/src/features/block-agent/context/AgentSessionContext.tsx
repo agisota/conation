@@ -35,6 +35,14 @@ import {
   createComposerController,
 } from './create-composer-controller';
 import {
+  createElicitationController,
+  type ElicitationController,
+} from './create-elicitation-controller';
+import {
+  createQueueController,
+  type QueueController,
+} from './create-queue-controller';
+import {
   createSessionStatusController,
   isDisconnected,
   type SessionStatus,
@@ -86,7 +94,21 @@ export type AgentSessionState = {
    * runtime was disconnected, and a request it must wait on is outstanding.
    */
   resuming: Accessor<boolean>;
+  /**
+   * The agent is mid-turn but waiting on the user, not generating: the
+   * fold's metadata names a question to answer. Presentational only -
+   * `working` stays true so queued prompts keep waiting behind the question.
+   */
+  blockedOnUser: Accessor<boolean>;
   composer: ComposerController;
+  /** The live question, and the one POST that answers it. */
+  elicitation: ElicitationController;
+  /**
+   * The session's server-side action queue: prompts sent mid-turn wait
+   * there and dispatch one per turn end. The server is the only truth —
+   * nothing is queued client-side.
+   */
+  queue: QueueController;
   /**
    * Quote selected transcript text into the composer as a referenced paste
    * chip. No-op until the composer editor has mounted.
@@ -122,12 +144,26 @@ export function AgentSessionProvider(
   // status stream knows when the runtime disconnected without closing it.
   // Combining them here is what keeps "working" a single truth.
   const working = () => feed.working() && !isDisconnected(status.status());
+  const queue = createQueueController({
+    sessionId,
+    messages: feed.messages,
+  });
   const composer = createComposerController({
     sessionId,
     working,
     model: () => feed.metadata()?.model,
     controlOutcome: (requestId) => controlOutcome(feed.messages(), requestId),
   });
+  const pendingElicitation = () =>
+    isDisconnected(status.status())
+      ? undefined
+      : (feed.metadata()?.pendingElicitation ?? undefined);
+  const elicitation = createElicitationController({
+    sessionId,
+    pending: pendingElicitation,
+    canEdit: () => feed.session()?.canEdit,
+  });
+  const blockedOnUser = () => working() && pendingElicitation() !== undefined;
 
   // The transcript's "Reply to this" chip hands selected text to the
   // composer through here. A plain variable, not a signal: it is only read
@@ -141,8 +177,7 @@ export function AgentSessionProvider(
   // Anything the service can only deliver over a live transport: a prompt on
   // the wire, or a model change waiting to be seen in the fold.
   const awaitingRuntime = () =>
-    composer.sendingId() !== undefined ||
-    composer.changingModel() !== undefined;
+    composer.sending() || composer.changingModel() !== undefined;
   const resuming = () => isDisconnected(status.status()) && awaitingRuntime();
 
   return (
@@ -174,7 +209,10 @@ export function AgentSessionProvider(
           working,
           status: status.status,
           resuming,
+          blockedOnUser,
           composer,
+          elicitation,
+          queue,
           quoteSelection,
           registerQuoteInsert,
         }}

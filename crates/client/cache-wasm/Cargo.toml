@@ -2,7 +2,8 @@
 edition = "2024"
 name = "cache-wasm"
 publish = false
-version = "0.6.3"
+# Rebuild for canonical Mail tab previews and viewer-scoped shared eligibility.
+version = "0.6.10"
 
 [features]
 default = []
@@ -42,4 +43,5 @@ wasm-bindgen-futures = { workspace = true }
 
 [target.'cfg(target_arch = "wasm32")'.dev-dependencies]
 soup-filter-projection = { path = "../../soup_filter_projection", default-features = false }
+uuid = { workspace = true, features = ["js"] }
 wasm-bindgen-test = { workspace = true }

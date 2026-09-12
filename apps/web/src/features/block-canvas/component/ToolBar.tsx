@@ -25,7 +25,7 @@ import ZoomIn from '@phosphor/magnifying-glass-plus.svg';
 import PencilSimple from '@phosphor/pencil-simple.svg';
 import Rectangle from '@phosphor/rectangle.svg';
 import Text from '@phosphor/text-t.svg';
-import { Button, cn, Dropdown, Hotkey } from '@ui';
+import { Button, ButtonGroup, Dropdown, Hotkey, Toolbar } from '@ui';
 import { createSignal, Show } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import { Tools } from '../constants';
@@ -41,9 +41,6 @@ import { connectorTypeMenuTriggerSignal } from './TopBar';
 const ConnectorTypeSubMenu = (props: {
   onSelect: (connectionStye: EdgeConnectionStyle) => void;
 }) => {
-  const SmallCaretDown = () => (
-    <CaretDown style={{ width: '12px' }} class="text-ink-muted" />
-  );
   const [connectorTypeMenuTrigger, setConnectorTypeMenuTrigger] =
     connectorTypeMenuTriggerSignal;
 
@@ -53,13 +50,8 @@ const ConnectorTypeSubMenu = (props: {
       open={connectorTypeMenuTrigger()}
       onOpenChange={setConnectorTypeMenuTrigger}
     >
-      <Dropdown.Trigger
-        variant="ghost"
-        size="icon-md"
-        style={{ width: '12px', margin: '0 -2px 0 -4px' }}
-        tabIndex={-1}
-      >
-        <SmallCaretDown />
+      <Dropdown.Trigger size="icon-sm" label="Connector options" tabIndex={-1}>
+        <CaretDown class="size-3 text-ink-muted" />
       </Dropdown.Trigger>
       <Dropdown.Content>
         <Dropdown.Group>
@@ -186,14 +178,12 @@ export function ToolBar() {
   return (
     <ScopedPortal scope="block">
       {/* Full-frame mobile/tablet: rest above the floating bottom chrome. */}
-      <div class="absolute left-1/2 bottom-2 touch:bottom-[calc(var(--mobile-content-inset-bottom,0)+0.5rem)] flex flex-row p-1 bg-surface border border-edge -translate-x-1/2">
-        <div
-          class={cn(
-            'flex flex-row items-center space-x-2',
-            canEdit() && 'border-r border-edge'
-          )}
-        >
-          <Button
+      <Toolbar
+        size="icon-sm"
+        class="absolute left-1/2 bottom-2 touch:bottom-[calc(var(--mobile-content-inset-bottom,0)+0.5rem)] -translate-x-1/2"
+      >
+        <Toolbar.Group>
+          <Toolbar.Button
             variant={activeTool() === Tools.Grab ? 'accent' : 'ghost'}
             size="icon-md"
             label={t('canvas.tools.hand')}
@@ -203,10 +193,10 @@ export function ToolBar() {
             }}
           >
             <Hand />
-          </Button>
+          </Toolbar.Button>
 
           <Show when={!isTouchDevice()}>
-            <Button
+            <Toolbar.Button
               variant={
                 activeTool() === Tools.ZoomIn || activeTool() === Tools.ZoomOut
                   ? 'accent'
@@ -223,11 +213,11 @@ export function ToolBar() {
               }}
             >
               {activeTool() === Tools.ZoomOut ? <ZoomOut /> : <ZoomIn />}
-            </Button>
+            </Toolbar.Button>
           </Show>
 
           <Show when={canEdit()}>
-            <Button
+            <Toolbar.Button
               variant={
                 activeTool() === Tools.Select ||
                 activeTool() === Tools.Resize ||
@@ -243,12 +233,13 @@ export function ToolBar() {
               }}
             >
               <Cursor />
-            </Button>
+            </Toolbar.Button>
           </Show>
-        </div>
+        </Toolbar.Group>
         <Show when={canEdit()}>
-          <div class="flex flex-row px-2 items-center space-x-2">
-            <Button
+          <Toolbar.Divider />
+          <Toolbar.Group>
+            <Toolbar.Button
               variant={activeTool() === Tools.Shape ? 'accent' : 'ghost'}
               size="icon-md"
               label={t('canvas.tools.rectangle')}
@@ -258,9 +249,9 @@ export function ToolBar() {
               }}
             >
               <Rectangle />
-            </Button>
+            </Toolbar.Button>
 
-            <Button
+            <Toolbar.Button
               variant={activeTool() === Tools.Pencil ? 'accent' : 'ghost'}
               size="icon-md"
               label={t('canvas.tools.pencil')}
@@ -270,7 +261,7 @@ export function ToolBar() {
               }}
             >
               <PencilSimple />
-            </Button>
+            </Toolbar.Button>
 
             <Button
               variant={activeTool() === Tools.Line ? 'accent' : 'ghost'}
@@ -286,7 +277,7 @@ export function ToolBar() {
             <ConnectorTypeSubMenu onSelect={onSelectConnectionStyle} />
 
             <Show when={ENABLE_CANVAS_TEXT}>
-              <Button
+              <Toolbar.Button
                 variant={
                   activeTool() === Tools.Text || activeTool() === Tools.Typing
                     ? 'accent'
@@ -300,21 +291,22 @@ export function ToolBar() {
                 }}
               >
                 <Text />
-              </Button>
+              </Toolbar.Button>
             </Show>
-          </div>
+          </Toolbar.Group>
         </Show>
-        <Show when={canEdit()}>
-          <div class="flex flex-row px-2 items-center space-x-2 border-l border-edge">
+        <Show when={canEdit() && (ENABLE_CANVAS_IMAGES || ENABLE_CANVAS_FILES)}>
+          <Toolbar.Divider />
+          <Toolbar.Group>
             <Show when={ENABLE_CANVAS_IMAGES}>
               <MediaSelector />
             </Show>
             <Show when={ENABLE_CANVAS_FILES}>
               <FileSelector />
             </Show>
-          </div>
+          </Toolbar.Group>
         </Show>
-      </div>
+      </Toolbar>
     </ScopedPortal>
   );
 }

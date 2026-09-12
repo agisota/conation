@@ -1,5 +1,49 @@
 import type { BrowserTursoCacheRolloutDecision } from '@graphql-cache/rollout-policy';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type {
+  GraphqlSoupEntityType,
+  SoupItemFieldsFragment,
+} from './graphql/generated/graphql';
+
+it('maps agent sessions without discarding persona, favorites or notifications', async () => {
+  const { mapGraphqlSoupItem } = await import('./graphql-soup');
+  const mapped = mapGraphqlSoupItem({
+    __typename: 'GraphqlSoupAgentSession',
+    id: 'session',
+    entityType: 'AGENT_SESSION',
+    displayName: 'Fix mentions',
+    sessionName: 'Fix mentions',
+    ownerId: 'macro|owner@example.com',
+    botId: 'bot',
+    bot: {
+      id: 'bot',
+      name: 'Ada',
+      avatarUrl: null,
+    },
+    threadId: null,
+    status: 'acp_ready',
+    createdAt: '2026-01-01',
+    updatedAt: '2026-01-02',
+    viewedAt: null,
+    cacheProjection: null,
+    isFavorited: true,
+    notifications: [],
+    properties: [],
+    frecencyScore: 5,
+  });
+  expect(mapped).toMatchObject({
+    tag: 'agentSession',
+    is_favorited: true,
+    frecency_score: 5,
+    data: {
+      id: 'session',
+      name: 'Fix mentions',
+      bot: { name: 'Ada' },
+      status: 'acp_ready',
+      notifications: [],
+    },
+  });
+});
 
 const mocks = vi.hoisted(() => {
   let enabled = true;
@@ -42,6 +86,7 @@ const mocks = vi.hoisted(() => {
   const realtimeClient = { kind: 'realtime' };
   const replaceSubscriptions = vi.fn();
   const platformFetch = vi.fn();
+  const toastFailure = vi.fn();
   return {
     get enabled() {
       return enabled;
@@ -81,6 +126,7 @@ const mocks = vi.hoisted(() => {
     realtimeClient,
     replaceSubscriptions,
     platformFetch,
+    toastFailure,
     createWorkerCacheHost: vi.fn(
       (options: { onInitializationError?: (error: Error) => void }) => {
         initializationErrorHandler = options.onInitializationError;
@@ -91,9 +137,13 @@ const mocks = vi.hoisted(() => {
   };
 });
 
+vi.mock('@core/component/Toast/Toast', () => ({
+  toast: { failure: mocks.toastFailure },
+}));
 vi.mock('@core/constant/featureFlags', () => ({
   ENABLE_BEARER_TOKEN_AUTH: false,
-  ENABLE_GRAPHQL_SOUP: () => mocks.graphqlEnabled,
+  enableGraphqlSoup: { key: 'enable-graphql-soup' },
+  isFeatureEnabled: () => mocks.graphqlEnabled,
 }));
 vi.mock('@core/constant/servers', () => ({
   SERVER_HOSTS: { 'document-storage-service': 'http://dss.test' },
@@ -178,6 +228,40 @@ vi.mock('@urql/core', () => ({
   },
 }));
 
+describe('GraphQL Soup chat models', () => {
+  it.each(['openai/gpt-5.6', 'anthropic/claude-sonnet-5', null])(
+    'preserves the saved model (%s) in the shared soup shape',
+    async (model) => {
+      const { mapGraphqlSoupItem } = await import('./graphql-soup');
+      const item = {
+        __typename: 'GraphqlSoupChat',
+        id: 'chat-model',
+        chatName: 'Chat',
+        model,
+        ownerId: 'macro|owner@example.com',
+        entityType: 'CHAT' as GraphqlSoupEntityType,
+        displayName: 'Chat',
+        projectId: null,
+        viewedAt: null,
+        deletedAt: null,
+        cacheProjection: null,
+        frecencyScore: null,
+        isPersistent: true,
+        isFavorited: false,
+        createdAt: '2026-09-11T00:00:00Z',
+        updatedAt: '2026-09-11T00:00:00Z',
+        properties: [],
+        notifications: [],
+      } satisfies SoupItemFieldsFragment;
+
+      expect(mapGraphqlSoupItem(item)).toMatchObject({
+        tag: 'chat',
+        data: { id: item.id, model },
+      });
+    }
+  );
+});
+
 describe('GraphQL Soup browser cache session gate', () => {
   beforeEach(() => {
     vi.resetModules();
@@ -216,47 +300,77 @@ describe('GraphQL Soup browser cache session gate', () => {
     expect(soup.graphqlSoupProjectionSupported()).toBe(true);
   });
 
-  it('retries a new client against an old server without projection local authority', async () => {
-    mocks.platformFetch
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            errors: [
-              {
-                message:
-                  'Cannot query field "cacheProjection" on type "GraphqlSoupEntity".',
-              },
-            ],
-          }),
-          { status: 200, headers: { 'content-type': 'application/json' } }
-        )
-      )
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({ data: { user: { soup: { items: [] } } } }),
-          {
-            status: 200,
-            headers: { 'content-type': 'application/json' },
-          }
-        )
-      );
+  it('strips client-only directives from GraphQL transport documents', async () => {
+    mocks.platformFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ data: { user: { id: 'user-1' } } }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      })
+    );
     const soup = await import('./graphql-soup');
-    const query = `query Soup {
-      user { soup { items { __typename id cacheProjection @cacheOnly } } }
+    const query = `query Soup($includeId: Boolean!) {
+      user {
+        id @include(if: $includeId)
+        soup { items { cacheProjection @cacheOnly } }
+      }
     }`;
-    const response = await soup.dssGraphqlFetch('http://dss.test/graphql', {
+    await soup.dssGraphqlFetch('http://dss.test/graphql', {
       method: 'POST',
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({ query, variables: { includeId: true } }),
     });
 
-    expect(response.status).toBe(200);
-    expect(mocks.platformFetch).toHaveBeenCalledTimes(2);
-    const retry = mocks.platformFetch.mock.calls[1]?.[1] as RequestInit;
-    expect(JSON.parse(retry.body as string).query).not.toContain(
-      'cacheProjection'
-    );
-    expect(soup.graphqlSoupProjectionSupported()).toBe(false);
+    expect(mocks.platformFetch).toHaveBeenCalledOnce();
+    const transport = mocks.platformFetch.mock.calls[0]?.[1] as RequestInit;
+    const payload = JSON.parse(transport.body as string) as {
+      query: string;
+      variables: { includeId: boolean };
+    };
+    expect(payload.query).not.toContain('@cacheOnly');
+    expect(payload.query).toContain('cacheProjection');
+    expect(payload.query).toContain('@include');
+    expect(payload.variables).toEqual({ includeId: true });
   });
+
+  it.each([
+    'Cannot query field "cacheProjection" on type "GraphqlSoupEntity".',
+    'Unknown field "cacheProjection" on type "GraphqlSoupEntity".',
+  ])(
+    'retries a new client against an old server without projection local authority: %s',
+    async (validationMessage) => {
+      mocks.platformFetch
+        .mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({ errors: [{ message: validationMessage }] }),
+            { status: 200, headers: { 'content-type': 'application/json' } }
+          )
+        )
+        .mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({ data: { user: { soup: { items: [] } } } }),
+            {
+              status: 200,
+              headers: { 'content-type': 'application/json' },
+            }
+          )
+        );
+      const soup = await import('./graphql-soup');
+      const query = `query Soup {
+        user { soup { items { __typename id cacheProjection @cacheOnly } } }
+      }`;
+      const response = await soup.dssGraphqlFetch('http://dss.test/graphql', {
+        method: 'POST',
+        body: JSON.stringify({ query }),
+      });
+
+      expect(response.status).toBe(200);
+      expect(mocks.platformFetch).toHaveBeenCalledTimes(2);
+      const retry = mocks.platformFetch.mock.calls[1]?.[1] as RequestInit;
+      expect(JSON.parse(retry.body as string).query).not.toContain(
+        'cacheProjection'
+      );
+      expect(soup.graphqlSoupProjectionSupported()).toBe(false);
+    }
+  );
 
   it('keeps GraphQL notification subscriptions active when the cache is disabled', async () => {
     mocks.enabled = false;
@@ -304,6 +418,9 @@ describe('GraphQL Soup browser cache session gate', () => {
     expect(soup.getGraphqlSoupClient()).toBe(mocks.realtimeClient);
     expect(soup.graphqlCacheEnabled()).toBe(false);
     expect(mocks.cleanupOrder()).toEqual(['subscriptions', 'host']);
+    expect(mocks.toastFailure).toHaveBeenCalledWith('Local cache unavailable', {
+      subtext: 'Macro will continue without local caching for this session.',
+    });
     expect(warn).toHaveBeenCalledWith(
       'graphql cache async init failed; using uncached client',
       expect.objectContaining({ message: 'injected initialization failure' })

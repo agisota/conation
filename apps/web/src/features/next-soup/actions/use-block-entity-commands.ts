@@ -18,6 +18,7 @@ import { type EntityData, isDocumentEntity, isTaskEntity } from '@entity';
 import { SYSTEM_PROPERTY_IDS } from '@property/constants';
 import type { Property, PropertyDefinitionDomain } from '@property/types';
 import { createEffect, onCleanup } from 'solid-js';
+import type { EntityActionNavigationEvent } from './entity-action-context';
 import {
   makeAddTagAction,
   makeCopyAction,
@@ -29,6 +30,7 @@ import {
   makeFavoriteAction,
   makeMarkDoneAction,
   makeMoveToProjectAction,
+  makeMuteAction,
   makeRenameAction,
   markReminderTargetDone,
 } from './index';
@@ -70,6 +72,9 @@ export const useBlockEntityCommands = (
   const copyBranchNameAction = makeCopyBranchNameAction();
   const copyEntityIdAction = makeCopyEntityIdAction();
   const favoriteAction = makeFavoriteAction();
+  const muteAction = makeMuteAction({
+    notificationSource: () => notificationSource,
+  });
   const addTagAction = makeAddTagAction();
 
   const allProperties = useAllProperties();
@@ -124,13 +129,21 @@ export const useBlockEntityCommands = (
   };
 
   /** Follows the list's next row into this split, as the triage flow does. */
-  const advanceSplitTo = (nextEntity: EntityData) => {
+  const advanceSplitTo = ({
+    entity: nextEntity,
+  }: EntityActionNavigationEvent) => {
     const splitHandle = splitPanel?.handle;
     if (!splitHandle) return;
+    if (!nextEntity) {
+      splitHandle.resetPreview();
+      return;
+    }
+
     void openEntityInSplitFromUnifiedList(nextEntity, {
       splitHandle,
       mergeHistory: true,
       referredFrom: splitHandle.referredFrom(),
+      notificationSource,
     });
   };
 
@@ -287,6 +300,31 @@ export const useBlockEntityCommands = (
       condition: () => {
         const entity = getEntity();
         return entity !== undefined && favoriteAction.canExecute(entity);
+      },
+      displayPriority: 10,
+      tags: [HotkeyTags.SelectionModification],
+    }).withGroup(group);
+
+    // Mute notifications (command menu only, no keybinding)
+    registerHotkey({
+      hotkeyToken: TOKENS.entity.action.mute,
+      scopeId,
+      description: () => {
+        const entity = getEntity();
+        return entity && muteAction.isMuted(entity)
+          ? 'Unmute notifications'
+          : 'Mute notifications';
+      },
+      keyDownHandler: () => {
+        const entity = getEntity();
+        if (!entity) return false;
+        if (!muteAction.canExecute(entity)) return false;
+        void muteAction.execute([entity]);
+        return true;
+      },
+      condition: () => {
+        const entity = getEntity();
+        return entity !== undefined && muteAction.canExecute(entity);
       },
       displayPriority: 10,
       tags: [HotkeyTags.SelectionModification],

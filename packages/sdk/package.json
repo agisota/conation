@@ -1,6 +1,11 @@
 {
-  "name": "@conation/sdk",
-  "version": "0.0.1",
+  "name": "@macro-inc/sdk",
+  "version": "0.0.2",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/macro-inc/macro.git",
+    "directory": "packages/sdk"
+  },
   "type": "module",
   "description": "Library for interacting with Conation",
   "main": "./dist/src/macro.js",

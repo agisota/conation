@@ -129,7 +129,11 @@ export async function openChatWithMessageReplacingSplit(
   await createAndOpenChat({ message, replaceSplit: splitHandle });
 }
 
-export function ChatWithAgentButton(props: { entity: ChatWithAgentEntity }) {
+export function ChatWithAgentButton(props: {
+  entity: ChatWithAgentEntity;
+  /** Button text; defaults to "Chat". */
+  label?: string;
+}) {
   const [hovering, setHovering] = createSignal(false);
 
   return (

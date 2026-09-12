@@ -17,7 +17,10 @@ use channels::{
     },
 };
 use conation_auth::middleware::decode_jwt::JwtValidationArgs;
-use conation_authorization::{InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationState};
+use conation_authorization::{
+    InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationState,
+    PgUserApiKeyAuthorizationRepo, PgUserApiKeyAuthorizer,
+};
 use conation_entrypoint::MacroEntrypoint;
 use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
 use conation_service_urls::{
@@ -128,6 +131,11 @@ async fn main() -> anyhow::Result<()> {
     let mail_identity = config
         .mail_identity()
         .context("invalid outbound mail identity configuration")?;
+    let signup_policy = Arc::new(
+        config
+            .signup_policy()
+            .context("invalid signup policy configuration")?,
+    );
     let microsoft_credentials = config
         .microsoft_credentials()
         .context("invalid Microsoft OAuth configuration")?;
@@ -302,6 +310,7 @@ async fn main() -> anyhow::Result<()> {
             default_user_id: None,
         },
         conation_authorization::NoBotAuthorizer,
+        PgUserApiKeyAuthorizer::new(PgUserApiKeyAuthorizationRepo::new(db.clone())),
     )));
 
     let redis_client = redis::Client::open(config.redis_uri.to_string().as_str())
@@ -508,6 +517,7 @@ async fn main() -> anyhow::Result<()> {
             notification_ingress_service,
             sqs_client,
             environment: config.environment,
+            signup_policy,
             rate_limit_service: rate_limit,
             calendar_scope_enabled: config.calendar_scope_enabled,
             jwt_args,

@@ -12,7 +12,10 @@ import {
   updateDragInsertPreviewFromCoordinates,
 } from '@core/component/LexicalMarkdown/utils/dragInsertUtils';
 import { isCursorBotId } from '@core/constant/cursorAgent';
-import { ENABLE_CHAT_V3_AGENTS } from '@core/constant/featureFlags';
+import {
+  enableChatV3Agents,
+  isFeatureEnabled,
+} from '@core/constant/featureFlags';
 import { useCursorAgentsAccess } from '@core/cursor/flag';
 import { registerHotkey, useHotkeyDOMScope } from '@core/hotkey/hotkeys';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
@@ -26,8 +29,7 @@ import {
 } from '@core/util/upload';
 import type { EntityData } from '@entity';
 import { useCursorApiKeyStatusQuery } from '@queries/auth/cursor-api-key';
-import { isIOS } from '@solid-primitives/platform';
-import { CollapsedInput, cn, Surface } from '@ui';
+import { CollapsedInput, ComposerSurface } from '@ui';
 import { $getRoot } from 'lexical';
 import {
   type Accessor,
@@ -38,11 +40,14 @@ import {
   Switch,
 } from 'solid-js';
 import {
-  applyConationAgentMentionPolicy,
-  conationAiMentionUser,
   cursorMentionUser,
-  isConationAiId,
-} from '../conationAi';
+  isMacroAiId,
+  isMacroCoderId,
+  isMacroNewId,
+  macroAiMentionUser,
+  macroCoderMentionUser,
+  macroNewMentionUser,
+} from '../macroAi';
 import { CHANNEL_FILE_PICKER_ACCEPT } from './accepted-file-types';
 import { createInputAttachmentTracker } from './attachment-tracker';
 import { createConfiguredChannelMarkdownEditor } from './configured-markdown-editor';
@@ -64,6 +69,7 @@ import type {
 } from './types';
 import { isReplyInput } from './types';
 import { uploadInputAttachments } from './upload-attachments';
+import { clearComposer as clearComposerPreservingFocus } from './utils/clear-composer';
 import { entityToDocumentMentionInfo } from './utils/entity-mention';
 import { applyInlineFormat, applyNodeFormat } from './utils/formatting';
 import { $selectTrailingParagraph } from './utils/select-trailing-paragraph';
@@ -204,6 +210,7 @@ export function ChannelInput(props: ChannelInputProps) {
   const isCollapsed = () => !!props.collapsible && collapsedInput.isCollapsed();
 
   let isEditorConnected = false;
+  let acceptTyping = false;
   let pendingRestore:
     | {
         snapshot: InputSnapshot;
@@ -219,11 +226,15 @@ export function ChannelInput(props: ChannelInputProps) {
     snapshot: InputSnapshot,
     options?: RestoreSnapshotOptions
   ) => {
+    acceptTyping = false;
     markdownEditor.controls.setMarkdown(snapshot.value);
     pendingCursor = options?.cursor;
     attachmentTracker.setAttachments(snapshot.attachments);
     mentionsTracker.setMentions(snapshot.mentions);
     if (options?.focus !== false) focusEditorNow();
+    queueMicrotask(() => {
+      acceptTyping = true;
+    });
   };
 
   const flushPendingRestore = () => {
@@ -258,23 +269,39 @@ export function ChannelInput(props: ChannelInputProps) {
   const canUseCursor = useCursorAgentsAccess();
   const cursorApiKey = useCursorApiKeyStatusQuery();
 
-  // Conation and Conation Coder (flag-gated) are mentionable in every channel,
+  // Macro AI and Macro Coder (flag-gated) are mentionable in every channel,
   // and any bot added to the channel is mentionable too. All are surfaced
   // through the same `@`-mention typeahead as participants and re-tagged as
   // bot mentions at send time.
   const mentionUsers: Accessor<IUser[]> = () => {
     const cursorEnabled =
       canUseCursor() && (cursorApiKey.data?.registered ?? false);
-    let base = [
+    const base = [
       ...(props.participants?.() ?? []),
       ...(props.bots?.() ?? []),
     ].filter((user) => cursorEnabled || !isCursorBotId(user.id));
-    base = applyConationAgentMentionPolicy(base, ENABLE_CHAT_V3_AGENTS());
-    if (cursorEnabled && !base.some((user) => isCursorBotId(user.id))) {
+    if (
+      isFeatureEnabled(enableChatV3Agents) &&
+      !base.some((user) => isMacroCoderId(user.id))
+    ) {
+      base.unshift(macroCoderMentionUser());
+    }
+    if (
+      isFeatureEnabled(enableChatV3Agents) &&
+      !base.some((user) => isMacroNewId(user.id))
+    ) {
+      base.unshift(macroNewMentionUser());
+    }
+    if (
+      cursorEnabled &&
+      // Hiding it is not enforcement — a mention can still arrive from a
+      // copied message or another client — so the harness refuses these too.
+      !base.some((user) => isCursorBotId(user.id))
+    ) {
       base.unshift(cursorMentionUser());
     }
-    if (!base.some((user) => isConationAiId(user.id))) {
-      base.unshift(conationAiMentionUser());
+    if (!base.some((user) => isMacroAiId(user.id))) {
+      base.unshift(macroAiMentionUser());
     }
     return uniqueByKey(base, (user) => user.id);
   };
@@ -291,7 +318,10 @@ export function ChannelInput(props: ChannelInputProps) {
       mentionsTracker.onMentionRemove(mention);
     },
     onChange: (markdown) => {
+      const previous = inputState.view().value ?? '';
       inputState.setValue(markdown);
+      if (!acceptTyping) return;
+      if (markdown.trim() === previous.trim()) return;
       typingTracker.keystroke();
     },
     onEnter: () => {
@@ -326,21 +356,15 @@ export function ChannelInput(props: ChannelInputProps) {
       coordinates.clientY <= rect.bottom
     );
   };
-  // On iOS, blur before clearing so dictation finalizes and discards its buffer
-  // (otherwise it re-injects the sent text into the cleared editor). Re-focus
-  // via rAF so the keyboard stays up: rAF fires after Lexical's update commits,
-  // avoiding a conflict where clear()'s $setSelection(null) undoes the focus.
   clearComposer = () => {
-    if (isIOS) {
-      isInternalRefocus = true;
-      markdownEditor.controls.blur();
-      markdownEditor.controls.clear();
-      requestAnimationFrame(() => {
-        markdownEditor.controls.focus();
-        isInternalRefocus = false;
-      });
-    } else {
-      markdownEditor.controls.clear();
+    isInternalRefocus = true;
+    try {
+      clearComposerPreservingFocus(
+        lexicalEditor(),
+        markdownEditor.controls.clear
+      );
+    } finally {
+      isInternalRefocus = false;
     }
   };
 
@@ -462,6 +486,9 @@ export function ChannelInput(props: ChannelInputProps) {
                   isEditorConnected = true;
                   flushPendingRestore();
                   flushPendingFocus();
+                  queueMicrotask(() => {
+                    acceptTyping = true;
+                  });
                 }}
               />
               <DragInsertIndicator
@@ -523,7 +550,7 @@ export function ChannelInput(props: ChannelInputProps) {
           onSend={() => void inputState.commands.send()}
         />
       </Show>
-      <Surface
+      <ComposerSurface
         onFocusOut={(e) => {
           const next = e.relatedTarget as Node | null;
           if (next && e.currentTarget.contains(next)) return;
@@ -531,17 +558,10 @@ export function ChannelInput(props: ChannelInputProps) {
           if (props.collapseOnFocusOut === false) return;
           collapsedInput.collapse();
         }}
-        class={cn(
-          'rounded-xl bg-surface touch:rounded-3xl touch:island',
-          isCollapsed() && 'hidden',
-          isTouchDevice() && 'bg-chrome'
-        )}
-        hideBorder={isTouchDevice()}
-        depth={isTouchDevice() ? 3 : 2}
-        solid
+        class={isCollapsed() ? 'hidden' : undefined}
       >
         {renderSurfaceContent()}
-      </Surface>
+      </ComposerSurface>
     </Input.Root>
   );
 }

@@ -9,16 +9,6 @@ use call::outbound::s3_recording_storage::S3RecordingStorage;
 use channels::{
     domain::list_service::ChannelListServiceImpl, outbound::pg_channels_repo::PgChannelsRepo,
 };
-use conation_auth::middleware::decode_jwt::JwtValidationArgs;
-use conation_authorization::{
-    InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationServiceImpl,
-    MacroAuthorizationState,
-};
-use conation_entrypoint::MacroEntrypoint;
-use conation_service_urls::{
-    ConnectionGatewayUrl, DocumentStorageServiceUrl, EmailServiceUrl, LexicalServiceUrl,
-    StaticFileServiceUrl, SyncServiceUrl,
-};
 use config::{Config, Environment};
 use document_storage_service_client::DocumentStorageServiceClient;
 use documents::{
@@ -37,6 +27,16 @@ use foreign_entity::{
 };
 use frecency::domain::services::FrecencyQueryServiceImpl;
 use frecency::outbound::postgres::FrecencyPgStorage;
+use conation_auth::middleware::decode_jwt::JwtValidationArgs;
+use conation_authorization::{
+    InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationServiceImpl,
+    MacroAuthorizationState, PgUserApiKeyAuthorizationRepo, PgUserApiKeyAuthorizer,
+};
+use conation_entrypoint::MacroEntrypoint;
+use conation_service_urls::{
+    ConnectionGatewayUrl, DocumentStorageServiceUrl, EmailServiceUrl, LexicalServiceUrl,
+    StaticFileServiceUrl, SyncServiceUrl,
+};
 use notification::domain::service::{
     NotificationReaderService, PlatformArnConfig, SqsNotificationIngress,
 };
@@ -152,6 +152,7 @@ async fn main() -> anyhow::Result<()> {
                 default_user_id: None,
             },
             conation_authorization::NoBotAuthorizer,
+            PgUserApiKeyAuthorizer::new(PgUserApiKeyAuthorizationRepo::new(db.clone())),
         )));
 
     let lexical_client = Arc::new(lexical_client::LexicalClient::new(
@@ -397,6 +398,7 @@ async fn main() -> anyhow::Result<()> {
         Arc::new(EntityAccessServiceImpl::new(PgAccessRepository::new(
             db.clone(),
         ))),
+        lexical_client.clone(),
     );
 
     tracing::info!("initialized email tool context");
@@ -489,7 +491,21 @@ async fn main() -> anyhow::Result<()> {
                         .value()
                         .unwrap_or(pipedream_mcp::outbound::api::DEFAULT_MCP_URL)
                         .to_owned(),
-                    allowed_origins: config.resolved_pipedream_allowed_origins()?,
+                    allowed_origins: match config.pipedream_allowed_origins.value() {
+                        Some(origins) => origins
+                            .split(',')
+                            .map(|origin| origin.trim().to_owned())
+                            .filter(|origin| !origin.is_empty())
+                            .collect(),
+                        None => match config.environment {
+                            Environment::Production => vec!["https://macro.com".to_owned()],
+                            Environment::Develop => vec![
+                                "https://dev.macro.com".to_owned(),
+                                "http://localhost:3000".to_owned(),
+                            ],
+                            Environment::Local => vec!["http://localhost:3000".to_owned()],
+                        },
+                    },
                 },
             )
             .context("failed to build Pipedream client")?,
@@ -596,7 +612,7 @@ async fn main() -> anyhow::Result<()> {
         recorder,
         usage_context: ai_usage::UsageContext::system(ai_usage::AiFeature::Chat),
     };
-    let all_tools = ai_tools::all_tools();
+    let all_tools = ai_tools::tools_for(ai_tools::AiHost::Chat);
     let all_tools_toolset = all_tools.toolset.clone();
     let all_tools_prompt: Arc<dyn std::fmt::Display + Send + Sync> =
         Arc::new(all_tools.prompt.to_string());
@@ -624,7 +640,7 @@ async fn main() -> anyhow::Result<()> {
     let projection_generator =
         ai_projections::outbound::agent_generator::AgentProjectionGenerator::new(
             tool_service_context.clone(),
-            ai_tools::all_tools(),
+            ai_tools::tools_for(ai_tools::AiHost::Chat),
         );
     // Notifier that pushes finished materializations to the target's connected
     // clients through the connection gateway.

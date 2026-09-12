@@ -27,6 +27,7 @@ local_auth = ["conation_authorization/local_auth"]
 location_check = []
 
 [dependencies]
+agent_session = { path = "../../crates/agent_session", features = ["outbound"] }
 activity = { path = "../../crates/activity" }
 ai_tools = { path = "../../crates/ai_tools" }
 ai_usage = { path = "../../crates/ai_usage" }
@@ -111,6 +112,7 @@ github = { path = "../../crates/github", default-features = false, features = [
   "sync",
 ] }
 graphql_soup = { path = "../../crates/graphql_soup" }
+harnesses = { path = "../../crates/harnesses" }
 hex = { workspace = true }
 http-body-util = { workspace = true }
 jsonwebtoken = { workspace = true }
@@ -216,6 +218,10 @@ tower-http = { workspace = true, features = ["compression-gzip"] }
 tracing = { workspace = true }
 unicode-segmentation = { workspace = true }
 urlencoding = { workspace = true }
+user_api_key = { path = "../../crates/user_api_key", features = [
+  "inbound",
+  "postgres",
+] }
 utoipa = { workspace = true, features = ["axum_extras"] }
 utoipa-swagger-ui = { workspace = true, features = ["axum"] }
 uuid = { workspace = true }

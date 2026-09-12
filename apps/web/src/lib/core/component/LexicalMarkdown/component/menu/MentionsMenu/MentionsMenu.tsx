@@ -5,7 +5,7 @@ import type { BlockName } from '@core/block';
 import { useMaybeBlockId, useMaybeBlockName } from '@core/block';
 import { SUPPORTED_CHAT_ATTACHMENT_BLOCKS } from '@core/component/AI/constant/fileType';
 import { type PortalScope, ScopedPortal } from '@core/component/ScopedPortal';
-import { ENABLE_CRM } from '@core/constant/featureFlags';
+import { enableCrm, isFeatureEnabled } from '@core/constant/featureFlags';
 import { type EntityItem, useQuickAccess } from '@core/context/quickAccess';
 import clickOutside from '@core/directive/clickOutside';
 import { isMobile } from '@core/mobile/isMobile';
@@ -36,6 +36,7 @@ import { floatWithSelection } from '../../../directive/floatWithSelection';
 import { CLOSE_INLINE_SEARCH_COMMAND } from '../../../plugins';
 import type { MenuOperations } from '../../../shared/inlineMenu';
 import type {
+  AgentSessionMentionItem,
   DateMentionItem,
   MentionItem,
   UserMentionRecord,
@@ -96,8 +97,22 @@ function MentionsMenuInner(props: MentionsMenuProps) {
   const activeSearchTerm = () => (props.menu.isOpen() ? searchTerm() : '');
 
   const hasCustomEntities = () => !!props.entities;
-
+  const sessionsEnabled = () =>
+    !hasCustomEntities() &&
+    (!props.sources || props.sources.includes('agentSessions'));
   const quickAccess = hasCustomEntities() ? undefined : useQuickAccess();
+  const sessionList = quickAccess?.useList({
+    buckets: ['agent_session'],
+    searchTerm: activeSearchTerm,
+    enabled: sessionsEnabled,
+  });
+  const agentSessions = createLazyMemo((): AgentSessionMentionItem[] =>
+    (sessionList?.items() ?? []).map((item) => ({
+      ...item,
+      kind: 'agentSession',
+    }))
+  );
+
   const allItems = props.entities ?? quickAccess!.useList().items;
 
   const { isKeypressActive } = useIsKeyPressActive();
@@ -128,7 +143,7 @@ function MentionsMenuInner(props: MentionsMenuProps) {
     : undefined;
 
   const customCompanies =
-    ENABLE_CRM() && props.entities
+    isFeatureEnabled(enableCrm) && props.entities
       ? useEntityMentionFromList({
           items: props.entities,
           buckets: ['crm_company'],
@@ -154,7 +169,7 @@ function MentionsMenuInner(props: MentionsMenuProps) {
 
   // CRM companies only surface in mentions when the feature is enabled —
   // the mention hook isn't even wired up otherwise.
-  const companyMention = ENABLE_CRM()
+  const companyMention = isFeatureEnabled(enableCrm)
     ? (customCompanies ??
       useEntityMention({
         buckets: ['crm_company'],
@@ -244,6 +259,7 @@ function MentionsMenuInner(props: MentionsMenuProps) {
       ...users,
       ...(docs() ?? []),
       ...(channels() ?? []),
+      ...agentSessions(),
       ...(companies() ?? []),
       ...(emails() ?? []),
       ...(dates() ?? []),
@@ -261,6 +277,7 @@ function MentionsMenuInner(props: MentionsMenuProps) {
           getFullCount: () =>
             (usersAndGroups()?.length ?? 0) +
             docsMention.totalCount() +
+            agentSessions().length +
             channelsMention.totalCount() +
             (companyMention?.totalCount() ?? 0) +
             totalEmailCount() +
@@ -316,6 +333,12 @@ function MentionsMenuInner(props: MentionsMenuProps) {
         loadMore: channelsMention.loadMore,
       },
       {
+        id: 'agentSessions',
+        label: 'Recent agent sessions',
+        getData: agentSessions,
+        getFullCount: () => agentSessions().length,
+      },
+      {
         id: 'companies',
         label: t('editor.mentions.buckets.companies'),
         getData: () => companies() ?? [],
@@ -352,7 +375,7 @@ function MentionsMenuInner(props: MentionsMenuProps) {
 
     const sourcesFilter = props.sources;
     const filtered = sourcesFilter
-      ? buckets.filter((bucket) => sourcesFilter.includes(bucket.id as any))
+      ? buckets.filter((bucket) => sourcesFilter.includes(bucket.id))
       : buckets;
 
     return filtered.filter((bucket) => bucket.getFullCount() > 0);
@@ -592,10 +615,7 @@ function MentionsMenuInner(props: MentionsMenuProps) {
             clickOutside(el, () => clickOutsideHandler);
           }}
         >
-          <Surface
-            depth={2}
-            class="pt-2 pb-1.5 shadow-lg shadow-drop-shadow rounded-xl"
-          >
+          <Surface depth={2} class="pt-2 pb-1.5 glass bg-menu-glass rounded-xl">
             <Show
               when={controller.viewAllMode()}
               fallback={

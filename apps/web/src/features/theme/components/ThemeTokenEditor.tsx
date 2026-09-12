@@ -63,7 +63,6 @@ const tokenSections = [
     tokens: [
       'surface',
       'inset',
-      'lift',
       'page',
       'panel',
       'dialog',
@@ -549,7 +548,6 @@ function RampEditor(props: { tokens: readonly string[] }) {
           </div>
         </div>
         <Checkbox
-          as="label"
           checked={overwrite()}
           onChange={setOverwriteAll}
           class="flex items-center gap-2 text-xs text-ink-muted"

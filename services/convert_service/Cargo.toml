@@ -27,7 +27,9 @@ futures = { workspace = true }
 http-body-util = { workspace = true }
 lambda_client = { path = "../../crates/lambda_client" }
 conation_auth = { path = "../../crates/conation_auth" }
-conation_authorization = { path = "../../crates/conation_authorization" }
+conation_authorization = { path = "../../crates/conation_authorization", features = [
+  "postgres",
+] }
 conation_aws_config = { path = "../../crates/conation_aws_config", features = ["s3"] }
 conation_cors = { path = "../../crates/conation_cors" }
 conation_config = { path = "../../crates/conation_config" }

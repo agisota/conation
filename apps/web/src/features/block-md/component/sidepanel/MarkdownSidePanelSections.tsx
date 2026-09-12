@@ -1,4 +1,4 @@
-import { EntityActivitySectionConditional } from '@app/features/activity/EntityActivitySection';
+import { EntityActivitySectionConditional } from '@app/features/activity/views/entity-activity-section';
 import {
   EntityPropertiesSection,
   EntityTagsSection,
@@ -25,8 +25,9 @@ import { Notifications } from '@core/component/Notifications';
 import { References } from '@core/component/References';
 import { UserIcon } from '@core/component/UserIcon';
 import {
-  ENABLE_HISTORY_COMPONENT,
-  USE_MACRO_PR_SUMMARY_BLOCK,
+  enableHistoryComponent,
+  isFeatureEnabled,
+  USE_CONATION_PR_SUMMARY_BLOCK,
 } from '@core/constant/featureFlags';
 import { useUserId } from '@core/context/user';
 import type { Entity, EntityType } from '@core/types';
@@ -578,7 +579,7 @@ function NotificationsSectionConditional(props: { entity: Entity }) {
   );
   const count = createMemo(() => notifications().length);
   const unreadCount = createMemo(
-    () => notifications().filter((n) => !n.viewed_at).length
+    () => notifications().filter((n) => n.state === 'unseen').length
   );
 
   return (
@@ -668,7 +669,7 @@ function GithubSectionConditional(props: {
             {(pr, index) => {
               const title = () => pr.name?.trim() || pr.displayName;
               const openPullRequest = () => {
-                if (USE_MACRO_PR_SUMMARY_BLOCK && pr.foreignEntityId) {
+                if (USE_CONATION_PR_SUMMARY_BLOCK && pr.foreignEntityId) {
                   openWithSplit(
                     {
                       type: 'pr',

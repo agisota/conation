@@ -35,6 +35,7 @@ async fn main() -> anyhow::Result<()> {
             default_user_id: None,
         },
         conation_authorization::NoBotAuthorizer,
+        conation_authorization::NoUserApiKeyAuthorizer,
     );
     let authorization_state = MacroAuthorizationState::new(Arc::new(authorization_service));
 

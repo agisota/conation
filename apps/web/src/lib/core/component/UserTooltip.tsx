@@ -2,10 +2,7 @@ import { useFeatureFlag } from '@app/lib/analytics/posthog';
 import { t } from '@app/lib/i18n';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import { toast } from '@core/component/Toast/Toast';
-import {
-  ENABLE_CRM_FLAG,
-  ENABLE_CRM_OVERRIDE,
-} from '@core/constant/featureFlags';
+import { enableCrm } from '@core/constant/featureFlags';
 import { useUserId } from '@core/context/user';
 import { useIsConnectedSecondaryInbox } from '@core/user';
 import WideChat from '@icon/wide-chat.svg';
@@ -51,9 +48,7 @@ export function UserTooltip(props: UserTooltipProps) {
   const canTreatAsUser = () =>
     !!props.id && !props.isDeleted && !isConnectedSecondaryInbox(props.id);
   const { openWithSplit, popoverSplit } = useSplitLayout();
-  const crmFlag = useFeatureFlag(ENABLE_CRM_FLAG, {
-    enabledOverride: ENABLE_CRM_OVERRIDE,
-  });
+  const crmFlag = useFeatureFlag(enableCrm);
   const getOrCreateDmMutation = useGetOrCreateDirectMessageMutation({
     onError: () => toast.failure(t('core.userActions.directMessageFailed')),
   });

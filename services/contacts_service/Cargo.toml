@@ -24,7 +24,9 @@ aws-sdk-sqs = { workspace = true }
 axum = { workspace = true }
 contacts = { path = "../../crates/contacts", features = ["axum"] }
 conation_auth = { path = "../../crates/conation_auth" }
-conation_authorization = { path = "../../crates/conation_authorization" }
+conation_authorization = { path = "../../crates/conation_authorization", features = [
+  "postgres",
+] }
 conation_aws_config = { path = "../../crates/conation_aws_config" }
 conation_cors = { path = "../../crates/conation_cors" }
 conation_entrypoint = { path = "../../crates/conation_entrypoint" }

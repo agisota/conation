@@ -1,8 +1,8 @@
 use crate::domain::{
     models::{
-        EnrichedSoupItem, FrecencyQueryInner, GroupedSortRequest, IntoSoupReqAst, SimpleQueryInner,
-        SoupErr, SoupItemWithProperties, SoupQuery, SoupRequest, SoupSortDirection, SoupType,
-        TouchedQueryInner,
+        EnrichedSoupItem, FrecencyQueryInner, GroupedSortRequest, IntoSoupReqAst,
+        NotifiedQueryInner, SimpleQueryInner, SoupErr, SoupItemWithProperties, SoupQuery,
+        SoupRequest, SoupSortDirection, SoupType, TouchedQueryInner,
         grouping::{GroupMeta, build_grouped_response},
     },
     ports::SoupService,
@@ -14,11 +14,7 @@ use axum::{
     response::IntoResponse,
     routing::{get, post},
 };
-use axum_extra::either::Either3;
-use conation_authorization::{
-    MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
-};
-use conation_user_id::user_id::MacroUserIdStr;
+use axum_extra::either::Either4;
 use cowlike::CowLike;
 use email::{
     domain::{
@@ -39,6 +35,7 @@ use item_filters::{
     EntityFilters,
     ast::{
         EntityFilterAst, ExpandErr, LiteralTree,
+        agent_session::AgentSessionLiteral,
         calendar_event::CalendarEventLiteral,
         call::CallLiteral,
         channel::{ChannelLiteral, ChannelThreadLiteral},
@@ -52,12 +49,16 @@ use item_filters::{
         reminder::ReminderLiteral,
     },
 };
+use conation_authorization::{
+    MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
+};
+use conation_user_id::user_id::MacroUserIdStr;
 use model_entity::Entity;
 use model_error_response::ErrorResponse;
 use models_grouping::{GroupByField, GroupingConfig};
 use models_pagination::{
-    CursorWithValAndFilter, Frecency, PaginatedOpaqueCursor, SimpleSortMethod, TouchedByMe,
-    TypeEraseCursor,
+    CursorWithValAndFilter, Frecency, NotifiedAt, PaginatedOpaqueCursor, SimpleSortMethod,
+    TouchedByMe, TypeEraseCursor,
 };
 use non_empty::IsEmpty;
 use recursion::CollapsibleExt;
@@ -84,7 +85,8 @@ pub struct Params {
     #[serde(default)]
     limit: Option<u16>,
     /// Sort method. Options are viewed_at, created_at, updated_at,
-    /// viewed_updated, frecency, touched_by_me. Defaults to viewed_at.
+    /// viewed_updated, frecency, touched_by_me, notified_at. Defaults to
+    /// viewed_at.
     #[serde(default)]
     sort_method: Option<SoupApiSort>,
     /// Sort direction. Options are asc, desc. Defaults to desc.
@@ -136,6 +138,12 @@ pub enum SoupApiSort {
     /// Both a filter and an ordering: views don't count, and entities the
     /// caller never touched are absent.
     TouchedByMe,
+    /// Only entities the caller holds a notification for, most recently
+    /// notified first. Both a filter and an ordering: entities the caller
+    /// was never notified about are absent. Thread-scoped channel
+    /// notifications surface as channel-thread rows; calls and CRM
+    /// companies never appear.
+    NotifiedAt,
 }
 
 impl SoupApiSort {
@@ -156,6 +164,7 @@ impl SoupApiSort {
             }
             SoupApiSort::Frecency => SoupQuery::new_sort_frecency(Frecency, filters),
             SoupApiSort::TouchedByMe => SoupQuery::new_sort_touched(filters),
+            SoupApiSort::NotifiedAt => SoupQuery::new_sort_notified(filters),
         }
     }
 }
@@ -527,7 +536,7 @@ where
 
     async fn handle<R>(
         &self,
-        macro_user_id: MacroUserIdStr<'static>,
+        conation_user_id: MacroUserIdStr<'static>,
         link_ids: Vec<Uuid>,
         team_receipt_option: Option<EntityAccessReceipt<MemberTeamRole>>,
         ApiSoupRequestInner {
@@ -541,7 +550,7 @@ where
         SoupRequest<R>: IntoSoupReqAst,
         R: Clone + Serialize + Send,
     {
-        let user_for_favorites = macro_user_id.copied().into_owned();
+        let user_for_favorites = conation_user_id.copied().into_owned();
         let sort_direction: SoupSortDirection =
             params.sort_direction.map(Into::into).unwrap_or_default();
         let create_fallback = move || -> SoupQuery<R> {
@@ -552,23 +561,27 @@ where
         };
 
         let cursor: SoupQuery<R> = match cursor {
-            Either3::E1(l) => l
+            Either4::E1(l) => l
                 .map(SoupQuery::new_cursor_simple)
                 .unwrap_or_else(create_fallback),
-            Either3::E2(r) => r
+            Either4::E2(r) => r
                 .map(SoupQuery::new_cursor_frecency)
                 .unwrap_or_else(create_fallback),
-            Either3::E3(t) => t
+            Either4::E3(t) => t
                 .map(SoupQuery::new_cursor_touched)
+                .unwrap_or_else(create_fallback),
+            Either4::E4(n) => n
+                .map(SoupQuery::new_cursor_notified)
                 .unwrap_or_else(create_fallback),
         };
 
-        // Frecency pages are ordered by relevance score and touched pages by
-        // the caller's own latest mutation; neither branch applies the merged
-        // sort the direction would flip. Rejecting beats accepting the
-        // parameter and silently doing nothing with it. Checked against the
-        // resolved query so a frecency/touched *cursor* is caught too, not
-        // just an initial request naming the method.
+        // Frecency pages are ordered by relevance score, touched pages by the
+        // caller's own latest mutation and notified pages by their latest
+        // notification; none of those branches applies the merged sort the
+        // direction would flip. Rejecting beats accepting the parameter and
+        // silently doing nothing with it. Checked against the resolved query
+        // so a *cursor* of those kinds is caught too, not just an initial
+        // request naming the method.
         if sort_direction == SoupSortDirection::Asc {
             match &cursor {
                 SoupQuery::Frecency(_) => {
@@ -576,6 +589,9 @@ where
                 }
                 SoupQuery::Touched(_) => {
                     return Err(SoupHandlerErr::AscendingTouchedUnsupported);
+                }
+                SoupQuery::Notified(_) => {
+                    return Err(SoupHandlerErr::AscendingNotifiedUnsupported);
                 }
                 SoupQuery::Simple(_) => {}
             }
@@ -596,7 +612,7 @@ where
                     limit: params.limit.unwrap_or(20),
                     cursor,
                     sort_direction,
-                    user: macro_user_id,
+                    user: conation_user_id,
                     email_preview_view: email_view,
                     link_ids,
                 },
@@ -612,12 +628,12 @@ where
 
     async fn handle_grouped(
         &self,
-        macro_user_id: MacroUserIdStr<'static>,
+        conation_user_id: MacroUserIdStr<'static>,
         filters: EntityFilterAst,
         params: GroupedParams,
         cursor: Option<CursorWithValAndFilter<Uuid, SimpleSortMethod, EntityFilterAst>>,
     ) -> Result<ApiGroupedSoupParts, SoupHandlerErr> {
-        let user_for_favorites = macro_user_id.copied().into_owned();
+        let user_for_favorites = conation_user_id.copied().into_owned();
         let limit = params.limit.unwrap_or(20).clamp(20, 500);
         let sort_method = params
             .sort_method
@@ -640,7 +656,7 @@ where
         let req = GroupedSortRequest {
             limit,
             cursor: query_cursor,
-            user_id: macro_user_id,
+            user_id: conation_user_id,
             grouping,
         };
 
@@ -703,6 +719,11 @@ pub struct SoupApiItem {
     /// ordered on this value, so it can be bumped optimistically.
     #[serde(skip_serializing_if = "Option::is_none")]
     touched_at: Option<chrono::DateTime<chrono::Utc>>,
+    /// When the caller was last notified about this entity, present only
+    /// when the page was ordered by `notified_at`. Clients keep the notified
+    /// feed ordered and date-bucketed on this value.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    notified_at: Option<chrono::DateTime<chrono::Utc>>,
     /// Whether the requesting user has favorited this entity.
     is_favorited: bool,
 }
@@ -713,6 +734,7 @@ impl SoupApiItem {
             item,
             frecency_score,
             touched_at,
+            notified_at,
             ..
         } = item;
         SoupApiItem {
@@ -721,6 +743,7 @@ impl SoupApiItem {
                 .map(|f| f.data.frecency_score)
                 .unwrap_or_default(),
             touched_at,
+            notified_at,
             is_favorited: false,
         }
     }
@@ -784,6 +807,12 @@ pub enum SoupHandlerErr {
     /// A touched-by-me query carried a filter kind the mode cannot evaluate.
     #[error("sort_method=touched_by_me does not support {0} filters")]
     TouchedUnsupportedFilter(&'static str),
+    /// Ascending order was requested for a notified-at query.
+    #[error("sort_direction=asc is not supported with sort_method=notified_at")]
+    AscendingNotifiedUnsupported,
+    /// A notified-at query carried a filter kind the mode cannot evaluate.
+    #[error("sort_method=notified_at does not support {0} filters")]
+    NotifiedUnsupportedFilter(&'static str),
 }
 
 impl From<SoupErr> for SoupHandlerErr {
@@ -794,6 +823,9 @@ impl From<SoupErr> for SoupHandlerErr {
             SoupErr::CrmAdminRequired => SoupHandlerErr::CrmAdminRequired,
             SoupErr::TouchedUnsupportedFilter(kind) => {
                 SoupHandlerErr::TouchedUnsupportedFilter(kind)
+            }
+            SoupErr::NotifiedUnsupportedFilter(kind) => {
+                SoupHandlerErr::NotifiedUnsupportedFilter(kind)
             }
             err => SoupHandlerErr::Internal(err),
         }
@@ -807,7 +839,9 @@ impl IntoResponse for SoupHandlerErr {
             | SoupHandlerErr::Expand
             | SoupHandlerErr::AscendingFrecencyUnsupported
             | SoupHandlerErr::AscendingTouchedUnsupported
-            | SoupHandlerErr::TouchedUnsupportedFilter(_) => StatusCode::BAD_REQUEST,
+            | SoupHandlerErr::TouchedUnsupportedFilter(_)
+            | SoupHandlerErr::AscendingNotifiedUnsupported
+            | SoupHandlerErr::NotifiedUnsupportedFilter(_) => StatusCode::BAD_REQUEST,
             SoupHandlerErr::CrmScopeForbidden | SoupHandlerErr::CrmAdminRequired => {
                 StatusCode::FORBIDDEN
             }
@@ -825,7 +859,7 @@ impl IntoResponse for SoupHandlerErr {
 
 async fn fetch_caller_link_ids<T, U, EAS, Auth>(
     service: &SoupRouterState<T, U, EAS, Auth>,
-    macro_user_id: &str,
+    conation_user_id: &str,
 ) -> Result<Vec<Uuid>, SoupHandlerErr>
 where
     T: SoupService,
@@ -833,9 +867,9 @@ where
     EAS: EntityAccessService,
     Auth: MacroAuthorizationService,
 {
-    let macro_id = MacroUserIdStr::parse_from_str(macro_user_id).map_err(|e| {
+    let macro_id = MacroUserIdStr::parse_from_str(conation_user_id).map_err(|e| {
         SoupHandlerErr::Internal(SoupErr::SoupDbErr(anyhow::anyhow!(
-            "invalid macro_user_id from extractor: {e}"
+            "invalid conation_user_id from extractor: {e}"
         )))
     })?;
     let links = service
@@ -874,14 +908,14 @@ where
     EAS: EntityAccessService,
     Auth: MacroAuthorizationService,
 {
-    let macro_user_id = authorization.authorization.user.macro_user_id;
-    let link_ids = fetch_caller_link_ids(&service, macro_user_id.as_ref()).await?;
+    let conation_user_id = authorization.authorization.user.conation_user_id;
+    let link_ids = fetch_caller_link_ids(&service, conation_user_id.as_ref()).await?;
     // Team receipt is plumbed through even for GET so that paginating a
     // team-scoped query via a cursor (which carries the original filter)
     // continues to authorize correctly.
     service
         .handle(
-            macro_user_id,
+            conation_user_id,
             link_ids,
             team.entity_access_receipt,
             ApiSoupRequestInner {
@@ -914,12 +948,15 @@ struct ApiSoupRequestInner<T> {
     email_view: PreviewView,
 }
 
-type SoupCursor<R> = Either3<
+type SoupCursor<R> = Either4<
     Option<CursorWithValAndFilter<Uuid, SimpleSortMethod, R>>,
     Option<CursorWithValAndFilter<Uuid, Frecency, R>>,
     // String id, not Uuid: the touched keyset compares the raw stored
     // entity id byte-for-byte, so the cursor must not canonicalize it.
     Option<CursorWithValAndFilter<String, TouchedByMe, R>>,
+    // Same value shape as the touched cursor; its `"notified_at"` sort
+    // marker (touched serializes `null`) is what keeps it out of arm 3.
+    Option<CursorWithValAndFilter<String, NotifiedAt, R>>,
 >;
 
 /// Gets the items the user has access to
@@ -954,14 +991,14 @@ where
     EAS: EntityAccessService,
     Auth: MacroAuthorizationService,
 {
-    let macro_user_id = authorization.authorization.user.macro_user_id;
-    let link_ids = fetch_caller_link_ids(&service, macro_user_id.as_ref()).await?;
+    let conation_user_id = authorization.authorization.user.conation_user_id;
+    let link_ids = fetch_caller_link_ids(&service, conation_user_id.as_ref()).await?;
     // Pass the raw extractor receipt through — `handle` resolves the
     // CRM-scope check against the *effective* filter (which may come from
     // the cursor on follow-up pages), not the request body.
     service
         .handle(
-            macro_user_id,
+            conation_user_id,
             link_ids,
             team.entity_access_receipt,
             ApiSoupRequestInner {
@@ -1021,14 +1058,14 @@ where
     EAS: EntityAccessService,
     Auth: MacroAuthorizationService,
 {
-    let macro_user_id = authorization.authorization.user.macro_user_id;
-    let link_ids = fetch_caller_link_ids(&service, macro_user_id.as_ref()).await?;
+    let conation_user_id = authorization.authorization.user.conation_user_id;
+    let link_ids = fetch_caller_link_ids(&service, conation_user_id.as_ref()).await?;
     // Pass the raw extractor receipt through — `handle` resolves the
     // CRM-scope check against the *effective* filter (which may come from
     // the cursor on follow-up pages), not the request body.
     service
         .handle(
-            macro_user_id,
+            conation_user_id,
             link_ids,
             team.entity_access_receipt,
             ApiSoupRequestInner {
@@ -1108,7 +1145,7 @@ where
     EAS: EntityAccessService,
     Auth: MacroAuthorizationService,
 {
-    let macro_user_id = authorization.authorization.user.macro_user_id;
+    let conation_user_id = authorization.authorization.user.conation_user_id;
     let (filters, params, mode) = match request {
         PostGroupedSoupAstRequest::Initial(request) => (
             request.filters,
@@ -1127,7 +1164,7 @@ where
         .map_err(|_| SoupHandlerErr::Expand)?;
 
     let response = service
-        .handle_grouped(macro_user_id, filters, params, cursor)
+        .handle_grouped(conation_user_id, filters, params, cursor)
         .await?;
 
     Ok(Json(match mode {
@@ -1200,6 +1237,12 @@ pub struct ApiEntityFilterAst {
     #[serde(default, rename = "remf")]
     #[schema(value_type = serde_json::Value)]
     pub reminder_filter: LiteralTree<ReminderLiteral>,
+    /// Filters applied to agent sessions (wire key `asf`). Like reminders,
+    /// empty/omitted returns **no** agent sessions: they are opt-in, so the
+    /// caller must send `inc`, an id, or an owner to get any.
+    #[serde(default, rename = "asf")]
+    #[schema(value_type = serde_json::Value)]
+    pub agent_session_filter: LiteralTree<AgentSessionLiteral>,
     /// the filters that should be applied based on entity properties
     #[serde(default, rename = "propf")]
     #[schema(value_type = serde_json::Value)]
@@ -1260,6 +1303,11 @@ impl IntoSoupReqAst for SoupRequest<ApiEntityFilterAst> {
             SoupQuery::Touched(TouchedQueryInner(query)) => SoupQuery::Touched(TouchedQueryInner(
                 query.try_map_filter(ApiEntityFilterAst::into_optional_entity_ast)?,
             )),
+            SoupQuery::Notified(NotifiedQueryInner(query)) => {
+                SoupQuery::Notified(NotifiedQueryInner(
+                    query.try_map_filter(ApiEntityFilterAst::into_optional_entity_ast)?,
+                ))
+            }
         };
 
         Ok(SoupRequest {
@@ -1296,6 +1344,7 @@ impl ApiEntityFilterAst {
             call_filter,
             crm_company_filter,
             reminder_filter,
+            agent_session_filter,
             properties_filter,
             email_crm_domains,
             email_crm_addresses,
@@ -1364,6 +1413,7 @@ impl ApiEntityFilterAst {
             crm_company_filter,
             foreign_entity_filter,
             reminder_filter,
+            agent_session_filter,
             properties_filter,
         })
     }

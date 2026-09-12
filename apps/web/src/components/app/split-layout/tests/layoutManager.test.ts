@@ -1,3 +1,9 @@
+import {
+  getListNavigationSource,
+  listNavigationSourceId,
+  registerListNavigationSource,
+  withListNavigationSource,
+} from '@app/features/soup/collection/list-navigation-source';
 import type { ResizeZoneCtx } from '@core/component/Resize/types';
 import type { BlockOrchestrator } from '@core/orchestrator';
 import { createRoot } from 'solid-js';
@@ -355,6 +361,36 @@ describe('layoutManager', () => {
     });
   });
 
+  describe('component metadata', () => {
+    it('updates the current mount through a retained split handle', () => {
+      createRoot((dispose) => {
+        const manager = createSplitLayout(createMockOrchestrator(), [
+          { type: 'component', id: 'inbox' },
+        ]);
+        const handle = manager.getSplit(manager.splits()[0].id)!;
+        const inboxMeta = handle.meta()!;
+
+        handle.updateMeta?.({ splitPanelLayout: 'legacy' });
+        handle.replace({ next: { type: 'component', id: 'tasks' } });
+
+        const tasksMeta = handle.meta()!;
+        expect(tasksMeta).not.toBe(inboxMeta);
+
+        handle.updateMeta?.({ splitPanelLayout: 'composable' });
+
+        expect(tasksMeta.splitPanelLayout).toBe('composable');
+        expect(inboxMeta.splitPanelLayout).toBe('legacy');
+
+        handle.replace({ next: { type: 'md', id: 'document-1' } });
+
+        expect(handle.meta()).toBeUndefined();
+        expect(handle.updateMeta).toBeUndefined();
+
+        dispose();
+      });
+    });
+  });
+
   describe('navigation params', () => {
     const channelWithTarget = {
       type: 'channel',
@@ -655,6 +691,103 @@ describe('layoutManager', () => {
   });
 
   describe('activation invariant', () => {
+    it('refreshes the list source when reopening an email already mounted in the native background', () => {
+      createRoot((dispose) => {
+        const manager = createSplitLayout(createMockOrchestrator(), [
+          { type: 'email', id: 'a' },
+        ]);
+        const detail = manager.getSplit(manager.splits()[0].id)!;
+        const swipeLayout = createMobileSwipeLayout(manager);
+        manager.openWithSplit({ type: 'component', id: 'mail' });
+        const list = manager.getSplit(manager.activeSplitId()!)!;
+        manager.openWithSplit(
+          withListNavigationSource({ type: 'email', id: 'a' }, list),
+          { handle: list, referredFrom: 'mail' }
+        );
+        expect(manager.activeSplitId()).toBe(detail.id);
+        expect(detail.referredFrom()).toBe('mail');
+        expect(listNavigationSourceId(detail)).toBe(list.id);
+        expect(manager.splits()).toHaveLength(2);
+        swipeLayout.swipeBack();
+        expect(manager.activeSplitId()).toBe(list.id);
+        dispose();
+      });
+    });
+
+    it('preserves the native source list through repeated email steps and swipe back', () => {
+      createRoot((dispose) => {
+        const manager = createSplitLayout(createMockOrchestrator(), [
+          { type: 'component', id: 'mail', state: { 'mail.tab': 'noise' } },
+        ]);
+        const list = manager.getSplit(manager.splits()[0].id)!;
+        const disposeListSource = createRoot((dispose) => {
+          registerListNavigationSource(list, {
+            viewId: 'mail',
+            entities: () => [],
+            hasMore: () => false,
+            loadMore: async () => {},
+          });
+          return dispose;
+        });
+        const source = getListNavigationSource(list.id);
+        const swipeLayout = createMobileSwipeLayout(manager);
+        manager.openWithSplit(
+          withListNavigationSource({ type: 'email', id: 'a' }, list),
+          { handle: list, referredFrom: 'mail' }
+        );
+        const detail = manager.getSplit(manager.activeSplitId()!)!;
+        expect(detail.id).not.toBe(list.id);
+        expect(getListNavigationSource(listNavigationSourceId(detail))).toBe(
+          source
+        );
+
+        for (const id of ['b', 'c']) {
+          manager.openWithSplit(
+            withListNavigationSource({ type: 'email', id }, detail),
+            { handle: detail, referredFrom: 'mail', mergeHistory: true }
+          );
+          expect(manager.activeSplitId()).toBe(detail.id);
+          expect(detail.content().id).toBe(id);
+          expect(getListNavigationSource(listNavigationSourceId(detail))).toBe(
+            source
+          );
+          expect(manager.splits()).toHaveLength(2);
+          expect(list.content().state?.['mail.tab']).toBe('noise');
+        }
+        // Opening an attachment discards the background list. Its component
+        // disposes the source; swipe-back mounts that history entry anew.
+        manager.openWithSplit(
+          { type: 'md', id: 'attachment' },
+          { handle: detail, referredFrom: 'attachment' }
+        );
+        expect(manager.getSplit(list.id)).toBeUndefined();
+        disposeListSource();
+        expect(
+          getListNavigationSource(listNavigationSourceId(detail))
+        ).toBeUndefined();
+        swipeLayout.swipeBack();
+        expect(manager.activeSplitId()).toBe(detail.id);
+        const restoredList = manager.getSplit(
+          manager.splits().find((split) => split.content.id === 'mail')!.id
+        )!;
+        expect(restoredList.id).not.toBe(list.id);
+        expect(restoredList.content().state?.['mail.tab']).toBe('noise');
+        registerListNavigationSource(restoredList, source!);
+        expect(getListNavigationSource(listNavigationSourceId(detail))).toBe(
+          source
+        );
+        manager.openWithSplit(
+          withListNavigationSource({ type: 'email', id: 'd' }, detail),
+          { handle: detail, referredFrom: 'mail', mergeHistory: true }
+        );
+        expect(detail.content().id).toBe('d');
+        swipeLayout.swipeBack();
+        expect(manager.activeSplitId()).toBe(restoredList.id);
+        expect(restoredList.content().id).toBe('mail');
+        dispose();
+      });
+    });
+
     it('refuses to activate an excluded split', () => {
       createRoot((dispose) => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -726,7 +859,7 @@ describe('layoutManager', () => {
         const { manager, controllerId } = setup();
         manager.engagePreviewMode(controllerId);
 
-        expect(manager.previewControllerWidth(controllerId)).toBe(440);
+        expect(manager.previewControllerWidth(controllerId)).toBe(360);
         expect(manager.splits()).toHaveLength(2);
         const viewerId = manager.splits()[1].id;
         expect(manager.viewerOf(controllerId)).toBe(viewerId);
@@ -992,7 +1125,7 @@ describe('layoutManager', () => {
         expect(manager.splits()).toHaveLength(2);
         expect(manager.viewerOf(controllerId)).toBe(viewerId);
         expect(manager.controllerOf(viewerId)).toBe(controllerId);
-        expect(manager.previewControllerWidth(controllerId)).toBe(440);
+        expect(manager.previewControllerWidth(controllerId)).toBe(360);
         expect(manager.activeSplitId()).toBe(controllerId);
 
         dispose();

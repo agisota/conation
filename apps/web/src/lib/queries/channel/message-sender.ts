@@ -4,6 +4,10 @@ import type {
   ChannelMessagesPage,
 } from '@service-storage/client';
 import type { ApiMessageSender } from '@service-storage/generated/schemas/apiMessageSender';
+import type { Bot } from '@service-storage/generated/schemas/bot';
+import { firstPartyBotName } from '../bots/first-party-bot-name';
+
+export { firstPartyBotName } from '../bots/first-party-bot-name';
 
 type WithMaybeSender<
   T extends { sender_id: string; sender: ApiMessageSender },
@@ -28,6 +32,26 @@ export function senderFromStorageId(senderId: string): ApiMessageSender {
   }
 
   return { type: 'user', id: senderId };
+}
+
+/** Resolve a channel bot sender to its display name. */
+export function getBotDisplayName(
+  senderId: string,
+  sender?: ApiMessageSender,
+  bots: readonly Pick<Bot, 'id' | 'name'>[] = []
+): string | undefined {
+  const parsed = sender ?? senderFromStorageId(senderId);
+  const systemName =
+    firstPartyBotName(parsed.id) ?? firstPartyBotName(senderId);
+
+  if (parsed.type !== 'bot' && !systemName) return undefined;
+
+  return (
+    parsed.name ??
+    systemName ??
+    bots.find((bot) => bot.id === parsed.id)?.name ??
+    'Bot'
+  );
 }
 
 export function isBotSenderId(senderId: string): boolean {

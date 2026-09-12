@@ -1,5 +1,7 @@
-import { t } from '@app/lib/i18n';
-import { ComposeTaskTitleEditor } from '@block-md/component/ComposeTask';
+import {
+  COMPOSER_TITLE_LINE_CLASS,
+  ComposeTaskTitleEditor,
+} from '@block-md/component/ComposeTask';
 import { InlinePropertyValue } from '@block-md/component/InlinePropertyValue';
 import {
   createTaskComposerProperties,
@@ -148,6 +150,16 @@ export function TaskComposer(props: {
     });
   }
 
+  // A title-mode pill that ends a picker session with no tags left has nothing
+  // to show, so drop it back to the property row instead of leaving an empty
+  // "Tags" chip beside the title. Collapsing on the session end rather than on
+  // the tag removal itself keeps the open picker from unmounting under the user.
+  const handleTitleTagPickerActive = (active: boolean) => {
+    if (active) return;
+    if (composerTags.appliedTags().length > 0) return;
+    setTagLayoutMode('bottom');
+  };
+
   const deleteTitleTagsAtStart = () => {
     if (tagLayoutMode() !== 'title') return false;
     clearComposerTags();
@@ -228,7 +240,7 @@ export function TaskComposer(props: {
   const editorConfig = buildConfig('markdown')
     .withMentions()
     .withTags({
-      applyTargetLabel: t('channel.composer.task'),
+      applyTargetLabel: 'Task',
       isApplied: (tag) => composerTags.isApplied(tag.optionId),
       onCreate: (tag) => {
         void composerTags.applyTag(tag.scope, tag.optionId);
@@ -239,6 +251,7 @@ export function TaskComposer(props: {
     .withCode()
     .withMedia({ fileDrop: true })
     .withSelectionData()
+    .withFloatingFormatMenu()
     .withHistory()
     .onChange(setContent)
     .onEscape(() => {
@@ -280,13 +293,16 @@ export function TaskComposer(props: {
       data-input-task-composer
     >
       <div class="flex flex-col gap-4 px-3 pt-2">
-        <div class="shrink-0 flex gap-2 items-center">
+        <div class="shrink-0 flex gap-2 items-start">
           <Show when={tagLayoutMode() === 'title'}>
-            <InlineTagsPill
-              docTags={composerTags}
-              showPlaceholder
-              class="shrink-0"
-            />
+            <div class={COMPOSER_TITLE_LINE_CLASS}>
+              <InlineTagsPill
+                docTags={composerTags}
+                showPlaceholder
+                class="shrink-0"
+                onActiveChange={handleTitleTagPickerActive}
+              />
+            </div>
           </Show>
           <ComposeTaskTitleEditor
             value={title}
@@ -316,7 +332,7 @@ export function TaskComposer(props: {
                   ? undefined
                   : restoredDraft?.content || undefined
               }
-              placeholder={t('channel.task.descriptionPlaceholder')}
+              placeholder="Add description, type @ to insert or / for commands"
               class="text-sm"
             />
           </Scroll>
@@ -382,7 +398,7 @@ export function TaskComposer(props: {
         <SendButton
           tooltip="Create task and send"
           shortcut="cmd+enter"
-          aria-label={t('channel.message.createTaskAndSend')}
+          aria-label="Create task and send"
           data-input-action="send-task"
           pending={isCreating()}
           disabled={!canSend()}

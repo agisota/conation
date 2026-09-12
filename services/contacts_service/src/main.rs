@@ -4,18 +4,19 @@ mod health;
 use std::sync::Arc;
 
 use anyhow::Context;
-use conation_authorization::{
-    InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationServiceImpl,
-    MacroAuthorizationState,
-};
-use conation_entrypoint::MacroEntrypoint;
-use conation_service_urls::ConnectionGatewayUrl;
+use axum::Router;
 use config::{Config, Environment};
 use contacts::domain::service::{ContactsDomainService, ContactsOutboxServiceImpl};
 use contacts::inbound::http::{ApiDoc, ContactsRouterState, contacts_router};
 use contacts::inbound::worker::{ContactsWorker, OutboxWorker};
 use contacts::outbound::gateway::ConnectionGatewayNotifier;
 use contacts::outbound::repository::DbContactsRepository;
+use conation_authorization::{
+    InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationServiceImpl,
+    MacroAuthorizationState, PgUserApiKeyAuthorizationRepo, PgUserApiKeyAuthorizer,
+};
+use conation_entrypoint::MacroEntrypoint;
+use conation_service_urls::ConnectionGatewayUrl;
 use rate_limit::{RateLimitServiceImpl, RedisRateLimitAdapter};
 use sqlx::postgres::PgPoolOptions;
 use sqs_worker::SQSWorker;
@@ -104,12 +105,11 @@ async fn main() -> anyhow::Result<()> {
         outbox_worker.run().await;
     });
 
-    let jwt_args =
-        conation_auth::middleware::decode_jwt::JwtValidationArgs::new_with_secret_manager(
-            config.environment,
-            &secretsmanager_client,
-        )
-        .await?;
+    let jwt_args = conation_auth::middleware::decode_jwt::JwtValidationArgs::new_with_secret_manager(
+        config.environment,
+        &secretsmanager_client,
+    )
+    .await?;
     let authorization_service = MacroAuthorizationServiceImpl::new(
         MacroAuthJwtValidator::new(jwt_args),
         InternalAuthConfig {
@@ -117,6 +117,7 @@ async fn main() -> anyhow::Result<()> {
             default_user_id: None,
         },
         conation_authorization::NoBotAuthorizer,
+        PgUserApiKeyAuthorizer::new(PgUserApiKeyAuthorizationRepo::new(db.clone())),
     );
     let authorization_state = MacroAuthorizationState::new(Arc::new(authorization_service));
 
@@ -132,14 +133,19 @@ async fn main() -> anyhow::Result<()> {
     let cors = conation_cors::cors_layer();
     let port = config.port;
 
-    let app = contacts_router(ContactsRouterState {
-        contacts_service: service,
-        rate_limit_service,
-        authorization_state,
-    })
-    .layer(cors.clone())
-    .merge(health::router().layer(cors))
-    .merge(SwaggerUi::new("/docs").url("/api-doc/openapi.json", ApiDoc::openapi()));
+    let app = mount_at_root_and_prefix(
+        contacts_router(ContactsRouterState {
+            contacts_service: service,
+            rate_limit_service,
+            authorization_state,
+        })
+        .layer(cors.clone())
+        .merge(health::router().layer(cors)),
+    )
+    .merge(SwaggerUi::new("/docs").url("/api-doc/openapi.json", ApiDoc::openapi()))
+    .merge(
+        SwaggerUi::new("/contacts/docs").url("/contacts/api-doc/openapi.json", ApiDoc::openapi()),
+    );
 
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port))
         .await
@@ -152,3 +158,16 @@ async fn main() -> anyhow::Result<()> {
         .context("error starting service")?;
     Ok(())
 }
+
+/// Path prefix the shared gateway ALB forwards unmodified. Dual-mounted
+/// alongside `/` so the dedicated ALB keeps working during cutover.
+const GATEWAY_PATH_PREFIX: &str = "/contacts";
+
+fn mount_at_root_and_prefix(inner: Router) -> Router {
+    Router::new()
+        .merge(inner.clone())
+        .nest(GATEWAY_PATH_PREFIX, inner)
+}
+
+#[cfg(test)]
+mod test;

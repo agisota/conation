@@ -1,4 +1,3 @@
-import { t } from '@app/lib/i18n';
 import { URL_PARAMS as CHANNEL_PARAMS } from '@block-channel/constants';
 import { CommentsProvider } from '@block-md/comments/CommentsProvider';
 import { URL_PARAMS } from '@block-md/constants';
@@ -7,16 +6,6 @@ import { markdownBlockErrorSignal } from '@block-md/signal/error';
 import { FindAndReplaceStore } from '@block-md/signal/findAndReplaceStore';
 import { revisionsSignal, rewriteSignal } from '@block-md/signal/rewriteSignal';
 import { SplitBottomPanel } from '@components/app/split-layout/components/SplitBottomPanel';
-import type { LoroManager } from '@conation/collaboration/collab/manager';
-import {
-  $isInlineSearchNode,
-  AwaitNode,
-  CommentNode,
-  createPeerIdValidator,
-  InlineSearchNode,
-  type PeerIdValidator,
-  peerIdPlugin,
-} from '@conation/lexical-core';
 import {
   type BlockName,
   useBlockId,
@@ -71,6 +60,7 @@ import {
   generatePlugin,
   horizontalRulePlugin,
   keyboardShortcutsPlugin,
+  listSwipeIndentPlugin,
   listToTablePlugin,
   markdownPastePlugin,
   mentionsPlugin,
@@ -83,6 +73,7 @@ import {
   tableTouchSelectionPlugin,
   tagsPlugin,
   textPastePlugin,
+  trailingParagraphPlugin,
   wordcountPlugin,
 } from '@core/component/LexicalMarkdown/plugins';
 import { actionsPlugin } from '@core/component/LexicalMarkdown/plugins/actions/actionsPlugin';
@@ -147,11 +138,12 @@ import { useUrlParams } from '@core/component/ParamsProvider';
 import { toast } from '@core/component/Toast/Toast';
 import { itemToBlockName } from '@core/constant/allBlocks';
 import {
-  ENABLE_GIT_BLAME,
   ENABLE_MARKDOWN_AI_GENERATE,
   ENABLE_MARKDOWN_COMMENTS,
   ENABLE_MARKDOWN_DIFF,
   ENABLE_MARKDOWN_LIVE_COLLABORATION,
+  enableGitBlame,
+  isFeatureEnabled,
 } from '@core/constant/featureFlags';
 import { IS_MAC } from '@core/constant/isMac';
 import { useUserId } from '@core/context/user';
@@ -171,7 +163,16 @@ import { isSourceDSS, isSourceSyncService } from '@core/util/source';
 import { bufToString } from '@core/util/string';
 import { handleFileFolderDrop } from '@core/util/upload';
 import { type EntityDragEvent, isEntityDragEvent } from '@entity';
-import WarningIcon from '@phosphor/warning.svg';
+import type { LoroManager } from '@macro-inc/collaboration/collab/manager';
+import {
+  $isInlineSearchNode,
+  AwaitNode,
+  CommentNode,
+  createPeerIdValidator,
+  InlineSearchNode,
+  type PeerIdValidator,
+  peerIdPlugin,
+} from '@macro-inc/lexical-core';
 import { useDocTags } from '@property/tags';
 import { EntityType } from '@service-properties/generated/schemas/entityType';
 import { onElementConnect } from '@solid-primitives/lifecycle';
@@ -202,8 +203,10 @@ import {
 import { blockDataSignal, mdStore } from '../signal/markdownBlockData';
 import type { MarkdownRewriteOutput } from '../signal/rewriteSignal';
 import { useBlockSave, useSaveMarkdownDocument } from '../signal/save';
+import { EditorSystemMessage } from './EditorSystemMessage';
 import { MarkdownCollabProvider } from './MarkdownCollabProvider';
 import { MarkdownPopup } from './MarkdownPopup';
+import { isMarkdownEditorLoading } from './markdownEditorLoadingState';
 
 false && fileFolderDrop;
 
@@ -211,10 +214,16 @@ false && fileFolderDrop;
 const EDITOR_CLICK_TARGET_HEIGHT = 80;
 
 function getBlankMarkdownPlaceholder(canEdit: boolean) {
-  if (!canEdit) return t('markdown.editor.blankReadOnly');
-  return ENABLE_MARKDOWN_AI_GENERATE
-    ? t('markdown.editor.blankEditableWithAi')
-    : t('markdown.editor.blankEditable');
+  if (!canEdit) return 'This document is blank...';
+
+  const hints = [
+    "'/' for commands",
+    "'@' to reference files",
+    "';' for snippets",
+  ];
+  if (ENABLE_MARKDOWN_AI_GENERATE) hints.push("'space' for AI writing");
+
+  return `Press ${hints.join(', ')}...`;
 }
 
 export function MarkdownEditor(props: {
@@ -232,9 +241,7 @@ export function MarkdownEditor(props: {
     blockName === 'task' ? EntityType.TASK : EntityType.DOCUMENT
   );
   const tagApplyTargetLabel = () =>
-    blockName === 'task'
-      ? t('markdown.task.title')
-      : t('markdown.document.title');
+    blockName === 'task' ? 'Task' : 'Document';
 
   const mdDocumentName = useBlockDocumentName('');
 
@@ -389,7 +396,10 @@ export function MarkdownEditor(props: {
     const dragInsertPosition = getValidDragInsertPosition(editor, res.mousePos);
     if (!dragInsertPosition) return;
 
-    const mentionId = await trackMention(blockId, 'document', res.id);
+    const mentionId =
+      res.item.type === 'agent_session'
+        ? undefined
+        : await trackMention(blockId, 'document', res.id);
 
     let blockParams: Record<string, string> | undefined;
     if (res.blockName === 'channel') {
@@ -517,7 +527,7 @@ export function MarkdownEditor(props: {
         highlightNodeId_
       );
       if (!found) {
-        toast.failure(t('markdown.editor.referenceNotFound'));
+        toast.failure('Document reference not found');
       }
     }
   });
@@ -539,6 +549,7 @@ export function MarkdownEditor(props: {
     .state<EditorState>(setState, 'json')
     .history(400, props.loroManager)
     .use(tabIndentationPlugin())
+    .use(listSwipeIndentPlugin(isContentEditable))
     .use(selectionDataPlugin(lexicalWrapper))
     .use(horizontalRulePlugin())
     .use(
@@ -610,6 +621,7 @@ export function MarkdownEditor(props: {
     .use(restoreFocusPlugin())
     .use(markdownPastePlugin())
     .use(normalizeEnterPlugin())
+    .use(trailingParagraphPlugin())
     .use(
       checkboxToTaskPlugin({
         currentUserId: userId(),
@@ -951,7 +963,7 @@ export function MarkdownEditor(props: {
   });
 
   const [blameTooltipStore, setBlameTooltipStore] = createBlameTooltipStore();
-  if (ENABLE_GIT_BLAME()) {
+  if (isFeatureEnabled(enableGitBlame)) {
     plugins.use(
       blameTooltipPlugin({ setState: (s) => setBlameTooltipStore(s) })
     );
@@ -969,13 +981,11 @@ export function MarkdownEditor(props: {
 
   return (
     <LexicalWrapperContext.Provider value={lexicalWrapper}>
-      {/* SCUFFED: are these the right transparency values? */}
       <Show when={editorError()}>
         {(error) => (
-          <div class="pointer-events-none text-alert-ink p-2 bg-alert-bg w-full border-alert/30 border mb-2 flex items-center gap-2">
-            <WarningIcon class="size-6 shrink-0" />
+          <EditorSystemMessage variant="warning" class="mb-2">
             {getErrorDescription(error())}
-          </div>
+          </EditorSystemMessage>
         )}
       </Show>
       {/* Note: the mt-1.5 here is to preserve markdown node margin tops. which means this div should avoid padding and border. */}
@@ -1029,7 +1039,7 @@ export function MarkdownEditor(props: {
           editorFocus={editorFocus}
           style={{ height: `${clickTargetHeight()}px` }}
         />
-        <Show when={!editorReady()}>
+        <Show when={isMarkdownEditorLoading(editorReady(), editorError())}>
           <div
             aria-hidden="true"
             class="pointer-events-none absolute inset-x-0 top-0 flex flex-col gap-2.5 pt-1"
@@ -1044,7 +1054,7 @@ export function MarkdownEditor(props: {
             {getBlankMarkdownPlaceholder(canEdit())}
           </div>
         </Show>
-        <Show when={ENABLE_GIT_BLAME()}>
+        <Show when={isFeatureEnabled(enableGitBlame)}>
           <Suspense>
             <BlameTooltip state={blameTooltipStore} documentId={blockId} />
           </Suspense>
@@ -1175,7 +1185,7 @@ export function MarkdownEditor(props: {
             {(state) => (
               <SplitBottomPanel
                 id="lexical-state-debugger"
-                title={t('markdown.debug.lexicalState')}
+                title="Lexical state debugger"
                 onClose={props.onLexicalStateDebuggerClose}
               >
                 <LexicalStateDebugger

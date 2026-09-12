@@ -80,7 +80,9 @@ jsonwebtoken = { workspace = true }
 last_online_tracker = { path = "../../crates/last_online_tracker" }
 loops_client = { path = "../../crates/loops_client" }
 conation_auth = { path = "../../crates/conation_auth" }
-conation_authorization = { path = "../../crates/conation_authorization" }
+conation_authorization = { path = "../../crates/conation_authorization", features = [
+  "postgres",
+] }
 conation_aws_config = { path = "../../crates/conation_aws_config" }
 conation_cache_client = { path = "../../crates/conation_cache_client", default-features = false, features = [
   "auth",

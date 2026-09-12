@@ -1,9 +1,11 @@
 import { t } from '@app/lib/i18n';
 import { MarkdownTextarea } from '@core/component/LexicalMarkdown/component/core/MarkdownTextarea';
 import type { ItemMention } from '@core/component/LexicalMarkdown/plugins/mentions/mentionsPlugin';
+import { isTouchDevice } from '@core/mobile/isTouchDevice';
 import XIcon from '@phosphor/x.svg';
-import { Button, cn, SendButton } from '@ui';
+import { Button, ComposerSurface, SendButton } from '@ui';
 import { batch, createEffect, createSignal, Show, useContext } from 'solid-js';
+import { Dynamic } from 'solid-js/web';
 import { CommentsContext, ThreadContext } from './Thread';
 
 function EditBottomRow(props: {
@@ -18,6 +20,7 @@ function EditBottomRow(props: {
       <Button
         tooltip={t('comments.composer.deleteDraft')}
         size="icon-sm"
+        class="size-7 rounded-full"
         variant="ghost"
         on:click={props.handleCancel}
       >
@@ -42,6 +45,13 @@ export function EditInput(props: {
   handleCancel: () => void;
   onSend: (newText: string) => unknown | Promise<unknown>;
   hidePadding?: boolean;
+  /**
+   * Cancel normally also deactivates the thread (dismissing a draft). Editing
+   * an existing message opts out — cancelling just returns to viewing it —
+   * and so does the drawer's pinned reply composer, where deactivating would
+   * close the whole drawer instead of collapsing back to the "Reply…" row.
+   */
+  deactivateThreadOnCancel?: boolean;
   isNewReply?: boolean;
   isNewThread?: boolean;
   isReply?: boolean;
@@ -65,7 +75,9 @@ export function EditInput(props: {
       e.stopPropagation();
       props.handleCancel();
       props.setEditing?.(false);
-      setActiveThread(null);
+      if (props.deactivateThreadOnCancel ?? true) {
+        setActiveThread(null);
+      }
       setMentions([]);
     });
   };
@@ -91,8 +103,9 @@ export function EditInput(props: {
   };
 
   return (
-    <div
-      class={cn('p-2 pb-8')}
+    <Dynamic
+      component={isTouchDevice() ? 'div' : ComposerSurface}
+      class="relative h-auto px-4 pt-2 pb-11 touch:px-3 touch:pb-12"
       on:click={(e) => {
         e.stopPropagation();
         focusEditor();
@@ -128,19 +141,21 @@ export function EditInput(props: {
         hasContent={editState().trim().length > 0}
         isSending={isSending()}
       />
-    </div>
+    </Dynamic>
   );
 }
 
 export function NewReplyInput(props: {
   createReply: (message: string) => unknown | Promise<unknown>;
   isEditing: boolean;
+  /** See EditInput.deactivateThreadOnCancel. */
+  deactivateThreadOnCancel?: boolean;
   setEditing: (newVal: boolean) => void;
   setTextValue: (newVal: string) => void;
   textValue: string;
 }) {
   return (
-    <div class="flex w-full flex-col mt-2">
+    <div class="flex w-full flex-col">
       <div class="h-px bg-edge-muted w-[calc(100%+1rem)] -mx-2"></div>
       <Show
         when={props.isEditing}
@@ -159,6 +174,7 @@ export function NewReplyInput(props: {
         <EditInput
           textValue={props.textValue}
           handleCancel={() => props.setTextValue('')}
+          deactivateThreadOnCancel={props.deactivateThreadOnCancel}
           onSend={(message) => {
             const result = props.createReply(message);
             props.setTextValue('');

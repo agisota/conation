@@ -5,16 +5,19 @@ use axum::http::{Request, header};
 use chrono::Utc;
 use conation_authorization::{
     BOT_SCOPE_HEADER, BOT_TOKEN_HEADER, BotActingUserClaims, BotAuthentication, BotAuthorizer,
-    BotScope, InternalAuthConfig, JwtValidator, MacroAuthorizationError,
-    MacroAuthorizationServiceImpl, ValidatedIdentity,
+    BotScope, HARNESS_FOR_CONATION_USER_ID_HEADER, HARNESS_TOKEN_HEADER, HarnessAuthentication,
+    HarnessAuthorizationOwner, HarnessAuthorizer, InternalAuthConfig, JwtValidator,
+    MacroAuthorizationError, MacroAuthorizationServiceImpl, MacroUserAuthentication,
+    NoUserApiKeyAuthorizer, ValidatedIdentity,
 };
 use rootcause::Report;
 use std::sync::{Arc, Mutex};
 use tower::ServiceExt;
 
 const BOT_TOKEN: &str = "mbot_self_test";
-const OWNER: &str = "conation|owner@example.com";
-const STRANGER: &str = "conation|stranger@example.com";
+const HARNESS_TOKEN: &str = "mhns_self_test";
+const OWNER: &str = "macro|owner@example.com";
+const STRANGER: &str = "macro|stranger@example.com";
 
 #[derive(Clone, Default)]
 struct FakeJwtValidator;
@@ -39,7 +42,7 @@ impl BotAuthorizer for SelfBotAuthorizer {
         &self,
         bot_token: &str,
         bot_scope: BotScope,
-        acting_user: Option<BotActingUserClaims>,
+        _acting_user: Option<BotActingUserClaims>,
     ) -> Result<BotAuthentication, Report<MacroAuthorizationError>> {
         if bot_token != BOT_TOKEN {
             return Err(Report::new(MacroAuthorizationError::InvalidCredentials));
@@ -49,17 +52,44 @@ impl BotAuthorizer for SelfBotAuthorizer {
             token_id: Uuid::new_v4(),
             bot_scope,
             team_id: None,
-            acting_user: acting_user
-                .and_then(|claims| claims.user_id)
-                .map(|user_id| conation_authorization::MacroUserAuthentication {
-                    macro_user_id: MacroUserIdStr::try_from(user_id.clone()).unwrap(),
-                    user_context: model_user::UserContext {
-                        user_id,
-                        fusion_user_id: "fusion-user".to_owned(),
-                        permissions: None,
-                        organization_id: None,
-                    },
-                }),
+            acting_user: None,
+        })
+    }
+}
+
+/// Accepts exactly [`HARNESS_TOKEN`] as [`harness_id::HarnessId::TEST_A`],
+/// acting for [`OWNER`].
+#[derive(Clone)]
+struct SelfHarnessAuthorizer;
+
+impl HarnessAuthorizer for SelfHarnessAuthorizer {
+    async fn authorize_harness(
+        &self,
+        harness_token: &str,
+        acting_user_claim: Option<String>,
+    ) -> Result<HarnessAuthentication, Report<MacroAuthorizationError>> {
+        if harness_token != HARNESS_TOKEN {
+            return Err(Report::new(MacroAuthorizationError::InvalidCredentials));
+        }
+        let conation_user_id =
+            MacroUserIdStr::try_from(acting_user_claim.unwrap_or_else(|| OWNER.to_owned()))
+                .map_err(|_| Report::new(MacroAuthorizationError::ActingUserNotAuthorized))?;
+        let user_id = conation_user_id.as_ref().to_owned();
+        Ok(HarnessAuthentication {
+            harness_id: harness_id::HarnessId::TEST_A,
+            token_id: Uuid::new_v4(),
+            owner: HarnessAuthorizationOwner::User {
+                user_id: user_id.clone(),
+            },
+            acting_user: MacroUserAuthentication {
+                conation_user_id,
+                user_context: model_user::UserContext {
+                    user_id,
+                    fusion_user_id: "fusion-owner".to_owned(),
+                    permissions: None,
+                    organization_id: None,
+                },
+            },
         })
     }
 }
@@ -75,7 +105,7 @@ impl SessionOpener for RecordingOpener {
     async fn open_external_session(
         &self,
         request: OpenExternalAgentSession,
-    ) -> crate::domain::error::Result<crate::domain::ports::OpenExternalSessionResult> {
+    ) -> crate::domain::error::Result<AgentSession> {
         let session = AgentSession {
             id: AgentSessionId::TEST_A,
             name: crate::domain::model::DEFAULT_AGENT_SESSION_NAME.to_owned(),
@@ -90,27 +120,25 @@ impl SessionOpener for RecordingOpener {
             workspace: request.workspace.clone(),
             sandbox_size: crate::domain::model::SandboxSize::Default,
             instructions: request.instructions.clone(),
+            mcp_servers: Default::default(),
             acp_session_id: None,
             external: None,
             status: SessionStatus::NoMessages,
             created_at: Utc::now(),
             modified_at: Utc::now(),
         };
-        let provision_egress = request.provision_egress;
         self.opened.lock().unwrap().push(request);
-        Ok(crate::domain::ports::OpenExternalSessionResult {
-            session,
-            egress: provision_egress.then(|| crate::domain::ports::ExternalSessionEgress {
-                base_url: "https://egress.test".to_owned(),
-                session_token: "test-session-token".to_owned(),
-            }),
-        })
+        Ok(session)
     }
 
     async fn open_managed_session(
         &self,
         request: OpenManagedSession,
     ) -> crate::domain::error::Result<AgentSession> {
+        let bot_id = request
+            .profile
+            .as_ref()
+            .map_or(BotId::TEST_B, |selected| selected.bot_id);
         let session = AgentSession {
             id: AgentSessionId::TEST_A,
             name: crate::domain::model::DEFAULT_AGENT_SESSION_NAME.to_owned(),
@@ -118,13 +146,14 @@ impl SessionOpener for RecordingOpener {
             thread_id: None,
             thread_channel_id: None,
             originating_message_id: None,
-            bot_id: BotId::TEST_A,
+            bot_id,
             model: "claude".to_owned(),
             harness: "opencode".to_owned(),
             repo_url: Some("https://github.com/macro-inc/macro".to_owned()),
             workspace: crate::MANAGED_CONTAINER_WORKSPACE.to_owned(),
             sandbox_size: crate::domain::model::SandboxSize::Default,
             instructions: request.instructions.clone(),
+            mcp_servers: Default::default(),
             acp_session_id: None,
             external: None,
             status: SessionStatus::NoMessages,
@@ -156,7 +185,11 @@ impl OneBotDirectory {
             facts: BotFacts {
                 has_agent: true,
                 is_managed: false,
+                is_system: false,
                 owner_user_id: Some(MacroUserIdStr::try_from(OWNER.to_owned()).unwrap()),
+                owner_team_id: None,
+                harness_id: Some(harness_id::HarnessId::TEST_A),
+                managed_profile: None,
             },
         }
     }
@@ -166,7 +199,16 @@ impl OneBotDirectory {
             facts: BotFacts {
                 has_agent: true,
                 is_managed: true,
-                owner_user_id: None,
+                is_system: false,
+                owner_user_id: Some(MacroUserIdStr::try_from(OWNER.to_owned()).unwrap()),
+                owner_team_id: None,
+                harness_id: None,
+                managed_profile: Some(crate::domain::ports::ManagedAgentProfile {
+                    model: "persona-model".to_owned(),
+                    harness: "in-memory".to_owned(),
+                    instructions: "persona instructions".to_owned(),
+                    mcp_servers: Default::default(),
+                }),
             },
         }
     }
@@ -176,7 +218,27 @@ impl OneBotDirectory {
             facts: BotFacts {
                 has_agent: false,
                 is_managed: false,
+                is_system: false,
                 owner_user_id: Some(MacroUserIdStr::try_from(OWNER.to_owned()).unwrap()),
+                owner_team_id: None,
+                harness_id: None,
+                managed_profile: None,
+            },
+        }
+    }
+
+    /// A fixed first-party coder such as the Cursor bot: managed, owned by
+    /// nobody, and with no persisted profile of its own.
+    fn system_coder() -> Self {
+        Self {
+            facts: BotFacts {
+                has_agent: true,
+                is_managed: true,
+                is_system: true,
+                owner_user_id: None,
+                owner_team_id: None,
+                harness_id: None,
+                managed_profile: None,
             },
         }
     }
@@ -185,6 +247,14 @@ impl OneBotDirectory {
 impl BotDirectory for OneBotDirectory {
     async fn bot_facts(&self, bot: BotId) -> crate::domain::error::Result<Option<BotFacts>> {
         Ok((bot == BotId::TEST_A).then(|| self.facts.clone()))
+    }
+
+    async fn user_has_team(
+        &self,
+        _user: MacroUserIdStr<'static>,
+        _team_id: Uuid,
+    ) -> crate::domain::error::Result<bool> {
+        Ok(false)
     }
 }
 
@@ -196,7 +266,9 @@ fn router_for(opener: Arc<RecordingOpener>, bots: OneBotDirectory) -> Router {
             default_user_id: None,
         },
         SelfBotAuthorizer,
-    );
+        NoUserApiKeyAuthorizer,
+    )
+    .with_harness_authorizer(SelfHarnessAuthorizer);
     agent_session_create_router(CreateSessionState::new(
         opener,
         Arc::new(bots),
@@ -231,15 +303,21 @@ fn as_bot(request_body: String) -> Request<Body> {
         .unwrap()
 }
 
-fn as_verified_bot(request_body: String) -> Request<Body> {
+fn as_harness(request_body: String) -> Request<Body> {
     Request::post("/")
         .header(header::CONTENT_TYPE, "application/json")
-        .header(BOT_TOKEN_HEADER, BOT_TOKEN)
-        .header(BOT_SCOPE_HEADER, "user")
-        .header(
-            conation_authorization::BOT_FOR_CONATION_USER_ID_HEADER,
-            OWNER,
-        )
+        .header(HARNESS_TOKEN_HEADER, HARNESS_TOKEN)
+        .body(Body::from(request_body))
+        .unwrap()
+}
+
+/// A harness request that forwards a verified acting-user claim, the way the
+/// daemon does for the user who mentioned the agent.
+fn as_harness_for(user: &str, request_body: String) -> Request<Body> {
+    Request::post("/")
+        .header(header::CONTENT_TYPE, "application/json")
+        .header(HARNESS_TOKEN_HEADER, HARNESS_TOKEN)
+        .header(HARNESS_FOR_CONATION_USER_ID_HEADER, user)
         .body(Body::from(request_body))
         .unwrap()
 }
@@ -265,10 +343,6 @@ async fn a_bot_opens_an_external_session_for_itself() {
         .unwrap();
     let payload: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
     assert_eq!(payload["session"]["workspace"], "/home/wolf/code");
-    assert!(
-        payload.get("egress").is_none(),
-        "default external open is capability-free"
-    );
 
     let opened = opener.opened.lock().unwrap();
     assert_eq!(opened.len(), 1);
@@ -278,78 +352,6 @@ async fn a_bot_opens_an_external_session_for_itself() {
     let thread = opened[0].thread.as_ref().expect("thread linkage was given");
     assert_eq!(thread.thread_id, thread.message_id);
     assert_eq!(thread.content, "fix the flaky test");
-}
-
-#[tokio::test]
-async fn egress_requires_a_verified_bot_and_repository() {
-    let opener = Arc::new(RecordingOpener::default());
-    let mut request = serde_json::json!({
-        "botId": BotId::TEST_A.as_uuid(),
-        "workspace": "/srv/agent",
-        "repoUrl": "https://github.com/agisota/conation",
-        "provisionEgress": true,
-    });
-    let user_response = router(opener.clone())
-        .oneshot(as_user(OWNER, request.to_string()))
-        .await
-        .unwrap();
-    assert_eq!(user_response.status(), StatusCode::FORBIDDEN);
-
-    request["owner"] = serde_json::json!(OWNER);
-    let unverified_response = router(opener.clone())
-        .oneshot(as_bot(request.to_string()))
-        .await
-        .unwrap();
-    assert_eq!(unverified_response.status(), StatusCode::FORBIDDEN);
-
-    request["repoUrl"] = serde_json::Value::Null;
-    let missing_repo_response = router(opener.clone())
-        .oneshot(as_verified_bot(request.to_string()))
-        .await
-        .unwrap();
-    assert_eq!(
-        missing_repo_response.status(),
-        StatusCode::UNPROCESSABLE_ENTITY
-    );
-    assert!(opener.opened.lock().unwrap().is_empty());
-}
-
-#[tokio::test]
-async fn a_verified_bot_receives_egress_only_in_its_create_response() {
-    let opener = Arc::new(RecordingOpener::default());
-    let response = router(opener.clone())
-        .oneshot(as_verified_bot(
-            serde_json::json!({
-                "workspace": "/srv/agent",
-                "repoUrl": "https://github.com/agisota/conation",
-                "provisionEgress": true,
-            })
-            .to_string(),
-        ))
-        .await
-        .unwrap();
-    assert_eq!(response.status(), StatusCode::CREATED);
-    let bytes = axum::body::to_bytes(response.into_body(), usize::MAX)
-        .await
-        .unwrap();
-    let payload: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
-    assert_eq!(payload["egress"]["baseUrl"], "https://egress.test");
-    assert_eq!(payload["egress"]["sessionToken"], "test-session-token");
-    assert!(opener.opened.lock().unwrap()[0].provision_egress);
-}
-
-#[tokio::test]
-async fn a_managed_shape_cannot_silently_request_egress() {
-    let opener = Arc::new(RecordingOpener::default());
-    let response = router(opener.clone())
-        .oneshot(as_user(
-            OWNER,
-            serde_json::json!({ "provisionEgress": true }).to_string(),
-        ))
-        .await
-        .unwrap();
-    assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
-    assert!(opener.managed.lock().unwrap().is_empty());
 }
 
 #[tokio::test]
@@ -406,6 +408,76 @@ async fn a_bot_may_not_name_another_bot() {
     let response = router(opener.clone()).oneshot(request).await.unwrap();
 
     assert_eq!(response.status(), StatusCode::FORBIDDEN);
+    assert!(opener.opened.lock().unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn a_harness_session_is_owned_by_its_verified_acting_user() {
+    let opener = Arc::new(RecordingOpener::default());
+    // The daemon forwards the mention sender as a verified acting-user claim;
+    // that user - not the token's default owner - owns the session.
+    let request = as_harness_for(
+        STRANGER,
+        body(Some(BotId::TEST_A.as_uuid()), "/srv/agent", None),
+    );
+
+    let response = router(opener.clone()).oneshot(request).await.unwrap();
+
+    assert_eq!(response.status(), StatusCode::CREATED);
+    let opened = opener.opened.lock().unwrap();
+    assert_eq!(opened[0].bot_id, BotId::TEST_A);
+    assert_eq!(opened[0].owner.as_ref(), STRANGER);
+}
+
+#[tokio::test]
+async fn a_harness_may_not_own_a_session_by_an_unverified_body_claim() {
+    let opener = Arc::new(RecordingOpener::default());
+    // No forwarded claim, so the harness acts as its verified default owner.
+    // The body's `owner` is a claim the harness cannot verify and must be
+    // ignored - otherwise a daemon could plant sessions in any account.
+    let request = as_harness(body(
+        Some(BotId::TEST_A.as_uuid()),
+        "/srv/agent",
+        Some(STRANGER),
+    ));
+
+    let response = router(opener.clone()).oneshot(request).await.unwrap();
+
+    assert_eq!(response.status(), StatusCode::CREATED);
+    let opened = opener.opened.lock().unwrap();
+    assert_eq!(opened[0].bot_id, BotId::TEST_A);
+    assert_eq!(opened[0].owner.as_ref(), OWNER);
+}
+
+#[tokio::test]
+async fn a_harness_may_not_open_sessions_for_an_unbound_agent() {
+    // The one bot the directory serves is bound to a different harness.
+    let opener = Arc::new(RecordingOpener::default());
+    let mut bots = OneBotDirectory::external_agent();
+    bots.facts.harness_id = Some(harness_id::HarnessId::TEST_B);
+    let request = as_harness(body(
+        Some(BotId::TEST_A.as_uuid()),
+        "/srv/agent",
+        Some(OWNER),
+    ));
+
+    let response = router_for(opener.clone(), bots)
+        .oneshot(request)
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+    assert!(opener.opened.lock().unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn a_harness_caller_must_name_a_bot() {
+    let opener = Arc::new(RecordingOpener::default());
+    let request = as_harness(body(None, "/srv/agent", Some(OWNER)));
+
+    let response = router(opener.clone()).oneshot(request).await.unwrap();
+
+    assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert!(opener.opened.lock().unwrap().is_empty());
 }
 
@@ -546,6 +618,72 @@ async fn a_managed_open_carries_its_instructions() {
             .collect::<Vec<_>>(),
         vec![Some(INSTRUCTIONS)]
     );
+}
+
+#[tokio::test]
+async fn an_owner_can_select_a_managed_persona() {
+    let opener = Arc::new(RecordingOpener::default());
+    let request = as_user(
+        OWNER,
+        serde_json::json!({
+            "botId": BotId::TEST_A.as_uuid(),
+            "prompt": "fix it"
+        })
+        .to_string(),
+    );
+
+    let response = router_for(opener.clone(), OneBotDirectory::managed_agent())
+        .oneshot(request)
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::CREATED);
+    let managed = opener.managed.lock().unwrap();
+    let selected = managed[0].profile.as_ref().expect("selected persona");
+    assert_eq!(selected.bot_id, BotId::TEST_A);
+    let profile = selected.profile.as_ref().expect("persisted profile");
+    assert_eq!(profile.model, "persona-model");
+    assert_eq!(profile.instructions, "persona instructions");
+}
+
+/// The deployment's own coders are everybody's: a user who could mention the
+/// Cursor bot in a channel can pick it here too. Having no persisted profile,
+/// it is passed through for the harness to stamp with its per-bot defaults.
+#[tokio::test]
+async fn anyone_can_select_a_managed_system_bot() {
+    let opener = Arc::new(RecordingOpener::default());
+    let request = as_user(
+        STRANGER,
+        serde_json::json!({ "botId": BotId::TEST_A.as_uuid(), "prompt": "fix it" }).to_string(),
+    );
+
+    let response = router_for(opener.clone(), OneBotDirectory::system_coder())
+        .oneshot(request)
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::CREATED);
+    let managed = opener.managed.lock().unwrap();
+    let selected = managed[0].profile.as_ref().expect("selected persona");
+    assert_eq!(selected.bot_id, BotId::TEST_A);
+    assert!(selected.profile.is_none());
+}
+
+#[tokio::test]
+async fn a_stranger_cannot_select_someone_elses_managed_persona() {
+    let opener = Arc::new(RecordingOpener::default());
+    let request = as_user(
+        STRANGER,
+        serde_json::json!({ "botId": BotId::TEST_A.as_uuid() }).to_string(),
+    );
+
+    let response = router_for(opener.clone(), OneBotDirectory::managed_agent())
+        .oneshot(request)
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+    assert!(opener.managed.lock().unwrap().is_empty());
 }
 
 /// Whitespace-only instructions are absence stated clumsily, and are

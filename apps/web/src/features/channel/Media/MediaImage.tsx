@@ -85,6 +85,7 @@ function Image(props: {
   fallback?: JSX.Element;
 }) {
   const [loaded, setLoaded] = createSignal(false);
+  const hasDimensions = () => (props.width ?? 0) > 0 && (props.height ?? 0) > 0;
 
   createEffect(
     on(
@@ -115,7 +116,12 @@ function Image(props: {
       </Show>
       <img
         class={cn(props.class)}
-        classList={{ invisible: !loaded(), absolute: !loaded() }}
+        // Keep the same responsive image box in flow before and after load.
+        // Swapping a fixed-size placeholder for it changes virtual row heights.
+        classList={{
+          invisible: !loaded(),
+          absolute: !loaded() && !hasDimensions(),
+        }}
         src={props.src}
         alt={t('channel.media.previewAlt')}
         width={props.width}

@@ -50,7 +50,9 @@ http-body-util = { workspace = true }
 itertools = { workspace = true }
 last_online_tracker = { path = "../../crates/last_online_tracker" }
 conation_auth = { path = "../../crates/conation_auth" }
-conation_authorization = { path = "../../crates/conation_authorization" }
+conation_authorization = { path = "../../crates/conation_authorization", features = [
+  "postgres",
+] }
 conation_user_id = { path = "../../crates/conation_user_id" }
 conation_aws_config = { path = "../../crates/conation_aws_config" }
 conation_config = { path = "../../crates/conation_config" }

@@ -1,15 +1,17 @@
-import { t } from '@app/lib/i18n';
-import { getConfiguredClientProfile } from '@core/constant/clientProfile';
+import { FloatRegionOrInline } from '@components/app/mobile/float-regions/FloatRegion';
 import { SidePanel } from '@components/app/side-panel';
 import { SplitPanelContext } from '@components/app/split-layout/context';
+import { useCanAutofocusSplitContent } from '@components/app/split-layout/layoutUtils';
+import { useNavigatedFromJK } from '@components/app/useNavigatedFromJK';
 import { useBlockId } from '@core/block';
 import { LoadErrorPanel } from '@core/component/EntityLoadGate';
 import { StaticMarkdownContext } from '@core/component/LexicalMarkdown/component/core/StaticMarkdown';
 import { LinkedConversationDrawer } from '@core/linked-conversation';
-import EmptyStateAiGraphic from '@design/empty-state-ai.svg';
-import { EmptyStatePanel } from '@ui';
-import { Show, useContext } from 'solid-js';
-
+import { nativeNetworkStatus } from '@core/mobile/native-network-status';
+import { createMethodRegistration } from '@core/orchestrator';
+import { blockHandleSignal } from '@core/signal/load';
+import { useSearchParams } from '@solidjs/router';
+import { createSignal, Show, useContext } from 'solid-js';
 import {
   AgentSessionProvider,
   useAgentSession,
@@ -19,14 +21,27 @@ import {
   sessionOriginThread,
 } from '../context/origin-thread';
 import { forgetPendingSession } from '../context/pending-session';
+import { parseAgentMessageTarget } from '../core/search-location';
 import { AgentComposer } from './AgentComposer';
 import { AgentSplitHeader } from './AgentSplitHeader';
 import { AgentSidePanelSections } from './sidepanel/AgentSidePanelSections';
 import { Transcript } from './Transcript';
 
 function AgentBlockContent() {
+  const [params] = useSearchParams();
+  const [searchTarget, setSearchTarget] = createSignal(
+    parseAgentMessageTarget(params)
+  );
+  createMethodRegistration(blockHandleSignal.get, {
+    goToLocationFromParams: (params: Record<string, unknown>) => {
+      const target = parseAgentMessageTarget(params);
+      if (target) setSearchTarget(target);
+    },
+  });
   const { session, metadata, loadFailed, loadRetryable, pending, retryLoad } =
     useAgentSession();
+  const canAutofocusSplitContent = useCanAutofocusSplitContent();
+  const { navigatedFromJK } = useNavigatedFromJK();
 
   // Nothing loaded and no way forward: the load failed outright, or the
   // device is offline and the pending load cannot complete until
@@ -36,28 +51,15 @@ function AgentBlockContent() {
   const loadUnavailable = () =>
     loadFailed() ||
     (nativeNetworkStatus() === 'offline' && !session() && !pending());
-  // Create failed with nothing to retry: on standalone that is a missing
-  // model key, not a document that failed to load.
 
   return (
     <Show
       when={!loadUnavailable()}
       fallback={
-        loadFailed() &&
-        !loadRetryable() &&
-        getConfiguredClientProfile() === 'standalone' ? (
-          <EmptyStatePanel
-            centered
-            graphic={EmptyStateAiGraphic}
-            title={t('agent.empty.noModelKey')}
-            description={t('agent.empty.noModelKeyDescription')}
-          />
-        ) : (
-          <LoadErrorPanel
-            title={t('agent.document.loadFailed')}
-            onRetry={loadRetryable() ? retryLoad : undefined}
-          />
-        )
+        <LoadErrorPanel
+          title="Unable to load this document"
+          onRetry={loadRetryable() ? retryLoad : undefined}
+        />
       }
     >
       {/* One shared static-markdown editor for every text part, rather than
@@ -74,10 +76,24 @@ function AgentBlockContent() {
               title={metadata()?.title ?? undefined}
             />
             <div class="size-full min-w-0 flex flex-col">
-              <Transcript />
-              <div class="shrink-0 w-full max-w-3xl mx-auto px-4 pb-4">
-                <AgentComposer />
-              </div>
+              <Transcript searchTarget={searchTarget()} />
+              {/* Full-frame mobile: composer + queue float in the bottom
+                  accessory region above the dock; desktop stays inline. */}
+              <FloatRegionOrInline region="accessory">
+                {/* Home/chat: re-enable pointer events on the accessory
+                    contribution — the float host is pointer-transparent. */}
+                <div class="flex w-full justify-center shrink-0 px-4 pb-4.5 pointer-events-auto touch:px-(--mobile-chrome-gutter) touch:pb-0">
+                  <div class="macro-message-width mx-auto">
+                    <AgentComposer
+                      autofocus={
+                        canAutofocusSplitContent &&
+                        !navigatedFromJK() &&
+                        !searchTarget()
+                      }
+                    />
+                  </div>
+                </div>
+              </FloatRegionOrInline>
             </div>
             <Show when={sessionOriginThread(session())}>
               {(origin) => (

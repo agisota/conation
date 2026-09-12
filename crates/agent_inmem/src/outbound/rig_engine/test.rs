@@ -3,13 +3,36 @@ use super::*;
 /// A stand-in for the toolset prompt, short enough to assert on positionally.
 const TOOLS: &str = "TOOLS";
 
+fn has_ask_user(supports_user_input: bool) -> bool {
+    let tools = tools_for(AiHost::AgentSession);
+    let base_tools = Arc::into_inner(tools.toolset)
+        .expect("tools_for should return a fresh, uniquely owned collection");
+    tools_for_turn(base_tools, supports_user_input)
+        .request_schemas()
+        .expect("tool schemas should be valid")
+        .iter()
+        .any(|schema| schema.name == "AskUser")
+}
+
+#[test]
+fn ask_user_is_only_advertised_when_the_client_supports_it() {
+    assert!(has_ask_user(true));
+    assert!(!has_ask_user(false));
+}
+
 #[test]
 fn instructions_are_a_delimited_section_after_the_standing_prompt() {
     let prompt = system_prompt(&TOOLS, Some("be terse"), None);
 
     assert!(
-        prompt.starts_with(&format!("{TOOLS}\n{}", prompt::agent_session::PROMPT)),
-        "the standing prompt comes first, unchanged"
+        prompt.starts_with(&prompt::agent_session::PROMPT.to_string()),
+        "the session preamble comes first"
+    );
+    assert!(
+        prompt.contains(&format!(
+            "{TOOLS}\n<session_instructions>\nbe terse\n</session_instructions>"
+        )),
+        "the static Macro prompt sits immediately before session instructions"
     );
     assert!(prompt.ends_with("\n<session_instructions>\nbe terse\n</session_instructions>"));
 }

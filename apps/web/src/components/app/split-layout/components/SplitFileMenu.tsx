@@ -6,6 +6,7 @@ import {
   makeCreateReminderAction,
   makeFavoriteAction,
   makeMarkDoneAction,
+  makeMuteAction,
   markReminderTargetDone,
 } from '@app/features/next-soup/actions';
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
@@ -16,10 +17,7 @@ import type { BlockTool } from '@components/app/ResponsiveBlockToolbar';
 import { type BlockName, useBlockAliasedName, useBlockName } from '@core/block';
 import { useItemOperations } from '@core/component/FileList/useItemOperations';
 import { toast } from '@core/component/Toast/Toast';
-import {
-  ENABLE_REMINDERS_FLAG,
-  ENABLE_REMINDERS_OVERRIDE,
-} from '@core/constant/featureFlags';
+import { enableReminders } from '@core/constant/featureFlags';
 import { useQuickAccess } from '@core/context/quickAccess';
 import { useUserId } from '@core/context/user';
 import { triggerFocusInput } from '@core/directive/focusInput';
@@ -30,6 +28,7 @@ import { buildEntityData, type EntityData } from '@entity';
 import DotsThree from '@icon/dots-three-large.svg';
 import ArrowRight from '@phosphor/arrow-right.svg';
 import BellSimple from '@phosphor/bell-simple.svg';
+import BellSlash from '@phosphor/bell-slash.svg';
 import CaretDown from '@phosphor/caret-down.svg';
 import CaretRight from '@phosphor/caret-right.svg';
 import Check from '@phosphor/check.svg';
@@ -39,7 +38,7 @@ import Rename from '@phosphor/pencil-line.svg';
 import Star from '@phosphor/star.svg';
 import Tag from '@phosphor/tag.svg';
 import Trash from '@phosphor/trash-simple.svg';
-import { blockNameToItemType, type ItemType } from '@service-storage/client';
+import { blockNameToItemType, type ItemType } from '@service-storage/itemType';
 import { cn, Dropdown, Hotkey } from '@ui';
 import {
   type Component,
@@ -53,6 +52,7 @@ import {
   useContext,
 } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
+import { match } from 'ts-pattern';
 import {
   getSplitFileMenuActionSections,
   type SplitFileMenuAction,
@@ -108,6 +108,7 @@ export type SplitFileMenuViews = {
  * hook's callers.
  */
 const BLOCKS_WITH_ENTITY_HOTKEYS: ReadonlySet<BlockName> = new Set<BlockName>([
+  'agent',
   'canvas',
   'channel',
   'chat',
@@ -195,7 +196,7 @@ function DesktopRender(props: SplitFileMenuRenderProps) {
       >
         <DotsThree />
       </Dropdown.Trigger>
-      <Dropdown.Content class="w-64 shadow-menu">
+      <Dropdown.Content class="w-64">
         <For each={sections()}>
           {(section) => (
             <Dropdown.Group>
@@ -375,6 +376,9 @@ export function SplitFileMenu(props: {
   const favoriteAction = makeFavoriteAction();
   const userId = useUserId();
   const notificationSource = useGlobalNotificationSource();
+  const muteAction = makeMuteAction({
+    notificationSource: () => notificationSource,
+  });
   const markDone = makeMarkDoneAction({
     userId: () => userId(),
     notificationSource: () => notificationSource,
@@ -424,13 +428,26 @@ export function SplitFileMenu(props: {
     };
   };
 
+  const muteOp = (): SplitFileMenuAction | undefined => {
+    const entity = menuEntity();
+    if (!entity || !muteAction.canExecute(entity)) return undefined;
+    const muted = muteAction.isMuted(entity);
+    return {
+      label: muted ? 'Unmute notifications' : 'Mute notifications',
+      icon: muted ? BellSimple : BellSlash,
+      action: () => {
+        void muteAction.execute([entity]);
+      },
+      hotkeyToken: blockHotkeyToken(TOKENS.entity.action.mute),
+      group: 'macro' as const,
+    };
+  };
+
   // Read reactively as well as through the action's imperative gate: `ops` below
   // is a memo, so without a reactive dependency the item would stay missing for
   // the life of this menu if PostHog answered after it was first computed. The
   // other reminder surfaces re-evaluate per interaction and don't need this.
-  const remindersFlag = useFeatureFlag(ENABLE_REMINDERS_FLAG, {
-    enabledOverride: ENABLE_REMINDERS_OVERRIDE,
-  });
+  const remindersFlag = useFeatureFlag(enableReminders);
 
   // Injected here rather than per-block so every block rendering this menu gets
   // it, the way Favorite does. Entity types the reminders API cannot mint an
@@ -470,6 +487,9 @@ export function SplitFileMenu(props: {
 
   const copyLinkOp = (): SplitFileMenuAction | undefined => {
     const entity = menuEntity();
+    // Some entities have no shareable link (a reminder resolves to no block, so
+    // its URL is dead); skip the item rather than copy one that won't open.
+    if (entity && !copyLinkAction.canExecute(entity)) return undefined;
     // Foreign PRs link out via their entity URL (GitHub); the block-derived
     // fallback would mint an internal /pr URL that doesn't resolve, so omit
     // the item when the entity is unavailable.
@@ -505,21 +525,23 @@ export function SplitFileMenu(props: {
     onCleanup(() => ctx.setTitleFileMenuTrigger(undefined));
   });
 
+  const ownsMenuEntity = () =>
+    match(props.entity)
+      .with(undefined, () => isOwner())
+      .otherwise((entity) => entity.ownerId === userId());
+
   const ops = createMemo<SplitFileMenuAction[]>(() => {
     const mapped = props.ops
       .map((op) => {
         if (isDefaultFileOperation(op)) {
-          switch (op.op) {
-            case 'delete':
-              if (!isOwner()) return null;
+          return match(op.op)
+            .returnType<SplitFileMenuAction | null>()
+            .with('delete', () => {
+              if (!ownsMenuEntity()) return null;
               return {
                 label: t('common.delete'),
                 action: () => {
-                  const entity = buildEntityData({
-                    id: props.id,
-                    name: props.name,
-                    blockName: aliasedBlockName,
-                  });
+                  const entity = menuEntity();
                   if (!entity) return;
                   setOpen(false);
                   openBulkEditModal({
@@ -536,17 +558,13 @@ export function SplitFileMenu(props: {
                 icon: Trash,
                 group: 'delete' as const,
               };
-
-            case 'rename':
-              if (!isOwner()) return null;
+            })
+            .with('rename', () => {
+              if (!ownsMenuEntity()) return null;
               return {
                 label: t('shell.actions.rename'),
                 action: () => {
-                  const entity = buildEntityData({
-                    id: props.id,
-                    name: props.name,
-                    blockName: aliasedBlockName,
-                  });
+                  const entity = menuEntity();
                   if (!entity) return;
                   setOpen(false);
                   openBulkEditModal({
@@ -562,8 +580,8 @@ export function SplitFileMenu(props: {
                 hotkeyToken: blockHotkeyToken(TOKENS.entity.action.rename),
                 group: 'file' as const,
               };
-
-            case 'copy':
+            })
+            .with('copy', () => {
               return {
                 label: t('shell.fileActions.duplicate'),
                 action: async () => {
@@ -591,8 +609,8 @@ export function SplitFileMenu(props: {
                 icon: Copy,
                 group: 'file' as const,
               };
-
-            case 'moveToProject':
+            })
+            .with('moveToProject', () => {
               if (!isOwner()) return null;
               return {
                 label: t('shell.fileActions.moveToFolder'),
@@ -619,7 +637,8 @@ export function SplitFileMenu(props: {
                 ),
                 group: 'file' as const,
               };
-          }
+            })
+            .exhaustive();
         } else {
           return op;
         }
@@ -627,6 +646,7 @@ export function SplitFileMenu(props: {
       .filter((op) => !!op);
     return [
       favoriteOp(),
+      muteOp(),
       reminderOp(),
       addTagOp(),
       copyLinkOp(),

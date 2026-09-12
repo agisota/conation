@@ -1,3 +1,4 @@
+import { FloatRegionOrInline } from '@components/app/mobile/float-regions/FloatRegion';
 import { useSplitPanelOrThrow } from '@components/app/split-layout/layoutUtils';
 import { buildChatEditor } from '@core/component/AI/component/input/buildChatEditor';
 import type { ChatSendInput } from '@core/component/AI/component/input/buildRequest';
@@ -7,6 +8,7 @@ import {
   useChatInputContext,
 } from '@core/component/AI/context';
 import { useGetChatAttachmentInfo } from '@core/component/AI/signal/attachment';
+import { createMentionAttachmentCallbacks } from '@core/component/AI/signal/mention-attachment-callbacks';
 import { setPendingSendData } from '@core/component/AI/signal/pendingSend';
 import { deriveChatName } from '@core/component/AI/util/deriveName';
 import {
@@ -27,12 +29,12 @@ function SoupChatInputInner() {
   const input = useChatInputContext();
 
   const { getAttachmentFromMention } = useGetChatAttachmentInfo();
+  const attachmentMentionCallbacks = createMentionAttachmentCallbacks(
+    input.attachments,
+    getAttachmentFromMention
+  );
   const editor = buildChatEditor().withMentions({
-    onCreate: (mention) => {
-      const attachment = getAttachmentFromMention(mention);
-      if (attachment) input.attachments.addAttachment(attachment);
-    },
-    onRemove: (mention) => input.attachments.removeAttachment(mention.itemId),
+    ...attachmentMentionCallbacks,
     block: 'chat',
     showOpenTabs: true,
   });
@@ -117,28 +119,27 @@ function SoupChatInputInner() {
   };
 
   return (
-    <div
-      ref={containerRef}
-      class="absolute bottom-0 inset-x-px pb-2 px-2 flex justify-center pointer-events-none"
-      style={{
-        'background-image': `linear-gradient(transparent, var(--color-surface) 85%)`,
-      }}
-    >
-      <div class="w-full max-w-3xl">
-        <div class="pointer-events-auto">
-          <ChatInput
-            editor={editor}
-            onSend={handleSend}
-            onEscape={() => {
-              splitPanelContext.panelRef()?.focus();
-              return true;
-            }}
-            isPersistent={true}
-            autoFocusOnMount={false}
-          />
+    <FloatRegionOrInline region="accessory">
+      <div
+        ref={containerRef}
+        class="absolute bottom-0 inset-x-px pb-2.5 px-2 flex justify-center pointer-events-none touch:static touch:pb-0 touch:px-(--mobile-chrome-gutter)"
+      >
+        <div class="w-full max-w-3xl">
+          <div class="pointer-events-auto">
+            <ChatInput
+              editor={editor}
+              onSend={handleSend}
+              onEscape={() => {
+                splitPanelContext.panelRef()?.focus();
+                return true;
+              }}
+              isPersistent={true}
+              autoFocusOnMount={false}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </FloatRegionOrInline>
   );
 }
 

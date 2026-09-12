@@ -3,11 +3,14 @@ import { t } from '@app/lib/i18n';
 import type { OptimisticPostMessageAttachment } from '@channel/Input/message-payload';
 import { toast } from '@core/component/Toast/Toast';
 import type { DateValue } from '@core/util/date';
+import { markMessageSent } from '@core/util/message-send-motion';
 import { throwOnErr } from '@core/util/result';
 import {
   bumpSoupEntityTouchedAt,
   invalidateSoupEntity,
+  optimisticUpdateSoupItemUpdatedAt,
   refetchSoupEntity,
+  type SoupTransaction,
 } from '@queries/soup/normalized-cache';
 import { type MutationCallbacks, withCallbacks } from '@queries/utils';
 import {
@@ -200,6 +203,8 @@ export function optimisticInsertChannelMessage(
     optimisticId: vars.optimisticId,
     target,
   };
+
+  markMessageSent(`channel:${vars.optimisticId}`);
 
   if (target.kind === 'thread_reply') {
     const optimisticReply = makeOptimisticThreadReply(
@@ -416,7 +421,10 @@ type SendMessageParams = {
   senderId: string;
 };
 
-type SendMessageContext = InsertMessageContext | undefined;
+type SendMessageContext = {
+  insert: InsertMessageContext | undefined;
+  updatedAt: SoupTransaction | undefined;
+};
 
 /**
  * Mutation to send an channel message.
@@ -454,13 +462,20 @@ export function useSendMessageMutation(
           await queryClient.cancelQueries({
             queryKey: getChannelMessagesQueryKeyPrefix(vars.channelID),
           });
-          return optimisticInsertChannelMessage({
+          const insert = optimisticInsertChannelMessage({
             channelId: vars.channelID,
             optimisticId: vars.optimisticId,
             senderId: vars.senderId,
             optimisticAttachments: vars.optimisticAttachments,
             ...vars.message,
           });
+          const updatedAt = optimisticUpdateSoupItemUpdatedAt(
+            vars.channelID,
+            'channel',
+            new Date().toISOString()
+          );
+
+          return { insert, updatedAt };
         },
         onSuccess(data, variables) {
           const threadId = variables.message.thread_id ?? undefined;
@@ -496,6 +511,7 @@ export function useSendMessageMutation(
           if (context) {
             rollbackInsertChannelMessage(vars.channelID, context);
           }
+          context?.updatedAt?.rollback();
         },
         onSettled: (_data, _error, variables) => {
           softInvalidateTargetCaches(

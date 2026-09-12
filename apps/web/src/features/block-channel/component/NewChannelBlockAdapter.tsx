@@ -1,4 +1,9 @@
 import {
+  ChatWithAgentButton,
+  ChatWithAgentIcon,
+  openChatWithAgent,
+} from '@app/features/chat/ChatWithAgentButton';
+import {
   makeRenameAction,
   useBlockEntityCommands,
 } from '@app/features/next-soup/actions';
@@ -151,7 +156,7 @@ function NewTop(props: { channelId: string }) {
   // the tab is being displayed (e.g. via the auto-join flow that flips
   // `activeTab` to `call` before the join request resolves).
   const showCallTab = () =>
-    ENABLE_CALLS() &&
+    ENABLE_CALLS &&
     canUseInlineCallTab() &&
     (call.isInThisChannel() ||
       call.isJoining() ||
@@ -185,6 +190,19 @@ function NewTop(props: { channelId: string }) {
       channelType: ch.channel_type,
       ownerId: ch.owner_id,
     });
+  };
+
+  // Seed for "Ask Macro": a new chat with this channel @mentioned, so the
+  // user does not have to create an agent and mention the channel by hand.
+  const askMacroEntity = () => {
+    const type = channelType();
+    if (!type) return undefined;
+    return {
+      type: 'channel' as const,
+      id: props.channelId,
+      name: channelName() ?? 'New Channel',
+      channelType: type,
+    };
   };
 
   // Mobile has no room for inline tabs; the title file-menu drawer leads with
@@ -224,6 +242,17 @@ function NewTop(props: { channelId: string }) {
           mobileViews={isMobile() ? mobileViews() : undefined}
           tools={[
             {
+              label: 'Ask Macro',
+              icon: ChatWithAgentIcon,
+              action: () => {
+                const entity = askMacroEntity();
+                if (!entity) return;
+                void openChatWithAgent(entity);
+              },
+              // Desktop gets a header button instead (see below).
+              condition: () => isMobile() && !!askMacroEntity(),
+            },
+            {
               group: 'file',
               label: t('channel.rename'),
               icon: RenameIcon,
@@ -241,8 +270,18 @@ function NewTop(props: { channelId: string }) {
           ]}
         />
       </SplitTitleFileMenu>
+      {/* Desktop only: on mobile the action lives in the title drawer above. */}
+      <Show when={!isMobile() && askMacroEntity()}>
+        {(entity) => (
+          <SplitHeaderRight>
+            <HeaderIsland>
+              <ChatWithAgentButton entity={entity()} label="Ask Macro" />
+            </HeaderIsland>
+          </SplitHeaderRight>
+        )}
+      </Show>
       {/* Hidden once the user has joined — the call surface owns the UI. */}
-      <Show when={ENABLE_CALLS() && !call.isInThisChannel()}>
+      <Show when={ENABLE_CALLS && !call.isInThisChannel()}>
         <SplitHeaderRight>
           <HeaderIsland
             class={cn(
@@ -386,13 +425,16 @@ export function NewChannelBlockAdapter(props: BlockChannelProps) {
     callCtx.syncCallPageTab(channelId, false);
   });
 
-  // Once the call actually mounts for this channel, replace the URL so a
-  // reload doesn't re-trigger auto-join after the user has left. Waiting for
-  // the call to mount (instead of running on adapter mount) preserves the
-  // deep link if the join fails so the user can retry by refreshing.
+  // Once the auto-join attempt settles — joined, failed, or calls disabled —
+  // replace the URL so the deep link cannot fire a second time. This used to
+  // wait for the call to mount, which left `join_call=true` in the URL forever
+  // when the join failed; any later reload (the browser discarding this tab
+  // overnight and restoring it on wake, say) then re-ran the join — and since
+  // the join API is a get-or-create, that starts a brand-new call in the
+  // channel. Retrying a failed join is the Call tab's "Try again", not a
+  // refresh.
   createComputed(() => {
-    if (!callCtx) return;
-    if (!callCtx.isInCall() || callCtx.activeChannelId() !== channelId) return;
+    if (pendingJoinCall()) return;
     if (searchParams[CHANNEL_URL_PARAMS.joinCall] === undefined) return;
     setSearchParams(
       { [CHANNEL_URL_PARAMS.joinCall]: undefined },

@@ -22,6 +22,7 @@ import type { MacroEvents } from './events/receiver';
 import { MacroClient } from './utils/client';
 
 export type { MacroOpts } from './config';
+export type { ListenOptions, MacroEvents } from './events/receiver';
 export {
   here,
   type Interpolation,
@@ -53,10 +54,8 @@ export class Macro<T extends MacroOpts = MacroOpts> {
   readonly teams: TeamNamespace;
   readonly users: UserNamespace;
   readonly webhooks: WebhooksNamespace;
-  declare readonly events: T extends { webhookSecret: string }
-    ? MacroEvents
-    : undefined;
-  /** Base URL of the Conation web app, used to build entity URLs. */
+  readonly events: MacroEvents;
+  /** Base URL of the Macro web app, used to build entity URLs. */
   readonly webAppUrl: string;
   /** Direct access to the underlying hey-api service clients. */
   readonly _client: MacroClient;
@@ -84,20 +83,20 @@ export class Macro<T extends MacroOpts = MacroOpts> {
     this.teams = new TeamNamespace(client);
     this.users = new UserNamespace(client);
     this.webhooks = new WebhooksNamespace(client);
-    (this as { events?: MacroEvents }).events = client.events;
+    this.events = client.events;
     this.webAppUrl = client.webAppUrl;
   }
 
   /**
    * The authenticated caller's mentionable principal — `bot|<uuid>` for bot
-   * auth, `conation|<email>` for user auth — fetched once and cached.
+   * auth, `macro|<email>` for user auth — fetched once and cached.
    */
   myPrincipalId(): Promise<string> {
     return this._client.myPrincipalId();
   }
 
   /** Clone of this SDK acting on behalf of `user` (sent as
-   * `x-conation-bot-for-conation-user-id`). Bot auth only — throws for user auth,
+   * `x-macro-bot-for-conation-user-id`). Bot auth only — throws for user auth,
    * since a user token always acts as its own user. */
   requestedAs(user: User): Macro<T> {
     return new Macro({ ...this.opts, requestedAs: user.id });

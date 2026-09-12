@@ -1,6 +1,5 @@
 import { parseLocalDate } from '@app/features/calendar/utils/calendar-date';
 import { openChatWithAgent } from '@app/features/chat/ChatWithAgentButton';
-import { formatDateTime, t } from '@app/lib/i18n';
 import { globalSplitManager } from '@app/signal/splitLayout';
 import {
   type CalendarMentionTarget,
@@ -24,7 +23,6 @@ import { channelTheme } from '@core/component/LexicalMarkdown/theme';
 import { toast } from '@core/component/Toast/Toast';
 import { UserIcon as UserIconComponent } from '@core/component/UserIcon';
 import { itemToBlockName, resolveBlockAlias } from '@core/constant/allBlocks';
-import { getConfiguredStandaloneOperatorOrigin } from '@core/constant/clientProfile';
 import { getDisplayName, tryMacroId } from '@core/user';
 import { copyBranchNameToClipboard } from '@core/util/branchName';
 import { matches } from '@core/util/match';
@@ -44,10 +42,6 @@ import SparkleIcon from '@phosphor/sparkle.svg';
 import LoadingSpinner from '@phosphor/spinner.svg';
 import TrashSimple from '@phosphor/trash-simple.svg';
 import UsersIcon from '@phosphor/users.svg';
-import { Property } from '@property';
-import { SYSTEM_PROPERTY_IDS } from '@property/constants';
-import { useEntityProperties } from '@property/hooks';
-import { getEntityValues, hasValue } from '@property/utils';
 import {
   isAccessiblePreviewItem,
   isCalendarEventPreviewItem,
@@ -60,13 +54,12 @@ import { blockNameToItemType } from '@service-storage/client';
 import { fetchBinary } from '@service-storage/util/fetchBinary';
 import { createCallback } from '@solid-primitives/rootless';
 import { useNavigate } from '@solidjs/router';
-import { Badge, cn, Layer, Surface, Tooltip } from '@ui';
+import { cn, Surface, Tooltip } from '@ui';
 import type { Component, JSX } from 'solid-js';
 import {
   createEffect,
   createMemo,
   createSignal,
-  For,
   Match,
   onCleanup,
   Show,
@@ -78,18 +71,7 @@ import { formatDate } from '../util/date';
 import NotFound from './AccessErrorViews/NotFound';
 import Unauthorized from './AccessErrorViews/Unauthorized';
 import { useItemPreviewData } from './ItemPreview';
-
-function documentCopyOrigin(): string {
-  if (!globalThis.__CONATION_HOSTED_LEGACY__) {
-    return getConfiguredStandaloneOperatorOrigin();
-  }
-
-  let hostname = window.location.hostname.replace('www.', '').toLowerCase();
-  if (hostname === 'localhost') {
-    return getConfiguredStandaloneOperatorOrigin();
-  }
-  return `https://${hostname}`;
-}
+import { TaskPropertiesPreview } from './TaskPropertiesPreview';
 
 /**
  * Container for displaying mentions with optional collapsing
@@ -128,9 +110,7 @@ function Spinner() {
  * Loading indicator for mentions
  */
 function Loading() {
-  return (
-    <MentionContainer icon={<Spinner />} text={t('core.itemPreview.loading')} />
-  );
+  return <MentionContainer icon={<Spinner />} text="Loading" />;
 }
 
 /**
@@ -173,7 +153,7 @@ export const mentionsAccessories = (
   if (blockName === 'pdf') {
     const id = params[URL_PARAMS_PDF.annotationId];
     if (id?.trim()) {
-      return { note: t('core.itemPreview.annotation', { id }) };
+      return { note: `Annotation: ${id}` };
     }
 
     const pageIndex = Number(params[URL_PARAMS_PDF.pageNumber]);
@@ -189,12 +169,9 @@ export const mentionsAccessories = (
         width > 0 &&
         height > 0
       ) {
-        return {
-          note: t('core.itemPreview.page', { page: pageIndex }),
-          icon: 'highlight',
-        };
+        return { note: `Page ${pageIndex}`, icon: 'highlight' };
       }
-      return { note: t('core.itemPreview.page', { page: pageIndex }) };
+      return { note: `Page ${pageIndex}` };
     }
   }
   // Canvas block handling
@@ -213,10 +190,10 @@ export const mentionsAccessories = (
     if (threadId) {
       return {
         icon: 'thread',
-        note: t('core.itemPreview.thread'),
+        note: 'Thread',
       };
     } else if (messageId) {
-      return { icon: 'message', note: t('core.itemPreview.message') };
+      return { icon: 'message', note: 'Message' };
     }
     return;
   }
@@ -225,12 +202,12 @@ export const mentionsAccessories = (
     const id = params[URL_PARAMS_MD.nodeId];
     const loc = params[URL_PARAMS_MD.location];
     if (id?.trim() || loc?.trim()) {
-      return { icon: 'highlight', note: t('core.itemPreview.snippet') };
+      return { icon: 'highlight', note: 'Snippet' };
     }
 
     const comment = params[URL_PARAMS_MD.commentId];
     if (comment?.trim()) {
-      return { icon: 'message', note: t('core.itemPreview.comment') };
+      return { icon: 'message', note: 'Comment' };
     }
   }
 };
@@ -254,6 +231,7 @@ function PopupIconButton(props: {
   return (
     <Tooltip label={props.tooltip}>
       <button
+        aria-label={props.tooltip}
         onClick={(e) => {
           e.stopPropagation();
           props.onClick();
@@ -402,88 +380,15 @@ function ImageCoverStrip(props: {
   );
 }
 
-const TASK_PREVIEW_PROPERTIES = [
-  SYSTEM_PROPERTY_IDS.STATUS,
-  SYSTEM_PROPERTY_IDS.PRIORITY,
-  SYSTEM_PROPERTY_IDS.ASSIGNEES,
-];
-
-export function TaskPropertiesPreview(props: { taskId: string }) {
-  const { properties, isLoading } = useEntityProperties(
-    props.taskId,
-    'TASK',
-    false
-  );
-
-  const previewProperties = createMemo(() =>
-    TASK_PREVIEW_PROPERTIES.flatMap((id) => {
-      const p = properties().find((p) => p.propertyDefinitionId === id);
-      return p && hasValue(p) ? [p] : [];
-    })
-  );
-
-  return (
-    <Show when={!isLoading() && previewProperties().length > 0}>
-      <div class="px-2 pb-2 flex flex-row flex-wrap gap-1 text-xs justify-start">
-        <For each={previewProperties()}>
-          {(property) => <PreviewPropertyPill property={property} />}
-        </For>
-      </div>
-    </Show>
-  );
-}
-
-/**
- * Compact read-only pill for the document preview popup. The popup itself is
- * already a tooltip-like surface, so there's no edit trigger or hover-card.
- * Visually matches the side-panel Properties pills.
- */
-function PreviewPropertyPill(props: {
-  property: import('@property/types').Property;
-}) {
-  const isMultiUser = () =>
-    props.property.valueType === 'ENTITY' &&
-    props.property.specificEntityType === 'USER' &&
-    getEntityValues(props.property).length > 1;
-
-  const isUserEntity = () =>
-    props.property.valueType === 'ENTITY' &&
-    props.property.specificEntityType === 'USER';
-
-  return (
-    <Property.Root property={props.property}>
-      <Layer depth={2}>
-        <Badge
-          variant="ghost"
-          size="sm"
-          class="min-w-0 max-w-full gap-1.5 text-left"
-        >
-          <Switch
-            fallback={
-              <Property.Icon
-                property={props.property}
-                class="size-3 shrink-0"
-              />
-            }
-          >
-            <Match when={isMultiUser()}>
-              <Property.UserStack property={props.property} maxUsers={2} />
-            </Match>
-            <Match when={isUserEntity()}>
-              <Property.Icon property={props.property} />
-            </Match>
-          </Switch>
-          <Property.Text property={props.property} class="truncate" />
-        </Badge>
-      </Layer>
-    </Property.Root>
-  );
-}
-
-const formatCalendarPreviewDate = (date: Date) =>
-  formatDateTime(date, { weekday: 'short', month: 'short', day: 'numeric' });
-const formatCalendarPreviewTime = (date: Date) =>
-  formatDateTime(date, { hour: 'numeric', minute: '2-digit' });
+const calendarDateFormat = new Intl.DateTimeFormat(undefined, {
+  weekday: 'short',
+  month: 'short',
+  day: 'numeric',
+});
+const calendarTimeFormat = new Intl.DateTimeFormat(undefined, {
+  hour: 'numeric',
+  minute: '2-digit',
+});
 
 /** One compact local-time schedule line for a calendar mention preview. */
 export function calendarPreviewSchedule(
@@ -496,35 +401,18 @@ export function calendarPreviewSchedule(
     const inclusiveEnd = end ? new Date(end) : undefined;
     inclusiveEnd?.setDate(inclusiveEnd.getDate() - 1);
     return inclusiveEnd && inclusiveEnd > start
-      ? t('calendar.event.schedule.allDayRange', {
-          start: formatCalendarPreviewDate(start),
-          end: formatCalendarPreviewDate(inclusiveEnd),
-        })
-      : t('calendar.event.schedule.allDaySingle', {
-          date: formatCalendarPreviewDate(start),
-        });
+      ? `${calendarDateFormat.format(start)} – ${calendarDateFormat.format(inclusiveEnd)} · All day`
+      : `${calendarDateFormat.format(start)} · All day`;
   }
   const start = new Date(event.time.startsAt);
   const end = new Date(event.time.endsAt);
   if (!Number.isFinite(start.getTime())) return undefined;
   if (!Number.isFinite(end.getTime())) {
-    return t('calendar.event.schedule.timedStart', {
-      date: formatCalendarPreviewDate(start),
-      time: formatCalendarPreviewTime(start),
-    });
+    return `${calendarDateFormat.format(start)} · ${calendarTimeFormat.format(start)}`;
   }
   return start.toDateString() === end.toDateString()
-    ? t('calendar.event.schedule.timedSingle', {
-        date: formatCalendarPreviewDate(start),
-        startTime: formatCalendarPreviewTime(start),
-        endTime: formatCalendarPreviewTime(end),
-      })
-    : t('calendar.event.schedule.timedRange', {
-        startDate: formatCalendarPreviewDate(start),
-        startTime: formatCalendarPreviewTime(start),
-        endDate: formatCalendarPreviewDate(end),
-        endTime: formatCalendarPreviewTime(end),
-      });
+    ? `${calendarDateFormat.format(start)} · ${calendarTimeFormat.format(start)} – ${calendarTimeFormat.format(end)}`
+    : `${calendarDateFormat.format(start)}, ${calendarTimeFormat.format(start)} – ${calendarDateFormat.format(end)}, ${calendarTimeFormat.format(end)}`;
 }
 
 /** Meeting-level rows of the calendar mention hover card. */
@@ -539,10 +427,7 @@ function CalendarEventPreviewDetails(props: {
         {(schedule) => (
           <MetadataInfo icon={ClockIcon}>
             {schedule()}
-            <Show when={props.event.isRecurring}>
-              {' '}
-              · {t('calendar.event.form.recurrence.label')}
-            </Show>
+            <Show when={props.event.isRecurring}> · Repeats</Show>
           </MetadataInfo>
         )}
       </Show>
@@ -561,9 +446,8 @@ function CalendarEventPreviewDetails(props: {
               {' · '}
             </Show>
             <Show when={props.event.attendeeCount > 0}>
-              {t('core.itemPreview.attendees', {
-                count: props.event.attendeeCount,
-              })}
+              {props.event.attendeeCount}{' '}
+              {props.event.attendeeCount === 1 ? 'attendee' : 'attendees'}
             </Show>
           </span>
         </MetadataInfo>
@@ -632,7 +516,8 @@ export function DocumentPreviewContent(props: DocumentPreviewContentProps) {
     return { id: props.documentInfo.id, type, messageId };
   };
 
-  const { item, ItemEntityIcon } = useItemPreviewData(itemPreviewEntity);
+  const { item, ItemEntityIcon, documentProperties } =
+    useItemPreviewData(itemPreviewEntity);
 
   // Resolve the caller-provided type against the item's actual subType so
   // that e.g. a markdown doc with `subType: { type: 'task' }` routes to the
@@ -751,13 +636,18 @@ export function DocumentPreviewContent(props: DocumentPreviewContentProps) {
 
   const handleCopy = () => {
     try {
+      let hostname = window.location.hostname.replace('www.', '').toLowerCase();
+      if (hostname === 'localhost') {
+        hostname = 'dev.macro.com';
+      }
+
       const mentionTarget = calendarMentionTarget();
       if (mentionTarget) {
         copyCalendarEventMentionTarget(mentionTarget);
         return;
       }
 
-      let link = `${documentCopyOrigin()}/app/${targetBlockType()}/${props.documentInfo.id}`;
+      let link = `https://${hostname}/app/${targetBlockType()}/${props.documentInfo.id}`;
 
       if (
         props.documentInfo.params &&
@@ -769,7 +659,7 @@ export function DocumentPreviewContent(props: DocumentPreviewContentProps) {
         link += `?${queryParams}`;
       }
       navigator.clipboard.writeText(link);
-      toast.success(t('core.itemPreview.linkCopied'));
+      toast.success('Copied document link to clipboard');
     } catch (e) {
       console.error(e);
     }
@@ -842,8 +732,8 @@ export function DocumentPreviewContent(props: DocumentPreviewContentProps) {
           <PopupIconButton
             tooltip={
               props.previewInfo.isPreviewable
-                ? t('core.itemPreview.convertToEmbed')
-                : t('core.itemPreview.convertToCard')
+                ? 'Convert to Embed'
+                : 'Convert to Card View'
             }
             onClick={props.previewInfo.handlePreviewToggle}
             icon={MacroEmbed}
@@ -860,14 +750,14 @@ export function DocumentPreviewContent(props: DocumentPreviewContentProps) {
             when={props.collapseInfo?.isCollapsed}
             fallback={
               <PopupIconButton
-                tooltip={t('core.itemPreview.collapseReference')}
+                tooltip="Collapse Reference"
                 onClick={handleToggleCollapse}
                 icon={CollapseInlinePreview}
               />
             }
           >
             <PopupIconButton
-              tooltip={t('core.itemPreview.expandReference')}
+              tooltip="Expand Reference"
               onClick={handleToggleCollapse}
               icon={ExpandInlinePreview}
             />
@@ -881,7 +771,7 @@ export function DocumentPreviewContent(props: DocumentPreviewContentProps) {
     if (canOpenInChat()) {
       buttons.push(
         <PopupIconButton
-          tooltip={t('core.itemPreview.openInAiChat')}
+          tooltip="Open Document in AI Chat"
           onClick={handleOpenInChat}
           icon={SparkleIcon}
         />
@@ -889,17 +779,13 @@ export function DocumentPreviewContent(props: DocumentPreviewContentProps) {
     }
 
     buttons.push(
-      <PopupIconButton
-        tooltip={t('core.itemPreview.copyLink')}
-        onClick={handleCopy}
-        icon={Link}
-      />
+      <PopupIconButton tooltip="Copy Link" onClick={handleCopy} icon={Link} />
     );
 
     if (props.documentInfo.type === 'task') {
       buttons.push(
         <PopupIconButton
-          tooltip={t('core.itemPreview.copyBranchName')}
+          tooltip="Copy Branch Name"
           onClick={handleCopyBranchName}
           icon={GitBranchIcon}
         />
@@ -909,7 +795,7 @@ export function DocumentPreviewContent(props: DocumentPreviewContentProps) {
     if (props.documentInfo.isOpenable) {
       buttons.push(
         <PopupIconButton
-          tooltip={t('core.itemPreview.openFullscreen')}
+          tooltip="Open Fullscreen"
           onClick={openDocument}
           icon={OpenIcon}
         />
@@ -918,7 +804,7 @@ export function DocumentPreviewContent(props: DocumentPreviewContentProps) {
       if (!isSplitAlreadyOpen()) {
         buttons.push(
           <PopupIconButton
-            tooltip={t('core.itemPreview.openInNewSplit')}
+            tooltip="Open in New Split"
             onClick={openInNewSplit}
             icon={ColumnsPlusRight}
           />
@@ -929,7 +815,7 @@ export function DocumentPreviewContent(props: DocumentPreviewContentProps) {
     if (props.delete) {
       buttons.push(
         <PopupIconButton
-          tooltip={t('common.delete')}
+          tooltip="Delete"
           onClick={props.delete}
           icon={TrashSimple}
         />
@@ -995,7 +881,11 @@ export function DocumentPreviewContent(props: DocumentPreviewContentProps) {
               {/* Task properties: status, priority, assignees */}
               <Show when={props.documentInfo.type === 'task'}>
                 <Suspense fallback={<div class="w-full bg-active h-4 m-2" />}>
-                  <TaskPropertiesPreview taskId={props.documentInfo.id} />
+                  <TaskPropertiesPreview
+                    taskId={props.documentInfo.id}
+                    taskName={accessibleItem().name}
+                    previewProperties={documentProperties()}
+                  />
                 </Suspense>
               </Show>
 

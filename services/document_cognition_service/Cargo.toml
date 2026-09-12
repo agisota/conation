@@ -77,7 +77,9 @@ conation_env = { path = "../../crates/conation_env" }
 conation_env_var = { path = "../../crates/conation_env_var" }
 conation_event_broker = { path = "../../crates/conation_event_broker" }
 conation_queues = { path = "../../crates/conation_queues" }
-conation_authorization = { path = "../../crates/conation_authorization" }
+conation_authorization = { path = "../../crates/conation_authorization", features = [
+  "postgres",
+] }
 conation_middleware = { path = "../../crates/conation_middleware", default-features = false, features = [
   "cloud_storage",
 ] }

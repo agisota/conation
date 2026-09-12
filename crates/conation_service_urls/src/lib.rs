@@ -1,6 +1,6 @@
 #![deny(missing_docs)]
 
-//! Conation service URL values with per-environment defaults and environment
+//! Macro service URL values with per-environment defaults and environment
 //! variable overrides.
 //!
 //! Use [`service_url!`] to define a newtype whose default value is selected
@@ -9,7 +9,7 @@
 //! `DocumentStorageServiceUrl` checks `OVERRIDE_DOCUMENT_STORAGE_SERVICE_URL`
 //! before falling back to its `local`, `dev`, or `prod` default.
 
-use std::{borrow::Cow, fmt, ops::Deref, str::FromStr};
+use std::{borrow::Cow, fmt, ops::Deref};
 
 #[doc(hidden)]
 pub use conation_env;
@@ -30,30 +30,17 @@ mod testing_harness {
 
     thread_local! {
         static MOCK_VAR_GETTER: MockValue = const { Cell::new(None) };
-        static MOCK_PROFILE_GETTER: MockValue = const { Cell::new(None) };
     }
 
-    struct ResetMockOverrideEnv;
+    struct ResetMockEnv;
 
-    impl Drop for ResetMockOverrideEnv {
+    impl Drop for ResetMockEnv {
         fn drop(&mut self) {
             MOCK_VAR_GETTER.replace(None);
         }
     }
 
-    struct ResetMockProfileEnv;
-
-    impl Drop for ResetMockProfileEnv {
-        fn drop(&mut self) {
-            MOCK_PROFILE_GETTER.replace(None);
-        }
-    }
-
     #[doc(hidden)]
-    #[allow(
-        clippy::disallowed_methods,
-        reason = "test harness falls back to the process environment when no mock is installed"
-    )]
     pub fn read_override_env(var_name: &'static str) -> Result<Option<String>, ServiceUrlVarErr> {
         let cur_getter = MOCK_VAR_GETTER.replace(None);
         match cur_getter {
@@ -77,38 +64,7 @@ mod testing_harness {
         Cb: FnOnce() -> U,
     {
         MOCK_VAR_GETTER.replace(Some(Box::new(f)));
-        let _guard = ResetMockOverrideEnv;
-        cb()
-    }
-
-    #[allow(
-        clippy::disallowed_methods,
-        reason = "test harness falls back to the process environment when no mock is installed"
-    )]
-    pub(super) fn read_service_url_profile_env() -> Result<Option<String>, std::env::VarError> {
-        let cur_getter = MOCK_PROFILE_GETTER.replace(None);
-        match cur_getter {
-            Some(mock) => {
-                let out = mock(super::SERVICE_URL_PROFILE_ENV_VAR);
-                MOCK_PROFILE_GETTER.replace(Some(mock));
-                out
-            }
-            None => std::env::var(super::SERVICE_URL_PROFILE_ENV_VAR),
-        }
-        .map(Some)
-        .or_else(|err| match err {
-            std::env::VarError::NotPresent => Ok(None),
-            err => Err(err),
-        })
-    }
-
-    pub(crate) fn with_mock_service_url_profile_env<F, Cb, U>(f: F, cb: Cb) -> U
-    where
-        F: Fn(&'static str) -> Result<String, std::env::VarError> + 'static,
-        Cb: FnOnce() -> U,
-    {
-        MOCK_PROFILE_GETTER.replace(Some(Box::new(f)));
-        let _guard = ResetMockProfileEnv;
+        let _guard = ResetMockEnv;
         cb()
     }
 }
@@ -129,25 +85,6 @@ pub fn read_override_env(var_name: &'static str) -> Result<Option<String>, Servi
         std::env::VarError::NotPresent => Ok(None),
         err => Err(ServiceUrlVarErr { var_name, err }),
     })
-}
-
-#[cfg(test)]
-fn read_service_url_profile_env() -> Result<Option<String>, std::env::VarError> {
-    testing_harness::read_service_url_profile_env()
-}
-
-#[cfg(not(test))]
-#[allow(
-    clippy::disallowed_methods,
-    reason = "Used when running locally to select the service URL profile"
-)]
-fn read_service_url_profile_env() -> Result<Option<String>, std::env::VarError> {
-    std::env::var(SERVICE_URL_PROFILE_ENV_VAR)
-        .map(Some)
-        .or_else(|err| match err {
-            std::env::VarError::NotPresent => Ok(None),
-            err => Err(err),
-        })
 }
 
 /// A service URL string that can either borrow an existing string slice or own
@@ -274,301 +211,6 @@ impl ServiceUrlVarErr {
     }
 }
 
-/// Environment variable that selects how service URLs are resolved.
-pub const SERVICE_URL_PROFILE_ENV_VAR: &str = "CONATION_SERVICE_URL_PROFILE";
-
-/// The service URL resolution contract to use for the current deployment.
-///
-/// [`ServiceUrlProfile::Managed`] preserves the historical behavior: an
-/// `OVERRIDE_*` value is used when present and otherwise the selected
-/// environment default is used. [`ServiceUrlProfile::StrictSelfHost`] is an
-/// explicit standalone deployment mode. It requires an override for every
-/// resolved URL and validates that override before it is used.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
-pub enum ServiceUrlProfile {
-    /// Preserve the managed-service defaults and optional overrides.
-    #[default]
-    Managed,
-    /// Require validated standalone/self-hosted overrides for every service URL.
-    StrictSelfHost,
-}
-
-impl ServiceUrlProfile {
-    /// Resolve the profile from [`SERVICE_URL_PROFILE_ENV_VAR`].
-    ///
-    /// An unset value and the literal `managed` both select
-    /// [`ServiceUrlProfile::Managed`]. The only other accepted value is
-    /// `strict-self-host`.
-    pub fn from_env() -> Result<Self, ServiceUrlResolutionError> {
-        match read_service_url_profile_env() {
-            Ok(None) => Ok(Self::Managed),
-            Ok(Some(value)) => value
-                .parse()
-                .map_err(ServiceUrlResolutionError::InvalidProfile),
-            Err(err) => Err(ServiceUrlResolutionError::ProfileEnv {
-                var_name: SERVICE_URL_PROFILE_ENV_VAR,
-                err,
-            }),
-        }
-    }
-}
-
-/// Error returned when [`ServiceUrlProfile`] receives an unsupported value.
-#[derive(Debug, Clone, PartialEq, Eq, Error)]
-#[error(
-    "invalid `{SERVICE_URL_PROFILE_ENV_VAR}` value `{value}`; expected `managed` or `strict-self-host`"
-)]
-pub struct UnknownServiceUrlProfile {
-    value: String,
-}
-
-impl UnknownServiceUrlProfile {
-    /// Return the unsupported profile value.
-    pub fn value(&self) -> &str {
-        &self.value
-    }
-}
-
-impl FromStr for ServiceUrlProfile {
-    type Err = UnknownServiceUrlProfile;
-
-    fn from_str(value: &str) -> Result<Self, Self::Err> {
-        match value {
-            "managed" => Ok(Self::Managed),
-            "strict-self-host" => Ok(Self::StrictSelfHost),
-            _ => Err(UnknownServiceUrlProfile {
-                value: value.to_owned(),
-            }),
-        }
-    }
-}
-
-/// The reason a strict self-hosted service URL override was rejected.
-#[derive(Debug, Clone, PartialEq, Eq, Error)]
-pub enum StrictSelfHostUrlError {
-    /// The value is not an absolute URL with an authority and host.
-    #[error("must be an absolute URL with a host")]
-    NotAbsolute,
-    /// The URL scheme does not match the service transport.
-    #[error("uses scheme `{actual}`; expected {expected}")]
-    UnsupportedScheme {
-        /// The parsed scheme in the supplied URL.
-        actual: String,
-        /// The permitted scheme pair for the service transport.
-        expected: &'static str,
-    },
-    /// The URL contains a username or password.
-    #[error("must not contain userinfo")]
-    UserInfo,
-    /// The URL contains a query string.
-    #[error("must not contain a query string")]
-    Query,
-    /// The URL contains a fragment.
-    #[error("must not contain a fragment")]
-    Fragment,
-    /// The URL points at a managed Macro domain instead of a standalone host.
-    #[error("host `{host}` is a forbidden managed Macro domain")]
-    ForbiddenManagedHost {
-        /// The parsed hostname that is forbidden in strict self-host mode.
-        host: String,
-    },
-}
-
-/// Error returned while resolving a service URL under the selected profile.
-#[derive(Debug, Error)]
-pub enum ServiceUrlResolutionError {
-    /// An override environment variable could not be read.
-    #[error(transparent)]
-    OverrideEnv(#[from] ServiceUrlVarErr),
-    /// The URL-profile environment variable could not be read.
-    #[error("failed to read service URL profile env var `{var_name}`: {err}")]
-    ProfileEnv {
-        /// The profile environment variable name.
-        var_name: &'static str,
-        /// The underlying environment-variable error.
-        #[source]
-        err: std::env::VarError,
-    },
-    /// The URL-profile environment variable has an unsupported value.
-    #[error(transparent)]
-    InvalidProfile(UnknownServiceUrlProfile),
-    /// A strict self-hosted URL profile was selected without the required override.
-    #[error("strict self-host profile requires `{var_name}`")]
-    MissingOverride {
-        /// The required service URL override environment variable.
-        var_name: &'static str,
-    },
-    /// A strict self-hosted service URL override failed validation.
-    #[error("invalid strict self-host URL in `{var_name}` (`{value}`): {reason}")]
-    InvalidOverrideUrl {
-        /// The override environment variable containing the URL.
-        var_name: &'static str,
-        /// The rejected URL value.
-        value: String,
-        /// The validation failure.
-        reason: StrictSelfHostUrlError,
-    },
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum ServiceUrlTransport {
-    Http,
-    Websocket,
-}
-
-impl ServiceUrlTransport {
-    fn from_default_url(default_url: &str) -> Self {
-        let parsed = Url::parse(default_url)
-            .expect("service_url! defaults must be absolute URLs with an http(s) or ws(s) scheme");
-
-        match parsed.scheme() {
-            "http" | "https" => Self::Http,
-            "ws" | "wss" => Self::Websocket,
-            _ => panic!("service_url! defaults must use an http(s) or ws(s) scheme"),
-        }
-    }
-
-    const fn expected_schemes(self) -> &'static str {
-        match self {
-            Self::Http => "`http` or `https`",
-            Self::Websocket => "`ws` or `wss`",
-        }
-    }
-
-    fn accepts(self, scheme: &str) -> bool {
-        match self {
-            Self::Http => matches!(scheme, "http" | "https"),
-            Self::Websocket => matches!(scheme, "ws" | "wss"),
-        }
-    }
-}
-
-fn contains_userinfo(value: &str) -> bool {
-    value
-        .split_once("://")
-        .and_then(|(_, rest)| rest.split(['/', '?', '#']).next())
-        .is_some_and(|authority| authority.contains('@'))
-}
-
-fn is_forbidden_managed_host(host: &str) -> bool {
-    let host = host.trim_end_matches('.').to_ascii_lowercase();
-
-    ["macro.com", "macroverse.workers.dev"]
-        .into_iter()
-        .any(|forbidden| {
-            host == forbidden
-                || host
-                    .strip_suffix(forbidden)
-                    .is_some_and(|prefix| prefix.ends_with('.'))
-        })
-}
-
-fn invalid_override_url(
-    var_name: &'static str,
-    value: &str,
-    reason: StrictSelfHostUrlError,
-) -> ServiceUrlResolutionError {
-    ServiceUrlResolutionError::InvalidOverrideUrl {
-        var_name,
-        value: value.to_owned(),
-        reason,
-    }
-}
-
-fn validate_strict_self_host_url(
-    var_name: &'static str,
-    value: &str,
-    default_url: &str,
-) -> Result<(), ServiceUrlResolutionError> {
-    let url = Url::parse(value)
-        .map_err(|_| invalid_override_url(var_name, value, StrictSelfHostUrlError::NotAbsolute))?;
-
-    if !value.contains("://") || !url.has_host() {
-        return Err(invalid_override_url(
-            var_name,
-            value,
-            StrictSelfHostUrlError::NotAbsolute,
-        ));
-    }
-
-    let transport = ServiceUrlTransport::from_default_url(default_url);
-    if !transport.accepts(url.scheme()) {
-        return Err(invalid_override_url(
-            var_name,
-            value,
-            StrictSelfHostUrlError::UnsupportedScheme {
-                actual: url.scheme().to_owned(),
-                expected: transport.expected_schemes(),
-            },
-        ));
-    }
-
-    if contains_userinfo(value) || !url.username().is_empty() || url.password().is_some() {
-        return Err(invalid_override_url(
-            var_name,
-            value,
-            StrictSelfHostUrlError::UserInfo,
-        ));
-    }
-
-    if url.query().is_some() {
-        return Err(invalid_override_url(
-            var_name,
-            value,
-            StrictSelfHostUrlError::Query,
-        ));
-    }
-
-    if url.fragment().is_some() {
-        return Err(invalid_override_url(
-            var_name,
-            value,
-            StrictSelfHostUrlError::Fragment,
-        ));
-    }
-
-    let host = url.host_str().expect("URL host was checked above");
-    if is_forbidden_managed_host(host) {
-        return Err(invalid_override_url(
-            var_name,
-            value,
-            StrictSelfHostUrlError::ForbiddenManagedHost {
-                host: host.to_owned(),
-            },
-        ));
-    }
-
-    Ok(())
-}
-
-/// Resolve one service URL with the supplied deterministic profile.
-///
-/// This function is public only because [`service_url!`] can expand in a
-/// downstream crate. Prefer the generated `new_*` constructors on the typed
-/// URL instead.
-#[doc(hidden)]
-pub fn resolve_service_url(
-    profile: ServiceUrlProfile,
-    override_env_var_name: &'static str,
-    default_url: &'static str,
-) -> Result<ServiceUrl<'static>, ServiceUrlResolutionError> {
-    match read_override_env(override_env_var_name)? {
-        Some(value) => {
-            if profile == ServiceUrlProfile::StrictSelfHost {
-                validate_strict_self_host_url(override_env_var_name, &value, default_url)?;
-            }
-
-            Ok(ServiceUrl::owned(value))
-        }
-        None if profile == ServiceUrlProfile::StrictSelfHost => {
-            Err(ServiceUrlResolutionError::MissingOverride {
-                var_name: override_env_var_name,
-            })
-        }
-        None => Ok(ServiceUrl::borrowed(default_url)),
-    }
-}
-
 /// Define typed service URL values with per-environment defaults and override
 /// environment variables.
 ///
@@ -580,13 +222,13 @@ pub fn resolve_service_url(
 /// # Example
 ///
 /// ```
-/// fn document_storage_service_url_example() -> Result<(), conation_service_urls::ServiceUrlResolutionError> {
+/// fn document_storage_service_url_example() -> Result<(), conation_service_urls::ServiceUrlVarErr> {
 ///     conation_service_urls::service_url! {
 ///         #[derive(Debug, Clone)]
 ///         pub struct DocumentStorageServiceUrl {
 ///             local: "http://localhost:8086",
-///             dev: "https://cloud-storage-dev.macro.com",
-///             prod: "https://cloud-storage.macro.com",
+///             dev: "https://dev-gateway.macro.com/dss",
+///             prod: "https://gateway.macro.com/dss",
 ///         }
 ///     }
 ///
@@ -629,48 +271,30 @@ macro_rules! service_url {
                 #[doc = "Default URL for [`conation_env::Environment::Production`]."]
                 $v const PROD: &'static str = $prod;
 
-                #[doc = "Create a new instance of [`Self`] using the profile selected by `CONATION_SERVICE_URL_PROFILE`."]
+                #[doc = "Create a new instance of [`Self`], using the override env var if set and otherwise selecting a default from [`conation_env::Environment::new_or_prod`]."]
                 #[allow(dead_code)]
-                $v fn new() -> Result<Self, $crate::ServiceUrlResolutionError> {
-                    Self::new_with_profile($crate::ServiceUrlProfile::from_env()?)
+                $v fn new() -> Result<Self, $crate::ServiceUrlVarErr> {
+                    if let Some(value) = $crate::read_override_env(Self::OVERRIDE_ENV_VAR_NAME)? {
+                        return Ok(Self($crate::ServiceUrl::owned(value)));
+                    }
+
+                    Ok(Self::default_for_environment($crate::conation_env::Environment::new_or_prod()))
                 }
 
-                #[doc = "Create a new instance of [`Self`], panicking if its profile or URL resolution fails."]
+                #[doc = "Create a new instance of [`Self`], panicking if the override env var is set but cannot be read."]
                 #[allow(dead_code)]
                 $v fn unwrap_new() -> Self {
                     Self::new().expect(concat!("Failed to resolve service URL for ", stringify!($n)))
                 }
 
-                #[doc = "Create a new instance of [`Self`] for the current environment using an explicit profile."]
+                #[doc = "Create a new instance of [`Self`] for a specific environment, using the override env var if set."]
                 #[allow(dead_code)]
-                $v fn new_with_profile(profile: $crate::ServiceUrlProfile) -> Result<Self, $crate::ServiceUrlResolutionError> {
-                    let environment = $crate::conation_env::Environment::new_or_prod();
-                    Self::new_for_environment_with_profile(environment, profile)
-                }
+                $v fn new_for_environment(environment: $crate::conation_env::Environment) -> Result<Self, $crate::ServiceUrlVarErr> {
+                    if let Some(value) = $crate::read_override_env(Self::OVERRIDE_ENV_VAR_NAME)? {
+                        return Ok(Self($crate::ServiceUrl::owned(value)));
+                    }
 
-                #[doc = "Create a new instance of [`Self`] for a specific environment using the profile selected by `CONATION_SERVICE_URL_PROFILE`."]
-                #[allow(dead_code)]
-                $v fn new_for_environment(environment: $crate::conation_env::Environment) -> Result<Self, $crate::ServiceUrlResolutionError> {
-                    Self::new_for_environment_with_profile(environment, $crate::ServiceUrlProfile::from_env()?)
-                }
-
-                #[doc = "Create a new instance of [`Self`] for a specific environment using an explicit deterministic profile."]
-                #[allow(dead_code)]
-                $v fn new_for_environment_with_profile(
-                    environment: $crate::conation_env::Environment,
-                    profile: $crate::ServiceUrlProfile,
-                ) -> Result<Self, $crate::ServiceUrlResolutionError> {
-                    let default_url = match environment {
-                        $crate::conation_env::Environment::Local => Self::LOCAL,
-                        $crate::conation_env::Environment::Develop => Self::DEV,
-                        $crate::conation_env::Environment::Production => Self::PROD,
-                    };
-
-                    Ok(Self($crate::resolve_service_url(
-                        profile,
-                        Self::OVERRIDE_ENV_VAR_NAME,
-                        default_url,
-                    )?))
+                    Ok(Self::default_for_environment(environment))
                 }
 
                 #[doc = "Create a new instance of [`Self`] for a specific environment without checking the override env var."]
@@ -830,40 +454,25 @@ macro_rules! service_url {
             }
 
             impl $n {
-                #[doc = "Create a new instance of [`Self`] with all service URLs resolved using the profile selected by `CONATION_SERVICE_URL_PROFILE`."]
+                #[doc = "Create a new instance of [`Self`] with all service URLs resolved for the current macro environment."]
                 #[allow(dead_code)]
-                $v fn new() -> Result<Self, $crate::ServiceUrlResolutionError> {
-                    Self::new_with_profile($crate::ServiceUrlProfile::from_env()?)
-                }
-
-                #[doc = "Create a new instance of [`Self`] with all service URLs resolved for the current environment using an explicit profile."]
-                #[allow(dead_code)]
-                $v fn new_with_profile(profile: $crate::ServiceUrlProfile) -> Result<Self, $crate::ServiceUrlResolutionError> {
+                $v fn new() -> Result<Self, $crate::ServiceUrlVarErr> {
                     let environment = $crate::conation_env::Environment::new_or_prod();
-                    Self::new_for_environment_with_profile(environment, profile)
+                    Self::new_for_environment(environment)
                 }
 
-                #[doc = "Create a new instance of [`Self`] with all service URLs resolved for the current environment, panicking if profile or URL resolution fails."]
+                #[doc = "Create a new instance of [`Self`] with all service URLs resolved for the current macro environment, panicking if an override env var is set but cannot be read."]
                 #[allow(dead_code)]
                 $v fn unwrap_new() -> Self {
                     Self::new().expect(concat!("Failed to resolve service URL collection for ", stringify!($n)))
                 }
 
-                #[doc = "Create a new instance of [`Self`] with all service URLs resolved for a specific environment using the profile selected by `CONATION_SERVICE_URL_PROFILE`."]
+                #[doc = "Create a new instance of [`Self`] with all service URLs resolved for a specific environment."]
                 #[allow(dead_code)]
-                $v fn new_for_environment(environment: $crate::conation_env::Environment) -> Result<Self, $crate::ServiceUrlResolutionError> {
-                    Self::new_for_environment_with_profile(environment, $crate::ServiceUrlProfile::from_env()?)
-                }
-
-                #[doc = "Create a new instance of [`Self`] with all service URLs resolved for a specific environment using an explicit deterministic profile."]
-                #[allow(dead_code)]
-                $v fn new_for_environment_with_profile(
-                    environment: $crate::conation_env::Environment,
-                    profile: $crate::ServiceUrlProfile,
-                ) -> Result<Self, $crate::ServiceUrlResolutionError> {
+                $v fn new_for_environment(environment: $crate::conation_env::Environment) -> Result<Self, $crate::ServiceUrlVarErr> {
                     Ok(Self {
                         $(
-                            [<$field_name:snake>]: $field_name::new_for_environment_with_profile(environment, profile)?,
+                            [<$field_name:snake>]: $field_name::new_for_environment(environment)?,
                         )*
                     })
                 }
@@ -883,7 +492,7 @@ macro_rules! service_url {
 }
 
 service_url! {
-    /// Common service URLs used by Conation services.
+    /// Common service URLs used by Macro services.
     pub struct ServiceUrls {
         /// Main app URL.
         pub AppServiceUrl {
@@ -894,58 +503,50 @@ service_url! {
         /// Authentication service API URL.
         pub AuthServiceUrl {
             local: "http://localhost:8080",
-            dev: "https://auth-service-dev.macro.com",
-            prod: "https://auth-service.macro.com",
-        },
-        /// PDF rendering service API URL.
-        pub PdfServiceUrl {
-            local: "http://localhost:4567",
-            dev: "https://pdf-service-dev.macro.com",
-            prod: "https://pdf-service.macro.com",
+            dev: "https://dev-gateway.macro.com/auth",
+            prod: "https://gateway.macro.com/auth",
         },
         /// Document storage service API URL.
         pub DocumentStorageServiceUrl {
             local: "http://localhost:8086",
-            dev: "https://cloud-storage-dev.macro.com",
-            prod: "https://cloud-storage.macro.com",
+            dev: "https://dev-gateway.macro.com/dss",
+            prod: "https://gateway.macro.com/dss",
         },
-        /// WebSocket service URL.
-        pub WebsocketServiceUrl {
-            local: "ws://localhost:6969",
-            dev: "wss://services-dev.macro.com",
-            prod: "wss://services.macro.com",
+        /// Convert service API URL.
+        pub ConvertServiceUrl {
+            local: "http://localhost:8080",
+            dev: "https://dev-gateway.macro.com/convert",
+            prod: "https://gateway.macro.com/convert",
+        },
+        /// Search processing service API URL.
+        pub SearchProcessingServiceUrl {
+            local: "http://localhost:8092",
+            dev: "https://dev-gateway.macro.com/search-processing",
+            prod: "https://gateway.macro.com/search-processing",
         },
         /// Connection gateway HTTP API URL.
         pub ConnectionGatewayUrl {
             local: "http://localhost:8082",
-            dev: "https://connection-gateway-dev.macro.com",
-            prod: "https://connection-gateway.macro.com",
+            dev: "https://dev-gateway.macro.com/connection-gateway",
+            prod: "https://gateway.macro.com/connection-gateway",
         },
         /// Connection gateway WebSocket URL.
         pub ConnectionGatewayWebsocketUrl {
             local: "ws://localhost:8082",
-            dev: "wss://connection-gateway-dev.macro.com",
-            prod: "wss://connection-gateway.macro.com",
-        },
-        /// Agent proxy WebSocket URL (the shared runtime endpoint external
-        /// agent runtimes dial). Unused: its service is gone, and the URL
-        /// stays only until the deployed stack behind it is torn down.
-        pub AgentProxyWebsocketUrl {
-            local: "ws://localhost:8091",
-            dev: "wss://agent-proxy-dev.macro.com",
-            prod: "wss://agent-proxy.macro.com",
+            dev: "wss://dev-gateway.macro.com/connection-gateway",
+            prod: "wss://gateway.macro.com/connection-gateway",
         },
         /// Document cognition service API URL.
         pub DocumentCognitionServiceUrl {
             local: "http://localhost:8085",
-            dev: "https://document-cognition-dev.macro.com",
-            prod: "https://document-cognition.macro.com",
+            dev: "https://dev-gateway.macro.com/cognition",
+            prod: "https://gateway.macro.com/cognition",
         },
         /// Notification service API URL.
         pub NotificationServiceUrl {
             local: "http://localhost:8089",
-            dev: "https://notifications-dev.conation.dev",
-            prod: "https://notifications.conation.dev",
+            dev: "https://dev-gateway.macro.com/notification",
+            prod: "https://gateway.macro.com/notification",
         },
         /// Static file service/CDN URL.
         pub StaticFileServiceUrl {
@@ -957,32 +558,46 @@ service_url! {
         /// routes, which run in the process that owns the live sessions.
         pub AgentHarnessServiceUrl {
             local: "http://localhost:8101",
-            dev: "https://agent-harness-dev.macro.com",
-            prod: "https://agent-harness.macro.com",
+            dev: "https://dev-gateway.macro.com/agent-harness",
+            prod: "https://gateway.macro.com/agent-harness",
+        },
+        /// Sandbox-facing agent harness egress proxy URL.
+        /// Override the local default when sandbox clients need a Docker-network
+        /// address or a public tunnel rather than the host's loopback address.
+        pub AgentHarnessEgressUrl {
+            local: "http://localhost:8102",
+            dev: "https://dev-gateway.macro.com/agent-harness-egress",
+            prod: "https://gateway.macro.com/agent-harness-egress",
+        },
+        /// Macro MCP service base URL. Append `/mcp` for its transport endpoint.
+        pub McpServiceUrl {
+            local: "http://localhost:8080",
+            dev: "https://dev-gateway.macro.com/mcp",
+            prod: "https://gateway.macro.com/mcp",
         },
         /// Link unfurl service API URL.
         pub UnfurlServiceUrl {
             local: "http://localhost:8095",
-            dev: "https://unfurl-service-dev.macro.com",
-            prod: "https://unfurl-service.macro.com",
+            dev: "https://dev-gateway.macro.com/unfurl",
+            prod: "https://gateway.macro.com/unfurl",
         },
         /// Contacts service API URL.
         pub ContactsServiceUrl {
             local: "http://localhost:8083",
-            dev: "https://contacts-dev.macro.com",
-            prod: "https://contacts.macro.com",
+            dev: "https://dev-gateway.macro.com/contacts",
+            prod: "https://gateway.macro.com/contacts",
         },
         /// Email service API URL.
         pub EmailServiceUrl {
             local: "http://localhost:8087",
-            dev: "https://email-service-dev.macro.com",
-            prod: "https://email-service.macro.com",
+            dev: "https://dev-gateway.macro.com/email",
+            prod: "https://gateway.macro.com/email",
         },
         /// Image proxy service API URL.
         pub ImageProxyServiceUrl {
             local: "http://localhost:8097",
-            dev: "https://image-proxy-dev.macro.com",
-            prod: "https://image-proxy.macro.com",
+            dev: "https://dev-gateway.macro.com/image-proxy",
+            prod: "https://gateway.macro.com/image-proxy",
         },
         /// Lexical conversion service API URL.
         pub LexicalServiceUrl {

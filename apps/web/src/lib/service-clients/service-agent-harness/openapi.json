@@ -11,6 +11,58 @@
     "version": "0.1.0"
   },
   "paths": {
+    "/agent-models/load": {
+      "post": {
+        "tags": ["agent-models"],
+        "summary": "Probe one provider's model catalog without creating an agent session.",
+        "operationId": "load_agent_models_handler",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoadAgentModelsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Fresh provider model catalog",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoadAgentModelsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid target"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Harness is not visible to caller"
+          },
+          "409": {
+            "description": "Macrod runtime is disconnected"
+          },
+          "502": {
+            "description": "Provider probe failed"
+          },
+          "504": {
+            "description": "Macrod probe timed out"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/agent-sandbox-size": {
       "get": {
         "tags": ["agent-sessions"],
@@ -177,6 +229,66 @@
         }
       }
     },
+    "/agent-sessions/preview": {
+      "post": {
+        "tags": ["agent-sessions"],
+        "summary": "Preview a batch of agent sessions for rendering chips.",
+        "description": "No per-id access extractor: a chip has to render for a session the caller\ncannot open, so access is answered per id in the body rather than\nenforced on the request. The caller learns the fields a chip shows for\nsessions they may view, and only existence for the rest.",
+        "operationId": "preview_agent_sessions",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreviewAgentSessionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreviewAgentSessionsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "more than the maximum number of session ids",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/agent-sessions/{session_id}": {
       "get": {
         "tags": ["agent-sessions"],
@@ -294,6 +406,7 @@
       "post": {
         "tags": ["agent-sessions"],
         "summary": "Perform a control operation on a live agent session.",
+        "description": "Edit access suffices: whoever can prompt the bot through its thread can\nprompt it here.",
         "operationId": "control_agent_session",
         "parameters": [
           {
@@ -319,11 +432,11 @@
         },
         "responses": {
           "200": {
-            "description": "Accepted; matches `requestId` on the folded message this action derives",
+            "description": "Accepted. `sent` reached the runtime; `queued` waits for the running turn to end and can be edited or removed meanwhile.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AgentActionId"
+                  "$ref": "#/components/schemas/ControlResponse"
                 }
               }
             }
@@ -339,6 +452,16 @@
             }
           },
           "403": {
+            "description": "",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
             "description": "",
             "content": {
               "text/plain": {
@@ -365,7 +488,7 @@
       "get": {
         "tags": ["agent-sessions"],
         "summary": "The raw protocol log of one agent session.",
-        "description": "Served unfolded, and whole: the fold is a left fold over the frames from\nthe beginning, so a reader that skipped any of them would derive different\nturn numbering.\n\nAn unknown session is an error: the response has to name the session's\nagent, and a session that never existed has none to name.",
+        "description": "Served unfolded from the latest successful load initialization, or the\nbeginning when no load succeeded. Consumers stage load attempts so failed\nor interrupted replay does not become visible conversation content.\n\nAn unknown session is an error: the response has to name the session's\nagent, and a session that never existed has none to name.",
         "operationId": "get_agent_session_log",
         "parameters": [
           {
@@ -476,6 +599,233 @@
           },
           "403": {
             "description": "",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agent-sessions/{session_id}/queue": {
+      "get": {
+        "tags": ["agent-sessions"],
+        "summary": "The actions waiting to dispatch in this session, oldest first.",
+        "operationId": "get_agent_session_queue",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "description": "ID of the agent session",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentSessionQueueResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agent-sessions/{session_id}/queue/{action_id}": {
+      "put": {
+        "tags": ["agent-sessions"],
+        "summary": "Replace a queued prompt's text before it dispatches.",
+        "operationId": "edit_queued_action",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "description": "ID of the agent session",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "action_id",
+            "in": "path",
+            "description": "ID the action was accepted under",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditQueuedActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Already dispatched or never queued",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The queued action carries no text",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["agent-sessions"],
+        "summary": "Remove a queued action before it dispatches. There is no un-sending: an\naction that already went out answers 404.",
+        "operationId": "remove_queued_action",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "description": "ID of the agent session",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "action_id",
+            "in": "path",
+            "description": "ID the action was accepted under",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "401": {
+            "description": "",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Already dispatched or never queued",
             "content": {
               "text/plain": {
                 "schema": {
@@ -632,13 +982,61 @@
                 "enum": ["stop"]
               }
             }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentRespondElicitationAction",
+                "description": "Answer an `elicitation/create` the agent sent.\n\nThe one action whose wire form is a JSON-RPC *response* rather than a\nrequest or notification: the agent asked, we answer on its id. The\nminted [`AgentActionId`] therefore never reaches the wire for this\naction; the fold correlates on the agent's id instead."
+              },
+              {
+                "type": "object",
+                "required": ["type"],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["respondElicitation"]
+                  }
+                }
+              }
+            ],
+            "description": "Answer an `elicitation/create` the agent sent.\n\nThe one action whose wire form is a JSON-RPC *response* rather than a\nrequest or notification: the agent asked, we answer on its id. The\nminted [`AgentActionId`] therefore never reaches the wire for this\naction; the fold correlates on the agent's id instead."
           }
         ],
         "description": "One thing a caller wants an agent to do."
       },
       "AgentActionId": {
         "type": "string",
-        "description": "Identifies one accepted [`AgentAction`] end to end: returned by the\ncontrol endpoint, written as the JSON-RPC request id on the action's wire\nframe, and read back off that frame as `request_id` on the folded message\nit derives. Correlation is string equality; the value is opaque.\n\nMinted only by the server at accept time, as `agent_session:{uuid}` - the\nprefix is what lets [`Self::from_request_id`] tell our ids from ones other\nclients picked."
+        "format": "uuid",
+        "description": "Identifies one accepted [`AgentAction`] end to end: returned by the\ncontrol endpoint, written as the JSON-RPC request id on the action's wire\nframe, and read back off that frame as `request_id` on the folded message\nit derives.\n\nMinted only by the server at accept time, as a v7 uuid so ids sort by mint\ntime. On the wire and in JSON it is the bare uuid, and a uuid-shaped\nrequest id is the whole ownership test: the server is the only writer of\nruntime-bound frames. The machine's own handshake request ids\n(`agent_session:{session}:{n}`) are not uuids and stay `None`."
+      },
+      "AgentModelDto": {
+        "type": "object",
+        "description": "One model picker option.",
+        "required": ["id", "name"],
+        "properties": {
+          "description": {
+            "type": ["string", "null"],
+            "description": "Optional provider description."
+          },
+          "group": {
+            "type": ["string", "null"],
+            "description": "Optional group heading supplied by the provider."
+          },
+          "id": {
+            "type": "string",
+            "description": "Provider model id."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name."
+          }
+        }
+      },
+      "AgentModelsStatusDto": {
+        "type": "string",
+        "description": "Model-selection availability returned over HTTP.",
+        "enum": ["available", "unsupported"]
       },
       "AgentPromptAction": {
         "type": "object",
@@ -651,6 +1049,25 @@
           }
         }
       },
+      "AgentRespondElicitationAction": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ElicitationAnswer",
+            "description": "The decision."
+          },
+          {
+            "type": "object",
+            "required": ["requestId"],
+            "properties": {
+              "requestId": {
+                "$ref": "#/components/schemas/ElicitationRequestId",
+                "description": "The agent's `elicitation/create` request id - not an\n[`AgentActionId`], because the agent minted it."
+              }
+            }
+          }
+        ],
+        "description": "Answer an elicitation the agent is waiting on."
+      },
       "AgentSessionLogEntryDto": {
         "allOf": [
           {
@@ -659,12 +1076,17 @@
           },
           {
             "type": "object",
-            "required": ["createdAt"],
+            "required": ["id", "createdAt"],
             "properties": {
               "createdAt": {
                 "type": "string",
                 "format": "date-time",
                 "description": "When the log recorded the frame.\n\nThe frame itself carries no time, so this comes from the log row. It is\nwhat a reader has to order these against anything else it is showing\nbeside them - the fold derives an order among the messages of one\nsession and nothing more."
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Durable transport row identity; together with `createdAt`, its order cursor."
               },
               "userId": {
                 "type": ["string", "null"],
@@ -689,7 +1111,141 @@
             "items": {
               "$ref": "#/components/schemas/AgentSessionLogEntryDto"
             },
-            "description": "Every logged frame, oldest first. Folding depends on this order."
+            "description": "Effective history in ascending `(createdAt, id)` order.\nThe first row is the inclusive history boundary cursor: buffered rows\nbefore it are obsolete. Reconcile snapshot overlap by row ID, never content.\nAn empty history has no boundary or overlapping rows."
+          }
+        }
+      },
+      "AgentSessionPreviewData": {
+        "type": "object",
+        "description": "The fields a chip renders for a session the caller may view.\n\nClients deserialize this, so both derives are used.",
+        "required": [
+          "id",
+          "name",
+          "ownerId",
+          "botId",
+          "status",
+          "createdAt",
+          "modifiedAt"
+        ],
+        "properties": {
+          "bot": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/SessionBot",
+                "description": "Minimal identity of the session's bot, when available."
+              }
+            ]
+          },
+          "botId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The bot running the agent."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the session was created."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The session id."
+          },
+          "modifiedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the session was last modified."
+          },
+          "name": {
+            "type": "string",
+            "description": "User-facing session name."
+          },
+          "ownerId": {
+            "type": "string",
+            "description": "The user who owns the session."
+          },
+          "status": {
+            "$ref": "#/components/schemas/SessionStatusDto",
+            "description": "The session's last known status."
+          }
+        }
+      },
+      "AgentSessionPreviewDto": {
+        "oneOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentSessionPreviewData",
+                "description": "The caller may view the session."
+              },
+              {
+                "type": "object",
+                "required": ["type"],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["access"]
+                  }
+                }
+              }
+            ],
+            "description": "The caller may view the session."
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WithAgentSessionId",
+                "description": "The session exists but the caller holds no grant on it."
+              },
+              {
+                "type": "object",
+                "required": ["type"],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["no_access"]
+                  }
+                }
+              }
+            ],
+            "description": "The session exists but the caller holds no grant on it."
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/WithAgentSessionId",
+                "description": "No session with this id exists."
+              },
+              {
+                "type": "object",
+                "required": ["type"],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["does_not_exist"]
+                  }
+                }
+              }
+            ],
+            "description": "No session with this id exists."
+          }
+        ],
+        "description": "What one requested id resolved to, on the wire.\n\nTagged the same way the chat and document preview endpoints tag theirs\n(`type` in `access` / `no_access` / `does_not_exist`), so a client that\nrenders those chips can render this one with the same branch.\n\nClients deserialize this, so both derives are used."
+      },
+      "AgentSessionQueueResponse": {
+        "type": "object",
+        "description": "Response body for a session's queue: everything waiting, oldest first.\n\nA wrapper rather than a bare array so that anything which is about the\nresponse rather than about an entry has somewhere to go later without\nbreaking every client.",
+        "required": ["entries"],
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QueuedActionDto"
+            },
+            "description": "The waiting actions, in dispatch order."
           }
         }
       },
@@ -700,6 +1256,7 @@
           "id",
           "name",
           "ownerId",
+          "canEdit",
           "botId",
           "model",
           "harness",
@@ -718,6 +1275,10 @@
             "type": "string",
             "format": "uuid",
             "description": "The bot running the agent."
+          },
+          "canEdit": {
+            "type": "boolean",
+            "description": "Whether the caller may drive the session - prompt it, answer its\nquestions, stop it - rather than only watch. Edit access; the\ncreator owns the session, so a create response always says so."
           },
           "createdAt": {
             "type": "string",
@@ -821,14 +1382,34 @@
         ],
         "description": "Request body for a control operation on a live session.\n\nA wrapper around the operation rather than the bare enum so that fields\nwhich are about the request rather than the operation have somewhere to go.\nThe acting user is deliberately not one of them: it comes from the caller's\ncredentials, so that a caller cannot attribute an operation to someone else.\n\nClients serialize this, so both derives are used."
       },
+      "ControlResponse": {
+        "type": "object",
+        "description": "Response body for a control operation.\n\nClients deserialize this, so both derives are used.",
+        "required": ["actionId", "status"],
+        "properties": {
+          "actionId": {
+            "$ref": "#/components/schemas/AgentActionId",
+            "description": "Matches `requestId` on the folded message this action derives once it\ndispatches, and names the queue entry until then."
+          },
+          "status": {
+            "$ref": "#/components/schemas/ControlStatusDto",
+            "description": "Whether the action went out or waits in the queue."
+          }
+        }
+      },
+      "ControlStatusDto": {
+        "type": "string",
+        "description": "What accepting a control operation did with it, on the wire.",
+        "enum": ["sent", "queued"]
+      },
       "CreateAgentSessionRequest": {
         "type": "object",
-        "description": "Request body for `POST /agent-sessions`.\n\nCarries two shapes, told apart by `workspace`. Naming one asks for an\nexternal session: the runtime is the bot operator's, so the caller has to\nsay which bot and which directory, and must own that bot. Omitting it asks\nfor a managed session, whose sandbox this deployment provisions from its\nown configuration - which is why the fields describing someone else's\nruntime must be omitted along with it rather than quietly ignored. Mixing\nthe two is refused rather than guessed at, so that no request can reach the\nmanaged path carrying a bot the caller was never entitled to name.\n\nClients serialize this, so both derives are used.",
+        "description": "Request body for `POST /agent-sessions`.\n\nCarries two shapes, told apart by `workspace`. Naming one asks for an\nexternal session: the runtime is the bot operator's, so the caller has to\nsay which bot and which directory, and must own that bot. Omitting it asks\nfor a managed session, whose runtime this deployment provisions. A managed\nrequest may select an authorized persisted persona with `botId`; omitting\nit uses the deployment's default coding persona. Fields describing someone\nelse's runtime must still be omitted rather than quietly ignored. Mixing\nthe two shapes is refused rather than guessed at.\n\nClients serialize this, so both derives are used.",
         "properties": {
           "botId": {
             "type": ["string", "null"],
             "format": "uuid",
-            "description": "Bot the session runs for. Bot callers may omit it (their own identity\nis used) and must not name another bot; user callers must supply a\nbot they own. External sessions only: a managed session runs as the\nbot its deployment is configured for."
+            "description": "Bot the session runs for. On a managed request this optionally selects\na persisted persona the user owns or may use through team membership;\nomitting it uses the deployment's default coding persona. On an\nexternal request, bot callers may omit it (their own identity is used)\nand must not name another bot; user callers must supply a bot they own."
           },
           "instructions": {
             "type": ["string", "null"],
@@ -836,7 +1417,7 @@
           },
           "owner": {
             "type": ["string", "null"],
-            "description": "The user who owns the session. Ignored for user callers, who always\nown their own sessions; required for bot callers without verified\nacting-user claims.\n\nFor bot callers this is a claim, not a verified fact: it is scoped to\nthe bot's own sessions, but the named user owns the session on the\nbot's say-so."
+            "description": "The user who owns the session. Ignored for user callers, who always\nown their own sessions, and for harness callers, whose verified acting\nuser (owner or confirmed team member) owns the session instead;\nrequired for bot callers without verified acting-user claims.\n\nFor bot callers this is a claim, not a verified fact: it is scoped to\nthe bot's own sessions, but the named user owns the session on the\nbot's say-so."
           },
           "prompt": {
             "type": ["string", "null"],
@@ -930,6 +1511,110 @@
           }
         }
       },
+      "EditQueuedActionRequest": {
+        "type": "object",
+        "description": "Request body for editing a queued prompt.",
+        "required": ["prompt"],
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "The new raw prompt text, replacing the old wholesale. Never blank: a\nprompt with nothing to say is a removal, and there is an endpoint for\nthat.",
+            "minLength": 1
+          }
+        }
+      },
+      "ElicitationAnswer": {
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "The user submitted the form, or consented to open the URL.",
+            "required": ["action"],
+            "properties": {
+              "action": {
+                "type": "string",
+                "enum": ["accept"]
+              },
+              "content": {
+                "type": ["object", "null"],
+                "description": "Form: the submitted values keyed by property. URL: omitted.",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/ElicitationContentValue"
+                },
+                "propertyNames": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "The user explicitly said no.",
+            "required": ["action"],
+            "properties": {
+              "action": {
+                "type": "string",
+                "enum": ["decline"]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "The user dismissed the request without choosing.",
+            "required": ["action"],
+            "properties": {
+              "action": {
+                "type": "string",
+                "enum": ["cancel"]
+              }
+            }
+          }
+        ],
+        "description": "What the user decided about an elicitation. Mirrors ACP's three actions;\nthere is no `Other` because we never originate an action we do not know."
+      },
+      "ElicitationContentValue": {
+        "oneOf": [
+          {
+            "type": "string",
+            "description": "A string, and the shape a whole draft rides in as JSON text."
+          },
+          {
+            "type": "boolean",
+            "description": "A yes/no."
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "A whole number."
+          },
+          {
+            "type": "number",
+            "format": "double",
+            "description": "A number that is not whole."
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "A multi-select's chosen values."
+          }
+        ],
+        "description": "A value ACP accepts in an elicitation answer.\n\nMirrors ACP's `ElicitationContentValue` so that the contract a caller\nanswers against is the closed union ACP will accept, rather than arbitrary\nJSON narrowed on the way out. An object, a null, or a mixed array is\nrefused when the request is deserialized - where the caller learns of it -\ninstead of at send time, when the elicitation slot has already been\nreleased."
+      },
+      "ElicitationRequestId": {
+        "oneOf": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "A numeric JSON-RPC id. Specta refuses `i64` (it does not fit a JS\nnumber); agents count their requests from zero, so `i32` is the\nhonest TypeScript face."
+          },
+          {
+            "type": "string",
+            "description": "A string JSON-RPC id."
+          }
+        ],
+        "description": "The JSON-RPC id of an agent's `elicitation/create` request, carried whole\nso the answer echoes exactly what the agent sent.\n\nAgents pick these, not us: Claude Code counts from `0`, others use\nstrings. `null` is not a legal id for a request that expects a response,\nso it is not representable here."
+      },
       "ExternalSessionResponse": {
         "type": "object",
         "description": "The provider-side identity of an externally-served session.",
@@ -946,6 +1631,44 @@
           "url": {
             "type": ["string", "null"],
             "description": "The agent's page on the provider's site, for a client to link out to."
+          }
+        }
+      },
+      "LoadAgentModelsRequest": {
+        "type": "object",
+        "description": "HTTP request selecting one provider to probe.",
+        "required": ["harness"],
+        "properties": {
+          "harness": {
+            "$ref": "#/components/schemas/ModelHarnessDto",
+            "description": "Provider to probe."
+          },
+          "harnessId": {
+            "type": ["string", "null"],
+            "format": "uuid",
+            "description": "Required for macrod and forbidden for other targets."
+          }
+        }
+      },
+      "LoadAgentModelsResponse": {
+        "type": "object",
+        "description": "Successful model-discovery response.",
+        "required": ["status", "models"],
+        "properties": {
+          "currentModel": {
+            "type": ["string", "null"],
+            "description": "Current provider model, if model selection is available."
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentModelDto"
+            },
+            "description": "Ordered model catalog."
+          },
+          "status": {
+            "$ref": "#/components/schemas/AgentModelsStatusDto",
+            "description": "Model-selection availability."
           }
         }
       },
@@ -966,6 +1689,68 @@
           "direction": {
             "$ref": "#/components/schemas/LogDirectionDto",
             "description": "Which way the frame travelled."
+          }
+        }
+      },
+      "ModelHarnessDto": {
+        "type": "string",
+        "description": "Harness names accepted by the model discovery endpoint.",
+        "enum": ["in-memory", "cursor", "macrod"]
+      },
+      "PreviewAgentSessionsRequest": {
+        "type": "object",
+        "description": "Request body for `POST /agent-sessions/preview`.\n\nClients serialize this, so both derives are used.",
+        "required": ["sessionIds"],
+        "properties": {
+          "sessionIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The sessions to preview. Duplicates are collapsed server-side; at most\n[`MAX_PREVIEW_SESSION_IDS`](crate::domain::model::MAX_PREVIEW_SESSION_IDS)\ndistinct ids per request."
+          }
+        }
+      },
+      "PreviewAgentSessionsResponse": {
+        "type": "object",
+        "description": "Response body for `POST /agent-sessions/preview`: one entry per distinct\nrequested id, in no particular order.\n\nClients deserialize this, so both derives are used.",
+        "required": ["previews"],
+        "properties": {
+          "previews": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentSessionPreviewDto"
+            },
+            "description": "What the caller may see of each requested session."
+          }
+        }
+      },
+      "QueuedActionDto": {
+        "type": "object",
+        "description": "One action waiting in a session's queue.\n\nClients deserialize this, so both derives are used.",
+        "required": ["actionId", "kind", "createdAt"],
+        "properties": {
+          "actionId": {
+            "$ref": "#/components/schemas/AgentActionId",
+            "description": "The id the action was accepted under."
+          },
+          "actorUserId": {
+            "type": ["string", "null"],
+            "description": "The user who queued it, absent when a bot acted on nobody's behalf."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When it was accepted."
+          },
+          "kind": {
+            "type": "string",
+            "description": "What kind of action waits - `prompt` or `compact`; only\nturn-occupying actions are ever queued."
+          },
+          "prompt": {
+            "type": ["string", "null"],
+            "description": "The prompt's raw text, present for prompts only. What an edit\nreplaces."
           }
         }
       },
@@ -1056,6 +1841,24 @@
           }
         ],
         "description": "Transport representation of a session's status, mirroring\n[`SessionStatus`]."
+      },
+      "WithAgentSessionId": {
+        "type": "object",
+        "description": "Just a session id, for the preview variants that carry nothing else.\n\nClients deserialize this, so both derives are used.",
+        "required": ["id"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The session id."
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   },
@@ -1063,6 +1866,10 @@
     {
       "name": "agent-sessions",
       "description": "Agent sessions"
+    },
+    {
+      "name": "agent-models",
+      "description": "Fresh provider model discovery"
     }
   ]
 }

@@ -16,9 +16,9 @@
 //! sniffing the id. Unroutable ids fall back to the default model.
 
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::{Arc, OnceLock};
 
-use ai_toolset::{RequestContext, SearchableTool};
+use ai_toolset::RequestContext;
 use ai_usage::{UsageContext, UsageRecorder};
 use conation_env_var::{env_var, maybe_env_var};
 use futures::StreamExt;
@@ -35,7 +35,7 @@ use super::anthropic::AnthropicModel;
 use super::openai::{OpenAiChatCompletionsModel, OpenAiResponsesModel};
 use super::types::Model;
 use crate::error::AgentError;
-use crate::hook::{RegisterFn, StreamBridge, ToolRouter};
+use crate::hook::{BridgeInputs, StreamBridge};
 use crate::stream::{ChatCompletionStream, StreamPart};
 
 env_var! {
@@ -227,9 +227,7 @@ impl ProviderAgent {
         prompt: Message,
         history: Vec<Message>,
         max_turns: usize,
-        routing: ToolRouter,
-        loaded_buffer: Arc<Mutex<Vec<SearchableTool>>>,
-        register_loaded: RegisterFn,
+        inputs: BridgeInputs,
         recorder: Arc<dyn UsageRecorder>,
         usage_ctx: UsageContext,
         model: String,
@@ -242,9 +240,7 @@ impl ProviderAgent {
                     prompt,
                     history,
                     max_turns,
-                    routing,
-                    loaded_buffer,
-                    register_loaded,
+                    inputs,
                     recorder,
                     usage_ctx,
                     model,
@@ -258,9 +254,7 @@ impl ProviderAgent {
                     prompt,
                     history,
                     max_turns,
-                    routing,
-                    loaded_buffer,
-                    register_loaded,
+                    inputs,
                     recorder,
                     usage_ctx,
                     model,
@@ -274,9 +268,7 @@ impl ProviderAgent {
                     prompt,
                     history,
                     max_turns,
-                    routing,
-                    loaded_buffer,
-                    register_loaded,
+                    inputs,
                     recorder,
                     usage_ctx,
                     model,
@@ -303,9 +295,7 @@ impl ProviderAgent {
                         prompt,
                         history,
                         max_turns,
-                        routing,
-                        loaded_buffer,
-                        register_loaded,
+                        inputs,
                         recorder,
                         usage_ctx,
                         model,
@@ -710,9 +700,7 @@ async fn drive_stream<M>(
     prompt: Message,
     history: Vec<Message>,
     max_turns: usize,
-    routing: ToolRouter,
-    loaded_buffer: Arc<Mutex<Vec<SearchableTool>>>,
-    register_loaded: RegisterFn,
+    inputs: BridgeInputs,
     recorder: Arc<dyn UsageRecorder>,
     usage_ctx: UsageContext,
     model: String,
@@ -723,9 +711,7 @@ where
     M::StreamingResponse: GetTokenUsage + Send + Sync,
 {
     let (bridge, mut rx) = StreamBridge::channel(
-        routing,
-        loaded_buffer,
-        register_loaded,
+        inputs,
         request_context.searchable_tools.clone(),
         request_context.cancel.clone(),
     );
@@ -827,9 +813,7 @@ pub(crate) trait DynStreamAgent: Send + Sync {
         prompt: Message,
         history: Vec<Message>,
         max_turns: usize,
-        routing: ToolRouter,
-        loaded_buffer: Arc<Mutex<Vec<SearchableTool>>>,
-        register_loaded: RegisterFn,
+        inputs: BridgeInputs,
         recorder: Arc<dyn UsageRecorder>,
         usage_ctx: UsageContext,
         model: String,
@@ -850,9 +834,7 @@ where
         prompt: Message,
         history: Vec<Message>,
         max_turns: usize,
-        routing: ToolRouter,
-        loaded_buffer: Arc<Mutex<Vec<SearchableTool>>>,
-        register_loaded: RegisterFn,
+        inputs: BridgeInputs,
         recorder: Arc<dyn UsageRecorder>,
         usage_ctx: UsageContext,
         model: String,
@@ -865,9 +847,7 @@ where
             prompt,
             history,
             max_turns,
-            routing,
-            loaded_buffer,
-            register_loaded,
+            inputs,
             recorder,
             usage_ctx,
             model,

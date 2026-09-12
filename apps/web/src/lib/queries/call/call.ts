@@ -32,7 +32,7 @@ export function useActiveCallsQuery() {
       await throwOnErr(() => callServiceClient.getActiveCalls()),
     placeholderData: [] as ActiveCallSummary[],
     refetchInterval: 30_000,
-    enabled: ENABLE_CALLS(),
+    enabled: ENABLE_CALLS,
   }));
 }
 

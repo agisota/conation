@@ -1,6 +1,8 @@
+import { toast } from '@core/component/Toast/Toast';
 import {
   ENABLE_BEARER_TOKEN_AUTH,
-  ENABLE_GRAPHQL_SOUP,
+  enableGraphqlSoup,
+  isFeatureEnabled,
 } from '@core/constant/featureFlags';
 import { SERVER_HOSTS } from '@core/constant/servers';
 import { fetchToken } from '@core/util/fetchWithToken';
@@ -19,7 +21,8 @@ import {
 import { registerCacheHost } from '@graphql-cache/lifecycle';
 import { getBrowserTursoCacheRolloutDecision } from '@graphql-cache/rollout';
 import { getOrCreateCacheScope } from '@graphql-cache/scope';
-import { getConationApiToken } from '@service-auth/fetch';
+import { notificationStateFromGraphql } from '@notifications/notification-state';
+import { getMacroApiToken } from '@service-auth/fetch';
 import type { ApiUserNotification } from '@service-notification/generated/schemas/apiUserNotification';
 import type { ChannelType } from '@service-notification/generated/schemas/channelType';
 import type { GithubPrCheckRunState } from '@service-notification/generated/schemas/githubPrCheckRunState';
@@ -39,7 +42,7 @@ import {
   type RequestPolicy,
   subscriptionExchange,
 } from '@urql/core';
-import { parse, print, visit } from 'graphql';
+import { type DocumentNode, parse, print, visit } from 'graphql';
 import {
   createClient as createGraphqlWsClient,
   type Client as GraphqlWsClient,
@@ -88,7 +91,7 @@ async function authorizedDssGraphqlFetch(
   init?: RequestInit
 ): Promise<Response> {
   if (ENABLE_BEARER_TOKEN_AUTH) {
-    const apiToken = await getConationApiToken();
+    const apiToken = await getMacroApiToken();
     return await platformFetch(input, {
       ...init,
       headers: mergeHeaders(init?.headers, {
@@ -115,6 +118,48 @@ let soupProjectionServerSupported = true;
 /** Whether this session has confirmed that the server accepts projection fields. */
 export function graphqlSoupProjectionSupported(): boolean {
   return soupProjectionServerSupported;
+}
+
+function stripGraphqlSoupClientDirectives(
+  document: DocumentNode
+): DocumentNode {
+  return visit(document, {
+    Directive(node) {
+      return node.name.value === 'cacheOnly' ? null : undefined;
+    },
+  });
+}
+
+/** Removes client-only directives from a document before network transport. */
+export function graphqlSoupTransportDocument(query: string): string {
+  return print(stripGraphqlSoupClientDirectives(parse(query)));
+}
+
+function graphqlSoupTransportRequest(
+  init: RequestInit | undefined
+): RequestInit | undefined {
+  if (typeof init?.body !== 'string') return init;
+  try {
+    const payload: unknown = JSON.parse(init.body);
+    if (
+      payload === null ||
+      typeof payload !== 'object' ||
+      !('query' in payload) ||
+      typeof payload.query !== 'string' ||
+      !payload.query.includes('@cacheOnly')
+    ) {
+      return init;
+    }
+    return {
+      ...init,
+      body: JSON.stringify({
+        ...payload,
+        query: graphqlSoupTransportDocument(payload.query),
+      }),
+    };
+  } catch {
+    return init;
+  }
 }
 
 /** Removes only the additive cache metadata field for a legacy-server retry. */
@@ -176,7 +221,9 @@ async function isLegacyProjectionValidationError(
           typeof error === 'object' &&
           'message' in error &&
           typeof error.message === 'string' &&
-          /Cannot query field ["']cacheProjection["']/.test(error.message)
+          /(?:Cannot query|Unknown) field ["']cacheProjection["']/.test(
+            error.message
+          )
       )
     );
   } catch {
@@ -188,8 +235,9 @@ export async function dssGraphqlFetch(
   input: RequestInfo | URL,
   init?: RequestInit
 ): Promise<Response> {
-  const response = await authorizedDssGraphqlFetch(input, init);
-  const legacyInit = legacyProjectionRequest(init);
+  const transportInit = graphqlSoupTransportRequest(init);
+  const response = await authorizedDssGraphqlFetch(input, transportInit);
+  const legacyInit = legacyProjectionRequest(transportInit);
   if (
     legacyInit === undefined ||
     !(await isLegacyProjectionValidationError(response))
@@ -218,7 +266,7 @@ function createGraphqlSoupWebSocketClient(): GraphqlWsClient {
   const resolveWebSocketUrl = createGraphqlSoupWebSocketUrlResolver({
     dssHost,
     bearerTokenAuth: ENABLE_BEARER_TOKEN_AUTH,
-    getApiToken: getConationApiToken,
+    getApiToken: getMacroApiToken,
     refreshCookieAuth: async () => {
       const result = await fetchToken();
       if (result.isErr()) {
@@ -237,7 +285,7 @@ function graphqlSoupSubscriptionExchange(websocketClient: GraphqlWsClient) {
   return subscriptionExchange({
     forwardSubscription(payload, request) {
       const graphqlWsPayload = {
-        query: print(request.query),
+        query: print(stripGraphqlSoupClientDirectives(request.query)),
         operationName: payload.operationName,
         variables: payload.variables,
         extensions: payload.extensions,
@@ -307,7 +355,7 @@ function fallbackAfterInitializationFailure(): void {
   cachedCacheCleanup = undefined;
   cachedCacheHost = undefined;
   cacheInitializationFailed = true;
-  cachedClient = ENABLE_GRAPHQL_SOUP()
+  cachedClient = isFeatureEnabled(enableGraphqlSoup)
     ? getUncachedRealtimeClient()
     : graphqlSoupClient;
   browserCacheClientActivated = false;
@@ -340,7 +388,7 @@ export function getGraphqlSoupClient(): Client {
     return cachedClient;
   const rollout = getBrowserTursoCacheRolloutDecision();
   if (!rollout.enabled) {
-    return ENABLE_GRAPHQL_SOUP()
+    return isFeatureEnabled(enableGraphqlSoup)
       ? getUncachedRealtimeClient()
       : graphqlSoupClient;
   }
@@ -362,6 +410,9 @@ export function getGraphqlSoupClient(): Client {
     const onInitializationError = (error: Error) => {
       if (!host || cachedCacheHost !== host) return;
       fallbackAfterInitializationFailure();
+      toast.failure('Local cache unavailable', {
+        subtext: 'Macro will continue without local caching for this session.',
+      });
       console.warn(
         'graphql cache async init failed; using uncached client',
         error
@@ -420,7 +471,7 @@ export function getGraphqlSoupClient(): Client {
       cachedCacheCleanup = undefined;
       cacheInitializationFailed = true;
       console.warn('graphql cache init failed; using uncached client', error);
-      return ENABLE_GRAPHQL_SOUP()
+      return isFeatureEnabled(enableGraphqlSoup)
         ? getUncachedRealtimeClient()
         : graphqlSoupClient;
     }
@@ -581,6 +632,27 @@ function toNotificationDocumentSubType(
   return subType
     ? ({ type: subType.toLowerCase() } as NotificationDocumentSubType)
     : null;
+}
+
+/** The flattened session block every agent-session kind carries. */
+function agentSessionContent(session: {
+  sessionId: string;
+  sessionName: string;
+  botId: string;
+  botName: string;
+  channelId?: string | null;
+  threadId?: string | null;
+  announcementMessageId?: string | null;
+}) {
+  return {
+    sessionId: session.sessionId,
+    sessionName: session.sessionName,
+    botId: session.botId,
+    botName: session.botName,
+    channelId: session.channelId ?? undefined,
+    threadId: session.threadId ?? undefined,
+    announcementMessageId: session.announcementMessageId ?? undefined,
+  };
 }
 
 type NotifEventMember<Tag extends NotifEvent['tag']> = Extract<
@@ -1035,6 +1107,44 @@ function mapGraphqlNotificationMetadata(
           },
         }) satisfies NotifEventMember<'github_pr_review'>
     )
+    .with(
+      { __typename: 'GraphqlAgentSessionSettledMetadata' },
+      (metadata) =>
+        ({
+          tag: 'agent_session_settled',
+          content: {
+            ...agentSessionContent(metadata.agentSessionSettledSession),
+            turn: metadata.agentSessionSettledTurn,
+            actor: metadata.agentSessionSettledActor ?? undefined,
+            stopReason: metadata.agentSessionSettledStopReason,
+            excerpt: metadata.agentSessionSettledExcerpt ?? undefined,
+          },
+        }) satisfies NotifEventMember<'agent_session_settled'>
+    )
+    .with(
+      { __typename: 'GraphqlAgentSessionWaitingForInputMetadata' },
+      (metadata) =>
+        ({
+          tag: 'agent_session_waiting_for_input',
+          content: {
+            ...agentSessionContent(metadata.agentSessionWaitingForInputSession),
+            turn: metadata.agentSessionWaitingForInputTurn,
+            question: metadata.agentSessionWaitingForInputQuestion,
+          },
+        }) satisfies NotifEventMember<'agent_session_waiting_for_input'>
+    )
+    .with(
+      { __typename: 'GraphqlAgentSessionMentionedMetadata' },
+      (metadata) =>
+        ({
+          tag: 'agent_session_mentioned',
+          content: {
+            ...agentSessionContent(metadata.agentSessionMentionedSession),
+            mentionedBy: metadata.agentSessionMentionedMentionedBy ?? undefined,
+            actionId: metadata.agentSessionMentionedActionId,
+          },
+        }) satisfies NotifEventMember<'agent_session_mentioned'>
+    )
     .exhaustive();
 }
 
@@ -1057,7 +1167,7 @@ export function mapGraphqlNotification(
     entity_type:
       record.entityType.toLowerCase() as ApiUserNotification['entity_type'],
     sent: record.sent,
-    done: record.done,
+    state: notificationStateFromGraphql(record.state),
     created_at: record.createdAt,
     viewed_at: record.viewedAt ?? undefined,
     updated_at: record.updatedAt,
@@ -1133,6 +1243,29 @@ export function mapGraphqlSoupItem(item: GraphqlSoupItem): SoupApiItem | null {
         }) as SoupApiItem
     )
     .with(
+      { __typename: 'GraphqlSoupAgentSession' },
+      (entity) =>
+        ({
+          tag: 'agentSession',
+          frecency_score: frecency,
+          is_favorited: entity.isFavorited,
+          data: {
+            id: entity.id,
+            name: entity.sessionName,
+            ownerId: entity.ownerId,
+            botId: entity.botId,
+            bot: entity.bot,
+            threadId: entity.threadId,
+            status: entity.status,
+            createdAt: entity.createdAt,
+            updatedAt: entity.updatedAt,
+            viewedAt: entity.viewedAt,
+            properties: mapGraphqlProperties(entity.properties),
+            notifications: mapGraphqlNotifications(entity.notifications),
+          },
+        }) as SoupApiItem
+    )
+    .with(
       { __typename: 'GraphqlSoupChat' },
       (entity) =>
         ({
@@ -1142,6 +1275,7 @@ export function mapGraphqlSoupItem(item: GraphqlSoupItem): SoupApiItem | null {
           data: {
             id: entity.id,
             name: entity.chatName,
+            model: entity.model,
             ownerId: entity.ownerId,
             projectId: entity.projectId ?? undefined,
             isPersistent: entity.isPersistent,
@@ -1195,6 +1329,7 @@ export function mapGraphqlSoupItem(item: GraphqlSoupItem): SoupApiItem | null {
             isRead: entity.isRead,
             isDraft: entity.isDraft,
             isImportant: entity.isImportant,
+            isSignal: entity.isSignal,
             projectId: entity.projectId ?? undefined,
             sortTs: entity.sortTs,
             createdAt: entity.createdAt,
@@ -1499,6 +1634,8 @@ export function mapGraphqlGroupedSoupPage(
 
 export type GraphqlSoupHydrationPage = {
   nextCursor: string | null;
+  /** Explicit membership evidence returned by a complete-scope backfill query. */
+  entityIds?: string[];
 };
 
 /**
@@ -1534,7 +1671,15 @@ export async function hydrateGraphqlSoup<
   if (!result.data) {
     throw new Error('GraphQL Soup hydration returned no cursor projection');
   }
-  return { nextCursor: result.data.user.soup.nextCursor };
+  const soup = result.data.user.soup as typeof result.data.user.soup & {
+    scopeIds?: Array<{ id: string }>;
+  };
+  return {
+    nextCursor: soup.nextCursor,
+    ...(soup.scopeIds
+      ? { entityIds: soup.scopeIds.map((item) => item.id) }
+      : {}),
+  };
 }
 
 /** Executes any Soup-shaped query and maps its result to the shared page type. */

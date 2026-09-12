@@ -3,9 +3,10 @@ import {
   EventAttendeesSection,
   EventDetails,
 } from '@app/features/calendar/components/EventDetails';
-import type {
-  CalendarEvent,
-  CalendarTimeFormat,
+import {
+  type CalendarEvent,
+  type CalendarTimeFormat,
+  reminderCalendarIdOf,
 } from '@app/features/calendar/types';
 import { t } from '@app/lib/i18n';
 import { MobileDrawer } from '@components/app/mobile/MobileDrawer';
@@ -52,8 +53,9 @@ interface SelectedEventDetailsProps {
 export function SelectedEventDetails(props: SelectedEventDetailsProps) {
   const calendarsQuery = useVisibleCalendarsQuery();
   const defaultReminders = (event: CalendarEvent) =>
-    calendarsQuery.data?.find((calendar) => calendar.id === event.calendarId)
-      ?.defaultReminders;
+    calendarsQuery.data?.find(
+      (calendar) => calendar.id === reminderCalendarIdOf(event)
+    )?.defaultReminders;
   const popoverSelection = createMemo(
     () => {
       const event = props.event();
@@ -308,6 +310,7 @@ function DeleteEventDialog(
     const effectiveScope = isRecurring() ? scope() : 'all';
     deleteEvent.mutate({
       eventId: props.event.eventId,
+      calendarId: props.event.calendarId,
       scope: effectiveScope,
       recurrenceId:
         effectiveScope === 'all'
@@ -422,6 +425,14 @@ function EventDetailsPopover(props: EventDetailsPopoverProps) {
                 event.preventDefault();
               }
             }}
+            onOpenAutoFocus={(event) => {
+              // Aims can arrive while the keyboard is elsewhere — arrow-key
+              // scanning in the inbox previews a calendar notification here,
+              // and auto-focusing the popover would silence the list's
+              // navigation hotkeys (hotkey scope follows focus). Escape
+              // still closes it from anywhere via the document listener.
+              event.preventDefault();
+            }}
             onFocusOutside={(event) => {
               // Deep links open this popover while their freshly-opened
               // split is still claiming focus; that focus movement lands
@@ -439,7 +450,7 @@ function EventDetailsPopover(props: EventDetailsPopoverProps) {
             }}
           >
             <Popover.Arrow class="fill-surface" />
-            <div class="w-fit min-w-[min(20rem,calc(100vw-2rem))] max-w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-xl bg-surface text-ink shadow-menu ring ring-edge-muted">
+            <div class="w-fit min-w-[min(20rem,calc(100vw-2rem))] max-w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-xl glass bg-menu-glass text-ink">
               <Popover.Title class="sr-only">{props.event.title}</Popover.Title>
               <div class="flex items-center justify-end gap-1 px-2 pt-2">
                 <Button

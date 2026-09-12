@@ -1,4 +1,4 @@
-import { EntityActivitySectionConditional } from '@app/features/activity/EntityActivitySection';
+import { EntityActivitySectionConditional } from '@app/features/activity/views/entity-activity-section';
 import { EntityPropertiesSection } from '@app/features/property/side-panel/properties';
 import { t } from '@app/lib/i18n';
 import { useCallContextOptional } from '@channel/Call/CallContext';
