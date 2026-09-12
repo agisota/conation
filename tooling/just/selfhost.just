@@ -34,6 +34,22 @@ selfhost-smoke:
         SELFHOST_SMOKE_REQUEST_TIMEOUT_SECONDS="${SELFHOST_SMOKE_REQUEST_TIMEOUT_SECONDS-}" \
         /usr/bin/bash tooling/scripts/selfhost-smoke.sh
 
+# Diagnose an already-running local stack without fail-fast: required HTTP and
+# Compose containers must pass; FusionAuth/Mailpit/Stalwart are warnings.
+selfhost-diagnose:
+    /usr/bin/env -i \
+        PATH=/usr/bin:/bin \
+        SELFHOST_PROXY_ORIGIN="${SELFHOST_PROXY_ORIGIN-}" \
+        SELFHOST_FRONTEND_ORIGIN="${SELFHOST_FRONTEND_ORIGIN-}" \
+        SELFHOST_LOCALSTACK_ORIGIN="${SELFHOST_LOCALSTACK_ORIGIN-}" \
+        SELFHOST_FUSIONAUTH_ORIGIN="${SELFHOST_FUSIONAUTH_ORIGIN-}" \
+        SELFHOST_MAILPIT_ORIGIN="${SELFHOST_MAILPIT_ORIGIN-}" \
+        SELFHOST_STALWART_ORIGIN="${SELFHOST_STALWART_ORIGIN-}" \
+        SELFHOST_STACK_PROJECT="${SELFHOST_STACK_PROJECT-}" \
+        SELFHOST_DIAGNOSE_CONNECT_TIMEOUT_SECONDS="${SELFHOST_DIAGNOSE_CONNECT_TIMEOUT_SECONDS-}" \
+        SELFHOST_DIAGNOSE_REQUEST_TIMEOUT_SECONDS="${SELFHOST_DIAGNOSE_REQUEST_TIMEOUT_SECONDS-}" \
+        /usr/bin/bash tooling/scripts/stack-diagnose.sh
+
 # Stop the supported stack while retaining its persistent volumes.
 selfhost-down:
     just stack down --keep-data
@@ -185,6 +201,7 @@ selfhost-check ENV_FILE=".env.selfhost.example":
     bash tooling/scripts/tests/provision-conation-stalwart-mailboxes.test.sh
     bash tooling/scripts/tests/provision-conation-support-users.test.sh
     bash tooling/scripts/tests/preflight-conation-support-accounts.test.sh
+    bash tooling/scripts/tests/stack-diagnose.test.sh
     just selfhost-overlay-check {{ quote(ENV_FILE) }}
 
 # Public DNS, TLS, and Internet mail require an operator security design and
