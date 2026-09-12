@@ -16,7 +16,7 @@ use conation_user_id::user_id::MacroUserIdStr;
 use dashmap::DashMap;
 
 use crate::domain::agent::{AgentState, serve};
-use crate::domain::engine::TurnEngine;
+use crate::domain::engine::{AgentIdentity, TurnEngine};
 use crate::domain::replay::{FrameSource, replay_history};
 use crate::domain::session::{SessionState, SessionStore};
 
@@ -32,6 +32,10 @@ pub struct SessionFacts {
     pub owner: MacroUserIdStr<'static>,
     /// Model id stamped on the session row.
     pub model: String,
+    /// The bot's display name and `@` handle, folded into every turn's
+    /// system prompt so the model knows who it is. Looked up from the
+    /// session's bot at attach; `None` only in tests that do not name one.
+    pub identity: Option<AgentIdentity>,
     /// Instructions stamped on the session row, folded into every turn's
     /// system prompt. Immutable for the session's life, so a reattach that
     /// finds a live conversation leaves what is stored alone.
@@ -96,6 +100,7 @@ impl InMemAgentManager {
             self.store.entry(facts.id).or_insert_with(|| SessionState {
                 acp_session_id: facts.acp_session_id.clone(),
                 model: facts.model.clone(),
+                identity: facts.identity.clone(),
                 instructions: facts.instructions.clone(),
                 history,
             });

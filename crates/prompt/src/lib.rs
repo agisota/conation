@@ -6,6 +6,7 @@
 #![deny(missing_docs)]
 
 pub mod about_conation;
+pub mod agent_identity;
 pub mod agent_session;
 pub mod channel_mention;
 pub mod citations;
@@ -160,6 +161,13 @@ mod tests {
         const TAG: &str = r#"<m-document-mention>{"documentId":"{id}","documentName":"","blockName":"md","blockParams":{}}</m-document-mention>"#;
         assert!(mentions::PROMPT.instructions.contains(TAG));
         assert!(document_content_links::PROMPT.instructions.contains(TAG));
+    }
+
+    #[test]
+    fn agent_identity_names_the_agent_before_the_session_preamble() {
+        let identity = agent_identity::render("Grunk", "grunk");
+        assert!(identity.starts_with("# Identity\n"));
+        assert!(identity.contains("You are Grunk (@grunk)."));
     }
 
     #[test]
