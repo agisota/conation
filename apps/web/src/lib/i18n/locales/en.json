@@ -494,6 +494,7 @@
   "editor.document.copyLink": "Copy link",
   "editor.emoji.noResults": "No emoji found",
   "editor.error.emptySource": "No document content could be found.",
+  "editor.error.unknown": "An error occurred while opening the document.",
   "editor.error.invalidJson": "Parse error. Invalid document JSON.",
   "editor.error.stagingVersionMismatch": "This document was updated on an incompatible staging version. Open it on staging to continue editing.",
   "editor.error.versionMismatch.mobile": "Close and reopen the app to edit this document. It may have been updated using a newer version of Conation.",

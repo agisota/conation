@@ -36,5 +36,8 @@ const MarkdownEditorErrorDescriptions: Record<
 export const getErrorDescription = (
   errorType: MarkdownEditorErrors
 ): string => {
-  return MarkdownEditorErrorDescriptions[errorType]();
+  return (
+    MarkdownEditorErrorDescriptions[errorType]?.() ??
+    t('editor.error.unknown')
+  );
 };

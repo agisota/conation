@@ -494,6 +494,7 @@
   "editor.document.copyLink": "Копировать ссылку",
   "editor.emoji.noResults": "Эмодзи не найдены",
   "editor.error.emptySource": "Не удалось найти содержимое документа.",
+  "editor.error.unknown": "Произошла ошибка при открытии документа.",
   "editor.error.invalidJson": "Ошибка разбора: некорректный JSON документа.",
   "editor.error.stagingVersionMismatch": "Документ обновлён в несовместимой версии staging-среды. Откройте его в staging-среде, чтобы продолжить редактирование.",
   "editor.error.versionMismatch.mobile": "Закройте и снова откройте приложение, чтобы редактировать документ. Возможно, он был обновлён в более новой версии Conation.",
