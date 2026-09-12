@@ -113,10 +113,18 @@ impl DaytonaClient {
     #[must_use]
     pub fn new(api_url: String, api_key: DaytonaApiKey) -> Self {
         Self {
-            http: reqwest::Client::new(),
+            http: reqwest::Client::builder()
+                .connect_timeout(Duration::from_secs(10))
+                .build()
+                .expect("reqwest client"),
             base: api_url.trim_end_matches('/').to_owned(),
             api_key,
         }
+    }
+
+    /// Whether this client has a credential and can talk to Daytona.
+    pub(crate) fn is_armed(&self) -> bool {
+        !self.api_key.expose().trim().is_empty()
     }
 
     /// Create a sandbox from a snapshot and return its Daytona id.

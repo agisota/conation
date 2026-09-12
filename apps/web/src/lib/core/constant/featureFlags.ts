@@ -158,8 +158,7 @@ export function ENABLE_EMAIL_SIGNATURES(): boolean {
 // global search. PostHog-gated (currently targeted at the Macro team in prod)
 // with a dev-mode default; override with VITE_ENABLE_CRM.
 export const ENABLE_CRM_FLAG = 'enable-crm';
-export const ENABLE_CRM_OVERRIDE =
-  resolveFeatureFlag('ENABLE_CRM', DEV_MODE_ENV) || undefined;
+export const ENABLE_CRM_OVERRIDE = getFeatureFlagOverride('ENABLE_CRM') ?? true;
 
 /**
  * Non-reactive check for imperative call sites. For reactive UI, prefer
@@ -167,7 +166,7 @@ export const ENABLE_CRM_OVERRIDE =
  */
 export function ENABLE_CRM(): boolean {
   if (ENABLE_CRM_OVERRIDE !== undefined) return ENABLE_CRM_OVERRIDE;
-  return analytics.posthog.isFeatureEnabled(ENABLE_CRM_FLAG) ?? false;
+  return analytics.posthog.isFeatureEnabled(ENABLE_CRM_FLAG) ?? true;
 }
 
 // Reminders: the "Remind me" entry in the command menu, the soup
@@ -185,13 +184,7 @@ export const ENABLE_REMINDERS_FLAG = 'enable-reminders';
 // and falling through to PostHog.
 const REMINDERS_ENV_OVERRIDE = import.meta.env.VITE_ENABLE_REMINDERS;
 export const ENABLE_REMINDERS_OVERRIDE: boolean | undefined =
-  REMINDERS_ENV_OVERRIDE === 'true'
-    ? true
-    : REMINDERS_ENV_OVERRIDE === 'false'
-      ? false
-      : DEV_MODE_ENV
-        ? true
-        : undefined;
+  REMINDERS_ENV_OVERRIDE !== 'false';
 
 /**
  * Non-reactive check for imperative call sites. For reactive UI, prefer
@@ -201,7 +194,7 @@ export function ENABLE_REMINDERS(): boolean {
   if (ENABLE_REMINDERS_OVERRIDE !== undefined) {
     return ENABLE_REMINDERS_OVERRIDE;
   }
-  return analytics.posthog.isFeatureEnabled(ENABLE_REMINDERS_FLAG) ?? false;
+  return analytics.posthog.isFeatureEnabled(ENABLE_REMINDERS_FLAG) ?? true;
 }
 
 export const ENABLE_BLOCK_IN_BLOCK = resolveFeatureFlag(
@@ -470,7 +463,7 @@ export const ENABLE_TASK_DUPLICATES_OVERRIDE = DEV_MODE_ENV ? true : undefined;
 // dev-mode default; override with VITE_ENABLE_SNIPPETS.
 export const ENABLE_SNIPPETS_FLAG = 'enable-snippets';
 export const ENABLE_SNIPPETS_OVERRIDE =
-  resolveFeatureFlag('ENABLE_SNIPPETS', DEV_MODE_ENV) || undefined;
+  getFeatureFlagOverride('ENABLE_SNIPPETS') ?? true;
 
 /** Non-reactive check for imperative call sites (e.g. editor key handlers). */
 export function ENABLE_SNIPPETS(): boolean {
@@ -478,7 +471,7 @@ export function ENABLE_SNIPPETS(): boolean {
     return ENABLE_SNIPPETS_OVERRIDE;
   }
 
-  return analytics.posthog.isFeatureEnabled(ENABLE_SNIPPETS_FLAG) ?? false;
+  return analytics.posthog.isFeatureEnabled(ENABLE_SNIPPETS_FLAG) ?? true;
 }
 
 export const ENABLE_SUPPORTED_SOUP_FOREIGN_ENTITIES_FLAG =
@@ -598,8 +591,7 @@ export const ENABLE_ONBOARDING_V4_OVERRIDE =
 // VITE_ENABLE_CALENDAR_UI.
 export const ENABLE_CALENDAR_UI_FLAG = 'enable-calendar-ui';
 export const ENABLE_CALENDAR_UI_OVERRIDE =
-  getFeatureFlagOverride('ENABLE_CALENDAR_UI') ??
-  (DEV_MODE_ENV ? true : undefined);
+  getFeatureFlagOverride('ENABLE_CALENDAR_UI') ?? true;
 
 /**
  * Non-reactive check for imperative call sites (notification navigation).
@@ -609,7 +601,7 @@ export function ENABLE_CALENDAR_UI(): boolean {
   if (ENABLE_CALENDAR_UI_OVERRIDE !== undefined) {
     return ENABLE_CALENDAR_UI_OVERRIDE;
   }
-  return analytics.posthog.isFeatureEnabled(ENABLE_CALENDAR_UI_FLAG) ?? false;
+  return analytics.posthog.isFeatureEnabled(ENABLE_CALENDAR_UI_FLAG) ?? true;
 }
 
 // Calendar event search UI: the Search view's Calendar type (and calendar
@@ -619,8 +611,7 @@ export function ENABLE_CALENDAR_UI(): boolean {
 // override with VITE_ENABLE_CALENDAR_SEARCH_UI.
 export const ENABLE_CALENDAR_SEARCH_UI_FLAG = 'enable-calendar-search-ui';
 export const ENABLE_CALENDAR_SEARCH_UI_OVERRIDE =
-  getFeatureFlagOverride('ENABLE_CALENDAR_SEARCH_UI') ??
-  (DEV_MODE_ENV ? true : undefined);
+  getFeatureFlagOverride('ENABLE_CALENDAR_SEARCH_UI') ?? true;
 
 /**
  * Non-reactive check for imperative call sites (soup filter presets). Gated by
@@ -634,7 +625,7 @@ export function ENABLE_CALENDAR_SEARCH_UI(): boolean {
     return ENABLE_CALENDAR_SEARCH_UI_OVERRIDE;
   }
   return (
-    analytics.posthog.isFeatureEnabled(ENABLE_CALENDAR_SEARCH_UI_FLAG) ?? false
+    analytics.posthog.isFeatureEnabled(ENABLE_CALENDAR_SEARCH_UI_FLAG) ?? true
   );
 }
 
@@ -679,8 +670,7 @@ export const ENABLE_TAG_TEAM_SHARING_OVERRIDE =
 export const ENABLE_ENTITY_ACTIVITY_SECTION_FLAG =
   'enable-entity-activity-section';
 export const ENABLE_ENTITY_ACTIVITY_SECTION_OVERRIDE =
-  getFeatureFlagOverride('ENABLE_ENTITY_ACTIVITY_SECTION') ??
-  (DEV_MODE_ENV ? true : undefined);
+  getFeatureFlagOverride('ENABLE_ENTITY_ACTIVITY_SECTION') ?? true;
 
 // The Activity view: the user's own activity feed from the GraphQL activity
 // log, replacing the retired soup/notification-derived timeline. Gates the
@@ -689,8 +679,7 @@ export const ENABLE_ENTITY_ACTIVITY_SECTION_OVERRIDE =
 // VITE_ENABLE_ACTIVITY_FEED.
 export const ENABLE_ACTIVITY_FEED_FLAG = 'enable-activity-feed';
 export const ENABLE_ACTIVITY_FEED_OVERRIDE =
-  getFeatureFlagOverride('ENABLE_ACTIVITY_FEED') ??
-  (DEV_MODE_ENV ? true : undefined);
+  getFeatureFlagOverride('ENABLE_ACTIVITY_FEED') ?? true;
 
 // AI agents: the Conation Coder mention entry and the folded agent-session
 // view in channels. Self-host defaults on; operators can explicitly disable
@@ -729,8 +718,7 @@ export function ENABLE_CURSOR_AGENTS(): boolean {
 // override with VITE_ENABLE_RECENT_VIEW.
 export const ENABLE_RECENT_VIEW_FLAG = 'enable-recent-view';
 export const ENABLE_RECENT_VIEW_OVERRIDE =
-  getFeatureFlagOverride('ENABLE_RECENT_VIEW') ??
-  (DEV_MODE_ENV ? true : undefined);
+  getFeatureFlagOverride('ENABLE_RECENT_VIEW') ?? true;
 
 // Settings › Notifications: the dedicated preferences tab (delivery, per-type
 // opt-outs, muted items). When off, the tab is hidden and Account keeps the
@@ -738,5 +726,4 @@ export const ENABLE_RECENT_VIEW_OVERRIDE =
 // override with VITE_ENABLE_NOTIFICATION_SETTINGS.
 export const ENABLE_NOTIFICATION_SETTINGS_FLAG = 'enable-notification-settings';
 export const ENABLE_NOTIFICATION_SETTINGS_OVERRIDE =
-  getFeatureFlagOverride('ENABLE_NOTIFICATION_SETTINGS') ??
-  (DEV_MODE_ENV ? true : undefined);
+  getFeatureFlagOverride('ENABLE_NOTIFICATION_SETTINGS') ?? true;

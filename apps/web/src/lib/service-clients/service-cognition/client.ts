@@ -3,11 +3,11 @@ import { setCachedInputStore } from '@core/store/cacheChatInput';
 import { cache } from '@core/util/cache';
 import {
   type FetchWithTokenErrorCode,
+  type FetchWithTokenInit,
   fetchWithToken,
 } from '@core/util/fetchWithToken';
 import { platformFetch } from '@core/util/platformFetch';
 import type { ObjectLike, ResultError } from '@core/util/result';
-import type { SafeFetchInit } from '@core/util/safeFetch';
 import type { DocumentTextPart } from '@service-cognition/generated/schemas/documentTextPart';
 import { err, ok, type Result } from 'neverthrow';
 import type OpenAI from 'openai';
@@ -49,15 +49,15 @@ type WithProjectId = { project_id: string };
 
 function dcsFetch(
   url: string,
-  init?: SafeFetchInit
+  init?: FetchWithTokenInit
 ): Promise<Result<void, ResultError<FetchWithTokenErrorCode>[]>>;
 function dcsFetch<T extends ObjectLike>(
   url: string,
-  init?: SafeFetchInit
+  init?: FetchWithTokenInit
 ): Promise<Result<T, ResultError<FetchWithTokenErrorCode>[]>>;
 function dcsFetch<T extends ObjectLike = never>(
   url: string,
-  init?: SafeFetchInit
+  init?: FetchWithTokenInit
 ):
   | Promise<Result<T, ResultError<FetchWithTokenErrorCode>[]>>
   | Promise<Result<void, ResultError<FetchWithTokenErrorCode>[]>> {
@@ -342,6 +342,14 @@ export const cognitionApiServiceClient = {
       await dcsFetch<SendChatMessageResponse>(`/stream/chat/message`, {
         method: 'POST',
         body: JSON.stringify(args),
+        errorResponseHandler: async (response) => {
+          const body = (await response.json().catch(() => null)) as {
+            error?: string;
+          } | null;
+          const message =
+            body?.error?.trim() || `HTTP error! status: ${response.status}`;
+          return { code: 'HTTP_ERROR', message };
+        },
       })
     ).map((result) => result);
   },

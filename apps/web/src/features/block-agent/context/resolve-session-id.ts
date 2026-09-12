@@ -39,7 +39,10 @@ export function resolveSessionId(blockId: Accessor<string>): ResolvedSessionId {
 
   return {
     sessionId,
-    pending: () => entry() != null && entry()?.sessionId() === undefined,
+    pending: () =>
+      entry() != null &&
+      entry()?.sessionId() === undefined &&
+      !(entry()?.failed() ?? false),
     failed: () => entry() === null || (entry()?.failed() ?? false),
   };
 }

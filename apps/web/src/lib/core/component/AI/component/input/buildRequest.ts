@@ -18,7 +18,7 @@ export type ChatSendInput = {
 
 type SendChatMessageResult =
   | { stream: ChatMessageStream; chat_id: string }
-  | { error: true };
+  | { error: true; message?: string };
 
 export function useSendChatMessage() {
   const additionalInstructions = useAdditionalInstructions();
@@ -46,14 +46,18 @@ export function useSendChatMessage() {
     });
 
     if (response.isErr()) {
-      return { error: true };
+      const err = response.error[0];
+      return { error: true, message: err?.message };
     }
 
     const { stream_id, chat_id } = response.value;
 
     const connectionStream = subscribe('chat', chat_id, stream_id);
     if (!connectionStream) {
-      return { error: true };
+      return {
+        error: true,
+        message: 'Could not subscribe to the chat stream',
+      };
     }
 
     analytics.track('ai_message_sent', {

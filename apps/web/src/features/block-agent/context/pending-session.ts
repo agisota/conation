@@ -16,6 +16,8 @@
  * they already handle while the GET is in flight.
  */
 
+import { t } from '@app/lib/i18n';
+import { toast } from '@core/component/Toast/Toast';
 import { agentHarnessServiceClient } from '@service-agent-harness/client';
 import { type Accessor, createSignal } from 'solid-js';
 
@@ -54,11 +56,15 @@ export function startPendingSession(): string {
     .then((result) => {
       if (result.isErr()) {
         setFailed(true);
+        toast.failure(t('agent.empty.createFailed'));
         return;
       }
       setSessionId(result.value.session.id);
     })
-    .catch(() => setFailed(true));
+    .catch(() => {
+      setFailed(true);
+      toast.failure(t('agent.empty.createFailed'));
+    });
 
   return placeholder;
 }

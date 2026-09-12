@@ -1,11 +1,11 @@
 import { t } from '@app/lib/i18n';
-import { getConfiguredClientProfile } from '@core/constant/clientProfile';
 import { SidePanel } from '@components/app/side-panel';
 import { SplitPanelContext } from '@components/app/split-layout/context';
 import { useBlockId } from '@core/block';
 import { LoadErrorPanel } from '@core/component/EntityLoadGate';
 import { StaticMarkdownContext } from '@core/component/LexicalMarkdown/component/core/StaticMarkdown';
 import { LinkedConversationDrawer } from '@core/linked-conversation';
+import { nativeNetworkStatus } from '@core/mobile/native-network-status';
 import EmptyStateAiGraphic from '@design/empty-state-ai.svg';
 import { EmptyStatePanel } from '@ui';
 import { Show, useContext } from 'solid-js';
@@ -36,21 +36,19 @@ function AgentBlockContent() {
   const loadUnavailable = () =>
     loadFailed() ||
     (nativeNetworkStatus() === 'offline' && !session() && !pending());
-  // Create failed with nothing to retry: on standalone that is a missing
-  // model key, not a document that failed to load.
+  // Create failed with nothing to retry: show a session-create empty state
+  // rather than a document load error.
 
   return (
     <Show
       when={!loadUnavailable()}
       fallback={
-        loadFailed() &&
-        !loadRetryable() &&
-        getConfiguredClientProfile() === 'standalone' ? (
+        loadFailed() && !loadRetryable() ? (
           <EmptyStatePanel
             centered
             graphic={EmptyStateAiGraphic}
-            title={t('agent.empty.noModelKey')}
-            description={t('agent.empty.noModelKeyDescription')}
+            title={t('agent.empty.createFailed')}
+            description={t('agent.empty.createFailedDescription')}
           />
         ) : (
           <LoadErrorPanel

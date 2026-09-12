@@ -1,5 +1,6 @@
 import { SERVER_HOSTS } from '@core/constant/servers';
 import { fetchWithToken } from '@core/util/fetchWithToken';
+import type { ResultError } from '@core/util/result';
 import type {
   AgentActionId,
   AgentSessionLogResponse,
@@ -13,7 +14,39 @@ import type {
 
 export type { SandboxSize, SandboxSizeBody };
 
+/** Control POST failures the composer can show instead of a generic send toast. */
+export type HarnessControlErrorCode =
+  | 'RUNTIME_DISCONNECTED'
+  | 'MISSING_PROVIDER_KEY';
+
 const agentHarnessHost = SERVER_HOSTS['agent-harness'];
+
+function classifyHarnessControlError(
+  status: number,
+  body: string
+): ResultError<HarnessControlErrorCode | 'HTTP_ERROR'> {
+  const message = body.trim();
+  if (
+    status === 409 ||
+    /not connected|failed to contact|не получилось связаться/i.test(message)
+  ) {
+    return {
+      code: 'RUNTIME_DISCONNECTED',
+      message: message || 'the agent is not connected',
+    };
+  }
+  if (
+    /api.?key|x-api-key|ROX_API_KEY|ANTHROPIC_API_KEY|OPENAI_API_KEY|not configured|missing.*key|authentication_error/i.test(
+      message
+    )
+  ) {
+    return { code: 'MISSING_PROVIDER_KEY', message };
+  }
+  return {
+    code: 'HTTP_ERROR',
+    message: message || `HTTP error! status: ${status}`,
+  };
+}
 
 /** Authenticated client for controlling live agent sessions. */
 export const agentHarnessServiceClient = {
@@ -62,12 +95,16 @@ export const agentHarnessServiceClient = {
     // The endpoint answers with a bare JSON string (`AgentActionId`), which
     // `fetchWithToken`'s object-or-bytes constraint cannot name; the cast is
     // the whole accommodation.
-    return fetchWithToken<Record<string, never>>(
+    return fetchWithToken<Record<string, never>, HarnessControlErrorCode>(
       `${agentHarnessHost}/agent-sessions/${sessionId}/control`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(request),
+        errorResponseHandler: async (response) => {
+          const body = await response.text().catch(() => '');
+          return classifyHarnessControlError(response.status, body);
+        },
       }
     ).then((result) => result.map((id) => id as unknown as AgentActionId));
   },

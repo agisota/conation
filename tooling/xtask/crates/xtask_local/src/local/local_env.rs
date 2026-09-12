@@ -513,7 +513,7 @@ impl BootStubEnv {
         // well-formed base URL is needed.
         env.insert(
             "DOCUMENT_STORAGE_SERVICE_CLOUDFRONT_DISTRIBUTION_URL".into(),
-            "http://localhost:8100".into(),
+            "https://app.conation.dev/s3/doc-storage".into(),
         );
         env.insert(
             "DOCUMENT_STORAGE_SERVICE_CLOUDFRONT_SIGNER_PUBLIC_KEY_ID".into(),

@@ -349,7 +349,8 @@ export function EmptyState(props: {
           primaryAction={{
             label: t('soup.empty.agents.create'),
             icon: PlusIcon,
-            onClick: () => runCreateAction('chat'),
+            onClick: () =>
+              runCreateAction(isCreatableEnabled('agent') ? 'agent' : 'chat'),
           }}
           documentationUrl={`${DOCS_BASE}/product/agents`}
           documentationLabel={documentationLabel}

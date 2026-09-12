@@ -259,6 +259,50 @@ where
         if target.is_read_only {
             return Err(CalendarMutationError::ReadOnly);
         }
+        if !target
+            .token_identity
+            .provider
+            .eq_ignore_ascii_case("GMAIL")
+        {
+            let title = patch.title.clone().ok_or_else(|| {
+                CalendarMutationError::InvalidInput(
+                    "a Stalwart calendar update needs a title".to_string(),
+                )
+            })?;
+            let time = patch.time.clone().ok_or_else(|| {
+                CalendarMutationError::InvalidInput(
+                    "a Stalwart calendar update needs a time".to_string(),
+                )
+            })?;
+            let draft = CalendarEventDraft {
+                title,
+                description: patch.description.clone(),
+                location: patch.location.clone(),
+                time,
+                attendees: patch.attendees.clone().unwrap_or_default(),
+                recurrence_lines: patch.recurrence_lines.clone().unwrap_or_default(),
+                visibility: patch.visibility,
+                transparency: patch.transparency,
+                reminders: patch.reminders.clone(),
+                conference: None,
+            };
+            let creation = crate::domain::models::CalendarCreationTarget {
+                owner_id: target.owner_id.clone(),
+                email_link_id: target.email_link_id,
+                account_id: target.account_id,
+                calendar_id: target.calendar_id,
+                provider_calendar_id: target.provider_calendar_id.clone(),
+                is_read_only: target.is_read_only,
+                token_identity: target.token_identity.clone(),
+                actor: target.actor.clone(),
+            };
+            let upsert = stalwart_upsert_from_draft(
+                &creation,
+                &draft,
+                target.provider_event_id.clone(),
+            );
+            return self.persist_echo(target.actor.as_ref(), upsert).await;
+        }
         let access_token = self.fetch_token(&target.token_identity).await?;
         let google_target = target.google_target(OccurrenceRange::maintenance_horizon(Utc::now()));
         match scope {
@@ -332,6 +376,23 @@ where
         let target = self.resolve_mutation_target(requester_id, event_id).await?;
         if target.is_read_only {
             return Err(CalendarMutationError::ReadOnly);
+        }
+        if !target
+            .token_identity
+            .provider
+            .eq_ignore_ascii_case("GMAIL")
+        {
+            let retired = self
+                .repository
+                .remove_google_source(
+                    target.account_id,
+                    target.calendar_id,
+                    target.master_provider_event_id(),
+                )
+                .await
+                .map_err(|error| CalendarMutationError::PersistFailed(format!("{error:?}")))?;
+            self.publish_retirements(retired);
+            return Ok(());
         }
         let access_token = self.fetch_token(&target.token_identity).await?;
         let google_target = target.google_target(OccurrenceRange::maintenance_horizon(Utc::now()));

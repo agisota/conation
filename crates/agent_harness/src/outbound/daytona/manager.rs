@@ -352,6 +352,11 @@ impl ContainerManager for DaytonaContainerManager {
         fields(agent.container.provider = "daytona")
     )]
     async fn spawn(&self, command: SpawnContainer) -> Result<DaytonaContainer> {
+        if !self.client.is_armed() {
+            return Err(HarnessError::Container(
+                "DAYTONA_API_KEY is unset: cannot spawn a sandbox".to_owned(),
+            ));
+        }
         let SpawnContainer {
             session_id,
             size,

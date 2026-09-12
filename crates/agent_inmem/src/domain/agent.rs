@@ -17,8 +17,10 @@ use agent::{StreamAccumulator, StreamPart, ToolResponse};
 use agent_client_protocol::schema::v1::{
     AgentCapabilities, CancelNotification, ContentBlock, ContentChunk, InitializeRequest,
     InitializeResponse, NewSessionRequest, NewSessionResponse, PromptRequest, PromptResponse,
-    ResumeSessionRequest, ResumeSessionResponse, SessionCapabilities, SessionId,
-    SessionNotification, SessionResumeCapabilities, SessionUpdate, SetSessionConfigOptionRequest,
+    ResumeSessionRequest, ResumeSessionResponse, SessionCapabilities, SessionConfigId,
+    SessionConfigKind, SessionConfigOption, SessionConfigSelect, SessionConfigSelectOption,
+    SessionConfigSelectOptions, SessionConfigValueId, SessionId, SessionNotification,
+    SessionResumeCapabilities, SessionUpdate, SetSessionConfigOptionRequest,
     SetSessionConfigOptionResponse, StopReason, ToolCall as AcpToolCall, ToolCallStatus,
     ToolCallUpdate, ToolCallUpdateFields, ToolKind,
 };
@@ -104,6 +106,13 @@ impl AgentState {
         }
     }
 
+    fn current_model(&self) -> String {
+        self.store
+            .get(&self.session_id)
+            .map(|state| state.model.clone())
+            .unwrap_or_default()
+    }
+
     /// Everything from the session's state that a turn answering `prompt`
     /// runs from.
     fn turn_input(&self, prompt: &str) -> TurnInput {
@@ -153,6 +162,23 @@ impl AgentState {
     }
 }
 
+fn model_config_options(model: &str) -> Vec<SessionConfigOption> {
+    if model.is_empty() {
+        return Vec::new();
+    }
+    vec![SessionConfigOption::new(
+        SessionConfigId::new(MODEL_CONFIG_ID),
+        "Model",
+        SessionConfigKind::Select(SessionConfigSelect::new(
+            SessionConfigValueId::new(model),
+            SessionConfigSelectOptions::Ungrouped(vec![SessionConfigSelectOption::new(
+                SessionConfigValueId::new(model),
+                model,
+            )]),
+        )),
+    )]
+}
+
 /// Serve this session's agent on `acp` until the connection closes.
 pub async fn serve(state: Arc<AgentState>, acp: AcpChannel) -> Result<(), AcpError> {
     Agent
@@ -177,7 +203,10 @@ pub async fn serve(state: Arc<AgentState>, acp: AcpChannel) -> Result<(), AcpErr
                     let state = Arc::clone(&state);
                     let acp_id = SessionId::new(conation_uuid::generate_uuid_v7().to_string());
                     state.bind_acp_session(acp_id.clone(), false);
-                    responder.respond(NewSessionResponse::new(acp_id))
+                    responder.respond(
+                        NewSessionResponse::new(acp_id)
+                            .config_options(model_config_options(&state.current_model())),
+                    )
                 }
             },
             agent_client_protocol::on_receive_request!(),
@@ -192,7 +221,10 @@ pub async fn serve(state: Arc<AgentState>, acp: AcpChannel) -> Result<(), AcpErr
                     // attach replayed the frame log back into it (see
                     // `domain::replay`).
                     state.bind_acp_session(request.session_id, true);
-                    responder.respond(ResumeSessionResponse::new())
+                    responder.respond(
+                        ResumeSessionResponse::new()
+                            .config_options(model_config_options(&state.current_model())),
+                    )
                 }
             },
             agent_client_protocol::on_receive_request!(),

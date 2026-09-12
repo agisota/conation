@@ -1,5 +1,4 @@
 use crate::api::context::ApiContext;
-use agent::PredefinedModel;
 use chat::domain::models::PatchChatArgs;
 use chat::domain::ports::ChatRepo;
 use chat::outbound::postgres::PgChatRepo;
@@ -110,7 +109,7 @@ async fn generate_chat_name(
     let usage_ctx = ai_usage::UsageContext::new(ai_usage::AiFeature::ChatRename, user_id)
         .with_entity(conation_uuid::string_to_uuid(chat_id).ok());
     let response = agent::complete(
-        PredefinedModel::Fast,
+        "rox/gemini-2.5-flash",
         CHAT_RENAME_SYSTEM_PROMPT,
         &rename_request,
         recorder,

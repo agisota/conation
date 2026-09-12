@@ -69,6 +69,7 @@ import { AnimatedCallIcon } from '@icon/wide-call';
 import PhoneIcon from '@icon/wide-call.svg';
 import { AnimatedChannelIcon } from '@icon/wide-channel';
 import { AnimatedCompanyIcon } from '@icon/wide-company';
+import { AnimatedDiagramIcon } from '@icon/wide-diagram';
 import { AnimatedEmailIcon } from '@icon/wide-email';
 import { AnimatedFileMdIcon } from '@icon/wide-fileMd';
 import { AnimatedHomeIcon } from '@icon/wide-home';
@@ -135,6 +136,7 @@ type SidebarSectionLinkId =
   | 'channels'
   | 'calls'
   | 'documents'
+  | 'canvas'
   | 'tasks'
   | 'calendar'
   | 'agents'
@@ -151,6 +153,7 @@ const WORKSPACE_LINK_IDS = [
   'channels',
   'calls',
   'documents',
+  'canvas',
   'tasks',
   'calendar',
   'agents',
@@ -162,6 +165,7 @@ const DEFAULT_SECTION_VISIBILITY: SidebarSectionVisibility = {
   channels: true,
   calls: true,
   documents: true,
+  canvas: true,
   tasks: true,
   calendar: true,
   agents: true,
@@ -318,9 +322,13 @@ function sidebarContent(
   viewId: SidebarItem['id'],
   params?: SidebarItem['params']
 ): SplitContent {
-  return viewId === 'calendar'
-    ? { type: 'calendar', id: CALENDAR_BLOCK_ID }
-    : { type: 'component', id: viewId, params };
+  if (viewId === 'calendar') {
+    return { type: 'calendar', id: CALENDAR_BLOCK_ID };
+  }
+  if (viewId === 'canvas') {
+    return { type: 'component', id: 'documents', params };
+  }
+  return { type: 'component', id: viewId, params };
 }
 
 /**
@@ -1022,6 +1030,23 @@ const CALLS_LINK: SidebarItem = {
   hotkeyToken: TOKENS.sidebar.goTo.calls,
 };
 
+const CANVAS_LINK: SidebarItem = {
+  id: 'canvas',
+  get label() {
+    return t('shell.navigation.canvas');
+  },
+  href: LIST_VIEW_PATHS.documents,
+  params: {
+    initialClientFilters: {
+      and: ['document-or-file'],
+      or: ['doc-canvas'],
+    },
+  },
+  icon: AnimatedDiagramIcon,
+  hotkey: 'b',
+  hotkeyToken: TOKENS.sidebar.goTo.canvas,
+};
+
 const COMPANIES_LINK: SidebarItem = {
   id: 'companies',
   get label() {
@@ -1118,6 +1143,17 @@ const buildSidebarLinks = (
       ACTIVITY_LINK,
       ...links.slice(idx + 1),
     ];
+  }
+
+  {
+    const idx = links.findIndex((l) => l.id === 'documents');
+    if (idx >= 0) {
+      links = [
+        ...links.slice(0, idx + 1),
+        CANVAS_LINK,
+        ...links.slice(idx + 1),
+      ];
+    }
   }
 
   if (ENABLE_CALLS()) {

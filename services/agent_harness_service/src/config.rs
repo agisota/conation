@@ -126,7 +126,7 @@ pub struct Config {
     pub cursor_repo_url: String,
     /// Model id stamped onto sessions the in-memory bot opens. Unknown ids
     /// fall back to the agent loop's default model.
-    #[conation_config_default(String::from("claude-sonnet-5"))]
+    #[conation_config_default(String::from("rox/gemini-2.5-flash"))]
     pub inmem_model: String,
     /// Harness slug stamped onto sessions the in-memory bot opens.
     #[conation_config_default(String::from("conation-inmem"))]

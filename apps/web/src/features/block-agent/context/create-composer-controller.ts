@@ -65,6 +65,30 @@ export type ComposerController = {
  */
 export const TURN_OBSERVE_TIMEOUT_MS = 10_000;
 
+function controlFailureMessage(
+  result:
+    | { isErr(): boolean; error: { code: string; message: string }[] }
+    | undefined
+): string {
+  if (result === undefined) {
+    return t('agent.error.runtimeDisconnected');
+  }
+  if (!result.isErr()) {
+    return t('agent.error.sendFailed');
+  }
+  const err = result.error[0];
+  if (err?.code === 'RUNTIME_DISCONNECTED' || err?.code === 'NETWORK_ERROR') {
+    return t('agent.error.runtimeDisconnected');
+  }
+  if (err?.code === 'MISSING_PROVIDER_KEY') {
+    return t('agent.empty.noModelKeyDescription');
+  }
+  if (err?.message && err.message !== 'Resource conflict') {
+    return err.message;
+  }
+  return t('agent.error.sendFailed');
+}
+
 export function createComposerController(options: {
   /** The fold's current model, which is how a model change is seen to land. */
   model?: Accessor<string | null | undefined>;
@@ -121,7 +145,7 @@ export function createComposerController(options: {
       // The prompt stays at the head of the queue — visible and retryable,
       // never dropped. The latch stops the drain until the user acts.
       setState('post', { type: 'failed', promptId: prompt.id });
-      toast.failure(t('agent.error.sendFailed'));
+      toast.failure(controlFailureMessage(result));
       return;
     }
     batch(() => {

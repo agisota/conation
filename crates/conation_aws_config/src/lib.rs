@@ -152,13 +152,26 @@ fn transform_local_url(url: &str) -> String {
     format!("http://localhost:{port}/{asset}{path}{query}")
 }
 
+/// Browser origin + path prefix Caddy reverse-proxies to LocalStack.
+const BROWSER_OBJECT_ORIGIN: &str = "https://app.conation.dev/s3";
+
+fn browser_facing_url(url: &str) -> String {
+    let parsed = url::Url::parse(url).expect("valid url");
+    if parsed.host_str() != Some("localhost") {
+        return url.to_string();
+    }
+    let path = parsed.path();
+    let query = parsed.query().map(|q| format!("?{q}")).unwrap_or_default();
+    format!("{BROWSER_OBJECT_ORIGIN}{path}{query}")
+}
+
 /// Transforms a LocalStack S3 URL into one a browser can reach.
 ///
 /// No-op unless S3 uses LocalStack; explicit endpoints such as MinIO remain
 /// unchanged.
 pub fn transform_aws_url(url: &str) -> String {
     if s3_uses_localstack() {
-        return transform_local_url(url);
+        return browser_facing_url(&transform_local_url(url));
     }
     url.to_string()
 }
@@ -172,6 +185,13 @@ fn transform_internal_url(url: &str) -> String {
     let port = parsed.port().unwrap_or(4566);
     let path = parsed.path();
     let query = parsed.query().map(|q| format!("?{q}")).unwrap_or_default();
+
+    // Same-origin object URLs minted for the public app host must be rewritten
+    // back to the LocalStack service hostname inside the Docker network.
+    if host == "app.conation.dev" {
+        let stripped = path.strip_prefix("/s3").unwrap_or(path);
+        return format!("http://localstack:4566{stripped}{query}");
+    }
 
     // Browser-facing local URLs use `localhost`, which inside a container
     // resolves to the container itself. Swap it for the `localstack` service
@@ -188,10 +208,9 @@ fn transform_internal_url(url: &str) -> String {
 /// inside the app's own containers when fetching an object server-side.
 ///
 /// The inverse of [`transform_aws_url`]: presigned and distribution URLs are
-/// minted with the `localhost` host so the browser on the host machine can
-/// reach LocalStack, but a service fetching the same object from inside the
-/// Docker network must use the `localstack` service hostname. No-op unless S3
-/// uses LocalStack.
+/// minted for the public app origin so the browser can fetch them same-origin,
+/// but a service fetching the same object from inside the Docker network must
+/// use the `localstack` service hostname. No-op unless S3 uses LocalStack.
 pub fn transform_aws_url_for_internal_fetch(url: &str) -> String {
     if s3_uses_localstack() {
         return transform_internal_url(url);

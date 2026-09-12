@@ -40,6 +40,7 @@ import {
   storeChatState,
 } from '@core/component/AI/util/storage';
 import { CustomScrollbar } from '@core/component/CustomScrollbar';
+import { toast } from '@core/component/Toast/Toast';
 import { TOKENS } from '@core/hotkey/tokens';
 import { registerScopeSignalHotkey } from '@core/hotkey/utils';
 import { createMethodRegistration } from '@core/orchestrator';
@@ -219,6 +220,7 @@ function ChatInner(props: {
 
     if ('error' in result) {
       chat.dispatch({ type: 'send_failed' });
+      toast.failure(result.message || t('agent.error.sendFailed'));
       return;
     }
 
