@@ -2,6 +2,7 @@ import IntlMessageFormat from 'intl-messageformat';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import {
   DEFAULT_LOCALE,
+  clearLocalePreference,
   formatDateTime,
   formatNumber,
   formatRelativeTime,
@@ -55,6 +56,43 @@ describe('i18n locale ownership', () => {
 
     expect(getAcceptLanguage()).toBe('ru-RU');
     expect(t('settings.account.language.label')).toBe('Язык');
+    expect(document.documentElement.lang).toBe('ru');
+  });
+
+  test('resets to the default locale when another tab clears all storage', () => {
+    initI18n();
+    window.dispatchEvent(
+      new StorageEvent('storage', {
+        key: null,
+        newValue: null,
+      })
+    );
+
+    expect(getAcceptLanguage()).toBe('ru-RU');
+    expect(document.documentElement.lang).toBe('ru');
+  });
+
+  test('resets to the default locale when another tab stores an unsupported value', () => {
+    initI18n();
+    window.dispatchEvent(
+      new StorageEvent('storage', {
+        key: LOCALE_STORAGE_KEY,
+        newValue: 'de-DE',
+      })
+    );
+
+    expect(getAcceptLanguage()).toBe('ru-RU');
+    expect(document.documentElement.lang).toBe('ru');
+  });
+
+  test('clears the same-tab preference and returns to the default locale', () => {
+    setLocale('en');
+    expect(localStorage.getItem(LOCALE_STORAGE_KEY)).toBe('en');
+
+    clearLocalePreference();
+
+    expect(localStorage.getItem(LOCALE_STORAGE_KEY)).toBeNull();
+    expect(getAcceptLanguage()).toBe('ru-RU');
     expect(document.documentElement.lang).toBe('ru');
   });
 

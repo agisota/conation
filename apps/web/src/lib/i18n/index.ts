@@ -96,17 +96,40 @@ function persistLocaleToServer(nextLocale: Locale) {
 
 let initialized = false;
 
+/**
+ * Applies a locale that arrived from another tab or from a cleared
+ * preference. Invalid and missing values fall back to the product default
+ * without writing the default back to storage or the server.
+ */
+export function applyExternalLocalePreference(
+  value: string | null | undefined
+): Locale {
+  const nextLocale = parseLocale(value) ?? DEFAULT_LOCALE;
+  if (nextLocale === getLocale()) return nextLocale;
+  setLocaleSignal(nextLocale);
+  syncDocumentLanguage(nextLocale);
+  return nextLocale;
+}
+
+/** Removes the browser preference and returns this profile to the default locale. */
+export function clearLocalePreference() {
+  try {
+    globalThis.localStorage?.removeItem(LOCALE_STORAGE_KEY);
+  } catch {
+    // The in-memory default remains valid when storage is unavailable.
+  }
+  applyExternalLocalePreference(null);
+}
+
 /** Applies the initial language and keeps it synchronized across browser tabs. */
 export function initI18n() {
   syncDocumentLanguage(getLocale());
   if (initialized || typeof window === 'undefined') return;
   initialized = true;
   window.addEventListener('storage', (event) => {
-    if (event.key !== LOCALE_STORAGE_KEY) return;
-    const nextLocale = parseLocale(event.newValue) ?? DEFAULT_LOCALE;
-    if (nextLocale === getLocale()) return;
-    setLocaleSignal(nextLocale);
-    syncDocumentLanguage(nextLocale);
+    // `key === null` is a `localStorage.clear()` from another tab.
+    if (event.key !== LOCALE_STORAGE_KEY && event.key !== null) return;
+    applyExternalLocalePreference(event.key === null ? null : event.newValue);
   });
 }
 
