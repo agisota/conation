@@ -2,14 +2,15 @@
 #
 # This file is config-validated by `just selfhost-overlay-check`; it is not the
 # supported application runner. Use `.cursor/stack.sh` for the working local,
-# no-managed-cloud baseline. MinIO and Stalwart remain isolated evaluations
-# until service-specific S3 endpoints and a production JMAP adapter are wired.
+# no-managed-cloud baseline. S3 can opt into MinIO via S3_ENDPOINT_URL without
+# moving SQS/DynamoDB/KMS. Stalwart remains an isolated evaluation until a
+# production JMAP adapter is wired.
 name: conation
 
 services:
   # ---------------------------------------------------------------------------
-  # MinIO — isolated S3-compatibility evaluation target. The application still
-  # uses LocalStack because LOCAL_AWS_URL is shared by S3/SQS/DynamoDB/KMS.
+  # MinIO — isolated S3-compatibility evaluation target. Point S3 at it with
+  # S3_ENDPOINT_URL=http://minio:9000; LOCAL_AWS_URL still owns SQS/Dynamo/KMS.
   # ---------------------------------------------------------------------------
   minio:
     image: minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
@@ -113,9 +114,9 @@ services:
       - databases
     restart: unless-stopped
 
-  # LocalStack remains the working application AWS emulator. A single
-  # LOCAL_AWS_URL configures every AWS SDK client, so pointing it at MinIO would
-  # also misroute SQS, DynamoDB, and KMS calls.
+  # LocalStack remains the working application AWS emulator. LOCAL_AWS_URL
+  # still configures SQS/DynamoDB/KMS. Do not point it at MinIO; use
+  # S3_ENDPOINT_URL for S3-only isolation.
   localstack:
     image: localstack/localstack:4@sha256:3ebc37595918b8accb852f8048fef2aff047d465167edd655528065b07bc364a
     ports:

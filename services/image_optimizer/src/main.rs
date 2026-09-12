@@ -47,7 +47,7 @@ async fn main() -> Result<(), Error> {
     let env = EnvConfig::unwrap_new();
 
     let ctx = AppContext {
-        s3_client: S3Client::new(&aws_config),
+        s3_client: conation_aws_config::s3_client().await,
         lambda_client: LambdaClient::new(&aws_config),
         bucket: env.bucket.to_string(),
         function_name: env.aws_lambda_function_name.to_string(),

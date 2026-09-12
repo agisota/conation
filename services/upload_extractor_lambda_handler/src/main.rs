@@ -596,7 +596,7 @@ async fn main() -> Result<(), Error> {
     let connection_gateway_url = ConnectionGatewayUrl::new()?.to_string();
 
     let config = conation_aws_config::get_conation_aws_config().await;
-    let s3_client = S3Client::new(&config);
+    let s3_client = conation_aws_config::s3_client().await;
 
     let dss_client = DocumentStorageServiceClient::new(internal_api_secret_key.clone(), dss_url);
 
