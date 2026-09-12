@@ -61,6 +61,7 @@ describe('i18n locale ownership', () => {
 
   test('resets to the default locale when another tab clears all storage', () => {
     initI18n();
+    localStorage.clear();
     window.dispatchEvent(
       new StorageEvent('storage', {
         key: null,
@@ -68,6 +69,7 @@ describe('i18n locale ownership', () => {
       })
     );
 
+    expect(localStorage.getItem(LOCALE_STORAGE_KEY)).toBeNull();
     expect(getAcceptLanguage()).toBe('ru-RU');
     expect(document.documentElement.lang).toBe('ru');
   });
@@ -83,6 +85,20 @@ describe('i18n locale ownership', () => {
 
     expect(getAcceptLanguage()).toBe('ru-RU');
     expect(document.documentElement.lang).toBe('ru');
+  });
+
+  test('ignores storage events for unrelated keys', () => {
+    initI18n();
+    setLocale('en');
+    window.dispatchEvent(
+      new StorageEvent('storage', {
+        key: 'unrelated-key',
+        newValue: 'whatever',
+      })
+    );
+
+    expect(getAcceptLanguage()).toBe('en-US');
+    expect(document.documentElement.lang).toBe('en');
   });
 
   test('clears the same-tab preference and returns to the default locale', () => {

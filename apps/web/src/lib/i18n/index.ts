@@ -101,7 +101,7 @@ let initialized = false;
  * preference. Invalid and missing values fall back to the product default
  * without writing the default back to storage or the server.
  */
-export function applyExternalLocalePreference(
+function applyExternalLocalePreference(
   value: string | null | undefined
 ): Locale {
   const nextLocale = parseLocale(value) ?? DEFAULT_LOCALE;
