@@ -1,6 +1,7 @@
 import { openCreateContactModal } from '@app/features/companies/CreateContactModal';
 import { t } from '@app/lib/i18n';
 import { SidePanel } from '@components/app/side-panel';
+import { EntityReferencesSection } from '@core/component/EntityReferencesSection';
 import PlusIcon from '@phosphor/plus.svg';
 import { useCompanyQuery } from '@queries/crm/companies';
 import { Button } from '@ui';
@@ -79,8 +80,11 @@ export function Company(props: { companyId: string }) {
       >
         <CompanySharingSection company={company()} />
       </SidePanel.Section>
-      {/* TODO: add a References section (inbound channel messages + documents)
-          once the references backend supports the crm_company entity type. */}
+      <EntityReferencesSection
+        entityId={props.companyId}
+        entityType="crm_company"
+        order={30}
+      />
     </SidePanel.Layout>
   );
 }

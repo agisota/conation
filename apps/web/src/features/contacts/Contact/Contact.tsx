@@ -1,5 +1,6 @@
 import { t } from '@app/lib/i18n';
 import { SidePanel } from '@components/app/side-panel';
+import { EntityReferencesSection } from '@core/component/EntityReferencesSection';
 import { useContactQuery } from '@queries/crm/contacts';
 import { useIsTeamAdmin } from '@queries/team/teams';
 import { Show } from 'solid-js';
@@ -49,8 +50,11 @@ export function Contact(props: { contactId: string }) {
           <ContactSharingSection contact={contact()} />
         </SidePanel.Section>
       </Show>
-      {/* TODO: add a References section (inbound channel messages + documents)
-          once the references backend supports the crm_contact entity type. */}
+      <EntityReferencesSection
+        entityId={props.contactId}
+        entityType="crm_contact"
+        order={30}
+      />
     </SidePanel.Layout>
   );
 }
