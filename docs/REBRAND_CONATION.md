@@ -1,12 +1,14 @@
 # Conation rebrand and namespace contract
 
 This document is a migration guardrail for the current repository, not a
-certificate that the rebrand is complete. `Conation` is the product name and
-the clean-history standalone branch is a greenfield deployment: it writes only
-Conation product identities and deliberately does not accept the historical
-`macro|` user-ID namespace. The upstream-sync branch has a different job: it
-must preserve or explicitly migrate existing persistent and external contracts
-while upstream work is reconciled.
+certificate that the rebrand is complete. `Conation` is the product name.
+Product git history is **`conation/main`** (Macro ancestry kept). The
+`clean-history` / `standalone-snapshot` orphans are archives, not the ship
+line — see [HISTORY_TOPOLOGY.md](HISTORY_TOPOLOGY.md). New public identities
+on `conation/main` still use the `conation|` principal prefix and must not
+introduce hosted `macro|` user IDs. Upstream reconciliation is a merge of
+Macro `upstream/main` **into** `conation/main`, not a reset onto those
+orphans.
 
 A remaining `Macro` match is therefore not automatically a defect, but it must
 be classified. Internal schema/type names, immutable third-party provenance,

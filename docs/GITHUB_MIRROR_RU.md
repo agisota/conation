@@ -26,13 +26,9 @@ default branch upstream, а не ветка, которую надо перен�
 PR head refs, 81 PR merge ref и 15 веток `conation/*`. Эти цифры не являются
 жёсткой константой: перед публикацией авторитетен новый локальный `plan`.
 
-Две важные ветки продукта остаются отдельными:
-
-1. `conation/upstream-sync` сохраняет parent из upstream и годится для
-   последующего осознанного обновления от источника.
-2. `conation/standalone-snapshot` — самостоятельный root commit с тем же
-   продуктовым tree. Это не попытка скрыть происхождение: лицензия, NOTICE и
-   archive upstream сохраняются.
+Продуктовая линия — `conation/main`. `conation/standalone-snapshot` и
+`conation/upstream-sync` остаются в mapping как архив, но не являются
+default product refs. Актуальная топология: [HISTORY_TOPOLOGY.md](HISTORY_TOPOLOGY.md).
 
 `conation/main` и остальные `conation/*` тоже входят в mapping. Скрипт не
 меняет default branch и не удаляет лишние remote refs.
