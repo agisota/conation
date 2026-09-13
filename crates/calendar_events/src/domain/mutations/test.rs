@@ -1558,6 +1558,38 @@ async fn rsvp_echo_marks_actor_inboxes_as_self() {
 }
 
 #[tokio::test]
+async fn rsvp_on_stalwart_persists_locally_without_calling_google() {
+    let mut target = mutation_target(false);
+    target.token_identity.provider = "STALWART".to_string();
+    let repo = FakeRepo {
+        mutation_target: Some(target),
+        ..FakeRepo::default()
+    };
+    let upserts = repo.upserts.clone();
+    let provider = FakeProvider::new(FakeProviderBehavior::Echo);
+    let calls = provider.calls.clone();
+    let event = service(repo, provider, FakeTokens::ok())
+        .respond_to_event(
+            "macro|user",
+            Uuid::now_v7(),
+            AttendeeResponseStatus::Declined,
+            CalendarRsvpScope::All,
+        )
+        .await
+        .unwrap();
+    assert!(calls.lock().unwrap().is_empty());
+    assert_eq!(upserts.lock().unwrap().len(), 1);
+    assert_eq!(
+        event
+            .attendees
+            .iter()
+            .find(|attendee| attendee.email == "self@example.com")
+            .map(|attendee| attendee.response_status),
+        Some(AttendeeResponseStatus::Declined)
+    );
+}
+
+#[tokio::test]
 async fn token_and_provider_failures_map_to_typed_errors() {
     let reauth = service(
         FakeRepo {

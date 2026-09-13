@@ -248,3 +248,245 @@ fn from_address_from_mime_reads_angle_addr_and_bare_addr() {
         "ib@conation.dev"
     );
 }
+
+fn calendar_session(server: &MockServer) -> Value {
+    json!({
+        "apiUrl": format!("{}/jmap/", server.uri()),
+        "uploadUrl": format!("{}/jmap/upload/{{accountId}}/", server.uri()),
+        "downloadUrl": format!("{}/jmap/download/{{accountId}}/{{blobId}}/{{name}}", server.uri()),
+        "capabilities": {
+            JMAP_CORE: {},
+            JMAP_MAIL: {},
+            JMAP_CALENDARS: {},
+            JMAP_MANAGEMENT: {}
+        },
+        "accounts": {
+            "u1": {
+                "accountCapabilities": {
+                    JMAP_MAIL: {},
+                    JMAP_CALENDARS: {},
+                    JMAP_MANAGEMENT: {}
+                }
+            }
+        },
+        "primaryAccounts": {
+            JMAP_MAIL: "u1",
+            JMAP_CALENDARS: "u1",
+            JMAP_MANAGEMENT: "u1"
+        }
+    })
+}
+
+async fn mount_calendar_admin(server: &MockServer) {
+    std::env::set_var("STALWART_TOKEN", TOKEN);
+    Mock::given(method("GET"))
+        .and(path("/jmap/session"))
+        .and(header("authorization", "Bearer per-user-test-token"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(calendar_session(server)))
+        .mount(server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/jmap/"))
+        .and(body_json(json!({
+            "using": [JMAP_CORE, JMAP_MANAGEMENT],
+            "methodCalls": [["x:Account/get", {
+                "accountId": "u1",
+                "ids": null,
+                "properties": ["id", "emailAddress"]
+            }, "c1"]]
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "methodResponses": [["x:Account/get", {
+                "list": [{"id": "u1", "emailAddress": "self@example.com"}]
+            }, "c1"]]
+        })))
+        .mount(server)
+        .await;
+}
+
+#[test]
+fn parses_iso8601_durations_used_by_jmap_calendar_events() {
+    assert_eq!(parse_iso8601_duration_secs("PT3600S"), 3600);
+    assert_eq!(parse_iso8601_duration_secs("PT1H30M"), 5400);
+    assert_eq!(parse_iso8601_duration_secs("P1D"), 86_400);
+    assert_eq!(parse_iso8601_duration_secs("bogus"), 60);
+}
+
+#[tokio::test]
+async fn lists_calendar_events_via_jmap_query_then_get() {
+    let server = MockServer::start().await;
+    mount_calendar_admin(&server).await;
+    Mock::given(method("POST"))
+        .and(path("/jmap/"))
+        .and(body_json(json!({
+            "using": [JMAP_CORE, JMAP_CALENDARS],
+            "methodCalls": [["CalendarEvent/query", {"accountId": "u1", "limit": 100}, "c1"]]
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "methodResponses": [["CalendarEvent/query", {"ids": ["ev1"]}, "c1"]]
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/jmap/"))
+        .and(body_json(json!({
+            "using": [JMAP_CORE, JMAP_CALENDARS],
+            "methodCalls": [["CalendarEvent/get", {
+                "accountId": "u1",
+                "ids": ["ev1"],
+                "properties": [
+                    "id", "uid", "title", "description", "start", "duration",
+                    "timeZone", "participants", "locations", "freeBusyStatus", "status"
+                ]
+            }, "c1"]]
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "methodResponses": [["CalendarEvent/get", {"list": [{
+                "id": "ev1",
+                "uid": "uid-1@conation.dev",
+                "title": "Standup",
+                "description": "Daily",
+                "start": "2026-09-13T14:00:00",
+                "duration": "PT1800S",
+                "timeZone": "UTC",
+                "freeBusyStatus": "busy",
+                "status": "confirmed",
+                "locations": {"l1": {"name": "Room A"}},
+                "participants": {
+                    "p1": {
+                        "name": "Ada",
+                        "roles": {"attendee": true},
+                        "participationStatus": "needs-action",
+                        "sendTo": {"imip": "mailto:self@example.com"}
+                    }
+                }
+            }]}, "c1"]]
+        })))
+        .mount(&server)
+        .await;
+    let events = provider(&server)
+        .list_calendar_events("self@example.com")
+        .await
+        .expect("list");
+    assert_eq!(events.len(), 1);
+    assert_eq!(events[0].id, "ev1");
+    assert_eq!(events[0].title, "Standup");
+    assert_eq!(events[0].location.as_deref(), Some("Room A"));
+    assert_eq!(events[0].duration_secs, 1800);
+    assert!(!events[0].free);
+    assert_eq!(events[0].participants.len(), 1);
+    assert_eq!(events[0].participants[0].email, "self@example.com");
+    assert_eq!(
+        events[0].participants[0].participation_status,
+        "needs-action"
+    );
+}
+
+#[tokio::test]
+async fn rsvp_patches_the_matching_participant_status() {
+    let server = MockServer::start().await;
+    mount_calendar_admin(&server).await;
+    Mock::given(method("POST"))
+        .and(path("/jmap/"))
+        .and(body_json(json!({
+            "using": [JMAP_CORE, JMAP_CALENDARS],
+            "methodCalls": [["CalendarEvent/get", {
+                "accountId": "u1",
+                "ids": ["ev1"],
+                "properties": [
+                    "id", "uid", "title", "description", "start", "duration",
+                    "timeZone", "participants", "locations", "freeBusyStatus", "status"
+                ]
+            }, "c1"]]
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "methodResponses": [["CalendarEvent/get", {"list": [{
+                "id": "ev1",
+                "title": "Standup",
+                "start": "2026-09-13T14:00:00",
+                "duration": "PT1H",
+                "participants": {
+                    "p1": {
+                        "participationStatus": "needs-action",
+                        "sendTo": {"imip": "mailto:self@example.com"}
+                    },
+                    "p2": {
+                        "participationStatus": "accepted",
+                        "sendTo": {"imip": "mailto:other@example.com"}
+                    }
+                }
+            }]}, "c1"]]
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/jmap/"))
+        .and(body_json(json!({
+            "using": [JMAP_CORE, JMAP_CALENDARS],
+            "methodCalls": [["CalendarEvent/set", {
+                "accountId": "u1",
+                "update": {
+                    "ev1": {
+                        "participants/p1/participationStatus": "accepted"
+                    }
+                }
+            }, "c1"]]
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "methodResponses": [["CalendarEvent/set", {"updated": {"ev1": {}}}, "c1"]]
+        })))
+        .mount(&server)
+        .await;
+    let event = provider(&server)
+        .rsvp_calendar_event("self@example.com", "ev1", &["self@example.com"], "accepted")
+        .await
+        .expect("rsvp");
+    assert_eq!(
+        event
+            .participants
+            .iter()
+            .find(|participant| participant.email == "self@example.com")
+            .map(|participant| participant.participation_status.as_str()),
+        Some("accepted")
+    );
+}
+
+#[tokio::test]
+async fn rsvp_without_a_matching_participant_is_not_found() {
+    let server = MockServer::start().await;
+    mount_calendar_admin(&server).await;
+    Mock::given(method("POST"))
+        .and(path("/jmap/"))
+        .and(body_json(json!({
+            "using": [JMAP_CORE, JMAP_CALENDARS],
+            "methodCalls": [["CalendarEvent/get", {
+                "accountId": "u1",
+                "ids": ["ev1"],
+                "properties": [
+                    "id", "uid", "title", "description", "start", "duration",
+                    "timeZone", "participants", "locations", "freeBusyStatus", "status"
+                ]
+            }, "c1"]]
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "methodResponses": [["CalendarEvent/get", {"list": [{
+                "id": "ev1",
+                "title": "Standup",
+                "start": "2026-09-13T14:00:00",
+                "duration": "PT1H",
+                "participants": {
+                    "p2": {
+                        "participationStatus": "accepted",
+                        "sendTo": {"imip": "mailto:other@example.com"}
+                    }
+                }
+            }]}, "c1"]]
+        })))
+        .mount(&server)
+        .await;
+    let error = provider(&server)
+        .rsvp_calendar_event("self@example.com", "ev1", &["self@example.com"], "declined")
+        .await
+        .expect_err("missing attendee");
+    assert!(matches!(error, ProviderError::NotFound(_)));
+}

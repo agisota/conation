@@ -197,6 +197,48 @@ pub enum ProviderError {
     Unsupported(&'static str),
 }
 
+/// One Stalwart JMAP calendar event after `CalendarEvent/query` + `CalendarEvent/get`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct StalwartCalendarEvent {
+    /// JMAP calendar event id.
+    pub id: String,
+    /// JSCalendar `uid`, when present.
+    pub uid: Option<String>,
+    /// Display title.
+    pub title: String,
+    /// Optional description.
+    pub description: Option<String>,
+    /// Optional location label (first JSCalendar location name).
+    pub location: Option<String>,
+    /// Inclusive start in UTC.
+    pub start: chrono::DateTime<chrono::Utc>,
+    /// Duration in seconds (minimum 60).
+    pub duration_secs: i64,
+    /// IANA time zone from JSCalendar `timeZone`.
+    pub time_zone: Option<String>,
+    /// `true` when JSCalendar `freeBusyStatus` is `free`.
+    pub free: bool,
+    /// JSCalendar status (`confirmed`, `cancelled`, `tentative`).
+    pub status: Option<String>,
+    /// Participants mapped from JSCalendar `participants`.
+    pub participants: Vec<StalwartParticipant>,
+}
+
+/// One JSCalendar participant on a Stalwart event.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct StalwartParticipant {
+    /// Mailbox address (`sendTo.imip` or `email`).
+    pub email: String,
+    /// Display name.
+    pub name: Option<String>,
+    /// JSCalendar `participationStatus` (`accepted`, `declined`, `tentative`, `needs-action`).
+    pub participation_status: String,
+    /// Optional attendance (`roles.optional`).
+    pub is_optional: bool,
+    /// JMAP participant map key, used when patching RSVP.
+    pub participant_id: String,
+}
+
 /// Stalwart JMAP provider — talks to Stalwart via JMAP at `STALWART_JMAP_URL`.
 /// For Conation self-host: `http://stalwart:8080`.
 #[derive(Clone)]
@@ -956,6 +998,344 @@ impl StalwartProvider {
         )
         .await?;
         Ok(())
+    }
+
+    /// Pull timed events from the mailbox via JMAP `CalendarEvent/query` then `CalendarEvent/get`.
+    pub async fn list_calendar_events(
+        &self,
+        mailbox_email: &str,
+    ) -> Result<Vec<StalwartCalendarEvent>, ProviderError> {
+        let (session, auth, account_id) = self.open_calendar_account(mailbox_email).await?;
+        let queried = self
+            .admin_call(
+                &session,
+                &auth,
+                vec![JMAP_CORE, JMAP_CALENDARS],
+                "CalendarEvent/query",
+                json!({
+                    "accountId": account_id,
+                    "limit": 100,
+                }),
+            )
+            .await?;
+        let ids: Vec<String> = queried
+            .get("ids")
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+            .filter_map(|id| id.as_str().map(str::to_owned))
+            .collect();
+        if ids.is_empty() {
+            return Ok(Vec::new());
+        }
+        let got = self
+            .admin_call(
+                &session,
+                &auth,
+                vec![JMAP_CORE, JMAP_CALENDARS],
+                "CalendarEvent/get",
+                json!({
+                    "accountId": account_id,
+                    "ids": ids,
+                    "properties": [
+                        "id",
+                        "uid",
+                        "title",
+                        "description",
+                        "start",
+                        "duration",
+                        "timeZone",
+                        "participants",
+                        "locations",
+                        "freeBusyStatus",
+                        "status"
+                    ],
+                }),
+            )
+            .await?;
+        let list = got.get("list").and_then(Value::as_array).ok_or_else(|| {
+            ProviderError::Provider("JMAP CalendarEvent/get response has no list".to_owned())
+        })?;
+        Ok(list.iter().filter_map(parse_jmap_calendar_event).collect())
+    }
+
+    /// Fetch one calendar event by JMAP id.
+    pub async fn get_calendar_event(
+        &self,
+        mailbox_email: &str,
+        event_id: &str,
+    ) -> Result<Option<StalwartCalendarEvent>, ProviderError> {
+        let (session, auth, account_id) = self.open_calendar_account(mailbox_email).await?;
+        let got = self
+            .admin_call(
+                &session,
+                &auth,
+                vec![JMAP_CORE, JMAP_CALENDARS],
+                "CalendarEvent/get",
+                json!({
+                    "accountId": account_id,
+                    "ids": [event_id],
+                    "properties": [
+                        "id",
+                        "uid",
+                        "title",
+                        "description",
+                        "start",
+                        "duration",
+                        "timeZone",
+                        "participants",
+                        "locations",
+                        "freeBusyStatus",
+                        "status"
+                    ],
+                }),
+            )
+            .await?;
+        let list = got.get("list").and_then(Value::as_array).ok_or_else(|| {
+            ProviderError::Provider("JMAP CalendarEvent/get response has no list".to_owned())
+        })?;
+        Ok(list.first().and_then(parse_jmap_calendar_event))
+    }
+
+    /// Set the matching participant's `participationStatus` via `CalendarEvent/set`.
+    pub async fn rsvp_calendar_event(
+        &self,
+        mailbox_email: &str,
+        event_id: &str,
+        attendee_emails: &[&str],
+        participation_status: &str,
+    ) -> Result<StalwartCalendarEvent, ProviderError> {
+        let mut event = self
+            .get_calendar_event(mailbox_email, event_id)
+            .await?
+            .ok_or_else(|| {
+                ProviderError::NotFound("Stalwart calendar event was not found".to_owned())
+            })?;
+        let needles: Vec<String> = attendee_emails
+            .iter()
+            .map(|email| email.to_ascii_lowercase())
+            .collect();
+        let participant_id = event
+            .participants
+            .iter()
+            .find(|participant| needles.iter().any(|email| email == &participant.email))
+            .map(|participant| participant.participant_id.clone())
+            .ok_or_else(|| {
+                ProviderError::NotFound(
+                    "connected mailbox is not a participant on the Stalwart event".to_owned(),
+                )
+            })?;
+        let (session, auth, account_id) = self.open_calendar_account(mailbox_email).await?;
+        let mut patch = serde_json::Map::new();
+        let path = format!("participants/{participant_id}/participationStatus");
+        let mut fields = serde_json::Map::new();
+        fields.insert(path, json!(participation_status));
+        patch.insert(event_id.to_owned(), Value::Object(fields));
+        let updated = self
+            .admin_call(
+                &session,
+                &auth,
+                vec![JMAP_CORE, JMAP_CALENDARS],
+                "CalendarEvent/set",
+                json!({
+                    "accountId": account_id,
+                    "update": patch,
+                }),
+            )
+            .await?;
+        if updated
+            .get("notUpdated")
+            .and_then(|value| value.get(event_id))
+            .is_some()
+        {
+            return Err(ProviderError::Provider(
+                "Stalwart CalendarEvent/set did not update the RSVP".to_owned(),
+            ));
+        }
+        if let Some(participant) = event
+            .participants
+            .iter_mut()
+            .find(|participant| participant.participant_id == participant_id)
+        {
+            participant.participation_status = participation_status.to_owned();
+        }
+        Ok(event)
+    }
+
+    async fn open_calendar_account(
+        &self,
+        mailbox_email: &str,
+    ) -> Result<(JmapSession, AdminAuth, String), ProviderError> {
+        let auth = admin_auth_from_env()?;
+        let session = self.admin_session_document(&auth).await?;
+        let account_id = self
+            .stalwart_account_id_for_email(&session, &auth, mailbox_email)
+            .await?;
+        Ok((session, auth, account_id))
+    }
+}
+
+fn parse_jmap_calendar_event(value: &Value) -> Option<StalwartCalendarEvent> {
+    let id = value.get("id").and_then(Value::as_str)?.to_owned();
+    let start = value
+        .get("start")
+        .and_then(Value::as_str)
+        .and_then(parse_jmap_start)?;
+    let duration_secs = value
+        .get("duration")
+        .and_then(Value::as_str)
+        .map(parse_iso8601_duration_secs)
+        .unwrap_or(60)
+        .max(60);
+    let time_zone = value
+        .get("timeZone")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    Some(StalwartCalendarEvent {
+        id,
+        uid: value.get("uid").and_then(Value::as_str).map(str::to_owned),
+        title: value
+            .get("title")
+            .and_then(Value::as_str)
+            .unwrap_or("Untitled")
+            .to_owned(),
+        description: value
+            .get("description")
+            .and_then(Value::as_str)
+            .filter(|text| !text.is_empty())
+            .map(str::to_owned),
+        location: first_location_name(value),
+        start,
+        duration_secs,
+        time_zone,
+        free: value.get("freeBusyStatus").and_then(Value::as_str) == Some("free"),
+        status: value
+            .get("status")
+            .and_then(Value::as_str)
+            .map(str::to_owned),
+        participants: parse_jmap_participants(value.get("participants")),
+    })
+}
+
+fn parse_jmap_participants(value: Option<&Value>) -> Vec<StalwartParticipant> {
+    let Some(object) = value.and_then(Value::as_object) else {
+        return Vec::new();
+    };
+    object
+        .iter()
+        .filter_map(|(participant_id, participant)| {
+            let email = participant_email(participant)?;
+            Some(StalwartParticipant {
+                email,
+                name: participant
+                    .get("name")
+                    .and_then(Value::as_str)
+                    .map(str::to_owned),
+                participation_status: participant
+                    .get("participationStatus")
+                    .and_then(Value::as_str)
+                    .unwrap_or("needs-action")
+                    .to_owned(),
+                is_optional: participant
+                    .get("roles")
+                    .and_then(|roles| roles.get("optional"))
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false),
+                participant_id: participant_id.clone(),
+            })
+        })
+        .collect()
+}
+
+fn participant_email(participant: &Value) -> Option<String> {
+    if let Some(email) = participant.get("email").and_then(Value::as_str) {
+        let email = email
+            .trim()
+            .trim_start_matches("mailto:")
+            .to_ascii_lowercase();
+        if email.contains('@') {
+            return Some(email);
+        }
+    }
+    let imip = participant
+        .get("sendTo")
+        .and_then(|send_to| send_to.get("imip"))
+        .and_then(Value::as_str)?;
+    let email = imip
+        .trim()
+        .trim_start_matches("mailto:")
+        .to_ascii_lowercase();
+    email.contains('@').then_some(email)
+}
+
+fn first_location_name(value: &Value) -> Option<String> {
+    value
+        .get("locations")
+        .and_then(Value::as_object)
+        .and_then(|locations| {
+            locations.values().find_map(|location| {
+                location
+                    .get("name")
+                    .and_then(Value::as_str)
+                    .filter(|name| !name.is_empty())
+                    .map(str::to_owned)
+            })
+        })
+}
+
+fn parse_jmap_start(start: &str) -> Option<chrono::DateTime<chrono::Utc>> {
+    if let Ok(parsed) = chrono::DateTime::parse_from_rfc3339(start) {
+        return Some(parsed.with_timezone(&chrono::Utc));
+    }
+    chrono::NaiveDateTime::parse_from_str(start, "%Y-%m-%dT%H:%M:%S")
+        .or_else(|_| chrono::NaiveDateTime::parse_from_str(start, "%Y-%m-%dT%H:%M:%S%.f"))
+        .ok()
+        .map(|naive| naive.and_utc())
+}
+
+fn parse_iso8601_duration_secs(value: &str) -> i64 {
+    let bytes = value.as_bytes();
+    if bytes.first() != Some(&b'P') {
+        return 60;
+    }
+    let mut total = 0_i64;
+    let mut number = 0_i64;
+    let mut in_time = false;
+    for byte in &bytes[1..] {
+        match byte {
+            b'T' => in_time = true,
+            b'0'..=b'9' => {
+                number = number
+                    .saturating_mul(10)
+                    .saturating_add(i64::from(byte - b'0'))
+            }
+            b'D' if !in_time => {
+                total = total.saturating_add(number.saturating_mul(86_400));
+                number = 0;
+            }
+            b'H' if in_time => {
+                total = total.saturating_add(number.saturating_mul(3_600));
+                number = 0;
+            }
+            b'M' if in_time => {
+                total = total.saturating_add(number.saturating_mul(60));
+                number = 0;
+            }
+            b'S' if in_time => {
+                total = total.saturating_add(number);
+                number = 0;
+            }
+            b'W' if !in_time => {
+                total = total.saturating_add(number.saturating_mul(604_800));
+                number = 0;
+            }
+            _ => return 60,
+        }
+    }
+    if total == 0 {
+        60
+    } else {
+        total
     }
 }
 

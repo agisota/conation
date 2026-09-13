@@ -96,6 +96,7 @@ where
         Report,
     > {
         validate_query(&range, limit)?;
+        self.import_stalwart_events(requester_id).await;
         let mut rows = self
             .repository
             .list_occurrences(requester_id, range, cursor, limit)
@@ -157,6 +158,40 @@ where
             .schedule_google_sync_for_link(email_link_id)
             .await?;
         Ok(true)
+    }
+
+    /// Best-effort Stalwart→Conation pull before a list. No-ops without
+    /// `STALWART_JMAP_URL` so Google-only tests never touch creation targets.
+    async fn import_stalwart_events(&self, requester_id: &str) {
+        let Ok(stalwart) = email_provider::StalwartProvider::from_env() else {
+            return;
+        };
+        let Ok(Some(target)) = self
+            .repository
+            .get_creation_target(requester_id, None, None)
+            .await
+        else {
+            return;
+        };
+        if target.token_identity.provider.eq_ignore_ascii_case("GMAIL") {
+            return;
+        }
+        let Ok(events) = stalwart
+            .list_calendar_events(&target.token_identity.email_address)
+            .await
+        else {
+            return;
+        };
+        for event in events {
+            let upsert = super::mutations::stalwart_upsert_from_remote(&target, &event);
+            let _ = self
+                .repository
+                .upsert_event(CalendarEventWrite::UserMutation(upsert))
+                .await
+                .inspect_err(|error| {
+                    tracing::warn!(error=?error, "failed to persist a pulled Stalwart calendar event");
+                });
+        }
     }
 }
 
