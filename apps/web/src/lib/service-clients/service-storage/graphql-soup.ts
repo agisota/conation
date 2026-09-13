@@ -1,1 +1,1 @@
-file:///tmp/graphql-soup-patched.ts
+RESTORE_FROM_FILE_/tmp/restore-soup.ts
