@@ -202,6 +202,9 @@ export async function dssGraphqlFetch(
     return response;
   }
 
+  // A mixed deployment remains network-correct: retry without the additive
+  // metadata field and suppress v2 local authority for this session. Backfill
+  // still refuses to checkpoint missing required Document supplements.
   soupProjectionServerSupported = false;
   return await authorizedDssGraphqlFetch(input, legacyInit);
 }
@@ -210,6 +213,9 @@ const graphqlSoupClient = createClient({
   url: `${dssHost}/items/soup/graphql`,
   exchanges: [fetchExchange],
   fetch: dssGraphqlFetch,
+  // urql's default ("within-url-limit") sends small documents as GET, but
+  // GET on the DSS GraphQL path serves the GraphiQL IDE — only POST
+  // executes. Every pre-activity document was too large to trigger this.
   preferGetMethod: false,
 });
 
@@ -230,4 +236,199 @@ function createGraphqlSoupWebSocketClient(): GraphqlWsClient {
     retryAttempts: SOUP_GRAPHQL_WEBSOCKET_RETRY_ATTEMPTS,
     shouldRetry: shouldRetryGraphqlSoupWebSocket,
   });
+}
+
+function graphqlSoupSubscriptionExchange(websocketClient: GraphqlWsClient) {
+  return subscriptionExchange({
+    forwardSubscription(payload, request) {
+      const graphqlWsPayload = {
+        query: print(request.query),
+        operationName: payload.operationName,
+        variables: payload.variables,
+        extensions: payload.extensions,
+      };
+      return {
+        subscribe(sink) {
+          const unsubscribe = websocketClient.subscribe(graphqlWsPayload, sink);
+          return { unsubscribe };
+        },
+      };
+    },
+  });
+}
+
+let uncachedRealtimeClient: Client | undefined;
+let uncachedRealtimeCleanup: (() => void) | undefined;
+
+function disposeUncachedRealtimeClient(): void {
+  uncachedRealtimeCleanup?.();
+  uncachedRealtimeCleanup = undefined;
+  uncachedRealtimeClient = undefined;
+}
+
+function getUncachedRealtimeClient(): Client {
+  if (uncachedRealtimeClient) return uncachedRealtimeClient;
+
+  const websocketClient = createGraphqlSoupWebSocketClient();
+  const subscriptionsLifecycle = createGraphqlSoupSubscriptionsLifecycle();
+  const client = createClient({
+    url: `${dssHost}/items/soup/graphql`,
+    preferGetMethod: false,
+    exchanges: [
+      graphqlSoupSubscriptionExchange(websocketClient),
+      fetchExchange,
+    ],
+    fetch: dssGraphqlFetch,
+  });
+  subscriptionsLifecycle.replace(client);
+  uncachedRealtimeClient = client;
+  uncachedRealtimeCleanup = () => {
+    subscriptionsLifecycle.dispose();
+    void websocketClient.dispose();
+  };
+  return client;
+}
+
+let cacheInitializationFailed = false;
+
+/**
+ * Whether the normalized cache is active for soup GraphQL queries.
+ * Browser: wasm engine in a worker. Tauri: native engine in the host
+ * process (graphql_cache_plugin).
+ */
+export function graphqlCacheEnabled(): boolean {
+  if (cacheInitializationFailed) return false;
+  if (!isTauri() && browserCacheClientActivated) return true;
+  return getBrowserTursoCacheRolloutDecision().enabled;
+}
+
+let cachedClient: Client | undefined;
+let cachedCacheHost: CacheHost | undefined;
+let cachedCacheCleanup: (() => void) | undefined;
+let browserCacheClientActivated = false;
+
+function fallbackAfterInitializationFailure(): void {
+  const cleanup = cachedCacheCleanup;
+  cachedCacheCleanup = undefined;
+  cachedCacheHost = undefined;
+  cacheInitializationFailed = true;
+  cachedClient = ENABLE_GRAPHQL_SOUP()
+    ? getUncachedRealtimeClient()
+    : graphqlSoupClient;
+  browserCacheClientActivated = false;
+  try {
+    cleanup?.();
+  } catch {
+    // Initialization-failure cleanup cannot alter GraphQL transport fallback.
+  }
+}
+
+/** Returns the persistent normalized-cache host after client initialization. */
+export function getGraphqlCacheHost(): CacheHost | undefined {
+  return cachedCacheHost?.disabled ? undefined : cachedCacheHost;
+}
+
+/**
+ * Resolves the urql client, lazily assembling the cached client on first
+ * use. The cache scope is an anonymous client uuid — no identity lookup is
+ * needed (or wanted) here: user↔cache consistency is enforced inside the
+ * engine by the identity witness on `QueryRoot.user.id` (a response for a
+ * different user wipes and rebinds the cache). See @graphql-cache/scope.
+ * Any failure falls back to the plain fetch client for the session.
+ */
+export function getGraphqlSoupClient(): Client {
+  const native = isTauri();
+  // Only the browser Turso client is session-latched. Tauri keeps the prior
+  // dynamic GraphQL transport behavior and can return to the plain client when
+  // ENABLE_GRAPHQL_SOUP changes without constructing a browser resource.
+  if (!native && browserCacheClientActivated && cachedClient)
+    return cachedClient;
+  const rollout = getBrowserTursoCacheRolloutDecision();
+  if (!rollout.enabled) {
+    return ENABLE_GRAPHQL_SOUP()
+      ? getUncachedRealtimeClient()
+      : graphqlSoupClient;
+  }
+  if (cachedClient) return cachedClient;
+  disposeUncachedRealtimeClient();
+  cachedClient = (() => {
+    let host: CacheHost | undefined;
+    let websocketClient: GraphqlWsClient | undefined;
+    let unregisterHost: () => void = () => undefined;
+    const subscriptionsLifecycle = createGraphqlSoupSubscriptionsLifecycle();
+    const cleanup = () => {
+      unregisterHost();
+      // Unsubscribing emits urql teardown operations; keep the cache host
+      // available until those best-effort registration removals are issued.
+      subscriptionsLifecycle.dispose();
+      host?.dispose();
+      if (websocketClient) void websocketClient.dispose();
+    };
+    const onInitializationError = (error: Error) => {
+      if (!host || cachedCacheHost !== host) return;
+      fallbackAfterInitializationFailure();
+      console.warn(
+        'graphql cache async init failed; using uncached client',
+        error
+      );
+    };
+    try {
+      const scope = getOrCreateCacheScope();
+      host = native
+        ? createTauriCacheHost({ scope, onInitializationError })
+        : createWorkerCacheHost({
+            scope,
+            onInitializationError,
+            rolloutCohort: rollout.cohort,
+          });
+      const graphqlWsClient = createGraphqlSoupWebSocketClient();
+      websocketClient = graphqlWsClient;
+      const client = createClient({
+        url: `${dssHost}/items/soup/graphql`,
+        // See graphqlSoupClient: GET serves GraphiQL on this path.
+        preferGetMethod: false,
+        exchanges: [
+          normalizedCacheExchange(host, {
+            entityResolvers: {
+              GraphqlUser: {
+                emailThread: entityFromArgument('GraphqlSoupEmailThread', [
+                  'input',
+                  'threadId',
+                ]),
+              },
+            },
+            // Session identity witness: the viewer id present on every soup
+            // response. A response for a different user silently wipes and
+            // rebinds the cache (see @graphql-cache/scope).
+            extractIdentity: (data) =>
+              (data as Partial<SoupQuery | GroupSoupQuery> | undefined)?.user
+                ?.id,
+            // Transport failures remain queued with their optimistic layer;
+            // GraphQL application errors are permanent and roll back.
+            shouldRetryMutation: (error) => error.networkError != null,
+          }),
+          graphqlSoupSubscriptionExchange(graphqlWsClient),
+          fetchExchange,
+        ],
+        fetch: dssGraphqlFetch,
+      });
+      cachedCacheHost = host;
+      cacheInitializationFailed = false;
+      unregisterHost = registerCacheHost(host);
+      subscriptionsLifecycle.replace(client, host);
+      cachedCacheCleanup = cleanup;
+      browserCacheClientActivated = !native;
+      return client;
+    } catch (error) {
+      cleanup();
+      cachedCacheHost = undefined;
+      cachedCacheCleanup = undefined;
+      cacheInitializationFailed = true;
+      console.warn('graphql cache init failed; using uncached client', error);
+      return ENABLE_GRAPHQL_SOUP()
+        ? getUncachedRealtimeClient()
+        : graphqlSoupClient;
+    }
+  })();
+  return cachedClient;
 }
