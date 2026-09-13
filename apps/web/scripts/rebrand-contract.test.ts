@@ -134,4 +134,57 @@ describe('Conation rebrand compatibility contract', () => {
       'conation',
     ]);
   });
+
+  it('keeps greenfield auth cookies, refresh header, and JWT token route', () => {
+    const jwtScript = readFileSync(
+      resolve(webRoot, 'scripts/generate-jwt-from-secrets.ts'),
+      'utf8'
+    );
+    const authClient = readFileSync(
+      resolve(webRoot, 'src/lib/service-clients/service-auth/client.ts'),
+      'utf8'
+    );
+    const html = readFileSync(resolve(webRoot, 'index.html'), 'utf8');
+
+    expect(jwtScript).toContain('accessTokenCookie: "conation-access-token"');
+    expect(jwtScript).toContain(
+      'refreshTokenCookie: "conation-refresh-token"'
+    );
+    expect(jwtScript).toContain(
+      'accessTokenCookie: "dev-conation-access-token"'
+    );
+    expect(jwtScript).not.toMatch(/macro-access-token|macro_api_token/);
+    expect(jwtScript).not.toContain('macro.com');
+
+    expect(authClient).toContain("'/jwt/conation_api_token'");
+    expect(authClient).toContain("'x-conation-refresh-token'");
+    expect(authClient).not.toContain('/jwt/macro_api_token');
+    expect(authClient).not.toContain('x-macro-refresh-token');
+
+    expect(html).toContain('conation-locale');
+    expect(html).not.toContain('macro-locale');
+  });
+
+  it('keeps Compose and web package identities on Conation', () => {
+    const repoRoot = resolve(webRoot, '../..');
+    const compose = readFileSync(
+      resolve(repoRoot, 'docker/docker-compose.yml'),
+      'utf8'
+    );
+    const databases = readFileSync(
+      resolve(repoRoot, 'docker/docker-compose-databases.yml'),
+      'utf8'
+    );
+    const pkg = JSON.parse(
+      readFileSync(resolve(webRoot, 'package.json'), 'utf8')
+    ) as { name: string };
+
+    expect(compose).toMatch(/^name: conation$/m);
+    expect(compose).not.toMatch(/^name: macro$/m);
+    expect(databases).toMatch(/^name: conation$/m);
+    expect(databases).toContain('name: conation_postgres_data');
+    expect(databases).toContain('name: conation_redis_data');
+    expect(databases).not.toContain('name: macro_postgres_data');
+    expect(pkg.name).toBe('@conation/web');
+  });
 });
