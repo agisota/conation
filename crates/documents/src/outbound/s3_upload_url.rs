@@ -158,6 +158,32 @@ impl PresignedUploadUrlPort for S3UploadUrlAdapter {
 
         Ok(())
     }
+
+    #[tracing::instrument(skip(self), err)]
+    async fn get_document_storage_object(&self, key: &str) -> anyhow::Result<Option<Vec<u8>>> {
+        let resp = self
+            .client
+            .get_object()
+            .bucket(&self.document_storage_bucket)
+            .key(key)
+            .send()
+            .await;
+
+        match resp {
+            Err(e) if e.as_service_error().map(|e| e.is_no_such_key()) == Some(true) => Ok(None),
+            Err(e) => Err(e).context("failed get_object for document storage"),
+            Ok(output) => {
+                let bytes = output
+                    .body
+                    .collect()
+                    .await
+                    .context("failed to read document storage body")?
+                    .into_bytes()
+                    .to_vec();
+                Ok(Some(bytes))
+            }
+        }
+    }
 }
 
 async fn put_presigned_url(

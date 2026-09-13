@@ -498,6 +498,10 @@ impl DocumentCreationService for FakeDocumentService {
     ) -> Result<(), DocumentError> {
         panic!("unexpected overwrite_plain_text call")
     }
+
+    async fn read_plain_text(&self, _document_id: &str) -> Result<Option<String>, DocumentError> {
+        panic!("unexpected read_plain_text call")
+    }
 }
 
 fn create_document_response(user_id: MacroUserIdStr<'static>) -> CreateDocumentResponseData {

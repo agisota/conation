@@ -92,6 +92,10 @@ impl DocumentCreationService for FakeCreationService {
     ) -> Result<(), DocumentError> {
         panic!("unexpected overwrite_plain_text call")
     }
+
+    async fn read_plain_text(&self, _document_id: &str) -> Result<Option<String>, DocumentError> {
+        panic!("unexpected read_plain_text call")
+    }
 }
 
 struct FakeMarkdownInitializer;

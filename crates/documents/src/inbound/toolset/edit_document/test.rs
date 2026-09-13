@@ -50,6 +50,8 @@ fn document_with_file_type(file_type: Option<&str>) -> DocumentBasic {
 struct FakeDocumentService {
     file_type: Option<String>,
     overwrites: Arc<Mutex<Vec<(String, String)>>>,
+    stored: Arc<Mutex<Option<String>>>,
+    read_error: Arc<Mutex<Option<String>>>,
 }
 
 impl FakeDocumentService {
@@ -57,7 +59,19 @@ impl FakeDocumentService {
         Self {
             file_type: Some(file_type.to_string()),
             overwrites: Arc::new(Mutex::new(Vec::new())),
+            stored: Arc::new(Mutex::new(None)),
+            read_error: Arc::new(Mutex::new(None)),
         }
+    }
+
+    fn with_stored_board(self, json: &str) -> Self {
+        *self.stored.lock().expect("stored lock poisoned") = Some(json.to_string());
+        self
+    }
+
+    fn with_read_error(self, message: &str) -> Self {
+        *self.read_error.lock().expect("read_error lock poisoned") = Some(message.to_string());
+        self
     }
 }
 
@@ -66,6 +80,8 @@ impl Clone for FakeDocumentService {
         Self {
             file_type: self.file_type.clone(),
             overwrites: self.overwrites.clone(),
+            stored: self.stored.clone(),
+            read_error: self.read_error.clone(),
         }
     }
 }
@@ -302,6 +318,18 @@ impl DocumentCreationService for FakeDocumentService {
             .expect("overwrites lock poisoned")
             .push((document_id.to_string(), text));
         Ok(())
+    }
+
+    async fn read_plain_text(&self, _document_id: &str) -> Result<Option<String>, DocumentError> {
+        if let Some(message) = self
+            .read_error
+            .lock()
+            .expect("read_error lock poisoned")
+            .clone()
+        {
+            return Err(DocumentError::Internal(anyhow::anyhow!(message)));
+        }
+        Ok(self.stored.lock().expect("stored lock poisoned").clone())
     }
 }
 
@@ -660,7 +688,18 @@ async fn call_canvas_ops(
     FakeDocumentService,
     FakeEditingWorker,
 ) {
-    let service = FakeDocumentService::new("canvas");
+    call_canvas_ops_with(FakeDocumentService::new("canvas"), file_content, canvas_ops).await
+}
+
+async fn call_canvas_ops_with(
+    service: FakeDocumentService,
+    file_content: Option<&str>,
+    canvas_ops: Option<Vec<crate::domain::canvas_loro::CanvasOp>>,
+) -> (
+    ToolResult<EditDocumentResponse>,
+    FakeDocumentService,
+    FakeEditingWorker,
+) {
     let editing = FakeEditingWorker::default();
     let tool = EditDocument {
         document_id: TEST_DOCUMENT_ID.to_string(),
@@ -735,6 +774,74 @@ async fn canvas_ops_empty_list_is_rejected() {
     let error = result.expect_err("empty canvasOps should fail");
     assert!(
         error.description.contains("canvasOps"),
+        "{}",
+        error.description
+    );
+    assert!(
+        service
+            .overwrites
+            .lock()
+            .expect("overwrites lock poisoned")
+            .is_empty()
+    );
+    assert!(
+        editing
+            .edit_calls
+            .lock()
+            .expect("edit calls lock poisoned")
+            .is_empty()
+    );
+}
+
+#[tokio::test]
+async fn canvas_ops_load_from_object_storage_when_snapshot_missing() {
+    use crate::domain::canvas_loro::CanvasOp;
+
+    let stored = r#"{"nodes":[{"id":"keep","x":1,"y":2}],"edges":[{"id":"e1"}]}"#;
+    let service = FakeDocumentService::new("canvas").with_stored_board(stored);
+    let (result, service, editing) = call_canvas_ops_with(
+        service,
+        None,
+        Some(vec![CanvasOp::UpsertNode {
+            node: serde_json::json!({"id":"n2","type":"shape","x":8,"y":4}),
+        }]),
+    )
+    .await;
+
+    let response = result.expect("ops should apply onto the stored board");
+    assert_eq!(response.summary, "Applied 1 canvas op(s).");
+    let overwrites = service.overwrites.lock().expect("overwrites lock poisoned");
+    let board: serde_json::Value = serde_json::from_str(&overwrites[0].1).unwrap();
+    assert_eq!(board["nodes"].as_array().map(|n| n.len()), Some(2));
+    assert_eq!(board["nodes"][0]["id"], "keep");
+    assert_eq!(board["nodes"][1]["id"], "n2");
+    assert_eq!(board["edges"], serde_json::json!([{"id":"e1"}]));
+    assert!(
+        editing
+            .edit_calls
+            .lock()
+            .expect("edit calls lock poisoned")
+            .is_empty()
+    );
+}
+
+#[tokio::test]
+async fn canvas_ops_do_not_start_empty_when_object_storage_read_fails() {
+    use crate::domain::canvas_loro::CanvasOp;
+
+    let service = FakeDocumentService::new("canvas").with_read_error("s3 unavailable");
+    let (result, service, editing) = call_canvas_ops_with(
+        service,
+        None,
+        Some(vec![CanvasOp::UpsertNode {
+            node: serde_json::json!({"id":"n1","type":"shape","x":8,"y":4}),
+        }]),
+    )
+    .await;
+
+    let error = result.expect_err("ops must not start from empty when DSS read fails");
+    assert!(
+        error.description.contains("object storage") || error.description.contains("s3"),
         "{}",
         error.description
     );

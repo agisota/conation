@@ -335,6 +335,14 @@ pub trait PresignedUploadUrlPort: Send + Sync + 'static {
         content_type: ContentType,
         bytes: Vec<u8>,
     ) -> impl Future<Output = anyhow::Result<()>> + Send;
+
+    /// Read a document-storage object at `key` (same bucket/key the editor DSS load uses).
+    ///
+    /// `Ok(None)` when the object does not exist.
+    fn get_document_storage_object(
+        &self,
+        key: &str,
+    ) -> impl Future<Output = anyhow::Result<Option<Vec<u8>>>> + Send;
 }
 
 /// Port for attaching task system properties.

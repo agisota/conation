@@ -156,6 +156,10 @@ impl PresignedUploadUrlPort for TestUploadUrlPort {
     ) -> anyhow::Result<()> {
         Ok(())
     }
+
+    async fn get_document_storage_object(&self, _key: &str) -> anyhow::Result<Option<Vec<u8>>> {
+        Ok(None)
+    }
 }
 
 struct TestTaskPropertiesPort;

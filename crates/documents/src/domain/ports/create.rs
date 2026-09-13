@@ -76,6 +76,15 @@ pub trait DocumentCreationService: Send + Sync {
         file_type: FileType,
         text: String,
     ) -> impl Future<Output = Result<(), DocumentError>> + Send;
+
+    /// Read the stored plaintext bytes (same DSS/S3 key as [`Self::overwrite_plain_text`]).
+    ///
+    /// `Ok(None)` when the object is missing. Used by canvas ops when there is
+    /// no `fileContent` and no live Loro snapshot.
+    fn read_plain_text(
+        &self,
+        document_id: &str,
+    ) -> impl Future<Output = Result<Option<String>, DocumentError>> + Send;
 }
 
 impl<T> DocumentCreationService for Arc<T>
@@ -127,5 +136,9 @@ where
         (**self)
             .overwrite_plain_text(document_id, file_type, text)
             .await
+    }
+
+    async fn read_plain_text(&self, document_id: &str) -> Result<Option<String>, DocumentError> {
+        (**self).read_plain_text(document_id).await
     }
 }

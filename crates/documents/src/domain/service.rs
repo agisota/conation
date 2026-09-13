@@ -817,6 +817,41 @@ impl<
         )
         .await
     }
+
+    #[tracing::instrument(err, skip(self))]
+    async fn read_plain_text(&self, document_id: &str) -> Result<Option<String>, DocumentError> {
+        let document = self
+            .repo
+            .get_basic_document(document_id)
+            .await
+            .map_err(|error| map_basic_document_error(document_id, error.into()))?;
+
+        let (document_version_id, _) = self
+            .repo
+            .get_document_version_id(document_id)
+            .await
+            .map_err(|error| DocumentError::Internal(error.into()))?;
+
+        let key = build_cloud_storage_bucket_document_key(
+            document.owner.as_ref(),
+            document_id,
+            document_version_id,
+        );
+        let bytes = self
+            .upload_url_service
+            .get_document_storage_object(&key)
+            .await
+            .map_err(DocumentError::Internal)?;
+
+        match bytes {
+            None => Ok(None),
+            Some(bytes) => String::from_utf8(bytes).map(Some).map_err(|error| {
+                DocumentError::Internal(anyhow!(
+                    "document storage object is not valid UTF-8: {error}"
+                ))
+            }),
+        }
+    }
 }
 
 impl<

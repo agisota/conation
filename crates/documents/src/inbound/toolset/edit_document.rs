@@ -45,7 +45,7 @@ pub struct EditDocument {
     #[serde(default)]
     pub file_content: Option<String>,
     #[schemars(
-        description = "For canvas documents, node-level ops matching the editor: upsertNode, deleteNode, moveNode, updateNode, upsertEdge, deleteEdge. Applied onto the live Loro board, or onto fileContent if given, otherwise an empty board. Prefer this over replacing the whole {nodes, edges} blob."
+        description = "For canvas documents, node-level ops matching the editor: upsertNode, deleteNode, moveNode, updateNode, upsertEdge, deleteEdge. Applied onto the live Loro board, or onto fileContent if given, otherwise the stored DSS/S3 board, otherwise an empty board. Prefer this over replacing the whole {nodes, edges} blob."
     )]
     #[serde(default)]
     pub canvas_ops: Option<Vec<CanvasOp>>,
@@ -157,6 +157,33 @@ fn canvas_overwrite_text(file_content: Option<&str>) -> Result<String, ToolCallE
     document_text_for_create("canvas", file_content).map_err(failed_to_overwrite_canvas)
 }
 
+fn failed_to_load_canvas(error: DocumentError) -> ToolCallError {
+    let description = match &error {
+        DocumentError::BadRequest(message) => message.clone(),
+        _ => "failed to load canvas from object storage".to_string(),
+    };
+    ToolCallError {
+        description,
+        internal_error: error.into(),
+    }
+}
+
+async fn stored_canvas_json<DSvc, ESvc, EDSvc>(
+    ctx: &ServiceContext<DocumentToolContext<DSvc, ESvc, EDSvc>>,
+    document_id: &str,
+) -> ToolResult<String>
+where
+    DSvc: DocumentService + DocumentCreationService,
+    ESvc: EntityAccessService,
+    EDSvc: EditingWorkerService,
+{
+    match ctx.service.read_plain_text(document_id).await {
+        Ok(Some(text)) => document_text_for_create("canvas", &text).map_err(failed_to_load_canvas),
+        Ok(None) => Ok(EMPTY_CANVAS_JSON.to_string()),
+        Err(error) => Err(failed_to_load_canvas(error)),
+    }
+}
+
 async fn apply_canvas_ops<DSvc, ESvc, EDSvc>(
     tool: &EditDocument,
     ctx: ServiceContext<DocumentToolContext<DSvc, ESvc, EDSvc>>,
@@ -189,12 +216,16 @@ where
             None
         }
     };
+    let snapshot_json = existing
+        .as_deref()
+        .filter(|snapshot| !snapshot.is_empty())
+        .and_then(|snapshot| canvas_loro::json_from_snapshot(snapshot).ok());
     let base = if let Some(file_content) = tool.file_content.as_deref() {
         canvas_overwrite_text(Some(file_content))?
-    } else if let Some(snapshot) = existing.as_deref() {
-        canvas_loro::json_from_snapshot(snapshot).unwrap_or_else(|_| EMPTY_CANVAS_JSON.to_string())
+    } else if let Some(json) = snapshot_json {
+        json
     } else {
-        EMPTY_CANVAS_JSON.to_string()
+        stored_canvas_json(&ctx, &tool.document_id).await?
     };
     let text = canvas_loro::apply_ops_to_json(&base, ops).map_err(|error| ToolCallError {
         description: error.to_string(),
