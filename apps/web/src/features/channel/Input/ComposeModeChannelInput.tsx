@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { isMobile } from '@core/mobile/isMobile';
 import { isPlatform } from '@core/util/platform';
 import { makePersisted } from '@solid-primitives/storage';
@@ -159,14 +160,14 @@ export function ComposeModeChannelInput(props: ComposeModeChannelInputProps) {
     <>
       <Show when={canUseTaskMode()}>
         <ComposeModeSwitch
-          label="Task"
+          label={t('channel.composer.task')}
           checked={current === 'task'}
           onChange={(checked) => setMode(checked ? 'task' : 'message')}
         />
       </Show>
       <Show when={canUseEventMode()}>
         <ComposeModeSwitch
-          label="Event"
+          label={t('channel.composer.event')}
           checked={current === 'event'}
           onChange={(checked) => setMode(checked ? 'event' : 'message')}
         />

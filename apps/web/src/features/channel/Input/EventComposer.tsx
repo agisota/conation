@@ -6,6 +6,7 @@ import {
   type EventEditorSubmitValues,
 } from '@app/features/calendar/components/composer/event-form-model';
 import { useEventEditor } from '@app/features/calendar/hooks/use-event-editor';
+import { t } from '@app/lib/i18n';
 import { useUserId } from '@core/context/user';
 import { registerHotkey, useHotkeyDOMScope } from '@core/hotkey/hotkeys';
 import type { IUser } from '@core/user/types';
@@ -164,7 +165,7 @@ export function EventComposer(props: {
     values: EventEditorSubmitValues
   ): EventEditorSubmitValues => {
     const link = buildSimpleEntityUrl({ type: 'channel', id: props.channelId });
-    const suffix = `Created from Macro channel: ${link}`;
+    const suffix = t('channel.composer.createdFromChannel', { link });
     return {
       ...values,
       description: values.description
@@ -199,7 +200,7 @@ export function EventComposer(props: {
   registerHotkey({
     hotkey: 'cmd+enter',
     scopeId: composerHotkeyScope,
-    description: 'Create event and send',
+    description: t('channel.composer.createEvent'),
     keyDownHandler: () => {
       handleSend();
       return true;
@@ -255,9 +256,9 @@ export function EventComposer(props: {
       <div class="shrink-0 flex w-full flex-row justify-between items-center p-2 space-x-2">
         <div class="flex items-center gap-2">{props.modeSwitch}</div>
         <SendButton
-          tooltip="Create event and send"
+          tooltip={t('channel.composer.createEvent')}
           shortcut="cmd+enter"
-          aria-label="Create event and send"
+          aria-label={t('channel.composer.createEvent')}
           data-input-action="send-event"
           pending={editor.pending()}
           disabled={!canSend()}

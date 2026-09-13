@@ -722,10 +722,10 @@ export function Channel(props: ChannelProps) {
         // send, so retrying in the composer would create a duplicate —
         // point at the event instead.
         onError: () => {
-          toast.failure('Event created, but sharing it to the channel failed', {
+          toast.failure(t('channel.composer.shareEventFailed'), {
             actions: [
               {
-                label: 'Open event',
+                label: t('channel.openEvent'),
                 onClick: () =>
                   void openCalendarEventSplit({ eventId: event.eventId }),
               },
