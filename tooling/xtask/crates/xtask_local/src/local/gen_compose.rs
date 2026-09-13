@@ -77,13 +77,19 @@ pub fn generate(
     } else {
         instance.port(Port::Frontend)
     };
+    let signup_antibot_hmac =
+        super::identity::instance_secret("signup-antibot-hmac", instance.name());
 
     // 1. Rust services → runtime image + mounted binaries.
     for svc in services_for_mode(mode) {
         let mut s = dct::Service {
             image: Some(RUNTIME_IMAGE_TAG.to_string()),
             volumes: mounts.iter().cloned().map(dct::Volumes::Simple).collect(),
-            environment: rust_service_environment(svc.compose_name, frontend_port),
+            environment: rust_service_environment(
+                svc.compose_name,
+                frontend_port,
+                &signup_antibot_hmac,
+            ),
             ..Default::default()
         };
         // Named instances need their own host ports (replacing the base ports —
@@ -533,11 +539,20 @@ fn override_in_place(service: &mut serde_yaml::Mapping, field: &str) {
 }
 
 /// `environment:` beats Compose `env_file` on recreate. Pin passwordless
-/// origins on auth so a restart cannot drop Tauri `https://localhost`.
-fn rust_service_environment(compose_name: &str, frontend_port: u16) -> dct::Environment {
+/// origins and the signup HMAC so a restart cannot drop Tauri
+/// `https://localhost` or leave `SIGNUP_ANTIBOT_HMAC_KEY` unset.
+fn rust_service_environment(
+    compose_name: &str,
+    frontend_port: u16,
+    signup_antibot_hmac: &str,
+) -> dct::Environment {
     if compose_name == "authentication-service" {
         let origins = super::local_env::allowed_origins_csv(frontend_port);
-        kv(&[("PORT", "8080"), ("ALLOWED_ORIGINS", origins.as_str())])
+        kv(&[
+            ("PORT", "8080"),
+            ("ALLOWED_ORIGINS", origins.as_str()),
+            ("SIGNUP_ANTIBOT_HMAC_KEY", signup_antibot_hmac),
+        ])
     } else {
         kv(&[("PORT", "8080")])
     }
