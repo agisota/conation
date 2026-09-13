@@ -39,6 +39,8 @@ fn rejects_non_local_and_out_of_range_origins() {
 fn allows_static_origins() {
     assert!(is_origin_allowed_with("https://conation.dev", &defaults()));
     assert!(is_origin_allowed_with("tauri://localhost", &defaults()));
+    assert!(is_origin_allowed_with("https://tauri.localhost", &defaults()));
+    assert!(is_origin_allowed_with("https://localhost", &defaults()));
 }
 
 #[test]

@@ -11,11 +11,8 @@ import {
   type AntibotProof,
 } from './signup-antibot';
 
-// Construct the redirect uri to use for passwordless login.
-// This will send us back to the application after clicking the magic link.
-// in "dev" (local) we use http otherwise https
-const protocol = import.meta.hot ? 'http' : 'https';
-const REDIRECT_URI = `${protocol}://${window.location.host}/app`;
+// Use the webview scheme as-is. Production used to force https, which turned
+// macOS `tauri://localhost` into `https://localhost/app`.
 
 async function isPasswordLogin(email?: string | null) {
   if (!email) return false;
@@ -44,7 +41,7 @@ async function postPasswordless(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        redirect_uri: REDIRECT_URI,
+        redirect_uri: `${window.location.protocol}//${window.location.host}/app`,
         email,
         ...(referral_code && { referral_code }),
         ...(antibot && { antibot }),
