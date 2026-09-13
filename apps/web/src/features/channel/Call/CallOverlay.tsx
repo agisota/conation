@@ -242,7 +242,7 @@ export function CallOverlay(props: { onLeave: () => void }) {
   const isVeryNarrow = () => panelWidth() < CALL_PANEL_VERY_NARROW_PX;
 
   const participants = () =>
-    Array.from(callCtx.remoteParticipants().values()).filter((p) => !p.isAgent);
+    Array.from(callCtx.remoteParticipants().values());
 
   const isLocalSpeaking = () => callCtx.isLocalSpeaking();
 

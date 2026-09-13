@@ -1,10 +1,23 @@
 import { describe, expect, it } from 'vitest';
+import type { RemoteParticipant, Room } from 'livekit-client';
+import { buildOrderedInCallMembers } from './InCallPanel/members';
 import {
   classifyCallParticipantIdentity,
   isStandingRoomEmpty,
   isStandingRoomWaiting,
   standingRoomEmptyJoinAllowed,
 } from './join-channel-call';
+
+function remote(
+  identity: string,
+  opts?: { isAgent?: boolean }
+): RemoteParticipant {
+  return {
+    sid: `sid-${identity}`,
+    identity,
+    isAgent: opts?.isAgent ?? false,
+  } as RemoteParticipant;
+}
 
 describe('standing rooms', () => {
   it('allows joining an empty LiveKit room', () => {
@@ -33,5 +46,26 @@ describe('standing rooms', () => {
   it('treats an unoccupied standing room as empty', () => {
     expect(isStandingRoomEmpty(0)).toBe(true);
     expect(isStandingRoomEmpty(1)).toBe(false);
+  });
+});
+
+describe('in-call roster roles', () => {
+  it('orders people, then bots, then agents and keeps isAgent remotes', () => {
+    const room = {} as Room;
+    const remotes = new Map<string, RemoteParticipant>([
+      ['a', remote('agent:scribe', { isAgent: true })],
+      ['b', remote('bot:alerts')],
+      ['c', remote('conation|ada@example.com')],
+    ]);
+    const members = buildOrderedInCallMembers(room, remotes);
+    expect(members.map((m) => m.role)).toEqual([
+      'person',
+      'person',
+      'bot',
+      'agent',
+    ]);
+    expect(members.filter((m) => m.kind === 'remote').map((m) => m.role)).toEqual(
+      ['person', 'bot', 'agent']
+    );
   });
 });

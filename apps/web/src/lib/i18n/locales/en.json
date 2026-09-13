@@ -1049,6 +1049,8 @@
   "channel.call.roster.everyone": "Everyone in call",
   "channel.call.roster.openDmFailed": "Could not open direct message",
   "channel.call.roster.title": "In this call",
+  "channel.call.roster.kind.bot": "Bot",
+  "channel.call.roster.kind.agent": "Agent",
   "channel.call.waitingForOthers": "Waiting for others",
   "channel.call.shareWithTeam": "Share with team",
   "channel.call.shareWithTeamDisabledHelp": "Let everyone view the transcript and AI summary",

@@ -1,10 +1,15 @@
 import type { RemoteParticipant } from 'livekit-client';
 import type { Accessor } from 'solid-js';
+import type { CallParticipantKind } from '../join-channel-call';
 import type { CallState } from '../CallContext';
 
 export type InCallPanelMember =
-  | { kind: 'local' }
-  | { kind: 'remote'; participant: RemoteParticipant };
+  | { kind: 'local'; role: CallParticipantKind }
+  | {
+      kind: 'remote';
+      participant: RemoteParticipant;
+      role: CallParticipantKind;
+    };
 
 export type InCallVisibleAvatarSlot =
   | { type: 'member'; member: InCallPanelMember; key: string }

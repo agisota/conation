@@ -7,9 +7,16 @@ import UsersThree from '@phosphor/users-three.svg';
 import { useGetOrCreateDirectMessageMutation } from '@queries/channel/get-or-create-dm';
 import { cn, Surface } from '@ui';
 import { createMemo, createSignal, For, Show } from 'solid-js';
+import type { CallParticipantKind } from '../join-channel-call';
 import { InCallParticipantAvatar } from './InCallParticipantAvatar';
 import { profilePictureIdForMember } from './profile-picture-id-for-member';
 import type { InCallPanelMember, UseInCallPanelResult } from './types';
+
+function rosterRoleLabel(role: CallParticipantKind): string | undefined {
+  if (role === 'bot') return t('channel.call.roster.kind.bot');
+  if (role === 'agent') return t('channel.call.roster.kind.agent');
+  return undefined;
+}
 
 export function InCallRosterListSection(props: {
   panel: UseInCallPanelResult;
@@ -73,8 +80,10 @@ export function InCallParticipantNameRow(props: {
   });
 
   const isRemote = () => props.member.kind === 'remote';
-  const allowDm = () => props.allowOpenDm !== false;
+  const allowDm = () =>
+    props.allowOpenDm !== false && props.member.role === 'person';
   const isInteractive = () => isRemote() && allowDm();
+  const roleLabel = () => rosterRoleLabel(props.member.role);
 
   const openDm = () => {
     if (props.member.kind !== 'remote') return;
@@ -111,6 +120,11 @@ export function InCallParticipantNameRow(props: {
         size="sm"
       />
       <span class="truncate text-sm text-ink">{label()}</span>
+      <Show when={roleLabel()}>
+        <span class="ml-auto text-xs text-ink-muted shrink-0 uppercase">
+          {roleLabel()}
+        </span>
+      </Show>
       <Show when={props.member.kind === 'local'}>
         <span class="ml-auto text-xs text-ink-muted shrink-0">
           {t('channel.call.you')}

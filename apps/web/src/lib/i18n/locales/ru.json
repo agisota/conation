@@ -1049,6 +1049,8 @@
   "channel.call.roster.everyone": "Все участники звонка",
   "channel.call.roster.openDmFailed": "Не удалось открыть личный чат",
   "channel.call.roster.title": "Участники звонка",
+  "channel.call.roster.kind.bot": "Бот",
+  "channel.call.roster.kind.agent": "Агент",
   "channel.call.waitingForOthers": "Ждём остальных",
   "channel.call.shareWithTeam": "Поделиться с командой",
   "channel.call.shareWithTeamDisabledHelp": "Разрешить всем просматривать расшифровку и сводку ИИ",

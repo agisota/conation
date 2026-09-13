@@ -28,6 +28,6 @@ export function debugInCallExtraRemoteMembers(
       identity: `debug-mock-participant-${i}`,
       isAgent: false,
     } as RemoteParticipant;
-    return { kind: 'remote' as const, participant };
+    return { kind: 'remote' as const, participant, role: 'person' };
   });
 }
