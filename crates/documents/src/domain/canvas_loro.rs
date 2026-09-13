@@ -1,6 +1,9 @@
 //! Persist canvas `{nodes, edges}` JSON as a Loro CRDT so concurrent
 //! board edits merge instead of last-write-wins on the whole file.
 
+use std::borrow::Cow;
+use std::collections::HashSet;
+
 use loro::{ExportMode, LoroDoc, LoroValue};
 use serde_json::{Map, Value};
 
@@ -36,10 +39,54 @@ pub fn snapshot_from_json_with_peer(json: &str, peer: u64) -> Result<Vec<u8>, Ca
 ///
 /// Nodes/edges/groups are keyed by `id`, so two peers adding different
 /// shapes keep both. Same-id keys last-write-win via Loro's map CRDT.
+/// Removals only drop an entity when encoded as a Loro map delete
+/// ([`update_from_json_onto_snapshot`]), not when a later snapshot simply
+/// omits the id.
 pub fn merge_json_boards(left: &str, right: &str) -> Result<String, CanvasLoroError> {
     let left_snap = snapshot_from_json_with_peer(left, 1)?;
     let right_snap = snapshot_from_json_with_peer(right, 2)?;
     json_from_snapshot(&merge_snapshots(&left_snap, &right_snap)?)
+}
+
+/// Apply a later board onto an existing snapshot and export a Loro *update*
+/// (the live WS payload after `initialize_from_snapshot`).
+///
+/// Entities present in `snapshot` but missing from `json` are deleted so
+/// the tombstone merges with peers that still have the old shape.
+pub fn update_from_json_onto_snapshot(
+    snapshot: &[u8],
+    json: &str,
+) -> Result<Vec<u8>, CanvasLoroError> {
+    update_from_json_onto_snapshot_with_peer(snapshot, json, 1)
+}
+
+/// [`update_from_json_onto_snapshot`] with an explicit Loro peer id.
+pub fn update_from_json_onto_snapshot_with_peer(
+    snapshot: &[u8],
+    json: &str,
+    peer: u64,
+) -> Result<Vec<u8>, CanvasLoroError> {
+    let value: Value = serde_json::from_str(json).map_err(|_| CanvasLoroError::InvalidBoard)?;
+    let obj = value.as_object().ok_or(CanvasLoroError::InvalidBoard)?;
+    if !obj.get(NODES).is_some_and(Value::is_array) || !obj.get(EDGES).is_some_and(Value::is_array)
+    {
+        return Err(CanvasLoroError::InvalidBoard);
+    }
+
+    let doc = LoroDoc::new();
+    doc.set_peer_id(peer)
+        .map_err(|e| CanvasLoroError::Loro(e.to_string()))?;
+    doc.import(snapshot)
+        .map_err(|e| CanvasLoroError::Loro(e.to_string()))?;
+    let from = doc.oplog_vv();
+    sync_entities(&doc, NODES, obj.get(NODES))?;
+    sync_entities(&doc, EDGES, obj.get(EDGES))?;
+    sync_entities(&doc, GROUPS, obj.get(GROUPS))?;
+    doc.commit();
+    doc.export(ExportMode::Updates {
+        from: Cow::Owned(from),
+    })
+    .map_err(|e| CanvasLoroError::Loro(e.to_string()))
 }
 
 fn merge_snapshots(left: &[u8], right: &[u8]) -> Result<Vec<u8>, CanvasLoroError> {
@@ -70,14 +117,14 @@ fn doc_from_board(value: &Value, peer: u64) -> Result<LoroDoc, CanvasLoroError> 
     let doc = LoroDoc::new();
     doc.set_peer_id(peer)
         .map_err(|e| CanvasLoroError::Loro(e.to_string()))?;
-    insert_entities(&doc, NODES, obj.get(NODES))?;
-    insert_entities(&doc, EDGES, obj.get(EDGES))?;
-    insert_entities(&doc, GROUPS, obj.get(GROUPS))?;
+    sync_entities(&doc, NODES, obj.get(NODES))?;
+    sync_entities(&doc, EDGES, obj.get(EDGES))?;
+    sync_entities(&doc, GROUPS, obj.get(GROUPS))?;
     doc.commit();
     Ok(doc)
 }
 
-fn insert_entities(
+fn sync_entities(
     doc: &LoroDoc,
     container: &str,
     value: Option<&Value>,
@@ -86,13 +133,28 @@ fn insert_entities(
         return Ok(());
     };
     let map = doc.get_map(container);
+    let mut keep = HashSet::new();
     for item in items {
         let id = item
             .get("id")
             .and_then(Value::as_str)
             .ok_or(CanvasLoroError::InvalidBoard)?;
+        keep.insert(id.to_string());
         map.insert(id, item.to_string())
             .map_err(|e| CanvasLoroError::Loro(e.to_string()))?;
+    }
+    let existing = match map.get_deep_value() {
+        LoroValue::Map(entries) => entries
+            .iter()
+            .map(|(id, _)| id.to_string())
+            .collect::<Vec<_>>(),
+        _ => Vec::new(),
+    };
+    for id in existing {
+        if !keep.contains(&id) {
+            map.delete(&id)
+                .map_err(|e| CanvasLoroError::Loro(e.to_string()))?;
+        }
     }
     Ok(())
 }

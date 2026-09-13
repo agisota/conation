@@ -27,10 +27,13 @@ describe('canvas Loro persist', () => {
   it('replays persisted updates for a document', () => {
     expect(
       recordCanvasLoro('doc-1', { nodes: [{ id: 'a' }], edges: [] })
-    ).toBe(true);
+    ).toBeTruthy();
     expect(
-      recordCanvasLoro('doc-1', { nodes: [{ id: 'b' }], edges: [] })
-    ).toBe(true);
+      recordCanvasLoro('doc-1', {
+        nodes: [{ id: 'a' }, { id: 'b' }],
+        edges: [],
+      })
+    ).toBeTruthy();
     const peeked = peekCanvasLoro('doc-1');
     const ids = (peeked?.nodes ?? []).map((n) => (n as { id: string }).id);
     expect(ids).toEqual(expect.arrayContaining(['a', 'b']));

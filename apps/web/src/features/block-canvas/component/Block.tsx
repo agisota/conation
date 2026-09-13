@@ -11,8 +11,10 @@ import { DocumentBlockContainer } from '@core/component/DocumentBlockContainer';
 import { toast } from '@core/component/Toast/Toast';
 import { createMethodRegistration } from '@core/orchestrator';
 import { blockFileSignal, blockHandleSignal } from '@core/signal/load';
+import { getPermissionToken } from '@core/signal/token';
 import type { IDocumentStorageServiceFile } from '@filesystem/file';
 import { storageServiceClient } from '@service-storage/client';
+import { createSyncServiceSource } from '@service-sync/source';
 import { createCallback } from '@solid-primitives/rootless';
 import { debounce } from '@solid-primitives/scheduled';
 import { useSearchParams } from '@solidjs/router';
@@ -33,6 +35,11 @@ import {
   useSaveCanvasDataImmediate,
 } from '../store/canvasData';
 import { peekCanvasLoro } from '../store/canvas-loro';
+import {
+  connectCanvasLiveSync,
+  disconnectCanvasLiveSync,
+  type CanvasLiveSource,
+} from '../store/canvas-sync';
 import { peekOfflineCanvas } from '../store/offline-canvas';
 import type { Canvas } from '../model/CanvasModel';
 import { isAnimating, renderStateStore } from '../store/RenderState';
@@ -102,6 +109,32 @@ export default function BlockCanvas(props: BlockCanvasProps) {
     onCleanup(() => {
       window.removeEventListener('online', onOnline);
       window.removeEventListener('offline', onOffline);
+    });
+  });
+
+  createEffect(() => {
+    const id = documentId;
+    let cancelled = false;
+    void (async () => {
+      const token = await getPermissionToken('canvas', id);
+      if (!token || cancelled) return;
+      const { source, doInitialSync } = createSyncServiceSource(id, token);
+      await connectCanvasLiveSync({
+        documentId: id,
+        source: source as CanvasLiveSource,
+        doInitialSync: async () => {
+          const result = await doInitialSync();
+          if (result.isErr()) return null;
+          return result.value;
+        },
+        onRemoteBoard: (board) => {
+          void loadCanvasData(board as Canvas);
+        },
+      });
+    })();
+    onCleanup(() => {
+      cancelled = true;
+      disconnectCanvasLiveSync(id);
     });
   });
 

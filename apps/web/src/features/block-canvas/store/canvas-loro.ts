@@ -35,22 +35,24 @@ function entityId(item: unknown): string | undefined {
   return typeof id === 'string' ? id : undefined;
 }
 
+function syncMap(map: ReturnType<LoroDoc['getMap']>, items: unknown[]): void {
+  const keep = new Set<string>();
+  for (const item of items) {
+    const id = entityId(item);
+    if (!id) continue;
+    keep.add(id);
+    map.set(id, JSON.stringify(item));
+  }
+  const existing = Object.keys((map.toJSON() as Record<string, unknown>) ?? {});
+  for (const id of existing) {
+    if (!keep.has(id)) map.delete(id);
+  }
+}
+
 function applyBoard(doc: LoroDoc, json: CanvasLoroJson): void {
-  const nodes = doc.getMap('nodes');
-  const edges = doc.getMap('edges');
-  const groups = doc.getMap('groups');
-  for (const item of json.nodes ?? []) {
-    const id = entityId(item);
-    if (id) nodes.set(id, JSON.stringify(item));
-  }
-  for (const item of json.edges ?? []) {
-    const id = entityId(item);
-    if (id) edges.set(id, JSON.stringify(item));
-  }
-  for (const item of json.groups ?? []) {
-    const id = entityId(item);
-    if (id) groups.set(id, JSON.stringify(item));
-  }
+  syncMap(doc.getMap('nodes'), json.nodes ?? []);
+  syncMap(doc.getMap('edges'), json.edges ?? []);
+  if (json.groups) syncMap(doc.getMap('groups'), json.groups);
   doc.commit();
 }
 
@@ -73,6 +75,14 @@ function mapToEntities(doc: LoroDoc, name: string): unknown[] {
   return items;
 }
 
+export function boardFromDoc(doc: LoroDoc): CanvasLoroJson {
+  return {
+    nodes: mapToEntities(doc, 'nodes'),
+    edges: mapToEntities(doc, 'edges'),
+    groups: mapToEntities(doc, 'groups'),
+  };
+}
+
 /** Encode one peer's board as a Loro update. */
 export function encodeCanvasLoroUpdate(
   json: CanvasLoroJson,
@@ -84,17 +94,32 @@ export function encodeCanvasLoroUpdate(
   return doc.export({ mode: 'update' });
 }
 
+/**
+ * Replay prior updates, upsert/delete against `json`, and export the
+ * incremental Loro update (tombstones included).
+ */
+export function encodeCanvasLoroDiff(
+  previousUpdates: Uint8Array[],
+  json: CanvasLoroJson,
+  peerId: bigint
+): Uint8Array {
+  const doc = new LoroDoc();
+  doc.setPeerId(peerId);
+  for (const update of previousUpdates) {
+    doc.import(update);
+  }
+  const from = doc.version();
+  applyBoard(doc, json);
+  return doc.export({ mode: 'update', from });
+}
+
 /** Import Loro updates from independent peers and export merged board JSON. */
 export function mergeCanvasLoroUpdates(updates: Uint8Array[]): CanvasLoroJson {
   const doc = new LoroDoc();
   for (const update of updates) {
     doc.import(update);
   }
-  return {
-    nodes: mapToEntities(doc, 'nodes'),
-    edges: mapToEntities(doc, 'edges'),
-    groups: mapToEntities(doc, 'groups'),
-  };
+  return boardFromDoc(doc);
 }
 
 export function mergeCanvasBoards(
@@ -140,13 +165,21 @@ function writeStore(store: Record<string, CanvasLoroRecord>): boolean {
   }
 }
 
+function storedUpdates(documentId: string): Uint8Array[] {
+  const row = readStore()[documentId];
+  if (!row?.updates.length) return [];
+  return row.updates.map(b64ToBytes);
+}
+
 /** Append a Loro update for this board so later peers can merge. */
 export function recordCanvasLoro(
   documentId: string,
   json: CanvasLoroJson
-): boolean {
-  if (!documentId) return false;
-  const update = encodeCanvasLoroUpdate(
+): Uint8Array | null {
+  if (!documentId) return null;
+  const previous = storedUpdates(documentId);
+  const update = encodeCanvasLoroDiff(
+    previous,
     json,
     BigInt(Date.now() % Number.MAX_SAFE_INTEGER) || 1n
   );
@@ -157,7 +190,8 @@ export function recordCanvasLoro(
     updates: [...(existing?.updates ?? []), bytesToB64(update)],
     savedAt: Date.now(),
   };
-  return writeStore(store);
+  if (!writeStore(store)) return null;
+  return update;
 }
 
 /** Merged board from persisted Loro updates, if any. */

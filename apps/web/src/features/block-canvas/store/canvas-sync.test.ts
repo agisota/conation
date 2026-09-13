@@ -1,0 +1,149 @@
+/**
+ * @vitest-environment jsdom
+ */
+
+import { afterEach, describe, expect, it } from 'vitest';
+import {
+  clearAllCanvasLoro,
+  encodeCanvasLoroUpdate,
+  peekCanvasLoro,
+  recordCanvasLoro,
+} from './canvas-loro';
+import {
+  connectCanvasLiveSync,
+  hasCanvasLiveSync,
+  pushCanvasLiveUpdate,
+  resetCanvasLiveSync,
+  type CanvasLiveRemoteEvent,
+  type CanvasLiveSource,
+} from './canvas-sync';
+
+afterEach(() => {
+  clearAllCanvasLoro();
+  resetCanvasLiveSync();
+});
+
+function fakeSource(documentId: string): {
+  source: CanvasLiveSource;
+  pushed: Uint8Array[][];
+  emit: (event: CanvasLiveRemoteEvent) => void;
+} {
+  const listeners = new Set<(event: CanvasLiveRemoteEvent) => void>();
+  const pushed: Uint8Array[][] = [];
+  return {
+    pushed,
+    emit: (event) => {
+      for (const listener of listeners) listener(event);
+    },
+    source: {
+      documentId,
+      listen: (listener) => {
+        listeners.add(listener);
+        return () => listeners.delete(listener);
+      },
+      pushUpdate: async (updates) => {
+        pushed.push(updates);
+        return true;
+      },
+      cleanup: () => {
+        listeners.clear();
+      },
+    },
+  };
+}
+
+describe('canvas Loro tombstones', () => {
+  it('drops a node removed in a later local save', () => {
+    expect(
+      recordCanvasLoro('doc-1', {
+        nodes: [{ id: 'a' }, { id: 'b' }],
+        edges: [],
+      })
+    ).toBeTruthy();
+    expect(
+      recordCanvasLoro('doc-1', { nodes: [{ id: 'a' }], edges: [] })
+    ).toBeTruthy();
+    const ids = (peekCanvasLoro('doc-1')?.nodes ?? []).map(
+      (n) => (n as { id: string }).id
+    );
+    expect(ids).toEqual(['a']);
+  });
+
+  it('keeps a later add when the previous node is still present', () => {
+    recordCanvasLoro('doc-1', { nodes: [{ id: 'a' }], edges: [] });
+    recordCanvasLoro('doc-1', {
+      nodes: [{ id: 'a' }, { id: 'b' }],
+      edges: [],
+    });
+    const ids = (peekCanvasLoro('doc-1')?.nodes ?? []).map(
+      (n) => (n as { id: string }).id
+    );
+    expect(ids).toEqual(expect.arrayContaining(['a', 'b']));
+  });
+});
+
+describe('canvas live WS apply-update', () => {
+  it('does not push before the session is connected', async () => {
+    const update = encodeCanvasLoroUpdate({ nodes: [{ id: 'a' }], edges: [] }, 1n);
+    expect(await pushCanvasLiveUpdate('doc-1', update)).toBe(false);
+  });
+
+  it('pushes incremental updates after initial sync', async () => {
+    const snapshot = encodeCanvasLoroUpdate(
+      { nodes: [{ id: 'a' }], edges: [] },
+      1n
+    );
+    const fake = fakeSource('doc-1');
+    const ok = await connectCanvasLiveSync({
+      documentId: 'doc-1',
+      source: fake.source,
+      doInitialSync: async () => ({ snapshot }),
+    });
+    expect(ok).toBe(true);
+    expect(hasCanvasLiveSync('doc-1')).toBe(true);
+
+    const update = recordCanvasLoro('doc-1', {
+      nodes: [{ id: 'a' }, { id: 'b' }],
+      edges: [],
+    });
+    expect(update).toBeTruthy();
+    expect(await pushCanvasLiveUpdate('doc-1', update!)).toBe(true);
+    expect(fake.pushed).toHaveLength(1);
+    expect(fake.pushed[0][0]).toEqual(update);
+  });
+
+  it('applies a remote update onto the live board', async () => {
+    const snapshot = encodeCanvasLoroUpdate(
+      { nodes: [{ id: 'a' }], edges: [] },
+      1n
+    );
+    const remote = encodeCanvasLoroUpdate(
+      { nodes: [{ id: 'b' }], edges: [] },
+      2n
+    );
+    const fake = fakeSource('doc-1');
+    const boards: { id?: string }[][] = [];
+    await connectCanvasLiveSync({
+      documentId: 'doc-1',
+      source: fake.source,
+      doInitialSync: async () => ({ snapshot }),
+      onRemoteBoard: (board) => {
+        boards.push((board.nodes ?? []) as { id?: string }[]);
+      },
+    });
+    fake.emit({ type: 'update', update: remote });
+    const ids = (boards.at(-1) ?? []).map((n) => n.id);
+    expect(ids).toEqual(expect.arrayContaining(['a', 'b']));
+  });
+
+  it('skips live sync when initial snapshot is missing', async () => {
+    const fake = fakeSource('doc-1');
+    const ok = await connectCanvasLiveSync({
+      documentId: 'doc-1',
+      source: fake.source,
+      doInitialSync: async () => null,
+    });
+    expect(ok).toBe(false);
+    expect(hasCanvasLiveSync('doc-1')).toBe(false);
+  });
+});

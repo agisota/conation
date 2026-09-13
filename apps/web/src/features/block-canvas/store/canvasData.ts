@@ -38,6 +38,7 @@ import {
   type OfflineCanvasJson,
 } from './offline-canvas';
 import { recordCanvasLoro } from './canvas-loro';
+import { pushCanvasLiveUpdate } from './canvas-sync';
 
 export const renderQueue = sharedInstance(() => {
   return createRenderQueue(nodesStore, edgesStore, groupStore);
@@ -819,7 +820,10 @@ async function putCanvasBlob(
   const encoder = new TextEncoder();
   const buffer = encoder.encode(JSON.stringify(json));
   const file = new Blob([buffer], { type: 'application/x-macro-canvas' });
-  recordCanvasLoro(documentId, json);
+  const update = recordCanvasLoro(documentId, json);
+  if (update) {
+    void pushCanvasLiveUpdate(documentId, update);
+  }
   const saveRes = await storageServiceClient.simpleSave({
     documentId,
     file,
