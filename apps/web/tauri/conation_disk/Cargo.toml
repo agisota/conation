@@ -1,0 +1,5 @@
+[package]
+name = "conation_disk"
+version = "0.1.0"
+edition.workspace = true
+description = "Conation Disk domain: personal/space files, addressed shares, revocable public links, pin/offline."

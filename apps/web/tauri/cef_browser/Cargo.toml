@@ -1,0 +1,8 @@
+[package]
+name = "cef_browser"
+version = "0.1.0"
+edition.workspace = true
+description = "Compiled CEF host stub. Not Chromium; no CEF binary is linked."
+
+[dependencies]
+url = { workspace = true }

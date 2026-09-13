@@ -1,0 +1,23 @@
+name: ConationDisk
+options:
+  bundleIdPrefix: dev.conation
+  deploymentTarget:
+    macOS: "11.0"
+targets:
+  FileProviderExtension:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: FileProviderExtension
+    info:
+      path: FileProviderExtension/Info.plist
+    entitlements:
+      path: FileProviderExtension/FileProviderExtension.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.conation.app.FileProvider
+        PRODUCT_NAME: FileProviderExtension
+        MACOSX_DEPLOYMENT_TARGET: "11.0"
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION: YES
+        GENERATE_INFOPLIST_FILE: false

@@ -1,6 +1,8 @@
 [workspace]
 members = [
   "callkit_plugin",
+  "cef_browser",
+  "conation_disk",
   "graphql_cache_plugin",
   "input_accessory_plugin",
   "logger",

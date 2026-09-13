@@ -3,7 +3,13 @@ name = "navigation_plugin"
 version = "0.1.0"
 edition.workspace = true
 
+[features]
+# Intercept external URLs with the compiled CEF stub. Default off: system opener.
+# Does not link Chromium.
+cef = ["dep:cef_browser"]
+
 [dependencies]
+cef_browser = { path = "../cef_browser", optional = true }
 rootcause = { workspace = true }
 nom = "8"
 logger = { path = "../logger" }

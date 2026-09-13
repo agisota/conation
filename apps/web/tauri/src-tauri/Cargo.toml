@@ -24,6 +24,8 @@ url = { workspace = true }
 # startup. Disabled via `--no-default-features` (just ios-dev,
 # ios-build-no-update) so the embedded bundle / dev server is always served.
 auto_apply_update = []
+# Compiled CEF stub in navigation_plugin. Off by default; no Chromium.
+cef = ["navigation_plugin/cef"]
 default = ["auto_apply_update"]
 
 [dependencies]
@@ -74,6 +76,7 @@ tauri-plugin-virtual-keyboard = { git = "https://github.com/voxelbee/tauri-plugi
 
 [target."cfg(any(target_os = \"macos\", windows, target_os = \"linux\"))".dependencies]
 tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
+conation_disk = { path = "../conation_disk" }
 
 [target.'cfg(any(target_os = "android", target_os = "ios"))'.dependencies]
 tauri-plugin-auth = { git = "https://github.com/inKibra/tauri-plugins", rev = "6ddd6600e20436388f169e936b610fe93944b7b0" }

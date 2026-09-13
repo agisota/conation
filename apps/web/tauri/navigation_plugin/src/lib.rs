@@ -3,6 +3,7 @@ use logger::Logger;
 use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, collections::HashMap, path::PathBuf, sync::Arc};
 use tauri::{Emitter, Manager, Runtime, plugin::Plugin};
+#[cfg(not(feature = "cef"))]
 use tauri_plugin_opener::OpenerExt;
 use url::Url;
 
@@ -13,6 +14,15 @@ pub mod scheme;
 
 #[derive(Debug, Clone)]
 struct ExternalUrl<'a>(Cow<'a, Url>);
+
+/// Where an external URL is sent. The product webview is not a browser.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ExternalNavigationTarget {
+    /// `tauri-plugin-opener` / the OS default browser (default build).
+    SystemDefaultBrowser,
+    /// Compiled `cef_browser` stub. No Chromium is linked.
+    CompiledCefStub,
+}
 
 /// Possible outcomes when trying to perform on_navigation
 #[derive(Debug, Clone)]
@@ -95,6 +105,18 @@ impl MacroNavigationPlugin {
     pub fn with_allowed_file_prefix(mut self, prefix: PathBuf) -> Self {
         self.allowed_file_prefix = Some(prefix);
         self
+    }
+
+    /// External-URL sink for this build. Feature `cef` selects the stub.
+    pub fn external_navigation_target() -> ExternalNavigationTarget {
+        #[cfg(feature = "cef")]
+        {
+            ExternalNavigationTarget::CompiledCefStub
+        }
+        #[cfg(not(feature = "cef"))]
+        {
+            ExternalNavigationTarget::SystemDefaultBrowser
+        }
     }
 
     #[tracing::instrument(ret, level = tracing::Level::DEBUG, skip(self))]
@@ -219,18 +241,24 @@ impl<R: Runtime> Plugin<R> for MacroNavigationPlugin {
 
         match dest {
             NavigationOutput::External(external_url) => {
-                // we are navigating somewhere external to the app
-                // open in system default browser
-                // spawn a detached thread to avoid blocking,
-                // on android this panics if called on the main thread
-                let app_handle = webview.app_handle().clone();
-                let url = external_url.0.into_owned();
-                std::thread::spawn(move || {
-                    app_handle
-                        .opener()
-                        .open_url(transform_external_url(url).as_str(), None::<&str>)
-                        .log_and_consume();
-                });
+                let url = transform_external_url(external_url.0.into_owned());
+                #[cfg(feature = "cef")]
+                {
+                    let _ = webview;
+                    cef_browser::process_host().open(&url);
+                }
+                #[cfg(not(feature = "cef"))]
+                {
+                    // Open in the system default browser. Detached: Android
+                    // panics if opener runs on the main thread.
+                    let app_handle = webview.app_handle().clone();
+                    std::thread::spawn(move || {
+                        app_handle
+                            .opener()
+                            .open_url(url.as_str(), None::<&str>)
+                            .log_and_consume();
+                    });
+                }
                 false
             }
             NavigationOutput::Internal => true,

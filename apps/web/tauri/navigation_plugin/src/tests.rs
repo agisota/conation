@@ -226,3 +226,30 @@ fn transform_external_url_preserves_other_query_params() {
         Some((Cow::Borrowed("is_mobile"), Cow::Borrowed("true")))
     );
 }
+
+#[cfg(not(feature = "cef"))]
+#[test]
+fn default_build_sends_external_urls_to_system_browser() {
+    assert_eq!(
+        MacroNavigationPlugin::external_navigation_target(),
+        ExternalNavigationTarget::SystemDefaultBrowser
+    );
+}
+
+#[cfg(feature = "cef")]
+#[test]
+fn cef_feature_sends_external_urls_to_compiled_stub() {
+    assert_eq!(
+        MacroNavigationPlugin::external_navigation_target(),
+        ExternalNavigationTarget::CompiledCefStub
+    );
+    let plugin = test_plugin();
+    let url = Url::parse("https://example.com/login").unwrap();
+    assert!(matches!(
+        plugin.get_destination(&url),
+        NavigationOutput::External(_)
+    ));
+    let opened = cef_browser::process_host().open(&url);
+    assert_eq!(opened.url, url);
+    assert!(!cef_browser::process_host().status().linked);
+}

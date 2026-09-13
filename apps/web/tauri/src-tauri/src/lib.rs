@@ -66,6 +66,11 @@ mod debug;
 /// This should be as restrictive as possible.
 /// If the webview attempts to naviate to other domains,
 /// they will be opened in the systems default browser
+/// Finder File Provider domain. Shared with `macos/FileProviderExtension`.
+/// The desktop app does not yet call `NSFileProviderManager.add`.
+#[cfg(desktop)]
+pub const CONATION_DISK_FILE_PROVIDER_DOMAIN: &str = conation_disk::FILE_PROVIDER_DOMAIN;
+
 static ALLOWED_DOMAINS: &[&str] = &[
     "http://tauri.localhost",
     "tauri://localhost",
@@ -565,4 +570,17 @@ fn flush_launch_deep_link(app: AppHandle, delivery: tauri::State<'_, DeepLinkDel
         tracing::debug!("flushing deep link {url}");
         emit_navigate_for_deep_link(url, &app).log_and_consume();
     }
+}
+
+#[cfg(all(test, desktop))]
+#[test]
+fn conation_disk_domain_is_stable() {
+    assert_eq!(
+        CONATION_DISK_FILE_PROVIDER_DOMAIN,
+        "dev.conation.disk"
+    );
+    assert_eq!(
+        conation_disk::FILE_PROVIDER_DISPLAY_NAME,
+        "Conation Disk"
+    );
 }
