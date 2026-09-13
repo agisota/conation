@@ -1,6 +1,5 @@
 use std::sync::Mutex;
 
-use activity::Attribution;
 use conation_user_id::user_id::MacroUserIdStr;
 
 use super::{DocumentCreator, MarkdownSubtype, NewDocumentMetadata, NewMarkdownTextDocument};
@@ -20,7 +19,7 @@ const DOCUMENT_ID: &str = "created-task";
 const EMAIL_SEED: &str = r#"<m-document-mention>{"documentId":"thread-7","blockName":"email","documentName":"Re: invoice"}</m-document-mention>"#;
 
 fn owner() -> MacroUserIdStr<'static> {
-    MacroUserIdStr::try_from("macro|owner@example.com".to_string()).unwrap()
+    MacroUserIdStr::try_from("conation|owner@example.com".to_string()).unwrap()
 }
 
 struct FakeCreationService;
@@ -65,7 +64,6 @@ impl DocumentCreationService for FakeCreationService {
         _user_id: MacroUserIdStr<'static>,
         _document_id: &str,
         _request: &CreateTaskRequest,
-        _attribution: &Attribution,
     ) -> Result<(), DocumentError> {
         Ok(())
     }
@@ -179,7 +177,7 @@ async fn markdown_creation_tracks_the_seeded_mentions_once() {
         tracker.calls(),
         vec![(
             DOCUMENT_ID.to_string(),
-            "macro|owner@example.com".to_string(),
+            "conation|owner@example.com".to_string(),
             EMAIL_SEED.to_string(),
         )]
     );

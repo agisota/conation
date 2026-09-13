@@ -64,3 +64,48 @@ fn test_rename_document_schema_validation() {
         "Description should contain expected text"
     );
 }
+
+#[test]
+fn create_document_schema_mentions_canvas() {
+    let validated = generate_validated_input_schema::<CreateDocument>().unwrap();
+    assert!(
+        validated.description.to_lowercase().contains("canvas"),
+        "CreateDocument must advertise canvas so the agent uses the same create as the UI: {}",
+        validated.description
+    );
+}
+
+#[test]
+fn empty_canvas_body_matches_the_web_create_menu() {
+    use super::create_document::{
+        EMPTY_CANVAS_JSON, document_text_for_create, is_canvas_extension,
+    };
+
+    assert!(is_canvas_extension("canvas"));
+    assert!(is_canvas_extension(".Canvas"));
+    assert!(!is_canvas_extension("md"));
+    assert_eq!(
+        document_text_for_create("canvas", "").unwrap(),
+        EMPTY_CANVAS_JSON
+    );
+    assert_eq!(
+        document_text_for_create("canvas", "   ").unwrap(),
+        EMPTY_CANVAS_JSON
+    );
+    assert_eq!(
+        document_text_for_create("canvas", r#"{"nodes":[{"id":"n1"}],"edges":[]}"#).unwrap(),
+        r#"{"nodes":[{"id":"n1"}],"edges":[]}"#
+    );
+    assert_eq!(document_text_for_create("md", "").unwrap(), "");
+}
+
+#[test]
+fn canvas_create_rejects_json_without_nodes_and_edges() {
+    use super::create_document::document_text_for_create;
+
+    assert!(document_text_for_create("canvas", "not json").is_err());
+    assert!(document_text_for_create("canvas", "[]").is_err());
+    assert!(document_text_for_create("canvas", r#"{"nodes":[]}"#).is_err());
+    assert!(document_text_for_create("canvas", r#"{"nodes":[],"edges":[]}"#).is_ok());
+    assert!(document_text_for_create("canvas", r#"{"nodes":[],"edges":[],"groups":[]}"#).is_ok());
+}

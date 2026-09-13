@@ -84,7 +84,10 @@ pub struct ReadContentResponse {
 
 #[derive(Debug, Deserialize, JsonSchema, Clone, Default)]
 #[serde(rename_all = "camelCase")]
-#[schemars(title = "ReadContent", description = "Retrieve a documents content")]
+#[schemars(
+    title = "ReadContent",
+    description = "Retrieve a document's content. Markdown returns structured nodes. Canvas and other plaintext files return the stored text — for canvas that is the same JSON the app saves ({nodes, edges})."
+)]
 pub struct ReadContent {
     #[schemars(description = "The id of the document you want to retrieve content for.")]
     pub document_id: Uuid,
