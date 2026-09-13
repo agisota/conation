@@ -594,3 +594,127 @@ type NotifEventMember<Tag extends NotifEvent['tag']> = Extract<
 > & {
   content: { hasAttachments?: boolean };
 };
+
+function mapGraphqlNotificationMetadata(
+  metadata: SoupNotificationFieldsFragment['metadata']
+): NotifEvent {
+  return match(metadata)
+    .with(
+      { __typename: 'GraphqlChannelMentionMetadata' },
+      (metadata) =>
+        ({
+          tag: 'channel_mention',
+          content: {
+            messageId: metadata.channelMentionMessageId,
+            messageContent: metadata.channelMentionMessageContent,
+            hasAttachments: metadata.channelMentionHasAttachments,
+            threadId: metadata.channelMentionThreadId,
+            senderDisplayName: metadata.channelMentionSenderDisplayName,
+            channelType:
+              metadata.channelMentionChannelType.toLowerCase() as ChannelType,
+            channelName: metadata.channelMentionChannelName,
+            senderProfilePictureUrl:
+              metadata.channelMentionSenderProfilePictureUrl,
+          },
+        }) satisfies NotifEventMember<'channel_mention'>
+    )
+    .with(
+      { __typename: 'GraphqlDocumentMentionMetadata' },
+      (metadata) =>
+        ({
+          tag: 'document_mention',
+          content: {
+            documentName: metadata.documentMentionDocumentName,
+            owner: metadata.documentMentionOwner,
+            fileType: metadata.documentMentionFileType,
+            subType: toNotificationDocumentSubType(
+              metadata.documentMentionSubType
+            ),
+            messageId: metadata.documentMentionMessageId,
+            messageContent: metadata.documentMentionMessageContent,
+            hasAttachments: metadata.documentMentionHasAttachments,
+            threadId: metadata.documentMentionThreadId,
+            senderDisplayName: metadata.documentMentionSenderDisplayName,
+            channelType:
+              metadata.documentMentionChannelType.toLowerCase() as ChannelType,
+            channelName: metadata.documentMentionChannelName,
+            senderProfilePictureUrl:
+              metadata.documentMentionSenderProfilePictureUrl,
+          },
+        }) satisfies NotifEventMember<'document_mention'>
+    )
+    .with(
+      { __typename: 'GraphqlMentionedInDocumentCommentMetadata' },
+      (metadata) =>
+        ({
+          tag: 'mentioned_in_document_comment',
+          content: {
+            documentName: metadata.mentionedInDocumentCommentDocumentName,
+            owner: metadata.mentionedInDocumentCommentOwner,
+            fileType: metadata.mentionedInDocumentCommentFileType,
+            subType: toNotificationDocumentSubType(
+              metadata.mentionedInDocumentCommentSubType
+            ),
+            mentionId: metadata.mentionedInDocumentCommentMentionId,
+            commentId: metadata.mentionedInDocumentCommentCommentId,
+            threadId: metadata.mentionedInDocumentCommentThreadId,
+            text: metadata.mentionedInDocumentCommentText,
+            senderProfilePictureUrl:
+              metadata.mentionedInDocumentCommentSenderProfilePictureUrl,
+          },
+        }) satisfies NotifEventMember<'mentioned_in_document_comment'>
+    )
+    .with(
+      { __typename: 'GraphqlRepliedToDocumentCommentThreadMetadata' },
+      (metadata) =>
+        ({
+          tag: 'replied_to_document_comment_thread',
+          content: {
+            documentName: metadata.repliedToDocumentCommentThreadDocumentName,
+            owner: metadata.repliedToDocumentCommentThreadOwner,
+            fileType: metadata.repliedToDocumentCommentThreadFileType,
+            subType: toNotificationDocumentSubType(
+              metadata.repliedToDocumentCommentThreadSubType
+            ),
+            commentId: metadata.repliedToDocumentCommentThreadCommentId,
+            threadId: metadata.repliedToDocumentCommentThreadThreadId,
+            text: metadata.repliedToDocumentCommentThreadText,
+            senderProfilePictureUrl:
+              metadata.repliedToDocumentCommentThreadSenderProfilePictureUrl,
+          },
+        }) satisfies NotifEventMember<'replied_to_document_comment_thread'>
+    )
+    .with(
+      { __typename: 'GraphqlCommentedOnDocumentMetadata' },
+      (metadata) =>
+        ({
+          tag: 'commented_on_document',
+          content: {
+            documentName: metadata.commentedOnDocumentDocumentName,
+            owner: metadata.commentedOnDocumentOwner,
+            fileType: metadata.commentedOnDocumentFileType,
+            subType: toNotificationDocumentSubType(
+              metadata.commentedOnDocumentSubType
+            ),
+            commentId: metadata.commentedOnDocumentCommentId,
+            threadId: metadata.commentedOnDocumentThreadId,
+            text: metadata.commentedOnDocumentText,
+            senderProfilePictureUrl:
+              metadata.commentedOnDocumentSenderProfilePictureUrl,
+          },
+        }) satisfies NotifEventMember<'commented_on_document'>
+    )
+    .with(
+      { __typename: 'GraphqlChannelInviteMetadata' },
+      (metadata) =>
+        ({
+          tag: 'channel_invite',
+          content: {
+            invitedBy: metadata.channelInviteInvitedBy,
+            channelName: metadata.channelInviteChannelName,
+            messageContent: metadata.channelInviteMessageContent,
+            senderProfilePictureUrl:
+              metadata.channelInviteSenderProfilePictureUrl,
+          },
+        }) satisfies NotifEventMember<'channel_invite'>
+    )
