@@ -221,20 +221,11 @@ where
         ensure_organizer_attendee(&mut draft.attendees, &target.token_identity.email_address);
         if !target.token_identity.provider.eq_ignore_ascii_case("GMAIL") {
             let mut provider_event_id = Uuid::now_v7().to_string();
-            if let EventTime::Timed {
-                starts_at, ends_at, ..
-            } = draft.time
-            {
-                let duration_secs = (ends_at - starts_at).num_seconds().max(60);
-                if let Ok(stalwart) = email_provider::StalwartProvider::from_env()
-                    && let Ok(id) = stalwart
-                        .create_calendar_event(
-                            &target.token_identity.email_address,
-                            &draft.title,
-                            starts_at,
-                            duration_secs,
-                        )
-                        .await
+            if let Ok(stalwart) = email_provider::StalwartProvider::from_env() {
+                let write = stalwart_write_from_draft(&draft);
+                if let Ok(id) = stalwart
+                    .create_calendar_event(&target.token_identity.email_address, &write)
+                    .await
                 {
                     provider_event_id = id;
                 }
@@ -323,22 +314,15 @@ where
                 token_identity: target.token_identity.clone(),
                 actor: target.actor.clone(),
             };
-            if let EventTime::Timed {
-                starts_at, ends_at, ..
-            } = &draft.time
-            {
-                let duration_secs = (*ends_at - *starts_at).num_seconds().max(60);
-                if let Ok(stalwart) = email_provider::StalwartProvider::from_env() {
-                    let _ = stalwart
-                        .update_calendar_event(
-                            &target.token_identity.email_address,
-                            &target.provider_event_id,
-                            &draft.title,
-                            *starts_at,
-                            duration_secs,
-                        )
-                        .await;
-                }
+            if let Ok(stalwart) = email_provider::StalwartProvider::from_env() {
+                let write = stalwart_write_from_draft(&draft);
+                let _ = stalwart
+                    .update_calendar_event(
+                        &target.token_identity.email_address,
+                        &target.provider_event_id,
+                        &write,
+                    )
+                    .await;
             }
             let upsert =
                 stalwart_upsert_from_draft(&creation, &draft, target.provider_event_id.clone());
@@ -824,6 +808,30 @@ fn stalwart_upsert_from_draft(
     }
 }
 
+fn stalwart_write_from_draft(
+    draft: &CalendarEventDraft,
+) -> email_provider::StalwartCalendarEventWrite {
+    match &draft.time {
+        EventTime::Timed {
+            starts_at, ends_at, ..
+        } => email_provider::StalwartCalendarEventWrite::timed(
+            draft.title.clone(),
+            *starts_at,
+            (*ends_at - *starts_at).num_seconds(),
+            &draft.recurrence_lines,
+        ),
+        EventTime::AllDay {
+            start_date,
+            end_date,
+        } => email_provider::StalwartCalendarEventWrite::all_day(
+            draft.title.clone(),
+            *start_date,
+            *end_date,
+            &draft.recurrence_lines,
+        ),
+    }
+}
+
 pub(crate) fn jmap_participation_status(status: AttendeeResponseStatus) -> &'static str {
     match status {
         AttendeeResponseStatus::NeedsAction => "needs-action",
@@ -870,10 +878,19 @@ pub(crate) fn stalwart_upsert_from_remote(
     remote: &email_provider::StalwartCalendarEvent,
 ) -> CalendarEventUpsert {
     let event_id = Uuid::now_v7();
-    let time = EventTime::Timed {
-        starts_at: remote.start,
-        ends_at: remote.start + chrono::Duration::seconds(remote.duration_secs.max(60)),
-        time_zone: remote.time_zone.clone(),
+    let time = if remote.show_without_time {
+        let start_date = remote.start.date_naive();
+        let days = (remote.duration_secs / 86_400).max(1);
+        EventTime::AllDay {
+            start_date,
+            end_date: start_date + chrono::Duration::days(days),
+        }
+    } else {
+        EventTime::Timed {
+            starts_at: remote.start,
+            ends_at: remote.start + chrono::Duration::seconds(remote.duration_secs.max(60)),
+            time_zone: remote.time_zone.clone(),
+        }
     };
     let attendees = remote
         .participants
@@ -913,7 +930,7 @@ pub(crate) fn stalwart_upsert_from_remote(
             },
             event_type: EventType::Default,
             time: time.clone(),
-            recurrence_lines: Vec::new(),
+            recurrence_lines: remote.recurrence_lines.clone(),
             organizer_email: Some(target.token_identity.email_address.clone()),
             organizer_name: None,
             creator_email: Some(target.token_identity.email_address.clone()),

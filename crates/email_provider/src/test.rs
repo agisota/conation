@@ -1,4 +1,5 @@
 use super::*;
+use chrono::TimeZone;
 use wiremock::{
     matchers::{body_json, header, method, path},
     Mock, MockServer, ResponseTemplate,
@@ -336,7 +337,8 @@ async fn lists_calendar_events_via_jmap_query_then_get() {
                 "ids": ["ev1"],
                 "properties": [
                     "id", "uid", "title", "description", "start", "duration",
-                    "timeZone", "participants", "locations", "freeBusyStatus", "status"
+                    "timeZone", "showWithoutTime", "recurrenceRules",
+                    "participants", "locations", "freeBusyStatus", "status"
                 ]
             }, "c1"]]
         })))
@@ -395,7 +397,8 @@ async fn rsvp_patches_the_matching_participant_status() {
                 "ids": ["ev1"],
                 "properties": [
                     "id", "uid", "title", "description", "start", "duration",
-                    "timeZone", "participants", "locations", "freeBusyStatus", "status"
+                    "timeZone", "showWithoutTime", "recurrenceRules",
+                    "participants", "locations", "freeBusyStatus", "status"
                 ]
             }, "c1"]]
         })))
@@ -464,7 +467,8 @@ async fn rsvp_without_a_matching_participant_is_not_found() {
                 "ids": ["ev1"],
                 "properties": [
                     "id", "uid", "title", "description", "start", "duration",
-                    "timeZone", "participants", "locations", "freeBusyStatus", "status"
+                    "timeZone", "showWithoutTime", "recurrenceRules",
+                    "participants", "locations", "freeBusyStatus", "status"
                 ]
             }, "c1"]]
         })))
@@ -489,4 +493,246 @@ async fn rsvp_without_a_matching_participant_is_not_found() {
         .await
         .expect_err("missing attendee");
     assert!(matches!(error, ProviderError::NotFound(_)));
+}
+
+async fn mount_default_calendar(server: &MockServer) {
+    Mock::given(method("POST"))
+        .and(path("/jmap/"))
+        .and(body_json(json!({
+            "using": [JMAP_CORE, JMAP_CALENDARS],
+            "methodCalls": [["Calendar/get", {"accountId": "u1"}, "c1"]]
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "methodResponses": [["Calendar/get", {
+                "list": [{"id": "cal1", "isDefault": true}]
+            }, "c1"]]
+        })))
+        .mount(server)
+        .await;
+}
+
+#[test]
+fn rrule_weekly_byday_becomes_jmap_recurrence_rules() {
+    let write = StalwartCalendarEventWrite::timed(
+        "Standup",
+        chrono::Utc.with_ymd_and_hms(2026, 9, 14, 14, 0, 0).unwrap(),
+        1800,
+        &["RRULE:FREQ=WEEKLY;BYDAY=MO,WE;COUNT=8".to_string()],
+    );
+    assert_eq!(write.recurrence_rules[0]["frequency"], "weekly");
+    assert_eq!(write.recurrence_rules[0]["count"], 8);
+    assert_eq!(
+        write.recurrence_rules[0]["byDay"],
+        json!([{"day": "mo"}, {"day": "we"}])
+    );
+}
+
+#[test]
+fn rrule_round_trips_nth_weekday_and_until() {
+    let write = StalwartCalendarEventWrite::all_day(
+        "Offsite",
+        chrono::NaiveDate::from_ymd_opt(2026, 9, 13).unwrap(),
+        chrono::NaiveDate::from_ymd_opt(2026, 9, 14).unwrap(),
+        &["RRULE:FREQ=MONTHLY;BYDAY=1MO;UNTIL=20261201".to_string()],
+    );
+    assert!(write.show_without_time);
+    assert_eq!(write.start, "2026-09-13T00:00:00");
+    assert_eq!(write.duration, "P1D");
+    assert_eq!(write.recurrence_rules[0]["frequency"], "monthly");
+    assert_eq!(
+        write.recurrence_rules[0]["byDay"],
+        json!([{"day": "mo", "nthOfPeriod": 1}])
+    );
+    let reconstructed = rfc5545_from_jmap_recurrence_rules(Some(&json!(write.recurrence_rules)));
+    assert_eq!(
+        reconstructed,
+        vec!["RRULE:FREQ=MONTHLY;UNTIL=20261201T000000;BYDAY=1MO".to_string()]
+    );
+}
+
+#[tokio::test]
+async fn creates_all_day_event_with_show_without_time() {
+    let server = MockServer::start().await;
+    mount_calendar_admin(&server).await;
+    mount_default_calendar(&server).await;
+    Mock::given(method("POST"))
+        .and(path("/jmap/"))
+        .and(body_json(json!({
+            "using": [JMAP_CORE, JMAP_CALENDARS],
+            "methodCalls": [["CalendarEvent/set", {
+                "accountId": "u1",
+                "create": {
+                    "e1": {
+                        "calendarIds": {"cal1": true},
+                        "title": "Offsite",
+                        "start": "2026-09-13T00:00:00",
+                        "duration": "P1D",
+                        "showWithoutTime": true,
+                        "timeZone": null
+                    }
+                }
+            }, "c1"]]
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "methodResponses": [["CalendarEvent/set", {
+                "created": {"e1": {"id": "ev-all-day"}}
+            }, "c1"]]
+        })))
+        .mount(&server)
+        .await;
+    let write = StalwartCalendarEventWrite::all_day(
+        "Offsite",
+        chrono::NaiveDate::from_ymd_opt(2026, 9, 13).unwrap(),
+        chrono::NaiveDate::from_ymd_opt(2026, 9, 14).unwrap(),
+        &[],
+    );
+    let id = provider(&server)
+        .create_calendar_event("self@example.com", &write)
+        .await
+        .expect("create");
+    assert_eq!(id, "ev-all-day");
+}
+
+#[tokio::test]
+async fn creates_weekly_recurring_event_with_recurrence_rules() {
+    let server = MockServer::start().await;
+    mount_calendar_admin(&server).await;
+    mount_default_calendar(&server).await;
+    Mock::given(method("POST"))
+        .and(path("/jmap/"))
+        .and(body_json(json!({
+            "using": [JMAP_CORE, JMAP_CALENDARS],
+            "methodCalls": [["CalendarEvent/set", {
+                "accountId": "u1",
+                "create": {
+                    "e1": {
+                        "calendarIds": {"cal1": true},
+                        "title": "Standup",
+                        "start": "2026-09-14T14:00:00",
+                        "duration": "PT1800S",
+                        "showWithoutTime": false,
+                        "timeZone": "UTC",
+                        "recurrenceRules": [{
+                            "frequency": "weekly",
+                            "byDay": [{"day": "mo"}]
+                        }]
+                    }
+                }
+            }, "c1"]]
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "methodResponses": [["CalendarEvent/set", {
+                "created": {"e1": {"id": "ev-recur"}}
+            }, "c1"]]
+        })))
+        .mount(&server)
+        .await;
+    let write = StalwartCalendarEventWrite::timed(
+        "Standup",
+        chrono::Utc.with_ymd_and_hms(2026, 9, 14, 14, 0, 0).unwrap(),
+        1800,
+        &["RRULE:FREQ=WEEKLY;BYDAY=MO".to_string()],
+    );
+    let id = provider(&server)
+        .create_calendar_event("self@example.com", &write)
+        .await
+        .expect("create");
+    assert_eq!(id, "ev-recur");
+}
+
+#[tokio::test]
+async fn updates_all_day_and_recurrence_via_jmap_set() {
+    let server = MockServer::start().await;
+    mount_calendar_admin(&server).await;
+    Mock::given(method("POST"))
+        .and(path("/jmap/"))
+        .and(body_json(json!({
+            "using": [JMAP_CORE, JMAP_CALENDARS],
+            "methodCalls": [["CalendarEvent/set", {
+                "accountId": "u1",
+                "update": {
+                    "ev1": {
+                        "title": "Holiday",
+                        "start": "2026-09-15T00:00:00",
+                        "duration": "P2D",
+                        "showWithoutTime": true,
+                        "timeZone": null,
+                        "recurrenceRules": [{
+                            "frequency": "yearly"
+                        }]
+                    }
+                }
+            }, "c1"]]
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "methodResponses": [["CalendarEvent/set", {"updated": {"ev1": {}}}, "c1"]]
+        })))
+        .mount(&server)
+        .await;
+    let write = StalwartCalendarEventWrite::all_day(
+        "Holiday",
+        chrono::NaiveDate::from_ymd_opt(2026, 9, 15).unwrap(),
+        chrono::NaiveDate::from_ymd_opt(2026, 9, 17).unwrap(),
+        &["RRULE:FREQ=YEARLY".to_string()],
+    );
+    provider(&server)
+        .update_calendar_event("self@example.com", "ev1", &write)
+        .await
+        .expect("update");
+}
+
+#[tokio::test]
+async fn lists_all_day_and_recurrence_from_jmap_get() {
+    let server = MockServer::start().await;
+    mount_calendar_admin(&server).await;
+    Mock::given(method("POST"))
+        .and(path("/jmap/"))
+        .and(body_json(json!({
+            "using": [JMAP_CORE, JMAP_CALENDARS],
+            "methodCalls": [["CalendarEvent/query", {"accountId": "u1", "limit": 100}, "c1"]]
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "methodResponses": [["CalendarEvent/query", {"ids": ["ev1"]}, "c1"]]
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/jmap/"))
+        .and(body_json(json!({
+            "using": [JMAP_CORE, JMAP_CALENDARS],
+            "methodCalls": [["CalendarEvent/get", {
+                "accountId": "u1",
+                "ids": ["ev1"],
+                "properties": [
+                    "id", "uid", "title", "description", "start", "duration",
+                    "timeZone", "showWithoutTime", "recurrenceRules",
+                    "participants", "locations", "freeBusyStatus", "status"
+                ]
+            }, "c1"]]
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "methodResponses": [["CalendarEvent/get", {"list": [{
+                "id": "ev1",
+                "title": "Holiday",
+                "start": "2026-09-15T00:00:00",
+                "duration": "P1D",
+                "showWithoutTime": true,
+                "recurrenceRules": [{"frequency": "yearly"}],
+                "freeBusyStatus": "free"
+            }]}, "c1"]]
+        })))
+        .mount(&server)
+        .await;
+    let events = provider(&server)
+        .list_calendar_events("self@example.com")
+        .await
+        .expect("list");
+    assert_eq!(events.len(), 1);
+    assert!(events[0].show_without_time);
+    assert_eq!(events[0].duration_secs, 86_400);
+    assert_eq!(
+        events[0].recurrence_lines,
+        vec!["RRULE:FREQ=YEARLY".to_string()]
+    );
+    assert!(events[0].free);
 }

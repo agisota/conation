@@ -220,8 +220,66 @@ pub struct StalwartCalendarEvent {
     pub free: bool,
     /// JSCalendar status (`confirmed`, `cancelled`, `tentative`).
     pub status: Option<String>,
+    /// `true` when JSCalendar `showWithoutTime` is set (all-day).
+    pub show_without_time: bool,
+    /// RFC 5545 recurrence lines reconstructed from JSCalendar `recurrenceRules`.
+    pub recurrence_lines: Vec<String>,
     /// Participants mapped from JSCalendar `participants`.
     pub participants: Vec<StalwartParticipant>,
+}
+
+/// Payload for Stalwart `CalendarEvent/set` create and update.
+#[derive(Debug, Clone, PartialEq)]
+pub struct StalwartCalendarEventWrite {
+    /// Display title.
+    pub title: String,
+    /// Inclusive JSCalendar local start (`YYYY-MM-DDTHH:MM:SS`).
+    pub start: String,
+    /// JSCalendar duration (`PT3600S` or `P1D`).
+    pub duration: String,
+    /// IANA zone for timed events; ignored when `show_without_time`.
+    pub time_zone: Option<String>,
+    /// `true` for an all-day floating date (`showWithoutTime`).
+    pub show_without_time: bool,
+    /// JSCalendar `recurrenceRules` (empty means a one-off).
+    pub recurrence_rules: Vec<Value>,
+}
+
+impl StalwartCalendarEventWrite {
+    /// Timed event in UTC, with optional RFC 5545 `RRULE` lines.
+    pub fn timed(
+        title: impl Into<String>,
+        start: chrono::DateTime<chrono::Utc>,
+        duration_secs: i64,
+        recurrence_lines: &[String],
+    ) -> Self {
+        Self {
+            title: title.into(),
+            start: start.format("%Y-%m-%dT%H:%M:%S").to_string(),
+            duration: iso8601_timed_duration(duration_secs),
+            time_zone: Some("UTC".to_string()),
+            show_without_time: false,
+            recurrence_rules: jmap_recurrence_rules_from_rfc5545(recurrence_lines),
+        }
+    }
+
+    /// All-day event spanning `[start_date, end_date)` local dates.
+    pub fn all_day(
+        title: impl Into<String>,
+        start_date: chrono::NaiveDate,
+        end_date: chrono::NaiveDate,
+        recurrence_lines: &[String],
+    ) -> Self {
+        let days = (end_date - start_date).num_days().max(1);
+        Self {
+            title: title.into(),
+            start: all_day_local_start(start_date),
+            duration: iso8601_all_day_duration(days),
+            time_zone: None,
+            show_without_time: true,
+            recurrence_rules: jmap_recurrence_rules_from_rfc5545(recurrence_lines),
+        }
+    }
 }
 
 /// One JSCalendar participant on a Stalwart event.
@@ -430,6 +488,21 @@ const JMAP_MANAGEMENT: &str = "urn:stalwart:jmap";
 const JMAP_PRINCIPAL: &str = "urn:ietf:params:jmap:principals";
 const JMAP_ADMIN: &str = "urn:stalwart:params:jmap:admin";
 const JMAP_CALENDARS: &str = "urn:ietf:params:jmap:calendars";
+const CALENDAR_EVENT_GET_PROPERTIES: &[&str] = &[
+    "id",
+    "uid",
+    "title",
+    "description",
+    "start",
+    "duration",
+    "timeZone",
+    "showWithoutTime",
+    "recurrenceRules",
+    "participants",
+    "locations",
+    "freeBusyStatus",
+    "status",
+];
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -858,13 +931,11 @@ impl StalwartProvider {
             })
     }
 
-    /// Create a timed event on the mailbox's default Stalwart calendar.
+    /// Create an event on the mailbox's default Stalwart calendar.
     pub async fn create_calendar_event(
         &self,
         mailbox_email: &str,
-        title: &str,
-        start: chrono::DateTime<chrono::Utc>,
-        duration_secs: i64,
+        write: &StalwartCalendarEventWrite,
     ) -> Result<String, ProviderError> {
         let auth = admin_auth_from_env()?;
         let session = self.admin_session_document(&auth).await?;
@@ -894,6 +965,11 @@ impl StalwartProvider {
             .ok_or_else(|| {
                 ProviderError::Provider(format!("Stalwart mailbox {mailbox_email} has no calendar"))
             })?;
+        let mut create = serde_json::Map::new();
+        create.insert(
+            "e1".to_owned(),
+            calendar_event_set_object(write, Some(calendar_id)),
+        );
         let created = self
             .admin_call(
                 &session,
@@ -902,15 +978,7 @@ impl StalwartProvider {
                 "CalendarEvent/set",
                 json!({
                     "accountId": account_id,
-                    "create": {
-                        "e1": {
-                            "calendarIds": { calendar_id: true },
-                            "title": title,
-                            "start": start.format("%Y-%m-%dT%H:%M:%S").to_string(),
-                            "duration": format!("PT{}S", duration_secs.max(60)),
-                            "timeZone": "UTC",
-                        }
-                    }
+                    "create": create,
                 }),
             )
             .await?;
@@ -927,14 +995,12 @@ impl StalwartProvider {
             })
     }
 
-    /// Update a timed event on the mailbox's default Stalwart calendar.
+    /// Update an event on the mailbox's default Stalwart calendar.
     pub async fn update_calendar_event(
         &self,
         mailbox_email: &str,
         event_id: &str,
-        title: &str,
-        start: chrono::DateTime<chrono::Utc>,
-        duration_secs: i64,
+        write: &StalwartCalendarEventWrite,
     ) -> Result<(), ProviderError> {
         let auth = admin_auth_from_env()?;
         let session = self.admin_session_document(&auth).await?;
@@ -942,15 +1008,7 @@ impl StalwartProvider {
             .stalwart_account_id_for_email(&session, &auth, mailbox_email)
             .await?;
         let mut patch = serde_json::Map::new();
-        patch.insert(
-            event_id.to_owned(),
-            json!({
-                "title": title,
-                "start": start.format("%Y-%m-%dT%H:%M:%S").to_string(),
-                "duration": format!("PT{}S", duration_secs.max(60)),
-                "timeZone": "UTC",
-            }),
-        );
+        patch.insert(event_id.to_owned(), calendar_event_set_object(write, None));
         let updated = self
             .admin_call(
                 &session,
@@ -1037,19 +1095,7 @@ impl StalwartProvider {
                 json!({
                     "accountId": account_id,
                     "ids": ids,
-                    "properties": [
-                        "id",
-                        "uid",
-                        "title",
-                        "description",
-                        "start",
-                        "duration",
-                        "timeZone",
-                        "participants",
-                        "locations",
-                        "freeBusyStatus",
-                        "status"
-                    ],
+                    "properties": CALENDAR_EVENT_GET_PROPERTIES,
                 }),
             )
             .await?;
@@ -1075,19 +1121,7 @@ impl StalwartProvider {
                 json!({
                     "accountId": account_id,
                     "ids": [event_id],
-                    "properties": [
-                        "id",
-                        "uid",
-                        "title",
-                        "description",
-                        "start",
-                        "duration",
-                        "timeZone",
-                        "participants",
-                        "locations",
-                        "freeBusyStatus",
-                        "status"
-                    ],
+                    "properties": CALENDAR_EVENT_GET_PROPERTIES,
                 }),
             )
             .await?;
@@ -1213,6 +1247,11 @@ fn parse_jmap_calendar_event(value: &Value) -> Option<StalwartCalendarEvent> {
             .get("status")
             .and_then(Value::as_str)
             .map(str::to_owned),
+        show_without_time: value
+            .get("showWithoutTime")
+            .and_then(Value::as_bool)
+            .unwrap_or(false),
+        recurrence_lines: rfc5545_from_jmap_recurrence_rules(value.get("recurrenceRules")),
         participants: parse_jmap_participants(value.get("participants")),
     })
 }
@@ -1287,10 +1326,320 @@ fn parse_jmap_start(start: &str) -> Option<chrono::DateTime<chrono::Utc>> {
     if let Ok(parsed) = chrono::DateTime::parse_from_rfc3339(start) {
         return Some(parsed.with_timezone(&chrono::Utc));
     }
-    chrono::NaiveDateTime::parse_from_str(start, "%Y-%m-%dT%H:%M:%S")
+    if let Ok(naive) = chrono::NaiveDateTime::parse_from_str(start, "%Y-%m-%dT%H:%M:%S")
         .or_else(|_| chrono::NaiveDateTime::parse_from_str(start, "%Y-%m-%dT%H:%M:%S%.f"))
+    {
+        return Some(naive.and_utc());
+    }
+    chrono::NaiveDate::parse_from_str(start, "%Y-%m-%d")
         .ok()
+        .and_then(|date| date.and_hms_opt(0, 0, 0))
         .map(|naive| naive.and_utc())
+}
+
+fn iso8601_timed_duration(duration_secs: i64) -> String {
+    let mut duration = String::from("PT");
+    duration.push_str(&duration_secs.max(60).to_string());
+    duration.push('S');
+    duration
+}
+
+fn iso8601_all_day_duration(days: i64) -> String {
+    let mut duration = String::from("P");
+    duration.push_str(&days.max(1).to_string());
+    duration.push('D');
+    duration
+}
+
+fn all_day_local_start(start_date: chrono::NaiveDate) -> String {
+    let mut start = start_date.to_string();
+    start.push_str("T00:00:00");
+    start
+}
+
+fn calendar_event_set_object(
+    write: &StalwartCalendarEventWrite,
+    calendar_id: Option<&str>,
+) -> Value {
+    let mut object = serde_json::Map::new();
+    if let Some(calendar_id) = calendar_id {
+        let mut ids = serde_json::Map::new();
+        ids.insert(calendar_id.to_owned(), json!(true));
+        object.insert("calendarIds".to_owned(), Value::Object(ids));
+    }
+    object.insert("title".to_owned(), json!(write.title));
+    object.insert("start".to_owned(), json!(write.start));
+    object.insert("duration".to_owned(), json!(write.duration));
+    object.insert("showWithoutTime".to_owned(), json!(write.show_without_time));
+    if write.show_without_time {
+        object.insert("timeZone".to_owned(), Value::Null);
+    } else {
+        object.insert(
+            "timeZone".to_owned(),
+            json!(write.time_zone.as_deref().unwrap_or("UTC")),
+        );
+    }
+    if !write.recurrence_rules.is_empty() {
+        object.insert(
+            "recurrenceRules".to_owned(),
+            Value::Array(write.recurrence_rules.clone()),
+        );
+    }
+    Value::Object(object)
+}
+
+fn jmap_recurrence_rules_from_rfc5545(lines: &[String]) -> Vec<Value> {
+    lines
+        .iter()
+        .filter_map(|line| parse_rrule_line(line))
+        .collect()
+}
+
+fn parse_rrule_line(line: &str) -> Option<Value> {
+    let trimmed = line.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+    let upper = trimmed.to_ascii_uppercase();
+    if upper.starts_with("RDATE") || upper.starts_with("EXDATE") {
+        return None;
+    }
+    let body = trimmed
+        .strip_prefix("RRULE:")
+        .or_else(|| trimmed.strip_prefix("rrule:"))
+        .unwrap_or(trimmed);
+    let mut rule = serde_json::Map::new();
+    for part in body.split(';') {
+        let Some((key, value)) = part.split_once('=') else {
+            continue;
+        };
+        match key.trim().to_ascii_uppercase().as_str() {
+            "FREQ" => {
+                rule.insert(
+                    "frequency".to_owned(),
+                    json!(value.trim().to_ascii_lowercase()),
+                );
+            }
+            "INTERVAL" => {
+                if let Ok(n) = value.trim().parse::<u32>() {
+                    rule.insert("interval".to_owned(), json!(n));
+                }
+            }
+            "COUNT" => {
+                if let Ok(n) = value.trim().parse::<u32>() {
+                    rule.insert("count".to_owned(), json!(n));
+                }
+            }
+            "UNTIL" => {
+                rule.insert(
+                    "until".to_owned(),
+                    json!(rrule_until_to_local(value.trim())),
+                );
+            }
+            "BYDAY" => {
+                rule.insert("byDay".to_owned(), json!(parse_byday(value.trim())));
+            }
+            "BYMONTHDAY" => {
+                rule.insert("byMonthDay".to_owned(), json!(parse_int_list(value.trim())));
+            }
+            "BYMONTH" => {
+                let months: Vec<&str> = value.split(',').map(str::trim).collect();
+                rule.insert("byMonth".to_owned(), json!(months));
+            }
+            "BYYEARDAY" => {
+                rule.insert("byYearDay".to_owned(), json!(parse_int_list(value.trim())));
+            }
+            "BYWEEKNO" => {
+                rule.insert("byWeekNo".to_owned(), json!(parse_int_list(value.trim())));
+            }
+            "BYSETPOS" => {
+                rule.insert(
+                    "bySetPosition".to_owned(),
+                    json!(parse_int_list(value.trim())),
+                );
+            }
+            "WKST" => {
+                rule.insert(
+                    "firstDayOfWeek".to_owned(),
+                    json!(value.trim().to_ascii_lowercase()),
+                );
+            }
+            _ => {}
+        }
+    }
+    rule.contains_key("frequency")
+        .then_some(Value::Object(rule))
+}
+
+fn parse_byday(value: &str) -> Vec<Value> {
+    value
+        .split(',')
+        .filter_map(|token| {
+            let token = token.trim();
+            if token.len() < 2 {
+                return None;
+            }
+            let bytes = token.as_bytes();
+            let mut i = 0;
+            if bytes[0] == b'+' || bytes[0] == b'-' {
+                i = 1;
+            }
+            while i < bytes.len() && bytes[i].is_ascii_digit() {
+                i += 1;
+            }
+            let (nth, day) =
+                if i > 0 && (bytes[0] == b'+' || bytes[0] == b'-' || bytes[0].is_ascii_digit()) {
+                    let nth = std::str::from_utf8(&bytes[..i]).ok()?.parse::<i32>().ok()?;
+                    (Some(nth), &token[i..])
+                } else {
+                    (None, token)
+                };
+            if day.len() != 2 {
+                return None;
+            }
+            let mut nday = serde_json::Map::new();
+            nday.insert("day".to_owned(), json!(day.to_ascii_lowercase()));
+            if let Some(nth) = nth {
+                nday.insert("nthOfPeriod".to_owned(), json!(nth));
+            }
+            Some(Value::Object(nday))
+        })
+        .collect()
+}
+
+fn parse_int_list(value: &str) -> Vec<i32> {
+    value
+        .split(',')
+        .filter_map(|item| item.trim().parse::<i32>().ok())
+        .collect()
+}
+
+fn rrule_until_to_local(value: &str) -> String {
+    let compact: String = value
+        .chars()
+        .filter(|ch| *ch != 'Z' && *ch != '-' && *ch != ':')
+        .collect();
+    if compact.len() >= 15 {
+        let mut local = String::new();
+        local.push_str(&compact[0..4]);
+        local.push('-');
+        local.push_str(&compact[4..6]);
+        local.push('-');
+        local.push_str(&compact[6..8]);
+        local.push('T');
+        local.push_str(&compact[9..11]);
+        local.push(':');
+        local.push_str(&compact[11..13]);
+        local.push(':');
+        local.push_str(&compact[13..15]);
+        return local;
+    }
+    if compact.len() >= 8 {
+        let mut local = String::new();
+        local.push_str(&compact[0..4]);
+        local.push('-');
+        local.push_str(&compact[4..6]);
+        local.push('-');
+        local.push_str(&compact[6..8]);
+        local.push_str("T00:00:00");
+        return local;
+    }
+    value.to_owned()
+}
+
+fn rfc5545_from_jmap_recurrence_rules(value: Option<&Value>) -> Vec<String> {
+    let Some(array) = value.and_then(Value::as_array) else {
+        return Vec::new();
+    };
+    array.iter().filter_map(jmap_rule_to_rrule).collect()
+}
+
+fn jmap_rule_to_rrule(rule: &Value) -> Option<String> {
+    let freq = rule.get("frequency").and_then(Value::as_str)?;
+    let mut parts = vec![String::from("FREQ=") + &freq.to_ascii_uppercase()];
+    if let Some(n) = rule
+        .get("interval")
+        .and_then(Value::as_u64)
+        .filter(|n| *n > 1)
+    {
+        let mut part = String::from("INTERVAL=");
+        part.push_str(&n.to_string());
+        parts.push(part);
+    }
+    if let Some(n) = rule.get("count").and_then(Value::as_u64) {
+        let mut part = String::from("COUNT=");
+        part.push_str(&n.to_string());
+        parts.push(part);
+    }
+    if let Some(until) = rule.get("until").and_then(Value::as_str) {
+        let mut part = String::from("UNTIL=");
+        part.push_str(&local_to_rrule_until(until));
+        parts.push(part);
+    }
+    if let Some(days) = rule.get("byDay").and_then(Value::as_array) {
+        let tokens: Vec<String> = days.iter().filter_map(nday_to_token).collect();
+        if !tokens.is_empty() {
+            let mut part = String::from("BYDAY=");
+            part.push_str(&tokens.join(","));
+            parts.push(part);
+        }
+    }
+    if let Some(days) = rule.get("byMonthDay").and_then(Value::as_array) {
+        let tokens = json_int_csv(days);
+        if !tokens.is_empty() {
+            let mut part = String::from("BYMONTHDAY=");
+            part.push_str(&tokens);
+            parts.push(part);
+        }
+    }
+    if let Some(months) = rule.get("byMonth").and_then(Value::as_array) {
+        let tokens: Vec<String> = months
+            .iter()
+            .filter_map(|item| {
+                item.as_str()
+                    .map(str::to_owned)
+                    .or_else(|| item.as_i64().map(|n| n.to_string()))
+            })
+            .collect();
+        if !tokens.is_empty() {
+            let mut part = String::from("BYMONTH=");
+            part.push_str(&tokens.join(","));
+            parts.push(part);
+        }
+    }
+    if let Some(week_start) = rule.get("firstDayOfWeek").and_then(Value::as_str) {
+        let mut part = String::from("WKST=");
+        part.push_str(&week_start.to_ascii_uppercase());
+        parts.push(part);
+    }
+    Some(String::from("RRULE:") + &parts.join(";"))
+}
+
+fn nday_to_token(value: &Value) -> Option<String> {
+    let day = value.get("day").and_then(Value::as_str)?;
+    match value.get("nthOfPeriod").and_then(Value::as_i64) {
+        Some(nth) => {
+            let mut token = nth.to_string();
+            token.push_str(&day.to_ascii_uppercase());
+            Some(token)
+        }
+        None => Some(day.to_ascii_uppercase()),
+    }
+}
+
+fn json_int_csv(values: &[Value]) -> String {
+    values
+        .iter()
+        .filter_map(|item| item.as_i64().map(|n| n.to_string()))
+        .collect::<Vec<_>>()
+        .join(",")
+}
+
+fn local_to_rrule_until(value: &str) -> String {
+    value
+        .chars()
+        .filter(|ch| *ch != '-' && *ch != ':')
+        .collect()
 }
 
 fn parse_iso8601_duration_secs(value: &str) -> i64 {

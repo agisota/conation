@@ -8,7 +8,7 @@ use crate::domain::models::{
     GoogleWatchChannel, ProviderCalendar, StoredGoogleCalendar, VisibleCalendar,
 };
 use crate::domain::ports::RetiredCalendarEvent;
-use chrono::{Duration, TimeZone};
+use chrono::{Duration, NaiveDate, TimeZone};
 use std::sync::{Arc, Mutex};
 
 fn token_identity() -> CalendarLinkTokenIdentity {
@@ -1857,4 +1857,70 @@ async fn disconnecting_an_inbox_the_requester_does_not_own_is_not_found() {
         Err(CalendarMutationError::NotFound)
     ));
     assert!(calls.lock().unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn create_all_day_recurring_on_stalwart_persists_locally_without_calling_google() {
+    let mut target = creation_target(false);
+    target.token_identity.provider = "STALWART".to_string();
+    let repo = FakeRepo {
+        creation_target: Some(target),
+        ..FakeRepo::default()
+    };
+    let upserts = repo.upserts.clone();
+    let provider = FakeProvider::new(FakeProviderBehavior::Echo);
+    let calls = provider.calls.clone();
+    let mut draft = draft();
+    draft.time = EventTime::AllDay {
+        start_date: NaiveDate::from_ymd_opt(2026, 9, 13).unwrap(),
+        end_date: NaiveDate::from_ymd_opt(2026, 9, 14).unwrap(),
+    };
+    draft.recurrence_lines = vec!["RRULE:FREQ=YEARLY".to_string()];
+    let event = service(repo, provider, FakeTokens::ok())
+        .create_event("macro|user", None, None, draft)
+        .await
+        .unwrap();
+    assert!(calls.lock().unwrap().is_empty());
+    assert_eq!(upserts.lock().unwrap().len(), 1);
+    assert!(matches!(event.time, EventTime::AllDay { .. }));
+    assert_eq!(
+        event.recurrence_lines,
+        vec!["RRULE:FREQ=YEARLY".to_string()]
+    );
+}
+
+#[test]
+fn stalwart_upsert_maps_all_day_and_recurrence_from_jmap() {
+    let mut target = creation_target(false);
+    target.token_identity.provider = "STALWART".to_string();
+    let start = Utc.with_ymd_and_hms(2026, 9, 13, 0, 0, 0).unwrap();
+    let remote = email_provider::StalwartCalendarEvent {
+        id: "ev1".to_string(),
+        uid: Some("uid-1@conation.dev".to_string()),
+        title: "Holiday".to_string(),
+        description: None,
+        location: None,
+        start,
+        duration_secs: 86_400,
+        time_zone: None,
+        free: true,
+        status: Some("confirmed".to_string()),
+        show_without_time: true,
+        recurrence_lines: vec!["RRULE:FREQ=YEARLY".to_string()],
+        participants: Vec::new(),
+    };
+    let upsert = stalwart_upsert_from_remote(&target, &remote);
+    assert!(matches!(
+        upsert.event.time,
+        EventTime::AllDay {
+            start_date,
+            end_date,
+        } if start_date == NaiveDate::from_ymd_opt(2026, 9, 13).unwrap()
+            && end_date == NaiveDate::from_ymd_opt(2026, 9, 14).unwrap()
+    ));
+    assert_eq!(
+        upsert.event.recurrence_lines,
+        vec!["RRULE:FREQ=YEARLY".to_string()]
+    );
+    assert_eq!(upsert.event.transparency, EventTransparency::Transparent);
 }
