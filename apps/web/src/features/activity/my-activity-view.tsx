@@ -11,7 +11,15 @@ import type { ActivityEvent } from '@queries/activity/graphql/entity';
 import { createMyActivityQuery } from '@queries/activity/graphql/feed';
 import { createMyActivityOverviewQuery } from '@queries/activity/graphql/overview';
 import { Button, Dropdown, SingleSelectCheck } from '@ui';
-import { type Component, createMemo, createSignal, For, Show } from 'solid-js';
+import {
+  type Component,
+  createEffect,
+  createMemo,
+  createSignal,
+  For,
+  onCleanup,
+  Show,
+} from 'solid-js';
 import { ActionGraph } from './action-graph';
 import { ActivityCategoryFilters } from './activity-category-filters';
 import { parseOverviewDate } from './activity-dates';
@@ -22,8 +30,8 @@ import {
   sortActivityEvents,
   toggleActivityCategory,
 } from './activity-feed-query';
-import { ActivityTimelineRow } from './activity-timeline-row';
 import { TopEntities } from './top-entities';
+import { useActivityViewPrefs } from './use-activity-view-prefs';
 
 type FeedGroup = { key: string; label: string; events: ActivityEvent[] };
 
@@ -34,9 +42,29 @@ const INSET_CLASS = 'mx-1 w-[calc(100%-0.5rem)]';
 export function MyActivityView() {
   const overview = createMyActivityOverviewQuery({ enabled: () => true });
   const feed = createMyActivityQuery({ enabled: () => true });
+  const prefs = useActivityViewPrefs(() => 'my');
   const [selectedDate, setSelectedDate] = createSignal<string | null>(null);
   const [categories, setCategories] = createSignal<Set<string>>(new Set());
   const [sort, setSort] = createSignal<ActivitySort>('newest');
+  const [hydrated, setHydrated] = createSignal(false);
+
+  createEffect(() => {
+    const snapshot = prefs.loaded();
+    if (snapshot === undefined || hydrated()) return;
+    setSort(snapshot.sort);
+    setCategories(new Set(snapshot.categories));
+    setHydrated(true);
+  });
+
+  createEffect(() => {
+    if (!hydrated()) return;
+    const next = {
+      sort: sort(),
+      categories: [...categories()],
+    };
+    const timer = setTimeout(() => prefs.persist(next), 400);
+    onCleanup(() => clearTimeout(timer));
+  });
 
   const timeZone = () => overview.data?.timeZone ?? 'UTC';
 
