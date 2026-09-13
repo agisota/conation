@@ -98,6 +98,17 @@ impl LocalEnv {
             "PIPEDREAM_ALLOWED_ORIGINS".into(),
             format!("http://localhost:{}", self.frontend_port),
         );
+        // Passwordless `redirect_uri` is checked against this list. The SPA on
+        // this host is reached as localhost from Playwright, and as the
+        // Tailscale/public IPs from the server Chromium (container localhost
+        // is selkies, not Vite).
+        env.insert(
+            "ALLOWED_ORIGINS".into(),
+            format!(
+                "https://app.conation.dev,https://conation.dev,https://www.conation.dev,http://localhost:{frontend},http://localhost:3000,http://localhost:5173,http://100.89.19.82:3000,http://173.212.222.197:3000",
+                frontend = self.frontend_port
+            ),
+        );
         // Calendar ingestion/sync ships dark (both flags default off in
         // deployed envs); local stacks keep it on for development.
         env.insert("CALENDAR_SYNC_ENABLED".into(), "true".into());
