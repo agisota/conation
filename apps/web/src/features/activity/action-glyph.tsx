@@ -11,7 +11,7 @@ import UserPlus from '@phosphor/user-plus.svg';
 import type { ActivityEvent } from '@queries/activity/graphql/entity';
 import { Dynamic } from 'solid-js/web';
 
-const GLYPHS = {
+export const ACTION_GLYPHS = {
   GraphqlActivityCreated: Plus,
   GraphqlActivityEdited: PencilSimple,
   GraphqlActivityOpened: Eye,
@@ -25,15 +25,31 @@ const GLYPHS = {
   GraphqlActivityUnknownAction: PencilSimple,
 } as const;
 
+/** Category color for glyphs and filter chips. */
+export const ACTION_TONE_CLASS = {
+  GraphqlActivityCreated: 'text-accent',
+  GraphqlActivityEdited: 'text-ink',
+  GraphqlActivityOpened: 'text-ink-muted',
+  GraphqlActivityDeleted: 'text-red',
+  GraphqlActivityMessaged: 'text-accent',
+  GraphqlActivitySent: 'text-accent',
+  GraphqlActivityPropertyChanged: 'text-ink-muted',
+  GraphqlActivityParticipantAdded: 'text-accent',
+  GraphqlActivityParticipantRemoved: 'text-red',
+  GraphqlActivityCallStarted: 'text-accent',
+  GraphqlActivityUnknownAction: 'text-ink-muted',
+} as const;
+
 /** A small icon for the kind of action, for glyph-led activity rows. */
 export function ActionGlyph(props: {
   action: ActivityEvent['action'];
   class?: string;
 }) {
+  const tone = ACTION_TONE_CLASS[props.action.__typename];
   return (
     <Dynamic
-      component={GLYPHS[props.action.__typename]}
-      class={props.class ?? 'size-3'}
+      component={ACTION_GLYPHS[props.action.__typename]}
+      class={`${props.class ?? 'size-3'} ${tone}`}
     />
   );
 }

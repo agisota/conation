@@ -70,10 +70,7 @@ export function ActivityTimelineRow(props: {
       <div class="relative flex w-6 shrink-0 items-center justify-center">
         <div class="absolute inset-y-0 w-px bg-edge-muted" />
         <span class="relative flex size-5 items-center justify-center rounded-full bg-surface ring ring-edge-muted">
-          <ActionGlyph
-            action={props.event.action}
-            class="size-3 text-ink-muted"
-          />
+          <ActionGlyph action={props.event.action} class="size-3" />
         </span>
       </div>
       <Show
