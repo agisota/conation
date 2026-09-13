@@ -54,6 +54,7 @@ export function MessageActions(props: {
       <Show when={!props.hiddenActions?.includes('reply')}>
         <Button
           class="size-6 p-0 border-0 bg-transparent rounded text-ink-muted hover:text-ink hover:bg-ink-muted/8"
+          noTouchResize
           onClick={onChangeReplyType('reply-all')}
           tooltip={t('blockEmail.actions.reply')}
         >
@@ -63,6 +64,7 @@ export function MessageActions(props: {
       <Show when={!props.hiddenActions?.includes('forward')}>
         <Button
           class="size-6 p-0 border-0 bg-transparent rounded text-ink-muted hover:text-ink hover:bg-ink-muted/8"
+          noTouchResize
           onClick={onChangeReplyType('forward')}
           tooltip={t('blockEmail.actions.forward')}
         >

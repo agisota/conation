@@ -74,6 +74,7 @@ import {
 } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import type { ReplyType } from '../util/replyType';
+import type { HoveredThreadStop } from '../util/threadStops';
 
 /**
  * Tracks thread IDs that had a draft saved since the last query fetch.
@@ -116,6 +117,8 @@ type EmailContextValues = {
     setTargetMessageID: (id: string | undefined) => void;
     focusedID: Accessor<string | undefined>;
     setFocused: (messageID: string | undefined) => void;
+    hovered: Accessor<HoveredThreadStop | undefined>;
+    setHovered: (stop: HoveredThreadStop | undefined) => void;
     expandedBodyIds: Record<string, boolean>;
     setExpandedBodyId: (id: string, expanded: boolean) => void;
     isBodyExpanded: (id: string) => boolean;
@@ -246,6 +249,7 @@ export function EmailProvider(props: FlowProps<{ threadID: string }>) {
   );
 
   const [focusedMessageId, setFocusedMessageId] = createSignal<string>();
+  const [hoveredStop, setHoveredStop] = createSignal<HoveredThreadStop>();
   const [replyingToMessageId, setReplyingToMessageId] = createSignal<string>();
   const [bottomReplyOpen, setBottomReplyOpen] = createSignal(false);
   const [mobileReplyComposerOpen, setMobileReplyComposerOpen] =
@@ -271,6 +275,7 @@ export function EmailProvider(props: FlowProps<{ threadID: string }>) {
   const [targetMessageId, setTargetMessageId] = createSignal<
     string | undefined
   >(searchParamsMessageId());
+  // Deep links (`?messageId=`) scroll to and expand a specific message after load.
 
   const [hasHandledTarget, setHasHandledTarget] = createSignal(false);
 
@@ -823,40 +828,21 @@ export function EmailProvider(props: FlowProps<{ threadID: string }>) {
     HTMLDivElement | undefined
   >(undefined);
 
-  let containerFilled = false;
   const isContainerFilled = () => {
     const messageList = messagesListRef();
     const containerRef = messagesContainerRef();
 
-    // Skip if dependencies not ready
     if (
       !messageList ||
       !containerRef ||
-      !untrack(() => threadQuery.data)?.db_id
+      !untrack(() => threadQuery.data)?.db_id ||
+      threadQuery.isFetching
     ) {
-      containerFilled = false;
       return false;
     }
 
-    // Skip if still loading or already filled
-    if (threadQuery.isFetching || containerFilled) {
-      return containerFilled;
-    }
-
-    const messageListHeight = messageList.getBoundingClientRect().height;
-    const containerHeight = containerRef.getBoundingClientRect().height;
-
-    // Load more if container isn't filled
-    if (
-      messageListHeight < containerHeight &&
-      threadQuery.hasNextPage &&
-      !threadQuery.isFetching
-    ) {
-      threadQuery.fetchNextPage();
-      containerFilled = false;
-      return false;
-    }
-    containerFilled = true;
+    // Older-page prefetch when the first batch does not overflow moved to
+    // MessageList (`listNeedsOlderPage` + `fetchOlderMessages`).
     return true;
   };
 
@@ -882,31 +868,7 @@ export function EmailProvider(props: FlowProps<{ threadID: string }>) {
   };
 
   const onExpandMessageBody = (messageID: string, expanded: boolean) => {
-    const listContainer = messagesListRef();
-
-    const lastScrollPosition = listContainer?.scrollTop;
-    const lastScrollHeight = listContainer?.scrollHeight;
-
     setExpandedMessageBodyIds(messageID, expanded);
-
-    if (
-      !listContainer ||
-      lastScrollPosition == null ||
-      lastScrollHeight == null
-    )
-      return;
-
-    // Maintain the scroll position when expansion changes
-    queueMicrotask(() => {
-      const lastPos = lastScrollHeight + lastScrollPosition;
-      const currentPos = listContainer.scrollHeight + listContainer.scrollTop;
-
-      // List is reversed, we need a negative value to maintain scroll
-      // position
-      const diff = lastPos - currentPos;
-
-      messagesListRef()?.scrollBy({ top: diff });
-    });
   };
 
   // When the provider unmounts (user navigates away), clear the thread query
@@ -967,6 +929,8 @@ export function EmailProvider(props: FlowProps<{ threadID: string }>) {
           messages: {
             focusedID: focusedMessageId,
             setFocused: setFocusedMessageId,
+            hovered: hoveredStop,
+            setHovered: setHoveredStop,
             targetMessageID: targetMessageId,
             setTargetMessageID: setTargetMessageId,
             list: createMemo(() => threadQuery.data?.filtered ?? []),

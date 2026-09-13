@@ -1,19 +1,17 @@
 import { UserIcon, type UserIconProps } from '@core/component/UserIcon';
 import { useEmail } from '@core/context/user';
 import type { ApiMessage } from '@service-email/generated/schemas';
-import { cn } from '@ui/utils/classname';
+import { Tooltip } from '@ui';
 import { createMemo, Show } from 'solid-js';
 import { getSenderDisplayName, getSenderMacroId } from '../util/emailUser';
-import { formatShortDate } from './EmailMessageTopBar';
+import { formatFullDate, formatShortDate } from '../util/formatEmailDate';
 import { EmailUserTooltip } from './EmailUserTooltip';
 
 interface CollapsedMessageProps {
   message: ApiMessage;
-  isFocused: boolean;
-  onClick: () => void;
-  onFocus?: () => void;
 }
 
+/** Collapsed thread row: sender, snippet, date. The chrome is MessageCard's. */
 export function CollapsedMessage(props: CollapsedMessageProps) {
   const currentUserEmail = useEmail();
 
@@ -21,10 +19,6 @@ export function CollapsedMessage(props: CollapsedMessageProps) {
     getSenderDisplayName(props.message, currentUserEmail())
   );
   const senderMacroId = createMemo(() => getSenderMacroId(props.message));
-  const _allRecipients = createMemo(() => [
-    ...props.message.to,
-    ...props.message.cc,
-  ]);
   const senderIconProps = createMemo<UserIconProps>(() => {
     const senderId = senderMacroId();
     const photoUrl = props.message.from?.photo_url ?? undefined;
@@ -47,56 +41,44 @@ export function CollapsedMessage(props: CollapsedMessageProps) {
     return '';
   });
 
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      e.stopPropagation();
-      props.onClick();
-    }
-  };
-
   return (
-    <div class="shrink-0 flex justify-center w-full">
-      <div class="macro-message-width macro-message-padding w-full">
-        <div
-          class={cn(
-            'relative flex flex-col gap-2 p-4 rounded-lg min-w-0 border',
-            props.isFocused
-              ? 'bg-active border-edge'
-              : 'bg-hover hover:bg-active hover:border-edge border-transparent'
-          )}
-          style={{
-            '--user-icon-width': '1rem',
-          }}
-          data-message-body-id={props.message.db_id}
-          tabIndex={0}
-          onClick={props.onClick}
-          onFocus={props.onFocus}
-          onKeyDown={handleKeyDown}
-        >
-          <div class="flex items-center gap-2 min-w-0 text-xs">
-            <div class="shrink-0 flex justify-center items-center size-6">
-              <UserIcon
-                {...senderIconProps()}
-                isDeleted={false}
-                size="fill"
-                suppressClick={true}
-              />
-            </div>
-            <EmailUserTooltip recipient={props.message.from}>
-              <span class="text-ink truncate cursor-default shrink-0 max-w-32">
-                {senderDisplay()}
-              </span>
-            </EmailUserTooltip>
-            <Show when={props.message.internal_date_ts}>
-              <span class="shrink-0 text-ink-extra-muted/60 tabular-nums">
-                {formatShortDate(props.message.internal_date_ts!)}
-              </span>
-            </Show>
-          </div>
-          <div class="min-w-0 text-sm text-ink-muted truncate">{snippet()}</div>
+    <div class="macro-thread-collapsed-row min-w-0">
+      <div
+        data-slot="sender"
+        class="macro-thread-message-header-row gap-2 min-w-0 text-sm"
+      >
+        <div class="shrink-0 flex justify-center items-center size-6">
+          <UserIcon
+            {...senderIconProps()}
+            isDeleted={false}
+            size="fill"
+            suppressClick={true}
+          />
+        </div>
+        <div class="min-w-0">
+          <EmailUserTooltip recipient={props.message.from}>
+            <span class="text-ink line-clamp-1">{senderDisplay()}</span>
+          </EmailUserTooltip>
         </div>
       </div>
+      <div data-slot="snippet" class="min-w-0 text-sm text-ink-extra-muted">
+        {snippet()}
+      </div>
+      <Show when={props.message.internal_date_ts}>
+        <span
+          data-slot="date"
+          class="macro-thread-message-header-row justify-self-end"
+        >
+          <Tooltip
+            as="span"
+            label={formatFullDate(props.message.internal_date_ts!)}
+          >
+            <span class="text-sm text-ink-extra-muted/60 tabular-nums">
+              {formatShortDate(props.message.internal_date_ts!)}
+            </span>
+          </Tooltip>
+        </span>
+      </Show>
     </div>
   );
 }
