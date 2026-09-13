@@ -83,6 +83,14 @@ export function boardFromDoc(doc: LoroDoc): CanvasLoroJson {
   };
 }
 
+/** Encode a board as a Loro snapshot for sync-service initialize. */
+export function snapshotFromJson(json: CanvasLoroJson): Uint8Array {
+  const doc = new LoroDoc();
+  doc.setPeerId(1n);
+  applyBoard(doc, json);
+  return doc.export({ mode: 'snapshot' });
+}
+
 /** Encode one peer's board as a Loro update. */
 export function encodeCanvasLoroUpdate(
   json: CanvasLoroJson,

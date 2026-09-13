@@ -54,6 +54,7 @@ mod path {
     pub const CONNECT: &str = "connect";
     pub const EXISTS: &str = "exists";
     pub const INITIALIZE: &str = "initialize";
+    pub const APPLY: &str = "apply";
     pub const RAW: &str = "raw";
     pub const SNAPSHOT: &str = "snapshot";
     pub const ACTIVE_PEERS_MARKER: &str = "active_peers";
@@ -400,6 +401,10 @@ impl DocumentSyncSession {
                             or_unauth!(claims.has_permission(&AccessLevel::Edit).then_some(()));
                             return self.initialize_handler(req, document_id).await;
                         }
+                        path::APPLY => {
+                            or_unauth!(claims.has_permission(&AccessLevel::Edit).then_some(()));
+                            return self.apply_update_handler(req, document_id).await;
+                        }
                         path::DEBUG_DUMP_OPERATIONS => {
                             or_unauth!(claims.has_permission(&AccessLevel::Admin).then_some(()));
                             return self.dump_operations(document_id).await;
@@ -486,6 +491,23 @@ impl DocumentSyncSession {
             });
         }
 
+        Response::empty()
+    }
+
+    async fn apply_update_handler(&self, mut req: Request, document_id: &str) -> Result<Response> {
+        if !self.exists(document_id).await? {
+            return Ok(response(status_codes::NOT_FOUND));
+        }
+        let update = req.bytes().await?;
+        if update.is_empty() {
+            return Response::empty();
+        }
+        let document_state = maybe_404!(self.document_state().await)?;
+        let session_storage = self.session_storage().await?;
+        session_storage
+            .append_pending_operation(&update, document_state.as_ref())
+            .await?;
+        websocket::broadcast_update(&self.get_websockets(), &update, self.msg_buffer.clone())?;
         Response::empty()
     }
 
@@ -860,6 +882,9 @@ pub static ROUTER: LazyLock<Router<&str>> = LazyLock::new(|| {
         .unwrap();
     router
         .insert("/document/{document_id}/initialize", path::INITIALIZE)
+        .unwrap();
+    router
+        .insert("/document/{document_id}/apply", path::APPLY)
         .unwrap();
     router
         .insert("/document/{document_id}/raw", path::RAW)

@@ -48,6 +48,32 @@ pub fn merge_json_boards(left: &str, right: &str) -> Result<String, CanvasLoroEr
     json_from_snapshot(&merge_snapshots(&left_snap, &right_snap)?)
 }
 
+/// What sync-service needs so a canvas edit is visible on the live WS.
+#[derive(Debug)]
+pub enum CanvasSyncSeed {
+    /// No Loro session yet — POST `/initialize`.
+    Initialize(Vec<u8>),
+    /// Session already exists — POST incremental `/apply`.
+    ApplyUpdate(Vec<u8>),
+}
+
+/// Encode an initialize snapshot or an incremental apply-update.
+///
+/// Boards that never got `initialize_from_snapshot` take the initialize
+/// path. Later agent overwrites take apply-update so live peers see the
+/// same ops the editor `pushUpdate`s.
+pub fn canvas_sync_seed(
+    existing_snapshot: Option<&[u8]>,
+    json: &str,
+) -> Result<CanvasSyncSeed, CanvasLoroError> {
+    match existing_snapshot {
+        Some(snapshot) if !snapshot.is_empty() => Ok(CanvasSyncSeed::ApplyUpdate(
+            update_from_json_onto_snapshot(snapshot, json)?,
+        )),
+        _ => Ok(CanvasSyncSeed::Initialize(snapshot_from_json(json)?)),
+    }
+}
+
 /// Apply a later board onto an existing snapshot and export a Loro *update*
 /// (the live WS payload after `initialize_from_snapshot`).
 ///
@@ -99,7 +125,7 @@ fn merge_snapshots(left: &[u8], right: &[u8]) -> Result<Vec<u8>, CanvasLoroError
         .map_err(|e| CanvasLoroError::Loro(e.to_string()))
 }
 
-fn json_from_snapshot(snapshot: &[u8]) -> Result<String, CanvasLoroError> {
+pub(crate) fn json_from_snapshot(snapshot: &[u8]) -> Result<String, CanvasLoroError> {
     let doc = LoroDoc::new();
     doc.import(snapshot)
         .map_err(|e| CanvasLoroError::Loro(e.to_string()))?;

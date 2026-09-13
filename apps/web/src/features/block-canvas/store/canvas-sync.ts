@@ -2,6 +2,7 @@ import type { LoroDoc } from 'loro-crdt';
 import { LoroDoc as Loro } from 'loro-crdt';
 import {
   boardFromDoc,
+  snapshotFromJson,
   type CanvasLoroJson,
 } from './canvas-loro';
 import {
@@ -59,6 +60,27 @@ function emitPresence(documentId: string, peers: CanvasPeerPresence[]): void {
 
 function notifyPresence(session: Session, documentId: string): void {
   emitPresence(documentId, session.presence.list(session.doc.peerIdStr));
+}
+
+export type CanvasSnapshotApi = {
+  exists: (documentId: string) => Promise<boolean>;
+  initialize: (documentId: string, snapshot: Uint8Array) => Promise<boolean>;
+};
+
+/**
+ * Seed sync-service initialize for boards that never got a Loro snapshot
+ * so the live WS session is not a no-op.
+ */
+export async function seedMissingCanvasSnapshot(opts: {
+  documentId: string;
+  board: CanvasLoroJson;
+  api: CanvasSnapshotApi;
+}): Promise<'exists' | 'initialized' | 'skipped'> {
+  if (await opts.api.exists(opts.documentId)) return 'exists';
+  const snapshot = snapshotFromJson(opts.board);
+  if (snapshot.length === 0) return 'skipped';
+  const ok = await opts.api.initialize(opts.documentId, snapshot);
+  return ok ? 'initialized' : 'skipped';
 }
 
 /**

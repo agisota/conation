@@ -178,6 +178,25 @@ pub fn broadcast_awareness(
     Ok(())
 }
 
+/// Broadcast a Loro update to every connected websocket (HTTP apply-update).
+pub fn broadcast_update(
+    sockets: &[WebSocket],
+    update: &[u8],
+    buf: Arc<Mutex<Vec<u8>>>,
+) -> Result<()> {
+    let message = FromRemote::RemoteUpdate {
+        update: SliceWrapper::Raw(update),
+    };
+    let mut buf = buf.lock("serialize RemoteUpdate in broadcast_update");
+    let serialized = serialize(message, &mut buf).context("Failed serializing update")?;
+    for w in sockets {
+        if let Err(e) = w.send_with_bytes(serialized) {
+            tracing::warn!(error = ?e, "failed to send apply-update to a peer; continuing");
+        }
+    }
+    Ok(())
+}
+
 // Max receiving websocket message is 1Mb
 const MAX_MESSAGE_SIZE: usize = 1000 * 1000;
 

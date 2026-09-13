@@ -55,6 +55,66 @@ fn failed_to_overwrite_canvas(error: DocumentError) -> ToolCallError {
     }
 }
 
+async fn seed_or_apply_canvas_loro(
+    sync: std::sync::Arc<sync_service_client::SyncServiceClient>,
+    document_id: String,
+    text: String,
+) {
+    let existing = match sync.get_snapshot(&document_id).await {
+        Ok(snapshot) => snapshot,
+        Err(error) => {
+            tracing::warn!(
+                error=?error,
+                document_id=%document_id,
+                "failed to fetch canvas Loro snapshot"
+            );
+            None
+        }
+    };
+    let seed = match crate::domain::canvas_loro::canvas_sync_seed(existing.as_deref(), &text) {
+        Ok(seed) => seed,
+        Err(error) => {
+            tracing::warn!(
+                error=?error,
+                document_id=%document_id,
+                "failed to encode canvas Loro snapshot"
+            );
+            return;
+        }
+    };
+    let result = match seed {
+        crate::domain::canvas_loro::CanvasSyncSeed::Initialize(snapshot) => {
+            sync.initialize_from_snapshot(&document_id, &snapshot).await
+        }
+        crate::domain::canvas_loro::CanvasSyncSeed::ApplyUpdate(update) => {
+            sync.apply_update(&document_id, &update).await
+        }
+    };
+    if let Err(error) = result {
+        let already = error.to_string().contains("snapshot already exists");
+        if already {
+            if let Ok(Some(snapshot)) = sync.get_snapshot(&document_id).await
+                && let Ok(crate::domain::canvas_loro::CanvasSyncSeed::ApplyUpdate(update)) =
+                    crate::domain::canvas_loro::canvas_sync_seed(Some(&snapshot), &text)
+            {
+                if let Err(error) = sync.apply_update(&document_id, &update).await {
+                    tracing::warn!(
+                        error=?error,
+                        document_id=%document_id,
+                        "failed to apply canvas Loro update after initialize race"
+                    );
+                }
+            }
+            return;
+        }
+        tracing::warn!(
+            error=?error,
+            document_id=%document_id,
+            "failed to seed canvas Loro session"
+        );
+    }
+}
+
 fn canvas_overwrite_text(file_content: Option<&str>) -> Result<String, ToolCallError> {
     let Some(file_content) = file_content else {
         return Err(ToolCallError {
@@ -150,27 +210,7 @@ where
             let sync = ctx.sync_service_client.clone();
             let document_id = self.document_id.clone();
             tokio::spawn(async move {
-                match crate::domain::canvas_loro::snapshot_from_json(&text) {
-                    Ok(snapshot) => {
-                        if let Err(error) =
-                            sync.initialize_from_snapshot(&document_id, &snapshot).await
-                            && !error.to_string().contains("snapshot already exists")
-                        {
-                            tracing::warn!(
-                                error=?error,
-                                document_id=%document_id,
-                                "failed to seed canvas Loro session"
-                            );
-                        }
-                    }
-                    Err(error) => {
-                        tracing::warn!(
-                            error=?error,
-                            document_id=%document_id,
-                            "failed to encode canvas Loro snapshot"
-                        );
-                    }
-                }
+                seed_or_apply_canvas_loro(sync, document_id, text).await;
             });
             return Ok(EditDocumentResponse {
                 summary: "Overwrote canvas JSON.".to_string(),

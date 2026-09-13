@@ -54,6 +54,48 @@ fn apply_update_tombstones_deleted_node() {
 }
 
 #[test]
+fn canvas_sync_seed_initializes_when_snapshot_is_missing() {
+    let json = r#"{"nodes":[{"id":"a"}],"edges":[]}"#;
+    match canvas_sync_seed(None, json).expect("seed") {
+        CanvasSyncSeed::Initialize(snapshot) => {
+            let merged = json_from_snapshot(&snapshot).expect("json");
+            let value: Value = serde_json::from_str(&merged).unwrap();
+            let ids: Vec<&str> = value["nodes"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .filter_map(|n| n.get("id").and_then(Value::as_str))
+                .collect();
+            assert_eq!(ids, vec!["a"], "{merged}");
+        }
+        CanvasSyncSeed::ApplyUpdate(_) => panic!("missing snapshot must initialize"),
+    }
+}
+
+#[test]
+fn canvas_sync_seed_applies_update_when_session_exists() {
+    let before = r#"{"nodes":[{"id":"a"}],"edges":[]}"#;
+    let after = r#"{"nodes":[{"id":"a"},{"id":"b"}],"edges":[]}"#;
+    let snap = snapshot_from_json(before).expect("encode");
+    match canvas_sync_seed(Some(&snap), after).expect("seed") {
+        CanvasSyncSeed::ApplyUpdate(update) => {
+            let merged =
+                json_from_snapshot(&merge_snapshots(&snap, &update).expect("merge")).expect("json");
+            let value: Value = serde_json::from_str(&merged).unwrap();
+            let ids: Vec<&str> = value["nodes"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .filter_map(|n| n.get("id").and_then(Value::as_str))
+                .collect();
+            assert!(ids.contains(&"a"), "{merged}");
+            assert!(ids.contains(&"b"), "{merged}");
+        }
+        CanvasSyncSeed::Initialize(_) => panic!("existing snapshot must apply-update"),
+    }
+}
+
+#[test]
 fn apply_update_tombstone_wins_over_stale_peer_snapshot() {
     let with_both = r#"{"nodes":[{"id":"a"},{"id":"b"}],"edges":[]}"#;
     let without_b = r#"{"nodes":[{"id":"a"}],"edges":[]}"#;

@@ -14,6 +14,7 @@ import { blockFileSignal, blockHandleSignal } from '@core/signal/load';
 import { getPermissionToken } from '@core/signal/token';
 import type { IDocumentStorageServiceFile } from '@filesystem/file';
 import { storageServiceClient } from '@service-storage/client';
+import { syncServiceClient } from '@service-sync/client';
 import { createSyncServiceSource } from '@service-sync/source';
 import { createCallback } from '@solid-primitives/rootless';
 import { debounce } from '@solid-primitives/scheduled';
@@ -34,10 +35,11 @@ import {
   useLoadCanvasData,
   useSaveCanvasDataImmediate,
 } from '../store/canvasData';
-import { peekCanvasLoro } from '../store/canvas-loro';
+import { peekCanvasLoro, type CanvasLoroJson } from '../store/canvas-loro';
 import {
   connectCanvasLiveSync,
   disconnectCanvasLiveSync,
+  seedMissingCanvasSnapshot,
   type CanvasLiveSource,
 } from '../store/canvas-sync';
 import { peekOfflineCanvas } from '../store/offline-canvas';
@@ -115,26 +117,7 @@ export default function BlockCanvas(props: BlockCanvasProps) {
 
   createEffect(() => {
     const id = documentId;
-    let cancelled = false;
-    void (async () => {
-      const token = await getPermissionToken('canvas', id);
-      if (!token || cancelled) return;
-      const { source, doInitialSync } = createSyncServiceSource(id, token);
-      await connectCanvasLiveSync({
-        documentId: id,
-        source: source as CanvasLiveSource,
-        doInitialSync: async () => {
-          const result = await doInitialSync();
-          if (result.isErr()) return null;
-          return result.value;
-        },
-        onRemoteBoard: (board) => {
-          void loadCanvasData(board as Canvas);
-        },
-      });
-    })();
     onCleanup(() => {
-      cancelled = true;
       disconnectCanvasLiveSync(id);
     });
   });
@@ -340,6 +323,46 @@ export default function BlockCanvas(props: BlockCanvasProps) {
         throw new Error('canvas json missing');
       }
       await loadCanvasData(board as Canvas);
+      try {
+        const token = await getPermissionToken('canvas', documentId);
+        if (token) {
+          await seedMissingCanvasSnapshot({
+            documentId,
+            board: board as CanvasLoroJson,
+            api: {
+              exists: async (id) => {
+                const res = await syncServiceClient.exists({ documentId: id });
+                return res.isOk() && res.value.exists;
+              },
+              initialize: async (id, snapshot) => {
+                const res = await syncServiceClient.initializeFromSnapshot({
+                  documentId: id,
+                  snapshot,
+                });
+                return res.isOk();
+              },
+            },
+          });
+          const { source, doInitialSync } = createSyncServiceSource(
+            documentId,
+            token
+          );
+          await connectCanvasLiveSync({
+            documentId,
+            source: source as CanvasLiveSource,
+            doInitialSync: async () => {
+              const result = await doInitialSync();
+              if (result.isErr()) return null;
+              return result.value;
+            },
+            onRemoteBoard: (remote) => {
+              void loadCanvasData(remote as Canvas);
+            },
+          });
+        }
+      } catch (syncError) {
+        console.error(syncError);
+      }
       setDataState('initialized');
       setPendingOffline(!!pending);
       if (pending) {

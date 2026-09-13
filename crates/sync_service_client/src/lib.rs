@@ -1,7 +1,9 @@
+pub mod apply;
 pub mod copy_document;
 pub mod delete;
 pub mod exists;
 pub mod get_raw;
+pub mod get_snapshot;
 pub mod initialize;
 pub mod metadata;
 pub mod wakeup;

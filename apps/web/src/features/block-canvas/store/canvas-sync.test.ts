@@ -17,6 +17,7 @@ import {
   publishCanvasPresence,
   pushCanvasLiveUpdate,
   resetCanvasLiveSync,
+  seedMissingCanvasSnapshot,
   type CanvasLiveRemoteEvent,
   type CanvasLiveSource,
 } from './canvas-sync';
@@ -154,6 +155,38 @@ describe('canvas live WS apply-update', () => {
     });
     expect(ok).toBe(false);
     expect(hasCanvasLiveSync('doc-1')).toBe(false);
+  });
+
+  it('initializes boards that never had a snapshot', async () => {
+    const initialized: Uint8Array[] = [];
+    const result = await seedMissingCanvasSnapshot({
+      documentId: 'doc-missing',
+      board: { nodes: [{ id: 'a' }], edges: [] },
+      api: {
+        exists: async () => false,
+        initialize: async (_id, snapshot) => {
+          initialized.push(snapshot);
+          return true;
+        },
+      },
+    });
+    expect(result).toBe('initialized');
+    expect(initialized).toHaveLength(1);
+    expect(initialized[0].byteLength).toBeGreaterThan(0);
+  });
+
+  it('does not re-initialize a canvas that already has a snapshot', async () => {
+    const result = await seedMissingCanvasSnapshot({
+      documentId: 'doc-ready',
+      board: { nodes: [{ id: 'a' }], edges: [] },
+      api: {
+        exists: async () => true,
+        initialize: async () => {
+          throw new Error('should not initialize');
+        },
+      },
+    });
+    expect(result).toBe('exists');
   });
 });
 
