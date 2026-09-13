@@ -21,6 +21,7 @@ import {
   Show,
 } from 'solid-js';
 import { ActionGraph } from './action-graph';
+import { ActivityTimelineRow } from './activity-timeline-row';
 import { ActivityCategoryFilters } from './activity-category-filters';
 import { parseOverviewDate } from './activity-dates';
 import {
