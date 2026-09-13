@@ -1,17 +1,19 @@
 import { openChatWithInput } from '@app/features/chat/ChatWithAgentButton';
 import { t } from '@app/lib/i18n';
+import { openCalendarEventSplit } from '@block-calendar/open-calendar-event';
 import { createActivityTracker } from '@channel/activity-tracker';
 import { DebugSuspense } from '@channel/DebugSuspense';
 import type { ChannelInputProps } from '@channel/Input/ChannelInput';
+import {
+  ComposeModeChannelInput,
+  type ComposeModeChannelInputProps,
+} from '@channel/Input/ComposeModeChannelInput';
+import type { EventComposerSendPayload } from '@channel/Input/EventComposer';
 import { buildPostMessageSendPayload } from '@channel/Input/message-payload';
 import {
-  TaskModeChannelInput,
-  type TaskModeChannelInputProps,
-} from '@channel/Input/TaskModeChannelInput';
-import {
   makeAttachmentTrackerPersistenceKey,
+  makeComposePersistence,
   makeInputValuePersistenceKey,
-  makeTaskPersistence,
 } from '@channel/Input/utils/persistence';
 import {
   type MessageData,
@@ -648,7 +650,7 @@ export function Channel(props: ChannelProps) {
 
   // Task mode: post the freshly created task into the channel as a message
   // carrying a task mention.
-  const onSendTask: TaskModeChannelInputProps['onSendTask'] = (task) => {
+  const onSendTask: ComposeModeChannelInputProps['onSendTask'] = (task) => {
     const senderId = userId();
     if (!senderId) return;
     sendMessageMutation.mutate(
@@ -682,6 +684,50 @@ export function Channel(props: ChannelProps) {
                     { type: 'task', id: task.documentId },
                     { referredFrom: null }
                   ),
+              },
+            ],
+          });
+        },
+      }
+    );
+  };
+
+  // Event mode: post the freshly created calendar event into the channel as
+  // a message carrying a calendar mention — the same message pasting the
+  // event's copied link would produce.
+  const onSendEvent = (event: EventComposerSendPayload) => {
+    const senderId = userId();
+    if (!senderId) return;
+    sendMessageMutation.mutate(
+      {
+        channelID: props.channelId,
+        senderId,
+        optimisticId: crypto.randomUUID(),
+        message: {
+          content: buildMentionMarkdownString({
+            type: 'document',
+            documentId: event.eventId,
+            documentName: event.title,
+            blockName: 'calendar',
+          }),
+          mentions: [
+            { entity_type: 'calendar_event', entity_id: event.eventId },
+          ],
+          attachments: [],
+        },
+        optimisticAttachments: [],
+      },
+      {
+        // The event itself was created (and its invites sent) before this
+        // send, so retrying in the composer would create a duplicate —
+        // point at the event instead.
+        onError: () => {
+          toast.failure(t('channel.composer.shareEventFailed'), {
+            actions: [
+              {
+                label: t('channel.openEvent'),
+                onClick: () =>
+                  void openCalendarEventSplit({ eventId: event.eventId }),
               },
             ],
           });
@@ -934,7 +980,7 @@ export function Channel(props: ChannelProps) {
                           )}
                         </Match>
                         <Match when={true}>
-                          <TaskModeChannelInput
+                          <ComposeModeChannelInput
                             autofocus={props.autofocus}
                             collapsible
                             input={{
@@ -960,7 +1006,11 @@ export function Channel(props: ChannelProps) {
                             }
                             onSend={onSend}
                             onSendTask={onSendTask}
-                            taskPersistence={makeTaskPersistence({
+                            eventMode={{
+                              channelId: props.channelId,
+                              onSendEvent,
+                            }}
+                            composePersistence={makeComposePersistence({
                               channelId: props.channelId,
                             })}
                             onStartTyping={() =>
