@@ -1,0 +1,24 @@
+# Fleet-owned diagnostic. Safe to delete after macos Tauri run is in_progress.
+name: hosted-runner-smoke
+'on':
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  ubuntu:
+    name: ubuntu-latest probe
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - name: uname
+      run: uname -a
+  macos:
+    name: macos-15 probe
+    runs-on: macos-15
+    timeout-minutes: 10
+    steps:
+    - name: uname
+      run: |
+        set -euo pipefail
+        uname -a
+        uname -m
