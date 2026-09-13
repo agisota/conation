@@ -12,6 +12,7 @@ import type { ConsentScopes } from '@service-auth/client';
 import {
   ALREADY_INITIALIZED_CODE,
   emailClient,
+  MAILBOX_TAKEN_CODE,
   NO_GMAIL_GRANT_CODE,
   SHARED_INBOX_CONFLICT_CODE,
 } from '@service-email/client';
@@ -52,6 +53,8 @@ type EmailInitError =
   | { tag: 'NoGmailGrant' }
   /** The mailbox is already connected by another user; confirm to share it. */
   | { tag: 'SharedInboxConflict'; emailAddress: string; ownerEmail: string }
+  /** Chosen @conation.dev local-part is already claimed. */
+  | { tag: 'MailboxTaken' }
   | { tag: 'FailedToInitialize'; message: string };
 
 function parseSharedInboxConflict(message: string): {
@@ -87,9 +90,14 @@ function parseSharedInboxConflict(message: string): {
 function initEmailLink(args?: {
   linkId?: string;
   forceShare?: boolean;
+  localPart?: string;
 }): ResultAsync<void, EmailInitError> {
   return ResultAsync.fromSafePromise(
-    emailClient.init({ linkId: args?.linkId, forceShare: args?.forceShare })
+    emailClient.init({
+      linkId: args?.linkId,
+      forceShare: args?.forceShare,
+      localPart: args?.localPart,
+    })
   ).andThen((initResult) => {
     if (initResult.isErr()) {
       const conflict = initResult.error.find(
@@ -104,6 +112,9 @@ function initEmailLink(args?: {
       }
       if (initResult.error.some((e) => e.code === NO_GMAIL_GRANT_CODE)) {
         return err<void, EmailInitError>({ tag: 'NoGmailGrant' });
+      }
+      if (initResult.error.some((e) => e.code === MAILBOX_TAKEN_CODE)) {
+        return err<void, EmailInitError>({ tag: 'MailboxTaken' });
       }
       const error: EmailInitError = initResult.error.some(
         (e) => e.code === ALREADY_INITIALIZED_CODE
@@ -333,8 +344,11 @@ export function useEmailLinks() {
   return {
     query: query,
     isConnected: () => hasEmailLinks(query),
-    initEmailLink: (args?: { linkId?: string; forceShare?: boolean }) =>
-      initEmailLink(args).map(startEmailPolling).map(invalidations),
+    initEmailLink: (args?: {
+      linkId?: string;
+      forceShare?: boolean;
+      localPart?: string;
+    }) => initEmailLink(args).map(startEmailPolling).map(invalidations),
     disconnect: () => disconnectEmail().andTee(invalidations),
     resyncInbox: (linkId: string) =>
       resyncInbox(linkId).andTee(() => invalidateEmailLinks()),

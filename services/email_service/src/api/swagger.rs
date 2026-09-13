@@ -19,26 +19,27 @@ use crate::api::email::labels::create::CreateLabelRequest;
 use crate::api::email::labels::create::CreateLabelResponse;
 use crate::api::email::links::list::ListLinksResponse;
 use crate::api::email::links::resync::ResyncResponse;
+use crate::api::email::mailbox::MailboxAvailableResponse;
 use crate::api::email::messages::labels::{UpdateLabelBatchRequest, UpdateLabelBatchResponse};
 use crate::api::email::settings::patch::{PatchSettingsRequest, PatchSettingsResponse};
 use crate::api::email::threads::archived::ArchiveThreadRequest;
 use crate::api::{email, health};
-use ::email::inbound;
-use ::email::inbound::axum::api_types::{
+use email::inbound;
+use email::inbound::axum::api_types::{
     ApiDraftContactInfo, ApiDraftInput, ApiDraftOutput, ApiPaginatedThreadCursor, ApiSortMethod,
     ApiThread, CreateDraftRequest as HexCreateDraftRequest,
     CreateDraftResponse as HexCreateDraftResponse, GetThreadResponse,
     SendMessageRequest as HexSendMessageRequest, SendMessageResponse as HexSendMessageResponse,
 };
-use ::email::inbound::axum::axum_impls::GetPreviewsCursorParams;
-use ::email::inbound::axum::email_filter_router::{
+use email::inbound::axum::axum_impls::GetPreviewsCursorParams;
+use email::inbound::axum::email_filter_router::{
     ApiEmailFilter, ListEmailFiltersResponse, UpsertEmailFilterRequest, UpsertEmailFilterResponse,
 };
-use ::email::inbound::axum::list_labels_router::ListLabelsResponse as HexListLabelsResponse;
-use ::email::inbound::axum::thread_labels_router::{
+use email::inbound::axum::list_labels_router::ListLabelsResponse as HexListLabelsResponse;
+use email::inbound::axum::thread_labels_router::{
     UpdateThreadLabelRequest, UpdateThreadLabelsResponse,
 };
-use ::email::inbound::axum::thread_project_router::{
+use email::inbound::axum::thread_project_router::{
     UpdateThreadProjectRequest, UpdateThreadProjectResponse,
 };
 use model::response::EmptyResponse;
@@ -70,6 +71,7 @@ use utoipa::OpenApi;
         email::backfill::get::active_handler,
         email::backfill::get::list_handler,
         email::init::handler,
+        email::mailbox::available_handler,
         inbound::axum::draft_router::create_draft_handler,
         email::drafts::delete::handler,
         email::drafts::scheduled::list::handler,
@@ -135,6 +137,7 @@ use utoipa::OpenApi;
             // Init types
             InitErrorCodeResponse,
             InitResponse,
+            MailboxAvailableResponse,
             SharedInboxConflictResponse,
             // Label types
             CreateLabelRequest,

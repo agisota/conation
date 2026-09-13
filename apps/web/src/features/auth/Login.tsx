@@ -53,6 +53,10 @@ import {
   sentEmailCode,
   useResetEmailCode,
 } from './EmailForm';
+import {
+  clearSignupMailboxLocal,
+  peekSignupMailboxLocal,
+} from './signup-antibot';
 import { OtpInput } from './OtpInput';
 import { Stage } from './Shared';
 import { useSsoLogin } from './useSsoLogin';
@@ -217,6 +221,7 @@ function FormError(props: { msg?: string }) {
 function EmailFormNew(props: {
   setStage: (next: Stage) => void;
   onBack: () => void;
+  signupMode?: boolean;
 }) {
   const [isPasswordLogin, setIsPasswordLogin] = createSignal(false);
   const submission = useSubmission(sendEmailCode);
@@ -270,6 +275,17 @@ function EmailFormNew(props: {
         placeholder={t('auth.email.placeholder')}
         value={searchParamsEmail}
       />
+      <Show when={props.signupMode}>
+        <FormInput
+          id="mailbox_local"
+          type="text"
+          placeholder={t('auth.mailbox.localPlaceholder')}
+          required={false}
+        />
+        <p class="text-xs text-ink-muted leading-snug">
+          {t('auth.mailbox.hint')}
+        </p>
+      </Show>
       <Show when={isPasswordLogin()}>
         <FormInput
           id="password"
@@ -510,8 +526,9 @@ export function Login(props: { signupMode?: boolean }) {
 
   const initMailboxOnLogin = async () => {
     const standalone = getConfiguredClientProfile() === 'standalone';
-    await initEmailLink().match(
+    await initEmailLink({ localPart: peekSignupMailboxLocal() }).match(
       async () => {
+        clearSignupMailboxLocal();
         if (!standalone) return;
         const result = await emailLinks.refetch();
         const mailbox = result.data?.links[0]?.email_address;
@@ -520,7 +537,10 @@ export function Login(props: { signupMode?: boolean }) {
         }
       },
       (err) => {
-        if (err.tag === 'AlreadyInitialized') return;
+        if (err.tag === 'AlreadyInitialized' || err.tag === 'MailboxTaken') {
+          if (err.tag === 'MailboxTaken') clearSignupMailboxLocal();
+          return;
+        }
         console.error('Failed to init email link on login', err);
         // Standalone stacks often have no Stalwart. A failed mailbox
         // must not look like a failed login — getting-started can retry.
@@ -662,7 +682,7 @@ export function Login(props: { signupMode?: boolean }) {
                   />
                 </Stepper.Step>
                 <Stepper.Step>
-                  <EmailFormNew setStage={onStageChange} onBack={onBack} />
+                  <EmailFormNew setStage={onStageChange} onBack={onBack} signupMode={props.signupMode} />
                 </Stepper.Step>
                 <Stepper.Step>
                   <VerifyFormNew setStage={onStageChange} onBack={onBack} />

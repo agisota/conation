@@ -1,9 +1,10 @@
+use crate::api::antibot::SignupChallenge;
 use github::domain::models::{
     EnrichGithubPullRequestsProxyRequest, EnrichGithubPullRequestsResponse,
     EnrichedGithubPullRequest, GithubPullRequestCheckRun, GithubPullRequestComment,
     GithubPullRequestRef, GithubPullRequestStatus,
 };
-use model::authentication::login::request::{AppleLoginRequest, PasswordRequest};
+use model::authentication::login::request::{AntibotProof, AppleLoginRequest, PasswordRequest};
 use teams::domain::model::{
     PatchTeamCrmSettingsRequest, PatchTeamCrmSettingsResponse, PatchTeamRequest, PatchTeamUserRole,
     Team, TeamInviteDetails, TeamMember, TeamPlan, TeamRole, TeamWithMembers,
@@ -18,7 +19,7 @@ use teams::inbound::axum_router::{
 use user_quota::UserQuota;
 use utoipa::OpenApi;
 
-use crate::api::cursor_api_key::{CursorApiKeyStatus, put_cursor_api_key::PutCursorApiKeyRequest};
+use crate::api::cursor_api_key::{put_cursor_api_key::PutCursorApiKeyRequest, CursorApiKeyStatus};
 use crate::api::email::generate_email_link::GenerateEmailLinkRequest;
 use crate::api::email::resend_fusionauth_verify_user_email::ResendFusionauthVerifyUserEmailRequest;
 use crate::api::jwt::conation_api_token::ConationApiTokenResponse;
@@ -31,8 +32,8 @@ use crate::api::user::create_user::CreateUserRequest;
 use crate::api::user::get_legacy_user_permissions::GetLegacyUserPermissionsResponse;
 use crate::api::user::get_user_link_exists::UserLinkResponse;
 use crate::api::user::get_user_organization::UserOrganizationResponse;
-use crate::api::user::patch_tutorial::PatchUserTutorialRequest;
 use crate::api::user::patch_locale::PatchUserLocaleRequest;
+use crate::api::user::patch_tutorial::PatchUserTutorialRequest;
 use crate::api::user::patch_user_group::PatchUserGroupRequest;
 use crate::api::user::patch_user_onboarding::PatchUserOnboardingRequest;
 use crate::api::user::post_get_names::PostGetNamesRequestBody;
@@ -67,6 +68,7 @@ use model::user::{
 
                 /// /login
                 login::passwordless::handler,
+                login::signup_challenge::handler,
                 login::sso::handler,
                 login::password::handler,
                 login::apple::handler,
@@ -166,6 +168,8 @@ use model::user::{
             schemas(
                         Permission,
                         PasswordlessRequest,
+                        AntibotProof,
+                        SignupChallenge,
                         PasswordRequest,
                         SsoRequiredResponse,
                         EmptyResponse,
@@ -279,11 +283,9 @@ mod tests {
             Some("#/components/schemas/GithubLinkStatusResponse")
         );
         assert!(operation["responses"].get("428").is_some());
-        assert!(
-            openapi["components"]["schemas"]
-                .get("GithubLinkStatusResponse")
-                .is_some()
-        );
+        assert!(openapi["components"]["schemas"]
+            .get("GithubLinkStatusResponse")
+            .is_some());
     }
 
     #[test]
@@ -355,10 +357,8 @@ mod tests {
         let response_properties = &schemas["EnrichedGithubPullRequest"]["properties"];
         assert!(response_properties.get("comments").is_some());
         assert!(response_properties.get("checks").is_some());
-        assert!(
-            response_properties
-                .get("participantGithubUserIds")
-                .is_some()
-        );
+        assert!(response_properties
+            .get("participantGithubUserIds")
+            .is_some());
     }
 }

@@ -4,6 +4,12 @@ import { platformFetch } from '@core/util/platformFetch';
 import { authServiceClient } from '@service-auth/client';
 import { action, useSubmission } from '@solidjs/router';
 import { Stage } from './Shared';
+import {
+  isAntibotReject,
+  rememberSignupMailboxLocal,
+  solveSignupAntibot,
+  type AntibotProof,
+} from './signup-antibot';
 
 // Construct the redirect uri to use for passwordless login.
 // This will send us back to the application after clicking the magic link.
@@ -13,9 +19,7 @@ const REDIRECT_URI = `${protocol}://${window.location.host}/app`;
 
 async function isPasswordLogin(email?: string | null) {
   if (!email) return false;
-  // SHA-256 via WebCrypto needs a secure context. HTTP LAN origins
-  // (Tailscale :3000) have no crypto.subtle — skip the password-login
-  // hash and continue with passwordless.
+  // HTTP LAN origins have no crypto.subtle; skip the staff-password hash.
   if (typeof crypto.subtle?.digest !== 'function') return false;
 
   const encodedEmail = new TextEncoder().encode(email.toLowerCase());
@@ -26,6 +30,26 @@ async function isPasswordLogin(email?: string | null) {
   return (
     hashedEmail ===
     '0d10222b5594dbb0eb5d2bccbc9b5d8e9ff83e99421b573fb32c8a7b74491c81'
+  );
+}
+
+async function postPasswordless(
+  email: string,
+  referral_code: string | null,
+  antibot?: AntibotProof
+) {
+  return platformFetch(
+    `${SERVER_HOSTS['auth-service']}/login/passwordless`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        redirect_uri: REDIRECT_URI,
+        email,
+        ...(referral_code && { referral_code }),
+        ...(antibot && { antibot }),
+      }),
+    }
   );
 }
 
@@ -51,21 +75,28 @@ export const sendEmailCode = action(async (formData: FormData) => {
     return 'LoggedIn';
   }
 
+  const mailboxLocal = formData.get('mailbox_local');
+  rememberSignupMailboxLocal(
+    typeof mailboxLocal === 'string' ? mailboxLocal : null
+  );
+
   const url = new URL(window.location.href);
   const referral_code = url.searchParams.get('referral_code');
 
-  const response = await platformFetch(
-    `${SERVER_HOSTS['auth-service']}/login/passwordless`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        redirect_uri: REDIRECT_URI,
-        email,
-        ...(referral_code && { referral_code }),
-      }),
+  let response = await postPasswordless(email, referral_code);
+  if (!response.ok) {
+    const text = await response.text();
+    if (isAntibotReject(response.status, text)) {
+      try {
+        const antibot = await solveSignupAntibot(email);
+        response = await postPasswordless(email, referral_code, antibot);
+      } catch {
+        throw new Error(t('auth.errors.antibotFailed'));
+      }
+    } else {
+      throw new Error(text);
     }
-  );
+  }
 
   if (!response.ok) throw new Error(await response.text());
 

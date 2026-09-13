@@ -107,6 +107,30 @@ pub async fn handler(
             match e {
                 FusionAuthClientError::UserDoesNotExist => {
                     tracing::trace!(email=%lowercase_email, "user does not exist, we need to create user");
+                    let proof = req.antibot.as_ref().ok_or_else(|| {
+                        (
+                            StatusCode::FORBIDDEN,
+                            Json(ErrorResponse {
+                                message: crate::api::antibot::AntibotError::Missing.code().into(),
+                            }),
+                        )
+                            .into_response()
+                    })?;
+                    crate::api::antibot::verify_proof(
+                        &lowercase_email,
+                        &crate::api::antibot::proof_from_request(proof),
+                        chrono::Utc::now().timestamp(),
+                    )
+                    .map_err(|err| {
+                        tracing::warn!(code=%err.code(), email=%lowercase_email, "signup antibot rejected");
+                        (
+                            StatusCode::FORBIDDEN,
+                            Json(ErrorResponse {
+                                message: err.code().into(),
+                            }),
+                        )
+                            .into_response()
+                    })?;
                     let fusionauth_user_id = ctx
                     .auth_client
                     .create_user(fusionauth::user::create::User {

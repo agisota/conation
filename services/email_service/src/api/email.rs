@@ -1,5 +1,5 @@
 use axum::Router;
-use axum::routing::post;
+use axum::routing::{get, post};
 
 use crate::api::ApiContext;
 
@@ -11,6 +11,7 @@ pub(crate) mod filters;
 pub(crate) mod init;
 pub(crate) mod labels;
 pub(crate) mod links;
+pub(crate) mod mailbox;
 pub(crate) mod messages;
 pub(crate) mod provider_error;
 pub(crate) mod settings;
@@ -35,4 +36,5 @@ pub fn router(state: ApiContext) -> Router<ApiContext> {
             conation_middleware::connection_drop_prevention_handler,
         ))
         .route("/init", post(init::handler))
+        .route("/mailbox/available", get(mailbox::available_handler))
 }

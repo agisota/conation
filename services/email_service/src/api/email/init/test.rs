@@ -78,6 +78,25 @@ async fn no_gmail_grant_is_a_coded_400() {
 }
 
 #[tokio::test]
+async fn mailbox_taken_is_a_coded_409() {
+    let response = InitError::MailboxTaken {
+        mailbox: "alice@conation.dev".to_string(),
+    }
+    .into_response();
+    assert_eq!(response.status(), StatusCode::CONFLICT);
+    let body = body_json(response).await;
+    assert_eq!(body["code"], MAILBOX_TAKEN_CODE);
+}
+
+#[test]
+fn derived_mailbox_uses_login_local_part() {
+    assert_eq!(
+        stalwart_mailbox_from_login_email("Ada.Lovelace@gmail.com"),
+        "ada.lovelace@conation.dev"
+    );
+}
+
+#[tokio::test]
 async fn already_initialized_is_a_coded_400() {
     let response = InitError::AlreadyInitialized.into_response();
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);

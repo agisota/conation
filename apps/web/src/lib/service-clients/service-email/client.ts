@@ -119,10 +119,14 @@ export const ALREADY_INITIALIZED_CODE = 'ALREADY_INITIALIZED' as const;
  */
 export const NO_GMAIL_GRANT_CODE = 'NO_GMAIL_GRANT' as const;
 
+/** Error code `init` returns (HTTP 409) when a chosen @conation.dev local-part is taken. */
+export const MAILBOX_TAKEN_CODE = 'MAILBOX_TAKEN' as const;
+
 type InitErrorCode =
   | typeof SHARED_INBOX_CONFLICT_CODE
   | typeof ALREADY_INITIALIZED_CODE
-  | typeof NO_GMAIL_GRANT_CODE;
+  | typeof NO_GMAIL_GRANT_CODE
+  | typeof MAILBOX_TAKEN_CODE;
 
 /**
  * Error code `patchSettings` returns (HTTP 422) when a signature has images that
@@ -134,10 +138,15 @@ export const SIGNATURE_IMAGES_UNRESOLVED_CODE =
   'SIGNATURE_IMAGES_UNRESOLVED' as const;
 
 export const emailClient = {
-  async init(args?: { linkId?: string; forceShare?: boolean }) {
+  async init(args?: {
+    linkId?: string;
+    forceShare?: boolean;
+    localPart?: string;
+  }) {
     const params = new URLSearchParams();
     if (args?.linkId) params.set('link_id', args.linkId);
     if (args?.forceShare) params.set('force_share', 'true');
+    if (args?.localPart) params.set('local_part', args.localPart);
     const query = params.toString();
     const path = query ? `/email/init?${query}` : '/email/init';
 
@@ -148,9 +157,18 @@ export const emailClient = {
       // statuses fall back to the same HTTP_ERROR shape callers already branch on.
       errorResponseHandler: async (response) => {
         if (response.status === 409) {
-          const body = (await response
-            .json()
-            .catch(() => null)) as SharedInboxConflictResponse | null;
+          const body = (await response.json().catch(() => null)) as {
+            code?: string;
+            message?: string;
+            email_address?: string;
+            existing_owner_email?: string;
+          } | null;
+          if (body?.code === MAILBOX_TAKEN_CODE) {
+            return {
+              code: MAILBOX_TAKEN_CODE,
+              message: body.message ?? '',
+            };
+          }
           return {
             code: SHARED_INBOX_CONFLICT_CODE,
             // The caller formats the prompt; the fields it needs ride along as JSON.

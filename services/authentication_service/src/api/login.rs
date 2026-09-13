@@ -15,8 +15,11 @@ pub(in crate::api) mod password;
 pub(in crate::api) mod passwordless;
 pub(in crate::api) mod sso;
 
+pub(in crate::api) mod signup_challenge;
+
 pub fn router(state: ApiContext) -> Router<ApiContext> {
     Router::new()
+        .route("/signup-challenge", get(signup_challenge::handler))
         .route(
             "/passwordless",
             post(passwordless::handler).layer(ServiceBuilder::new().layer(

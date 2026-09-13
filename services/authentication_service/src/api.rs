@@ -23,6 +23,7 @@ mod link;
 mod merge;
 mod mobile_welcome_email;
 
+mod antibot;
 mod github_pull_requests;
 mod health;
 mod internal;

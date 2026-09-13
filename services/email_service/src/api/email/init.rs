@@ -2,14 +2,14 @@ use crate::api::ApiContext;
 use crate::api::context::{AuthorizationService, CalendarGrantService};
 use crate::utils::extract_email_with_response;
 use anyhow::Context;
-use base64::Engine as _;
-use base64::engine::general_purpose::STANDARD;
-use bytes::Bytes;
 use axum::{
     extract::{Query, State},
     http::StatusCode,
     response::{IntoResponse, Json, Response},
 };
+use base64::Engine as _;
+use base64::engine::general_purpose::STANDARD;
+use bytes::Bytes;
 use calendar_events::domain::models::{CalendarGrantIntent, GoogleScopeSet};
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_db_client::in_progress_user_link::InProgressUserLink;
@@ -33,8 +33,8 @@ use models_email::email::service::message::Message;
 use models_email::email::service::thread::Thread;
 use models_email::service::link;
 use models_email::service::link::Link;
-use strum_macros::AsRefStr;
 use static_file_service_client::StaticFileServiceClient;
+use strum_macros::AsRefStr;
 use thiserror::Error;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -71,6 +71,9 @@ pub enum InitError {
         existing_owner_email: String,
         existing_link_id: Uuid,
     },
+
+    #[error("Mailbox address is already taken")]
+    MailboxTaken { mailbox: String },
 }
 
 /// Stable machine-readable code for [`InitError::AlreadyInitialized`].
@@ -78,6 +81,9 @@ pub const ALREADY_INITIALIZED_CODE: &str = "ALREADY_INITIALIZED";
 
 /// Stable machine-readable code for [`InitError::NoGmailGrant`].
 pub const NO_GMAIL_GRANT_CODE: &str = "NO_GMAIL_GRANT";
+
+/// Stable machine-readable code for [`InitError::MailboxTaken`].
+pub const MAILBOX_TAKEN_CODE: &str = "MAILBOX_TAKEN";
 
 /// Structured 400 body carrying a machine-readable code. Clients branch on
 /// `code` instead of parsing the human message.
@@ -96,6 +102,7 @@ impl InitError {
             | InitError::NoGmailGrant
             | InitError::BadRequest(_)
             | InitError::Parse(_) => StatusCode::BAD_REQUEST,
+            InitError::MailboxTaken { .. } => StatusCode::CONFLICT,
             InitError::ProviderError(EmailApiError::RateLimited { .. }) => {
                 StatusCode::TOO_MANY_REQUESTS
             }
@@ -141,6 +148,14 @@ impl IntoResponse for InitError {
                 }),
             )
                 .into_response(),
+            InitError::MailboxTaken { mailbox } => (
+                status_code,
+                Json(InitErrorCodeResponse {
+                    code: MAILBOX_TAKEN_CODE.to_string(),
+                    message: format!("{mailbox} is already taken"),
+                }),
+            )
+                .into_response(),
             other => (status_code, other.to_string()).into_response(),
         }
     }
@@ -181,6 +196,9 @@ pub struct InitParams {
     /// macro user promotes it to a shared inbox instead of returning a 409 conflict.
     #[serde(default)]
     force_share: bool,
+    /// Optional `@conation.dev` local-part for Stalwart open signup.
+    #[serde(default)]
+    local_part: Option<String>,
 }
 
 /// Initialize email functionality for the user. Populates initial threads and enables inbox syncing.
@@ -191,6 +209,7 @@ pub struct InitParams {
     params(
         ("link_id" = Option<Uuid>, Query, description = "**OPTIONAL**. The in_progress_user_link id from a /link/gmail flow."),
         ("force_share" = Option<bool>, Query, description = "**OPTIONAL**. Confirms promoting a mailbox already connected by another user into a shared inbox."),
+        ("local_part" = Option<String>, Query, description = "**OPTIONAL**. `@conation.dev` local-part to claim during Stalwart signup."),
     ),
     operation_id = "init_user",
     responses(
@@ -258,6 +277,7 @@ async fn init_user(
     Query(InitParams {
         link_id,
         force_share,
+        local_part,
     }): Query<InitParams>,
     authorization: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
 ) -> Result<Response, InitError> {
@@ -620,7 +640,7 @@ async fn init_user(
             .map_err(|_| InitError::BadRequest("Failed to extract email".to_string()))?;
 
         if provider_kind == EmailProviderKind::Stalwart {
-            let mailbox = stalwart_mailbox_from_login_email(&email);
+            let mailbox = resolve_stalwart_mailbox(&ctx.db, &email, local_part.as_deref()).await?;
             let random_password = conation_uuid::generate_uuid_v7().to_string();
             let provider = StalwartProvider::from_env().map_err(|error| {
                 anyhow::anyhow!("Failed to load Stalwart provider for mailbox provision: {error}")
@@ -996,11 +1016,42 @@ fn classify_provider_init_error(error: EmailApiError) -> InitError {
 }
 
 fn stalwart_mailbox_from_login_email(login_email: &str) -> String {
-    match login_email.rsplit_once('@') {
-        Some((_, host)) if host.eq_ignore_ascii_case("conation.dev") => login_email.to_string(),
-        Some((local, _)) if !local.is_empty() => format!("{local}@conation.dev"),
-        _ => login_email.to_string(),
+    let local = super::mailbox::suggested_local_from_login(login_email);
+    let local = super::mailbox::normalize_local_part(&local)
+        .unwrap_or_else(|_| super::mailbox::next_candidate(&local, 2));
+    super::mailbox::address_for_local(&local)
+}
+
+async fn resolve_stalwart_mailbox(
+    pool: &sqlx::PgPool,
+    login_email: &str,
+    requested: Option<&str>,
+) -> Result<String, InitError> {
+    let chosen = if let Some(raw) = requested {
+        super::mailbox::normalize_local_part(raw)
+            .map_err(|message| InitError::BadRequest(message.to_string()))?
+    } else {
+        let suggested = super::mailbox::suggested_local_from_login(login_email);
+        super::mailbox::normalize_local_part(&suggested)
+            .unwrap_or_else(|_| super::mailbox::next_candidate(&suggested, 2))
+    };
+    let mailbox = super::mailbox::address_for_local(&chosen);
+    if super::mailbox::mailbox_taken(pool, &mailbox).await? {
+        if requested.is_some() {
+            return Err(InitError::MailboxTaken { mailbox });
+        }
+        for n in 2..=99 {
+            let candidate =
+                super::mailbox::address_for_local(&super::mailbox::next_candidate(&chosen, n));
+            if !super::mailbox::mailbox_taken(pool, &candidate).await? {
+                return Ok(candidate);
+            }
+        }
+        return Err(InitError::BadRequest(
+            "no free @conation.dev local-part".to_string(),
+        ));
     }
+    Ok(mailbox)
 }
 
 fn new_gmail_link(
@@ -1091,11 +1142,7 @@ async fn seed_stalwart_threads(
             .messages
             .iter()
             .flat_map(|message| message.attachments.iter())
-            .filter_map(|attachment| {
-                attachment
-                    .sfs_id
-                    .map(|sfs_id| (attachment.db_id, sfs_id))
-            })
+            .filter_map(|attachment| attachment.sfs_id.map(|sfs_id| (attachment.db_id, sfs_id)))
             .collect();
         match email_db_client::threads::insert::insert_thread_and_messages(db, thread, link_id)
             .await
@@ -1134,10 +1181,7 @@ async fn seed_stalwart_threads(
     }
 }
 
-async fn provision_stalwart_calendar(
-    db: &sqlx::PgPool,
-    link: &Link,
-) -> anyhow::Result<()> {
+async fn provision_stalwart_calendar(db: &sqlx::PgPool, link: &Link) -> anyhow::Result<()> {
     let account_id = conation_uuid::generate_uuid_v7();
     sqlx::query(
         r#"
@@ -1178,12 +1222,7 @@ async fn provision_stalwart_calendar(
     Ok(())
 }
 
-
-fn seed_stalwart_message(
-    thread_db_id: Uuid,
-    link_id: Uuid,
-    message: ProviderMessage,
-) -> Message {
+fn seed_stalwart_message(thread_db_id: Uuid, link_id: Uuid, message: ProviderMessage) -> Message {
     let date = message.date;
     let now = date.unwrap_or_else(chrono::Utc::now);
     let is_read = message.labels.iter().any(|kw| kw == "$seen");
