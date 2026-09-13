@@ -1,6 +1,7 @@
 import { Telemetry } from '@conation/observability';
 import { ENABLE_BEARER_TOKEN_AUTH } from '@core/constant/featureFlags';
 import { SERVER_HOSTS } from '@core/constant/servers';
+import { syncLoginStorage } from '@core/util/cookies';
 import { fetchWithToken } from '@core/util/fetchWithToken';
 import { registerClient } from '@core/util/mockClient';
 import type { ObjectLike } from '@core/util/result';
@@ -258,6 +259,7 @@ export const authServiceClient = {
         refreshToken: result.value.refresh_token,
         expiresAt: getExpiresAt(result.value.access_token),
       });
+      syncLoginStorage(true);
     }
     return result;
   },
@@ -302,6 +304,7 @@ export const authServiceClient = {
         refreshToken: result.value.refresh_token,
         expiresAt: getExpiresAt(result.value.access_token),
       });
+      syncLoginStorage(true);
     }
     return result;
   },

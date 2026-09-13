@@ -16,12 +16,33 @@ type LoginCookieOptions = {
 };
 
 const LOGIN_STORAGE_KEY = 'conation:login';
+/** Persisted by `authServiceClient` via `@solid-primitives/storage`. */
+const ACCESS_TOKEN_STORAGE_KEY = 'conationAccessToken';
+
+function hasPersistedAccessToken(): boolean {
+  if (typeof localStorage === 'undefined') return false;
+  const raw = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+  if (!raw || raw === 'null' || raw === 'undefined') return false;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return (
+      typeof parsed === 'object' &&
+      parsed !== null &&
+      'accessToken' in parsed &&
+      typeof parsed.accessToken === 'string' &&
+      parsed.accessToken.length > 0
+    );
+  } catch {
+    return false;
+  }
+}
 
 /** Check if the user appears to be authenticated based on the login cookie or localStorage fallback. */
 export function hasLoginCookie(): boolean {
   if (
     typeof localStorage !== 'undefined' &&
-    localStorage.getItem(LOGIN_STORAGE_KEY) === 'true'
+    (localStorage.getItem(LOGIN_STORAGE_KEY) === 'true' ||
+      hasPersistedAccessToken())
   ) {
     return true;
   }

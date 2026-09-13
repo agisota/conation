@@ -226,9 +226,12 @@ export function ENABLE_HISTORY_COMPONENT(): boolean {
   );
 }
 
+// Standalone operators often serve the SPA off a different origin than
+// AUTH_COOKIE_DOMAIN (Secure cookies scoped to .conation.dev). Passwordless
+// already persists JWT in localStorage; cookie-only fetch cannot attach it.
 export const ENABLE_BEARER_TOKEN_AUTH = resolveFeatureFlag(
   'ENABLE_BEARER_TOKEN_AUTH',
-  false
+  true
 );
 
 export const ENABLE_GIT_BLAME_FLAG = 'enable-git-blame';

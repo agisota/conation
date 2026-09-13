@@ -241,7 +241,14 @@ const SOUP_ROW_BY_VIEW: Partial<Record<ListView, SoupRowEntry>> = {
   companies: { component: CompanyListEntity, family: 'row' },
 };
 
-const DEFAULT_SOUP_ROW: SoupRowEntry = { component: ListEntity, family: 'row' };
+const DEFAULT_SOUP_ROW: SoupRowEntry = {
+  // Delay the ListEntity read so a circular @entity import cannot hit TDZ
+  // at module init (login would otherwise white-screen).
+  get component() {
+    return ListEntity;
+  },
+  family: 'row',
+};
 
 const CONDENSED_NARROW_LIST_VIEWS: ReadonlySet<ListView> = new Set([
   'channels',

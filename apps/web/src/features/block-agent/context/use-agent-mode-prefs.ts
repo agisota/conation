@@ -9,7 +9,7 @@ import {
   isAgentModePrefsConfig,
   parseAgentMode,
   toAgentModePrefsConfig,
-} from './agent-mode-prefs';
+} from '../agent-mode-prefs';
 
 const AGENT_MODE_QUERY_KEY = ['agent', 'mode-prefs'] as const;
 
