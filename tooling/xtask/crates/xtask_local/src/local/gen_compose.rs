@@ -72,13 +72,18 @@ pub fn generate(
 ) -> Result<PathBuf> {
     let mut services: IndexMap<String, Option<dct::Service>> = IndexMap::new();
     let mounts = binaries.compose_mounts();
+    let frontend_port = if static_frontend {
+        instance.port(Port::Proxy)
+    } else {
+        instance.port(Port::Frontend)
+    };
 
     // 1. Rust services → runtime image + mounted binaries.
     for svc in services_for_mode(mode) {
         let mut s = dct::Service {
             image: Some(RUNTIME_IMAGE_TAG.to_string()),
             volumes: mounts.iter().cloned().map(dct::Volumes::Simple).collect(),
-            environment: kv(&[("PORT", "8080")]),
+            environment: rust_service_environment(svc.compose_name, frontend_port),
             ..Default::default()
         };
         // Named instances need their own host ports (replacing the base ports —
@@ -524,6 +529,17 @@ fn override_tag(value: Value) -> Value {
 fn override_in_place(service: &mut serde_yaml::Mapping, field: &str) {
     if let Some(existing) = service.remove(field) {
         service.insert(field.into(), override_tag(existing));
+    }
+}
+
+/// `environment:` beats Compose `env_file` on recreate. Pin passwordless
+/// origins on auth so a restart cannot drop Tauri `https://localhost`.
+fn rust_service_environment(compose_name: &str, frontend_port: u16) -> dct::Environment {
+    if compose_name == "authentication-service" {
+        let origins = super::local_env::allowed_origins_csv(frontend_port);
+        kv(&[("PORT", "8080"), ("ALLOWED_ORIGINS", origins.as_str())])
+    } else {
+        kv(&[("PORT", "8080")])
     }
 }
 

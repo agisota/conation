@@ -24,6 +24,18 @@ use super::{Mode, identity, resources};
 /// coordinated database and compose migration, outside local identity setup.
 const LOCAL_DATABASE_NAME: &str = "macrodb";
 
+/// Passwordless `redirect_uri` / CORS allowlist for one local instance.
+///
+/// Compose `env_file` is read only when a container is created. Pinning this
+/// same CSV on `authentication-service` in the generated override keeps Tauri
+/// `https://localhost/app` (existing DMG) after an auth recreate, even if the
+/// generated env file is stale.
+pub fn allowed_origins_csv(frontend_port: u16) -> String {
+    format!(
+        "https://app.conation.dev,https://conation.dev,https://www.conation.dev,http://localhost:{frontend_port},http://localhost:3000,http://localhost:5173,http://100.89.19.82:3000,http://173.212.222.197:3000,tauri://localhost,http://tauri.localhost,https://tauri.localhost,https://localhost"
+    )
+}
+
 /// The full local environment for one instance.
 pub struct LocalEnv {
     environment: &'static str,
@@ -108,10 +120,7 @@ impl LocalEnv {
         // defaults, so those desktop origins must be listed here.
         env.insert(
             "ALLOWED_ORIGINS".into(),
-            format!(
-                "https://app.conation.dev,https://conation.dev,https://www.conation.dev,http://localhost:{frontend},http://localhost:3000,http://localhost:5173,http://100.89.19.82:3000,http://173.212.222.197:3000,tauri://localhost,http://tauri.localhost,https://tauri.localhost,https://localhost",
-                frontend = self.frontend_port
-            ),
+            allowed_origins_csv(self.frontend_port),
         );
         // Calendar ingestion/sync ships dark (both flags default off in
         // deployed envs); local stacks keep it on for development.

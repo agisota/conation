@@ -62,3 +62,40 @@ fn named_override_preserves_external_database_and_auth_mappings() {
         );
     }
 }
+
+fn allowed_origins_value(env: &dct::Environment) -> Option<&str> {
+    let dct::Environment::KvPair(map) = env else {
+        return None;
+    };
+    match map.get("ALLOWED_ORIGINS")?.as_ref()? {
+        dct::SingleValue::String(s) => Some(s.as_str()),
+        other => panic!("ALLOWED_ORIGINS must be a string, got {other:?}"),
+    }
+}
+
+#[test]
+fn authentication_override_pins_tauri_https_localhost() {
+    let env = rust_service_environment("authentication-service", 24010);
+    let origins = allowed_origins_value(&env).expect("ALLOWED_ORIGINS");
+    for origin in [
+        "http://localhost:24010",
+        "tauri://localhost",
+        "http://tauri.localhost",
+        "https://tauri.localhost",
+        "https://localhost",
+    ] {
+        assert!(
+            origins.split(',').any(|item| item == origin),
+            "compose auth ALLOWED_ORIGINS missing {origin}: {origins}"
+        );
+    }
+}
+
+#[test]
+fn non_auth_override_does_not_pin_allowed_origins() {
+    let env = rust_service_environment("email-service", 24010);
+    assert!(
+        allowed_origins_value(&env).is_none(),
+        "non-auth override must keep ALLOWED_ORIGINS on env_file"
+    );
+}
