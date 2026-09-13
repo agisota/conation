@@ -32,6 +32,7 @@ fn emits_required_keys() {
         "NOTIFICATION_INGRESS_QUEUE",
         "SMTP_HOST",
         "INTERNAL_API_SECRET_KEY",
+        "SIGNUP_ANTIBOT_HMAC_KEY",
         "FUSIONAUTH_API_KEY_SECRET_KEY",
         "FUSIONAUTH_PUBLIC_URL",
         "FUSIONAUTH_OAUTH_REDIRECT_URI",

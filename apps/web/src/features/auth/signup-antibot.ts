@@ -95,6 +95,44 @@ export async function solveSignupAntibot(email: string): Promise<AntibotProof> {
   };
 }
 
+export type MailboxAvailability = {
+  local: string;
+  mailbox: string;
+  available: boolean;
+  suggestion?: string;
+};
+
+export function mailboxAvailabilityUrl(local: string): string {
+  const url = new URL(`${SERVER_HOSTS['email-service']}/email/mailbox/available`);
+  url.searchParams.set('local', local);
+  return url.toString();
+}
+
+export async function checkMailboxAvailable(
+  local: string,
+  fetchImpl: typeof fetch = platformFetch
+): Promise<MailboxAvailability> {
+  const response = await fetchImpl(mailboxAvailabilityUrl(local));
+  if (response.status === 400) {
+    throw new Error('invalid');
+  }
+  if (response.status === 429) {
+    throw new Error('rate_limited');
+  }
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
+  const body = (await response.json()) as MailboxAvailability;
+  if (
+    typeof body.local !== 'string' ||
+    typeof body.mailbox !== 'string' ||
+    typeof body.available !== 'boolean'
+  ) {
+    throw new Error('invalid availability');
+  }
+  return body;
+}
+
 export function isAntibotReject(status: number, bodyText: string): boolean {
   if (status !== 403) return false;
   try {

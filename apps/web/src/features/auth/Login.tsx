@@ -12,6 +12,7 @@ import { useEmailLinks } from '@core/email-link';
 import { isMobile } from '@core/mobile/isMobile';
 import { isNativeMobilePlatform } from '@core/mobile/isNativeMobilePlatform';
 import { virtualKeyboardVisible } from '@core/mobile/virtualKeyboard';
+import { debouncedDependent } from '@core/util/debounce';
 import { unsetTokenPromise } from '@core/util/fetchWithToken';
 import { unsetConationApiTokenPromise } from '@service-auth/fetch';
 import { getNativeMobilePlatform } from '@core/util/platform';
@@ -56,6 +57,7 @@ import {
 import {
   clearSignupMailboxLocal,
   peekSignupMailboxLocal,
+  checkMailboxAvailable,
 } from './signup-antibot';
 import { OtpInput } from './OtpInput';
 import { Stage } from './Shared';
@@ -175,6 +177,7 @@ function FormInput(props: {
   required?: boolean;
   value?: string;
   autoFocus?: boolean;
+  onInput?: (value: string) => void;
 }) {
   let inputEl: HTMLInputElement | undefined;
   onMount(() => {
@@ -203,6 +206,7 @@ function FormInput(props: {
       value={props.value ?? ''}
       required={props.required ?? true}
       autocomplete={props.id}
+      onInput={(event) => props.onInput?.(event.currentTarget.value)}
       class="ln-input w-full px-4 py-3 rounded-lg border border-edge bg-surface text-sm text-ink placeholder:text-ink-placeholder focus:border-accent focus:outline-none transition-colors user-invalid:border-failure"
     />
   );
@@ -224,6 +228,12 @@ function EmailFormNew(props: {
   signupMode?: boolean;
 }) {
   const [isPasswordLogin, setIsPasswordLogin] = createSignal(false);
+  const [mailboxDraft, setMailboxDraft] = createSignal('');
+  const [mailboxStatus, setMailboxStatus] = createSignal<
+    'idle' | 'checking' | 'ok' | 'taken' | 'invalid'
+  >('idle');
+  const [mailboxHint, setMailboxHint] = createSignal<string>();
+  const mailboxQuery = debouncedDependent(mailboxDraft, 400);
   const submission = useSubmission(sendEmailCode);
   const send = useAction(sendEmailCode);
   const [searchParams] = useSearchParams();
@@ -259,6 +269,50 @@ function EmailFormNew(props: {
     }
   });
 
+  createEffect(() => {
+    const local = mailboxQuery().trim();
+    if (!props.signupMode || !local) {
+      setMailboxStatus('idle');
+      setMailboxHint();
+      return;
+    }
+    let cancelled = false;
+    setMailboxStatus('checking');
+    setMailboxHint();
+    void checkMailboxAvailable(local)
+      .then((result) => {
+        if (cancelled) return;
+        if (result.available) {
+          setMailboxStatus('ok');
+          setMailboxHint(t('auth.mailbox.available', { mailbox: result.mailbox }));
+        } else {
+          setMailboxStatus('taken');
+          setMailboxHint(
+            result.suggestion
+              ? t('auth.mailbox.takenSuggestion', {
+                  mailbox: result.mailbox,
+                  suggestion: result.suggestion,
+                })
+              : t('auth.errors.mailboxTaken', { mailbox: result.mailbox })
+          );
+        }
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        const message = error instanceof Error ? error.message : '';
+        if (message === 'invalid') {
+          setMailboxStatus('invalid');
+          setMailboxHint(t('auth.mailbox.invalid'));
+          return;
+        }
+        setMailboxStatus('idle');
+        setMailboxHint();
+      });
+    onCleanup(() => {
+      cancelled = true;
+    });
+  });
+
   return (
     <form
       action={sendEmailCode}
@@ -281,9 +335,23 @@ function EmailFormNew(props: {
           type="text"
           placeholder={t('auth.mailbox.localPlaceholder')}
           required={false}
+          autoFocus={false}
+          onInput={setMailboxDraft}
         />
-        <p class="text-xs text-ink-muted leading-snug">
-          {t('auth.mailbox.hint')}
+        <p
+          class="text-xs leading-snug"
+          classList={{
+            'text-success': mailboxStatus() === 'ok',
+            'text-failure':
+              mailboxStatus() === 'taken' || mailboxStatus() === 'invalid',
+            'text-ink-muted':
+              mailboxStatus() === 'idle' || mailboxStatus() === 'checking',
+          }}
+          aria-live="polite"
+        >
+          {mailboxStatus() === 'checking'
+            ? t('auth.mailbox.checking')
+            : mailboxHint() || t('auth.mailbox.hint')}
         </p>
       </Show>
       <Show when={isPasswordLogin()}>

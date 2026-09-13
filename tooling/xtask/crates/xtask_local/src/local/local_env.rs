@@ -380,6 +380,7 @@ struct ServiceAuthEnv {
     doc_perm_jwt: String,
     internal_call: String,
     url_signing: String,
+    signup_antibot_hmac: String,
 }
 
 impl ServiceAuthEnv {
@@ -392,6 +393,7 @@ impl ServiceAuthEnv {
             doc_perm_jwt: "local".to_string(),
             internal_call: identity::instance_secret("internal-call", name),
             url_signing: identity::instance_secret("url-signing", name),
+            signup_antibot_hmac: identity::instance_secret("signup-antibot-hmac", name),
         }
     }
 
@@ -430,6 +432,10 @@ impl ServiceAuthEnv {
         env.insert("DOCUMENT_PERMISSION_JWT".into(), self.doc_perm_jwt.clone());
         env.insert("INTERNAL_CALL_SECRET".into(), self.internal_call.clone());
         env.insert("URL_SIGNING_HMAC".into(), self.url_signing.clone());
+        env.insert(
+            "SIGNUP_ANTIBOT_HMAC_KEY".into(),
+            self.signup_antibot_hmac.clone(),
+        );
     }
 }
 

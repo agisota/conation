@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { leadingZeroBits, sha256Bytes, solveCounter } from './signup-antibot';
+import {
+  checkMailboxAvailable,
+  leadingZeroBits,
+  mailboxAvailabilityUrl,
+  sha256Bytes,
+  solveCounter,
+} from './signup-antibot';
 
 describe('signup antibot PoW', () => {
   it('counts leading zero bits and finds a difficulty-8 counter', () => {
@@ -8,5 +14,39 @@ describe('signup antibot PoW', () => {
     const digest = sha256Bytes(`${nonce}:${counter}`);
     expect(leadingZeroBits(digest)).toBeGreaterThanOrEqual(8);
     expect(digest[0]).toBe(0);
+  });
+});
+
+describe('mailbox availability URL', () => {
+  it('queries GET /email/mailbox/available?local=', () => {
+    const url = mailboxAvailabilityUrl('Alice.Work');
+    expect(url).toContain('/email/mailbox/available');
+    expect(url).toContain('local=Alice.Work');
+  });
+
+  it('returns taken vs available from the JSON body', async () => {
+    const fetchImpl = (async () =>
+      new Response(
+        JSON.stringify({
+          local: 'alice',
+          mailbox: 'alice@conation.dev',
+          available: false,
+          suggestion: 'alice2',
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      )) as typeof fetch;
+    await expect(checkMailboxAvailable('alice', fetchImpl)).resolves.toEqual({
+      local: 'alice',
+      mailbox: 'alice@conation.dev',
+      available: false,
+      suggestion: 'alice2',
+    });
+  });
+
+  it('maps 400 to invalid', async () => {
+    const fetchImpl = (async () => new Response('bad', { status: 400 })) as typeof fetch;
+    await expect(checkMailboxAvailable('nope', fetchImpl)).rejects.toThrow(
+      'invalid'
+    );
   });
 });

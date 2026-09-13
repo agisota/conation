@@ -3,8 +3,10 @@
 //! Existing passwordless logins skip this check. New FusionAuth accounts
 //! must present a solved challenge so bulk mailbox signup is not free.
 
+use conation_env_var::env_var;
 use hmac::{Hmac, Mac};
 use sha2::{Digest, Sha256};
+use std::sync::OnceLock;
 
 #[cfg(test)]
 mod test;
@@ -14,9 +16,29 @@ pub const DIFFICULTY_BITS: u32 = 8;
 /// How long an issued challenge stays valid.
 pub const CHALLENGE_TTL_SECS: i64 = 120;
 
-const SIGNING_KEY: &[u8] = b"conation-signup-antibot-v1";
+env_var! {
+    /// HMAC key for open-signup proof-of-work (`SIGNUP_ANTIBOT_HMAC_KEY`).
+    ///
+    /// Loaded from process env or `APP_SECRETS_JSON`. Add the secret to the
+    /// authentication-service Doppler project; do not commit it. Kept off
+    /// [`crate::config::Config`] so the Doppler schema loader does not fail
+    /// before the key exists there.
+    pub struct SignupAntibotHmacKey;
+}
+
+static SIGNING_KEY: OnceLock<Vec<u8>> = OnceLock::new();
 
 type HmacSha256 = Hmac<Sha256>;
+
+fn signing_key() -> &'static [u8] {
+    SIGNING_KEY.get_or_init(|| {
+        SignupAntibotHmacKey::new()
+            .expect("SIGNUP_ANTIBOT_HMAC_KEY must be provided via APP_SECRETS_JSON or env")
+            .as_ref()
+            .as_bytes()
+            .to_vec()
+    })
+}
 
 /// Issued challenge returned to the browser.
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
@@ -70,14 +92,19 @@ impl AntibotError {
 
 /// Issue a challenge bound to `email`.
 pub fn issue_challenge(email: &str, now: i64) -> SignupChallenge {
-    issue_challenge_with_difficulty(email, now, DIFFICULTY_BITS)
+    issue_challenge_with_key(signing_key(), email, now, DIFFICULTY_BITS)
 }
 
-/// Issue a challenge at an explicit difficulty (tests).
-pub fn issue_challenge_with_difficulty(email: &str, now: i64, difficulty: u32) -> SignupChallenge {
+/// Issue a challenge at an explicit difficulty and HMAC key (tests).
+pub fn issue_challenge_with_key(
+    key: &[u8],
+    email: &str,
+    now: i64,
+    difficulty: u32,
+) -> SignupChallenge {
     let nonce = uuid::Uuid::new_v4().simple().to_string();
     let expires_at = now + CHALLENGE_TTL_SECS;
-    let mac = mac_hex(email, &nonce, expires_at, difficulty);
+    let mac = mac_hex(key, email, &nonce, expires_at, difficulty);
     SignupChallenge {
         nonce,
         expires_at,
@@ -88,10 +115,20 @@ pub fn issue_challenge_with_difficulty(email: &str, now: i64, difficulty: u32) -
 
 /// Verify a solved challenge for `email`.
 pub fn verify_proof(email: &str, proof: &AntibotProof, now: i64) -> Result<(), AntibotError> {
+    verify_proof_with_key(signing_key(), email, proof, now)
+}
+
+/// Verify a solved challenge with an explicit HMAC key (tests).
+pub fn verify_proof_with_key(
+    key: &[u8],
+    email: &str,
+    proof: &AntibotProof,
+    now: i64,
+) -> Result<(), AntibotError> {
     if proof.expires_at < now {
         return Err(AntibotError::Expired);
     }
-    let expected = mac_hex(email, &proof.nonce, proof.expires_at, DIFFICULTY_BITS);
+    let expected = mac_hex(key, email, &proof.nonce, proof.expires_at, DIFFICULTY_BITS);
     if !constant_time_eq(&expected, &proof.mac) {
         return Err(AntibotError::Mac);
     }
@@ -147,8 +184,8 @@ pub fn solve_counter(nonce: &str, difficulty: u32) -> u64 {
     }
 }
 
-fn mac_hex(email: &str, nonce: &str, expires_at: i64, difficulty: u32) -> String {
-    let mut mac = HmacSha256::new_from_slice(SIGNING_KEY).expect("HMAC-SHA256 accepts any key");
+fn mac_hex(key: &[u8], email: &str, nonce: &str, expires_at: i64, difficulty: u32) -> String {
+    let mut mac = HmacSha256::new_from_slice(key).expect("HMAC-SHA256 accepts any key");
     mac.update(email.trim().to_ascii_lowercase().as_bytes());
     mac.update(b"|");
     mac.update(nonce.as_bytes());

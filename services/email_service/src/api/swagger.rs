@@ -24,22 +24,22 @@ use crate::api::email::messages::labels::{UpdateLabelBatchRequest, UpdateLabelBa
 use crate::api::email::settings::patch::{PatchSettingsRequest, PatchSettingsResponse};
 use crate::api::email::threads::archived::ArchiveThreadRequest;
 use crate::api::{email, health};
-use email::inbound;
-use email::inbound::axum::api_types::{
+use ::email::inbound;
+use ::email::inbound::axum::api_types::{
     ApiDraftContactInfo, ApiDraftInput, ApiDraftOutput, ApiPaginatedThreadCursor, ApiSortMethod,
     ApiThread, CreateDraftRequest as HexCreateDraftRequest,
     CreateDraftResponse as HexCreateDraftResponse, GetThreadResponse,
     SendMessageRequest as HexSendMessageRequest, SendMessageResponse as HexSendMessageResponse,
 };
-use email::inbound::axum::axum_impls::GetPreviewsCursorParams;
-use email::inbound::axum::email_filter_router::{
+use ::email::inbound::axum::axum_impls::GetPreviewsCursorParams;
+use ::email::inbound::axum::email_filter_router::{
     ApiEmailFilter, ListEmailFiltersResponse, UpsertEmailFilterRequest, UpsertEmailFilterResponse,
 };
-use email::inbound::axum::list_labels_router::ListLabelsResponse as HexListLabelsResponse;
-use email::inbound::axum::thread_labels_router::{
+use ::email::inbound::axum::list_labels_router::ListLabelsResponse as HexListLabelsResponse;
+use ::email::inbound::axum::thread_labels_router::{
     UpdateThreadLabelRequest, UpdateThreadLabelsResponse,
 };
-use email::inbound::axum::thread_project_router::{
+use ::email::inbound::axum::thread_project_router::{
     UpdateThreadProjectRequest, UpdateThreadProjectResponse,
 };
 use model::response::EmptyResponse;
