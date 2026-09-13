@@ -13,6 +13,7 @@ import { isMobile } from '@core/mobile/isMobile';
 import { isNativeMobilePlatform } from '@core/mobile/isNativeMobilePlatform';
 import { virtualKeyboardVisible } from '@core/mobile/virtualKeyboard';
 import { unsetTokenPromise } from '@core/util/fetchWithToken';
+import { unsetConationApiTokenPromise } from '@service-auth/fetch';
 import { getNativeMobilePlatform } from '@core/util/platform';
 import IconApple from '@icon/conation-apple.svg';
 import IconGoogle from '@icon/conation-google.svg';
@@ -521,9 +522,8 @@ export function Login(props: { signupMode?: boolean }) {
       (err) => {
         if (err.tag === 'AlreadyInitialized') return;
         console.error('Failed to init email link on login', err);
-        if (standalone) {
-          toast.failure(t('auth.errors.mailboxCreateFailed'));
-        }
+        // Standalone stacks often have no Stalwart. A failed mailbox
+        // must not look like a failed login — getting-started can retry.
       }
     );
   };
@@ -548,6 +548,7 @@ export function Login(props: { signupMode?: boolean }) {
           // changed — resetting before sessionLogin opens a window where a
           // visibility-triggered refresh re-latches under the new generation.
           unsetTokenPromise();
+          unsetConationApiTokenPromise();
           await invalidateAllAfterLogin();
           await initMailboxOnLogin();
         } else {
@@ -560,6 +561,7 @@ export function Login(props: { signupMode?: boolean }) {
 
   const onComplete = async () => {
     unsetTokenPromise();
+    unsetConationApiTokenPromise();
     await invalidateAllAfterLogin();
     await initMailboxOnLogin();
     const user = userInfo();
@@ -671,7 +673,7 @@ export function Login(props: { signupMode?: boolean }) {
             <div class="text-center text-xs text-ink/50 wrap-break-word">
               {t('auth.legal.byContinuing')}{' '}
               <a
-                class="text-link hover:text-link-hover visited:text-link-visited underline underline-offset-2 focus-visible:text-link-hover"
+                class="text-link hover:text-link-hover visited:text-link-hover visited:text-link-visited underline underline-offset-2 focus-visible:text-link-hover"
                 href="/terms"
               >
                 {t('auth.legal.terms')}
