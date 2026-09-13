@@ -432,3 +432,165 @@ export function getGraphqlSoupClient(): Client {
   })();
   return cachedClient;
 }
+
+/** Returns the cache host backing the flagged GraphQL Soup client. */
+export function getGraphqlSoupCacheHost(): CacheHost | undefined {
+  if (!graphqlCacheEnabled()) return undefined;
+  getGraphqlSoupClient();
+  return cachedCacheHost;
+}
+
+/** Shared entity GraphQL client used by both Soup queries and mutations. */
+export const getEntityGraphqlClient = getGraphqlSoupClient;
+
+export type GraphqlSoupInput = SoupInput;
+export type GraphqlSoupInitialInput = SoupInitialInput;
+export type GraphqlGroupedSoupInput = GroupedSoupInput;
+
+export type GraphqlGroupedSoupPage = {
+  items: Record<string, SoupApiItem>;
+  groups: Array<{
+    key: string;
+    totalCount: number;
+    nextCursor: string | null;
+    itemIds: string[];
+  }>;
+};
+
+export type GraphqlSoupItem = SoupQuery['user']['soup']['items'][number];
+type GraphqlSoupEntity = GraphqlSoupItem;
+type GraphqlProperty = Extract<
+  GraphqlSoupEntity,
+  { __typename: 'GraphqlSoupDocument' }
+>['properties'][number];
+type GraphqlPropertyValue = NonNullable<GraphqlProperty['value']>;
+type GraphqlSoupDocument = Extract<
+  GraphqlSoupEntity,
+  { __typename: 'GraphqlSoupDocument' }
+>;
+type GraphqlSoupChannelMessage = NonNullable<
+  Extract<
+    GraphqlSoupEntity,
+    { __typename: 'GraphqlSoupChannel' }
+  >['latestMessage']
+>;
+
+function mapGraphqlPropertyValue(
+  value: GraphqlPropertyValue | null | undefined
+) {
+  if (!value) return value;
+
+  return match(value)
+    .with({ __typename: 'GraphqlBooleanPropertyValue' }, ({ boolValue }) => ({
+      type: 'Boolean' as const,
+      value: boolValue,
+    }))
+    .with({ __typename: 'GraphqlNumberPropertyValue' }, ({ numberValue }) => ({
+      type: 'Number' as const,
+      value: numberValue,
+    }))
+    .with({ __typename: 'GraphqlStringPropertyValue' }, ({ stringValue }) => ({
+      type: 'String' as const,
+      value: stringValue,
+    }))
+    .with({ __typename: 'GraphqlDatePropertyValue' }, ({ dateValue }) => ({
+      type: 'Date' as const,
+      value: dateValue,
+    }))
+    .with(
+      { __typename: 'GraphqlSelectOptionPropertyValue' },
+      ({ optionIds }) => ({
+        type: 'SelectOption' as const,
+        value: optionIds,
+      })
+    )
+    .with(
+      { __typename: 'GraphqlEntityReferencePropertyValue' },
+      ({ references }) => ({
+        type: 'EntityReference' as const,
+        value: references.map((reference) => ({
+          entity_id: reference.entityId,
+          entity_type: reference.entityType,
+          specific_message_id: reference.specificMessageId ?? undefined,
+        })),
+      })
+    )
+    .with({ __typename: 'GraphqlLinkPropertyValue' }, ({ urls }) => ({
+      type: 'Link' as const,
+      value: urls,
+    }))
+    .exhaustive();
+}
+
+/** Maps GraphQL property fragments to the shared Soup property shape. */
+export function mapGraphqlProperties(
+  properties: SoupPropertyFieldsFragment[]
+): SoupProperty[] {
+  return properties.map((property) => ({
+    id: property.id,
+    definition: {
+      id: property.propertyDefinitionId,
+      display_name: property.displayName,
+      data_type: property.dataType,
+      is_multi_select: property.isMultiSelect,
+      specific_entity_type: property.specificEntityType ?? undefined,
+      is_system: property.isSystem,
+      is_metadata: property.isMetadata,
+      owner: { scope: 'system' as const },
+      created_at: '',
+      updated_at: '',
+    },
+    value: mapGraphqlPropertyValue(property.value),
+  }));
+}
+
+function mapDocumentSubType(subType: GraphqlSoupDocument['subType']) {
+  if (!subType) return undefined;
+  return match(subType)
+    .with({ __typename: 'GraphqlTaskSubType' }, ({ isCompleted }) => ({
+      type: 'task' as const,
+      is_completed: isCompleted,
+    }))
+    .with({ __typename: 'GraphqlSnippetSubType' }, () => ({
+      type: 'snippet' as const,
+    }))
+    .with({ __typename: 'GraphqlSkillSubType' }, () => ({
+      type: 'skill' as const,
+    }))
+    .exhaustive();
+}
+
+function mapChannelMessage(
+  message: GraphqlSoupChannelMessage | null | undefined
+) {
+  if (!message) return message;
+  return {
+    message_id: message.messageId,
+    thread_id: message.threadId ?? undefined,
+    sender_id: message.senderId,
+    content: message.content,
+    created_at: message.createdAt,
+    updated_at: message.updatedAt,
+    deleted_at: message.deletedAt ?? undefined,
+    mentions: message.mentions ?? [],
+  };
+}
+
+function normalizeChannelType(channelType: string) {
+  return channelType.toLowerCase();
+}
+
+function toNotificationDocumentSubType(
+  subType: string | null
+): NotificationDocumentSubType | null {
+  return subType
+    ? ({ type: subType.toLowerCase() } as NotificationDocumentSubType)
+    : null;
+}
+
+type NotifEventMember<Tag extends NotifEvent['tag']> = Extract<
+  NotifEvent,
+  { tag: Tag }
+> & {
+  content: { hasAttachments?: boolean };
+};
