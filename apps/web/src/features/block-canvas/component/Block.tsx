@@ -32,6 +32,8 @@ import {
   useLoadCanvasData,
   useSaveCanvasDataImmediate,
 } from '../store/canvasData';
+import { peekOfflineCanvas } from '../store/offline-canvas';
+import type { Canvas } from '../model/CanvasModel';
 import { isAnimating, renderStateStore } from '../store/RenderState';
 import { CanvasController } from './CanvasController';
 import { CanvasRenderer } from './CanvasRenderer';
@@ -273,9 +275,22 @@ export default function BlockCanvas(props: BlockCanvasProps) {
   async function parseCanvasFile(file: IDocumentStorageServiceFile) {
     try {
       const text = await file.text();
-      const json = JSON.parse(text);
-      await loadCanvasData(json);
+      let json: unknown;
+      try {
+        json = JSON.parse(text);
+      } catch {
+        json = null;
+      }
+      const pending = peekOfflineCanvas(documentId);
+      const board = pending ?? json;
+      if (!board) {
+        throw new Error('canvas json missing');
+      }
+      await loadCanvasData(board as Canvas);
       setDataState('initialized');
+      if (pending) {
+        await saveCanvasDataImmediate();
+      }
     } catch (e) {
       setDataState('error');
       toast.failure(t('canvas.error.parseFailed'));

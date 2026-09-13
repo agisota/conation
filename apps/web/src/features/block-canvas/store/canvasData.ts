@@ -31,6 +31,12 @@ import { sharedInstance } from '../util/sharedInstance';
 import { type Vector2, vec2 } from '../util/vector2';
 import { useGetEdge, useGetGroup, useGetNode } from './getNodeEdge';
 import { edgesStore, groupStore, nodesStore } from './nodesStore';
+import {
+  clearOfflineCanvas,
+  ensureOfflineCanvasFlush,
+  recordOfflineCanvas,
+  type OfflineCanvasJson,
+} from './offline-canvas';
 
 export const renderQueue = sharedInstance(() => {
   return createRenderQueue(nodesStore, edgesStore, groupStore);
@@ -805,6 +811,27 @@ export const useExportCanvasData = sharedInstance(() => {
 });
 
 // Immediate save function (not debounced)
+async function putCanvasBlob(
+  documentId: string,
+  json: OfflineCanvasJson | Canvas
+): Promise<boolean> {
+  const encoder = new TextEncoder();
+  const buffer = encoder.encode(JSON.stringify(json));
+  const file = new Blob([buffer], { type: 'application/x-macro-canvas' });
+  const saveRes = await storageServiceClient.simpleSave({
+    documentId,
+    file,
+  });
+  if (saveRes.isErr()) {
+    recordOfflineCanvas(documentId, json);
+    return false;
+  }
+  clearOfflineCanvas(documentId);
+  return true;
+}
+
+ensureOfflineCanvasFlush(putCanvasBlob);
+
 export const useSaveCanvasDataImmediate = sharedInstance(() => {
   const exportCanvasData = useExportCanvasData();
   const [, setPendingUpdates] = pendingUpdates;
@@ -821,15 +848,10 @@ export const useSaveCanvasDataImmediate = sharedInstance(() => {
     const canvas = exportCanvasData();
     const encoder = new TextEncoder();
     const buffer = encoder.encode(JSON.stringify(canvas));
-
     const file = new Blob([buffer], { type: 'application/x-macro-canvas' });
 
-    const saveRes = await storageServiceClient.simpleSave({
-      documentId,
-      file,
-    });
-
-    if (saveRes.isErr()) {
+    const ok = await putCanvasBlob(documentId, canvas);
+    if (!ok) {
       console.error('error on canvas save');
     }
 
