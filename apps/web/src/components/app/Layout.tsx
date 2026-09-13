@@ -46,11 +46,11 @@ import {
   SidebarVisibilityContext,
 } from '@components/app/sidebarVisibility';
 import { useIsAuthenticated } from '@core/auth';
+import { getConfiguredClientProfile } from '@core/constant/clientProfile';
 import {
   ENABLE_REMINDERS_FLAG,
   ENABLE_REMINDERS_OVERRIDE,
 } from '@core/constant/featureFlags';
-import { getConfiguredClientProfile } from '@core/constant/clientProfile';
 import { isSoloSettings } from '@core/constant/SettingsState';
 import { attachGlobalDOMScope } from '@core/hotkey/hotkeys';
 import { isMobile } from '@core/mobile/isMobile';
@@ -78,6 +78,7 @@ import {
   Suspense,
 } from 'solid-js';
 import { BundleUpdateProgressBar } from './BundleUpdateProgressBar';
+import { DesktopWindowDragRegion } from './DesktopWindowDragRegion';
 import GlobalShortcuts from './GlobalHotkeys';
 import { ItemDndProvider } from './ItemDragAndDrop';
 import { FloatRegion } from './mobile/float-regions/FloatRegion';
@@ -448,6 +449,7 @@ function LayoutInner(props: RouteSectionProps) {
         'relative flex flex-col justify-between w-dvw h-[calc(var(--dvh,1dvh)*100)] pl-(--safe-left) pr-(--safe-right)'
       )}
     >
+      <DesktopWindowDragRegion />
       <ImperativeDialogHost />
       <BundleUpdateProgressBar />
       <Suspense>
