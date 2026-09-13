@@ -13,6 +13,7 @@ export {
   type QuoteInsert,
 } from './AgentInput';
 export { AgentModelSelector } from './AgentModelSelector';
+export { AgentModeSelector } from './AgentModeSelector';
 export { AnimatedNumber } from './AnimatedNumber';
 export {
   ComposerNotice,

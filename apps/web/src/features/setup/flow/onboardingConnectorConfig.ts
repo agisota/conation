@@ -14,6 +14,7 @@ const ONBOARDING_STEP_ORDER = [
   'team',
   'building',
   'summary',
+  'agent-mode',
   'plan',
 ];
 
