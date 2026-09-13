@@ -4,6 +4,7 @@
 
 import { afterEach, describe, expect, it } from 'vitest';
 import {
+  applyCanvasOps,
   boardFromDoc,
   clearAllCanvasLoro,
   mergeCanvasBoards,
@@ -54,5 +55,36 @@ describe('canvas Loro persist', () => {
     const peeked = peekCanvasLoro('doc-1');
     const ids = (peeked?.nodes ?? []).map((n) => (n as { id: string }).id);
     expect(ids).toEqual(expect.arrayContaining(['a', 'b']));
+  });
+});
+
+
+describe('canvas node-level ops', () => {
+  it('upserts, moves, patches, and deletes without replacing the board', () => {
+    const next = applyCanvasOps(
+      {
+        nodes: [{ id: 'a', kind: 'rect', x: 0, y: 0 }],
+        edges: [],
+      },
+      [
+        { op: 'upsertNode', node: { id: 'b', kind: 'ellipse', x: 1, y: 2 } },
+        { op: 'moveNode', id: 'a', x: 10, y: 20 },
+        { op: 'updateNode', id: 'a', patch: { kind: 'diamond' } },
+        { op: 'upsertEdge', edge: { id: 'e1', from: 'a', to: 'b' } },
+      ]
+    );
+    const nodes = (next.nodes ?? []) as Array<Record<string, unknown>>;
+    expect(nodes.map((n) => n.id)).toEqual(['a', 'b']);
+    expect(nodes[0]).toMatchObject({ id: 'a', x: 10, y: 20, kind: 'diamond' });
+    expect(next.edges).toEqual([{ id: 'e1', from: 'a', to: 'b' }]);
+
+    const deleted = applyCanvasOps(next, [
+      { op: 'deleteNode', id: 'b' },
+      { op: 'deleteEdge', id: 'e1' },
+    ]);
+    expect((deleted.nodes ?? []).map((n) => (n as { id: string }).id)).toEqual([
+      'a',
+    ]);
+    expect(deleted.edges).toEqual([]);
   });
 });

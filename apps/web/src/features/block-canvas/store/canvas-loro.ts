@@ -35,6 +35,79 @@ function entityId(item: unknown): string | undefined {
   return typeof id === 'string' ? id : undefined;
 }
 
+export type CanvasOp =
+  | { op: 'upsertNode'; node: Record<string, unknown> }
+  | { op: 'deleteNode'; id: string }
+  | { op: 'moveNode'; id: string; x: number; y: number }
+  | { op: 'updateNode'; id: string; patch: Record<string, unknown> }
+  | { op: 'upsertEdge'; edge: Record<string, unknown> }
+  | { op: 'deleteEdge'; id: string };
+
+function upsertEntity(
+  items: unknown[],
+  item: Record<string, unknown>
+): unknown[] {
+  const id = entityId(item);
+  if (!id) return items;
+  const next = items.filter((entry) => entityId(entry) !== id);
+  next.push(item);
+  return next;
+}
+
+function deleteEntity(items: unknown[], id: string): unknown[] {
+  return items.filter((entry) => entityId(entry) !== id);
+}
+
+function patchNode(
+  items: unknown[],
+  id: string,
+  patch: Record<string, unknown>
+): unknown[] {
+  return items.map((entry) => {
+    if (entityId(entry) !== id || !entry || typeof entry !== 'object') {
+      return entry;
+    }
+    const { id: _ignored, ...rest } = patch;
+    return { ...(entry as Record<string, unknown>), ...rest, id };
+  });
+}
+
+/** Apply editor-style node/edge ops onto a board (agent + tests). */
+export function applyCanvasOps(
+  json: CanvasLoroJson,
+  ops: CanvasOp[]
+): CanvasLoroJson {
+  let nodes = [...(json.nodes ?? [])];
+  let edges = [...(json.edges ?? [])];
+  for (const op of ops) {
+    switch (op.op) {
+      case 'upsertNode':
+        nodes = upsertEntity(nodes, op.node);
+        break;
+      case 'deleteNode':
+        nodes = deleteEntity(nodes, op.id);
+        break;
+      case 'moveNode':
+        nodes = patchNode(nodes, op.id, { x: op.x, y: op.y });
+        break;
+      case 'updateNode':
+        nodes = patchNode(nodes, op.id, op.patch);
+        break;
+      case 'upsertEdge':
+        edges = upsertEntity(edges, op.edge);
+        break;
+      case 'deleteEdge':
+        edges = deleteEntity(edges, op.id);
+        break;
+      default: {
+        const _never: never = op;
+        void _never;
+      }
+    }
+  }
+  return { ...json, nodes, edges };
+}
+
 function syncMap(map: ReturnType<LoroDoc['getMap']>, items: unknown[]): void {
   const keep = new Set<string>();
   for (const item of items) {

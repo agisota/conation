@@ -1,4 +1,4 @@
-//! EditDocument tool — Loro markdown edits, or canvas JSON overwrite.
+//! EditDocument tool — Loro markdown edits, or canvas JSON overwrite / node ops.
 
 use crate::domain::models::DocumentError;
 use crate::domain::permission_token::encode_permission_token;
@@ -17,8 +17,10 @@ use models_permissions::share_permission::access_level::AccessLevel;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use crate::domain::canvas_loro::{self, CanvasOp};
+
 use super::DocumentToolContext;
-use super::create_document::document_text_for_create;
+use super::create_document::{EMPTY_CANVAS_JSON, document_text_for_create};
 
 #[cfg(test)]
 mod test;
@@ -26,7 +28,7 @@ mod test;
 #[derive(Debug, Deserialize, JsonSchema)]
 #[schemars(
     title = "EditDocument",
-    description = "Edit a Conation markdown document in place, or overwrite a canvas with the same JSON the app saves ({\"nodes\":[],\"edges\":[]}). Markdown uses `instructions` through the collaborative editor. Canvas uses `fileContent` — the same JSON CreateDocument writes. Uploaded files -- PDFs, DOCX, spreadsheets, images, source files such as .py or .ts -- are readable but not editable. If the response contains a `clarification` field, invoke again with the requested info appended to `instructions`. To insert mention(s), include each person's userId and email. To insert document-card(s), include each document's documentId and documentName."
+    description = "Edit a Conation markdown document in place, or edit a canvas. Markdown uses `instructions` through the collaborative editor. Canvas prefers `canvasOps` (add/move/update/delete nodes and edges, same as the human editor) and can still overwrite with `fileContent` JSON ({\"nodes\":[],\"edges\":[]}). Uploaded files -- PDFs, DOCX, spreadsheets, images, source files such as .py or .ts -- are readable but not editable. If the response contains a `clarification` field, invoke again with the requested info appended to `instructions`. To insert mention(s), include each person's userId and email. To insert document-card(s), include each document's documentId and documentName."
 )]
 pub struct EditDocument {
     #[schemars(
@@ -34,14 +36,19 @@ pub struct EditDocument {
     )]
     pub document_id: String,
     #[schemars(
-        description = "Natural language instructions for markdown. Ignored when overwriting a canvas with `fileContent`."
+        description = "Natural language instructions for markdown. Ignored when editing a canvas with `canvasOps` or `fileContent`."
     )]
     pub instructions: String,
     #[schemars(
-        description = "For canvas documents, the same JSON the UI saves ({nodes, edges}). Extra keys such as groups are fine. Required to overwrite an existing canvas; omit for markdown."
+        description = "For canvas documents, the same JSON the UI saves ({nodes, edges}). Extra keys such as groups are fine. Used to overwrite the whole board, or as the base board when `canvasOps` is also set. Omit for markdown."
     )]
     #[serde(default)]
     pub file_content: Option<String>,
+    #[schemars(
+        description = "For canvas documents, node-level ops matching the editor: upsertNode, deleteNode, moveNode, updateNode, upsertEdge, deleteEdge. Applied onto the live Loro board, or onto fileContent if given, otherwise an empty board. Prefer this over replacing the whole {nodes, edges} blob."
+    )]
+    #[serde(default)]
+    pub canvas_ops: Option<Vec<CanvasOp>>,
 }
 
 fn failed_to_overwrite_canvas(error: DocumentError) -> ToolCallError {
@@ -60,6 +67,24 @@ async fn seed_or_apply_canvas_loro(
     document_id: String,
     text: String,
 ) {
+    seed_canvas_loro(sync, document_id, text, None).await;
+}
+
+async fn seed_or_apply_canvas_loro_ops(
+    sync: std::sync::Arc<sync_service_client::SyncServiceClient>,
+    document_id: String,
+    text: String,
+    ops: Vec<CanvasOp>,
+) {
+    seed_canvas_loro(sync, document_id, text, Some(ops)).await;
+}
+
+async fn seed_canvas_loro(
+    sync: std::sync::Arc<sync_service_client::SyncServiceClient>,
+    document_id: String,
+    text: String,
+    ops: Option<Vec<CanvasOp>>,
+) {
     let existing = match sync.get_snapshot(&document_id).await {
         Ok(snapshot) => snapshot,
         Err(error) => {
@@ -71,7 +96,11 @@ async fn seed_or_apply_canvas_loro(
             None
         }
     };
-    let seed = match crate::domain::canvas_loro::canvas_sync_seed(existing.as_deref(), &text) {
+    let seed = match &ops {
+        Some(ops) => canvas_loro::canvas_sync_seed_ops(existing.as_deref(), &text, ops),
+        None => canvas_loro::canvas_sync_seed(existing.as_deref(), &text),
+    };
+    let seed = match seed {
         Ok(seed) => seed,
         Err(error) => {
             tracing::warn!(
@@ -95,7 +124,10 @@ async fn seed_or_apply_canvas_loro(
         if already {
             if let Ok(Some(snapshot)) = sync.get_snapshot(&document_id).await
                 && let Ok(crate::domain::canvas_loro::CanvasSyncSeed::ApplyUpdate(update)) =
-                    crate::domain::canvas_loro::canvas_sync_seed(Some(&snapshot), &text)
+                    match &ops {
+                        Some(ops) => canvas_loro::canvas_sync_seed_ops(Some(&snapshot), &text, ops),
+                        None => canvas_loro::canvas_sync_seed(Some(&snapshot), &text),
+                    }
             {
                 if let Err(error) = sync.apply_update(&document_id, &update).await {
                     tracing::warn!(
@@ -118,11 +150,71 @@ async fn seed_or_apply_canvas_loro(
 fn canvas_overwrite_text(file_content: Option<&str>) -> Result<String, ToolCallError> {
     let Some(file_content) = file_content else {
         return Err(ToolCallError {
-            description: "canvas overwrite requires fileContent JSON matching the UI save format {\"nodes\":[],\"edges\":[]}".to_string(),
-            internal_error: anyhow::anyhow!("canvas EditDocument called without fileContent"),
+            description: "canvas edit requires canvasOps (node-level add/move/update/delete) or fileContent JSON matching the UI save format {\"nodes\":[],\"edges\":[]}".to_string(),
+            internal_error: anyhow::anyhow!("canvas EditDocument called without canvasOps or fileContent"),
         });
     };
     document_text_for_create("canvas", file_content).map_err(failed_to_overwrite_canvas)
+}
+
+async fn apply_canvas_ops<DSvc, ESvc, EDSvc>(
+    tool: &EditDocument,
+    ctx: ServiceContext<DocumentToolContext<DSvc, ESvc, EDSvc>>,
+    ops: &[CanvasOp],
+) -> ToolResult<EditDocumentResponse>
+where
+    DSvc: DocumentService + DocumentCreationService,
+    ESvc: EntityAccessService,
+    EDSvc: EditingWorkerService,
+{
+    if ops.is_empty() {
+        return Err(ToolCallError {
+            description: "canvasOps must contain at least one op".to_string(),
+            internal_error: anyhow::anyhow!("canvas EditDocument called with empty canvasOps"),
+        });
+    }
+
+    let existing = match ctx
+        .sync_service_client
+        .get_snapshot(&tool.document_id)
+        .await
+    {
+        Ok(snapshot) => snapshot,
+        Err(error) => {
+            tracing::warn!(
+                error=?error,
+                document_id=%tool.document_id,
+                "failed to fetch canvas Loro snapshot before applying ops"
+            );
+            None
+        }
+    };
+    let base = if let Some(file_content) = tool.file_content.as_deref() {
+        canvas_overwrite_text(Some(file_content))?
+    } else if let Some(snapshot) = existing.as_deref() {
+        canvas_loro::json_from_snapshot(snapshot).unwrap_or_else(|_| EMPTY_CANVAS_JSON.to_string())
+    } else {
+        EMPTY_CANVAS_JSON.to_string()
+    };
+    let text = canvas_loro::apply_ops_to_json(&base, ops).map_err(|error| ToolCallError {
+        description: error.to_string(),
+        internal_error: error.into(),
+    })?;
+    ctx.service
+        .overwrite_plain_text(&tool.document_id, FileType::Canvas, text.clone())
+        .await
+        .map_err(failed_to_overwrite_canvas)?;
+    let sync = ctx.sync_service_client.clone();
+    let document_id = tool.document_id.clone();
+    let ops = ops.to_vec();
+    let applied = ops.len();
+    tokio::spawn(async move {
+        seed_or_apply_canvas_loro_ops(sync, document_id, text, ops).await;
+    });
+    Ok(EditDocumentResponse {
+        summary: format!("Applied {applied} canvas op(s)."),
+        clarification: None,
+    })
 }
 
 /// The editing worker opens a sync-service session and blocks on the initial
@@ -202,6 +294,9 @@ where
             })?;
 
         if document.try_file_type() == Some(FileType::Canvas) {
+            if let Some(ops) = self.canvas_ops.as_ref() {
+                return apply_canvas_ops(self, ctx, ops).await;
+            }
             let text = canvas_overwrite_text(self.file_content.as_deref())?;
             ctx.service
                 .overwrite_plain_text(&self.document_id, FileType::Canvas, text.clone())

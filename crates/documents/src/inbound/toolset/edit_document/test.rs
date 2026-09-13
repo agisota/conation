@@ -482,6 +482,7 @@ async fn call_edit_document(
         document_id: TEST_DOCUMENT_ID.to_string(),
         instructions: "tidy up the imports".to_string(),
         file_content: None,
+        canvas_ops: None,
     };
 
     let result = tool
@@ -566,6 +567,7 @@ async fn call_overwrite_canvas(
         document_id: TEST_DOCUMENT_ID.to_string(),
         instructions: "add a box".to_string(),
         file_content: file_content.map(str::to_string),
+        canvas_ops: None,
     };
 
     let result = tool
@@ -646,6 +648,108 @@ async fn canvas_overwrite_rejects_json_without_nodes_and_edges() {
             .overwrites
             .lock()
             .expect("overwrites lock poisoned")
+            .is_empty()
+    );
+}
+
+async fn call_canvas_ops(
+    file_content: Option<&str>,
+    canvas_ops: Option<Vec<crate::domain::canvas_loro::CanvasOp>>,
+) -> (
+    ToolResult<EditDocumentResponse>,
+    FakeDocumentService,
+    FakeEditingWorker,
+) {
+    let service = FakeDocumentService::new("canvas");
+    let editing = FakeEditingWorker::default();
+    let tool = EditDocument {
+        document_id: TEST_DOCUMENT_ID.to_string(),
+        instructions: "add a box".to_string(),
+        file_content: file_content.map(str::to_string),
+        canvas_ops,
+    };
+
+    let result = tool
+        .call(
+            tool_context(service.clone(), editing.clone()),
+            request_context(),
+        )
+        .await;
+
+    (result, service, editing)
+}
+
+#[tokio::test]
+async fn canvas_ops_upsert_node_without_whole_board() {
+    use crate::domain::canvas_loro::CanvasOp;
+
+    let (result, service, editing) = call_canvas_ops(
+        None,
+        Some(vec![CanvasOp::UpsertNode {
+            node: serde_json::json!({"id":"n1","type":"shape","x":8,"y":4}),
+        }]),
+    )
+    .await;
+
+    let response = result.expect("node-level op should apply");
+    assert_eq!(response.summary, "Applied 1 canvas op(s).");
+    let overwrites = service.overwrites.lock().expect("overwrites lock poisoned");
+    assert_eq!(overwrites.len(), 1);
+    let board: serde_json::Value = serde_json::from_str(&overwrites[0].1).unwrap();
+    assert_eq!(board["nodes"][0]["id"], "n1");
+    assert_eq!(board["nodes"][0]["x"], 8.0);
+    assert_eq!(board["edges"], serde_json::json!([]));
+    assert!(
+        editing
+            .edit_calls
+            .lock()
+            .expect("edit calls lock poisoned")
+            .is_empty()
+    );
+}
+
+#[tokio::test]
+async fn canvas_ops_delete_from_file_content_base() {
+    use crate::domain::canvas_loro::CanvasOp;
+
+    let base = r#"{"nodes":[{"id":"a"},{"id":"b"}],"edges":[{"id":"e1"}]}"#;
+    let (result, service, _) = call_canvas_ops(
+        Some(base),
+        Some(vec![
+            CanvasOp::DeleteNode { id: "b".into() },
+            CanvasOp::DeleteEdge { id: "e1".into() },
+        ]),
+    )
+    .await;
+
+    result.expect("delete ops should apply");
+    let overwrites = service.overwrites.lock().expect("overwrites lock poisoned");
+    let board: serde_json::Value = serde_json::from_str(&overwrites[0].1).unwrap();
+    assert_eq!(board["nodes"], serde_json::json!([{"id":"a"}]));
+    assert_eq!(board["edges"], serde_json::json!([]));
+}
+
+#[tokio::test]
+async fn canvas_ops_empty_list_is_rejected() {
+    let (result, service, editing) = call_canvas_ops(None, Some(vec![])).await;
+    let error = result.expect_err("empty canvasOps should fail");
+    assert!(
+        error.description.contains("canvasOps"),
+        "{}",
+        error.description
+    );
+    assert!(
+        service
+            .overwrites
+            .lock()
+            .expect("overwrites lock poisoned")
+            .is_empty()
+    );
+    assert!(
+        editing
+            .edit_calls
+            .lock()
+            .expect("edit calls lock poisoned")
             .is_empty()
     );
 }
