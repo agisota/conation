@@ -25,6 +25,7 @@ use serde::{Deserialize, Serialize};
 use crate::domain::{
     models::{
         CalendarAttendeeInput, CalendarEvent, EventReminderOverride, EventReminders, EventTime,
+        EventTransparency,
     },
     ports::{CalendarMutationError, CalendarMutationService, CalendarOccurrenceService},
 };
@@ -165,6 +166,26 @@ impl From<EventTimeInput> for EventTime {
     }
 }
 
+/// Whether an event blocks availability (busy/free). Same values the HTTP
+/// create/update bodies use: opaque = busy, transparent = free.
+#[derive(Debug, Deserialize, JsonSchema, Clone, Copy, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum TransparencyInput {
+    /// Blocks availability (busy).
+    Opaque,
+    /// Does not block availability (free).
+    Transparent,
+}
+
+impl From<TransparencyInput> for EventTransparency {
+    fn from(input: TransparencyInput) -> Self {
+        match input {
+            TransparencyInput::Opaque => Self::Opaque,
+            TransparencyInput::Transparent => Self::Transparent,
+        }
+    }
+}
+
 /// An attendee supplied to a calendar tool.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
@@ -283,6 +304,8 @@ pub struct ToolCalendarEvent {
     pub is_read_only: bool,
     /// Calendar the event belongs to, when known.
     pub calendar_id: Option<uuid::Uuid>,
+    /// Availability: "opaque" blocks time (busy), "transparent" is free.
+    pub transparency: String,
 }
 
 const DESCRIPTION_PREVIEW_CHARS: usize = 280;
@@ -354,6 +377,7 @@ impl ToolCalendarEvent {
             conference_url: event.conference_url.clone(),
             is_read_only: event.is_read_only,
             calendar_id: event.calendar_id,
+            transparency: event.transparency.as_str().to_string(),
         }
     }
 }
