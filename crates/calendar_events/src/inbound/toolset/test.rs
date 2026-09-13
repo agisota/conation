@@ -289,7 +289,7 @@ fn context(
 }
 
 fn request_context() -> RequestContext {
-    RequestContext::new(MacroUserIdStr::try_from("macro|test@example.com".to_string()).unwrap())
+    RequestContext::new(MacroUserIdStr::try_from("conation|test@example.com".to_string()).unwrap())
 }
 
 fn empty_occurrences() -> MockOccurrences {
@@ -368,6 +368,7 @@ async fn create_converts_input_into_a_domain_draft() {
                 minutes: 15,
             }],
         }),
+        transparency: None,
         add_google_meet: true,
     };
     let response = tool.call(context, request_context()).await.unwrap();
@@ -419,6 +420,7 @@ async fn create_surfaces_missing_calendar_as_an_actionable_error() {
         recurrence_lines: Vec::new(),
         calendar_id: None,
         reminders: None,
+        transparency: None,
         add_google_meet: false,
     };
     let error = tool.call(context, request_context()).await.unwrap_err();
@@ -451,6 +453,7 @@ async fn update_converts_input_into_a_domain_patch() {
         recurrence_lines: None,
         conference: Some(ConferenceChangeInput::Remove),
         reminders: None,
+        transparency: None,
         rsvp: None,
     };
     tool.call(context, request_context()).await.unwrap();
@@ -490,6 +493,7 @@ async fn update_passes_the_selected_occurrence_scope() {
         recurrence_lines: None,
         conference: None,
         reminders: None,
+        transparency: None,
         rsvp: None,
     };
     tool.call(context, request_context()).await.unwrap();
@@ -520,6 +524,7 @@ async fn scoped_update_requires_a_recurrence_id() {
         recurrence_lines: None,
         conference: None,
         reminders: None,
+        transparency: None,
         rsvp: None,
     };
     let error = tool.call(context, request_context()).await.unwrap_err();
@@ -546,6 +551,7 @@ async fn series_update_rejects_a_stray_recurrence_id() {
         recurrence_lines: None,
         conference: None,
         reminders: None,
+        transparency: None,
         rsvp: None,
     };
     let error = tool.call(context, request_context()).await.unwrap_err();
@@ -575,6 +581,7 @@ async fn update_carries_reminders_into_the_patch() {
                 minutes: 30,
             }],
         }),
+        transparency: None,
         rsvp: None,
     };
     tool.call(context, request_context()).await.unwrap();
@@ -612,6 +619,7 @@ async fn rsvp_alone_answers_without_patching() {
         recurrence_lines: None,
         conference: None,
         reminders: None,
+        transparency: None,
         rsvp: Some(RsvpResponseInput::Declined),
     };
     tool.call(context, request_context()).await.unwrap();
@@ -644,6 +652,7 @@ async fn rsvp_follows_the_occurrence_scope_of_the_call() {
         recurrence_lines: None,
         conference: None,
         reminders: None,
+        transparency: None,
         rsvp: Some(RsvpResponseInput::Tentative),
     };
     tool.call(context, request_context()).await.unwrap();
@@ -680,6 +689,7 @@ async fn update_answers_after_applying_the_patch() {
         recurrence_lines: None,
         conference: None,
         reminders: None,
+        transparency: None,
         rsvp: Some(RsvpResponseInput::Accepted),
     };
     tool.call(context, request_context()).await.unwrap();
@@ -704,6 +714,7 @@ async fn update_without_a_change_or_an_rsvp_is_rejected() {
         recurrence_lines: None,
         conference: None,
         reminders: None,
+        transparency: None,
         rsvp: None,
     };
     let error = tool.call(context, request_context()).await.unwrap_err();
@@ -872,4 +883,69 @@ async fn list_calendars_maps_visible_calendars() {
     assert!(calendar.is_primary);
     assert!(calendar.is_writable);
     assert_eq!(response.summary, "Found 1 calendar.");
+}
+
+#[tokio::test]
+async fn create_carries_transparency_into_the_draft() {
+    let (mutations, context) = context(MockMutations::default(), empty_occurrences());
+
+    let tool = CreateCalendarEvent {
+        title: "Focus".to_string(),
+        time: EventTimeInput::Timed {
+            starts_at: Utc.with_ymd_and_hms(2026, 8, 20, 12, 0, 0).unwrap(),
+            ends_at: Utc.with_ymd_and_hms(2026, 8, 20, 13, 0, 0).unwrap(),
+            time_zone: None,
+        },
+        description: None,
+        location: None,
+        attendees: Vec::new(),
+        recurrence_lines: Vec::new(),
+        calendar_id: None,
+        reminders: None,
+        transparency: Some(TransparencyInput::Transparent),
+        add_google_meet: false,
+    };
+    tool.call(context, request_context()).await.unwrap();
+
+    let created = mutations.created.lock().unwrap();
+    let (_, _, draft) = created.first().expect("one create call");
+    assert_eq!(draft.transparency, Some(EventTransparency::Transparent));
+}
+
+#[tokio::test]
+async fn update_carries_transparency_into_the_patch() {
+    let (mutations, context) = context(MockMutations::default(), empty_occurrences());
+
+    let tool = UpdateCalendarEvent {
+        event_id: Uuid::from_u128(11),
+        scope: UpdateScopeInput::All,
+        recurrence_id: None,
+        title: None,
+        description: None,
+        location: None,
+        time: None,
+        attendees: None,
+        recurrence_lines: None,
+        conference: None,
+        reminders: None,
+        transparency: Some(TransparencyInput::Opaque),
+        rsvp: None,
+    };
+    tool.call(context, request_context()).await.unwrap();
+
+    let updated = mutations.updated.lock().unwrap();
+    let (_, patch, _) = updated.first().expect("one update call");
+    assert_eq!(patch.transparency, Some(EventTransparency::Opaque));
+}
+
+#[test]
+fn create_calendar_schema_mentions_busy_free() {
+    let schema = generate_validated_input_schema::<CreateCalendarEvent>()
+        .expect("create calendar event schema should validate");
+    assert!(
+        schema.description.contains("opaque"),
+        "CreateCalendarEvent must advertise busy/free: {}",
+        schema.description
+    );
+    assert!(schema.description.contains("transparent"));
 }
