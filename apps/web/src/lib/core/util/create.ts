@@ -26,6 +26,13 @@ import {
   isCodeEditorLanguageSupported,
 } from './languageQuery';
 import { resolveUploadContentType } from './uploadContentType';
+import {
+  dequeueOfflineCreates,
+  ensureOfflineCreateFlush,
+  isOfflineCreateFailure,
+  queueOfflineCreate,
+  type OfflineCreateRecord,
+} from './offline-create';
 
 type CreateMarkdownFileArgs = {
   title?: string;
@@ -40,7 +47,8 @@ type CreateMarkdownFileArgs = {
  * Use createTask for the task subtype.
  */
 export async function createMarkdownFile(
-  args?: CreateMarkdownFileArgs
+  args?: CreateMarkdownFileArgs,
+  opts?: { replay?: boolean }
 ): Promise<string | undefined> {
   const result = await storageServiceClient.createMarkdownDocument({
     documentName: args?.title ?? '',
@@ -50,7 +58,18 @@ export async function createMarkdownFile(
 
   invalidateUserQuota();
 
-  if (result.isErr()) return;
+  if (result.isErr()) {
+    if (!opts?.replay && isOfflineCreateFailure(result.error)) {
+      queueOfflineCreate({
+        kind: 'markdown',
+        title: args?.title,
+        content: args?.content,
+        projectId: args?.projectId,
+        source: args?.source,
+      });
+    }
+    return;
+  }
 
   const { documentId, documentMetadata, token } = result.value;
 
@@ -119,7 +138,10 @@ export async function createTaskWithInitialSnapshot(args?: CreateTaskArgs) {
   return { documentId: createdTask.documentId, initialSnapshot };
 }
 
-async function createTaskResponse(args?: CreateTaskArgs) {
+async function createTaskResponse(
+  args?: CreateTaskArgs,
+  opts?: { replay?: boolean }
+) {
   // Ensure status is always set, defaulting to NOT_STARTED
   const existingPropertyValues = args?.propertyValues ?? [];
   const hasStatus = existingPropertyValues.some(
@@ -148,7 +170,19 @@ async function createTaskResponse(args?: CreateTaskArgs) {
 
   invalidateUserQuota();
 
-  if (result.isErr()) return;
+  if (result.isErr()) {
+    if (!opts?.replay && isOfflineCreateFailure(result.error)) {
+      queueOfflineCreate({
+        kind: 'task',
+        title: args?.title,
+        content: args?.content,
+        projectId: args?.projectId,
+        propertyValues: args?.propertyValues,
+        source: args?.source,
+      });
+    }
+    return;
+  }
 
   const { documentId, documentMetadata, token, initialSnapshot } = result.value;
 
@@ -394,6 +428,7 @@ export async function createCanvasFileFromJsonString(args: {
   projectId?: string;
   /** UI surface the creation originated from, for analytics. */
   source?: string;
+  replay?: boolean;
 }) {
   const { json, title, projectId, source } = args;
   const encoder = new TextEncoder();
@@ -407,7 +442,18 @@ export async function createCanvasFileFromJsonString(args: {
     projectId,
   });
   invalidateUserQuota();
-  if (maybeCanvas.isErr()) return { error: 'Document creation failed.' };
+  if (maybeCanvas.isErr()) {
+    if (!args.replay && isOfflineCreateFailure(maybeCanvas.error)) {
+      queueOfflineCreate({
+        kind: 'canvas',
+        json,
+        title,
+        projectId,
+        source,
+      });
+    }
+    return { error: 'Document creation failed.' };
+  }
   const canvas = maybeCanvas.value;
 
   const uploadResult = await uploadToPresignedUrl({
@@ -502,3 +548,51 @@ export async function createStaticFile(file: File): Promise<string> {
   }
   return id;
 }
+
+async function flushOfflineCreates(): Promise<void> {
+  const rows = dequeueOfflineCreates();
+  for (const row of rows) {
+    const replayed = await replayOfflineCreate(row);
+    if (!replayed) {
+      queueOfflineCreate(row);
+    }
+  }
+}
+
+async function replayOfflineCreate(row: OfflineCreateRecord): Promise<boolean> {
+  if (row.kind === 'task') {
+    const created = await createTaskResponse(
+      {
+        title: row.title,
+        content: row.content,
+        projectId: row.projectId,
+        propertyValues: row.propertyValues as CreateTaskArgs['propertyValues'],
+        source: row.source,
+      },
+      { replay: true }
+    );
+    return !!created;
+  }
+  if (row.kind === 'markdown') {
+    const created = await createMarkdownFile(
+      {
+        title: row.title,
+        content: row.content,
+        projectId: row.projectId,
+        source: row.source,
+      },
+      { replay: true }
+    );
+    return !!created;
+  }
+  const created = await createCanvasFileFromJsonString({
+    json: row.json,
+    title: row.title,
+    projectId: row.projectId,
+    source: row.source,
+    replay: true,
+  });
+  return 'documentId' in created && typeof created.documentId === 'string';
+}
+
+ensureOfflineCreateFlush(flushOfflineCreates);
