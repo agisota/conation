@@ -147,6 +147,15 @@ impl PresignedUploadUrlPort for TestUploadUrlPort {
     async fn upload_snapshot(&self, _document_id: &str, _bytes: Vec<u8>) -> anyhow::Result<()> {
         Ok(())
     }
+
+    async fn put_document_storage_object(
+        &self,
+        _key: &str,
+        _content_type: ContentType,
+        _bytes: Vec<u8>,
+    ) -> anyhow::Result<()> {
+        Ok(())
+    }
 }
 
 struct TestTaskPropertiesPort;

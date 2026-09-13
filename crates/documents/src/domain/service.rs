@@ -781,6 +781,42 @@ impl<
     async fn cleanup_created_document(&self, document_id: &str) {
         self.cleanup_document(document_id).await;
     }
+
+    #[tracing::instrument(err, skip(self, text))]
+    async fn overwrite_plain_text(
+        &self,
+        document_id: &str,
+        file_type: FileType,
+        text: String,
+    ) -> Result<(), DocumentError> {
+        let document = self
+            .repo
+            .get_basic_document(document_id)
+            .await
+            .map_err(|error| map_basic_document_error(document_id, error.into()))?;
+
+        let (document_version_id, _) = self
+            .repo
+            .get_document_version_id(document_id)
+            .await
+            .map_err(|error| DocumentError::Internal(error.into()))?;
+
+        let key = build_cloud_storage_bucket_document_key(
+            document.owner.as_ref(),
+            document_id,
+            document_version_id,
+        );
+        self.upload_url_service
+            .put_document_storage_object(&key, file_type.into(), text.into_bytes())
+            .await
+            .map_err(DocumentError::Internal)?;
+
+        self.set_document_content(
+            document_id,
+            DocumentContent::ready(DocumentContentLocation::ObjectStorage),
+        )
+        .await
+    }
 }
 
 impl<

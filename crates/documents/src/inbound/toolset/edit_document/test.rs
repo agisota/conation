@@ -20,12 +20,15 @@ use entity_access::domain::models::{
     MemberTeamRole, OwnerAccessLevel, RequiredPermission, TeamRole, UserTeamInfo, ViewAccessLevel,
 };
 use lexical_client::LexicalClient;
-use model::{document::DocumentBasic, sync_service::SyncServiceVersionID};
+use model::{
+    document::{DocumentBasic, FileType},
+    sync_service::SyncServiceVersionID,
+};
 use model_entity::Entity;
 use sync_service_client::SyncServiceClient;
 use uuid::Uuid;
 
-const TEST_USER_ID: &str = "macro|editor@example.com";
+const TEST_USER_ID: &str = "conation|editor@example.com";
 const TEST_DOCUMENT_ID: &str = "019fd3b9-3c6c-7c05-89c2-a27f0121813b";
 
 fn document_with_file_type(file_type: Option<&str>) -> DocumentBasic {
@@ -46,12 +49,23 @@ fn document_with_file_type(file_type: Option<&str>) -> DocumentBasic {
 
 struct FakeDocumentService {
     file_type: Option<String>,
+    overwrites: Arc<Mutex<Vec<(String, String)>>>,
 }
 
 impl FakeDocumentService {
     fn new(file_type: &str) -> Self {
         Self {
             file_type: Some(file_type.to_string()),
+            overwrites: Arc::new(Mutex::new(Vec::new())),
+        }
+    }
+}
+
+impl Clone for FakeDocumentService {
+    fn clone(&self) -> Self {
+        Self {
+            file_type: self.file_type.clone(),
+            overwrites: self.overwrites.clone(),
         }
     }
 }
@@ -275,6 +289,20 @@ impl DocumentCreationService for FakeDocumentService {
     async fn cleanup_created_document(&self, _document_id: &str) {
         panic!("unexpected cleanup_created_document call")
     }
+
+    async fn overwrite_plain_text(
+        &self,
+        document_id: &str,
+        file_type: FileType,
+        text: String,
+    ) -> Result<(), DocumentError> {
+        assert_eq!(file_type, FileType::Canvas);
+        self.overwrites
+            .lock()
+            .expect("overwrites lock poisoned")
+            .push((document_id.to_string(), text));
+        Ok(())
+    }
 }
 
 #[derive(Clone, Default)]
@@ -453,6 +481,7 @@ async fn call_edit_document(
     let tool = EditDocument {
         document_id: TEST_DOCUMENT_ID.to_string(),
         instructions: "tidy up the imports".to_string(),
+        file_content: None,
     };
 
     let result = tool
@@ -521,5 +550,102 @@ fn only_markdown_is_editable() {
     assert!(
         ensure_markdown(&document_with_file_type(None)).is_err(),
         "a document with no file type must be rejected"
+    );
+}
+
+async fn call_overwrite_canvas(
+    file_content: Option<&str>,
+) -> (
+    ToolResult<EditDocumentResponse>,
+    FakeDocumentService,
+    FakeEditingWorker,
+) {
+    let service = FakeDocumentService::new("canvas");
+    let editing = FakeEditingWorker::default();
+    let tool = EditDocument {
+        document_id: TEST_DOCUMENT_ID.to_string(),
+        instructions: "add a box".to_string(),
+        file_content: file_content.map(str::to_string),
+    };
+
+    let result = tool
+        .call(
+            tool_context(service.clone(), editing.clone()),
+            request_context(),
+        )
+        .await;
+
+    (result, service, editing)
+}
+
+#[tokio::test]
+async fn overwrites_canvas_json_without_calling_the_worker() {
+    let json = r#"{"nodes":[{"id":"n1"}],"edges":[],"groups":[]}"#;
+    let (result, service, editing) = call_overwrite_canvas(Some(json)).await;
+
+    let response = result.expect("canvas JSON should overwrite");
+    assert_eq!(response.summary, "Overwrote canvas JSON.");
+    assert!(response.clarification.is_none());
+    assert_eq!(
+        *service.overwrites.lock().expect("overwrites lock poisoned"),
+        vec![(TEST_DOCUMENT_ID.to_string(), json.to_string())]
+    );
+    assert!(
+        editing
+            .edit_calls
+            .lock()
+            .expect("edit calls lock poisoned")
+            .is_empty(),
+        "canvas overwrite must not use the Loro markdown worker"
+    );
+}
+
+#[tokio::test]
+async fn empty_canvas_file_content_writes_the_same_empty_board_as_create() {
+    use crate::inbound::toolset::create_document::EMPTY_CANVAS_JSON;
+
+    let (result, service, _) = call_overwrite_canvas(Some("  ")).await;
+    result.expect("empty canvas body should become the UI empty board");
+    assert_eq!(
+        *service.overwrites.lock().expect("overwrites lock poisoned"),
+        vec![(TEST_DOCUMENT_ID.to_string(), EMPTY_CANVAS_JSON.to_string())]
+    );
+}
+
+#[tokio::test]
+async fn canvas_overwrite_requires_file_content() {
+    let (result, service, editing) = call_overwrite_canvas(None).await;
+    let error = result.expect_err("canvas without fileContent should fail");
+    assert!(
+        error.description.contains("fileContent"),
+        "description should ask for fileContent: {}",
+        error.description
+    );
+    assert!(
+        service
+            .overwrites
+            .lock()
+            .expect("overwrites lock poisoned")
+            .is_empty()
+    );
+    assert!(
+        editing
+            .edit_calls
+            .lock()
+            .expect("edit calls lock poisoned")
+            .is_empty()
+    );
+}
+
+#[tokio::test]
+async fn canvas_overwrite_rejects_json_without_nodes_and_edges() {
+    let (result, service, _) = call_overwrite_canvas(Some(r#"{"nodes":[]}"#)).await;
+    result.expect_err("canvas JSON must include nodes and edges");
+    assert!(
+        service
+            .overwrites
+            .lock()
+            .expect("overwrites lock poisoned")
+            .is_empty()
     );
 }

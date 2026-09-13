@@ -5,6 +5,8 @@ use std::sync::Arc;
 
 use conation_user_id::user_id::MacroUserIdStr;
 
+use model::document::FileType;
+
 use crate::domain::content::DocumentContent;
 use crate::domain::models::{CreateDocumentRepoArgs, CreateTaskRequest, DocumentError};
 use crate::domain::response::CreateDocumentResponseData;
@@ -63,6 +65,17 @@ pub trait DocumentCreationService: Send + Sync {
 
     /// Clean up a document that failed after its database row was created.
     fn cleanup_created_document(&self, document_id: &str) -> impl Future<Output = ()> + Send;
+
+    /// Overwrite an existing plaintext document's stored bytes.
+    ///
+    /// Canvas uses this the same way create_text_file writes JSON:
+    /// `application/x-macro-canvas` object-storage bytes.
+    fn overwrite_plain_text(
+        &self,
+        document_id: &str,
+        file_type: FileType,
+        text: String,
+    ) -> impl Future<Output = Result<(), DocumentError>> + Send;
 }
 
 impl<T> DocumentCreationService for Arc<T>
@@ -103,5 +116,16 @@ where
 
     async fn cleanup_created_document(&self, document_id: &str) {
         (**self).cleanup_created_document(document_id).await
+    }
+
+    async fn overwrite_plain_text(
+        &self,
+        document_id: &str,
+        file_type: FileType,
+        text: String,
+    ) -> Result<(), DocumentError> {
+        (**self)
+            .overwrite_plain_text(document_id, file_type, text)
+            .await
     }
 }

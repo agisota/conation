@@ -489,6 +489,15 @@ impl DocumentCreationService for FakeDocumentService {
     async fn cleanup_created_document(&self, _document_id: &str) {
         panic!("unexpected cleanup_created_document call")
     }
+
+    async fn overwrite_plain_text(
+        &self,
+        _document_id: &str,
+        _file_type: model::document::FileType,
+        _text: String,
+    ) -> Result<(), DocumentError> {
+        panic!("unexpected overwrite_plain_text call")
+    }
 }
 
 fn create_document_response(user_id: MacroUserIdStr<'static>) -> CreateDocumentResponseData {

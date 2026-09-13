@@ -134,6 +134,30 @@ impl PresignedUploadUrlPort for S3UploadUrlAdapter {
 
         Ok(())
     }
+
+    #[tracing::instrument(skip(self, bytes), err)]
+    async fn put_document_storage_object(
+        &self,
+        key: &str,
+        content_type: ContentType,
+        bytes: Vec<u8>,
+    ) -> anyhow::Result<()> {
+        if conation_aws_config::s3_uses_localstack() {
+            return Ok(());
+        }
+
+        self.client
+            .put_object()
+            .bucket(&self.document_storage_bucket)
+            .key(key)
+            .content_type(content_type.mime_type())
+            .body(ByteStream::from(bytes))
+            .send()
+            .await
+            .context("failed to overwrite document storage object")?;
+
+        Ok(())
+    }
 }
 
 async fn put_presigned_url(

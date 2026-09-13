@@ -109,3 +109,25 @@ fn canvas_create_rejects_json_without_nodes_and_edges() {
     assert!(document_text_for_create("canvas", r#"{"nodes":[],"edges":[]}"#).is_ok());
     assert!(document_text_for_create("canvas", r#"{"nodes":[],"edges":[],"groups":[]}"#).is_ok());
 }
+
+#[test]
+fn test_edit_document_schema_validation() {
+    let result = generate_validated_input_schema::<EditDocument>();
+    assert!(result.is_ok(), "{:?}", result);
+
+    let validated = result.unwrap();
+    assert_eq!(
+        validated.name, "EditDocument",
+        "Tool name should match the schemars title"
+    );
+}
+
+#[test]
+fn edit_document_schema_mentions_canvas() {
+    let validated = generate_validated_input_schema::<EditDocument>().unwrap();
+    assert!(
+        validated.description.to_lowercase().contains("canvas"),
+        "EditDocument must advertise canvas overwrite: {}",
+        validated.description
+    );
+}

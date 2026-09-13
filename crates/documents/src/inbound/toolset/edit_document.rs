@@ -1,5 +1,6 @@
-//! EditDocument tool — thin wrapper over [`EditingWorkerPort`].
+//! EditDocument tool — Loro markdown edits, or canvas JSON overwrite.
 
+use crate::domain::models::DocumentError;
 use crate::domain::permission_token::encode_permission_token;
 use crate::domain::ports::{
     DocumentService, create::DocumentCreationService, editing::EditingWorkerService,
@@ -17,6 +18,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::DocumentToolContext;
+use super::create_document::document_text_for_create;
 
 #[cfg(test)]
 mod test;
@@ -24,17 +26,43 @@ mod test;
 #[derive(Debug, Deserialize, JsonSchema)]
 #[schemars(
     title = "EditDocument",
-    description = "Apply AI-driven edits to a Conation markdown document in place -- rewriting, inserting, formatting, or restructuring. Markdown documents only: these are authored in Conation's collaborative editor, and are the only documents whose content this tool can rewrite. Uploaded files -- PDFs, DOCX, spreadsheets, images, source files such as .py or .ts -- are readable but not editable, and are rejected. If the response contains a `clarification` field, invoke again with the requested info appended to `instructions`. To insert mention(s), include each person's userId and email. To insert document-card(s), include each document's documentId and documentName."
+    description = "Edit a Conation markdown document in place, or overwrite a canvas with the same JSON the app saves ({\"nodes\":[],\"edges\":[]}). Markdown uses `instructions` through the collaborative editor. Canvas uses `fileContent` — the same JSON CreateDocument writes. Uploaded files -- PDFs, DOCX, spreadsheets, images, source files such as .py or .ts -- are readable but not editable. If the response contains a `clarification` field, invoke again with the requested info appended to `instructions`. To insert mention(s), include each person's userId and email. To insert document-card(s), include each document's documentId and documentName."
 )]
 pub struct EditDocument {
     #[schemars(
-        description = "The ID of the markdown document to edit. If you are not certain the document is markdown, call ReadMetadata first and check that `fileType` is `md` -- passing an uploaded file here fails."
+        description = "The ID of the markdown or canvas document to edit. Call ReadMetadata first if you are not certain of `fileType`. Markdown is `md`; canvas is `canvas`. Other uploaded files fail."
     )]
     pub document_id: String,
     #[schemars(
-        description = "Natural language instructions. For mention(s), include userId and email per person. For document-card(s), include documentId and documentName per document. You may need to look these up."
+        description = "Natural language instructions for markdown. Ignored when overwriting a canvas with `fileContent`."
     )]
     pub instructions: String,
+    #[schemars(
+        description = "For canvas documents, the same JSON the UI saves ({nodes, edges}). Extra keys such as groups are fine. Required to overwrite an existing canvas; omit for markdown."
+    )]
+    #[serde(default)]
+    pub file_content: Option<String>,
+}
+
+fn failed_to_overwrite_canvas(error: DocumentError) -> ToolCallError {
+    let description = match &error {
+        DocumentError::BadRequest(message) => message.clone(),
+        _ => "failed to overwrite canvas".to_string(),
+    };
+    ToolCallError {
+        description,
+        internal_error: error.into(),
+    }
+}
+
+fn canvas_overwrite_text(file_content: Option<&str>) -> Result<String, ToolCallError> {
+    let Some(file_content) = file_content else {
+        return Err(ToolCallError {
+            description: "canvas overwrite requires fileContent JSON matching the UI save format {\"nodes\":[],\"edges\":[]}".to_string(),
+            internal_error: anyhow::anyhow!("canvas EditDocument called without fileContent"),
+        });
+    };
+    document_text_for_create("canvas", file_content).map_err(failed_to_overwrite_canvas)
 }
 
 /// The editing worker opens a sync-service session and blocks on the initial
@@ -112,6 +140,18 @@ where
                 description: "unable to look up this document".to_string(),
                 internal_error: e.into(),
             })?;
+
+        if document.try_file_type() == Some(FileType::Canvas) {
+            let text = canvas_overwrite_text(self.file_content.as_deref())?;
+            ctx.service
+                .overwrite_plain_text(&self.document_id, FileType::Canvas, text)
+                .await
+                .map_err(failed_to_overwrite_canvas)?;
+            return Ok(EditDocumentResponse {
+                summary: "Overwrote canvas JSON.".to_string(),
+                clarification: None,
+            });
+        }
 
         ensure_markdown(&document)?;
 
