@@ -3,7 +3,10 @@ import {
   checkMailboxAvailable,
   leadingZeroBits,
   mailboxAvailabilityUrl,
+  peekSignupMailboxLocal,
+  rememberSignupMailboxLocal,
   sha256Bytes,
+  SIGNUP_MAILBOX_LOCAL_KEY,
   solveCounter,
 } from './signup-antibot';
 
@@ -14,6 +17,16 @@ describe('signup antibot PoW', () => {
     const digest = sha256Bytes(`${nonce}:${counter}`);
     expect(leadingZeroBits(digest)).toBeGreaterThanOrEqual(8);
     expect(digest[0]).toBe(0);
+  });
+});
+
+describe('signup mailbox local session', () => {
+  it('remembers and peeks a trimmed local', () => {
+    sessionStorage.removeItem(SIGNUP_MAILBOX_LOCAL_KEY);
+    rememberSignupMailboxLocal('  alice  ');
+    expect(peekSignupMailboxLocal()).toBe('alice');
+    rememberSignupMailboxLocal('');
+    expect(peekSignupMailboxLocal()).toBeUndefined();
   });
 });
 

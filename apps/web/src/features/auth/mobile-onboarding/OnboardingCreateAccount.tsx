@@ -3,6 +3,7 @@ import { GOOGLE_GMAIL_IDP } from '@core/auth/email';
 import IconGoogle from '@icon/conation-google.svg';
 import { useNavigate } from '@solidjs/router';
 import { Button } from '@ui';
+import { createSignal } from 'solid-js';
 import { useSsoLogin } from '../useSsoLogin';
 
 /**
@@ -14,6 +15,7 @@ import { useSsoLogin } from '../useSsoLogin';
 export function OnboardingCreateAccount() {
   const navigate = useNavigate();
   const startSsoLogin = useSsoLogin({ signupMode: true });
+  const [mailboxDraft, setMailboxDraft] = createSignal('');
 
   return (
     <div class="flex flex-col gap-6">
@@ -30,10 +32,25 @@ export function OnboardingCreateAccount() {
       </div>
 
       <div class="flex flex-col gap-2 pt-2">
+        <label class="flex flex-col gap-1">
+          <span class="text-xs text-ink-muted">{t('auth.mailbox.hint')}</span>
+          <input
+            id="mailbox_local"
+            type="text"
+            placeholder={t('auth.mailbox.localPlaceholder')}
+            value={mailboxDraft()}
+            onInput={(event) => setMailboxDraft(event.currentTarget.value)}
+            class="w-full px-4 py-3 rounded-lg border border-edge bg-surface text-sm text-ink placeholder:text-ink-placeholder focus:border-accent focus:outline-none"
+          />
+        </label>
         <Button
           variant="strong"
           size="xl"
-          onClick={() => startSsoLogin(GOOGLE_GMAIL_IDP)}
+          onClick={() =>
+            void startSsoLogin(GOOGLE_GMAIL_IDP, {
+              mailboxLocal: mailboxDraft(),
+            })
+          }
         >
           <IconGoogle class="size-5" />
           {t('auth.mobile.connectGmail')}

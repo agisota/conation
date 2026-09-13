@@ -57,6 +57,7 @@ import {
 import {
   clearSignupMailboxLocal,
   peekSignupMailboxLocal,
+  rememberSignupMailboxLocal,
   checkMailboxAvailable,
 } from './signup-antibot';
 import { OtpInput } from './OtpInput';
@@ -118,6 +119,7 @@ function LoginPicker(props: {
 }) {
   const analytics = useAnalytics();
   const startSsoLogin = useSsoLogin({ signupMode: props.signupMode });
+  const [mailboxDraft, setMailboxDraft] = createSignal('');
   // Apple sign-in is iOS-only: it's required there for App Store review,
   // and intentionally absent on desktop.
   const showApple = getNativeMobilePlatform() === 'ios';
@@ -126,19 +128,36 @@ function LoginPicker(props: {
 
   const continueWithEmail = () => {
     if (props.signupMode) {
+      rememberSignupMailboxLocal(mailboxDraft());
       analytics.track('sign_up_click', { method: 'email' });
     }
     props.setStage(Stage.Email);
   };
 
+  const startSso = (idp: string) => {
+    void startSsoLogin(idp, { mailboxLocal: mailboxDraft() });
+  };
+
   return (
     <div class="flex flex-col gap-3">
+      <Show when={props.signupMode}>
+        <FormInput
+          id="mailbox_local"
+          type="text"
+          placeholder={t('auth.mailbox.localPlaceholder')}
+          required={false}
+          autoFocus={false}
+          value={mailboxDraft()}
+          onInput={setMailboxDraft}
+        />
+        <p class="text-xs text-ink-muted leading-snug">{t('auth.mailbox.hint')}</p>
+      </Show>
       <Show when={showGoogle}>
         <Button
           variant="cta"
           size="xl"
           autofocus
-          onClick={() => startSsoLogin(GOOGLE_GMAIL_IDP)}
+          onClick={() => startSso(GOOGLE_GMAIL_IDP)}
         >
           <IconGoogle class="size-fit" />
           {t('auth.methods.continueWithGoogle')}
@@ -150,7 +169,7 @@ function LoginPicker(props: {
           variant="outline"
           size="xl"
           class="bg-surface"
-          onClick={() => startSsoLogin('Apple')}
+          onClick={() => startSso('Apple')}
         >
           <IconApple class="size-fit" />
           {t('auth.methods.continueWithApple')}
@@ -228,7 +247,9 @@ function EmailFormNew(props: {
   signupMode?: boolean;
 }) {
   const [isPasswordLogin, setIsPasswordLogin] = createSignal(false);
-  const [mailboxDraft, setMailboxDraft] = createSignal('');
+  const [mailboxDraft, setMailboxDraft] = createSignal(
+    peekSignupMailboxLocal() ?? ''
+  );
   const [mailboxStatus, setMailboxStatus] = createSignal<
     'idle' | 'checking' | 'ok' | 'taken' | 'invalid'
   >('idle');
@@ -336,6 +357,7 @@ function EmailFormNew(props: {
           placeholder={t('auth.mailbox.localPlaceholder')}
           required={false}
           autoFocus={false}
+          value={mailboxDraft()}
           onInput={setMailboxDraft}
         />
         <p

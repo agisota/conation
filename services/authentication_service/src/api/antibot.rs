@@ -2,6 +2,10 @@
 //!
 //! Existing passwordless logins skip this check. New FusionAuth accounts
 //! must present a solved challenge so bulk mailbox signup is not free.
+//!
+//! Cloudflare Turnstile / hCaptcha are not wired. No `TURNSTILE_SITE_KEY`,
+//! `TURNSTILE_SECRET_KEY`, or hCaptcha pair exists in `conation_env_var`
+//! macros or this service's Doppler `Config`. Do not invent a key.
 
 use conation_env_var::env_var;
 use hmac::{Hmac, Mac};
