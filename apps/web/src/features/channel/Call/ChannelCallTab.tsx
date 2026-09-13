@@ -159,6 +159,9 @@ export function ChannelCallTab(props: {
       </Match>
       <Match when={call.joinError()}>
         <div class="flex size-full flex-col items-center justify-center gap-3 text-ink-muted px-4">
+          <h2 class="text-lg font-semibold text-ink">
+            {t('channel.call.waitingForOthers')}
+          </h2>
           <p class="text-center">{call.joinError()}</p>
           <Show when={call.isJoining()}>
             <p class="text-xs text-ink-extra-muted animate-pulse">
