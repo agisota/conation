@@ -66,3 +66,6 @@ Gmail — необязательная Google-интеграция. Публич
 - Пользовательские гайды продукта (inbox, задачи, агенты) — [`apps/docs`](../apps/docs).
 - Значения секретов. Документы называют имена переменных, не credentials.
 - Заявленная готовность интернет-почты, CalDAV, APNS/FCM, Pulumi-org Conation.
+- Размещение всего серверного продукта на ROX Ultra и Mac без локального Docker.
+  Self-host в этом дереве — однохостовый Compose/Nix, оператор `:8090` и
+  `just tauri-build-local-stack`. Это не доказательство ROX Ultra.
