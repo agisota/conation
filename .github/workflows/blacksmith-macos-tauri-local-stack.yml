@@ -22,8 +22,11 @@ on:
         required: false
         default: http://100.89.19.82:8090
         type: string
+      # Blacksmith labels (blacksmith-12vcpu-macos-15 / blacksmith-6vcpu-macos-15)
+      # are kept here so org runners can be selected later. They are not used as
+      # the default: personal repos never attach those runners.
       runner:
-        description: macOS runner (macos-15 is GitHub-hosted; blacksmith-* needs an org)
+        description: Ignored unless you edit runs-on; default job uses GitHub-hosted macos-15
         required: false
         default: macos-15
         type: choice
@@ -38,15 +41,16 @@ permissions:
   actions: read
 
 concurrency:
-  group: blacksmith-macos-local-stack-${{ github.ref }}
+  group: macos-github-hosted-local-stack-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build-macos:
     name: Tauri local-stack macOS
-    # Default: GitHub-hosted macos-15 (arm64). Do not default to blacksmith-*
-    # on this personal repo — those labels never match a runner.
-    runs-on: ${{ inputs.runner || 'macos-15' }}
+    # GitHub-hosted Apple Silicon. Do not use blacksmith-* on this personal repo.
+    # Alternate: runs-on: ${{ inputs.runner }} after transferring to an org
+    # with the Blacksmith GitHub App installed.
+    runs-on: macos-15
     timeout-minutes: 120
     env:
       CONATION_OPERATOR_ORIGIN: ${{ inputs.operator_origin || 'http://100.89.19.82:8090' }}
