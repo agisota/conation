@@ -51,7 +51,11 @@ function dayStat(date: string | null): string {
  * year of day cells, and a compact stats row, divided like `SidePanel.Card`
  * so it reads as list chrome rather than a dashboard tile.
  */
-export function ActionGraph(props: { overview: ActivityOverview }) {
+export function ActionGraph(props: {
+  overview: ActivityOverview;
+  selectedDate?: string | null;
+  onSelectDate?: (date: string | null) => void;
+}) {
   const grid = createMemo(() => buildContributionGrid(props.overview));
   const monthLabels = createMemo(
     () =>
@@ -63,6 +67,10 @@ export function ActionGraph(props: { overview: ActivityOverview }) {
       )
   );
   const stats = createMemo(() => summarizeActivity(props.overview));
+  const selectDate = (date: string) => {
+    if (!props.onSelectDate) return;
+    props.onSelectDate(props.selectedDate === date ? null : date);
+  };
 
   return (
     <Layer depth={2}>
@@ -75,6 +83,8 @@ export function ActionGraph(props: { overview: ActivityOverview }) {
           <ContributionHeatmap
             weeks={grid().weeks}
             monthLabels={monthLabels()}
+            selectedDate={props.selectedDate ?? null}
+            onSelectDate={selectDate}
           />
           <ActionGraphStats stats={stats()} />
         </div>
@@ -117,6 +127,8 @@ function IntensityLegend() {
 function ContributionHeatmap(props: {
   weeks: ContributionWeek[];
   monthLabels: Map<number, string>;
+  selectedDate: string | null;
+  onSelectDate: (date: string) => void;
 }) {
   return (
     <div class="overflow-x-auto px-4 py-3 scrollbar-hidden">
@@ -132,7 +144,13 @@ function ContributionHeatmap(props: {
           <WeekdayGutter />
           <WeekRow>
             <For each={props.weeks}>
-              {(week) => <HeatmapWeek week={week} />}
+              {(week) => (
+                <HeatmapWeek
+                  week={week}
+                  selectedDate={props.selectedDate}
+                  onSelectDate={props.onSelectDate}
+                />
+              )}
             </For>
           </WeekRow>
         </div>
@@ -164,10 +182,22 @@ function WeekdayGutter() {
   );
 }
 
-function HeatmapWeek(props: { week: ContributionWeek }) {
+function HeatmapWeek(props: {
+  week: ContributionWeek;
+  selectedDate: string | null;
+  onSelectDate: (date: string) => void;
+}) {
   return (
     <WeekColumn class="flex flex-col gap-[3px]">
-      <For each={props.week}>{(day) => <DaySquare day={day} />}</For>
+      <For each={props.week}>
+        {(day) => (
+          <DaySquare
+            day={day}
+            selected={day?.date === props.selectedDate}
+            onSelectDate={props.onSelectDate}
+          />
+        )}
+      </For>
     </WeekColumn>
   );
 }
@@ -180,7 +210,11 @@ function MonthLetter(props: { label?: string }) {
   );
 }
 
-function DaySquare(props: { day: ContributionDay | null }) {
+function DaySquare(props: {
+  day: ContributionDay | null;
+  selected: boolean;
+  onSelectDate: (date: string) => void;
+}) {
   const day = props.day;
   if (!day) {
     return <span class="aspect-square w-full shrink-0" />;
@@ -194,9 +228,16 @@ function DaySquare(props: { day: ContributionDay | null }) {
       class="aspect-square w-full shrink-0"
       label={label}
     >
-      <span
+      <button
+        type="button"
         aria-label={label}
-        class={`block size-full rounded-[3px] ${INTENSITY_CLASS[day.intensity]}`}
+        aria-pressed={props.selected}
+        onClick={() => props.onSelectDate(day.date)}
+        class={`block size-full rounded-[3px] ${INTENSITY_CLASS[day.intensity]} ${
+          props.selected
+            ? 'ring-2 ring-ink ring-offset-1 ring-offset-surface'
+            : ''
+        }`}
       />
     </Tooltip>
   );
