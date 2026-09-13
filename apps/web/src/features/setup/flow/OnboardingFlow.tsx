@@ -27,6 +27,7 @@ import {
 } from 'solid-js';
 import type { ModuleLogo, ModuleState } from '../Module';
 import { MODULE_LOGOS } from '../moduleLogos';
+import { AgentModeStep } from './AgentModeStep';
 import { BrandHandoff, type BrandHandoffSource } from './BrandHandoff';
 import { BuildingStep, type ConnectedTools } from './BuildingStep';
 import { ConnectorStep } from './ConnectorStep';
@@ -205,6 +206,13 @@ function buildSteps(
       subtitle: t('setup.summary.subtitle'),
       wide: true,
       render: (controls) => <SummaryStep onContinue={controls.next} />,
+    },
+    {
+      key: 'agent-mode',
+      title: t('setup.agentMode.title'),
+      subtitle: t('setup.agentMode.subtitle'),
+      wide: true,
+      render: (controls) => <AgentModeStep onContinue={controls.next} />,
     },
     {
       key: 'plan',

@@ -68,6 +68,7 @@ describe('resolveOnboardingStepIndex', () => {
     'team',
     'building',
     'summary',
+    'agent-mode',
     'plan',
   ];
 
