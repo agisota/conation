@@ -15,6 +15,7 @@ import {
 import type { CallControlsVariant } from '../CallControls/CallControls';
 import { CallControls } from '../CallControls/CallControls';
 import type { InCallPanelProps } from '../InCallPanel/types';
+import { isStandingRoomWaiting } from '../join-channel-call';
 import { openChannelCallTab } from '../open-channel-call-tab';
 import {
   InCallParticipantsListPopover,
@@ -121,6 +122,9 @@ export const InCallPanel: Component<InCallPanelProps> = (props) => {
     return name[0]?.toUpperCase() ?? '?';
   });
   const memberCount = createMemo(() => orderedMembers().length);
+  const waitingForOthers = createMemo(
+    () => !slim() && isStandingRoomWaiting(memberCount())
+  );
   const callDuration = createMemo(() =>
     formatDuration(activeCallQuery.data?.createdAt, nowMs())
   );
@@ -177,7 +181,9 @@ export const InCallPanel: Component<InCallPanelProps> = (props) => {
                 <span class="size-1.5 shrink-0 rounded-full bg-success animate-pulse" />
               </Show>
               <span class="text-xs font-medium text-ink truncate">
-                {activeChannelName()}
+                {waitingForOthers()
+                  ? t('channel.call.waitingForOthers')
+                  : activeChannelName()}
               </span>
             </Show>
           </div>

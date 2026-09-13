@@ -82,6 +82,7 @@ export function invalidateTeam(teamId: string) {
   });
 }
 
+
 type CreateTeamArgs = CreateTeamRequest;
 type CreateTeamCallbacks = MutationCallbacks<Team, Error, CreateTeamArgs>;
 

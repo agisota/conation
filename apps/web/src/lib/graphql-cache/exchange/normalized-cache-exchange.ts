@@ -70,6 +70,7 @@ import {
   isOwnerEpochLostError,
   type QueryRevalidationWire,
 } from '../protocol';
+import { isUnmergeableConflict, recordKeepBoth } from '../keep-both';
 import {
   compileEntityResolvers,
   type EntityResolverConfig,
@@ -770,6 +771,17 @@ export function normalizedCacheExchange(
             });
           } catch (error) {
             try {
+              if (isUnmergeableConflict(error)) {
+                recordKeepBoth({
+                  transactionId: claimed.transactionId,
+                  query: claimed.query,
+                  operationName: claimed.operationName,
+                  variables: claimed.variables,
+                  local: claimed.variables,
+                  remote: null,
+                  error: error instanceof Error ? error.message : String(error),
+                });
+              }
               await host.rollbackOptimisticWrite(
                 claimed.transactionId,
                 {
@@ -1186,6 +1198,17 @@ export function normalizedCacheExchange(
                   );
                   disposition = 'queued';
                 } else {
+                  if (isUnmergeableConflict(result.error)) {
+                    recordKeepBoth({
+                      transactionId: attempt.transactionId,
+                      query: queryText(op),
+                      operationName: operationName(op),
+                      variables: (op.variables as Record<string, unknown> | undefined) ?? {},
+                      local: op.variables ?? {},
+                      remote: result.data ?? null,
+                      error: result.error?.message ?? 'mutation returned no data',
+                    });
+                  }
                   await host.rollbackOptimisticWrite(
                     attempt.transactionId,
                     claim,

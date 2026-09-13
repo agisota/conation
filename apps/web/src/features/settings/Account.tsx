@@ -42,6 +42,13 @@ import {
   invalidateOwnUserName,
   useOwnUserName,
 } from '@queries/auth/user-name-self';
+import { useCurrentTeamQuery } from '@queries/team/teams';
+import {
+  loadWorkProfileExtras,
+  resolveWorkProfileFromTeam,
+  saveWorkProfileExtras,
+  type WorkProfileExtras,
+} from '@queries/team/work-profile';
 import { authServiceClient } from '@service-auth/client';
 import { invoke } from '@tauri-apps/api/core';
 import { Button, Dialog, Dropdown, Panel, ToggleSwitch, Tooltip } from '@ui';
@@ -483,6 +490,8 @@ export function Account() {
         </SettingsCard>
       </SettingsSection>
 
+      <WorkProfileSection />
+
       <Show when={isTouchDevice()}>
         <SettingsSection>
           <SettingsCard>
@@ -672,6 +681,135 @@ export function Account() {
         </Panel>
       </Dialog>
     </SettingsPage>
+  );
+}
+
+function WorkProfileSection() {
+  const userId = useUserId();
+  const teamQuery = useCurrentTeamQuery();
+  const resolved = createMemo(() =>
+    resolveWorkProfileFromTeam(userId() ?? '', teamQuery.data)
+  );
+  const [extras, setExtras] = createSignal(
+    loadWorkProfileExtras(userId() ?? '')
+  );
+
+  createEffect(() => {
+    const id = userId();
+    if (id) setExtras(loadWorkProfileExtras(id));
+  });
+
+  const persist = (patch: Partial<WorkProfileExtras>) => {
+    const next = { ...extras(), ...patch };
+    setExtras(next);
+    const id = userId();
+    if (id) saveWorkProfileExtras(id, next);
+  };
+
+  const roleLabel = () => {
+    const role = resolved().role;
+    return role ?? t('settings.account.workProfile.role.none');
+  };
+
+  return (
+    <SettingsSection title={t('settings.account.workProfile.title')}>
+      <SettingsCard>
+        <Row label={t('settings.account.workProfile.team')}>
+          <span class="text-sm text-ink-muted">
+            {resolved().teamName ?? t('settings.account.workProfile.role.none')}
+          </span>
+        </Row>
+        <Row label={t('settings.account.workProfile.role')}>
+          <span class="text-sm text-ink-muted">{roleLabel()}</span>
+        </Row>
+        <Row label={t('settings.account.workProfile.description')}>
+          <WorkProfileInput
+            value={extras().description}
+            placeholder={t(
+              'settings.account.workProfile.description.placeholder'
+            )}
+            onCommit={(value) => persist({ description: value })}
+          />
+        </Row>
+        <Row label={t('settings.account.workProfile.skills')}>
+          <WorkProfileInput
+            value={extras().skills}
+            placeholder={t('settings.account.workProfile.skills.placeholder')}
+            onCommit={(value) => persist({ skills: value })}
+          />
+        </Row>
+        <Row label={t('settings.account.workProfile.hours')}>
+          <WorkProfileInput
+            value={extras().hours}
+            placeholder={t('settings.account.workProfile.hours.placeholder')}
+            onCommit={(value) => persist({ hours: value })}
+          />
+        </Row>
+        <Row label={t('settings.account.workProfile.timezone')}>
+          <WorkProfileInput
+            value={extras().timezone}
+            placeholder={t(
+              'settings.account.workProfile.timezone.placeholder'
+            )}
+            onCommit={(value) => persist({ timezone: value })}
+          />
+        </Row>
+        <Row label={t('settings.account.workProfile.status')}>
+          <select
+            class="text-sm bg-transparent outline-none border border-edge-muted rounded-lg h-9 px-3"
+            value={extras().status}
+            onChange={(e) =>
+              persist({
+                status: e.currentTarget.value as WorkProfileExtras['status'],
+              })
+            }
+          >
+            <option value="available">
+              {t('settings.account.workProfile.status.available')}
+            </option>
+            <option value="busy">
+              {t('settings.account.workProfile.status.busy')}
+            </option>
+            <option value="away">
+              {t('settings.account.workProfile.status.away')}
+            </option>
+          </select>
+        </Row>
+        <Row label={t('settings.account.workProfile.emailVisible')}>
+          <ToggleSwitch
+            size="md"
+            checked={extras().emailVisible}
+            onChange={(checked) => persist({ emailVisible: checked })}
+          />
+        </Row>
+        <Row label={t('settings.account.workProfile.activityVisible')}>
+          <ToggleSwitch
+            size="md"
+            checked={extras().activityVisible}
+            onChange={(checked) => persist({ activityVisible: checked })}
+          />
+        </Row>
+      </SettingsCard>
+    </SettingsSection>
+  );
+}
+
+function WorkProfileInput(props: {
+  value: string;
+  placeholder?: string;
+  onCommit: (value: string) => void;
+}) {
+  const [value, setValue] = createSignal(props.value);
+  createEffect(() => setValue(props.value));
+  return (
+    <input
+      type="text"
+      class="text-sm text-right bg-transparent outline-none border border-edge-muted rounded-lg h-9 px-3 min-w-40 max-w-72"
+      value={value()}
+      placeholder={props.placeholder}
+      onInput={(e) => setValue(e.currentTarget.value)}
+      onBlur={() => props.onCommit(value())}
+    />
   );
 }
 

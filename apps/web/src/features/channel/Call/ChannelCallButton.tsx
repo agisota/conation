@@ -29,12 +29,24 @@ export function ChannelCallButton(props: { channelId: string }) {
   // inherits this component's lifetime (navigating away closes it).
   const owner = getOwner();
 
-  const tooltip = () =>
-    isCallInProgress() ? t('channel.call.join') : t('channel.call.start');
-  const label = () =>
-    isCallInProgress()
+  const tooltip = () => {
+    if (isDm()) {
+      return isCallInProgress() ? t('channel.call.join') : t('channel.call.start');
+    }
+    return isCallInProgress()
+      ? t('channel.call.joinRoom')
+      : t('channel.call.enterRoom');
+  };
+  const label = () => {
+    if (isDm()) {
+      return isCallInProgress()
+        ? t('channel.call.joinShort')
+        : t('channel.call.callShort');
+    }
+    return isCallInProgress()
       ? t('channel.call.joinShort')
-      : t('channel.call.callShort');
+      : t('channel.call.roomShort');
+  };
 
   const variant = () => {
     if (isTouchDevice()) return 'ghost';
@@ -47,13 +59,13 @@ export function ChannelCallButton(props: { channelId: string }) {
     if (!name) return t('channel.call.confirm.start');
     return isDm()
       ? t('channel.call.confirm.direct', { name })
-      : t('channel.call.confirm.channel', { name });
+      : t('channel.call.confirm.enterRoom', { name });
   };
 
   // A DM title ("Call Jane?") already says who rings; the group-channel case
   // is the one where the blast radius needs spelling out.
   const confirmBody = () =>
-    isDm() ? undefined : t('channel.call.confirm.notifyEveryone');
+    isDm() ? undefined : t('channel.call.confirm.standingRoom');
 
   const joinCall = async () => {
     if (call.isJoining()) return;
@@ -93,7 +105,7 @@ export function ChannelCallButton(props: { channelId: string }) {
           confirmLabel: (
             <>
               <PhoneIcon class="size-5" />
-              {t('channel.call.start')}
+              {isDm() ? t('channel.call.start') : t('channel.call.enterRoom')}
             </>
           ),
         }),

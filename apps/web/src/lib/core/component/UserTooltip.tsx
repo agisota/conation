@@ -1,5 +1,9 @@
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
 import { t } from '@app/lib/i18n';
+import {
+  canStartUserCall,
+  joinChannelCall,
+} from '@channel/Call/join-channel-call';
 import { useSplitLayout } from '@components/app/split-layout/layout';
 import { toast } from '@core/component/Toast/Toast';
 import {
@@ -8,6 +12,7 @@ import {
 } from '@core/constant/featureFlags';
 import { useUserId } from '@core/context/user';
 import { useIsConnectedSecondaryInbox } from '@core/user';
+import WideCall from '@icon/wide-call.svg';
 import WideChat from '@icon/wide-chat.svg';
 import WideContact from '@icon/wide-contact.svg';
 import WideCopy from '@icon/wide-copy.svg';
@@ -73,6 +78,22 @@ export function UserTooltip(props: UserTooltipProps) {
       );
     } catch {
       // The mutation's onError callback handles the toast.
+    } finally {
+      props.onClose?.();
+    }
+  };
+
+  const openCall = async (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!props.id) return;
+    try {
+      const { channel_id } = await getOrCreateDmMutation.mutateAsync({
+        recipient_id: props.id,
+      });
+      await joinChannelCall(channel_id);
+    } catch {
+      toast.failure(t('core.userActions.callFailed'));
     } finally {
       props.onClose?.();
     }
@@ -164,6 +185,18 @@ export function UserTooltip(props: UserTooltipProps) {
               <ActionItem onClick={openDM}>
                 <WideChat class="size-3.5" />
                 {t('core.userActions.message')}
+              </ActionItem>
+            </Show>
+            <Show
+              when={
+                canTreatAsUser() &&
+                props.id !== currentUserId() &&
+                canStartUserCall()
+              }
+            >
+              <ActionItem onClick={openCall}>
+                <WideCall class="size-3.5" />
+                {t('core.userActions.call')}
               </ActionItem>
             </Show>
             <Show when={canTreatAsUser()}>

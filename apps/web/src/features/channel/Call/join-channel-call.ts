@@ -1,3 +1,4 @@
+import { ENABLE_CALLS } from '@core/constant/featureFlags';
 import { globalSplitManager } from '@app/signal/splitLayout';
 import { URL_PARAMS } from '@channel/Channel/link';
 
@@ -26,4 +27,44 @@ export async function joinChannelCall(channelId: string): Promise<void> {
   await handle?.goToLocationFromParams({
     [URL_PARAMS.joinCall]: 'true',
   });
+}
+
+export type CallParticipantKind = 'person' | 'bot' | 'agent';
+
+/**
+ * LiveKit already creates a room on first join (`get_or_create_call`).
+ * Standing rooms stay joinable when empty so others can arrive later.
+ */
+export function standingRoomEmptyJoinAllowed(): boolean {
+  return true;
+}
+
+/** Classify a LiveKit identity as a person, bot, or agent. */
+export function classifyCallParticipantIdentity(
+  identity: string,
+  options?: { isAgent?: boolean }
+): CallParticipantKind {
+  if (options?.isAgent) return 'agent';
+  const value = identity.trim().toLowerCase();
+  if (
+    value.startsWith('agent:') ||
+    value.startsWith('agent|') ||
+    value.includes('transcription-agent')
+  ) {
+    return 'agent';
+  }
+  if (value.startsWith('bot:') || value.startsWith('bot|')) {
+    return 'bot';
+  }
+  return 'person';
+}
+
+/** True while only the local participant (or nobody) is in the room. */
+export function isStandingRoomWaiting(memberCount: number): boolean {
+  return memberCount <= 1;
+}
+
+/** Tooltip / profile Call action. Isolated so tests can mock without featureFlags. */
+export function canStartUserCall(): boolean {
+  return ENABLE_CALLS();
 }

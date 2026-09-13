@@ -66,6 +66,20 @@ const SETTINGS_SEARCH_CONTENT: Partial<
         keywords: ['email', 'account email', 'login email', 'change email'],
       },
       {
+        title: 'Work profile',
+        section: 'Work profile',
+        keywords: [
+          'role',
+          'skills',
+          'hours',
+          'timezone',
+          'availability',
+          'visibility',
+          'bio',
+          'status',
+        ],
+      },
+      {
         title: 'App version',
         keywords: [
           'version',

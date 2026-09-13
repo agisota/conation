@@ -9,7 +9,7 @@ export const IN_CALL_PANEL_CROWDED_MEMBER_THRESHOLD = 5;
 export const IN_CALL_PANEL_VISIBLE_AVATAR_COUNT_CROWDED = 4;
 
 /**
- * Ordered list: local participant first, then non-agent remotes.
+ * Ordered list: local participant first, then people, bots, and agents.
  * Empty when there is no room yet (e.g. still connecting).
  */
 export function buildOrderedInCallMembers(
@@ -19,7 +19,7 @@ export function buildOrderedInCallMembers(
   if (!room) return [];
   const out: InCallPanelMember[] = [{ kind: 'local' }];
   for (const p of remoteParticipants.values()) {
-    if (!p.isAgent) out.push({ kind: 'remote', participant: p });
+    out.push({ kind: 'remote', participant: p });
   }
   return out;
 }
