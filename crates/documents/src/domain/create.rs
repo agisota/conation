@@ -663,6 +663,8 @@ where
             text,
         } = document;
 
+        let kind = file_type.as_file_type();
+        let canvas_json = (kind == FileType::Canvas).then(|| text.clone());
         let bytes = text.into_bytes();
         let hashes = file_shas(&bytes);
         let args = metadata.into_repo_args(
@@ -722,6 +724,19 @@ where
 
         response.document_response.document_metadata.content =
             DocumentContent::ready(DocumentContentLocation::ObjectStorage);
+
+        if let Some(json) = canvas_json
+            && let Err(error) = self
+                .markdown_initializer
+                .initialize_existing_canvas(&document_id, &json)
+                .await
+        {
+            tracing::warn!(
+                error=?error,
+                document_id=%document_id,
+                "failed to seed canvas Loro session"
+            );
+        }
 
         Ok(CreatedDocument::new(response))
     }

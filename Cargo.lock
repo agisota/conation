@@ -5688,6 +5688,7 @@ dependencies = [
  "jsonwebtoken 10.3.0",
  "kafka_util",
  "lexical_client",
+ "loro",
  "mockall",
  "model",
  "model-entity",

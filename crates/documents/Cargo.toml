@@ -155,6 +155,7 @@ ai_toolset = { path = "../ai_toolset", optional = true }
 ai_usage = { path = "../ai_usage", optional = true }
 async-trait = { workspace = true, optional = true }
 lexical_client = { path = "../lexical_client", optional = true }
+loro = "1.13"
 conation_tower_layers = { path = "../conation_tower_layers", optional = true }
 model_file_type = { path = "../model_file_type", optional = true }
 reqwest = { workspace = true, optional = true }

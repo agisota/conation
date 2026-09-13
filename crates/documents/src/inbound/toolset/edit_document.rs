@@ -144,9 +144,34 @@ where
         if document.try_file_type() == Some(FileType::Canvas) {
             let text = canvas_overwrite_text(self.file_content.as_deref())?;
             ctx.service
-                .overwrite_plain_text(&self.document_id, FileType::Canvas, text)
+                .overwrite_plain_text(&self.document_id, FileType::Canvas, text.clone())
                 .await
                 .map_err(failed_to_overwrite_canvas)?;
+            let sync = ctx.sync_service_client.clone();
+            let document_id = self.document_id.clone();
+            tokio::spawn(async move {
+                match crate::domain::canvas_loro::snapshot_from_json(&text) {
+                    Ok(snapshot) => {
+                        if let Err(error) =
+                            sync.initialize_from_snapshot(&document_id, &snapshot).await
+                            && !error.to_string().contains("snapshot already exists")
+                        {
+                            tracing::warn!(
+                                error=?error,
+                                document_id=%document_id,
+                                "failed to seed canvas Loro session"
+                            );
+                        }
+                    }
+                    Err(error) => {
+                        tracing::warn!(
+                            error=?error,
+                            document_id=%document_id,
+                            "failed to encode canvas Loro snapshot"
+                        );
+                    }
+                }
+            });
             return Ok(EditDocumentResponse {
                 summary: "Overwrote canvas JSON.".to_string(),
                 clarification: None,

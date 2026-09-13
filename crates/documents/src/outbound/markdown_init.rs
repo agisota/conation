@@ -114,6 +114,58 @@ where
 
         Ok(initial_snapshot)
     }
+
+    #[tracing::instrument(skip(self, json), err)]
+    async fn initialize_existing_canvas(
+        &self,
+        document_id: &str,
+        json: &str,
+    ) -> Result<Vec<u8>, DocumentError> {
+        let loro_snapshot = crate::domain::canvas_loro::snapshot_from_json(json)
+            .map_err(|e| DocumentError::BadRequest(e.to_string()))?;
+
+        let sync_service_client = self.sync_service_client.clone();
+        let document_id = document_id.to_owned();
+        let initial_snapshot = loro_snapshot.clone();
+        tokio::spawn(async move {
+            const MAX_ATTEMPTS: usize = 3;
+            const RETRY_DELAY: Duration = Duration::from_secs(1);
+
+            let loro_snapshot: Arc<[u8]> = loro_snapshot.into();
+            let mut attempt = 0usize;
+            let result = Retry::start(
+                FixedInterval::new(RETRY_DELAY).take(MAX_ATTEMPTS - 1),
+                || {
+                    attempt += 1;
+                    let sync_service_client = Arc::clone(&sync_service_client);
+                    let document_id = document_id.clone();
+                    let loro_snapshot = Arc::clone(&loro_snapshot);
+                    async move {
+                        let result = sync_service_client
+                            .initialize_from_snapshot(&document_id, &loro_snapshot)
+                            .await;
+                        if let Err(error) = &result {
+                            let already = error.to_string().contains("snapshot already exists");
+                            if already {
+                                return Ok(());
+                            }
+                            if attempt < MAX_ATTEMPTS {
+                                tracing::warn!(error=?error, attempt, "failed to initialize canvas Loro session, retrying in 1s");
+                            }
+                        }
+                        result
+                    }
+                },
+            )
+            .await;
+
+            if let Err(error) = result {
+                tracing::warn!(error=?error, "failed to initialize canvas Loro session after {MAX_ATTEMPTS} attempts");
+            }
+        });
+
+        Ok(initial_snapshot)
+    }
 }
 
 #[cfg(test)]

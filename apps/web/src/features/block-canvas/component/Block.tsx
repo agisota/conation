@@ -32,6 +32,7 @@ import {
   useLoadCanvasData,
   useSaveCanvasDataImmediate,
 } from '../store/canvasData';
+import { peekCanvasLoro } from '../store/canvas-loro';
 import { peekOfflineCanvas } from '../store/offline-canvas';
 import type { Canvas } from '../model/CanvasModel';
 import { isAnimating, renderStateStore } from '../store/RenderState';
@@ -86,6 +87,23 @@ export default function BlockCanvas(props: BlockCanvasProps) {
   const [, setRenderState] = renderStateStore;
   const [dataState, setDataState] = createSignal<BlockDataState>('loading');
   const [visible, setVisible] = createSignal(false);
+  const [offline, setOffline] = createSignal(
+    typeof navigator !== 'undefined' ? !navigator.onLine : false
+  );
+  const [pendingOffline, setPendingOffline] = createSignal(
+    !!peekOfflineCanvas(documentId)
+  );
+
+  createEffect(() => {
+    const onOnline = () => setOffline(false);
+    const onOffline = () => setOffline(true);
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+    onCleanup(() => {
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
+    });
+  });
 
   // Flush pending saves on cleanup to prevent data loss when navigating away
   onCleanup(() => {
@@ -282,14 +300,17 @@ export default function BlockCanvas(props: BlockCanvasProps) {
         json = null;
       }
       const pending = peekOfflineCanvas(documentId);
-      const board = pending ?? json;
+      const loro = peekCanvasLoro(documentId);
+      const board = loro ?? pending ?? json;
       if (!board) {
         throw new Error('canvas json missing');
       }
       await loadCanvasData(board as Canvas);
       setDataState('initialized');
+      setPendingOffline(!!pending);
       if (pending) {
         await saveCanvasDataImmediate();
+        setPendingOffline(!!peekOfflineCanvas(documentId));
       }
     } catch (e) {
       setDataState('error');
@@ -328,6 +349,29 @@ export default function BlockCanvas(props: BlockCanvasProps) {
               <FileSidePanelSections />
               <div class="flex size-full min-w-0 flex-col overflow-hidden">
                 <TopBar />
+                <Show when={offline() || pendingOffline()}>
+                  <div
+                    role="status"
+                    class="flex items-center justify-between gap-3 border-b border-alert/20 bg-alert-bg px-3 py-2 text-sm text-alert-ink"
+                  >
+                    <span>
+                      {offline()
+                        ? t('canvas.collaboration.offlineDescription')
+                        : t('canvas.collaboration.pendingDescription')}
+                    </span>
+                    <button
+                      type="button"
+                      class="shrink-0 underline"
+                      onClick={() => {
+                        void saveCanvasDataImmediate().then(() => {
+                          setPendingOffline(!!peekOfflineCanvas(documentId));
+                        });
+                      }}
+                    >
+                      {t('canvas.collaboration.retry')}
+                    </button>
+                  </div>
+                </Show>
                 <CanvasBody />
               </div>
             </SidePanel.Layout>

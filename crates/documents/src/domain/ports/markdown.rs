@@ -12,6 +12,20 @@ pub trait MarkdownInitializationPort: Send + Sync {
         document_id: &str,
         markdown: &str,
     ) -> impl Future<Output = Result<Vec<u8>, DocumentError>> + Send;
+
+    /// Encode canvas JSON as a Loro snapshot and seed sync-service when wired.
+    ///
+    /// Default implementation encodes only (no HTTP) so fakes stay HTTP-free.
+    fn initialize_existing_canvas(
+        &self,
+        _document_id: &str,
+        json: &str,
+    ) -> impl Future<Output = Result<Vec<u8>, DocumentError>> + Send {
+        async move {
+            crate::domain::canvas_loro::snapshot_from_json(json)
+                .map_err(|e| DocumentError::BadRequest(e.to_string()))
+        }
+    }
 }
 
 /// Utilities from the lexical service
