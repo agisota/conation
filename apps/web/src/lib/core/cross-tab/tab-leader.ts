@@ -13,7 +13,22 @@ import { Tab } from 'tab-election';
  * in embedded browsers without locks — builds its own protocol on
  * `cross-tab-bus.ts` instead (see `features/channel/Call/ring-coordination.ts`).
  */
+function webLocksAvailable(): boolean {
+  try {
+    return typeof navigator.locks?.request === 'function';
+  } catch {
+    return false;
+  }
+}
+
 export const createTabLeaderSignal = (namespace: string): Accessor<boolean> => {
+  // HTTP LAN origins (Tailscale :3000) are not secure contexts, so
+  // navigator.locks is missing. tab-election calls locks.request in its
+  // constructor and would crash /login; this tab is the only leader.
+  if (!webLocksAvailable()) {
+    return () => true;
+  }
+
   const [isLeader, setIsLeader] = createSignal<boolean>(false);
   const tab = new Tab(namespace);
 

@@ -13,6 +13,10 @@ const REDIRECT_URI = `${protocol}://${window.location.host}/app`;
 
 async function isPasswordLogin(email?: string | null) {
   if (!email) return false;
+  // SHA-256 via WebCrypto needs a secure context. HTTP LAN origins
+  // (Tailscale :3000) have no crypto.subtle — skip the password-login
+  // hash and continue with passwordless.
+  if (typeof crypto.subtle?.digest !== 'function') return false;
 
   const encodedEmail = new TextEncoder().encode(email.toLowerCase());
   const hashedBuffer = await crypto.subtle.digest('SHA-256', encodedEmail);
