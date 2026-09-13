@@ -31,10 +31,14 @@ export type FromWebsocketMessage = {
 
 async function resolveWsUrl() {
   if (ENABLE_BEARER_TOKEN_AUTH) {
-    const apiToken = await getConationApiToken();
-    if (!apiToken) throw new Error('No Conation API token');
-
-    return `${wsHost}/?conation-api-token=${apiToken}`;
+    try {
+      const apiToken = await getConationApiToken();
+      if (!apiToken) return wsHost;
+      return `${wsHost}/?conation-api-token=${apiToken}`;
+    } catch {
+      // Login / logged-out pages must still render if JWT mint 401s.
+      return wsHost;
+    }
   }
   await fetchToken();
   return wsHost;
