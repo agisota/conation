@@ -19,6 +19,12 @@
     "windows": [
       {
         "title": "Conation",
+        "hiddenTitle": true,
+        "titleBarStyle": "Overlay",
+        "trafficLightPosition": {
+          "x": 16,
+          "y": 10
+        },
         "width": 800,
         "height": 600,
         "resizable": true,
