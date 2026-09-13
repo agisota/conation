@@ -9,7 +9,7 @@ use serde::Deserialize;
 
 use super::{
     AttendeeInput, CalendarToolContext, EventRemindersInput, EventTimeInput, ToolCalendarEvent,
-    mutation_tool_error,
+    TransparencyInput, mutation_tool_error,
 };
 use crate::domain::{
     models::{CalendarEventDraft, ConferenceChange},
@@ -32,7 +32,7 @@ before executing the call.\n\
 The event lands on the user's primary calendar unless `calendarId` (from ListCalendars) \
 targets another one. For recurring events pass RFC 5545 lines in `recurrenceLines`, e.g. \
 [\"RRULE:FREQ=WEEKLY;BYDAY=MO\"]. Returns the created event with its `eventId` for later \
-updates or deletion. Fails if the user has no writable calendar connected."
+updates or deletion. `transparency` sets busy/free the same way the HTTP create body does: \"opaque\" blocks availability, \"transparent\" is free. Omit to keep the calendar default (busy). Fails if the user has no writable calendar connected."
 )]
 pub struct CreateCalendarEvent {
     /// Display title.
@@ -94,6 +94,13 @@ pub struct CreateCalendarEvent {
     )]
     #[serde(default)]
     pub add_google_meet: bool,
+
+    /// Busy/free.
+    #[schemars(
+        description = "Availability: \"opaque\" blocks time (busy), \"transparent\" is free. Omit to keep the calendar default (busy)."
+    )]
+    #[serde(default)]
+    pub transparency: Option<TransparencyInput>,
 }
 
 impl ToolAnnotated for CreateCalendarEvent {
@@ -131,7 +138,7 @@ where
             attendees: self.attendees.iter().cloned().map(Into::into).collect(),
             recurrence_lines: self.recurrence_lines.clone(),
             visibility: None,
-            transparency: None,
+            transparency: self.transparency.map(Into::into),
             reminders: self.reminders.clone().map(Into::into),
             conference: self.add_google_meet.then_some(ConferenceChange::GoogleMeet),
         };
