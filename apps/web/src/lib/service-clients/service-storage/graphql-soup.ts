@@ -202,9 +202,6 @@ export async function dssGraphqlFetch(
     return response;
   }
 
-  // A mixed deployment remains network-correct: retry without the additive
-  // metadata field and suppress v2 local authority for this session. Backfill
-  // still refuses to checkpoint missing required Document supplements.
   soupProjectionServerSupported = false;
   return await authorizedDssGraphqlFetch(input, legacyInit);
 }
@@ -213,8 +210,24 @@ const graphqlSoupClient = createClient({
   url: `${dssHost}/items/soup/graphql`,
   exchanges: [fetchExchange],
   fetch: dssGraphqlFetch,
-  // urql's default ("within-url-limit") sends small documents as GET, but
-  // GET on the DSS GraphQL path serves the GraphiQL IDE — only POST
-  // executes. Every pre-activity document was too large to trigger this.
   preferGetMethod: false,
 });
+
+function createGraphqlSoupWebSocketClient(): GraphqlWsClient {
+  const resolveWebSocketUrl = createGraphqlSoupWebSocketUrlResolver({
+    dssHost,
+    bearerTokenAuth: ENABLE_BEARER_TOKEN_AUTH,
+    getApiToken: getConationApiToken,
+    refreshCookieAuth: async () => {
+      const result = await fetchToken();
+      if (result.isErr()) {
+        throw new Error('Unable to refresh GraphQL websocket cookie');
+      }
+    },
+  });
+  return createGraphqlWsClient({
+    url: resolveWebSocketUrl,
+    retryAttempts: SOUP_GRAPHQL_WEBSOCKET_RETRY_ATTEMPTS,
+    shouldRetry: shouldRetryGraphqlSoupWebSocket,
+  });
+}
