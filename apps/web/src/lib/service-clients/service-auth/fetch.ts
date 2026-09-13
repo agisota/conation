@@ -1,5 +1,9 @@
 import { LOCAL_ONLY } from '@core/constant/featureFlags';
-import type { ObjectLike, ResultError } from '@core/util/result';
+import {
+  type ObjectLike,
+  type ResultError,
+  ThrownResultError,
+} from '@core/util/result';
 import {
   type BaseFetchErrorCode,
   type ErrorResponseHandler,
@@ -17,12 +21,46 @@ function isExpired(token: string) {
 
 let conationApiTokenPromise: Promise<string> | null = null;
 
+const ACCESS_TOKEN_STORAGE_KEY = 'conationAccessToken';
+
+function readPersistedAccessToken(): string | null {
+  if (typeof localStorage === 'undefined') return null;
+  const raw = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+  if (!raw || raw === 'null' || raw === 'undefined') return null;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (
+      typeof parsed === 'object' &&
+      parsed !== null &&
+      'accessToken' in parsed &&
+      typeof parsed.accessToken === 'string' &&
+      parsed.accessToken.length > 0 &&
+      !isExpired(parsed.accessToken)
+    ) {
+      return parsed.accessToken;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+/** Drop a login-page mint so the next call can use the passwordless JWT. */
+export function unsetConationApiTokenPromise() {
+  conationApiTokenPromise = null;
+}
+
 function requestConationApiToken() {
   const promise = authServiceClient.conationApiToken().then((result) => {
-    if (result.isErr()) {
-      throw result.error;
+    if (result.isOk()) {
+      return result.value.conation_api_token;
     }
-    return result.value.conation_api_token;
+    // Passwordless writes the session JWT before /jwt/conation_api_token
+    // can see it. A login-page 401 that resolves after that write must
+    // not wipe the new session — use the persisted JWT as Bearer.
+    const persisted = readPersistedAccessToken();
+    if (persisted) return persisted;
+    throw new ThrownResultError(result.error);
   });
 
   conationApiTokenPromise = promise;
@@ -92,7 +130,20 @@ export async function fetchWithAuth<
   input: RequestInfo,
   init?: fetchWithAuthOptions<T, CustomErrorCode>
 ): Promise<Result<T, ResultError<BaseFetchErrorCode | CustomErrorCode>[]>> {
-  const apiToken = await getConationApiToken();
+  let apiToken: string;
+  try {
+    apiToken = await getConationApiToken();
+  } catch (error) {
+    if (error instanceof ThrownResultError) {
+      return err(error.errors);
+    }
+    return err([
+      {
+        code: 'UNAUTHORIZED',
+        message: error instanceof Error ? error.message : 'Unauthorized access',
+      },
+    ]);
+  }
   if (!apiToken) {
     return err([
       { code: 'UNAUTHORIZED', message: 'No access and/or refresh token found' },

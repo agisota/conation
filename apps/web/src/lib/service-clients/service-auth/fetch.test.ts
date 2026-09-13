@@ -42,6 +42,7 @@ describe('getConationApiToken', () => {
   beforeEach(() => {
     vi.resetModules();
     conationApiToken.mockReset();
+    localStorage.clear();
   });
 
   test('reuses an unexpired cached token', async () => {
@@ -141,6 +142,41 @@ describe('getConationApiToken', () => {
     await expect(getConationApiToken()).rejects.toBeDefined();
     await expect(getConationApiToken()).resolves.toBe(fresh);
 
+    expect(conationApiToken).toHaveBeenCalledTimes(2);
+  });
+
+  test('falls back to a persisted passwordless JWT when mint 401s', async () => {
+    const persisted = jwt(Math.floor(Date.now() / 1000) + 3600);
+    localStorage.setItem(
+      'conationAccessToken',
+      JSON.stringify({
+        accessToken: persisted,
+        refreshToken: 'refresh',
+        expiresAt: Date.now() + 3600_000,
+      })
+    );
+    conationApiToken.mockResolvedValueOnce(
+      err([{ code: 'UNAUTHORIZED' as const, message: 'Unauthorized access' }])
+    );
+    const { getConationApiToken } = await import('./fetch');
+
+    await expect(getConationApiToken()).resolves.toBe(persisted);
+    expect(conationApiToken).toHaveBeenCalledTimes(1);
+    localStorage.removeItem('conationAccessToken');
+  });
+
+  test('unsetConationApiTokenPromise drops an in-flight cache', async () => {
+    const first = jwt(Math.floor(Date.now() / 1000) + 3600);
+    const second = jwt(Math.floor(Date.now() / 1000) + 7200);
+    conationApiToken
+      .mockResolvedValueOnce(ok({ conation_api_token: first }))
+      .mockResolvedValueOnce(ok({ conation_api_token: second }));
+    const { getConationApiToken, unsetConationApiTokenPromise } =
+      await import('./fetch');
+
+    await expect(getConationApiToken()).resolves.toBe(first);
+    unsetConationApiTokenPromise();
+    await expect(getConationApiToken()).resolves.toBe(second);
     expect(conationApiToken).toHaveBeenCalledTimes(2);
   });
 });
