@@ -3,11 +3,12 @@ import { isCalendarRangeSupported } from '@app/features/calendar/utils/calendar-
 import { t } from '@app/lib/i18n';
 import { useAddInboxFlow } from '@core/email-link';
 import { useEmailLinksQuery } from '@queries/email/link';
-import { UserProvider } from '@service-email/generated/schemas/userProvider';
 import { Button } from '@ui';
 import { createMemo, Show } from 'solid-js';
-
-type CalendarSetupState = 'connect' | 'permission' | 'reauth' | 'disabled';
+import {
+  type CalendarSetupState,
+  resolveCalendarSetupState,
+} from './resolve-calendar-setup-state';
 
 /** Displays account setup actions above the complete calendar pager. */
 export function SetupStatus() {
@@ -24,36 +25,13 @@ export function SetupStatus() {
   const setupState = createMemo<CalendarSetupState | undefined>(() => {
     const activeData = calendarPager.activeData();
     const range = activeData?.range();
-    if (range && !isCalendarRangeSupported(range)) return undefined;
 
-    if (!linksQuery.isSuccess || !activeData?.occurrencesQuery.isSuccess) {
-      return undefined;
-    }
-
-    const gmailLinks = (linksQuery.data?.links ?? []).filter(
-      (link) => link.provider === UserProvider.GMAIL
-    );
-    if (gmailLinks.length === 0) return 'connect';
-
-    const hasAvailableCalendar = gmailLinks.some(
-      (link) =>
-        link.is_sync_active &&
-        !link.needs_calendar_permission &&
-        !link.needs_reauth
-    );
-    if (hasAvailableCalendar) return undefined;
-    if (gmailLinks.some((link) => link.needs_reauth)) return 'reauth';
-    if (gmailLinks.some((link) => link.needs_calendar_permission)) {
-      // A calendar the user turned off is not a missing upgrade; say so, and
-      // still offer the way back since they came to the calendar view.
-      return gmailLinks.every(
-        (link) => !link.needs_calendar_permission || link.calendar_disabled
-      )
-        ? 'disabled'
-        : 'permission';
-    }
-
-    return 'connect';
+    return resolveCalendarSetupState(linksQuery.data?.links ?? [], {
+      rangeSupported: !(range && !isCalendarRangeSupported(range)),
+      loaded:
+        linksQuery.isSuccess &&
+        Boolean(activeData?.occurrencesQuery.isSuccess),
+    });
   });
 
   const setupMessage = createMemo(() => {
