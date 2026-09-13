@@ -13,13 +13,21 @@ import { invalidateAllAfterLogin } from '@queries/auth/user-info';
 import { authServiceClient } from '@service-auth/client';
 import { useLocation } from '@solidjs/router';
 import { invoke } from '@tauri-apps/api/core';
+import {
+  clearSignupMailboxLocal,
+  peekSignupMailboxLocal,
+  rememberSignupMailboxLocal,
+} from './signup-antibot';
 
 export function useSsoLogin(opts?: { signupMode?: boolean }) {
   const analytics = useAnalytics();
   const location = useLocation<RedirectLocation>();
   const { initEmailLink } = useEmailLinks();
 
-  return async (idp_name: string) => {
+  return async (idp_name: string, extra?: { mailboxLocal?: string | null }) => {
+    if (opts?.signupMode && extra && 'mailboxLocal' in extra) {
+      rememberSignupMailboxLocal(extra.mailboxLocal);
+    }
     // Both events are pre-redirect *intent*. The authoritative sign_up (and
     // the ad conversions) fire post-auth when the backend marks the session
     // as a freshly created account — see lib/analytics/signupCompletion.ts.
@@ -78,12 +86,16 @@ export function useSsoLogin(opts?: { signupMode?: boolean }) {
         // visibility-triggered refresh re-latches under the new generation.
         unsetTokenPromise();
         await invalidateAllAfterLogin();
-        await initEmailLink().match(
-          () => {},
+        await initEmailLink({ localPart: peekSignupMailboxLocal() }).match(
+          () => {
+            clearSignupMailboxLocal();
+          },
           (err) => {
-            if (err.tag !== 'AlreadyInitialized') {
-              console.error('Failed to init email link on login', err);
+            if (err.tag === 'AlreadyInitialized' || err.tag === 'MailboxTaken') {
+              if (err.tag === 'MailboxTaken') clearSignupMailboxLocal();
+              return;
             }
+            console.error('Failed to init email link on login', err);
           }
         );
       } else {
