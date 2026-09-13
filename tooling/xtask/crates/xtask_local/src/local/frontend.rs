@@ -279,6 +279,15 @@ pub fn start(
              previous run. Free it (`lsof -ti tcp:{port} | xargs kill`) and retry."
         );
     }
+    // Without node_modules, bun/vite never binds the port and the poll below
+    // times out with an opaque "did not become ready". This is a Bun
+    // workspace: `bun install` hoists deps into the repo-root node_modules.
+    if !repo_root().join("node_modules").exists() {
+        anyhow::bail!(
+            "{}/node_modules is missing — run `bun install` from the repo root first.",
+            repo_root().display()
+        );
+    }
     let mut prepare = Command::new("bash");
     prepare.current_dir(app_dir()).args([
         "-lc",
