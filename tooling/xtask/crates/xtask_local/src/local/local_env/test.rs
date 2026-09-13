@@ -386,6 +386,10 @@ fn allowed_origins_include_lan_frontend() {
         "http://localhost:3000",
         "http://100.89.19.82:3000",
         "http://173.212.222.197:3000",
+        "tauri://localhost",
+        "http://tauri.localhost",
+        "https://tauri.localhost",
+        "https://localhost",
     ] {
         assert!(
             origins.contains(&origin),

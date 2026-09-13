@@ -9,7 +9,7 @@ use conation_env_var::maybe_env_vars;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use url::Url;
 
-static DEFAULT_ALLOWED_ORIGINS: [&str; 12] = [
+static DEFAULT_ALLOWED_ORIGINS: [&str; 14] = [
     "http://localhost:5173",
     "http://localhost:3000",
     "http://host.local:3000",
@@ -19,6 +19,8 @@ static DEFAULT_ALLOWED_ORIGINS: [&str; 12] = [
     "https://app.conation.dev",
     "https://conation.dev",
     "http://tauri.localhost",
+    "https://tauri.localhost",
+    "https://localhost",
     "tauri://localhost",
     "capacitor://localhost",
     "http://conation.localhost",

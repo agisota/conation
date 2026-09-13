@@ -101,11 +101,15 @@ impl LocalEnv {
         // Passwordless `redirect_uri` is checked against this list. The SPA on
         // this host is reached as localhost from Playwright, and as the
         // Tailscale/public IPs from the server Chromium (container localhost
-        // is selkies, not Vite).
+        // is selkies, not Vite). The macOS/Linux Tauri webview origin is
+        // `tauri://localhost`; production EmailForm still posts
+        // `https://localhost/app` (forced https + host `localhost`). Windows
+        // uses `https://tauri.localhost`. `ALLOWED_ORIGINS` replaces CORS
+        // defaults, so those desktop origins must be listed here.
         env.insert(
             "ALLOWED_ORIGINS".into(),
             format!(
-                "https://app.conation.dev,https://conation.dev,https://www.conation.dev,http://localhost:{frontend},http://localhost:3000,http://localhost:5173,http://100.89.19.82:3000,http://173.212.222.197:3000",
+                "https://app.conation.dev,https://conation.dev,https://www.conation.dev,http://localhost:{frontend},http://localhost:3000,http://localhost:5173,http://100.89.19.82:3000,http://173.212.222.197:3000,tauri://localhost,http://tauri.localhost,https://tauri.localhost,https://localhost",
                 frontend = self.frontend_port
             ),
         );

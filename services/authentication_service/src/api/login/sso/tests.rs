@@ -15,6 +15,8 @@ fn allowed_original_urls_are_accepted() {
         "conation://otherthing/path",
         "tauri://localhost/app/login",
         "http://tauri.localhost/app/login",
+        "https://tauri.localhost/app/login",
+        "https://localhost/app/login",
         "http://localhost:3000/app/login",
         "https://dev.conation.dev/app/login",
         "https://conation.dev/app/login",
@@ -38,8 +40,6 @@ fn untrusted_original_urls_are_rejected() {
         "http://macro.com/app/login",
         "http://dev.macro.com/app/login",
         "tauri://example.com/app/login",
-        "https://tauri.localhost/app/login",
-        "https://localhost/app/login",
         "http://127.0.0.1:3000/app/login",
         "javascript:alert('redirected')",
     ] {
