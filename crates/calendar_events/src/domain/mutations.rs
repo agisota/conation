@@ -14,9 +14,9 @@ use super::{
         ActorInboxes, AttendeeResponseStatus, CalendarAttendee, CalendarAttendeeInput,
         CalendarEvent, CalendarEventDraft, CalendarEventMutationTarget, CalendarEventPatch,
         CalendarEventSource, CalendarEventUpsert, CalendarOccurrence, DisconnectedGoogleCalendar,
-        EventReminders, EventStatus, EventTime, EventTransparency, EventType, EventVisibility,
-        GoogleEventSource, OccurrenceRange, REMINDER_METHOD_EMAIL, REMINDER_METHOD_POPUP,
-        REMINDER_MINUTES_MAX, REMINDER_OVERRIDES_MAX,
+        EventReminderOverride, EventReminders, EventStatus, EventTime, EventTransparency,
+        EventType, EventVisibility, GoogleEventSource, OccurrenceRange, REMINDER_METHOD_EMAIL,
+        REMINDER_METHOD_POPUP, REMINDER_MINUTES_MAX, REMINDER_OVERRIDES_MAX,
     },
     ports::{
         CalendarAccessTokenProvider, CalendarDeletionScope, CalendarEventChange,
@@ -811,7 +811,7 @@ fn stalwart_upsert_from_draft(
 fn stalwart_write_from_draft(
     draft: &CalendarEventDraft,
 ) -> email_provider::StalwartCalendarEventWrite {
-    match &draft.time {
+    let write = match &draft.time {
         EventTime::Timed {
             starts_at, ends_at, ..
         } => email_provider::StalwartCalendarEventWrite::timed(
@@ -829,6 +829,44 @@ fn stalwart_write_from_draft(
             *end_date,
             &draft.recurrence_lines,
         ),
+    };
+    write.with_alerts(stalwart_alerts_from_reminders(draft.reminders.as_ref()))
+}
+
+fn stalwart_alerts_from_reminders(
+    reminders: Option<&EventReminders>,
+) -> Option<Vec<email_provider::StalwartCalendarAlert>> {
+    let reminders = reminders?;
+    if reminders.use_default {
+        return None;
+    }
+    Some(
+        reminders
+            .overrides
+            .iter()
+            .map(|reminder| email_provider::StalwartCalendarAlert {
+                method: reminder.method.clone(),
+                minutes: reminder.minutes,
+            })
+            .collect(),
+    )
+}
+
+fn reminders_from_stalwart_alerts(
+    alerts: &Option<Vec<email_provider::StalwartCalendarAlert>>,
+) -> EventReminders {
+    match alerts {
+        None => EventReminders::default(),
+        Some(alerts) => EventReminders {
+            use_default: false,
+            overrides: alerts
+                .iter()
+                .map(|alert| EventReminderOverride {
+                    method: alert.method.clone(),
+                    minutes: alert.minutes,
+                })
+                .collect(),
+        },
     }
 }
 
@@ -940,7 +978,7 @@ pub(crate) fn stalwart_upsert_from_remote(
             sequence: 0,
             is_read_only: false,
             attendees,
-            reminders: EventReminders::default(),
+            reminders: reminders_from_stalwart_alerts(&remote.alerts),
             created_at: Utc::now(),
             updated_at: Utc::now(),
         },

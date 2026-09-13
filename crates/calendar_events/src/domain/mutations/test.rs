@@ -3,9 +3,10 @@ use crate::domain::models::{
     ActorInboxes, AppliedGoogleGrant, CalendarAttendee, CalendarAttendeeInput,
     CalendarBackfillJobKey, CalendarCreationTarget, CalendarEventSource, CalendarLinkTokenIdentity,
     CalendarOccurrence, CalendarOccurrenceCursor, CalendarSyncStatus, CalendarWatchRelease,
-    ConferenceChange, DisconnectedGoogleCalendar, EventStatus, EventTransparency, EventType,
-    EventVisibility, GoogleCalendarSyncSnapshot, GoogleCalendarTarget, GoogleEventSource,
-    GoogleWatchChannel, ProviderCalendar, StoredGoogleCalendar, VisibleCalendar,
+    ConferenceChange, DisconnectedGoogleCalendar, EventReminderOverride, EventReminders,
+    EventStatus, EventTransparency, EventType, EventVisibility, GoogleCalendarSyncSnapshot,
+    GoogleCalendarTarget, GoogleEventSource, GoogleWatchChannel, ProviderCalendar,
+    StoredGoogleCalendar, VisibleCalendar,
 };
 use crate::domain::ports::RetiredCalendarEvent;
 use chrono::{Duration, NaiveDate, TimeZone};
@@ -1908,6 +1909,7 @@ fn stalwart_upsert_maps_all_day_and_recurrence_from_jmap() {
         show_without_time: true,
         recurrence_lines: vec!["RRULE:FREQ=YEARLY".to_string()],
         participants: Vec::new(),
+        alerts: None,
     };
     let upsert = stalwart_upsert_from_remote(&target, &remote);
     assert!(matches!(
@@ -1923,4 +1925,63 @@ fn stalwart_upsert_maps_all_day_and_recurrence_from_jmap() {
         vec!["RRULE:FREQ=YEARLY".to_string()]
     );
     assert_eq!(upsert.event.transparency, EventTransparency::Transparent);
+}
+
+#[tokio::test]
+async fn create_with_popup_reminder_on_stalwart_persists_locally_without_calling_google() {
+    let mut target = creation_target(false);
+    target.token_identity.provider = "STALWART".to_string();
+    let repo = FakeRepo {
+        creation_target: Some(target),
+        ..FakeRepo::default()
+    };
+    let upserts = repo.upserts.clone();
+    let provider = FakeProvider::new(FakeProviderBehavior::Echo);
+    let calls = provider.calls.clone();
+    let mut draft = draft();
+    draft.reminders = Some(EventReminders {
+        use_default: false,
+        overrides: vec![EventReminderOverride {
+            method: "popup".to_string(),
+            minutes: 15,
+        }],
+    });
+    let event = service(repo, provider, FakeTokens::ok())
+        .create_event("macro|user", None, None, draft)
+        .await
+        .unwrap();
+    assert!(calls.lock().unwrap().is_empty());
+    assert_eq!(upserts.lock().unwrap().len(), 1);
+    assert!(!event.reminders.use_default);
+    assert_eq!(event.reminders.overrides[0].minutes, 15);
+}
+
+#[test]
+fn stalwart_upsert_maps_alerts_from_jmap() {
+    let mut target = creation_target(false);
+    target.token_identity.provider = "STALWART".to_string();
+    let start = Utc.with_ymd_and_hms(2026, 9, 13, 14, 0, 0).unwrap();
+    let remote = email_provider::StalwartCalendarEvent {
+        id: "ev1".to_string(),
+        uid: Some("uid-1@conation.dev".to_string()),
+        title: "Standup".to_string(),
+        description: None,
+        location: None,
+        start,
+        duration_secs: 1_800,
+        time_zone: Some("UTC".to_string()),
+        free: false,
+        status: Some("confirmed".to_string()),
+        show_without_time: false,
+        recurrence_lines: Vec::new(),
+        participants: Vec::new(),
+        alerts: Some(vec![email_provider::StalwartCalendarAlert {
+            method: "popup".to_string(),
+            minutes: 15,
+        }]),
+    };
+    let upsert = stalwart_upsert_from_remote(&target, &remote);
+    assert!(!upsert.event.reminders.use_default);
+    assert_eq!(upsert.event.reminders.overrides[0].method, "popup");
+    assert_eq!(upsert.event.reminders.overrides[0].minutes, 15);
 }

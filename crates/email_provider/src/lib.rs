@@ -226,6 +226,19 @@ pub struct StalwartCalendarEvent {
     pub recurrence_lines: Vec<String>,
     /// Participants mapped from JSCalendar `participants`.
     pub participants: Vec<StalwartParticipant>,
+    /// JSCalendar `alerts` mapped to Google-shaped reminder overrides.
+    /// `None` means the field was omitted (calendar defaults). `Some` is
+    /// explicit, including an empty list for no reminders.
+    pub alerts: Option<Vec<StalwartCalendarAlert>>,
+}
+
+/// One JSCalendar alert, stored as a Google-shaped reminder override.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct StalwartCalendarAlert {
+    /// Provider method (`popup` or `email`).
+    pub method: String,
+    /// Minutes before the event start.
+    pub minutes: u32,
 }
 
 /// Payload for Stalwart `CalendarEvent/set` create and update.
@@ -243,6 +256,9 @@ pub struct StalwartCalendarEventWrite {
     pub show_without_time: bool,
     /// JSCalendar `recurrenceRules` (empty means a one-off).
     pub recurrence_rules: Vec<Value>,
+    /// JSCalendar `alerts`. `None` omits the field (calendar defaults).
+    /// `Some` is sent even when empty, so explicit no-reminders can clear them.
+    pub alerts: Option<Vec<StalwartCalendarAlert>>,
 }
 
 impl StalwartCalendarEventWrite {
@@ -260,6 +276,7 @@ impl StalwartCalendarEventWrite {
             time_zone: Some("UTC".to_string()),
             show_without_time: false,
             recurrence_rules: jmap_recurrence_rules_from_rfc5545(recurrence_lines),
+            alerts: None,
         }
     }
 
@@ -278,7 +295,15 @@ impl StalwartCalendarEventWrite {
             time_zone: None,
             show_without_time: true,
             recurrence_rules: jmap_recurrence_rules_from_rfc5545(recurrence_lines),
+            alerts: None,
         }
+    }
+
+    /// Attach JSCalendar `alerts` (or an empty list to clear them).
+    #[must_use]
+    pub fn with_alerts(mut self, alerts: Option<Vec<StalwartCalendarAlert>>) -> Self {
+        self.alerts = alerts;
+        self
     }
 }
 
@@ -502,6 +527,7 @@ const CALENDAR_EVENT_GET_PROPERTIES: &[&str] = &[
     "locations",
     "freeBusyStatus",
     "status",
+    "alerts",
 ];
 
 #[derive(Debug, Deserialize)]
@@ -1253,6 +1279,7 @@ fn parse_jmap_calendar_event(value: &Value) -> Option<StalwartCalendarEvent> {
             .unwrap_or(false),
         recurrence_lines: rfc5545_from_jmap_recurrence_rules(value.get("recurrenceRules")),
         participants: parse_jmap_participants(value.get("participants")),
+        alerts: parse_jmap_alerts(value.get("alerts")),
     })
 }
 
@@ -1385,7 +1412,106 @@ fn calendar_event_set_object(
             Value::Array(write.recurrence_rules.clone()),
         );
     }
+    if let Some(alerts) = &write.alerts {
+        object.insert("alerts".to_owned(), jmap_alerts_object(alerts));
+    }
     Value::Object(object)
+}
+
+fn jmap_alerts_object(alerts: &[StalwartCalendarAlert]) -> Value {
+    let mut object = serde_json::Map::new();
+    for (index, alert) in alerts.iter().enumerate() {
+        let action = if alert.method.eq_ignore_ascii_case("email") {
+            "email"
+        } else {
+            "display"
+        };
+        object.insert(
+            format!("a{index}"),
+            json!({
+                "action": action,
+                "trigger": {
+                    "@type": "OffsetTrigger",
+                    "offset": iso8601_minutes_before(alert.minutes),
+                    "relativeTo": "start"
+                }
+            }),
+        );
+    }
+    Value::Object(object)
+}
+
+fn iso8601_minutes_before(minutes: u32) -> String {
+    format!("-PT{minutes}M")
+}
+
+fn parse_jmap_alerts(value: Option<&Value>) -> Option<Vec<StalwartCalendarAlert>> {
+    let object = value?.as_object()?;
+    let alerts = object
+        .values()
+        .filter_map(parse_jmap_alert)
+        .collect::<Vec<_>>();
+    Some(alerts)
+}
+
+fn parse_jmap_alert(value: &Value) -> Option<StalwartCalendarAlert> {
+    let trigger = value.get("trigger")?;
+    let offset = trigger.get("offset").and_then(Value::as_str)?;
+    let minutes = iso8601_offset_minutes_before(offset)?;
+    let method = match value.get("action").and_then(Value::as_str) {
+        Some("email") => "email",
+        _ => "popup",
+    };
+    Some(StalwartCalendarAlert {
+        method: method.to_owned(),
+        minutes,
+    })
+}
+
+fn iso8601_offset_minutes_before(offset: &str) -> Option<u32> {
+    let trimmed = offset.trim();
+    if !trimmed.starts_with('-') {
+        return None;
+    }
+    let body = trimmed.trim_start_matches('-');
+    if !body.starts_with('P') {
+        return None;
+    }
+    let rest = &body[1..];
+    let (date_part, time_part) = rest.split_once('T').unwrap_or((rest, ""));
+    let mut minutes: u64 = 0;
+    parse_iso8601_span(date_part, |unit, amount| match unit {
+        'D' => minutes = minutes.saturating_add(amount.saturating_mul(24 * 60)),
+        'W' => minutes = minutes.saturating_add(amount.saturating_mul(7 * 24 * 60)),
+        _ => {}
+    })?;
+    parse_iso8601_span(time_part, |unit, amount| match unit {
+        'H' => minutes = minutes.saturating_add(amount.saturating_mul(60)),
+        'M' => minutes = minutes.saturating_add(amount),
+        'S' => minutes = minutes.saturating_add(amount / 60),
+        _ => {}
+    })?;
+    u32::try_from(minutes).ok()
+}
+
+fn parse_iso8601_span(span: &str, mut on_unit: impl FnMut(char, u64)) -> Option<()> {
+    if span.is_empty() {
+        return Some(());
+    }
+    let mut digits = String::new();
+    for ch in span.chars() {
+        if ch.is_ascii_digit() {
+            digits.push(ch);
+            continue;
+        }
+        if !ch.is_ascii_alphabetic() || digits.is_empty() {
+            return None;
+        }
+        let amount = digits.parse::<u64>().ok()?;
+        digits.clear();
+        on_unit(ch.to_ascii_uppercase(), amount);
+    }
+    digits.is_empty().then_some(())
 }
 
 fn jmap_recurrence_rules_from_rfc5545(lines: &[String]) -> Vec<Value> {
