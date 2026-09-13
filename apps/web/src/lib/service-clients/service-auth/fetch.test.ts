@@ -165,6 +165,31 @@ describe('getConationApiToken', () => {
     localStorage.removeItem('conationAccessToken');
   });
 
+  test('falls back to a persisted passwordless JWT when mint 500s', async () => {
+    const persisted = jwt(Math.floor(Date.now() / 1000) + 3600);
+    localStorage.setItem(
+      'conationAccessToken',
+      JSON.stringify({
+        accessToken: persisted,
+        refreshToken: 'refresh',
+        expiresAt: Date.now() + 3600_000,
+      })
+    );
+    conationApiToken.mockResolvedValueOnce(
+      err([
+        {
+          code: 'SERVER_ERROR' as const,
+          message: 'unable to encode Conation API token',
+        },
+      ])
+    );
+    const { getConationApiToken } = await import('./fetch');
+
+    await expect(getConationApiToken()).resolves.toBe(persisted);
+    expect(conationApiToken).toHaveBeenCalledTimes(1);
+    localStorage.removeItem('conationAccessToken');
+  });
+
   test('unsetConationApiTokenPromise drops an in-flight cache', async () => {
     const first = jwt(Math.floor(Date.now() / 1000) + 3600);
     const second = jwt(Math.floor(Date.now() / 1000) + 7200);
