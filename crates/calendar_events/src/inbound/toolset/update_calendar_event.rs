@@ -11,7 +11,7 @@ use serde::Deserialize;
 
 use super::{
     AttendeeInput, CalendarToolContext, EventRemindersInput, EventTimeInput, ToolCalendarEvent,
-    mutation_tool_error,
+    TransparencyInput, mutation_tool_error,
 };
 use crate::domain::{
     models::{AttendeeResponseStatus, CalendarEventPatch, ConferenceChange},
@@ -93,6 +93,9 @@ event instead.\n\
 Passing `attendees` replaces the full attendee list — include everyone who should remain, \
 not just additions. An empty string for `description` or `location` clears it. Fails on \
 events from calendars the user cannot edit.\n\
+\n\
+`transparency` sets busy/free the same way the HTTP update body does: \"opaque\" \
+blocks availability, \"transparent\" is free.\n\
 \n\
 `rsvp` sets the user's own response to an invitation and is independent of the field \
 edits — it can be the only thing this call changes. It applies at the same `scope` as \
@@ -187,6 +190,14 @@ pub struct UpdateCalendarEvent {
     #[serde(default)]
     pub reminders: Option<EventRemindersInput>,
 
+    /// Busy/free.
+    #[schemars(
+        description = "Availability: \"opaque\" blocks time (busy), \"transparent\" is free. \
+                       Omit to leave the current availability alone."
+    )]
+    #[serde(default)]
+    pub transparency: Option<TransparencyInput>,
+
     /// The requester's own RSVP.
     #[schemars(
         description = "Set the user's own response to the invitation: \"accepted\", \
@@ -264,7 +275,7 @@ where
                 .map(|attendees| attendees.into_iter().map(Into::into).collect()),
             recurrence_lines: self.recurrence_lines.clone(),
             visibility: None,
-            transparency: None,
+            transparency: self.transparency.map(Into::into),
             reminders: self.reminders.clone().map(Into::into),
             conference: self.conference.map(Into::into),
         };
