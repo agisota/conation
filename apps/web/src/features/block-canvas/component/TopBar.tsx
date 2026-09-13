@@ -47,6 +47,7 @@ import { createCallback } from '@solid-primitives/rootless';
 import { onMount } from 'solid-js';
 import { URL_PARAMS } from '../constants';
 import { useToolManager } from '../signal/toolManager';
+import { CanvasPresenceList } from './CanvasPresence';
 import { currentSavedFile } from '../store/canvasData';
 import { useRenderState } from '../store/RenderState';
 
@@ -168,7 +169,8 @@ export function TopBar() {
       </SplitHeaderLeft>
       <SplitHeaderRight>
         {/* Hidden on mobile/tablet: no floating-island treatment for live avatars yet. */}
-        <div class="-order-1 touch:hidden">
+        <div class="-order-1 touch:hidden flex items-center gap-1">
+          <CanvasPresenceList />
           <BlockLiveIndicators />
         </div>
       </SplitHeaderRight>

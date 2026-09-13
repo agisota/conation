@@ -4,11 +4,24 @@ import {
   boardFromDoc,
   type CanvasLoroJson,
 } from './canvas-loro';
+import {
+  createCanvasPresenceStore,
+  type CanvasPeerPresence,
+  type CanvasPresenceState,
+  type CanvasPresenceStore,
+} from './canvas-presence';
+
+export type { CanvasPeerPresence, CanvasPresenceState };
+export {
+  canvasPointToOverlayStyle,
+  canvasPresenceHex,
+} from './canvas-presence';
 
 export type CanvasLiveRemoteEvent = {
   type: string;
   update?: Uint8Array;
   snapshot?: Uint8Array;
+  awareness?: Uint8Array;
 };
 
 /** Minimal live-sync surface used after one-shot `initialize_from_snapshot`. */
@@ -16,6 +29,7 @@ export type CanvasLiveSource = {
   documentId: string;
   listen: (listener: (event: CanvasLiveRemoteEvent) => void) => () => void;
   pushUpdate: (updates: Uint8Array[]) => Promise<boolean>;
+  pushAwareness?: (awareness: Uint8Array) => void;
   cleanup: () => void;
 };
 
@@ -23,13 +37,28 @@ type Session = {
   source: CanvasLiveSource;
   doc: LoroDoc;
   unlisten: () => void;
+  presence: CanvasPresenceStore;
 };
 
 const sessions = new Map<string, Session>();
+const presenceListeners = new Map<
+  string,
+  Set<(peers: CanvasPeerPresence[]) => void>
+>();
 
 function importInto(doc: LoroDoc, bytes: Uint8Array): void {
   if (bytes.length === 0) return;
   doc.import(bytes);
+}
+
+function emitPresence(documentId: string, peers: CanvasPeerPresence[]): void {
+  const listeners = presenceListeners.get(documentId);
+  if (!listeners) return;
+  for (const listener of listeners) listener(peers);
+}
+
+function notifyPresence(session: Session, documentId: string): void {
+  emitPresence(documentId, session.presence.list(session.doc.peerIdStr));
 }
 
 /**
@@ -39,8 +68,12 @@ function importInto(doc: LoroDoc, bytes: Uint8Array): void {
 export async function connectCanvasLiveSync(opts: {
   documentId: string;
   source: CanvasLiveSource;
-  doInitialSync: () => Promise<{ snapshot: Uint8Array } | null>;
+  doInitialSync: () => Promise<{
+    snapshot: Uint8Array;
+    awareness?: Uint8Array;
+  } | null>;
   onRemoteBoard?: (board: CanvasLoroJson) => void;
+  onPresence?: (peers: CanvasPeerPresence[]) => void;
 }): Promise<boolean> {
   disconnectCanvasLiveSync(opts.documentId);
   const initial = await opts.doInitialSync();
@@ -50,7 +83,19 @@ export async function connectCanvasLiveSync(opts: {
   }
   const doc = new Loro();
   importInto(doc, initial.snapshot);
+  const presence = createCanvasPresenceStore();
+  if (initial.awareness) presence.apply(initial.awareness);
+  const publishList = () => {
+    const peers = presence.list(doc.peerIdStr);
+    opts.onPresence?.(peers);
+    emitPresence(opts.documentId, peers);
+  };
   const unlisten = opts.source.listen((event) => {
+    if (event.type === 'awareness' && event.awareness) {
+      presence.apply(event.awareness);
+      publishList();
+      return;
+    }
     if (event.type === 'update' && event.update) {
       importInto(doc, event.update);
     } else if (
@@ -58,21 +103,30 @@ export async function connectCanvasLiveSync(opts: {
       event.snapshot
     ) {
       importInto(doc, event.snapshot);
+      if (event.awareness) {
+        presence.apply(event.awareness);
+        publishList();
+      }
     } else {
       return;
     }
     opts.onRemoteBoard?.(boardFromDoc(doc));
   });
-  sessions.set(opts.documentId, { source: opts.source, doc, unlisten });
+  sessions.set(opts.documentId, { source: opts.source, doc, unlisten, presence });
+  publishList();
   return true;
 }
 
 export function disconnectCanvasLiveSync(documentId: string): void {
   const session = sessions.get(documentId);
   if (!session) return;
+  session.presence.clear(session.doc.peerIdStr);
+  const encoded = session.presence.encode(session.doc.peerIdStr);
+  session.source.pushAwareness?.(encoded);
   session.unlisten();
   session.source.cleanup();
   sessions.delete(documentId);
+  emitPresence(documentId, []);
 }
 
 export function hasCanvasLiveSync(documentId: string): boolean {
@@ -90,9 +144,49 @@ export async function pushCanvasLiveUpdate(
   return session.source.pushUpdate([update]);
 }
 
+/** Publish local cursor/identity on the live WS awareness channel. */
+export function publishCanvasPresence(
+  documentId: string,
+  state: CanvasPresenceState
+): boolean {
+  const session = sessions.get(documentId);
+  if (!session?.source.pushAwareness) return false;
+  const peerId = session.doc.peerIdStr;
+  session.presence.set(peerId, state);
+  session.source.pushAwareness(session.presence.encode(peerId));
+  notifyPresence(session, documentId);
+  return true;
+}
+
+/** Remote peers currently in the live canvas session. */
+export function listCanvasPresence(documentId: string): CanvasPeerPresence[] {
+  const session = sessions.get(documentId);
+  if (!session) return [];
+  return session.presence.list(session.doc.peerIdStr);
+}
+
+/** Subscribe to remote canvas presence changes. */
+export function subscribeCanvasPresence(
+  documentId: string,
+  listener: (peers: CanvasPeerPresence[]) => void
+): () => void {
+  let set = presenceListeners.get(documentId);
+  if (!set) {
+    set = new Set();
+    presenceListeners.set(documentId, set);
+  }
+  set.add(listener);
+  listener(listCanvasPresence(documentId));
+  return () => {
+    set.delete(listener);
+    if (set.size === 0) presenceListeners.delete(documentId);
+  };
+}
+
 /** Test helper. */
 export function resetCanvasLiveSync(): void {
   for (const id of [...sessions.keys()]) {
     disconnectCanvasLiveSync(id);
   }
+  presenceListeners.clear();
 }

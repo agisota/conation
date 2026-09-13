@@ -9,9 +9,12 @@ import {
   peekCanvasLoro,
   recordCanvasLoro,
 } from './canvas-loro';
+import { createCanvasPresenceStore } from './canvas-presence';
 import {
   connectCanvasLiveSync,
   hasCanvasLiveSync,
+  listCanvasPresence,
+  publishCanvasPresence,
   pushCanvasLiveUpdate,
   resetCanvasLiveSync,
   type CanvasLiveRemoteEvent,
@@ -26,12 +29,15 @@ afterEach(() => {
 function fakeSource(documentId: string): {
   source: CanvasLiveSource;
   pushed: Uint8Array[][];
+  awareness: Uint8Array[];
   emit: (event: CanvasLiveRemoteEvent) => void;
 } {
   const listeners = new Set<(event: CanvasLiveRemoteEvent) => void>();
   const pushed: Uint8Array[][] = [];
+  const awareness: Uint8Array[] = [];
   return {
     pushed,
+    awareness,
     emit: (event) => {
       for (const listener of listeners) listener(event);
     },
@@ -44,6 +50,9 @@ function fakeSource(documentId: string): {
       pushUpdate: async (updates) => {
         pushed.push(updates);
         return true;
+      },
+      pushAwareness: (bytes) => {
+        awareness.push(bytes);
       },
       cleanup: () => {
         listeners.clear();
@@ -145,5 +154,97 @@ describe('canvas live WS apply-update', () => {
     });
     expect(ok).toBe(false);
     expect(hasCanvasLiveSync('doc-1')).toBe(false);
+  });
+});
+
+describe('canvas live WS awareness', () => {
+  const snapshot = encodeCanvasLoroUpdate(
+    { nodes: [{ id: 'a' }], edges: [] },
+    1n
+  );
+
+  it('does not publish presence before the session is connected', () => {
+    expect(
+      publishCanvasPresence('doc-1', {
+        userId: 'me',
+        name: 'Me',
+        color: 'blue',
+        x: 1,
+        y: 2,
+      })
+    ).toBe(false);
+  });
+
+  it('pushes local presence over the existing WS after initial sync', async () => {
+    const fake = fakeSource('doc-1');
+    await connectCanvasLiveSync({
+      documentId: 'doc-1',
+      source: fake.source,
+      doInitialSync: async () => ({ snapshot }),
+    });
+    expect(
+      publishCanvasPresence('doc-1', {
+        userId: 'me',
+        name: 'Me',
+        color: 'blue',
+        x: 10,
+        y: 20,
+      })
+    ).toBe(true);
+    expect(fake.awareness).toHaveLength(1);
+    expect(fake.pushed).toHaveLength(0);
+    expect(listCanvasPresence('doc-1')).toEqual([]);
+  });
+
+  it('loads peers from the initial awareness snapshot', async () => {
+    const remote = createCanvasPresenceStore();
+    remote.set('peer-b', {
+      userId: 'them',
+      name: 'Them',
+      color: 'green',
+      x: 3,
+      y: 4,
+    });
+    const fake = fakeSource('doc-1');
+    await connectCanvasLiveSync({
+      documentId: 'doc-1',
+      source: fake.source,
+      doInitialSync: async () => ({
+        snapshot,
+        awareness: remote.encode('peer-b'),
+      }),
+    });
+    expect(listCanvasPresence('doc-1').map((p) => p.userId)).toEqual(['them']);
+  });
+
+  it('applies a remote awareness event without touching the board', async () => {
+    const fake = fakeSource('doc-1');
+    const boards: unknown[] = [];
+    await connectCanvasLiveSync({
+      documentId: 'doc-1',
+      source: fake.source,
+      doInitialSync: async () => ({ snapshot }),
+      onRemoteBoard: (board) => boards.push(board),
+    });
+    const remote = createCanvasPresenceStore();
+    remote.set('peer-b', {
+      userId: 'them',
+      name: 'Them',
+      color: 'green',
+      x: 8,
+      y: 9,
+    });
+    fake.emit({ type: 'awareness', awareness: remote.encode('peer-b') });
+    expect(boards).toHaveLength(0);
+    expect(listCanvasPresence('doc-1')).toEqual([
+      {
+        peerId: 'peer-b',
+        userId: 'them',
+        name: 'Them',
+        color: 'green',
+        x: 8,
+        y: 9,
+      },
+    ]);
   });
 });

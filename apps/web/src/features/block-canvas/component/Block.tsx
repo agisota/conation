@@ -44,6 +44,7 @@ import { peekOfflineCanvas } from '../store/offline-canvas';
 import type { Canvas } from '../model/CanvasModel';
 import { isAnimating, renderStateStore } from '../store/RenderState';
 import { CanvasController } from './CanvasController';
+import { CanvasPresenceCursors } from './CanvasPresence';
 import { CanvasRenderer } from './CanvasRenderer';
 import { Loading } from './Loading';
 import { ModalsProvider } from './ModalsProvider';
@@ -358,6 +359,7 @@ export default function BlockCanvas(props: BlockCanvasProps) {
       <CanvasController>
         <Show when={visible()}>
           <CanvasRenderer />
+          <CanvasPresenceCursors />
           <ToolBar />
         </Show>
       </CanvasController>

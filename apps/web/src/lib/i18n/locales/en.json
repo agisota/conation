@@ -3423,6 +3423,7 @@
   "canvas.collaboration.offlineDescription": "No connection. Canvas changes will sync when you reconnect.",
   "canvas.collaboration.pendingDescription": "This board has unsynced local changes. Retry to upload them.",
   "canvas.collaboration.retry": "Retry sync",
+  "canvas.collaboration.presence": "Also editing",
   "canvas.error.parseFailed": "Failed to parse canvas file",
   "canvas.error.uploadImageFailed": "Failed to upload image",
   "canvas.file.invalid": "This file is invalid",
