@@ -10,7 +10,6 @@ import {
   ENABLE_CRM_FLAG,
   ENABLE_CRM_OVERRIDE,
 } from '@core/constant/featureFlags';
-import { useUserId } from '@core/context/user';
 import { useIsConnectedSecondaryInbox } from '@core/user';
 import WideCall from '@icon/wide-call.svg';
 import WideChat from '@icon/wide-chat.svg';
@@ -51,7 +50,6 @@ function copyableName(
 }
 
 export function UserTooltip(props: UserTooltipProps) {
-  const currentUserId = useUserId();
   const isConnectedSecondaryInbox = useIsConnectedSecondaryInbox();
   const canTreatAsUser = () =>
     !!props.id && !props.isDeleted && !isConnectedSecondaryInbox(props.id);
@@ -181,19 +179,13 @@ export function UserTooltip(props: UserTooltipProps) {
                 </Suspense>
               )}
             </Show>
-            <Show when={canTreatAsUser() && props.id !== currentUserId()}>
+            <Show when={canTreatAsUser()}>
               <ActionItem onClick={openDM}>
                 <WideChat class="size-3.5" />
                 {t('core.userActions.message')}
               </ActionItem>
             </Show>
-            <Show
-              when={
-                canTreatAsUser() &&
-                props.id !== currentUserId() &&
-                canStartUserCall()
-              }
-            >
+            <Show when={canTreatAsUser() && canStartUserCall()}>
               <ActionItem onClick={openCall}>
                 <WideCall class="size-3.5" />
                 {t('core.userActions.call')}

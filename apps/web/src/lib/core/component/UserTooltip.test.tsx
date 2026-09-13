@@ -198,4 +198,17 @@ describe('UserTooltip call action', () => {
     expect(mocks.joinChannelCall).toHaveBeenCalledWith('dm-1');
     expect(mocks.onClose).toHaveBeenCalledOnce();
   });
+
+  it('shows Message and Call on the current user tooltip', () => {
+    render(() => (
+      <UserTooltip
+        displayName="Me"
+        email="current@example.com"
+        id="conation|current@example.com"
+      />
+    ));
+
+    expect(screen.getByRole('button', { name: 'Message' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Call' })).toBeTruthy();
+  });
 });

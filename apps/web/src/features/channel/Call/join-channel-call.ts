@@ -64,6 +64,14 @@ export function isStandingRoomWaiting(memberCount: number): boolean {
   return memberCount <= 1;
 }
 
+/**
+ * Empty standing room: nobody else is in yet (join-empty / solo occupant).
+ * `otherCount` is remotes, or call-record occupants when you have not joined.
+ */
+export function isStandingRoomEmpty(otherCount: number): boolean {
+  return otherCount === 0;
+}
+
 /** Tooltip / profile Call action. Isolated so tests can mock without featureFlags. */
 export function canStartUserCall(): boolean {
   return ENABLE_CALLS();

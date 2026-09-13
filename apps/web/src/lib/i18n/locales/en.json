@@ -1981,6 +1981,7 @@
   "settings.account.workProfile.status.away": "Away",
   "settings.account.workProfile.emailVisible": "Show email",
   "settings.account.workProfile.activityVisible": "Show activity",
+  "settings.account.workProfile.reach": "Message / Call",
   "settings.account.profilePicture.label": "Profile picture",
   "settings.account.profilePicture.upload": "Upload profile picture",
   "settings.account.profilePicture.edit": "Edit profile picture",

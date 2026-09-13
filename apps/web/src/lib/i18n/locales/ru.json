@@ -1987,6 +1987,7 @@
   "settings.account.workProfile.status.away": "Отошёл",
   "settings.account.workProfile.emailVisible": "Показывать почту",
   "settings.account.workProfile.activityVisible": "Показывать активность",
+  "settings.account.workProfile.reach": "Написать / позвонить",
   "settings.account.profilePicture.label": "Фото профиля",
   "settings.account.profilePicture.upload": "Загрузить фото профиля",
   "settings.account.profilePicture.edit": "Изменить фото профиля",

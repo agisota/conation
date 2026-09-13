@@ -5,9 +5,10 @@ import { getDisplayName, tryMacroId } from '@core/user';
 import PhoneIcon from '@icon/wide-call.svg';
 import { useActiveCallQuery, useCallRecordQuery } from '@queries/call/call';
 import { Button } from '@ui';
-import { type Accessor, createMemo, Match, Show, Switch } from 'solid-js';
+import { type Accessor, createMemo, Match, Show, Suspense, Switch } from 'solid-js';
 import { CallOverlay } from './CallOverlay';
 import { getCallJoinTab, getCallLeaveTab } from './call-tabs';
+import { isStandingRoomEmpty } from './join-channel-call';
 import { useCall } from './use-call';
 
 function participantFirstName(id: string) {
@@ -76,8 +77,14 @@ function JoinCallEmptyState(props: {
           showTooltip
         />
         <div class="flex flex-col items-center gap-1">
-          <h2 class="text-lg font-semibold">{t('channel.call.inProgress')}</h2>
-          <ParticipantNamesLine ids={participantIds()} />
+          <h2 class="text-lg font-semibold">
+            {isStandingRoomEmpty(participantIds().length)
+              ? t('channel.call.waitingForOthers')
+              : t('channel.call.inProgress')}
+          </h2>
+          <Show when={!isStandingRoomEmpty(participantIds().length)}>
+            <ParticipantNamesLine ids={participantIds()} />
+          </Show>
         </div>
       </div>
 
@@ -91,7 +98,9 @@ function JoinCallEmptyState(props: {
         <PhoneIcon class="size-5" />
         {props.isJoining
           ? t('channel.call.connecting')
-          : t('channel.call.join')}
+          : isStandingRoomEmpty(participantIds().length)
+            ? t('channel.call.enterRoom')
+            : t('channel.call.join')}
       </Button>
     </div>
   );
@@ -128,11 +137,21 @@ export function ChannelCallTab(props: {
   return (
     <Switch
       fallback={
-        <JoinCallEmptyState
-          channelId={props.channelId}
-          isJoining={call.isJoining()}
-          onJoin={() => void call.joinCall()}
-        />
+        <Suspense
+          fallback={
+            <div class="flex size-full items-center justify-center px-6 text-center text-ink">
+              <h2 class="text-lg font-semibold">
+                {t('channel.call.waitingForOthers')}
+              </h2>
+            </div>
+          }
+        >
+          <JoinCallEmptyState
+            channelId={props.channelId}
+            isJoining={call.isJoining()}
+            onJoin={() => void call.joinCall()}
+          />
+        </Suspense>
       }
     >
       <Match when={call.isInThisChannel() && !call.joinError()}>
@@ -156,9 +175,12 @@ export function ChannelCallTab(props: {
           </button>
         </div>
       </Match>
-      <Match when={props.pendingJoin?.()}>
-        <div class="flex size-full items-center justify-center text-ink-muted">
-          {t('channel.call.joining')}
+      <Match when={props.pendingJoin?.() || call.isJoining()}>
+        <div class="flex size-full flex-col items-center justify-center gap-2 px-6 text-center text-ink">
+          <h2 class="text-lg font-semibold">
+            {t('channel.call.waitingForOthers')}
+          </h2>
+          <p class="text-sm text-ink-muted">{t('channel.call.joining')}</p>
         </div>
       </Match>
     </Switch>

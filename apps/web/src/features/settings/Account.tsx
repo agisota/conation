@@ -2,6 +2,11 @@ import { useAnalytics } from '@app/lib/analytics/analytics-context';
 import type { AccountDeletionReason } from '@app/lib/analytics/app-events';
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
 import { LocaleSelect, t } from '@app/lib/i18n';
+import { globalSplitManager } from '@app/signal/splitLayout';
+import {
+  canStartUserCall,
+  joinChannelCall,
+} from '@channel/Call/join-channel-call';
 import { type BundleUpdateStatus, useTauri } from '@conation/tauri';
 import { useLogout } from '@core/auth/logout';
 import { toast } from '@core/component/Toast/Toast';
@@ -42,6 +47,7 @@ import {
   invalidateOwnUserName,
   useOwnUserName,
 } from '@queries/auth/user-name-self';
+import { useGetOrCreateDirectMessageMutation } from '@queries/channel/get-or-create-dm';
 import { useCurrentTeamQuery } from '@queries/team/teams';
 import {
   loadWorkProfileExtras,
@@ -789,8 +795,69 @@ function WorkProfileSection() {
             onChange={(checked) => persist({ activityVisible: checked })}
           />
         </Row>
+        <WorkProfileReachActions userId={userId()} />
       </SettingsCard>
     </SettingsSection>
+  );
+}
+
+function WorkProfileReachActions(props: { userId: string | undefined }) {
+  const getOrCreateDmMutation = useGetOrCreateDirectMessageMutation({
+    onError: () => toast.failure(t('core.userActions.directMessageFailed')),
+  });
+
+  const openDM = async () => {
+    if (!props.userId) return;
+    try {
+      const { channel_id } = await getOrCreateDmMutation.mutateAsync({
+        recipient_id: props.userId,
+      });
+      globalSplitManager()?.openWithSplit(
+        { type: 'channel', id: channel_id },
+        { reopen: 'latest' }
+      );
+    } catch {
+      // mutation onError toasts
+    }
+  };
+
+  const openCall = async () => {
+    if (!props.userId) return;
+    try {
+      const { channel_id } = await getOrCreateDmMutation.mutateAsync({
+        recipient_id: props.userId,
+      });
+      await joinChannelCall(channel_id);
+    } catch {
+      toast.failure(t('core.userActions.callFailed'));
+    }
+  };
+
+  return (
+    <Row label={t('settings.account.workProfile.reach')}>
+      <div class="flex items-center gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          depth={2}
+          disabled={!props.userId}
+          onClick={() => void openDM()}
+        >
+          {t('core.userActions.message')}
+        </Button>
+        <Show when={canStartUserCall()}>
+          <Button
+            size="sm"
+            variant="outline"
+            depth={2}
+            disabled={!props.userId}
+            onClick={() => void openCall()}
+          >
+            {t('core.userActions.call')}
+          </Button>
+        </Show>
+      </div>
+    </Row>
   );
 }
 

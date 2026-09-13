@@ -13,6 +13,7 @@ import {
   CALL_PANEL_MEDIUM_NARROW_PX,
   CALL_PANEL_VERY_NARROW_PX,
 } from './call-panel-breakpoints';
+import { isStandingRoomEmpty } from './join-channel-call';
 import { LK_TRACK_SOURCE } from './livekit-loader';
 import { MutedMicrophoneBadge } from './MutedMicrophoneBadge';
 import { TrackView } from './TrackView';
@@ -291,6 +292,14 @@ export function CallOverlay(props: { onLeave: () => void }) {
 
   return (
     <div class="flex flex-col h-full touch:pb-(--mobile-content-inset-bottom)">
+      <Show when={isStandingRoomEmpty(callCtx.remoteParticipants().size)}>
+        <p
+          data-testid="standing-room-waiting"
+          class="shrink-0 px-3 pt-2 text-center text-sm font-medium text-ink"
+        >
+          {t('channel.call.waitingForOthers')}
+        </p>
+      </Show>
       {/* Screen share area */}
       <Show when={hasAnyScreenShare()}>
         <div class="flex-1 min-h-0 pt-2">
