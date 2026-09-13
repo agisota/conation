@@ -31,6 +31,12 @@ fn test_read_content_schema_validation() {
         validated.description.contains("Retrieve"),
         "Description should contain expected text"
     );
+    assert!(
+        validated.description.to_lowercase().contains("canvas")
+            && validated.description.to_lowercase().contains("loro"),
+        "ReadContent must advertise live canvas boards: {}",
+        validated.description
+    );
 }
 
 #[test]
