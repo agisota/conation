@@ -76,7 +76,10 @@ async fn lists_recent_threads_via_standard_jmap_query_then_get() {
     assert!(messages[0].has_attachments);
     assert_eq!(messages[0].attachments.len(), 1);
     assert_eq!(messages[0].attachments[0].blob_id, "att-1");
-    assert_eq!(messages[0].attachments[0].name.as_deref(), Some("brief.pdf"));
+    assert_eq!(
+        messages[0].attachments[0].name.as_deref(),
+        Some("brief.pdf")
+    );
     assert_eq!(messages[0].attachments[0].mime_type, "application/pdf");
     assert_eq!(messages[0].attachments[0].size, 1024);
 }
@@ -205,7 +208,9 @@ async fn removed_principal_api_provisioning_fails_closed() {
         provider(&server)
             .provision_account("pythia@conation.dev", "not-sent")
             .await,
-        Err(ProviderError::Configuration(_) | ProviderError::Transport(_) | ProviderError::Provider(_))
+        Err(ProviderError::Configuration(_)
+            | ProviderError::Transport(_)
+            | ProviderError::Provider(_))
     ));
     assert!(server
         .received_requests()

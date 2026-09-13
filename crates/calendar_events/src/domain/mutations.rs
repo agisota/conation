@@ -184,11 +184,7 @@ where
             return Err(CalendarMutationError::ReadOnly);
         }
         ensure_organizer_attendee(&mut draft.attendees, &target.token_identity.email_address);
-        if !target
-            .token_identity
-            .provider
-            .eq_ignore_ascii_case("GMAIL")
-        {
+        if !target.token_identity.provider.eq_ignore_ascii_case("GMAIL") {
             let mut provider_event_id = Uuid::now_v7().to_string();
             if let EventTime::Timed {
                 starts_at, ends_at, ..
@@ -259,11 +255,7 @@ where
         if target.is_read_only {
             return Err(CalendarMutationError::ReadOnly);
         }
-        if !target
-            .token_identity
-            .provider
-            .eq_ignore_ascii_case("GMAIL")
-        {
+        if !target.token_identity.provider.eq_ignore_ascii_case("GMAIL") {
             let title = patch.title.clone().ok_or_else(|| {
                 CalendarMutationError::InvalidInput(
                     "a Stalwart calendar update needs a title".to_string(),
@@ -296,11 +288,25 @@ where
                 token_identity: target.token_identity.clone(),
                 actor: target.actor.clone(),
             };
-            let upsert = stalwart_upsert_from_draft(
-                &creation,
-                &draft,
-                target.provider_event_id.clone(),
-            );
+            if let EventTime::Timed {
+                starts_at, ends_at, ..
+            } = &draft.time
+            {
+                let duration_secs = (*ends_at - *starts_at).num_seconds().max(60);
+                if let Ok(stalwart) = email_provider::StalwartProvider::from_env() {
+                    let _ = stalwart
+                        .update_calendar_event(
+                            &target.token_identity.email_address,
+                            &target.provider_event_id,
+                            &draft.title,
+                            *starts_at,
+                            duration_secs,
+                        )
+                        .await;
+                }
+            }
+            let upsert =
+                stalwart_upsert_from_draft(&creation, &draft, target.provider_event_id.clone());
             return self.persist_echo(target.actor.as_ref(), upsert).await;
         }
         let access_token = self.fetch_token(&target.token_identity).await?;
@@ -377,11 +383,15 @@ where
         if target.is_read_only {
             return Err(CalendarMutationError::ReadOnly);
         }
-        if !target
-            .token_identity
-            .provider
-            .eq_ignore_ascii_case("GMAIL")
-        {
+        if !target.token_identity.provider.eq_ignore_ascii_case("GMAIL") {
+            if let Ok(stalwart) = email_provider::StalwartProvider::from_env() {
+                let _ = stalwart
+                    .delete_calendar_event(
+                        &target.token_identity.email_address,
+                        target.master_provider_event_id(),
+                    )
+                    .await;
+            }
             let retired = self
                 .repository
                 .remove_google_source(

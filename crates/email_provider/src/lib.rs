@@ -622,10 +622,7 @@ impl StalwartProvider {
         method_response(body, method)
     }
 
-    async fn admin_session_document(
-        &self,
-        auth: &AdminAuth,
-    ) -> Result<JmapSession, ProviderError> {
+    async fn admin_session_document(&self, auth: &AdminAuth) -> Result<JmapSession, ProviderError> {
         let response = apply_admin_auth(self.client.get(self.session_url()?), auth)
             .send()
             .await
@@ -677,7 +674,10 @@ impl StalwartProvider {
                 self.admin_call(session, auth, using, method, arguments)
                     .await
             }
-            None => self.call(session, access_token, using, method, arguments).await,
+            None => {
+                self.call(session, access_token, using, method, arguments)
+                    .await
+            }
         }
     }
 
@@ -843,7 +843,9 @@ impl StalwartProvider {
             .and_then(Value::as_array)
             .and_then(|list| {
                 list.iter()
-                    .find(|calendar| calendar.get("isDefault").and_then(Value::as_bool) == Some(true))
+                    .find(|calendar| {
+                        calendar.get("isDefault").and_then(Value::as_bool) == Some(true)
+                    })
                     .or_else(|| list.first())
                     .and_then(|calendar| calendar.get("id").and_then(Value::as_str))
             })
@@ -877,8 +879,83 @@ impl StalwartProvider {
             .and_then(Value::as_str)
             .map(str::to_owned)
             .ok_or_else(|| {
-                ProviderError::Provider("Stalwart CalendarEvent/set did not create an event".to_owned())
+                ProviderError::Provider(
+                    "Stalwart CalendarEvent/set did not create an event".to_owned(),
+                )
             })
+    }
+
+    /// Update a timed event on the mailbox's default Stalwart calendar.
+    pub async fn update_calendar_event(
+        &self,
+        mailbox_email: &str,
+        event_id: &str,
+        title: &str,
+        start: chrono::DateTime<chrono::Utc>,
+        duration_secs: i64,
+    ) -> Result<(), ProviderError> {
+        let auth = admin_auth_from_env()?;
+        let session = self.admin_session_document(&auth).await?;
+        let account_id = self
+            .stalwart_account_id_for_email(&session, &auth, mailbox_email)
+            .await?;
+        let mut patch = serde_json::Map::new();
+        patch.insert(
+            event_id.to_owned(),
+            json!({
+                "title": title,
+                "start": start.format("%Y-%m-%dT%H:%M:%S").to_string(),
+                "duration": format!("PT{}S", duration_secs.max(60)),
+                "timeZone": "UTC",
+            }),
+        );
+        let updated = self
+            .admin_call(
+                &session,
+                &auth,
+                vec![JMAP_CORE, JMAP_CALENDARS],
+                "CalendarEvent/set",
+                json!({
+                    "accountId": account_id,
+                    "update": patch,
+                }),
+            )
+            .await?;
+        if updated
+            .get("notUpdated")
+            .and_then(|value| value.get(event_id))
+            .is_some()
+        {
+            return Err(ProviderError::Provider(
+                "Stalwart CalendarEvent/set did not update the event".to_owned(),
+            ));
+        }
+        Ok(())
+    }
+
+    /// Destroy a Stalwart calendar event. Missing events are treated as success.
+    pub async fn delete_calendar_event(
+        &self,
+        mailbox_email: &str,
+        event_id: &str,
+    ) -> Result<(), ProviderError> {
+        let auth = admin_auth_from_env()?;
+        let session = self.admin_session_document(&auth).await?;
+        let account_id = self
+            .stalwart_account_id_for_email(&session, &auth, mailbox_email)
+            .await?;
+        self.admin_call(
+            &session,
+            &auth,
+            vec![JMAP_CORE, JMAP_CALENDARS],
+            "CalendarEvent/set",
+            json!({
+                "accountId": account_id,
+                "destroy": [event_id],
+            }),
+        )
+        .await?;
+        Ok(())
     }
 }
 
@@ -941,9 +1018,8 @@ fn method_response(body: Value, expected_method: &str) -> Result<Value, Provider
 }
 
 fn from_address_from_mime(mime: &[u8]) -> Result<String, ProviderError> {
-    let text = std::str::from_utf8(mime).map_err(|_| {
-        ProviderError::Provider("MIME message is not valid UTF-8".to_owned())
-    })?;
+    let text = std::str::from_utf8(mime)
+        .map_err(|_| ProviderError::Provider("MIME message is not valid UTF-8".to_owned()))?;
     let headers = text.split("\r\n\r\n").next().unwrap_or(text);
     for line in headers.lines() {
         let Some(value) = line
@@ -997,10 +1073,7 @@ fn admin_auth_from_env() -> Result<AdminAuth, ProviderError> {
     }
 }
 
-fn apply_admin_auth(
-    request: reqwest::RequestBuilder,
-    auth: &AdminAuth,
-) -> reqwest::RequestBuilder {
+fn apply_admin_auth(request: reqwest::RequestBuilder, auth: &AdminAuth) -> reqwest::RequestBuilder {
     match auth {
         AdminAuth::Bearer(token) => request.bearer_auth(token),
         AdminAuth::Basic { user, password } => request.basic_auth(user, Some(password)),
@@ -1042,12 +1115,8 @@ fn admin_account_id(session: &JmapSession) -> Option<&str> {
         })
         .or_else(|| {
             session.accounts.iter().find_map(|(id, account)| {
-                (account
-                    .account_capabilities
-                    .contains_key(JMAP_MANAGEMENT)
-                    || account
-                        .account_capabilities
-                        .contains_key(JMAP_PRINCIPAL)
+                (account.account_capabilities.contains_key(JMAP_MANAGEMENT)
+                    || account.account_capabilities.contains_key(JMAP_PRINCIPAL)
                     || account.account_capabilities.contains_key(JMAP_ADMIN))
                 .then_some(id.as_str())
             })
@@ -1209,9 +1278,7 @@ impl EmailProvider for StalwartProvider {
         _thread_id: Option<&str>,
     ) -> Result<SendResult, ProviderError> {
         let from = from_address_from_mime(mime).ok();
-        let (session, admin, account_id) = self
-            .open_mailbox(access_token, from.as_deref())
-            .await?;
+        let (session, admin, account_id) = self.open_mailbox(access_token, from.as_deref()).await?;
         if !session.capabilities.contains_key(JMAP_SUBMISSION) {
             return Err(ProviderError::Provider(
                 "JMAP session does not advertise submission capability".to_owned(),
@@ -1237,7 +1304,9 @@ impl EmailProvider for StalwartProvider {
                         .flatten()
                 })
             })
-            .ok_or_else(|| ProviderError::Provider("JMAP account has no Drafts mailbox".to_owned()))?
+            .ok_or_else(|| {
+                ProviderError::Provider("JMAP account has no Drafts mailbox".to_owned())
+            })?
             .to_owned();
         let upload_url = session.upload_url.as_deref().ok_or_else(|| {
             ProviderError::Provider("JMAP session does not advertise uploadUrl".to_owned())
