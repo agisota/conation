@@ -7,7 +7,7 @@ import {
   buildSettingsSearchIndex,
   type SettingsSearchEntry,
   searchSettings,
-} from './settingsSearch';
+} from './settings-search-query';
 
 const Icon = () => null;
 

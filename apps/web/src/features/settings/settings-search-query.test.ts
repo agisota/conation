@@ -1,6 +1,6 @@
 import type { SettingsTabItem } from '@core/constant/settingsTabsConfig';
 import { describe, expect, it } from 'vitest';
-import { buildSettingsSearchIndex, searchSettings } from './settingsSearch.ts';
+import { buildSettingsSearchIndex, searchSettings } from './settings-search-query.ts';
 
 // A stand-in icon: the index only carries icons through, it never renders them.
 const Icon = () => null;

@@ -49,7 +49,7 @@ import { Notifications } from './Notifications';
 import { SettingsSearch } from './SettingsSearch';
 import { Shortcuts } from './Shortcuts';
 import { settingsGroupLabel, settingsTabLabel } from './settings-i18n';
-import { buildSettingsSearchIndex, searchSettings } from './settingsSearch';
+import { buildSettingsSearchIndex, searchSettings } from './settings-search-query';
 import { Tags } from './Tags';
 import { Team } from './Team';
 

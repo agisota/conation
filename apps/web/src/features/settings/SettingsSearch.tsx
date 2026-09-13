@@ -8,12 +8,12 @@ import { Dynamic } from 'solid-js/web';
 import type {
   SettingsSearchEntry,
   SettingsSearchResult,
-} from './settingsSearch';
+} from './settings-search-query';
 
 /**
  * The search field at the top of the settings sidebar plus, while a query is
  * typed, the ranked results that stand in for the category groups. Results are
- * pages and things inside pages (see `settingsSearch.ts`); picking one opens
+ * pages and things inside pages (see `settings-search-query.ts`); picking one opens
  * its page. Arrow keys move the highlight, Enter opens it, Escape clears the
  * query (or hands off to `onEscape` when there's nothing to clear).
  */
