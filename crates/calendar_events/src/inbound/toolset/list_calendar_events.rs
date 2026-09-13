@@ -68,6 +68,8 @@ pub struct CalendarEventListItem {
     pub is_read_only: bool,
     /// Calendar the event belongs to, when known.
     pub calendar_id: Option<uuid::Uuid>,
+    /// Availability: "opaque" blocks time (busy), "transparent" is free.
+    pub transparency: String,
 }
 
 /// Response from the ListCalendarEvents tool.
@@ -225,6 +227,7 @@ where
                     conference_url: event.conference_url.clone(),
                     is_read_only: event.is_read_only,
                     calendar_id: event.calendar_id,
+                    transparency: event.transparency.as_str().to_string(),
                 }
             })
             .collect();
