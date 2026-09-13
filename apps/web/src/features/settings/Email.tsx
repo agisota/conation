@@ -69,13 +69,7 @@ export function EmailCard() {
   const emailActive = useEmailLinksStatus();
   const startAddInbox = useAddInboxFlow();
 
-  // Fires when the Email settings open. Used only to surface the COMPLETED
-  // state; in-progress state comes from the live connection-gateway store.
   const backfillJobsQuery = useBackfillJobsQuery();
-  // Latest job per link. The query returns newest-first, so the first job seen
-  // for a link_id is its latest — we key the settled label off the current job,
-  // not any historical completed one (a later fail/cancel must not still read
-  // as "complete").
   const latestBackfillByLinkId = createMemo(() => {
     const latest = new Map<string, BackfillJob>();
     for (const job of backfillJobsQuery.data?.jobs ?? []) {
@@ -107,8 +101,6 @@ export function EmailCard() {
   );
   const [isEmailActionPending, setIsEmailActionPending] = createSignal(false);
 
-  // The primary inbox is the user's own is_primary link; it sorts to the top
-  // and is labelled. Everything else (other own inboxes + delegated/shared) follows.
   const inboxes = createMemo(() => {
     const links = emailLinksQuery.data?.links ?? [];
     const uid = userId();
@@ -179,7 +171,6 @@ export function EmailCard() {
             />
           </Show>
         </IntegrationRow>
-
         <Show when={emailActive()}>
           <Show when={inboxes().primary}>
             {(primary) => (
@@ -265,12 +256,10 @@ export function EmailCard() {
           </Show>
         </Show>
       </SettingsCard>
-
       <TurnOffCalendarDialog
         target={turnOffCalendarTarget()}
         onClose={() => setTurnOffCalendarTarget(null)}
       />
-
       <Dialog
         open={removeTarget() !== null}
         onOpenChange={(open) => {
@@ -329,11 +318,6 @@ function syncStatusLabel(status: SyncStatus): string {
     .exhaustive();
 }
 
-// Live backfill progress bar. `completed`/`total` are the connection-gateway
-// counters; render the ratio rather than the raw counts since the priority pass
-// can inflate both slightly above the real mailbox size.
-// Rough "time left" from the recent backfill rate. Rounds up and bins into
-// s / m / h so the estimate doesn't visibly jitter between progress events.
 function formatEta(seconds: number): string {
   if (seconds < 60) {
     return t('settings.email.sync.eta.seconds', {
@@ -357,8 +341,6 @@ function formatEta(seconds: number): string {
 function BackfillProgressBar(props: { progress: BackfillProgress }) {
   const percent = () => {
     if (props.progress.total <= 0) return 0;
-    // Only reach 100% at actual completion; floor otherwise so e.g. 999/1000
-    // doesn't round up and make the bar look finished early.
     if (props.progress.completed >= props.progress.total) return 100;
     return Math.floor((props.progress.completed / props.progress.total) * 100);
   };
@@ -399,9 +381,6 @@ function Chip(props: { label: string }) {
   );
 }
 
-// Placeholder shown when the account's primary inbox has been removed but other
-// inboxes remain. It is not a real link — re-enabling re-runs the Gmail enable
-// flow, which re-links and backfills.
 function DisabledPrimaryRow(props: { email: string; onEnable: () => void }) {
   return (
     <div class="bg-surface flex items-center justify-between gap-3 h-15.25 px-6">
@@ -480,12 +459,9 @@ function InboxRow(props: {
                 </Show>
               }
             >
-              {/* Live backfill progress (connection gateway) wins over the coarse
-                  sync_status while a backfill is actively running. */}
               <Match when={getBackfillProgress(props.link.id)}>
                 {(progress) => <BackfillProgressBar progress={progress()} />}
               </Match>
-              {/* Settled inbox with a completed backfill from the BE list. */}
               <Match
                 when={
                   props.link.sync_status === SyncStatus.UP_TO_DATE &&
@@ -536,12 +512,12 @@ function InboxRow(props: {
               {t('settings.email.actions.reconnect')}
             </Button>
           </Show>
-          {/* Its own consent flow, since Reconnect asks for the Gmail scopes
-              only. Shown alongside Reconnect rather than after it: this
-              request is a superset, so one consent repairs a dead grant and
-              enables calendar, sparing a full revoke two round trips. */}
           <Show
-            when={calendarUiEnabled() && props.link.needs_calendar_permission}
+            when={
+              calendarUiEnabled() &&
+              props.link.provider === UserProvider.GMAIL &&
+              props.link.needs_calendar_permission
+            }
           >
             <Button
               variant="accent"
@@ -555,15 +531,11 @@ function InboxRow(props: {
               {t('settings.email.actions.enableCalendar')}
             </Button>
           </Show>
-          {/* Only the owner sees this: turning calendar off deletes the
-              inbox's calendar data, which a delegate must not do. Offered
-              whenever that data exists, not only while the grant satisfies
-              today's capability check — an inbox synced under an earlier scope
-              set still has events to remove. */}
           <Show
             when={
               calendarUiEnabled() &&
               props.isOwn &&
+              props.link.provider === UserProvider.GMAIL &&
               (!props.link.needs_calendar_permission ||
                 props.link.has_calendar_data)
             }
