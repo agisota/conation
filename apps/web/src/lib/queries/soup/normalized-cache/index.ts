@@ -6,6 +6,7 @@ export {
   hasSoupEntity,
   invalidateAllSoup,
   invalidateSoupEntity,
+  insertSoupEntity,
   invalidateSoupQueriesReferencing,
   optimisticUpdateSoupEntity,
   optimisticUpdateSoupItemUpdatedAt,

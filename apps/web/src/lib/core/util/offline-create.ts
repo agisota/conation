@@ -1,5 +1,9 @@
 const STORAGE_KEY = 'conation:offline-create';
+const LOCAL_FIRST_STORAGE_KEY = 'conation:local-first-ids';
 const MAX_RECORDS = 50;
+
+/** Soup / preview ids for creates that have not been accepted by the server yet. */
+export const LOCAL_FIRST_PREFIX = 'local:';
 
 type OfflineCreateBase = {
   id: string;
@@ -71,6 +75,109 @@ function newId(): string {
   return `offline-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+/** Client-generated soup id used until the create flushes to a server id. */
+export function allocateLocalFirstId(): string {
+  return `${LOCAL_FIRST_PREFIX}${newId()}`;
+}
+
+export function isLocalFirstId(id: string): boolean {
+  return id.startsWith(LOCAL_FIRST_PREFIX);
+}
+
+export function toLocalFirstId(id: string): string {
+  return isLocalFirstId(id) ? id : `${LOCAL_FIRST_PREFIX}${id}`;
+}
+
+export type LocalFirstBinding = {
+  localId: string;
+  kind: OfflineCreateRecord['kind'];
+  title?: string;
+  queuedAt: number;
+  serverId?: string;
+};
+
+function readBindings(): LocalFirstBinding[] {
+  if (typeof localStorage === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(LOCAL_FIRST_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (row): row is LocalFirstBinding =>
+        !!row &&
+        typeof row === 'object' &&
+        typeof (row as LocalFirstBinding).localId === 'string'
+    );
+  } catch {
+    return [];
+  }
+}
+
+function writeBindings(rows: LocalFirstBinding[]): void {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(
+      LOCAL_FIRST_STORAGE_KEY,
+      JSON.stringify(rows.slice(0, MAX_RECORDS))
+    );
+  } catch {
+    // quota / private mode — the create queue still holds the payload
+  }
+}
+
+/** Remember a queued create so soup can keep the local id until replay binds a server id. */
+export function rememberLocalFirstBinding(
+  binding: LocalFirstBinding
+): LocalFirstBinding {
+  const localId = toLocalFirstId(binding.localId);
+  const existing = readBindings().find((row) => row.localId === localId);
+  const next: LocalFirstBinding = {
+    kind: binding.kind ?? existing?.kind ?? 'markdown',
+    title: binding.title ?? existing?.title,
+    queuedAt: binding.queuedAt ?? existing?.queuedAt ?? Date.now(),
+    serverId: binding.serverId ?? existing?.serverId,
+    localId,
+  };
+  writeBindings([
+    next,
+    ...readBindings().filter((row) => row.localId !== localId),
+  ]);
+  return next;
+}
+
+/** Map a local-first soup id to the server id returned by a successful flush. */
+export function bindLocalFirstId(
+  localId: string,
+  serverId: string
+): LocalFirstBinding {
+  const existing = readBindings().find(
+    (row) => row.localId === toLocalFirstId(localId)
+  );
+  return rememberLocalFirstBinding({
+    localId,
+    kind: existing?.kind ?? 'markdown',
+    title: existing?.title,
+    queuedAt: existing?.queuedAt ?? Date.now(),
+    serverId,
+  });
+}
+
+export function listLocalFirstBindings(): LocalFirstBinding[] {
+  return readBindings();
+}
+
+/** Server soup id when known, otherwise the local-first id still in soup. */
+export function resolveSoupId(id: string): string {
+  if (!isLocalFirstId(id)) return id;
+  return readBindings().find((row) => row.localId === id)?.serverId ?? id;
+}
+
+export function clearLocalFirstBindings(): void {
+  if (typeof localStorage === 'undefined') return;
+  localStorage.removeItem(LOCAL_FIRST_STORAGE_KEY);
+}
+
 /** Queue a docs/tasks/Canvas create that the storage API could not accept offline. */
 export function queueOfflineCreate(
   record: Omit<OfflineCreateRecord, 'id' | 'queuedAt'> & {
@@ -78,14 +185,24 @@ export function queueOfflineCreate(
     queuedAt?: number;
   }
 ): string {
+  const id =
+    record.id && record.id.length > 0
+      ? toLocalFirstId(record.id)
+      : allocateLocalFirstId();
   const next: OfflineCreateRecord = {
     ...record,
-    id: record.id ?? newId(),
+    id,
     queuedAt: record.queuedAt ?? Date.now(),
   } as OfflineCreateRecord;
   const rows = readStore().filter((row) => row.id !== next.id);
   rows.unshift(next);
   writeStore(rows);
+  rememberLocalFirstBinding({
+    localId: next.id,
+    kind: next.kind,
+    title: 'title' in next ? next.title : undefined,
+    queuedAt: next.queuedAt,
+  });
   return next.id;
 }
 

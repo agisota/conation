@@ -6,7 +6,12 @@ import { PROPERTY_OPTION_IDS, SYSTEM_PROPERTY_IDS } from '@property/constants';
 import { invalidateUserQuota } from '@queries/auth';
 import { postNewHistoryItem } from '@queries/history/history';
 import { setPreviewOnCreate } from '@queries/preview/preview';
-import { refetchSoupEntity } from '@queries/soup/cache';
+import {
+  insertSoupEntity,
+  refetchSoupEntity,
+  removeSoupEntities,
+} from '@queries/soup/cache';
+import type { SoupApiItem } from '@service-storage/generated/schemas';
 import { seedDocumentLoadBundle } from '@queries/storage/documentLoad/documentLoadBundle';
 import { cognitionApiServiceClient } from '@service-cognition/client';
 import type { CreateChatRequest } from '@service-cognition/generated/schemas';
@@ -27,12 +32,55 @@ import {
 } from './languageQuery';
 import { resolveUploadContentType } from './uploadContentType';
 import {
+  bindLocalFirstId,
   dequeueOfflineCreates,
   ensureOfflineCreateFlush,
+  isLocalFirstId,
   isOfflineCreateFailure,
   queueOfflineCreate,
   type OfflineCreateRecord,
 } from './offline-create';
+
+
+function seedLocalFirstCreate(
+  record: Omit<OfflineCreateRecord, 'id' | 'queuedAt'> & {
+    id?: string;
+    queuedAt?: number;
+  }
+): string {
+  const localId = queueOfflineCreate(record);
+  const title = 'title' in record ? record.title : undefined;
+  const fileType = record.kind === 'canvas' ? 'canvas' : 'md';
+  setPreviewOnCreate({
+    itemId: localId,
+    itemType: 'document',
+    name: title ?? '',
+    fileType,
+    subType:
+      record.kind === 'task' ? { type: 'task', is_completed: false } : undefined,
+  });
+  try {
+    insertSoupEntity({
+      tag: 'document',
+      data: { id: localId, title: title ?? '' },
+      frecency_score: 1,
+    } as SoupApiItem);
+  } catch {
+    // soup cache may not be initialized in unit tests / early boot
+  }
+  return localId;
+}
+
+function bindFlushedCreate(localId: string, serverId: string): void {
+  bindLocalFirstId(localId, serverId);
+  if (isLocalFirstId(localId) && localId !== serverId) {
+    try {
+      removeSoupEntities(new Set([localId]));
+    } catch {
+      // soup cache optional
+    }
+  }
+}
 
 type CreateMarkdownFileArgs = {
   title?: string;
@@ -60,7 +108,7 @@ export async function createMarkdownFile(
 
   if (result.isErr()) {
     if (!opts?.replay && isOfflineCreateFailure(result.error)) {
-      queueOfflineCreate({
+      return seedLocalFirstCreate({
         kind: 'markdown',
         title: args?.title,
         content: args?.content,
@@ -172,7 +220,7 @@ async function createTaskResponse(
 
   if (result.isErr()) {
     if (!opts?.replay && isOfflineCreateFailure(result.error)) {
-      queueOfflineCreate({
+      const documentId = seedLocalFirstCreate({
         kind: 'task',
         title: args?.title,
         content: args?.content,
@@ -180,6 +228,7 @@ async function createTaskResponse(
         propertyValues: args?.propertyValues,
         source: args?.source,
       });
+      return { documentId };
     }
     return;
   }
@@ -444,13 +493,15 @@ export async function createCanvasFileFromJsonString(args: {
   invalidateUserQuota();
   if (maybeCanvas.isErr()) {
     if (!args.replay && isOfflineCreateFailure(maybeCanvas.error)) {
-      queueOfflineCreate({
-        kind: 'canvas',
-        json,
-        title,
-        projectId,
-        source,
-      });
+      return {
+        documentId: seedLocalFirstCreate({
+          kind: 'canvas',
+          json,
+          title,
+          projectId,
+          source,
+        }),
+      };
     }
     return { error: 'Document creation failed.' };
   }
@@ -552,14 +603,18 @@ export async function createStaticFile(file: File): Promise<string> {
 async function flushOfflineCreates(): Promise<void> {
   const rows = dequeueOfflineCreates();
   for (const row of rows) {
-    const replayed = await replayOfflineCreate(row);
-    if (!replayed) {
+    const serverId = await replayOfflineCreate(row);
+    if (!serverId) {
       queueOfflineCreate(row);
+      continue;
     }
+    bindFlushedCreate(row.id, serverId);
   }
 }
 
-async function replayOfflineCreate(row: OfflineCreateRecord): Promise<boolean> {
+async function replayOfflineCreate(
+  row: OfflineCreateRecord
+): Promise<string | undefined> {
   if (row.kind === 'task') {
     const created = await createTaskResponse(
       {
@@ -571,10 +626,10 @@ async function replayOfflineCreate(row: OfflineCreateRecord): Promise<boolean> {
       },
       { replay: true }
     );
-    return !!created;
+    return created?.documentId;
   }
   if (row.kind === 'markdown') {
-    const created = await createMarkdownFile(
+    return createMarkdownFile(
       {
         title: row.title,
         content: row.content,
@@ -583,7 +638,6 @@ async function replayOfflineCreate(row: OfflineCreateRecord): Promise<boolean> {
       },
       { replay: true }
     );
-    return !!created;
   }
   const created = await createCanvasFileFromJsonString({
     json: row.json,
@@ -592,7 +646,9 @@ async function replayOfflineCreate(row: OfflineCreateRecord): Promise<boolean> {
     source: row.source,
     replay: true,
   });
-  return 'documentId' in created && typeof created.documentId === 'string';
+  return 'documentId' in created && typeof created.documentId === 'string'
+    ? created.documentId
+    : undefined;
 }
 
 ensureOfflineCreateFlush(flushOfflineCreates);

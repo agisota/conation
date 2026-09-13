@@ -83,6 +83,7 @@ import {
   SettingsRow,
   SettingsSection,
 } from './primitives';
+import { KeepBothRestore } from './KeepBothRestore';
 
 // 16 megabytes
 const MAX_PROFILE_PICTURE_SIZE = 16 * 1000 * 1000;
@@ -497,6 +498,8 @@ export function Account() {
       </SettingsSection>
 
       <WorkProfileSection />
+
+      <KeepBothRestore />
 
       <Show when={isTouchDevice()}>
         <SettingsSection>

@@ -4,15 +4,22 @@
 
 import { afterEach, describe, expect, it } from 'vitest';
 import {
+  allocateLocalFirstId,
+  bindLocalFirstId,
+  clearLocalFirstBindings,
   clearOfflineCreates,
   dequeueOfflineCreates,
+  isLocalFirstId,
   isOfflineCreateFailure,
+  listLocalFirstBindings,
   listOfflineCreates,
   queueOfflineCreate,
+  resolveSoupId,
 } from './offline-create';
 
 afterEach(() => {
   clearOfflineCreates();
+  clearLocalFirstBindings();
 });
 
 describe('isOfflineCreateFailure', () => {
@@ -56,8 +63,31 @@ describe('queueOfflineCreate', () => {
       'markdown',
       'task',
     ]);
+    expect(listOfflineCreates().every((row) => isLocalFirstId(row.id))).toBe(
+      true
+    );
     const taken = dequeueOfflineCreates();
     expect(taken).toHaveLength(3);
     expect(listOfflineCreates()).toEqual([]);
+  });
+});
+
+describe('local-first soup ids', () => {
+  it('allocates local: ids and binds them to server soup ids', () => {
+    const localId = allocateLocalFirstId();
+    expect(isLocalFirstId(localId)).toBe(true);
+    const queued = queueOfflineCreate({
+      kind: 'markdown',
+      title: 'Draft',
+      id: localId,
+      queuedAt: 1,
+    });
+    expect(queued).toBe(localId);
+    expect(resolveSoupId(localId)).toBe(localId);
+    bindLocalFirstId(localId, 'server-doc-1');
+    expect(resolveSoupId(localId)).toBe('server-doc-1');
+    expect(
+      listLocalFirstBindings().find((row) => row.localId === localId)?.serverId
+    ).toBe('server-doc-1');
   });
 });
