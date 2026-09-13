@@ -2654,6 +2654,7 @@
   "auth.legal.terms": "условиями использования",
   "auth.mailbox.created": "Почтовый ящик создан: {email}",
   "auth.mailbox.hint": "Необязательный адрес @conation.dev. Пустое поле — имя из вашей почты.",
+  "auth.mailbox.createNeedsLocal": "Сначала выберите адрес @conation.dev при регистрации.",
   "auth.mailbox.localPlaceholder": "alice",
   "auth.mailbox.checking": "Проверяем, свободен ли адрес…",
   "auth.mailbox.available": "{mailbox} свободен.",

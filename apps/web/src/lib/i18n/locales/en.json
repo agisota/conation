@@ -2648,6 +2648,7 @@
   "auth.legal.terms": "terms",
   "auth.mailbox.created": "Mailbox created: {email}",
   "auth.mailbox.hint": "Optional @conation.dev address. Leave blank to use your email name.",
+  "auth.mailbox.createNeedsLocal": "Choose a @conation.dev address during signup before creating the mailbox.",
   "auth.mailbox.localPlaceholder": "alice",
   "auth.mailbox.checking": "Checking availability…",
   "auth.mailbox.available": "{mailbox} is available.",

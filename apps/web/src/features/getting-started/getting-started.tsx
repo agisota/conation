@@ -1,4 +1,4 @@
-import { peekSignupMailboxLocal } from '@app/features/auth/signup-antibot';
+import { mailboxCreateLocalPart } from '@app/features/auth/signup-antibot';
 import { DOCS_BASE } from '@app/constants/docs-links';
 import { HomeBackfillProgress } from '@app/features/home/home-backfill-progress';
 import { InteractiveOnboardingModal } from '@app/features/onboarding/InteractiveOnboardingModal';
@@ -187,11 +187,11 @@ function GettingStartedContent() {
       local: userInfo()?.email?.split('@')[0] || 'you',
     }),
     onActivate: async () => {
-      const localPart = peekSignupMailboxLocal();
+      const localPart = mailboxCreateLocalPart();
       if (!localPart) {
         // Signup is the place to pick a local. Do not mint a derived
         // @conation.dev address from this checklist row.
-        toast.failure(t('auth.mailbox.hint'));
+        toast.failure(t('auth.mailbox.createNeedsLocal'));
         return false;
       }
       let succeeded = false;

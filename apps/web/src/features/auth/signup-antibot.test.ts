@@ -3,6 +3,7 @@ import {
   checkMailboxAvailable,
   leadingZeroBits,
   mailboxAvailabilityUrl,
+  mailboxCreateLocalPart,
   peekSignupMailboxLocal,
   rememberSignupMailboxLocal,
   sha256Bytes,
@@ -27,6 +28,13 @@ describe('signup mailbox local session', () => {
     expect(peekSignupMailboxLocal()).toBe('alice');
     rememberSignupMailboxLocal('');
     expect(peekSignupMailboxLocal()).toBeUndefined();
+  });
+
+  it('does not invent a local for later create clicks', () => {
+    sessionStorage.removeItem(SIGNUP_MAILBOX_LOCAL_KEY);
+    expect(mailboxCreateLocalPart()).toBeUndefined();
+    rememberSignupMailboxLocal('bob');
+    expect(mailboxCreateLocalPart()).toBe('bob');
   });
 });
 

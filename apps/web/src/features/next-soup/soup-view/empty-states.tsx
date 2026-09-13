@@ -1,3 +1,4 @@
+import { mailboxCreateLocalPart } from '@app/features/auth/signup-antibot';
 import { DOCS_BASE } from '@app/constants/docs-links';
 import type { ListView } from '@app/constants/list-views';
 import {
@@ -134,7 +135,12 @@ export function EmptyState(props: {
   const documentationLabel = t('soup.empty.documentation');
 
   const onCreateMailbox = () => {
-    void initEmailLink().match(
+    const localPart = mailboxCreateLocalPart();
+    if (!localPart) {
+      toast.failure(t('auth.mailbox.createNeedsLocal'));
+      return;
+    }
+    void initEmailLink({ localPart }).match(
       () => undefined,
       (err) => {
         if (err.tag !== 'AlreadyInitialized') {

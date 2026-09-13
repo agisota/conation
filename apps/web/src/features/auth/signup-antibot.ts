@@ -64,6 +64,15 @@ export function peekSignupMailboxLocal(): string | undefined {
   }
 }
 
+/**
+ * Local-part chosen at signup. Empty means do not mint a derived
+ * `@conation.dev` mailbox from a later checklist or empty-state click.
+ */
+export function mailboxCreateLocalPart(): string | undefined {
+  const peeked = peekSignupMailboxLocal()?.trim();
+  return peeked || undefined;
+}
+
 export function clearSignupMailboxLocal() {
   try {
     sessionStorage.removeItem(SIGNUP_MAILBOX_LOCAL_KEY);
