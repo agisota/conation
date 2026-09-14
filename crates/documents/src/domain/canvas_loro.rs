@@ -144,6 +144,29 @@ pub fn canvas_sync_seed_ops(
     }
 }
 
+/// Whether DSS should last-write agent `{nodes, edges}` after `canvasOps`.
+///
+/// After a live Loro apply-update, object storage must not last-write the
+/// agent's reconstructed board (that clobbers peer entities the agent never
+/// saw). Boards with no Loro session still persist full JSON so
+/// snapshot-less readers (DSS/S3 load, ReadContent fallback) have a board.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CanvasDssPut {
+    /// Live snapshot is source of truth — skip `overwrite_plain_text`.
+    Skip,
+    /// No Loro session — persist the applied JSON board.
+    Json,
+}
+
+/// Skip DSS put when a live Loro snapshot already exists.
+pub fn canvas_dss_put_after_ops(has_live_snapshot: bool) -> CanvasDssPut {
+    if has_live_snapshot {
+        CanvasDssPut::Skip
+    } else {
+        CanvasDssPut::Json
+    }
+}
+
 /// Apply editor-style node/edge ops onto a canvas JSON board.
 pub fn apply_ops_to_json(json: &str, ops: &[CanvasOp]) -> Result<String, CanvasLoroError> {
     let mut value: Value = serde_json::from_str(json).map_err(|_| CanvasLoroError::InvalidBoard)?;

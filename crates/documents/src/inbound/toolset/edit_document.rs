@@ -147,6 +147,15 @@ async fn seed_canvas_loro(
     }
 }
 
+fn canvas_ops_should_overwrite_dss(live_snapshot: Option<&[u8]>) -> bool {
+    matches!(
+        canvas_loro::canvas_dss_put_after_ops(
+            live_snapshot.is_some_and(|snapshot| !snapshot.is_empty())
+        ),
+        canvas_loro::CanvasDssPut::Json
+    )
+}
+
 fn canvas_overwrite_text(file_content: Option<&str>) -> Result<String, ToolCallError> {
     let Some(file_content) = file_content else {
         return Err(ToolCallError {
@@ -231,10 +240,12 @@ where
         description: error.to_string(),
         internal_error: error.into(),
     })?;
-    ctx.service
-        .overwrite_plain_text(&tool.document_id, FileType::Canvas, text.clone())
-        .await
-        .map_err(failed_to_overwrite_canvas)?;
+    if canvas_ops_should_overwrite_dss(existing.as_deref()) {
+        ctx.service
+            .overwrite_plain_text(&tool.document_id, FileType::Canvas, text.clone())
+            .await
+            .map_err(failed_to_overwrite_canvas)?;
+    }
     let sync = ctx.sync_service_client.clone();
     let document_id = tool.document_id.clone();
     let ops = ops.to_vec();

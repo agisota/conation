@@ -860,3 +860,17 @@ async fn canvas_ops_do_not_start_empty_when_object_storage_read_fails() {
             .is_empty()
     );
 }
+
+#[test]
+fn canvas_ops_overwrite_dss_when_loro_session_is_missing() {
+    assert!(canvas_ops_should_overwrite_dss(None));
+    assert!(canvas_ops_should_overwrite_dss(Some(&[])));
+}
+
+#[test]
+fn canvas_ops_skip_dss_overwrite_when_live_snapshot_exists() {
+    let snap =
+        crate::domain::canvas_loro::snapshot_from_json(r#"{"nodes":[{"id":"a"}],"edges":[]}"#)
+            .expect("encode");
+    assert!(!canvas_ops_should_overwrite_dss(Some(&snap)));
+}

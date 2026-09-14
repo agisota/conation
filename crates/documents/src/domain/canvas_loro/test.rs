@@ -250,3 +250,13 @@ fn loro_delete_op_tombstones_node() {
         json_from_snapshot(&merge_snapshots(&snap, &update).expect("merge")).expect("json");
     assert_eq!(node_ids(&merged), vec!["a".to_string()], "{merged}");
 }
+
+#[test]
+fn canvas_dss_put_after_ops_writes_json_when_no_session() {
+    assert_eq!(canvas_dss_put_after_ops(false), CanvasDssPut::Json);
+}
+
+#[test]
+fn canvas_dss_put_after_ops_skips_when_live_snapshot() {
+    assert_eq!(canvas_dss_put_after_ops(true), CanvasDssPut::Skip);
+}
