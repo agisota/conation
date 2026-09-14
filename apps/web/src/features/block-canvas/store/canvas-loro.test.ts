@@ -2,11 +2,13 @@
  * @vitest-environment jsdom
  */
 
+import { LoroDoc } from 'loro-crdt';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   applyCanvasOps,
   applyCanvasOpsToDoc,
   boardFromDoc,
+  canvasDssPutAfterWal,
   clearAllCanvasLoro,
   encodeCanvasLoroDiff,
   mergeCanvasBoards,
@@ -18,7 +20,6 @@ import {
   seedCanvasLoroPrior,
   snapshotFromJson,
 } from './canvas-loro';
-import { LoroDoc } from 'loro-crdt';
 
 afterEach(() => {
   clearAllCanvasLoro();
@@ -64,7 +65,6 @@ describe('canvas Loro persist', () => {
   });
 });
 
-
 describe('canvas node-level ops', () => {
   it('upserts, moves, patches, and deletes without replacing the board', () => {
     const next = applyCanvasOps(
@@ -94,7 +94,6 @@ describe('canvas node-level ops', () => {
     expect(deleted.edges).toEqual([]);
   });
 });
-
 
 describe('canvas editor incremental save', () => {
   it('diffs only dirty nodes and edges', () => {
@@ -265,5 +264,42 @@ describe('canvas editor incremental save', () => {
       (n) => (n as { id: string }).id
     );
     expect(ids).toEqual(['a']);
+  });
+});
+
+describe('canvas DSS save after WAL', () => {
+  const clientMissingPeer = {
+    nodes: [{ id: 'a', kind: 'mine' }],
+    edges: [] as unknown[],
+  };
+
+  it('writes full JSON when there is no Loro session', () => {
+    expect(
+      canvasDssPutAfterWal({
+        hadLocalWal: false,
+        liveSnapshotBytes: 0,
+        clientBoard: clientMissingPeer,
+      })
+    ).toEqual({ action: 'json', json: clientMissingPeer });
+  });
+
+  it('skips last-write of client JSON once a local WAL exists', () => {
+    expect(
+      canvasDssPutAfterWal({
+        hadLocalWal: true,
+        liveSnapshotBytes: 0,
+        clientBoard: clientMissingPeer,
+      })
+    ).toEqual({ action: 'skip' });
+  });
+
+  it('skips last-write when a live Loro snapshot is the source of truth', () => {
+    expect(
+      canvasDssPutAfterWal({
+        hadLocalWal: false,
+        liveSnapshotBytes: 12,
+        clientBoard: clientMissingPeer,
+      })
+    ).toEqual({ action: 'skip' });
   });
 });

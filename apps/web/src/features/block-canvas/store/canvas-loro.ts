@@ -492,3 +492,26 @@ export function peekCanvasLoroUpdates(documentId: string): Uint8Array[] {
 export function hasCanvasLoro(documentId: string): boolean {
   return (readStore()[documentId]?.updates.length ?? 0) > 0;
 }
+
+export type CanvasDssPut =
+  | { action: 'skip' }
+  | { action: 'json'; json: CanvasLoroJson };
+
+/**
+ * After live Loro / WAL apply-update, DSS must not last-write the client's
+ * `{nodes, edges}` blob (that clobbers peer entities the client never saw).
+ *
+ * Skip the object-storage put when a local WAL or live snapshot is already
+ * the source of truth. Boards with no Loro session still persist full JSON so
+ * non-collaborative readers (DSS/S3 load, ReadContent fallback) have a board.
+ */
+export function canvasDssPutAfterWal(input: {
+  hadLocalWal: boolean;
+  liveSnapshotBytes: number;
+  clientBoard: CanvasLoroJson;
+}): CanvasDssPut {
+  if (input.hadLocalWal || input.liveSnapshotBytes > 0) {
+    return { action: 'skip' };
+  }
+  return { action: 'json', json: input.clientBoard };
+}

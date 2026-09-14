@@ -29,16 +29,20 @@ import { Rect, type Rectangle } from '../util/rectangle';
 import { createRenderQueue } from '../util/renderQueue';
 import { sharedInstance } from '../util/sharedInstance';
 import { type Vector2, vec2 } from '../util/vector2';
+import {
+  canvasDssPutAfterWal,
+  hasCanvasLoro,
+  recordCanvasLoro,
+} from './canvas-loro';
+import { peekCanvasLiveSnapshot, pushCanvasLiveUpdate } from './canvas-sync';
 import { useGetEdge, useGetGroup, useGetNode } from './getNodeEdge';
 import { edgesStore, groupStore, nodesStore } from './nodesStore';
 import {
   clearOfflineCanvas,
   ensureOfflineCanvasFlush,
-  recordOfflineCanvas,
   type OfflineCanvasJson,
+  recordOfflineCanvas,
 } from './offline-canvas';
-import { recordCanvasLoro } from './canvas-loro';
-import { peekCanvasLiveSnapshot, pushCanvasLiveUpdate } from './canvas-sync';
 
 export const renderQueue = sharedInstance(() => {
   return createRenderQueue(nodesStore, edgesStore, groupStore);
@@ -817,10 +821,8 @@ async function putCanvasBlob(
   documentId: string,
   json: OfflineCanvasJson | Canvas
 ): Promise<boolean> {
-  const encoder = new TextEncoder();
-  const buffer = encoder.encode(JSON.stringify(json));
-  const file = new Blob([buffer], { type: 'application/x-macro-canvas' });
   const live = peekCanvasLiveSnapshot(documentId);
+  const hadLocalWal = hasCanvasLoro(documentId);
   const update = recordCanvasLoro(documentId, json, {
     snapshot: live ?? undefined,
     board: peekOfflineCanvas(documentId) ?? undefined,
@@ -828,6 +830,18 @@ async function putCanvasBlob(
   if (update) {
     void pushCanvasLiveUpdate(documentId, update);
   }
+  const put = canvasDssPutAfterWal({
+    hadLocalWal,
+    liveSnapshotBytes: live?.byteLength ?? 0,
+    clientBoard: json,
+  });
+  if (put.action === 'skip') {
+    clearOfflineCanvas(documentId);
+    return true;
+  }
+  const encoder = new TextEncoder();
+  const buffer = encoder.encode(JSON.stringify(put.json));
+  const file = new Blob([buffer], { type: 'application/x-macro-canvas' });
   const saveRes = await storageServiceClient.simpleSave({
     documentId,
     file,
