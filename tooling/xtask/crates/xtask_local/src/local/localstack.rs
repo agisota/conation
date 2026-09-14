@@ -44,8 +44,10 @@ async fn provision_async(url: &str) -> Result<()> {
     b?;
     k?;
 
-    // Dependent: wire doc-storage ObjectCreated -> document-upload-finalizer-queue.
+    // Dependent: wire doc-storage ObjectCreated -> document-upload-finalizer-queue
+    // and static-file-storage ObjectCreated -> static-file-service poller.
     wire_upload_finalizer(&sqs, &s3).await?;
+    wire_static_file_events(&sqs, &s3).await?;
     Ok(())
 }
 
@@ -281,6 +283,50 @@ async fn wire_upload_finalizer(sqs: &aws_sdk_sqs::Client, s3: &aws_sdk_s3::Clien
         .send()
         .await
         .context("configuring doc-storage notifications")?;
+    Ok(())
+}
+
+async fn wire_static_file_events(sqs: &aws_sdk_sqs::Client, s3: &aws_sdk_s3::Client) -> Result<()> {
+    let queue = conation_queues::StaticFileServiceS3EventQueueUrl::LOCAL;
+    let queue_url = resources::queue_url(queue);
+    let queue_arn = resources::queue_arn(queue);
+    let source_arn = "arn:aws:s3:::static-file-storage";
+
+    let policy = serde_json::json!({
+        "Version": "2012-10-17",
+        "Statement": [{
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sqs:SendMessage",
+            "Resource": queue_arn,
+            "Condition": { "ArnEquals": { "aws:SourceArn": source_arn } },
+        }],
+    })
+    .to_string();
+
+    sqs.set_queue_attributes()
+        .queue_url(&queue_url)
+        .attributes(aws_sdk_sqs::types::QueueAttributeName::Policy, policy)
+        .send()
+        .await
+        .context("setting static-file event queue policy")?;
+
+    let config = s3_types::NotificationConfiguration::builder()
+        .queue_configurations(
+            s3_types::QueueConfiguration::builder()
+                .id("static-file-s3-events")
+                .queue_arn(&queue_arn)
+                .events(s3_types::Event::from("s3:ObjectCreated:*"))
+                .build()
+                .context("building static-file queue notification config")?,
+        )
+        .build();
+    s3.put_bucket_notification_configuration()
+        .bucket("static-file-storage")
+        .notification_configuration(config)
+        .send()
+        .await
+        .context("configuring static-file-storage notifications")?;
     Ok(())
 }
 

@@ -187,6 +187,11 @@ const STATIC_FILE_LOCAL: &str = r#"    route /static-file/* {
         rewrite * /static-file-storage{uri}
         reverse_proxy localstack:4566
     }
+    handle_path /s3/* {
+        reverse_proxy localstack:4566 {
+            header_up Host localstack:4566
+        }
+    }
 "#;
 
 /// Dev: no local LocalStack — route all static-file paths through the local

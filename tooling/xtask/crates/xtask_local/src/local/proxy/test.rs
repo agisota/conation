@@ -109,6 +109,17 @@ fn static_file_block_is_mode_specific() {
     assert!(!caddyfile(Mode::Dev, false).contains("/static-file-storage"));
 }
 
+/// Browser object PUTs (canvas, files) hit `/s3/{bucket}/{key}` on the
+/// single-origin proxy. Dev talks to real S3, so it must not grow this route.
+#[test]
+fn local_proxy_exposes_path_style_s3() {
+    let local = caddyfile(Mode::Local, false);
+    assert!(local.contains("handle_path /s3/* {"));
+    assert!(local.contains("reverse_proxy localstack:4566"));
+    assert!(local.contains("header_up Host localstack:4566"));
+    assert!(!caddyfile(Mode::Dev, false).contains("handle_path /s3/*"));
+}
+
 /// Drift gate across the Rust↔TypeScript seam: every proxied service's prefix
 /// must be wired into `createStandaloneServers()` in `serverProfile.ts`, or
 /// the frontend can't reach it through the single-origin proxy. The frontend
