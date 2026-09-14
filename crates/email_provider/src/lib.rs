@@ -267,6 +267,9 @@ pub struct StalwartCalendarEventWrite {
     /// JSCalendar physical `locations.name`. `None` omits the field.
     /// `Some("")` sends `{}` to clear. `Some(name)` sets the venue.
     pub location: Option<String>,
+    /// JSCalendar `freeBusyStatus`. `None` omits the field (calendar default
+    /// is busy). `Some(true)` is `free`. `Some(false)` is `busy`.
+    pub free: Option<bool>,
 }
 
 impl StalwartCalendarEventWrite {
@@ -287,6 +290,7 @@ impl StalwartCalendarEventWrite {
             alerts: None,
             conference_url: None,
             location: None,
+            free: None,
         }
     }
 
@@ -308,6 +312,7 @@ impl StalwartCalendarEventWrite {
             alerts: None,
             conference_url: None,
             location: None,
+            free: None,
         }
     }
 
@@ -329,6 +334,13 @@ impl StalwartCalendarEventWrite {
     #[must_use]
     pub fn with_location(mut self, location: Option<String>) -> Self {
         self.location = location;
+        self
+    }
+
+    /// Attach JSCalendar `freeBusyStatus` (`true` = free, `false` = busy).
+    #[must_use]
+    pub fn with_free(mut self, free: Option<bool>) -> Self {
+        self.free = free;
         self
     }
 }
@@ -1522,6 +1534,12 @@ fn calendar_event_set_object(
         } else {
             object.insert("locations".to_owned(), jmap_physical_locations(location));
         }
+    }
+    if let Some(free) = write.free {
+        object.insert(
+            "freeBusyStatus".to_owned(),
+            json!(if free { "free" } else { "busy" }),
+        );
     }
     Value::Object(object)
 }

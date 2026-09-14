@@ -1263,3 +1263,126 @@ async fn updates_event_location_name() {
         .await
         .expect("update");
 }
+
+#[test]
+fn omitted_free_stays_off_the_jmap_set() {
+    let write = StalwartCalendarEventWrite::timed(
+        "Standup",
+        chrono::Utc.with_ymd_and_hms(2026, 9, 14, 14, 0, 0).unwrap(),
+        1800,
+        &[],
+    );
+    let object = calendar_event_set_object(&write, Some("cal1"));
+    assert!(object.get("freeBusyStatus").is_none());
+}
+
+#[test]
+fn transparent_becomes_jmap_free() {
+    let write = StalwartCalendarEventWrite::timed(
+        "Standup",
+        chrono::Utc.with_ymd_and_hms(2026, 9, 14, 14, 0, 0).unwrap(),
+        1800,
+        &[],
+    )
+    .with_free(Some(true));
+    let object = calendar_event_set_object(&write, Some("cal1"));
+    assert_eq!(object["freeBusyStatus"], "free");
+}
+
+#[test]
+fn opaque_becomes_jmap_busy() {
+    let write = StalwartCalendarEventWrite::timed(
+        "Standup",
+        chrono::Utc.with_ymd_and_hms(2026, 9, 14, 14, 0, 0).unwrap(),
+        1800,
+        &[],
+    )
+    .with_free(Some(false));
+    let object = calendar_event_set_object(&write, Some("cal1"));
+    assert_eq!(object["freeBusyStatus"], "busy");
+}
+
+#[tokio::test]
+async fn creates_event_with_free_busy() {
+    let server = MockServer::start().await;
+    mount_calendar_admin(&server).await;
+    mount_default_calendar(&server).await;
+    Mock::given(method("POST"))
+        .and(path("/jmap/"))
+        .and(body_json(json!({
+            "using": [JMAP_CORE, JMAP_CALENDARS],
+            "methodCalls": [["CalendarEvent/set", {
+                "accountId": "u1",
+                "create": {
+                    "e1": {
+                        "calendarIds": {"cal1": true},
+                        "title": "Standup",
+                        "start": "2026-09-14T14:00:00",
+                        "duration": "PT1800S",
+                        "showWithoutTime": false,
+                        "timeZone": "UTC",
+                        "freeBusyStatus": "free"
+                    }
+                }
+            }, "c1"]]
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "methodResponses": [["CalendarEvent/set", {
+                "created": {"e1": {"id": "ev-free"}}
+            }, "c1"]]
+        })))
+        .mount(&server)
+        .await;
+    let write = StalwartCalendarEventWrite::timed(
+        "Standup",
+        chrono::Utc.with_ymd_and_hms(2026, 9, 14, 14, 0, 0).unwrap(),
+        1800,
+        &[],
+    )
+    .with_free(Some(true));
+    let id = provider(&server)
+        .create_calendar_event("self@example.com", &write)
+        .await
+        .expect("create");
+    assert_eq!(id, "ev-free");
+}
+
+#[tokio::test]
+async fn updates_event_free_busy() {
+    let server = MockServer::start().await;
+    mount_calendar_admin(&server).await;
+    Mock::given(method("POST"))
+        .and(path("/jmap/"))
+        .and(body_json(json!({
+            "using": [JMAP_CORE, JMAP_CALENDARS],
+            "methodCalls": [["CalendarEvent/set", {
+                "accountId": "u1",
+                "update": {
+                    "ev1": {
+                        "title": "Standup",
+                        "start": "2026-09-14T14:00:00",
+                        "duration": "PT1800S",
+                        "showWithoutTime": false,
+                        "timeZone": "UTC",
+                        "freeBusyStatus": "busy"
+                    }
+                }
+            }, "c1"]]
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "methodResponses": [["CalendarEvent/set", {"updated": {"ev1": {}}}, "c1"]]
+        })))
+        .mount(&server)
+        .await;
+    let write = StalwartCalendarEventWrite::timed(
+        "Standup",
+        chrono::Utc.with_ymd_and_hms(2026, 9, 14, 14, 0, 0).unwrap(),
+        1800,
+        &[],
+    )
+    .with_free(Some(false));
+    provider(&server)
+        .update_calendar_event("self@example.com", "ev1", &write)
+        .await
+        .expect("update");
+}

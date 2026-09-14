@@ -2070,3 +2070,25 @@ async fn create_with_physical_location_on_stalwart_persists_locally() {
     assert_eq!(event.location.as_deref(), Some("Room A"));
     assert_eq!(event.conference_url, None);
 }
+
+#[tokio::test]
+async fn create_with_transparent_on_stalwart_persists_locally() {
+    let mut target = creation_target(false);
+    target.token_identity.provider = "STALWART".to_string();
+    let repo = FakeRepo {
+        creation_target: Some(target),
+        ..FakeRepo::default()
+    };
+    let upserts = repo.upserts.clone();
+    let provider = FakeProvider::new(FakeProviderBehavior::Echo);
+    let calls = provider.calls.clone();
+    let mut draft = draft();
+    draft.transparency = Some(EventTransparency::Transparent);
+    let event = service(repo, provider, FakeTokens::ok())
+        .create_event("macro|user", None, None, draft)
+        .await
+        .unwrap();
+    assert!(calls.lock().unwrap().is_empty());
+    assert_eq!(upserts.lock().unwrap().len(), 1);
+    assert_eq!(event.transparency, EventTransparency::Transparent);
+}

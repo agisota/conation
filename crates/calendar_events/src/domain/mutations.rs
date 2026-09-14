@@ -837,6 +837,13 @@ fn stalwart_write_from_draft(
         .with_alerts(stalwart_alerts_from_reminders(draft.reminders.as_ref()))
         .with_conference_url(conference_url_write_from_draft(draft))
         .with_location(location_write_from_draft(draft))
+        .with_free(free_write_from_draft(draft))
+}
+
+fn free_write_from_draft(draft: &CalendarEventDraft) -> Option<bool> {
+    draft
+        .transparency
+        .map(|transparency| matches!(transparency, EventTransparency::Transparent))
 }
 
 fn conference_url_from_draft(draft: &CalendarEventDraft) -> Option<String> {
