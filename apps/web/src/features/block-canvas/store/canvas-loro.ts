@@ -72,6 +72,79 @@ function patchNode(
   });
 }
 
+function itemsById(
+  items: unknown[] | undefined
+): Map<string, Record<string, unknown>> {
+  const map = new Map<string, Record<string, unknown>>();
+  for (const item of items ?? []) {
+    const id = entityId(item);
+    if (!id || !item || typeof item !== 'object' || Array.isArray(item)) {
+      continue;
+    }
+    map.set(id, item as Record<string, unknown>);
+  }
+  return map;
+}
+
+function sameJson(left: unknown, right: unknown): boolean {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function readMapEntity(
+  map: ReturnType<LoroDoc['getMap']>,
+  id: string
+): Record<string, unknown> | undefined {
+  const raw = (map.toJSON() as Record<string, unknown>)?.[id];
+  if (typeof raw !== 'string') return;
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return;
+    }
+    return parsed as Record<string, unknown>;
+  } catch {
+    return;
+  }
+}
+
+/** Diff two boards into editor/agent node-edge ops (untouched ids omitted). */
+export function opsFromBoardDiff(
+  previous: CanvasLoroJson,
+  next: CanvasLoroJson
+): CanvasOp[] {
+  const ops: CanvasOp[] = [];
+  const prevNodes = itemsById(previous.nodes);
+  const nextNodes = itemsById(next.nodes);
+  for (const [id, node] of nextNodes) {
+    const prev = prevNodes.get(id);
+    if (!prev) {
+      ops.push({ op: 'upsertNode', node });
+      continue;
+    }
+    if (sameJson(prev, node)) continue;
+    ops.push({ op: 'upsertNode', node });
+  }
+  for (const id of prevNodes.keys()) {
+    if (!nextNodes.has(id)) ops.push({ op: 'deleteNode', id });
+  }
+
+  const prevEdges = itemsById(previous.edges);
+  const nextEdges = itemsById(next.edges);
+  for (const [id, edge] of nextEdges) {
+    const prev = prevEdges.get(id);
+    if (!prev) {
+      ops.push({ op: 'upsertEdge', edge });
+      continue;
+    }
+    if (sameJson(prev, edge)) continue;
+    ops.push({ op: 'upsertEdge', edge });
+  }
+  for (const id of prevEdges.keys()) {
+    if (!nextEdges.has(id)) ops.push({ op: 'deleteEdge', id });
+  }
+  return ops;
+}
+
 /** Apply editor-style node/edge ops onto a board (agent + tests). */
 export function applyCanvasOps(
   json: CanvasLoroJson,
@@ -106,6 +179,72 @@ export function applyCanvasOps(
     }
   }
   return { ...json, nodes, edges };
+}
+
+/** Mutate only named Loro entities (same as agent `canvasOps` apply-update). */
+export function applyCanvasOpsToDoc(doc: LoroDoc, ops: CanvasOp[]): void {
+  const nodes = doc.getMap('nodes');
+  const edges = doc.getMap('edges');
+  for (const op of ops) {
+    switch (op.op) {
+      case 'upsertNode': {
+        const id = entityId(op.node);
+        if (id) nodes.set(id, JSON.stringify(op.node));
+        break;
+      }
+      case 'deleteNode':
+        nodes.delete(op.id);
+        break;
+      case 'moveNode': {
+        const node = readMapEntity(nodes, op.id);
+        if (node) {
+          nodes.set(
+            op.id,
+            JSON.stringify({ ...node, x: op.x, y: op.y, id: op.id })
+          );
+        }
+        break;
+      }
+      case 'updateNode': {
+        const node = readMapEntity(nodes, op.id);
+        if (node) {
+          const { id: _ignored, ...rest } = op.patch;
+          nodes.set(op.id, JSON.stringify({ ...node, ...rest, id: op.id }));
+        }
+        break;
+      }
+      case 'upsertEdge': {
+        const id = entityId(op.edge);
+        if (id) edges.set(id, JSON.stringify(op.edge));
+        break;
+      }
+      case 'deleteEdge':
+        edges.delete(op.id);
+        break;
+      default: {
+        const _never: never = op;
+        void _never;
+      }
+    }
+  }
+}
+
+function applyDirtyGroups(
+  doc: LoroDoc,
+  previous: unknown[] | undefined,
+  next: unknown[] | undefined
+): void {
+  const map = doc.getMap('groups');
+  const prev = itemsById(previous);
+  const nxt = itemsById(next);
+  for (const [id, item] of nxt) {
+    const prior = prev.get(id);
+    if (prior && sameJson(prior, item)) continue;
+    map.set(id, JSON.stringify(item));
+  }
+  for (const id of prev.keys()) {
+    if (!nxt.has(id)) map.delete(id);
+  }
 }
 
 function syncMap(map: ReturnType<LoroDoc['getMap']>, items: unknown[]): void {
@@ -176,8 +315,9 @@ export function encodeCanvasLoroUpdate(
 }
 
 /**
- * Replay prior updates, upsert/delete against `json`, and export the
- * incremental Loro update (tombstones included).
+ * Replay prior updates, apply dirty node/edge ops (and dirty groups), and
+ * export the incremental Loro update. Whole-board `applyBoard` is the
+ * fallback when there is no prior WAL to diff against.
  */
 export function encodeCanvasLoroDiff(
   previousUpdates: Uint8Array[],
@@ -190,7 +330,14 @@ export function encodeCanvasLoroDiff(
     doc.import(update);
   }
   const from = doc.version();
-  applyBoard(doc, json);
+  if (previousUpdates.length === 0) {
+    applyBoard(doc, json);
+    return doc.export({ mode: 'update', from });
+  }
+  const previous = boardFromDoc(doc);
+  applyCanvasOpsToDoc(doc, opsFromBoardDiff(previous, json));
+  if (json.groups) applyDirtyGroups(doc, previous.groups, json.groups);
+  doc.commit();
   return doc.export({ mode: 'update', from });
 }
 
