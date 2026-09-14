@@ -14,6 +14,7 @@ import {
   connectCanvasLiveSync,
   hasCanvasLiveSync,
   listCanvasPresence,
+  peekCanvasLiveSnapshot,
   publishCanvasPresence,
   pushCanvasLiveUpdate,
   resetCanvasLiveSync,
@@ -112,10 +113,15 @@ describe('canvas live WS apply-update', () => {
     expect(ok).toBe(true);
     expect(hasCanvasLiveSync('doc-1')).toBe(true);
 
-    const update = recordCanvasLoro('doc-1', {
-      nodes: [{ id: 'a' }, { id: 'b' }],
-      edges: [],
-    });
+    const live = peekCanvasLiveSnapshot('doc-1');
+    const update = recordCanvasLoro(
+      'doc-1',
+      {
+        nodes: [{ id: 'a' }, { id: 'b' }],
+        edges: [],
+      },
+      { snapshot: live ?? undefined }
+    );
     expect(update).toBeTruthy();
     expect(await pushCanvasLiveUpdate('doc-1', update!)).toBe(true);
     expect(fake.pushed).toHaveLength(1);
@@ -173,6 +179,38 @@ describe('canvas live WS apply-update', () => {
     expect(result).toBe('initialized');
     expect(initialized).toHaveLength(1);
     expect(initialized[0].byteLength).toBeGreaterThan(0);
+  });
+
+  it('first WAL persist after live sync diffs against the live snapshot', async () => {
+    const snapshot = encodeCanvasLoroUpdate(
+      { nodes: [{ id: 'a' }, { id: 'b', kind: 'old' }], edges: [] },
+      1n
+    );
+    const fake = fakeSource('doc-1');
+    await connectCanvasLiveSync({
+      documentId: 'doc-1',
+      source: fake.source,
+      doInitialSync: async () => ({ snapshot }),
+    });
+    const live = peekCanvasLiveSnapshot('doc-1');
+    expect(live?.byteLength).toBeGreaterThan(0);
+    expect(
+      recordCanvasLoro(
+        'doc-1',
+        {
+          nodes: [
+            { id: 'a' },
+            { id: 'b', kind: 'new' },
+          ],
+          edges: [],
+        },
+        { snapshot: live! }
+      )
+    ).toBeTruthy();
+    const ids = (peekCanvasLoro('doc-1')?.nodes ?? []).map(
+      (n) => (n as { id: string }).id
+    );
+    expect(ids).toEqual(expect.arrayContaining(['a', 'b']));
   });
 
   it('does not re-initialize a canvas that already has a snapshot', async () => {

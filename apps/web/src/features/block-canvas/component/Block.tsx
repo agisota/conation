@@ -35,7 +35,11 @@ import {
   useLoadCanvasData,
   useSaveCanvasDataImmediate,
 } from '../store/canvasData';
-import { peekCanvasLoro, type CanvasLoroJson } from '../store/canvas-loro';
+import {
+  peekCanvasLoro,
+  seedCanvasLoroPrior,
+  type CanvasLoroJson,
+} from '../store/canvas-loro';
 import {
   connectCanvasLiveSync,
   disconnectCanvasLiveSync,
@@ -322,6 +326,7 @@ export default function BlockCanvas(props: BlockCanvasProps) {
       if (!board) {
         throw new Error('canvas json missing');
       }
+      seedCanvasLoroPrior(documentId, board as CanvasLoroJson);
       await loadCanvasData(board as Canvas);
       try {
         const token = await getPermissionToken('canvas', documentId);

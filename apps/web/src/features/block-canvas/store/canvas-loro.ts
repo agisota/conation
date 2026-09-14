@@ -316,8 +316,8 @@ export function encodeCanvasLoroUpdate(
 
 /**
  * Replay prior updates, apply dirty node/edge ops (and dirty groups), and
- * export the incremental Loro update. Whole-board `applyBoard` is the
- * fallback when there is no prior WAL to diff against.
+ * export the incremental Loro update. Whole-board `applyBoard` is only the
+ * fallback when there is no prior WAL, snapshot, or DSS board to diff.
  */
 export function encodeCanvasLoroDiff(
   previousUpdates: Uint8Array[],
@@ -399,15 +399,50 @@ function storedUpdates(documentId: string): Uint8Array[] {
   return row.updates.map(b64ToBytes);
 }
 
+const seededPriors = new Map<string, CanvasLoroJson>();
+
+export type RecordCanvasLoroPrior = {
+  snapshot?: Uint8Array;
+  board?: CanvasLoroJson;
+};
+
+/** Remember the loaded DSS/offline board so the first WAL persist can diff. */
+export function seedCanvasLoroPrior(
+  documentId: string,
+  board: CanvasLoroJson
+): void {
+  if (!documentId || hasCanvasLoro(documentId)) return;
+  seededPriors.set(documentId, {
+    nodes: board.nodes ? [...board.nodes] : undefined,
+    edges: board.edges ? [...board.edges] : undefined,
+    groups: board.groups ? [...board.groups] : undefined,
+  });
+}
+
+function firstWalSeeds(
+  documentId: string,
+  prior?: RecordCanvasLoroPrior
+): Uint8Array[] {
+  if (prior?.snapshot && prior.snapshot.length > 0) {
+    return [prior.snapshot];
+  }
+  const board = prior?.board ?? seededPriors.get(documentId);
+  if (!board) return [];
+  const snapshot = snapshotFromJson(board);
+  return snapshot.length > 0 ? [snapshot] : [];
+}
+
 /** Append a Loro update for this board so later peers can merge. */
 export function recordCanvasLoro(
   documentId: string,
-  json: CanvasLoroJson
+  json: CanvasLoroJson,
+  prior?: RecordCanvasLoroPrior
 ): Uint8Array | null {
   if (!documentId) return null;
-  const previous = storedUpdates(documentId);
+  const stored = storedUpdates(documentId);
+  const seeds = stored.length === 0 ? firstWalSeeds(documentId, prior) : [];
   const update = encodeCanvasLoroDiff(
-    previous,
+    stored.length > 0 ? stored : seeds,
     json,
     BigInt(Date.now() % Number.MAX_SAFE_INTEGER) || 1n
   );
@@ -415,9 +450,14 @@ export function recordCanvasLoro(
   const existing = store[documentId];
   store[documentId] = {
     documentId,
-    updates: [...(existing?.updates ?? []), bytesToB64(update)],
+    updates: [
+      ...(existing?.updates ?? []),
+      ...seeds.map(bytesToB64),
+      bytesToB64(update),
+    ],
     savedAt: Date.now(),
   };
+  seededPriors.delete(documentId);
   if (!writeStore(store)) return null;
   return update;
 }
@@ -439,8 +479,14 @@ export function clearCanvasLoro(documentId: string): void {
 
 /** Test helper. */
 export function clearAllCanvasLoro(): void {
+  seededPriors.clear();
   if (typeof localStorage === 'undefined') return;
   localStorage.removeItem(STORAGE_KEY);
+}
+
+/** Test helper: persisted WAL bytes including a first-save snapshot seed. */
+export function peekCanvasLoroUpdates(documentId: string): Uint8Array[] {
+  return storedUpdates(documentId);
 }
 
 export function hasCanvasLoro(documentId: string): boolean {

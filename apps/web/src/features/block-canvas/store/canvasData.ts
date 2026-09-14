@@ -38,7 +38,7 @@ import {
   type OfflineCanvasJson,
 } from './offline-canvas';
 import { recordCanvasLoro } from './canvas-loro';
-import { pushCanvasLiveUpdate } from './canvas-sync';
+import { peekCanvasLiveSnapshot, pushCanvasLiveUpdate } from './canvas-sync';
 
 export const renderQueue = sharedInstance(() => {
   return createRenderQueue(nodesStore, edgesStore, groupStore);
@@ -820,7 +820,11 @@ async function putCanvasBlob(
   const encoder = new TextEncoder();
   const buffer = encoder.encode(JSON.stringify(json));
   const file = new Blob([buffer], { type: 'application/x-macro-canvas' });
-  const update = recordCanvasLoro(documentId, json);
+  const live = peekCanvasLiveSnapshot(documentId);
+  const update = recordCanvasLoro(documentId, json, {
+    snapshot: live ?? undefined,
+    board: peekOfflineCanvas(documentId) ?? undefined,
+  });
   if (update) {
     void pushCanvasLiveUpdate(documentId, update);
   }

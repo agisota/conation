@@ -155,6 +155,14 @@ export function hasCanvasLiveSync(documentId: string): boolean {
   return sessions.has(documentId);
 }
 
+/** Live session snapshot so the first WAL persist can diff instead of applyBoard. */
+export function peekCanvasLiveSnapshot(documentId: string): Uint8Array | null {
+  const session = sessions.get(documentId);
+  if (!session) return null;
+  const bytes = session.doc.export({ mode: 'snapshot' });
+  return bytes.length > 0 ? bytes : null;
+}
+
 /** Push a Loro update on the live WS after initial sync. */
 export async function pushCanvasLiveUpdate(
   documentId: string,

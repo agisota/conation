@@ -13,7 +13,9 @@ import {
   mergeCanvasLoroUpdates,
   opsFromBoardDiff,
   peekCanvasLoro,
+  peekCanvasLoroUpdates,
   recordCanvasLoro,
+  seedCanvasLoroPrior,
   snapshotFromJson,
 } from './canvas-loro';
 import { LoroDoc } from 'loro-crdt';
@@ -176,5 +178,92 @@ describe('canvas editor incremental save', () => {
     const byId = Object.fromEntries(nodes.map((n) => [n.id, n]));
     expect(byId.a).toMatchObject({ id: 'a', kind: 'keep' });
     expect(byId.b).toMatchObject({ id: 'b', kind: 'new' });
+  });
+
+  it('first WAL persist diffs against a snapshot prior instead of applyBoard', () => {
+    const base = {
+      nodes: [
+        { id: 'a', kind: 'keep' },
+        { id: 'b', kind: 'old' },
+      ],
+      edges: [] as unknown[],
+    };
+    const snap = snapshotFromJson(base);
+    const editor = recordCanvasLoro(
+      'doc-1',
+      {
+        nodes: [
+          { id: 'a', kind: 'keep' },
+          { id: 'b', kind: 'new' },
+        ],
+        edges: [],
+      },
+      { snapshot: snap }
+    );
+    expect(editor).toBeTruthy();
+    expect(peekCanvasLoroUpdates('doc-1')).toHaveLength(2);
+    const peerDoc = new LoroDoc();
+    peerDoc.setPeerId(2n);
+    peerDoc.import(snap);
+    const from = peerDoc.version();
+    applyCanvasOpsToDoc(peerDoc, [
+      { op: 'updateNode', id: 'a', patch: { kind: 'remote' } },
+    ]);
+    peerDoc.commit();
+    const peer = peerDoc.export({ mode: 'update', from });
+    const merged = mergeCanvasLoroUpdates([snap, peer, editor!]);
+    const nodes = (merged.nodes ?? []) as Array<Record<string, unknown>>;
+    const byId = Object.fromEntries(nodes.map((n) => [n.id, n]));
+    expect(byId.a).toMatchObject({ id: 'a', kind: 'remote' });
+    expect(byId.b).toMatchObject({ id: 'b', kind: 'new' });
+  });
+
+  it('first WAL persist diffs against a seeded DSS board', () => {
+    const base = {
+      nodes: [
+        { id: 'a', kind: 'keep' },
+        { id: 'b', kind: 'old' },
+      ],
+      edges: [] as unknown[],
+    };
+    seedCanvasLoroPrior('doc-1', base);
+    expect(
+      recordCanvasLoro('doc-1', {
+        nodes: [
+          { id: 'a', kind: 'keep' },
+          { id: 'b', kind: 'new' },
+        ],
+        edges: [],
+      })
+    ).toBeTruthy();
+    const wal = peekCanvasLoroUpdates('doc-1');
+    expect(wal).toHaveLength(2);
+    const snap = wal[0];
+    const editor = wal[1];
+    const peerDoc = new LoroDoc();
+    peerDoc.setPeerId(2n);
+    peerDoc.import(snap);
+    const from = peerDoc.version();
+    applyCanvasOpsToDoc(peerDoc, [
+      { op: 'updateNode', id: 'a', patch: { kind: 'remote' } },
+    ]);
+    peerDoc.commit();
+    const peer = peerDoc.export({ mode: 'update', from });
+    const merged = mergeCanvasLoroUpdates([snap, peer, editor]);
+    const nodes = (merged.nodes ?? []) as Array<Record<string, unknown>>;
+    const byId = Object.fromEntries(nodes.map((n) => [n.id, n]));
+    expect(byId.a).toMatchObject({ id: 'a', kind: 'remote' });
+    expect(byId.b).toMatchObject({ id: 'b', kind: 'new' });
+  });
+
+  it('falls back to applyBoard when there is no prior board', () => {
+    expect(
+      recordCanvasLoro('doc-new', { nodes: [{ id: 'a' }], edges: [] })
+    ).toBeTruthy();
+    expect(peekCanvasLoroUpdates('doc-new')).toHaveLength(1);
+    const ids = (peekCanvasLoro('doc-new')?.nodes ?? []).map(
+      (n) => (n as { id: string }).id
+    );
+    expect(ids).toEqual(['a']);
   });
 });
