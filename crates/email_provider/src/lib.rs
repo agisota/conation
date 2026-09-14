@@ -264,6 +264,9 @@ pub struct StalwartCalendarEventWrite {
     /// JSCalendar `virtualLocations` join URI. `None` omits the field.
     /// `Some("")` sends `{}` to clear. `Some(url)` sets the conference.
     pub conference_url: Option<String>,
+    /// JSCalendar physical `locations.name`. `None` omits the field.
+    /// `Some("")` sends `{}` to clear. `Some(name)` sets the venue.
+    pub location: Option<String>,
 }
 
 impl StalwartCalendarEventWrite {
@@ -283,6 +286,7 @@ impl StalwartCalendarEventWrite {
             recurrence_rules: jmap_recurrence_rules_from_rfc5545(recurrence_lines),
             alerts: None,
             conference_url: None,
+            location: None,
         }
     }
 
@@ -303,6 +307,7 @@ impl StalwartCalendarEventWrite {
             recurrence_rules: jmap_recurrence_rules_from_rfc5545(recurrence_lines),
             alerts: None,
             conference_url: None,
+            location: None,
         }
     }
 
@@ -317,6 +322,13 @@ impl StalwartCalendarEventWrite {
     #[must_use]
     pub fn with_conference_url(mut self, conference_url: Option<String>) -> Self {
         self.conference_url = conference_url;
+        self
+    }
+
+    /// Attach a JSCalendar physical `locations.name` (or `Some("")` to clear).
+    #[must_use]
+    pub fn with_location(mut self, location: Option<String>) -> Self {
+        self.location = location;
         self
     }
 }
@@ -1504,7 +1516,23 @@ fn calendar_event_set_object(
             object.insert("virtualLocations".to_owned(), jmap_virtual_locations(url));
         }
     }
+    if let Some(location) = &write.location {
+        if location.is_empty() {
+            object.insert("locations".to_owned(), json!({}));
+        } else {
+            object.insert("locations".to_owned(), jmap_physical_locations(location));
+        }
+    }
     Value::Object(object)
+}
+
+fn jmap_physical_locations(name: &str) -> Value {
+    json!({
+        "l1": {
+            "@type": "Location",
+            "name": name
+        }
+    })
 }
 
 fn jmap_virtual_locations(url: &str) -> Value {

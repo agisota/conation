@@ -1128,3 +1128,138 @@ async fn lists_conference_url_from_locations_uri() {
         Some("https://meet.example.test/from-location")
     );
 }
+
+#[test]
+fn location_name_becomes_jmap_locations() {
+    let write = StalwartCalendarEventWrite::timed(
+        "Standup",
+        chrono::Utc.with_ymd_and_hms(2026, 9, 14, 14, 0, 0).unwrap(),
+        1800,
+        &[],
+    )
+    .with_location(Some("Room A".to_string()));
+    let object = calendar_event_set_object(&write, Some("cal1"));
+    assert_eq!(object["locations"]["l1"]["name"], "Room A");
+    assert_eq!(object["locations"]["l1"]["@type"], "Location");
+    assert!(object.get("virtualLocations").is_none());
+}
+
+#[test]
+fn omitted_location_stays_off_the_jmap_set() {
+    let write = StalwartCalendarEventWrite::timed(
+        "Standup",
+        chrono::Utc.with_ymd_and_hms(2026, 9, 14, 14, 0, 0).unwrap(),
+        1800,
+        &[],
+    );
+    let object = calendar_event_set_object(&write, Some("cal1"));
+    assert!(object.get("locations").is_none());
+}
+
+#[test]
+fn empty_location_clears_locations() {
+    let write = StalwartCalendarEventWrite::timed(
+        "Standup",
+        chrono::Utc.with_ymd_and_hms(2026, 9, 14, 14, 0, 0).unwrap(),
+        1800,
+        &[],
+    )
+    .with_location(Some(String::new()));
+    let object = calendar_event_set_object(&write, Some("cal1"));
+    assert_eq!(object["locations"], json!({}));
+}
+
+#[tokio::test]
+async fn creates_event_with_location_name() {
+    let server = MockServer::start().await;
+    mount_calendar_admin(&server).await;
+    mount_default_calendar(&server).await;
+    Mock::given(method("POST"))
+        .and(path("/jmap/"))
+        .and(body_json(json!({
+            "using": [JMAP_CORE, JMAP_CALENDARS],
+            "methodCalls": [["CalendarEvent/set", {
+                "accountId": "u1",
+                "create": {
+                    "e1": {
+                        "calendarIds": {"cal1": true},
+                        "title": "Standup",
+                        "start": "2026-09-14T14:00:00",
+                        "duration": "PT1800S",
+                        "showWithoutTime": false,
+                        "timeZone": "UTC",
+                        "locations": {
+                            "l1": {
+                                "@type": "Location",
+                                "name": "Room A"
+                            }
+                        }
+                    }
+                }
+            }, "c1"]]
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "methodResponses": [["CalendarEvent/set", {
+                "created": {"e1": {"id": "ev-loc"}}
+            }, "c1"]]
+        })))
+        .mount(&server)
+        .await;
+    let write = StalwartCalendarEventWrite::timed(
+        "Standup",
+        chrono::Utc.with_ymd_and_hms(2026, 9, 14, 14, 0, 0).unwrap(),
+        1800,
+        &[],
+    )
+    .with_location(Some("Room A".to_string()));
+    let id = provider(&server)
+        .create_calendar_event("self@example.com", &write)
+        .await
+        .expect("create");
+    assert_eq!(id, "ev-loc");
+}
+
+#[tokio::test]
+async fn updates_event_location_name() {
+    let server = MockServer::start().await;
+    mount_calendar_admin(&server).await;
+    Mock::given(method("POST"))
+        .and(path("/jmap/"))
+        .and(body_json(json!({
+            "using": [JMAP_CORE, JMAP_CALENDARS],
+            "methodCalls": [["CalendarEvent/set", {
+                "accountId": "u1",
+                "update": {
+                    "ev1": {
+                        "title": "Standup",
+                        "start": "2026-09-14T14:00:00",
+                        "duration": "PT1800S",
+                        "showWithoutTime": false,
+                        "timeZone": "UTC",
+                        "locations": {
+                            "l1": {
+                                "@type": "Location",
+                                "name": "Room B"
+                            }
+                        }
+                    }
+                }
+            }, "c1"]]
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "methodResponses": [["CalendarEvent/set", {"updated": {"ev1": {}}}, "c1"]]
+        })))
+        .mount(&server)
+        .await;
+    let write = StalwartCalendarEventWrite::timed(
+        "Standup",
+        chrono::Utc.with_ymd_and_hms(2026, 9, 14, 14, 0, 0).unwrap(),
+        1800,
+        &[],
+    )
+    .with_location(Some("Room B".to_string()));
+    provider(&server)
+        .update_calendar_event("self@example.com", "ev1", &write)
+        .await
+        .expect("update");
+}

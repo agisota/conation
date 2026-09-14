@@ -836,6 +836,7 @@ fn stalwart_write_from_draft(
     write
         .with_alerts(stalwart_alerts_from_reminders(draft.reminders.as_ref()))
         .with_conference_url(conference_url_write_from_draft(draft))
+        .with_location(location_write_from_draft(draft))
 }
 
 fn conference_url_from_draft(draft: &CalendarEventDraft) -> Option<String> {
@@ -850,6 +851,17 @@ fn conference_url_write_from_draft(draft: &CalendarEventDraft) -> Option<String>
         return Some(String::new());
     }
     http_join_url(draft.location.as_deref())
+}
+
+fn location_write_from_draft(draft: &CalendarEventDraft) -> Option<String> {
+    let location = draft.location.as_deref()?.trim();
+    if location.is_empty() {
+        return Some(String::new());
+    }
+    if http_join_url(Some(location)).is_some() {
+        return None;
+    }
+    Some(location.to_owned())
 }
 
 fn http_join_url(value: Option<&str>) -> Option<String> {
