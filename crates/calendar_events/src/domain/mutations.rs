@@ -838,6 +838,7 @@ fn stalwart_write_from_draft(
         .with_conference_url(conference_url_write_from_draft(draft))
         .with_location(location_write_from_draft(draft))
         .with_free(free_write_from_draft(draft))
+        .with_description(draft.description.clone())
 }
 
 fn free_write_from_draft(draft: &CalendarEventDraft) -> Option<bool> {
