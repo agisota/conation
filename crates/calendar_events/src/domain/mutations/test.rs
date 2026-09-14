@@ -3,10 +3,10 @@ use crate::domain::models::{
     ActorInboxes, AppliedGoogleGrant, CalendarAttendee, CalendarAttendeeInput,
     CalendarBackfillJobKey, CalendarCreationTarget, CalendarEventSource, CalendarLinkTokenIdentity,
     CalendarOccurrence, CalendarOccurrenceCursor, CalendarSyncStatus, CalendarWatchRelease,
-    ConferenceChange, DisconnectedGoogleCalendar, EventReminderOverride, EventReminders,
-    EventStatus, EventTransparency, EventType, EventVisibility, GoogleCalendarSyncSnapshot,
-    GoogleCalendarTarget, GoogleEventSource, GoogleWatchChannel, ProviderCalendar,
-    StoredGoogleCalendar, VisibleCalendar,
+    ConferenceChange, ConferenceProvider, DisconnectedGoogleCalendar, EventReminderOverride,
+    EventReminders, EventStatus, EventTransparency, EventType, EventVisibility,
+    GoogleCalendarSyncSnapshot, GoogleCalendarTarget, GoogleEventSource, GoogleWatchChannel,
+    ProviderCalendar, StoredGoogleCalendar, VisibleCalendar,
 };
 use crate::domain::ports::RetiredCalendarEvent;
 use chrono::{Duration, NaiveDate, TimeZone};
@@ -1910,6 +1910,7 @@ fn stalwart_upsert_maps_all_day_and_recurrence_from_jmap() {
         recurrence_lines: vec!["RRULE:FREQ=YEARLY".to_string()],
         participants: Vec::new(),
         alerts: None,
+        conference_url: None,
     };
     let upsert = stalwart_upsert_from_remote(&target, &remote);
     assert!(matches!(
@@ -1979,9 +1980,70 @@ fn stalwart_upsert_maps_alerts_from_jmap() {
             method: "popup".to_string(),
             minutes: 15,
         }]),
+        conference_url: None,
     };
     let upsert = stalwart_upsert_from_remote(&target, &remote);
     assert!(!upsert.event.reminders.use_default);
     assert_eq!(upsert.event.reminders.overrides[0].method, "popup");
     assert_eq!(upsert.event.reminders.overrides[0].minutes, 15);
+}
+
+#[tokio::test]
+async fn create_with_join_url_location_on_stalwart_persists_conference_locally() {
+    let mut target = creation_target(false);
+    target.token_identity.provider = "STALWART".to_string();
+    let repo = FakeRepo {
+        creation_target: Some(target),
+        ..FakeRepo::default()
+    };
+    let upserts = repo.upserts.clone();
+    let provider = FakeProvider::new(FakeProviderBehavior::Echo);
+    let calls = provider.calls.clone();
+    let mut draft = draft();
+    draft.location = Some("https://meet.example.test/abc-defg-hij".to_string());
+    let event = service(repo, provider, FakeTokens::ok())
+        .create_event("macro|user", None, None, draft)
+        .await
+        .unwrap();
+    assert!(calls.lock().unwrap().is_empty());
+    assert_eq!(upserts.lock().unwrap().len(), 1);
+    assert_eq!(
+        event.conference_url.as_deref(),
+        Some("https://meet.example.test/abc-defg-hij")
+    );
+    assert_eq!(event.conference_provider, Some(ConferenceProvider::Other));
+}
+
+#[test]
+fn stalwart_upsert_maps_conference_url_from_jmap() {
+    let mut target = creation_target(false);
+    target.token_identity.provider = "STALWART".to_string();
+    let start = Utc.with_ymd_and_hms(2026, 9, 13, 14, 0, 0).unwrap();
+    let remote = email_provider::StalwartCalendarEvent {
+        id: "ev1".to_string(),
+        uid: Some("uid-1@conation.dev".to_string()),
+        title: "Standup".to_string(),
+        description: None,
+        location: Some("Room A".to_string()),
+        start,
+        duration_secs: 1_800,
+        time_zone: Some("UTC".to_string()),
+        free: false,
+        status: Some("confirmed".to_string()),
+        show_without_time: false,
+        recurrence_lines: Vec::new(),
+        participants: Vec::new(),
+        alerts: None,
+        conference_url: Some("https://meet.google.com/abc-defg-hij".to_string()),
+    };
+    let upsert = stalwart_upsert_from_remote(&target, &remote);
+    assert_eq!(
+        upsert.event.conference_url.as_deref(),
+        Some("https://meet.google.com/abc-defg-hij")
+    );
+    assert_eq!(
+        upsert.event.conference_provider,
+        Some(ConferenceProvider::GoogleMeet)
+    );
+    assert_eq!(upsert.event.location.as_deref(), Some("Room A"));
 }

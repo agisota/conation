@@ -13,10 +13,11 @@ use super::{
     models::{
         ActorInboxes, AttendeeResponseStatus, CalendarAttendee, CalendarAttendeeInput,
         CalendarEvent, CalendarEventDraft, CalendarEventMutationTarget, CalendarEventPatch,
-        CalendarEventSource, CalendarEventUpsert, CalendarOccurrence, DisconnectedGoogleCalendar,
-        EventReminderOverride, EventReminders, EventStatus, EventTime, EventTransparency,
-        EventType, EventVisibility, GoogleEventSource, OccurrenceRange, REMINDER_METHOD_EMAIL,
-        REMINDER_METHOD_POPUP, REMINDER_MINUTES_MAX, REMINDER_OVERRIDES_MAX,
+        CalendarEventSource, CalendarEventUpsert, CalendarOccurrence, ConferenceChange,
+        ConferenceProvider, DisconnectedGoogleCalendar, EventReminderOverride, EventReminders,
+        EventStatus, EventTime, EventTransparency, EventType, EventVisibility, GoogleEventSource,
+        OccurrenceRange, REMINDER_METHOD_EMAIL, REMINDER_METHOD_POPUP, REMINDER_MINUTES_MAX,
+        REMINDER_OVERRIDES_MAX,
     },
     ports::{
         CalendarAccessTokenProvider, CalendarDeletionScope, CalendarEventChange,
@@ -302,7 +303,7 @@ where
                 visibility: patch.visibility,
                 transparency: patch.transparency,
                 reminders: patch.reminders.clone(),
-                conference: None,
+                conference: patch.conference,
             };
             let creation = crate::domain::models::CalendarCreationTarget {
                 owner_id: target.owner_id.clone(),
@@ -760,6 +761,8 @@ fn stalwart_upsert_from_draft(
             comment: None,
         })
         .collect();
+    let conference_url = conference_url_from_draft(draft);
+    let conference_provider = conference_provider_from_url(conference_url.as_deref());
     CalendarEventUpsert {
         event: CalendarEvent {
             id: event_id,
@@ -779,8 +782,8 @@ fn stalwart_upsert_from_draft(
             organizer_name: None,
             creator_email: Some(target.token_identity.email_address.clone()),
             creator_name: None,
-            conference_url: None,
-            conference_provider: None,
+            conference_url,
+            conference_provider,
             sequence: 0,
             is_read_only: false,
             attendees,
@@ -830,7 +833,41 @@ fn stalwart_write_from_draft(
             &draft.recurrence_lines,
         ),
     };
-    write.with_alerts(stalwart_alerts_from_reminders(draft.reminders.as_ref()))
+    write
+        .with_alerts(stalwart_alerts_from_reminders(draft.reminders.as_ref()))
+        .with_conference_url(conference_url_write_from_draft(draft))
+}
+
+fn conference_url_from_draft(draft: &CalendarEventDraft) -> Option<String> {
+    if draft.conference == Some(ConferenceChange::Removed) {
+        return None;
+    }
+    http_join_url(draft.location.as_deref())
+}
+
+fn conference_url_write_from_draft(draft: &CalendarEventDraft) -> Option<String> {
+    if draft.conference == Some(ConferenceChange::Removed) {
+        return Some(String::new());
+    }
+    http_join_url(draft.location.as_deref())
+}
+
+fn http_join_url(value: Option<&str>) -> Option<String> {
+    let trimmed = value?.trim();
+    if trimmed.starts_with("https://") || trimmed.starts_with("http://") {
+        Some(trimmed.to_owned())
+    } else {
+        None
+    }
+}
+
+fn conference_provider_from_url(url: Option<&str>) -> Option<ConferenceProvider> {
+    let url = url?;
+    Some(if url.contains("meet.google.com") {
+        ConferenceProvider::GoogleMeet
+    } else {
+        ConferenceProvider::Other
+    })
 }
 
 fn stalwart_alerts_from_reminders(
@@ -973,8 +1010,8 @@ pub(crate) fn stalwart_upsert_from_remote(
             organizer_name: None,
             creator_email: Some(target.token_identity.email_address.clone()),
             creator_name: None,
-            conference_url: None,
-            conference_provider: None,
+            conference_url: remote.conference_url.clone(),
+            conference_provider: conference_provider_from_url(remote.conference_url.as_deref()),
             sequence: 0,
             is_read_only: false,
             attendees,

@@ -338,8 +338,8 @@ async fn lists_calendar_events_via_jmap_query_then_get() {
                 "properties": [
                     "id", "uid", "title", "description", "start", "duration",
                     "timeZone", "showWithoutTime", "recurrenceRules",
-                    "participants", "locations", "freeBusyStatus", "status",
-                    "alerts"
+                    "participants", "locations", "virtualLocations",
+                    "freeBusyStatus", "status", "alerts"
                 ]
             }, "c1"]]
         })))
@@ -399,8 +399,8 @@ async fn rsvp_patches_the_matching_participant_status() {
                 "properties": [
                     "id", "uid", "title", "description", "start", "duration",
                     "timeZone", "showWithoutTime", "recurrenceRules",
-                    "participants", "locations", "freeBusyStatus", "status",
-                    "alerts"
+                    "participants", "locations", "virtualLocations",
+                    "freeBusyStatus", "status", "alerts"
                 ]
             }, "c1"]]
         })))
@@ -470,8 +470,8 @@ async fn rsvp_without_a_matching_participant_is_not_found() {
                 "properties": [
                     "id", "uid", "title", "description", "start", "duration",
                     "timeZone", "showWithoutTime", "recurrenceRules",
-                    "participants", "locations", "freeBusyStatus", "status",
-                    "alerts"
+                    "participants", "locations", "virtualLocations",
+                    "freeBusyStatus", "status", "alerts"
                 ]
             }, "c1"]]
         })))
@@ -709,8 +709,8 @@ async fn lists_all_day_and_recurrence_from_jmap_get() {
                 "properties": [
                     "id", "uid", "title", "description", "start", "duration",
                     "timeZone", "showWithoutTime", "recurrenceRules",
-                    "participants", "locations", "freeBusyStatus", "status",
-                    "alerts"
+                    "participants", "locations", "virtualLocations",
+                    "freeBusyStatus", "status", "alerts"
                 ]
             }, "c1"]]
         })))
@@ -874,8 +874,8 @@ async fn lists_alerts_from_jmap_get() {
                 "properties": [
                     "id", "uid", "title", "description", "start", "duration",
                     "timeZone", "showWithoutTime", "recurrenceRules",
-                    "participants", "locations", "freeBusyStatus", "status",
-                    "alerts"
+                    "participants", "locations", "virtualLocations",
+                    "freeBusyStatus", "status", "alerts"
                 ]
             }, "c1"]]
         })))
@@ -915,5 +915,216 @@ async fn lists_alerts_from_jmap_get() {
                 minutes: 60,
             },
         ])
+    );
+}
+
+#[test]
+fn conference_url_becomes_jmap_virtual_locations() {
+    let write = StalwartCalendarEventWrite::timed(
+        "Standup",
+        chrono::Utc.with_ymd_and_hms(2026, 9, 14, 14, 0, 0).unwrap(),
+        1800,
+        &[],
+    )
+    .with_conference_url(Some("https://meet.example.test/abc-defg-hij".to_string()));
+    let object = calendar_event_set_object(&write, Some("cal1"));
+    assert_eq!(
+        object["virtualLocations"]["v1"]["uri"],
+        "https://meet.example.test/abc-defg-hij"
+    );
+    assert_eq!(object["virtualLocations"]["v1"]["@type"], "VirtualLocation");
+}
+
+#[test]
+fn omitted_conference_stays_off_the_jmap_set() {
+    let write = StalwartCalendarEventWrite::timed(
+        "Standup",
+        chrono::Utc.with_ymd_and_hms(2026, 9, 14, 14, 0, 0).unwrap(),
+        1800,
+        &[],
+    );
+    let object = calendar_event_set_object(&write, Some("cal1"));
+    assert!(object.get("virtualLocations").is_none());
+}
+
+#[test]
+fn empty_conference_clears_virtual_locations() {
+    let write = StalwartCalendarEventWrite::timed(
+        "Standup",
+        chrono::Utc.with_ymd_and_hms(2026, 9, 14, 14, 0, 0).unwrap(),
+        1800,
+        &[],
+    )
+    .with_conference_url(Some(String::new()));
+    let object = calendar_event_set_object(&write, Some("cal1"));
+    assert_eq!(object["virtualLocations"], json!({}));
+}
+
+#[tokio::test]
+async fn creates_event_with_conference_url() {
+    let server = MockServer::start().await;
+    mount_calendar_admin(&server).await;
+    mount_default_calendar(&server).await;
+    Mock::given(method("POST"))
+        .and(path("/jmap/"))
+        .and(body_json(json!({
+            "using": [JMAP_CORE, JMAP_CALENDARS],
+            "methodCalls": [["CalendarEvent/set", {
+                "accountId": "u1",
+                "create": {
+                    "e1": {
+                        "calendarIds": {"cal1": true},
+                        "title": "Standup",
+                        "start": "2026-09-14T14:00:00",
+                        "duration": "PT1800S",
+                        "showWithoutTime": false,
+                        "timeZone": "UTC",
+                        "virtualLocations": {
+                            "v1": {
+                                "@type": "VirtualLocation",
+                                "name": "Call",
+                                "uri": "https://meet.example.test/abc-defg-hij",
+                                "features": { "audio": true, "video": true }
+                            }
+                        }
+                    }
+                }
+            }, "c1"]]
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "methodResponses": [["CalendarEvent/set", {
+                "created": {"e1": {"id": "ev-conf"}}
+            }, "c1"]]
+        })))
+        .mount(&server)
+        .await;
+    let write = StalwartCalendarEventWrite::timed(
+        "Standup",
+        chrono::Utc.with_ymd_and_hms(2026, 9, 14, 14, 0, 0).unwrap(),
+        1800,
+        &[],
+    )
+    .with_conference_url(Some("https://meet.example.test/abc-defg-hij".to_string()));
+    let id = provider(&server)
+        .create_calendar_event("self@example.com", &write)
+        .await
+        .expect("create");
+    assert_eq!(id, "ev-conf");
+}
+
+#[tokio::test]
+async fn lists_conference_url_from_virtual_locations() {
+    let server = MockServer::start().await;
+    mount_calendar_admin(&server).await;
+    Mock::given(method("POST"))
+        .and(path("/jmap/"))
+        .and(body_json(json!({
+            "using": [JMAP_CORE, JMAP_CALENDARS],
+            "methodCalls": [["CalendarEvent/query", {"accountId": "u1", "limit": 100}, "c1"]]
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "methodResponses": [["CalendarEvent/query", {"ids": ["ev1"]}, "c1"]]
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/jmap/"))
+        .and(body_json(json!({
+            "using": [JMAP_CORE, JMAP_CALENDARS],
+            "methodCalls": [["CalendarEvent/get", {
+                "accountId": "u1",
+                "ids": ["ev1"],
+                "properties": [
+                    "id", "uid", "title", "description", "start", "duration",
+                    "timeZone", "showWithoutTime", "recurrenceRules",
+                    "participants", "locations", "virtualLocations",
+                    "freeBusyStatus", "status", "alerts"
+                ]
+            }, "c1"]]
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "methodResponses": [["CalendarEvent/get", {"list": [{
+                "id": "ev1",
+                "title": "Standup",
+                "start": "2026-09-14T14:00:00",
+                "duration": "PT1800S",
+                "locations": {"l1": {"name": "Room A"}},
+                "virtualLocations": {
+                    "v1": {
+                        "@type": "VirtualLocation",
+                        "uri": "https://meet.example.test/abc-defg-hij"
+                    }
+                }
+            }]}, "c1"]]
+        })))
+        .mount(&server)
+        .await;
+    let events = provider(&server)
+        .list_calendar_events("self@example.com")
+        .await
+        .expect("list");
+    assert_eq!(events[0].location.as_deref(), Some("Room A"));
+    assert_eq!(
+        events[0].conference_url.as_deref(),
+        Some("https://meet.example.test/abc-defg-hij")
+    );
+}
+
+#[tokio::test]
+async fn lists_conference_url_from_locations_uri() {
+    let server = MockServer::start().await;
+    mount_calendar_admin(&server).await;
+    Mock::given(method("POST"))
+        .and(path("/jmap/"))
+        .and(body_json(json!({
+            "using": [JMAP_CORE, JMAP_CALENDARS],
+            "methodCalls": [["CalendarEvent/query", {"accountId": "u1", "limit": 100}, "c1"]]
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "methodResponses": [["CalendarEvent/query", {"ids": ["ev1"]}, "c1"]]
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/jmap/"))
+        .and(body_json(json!({
+            "using": [JMAP_CORE, JMAP_CALENDARS],
+            "methodCalls": [["CalendarEvent/get", {
+                "accountId": "u1",
+                "ids": ["ev1"],
+                "properties": [
+                    "id", "uid", "title", "description", "start", "duration",
+                    "timeZone", "showWithoutTime", "recurrenceRules",
+                    "participants", "locations", "virtualLocations",
+                    "freeBusyStatus", "status", "alerts"
+                ]
+            }, "c1"]]
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "methodResponses": [["CalendarEvent/get", {"list": [{
+                "id": "ev1",
+                "title": "Standup",
+                "start": "2026-09-14T14:00:00",
+                "duration": "PT1800S",
+                "locations": {
+                    "v1": {
+                        "@type": "Location",
+                        "name": "Call",
+                        "uri": "https://meet.example.test/from-location",
+                        "locationTypes": {"virtual": true}
+                    }
+                }
+            }]}, "c1"]]
+        })))
+        .mount(&server)
+        .await;
+    let events = provider(&server)
+        .list_calendar_events("self@example.com")
+        .await
+        .expect("list");
+    assert_eq!(events[0].location, None);
+    assert_eq!(
+        events[0].conference_url.as_deref(),
+        Some("https://meet.example.test/from-location")
     );
 }

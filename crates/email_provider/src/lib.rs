@@ -230,6 +230,8 @@ pub struct StalwartCalendarEvent {
     /// `None` means the field was omitted (calendar defaults). `Some` is
     /// explicit, including an empty list for no reminders.
     pub alerts: Option<Vec<StalwartCalendarAlert>>,
+    /// Join URL from JSCalendar `virtualLocations` (or a virtual `locations` URI).
+    pub conference_url: Option<String>,
 }
 
 /// One JSCalendar alert, stored as a Google-shaped reminder override.
@@ -259,6 +261,9 @@ pub struct StalwartCalendarEventWrite {
     /// JSCalendar `alerts`. `None` omits the field (calendar defaults).
     /// `Some` is sent even when empty, so explicit no-reminders can clear them.
     pub alerts: Option<Vec<StalwartCalendarAlert>>,
+    /// JSCalendar `virtualLocations` join URI. `None` omits the field.
+    /// `Some("")` sends `{}` to clear. `Some(url)` sets the conference.
+    pub conference_url: Option<String>,
 }
 
 impl StalwartCalendarEventWrite {
@@ -277,6 +282,7 @@ impl StalwartCalendarEventWrite {
             show_without_time: false,
             recurrence_rules: jmap_recurrence_rules_from_rfc5545(recurrence_lines),
             alerts: None,
+            conference_url: None,
         }
     }
 
@@ -296,6 +302,7 @@ impl StalwartCalendarEventWrite {
             show_without_time: true,
             recurrence_rules: jmap_recurrence_rules_from_rfc5545(recurrence_lines),
             alerts: None,
+            conference_url: None,
         }
     }
 
@@ -303,6 +310,13 @@ impl StalwartCalendarEventWrite {
     #[must_use]
     pub fn with_alerts(mut self, alerts: Option<Vec<StalwartCalendarAlert>>) -> Self {
         self.alerts = alerts;
+        self
+    }
+
+    /// Attach a JSCalendar `virtualLocations` join URI (or `Some("")` to clear).
+    #[must_use]
+    pub fn with_conference_url(mut self, conference_url: Option<String>) -> Self {
+        self.conference_url = conference_url;
         self
     }
 }
@@ -525,6 +539,7 @@ const CALENDAR_EVENT_GET_PROPERTIES: &[&str] = &[
     "recurrenceRules",
     "participants",
     "locations",
+    "virtualLocations",
     "freeBusyStatus",
     "status",
     "alerts",
@@ -1280,6 +1295,7 @@ fn parse_jmap_calendar_event(value: &Value) -> Option<StalwartCalendarEvent> {
         recurrence_lines: rfc5545_from_jmap_recurrence_rules(value.get("recurrenceRules")),
         participants: parse_jmap_participants(value.get("participants")),
         alerts: parse_jmap_alerts(value.get("alerts")),
+        conference_url: parse_conference_url(value),
     })
 }
 
@@ -1340,13 +1356,79 @@ fn first_location_name(value: &Value) -> Option<String> {
         .and_then(Value::as_object)
         .and_then(|locations| {
             locations.values().find_map(|location| {
+                if location_is_virtual(location) {
+                    return None;
+                }
                 location
                     .get("name")
                     .and_then(Value::as_str)
-                    .filter(|name| !name.is_empty())
+                    .filter(|name| !name.is_empty() && http_join_url(name).is_none())
                     .map(str::to_owned)
             })
         })
+}
+
+fn location_is_virtual(location: &Value) -> bool {
+    location
+        .get("locationTypes")
+        .and_then(|types| types.get("virtual"))
+        .and_then(Value::as_bool)
+        == Some(true)
+        || location
+            .get("iCalendar")
+            .and_then(|calendar| calendar.get("name"))
+            .and_then(Value::as_str)
+            == Some("vlocation")
+}
+
+fn http_join_url(value: &str) -> Option<String> {
+    let trimmed = value.trim();
+    if trimmed.starts_with("https://") || trimmed.starts_with("http://") {
+        Some(trimmed.to_owned())
+    } else {
+        None
+    }
+}
+
+fn parse_conference_url(value: &Value) -> Option<String> {
+    if let Some(url) = first_http_uri_in_map(value.get("virtualLocations")) {
+        return Some(url);
+    }
+    let Some(locations) = value.get("locations").and_then(Value::as_object) else {
+        return None;
+    };
+    for location in locations.values() {
+        if let Some(url) = location
+            .get("uri")
+            .and_then(Value::as_str)
+            .and_then(http_join_url)
+        {
+            return Some(url);
+        }
+        if let Some(url) = first_http_uri_in_map(location.get("links")) {
+            return Some(url);
+        }
+    }
+    locations.values().find_map(|location| {
+        location
+            .get("name")
+            .and_then(Value::as_str)
+            .and_then(http_join_url)
+    })
+}
+
+fn first_http_uri_in_map(value: Option<&Value>) -> Option<String> {
+    let object = value?.as_object()?;
+    object.values().find_map(|item| {
+        item.get("uri")
+            .and_then(Value::as_str)
+            .and_then(http_join_url)
+            .or_else(|| {
+                item.get("href")
+                    .and_then(Value::as_str)
+                    .and_then(http_join_url)
+            })
+    })
 }
 
 fn parse_jmap_start(start: &str) -> Option<chrono::DateTime<chrono::Utc>> {
@@ -1415,7 +1497,25 @@ fn calendar_event_set_object(
     if let Some(alerts) = &write.alerts {
         object.insert("alerts".to_owned(), jmap_alerts_object(alerts));
     }
+    if let Some(url) = &write.conference_url {
+        if url.is_empty() {
+            object.insert("virtualLocations".to_owned(), json!({}));
+        } else {
+            object.insert("virtualLocations".to_owned(), jmap_virtual_locations(url));
+        }
+    }
     Value::Object(object)
+}
+
+fn jmap_virtual_locations(url: &str) -> Value {
+    json!({
+        "v1": {
+            "@type": "VirtualLocation",
+            "name": "Call",
+            "uri": url,
+            "features": { "audio": true, "video": true }
+        }
+    })
 }
 
 fn jmap_alerts_object(alerts: &[StalwartCalendarAlert]) -> Value {
