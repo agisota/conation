@@ -122,10 +122,10 @@ pub struct Config {
     /// Stripe secret key
     pub stripe_secret_key: StripeSecretKey,
     /// The port to listen for HTTP requests on.
-    #[macro_config_default(8080)]
+    #[conation_config_default(8080)]
     pub port: usize,
     /// The environment we are in
-    #[macro_config_default(Environment::new_or_prod())]
+    #[conation_config_default(Environment::new_or_prod())]
     pub environment: Environment,
     /// The internal auth key used by other services
     pub service_internal_auth_key: ServiceInternalAuthKey,
@@ -170,7 +170,7 @@ pub struct Config {
     /// Whether Gmail link consent requests the Google Calendar scope. Off by
     /// default so deployed environments don't ask users for a scope the
     /// calendar feature isn't using yet.
-    #[macro_config_default(false)]
+    #[conation_config_default(false)]
     pub calendar_scope_enabled: bool,
 }
 

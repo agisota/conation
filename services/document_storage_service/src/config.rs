@@ -162,7 +162,7 @@ pub struct Config {
     /// Set to `false` for the final pass of the legacy comment importer, before
     /// the new document discussion UI is enabled; those handlers then answer
     /// 503 and the importer works from a frozen source.
-    #[macro_config_default(true)]
+    #[conation_config_default(true)]
     pub legacy_comment_writes_enabled: bool,
 
     /// The number of seconds a signed document or call recording URL is valid for.

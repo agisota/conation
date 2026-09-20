@@ -70,13 +70,13 @@ pub struct Config {
     /// The connection URL for the Postgres database this application should use.
     pub database_url: DatabaseUrl,
     /// The port to listen for HTTP requests on.
-    #[macro_config_default(8080)]
+    #[conation_config_default(8080)]
     pub port: usize,
     /// The environment we are in
-    #[macro_config_default(Environment::new_or_prod())]
+    #[conation_config_default(Environment::new_or_prod())]
     pub environment: Environment,
     /// The maximum number of results in a document query
-    #[macro_config_default(DEFAULT_DOCUMENT_BATCH_LIMIT)]
+    #[conation_config_default(DEFAULT_DOCUMENT_BATCH_LIMIT)]
     pub document_batch_limit: i64,
     /// document storage bucket
     pub document_storage_bucket: DocumentStorageBucket,
@@ -121,10 +121,10 @@ pub struct Config {
     /// The internal api key
     pub internal_api_key: InternalApiKey,
     /// AI editing worker URL
-    #[macro_config_default(AiEditingWorkerUrl::unwrap_new().to_string())]
+    #[conation_config_default(AiEditingWorkerUrl::unwrap_new().to_string())]
     pub ai_editing_worker_url: String,
     /// Browser-facing base URL used for MCP OAuth redirects and client metadata.
-    #[macro_config_default(default_mcp_public_url(Environment::new_or_prod()).to_string())]
+    #[conation_config_default(default_mcp_public_url(Environment::new_or_prod()).to_string())]
     pub mcp_public_url: String,
     /// JWT secret for minting document permission tokens for the editing worker.
     pub document_permission_jwt: DocumentPermissionJwt,

@@ -24,7 +24,7 @@ pub struct Config {
     /// channel and document posts) or `channels` (the pre-parent channel
     /// event, kept until its producer retires it). Never both: every channel
     /// post is on both topics, so both would evaluate each mention twice.
-    #[macro_config_default(TriggerEventSource::default())]
+    #[conation_config_default(TriggerEventSource::default())]
     pub agent_trigger_event_source: TriggerEventSource,
 }
 

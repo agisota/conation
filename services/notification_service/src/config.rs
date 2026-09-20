@@ -53,19 +53,19 @@ pub struct Config {
     pub(crate) url_signing_hmac: UrlSigningHmac,
 
     /// The port to listen for HTTP requests on.
-    #[macro_config_default(8080)]
+    #[conation_config_default(8080)]
     pub(crate) port: usize,
 
     /// The environment we are in.
-    #[macro_config_default(Environment::new_or_prod())]
+    #[conation_config_default(Environment::new_or_prod())]
     pub(crate) environment: Environment,
 
     /// The notification queue max messages per poll.
-    #[macro_config_default(9)]
+    #[conation_config_default(9)]
     pub(crate) notification_queue_max_messages: i32,
 
     /// The notification queue wait time seconds.
-    #[macro_config_default(4)]
+    #[conation_config_default(4)]
     pub(crate) notification_queue_wait_time_seconds: i32,
 
     /// Redis used by notification-service for digest batching, rate limiting, etc.

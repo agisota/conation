@@ -36,7 +36,7 @@ pub struct Config {
     pub macro_db_url: MacroDbUrl,
 
     /// The port to listen for HTTP requests on.
-    #[macro_config_default(8080)]
+    #[conation_config_default(8080)]
     pub port: usize,
 
     /// The Redis URI for the Redis this application should use.
@@ -46,14 +46,14 @@ pub struct Config {
     pub kafka_brokers: KafkaBrokers,
 
     /// The environment we are in
-    #[macro_config_default(Environment::new_or_prod())]
+    #[conation_config_default(Environment::new_or_prod())]
     pub environment: Environment,
 
     /// Master switch for calendar sync. When `false` (the default) the sync
     /// scheduler stays parked, the calendar outbox stops publishing, and
     /// calendar backfill deliveries requeue their outbox rows. Enabling it
     /// later resumes everything without a migration.
-    #[macro_config_default(false)]
+    #[conation_config_default(false)]
     pub calendar_sync_enabled: bool,
 
     /// Auth service secret key, used for internal access
@@ -63,23 +63,23 @@ pub struct Config {
     pub internal_api_key: InternalApiKey,
 
     /// The number of workers we spawn for the calendar backfill queue
-    #[macro_config_default(25)]
+    #[conation_config_default(25)]
     pub backfill_queue_workers: i32,
 
     /// The queue max messages per poll for the calendar backfill queue
-    #[macro_config_default(1)]
+    #[conation_config_default(1)]
     pub backfill_queue_max_messages: i32,
 
     /// The queue max messages per poll
-    #[macro_config_default(10)]
+    #[conation_config_default(10)]
     pub queue_max_messages: i32,
 
     /// The queue wait time seconds
-    #[macro_config_default(20)]
+    #[conation_config_default(20)]
     pub queue_wait_time_seconds: i32,
 
     /// The size of the sliding window we use for Google Calendar rate limiting.
-    #[macro_config_default(60)]
+    #[conation_config_default(60)]
     pub redis_rate_limit_window_secs: u32,
 }
 

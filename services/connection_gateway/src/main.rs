@@ -12,12 +12,8 @@ use crate::{
     context::{AppState, AuthorizationService},
 };
 use anyhow::{Context, Result};
-use axum::http::{
-    Method,
-    header::{AUTHORIZATION, CONTENT_TYPE},
-};
 use config::Config;
-use constants::ORIGINS;
+use conation_cors::cors_layer;
 use frecency::{
     domain::services::{EventIngestorImpl, PullAggregatorImpl},
     inbound::polling_aggregator::FrecencyAggregatorWorkerHandle,
@@ -43,7 +39,6 @@ use service::dynamodb::create_dynamo_db_connection_manager;
 use service::redis::poll_messages;
 use sqlx::postgres::PgPoolOptions;
 use stream::outbound::redis_pg::{RedisPostgresStreamManager, RedisPostgresStreamRepo};
-use tower_http::cors::CorsLayer;
 
 #[tokio::main]
 #[tracing::instrument(ret, err)]
@@ -65,19 +60,7 @@ async fn main() -> Result<()> {
         JwtValidationArgs::new_with_secret_manager(config.environment, &secretsmanager_client)
             .await?;
 
-    // allow requests from any origin
-    let cors = CorsLayer::new()
-        .allow_credentials(true)
-        .allow_headers(vec![AUTHORIZATION, CONTENT_TYPE])
-        .allow_methods(vec![
-            Method::GET,
-            Method::POST,
-            Method::PUT,
-            Method::PATCH,
-            Method::DELETE,
-            Method::OPTIONS,
-        ])
-        .allow_origin(ORIGINS);
+    let cors = cors_layer();
 
     let dynamodb_client = aws_sdk_dynamodb::Client::new(&aws_config);
 
@@ -108,7 +91,7 @@ async fn main() -> Result<()> {
     let pgpool = PgPoolOptions::new()
         .min_connections(3)
         .max_connections(20)
-        .connect(config.macro_db_url.as_ref())
+        .connect(config.conation_db_url.as_ref())
         .await?;
 
     let stream_service = RedisPostgresStreamRepo::new((*redis_client).clone(), pgpool.clone());
