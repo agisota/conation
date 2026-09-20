@@ -86,16 +86,15 @@ impl McpServerStore for PgServerRepo {
         let encrypted_headers: Option<Vec<u8>> = if record.headers.is_empty() {
             None
         } else {
-            let headers_plain =
-                serde_json::to_vec(&record.headers)
-                    .map_err(|e| sqlx::Error::Protocol(e.to_string()))?;
+            let headers_plain = serde_json::to_vec(&record.headers)
+                .map_err(|e| sqlx::Error::Protocol(e.to_string()))?;
             Some(self.encrypt_bytes(&headers_plain)?)
         };
 
         // Never clobber stored credentials with NULL on conflict: re-adding
         // an existing server (e.g. via the Add Server dialog) must not wipe
         // a valid OAuth grant.
-        sqlx::query!(
+        sqlx::query(
             r#"
             INSERT INTO mcp_servers (user_id, url, server_name, credentials, enabled, headers)
             VALUES ($1, $2, $3, $4, $5, $6)
@@ -106,13 +105,13 @@ impl McpServerStore for PgServerRepo {
                 headers     = EXCLUDED.headers,
                 updated_at  = NOW()
             "#,
-            record.user_id.as_ref(),
-            record.url,
-            record.server_name,
-            encrypted.as_deref(),
-            record.enabled,
-            encrypted_headers.as_deref(),
         )
+        .bind(record.user_id.as_ref())
+        .bind(&record.url)
+        .bind(&record.server_name)
+        .bind(encrypted.as_deref())
+        .bind(record.enabled)
+        .bind(encrypted_headers.as_deref())
         .execute(&self.pool)
         .await?;
 
@@ -125,24 +124,27 @@ impl McpServerStore for PgServerRepo {
         user_id: &MacroUserIdStr<'static>,
         server_url: &str,
     ) -> Result<Option<McpServerRecord>, Self::Err> {
-        let row = sqlx::query!(
+        let row: Option<(
+            String,
+            String,
+            String,
+            Option<Vec<u8>>,
+            bool,
+            Option<Vec<u8>>,
+        )> = sqlx::query_as(
             r#"
             SELECT user_id, url, server_name, credentials, enabled, headers
             FROM mcp_servers
             WHERE user_id = $1 AND url = $2
             "#,
-            user_id.as_ref(),
-            server_url,
         )
+        .bind(user_id.as_ref())
+        .bind(server_url)
         .fetch_optional(&self.pool)
         .await?;
 
-        row.map(|r| {
-            self.to_record(
-                r.user_id, r.url, r.server_name, r.credentials, r.enabled, r.headers,
-            )
-        })
-        .transpose()
+        row.map(|r| self.to_record(r.0, r.1, r.2, r.3, r.4, r.5))
+            .transpose()
     }
 
     #[tracing::instrument(skip_all, err)]
@@ -151,14 +153,14 @@ impl McpServerStore for PgServerRepo {
         user_id: &MacroUserIdStr<'static>,
         server_url: &str,
     ) -> Result<(), Self::Err> {
-        sqlx::query!(
+        sqlx::query(
             r#"
             DELETE FROM mcp_servers
             WHERE user_id = $1 AND url = $2
             "#,
-            user_id.as_ref(),
-            server_url,
         )
+        .bind(user_id.as_ref())
+        .bind(server_url)
         .execute(&self.pool)
         .await?;
 
@@ -170,24 +172,27 @@ impl McpServerStore for PgServerRepo {
         &self,
         user_id: &MacroUserIdStr<'static>,
     ) -> Result<Vec<McpServerRecord>, Self::Err> {
-        let rows = sqlx::query!(
+        let rows: Vec<(
+            String,
+            String,
+            String,
+            Option<Vec<u8>>,
+            bool,
+            Option<Vec<u8>>,
+        )> = sqlx::query_as(
             r#"
             SELECT user_id, url, server_name, credentials, enabled, headers
             FROM mcp_servers
             WHERE user_id = $1
             ORDER BY created_at
             "#,
-            user_id.as_ref(),
         )
+        .bind(user_id.as_ref())
         .fetch_all(&self.pool)
         .await?;
 
         rows.into_iter()
-            .map(|r| {
-                self.to_record(
-                    r.user_id, r.url, r.server_name, r.credentials, r.enabled, r.headers,
-                )
-            })
+            .map(|r| self.to_record(r.0, r.1, r.2, r.3, r.4, r.5))
             .collect()
     }
 }
