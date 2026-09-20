@@ -493,6 +493,43 @@ export function hasCanvasLoro(documentId: string): boolean {
   return (readStore()[documentId]?.updates.length ?? 0) > 0;
 }
 
+/**
+ * Merge a live/doInitialSync snapshot into the local WAL so peekCanvasLoro
+ * sees remote nodes before the first editor save. Compacts to one snapshot
+ * so the WAL cap cannot drop the remote seed.
+ */
+export function importCanvasLoroSnapshot(
+  documentId: string,
+  snapshot: Uint8Array
+): Uint8Array | null {
+  if (!documentId || snapshot.length === 0) return null;
+  const stored = storedUpdates(documentId);
+  const doc = new LoroDoc();
+  for (const update of stored) {
+    try {
+      doc.import(update);
+    } catch {
+      /* skip corrupt WAL entry */
+    }
+  }
+  try {
+    doc.import(snapshot);
+  } catch {
+    return null;
+  }
+  const compact = doc.export({ mode: 'snapshot' });
+  if (compact.length === 0) return null;
+  const store = readStore();
+  store[documentId] = {
+    documentId,
+    updates: [bytesToB64(compact)],
+    savedAt: Date.now(),
+  };
+  seededPriors.delete(documentId);
+  if (!writeStore(store)) return null;
+  return compact;
+}
+
 export type CanvasDssPut =
   | { action: 'skip' }
   | { action: 'json'; json: CanvasLoroJson };

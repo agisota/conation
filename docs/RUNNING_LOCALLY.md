@@ -1,348 +1,402 @@
-# Локальный запуск Conation
+# Running locally
 
-Этот документ описывает три разные задачи:
+This guide covers two ways to run Macro on your machine.
 
-1. собрать web-клиент из исходников;
-2. запустить полный локальный контур разработки;
-3. получить standalone web/Tauri-артефакт для собственного backend-origin.
+If you only change the frontend, run the frontend against hosted services. You do not need Docker or the local stack.
 
-Локальный контур подходит для разработки, проверки и демонстрации. Он не
-является готовым публичным production-развёртыванием. Актуальная карта AWS-
-зависимостей, ingress и неподдержанных production-возможностей находится в
-[статусе self-hosting](../infra/selfhost/README.md).
+If you change a backend service, the database, or behavior that must stay on your machine, run the local stack.
 
-## Что получится в браузере и desktop
+## Choose a path
 
-Основной интерфейс — SolidJS/Vite SPA. При локальном запуске он доступен по
-адресу `http://localhost:3000/app`. Та же сборка используется внутри Tauri на
-desktop и mobile, поэтому web-режим не является урезанной копией desktop.
+- **Frontend against hosted services.** Vite on your machine. APIs on hosted `*-dev` services. See [Run the frontend against hosted services](#run-the-frontend-against-hosted-services).
+- **Local stack.** Docker, local infrastructure, and local Rust services. See [Run the local stack](#run-the-local-stack).
 
-Различаются не функции интерфейса, а окружение:
+## Shared prerequisites
 
-- браузер получает API через HTTP/WebSocket;
-- Tauri добавляет нативные возможности и ограничения capability-файлов;
-- внешний production требует TLS, ingress, секреты, резервное копирование и
-  эксплуатационные процедуры, которых локальный запуск не создаёт.
+Install Nix before you start:
 
-## Предварительные требования
+1. [Nix](https://nix.dev/install-nix) package manager
 
-Нужен [Nix](https://nix.dev/install-nix). Закрытый репозиторий клонируется при
-наличии GitHub-доступа:
+Clone the repository:
 
 ```bash
-git clone https://github.com/agisota/conation.git
-\cd conation
+git clone https://github.com/macro-inc/macro.git
+cd macro
+```
+
+The Nix shell provides `just`, Cargo, the Rust toolchain, Bun, `wasm-pack`, sqlx, zig, and cargo-zigbuild. You do not need to install these tools separately.
+
+```bash
 nix develop
 ```
 
-Если flakes ещё не включены:
+If `nix develop` fails, enable the experimental features:
 
 ```bash
-nix develop \
-  --extra-experimental-features nix-command \
-  --extra-experimental-features flakes
+nix develop --extra-experimental-features nix-command --extra-experimental-features flakes
 ```
 
-Для постоянной настройки добавьте в `~/.config/nix/nix.conf`:
+Nix requires these experimental features to work. The command above enables them for one run. To enable them permanently, set this in `~/.config/nix/nix.conf`:
 
-```text
+```
 experimental-features = nix-command flakes
 ```
 
-Nix shell предоставляет Rust, Cargo, Bun, `just`, SQLx CLI, Zig и общие
-инструменты сборки.
+The default shell does not include the Tauri platform dependencies. They are large, so they live in their own shells. For Linux desktop development, use `nix develop .#tauri-linux`. For Android development on x86_64 Linux, use `nix develop .#tauri-android`.
 
-### Дополнительно на macOS
+For automated Linux desktop offline tests, use `nix develop .#tauri-e2e` and the
+[native E2E guide](../apps/web/tests/native/README.md). It runs the real Tauri
+webview/native cache with deterministic API fixtures, without the local stack.
 
-Установите Docker runtime: Docker Desktop, OrbStack или Colima. Nix
-предоставляет Docker CLI, но не запускает macOS VM/daemon вместо runtime.
+## Run the frontend against hosted services
 
-Для desktop/iOS-сборок нужен Xcode с Command Line Tools. Наличие Xcode не
-заменяет Apple Developer certificate, подпись и notarization.
+The web app talks to hosted `*-dev` services when you run `bun run dev` from the web app.
 
-## Только собрать web-клиент
+Limits:
 
-Установите workspace-зависимости из корня:
+- You still need Nix. The first `bun run dev` may compile wasm. Later runs skip that compile when versions match.
+- The UI calls hosted `*-dev` services and shared data.
+- Sign-in is not the local Mailpit flow. If you need a private database or to change a backend service, use the [local stack](#run-the-local-stack).
+
+From the repository root, inside the Nix shell:
 
 ```bash
 bun install
-\cd apps/web
-bunx vite build -c vite.config.ts
+cd apps/web
+bun run dev
 ```
 
-Готовый SPA будет в `apps/web/dist`. Эта команда подтверждает компиляцию, но не
-поднимает API. Без backend страница не сможет выполнить вход, загрузить
-документы или синхронизировать данные.
+The first run, or a run after a wasm version change, may build wasm packages. Vite prints a local URL when it is ready.
 
-Репозиторный production-рецепт дополнительно собирает нужные WASM-компоненты и
-пишет метаданные артефакта:
+## Run the local stack
 
-```bash
-\cd apps/web
-just build-prod
-just check-standalone-artifact
-```
+The local stack runs without Doppler. It runs Postgres, Redis, LocalStack, OpenSearch, Kafka, and FusionAuth in Docker, with dummy AWS credentials and fixed test secrets.
 
-Проверка `check-standalone-artifact` ищет в собранном standalone-клиенте
-запрещённые managed Macro endpoints и legacy URL scheme. Это статический gate,
-а не end-to-end тест backend.
+On Linux, the Nix dev shell supplies the Docker CLI, daemon, Compose, and `fuse-overlayfs`. Nix is the only host dependency.
 
-## Полный локальный стек на macOS/Linux
+On macOS, install a Docker runtime such as Docker Desktop, OrbStack, or Colima. The Nix dev shell supplies the Docker CLI, but macOS still needs the runtime to provide the daemon.
 
-Перед первым запуском проверьте инструменты, Docker daemon и порты:
+Run the preflight check before the first start:
 
 ```bash
 just doctor-local
 ```
 
-Запуск без внутренних Doppler-секретов:
+The check tests the Docker daemon, the toolchain, and the required ports. It reports any problem and suggests a fix. If a start fails, run the check again.
+
+Run this command from the repository root if you do not have Doppler access:
 
 ```bash
 just run_local --no-doppler
 ```
 
-Стек использует локальные/тестовые значения и поднимает Postgres с pgvector,
-Redis, OpenSearch, Kafka, FusionAuth, LocalStack, Mailpit, application services,
-proxy и Vite. По окончании запуска откройте:
+The local stack does not need Doppler. It uses the code-defined local configuration with dummy AWS credentials and fixed test secrets. Most contributors are not on the team, so this is the common path.
 
-- приложение — `http://localhost:3000/app`;
-- backend proxy — `http://localhost:8090`;
-- FusionAuth — `http://localhost:9011`;
-- Mailpit — `http://localhost:8025`;
-- LocalStack — `http://localhost:4566`.
+The stack boots with stubbed values for every config the services require, including the third-party integrations (Google, GitHub, Stripe, CloudFront). Those flows do not work against real services with the stubs. The rest of the stack is fully functional: auth, documents, email, and search.
 
-Если на той же машине уже заняты порты rox-platform (Postgres 5432, Redis 6379,
-Redis Stack UI 8001–8003), подключите overlay с другими host-портами. Redis
-Stack UI слушает **8005**, не 8002:
+To use a real integration locally, supply its keys via `--env-file` — see [Integration Secrets](#integration-secrets) below.
+
+Run this command if you have Doppler access. It pulls the `lcl_personal` config. Then it overlays the code-defined local defaults. Every integration value is real:
 
 ```bash
-docker compose -f docker/docker-compose.yml \
-  -f docker/docker-compose.override-ports.yml up -d
+just run_local
 ```
 
-`--no-doppler` означает, что внешние интеграции получают безопасные stubs.
-Локальный вход по одноразовому коду работает, но Google/Gmail, GitHub, реальные
-AI-провайдеры и Internet mail delivery без credentials не заработают.
+If you prefer to test against real cloud infrastructure, you need [Doppler](https://www.doppler.com) for secrets management.
 
-Пока интерактивный `run_local` работает:
+This command:
 
-- `r` пересобирает изменённые Rust services;
-- `q` корректно останавливает стек.
+- Builds the Rust backend services
+- Starts the local infrastructure (Postgres, Redis, LocalStack, OpenSearch, Kafka, FusionAuth)
+- Starts the backend services
+- Starts the local proxy and the frontend
 
-Если изменялись `sync_service`, `lexical_service` или `websocket_service`,
-запустите контур с пересборкой их Docker-образов:
+When startup finishes, the command prints the frontend URL and the important service URLs.
 
-```bash
-just run_local --no-doppler --build-aux-services
-```
+Open the frontend URL in your browser.
 
-## Вход и тестовые данные
+The local environment supplies both `LOCAL_AWS_URL` (the container endpoint)
+and `LOCAL_AWS_PUBLIC_URL` (the instance's published LocalStack port). SFS and
+other presigned uploads use the public endpoint in browser-facing URLs. If an
+upload attempts `localhost:4566` on a named instance, rebuild the service and
+reload its generated environment; named instances publish storage on their own
+port.
 
-Предварительно создавать пользователя не нужно. Введите любой тестовый email в
-passwordless login. Authentication service создаст пользователя, а письмо с
-кодом попадёт в Mailpit по адресу `http://localhost:8025`.
+The stack does not create accounts in advance. Passwordless login creates a user
+on demand. Register with any email address. FusionAuth sends you a one-time code
+by email. That email lands in **Mailpit** at http://localhost:8025, not in a real
+inbox.
 
-Mailpit — только локальный SMTP sink/UI. Он не создаёт рабочий почтовый ящик
-пользователя и не доказывает замену Gmail на Stalwart.
+### Seeding sample data (recommended)
 
-Для демонстрационных документов, каналов, задач и ролей:
+A bare stack has no content to click through. The seed CLI creates a realistic
+world: users, teams, channels, projects, documents, tasks, chats, calls, emails,
+and messages. The world uses realistic permissions.
+
+From the repository root, after the stack is up:
 
 ```bash
 just seed-scenario apply --file seed/scenarios/team-perms.json
 ```
 
-Полезные безопасные команды:
+`apply` creates a FusionAuth account for each persona. It prints a login link per
+persona, for example `http://alice.localhost:3000/app/login?email=alice@seed.macro.local`.
+Open each link in a plain browser tab. Each persona hostname has its own cookie
+jar. You can drive several personas side by side against one stack.
 
-```bash
-just seed-scenario status --file seed/scenarios/team-perms.json
-just seed-scenario matrix --file seed/scenarios/team-perms.json
-```
+Useful commands:
 
-`reset` сценария удаляет созданные им строки и аккаунты. Не запускайте reset,
-если эти данные нужно сохранить.
+- `just seed-scenario status --file seed/scenarios/team-perms.json` — show what is seeded and re-print the login links.
+- `just seed-scenario reset --file seed/scenarios/team-perms.json` — remove the scenario's rows and its user accounts by email.
+- `just seed-scenario matrix --file seed/scenarios/team-perms.json` — check the expected access level for every user and entity pair against the live database.
 
-## Cursor Cloud
+`apply` touches only rows that carry the scenario `5eed` id marker, plus the
+persona accounts it created. It is safe to run against a stack that you tested in.
 
-В подготовленном Cursor Cloud используйте только поддерживаемые entrypoints:
+## Integration Secrets
 
-```bash
-bash .cursor/infra.sh
-bash .cursor/stack.sh
-```
+A `--no-doppler` stack boots with deterministic stubs for every value the services' config loaders require. The stubs are enough to start the services. The third-party integrations they back do not work until you supply real values:
 
-`infra.sh` поднимает Docker, Postgres и Redis для DB-backed тестов. `stack.sh`
-оставляет здоровый backend на месте и запускает hot-reload frontend. Не
-передавайте `--fresh`, если не хотите намеренно пересоздать локальные данные.
+| Integration | Keys | Stub behavior |
+| --- | --- | --- |
+| Google login / Gmail | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET_KEY` | Google SSO and Gmail inbox linking are unavailable. Local signup still works. The email service reports no Gmail grant and skips inbox syncing. |
+| GitHub login | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_IDP_ID` | Login with GitHub is unavailable |
+| Stripe billing | `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID` | Checkout and subscription endpoints fail. Signup still works: the create-user webhook detects the stub key and skips the real Stripe call. It stores a placeholder customer id instead. |
+| CloudFront signed URLs | `DOCUMENT_STORAGE_SERVICE_CLOUDFRONT_DISTRIBUTION_URL`, `DOCUMENT_STORAGE_SERVICE_CLOUDFRONT_SIGNER_PUBLIC_KEY_ID`, `DOCUMENT_STORAGE_SERVICE_CLOUDFRONT_SIGNER_PRIVATE_KEY` | Document download URLs are unsigned (fine against local S3) |
 
-После изменений Rust-backend:
+The other stubbed keys (`REDIS_HOST`, `MACRO_DB_URL`, `INTERNAL_API_KEY`, `AUTHENTICATION_SERVICE_SECRET_KEY`, `OPENSEARCH_USERNAME`, `OPENSEARCH_PASSWORD`) are internal plumbing with correct local values — you never need to override them.
 
-```bash
-bash .cursor/rebuild.sh
-```
-
-Frontend-изменения применяются Vite автоматически.
-
-## Headless-режим
-
-Для CI/агентов можно поднять статически собранный frontend и backend без
-интерактивной петли:
-
-```bash
-just stack up --no-doppler
-just stack status --json
-```
-
-Обновление без сброса volumes:
-
-```bash
-just stack update
-just stack update --frontend
-```
-
-Остановка с сохранением данных:
-
-```bash
-just stack down --keep-data
-```
-
-Приложение в headless-контуре отдаётся через единый proxy origin по пути
-`/app/`.
-
-После готовности `/auth/health` команда `stack up` идемпотентно согласует в
-FusionAuth три служебных профиля Conation — так же, как `run_local`. Для
-именованного экземпляра используются только его вычисленные порты; другие
-Compose projects и их данные provisioning не перезапускает и не пересоздаёт:
-
-```bash
-just stack up --no-doppler --instance agent-a
-```
-
-В headless-профилях URL аватаров указывает на тот же proxy origin, который
-раздаёт `/app/`; незапущенный Vite-порт в профили не записывается.
-
-## Несколько изолированных экземпляров
-
-Для параллельных worktree используйте имя instance:
-
-```bash
-just run_local --no-doppler --instance agent-a
-just run_local --no-doppler --instance agent-b
-```
-
-Если стандартные порты заняты, сначала проверьте новое окно:
-
-```bash
-just doctor-local --instance test --port-base 31000
-just run_local --no-doppler --instance test --port-base 31000
-```
-
-Одинаковые `--instance` и `--port-base` нужно передавать в `run_local`, status и
-seed-команды: иначе инструмент обратится к другому стеку.
-
-На macOS часто конфликтуют порт 8080 (WebDriver) и 8090 (другой dev server).
-Менять системные службы необязательно — выберите свободный `--port-base`.
-
-## Внешние интеграции и секреты
-
-Передавайте секреты через локальный игнорируемый env-файл или секрет-хранилище,
-никогда не коммитьте их и не вставляйте в документацию:
+To turn on an integration, create a `local.env` with the real values. Then pass it
+to `run_local`:
 
 ```bash
 just run_local --no-doppler --env-file ./local.env
 ```
 
-Основные опциональные интеграции:
+Keys in the file override the code-defined defaults, so you only need to list the integrations you care about. With Doppler access, `just run_local` (without `--no-doppler`) supplies everything automatically.
 
-| Интеграция                    | Что требуется                                               | Поведение без секрета                                                       |
-| ----------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------- |
-| Google OAuth / Gmail          | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET_KEY`              | Google login и Gmail sync недоступны; локальный passwordless login работает |
-| GitHub                        | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_IDP_ID` | GitHub login/tasks недоступны                                               |
-| AI через операторский gateway | ключ и endpoint, соответствующие выбранному adapter         | Agent service может быть unhealthy либо функция завершится явной ошибкой    |
-| CloudFront-совместимые URL    | signer/distribution settings                                | Локальное S3 скачивание может обходиться без CloudFront, production — нет   |
-| Публичная почта               | SMTP/JMAP/provider credentials, DNS/MX/SPF/DKIM/DMARC       | Письма остаются в Mailpit; пользовательский inbox не появляется             |
+## Tracing, Logs, and the Debug Browser
 
-Внутренний URL базы данных задаётся через `CONATION_DB_URL`. Для полностью
-чистого развёртывания не оставляйте прежний ключ как alias: обновите секрет во
-всех deployment-конфигурациях одновременно.
+`just run_local` and `just stack up` support two global (per-machine, shared
+across instances) debugging containers:
 
-## macOS desktop → Linux local stack
+- **LGTM collector** (`--traces lgtm`, the default): Grafana at
+  http://localhost:3001 with Tempo (traces), Loki (service logs), and
+  Prometheus behind it. Rust services export spans and `tracing` events over
+  OTLP; the frontend exports browser spans through the proxy and propagates
+  `traceparent`, so one trace covers browser → proxy → services. Swap with
+  `--traces jaeger|datadog`, or disable with `--traces off`.
+- **Agent browser** (opt-in via `--with-chrome`): Chromium with the DevTools
+  protocol on http://localhost:9222, for agents driving the app (the
+  `chrome-devtools` MCP server in `.mcp.json` / `opencode.json` /
+  `.cursor/mcp.json` points at it). Watch what an agent is doing live at
+  http://localhost:6080/vnc.html.
 
-Desktop Tauri выбирает API/WS/auth через `CONATION_OPERATOR_ORIGIN` (и
-одноимённый `VITE_CONATION_OPERATOR_ORIGIN` в web-бандле). На этом сервере
-`127.0.0.1:8090` — dynacat; Conation слушает `:24009`, а публичный IPv4 и
-Tailscale `:8090` проксируют туда.
+See `.claude/skills/live-debug/SKILL.md` for query recipes (Tempo/Loki HTTP
+APIs) and the browser-debugging workflow.
 
-С MacBook, в Nix shell (не `http://localhost:8090`):
+For agent turns, use Tempo's TraceQL query
+`{span.gen_ai.operation.name="invoke_agent"}`. The session actor records the
+ACP prompt, output and tool activity on that trace and sends its context in
+`params._meta["macro.dev/trace-context"]`. Macro's in-process runtime restores
+that context so its model calls and backend work appear in the same trace.
+Other runtimes must explicitly consume this metadata to correlate their
+internal spans; their ACP activity is still traced by the session actor.
 
-```bash
-./scripts/macos-connect-local-server.sh --write
-set -a && source .env.desktop.local && set +a
-\cd apps/web
-CONATION_OPERATOR_ORIGIN=http://100.89.19.82:8090 just tauri-build-local-stack
-```
+GenAI content is bounded by `genai_telemetry`; check
+`macro.genai.content_truncated` before using a span for evaluations.
 
-Публичный IP, если MacBook не в Tailscale:
+## Control the Running Stack
 
-```bash
-CONATION_OPERATOR_ORIGIN=http://173.212.222.197:8090 just tauri-build-local-stack
-```
+While `run_local` is attached:
 
-Шаблон с IP — [`.env.desktop.local.example`](../.env.desktop.local.example).
-Рецепт `tauri-build-local-stack` отклоняет пустой origin, `same-origin` и
-hosted `conation.dev` / `app.conation.dev`. Подробности: `.cursor-fleet/LOCAL_INFRA.md`.
+- Press `r` to rebuild the changed Rust services and reload them.
+- Press `f` to restart Vite with the same frontend port and configuration. This
+  also recovers a stuck frontend reload and leaves backend services and data intact.
+- Press `q` to stop the stack and exit.
 
-## Standalone
+Use `q`, not the terminal close button. `q` stops and removes the containers at once. The next start does not have to clean up a stale stack.
 
-`standalone` — профиль адресации клиента. В production web-сборке он по
-умолчанию использует same-origin маршруты. Оператор должен направить их в
-соответствующие Conation services; точный ingress-контракт перечислен в
-[self-hosting status](../infra/selfhost/README.md).
+## Run More than One Stack
 
-Фиксированный операторский origin задаётся на этапе сборки:
-
-```bash
-\cd apps/web
-VITE_CONATION_OPERATOR_ORIGIN=https://conation.example just build-prod
-```
-
-Для Tauri:
+Use named instances for several local stacks at once. This helps across worktrees:
 
 ```bash
-\cd apps/web
-CONATION_OPERATOR_ORIGIN=https://conation.example just tauri-build-standalone
+just run_local --instance agent-a
+just run_local --instance agent-b
 ```
 
-Чтобы native-сборка ходила в локальный стек на этой машине (прокси
-`just stack` / `just run_local` на порту **8090**), а не в публичный
-`https://conation.dev`, используйте рецепт, который требует явный origin:
+Each instance has its own resources:
+
+- a Compose project
+- volumes and networks
+- env files
+- a proxy port, a frontend port, and backend ports
+
+The ports are deterministic for the instance name. The same name gets the same
+port window on every run.
+
+If the port window conflicts with another program, change the base port:
 
 ```bash
-\cd apps/web
-CONATION_OPERATOR_ORIGIN=http://<this-host>:8090 just tauri-build-local-stack
+just run_local --instance agent-a --port-base 23000
 ```
 
-`<this-host>` — адрес, с которого клиент достигает этот сервер. Рецепт
-отклоняет пустой origin, `same-origin` и hosted `conation.dev`.
+The generated files for an instance live here:
 
-В обоих примерах `conation.example` нужно заменить на реально контролируемый
-HTTPS origin. Сборка отклоняет managed Macro hosts в standalone-профиле.
+```text
+infra/local/generated/<instance>
+```
 
-Conation поддерживает только standalone-профиль. Старое значение
-`VITE_CONATION_CLIENT_PROFILE=hosted-legacy` отклоняется до сборки, чтобы
-артефакт не мог получить managed Macro endpoints или app links.
+## Port Conflicts (macOS)
 
-## Что ещё не подтверждено для production
+The default instance binds a fixed set of host ports. macOS reserves some of them
+for its own services. If the app loads but API calls return unexpected HTML, a
+port is probably hijacked by an unrelated process. The two most common conflicts
+on a fresh Mac:
 
-- публичный TLS/ingress, WAF/rate limits и multi-node topology;
-- полный backup/restore для Postgres, object storage, FusionAuth, Kafka и search;
-- замена всех SQS/DynamoDB/KMS/Lambda/ECS/SES/SNS контрактов;
-- полноценные почтовые аккаунты Stalwart и Internet delivery;
-- locale пользователя в асинхронных email/push/digest;
-- production egress для sandbox, его TLS-достижимость из Daytona и live
-  OmniRoute smoke-тест; исходники содержат capability-защищенный fallback,
-  но end-to-end production-подтверждения ещё нет;
-- подписанный и notarized macOS artifact;
-- проверенные public web/docs/MCP endpoints на домене `conation.dev`.
+- **Port 8080** — macOS WebDriver service (`com.apple.WebDriver.HTTPService`). It listens on this port when remote automation is on. The auth service cannot bind it.
+- **Port 8090** — another project's dev server, for example an Expo server with `--port 8090`. The proxy cannot bind it.
 
-До закрытия этих пунктов корректное описание — «локально собирается и
-запускается для разработки/валидации», а не «готово к production deployment».
+The frontend loads, but login and API calls hit the other process. You see HTML
+or console errors instead of JSON. `just doctor-local` reports the busy ports
+before you start.
+
+Run the stack on a port window that is free on your machine. You do not need to
+kill the other process:
+
+```bash
+just doctor-local                         # see which default ports are busy
+just doctor-local --instance test --port-base 31000   # check the new window is free
+just run_local --no-doppler --instance test --port-base 31000
+```
+
+A named instance binds every service at `port-base + offset`. A free base like
+`31000` moves the whole stack to one contiguous window. Use any base that is free
+on your machine. See `just doctor-local` for the busy ports. Keep the same
+`--instance` name and `--port-base` on later runs so the ports stay deterministic.
+
+Use the same two flags for every command. Run the stack, seed it, and check it
+with the same `--instance` and `--port-base` values:
+
+```bash
+just run_local --no-doppler --instance test --port-base 31000
+just seed-scenario --instance test --port-base 31000 apply --file seed/scenarios/team-perms.json
+just seed-scenario --instance test --port-base 31000 status --file seed/scenarios/team-perms.json
+just status_local --instance test --port-base 31000
+```
+
+If you omit `--port-base`, a named instance gets a deterministic port window
+derived from its name. That window is different from the one you chose. A stack
+started with an explicit `--port-base` must be seeded with the same explicit
+`--port-base`, or the seed CLI looks at the wrong database. The default instance
+(no `--instance`) always uses the fixed ports and needs no extra flags.
+
+The seeded persona login links embed the frontend port. If you switch ports, run
+`just seed-scenario apply` again to get links that match the new window.
+`just status_local`, with the same two flags, prints the live endpoints.
+
+## What the Stack Rebuilds
+
+The Rust services are built on the host with `cargo zigbuild`. The binaries are mounted into a shared runtime image. Docker does not compile these services during a normal `run_local`.
+
+Press `r` to rebuild the binaries. Only the services whose binaries changed restart.
+
+Three services have Docker-built images. They are not rebuilt by default:
+
+- `sync_service`
+- `lexical_service`
+- `websocket_service`
+
+If you change these services, the running stack can use a stale image. Force a rebuild with this flag:
+
+```bash
+just run_local --build-aux-services
+```
+
+When you start the stack with `--build-aux-services`, press `r` to rebuild those images and recreate their containers. This is slower, so leave the flag off unless you work on those services.
+
+If you started without the flag and suspect a stale image, press `q`. Then start again with the flag.
+
+## Headless Mode
+
+`just stack` runs the same stack without an attached terminal. There is no hotkey loop and no dev server. The frontend is built once and served statically by the proxy. The whole product lives behind one origin. A finished `up` leaves only Docker containers running.
+
+```bash
+just stack up                  # bring everything up, print URLs, return
+just stack status --json      # machine-readable state (containers, health, URLs)
+just stack update             # rebuild and reload only the changed services (the `r` hotkey)
+just stack update --frontend  # also rebuild the frontend bundle
+just stack update --binaries-dir <dir>  # remount a prebuilt set; volumes stay
+just stack down               # remove containers, volumes, and state
+```
+
+All the `run_local` flags apply to `stack` too. This includes `--instance`, `--no-doppler`, `--no-build`, and `--binaries-dir`.
+
+The app is served at `<proxy>/app/`. The bundle resolves its backend from the origin it is served on. The same stack works on localhost or behind any hostname without a rebuild.
+
+### Init Snapshots
+
+`just run_local` and `stack up` both cache the expensive infrastructure initialization. The first cold run:
+
+- Migrates the database
+- Creates the Kafka topics
+- Waits for the FusionAuth kickstart
+- Creates the search indices
+
+It saves these volumes as an init snapshot. The snapshot is content-addressed and stored under `infra/local/generated/.snapshots`. Later runs restore the snapshot and skip the initialization. An input change causes a cache miss and a normal full init — the key *is* the definition of clean state, so the full-delete/full-create guarantee is unchanged.
+
+Useful commands:
+
+```bash
+just run_local --no-snapshot  # skip the snapshot cache
+just stack up --no-snapshot   # same flag, headless
+```
+
+Cursor Cloud bakes the snapshot during environment install. Later `stack up` restores it.
+
+## Common Commands
+
+Run local binaries against shared dev resources instead of a full local stack:
+
+```bash
+just run_dev
+```
+
+`run_dev` uses shared dev resources. It needs Doppler and real cloud access. It is for contributors with team access.
+
+See what a running or stopped instance looks like. The output shows endpoints with live reachability probes, plus the state and host ports of every container. It does not start or rebuild anything:
+
+```bash
+just status_local
+```
+
+Stop an instance but keep its volumes:
+
+```bash
+just stop_local --instance agent-a
+```
+
+Remove the containers, volumes, and named-instance networks of an instance:
+
+```bash
+just destroy_local --instance agent-a
+```
+
+Drop, recreate, and migrate an instance database:
+
+```bash
+just reset_local --instance agent-a
+```
+
+### Finding out where a bring-up spent its time
+
+Every run prints its slowest stages before the summary. To compare runs, point
+`MACRO_LOCAL_TIMINGS` at a file — each run appends one JSON line of every stage
+and its duration:
+
+```bash
+MACRO_LOCAL_TIMINGS=/tmp/run-local-timings.jsonl just run_local
+```
+
+For the default instance, omit `--instance`.

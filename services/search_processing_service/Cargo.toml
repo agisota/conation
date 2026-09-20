@@ -14,8 +14,8 @@ processing = [
   "dep:documents",
   "dep:email",
   "dep:kafka_util",
-  "dep:conation_event_broker",
-  "dep:conation_event_topics",
+  "dep:macro_event_broker",
+  "dep:macro_event_topics",
   "dep:models_properties",
   "dep:projects",
   "dep:properties",
@@ -25,8 +25,8 @@ processing = [
 ]
 service = [
   "dep:documents",
-  "dep:conation_event_broker",
-  "conation_db_client",
+  "dep:macro_event_broker",
+  "macro_db_client",
   "dep:models_properties",
   "dep:properties",
 ]
@@ -42,6 +42,8 @@ name = "search_processing_service_doppler_config"
 path = "src/doppler_config.rs"
 
 [dependencies]
+agent_session = { path = "../../crates/agent_session", default-features = false, features = ["outbound"] }
+agent_fold = { path = "../../crates/agent_fold" }
 anyhow = { workspace = true }
 aws-sdk-dynamodb = { workspace = true }
 aws-sdk-s3 = { workspace = true }
@@ -58,24 +60,26 @@ futures = { workspace = true }
 http-body-util = { workspace = true }
 kafka_util = { path = "../../crates/kafka_util", optional = true }
 lexical_client = { path = "../../crates/lexical_client" }
-conation_auth = { path = "../../crates/conation_auth" }
-conation_authorization = { path = "../../crates/conation_authorization" }
-conation_aws_config = { path = "../../crates/conation_aws_config", features = ["s3"] }
-conation_cors = { path = "../../crates/conation_cors" }
-conation_config = { path = "../../crates/conation_config" }
-conation_db_client = { path = "../../crates/conation_db_client", optional = true } # Make this optional
-conation_entrypoint = { path = "../../crates/conation_entrypoint" }
-conation_env = { path = "../../crates/conation_env" }
-conation_env_var = { path = "../../crates/conation_env_var" }
+macro_auth = { package = "conation_auth", path = "../../crates/conation_auth" }
+macro_authorization = { path = "../../crates/conation_authorization", features = [
+  "postgres",
+] }
+macro_aws_config = { package = "conation_aws_config", path = "../../crates/conation_aws_config", features = ["s3"] }
+macro_cors = { package = "conation_cors", path = "../../crates/conation_cors" }
+macro_config = { package = "conation_config", path = "../../crates/conation_config" }
+macro_db_client = { package = "conation_db_client", path = "../../crates/conation_db_client", optional = true } # Make this optional
+macro_entrypoint = { path = "../../crates/conation_entrypoint" }
+macro_env = { package = "conation_env", path = "../../crates/conation_env" }
+macro_env_var = { package = "conation_env_var", path = "../../crates/conation_env_var" }
 calendar_events = { path = "../../crates/calendar_events" }
-conation_event_broker = { path = "../../crates/conation_event_broker", default-features = false, features = [
+macro_event_broker = { package = "conation_event_broker", path = "../../crates/conation_event_broker", default-features = false, features = [
   "outbound",
 ], optional = true }
-conation_event_topics = { path = "../../crates/conation_event_topics", optional = true }
-conation_queues = { path = "../../crates/conation_queues" }
-conation_middleware = { path = "../../crates/conation_middleware", default-features = false }
-conation_user_id = { path = "../../crates/conation_user_id" }
-conation_uuid = { path = "../../crates/conation_uuid" }
+macro_event_topics = { package = "conation_event_topics", path = "../../crates/conation_event_topics", optional = true }
+macro_queues = { package = "conation_queues", path = "../../crates/conation_queues" }
+macro_middleware = { package = "conation_middleware", path = "../../crates/conation_middleware", default-features = false }
+macro_user_id = { package = "conation_user_id", path = "../../crates/conation_user_id" }
+macro_uuid = { package = "conation_uuid", path = "../../crates/conation_uuid" }
 mention_utils = { path = "../../crates/mention_utils" }
 document_sub_type = { path = "../../crates/document_sub_type" }
 documents = { path = "../../crates/documents", default-features = false, optional = true }
@@ -118,5 +122,5 @@ utoipa = { workspace = true }
 utoipa-swagger-ui = { workspace = true }
 uuid = { workspace = true }
 
-conation_service_urls = { path = "../../crates/conation_service_urls" }
+macro_service_urls = { package = "conation_service_urls", path = "../../crates/conation_service_urls" }
 workspace-hack = { version = "0.1", path = "../../crates/workspace-hack" }

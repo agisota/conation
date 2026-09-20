@@ -6,10 +6,16 @@
  */
 import type {
   AppleLoginRequest,
-  ConationApiTokenParams,
-  ConationApiTokenResponse,
+  CodexConfigRequest,
+  CodexConnectionStatus,
+  CodexEnvironment,
+  CodexLoginPoll,
+  CodexLoginStart,
   CreateAccountMergeRequest,
+  CreateCheckoutSessionV2Request,
+  CreateGtmInviteLinkRequest,
   CreateInProgressLinkResponse,
+  CreatePortalSessionRequest,
   CreateTeamRequest,
   CreateUserRequest,
   CursorApiKeyStatus,
@@ -27,6 +33,10 @@ import type {
   GetUserLinkExistsParams,
   GithubLinkStatusResponse,
   GmailLinkStatusResponse,
+  GtmInviteLink,
+  GtmInviteLinkList,
+  GtmInviteOffer,
+  GtmInviteOfferStatus,
   InitGithubLinkParams,
   InitGithubLinkResponse,
   InitGmailLinkParams,
@@ -34,6 +44,9 @@ import type {
   InitOutlookLinkParams,
   InitOutlookLinkResponse,
   InviteToTeamRequest,
+  ListGtmInviteLinksParams,
+  MacroApiTokenParams,
+  MacroApiTokenResponse,
   PasswordlessCallbackParams,
   PasswordlessRequest,
   PasswordlessStartedResponse,
@@ -47,16 +60,19 @@ import type {
   Permission,
   PostGetNamesRequestBody,
   ProfilePictures,
+  PublicGtmInviteLink,
   PutCursorApiKeyRequest,
   PutCursorDefaultModelRequest,
   PutProfilePictureParams,
   PutUserNameParams,
+  RedeemGtmInviteLinkRequest,
   ResendFusionauthVerifyUserEmailRequest,
   SendInviteBody,
   SendMobileWelcomeEmailRequest,
   SendMobileWelcomeEmailResponse,
   SsoLoginParams,
   SsoRequiredResponse,
+  StripeSessionResponse,
   Team,
   TeamInvitesResponse,
   TeamWithMembers,
@@ -69,6 +85,247 @@ import type {
   UserQuota,
   UserTokensResponse,
 } from './schemas';
+
+export type getCodexConnectionResponse200 = {
+  data: CodexConnectionStatus;
+  status: 200;
+};
+
+export type getCodexConnectionResponseSuccess =
+  getCodexConnectionResponse200 & {
+    headers: Headers;
+  };
+
+export type getCodexConnectionResponse = getCodexConnectionResponseSuccess;
+
+export const getGetCodexConnectionUrl = () => {
+  return `/codex`;
+};
+
+export const getCodexConnection = async (
+  options?: RequestInit
+): Promise<getCodexConnectionResponse> => {
+  const res = await fetch(getGetCodexConnectionUrl(), {
+    ...options,
+    method: 'GET',
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getCodexConnectionResponse['data'] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as getCodexConnectionResponse;
+};
+
+export type disconnectCodexResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type disconnectCodexResponseSuccess = disconnectCodexResponse204 & {
+  headers: Headers;
+};
+
+export type disconnectCodexResponse = disconnectCodexResponseSuccess;
+
+export const getDisconnectCodexUrl = () => {
+  return `/codex`;
+};
+
+export const disconnectCodex = async (
+  options?: RequestInit
+): Promise<disconnectCodexResponse> => {
+  const res = await fetch(getDisconnectCodexUrl(), {
+    ...options,
+    method: 'DELETE',
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: disconnectCodexResponse['data'] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as disconnectCodexResponse;
+};
+
+export type configureCodexResponse200 = {
+  data: CodexConnectionStatus;
+  status: 200;
+};
+
+export type configureCodexResponseSuccess = configureCodexResponse200 & {
+  headers: Headers;
+};
+
+export type configureCodexResponse = configureCodexResponseSuccess;
+
+export const getConfigureCodexUrl = () => {
+  return `/codex/config`;
+};
+
+export const configureCodex = async (
+  codexConfigRequest: CodexConfigRequest,
+  options?: RequestInit
+): Promise<configureCodexResponse> => {
+  const res = await fetch(getConfigureCodexUrl(), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(codexConfigRequest),
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: configureCodexResponse['data'] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as configureCodexResponse;
+};
+
+export type listCodexEnvironmentsResponse200 = {
+  data: CodexEnvironment[];
+  status: 200;
+};
+
+export type listCodexEnvironmentsResponseSuccess =
+  listCodexEnvironmentsResponse200 & {
+    headers: Headers;
+  };
+
+export type listCodexEnvironmentsResponse =
+  listCodexEnvironmentsResponseSuccess;
+
+export const getListCodexEnvironmentsUrl = () => {
+  return `/codex/environments`;
+};
+
+export const listCodexEnvironments = async (
+  options?: RequestInit
+): Promise<listCodexEnvironmentsResponse> => {
+  const res = await fetch(getListCodexEnvironmentsUrl(), {
+    ...options,
+    method: 'GET',
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: listCodexEnvironmentsResponse['data'] = body
+    ? JSON.parse(body)
+    : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as listCodexEnvironmentsResponse;
+};
+
+export type startCodexLoginResponse200 = {
+  data: CodexLoginStart;
+  status: 200;
+};
+
+export type startCodexLoginResponseSuccess = startCodexLoginResponse200 & {
+  headers: Headers;
+};
+
+export type startCodexLoginResponse = startCodexLoginResponseSuccess;
+
+export const getStartCodexLoginUrl = () => {
+  return `/codex/login`;
+};
+
+export const startCodexLogin = async (
+  options?: RequestInit
+): Promise<startCodexLoginResponse> => {
+  const res = await fetch(getStartCodexLoginUrl(), {
+    ...options,
+    method: 'POST',
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: startCodexLoginResponse['data'] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as startCodexLoginResponse;
+};
+
+export type pollCodexLoginResponse200 = {
+  data: CodexLoginPoll;
+  status: 200;
+};
+
+export type pollCodexLoginResponseSuccess = pollCodexLoginResponse200 & {
+  headers: Headers;
+};
+
+export type pollCodexLoginResponse = pollCodexLoginResponseSuccess;
+
+export const getPollCodexLoginUrl = (attemptId: string) => {
+  return `/codex/login/${attemptId}`;
+};
+
+export const pollCodexLogin = async (
+  attemptId: string,
+  options?: RequestInit
+): Promise<pollCodexLoginResponse> => {
+  const res = await fetch(getPollCodexLoginUrl(attemptId), {
+    ...options,
+    method: 'GET',
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: pollCodexLoginResponse['data'] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as pollCodexLoginResponse;
+};
+
+export type cancelCodexLoginResponse204 = {
+  data: void;
+  status: 204;
+};
+
+export type cancelCodexLoginResponseSuccess = cancelCodexLoginResponse204 & {
+  headers: Headers;
+};
+
+export type cancelCodexLoginResponse = cancelCodexLoginResponseSuccess;
+
+export const getCancelCodexLoginUrl = (attemptId: string) => {
+  return `/codex/login/${attemptId}`;
+};
+
+export const cancelCodexLogin = async (
+  attemptId: string,
+  options?: RequestInit
+): Promise<cancelCodexLoginResponse> => {
+  const res = await fetch(getCancelCodexLoginUrl(attemptId), {
+    ...options,
+    method: 'DELETE',
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: cancelCodexLoginResponse['data'] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as cancelCodexLoginResponse;
+};
 
 /**
  * Never returns the key, or any part of it. There is no screen that needs one,
@@ -85,10 +342,18 @@ export type getCursorApiKeyResponse401 = {
   status: 401;
 };
 
+export type getCursorApiKeyResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
 export type getCursorApiKeyResponseSuccess = getCursorApiKeyResponse200 & {
   headers: Headers;
 };
-export type getCursorApiKeyResponseError = getCursorApiKeyResponse401 & {
+export type getCursorApiKeyResponseError = (
+  | getCursorApiKeyResponse401
+  | getCursorApiKeyResponse403
+) & {
   headers: Headers;
 };
 
@@ -140,12 +405,18 @@ export type putCursorApiKeyResponse401 = {
   status: 401;
 };
 
+export type putCursorApiKeyResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
 export type putCursorApiKeyResponseSuccess = putCursorApiKeyResponse200 & {
   headers: Headers;
 };
 export type putCursorApiKeyResponseError = (
   | putCursorApiKeyResponse400
   | putCursorApiKeyResponse401
+  | putCursorApiKeyResponse403
 ) & {
   headers: Headers;
 };
@@ -198,11 +469,19 @@ export type deleteCursorApiKeyResponse401 = {
   status: 401;
 };
 
+export type deleteCursorApiKeyResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
 export type deleteCursorApiKeyResponseSuccess =
   deleteCursorApiKeyResponse200 & {
     headers: Headers;
   };
-export type deleteCursorApiKeyResponseError = deleteCursorApiKeyResponse401 & {
+export type deleteCursorApiKeyResponseError = (
+  | deleteCursorApiKeyResponse401
+  | deleteCursorApiKeyResponse403
+) & {
   headers: Headers;
 };
 
@@ -250,6 +529,11 @@ export type putCursorDefaultModelResponse401 = {
   status: 401;
 };
 
+export type putCursorDefaultModelResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
 export type putCursorDefaultModelResponse409 = {
   data: ErrorResponse;
   status: 409;
@@ -261,6 +545,7 @@ export type putCursorDefaultModelResponseSuccess =
   };
 export type putCursorDefaultModelResponseError = (
   | putCursorDefaultModelResponse401
+  | putCursorDefaultModelResponse403
   | putCursorDefaultModelResponse409
 ) & {
   headers: Headers;
@@ -315,6 +600,11 @@ export type listCursorModelsResponse401 = {
   status: 401;
 };
 
+export type listCursorModelsResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
 export type listCursorModelsResponse409 = {
   data: ErrorResponse;
   status: 409;
@@ -330,6 +620,7 @@ export type listCursorModelsResponseSuccess = listCursorModelsResponse200 & {
 };
 export type listCursorModelsResponseError = (
   | listCursorModelsResponse401
+  | listCursorModelsResponse403
   | listCursorModelsResponse409
   | listCursorModelsResponse502
 ) & {
@@ -643,6 +934,440 @@ export const enrichGithubPullRequests = async (
 };
 
 /**
+ * @summary Lists invite links, newest first. Macro staff only.
+ */
+export type listGtmInviteLinksResponse200 = {
+  data: GtmInviteLinkList;
+  status: 200;
+};
+
+export type listGtmInviteLinksResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type listGtmInviteLinksResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type listGtmInviteLinksResponse500 = {
+  data: ErrorResponse;
+  status: 500;
+};
+
+export type listGtmInviteLinksResponseSuccess =
+  listGtmInviteLinksResponse200 & {
+    headers: Headers;
+  };
+export type listGtmInviteLinksResponseError = (
+  | listGtmInviteLinksResponse401
+  | listGtmInviteLinksResponse403
+  | listGtmInviteLinksResponse500
+) & {
+  headers: Headers;
+};
+
+export type listGtmInviteLinksResponse =
+  | listGtmInviteLinksResponseSuccess
+  | listGtmInviteLinksResponseError;
+
+export const getListGtmInviteLinksUrl = (params?: ListGtmInviteLinksParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/gtm-invite/links?${stringifiedParams}`
+    : `/gtm-invite/links`;
+};
+
+export const listGtmInviteLinks = async (
+  params?: ListGtmInviteLinksParams,
+  options?: RequestInit
+): Promise<listGtmInviteLinksResponse> => {
+  const res = await fetch(getListGtmInviteLinksUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: listGtmInviteLinksResponse['data'] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as listGtmInviteLinksResponse;
+};
+
+/**
+ * @summary Creates an invite link. Macro staff only.
+ */
+export type createGtmInviteLinkResponse200 = {
+  data: GtmInviteLink;
+  status: 200;
+};
+
+export type createGtmInviteLinkResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type createGtmInviteLinkResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type createGtmInviteLinkResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type createGtmInviteLinkResponse500 = {
+  data: ErrorResponse;
+  status: 500;
+};
+
+export type createGtmInviteLinkResponseSuccess =
+  createGtmInviteLinkResponse200 & {
+    headers: Headers;
+  };
+export type createGtmInviteLinkResponseError = (
+  | createGtmInviteLinkResponse400
+  | createGtmInviteLinkResponse401
+  | createGtmInviteLinkResponse403
+  | createGtmInviteLinkResponse500
+) & {
+  headers: Headers;
+};
+
+export type createGtmInviteLinkResponse =
+  | createGtmInviteLinkResponseSuccess
+  | createGtmInviteLinkResponseError;
+
+export const getCreateGtmInviteLinkUrl = () => {
+  return `/gtm-invite/links`;
+};
+
+export const createGtmInviteLink = async (
+  createGtmInviteLinkRequest: CreateGtmInviteLinkRequest,
+  options?: RequestInit
+): Promise<createGtmInviteLinkResponse> => {
+  const res = await fetch(getCreateGtmInviteLinkUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(createGtmInviteLinkRequest),
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: createGtmInviteLinkResponse['data'] = body
+    ? JSON.parse(body)
+    : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as createGtmInviteLinkResponse;
+};
+
+/**
+ * @summary Revokes an invite link nobody has signed up through. Macro staff only.
+ */
+export type revokeGtmInviteLinkResponse200 = {
+  data: GtmInviteLink;
+  status: 200;
+};
+
+export type revokeGtmInviteLinkResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type revokeGtmInviteLinkResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type revokeGtmInviteLinkResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
+export type revokeGtmInviteLinkResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type revokeGtmInviteLinkResponse500 = {
+  data: ErrorResponse;
+  status: 500;
+};
+
+export type revokeGtmInviteLinkResponseSuccess =
+  revokeGtmInviteLinkResponse200 & {
+    headers: Headers;
+  };
+export type revokeGtmInviteLinkResponseError = (
+  | revokeGtmInviteLinkResponse400
+  | revokeGtmInviteLinkResponse401
+  | revokeGtmInviteLinkResponse403
+  | revokeGtmInviteLinkResponse404
+  | revokeGtmInviteLinkResponse500
+) & {
+  headers: Headers;
+};
+
+export type revokeGtmInviteLinkResponse =
+  | revokeGtmInviteLinkResponseSuccess
+  | revokeGtmInviteLinkResponseError;
+
+export const getRevokeGtmInviteLinkUrl = (id: string) => {
+  return `/gtm-invite/links/${id}`;
+};
+
+export const revokeGtmInviteLink = async (
+  id: string,
+  options?: RequestInit
+): Promise<revokeGtmInviteLinkResponse> => {
+  const res = await fetch(getRevokeGtmInviteLinkUrl(id), {
+    ...options,
+    method: 'DELETE',
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: revokeGtmInviteLinkResponse['data'] = body
+    ? JSON.parse(body)
+    : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as revokeGtmInviteLinkResponse;
+};
+
+/**
+ * @summary The promotion the signed-in user's account holds from an invite link, if
+they redeemed one and have not started a paid subscription yet.
+ */
+export type getGtmInviteOfferResponse200 = {
+  data: GtmInviteOfferStatus;
+  status: 200;
+};
+
+export type getGtmInviteOfferResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type getGtmInviteOfferResponse500 = {
+  data: ErrorResponse;
+  status: 500;
+};
+
+export type getGtmInviteOfferResponseSuccess = getGtmInviteOfferResponse200 & {
+  headers: Headers;
+};
+export type getGtmInviteOfferResponseError = (
+  | getGtmInviteOfferResponse401
+  | getGtmInviteOfferResponse500
+) & {
+  headers: Headers;
+};
+
+export type getGtmInviteOfferResponse =
+  | getGtmInviteOfferResponseSuccess
+  | getGtmInviteOfferResponseError;
+
+export const getGetGtmInviteOfferUrl = () => {
+  return `/gtm-invite/offer`;
+};
+
+export const getGtmInviteOffer = async (
+  options?: RequestInit
+): Promise<getGtmInviteOfferResponse> => {
+  const res = await fetch(getGetGtmInviteOfferUrl(), {
+    ...options,
+    method: 'GET',
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getGtmInviteOfferResponse['data'] = body ? JSON.parse(body) : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as getGtmInviteOfferResponse;
+};
+
+/**
+ * Unauthenticated: the recipient has no account yet. Only the first name and
+whether the link is still usable are exposed.
+ * @summary Resolves an invite link for the public welcome page and counts the open.
+ */
+export type resolveGtmInviteLinkResponse200 = {
+  data: PublicGtmInviteLink;
+  status: 200;
+};
+
+export type resolveGtmInviteLinkResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type resolveGtmInviteLinkResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type resolveGtmInviteLinkResponse429 = {
+  data: void;
+  status: 429;
+};
+
+export type resolveGtmInviteLinkResponse500 = {
+  data: ErrorResponse;
+  status: 500;
+};
+
+export type resolveGtmInviteLinkResponseSuccess =
+  resolveGtmInviteLinkResponse200 & {
+    headers: Headers;
+  };
+export type resolveGtmInviteLinkResponseError = (
+  | resolveGtmInviteLinkResponse400
+  | resolveGtmInviteLinkResponse404
+  | resolveGtmInviteLinkResponse429
+  | resolveGtmInviteLinkResponse500
+) & {
+  headers: Headers;
+};
+
+export type resolveGtmInviteLinkResponse =
+  | resolveGtmInviteLinkResponseSuccess
+  | resolveGtmInviteLinkResponseError;
+
+export const getResolveGtmInviteLinkUrl = (token: string) => {
+  return `/gtm-invite/public/${token}`;
+};
+
+export const resolveGtmInviteLink = async (
+  token: string,
+  options?: RequestInit
+): Promise<resolveGtmInviteLinkResponse> => {
+  const res = await fetch(getResolveGtmInviteLinkUrl(token), {
+    ...options,
+    method: 'GET',
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: resolveGtmInviteLinkResponse['data'] = body
+    ? JSON.parse(body)
+    : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as resolveGtmInviteLinkResponse;
+};
+
+/**
+ * @summary Attributes the signed-in user's account to the invite link they opened and
+grants them its offer. Idempotent for the same account.
+ */
+export type redeemGtmInviteLinkResponse200 = {
+  data: GtmInviteOffer;
+  status: 200;
+};
+
+export type redeemGtmInviteLinkResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type redeemGtmInviteLinkResponse401 = {
+  data: ErrorResponse;
+  status: 401;
+};
+
+export type redeemGtmInviteLinkResponse404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type redeemGtmInviteLinkResponse409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type redeemGtmInviteLinkResponse410 = {
+  data: ErrorResponse;
+  status: 410;
+};
+
+export type redeemGtmInviteLinkResponse500 = {
+  data: ErrorResponse;
+  status: 500;
+};
+
+export type redeemGtmInviteLinkResponseSuccess =
+  redeemGtmInviteLinkResponse200 & {
+    headers: Headers;
+  };
+export type redeemGtmInviteLinkResponseError = (
+  | redeemGtmInviteLinkResponse400
+  | redeemGtmInviteLinkResponse401
+  | redeemGtmInviteLinkResponse404
+  | redeemGtmInviteLinkResponse409
+  | redeemGtmInviteLinkResponse410
+  | redeemGtmInviteLinkResponse500
+) & {
+  headers: Headers;
+};
+
+export type redeemGtmInviteLinkResponse =
+  | redeemGtmInviteLinkResponseSuccess
+  | redeemGtmInviteLinkResponseError;
+
+export const getRedeemGtmInviteLinkUrl = () => {
+  return `/gtm-invite/redeem`;
+};
+
+export const redeemGtmInviteLink = async (
+  redeemGtmInviteLinkRequest: RedeemGtmInviteLinkRequest,
+  options?: RequestInit
+): Promise<redeemGtmInviteLinkResponse> => {
+  const res = await fetch(getRedeemGtmInviteLinkUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(redeemGtmInviteLinkRequest),
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: redeemGtmInviteLinkResponse['data'] = body
+    ? JSON.parse(body)
+    : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as redeemGtmInviteLinkResponse;
+};
+
+/**
  * @summary Health check
  */
 export type healthHandlerResponse200 = {
@@ -679,42 +1404,42 @@ export const healthHandler = async (
 };
 
 /**
- * @summary Generates a Conation API token using the user's access token.
+ * @summary Generates a macro-api-token using the user's macro-access-token
 You can either have your access token in the cookies or in the request
 headers
 Authorization: Bearer <access_token>
-This returns a new Conation API token.
+This returns a new macro-api-token
  */
-export type conationApiTokenResponse200 = {
-  data: ConationApiTokenResponse;
+export type macroApiTokenResponse200 = {
+  data: MacroApiTokenResponse;
   status: 200;
 };
 
-export type conationApiTokenResponse401 = {
+export type macroApiTokenResponse401 = {
   data: string;
   status: 401;
 };
 
-export type conationApiTokenResponse500 = {
+export type macroApiTokenResponse500 = {
   data: string;
   status: 500;
 };
 
-export type conationApiTokenResponseSuccess = conationApiTokenResponse200 & {
+export type macroApiTokenResponseSuccess = macroApiTokenResponse200 & {
   headers: Headers;
 };
-export type conationApiTokenResponseError = (
-  | conationApiTokenResponse401
-  | conationApiTokenResponse500
+export type macroApiTokenResponseError = (
+  | macroApiTokenResponse401
+  | macroApiTokenResponse500
 ) & {
   headers: Headers;
 };
 
-export type conationApiTokenResponse =
-  | conationApiTokenResponseSuccess
-  | conationApiTokenResponseError;
+export type macroApiTokenResponse =
+  | macroApiTokenResponseSuccess
+  | macroApiTokenResponseError;
 
-export const getConationApiTokenUrl = (params?: ConationApiTokenParams) => {
+export const getMacroApiTokenUrl = (params: MacroApiTokenParams) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -726,27 +1451,27 @@ export const getConationApiTokenUrl = (params?: ConationApiTokenParams) => {
   const stringifiedParams = normalizedParams.toString();
 
   return stringifiedParams.length > 0
-    ? `/jwt/conation_api_token?${stringifiedParams}`
-    : `/jwt/conation_api_token`;
+    ? `/jwt/macro_api_token?${stringifiedParams}`
+    : `/jwt/macro_api_token`;
 };
 
-export const conationApiToken = async (
-  params?: ConationApiTokenParams,
+export const macroApiToken = async (
+  params: MacroApiTokenParams,
   options?: RequestInit
-): Promise<conationApiTokenResponse> => {
-  const res = await fetch(getConationApiTokenUrl(params), {
+): Promise<macroApiTokenResponse> => {
+  const res = await fetch(getMacroApiTokenUrl(params), {
     ...options,
     method: 'GET',
   });
 
   const body = [204, 205, 304].includes(res.status) ? null : await res.text();
 
-  const data: conationApiTokenResponse['data'] = body ? JSON.parse(body) : {};
+  const data: macroApiTokenResponse['data'] = body ? JSON.parse(body) : {};
   return {
     data,
     status: res.status,
     headers: res.headers,
-  } as conationApiTokenResponse;
+  } as macroApiTokenResponse;
 };
 
 /**
@@ -754,7 +1479,7 @@ export const conationApiToken = async (
 You can either have your access token and refresh token in the cookies or in the request
 headers
 Authorization: Bearer <access_token>
-x-conation-refresh-token: <refresh_token>
+x-macro-refresh-token: <refresh_token>
 This returns the cookies with the new access and refresh token
  */
 export type refreshResponse200 = {
@@ -3383,6 +4108,11 @@ export type createUserResponse400 = {
   status: 400;
 };
 
+export type createUserResponse403 = {
+  data: ErrorResponse;
+  status: 403;
+};
+
 export type createUserResponse500 = {
   data: ErrorResponse;
   status: 500;
@@ -3393,6 +4123,7 @@ export type createUserResponseSuccess = createUserResponse200 & {
 };
 export type createUserResponseError = (
   | createUserResponse400
+  | createUserResponse403
   | createUserResponse500
 ) & {
   headers: Headers;
@@ -4294,6 +5025,138 @@ export const getUserQuota = async (
     status: res.status,
     headers: res.headers,
   } as getUserQuotaResponse;
+};
+
+/**
+ * @summary Creates a Stripe checkout session for the user to subscribe.
+ */
+export type createCheckoutSessionV2Response200 = {
+  data: StripeSessionResponse;
+  status: 200;
+};
+
+export type createCheckoutSessionV2Response400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type createCheckoutSessionV2Response404 = {
+  data: ErrorResponse;
+  status: 404;
+};
+
+export type createCheckoutSessionV2Response409 = {
+  data: ErrorResponse;
+  status: 409;
+};
+
+export type createCheckoutSessionV2Response500 = {
+  data: ErrorResponse;
+  status: 500;
+};
+
+export type createCheckoutSessionV2ResponseSuccess =
+  createCheckoutSessionV2Response200 & {
+    headers: Headers;
+  };
+export type createCheckoutSessionV2ResponseError = (
+  | createCheckoutSessionV2Response400
+  | createCheckoutSessionV2Response404
+  | createCheckoutSessionV2Response409
+  | createCheckoutSessionV2Response500
+) & {
+  headers: Headers;
+};
+
+export type createCheckoutSessionV2Response =
+  | createCheckoutSessionV2ResponseSuccess
+  | createCheckoutSessionV2ResponseError;
+
+export const getCreateCheckoutSessionV2Url = () => {
+  return `/user/stripe/checkoutv2`;
+};
+
+export const createCheckoutSessionV2 = async (
+  createCheckoutSessionV2Request: CreateCheckoutSessionV2Request,
+  options?: RequestInit
+): Promise<createCheckoutSessionV2Response> => {
+  const res = await fetch(getCreateCheckoutSessionV2Url(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(createCheckoutSessionV2Request),
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: createCheckoutSessionV2Response['data'] = body
+    ? JSON.parse(body)
+    : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as createCheckoutSessionV2Response;
+};
+
+/**
+ * @summary Creates a Stripe billing portal session.
+ */
+export type createPortalSessionResponse200 = {
+  data: StripeSessionResponse;
+  status: 200;
+};
+
+export type createPortalSessionResponse400 = {
+  data: ErrorResponse;
+  status: 400;
+};
+
+export type createPortalSessionResponse500 = {
+  data: ErrorResponse;
+  status: 500;
+};
+
+export type createPortalSessionResponseSuccess =
+  createPortalSessionResponse200 & {
+    headers: Headers;
+  };
+export type createPortalSessionResponseError = (
+  | createPortalSessionResponse400
+  | createPortalSessionResponse500
+) & {
+  headers: Headers;
+};
+
+export type createPortalSessionResponse =
+  | createPortalSessionResponseSuccess
+  | createPortalSessionResponseError;
+
+export const getCreatePortalSessionUrl = () => {
+  return `/user/stripe/portal`;
+};
+
+export const createPortalSession = async (
+  createPortalSessionRequest: CreatePortalSessionRequest,
+  options?: RequestInit
+): Promise<createPortalSessionResponse> => {
+  const res = await fetch(getCreatePortalSessionUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(createPortalSessionRequest),
+  });
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: createPortalSessionResponse['data'] = body
+    ? JSON.parse(body)
+    : {};
+  return {
+    data,
+    status: res.status,
+    headers: res.headers,
+  } as createPortalSessionResponse;
 };
 
 /**

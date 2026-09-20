@@ -1,28 +1,21 @@
 import type { CalendarEvent } from '@app/features/calendar/types';
-import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
-import CloseIcon from '@phosphor/x.svg';
 import { useRsvpCalendarEventMutation } from '@queries/calendar/mutations';
 import type { CalendarRsvpScope } from '@service-email/client';
 import type { AttendeeResponseStatus } from '@service-storage/generated/schemas/attendeeResponseStatus';
-import { Button, Dialog, Panel } from '@ui';
+import { Button } from '@ui';
 import { createMemo, createSignal, For, Show } from 'solid-js';
+import { EventRsvpScopeDialog } from './EventRsvpScopeDialog';
 
 type RsvpResponse = Exclude<AttendeeResponseStatus, 'needs_action'>;
 
 const RSVP_OPTIONS = [
-  { response: 'accepted' },
-  { response: 'tentative' },
-  { response: 'declined' },
+  { response: 'accepted', label: 'Yes' },
+  { response: 'tentative', label: 'Maybe' },
+  { response: 'declined', label: 'No' },
 ] as const satisfies readonly {
   response: RsvpResponse;
-}[];
-
-const SCOPE_OPTIONS = [
-  { scope: 'this_event' },
-  { scope: 'all' },
-] as const satisfies readonly {
-  scope: CalendarRsvpScope;
+  label: string;
 }[];
 
 /**
@@ -54,9 +47,7 @@ export function EventRsvpSection(props: {
 
   const rsvp = useRsvpCalendarEventMutation({
     onError: (error) => {
-      toast.failure(t('calendar.rsvp.toast.updateFailed'), {
-        subtext: error.message,
-      });
+      toast.failure('Failed to update RSVP', { subtext: error.message });
     },
   });
 
@@ -96,72 +87,34 @@ export function EventRsvpSection(props: {
 
   return (
     <Show when={canRespond()}>
-      <div class="border-edge-muted flex items-center gap-3 border-t bg-active px-4 py-2.5 text-sm text-ink-muted sm:text-xs">
-        <span>{t('calendar.rsvp.prompt')}</span>
+      <div class="border-edge-muted flex items-center gap-3 border-t bg-active px-4 py-2.5 text-sm text-ink-muted sm:text-xs mobile:border-0 mobile:bg-transparent mobile:px-6 mobile:pt-4 mobile:pb-2">
+        <span>Going?</span>
         <div class="ml-auto flex shrink-0 gap-3 lg:gap-2">
           <For each={RSVP_OPTIONS}>
             {(option) => (
               <Button
-                variant={
-                  selfAttendee()?.responseStatus === option.response
-                    ? 'accent'
-                    : 'outline'
-                }
+                variant="ghost"
                 size={props.buttonSize ?? 'sm'}
                 depth={3}
-                class="rounded-lg px-3"
+                class="rounded-lg bg-ink/5 px-3 aria-pressed:bg-accent-bg aria-pressed:text-accent mobile:min-h-11 mobile:rounded-full"
+                aria-pressed={
+                  selfAttendee()?.responseStatus === option.response
+                }
                 onClick={() => respond(option.response)}
               >
-                {t('calendar.rsvp.response', { response: option.response })}
+                {option.label}
               </Button>
             )}
           </For>
         </div>
       </div>
-      <Dialog
+      <EventRsvpScopeDialog
         open={pendingResponse() !== undefined}
-        onOpenChange={(open) => !open && setPendingResponse(undefined)}
-      >
-        <Panel depth={2} class="max-w-[calc(100vw-2rem)] rounded-xl text-ink">
-          <Panel.Header class="gap-1 px-2">
-            <Dialog.CloseButton as={Button} variant="ghost" size="icon-sm">
-              <CloseIcon />
-            </Dialog.CloseButton>
-            <Dialog.Title as="span" class="m-0 p-0 text-sm font-medium">
-              {t('calendar.rsvp.recurringDialog.title')}
-            </Dialog.Title>
-          </Panel.Header>
-          <Panel.Body class="flex flex-col gap-3 p-3">
-            <div class="flex max-w-80 flex-col gap-2 text-sm text-ink-muted">
-              <For each={SCOPE_OPTIONS}>
-                {(option) => (
-                  <label class="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="rsvp-scope"
-                      checked={scope() === option.scope}
-                      onChange={() => setScope(option.scope)}
-                    />
-                    {t('calendar.rsvp.scope', { scope: option.scope })}
-                  </label>
-                )}
-              </For>
-            </div>
-            <div class="flex justify-end gap-1 pt-2">
-              <Button
-                variant="ghost"
-                class="rounded-lg"
-                onClick={() => setPendingResponse(undefined)}
-              >
-                {t('common.cancel')}
-              </Button>
-              <Button variant="accent" class="rounded-lg" onClick={confirm}>
-                {t('calendar.rsvp.confirm')}
-              </Button>
-            </div>
-          </Panel.Body>
-        </Panel>
-      </Dialog>
+        scope={scope()}
+        onScopeChange={setScope}
+        onClose={() => setPendingResponse(undefined)}
+        onConfirm={confirm}
+      />
     </Show>
   );
 }

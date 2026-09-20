@@ -1,14 +1,15 @@
 [package]
 edition = "2024"
-name = "conation_entrypoint"
+name = "macro_entrypoint"
 publish = false
 version = "0.1.0"
 
 [dependencies]
 dotenvy = { workspace = true }
-conation_env = { path = "../conation_env" }
-opentelemetry = { workspace = true, features = ["trace"] }
-opentelemetry_sdk = { workspace = true, features = ["rt-tokio", "trace"] }
+macro_env = { package = "conation_env", path = "../conation_env" }
+opentelemetry = { workspace = true, features = ["logs", "trace"] }
+opentelemetry_sdk = { workspace = true, features = ["logs", "rt-tokio", "trace"] }
+opentelemetry-appender-tracing = { workspace = true }
 opentelemetry-otlp = { workspace = true }
 rootcause = { workspace = true }
 rootcause-tracing = { workspace = true }
@@ -20,7 +21,7 @@ tracing-panic = "0.1"
 tracing-subscriber = { workspace = true }
 tracing-tree = { workspace = true }
 workspace-hack = { version = "0.1", path = "../workspace-hack" }
-conation_env_var = { path = "../conation_env_var" }
+macro_env_var = { package = "conation_env_var", path = "../conation_env_var" }
 
 [dev-dependencies]
 opentelemetry_sdk = { workspace = true, features = ["testing"] }

@@ -1,33 +1,36 @@
 [package]
 edition = "2024"
-name = "conation_authorization"
+name = "macro_authorization"
 publish = false
 version = "0.1.0"
 
 [features]
 axum = [
   "dep:axum",
-  "dep:conation_auth",
+  "dep:macro_auth",
   "dep:model-error-response",
   "dep:serde",
 ]
 default = ["axum", "outbound"]
-local_auth = ["dep:conation_env_var"]
-outbound = ["dep:conation_auth"]
-postgres = ["dep:sqlx"]
+local_auth = ["dep:macro_env_var"]
+outbound = ["dep:macro_auth"]
+postgres = ["dep:sqlx", "dep:sha2"]
 
 [dependencies]
 axum = { workspace = true, optional = true }
 bot_id = { path = "../bot_id" }
 bot_token = { path = "../bot_token" }
 constant_time_eq = { workspace = true }
-conation_auth = { path = "../conation_auth", optional = true }
-conation_env_var = { path = "../conation_env_var", optional = true }
-conation_user_id = { path = "../conation_user_id" }
+harness_id = { path = "../harness_id" }
+harness_token = { path = "../harness_token" }
+macro_auth = { package = "conation_auth", path = "../conation_auth", optional = true }
+macro_env_var = { package = "conation_env_var", path = "../conation_env_var", optional = true }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
 model-error-response = { path = "../model-error-response", optional = true }
 model_user = { path = "../model_user" }
 rootcause = { workspace = true }
 serde = { workspace = true, optional = true }
+sha2 = { workspace = true, optional = true }
 sqlx = { workspace = true, optional = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
@@ -36,10 +39,11 @@ workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
 cookie = { workspace = true }
+harness_id = { path = "../harness_id", features = ["test-utils"] }
 http-body-util = { workspace = true }
 jsonwebtoken = { workspace = true }
-conation_auth = { path = "../conation_auth", features = ["testing"] }
-conation_db_migrator = { path = "../conation_db_migrator" }
+macro_auth = { package = "conation_auth", path = "../conation_auth", features = ["testing"] }
+macro_db_migrator = { package = "conation_db_migrator", path = "../conation_db_migrator" }
 serde_json = { workspace = true }
 serde_urlencoded = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt"] }

@@ -1,11 +1,10 @@
 import type { Link as EmailLink } from '@service-email/generated/schemas';
-import { QueryClient, QueryClientProvider } from '@tanstack/solid-query';
+import { QueryClient } from '@tanstack/solid-query';
 import { err, ok } from 'neverthrow';
-import type { JSX } from 'solid-js';
-import { render } from 'solid-js/web';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { emailKeys } from './keys';
 import { useDisableCalendarMutation } from './link';
+import { mountEmailMutation } from './tests/mutation';
 
 const disableLinkCalendarMock = vi.hoisted(() => vi.fn());
 const invalidateCalendarViewsMock = vi.hoisted(() => vi.fn());
@@ -50,24 +49,6 @@ const cachedLinks = () =>
 
 const cachedLink = (id: string) => cachedLinks().find((it) => it.id === id);
 
-let dispose: (() => void) | undefined;
-
-function renderHook<T>(factory: () => T): T {
-  let hook!: T;
-  dispose = render(
-    () => (
-      <QueryClientProvider client={testQueryClient}>
-        {(() => {
-          hook = factory();
-          return null as unknown as JSX.Element;
-        })()}
-      </QueryClientProvider>
-    ),
-    document.body
-  );
-  return hook;
-}
-
 beforeEach(() => {
   vi.clearAllMocks();
   testQueryClient = new QueryClient({
@@ -78,16 +59,13 @@ beforeEach(() => {
   });
 });
 
-afterEach(() => {
-  dispose?.();
-  dispose = undefined;
-  testQueryClient.clear();
-});
-
 describe('useDisableCalendarMutation', () => {
   it('marks only the target inbox as deliberately calendar-less', async () => {
     disableLinkCalendarMock.mockResolvedValue(ok({}));
-    const disable = renderHook(() => useDisableCalendarMutation());
+    const disable = mountEmailMutation(
+      useDisableCalendarMutation,
+      testQueryClient
+    );
 
     await disable.mutateAsync('inbox-a');
 
@@ -111,7 +89,10 @@ describe('useDisableCalendarMutation', () => {
     disableLinkCalendarMock.mockResolvedValue(
       err([{ code: 'HTTP_ERROR' as const, message: 'nope' }])
     );
-    const disable = renderHook(() => useDisableCalendarMutation());
+    const disable = mountEmailMutation(
+      useDisableCalendarMutation,
+      testQueryClient
+    );
 
     await expect(disable.mutateAsync('inbox-a')).rejects.toThrow();
 

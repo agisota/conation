@@ -40,9 +40,11 @@ import {
   saveTheme,
   updateTheme,
 } from '@theme/utils/themeUtils';
-import { Dropdown, Layer, ToggleSwitch, Tooltip } from '@ui';
+import { Dropdown, Layer, SegmentedControl, ToggleSwitch, Tooltip } from '@ui';
 import {
+  fontScale,
   monochromeIcons,
+  setFontScale,
   setMonochromeIcons,
   setTooltipsEnabled,
   tooltipsEnabled,
@@ -713,6 +715,27 @@ export function Appearance() {
 
         <SettingsSection title={t('settings.appearance.interface.title')}>
           <SettingsCard>
+            <SettingsRow
+              label={t('settings.appearance.fontScale.label')}
+              description={t('settings.appearance.fontScale.description')}
+            >
+              <SegmentedControl
+                size="sm"
+                aria-label={t('settings.appearance.fontScale')}
+                value={fontScale()}
+                options={[
+                  {
+                    value: 'default',
+                    label: t('settings.appearance.fontScale.default'),
+                  },
+                  {
+                    value: 'compact',
+                    label: t('settings.appearance.fontScale.compact'),
+                  },
+                ]}
+                onChange={setFontScale}
+              />
+            </SettingsRow>
             <SettingsRow
               label={t('settings.appearance.interface.monochrome.label')}
               description={t(

@@ -33,7 +33,7 @@ axum = [
   "dep:utoipa",
   "models_pagination/axum",
 ]
-gmail_token = ["dep:authentication_service_client", "dep:redis", "ports"]
+gmail_token = ["dep:authentication_service_client", "dep:google_token", "dep:redis", "ports"]
 http_client = ["dep:reqwest", "ports"]
 inbound = ["ports"]
 outbound = ["dep:sqlx", "ports"]
@@ -46,6 +46,7 @@ attachment = { path = "../attachment", optional = true }
 anyhow = { workspace = true }
 async-trait = { workspace = true, optional = true }
 base64 = { workspace = true }
+lexical_client = { path = "../lexical_client" }
 entity_access = { path = "../entity_access" }
 entity_access_management = { path = "../entity_access_management", default-features = false, features = [
   "ports",
@@ -60,14 +61,15 @@ either = { workspace = true }
 email_utils = { path = "../email_utils" }
 filter_ast = { path = "../filter_ast" }
 frecency = { path = "../frecency" }
+google_token = { path = "../google_token", optional = true }
 item_filters = { path = "../item_filters" }
 lol_html = { workspace = true }
 scraper = { workspace = true }
-conation_authorization = { path = "../conation_authorization", default-features = false, features = ["axum"], optional = true }
+conation_authorization = { package = "macro_authorization", path = "../conation_authorization", default-features = false, features = ["axum"], optional = true }
 conation_event_broker = { path = "../conation_event_broker", default-features = false }
 conation_event_topics = { path = "../conation_event_topics" }
 entity_mutation = { path = "../entity_mutation" }
-conation_user_id = { path = "../conation_user_id" }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
 conation_uuid = { path = "../conation_uuid" }
 model-entity = { path = "../model-entity" }
 non_empty = { path = "../non_empty", optional = true }

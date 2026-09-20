@@ -14,7 +14,7 @@ ai_tools = [
 default = ["ai_tools", "inbound", "outbound", "ports"]
 inbound = [
   "dep:axum",
-  "dep:conation_authorization",
+  "dep:macro_authorization",
   "dep:tokio",
   "dep:utoipa",
   "entity_access/inbound",
@@ -23,7 +23,7 @@ inbound = [
 outbound = [
   "dep:entity_access_db_utils",
   "dep:futures",
-  "dep:conation_uuid",
+  "dep:macro_uuid",
   "dep:model-entity",
   "dep:model_notifications",
   "dep:models_permissions",
@@ -41,18 +41,19 @@ async-trait = { workspace = true, optional = true }
 axum = { workspace = true, optional = true }
 chrono = { workspace = true }
 document_sub_type = { path = "../document_sub_type" }
+bot_id = { path = "../bot_id" }
 entity_access = { path = "../entity_access", default-features = false, features = [
   "ports",
 ] }
 entity_access_db_utils = { path = "../entity_access_db_utils", optional = true }
 futures = { workspace = true, optional = true }
-conation_authorization = { path = "../conation_authorization", default-features = false, features = [
+macro_authorization = { path = "../conation_authorization", default-features = false, features = [
   "axum",
 ], optional = true }
 conation_event_broker = { path = "../conation_event_broker", default-features = false }
 conation_event_topics = { path = "../conation_event_topics" }
-conation_user_id = { path = "../conation_user_id" }
-conation_uuid = { path = "../conation_uuid", optional = true }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
+macro_uuid = { package = "conation_uuid", path = "../conation_uuid", optional = true }
 model-entity = { path = "../model-entity", optional = true }
 model_notifications = { path = "../model_notifications", optional = true }
 models_permissions = { path = "../models_permissions", optional = true }

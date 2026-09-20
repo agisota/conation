@@ -1,32 +1,45 @@
-import { t } from '@app/lib/i18n';
 import { CalendarEmbed } from '@app/features/calendar/components/CalendarEmbed';
 import { CalendarGridSkeleton } from '@app/features/calendar/components/CalendarGridSkeleton';
 import { useCalendarOccurrenceData } from '@app/features/calendar/hooks/use-calendar-occurrence-data';
 import { useCalendarSources } from '@app/features/calendar/hooks/use-calendar-sources';
-import type { CalendarEvent } from '@app/features/calendar/types';
+import type { CalendarEvent, CalendarWeekStart } from '@app/features/calendar/types';
 import { getDefaultCalendarTimeFormat } from '@app/features/calendar/utils/time-format';
+import { getLocale, t } from '@app/lib/i18n';
 import {
   createCalendarOccurrenceQueryRange,
   type CalendarOccurrenceQueryRange,
 } from '@queries/calendar/occurrences';
 import { cn } from '@ui';
 import { addDays, format, startOfDay, startOfWeek } from 'date-fns';
+import { enUS, ru } from 'date-fns/locale';
 import { createMemo, createSignal, For, Show } from 'solid-js';
 import type { WidgetOf } from '../schema';
 import { SURFACE, TEXT } from '../tokens';
 
 export type CalendarProps = Omit<WidgetOf<'calendar'>, 'type'>;
 
+function dateFnsLocale() {
+  return getLocale() === 'ru' ? ru : enUS;
+}
+
+function calendarWeekStartsOn(): CalendarWeekStart {
+  return dateFnsLocale().options?.weekStartsOn === 1 ? 1 : 0;
+}
+
 function occurrenceRange(
   range: CalendarProps['range'],
-  date: Date
+  date: Date,
+  weekStartsOn: CalendarWeekStart
 ): CalendarOccurrenceQueryRange {
   const start = startOfDay(date);
   if (range === 'day') {
     return createCalendarOccurrenceQueryRange(start, addDays(start, 1));
   }
   if (range === 'week') {
-    const weekStart = startOfWeek(start, { weekStartsOn: 0 });
+    const weekStart = startOfWeek(start, {
+      weekStartsOn,
+      locale: dateFnsLocale(),
+    });
     return createCalendarOccurrenceQueryRange(weekStart, addDays(weekStart, 7));
   }
   return createCalendarOccurrenceQueryRange(start, addDays(start, 7));
@@ -50,7 +63,7 @@ function pinIds(events: CalendarEvent[], pins: CalendarProps['pins']) {
 export function Calendar(props: CalendarProps) {
   const initialDate = new Date();
   const [range, setRange] = createSignal(
-    occurrenceRange(props.range, initialDate)
+    occurrenceRange(props.range, initialDate, calendarWeekStartsOn())
   );
   const { sourceById, sources } = useCalendarSources();
   const data = useCalendarOccurrenceData({ range, sourceById });
@@ -105,7 +118,7 @@ export function Calendar(props: CalendarProps) {
               showDayHeaders: props.range !== 'day',
               collapseEmptyAllDaySlot: true,
               showWeekends: true,
-              weekStartsOn: 0,
+              weekStartsOn: calendarWeekStartsOn(),
               timeFormat: getDefaultCalendarTimeFormat(),
             }}
             selection={{ color: 'var(--color-accent)' }}
@@ -148,8 +161,12 @@ function Agenda(props: { events: CalendarEvent[] }) {
             <li class="flex min-w-0 items-baseline gap-2 px-3 py-1.5 text-sm">
               <span class={cn('shrink-0 tabular-nums', TEXT.tertiary)}>
                 {event.allDay
-                  ? format(new Date(event.start), 'MMM d')
-                  : format(new Date(event.start), 'MMM d, p')}
+                  ? format(new Date(event.start), 'MMM d', {
+                      locale: dateFnsLocale(),
+                    })
+                  : format(new Date(event.start), 'MMM d, p', {
+                      locale: dateFnsLocale(),
+                    })}
               </span>
               <span class={cn('min-w-0 truncate', TEXT.primary)}>
                 {event.title}

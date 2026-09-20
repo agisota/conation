@@ -120,6 +120,7 @@ pub fn build_grouped_response(
                 item: grouped_item.item,
                 frecency_score: None,
                 touched_at: None,
+                notified_at: None,
             });
     }
 

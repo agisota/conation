@@ -2,43 +2,54 @@
 mod test;
 
 use analytics_client::{MetaActionSource, MetaUserData};
+use std::{collections::HashSet, future::Future};
+
 use anyhow::Context;
+use authentication_service::service::signup_policy::SignupPolicy;
 use axum::{
     extract::{self, State},
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
+use macro_authorization::{InternalOnly, MacroAuthorizationExtractor};
 use rand::Rng;
 
 use crate::{
-    api::context::{ApiContext, AuthorizationService},
+    api::{
+        context::{ApiContext, AuthorizationService},
+        signup_policy::signup_forbidden_response,
+    },
     rate_limit_config::RATE_LIMIT_CONFIG,
 };
 use authentication_service::service::user::create_user::create_user;
 use authentication_service::service::user::support_channel_welcome::{
-    SupportTeam, post_support_channel_welcome,
+    AuthorizedSupportChannelMessages, post_support_channel_welcome,
 };
 use channels::domain::{
-    models::{ChannelType, CreateChannelRequest, Sender},
+    models::{ChannelType, CreateChannelRequest},
     ports::ChannelService,
-};
-use conation_user_id::{
-    email::{Email, ReadEmailParts},
-    user_id::MacroUserIdStr,
 };
 use favorites::domain::ports::FavoritesService;
 use fusionauth::error::FusionAuthClientError;
-use model::{
-    authentication::webhooks::{FusionAuthUserWebhook, User as FusionAuthWebhookUser},
-    document_storage_service_internal::StarterDocHowToGuide,
+use macro_user_id::{
+    email::{Email, ReadEmailParts},
+    user_id::MacroUserIdStr,
 };
+use model::authentication::webhooks::{FusionAuthUserWebhook, User as FusionAuthWebhookUser};
 use model_entity::EntityType;
-use std::collections::HashSet;
 use teams::domain::team_repo::TeamService;
 
+/// Macro support team members added to every new user's support channel.
+const MACRO_SUPPORT_EMAILS: [&str; 5] = [
+    "jacob@macro.com",
+    "julia@macro.com",
+    "teo@macro.com",
+    "valentina@macro.com",
+    "chaitanya@macro.com",
+];
+
 fn support_channel_name<T: AsRef<str>>(email: &Email<T>) -> String {
-    format!("Поддержка Conation — {}", email.local_part())
+    format!("Macro Support x {}", email.local_part())
 }
 
 /// Name the identity provider gave us, as (first, last).
@@ -90,10 +101,11 @@ pub async fn handler(
             })?;
         }
         "user.create" => {
-            create_user_webhook(&ctx, req).await.map_err(|e| {
-                tracing::error!(error=?e, "unable to user.create");
-                (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
-            })?;
+            dispatch_user_create_webhook(&ctx.signup_policy, req, |req| {
+                create_user_webhook(&ctx, req)
+            })
+            .await
+            .map_err(user_create_webhook_error_response)?;
         }
         "user.email.verified" => {
             verify_user_email_webhook(&ctx, req).await.map_err(|e| {
@@ -110,6 +122,39 @@ pub async fn handler(
     Ok(StatusCode::OK.into_response())
 }
 
+enum UserCreateWebhookError {
+    Forbidden,
+    Onboarding(anyhow::Error),
+}
+
+fn user_create_webhook_error_response(error: UserCreateWebhookError) -> Response {
+    match error {
+        UserCreateWebhookError::Forbidden => signup_forbidden_response(),
+        UserCreateWebhookError::Onboarding(e) => {
+            tracing::error!(error=?e, "unable to user.create");
+            (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
+        }
+    }
+}
+
+async fn dispatch_user_create_webhook<F, Fut>(
+    signup_policy: &SignupPolicy,
+    req: FusionAuthUserWebhook,
+    onboard_user: F,
+) -> Result<(), UserCreateWebhookError>
+where
+    F: FnOnce(FusionAuthUserWebhook) -> Fut,
+    Fut: Future<Output = anyhow::Result<()>>,
+{
+    signup_policy
+        .authorize_public_email(&req.event.user.email)
+        .map_err(|_| UserCreateWebhookError::Forbidden)?;
+
+    onboard_user(req)
+        .await
+        .map_err(UserCreateWebhookError::Onboarding)
+}
+
 #[tracing::instrument(skip(ctx, req), err)]
 async fn verify_user_email_webhook(
     ctx: &ApiContext,
@@ -118,7 +163,7 @@ async fn verify_user_email_webhook(
     let fusionauth_user_id = req.event.user.id;
     let email = req.event.user.email.to_lowercase();
 
-    conation_db_client::macro_user_email_verification::upsert_macro_user_email_verification(
+    macro_db_client::macro_user_email_verification::upsert_macro_user_email_verification(
         &ctx.db,
         &fusionauth_user_id,
         &email,
@@ -152,14 +197,6 @@ async fn create_user_webhook(ctx: &ApiContext, req: FusionAuthUserWebhook) -> an
     let ip_address = req.event.info.ip_address;
     let email = req.event.user.email.to_lowercase();
     let (first_name, last_name) = identity_provider_name(&req.event.user);
-    let profile_picture = req
-        .event
-        .user
-        .image_url
-        .as_deref()
-        .map(str::trim)
-        .filter(|url| !url.is_empty())
-        .map(str::to_owned);
     let username = req.event.user.username.unwrap_or(email.clone());
     let fusionauth_user_id = req.event.user.id;
 
@@ -168,13 +205,13 @@ async fn create_user_webhook(ctx: &ApiContext, req: FusionAuthUserWebhook) -> an
     // returning an error here aborts the FusionAuth user creation entirely.
     let parsed_email = match Email::parse_from_str(&email) {
         Ok(email) => email,
-        Err(e) => anyhow::bail!("email is not a valid Conation email: {e}"),
+        Err(e) => anyhow::bail!("email is not a valid macro email: {e}"),
     };
     let support_channel_name = support_channel_name(&parsed_email);
 
     // rate limit check for user creation
     let rate_limit = ctx
-        .conation_cache_client
+        .macro_cache_client
         .get_create_user_hourly_rate_limit(&ip_address)
         .await?;
 
@@ -184,9 +221,21 @@ async fn create_user_webhook(ctx: &ApiContext, req: FusionAuthUserWebhook) -> an
         anyhow::bail!("rate limit exceeded")
     }
 
+    if let Some((user_id, organization_id)) =
+        macro_db_client::user::get::get_user_profile_by_fusionauth_user_id_and_email(
+            &ctx.db,
+            &fusionauth_user_id,
+            &email,
+        )
+        .await?
+    {
+        tracing::info!(user_id=?user_id, organization_id=?organization_id, "user profile already exists for FusionAuth user");
+        return Ok(());
+    }
+
     // check if user exists
     if let Ok((user_id, _stripe_customer_id)) =
-        conation_db_client::user::get::get_user_id_and_stripe_customer_id_by_email(&ctx.db, &email)
+        macro_db_client::user::get::get_user_id_and_stripe_customer_id_by_email(&ctx.db, &email)
             .await
     {
         // The macro_user already exists for that email
@@ -203,7 +252,7 @@ async fn create_user_webhook(ctx: &ApiContext, req: FusionAuthUserWebhook) -> an
         &email,
         req.event.user.verified,
         &ctx.db,
-        ctx.stripe_enabled.0.then_some(ctx.stripe_client.as_ref()),
+        &ctx.stripe_client,
     )
     .await?;
 
@@ -212,7 +261,7 @@ async fn create_user_webhook(ctx: &ApiContext, req: FusionAuthUserWebhook) -> an
     // Mark the account as freshly created so the auth callback completing this
     // flow can attribute the login as a signup (analytics). Best-effort.
     let _ = ctx
-        .conation_cache_client
+        .macro_cache_client
         .mark_user_just_signed_up(&email)
         .await
         .inspect_err(|e| tracing::error!(error=?e, "unable to mark user as just signed up"));
@@ -226,7 +275,7 @@ async fn create_user_webhook(ctx: &ApiContext, req: FusionAuthUserWebhook) -> an
     // shared `signup:{user_id}` event id purely to contribute click-id
     // cookies for attribution; Meta dedupes the pair on that id (see the
     // web app's signupCompletion.ts). Uses the same distinct id
-    // ("conation|{email}") the app identifies with. Fire-and-forget.
+    // ("macro|{email}") the app identifies with. Fire-and-forget.
     tokio::spawn({
         let analytics_client = ctx.analytics_client.clone();
         let db = ctx.db.clone();
@@ -239,9 +288,9 @@ async fn create_user_webhook(ctx: &ApiContext, req: FusionAuthUserWebhook) -> an
         async move {
             // Seed the profile with the name the identity provider gave us (Google
             // SSO). Keyed on the FusionAuth id, which is macro_user.id — `user_id`
-            // here is the "conation|{email}" User profile id.
+            // here is the "macro|{email}" User profile id.
             if first_name.is_some() || last_name.is_some() {
-                let _ = conation_db_client::user::update_user_name::update_user_name(
+                let _ = macro_db_client::user::update_user_name::update_user_name(
                     &db,
                     &fusionauth_user_id,
                     first_name,
@@ -251,19 +300,6 @@ async fn create_user_webhook(ctx: &ApiContext, req: FusionAuthUserWebhook) -> an
                 .inspect_err(
                     |e| tracing::error!(error=?e, "unable to set user name from identity provider"),
                 );
-            }
-
-            if let Some(profile_picture) = profile_picture {
-                let _ = conation_db_client::user::update_profile_picture::update_profile_picture(
-                    &db,
-                    &fusionauth_user_id,
-                    &profile_picture,
-                    "fusionauth",
-                )
-                .await
-                .inspect_err(|e| {
-                    tracing::error!(error=?e, "unable to set user profile picture from FusionAuth");
-                });
             }
 
             let _ = analytics_client
@@ -375,100 +411,88 @@ async fn create_user_webhook(ctx: &ApiContext, req: FusionAuthUserWebhook) -> an
         }
     });
 
-    let is_support_account =
-        SupportTeam::conation_default().is_ok_and(|team| team.contains_user_id(&user_id));
-
-    // Seed the starter documents (including the compatibility-named guide and
-    // its starter tasks, with the guide pinned to the new user's sidebar
+    // Seed the starter documents (the "Macro how to guide" and the starter
+    // tasks it links to, with the guide pinned to the new user's sidebar
     // favorites), then create a private support channel connecting the new
-    // user with the Conation support team and post the welcome script — which
+    // user with the Macro support team and post the welcome script — which
     // mentions the guide, so seeding runs first. Fire-and-forget: neither a
     // failed seeding (retried, then skipped) nor a failed channel creation
     // may block user creation.
-    if !is_support_account {
-        tokio::spawn({
-            let document_storage_service_client = ctx.document_storage_service_client.clone();
-            let channel_service = ctx.channel_service.clone();
-            let favorites_service = ctx.favorites_service.clone();
-            let user_id = user_id.clone();
-            let email = email.clone();
-            let support_channel_name = support_channel_name.clone();
-            async move {
-                let how_to_guide =
-                    initialize_starter_docs_with_retries(&document_storage_service_client, &user_id)
-                        .await;
+    tokio::spawn({
+        let document_storage_service_client = ctx.document_storage_service_client.clone();
+        let channel_service = ctx.channel_service.clone();
+        let channel_messages = ctx.channel_messages.clone();
+        let entity_access_service = ctx.entity_access_service.clone();
+        let favorites_service = ctx.favorites_service.clone();
+        let user_id = user_id.clone();
+        let email = email.clone();
+        let support_channel_name = support_channel_name.clone();
+        async move {
+            initialize_starter_docs_with_retries(&document_storage_service_client, &user_id).await;
 
-                let owner_id = match MacroUserIdStr::try_from(user_id) {
-                    Ok(owner_id) => owner_id,
-                    Err(e) => {
-                        tracing::error!(error=?e, "unable to parse user id for support channel");
-                        return;
-                    }
-                };
-
-                let support_team = match SupportTeam::conation_default() {
-                    Ok(support_team) => support_team,
-                    Err(e) => {
-                        tracing::error!(error=?e, "unable to parse support user ids for support channel");
-                        return;
-                    }
-                };
-                let participants = support_team
-                    .participants()
-                    .into_iter()
-                    .collect::<HashSet<_>>();
-
-                let channel = match channel_service
-                    .create_channel(
-                        Sender::new_from_user(owner_id.clone()),
-                        None,
-                        CreateChannelRequest {
-                            name: Some(support_channel_name),
-                            channel_type: ChannelType::Private,
-                            team_id: None,
-                            auto_join_team: false,
-                            participants,
-                        },
-                    )
-                    .await
-                {
-                    Ok(channel) => channel,
-                    Err(e) => {
-                        tracing::error!(error=?e, %email, "failed to create Conation support channel");
-                        return;
-                    }
-                };
-
-                let channel_entity = EntityType::Channel.with_entity_str(&channel.id);
-                if let Err(e) = favorites_service
-                    .add_favorite_with_established_access(&owner_id, &channel_entity)
-                    .await
-                {
-                    tracing::error!(error=?e, channel_id=%channel.id, %email, "failed to favorite Conation support channel");
+            let owner_id = match MacroUserIdStr::try_from(user_id) {
+                Ok(owner_id) => owner_id,
+                Err(e) => {
+                    tracing::error!(error=?e, "unable to parse user id for support channel");
+                    return;
                 }
+            };
 
-                let _ = post_support_channel_welcome(
-                    channel_service.as_ref(),
-                    &channel.id,
-                    owner_id,
-                    &support_team,
-                    how_to_guide
-                        .as_ref()
-                        .map(|guide| (guide.document_id.as_str(), guide.document_name.as_str())),
+            let participants = match MACRO_SUPPORT_EMAILS
+                .into_iter()
+                .map(MacroUserIdStr::try_from_email)
+                .collect::<Result<HashSet<_>, _>>()
+            {
+                Ok(participants) => participants,
+                Err(e) => {
+                    tracing::error!(error=?e, "unable to parse support user ids for support channel");
+                    return;
+                }
+            };
+
+            let channel = match channel_service
+                .create_system_channel(
+                    owner_id.clone(),
+                    CreateChannelRequest {
+                        name: Some(support_channel_name),
+                        channel_type: ChannelType::Private,
+                        team_id: None,
+                        auto_join_team: false,
+                        participants,
+                    },
                 )
                 .await
-                .inspect_err(|e| {
-                    tracing::error!(error=?e, channel_id=%channel.id, %email, "failed to post Conation support welcome message");
-                });
+            {
+                Ok(channel) => channel,
+                Err(e) => {
+                    tracing::error!(error=?e, %email, "failed to create Macro support channel");
+                    return;
+                }
+            };
+
+            let channel_entity = EntityType::Channel.with_entity_str(&channel.id);
+            if let Err(e) = favorites_service
+                .add_favorite_with_established_access(&owner_id, &channel_entity)
+                .await
+            {
+                tracing::error!(error=?e, channel_id=%channel.id, %email, "failed to favorite Macro support channel");
             }
-        });
-    }
+
+            let welcome_gateway =
+                AuthorizedSupportChannelMessages::new(channel_messages, entity_access_service);
+            let _ = post_support_channel_welcome(&welcome_gateway, &channel.id, owner_id)
+                .await
+                .inspect_err(|e| {
+                tracing::error!(error=?e, channel_id=%channel.id, %email, "failed to post Macro support welcome message");
+            });
+        }
+    });
 
     tracing::trace!(email, fusionauth_user_id, elapsed=?start_time.elapsed(), "created user");
 
     // Allow to fail silently
     let _ = ctx
-        .conation_cache_client
+        .macro_cache_client
         .increment_create_user_hourly_rate_limit(&ip_address)
         .await
         .inspect_err(|e| tracing::error!(error=?e, "unable to increment create user rate limit"));
@@ -480,12 +504,12 @@ async fn create_user_webhook(ctx: &ApiContext, req: FusionAuthUserWebhook) -> an
 async fn initialize_starter_docs_with_retries(
     client: &document_storage_service_client::DocumentStorageServiceClient,
     user_id: &str,
-) -> Option<StarterDocHowToGuide> {
+) {
     const MAX_ATTEMPTS: u32 = 3;
     const RETRY_DELAY_SECS: u64 = 2;
     for attempt in 1..=MAX_ATTEMPTS {
         match client.initialize_starter_docs(user_id).await {
-            Ok(guide) => return guide,
+            Ok(_) => return,
             Err(e) if attempt < MAX_ATTEMPTS => {
                 tracing::warn!(error=?e, attempt, "failed to initialize starter docs, retrying");
                 tokio::time::sleep(std::time::Duration::from_secs(RETRY_DELAY_SECS)).await;
@@ -495,7 +519,6 @@ async fn initialize_starter_docs_with_retries(
             }
         }
     }
-    None
 }
 
 /// Initializes the experiments for a provided user
@@ -504,7 +527,7 @@ async fn initialize_user_experiments(
     db: &sqlx::Pool<sqlx::Postgres>,
     user_id: &str,
 ) -> anyhow::Result<()> {
-    let active_experiments = conation_db_client::experiment::get_active_experiments(db)
+    let active_experiments = macro_db_client::experiment::get_active_experiments(db)
         .await
         .context("failed to get active experiments")?;
 
@@ -521,13 +544,9 @@ async fn initialize_user_experiments(
         })
         .collect::<Vec<(String, String)>>();
 
-    conation_db_client::experiment_log::bulk_create_experiment_logs(
-        db,
-        user_id,
-        &active_experiments,
-    )
-    .await
-    .context("failed to bulk create experiment logs")?;
+    macro_db_client::experiment_log::bulk_create_experiment_logs(db, user_id, &active_experiments)
+        .await
+        .context("failed to bulk create experiment logs")?;
 
     Ok(())
 }

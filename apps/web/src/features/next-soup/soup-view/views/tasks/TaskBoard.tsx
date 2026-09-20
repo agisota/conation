@@ -30,9 +30,10 @@ import { useBulkSaveEntityPropertiesMutation } from '@queries/properties/entity'
 import { getSoupEntityById } from '@queries/soup/normalized-cache';
 import { EntityType } from '@service-properties/generated/schemas/entityType';
 import { createElementSize } from '@solid-primitives/resize-observer';
-import { cn, Layer } from '@ui';
+import { Button, cn, Layer } from '@ui';
 import { endOfWeek, isBefore, isToday, startOfDay } from 'date-fns';
 import { createEffect, createMemo, createSignal, For, Show } from 'solid-js';
+import { getTaskDueDate } from './task-grid-template';
 
 const MIN_COLUMN_WIDTH = 224;
 const COLUMN_GAP = 12;
@@ -101,17 +102,6 @@ const TIMELINE_COLUMN_KEYS: TimelineColumnKey[] = [
   'later',
   'noDate',
 ];
-
-function getTaskDueDate(entity: TaskEntityWithProperties): Date | undefined {
-  const due = entity.properties?.find(
-    (property) => property.definition.id === SYSTEM_PROPERTY_IDS.DUE_DATE
-  );
-  if (!due?.value || due.value.type !== 'Date') return undefined;
-  const raw = due.value.value;
-  if (raw == null) return undefined;
-  const date = new Date(raw as string | number);
-  return Number.isNaN(date.getTime()) ? undefined : date;
-}
 
 function statusColumnKey(entity: TaskEntityWithProperties): StatusColumnKey {
   const optionId = getTaskStatusOptionId(entity);
@@ -193,9 +183,10 @@ export function TaskBoard(props: { onScrollBottom?: VoidFunction }) {
       .rows()
       .filter((row) => !row.getIsGrouped() && !row.getIsLoadMore())
       .map((row) => row.original);
-    const fromSource = source.data();
-    const merged = fromRows.length > 0 ? fromRows : fromSource;
-    return merged.filter(isTaskEntity).map(withCachedProperties);
+    const byId = new Map<string, EntityData>();
+    for (const entity of source.data()) byId.set(entity.id, entity);
+    for (const entity of fromRows) byId.set(entity.id, entity);
+    return [...byId.values()].filter(isTaskEntity).map(withCachedProperties);
   });
 
   const effectiveStatus = (task: TaskEntityWithProperties) =>
@@ -253,23 +244,32 @@ export function TaskBoard(props: { onScrollBottom?: VoidFunction }) {
     return Math.floor((usable - (fit - 1) * COLUMN_GAP) / fit);
   });
 
+  const fetchMore = () => {
+    if (
+      source.isFetching() ||
+      source.isFetchingNextPage() ||
+      !source.hasNextPage()
+    ) {
+      return;
+    }
+    if (props.onScrollBottom) {
+      props.onScrollBottom();
+      return;
+    }
+    void source.fetchNextPage();
+  };
+
   const handleColumnScroll = (event: Event & { currentTarget: HTMLElement }) => {
     const el = event.currentTarget;
     const threshold = Math.max(300, el.clientHeight);
     if (el.scrollHeight - el.clientHeight - el.scrollTop <= threshold) {
-      props.onScrollBottom?.();
+      fetchMore();
     }
   };
 
   createEffect(() => {
     void tasks().length;
-    if (
-      source.isFetching() ||
-      source.isFetchingNextPage() ||
-      !source.hasNextPage()
-    )
-      return;
-    props.onScrollBottom?.();
+    fetchMore();
   });
 
   const moveToStatus = (entityId: string, statusKey: string) => {
@@ -414,6 +414,22 @@ export function TaskBoard(props: { onScrollBottom?: VoidFunction }) {
           </For>
         </div>
       </div>
+      <Show when={source.hasNextPage()}>
+        <div class="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex justify-center">
+          <Button
+            variant="outline"
+            size="sm"
+            depth={2}
+            class="pointer-events-auto"
+            disabled={source.isFetchingNextPage()}
+            onClick={() => fetchMore()}
+          >
+            {source.isFetchingNextPage()
+              ? t('common.loading')
+              : t('soup.search.loadMore')}
+          </Button>
+        </div>
+      </Show>
       <CustomScrollbar
         scrollContainer={scrollRef}
         horizontal

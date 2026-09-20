@@ -12,12 +12,12 @@ use crate::{
     context::{AppState, AuthorizationService},
 };
 use anyhow::{Context, Result};
-use conation_auth::middleware::decode_jwt::JwtValidationArgs;
-use conation_authorization::{InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationState};
-use conation_entrypoint::MacroEntrypoint;
-use conation_env::Environment;
-use conation_tower_layers::MacroRequestIdAndTracingLayer;
+use axum::http::{
+    Method,
+    header::{AUTHORIZATION, CONTENT_TYPE},
+};
 use config::Config;
+use constants::ORIGINS;
 use frecency::{
     domain::services::{EventIngestorImpl, PullAggregatorImpl},
     inbound::polling_aggregator::FrecencyAggregatorWorkerHandle,
@@ -31,17 +31,26 @@ use last_online_tracker::{
     inbound::LastOnlineWorker,
     outbound::{redis::RedisLastOnlineRepo, time::DefaultTime as LastOnlineDefaultTime},
 };
+use macro_auth::middleware::decode_jwt::JwtValidationArgs;
+use macro_authorization::{
+    InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationState,
+    PgUserApiKeyAuthorizationRepo, PgUserApiKeyAuthorizer,
+};
+use macro_entrypoint::MacroEntrypoint;
+use macro_env::Environment;
+use macro_tower_layers::MacroRequestIdAndTracingLayer;
 use service::dynamodb::create_dynamo_db_connection_manager;
 use service::redis::poll_messages;
 use sqlx::postgres::PgPoolOptions;
 use stream::outbound::redis_pg::{RedisPostgresStreamManager, RedisPostgresStreamRepo};
+use tower_http::cors::CorsLayer;
 
 #[tokio::main]
 #[tracing::instrument(ret, err)]
 async fn main() -> Result<()> {
     MacroEntrypoint::default().init();
 
-    let aws_config = conation_aws_config::get_conation_aws_config().await;
+    let aws_config = macro_aws_config::get_macro_aws_config().await;
 
     let secretsmanager_client = secretsmanager_client::SecretsManager::new(
         aws_sdk_secretsmanager::Client::new(&aws_config),
@@ -56,9 +65,19 @@ async fn main() -> Result<()> {
         JwtValidationArgs::new_with_secret_manager(config.environment, &secretsmanager_client)
             .await?;
 
-    // Resolve the same exact, operator-configurable origin policy used by the
-    // HTTP APIs. Invalid ALLOWED_ORIGINS fails during service startup.
-    let cors = conation_cors::cors_layer();
+    // allow requests from any origin
+    let cors = CorsLayer::new()
+        .allow_credentials(true)
+        .allow_headers(vec![AUTHORIZATION, CONTENT_TYPE])
+        .allow_methods(vec![
+            Method::GET,
+            Method::POST,
+            Method::PUT,
+            Method::PATCH,
+            Method::DELETE,
+            Method::OPTIONS,
+        ])
+        .allow_origin(ORIGINS);
 
     let dynamodb_client = aws_sdk_dynamodb::Client::new(&aws_config);
 
@@ -89,7 +108,7 @@ async fn main() -> Result<()> {
     let pgpool = PgPoolOptions::new()
         .min_connections(3)
         .max_connections(20)
-        .connect(config.conation_db_url.as_ref())
+        .connect(config.macro_db_url.as_ref())
         .await?;
 
     let stream_service = RedisPostgresStreamRepo::new((*redis_client).clone(), pgpool.clone());
@@ -113,7 +132,8 @@ async fn main() -> Result<()> {
             api_key: config.internal_api_key.to_string(),
             default_user_id: None,
         },
-        conation_authorization::NoBotAuthorizer,
+        macro_authorization::NoBotAuthorizer,
+        PgUserApiKeyAuthorizer::new(PgUserApiKeyAuthorizationRepo::new(pgpool.clone())),
     )));
 
     let app = router(AppState {

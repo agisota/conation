@@ -1,4 +1,3 @@
-import { t } from '@app/lib/i18n';
 import { IS_MAC } from '@core/constant/isMac';
 import { cn, Hotkey, ToggleSwitch } from '@ui';
 import {
@@ -881,170 +880,124 @@ function Keyboard(props: { keys?: string[] }): JSX.Element {
   );
 }
 
-function getShortcutSections(): ShortcutSection[] {
-  return [
-    {
-      title: t('settings.shortcuts.core.title'),
-      items: [
-        {
-          keys: [`${cmdOrCtrl}+k`],
-          codes: [CmdOrCtrl, 'KeyK'],
-          description: t('settings.shortcuts.core.commandMenu'),
-        },
-        {
-          keys: [`${cmdOrCtrl}+f`],
-          codes: [CmdOrCtrl, 'KeyF'],
-          description: t('settings.shortcuts.core.searchCurrentView'),
-        },
-        {
-          keys: ['c'],
-          codes: ['KeyC'],
-          description: t('settings.shortcuts.core.createMenu'),
-        },
-        {
-          keys: [`${cmdOrCtrl}+;`],
-          codes: [CmdOrCtrl, 'Semicolon'],
-          description: t('settings.shortcuts.core.settingsPanel'),
-        },
-        {
-          keys: ['/'],
-          codes: ['Slash'],
-          description: t('settings.shortcuts.core.searchView'),
-        },
-        {
-          keys: [`${cmdOrCtrl}+j`],
-          codes: [CmdOrCtrl, 'KeyJ'],
-          description: t('settings.shortcuts.core.focusAiChat'),
-        },
-        {
-          keys: ['g'],
-          codes: ['KeyG'],
-          description: t('settings.shortcuts.core.goToView'),
-        },
-      ],
-    },
-    {
-      title: t('settings.shortcuts.splits.title'),
-      items: [
-        {
-          keys: ['opt+['],
-          codes: ['AltLeft', 'BracketLeft'],
-          description: t('settings.shortcuts.splits.goBack'),
-        },
-        {
-          keys: ['opt+]'],
-          codes: ['AltLeft', 'BracketRight'],
-          description: t('settings.shortcuts.splits.goForward'),
-        },
-        {
-          keys: ['shift+arrowleft'],
-          codes: ['ShiftLeft', 'ArrowLeft'],
-          description: t('settings.shortcuts.splits.focusLeft'),
-        },
-        {
-          keys: ['shift+arrowright'],
-          codes: ['ShiftLeft', 'ArrowRight'],
-          description: t('settings.shortcuts.splits.focusRight'),
-        },
-        {
-          keys: ['cmd+escape'],
-          codes: ['MetaLeft', 'Escape'],
-          description: t('settings.shortcuts.splits.backToList'),
-        },
-        {
-          keys: ['shift+escape'],
-          codes: ['ShiftLeft', 'Escape'],
-          description: t('settings.shortcuts.splits.spotlight'),
-        },
-        {
-          keys: ['\\'],
-          codes: ['Backslash'],
-          description: t('settings.shortcuts.splits.create'),
-        },
-      ],
-    },
-    {
-      title: t('settings.shortcuts.unifiedList.title'),
-      items: [
-        {
-          keys: ['enter'],
-          codes: ['Enter'],
-          description: t('settings.shortcuts.unifiedList.openCurrent'),
-        },
-        {
-          keys: ['shift+enter'],
-          codes: ['ShiftLeft', 'Enter'],
-          description: t('settings.shortcuts.unifiedList.openNewSplit'),
-        },
-        {
-          keys: ['opt+enter'],
-          codes: ['AltLeft', 'Enter'],
-          description: t('settings.shortcuts.unifiedList.openReplacePreview'),
-        },
-        {
-          keys: ['arrowup'],
-          codes: ['ArrowUp'],
-          description: t('settings.shortcuts.unifiedList.moveUp'),
-        },
-        {
-          keys: ['arrowdown'],
-          codes: ['ArrowDown'],
-          description: t('settings.shortcuts.unifiedList.moveDown'),
-        },
-        {
-          keys: ['shift+arrowup'],
-          codes: ['ShiftLeft', 'ArrowUp'],
-          description: t('settings.shortcuts.unifiedList.selectUp'),
-        },
-        {
-          keys: ['shift+arrowdown'],
-          codes: ['ShiftLeft', 'ArrowDown'],
-          description: t('settings.shortcuts.unifiedList.selectDown'),
-        },
-        {
-          keys: ['arrowleft'],
-          codes: ['ArrowLeft'],
-          description: t('settings.shortcuts.unifiedList.collapse'),
-        },
-        {
-          keys: ['arrowright'],
-          codes: ['ArrowRight'],
-          description: t('settings.shortcuts.unifiedList.expand'),
-        },
-        {
-          keys: ['space'],
-          codes: ['Space'],
-          description: t('settings.shortcuts.unifiedList.preview'),
-        },
-        {
-          keys: ['f'],
-          codes: ['KeyF'],
-          description: t('settings.shortcuts.unifiedList.filter'),
-        },
-        {
-          keys: ['x'],
-          codes: ['KeyX'],
-          description: t('settings.shortcuts.unifiedList.selectItems'),
-        },
-        {
-          keys: ['e'],
-          codes: ['KeyE'],
-          description: t('settings.shortcuts.unifiedList.markDone'),
-        },
-        {
-          keys: ['u'],
-          codes: ['KeyU'],
-          description: t('settings.shortcuts.unifiedList.markUnread'),
-        },
-        {
-          keys: ['shift+u'],
-          codes: ['ShiftLeft', 'KeyU'],
-          description: t('settings.shortcuts.unifiedList.markRead'),
-        },
-      ],
-    },
-  ];
-}
+const shortcutSections: ShortcutSection[] = [
+  {
+    title: 'Core',
+    items: [
+      {
+        keys: [`${cmdOrCtrl}+k`],
+        codes: [CmdOrCtrl, 'KeyK'],
+        description: 'Open the command menu',
+      },
+      {
+        keys: [`${cmdOrCtrl}+f`],
+        codes: [CmdOrCtrl, 'KeyF'],
+        description: 'Search in current view',
+      },
+      { keys: ['c'], codes: ['KeyC'], description: 'Open the create menu' },
+      {
+        keys: [`${cmdOrCtrl}+;`],
+        codes: [CmdOrCtrl, 'Semicolon'],
+        description: 'Open settings panel',
+      },
+      { keys: ['/'], codes: ['Slash'], description: 'Go to search view' },
+      {
+        keys: [`${cmdOrCtrl}+j`],
+        codes: [CmdOrCtrl, 'KeyJ'],
+        description: 'Focus AI chat',
+      },
+      { keys: ['g'], codes: ['KeyG'], description: 'Go to a view' },
+    ],
+  },
+  {
+    title: 'Splits',
+    items: [
+      {
+        keys: ['opt+['],
+        codes: ['AltLeft', 'BracketLeft'],
+        description: 'Go back in current split',
+      },
+      {
+        keys: ['opt+]'],
+        codes: ['AltLeft', 'BracketRight'],
+        description: 'Go forward in current split',
+      },
+      {
+        keys: ['shift+arrowleft'],
+        codes: ['ShiftLeft', 'ArrowLeft'],
+        description: 'Focus split to the left',
+      },
+      {
+        keys: ['shift+arrowright'],
+        codes: ['ShiftLeft', 'ArrowRight'],
+        description: 'Focus split to the right',
+      },
+      {
+        keys: ['cmd+escape'],
+        codes: ['MetaLeft', 'Escape'],
+        description: 'Back to list / close split',
+      },
+      {
+        keys: ['shift+escape'],
+        codes: ['ShiftLeft', 'Escape'],
+        description: 'Spotlight split',
+      },
+      { keys: ['\\'], codes: ['Backslash'], description: 'Create a split' },
+    ],
+  },
+  {
+    title: 'Unified List',
+    items: [
+      {
+        keys: ['enter'],
+        codes: ['Enter'],
+        description: 'Open item in current split',
+      },
+      {
+        keys: ['shift+enter'],
+        codes: ['ShiftLeft', 'Enter'],
+        description: 'Open item in a new split',
+      },
+      {
+        keys: ['opt+enter'],
+        codes: ['AltLeft', 'Enter'],
+        description: 'Open item in place of the preview',
+      },
+      { keys: ['arrowup'], codes: ['ArrowUp'], description: 'Move up' },
+      { keys: ['arrowdown'], codes: ['ArrowDown'], description: 'Move down' },
+      {
+        keys: ['shift+arrowup'],
+        codes: ['ShiftLeft', 'ArrowUp'],
+        description: 'Select up',
+      },
+      {
+        keys: ['shift+arrowdown'],
+        codes: ['ShiftLeft', 'ArrowDown'],
+        description: 'Select down',
+      },
+      {
+        keys: ['arrowleft'],
+        codes: ['ArrowLeft'],
+        description: 'Collapse item',
+      },
+      {
+        keys: ['arrowright'],
+        codes: ['ArrowRight'],
+        description: 'Expand item',
+      },
+      { keys: ['space'], codes: ['Space'], description: 'Preview item' },
+      { keys: ['f'], codes: ['KeyF'], description: 'Open filter menu' },
+      { keys: ['x'], codes: ['KeyX'], description: 'Select items' },
+      { keys: ['e'], codes: ['KeyE'], description: 'Mark done' },
+      { keys: ['u'], codes: ['KeyU'], description: 'Mark unread' },
+      {
+        keys: ['shift+u'],
+        codes: ['ShiftLeft', 'KeyU'],
+        description: 'Mark read',
+      },
+    ],
+  },
+];
 
 const [hoveredCodes, setHoveredCodes] = createSignal<string[]>([]);
 
@@ -1094,12 +1047,12 @@ function ShortcutRow(props: { item: ShortcutItem; spacer?: string }) {
 function ShortcutSectionComponent(props: { section: ShortcutSection }) {
   return (
     <div class="mb-4">
-      <h3 class="text-[15px] font-semibold text-ink mb-1.5 flex items-center gap-2">
+      <h3 class="text-sm font-semibold text-ink mb-1.5 flex items-center gap-2">
         {props.section.title}
       </h3>
       <div class="flex flex-col">
         <For each={props.section.items}>
-          {(item) => <ShortcutRow item={item} spacer={t('settings.shortcuts.or')} />}
+          {(item) => <ShortcutRow item={item} spacer="or" />}
         </For>
       </div>
     </div>
@@ -1107,15 +1060,12 @@ function ShortcutSectionComponent(props: { section: ShortcutSection }) {
 }
 
 export function Shortcuts() {
-  const sections = getShortcutSections();
   return (
     <SettingsPage
-      title={t('settings.shortcuts.title')}
+      title="Keyboard shortcuts"
       actions={
         <div class="flex items-center gap-2">
-          <span class="text-sm text-ink-muted">
-            {t('settings.shortcuts.screencastKeys')}
-          </span>
+          <span class="text-sm text-ink-muted">Screencast keys</span>
           <ToggleSwitch
             size="md"
             onChange={setEnableScreencastHotkeys}
@@ -1131,21 +1081,19 @@ export function Shortcuts() {
       <div class="@container">
         <div class="grid grid-cols-1 @[600px]:grid-cols-2 gap-x-8">
           {/* Core - left column */}
-          <ShortcutSectionComponent section={sections[0]} />
+          <ShortcutSectionComponent section={shortcutSections[0]} />
 
           {/* Splits - right column */}
-          <ShortcutSectionComponent section={sections[1]} />
+          <ShortcutSectionComponent section={shortcutSections[1]} />
 
           {/* Unified List - spans both columns with its own 2-column layout */}
           <div class="@[600px]:col-span-2">
-            <h3 class="text-[15px] font-semibold text-ink mb-1.5 flex items-center gap-2">
-              {sections[2].title}
+            <h3 class="text-sm font-semibold text-ink mb-1.5 flex items-center gap-2">
+              {shortcutSections[2].title}
             </h3>
             <div class="grid grid-cols-1 @[600px]:grid-cols-2 gap-x-8">
-              <For each={sections[2].items}>
-                {(item) => (
-                  <ShortcutRow item={item} spacer={t('settings.shortcuts.or')} />
-                )}
+              <For each={shortcutSections[2].items}>
+                {(item) => <ShortcutRow item={item} spacer="or" />}
               </For>
             </div>
           </div>

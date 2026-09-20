@@ -11,9 +11,10 @@ use axum::{
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Json, Response},
 };
-use conation_user_id::email::Email;
-use conation_user_id::user_id::MacroUserIdStr;
-use conation_user_id::{cowlike::CowLike, lowercased::Lowercase};
+use gtm_invite::domain::ports::GtmInviteService;
+use macro_user_id::email::Email;
+use macro_user_id::user_id::MacroUserIdStr;
+use macro_user_id::{cowlike::CowLike, lowercased::Lowercase};
 use miniserde::json::Value as JsonValue;
 use model::response::ErrorResponse;
 use referral::domain::ports::ReferralService;
@@ -92,19 +93,6 @@ fn is_active_subscription_except_current(
     subscription_id != current_subscription_id && is_active_subscription_status(status)
 }
 
-fn configured_stripe_webhook_secret(stripe_webhook_secret: Option<&str>) -> Result<&str, Response> {
-    stripe_webhook_secret.ok_or_else(|| {
-        tracing::warn!("stripe webhook invoked while billing is disabled");
-        (
-            StatusCode::SERVICE_UNAVAILABLE,
-            Json(ErrorResponse {
-                message: "Stripe billing is disabled".into(),
-            }),
-        )
-            .into_response()
-    })
-}
-
 /// The main entrypoint for all stripe webhook events handling
 #[tracing::instrument(skip(ctx, headers, body))]
 pub async fn handler(
@@ -113,12 +101,6 @@ pub async fn handler(
     body: Bytes,
 ) -> Result<Response, Response> {
     tracing::info!("stripe_webhook");
-
-    let stripe_webhook_secret = configured_stripe_webhook_secret(
-        ctx.stripe_webhook_secret
-            .as_ref()
-            .map(|secret| secret.as_ref()),
-    )?;
 
     let signature = headers
         .get("stripe-signature")
@@ -146,17 +128,21 @@ pub async fn handler(
     })?;
 
     // Construct and verify the event
-    let event = stripe_webhook::Webhook::construct_event(payload, signature, stripe_webhook_secret)
-        .map_err(|e| {
-            tracing::error!(error=?e, "failed to construct stripe event");
-            (
-                StatusCode::BAD_REQUEST,
-                Json(ErrorResponse {
-                    message: "failed to construct stripe event".into(),
-                }),
-            )
-                .into_response()
-        })?;
+    let event = stripe_webhook::Webhook::construct_event(
+        payload,
+        signature,
+        ctx.stripe_webhook_secret.as_ref(),
+    )
+    .map_err(|e| {
+        tracing::error!(error=?e, "failed to construct stripe event");
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse {
+                message: "failed to construct stripe event".into(),
+            }),
+        )
+            .into_response()
+    })?;
 
     tracing::info!(
         event_id = %event.id,
@@ -288,7 +274,7 @@ async fn handle_payment_event(
     );
 
     if let Some(team_id) = subscription.metadata.get("team_id") {
-        let team_id = conation_uuid::string_to_uuid(team_id)?;
+        let team_id = macro_uuid::string_to_uuid(team_id)?;
         return handle_team_subscription_event(
             ctx,
             subscription_id,
@@ -470,10 +456,17 @@ async fn handle_customer_subscription_event(
     let is_new_subscription = matches!(event_type, EventType::CustomerSubscriptionCreated)
         || is_transition_from_incomplete;
 
+    // An account that signed up through a GTM invite link converted the moment
+    // its subscription — personal or team — is live. Tracking only: never
+    // fails the webhook.
+    if matches!(subscription_status, "active" | "trialing") {
+        mark_gtm_invite_converted(ctx, &email, subscription_id).await;
+    }
+
     // Get subscription metadata, if this is a team subscription then we need to handle it
     // separately.
     if let Some(team_id) = subscription.metadata.get("team_id") {
-        let team_id = conation_uuid::string_to_uuid(team_id)?;
+        let team_id = macro_uuid::string_to_uuid(team_id)?;
         // We need to handle team subscriptions differently than regular subscriptions.
         return handle_team_subscription_event(
             ctx,
@@ -555,8 +548,7 @@ async fn handle_customer_subscription_event(
 
     if subscription_status == "trialing" {
         // set has_trialed in macro_user table
-        conation_db_client::user::patch::update_macro_user_has_trialed(&ctx.db, &email, true)
-            .await?;
+        macro_db_client::user::patch::update_macro_user_has_trialed(&ctx.db, &email, true).await?;
 
         // Add has_trialed: true to stripe customer metadata
         let mut params = stripe::UpdateCustomer::new();
@@ -617,19 +609,43 @@ async fn handle_customer_subscription_event(
     Ok(())
 }
 
+/// Records the subscriber's redeemed GTM invite link, if they hold one, as
+/// converted into this subscription.
+#[tracing::instrument(skip(ctx, email), fields(subscription_id))]
+async fn mark_gtm_invite_converted(
+    ctx: &ApiContext,
+    email: &Email<macro_user_id::lowercased::Lowercase<'_>>,
+    subscription_id: &str,
+) {
+    let user_id = match macro_user_id::user_id::MacroUserIdStr::try_from_email(email.as_ref()) {
+        Ok(user_id) => user_id,
+        Err(e) => {
+            tracing::error!(error=?e, "customer email is not a valid macro user id");
+            return;
+        }
+    };
+
+    match ctx
+        .gtm_invite_service
+        .mark_converted(&user_id, subscription_id)
+        .await
+    {
+        Ok(true) => tracing::info!("marked GTM invite link as converted"),
+        Ok(false) => {}
+        Err(e) => tracing::error!(error=?e, "failed to mark GTM invite link as converted"),
+    }
+}
+
 /// Checks if the subscribing user was referred and, if so, processes the referral
 /// to credit the referrer.
 #[tracing::instrument(skip(ctx, email), err)]
 async fn check_and_process_referral(
     ctx: &ApiContext,
-    email: &Email<conation_user_id::lowercased::Lowercase<'_>>,
+    email: &Email<macro_user_id::lowercased::Lowercase<'_>>,
 ) -> anyhow::Result<()> {
     let (macro_user_id, user_id_str) =
-        conation_db_client::user::get::get_user_macro_user_id_and_id_by_email(
-            &ctx.db,
-            email.as_ref(),
-        )
-        .await?;
+        macro_db_client::user::get::get_user_macro_user_id_and_id_by_email(&ctx.db, email.as_ref())
+            .await?;
 
     let Some(referral_code) = ctx
         .referral_service
@@ -640,7 +656,7 @@ async fn check_and_process_referral(
         return Ok(());
     };
 
-    let user_id = conation_user_id::user_id::MacroUserIdStr::parse_from_str(&user_id_str)
+    let user_id = macro_user_id::user_id::MacroUserIdStr::parse_from_str(&user_id_str)
         .expect("user id from db should be valid")
         .into_owned();
 
@@ -668,8 +684,7 @@ async fn handle_team_subscription_event<'a>(
 
     if subscription_status == "trialing" {
         // set has_trialed in macro_user table
-        conation_db_client::user::patch::update_macro_user_has_trialed(&ctx.db, email, true)
-            .await?;
+        macro_db_client::user::patch::update_macro_user_has_trialed(&ctx.db, email, true).await?;
     }
 
     let subscription_id = stripe::SubscriptionId::from_str(subscription_id).unwrap();
@@ -783,7 +798,7 @@ fn track_stripe_subscription(
                 ..MetaUserData::default()
             };
             let event_id = Some(subscription_id.as_str());
-            // PostHog distinct id must be the "conation|{email}" id the app
+            // PostHog distinct id must be the "macro|{email}" id the app
             // identifies with; a bare email lands events on orphaned person
             // profiles disconnected from product usage. This only links to the
             // right person when the Stripe customer email matches the Macro

@@ -1,7 +1,7 @@
-import { t } from '@app/lib/i18n';
+import { MarkdownTextarea } from '@core/component/LexicalMarkdown/component/core/MarkdownTextarea';
 import SpinnerIcon from '@phosphor/spinner.svg';
 import type { CalendarUpdateScope } from '@service-email/client';
-import { Button, cn, Layer } from '@ui';
+import { Button, cn, Layer, RadioGroup } from '@ui';
 import {
   createEffect,
   createSignal,
@@ -9,12 +9,19 @@ import {
   For,
   Show,
 } from 'solid-js';
+import {
+  calendarDescriptionToEditorHtml,
+  exportCalendarDescription,
+} from '../../utils/calendar-description';
 import type { CalendarEventFormController } from './create-calendar-event-form-controller';
 import { EventDateTimeRangeFields } from './EventDateTimeRangeFields';
 import {
   EventComposerCalendarPill,
   EventComposerConferencePill,
+  EventComposerDeclineMessagePill,
+  EventComposerDeclinePill,
   EventComposerGuestsPill,
+  EventComposerKindPill,
   EventComposerLocationPill,
   EventComposerRecurrencePill,
   EventComposerRemindersPill,
@@ -23,6 +30,7 @@ import type {
   EventEditorDisabledFields,
   EventEditorSubmitValues,
 } from './event-form-model';
+import { outOfOfficeNoticeFor } from './out-of-office';
 import { RecurrenceBuilder } from './RecurrenceBuilder';
 
 export interface EventFormProps {
@@ -34,20 +42,9 @@ export interface EventFormProps {
   disabled?: boolean;
   pending: boolean;
   class?: string;
-  /**
-   * Hides the built-in Cancel/submit footer so a host can render its own
-   * controls (e.g. the channel input's event face). Submission then goes
-   * through the controller's `submitValues` or the form's Enter handling.
-   */
-  hideFooter?: boolean;
-  /** Overrides the title autofocus; defaults to autofocusing on create. */
-  autofocusTitle?: boolean;
-  /** Observes the title input, e.g. to refocus when a host face activates. */
-  titleInputRef?: (el: HTMLInputElement) => void;
   onCalendarChange?: (calendarId: string, color: string) => void;
   onDirtyChange?: (dirty: boolean) => void;
-  /** Discards the form. Unused when the footer is hidden. */
-  onCancel?: () => void;
+  onCancel: () => void;
   onSubmit: (
     values: EventEditorSubmitValues,
     scope?: CalendarUpdateScope
@@ -56,14 +53,11 @@ export interface EventFormProps {
 
 /** Whether edits to a recurring event patch one occurrence or the whole series. */
 const RECURRING_EDIT_SCOPE_OPTIONS = [
-  {
-    scope: 'this_event',
-    labelKey: 'calendar.event.form.recurringEditThisEvent',
-  },
-  { scope: 'all', labelKey: 'calendar.event.form.recurringEditAllEvents' },
+  { scope: 'this_event', label: 'This event' },
+  { scope: 'all', label: 'All events' },
 ] as const satisfies readonly {
   scope: CalendarUpdateScope;
-  labelKey: string;
+  label: string;
 }[];
 
 /** Create/edit event form laid out like the standalone task composer. */
@@ -94,6 +88,25 @@ export function EventForm(props: EventFormProps) {
     props.disabledFields?.[field] === true;
   const fieldIsDisabled = (field: keyof EventEditorDisabledFields) =>
     formIsDisabled() || fieldIsReadOnly(field);
+
+  const isOutOfOffice = () => controller.isOutOfOffice();
+  // The decline settings of an edited event are unknown until picked, and the
+  // disclosure must not claim behavior nobody chose.
+  const outOfOfficeNotice = () => {
+    const outOfOffice = state().outOfOffice;
+    if (!isOutOfOffice() || !outOfOffice) return undefined;
+    return outOfOfficeNoticeFor(
+      outOfOffice.autoDeclineMode,
+      outOfOffice.declineMessage
+    );
+  };
+
+  // The editor cannot hand the provider's string back: Lexical re-serializes
+  // whatever it loads. Only content that exports differently from what was
+  // loaded counts as an edit, so an untouched description stays byte-for-byte
+  // what the event was opened with.
+  const initialDescription = state().description;
+  let loadedDescription: string | undefined;
 
   createEffect(() => {
     const option = controller.selectedCalendarOption();
@@ -163,42 +176,58 @@ export function EventForm(props: EventFormProps) {
             </div>
 
             <input
-              ref={props.titleInputRef}
               type="text"
               value={state().title}
               onInput={(event) =>
                 controller.setField('title', event.currentTarget.value)
               }
-              placeholder={t('calendar.event.new')}
-              aria-label={t('calendar.event.form.title.label')}
-              autofocus={props.autofocusTitle ?? !isEdit()}
+              placeholder="New event"
+              aria-label="Title"
+              autofocus={!isEdit()}
               disabled={fieldIsDisabled('title')}
               class="h-9 w-full bg-transparent px-2 text-lg font-semibold leading-snug text-ink outline-none placeholder:text-ink-placeholder"
             />
 
-            <div class="h-12">
-              <textarea
-                value={state().description}
-                onInput={(event) =>
-                  controller.setField(
-                    'description',
-                    event.currentTarget.value.replaceAll(/[\r\n]+/g, ' ')
-                  )
-                }
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') event.preventDefault();
-                }}
-                placeholder={t('calendar.event.form.description.placeholder')}
-                aria-label={t('calendar.event.form.description.label')}
-                rows={1}
-                wrap="off"
-                disabled={fieldIsDisabled('description')}
-                class="h-full w-full resize-none overflow-x-auto bg-transparent px-2 text-sm text-ink outline-none placeholder:text-ink-placeholder"
-              />
-            </div>
+            {/* Google rejects a description on an out-of-office event. The
+                editor re-initializes from the kind switch's reset state, so
+                what it shows always matches what a save submits. */}
+            <Show when={!isOutOfOffice()}>
+              <div class="h-12 overflow-y-auto">
+                <MarkdownTextarea
+                  type="calendar"
+                  initialHtml={calendarDescriptionToEditorHtml(
+                    initialDescription
+                  )}
+                  editable={() => !fieldIsDisabled('description')}
+                  onInitialized={(editor) => {
+                    loadedDescription = exportCalendarDescription(editor);
+                  }}
+                  onChange={(_markdown, editor) => {
+                    if (!editor) return;
+                    const next = exportCalendarDescription(editor);
+                    controller.setField(
+                      'description',
+                      next === loadedDescription ? initialDescription : next
+                    );
+                  }}
+                  placeholder="Add description..."
+                  portalScope="local"
+                  domRef={(element) =>
+                    element.setAttribute('aria-label', 'Description')
+                  }
+                  class="h-full w-full bg-transparent px-2 text-sm text-ink outline-none"
+                />
+              </div>
+            </Show>
           </div>
 
           <div class="flex min-w-0 flex-wrap items-center gap-2">
+            <EventComposerKindPill
+              eventType={state().eventType}
+              onChange={controller.setEventKind}
+              disabled={formIsDisabled()}
+              readOnly={isEdit()}
+            />
             <EventComposerCalendarPill
               options={controller.calendarOptions()}
               value={controller.selectedCalendarOption()}
@@ -219,28 +248,57 @@ export function EventForm(props: EventFormProps) {
                 fieldIsReadOnly('recurrence') || editScope() === 'this_event'
               }
             />
-            <EventComposerGuestsPill
-              options={controller.guestOptions}
-              selected={controller.selectedGuests()}
-              onChange={controller.setSelectedGuests}
-              disabled={formIsDisabled()}
-              readOnly={fieldIsReadOnly('guests')}
-            />
-            <EventComposerConferencePill
-              value={state().conference}
-              canKeepExisting={
-                controller.initialConferenceChoice() === 'existing'
-              }
-              onChange={(conference) =>
-                controller.setField('conference', conference)
-              }
-              disabled={fieldIsDisabled('conference')}
-            />
-            <EventComposerLocationPill
-              value={state().location}
-              onChange={(location) => controller.setField('location', location)}
-              disabled={fieldIsDisabled('location')}
-            />
+            <Show when={!isOutOfOffice()}>
+              <EventComposerGuestsPill
+                options={controller.guestOptions}
+                selected={controller.selectedGuests()}
+                onChange={controller.setSelectedGuests}
+                disabled={formIsDisabled()}
+                readOnly={fieldIsReadOnly('guests')}
+              />
+              <EventComposerConferencePill
+                value={state().conference}
+                canKeepExisting={
+                  controller.initialConferenceChoice() === 'existing'
+                }
+                onChange={(conference) =>
+                  controller.setField('conference', conference)
+                }
+                disabled={fieldIsDisabled('conference')}
+              />
+              <EventComposerLocationPill
+                value={state().location}
+                onChange={(location) =>
+                  controller.setField('location', location)
+                }
+                disabled={fieldIsDisabled('location')}
+              />
+            </Show>
+            <Show when={isOutOfOffice()}>
+              <EventComposerDeclinePill
+                value={state().outOfOffice}
+                onChange={controller.setOutOfOffice}
+                disabled={formIsDisabled()}
+              />
+              <Show
+                when={
+                  state().outOfOffice &&
+                  state().outOfOffice?.autoDeclineMode !== 'decline_none'
+                }
+              >
+                <EventComposerDeclineMessagePill
+                  value={state().outOfOffice?.declineMessage ?? ''}
+                  onChange={(declineMessage) =>
+                    controller.setOutOfOffice({
+                      autoDeclineMode:
+                        state().outOfOffice?.autoDeclineMode ?? 'decline_none',
+                      declineMessage,
+                    })
+                  }
+                  disabled={formIsDisabled()}
+                />
+              </Show>
+            </Show>
             <EventComposerRemindersPill
               minutes={controller.reminderMinutes()}
               usedSlots={
@@ -252,6 +310,26 @@ export function EventForm(props: EventFormProps) {
               disabled={fieldIsDisabled('reminders')}
             />
           </div>
+
+          <Show when={outOfOfficeNotice()}>
+            {(notice) => (
+              <div
+                role="note"
+                aria-label="Out-of-office event"
+                class="flex min-w-0 flex-col gap-1 rounded-lg border border-warning/40 bg-warning-bg p-3 text-xs text-warning-ink"
+              >
+                <span class="font-medium">Out-of-office event</span>
+                <span>{notice().effect}</span>
+                <Show when={notice().declineMessage}>
+                  {(message) => (
+                    <span class="italic">
+                      Auto-decline reply: “{message()}”
+                    </span>
+                  )}
+                </Show>
+              </div>
+            )}
+          </Show>
         </div>
 
         <Show when={controller.recurrenceChoice() === 'custom'}>
@@ -261,7 +339,9 @@ export function EventForm(props: EventFormProps) {
                 value={controller.customConfig()}
                 start={controller.startForRecurrence()}
                 allDay={state().allDay}
-                disabled={fieldIsDisabled('recurrence')}
+                disabled={
+                  fieldIsDisabled('recurrence') || editScope() === 'this_event'
+                }
                 onChange={controller.setCustomConfig}
               />
             </div>
@@ -269,42 +349,33 @@ export function EventForm(props: EventFormProps) {
         </Show>
       </div>
 
-      <div
-        class={cn(
-          'flex shrink-0 items-center justify-end gap-3',
-          props.hideFooter && 'hidden'
-        )}
-      >
+      <div class="flex shrink-0 items-center justify-end gap-3">
         <Show when={props.showRecurringEditNotice}>
-          <div
-            role="radiogroup"
-            aria-label={t('calendar.event.form.recurringEditScope')}
-            class="mr-auto flex items-center gap-3 text-xs text-ink-muted"
+          <RadioGroup
+            value={editScope()}
+            onChange={(value) => setEditScope(value as CalendarUpdateScope)}
+            disabled={formIsDisabled()}
+            aria-label="Apply changes to"
+            class="mr-auto flex-row items-center gap-3 text-xs text-ink-muted"
           >
             <For each={RECURRING_EDIT_SCOPE_OPTIONS}>
               {(option) => (
-                <label class="flex items-center gap-1.5">
-                  <input
-                    type="radio"
-                    name="event-edit-scope"
-                    checked={editScope() === option.scope}
-                    onChange={() => setEditScope(option.scope)}
-                    disabled={formIsDisabled()}
-                  />
-                  {t(option.labelKey)}
-                </label>
+                <RadioGroup.Item value={option.scope} class="gap-1.5">
+                  <RadioGroup.ItemControl class="size-3.5" />
+                  <RadioGroup.ItemLabel>{option.label}</RadioGroup.ItemLabel>
+                </RadioGroup.Item>
               )}
             </For>
-          </div>
+          </RadioGroup>
         </Show>
         <Button
           type="button"
           variant="ghost"
           class="rounded-lg"
           disabled={formIsDisabled()}
-          onClick={() => props.onCancel?.()}
+          onClick={props.onCancel}
         >
-          {t('common.cancel')}
+          Cancel
         </Button>
         <Button
           type="submit"
@@ -312,15 +383,11 @@ export function EventForm(props: EventFormProps) {
           depth={3}
           class="rounded-lg border-0"
           disabled={!controller.canSave() || formIsDisabled()}
-          aria-label={
-            isEdit() ? t('common.save') : t('calendar.event.form.create')
-          }
+          aria-label={isEdit() ? 'Save' : 'Create event'}
         >
           <Show
             when={props.pending}
-            fallback={
-              isEdit() ? t('common.save') : t('calendar.event.form.create')
-            }
+            fallback={isEdit() ? 'Save' : 'Create event'}
           >
             <SpinnerIcon class="size-4 animate-spin" />
           </Show>

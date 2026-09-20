@@ -70,7 +70,6 @@ import {
   isOwnerEpochLostError,
   type QueryRevalidationWire,
 } from '../protocol';
-import { isUnmergeableConflict, recordKeepBoth } from '../keep-both';
 import {
   compileEntityResolvers,
   type EntityResolverConfig,
@@ -733,6 +732,27 @@ export function normalizedCacheExchange(
         claimed: ClaimedMutation
       ): Promise<void> {
         deferredUntil = undefined;
+        if (claimed.superseded) {
+          const discarded = await host.deferOptimisticWrite(
+            claimed.transactionId,
+            { owner: queueOwner, generation: claimed.leaseGeneration },
+            Date.now(),
+            'superseded before network replay'
+          );
+          if (discarded.kind !== 'discarded-superseded') {
+            throw new Error('superseded mutation was unexpectedly deferred');
+          }
+          const live = liveQueuedOps.get(claimed.transactionId);
+          if (live) {
+            liveQueuedOps.delete(claimed.transactionId);
+            live.resolveRoute(
+              queuedMutationResult(live.operation, claimed.transactionId)
+            );
+          }
+          resolveLiveOperationsAsQueued();
+          scheduleDrain();
+          return;
+        }
         attemptInFlight = true;
         const attempt: QueueAttemptContext = {
           transactionId: claimed.transactionId,
@@ -771,17 +791,6 @@ export function normalizedCacheExchange(
             });
           } catch (error) {
             try {
-              if (isUnmergeableConflict(error)) {
-                recordKeepBoth({
-                  transactionId: claimed.transactionId,
-                  query: claimed.query,
-                  operationName: claimed.operationName,
-                  variables: claimed.variables,
-                  local: claimed.variables,
-                  remote: null,
-                  error: error instanceof Error ? error.message : String(error),
-                });
-              }
               await host.rollbackOptimisticWrite(
                 claimed.transactionId,
                 {
@@ -937,6 +946,7 @@ export function normalizedCacheExchange(
           return undefined;
         }
         const args = {
+          uuid: optimistic.uuid,
           query: queryText(op),
           operationName: operationName(op),
           variables: op.variables as Record<string, unknown> | undefined,
@@ -990,6 +1000,20 @@ export function normalizedCacheExchange(
             }
             enqueueForward(op);
             return undefined;
+          }
+        }
+        if (enqueue.upsertKind.kind === 'replaced-pending') {
+          const superseded = liveQueuedOps.get(
+            enqueue.upsertKind.removedTransactionId
+          );
+          if (superseded) {
+            liveQueuedOps.delete(enqueue.upsertKind.removedTransactionId);
+            superseded.resolveRoute(
+              queuedMutationResult(
+                superseded.operation,
+                enqueue.upsertKind.removedTransactionId
+              )
+            );
           }
         }
         const routed = new Promise<OperationResult | undefined>((resolve) => {
@@ -1176,8 +1200,12 @@ export function normalizedCacheExchange(
               generation: attempt.leaseGeneration,
             };
             let retryAt: number | undefined;
-            let disposition: 'committed' | 'queued' | 'permanently-failed' =
-              'queued';
+            let replacementTransactionId: string | undefined;
+            let disposition:
+              | 'committed'
+              | 'queued'
+              | 'superseded'
+              | 'permanently-failed' = 'queued';
             try {
               if (result.error || result.data == null) {
                 let retry = false;
@@ -1190,31 +1218,33 @@ export function normalizedCacheExchange(
                 }
                 if (retry) {
                   retryAt = Date.now() + retryDelayMs(attempt.attemptCount);
-                  await host.deferOptimisticWrite(
+                  const deferred = await host.deferOptimisticWrite(
                     attempt.transactionId,
                     claim,
                     retryAt,
                     result.error?.message ?? 'mutation returned no data'
                   );
-                  disposition = 'queued';
-                } else {
-                  if (isUnmergeableConflict(result.error)) {
-                    recordKeepBoth({
-                      transactionId: attempt.transactionId,
-                      query: queryText(op),
-                      operationName: operationName(op),
-                      variables: (op.variables as Record<string, unknown> | undefined) ?? {},
-                      local: op.variables ?? {},
-                      remote: result.data ?? null,
-                      error: result.error?.message ?? 'mutation returned no data',
-                    });
+                  if (deferred.kind === 'discarded-superseded') {
+                    retryAt = undefined;
+                    replacementTransactionId =
+                      deferred.replacementTransactionId;
+                    disposition = 'superseded';
+                  } else {
+                    disposition = 'queued';
                   }
-                  await host.rollbackOptimisticWrite(
+                } else {
+                  const rolledBack = await host.rollbackOptimisticWrite(
                     attempt.transactionId,
                     claim,
                     result.error?.message ?? 'mutation returned no data'
                   );
-                  disposition = 'permanently-failed';
+                  if (rolledBack.kind === 'discarded-superseded') {
+                    replacementTransactionId =
+                      rolledBack.replacementTransactionId;
+                    disposition = 'superseded';
+                  } else {
+                    disposition = 'permanently-failed';
+                  }
                 }
               } else {
                 const committed = await host.commitOptimisticWrite(
@@ -1229,15 +1259,20 @@ export function normalizedCacheExchange(
                     data: result.data,
                   }
                 );
-                const effects = operationCacheEffects(result.data);
-                if (effects.some((effect) => effect.kind === 'delete')) {
-                  // Commit already normalized the complete result. Replay only
-                  // mixed explicit effects so their final write/delete order is
-                  // identical to a non-optimistic operation.
-                  await applyOperationCacheEffects(op, effects);
+                if (committed.kind === 'committed-superseded') {
+                  replacementTransactionId = committed.replacementTransactionId;
+                  disposition = 'superseded';
+                } else {
+                  const effects = operationCacheEffects(result.data);
+                  if (effects.some((effect) => effect.kind === 'delete')) {
+                    // Commit already normalized the complete result. Replay only
+                    // mixed explicit effects so their final write/delete order is
+                    // identical to a non-optimistic operation.
+                    await applyOperationCacheEffects(op, effects);
+                  }
+                  revalidateAfterCommit(committed.revalidations ?? [], op);
+                  disposition = 'committed';
                 }
-                revalidateAfterCommit(committed.revalidations ?? [], op);
-                disposition = 'committed';
               }
             } catch (error) {
               options.onCacheError?.(error, op);
@@ -1254,10 +1289,20 @@ export function normalizedCacheExchange(
                 retryAt === undefined ? 0 : Math.max(0, retryAt - Date.now())
               );
             }
-            return withOptimisticMutationDisposition(result, {
-              kind: disposition,
-              transactionId: attempt.transactionId,
-            });
+            return withOptimisticMutationDisposition(
+              result,
+              disposition === 'superseded'
+                ? {
+                    kind: 'superseded',
+                    transactionId: attempt.transactionId,
+                    replacementTransactionId:
+                      replacementTransactionId ?? attempt.transactionId,
+                  }
+                : {
+                    kind: disposition,
+                    transactionId: attempt.transactionId,
+                  }
+            );
           }
 
           const optimistic = optimisticContextOf(op);

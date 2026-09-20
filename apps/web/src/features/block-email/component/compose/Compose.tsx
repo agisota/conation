@@ -40,9 +40,9 @@ import { useHasFeatureAccess } from '@core/auth';
 import { EmailPermissionsBanner } from '@core/component/EmailPermissionsBanner';
 import { toast } from '@core/component/Toast/Toast';
 import {
-  ENABLE_EMAIL_SIGNATURES_FLAG,
-  ENABLE_EMAIL_SIGNATURES_OVERRIDE,
-  ENABLE_GRAPHQL_SOUP,
+  enableEmailSignatures,
+  enableGraphqlSoup,
+  isFeatureEnabled,
 } from '@core/constant/featureFlags';
 import { hasStalwartMailbox } from '@core/email-link';
 import { isMobile } from '@core/mobile/isMobile';
@@ -173,9 +173,7 @@ export function EmailCompose(props: EmailComposeProps) {
   // message. The backend injects it on send (see include_signature below); the
   // FE only renders the preview and signals an explicit dismiss.
   const signature = useEmailSignature(() => link()?.id);
-  const emailSignaturesFlag = useFeatureFlag(ENABLE_EMAIL_SIGNATURES_FLAG, {
-    enabledOverride: ENABLE_EMAIL_SIGNATURES_OVERRIDE,
-  });
+  const emailSignaturesFlag = useFeatureFlag(enableEmailSignatures);
   const [includeSignature, setIncludeSignature] = createSignal(true);
 
   const hasLinkError = createMemo(() => {
@@ -416,7 +414,7 @@ export function EmailCompose(props: EmailComposeProps) {
   ) => {
     // Wipe the new thread's cache when its view unmounts (replaceSplit
     // below) so the next visit fetches fresh data without the sent message.
-    if (threadId && !ENABLE_GRAPHQL_SOUP()) markThreadDraftSaved(threadId);
+    if (threadId && !isFeatureEnabled(enableGraphqlSoup)) markThreadDraftSaved(threadId);
 
     // Overwrite the server-side draft with the pre-send content. The
     // snapshot itself stays for the compose remount below to restore the
@@ -441,7 +439,7 @@ export function EmailCompose(props: EmailComposeProps) {
     // markThreadDraftSaved's TanStack cleanup can't reach — refetch through
     // it (after the draft-body restore) so a revisit doesn't replay the
     // undone message from cache.
-    if (threadId && ENABLE_GRAPHQL_SOUP()) {
+    if (threadId && isFeatureEnabled(enableGraphqlSoup)) {
       void fetchAndCacheThread(threadId);
     }
 

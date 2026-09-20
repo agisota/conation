@@ -1,5 +1,9 @@
-import { ENABLE_GRAPHQL_SOUP } from '@core/constant/featureFlags';
+import {
+  enableGraphqlSoup,
+  isFeatureEnabled,
+} from '@core/constant/featureFlags';
 import type { Entity, EntityType } from '@core/types';
+import { isMutedItem } from '@entity/utils/notification';
 import { queryClient } from '@queries/client';
 import {
   toNotificationEntityRef,
@@ -73,7 +77,7 @@ export function notificationIsOfEntityType(
  * @returns boolean
  */
 export function notificationIsRead(notification: UnifiedNotification): boolean {
-  if (notification.viewed_at || notification.done) return true;
+  if (notification.state !== 'unseen') return true;
   if (
     notification.entity_type === 'channel' &&
     !isChannelNotification(notification)
@@ -198,7 +202,7 @@ export async function markNotificationsForEntityAsRead(
   entity: Entity
 ): Promise<void> {
   const entityRef = toNotificationEntityRef(entity);
-  if (ENABLE_GRAPHQL_SOUP() && entityRef) {
+  if (isFeatureEnabled(enableGraphqlSoup) && entityRef) {
     await updateNotificationsForEntities({
       entities: [entityRef],
       operation: 'MARK_SEEN',
@@ -222,9 +226,9 @@ export function useNotificationsMutedForEntity(
   entity: Entity
 ): Accessor<boolean> {
   return createMemo(() =>
-    notificationSource.mutedEntities().includes({
-      item_type: entity.type,
+    isMutedItem(notificationSource.mutedEntities(), {
       item_id: entity.id,
+      item_type: entity.type,
     })
   );
 }
@@ -237,11 +241,11 @@ export function useNotificationsMutedForEntity(
 export async function executeMarkNotificationsDone(
   notificationIds: string[]
 ): Promise<void> {
-  setDoneOverride(notificationIds, true);
+  const rollback = setDoneOverride(notificationIds, true);
   try {
     await bulkMarkNotificationsAsDone(notificationIds);
   } catch (err) {
-    setDoneOverride(notificationIds, false);
+    rollback();
     throw err;
   } finally {
     await queryClient.invalidateQueries({
@@ -259,11 +263,11 @@ export async function executeMarkNotificationsDone(
 export async function executeMarkNotificationsUndone(
   notificationIds: string[]
 ): Promise<void> {
-  setDoneOverride(notificationIds, false);
+  const rollback = setDoneOverride(notificationIds, false);
   try {
     await bulkMarkNotificationsAsUndone(notificationIds);
   } catch (err) {
-    setDoneOverride(notificationIds, true);
+    rollback();
     throw err;
   } finally {
     await queryClient.invalidateQueries({

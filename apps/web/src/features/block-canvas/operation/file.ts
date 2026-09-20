@@ -1,25 +1,17 @@
-import { createBlockSignal, useBlockId } from '@core/block';
 import { DEV_MODE_ENV } from '@core/constant/featureFlags';
 import { trackMention } from '@core/signal/mention';
 import { copiedItem } from '@core/state/clipboard';
 import { unwrap } from 'solid-js/store';
 import { OPERATION_LOGGING, Tools } from '../constants';
+import { useCanvasDocument } from '../context/canvas-document-context';
 import type { EntityMentionNode } from '../model/CanvasModel';
 import { useCanvasHistory } from '../signal/canvasHistory';
 import { useToolManager } from '../signal/toolManager';
-import { highestOrderSignal, useCanvasNodes } from '../store/canvasData';
+import { useCanvasNodes } from '../store/canvasData';
 import { useRenderState } from '../store/RenderState';
 import { sharedInstance } from '../util/sharedInstance';
 import type { Vector2 } from '../util/vector2';
 import type { Operation, Operator } from './operation';
-
-export const selectedFileSignal = createBlockSignal<{
-  type?: EntityMentionNode['entityType'];
-  id?: string;
-}>({
-  type: undefined,
-  id: undefined,
-});
 
 export const fileWidth = 250;
 export const fileHeight = 50;
@@ -35,20 +27,19 @@ export type FileOperation = Operation & {
   node: EntityMentionNode;
 };
 
-export const currentFileOperationSignal = createBlockSignal<FileOperation>();
-
 export const useFile = sharedInstance((): Operator => {
+  const canvas = useCanvasDocument();
+  const state = canvas.state.signals;
   const { pageToCanvas } = useRenderState();
   const { createNode, updateNode, ...nodes } = useCanvasNodes();
   const [currentFileOperation, setCurrentFileOperation] =
-    currentFileOperationSignal;
+    state.currentFileOperation;
   const { setSelectedTool } = useToolManager();
   const history = useCanvasHistory();
-  const highestOrder = highestOrderSignal.get;
-  const blockId = useBlockId();
+  const [highestOrder] = state.highestOrder;
+  const blockId = canvas.documentId();
 
-  const selectedFile = selectedFileSignal.get;
-  const setSelectedFile = selectedFileSignal.set;
+  const [selectedFile, setSelectedFile] = state.selectedFile;
 
   function _applyMousePos(mousePos: Vector2) {
     const op = currentFileOperation();
@@ -80,7 +71,7 @@ export const useFile = sharedInstance((): Operator => {
       if (!id) {
         if (copiedItem()) {
           id = copiedItem()!.id;
-          type = copiedItem()!.type as EntityMentionNode['entityType'];
+          type = copiedItem()!.type;
         } else {
           console.warn('No source File found');
           return;
@@ -90,7 +81,12 @@ export const useFile = sharedInstance((): Operator => {
         {
           type: 'entitymention',
           file: id,
-          entityType: type as EntityMentionNode['entityType'],
+          entityType: type as
+            | 'document'
+            | 'chat'
+            | 'project'
+            | 'channel'
+            | 'email',
           x: mousePos.x - fileWidth / 2,
           y: mousePos.y - fileHeight / 2,
           width: fileWidth,

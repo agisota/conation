@@ -11,68 +11,14 @@ use crate::domain::ports::editing::EditingWorkerService;
 use ai_toolset::{AsyncTool, RequestContext, ServiceContext, ToolCallError, ToolResult};
 use anyhow::Context;
 use async_trait::async_trait;
-use conation_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::models::{EditAccessLevel, EntityType};
 use entity_access::domain::ports::EntityAccessService;
+use macro_user_id::user_id::MacroUserIdStr;
 use model::document::FileType;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::DocumentToolContext;
-
-/// Same empty canvas the web create menu uploads (`createCanvasFileFromJsonString`).
-pub const EMPTY_CANVAS_JSON: &str = r#"{"nodes":[],"edges":[]}"#;
-
-/// True when the agent asked for a canvas the same way the UI does (`fileType: canvas`).
-pub fn is_canvas_extension(file_extension: &str) -> bool {
-    matches!(
-        file_extension
-            .trim()
-            .trim_start_matches('.')
-            .to_ascii_lowercase()
-            .as_str(),
-        "canvas"
-    )
-}
-
-/// Normalize create-document text so a canvas without body matches the UI empty board.
-pub fn document_text_for_create(
-    file_extension: &str,
-    file_content: &str,
-) -> Result<String, DocumentError> {
-    if !is_canvas_extension(file_extension) {
-        return Ok(file_content.to_string());
-    }
-    let trimmed = file_content.trim();
-    if trimmed.is_empty() {
-        return Ok(EMPTY_CANVAS_JSON.to_string());
-    }
-    validate_canvas_json(trimmed)?;
-    Ok(trimmed.to_string())
-}
-
-fn validate_canvas_json(file_content: &str) -> Result<(), DocumentError> {
-    let value: serde_json::Value = serde_json::from_str(file_content).map_err(|_| {
-        DocumentError::BadRequest(
-            "canvas content must be JSON matching the UI save format {\"nodes\":[],\"edges\":[]}"
-                .to_string(),
-        )
-    })?;
-    let Some(obj) = value.as_object() else {
-        return Err(DocumentError::BadRequest(
-            "canvas content must be a JSON object with nodes and edges arrays".to_string(),
-        ));
-    };
-    if !obj.get("nodes").is_some_and(|v| v.is_array())
-        || !obj.get("edges").is_some_and(|v| v.is_array())
-    {
-        return Err(DocumentError::BadRequest(
-            "canvas JSON must include nodes and edges arrays, same as the app Create canvas action"
-                .to_string(),
-        ));
-    }
-    Ok(())
-}
 
 fn failed_to_create_document(error: DocumentError) -> ToolCallError {
     let description = match &error {
@@ -101,19 +47,19 @@ pub struct CreateDocumentResponse {
 #[serde(rename_all = "camelCase")]
 #[schemars(
     title = "CreateDocument",
-    description = "Create a plaintext document or a canvas. For a canvas use fileExtension \"canvas\" and the same JSON the app saves: {\"nodes\":[],\"edges\":[]} (extra keys such as groups are fine). An empty canvas body is filled with that empty board automatically — the same payload the Create canvas menu uploads."
+    description = "Create a plaintext document or a native Macro spreadsheet. For a workbook use fileExtension spreadsheet, empty fileContent, and isTask false; then ReadSpreadsheet and EditSpreadsheet to populate cells, formulas and sheets. Works without an open editor."
 )]
 pub struct CreateDocument {
     #[schemars(description = "The name of the document without the file extension")]
     pub document_name: String,
 
     #[schemars(
-        description = "The string content of the document you are creating. For canvas, the same JSON the UI uploads ({nodes, edges}). Leave empty to create a blank canvas."
+        description = "The string content of a text document. Must be empty for a native spreadsheet."
     )]
     pub file_content: String,
 
     #[schemars(
-        description = "The extension of the plaintext file you are creating. Use \"canvas\" for a canvas board (application/x-macro-canvas), same as the user Create canvas action."
+        description = "The extension of a plaintext file, or spreadsheet for a native collaborative workbook."
     )]
     pub file_extension: String,
 
@@ -189,27 +135,30 @@ where
             None
         };
 
-        let mut metadata_builder = NewDocumentMetadata::builder(self.document_name.clone());
+        let mut metadata_builder = NewDocumentMetadata::builder(self.document_name.clone())
+            .attribution(service_context.attribution(user_id.clone()));
         if let Some(project_id) = self.project_id {
             metadata_builder = metadata_builder.project_id(project_id);
         }
 
-        let document = NewPlainTextDocument::builder(metadata_builder.build())
-            .file_type(parsed_file_type)
-            .text(
-                document_text_for_create(&self.file_extension, &self.file_content)
-                    .map_err(failed_to_create_document)?,
-            )
-            .task_flag(self.is_task, maybe_team)
-            .build()
-            .map_err(failed_to_create_document)?;
-
-        let response = service_context
-            .creator
-            .create_plain_text(user_id, document)
-            .await
-            .map(|document| document.into_response())
-            .map_err(failed_to_create_document)?;
+        let response = if parsed_file_type == FileType::Spreadsheet {
+            if !self.file_content.is_empty() || self.is_task {
+                return Err(failed_to_create_document(DocumentError::BadRequest(
+                    "Create spreadsheets with empty fileContent and isTask false, then use ReadSpreadsheet and EditSpreadsheet to populate the workbook".to_string(),
+                )));
+            }
+            service_context.creator.create_spreadsheet(user_id, metadata_builder.build()).await
+        } else {
+            let document = NewPlainTextDocument::builder(metadata_builder.build())
+                .file_type(parsed_file_type)
+                .text(self.file_content.clone())
+                .task_flag(self.is_task, maybe_team)
+                .build()
+                .map_err(failed_to_create_document)?;
+            service_context.creator.create_plain_text(user_id, document).await
+        }
+        .map(|document| document.into_response())
+        .map_err(failed_to_create_document)?;
 
         tracing::trace!("created document");
 

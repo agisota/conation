@@ -1,11 +1,13 @@
-import { formatDateTime, t } from '@app/lib/i18n';
+import { openDocument } from '@core/component/LexicalMarkdown/component/core/BlockLink';
 import { UserIcon, type UserIconProps } from '@core/component/UserIcon';
 import { ScrollIndicators } from '@core/component/VerticalScrollIndicators';
+import { isMobile } from '@core/mobile/isMobile';
 import {
   emailToMacroId,
   getDisplayName,
   getInitialsFromName,
 } from '@core/user';
+import { plural } from '@core/util/string';
 import { openExternalUrl } from '@core/util/url';
 import { Collapsible } from '@kobalte/core/collapsible';
 import ArrowSquareOutIcon from '@phosphor/arrow-square-out.svg';
@@ -25,6 +27,7 @@ import XIcon from '@phosphor/x.svg';
 import type { AttendeeResponseStatus } from '@service-storage/generated/schemas/attendeeResponseStatus';
 import type { CalendarAttendee } from '@service-storage/generated/schemas/calendarAttendee';
 import type { EventReminderOverride } from '@service-storage/generated/schemas/eventReminderOverride';
+import { createCallback } from '@solid-primitives/rootless';
 import { Avatar, Button, cn } from '@ui';
 import {
   type Accessor,
@@ -37,6 +40,10 @@ import {
 import { Dynamic } from 'solid-js/web';
 import type { CalendarEvent, CalendarTimeFormat } from '../types';
 import { isSameLocalDate, parseLocalDate } from '../utils/calendar-date';
+import {
+  parseMacroAppLink,
+  sanitizeCalendarDescription,
+} from '../utils/calendar-description';
 import {
   type CalendarPerson,
   eventAttribution,
@@ -56,22 +63,34 @@ import {
   formatCalendarTime,
 } from '../utils/time-format';
 
+const formatDate = new Intl.DateTimeFormat(undefined, {
+  weekday: 'short',
+  month: 'long',
+  day: 'numeric',
+});
+const formatShortDate = new Intl.DateTimeFormat(undefined, {
+  month: 'short',
+  day: 'numeric',
+});
 const ATTENDEE_RESPONSE = {
   accepted: {
+    label: 'Accepted',
     class: 'text-success',
     icon: CheckIcon,
   },
   declined: {
+    label: 'Declined',
     class: 'text-failure',
     icon: XIcon,
   },
   tentative: {
+    label: 'Tentative',
     class: 'text-warning',
     icon: QuestionMarkIcon,
   },
 } satisfies Record<
   Exclude<AttendeeResponseStatus, 'needs_action'>,
-  { class: string; icon: typeof CheckIcon }
+  { label: string; class: string; icon: typeof CheckIcon }
 >;
 
 function isUsableDisplayName(value: string, email: string) {
@@ -155,7 +174,7 @@ function CalendarUserItem(props: {
           )}
         >
           {props.displayName()}
-          <Show when={props.isSelf}> {t('calendar.event.attendee.you')}</Show>
+          <Show when={props.isSelf}> (you)</Show>
         </span>
         <Show
           when={secondaryLabelPosition() === 'below' && props.secondaryLabel}
@@ -184,10 +203,10 @@ function CalendarAttendeeItem(props: {
     attendee.isOrganizer || attendee.isOptional ? (
       <>
         <Show when={attendee.isOrganizer}>
-          <span>{t('calendar.event.role.organizer')}</span>
+          <span>Organizer</span>
         </Show>
         <Show when={attendee.isOptional}>
-          <span>{t('calendar.event.role.optional')}</span>
+          <span>Optional</span>
         </Show>
       </>
     ) : undefined;
@@ -199,12 +218,8 @@ function CalendarAttendeeItem(props: {
   const trailing = response ? (
     <span
       role="img"
-      aria-label={t('calendar.event.attendee.response', {
-        response: attendee.responseStatus,
-      })}
-      title={t('calendar.event.attendee.response', {
-        response: attendee.responseStatus,
-      })}
+      aria-label={response.label}
+      title={response.label}
       class={`shrink-0 ${response.class}`}
     >
       <Dynamic component={response.icon} aria-hidden="true" class="size-3.5" />
@@ -271,12 +286,17 @@ function ScrollableAttendeeList(props: { attendees: CalendarAttendee[] }) {
 
   return (
     <div class="relative min-w-0 flex-1">
-      <div ref={setScrollContainer} class="max-h-40 overflow-y-auto pr-4">
+      <div
+        ref={setScrollContainer}
+        class="max-h-40 overflow-y-auto pr-4 mobile:max-h-none mobile:overflow-visible mobile:pr-0"
+      >
         <div class="flex flex-col gap-3">
           <CalendarAttendeeList attendees={props.attendees} />
         </div>
       </div>
-      <ScrollIndicators scrollRef={scrollContainer} appearance="gradient" />
+      <Show when={!isMobile()}>
+        <ScrollIndicators scrollRef={scrollContainer} appearance="gradient" />
+      </Show>
     </div>
   );
 }
@@ -291,40 +311,18 @@ function formatEventSchedule(
 ) {
   const start = parseCalendarDate(event.start);
   const end = parseCalendarDate(event.end);
-  const longDate = (date: Date) =>
-    formatDateTime(date, {
-      weekday: 'short',
-      month: 'long',
-      day: 'numeric',
-    });
-  const shortDate = (date: Date) =>
-    formatDateTime(date, { month: 'short', day: 'numeric' });
 
   if (event.allDay) {
     const inclusiveEnd = new Date(end);
     inclusiveEnd.setDate(inclusiveEnd.getDate() - 1);
     return isSameLocalDate(start, inclusiveEnd)
-      ? t('calendar.event.schedule.allDaySingle', {
-          date: longDate(start),
-        })
-      : t('calendar.event.schedule.allDayRange', {
-          start: shortDate(start),
-          end: shortDate(inclusiveEnd),
-        });
+      ? `${formatDate.format(start)} · All day`
+      : `${formatShortDate.format(start)}–${formatShortDate.format(inclusiveEnd)} · All day`;
   }
 
   return isSameLocalDate(start, end)
-    ? t('calendar.event.schedule.timedSingle', {
-        date: longDate(start),
-        startTime: formatCalendarTime(start, timeFormat),
-        endTime: formatCalendarTime(end, timeFormat),
-      })
-    : t('calendar.event.schedule.timedRange', {
-        startDate: longDate(start),
-        startTime: formatCalendarTime(start, timeFormat),
-        endDate: longDate(end),
-        endTime: formatCalendarTime(end, timeFormat),
-      });
+    ? `${formatDate.format(start)} · ${formatCalendarTime(start, timeFormat)}–${formatCalendarTime(end, timeFormat)}`
+    : `${formatDate.format(start)}, ${formatCalendarTime(start, timeFormat)}–${formatDate.format(end)}, ${formatCalendarTime(end, timeFormat)}`;
 }
 
 function safeConferenceUrl(value: string | undefined) {
@@ -388,7 +386,7 @@ function EventRemindersItem(props: {
     resolveReminderOverrides(
       props.event.reminders,
       props.defaultReminders,
-      props.event.eventType
+      props.event.reminderEventType ?? props.event.eventType
     ).toSorted((a, b) => a.minutes - b.minutes)
   );
 
@@ -401,9 +399,7 @@ function EventRemindersItem(props: {
             {(reminder) => (
               <span>
                 {formatReminderOffset(reminder.minutes)}
-                {reminder.method === REMINDER_METHOD_POPUP
-                  ? ''
-                  : t('calendar.reminder.emailSuffix')}
+                {reminder.method === REMINDER_METHOD_POPUP ? '' : ' (email)'}
               </span>
             )}
           </For>
@@ -444,7 +440,7 @@ function CalendarSourceItem(props: {
         <Show when={createdBy()}>
           {(name) => (
             <div class="text-xs text-ink-extra-muted sm:text-xxs">
-              {t('calendar.event.createdBy', { name: name() })}
+              Created by: {name()}
             </div>
           )}
         </Show>
@@ -473,7 +469,7 @@ function CalendarOrganizerItem(props: { organizer: CalendarPerson }) {
           displayName={displayName}
           iconProps={iconProps}
           isSelf={props.organizer.isSelf}
-          secondaryLabel={t('calendar.event.role.organizer')}
+          secondaryLabel="Organizer"
           secondaryLabelPosition="above"
         />
       </div>
@@ -488,19 +484,14 @@ function formatOriginalTimeZone(
   if (event.allDay || !event.timeZone) return undefined;
 
   try {
-    const time = formatDateTime(parseCalendarDate(event.start), {
+    const time = new Intl.DateTimeFormat(undefined, {
       ...CALENDAR_TIME_FORMAT_OPTIONS[timeFormat],
       timeZone: event.timeZone,
       timeZoneName: 'short',
-    });
-    return t('calendar.event.originalTime', {
-      time,
-      timeZone: event.timeZone,
-    });
+    }).format(parseCalendarDate(event.start));
+    return `Original time: ${time} · ${event.timeZone}`;
   } catch {
-    return t('calendar.event.originalTimeZone', {
-      timeZone: event.timeZone,
-    });
+    return `Original timezone: ${event.timeZone}`;
   }
 }
 
@@ -515,12 +506,31 @@ export function EventDetails(props: {
   );
   const conferenceLabel = () =>
     props.event.conferenceProvider === 'google_meet'
-      ? t('calendar.event.conference.joinGoogleMeet')
-      : t('calendar.event.conference.joinMeeting');
+      ? 'Join Google Meet'
+      : 'Join meeting';
   const attribution = createMemo(() => eventAttribution(props.event));
   const originalTimeZone = createMemo(() =>
     formatOriginalTimeZone(props.event, props.timeFormat)
   );
+  const descriptionHtml = createMemo(() =>
+    sanitizeCalendarDescription(props.event.description ?? '')
+  );
+  const openDescriptionLink = createCallback((event: MouseEvent) => {
+    const anchor = (event.target as Element | null)?.closest('a[href]');
+    if (!(anchor instanceof HTMLAnchorElement)) return;
+    event.preventDefault();
+    const target = parseMacroAppLink(anchor.href);
+    if (target) {
+      openDocument(
+        target.blockName,
+        target.documentId,
+        undefined,
+        event.shiftKey
+      );
+      return;
+    }
+    openExternalUrl(anchor.href);
+  });
   const recurrenceDescription = createMemo(() => {
     const description = formatRecurrenceDescription(
       props.event.recurrenceLines
@@ -529,7 +539,7 @@ export function EventDetails(props: {
 
     return props.event.recurrenceLines.length > 0 ||
       props.event.recurrenceId !== undefined
-      ? t('calendar.recurrence.recurringEvent')
+      ? 'Recurring event'
       : undefined;
   });
 
@@ -539,10 +549,16 @@ export function EventDetails(props: {
         aria-hidden="true"
         class="mt-0.5 flex size-5 items-center justify-center sm:size-4"
       >
-        <span
-          class="size-4 rounded-sm sm:size-3"
-          style={{ 'background-color': props.event.calendar.color }}
-        />
+        <span class="flex size-4 gap-px overflow-hidden rounded-sm sm:size-3">
+          <For each={props.event.visibleCalendars}>
+            {(calendar) => (
+              <span
+                class="min-w-0 flex-1"
+                style={{ 'background-color': calendar.color }}
+              />
+            )}
+          </For>
+        </span>
       </span>
       <div class="flex min-w-0 flex-col gap-1">
         <div class="select-text text-lg font-semibold leading-snug text-ink sm:text-base">
@@ -551,6 +567,11 @@ export function EventDetails(props: {
         <div class="select-text text-sm text-ink-muted sm:text-xs">
           {formatEventSchedule(props.event, props.timeFormat)}
         </div>
+        <Show when={props.event.eventType === 'out_of_office'}>
+          <div class="select-text text-sm text-ink-extra-muted sm:text-xs">
+            Out of office
+          </div>
+        </Show>
         <Show when={recurrenceDescription()}>
           {(description) => (
             <div class="select-text text-sm text-ink-extra-muted sm:text-xs">
@@ -590,13 +611,15 @@ export function EventDetails(props: {
         {(location) => <EventLocationItem location={location()} />}
       </Show>
 
-      <Show when={props.event.description}>
-        {(description) => (
+      <Show when={descriptionHtml()}>
+        {(html) => (
           <div class="contents">
             <TextAlignLeftIcon class="mt-0.5 size-5 text-ink-extra-muted sm:size-4" />
-            <p class="select-text leading-relaxed text-ink-muted">
-              {description()}
-            </p>
+            <div
+              class="select-text leading-relaxed text-ink-muted [&_a]:text-accent [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-4 [&_p+p]:mt-1 [&_ul]:list-disc [&_ul]:pl-4"
+              innerHTML={html()}
+              onClick={openDescriptionLink}
+            />
           </div>
         )}
       </Show>
@@ -619,9 +642,15 @@ export function EventDetails(props: {
   );
 }
 
-/** Displays attendees in a full-width collapsible popover section. */
+/**
+ * Displays attendees in a full-width collapsible popover section. `actions`
+ * are icon buttons for the header row's trailing edge — the copy-emails and
+ * email-guests pair Google Calendar puts there — rendered beside the
+ * disclosure trigger rather than inside it, since a button cannot nest one.
+ */
 export function EventAttendeesSection(props: {
   attendees: CalendarAttendee[];
+  actions?: JSX.Element;
 }) {
   return (
     <Show when={props.attendees.length > 0}>
@@ -629,18 +658,20 @@ export function EventAttendeesSection(props: {
         defaultOpen
         class="border-edge-muted text-sm text-ink-muted sm:border-t sm:text-xs"
       >
-        <Collapsible.Trigger class="group flex w-full items-center gap-4 px-4 py-4 text-left hover:bg-hover hover:text-ink sm:gap-3">
-          <UsersIcon class="size-5 shrink-0 text-ink-extra-muted sm:size-4" />
-          <span>
-            {t('calendar.event.attendee.count', {
-              count: props.attendees.length,
-            })}
-          </span>
-          <CaretDownIcon
-            aria-hidden="true"
-            class="ml-auto size-3 shrink-0 -rotate-90 text-ink-extra-muted transition-transform group-data-expanded:rotate-0"
-          />
-        </Collapsible.Trigger>
+        <div class="flex items-center pr-2">
+          <Collapsible.Trigger class="group flex min-w-0 flex-1 items-center gap-4 py-4 pl-4 pr-2 text-left hover:bg-hover hover:text-ink sm:gap-3">
+            <UsersIcon class="size-5 shrink-0 text-ink-extra-muted sm:size-4" />
+            <span>
+              {props.attendees.length}{' '}
+              {plural('attendee', props.attendees.length)}
+            </span>
+            <CaretDownIcon
+              aria-hidden="true"
+              class="size-3 shrink-0 -rotate-90 text-ink-extra-muted transition-transform group-data-expanded:rotate-0"
+            />
+          </Collapsible.Trigger>
+          <div class="flex shrink-0 items-center gap-1">{props.actions}</div>
+        </div>
         <Collapsible.Content class="data-closed:hidden">
           <div class="flex gap-4 pb-3 pl-4 pt-1.5 sm:gap-3">
             <span aria-hidden="true" class="size-5 shrink-0 sm:size-4" />

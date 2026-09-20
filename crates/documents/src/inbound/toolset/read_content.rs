@@ -3,12 +3,11 @@
 use ai_toolset::{ToolAnnotated, ToolAnnotations};
 use std::str::FromStr;
 
-use crate::domain::canvas_loro;
-use crate::domain::models::{CommentThread, DocumentError, LocationQueryParams};
-use crate::domain::ports::{
-    DocumentService, create::DocumentCreationService, editing::EditingWorkerService,
+use crate::domain::{
+    models::{CommentThread, LocationQueryParams},
+    ports::{DocumentService, create::DocumentCreationService, editing::EditingWorkerService},
+    response::LocationResponseV3,
 };
-use crate::domain::response::LocationResponseV3;
 use ai_toolset::{AsyncTool, RequestContext, ServiceContext, ToolCallError, ToolResult};
 use async_trait::async_trait;
 use entity_access::domain::{
@@ -22,10 +21,6 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use super::DocumentToolContext;
-use super::create_document::{EMPTY_CANVAS_JSON, document_text_for_create};
-
-#[cfg(test)]
-mod test;
 
 /// A single node of a markdown document as seen by the AI.
 #[derive(Debug, Serialize, JsonSchema)]
@@ -89,10 +84,7 @@ pub struct ReadContentResponse {
 
 #[derive(Debug, Deserialize, JsonSchema, Clone, Default)]
 #[serde(rename_all = "camelCase")]
-#[schemars(
-    title = "ReadContent",
-    description = "Retrieve a document's content. Markdown returns structured nodes. Canvas returns the live board JSON ({nodes, edges}) from the Loro session when present, otherwise the stored DSS/S3 board — not a stale blob that ignores the live canvas."
-)]
+#[schemars(title = "ReadContent", description = "Retrieve a documents content")]
 pub struct ReadContent {
     #[schemars(description = "The id of the document you want to retrieve content for.")]
     pub document_id: Uuid,
@@ -168,51 +160,72 @@ where
             });
         };
 
-        let content: Content = match file_type.conation_app_path() {
-            FileAssociation::Pdf(_) | FileAssociation::Write(_) => Content::Text(
-                service_context
-                    .service
-                    .get_document_text(entity_access_receipt.clone())
-                    .await
-                    .map_err(|e| ToolCallError {
-                        description: "unable to get document text".to_string(),
-                        internal_error: e.into(),
-                    })?,
-            ),
-            FileAssociation::Md(_) => Content::Markdown(
-                service_context
-                    .lexical_client
-                    .parse_cognition_v2(&self.document_id.to_string())
-                    .await
-                    .map_err(|e| ToolCallError {
-                        description: "unable to parse markdown".to_string(),
-                        internal_error: e,
-                    })?
-                    .data
-                    .into_iter()
-                    .map(|i| i.into())
-                    .collect(),
-            ),
-            FileAssociation::Code(_) | FileAssociation::Document(_) => Content::Text(
-                get_document_content_from_location(
-                    service_context.clone(),
-                    &document_context,
+        let content: Content = if file_type == FileType::Spreadsheet {
+            let result = service_context
+                .spreadsheet
+                .read(
                     entity_access_receipt.clone(),
+                    &request_context.user_id,
+                    service_context.actor.into_storage_id().as_ref(),
+                    crate::domain::spreadsheet::SpreadsheetRequest::Read {
+                        sheet_id: None,
+                        ranges: None,
+                        include_styles: None,
+                    },
                 )
                 .await
                 .map_err(|e| ToolCallError {
-                    description: "unable to get document content using location".to_string(),
+                    description: e.to_string(),
                     internal_error: e,
-                })?,
-            ),
-            FileAssociation::Canvas(_) => Content::Text(
-                live_canvas_board(&service_context, &self.document_id.to_string()).await?,
-            ),
-            _ => {
-                return Err(ToolCallError {
-                    description: format!("unsupported file type {file_type}"),
-                    internal_error: anyhow::anyhow!("unsupported file type"),
-                });
+                })?;
+            Content::Text(serde_json::to_string(&result).map_err(|e| ToolCallError {
+                description: "unable to serialize spreadsheet overview".to_string(),
+                internal_error: e.into(),
+            })?)
+        } else {
+            match file_type.macro_app_path() {
+                FileAssociation::Pdf(_) | FileAssociation::Write(_) => Content::Text(
+                    service_context
+                        .service
+                        .get_document_text(entity_access_receipt.clone())
+                        .await
+                        .map_err(|e| ToolCallError {
+                            description: "unable to get document text".to_string(),
+                            internal_error: e.into(),
+                        })?,
+                ),
+                FileAssociation::Md(_) => Content::Markdown(
+                    service_context
+                        .lexical_client
+                        .parse_cognition_v2(&self.document_id.to_string())
+                        .await
+                        .map_err(|e| ToolCallError {
+                            description: "unable to parse markdown".to_string(),
+                            internal_error: e,
+                        })?
+                        .data
+                        .into_iter()
+                        .map(|i| i.into())
+                        .collect(),
+                ),
+                FileAssociation::Code(_) | FileAssociation::Document(_) => Content::Text(
+                    get_document_content_from_location(
+                        service_context.clone(),
+                        &document_context,
+                        entity_access_receipt.clone(),
+                    )
+                    .await
+                    .map_err(|e| ToolCallError {
+                        description: "unable to get document content using location".to_string(),
+                        internal_error: e,
+                    })?,
+                ),
+                _ => {
+                    return Err(ToolCallError {
+                        description: format!("unsupported file type {file_type}"),
+                        internal_error: anyhow::anyhow!("unsupported file type"),
+                    });
+                }
             }
         };
 
@@ -227,71 +240,6 @@ where
 
         Ok(ReadContentResponse { content, comments })
     }
-}
-
-/// Prefer a readable live Loro board; empty/unreadable snapshots fall through.
-pub(crate) fn canvas_board_from_loro_snapshot(snapshot: Option<&[u8]>) -> Option<String> {
-    snapshot
-        .filter(|snapshot| !snapshot.is_empty())
-        .and_then(|snapshot| canvas_loro::json_from_snapshot(snapshot).ok())
-}
-
-fn failed_to_load_canvas(error: DocumentError) -> ToolCallError {
-    let description = match &error {
-        DocumentError::BadRequest(message) => message.clone(),
-        _ => "failed to load canvas from object storage".to_string(),
-    };
-    ToolCallError {
-        description,
-        internal_error: error.into(),
-    }
-}
-
-async fn stored_canvas_json<DSvc, ESvc, EDSvc>(
-    service_context: &ServiceContext<DocumentToolContext<DSvc, ESvc, EDSvc>>,
-    document_id: &str,
-) -> ToolResult<String>
-where
-    DSvc: DocumentService + DocumentCreationService,
-    ESvc: EntityAccessService,
-    EDSvc: EditingWorkerService,
-{
-    match service_context.service.read_plain_text(document_id).await {
-        Ok(Some(text)) => document_text_for_create("canvas", &text).map_err(failed_to_load_canvas),
-        Ok(None) => Ok(EMPTY_CANVAS_JSON.to_string()),
-        Err(error) => Err(failed_to_load_canvas(error)),
-    }
-}
-
-/// Live canvas board: Loro session JSON if present, else DSS/S3 JSON, else empty board.
-async fn live_canvas_board<DSvc, ESvc, EDSvc>(
-    service_context: &ServiceContext<DocumentToolContext<DSvc, ESvc, EDSvc>>,
-    document_id: &str,
-) -> ToolResult<String>
-where
-    DSvc: DocumentService + DocumentCreationService,
-    ESvc: EntityAccessService,
-    EDSvc: EditingWorkerService,
-{
-    let existing = match service_context
-        .sync_service_client
-        .get_snapshot(document_id)
-        .await
-    {
-        Ok(snapshot) => snapshot,
-        Err(error) => {
-            tracing::warn!(
-                error=?error,
-                document_id=%document_id,
-                "failed to fetch canvas Loro snapshot"
-            );
-            None
-        }
-    };
-    if let Some(json) = canvas_board_from_loro_snapshot(existing.as_deref()) {
-        return Ok(json);
-    }
-    stored_canvas_json(service_context, document_id).await
 }
 
 /// Gets the document content from location

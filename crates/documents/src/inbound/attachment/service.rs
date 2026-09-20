@@ -8,13 +8,13 @@ use attachment::{
     AttachmentContent, AttachmentError, AttachmentPart, AttachmentService, Attachments,
     ResolutionError,
 };
-use conation_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::{
     models::{EntityAccessReceipt, ViewAccessLevel},
     ports::EntityAccessService,
 };
 use futures::future::join_all;
 use lexical_client::LexicalClient;
+use macro_user_id::user_id::MacroUserIdStr;
 use model::document::DocumentBasic;
 use model_entity::{Entity, EntityType};
 use model_file_type::{FileAssociation, FileType};
@@ -201,7 +201,15 @@ impl<DSvc: DocumentService, ESvc: EntityAccessService> DocumentAttachmentService
                 FileType::from_str(ft).map_err(|_| AttachmentError::UnsupportedFileType(ft.clone()))
             })?;
 
-        let content = match file_type.conation_app_path() {
+        if let Some(context) = crate::domain::content::spreadsheet_attachment_context(&document) {
+            return Ok(AttachmentContent {
+                reference: EntityType::Document.with_entity_string(id.to_string()),
+                name: Some(document.document_name),
+                content: NonEmpty::one(AttachmentPart::Content(context)),
+            });
+        }
+
+        let content = match file_type.macro_app_path() {
             FileAssociation::Pdf(_) | FileAssociation::Write(_) => {
                 let text = self
                     .document_service
@@ -292,9 +300,9 @@ pub(super) fn skill_type_metadata() -> AttachmentPart<'static> {
 
 pub(super) async fn fetch_url_bytes(url: &str) -> Result<Vec<u8>, AttachmentError> {
     // Presigned/distribution URLs are minted with the browser-facing `localhost`
-    // host; rewrite to the in-network LocalStack host for server-side fetches.
-    // No-op unless S3 uses LocalStack.
-    let url = conation_aws_config::transform_aws_url_for_internal_fetch(url);
+    // host; rewrite to the in-network LocalStack host so this server-side fetch
+    // works inside Docker. No-op outside local AWS.
+    let url = macro_aws_config::transform_aws_url_for_internal_fetch(url);
     let url = url.as_str();
     let response = reqwest::get(url)
         .await

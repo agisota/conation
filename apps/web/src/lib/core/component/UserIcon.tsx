@@ -187,17 +187,20 @@ export function UserIcon(props: UserIconProps) {
     return props.email;
   });
 
-  const { replaceOrInsertSplit } = useSplitLayout();
+  const { openWithSplit } = useSplitLayout();
   const getOrCreateDmMutation = useGetOrCreateDirectMessageMutation();
   const isConnectedSecondaryInbox = useIsConnectedSecondaryInbox();
 
-  const getOrCreateDm = () => {
+  const getOrCreateDm = (event: MouseEvent) => {
     if (!props.id || isConnectedSecondaryInbox(props.id)) return;
     getOrCreateDmMutation.mutate(
       { recipient_id: props.id },
       {
         onSuccess: ({ channel_id }) => {
-          replaceOrInsertSplit({ type: 'channel', id: channel_id });
+          openWithSplit(
+            { type: 'channel', id: channel_id },
+            { activate: true, preferNewSplit: event.shiftKey }
+          );
         },
       }
     );
@@ -233,9 +236,16 @@ export function UserIcon(props: UserIconProps) {
           size={size()}
           class={cn('bg-surface text-accent ring ring-edge-muted', props.class)}
         >
-          <Avatar.Fallback>
-            <RobotIcon class="size-[62%]" />
-          </Avatar.Fallback>
+          <Show
+            when={props.photoUrl}
+            fallback={
+              <Avatar.Fallback>
+                <RobotIcon class="size-[62%]" />
+              </Avatar.Fallback>
+            }
+          >
+            {(photoUrl) => <Avatar.Image src={photoUrl()} alt="" />}
+          </Show>
         </Avatar>
       </Match>
 

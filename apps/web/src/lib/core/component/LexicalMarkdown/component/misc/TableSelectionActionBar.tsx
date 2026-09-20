@@ -4,9 +4,6 @@
  * menu for the clipboard and no format popup for table selections. On
  * desktop, merge/split live in the normal selection popup (FormatTools).
  */
-
-import { t } from '@app/lib/i18n';
-import { mdStore } from '@block-md/signal/markdownBlockData';
 import { ScopedPortal } from '@core/component/ScopedPortal';
 import { toast } from '@core/component/Toast/Toast';
 import {
@@ -48,15 +45,17 @@ import {
   createSignal,
   onCleanup,
   Show,
+  useContext,
 } from 'solid-js';
+import { LexicalWrapperContext } from '../../context/LexicalWrapperContext';
 import { floatWithElement } from '../../directive/floatWithElement';
 import { createLayoutTick } from './createLayoutTick';
 
 false && floatWithElement;
 
 export function TableSelectionActionBar() {
-  const mdData = mdStore.get;
-  const editor = () => mdData.editor;
+  const lexicalWrapper = useContext(LexicalWrapperContext);
+  const editor = () => lexicalWrapper?.editor;
 
   const [anchorCellKey, setAnchorCellKey] = createSignal<string>();
   const [focusCellKey, setFocusCellKey] = createSignal<string>();
@@ -175,7 +174,7 @@ export function TableSelectionActionBar() {
     const data = readSelectionData();
     if (!currentEditor || !data) return;
     if (!(await writeClipboardData(data))) {
-      toast.failure(t('editor.table.cutFailed'));
+      toast.failure('Failed to cut cells');
       return;
     }
     // Clear the selected cells via the same path as backspacing a table
@@ -190,7 +189,7 @@ export function TableSelectionActionBar() {
     const data = readSelectionData();
     if (!data) return;
     if (await writeClipboardData(data)) {
-      toast.success(t('editor.table.copiedCells'));
+      toast.success('Copied cells');
       // Dismiss the bar once the action is taken, like a normal menu.
       clearSelection();
     }
@@ -222,7 +221,7 @@ export function TableSelectionActionBar() {
     if (!currentEditor) return;
     const dataTransfer = await readClipboardAsDataTransfer();
     if (!dataTransfer) {
-      toast.failure(t('editor.table.nothingToPaste'));
+      toast.failure('Nothing to paste');
       return;
     }
     currentEditor.update(() => {
@@ -282,34 +281,14 @@ export function TableSelectionActionBar() {
                 floatingOptions: { placement: 'top' },
               }}
             >
-              {barButton(
-                t('editor.table.actions.cut'),
-                ScissorsIcon,
-                () => void runCut()
-              )}
-              {barButton(
-                t('editor.table.actions.copy'),
-                CopyIcon,
-                () => void runCopy()
-              )}
-              {barButton(
-                t('editor.table.actions.paste'),
-                ClipboardIcon,
-                () => void runPaste()
-              )}
+              {barButton('Cut', ScissorsIcon, () => void runCut())}
+              {barButton('Copy', CopyIcon, () => void runCopy())}
+              {barButton('Paste', ClipboardIcon, () => void runPaste())}
               <Show when={isMultiCell()}>
-                {barButton(
-                  t('editor.table.actions.merge'),
-                  CornersInIcon,
-                  runMerge
-                )}
+                {barButton('Merge', CornersInIcon, runMerge)}
               </Show>
               <Show when={hasMergedCell()}>
-                {barButton(
-                  t('editor.table.actions.split'),
-                  CornersOutIcon,
-                  runSplit
-                )}
+                {barButton('Split', CornersOutIcon, runSplit)}
               </Show>
             </div>
           </Layer>

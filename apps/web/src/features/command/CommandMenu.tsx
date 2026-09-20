@@ -1,13 +1,10 @@
-import { ConationMark } from '@app/components/brand';
 import { isListViewID } from '@app/constants/list-views';
 import { openChatWithMessage } from '@app/features/chat/ChatWithAgentButton';
 import { getViewPreset } from '@app/features/next-soup/sidebar/soup-filter-presets';
 import { getSearchSplit } from '@app/features/next-soup/soup-view/search-controllers';
 import { useAnalytics } from '@app/lib/analytics/analytics-context';
-import { t } from '@app/lib/i18n';
 import { globalSplitManager } from '@app/signal/splitLayout';
 import { useSplitLayout } from '@components/app/split-layout/layout';
-import { TabsInset } from '@core/component/TabsInset';
 import { itemToBlockName } from '@core/constant/allBlocks';
 import { USE_MACRO_PR_SUMMARY_BLOCK } from '@core/constant/featureFlags';
 import { getActiveCommandsFromScope } from '@core/hotkey/getCommands';
@@ -21,9 +18,12 @@ import type { HotkeyCommand, RegisterHotkeyReturn } from '@core/hotkey/types';
 import { runCommand } from '@core/hotkey/utils';
 import { debouncedDependent } from '@core/util/debounce';
 import { openExternalUrl } from '@core/util/url';
-import { type EntityData, InlineEntity, isGithubPrEntity } from '@entity';
+import { type EntityData, isGithubPrEntity } from '@entity';
+import { EntitySelectionBadge } from '@entity/components/EntitySelectionBadge';
+import Macro from '@icon/macro-logo.svg';
 import ArrowLeft from '@phosphor/arrow-left.svg';
 import {
+  Badge,
   CommandMenuEmptyState,
   CommandMenuHotkeyHint,
   CommandMenuSearchInput,
@@ -32,6 +32,7 @@ import {
   createCommandListController,
   Dialog,
   Hotkey,
+  Tabs,
 } from '@ui';
 import {
   createEffect,
@@ -63,48 +64,13 @@ import {
 } from './useCommandItems';
 
 const CATEGORIES: { id: CategoryFilter; label: string }[] = [
-  {
-    id: 'all',
-    get label() {
-      return t('shell.command.category.all');
-    },
-  },
-  {
-    id: 'commands',
-    get label() {
-      return t('shell.command.category.commands');
-    },
-  },
-  {
-    id: 'chats',
-    get label() {
-      return t('shell.command.category.agents');
-    },
-  },
-  {
-    id: 'documents',
-    get label() {
-      return t('shell.command.category.files');
-    },
-  },
-  {
-    id: 'tasks',
-    get label() {
-      return t('shell.command.category.tasks');
-    },
-  },
-  {
-    id: 'channels',
-    get label() {
-      return t('shell.command.category.channels');
-    },
-  },
-  {
-    id: 'dms',
-    get label() {
-      return t('shell.command.category.people');
-    },
-  },
+  { id: 'all', label: 'All' },
+  { id: 'commands', label: 'Command' },
+  { id: 'chats', label: 'Agents' },
+  { id: 'documents', label: 'Files' },
+  { id: 'tasks', label: 'Tasks' },
+  { id: 'channels', label: 'Channels' },
+  { id: 'dms', label: 'People' },
 ];
 
 const VIRTUAL_ITEM_HEIGHT = 40; // tailwind h-10
@@ -414,7 +380,7 @@ export function CommandMenuInner(props: {
   const navDownHotkey = registerHotkey({
     hotkey: ['arrowdown', 'ctrl+j'],
     scopeId: hotkeyScope,
-    description: t('shell.command.menu.moveSelectionDown'),
+    description: 'Move selection down',
     keyDownHandler: () => {
       const items = filteredItems();
       if (items.length === 0) return false;
@@ -434,7 +400,7 @@ export function CommandMenuInner(props: {
   const navUpHotkey = registerHotkey({
     hotkey: ['arrowup', 'ctrl+k'],
     scopeId: hotkeyScope,
-    description: t('shell.command.menu.moveSelectionUp'),
+    description: 'Move selection up',
     keyDownHandler: () => {
       const items = filteredItems();
       if (items.length === 0) return false;
@@ -447,7 +413,7 @@ export function CommandMenuInner(props: {
   const confirmHotkey = registerHotkey({
     hotkey: 'enter',
     scopeId: hotkeyScope,
-    description: t('shell.command.menu.selectItem'),
+    description: 'Select item',
     keyDownHandler: () => {
       const item = selectedItem();
       if (item) {
@@ -462,7 +428,7 @@ export function CommandMenuInner(props: {
   const confirmSplitHotkey = registerHotkey({
     hotkey: 'shift+enter',
     scopeId: hotkeyScope,
-    description: t('shell.command.menu.openInNewSplit'),
+    description: 'Open in new split',
     keyDownHandler: () => {
       const item = selectedItem();
       if (item) {
@@ -477,7 +443,7 @@ export function CommandMenuInner(props: {
   const escapeHotkey = registerHotkey({
     hotkey: 'escape',
     scopeId: hotkeyScope,
-    description: t('shell.command.menu.close'),
+    description: 'Close command menu',
     keyDownHandler: () => {
       // If in command scope, go back to main menu
       if (CommandState.commandScopeCommands().length > 0) {
@@ -498,7 +464,7 @@ export function CommandMenuInner(props: {
   const backspaceHotkey = registerHotkey({
     hotkey: 'backspace',
     scopeId: hotkeyScope,
-    description: t('shell.command.menu.goBack'),
+    description: 'Go back',
     keyDownHandler: () => {
       // Only handle if query is empty
       if (CommandState.query() !== '') {
@@ -521,7 +487,7 @@ export function CommandMenuInner(props: {
   const tabHotkey = registerHotkey({
     hotkey: 'tab',
     scopeId: hotkeyScope,
-    description: t('shell.command.menu.nextCategory'),
+    description: 'Next category',
     keyDownHandler: () => {
       const currentIndex = CATEGORIES.findIndex(
         (c) => c.id === CommandState.categoryFilter()
@@ -537,7 +503,7 @@ export function CommandMenuInner(props: {
   registerHotkey({
     hotkey: 'shift+tab',
     scopeId: hotkeyScope,
-    description: t('shell.command.menu.previousCategory'),
+    description: 'Previous category',
     keyDownHandler: () => {
       const currentIndex = CATEGORIES.findIndex(
         (c) => c.id === CommandState.categoryFilter()
@@ -587,12 +553,10 @@ export function CommandMenuInner(props: {
     );
   };
 
-  const categoryTabs = createMemo(() =>
-    CATEGORIES.map((category) => ({
-      value: category.id,
-      label: category.label,
-    }))
-  );
+  const categoryTabs = CATEGORIES.map((c) => ({
+    value: c.id,
+    label: c.label,
+  }));
 
   return (
     <CommandMenuShell
@@ -605,14 +569,14 @@ export function CommandMenuInner(props: {
           when={isInCommandScope()}
           fallback={
             <span class="flex size-5 shrink-0 items-center justify-center text-accent">
-              <ConationMark class="size-3" />
+              <Macro class="size-3" />
             </span>
           }
         >
           <button
             class="flex size-5 shrink-0 items-center justify-center text-ink-muted hover:text-ink transition-colors"
             onClick={handleBack}
-            title={t('shell.command.backEscape')}
+            title="Back (Esc)"
           >
             <ArrowLeft class="size-3" />
           </button>
@@ -621,9 +585,7 @@ export function CommandMenuInner(props: {
           type="text"
           placeholder={
             CommandState.commandScopePlaceholder() ??
-            (isEntityActionMode()
-              ? t('shell.command.searchActionsPlaceholder')
-              : t('shell.command.searchPlaceholder'))
+            (isEntityActionMode() ? 'Search actions...' : 'Search...')
           }
           value={CommandState.query()}
           onInput={(e) => CommandState.setQuery(e.currentTarget.value)}
@@ -634,16 +596,15 @@ export function CommandMenuInner(props: {
       <Show when={isEntityActionMode() || !isInCommandScope()}>
         <CommandMenuShell.Toolbar
           class={cn(
-            'pl-2.5 pr-1.5 pt-2 border-0',
+            'pl-2.5 pr-1.5 pt-2 border-0 bg-transparent',
             isEntityActionMode() && 'gap-1.5'
           )}
         >
           <Show
             when={isEntityActionMode()}
             fallback={
-              <TabsInset
-                depth={1}
-                list={categoryTabs()}
+              <Tabs
+                list={categoryTabs}
                 value={CommandState.categoryFilter()}
                 onChange={(value) => {
                   if (value) {
@@ -668,9 +629,7 @@ export function CommandMenuInner(props: {
           <Show
             when={filteredItems().length > 0}
             fallback={
-              <CommandMenuEmptyState>
-                {t('shell.command.noResults')}
-              </CommandMenuEmptyState>
+              <CommandMenuEmptyState>No results found</CommandMenuEmptyState>
             }
           >
             <VirtualizedCommandList
@@ -687,7 +646,7 @@ export function CommandMenuInner(props: {
         </div>
       </CommandMenuShell.Body>
 
-      <CommandMenuShell.Footer>
+      <CommandMenuShell.Footer class="bg-transparent">
         <span class="flex items-center gap-1">
           <div class="flex gap-1">
             <div class="flex border border-edge-muted text-xxs rounded-md items-center px-1.5 py-px font-normal">
@@ -697,68 +656,48 @@ export function CommandMenuInner(props: {
               <Hotkey shortcut={navDownHotkey.hotkey()} class="space-x-1" />
             </div>
           </div>
-          {t('shell.command.navigate')}
+          Navigate
         </span>
 
         <Switch>
           <Match when={isInCommandScope()}>
-            <HotkeyHint
-              command={confirmHotkey}
-              label={t('shell.command.runAction')}
-            />
-            <HotkeyHint
-              command={backspaceHotkey}
-              label={t('shell.actions.back')}
-            />
+            <HotkeyHint command={confirmHotkey} label="Run action" />
+            <HotkeyHint command={backspaceHotkey} label="Back" />
           </Match>
           <Match when={selectedIsCommand() || isEntityActionMode()}>
-            <HotkeyHint
-              command={confirmHotkey}
-              label={t('shell.command.runAction')}
-            />
+            <HotkeyHint command={confirmHotkey} label="Run action" />
           </Match>
           <Match when={selectedIsSearch()}>
-            <HotkeyHint command={confirmHotkey} label={t('common.search')} />
+            <HotkeyHint command={confirmHotkey} label="Search" />
             <Show when={canOpenInNewSplit()}>
               <HotkeyHint
                 command={confirmSplitHotkey}
-                label={t('shell.command.searchInNewSplit')}
+                label="Search in new split"
               />
             </Show>
           </Match>
           <Match when={selectedIsAskAi()}>
-            <HotkeyHint
-              command={confirmHotkey}
-              label={t('shell.command.askAi')}
-            />
+            <HotkeyHint command={confirmHotkey} label="Ask AI" />
           </Match>
           <Match when={selectedIsEntity()}>
-            <HotkeyHint
-              command={confirmHotkey}
-              label={t('shell.actions.open')}
-            />
+            <HotkeyHint command={confirmHotkey} label="Open" />
             <Show when={canOpenInNewSplit()}>
               <HotkeyHint
                 command={confirmSplitHotkey}
-                label={t('shell.command.openInNewSplit')}
+                label="Open in new split"
               />
             </Show>
           </Match>
         </Switch>
 
         <Show when={!isInCommandScope() && !isEntityActionMode()}>
-          <HotkeyHint
-            command={tabHotkey}
-            label={t('shell.command.categoryLabel')}
-          />
+          <HotkeyHint command={tabHotkey} label="Category" />
         </Show>
         <Show
           when={isInCommandScope()}
-          fallback={
-            <HotkeyHint command={escapeHotkey} label={t('common.close')} />
-          }
+          fallback={<HotkeyHint command={escapeHotkey} label="Close" />}
         >
-          <HotkeyHint command={escapeHotkey} label={t('shell.actions.back')} />
+          <HotkeyHint command={escapeHotkey} label="Back" />
         </Show>
       </CommandMenuShell.Footer>
     </CommandMenuShell>
@@ -773,25 +712,10 @@ function EntityActionPreview(props: { entities: EntityData[] }) {
   return (
     <>
       <For each={displayEntities()}>
-        {(entity) => {
-          return (
-            <div
-              class={cn(
-                'bg-active border border-edge-muted px-2 py-1 truncate text-xs rounded',
-                {
-                  'max-w-[50%]': props.entities.length === 2,
-                }
-              )}
-            >
-              <InlineEntity entity={entity} />
-            </div>
-          );
-        }}
+        {(entity) => <EntitySelectionBadge entity={entity} />}
       </For>
       <Show when={remainingCount() > 0}>
-        <div class="text-ink-muted text-xs px-2 py-1">
-          {t('shell.command.moreRemaining', { count: remainingCount() })}
-        </div>
+        <Badge size="sm">+{remainingCount()} more</Badge>
       </Show>
     </>
   );

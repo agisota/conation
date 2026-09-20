@@ -1,6 +1,5 @@
 import { t } from '@app/lib/i18n';
 import { Color } from '@block-pdf/model/Color';
-import { activePlaceableIdSignal } from '@block-pdf/signal/placeables';
 import {
   useDeletePlaceable,
   useModifyPayload,
@@ -13,6 +12,7 @@ import {
 import { createCallback } from '@solid-primitives/rootless';
 import { cn } from '@ui';
 import { createEffect, createSignal, type JSX, type Ref } from 'solid-js';
+import { usePdfDocument } from '../../context/pdf-document-context';
 
 interface TextBoxProps {
   id: string;
@@ -27,7 +27,8 @@ interface TextBoxProps {
 export function TextBox(props: TextBoxProps) {
   let textAreaRef!: HTMLTextAreaElement;
   const [text, setText] = createSignal(props.payload.text);
-  const setActivePlaceable = activePlaceableIdSignal.set;
+  const [, setActivePlaceable] =
+    usePdfDocument().state.signals.activePlaceableId;
 
   const modifyPayload = useModifyPayload();
   const deletePlaceable = useDeletePlaceable();

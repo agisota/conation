@@ -6,7 +6,7 @@ publish = false
 version = "0.1.0"
 
 [dev-dependencies]
-conation_entrypoint = { path = "../conation_entrypoint" }
+conation_entrypoint = { package = "macro_entrypoint", path = "../conation_entrypoint" }
 tokio = { workspace = true }
 uuid = { workspace = true }
 

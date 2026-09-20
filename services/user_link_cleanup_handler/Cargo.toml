@@ -11,7 +11,7 @@ chrono = { workspace = true }
 futures = { workspace = true }
 lambda_runtime = { workspace = true }
 conation_db_client = { path = "../../crates/conation_db_client" }
-conation_entrypoint = { path = "../../crates/conation_entrypoint" }
+conation_entrypoint = { package = "macro_entrypoint", path = "../../crates/conation_entrypoint" }
 conation_env_var = { path = "../../crates/conation_env_var" }
 serde = { workspace = true }
 serde_json = { workspace = true }

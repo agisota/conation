@@ -15,7 +15,7 @@ INSERT INTO public.macro_user (id, username, email, stripe_customer_id)
 VALUES ('00000000-0000-0000-0000-000000000001', 'testuser1', 'user@test.com', 'stripe_mu_1')
 ON CONFLICT DO NOTHING;
 INSERT INTO public."User" ("id", "email", "stripeCustomerId", "organizationId", "macro_user_id")
-VALUES ('conation|user-1@test.com', 'user@test.com', 'stripe_id_1', 1, '00000000-0000-0000-0000-000000000001');
+VALUES ('macro|user-1@test.com', 'user@test.com', 'stripe_id_1', 1, '00000000-0000-0000-0000-000000000001');
 
 ---------------------------------
 --  PROJECT HIERARCHY SETUP with UUIDs
@@ -23,11 +23,11 @@ VALUES ('conation|user-1@test.com', 'user@test.com', 'stripe_id_1', 1, '00000000
 
 INSERT INTO public."Project" ("id", "name", "userId", "parentId", "createdAt", "updatedAt")
 VALUES
-    ('11111111-1111-1111-1111-111111111111', 'Project A', 'conation|user-1@test.com', NULL, '2023-01-01 10:00:00', '2023-01-01 10:00:00'),
-    ('22222222-2222-2222-2222-222222222222', 'Project B', 'conation|user-1@test.com', '11111111-1111-1111-1111-111111111111', '2023-01-01 11:00:00', '2023-01-01 11:00:00'),
-    ('33333333-3333-3333-3333-333333333333', 'Project C', 'conation|user-1@test.com', '22222222-2222-2222-2222-222222222222', '2023-01-01 12:00:00', '2023-01-01 12:00:00'),
-    ('44444444-4444-4444-4444-444444444444', 'Project D', 'conation|user-1@test.com', NULL, '2023-01-02 10:00:00', '2023-01-02 10:00:00'),
-    ('55555555-5555-5555-5555-555555555555', 'Project Isolated', 'conation|user-1@test.com', NULL, '2023-01-03 10:00:00', '2023-01-03 10:00:00');
+    ('11111111-1111-1111-1111-111111111111', 'Project A', 'macro|user-1@test.com', NULL, '2023-01-01 10:00:00', '2023-01-01 10:00:00'),
+    ('22222222-2222-2222-2222-222222222222', 'Project B', 'macro|user-1@test.com', '11111111-1111-1111-1111-111111111111', '2023-01-01 11:00:00', '2023-01-01 11:00:00'),
+    ('33333333-3333-3333-3333-333333333333', 'Project C', 'macro|user-1@test.com', '22222222-2222-2222-2222-222222222222', '2023-01-01 12:00:00', '2023-01-01 12:00:00'),
+    ('44444444-4444-4444-4444-444444444444', 'Project D', 'macro|user-1@test.com', NULL, '2023-01-02 10:00:00', '2023-01-02 10:00:00'),
+    ('55555555-5555-5555-5555-555555555555', 'Project Isolated', 'macro|user-1@test.com', NULL, '2023-01-03 10:00:00', '2023-01-03 10:00:00');
 
 ---------------------------------------------------
 --  DOCUMENTS, CHATS, AND THEIR DEPENDENCIES
@@ -46,12 +46,12 @@ VALUES
 -- Documents with UUID IDs
 INSERT INTO public."Document" ("id", "name", "owner", "projectId", "documentFamilyId", "fileType", "createdAt", "updatedAt")
 VALUES
-    ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Document in A', 'conation|user-1@test.com', '11111111-1111-1111-1111-111111111111', 1, 'pdf', '2023-01-05 10:00:00', '2023-01-05 10:00:00'),
-    ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Document in B', 'conation|user-1@test.com', '22222222-2222-2222-2222-222222222222', 2, 'pdf', '2023-01-05 11:00:00', '2023-01-05 11:00:00'),
-    ('cccccccc-cccc-cccc-cccc-cccccccccccc', 'Document in C', 'conation|user-1@test.com', '33333333-3333-3333-3333-333333333333', 3, 'md', '2023-01-05 12:00:00', '2023-01-05 12:00:00'),
-    ('dddddddd-dddd-dddd-dddd-dddddddddddd', 'Document in D', 'conation|user-1@test.com', '44444444-4444-4444-4444-444444444444', 4, 'pdf', '2023-01-05 13:00:00', '2023-01-05 13:00:00'),
-    ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'Standalone Document', 'conation|user-1@test.com', NULL, 5, 'pdf', '2023-01-05 14:00:00', '2023-01-05 14:00:00'),
-    ('ffffffff-ffff-ffff-ffff-ffffffffffff', 'Isolated Document', 'conation|user-1@test.com', '55555555-5555-5555-5555-555555555555', 6, 'pdf', '2023-01-05 15:00:00', '2023-01-05 15:00:00');
+    ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Document in A', 'macro|user-1@test.com', '11111111-1111-1111-1111-111111111111', 1, 'pdf', '2023-01-05 10:00:00', '2023-01-05 10:00:00'),
+    ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Document in B', 'macro|user-1@test.com', '22222222-2222-2222-2222-222222222222', 2, 'pdf', '2023-01-05 11:00:00', '2023-01-05 11:00:00'),
+    ('cccccccc-cccc-cccc-cccc-cccccccccccc', 'Document in C', 'macro|user-1@test.com', '33333333-3333-3333-3333-333333333333', 3, 'md', '2023-01-05 12:00:00', '2023-01-05 12:00:00'),
+    ('dddddddd-dddd-dddd-dddd-dddddddddddd', 'Document in D', 'macro|user-1@test.com', '44444444-4444-4444-4444-444444444444', 4, 'pdf', '2023-01-05 13:00:00', '2023-01-05 13:00:00'),
+    ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'Standalone Document', 'macro|user-1@test.com', NULL, 5, 'pdf', '2023-01-05 14:00:00', '2023-01-05 14:00:00'),
+    ('ffffffff-ffff-ffff-ffff-ffffffffffff', 'Isolated Document', 'macro|user-1@test.com', '55555555-5555-5555-5555-555555555555', 6, 'pdf', '2023-01-05 15:00:00', '2023-01-05 15:00:00');
 
 -- Document Instances
 INSERT INTO public."DocumentInstance" ("id", "documentId", "sha", "createdAt", "updatedAt")
@@ -66,11 +66,11 @@ VALUES
 -- Chats with UUID IDs
 INSERT INTO public."Chat" ("id", "name", "userId", "projectId", "createdAt", "updatedAt")
 VALUES
-    ('a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1', 'Chat in A', 'conation|user-1@test.com', '11111111-1111-1111-1111-111111111111', '2023-01-06 10:00:00', '2023-01-06 10:00:00'),
-    ('b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2', 'Chat in B', 'conation|user-1@test.com', '22222222-2222-2222-2222-222222222222', '2023-01-06 11:00:00', '2023-01-06 11:00:00'),
-    ('c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3', 'Chat in C', 'conation|user-1@test.com', '33333333-3333-3333-3333-333333333333', '2023-01-06 12:00:00', '2023-01-06 12:00:00'),
-    ('d4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4', 'Standalone Chat', 'conation|user-1@test.com', NULL, '2023-01-06 13:00:00', '2023-01-06 13:00:00'),
-    ('e5e5e5e5-e5e5-e5e5-e5e5-e5e5e5e5e5e5', 'Isolated Chat', 'conation|user-1@test.com', '55555555-5555-5555-5555-555555555555', '2023-01-06 14:00:00', '2023-01-06 14:00:00');
+    ('a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1', 'Chat in A', 'macro|user-1@test.com', '11111111-1111-1111-1111-111111111111', '2023-01-06 10:00:00', '2023-01-06 10:00:00'),
+    ('b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2', 'Chat in B', 'macro|user-1@test.com', '22222222-2222-2222-2222-222222222222', '2023-01-06 11:00:00', '2023-01-06 11:00:00'),
+    ('c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3', 'Chat in C', 'macro|user-1@test.com', '33333333-3333-3333-3333-333333333333', '2023-01-06 12:00:00', '2023-01-06 12:00:00'),
+    ('d4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4', 'Standalone Chat', 'macro|user-1@test.com', NULL, '2023-01-06 13:00:00', '2023-01-06 13:00:00'),
+    ('e5e5e5e5-e5e5-e5e5-e5e5-e5e5e5e5e5e5', 'Isolated Chat', 'macro|user-1@test.com', '55555555-5555-5555-5555-555555555555', '2023-01-06 14:00:00', '2023-01-06 14:00:00');
 
 ---------------------------------------------------
 --  USER ACCESS PERMISSIONS (entity_access)
@@ -80,36 +80,36 @@ VALUES
 INSERT INTO public.entity_access ("entity_id", "entity_type", "source_id", "source_type", "access_level", "granted_from_project_id")
 VALUES
 -- Direct access to project-A (view)
-('11111111-1111-1111-1111-111111111111', 'project', 'conation|user-1@test.com', 'user', 'view', NULL),
+('11111111-1111-1111-1111-111111111111', 'project', 'macro|user-1@test.com', 'user', 'view', NULL),
 -- Inherited access to project-B and project-C from project-A
-('22222222-2222-2222-2222-222222222222', 'project', 'conation|user-1@test.com', 'user', 'view', '11111111-1111-1111-1111-111111111111'),
-('33333333-3333-3333-3333-333333333333', 'project', 'conation|user-1@test.com', 'user', 'view', '11111111-1111-1111-1111-111111111111'),
+('22222222-2222-2222-2222-222222222222', 'project', 'macro|user-1@test.com', 'user', 'view', '11111111-1111-1111-1111-111111111111'),
+('33333333-3333-3333-3333-333333333333', 'project', 'macro|user-1@test.com', 'user', 'view', '11111111-1111-1111-1111-111111111111'),
 -- Inherited access to documents and chats in A, B, C
-('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'conation|user-1@test.com', 'user', 'view', '11111111-1111-1111-1111-111111111111'),
-('a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1', 'chat', 'conation|user-1@test.com', 'user', 'view', '11111111-1111-1111-1111-111111111111'),
-('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'document', 'conation|user-1@test.com', 'user', 'view', '11111111-1111-1111-1111-111111111111'),
-('b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2', 'chat', 'conation|user-1@test.com', 'user', 'view', '11111111-1111-1111-1111-111111111111'),
-('cccccccc-cccc-cccc-cccc-cccccccccccc', 'document', 'conation|user-1@test.com', 'user', 'view', '11111111-1111-1111-1111-111111111111'),
-('c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3', 'chat', 'conation|user-1@test.com', 'user', 'view', '11111111-1111-1111-1111-111111111111'),
+('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', 'macro|user-1@test.com', 'user', 'view', '11111111-1111-1111-1111-111111111111'),
+('a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1', 'chat', 'macro|user-1@test.com', 'user', 'view', '11111111-1111-1111-1111-111111111111'),
+('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'document', 'macro|user-1@test.com', 'user', 'view', '11111111-1111-1111-1111-111111111111'),
+('b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2', 'chat', 'macro|user-1@test.com', 'user', 'view', '11111111-1111-1111-1111-111111111111'),
+('cccccccc-cccc-cccc-cccc-cccccccccccc', 'document', 'macro|user-1@test.com', 'user', 'view', '11111111-1111-1111-1111-111111111111'),
+('c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3', 'chat', 'macro|user-1@test.com', 'user', 'view', '11111111-1111-1111-1111-111111111111'),
 
 -- Direct 'edit' on doc-in-B (higher than inherited 'view')
-('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'document', 'conation|user-1@test.com', 'user', 'edit', NULL),
+('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'document', 'macro|user-1@test.com', 'user', 'edit', NULL),
 
 -- Direct access to project-D (owner) and its document
-('44444444-4444-4444-4444-444444444444', 'project', 'conation|user-1@test.com', 'user', 'owner', NULL),
-('dddddddd-dddd-dddd-dddd-dddddddddddd', 'document', 'conation|user-1@test.com', 'user', 'owner', '44444444-4444-4444-4444-444444444444'),
+('44444444-4444-4444-4444-444444444444', 'project', 'macro|user-1@test.com', 'user', 'owner', NULL),
+('dddddddd-dddd-dddd-dddd-dddddddddddd', 'document', 'macro|user-1@test.com', 'user', 'owner', '44444444-4444-4444-4444-444444444444'),
 
 -- Direct access to standalone items
-('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'document', 'conation|user-1@test.com', 'user', 'owner', NULL),
-('d4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4', 'chat', 'conation|user-1@test.com', 'user', 'owner', NULL);
+('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'document', 'macro|user-1@test.com', 'user', 'owner', NULL),
+('d4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4', 'chat', 'macro|user-1@test.com', 'user', 'owner', NULL);
 
 -- User history
 INSERT INTO public."UserHistory" ("userId", "itemId", "itemType", "createdAt", "updatedAt")
 VALUES
-    ('conation|user-1@test.com', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'document', '2024-01-01 00:00:00', '2024-01-10 10:00:00'),
-    ('conation|user-1@test.com', 'd4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4', 'chat', '2024-01-01 00:00:00', '2024-01-09 10:00:00'),
-    ('conation|user-1@test.com', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', '2024-01-01 00:00:00', '2024-01-08 10:00:00'),
-    ('conation|user-1@test.com', 'a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1', 'chat', '2024-01-01 00:00:00', '2024-01-07 10:00:00');
+    ('macro|user-1@test.com', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'document', '2024-01-01 00:00:00', '2024-01-10 10:00:00'),
+    ('macro|user-1@test.com', 'd4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4', 'chat', '2024-01-01 00:00:00', '2024-01-09 10:00:00'),
+    ('macro|user-1@test.com', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'document', '2024-01-01 00:00:00', '2024-01-08 10:00:00'),
+    ('macro|user-1@test.com', 'a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1', 'chat', '2024-01-01 00:00:00', '2024-01-07 10:00:00');
 
 ---------------------------------------------------
 --  DOCUMENT SUB TYPES & ASSIGNEES (for importance testing)
@@ -132,7 +132,7 @@ VALUES
         'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
         'TASK',
         '00000001-0000-0000-0000-000000000001',
-        '{"type": "EntityReference", "value": [{"entity_type": "USER", "entity_id": "conation|user-1@test.com"}]}'
+        '{"type": "EntityReference", "value": [{"entity_type": "USER", "entity_id": "macro|user-1@test.com"}]}'
     ),
     -- doc-in-B: assigned to a different user (NOT important to user-1)
     (
@@ -140,7 +140,7 @@ VALUES
         'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
         'TASK',
         '00000001-0000-0000-0000-000000000001',
-        '{"type": "EntityReference", "value": [{"entity_type": "USER", "entity_id": "conation|other-user@test.com"}]}'
+        '{"type": "EntityReference", "value": [{"entity_type": "USER", "entity_id": "macro|other-user@test.com"}]}'
     ),
     -- doc-in-C: assigned to user-1 (important to user-1)
     (
@@ -148,7 +148,23 @@ VALUES
         'cccccccc-cccc-cccc-cccc-cccccccccccc',
         'TASK',
         '00000001-0000-0000-0000-000000000001',
-        '{"type": "EntityReference", "value": [{"entity_type": "USER", "entity_id": "conation|user-1@test.com"}]}'
+        '{"type": "EntityReference", "value": [{"entity_type": "USER", "entity_id": "macro|user-1@test.com"}]}'
+    ),
+    -- doc-in-A: Status = Not Started
+    (
+        'a0000001-0000-0000-0000-000000000004',
+        'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+        'TASK',
+        '00000001-0000-0000-0000-000000000002',
+        '{"type": "SelectOption", "value": ["00000001-0000-0000-0002-000000000001"]}'
+    ),
+    -- doc-in-B: Status = In Progress
+    (
+        'a0000001-0000-0000-0000-000000000005',
+        'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+        'TASK',
+        '00000001-0000-0000-0000-000000000002',
+        '{"type": "SelectOption", "value": ["00000001-0000-0000-0002-000000000002"]}'
     );
 
 -- Email attachments linked to some documents via document_email

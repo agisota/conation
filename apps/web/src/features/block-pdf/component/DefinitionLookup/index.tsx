@@ -9,10 +9,11 @@ import {
 import { createEffect, createMemo, type JSX, onCleanup, Show } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { styled } from 'solid-styled-components';
+import { usePdfDocument } from '../../context/pdf-document-context';
 import type Section from '../../model/Section';
 import type Term from '../../model/Term';
 import { keyedTermDataStore } from '../../PdfViewer/TermDataStore';
-import { popupOpen, useIsPopup } from '../../signal/pdfViewer';
+import { useIsPopup } from '../../signal/pdfViewer';
 import { useGoToLocation } from '../../signal/tab';
 import { usePopupStore } from '../../store/definitionPopup';
 import { useGetIdToSectionMap } from '../../store/tableOfContents';
@@ -110,6 +111,7 @@ export interface IState {
 }
 
 export function DefinitionLookup(props: IProps) {
+  const popupOpen = usePdfDocument().state.derived.popupOpen;
   const isPopup = useIsPopup();
   const getIdToSectionMap = useGetIdToSectionMap();
   // popupAtoms => popupStore

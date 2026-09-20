@@ -2,6 +2,7 @@ import { t } from '@app/lib/i18n';
 import { LoadingSpinner } from '@core/component/LoadingSpinner';
 import { toast } from '@core/component/Toast/Toast';
 import { useChannelsContext } from '@core/context/channels';
+import { useUserId } from '@core/context/user';
 import CaretLeftIcon from '@phosphor/caret-left.svg';
 import {
   useBotChannelsQuery,
@@ -10,6 +11,7 @@ import {
   useUpdateBotMutation,
 } from '@queries/bots/bots';
 import { useSyncBotChannelsMutation } from '@queries/channel/channel-bots';
+import { useCurrentTeamQuery, useIsTeamOwner } from '@queries/team/teams';
 import { Button } from '@ui';
 import { createEffect, createMemo, createSignal, on, Show } from 'solid-js';
 import { createStore } from 'solid-js/store';
@@ -28,12 +30,16 @@ import {
   slugBotHandle,
   validateBotForm,
 } from './botForm';
+import { canDeleteBot } from './botPermissions';
 import { ChannelMultiSelect } from './ChannelMultiSelect';
 import { CreateBotTokenDialog } from './CreateBotTokenDialog';
 import { createBotAvatarUpload } from './createBotAvatarUpload';
 
 export function BotDetail(props: { botId: string; onBack: () => void }) {
   const channelsContext = useChannelsContext();
+  const currentUserId = useUserId();
+  const currentTeamQuery = useCurrentTeamQuery();
+  const isTeamOwner = useIsTeamOwner();
   const botQuery = useBotQuery(() => props.botId);
   const botChannelsQuery = useBotChannelsQuery(() => props.botId);
   const updateBotMutation = useUpdateBotMutation();
@@ -101,6 +107,18 @@ export function BotDetail(props: { botId: string; onBack: () => void }) {
   });
   const pending = () =>
     saving() || avatarUpload.uploading() || deleteBotMutation.isPending;
+  const canDelete = () => {
+    const bot = botQuery.data;
+    return (
+      bot !== undefined &&
+      canDeleteBot(
+        bot,
+        currentUserId(),
+        currentTeamQuery.data?.team.id,
+        isTeamOwner()
+      )
+    );
+  };
 
   const leave = () => {
     if (pending()) return;
@@ -281,6 +299,7 @@ export function BotDetail(props: { botId: string; onBack: () => void }) {
                 />
 
                 <BotDetailActions
+                  canDelete={canDelete()}
                   dirty={isDirty()}
                   pending={pending()}
                   saving={saving()}

@@ -13,8 +13,8 @@ const DEFAULT_LIMIT = 20;
 /**
  * Live activity tile. Reuses {@link createMyActivityQuery} and
  * {@link ActivityTimelineRow} without the My Activity chrome (heatmap,
- * filters, split header). `team` names the actor; `me` does not. There is
- * no separate team activity API, so both filters read the viewer's feed.
+ * filters, split header). There is no team activity API; `team` still
+ * reads the viewer's feed and names actors.
  */
 export function Activity(props: ActivityProps) {
   const feed = createMyActivityQuery({ enabled: () => true });
@@ -38,6 +38,11 @@ export function Activity(props: ActivityProps) {
         SURFACE.borderMuted
       )}
     >
+      <Show when={props.filter === 'team'}>
+        <div class={cn('px-3 py-2 text-xs', TEXT.tertiary)}>
+          {t('dashboard.activity.personalFeedOnly')}
+        </div>
+      </Show>
       <Show
         when={events().length > 0}
         fallback={

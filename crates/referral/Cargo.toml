@@ -33,7 +33,7 @@ uuid = { workspace = true }
 
 # Domain models
 invite_email = { path = "../invite_email" }
-conation_authorization = { path = "../conation_authorization", optional = true, default-features = false, features = [
+conation_authorization = { package = "macro_authorization", path = "../conation_authorization", optional = true, default-features = false, features = [
   "axum",
 ] }
 conation_user_id = { path = "../conation_user_id" }

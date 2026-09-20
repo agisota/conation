@@ -22,7 +22,8 @@ dispatch = ["dep:serde_json", "dep:tokio", "dep:tokio-util", "ports"]
 dispatch-sqs = ["dep:aws-sdk-sqs", "dispatch", "outbound"]
 inbound = [
   "dep:axum",
-  "dep:conation_authorization",
+  "dep:axum-extra",
+  "dep:macro_authorization",
   "dep:model-error-response",
   "dep:utoipa",
   "entity_access/inbound",
@@ -31,7 +32,7 @@ inbound = [
 notify = ["dep:model_notifications", "dep:notification", "outbound"]
 outbound = ["ports"]
 ports = ["dep:entity_access", "dep:tracing"]
-postgres = ["dep:conation_uuid", "dep:sqlx", "outbound"]
+postgres = ["dep:macro_uuid", "dep:sqlx", "outbound"]
 
 [dependencies]
 ai_toolset = { path = "../ai_toolset", optional = true }
@@ -39,13 +40,16 @@ anyhow = { workspace = true, optional = true }
 async-trait = { workspace = true, optional = true }
 aws-sdk-sqs = { workspace = true, optional = true }
 axum = { workspace = true, optional = true }
+# `query` brings `axum_extra::extract::Query`, whose deserializer collects
+# repeated query keys into a vector; `axum::extract::Query` keeps only one.
+axum-extra = { workspace = true, optional = true, features = ["query"] }
 chrono = { workspace = true, features = ["serde"] }
 chrono-tz = { workspace = true }
 cron = { workspace = true }
 entity_access = { path = "../entity_access", optional = true, default-features = false, features = ["ports"] }
-conation_authorization = { path = "../conation_authorization", optional = true, default-features = false, features = ["axum"] }
-conation_user_id = { path = "../conation_user_id" }
-conation_uuid = { path = "../conation_uuid", optional = true }
+macro_authorization = { path = "../conation_authorization", optional = true, default-features = false, features = ["axum"] }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
+macro_uuid = { package = "conation_uuid", path = "../conation_uuid", optional = true }
 model-entity = { path = "../model-entity" }
 rootcause = { workspace = true }
 schemars = { workspace = true, optional = true }
@@ -65,7 +69,7 @@ workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
 http-body-util = { workspace = true }
-conation_db_migrator = { path = "../conation_db_migrator" }
+macro_db_migrator = { package = "conation_db_migrator", path = "../conation_db_migrator" }
 model_user = { path = "../model_user" }
 serde_json = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

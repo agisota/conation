@@ -1,7 +1,5 @@
-import { Telemetry } from '@conation/observability';
 import { ENABLE_BEARER_TOKEN_AUTH } from '@core/constant/featureFlags';
 import { SERVER_HOSTS } from '@core/constant/servers';
-import { syncLoginStorage } from '@core/util/cookies';
 import { fetchWithToken } from '@core/util/fetchWithToken';
 import { registerClient } from '@core/util/mockClient';
 import type { ObjectLike } from '@core/util/result';
@@ -10,6 +8,7 @@ import {
   type SafeFetchInit,
   safeFetch,
 } from '@core/util/safeFetch';
+import { Telemetry } from '@conation/observability';
 
 import { makePersisted } from '@solid-primitives/storage';
 import { err, ok } from 'neverthrow';
@@ -29,20 +28,26 @@ import type {
   UserQuota,
 } from './generated/schemas';
 import type { AppleLoginRequest } from './generated/schemas/appleLoginRequest';
-import type { ConationApiTokenResponse } from './generated/schemas/conationApiTokenResponse';
+import type { CreateGtmInviteLinkRequest } from './generated/schemas/createGtmInviteLinkRequest';
 import type { CreateTeamRequest } from './generated/schemas/createTeamRequest';
 import type { EmptyResponse } from './generated/schemas/emptyResponse';
 import type { GenericSuccessResponse } from './generated/schemas/genericSuccessResponse';
 import type { GetLegacyUserPermissionsResponse } from './generated/schemas/getLegacyUserPermissionsResponse';
 import type { GetProfilePicturesRequestBody } from './generated/schemas/getProfilePicturesRequestBody';
 import type { GetUserInfo } from './generated/schemas/getUserInfo';
+import type { GtmInviteLink } from './generated/schemas/gtmInviteLink';
+import type { GtmInviteLinkList } from './generated/schemas/gtmInviteLinkList';
+import type { GtmInviteOffer } from './generated/schemas/gtmInviteOffer';
+import type { GtmInviteOfferStatus } from './generated/schemas/gtmInviteOfferStatus';
 import type { InviteToTeamRequest } from './generated/schemas/inviteToTeamRequest';
+import type { MacroApiTokenResponse } from './generated/schemas/macroApiTokenResponse';
 import type { PasswordRequest } from './generated/schemas/passwordRequest';
 import type { PatchTeamRequest } from './generated/schemas/patchTeamRequest';
 import type { PatchUserGroupRequest } from './generated/schemas/patchUserGroupRequest';
 import type { PatchUserOnboardingRequest } from './generated/schemas/patchUserOnboardingRequest';
 import type { PostGetNamesRequestBody } from './generated/schemas/postGetNamesRequestBody';
 import type { ProfilePictures } from './generated/schemas/profilePictures';
+import type { PublicGtmInviteLink } from './generated/schemas/publicGtmInviteLink';
 import type { PutProfilePictureParams } from './generated/schemas/putProfilePictureParams';
 import type { PutUserNameQueryParams } from './generated/schemas/putUserNameQueryParams';
 import type { Team } from './generated/schemas/team';
@@ -85,7 +90,7 @@ type Token = {
 const [accessTokenData, setAccessTokenData] = makePersisted(
   createSignal<Token | null>(null),
   {
-    name: 'conationAccessToken',
+    name: 'macroAccessToken',
   }
 );
 
@@ -259,7 +264,6 @@ export const authServiceClient = {
         refreshToken: result.value.refresh_token,
         expiresAt: getExpiresAt(result.value.access_token),
       });
-      syncLoginStorage(true);
     }
     return result;
   },
@@ -304,7 +308,6 @@ export const authServiceClient = {
         refreshToken: result.value.refresh_token,
         expiresAt: getExpiresAt(result.value.access_token),
       });
-      syncLoginStorage(true);
     }
     return result;
   },
@@ -313,7 +316,7 @@ export const authServiceClient = {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${args.accessToken}`,
-        'x-conation-refresh-token': args.refreshToken,
+        'x-macro-refresh-token': args.refreshToken,
       },
     });
   },
@@ -401,21 +404,18 @@ export const authServiceClient = {
       )
     ).map((result) => result);
   },
-  async conationApiToken() {
+  async macroApiToken() {
     const accessToken = await getAccessToken();
     if (!accessToken) {
       Telemetry.warn('No access token found, fetching with cookies');
-      return authApiFetch<ConationApiTokenResponse>('/jwt/conation_api_token');
+      return authApiFetch<MacroApiTokenResponse>('/jwt/macro_api_token');
     }
 
-    return await authApiFetch<ConationApiTokenResponse>(
-      '/jwt/conation_api_token',
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
+    return await authApiFetch<MacroApiTokenResponse>('/jwt/macro_api_token', {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
   },
   async userQuota() {
     const result = await (
@@ -529,6 +529,103 @@ export const authServiceClient = {
         body: JSON.stringify({ recipient }),
       })
     ).map(() => undefined);
+  },
+
+  // GTM invite links: personal, time-limited signup links Macro staff hand
+  // to prospects. Staff endpoints are gated server-side on a @macro.com account.
+  async createGtmInviteLink(args: CreateGtmInviteLinkRequest) {
+    return (
+      await fetchWithAuth<GtmInviteLink>(`${authHost}/gtm-invite/links`, {
+        method: 'POST',
+        body: JSON.stringify(args),
+      })
+    ).map((link) => link);
+  },
+
+  async listGtmInviteLinks(args: { mine: boolean }) {
+    return (
+      await fetchWithAuth<GtmInviteLinkList>(
+        `${authHost}/gtm-invite/links?mine=${args.mine ? 'true' : 'false'}`,
+        { method: 'GET' }
+      )
+    ).map((result) => result.links);
+  },
+
+  async revokeGtmInviteLink(id: string) {
+    return (
+      await fetchWithAuth<GtmInviteLink>(
+        `${authHost}/gtm-invite/links/${encodeURIComponent(id)}`,
+        { method: 'DELETE' }
+      )
+    ).map((link) => link);
+  },
+
+  /** Public: the recipient has no account yet, so nothing is sent for auth. */
+  async resolveGtmInviteLink(token: string) {
+    return (
+      await authApiFetch<PublicGtmInviteLink>(
+        `/gtm-invite/public/${encodeURIComponent(token)}`,
+        { method: 'GET', trace: { expectedStatusCodes: [404] } }
+      )
+    ).map((link) => link);
+  },
+
+  /** Attributes the signed-in account to the link and grants its offer. */
+  async redeemGtmInviteLink(token: string) {
+    return (
+      await fetchWithAuth<GtmInviteOffer>(`${authHost}/gtm-invite/redeem`, {
+        method: 'POST',
+        body: JSON.stringify({ token }),
+      })
+    ).map((offer) => offer);
+  },
+
+  /** The promotion this account holds from an invite link, or null. */
+  async getGtmInviteOffer() {
+    return (
+      await fetchWithAuth<GtmInviteOfferStatus>(
+        `${authHost}/gtm-invite/offer`,
+        { method: 'GET' }
+      )
+    ).map((result) => result.offer ?? null);
+  },
+
+  // Stripe HTTP methods (replacing RPC calls)
+  async createCheckoutSessionV2(args: {
+    successUrl: string;
+    cancelUrl: string;
+    discount?: string | null;
+    metadata?: {
+      gaClientId?: string | null;
+      fbp?: string | null;
+      fbc?: string | null;
+    };
+  }) {
+    return (
+      await fetchWithAuth<{ url: string }>(
+        `${authHost}/user/stripe/checkoutv2`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            successUrl: args.successUrl,
+            cancelUrl: args.cancelUrl,
+            discount: args.discount ?? undefined,
+            metadata: args.metadata,
+          }),
+        }
+      )
+    ).map((result) => result.url);
+  },
+
+  async createPortalSession(args: { returnUrl: string }) {
+    return (
+      await fetchWithAuth<{ url: string }>(`${authHost}/user/stripe/portal`, {
+        method: 'POST',
+        body: JSON.stringify({
+          returnUrl: args.returnUrl,
+        }),
+      })
+    ).map((result) => result.url);
   },
 
   /**
@@ -686,27 +783,31 @@ export const authServiceClient = {
       ? `${authHost}/link/gmail?${query}`
       : `${authHost}/link/gmail`;
     return (
-      await fetchWithAuth<InitGmailLinkResponse, 'TOO_MANY_PENDING_LINKS'>(
-        url,
-        {
-          method: 'POST',
-          // The server limits concurrent incomplete OAuth attempts with 429.
-          // Other failures intentionally use the generic error path: Conation
-          // does not turn Gmail connection errors into an upgrade prompt.
-          errorResponseHandler: async (response) => {
-            if (response.status === 429) {
-              return {
-                code: 'TOO_MANY_PENDING_LINKS',
-                message: 'Too many pending inbox connections',
-              };
-            }
+      await fetchWithAuth<
+        InitGmailLinkResponse,
+        'PAYMENT_REQUIRED' | 'TOO_MANY_PENDING_LINKS'
+      >(url, {
+        method: 'POST',
+        // The backend returns 402 when the user isn't entitled to additional
+        // inboxes, and 429 when they have too many incomplete link attempts in
+        // flight. Surface each as a distinct code so the add-inbox flow can open
+        // the paywall or explain the wait instead of a generic failure.
+        errorResponseHandler: async (response) => {
+          if (response.status === 402) {
+            return { code: 'PAYMENT_REQUIRED', message: 'Payment required' };
+          }
+          if (response.status === 429) {
             return {
-              code: 'HTTP_ERROR',
-              message: `HTTP error! status: ${response.status}`,
+              code: 'TOO_MANY_PENDING_LINKS',
+              message: 'Too many pending inbox connections',
             };
-          },
-        }
-      )
+          }
+          return {
+            code: 'HTTP_ERROR',
+            message: `HTTP error! status: ${response.status}`,
+          };
+        },
+      })
     ).map((result) => result);
   },
 

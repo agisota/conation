@@ -3,9 +3,8 @@ import { useFeatureFlag } from '@app/lib/analytics/posthog';
 import { t } from '@app/lib/i18n';
 import { toast } from '@core/component/Toast/Toast';
 import {
-  ENABLE_GRAPHQL_SOUP,
-  ENABLE_GRAPHQL_SOUP_FLAG,
-  ENABLE_GRAPHQL_SOUP_OVERRIDE,
+  enableGraphqlSoup,
+  isFeatureEnabled,
 } from '@core/constant/featureFlags';
 import { thrownResultErrorHasCode, throwOnErr } from '@core/util/result';
 import {
@@ -95,9 +94,7 @@ export function useEntityPropertiesQuery(
   entityId: Accessor<string>,
   includeMetadata: boolean
 ) {
-  const graphqlSoupFlag = useFeatureFlag(ENABLE_GRAPHQL_SOUP_FLAG, {
-    enabledOverride: ENABLE_GRAPHQL_SOUP_OVERRIDE,
-  });
+  const graphqlSoupFlag = useFeatureFlag(enableGraphqlSoup);
 
   // Metadata properties are computed by the REST properties endpoint and are
   // not part of the GraphQL Soup property edge. USER is not represented in
@@ -203,7 +200,7 @@ function optimisticUpdateSoupEntityProperties(
     // A miss here means the write silently lost its optimism. Expected on the
     // GraphQL transport, whose rows live in the normalized cache instead and
     // carry their own optimistic write.
-    if (!ENABLE_GRAPHQL_SOUP()) {
+    if (!isFeatureEnabled(enableGraphqlSoup)) {
       console.warn(
         'no soup cache entry for entity; skipping optimistic property update',
         entityId
@@ -465,24 +462,24 @@ export function useAddEntityPropertyMutation(
 
   return {
     get isPending() {
-      return ENABLE_GRAPHQL_SOUP()
+      return isFeatureEnabled(enableGraphqlSoup)
         ? graphqlMutation.isPending
         : restMutation.isPending;
     },
     get error() {
-      return ENABLE_GRAPHQL_SOUP()
+      return isFeatureEnabled(enableGraphqlSoup)
         ? graphqlMutation.error
         : (restMutation.error ?? null);
     },
     mutate(variables) {
-      if (ENABLE_GRAPHQL_SOUP()) {
+      if (isFeatureEnabled(enableGraphqlSoup)) {
         graphqlMutation.mutate(variables);
       } else {
         restMutation.mutate(variables);
       }
     },
     async mutateAsync(variables) {
-      if (ENABLE_GRAPHQL_SOUP()) {
+      if (isFeatureEnabled(enableGraphqlSoup)) {
         const result = await graphqlMutation.mutateAsync(variables);
         if (result.error) throw result.error;
       } else {
@@ -656,7 +653,7 @@ export function useBulkUpdateEntityPropertyOptionsMutation(
       // The transport swaps, the mutation shell does not: the per-entity scope
       // that serializes commits and the in-flight overlay both read this
       // mutation's state, whichever cache the selection lands in.
-      if (ENABLE_GRAPHQL_SOUP()) {
+      if (isFeatureEnabled(enableGraphqlSoup)) {
         return updateGraphqlEntityPropertyOptions(variables);
       }
       const response = await throwOnErr(async () =>
@@ -1000,24 +997,24 @@ export function useBulkSaveEntityPropertiesMutation(
 
   return {
     get isPending() {
-      return ENABLE_GRAPHQL_SOUP()
+      return isFeatureEnabled(enableGraphqlSoup)
         ? graphqlMutation.isPending
         : restMutation.isPending;
     },
     get error() {
-      return ENABLE_GRAPHQL_SOUP()
+      return isFeatureEnabled(enableGraphqlSoup)
         ? graphqlMutation.error
         : (restMutation.error ?? null);
     },
     mutate(variables) {
-      if (ENABLE_GRAPHQL_SOUP()) {
+      if (isFeatureEnabled(enableGraphqlSoup)) {
         graphqlMutation.mutate(variables);
       } else {
         restMutation.mutate(variables);
       }
     },
     async mutateAsync(variables) {
-      if (ENABLE_GRAPHQL_SOUP()) {
+      if (isFeatureEnabled(enableGraphqlSoup)) {
         const result = await graphqlMutation.mutateAsync(variables);
         if (result.error) throw result.error;
       } else {

@@ -1,14 +1,16 @@
-import { t } from '@app/lib/i18n';
-import { mdStore } from '@block-md/signal/markdownBlockData';
 import { buildChatEditor } from '@core/component/AI/component/input/buildChatEditor';
 import { MarkdownShell } from '@core/component/LexicalMarkdown/builder/MarkdownShell';
-import { toast } from '@core/component/Toast/Toast';
 import clickOutside from '@core/directive/clickOutside';
 import { TOKENS } from '@core/hotkey/tokens';
-import { AnimatedStarIcon } from '@icon/wide-star';
-import { cancelAiEdit, requestAiEdit } from '@service-ai-editing/client';
-import { Button, SendButton, Surface } from '@ui';
+import SparkleIcon from '@phosphor/sparkle.svg';
+import {
+  cancelAiEdit,
+  requestAiEdit,
+  toastAiEditResult,
+} from '@service-ai-editing/client';
+import { Button, ComposerSurface, SendButton } from '@ui';
 import { createSignal, Show } from 'solid-js';
+import { useMarkdownDocument } from '../context/markdown-document-context';
 
 false && clickOutside;
 
@@ -17,12 +19,11 @@ false && clickOutside;
  * into a prompt card matching the Discussion composer.
  */
 export function DocumentAiEditBar(props: { documentId: string }) {
-  const md = mdStore.get;
+  const { state } = useMarkdownDocument();
 
   const [expanded, setExpanded] = createSignal(false);
   const [editing, setEditing] = createSignal(false);
   const [hovering, setHovering] = createSignal(false);
-  const [focused, setFocused] = createSignal(false);
   const [prompt, setPrompt] = createSignal('');
 
   let editor = buildChatEditor();
@@ -30,7 +31,7 @@ export function DocumentAiEditBar(props: { documentId: string }) {
   const collapse = () => {
     setExpanded(false);
     setPrompt('');
-    md.editor?.focus();
+    state.editor.md.editor?.focus();
   };
 
   const submit = () => {
@@ -45,9 +46,7 @@ export function DocumentAiEditBar(props: { documentId: string }) {
       documentId: props.documentId,
       prompt: value,
     })
-      .then((result) => {
-        if (result === 'failed') toast.failure(t('markdown.ai.editFailed'));
-      })
+      .then(toastAiEditResult)
       .finally(() => setEditing(false));
   };
 
@@ -95,9 +94,7 @@ export function DocumentAiEditBar(props: { documentId: string }) {
             }}
             onMouseEnter={() => setHovering(true)}
             onMouseLeave={() => setHovering(false)}
-            tooltip={
-              editing() ? t('markdown.ai.stopEdit') : t('markdown.ai.askToEdit')
-            }
+            tooltip={editing() ? 'Stop AI edit' : 'Ask AI to edit'}
             hotkey={editing() ? undefined : TOKENS.chat.input.focus}
             variant="ghost"
             size="sm"
@@ -110,56 +107,41 @@ export function DocumentAiEditBar(props: { documentId: string }) {
                 'ai-edit-star-breathing text-accent': editing(),
               }}
             >
-              <AnimatedStarIcon triggerAnimation={hovering() && !editing()} />
+              <SparkleIcon />
             </span>
             <span
               class="text-xs font-medium"
               classList={{ 'text-ink-muted': editing() && !hovering() }}
             >
-              {editing()
-                ? hovering()
-                  ? t('markdown.ai.stop')
-                  : t('markdown.ai.editing')
-                : t('markdown.ai.editWithAi')}
+              {editing() ? (hovering() ? 'Stop' : 'Editing…') : 'Edit with AI'}
             </span>
           </Button>
         }
       >
-        <Surface
-          onFocusIn={() => setFocused(true)}
-          onFocusOut={(event) => {
-            const next = event.relatedTarget as Node | null;
-            if (next && event.currentTarget.contains(next)) return;
-            setFocused(false);
-          }}
-          active={focused()}
-          class="w-96 max-w-full rounded-xl"
-          depth={2}
-          solid
-        >
-          <div class="flex flex-col gap-2 p-3" use:clickOutside={collapse}>
+        <ComposerSurface class="h-auto w-96 max-w-full">
+          <div class="flex flex-col gap-2 p-2" use:clickOutside={collapse}>
             <div class="flex items-start gap-2">
               <span class="flex h-8 w-4 shrink-0 items-center justify-center text-accent">
-                <AnimatedStarIcon triggerAnimation={focused()} />
+                <SparkleIcon />
               </span>
-              <div class="min-w-0 grow text-sm text-ink">
+              <div class="min-w-0 grow text-base text-ink">
                 <MarkdownShell
                   config={editor}
-                  placeholder={t('markdown.ai.describeEdit')}
+                  placeholder="Describe the edit…"
                   autofocus
                 />
               </div>
             </div>
             <div class="flex items-center justify-end">
               <SendButton
-                tooltip={t('markdown.ai.sendEdit')}
+                tooltip="Send edit"
                 shortcut="enter"
                 disabled={prompt().trim().length === 0}
                 onClick={submit}
               />
             </div>
           </div>
-        </Surface>
+        </ComposerSurface>
       </Show>
     </div>
   );

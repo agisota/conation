@@ -1,4 +1,3 @@
-import { t } from '@app/lib/i18n';
 import type { CollectionNode } from '@kobalte/core';
 import { Collapsible } from '@kobalte/core/collapsible';
 import { Select } from '@kobalte/core/select';
@@ -48,22 +47,16 @@ const TOKEN_SELECT_OPTIONS: TokenOption[] = TOKEN_OPTIONS.map((token) => ({
 }));
 
 const tokenSections = [
+  { label: 'Surface', tokens: surfaceTokens, defaultOpen: true, ramp: true },
+  { label: 'Content', tokens: contentTokens, ramp: true },
+  { label: 'Edge', tokens: edgeTokens },
+  { label: 'Accent', tokens: ['accent'] as const },
+  { label: 'Palette', tokens: paletteTokens },
   {
-    labelKey: 'theme.sections.surface',
-    tokens: surfaceTokens,
-    defaultOpen: true,
-    ramp: true,
-  },
-  { labelKey: 'theme.sections.content', tokens: contentTokens, ramp: true },
-  { labelKey: 'theme.sections.edge', tokens: edgeTokens },
-  { labelKey: 'theme.sections.accent', tokens: ['accent'] as const },
-  { labelKey: 'theme.sections.palette', tokens: paletteTokens },
-  {
-    labelKey: 'theme.sections.semanticSurfaces',
+    label: 'Semantic surfaces',
     tokens: [
       'surface',
       'inset',
-      'lift',
       'page',
       'panel',
       'dialog',
@@ -78,7 +71,7 @@ const tokenSections = [
     defaultOpen: true,
   },
   {
-    labelKey: 'theme.sections.ink',
+    label: 'Ink',
     tokens: [
       'ink',
       'ink-muted',
@@ -88,15 +81,15 @@ const tokenSections = [
     ] as const,
   },
   {
-    labelKey: 'theme.sections.links',
+    label: 'Links',
     tokens: ['link', 'link-hover', 'link-visited'] as const,
   },
   {
-    labelKey: 'theme.sections.interaction',
+    label: 'Interaction',
     tokens: ['hover', 'active', 'selected'] as const,
   },
   {
-    labelKey: 'theme.sections.status',
+    label: 'Status',
     tokens: ['success', 'warning', 'failure'] as const,
   },
 ] as const;
@@ -199,7 +192,7 @@ function ColorControl(props: {
       onC={(value) => write({ c: value })}
       onH={(value) => write({ h: value })}
       onAlpha={(value) => write({ alpha: value })}
-      ariaLabel={t('theme.color.editToken', { token: props.token })}
+      ariaLabel={`Edit ${props.token}`}
       title={tokenLabel(props.token)}
       subtitle={props.token}
       trigger={
@@ -280,7 +273,7 @@ function TokenPill(props: {
       <button
         type="button"
         class="mr-1 grid size-5 shrink-0 place-items-center rounded-full text-ink-muted hover:bg-hover hover:text-ink"
-        aria-label={t('theme.tokens.remove', { label: props.label })}
+        aria-label={`Remove ${props.label}`}
         onClick={props.onRemove}
       >
         <XIcon class="size-3" />
@@ -350,7 +343,7 @@ function AssignmentControls(props: { token: string; value: string }) {
           return (
             <>
               <span class="rounded-full bg-ink/5 px-2 py-1 font-mono text-[10px] text-ink-muted">
-                {t('theme.assignment.custom')}
+                custom
               </span>
               <Button
                 variant="ghost"
@@ -359,7 +352,7 @@ function AssignmentControls(props: { token: string; value: string }) {
                   commit({ kind: 'linked', token: 'accent', alpha: 1 })
                 }
               >
-                <PlusIcon class="size-3" /> {t('theme.assignment.link')}
+                <PlusIcon class="size-3" /> link
               </Button>
             </>
           );
@@ -373,13 +366,13 @@ function AssignmentControls(props: { token: string; value: string }) {
           return (
             <>
               <TokenPill
-                label={t('theme.tokens.linkedToken', { token: props.token })}
+                label={`${props.token} linked token`}
                 value={current.token}
                 onChange={(token) => commit({ ...current, token })}
                 onRemove={makeCustom}
               />
               <TokenSlider
-                label={t('theme.color.alpha')}
+                label="Alpha"
                 value={current.alpha}
                 color={`var(--color-${current.token})`}
                 onPreview={(alpha) => preview(withAlpha(alpha))}
@@ -398,7 +391,7 @@ function AssignmentControls(props: { token: string; value: string }) {
                   })
                 }
               >
-                <PlusIcon class="size-3" /> {t('theme.assignment.mix')}
+                <PlusIcon class="size-3" /> mix
               </Button>
             </>
           );
@@ -415,13 +408,13 @@ function AssignmentControls(props: { token: string; value: string }) {
         return (
           <>
             <TokenPill
-              label={t('theme.tokens.firstMixToken', { token: props.token })}
+              label={`${props.token} first mix token`}
               value={current.first}
               onChange={(first) => commit({ ...current, first })}
               onRemove={makeCustom}
             />
             <TokenSlider
-              label={t('theme.assignment.mix')}
+              label="Mix"
               value={1 - current.mix}
               color={`var(--color-${props.token})`}
               track={`linear-gradient(90deg in ${current.space ?? 'oklch'}, var(--color-${current.first}), var(--color-${current.second}))`}
@@ -429,7 +422,7 @@ function AssignmentControls(props: { token: string; value: string }) {
               onCommit={(secondMix) => commit(withSecondMix(secondMix))}
             />
             <TokenPill
-              label={t('theme.tokens.secondMixToken', { token: props.token })}
+              label={`${props.token} second mix token`}
               value={current.second}
               onChange={(second) => commit({ ...current, second })}
               onRemove={() =>
@@ -441,7 +434,7 @@ function AssignmentControls(props: { token: string; value: string }) {
               }
             />
             <TokenSlider
-              label={t('theme.color.alpha')}
+              label="Alpha"
               value={current.alpha}
               color={`var(--color-${current.second})`}
               onPreview={(alpha) => preview(withAlpha(alpha))}
@@ -541,21 +534,18 @@ function RampEditor(props: { tokens: readonly string[] }) {
     <div class="border-b border-edge-muted bg-inset/50 px-4 py-4">
       <div class="mb-4 flex flex-wrap items-center gap-4">
         <div class="mr-auto">
-          <div class="text-xs font-medium text-ink">
-            {t('theme.ramp.title')}
-          </div>
+          <div class="text-xs font-medium text-ink">Ramp editor</div>
           <div class="text-[11px] text-ink-extra-muted">
-            {t('theme.ramp.description')}
+            Drag a stop to attach it to the sRGB interpolation.
           </div>
         </div>
         <Checkbox
-          as="label"
           checked={overwrite()}
           onChange={setOverwriteAll}
           class="flex items-center gap-2 text-xs text-ink-muted"
         >
           <Checkbox.Control />
-          <span>{t('theme.ramp.overwriteCustomStops')}</span>
+          <Checkbox.Label>Overwrite custom stops</Checkbox.Label>
         </Checkbox>
       </div>
 
@@ -568,7 +558,7 @@ function RampEditor(props: { tokens: readonly string[] }) {
           />
           <div class="min-w-0">
             <div class="text-[10px] uppercase tracking-wide text-ink-extra-muted">
-              {t('theme.ramp.from')}
+              From
             </div>
             <code class="text-xs text-ink-muted">{from()}</code>
           </div>
@@ -581,7 +571,7 @@ function RampEditor(props: { tokens: readonly string[] }) {
           />
           <div class="min-w-0">
             <div class="text-[10px] uppercase tracking-wide text-ink-extra-muted">
-              {t('theme.ramp.to')}
+              To
             </div>
             <code class="text-xs text-ink-muted">{to()}</code>
           </div>
@@ -605,7 +595,7 @@ function RampEditor(props: { tokens: readonly string[] }) {
                 max="0.96"
                 step="0.01"
                 value={positions()[token] ?? 0.5}
-                aria-label={t('theme.ramp.position', { token })}
+                aria-label={`${token} ramp position`}
                 class="theme-ramp-stop pointer-events-none absolute inset-x-2 top-0 h-11 appearance-none bg-transparent"
                 classList={{ 'is-attached': attached() }}
                 style={{ '--stop-color': `var(--color-${token})` }}
@@ -633,8 +623,8 @@ function RampEditor(props: { tokens: readonly string[] }) {
                 onClick={() => (attached() ? detach(token) : attach(token))}
                 title={
                   attached()
-                    ? t('theme.ramp.makeCustom', { token })
-                    : t('theme.ramp.linkToRamp', { token })
+                    ? `Make ${token} custom`
+                    : `Link ${token} to this ramp`
                 }
               >
                 <span
@@ -643,9 +633,7 @@ function RampEditor(props: { tokens: readonly string[] }) {
                 />
                 {token}
                 <span class="text-ink-extra-muted">
-                  {attached()
-                    ? t('theme.assignment.linked')
-                    : t('theme.assignment.custom')}
+                  {attached() ? 'linked' : 'custom'}
                 </span>
               </button>
             );
@@ -772,7 +760,7 @@ export function ThemeTokenEditor() {
         <For each={tokenSections}>
           {(section) => (
             <TokenSection
-              title={t(section.labelKey)}
+              title={section.label}
               tokens={section.tokens}
               defaultOpen={'defaultOpen' in section && section.defaultOpen}
               ramp={'ramp' in section && section.ramp}

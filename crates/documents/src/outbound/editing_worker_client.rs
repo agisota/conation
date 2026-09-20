@@ -1,7 +1,7 @@
 //! Outbound adapter for the AI editing worker.
 
-use crate::domain::ports::editing::{EditResult, EditUsage, EditingWorkerService};
-use conation_sync_service_jwt::DocumentPermissionToken;
+use crate::domain::ports::editing::{EditMode, EditResult, EditUsage, EditingWorkerService};
+use macro_sync_service_jwt::DocumentPermissionToken;
 use reqwest::Client;
 use std::sync::Arc;
 
@@ -36,17 +36,57 @@ impl ReqwestEditingWorkerClient {
 }
 
 impl EditingWorkerService for ReqwestEditingWorkerClient {
+    #[cfg(feature = "ai_tools")]
+    #[tracing::instrument(skip_all, fields(document_id), err)]
+    async fn spreadsheet(
+        &self,
+        document_id: &str,
+        document_token: &DocumentPermissionToken,
+        request: &crate::domain::spreadsheet::SpreadsheetRequest,
+    ) -> anyhow::Result<crate::domain::spreadsheet::SpreadsheetResponse> {
+        let mut headers = reqwest::header::HeaderMap::new();
+        macro_tower_layers::inject_trace_headers(&mut headers);
+        let response = self
+            .client
+            .post(format!("{}/spreadsheet", self.worker_url))
+            .headers(headers)
+            .timeout(std::time::Duration::from_secs(45))
+            .json(&serde_json::json!({
+                "documentId": document_id,
+                "documentToken": document_token.as_str(),
+                "request": request,
+            }))
+            .send()
+            .await?;
+        let status = response.status();
+        if !status.is_success() {
+            let body = response
+                .json::<serde_json::Value>()
+                .await
+                .unwrap_or_default();
+            let message = body.get("error").and_then(serde_json::Value::as_str)
+                .unwrap_or("Spreadsheet operation failed. Read the workbook again before retrying an edit.");
+            anyhow::bail!("{message} (HTTP {status})");
+        }
+        Ok(response.json().await?)
+    }
+
     #[tracing::instrument(skip_all, fields(document_id), err)]
     async fn edit(
         &self,
         document_id: &str,
         document_token: &DocumentPermissionToken,
         instructions: &str,
+        mode: EditMode,
     ) -> anyhow::Result<EditResult> {
         let request_body = serde_json::json!({
             "documentToken": document_token.as_str(),
             "documentId": document_id,
             "prompt": instructions,
+            "mode": match mode {
+                EditMode::Supervised => "supervised",
+                EditMode::Fast => "fast",
+            },
             "models": {
                 "supervisor": [
                     { "provider": "anthropic", "model": "claude-opus-4-8" },
@@ -72,6 +112,14 @@ impl EditingWorkerService for ReqwestEditingWorkerClient {
                     { "provider": "openai", "model": "gpt-5.5" },
                     { "provider": "anthropic", "model": "claude-haiku-4-5" },
                 ],
+                // The fast path's single model; mirrors the web client's chain
+                // (apps/web ai-editing-worker/client.ts). Gemini 3.8 Flash ran
+                // a real inline edit in 1.5-5 s with no thinking tokens where
+                // 3.7 Flash took 3.8-5.4 s; Haiku is the provider-error fallback.
+                "fast": [
+                    { "provider": "google", "model": "gemini-3.8-flash" },
+                    { "provider": "anthropic", "model": "claude-haiku-4-5" },
+                ],
             },
             "interpret": false,
         });
@@ -79,7 +127,7 @@ impl EditingWorkerService for ReqwestEditingWorkerClient {
         // Propagate the current trace so the worker's spans join this
         // service's trace instead of rooting their own.
         let mut headers = reqwest::header::HeaderMap::new();
-        conation_tower_layers::inject_trace_headers(&mut headers);
+        macro_tower_layers::inject_trace_headers(&mut headers);
 
         let edit_resp = self
             .client
@@ -130,7 +178,7 @@ impl EditingWorkerService for ReqwestEditingWorkerClient {
         };
 
         let mut headers = reqwest::header::HeaderMap::new();
-        conation_tower_layers::inject_trace_headers(&mut headers);
+        macro_tower_layers::inject_trace_headers(&mut headers);
 
         let resp = self
             .client

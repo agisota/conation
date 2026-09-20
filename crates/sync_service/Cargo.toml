@@ -10,7 +10,7 @@ inbound = ["dep:axum", "dep:conation_authorization", "dep:utoipa"]
 
 [dependencies]
 axum = { workspace = true, optional = true }
-conation_authorization = { path = "../conation_authorization", optional = true, default-features = false, features = ["axum"] }
+conation_authorization = { package = "macro_authorization", path = "../conation_authorization", optional = true, default-features = false, features = ["axum"] }
 serde = { workspace = true }
 utoipa = { workspace = true, optional = true }
 workspace-hack = { version = "0.1", path = "../workspace-hack" }

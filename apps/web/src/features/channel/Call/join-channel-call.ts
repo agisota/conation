@@ -74,5 +74,5 @@ export function isStandingRoomEmpty(otherCount: number): boolean {
 
 /** Tooltip / profile Call action. Isolated so tests can mock without featureFlags. */
 export function canStartUserCall(): boolean {
-  return ENABLE_CALLS();
+  return ENABLE_CALLS;
 }

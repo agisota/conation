@@ -256,8 +256,8 @@ pub async fn test_api_context(pool: sqlx::Pool<sqlx::Postgres>) -> std::sync::Ar
 
     // Producer creation is lazy: nothing connects to Kafka unless an event
     // is published, so a dummy broker address is safe for tests.
-    let conation_event_broker = conation_event_broker::MacroEventBrokerService::new(
-        conation_event_broker::KafkaEventPublisher::new("localhost:9092")
+    let macro_event_broker = macro_event_broker::MacroEventBrokerService::new(
+        macro_event_broker::KafkaEventPublisher::new("localhost:9092")
             .expect("kafka producer config is valid"),
         TaskTracker::new(),
     );
@@ -273,7 +273,7 @@ pub async fn test_api_context(pool: sqlx::Pool<sqlx::Postgres>) -> std::sync::Ar
             entity_access_management::outbound::PgRepository::new(pool.clone()),
         ),
         ForeignEntityServiceImpl::new(PgForeignEntityRepo::new(pool.clone())),
-        conation_event_broker.clone(),
+        macro_event_broker.clone(),
     );
     let test_lexical_client = LexicalClient::new("test".into(), "http://nofileshere".into());
     let test_editing_client =
@@ -310,12 +310,13 @@ pub async fn test_api_context(pool: sqlx::Pool<sqlx::Postgres>) -> std::sync::Ar
             ),
             0,
         )
-        .with_conation_event_broker(conation_event_broker.clone()),
+        .with_macro_event_broker(macro_event_broker.clone()),
     );
     let email_tool_context = email::inbound::toolset::EmailToolContext::new(
         user_email_service.clone(),
         Arc::new(email::domain::ports::NoOpGmailTokenProvider),
         entity_access_service.clone(),
+        Arc::new(test_lexical_client.clone()),
     );
 
     let call_service = call::domain::service::CallServiceImpl::new(
@@ -346,7 +347,7 @@ pub async fn test_api_context(pool: sqlx::Pool<sqlx::Postgres>) -> std::sync::Ar
 
     let project_tool_context = ai_tools::build_project_tool_context(
         pool.clone(),
-        conation_event_broker.clone(),
+        macro_event_broker.clone(),
         entity_access_service.clone(),
         document_tool_context.service.clone(),
         chat_tool_context.service.clone(),
@@ -385,7 +386,7 @@ pub async fn test_api_context(pool: sqlx::Pool<sqlx::Postgres>) -> std::sync::Ar
         ),
         bot_tool_context: ai_tools::build_bot_tool_context(
             pool.clone(),
-            ai_tools::ToolBotEventBroker::Real(conation_event_broker.clone()),
+            ai_tools::ToolBotEventBroker::Real(macro_event_broker.clone()),
             entity_access_service.clone(),
             "http://localhost:8086".to_string(),
         ),
@@ -401,7 +402,7 @@ pub async fn test_api_context(pool: sqlx::Pool<sqlx::Postgres>) -> std::sync::Ar
         recorder: ai_usage::pg_recorder(pool.clone()),
         usage_context: ai_usage::UsageContext::system(ai_usage::AiFeature::Chat),
     };
-    let all_tools = ai_tools::all_tools();
+    let all_tools = ai_tools::tools_for(ai_tools::AiHost::Chat);
     let all_tools_toolset = all_tools.toolset.clone();
     let all_tools_prompt: Arc<dyn std::fmt::Display + Send + Sync> =
         Arc::new(all_tools.prompt.to_string());
@@ -465,7 +466,7 @@ pub async fn test_api_context(pool: sqlx::Pool<sqlx::Postgres>) -> std::sync::Ar
     let projection_generator =
         ai_projections::outbound::agent_generator::AgentProjectionGenerator::new(
             tool_service_context.clone(),
-            ai_tools::all_tools(),
+            ai_tools::tools_for(ai_tools::AiHost::Chat),
         );
 
     let projection_notifier =
@@ -490,13 +491,14 @@ pub async fn test_api_context(pool: sqlx::Pool<sqlx::Postgres>) -> std::sync::Ar
     let authorization_state =
         MacroAuthorizationState::new(Arc::new(MacroAuthorizationServiceImpl::new(
             MacroAuthJwtValidator::new(
-                conation_auth::middleware::decode_jwt::JwtValidationArgs::new_testing(),
+                macro_auth::middleware::decode_jwt::JwtValidationArgs::new_testing(),
             ),
-            conation_authorization::InternalAuthConfig {
+            macro_authorization::InternalAuthConfig {
                 api_key: "testing".to_string(),
                 default_user_id: None,
             },
-            conation_authorization::NoBotAuthorizer,
+            macro_authorization::NoBotAuthorizer,
+            macro_authorization::NoUserApiKeyAuthorizer,
         )));
 
     let user_permissions_service = Arc::new(
@@ -566,7 +568,7 @@ pub async fn test_api_context(pool: sqlx::Pool<sqlx::Postgres>) -> std::sync::Ar
                     ),
                 },
             )
-            .with_event_broker(conation_event_broker.clone()),
+            .with_event_broker(macro_event_broker.clone()),
         ),
         ai_stream_registry: crate::service::ai_stream_registry::AiStreamRegistry::new(Arc::new(
             redis::Client::open("redis://127.0.0.1:6379/").expect("valid redis url"),
@@ -605,7 +607,7 @@ pub async fn test_api_context(pool: sqlx::Pool<sqlx::Postgres>) -> std::sync::Ar
         },
         import_service: import_service.clone(),
         onboarding_service,
-        conation_event_broker,
+        macro_event_broker,
     };
     Arc::new(api_context)
 }

@@ -1,8 +1,7 @@
-import { t } from '@app/lib/i18n';
-import { mdStore } from '@block-md/signal/markdownBlockData';
 import { ScopedPortal } from '@core/component/ScopedPortal';
 import clickOutside from '@core/directive/clickOutside';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
+import { getScrollParentElement } from '@core/util/scrollParent';
 import {
   $computeTableMap,
   $createTableSelection,
@@ -48,7 +47,9 @@ import {
   createSignal,
   For,
   Show,
+  useContext,
 } from 'solid-js';
+import { LexicalWrapperContext } from '../../context/LexicalWrapperContext';
 import { floatWithElement } from '../../directive/floatWithElement';
 import { lazyRegister } from '../../plugins';
 import { $moveCellRange } from '../../plugins/tables/tableMove';
@@ -60,7 +61,7 @@ false && floatWithElement;
 const DRAG_THRESHOLD_PX = 4;
 
 type MenuItem = {
-  labelKey: string;
+  label: string;
   icon: Component<ComponentProps<'svg'>>;
   action: (cell: TableCellNode) => void;
 };
@@ -68,22 +69,22 @@ type MenuItem = {
 // 2×2 grid: column inserts side by side on top, row inserts below.
 const INSERT_ITEMS: MenuItem[] = [
   {
-    labelKey: 'editor.table.insertColumnLeft',
+    label: 'Insert column left',
     icon: ColumnsPlusLeftIcon,
     action: () => $insertTableColumnAtSelection(false),
   },
   {
-    labelKey: 'editor.table.insertColumnRight',
+    label: 'Insert column right',
     icon: ColumnsPlusRightIcon,
     action: () => $insertTableColumnAtSelection(true),
   },
   {
-    labelKey: 'editor.table.insertRowBelow',
+    label: 'Insert row below',
     icon: RowsPlusBottomIcon,
     action: () => $insertTableRowAtSelection(true),
   },
   {
-    labelKey: 'editor.table.insertRowAbove',
+    label: 'Insert row above',
     icon: RowsPlusTopIcon,
     action: () => $insertTableRowAtSelection(false),
   },
@@ -92,12 +93,12 @@ const INSERT_ITEMS: MenuItem[] = [
 // Bottom row: delete the row/column the selection is in.
 const DELETE_ITEMS: MenuItem[] = [
   {
-    labelKey: 'editor.table.deleteRow',
+    label: 'Delete row',
     icon: RowsIcon,
     action: () => $deleteTableRowAtSelection(),
   },
   {
-    labelKey: 'editor.table.deleteColumn',
+    label: 'Delete column',
     icon: ColumnsIcon,
     action: () => $deleteTableColumnAtSelection(),
   },
@@ -123,8 +124,8 @@ type DragShape = {
  * pasting a copied range.
  */
 export function TableMoveHandle() {
-  const mdData = mdStore.get;
-  const editor = () => mdData.editor;
+  const lexicalWrapper = useContext(LexicalWrapperContext);
+  const editor = () => lexicalWrapper?.editor;
 
   const [anchorCellKey, setAnchorCellKey] = createSignal<string>();
   const [focusCellKey, setFocusCellKey] = createSignal<string>();
@@ -239,7 +240,9 @@ export function TableMoveHandle() {
       ?.getBoundingClientRect();
     // Vertical scroll viewport of the editor; its top is the highest the
     // handle may sit before it would float over the gray area above.
-    const scrollTop = mdData.scrollContainer?.getBoundingClientRect().top;
+    const scrollTop = getScrollParentElement(
+      currentEditor.getRootElement()
+    )?.getBoundingClientRect().top;
 
     return {
       // Clamp to the scroll wrapper's visible right edge so a cell scrolled
@@ -435,8 +438,8 @@ export function TableMoveHandle() {
   const menuItemButton = (item: MenuItem, danger?: boolean) => (
     <button
       type="button"
-      aria-label={t(item.labelKey)}
-      title={t(item.labelKey)}
+      aria-label={item.label}
+      title={item.label}
       class="flex items-center justify-center rounded-md py-2 ring-1 ring-edge active:bg-accent/10"
       classList={{ 'text-failure': danger, 'text-ink-muted': !danger }}
       onClick={() => runMenuAction(item.action)}
@@ -539,7 +542,7 @@ export function TableMoveHandle() {
             <button
               ref={setHandleElem}
               type="button"
-              aria-label={t('editor.table.moveCells')}
+              aria-label="Move cells"
               class="fixed z-20 flex size-6 -translate-x-[calc(100%-3px)] -translate-y-[3px] items-center justify-center rounded-full border border-edge bg-surface text-ink-muted shadow-sm touch-none"
               classList={{
                 'cursor-grab': !dragging(),
@@ -556,8 +559,8 @@ export function TableMoveHandle() {
               {(corner) => (
                 <button
                   type="button"
-                  aria-label={t('editor.table.deleteTable')}
-                  title={t('editor.table.deleteTable')}
+                  aria-label="Delete table"
+                  title="Delete table"
                   class="fixed z-20 flex size-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-edge bg-surface text-failure shadow-sm active:border-failure active:bg-failure active:text-surface"
                   style={{ left: `${corner().x}px`, top: `${corner().y}px` }}
                   onPointerDown={(e) => e.preventDefault()}
@@ -593,13 +596,13 @@ export function TableMoveHandle() {
                 <Show when={anchorCellMerged()}>
                   <button
                     type="button"
-                    aria-label={t('editor.table.splitCell')}
-                    title={t('editor.table.splitCell')}
+                    aria-label="Split cell"
+                    title="Split cell"
                     class="col-span-2 flex items-center justify-center gap-1.5 rounded-md py-2 ring-1 ring-edge active:bg-accent/10 text-ink-muted"
                     onClick={() => runMenuAction(() => $unmergeCell())}
                   >
                     <CornersOutIcon class="size-4" />
-                    <span class="text-xs">{t('editor.table.splitCell')}</span>
+                    <span class="text-xs">Split cell</span>
                   </button>
                 </Show>
               </div>

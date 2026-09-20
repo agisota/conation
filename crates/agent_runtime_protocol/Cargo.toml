@@ -16,7 +16,7 @@ utoipa = ["dep:utoipa"]
 
 [dependencies]
 agent-client-protocol = { workspace = true }
-conation_uuid = { path = "../conation_uuid" }
+macro_uuid = { package = "conation_uuid", path = "../conation_uuid" }
 axum = { workspace = true, features = ["ws"], optional = true }
 futures = { workspace = true, optional = true }
 serde = { workspace = true }

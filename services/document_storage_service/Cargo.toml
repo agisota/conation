@@ -23,10 +23,11 @@ connection_gateway = []
 default = ["connection_gateway", "delete_document_worker", "location_check"]
 delete_document_worker = []
 local = ["local_auth"]
-local_auth = ["conation_authorization/local_auth"]
+local_auth = ["macro_authorization/local_auth"]
 location_check = []
 
 [dependencies]
+agent_session = { path = "../../crates/agent_session", features = ["outbound"] }
 activity = { path = "../../crates/activity" }
 ai_tools = { path = "../../crates/ai_tools" }
 ai_usage = { path = "../../crates/ai_usage" }
@@ -57,6 +58,7 @@ bzip2 = { workspace = true, default-features = false, features = [
 cal = { path = "../../crates/cal", features = ["axum", "outbound"] }
 call = { path = "../../crates/call" }
 channel_bots = { path = "../../crates/channel_bots" }
+messages = { path = "../../crates/messages", features = ["broker", "delivery", "inbound"] }
 channels = { path = "../../crates/channels", features = [
   "entity_mutation",
   "inbound",
@@ -111,15 +113,17 @@ github = { path = "../../crates/github", default-features = false, features = [
   "sync",
 ] }
 graphql_soup = { path = "../../crates/graphql_soup" }
+harnesses = { path = "../../crates/harnesses" }
 hex = { workspace = true }
 http-body-util = { workspace = true }
+initiative = { path = "../../crates/initiative", features = ["inbound", "postgres"] }
 jsonwebtoken = { workspace = true }
 last_online_tracker = { path = "../../crates/last_online_tracker" }
 lazy_static = { workspace = true }
 lexical_client = { path = "../../crates/lexical_client" }
 lexical_mention_extractor = { path = "../../crates/lexical_mention_extractor" }
 conation_auth = { path = "../../crates/conation_auth" }
-conation_authorization = { path = "../../crates/conation_authorization", features = [
+macro_authorization = { path = "../../crates/conation_authorization", features = [
   "postgres",
 ] }
 conation_aws_config = { path = "../../crates/conation_aws_config", features = ["s3"] }
@@ -127,7 +131,7 @@ conation_axum_utils = { path = "../../crates/conation_axum_utils" }
 conation_config = { path = "../../crates/conation_config" }
 conation_cors = { path = "../../crates/conation_cors" }
 conation_db_client = { path = "../../crates/conation_db_client" }
-conation_entrypoint = { path = "../../crates/conation_entrypoint" }
+conation_entrypoint = { package = "macro_entrypoint", path = "../../crates/conation_entrypoint" }
 conation_env = { path = "../../crates/conation_env" }
 conation_env_var = { path = "../../crates/conation_env_var" }
 conation_event_broker = { path = "../../crates/conation_event_broker" }
@@ -139,7 +143,7 @@ conation_service_urls = { path = "../../crates/conation_service_urls" }
 conation_sha_count_client = { path = "../../crates/conation_sha_count_client" }
 conation_sync_service_jwt = { path = "../../crates/conation_sync_service_jwt" }
 conation_tower_layers = { path = "../../crates/conation_tower_layers" }
-conation_user_id = { path = "../../crates/conation_user_id" }
+macro_user_id = { package = "conation_user_id", path = "../../crates/conation_user_id" }
 conation_uuid = { path = "../../crates/conation_uuid" }
 mockall = { workspace = true }
 model = { path = "../../crates/model" }
@@ -202,6 +206,7 @@ sqs_client = { path = "../../crates/sqs_client", default-features = false, featu
   "search",
 ] }
 sqs_worker = { path = "../../crates/sqs_worker" }
+static_file_service_client = { path = "../../crates/static_file_service_client" }
 sync_service_client = { path = "../../crates/sync_service_client" }
 sync_service_hex = { path = "../../crates/sync_service", package = "sync_service_hex", features = [
   "inbound",
@@ -216,6 +221,10 @@ tower-http = { workspace = true, features = ["compression-gzip"] }
 tracing = { workspace = true }
 unicode-segmentation = { workspace = true }
 urlencoding = { workspace = true }
+user_api_key = { path = "../../crates/user_api_key", features = [
+  "inbound",
+  "postgres",
+] }
 utoipa = { workspace = true, features = ["axum_extras"] }
 utoipa-swagger-ui = { workspace = true, features = ["axum"] }
 uuid = { workspace = true }

@@ -6,18 +6,19 @@ version = "0.1.0"
 
 
 [features]
-ai_tool = ["dep:ai_toolset", "dep:anyhow", "dep:async-trait", "dep:schemars"]
+ai_tool = ["dep:ai_toolset", "dep:anyhow", "dep:async-trait", "dep:schemars", "notification_state/schema"]
 axum = [
   "dep:axum",
-  "dep:conation_authorization",
+  "dep:macro_authorization",
   "dep:model-error-response",
   "dep:model_user",
   "models_pagination/axum",
+  "dep:serde_with",
   "schema",
 ]
 docs = ["dep:aquamarine"]
 redis-tests = []
-schema = ["dep:utoipa", "conation_user_id/schema"]
+schema = ["dep:utoipa", "macro_user_id/schema", "notification_state/schema"]
 
 [dependencies]
 ai_toolset = { path = "../ai_toolset", optional = true }
@@ -38,32 +39,33 @@ hmac = { workspace = true }
 itertools = { workspace = true }
 kafka_util = { path = "../kafka_util" }
 last_online_tracker = { path = "../last_online_tracker" }
-conation_event_broker = { path = "../conation_event_broker" }
-conation_event_topics = { path = "../conation_event_topics" }
-conation_authorization = { path = "../conation_authorization", default-features = false, features = [
+macro_event_broker = { package = "conation_event_broker", path = "../conation_event_broker" }
+macro_event_topics = { package = "conation_event_topics", path = "../conation_event_topics" }
+macro_authorization = { path = "../conation_authorization", default-features = false, features = [
   "axum",
 ], optional = true }
-conation_env = { path = "../conation_env" }
-conation_service_urls = { path = "../conation_service_urls" }
-conation_user_id = { path = "../conation_user_id" }
-conation_uuid = { path = "../conation_uuid" }
+macro_env = { package = "conation_env", path = "../conation_env" }
+macro_service_urls = { package = "conation_service_urls", path = "../conation_service_urls" }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
+macro_uuid = { package = "conation_uuid", path = "../conation_uuid" }
 model-entity = { path = "../model-entity" }
 model-error-response = { path = "../model-error-response", optional = true }
 model_user = { path = "../model_user", optional = true }
 models_pagination = { path = "../models_pagination" }
+notification_state = { path = "../notification_state", features = ["postgres"] }
 rate_limit = { path = "../rate_limit" }
 redis = { workspace = true, features = [
   "aio",
   "tokio-comp",
   "tokio-rustls-comp",
 ] }
-ses_client = { path = "../ses_client" }
 rdkafka = { workspace = true }
 reqwest = { workspace = true }
 rootcause = { workspace = true }
 schemars = { workspace = true, optional = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+serde_with = { workspace = true, optional = true }
 sha2 = { workspace = true }
 sqlx = { workspace = true }
 strum = { workspace = true }
@@ -78,8 +80,7 @@ workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
 http-body-util = { workspace = true }
-conation_db_migrator = { path = "../conation_db_migrator" }
-model_notifications = { path = "../model_notifications" }
+macro_db_migrator = { package = "conation_db_migrator", path = "../conation_db_migrator" }
 rate_limit = { path = "../rate_limit", features = ["testing"] }
 tokio = { workspace = true, features = ["macros", "rt", "test-util"] }
 tower = { workspace = true }

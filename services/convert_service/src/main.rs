@@ -1,11 +1,12 @@
 #![recursion_limit = "256"]
 use crate::api::context::{ApiContext, AuthorizationService};
 use anyhow::Context;
-use conation_authorization::{
-    InternalAuthConfig, MacroAuthorizationState, NoopMacroAuthJwtValidator,
-};
-use conation_entrypoint::MacroEntrypoint;
 use config::{Config, Environment};
+use macro_authorization::{
+    InternalAuthConfig, MacroAuthorizationState, NoopMacroAuthJwtValidator,
+    PgUserApiKeyAuthorizationRepo, PgUserApiKeyAuthorizer,
+};
+use macro_entrypoint::MacroEntrypoint;
 use process::runner::run_worker;
 use sqlx::postgres::PgPoolOptions;
 use std::sync::Arc;
@@ -67,16 +68,7 @@ async fn main() -> anyhow::Result<()> {
 
     smoke_test_lok(&config.lok_path)?;
 
-    let aws_config = conation_aws_config::get_conation_aws_config().await;
-
-    let authorization_state = MacroAuthorizationState::new(Arc::new(AuthorizationService::new(
-        NoopMacroAuthJwtValidator, // we only have internal calls in this service.
-        InternalAuthConfig {
-            api_key: config.internal_api_key.to_string(),
-            default_user_id: None,
-        },
-        conation_authorization::NoBotAuthorizer,
-    )));
+    let aws_config = macro_aws_config::get_macro_aws_config().await;
 
     let db = PgPoolOptions::new()
         .min_connections(1)
@@ -85,14 +77,24 @@ async fn main() -> anyhow::Result<()> {
         .await
         .context("could not connect to db")?;
 
+    let authorization_state = MacroAuthorizationState::new(Arc::new(AuthorizationService::new(
+        NoopMacroAuthJwtValidator, // we only have internal calls in this service.
+        InternalAuthConfig {
+            api_key: config.internal_api_key.to_string(),
+            default_user_id: None,
+        },
+        macro_authorization::NoBotAuthorizer,
+        PgUserApiKeyAuthorizer::new(PgUserApiKeyAuthorizationRepo::new(db.clone())),
+    )));
+
     tracing::trace!("initialized config");
 
-    let queue_aws_config = conation_aws_config::get_conation_aws_config().await;
+    let queue_aws_config = macro_aws_config::get_macro_aws_config().await;
 
-    let s3_client = s3_client::S3::new(conation_aws_config::s3_client().await);
+    let s3_client = s3_client::S3::new(macro_aws_config::s3_client().await);
     tracing::trace!("initialized s3 client");
 
-    let convert_queue = conation_queues::ConvertQueue::new();
+    let convert_queue = macro_queues::ConvertQueue::new();
     let sqs_client = sqs_client::SQS::new(aws_sdk_sqs::Client::new(&queue_aws_config))
         .convert_queue(&convert_queue);
     tracing::trace!("initialized sqs client");

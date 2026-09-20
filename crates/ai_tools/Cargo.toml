@@ -48,12 +48,13 @@ item_filters = { path = "../item_filters" }
 lazy_static.workspace = true
 lexical_client = { path = "../lexical_client" }
 lexical_mention_extractor = { path = "../lexical_mention_extractor" }
-conation_aws_config = { path = "../conation_aws_config" }
-conation_db_client = { path = "../conation_db_client" }
-conation_env_var = { path = "../conation_env_var" }
-conation_event_broker = { path = "../conation_event_broker" }
-conation_queues = { path = "../conation_queues" }
-conation_user_id = { path = "../conation_user_id" }
+macro_aws_config = { package = "conation_aws_config", path = "../conation_aws_config" }
+macro_db_client = { package = "conation_db_client", path = "../conation_db_client" }
+macro_env_var = { package = "conation_env_var", path = "../conation_env_var" }
+macro_event_broker = { package = "conation_event_broker", path = "../conation_event_broker" }
+messages = { path = "../messages", features = ["broker", "delivery"] }
+macro_queues = { package = "conation_queues", path = "../conation_queues" }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
 mcp_client = { path = "../mcp_client" }
 mcp_select = { path = "../mcp_select" }
 pipedream_mcp = { path = "../pipedream_mcp" }
@@ -88,17 +89,18 @@ sqlx.workspace = true
 strum.workspace = true
 sync_service_client = { path = "../sync_service_client" }
 system_properties = { path = "../system_properties" }
+thiserror.workspace = true
 tokio.workspace = true
 tokio-util = { workspace = true, features = ["rt"] }
 tracing.workspace = true
 utoipa.workspace = true
 uuid.workspace = true
 remote_env_var = { path = "../remote_env_var" }
-conation_env = { path = "../conation_env" }
+macro_env = { package = "conation_env", path = "../conation_env" }
 secretsmanager_client = { path = "../secretsmanager_client" }
 aws-sdk-secretsmanager = { workspace = true }
 
-conation_service_urls = { path = "../conation_service_urls" }
+macro_service_urls = { package = "conation_service_urls", path = "../conation_service_urls" }
 workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]

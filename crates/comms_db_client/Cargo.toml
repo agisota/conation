@@ -12,7 +12,7 @@ chrono = { workspace = true }
 doppleganger = { workspace = true }
 futures = { workspace = true }
 conation_user_id = { path = "../conation_user_id" }
-conation_uuid = { path = "../conation_uuid" }
+macro_uuid = { package = "conation_uuid", path = "../conation_uuid" }
 model = { path = "../model" }
 serde = { workspace = true }
 serde_json = { workspace = true }

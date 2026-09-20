@@ -229,6 +229,26 @@ describe('canvas live WS apply-update', () => {
     expect(ids).toEqual(expect.arrayContaining(['a', 'b']));
   });
 
+  it('applies the initial remote snapshot into an empty local WAL', async () => {
+    const snapshot = encodeCanvasLoroUpdate(
+      { nodes: [{ id: 'remote-a' }, { id: 'remote-b' }], edges: [] },
+      1n
+    );
+    expect(peekCanvasLoro('doc-empty-wal')).toBeNull();
+    const fake = fakeSource('doc-empty-wal');
+    const ok = await connectCanvasLiveSync({
+      documentId: 'doc-empty-wal',
+      source: fake.source,
+      doInitialSync: async () => ({ snapshot }),
+    });
+    expect(ok).toBe(true);
+    const ids = (peekCanvasLoro('doc-empty-wal')?.nodes ?? []).map(
+      (n) => (n as { id: string }).id
+    );
+    expect(ids).toEqual(expect.arrayContaining(['remote-a', 'remote-b']));
+  });
+
+
   it('does not re-initialize a canvas that already has a snapshot', async () => {
     const result = await seedMissingCanvasSnapshot({
       documentId: 'doc-ready',

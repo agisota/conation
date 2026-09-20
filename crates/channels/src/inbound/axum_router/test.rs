@@ -15,24 +15,26 @@ use axum::{
     body::Body,
     http::{Request, StatusCode, header},
 };
-use conation_authorization::{
-    INTERNAL_API_KEY_HEADER, INTERNAL_CONATION_ORGANIZATION_ID_HEADER,
-    INTERNAL_CONATION_USER_ID_HEADER, InternalAuthConfig, JwtValidator, MacroAuthorizationError,
-    MacroAuthorizationServiceImpl, MacroAuthorizationState, ValidatedIdentity,
-};
-use conation_user_id::cowlike::CowLike;
-use conation_user_id::user_id::MacroUserIdStr;
-use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId};
 use entity_access::domain::models::TeamRole;
 use entity_access::domain::{
     models::{
-        AccessError, AccessLevel, BotAccessScope, BotId, BotReceiptScope, Entity,
+        AccessError, AccessLevel, AdminParticipantRole, BotAccessScope, BotId, Entity,
         EntityAccessReceipt, EntityPermission, EntityType, MemberParticipantRole,
         ParticipantRole as EntityParticipantRole, RequiredPermission, UserTeamInfo,
     },
     ports::EntityAccessService,
 };
 use http_body_util::BodyExt;
+#[allow(deprecated)]
+use macro_authorization::{
+    INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_ORGANIZATION_ID_HEADER, INTERNAL_MACRO_USER_ID_HEADER,
+    InternalAuthConfig, JwtValidator, LEGACY_DSS_INTERNAL_API_KEY_HEADER,
+    LEGACY_DSS_INTERNAL_MACRO_USER_ID_HEADER, MacroAuthorizationError,
+    MacroAuthorizationServiceImpl, MacroAuthorizationState, ValidatedIdentity,
+};
+use macro_user_id::cowlike::CowLike;
+use macro_user_id::user_id::MacroUserIdStr;
+use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId};
 use models_pagination::{Base64Str, CreatedAt, Cursor, CursorVal, PaginateOn, Query};
 use rootcause::Report;
 use std::sync::{
@@ -69,6 +71,7 @@ struct PermissionCall {
 struct TestAccessService {
     mode: AccessMode,
     channel_view_only: bool,
+    channel_role: EntityParticipantRole,
     permission_calls: Arc<Mutex<Vec<PermissionCall>>>,
 }
 
@@ -96,6 +99,7 @@ impl TestAccessService {
         Self {
             mode,
             channel_view_only: false,
+            channel_role: EntityParticipantRole::Member,
             permission_calls: Arc::default(),
         }
     }
@@ -141,7 +145,7 @@ impl EntityAccessService for TestAccessService {
                 entity_type,
             },
             EntityPermission::ChannelRole {
-                role: EntityParticipantRole::Member,
+                role: self.channel_role,
             },
         )
     }
@@ -216,7 +220,7 @@ impl EntityAccessService for TestAccessService {
         match self.mode {
             AccessMode::Allow => match entity_type {
                 EntityType::Channel => Ok(EntityPermission::ChannelRole {
-                    role: EntityParticipantRole::Member,
+                    role: self.channel_role,
                 }),
                 _ => Ok(EntityPermission::AccessLevel {
                     access_level: AccessLevel::View,
@@ -258,34 +262,21 @@ impl EntityAccessService for TestAccessService {
     }
 }
 
-#[test]
-fn bot_actor_from_receipt_uses_canonical_principal() {
-    let bot_id = BotId::new_from_uuid(uuid::uuid!("00000000-0000-0000-0000-000000000123"));
-    let receipt = EntityAccessReceipt::<MemberParticipantRole>::try_new_bot(
-        bot_id.into_storage_id(),
-        BotReceiptScope::Team {
-            team_id: Uuid::new_v4(),
-        },
-        Entity {
-            entity_id: Uuid::new_v4().to_string(),
-            entity_type: EntityType::Channel,
-        },
-        EntityPermission::ChannelRole {
-            role: EntityParticipantRole::Member,
-        },
-    )
-    .unwrap();
-
-    let sender = actor_from_receipt(&receipt).unwrap();
-
-    assert_eq!(sender.as_ref(), bot_id.into_storage_id().as_ref());
-}
-
 // --- Mock services (business logic only, no auth concerns) ---
 
 struct MockService;
 
 impl ChannelService for MockService {
+    async fn set_channel_picture(
+        &self,
+        _access: entity_access::domain::models::EntityAccessReceipt<
+            entity_access::domain::models::AdminParticipantRole,
+        >,
+        _picture_id: Option<uuid::Uuid>,
+    ) -> Result<(), crate::domain::ports::ChannelMutationErr> {
+        unimplemented!("picture mutation is not used by this fixture")
+    }
+
     async fn get_channel_messages(
         &self,
         _channel_id: Uuid,
@@ -410,6 +401,16 @@ impl ChannelService for MockService {
 struct ErrorService;
 
 impl ChannelService for ErrorService {
+    async fn set_channel_picture(
+        &self,
+        _access: entity_access::domain::models::EntityAccessReceipt<
+            entity_access::domain::models::AdminParticipantRole,
+        >,
+        _picture_id: Option<uuid::Uuid>,
+    ) -> Result<(), crate::domain::ports::ChannelMutationErr> {
+        unimplemented!("picture mutation is not used by this fixture")
+    }
+
     async fn get_channel_messages(
         &self,
         _channel_id: Uuid,
@@ -469,6 +470,16 @@ impl ChannelService for ErrorService {
 struct ParticipantsService;
 
 impl ChannelService for ParticipantsService {
+    async fn set_channel_picture(
+        &self,
+        _access: entity_access::domain::models::EntityAccessReceipt<
+            entity_access::domain::models::AdminParticipantRole,
+        >,
+        _picture_id: Option<uuid::Uuid>,
+    ) -> Result<(), crate::domain::ports::ChannelMutationErr> {
+        unimplemented!("picture mutation is not used by this fixture")
+    }
+
     async fn get_channel_messages(
         &self,
         _channel_id: Uuid,
@@ -580,6 +591,16 @@ impl JoinLinkService {
 }
 
 impl ChannelService for JoinLinkService {
+    async fn set_channel_picture(
+        &self,
+        _access: entity_access::domain::models::EntityAccessReceipt<
+            entity_access::domain::models::AdminParticipantRole,
+        >,
+        _picture_id: Option<uuid::Uuid>,
+    ) -> Result<(), crate::domain::ports::ChannelMutationErr> {
+        unimplemented!("picture mutation is not used by this fixture")
+    }
+
     async fn get_channel_messages(
         &self,
         _channel_id: Uuid,
@@ -672,11 +693,85 @@ impl ChannelService for JoinLinkService {
 
 #[derive(Clone, Default)]
 struct RecordingMutationService {
+    pictures: Arc<Mutex<Vec<(String, Option<Uuid>)>>>,
     joins: Arc<Mutex<Vec<(Sender, Uuid)>>>,
     posts: Arc<Mutex<Vec<(Sender, Uuid, PostMessageRequest)>>>,
+    typing: Arc<Mutex<Vec<(Sender, Uuid, PostTypingRequest)>>>,
+}
+
+fn recorded_actor(
+    access: &EntityAccessReceipt<messages::domain::service::MessageWrite>,
+) -> (Sender, Uuid) {
+    let actor = match access.auth() {
+        entity_access::domain::models::EntityAccessAuth::Bot(bot) => {
+            Sender::new_from_bot(bot.bot_id())
+        }
+        _ => Sender::new_from_user(access.get_authenticated_user().unwrap().clone()),
+    };
+    (actor, access.entity().entity_id.parse().unwrap())
+}
+
+#[async_trait::async_trait]
+impl crate::domain::ports::ChannelMessageCommands for RecordingMutationService {
+    async fn post_message(
+        &self,
+        access: EntityAccessReceipt<messages::domain::service::MessageWrite>,
+        req: PostMessageRequest,
+    ) -> Result<PostMessageResponse, ChannelMutationErr> {
+        let (actor, channel_id) = recorded_actor(&access);
+        self.posts.lock().unwrap().push((actor, channel_id, req));
+        Ok(PostMessageResponse {
+            id: Uuid::new_v4().to_string(),
+            nonce: Some("n1".to_string()),
+        })
+    }
+    async fn patch_message(
+        &self,
+        _access: EntityAccessReceipt<messages::domain::service::MessageWrite>,
+        _message_id: Uuid,
+        _req: PatchMessageRequest,
+    ) -> Result<(), ChannelMutationErr> {
+        Ok(())
+    }
+    async fn delete_message(
+        &self,
+        _access: EntityAccessReceipt<messages::domain::service::MessageWrite>,
+        _message_id: Uuid,
+        _query: DeleteMessageQuery,
+    ) -> Result<(), ChannelMutationErr> {
+        Ok(())
+    }
+    async fn post_reaction(
+        &self,
+        _access: EntityAccessReceipt<messages::domain::service::MessageWrite>,
+        _req: PostReactionRequest,
+    ) -> Result<(), ChannelMutationErr> {
+        Ok(())
+    }
+    async fn post_typing(
+        &self,
+        access: EntityAccessReceipt<messages::domain::service::MessageWrite>,
+        req: PostTypingRequest,
+    ) -> Result<(), ChannelMutationErr> {
+        let (actor, channel_id) = recorded_actor(&access);
+        self.typing.lock().unwrap().push((actor, channel_id, req));
+        Ok(())
+    }
 }
 
 impl ChannelService for RecordingMutationService {
+    async fn set_channel_picture(
+        &self,
+        access: EntityAccessReceipt<AdminParticipantRole>,
+        picture_id: Option<Uuid>,
+    ) -> Result<(), ChannelMutationErr> {
+        self.pictures
+            .lock()
+            .unwrap()
+            .push((access.entity().entity_id.clone(), picture_id));
+        Ok(())
+    }
+
     async fn get_channel_messages(
         &self,
         _channel_id: Uuid,
@@ -770,8 +865,7 @@ impl ChannelService for RecordingMutationService {
 
     async fn patch_channel(
         &self,
-        _actor: Sender,
-        _channel_id: Uuid,
+        _access: EntityAccessReceipt<MemberParticipantRole>,
         _req: PatchChannelRequest,
     ) -> Result<(), ChannelMutationErr> {
         Ok(())
@@ -929,7 +1023,8 @@ fn authorization_state_with_default(
             api_key: VALID_INTERNAL_KEY.to_string(),
             default_user_id: default_user_id.map(str::to_string),
         },
-        conation_authorization::NoBotAuthorizer,
+        macro_authorization::NoBotAuthorizer,
+        macro_authorization::NoUserApiKeyAuthorizer,
     );
     (MacroAuthorizationState::new(Arc::new(service)), validator)
 }
@@ -948,6 +1043,7 @@ async fn attach_bearer(mut request: Request<Body>) -> Request<Body> {
 
 fn mock_router() -> Router {
     channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         MockService,
         TestAccessService::allow(),
         authorization_state(),
@@ -957,6 +1053,7 @@ fn mock_router() -> Router {
 
 fn error_router() -> Router {
     channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         ErrorService,
         TestAccessService::allow(),
         authorization_state(),
@@ -966,6 +1063,7 @@ fn error_router() -> Router {
 
 fn denied_router() -> Router {
     channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         MockService,
         TestAccessService::deny(),
         authorization_state(),
@@ -975,6 +1073,7 @@ fn denied_router() -> Router {
 
 fn not_found_router() -> Router {
     channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         MockService,
         TestAccessService::not_found(),
         authorization_state(),
@@ -990,6 +1089,7 @@ fn join_by_code_router(
     let joined_users = service.joined_users.clone();
     let (authorization_state, validator) = authorization_state_with_default(default_user_id);
     let router = channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         service,
         TestAccessService::deny(),
         authorization_state,
@@ -1068,14 +1168,15 @@ async fn standard_internal_headers_propagate_organization_to_entity_access() {
     let channel_id = Uuid::new_v4();
     let access_service = TestAccessService::allow();
     let router = channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         MockService,
         access_service.clone(),
         authorization_state(),
     ));
     let request = Request::get(format!("/{channel_id}/messages"))
         .header(INTERNAL_API_KEY_HEADER, VALID_INTERNAL_KEY)
-        .header(INTERNAL_CONATION_USER_ID_HEADER, INTERNAL_USER_ID)
-        .header(INTERNAL_CONATION_ORGANIZATION_ID_HEADER, "73")
+        .header(INTERNAL_MACRO_USER_ID_HEADER, INTERNAL_USER_ID)
+        .header(INTERNAL_MACRO_ORGANIZATION_ID_HEADER, "73")
         .body(Body::empty())
         .unwrap();
 
@@ -1093,25 +1194,27 @@ async fn standard_internal_headers_propagate_organization_to_entity_access() {
     );
 }
 
+#[allow(deprecated)]
 #[tokio::test]
-async fn legacy_internal_headers_are_rejected_before_join_service_invocation() {
+async fn legacy_internal_headers_authenticate_acting_user() {
     let (router, join_code, joined_users, validator) = join_by_code_router(None);
     let request = join_by_code_request(join_code)
-        .header("x-document-storage-service-auth-key", VALID_INTERNAL_KEY)
-        .header("x-document-storage-service-user-id", INTERNAL_USER_ID)
+        .header(LEGACY_DSS_INTERNAL_API_KEY_HEADER, VALID_INTERNAL_KEY)
+        .header(LEGACY_DSS_INTERNAL_MACRO_USER_ID_HEADER, INTERNAL_USER_ID)
         .body(Body::empty())
         .unwrap();
 
     let response = router.oneshot(request).await.unwrap();
 
-    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(validator.validation_count(), 0);
     let joined_users = joined_users.lock().unwrap();
-    assert!(joined_users.is_empty());
+    assert_eq!(joined_users.len(), 1);
+    assert_eq!(joined_users[0].as_ref(), INTERNAL_USER_ID);
 }
 
 #[tokio::test]
-async fn internal_headers_use_configured_default_identity() {
+async fn internal_headers_use_dss_style_default_identity() {
     let (router, join_code, joined_users, validator) = join_by_code_router(Some(TEST_USER_ID));
     let request = join_by_code_request(join_code)
         .header(INTERNAL_API_KEY_HEADER, VALID_INTERNAL_KEY)
@@ -1133,6 +1236,7 @@ async fn bearer_organization_is_propagated_to_entity_access() {
     let access_service = TestAccessService::allow();
     let (authorization_state, validator) = authorization_state_with_default(None);
     let router = channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         MockService,
         access_service.clone(),
         authorization_state,
@@ -1167,6 +1271,7 @@ async fn active_participant_can_get_persisted_channel_join_code() {
     let service = JoinLinkService::new(channel_id, join_code, vec![]);
     let requested_channel_ids = service.requested_channel_ids.clone();
     let router = channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         service,
         TestAccessService::allow(),
         authorization_state(),
@@ -1198,6 +1303,7 @@ async fn non_participant_cannot_get_channel_join_code() {
     let service = JoinLinkService::new(channel_id, Uuid::new_v4(), vec![]);
     let requested_channel_ids = service.requested_channel_ids.clone();
     let router = channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         service,
         TestAccessService::deny(),
         authorization_state(),
@@ -1231,6 +1337,7 @@ async fn non_private_channels_cannot_get_join_codes() {
         non_private_channels.iter().map(|(_, id)| *id).collect(),
     );
     let router = channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         service,
         TestAccessService::allow(),
         authorization_state(),
@@ -1260,6 +1367,7 @@ async fn non_private_channels_cannot_get_join_codes() {
 async fn join_channel_by_code_handles_malformed_and_unknown_codes() {
     let service = JoinLinkService::new(Uuid::new_v4(), Uuid::new_v4(), vec![]);
     let router = channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         service,
         TestAccessService::deny(),
         authorization_state(),
@@ -1298,6 +1406,7 @@ async fn authenticated_user_can_join_by_code_without_channel_access() {
     let service = JoinLinkService::new(Uuid::new_v4(), join_code, vec![]);
     let joined_users = service.joined_users.clone();
     let router = channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         service,
         TestAccessService::deny(),
         authorization_state(),
@@ -1338,6 +1447,7 @@ async fn channel_view_only_user_can_join_channel_by_id() {
     let joins = mutation_service.joins.clone();
     let access_service = TestAccessService::channel_view_only();
     let router = channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         mutation_service,
         access_service.clone(),
         authorization_state(),
@@ -1375,6 +1485,7 @@ async fn user_without_channel_access_cannot_join_channel_by_id() {
     let mutation_service = RecordingMutationService::default();
     let joins = mutation_service.joins.clone();
     let router = channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         mutation_service,
         TestAccessService::deny(),
         authorization_state(),
@@ -1400,6 +1511,7 @@ async fn malformed_channel_id_does_not_invoke_join_service() {
     let joins = mutation_service.joins.clone();
     let access_service = TestAccessService::channel_view_only();
     let router = channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         mutation_service,
         access_service.clone(),
         authorization_state(),
@@ -1433,7 +1545,8 @@ async fn post_message_route_uses_entity_access_and_mutation_service() {
     let mutation_service = RecordingMutationService::default();
     let posts = mutation_service.posts.clone();
     let router = channels_router(ChannelsRouterState::new(
-        mutation_service,
+        Arc::new(mutation_service),
+        MockService,
         TestAccessService::allow(),
         authorization_state(),
     ))
@@ -1609,6 +1722,7 @@ async fn participants_returns_empty_list() {
 #[tokio::test]
 async fn participants_returns_data_with_correct_shape() {
     let router = channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         ParticipantsService,
         TestAccessService::allow(),
         authorization_state(),
@@ -1652,6 +1766,16 @@ async fn participants_returns_500_on_service_error() {
 struct NotFoundService;
 
 impl ChannelService for NotFoundService {
+    async fn set_channel_picture(
+        &self,
+        _access: entity_access::domain::models::EntityAccessReceipt<
+            entity_access::domain::models::AdminParticipantRole,
+        >,
+        _picture_id: Option<uuid::Uuid>,
+    ) -> Result<(), crate::domain::ports::ChannelMutationErr> {
+        unimplemented!("picture mutation is not used by this fixture")
+    }
+
     async fn get_channel_messages(
         &self,
         _channel_id: Uuid,
@@ -1724,6 +1848,16 @@ struct AroundHasItemsService {
 }
 
 impl ChannelService for AroundHasItemsService {
+    async fn set_channel_picture(
+        &self,
+        _access: entity_access::domain::models::EntityAccessReceipt<
+            entity_access::domain::models::AdminParticipantRole,
+        >,
+        _picture_id: Option<uuid::Uuid>,
+    ) -> Result<(), crate::domain::ports::ChannelMutationErr> {
+        unimplemented!("picture mutation is not used by this fixture")
+    }
+
     async fn get_channel_messages(
         &self,
         _channel_id: Uuid,
@@ -1843,6 +1977,7 @@ async fn messages_around_returns_empty_page() {
 #[tokio::test]
 async fn messages_around_omits_previous_cursor_when_no_newer_page() {
     let router = channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         AroundHasItemsService {
             has_more_newer: false,
         },
@@ -1871,6 +2006,7 @@ async fn messages_around_omits_previous_cursor_when_no_newer_page() {
 #[tokio::test]
 async fn messages_around_returns_previous_cursor_when_newer_page_exists() {
     let router = channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         AroundHasItemsService {
             has_more_newer: true,
         },
@@ -1899,6 +2035,7 @@ async fn messages_around_returns_previous_cursor_when_newer_page_exists() {
 #[tokio::test]
 async fn messages_around_returns_404_when_not_found() {
     let router = channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         NotFoundService,
         TestAccessService::allow(),
         authorization_state(),
@@ -1925,6 +2062,7 @@ async fn messages_around_returns_404_when_not_found() {
 
 struct CapturingService {
     captured: std::sync::Mutex<Option<ChannelMessageFilters>>,
+    captured_direction: std::sync::Mutex<Option<MessagePageDirection>>,
     captured_notification_user_id: std::sync::Mutex<Option<MacroUserIdStr<'static>>>,
 }
 
@@ -1932,22 +2070,34 @@ impl CapturingService {
     fn new() -> std::sync::Arc<Self> {
         std::sync::Arc::new(Self {
             captured: std::sync::Mutex::new(None),
+            captured_direction: std::sync::Mutex::new(None),
             captured_notification_user_id: std::sync::Mutex::new(None),
         })
     }
 }
 
 impl ChannelService for std::sync::Arc<CapturingService> {
+    async fn set_channel_picture(
+        &self,
+        _access: entity_access::domain::models::EntityAccessReceipt<
+            entity_access::domain::models::AdminParticipantRole,
+        >,
+        _picture_id: Option<uuid::Uuid>,
+    ) -> Result<(), crate::domain::ports::ChannelMutationErr> {
+        unimplemented!("picture mutation is not used by this fixture")
+    }
+
     async fn get_channel_messages(
         &self,
         _channel_id: Uuid,
         _query: Query<Uuid, CreatedAt, ()>,
-        _direction: MessagePageDirection,
+        direction: MessagePageDirection,
         _limit: u16,
         filters: &ChannelMessageFilters,
         notification_user_id: Option<MacroUserIdStr<'_>>,
     ) -> Result<ChannelMessagesQueryResult, ChannelMessagesErr> {
         *self.captured.lock().unwrap() = Some(filters.clone());
+        *self.captured_direction.lock().unwrap() = Some(direction);
         *self.captured_notification_user_id.lock().unwrap() =
             notification_user_id.map(CowLike::into_owned);
         Ok(ChannelMessagesQueryResult {
@@ -2019,6 +2169,7 @@ impl ChannelService for std::sync::Arc<CapturingService> {
 async fn post_messages_empty_body_uses_default_filters() {
     let svc = CapturingService::new();
     let router = channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         svc.clone(),
         TestAccessService::allow(),
         authorization_state(),
@@ -2047,6 +2198,7 @@ async fn post_messages_empty_body_uses_default_filters() {
 async fn post_messages_forwards_message_ids_filter() {
     let svc = CapturingService::new();
     let router = channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         svc.clone(),
         TestAccessService::allow(),
         authorization_state(),
@@ -2076,6 +2228,7 @@ async fn post_messages_forwards_message_ids_filter() {
 async fn post_messages_forwards_last_activity_filter() {
     let svc = CapturingService::new();
     let router = channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         svc.clone(),
         TestAccessService::allow(),
         authorization_state(),
@@ -2110,6 +2263,7 @@ async fn post_messages_forwards_last_activity_filter() {
 async fn post_messages_forwards_notification_filter_for_authenticated_user() {
     let svc = CapturingService::new();
     let router = channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         svc.clone(),
         TestAccessService::allow(),
         authorization_state(),
@@ -2119,8 +2273,7 @@ async fn post_messages_forwards_notification_filter_for_authenticated_user() {
     let channel_id = Uuid::new_v4();
     let body = serde_json::json!({
         "notification_filters": {
-            "done": false,
-            "seen": true
+            "states": ["seen"]
         }
     })
     .to_string();
@@ -2136,8 +2289,10 @@ async fn post_messages_forwards_notification_filter_for_authenticated_user() {
     assert_eq!(res.status(), StatusCode::OK);
 
     let captured = svc.captured.lock().unwrap().clone().unwrap();
-    assert_eq!(captured.notification_filters.done, Some(false));
-    assert_eq!(captured.notification_filters.seen, Some(true));
+    assert_eq!(
+        captured.notification_filters.states,
+        vec![item_filters::NotificationState::Seen]
+    );
     let captured_user_id = svc
         .captured_notification_user_id
         .lock()
@@ -2150,6 +2305,7 @@ async fn post_messages_forwards_notification_filter_for_authenticated_user() {
 #[tokio::test]
 async fn post_messages_rejects_oversized_filter_list() {
     let router = channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         MockService,
         TestAccessService::allow(),
         authorization_state(),
@@ -2196,6 +2352,7 @@ async fn thread_replies_returns_empty_list() {
 #[tokio::test]
 async fn thread_replies_returns_404_when_not_found() {
     let router = channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         NotFoundService,
         TestAccessService::allow(),
         authorization_state(),
@@ -2263,6 +2420,94 @@ async fn message_context_returns_flat_context_response() {
 }
 
 // --- Access control tests ---
+
+#[tokio::test]
+async fn catch_up_forwards_exclusive_after_and_older_direction() {
+    let svc = CapturingService::new();
+    let router = channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
+        svc.clone(),
+        TestAccessService::allow(),
+        authorization_state(),
+    ))
+    .layer(axum::middleware::map_request(attach_bearer));
+
+    let channel_id = Uuid::new_v4();
+    let after = "2026-09-10T13:19:00.123456Z";
+    let request = Request::builder()
+        .uri(format!("/{channel_id}/messages/catch-up?after={after}"))
+        .body(axum::body::Body::empty())
+        .unwrap();
+
+    let res = router.oneshot(request).await.unwrap();
+    assert_eq!(res.status(), StatusCode::OK);
+
+    let captured = svc.captured.lock().unwrap().clone().unwrap();
+    assert_eq!(
+        captured.created_after_exclusive,
+        Some(
+            chrono::DateTime::parse_from_rfc3339(after)
+                .unwrap()
+                .with_timezone(&chrono::Utc)
+        )
+    );
+    assert!(captured.created_after.is_none());
+    assert_eq!(
+        *svc.captured_direction.lock().unwrap(),
+        Some(MessagePageDirection::Older)
+    );
+}
+
+#[tokio::test]
+async fn catch_up_rejects_missing_or_invalid_after() {
+    let svc = CapturingService::new();
+    let router = channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
+        svc.clone(),
+        TestAccessService::allow(),
+        authorization_state(),
+    ))
+    .layer(axum::middleware::map_request(attach_bearer));
+
+    let channel_id = Uuid::new_v4();
+    for uri in [
+        format!("/{channel_id}/messages/catch-up"),
+        format!("/{channel_id}/messages/catch-up?after=yesterday"),
+    ] {
+        let request = Request::builder()
+            .uri(uri)
+            .body(axum::body::Body::empty())
+            .unwrap();
+        let res = router.clone().oneshot(request).await.unwrap();
+        assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+        let bytes = res.into_body().collect().await.unwrap().to_bytes();
+        let json: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(json["message"], "after must be an RFC3339 timestamp");
+        assert!(svc.captured.lock().unwrap().is_none());
+    }
+}
+
+#[tokio::test]
+async fn non_member_cannot_access_catch_up() {
+    let router = denied_router();
+    let channel_id = Uuid::new_v4();
+    let request = Request::builder()
+        .uri(format!(
+            "/{channel_id}/messages/catch-up?after=2026-09-10T13:19:00Z"
+        ))
+        .body(axum::body::Body::empty())
+        .unwrap();
+
+    let res = router.oneshot(request).await.unwrap();
+    assert_eq!(res.status(), StatusCode::UNAUTHORIZED);
+
+    let bytes = res.into_body().collect().await.unwrap().to_bytes();
+    let json: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+    assert_eq!(
+        json["message"],
+        "User does not have access to the requested resource"
+    );
+}
 
 #[tokio::test]
 async fn non_member_cannot_access_messages() {
@@ -2359,6 +2604,16 @@ struct ActivityService {
 }
 
 impl ChannelService for ActivityService {
+    async fn set_channel_picture(
+        &self,
+        _access: entity_access::domain::models::EntityAccessReceipt<
+            entity_access::domain::models::AdminParticipantRole,
+        >,
+        _picture_id: Option<uuid::Uuid>,
+    ) -> Result<(), crate::domain::ports::ChannelMutationErr> {
+        unimplemented!("picture mutation is not used by this fixture")
+    }
+
     async fn get_channel_messages(
         &self,
         _channel_id: Uuid,
@@ -2470,6 +2725,7 @@ impl ChannelService for ActivityService {
 #[tokio::test]
 async fn get_activity_returns_user_activities() {
     let router = channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         ActivityService::default(),
         TestAccessService::allow(),
         authorization_state(),
@@ -2493,6 +2749,7 @@ async fn post_activity_records_and_returns_activity() {
     let service = ActivityService::default();
     let posts = service.posts.clone();
     let router = channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         service,
         TestAccessService::allow(),
         authorization_state(),
@@ -2528,6 +2785,7 @@ async fn post_activity_records_and_returns_activity() {
 #[tokio::test]
 async fn post_activity_rejects_non_members() {
     let router = channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         ActivityService::default(),
         TestAccessService::deny(),
         authorization_state(),
@@ -2553,6 +2811,7 @@ async fn post_activity_rejects_non_members() {
 #[tokio::test]
 async fn post_activity_rejects_invalid_channel_id() {
     let router = channels_router(ChannelsRouterState::new(
+        Arc::new(RecordingMutationService::default()),
         ActivityService::default(),
         TestAccessService::allow(),
         authorization_state(),
@@ -2573,4 +2832,51 @@ async fn post_activity_rejects_invalid_channel_id() {
 
     let res = router.oneshot(request).await.unwrap();
     assert_eq!(res.status(), StatusCode::BAD_REQUEST);
+}
+
+#[tokio::test]
+async fn picture_endpoint_requires_channel_admin_and_passes_the_verified_channel() {
+    for role in [
+        EntityParticipantRole::Member,
+        EntityParticipantRole::Admin,
+        EntityParticipantRole::Owner,
+    ] {
+        let service = RecordingMutationService::default();
+        let pictures = service.pictures.clone();
+        let mut access = TestAccessService::allow();
+        access.channel_role = role;
+        let app = channels_router(ChannelsRouterState::new(
+            Arc::new(RecordingMutationService::default()),
+            service,
+            access,
+            authorization_state(),
+        ));
+        let channel_id = Uuid::new_v4();
+        let picture_id = Uuid::new_v4();
+        let response = app
+            .oneshot(
+                Request::put(format!("/{channel_id}/profile_picture"))
+                    .header(
+                        header::AUTHORIZATION,
+                        format!("Bearer {VALID_BEARER_TOKEN}"),
+                    )
+                    .header(header::CONTENT_TYPE, "application/json")
+                    .body(Body::from(
+                        serde_json::json!({"profile_picture_id": picture_id}).to_string(),
+                    ))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        if role == EntityParticipantRole::Member {
+            assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+            assert!(pictures.lock().unwrap().is_empty());
+        } else {
+            assert_eq!(response.status(), StatusCode::NO_CONTENT);
+            assert_eq!(
+                *pictures.lock().unwrap(),
+                vec![(channel_id.to_string(), Some(picture_id))]
+            );
+        }
+    }
 }

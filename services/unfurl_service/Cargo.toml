@@ -29,7 +29,7 @@ http = { workspace = true }
 http-body-util = { workspace = true }
 conation_config = { path = "../../crates/conation_config" }
 conation_cors = { path = "../../crates/conation_cors" }
-conation_entrypoint = { path = "../../crates/conation_entrypoint" }
+conation_entrypoint = { package = "macro_entrypoint", path = "../../crates/conation_entrypoint" }
 conation_env = { path = "../../crates/conation_env" }
 reqwest = { workspace = true, features = ["stream"] }
 scraper = { workspace = true }

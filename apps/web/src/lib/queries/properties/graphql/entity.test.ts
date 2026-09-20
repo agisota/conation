@@ -9,6 +9,7 @@ import {
   type OperationResult,
 } from '@urql/core';
 import { createRoot, createSignal } from 'solid-js';
+import { validate as validateUuid } from 'uuid';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { filter, makeSubject, mergeMap, pipe } from 'wonka';
 
@@ -31,6 +32,7 @@ import {
   createGraphqlAddEntityPropertyMutation,
   createGraphqlBulkSaveEntityPropertiesMutation,
   createGraphqlEntityPropertiesQuery,
+  entityPropertyOptimisticMutationUuid,
   mapGraphqlEntityProperties,
 } from './entity';
 
@@ -168,7 +170,46 @@ describe('mapGraphqlEntityProperties', () => {
 
   it('retains the not-yet-loaded distinction', () => {
     expect(mapGraphqlEntityProperties(undefined, 'entity-1')).toBeUndefined();
+    expect(
+      mapGraphqlEntityProperties(
+        { user: { id: 'user-1' } } as never,
+        'entity-1'
+      )
+    ).toBeUndefined();
     expect(mapGraphqlPropertiesMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('entityPropertyOptimisticMutationUuid', () => {
+  it('is stable per property slot and distinct across slots', () => {
+    const args = {
+      entityType: 'DOCUMENT' as const,
+      entityId: 'document-1',
+      propertyDefinitionId: 'property-1',
+    };
+    const uuid = entityPropertyOptimisticMutationUuid(args);
+
+    expect(validateUuid(uuid)).toBe(true);
+    expect(entityPropertyOptimisticMutationUuid(args)).toBe(uuid);
+    expect(
+      entityPropertyOptimisticMutationUuid({
+        ...args,
+        propertyDefinitionId: 'property-2',
+      })
+    ).not.toBe(uuid);
+    expect(
+      entityPropertyOptimisticMutationUuid({
+        ...args,
+        entityId: 'document-1:property',
+        propertyDefinitionId: '1',
+      })
+    ).not.toBe(
+      entityPropertyOptimisticMutationUuid({
+        ...args,
+        entityId: 'document-1',
+        propertyDefinitionId: 'property:1',
+      })
+    );
   });
 });
 
@@ -227,7 +268,7 @@ describe('GraphQL entity property mutations', () => {
     );
   });
 
-  it('durably queues optimistic saves', async () => {
+  it('returns optimistic data for saves queued behind a replacement', async () => {
     const property = {
       propertyId: 'assignment-1',
       propertyDefinitionId: 'definition-1',
@@ -248,11 +289,12 @@ describe('GraphQL entity property mutations', () => {
             kind: 'mutation',
             context,
           } as Operation,
-          data: { setEntityProperty: { id: 'assignment-1' } },
+          data: undefined,
           extensions: {
             normalizedCacheMutationDisposition: {
-              kind: 'queued',
+              kind: 'superseded',
               transactionId: 'transaction-1',
+              replacementTransactionId: 'transaction-2',
             },
           },
           stale: false,
@@ -282,10 +324,14 @@ describe('GraphQL entity property mutations', () => {
         ],
       })
     ).resolves.toMatchObject({
+      data: {
+        setEntityProperty: expect.objectContaining({ id: 'assignment-1' }),
+      },
       extensions: {
         normalizedCacheMutationDisposition: {
-          kind: 'queued',
+          kind: 'superseded',
           transactionId: 'transaction-1',
+          replacementTransactionId: 'transaction-2',
         },
       },
     });

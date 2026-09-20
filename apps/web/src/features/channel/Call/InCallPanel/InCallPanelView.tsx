@@ -1,8 +1,8 @@
 import { t } from '@app/lib/i18n';
 import { StackedAvatarsRow } from '@core/component/StackedAvatarsRow';
 import { useChannelsContext } from '@core/context/channels';
-import PhoneDisconnect from '@icon/wide-call-disconnect.svg';
 import ArrowsOut from '@phosphor/arrows-out.svg';
+import PhoneDisconnect from '@phosphor/phone-disconnect.svg';
 import { useActiveCallQuery } from '@queries/call/call';
 import { Avatar, cn, Surface, Tooltip } from '@ui';
 import {

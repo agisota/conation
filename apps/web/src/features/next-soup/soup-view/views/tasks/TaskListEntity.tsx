@@ -39,6 +39,7 @@ import { mergeRefs } from '@solid-primitives/refs';
 import { cn } from '@ui/utils/classname';
 import {
   createEffect,
+  createMemo,
   createSignal,
   type JSX,
   Match,
@@ -47,6 +48,7 @@ import {
   useContext,
 } from 'solid-js';
 import { TaskGridLayout } from './task-grid-layout';
+import { matchesTaskDueFilter, taskDueFilter } from './task-grid-template';
 
 interface TaskListEntityProps extends BaseListEntityProps {
   showUnrollNotifications?: boolean;
@@ -105,7 +107,11 @@ export function TaskListEntity(props: TaskListEntityProps) {
   const [snippetContainerRef, setSnippetContainerRef] = createSignal<
     HTMLElement | undefined
   >();
-  const chars = useCharacterCount(snippetContainerRef);
+  const chars = useCharacterCount(() =>
+    props.deferInteractions && !hasSearchContentHits(props.entity)
+      ? undefined
+      : snippetContainerRef()
+  );
 
   const showHitSnippet = () =>
     !props.hideContentHits && hasSearchContentHits(props.entity);
@@ -130,71 +136,78 @@ export function TaskListEntity(props: TaskListEntityProps) {
   const draggable = createEntityDraggable({
     entity: props.entity,
     splitId: useSplitPanel()?.handle?.id,
+    deferUntilInteraction: () => props.deferInteractions === true,
   });
 
   const isWide = useListLayout()?.isWide ?? (() => true);
 
-  return (
-    <Entity.Root
-      entity={props.entity}
-      onClick={(e) => {
-        if (e.metaKey && props.onChecked) {
-          props.onChecked(!props.checked, e.shiftKey);
-          return;
-        }
-        props.onClick?.(e);
-      }}
-      ref={mergeRefs(props.ref, draggable)}
-      class={cn(
-        // Carries the --soup-row-* geometry (ListEntity.css) that the narrow
-        // layout below reads for its leading edge.
-        isWide() ? SOUP_ROW_CLASS.wide : SOUP_ROW_CLASS.narrow,
-        'soup-list-entity @container/entity w-[calc(100%-0.5rem)] mr-1 relative group/narrow flex flex-col py-0.5 rounded-lg',
-        {
-          'min-h-10 mx-(--soup-row-gutter)': !isMobile(),
-          'bg-list-selected': props.checked,
-          'bg-list-selected-highlighted':
-            props.checked && props.highlighted && !isTouchDevice(),
-          'bg-list-highlighted':
-            props.highlighted && !props.checked && !isTouchDevice(),
-          'hover:bg-list-hover':
-            !props.highlighted && !props.checked && !isTouchDevice(),
-        }
-      )}
-      onMouseMove={props.onMouseMove}
-    >
-      <Switch>
-        <Match when={isWide()}>
-          <MaybeEntityRow
-            entityId={props.entity.id}
-            config={props.entityRowConfig}
-          >
-            <TaskGridLayout {...layoutProps()} />
-          </MaybeEntityRow>
-        </Match>
-        <Match when={true}>
-          <MaybeEntityRow
-            entityId={props.entity.id}
-            config={props.entityRowConfig}
-          >
-            <NarrowLayout {...layoutProps()} />
-          </MaybeEntityRow>
-        </Match>
-      </Switch>
+  const dueVisible = createMemo(() =>
+    matchesTaskDueFilter(props.entity, taskDueFilter())
+  );
 
-      <Show when={showContentHits()}>
-        <div class="flex gap-2 w-full h-full items-center text-sm px-2 pb-1 -mt-2 min-w-0">
-          <div
-            class={cn('min-w-0 flex-1 overflow-hidden ml-4 @lg/entity:ml-6')}
-          >
-            <Entity.Search.ContentHits
-              entity={props.entity}
-              onClick={props.onContentHitClick}
-              visibleCount={0}
-            />
+  return (
+    <Show when={dueVisible()}>
+      <Entity.Root
+        entity={props.entity}
+        onClick={(e) => {
+          if (e.metaKey && props.onChecked) {
+            props.onChecked(!props.checked, e.shiftKey);
+            return;
+          }
+          props.onClick?.(e);
+        }}
+        ref={mergeRefs(props.ref, draggable)}
+        class={cn(
+          // Carries the --soup-row-* geometry (ListEntity.css) that the narrow
+          // layout below reads for its leading edge.
+          isWide() ? SOUP_ROW_CLASS.wide : SOUP_ROW_CLASS.narrow,
+          'soup-list-entity @container/entity w-[calc(100%-0.5rem)] mr-1 relative group/narrow flex flex-col py-0.5 rounded-xl',
+          {
+            'min-h-10 mx-(--soup-row-gutter)': !isMobile(),
+            'bg-list-selected': props.checked,
+            'bg-list-selected-highlighted':
+              props.checked && props.highlighted && !isTouchDevice(),
+            'bg-list-highlighted':
+              props.highlighted && !props.checked && !isTouchDevice(),
+            'hover:bg-list-hover':
+              !props.highlighted && !props.checked && !isTouchDevice(),
+          }
+        )}
+        onMouseMove={props.onMouseMove}
+      >
+        <Switch>
+          <Match when={isWide()}>
+            <MaybeEntityRow
+              entityId={props.entity.id}
+              config={props.entityRowConfig}
+            >
+              <TaskGridLayout {...layoutProps()} />
+            </MaybeEntityRow>
+          </Match>
+          <Match when={true}>
+            <MaybeEntityRow
+              entityId={props.entity.id}
+              config={props.entityRowConfig}
+            >
+              <NarrowLayout {...layoutProps()} />
+            </MaybeEntityRow>
+          </Match>
+        </Switch>
+
+        <Show when={showContentHits()}>
+          <div class="flex gap-2 w-full h-full items-center text-sm px-2 pb-1 -mt-2 min-w-0">
+            <div
+              class={cn('min-w-0 flex-1 overflow-hidden ml-4 @lg/entity:ml-6')}
+            >
+              <Entity.Search.ContentHits
+                entity={props.entity}
+                onClick={props.onContentHitClick}
+                visibleCount={0}
+              />
+            </div>
           </div>
-        </div>
-      </Show>
-    </Entity.Root>
+        </Show>
+      </Entity.Root>
+    </Show>
   );
 }

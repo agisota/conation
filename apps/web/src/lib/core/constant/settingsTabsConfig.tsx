@@ -1,13 +1,17 @@
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
-import BotIcon from '@icon/wide-bot.svg';
+import { t } from '@app/lib/i18n';
 import BellIcon from '@phosphor/bell-simple.svg';
 import BugIcon from '@phosphor/bug.svg';
 import BuildingsIcon from '@phosphor/buildings.svg';
 import CpuIcon from '@phosphor/cpu.svg';
+import CreditCardIcon from '@phosphor/credit-card.svg';
 import DeviceMobileIcon from '@phosphor/device-mobile-speaker.svg';
+import HardDrivesIcon from '@phosphor/hard-drives.svg';
 import KeyIcon from '@phosphor/key.svg';
 import KeyboardIcon from '@phosphor/keyboard.svg';
 import PlugIcon from '@phosphor/plug.svg';
+import BotIcon from '@phosphor/robot.svg';
+import AgentIcon from '@phosphor/sparkle.svg';
 import SwatchesIcon from '@phosphor/swatches.svg';
 import TagIcon from '@phosphor/tag-simple.svg';
 import UserIconPhosphor from '@phosphor/user.svg';
@@ -17,14 +21,12 @@ import { useHasPermission } from '../context/user';
 import { isNativeMobilePlatform } from '../mobile/isNativeMobilePlatform';
 import { isTouchDevice } from '../mobile/isTouchDevice';
 import {
-  BOT_MANAGEMENT_FLAG,
-  BOT_MANAGEMENT_OVERRIDE,
+  botManagement,
   DEV_MODE_ENV,
   ENABLE_APP_STORE_QR_CODE,
-  ENABLE_CRM_FLAG,
-  ENABLE_CRM_OVERRIDE,
-  ENABLE_NOTIFICATION_SETTINGS_FLAG,
-  ENABLE_NOTIFICATION_SETTINGS_OVERRIDE,
+  enableChatV3Agents,
+  enableCrm,
+  enableNotificationSettings,
 } from './featureFlags';
 import { PERMISSION_IDS } from './permissions';
 import type { SettingsTab } from './SettingsState';
@@ -50,36 +52,144 @@ export type SettingsTabGroup = {
  */
 export const SETTINGS_TAB_GROUPS: SettingsTabGroup[] = [
   {
-    label: 'General',
+    get label() {
+      return t('settings.tabs.general');
+    },
     items: [
-      { tab: 'Account', label: 'Account', icon: UserIconPhosphor },
-      { tab: 'Notifications', label: 'Notifications', icon: BellIcon },
-      // The historical route remains `/settings/billing`, while its free
-      // Conation surface is presented as access rather than a purchase flow.
-      { tab: 'Billing', label: 'Access', icon: KeyIcon },
-      { tab: 'Appearance', label: 'Appearance', icon: SwatchesIcon },
-      { tab: 'Mobile App', label: 'Mobile App', icon: DeviceMobileIcon },
-      { tab: 'Shortcuts', label: 'Shortcuts', icon: KeyboardIcon },
+      {
+        tab: 'Account',
+        get label() {
+          return t('settings.tabs.account');
+        },
+        icon: UserIconPhosphor,
+      },
+      {
+        tab: 'API Keys',
+        get label() {
+          return t('settings.tabs.apiKeys');
+        },
+        icon: KeyIcon,
+      },
+      {
+        tab: 'Notifications',
+        get label() {
+          return t('settings.tabs.notifications');
+        },
+        icon: BellIcon,
+      },
+      {
+        tab: 'Billing',
+        get label() {
+          return t('settings.tabs.billing');
+        },
+        icon: CreditCardIcon,
+      },
+      {
+        tab: 'Appearance',
+        get label() {
+          return t('settings.tabs.appearance');
+        },
+        icon: SwatchesIcon,
+      },
+      {
+        tab: 'Mobile App',
+        get label() {
+          return t('settings.tabs.mobileApp');
+        },
+        icon: DeviceMobileIcon,
+      },
+      {
+        tab: 'Shortcuts',
+        get label() {
+          return t('settings.tabs.shortcuts');
+        },
+        icon: KeyboardIcon,
+      },
     ],
   },
   {
-    label: 'Workspace',
+    get label() {
+      return t('settings.tabs.workspace');
+    },
     items: [
-      { tab: 'Team', label: 'Team', icon: UsersThreeIcon },
-      { tab: 'Tags', label: 'Tags', icon: TagIcon },
-      { tab: 'CRM', label: 'CRM', icon: BuildingsIcon },
+      {
+        tab: 'Team',
+        get label() {
+          return t('settings.tabs.team');
+        },
+        icon: UsersThreeIcon,
+      },
+      {
+        tab: 'Tags',
+        get label() {
+          return t('settings.tabs.tags');
+        },
+        icon: TagIcon,
+      },
+      {
+        tab: 'CRM',
+        get label() {
+          return t('settings.tabs.crm');
+        },
+        icon: BuildingsIcon,
+      },
       {
         tab: 'Connected',
-        label: 'Connections',
+        get label() {
+          return t('settings.tabs.integrations');
+        },
         icon: CpuIcon,
       },
-      { tab: 'Agent', label: 'MCP server', icon: PlugIcon },
-      { tab: 'Bots', label: 'Bots', icon: BotIcon },
+      {
+        tab: 'Agent',
+        get label() {
+          return t('settings.tabs.mcpServer');
+        },
+        icon: PlugIcon,
+      },
+      {
+        tab: 'Bots',
+        get label() {
+          return t('settings.tabs.bots');
+        },
+        icon: BotIcon,
+      },
     ],
   },
   {
-    label: 'Admin',
-    items: [{ tab: 'Admin', label: 'Debug', icon: BugIcon }],
+    get label() {
+      return t('settings.tabs.agents');
+    },
+    items: [
+      {
+        tab: 'Agents',
+        get label() {
+          return t('settings.tabs.agents');
+        },
+        icon: AgentIcon,
+      },
+      {
+        tab: 'Harness',
+        get label() {
+          return t('settings.tabs.harness');
+        },
+        icon: HardDrivesIcon,
+      },
+    ],
+  },
+  {
+    get label() {
+      return t('settings.tabs.admin');
+    },
+    items: [
+      {
+        tab: 'Admin',
+        get label() {
+          return t('settings.tabs.debug');
+        },
+        icon: BugIcon,
+      },
+    ],
   },
 ];
 
@@ -94,6 +204,7 @@ const SETTINGS_TAB_ITEMS = SETTINGS_TAB_GROUPS.flatMap((group) => group.items);
  */
 const SETTINGS_TAB_SLUGS: Record<SettingsTab, string> = {
   Account: 'account',
+  'API Keys': 'api-keys',
   Notifications: 'notifications',
   Billing: 'billing',
   Subscription: 'subscription',
@@ -105,6 +216,8 @@ const SETTINGS_TAB_SLUGS: Record<SettingsTab, string> = {
   Shortcuts: 'shortcuts',
   'Mobile App': 'mobile-app',
   Agent: 'mcp-server',
+  Agents: 'agents',
+  Harness: 'harness',
   Bots: 'bots',
   Team: 'team',
   Tags: 'tags',
@@ -148,24 +261,17 @@ export const getSettingsTabItem = (
  * surface a tab the panel won't render.
  */
 export const useSettingsTabAvailable = () => {
-  const botManagementFlag = useFeatureFlag(BOT_MANAGEMENT_FLAG, {
-    enabledOverride: BOT_MANAGEMENT_OVERRIDE,
-  });
-  const crmFlag = useFeatureFlag(ENABLE_CRM_FLAG, {
-    enabledOverride: ENABLE_CRM_OVERRIDE,
-  });
-  const notificationSettingsFlag = useFeatureFlag(
-    ENABLE_NOTIFICATION_SETTINGS_FLAG,
-    {
-      enabledOverride: ENABLE_NOTIFICATION_SETTINGS_OVERRIDE,
-    }
-  );
+  const botManagementFlag = useFeatureFlag(botManagement);
+  const chatV3AgentsFlag = useFeatureFlag(enableChatV3Agents);
+  const crmFlag = useFeatureFlag(enableCrm);
+  const notificationSettingsFlag = useFeatureFlag(enableNotificationSettings);
   const hasAdminPanel = useHasPermission(PERMISSION_IDS.WRITE_ADMIN_PANEL);
 
   return (tab: SettingsTab): boolean => {
     switch (tab) {
       case 'Appearance':
       case 'Account':
+      case 'API Keys':
       case 'Billing':
         return true;
       case 'Notifications':
@@ -186,6 +292,12 @@ export const useSettingsTabAvailable = () => {
         return ENABLE_APP_STORE_QR_CODE && !isNativeMobilePlatform();
       case 'Agent':
         return !isNativeMobilePlatform();
+      // Configurable agents are still rolling out; keep both tabs behind the
+      // same enable-chat-v3-agents gate as the channel mention surfaces, so
+      // settings never advertises agents to a user who cannot mention one.
+      case 'Harness':
+      case 'Agents':
+        return chatV3AgentsFlag().enabled;
       case 'Bots':
         return botManagementFlag().enabled;
       case 'Mobile':

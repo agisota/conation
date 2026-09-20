@@ -50,3 +50,22 @@ impl ManagedModelCredentials for OmniRouteCredentials {
         UpstreamCall::bearer(url, token)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::domain::error::EgressError;
+    use crate::domain::model::BearerToken;
+    use url::Url;
+
+    #[tokio::test]
+    async fn an_empty_token_fails_closed() {
+        let credentials = OmniRouteCredentials::new(
+            Url::parse("https://api.rox.one").expect("url"),
+            BearerToken::new("  "),
+        )
+        .expect("https origin is accepted");
+        let error = credentials.resolve().await.expect_err("unarmed");
+        assert!(matches!(error, EgressError::Unroutable(_)));
+    }
+}

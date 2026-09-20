@@ -1,5 +1,7 @@
-import { t } from '@app/lib/i18n';
 import { useSplitLayout } from '@components/app/split-layout/layout';
+import { HoverCard } from '@core/component/HoverCard';
+import { openInNewSplitForMention } from '@core/util/openInNewSplit';
+import { useSplitNavigationHandler } from '@core/util/useSplitNavigationHandler';
 import {
   $isPullRequestMentionNode,
   HISTORIC_TAG,
@@ -7,9 +9,6 @@ import {
   SKIP_DOM_SELECTION_TAG,
   SKIP_SCROLL_INTO_VIEW_TAG,
 } from '@conation/lexical-core';
-import { HoverCard } from '@core/component/HoverCard';
-import { openInNewSplitForMention } from '@core/util/openInNewSplit';
-import { useSplitNavigationHandler } from '@core/util/useSplitNavigationHandler';
 import OpenIcon from '@phosphor/arrows-out.svg';
 import ChatCircle from '@phosphor/chat-circle.svg';
 import GitMerge from '@phosphor/git-merge.svg';
@@ -104,10 +103,10 @@ interface PullRequestParts {
 
 function pullRequestParts(
   entity: ForeignEntity | undefined,
-  props: PullRequestMentionDecoratorProps
+  label: string | undefined
 ): PullRequestParts {
   if (!entity || entity.foreignEntitySource !== GITHUB_PULL_REQUEST_SOURCE) {
-    return { name: fallbackLabel(props) };
+    return { name: fallbackLabel(label) };
   }
 
   const metadata = metadataRecord(entity.metadata);
@@ -118,13 +117,13 @@ function pullRequestParts(
     number != null
       ? `#${number}`
       : displayNameFromGithubKey(entity.foreignEntityId);
-  const name = title ?? displayName ?? ref ?? fallbackLabel(props);
+  const name = title ?? displayName ?? ref ?? fallbackLabel(label);
 
   return { name, number: name === ref ? undefined : ref };
 }
 
-function fallbackLabel(props: PullRequestMentionDecoratorProps): string {
-  return props.label || t('editor.pullRequest.fallbackLabel');
+function fallbackLabel(label: string | undefined): string {
+  return label || 'Pull request';
 }
 
 function PullRequestStatusIcon(props: { status: string }) {
@@ -191,7 +190,7 @@ function checksSummary(
 
 function pullRequestPreview(
   entity: ForeignEntity | undefined,
-  props: PullRequestMentionDecoratorProps
+  label: string | undefined
 ): PullRequestPreview | undefined {
   if (!entity || entity.foreignEntitySource !== GITHUB_PULL_REQUEST_SOURCE) {
     return undefined;
@@ -215,7 +214,7 @@ function pullRequestPreview(
     : undefined;
 
   return {
-    title: title ?? displayName ?? ref ?? fallbackLabel(props),
+    title: title ?? displayName ?? ref ?? fallbackLabel(label),
     ref,
     url: optionalString(metadata.url),
     status: optionalString(metadata.status) ?? 'open',
@@ -234,13 +233,10 @@ function PreviewStat(props: { children: JSX.Element; class?: string }) {
   );
 }
 
-function PullRequestPreviewBody(props: {
-  id: string;
-  fallbackProps: PullRequestMentionDecoratorProps;
-}) {
+function PullRequestPreviewBody(props: { id: string; fallbackLabel?: string }) {
   const query = usePrMentionQuery(() => props.id);
   const preview = createMemo(() =>
-    pullRequestPreview(query.data, props.fallbackProps)
+    pullRequestPreview(query.data, props.fallbackLabel)
   );
 
   return (
@@ -248,7 +244,7 @@ function PullRequestPreviewBody(props: {
       when={preview()}
       fallback={
         <div class="p-3 text-sm text-ink-muted">
-          {fallbackLabel(props.fallbackProps)}
+          {fallbackLabel(props.fallbackLabel)}
         </div>
       }
     >
@@ -343,9 +339,9 @@ function PullRequestPreviewBody(props: {
   );
 }
 
-function PullRequestPreviewCard(props: {
+export function PullRequestPreviewCard(props: {
   id: string;
-  fallbackProps: PullRequestMentionDecoratorProps;
+  fallbackLabel?: string;
 }) {
   return (
     <div class="select-none overflow-hidden w-80 text-ink">
@@ -353,13 +349,13 @@ function PullRequestPreviewCard(props: {
         <Suspense
           fallback={
             <div class="p-3 flex items-center justify-center text-sm text-ink-muted">
-              {t('editor.pullRequest.loading')}
+              Fetching PR...
             </div>
           }
         >
           <PullRequestPreviewBody
             id={props.id}
-            fallbackProps={props.fallbackProps}
+            fallbackLabel={props.fallbackLabel}
           />
         </Suspense>
       </Surface>
@@ -377,9 +373,9 @@ function PullRequestMentionContent(props: PullRequestMentionDecoratorProps) {
   );
 
   const label = createMemo(
-    () => pullRequestLabel(query.data) ?? fallbackLabel(props)
+    () => pullRequestLabel(query.data) ?? fallbackLabel(props.label)
   );
-  const parts = createMemo(() => pullRequestParts(query.data, props));
+  const parts = createMemo(() => pullRequestParts(query.data, props.label));
   const status = createMemo(() => pullRequestStatus(query.data));
 
   createEffect(() => {
@@ -475,21 +471,72 @@ export function PullRequestMention(props: PullRequestMentionDecoratorProps) {
           >
             <Suspense
               fallback={
-                <span class="text-ink-placeholder">
-                  {t('editor.pullRequest.loading')}
-                </span>
+                <span class="text-ink-placeholder">Fetching PR...</span>
               }
             >
               <PullRequestMentionContent {...props} />
             </Suspense>
           </span>
-          <MentionTooltip
-            show={isSelectedAsNode()}
-            text={t('editor.mention.open')}
-          />
+          <MentionTooltip show={isSelectedAsNode()} text="Open" />
         </span>
       }
-      content={<PullRequestPreviewCard id={props.id} fallbackProps={props} />}
+      content={
+        <PullRequestPreviewCard id={props.id} fallbackLabel={props.label} />
+      }
+    />
+  );
+}
+
+/**
+ * The mention's face for a pull request already in hand, outside any
+ * editor: the status icon and `title #N` pill with the same hover preview,
+ * opening the PR split on click. For surfaces that resolve the entity
+ * themselves - a Magic Chip linking the PR its session opened - rather than
+ * carrying a mention node.
+ */
+export function PullRequestEntityLink(props: {
+  entity: ForeignEntity;
+  class?: string;
+}) {
+  const { openWithSplit } = useSplitLayout()!;
+  const parts = createMemo(() => pullRequestParts(props.entity, undefined));
+  const status = createMemo(() => pullRequestStatus(props.entity));
+  const open = (e: MouseEvent | KeyboardEvent) => {
+    e.stopPropagation();
+    openWithSplit(
+      { type: 'pr', id: props.entity.id },
+      { preferNewSplit: openInNewSplitForMention(e.shiftKey, true) }
+    );
+  };
+  const navHandlers = useSplitNavigationHandler<HTMLButtonElement>(open);
+
+  return (
+    <HoverCard
+      triggerClass="min-w-0 max-w-full"
+      trigger={
+        <button
+          type="button"
+          class={cn(
+            'inline-flex min-w-0 items-center gap-1 rounded-xs px-1 py-0.5 hover:bg-hover focus:bg-active',
+            props.class
+          )}
+          data-pr-entity-link={props.entity.id}
+          {...navHandlers}
+        >
+          <span class="relative size-[1em] shrink-0 inline-flex">
+            <PullRequestStatusIcon status={status()} />
+          </span>
+          <span class="min-w-0 truncate">{parts().name}</span>
+          <Show when={parts().number}>
+            {(number) => (
+              <span class="shrink-0 text-ink-extra-muted text-[0.8em]">
+                {number()}
+              </span>
+            )}
+          </Show>
+        </button>
+      }
+      content={<PullRequestPreviewCard id={props.entity.id} />}
     />
   );
 }

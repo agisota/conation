@@ -5,7 +5,7 @@ import { ENABLE_TTFT } from '@core/constant/featureFlags';
 import { t } from '@core/i18n';
 import { createMarkdownFile } from '@core/util/create';
 import { PulsingStar } from '@entity/components/PulsingStar';
-import WideFileMd from '@icon/wide-file-md.svg';
+import WideFileMd from '@phosphor/file.svg';
 import CheckIcon from '@phosphor-icons/core/bold/check-bold.svg?component-solid';
 import ClipboardIcon from '@phosphor-icons/core/bold/clipboard-bold.svg?component-solid';
 import LoadingIcon from '@phosphor-icons/core/bold/spinner-gap-bold.svg?component-solid';

@@ -27,7 +27,7 @@ function _NotificationsButton(props: {
     props.entity
   );
   const unreadCount = createMemo(
-    () => notifications().filter((n) => !n.viewed_at).length
+    () => notifications().filter((n) => n.state === 'unseen').length
   );
   return (
     <div class="relative p-0 flex" tabIndex={-1}>
@@ -66,7 +66,7 @@ export function NotificationsDrawer(props: {
     props.entity
   );
   const unreadCount = createMemo(
-    () => notifications().filter((n) => !n.viewed_at).length
+    () => notifications().filter((n) => n.state === 'unseen').length
   );
   const title = () => (
     <>

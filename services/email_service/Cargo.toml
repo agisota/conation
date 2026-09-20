@@ -70,7 +70,7 @@ default = [
   "sfs_delete",
 ]
 gmail_webhook_auth = []
-local_auth = ["conation_authorization/local_auth"]
+local_auth = ["macro_authorization/local_auth"]
 local_queue = []
 sfs_map = []
 sfs_delete = []
@@ -80,7 +80,7 @@ calendar_events = { path = "../../crates/calendar_events", features = ["google",
 ammonia = { workspace = true }
 anyhow = { workspace = true }
 authentication_service_client = { path = "../../crates/authentication_service_client" }
-conation_aws_config = { path = "../../crates/conation_aws_config", features = ["s3", "sqs"] }
+macro_aws_config = { package = "conation_aws_config", path = "../../crates/conation_aws_config", features = ["s3", "sqs"] }
 aws-sdk-s3 = { workspace = true }
 aws-sdk-secretsmanager = { workspace = true }
 aws-sdk-sqs = { workspace = true }
@@ -102,32 +102,34 @@ entity_access = { path = "../../crates/entity_access", default-features = false,
 entity_access_management = { path = "../../crates/entity_access_management" }
 email_api_client = { path = "../../crates/email_api_client", features = ["ports", "outbound-gmail"] }
 email_db_client = { path = "../../crates/email_db_client" }
-email_provider = { path = "../../crates/email_provider" }
 email_utils = { path = "../../crates/email_utils" }
 filter_ast = { path = "../../crates/filter_ast" }
 frecency = { path = "../../crates/frecency", features = ["postgres"] }
 futures = { workspace = true }
 gmail_client = { path = "../../crates/gmail_client" }
+google_token = { path = "../../crates/google_token" }
 html-escape = { workspace = true }
 http-body-util = { workspace = true }
 infer = "0.19.0"
 item_filters = { path = "../../crates/item_filters" }
 lol_html = { workspace = true }
-conation_auth = { path = "../../crates/conation_auth" }
-conation_authorization = { path = "../../crates/conation_authorization" }
-conation_cors = { path = "../../crates/conation_cors" }
-conation_config = { path = "../../crates/conation_config" }
-conation_db_client = { path = "../../crates/conation_db_client" }
-conation_entrypoint = { path = "../../crates/conation_entrypoint" }
-conation_env = { path = "../../crates/conation_env" }
-conation_event_broker = { path = "../../crates/conation_event_broker" }
-conation_env_var = { path = "../../crates/conation_env_var" }
-conation_queues = { path = "../../crates/conation_queues" }
-conation_middleware = { path = "../../crates/conation_middleware", default-features = false }
+macro_auth = { package = "conation_auth", path = "../../crates/conation_auth" }
+macro_authorization = { path = "../../crates/conation_authorization", features = [
+  "postgres",
+] }
+macro_cors = { package = "conation_cors", path = "../../crates/conation_cors" }
+macro_config = { package = "conation_config", path = "../../crates/conation_config" }
+macro_db_client = { package = "conation_db_client", path = "../../crates/conation_db_client" }
+macro_entrypoint = { path = "../../crates/conation_entrypoint" }
+macro_env = { package = "conation_env", path = "../../crates/conation_env" }
+macro_event_broker = { package = "conation_event_broker", path = "../../crates/conation_event_broker" }
+macro_env_var = { package = "conation_env_var", path = "../../crates/conation_env_var" }
+macro_queues = { package = "conation_queues", path = "../../crates/conation_queues" }
+macro_middleware = { package = "conation_middleware", path = "../../crates/conation_middleware", default-features = false }
 last_online_tracker = { path = "../../crates/last_online_tracker" }
 notification = { path = "../../crates/notification" }
-conation_user_id = { path = "../../crates/conation_user_id" }
-conation_uuid = { path = "../../crates/conation_uuid" }
+macro_user_id = { package = "conation_user_id", path = "../../crates/conation_user_id" }
+macro_uuid = { package = "conation_uuid", path = "../../crates/conation_uuid" }
 mime_guess = "2.0.5"
 contacts = { path = "../../crates/contacts" }
 model = { path = "../../crates/model" }
@@ -180,10 +182,11 @@ urlencoding = { workspace = true }
 utoipa = { workspace = true }
 utoipa-swagger-ui = { workspace = true }
 uuid = { workspace = true }
+subtle = { workspace = true }
 
-conation_service_urls = { path = "../../crates/conation_service_urls" }
+macro_service_urls = { package = "conation_service_urls", path = "../../crates/conation_service_urls" }
 workspace-hack = { version = "0.1", path = "../../crates/workspace-hack" }
 
 [dev-dependencies]
-conation_auth = { path = "../../crates/conation_auth", features = ["testing"] }
-conation_db_migrator = { path = "../../crates/conation_db_migrator" }
+macro_auth = { package = "conation_auth", path = "../../crates/conation_auth", features = ["testing"] }
+macro_db_migrator = { package = "conation_db_migrator", path = "../../crates/conation_db_migrator" }

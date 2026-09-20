@@ -1,12 +1,6 @@
-import { formatNumber, t } from '@app/lib/i18n';
+import { useCurrentPageNumber } from '@block-pdf/signal/pdfViewer';
 import {
-  useCurrentPageNumber,
-  viewerHasVisiblePagesSignal,
-} from '@block-pdf/signal/pdfViewer';
-import {
-  activeTabIdSignal,
   MAX_TAB_COUNT,
-  tabDataStore,
   useCreateTab,
   useDeleteTab,
   useNavigateToTab,
@@ -14,6 +8,7 @@ import {
 import PlusIcon from '@phosphor/plus.svg';
 import XIcon from '@phosphor/x.svg';
 import { For, Show } from 'solid-js';
+import { usePdfDocument } from '../context/pdf-document-context';
 
 interface IInternalTabProps {
   label: string;
@@ -26,28 +21,14 @@ interface IInternalTabProps {
 }
 
 function Tab(props: IInternalTabProps) {
-  const [activeTabId] = activeTabIdSignal;
+  const [activeTabId] = usePdfDocument().state.signals.activeTabId;
   const currentPageNumber = useCurrentPageNumber();
 
   const active = () => props.id === activeTabId();
 
   // TODO (seamus) Tab label should be able to pull information from pdf
   // section data.
-  const label = () => {
-    if (active()) {
-      return t('pdf.tabs.page', {
-        page: formatNumber(currentPageNumber()),
-      });
-    }
-
-    // Page labels are stored in their compatibility-safe English form. Format
-    // them for display without mutating the persisted/block-scoped value.
-    const pageMatch = /^Page (\d+)$/.exec(props.label);
-    if (!pageMatch) return props.label;
-    return t('pdf.tabs.page', {
-      page: formatNumber(Number(pageMatch[1])),
-    });
-  };
+  const label = () => (active() ? `Page ${currentPageNumber()}` : props.label);
 
   return (
     <div
@@ -58,7 +39,6 @@ function Tab(props: IInternalTabProps) {
       <span class="truncate text-sm font-medium">{label()}</span>
       <Show when={props.tabCount > 1}>
         <XIcon
-          aria-label={t('pdf.tabs.close')}
           width={16}
           height={16}
           class="text-ink-muted shrink-0 ml-3 hover:bg-hover hover-transition-bg p-0.5 rounded"
@@ -73,12 +53,14 @@ function Tab(props: IInternalTabProps) {
 }
 
 export function Tabs() {
-  const [tabs] = tabDataStore;
+  const pdf = usePdfDocument();
+  const [tabs] = pdf.state.stores.tabData;
+  const [viewerHasVisiblePages] = pdf.state.signals.viewerHasVisiblePages;
   const createTab = useCreateTab();
   const deleteTab = useDeleteTab();
   const navigate = useNavigateToTab();
   return (
-    <Show when={viewerHasVisiblePagesSignal.get()}>
+    <Show when={viewerHasVisiblePages()}>
       <div class="w-full h-7 rounded-full flex px-1.5 shrink items-center">
         <For each={tabs}>
           {(tab, index) => (
@@ -95,8 +77,6 @@ export function Tabs() {
         </For>
         <Show when={tabs.length < MAX_TAB_COUNT}>
           <button
-            aria-label={t('pdf.tabs.add')}
-            type="button"
             onClick={() => createTab()}
             class="shrink-0 p-2 aspect-square rounded-lg flex items-center justify-center hover:bg-hover hover-transition-bg"
           >

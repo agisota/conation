@@ -1,15 +1,17 @@
 //! The capabilities the service needs from the outside.
 //!
-//! Four, and the split is deliberate. [`SessionAuthority`] answers "may this
+//! Five, and the split is deliberate. [`SessionAuthority`] answers "may this
 //! request happen at all", [`McpCredentials`] and [`GithubTokens`] answer
-//! "with whose credential, to where" for the two kinds of upstream, and
-//! [`Forwarder`] does the one thing that is genuinely transport work. Only the
-//! last touches a socket, which is what lets the decisions above it be tested
-//! exhaustively without one.
+//! "with whose credential, to where" for the two kinds of owner-scoped
+//! upstream, [`ManagedModelCredentials`] answers the one deployment-owned
+//! managed-model route, and [`Forwarder`] does the one thing that is
+//! genuinely transport work. Only the last touches a socket, which is what
+//! lets the decisions above it be tested exhaustively without one.
 
 use crate::domain::error::EgressError;
 use crate::domain::model::{
-    McpDestination, ProxyRequest, ProxyResponse, RepoSlug, SessionGrant, SessionToken, UpstreamCall,
+    McpDestination, McpResolution, ProxyRequest, ProxyResponse, RepoSlug, SessionGrant,
+    SessionToken, UpstreamCall,
 };
 use conation_user_id::user_id::MacroUserIdStr;
 
@@ -37,12 +39,16 @@ pub trait McpCredentials: Send + Sync {
     /// The upstream and credential for `destination`, on behalf of `owner`.
     ///
     /// Resolution is scoped to `owner`: a slug that names somebody else's
-    /// server is [`EgressError::UnknownServer`], not somebody else's server.
+    /// server is never somebody else's server. [`McpResolution::Connected`]
+    /// when the owner holds an enabled grant; [`McpResolution::Unconnected`]
+    /// when they do not but the upstream can still be addressed for them
+    /// (Pipedream scopes by user and app alone); [`EgressError::UnknownServer`]
+    /// only when the destination cannot be addressed at all.
     fn resolve(
         &self,
         owner: &MacroUserIdStr<'static>,
         destination: &McpDestination,
-    ) -> impl Future<Output = Result<UpstreamCall, EgressError>> + Send;
+    ) -> impl Future<Output = Result<McpResolution, EgressError>> + Send;
 }
 
 /// Mint a credential for git access to one repository.

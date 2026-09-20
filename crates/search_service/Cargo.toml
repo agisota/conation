@@ -13,6 +13,8 @@ name = "search_service_openapi"
 path = "src/openapi.rs"
 
 [dependencies]
+agent_session = { path = "../agent_session", default-features = false }
+rootcause = { workspace = true }
 anyhow = { workspace = true }
 aws-sdk-secretsmanager = { workspace = true }
 conation_aws_config = { path = "../conation_aws_config" }
@@ -31,7 +33,7 @@ http-body-util = { workspace = true }
 indexmap = { workspace = true }
 item_filters = { path = "../item_filters" }
 conation_auth = { path = "../conation_auth" }
-conation_authorization = { path = "../conation_authorization" }
+conation_authorization = { package = "macro_authorization", path = "../conation_authorization" }
 conation_db_client = { path = "../conation_db_client" }
 models_properties = { path = "../models_properties" }
 models_soup = { path = "../models_soup" }
@@ -42,7 +44,7 @@ system_properties = { path = "../system_properties" }
 readonly_pool = { path = "../readonly_pool" }
 conation_env = { path = "../conation_env" }
 conation_env_var = { path = "../conation_env_var" }
-conation_user_id = { path = "../conation_user_id" }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
 model = { path = "../model" }
 models_email = { path = "../models_email" }
 models_opensearch = { path = "../models_opensearch" }

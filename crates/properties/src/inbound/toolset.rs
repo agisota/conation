@@ -15,6 +15,7 @@ mod test;
 
 use crate::domain::service::{PropertiesService, TeamReceipt};
 use ai_toolset::{AsyncToolCollection, RequestContext, ServiceContext, ToolCallError};
+use bot_id::BotId;
 use entity_access::domain::models::{
     AccessError, Entity, EntityAccessReceipt, EntityPermission, EntityType,
 };
@@ -39,6 +40,9 @@ pub struct PropertiesToolContext<T: PropertiesService, A: EntityAccessService> {
     pub service: Arc<T>,
     /// The canonical service used to mint entity access receipts.
     pub entity_access_service: Arc<A>,
+    /// The bot these tools act as, on behalf of the requesting user. Defaults
+    /// to Macro AI; hosts running a specific agent set it with [`Self::with_actor`].
+    pub actor: BotId,
 }
 
 impl<T: PropertiesService, A: EntityAccessService> Clone for PropertiesToolContext<T, A> {
@@ -46,6 +50,7 @@ impl<T: PropertiesService, A: EntityAccessService> Clone for PropertiesToolConte
         Self {
             service: self.service.clone(),
             entity_access_service: self.entity_access_service.clone(),
+            actor: self.actor,
         }
     }
 }
@@ -56,7 +61,14 @@ impl<T: PropertiesService, A: EntityAccessService> PropertiesToolContext<T, A> {
         Self {
             service: Arc::new(service),
             entity_access_service: Arc::new(entity_access_service),
+            actor: bot_id::MACRO_AI_BOT_ID,
         }
+    }
+
+    /// Set the bot these tools act as.
+    pub fn with_actor(mut self, actor: BotId) -> Self {
+        self.actor = actor;
+        self
     }
 }
 

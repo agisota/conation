@@ -1,4 +1,3 @@
-import { t } from '@app/lib/i18n';
 import { MobileDrawer } from '@components/app/mobile/MobileDrawer';
 import { SwipableRowProvider } from '@components/app/mobile/SwipableRow';
 import { touchHandler } from '@core/directive/touchHandler';
@@ -13,7 +12,7 @@ import CheckIcon from '@phosphor/check.svg';
 import { cn } from '@ui';
 import { createSignal, For, Show } from 'solid-js';
 
-const CURRENT_USER_ID = 'conation|current@example.com';
+const CURRENT_USER_ID = 'macro|current@example.com';
 
 const mockEmail = (
   id: string,
@@ -104,52 +103,31 @@ export function OnboardingInbox() {
       if (email) markDone(email.id);
     };
     return [
+      { items: [{ label: 'Mark done', onClick: removeEmail }] },
       {
         items: [
-          {
-            label: t('auth.mobile.inbox.actions.markDone'),
-            onClick: removeEmail,
-          },
+          { label: 'Move to folder', onClick: () => {} },
+          { label: 'Copy link', onClick: () => {} },
         ],
       },
       {
+        label: 'Sender',
         items: [
-          {
-            label: t('auth.mobile.inbox.actions.moveToFolder'),
-            onClick: () => {},
-          },
-          { label: t('auth.mobile.inbox.actions.copyLink'), onClick: () => {} },
+          { label: 'Signal', onClick: () => {} },
+          { label: 'Block sender', onClick: () => {} },
         ],
       },
       {
-        label: t('auth.mobile.inbox.actions.sender'),
-        items: [
-          { label: t('auth.mobile.inbox.actions.signal'), onClick: () => {} },
-          {
-            label: t('auth.mobile.inbox.actions.blockSender'),
-            onClick: () => {},
-          },
-        ],
-      },
-      {
-        items: [
-          {
-            label: t('common.delete'),
-            destructive: true,
-            onClick: removeEmail,
-          },
-        ],
+        items: [{ label: 'Delete', destructive: true, onClick: removeEmail }],
       },
     ];
   };
 
   return (
     <div class="flex flex-col gap-4">
-      <h1 class="text-2xl font-semibold tracking-tight text-ink">
-        {t('auth.mobile.inbox.title')}
-      </h1>
+      <h1 class="text-2xl font-semibold tracking-tight text-ink">The Inbox</h1>
       <p class="text-sm/relaxed text-ink/60">
-        {t('auth.mobile.inbox.instructions')}
+        Swipe an email left to mark it done, or press and hold for more actions.
       </p>
 
       <ListEntityNoopMetadataProvider>
@@ -164,11 +142,9 @@ export function OnboardingInbox() {
                 each={emails()}
                 fallback={
                   <div class="flex flex-col items-center justify-center gap-1 py-12 text-center">
-                    <p class="text-sm font-medium text-ink">
-                      {t('auth.mobile.inbox.emptyTitle')}
-                    </p>
+                    <p class="text-sm font-medium text-ink">Inbox zero 🎉</p>
                     <p class="text-sm text-ink/60">
-                      {t('auth.mobile.inbox.emptyDescription')}
+                      You've cleared every email.
                     </p>
                   </div>
                 }
@@ -214,10 +190,8 @@ export function OnboardingInbox() {
         }}
       >
         <MobileDrawer.Portal>
-          <MobileDrawer.Overlay class="fixed inset-0 z-modal-overlay bg-modal-overlay" />
-          <MobileDrawer.Content
-            aria-label={t('auth.mobile.inbox.entityActions')}
-          >
+          <MobileDrawer.Overlay />
+          <MobileDrawer.Content aria-label="Entity actions">
             <MobileDrawer.Handle />
 
             <Show when={drawerEmail()}>

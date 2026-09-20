@@ -213,8 +213,15 @@ fn api_router(state: ApiContext) -> Router {
             "/channels",
             channels::inbound::axum_router::channels_router(state.channels_state.clone()),
         )
+        .nest(
+            "/messages",
+            messages::inbound::axum_router::router(state.messages_state.clone()),
+        )
         .merge(bots::inbound::axum_router::bots_router(
             state.bots_state.clone(),
+        ))
+        .merge(harnesses::inbound::axum_router::harnesses_router(
+            state.harnesses_state.clone(),
         ))
         .merge(
             bots::inbound::channel_webhook_router::channel_scoped_bot_router(
@@ -226,8 +233,18 @@ fn api_router(state: ApiContext) -> Router {
             favorites::inbound::axum_router::favorites_router(state.favorites_state.clone()),
         )
         .nest(
+            "/user-api-keys",
+            user_api_key::inbound::axum_router::user_api_key_router(
+                state.user_api_key_state.clone(),
+            ),
+        )
+        .nest(
             "/reminders",
             reminders::inbound::axum_router::reminders_router(state.reminders_state.clone()),
+        )
+        .nest(
+            "/initiatives",
+            initiative::inbound::axum_router::initiative_router(state.initiative_state.clone()),
         )
         .nest(
             "/collab_surfaces",
@@ -247,7 +264,11 @@ fn api_router(state: ApiContext) -> Router {
         )
         .nest(
             "/webhook",
-            webhook::inbound::axum_router::webhook_router(state.webhook_state.clone()),
+            webhook::inbound::axum_router::webhook_router(state.webhook_state.clone()).merge(
+                webhook::inbound::stream_router::webhook_stream_router(
+                    state.sse_stream_state.clone(),
+                ),
+            ),
         )
         .nest(
             "/crm",

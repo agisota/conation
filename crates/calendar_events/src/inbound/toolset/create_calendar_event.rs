@@ -1,15 +1,17 @@
 //! CreateCalendarEvent tool for adding events to the user's calendar.
 
 use ai_toolset::{
-    AsyncTool, RequestContext, ServiceContext, ToolAnnotated, ToolAnnotations, ToolResult,
+    AsyncTool, RequestContext, ServiceContext, ToolAnnotated, ToolAnnotations, ToolCallError,
+    ToolResult,
 };
 use async_trait::async_trait;
+use rootcause::compat::boxed_error::IntoBoxedError;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
 use super::{
-    AttendeeInput, CalendarToolContext, EventRemindersInput, EventTimeInput, ToolCalendarEvent,
-    TransparencyInput, mutation_tool_error,
+    AttendeeInput, CalendarEventTypeInput, CalendarToolContext, EventRemindersInput,
+    EventTimeInput, OutOfOfficeInput, ToolCalendarEvent, mutation_tool_error,
 };
 use crate::domain::{
     models::{CalendarEventDraft, ConferenceChange},
@@ -23,7 +25,7 @@ use crate::domain::{
     title = "CreateCalendarEvent",
     description = "\
 Prepare an event on the user's calendar, inviting any listed attendees through Google \
-Calendar. In Conation chat this tool opens an inline composer so the user can review, edit, and \
+Calendar. In Macro chat this tool opens an inline composer so the user can review, edit, and \
 confirm the event; use the tool to present the proposal instead of asking for a redundant \
 confirmation in prose. When the pending call is executed, the event is written to Google \
 immediately and attendees receive invitations. Other clients should confirm attendee events \
@@ -32,7 +34,13 @@ before executing the call.\n\
 The event lands on the user's primary calendar unless `calendarId` (from ListCalendars) \
 targets another one. For recurring events pass RFC 5545 lines in `recurrenceLines`, e.g. \
 [\"RRULE:FREQ=WEEKLY;BYDAY=MO\"]. Returns the created event with its `eventId` for later \
-updates or deletion. `transparency` sets busy/free the same way the HTTP create body does: \"opaque\" blocks availability, \"transparent\" is free. Omit to keep the calendar default (busy). Fails if the user has no writable calendar connected."
+updates or deletion. Fails if the user has no writable calendar connected.\n\
+\n\
+Set `eventType` to \"out_of_office\" to mark the user as out of office (e.g. \"mark me out \
+of office Thursday\"). Out-of-office events must land on the user's primary calendar (omit \
+`calendarId`), must be timed rather than all-day, and take no attendees or Google Meet \
+(leave `addGoogleMeet` false); use `outOfOffice` to control whether conflicting meetings \
+are auto-declined. The type cannot be changed afterward."
 )]
 pub struct CreateCalendarEvent {
     /// Display title.
@@ -95,12 +103,24 @@ pub struct CreateCalendarEvent {
     #[serde(default)]
     pub add_google_meet: bool,
 
-    /// Busy/free.
+    /// Kind of event to create.
     #[schemars(
-        description = "Availability: \"opaque\" blocks time (busy), \"transparent\" is free. Omit to keep the calendar default (busy)."
+        description = "The kind of event: \"default\" for a regular event (the default), or \
+                       \"out_of_office\" to mark the user as out of office. Out-of-office \
+                       events must be timed, on the primary calendar, and with no attendees."
     )]
     #[serde(default)]
-    pub transparency: Option<TransparencyInput>,
+    pub event_type: CalendarEventTypeInput,
+
+    /// Out-of-office decline behavior.
+    #[schemars(
+        description = "Out-of-office decline behavior, used only when eventType is \
+                       \"out_of_office\". Omit to just block the time; set \
+                       `autoDeclineMode` to \"decline_all\" or \"decline_new_only\" to have \
+                       Google decline conflicting meetings, optionally with a `declineMessage`."
+    )]
+    #[serde(default)]
+    pub out_of_office: Option<OutOfOfficeInput>,
 }
 
 impl ToolAnnotated for CreateCalendarEvent {
@@ -130,6 +150,25 @@ where
         );
 
         let requester_id = request_context.user_id.to_string();
+        let out_of_office = match self.event_type {
+            CalendarEventTypeInput::Default => {
+                if self.out_of_office.is_some() {
+                    return Err(ToolCallError {
+                        description: "`outOfOffice` only applies when eventType is \
+                                      \"out_of_office\"."
+                            .to_string(),
+                        internal_error: anyhow::Error::from_boxed(
+                            rootcause::report!("out-of-office settings without the event type")
+                                .into_boxed_error(),
+                        ),
+                    });
+                }
+                None
+            }
+            CalendarEventTypeInput::OutOfOffice => {
+                Some(self.out_of_office.clone().unwrap_or_default().into())
+            }
+        };
         let draft = CalendarEventDraft {
             title: self.title.clone(),
             description: self.description.clone(),
@@ -138,9 +177,10 @@ where
             attendees: self.attendees.iter().cloned().map(Into::into).collect(),
             recurrence_lines: self.recurrence_lines.clone(),
             visibility: None,
-            transparency: self.transparency.map(Into::into),
+            transparency: None,
             reminders: self.reminders.clone().map(Into::into),
             conference: self.add_google_meet.then_some(ConferenceChange::GoogleMeet),
+            out_of_office,
         };
 
         let event = service_context

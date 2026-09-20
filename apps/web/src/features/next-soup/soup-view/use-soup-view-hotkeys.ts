@@ -3,6 +3,7 @@ import { isListViewID, type ListView } from '@app/constants/list-views';
 import { CommandState } from '@app/features/command/state';
 import { VIEW_TAB_PRESETS } from '@app/features/next-soup/sidebar/soup-filter-presets';
 import {
+  markChannelNotificationsSeenOnOpen,
   markReminderSeenOnOpen,
   openEntityInSplitFromUnifiedList,
 } from '@app/features/next-soup/utils';
@@ -14,6 +15,7 @@ import { createHotkeyGroup, registerHotkey } from '@core/hotkey/hotkeys';
 import { TOKENS } from '@core/hotkey/tokens';
 import { isScopeInActiveBranch } from '@core/hotkey/utils';
 import {
+  type EntityData,
   filterNotDoneNotifications,
   filterValidNotifications,
   isSearchEntity,
@@ -30,6 +32,9 @@ import {
 } from './soup-view-tabs';
 
 type UseSoupViewHotkeysOptions = {
+  onOpenProject?: (id: string) => void;
+  onOpenEntity?: (entity: EntityData, event?: KeyboardEvent) => boolean;
+  disableTabHotkeys?: boolean;
   scopeId: string;
   soup: SoupState;
   splitHandle: SplitHandle;
@@ -131,15 +136,18 @@ export const useSoupViewHotkeys = (options: UseSoupViewHotkeysOptions) => {
       filterValidNotifications(entity.notifications?.() ?? [])
     );
     const splitManager = globalSplitManager();
-    return (
+    const didOpen =
       !!splitManager &&
       openSingleStackNotification(
         validNotifs,
         splitManager,
         newSplit,
         splitHandle
-      )
-    );
+      );
+    if (didOpen) {
+      markChannelNotificationsSeenOnOpen(entity, notificationSource);
+    }
+    return didOpen;
   };
 
   // enter - Open entity in split, toggle group, or load more
@@ -149,7 +157,7 @@ export const useSoupViewHotkeys = (options: UseSoupViewHotkeysOptions) => {
     scopeId,
     description: 'Open',
     hide: true,
-    keyDownHandler: () => {
+    keyDownHandler: (event) => {
       const focusedRow = soup.focus.row();
       if (!focusedRow) return false;
 
@@ -176,6 +184,12 @@ export const useSoupViewHotkeys = (options: UseSoupViewHotkeysOptions) => {
       const entity = soup.focus.item();
       if (!entity) return false;
 
+      if (entity.type === 'project' && options.onOpenProject) {
+        options.onOpenProject(entity.id);
+        return true;
+      }
+      if (options.onOpenEntity?.(entity, event)) return true;
+
       const contentHitData = isSearchEntity(entity)
         ? entity.search.contentHitData
         : undefined;
@@ -188,6 +202,7 @@ export const useSoupViewHotkeys = (options: UseSoupViewHotkeysOptions) => {
         splitHandle,
         location,
         referredFrom: currentView(),
+        notificationSource,
       });
       return true;
     },
@@ -228,6 +243,7 @@ export const useSoupViewHotkeys = (options: UseSoupViewHotkeysOptions) => {
         splitHandle,
         replacePreview: true,
         referredFrom: currentView(),
+        notificationSource,
       });
       return true;
     },
@@ -346,6 +362,7 @@ export const useSoupViewHotkeys = (options: UseSoupViewHotkeysOptions) => {
         splitHandle,
         openInNewSplit: true,
         referredFrom: currentView(),
+        notificationSource,
       });
       return true;
     },
@@ -356,6 +373,7 @@ export const useSoupViewHotkeys = (options: UseSoupViewHotkeysOptions) => {
 
   const visibleViewTabs = useVisibleViewTabs();
   const getTabKeys = () => {
+    if (options.disableTabHotkeys) return [];
     const view = currentView();
     if (!view || !isTabbedView(view)) return [];
     return visibleViewTabs(view).map((t) => t.value);

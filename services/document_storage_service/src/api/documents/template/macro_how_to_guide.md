@@ -1,86 +1,97 @@
-# Добро пожаловать в Conation!
+# Welcome to Macro!
 
-Conation объединяет документы, задачи, каналы, почту и ИИ-помощников в одном рабочем пространстве. Доступность отдельных источников и интеграций зависит от настроек вашего развертывания.
+Macro is an extremely fast, unified interface for all your work—email, messages, tasks, docs, and AI agents, all linked together in one database. 
 
-Мы подготовили несколько стартовых документов. Нажмите `cmd+k`, чтобы найти и открыть их.
+We've prepared some starter docs to help you get a sense of the power of **Macro**. Press `cmd + k` to take a peek!
 
-> **Совет:** это руководство уже добавлено в избранное и отображается на боковой панели.
+Let's walk around together and see what **Macro** can do. As you're reading, try playing around.
+
+> **Tip:** We've pinned this doc to your favorites, which appears in the sidebar. For the full documentation, visit [docs.macro.com](https://docs.macro.com).
 
 ---
 
-# Единый ввод
+# Unified Input
 
-В редакторах Conation можно вводить `@`, чтобы открыть меню упоминаний. Попробуйте прямо здесь.
+In **Macro**, anywhere that you can type—whether it's a document, an email, a message—you have access to a host of powerful tools.
 
-**Введите @ здесь:**
+For example, you can always type @ to open the **mentions** menu. Go ahead, try it.
 
-Упоминания связывают документы, задачи, контакты и каналы. Ссылку на этот документ затем можно увидеть в разделе «Упоминания» или «Ссылки» его информационной панели.
+**Type @ here:**
 
-Вот упоминание **задачи**: <m-document-mention>{"documentId":"LEARN_ABOUT_TASKS_ID","blockName":"task","documentName":"LEARN_ABOUT_TASKS_NAME","blockParams":{},"collapsed":false}</m-document-mention>. А ниже та же задача показана карточкой:
+Mentions allow you to create **bidirectional links** to any document, contact, channel, etc. Anything inside of Macro can be mentioned. 
+
+For example here is **task** mention: <m-document-mention>{"documentId":"LEARN_ABOUT_TASKS_ID","blockName":"task","documentName":"LEARN_ABOUT_TASKS_NAME","blockParams":{},"collapsed":false}</m-document-mention>. And here is the same mention, rendered as a card:
 
 <m-document-card>{"documentId":"LEARN_ABOUT_TASKS_ID","blockName":"task","documentName":"LEARN_ABOUT_TASKS_NAME","blockParams":{},"previewBox":["100%","400px"],"previewData":null}</m-document-card>
 
-Если упомянуть пользователя в сообщении или комментарии к документу, он может получить уведомление — с учётом своих настроек уведомлений.
+Sometimes mentioning has special powers. For example, if you mention a user in a **message** or in a **document comment**, Macro will notify that user that they've been mentioned.
 
-Другие полезные команды редактора:
+> **Tip:** You can see every place that a document has been mentioned in the References sections of the document's info panel.
 
-1. `#` — добавить тег, например «документы»;
-2. `/` — открыть форматирование и действия, например `/task`;
-3. `:` — выбрать эмодзи 🦋.
+Other tools available wherever you are typing: 
 
----
-
-# Пять основных сочетаний клавиш
-
-Conation удобно управлять с клавиатуры:
-
-- `cmd+k` — найти и открыть объект по имени;
-- `c` — открыть меню создания, затем `d` для документа, `t` для задачи, `e` для письма, `m` для канала или `a` для чата с помощником;
-- `/` — открыть поиск по рабочему пространству;
-- `j` / `k` — перейти вниз или вверх по списку;
-- `e` — отметить выбранный объект выполненным.
-
-> **Примечание:** однобуквенные сочетания не работают, пока курсор находится в текстовом редакторе. Сначала нажмите `escape`.
-
-Полный список доступных сочетаний можно открыть в **Настройки → Сочетания клавиш**. Подсказки также показываются в меню команд и при наведении на кнопки.
+1. `#` to add **tags,** e.g. <m-tag>{"optionId":"DOCS_TAG_OPTION_ID","propertyDefinitionId":"DOCS_TAG_DEFINITION_ID","scope":"user","name":"DOCS_TAG_LABEL","color":"DOCS_TAG_COLOR"}</m-tag>
+2. `/` for text formatting and other tools (try typing `/task`)
+3. `:` for emojis 🦋
 
 ---
 
-# Документы
+# Learn the five most important shortcuts
 
-Нажмите `c`, затем `d`, чтобы создать документ. Документы поддерживают Markdown и совместное редактирование.
+Macro is built to be driven from the keyboard.
 
-Права доступа задаются для каждого документа. Перед отправкой ссылки проверьте настройки в меню «Поделиться».
+- `cmd + k` — jump to anything by name
+- `c` — create anything (then `d` for a doc, `t` for a task, `e` for an email, `m` for a channel, `a` for an AI chat)
+- `/` — search everything in your workspace
+- `j` / `k` — move down / up in any list
+- `e` — mark done
 
-- Выделите текст, чтобы оставить комментарий.
-- Используйте `#` для заголовков, `[]` для списков с флажками и `>` для цитат.
-- История версий помогает просматривать предыдущие состояния документа.
-- Введите `/`, чтобы увидеть доступные блоки. Например, формула: $\int_{x=0}^{100}x\,dx$.
+> **Note:** You won't be able to use the single-letter shortcuts if you're currently editing text. Press `escape` first to unfocus the editor, and then try pressing, for example, `c`.
 
----
-
-# Единые входящие
-
-Нажмите `g`, затем `i`, чтобы открыть входящие. Там могут появляться назначения задач, упоминания, сообщения, письма и результаты помощников — только из тех источников, которые подключены в вашем развертывании.
-
-Перемещайтесь с помощью `j`/`k`, открывайте выбранный элемент клавишей `enter` и отмечайте выполненным клавишей `e`. Если включена автоматическая сортировка, элементы могут дополнительно разделяться на важные и второстепенные.
+You'll see shortcuts for actions listed in the command menu, in tooltips when you hover buttons, or in the context menu when you right-click on an item. For a full-list of shortcuts, see [keyboard shortcuts reference](https://macro.com/app/settings/shortcuts).
 
 ---
 
-# Почта
+# Documents
 
-Если администратор включил почтовую интеграцию, добавьте поддерживаемую учётную запись в **Настройки → Подключения**. Доступные провайдеры, синхронизация и отправка зависят от конфигурации развертывания.
+Press `c` then `d` to create a document. Docs are markdown-native and collaborative in real time — multiple people can type on the same line without conflicts.
+
+Documents are *public* by default. You can click share in the corner to edit permissions or get yourself a link. Share this with a friend!
+
+There's a bunch of other fancy stuff documents can do:
+
+- Select text to comment; comments with @mentions always notify
+- Markdown auto-formatting: `#` for headings, `[]` for checklists, `>` for quotes.
+- Full version history with time-travel browsing
+- Type `/` for a bunch of fun nodes. Math? $\int_{you=0}^{you=100}(Macro)dx$
 
 ---
 
-# ИИ-помощники
+# Triage everything from one inbox
 
-Нажмите `c`, затем `a`, чтобы открыть чат с помощником, или упомяните **@conation** в канале. Помощник работает только с тем контекстом, к которому ему предоставлен доступ. Доступные модели, инструменты и автоматизации определяет администратор развертывания.
+Press `g` then `i` to open your unified **inbox**: emails, channel messages, task assignments, doc mentions, and agent results—all in one list.
+
+- **Signal** is what needs your attention. **Noise** is everything else (newsletters, promos), filtered by AI.
+- Move with `j`/`k`, preview with `space`, open with `enter`, and mark items as done with `e` to get to inbox zero.
 
 ---
 
-# Разделение рабочей области
+# Connect *all* your email accounts
 
-- `\` или `cmd+\` — разделить рабочую область;
-- `shift+h` / `shift+l` — перемещать фокус между областями;
-- `shift+esc` — развернуть активную область.
+Macro is a full email client that syncs with Gmail and Google Workspace—no migration needed. Connect one or more accounts in **Settings**, and every message lands in a single unified inbox. When you compose, you pick which address sends.
+
+---
+
+# Put agents to work
+
+Press `c` then `a` to chat with an agent, or mention **@Macro** in any channel. Agents see your whole workspace — docs, emails, messages, call transcripts — so they can summarize discussions, answer questions, draft documents, and create tasks. You can also schedule **automations** (daily reminders, weekly summaries) that deliver results straight to your inbox.
+
+---
+
+# Splits
+
+Macro has a built-in window manager:
+
+- `\` or `cmd+\` — split your workspace
+- `shift+h` / `shift+l` — move focus between splits
+- `shift+esc` — maximize the focused split

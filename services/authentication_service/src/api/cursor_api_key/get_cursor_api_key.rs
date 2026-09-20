@@ -1,5 +1,5 @@
 use axum::{Json, extract::State};
-use conation_authorization::{MacroAuthorizationExtractor, UserOnly};
+use macro_authorization::{MacroAuthorizationExtractor, UserOnly};
 
 use super::{CursorApiKeyError, CursorApiKeyStatus};
 use crate::api::context::{ApiContext, AuthorizationService};
@@ -15,6 +15,7 @@ use crate::api::context::{ApiContext, AuthorizationService};
     responses(
         (status = 200, body = CursorApiKeyStatus),
         (status = 401, body = String),
+        (status = 403, body = model::response::ErrorResponse),
     )
 )]
 #[tracing::instrument(skip(ctx, user_context), err, fields(user_id = %user_context.authorization.macro_user_id))]
@@ -23,6 +24,7 @@ pub async fn handler(
     user_context: MacroAuthorizationExtractor<AuthorizationService, UserOnly>,
 ) -> Result<Json<CursorApiKeyStatus>, CursorApiKeyError> {
     let user_id = &user_context.authorization.macro_user_id;
+
     // Read even when the deployment has no KMS key: a key registered before the
     // deployment lost its configuration is still stored, and reporting it as
     // absent would invite the user to paste a replacement that cannot be saved.

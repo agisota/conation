@@ -1,52 +1,37 @@
-import { formatNumber, t } from '@app/lib/i18n';
 import type { BlockTool } from '@components/app/ResponsiveBlockToolbar';
 import {
-  BLOCK_TOOL_IDS,
   ResponsiveBlockToolbar,
   ResponsivePermissionsBadge,
 } from '@components/app/ResponsiveBlockToolbar';
-import { useDrawerControl } from '@components/app/split-layout/components/SplitDrawerContext';
 import type { FileOperation } from '@components/app/split-layout/components/SplitFileMenu';
 import { SplitHeaderLeft } from '@components/app/split-layout/components/SplitHeader';
 import { BlockItemSplitLabel } from '@components/app/split-layout/components/SplitLabel';
 
-import { useIsAuthenticated } from '@core/auth';
 import { useBlockId } from '@core/block';
-import { DETAILS_DRAWER_ID } from '@core/component/DetailsDrawer';
-import {
-  REFERENCES_DRAWER_ID,
-  ReferencesButton,
-} from '@core/component/ReferencesModal';
 import { toast } from '@core/component/Toast/Toast';
 import {
   getShareDrawerRecipientInput,
   ShareTrigger,
   useShareDialogContext,
 } from '@core/component/TopBar/ShareButton';
-import { ENABLE_REFERENCES_MODAL } from '@core/constant/featureFlags';
 import {
   useBlockDocumentDownloadName,
   useBlockDocumentName,
 } from '@core/util/currentBlockDocumentName';
 import { downloadFile } from '@filesystem/download';
-import IconShared from '@icon/wide-share.svg';
 import Download from '@phosphor/download.svg';
-import Info from '@phosphor/info.svg';
-import Quotes from '@phosphor/quotes.svg';
+import IconShared from '@phosphor/share.svg';
 import Spinner from '@phosphor/spinner.svg';
 import { createCallback } from '@solid-primitives/rootless';
 import { createSignal } from 'solid-js';
 import { useGetFileBlob } from '../signal/blockData';
 
 export function TopBar() {
-  const isAuth = useIsAuthenticated();
   const blockId = useBlockId();
   const name = useBlockDocumentName();
   const downloadName = useBlockDocumentDownloadName();
   const getBlob = useGetFileBlob();
 
-  const referencesControl = useDrawerControl(REFERENCES_DRAWER_ID);
-  const detailsControl = useDrawerControl(DETAILS_DRAWER_ID);
   const shareCtx = useShareDialogContext();
 
   const downloadDocument = createCallback(async () => {
@@ -55,7 +40,7 @@ export function TopBar() {
 
     const toastId = toast.custom(
       {
-        title: t('file.download.downloading', { fileName }),
+        title: `Downloading ${fileName}`,
         icon: () => <Spinner class="text-accent size-5 animate-spin" />,
         color: 'var(--color-accent)',
         content: () => <DownloadProgressBar progress={progress()} />,
@@ -67,30 +52,21 @@ export function TopBar() {
       const blob = await getBlob({ onProgress: setProgress });
       downloadFile(blob, fileName);
       toast.dismiss(toastId);
-      toast.success(t('file.download.downloaded', { fileName }));
+      toast.success(`Downloaded ${fileName}`);
     } catch (e) {
       toast.dismiss(toastId);
       console.error('error downloading file', e);
-      toast.failure(t('file.download.failed'));
+      toast.failure('Error downloading file');
     }
   });
 
   const ops: FileOperation[] = [
-    {
-      get label() {
-        return t('common.details');
-      },
-      icon: Info,
-      action: detailsControl.toggle,
-    },
     { op: 'rename' },
     { op: 'copy' },
     { op: 'moveToProject' },
     {
       group: 'file',
-      get label() {
-        return t('block.actions.download');
-      },
+      label: 'Download',
       icon: Download,
       action: downloadDocument,
     },
@@ -99,27 +75,8 @@ export function TopBar() {
 
   const tools: BlockTool[] = [
     {
-      id: BLOCK_TOOL_IDS.references,
-      get label() {
-        return t('block.actions.references');
-      },
-      icon: Quotes,
-      action: referencesControl.toggle,
-      condition: () => !!isAuth() && ENABLE_REFERENCES_MODAL,
-      buttonComponent: () => (
-        <ReferencesButton
-          documentId={blockId}
-          documentName={name()}
-          buttonSize="sm"
-        />
-      ),
-    },
-    {
-      id: BLOCK_TOOL_IDS.share,
       group: 'sharing',
-      get label() {
-        return t('block.actions.share');
-      },
+      label: 'Share',
       icon: IconShared,
       action: () => shareCtx.open(),
       buttonComponent: () => <ShareTrigger />,
@@ -156,10 +113,7 @@ function formatBytes(bytes: number): string {
   );
   const value = bytes / 1024 ** exp;
   const decimals = exp === 0 || value >= 100 ? 0 : value >= 10 ? 1 : 2;
-  return `${formatNumber(value, {
-    maximumFractionDigits: decimals,
-    minimumFractionDigits: decimals,
-  })} ${SIZE_UNITS[exp]}`;
+  return `${value.toFixed(decimals)} ${SIZE_UNITS[exp]}`;
 }
 
 function DownloadProgressBar(props: {
@@ -184,18 +138,9 @@ function DownloadProgressBar(props: {
         />
       </div>
       <div class="text-xs text-ink-extra-muted">
-        {hasTotal()
-          ? `${formatNumber(percent() / 100, {
-              maximumFractionDigits: 0,
-              style: 'percent',
-            })} — `
-          : ''}
-        {hasTotal()
-          ? t('file.download.progressOf', {
-              loaded: formatBytes(props.progress.loaded),
-              total: formatBytes(props.progress.total),
-            })
-          : formatBytes(props.progress.loaded)}
+        {hasTotal() ? `${percent()}% — ` : ''}
+        {formatBytes(props.progress.loaded)}
+        {hasTotal() ? ` of ${formatBytes(props.progress.total)}` : ''}
       </div>
     </div>
   );

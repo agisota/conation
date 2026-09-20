@@ -124,6 +124,21 @@ export const NOTIFICATION_EVENT_GROUPS: readonly NotificationEventGroup[] = [
         label: 'AI replies',
         description: 'When an AI chat responds',
       },
+      {
+        type: 'agent_session_settled',
+        label: 'Agent finished',
+        description: 'When an agent session you took part in finishes a turn',
+      },
+      {
+        type: 'agent_session_waiting_for_input',
+        label: 'Agent needs an answer',
+        description: 'When your agent stops to ask you something',
+      },
+      {
+        type: 'agent_session_mentioned',
+        label: 'Agent session mentions',
+        description: 'When someone mentions you in an agent session',
+      },
     ],
   },
   {
@@ -166,6 +181,7 @@ export const BLOCKABLE_NOTIFICATION_EVENT_TYPES: readonly string[] =
 
 export const MUTED_ENTITY_TYPE_LABELS: Record<string, string> = {
   calendar_event: 'Calendar event',
+  call: 'Call',
   channel: 'Channel',
   channel_message: 'Thread',
   chat: 'Chat',
@@ -174,6 +190,7 @@ export const MUTED_ENTITY_TYPE_LABELS: Record<string, string> = {
   email_thread: 'Email',
   foreign: 'GitHub',
   foreign_entity: 'GitHub',
+  project: 'Folder',
   reminder: 'Reminder',
   team: 'Team',
 };

@@ -1,6 +1,6 @@
 import { t } from '@app/lib/i18n';
 import { useCanvasFileDrop } from '@block-canvas/signal/fileDrop';
-import { type BlockName, useBlockId, useIsNestedBlock } from '@core/block';
+import type { BlockName } from '@core/block';
 import { FileDropOverlay } from '@core/component/FileDropOverlay';
 import { OldMenu, OldMenuItem } from '@core/component/OldMenu';
 import {
@@ -18,11 +18,7 @@ import { HEIC_EXTENSIONS, HEIC_MIME_TYPES } from '@core/heic/constants';
 import { registerHotkey } from '@core/hotkey/hotkeys';
 import { TOKENS } from '@core/hotkey/tokens';
 import { HOTKEY_PRIORITY_HIGH } from '@core/hotkey/types';
-import { createMethodRegistration } from '@core/orchestrator';
-import { blockHotkeyScopeSignal } from '@core/signal/blockElement';
-import { blockHandleSignal } from '@core/signal/load';
 import { trackMention } from '@core/signal/mention';
-import { useCanEdit } from '@core/signal/permissions';
 import type { EntityDragEvent } from '@entity';
 import TrashSimple from '@phosphor/trash-simple.svg';
 import Clipboard from '@phosphor-icons/core/regular/clipboard.svg?component-solid';
@@ -57,6 +53,7 @@ import {
   type Tool,
   Tools,
 } from '../constants';
+import { useCanvasDocument } from '../context/canvas-document-context';
 import { useConnect } from '../operation/connect';
 import { fileHeight, fileWidth, useFile } from '../operation/file';
 import { useImage } from '../operation/image';
@@ -72,24 +69,16 @@ import { useClipboard } from '../signal/clipboard';
 import { useNudge } from '../signal/nudge';
 import { useReorder } from '../signal/reorder';
 import { useSelection } from '../signal/selection';
+import { useToolManager } from '../signal/toolManager';
 import {
-  handlersByToolSignal,
-  middleMousePressedSignal,
-  mouseDownPositionSignal,
-  useToolManager,
-} from '../signal/toolManager';
-import {
-  highestOrderSignal,
   useCanvasEdges,
   useCanvasNodes,
   useCreateGroup,
   useDeleteGroup,
-  useExportCanvasData,
 } from '../store/canvasData';
 import { useRenderState } from '../store/RenderState';
 import { type Vector2, vec2 } from '../util/vector2';
 import { createContextMenu } from './ContextMenu';
-import { connectorTypeMenuTriggerSignal } from './TopBar';
 
 false && observedSize;
 false && fileDrop;
@@ -132,7 +121,7 @@ export function handleDelete() {
   const nodes = useCanvasNodes();
   const edges = useCanvasEdges();
   const history = useCanvasHistory();
-  const canEdit = useCanEdit();
+  const canEdit = useCanvasDocument().canEdit;
 
   return createCallback(() => {
     if (!canEdit()) return false;
@@ -163,10 +152,10 @@ export function handleDelete() {
 }
 
 export function CanvasController(props: ParentProps) {
-  const scopeId = blockHotkeyScopeSignal.get;
-  const canEdit = useCanEdit();
-  const isNestedBlock = useIsNestedBlock();
-  const isDisabled = createMemo(() => isNestedBlock || !canEdit());
+  const canvas = useCanvasDocument();
+  const scopeId = canvas.hotkeyScope;
+  const canEdit = canvas.canEdit;
+  const isDisabled = createMemo(() => canvas.isNested() || !canEdit());
   const renderState = useRenderState();
   const toolManager = useToolManager();
   const nodes = useCanvasNodes();
@@ -188,11 +177,10 @@ export function CanvasController(props: ParentProps) {
   const createGroup = useCreateGroup();
   const deleteGroup = useDeleteGroup();
   const deleteSelection = handleDelete();
-  const blockId = useBlockId();
-  const [middleMousePressed] = middleMousePressedSignal;
-  const [handlersByTool] = handlersByToolSignal;
-  const [_, setConnectorTypeMenuTrigger] = connectorTypeMenuTriggerSignal;
-  const exportCanvasData = useExportCanvasData();
+  const [middleMousePressed] = canvas.state.signals.middleMousePressed;
+  const [handlersByTool] = canvas.state.signals.handlersByTool;
+  const [, setConnectorTypeMenuTrigger] =
+    canvas.state.signals.connectorTypeMenuTrigger;
 
   const imageExtensions = blockNameToFileExtensions.image;
   const imageMimeTypes = blockNameToMimeTypes.image;
@@ -212,15 +200,6 @@ export function CanvasController(props: ParentProps) {
   const acceptedFileExtensions = ENABLE_CANVAS_VIDEO
     ? [...canvasImageExtensions, ...videoExtensions]
     : canvasImageExtensions;
-
-  const blockHandle = blockHandleSignal.get;
-
-  createMethodRegistration(blockHandle, {
-    exportCanvas: async () => {
-      const canvas = exportCanvasData();
-      return canvas;
-    },
-  });
 
   const [domRect, setDomRect] = createSignal<DOMRect | undefined>();
 
@@ -820,7 +799,7 @@ export function CanvasController(props: ParentProps) {
   const centerVec = createMemo(() => {
     return vec2(viewBox().x + viewBox().w / 2, viewBox().y + viewBox().h / 2);
   });
-  const highestOrder = highestOrderSignal.get;
+  const [highestOrder] = canvas.state.signals.highestOrder;
 
   const droppable = createDroppable('canvas-input-' + _id);
   const [dragDropState, { onDragEnd, onDragMove }] = useDragDropContext() ?? [
@@ -913,12 +892,13 @@ export function CanvasController(props: ParentProps) {
     // Nor are reminders — they have no canvas representation.
     if (entityType === 'reminder') return;
     // Nor are calendar events.
-    if (entityType === 'calendar_event') return;
+    if (entityType === 'calendar_event' || entityType === 'agent_session')
+      return;
 
     // Track document mention and get UUID
     let mentionUuid: string | undefined;
-    if (blockId && entityType === 'document') {
-      mentionUuid = await trackMention(blockId, 'document', id);
+    if (entityType === 'document') {
+      mentionUuid = await trackMention(canvas.documentId(), 'document', id);
     }
 
     nodes.createNode(
@@ -985,7 +965,7 @@ export function CanvasController(props: ParentProps) {
     dndDragMove(event as EntityDragEvent);
   });
 
-  const [_mouseDownPos, setMouseDownPos] = mouseDownPositionSignal;
+  const [, setMouseDownPos] = canvas.state.signals.mouseDownPosition;
 
   // TODO (seamus) : Make a beter interface with the gesute library.
   const pinch = usePinch(

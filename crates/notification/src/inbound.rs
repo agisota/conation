@@ -10,3 +10,5 @@ pub mod notification_events_listener;
 pub mod push_notification_event_worker;
 /// Worker for delivering notifications from the delivery queue.
 pub mod worker;
+/// Worker that sweeps due tasks and notifies assignees.
+pub mod task_due_worker;

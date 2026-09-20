@@ -1,9 +1,5 @@
 import { t } from '@app/lib/i18n';
 import {
-  generatedAndWaitingSignal,
-  isGeneratingSignal,
-} from '@block-md/signal/generateSignal';
-import {
   InlineInputDisabled,
   InlineInputLoading,
   InlineInputReady,
@@ -37,6 +33,8 @@ type GenerateMenuProps = {
   menuOpen: GenerateMenuOpen;
   generateCallback: generateCallback;
   completionSignal: Accessor<Completion | undefined>;
+  generatedAndWaiting: Accessor<boolean>;
+  isGenerating: Accessor<boolean>;
   editor: LexicalEditor;
 };
 
@@ -87,7 +85,7 @@ function GenerateActionMenu(props: GenerateMenuProps) {
         props.editor.dispatchCommand(ACCEPT_COMPLETION, undefined);
         break;
       case 'Escape':
-        if (!isGeneratingSignal()) {
+        if (!props.isGenerating()) {
           props.editor.dispatchCommand(REJECT_COMPLETION, undefined);
         }
         break;
@@ -140,11 +138,8 @@ function InnerGenerateMenu(props: GenerateMenuProps) {
   registerEditorWidthObserver(props.editor, setTargetWidth);
   createEffect(() => console.log(targetWidth()));
 
-  const generatedAndWaiting = generatedAndWaitingSignal.get;
-  const isGenerating = isGeneratingSignal.get;
-
   const keyHandler = (e: KeyboardEvent) => {
-    if (e.key === 'Escape' && !isGenerating()) {
+    if (e.key === 'Escape' && !props.isGenerating()) {
       props.editor.dispatchCommand(REJECT_COMPLETION, undefined);
     }
   };
@@ -172,7 +167,7 @@ function InnerGenerateMenu(props: GenerateMenuProps) {
           element: () => props.completionSignal()?.parentElement,
         }}
         use:clickOutside={() => {
-          if (!generatedAndWaiting() && !isGenerating()) {
+          if (!props.generatedAndWaiting() && !props.isGenerating()) {
             props.editor.dispatchCommand(REJECT_COMPLETION, undefined);
           }
         }}

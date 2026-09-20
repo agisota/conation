@@ -6,7 +6,6 @@ import {
   useCreatableEnabled,
 } from '@app/features/command/Launcher';
 import { openCreateCompanyModal } from '@app/features/companies/CreateCompanyModal';
-import { t } from '@app/lib/i18n';
 import { useHandleFileUpload } from '@app/util/handleFileUpload';
 import { openNewChannelModal } from '@channel/CreateChannelModal';
 import { CollapsibleHeaderItem } from '@components/app/split-layout/components/CollapsibleItem';
@@ -25,10 +24,11 @@ import UploadIcon from '@phosphor/upload-simple.svg';
 import { Button, cn, Dropdown } from '@ui';
 import { createMemo, For, Show } from 'solid-js';
 import { NewCallButton } from './NewCallButton';
+import { useMaybeSoupView } from './soup-view-context';
 
 // Which blocks to show as create options per view, in order
 const VIEW_CREATE_BLOCKNAMES: Partial<Record<ListView, CreatableName[]>> = {
-  documents: ['md', 'snippet', 'canvas', 'code', 'project'],
+  documents: ['md', 'snippet', 'spreadsheet', 'canvas', 'code', 'project'],
   tasks: ['task'],
   agents: ['agent', 'chat', 'automation', 'skill'],
   mail: ['email'],
@@ -44,23 +44,17 @@ type CreateOption = {
 
 const IMPORT_FILE_OPTION: CreateOption = {
   id: 'import-file',
-  get label() {
-    return t('soup.create.importFile');
-  },
+  label: 'Import file',
 };
 const IMPORT_FOLDER_OPTION: CreateOption = {
   id: 'import-folder',
-  get label() {
-    return t('soup.create.importFolder');
-  },
+  label: 'Import folder',
 };
 // Companies aren't blocks, so the Customers view gets a bespoke option
 // that opens the create-company modal instead of a create action.
 const CREATE_COMPANY_OPTION: CreateOption = {
   id: 'create-company',
-  get label() {
-    return t('soup.create.company');
-  },
+  label: 'Company',
 };
 
 /**
@@ -69,36 +63,18 @@ const CREATE_COMPANY_OPTION: CreateOption = {
  * specific list views.
  */
 const VIEW_ONLY_BLOCK_LABELS: Partial<Record<CreatableName, string>> = {
-  get automation() {
-    return t('soup.create.automation');
-  },
+  automation: 'Automation',
 };
 
 const VIEW_CREATE_LABELS: Partial<Record<ListView, string>> = {
-  get agents() {
-    return t('soup.create.agent');
-  },
-  get channels() {
-    return t('soup.create.channel');
-  },
-  get companies() {
-    return t('soup.create.company');
-  },
-  get documents() {
-    return t('soup.create.new');
-  },
-  get folders() {
-    return t('soup.create.folder');
-  },
-  get mail() {
-    return t('soup.create.email');
-  },
-  get reminders() {
-    return t('soup.create.reminder');
-  },
-  get tasks() {
-    return t('soup.create.task');
-  },
+  agents: 'Agent',
+  channels: 'Channel',
+  companies: 'Company',
+  documents: 'New',
+  folders: 'Folder',
+  mail: 'Email',
+  reminders: 'Reminder',
+  tasks: 'Task',
 };
 
 function getViewCreateOptions(
@@ -156,6 +132,7 @@ export const SoupViewCreateButton = () => {
   const panel = useSplitPanelOrThrow();
   const handleFileUpload = useHandleFileUpload();
   const isCreatableEnabled = useCreatableEnabled();
+  const soupView = useMaybeSoupView();
 
   const currentView = createMemo(() => {
     const content = panel.handle.content();
@@ -163,15 +140,26 @@ export const SoupViewCreateButton = () => {
     return isListViewID(content.id) ? content.id : undefined;
   });
 
-  const options = createMemo<CreateOption[]>(() => {
+  // The inbox's Reminders tab is not a ListView of its own, but it offers the
+  // same create button the standalone Reminders view does — a reminder is the
+  // one thing you make from that list rather than triage into it.
+  const createView = createMemo(() => {
     const view = currentView();
+    if (view === 'inbox' && soupView?.activeTab() === 'reminders') {
+      return 'reminders';
+    }
+    return view;
+  });
+
+  const options = createMemo<CreateOption[]>(() => {
+    const view = createView();
     if (!view) return [];
     return getViewCreateOptions(view, isCreatableEnabled);
   });
   const createLabel = createMemo(() => {
-    const view = currentView();
-    if (!view) return t('soup.create.action');
-    return VIEW_CREATE_LABELS[view] ?? t('soup.create.action');
+    const view = createView();
+    if (!view) return 'Create';
+    return VIEW_CREATE_LABELS[view] ?? 'Create';
   });
 
   const handleSelect = (option: CreateOption) => {

@@ -1,8 +1,9 @@
-import { t } from '@app/lib/i18n';
 import TrashIcon from '@phosphor/trash.svg';
 import { Button } from '@ui';
+import { Show } from 'solid-js';
 
 type BotDetailActionsProps = {
+  canDelete: boolean;
   dirty: boolean;
   pending: boolean;
   saving: boolean;
@@ -13,17 +14,19 @@ type BotDetailActionsProps = {
 export function BotDetailActions(props: BotDetailActionsProps) {
   return (
     <div class="flex items-center justify-between gap-3 pt-1">
-      <Button
-        type="button"
-        variant="danger"
-        size="sm"
-        disabled={props.pending}
-        onClick={props.onDelete}
-      >
-        <TrashIcon />
-        {t('channel.bots.delete.submit')}
-      </Button>
-      <div class="flex items-center gap-2">
+      <Show when={props.canDelete}>
+        <Button
+          type="button"
+          variant="danger"
+          size="sm"
+          disabled={props.pending}
+          onClick={props.onDelete}
+        >
+          <TrashIcon />
+          Delete bot
+        </Button>
+      </Show>
+      <div class="ml-auto flex items-center gap-2">
         <Button
           type="button"
           variant="ghost"
@@ -31,7 +34,7 @@ export function BotDetailActions(props: BotDetailActionsProps) {
           disabled={props.pending}
           onClick={props.onBack}
         >
-          {t('channel.bots.back')}
+          Back
         </Button>
         <Button
           type="submit"
@@ -39,9 +42,7 @@ export function BotDetailActions(props: BotDetailActionsProps) {
           size="sm"
           disabled={!props.dirty || props.pending}
         >
-          {props.saving
-            ? t('channel.bots.save.saving')
-            : t('channel.bots.save.submit')}
+          {props.saving ? 'Saving…' : 'Save changes'}
         </Button>
       </div>
     </div>

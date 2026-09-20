@@ -14,13 +14,14 @@ use crate::{
     process::{context::SearchProcessingContext, worker::run_search_processing_workers},
 };
 use anyhow::Context;
-use conation_authorization::{
-    InternalAuthConfig, MacroAuthorizationState, NoopMacroAuthJwtValidator,
-};
-use conation_entrypoint::MacroEntrypoint;
-use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
 use config::{Config, Environment};
 use lexical_client::LexicalClient;
+use macro_authorization::{
+    InternalAuthConfig, MacroAuthorizationState, NoopMacroAuthJwtValidator,
+    PgUserApiKeyAuthorizationRepo, PgUserApiKeyAuthorizer,
+};
+use macro_entrypoint::MacroEntrypoint;
+use macro_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
 use opensearch_client::OpensearchClient;
 #[cfg(feature = "pdf")]
 use rust_embed::RustEmbed;
@@ -45,6 +46,17 @@ mod process;
 /// the domain stays agnostic of which adapters back it.
 pub type BackfillServiceImpl =
     BackfillOrchestrator<PgBackfillSource, SqsSearchEventPublisher, DirectPropertyBackfillIndexer>;
+
+/// Production wiring for the authoritative agent-session search projection.
+pub type AgentSessionIndexer = domain::agent_session_index::AgentSessionIndexService<
+    agent_session::domain::search::indexing::SearchSnapshotServiceImpl<
+        agent_session::outbound::postgres::search::PgSearchIndexingRepo,
+        agent_fold::domain::service::FoldedMessageService<
+            agent_session::outbound::postgres::PgAgentSessionRepo,
+        >,
+    >,
+    outbound::agent_session_search::OpenSearchAgentSessionIndex,
+>;
 
 /// Resolve a read-replica macrodb URL and
 /// connect a small pool. Returns `None` when the replica URL is missing,
@@ -148,22 +160,6 @@ async fn main() -> anyhow::Result<()> {
     let config = Config::from_env().context("expected to be able to generate config")?;
     tracing::trace!("initialized config");
 
-    let authorization_state = MacroAuthorizationState::new(Arc::new(AuthorizationService::new(
-        NoopMacroAuthJwtValidator, // we only have internal calls in this service.
-        InternalAuthConfig {
-            api_key: config.internal_api_key.to_string(),
-            default_user_id: None,
-        },
-        conation_authorization::NoBotAuthorizer,
-    )));
-
-    let aws_config = conation_aws_config::get_conation_aws_config().await;
-    let search_event_queue = conation_queues::SearchEventQueue::new();
-    let sqs_client = sqs_client::SQS::new(aws_sdk_sqs::Client::new(&aws_config))
-        .search_event_queue(&search_event_queue);
-
-    let s3_client = Arc::new(s3_client::S3::new(conation_aws_config::s3_client().await));
-
     let (min_connections, max_connections): (u32, u32) = match config.environment {
         Environment::Production => (5, 50),
         Environment::Develop => (1, 25),
@@ -182,6 +178,23 @@ async fn main() -> anyhow::Result<()> {
         max_connections,
         "initialized db connection"
     );
+
+    let authorization_state = MacroAuthorizationState::new(Arc::new(AuthorizationService::new(
+        NoopMacroAuthJwtValidator, // we only have internal calls in this service.
+        InternalAuthConfig {
+            api_key: config.internal_api_key.to_string(),
+            default_user_id: None,
+        },
+        macro_authorization::NoBotAuthorizer,
+        PgUserApiKeyAuthorizer::new(PgUserApiKeyAuthorizationRepo::new(db.clone())),
+    )));
+
+    let aws_config = macro_aws_config::get_macro_aws_config().await;
+    let search_event_queue = macro_queues::SearchEventQueue::new();
+    let sqs_client = sqs_client::SQS::new(aws_sdk_sqs::Client::new(&aws_config))
+        .search_event_queue(&search_event_queue);
+
+    let s3_client = Arc::new(s3_client::S3::new(macro_aws_config::s3_client().await));
 
     let opensearch_client = Arc::new(
         OpensearchClient::new(
@@ -214,6 +227,22 @@ async fn main() -> anyhow::Result<()> {
 
     let sqs_client = Arc::new(sqs_client);
 
+    let session_repo = agent_session::outbound::postgres::PgAgentSessionRepo::new(db.clone());
+    // Waiting advisory locks must not exhaust the pool used to read ACP logs.
+    let session_lock_pool = PgPoolOptions::new()
+        .max_connections(10)
+        .connect_lazy(config.database_url.as_ref())?;
+    let agent_session_indexer = Arc::new(AgentSessionIndexer::new(
+        agent_session::domain::search::indexing::SearchSnapshotServiceImpl::new(
+            agent_session::outbound::postgres::search::PgSearchIndexingRepo::new(
+                db.clone(),
+                session_lock_pool,
+            ),
+            agent_fold::domain::service::FoldedMessageService::new(session_repo),
+        ),
+        outbound::agent_session_search::OpenSearchAgentSessionIndex(opensearch_client.clone()),
+    ));
+
     let backfill_service = Arc::new(BackfillOrchestrator::new(
         PgBackfillSource::new(backfill_db, config.backfill_page_sizes()?),
         SqsSearchEventPublisher::new(sqs_client.clone()),
@@ -222,7 +251,7 @@ async fn main() -> anyhow::Result<()> {
 
     let shutdown_token = CancellationToken::new();
     let event_broker_tracker = TaskTracker::new();
-    let conation_event_broker = MacroEventBrokerService::new(
+    let macro_event_broker = MacroEventBrokerService::new(
         KafkaEventPublisher::new(config.kafka_brokers.as_ref())
             .context("failed to create kafka event publisher")?,
         event_broker_tracker.clone(),
@@ -261,6 +290,7 @@ async fn main() -> anyhow::Result<()> {
         run_search_processing_workers(search_processing_context, config.worker_count);
 
         let kafka_processing_context = KafkaProcessingContext {
+            agent_session_indexer: agent_session_indexer.clone(),
             db: db.clone(),
             opensearch_client: opensearch_client.clone(),
             s3_client: s3_client.clone(),
@@ -290,13 +320,14 @@ async fn main() -> anyhow::Result<()> {
 
     let api_result = api::setup_and_serve(
         ApiContext {
+            agent_session_indexer,
             db,
             authorization_state,
             opensearch_client,
             config: Arc::new(config),
             backfill_service,
             backfill_jobs,
-            conation_event_broker,
+            macro_event_broker,
         },
         shutdown_token.clone(),
     )

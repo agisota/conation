@@ -2,12 +2,12 @@
 
 Shared, type-safe WebSocket abstraction with reconnect, buffering, heartbeat,
 serialization, and Solid lifecycle helpers. Import its public API through the
-`@macro-inc/collaboration/websocket` export.
+`@conation/collaboration/websocket` export.
 
 ## Basic Usage
 
 ```typescript
-import { JsonSerializer, WebsocketBuilder, WebsocketEvent } from '@macro-inc/collaboration/websocket';
+import { JsonSerializer, WebsocketBuilder, WebsocketEvent } from '@conation/collaboration/websocket';
 
 const ws = new WebsocketBuilder('ws://localhost:5000')
   .withSerializer(new JsonSerializer<SendType, ReceiveType>())
@@ -23,7 +23,7 @@ ws.send({ type: 'hello' });
 ## Builder Pattern
 
 ```typescript
-import { ExponentialBackoff, WebsocketBuilder } from '@macro-inc/collaboration/websocket';
+import { ExponentialBackoff, WebsocketBuilder } from '@conation/collaboration/websocket';
 
 const ws = new WebsocketBuilder('ws://localhost:5000')
   .withBackoff(new ExponentialBackoff(1_000, 5))
@@ -53,7 +53,7 @@ const ws = new WebsocketBuilder(url)
 Built-in serializers for common formats:
 
 ```typescript
-import { BebopSerializer, JsonSerializer } from '@macro-inc/collaboration/websocket';
+import { BebopSerializer, JsonSerializer } from '@conation/collaboration/websocket';
 
 // JSON
 new WebsocketBuilder(url)
@@ -71,7 +71,7 @@ new WebsocketBuilder(url)
 Reactive effects for message handling:
 
 ```typescript
-import { createSocketEffect, createWebsocketEventEffect } from '@macro-inc/collaboration/websocket';
+import { createSocketEffect, createWebsocketEventEffect } from '@conation/collaboration/websocket';
 
 // Listen to all messages
 createSocketEffect(ws, (data) => {
@@ -89,7 +89,7 @@ createWebsocketEventEffect(ws, 'chat', (msg: ChatMessage) => {
 Track connection lifecycle:
 
 ```typescript
-import { WebsocketEvent } from '@macro-inc/collaboration/websocket';
+import { WebsocketEvent } from '@conation/collaboration/websocket';
 
 ws.addEventListener(WebsocketEvent.Open, () => console.log('Connected'));
 ws.addEventListener(WebsocketEvent.Close, () => console.log('Disconnected'));
@@ -101,7 +101,7 @@ ws.addEventListener(WebsocketEvent.Reconnect, () =>
 );
 
 // Or use reactive state
-import { createWebsocketStateSignal } from '@macro-inc/collaboration/websocket';
+import { createWebsocketStateSignal } from '@conation/collaboration/websocket';
 const state = createWebsocketStateSignal(ws);
 ```
 

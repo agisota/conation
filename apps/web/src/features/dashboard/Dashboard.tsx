@@ -11,10 +11,15 @@ import { Button } from '@ui';
 import { createEffect, createMemo, createSignal, Show } from 'solid-js';
 import {
   appendDashboardModule,
+  createChannelMessageModule,
   createDashboardModule,
+  moveDashboardModuleAt,
   parseDashboardModules,
   removeDashboardModuleAt,
-  type DashboardModuleType,
+  updateDashboardChannelMessageAt,
+  type ChannelMessageConfig,
+  type InstantDashboardModuleType,
+  type MoveDirection,
 } from './catalog';
 import { DashboardEditor } from './editor';
 import { useDashboardPersistence } from './persistence';
@@ -39,14 +44,36 @@ export function Dashboard() {
 
   const view = createMemo(() => ({ widgets: widgets() }));
 
-  const addModule = (type: DashboardModuleType) => {
+  const addModule = (type: InstantDashboardModuleType) => {
     setWidgets((current) =>
       appendDashboardModule(current, createDashboardModule(type))
     );
   };
 
+  const addChannelMessage = (input: {
+    channelId: string;
+    messageId?: string;
+  }) => {
+    const module = createChannelMessageModule(input);
+    if (module === undefined) return;
+    setWidgets((current) => appendDashboardModule(current, module));
+  };
+
   const removeModule = (path: number[]) => {
     setWidgets((current) => removeDashboardModuleAt(current, path));
+  };
+
+  const moveModule = (path: number[], direction: MoveDirection) => {
+    setWidgets((current) => moveDashboardModuleAt(current, path, direction));
+  };
+
+  const updateChannelMessage = (
+    path: number[],
+    next: ChannelMessageConfig
+  ) => {
+    setWidgets((current) =>
+      updateDashboardChannelMessageAt(current, path, next)
+    );
   };
 
   const applyPreset = (id: 'morning' | 'blank') => {
@@ -89,7 +116,10 @@ export function Dashboard() {
         <DashboardEditor
           widgets={widgets()}
           onAdd={addModule}
+          onAddChannelMessage={addChannelMessage}
           onRemove={removeModule}
+          onMove={moveModule}
+          onUpdateChannelMessage={updateChannelMessage}
           onApplyPreset={applyPreset}
         />
         <section class="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto p-4">

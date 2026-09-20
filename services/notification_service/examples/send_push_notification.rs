@@ -1,16 +1,14 @@
 use anyhow::Context;
-use aws_sdk_sns::types::MessageAttributeValue;
-use conation_entrypoint::MacroEntrypoint;
+use macro_entrypoint::MacroEntrypoint;
 use serde::Serialize;
 use sns_client::{APNSPushNotification, Alert, AlertDictionary, Aps, MessageAttributes, SnsTarget};
-use std::collections::HashMap;
 
 /// Sends a push notification to the provided ENDPOINT_ARN environment variable
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     MacroEntrypoint::default().init();
 
-    let aws_config = conation_aws_config::get_conation_aws_config().await;
+    let aws_config = macro_aws_config::get_macro_aws_config().await;
 
     let sns_client = sns_client::SNS::new(aws_sdk_sns::Client::new(&aws_config));
 
@@ -50,7 +48,7 @@ async fn send_first(
             &apns,
             MessageAttributes {
                 push_type: sns_client::PushType::Alert,
-                apns_bundle_id: "dev.conation.app",
+                apns_bundle_id: "com.macro.app.prod",
                 collapse_key,
             },
         )
@@ -86,7 +84,7 @@ async fn send_empty(
             &apns,
             MessageAttributes {
                 push_type: sns_client::PushType::Alert,
-                apns_bundle_id: "dev.conation.app",
+                apns_bundle_id: "com.macro.app.prod",
                 collapse_key,
             },
         )

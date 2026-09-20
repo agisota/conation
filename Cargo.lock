@@ -102,8 +102,11 @@ dependencies = [
  "conation_env_var",
  "conation_user_id",
  "futures",
+ "genai_telemetry",
  "model-entity",
  "non_empty",
+ "opentelemetry",
+ "opentelemetry_sdk",
  "prompt",
  "regex",
  "rig-agent",
@@ -116,6 +119,8 @@ dependencies = [
  "tokio",
  "tokio-util",
  "tracing",
+ "tracing-opentelemetry",
+ "tracing-subscriber",
  "utoipa",
  "workspace-hack",
 ]
@@ -169,6 +174,39 @@ dependencies = [
 ]
 
 [[package]]
+name = "agent_changes"
+version = "0.1.0"
+dependencies = [
+ "agent_fold",
+ "agent_session",
+ "anyhow",
+ "aws-sdk-s3",
+ "axum",
+ "bot_id",
+ "chrono",
+ "conation_db_migrator",
+ "conation_user_id",
+ "conation_uuid",
+ "dashmap",
+ "entity_access",
+ "github",
+ "macro_authorization",
+ "reqwest 0.13.4",
+ "rootcause",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "strum 0.27.2",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "url",
+ "utoipa",
+ "uuid",
+ "workspace-hack",
+]
+
+[[package]]
 name = "agent_egress"
 version = "0.1.0"
 dependencies = [
@@ -187,7 +225,7 @@ dependencies = [
  "github",
  "http 1.4.0",
  "http-body-util",
- "lru",
+ "lru 0.16.4",
  "pipedream_mcp",
  "rand 0.9.4",
  "reqwest 0.13.4",
@@ -210,10 +248,12 @@ version = "0.1.0"
 dependencies = [
  "agent-client-protocol",
  "agent_runtime_protocol",
+ "chrono",
  "clap",
  "conation_user_id",
  "conation_uuid",
  "insta",
+ "lazy-regex",
  "non_empty",
  "rootcause",
  "serde",
@@ -234,20 +274,25 @@ dependencies = [
 name = "agent_harness"
 version = "0.1.0"
 dependencies = [
+ "agent",
  "agent-client-protocol",
  "agent_egress",
  "agent_fold",
  "agent_runtime_protocol",
  "agent_session",
  "agent_trigger",
+ "ai_usage",
  "anyhow",
+ "async-trait",
  "axum",
  "base64 0.22.1",
  "bot_id",
  "channel_sender",
  "channels",
  "chrono",
- "conation_authorization",
+ "claude_cloud_agents",
+ "codex_cloud_agents",
+ "codex_connection",
  "conation_env_var",
  "conation_event_broker",
  "conation_tower_layers",
@@ -257,11 +302,22 @@ dependencies = [
  "cursor_cloud_agents",
  "dashmap",
  "entity_access",
+ "entity_access_db_utils",
  "futures",
+ "github",
+ "harness_id",
  "kafka_util",
  "lexical_client",
+ "macro_authorization",
+ "messages",
  "mockall",
+ "model-entity",
+ "model_notifications",
+ "model_user",
+ "notification",
+ "opentelemetry",
  "pipedream_mcp",
+ "redis",
  "reqwest 0.13.4",
  "rootcause",
  "rustls 0.23.40",
@@ -272,8 +328,12 @@ dependencies = [
  "tokio",
  "tokio-tungstenite 0.28.0",
  "tokio-util",
+ "tower 0.5.3",
  "tracing",
+ "tracing-opentelemetry",
  "url",
+ "utoipa",
+ "uuid",
  "workspace-hack",
 ]
 
@@ -281,6 +341,8 @@ dependencies = [
 name = "agent_harness_service"
 version = "0.1.0"
 dependencies = [
+ "agent-client-protocol",
+ "agent_changes",
  "agent_egress",
  "agent_fold",
  "agent_harness",
@@ -289,21 +351,24 @@ dependencies = [
  "agent_session",
  "agent_trigger",
  "ai_tools",
+ "ai_toolset",
  "ai_usage",
  "anyhow",
  "aws-sdk-kms",
  "aws-sdk-secretsmanager",
  "aws-sdk-sqs",
  "axum",
+ "axum-extra",
  "bot_id",
  "bots",
  "channels",
+ "claude_cloud_agents",
+ "codex_cloud_agents",
+ "codex_connection",
  "conation_auth",
- "conation_authorization",
  "conation_aws_config",
  "conation_config",
  "conation_cors",
- "conation_entrypoint",
  "conation_env",
  "conation_env_var",
  "conation_event_broker",
@@ -317,19 +382,33 @@ dependencies = [
  "cursor_api_key",
  "cursor_cloud_agents",
  "database_env_vars",
+ "doppler-config",
  "entity_access",
+ "futures",
  "github",
+ "harness_id",
+ "harnesses",
  "kafka_util",
  "lexical_client",
+ "lexical_mention_extractor",
+ "macro_authorization",
+ "macro_entrypoint",
+ "messages",
  "notification",
  "pipedream_mcp",
  "rdkafka",
+ "redis",
+ "rmcp",
+ "rootcause",
  "secretsmanager_client",
  "serde",
  "serde_json",
  "sqlx",
+ "static_file_service_client",
  "tokio",
+ "tokio-retry",
  "tokio-util",
+ "tower 0.5.3",
  "tracing",
  "url",
  "utoipa",
@@ -343,25 +422,48 @@ version = "0.1.0"
 dependencies = [
  "agent",
  "agent-client-protocol",
+ "agent_egress",
  "agent_fold",
  "agent_runtime_protocol",
  "agent_session",
  "ai_tools",
  "ai_toolset",
  "ai_usage",
+ "anyhow",
+ "async-trait",
+ "attachment",
+ "axum",
  "bot_id",
+ "bytes",
+ "chat",
  "conation_user_id",
  "conation_uuid",
  "dashmap",
  "futures",
+ "genai_telemetry",
+ "http 1.4.0",
+ "http-body-util",
+ "mcp_select",
+ "mcp_toolset",
  "memory",
+ "model-entity",
+ "non_empty",
+ "opentelemetry",
+ "opentelemetry_sdk",
  "prompt",
+ "rig-agent",
+ "rmcp",
+ "schemars 1.2.1",
  "serde",
  "serde_json",
  "sqlx",
+ "sse-stream",
+ "thiserror 2.0.18",
  "tokio",
  "tokio-util",
  "tracing",
+ "tracing-opentelemetry",
+ "tracing-subscriber",
  "workspace-hack",
 ]
 
@@ -394,27 +496,39 @@ dependencies = [
  "agent-client-protocol",
  "agent_fold",
  "agent_runtime_protocol",
+ "ai_toolset",
  "ai_usage",
  "anyhow",
+ "async-trait",
  "axum",
  "bot_id",
  "bots",
  "chrono",
  "clap",
- "conation_authorization",
  "conation_db_migrator",
- "conation_service_urls",
+ "conation_event_broker",
+ "conation_event_topics",
  "conation_user_id",
  "conation_uuid",
  "connection_gateway_client",
  "dashmap",
  "entity_access",
  "entity_access_db_utils",
+ "entity_registry_db_utils",
+ "genai_telemetry",
+ "harness_id",
+ "lazy-regex",
+ "macro_authorization",
+ "messages",
  "mockall",
  "model-entity",
+ "model_owner",
  "model_user",
  "non_empty",
+ "opentelemetry",
+ "opentelemetry_sdk",
  "rootcause",
+ "schemars 1.2.1",
  "serde",
  "serde_json",
  "sqlx",
@@ -425,7 +539,10 @@ dependencies = [
  "tokio-util",
  "tower 0.5.3",
  "tracing",
+ "tracing-opentelemetry",
+ "tracing-subscriber",
  "utoipa",
+ "uuid",
  "workspace-hack",
 ]
 
@@ -438,6 +555,7 @@ dependencies = [
  "ai_usage",
  "anyhow",
  "bot_id",
+ "bots",
  "channel_sender",
  "channels",
  "chrono",
@@ -445,10 +563,13 @@ dependencies = [
  "conation_event_topics",
  "conation_user_id",
  "conation_uuid",
+ "entity_access",
  "lexical_client",
+ "messages",
  "mockall",
  "serde",
  "serde_json",
+ "sqlx",
  "strum 0.27.2",
  "thiserror 2.0.18",
  "tokio",
@@ -467,13 +588,15 @@ dependencies = [
  "bots",
  "channels",
  "conation_config",
- "conation_entrypoint",
  "conation_env_var",
  "conation_event_broker",
  "conation_service_urls",
  "database_env_vars",
+ "entity_access",
  "kafka_util",
  "lexical_client",
+ "macro_entrypoint",
+ "messages",
  "rdkafka",
  "serde_json",
  "sqlx",
@@ -516,12 +639,12 @@ dependencies = [
  "aws-sdk-sqs",
  "axum",
  "chrono",
- "conation_authorization",
  "conation_db_migrator",
  "conation_user_id",
  "connection_gateway_client",
  "futures",
  "http-body-util",
+ "macro_authorization",
  "model-entity",
  "model-error-response",
  "model_user",
@@ -553,12 +676,12 @@ dependencies = [
  "conation_aws_config",
  "conation_config",
  "conation_db_migrator",
- "conation_entrypoint",
  "conation_env",
  "conation_env_var",
  "conation_queues",
  "futures",
  "lambda_runtime",
+ "macro_entrypoint",
  "models_ai_projection",
  "serde",
  "serde_json",
@@ -620,6 +743,7 @@ dependencies = [
  "lexical_mention_extractor",
  "mcp_client",
  "mcp_select",
+ "messages",
  "model",
  "model-entity",
  "model_notifications",
@@ -655,6 +779,7 @@ dependencies = [
  "sync_service_client",
  "system_properties",
  "teams",
+ "thiserror 2.0.18",
  "tokio",
  "tokio-util",
  "tracing",
@@ -672,12 +797,18 @@ dependencies = [
  "axum",
  "axum-macros",
  "conation_user_id",
+ "genai_telemetry",
+ "opentelemetry",
+ "opentelemetry_sdk",
  "schemars 1.2.1",
  "serde",
  "serde_json",
  "thiserror 2.0.18",
+ "tokio",
  "tokio-util",
  "tracing",
+ "tracing-opentelemetry",
+ "tracing-subscriber",
  "utoipa",
  "workspace-hack",
 ]
@@ -689,10 +820,10 @@ dependencies = [
  "anyhow",
  "axum",
  "chrono",
- "conation_authorization",
  "conation_db_migrator",
  "conation_user_id",
  "conation_uuid",
+ "macro_authorization",
  "rootcause",
  "serde",
  "serde_json",
@@ -929,6 +1060,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "arboard"
+version = "3.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0348a1c054491f4bfe6ab86a7b6ab1e44e45d899005de92f58b3df180b36ddaf"
+dependencies = [
+ "clipboard-win",
+ "log",
+ "objc2",
+ "objc2-app-kit",
+ "objc2-foundation",
+ "parking_lot",
+ "percent-encoding",
+ "windows-sys 0.59.0",
+ "wl-clipboard-rs",
+ "x11rb",
+]
+
+[[package]]
 name = "arc-swap"
 version = "1.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -961,7 +1110,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8454c8a44ce2cb9cc7e7fae67fc6128465b343b92c6631e94beca3c8d1524ea5"
 dependencies = [
  "concolor",
- "unicode-width 0.2.2",
+ "unicode-width 0.2.0",
  "yansi",
 ]
 
@@ -1138,7 +1287,7 @@ dependencies = [
  "handlebars",
  "http 1.4.0",
  "indexmap 2.14.0",
- "lru",
+ "lru 0.16.4",
  "mime",
  "multer",
  "num-traits",
@@ -1504,20 +1653,19 @@ dependencies = [
  "aws-sdk-sesv2",
  "aws-sdk-sqs",
  "axum",
- "backend_i18n",
  "base64 0.22.1",
  "calendar_events",
  "channels",
  "chrono",
+ "codex_cloud_agents",
+ "codex_connection",
  "comms_db_client",
  "conation_auth",
- "conation_authorization",
  "conation_aws_config",
  "conation_cache_client",
  "conation_config",
  "conation_cors",
  "conation_db_client",
- "conation_entrypoint",
  "conation_env",
  "conation_env_var",
  "conation_event_broker",
@@ -1547,13 +1695,16 @@ dependencies = [
  "fusionauth",
  "futures",
  "github",
- "hmac 0.12.1",
+ "gtm_invite",
  "http-body-util",
  "jsonwebtoken 10.3.0",
  "last_online_tracker",
  "loops_client",
+ "macro_authorization",
+ "macro_entrypoint",
  "maud",
  "mention_utils",
+ "messages",
  "microsoft_oauth_grant_db_utils",
  "miniserde",
  "mobile_welcome_email_db_client",
@@ -1580,7 +1731,6 @@ dependencies = [
  "serde_utils",
  "ses_client",
  "sha1 0.10.6",
- "sha2 0.10.9",
  "sqlx",
  "sqs_client",
  "strum 0.27.2",
@@ -1913,7 +2063,7 @@ dependencies = [
  "http 0.2.12",
  "http 1.4.0",
  "http-body 1.0.1",
- "lru",
+ "lru 0.16.4",
  "percent-encoding",
  "regex-lite",
  "sha2 0.11.0",
@@ -2443,6 +2593,7 @@ dependencies = [
  "axum-core",
  "bytes",
  "cookie",
+ "form_urlencoded",
  "futures-util",
  "headers",
  "http 1.4.0",
@@ -2452,6 +2603,8 @@ dependencies = [
  "pin-project-lite",
  "rustversion",
  "serde_core",
+ "serde_html_form",
+ "serde_path_to_error",
  "tower-layer",
  "tower-service",
  "tracing",
@@ -2775,14 +2928,16 @@ dependencies = [
  "bot_token",
  "channels",
  "chrono",
- "conation_authorization",
  "conation_db_migrator",
  "conation_event_broker",
  "conation_event_topics",
  "conation_user_id",
  "conation_uuid",
  "entity_access",
+ "harness_id",
  "hex",
+ "macro_authorization",
+ "messages",
  "mockall",
  "model-error-response",
  "rand 0.9.4",
@@ -2791,6 +2946,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sqlx",
+ "strum 0.27.2",
  "thiserror 2.0.18",
  "tokio",
  "tower 0.5.3",
@@ -2930,7 +3086,7 @@ dependencies = [
  "apollo-compiler",
  "apollo-parser",
  "chrono",
- "lru",
+ "lru 0.16.4",
  "maybe_send",
  "pollster",
  "postcard",
@@ -2939,6 +3095,7 @@ dependencies = [
  "serde_json",
  "sha2 0.10.9",
  "thiserror 2.0.18",
+ "uuid",
 ]
 
 [[package]]
@@ -2954,12 +3111,13 @@ dependencies = [
  "thiserror 2.0.18",
  "turso-opfs",
  "turso_core",
+ "uuid",
  "wasm-bindgen-test",
 ]
 
 [[package]]
 name = "cache-wasm"
-version = "0.6.3"
+version = "0.6.16"
 dependencies = [
  "async-lock",
  "cache-core",
@@ -2972,6 +3130,7 @@ dependencies = [
  "soup-filter-cache-adapter",
  "soup-filter-projection",
  "turso-opfs",
+ "uuid",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "wasm-bindgen-test",
@@ -3043,13 +3202,13 @@ dependencies = [
  "aws-sdk-sqs",
  "axum",
  "chrono",
- "conation_authorization",
  "conation_db_migrator",
  "conation_event_broker",
  "conation_event_topics",
  "conation_user_id",
  "email_provider",
  "futures",
+ "macro_authorization",
  "model-entity",
  "model_notifications",
  "models_pagination",
@@ -3071,6 +3230,53 @@ dependencies = [
 ]
 
 [[package]]
+name = "calendar_service"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "authentication_service_client",
+ "aws-sdk-secretsmanager",
+ "aws-sdk-sqs",
+ "axum",
+ "calendar_events",
+ "chrono",
+ "conation_auth",
+ "conation_aws_config",
+ "conation_config",
+ "conation_cors",
+ "conation_env",
+ "conation_env_var",
+ "conation_event_broker",
+ "conation_queues",
+ "conation_service_urls",
+ "connection_gateway_client",
+ "email_db_client",
+ "email_utils",
+ "futures",
+ "google_token",
+ "macro_authorization",
+ "macro_entrypoint",
+ "models_email",
+ "redis",
+ "reqwest 0.13.4",
+ "secretsmanager_client",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "sqs_worker",
+ "subtle",
+ "tokio",
+ "tokio-util",
+ "tower 0.5.3",
+ "tower-http",
+ "tracing",
+ "utoipa",
+ "utoipa-swagger-ui",
+ "uuid",
+ "workspace-hack",
+]
+
+[[package]]
 name = "call"
 version = "0.1.0"
 dependencies = [
@@ -3082,10 +3288,10 @@ dependencies = [
  "async-trait",
  "aws-sdk-s3",
  "axum",
+ "base64 0.22.1",
  "channels",
  "chrono",
  "cloudfront_sign",
- "conation_authorization",
  "conation_aws_config",
  "conation_db_migrator",
  "conation_event_broker",
@@ -3101,6 +3307,7 @@ dependencies = [
  "item_filters",
  "livekit-api",
  "livekit-protocol",
+ "macro_authorization",
  "mockall",
  "model-entity",
  "model-error-response",
@@ -3112,7 +3319,10 @@ dependencies = [
  "schemars 1.2.1",
  "serde",
  "serde_json",
+ "sha2 0.10.9",
+ "share_permission_db_utils",
  "sqlx",
+ "subtle",
  "thiserror 2.0.18",
  "tokio",
  "tracing",
@@ -3131,9 +3341,9 @@ dependencies = [
  "aws_lambda_events",
  "conation_aws_config",
  "conation_db_migrator",
- "conation_entrypoint",
  "conation_env_var",
  "lambda_runtime",
+ "macro_entrypoint",
  "sqlx",
  "tokio",
  "tracing",
@@ -3176,10 +3386,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "cassowary"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "df8670b8c7b9dae1793364eafadf7239c40d669904660c5960d74cfd80b46a53"
+
+[[package]]
 name = "cast"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37b2a672a2cb129a2e41c10b1224bb368f9f37a2b16b612598138befd7b37eb5"
+
+[[package]]
+name = "castaway"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dec551ab6e7578819132c713a93c022a05d60159dc86e7a7050223577484c55a"
+dependencies = [
+ "rustversion",
+]
 
 [[package]]
 name = "cc"
@@ -3269,12 +3494,16 @@ dependencies = [
  "anyhow",
  "async-trait",
  "bot_id",
- "channels",
+ "calendar_events",
+ "channel_sender",
  "chrono",
+ "chrono-tz",
  "conation_user_id",
+ "entity_access",
  "futures",
- "models_pagination",
+ "messages",
  "prompt",
+ "rootcause",
  "serde",
  "serde_json",
  "tokio",
@@ -3310,7 +3539,6 @@ dependencies = [
  "bot_id",
  "channel_sender",
  "chrono",
- "conation_authorization",
  "conation_db_migrator",
  "conation_env_var",
  "conation_event_broker",
@@ -3329,6 +3557,8 @@ dependencies = [
  "indexmap 2.14.0",
  "item_filters",
  "kafka_util",
+ "macro_authorization",
+ "messages",
  "mockall",
  "model-entity",
  "model-error-response",
@@ -3345,6 +3575,7 @@ dependencies = [
  "serde_json",
  "share_permission_db_utils",
  "sqlx",
+ "static_file_service_client",
  "thiserror 2.0.18",
  "tokio",
  "tokio-retry",
@@ -3378,7 +3609,6 @@ dependencies = [
  "attachment",
  "axum",
  "chrono",
- "conation_authorization",
  "conation_db_migrator",
  "conation_event_broker",
  "conation_event_topics",
@@ -3388,10 +3618,13 @@ dependencies = [
  "entity_access_db_utils",
  "entity_access_management",
  "entity_mutation",
+ "entity_registry_db_utils",
  "futures",
  "http-body-util",
+ "macro_authorization",
  "model",
  "model-entity",
+ "model_owner",
  "models_entity_access_management",
  "models_permissions",
  "non_empty",
@@ -3499,6 +3732,46 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c8d4a3bb8b1e0c1050499d1815f5ab16d04f0959b233085fb31653fbfc9d98f9"
 
 [[package]]
+name = "claude_cloud_agents"
+version = "0.1.0"
+dependencies = [
+ "agent-client-protocol",
+ "agent_runtime_protocol",
+ "async-trait",
+ "axum",
+ "base64 0.22.1",
+ "clap",
+ "conation_db_migrator",
+ "cursor_api_key",
+ "futures",
+ "macro_authorization",
+ "rand 0.9.4",
+ "reqwest 0.13.4",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "sqlx",
+ "sse-core",
+ "subtle",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "utoipa",
+ "uuid",
+ "workspace-hack",
+ "zeroize",
+]
+
+[[package]]
+name = "clipboard-win"
+version = "5.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bde03770d3df201d4fb868f2c9c59e66a3e4e2bd06692a0fe701e7103c7e84d4"
+dependencies = [
+ "error-code",
+]
+
+[[package]]
 name = "cloudfront_sign"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3535,6 +3808,55 @@ dependencies = [
 ]
 
 [[package]]
+name = "codex_cloud_agents"
+version = "0.1.0"
+dependencies = [
+ "agent-client-protocol",
+ "agent_fold",
+ "agent_runtime_protocol",
+ "agent_session",
+ "axum",
+ "base64 0.22.1",
+ "clap",
+ "futures",
+ "insta",
+ "lazy-regex",
+ "reqwest 0.13.4",
+ "rootcause",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tempfile",
+ "tokio",
+ "tokio-util",
+ "uuid",
+ "workspace-hack",
+ "zeroize",
+]
+
+[[package]]
+name = "codex_connection"
+version = "0.1.0"
+dependencies = [
+ "aes-gcm",
+ "async-trait",
+ "aws-sdk-kms",
+ "chrono",
+ "codex_cloud_agents",
+ "conation_db_migrator",
+ "conation_user_id",
+ "rootcause",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "thiserror 2.0.18",
+ "tokio",
+ "uuid",
+ "workspace-hack",
+ "zeroize",
+]
+
+[[package]]
 name = "coding_agent_worker"
 version = "0.1.0"
 dependencies = [
@@ -3542,33 +3864,45 @@ dependencies = [
  "agent_runtime_protocol",
  "agent_session",
  "agent_trigger",
- "axum",
+ "arboard",
  "bot_id",
- "bots",
  "channel_sender",
  "channels",
  "chrono",
  "clap",
+ "conation_env_var",
  "conation_event_broker",
  "conation_user_id",
  "conation_uuid",
+ "crossterm 0.28.1",
  "dashmap",
+ "eventsource-stream",
+ "futures",
+ "harness_id",
+ "harnesses",
+ "messages",
+ "ratatui",
  "reqwest 0.13.4",
  "rootcause",
  "rustls 0.23.40",
  "serde",
  "serde_json",
+ "shell-words",
  "strum 0.27.2",
+ "tempfile",
  "thiserror 2.0.18",
  "tokio",
  "tokio-retry",
  "tokio-tungstenite 0.28.0",
+ "tokio-util",
  "toml 0.8.23",
- "tower 0.5.3",
+ "toml_edit 0.22.27",
  "tracing",
  "tracing-subscriber",
+ "tui-input",
+ "uuid",
+ "webbrowser",
  "webhook",
- "webhook_signature",
  "workspace-hack",
 ]
 
@@ -3578,13 +3912,13 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "chrono",
- "conation_authorization",
  "conation_db_migrator",
  "conation_sync_service_jwt",
  "conation_user_id",
  "conation_uuid",
  "entity_access",
  "lexical_client",
+ "macro_authorization",
  "mockall",
  "model",
  "model-entity",
@@ -3655,6 +3989,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "compact_str"
+version = "0.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7fd622ebbb56a5b2ccb651b32b911cdeb2a9b4b11776b2473bf26a26a286244e"
+dependencies = [
+ "castaway",
+ "cfg-if",
+ "itoa",
+ "rustversion",
+ "ryu",
+ "static_assertions",
+]
+
+[[package]]
 name = "complete_graph"
 version = "0.1.0"
 dependencies = [
@@ -3663,12 +4011,13 @@ dependencies = [
  "apollo-compiler",
  "async-graphql",
  "axum",
+ "bots",
  "chrono",
- "conation_authorization",
  "conation_user_id",
  "email",
  "entity_access",
  "entity_mutation",
+ "favorites",
  "graphql_activity",
  "graphql_channel",
  "graphql_common",
@@ -3679,6 +4028,7 @@ dependencies = [
  "graphql_permission",
  "graphql_properties",
  "graphql_soup",
+ "macro_authorization",
  "model-entity",
  "model_notifications",
  "model_user",
@@ -3686,11 +4036,14 @@ dependencies = [
  "models_properties",
  "models_soup",
  "notification",
+ "predicate-index",
  "rootcause",
  "serde",
  "soup",
+ "soup-filter-projection",
  "soup_realtime",
  "tokio",
+ "tracing",
  "uuid",
  "workspace-hack",
 ]
@@ -3731,37 +4084,6 @@ dependencies = [
  "thiserror 2.0.18",
  "tokio",
  "tracing",
- "workspace-hack",
-]
-
-[[package]]
-name = "conation_authorization"
-version = "0.1.0"
-dependencies = [
- "axum",
- "bot_id",
- "bot_token",
- "conation_auth",
- "conation_db_migrator",
- "conation_env_var",
- "conation_user_id",
- "constant_time_eq",
- "cookie",
- "http-body-util",
- "jsonwebtoken 10.3.0",
- "model-error-response",
- "model_user",
- "rootcause",
- "serde",
- "serde_json",
- "serde_urlencoded",
- "sqlx",
- "thiserror 2.0.18",
- "tokio",
- "tower 0.5.3",
- "tracing",
- "urlencoding",
- "uuid",
  "workspace-hack",
 ]
 
@@ -3849,10 +4171,12 @@ dependencies = [
  "conation_uuid",
  "document_sub_type",
  "entity_access_db_utils",
+ "entity_registry_db_utils",
  "futures",
  "model",
  "model-entity",
  "model_file_type",
+ "model_owner",
  "models_dcs",
  "models_entity_access_management",
  "models_opensearch",
@@ -3877,29 +4201,17 @@ dependencies = [
 name = "conation_db_migrator"
 version = "0.1.0"
 dependencies = [
- "sqlx",
- "workspace-hack",
-]
-
-[[package]]
-name = "conation_entrypoint"
-version = "0.1.0"
-dependencies = [
+ "chrono",
+ "clap",
  "conation_env",
- "conation_env_var",
- "dotenvy",
- "opentelemetry",
- "opentelemetry-otlp",
- "opentelemetry_sdk",
+ "conation_uuid",
+ "database_env_vars",
+ "macro_entrypoint",
  "rootcause",
- "rootcause-tracing",
  "serde_json",
+ "sqlx",
  "tokio",
  "tracing",
- "tracing-opentelemetry",
- "tracing-panic",
- "tracing-subscriber",
- "tracing-tree",
  "workspace-hack",
 ]
 
@@ -4138,11 +4450,8 @@ dependencies = [
  "axum",
  "chrono",
  "conation_auth",
- "conation_authorization",
  "conation_aws_config",
  "conation_config",
- "conation_cors",
- "conation_entrypoint",
  "conation_env",
  "conation_env_var",
  "conation_tower_layers",
@@ -4159,6 +4468,8 @@ dependencies = [
  "http-body-util",
  "itertools 0.14.0",
  "last_online_tracker",
+ "macro_authorization",
+ "macro_entrypoint",
  "mockall",
  "model",
  "model-entity",
@@ -4221,7 +4532,7 @@ dependencies = [
  "encode_unicode",
  "libc",
  "once_cell",
- "unicode-width 0.2.2",
+ "unicode-width 0.2.0",
  "windows-sys 0.59.0",
 ]
 
@@ -4233,7 +4544,7 @@ checksum = "4fe5f465a4f6fee88fad41b85d990f84c835335e85b5d9e6e63e0d06d28cba7c"
 dependencies = [
  "encode_unicode",
  "libc",
- "unicode-width 0.2.2",
+ "unicode-width 0.2.0",
  "windows-sys 0.61.2",
 ]
 
@@ -4294,10 +4605,10 @@ dependencies = [
  "aws-sdk-sqs",
  "axum",
  "axum-extra",
- "conation_authorization",
  "conation_db_migrator",
  "conation_user_id",
  "http-body-util",
+ "macro_authorization",
  "rate_limit",
  "reqwest 0.13.4",
  "rootcause",
@@ -4322,11 +4633,9 @@ dependencies = [
  "aws-sdk-sqs",
  "axum",
  "conation_auth",
- "conation_authorization",
  "conation_aws_config",
  "conation_config",
  "conation_cors",
- "conation_entrypoint",
  "conation_env",
  "conation_env_var",
  "conation_queues",
@@ -4336,6 +4645,8 @@ dependencies = [
  "database_env_vars",
  "doppler-config",
  "http-body-util",
+ "macro_authorization",
+ "macro_entrypoint",
  "model",
  "rate_limit",
  "redis",
@@ -4381,12 +4692,10 @@ dependencies = [
  "aws-sdk-sqs",
  "axum",
  "conation_auth",
- "conation_authorization",
  "conation_aws_config",
  "conation_config",
  "conation_cors",
  "conation_db_client",
- "conation_entrypoint",
  "conation_env",
  "conation_env_var",
  "conation_middleware",
@@ -4397,6 +4706,8 @@ dependencies = [
  "futures",
  "http-body-util",
  "lambda_client",
+ "macro_authorization",
+ "macro_entrypoint",
  "model",
  "nix 0.29.0",
  "remote_env_var",
@@ -4475,8 +4786,6 @@ checksum = "7704b5fdd17b18ae31c4c1da5a2e0305a2bf17b5249300a9ee9ed7b72114c636"
 name = "cowlike"
 version = "0.1.0"
 dependencies = [
- "bot_id",
- "conation_user_id",
  "either",
 ]
 
@@ -4562,11 +4871,11 @@ dependencies = [
  "async-trait",
  "axum",
  "chrono",
- "conation_authorization",
  "conation_db_migrator",
  "conation_user_id",
  "conation_uuid",
  "entity_access",
+ "macro_authorization",
  "model-error-response",
  "models_properties",
  "properties",
@@ -4653,6 +4962,22 @@ dependencies = [
  "libc",
  "mio 0.8.11",
  "parking_lot",
+ "signal-hook",
+ "signal-hook-mio",
+ "winapi",
+]
+
+[[package]]
+name = "crossterm"
+version = "0.28.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "829d955a0bb380ef178a640b91779e3987da38c9aea133b20614cfed8cdea9c6"
+dependencies = [
+ "bitflags 2.11.1",
+ "crossterm_winapi",
+ "mio 1.2.0",
+ "parking_lot",
+ "rustix 0.38.44",
  "signal-hook",
  "signal-hook-mio",
  "winapi",
@@ -4791,6 +5116,10 @@ name = "cursor_cloud_agents"
 version = "0.1.0"
 dependencies = [
  "agent-client-protocol",
+ "agent_fold",
+ "agent_runtime_protocol",
+ "agent_session",
+ "bytes",
  "conation_env_var",
  "futures",
  "insta",
@@ -4798,12 +5127,16 @@ dependencies = [
  "rootcause",
  "serde",
  "serde_json",
+ "sqlx",
  "sse-core",
+ "static_file_service_client",
  "thiserror 2.0.18",
  "tokio",
  "tokio-util",
  "tracing",
  "tracing-subscriber",
+ "urlencoding",
+ "uuid",
  "workspace-hack",
  "zeroize",
 ]
@@ -4866,6 +5199,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "darling"
+version = "0.24.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ed17f5901b6630b993ca003def43f2f8ef4014fc13b047b57aad617ff32bc2ec"
+dependencies = [
+ "darling_core 0.24.1",
+ "darling_macro 0.24.1",
+]
+
+[[package]]
 name = "darling_core"
 version = "0.20.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4907,6 +5250,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "darling_core"
+version = "0.24.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6837e2cf7485aaae18f86181d2f0e9a7ed297a025e220aeabf63fdebd3a2ddff"
+dependencies = [
+ "ident_case",
+ "proc-macro2",
+ "quote",
+ "strsim",
+ "syn 3.0.3",
+]
+
+[[package]]
 name = "darling_macro"
 version = "0.20.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4937,6 +5293,17 @@ dependencies = [
  "darling_core 0.23.0",
  "quote",
  "syn 2.0.117",
+]
+
+[[package]]
+name = "darling_macro"
+version = "0.24.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2ac7135c3ef02b2f7833bbeb1be5ba7f966dcde8a87c6b87f65a778d71a02785"
+dependencies = [
+ "darling_core 0.24.1",
+ "quote",
+ "syn 3.0.3",
 ]
 
 [[package]]
@@ -4977,9 +5344,9 @@ dependencies = [
  "aws-sdk-sns",
  "aws_lambda_events",
  "conation_aws_config",
- "conation_entrypoint",
  "conation_env_var",
  "lambda_runtime",
+ "macro_entrypoint",
  "s3_client",
  "sns_client",
  "tokio",
@@ -5059,10 +5426,12 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "aws_lambda_events",
- "conation_entrypoint",
+ "conation_db_migrator",
  "conation_env_var",
  "conation_uuid",
+ "entity_registry_db_utils",
  "lambda_runtime",
+ "macro_entrypoint",
  "sqlx",
  "tokio",
  "tracing",
@@ -5081,7 +5450,6 @@ dependencies = [
  "chrono",
  "conation_aws_config",
  "conation_db_client",
- "conation_entrypoint",
  "conation_env",
  "conation_env_var",
  "conation_event_broker",
@@ -5091,6 +5459,7 @@ dependencies = [
  "documents",
  "futures",
  "lambda_runtime",
+ "macro_entrypoint",
  "model",
  "projects",
  "serde",
@@ -5210,6 +5579,23 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.117",
+]
+
+[[package]]
+name = "determinator"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bf14b901cdfba3f731d01c4c184100e85f586a272d38874824175b845dbaeaf9"
+dependencies = [
+ "camino",
+ "globset",
+ "guppy",
+ "guppy-workspace-hack",
+ "once_cell",
+ "petgraph 0.6.5",
+ "rayon",
+ "serde",
+ "toml 0.5.11",
 ]
 
 [[package]]
@@ -5333,13 +5719,11 @@ dependencies = [
  "chat",
  "chrono",
  "conation_auth",
- "conation_authorization",
  "conation_aws_config",
  "conation_config",
  "conation_cors",
  "conation_db_client",
  "conation_db_migrator",
- "conation_entrypoint",
  "conation_env",
  "conation_env_var",
  "conation_event_broker",
@@ -5370,6 +5754,8 @@ dependencies = [
  "lazy_static",
  "lexical_client",
  "log",
+ "macro_authorization",
+ "macro_entrypoint",
  "mcp_client",
  "mcp_select",
  "memory",
@@ -5425,6 +5811,7 @@ name = "document_storage_service"
 version = "0.1.0"
 dependencies = [
  "activity",
+ "agent_session",
  "ai_tools",
  "ai_usage",
  "analytics_client",
@@ -5456,13 +5843,11 @@ dependencies = [
  "comms_db_client",
  "complete_graph",
  "conation_auth",
- "conation_authorization",
  "conation_aws_config",
  "conation_axum_utils",
  "conation_config",
  "conation_cors",
  "conation_db_client",
- "conation_entrypoint",
  "conation_env",
  "conation_env_var",
  "conation_event_broker",
@@ -5495,13 +5880,18 @@ dependencies = [
  "futures",
  "github",
  "graphql_soup",
+ "harnesses",
  "hex",
  "http-body-util",
+ "initiative",
  "jsonwebtoken 10.3.0",
  "last_online_tracker",
  "lazy_static",
  "lexical_client",
  "lexical_mention_extractor",
+ "macro_authorization",
+ "macro_entrypoint",
+ "messages",
  "mockall",
  "model",
  "model-entity",
@@ -5540,6 +5930,7 @@ dependencies = [
  "sqlx",
  "sqs_client",
  "sqs_worker",
+ "static_file_service_client",
  "sync_service_client",
  "sync_service_hex",
  "system_properties",
@@ -5552,6 +5943,7 @@ dependencies = [
  "tracing",
  "unicode-segmentation",
  "urlencoding",
+ "user_api_key",
  "utoipa",
  "utoipa-swagger-ui",
  "uuid",
@@ -5582,6 +5974,7 @@ version = "0.1.0"
 dependencies = [
  "schemars 1.2.1",
  "serde",
+ "serde_json",
  "sqlx",
  "strum 0.27.2",
  "thiserror 2.0.18",
@@ -5598,9 +5991,9 @@ dependencies = [
  "aws_lambda_events",
  "chrono",
  "conation_aws_config",
- "conation_entrypoint",
  "conation_env_var",
  "lambda_runtime",
+ "macro_entrypoint",
  "mockall",
  "model",
  "pdfium-render",
@@ -5625,12 +6018,12 @@ dependencies = [
  "aws-sdk-sqs",
  "aws_lambda_events",
  "conation_aws_config",
- "conation_entrypoint",
  "conation_env_var",
  "conation_service_urls",
  "documents",
  "lambda_runtime",
  "lexical_client",
+ "macro_entrypoint",
  "model",
  "s3_key",
  "serde",
@@ -5662,10 +6055,8 @@ dependencies = [
  "clap",
  "cloudfront_sign",
  "comms_db_client",
- "conation_authorization",
  "conation_aws_config",
  "conation_db_migrator",
- "conation_entrypoint",
  "conation_env_var",
  "conation_event_broker",
  "conation_event_topics",
@@ -5682,6 +6073,7 @@ dependencies = [
  "entity_access_db_utils",
  "entity_access_management",
  "entity_mutation",
+ "entity_registry_db_utils",
  "foreign_entity",
  "futures",
  "hex",
@@ -5690,11 +6082,14 @@ dependencies = [
  "kafka_util",
  "lexical_client",
  "loro",
+ "macro_authorization",
+ "macro_entrypoint",
  "mockall",
  "model",
  "model-entity",
  "model-error-response",
  "model_file_type",
+ "model_owner",
  "model_user",
  "models_permissions",
  "models_properties",
@@ -5738,7 +6133,6 @@ dependencies = [
  "bzip2",
  "conation_aws_config",
  "conation_db_client",
- "conation_entrypoint",
  "conation_env",
  "conation_env_var",
  "conation_queues",
@@ -5747,6 +6141,7 @@ dependencies = [
  "futures",
  "lambda_client",
  "lambda_runtime",
+ "macro_entrypoint",
  "model",
  "redis",
  "s3_client",
@@ -5830,6 +6225,12 @@ name = "downcast"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1435fa1053d8b2fbbe9be7e97eca7f33d37b28409959813daefc1446a14247f1"
+
+[[package]]
+name = "downcast-rs"
+version = "1.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "75b325c5dbd37f80359721ad39aca5a29fb04c89279657cffdda8736d0c0b9d2"
 
 [[package]]
 name = "dtoa"
@@ -5963,7 +6364,6 @@ dependencies = [
  "axum-extra",
  "base64 0.22.1",
  "chrono",
- "conation_authorization",
  "conation_db_migrator",
  "conation_event_broker",
  "conation_event_topics",
@@ -5979,8 +6379,11 @@ dependencies = [
  "filter_ast",
  "frecency",
  "futures",
+ "google_token",
  "item_filters",
+ "lexical_client",
  "lol_html",
+ "macro_authorization",
  "model-entity",
  "model-error-response",
  "models_pagination",
@@ -6115,11 +6518,11 @@ dependencies = [
  "chrono",
  "conation_aws_config",
  "conation_db_migrator",
- "conation_entrypoint",
  "conation_env",
  "conation_env_var",
  "conation_queues",
  "lambda_runtime",
+ "macro_entrypoint",
  "model",
  "models_email",
  "sqlx",
@@ -6140,11 +6543,11 @@ dependencies = [
  "chrono",
  "conation_aws_config",
  "conation_db_migrator",
- "conation_entrypoint",
  "conation_env",
  "conation_env_var",
  "conation_queues",
  "lambda_runtime",
+ "macro_entrypoint",
  "models_email",
  "sqlx",
  "sqs_client",
@@ -6171,13 +6574,11 @@ dependencies = [
  "chrono",
  "cloudfront_sign",
  "conation_auth",
- "conation_authorization",
  "conation_aws_config",
  "conation_config",
  "conation_cors",
  "conation_db_client",
  "conation_db_migrator",
- "conation_entrypoint",
  "conation_env",
  "conation_env_var",
  "conation_event_broker",
@@ -6196,7 +6597,6 @@ dependencies = [
  "email",
  "email_api_client",
  "email_db_client",
- "email_provider",
  "email_utils",
  "entity_access",
  "entity_access_management",
@@ -6204,12 +6604,15 @@ dependencies = [
  "frecency",
  "futures",
  "gmail_client",
+ "google_token",
  "html-escape",
  "http-body-util",
  "infer 0.19.0",
  "item_filters",
  "last_online_tracker",
  "lol_html",
+ "macro_authorization",
+ "macro_entrypoint",
  "mime_guess",
  "model",
  "model-entity",
@@ -6239,6 +6642,7 @@ dependencies = [
  "sqs_worker",
  "static_file_service_client",
  "strum_macros 0.27.2",
+ "subtle",
  "system_properties",
  "thiserror 2.0.18",
  "tokio",
@@ -6280,11 +6684,11 @@ dependencies = [
  "aws-sdk-sqs",
  "aws_lambda_events",
  "conation_aws_config",
- "conation_entrypoint",
  "conation_env",
  "conation_env_var",
  "conation_queues",
  "lambda_runtime",
+ "macro_entrypoint",
  "sqlx",
  "sqs_client",
  "tokio",
@@ -6300,9 +6704,9 @@ dependencies = [
  "aws_lambda_events",
  "chrono",
  "conation_db_client",
- "conation_entrypoint",
  "conation_env_var",
  "lambda_runtime",
+ "macro_entrypoint",
  "serde",
  "serde_json",
  "sqlx",
@@ -6397,16 +6801,21 @@ dependencies = [
  "axum",
  "bot_id",
  "cached",
- "conation_authorization",
+ "clap",
  "conation_db_migrator",
  "conation_user_id",
  "cool_asserts",
+ "database_env_vars",
  "futures",
+ "harness_id",
+ "macro_authorization",
+ "macro_entrypoint",
  "mockall",
  "model",
  "model-entity",
  "model-error-response",
  "model_user",
+ "models_entity_access_management",
  "models_permissions",
  "rootcause",
  "serde",
@@ -6430,6 +6839,7 @@ dependencies = [
  "conation_user_id",
  "conation_uuid",
  "model-entity",
+ "model_owner",
  "models_entity_access_management",
  "models_permissions",
  "serde",
@@ -6472,6 +6882,39 @@ dependencies = [
  "models_permissions",
  "rootcause",
  "tracing",
+ "workspace-hack",
+]
+
+[[package]]
+name = "entity_registry"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "conation_db_migrator",
+ "model-entity",
+ "model_owner",
+ "rootcause",
+ "shared_entity_registry",
+ "sqlx",
+ "tokio",
+ "tracing",
+ "uuid",
+ "workspace-hack",
+]
+
+[[package]]
+name = "entity_registry_db_utils"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "conation_db_migrator",
+ "model_owner",
+ "rootcause",
+ "shared_entity_registry",
+ "sqlx",
+ "tokio",
+ "tracing",
+ "uuid",
  "workspace-hack",
 ]
 
@@ -6546,6 +6989,12 @@ dependencies = [
  "libc",
  "windows-sys 0.61.2",
 ]
+
+[[package]]
+name = "error-code"
+version = "3.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b5343afd4a8365a643ac588dab4cf234a190c7f6c88c9f6dd6ffe00837661b7"
 
 [[package]]
 name = "etcetera"
@@ -6673,20 +7122,25 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum",
+ "axum-extra",
  "chrono",
- "conation_authorization",
  "conation_db_migrator",
  "conation_user_id",
  "cowlike",
  "entity_access",
+ "http-body-util",
+ "macro_authorization",
  "mockall",
  "model-entity",
  "model-error-response",
+ "model_user",
+ "rootcause",
  "serde",
  "serde_json",
  "sqlx",
  "thiserror 2.0.18",
  "tokio",
+ "tower 0.5.3",
  "tracing",
  "utoipa",
  "uuid",
@@ -6797,7 +7251,6 @@ dependencies = [
  "anyhow",
  "axum",
  "chrono",
- "conation_authorization",
  "conation_db_migrator",
  "conation_user_id",
  "conation_uuid",
@@ -6805,6 +7258,7 @@ dependencies = [
  "filter_ast",
  "http-body-util",
  "item_filters",
+ "macro_authorization",
  "model-error-response",
  "model_user",
  "models_pagination",
@@ -7078,6 +7532,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "genai_telemetry"
+version = "0.1.0"
+dependencies = [
+ "conation_env_var",
+ "opentelemetry",
+ "opentelemetry_sdk",
+ "serde_json",
+ "tracing",
+ "tracing-opentelemetry",
+ "tracing-subscriber",
+ "workspace-hack",
+]
+
+[[package]]
 name = "generator"
 version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7140,7 +7608,7 @@ version = "0.2.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cfe4fbac503b8d1f88e6676011885f34b7174f46e59956bba534ba83abded4df"
 dependencies = [
- "unicode-width 0.2.2",
+ "unicode-width 0.2.0",
 ]
 
 [[package]]
@@ -7250,18 +7718,20 @@ dependencies = [
 name = "github"
 version = "0.1.0"
 dependencies = [
+ "activity",
  "anyhow",
  "axum",
  "axum-extra",
  "base64 0.22.1",
  "chrono",
- "conation_authorization",
  "conation_db_migrator",
  "conation_env",
  "conation_env_var",
  "conation_service_urls",
  "conation_user_id",
  "conation_uuid",
+ "connection_gateway_client",
+ "cowlike",
  "document_sub_type",
  "documents",
  "entity_access",
@@ -7271,6 +7741,8 @@ dependencies = [
  "hmac 0.12.1",
  "http-body-util",
  "jsonwebtoken 10.3.0",
+ "lru 0.16.4",
+ "macro_authorization",
  "mockall",
  "model",
  "model-entity",
@@ -7349,6 +7821,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "google_token"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "authentication_service_client",
+ "email_utils",
+ "redis",
+ "tracing",
+ "workspace-hack",
+]
+
+[[package]]
 name = "graphql_activity"
 version = "0.1.0"
 dependencies = [
@@ -7391,10 +7875,10 @@ dependencies = [
  "async-graphql",
  "axum",
  "axum-extra",
- "conation_authorization",
  "conation_user_id",
  "filter_ast",
  "item_filters",
+ "macro_authorization",
  "model-entity",
  "model_user",
  "models_properties",
@@ -7446,12 +7930,19 @@ name = "graphql_favorite"
 version = "0.1.0"
 dependencies = [
  "async-graphql",
+ "chrono",
  "conation_user_id",
+ "entity_mutation",
  "favorites",
+ "graphql_common",
+ "graphql_entity_mutation",
+ "graphql_permission",
+ "graphql_soup",
  "model-entity",
  "rootcause",
  "tokio",
  "tracing",
+ "uuid",
  "workspace-hack",
 ]
 
@@ -7468,6 +7959,7 @@ dependencies = [
  "model-entity",
  "model_notifications",
  "notification",
+ "notification_state",
  "rootcause",
  "serde_json",
  "tokio",
@@ -7519,7 +8011,6 @@ dependencies = [
  "axum",
  "axum-extra",
  "chrono",
- "conation_authorization",
  "conation_user_id",
  "document_sub_type",
  "either",
@@ -7532,6 +8023,7 @@ dependencies = [
  "graphql_permission",
  "graphql_soup_filter_input",
  "item_filters",
+ "macro_authorization",
  "model-entity",
  "model_file_type",
  "models_grouping",
@@ -7563,6 +8055,7 @@ dependencies = [
  "graphql_common",
  "item_filters",
  "model_file_type",
+ "notification_state",
  "serde",
  "serde_json",
  "thiserror 2.0.18",
@@ -7578,6 +8071,38 @@ dependencies = [
  "ff",
  "rand_core 0.6.4",
  "subtle",
+]
+
+[[package]]
+name = "gtm_invite"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "axum-extra",
+ "chrono",
+ "conation_db_migrator",
+ "conation_user_id",
+ "conation_uuid",
+ "http-body-util",
+ "ip_extractor",
+ "macro_authorization",
+ "mockall",
+ "model-error-response",
+ "model_user",
+ "rand 0.9.4",
+ "rate_limit",
+ "rootcause",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "thiserror 2.0.18",
+ "tokio",
+ "tower 0.5.3",
+ "tracing",
+ "utoipa",
+ "uuid",
+ "workspace-hack",
 ]
 
 [[package]]
@@ -7723,6 +8248,55 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 2.0.18",
+]
+
+[[package]]
+name = "harness_id"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "sqlx",
+ "thiserror 2.0.18",
+ "utoipa",
+ "uuid",
+ "workspace-hack",
+]
+
+[[package]]
+name = "harness_token"
+version = "0.1.0"
+dependencies = [
+ "sha2 0.10.9",
+ "workspace-hack",
+]
+
+[[package]]
+name = "harnesses"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "bot_id",
+ "chrono",
+ "conation_db_migrator",
+ "conation_user_id",
+ "constant_time_eq",
+ "harness_id",
+ "harness_token",
+ "hex",
+ "macro_authorization",
+ "mockall",
+ "model-error-response",
+ "rand 0.9.4",
+ "serde",
+ "sqlx",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "utoipa",
+ "uuid",
+ "workspace-hack",
 ]
 
 [[package]]
@@ -8007,7 +8581,7 @@ dependencies = [
  "html5ever 0.38.0",
  "tendril 0.5.0",
  "thiserror 2.0.18",
- "unicode-width 0.2.2",
+ "unicode-width 0.2.0",
 ]
 
 [[package]]
@@ -8566,10 +9140,10 @@ dependencies = [
  "aws-sdk-s3",
  "base64 0.22.1",
  "conation_aws_config",
- "conation_entrypoint",
  "conation_env_var",
  "image",
  "lambda_runtime",
+ "macro_entrypoint",
  "serde",
  "serde_json",
  "serde_urlencoded",
@@ -8587,17 +9161,17 @@ dependencies = [
  "axum",
  "bytes",
  "conation_auth",
- "conation_authorization",
  "conation_aws_config",
  "conation_config",
  "conation_cors",
- "conation_entrypoint",
  "conation_env",
  "conation_middleware",
  "doppler-config",
  "futures",
  "http-body-util",
  "jsonwebtoken 10.3.0",
+ "macro_authorization",
+ "macro_entrypoint",
  "model",
  "reqwest 0.13.4",
  "secretsmanager_client",
@@ -8630,12 +9204,12 @@ dependencies = [
  "async-trait",
  "axum",
  "chrono",
- "conation_authorization",
  "conation_db_migrator",
  "conation_user_id",
  "connection_gateway_client",
  "dateparser",
  "futures",
+ "macro_authorization",
  "mcp_select",
  "model-entity",
  "models_properties",
@@ -8718,7 +9292,7 @@ checksum = "9433806cd6b4ec1aba79c021c7e4c58fb4c3b9977c085062e611ac929998fb0c"
 dependencies = [
  "console 0.16.4",
  "portable-atomic",
- "unicode-width 0.2.2",
+ "unicode-width 0.2.0",
  "unit-prefix",
  "web-time",
 ]
@@ -8748,6 +9322,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "initiative"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "chrono",
+ "conation_db_migrator",
+ "conation_user_id",
+ "conation_uuid",
+ "entity_access",
+ "entity_access_db_utils",
+ "http-body-util",
+ "macro_authorization",
+ "mockall",
+ "model-entity",
+ "model-error-response",
+ "model_user",
+ "models_permissions",
+ "rootcause",
+ "serde",
+ "serde_json",
+ "share_permission_db_utils",
+ "sqlx",
+ "thiserror 2.0.18",
+ "tokio",
+ "tower 0.5.3",
+ "tracing",
+ "unicode-segmentation",
+ "utoipa",
+ "uuid",
+ "workspace-hack",
+]
+
+[[package]]
 name = "inout"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8763,7 +9371,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0fddf93031af70e75410a2511ec04d49e758ed2f26dad3404a934e0fb45cc12a"
 dependencies = [
  "bitflags 2.11.1",
- "crossterm",
+ "crossterm 0.25.0",
  "dyn-clone",
  "fuzzy-matcher",
  "fxhash",
@@ -8786,6 +9394,19 @@ dependencies = [
  "similar",
  "tempfile",
  "walkdir",
+]
+
+[[package]]
+name = "instability"
+version = "0.3.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2bf84e73fa6f27f299dec58e13223cf70db80da872eb921d4f6138342a0eabc8"
+dependencies = [
+ "darling 0.24.1",
+ "indoc",
+ "proc-macro2",
+ "quote",
+ "syn 3.0.3",
 ]
 
 [[package]]
@@ -8894,6 +9515,7 @@ dependencies = [
  "filter_ast",
  "item_filters",
  "predicate-index",
+ "system_properties",
  "thiserror 2.0.18",
  "uuid",
 ]
@@ -8911,6 +9533,7 @@ dependencies = [
  "model_file_type",
  "nom 8.0.0",
  "non_empty",
+ "notification_state",
  "rootcause",
  "schemars 1.2.1",
  "serde",
@@ -9219,6 +9842,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "lazy-regex"
+version = "3.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4994ba703f78b083e2f7946dac9251abd83fd43a0365f030e99b69be5b4b9ef9"
+dependencies = [
+ "lazy-regex-proc_macros",
+ "once_cell",
+ "regex",
+]
+
+[[package]]
+name = "lazy-regex-proc_macros"
+version = "3.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fd97232314824e6dbef1918a871bb93f51070455e3715bf26e19a6d01aa977a0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "regex",
+ "syn 2.0.117",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9278,7 +9924,7 @@ version = "0.1.0"
 dependencies = [
  "agent_fold",
  "anyhow",
- "models_search",
+ "messages",
  "reqwest 0.13.4",
  "serde",
  "serde_json",
@@ -9294,6 +9940,8 @@ dependencies = [
  "anyhow",
  "channels",
  "lexical_client",
+ "messages",
+ "rootcause",
  "workspace-hack",
 ]
 
@@ -9725,6 +10373,15 @@ dependencies = [
 
 [[package]]
 name = "lru"
+version = "0.12.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "234cf4f4a04dc1f57e24b96cc0cd600cf2af460d4161ac5ecdd0af8e1f3b2a38"
+dependencies = [
+ "hashbrown 0.15.5",
+]
+
+[[package]]
+name = "lru"
 version = "0.16.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f66e8d5d03f609abc3a39e6f08e4164ebf1447a732906d39eb9b99b7919ef39"
@@ -9773,6 +10430,63 @@ name = "mac"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c41e0c4fef86961ac6d6f8a82609f55f31b05e4fce149ac5710e439df7619ba4"
+
+[[package]]
+name = "macro_authorization"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "bot_id",
+ "bot_token",
+ "conation_auth",
+ "conation_db_migrator",
+ "conation_env_var",
+ "conation_user_id",
+ "constant_time_eq",
+ "cookie",
+ "harness_id",
+ "harness_token",
+ "http-body-util",
+ "jsonwebtoken 10.3.0",
+ "model-error-response",
+ "model_user",
+ "rootcause",
+ "serde",
+ "serde_json",
+ "serde_urlencoded",
+ "sha2 0.10.9",
+ "sqlx",
+ "thiserror 2.0.18",
+ "tokio",
+ "tower 0.5.3",
+ "tracing",
+ "urlencoding",
+ "uuid",
+ "workspace-hack",
+]
+
+[[package]]
+name = "macro_entrypoint"
+version = "0.1.0"
+dependencies = [
+ "conation_env",
+ "conation_env_var",
+ "dotenvy",
+ "opentelemetry",
+ "opentelemetry-appender-tracing",
+ "opentelemetry-otlp",
+ "opentelemetry_sdk",
+ "rootcause",
+ "rootcause-tracing",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "tracing-opentelemetry",
+ "tracing-panic",
+ "tracing-subscriber",
+ "tracing-tree",
+ "workspace-hack",
+]
 
 [[package]]
 name = "mail-builder"
@@ -9937,11 +10651,11 @@ dependencies = [
  "async-trait",
  "axum",
  "base64 0.22.1",
- "conation_authorization",
  "conation_env_var",
  "conation_user_id",
  "futures",
  "http 1.4.0",
+ "macro_authorization",
  "model-error-response",
  "oauth2",
  "redis",
@@ -9992,7 +10706,6 @@ dependencies = [
  "conation_auth",
  "conation_aws_config",
  "conation_config",
- "conation_entrypoint",
  "conation_env",
  "conation_env_var",
  "conation_event_broker",
@@ -10013,6 +10726,7 @@ dependencies = [
  "fusionauth",
  "http 1.4.0",
  "lexical_client",
+ "macro_entrypoint",
  "mcp_auth_proxy",
  "notification",
  "prompt",
@@ -10032,6 +10746,22 @@ dependencies = [
  "tokio-util",
  "tracing",
  "url",
+ "workspace-hack",
+]
+
+[[package]]
+name = "mcp_toolset"
+version = "0.1.0"
+dependencies = [
+ "ai_toolset",
+ "anyhow",
+ "futures",
+ "regex",
+ "rmcp",
+ "schemars 1.2.1",
+ "serde_json",
+ "thiserror 2.0.18",
+ "tracing",
  "workspace-hack",
 ]
 
@@ -10089,10 +10819,8 @@ dependencies = [
  "call",
  "channels",
  "chrono",
- "conation_authorization",
  "conation_aws_config",
  "conation_db_migrator",
- "conation_entrypoint",
  "conation_env",
  "conation_env_var",
  "conation_user_id",
@@ -10107,6 +10835,8 @@ dependencies = [
  "frecency",
  "futures",
  "lexical_client",
+ "macro_authorization",
+ "macro_entrypoint",
  "notification",
  "readonly_pool",
  "reminders",
@@ -10162,6 +10892,43 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.117",
+]
+
+[[package]]
+name = "messages"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "axum",
+ "bot_id",
+ "channel_sender",
+ "chrono",
+ "conation_db_migrator",
+ "conation_event_broker",
+ "conation_event_topics",
+ "conation_user_id",
+ "conation_uuid",
+ "connection_gateway_client",
+ "entity_access",
+ "macro_authorization",
+ "mockall",
+ "model",
+ "model-entity",
+ "model_notifications",
+ "models_pagination",
+ "notification",
+ "rootcause",
+ "schemars 1.2.1",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "system_properties",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "utoipa",
+ "uuid",
+ "workspace-hack",
 ]
 
 [[package]]
@@ -10281,6 +11048,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "50b7e5b27aa02a74bac8c3f23f448f8d87ff11f92d3aac1a6ed369ee08cc56c1"
 dependencies = [
  "libc",
+ "log",
  "wasi 0.11.1+wasi-snapshot-preview1",
  "windows-sys 0.61.2",
 ]
@@ -10413,6 +11181,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "model_owner"
+version = "0.1.0"
+dependencies = [
+ "bot_id",
+ "conation_user_id",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "thiserror 2.0.18",
+ "uuid",
+ "workspace-hack",
+]
+
+[[package]]
 name = "model_user"
 version = "0.1.0"
 dependencies = [
@@ -10523,13 +11305,17 @@ dependencies = [
 name = "models_permissions"
 version = "0.1.0"
 dependencies = [
+ "conation_user_id",
+ "model-entity",
  "model_file_type",
  "schemars 1.2.1",
  "serde",
  "serde_json",
  "sqlx",
  "strum 0.27.2",
+ "thiserror 2.0.18",
  "utoipa",
+ "uuid",
  "workspace-hack",
 ]
 
@@ -10866,7 +11652,6 @@ dependencies = [
  "axum",
  "broadcast",
  "chrono",
- "conation_authorization",
  "conation_db_migrator",
  "conation_env",
  "conation_event_broker",
@@ -10883,11 +11668,12 @@ dependencies = [
  "itertools 0.14.0",
  "kafka_util",
  "last_online_tracker",
+ "macro_authorization",
  "model-entity",
  "model-error-response",
- "model_notifications",
  "model_user",
  "models_pagination",
+ "notification_state",
  "rate_limit",
  "rdkafka",
  "redis",
@@ -10896,7 +11682,7 @@ dependencies = [
  "schemars 1.2.1",
  "serde",
  "serde_json",
- "ses_client",
+ "serde_with",
  "sha2 0.10.9",
  "sqlx",
  "strum 0.27.2",
@@ -10975,12 +11761,9 @@ dependencies = [
  "axum",
  "chrono",
  "conation_auth",
- "conation_authorization",
  "conation_aws_config",
  "conation_config",
  "conation_cors",
- "conation_db_client",
- "conation_entrypoint",
  "conation_env",
  "conation_env_var",
  "conation_event_broker",
@@ -10991,12 +11774,14 @@ dependencies = [
  "conation_user_id",
  "conation_uuid",
  "database_env_vars",
+ "doppler-config",
  "email_formatting",
  "hmac 0.12.1",
  "http-body-util",
- "invite_email",
  "itertools 0.14.0",
  "last_online_tracker",
+ "macro_authorization",
+ "macro_entrypoint",
  "mention_utils",
  "model",
  "model-entity",
@@ -11011,10 +11796,10 @@ dependencies = [
  "rate_limit",
  "redis",
  "regex",
+ "rootcause",
  "secretsmanager_client",
  "serde",
  "serde_json",
- "ses_client",
  "sha2 0.10.9",
  "sns_client",
  "sqlx",
@@ -11028,6 +11813,18 @@ dependencies = [
  "utoipa-swagger-ui",
  "uuid",
  "workspace-hack",
+]
+
+[[package]]
+name = "notification_state"
+version = "0.1.0"
+dependencies = [
+ "async-graphql",
+ "schemars 1.2.1",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "utoipa",
 ]
 
 [[package]]
@@ -11199,7 +11996,7 @@ version = "5.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "51e219e79014df21a225b1860a479e2dcd7cbd9130f4defd4bd0e191ea31d67d"
 dependencies = [
- "base64 0.21.7",
+ "base64 0.22.1",
  "chrono",
  "getrandom 0.2.17",
  "http 1.4.0",
@@ -11219,6 +12016,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3a12a8ed07aefc768292f076dc3ac8c48f3781c8f2d5851dd3d98950e8c5a89f"
 dependencies = [
  "objc2-encode",
+]
+
+[[package]]
+name = "objc2-app-kit"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d49e936b501e5c5bf01fda3a9452ff86dc3ea98ad5f283e1455153142d97518c"
+dependencies = [
+ "bitflags 2.11.1",
+ "objc2",
+ "objc2-core-graphics",
+ "objc2-foundation",
 ]
 
 [[package]]
@@ -11378,10 +12187,10 @@ dependencies = [
  "anyhow",
  "axum",
  "chrono",
- "conation_authorization",
  "conation_user_id",
  "generic_email_domains",
  "import",
+ "macro_authorization",
  "mcp_client",
  "mcp_select",
  "rootcause",
@@ -11451,7 +12260,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "chrono",
- "conation_entrypoint",
+ "macro_entrypoint",
  "models_opensearch",
  "models_search_cursor",
  "opensearch",
@@ -11515,6 +12324,18 @@ dependencies = [
  "pin-project-lite",
  "thiserror 2.0.18",
  "tracing",
+]
+
+[[package]]
+name = "opentelemetry-appender-tracing"
+version = "0.31.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ef6a1ac5ca3accf562b8c306fa8483c85f4390f768185ab775f242f7fe8fdcc2"
+dependencies = [
+ "opentelemetry",
+ "tracing",
+ "tracing-core",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -11598,10 +12419,10 @@ dependencies = [
  "aws-sdk-sqs",
  "aws_lambda_events",
  "conation_aws_config",
- "conation_entrypoint",
  "conation_env_var",
  "conation_queues",
  "lambda_runtime",
+ "macro_entrypoint",
  "sqlx",
  "sqs_client",
  "tokio",
@@ -11617,10 +12438,10 @@ dependencies = [
  "aws-sdk-sqs",
  "aws_lambda_events",
  "conation_aws_config",
- "conation_entrypoint",
  "conation_env_var",
  "conation_queues",
  "lambda_runtime",
+ "macro_entrypoint",
  "serde_json",
  "sqlx",
  "sqs_client",
@@ -11642,6 +12463,16 @@ dependencies = [
  "objc2-foundation",
  "objc2-ui-kit",
  "serde",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "os_pipe"
+version = "1.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7d8fae84b431384b68627d0f9b3b1245fcf9f46f6c0e3dc902e9dce64edd1967"
+dependencies = [
+ "libc",
  "windows-sys 0.61.2",
 ]
 
@@ -12108,11 +12939,11 @@ dependencies = [
  "ai_toolset",
  "anyhow",
  "axum",
- "conation_authorization",
  "conation_user_id",
  "futures",
+ "macro_authorization",
+ "mcp_toolset",
  "model-error-response",
- "regex",
  "reqwest 0.13.4",
  "rmcp",
  "schemars 1.2.1",
@@ -12121,6 +12952,7 @@ dependencies = [
  "sqlx",
  "thiserror 2.0.18",
  "tokio",
+ "tower 0.5.3",
  "tracing",
  "url",
  "utoipa",
@@ -12463,8 +13295,8 @@ dependencies = [
  "axum",
  "axum-extra",
  "base64 0.22.1",
+ "bot_id",
  "chrono",
- "conation_authorization",
  "conation_aws_config",
  "conation_db_migrator",
  "conation_env_var",
@@ -12481,14 +13313,17 @@ dependencies = [
  "entity_access_db_utils",
  "entity_access_management",
  "entity_mutation",
+ "entity_registry_db_utils",
  "futures",
  "hex",
  "http-body-util",
  "kafka_util",
+ "macro_authorization",
  "mockall",
  "model",
  "model-entity",
  "model-error-response",
+ "model_owner",
  "model_user",
  "models_bulk_upload",
  "models_permissions",
@@ -12529,8 +13364,8 @@ dependencies = [
  "anyhow",
  "async-trait",
  "axum",
+ "bot_id",
  "chrono",
- "conation_authorization",
  "conation_db_migrator",
  "conation_event_broker",
  "conation_event_topics",
@@ -12540,6 +13375,7 @@ dependencies = [
  "entity_access",
  "entity_access_db_utils",
  "futures",
+ "macro_authorization",
  "mockall",
  "model-entity",
  "model_notifications",
@@ -12566,8 +13402,8 @@ name = "properties_service"
 version = "0.1.0"
 dependencies = [
  "axum",
- "conation_authorization",
  "entity_access",
+ "macro_authorization",
  "models_properties",
  "notification",
  "properties",
@@ -12618,7 +13454,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "22505a5c94da8e3b7c2996394d1c933236c4d743e81a410bcca4e6989fc066a4"
 dependencies = [
  "bytes",
- "heck 0.4.1",
+ "heck 0.5.0",
  "itertools 0.12.1",
  "log",
  "multimap",
@@ -12687,6 +13523,15 @@ name = "quick-error"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a993555f31e5a609f617c12db6250dedcac1b0a85076912c436e6fc9b2c8e6a3"
+
+[[package]]
+name = "quick-xml"
+version = "0.41.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e660451e55124f798a69a5af3f49ccfbefbd41910eefd25caf2393e1f3473ec1"
+dependencies = [
+ "memchr",
+]
 
 [[package]]
 name = "quick_cache"
@@ -12953,6 +13798,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "ratatui"
+version = "0.29.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eabd94c2f37801c20583fc49dd5cd6b0ba68c716787c2dd6ed18571e1e63117b"
+dependencies = [
+ "bitflags 2.11.1",
+ "cassowary",
+ "compact_str",
+ "crossterm 0.28.1",
+ "indoc",
+ "instability",
+ "itertools 0.13.0",
+ "lru 0.12.5",
+ "paste",
+ "strum 0.26.3",
+ "unicode-segmentation",
+ "unicode-truncate",
+ "unicode-width 0.2.0",
+]
+
+[[package]]
 name = "rate_limit"
 version = "0.1.0"
 dependencies = [
@@ -13175,13 +14041,13 @@ dependencies = [
  "axum",
  "axum-extra",
  "chrono",
- "conation_authorization",
  "conation_db_migrator",
  "conation_user_id",
  "conation_uuid",
  "http-body-util",
  "invite_email",
  "ip_extractor",
+ "macro_authorization",
  "mockall",
  "model-entity",
  "model-error-response",
@@ -13205,9 +14071,9 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.12.3"
+version = "1.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e10754a14b9137dd7b1e3e5b0493cc9171fdd105e0ab477f51b72e7f3ac0e276"
+checksum = "f020237b6c8eed93db2e2cb53c00c60a8e1bc73da7d073199a1180401450218d"
 dependencies = [
  "aho-corasick",
  "memchr",
@@ -13217,9 +14083,9 @@ dependencies = [
 
 [[package]]
 name = "regex-automata"
-version = "0.4.14"
+version = "0.4.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e1dd4122fc1595e8162618945476892eefca7b88c52820e74af6262213cae8f"
+checksum = "ad8553b9b26413251cbf30e620595c7a41b3887f03da04579c0e6b0d6a06b4b2"
 dependencies = [
  "aho-corasick",
  "memchr",
@@ -13234,9 +14100,9 @@ checksum = "cab834c73d247e67f4fae452806d17d3c7501756d98c8808d7c9c7aa7d18f973"
 
 [[package]]
 name = "regex-syntax"
-version = "0.8.10"
+version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc897dd8d9e8bd1ed8cdad82b5966c3e0ecae09fb1907d58efaa013543185d0a"
+checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
 name = "reminders"
@@ -13247,15 +14113,16 @@ dependencies = [
  "async-trait",
  "aws-sdk-sqs",
  "axum",
+ "axum-extra",
  "chrono",
  "chrono-tz",
- "conation_authorization",
  "conation_db_migrator",
  "conation_user_id",
  "conation_uuid",
  "cron",
  "entity_access",
  "http-body-util",
+ "macro_authorization",
  "model-entity",
  "model-error-response",
  "model_notifications",
@@ -13600,7 +14467,7 @@ dependencies = [
 [[package]]
 name = "rs-libreoffice-bindings"
 version = "0.0.7"
-source = "git+https://github.com/whutchinson98/rs-libreoffice-bindings?rev=056a40ddfac1d9650be30b9f0b4b934e9266c7dc#056a40ddfac1d9650be30b9f0b4b934e9266c7dc"
+source = "git+https://github.com/macro-inc/rs-libreoffice-bindings?rev=056a40ddfac1d9650be30b9f0b4b934e9266c7dc#056a40ddfac1d9650be30b9f0b4b934e9266c7dc"
 dependencies = [
  "bindgen",
  "cc",
@@ -13908,12 +14775,11 @@ dependencies = [
  "chrono",
  "chrono-tz",
  "conation_auth",
- "conation_authorization",
  "conation_aws_config",
  "conation_config",
  "conation_cors",
  "conation_db_client",
- "conation_entrypoint",
+ "conation_db_migrator",
  "conation_env",
  "conation_env_var",
  "conation_queues",
@@ -13924,11 +14790,15 @@ dependencies = [
  "cron",
  "database_env_vars",
  "doppler-config",
+ "entity_registry_db_utils",
  "futures",
+ "macro_authorization",
+ "macro_entrypoint",
  "memory",
  "model",
  "model-entity",
  "model_notifications",
+ "model_owner",
  "models_permissions",
  "notification",
  "secretsmanager_client",
@@ -13938,6 +14808,7 @@ dependencies = [
  "sqlx",
  "tokio",
  "tokio-util",
+ "tower 0.5.3",
  "tracing",
  "utoipa",
  "utoipa-swagger-ui",
@@ -14042,6 +14913,8 @@ dependencies = [
 name = "search_processing_service"
 version = "0.1.0"
 dependencies = [
+ "agent_fold",
+ "agent_session",
  "anyhow",
  "aws-sdk-dynamodb",
  "aws-sdk-s3",
@@ -14054,12 +14927,10 @@ dependencies = [
  "chrono",
  "comms_db_client",
  "conation_auth",
- "conation_authorization",
  "conation_aws_config",
  "conation_config",
  "conation_cors",
  "conation_db_client",
- "conation_entrypoint",
  "conation_env",
  "conation_env_var",
  "conation_event_broker",
@@ -14079,6 +14950,8 @@ dependencies = [
  "http-body-util",
  "kafka_util",
  "lexical_client",
+ "macro_authorization",
+ "macro_entrypoint",
  "mention_utils",
  "model",
  "model_file_type",
@@ -14119,6 +14992,7 @@ dependencies = [
 name = "search_service"
 version = "0.1.0"
 dependencies = [
+ "agent_session",
  "anyhow",
  "aws-sdk-secretsmanager",
  "axum",
@@ -14126,7 +15000,6 @@ dependencies = [
  "chrono",
  "comms_db_client",
  "conation_auth",
- "conation_authorization",
  "conation_aws_config",
  "conation_db_client",
  "conation_env",
@@ -14140,6 +15013,7 @@ dependencies = [
  "http-body-util",
  "indexmap 2.14.0",
  "item_filters",
+ "macro_authorization",
  "model",
  "models_email",
  "models_opensearch",
@@ -14151,6 +15025,7 @@ dependencies = [
  "opensearch_client",
  "properties",
  "readonly_pool",
+ "rootcause",
  "secretsmanager_client",
  "serde",
  "serde_json",
@@ -14184,11 +15059,11 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "aws_lambda_events",
- "conation_entrypoint",
  "conation_env_var",
  "conation_service_urls",
  "document_storage_service_client",
  "lambda_runtime",
+ "macro_entrypoint",
  "s3_key",
  "tokio",
  "tracing",
@@ -14269,7 +15144,6 @@ dependencies = [
  "conation_aws_config",
  "conation_db_client",
  "conation_db_migrator",
- "conation_entrypoint",
  "conation_env",
  "conation_env_var",
  "conation_user_id",
@@ -14282,6 +15156,7 @@ dependencies = [
  "futures",
  "jsonwebtoken 10.3.0",
  "lexical_client",
+ "macro_entrypoint",
  "mockall",
  "model",
  "model-entity",
@@ -14295,6 +15170,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.10.9",
+ "share_permission_db_utils",
  "sqlx",
  "sync_service_client",
  "system_properties",
@@ -14446,6 +15322,19 @@ dependencies = [
  "aws-sdk-dynamodb",
  "base64 0.21.7",
  "serde",
+ "serde_core",
+]
+
+[[package]]
+name = "serde_html_form"
+version = "0.2.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b2f2d7ff8a2140333718bb329f5c40fc5f0865b84c426183ce14c97d2ab8154f"
+dependencies = [
+ "form_urlencoded",
+ "indexmap 2.14.0",
+ "itoa",
+ "ryu",
  "serde_core",
 ]
 
@@ -14667,6 +15556,7 @@ dependencies = [
  "anyhow",
  "aws-sdk-sesv2",
  "conation_env_var",
+ "html-escape",
  "lettre",
  "mockall",
  "tracing",
@@ -14730,10 +15620,10 @@ dependencies = [
  "anyhow",
  "aws-sdk-s3",
  "conation_aws_config",
- "conation_entrypoint",
  "conation_env",
  "conation_env_var",
  "futures",
+ "macro_entrypoint",
  "mockall",
  "redis",
  "sqlx",
@@ -14760,9 +15650,25 @@ dependencies = [
  "conation_user_id",
  "conation_uuid",
  "entity_access_db_utils",
+ "model-entity",
  "models_permissions",
+ "rootcause",
  "sqlx",
+ "thiserror 2.0.18",
  "tokio",
+ "workspace-hack",
+]
+
+[[package]]
+name = "shared_entity_registry"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "model-entity",
+ "model_owner",
+ "rootcause",
+ "thiserror 2.0.18",
+ "uuid",
  "workspace-hack",
 ]
 
@@ -14816,6 +15722,7 @@ checksum = "b75a19a7a740b25bc7944bdee6172368f988763b744e3d4dfe753f6b4ece40cc"
 dependencies = [
  "libc",
  "mio 0.8.11",
+ "mio 1.2.0",
  "signal-hook",
 ]
 
@@ -15045,7 +15952,6 @@ dependencies = [
  "channels",
  "chrono",
  "chrono-tz",
- "conation_authorization",
  "conation_db_migrator",
  "conation_user_id",
  "cool_asserts",
@@ -15063,6 +15969,7 @@ dependencies = [
  "http-body-util",
  "indexmap 2.14.0",
  "item_filters",
+ "macro_authorization",
  "mockall",
  "model-entity",
  "model-error-response",
@@ -15120,7 +16027,6 @@ dependencies = [
  "conation_user_id",
  "document_sub_type",
  "item-filter-index",
- "model_file_type",
  "models_soup",
  "postcard",
  "predicate-index",
@@ -15147,6 +16053,7 @@ dependencies = [
  "entity_access",
  "futures",
  "kafka_util",
+ "messages",
  "model-entity",
  "models_properties",
  "projects",
@@ -15528,16 +16435,16 @@ dependencies = [
  "axum",
  "chrono",
  "conation_auth",
- "conation_authorization",
  "conation_aws_config",
  "conation_config",
  "conation_cors",
- "conation_entrypoint",
  "conation_env",
  "conation_env_var",
  "conation_queues",
  "conation_service_urls",
  "doppler-config",
+ "macro_authorization",
+ "macro_entrypoint",
  "model",
  "models_sfs",
  "s3_key",
@@ -15563,6 +16470,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bytes",
+ "conation_aws_config",
  "conation_service_urls",
  "models_sfs",
  "reqwest 0.13.4",
@@ -15778,14 +16686,18 @@ dependencies = [
 name = "sync_service"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.1",
  "bebop",
  "conation_sync_service_jwt",
+ "futures",
  "getrandom 0.3.4",
  "loro",
  "matchit 0.8.4",
  "serde",
  "serde_json",
+ "subtle",
  "sync_service_bebop_schema",
+ "thiserror 2.0.18",
  "time",
  "tracing",
  "tracing-subscriber",
@@ -15824,7 +16736,7 @@ name = "sync_service_hex"
 version = "0.1.0"
 dependencies = [
  "axum",
- "conation_authorization",
+ "macro_authorization",
  "serde",
  "utoipa",
  "workspace-hack",
@@ -15952,7 +16864,6 @@ dependencies = [
  "clap",
  "conation_aws_config",
  "conation_db_migrator",
- "conation_entrypoint",
  "conation_env",
  "conation_env_var",
  "conation_service_urls",
@@ -15960,6 +16871,7 @@ dependencies = [
  "embedding",
  "futures",
  "lexical_client",
+ "macro_entrypoint",
  "model-entity",
  "reqwest 0.13.4",
  "rootcause",
@@ -15988,9 +16900,7 @@ dependencies = [
  "axum",
  "channels",
  "chrono",
- "conation_authorization",
  "conation_db_migrator",
- "conation_entrypoint",
  "conation_event_broker",
  "conation_event_topics",
  "conation_user_id",
@@ -15999,6 +16909,8 @@ dependencies = [
  "database_env_vars",
  "entity_access",
  "generic_email_domains",
+ "macro_authorization",
+ "macro_entrypoint",
  "model-entity",
  "model-error-response",
  "model_notifications",
@@ -16684,6 +17596,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "tree_magic_mini"
+version = "3.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b8765b90061cba6c22b5831f675da109ae5561588290f9fa2317adab2714d5a6"
+dependencies = [
+ "memchr",
+ "nom 8.0.0",
+ "petgraph 0.8.3",
+]
+
+[[package]]
 name = "triomphe"
 version = "0.1.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -16698,6 +17621,15 @@ name = "try-lock"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
+
+[[package]]
+name = "tui-input"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "911e93158bf80bbc94bad533b2b16e3d711e1132d69a6a6980c3920a63422c19"
+dependencies = [
+ "unicode-width 0.2.0",
+]
 
 [[package]]
 name = "tungstenite"
@@ -16926,12 +17858,12 @@ dependencies = [
  "bytes",
  "conation_config",
  "conation_cors",
- "conation_entrypoint",
  "conation_env",
  "doppler-config",
  "futures",
  "http 1.4.0",
  "http-body-util",
+ "macro_entrypoint",
  "reqwest 0.13.4",
  "scraper",
  "serde",
@@ -16987,6 +17919,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9629274872b2bfaf8d66f5f15725007f635594914870f65218920345aa11aa8c"
 
 [[package]]
+name = "unicode-truncate"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b3644627a5af5fa321c95b9b235a72fd24cd29c648c2c379431e6628655627bf"
+dependencies = [
+ "itertools 0.13.0",
+ "unicode-segmentation",
+ "unicode-width 0.1.14",
+]
+
+[[package]]
 name = "unicode-width"
 version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -16994,9 +17937,9 @@ checksum = "7dd6e30e90baa6f72411720665d41d89b9a3d039dc45b8faea1ddd07f617f6af"
 
 [[package]]
 name = "unicode-width"
-version = "0.2.2"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b4ac048d71ede7ee76d585517add45da530660ef4390e49b098733c6e897f254"
+checksum = "1fc81956842c57dac11422a97c3b8195a1ff727f06e85c84ed2e8aa277c9a0fd"
 
 [[package]]
 name = "unicode-xid"
@@ -17053,7 +17996,6 @@ dependencies = [
  "aws_lambda_events",
  "chrono",
  "conation_aws_config",
- "conation_entrypoint",
  "conation_env_var",
  "conation_service_urls",
  "connection_gateway_client",
@@ -17061,6 +18003,7 @@ dependencies = [
  "dynamodb_client",
  "futures",
  "lambda_runtime",
+ "macro_entrypoint",
  "model",
  "model-entity",
  "models_bulk_upload",
@@ -17086,11 +18029,11 @@ dependencies = [
  "aws-sdk-sqs",
  "aws_lambda_events",
  "conation_aws_config",
- "conation_entrypoint",
  "conation_env_var",
  "conation_queues",
  "dynamodb_client",
  "lambda_runtime",
+ "macro_entrypoint",
  "models_bulk_upload",
  "s3_key",
  "serde",
@@ -17121,6 +18064,31 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "daf8dba3b7eb870caf1ddeed7bc9d2a049f3cfdfae7cb521b087cc33ae4c49da"
 
 [[package]]
+name = "user_api_key"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "chrono",
+ "conation_db_migrator",
+ "conation_user_id",
+ "hex",
+ "macro_authorization",
+ "model-error-response",
+ "rand 0.9.4",
+ "rootcause",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "sqlx",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "utoipa",
+ "uuid",
+ "workspace-hack",
+]
+
+[[package]]
 name = "user_link_cleanup_handler"
 version = "0.1.0"
 dependencies = [
@@ -17128,10 +18096,10 @@ dependencies = [
  "aws_lambda_events",
  "chrono",
  "conation_db_client",
- "conation_entrypoint",
  "conation_env_var",
  "futures",
  "lambda_runtime",
+ "macro_entrypoint",
  "serde",
  "serde_json",
  "sqlx",
@@ -17527,6 +18495,76 @@ dependencies = [
 ]
 
 [[package]]
+name = "wayland-backend"
+version = "0.3.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "38a91b4eaddff87b1cd1074985e3713da4af2c49742d1b356b2c01670a67a078"
+dependencies = [
+ "cc",
+ "downcast-rs",
+ "rustix 1.1.4",
+ "smallvec",
+ "wayland-sys",
+]
+
+[[package]]
+name = "wayland-client"
+version = "0.31.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e3c36a0f861ad76d0901f2800b46321410d9f73f2ea88aac0650d86c32688073"
+dependencies = [
+ "bitflags 2.11.1",
+ "rustix 1.1.4",
+ "wayland-backend",
+ "wayland-scanner",
+]
+
+[[package]]
+name = "wayland-protocols"
+version = "0.32.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "23d0c813de3daa2ed6520af85a3bd49b0e722a3078506899aa9686fea58dc4b6"
+dependencies = [
+ "bitflags 2.11.1",
+ "wayland-backend",
+ "wayland-client",
+ "wayland-scanner",
+]
+
+[[package]]
+name = "wayland-protocols-wlr"
+version = "0.3.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eb04e52f7836d7c7976c78ca0250d61e33873c34156a2a1fc9474828ec268234"
+dependencies = [
+ "bitflags 2.11.1",
+ "wayland-backend",
+ "wayland-client",
+ "wayland-protocols",
+ "wayland-scanner",
+]
+
+[[package]]
+name = "wayland-scanner"
+version = "0.31.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "338e30461b3a2b67d70eb30a6d89f8e0c93a833e07d2ae89085cd070c4a00ac0"
+dependencies = [
+ "proc-macro2",
+ "quick-xml",
+ "quote",
+]
+
+[[package]]
+name = "wayland-sys"
+version = "0.31.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d8eab23fefc9e41f8e841df4a9c707e8a8c4ed26e944ef69297184de2785e3be"
+dependencies = [
+ "pkg-config",
+]
+
+[[package]]
 name = "web-sys"
 version = "0.3.103"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -17559,9 +18597,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "webbrowser"
+version = "1.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ef62a3d5f7b2411119a11b6f62570dbff91d7105e011a20fb83fbf8f5761c40f"
+dependencies = [
+ "jni 0.22.4",
+ "log",
+ "ndk-context",
+ "objc2",
+ "objc2-app-kit",
+ "objc2-foundation",
+ "url",
+ "web-sys",
+]
+
+[[package]]
 name = "webhook"
 version = "0.1.0"
 dependencies = [
+ "agent_fold",
+ "agent_runtime_protocol",
  "agent_session",
  "agent_trigger",
  "anyhow",
@@ -17571,7 +18627,6 @@ dependencies = [
  "channel_sender",
  "channels",
  "chrono",
- "conation_authorization",
  "conation_db_migrator",
  "conation_event_broker",
  "conation_event_topics",
@@ -17581,6 +18636,8 @@ dependencies = [
  "entity_access",
  "futures",
  "kafka_util",
+ "macro_authorization",
+ "messages",
  "model-error-response",
  "model_user",
  "rate_limit",
@@ -17591,6 +18648,7 @@ dependencies = [
  "serde_json",
  "sqlx",
  "sqs_client",
+ "strum 0.27.2",
  "thiserror 2.0.18",
  "tokio",
  "tokio-retry",
@@ -18138,6 +19196,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "wl-clipboard-rs"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e9651471a32e87d96ef3a127715382b2d11cc7c8bb9822ded8a7cc94072eb0a3"
+dependencies = [
+ "libc",
+ "log",
+ "os_pipe",
+ "rustix 1.1.4",
+ "thiserror 2.0.18",
+ "tree_magic_mini",
+ "wayland-backend",
+ "wayland-client",
+ "wayland-protocols",
+ "wayland-protocols-wlr",
+]
+
+[[package]]
 name = "worker"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -18221,10 +19297,10 @@ dependencies = [
  "aws-sdk-ecs",
  "aws_lambda_events",
  "conation_aws_config",
- "conation_entrypoint",
  "conation_env",
  "conation_env_var",
  "lambda_runtime",
+ "macro_entrypoint",
  "mockall",
  "serde_json",
  "tokio",
@@ -18303,7 +19379,9 @@ dependencies = [
  "hyper-util",
  "idna",
  "indexmap 2.14.0",
+ "insta",
  "ipnet",
+ "itertools 0.13.0",
  "lazy_static",
  "libc",
  "linux-raw-sys 0.12.1",
@@ -18311,9 +19389,12 @@ dependencies = [
  "memchr",
  "mime_guess",
  "miniz_oxide",
+ "mio 1.2.0",
  "num-bigint",
  "num-integer",
  "num-traits",
+ "objc2",
+ "objc2-foundation",
  "once_cell",
  "opentelemetry",
  "opentelemetry-http",
@@ -18355,6 +19436,7 @@ dependencies = [
  "serde_with_macros",
  "sha1 0.10.6",
  "sha2 0.10.9",
+ "signal-hook-mio",
  "simd-adler32",
  "slab",
  "smallvec",
@@ -18408,6 +19490,23 @@ checksum = "05f360fc0b24296329c78fda852a1e9ae82de9cf7b27dae4b7f62f118f77b9ed"
 dependencies = [
  "tap",
 ]
+
+[[package]]
+name = "x11rb"
+version = "0.13.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9993aa5be5a26815fe2c3eacfc1fde061fc1a1f094bf1ad2a18bf9c495dd7414"
+dependencies = [
+ "gethostname",
+ "rustix 1.1.4",
+ "x11rb-protocol",
+]
+
+[[package]]
+name = "x11rb-protocol"
+version = "0.13.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ea6fc2961e4ef194dcbfe56bb845534d0dc8098940c7e5c012a258bfec6701bd"
 
 [[package]]
 name = "xmlparser"
@@ -18497,6 +19596,7 @@ dependencies = [
  "dotenvy",
  "indexmap 2.14.0",
  "indicatif",
+ "indoc",
  "libc",
  "rdkafka",
  "serde",
@@ -18513,8 +19613,11 @@ name = "xtask_nextest_filter"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "determinator",
  "guppy",
+ "tempfile",
  "xtask_graph",
+ "xtask_paths",
 ]
 
 [[package]]

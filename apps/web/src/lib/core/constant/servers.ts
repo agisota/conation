@@ -1,26 +1,206 @@
-import {
-  getConfiguredStandaloneOperatorOrigin,
-} from './clientProfile';
-import {
-  createStandaloneServers,
-  createStandaloneSyncServiceHosts,
-  type Servers,
-} from './serverProfile';
+const serverHostLocal: Servers = {
+  'auth-service': 'http://localhost:8080',
+  'auth-logout': 'http://localhost:3000', // TODO: make work with local fusionauth later
+  'pdf-service': 'http://localhost:4567',
+  'document-storage-service': 'http://localhost:8086',
+  'websocket-service': 'ws://localhost:6969',
+  'cognition-service': 'http://localhost:8085',
+  'connection-gateway': 'ws://localhost:8082',
+  'notification-service': 'http://localhost:8089',
+  'static-file': 'http://localhost:8100',
+  'unfurl-service': 'http://localhost:8095',
+  contacts: 'http://localhost:8083',
+  'email-service': 'http://localhost:8087',
+  'image-proxy-service': 'http://localhost:8097',
+  'scheduled-action': 'http://localhost:8099',
+  'agent-harness': 'http://localhost:8101',
+} as const;
 
-const standaloneOperatorOrigin = getConfiguredStandaloneOperatorOrigin();
+const devServerSuffix = import.meta.env.MODE === 'development' ? '-dev' : '';
 
-/** All web builds use the operator's single-origin reverse-proxy contract. */
-export const SERVER_HOSTS: Servers = createStandaloneServers(
-  standaloneOperatorOrigin
-);
+const gatewayHost =
+  import.meta.env.MODE === 'development'
+    ? 'https://dev-gateway.macro.com'
+    : 'https://gateway.macro.com';
 
-export const SYNC_SERVICE_HOSTS = createStandaloneSyncServiceHosts(
-  standaloneOperatorOrigin
-);
+const authLogoutUrl =
+  import.meta.env.MODE === 'development'
+    ? 'https://fusionauth-dev.macro.com/oauth2/logout?client_id=eb75fe7a-0ef1-4186-96d9-cc62cfb1d10c&tenantId=5e13f524-8d32-0454-81f8-061936256aa4'
+    : 'https://auth.macro.com/oauth2/logout?client_id=75409999-7dc4-4241-b73b-a51818c3a71c&tenantId=a3e53c3d-8d6a-3e92-d64c-fa3bf30a60be';
 
-/** The operator DSS host used to mint sync-service permission tokens. */
+const serverHostRemote = {
+  'auth-service': `${gatewayHost}/auth`,
+  'auth-logout': authLogoutUrl,
+  'pdf-service': `https://pdf-service${devServerSuffix}.macro.com`,
+  'document-storage-service': `${gatewayHost}/dss`,
+  'websocket-service': `wss://services${devServerSuffix}.macro.com`,
+  'cognition-service': `${gatewayHost}/cognition`,
+  'connection-gateway': `${gatewayHost.replace(/^http/, 'ws')}/connection-gateway`,
+  'notification-service': `${gatewayHost}/notification`,
+  'static-file': `https://static-file-service${devServerSuffix}.macro.com`,
+  'unfurl-service': `${gatewayHost}/unfurl`,
+  contacts: `${gatewayHost}/contacts`,
+  'email-service': `${gatewayHost}/email`,
+  'image-proxy-service': `${gatewayHost}/image-proxy`,
+  'scheduled-action': `${gatewayHost}/scheduled-action`,
+  'agent-harness': `${gatewayHost}/agent-harness`,
+} as const;
+
+type Servers = Record<keyof typeof serverHostRemote, string>;
+
+// Single-origin local backend: when the xtask orchestrator's reverse proxy is
+// in use it sets VITE_LOCAL_BACKEND_ORIGIN to the proxy origin, and the whole
+// app talks to it via path prefixes instead of many direct host ports. Unset =>
+// direct-port behavior (unchanged). Declared BEFORE SERVER_HOSTS so it is
+// initialized before SERVER_HOSTS evaluates selectLocalServers() at module load
+// (these are consts in a temporal dead zone; the functions below are hoisted).
+//
+// The special value 'same-origin' resolves to the origin the bundle is served
+// from, at runtime. The headless stack (`cargo x stack up`) builds with it so
+// the static bundle Caddy serves works unchanged on any host that reaches the
+// proxy — localhost, a tunnel URL, a preview domain. (globalThis.location
+// exists in both windows and workers.)
+const rawLocalBackendOrigin: string | undefined = import.meta.env
+  .VITE_LOCAL_BACKEND_ORIGIN;
+const proxyOrigin: string | undefined =
+  rawLocalBackendOrigin === 'same-origin'
+    ? globalThis.location?.origin
+    : resolveProxyOrigin(rawLocalBackendOrigin);
+const wsProxyOrigin = proxyOrigin?.replace(/^http/, 'ws');
+
+// Follow the page's hostname (keeping the proxy's port) so the app works from
+// any `*.localhost` alias. Hostnames get separate cookie jars while ports
+// share them, so opening tabs like alice.localhost:3000 / carol.localhost:3000
+// gives each seeded persona an isolated login session against the one backend.
+function resolveProxyOrigin(configured: string | undefined) {
+  if (!configured || typeof window === 'undefined') return configured;
+  try {
+    const url = new URL(configured);
+    url.hostname = window.location.hostname;
+    return url.origin;
+  } catch {
+    return configured;
+  }
+}
+
+export const SERVER_HOSTS: Servers =
+  import.meta.env.MODE === 'development'
+    ? selectLocalServers()
+    : serverHostRemote;
+
+function proxyServers(): Servers | undefined {
+  if (!proxyOrigin || !wsProxyOrigin) return undefined;
+  return {
+    'auth-service': `${proxyOrigin}/auth`,
+    'auth-logout': serverHostLocal['auth-logout'],
+    'pdf-service': serverHostLocal['pdf-service'], // no local container
+    'document-storage-service': `${proxyOrigin}/dss`,
+    'websocket-service': `${wsProxyOrigin}/websocket`,
+    'cognition-service': `${proxyOrigin}/cognition`,
+    'connection-gateway': `${wsProxyOrigin}/connection-gateway`,
+    'notification-service': `${proxyOrigin}/notification`,
+    'static-file': `${proxyOrigin}/static-file`,
+    'unfurl-service': `${proxyOrigin}/unfurl`,
+    'agent-harness': `${proxyOrigin}/agent-harness`,
+    contacts: `${proxyOrigin}/contacts`,
+    'email-service': `${proxyOrigin}/email`,
+    'image-proxy-service': `${proxyOrigin}/image-proxy`,
+    'scheduled-action': `${proxyOrigin}/scheduled-action`,
+  };
+}
+
+function selectLocalServers(): Servers {
+  const selectedLocalServers: string = import.meta.env.VITE_LOCAL_SERVERS;
+  if (!selectedLocalServers || selectedLocalServers.length === 0) {
+    return serverHostRemote;
+  }
+
+  // Keyword to make running everything locally easier
+  if (selectedLocalServers === 'ALL') {
+    return proxyServers() ?? serverHostLocal;
+  }
+
+  function assertValidName(name: string): name is keyof Servers {
+    if (!(name in serverHostRemote))
+      throw new Error(`unknown server name ${name}`);
+    return true;
+  }
+  const servers = selectedLocalServers.split(',').reduce(
+    (acc: Servers, entry: string) => {
+      // Support "service-name:port" to override the default local port
+      const [name, portOverride] = entry.split(':') as [
+        string,
+        string | undefined,
+      ];
+      if (!assertValidName(name)) return acc;
+      if (portOverride) {
+        const url = new URL(serverHostLocal[name]);
+        url.port = portOverride;
+        acc[name] = url.toString().replace(/\/$/, '');
+      } else {
+        acc[name] = serverHostLocal[name];
+      }
+      console.log(`Using local server ${name}: ${acc[name]}`);
+      return acc;
+    },
+    { ...serverHostRemote }
+  );
+  return servers;
+}
+
+const syncServiceSuffix =
+  import.meta.env.MODE === 'development' ? '-dev3' : '-prod2';
+
+const syncServiceHostLocal = {
+  worker: 'http://localhost:8787',
+  ws: 'ws://localhost:8787',
+} as const;
+
+const syncServiceHostRemote = {
+  worker: `https://sync-service${syncServiceSuffix}.macroverse.workers.dev`,
+  ws: `wss://sync-service${syncServiceSuffix}.macroverse.workers.dev`,
+} as const;
+
+function selectSyncServiceHost():
+  | typeof syncServiceHostRemote
+  | typeof syncServiceHostLocal
+  | { worker: string; ws: string } {
+  const overrideHost: string | undefined = import.meta.env
+    .VITE_SYNC_SERVICE_HOST;
+  if (overrideHost) {
+    return {
+      worker: `https://${overrideHost}`,
+      ws: `wss://${overrideHost}`,
+    };
+  }
+  if (import.meta.env.MODE !== 'development') {
+    return syncServiceHostRemote;
+  }
+  const selectedLocalServers: string = import.meta.env.VITE_LOCAL_SERVERS;
+  if (
+    selectedLocalServers === 'ALL' ||
+    selectedLocalServers?.includes('sync-service')
+  ) {
+    // Route sync through the single-origin proxy when it is in use.
+    if (proxyOrigin && wsProxyOrigin) {
+      return { worker: `${proxyOrigin}/sync`, ws: `${wsProxyOrigin}/sync` };
+    }
+    return syncServiceHostLocal;
+  }
+  return syncServiceHostRemote;
+}
+
+export const SYNC_SERVICE_HOSTS = selectSyncServiceHost();
+
+/**
+ * The DSS host to use for sync-service permission tokens.
+ * When the sync service is remote, permission tokens must come from the remote DSS
+ * because they need to be signed with the matching JWT secret.
+ */
 export const SYNC_PERMISSION_TOKEN_DSS_HOST =
-  SERVER_HOSTS['document-storage-service'];
+  SYNC_SERVICE_HOSTS === syncServiceHostRemote
+    ? serverHostRemote['document-storage-service']
+    : SERVER_HOSTS['document-storage-service'];
 
 /** Creates endpoint URL for accessing a static file by its ID */
 export function staticFileIdEndpoint(id: string): string {

@@ -3,20 +3,17 @@ import {
   ChatWithAgentIcon,
   openChatWithAgent,
 } from '@app/features/chat/ChatWithAgentButton';
-import { t } from '@app/lib/i18n';
 import { getIsSpecialProject } from '@block-project/isSpecial';
 import { projectBlockDataSignal } from '@block-project/signal/projectBlockData';
 import {
-  BLOCK_TOOL_IDS,
   type BlockTool,
   ResponsivePermissionsBadge,
   ToolButton,
 } from '@components/app/ResponsiveBlockToolbar';
 import { PreviewButton } from '@components/app/split-layout/components/PreviewButton';
-import { useDrawerControl } from '@components/app/split-layout/components/SplitDrawerContext';
 import {
+  BlockSplitFileMenu,
   type FileOperation,
-  SplitFileMenu,
 } from '@components/app/split-layout/components/SplitFileMenu';
 import {
   SplitHeaderLeft,
@@ -31,7 +28,6 @@ import {
   SplitToolbarRight,
 } from '@components/app/split-layout/components/SplitToolbar';
 import { useBlockId } from '@core/block';
-import { DETAILS_DRAWER_ID } from '@core/component/DetailsDrawer';
 import { toast } from '@core/component/Toast/Toast';
 import {
   getShareDrawerRecipientInput,
@@ -42,8 +38,7 @@ import { ENABLE_PROJECT_SHARING } from '@core/constant/featureFlags';
 import { isMobile } from '@core/mobile/isMobile';
 import { useCanEdit, useIsDocumentOwner } from '@core/signal/permissions';
 import { buildSimpleEntityUrl } from '@core/util/url';
-import IconShared from '@icon/wide-share.svg';
-import Info from '@phosphor/info.svg';
+import IconShared from '@phosphor/share.svg';
 import { createMemo, For, Show } from 'solid-js';
 import { ProjectCreateMenu, useProjectCreateTools } from './ProjectCreateMenu';
 
@@ -59,7 +54,6 @@ export function TopBar() {
     () => projectBlockDataSignal()?.projectMetadata.name ?? ''
   );
 
-  const detailsControl = useDrawerControl(DETAILS_DRAWER_ID);
   const shareCtx = useShareDialogContext();
 
   function handleCopyLink() {
@@ -69,19 +63,10 @@ export function TopBar() {
         id,
       })
     );
-    toast.success(t('file.feedback.linkCopied'));
+    toast.success('Link copied to clipboard');
   }
 
   const ops = createMemo<FileOperation[]>(() => [
-    ...(!isSpecialProject
-      ? [
-          {
-            label: t('common.details'),
-            icon: Info,
-            action: detailsControl.toggle,
-          },
-        ]
-      : []),
     ...(isOwner() && !isSpecialProject
       ? [
           { op: 'rename' as const },
@@ -99,10 +84,7 @@ export function TopBar() {
 
   const tools: BlockTool[] = [
     {
-      id: BLOCK_TOOL_IDS.chat,
-      get label() {
-        return t('block.actions.chat');
-      },
+      label: 'Chat',
       icon: ChatWithAgentIcon,
       action: () => openChatWithAgent({ type: 'project', id, name: name() }),
       condition: () => !isSpecialProject,
@@ -111,11 +93,8 @@ export function TopBar() {
       ),
     },
     {
-      id: BLOCK_TOOL_IDS.share,
       group: 'sharing',
-      get label() {
-        return t('block.actions.share');
-      },
+      label: 'Share',
       icon: IconShared,
       action: () => shareCtx.open(),
       condition: () => ENABLE_PROJECT_SHARING && !isSpecialProject,
@@ -123,8 +102,7 @@ export function TopBar() {
       focusTarget: getShareDrawerRecipientInput,
     },
   ];
-  const toolbarTools = () =>
-    tools.filter((tool) => tool.id !== BLOCK_TOOL_IDS.share);
+  const toolbarTools = () => tools.filter((tool) => tool.label !== 'Share');
   const showShare = () => ENABLE_PROJECT_SHARING && !isSpecialProject;
 
   return (
@@ -141,7 +119,7 @@ export function TopBar() {
       </SplitHeaderRight>
       <ResponsivePermissionsBadge />
       <SplitTitleFileMenu>
-        <SplitFileMenu
+        <BlockSplitFileMenu
           id={id}
           itemType="project"
           name={name()}

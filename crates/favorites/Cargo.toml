@@ -8,7 +8,8 @@ version = "0.1.0"
 default = []
 inbound = [
   "dep:axum",
-  "dep:conation_authorization",
+  "dep:axum-extra",
+  "dep:macro_authorization",
   "dep:model-error-response",
   "dep:utoipa",
   "entity_access/inbound",
@@ -22,11 +23,14 @@ postgres = ["dep:sqlx", "outbound"]
 [dependencies]
 anyhow = { workspace = true }
 axum = { workspace = true, optional = true }
+# `query` brings `axum_extra::extract::Query`, whose deserializer collects
+# repeated query keys into a vector; `axum::extract::Query` keeps only one.
+axum-extra = { workspace = true, optional = true, features = ["query"] }
 chrono = { workspace = true, features = ["serde"] }
 cowlike = { path = "../cowlike" }
 entity_access = { path = "../entity_access", optional = true, default-features = false, features = ["ports"] }
-conation_authorization = { path = "../conation_authorization", optional = true, default-features = false, features = ["axum"] }
-conation_user_id = { path = "../conation_user_id" }
+macro_authorization = { path = "../conation_authorization", optional = true, default-features = false, features = ["axum"] }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
 mockall = { workspace = true, optional = true }
 model-entity = { path = "../model-entity" }
 model-error-response = { path = "../model-error-response", optional = true }
@@ -39,7 +43,11 @@ utoipa = { workspace = true, optional = true }
 workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
-conation_db_migrator = { path = "../conation_db_migrator" }
+http-body-util = { workspace = true }
+macro_db_migrator = { package = "conation_db_migrator", path = "../conation_db_migrator" }
+model_user = { path = "../model_user" }
+rootcause = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tower = { workspace = true }
 uuid = { workspace = true, features = ["v7"] }

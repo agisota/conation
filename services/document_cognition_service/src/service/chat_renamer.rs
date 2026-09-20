@@ -1,8 +1,9 @@
 use crate::api::context::ApiContext;
-use chat::domain::models::PatchChatArgs;
+use agent::PredefinedModel;
+use chat::domain::models::PatchChatRepoArgs;
 use chat::domain::ports::ChatRepo;
 use chat::outbound::postgres::PgChatRepo;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use model_entity::EntityType;
 use std::sync::Arc;
 
@@ -70,10 +71,11 @@ async fn rename_initial_chat(
         .patch(
             user_id,
             &chat_id,
-            PatchChatArgs {
+            PatchChatRepoArgs {
                 name: Some(name.clone()),
                 project_id: None,
                 share_permission: None,
+                team_share: None,
             },
         )
         .await
@@ -107,9 +109,9 @@ async fn generate_chat_name(
         initial_question.trim()
     );
     let usage_ctx = ai_usage::UsageContext::new(ai_usage::AiFeature::ChatRename, user_id)
-        .with_entity(conation_uuid::string_to_uuid(chat_id).ok());
+        .with_entity(macro_uuid::string_to_uuid(chat_id).ok());
     let response = agent::complete(
-        "rox/gemini-2.5-flash",
+        PredefinedModel::Fast,
         CHAT_RENAME_SYSTEM_PROMPT,
         &rename_request,
         recorder,

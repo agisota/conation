@@ -1,4 +1,5 @@
 use super::*;
+use conation_user_id::user_id::MacroUserIdStr;
 use http::Method;
 
 fn header_map(pairs: &[(&str, &str)]) -> HeaderMap {
@@ -231,6 +232,33 @@ fn a_repo_slug_rejects_rather_than_repairs() {
     }
 }
 
+/// A configured URL is read into a slug only when it names a repository and
+/// nothing else: this is the one reading of `repo_url`, and the harness mints
+/// a session's token against whatever it says.
+#[test]
+fn reads_the_repository_out_of_a_configured_url() {
+    for url in [
+        "https://github.com/macro-inc/macro",
+        "https://github.com/macro-inc/macro/",
+        "https://github.com/macro-inc/macro.git",
+    ] {
+        let repo = RepoSlug::parse_github_url(url).expect(url);
+        assert_eq!(repo.to_string(), "macro-inc/macro", "for {url}");
+    }
+
+    for url in [
+        "",
+        "not a url",
+        "https://github.com",
+        "https://github.com/macro-inc",
+        "https://gitlab.com/macro-inc/macro",
+        "https://github.com.evil.example/macro-inc/macro",
+        "https://github.com/macro-inc/macro/tree/main",
+    ] {
+        assert_eq!(RepoSlug::parse_github_url(url), None, "accepted {url}");
+    }
+}
+
 /// The allowlist is the whole point: anything not one of the three smart-HTTP
 /// routes - the dumb protocol's object endpoints most of all - is not a target
 /// this crate can name.
@@ -339,4 +367,44 @@ fn a_repeated_git_service_parameter_does_not_escalate() {
             service: GitService::UploadPack
         })
     );
+}
+
+#[test]
+fn an_mcp_destination_is_read_off_the_proxy_path() {
+    assert_eq!(
+        McpDestination::from_path("/mcp-conation"),
+        Some(McpDestination::Conation)
+    );
+    assert_eq!(
+        McpDestination::from_path("/mcp-macro"),
+        Some(McpDestination::Conation)
+    );
+    assert_eq!(
+        McpDestination::from_path("/mcp/google_sheets"),
+        Some(McpDestination::Connected(
+            McpServerSlug::parse("google_sheets").expect("slug")
+        ))
+    );
+    // A slug outside the charset, a nested path and a stray route all name
+    // nothing, the same as they do at the router.
+    assert_eq!(McpDestination::from_path("/mcp/Not-A-Slug"), None);
+    assert_eq!(McpDestination::from_path("/mcp/a/b"), None);
+    assert_eq!(McpDestination::from_path("/mcp/"), None);
+    assert_eq!(McpDestination::from_path("/git/info/refs"), None);
+}
+
+#[test]
+fn is_macro_staff_admits_conation_and_macro_domains() {
+    let staff_macro =
+        MacroUserIdStr::try_from_email("staff@macro.com").expect("a valid user id");
+    let staff_conation =
+        MacroUserIdStr::try_from_email("dev@conation.dev").expect("a valid user id");
+    let plus_alias =
+        MacroUserIdStr::try_from_email("name+tag@conation.dev").expect("a valid user id");
+    let visitor =
+        MacroUserIdStr::try_from_email("visitor@example.com").expect("a valid user id");
+    assert!(is_macro_staff(&staff_macro));
+    assert!(is_macro_staff(&staff_conation));
+    assert!(is_macro_staff(&plus_alias));
+    assert!(!is_macro_staff(&visitor));
 }

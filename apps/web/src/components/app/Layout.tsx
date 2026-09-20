@@ -22,9 +22,12 @@ import {
   AddInboxDialog,
   isAddInboxDialogOpen,
 } from '@app/features/inbox/AddInboxDialog';
-import { ConationMcpSetupModal } from '@app/features/integrations/mcp-setup/ConationMcpSetupModal';
+import { MacroMcpSetupModal } from '@app/features/integrations/mcp-setup/MacroMcpSetupModal';
+import { Paywall } from '@app/features/paywall/Paywall';
 import { PropertyEditorModal } from '@app/features/property/editor/PropertyEditorModal';
 import { ReminderComposerModal } from '@app/features/reminders/ReminderComposerModal';
+import { MobileSettingsProvider } from '@app/features/settings/context/mobile-settings';
+import { MobileSettings } from '@app/features/settings/MobileSettings';
 import { useOnboardingV4Flag } from '@app/features/setup/flow/useOnboardingV4Flag';
 import { GlobalShareModal } from '@app/features/sharing/global-share-modal/GlobalShareModal';
 import { IosShareSheet } from '@app/features/sharing/ios-share-sheet/IosShareSheet';
@@ -40,17 +43,16 @@ import {
   type SidebarState,
 } from '@components/app/app-sidebar/sidebar';
 import { registerMailtoComposerHandler } from '@components/app/mailtoComposerHandler';
+import { SidebarRail } from '@components/app/sidebar-next/sidebar-rail';
+import { useSidebarNextFlag } from '@components/app/sidebar-next/use-sidebar-next-flag';
 import {
   isSidebarVisible,
   SidebarCollapseContext,
   SidebarVisibilityContext,
 } from '@components/app/sidebarVisibility';
 import { useIsAuthenticated } from '@core/auth';
-import { getConfiguredClientProfile } from '@core/constant/clientProfile';
-import {
-  ENABLE_REMINDERS_FLAG,
-  ENABLE_REMINDERS_OVERRIDE,
-} from '@core/constant/featureFlags';
+import { enableReminders } from '@core/constant/featureFlags';
+import { usePaywallState } from '@core/constant/PaywallState';
 import { isSoloSettings } from '@core/constant/SettingsState';
 import { attachGlobalDOMScope } from '@core/hotkey/hotkeys';
 import { isMobile } from '@core/mobile/isMobile';
@@ -58,7 +60,6 @@ import { isNativeMobilePlatform } from '@core/mobile/isNativeMobilePlatform';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
 import { virtualKeyboardVisible } from '@core/mobile/virtualKeyboard';
 import { updateCookie } from '@core/util/cookies';
-import { useCompleteTutorialMutation } from '@queries/auth/tutorial';
 import { useUserInfoQuery } from '@queries/auth/user-info';
 import { makePersisted } from '@solid-primitives/storage';
 import {
@@ -74,15 +75,16 @@ import {
   createSignal,
   type JSX,
   onCleanup,
+  onMount,
   Show,
   Suspense,
 } from 'solid-js';
 import { BundleUpdateProgressBar } from './BundleUpdateProgressBar';
-import { DesktopWindowDragRegion } from './DesktopWindowDragRegion';
 import GlobalShortcuts from './GlobalHotkeys';
 import { ItemDndProvider } from './ItemDragAndDrop';
 import { FloatRegion } from './mobile/float-regions/FloatRegion';
 import { FloatRegionHost } from './mobile/float-regions/FloatRegionHost';
+import { installGlassPress } from './mobile/glassPress';
 import { MobileDockRow } from './mobile/MobileDockRow';
 import { MobileViewsRow } from './mobile/MobileViewsRow';
 import { SwipeDownDismissKeyboard } from './mobile/SwipeDownDismissKeyboard';
@@ -99,6 +101,8 @@ const AUTH_URLS = [
   `${ROUTER_BASE_CONCAT}welcome`,
   `${ROUTER_BASE_CONCAT}mobile-email-signup`,
   `${ROUTER_BASE_CONCAT}team-invite`,
+  `${ROUTER_BASE_CONCAT}invite`,
+  `${ROUTER_BASE_CONCAT}internal/invite-links`,
 ];
 
 const [sidebarState, setSidebarState] = makePersisted(
@@ -128,7 +132,9 @@ export function Layout(props: RouteSectionProps) {
           expand: () => setSidebarState('expanded'),
         }}
       >
-        <LayoutInner {...props} />
+        <MobileSettingsProvider>
+          <LayoutInner {...props} />
+        </MobileSettingsProvider>
       </SidebarCollapseContext.Provider>
     </SidebarVisibilityContext.Provider>
   );
@@ -307,47 +313,19 @@ function CollapsedSidebarIncomingCallWidget(props: {
  * Sends first-time desktop users into the onboarding flow at /onboarding.
  * Fires from anywhere in the app (marketing SSO lands on /app, not /login),
  * but never off auth/full-screen routes — /onboarding itself included.
- *
- * Standalone/self-host skips that overlay: v4 onboarding is Gmail/PostHog
- * gated, and the mock tutorial is not the live shell. Skip/finish still
- * writes tutorialComplete so Layout and /onboarding cannot ping-pong.
  */
 function NewOnboardingRedirect() {
   const userInfoQuery = useUserInfoQuery();
   const navigate = useNavigate();
   const location = useLocation();
   const onboardingV4 = useOnboardingV4Flag();
-  const completeTutorial = useCompleteTutorialMutation();
-  let standaloneTutorialLock = false;
 
   createEffect(() => {
-    const data = userInfoQuery.data;
-    if (data?.authenticated !== true) {
-      return;
-    }
-
-    if (getConfiguredClientProfile() === 'standalone') {
-      const onboardingSurface =
-        location.pathname === `${ROUTER_BASE_CONCAT}onboarding` ||
-        location.pathname === `${ROUTER_BASE_CONCAT}setup`;
-
-      if (data.tutorialComplete === false && !standaloneTutorialLock) {
-        standaloneTutorialLock = true;
-        void completeTutorial.mutateAsync().catch(() => {
-          standaloneTutorialLock = false;
-        });
-      }
-
-      if (onboardingSurface) {
-        navigate(DEFAULT_ROUTE, { replace: true });
-      }
-      return;
-    }
-
     if (!onboardingV4().enabled || isMobile() || isNativeMobilePlatform()) {
       return;
     }
-    if (data.tutorialComplete !== false) {
+    const data = userInfoQuery.data;
+    if (data?.authenticated !== true || data.tutorialComplete !== false) {
       return;
     }
     if (AUTH_URLS.includes(location.pathname)) return;
@@ -371,14 +349,19 @@ function NewOnboardingRedirect() {
 
 function LayoutInner(props: RouteSectionProps) {
   const isAuthenticated = useIsAuthenticated();
+  const { paywallOpen, showPaywall } = usePaywallState();
   const location = useLocation();
   const [sidebarOverlayOpen, setSidebarOverlayOpen] = createSignal(false);
   const [sidebarOverlayTriggerHovered, setSidebarOverlayTriggerHovered] =
     createSignal(false);
   const callCtx = useCallContextOptional();
   const incomingCallWidgetVisible = useIncomingCallWidgetVisible();
+  const sidebarNextEnabled = useSidebarNextFlag();
+  // SidebarRail is already narrow and has no slim mode, so nothing should arm
+  // the hover-peek overlay strip or the slim-mode call widget under it.
   const sidebarCollapsed = createMemo(
-    () => isSidebarVisible() && sidebarState() === 'slim'
+    () =>
+      !sidebarNextEnabled() && isSidebarVisible() && sidebarState() === 'slim'
   );
   const activeCallWidgetVisible = createMemo(
     () =>
@@ -436,6 +419,14 @@ function LayoutInner(props: RouteSectionProps) {
     });
   });
 
+  onMount(() => {
+    onCleanup(installGlassPress());
+    if (sessionStorage.getItem('showUpgradeModal') === 'true') {
+      showPaywall();
+      sessionStorage.removeItem('showUpgradeModal');
+    }
+  });
+
   mountGlobalFocusListener();
 
   // Route mailto: links (via openExternalUrl) to the in-app email composer.
@@ -449,7 +440,6 @@ function LayoutInner(props: RouteSectionProps) {
         'relative flex flex-col justify-between w-dvw h-[calc(var(--dvh,1dvh)*100)] pl-(--safe-left) pr-(--safe-right)'
       )}
     >
-      <DesktopWindowDragRegion />
       <ImperativeDialogHost />
       <BundleUpdateProgressBar />
       <Suspense>
@@ -474,17 +464,14 @@ function LayoutInner(props: RouteSectionProps) {
           <GlobalBulkEditEntityModal />
           <GlobalShareModal />
           <IosShareSheet />
-          <ConationMcpSetupModal />
+          <MacroMcpSetupModal />
           <CreateChannelModal />
           <CreateCompanyModal />
           <CreateContactModal />
-          {/* Reactive, unlike the imperative ENABLE_REMINDERS() gate on the
+          {/* Reactive, unlike the imperative isFeatureEnabled(enableReminders) gate on the
               action: this decides whether the composer is mounted at all, so it
               has to pick up a late PostHog answer. */}
-          <ShowFeatureFlag
-            key={ENABLE_REMINDERS_FLAG}
-            enabledOverride={ENABLE_REMINDERS_OVERRIDE}
-          >
+          <ShowFeatureFlag flag={enableReminders}>
             <ReminderComposerModal />
           </ShowFeatureFlag>
           <Show when={isAddInboxDialogOpen()}>
@@ -504,24 +491,34 @@ function LayoutInner(props: RouteSectionProps) {
         <Onboarding />
       </Show> */}
 
+      <Show when={paywallOpen()}>
+        <Paywall />
+      </Show>
       <div class="max-h-full grow flex">
         {/* The provider spans the sidebar too so its favorites can register
             sortables with the same drag-drop context as the entity drags. */}
         <ItemDndProvider>
           <Show when={isSidebarVisible()}>
-            <AppSidebar
-              sidebarState={sidebarState()}
-              overlayOpen={sidebarOverlayOpen()}
-              onOverlayOpenChange={setSidebarOverlayOpenGuarded}
-              onOpenChange={(open) => {
-                if (!open) {
-                  setSidebarState(isTouchDevice() ? 'hidden' : 'slim');
-                  return;
-                }
+            <Show
+              when={sidebarNextEnabled()}
+              fallback={
+                <AppSidebar
+                  sidebarState={sidebarState()}
+                  overlayOpen={sidebarOverlayOpen()}
+                  onOverlayOpenChange={setSidebarOverlayOpenGuarded}
+                  onOpenChange={(open) => {
+                    if (!open) {
+                      setSidebarState(isTouchDevice() ? 'hidden' : 'slim');
+                      return;
+                    }
 
-                setSidebarState('expanded');
-              }}
-            />
+                    setSidebarState('expanded');
+                  }}
+                />
+              }
+            >
+              <SidebarRail />
+            </Show>
           </Show>
           <Show when={sidebarCollapsed()}>
             <div
@@ -537,7 +534,7 @@ function LayoutInner(props: RouteSectionProps) {
             />
           </Show>
 
-          <div class="flex-1 w-full min-h-0 font-sans text-ink caret-accent">
+          <div class="flex-1 w-full min-h-0 font-sans text-ink caret-current">
             {props.children}
           </div>
         </ItemDndProvider>
@@ -559,6 +556,9 @@ function LayoutInner(props: RouteSectionProps) {
         }
       >
         <FloatRegionHost />
+        <Show when={isMobile()}>
+          <MobileSettings />
+        </Show>
         <MobileViewsRow />
         <FloatRegion
           region="dock"

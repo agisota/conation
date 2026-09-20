@@ -1,7 +1,7 @@
 # Sync Service Browser Adapter
 
 App-only HTTP calls and permission-token refresh for the shared
-`@macro-inc/collaboration/sync-service/*` transport.
+`@conation/collaboration/sync-service/*` transport.
 
 Order of operations:
 1. We get authentication token for the document

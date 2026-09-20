@@ -1,9 +1,5 @@
 import { LOCAL_ONLY } from '@core/constant/featureFlags';
-import {
-  type ObjectLike,
-  type ResultError,
-  ThrownResultError,
-} from '@core/util/result';
+import type { ObjectLike, ResultError } from '@core/util/result';
 import {
   type BaseFetchErrorCode,
   type ErrorResponseHandler,
@@ -19,62 +15,28 @@ function isExpired(token: string) {
   return expiresAt <= 0 || Date.now() >= expiresAt;
 }
 
-let conationApiTokenPromise: Promise<string> | null = null;
+let macroApiTokenPromise: Promise<string> | null = null;
 
-const ACCESS_TOKEN_STORAGE_KEY = 'conationAccessToken';
-
-function readPersistedAccessToken(): string | null {
-  if (typeof localStorage === 'undefined') return null;
-  const raw = localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
-  if (!raw || raw === 'null' || raw === 'undefined') return null;
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (
-      typeof parsed === 'object' &&
-      parsed !== null &&
-      'accessToken' in parsed &&
-      typeof parsed.accessToken === 'string' &&
-      parsed.accessToken.length > 0 &&
-      !isExpired(parsed.accessToken)
-    ) {
-      return parsed.accessToken;
+function requestMacroApiToken() {
+  const promise = authServiceClient.macroApiToken().then((result) => {
+    if (result.isErr()) {
+      throw result.error;
     }
-  } catch {
-    return null;
-  }
-  return null;
-}
-
-/** Drop a login-page mint so the next call can use the passwordless JWT. */
-export function unsetConationApiTokenPromise() {
-  conationApiTokenPromise = null;
-}
-
-function requestConationApiToken() {
-  const promise = authServiceClient.conationApiToken().then((result) => {
-    if (result.isOk()) {
-      return result.value.conation_api_token;
-    }
-    // Passwordless writes the session JWT before /jwt/conation_api_token
-    // can see it. A login-page 401 that resolves after that write must
-    // not wipe the new session — use the persisted JWT as Bearer.
-    const persisted = readPersistedAccessToken();
-    if (persisted) return persisted;
-    throw new ThrownResultError(result.error);
+    return result.value.macro_api_token;
   });
 
-  conationApiTokenPromise = promise;
+  macroApiTokenPromise = promise;
   void promise.catch(() => {
     // A failed request must not poison the cache permanently. Keep the
     // identity check so an older rejection cannot clear a newer request.
-    if (conationApiTokenPromise === promise) {
-      conationApiTokenPromise = null;
+    if (macroApiTokenPromise === promise) {
+      macroApiTokenPromise = null;
     }
   });
   return promise;
 }
 
-export async function getConationApiToken() {
+export async function getMacroApiToken() {
   if (LOCAL_ONLY) {
     const apiToken = import.meta.env.__LOCAL_JWT__;
     if (apiToken) {
@@ -82,9 +44,9 @@ export async function getConationApiToken() {
     }
   }
 
-  const cachedPromise = conationApiTokenPromise;
+  const cachedPromise = macroApiTokenPromise;
   if (!cachedPromise) {
-    return requestConationApiToken();
+    return requestMacroApiToken();
   }
 
   const apiToken = await cachedPromise;
@@ -95,11 +57,11 @@ export async function getConationApiToken() {
   // Another caller may already have replaced the expired entry while this
   // caller was suspended awaiting it. Reuse that replacement instead of
   // issuing a duplicate request.
-  if (conationApiTokenPromise !== cachedPromise) {
-    return getConationApiToken();
+  if (macroApiTokenPromise !== cachedPromise) {
+    return getMacroApiToken();
   }
 
-  return requestConationApiToken();
+  return requestMacroApiToken();
 }
 
 type TextContentType = `text/${string}`;
@@ -130,20 +92,7 @@ export async function fetchWithAuth<
   input: RequestInfo,
   init?: fetchWithAuthOptions<T, CustomErrorCode>
 ): Promise<Result<T, ResultError<BaseFetchErrorCode | CustomErrorCode>[]>> {
-  let apiToken: string;
-  try {
-    apiToken = await getConationApiToken();
-  } catch (error) {
-    if (error instanceof ThrownResultError) {
-      return err(error.errors);
-    }
-    return err([
-      {
-        code: 'UNAUTHORIZED',
-        message: error instanceof Error ? error.message : 'Unauthorized access',
-      },
-    ]);
-  }
+  const apiToken = await getMacroApiToken();
   if (!apiToken) {
     return err([
       { code: 'UNAUTHORIZED', message: 'No access and/or refresh token found' },
@@ -195,11 +144,6 @@ export async function fetchWithAuth<
         return {
           code: 'SERVER_ERROR',
           message: 'Internal server error',
-        };
-      case 503:
-        return {
-          code: 'SERVICE_UNAVAILABLE',
-          message: 'Service unavailable',
         };
       default:
         return {

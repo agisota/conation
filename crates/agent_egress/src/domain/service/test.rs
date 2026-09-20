@@ -1,18 +1,17 @@
 use super::*;
 use crate::domain::model::{
-    AgentSessionId, BearerToken, GitEndpoint, GitService, McpDestination, McpServerSlug, ProxyBody,
-    RepoSlug, SessionGrant, UpstreamCall, UpstreamCredential,
+    AgentSessionId, BearerToken, GitEndpoint, GitService, McpDestination, McpServerListing,
+    McpServerSlug, ProxyBody, RepoSlug, SessionGrant, UpstreamCall, UpstreamCredential,
 };
-use bytes::Bytes;
-use conation_user_id::user_id::MacroUserIdStr;
 use http::header::{AUTHORIZATION, HeaderMap, HeaderName, HeaderValue};
 use http::{Method, StatusCode};
 use http_body_util::{BodyExt, Empty, Full};
+use macro_user_id::user_id::MacroUserIdStr;
 use std::sync::Mutex;
 use url::Url;
 
 fn owner() -> MacroUserIdStr<'static> {
-    MacroUserIdStr::try_from_email("owner@example.com").expect("a valid user id")
+    MacroUserIdStr::try_from_email("owner@macro.com").expect("a valid user id")
 }
 
 fn empty_body() -> ProxyBody {
@@ -43,10 +42,16 @@ struct StubSessions(Result<SessionGrant, ()>);
 
 impl StubSessions {
     fn granting() -> Self {
+        Self::granting_with(Vec::new())
+    }
+
+    /// A grant whose session was opened by an agent that listed `servers`.
+    fn granting_with(servers: Vec<McpServerListing>) -> Self {
         Self(Ok(SessionGrant {
             session: AgentSessionId::new(),
             owner: owner(),
-            repo: session_repo(),
+            repo: Some(session_repo()),
+            mcp_servers: servers,
         }))
     }
 
@@ -63,10 +68,21 @@ impl SessionAuthority for StubSessions {
     }
 }
 
+/// How the spy answers a slug it is asked about.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Knowledge {
+    /// The owner holds an enabled grant.
+    Connected,
+    /// Addressable for the owner, but no grant behind it.
+    Unconnected,
+    /// Nothing to address at all.
+    Unknown,
+}
+
 /// Records who it was asked about, and answers with a fixed upstream.
 struct SpyCredentials {
     asked: Mutex<Vec<(String, String)>>,
-    known: bool,
+    known: Knowledge,
     url: String,
     scope: HeaderMap,
 }
@@ -80,9 +96,21 @@ impl SpyCredentials {
     fn at(url: &str) -> Self {
         Self {
             asked: Mutex::default(),
-            known: true,
+            known: Knowledge::Connected,
             url: url.to_owned(),
             scope: HeaderMap::new(),
+        }
+    }
+
+    /// An app the owner has not connected, the way the Pipedream adapter
+    /// reports one: addressable, with the owner's scoping, but no grant.
+    fn unconnected() -> Self {
+        Self {
+            known: Knowledge::Unconnected,
+            ..Self::scoped(&[
+                ("x-pd-external-user-id", "owner"),
+                ("x-pd-app-slug", "datadog"),
+            ])
         }
     }
 
@@ -105,7 +133,7 @@ impl SpyCredentials {
     fn empty() -> Self {
         Self {
             asked: Mutex::default(),
-            known: false,
+            known: Knowledge::Unknown,
             url: String::new(),
             scope: HeaderMap::new(),
         }
@@ -117,24 +145,30 @@ impl McpCredentials for SpyCredentials {
         &self,
         owner: &MacroUserIdStr<'static>,
         destination: &McpDestination,
-    ) -> Result<UpstreamCall, EgressError> {
-        let McpDestination::Connected(slug) = destination else {
-            unreachable!("these tests only dial connected servers");
+    ) -> Result<McpResolution, EgressError> {
+        let slug = match destination {
+            McpDestination::Connected(slug) => slug.clone(),
+            McpDestination::Conation => McpServerSlug::parse("conation").expect("slug"),
         };
         self.asked
             .lock()
             .expect("lock")
             .push((owner.to_string(), slug.to_string()));
 
-        if !self.known {
+        if self.known == Knowledge::Unknown {
             return Err(EgressError::UnknownServer(slug.clone()));
         }
 
-        Ok(UpstreamCall::bearer(
+        let call = UpstreamCall::bearer(
             Url::parse(&self.url).expect("url"),
             BearerToken::new("upstream-token"),
         )?
-        .scoped_by(self.scope.clone()))
+        .scoped_by(self.scope.clone());
+        Ok(match self.known {
+            Knowledge::Connected => McpResolution::Connected(call),
+            Knowledge::Unconnected => McpResolution::Unconnected(call),
+            Knowledge::Unknown => unreachable!("returned above"),
+        })
     }
 }
 
@@ -180,36 +214,34 @@ impl GithubTokens for SpyGithubTokens {
     }
 }
 
-/// Records whether a managed-model credential was requested.
-struct SpyManagedModels {
-    calls: Mutex<usize>,
+/// Records whether the managed-model port was asked, and answers with a fixed upstream.
+struct SpyModels {
+    asked: Mutex<usize>,
+    url: String,
 }
 
-impl SpyManagedModels {
-    fn new() -> Self {
+impl Default for SpyModels {
+    fn default() -> Self {
         Self {
-            calls: Mutex::default(),
+            asked: Mutex::default(),
+            url: "https://omni.example.com/v1/chat/completions".to_owned(),
         }
     }
-
-    fn calls(&self) -> usize {
-        *self.calls.lock().expect("lock")
-    }
 }
 
-impl ManagedModelCredentials for SpyManagedModels {
+impl ManagedModelCredentials for SpyModels {
     async fn resolve(&self) -> Result<UpstreamCall, EgressError> {
-        *self.calls.lock().expect("lock") += 1;
+        *self.asked.lock().expect("lock") += 1;
         UpstreamCall::bearer(
-            Url::parse("https://api.rox.one/v1/chat/completions").expect("url"),
-            BearerToken::new("server-rox-token"),
+            Url::parse(&self.url).expect("url"),
+            BearerToken::new("omni-token"),
         )
     }
 }
 
 /// Records the request it was handed, and answers with a fixed response.
 struct SpyForwarder {
-    seen: Mutex<Option<(http::request::Parts, Bytes)>>,
+    seen: Mutex<Option<http::request::Parts>>,
     response_headers: HeaderMap,
 }
 
@@ -226,32 +258,20 @@ impl SpyForwarder {
     }
 
     fn forwarded<T>(&self, read: impl Fn(&http::request::Parts) -> T) -> T {
-        let guard = self.seen.lock().expect("lock");
-        read(&guard.as_ref().expect("forwarder was called").0)
-    }
-
-    fn body(&self) -> Bytes {
-        self.seen
-            .lock()
-            .expect("lock")
-            .as_ref()
-            .expect("forwarder was called")
-            .1
-            .clone()
+        read(
+            self.seen
+                .lock()
+                .expect("lock")
+                .as_ref()
+                .expect("forwarder was called"),
+        )
     }
 }
 
 impl Forwarder for SpyForwarder {
     async fn forward(&self, request: ProxyRequest) -> Result<ProxyResponse, EgressError> {
-        let (parts, body) = request.into_parts();
-        let body = body
-            .collect()
-            .await
-            .map_err(|error| {
-                EgressError::Internal(rootcause::report!("test proxy body failed: {error}"))
-            })?
-            .to_bytes();
-        *self.seen.lock().expect("lock") = Some((parts, body));
+        let (parts, _body) = request.into_parts();
+        *self.seen.lock().expect("lock") = Some(parts);
 
         let mut response = http::Response::new(empty_body());
         *response.status_mut() = StatusCode::ACCEPTED;
@@ -267,15 +287,254 @@ fn request(method: Method, header_pairs: &[(&str, &str)]) -> ProxyRequest {
     request
 }
 
-fn chat_request(model: &str, header_pairs: &[(&str, &str)]) -> ProxyRequest {
-    let payload = serde_json::json!({"model": model, "messages": []});
-    let body: ProxyBody = Full::new(Bytes::from(serde_json::to_vec(&payload).expect("json")))
-        .map_err(|never| match never {})
-        .boxed_unsync();
-    let mut request = http::Request::new(body);
+fn json_request(body: &str) -> ProxyRequest {
+    let mut request = http::Request::new(
+        Full::new(bytes::Bytes::from(body.to_owned()))
+            .map_err(|never| match never {})
+            .boxed_unsync(),
+    );
     *request.method_mut() = Method::POST;
-    *request.headers_mut() = header_map(header_pairs);
     request
+}
+
+fn listing(slug: &str, name: &str) -> McpServerListing {
+    McpServerListing {
+        slug: McpServerSlug::parse(slug).expect("slug"),
+        name: name.to_owned(),
+    }
+}
+
+fn selected(listings: &[(&str, &str)]) -> Vec<McpServerListing> {
+    listings
+        .iter()
+        .map(|(slug, name)| listing(slug, name))
+        .collect()
+}
+
+async fn body_json(response: ProxyResponse) -> serde_json::Value {
+    let bytes = response
+        .into_body()
+        .collect()
+        .await
+        .expect("body")
+        .to_bytes();
+    serde_json::from_slice(&bytes).expect("json body")
+}
+
+/// An app the owner has not connected is still addressed for them: the
+/// handshake and listing go through whether or not the agent named the app,
+/// since every valid slug resolves against the owner's own connections.
+#[tokio::test]
+async fn an_unconnected_app_is_forwarded_even_when_the_agent_did_not_list_it() {
+    let service = EgressServiceImpl::new(
+        StubSessions::granting(),
+        SpyCredentials::unconnected(),
+        SpyGithubTokens::default(),
+        SpyModels::default(),
+        SpyForwarder::answering(&[]),
+    );
+
+    let response = service
+        .proxy(
+            &SessionToken::new("token"),
+            datadog(),
+            json_request(r#"{"jsonrpc":"2.0","id":1,"method":"tools/list"}"#),
+        )
+        .await
+        .expect("forwarded");
+
+    assert_eq!(response.status(), StatusCode::ACCEPTED);
+    assert!(service.forward.was_called());
+}
+
+/// With no name from the agent, the refusal calls the app by its slug made
+/// readable, so the person sees "Google Sheets" rather than "google_sheets".
+#[tokio::test]
+async fn an_unlisted_unconnected_app_is_named_from_its_slug() {
+    let service = EgressServiceImpl::new(
+        StubSessions::granting(),
+        SpyCredentials::unconnected(),
+        SpyGithubTokens::default(),
+        SpyModels::default(),
+        SpyForwarder::answering(&[]),
+    );
+    let sheets = EgressTarget::McpServer(McpDestination::Connected(
+        McpServerSlug::parse("google_sheets").expect("slug"),
+    ));
+
+    let response = service
+        .proxy(
+            &SessionToken::new("token"),
+            sheets,
+            json_request(r#"{"jsonrpc":"2.0","id":1,"method":"tools/call"}"#),
+        )
+        .await
+        .expect("answered");
+
+    let body = body_json(response).await;
+    let text = body["result"]["content"][0]["text"]
+        .as_str()
+        .expect("a text content block");
+    assert!(text.contains("Google Sheets is not connected"), "{text}");
+    assert!(
+        text.contains(
+            r#"<m-connect-app>{"appSlug":"google_sheets","name":"Google Sheets"}</m-connect-app>"#
+        ),
+        "{text}"
+    );
+}
+
+/// A listed app the owner has connected proxies exactly like before.
+#[tokio::test]
+async fn a_listed_connected_app_is_forwarded() {
+    let service = EgressServiceImpl::new(
+        StubSessions::granting_with(selected(&[("datadog", "Datadog")])),
+        SpyCredentials::knowing(),
+        SpyGithubTokens::default(),
+        SpyModels::default(),
+        SpyForwarder::answering(&[]),
+    );
+
+    let response = service
+        .proxy(
+            &SessionToken::new("token"),
+            datadog(),
+            json_request(r#"{"jsonrpc":"2.0","id":1,"method":"tools/call"}"#),
+        )
+        .await
+        .expect("proxied");
+
+    assert_eq!(response.status(), StatusCode::ACCEPTED);
+    assert!(service.forward.was_called());
+}
+
+/// A `tools/call` to an app the owner has not connected is answered by the
+/// proxy as the tool's own result, under the name the agent gave the app: the
+/// model reads that the app is not connected and how to get it connected,
+/// and nothing reaches the upstream.
+#[tokio::test]
+async fn a_tools_call_to_an_unconnected_app_is_answered_locally() {
+    let service = EgressServiceImpl::new(
+        StubSessions::granting_with(selected(&[("datadog", "Datadog")])),
+        SpyCredentials::unconnected(),
+        SpyGithubTokens::default(),
+        SpyModels::default(),
+        SpyForwarder::answering(&[]),
+    );
+
+    let response = service
+        .proxy(
+            &SessionToken::new("token"),
+            datadog(),
+            json_request(
+                r#"{"jsonrpc":"2.0","id":"call-7","method":"tools/call","params":{"name":"list_monitors","arguments":{"secret":"do-not-echo"}}}"#,
+            ),
+        )
+        .await
+        .expect("answered");
+
+    assert!(!service.forward.was_called());
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(
+        response.headers()[http::header::CONTENT_TYPE],
+        "application/json"
+    );
+    let body = body_json(response).await;
+    assert_eq!(body["jsonrpc"], "2.0");
+    assert_eq!(body["id"], "call-7");
+    assert_eq!(body["result"]["isError"], true);
+    let text = body["result"]["content"][0]["text"]
+        .as_str()
+        .expect("a text content block");
+    assert!(text.contains("Datadog is not connected"), "{text}");
+    assert!(
+        text.contains(r#"<m-connect-app>{"appSlug":"datadog","name":"Datadog"}</m-connect-app>"#),
+        "{text}"
+    );
+    assert!(
+        text.contains("let you know once they have connected Datadog"),
+        "{text}"
+    );
+    assert!(!text.contains("do-not-echo"), "{text}");
+    assert!(!text.contains("list_monitors"), "{text}");
+}
+
+/// Everything but `tools/call` goes through for an unconnected app,
+/// addressed for the owner, so the client's handshake and tool listing work
+/// from the first turn; the body it read is put back intact.
+#[tokio::test]
+async fn the_handshake_and_listing_of_an_unconnected_app_are_forwarded() {
+    for (method, body) in [
+        (
+            Method::POST,
+            Some(r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}"#),
+        ),
+        (
+            Method::POST,
+            Some(r#"{"jsonrpc":"2.0","id":2,"method":"tools/list"}"#),
+        ),
+        (
+            Method::POST,
+            Some(r#"{"jsonrpc":"2.0","method":"notifications/initialized"}"#),
+        ),
+        (Method::GET, None),
+        (Method::DELETE, None),
+    ] {
+        let service = EgressServiceImpl::new(
+            StubSessions::granting_with(selected(&[("datadog", "Datadog")])),
+            SpyCredentials::unconnected(),
+            SpyGithubTokens::default(),
+            SpyModels::default(),
+            SpyForwarder::answering(&[]),
+        );
+        let request = match body {
+            Some(body) => json_request(body),
+            None => request(method.clone(), &[]),
+        };
+
+        let response = service
+            .proxy(&SessionToken::new("token"), datadog(), request)
+            .await
+            .expect("forwarded");
+
+        assert_eq!(response.status(), StatusCode::ACCEPTED, "{method} {body:?}");
+        assert!(service.forward.was_called(), "{method} {body:?}");
+        service.forward.forwarded(|parts| {
+            assert_eq!(parts.method, method);
+            assert_eq!(
+                parts
+                    .headers
+                    .get("x-pd-external-user-id")
+                    .map(|value| value.to_str().expect("ascii")),
+                Some("owner"),
+                "{method} {body:?}: the owner's scoping is stamped on"
+            );
+        });
+    }
+}
+
+/// The one path that reads a request body is bounded.
+#[tokio::test]
+async fn an_oversized_request_to_an_unconnected_app_is_refused() {
+    let service = EgressServiceImpl::new(
+        StubSessions::granting_with(selected(&[("datadog", "Datadog")])),
+        SpyCredentials::unconnected(),
+        SpyGithubTokens::default(),
+        SpyModels::default(),
+        SpyForwarder::answering(&[]),
+    );
+    let huge = format!(
+        r#"{{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{{"pad":"{}"}}}}"#,
+        "x".repeat(crate::domain::model::MAX_MCP_REQUEST_BYTES)
+    );
+
+    let error = service
+        .proxy(&SessionToken::new("token"), datadog(), json_request(&huge))
+        .await
+        .expect_err("refused");
+
+    assert!(matches!(error, EgressError::RequestTooLarge));
+    assert!(!service.forward.was_called());
 }
 
 fn datadog() -> EgressTarget {
@@ -290,6 +549,7 @@ async fn addresses_the_request_at_the_resolved_upstream_and_passes_the_status_ba
         StubSessions::granting(),
         SpyCredentials::knowing(),
         SpyGithubTokens::default(),
+        SpyModels::default(),
         SpyForwarder::answering(&[]),
     );
 
@@ -319,6 +579,7 @@ async fn replaces_the_sandboxs_token_with_the_owners() {
         StubSessions::granting(),
         SpyCredentials::knowing(),
         SpyGithubTokens::default(),
+        SpyModels::default(),
         SpyForwarder::answering(&[]),
     );
 
@@ -369,6 +630,7 @@ async fn stamps_the_resolved_scope_over_whatever_the_sandbox_claimed() {
             ("x-pd-app-slug", "datadog"),
         ]),
         SpyGithubTokens::default(),
+        SpyModels::default(),
         SpyForwarder::answering(&[]),
     );
 
@@ -422,6 +684,7 @@ async fn strips_hop_by_hop_headers_from_the_response() {
         StubSessions::granting(),
         SpyCredentials::knowing(),
         SpyGithubTokens::default(),
+        SpyModels::default(),
         SpyForwarder::answering(&[
             ("mcp-session-id", "abc123"),
             ("set-cookie", "upstream=1"),
@@ -441,42 +704,42 @@ async fn strips_hop_by_hop_headers_from_the_response() {
     assert_eq!(names(response.headers()), ["mcp-session-id"]);
 }
 
-/// An authenticated session may use its own connections regardless of the
-/// owner's email domain. The owner-scoped grant and upstream credential still
-/// provide the security boundary.
+/// The proxy is staff-only for now: a session owned outside staff domains
+/// gets nothing, whatever its token says - told only, in our words, that staff
+/// membership is what it lacks.
 #[tokio::test]
-async fn a_session_owner_on_any_email_domain_uses_only_its_own_credentials() {
+async fn a_session_owned_outside_macro_gets_nothing() {
     let service = EgressServiceImpl::new(
         StubSessions(Ok(SessionGrant {
             session: AgentSessionId::new(),
             owner: MacroUserIdStr::try_from_email("visitor@example.com").expect("a valid user id"),
-            repo: session_repo(),
+            repo: Some(session_repo()),
+            mcp_servers: Vec::new(),
         })),
         SpyCredentials::knowing(),
         SpyGithubTokens::default(),
+        SpyModels::default(),
         SpyForwarder::answering(&[]),
     );
 
-    service
+    let refusal = service
         .proxy(
             &SessionToken::new("token"),
             datadog(),
             request(Method::POST, &[]),
         )
         .await
-        .expect("proxied");
+        .expect_err("refused");
 
     assert!(
-        service
-            .credentials
-            .asked
-            .lock()
-            .expect("lock")
-            .iter()
-            .any(|(owner, _)| owner == "conation|visitor@example.com"),
-        "credential resolution must use the verified session owner"
+        matches!(refusal, EgressError::Unauthenticated(_)),
+        "{refusal}"
     );
-    assert!(service.forward.was_called());
+    assert!(
+        service.credentials.asked.lock().expect("lock").is_empty(),
+        "an outside owner must never reach credential resolution"
+    );
+    assert!(!service.forward.was_called());
 }
 
 /// Resolution reads the owner's connected servers, so an unverified token
@@ -488,6 +751,7 @@ async fn an_unverified_token_never_reaches_credential_resolution() {
         StubSessions::refusing(),
         SpyCredentials::knowing(),
         SpyGithubTokens::default(),
+        SpyModels::default(),
         SpyForwarder::answering(&[]),
     );
 
@@ -511,6 +775,7 @@ async fn resolves_only_against_the_session_owner() {
         StubSessions::granting(),
         SpyCredentials::knowing(),
         SpyGithubTokens::default(),
+        SpyModels::default(),
         SpyForwarder::answering(&[]),
     );
 
@@ -535,6 +800,7 @@ async fn an_unknown_server_is_refused_before_anything_is_forwarded() {
         StubSessions::granting(),
         SpyCredentials::empty(),
         SpyGithubTokens::default(),
+        SpyModels::default(),
         SpyForwarder::answering(&[]),
     );
 
@@ -559,6 +825,7 @@ async fn a_disallowed_method_is_refused_up_front() {
         StubSessions::granting(),
         SpyCredentials::knowing(),
         SpyGithubTokens::default(),
+        SpyModels::default(),
         SpyForwarder::answering(&[]),
     );
 
@@ -588,6 +855,7 @@ async fn addresses_a_git_request_at_the_repositorys_endpoint() {
         StubSessions::granting(),
         SpyCredentials::knowing(),
         SpyGithubTokens::default(),
+        SpyModels::default(),
         SpyForwarder::answering(&[]),
     );
 
@@ -617,6 +885,7 @@ async fn replaces_the_sandboxs_basic_credential_on_a_git_request() {
         StubSessions::granting(),
         SpyCredentials::knowing(),
         SpyGithubTokens::default(),
+        SpyModels::default(),
         SpyForwarder::answering(&[]),
     );
 
@@ -661,6 +930,7 @@ async fn an_unverified_token_never_reaches_git_token_minting() {
         StubSessions::refusing(),
         SpyCredentials::knowing(),
         SpyGithubTokens::default(),
+        SpyModels::default(),
         SpyForwarder::answering(&[]),
     );
 
@@ -686,6 +956,7 @@ async fn mints_for_the_grants_repository_and_owner() {
         StubSessions::granting(),
         SpyCredentials::knowing(),
         SpyGithubTokens::default(),
+        SpyModels::default(),
         SpyForwarder::answering(&[]),
     );
 
@@ -714,6 +985,7 @@ async fn a_cleartext_mcp_server_never_receives_the_owners_token() {
         StubSessions::granting(),
         SpyCredentials::at("http://mcp.example.com/mcp"),
         SpyGithubTokens::default(),
+        SpyModels::default(),
         SpyForwarder::answering(&[]),
     );
 
@@ -736,6 +1008,7 @@ async fn a_cleartext_git_base_is_refused_too() {
         StubSessions::granting(),
         SpyCredentials::knowing(),
         SpyGithubTokens::at("http://github.com/macro/wolf.git/"),
+        SpyModels::default(),
         SpyForwarder::answering(&[]),
     );
 
@@ -753,122 +1026,108 @@ async fn a_cleartext_git_base_is_refused_too() {
 }
 
 #[tokio::test]
-async fn managed_model_requires_a_session_before_resolving_a_credential() {
+async fn a_session_without_a_repository_can_use_mcp_but_cannot_mint_git_credentials() {
     let service = EgressServiceImpl::new(
-        StubSessions::refusing(),
+        StubSessions(Ok(SessionGrant {
+            session: AgentSessionId::new(),
+            owner: owner(),
+            repo: None,
+            mcp_servers: Vec::new(),
+        })),
         SpyCredentials::knowing(),
         SpyGithubTokens::default(),
+        SpyModels::default(),
         SpyForwarder::answering(&[]),
-    )
-    .with_managed_models(SpyManagedModels::new());
-
+    );
+    for target in [EgressTarget::McpServer(McpDestination::Conation), datadog()] {
+        service
+            .proxy(
+                &SessionToken::new("token"),
+                target,
+                request(Method::POST, &[]),
+            )
+            .await
+            .expect("MCP does not require a repository");
+    }
     let error = service
         .proxy(
-            &SessionToken::new("bad-token"),
-            EgressTarget::OmniRouteChatCompletions,
-            chat_request("gemini-2.5-flash", &[]),
-        )
-        .await
-        .expect_err("unauthenticated requests must stop before credential resolution");
-
-    assert!(matches!(error, EgressError::Unauthenticated(_)));
-    assert_eq!(service.models.calls(), 0);
-    assert!(!service.forward.was_called());
-}
-
-#[tokio::test]
-async fn managed_model_route_normalizes_the_model_and_stamps_only_the_server_credential() {
-    let service = EgressServiceImpl::new(
-        StubSessions::granting(),
-        SpyCredentials::knowing(),
-        SpyGithubTokens::default(),
-        SpyForwarder::answering(&[
-            ("authorization", "Bearer echoed-server-token"),
-            ("set-cookie", "upstream-session=secret"),
-        ]),
-    )
-    .with_managed_models(SpyManagedModels::new());
-
-    let response = service
-        .proxy(
-            &SessionToken::new("session-token"),
-            EgressTarget::OmniRouteChatCompletions,
-            chat_request(
-                "rox/gemini-2.5-flash",
-                &[
-                    ("authorization", "Bearer sandbox-token"),
-                    ("cookie", "sandbox-cookie=secret"),
-                    ("host", "attacker.invalid"),
-                ],
-            ),
-        )
-        .await
-        .expect("proxied");
-
-    assert_eq!(service.models.calls(), 1);
-    assert_eq!(
-        service.forward.forwarded(|parts| parts.uri.to_string()),
-        "https://api.rox.one/v1/chat/completions"
-    );
-    assert_eq!(
-        service
-            .forward
-            .forwarded(|parts| parts.headers[AUTHORIZATION]
-                .to_str()
-                .expect("header")
-                .to_owned()),
-        "Bearer server-rox-token"
-    );
-    assert!(
-        service
-            .forward
-            .forwarded(|parts| !parts.headers.contains_key("cookie"))
-    );
-    assert!(
-        service
-            .forward
-            .forwarded(|parts| !parts.headers.contains_key("host"))
-    );
-    assert_eq!(
-        serde_json::from_slice::<serde_json::Value>(&service.forward.body()).expect("json")["model"],
-        "gemini-2.5-flash"
-    );
-    assert!(!response.headers().contains_key("authorization"));
-    assert!(!response.headers().contains_key("set-cookie"));
-}
-
-#[tokio::test]
-async fn managed_model_refuses_non_post_and_unapproved_models_without_forwarding() {
-    let service = EgressServiceImpl::new(
-        StubSessions::granting(),
-        SpyCredentials::knowing(),
-        SpyGithubTokens::default(),
-        SpyForwarder::answering(&[]),
-    )
-    .with_managed_models(SpyManagedModels::new());
-
-    let method_error = service
-        .proxy(
             &SessionToken::new("token"),
-            EgressTarget::OmniRouteChatCompletions,
+            git(GitEndpoint::InfoRefs {
+                service: GitService::UploadPack,
+            }),
             request(Method::GET, &[]),
         )
         .await
-        .expect_err("GET must not reach OmniRoute");
+        .unwrap_err();
     assert!(matches!(
-        method_error,
-        EgressError::MethodNotAllowed(Method::GET)
+        error,
+        EgressError::Unauthenticated("the session has no repository for git access")
     ));
+    assert!(service.tokens.asked.lock().expect("lock").is_empty());
+}
 
-    let model_error = service
+#[tokio::test]
+async fn a_session_owned_by_conation_staff_is_admitted() {
+    let service = EgressServiceImpl::new(
+        StubSessions(Ok(SessionGrant {
+            session: AgentSessionId::new(),
+            owner: MacroUserIdStr::try_from_email("dev@conation.dev").expect("a valid user id"),
+            repo: Some(session_repo()),
+            mcp_servers: Vec::new(),
+        })),
+        SpyCredentials::knowing(),
+        SpyGithubTokens::default(),
+        SpyModels::default(),
+        SpyForwarder::answering(&[]),
+    );
+
+    let response = service
+        .proxy(
+            &SessionToken::new("token"),
+            datadog(),
+            request(Method::POST, &[]),
+        )
+        .await
+        .expect("admitted");
+
+    assert_eq!(response.status(), StatusCode::ACCEPTED);
+    assert!(service.forward.was_called());
+}
+
+#[tokio::test]
+async fn addresses_a_managed_model_request_at_the_resolved_omniroute() {
+    let service = EgressServiceImpl::new(
+        StubSessions::granting(),
+        SpyCredentials::knowing(),
+        SpyGithubTokens::default(),
+        SpyModels::default(),
+        SpyForwarder::answering(&[]),
+    );
+
+    let response = service
         .proxy(
             &SessionToken::new("token"),
             EgressTarget::OmniRouteChatCompletions,
-            chat_request("other-provider/anything", &[]),
+            request(Method::POST, &[]),
         )
         .await
-        .expect_err("unapproved model must not reach OmniRoute");
-    assert!(matches!(model_error, EgressError::Unroutable(_)));
-    assert_eq!(service.models.calls(), 0);
-    assert!(!service.forward.was_called());
+        .expect("forwarded");
+
+    assert_eq!(response.status(), StatusCode::ACCEPTED);
+    assert_eq!(*service.models.asked.lock().expect("lock"), 1);
+    assert!(service.credentials.asked.lock().expect("lock").is_empty());
+    assert!(service.tokens.asked.lock().expect("lock").is_empty());
+    service.forward.forwarded(|parts| {
+        assert_eq!(
+            parts.uri.to_string(),
+            "https://omni.example.com/v1/chat/completions"
+        );
+        assert_eq!(
+            parts
+                .headers
+                .get(AUTHORIZATION)
+                .map(|value| value.to_str().expect("ascii")),
+            Some("Bearer omni-token")
+        );
+    });
 }

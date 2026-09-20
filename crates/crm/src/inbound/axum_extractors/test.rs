@@ -8,15 +8,6 @@ use axum::{
     routing::get,
 };
 use chrono::{DateTime, Utc};
-use conation_authorization::{
-    INTERNAL_API_KEY_HEADER, INTERNAL_CONATION_USER_ID_HEADER, InternalAuthConfig, JwtValidator,
-    MacroAuthorizationError, MacroAuthorizationServiceImpl, MacroAuthorizationState,
-    ValidatedIdentity,
-};
-use conation_user_id::{
-    lowercased::Lowercase,
-    user_id::{MacroUserId, MacroUserIdStr},
-};
 use entity_access::domain::{
     models::{
         AccessError, AccessLevel, AnyEntityPermission, BotAccessScope, BotId, CallChannelInfo,
@@ -24,6 +15,15 @@ use entity_access::domain::{
         RequiredPermission, UserTeamInfo, ViewAccessLevel,
     },
     ports::EntityAccessService,
+};
+use macro_authorization::{
+    INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_USER_ID_HEADER, InternalAuthConfig, JwtValidator,
+    MacroAuthorizationError, MacroAuthorizationServiceImpl, MacroAuthorizationState,
+    ValidatedIdentity,
+};
+use macro_user_id::{
+    lowercased::Lowercase,
+    user_id::{MacroUserId, MacroUserIdStr},
 };
 use rootcause::Report;
 use serde_json::{Value, json};
@@ -298,7 +298,7 @@ impl CrmService for FakeCrmService {
         panic!("unexpected depopulate_link_in_team call")
     }
 
-    async fn get_team_id_for_user(&self, _conation_id: &str) -> Result<Option<Uuid>, CrmError> {
+    async fn get_team_id_for_user(&self, _macro_id: &str) -> Result<Option<Uuid>, CrmError> {
         panic!("unexpected get_team_id_for_user call")
     }
 
@@ -532,14 +532,20 @@ fn test_router(
             api_key: INTERNAL_KEY.to_string(),
             default_user_id: None,
         },
-        conation_authorization::NoBotAuthorizer,
+        macro_authorization::NoBotAuthorizer,
+        macro_authorization::NoUserApiKeyAuthorizer,
     );
-    let state: CrmRouterState<FakeCrmService, FakeEntityAccessService, TestAuthorizationService> =
-        CrmRouterState {
-            service: Arc::new(crm_service.clone()),
-            entity_access_service: Arc::new(entity_access.clone()),
-            authorization_state: MacroAuthorizationState::new(Arc::new(authorization_service)),
-        };
+    let state: CrmRouterState<
+        FakeCrmService,
+        (),
+        FakeEntityAccessService,
+        TestAuthorizationService,
+    > = CrmRouterState {
+        service: Arc::new(crm_service.clone()),
+        stage_service: Arc::new(()),
+        entity_access_service: Arc::new(entity_access.clone()),
+        authorization_state: MacroAuthorizationState::new(Arc::new(authorization_service)),
+    };
     let router = Router::new()
         .route("/companies/{company_id}", get(company_handler))
         .route("/company-without-id/{other_id}", get(company_handler))
@@ -565,7 +571,7 @@ fn bearer_request(path: &str, token: &str) -> Request<Body> {
 fn internal_request(path: &str, acting_user: Option<&str>) -> Request<Body> {
     let mut request = Request::get(path).header(INTERNAL_API_KEY_HEADER, INTERNAL_KEY);
     if let Some(acting_user) = acting_user {
-        request = request.header(INTERNAL_CONATION_USER_ID_HEADER, acting_user);
+        request = request.header(INTERNAL_MACRO_USER_ID_HEADER, acting_user);
     }
     request.body(Body::empty()).unwrap()
 }

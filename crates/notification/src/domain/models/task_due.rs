@@ -75,6 +75,39 @@ pub struct TaskDueNotification {
     pub kind: TaskDueKind,
 }
 
+/// One assignee of an open task whose due instant is inside the dispatch window.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DueTaskAssignment {
+    /// Document id of the task.
+    pub task_id: String,
+    /// Display name at scan time. Absent when the document has no title.
+    pub task_name: Option<String>,
+    /// Due instant from the task's due-date property.
+    pub due_at: DateTime<Utc>,
+    /// Assignee id as stored on the property (a [`MacroUserIdStr`]).
+    pub assignee_id: String,
+}
+
+/// How many due assignments one dispatch tick loads.
+pub const TASK_DUE_SWEEP_PAGE: i64 = 500;
+
+/// Tasks due within this duration are classified due-soon.
+pub const DUE_SOON_WINDOW: chrono::Duration = chrono::Duration::hours(24);
+
+/// Overdue tasks older than this are left to the task list rather than notified.
+pub const OVERDUE_LOOKBACK: chrono::Duration = chrono::Duration::hours(24);
+
+/// Count of a dispatch tick.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct TaskDueDispatchSummary {
+    /// Assignments handed to the notifier.
+    pub notified: usize,
+    /// Assignments skipped (bad user id, outside the window).
+    pub skipped: usize,
+    /// Notifier failures. The next tick retries them.
+    pub failed: usize,
+}
+
 impl TaskDueNotification {
     /// Build an event classified against `now`.
     pub fn new(
@@ -99,6 +132,12 @@ impl TaskDueNotification {
         self,
         assignee_id: MacroUserIdStr<'a>,
     ) -> SendNotificationRequest<'a, Self, PushNotificationData> {
+        let notification_id = Self::idempotency_id(
+            &self.task_id,
+            assignee_id.as_ref(),
+            self.due_at,
+            self.kind,
+        );
         let notification_entity =
             EntityType::Document.with_entity_string(self.task_id.clone());
         SendNotificationRequestBuilder {
@@ -108,9 +147,25 @@ impl TaskDueNotification {
             sender_id: None,
             recipient_ids: HashSet::from([assignee_id]),
         }
-        .into_request()
+        .into_request_with_id(notification_id)
         .with_apns()
         .with_conn_gateway()
+    }
+
+    /// Stable id so a redelivered firing does not insert a second row.
+    fn idempotency_id(
+        task_id: &str,
+        assignee_id: &str,
+        due_at: DateTime<Utc>,
+        kind: TaskDueKind,
+    ) -> Uuid {
+        const NS: Uuid = Uuid::from_u128(0xa3e1_d4c0_0b1e_4f7a_9c2d_7e5f_8a1b_4c6d);
+        let name = format!(
+            "task_due:{task_id}:{assignee_id}:{}:{}",
+            due_at.timestamp(),
+            kind.as_str()
+        );
+        Uuid::new_v5(&NS, name.as_bytes())
     }
 }
 

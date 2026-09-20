@@ -1,4 +1,4 @@
-import { formatDateTime, t } from '@app/lib/i18n';
+import { format } from 'date-fns';
 import { match, P } from 'ts-pattern';
 import { GITHUB_EVENT_TYPES } from './github-event-types';
 import type { UnifiedNotification } from './types';
@@ -8,85 +8,61 @@ import type { UnifiedNotification } from './types';
 export function getNotificationAction(n: UnifiedNotification): string {
   return (
     match(n.notification_metadata.tag)
-      .with('channel_mention', () =>
-        t('notifications.metadata.actions.channelMention')
-      )
+      .with('channel_mention', () => 'mentioned you in')
       .with('document_mention', () => {
         const meta = n.notification_metadata;
         if (
           meta.tag === 'document_mention' &&
           meta.content.subType?.type === 'task'
         ) {
-          return t('notifications.metadata.actions.sentTask');
+          return 'sent a task';
         }
 
-        return t('notifications.metadata.actions.sentDocument');
+        return 'sent a document';
       })
-      .with('mentioned_in_document_comment', () =>
-        t('notifications.metadata.actions.commentMention')
+      .with(
+        'mentioned_in_document_comment',
+        () => 'mentioned you in a comment on'
       )
-      .with('replied_to_document_comment_thread', () =>
-        t('notifications.metadata.actions.commentReply')
+      .with(
+        'replied_to_document_comment_thread',
+        () => 'replied to a comment on'
       )
-      .with('commented_on_document', () =>
-        t('notifications.metadata.actions.documentComment')
-      )
-      .with('channel_message_send', () =>
-        t('notifications.metadata.actions.channelMessage')
-      )
-      .with('ai_response', () => t('notifications.metadata.actions.aiResponse'))
-      .with('channel_message_reply', () =>
-        t('notifications.metadata.actions.channelReply')
-      )
-      .with('call_started', () =>
-        t('notifications.metadata.actions.callStarted')
-      )
-      .with('channel_invite', () =>
-        t('notifications.metadata.actions.channelInvite')
-      )
-      .with('new_email', () => t('notifications.metadata.actions.newEmail'))
-      .with('invite_to_team', () =>
-        t('notifications.metadata.actions.teamInvite')
-      )
-      .with('task_assigned', () =>
-        t('notifications.metadata.actions.taskAssigned')
-      )
+      .with('commented_on_document', () => 'commented on')
+      .with('channel_message_send', () => 'sent a message in')
+      .with('ai_response', () => 'AI responded')
+      .with('channel_message_reply', () => 'replied in')
+      .with('call_started', () => 'started a call')
+      .with('channel_invite', () => 'invited you to')
+      .with('new_email', () => 'sent a new email')
+      .with('invite_to_team', () => 'invited you to')
+      .with('task_assigned', () => 'assigned you a task')
       // Self-set, so there is no actor — the sentence reads "Reminder about X"
       // rather than "<someone> reminded you about X".
-      .with('reminder', () => t('notifications.metadata.actions.reminder'))
+      .with('reminder', () => 'Reminder')
       // Same shape: no actor, reads "Upcoming event · <event title>".
-      .with('calendar_event_reminder', () =>
-        t('notifications.metadata.actions.upcomingEvent')
-      )
-      .with('github_pr_status_changed', () =>
-        t('notifications.metadata.actions.pullRequestUpdated')
-      )
+      .with('calendar_event_reminder', () => 'Upcoming event')
+      .with('github_pr_status_changed', () => 'updated a pull request')
       .with('github_pr_check_run', () => {
         const meta = n.notification_metadata;
         if (
           meta.tag === 'github_pr_check_run' &&
           meta.content.state === 'failed'
         ) {
-          return t('notifications.metadata.actions.checkFailed');
+          return 'failed a check on';
         }
 
-        return t('notifications.metadata.actions.checkCompleted');
+        return 'completed a check on';
       })
-      .with('github_review_requested', () =>
-        t('notifications.metadata.actions.reviewRequested')
-      )
-      .with('github_pr_comment', () =>
-        t('notifications.metadata.actions.pullRequestComment')
-      )
-      .with('github_pr_mention', () =>
-        t('notifications.metadata.actions.pullRequestMention')
-      )
-      .with('github_pr_review', () =>
-        t('notifications.metadata.actions.pullRequestReviewed')
-      )
-      .with('inbox_reauth_required', () =>
-        t('notifications.metadata.actions.inboxReconnect')
-      )
+      .with('github_review_requested', () => 'requested your review on')
+      .with('github_pr_comment', () => 'commented on')
+      .with('github_pr_mention', () => 'mentioned you in')
+      .with('github_pr_review', () => 'reviewed')
+      .with('inbox_reauth_required', () => 'needs reconnection')
+      // The bot is the actor: "<bot> finished <session>".
+      .with('agent_session_settled', () => 'finished')
+      .with('agent_session_waiting_for_input', () => 'needs your answer in')
+      .with('agent_session_mentioned', () => 'mentioned you in')
       .exhaustive()
   );
 }
@@ -125,9 +101,19 @@ export function getNotificationTargetName(
       .with({ tag: 'reminder' }, () => undefined)
       .with(
         { tag: 'calendar_event_reminder' },
-        (m) => m.content.title || t('notifications.metadata.noTitle')
+        (m) => m.content.title || '(No title)'
       )
       .with({ tag: 'inbox_reauth_required' }, () => undefined)
+      .with(
+        {
+          tag: P.union(
+            'agent_session_settled',
+            'agent_session_waiting_for_input',
+            'agent_session_mentioned'
+          ),
+        },
+        (m) => m.content.sessionName
+      )
       .exhaustive()
   );
 }
@@ -182,6 +168,15 @@ export function getNotificationContent(
         formatCalendarReminderTime(m.content)
       )
       .with({ tag: 'inbox_reauth_required' }, (m) => m.content.emailAddress)
+      .with(
+        { tag: 'agent_session_settled' },
+        (m) => m.content.excerpt ?? undefined
+      )
+      .with(
+        { tag: 'agent_session_waiting_for_input' },
+        (m) => m.content.question
+      )
+      .with({ tag: 'agent_session_mentioned' }, () => undefined)
       .exhaustive()
   );
 }
@@ -197,18 +192,11 @@ export function formatCalendarReminderTime(content: {
   startDate?: string | null;
 }): string | undefined {
   if (!content.startsAt) {
-    return content.startDate ? t('notifications.metadata.allDay') : undefined;
+    return content.startDate ? 'All day' : undefined;
   }
-  const start = formatDateTime(new Date(content.startsAt), {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
+  const start = format(new Date(content.startsAt), 'p');
   if (!content.endsAt) return start;
-  const end = formatDateTime(new Date(content.endsAt), {
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-  return `${start} – ${end}`;
+  return `${start} – ${format(new Date(content.endsAt), 'p')}`;
 }
 
 export function shouldShowNotificationTarget(n: UnifiedNotification): boolean {
@@ -243,6 +231,16 @@ export function shouldShowNotificationTarget(n: UnifiedNotification): boolean {
       .with({ tag: 'reminder' }, () => true)
       .with({ tag: 'calendar_event_reminder' }, () => true)
       .with({ tag: 'inbox_reauth_required' }, () => false)
+      .with(
+        {
+          tag: P.union(
+            'agent_session_settled',
+            'agent_session_waiting_for_input',
+            'agent_session_mentioned'
+          ),
+        },
+        () => true
+      )
       .exhaustive()
   );
 }

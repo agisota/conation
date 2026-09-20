@@ -1,6 +1,3 @@
-import { t } from '@app/lib/i18n';
-import { FindAndReplaceStore } from '@block-md/signal/findAndReplaceStore';
-import { mdStore } from '@block-md/signal/markdownBlockData';
 import {
   DO_REPLACE_COMMAND,
   DO_REPLACE_ONCE_COMMAND,
@@ -8,8 +5,6 @@ import {
 } from '@core/component/LexicalMarkdown/plugins';
 import { registerHotkey } from '@core/hotkey/hotkeys';
 import { TOKENS } from '@core/hotkey/tokens';
-import { blockHotkeyScopeSignal } from '@core/signal/blockElement';
-import { useCanEdit } from '@core/signal/permissions';
 import ReplaceAll from '@phosphor/arrow-bend-double-up-right.svg';
 import Replace from '@phosphor/arrow-bend-up-right.svg';
 import CaretDown from '@phosphor/caret-down.svg';
@@ -21,18 +16,22 @@ import { createCallback } from '@solid-primitives/rootless';
 import { cn, Panel, Tooltip } from '@ui';
 import type { JSX } from 'solid-js';
 import { createEffect, createSignal, on, onCleanup, Show } from 'solid-js';
+import { useMarkdownDocument } from '../context/markdown-document-context';
 
-export function FindAndReplace() {
-  const mdData = mdStore.get;
-  const canEdit = useCanEdit();
+export function FindAndReplace(props: { hotkeyScope?: string } = {}) {
+  const { permissions, state } = useMarkdownDocument();
+  const canEdit = permissions.canEdit;
+  const {
+    md: mdData,
+    findAndReplace: findAndReplaceStore,
+    setFindAndReplace: setFindAndReplaceStore,
+  } = state.editor;
   const editor = () => mdData.editor;
-  const scopeId = blockHotkeyScopeSignal.get;
+  const scopeId = () => props.hotkeyScope;
 
   let inputRef: HTMLInputElement | undefined;
   let inputReplaceRef: HTMLInputElement | undefined;
   let performSearchTimeout: ReturnType<typeof setTimeout>;
-
-  const [findAndReplaceStore, setFindAndReplaceStore] = FindAndReplaceStore;
 
   const closeSearch = () => {
     setFindAndReplaceStore('searchIsOpen', false);
@@ -261,13 +260,14 @@ export function FindAndReplace() {
     });
 
   createEffect(() => {
-    if (!scopeId()) return;
+    const currentScopeId = scopeId();
+    if (!currentScopeId) return;
 
     const registration = registerHotkey({
       hotkey: 'cmd+f',
-      scopeId: scopeId(),
+      scopeId: currentScopeId,
       hotkeyToken: TOKENS.md.find,
-      description: () => t('markdown.find.command'),
+      description: 'Find in Document',
       runWithInputFocused: true,
       keyDownHandler: () => {
         if (findAndReplaceStore.searchIsOpen) {
@@ -314,11 +314,7 @@ export function FindAndReplace() {
       >
         <div class="flex items-center px-1">
           <Tooltip
-            label={
-              findAndReplaceStore.replaceInputOpen
-                ? t('markdown.find.collapse')
-                : t('markdown.find.expand')
-            }
+            label={`${findAndReplaceStore.replaceInputOpen ? 'Collapse' : 'Expand'} Search Bar`}
           >
             <div
               class="flex items-center w-8 h-6 justify-center rounded-md hover:bg-hover hover-transition-bg"
@@ -349,7 +345,7 @@ export function FindAndReplace() {
               <input
                 class="mx-0.5 flex-1 h-6 border-0 text-sm text-ink focus:outline-none focus:ring-0"
                 type="text"
-                placeholder={t('markdown.find.placeholder')}
+                placeholder="Find..."
                 ref={inputRef}
                 value={findAndReplaceStore.searchInputText}
                 onInput={(e) => {
@@ -363,20 +359,15 @@ export function FindAndReplace() {
               <div class="flex items-center justify-start">
                 <p class="text-xs text-ink whitespace-nowrap">
                   {findAndReplaceStore.isSearching
-                    ? t('markdown.find.searching')
+                    ? 'searching...'
                     : findAndReplaceStore.matches > 0
-                      ? t('markdown.find.matchPosition', {
-                          current:
-                            findAndReplaceStore.currentMatch === -1
-                              ? '?'
-                              : findAndReplaceStore.currentMatch + 1,
-                          total: findAndReplaceStore.matches,
-                        })
-                      : t('markdown.find.noMatches')}
+                      ? `${findAndReplaceStore.currentMatch === -1 ? '?' : findAndReplaceStore.currentMatch + 1} of ${findAndReplaceStore.matches}` +
+                        ` match${findAndReplaceStore.matches === 1 ? '' : 'es'}`
+                      : 'no matches'}
                 </p>
               </div>
               <div class="ml-4 flex justify-end items-center">
-                <Tooltip label={t('markdown.find.previousMatch')}>
+                <Tooltip label={`Previous Match`}>
                   <div
                     class="flex items-center px-1 size-6 justify-center rounded-md hover:bg-hover hover-transition-bg"
                     onMouseDown={() => {
@@ -386,7 +377,7 @@ export function FindAndReplace() {
                     <CaretUp />
                   </div>
                 </Tooltip>
-                <Tooltip label={t('markdown.find.nextMatch')}>
+                <Tooltip label={`Next Match`}>
                   <div
                     class="flex items-center px-1 size-6 justify-center rounded-md hover:bg-hover hover-transition-bg"
                     onMouseDown={() => {
@@ -396,7 +387,7 @@ export function FindAndReplace() {
                     <CaretDown />
                   </div>
                 </Tooltip>
-                <Tooltip label={t('markdown.find.closeSearch')}>
+                <Tooltip label={`Close Search Bar`}>
                   <div
                     class="flex items-center px-1 size-6 justify-center rounded-md hover:bg-hover hover-transition-bg"
                     onMouseDown={closeSearch}
@@ -414,7 +405,7 @@ export function FindAndReplace() {
                 <input
                   class="mx-0.5 flex-1 h-6 border-0 text-sm text-ink focus:outline-none focus:ring-0"
                   type="text"
-                  placeholder={t('markdown.find.replacePlaceholder')}
+                  placeholder="Replace with..."
                   ref={inputReplaceRef}
                   value={findAndReplaceStore.replaceInputText}
                   onInput={(e) =>
@@ -424,7 +415,7 @@ export function FindAndReplace() {
                 />
               </div>
               <div class="flex grow justify-center ml-2">
-                <Tooltip label={t('markdown.find.replace')}>
+                <Tooltip label={`Replace`}>
                   <div
                     class="flex items-center px-1 size-6 justify-center rounded-md hover:bg-hover hover-transition-bg"
                     onMouseDown={() => {
@@ -434,7 +425,7 @@ export function FindAndReplace() {
                     <Replace />
                   </div>
                 </Tooltip>
-                <Tooltip label={t('markdown.find.replaceAll')}>
+                <Tooltip label={`Replace All`}>
                   <div
                     class="flex items-center px-1 size-6 justify-center rounded-md hover:bg-hover hover-transition-bg"
                     onMouseDown={() => {

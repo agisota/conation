@@ -19,23 +19,6 @@ use std::collections::BTreeMap;
 use super::instance::{Instance, Port};
 use super::{Mode, identity, resources};
 
-/// `macrodb` is the existing local database/schema compatibility identifier.
-/// It is intentionally not a product-facing name: changing it would require a
-/// coordinated database and compose migration, outside local identity setup.
-const LOCAL_DATABASE_NAME: &str = "macrodb";
-
-/// Passwordless `redirect_uri` / CORS allowlist for one local instance.
-///
-/// Compose `env_file` is read only when a container is created. Pinning this
-/// same CSV on `authentication-service` in the generated override keeps Tauri
-/// `https://localhost/app` (existing DMG) after an auth recreate, even if the
-/// generated env file is stale.
-pub fn allowed_origins_csv(frontend_port: u16) -> String {
-    format!(
-        "https://app.conation.dev,https://conation.dev,https://www.conation.dev,http://localhost:{frontend_port},http://localhost:3000,http://localhost:5173,http://100.89.19.82:3000,http://173.212.222.197:3000,tauri://localhost,http://tauri.localhost,https://tauri.localhost,https://localhost"
-    )
-}
-
 /// The full local environment for one instance.
 pub struct LocalEnv {
     environment: &'static str,
@@ -46,8 +29,15 @@ pub struct LocalEnv {
     /// `http://localhost:{FRONTEND_PORT}`, so this must track the serving
     /// mode or every OAuth signup dead-ends on an unused port.
     frontend_port: u16,
-    /// Browser-facing origin of the public MCP transport and OAuth broker.
+    /// Browser-facing route to document cognition's MCP OAuth callback.
     mcp_public_url: String,
+    /// Browser-facing base the static file service stamps into permalinks.
+    /// Only the service itself reads `STATIC_FILE_SERVICE_URL`; callers
+    /// reach it in-network through the `OVERRIDE_` form below. Without this
+    /// a named instance mints `http://localhost:8100/file/...`, the
+    /// single-instance CDN port, which nothing on a named instance serves;
+    /// the proxy's `/static-file/*` block is what does.
+    static_file_public_url: String,
     infra: InfraEnv,
     storage: StorageEnv,
     queues: QueueEnv,
@@ -82,8 +72,12 @@ impl LocalEnv {
             } else {
                 instance.port(Port::Frontend)
             },
-            mcp_public_url: format!("http://localhost:{}", instance.port(Port::Proxy)),
-            infra: InfraEnv::local(),
+            mcp_public_url: format!("http://localhost:{}/cognition", instance.port(Port::Proxy)),
+            static_file_public_url: format!(
+                "http://localhost:{}/static-file",
+                instance.port(Port::Proxy)
+            ),
+            infra: InfraEnv::local(instance),
             storage: StorageEnv::local(),
             queues: QueueEnv::local(),
             mail: MailEnv::local(),
@@ -102,6 +96,10 @@ impl LocalEnv {
         env.insert("PORT".into(), "8080".into());
         env.insert("FRONTEND_PORT".into(), self.frontend_port.to_string());
         env.insert("MCP_PUBLIC_URL".into(), self.mcp_public_url.clone());
+        env.insert(
+            "STATIC_FILE_SERVICE_URL".into(),
+            self.static_file_public_url.clone(),
+        );
         // Pipedream's hosted Connect UI refuses to be opened from an origin
         // outside this list, and document_cognition's own local default only
         // names port 3000 - a named instance's frontend lives on a derived
@@ -109,18 +107,6 @@ impl LocalEnv {
         env.insert(
             "PIPEDREAM_ALLOWED_ORIGINS".into(),
             format!("http://localhost:{}", self.frontend_port),
-        );
-        // Passwordless `redirect_uri` is checked against this list. The SPA on
-        // this host is reached as localhost from Playwright, and as the
-        // Tailscale/public IPs from the server Chromium (container localhost
-        // is selkies, not Vite). The macOS/Linux Tauri webview origin is
-        // `tauri://localhost`; production EmailForm still posts
-        // `https://localhost/app` (forced https + host `localhost`). Windows
-        // uses `https://tauri.localhost`. `ALLOWED_ORIGINS` replaces CORS
-        // defaults, so those desktop origins must be listed here.
-        env.insert(
-            "ALLOWED_ORIGINS".into(),
-            allowed_origins_csv(self.frontend_port),
         );
         // Calendar ingestion/sync ships dark (both flags default off in
         // deployed envs); local stacks keep it on for development.
@@ -157,16 +143,18 @@ struct InfraEnv {
     redis_uri: String,
     opensearch_url: String,
     local_aws_url: String,
+    local_aws_public_url: String,
     kafka_brokers: String,
 }
 
 impl InfraEnv {
-    fn local() -> Self {
+    fn local(instance: &Instance) -> Self {
         InfraEnv {
-            database_url: format!("postgres://user:password@postgres:5432/{LOCAL_DATABASE_NAME}"),
+            database_url: "postgres://user:password@postgres:5432/macrodb".into(),
             redis_uri: "redis://redis:6379".into(),
             opensearch_url: "http://search:9200".into(),
             local_aws_url: "http://localstack:4566".into(),
+            local_aws_public_url: format!("http://localhost:{}", instance.port(Port::LocalStack)),
             // The broker's in-network listener (see docker/docker-compose-databases.yml);
             // host processes use localhost:9092 instead.
             kafka_brokers: "kafka:29092".into(),
@@ -184,6 +172,10 @@ impl InfraEnv {
         env.insert("LAST_ONLINE_REDIS_URI".into(), self.redis_uri.clone());
         env.insert("OPENSEARCH_URL".into(), self.opensearch_url.clone());
         env.insert("LOCAL_AWS_URL".into(), self.local_aws_url.clone());
+        env.insert(
+            "LOCAL_AWS_PUBLIC_URL".into(),
+            self.local_aws_public_url.clone(),
+        );
         env.insert("KAFKA_BROKERS".into(), self.kafka_brokers.clone());
         // In-network services resolve the gateway through the OVERRIDE_ var;
         // without it the resolver's Environment::Local default
@@ -198,7 +190,7 @@ impl InfraEnv {
         // the calling container. Callers like the authentication service's
         // signup hook (starter docs) then fail with a connection error.
         // `DOCUMENT_STORAGE_SERVICE_URL` (from Doppler) only covers the older
-        // call sites that read that var directly, not `conation_service_urls`.
+        // call sites that read that var directly, not `macro_service_urls`.
         env.insert(
             "OVERRIDE_DOCUMENT_STORAGE_SERVICE_URL".into(),
             "http://document-storage-service:8080".into(),
@@ -210,11 +202,16 @@ impl InfraEnv {
             "OVERRIDE_LEXICAL_SERVICE_URL".into(),
             "http://lexical-service:8096".into(),
         );
+        // Channel picture authorization reads file metadata from inside DSS.
+        env.insert(
+            "OVERRIDE_STATIC_FILE_SERVICE_URL".into(),
+            "http://static-file-service:8080".into(),
+        );
         // Same failure mode for the email connect flows: without these,
         // first-inbox provisioning (auth-service → `/email/init`) and Gmail
         // token fetches (email-service → `/internal/google_access_token`)
         // fail with connection errors. (Plain `EMAIL_SERVICE_URL` in Doppler
-        // is ignored — conation_service_urls only honors the `OVERRIDE_` prefix.)
+        // is ignored — macro_service_urls only honors the `OVERRIDE_` prefix.)
         env.insert(
             "OVERRIDE_EMAIL_SERVICE_URL".into(),
             "http://email-service:8080".into(),
@@ -222,6 +219,14 @@ impl InfraEnv {
         env.insert(
             "OVERRIDE_AUTH_SERVICE_URL".into(),
             "http://authentication-service:8080".into(),
+        );
+        // Same split for the static file service: without this a service
+        // storing a file (the agent harness re-hosting a Cursor artifact)
+        // asks http://localhost:8100, the host port of the single-instance
+        // CDN, which inside a container is the caller itself.
+        env.insert(
+            "OVERRIDE_STATIC_FILE_SERVICE_URL".into(),
+            "http://static-file-service:8080".into(),
         );
         // The alias LocalStack provisions for the Cursor API key CMK. Named by
         // alias rather than key id because `CreateKey` mints a random id every
@@ -233,6 +238,10 @@ impl InfraEnv {
         env.insert(
             "CURSOR_API_KEY_KMS_KEY_ID".into(),
             resources::CURSOR_API_KEY_KMS_ALIAS.into(),
+        );
+        env.insert(
+            "CODEX_OAUTH_KMS_KEY_ID".into(),
+            resources::CODEX_OAUTH_KMS_ALIAS.into(),
         );
         // Dummy creds: the SDK talks to LocalStack, never real AWS.
         env.insert("AWS_ACCESS_KEY_ID".into(), "test".into());
@@ -285,6 +294,11 @@ impl QueueEnv {
                 env.insert(key.into(), form.value(queue.name));
             }
         }
+        // Without these the `ai_tools` SQS client is built with no queue name
+        // and every enqueue fails, so an agent session can neither send email
+        // nor sync thread labels. Deployed environments set them in Doppler.
+        env.insert("ENABLE_EMAIL_SCHEDULED_QUEUE".into(), "true".into());
+        env.insert("ENABLE_GMAIL_OPS_QUEUE".into(), "true".into());
     }
 }
 
@@ -300,7 +314,7 @@ impl MailEnv {
         MailEnv {
             smtp_host: "mailpit",
             smtp_port: "1025",
-            sender_base_address: "conation.local",
+            sender_base_address: "macro.local",
         }
     }
 
@@ -325,8 +339,8 @@ impl MailEnv {
 /// egress proxy.
 ///
 /// Two managed bots: `@coder` (`HARNESS_BOT_ID`) gets a sandbox from the
-/// local Docker provider, and `@conation` runs in-process on the in-memory ACP
-/// runtime. Only the first is configured - `@conation` is `bot_id::CONATION_AI_BOT_ID`
+/// local Docker provider, and `@macro` runs in-process on the in-memory ACP
+/// runtime. Only the first is configured - `@macro` is `bot_id::MACRO_AI_BOT_ID`
 /// in code, served wherever `ENVIRONMENT` is not production.
 struct AgentHarnessEnv {
     bot_id: &'static str,
@@ -341,19 +355,19 @@ struct AgentHarnessEnv {
     network: String,
     /// The egress proxy as its clients dial it: the run's Cursor egress
     /// tunnel when one opened, otherwise the in-network address.
-    egress_base_url: String,
-    /// Conation's own MCP server as the egress proxy dials it. In-network and
-    /// cleartext, which the proxy permits only under `ENVIRONMENT=local`:
+    egress_url: String,
+    /// Macro's MCP service base URL, without its `/mcp` transport endpoint.
+    /// In-network and cleartext, which the proxy permits only locally:
     /// this hop never leaves the compose bridge.
-    conation_mcp_url: &'static str,
+    mcp_service_url: &'static str,
 }
 
 impl AgentHarnessEnv {
     fn local(project_name: &str, egress_public_url: Option<&str>) -> Self {
         AgentHarnessEnv {
-            // bot_id::CONATION_CODER_BOT_ID, a first-party bot with no row.
+            // bot_id::MACRO_CODER_BOT_ID, a first-party bot with no row.
             bot_id: "00000000-0000-0000-0000-00000000a9e7",
-            snapshot: "conation-agent-harness",
+            snapshot: "macro-agent-harness",
             image: super::sandbox_image::DEFAULT_LOCAL_TAG,
             // Compose names a network `<project>_<network>`.
             network: format!("{project_name}_services"),
@@ -366,10 +380,10 @@ impl AgentHarnessEnv {
             // `credential.<url>.helper`, so an underscore here means the
             // scoped credential helper never fires and the clone prompts for
             // a password it has no terminal to read.
-            egress_base_url: egress_public_url
+            egress_url: egress_public_url
                 .unwrap_or("http://agent-harness-service:8102")
                 .to_owned(),
-            conation_mcp_url: "http://mcp-service:8080/mcp",
+            mcp_service_url: "http://mcp-service:8080",
         }
     }
 
@@ -380,8 +394,14 @@ impl AgentHarnessEnv {
         env.insert("DEV_DANGEROUS_LOCAL_CONTAINERS".into(), "true".into());
         env.insert("LOCAL_CONTAINER_IMAGE".into(), self.image.into());
         env.insert("LOCAL_CONTAINER_NETWORK".into(), self.network.clone());
-        env.insert("EGRESS_BASE_URL".into(), self.egress_base_url.clone());
-        env.insert("CONATION_MCP_URL".into(), self.conation_mcp_url.into());
+        env.insert(
+            "OVERRIDE_AGENT_HARNESS_EGRESS_URL".into(),
+            self.egress_url.clone(),
+        );
+        env.insert(
+            "OVERRIDE_MCP_SERVICE_URL".into(),
+            self.mcp_service_url.into(),
+        );
     }
 }
 
@@ -393,7 +413,6 @@ struct ServiceAuthEnv {
     doc_perm_jwt: String,
     internal_call: String,
     url_signing: String,
-    signup_antibot_hmac: String,
 }
 
 impl ServiceAuthEnv {
@@ -406,7 +425,6 @@ impl ServiceAuthEnv {
             doc_perm_jwt: "local".to_string(),
             internal_call: identity::instance_secret("internal-call", name),
             url_signing: identity::instance_secret("url-signing", name),
-            signup_antibot_hmac: identity::instance_secret("signup-antibot-hmac", name),
         }
     }
 
@@ -445,10 +463,6 @@ impl ServiceAuthEnv {
         env.insert("DOCUMENT_PERMISSION_JWT".into(), self.doc_perm_jwt.clone());
         env.insert("INTERNAL_CALL_SECRET".into(), self.internal_call.clone());
         env.insert("URL_SIGNING_HMAC".into(), self.url_signing.clone());
-        env.insert(
-            "SIGNUP_ANTIBOT_HMAC_KEY".into(),
-            self.signup_antibot_hmac.clone(),
-        );
     }
 }
 
@@ -502,14 +516,14 @@ impl FusionAuthEnv {
             "FUSIONAUTH_OAUTH_REDIRECT_URI".into(),
             self.oauth_redirect_uri.clone(),
         );
-        // conation_auth JWT claim validation.
+        // macro_auth JWT claim validation.
         env.insert("AUDIENCE".into(), identity::APPLICATION_ID.into());
         env.insert("ISSUER".into(), identity::ISSUER.into());
         env.insert("JWT_SECRET_KEY".into(), identity::JWT_SECRET.into());
     }
 }
 
-/// Values the services' `conation_config` loaders require but that only exist in
+/// Values the services' `macro_config` loaders require but that only exist in
 /// Doppler's `lcl_personal` config. Without these a `--no-doppler` stack's
 /// containers crash at startup ("missing required value") before any of the
 /// integration the value backs is ever exercised. Each entry is a deterministic
@@ -531,19 +545,28 @@ impl BootStubEnv {
         env.insert("REDIS_HOST".into(), "redis://redis:6379".into());
         // email_service / connection_gateway open their own Postgres pool.
         env.insert(
-            "CONATION_DB_URL".into(),
-            format!("postgres://user:password@postgres:5432/{LOCAL_DATABASE_NAME}"),
+            "MACRO_DB_URL".into(),
+            "postgres://user:password@postgres:5432/macrodb".into(),
         );
         // search_processing_service; the local cluster has the security plugin
         // disabled so these are accepted but ignored (same as opensearch.rs).
-        env.insert("OPENSEARCH_USERNAME".into(), "conationuser".into());
+        // document_cognition_service mounts the Pipedream webhook when both
+        // values are set. Nothing local can receive Pipedream's callbacks, so
+        // these only need to be well-formed: the URI must carry the same
+        // secret the route checks against.
+        env.insert(
+            "PIPEDREAM_WEBHOOK_URI".into(),
+            "http://localhost:8080/pipedream/mcp/webhook?secret=local".into(),
+        );
+        env.insert("PIPEDREAM_WEBHOOK_SECRET".into(), "local".into());
+        env.insert("OPENSEARCH_USERNAME".into(), "macrouser".into());
         env.insert("OPENSEARCH_PASSWORD".into(), "local".into());
         // document_storage_service's presigned-URL config. Locally the
-        // `s3_uses_localstack()` branch skips CloudFront signing entirely, so
-        // only a well-formed base URL is needed.
+        // `is_local_aws()` branch skips CloudFront signing entirely, so only a
+        // well-formed base URL is needed.
         env.insert(
             "DOCUMENT_STORAGE_SERVICE_CLOUDFRONT_DISTRIBUTION_URL".into(),
-            "https://app.conation.dev/s3/doc-storage".into(),
+            "http://localhost:8100".into(),
         );
         env.insert(
             "DOCUMENT_STORAGE_SERVICE_CLOUDFRONT_SIGNER_PUBLIC_KEY_ID".into(),
@@ -579,36 +602,20 @@ impl BootStubEnv {
             "STRIPE_WEBHOOK_SECRET_KEY".into(),
             "local-stripe-webhook-secret".into(),
         );
-        // conation_auth's `JwtValidationArgs` (used by every service that mounts
-        // the auth middleware) reads these at boot. A local stack receives a
-        // real pair from its generated secrets; these names are only fallbacks
-        // for processes that do not validate a bearer token.
-        env.insert("CONATION_API_TOKEN_ISSUER".into(), "local".into());
+        // macro_auth's `JwtValidationArgs` (used by every service that mounts
+        // the auth middleware) reads these at boot. The keys are only parsed
+        // when a Macro API token is actually validated — normal local auth
+        // uses FusionAuth JWTs — so dummies are fine.
+        env.insert("MACRO_API_TOKEN_ISSUER".into(), "local".into());
         env.insert(
-            "CONATION_API_TOKEN_PUBLIC_KEY".into(),
-            "local-conation-api-token-public-key".into(),
+            "MACRO_API_TOKEN_PUBLIC_KEY".into(),
+            "local-macro-api-token-public-key".into(),
         );
         env.insert(
-            "CONATION_API_TOKEN_PRIVATE_SECRET_KEY".into(),
-            "local-conation-api-token-private-key".into(),
+            "MACRO_API_TOKEN_PRIVATE_SECRET_KEY".into(),
+            "local-macro-api-token-private-key".into(),
         );
-        env.insert("CONATION_API_TOKEN_EXPIRY_SECONDS".into(), "3600".into());
-        // The agent harness constructs its Pipedream client at boot. Local
-        // stubs keep the disabled integration from preventing the rest of the
-        // harness (including local sandboxes) from starting; production still
-        // supplies real required credentials through its deployment config.
-        env.insert(
-            "PIPEDREAM_CLIENT_ID".into(),
-            "local-pipedream-client".into(),
-        );
-        env.insert(
-            "PIPEDREAM_CLIENT_SECRET".into(),
-            "local-pipedream-secret".into(),
-        );
-        env.insert(
-            "PIPEDREAM_PROJECT_ID".into(),
-            "local-pipedream-project".into(),
-        );
+        env.insert("MACRO_API_TOKEN_EXPIRY_SECONDS".into(), "3600".into());
         // email_service's GCP pubsub queue (gmail watch notifications) and
         // its own CloudFront signer for attachment presigned URLs.
         env.insert("GMAIL_GCP_QUEUE".into(), "gmail-gcp-queue-local".into());
@@ -627,14 +634,14 @@ impl BootStubEnv {
         );
         // notification_service's APNS/FCM push config — push won't work
         // locally, but the loader requires the keys.
-        env.insert("APPLE_BUNDLE_ID".into(), "dev.conation.local".into());
+        env.insert("APPLE_BUNDLE_ID".into(), "com.macro.local".into());
         env.insert(
             "SNS_APNS_PLATFORM_ARN".into(),
-            "arn:aws:sns:us-east-1:000000000000:app/APNS/conation-local".into(),
+            "arn:aws:sns:us-east-1:000000000000:app/APNS/macro-local".into(),
         );
         env.insert(
             "SNS_FCM_PLATFORM_ARN".into(),
-            "arn:aws:sns:us-east-1:000000000000:app/GCM/conation-local".into(),
+            "arn:aws:sns:us-east-1:000000000000:app/GCM/macro-local".into(),
         );
         // document_cognition_service's MCP credentials encryption key — must be
         // a base64-encoded 32-byte AES key (`AesKey::try_from`).
@@ -684,9 +691,6 @@ impl BootStubEnv {
         env.insert("LIVEKIT_API_SECRET".into(), "local-livekit-secret".into());
         env.insert("OPENAI_API_KEY".into(), "local-openai-key".into());
         env.insert("COHERE_API_KEY".into(), "local-cohere-key".into());
-        // Conation default LLM — rox.one
-        env.insert("ROX_API_KEY".into(), "local-rox-key".into());
-        env.insert("ROX_BASE_URL".into(), "https://api.rox.one/v1".into());
         env.insert(
             "CAL_WEBHOOK_SECRET_KEY".into(),
             "local-cal-webhook-secret".into(),

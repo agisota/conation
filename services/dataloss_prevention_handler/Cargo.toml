@@ -12,7 +12,7 @@ conation_aws_config = { path = "../../crates/conation_aws_config", features = ["
 aws-sdk-sns = { workspace = true }
 aws_lambda_events = { workspace = true, features = ["s3"] }
 lambda_runtime = { workspace = true }
-conation_entrypoint = { path = "../../crates/conation_entrypoint" }
+conation_entrypoint = { package = "macro_entrypoint", path = "../../crates/conation_entrypoint" }
 conation_env_var = { path = "../../crates/conation_env_var" }
 s3_client = { path = "../../crates/s3_client" }
 sns_client = { path = "../../crates/sns_client" }

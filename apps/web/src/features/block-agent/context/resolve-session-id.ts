@@ -18,6 +18,7 @@ export type ResolvedSessionId = {
   pending: Accessor<boolean>;
   /** The create failed, or the placeholder has no create behind it. */
   failed: Accessor<boolean>;
+  error: Accessor<string | undefined>;
 };
 
 export function resolveSessionId(blockId: Accessor<string>): ResolvedSessionId {
@@ -41,8 +42,12 @@ export function resolveSessionId(blockId: Accessor<string>): ResolvedSessionId {
     sessionId,
     pending: () =>
       entry() != null &&
-      entry()?.sessionId() === undefined &&
-      !(entry()?.failed() ?? false),
+      !entry()?.failed() &&
+      entry()?.sessionId() === undefined,
     failed: () => entry() === null || (entry()?.failed() ?? false),
+    error: () =>
+      entry() === null
+        ? 'This conversation was not created. Return to the composer to start a new one.'
+        : entry()?.error(),
   };
 }

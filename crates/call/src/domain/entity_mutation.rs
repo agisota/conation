@@ -1,6 +1,8 @@
 //! Unified entity-mutation capability impls for calls.
 
-use conation_event_broker::MacroEventBroker;
+#[cfg(test)]
+mod test;
+
 use entity_access::domain::models::{
     AccessError, EditAccessLevel, EntityAccessReceipt, ViewAccessLevel,
 };
@@ -8,6 +10,7 @@ use entity_mutation::{
     DeleteEntityPermanently, EntityMutationEffect, EntityMutationErrorCode, RenameEntity,
     UpdateEntitySharePolicy,
 };
+use macro_event_broker::MacroEventBroker;
 use model_entity::Entity;
 use models_permissions::share_permission::UpdateSharePermissionRequestV2;
 
@@ -31,7 +34,10 @@ impl From<CallError> for EntityMutationErrorCode {
                 Self::forbidden(rootcause::report!(error))
             }
             error @ CallError::InvalidRequest(_) => Self::invalid(rootcause::report!(error)),
-            error @ CallError::AlreadyInCall(_) => Self::conflict(rootcause::report!(error)),
+            error @ CallError::Forbidden(_) => Self::forbidden(rootcause::report!(error)),
+            error @ (CallError::AlreadyInCall(_) | CallError::Conflict(_)) => {
+                Self::conflict(rootcause::report!(error))
+            }
             error @ CallError::Internal(_) => Self::internal(rootcause::report!(error)),
         }
     }

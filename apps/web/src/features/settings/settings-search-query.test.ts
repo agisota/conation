@@ -38,7 +38,7 @@ describe('buildSettingsSearchIndex', function () {
     expect(
       entries.slice(1).every((e) => !e.isPage && e.tab === 'Connected')
     ).toBe(true);
-    expect(entries.map((e) => e.title)).toContain('Gmail');
+    expect(entries.map((e) => e.title)).toContain('Email');
   });
 
   it('only indexes the tabs it is given, so gating carries over to search', function () {
@@ -64,7 +64,7 @@ describe('searchSettings', function () {
   });
 
   it('finds inner content that is not a sidebar item', function () {
-    expect(titles('gmail')).toContain('Gmail');
+    expect(titles('gmail')).toContain('Email');
     expect(titles('linear')).toContain('Linear');
     expect(titles('delete account')).toContain('Delete account');
     expect(titles('slug')).toContain('Team slug');
@@ -100,7 +100,7 @@ describe('searchSettings', function () {
 
   it('requires every word of a multi-word query to match', function () {
     expect(titles('github app')).toContain('GitHub App');
-    expect(titles('github app')).not.toContain('Gmail');
+    expect(titles('github app')).not.toContain('Email');
     expect(search('github zzzz')).toEqual([]);
   });
 

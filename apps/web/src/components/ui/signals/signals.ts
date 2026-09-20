@@ -1,5 +1,5 @@
 import { makePersisted } from '@solid-primitives/storage';
-import { createSignal } from 'solid-js';
+import { createEffect, createRoot, createSignal } from 'solid-js';
 
 /**
  * Globally enables or disables the appearance of tooltips across the app.
@@ -18,3 +18,19 @@ export const [monochromeIcons, setMonochromeIcons] = makePersisted(
   createSignal<boolean>(false),
   { name: 'enable-monochrome-icons' }
 );
+
+/** Reading text scale. Compact tightens `--text-*` tokens; html font-size stays. */
+export type FontScale = 'default' | 'compact';
+
+export const [fontScale, setFontScale] = makePersisted(
+  createSignal<FontScale>('default'),
+  { name: 'ui.fontScale' }
+);
+
+if (typeof document !== 'undefined') {
+  createRoot(() => {
+    createEffect(() => {
+      document.documentElement.dataset.fontScale = fontScale();
+    });
+  });
+}

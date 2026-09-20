@@ -5,13 +5,13 @@ mod config;
 use std::sync::Arc;
 
 use anyhow::Context;
-use conation_auth::middleware::decode_jwt::JwtValidationArgs;
-use conation_authorization::{
+use config::Config;
+use macro_auth::middleware::decode_jwt::JwtValidationArgs;
+use macro_authorization::{
     InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationServiceImpl,
     MacroAuthorizationState,
 };
-use conation_entrypoint::MacroEntrypoint;
-use config::Config;
+use macro_entrypoint::MacroEntrypoint;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -22,7 +22,7 @@ async fn main() -> anyhow::Result<()> {
     tracing::trace!("initialized config");
 
     let secretsmanager_client = secretsmanager_client::SecretsManager::new(
-        aws_sdk_secretsmanager::Client::new(&conation_aws_config::get_conation_aws_config().await),
+        aws_sdk_secretsmanager::Client::new(&macro_aws_config::get_macro_aws_config().await),
     );
 
     let jwt_args =
@@ -34,7 +34,8 @@ async fn main() -> anyhow::Result<()> {
             api_key: config.internal_api_key.to_string(),
             default_user_id: None,
         },
-        conation_authorization::NoBotAuthorizer,
+        macro_authorization::NoBotAuthorizer,
+        macro_authorization::NoUserApiKeyAuthorizer,
     );
     let authorization_state = MacroAuthorizationState::new(Arc::new(authorization_service));
 

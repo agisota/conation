@@ -32,7 +32,10 @@ const getToolSearchQuery = (
   return 'query' in ctx.tool.data ? ctx.tool.data.query : ctx.tool.data.name;
 };
 
-function SearchResultRow(props: { entity: SearchEntity; onClick: () => void }) {
+function SearchResultRow(props: {
+  entity: SearchEntity;
+  onClick: (event: MouseEvent) => void;
+}) {
   const hit = () => props.entity.search.contentHitData?.[0];
 
   return (
@@ -83,7 +86,7 @@ const UnifiedSearchToolResponse = (props: {
     )
   );
 
-  const openEntity = async (entity: SearchEntity) => {
+  const openEntity = async (entity: SearchEntity, event: MouseEvent) => {
     if (entity.type === 'channel_message') {
       const orchestrator = globalSplitManager()?.getOrchestrator();
       if (orchestrator) {
@@ -91,7 +94,8 @@ const UnifiedSearchToolResponse = (props: {
           orchestrator,
           entity.channelId,
           entity.messageId,
-          entity.threadId
+          entity.threadId,
+          { preferNewSplit: event.shiftKey }
         );
         return;
       }
@@ -109,7 +113,7 @@ const UnifiedSearchToolResponse = (props: {
             return (
               <SearchResultRow
                 entity={entity}
-                onClick={() => openEntity(entity)}
+                onClick={(event) => openEntity(entity, event)}
               />
             );
           }}

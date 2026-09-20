@@ -21,7 +21,7 @@ aws_lambda_events = { workspace = true, features = [
 ] }
 chrono = { workspace = true }
 lambda_runtime = { workspace = true }
-conation_entrypoint = { path = "../../crates/conation_entrypoint" }
+conation_entrypoint = { package = "macro_entrypoint", path = "../../crates/conation_entrypoint" }
 conation_env_var = { path = "../../crates/conation_env_var" }
 mockall = { workspace = true }
 model = { path = "../../crates/model" }

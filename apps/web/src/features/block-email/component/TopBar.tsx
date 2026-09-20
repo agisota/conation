@@ -3,19 +3,15 @@ import {
   ChatWithAgentIcon,
   openChatWithAgent,
 } from '@app/features/chat/ChatWithAgentButton';
+import { useEmailThreadState } from '@app/features/email-thread/context/email-thread-state-context';
 import { makeMoveToProjectAction } from '@app/features/next-soup/actions';
 import { useMaybeSoup } from '@app/features/next-soup/soup-context';
 import {
   openEntityInSplitFromUnifiedList,
   trashEmails,
 } from '@app/features/next-soup/utils';
-import { t } from '@app/lib/i18n';
 import type { BlockTool } from '@components/app/ResponsiveBlockToolbar';
-import {
-  BLOCK_TOOL_IDS,
-  ResponsiveBlockToolbar,
-} from '@components/app/ResponsiveBlockToolbar';
-import { useSidePanel } from '@components/app/side-panel';
+import { ResponsiveBlockToolbar } from '@components/app/ResponsiveBlockToolbar';
 import {
   SplitHeaderLeft,
   SplitHeaderRight,
@@ -24,7 +20,6 @@ import {
   SplitHeaderBadge,
   StaticSplitLabel,
 } from '@components/app/split-layout/components/SplitLabel';
-import { useSplitPanel } from '@components/app/split-layout/layoutUtils';
 import { toast } from '@core/component/Toast/Toast';
 import {
   getShareDrawerRecipientInput,
@@ -32,26 +27,24 @@ import {
   useShareDialogContext,
 } from '@core/component/TopBar/ShareButton';
 import { ENABLE_EMAIL_SHARING } from '@core/constant/featureFlags';
-import { registerHotkey } from '@core/hotkey/hotkeys';
 import { TOKENS } from '@core/hotkey/tokens';
 import { getActiveCommandByToken, runCommand } from '@core/hotkey/utils';
 import { isMobile } from '@core/mobile/isMobile';
 import { buildEntityData } from '@entity';
-import { AnimatedNoiseIcon } from '@icon/wide-noise';
-import IconShared from '@icon/wide-share.svg';
-import { AnimatedTaskIcon } from '@icon/wide-task';
 import ArrowRightIcon from '@phosphor/arrow-right.svg';
 import CheckIcon from '@phosphor/check.svg';
 import EnvelopeSimpleIcon from '@phosphor/envelope-simple.svg';
 import EnvelopeSimpleOpenIcon from '@phosphor/envelope-simple-open.svg';
+import TaskIcon from '@phosphor/list-checks.svg';
 import ProhibitIcon from '@phosphor/prohibit.svg';
+import IconShared from '@phosphor/share.svg';
 import TrashIcon from '@phosphor/trash.svg';
+import NoiseIcon from '@phosphor/waveform.svg';
 import CheckBoldIcon from '@phosphor-icons/core/bold/check-bold.svg?component-solid';
 import ArrowCounterClockwise from '@phosphor-icons/core/regular/arrow-counter-clockwise.svg?component-solid';
 import { useEmailLinksQuery } from '@queries/email/link';
 import { Button } from '@ui';
-import { onCleanup, Show } from 'solid-js';
-import { useEmailContext } from './EmailContext';
+import { Show } from 'solid-js';
 
 export function TopBar(props: {
   id: string;
@@ -59,29 +52,11 @@ export function TopBar(props: {
   isDraft?: boolean;
   onCreateTask?: () => void;
 }) {
-  const splitPanel = useSplitPanel();
   const shareCtx = useShareDialogContext();
-  const emailCtx = useEmailContext();
+  const emailCtx = useEmailThreadState();
   const soup = useMaybeSoup();
   const linksQuery = useEmailLinksQuery();
-  const sidePanel = useSidePanel();
   const moveToProjectAction = makeMoveToProjectAction();
-
-  if (splitPanel?.splitHotkeyScope) {
-    const reg = registerHotkey({
-      hotkey: ']',
-      scopeId: splitPanel.splitHotkeyScope,
-      hotkeyToken: TOKENS.block.toggleSidePanel,
-      description: () => t('blockEmail.sidePanel.toggle'),
-      keyDownHandler: () => {
-        if (!sidePanel) return false;
-        if (!sidePanel.hasSections()) return false;
-        sidePanel.toggle();
-        return true;
-      },
-    });
-    onCleanup(() => reg.dispose());
-  }
 
   const isInvite = () => {
     const row = soup?.items.get(props.id);
@@ -166,16 +141,16 @@ export function TopBar(props: {
       openEntityInSplitFromUnifiedList(nextRow.original, {});
     }
 
-    const toastId = toast.success(t('blockEmail.trash.moved'), {
+    const toastId = toast.success('Moved to Trash', {
       actions: [
         {
-          label: t('blockEmail.actions.undo'),
+          label: 'Undo',
           icon: ArrowCounterClockwise,
           onClick: () => {
             if (toastId != null) toast.dismiss(toastId);
             handle.undo().then(
-              () => toast.success(t('blockEmail.trash.restored')),
-              () => toast.failure(t('blockEmail.trash.restoreFailed'))
+              () => toast.success('Restored from Trash'),
+              () => toast.failure('Failed to restore from Trash')
             );
           },
         },
@@ -184,37 +159,30 @@ export function TopBar(props: {
     });
 
     handle.done.catch(() => {
-      toast.failure(t('blockEmail.trash.moveFailed'));
+      toast.failure('Failed to move to Trash');
     });
   };
 
   const shareTool: BlockTool = {
-    id: BLOCK_TOOL_IDS.share,
     group: 'sharing',
-    get label() {
-      return t('blockEmail.actions.share');
-    },
+    label: 'Share',
     icon: IconShared,
     action: () => shareCtx.open(),
     condition: () => ENABLE_EMAIL_SHARING,
-    buttonComponent: () => <ShareTrigger />,
+    buttonComponent: () => <ShareTrigger id={props.id} blockType="email" />,
     focusTarget: getShareDrawerRecipientInput,
   };
 
   const emailActions: BlockTool[] = [
     {
-      get label() {
-        return t('blockEmail.actions.markDone');
-      },
+      label: 'Mark done',
       icon: CheckIcon,
       action: toggleMarkDone,
       condition: () => isOwnThread() && !isDone(),
       hotkeyToken: TOKENS.entity.action.markDone,
     },
     {
-      get label() {
-        return t('blockEmail.actions.markNotDone');
-      },
+      label: 'Mark as not done',
       icon: CheckBoldIcon,
       action: toggleMarkDone,
       condition: () =>
@@ -222,27 +190,21 @@ export function TopBar(props: {
       hotkeyToken: TOKENS.entity.action.markNotDone,
     },
     {
-      get label() {
-        return t('blockEmail.actions.markUnread');
-      },
+      label: 'Mark unread',
       icon: EnvelopeSimpleOpenIcon,
       action: toggleMarkUnread,
       condition: () => isOwnThread() && !emailCtx.isThreadMarkedUnread(),
       hotkeyToken: TOKENS.entity.action.markUnread,
     },
     {
-      get label() {
-        return t('blockEmail.actions.markRead');
-      },
+      label: 'Mark read',
       icon: EnvelopeSimpleIcon,
       action: toggleMarkUnread,
       condition: () => isOwnThread() && emailCtx.isThreadMarkedUnread(),
       hotkeyToken: TOKENS.entity.action.markRead,
     },
     {
-      get label() {
-        return t('chat.actions.askConation');
-      },
+      label: 'Ask Macro',
       icon: ChatWithAgentIcon,
       action: () => {
         const threadId = emailCtx.thread()?.db_id;
@@ -252,19 +214,15 @@ export function TopBar(props: {
       condition: () => !!emailCtx.thread()?.db_id,
     },
     {
-      get label() {
-        return t('blockEmail.actions.createTask');
-      },
-      icon: AnimatedTaskIcon,
+      label: 'Create task',
+      icon: TaskIcon,
       action: () => props.onCreateTask?.(),
       condition: () => !!props.onCreateTask && !!emailCtx.thread()?.db_id,
     },
     shareTool,
     {
       group: 'file',
-      get label() {
-        return t('blockEmail.actions.moveToFolder');
-      },
+      label: 'Move to folder',
       icon: ArrowRightIcon,
       action: moveToFolder,
       condition: () => {
@@ -274,25 +232,21 @@ export function TopBar(props: {
     },
     {
       group: 'delete',
-      label: t('common.delete'),
+      label: 'Delete',
       icon: TrashIcon,
       action: trashThread,
       condition: isOwnThread,
     },
     {
       group: 'sender',
-      get label() {
-        return t('blockEmail.actions.senderToNoise');
-      },
-      icon: AnimatedNoiseIcon,
+      label: 'Sender → Noise',
+      icon: NoiseIcon,
       action: () => emailCtx.markSenderNoise(),
       condition: isOwnThread,
     },
     {
       group: 'sender',
-      get label() {
-        return t('blockEmail.actions.blockSender');
-      },
+      label: 'Block Sender',
       icon: ProhibitIcon,
       action: () => emailCtx.blockSender(),
       condition: isOwnThread,
@@ -301,10 +255,7 @@ export function TopBar(props: {
 
   const tools: BlockTool[] = [
     {
-      id: BLOCK_TOOL_IDS.chat,
-      get label() {
-        return t('blockEmail.actions.chat');
-      },
+      label: 'Chat',
       icon: ChatWithAgentIcon,
       action: () => {
         const threadId = emailCtx.thread()?.db_id;
@@ -336,8 +287,8 @@ export function TopBar(props: {
             props.isDraft
               ? [
                   <SplitHeaderBadge
-                    text={t('blockEmail.compose.draft')}
-                    tooltip={t('blockEmail.compose.draftBadge')}
+                    text="draft"
+                    tooltip="This is a Draft Email"
                   />,
                 ]
               : undefined
@@ -358,8 +309,8 @@ export function TopBar(props: {
               class="p-1 rounded-lg"
               label={
                 emailCtx.isThreadMarkedUnread()
-                  ? t('blockEmail.actions.markRead')
-                  : t('blockEmail.actions.markUnread')
+                  ? 'Mark as read'
+                  : 'Mark as unread'
               }
               hotkey={
                 emailCtx.isThreadMarkedUnread()
@@ -382,11 +333,7 @@ export function TopBar(props: {
           <Show when={isOwnThread() && showMarkDoneToggle()}>
             <Button
               class="p-1 rounded-lg"
-              label={
-                isDone()
-                  ? t('blockEmail.actions.markNotDone')
-                  : t('blockEmail.actions.markDone')
-              }
+              label={isDone() ? 'Mark as not done' : 'Mark done'}
               hotkey={
                 isDone()
                   ? TOKENS.entity.action.markNotDone

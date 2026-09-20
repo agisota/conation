@@ -126,3 +126,12 @@ fn request_for_assignee_is_a_self_notification() {
         "11111111-1111-1111-1111-111111111111"
     );
 }
+
+#[test]
+fn request_for_assignee_is_idempotent_for_the_same_firing() {
+    let first = overdue().request_for_assignee(assignee());
+    let second = overdue().request_for_assignee(assignee());
+    assert_eq!(first.uuid_to_write, second.uuid_to_write);
+    let due_soon = due_soon().request_for_assignee(assignee());
+    assert_ne!(first.uuid_to_write, due_soon.uuid_to_write);
+}

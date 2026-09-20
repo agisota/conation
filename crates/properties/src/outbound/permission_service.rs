@@ -227,6 +227,8 @@ impl<Svc: EntityAccessService> PermissionService for PermissionServiceImpl<Svc> 
             return Ok(());
         }
 
+        // Named users only. Remaining assignees and the owner row stay: this
+        // is a membership revoke, not a public-to-private sweep.
         let conation_ids: Vec<String> = user_ids.iter().map(|s| s.to_string()).collect();
         sqlx::query(
             r#"
@@ -234,17 +236,114 @@ impl<Svc: EntityAccessService> PermissionService for PermissionServiceImpl<Svc> 
             WHERE entity_id = $1
               AND entity_type = $2
               AND source_type = 'user'
-              AND source_id = ANY($3::text[])
+              AND source_id = ANY($3)
               AND access_level = 'edit'
               AND granted_from_project_id IS NULL
             "#,
         )
         .bind(conation_uuid::string_to_uuid(task_id).unwrap())
         .bind(model_entity::EntityType::Document.as_ref())
-        .bind(&conation_ids)
+        .bind(conation_ids.as_slice())
         .execute(&self.db)
         .await?;
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+
+    use conation_db_migrator::MACRO_DB_MIGRATIONS;
+    use conation_user_id::user_id::MacroUserIdStr;
+    use entity_access::domain::ports::NoOpEntityAccessService;
+    use entity_access_db_utils::AccessLevel;
+    use sqlx::{Pool, Postgres, Row as _};
+    use uuid::Uuid;
+
+    use super::PermissionServiceImpl;
+    use crate::domain::ports::PermissionService;
+
+    fn user(email: &str) -> MacroUserIdStr<'static> {
+        MacroUserIdStr::try_from_email(email).unwrap()
+    }
+
+    async fn insert_direct_user_grant(
+        pool: &Pool<Postgres>,
+        entity_id: &Uuid,
+        source_id: &str,
+        access_level: AccessLevel,
+    ) {
+        sqlx::query(
+            r#"
+            INSERT INTO entity_access (
+                entity_id,
+                entity_type,
+                source_id,
+                source_type,
+                access_level
+            )
+            VALUES ($1, $2, $3, 'user', $4)
+            "#,
+        )
+        .bind(entity_id)
+        .bind(model_entity::EntityType::Document.as_ref())
+        .bind(source_id)
+        .bind(access_level)
+        .execute(pool)
+        .await
+        .unwrap();
+    }
+
+    async fn grant_source_ids(pool: &Pool<Postgres>, entity_id: &Uuid) -> Vec<(String, String)> {
+        sqlx::query(
+            r#"
+            SELECT source_id, access_level::text AS access_level
+            FROM entity_access
+            WHERE entity_id = $1 AND entity_type = $2
+            ORDER BY source_id, access_level::text
+            "#,
+        )
+        .bind(entity_id)
+        .bind(model_entity::EntityType::Document.as_ref())
+        .map(|row: sqlx::postgres::PgRow| {
+            (
+                row.get::<String, _>("source_id"),
+                row.get::<String, _>("access_level"),
+            )
+        })
+        .fetch_all(pool)
+        .await
+        .unwrap()
+    }
+
+    #[sqlx::test(migrator = "MACRO_DB_MIGRATIONS")]
+    async fn unassign_one_assignee_keeps_remaining_assignees_and_owner(pool: Pool<Postgres>) {
+        let task_id = Uuid::from_u128(0xaaa1);
+        let owner = user("owner@macro.com");
+        let remaining = user("alice@macro.com");
+        let removed = user("bob@macro.com");
+        let viewer = user("viewer@macro.com");
+
+        insert_direct_user_grant(&pool, &task_id, owner.as_ref(), AccessLevel::Owner).await;
+        insert_direct_user_grant(&pool, &task_id, remaining.as_ref(), AccessLevel::Edit).await;
+        insert_direct_user_grant(&pool, &task_id, removed.as_ref(), AccessLevel::Edit).await;
+        insert_direct_user_grant(&pool, &task_id, viewer.as_ref(), AccessLevel::View).await;
+
+        let service = PermissionServiceImpl::new(pool.clone(), Arc::new(NoOpEntityAccessService));
+        service
+            .revoke_permissions_from_task(&[removed.clone()], &task_id.to_string())
+            .await
+            .unwrap();
+
+        assert_eq!(
+            grant_source_ids(&pool, &task_id).await,
+            vec![
+                (remaining.as_ref().to_string(), "edit".to_string()),
+                (owner.as_ref().to_string(), "owner".to_string()),
+                (viewer.as_ref().to_string(), "view".to_string()),
+            ]
+        );
     }
 }

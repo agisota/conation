@@ -1,9 +1,13 @@
 import * as aws from '@pulumi/aws';
 import * as pulumi from '@pulumi/pulumi';
+import { createBucket } from '../../packages/resources';
 import {
   config,
+  CODEX_OAUTH_KMS_ALIAS,
   getAiToolsInfra,
-  getConationApiToken,
+  getMacroApiToken,
+  getServiceUrl,
+  ServiceUrl,
   stack,
 } from '../../packages/shared';
 import { get_coparse_api_vpc } from '../../packages/vpc';
@@ -28,43 +32,53 @@ const jwtSecretKeyArn = aws.secretsmanager
   .getSecretVersionOutput({ secretId: `fusionauth-jwt-secret-${stack}` })
   .apply((secret) => secret.arn);
 
-// The egress proxy mints GitHub App installation tokens and Conation API tokens
+// The egress proxy mints GitHub App installation tokens and Macro API tokens
 // inline, so the task role needs the App's PEM and the signing key - both
 // held as Secrets Manager secret names the service resolves at runtime.
 const githubSyncAppPemArn = aws.secretsmanager
   .getSecretVersionOutput({ secretId: config.require('github_sync_app_pem') })
   .apply((secret) => secret.arn);
 
-const conationApiTokenPrivateKeyArn = aws.secretsmanager
+const macroApiTokenPrivateKeyArn = aws.secretsmanager
   .getSecretVersionOutput({
-    secretId: config.require('conation_api_token_private_secret_key'),
+    secretId: config.require('macro_api_token_private_secret_key'),
   })
   .apply((secret) => secret.arn);
 
-const CONATION_API_TOKENS = getConationApiToken();
+const MACRO_API_TOKENS = getMacroApiToken();
+
+// ── Session changes bucket ───────────────────────────────────────────────────
+// The patch behind each agent session's Changes pane, one object per capture
+// under `agent-sessions/{session}/changes/`. Only the latest capture is
+// reachable from the database; superseded patches are deleted on capture and
+// a session's last patch is orphaned when the session is deleted, so the
+// lifecycle rule is what reclaims those.
+
+const sessionChangesBucket = createBucket({
+  id: `macro-agent-session-changes-${stack}`,
+  bucketName: `macro-agent-session-changes-${stack}`,
+  transferAcceleration: false,
+  enableVersioning: false,
+  lifecycleRules: [
+    {
+      id: 'expire-orphaned-patches',
+      enabled: true,
+      expiration: { days: 90 },
+    },
+  ],
+  tags,
+});
+
+export const agentSessionChangesBucketArn = sessionChangesBucket.arn;
 
 // ── AI tools infra ───────────────────────────────────────────────────────────
 
-const aiTools =
-  stack === 'dev'
-    ? getAiToolsInfra()
-    : { secretArns: [], queueArns: [], bucketArns: [] };
+const aiTools = getAiToolsInfra();
 
 // ── Stack references ─────────────────────────────────────────────────────────
 
-// The ECS cluster is owned by the document-storage stack. Keep the fully
-// qualified reference in per-stack Pulumi configuration: a standalone
-// Conation deployment must explicitly select its own state rather than falling
-// back to an upstream organization.
-const cloudStorageStackRef = config.require('cloud_storage_stack_ref').trim();
-if (!cloudStorageStackRef) {
-  throw new Error(
-    'cloud_storage_stack_ref must name the document-storage Pulumi stack'
-  );
-}
-
 const cloudStorageStack = new pulumi.StackReference('cloud-storage-stack', {
-  name: cloudStorageStackRef,
+  name: `macro-inc/document-storage/${stack}`,
 });
 
 const cloudStorageClusterArn = cloudStorageStack
@@ -74,18 +88,6 @@ const cloudStorageClusterArn = cloudStorageStack
 const cloudStorageClusterName = cloudStorageStack
   .getOutput('cloudStorageClusterName')
   .apply((value) => value as string);
-
-// ── Queues ───────────────────────────────────────────────────────────────────
-// Channel side effects use these in every environment. Dev's AI tool bundle
-// includes both plus the additional tool queues.
-
-const notificationIngressQueueArn = aws.sqs
-  .getQueueOutput({ name: `notification-ingress-queue-${stack}` })
-  .apply((queue) => queue.arn);
-
-const contactsQueueArn = aws.sqs
-  .getQueueOutput({ name: `contacts-queue-${stack}` })
-  .apply((queue) => queue.arn);
 
 // ── Service ──────────────────────────────────────────────────────────────────
 
@@ -98,25 +100,29 @@ const service = new AgentHarnessService(`agent-harness-service-${stack}`, {
   serviceContainerPort: 8101,
   egressContainerPort: 8102,
   healthCheckPath: '/health',
-  isPrivate: false,
   ecsClusterArn: cloudStorageClusterArn,
   cloudStorageClusterName,
   secretKeyArns: [
     jwtSecretKeyArn,
-    CONATION_API_TOKENS.conationApiTokenPublicKeyArn,
-    conationApiTokenPrivateKeyArn,
+    MACRO_API_TOKENS.macroApiTokenPublicKeyArn,
+    macroApiTokenPrivateKeyArn,
     githubSyncAppPemArn,
     ...aiTools.secretArns,
   ],
-  queueArns:
-    stack === 'dev'
-      ? [...aiTools.queueArns]
-      : [notificationIngressQueueArn, contactsQueueArn],
-  bucketArns: [...aiTools.bucketArns],
+  queueArns: [...aiTools.queueArns],
+  bucketArns: [...aiTools.bucketArns, sessionChangesBucket.arn],
   containerEnvVars: [
+    {
+      name: 'CODEX_OAUTH_KMS_KEY_ID',
+      value: CODEX_OAUTH_KMS_ALIAS,
+    },
     {
       name: 'ENVIRONMENT',
       value: stack,
+    },
+    {
+      name: 'AGENT_SESSION_CHANGES_BUCKET',
+      value: sessionChangesBucket.bucket,
     },
     // Datadog
     {
@@ -130,6 +136,8 @@ const service = new AgentHarnessService(`agent-harness-service-${stack}`, {
   ],
 });
 
-export const agentHarnessServiceUrl = pulumi.interpolate`${service.domain}`;
+export const agentHarnessServiceUrl = getServiceUrl(
+  ServiceUrl.AGENT_HARNESS_SERVICE_URL
+);
 export const agentHarnessEgressUrl = pulumi.interpolate`${service.egressDomain}`;
 export const agentHarnessServiceRoleArn = service.role.arn;

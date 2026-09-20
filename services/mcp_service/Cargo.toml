@@ -48,7 +48,7 @@ lexical_client = { path = "../../crates/lexical_client" }
 conation_auth = { path = "../../crates/conation_auth" }
 conation_aws_config = { path = "../../crates/conation_aws_config", features = ["s3"] }
 conation_config = { path = "../../crates/conation_config" }
-conation_entrypoint = { path = "../../crates/conation_entrypoint" }
+conation_entrypoint = { package = "macro_entrypoint", path = "../../crates/conation_entrypoint" }
 conation_env = { path = "../../crates/conation_env" }
 conation_env_var = { path = "../../crates/conation_env_var" }
 conation_event_broker = { path = "../../crates/conation_event_broker" }

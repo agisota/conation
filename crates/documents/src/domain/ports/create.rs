@@ -3,9 +3,8 @@
 use std::future::Future;
 use std::sync::Arc;
 
-use conation_user_id::user_id::MacroUserIdStr;
-
-use model::document::FileType;
+use activity::Attribution;
+use macro_user_id::user_id::MacroUserIdStr;
 
 use crate::domain::content::DocumentContent;
 use crate::domain::models::{CreateDocumentRepoArgs, CreateTaskRequest, DocumentError};
@@ -48,6 +47,7 @@ pub trait DocumentCreationService: Send + Sync {
         user_id: MacroUserIdStr<'static>,
         document_id: &str,
         request: &CreateTaskRequest,
+        attribution: &Attribution,
     ) -> impl Future<Output = Result<(), DocumentError>> + Send;
 
     /// Mark a created document's upload/finalization lifecycle as complete.
@@ -65,26 +65,6 @@ pub trait DocumentCreationService: Send + Sync {
 
     /// Clean up a document that failed after its database row was created.
     fn cleanup_created_document(&self, document_id: &str) -> impl Future<Output = ()> + Send;
-
-    /// Overwrite an existing plaintext document's stored bytes.
-    ///
-    /// Canvas uses this the same way create_text_file writes JSON:
-    /// `application/x-macro-canvas` object-storage bytes.
-    fn overwrite_plain_text(
-        &self,
-        document_id: &str,
-        file_type: FileType,
-        text: String,
-    ) -> impl Future<Output = Result<(), DocumentError>> + Send;
-
-    /// Read the stored plaintext bytes (same DSS/S3 key as [`Self::overwrite_plain_text`]).
-    ///
-    /// `Ok(None)` when the object is missing. Used by canvas ops when there is
-    /// no `fileContent` and no live Loro snapshot.
-    fn read_plain_text(
-        &self,
-        document_id: &str,
-    ) -> impl Future<Output = Result<Option<String>, DocumentError>> + Send;
 }
 
 impl<T> DocumentCreationService for Arc<T>
@@ -105,9 +85,10 @@ where
         user_id: MacroUserIdStr<'static>,
         document_id: &str,
         request: &CreateTaskRequest,
+        attribution: &Attribution,
     ) -> Result<(), DocumentError> {
         (**self)
-            .handle_task_properties(user_id, document_id, request)
+            .handle_task_properties(user_id, document_id, request, attribution)
             .await
     }
 
@@ -125,20 +106,5 @@ where
 
     async fn cleanup_created_document(&self, document_id: &str) {
         (**self).cleanup_created_document(document_id).await
-    }
-
-    async fn overwrite_plain_text(
-        &self,
-        document_id: &str,
-        file_type: FileType,
-        text: String,
-    ) -> Result<(), DocumentError> {
-        (**self)
-            .overwrite_plain_text(document_id, file_type, text)
-            .await
-    }
-
-    async fn read_plain_text(&self, document_id: &str) -> Result<Option<String>, DocumentError> {
-        (**self).read_plain_text(document_id).await
     }
 }

@@ -1,6 +1,5 @@
-import { getConfiguredStandaloneOperatorOrigin } from '@core/constant/clientProfile';
-import { AnimatedFileMdIcon } from '@icon/wide-fileMd';
-import { AnimatedTaskIcon } from '@icon/wide-task';
+import FileIcon from '@phosphor/file.svg';
+import TaskIcon from '@phosphor/list-checks.svg';
 import TagIcon from '@phosphor/tag.svg';
 import type { Component } from 'solid-js';
 
@@ -13,53 +12,43 @@ import type { Component } from 'solid-js';
 export type AgentExample = {
   id: string;
   icon: Component<{ class?: string }>;
-  titleKey: string;
-  descriptionKey: string;
-  promptKey: string;
-  promptValues?: { link: string };
+  title: string;
+  description: string;
+  prompt: string;
 };
 
 /** App links the example prompts ask the agent to include in its reply. */
-function appLink(path: string): string {
-  if (globalThis.__CONATION_HOSTED_LEGACY__) {
-    return `${getConfiguredStandaloneOperatorOrigin()}${path}`;
-  }
-  return `${getConfiguredStandaloneOperatorOrigin()}${path}`;
-}
-
-const MANAGE_TAGS_LINK = appLink('/app/settings/tags');
-const TASKS_LIST_LINK = appLink('/app/component/tasks');
+const MANAGE_TAGS_LINK = 'macro.com/app/settings/tags';
+const TASKS_LIST_LINK = 'macro.com/app/component/tasks';
 
 export const AGENT_EXAMPLES: AgentExample[] = [
   {
     id: 'example-organize-inbox',
     icon: TagIcon,
-    titleKey: 'shell.gettingStarted.examples.organizeInboxTitle',
-    descriptionKey: 'shell.gettingStarted.examples.organizeInboxDescription',
-    promptKey: 'shell.gettingStarted.examples.organizeInboxPrompt',
-    promptValues: { link: MANAGE_TAGS_LINK },
+    title: 'Auto-organize my inbox',
+    description: 'Categorize and tag your recent email',
+    prompt: `Categorize and tag recent emails in my inbox. Link me to ${MANAGE_TAGS_LINK} where I can manage all of my tags.`,
   },
   {
     id: 'example-pull-tasks',
-    icon: AnimatedTaskIcon,
-    titleKey: 'shell.gettingStarted.examples.pullTasksTitle',
-    descriptionKey: 'shell.gettingStarted.examples.pullTasksDescription',
-    promptKey: 'shell.gettingStarted.examples.pullTasksPrompt',
-    promptValues: { link: TASKS_LIST_LINK },
+    icon: TaskIcon,
+    title: 'Pull tasks from inbox',
+    description: 'Turn important emails into tasks',
+    prompt: `Find my most important recent emails and create tasks from them. Link me to ${TASKS_LIST_LINK} where I can see all of my tasks.`,
   },
   {
     id: 'example-weekly-brief',
-    icon: AnimatedFileMdIcon,
-    titleKey: 'shell.gettingStarted.examples.weeklyBriefTitle',
-    descriptionKey: 'shell.gettingStarted.examples.weeklyBriefDescription',
-    promptKey: 'shell.gettingStarted.examples.weeklyBriefPrompt',
+    icon: FileIcon,
+    title: 'Build weekly brief',
+    description: 'Summarize your week with links to sources',
+    prompt:
+      'Review my recent emails, documents, and tasks from the past week. Identify key decisions, open questions, blockers, and next steps, then create a concise weekly briefing document with links to the original sources.',
   },
   {
     id: 'example-auto-tag-tasks',
     icon: TagIcon,
-    titleKey: 'shell.gettingStarted.examples.tagTasksTitle',
-    descriptionKey: 'shell.gettingStarted.examples.tagTasksDescription',
-    promptKey: 'shell.gettingStarted.examples.tagTasksPrompt',
-    promptValues: { link: MANAGE_TAGS_LINK },
+    title: 'Auto-tag my tasks',
+    description: 'Keep your task list organized automatically',
+    prompt: `Review my open tasks and apply helpful tags to organize them. Link me to ${MANAGE_TAGS_LINK} where I can manage all of my tags.`,
   },
 ];

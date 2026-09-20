@@ -12,7 +12,12 @@ import {
 } from 'pulumi-fusionauth';
 import * as pulumi from '@pulumi/pulumi';
 import * as fs from 'fs';
-import { config, stack } from '../../packages/shared';
+import {
+  config,
+  getServiceUrl,
+  ServiceUrl,
+  stack,
+} from '../../packages/shared';
 
 import 'dotenv/config';
 import {
@@ -28,11 +33,7 @@ import {
   SMTP_CREDENTIALS,
   FUSIONAUTH_THEME_ID,
 } from './constants';
-import {
-  ALLOWED_ORIGINS,
-  APPLICATION_URL,
-  MCP_OAUTH_CALLBACK_URL,
-} from './origins';
+import { ALLOWED_ORIGINS } from './origins';
 
 // The main fusionauth provider, this will be passed around when creating various components
 
@@ -155,7 +156,7 @@ const defaultTenant = new FusionAuthTenant(
       verificationEmailTemplateId: emailVerificationTemplate.id,
       verificationStrategy: 'ClickableLink',
     },
-    logoutUrl: APPLICATION_URL,
+    logoutUrl: `https://${stack === 'prod' ? '' : `${stack}.`}macro.com`,
     // Delete unverified users
     userDeletePolicy: {
       unverifiedEnabled: true,
@@ -292,11 +293,22 @@ const macroApplication = new FusionAuthApplication(
       proofKeyForCodeExchangePolicy: 'NotRequired',
       scopeHandlingPolicy: 'Compatibility',
       unknownScopePolicy: 'Remove',
-      authorizedUrlValidationPolicy: 'ExactMatch',
+      authorizedUrlValidationPolicy:
+        stack === 'local' || stack === 'dev' ? 'AllowWildcards' : 'ExactMatch',
       authorizedRedirectUrls: [
         `${AUTHENTICATION_SERVICE_DOMAIN}/oauth/redirect`,
-        MCP_OAUTH_CALLBACK_URL,
-        ...(stack === 'dev' ? ['http://localhost:8085/oauth/callback'] : []),
+        ...(stack === 'dev' || stack === 'prod'
+          ? [
+              `${getServiceUrl(ServiceUrl.AUTHENTICATION_SERVICE_URL)}/oauth/redirect`,
+            ]
+          : []),
+        `https://mcp-server${stack === 'prod' ? '' : `-${stack}`}.macro.com/oauth/callback`,
+        ...(stack === 'dev' || stack === 'prod'
+          ? [`${getServiceUrl(ServiceUrl.MCP_SERVER_URL)}/oauth/callback`]
+          : []),
+        ...(stack === 'local' || stack === 'dev'
+          ? ['http://localhost:8085/*', 'http://localhost:8085/oauth/*']
+          : []),
       ],
       authorizedOriginUrls: ALLOWED_ORIGINS(),
       logoutBehavior: 'AllApplications',
@@ -469,8 +481,10 @@ new FusionAuthIdpOpenIdConnect(
     oauth2ClientId: GOOGLE_CLIENT_ID,
     oauth2ClientSecret: GOOGLE_CLIENT_SECRET,
     oauth2ClientAuthenticationMethod: 'client_secret_basic',
+    // Logins mint a fresh refresh token. include_granted_scopes keeps the
+    // scopes granted earlier through /link/gmail (calendar) on that token.
     oauth2AuthorizationEndpoint:
-      'https://accounts.google.com/o/oauth2/v2/auth?prompt=consent&access_type=offline',
+      'https://accounts.google.com/o/oauth2/v2/auth?prompt=consent&access_type=offline&include_granted_scopes=true',
     oauth2TokenEndpoint: 'https://oauth2.googleapis.com/token',
     oauth2UserInfoEndpoint: 'https://openidconnect.googleapis.com/v1/userinfo',
     buttonText: 'GoogleGmail',

@@ -12,25 +12,38 @@ path = "src/main.rs"
 name = "agent_harness_service_openapi"
 path = "src/openapi.rs"
 
+[[bin]]
+name = "agent_harness_service_doppler_config"
+path = "src/doppler_config.rs"
+
 [dependencies]
+codex_cloud_agents = { path = "../../crates/codex_cloud_agents" }
+codex_connection = { path = "../../crates/codex_connection" }
+agent_changes = { path = "../../crates/agent_changes" }
 agent_egress = { path = "../../crates/agent_egress" }
 agent_fold = { path = "../../crates/agent_fold" }
 agent_harness = { path = "../../crates/agent_harness" }
 agent_inmem = { path = "../../crates/agent_inmem" }
 ai_tools = { path = "../../crates/ai_tools" }
 agent_runtime_protocol = { path = "../../crates/agent_runtime_protocol", features = ["utoipa"] }
-agent_session = { path = "../../crates/agent_session" }
-agent_trigger = { path = "../../crates/agent_trigger" }
+agent_session = { path = "../../crates/agent_session", features = ["ai_tools"] }
+ai_toolset = { path = "../../crates/ai_toolset" }
+rmcp = { workspace = true }
+agent_trigger = { path = "../../crates/agent_trigger", features = ["outbound"] }
 ai_usage = { path = "../../crates/ai_usage" }
 aws-sdk-sqs = { workspace = true }
 bot_id = { path = "../../crates/bot_id" }
 bots = { path = "../../crates/bots" }
+harness_id = { path = "../../crates/harness_id" }
+harnesses = { path = "../../crates/harnesses", default-features = false, features = ["outbound", "ports"] }
 connection_gateway_client = { path = "../../crates/connection_gateway_client" }
 aws-sdk-kms = { workspace = true }
 cursor_api_key = { path = "../../crates/cursor_api_key" }
 cursor_cloud_agents = { path = "../../crates/cursor_cloud_agents" }
+claude_cloud_agents = { path = "../../crates/claude_cloud_agents" }
 database_env_vars = { path = "../../crates/database_env_vars" }
 entity_access = { path = "../../crates/entity_access" }
+futures = { workspace = true }
 github = { path = "../../crates/github", default-features = false, features = [
   "outbound",
   "ports",
@@ -39,42 +52,53 @@ github = { path = "../../crates/github", default-features = false, features = [
 pipedream_mcp = { path = "../../crates/pipedream_mcp" }
 url = { workspace = true }
 contacts = { path = "../../crates/contacts" }
-conation_aws_config = { path = "../../crates/conation_aws_config" }
-conation_event_broker = { path = "../../crates/conation_event_broker", features = ["outbound"] }
-conation_queues = { path = "../../crates/conation_queues" }
+macro_aws_config = { package = "conation_aws_config", path = "../../crates/conation_aws_config", features = ["s3"] }
+macro_event_broker = { package = "conation_event_broker", path = "../../crates/conation_event_broker", features = ["outbound"] }
+macro_queues = { package = "conation_queues", path = "../../crates/conation_queues" }
 lexical_client = { path = "../../crates/lexical_client" }
-conation_service_urls = { path = "../../crates/conation_service_urls" }
-conation_tower_layers = { path = "../../crates/conation_tower_layers" }
+lexical_mention_extractor = { path = "../../crates/lexical_mention_extractor" }
+macro_service_urls = { package = "conation_service_urls", path = "../../crates/conation_service_urls" }
+messages = { path = "../../crates/messages", features = ["broker", "delivery"] }
+static_file_service_client = { path = "../../crates/static_file_service_client" }
+macro_tower_layers = { package = "conation_tower_layers", path = "../../crates/conation_tower_layers" }
 notification = { path = "../../crates/notification" }
 rdkafka = { workspace = true }
+rootcause = { workspace = true }
 channels = { path = "../../crates/channels", features = ["ports", "outbound"] }
 anyhow = { workspace = true }
-conation_user_id = { path = "../../crates/conation_user_id" }
+macro_user_id = { package = "conation_user_id", path = "../../crates/conation_user_id" }
 axum = { workspace = true }
+axum-extra = { workspace = true, features = ["typed-header"] }
 aws-sdk-secretsmanager = { workspace = true }
 kafka_util = { path = "../../crates/kafka_util" }
-conation_auth = { path = "../../crates/conation_auth" }
-conation_authorization = { path = "../../crates/conation_authorization", default-features = false, features = [
+macro_auth = { package = "conation_auth", path = "../../crates/conation_auth" }
+macro_authorization = { path = "../../crates/conation_authorization", default-features = false, features = [
   "axum",
   "outbound",
   "postgres",
 ] }
-conation_cors = { path = "../../crates/conation_cors" }
+macro_cors = { package = "conation_cors", path = "../../crates/conation_cors" }
 secretsmanager_client = { path = "../../crates/secretsmanager_client" }
-serde_json = { workspace = true }
+redis = { workspace = true, features = ["aio", "tokio-comp"] }
 utoipa = { workspace = true }
 utoipa-swagger-ui = { workspace = true }
-conation_config = { path = "../../crates/conation_config" }
-conation_entrypoint = { path = "../../crates/conation_entrypoint" }
-conation_env = { path = "../../crates/conation_env" }
-conation_env_var = { path = "../../crates/conation_env_var" }
-conation_uuid = { path = "../../crates/conation_uuid" }
+macro_config = { package = "conation_config", path = "../../crates/conation_config" }
+doppler-config = { workspace = true }
+macro_entrypoint = { path = "../../crates/conation_entrypoint" }
+macro_env = { package = "conation_env", path = "../../crates/conation_env" }
+macro_env_var = { package = "conation_env_var", path = "../../crates/conation_env_var" }
+macro_uuid = { package = "conation_uuid", path = "../../crates/conation_uuid" }
 serde = { workspace = true }
+serde_json = { workspace = true }
 sqlx = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread", "time"] }
+tokio-retry = { workspace = true }
 tokio-util = { workspace = true, features = ["rt"] }
+tower = { workspace = true }
 tracing = { workspace = true }
 workspace-hack = { version = "0.1", path = "../../crates/workspace-hack" }
 
 [dev-dependencies]
+agent-client-protocol = { workspace = true }
 agent_session = { path = "../../crates/agent_session", features = ["test-utils"] }
+harness_id = { path = "../../crates/harness_id", features = ["test-utils"] }

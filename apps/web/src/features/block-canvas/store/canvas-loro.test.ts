@@ -11,6 +11,7 @@ import {
   canvasDssPutAfterWal,
   clearAllCanvasLoro,
   encodeCanvasLoroDiff,
+  importCanvasLoroSnapshot,
   mergeCanvasBoards,
   mergeCanvasLoroUpdates,
   opsFromBoardDiff,
@@ -63,6 +64,40 @@ describe('canvas Loro persist', () => {
     const ids = (peeked?.nodes ?? []).map((n) => (n as { id: string }).id);
     expect(ids).toEqual(expect.arrayContaining(['a', 'b']));
   });
+
+  it('imports a remote snapshot into an empty WAL', () => {
+    const snapshot = snapshotFromJson({
+      nodes: [{ id: 'remote' }],
+      edges: [],
+    });
+    expect(peekCanvasLoro('doc-empty')).toBeNull();
+    expect(importCanvasLoroSnapshot('doc-empty', snapshot)).toBeTruthy();
+    const ids = (peekCanvasLoro('doc-empty')?.nodes ?? []).map(
+      (n) => (n as { id: string }).id
+    );
+    expect(ids).toEqual(['remote']);
+    expect(peekCanvasLoroUpdates('doc-empty')).toHaveLength(1);
+  });
+
+  it('compacts WAL to one snapshot when applying a remote snapshot', () => {
+    recordCanvasLoro('doc-1', { nodes: [{ id: 'a' }], edges: [] });
+    recordCanvasLoro('doc-1', {
+      nodes: [{ id: 'a' }, { id: 'b' }],
+      edges: [],
+    });
+    expect(peekCanvasLoroUpdates('doc-1').length).toBeGreaterThan(1);
+    const snapshot = snapshotFromJson({
+      nodes: [{ id: 'c' }],
+      edges: [],
+    });
+    expect(importCanvasLoroSnapshot('doc-1', snapshot)).toBeTruthy();
+    expect(peekCanvasLoroUpdates('doc-1')).toHaveLength(1);
+    const ids = (peekCanvasLoro('doc-1')?.nodes ?? []).map(
+      (n) => (n as { id: string }).id
+    );
+    expect(ids).toEqual(expect.arrayContaining(['a', 'b', 'c']));
+  });
+
 });
 
 describe('canvas node-level ops', () => {
@@ -273,7 +308,7 @@ describe('canvas DSS save after WAL', () => {
     edges: [] as unknown[],
   };
 
-  it('writes full JSON when there is no Loro session', () => {
+  it('does not skip DSS when live snapshot is empty and there is no local WAL', () => {
     expect(
       canvasDssPutAfterWal({
         hadLocalWal: false,

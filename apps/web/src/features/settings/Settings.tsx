@@ -1,6 +1,4 @@
-import { Billing } from '@app/features/settings/Billing';
-import { Bots } from '@app/features/settings/Bots';
-import { t } from '@app/lib/i18n';
+import { toBaseRelative } from '@app/constants/routerBase';
 import { PillTabs } from '@components/app/mobile/PillTabs';
 import { HeaderIsland } from '@components/app/split-layout/components/HeaderIsland';
 import {
@@ -15,6 +13,7 @@ import {
   settingsTabFromSplitPath,
   useSettingsState,
 } from '@core/constant/SettingsState';
+import { stripSettingsSplitFromUrl } from '@core/constant/settingsSplitUrl';
 import { useSettingsTabs } from '@core/constant/settingsTabsConfig';
 import { registerHotkey, useHotkeyDOMScope } from '@core/hotkey/hotkeys';
 import type { ValidHotkey } from '@core/hotkey/types';
@@ -25,33 +24,18 @@ import ArrowsIn from '@phosphor/arrows-in.svg';
 import ArrowsOut from '@phosphor/arrows-out.svg';
 import CaretLeftIcon from '@phosphor/caret-left.svg';
 import SignOutIcon from '@phosphor/sign-out.svg';
-import { useLocation } from '@solidjs/router';
+import { useLocation, useNavigate } from '@solidjs/router';
 import { Button, cn, Layer, SideNav } from '@ui';
 import {
-  createMemo,
   createRenderEffect,
   createSignal,
   For,
   onCleanup,
   onMount,
   Show,
-  Suspense,
   untrack,
 } from 'solid-js';
-import { Account } from './Account';
-import { Admin } from './Admin';
-import { Agent } from './Agent';
-import { Appearance } from './Appearance';
-import { ConnectedAccounts } from './ConnectedAccounts';
-import { Crm } from './Crm';
-import { MobileApp } from './MobileApp';
-import { Notifications } from './Notifications';
-import { SettingsSearch } from './SettingsSearch';
-import { Shortcuts } from './Shortcuts';
-import { settingsGroupLabel, settingsTabLabel } from './settings-i18n';
-import { buildSettingsSearchIndex, searchSettings } from './settings-search-query';
-import { Tags } from './Tags';
-import { Team } from './Team';
+import { SettingsTabContent } from './SettingsTabContent';
 
 /** Where the settings panel is mounted, which determines its header chrome. */
 export type SettingsVariant = 'split' | 'fullscreen';
@@ -77,7 +61,29 @@ export function SettingsPanelComponentWrapper() {
     const tab = settingsTabFromSplitPath(location.pathname);
     if (tab && untrack(activeTabId) !== tab) setActiveTabId(tab);
   });
-  return <SettingsPanel variant={isSoloSettings() ? 'fullscreen' : 'split'} />;
+  return (
+    <Show when={!isMobile()} fallback={<MobileSettingsDeepLink />}>
+      <SettingsPanel variant={isSoloSettings() ? 'fullscreen' : 'split'} />
+    </Show>
+  );
+}
+
+/** Old settings URLs still open their section, over the restored app surface. */
+function MobileSettingsDeepLink() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { openSettings } = useSettingsState();
+  onMount(() => {
+    const tab = settingsTabFromSplitPath(location.pathname) ?? activeTabId();
+    openSettings(tab);
+    navigate(
+      stripSettingsSplitFromUrl(
+        `${toBaseRelative(location.pathname)}${location.search}${location.hash}`
+      ),
+      { replace: true }
+    );
+  });
+  return null;
 }
 
 type SettingsPanelProps = {
@@ -94,15 +100,10 @@ export function SettingsPanel(props: SettingsPanelProps) {
     activeTabId,
     selectTab,
   } = useSettingsState();
-  const { groups, flatTabs, isAvailable } = useSettingsTabs();
+  const { groups, flatTabs } = useSettingsTabs();
   const logout = useLogout();
 
   const variant = () => props.variant ?? 'split';
-
-  // A tab's content renders only when it's both selected and still available
-  // (gating lives solely in the settings tab config).
-  const isCurrentTab = (tab: SettingsTab) =>
-    activeTabId() === tab && isAvailable(tab);
 
   // Responsive state, driven by the panel's own width (see breakpoints above).
   const [panelWidth, setPanelWidth] = createSignal(Number.POSITIVE_INFINITY);
@@ -139,7 +140,7 @@ export function SettingsPanel(props: SettingsPanelProps) {
   // Register Escape key to close settings
   registerHotkey({
     keyDownHandler: handleEscapeKey,
-    description: t('settings.shell.hotkeys.close'),
+    description: 'Close settings',
     scopeId: settingsHotkeyScope,
     hotkey: 'escape',
   });
@@ -181,14 +182,14 @@ export function SettingsPanel(props: SettingsPanelProps) {
   registerHotkey({
     hotkey: 'tab',
     scopeId: settingsHotkeyScope,
-    description: t('settings.shell.hotkeys.nextTab'),
+    description: 'Next settings tab',
     keyDownHandler: handleNextTab,
     hide: true,
   });
 
   // Register Shift+Tab for previous tab navigation
   registerHotkey({
-    description: t('settings.shell.hotkeys.previousTab'),
+    description: 'Previous settings tab',
     keyDownHandler: handlePreviousTab,
     scopeId: settingsHotkeyScope,
     hotkey: 'shift+tab',
@@ -202,9 +203,7 @@ export function SettingsPanel(props: SettingsPanelProps) {
       return navigateToTabIndex(keyNum - 1);
     }
     registerHotkey({
-      description: t('settings.shell.hotkeys.goToTab', {
-        number: keyNum,
-      }),
+      description: `Go to settings tab ${keyNum}`,
       hotkey: `${keyNum}` as ValidHotkey,
       keyDownHandler: handleNumberKey,
       scopeId: settingsHotkeyScope,
@@ -220,19 +219,7 @@ export function SettingsPanel(props: SettingsPanelProps) {
 
   // Tab list for the compact segmented control / dropdown.
   const tabItems = () =>
-    flatTabs().map((tab) => ({
-      value: tab.tab,
-      label: settingsTabLabel(tab.tab, tab.label),
-    }));
-
-  // Sidebar search over pages and the content inside them. The index is built
-  // from the available tabs so gated pages never show up as results.
-  const [searchQuery, setSearchQuery] = createSignal('');
-  const searchIndex = createMemo(() => buildSettingsSearchIndex(flatTabs()));
-  const searchResults = createMemo(() =>
-    searchSettings(searchQuery(), searchIndex())
-  );
-  const searching = () => searchQuery().trim().length > 0;
+    flatTabs().map((tab) => ({ value: tab.tab, label: tab.label }));
 
   // "Back to app" — the close affordance for solo settings. Laid out like a nav row.
   const backToApp = () => (
@@ -242,16 +229,14 @@ export function SettingsPanel(props: SettingsPanelProps) {
       class="flex items-center gap-2 px-2 py-1.5 rounded-md text-xs text-ink-extra-muted cursor-default hover:bg-ink/4 hover:text-ink-muted"
     >
       <CaretLeftIcon class="size-4 shrink-0" />
-      <span class="whitespace-nowrap">
-        {t('settings.shell.backToApp')}
-      </span>
+      <span class="whitespace-nowrap">Back to app</span>
     </button>
   );
 
   const moveToSplitButton = () => (
     <Button
       class="p-1 rounded-md"
-      label={t('settings.shell.moveToSplit')}
+      label="Move to split"
       onClick={() => moveSettingsToSplit()}
     >
       <ArrowsIn class="size-4" />
@@ -290,7 +275,7 @@ export function SettingsPanel(props: SettingsPanelProps) {
             <HeaderIsland>
               <div class="h-full flex gap-3 items-center">
                 <h1 class="font-semibold text-ink select-none text-sm shrink-0">
-                  {t('settings.shell.title')}
+                  Settings
                 </h1>
               </div>
             </HeaderIsland>
@@ -314,7 +299,7 @@ export function SettingsPanel(props: SettingsPanelProps) {
           <SplitHeaderRight>
             <Button
               class="p-1 rounded-lg"
-              label={t('settings.shell.openFullscreen')}
+              label="Open fullscreen"
               onClick={() => moveSettingsToSolo()}
             >
               <ArrowsOut class="size-4" />
@@ -340,34 +325,24 @@ export function SettingsPanel(props: SettingsPanelProps) {
                 {moveToSplitButton()}
               </div>
             </Show>
-            <SettingsSearch
-              query={searchQuery()}
-              onQueryChange={setSearchQuery}
-              results={searchResults()}
-              onSelect={(entry) => handleTabChange(entry.tab)}
-              onEscape={() => closeSettings()}
-            />
-            {/* While a query is typed the search results stand in for the groups. */}
-            <Show when={!searching()}>
-              <For each={groups()}>
-                {(group) => (
-                  <SideNav.Group label={settingsGroupLabel(group.label)}>
-                    <For each={group.items}>
-                      {(item) => (
-                        <SideNav.Item
-                          icon={item.icon}
-                          active={activeTabId() === item.tab}
-                          onSelect={() => handleTabChange(item.tab)}
-                          class="text-xs py-1.5"
-                        >
-                          {settingsTabLabel(item.tab, item.label)}
-                        </SideNav.Item>
-                      )}
-                    </For>
-                  </SideNav.Group>
-                )}
-              </For>
-            </Show>
+            <For each={groups()}>
+              {(group) => (
+                <SideNav.Group label={group.label}>
+                  <For each={group.items}>
+                    {(item) => (
+                      <SideNav.Item
+                        icon={item.icon}
+                        active={activeTabId() === item.tab}
+                        onSelect={() => handleTabChange(item.tab)}
+                        class="text-xs py-1.5"
+                      >
+                        {item.label}
+                      </SideNav.Item>
+                    )}
+                  </For>
+                </SideNav.Group>
+              )}
+            </For>
             <div class="mt-auto border-t border-edge-muted pt-2">
               <button
                 type="button"
@@ -375,9 +350,7 @@ export function SettingsPanel(props: SettingsPanelProps) {
                 class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs text-ink-extra-muted cursor-default hover:bg-ink/3 hover:text-ink"
               >
                 <SignOutIcon class="size-4 shrink-0" />
-                <span class="whitespace-nowrap">
-                  {t('settings.shell.logout')}
-                </span>
+                <span class="whitespace-nowrap">Log out</span>
               </button>
             </div>
           </SideNav>
@@ -418,58 +391,8 @@ export function SettingsPanel(props: SettingsPanelProps) {
                   so content scrolls under the floating header/dock like every
                   other block instead of being boxed between them. */}
               <div class="relative min-h-0 flex-1 overflow-hidden">
-                <Show when={isCurrentTab('Account')}>
-                  <Suspense>
-                    <Account />
-                  </Suspense>
-                </Show>
-                <Show when={isCurrentTab('Notifications')}>
-                  <Notifications />
-                </Show>
-                <Show when={isCurrentTab('Billing')}>
-                  <Suspense>
-                    <Billing />
-                  </Suspense>
-                </Show>
-                <Show when={isCurrentTab('Appearance')}>
-                  <Appearance />
-                </Show>
-                <Show when={isCurrentTab('Shortcuts')}>
-                  <Shortcuts />
-                </Show>
-                <Show when={isCurrentTab('Team')}>
-                  <Suspense>
-                    <Team />
-                  </Suspense>
-                </Show>
-                <Show when={isCurrentTab('Tags')}>
-                  <Suspense>
-                    <Tags />
-                  </Suspense>
-                </Show>
-                <Show when={isCurrentTab('CRM')}>
-                  <Suspense>
-                    <Crm />
-                  </Suspense>
-                </Show>
-                <Show when={isCurrentTab('Connected')}>
-                  <Suspense>
-                    <ConnectedAccounts />
-                  </Suspense>
-                </Show>
-                <Show when={isCurrentTab('Mobile App')}>
-                  <MobileApp />
-                </Show>
-                <Show when={isCurrentTab('Agent')}>
-                  <Agent />
-                </Show>
-                <Show when={isCurrentTab('Bots')}>
-                  <Suspense>
-                    <Bots />
-                  </Suspense>
-                </Show>
-                <Show when={isCurrentTab('Admin')}>
-                  <Admin />
+                <Show when={activeTabId()}>
+                  {(tab) => <SettingsTabContent tab={tab()} />}
                 </Show>
               </div>
             </div>

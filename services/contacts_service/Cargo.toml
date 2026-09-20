@@ -23,13 +23,15 @@ aws-sdk-secretsmanager = { workspace = true }
 aws-sdk-sqs = { workspace = true }
 axum = { workspace = true }
 contacts = { path = "../../crates/contacts", features = ["axum"] }
-conation_auth = { path = "../../crates/conation_auth" }
-conation_authorization = { path = "../../crates/conation_authorization" }
-conation_aws_config = { path = "../../crates/conation_aws_config" }
-conation_cors = { path = "../../crates/conation_cors" }
-conation_entrypoint = { path = "../../crates/conation_entrypoint" }
-conation_env = { path = "../../crates/conation_env" }
-conation_user_id = { path = "../../crates/conation_user_id" }
+macro_auth = { package = "conation_auth", path = "../../crates/conation_auth" }
+macro_authorization = { path = "../../crates/conation_authorization", features = [
+  "postgres",
+] }
+macro_aws_config = { package = "conation_aws_config", path = "../../crates/conation_aws_config" }
+macro_cors = { package = "conation_cors", path = "../../crates/conation_cors" }
+macro_entrypoint = { path = "../../crates/conation_entrypoint" }
+macro_env = { package = "conation_env", path = "../../crates/conation_env" }
+macro_user_id = { package = "conation_user_id", path = "../../crates/conation_user_id" }
 model = { path = "../../crates/model" }
 rate_limit = { path = "../../crates/rate_limit", features = ["axum"] }
 redis = { workspace = true }
@@ -42,11 +44,11 @@ tokio = { workspace = true }
 tracing = { workspace = true }
 utoipa = { workspace = true }
 utoipa-swagger-ui = { workspace = true }
-conation_service_urls = { path = "../../crates/conation_service_urls" }
+macro_service_urls = { package = "conation_service_urls", path = "../../crates/conation_service_urls" }
 workspace-hack = { version = "0.1", path = "../../crates/workspace-hack" }
-conation_env_var = { path = "../../crates/conation_env_var" }
-conation_queues = { path = "../../crates/conation_queues" }
-conation_config = { path = "../../crates/conation_config" }
+macro_env_var = { package = "conation_env_var", path = "../../crates/conation_env_var" }
+macro_queues = { package = "conation_queues", path = "../../crates/conation_queues" }
+macro_config = { package = "conation_config", path = "../../crates/conation_config" }
 database_env_vars = { path = "../../crates/database_env_vars" }
 doppler-config = { workspace = true }
 

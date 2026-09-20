@@ -22,7 +22,7 @@ all = ["ai_tools", "axum", "inbound", "outbound", "ports"]
 axum = [
   "dep:axum",
   "dep:axum-extra",
-  "dep:conation_authorization",
+  "dep:macro_authorization",
   "dep:model-error-response",
   "dep:utoipa",
   "email/axum",
@@ -70,8 +70,8 @@ foreign_entity = { path = "../foreign_entity", default-features = false, feature
 frecency = { path = "../frecency" }
 indexmap = { workspace = true }
 item_filters = { path = "../item_filters" }
-conation_authorization = { path = "../conation_authorization", default-features = false, features = ["axum"], optional = true }
-conation_user_id = { path = "../conation_user_id" }
+macro_authorization = { path = "../conation_authorization", default-features = false, features = ["axum"], optional = true }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
 model-entity = { path = "../model-entity" }
 model-error-response = { path = "../model-error-response", optional = true }
 models_grouping = { path = "../models_grouping" }

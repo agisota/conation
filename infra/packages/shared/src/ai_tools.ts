@@ -23,27 +23,27 @@ export type AiToolsInfra = {
 export function getAiToolsInfra(): AiToolsInfra {
   const cloudStorageStack = new pulumi.StackReference(
     'ai-tools-cloud-storage-stack',
-    { name: `conation-dev/document-storage/${stack}` }
+    { name: `macro-inc/document-storage/${stack}` }
   );
   const cloudStorageServiceStack = new pulumi.StackReference(
     'ai-tools-cloud-storage-service-stack',
-    { name: `conation-dev/cloud-storage-service/${stack}` }
+    { name: `macro-inc/cloud-storage-service/${stack}` }
   );
   const emailServiceStack = new pulumi.StackReference(
     'ai-tools-email-service-stack',
-    { name: `conation-dev/email-service/${stack}` }
+    { name: `macro-inc/email-service/${stack}` }
   );
   const notificationServiceStack = new pulumi.StackReference(
     'ai-tools-notification-service-stack',
-    { name: `conation-dev/notification-service/${stack}` }
+    { name: `macro-inc/notification-service/${stack}` }
   );
   const searchEventQueueStack = new pulumi.StackReference(
     'ai-tools-search-event-queue-stack',
-    { name: `conation-dev/search-event-queue/${stack}` }
+    { name: `macro-inc/search-event-queue/${stack}` }
   );
   const contactsServiceStack = new pulumi.StackReference(
     'ai-tools-contacts-service-stack',
-    { name: `conation-dev/contacts-service/${stack}` }
+    { name: `macro-inc/contacts-service/${stack}` }
   );
 
   const documentStorageBucketArn: pulumi.Output<string> = cloudStorageStack
@@ -118,26 +118,20 @@ export function getAiToolsInfra(): AiToolsInfra {
 export function getAiToolsServiceRoleArns(): pulumi.Output<string>[] {
   const mcpServerStack = new pulumi.StackReference(
     'ai-tools-mcp-server-stack',
-    { name: `conation-dev/mcp-server/${stack}` }
+    { name: `macro-inc/mcp-server/${stack}` }
   );
   const documentCognitionStack = new pulumi.StackReference(
     'ai-tools-document-cognition-stack',
-    { name: `conation-dev/document-cognition/${stack}` }
+    { name: `macro-inc/document-cognition/${stack}` }
   );
   const agentScheduleServiceStack = new pulumi.StackReference(
     'ai-tools-agent-schedule-service-stack',
-    { name: `conation-dev/agent-schedule-service/${stack}` }
+    { name: `macro-inc/agent-schedule-service/${stack}` }
   );
-  const agentHarnessServiceRoleArns =
-    stack === 'dev'
-      ? [
-          new pulumi.StackReference('ai-tools-agent-harness-service-stack', {
-            name: `conation-dev/agent-harness-service/${stack}`,
-          })
-            .getOutput('agentHarnessServiceRoleArn')
-            .apply((v) => v as string),
-        ]
-      : [];
+  const agentHarnessServiceStack = new pulumi.StackReference(
+    'ai-tools-agent-harness-service-stack',
+    { name: `macro-inc/agent-harness-service/${stack}` }
+  );
 
   return [
     mcpServerStack.getOutput('mcpServerRoleArn').apply((v) => v as string),
@@ -147,6 +141,8 @@ export function getAiToolsServiceRoleArns(): pulumi.Output<string>[] {
     agentScheduleServiceStack
       .getOutput('agentScheduleServiceRoleArn')
       .apply((v) => v as string),
-    ...agentHarnessServiceRoleArns,
+    agentHarnessServiceStack
+      .getOutput('agentHarnessServiceRoleArn')
+      .apply((v) => v as string),
   ];
 }

@@ -66,7 +66,7 @@ describe('SettingsSearch', () => {
     type('gmail');
 
     const options = screen.getAllByRole('option');
-    expect(options[0]?.textContent).toContain('Gmail');
+    expect(options[0]?.textContent).toContain('Email');
     expect(options[0]?.textContent).toContain('Connections · Accounts');
   });
 
@@ -105,7 +105,7 @@ describe('SettingsSearch', () => {
     fireEvent.click(screen.getAllByRole('option')[0]!);
 
     expect(onSelect).toHaveBeenCalledTimes(1);
-    expect(onSelect.mock.calls[0]?.[0]?.title).toBe('Gmail');
+    expect(onSelect.mock.calls[0]?.[0]?.title).toBe('Email');
   });
 
   it('keeps the highlight inside the result list', () => {

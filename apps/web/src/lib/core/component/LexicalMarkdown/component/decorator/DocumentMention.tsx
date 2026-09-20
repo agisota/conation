@@ -21,8 +21,8 @@ import {
 } from '@core/component/DocumentPreview';
 import { EntityIcon } from '@core/component/EntityIcon';
 import { HoverCard } from '@core/component/HoverCard';
+import { InlineTaskProperties } from '@core/component/InlineTaskProperties';
 import { useItemPreviewData } from '@core/component/ItemPreview';
-import { UserIcon } from '@core/component/UserIcon';
 import {
   itemToBlockName,
   resolveBlockAlias,
@@ -36,16 +36,12 @@ import { openInNewSplitForMention } from '@core/util/openInNewSplit';
 import { useSplitNavigationHandler } from '@core/util/useSplitNavigationHandler';
 import EyeSlashDuo from '@phosphor/eye-slash.svg';
 import TrashSimple from '@phosphor/trash-simple.svg';
-import { PropertyValueIcon } from '@property/component/propertyValue/PropertyValueIcon';
-import { SYSTEM_PROPERTY_IDS } from '@property/constants';
-import { useEntityProperties } from '@property/hooks';
 import {
   type ItemEntity,
   isAccessiblePreviewItem,
   isCalendarEventPreviewItem,
   type PreviewCalendarEventAccess,
   type PreviewItemNoAccess,
-  useItemPreview,
 } from '@queries/preview';
 import { useSystemSkillsQuery } from '@queries/storage/system-skills';
 import { blockNameToItemType } from '@service-storage/client';
@@ -171,68 +167,28 @@ export function calendarMentionTimeLabel(
   return startDate ? formatDate(startDate) : undefined;
 }
 
-function InlineTaskProperties(props: { taskId: string }) {
-  const { properties, isLoading } = useEntityProperties(
-    props.taskId,
-    'TASK',
-    false
-  );
-
-  const statusOptionId = createMemo(() => {
-    const p = properties().find(
-      (p) => p.propertyDefinitionId === SYSTEM_PROPERTY_IDS.STATUS
-    );
-    return p?.valueType === 'SELECT_STRING' ? p.value?.[0] : undefined;
-  });
-
-  const priorityOptionId = createMemo(() => {
-    const p = properties().find(
-      (p) => p.propertyDefinitionId === SYSTEM_PROPERTY_IDS.PRIORITY
-    );
-    return p?.valueType === 'SELECT_STRING' ? p.value?.[0] : undefined;
-  });
-
-  const firstAssigneeId = createMemo(() => {
-    const p = properties().find(
-      (p) => p.propertyDefinitionId === SYSTEM_PROPERTY_IDS.ASSIGNEES
-    );
-    return p?.valueType === 'ENTITY' ? p.value?.[0]?.entity_id : undefined;
-  });
-
-  const hasAny = createMemo(
-    () =>
-      !isLoading() &&
-      !!(statusOptionId() || priorityOptionId() || firstAssigneeId())
-  );
-
+function MentionAccessories(props: {
+  blockName: BlockName | BlockAlias;
+  blockParams?: Record<string, string>;
+}) {
+  const accessories = () =>
+    mentionsAccessories(props.blockName as BlockName, props.blockParams ?? {});
   return (
-    <Show when={hasAny()}>
-      <span class="inline-flex items-center gap-1 mx-1 align-middle relative top-[-0.05em]">
-        <Show when={statusOptionId()}>
-          {(id) => <PropertyValueIcon optionId={id()} class="size-3" />}
-        </Show>
-        <Show when={priorityOptionId()}>
-          {(id) => <PropertyValueIcon optionId={id()} class="size-3" />}
-        </Show>
-        <Show when={firstAssigneeId()}>
-          {(id) => (
-            <span class="inline-flex ml-0.5 size-3.25">
-              <UserIcon
-                id={id()}
-                isDeleted={false}
-                size="fill"
-                suppressClick
-                showTooltip={false}
-              />
-            </span>
-          )}
-        </Show>
-      </span>
-    </Show>
+    <span class="relative text-[0.8em] text-current/50 rounded-xs">
+      <Show when={accessories()}>
+        {(value) => (
+          <>
+            {` ${value().note ?? ''}`}
+            {getMentionsIcon(value().icon)}
+          </>
+        )}
+      </Show>
+    </span>
   );
 }
 
 function InlinePreview(props: {
+  previewData: ReturnType<typeof useItemPreviewData>;
   entity: ItemEntity;
   blockName: BlockName | BlockAlias;
   blockParams: Record<string, string>;
@@ -242,7 +198,7 @@ function InlinePreview(props: {
   createdAt?: number;
   isRecentMention: () => boolean;
 }) {
-  const { item, ItemEntityIcon } = useItemPreviewData(() => props.entity);
+  const { item, ItemEntityIcon, documentProperties } = props.previewData;
 
   const shouldShowFallback = createMemo(() => {
     return (
@@ -280,6 +236,10 @@ function InlinePreview(props: {
                   >
                     {(name) => name().replaceAll('\n', ' ').trim()}
                   </Show>
+                  <MentionAccessories
+                    blockName={props.blockName}
+                    blockParams={props.blockParams}
+                  />
                 </span>
               }
               collapsed={props.collapsed}
@@ -315,22 +275,10 @@ function InlinePreview(props: {
                   >
                     {(name) => name().replaceAll('\n', ' ').trim()}
                   </Show>
-                  <span class="relative text-[0.8em] text-current/50 rounded-md">
-                    {(() => {
-                      const accessories = mentionsAccessories(
-                        props.blockName as BlockName,
-                        props.blockParams
-                      );
-                      if (accessories) {
-                        return (
-                          <>
-                            {` ${accessories.note ?? ''}`}
-                            {getMentionsIcon(accessories.icon)}
-                          </>
-                        );
-                      }
-                    })()}
-                  </span>
+                  <MentionAccessories
+                    blockName={props.blockName}
+                    blockParams={props.blockParams}
+                  />
                 </span>
               }
               collapsed={props.collapsed}
@@ -396,25 +344,16 @@ function InlinePreview(props: {
                         </Show>
                       )}
                     </Show>
-                    <span class="relative text-[0.8em] text-current/50 rounded-xs">
-                      {(() => {
-                        const accessories = mentionsAccessories(
-                          props.blockName as BlockName,
-                          props.blockParams
-                        );
-                        if (accessories) {
-                          return (
-                            <>
-                              {` ${accessories.note ?? ''}`}
-                              {getMentionsIcon(accessories.icon)}
-                            </>
-                          );
-                        }
-                      })()}
-                    </span>
+                    <MentionAccessories
+                      blockName={props.blockName}
+                      blockParams={props.blockParams}
+                    />
                     <Show when={props.blockName === 'task'}>
                       <Suspense>
-                        <InlineTaskProperties taskId={accessibleItem().id} />
+                        <InlineTaskProperties
+                          taskId={accessibleItem().id}
+                          previewProperties={documentProperties()}
+                        />
                       </Suspense>
                     </Show>
                   </span>
@@ -452,6 +391,23 @@ export function DocumentMention(props: DocumentMentionDecoratorProps) {
   if (lexicalWrapper?.skipPreviewFetch) {
     return <DocumentMentionStatic {...props} />;
   }
+  // Only skill mentions need to distinguish built-ins from stored documents.
+  // Ordinary mentions must not wait for a once-per-session skills request.
+  return (
+    <Show
+      when={props.blockName === 'skill'}
+      fallback={
+        <Suspense fallback={<DocumentMentionStatic {...props} />}>
+          <DocumentMentionInner {...props} />
+        </Suspense>
+      }
+    >
+      <SkillDocumentMention {...props} />
+    </Show>
+  );
+}
+
+function SkillDocumentMention(props: DocumentMentionDecoratorProps) {
   const systemSkills = useSystemSkillsQuery();
   return (
     <Switch>
@@ -465,7 +421,7 @@ export function DocumentMention(props: DocumentMentionDecoratorProps) {
         <DocumentMentionStatic {...props} />
       </Match>
       <Match when={true}>
-        <Suspense>
+        <Suspense fallback={<DocumentMentionStatic {...props} />}>
           <DocumentMentionInner {...props} />
         </Suspense>
       </Match>
@@ -491,18 +447,20 @@ function SystemSkillMention(
 }
 
 /** Lightweight mention display that skips all backend fetches. Uses only the stored name. */
-function DocumentMentionStatic(props: DocumentMentionDecoratorProps) {
+export function DocumentMentionStatic(props: DocumentMentionDecoratorProps) {
   if (props.blockName === 'skill') {
     return (
       <SkillSlashText
         documentId={props.documentId}
         name={props.documentName ?? ''}
+        collapsed={props.collapsed}
       />
     );
   }
   return (
     <MentionContainer
       icon={<EntityIcon targetType={props.blockName as any} size="fill" />}
+      collapsed={props.collapsed}
       text={
         <span
           data-document-mention="true"
@@ -510,7 +468,11 @@ function DocumentMentionStatic(props: DocumentMentionDecoratorProps) {
           data-block-name={props.blockName}
           data-document-name={props.documentName}
         >
-          {props.documentName ?? props.documentId}
+          {(props.documentName || 'Loading...').replaceAll('\n', ' ').trim()}
+          <MentionAccessories
+            blockName={verifyBlockName(props.blockName)}
+            blockParams={props.blockParams}
+          />
         </span>
       }
     />
@@ -571,7 +533,8 @@ function DocumentMentionInner(props: DocumentMentionDecoratorProps) {
     return baseEntity;
   };
 
-  const [item] = useItemPreview(itemEntity);
+  const previewData = useItemPreviewData(itemEntity);
+  const { item } = previewData;
 
   const isSelectedAsNode = createMemo(() => {
     const sel = selection();
@@ -712,6 +675,7 @@ function DocumentMentionInner(props: DocumentMentionDecoratorProps) {
             <Switch>
               <Match when={item()}>
                 <InlinePreview
+                  previewData={previewData}
                   entity={itemEntity()}
                   blockName={verifyBlockName(props.blockName)}
                   blockParams={props.blockParams || {}}

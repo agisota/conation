@@ -24,27 +24,26 @@ use crate::{
     MacroAuthorizationError, MacroAuthorizationService, MacroUserAuthentication,
 };
 
-const VALID_USER_ID: &str = "conation|valid@example.com";
-const COOKIE_USER_ID: &str = "conation|cookie@example.com";
-const QUERY_USER_ID: &str = "conation|query@example.com";
-const BEARER_USER_ID: &str = "conation|bearer@example.com";
-const OPTIONAL_USER_ID: &str = "conation|optional@example.com";
-const STANDARD_INTERNAL_USER_ID: &str = "conation|standard-internal@example.com";
-const LEGACY_INTERNAL_USER_ID: &str = "conation|legacy-internal@example.com";
-const LEGACY_DSS_INTERNAL_API_KEY_HEADER: &str = "x-document-storage-service-auth-key";
-const LEGACY_DSS_INTERNAL_USER_ID_HEADER: &str = "x-document-storage-service-user-id";
-const LEGACY_MACRO_INTERNAL_USER_ID_HEADER: &str = "x-internal-macro-user-id";
-const LEGACY_MACRO_INTERNAL_ORGANIZATION_ID_HEADER: &str = "x-internal-macro-organization-id";
-const BOT_ACTING_USER_ID: &str = "conation|bot-acting@example.com";
+const VALID_USER_ID: &str = "macro|valid@example.com";
+const COOKIE_USER_ID: &str = "macro|cookie@example.com";
+const QUERY_USER_ID: &str = "macro|query@example.com";
+const BEARER_USER_ID: &str = "macro|bearer@example.com";
+const OPTIONAL_USER_ID: &str = "macro|optional@example.com";
+const STANDARD_INTERNAL_USER_ID: &str = "macro|standard-internal@example.com";
+const LEGACY_INTERNAL_USER_ID: &str = "macro|legacy-internal@example.com";
+const BOT_ACTING_USER_ID: &str = "macro|bot-acting@example.com";
 const VALID_INTERNAL_KEY: &str = "valid-internal-key";
 const BOT_ID: BotId = BotId::new_from_uuid(Uuid::from_u128(1));
 const BOT_TOKEN_ID: Uuid = Uuid::from_u128(2);
 const BOT_TEAM_ID: Uuid = Uuid::from_u128(3);
-const ACCESS_TOKEN_COOKIE: &str = "conation-access-token";
+const ACCESS_TOKEN_COOKIE: &str = "macro-access-token";
+const API_KEY_USER_ID: &str = "macro|api-key@example.com";
+const VALID_USER_API_KEY: &str = "mak_valid";
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 enum AuthorizationCall {
     Jwt(String),
+    UserApiKey(String),
     Bot {
         token: String,
         bot_scope: BotScope,
@@ -82,9 +81,24 @@ impl MacroAuthorizationService for FakeAuthorizationService {
             "optional" => Ok(user_context(OPTIONAL_USER_ID, None)),
             "organization" => Ok(user_context(VALID_USER_ID, Some(42))),
             "malformed-user" => Ok(user_context("not-a-macro-user-id", None)),
-            "legacy-macro-user" => Ok(user_context("macro|legacy@example.com", None)),
             "empty-user" => Ok(user_context("", None)),
             "expired" => Err(Report::new(MacroAuthorizationError::CredentialsExpired)),
+            _ => Err(Report::new(MacroAuthorizationError::InvalidCredentials)),
+        }
+    }
+
+    async fn authorize_user_api_key(
+        &self,
+        api_key: &str,
+    ) -> Result<UserContext, Report<MacroAuthorizationError>> {
+        self.calls
+            .lock()
+            .expect("calls lock poisoned")
+            .push(AuthorizationCall::UserApiKey(api_key.to_string()));
+
+        match api_key {
+            VALID_USER_API_KEY => Ok(user_context(API_KEY_USER_ID, Some(42))),
+            "mak_unavailable" => Err(Report::new(MacroAuthorizationError::Unavailable)),
             _ => Err(Report::new(MacroAuthorizationError::InvalidCredentials)),
         }
     }
@@ -418,6 +432,10 @@ fn bot_request(path: &str, token: &str) -> ::axum::http::request::Builder {
         .header(BOT_SCOPE_HEADER, BotScope::User.as_str())
 }
 
+fn user_api_key_request(path: &str, key: &str) -> ::axum::http::request::Builder {
+    request(path).header(USER_API_KEY_HEADER, key)
+}
+
 fn empty_body(request: ::axum::http::request::Builder) -> Request<Body> {
     request.body(Body::empty()).unwrap()
 }
@@ -494,7 +512,7 @@ async fn extractors_report_the_authenticating_entity() {
             empty_body(
                 request("/required")
                     .header(INTERNAL_API_KEY_HEADER, VALID_INTERNAL_KEY)
-                    .header(INTERNAL_CONATION_USER_ID_HEADER, STANDARD_INTERNAL_USER_ID),
+                    .header(INTERNAL_MACRO_USER_ID_HEADER, STANDARD_INTERNAL_USER_ID),
             ),
             Some("internal".to_string()),
         ),
@@ -536,26 +554,34 @@ async fn extractors_report_the_authenticating_entity() {
     }
 }
 
+#[allow(deprecated)]
 #[tokio::test]
-async fn internal_accepts_canonical_api_key_without_identity_headers() {
+async fn internal_accepts_standard_and_legacy_api_keys_without_identity_headers() {
     let (router, service) = test_router();
 
-    let request =
-        empty_body(request("/internal").header(INTERNAL_API_KEY_HEADER, VALID_INTERNAL_KEY));
-    let (status, body) = send(&router, request).await;
+    for header in [INTERNAL_API_KEY_HEADER, LEGACY_DSS_INTERNAL_API_KEY_HEADER] {
+        let request = empty_body(request("/internal").header(header, VALID_INTERNAL_KEY));
+        let (status, body) = send(&router, request).await;
 
-    assert_eq!(status, StatusCode::OK);
-    assert_eq!(
-        body,
-        json!({ "acting_entity": "internal", "authorized": true })
-    );
+        assert_eq!(status, StatusCode::OK);
+        assert_eq!(
+            body,
+            json!({ "acting_entity": "internal", "authorized": true })
+        );
+    }
 
     assert_eq!(
         service.calls(),
-        [AuthorizationCall::Internal {
-            provided_key: VALID_INTERNAL_KEY.to_string(),
-            claims: InternalIdentityClaims::default(),
-        }]
+        [
+            AuthorizationCall::Internal {
+                provided_key: VALID_INTERNAL_KEY.to_string(),
+                claims: InternalIdentityClaims::default(),
+            },
+            AuthorizationCall::Internal {
+                provided_key: VALID_INTERNAL_KEY.to_string(),
+                claims: InternalIdentityClaims::default(),
+            },
+        ]
     );
 }
 
@@ -565,8 +591,8 @@ async fn internal_forwards_identity_headers_to_create_user_context() {
     let request = empty_body(
         request("/internal")
             .header(INTERNAL_API_KEY_HEADER, VALID_INTERNAL_KEY)
-            .header(INTERNAL_CONATION_USER_ID_HEADER, STANDARD_INTERNAL_USER_ID)
-            .header(INTERNAL_CONATION_ORGANIZATION_ID_HEADER, "42")
+            .header(INTERNAL_MACRO_USER_ID_HEADER, STANDARD_INTERNAL_USER_ID)
+            .header(INTERNAL_MACRO_ORGANIZATION_ID_HEADER, "42")
             .header(INTERNAL_FUSIONAUTH_USER_ID_HEADER, "fusion-user"),
     );
 
@@ -627,8 +653,9 @@ async fn internal_rejects_invalid_api_key() {
     );
 }
 
+#[allow(deprecated)]
 #[tokio::test]
-async fn legacy_dss_key_is_rejected_even_with_a_canonical_key() {
+async fn internal_standard_key_takes_precedence_over_legacy_key() {
     let (router, service) = test_router();
     let request = empty_body(
         request("/internal")
@@ -638,12 +665,15 @@ async fn legacy_dss_key_is_rejected_even_with_a_canonical_key() {
 
     let (status, body) = send(&router, request).await;
 
-    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert_eq!(status, StatusCode::UNAUTHORIZED);
+    assert_eq!(body, json!({ "message": "unauthorized" }));
     assert_eq!(
-        body,
-        json!({ "message": "legacy internal credentials are not supported" })
+        service.calls(),
+        [AuthorizationCall::Internal {
+            provided_key: "invalid-standard-key".to_string(),
+            claims: InternalIdentityClaims::default(),
+        }]
     );
-    assert!(service.calls().is_empty());
 }
 
 #[tokio::test]
@@ -651,7 +681,7 @@ async fn user_accepts_query_bearer_and_cookie_credentials() {
     let (router, service) = test_router();
     let requests = [
         (
-            empty_body(request("/user?conation-api-token=query")),
+            empty_body(request("/user?macro-api-token=query")),
             QUERY_USER_ID,
         ),
         (
@@ -679,21 +709,6 @@ async fn user_accepts_query_bearer_and_cookie_credentials() {
             AuthorizationCall::Jwt("bearer".to_string()),
             AuthorizationCall::Jwt("cookie".to_string()),
         ]
-    );
-}
-
-#[tokio::test]
-async fn user_accepts_transitional_conation_query_alias() {
-    let (router, service) = test_router();
-    let request = empty_body(request("/user?conation-api-token=query"));
-
-    let (status, body) = send(&router, request).await;
-
-    assert_eq!(status, StatusCode::OK);
-    assert_eq!(body["macro_user_id"], QUERY_USER_ID);
-    assert_eq!(
-        service.calls(),
-        [AuthorizationCall::Jwt("query".to_string())]
     );
 }
 
@@ -763,7 +778,7 @@ async fn required_extracts_valid_cookie() {
 async fn query_token_takes_precedence_over_bearer_and_cookie() {
     let (router, service) = test_router();
     let request = empty_body(
-        request("/required?conation-api-token=query")
+        request("/required?macro-api-token=query")
             .header("authorization", "Bearer invalid")
             .header("cookie", format!("{ACCESS_TOKEN_COOKIE}=invalid")),
     );
@@ -800,7 +815,7 @@ async fn bearer_token_takes_precedence_over_cookie() {
 #[tokio::test]
 async fn malformed_query_remains_an_explicit_user_credential() {
     let (router, service) = test_router();
-    let malformed_query = "conation-api-token=query&conation-api-token=invalid";
+    let malformed_query = "macro-api-token=query&macro-api-token=invalid";
 
     let bearer_request = empty_body(
         request(&format!("/required?{malformed_query}")).header("authorization", "Bearer bearer"),
@@ -925,22 +940,6 @@ async fn required_rejects_malformed_user_id() {
 }
 
 #[tokio::test]
-async fn required_rejects_legacy_macro_user_namespace() {
-    let (router, service) = test_router();
-    let request =
-        empty_body(request("/required").header("authorization", "Bearer legacy-macro-user"));
-
-    let (status, body) = send(&router, request).await;
-
-    assert_eq!(status, StatusCode::UNAUTHORIZED);
-    assert_eq!(body, json!({ "message": "invalid user id" }));
-    assert_eq!(
-        service.calls(),
-        [AuthorizationCall::Jwt("legacy-macro-user".to_string())]
-    );
-}
-
-#[tokio::test]
 async fn optional_rejects_empty_user_id_from_authorized_context() {
     let (router, service) = test_router();
     let request = empty_body(request("/optional").header("authorization", "Bearer empty-user"));
@@ -985,8 +984,8 @@ async fn standard_internal_headers_authorize_matching_claims() {
     let request = empty_body(
         request("/required")
             .header(INTERNAL_API_KEY_HEADER, VALID_INTERNAL_KEY)
-            .header(INTERNAL_CONATION_USER_ID_HEADER, STANDARD_INTERNAL_USER_ID)
-            .header(INTERNAL_CONATION_ORGANIZATION_ID_HEADER, "42")
+            .header(INTERNAL_MACRO_USER_ID_HEADER, STANDARD_INTERNAL_USER_ID)
+            .header(INTERNAL_MACRO_ORGANIZATION_ID_HEADER, "42")
             .header(INTERNAL_FUSIONAUTH_USER_ID_HEADER, "standard-fusion-id"),
     );
 
@@ -1016,65 +1015,96 @@ async fn standard_internal_headers_authorize_matching_claims() {
     );
 }
 
+#[allow(deprecated)]
 #[tokio::test]
-async fn legacy_dss_headers_are_rejected_before_authorization() {
+async fn legacy_dss_headers_authorize_matching_claims() {
     let (router, service) = test_router();
     let request = empty_body(
         request("/required")
             .header(LEGACY_DSS_INTERNAL_API_KEY_HEADER, VALID_INTERNAL_KEY)
-            .header(LEGACY_DSS_INTERNAL_USER_ID_HEADER, LEGACY_INTERNAL_USER_ID),
+            .header(
+                LEGACY_DSS_INTERNAL_MACRO_USER_ID_HEADER,
+                LEGACY_INTERNAL_USER_ID,
+            ),
     );
 
     let (status, body) = send(&router, request).await;
 
-    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body["macro_user_id"], LEGACY_INTERNAL_USER_ID);
+    assert_eq!(body["user_context"]["fusion_user_id"], "");
+    assert_eq!(body["user_context"]["organization_id"], Value::Null);
+    assert_eq!(body["is_internal_access"], true);
     assert_eq!(
-        body,
-        json!({ "message": "legacy internal credentials are not supported" })
+        service.calls(),
+        [AuthorizationCall::Internal {
+            provided_key: VALID_INTERNAL_KEY.to_string(),
+            claims: InternalIdentityClaims {
+                user_id: Some(LEGACY_INTERNAL_USER_ID.to_string()),
+                ..InternalIdentityClaims::default()
+            },
+        }]
     );
-    assert!(service.calls().is_empty());
 }
 
+#[allow(deprecated)]
 #[tokio::test]
-async fn legacy_macro_identity_headers_are_rejected_before_authorization() {
+async fn internal_identity_headers_are_not_mixed_between_conventions() {
     let (router, service) = test_router();
 
-    let legacy_user_request = empty_body(
+    let standard_request = empty_body(
         request("/optional")
             .header(INTERNAL_API_KEY_HEADER, VALID_INTERNAL_KEY)
             .header(
-                LEGACY_MACRO_INTERNAL_USER_ID_HEADER,
+                LEGACY_DSS_INTERNAL_MACRO_USER_ID_HEADER,
                 LEGACY_INTERNAL_USER_ID,
             ),
     );
-    let (status, body) = send(&router, legacy_user_request).await;
-    assert_eq!(status, StatusCode::BAD_REQUEST);
-    assert_eq!(
-        body,
-        json!({ "message": "legacy internal credentials are not supported" })
-    );
+    let (status, body) = send(&router, standard_request).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body["macro_user_id"], Value::Null);
+    assert_eq!(body["is_internal_access"], true);
 
-    let legacy_organization_request = empty_body(
+    let legacy_request = empty_body(
         request("/optional")
-            .header(INTERNAL_API_KEY_HEADER, VALID_INTERNAL_KEY)
-            .header(LEGACY_MACRO_INTERNAL_ORGANIZATION_ID_HEADER, "42"),
+            .header(LEGACY_DSS_INTERNAL_API_KEY_HEADER, VALID_INTERNAL_KEY)
+            .header(INTERNAL_MACRO_USER_ID_HEADER, STANDARD_INTERNAL_USER_ID)
+            .header(INTERNAL_MACRO_ORGANIZATION_ID_HEADER, "42")
+            .header(INTERNAL_FUSIONAUTH_USER_ID_HEADER, "standard-fusion-id"),
     );
-    let (status, body) = send(&router, legacy_organization_request).await;
-    assert_eq!(status, StatusCode::BAD_REQUEST);
+    let (status, body) = send(&router, legacy_request).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body["macro_user_id"], Value::Null);
+    assert_eq!(body["is_internal_access"], true);
+
     assert_eq!(
-        body,
-        json!({ "message": "legacy internal credentials are not supported" })
+        service.calls(),
+        [
+            AuthorizationCall::Internal {
+                provided_key: VALID_INTERNAL_KEY.to_string(),
+                claims: InternalIdentityClaims::default(),
+            },
+            AuthorizationCall::Internal {
+                provided_key: VALID_INTERNAL_KEY.to_string(),
+                claims: InternalIdentityClaims::default(),
+            },
+        ]
     );
-    assert!(service.calls().is_empty());
 }
 
+#[allow(deprecated)]
 #[tokio::test]
-async fn canonical_internal_identity_headers_are_authorized() {
+async fn standard_convention_takes_precedence_when_both_keys_are_present() {
     let (router, service) = test_router();
     let request = empty_body(
         request("/required")
             .header(INTERNAL_API_KEY_HEADER, VALID_INTERNAL_KEY)
-            .header(INTERNAL_CONATION_USER_ID_HEADER, STANDARD_INTERNAL_USER_ID),
+            .header(LEGACY_DSS_INTERNAL_API_KEY_HEADER, "invalid-legacy-key")
+            .header(INTERNAL_MACRO_USER_ID_HEADER, STANDARD_INTERNAL_USER_ID)
+            .header(
+                LEGACY_DSS_INTERNAL_MACRO_USER_ID_HEADER,
+                LEGACY_INTERNAL_USER_ID,
+            ),
     );
 
     let (status, body) = send(&router, request).await;
@@ -1184,8 +1214,8 @@ async fn malformed_internal_organization_is_ignored() {
     let request = empty_body(
         request("/required")
             .header(INTERNAL_API_KEY_HEADER, VALID_INTERNAL_KEY)
-            .header(INTERNAL_CONATION_USER_ID_HEADER, STANDARD_INTERNAL_USER_ID)
-            .header(INTERNAL_CONATION_ORGANIZATION_ID_HEADER, "not-an-integer"),
+            .header(INTERNAL_MACRO_USER_ID_HEADER, STANDARD_INTERNAL_USER_ID)
+            .header(INTERNAL_MACRO_ORGANIZATION_ID_HEADER, "not-an-integer"),
     );
 
     let (status, body) = send(&router, request).await;
@@ -1208,50 +1238,212 @@ async fn malformed_internal_organization_is_ignored() {
 
 #[test]
 fn bot_header_constants_use_the_resolved_names() {
-    assert_eq!(BOT_TOKEN_HEADER, "x-conation-bot-token");
-    assert_eq!(BOT_SCOPE_HEADER, "x-conation-bot-scope");
+    assert_eq!(BOT_TOKEN_HEADER, "x-macro-bot-token");
+    assert_eq!(BOT_SCOPE_HEADER, "x-macro-bot-scope");
     assert_eq!(
-        BOT_FOR_CONATION_USER_ID_HEADER,
-        "x-conation-bot-for-conation-user-id"
+        BOT_FOR_MACRO_USER_ID_HEADER,
+        "x-macro-bot-for-macro-user-id"
     );
     assert_eq!(
         BOT_FOR_FUSIONAUTH_USER_ID_HEADER,
-        "x-conation-bot-for-fusionauth-user-id"
+        "x-macro-bot-for-fusionauth-user-id"
     );
     assert_eq!(
         BOT_FOR_ORGANIZATION_ID_HEADER,
-        "x-conation-bot-for-organization-id"
+        "x-macro-bot-for-organization-id"
+    );
+}
+
+#[test]
+fn user_api_key_header_constant_uses_the_resolved_name() {
+    assert_eq!(USER_API_KEY_HEADER, "x-macro-user-api-key");
+}
+
+#[tokio::test]
+async fn user_api_key_authenticates_as_the_user() {
+    let (router, service) = test_router();
+
+    for path in ["/user", "/required", "/required/user-only"] {
+        let (status, body) = send(
+            &router,
+            empty_body(user_api_key_request(path, VALID_USER_API_KEY)),
+        )
+        .await;
+        assert_eq!(status, StatusCode::OK, "path {path}");
+        assert_eq!(body["acting_entity"], API_KEY_USER_ID);
+        if path != "/required/user-only" {
+            assert_eq!(body["macro_user_id"], API_KEY_USER_ID);
+        }
+    }
+
+    assert_eq!(
+        service.calls(),
+        [
+            AuthorizationCall::UserApiKey(VALID_USER_API_KEY.to_string()),
+            AuthorizationCall::UserApiKey(VALID_USER_API_KEY.to_string()),
+            AuthorizationCall::UserApiKey(VALID_USER_API_KEY.to_string()),
+        ]
     );
 }
 
 #[tokio::test]
-async fn legacy_bot_headers_are_rejected_before_user_or_cookie_fallback() {
+async fn user_api_key_is_forbidden_for_bot_and_internal_only_policies() {
     let (router, service) = test_router();
 
-    for header in [
-        "x-macro-bot-token",
-        "x-macro-bot-scope",
-        "x-macro-bot-for-macro-user-id",
-        "x-macro-bot-for-fusionauth-user-id",
-        "x-macro-bot-for-organization-id",
-    ] {
-        let request = empty_body(
-            request("/optional")
-                .header(header, "legacy-value")
-                .header("cookie", format!("{ACCESS_TOKEN_COOKIE}=cookie")),
-        );
+    for path in ["/required/bot-only", "/required/internal-only"] {
+        let (status, body) = send(
+            &router,
+            empty_body(user_api_key_request(path, VALID_USER_API_KEY)),
+        )
+        .await;
+        assert_eq!(status, StatusCode::FORBIDDEN, "path {path}");
+        assert_eq!(body, json!({ "message": "forbidden" }));
+    }
 
+    assert_eq!(
+        service.calls(),
+        [
+            AuthorizationCall::UserApiKey(VALID_USER_API_KEY.to_string()),
+            AuthorizationCall::UserApiKey(VALID_USER_API_KEY.to_string()),
+        ]
+    );
+}
+
+#[tokio::test]
+async fn invalid_user_api_key_is_unauthorized() {
+    let (router, service) = test_router();
+    let (status, body) = send(
+        &router,
+        empty_body(user_api_key_request("/required", "mak_invalid")),
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::UNAUTHORIZED);
+    assert_eq!(body, json!({ "message": "unauthorized" }));
+    assert_eq!(
+        service.calls(),
+        [AuthorizationCall::UserApiKey("mak_invalid".to_string())]
+    );
+}
+
+#[tokio::test]
+async fn unavailable_user_api_key_lookup_is_internal_server_error() {
+    let (router, service) = test_router();
+    let (status, body) = send(
+        &router,
+        empty_body(user_api_key_request("/required", "mak_unavailable")),
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
+    assert_eq!(body, json!({ "message": "internal server error" }));
+    assert_eq!(
+        service.calls(),
+        [AuthorizationCall::UserApiKey("mak_unavailable".to_string())]
+    );
+}
+
+#[tokio::test]
+async fn empty_user_api_key_header_is_unauthorized_without_a_service_call() {
+    let (router, service) = test_router();
+    let (status, body) = send(
+        &router,
+        empty_body(user_api_key_request("/required", "   ")),
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::UNAUTHORIZED);
+    assert_eq!(body, json!({ "message": "unauthorized" }));
+    assert!(service.calls().is_empty());
+}
+
+#[tokio::test]
+async fn user_api_key_combined_with_other_explicit_credentials_is_ambiguous() {
+    let (router, service) = test_router();
+    let requests = [
+        empty_body(
+            user_api_key_request("/required", VALID_USER_API_KEY)
+                .header("authorization", "Bearer valid"),
+        ),
+        empty_body(
+            bot_request("/required", "bot-acting").header(USER_API_KEY_HEADER, VALID_USER_API_KEY),
+        ),
+        empty_body(
+            request("/required")
+                .header(INTERNAL_API_KEY_HEADER, VALID_INTERNAL_KEY)
+                .header(USER_API_KEY_HEADER, VALID_USER_API_KEY),
+        ),
+        empty_body(
+            request("/required?macro-api-token=query")
+                .header(USER_API_KEY_HEADER, VALID_USER_API_KEY),
+        ),
+    ];
+
+    for request in requests {
         let (status, body) = send(&router, request).await;
-
-        assert_eq!(status, StatusCode::BAD_REQUEST, "header: {header}");
-        assert_eq!(
-            body,
-            json!({ "message": "legacy bot credentials are not supported" }),
-            "header: {header}"
-        );
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+        assert_eq!(body, json!({ "message": "ambiguous credentials" }));
     }
 
     assert!(service.calls().is_empty());
+}
+
+#[tokio::test]
+async fn user_api_key_wins_over_ambient_cookies() {
+    let (router, service) = test_router();
+    let (status, body) = send(
+        &router,
+        empty_body(
+            user_api_key_request("/user", VALID_USER_API_KEY)
+                .header("cookie", format!("{ACCESS_TOKEN_COOKIE}=cookie")),
+        ),
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body["macro_user_id"], API_KEY_USER_ID);
+    assert_eq!(
+        service.calls(),
+        [AuthorizationCall::UserApiKey(
+            VALID_USER_API_KEY.to_string()
+        )]
+    );
+}
+
+#[tokio::test]
+async fn optional_extractor_rejects_an_invalid_user_api_key() {
+    let (router, service) = test_router();
+    let (status, body) = send(
+        &router,
+        empty_body(user_api_key_request("/optional", "mak_invalid")),
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::UNAUTHORIZED);
+    assert_eq!(body, json!({ "message": "unauthorized" }));
+    assert_eq!(
+        service.calls(),
+        [AuthorizationCall::UserApiKey("mak_invalid".to_string())]
+    );
+}
+
+#[tokio::test]
+async fn optional_extractor_accepts_a_valid_user_api_key() {
+    let (router, service) = test_router();
+    let (status, body) = send(
+        &router,
+        empty_body(user_api_key_request("/optional", VALID_USER_API_KEY)),
+    )
+    .await;
+
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body["macro_user_id"], API_KEY_USER_ID);
+    assert_eq!(
+        service.calls(),
+        [AuthorizationCall::UserApiKey(
+            VALID_USER_API_KEY.to_string()
+        )]
+    );
 }
 
 #[tokio::test]
@@ -1261,7 +1453,7 @@ async fn acting_user_and_any_principal_accept_bot_with_verified_acting_user() {
     for path in ["/required/acting-user", "/optional/any-principal"] {
         let request = empty_body(
             bot_request(path, "bot-acting")
-                .header(BOT_FOR_CONATION_USER_ID_HEADER, BOT_ACTING_USER_ID)
+                .header(BOT_FOR_MACRO_USER_ID_HEADER, BOT_ACTING_USER_ID)
                 .header(BOT_FOR_FUSIONAUTH_USER_ID_HEADER, "fusion-claimed")
                 .header(BOT_FOR_ORGANIZATION_ID_HEADER, "42"),
         );
@@ -1457,7 +1649,7 @@ async fn bot_claim_headers_are_strictly_parsed_before_authorization() {
     let malformed_header = HeaderValue::from_bytes(b"\xff").unwrap();
 
     for header in [
-        BOT_FOR_CONATION_USER_ID_HEADER,
+        BOT_FOR_MACRO_USER_ID_HEADER,
         BOT_FOR_FUSIONAUTH_USER_ID_HEADER,
         BOT_FOR_ORGANIZATION_ID_HEADER,
     ] {
@@ -1532,7 +1724,7 @@ async fn every_combination_of_multiple_explicit_credential_types_is_ambiguous() 
         "/optional/any-principal",
     ] {
         let (router, service) = test_router();
-        let path_with_query = format!("{path}?conation-api-token=query");
+        let path_with_query = format!("{path}?macro-api-token=query");
         let requests = [
             empty_body(
                 request(path)
@@ -1641,7 +1833,7 @@ fn principal_request(path: &str, credentials: PrincipalCredentials) -> Request<B
         PrincipalCredentials::BotWithoutActingUser => bot_request(path, "bot-bare"),
         PrincipalCredentials::InternalWithActingUser => request(path)
             .header(INTERNAL_API_KEY_HEADER, VALID_INTERNAL_KEY)
-            .header(INTERNAL_CONATION_USER_ID_HEADER, STANDARD_INTERNAL_USER_ID),
+            .header(INTERNAL_MACRO_USER_ID_HEADER, STANDARD_INTERNAL_USER_ID),
         PrincipalCredentials::InternalWithoutActingUser => {
             request(path).header(INTERNAL_API_KEY_HEADER, VALID_INTERNAL_KEY)
         }

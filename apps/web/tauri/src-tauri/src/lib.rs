@@ -1,14 +1,15 @@
-use conation_bundle_updater_plugin::domain::{
-    asset_service::BundleAssetResolver, bundle_routes::BundleRoutes,
-};
-use conation_bundle_updater_plugin::inbound::plugin::retry_waiting_for_wifi;
-#[cfg(feature = "auto_apply_update")]
-use conation_bundle_updater_plugin::inbound::plugin::{
-    allow_update_reload_retry, apply_completed_update_from, start_update_check,
-};
-use conation_bundle_updater_plugin::outbound::fs::FileSystem;
 use device::{IsIpad, detect_is_ipad, is_ipad};
 use logger::Logger;
+use macro_bundle_updater_plugin::domain::{
+    asset_service::BundleAssetResolver, bundle_routes::BundleRoutes,
+};
+#[cfg(feature = "auto_apply_update")]
+use macro_bundle_updater_plugin::inbound::plugin::apply_completed_update_from;
+#[cfg(mobile)]
+use macro_bundle_updater_plugin::inbound::plugin::retry_waiting_for_wifi;
+#[cfg(all(mobile, feature = "auto_apply_update"))]
+use macro_bundle_updater_plugin::inbound::plugin::{allow_update_reload_retry, start_update_check};
+use macro_bundle_updater_plugin::outbound::fs::FileSystem;
 use navigation_plugin::scheme::MacroScheme;
 use navigation_plugin::{MacroNavigationPlugin, NavigatePayload};
 use reqwest::cookie::CookieStore;
@@ -24,7 +25,7 @@ use tauri::{AppHandle, Emitter, Manager, RunEvent, Runtime};
 
 mod tauri_protocol;
 
-pub(crate) const APP_SCHEME: &str = env!("CONATION_TAURI_APP_SCHEME");
+pub(crate) const APP_SCHEME: &str = "macro";
 use tauri_plugin_deep_link::DeepLinkExt;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
@@ -34,28 +35,46 @@ mod device;
 mod share_target;
 mod staged_upload;
 
-#[cfg(test)]
-#[path = "../client_profile_config.rs"]
-#[allow(
-    dead_code,
-    reason = "the build-profile module is included solely to run its unit tests"
-)]
-mod client_profile_config;
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum AppEnvironment {
+    Development,
+    Production,
+}
 
-fn app_link_hosts() -> &'static [&'static str] {
-    static HOSTS: std::sync::OnceLock<Box<[&'static str]>> = std::sync::OnceLock::new();
-    HOSTS.get_or_init(|| {
-        env!("CONATION_TAURI_APP_LINK_HOSTS")
-            .split(',')
-            .filter(|host| !host.is_empty())
-            .collect()
-    })
+impl AppEnvironment {
+    fn current() -> Self {
+        match env!("MACRO_TAURI_APP_ENV") {
+            "development" => Self::Development,
+            "production" => Self::Production,
+            other => unreachable!("invalid MACRO_TAURI_APP_ENV: {other}"),
+        }
+    }
+
+    fn auth_service_url(self) -> &'static str {
+        match self {
+            Self::Development => "https://dev-gateway.macro.com/auth/",
+            Self::Production => "https://gateway.macro.com/auth/",
+        }
+    }
+
+    fn bundle_update_base_url(self) -> &'static str {
+        option_env!("MACRO_BUNDLE_UPDATE_BASE_URL")
+            .filter(|url| !url.trim().is_empty())
+            .unwrap_or_else(|| self.auth_service_url())
+    }
+
+    fn web_origin(self) -> &'static str {
+        match self {
+            Self::Development => "https://dev.macro.com",
+            Self::Production => "https://macro.com",
+        }
+    }
 }
 
 fn embedded_bundle_build() -> u64 {
-    env!("CONATION_EMBEDDED_BUNDLE_BUILD")
+    env!("MACRO_EMBEDDED_BUNDLE_BUILD")
         .parse()
-        .expect("CONATION_EMBEDDED_BUNDLE_BUILD must be an unsigned integer")
+        .expect("MACRO_EMBEDDED_BUNDLE_BUILD must be an unsigned integer")
 }
 
 /// This module provides debuging utilities and should not be compiled in prodiction builds
@@ -66,11 +85,6 @@ mod debug;
 /// This should be as restrictive as possible.
 /// If the webview attempts to naviate to other domains,
 /// they will be opened in the systems default browser
-/// Finder File Provider domain. Shared with `macos/FileProviderExtension`.
-/// The desktop app does not yet call `NSFileProviderManager.add`.
-#[cfg(desktop)]
-pub const CONATION_DISK_FILE_PROVIDER_DOMAIN: &str = conation_disk::FILE_PROVIDER_DOMAIN;
-
 static ALLOWED_DOMAINS: &[&str] = &[
     "http://tauri.localhost",
     "tauri://localhost",
@@ -86,10 +100,12 @@ static ALLOWED_DOMAINS: &[&str] = &[
     "http://localhost:3009",
 ];
 
-/// Hosts whose `/app` URLs are Conation app links. Main-frame navigations to
+/// hosts whose `/app` urls are Macro app links. Main-frame navigations to
 /// these are routed through the SPA router instead of loading the remote
 /// site in the webview. Keep in parity with the deep-link hosts in
 /// tauri.conf.json.
+static APP_LINK_HOSTS: &[&str] = &["macro.com", "dev.macro.com", "staging.macro.com"];
+
 type Type = std::sync::OnceLock<
     Box<dyn Fn(&str, http::Request<Vec<u8>>, tauri::UriSchemeResponder) + Send + Sync + 'static>,
 >;
@@ -116,7 +132,10 @@ pub fn run() {
     let registry = tracing_subscriber::registry().with(filter).with(fmt_layer);
 
     #[cfg(target_os = "ios")]
-    let registry = registry.with(tracing_oslog::OsLogger::new("dev.conation.app", "default"));
+    let registry = registry.with(tracing_oslog::OsLogger::new(
+        "com.macro.app.prod",
+        "default",
+    ));
 
     registry.init();
 
@@ -143,6 +162,7 @@ pub fn run() {
     {
         builder = builder
             .plugin(tauri_plugin_haptics::init())
+            .plugin(tauri_plugin_edit_menu::init())
             .plugin(tauri_plugin_input_accessory::init())
             .plugin(tauri_plugin_network_status::init())
             .plugin(tauri_plugin_pasteboard::init())
@@ -174,12 +194,12 @@ pub fn run() {
         .plugin(
             MacroNavigationPlugin::new(ALLOWED_DOMAINS)
                 .expect("Domains must be valid urls")
-                .with_app_link_hosts(app_link_hosts())
-                .with_app_scheme(APP_SCHEME),
+                .with_app_link_hosts(APP_LINK_HOSTS),
         )
         .plugin(
-            conation_bundle_updater_plugin::inbound::plugin::MacroBundleUpdaterPlugin::new(
-                env!("CONATION_BUNDLE_UPDATE_BASE_URL")
+            macro_bundle_updater_plugin::inbound::plugin::MacroBundleUpdaterPlugin::new(
+                AppEnvironment::current()
+                    .bundle_update_base_url()
                     .parse()
                     .expect("valid url"),
                 embedded_bundle_build,
@@ -238,6 +258,7 @@ pub fn run() {
             graphql_cache_plugin::commands::graphql_cache_read,
             graphql_cache_plugin::commands::graphql_cache_read_records_by_keys,
             graphql_cache_plugin::commands::graphql_cache_search,
+            graphql_cache_plugin::commands::graphql_cache_entity_filter,
             graphql_cache_plugin::commands::graphql_cache_write,
             graphql_cache_plugin::commands::graphql_cache_hydrate,
             graphql_cache_plugin::commands::graphql_cache_enqueue_optimistic_mutation,
@@ -251,13 +272,13 @@ pub fn run() {
             graphql_cache_plugin::commands::graphql_cache_delete_records,
             graphql_cache_plugin::commands::graphql_cache_teardown,
             graphql_cache_plugin::commands::graphql_cache_clear,
-            conation_bundle_updater_plugin::inbound::plugin::grant_bundle_update,
-            conation_bundle_updater_plugin::inbound::plugin::perform_update,
-            conation_bundle_updater_plugin::inbound::plugin::ack_bundle_update_reload,
-            conation_bundle_updater_plugin::inbound::plugin::check_for_update,
-            conation_bundle_updater_plugin::inbound::plugin::get_bundle_debug_info,
-            conation_bundle_updater_plugin::inbound::plugin::get_bundle_update_status,
-            conation_bundle_updater_plugin::inbound::plugin::clear_bundle,
+            macro_bundle_updater_plugin::inbound::plugin::grant_bundle_update,
+            macro_bundle_updater_plugin::inbound::plugin::perform_update,
+            macro_bundle_updater_plugin::inbound::plugin::ack_bundle_update_reload,
+            macro_bundle_updater_plugin::inbound::plugin::check_for_update,
+            macro_bundle_updater_plugin::inbound::plugin::get_bundle_debug_info,
+            macro_bundle_updater_plugin::inbound::plugin::get_bundle_update_status,
+            macro_bundle_updater_plugin::inbound::plugin::clear_bundle,
             is_ipad,
             get_pending_share_filenames,
             pop_shared_files,
@@ -298,7 +319,15 @@ pub fn run() {
                     });
                 }
             }
-            RunEvent::Resumed => {
+            // Tao 0.37 delivers mobile foreground transitions per window, not
+            // through the top-level event-loop Resumed event or focus changes.
+            #[cfg(mobile)]
+            RunEvent::WindowEvent {
+                label,
+                event: tauri::WindowEvent::Resumed,
+                ..
+            } => {
+                tracing::debug!(window_label = %label, "mobile window resumed");
                 let app = app_handle.clone();
                 tauri::async_runtime::spawn(async move {
                     if let Err(e) = retry_waiting_for_wifi(&app).await {
@@ -351,15 +380,19 @@ fn merge_header_callback<R: Runtime>(url: String, headers: &mut HeaderMap, handl
         return;
     };
 
-    // Standalone services share the operator host and need its public web
-    // origin rather than the synthetic tauri://localhost origin. Compare a
-    // complete origin mapping, not just the hostname: localhost services on
-    // distinct ports are distinct security origins.
-    if websocket_matches_operator_origin(&parsed_url, env!("CONATION_TAURI_OPERATOR_ORIGIN")) {
-        headers.insert(
-            ORIGIN,
-            HeaderValue::from_static(env!("CONATION_TAURI_OPERATOR_ORIGIN")),
-        );
+    // These services (including the macroverse.workers.dev sync service) validate
+    // Origin for auth, so set it to our web origin unconditionally — independent of
+    // whether cookie state is available.
+    match parsed_url.host_str() {
+        Some("services.macro.com")
+        | Some("services-dev.macro.com")
+        | Some("macroverse.workers.dev") => {
+            headers.insert(
+                ORIGIN,
+                HeaderValue::from_static(AppEnvironment::current().web_origin()),
+            );
+        }
+        _ => {}
     }
 
     // Cookie forwarding requires the HTTP plugin's cookie jar.
@@ -377,57 +410,6 @@ fn merge_header_callback<R: Runtime>(url: String, headers: &mut HeaderMap, handl
     if let Some(cookie) = s.inner().cookies_jar.as_ref().cookies(&parsed_url) {
         tracing::trace!("inserting cookie value for {parsed_url}");
         headers.insert(COOKIE, cookie);
-    }
-}
-
-/// Returns whether a WebSocket URL is the WS equivalent of the public
-/// operator origin. HTTP operators are reached over `ws`, HTTPS operators over
-/// `wss`; hostname comparison is case-insensitive and ports include defaults.
-fn websocket_matches_operator_origin(websocket: &Url, operator_origin: &str) -> bool {
-    let Ok(operator) = Url::parse(operator_origin) else {
-        return false;
-    };
-    let expected_websocket_scheme = match operator.scheme() {
-        "http" => "ws",
-        "https" => "wss",
-        _ => return false,
-    };
-
-    websocket.scheme() == expected_websocket_scheme
-        && websocket
-            .host_str()
-            .zip(operator.host_str())
-            .is_some_and(|(websocket_host, operator_host)| {
-                websocket_host.eq_ignore_ascii_case(operator_host)
-            })
-        && websocket.port_or_known_default() == operator.port_or_known_default()
-}
-
-#[cfg(test)]
-mod websocket_origin_tests {
-    use super::websocket_matches_operator_origin;
-    use url::Url;
-
-    #[test]
-    fn only_sets_the_public_origin_for_the_matching_websocket_origin() {
-        let cases = [
-            ("ws://localhost:8090/websocket", "http://localhost:8090", true),
-            ("wss://operator.example.test/websocket", "https://operator.example.test", true),
-            ("wss://OPERATOR.example.test/websocket", "https://operator.example.test", true),
-            ("wss://operator.example.test/websocket", "https://operator.example.test:443", true),
-            ("ws://localhost:9999/websocket", "http://localhost:8090", false),
-            ("wss://operator.example.test/websocket", "http://operator.example.test", false),
-            ("ws://operator.example.test/websocket", "https://operator.example.test", false),
-            ("wss://other.example.test/websocket", "https://operator.example.test", false),
-        ];
-
-        for (websocket, operator, expected) in cases {
-            assert_eq!(
-                websocket_matches_operator_origin(&Url::parse(websocket).unwrap(), operator),
-                expected,
-                "websocket={websocket}, operator={operator}"
-            );
-        }
     }
 }
 
@@ -468,19 +450,18 @@ enum LaunchState {
 /// Convert a deep link url into a `navigate` event for the frontend router.
 #[tracing::instrument(err, skip(handle))]
 fn emit_navigate_for_deep_link(url: Url, handle: &AppHandle) -> Result<(), Report> {
-    // Universal/App links come in as https:// URLs; custom links use
-    // conation://.
-    let conation_scheme = match url.scheme() {
-        s if s == APP_SCHEME => MacroScheme::new_with_scheme(url, APP_SCHEME)?,
-        "http" | "https" => MacroScheme::from_url_with_scheme(&url, APP_SCHEME)?,
+    // Universal/App links come in as https:// URLs, custom scheme links come in as macro://
+    let macro_scheme = match url.scheme() {
+        s if s == APP_SCHEME => MacroScheme::new(url)?,
+        "http" | "https" => MacroScheme::from_url(&url)?,
         scheme => {
             return Err(report!("unexpected deep link scheme: {}", scheme));
         }
     };
 
     let payload = NavigatePayload {
-        path: conation_scheme.0.path(),
-        query: conation_scheme.0.query().unwrap_or_default(),
+        path: macro_scheme.0.path(),
+        query: macro_scheme.0.query().unwrap_or_default(),
     };
     // we send a navigate event instead of calling navigate directly
     // because navigate performs a full browser navigation
@@ -570,17 +551,4 @@ fn flush_launch_deep_link(app: AppHandle, delivery: tauri::State<'_, DeepLinkDel
         tracing::debug!("flushing deep link {url}");
         emit_navigate_for_deep_link(url, &app).log_and_consume();
     }
-}
-
-#[cfg(all(test, desktop))]
-#[test]
-fn conation_disk_domain_is_stable() {
-    assert_eq!(
-        CONATION_DISK_FILE_PROVIDER_DOMAIN,
-        "dev.conation.disk"
-    );
-    assert_eq!(
-        conation_disk::FILE_PROVIDER_DISPLAY_NAME,
-        "Conation Disk"
-    );
 }

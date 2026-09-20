@@ -137,7 +137,35 @@ fn users(emails: &[&str]) -> Vec<MacroUserIdStr<'static>> {
 }
 
 #[tokio::test]
-async fn conation_ai_bot_profile_is_builtin_without_context_lookup() {
+async fn picture_changes_refresh_all_participant_sessions_without_notifications() {
+    let realtime = FakeRealtime::default();
+    let notifications = FakeNotifications::default();
+    let contacts = FakeContacts::default();
+    let service = ChannelSideEffectService::new(
+        FakeContext::default(),
+        realtime.clone(),
+        notifications.clone(),
+        contacts.clone(),
+    );
+    let channel_id = Uuid::new_v4();
+    let recipients = users(&["owner@test.com", "member@test.com"]);
+    service
+        .handle(ChannelEvent::PictureChanged {
+            channel_id,
+            recipients: recipients.clone(),
+        })
+        .await;
+    let effects = realtime.effects.lock().unwrap();
+    assert!(
+        matches!(&effects[..], [ChannelRealtimeEffect::PictureChanged { channel_id: id, recipients: actual }]
+        if *id == channel_id && actual == &recipients)
+    );
+    assert!(notifications.effects.lock().unwrap().is_empty());
+    assert!(contacts.users.lock().unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn macro_ai_bot_profile_is_builtin_without_context_lookup() {
     let lookup_count = Arc::new(Mutex::new(0));
     let service = ChannelSideEffectService::new(
         FakeContext {
@@ -154,7 +182,7 @@ async fn conation_ai_bot_profile_is_builtin_without_context_lookup() {
         id: Uuid::new_v4(),
         channel_id: Uuid::new_v4(),
         thread_id: None,
-        sender_id: Sender::new_from_bot(bot_id::CONATION_AI_BOT_ID),
+        sender_id: Sender::new_from_bot(bot_id::MACRO_AI_BOT_ID),
         triggered_by: None,
         content: "hello".to_string(),
         created_at: now,
@@ -166,15 +194,15 @@ async fn conation_ai_bot_profile_is_builtin_without_context_lookup() {
     let profile = service
         .bot_profile_for_message(&message)
         .await
-        .expect("Conation AI should have a built-in profile");
+        .expect("Macro AI should have a built-in profile");
 
-    assert_eq!(profile.name, bot_id::CONATION_AI_NAME);
+    assert_eq!(profile.name, bot_id::MACRO_AI_NAME);
     assert_eq!(profile.avatar_url, None);
     assert_eq!(*lookup_count.lock().unwrap(), 0);
 }
 
 #[tokio::test]
-async fn non_conation_bot_profile_uses_context_lookup() {
+async fn non_macro_bot_profile_uses_context_lookup() {
     let lookup_count = Arc::new(Mutex::new(0));
     let service = ChannelSideEffectService::new(
         FakeContext {
@@ -202,7 +230,7 @@ async fn non_conation_bot_profile_uses_context_lookup() {
     let profile = service
         .bot_profile_for_message(&message)
         .await
-        .expect("non-Conation bot profile should come from context");
+        .expect("non-Macro bot profile should come from context");
 
     assert_eq!(profile.name, "Test Bot");
     assert_eq!(*lookup_count.lock().unwrap(), 1);
@@ -503,12 +531,12 @@ async fn message_changed_with_posted_notification_context_sends_notification() {
     service
         .handle(ChannelEvent::MessageChanged {
             channel_id,
-            actor: Sender::new_from_bot(bot_id::CONATION_AI_BOT_ID),
+            actor: Sender::new_from_bot(bot_id::MACRO_AI_BOT_ID),
             message: MutatedMessage {
                 id: message_id,
                 channel_id,
                 thread_id: Some(thread_id),
-                sender_id: Sender::new_from_bot(bot_id::CONATION_AI_BOT_ID),
+                sender_id: Sender::new_from_bot(bot_id::MACRO_AI_BOT_ID),
                 triggered_by: None,
                 content: "final answer".to_string(),
                 created_at: now,
@@ -545,7 +573,7 @@ async fn message_changed_with_posted_notification_context_sends_notification() {
     assert_eq!(
         *sender,
         NotificationSender::Bot {
-            name: bot_id::CONATION_AI_NAME.to_string()
+            name: bot_id::MACRO_AI_NAME.to_string()
         }
     );
     assert!(recipient_ids.contains(&recipient));
@@ -787,7 +815,7 @@ async fn user_message_with_bot_mention_enqueues_bot_trigger() {
                 },
                 ChannelParticipant {
                     channel_id,
-                    user_id: bot_id::CONATION_AI_BOT_ID.into_storage_id().to_string(),
+                    user_id: bot_id::MACRO_AI_BOT_ID.into_storage_id().to_string(),
                     role: ParticipantRole::Member,
                     joined_at: now,
                     left_at: None,
@@ -799,7 +827,7 @@ async fn user_message_with_bot_mention_enqueues_bot_trigger() {
                 thread_id: None,
                 sender_id: Sender::new_from_user(sender),
                 triggered_by: None,
-                content: "@conation help".to_string(),
+                content: "@macro help".to_string(),
                 created_at: now,
                 updated_at: now,
                 edited_at: None,
@@ -807,7 +835,7 @@ async fn user_message_with_bot_mention_enqueues_bot_trigger() {
             },
             mentions: vec![SimpleMention {
                 entity_type: "user".to_string(),
-                entity_id: bot_id::CONATION_AI_BOT_ID.into_storage_id().to_string(),
+                entity_id: bot_id::MACRO_AI_BOT_ID.into_storage_id().to_string(),
             }],
             has_attachments: false,
             attachments: Vec::new(),
@@ -821,7 +849,7 @@ async fn user_message_with_bot_mention_enqueues_bot_trigger() {
         .expect("expected bot trigger");
     assert_eq!(trigger.channel_id, channel_id);
     assert_eq!(trigger.message.id, message_id);
-    assert_eq!(trigger.mentioned_bot_ids, vec![bot_id::CONATION_AI_BOT_ID]);
+    assert_eq!(trigger.mentioned_bot_ids, vec![bot_id::MACRO_AI_BOT_ID]);
     assert!(bot_trigger_receiver.try_recv().is_err());
 }
 
@@ -1007,6 +1035,7 @@ fn contact_sync_is_derived_from_private_channel_created() {
     let event = ChannelEvent::ChannelCreated {
         channel_id: Uuid::nil(),
         actor: Sender::new_from_user(user("alice@example.com")),
+        on_behalf_of: None,
         channel_type: ChannelType::Private,
         channel_name: None,
         participant_user_ids: users(&["alice@example.com", "bob@example.com"]),
@@ -1020,10 +1049,43 @@ fn contact_sync_is_derived_from_private_channel_created() {
 }
 
 #[test]
+fn contact_sync_system_channel_created_with_subject() {
+    let event = ChannelEvent::ChannelCreated {
+        channel_id: Uuid::nil(),
+        actor: Sender::new_from_bot(bot_id::MACRO_SYSTEM_BOT_ID),
+        on_behalf_of: Some(user("owner@example.com")),
+        channel_type: ChannelType::Private,
+        channel_name: Some("Macro Support x owner".to_string()),
+        participant_user_ids: users(&["owner@example.com", "teo@macro.com"]),
+    };
+
+    let contact_users = contact_sync_users_for_event(&event).unwrap();
+
+    assert_eq!(contact_users.len(), 2);
+    assert!(contact_users.contains(&user("owner@example.com")));
+    assert!(contact_users.contains(&user("teo@macro.com")));
+}
+
+#[test]
+fn contact_sync_ignores_bot_channel_created_without_subject() {
+    let event = ChannelEvent::ChannelCreated {
+        channel_id: Uuid::nil(),
+        actor: Sender::new_from_bot(bot_id::MACRO_SYSTEM_BOT_ID),
+        on_behalf_of: None,
+        channel_type: ChannelType::Private,
+        channel_name: None,
+        participant_user_ids: users(&["alice@example.com", "bob@example.com"]),
+    };
+
+    assert!(contact_sync_users_for_event(&event).is_none());
+}
+
+#[test]
 fn contact_sync_ignores_public_channel_created() {
     let event = ChannelEvent::ChannelCreated {
         channel_id: Uuid::nil(),
         actor: Sender::new_from_user(user("alice@example.com")),
+        on_behalf_of: None,
         channel_type: ChannelType::Public,
         channel_name: None,
         participant_user_ids: users(&["alice@example.com", "bob@example.com"]),
@@ -1088,15 +1150,15 @@ fn mention(entity_type: &str, entity_id: &str) -> SimpleMention {
 }
 
 #[test]
-fn bot_mentions_recognize_bot_and_conation_ai_user_tags() {
-    let conation_ai = bot_id::CONATION_AI_BOT_ID.into_storage_id().to_string();
+fn bot_mentions_recognize_bot_and_macro_ai_user_tags() {
+    let macro_ai = bot_id::MACRO_AI_BOT_ID.into_storage_id().to_string();
     let other_bot = BotId::new_from_uuid(Uuid::new_v4());
     let other_bot_principal = other_bot.into_storage_id().to_string();
     let mentions = vec![
-        // Conation AI is surfaced through the user-mention UI.
-        mention("user", &conation_ai),
+        // Macro AI surfaced through the user-mention UI.
+        mention("user", &macro_ai),
         // Duplicate bot mentions are dispatched once.
-        mention("user", &conation_ai),
+        mention("user", &macro_ai),
         // A real user mention is ignored.
         mention("user", "macro|teo@macro.com"),
         // An explicitly bot-tagged mention.
@@ -1105,7 +1167,7 @@ fn bot_mentions_recognize_bot_and_conation_ai_user_tags() {
     ];
 
     let bots = bot_mention_ids(&mentions);
-    assert_eq!(bots, vec![bot_id::CONATION_AI_BOT_ID, other_bot]);
+    assert_eq!(bots, vec![bot_id::MACRO_AI_BOT_ID, other_bot]);
 }
 
 #[test]
@@ -1113,7 +1175,7 @@ fn bot_mentions_reject_bare_uuid_ids() {
     // Bare UUIDs are a legacy encoding; producers must send `bot|<uuid>`
     // and historical content is normalized by migration.
     let mentions = vec![
-        mention("user", &bot_id::CONATION_AI_BOT_ID.as_uuid().to_string()),
+        mention("user", &bot_id::MACRO_AI_BOT_ID.as_uuid().to_string()),
         mention(BOT_MENTION_ENTITY_TYPE, &Uuid::new_v4().to_string()),
     ];
 
@@ -1121,22 +1183,22 @@ fn bot_mentions_reject_bare_uuid_ids() {
 }
 
 #[test]
-fn conation_ai_user_mention_is_not_a_user_recipient() {
+fn macro_ai_user_mention_is_not_a_user_recipient() {
     assert!(is_bot_user_mention(&mention(
         "user",
-        bot_id::CONATION_AI_BOT_ID.into_storage_id().as_ref()
+        bot_id::MACRO_AI_BOT_ID.into_storage_id().as_ref()
     )));
     // The legacy bare-UUID encoding is no longer treated as a bot mention.
     assert!(!is_bot_user_mention(&mention(
         "user",
-        &bot_id::CONATION_AI_BOT_ID.as_uuid().to_string()
+        &bot_id::MACRO_AI_BOT_ID.as_uuid().to_string()
     )));
     assert!(!is_bot_user_mention(&mention(
         "user",
         "macro|teo@macro.com"
     )));
     assert!(is_bot_principal(
-        bot_id::CONATION_AI_BOT_ID.into_storage_id().as_ref()
+        bot_id::MACRO_AI_BOT_ID.into_storage_id().as_ref()
     ));
     assert!(!is_bot_principal("macro|teo@macro.com"));
 }
@@ -1154,12 +1216,12 @@ struct PublishedEvent {
 }
 
 impl MacroEventBroker for TestEventBroker {
-    fn send_event<E: conation_event_broker::MacroEvent + ?Sized>(
+    fn send_event<E: macro_event_broker::MacroEvent + ?Sized>(
         &self,
         event: &E,
     ) -> Result<
-        tokio::task::JoinHandle<Result<(), conation_event_broker::EventBrokerError>>,
-        conation_event_broker::EventBrokerError,
+        tokio::task::JoinHandle<Result<(), macro_event_broker::EventBrokerError>>,
+        macro_event_broker::EventBrokerError,
     > {
         self.published.lock().unwrap().push(PublishedEvent {
             topic: event.topic().to_string(),
@@ -1176,15 +1238,15 @@ struct FailingEventBroker {
 }
 
 impl MacroEventBroker for FailingEventBroker {
-    fn send_event<E: conation_event_broker::MacroEvent + ?Sized>(
+    fn send_event<E: macro_event_broker::MacroEvent + ?Sized>(
         &self,
         _event: &E,
     ) -> Result<
-        tokio::task::JoinHandle<Result<(), conation_event_broker::EventBrokerError>>,
-        conation_event_broker::EventBrokerError,
+        tokio::task::JoinHandle<Result<(), macro_event_broker::EventBrokerError>>,
+        macro_event_broker::EventBrokerError,
     > {
         *self.attempts.lock().unwrap() += 1;
-        Err(conation_event_broker::EventBrokerError::Publish(
+        Err(macro_event_broker::EventBrokerError::Publish(
             "broker unavailable".to_string(),
         ))
     }
@@ -1205,7 +1267,7 @@ fn broker_service(
         FakeNotifications::default(),
         FakeContacts::default(),
     )
-    .with_conation_event_broker(broker)
+    .with_macro_event_broker(broker)
 }
 
 fn attachment(channel_id: Uuid, message_id: Uuid) -> MutatedAttachment {
@@ -1247,6 +1309,7 @@ async fn handle_publishes_channel_created_event() {
         .handle(ChannelEvent::ChannelCreated {
             channel_id,
             actor: Sender::new_from_user(user("alice@example.com")),
+            on_behalf_of: None,
             channel_type: ChannelType::Private,
             channel_name: Some("general".to_string()),
             participant_user_ids: users(&["alice@example.com", "bob@example.com"]),
@@ -1486,7 +1549,7 @@ async fn publish_failure_does_not_break_other_side_effects() {
         FakeNotifications::default(),
         FakeContacts::default(),
     )
-    .with_conation_event_broker(broker.clone());
+    .with_macro_event_broker(broker.clone());
     let channel_id = Uuid::new_v4();
     let message_id = Uuid::new_v4();
 
@@ -1512,7 +1575,7 @@ async fn publish_failure_does_not_break_other_side_effects() {
 
 #[test]
 fn broker_events_map_participant_joined_to_participant_added() {
-    use conation_event_broker::MacroEvent as _;
+    use macro_event_broker::MacroEvent as _;
     let channel_id = Uuid::new_v4();
     let events = broker_events_for_event(&ChannelEvent::ParticipantJoined {
         channel_id,
@@ -1533,7 +1596,7 @@ fn broker_events_map_participant_joined_to_participant_added() {
 
 #[test]
 fn broker_events_map_channel_updated() {
-    use conation_event_broker::MacroEvent as _;
+    use macro_event_broker::MacroEvent as _;
     let channel_id = Uuid::new_v4();
     let events = broker_events_for_event(&ChannelEvent::ChannelUpdated {
         channel_id,
@@ -1597,14 +1660,14 @@ fn message_posted_with_mentions(
 
 #[test]
 fn broker_events_map_message_posted_mentions_per_entity() {
-    use conation_event_broker::MacroEvent as _;
+    use macro_event_broker::MacroEvent as _;
     let channel_id = Uuid::new_v4();
     let message_id = Uuid::new_v4();
     let bot_principal = BotId::new_from_uuid(Uuid::new_v4())
         .into_storage_id()
         .to_string();
-    let conation_ai_principal = bot_id::CONATION_AI_BOT_ID.into_storage_id().to_string();
-    let conation_coder_principal = bot_id::CONATION_CODER_BOT_ID.into_storage_id().to_string();
+    let macro_ai_principal = bot_id::MACRO_AI_BOT_ID.into_storage_id().to_string();
+    let macro_coder_principal = bot_id::MACRO_CODER_BOT_ID.into_storage_id().to_string();
     let uninstalled_bot_principal = BotId::new_from_uuid(Uuid::new_v4())
         .into_storage_id()
         .to_string();
@@ -1617,10 +1680,10 @@ fn broker_events_map_message_posted_mentions_per_entity() {
             mention(BOT_MENTION_ENTITY_TYPE, &bot_principal),
             // Duplicate mentions of one entity emit a single event.
             mention(BOT_MENTION_ENTITY_TYPE, &bot_principal),
-            // Conation AI surfaced through the user-mention UI still counts.
-            mention("user", &conation_ai_principal),
-            // Conation Coder is globally available without a participant row.
-            mention(BOT_MENTION_ENTITY_TYPE, &conation_coder_principal),
+            // Macro AI surfaced through the user-mention UI still counts.
+            mention("user", &macro_ai_principal),
+            // Macro Coder is globally available without a participant row.
+            mention(BOT_MENTION_ENTITY_TYPE, &macro_coder_principal),
             // A valid bot principal that is not installed emits nothing.
             mention(BOT_MENTION_ENTITY_TYPE, &uninstalled_bot_principal),
             // A bot-tagged mention with a malformed id emits nothing.
@@ -1668,8 +1731,8 @@ fn broker_events_map_message_posted_mentions_per_entity() {
         mentioned_entities,
         vec![
             ("bot".to_string(), bot_principal),
-            ("user".to_string(), conation_ai_principal),
-            ("bot".to_string(), conation_coder_principal),
+            ("user".to_string(), macro_ai_principal),
+            ("bot".to_string(), macro_coder_principal),
             ("user".to_string(), "macro|alice@example.com".to_string()),
             ("user".to_string(), "macro|bob@example.com".to_string()),
             ("document".to_string(), "doc-1".to_string()),
@@ -1680,7 +1743,7 @@ fn broker_events_map_message_posted_mentions_per_entity() {
 
 #[test]
 fn broker_events_bot_authored_mentions_emit() {
-    use conation_event_broker::MacroEvent as _;
+    use macro_event_broker::MacroEvent as _;
     let sender_bot = BotId::new_from_uuid(Uuid::new_v4());
     let sender_principal = sender_bot.into_storage_id().to_string();
     let other_bot_principal = BotId::new_from_uuid(Uuid::new_v4())
@@ -1717,7 +1780,7 @@ fn broker_events_bot_authored_mentions_emit() {
 
 #[test]
 fn broker_events_skip_mentions_on_message_changed() {
-    use conation_event_broker::MacroEvent as _;
+    use macro_event_broker::MacroEvent as _;
     let channel_id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -1803,7 +1866,7 @@ fn broker_events_skip_entity_mention_events() {
 
 #[test]
 fn mention_broker_events_map_message_posted_mentions() {
-    use conation_event_broker::MacroEvent as _;
+    use macro_event_broker::MacroEvent as _;
     let channel_id = Uuid::new_v4();
     let message_id = Uuid::new_v4();
     let now = Utc::now();
@@ -1856,7 +1919,7 @@ fn mention_broker_events_map_message_posted_mentions() {
 
 #[test]
 fn mention_broker_events_map_entity_mention_created_and_deleted() {
-    use conation_event_broker::MacroEvent as _;
+    use macro_event_broker::MacroEvent as _;
     let mention = entity_mention("bot", "bot-1");
 
     let created = mention_broker_events_for_event(&ChannelEvent::EntityMentionCreated {

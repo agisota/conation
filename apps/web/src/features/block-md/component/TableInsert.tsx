@@ -4,7 +4,7 @@ import { createCallback } from '@solid-primitives/rootless';
 import { Button } from '@ui';
 import { createSignal, Index, type ParentProps } from 'solid-js';
 import { Portal } from 'solid-js/web';
-import { mdStore } from '../signal/markdownBlockData';
+import { useMarkdownDocument } from '../context/markdown-document-context';
 
 const MAX_NUMBER_OF_ROWS = 50;
 const MAX_NUMBER_OF_COLS = 20;
@@ -110,8 +110,7 @@ export function TableInsert(
     onMenuClose?: () => void;
   }>
 ) {
-  const mdData = mdStore.get;
-  const editor = () => mdData.editor;
+  const { state } = useMarkdownDocument();
 
   const [rows, setRows] = createSignal<number>();
   const [cols, setCols] = createSignal<number>();
@@ -121,7 +120,7 @@ export function TableInsert(
 
     const clampedCols = Math.min(cols, MAX_NUMBER_OF_COLS);
     const clampedRows = Math.min(rows, MAX_NUMBER_OF_ROWS);
-    editor()?.dispatchCommand(INSERT_TABLE_COMMAND, {
+    state.editor.md.editor?.dispatchCommand(INSERT_TABLE_COMMAND, {
       columns: `${clampedCols}`,
       rows: `${clampedRows}`,
       includeHeaders: false,

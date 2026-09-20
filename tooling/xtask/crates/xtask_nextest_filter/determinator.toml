@@ -1,0 +1,13 @@
+use-default-rules = false
+
+[[path-rule]]
+globs = ["static_assets/**"]
+mark-changed = [
+  "cache-core",
+  "collab_surface",
+  "complete_graph",
+  "documents",
+  "seed_cli",
+  "sync_service",
+  "xtask_workflows",
+]

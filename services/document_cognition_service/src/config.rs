@@ -1,8 +1,8 @@
 use anyhow::Context;
-use conation_auth::InternalApiKey;
-pub use conation_env::Environment;
-use conation_env_var::{env_vars, maybe_env_vars};
-use conation_service_urls::{AiEditingWorkerUrl, DocumentCognitionServiceUrl};
+use macro_auth::InternalApiKey;
+pub use macro_env::Environment;
+use macro_env_var::{env_vars, maybe_env_vars};
+use macro_service_urls::AiEditingWorkerUrl;
 use secretsmanager_client::LocalOrRemoteSecret;
 
 use crate::core::constants::DEFAULT_DOCUMENT_BATCH_LIMIT;
@@ -49,25 +49,34 @@ maybe_env_vars!(
     pub struct PipedreamMcpUrl;
     /// Comma-separated browser origins allowed to embed Pipedream's hosted
     /// Connect UI (sent as the Connect token's `allowed_origins`). Defaults
-    /// by deploy environment: the Conation app origin plus localhost outside
-    /// production.
+    /// by deploy environment: the app origin (`https://macro.com` /
+    /// `https://dev.macro.com`) plus localhost outside production.
     pub struct PipedreamAllowedOrigins;
+    /// Absolute URL Pipedream posts connect-flow outcomes to, minted into
+    /// every Connect token. Must carry the shared secret as a `secret` query
+    /// parameter, matching `PIPEDREAM_WEBHOOK_SECRET`. When unset (or when
+    /// the secret is unset), connect tokens are minted without a webhook.
+    pub struct PipedreamWebhookUri;
+    /// Shared secret guarding the public Pipedream webhook route, which is
+    /// unauthenticated because Pipedream is the caller. When unset, the
+    /// webhook route is not mounted.
+    pub struct PipedreamWebhookSecret;
 );
 
 /// The configuration parameters for the application.
-#[derive(conation_config::MacroConfig)]
+#[derive(macro_config::MacroConfig)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Config {
     /// The connection URL for the Postgres database this application should use.
     pub database_url: DatabaseUrl,
     /// The port to listen for HTTP requests on.
-    #[conation_config_default(8080)]
+    #[macro_config_default(8080)]
     pub port: usize,
     /// The environment we are in
-    #[conation_config_default(Environment::new_or_prod())]
+    #[macro_config_default(Environment::new_or_prod())]
     pub environment: Environment,
     /// The maximum number of results in a document query
-    #[conation_config_default(DEFAULT_DOCUMENT_BATCH_LIMIT)]
+    #[macro_config_default(DEFAULT_DOCUMENT_BATCH_LIMIT)]
     pub document_batch_limit: i64,
     /// document storage bucket
     pub document_storage_bucket: DocumentStorageBucket,
@@ -105,13 +114,17 @@ pub struct Config {
     pub pipedream_mcp_url: PipedreamMcpUrl,
     /// Browser origins allowed to embed Pipedream's hosted Connect UI.
     pub pipedream_allowed_origins: PipedreamAllowedOrigins,
+    /// URL Pipedream posts connect-flow outcomes to.
+    pub pipedream_webhook_uri: PipedreamWebhookUri,
+    /// Shared secret guarding the public Pipedream webhook route.
+    pub pipedream_webhook_secret: PipedreamWebhookSecret,
     /// The internal api key
     pub internal_api_key: InternalApiKey,
     /// AI editing worker URL
-    #[conation_config_default(AiEditingWorkerUrl::unwrap_new().to_string())]
+    #[macro_config_default(AiEditingWorkerUrl::unwrap_new().to_string())]
     pub ai_editing_worker_url: String,
     /// Browser-facing base URL used for MCP OAuth redirects and client metadata.
-    #[conation_config_default(DocumentCognitionServiceUrl::unwrap_new().to_string())]
+    #[macro_config_default(default_mcp_public_url(Environment::new_or_prod()).to_string())]
     pub mcp_public_url: String,
     /// JWT secret for minting document permission tokens for the editing worker.
     pub document_permission_jwt: DocumentPermissionJwt,
@@ -119,29 +132,18 @@ pub struct Config {
     pub kafka_brokers: KafkaBrokers,
 }
 
+fn default_mcp_public_url(environment: Environment) -> &'static str {
+    match environment {
+        Environment::Production => "https://document-cognition.macro.com",
+        Environment::Develop => "https://document-cognition-dev.macro.com",
+        Environment::Local => "http://localhost:8085",
+    }
+}
+
 impl Config {
     #[tracing::instrument(err, skip_all)]
     pub fn from_env() -> anyhow::Result<Self> {
-        let config =
-            conation_config::ConfigLoader::load::<Config>().context("failed to load config")?;
-        config.resolved_pipedream_allowed_origins()?;
-        Ok(config)
-    }
-
-    pub(crate) fn resolved_pipedream_allowed_origins(&self) -> anyhow::Result<Vec<String>> {
-        match self.pipedream_allowed_origins.value() {
-            Some(origins) => conation_cors::parse_allowed_origins(origins)
-                .map_err(anyhow::Error::msg)
-                .context("invalid PIPEDREAM_ALLOWED_ORIGINS"),
-            None => Ok(match self.environment {
-                Environment::Production => vec!["https://conation.dev".to_owned()],
-                Environment::Develop => vec![
-                    "https://dev.conation.dev".to_owned(),
-                    "http://localhost:3000".to_owned(),
-                ],
-                Environment::Local => vec!["http://localhost:3000".to_owned()],
-            }),
-        }
+        macro_config::ConfigLoader::load::<Config>().context("failed to load config")
     }
 
     #[cfg(test)]
@@ -188,9 +190,11 @@ impl Config {
             pipedream_api_url: PipedreamApiUrl::Unset,
             pipedream_mcp_url: PipedreamMcpUrl::Unset,
             pipedream_allowed_origins: PipedreamAllowedOrigins::Unset,
+            pipedream_webhook_uri: PipedreamWebhookUri::Unset,
+            pipedream_webhook_secret: PipedreamWebhookSecret::Unset,
             internal_api_key: InternalApiKey::Comptime(""),
             ai_editing_worker_url: AiEditingWorkerUrl::unwrap_new().to_string(),
-            mcp_public_url: DocumentCognitionServiceUrl::unwrap_new().to_string(),
+            mcp_public_url: default_mcp_public_url(Environment::Local).to_string(),
             document_permission_jwt: DocumentPermissionJwt::Comptime("DOCUMENT_PERMISSION_JWT"),
             kafka_brokers: KafkaBrokers::Comptime("localhost:9092"),
         }

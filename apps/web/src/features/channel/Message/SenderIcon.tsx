@@ -1,6 +1,6 @@
 import { UserIcon } from '@core/component/UserIcon';
-import { isConationAiId } from '@core/constant/conationAi';
-import { senderFromStorageId } from '@queries/channel/message-sender';
+import { isMacroAgentId } from '@core/constant/macroAgent';
+import { senderFromStorageId } from '@queries/messages/message-sender';
 import type { ApiMessageSender } from '@service-storage/generated/schemas/apiMessageSender';
 import { cn } from '@ui';
 import { Show } from 'solid-js';
@@ -15,11 +15,11 @@ type SenderIconProps = {
 export function SenderIcon(props: SenderIconProps) {
   const message = useMessage();
 
-  // Bot senders render their own avatar; Conation keeps its dedicated logo
+  // Bot senders render their own avatar; Macro AI keeps its dedicated logo
   // rendering inside UserIcon.
   const botSender = (): ApiMessageSender | undefined => {
     const sender = message().sender ?? senderFromStorageId(message().sender_id);
-    if (sender.type !== 'bot' || isConationAiId(sender.id)) return undefined;
+    if (sender.type !== 'bot' || isMacroAgentId(sender.id)) return undefined;
     return sender;
   };
 

@@ -9,13 +9,13 @@ use axum::{
     http::{Request, StatusCode, header},
 };
 use chrono::{TimeZone, Utc};
-use conation_authorization::{
-    INTERNAL_API_KEY_HEADER, INTERNAL_CONATION_USER_ID_HEADER, InternalAuthConfig, JwtValidator,
+use http_body_util::BodyExt;
+use macro_authorization::{
+    INTERNAL_API_KEY_HEADER, INTERNAL_MACRO_USER_ID_HEADER, InternalAuthConfig, JwtValidator,
     MacroAuthorizationError, MacroAuthorizationServiceImpl, MacroAuthorizationState,
     ValidatedIdentity,
 };
-use conation_user_id::user_id::MacroUserIdStr;
-use http_body_util::BodyExt;
+use macro_user_id::user_id::MacroUserIdStr;
 use models_pagination::Base64Str;
 use rootcause::Report;
 use tower::ServiceExt;
@@ -133,7 +133,8 @@ fn test_router_with_channels(
             api_key: VALID_INTERNAL_KEY.to_string(),
             default_user_id: default_user_id.map(str::to_owned),
         },
-        conation_authorization::NoBotAuthorizer,
+        macro_authorization::NoBotAuthorizer,
+        macro_authorization::NoUserApiKeyAuthorizer,
     );
     let state = ChannelListRouterState::new(
         list_service,
@@ -179,7 +180,7 @@ async fn standard_internal_credentials_pass_acting_user_to_channel_list_service(
     let (router, tracker) = test_router(None);
     let request = Request::get("/channels")
         .header(INTERNAL_API_KEY_HEADER, VALID_INTERNAL_KEY)
-        .header(INTERNAL_CONATION_USER_ID_HEADER, ACTING_USER_ID)
+        .header(INTERNAL_MACRO_USER_ID_HEADER, ACTING_USER_ID)
         .body(Body::empty())
         .unwrap();
 

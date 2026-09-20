@@ -3,7 +3,8 @@ import * as pulumi from '@pulumi/pulumi';
 import { createBucket, Queue } from '../../packages/resources';
 import {
   config,
-  getConationApiToken,
+  DOCUMENT_STORAGE_GATEWAY_URL,
+  getMacroApiToken,
   getMacroNotify,
   getSearchEventQueue,
   getServiceUrl,
@@ -239,7 +240,7 @@ export const calendarReminderDispatchQueueArn =
 export const calendarReminderDispatchQueueName =
   calendarReminderDispatchQueue.queue.name;
 
-const CONATION_API_TOKENS = getConationApiToken();
+const MACRO_API_TOKENS = getMacroApiToken();
 
 const GITHUB_WEBHOOK_SECRET_KEY = config.require('github_webhook_secret_key');
 const githubWebhookSecretKeyArn: pulumi.Output<string> = aws.secretsmanager
@@ -304,7 +305,7 @@ const cloudStorageService = new CloudStorageService(
       documentStoragePermissionsKeyArn,
       cloudfrontPrivateKeySecretArn,
       syncServiceAuthKeyArn,
-      CONATION_API_TOKENS.conationApiTokenPublicKeyArn,
+      MACRO_API_TOKENS.macroApiTokenPublicKeyArn,
       githubWebhookSecretKeyArn,
       githubSyncAppPemArn,
       calWebhookSecretKeyArn,
@@ -323,15 +324,13 @@ const cloudStorageService = new CloudStorageService(
         value: stack,
       },
     ],
-    isPrivate: false,
     tags,
   }
 );
 
 export const cloudStorageServiceRoleArn = cloudStorageService.role.arn;
 export const cloudStorageServiceSgId = cloudStorageService.serviceSg.id;
-export const cloudStorageServiceAlbSgId = cloudStorageService.serviceAlbSg.id;
-export const cloudStorageServiceUrl = pulumi.interpolate`${cloudStorageService.domain}`;
+export const cloudStorageServiceUrl = DOCUMENT_STORAGE_GATEWAY_URL;
 
 const convertServiceStack = new pulumi.StackReference('convert-service-stack', {
   name: `macro-inc/convert-service/${stack}`,
