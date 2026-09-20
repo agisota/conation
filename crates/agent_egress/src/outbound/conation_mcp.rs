@@ -15,7 +15,7 @@
 
 use chrono::{DateTime, Duration as ChronoDuration, TimeZone, Utc};
 use lru::LruCache;
-use conation_auth::macro_api_token::{EncodeMacroApiTokenArgs, encode_macro_api_token};
+use conation_auth::conation_api_token::{EncodeConationApiTokenArgs, encode_conation_api_token};
 use macro_user_id::user_id::MacroUserIdStr;
 use std::num::NonZeroUsize;
 use std::sync::Mutex;
@@ -276,7 +276,7 @@ impl MacroApiTokens for MacroApiTokenSigner {
             ))
         })?;
 
-        encode_macro_api_token(EncodeMacroApiTokenArgs {
+        encode_conation_api_token(EncodeConationApiTokenArgs {
             fusionauth_id: fusion_root_id.to_string(),
             macro_user_id,
             organization_id,
