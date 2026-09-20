@@ -12,6 +12,7 @@ testing = []
 anyhow = { workspace = true }
 axum = { workspace = true }
 axum-extra = { workspace = true, features = ["cookie", "typed-header"] }
+base64 = { workspace = true }
 cookie = { workspace = true }
 jsonwebtoken = { workspace = true }
 conation_env = { path = "../conation_env" }
