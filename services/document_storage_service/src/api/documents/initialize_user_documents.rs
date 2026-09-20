@@ -290,7 +290,7 @@ pub async fn handler(
         },
     );
     let _ = state
-        .conation_event_broker
+        .macro_event_broker
         .send_event(&project_event)
         .inspect_err(|error| {
             tracing::error!(

@@ -130,7 +130,7 @@ pub async fn permanently_delete_document_handler(
                 .into_response()
         })?;
 
-    publish_document_purged_event(&state.conation_event_broker, &document_id).map_err(|e| {
+    publish_document_purged_event(&state.macro_event_broker, &document_id).map_err(|e| {
         tracing::error!(error=?e, "unable to publish document purged event");
         (
             StatusCode::INTERNAL_SERVER_ERROR,

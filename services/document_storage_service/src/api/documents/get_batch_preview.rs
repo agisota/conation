@@ -87,7 +87,7 @@ pub async fn get_batch_preview_handler(
                 let has_access = match ctx
                     .entity_access_service
                     .get_access_level(
-                        user_id.as_ref(),
+                        user_id.as_ref().map(|v| &**v),
                         &preview_data.document_id,
                         EntityType::Document,
                     )
