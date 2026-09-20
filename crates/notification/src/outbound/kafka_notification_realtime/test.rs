@@ -5,7 +5,7 @@ use chrono::Utc;
 use macro_event_broker::{
     EventBrokerError, EventPublisher, MacroEvent, MacroEventBrokerService, Spawner,
 };
-use conation_event_topics::Topic;
+use macro_event_topics::Topic;
 use macro_user_id::user_id::MacroUserIdStr;
 use model_entity::EntityType;
 

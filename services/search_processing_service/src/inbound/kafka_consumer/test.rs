@@ -36,7 +36,7 @@ use channels::domain::{
 };
 use chrono::Utc;
 use macro_event_broker::{Event, EventBrokerError, MacroEvent as _, MessageParts};
-use conation_event_topics::{
+use macro_event_topics::{
     MacroCalendarTopic, MacroCallsTopic, MacroChannelsTopic, MacroChatsTopic, MacroDocumentsTopic,
     MacroEmailTopic, MacroProjectsTopic, MacroPropertiesTopic, Topic as _,
 };

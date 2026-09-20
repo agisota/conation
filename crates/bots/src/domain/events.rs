@@ -8,7 +8,7 @@ mod test;
 
 use chrono::{DateTime, Utc};
 use macro_event_broker::{Event, MacroEvent, TopicEvent};
-use conation_event_topics::MacroBotsTopic;
+use macro_event_topics::MacroBotsTopic;
 use macro_user_id::user_id::MacroUserIdStr;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;

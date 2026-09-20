@@ -21,7 +21,7 @@ use macro_event_broker::{
     Event, KafkaConsumerAdapter, MacroEvent, MacroEventCollection as _, MacroEventConsumerService,
     TopicEvent,
 };
-use conation_event_topics::MacroTeamsTopic;
+use macro_event_topics::MacroTeamsTopic;
 use macro_user_id::user_id::MacroUserIdStr;
 use kafka_util::{GroupName, KafkaEventConsumer};
 use rdkafka::consumer::CommitMode;

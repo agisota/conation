@@ -4,7 +4,7 @@ use chrono::Utc;
 use macro_event_broker::{
     EventBrokerError, EventPublisher, MacroEvent, MacroEventBrokerService, Spawner,
 };
-use conation_event_topics::Topic;
+use macro_event_topics::Topic;
 use model_entity::EntityType;
 use serde::ser::Error as _;
 use uuid::Uuid;

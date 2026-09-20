@@ -10,7 +10,7 @@ mod test;
 use channel_sender::ChannelSender;
 use chrono::{DateTime, Utc};
 use macro_event_broker::{Event, MacroEvent, TopicEvent};
-use conation_event_topics::MacroChannelsTopic;
+use macro_event_topics::MacroChannelsTopic;
 use macro_user_id::user_id::MacroUserIdStr;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;

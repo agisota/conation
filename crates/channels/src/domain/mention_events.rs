@@ -12,7 +12,7 @@
 mod test;
 
 use macro_event_broker::{Event, MacroEvent, TopicEvent};
-use conation_event_topics::MacroMentionsTopic;
+use macro_event_topics::MacroMentionsTopic;
 use serde::{Deserialize, Serialize};
 
 use crate::domain::models::EntityMention;
