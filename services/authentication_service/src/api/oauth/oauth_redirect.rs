@@ -106,7 +106,7 @@ pub async fn handler(
     };
 
     let write_db = async |code: &SessionCode| {
-        ctx.conation_cache_client
+        ctx.macro_cache_client
             .set_mobile_login_session(code.0.as_str(), &refresh_token)
             .await
             .inspect_err(|e| {
@@ -165,7 +165,7 @@ pub async fn handler(
 
     if let Ok(user_id) = decoded_user_id.as_ref() {
         append_signed_up_param_if_new_user(
-            &ctx.conation_cache_client,
+            &ctx.macro_cache_client,
             user_id.email_str(),
             &mut redirect_url,
         )

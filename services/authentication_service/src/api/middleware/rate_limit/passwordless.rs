@@ -61,7 +61,7 @@ pub(in crate::api) async fn handler(
         .to_string();
 
     let count = match ctx
-        .conation_cache_client
+        .macro_cache_client
         .get_passwordless_rate_limit(&email_without_alias)
         .await
     {
@@ -98,7 +98,7 @@ pub(in crate::api) async fn handler(
     }
 
     if let Err(e) = ctx
-        .conation_cache_client
+        .macro_cache_client
         .increment_passwordless_rate_limit(&email_without_alias, RATE_LIMIT_CONFIG.passwordless.1)
         .await
     {
@@ -111,7 +111,7 @@ pub(in crate::api) async fn handler(
     }
 
     let daily_count = match ctx
-        .conation_cache_client
+        .macro_cache_client
         .get_daily_passwordless_rate_limit(&email_without_alias)
         .await
     {
@@ -148,7 +148,7 @@ pub(in crate::api) async fn handler(
     }
 
     if let Err(e) = ctx
-        .conation_cache_client
+        .macro_cache_client
         .increment_passwordless_daily_rate_limit(
             &email_without_alias,
             RATE_LIMIT_CONFIG.passwordless_daily.1,

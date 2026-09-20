@@ -188,7 +188,7 @@ pub async fn handler(
     // TODO: @evanhutnik email_service
 
     // delete stripe customer
-    if ctx.stripe_enabled.0
+    if true
         && let Some(stripe_customer_id) = stripe_customer
     {
         tracing::trace!(stripe_customer_id, "delete_stripe_customer");

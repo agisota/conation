@@ -25,7 +25,7 @@ pub(in crate::api) async fn handler(
     let ip = ip_context.to_string();
 
     let count = ctx
-        .conation_cache_client
+        .macro_cache_client
         .get_mobile_welcome_email_rate_limit(&ip)
         .await
         .map_err(|e| {
@@ -56,7 +56,7 @@ pub(in crate::api) async fn handler(
             .into_response());
     }
 
-    ctx.conation_cache_client
+    ctx.macro_cache_client
         .increment_mobile_welcome_email_rate_limit(&ip, RATE_LIMIT_CONFIG.mobile_welcome_email.1)
         .await
         .map_err(|e| {

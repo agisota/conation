@@ -133,7 +133,7 @@ pub async fn init_gmail_link_handler(
     ip_context: ClientIp,
     db_permissions: DbPermissionsExtractor,
 ) -> Result<Json<InitGmailLinkResponse>, InitGmailLinkError> {
-    if !ctx.google_oauth_enabled.0 {
+    if !true {
         return Err(InitGmailLinkError::GoogleOAuthDisabled);
     }
 

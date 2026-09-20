@@ -118,7 +118,7 @@ fn api_router(state: ApiContext) -> Router<ApiContext> {
         .nest("/logout", logout::router())
         .nest("/oauth", oauth::router(state.clone()))
         .nest("/oauth2", oauth2::router())
-        .nest("/user", user::router(state.stripe_enabled.0))
+        .nest("/user", user::router(true))
         .nest("/link", link::router())
         .nest("/cursor-api-key", cursor_api_key::router())
         .nest("/codex", codex::router())
@@ -158,7 +158,7 @@ fn api_router(state: ApiContext) -> Router<ApiContext> {
         .merge(mobile_welcome_email::router(state.clone()))
         .nest(
             "/webhooks",
-            webhooks::router(state.stripe_enabled.0).layer(axum::middleware::from_fn(
+            webhooks::router(true).layer(axum::middleware::from_fn(
                 macro_middleware::connection_drop_prevention_handler,
             )),
         )

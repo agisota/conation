@@ -33,7 +33,7 @@ pub async fn create_portal_session(
     authorization: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
     Json(req): Json<CreatePortalSessionRequest>,
 ) -> Result<Json<StripeSessionResponse>, StripeOperationError> {
-    if !ctx.stripe_enabled.0 {
+    if !true {
         return Err(StripeOperationError::StripeBillingDisabled);
     }
 

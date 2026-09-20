@@ -53,7 +53,7 @@ pub(in crate::api) async fn handler(
             .to_string();
 
         let count = match ctx
-            .conation_cache_client
+            .macro_cache_client
             .get_code_rate_limit(&email_without_alias)
             .await
         {
@@ -90,7 +90,7 @@ pub(in crate::api) async fn handler(
         }
 
         if let Err(e) = ctx
-            .conation_cache_client
+            .macro_cache_client
             .increment_code_rate_limit(&email_without_alias, RATE_LIMIT_CONFIG.login_code.1)
             .await
         {
@@ -103,7 +103,7 @@ pub(in crate::api) async fn handler(
         }
 
         let daily_count = match ctx
-            .conation_cache_client
+            .macro_cache_client
             .get_daily_code_rate_limit(&email_without_alias)
             .await
         {
@@ -142,7 +142,7 @@ pub(in crate::api) async fn handler(
         }
 
         if let Err(e) = ctx
-            .conation_cache_client
+            .macro_cache_client
             .increment_daily_code_rate_limit(
                 &email_without_alias,
                 RATE_LIMIT_CONFIG.login_code_daily.1,

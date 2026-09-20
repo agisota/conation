@@ -78,7 +78,7 @@ pub async fn handler(
         .to_string();
 
     let (minute, daily) = ctx
-        .conation_cache_client
+        .macro_cache_client
         .get_merge_email_rate_limits(&req.email)
         .await
         .map_err(|e| {

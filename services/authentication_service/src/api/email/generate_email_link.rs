@@ -312,7 +312,7 @@ pub async fn handler(
         })?;
 
     // Increment the rate limits
-    ctx.conation_cache_client
+    ctx.macro_cache_client
         .increment_resend_verify_email_rate_limits(&req.email)
         .await
         .map_err(|e| {

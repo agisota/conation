@@ -42,7 +42,7 @@ pub async fn handler(
     cookies: Cookies,
 ) -> Result<Response, Response> {
     let refresh_token = ctx
-        .conation_cache_client
+        .macro_cache_client
         .get_mobile_login_session(&session_code)
         .await
         .map_err(|e| {

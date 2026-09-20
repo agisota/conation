@@ -89,7 +89,7 @@ pub(in crate::api::oauth2) async fn handler(
         url.query_pairs_mut().clear().extend_pairs(filtered);
         url.query_pairs_mut().append_pair("token", &session_code);
 
-        ctx.conation_cache_client
+        ctx.macro_cache_client
             .set_mobile_login_session(&session_code, &refresh_token)
             .await
             .map_err(|e| {

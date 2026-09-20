@@ -247,7 +247,8 @@ async fn main() -> anyhow::Result<()> {
     let ses_client = ses_client::Ses::from_env(
         aws_sdk_sesv2::Client::new(&aws_config),
         &config.environment.to_string(),
-    );
+    )
+    .context("failed to initialize mail client")?;
 
     let jwt_args =
         JwtValidationArgs::new_with_secret_manager(config.environment, &secretsmanager_client)

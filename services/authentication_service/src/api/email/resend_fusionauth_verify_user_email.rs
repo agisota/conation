@@ -36,7 +36,7 @@ pub async fn handler(
     tracing::info!("resend_fusionauth_verify_user_email");
 
     let (minute, daily) = ctx
-        .conation_cache_client
+        .macro_cache_client
         .get_resend_verify_email_rate_limits(&req.email)
         .await
         .map_err(|e| {
@@ -84,7 +84,7 @@ pub async fn handler(
                 .into_response()
         })?;
 
-    ctx.conation_cache_client
+    ctx.macro_cache_client
         .increment_resend_verify_email_rate_limits(&req.email)
         .await
         .map_err(|e| {

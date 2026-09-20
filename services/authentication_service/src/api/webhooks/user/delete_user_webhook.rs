@@ -122,7 +122,7 @@ async fn delete_user(
     });
 
     // Handle stripe user deletion
-    if ctx.stripe_enabled.0
+    if true
         && let Some(stripe_customer_id) = macro_user.stripe_customer_id
     {
         tokio::spawn({
@@ -172,7 +172,7 @@ async fn delete_user(
     // MacroCache deletion
     tokio::spawn(
         {
-            let redis_client = ctx.conation_cache_client.clone();
+            let redis_client = ctx.macro_cache_client.clone();
             let user_ids = user_ids.clone();
             async move {
                 for user_id in user_ids {

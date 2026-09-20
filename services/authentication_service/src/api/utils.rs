@@ -223,11 +223,11 @@ pub fn create_refresh_token_cookie(token: &str) -> Cookie<'static> {
 /// redirect URL so the app can attribute the session as a signup for
 /// analytics. Best-effort: never fails the login.
 pub async fn append_signed_up_param_if_new_user(
-    conation_cache_client: &macro_cache_client::MacroCache,
+    macro_cache_client: &macro_cache_client::MacroCache,
     email: &str,
     redirect_url: &mut Url,
 ) {
-    match conation_cache_client.take_user_just_signed_up(email).await {
+    match macro_cache_client.take_user_just_signed_up(email).await {
         Ok(true) => {
             redirect_url
                 .query_pairs_mut()
