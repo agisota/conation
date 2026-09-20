@@ -18,12 +18,14 @@ import {
 import type { LayoutProps } from '@entity/composed/list-entity/shared';
 import { soupPropertyToProperty } from '@entity/extractors-property';
 import { Modals } from '@property/component/modal';
+import { SYSTEM_PROPERTY_IDS } from '@property/constants';
 import {
   PropertiesProvider,
   type PropertySaveHandler,
 } from '@property/context/PropertiesContext';
 import { EntityRowTags } from '@property/tags';
 import type { Property, PropertyApiValues } from '@property/types';
+import { getEntityValues } from '@property/utils';
 import { useUserId } from '@queries/auth';
 import { useBulkSaveEntityPropertiesMutation } from '@queries/properties/entity';
 import { EntityType } from '@service-properties/generated/schemas/entityType';
@@ -94,6 +96,17 @@ export function TaskGridLayout(props: LayoutProps) {
 
   const properties = createMemo(() => Array.from(propertyMap().values()));
 
+  const canEdit = createMemo(() => {
+    const me = currentId();
+    if (!me) return false;
+    if (entity().ownerId === me) return true;
+    const assignees = propertyMap().get(SYSTEM_PROPERTY_IDS.ASSIGNEES);
+    return (
+      !!assignees &&
+      getEntityValues(assignees).some((ref) => ref.entity_id === me)
+    );
+  });
+
   const saveMutation = useBulkSaveEntityPropertiesMutation();
 
   const saveOne = (property: Property, apiValues: PropertyApiValues) =>
@@ -118,7 +131,7 @@ export function TaskGridLayout(props: LayoutProps) {
     <PropertiesProvider
       entityId={props.entity.id}
       entityType={EntityType.TASK}
-      canEdit={true}
+      canEdit={canEdit()}
       properties={properties}
       onRefresh={() => {}}
       onPropertyAdded={() => {}}

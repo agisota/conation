@@ -7,10 +7,8 @@ import {
 } from '@core/block';
 import { ENABLE_MARKDOWN_LIVE_COLLABORATION } from '@core/constant/featureFlags';
 import { ThrownResultError } from '@core/util/result';
-import {
-  fetchDocumentLocation,
-  waitForDocumentSyncServiceReady,
-} from '@queries/storage/document-location';
+import { isLocalFirstId } from '@core/util/offline-create';
+import { fetchDocumentLocation } from '@queries/storage/document-location';
 import { fetchDocumentLoadBundle } from '@queries/storage/documentLoad/documentLoadBundle';
 import { makeFileFromBlob } from '@service-storage/util/makeFileFromBlob';
 import { createSyncServiceSource } from '@service-sync/source';
@@ -59,6 +57,9 @@ export const definition = defineBlock({
   async load(source, intent) {
     if (source.type === 'sync-service') {
       const documentId = source.id;
+      if (isLocalFirstId(documentId)) {
+        return LoadErrors.INVALID;
+      }
       if (intent === 'preload') {
         return ok({
           type: 'preload',
@@ -83,8 +84,6 @@ export const definition = defineBlock({
             return result;
           });
 
-        // The location span covers the sync-service readiness wait too, so it
-        // reflects when the document actually became loadable.
         const loadLocation = () =>
           loadSpan.span('doc.load.location', async (locationSpan) => {
             const result = await loadResult(
@@ -94,22 +93,10 @@ export const definition = defineBlock({
               locationSpan.error(new ThrownResultError(result.error));
               return result;
             }
-            let location = result.value;
-            if (
-              location.type === 'presignedUrl' &&
-              location.content.state === 'pending'
-            ) {
-              location = await waitForDocumentSyncServiceReady({
-                documentId,
-              }).catch((error) => {
-                console.error(
-                  'Failed waiting for markdown sync-service location',
-                  error
-                );
-                return location;
-              });
-              locationSpan.setAttr('location.pending', true);
-              return ok(location);
+            const location = result.value;
+            if (location.type !== 'syncServiceContent') {
+              locationSpan.error('markdown document not in sync-service');
+              return LoadErrors.INVALID;
             }
             return ok(location);
           });

@@ -86,6 +86,10 @@ export async function seedMissingCanvasSnapshot(opts: {
 /**
  * After the one-shot sync-service snapshot, keep a Loro doc and push/apply
  * incremental updates over the live WS source.
+ *
+ * The initial snapshot must paint the board (`onRemoteBoard`) so a second
+ * client does not keep stale DSS JSON. Parse/import failure returns false
+ * so the UI can show `canvas.error.staleLive` instead of spinning.
  */
 export async function connectCanvasLiveSync(opts: {
   documentId: string;
@@ -98,13 +102,27 @@ export async function connectCanvasLiveSync(opts: {
   onPresence?: (peers: CanvasPeerPresence[]) => void;
 }): Promise<boolean> {
   disconnectCanvasLiveSync(opts.documentId);
-  const initial = await opts.doInitialSync();
-  if (!initial) {
+  let initial: {
+    snapshot: Uint8Array;
+    awareness?: Uint8Array;
+  } | null;
+  try {
+    initial = await opts.doInitialSync();
+  } catch {
+    opts.source.cleanup();
+    return false;
+  }
+  if (!initial || initial.snapshot.length === 0) {
     opts.source.cleanup();
     return false;
   }
   const doc = new Loro();
-  importInto(doc, initial.snapshot);
+  try {
+    importInto(doc, initial.snapshot);
+  } catch {
+    opts.source.cleanup();
+    return false;
+  }
   const presence = createCanvasPresenceStore();
   if (initial.awareness) presence.apply(initial.awareness);
   const publishList = () => {
@@ -135,6 +153,8 @@ export async function connectCanvasLiveSync(opts: {
     opts.onRemoteBoard?.(boardFromDoc(doc));
   });
   sessions.set(opts.documentId, { source: opts.source, doc, unlisten, presence });
+  // Live snapshot is last-write: paint before later DSS/WAL JSON can stick.
+  opts.onRemoteBoard?.(boardFromDoc(doc));
   publishList();
   return true;
 }

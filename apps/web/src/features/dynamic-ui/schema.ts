@@ -93,6 +93,54 @@ export const ChannelMessageWidgetSchema = z.object({
 export type ChannelMessageWidget = z.infer<typeof ChannelMessageWidgetSchema>;
 
 /**
+ * An embedded calendar. `range` picks the visible window; `source` chooses
+ * the viewer's calendars (`mine`) or every visible calendar (`team`). Optional
+ * `pins` emphasize specific calendar-event entity refs.
+ */
+export const CalendarWidgetSchema = z.object({
+  type: z.literal('calendar'),
+  range: z.enum(['day', 'week', 'agenda']),
+  source: z.enum(['mine', 'team']),
+  pins: z.array(EntityRefSchema).optional(),
+});
+export type CalendarWidget = z.infer<typeof CalendarWidgetSchema>;
+
+/**
+ * A compact pin board. `favorites` hydrates the viewer's starred entities;
+ * `explicit` renders the supplied refs. `limit` caps how many pins are shown.
+ */
+export const PinsWidgetSchema = z.object({
+  type: z.literal('pins'),
+  kind: z.enum(['favorites', 'explicit']),
+  entities: z.array(EntityRefSchema).optional(),
+  limit: z.number().optional(),
+});
+export type PinsWidget = z.infer<typeof PinsWidgetSchema>;
+
+/**
+ * A single metric over a soup `Query`. `count` is the match size; `overdue`
+ * and `unread` count the subset of matches that are past-due tasks or unread.
+ */
+export const KpiWidgetSchema = z.object({
+  type: z.literal('kpi'),
+  query: QuerySchema,
+  metric: z.enum(['count', 'overdue', 'unread']),
+  title: z.string().optional(),
+});
+export type KpiWidget = z.infer<typeof KpiWidgetSchema>;
+
+/**
+ * A live activity feed. `me` is the viewer's own activity; `team` is the
+ * same feed with actors named (no separate team activity API yet).
+ */
+export const ActivityWidgetSchema = z.object({
+  type: z.literal('activity'),
+  filter: z.enum(['me', 'team']),
+  limit: z.number().optional(),
+});
+export type ActivityWidget = z.infer<typeof ActivityWidgetSchema>;
+
+/**
  * A nestable flex container. This is what makes real dashboards composable.
  *
  * `ContainerWidget` and `Widget` are mutually recursive, so their types are
@@ -129,6 +177,10 @@ export type Widget =
   | TimelineWidget
   | ListWidget
   | ChannelMessageWidget
+  | CalendarWidget
+  | PinsWidget
+  | KpiWidget
+  | ActivityWidget
   | ContainerWidget;
 
 export const WidgetSchema: z.ZodType<Widget> = z.union([
@@ -136,6 +188,10 @@ export const WidgetSchema: z.ZodType<Widget> = z.union([
   TimelineWidgetSchema,
   ListWidgetSchema,
   ChannelMessageWidgetSchema,
+  CalendarWidgetSchema,
+  PinsWidgetSchema,
+  KpiWidgetSchema,
+  ActivityWidgetSchema,
   ContainerWidgetSchema,
 ]);
 

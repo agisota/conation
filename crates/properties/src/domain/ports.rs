@@ -423,6 +423,14 @@ pub trait PermissionService: Send + Sync + 'static {
         user_ids: &[MacroUserIdStr<'a>],
         task_id: &str,
     ) -> impl Future<Output = Result<(), Self::Err>> + Send;
+
+    /// Revoke edit permissions previously granted by assigning users to a task.
+    /// Owner rows and non-Edit access are left untouched.
+    fn revoke_permissions_from_task<'a>(
+        &self,
+        user_ids: &[MacroUserIdStr<'a>],
+        task_id: &str,
+    ) -> impl Future<Output = Result<(), Self::Err>> + Send;
 }
 
 /// Notification service trait for sending notifications.

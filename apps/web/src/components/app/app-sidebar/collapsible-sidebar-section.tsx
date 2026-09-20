@@ -53,7 +53,7 @@ export function CollapsibleSidebarSection(props: {
     <button
       type="button"
       class={cn(
-        'flex h-7 w-full min-w-0 items-center justify-start gap-1 rounded-md px-2 text-left text-[13px] font-medium text-ink-extra-muted/60 transition-colors group-hover/section:bg-ink/3 group-hover/section:text-ink-muted',
+        'flex h-7 w-full min-w-0 items-center justify-start gap-1 rounded-md px-2 text-left text-sm font-medium text-ink-extra-muted/60 transition-colors group-hover/section:bg-ink/3 group-hover/section:text-ink-muted',
         props.headerMenu ? 'pr-18' : 'pr-2'
       )}
       aria-expanded={open()}

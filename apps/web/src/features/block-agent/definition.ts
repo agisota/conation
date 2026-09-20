@@ -17,14 +17,21 @@ export const definition = defineBlock({
       // `context/pending-session.ts`). One arriving from anywhere else — a
       // reloaded URL, a restored layout — names a session this tab cannot
       // find, so it is missing rather than merely slow.
-      if (isPlaceholderSessionId(source.id) && !pendingSession(source.id)) {
-        return LoadErrors.MISSING;
+      // A spawn that already failed (missing Daytona/OmniRoute, etc.) is
+      // the same: never treat the placeholder as a running session.
+      if (isPlaceholderSessionId(source.id)) {
+        const pending = pendingSession(source.id);
+        if (!pending || pending.failed()) {
+          return LoadErrors.MISSING;
+        }
       }
       return ok({ id: source.id });
     }
     return LoadErrors.MISSING;
   },
   accepted: {},
+  // Automations soup tab is still client-only and is not a string in this
+  // file; hide/gate it in soup-filter-presets (N03), not on the agent block.
 });
 
 export type AgentData = ExtractLoadType<(typeof definition)['load']>;

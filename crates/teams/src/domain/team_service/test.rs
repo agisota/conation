@@ -759,6 +759,21 @@ impl TeamRepository for MockTeamRepository {
         team_ids.truncate(limit as usize);
         async move { Ok(team_ids) }
     }
+
+    fn get_dashboard_layout(
+        &self,
+        _: &uuid::Uuid,
+    ) -> impl Future<Output = Result<Option<serde_json::Value>, TeamError>> + Send {
+        async { Ok(None) }
+    }
+
+    fn set_dashboard_layout(
+        &self,
+        _: &uuid::Uuid,
+        layout: Option<serde_json::Value>,
+    ) -> impl Future<Output = Result<Option<serde_json::Value>, TeamError>> + Send {
+        async move { Ok(layout) }
+    }
 }
 
 // -- Mock CustomerRepository --

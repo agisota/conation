@@ -19,6 +19,7 @@ import { toast } from '@core/component/Toast/Toast';
 import { agentHarnessServiceClient } from '@service-agent-harness/client';
 import { type Accessor, batch, createEffect, onCleanup } from 'solid-js';
 import { createStore } from 'solid-js/store';
+import type { AgentMode } from '../agent-mode-prefs';
 import {
   isBusy,
   nextAction,
@@ -26,6 +27,9 @@ import {
   type QueuedPrompt,
 } from '../state/composer-state';
 import type { ControlOutcome } from '../state/control-message';
+
+/** Production default: prompt for dangerous/git ops rather than auto-allow. */
+const DEFAULT_CONTROL_MODE: AgentMode = 'control';
 
 export type ComposerController = {
   /** Prompts waiting to be sent, oldest first. The head sends next. */
@@ -109,6 +113,8 @@ export function createComposerController(options: {
    * refused switch would shimmer forever.
    */
   controlOutcome?: (requestId: string) => ControlOutcome | undefined;
+  /** YOLO / per-task / control-actions. Sent on every control() so the runtime can apply it. */
+  mode?: Accessor<AgentMode>;
 }): ComposerController {
   const [state, setState] = createStore<{
     queue: QueuedPrompt[];
@@ -138,7 +144,11 @@ export function createComposerController(options: {
   const postHead = async (sessionId: string, prompt: QueuedPrompt) => {
     setState('post', { type: 'posting', promptId: prompt.id });
     const result = await agentHarnessServiceClient
-      .control(sessionId, { type: 'prompt', prompt: prompt.markdown })
+      .control(sessionId, {
+        type: 'prompt',
+        prompt: prompt.markdown,
+        mode: options.mode?.() ?? DEFAULT_CONTROL_MODE,
+      } as Parameters<(typeof agentHarnessServiceClient)['control']>[1])
       .catch(() => undefined);
 
     if (result === undefined || result.isErr()) {
@@ -157,7 +167,11 @@ export function createComposerController(options: {
   const postSetModel = async (sessionId: string, model: string) => {
     setState('requestedModel', model);
     const result = await agentHarnessServiceClient
-      .control(sessionId, { type: 'setModel', model })
+      .control(sessionId, {
+        type: 'setModel',
+        model,
+        mode: options.mode?.() ?? DEFAULT_CONTROL_MODE,
+      } as Parameters<(typeof agentHarnessServiceClient)['control']>[1])
       .catch(() => undefined);
     if (result === undefined || result.isErr()) {
       batch(() => {
@@ -179,7 +193,10 @@ export function createComposerController(options: {
 
   const postStop = async (sessionId: string) => {
     const result = await agentHarnessServiceClient
-      .control(sessionId, { type: 'stop' })
+      .control(sessionId, {
+        type: 'stop',
+        mode: options.mode?.() ?? DEFAULT_CONTROL_MODE,
+      } as Parameters<(typeof agentHarnessServiceClient)['control']>[1])
       .catch(() => undefined);
     if (result === undefined || result.isErr()) {
       setState('stopping', false);

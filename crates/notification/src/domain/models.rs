@@ -14,6 +14,8 @@ pub mod request;
 pub mod signing;
 /// Broker event models for WebSocket notification delivery.
 pub mod websocket_notification_event;
+/// Overdue / due-soon notification for task assignees.
+pub mod task_due;
 
 use crate::domain::models::{apple::APNSPushNotification, queue_message::EmailContent};
 use chrono::{DateTime, Utc};
@@ -24,6 +26,7 @@ use models_pagination::{CreatedAt, CursorVal, Identify, SortOn};
 pub use rate_limit::{RateLimitConfig, RateLimitExceeded, RateLimitKey, RateLimitResult};
 pub use recipient::{ExclusionReason, FilteredRecipient, RecipientExclusion};
 pub use request::{NotificationResult, SendNotificationRequest, SendNotificationRequestBuilder};
+pub use task_due::{TaskDueKind, TaskDueNotification};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::{borrow::Cow, sync::Arc};
 use uuid::Uuid;

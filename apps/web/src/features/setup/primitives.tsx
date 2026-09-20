@@ -60,7 +60,7 @@ export function ImportCard(props: {
         {/* Recessed status well (Layer depth 0 drops bg-surface to the
             darkest level, same as the soup active-filters bar). */}
         <Layer depth={0}>
-          <div class="flex flex-wrap items-center gap-x-1.5 gap-y-1 rounded-lg border border-edge-muted bg-surface px-3 py-2.5 text-[13px] text-ink-muted">
+          <div class="flex flex-wrap items-center gap-x-1.5 gap-y-1 rounded-lg border border-edge-muted bg-surface px-3 py-2.5 text-sm text-ink-muted">
             <Show when={props.connected}>
               <StatusDot state="connected" />
               <span class="font-medium text-ink">
@@ -132,7 +132,7 @@ export function ItemPill(props: {
     </>
   );
   const base =
-    'inline-flex h-7 max-w-72 items-center gap-1.5 rounded-lg border px-2.5 text-[13px]';
+    'inline-flex h-7 max-w-72 items-center gap-1.5 rounded-lg border px-2.5 text-sm';
 
   return (
     <Show

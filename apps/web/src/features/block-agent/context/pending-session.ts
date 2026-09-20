@@ -7,6 +7,10 @@
  * block opens immediately against a placeholder id minted here, and adopts
  * the real one when the create lands.
  *
+ * A missing Daytona/OmniRoute surface (or any other spawn failure) must
+ * mark the placeholder failed and never adopt a session id: the UI then
+ * shows an error empty-state, not a fake running agent.
+ *
  * The registry is module-level on purpose: the create is in flight before any
  * block mounts, and must survive the mount either way round — resolving
  * before the block is on screen is normal, not a race.
@@ -51,19 +55,30 @@ export function startPendingSession(): string {
   const [failed, setFailed] = createSignal(false);
   pending.set(placeholder, { sessionId, failed });
 
+  const failSpawn = () => {
+    setFailed(true);
+    toast.failure(t('agent.empty.createFailed'));
+  };
+
   void agentHarnessServiceClient
     .create({})
     .then((result) => {
       if (result.isErr()) {
-        setFailed(true);
-        toast.failure(t('agent.empty.createFailed'));
+        failSpawn();
         return;
       }
-      setSessionId(result.value.session.id);
+      const id = result.value.session?.id;
+      // A 2xx without a session id is not a live agent — treat it as spawn
+      // failure (missing Daytona/OmniRoute often lands here) rather than
+      // adopting a placeholder as if the sandbox were running.
+      if (!id) {
+        failSpawn();
+        return;
+      }
+      setSessionId(id);
     })
     .catch(() => {
-      setFailed(true);
-      toast.failure(t('agent.empty.createFailed'));
+      failSpawn();
     });
 
   return placeholder;

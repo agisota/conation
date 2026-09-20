@@ -1,7 +1,7 @@
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal, UserOrInternalCaller};
 use std::sync::Arc;
 
 use crate::api::context::AuthorizationService;
@@ -22,6 +22,7 @@ pub struct Params {
     responses(
         (status = 200, body=String, description = "Presigned URL for the file"),
         (status = 401, body=String),
+        (status = 403, body=String),
         (status = 404, body=String),
         (status = 500, body=String)
     )
@@ -49,6 +50,13 @@ pub async fn handle_get_presigned_url(
     // Check if file is uploaded
     if !metadata.is_uploaded {
         return Err((StatusCode::NOT_FOUND, "file not yet uploaded").into_response());
+    }
+
+    // Skip owner check for internal requests
+    let is_internal = user.authorization.caller == UserOrInternalCaller::Internal;
+    if !is_internal && metadata.owner_id != user.authorization.user.macro_user_id.as_ref() {
+        tracing::warn!("presign requested by non-owner");
+        return Err((StatusCode::FORBIDDEN, "access denied").into_response());
     }
 
     let s3_key = s3_key::StaticFileKey::new(&file_id).to_key();

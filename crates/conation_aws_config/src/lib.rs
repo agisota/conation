@@ -49,7 +49,10 @@ fn s3_config_builder(
     s3_endpoint_url: Option<&str>,
     s3_uses_localstack: bool,
 ) -> aws_sdk_s3::config::Builder {
-    let builder = builder.force_path_style(s3_uses_localstack || s3_endpoint_url.is_some());
+    let builder = builder.force_path_style(s3_uses_path_style_with_endpoint(
+        s3_uses_localstack,
+        s3_endpoint_url,
+    ));
     if let Some(s3_endpoint_url) = s3_endpoint_url {
         builder.endpoint_url(s3_endpoint_url)
     } else {
@@ -118,13 +121,32 @@ fn s3_uses_localstack_with_endpoint(
     localstack_enabled && s3_endpoint_url.is_none()
 }
 
+fn s3_uses_path_style_with_endpoint(
+    localstack_enabled: bool,
+    s3_endpoint_url: Option<&str>,
+) -> bool {
+    localstack_enabled || s3_endpoint_url.is_some()
+}
+
 /// Returns whether S3 requests use LocalStack.
 ///
 /// An explicit `S3_ENDPOINT_URL` takes precedence over `LOCAL_AWS_URL`, so
 /// S3-only endpoints such as MinIO do not use LocalStack URL transformations
-/// or local-storage skips.
+/// or local-storage skips. CloudFront signing skips use
+/// [`s3_uses_path_style_endpoint`] instead: that gate is true for any
+/// path-style custom endpoint, not LocalStack hostnames only.
 pub fn s3_uses_localstack() -> bool {
     s3_uses_localstack_with_endpoint(is_localstack(), S3EndpointUrl::new().as_deref())
+}
+
+/// Returns whether S3 uses path-style addressing on a non-AWS endpoint.
+///
+/// True for LocalStack and for an explicit `S3_ENDPOINT_URL` such as MinIO.
+/// Callers that skip CloudFront signing must use this rather than
+/// [`s3_uses_localstack`]: MinIO has no CloudFront distribution, and the skip
+/// is endpoint-based rather than LocalStack-hostname-only.
+pub fn s3_uses_path_style_endpoint() -> bool {
+    s3_uses_path_style_with_endpoint(is_localstack(), S3EndpointUrl::new().as_deref())
 }
 
 /// internal method to transform the local aws url
@@ -220,3 +242,44 @@ pub fn transform_aws_url_for_internal_fetch(url: &str) -> String {
 
 #[cfg(test)]
 mod test;
+
+#[cfg(test)]
+mod path_style_endpoint_tests {
+    use super::*;
+
+    #[test]
+    fn custom_minio_endpoint_is_path_style_without_localstack() {
+        assert!(s3_uses_path_style_with_endpoint(
+            false,
+            Some("http://minio:9000")
+        ));
+        assert!(!s3_uses_localstack_with_endpoint(
+            false,
+            Some("http://minio:9000")
+        ));
+    }
+
+    #[test]
+    fn localstack_without_override_is_path_style() {
+        assert!(s3_uses_path_style_with_endpoint(true, None));
+        assert!(s3_uses_localstack_with_endpoint(true, None));
+    }
+
+    #[test]
+    fn aws_default_is_not_path_style() {
+        assert!(!s3_uses_path_style_with_endpoint(false, None));
+        assert!(!s3_uses_localstack_with_endpoint(false, None));
+    }
+
+    #[test]
+    fn custom_endpoint_plus_localstack_is_path_style_not_localstack_s3() {
+        assert!(s3_uses_path_style_with_endpoint(
+            true,
+            Some("http://minio:9000")
+        ));
+        assert!(!s3_uses_localstack_with_endpoint(
+            true,
+            Some("http://minio:9000")
+        ));
+    }
+}

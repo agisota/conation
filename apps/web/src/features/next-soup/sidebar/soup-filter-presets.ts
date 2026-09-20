@@ -596,15 +596,13 @@ export const VIEW_TAB_PRESETS: Record<ListView, ViewTabConfig> = {
       all: () => ({
         // Temporary: search has no full-text index over foreign entities yet,
         // so always exclude them (matching no record id) until search supports
-        // them. CRM and non-displayable channel-thread rows are NIL-excluded
-        // the same way. Calendar events are not excluded — they carry a title
-        // index of their own. `search-supported` mirrors these exclusions
-        // client-side so entities that enter the soup cache outside this query
-        // (e.g. websocket-driven inserts) don't surface in the search feed.
+        // them. Non-displayable channel-thread rows are NIL-excluded the same
+        // way. CRM companies are not — omitting `crmCompanyId` lets the
+        // search service opt in via `include_crm`. Calendar events are not
+        // excluded — they carry a title index of their own.
         filters: {
           include: {
             foreignEntityRecordId: [NIL_UUID],
-            crmCompanyId: [NIL_UUID],
             channelThreadId: [NIL_UUID],
             // Events are title-indexed, so search returns them — but opening
             // one needs the calendar block, which the flag gates. Without it
@@ -615,7 +613,18 @@ export const VIEW_TAB_PRESETS: Record<ListView, ViewTabConfig> = {
           },
           exclude: getDisabledSnippetSubtypeExclude(),
         },
-        clientFilters: { and: ['search-supported'] },
+        // `search-supported` still drops `crm_company`, which would hide
+        // companies this query (and `include_crm`) now return.
+        clientFilters: {},
+      }),
+    },
+  },
+  dashboard: {
+    default: 'all',
+    tabs: {
+      all: () => ({
+        filters: defineQueryFilters({}),
+        clientFilters: {},
       }),
     },
   },

@@ -122,6 +122,8 @@ function createHistory() {
 
       applySnapshot(snapshot);
       setCurrentIndex(currentIndex() + 1);
+      nodes.save();
+      edges.save();
     },
 
     clearHistory: () => {

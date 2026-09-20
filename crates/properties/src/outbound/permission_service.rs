@@ -216,4 +216,35 @@ impl<Svc: EntityAccessService> PermissionService for PermissionServiceImpl<Svc> 
 
         Ok(())
     }
+
+    #[tracing::instrument(skip(self), fields(task_id = %task_id, user_count = user_ids.len()), err)]
+    async fn revoke_permissions_from_task(
+        &self,
+        user_ids: &[MacroUserIdStr<'_>],
+        task_id: &str,
+    ) -> Result<(), Self::Err> {
+        if user_ids.is_empty() {
+            return Ok(());
+        }
+
+        let conation_ids: Vec<String> = user_ids.iter().map(|s| s.to_string()).collect();
+        sqlx::query(
+            r#"
+            DELETE FROM entity_access
+            WHERE entity_id = $1
+              AND entity_type = $2
+              AND source_type = 'user'
+              AND source_id = ANY($3::text[])
+              AND access_level = 'edit'
+              AND granted_from_project_id IS NULL
+            "#,
+        )
+        .bind(conation_uuid::string_to_uuid(task_id).unwrap())
+        .bind(model_entity::EntityType::Document.as_ref())
+        .bind(&conation_ids)
+        .execute(&self.db)
+        .await?;
+
+        Ok(())
+    }
 }

@@ -1,4 +1,5 @@
 import { analytics } from '@app/lib/analytics';
+import { t } from '@app/lib/i18n';
 import { DEFAULT_CHAT_NAME } from '@block-chat/definition';
 import type { CodeFileExtension } from '@block-code/util/languageSupport';
 import { PaywallKey, usePaywallState } from '@core/constant/PaywallState';
@@ -51,14 +52,17 @@ function seedLocalFirstCreate(
   const localId = queueOfflineCreate(record);
   const title = 'title' in record ? record.title : undefined;
   const fileType = record.kind === 'canvas' ? 'canvas' : 'md';
-  setPreviewOnCreate({
-    itemId: localId,
-    itemType: 'document',
-    name: title ?? '',
-    fileType,
-    subType:
-      record.kind === 'task' ? { type: 'task', is_completed: false } : undefined,
-  });
+  // Offline markdown is not a live editor until the create flushes to a server id.
+  if (record.kind !== 'markdown') {
+    setPreviewOnCreate({
+      itemId: localId,
+      itemType: 'document',
+      name: title ?? '',
+      fileType,
+      subType:
+        record.kind === 'task' ? { type: 'task', is_completed: false } : undefined,
+    });
+  }
   try {
     insertSoupEntity({
       tag: 'document',
@@ -480,12 +484,13 @@ export async function createCanvasFileFromJsonString(args: {
   replay?: boolean;
 }) {
   const { json, title, projectId, source } = args;
+  const documentName = title ?? t('project.create.defaultNames.canvas');
   const encoder = new TextEncoder();
   const buffer = encoder.encode(json);
   const sha = await contentHash(buffer);
 
   const maybeCanvas = await storageServiceClient.createDocument({
-    documentName: title ?? 'New Canvas',
+    documentName,
     fileType: 'canvas',
     sha: sha,
     projectId,
@@ -520,7 +525,7 @@ export async function createCanvasFileFromJsonString(args: {
   setPreviewOnCreate({
     itemId: canvas.metadata.documentId,
     itemType: 'document',
-    name: title ?? 'New Canvas',
+    name: documentName,
     fileType: 'canvas',
   });
   refetchSoupEntity(canvas.metadata.documentId, 'document', {

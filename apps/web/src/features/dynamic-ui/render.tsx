@@ -1,16 +1,15 @@
 import { t } from '@app/lib/i18n';
-import { createMemo, ErrorBoundary, For, type JSX, Suspense } from 'solid-js';
+import { ErrorBoundary, For, type JSX, Suspense } from 'solid-js';
 import { match } from 'ts-pattern';
 import { Col, Row, View } from './core/Layout';
-import type {
-  View as ComposedView,
-  Widget,
-  WidgetOf,
-  WidgetType,
-} from './schema';
+import type { View as ComposedView, Widget, WidgetOf } from './schema';
+import { Activity } from './widgets/Activity';
+import { Calendar } from './widgets/Calendar';
 import { ChannelMessage } from './widgets/ChannelMessage';
+import { Kpi } from './widgets/Kpi';
 import { List } from './widgets/List';
 import { Md } from './widgets/Md';
+import { Pins } from './widgets/Pins';
 import { Timeline } from './widgets/Timeline';
 
 /**
@@ -26,16 +25,13 @@ export function Render(props: { node: Widget }): JSX.Element {
     .with({ type: 'timeline' }, (n) => <Timeline {...n} />)
     .with({ type: 'channelMessage' }, (n) => <ChannelMessage {...n} />)
     .with({ type: 'list' }, (n) => <List {...n} />)
+    .with({ type: 'calendar' }, (n) => <Calendar {...n} />)
+    .with({ type: 'pins' }, (n) => <Pins {...n} />)
+    .with({ type: 'kpi' }, (n) => <Kpi {...n} />)
+    .with({ type: 'activity' }, (n) => <Activity {...n} />)
     .with({ type: 'container' }, (n) => <Container node={n} />)
     .exhaustive();
 }
-
-/**
- * Widgets that must always span the full width of their container — they never
- * share a horizontal row, so e.g. a `list` dropped into a `row` still renders
- * full-width on its own line instead of being squished into a column.
- */
-const FULL_WIDTH_TYPES: ReadonlySet<WidgetType> = new Set<WidgetType>(['list']);
 
 /**
  * Renders a `container` node: picks {@link RowLayout} or {@link Col} by
@@ -53,56 +49,21 @@ function Container(props: { node: WidgetOf<'container'> }): JSX.Element {
     ));
 }
 
-type RowSegment =
-  | { full: true; item: Widget }
-  | { full: false; items: Widget[] };
-
 /**
- * Lays out a `row` container: full-width-only widgets ({@link FULL_WIDTH_TYPES})
- * break onto their own full-width line, while runs of normal widgets share a
- * row. Segments stack in a column.
+ * Lays out a `row` container. Children share one flex row (lists included)
+ * so two list tiles can sit side by side; `wrap` still lets them break when
+ * the container is too narrow.
  */
 function RowLayout(props: { node: WidgetOf<'container'> }): JSX.Element {
-  const segments = createMemo<RowSegment[]>(() => {
-    const out: RowSegment[] = [];
-    let run: Widget[] = [];
-    const flush = () => {
-      if (run.length > 0) {
-        out.push({ full: false, items: run });
-        run = [];
-      }
-    };
-    for (const child of props.node.children) {
-      if (FULL_WIDTH_TYPES.has(child.type)) {
-        flush();
-        out.push({ full: true, item: child });
-      } else {
-        run.push(child);
-      }
-    }
-    flush();
-    return out;
-  });
-
   return (
-    <Col gap={props.node.gap}>
-      <For each={segments()}>
-        {(seg) =>
-          seg.full ? (
-            <Render node={seg.item} />
-          ) : (
-            <Row
-              gap={props.node.gap}
-              align={props.node.align}
-              justify={props.node.justify}
-              wrap={props.node.wrap}
-            >
-              <For each={seg.items}>{(item) => <Render node={item} />}</For>
-            </Row>
-          )
-        }
-      </For>
-    </Col>
+    <Row
+      gap={props.node.gap}
+      align={props.node.align}
+      justify={props.node.justify}
+      wrap={props.node.wrap}
+    >
+      <For each={props.node.children}>{(item) => <Render node={item} />}</For>
+    </Row>
   );
 }
 

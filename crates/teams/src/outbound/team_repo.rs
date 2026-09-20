@@ -1588,4 +1588,49 @@ impl TeamRepository for TeamRepositoryImpl {
 
         Ok(team_id)
     }
+
+    #[tracing::instrument(skip(self), err)]
+    async fn get_dashboard_layout(
+        &self,
+        team_id: &uuid::Uuid,
+    ) -> Result<Option<serde_json::Value>, TeamError> {
+        let row = sqlx::query!(
+            r#"
+            SELECT dashboard_layout
+            FROM team
+            WHERE id = $1
+            "#,
+            team_id
+        )
+        .fetch_optional(&self.pool)
+        .await?;
+        match row {
+            None => Err(TeamError::TeamDoesNotExist),
+            Some(r) => Ok(r.dashboard_layout),
+        }
+    }
+
+    #[tracing::instrument(skip(self, layout), err)]
+    async fn set_dashboard_layout(
+        &self,
+        team_id: &uuid::Uuid,
+        layout: Option<serde_json::Value>,
+    ) -> Result<Option<serde_json::Value>, TeamError> {
+        let row = sqlx::query!(
+            r#"
+            UPDATE team
+            SET dashboard_layout = $2
+            WHERE id = $1
+            RETURNING dashboard_layout
+            "#,
+            team_id,
+            layout as Option<serde_json::Value>,
+        )
+        .fetch_optional(&self.pool)
+        .await?;
+        match row {
+            None => Err(TeamError::TeamDoesNotExist),
+            Some(r) => Ok(r.dashboard_layout),
+        }
+    }
 }

@@ -47,7 +47,7 @@ export function View(props: {
   const [local] = splitProps(props, ['title', 'class', 'children']);
 
   return (
-    <div class={cn('flex w-full flex-col gap-3', local.class)}>
+    <div class={cn('flex w-full min-w-0 flex-col gap-3', local.class)}>
       <Show when={local.title}>
         <h2 class="text-ink text-base font-semibold">{local.title}</h2>
       </Show>
@@ -76,7 +76,7 @@ export function Row(props: {
   return (
     <div
       class={cn(
-        'flex flex-row',
+        'flex min-w-0 flex-row',
         // Non-wrapping rows must always fit their children on one line, so
         // items are given a zero basis (flex-1) and no min-width floor and
         // simply shrink evenly to fit. A wrapping row needs the opposite:
@@ -116,7 +116,7 @@ export function Col(props: {
   return (
     <div
       class={cn(
-        'flex flex-col',
+        'flex min-w-0 flex-col',
         gapClass(local.gap),
         alignClass(local.align),
         justifyClass(local.justify),

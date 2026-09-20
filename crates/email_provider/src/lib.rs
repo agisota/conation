@@ -149,10 +149,14 @@ pub trait EmailProvider: Send + Sync {
         thread_id: Option<&str>,
     ) -> Result<SendResult, ProviderError>;
 
-    /// Register push/watch (Gmail: users.watch -> PubSub; Stalwart: JMAP push subscription)
+    /// Register push/watch.
+    ///
+    /// Gmail: `users.watch` → Pub/Sub via `gmail_client`. Stalwart JMAP Push
+    /// (RFC 8620 §7) is intentionally not implemented — return
+    /// [`ProviderError::Unsupported`] rather than a fake subscription.
     async fn register_watch(&self, access_token: &str) -> Result<WatchResult, ProviderError>;
 
-    /// Stop watch
+    /// Stop watch. Stalwart JMAP Push is not wired; return Unsupported.
     async fn stop_watch(&self, access_token: &str) -> Result<(), ProviderError>;
 }
 
@@ -2434,6 +2438,8 @@ impl EmailProvider for StalwartProvider {
         })
     }
 
+    // JMAP Push (RFC 8620 §7) is not implemented. Stalwart inbox freshness is
+    // init seed / JMAP poll. Do not pretend this is Gmail `users.watch`.
     async fn register_watch(&self, _access_token: &str) -> Result<WatchResult, ProviderError> {
         Err(ProviderError::Unsupported(
             "Stalwart JMAP push subscriptions are not wired",

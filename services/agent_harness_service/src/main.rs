@@ -23,7 +23,10 @@ use agent_egress::outbound::mcp_credentials::PipedreamMcpCredentials;
 use agent_egress::outbound::omniroute::OmniRouteCredentials;
 use agent_egress::outbound::session_authority::StoredTokenSessionAuthority;
 use agent_fold::domain::service::FoldedMessageService;
-use agent_harness::domain::model::{HarnessCommand, HarnessDefaults, SessionDefaults};
+use agent_harness::domain::error::HarnessError;
+use agent_harness::domain::model::{HarnessCommand, HarnessDefaults, SessionDefaults, SpawnContainer};
+use agent_harness::domain::ports::ContainerManager;
+use agent_harness::domain::sandbox::SandboxResizeEffect;
 use agent_harness::domain::service::AgentHarnessService;
 use agent_harness::inbound::kafka::{RoutedTrigger, route_agent_trigger};
 use agent_harness::inbound::runtime_gateway::RuntimeGatewayState;
@@ -42,6 +45,7 @@ use agent_harness::outbound::runtime_registry::RuntimeRegistry;
 use agent_inmem::outbound::log_frames::LogFrameSource;
 use agent_inmem::outbound::manager::InMemAgentManager;
 use agent_inmem::outbound::rig_engine::RigTurnEngine;
+use agent_session::domain::model::{AgentSessionId, SandboxSize};
 use agent_session::domain::ports::NoOpRealtime;
 use agent_session::domain::service::AgentSessionServiceImpl;
 use agent_session::inbound::axum_router::{
@@ -122,6 +126,84 @@ struct PendingHarnessWork {
     span: tracing::Span,
     work: HarnessWork,
     description: &'static str,
+}
+
+/// Cursor provider that is built only when `CURSOR_REPO_URL` is set.
+///
+/// `CursorContainerManager` requires a repository URL at construction, so an
+/// empty value cannot go through `new`. Booting unarmed keeps sandboxed and
+/// in-process sessions alive; spawn and resume fail instead of substituting a
+/// shared repository.
+#[derive(Clone)]
+enum CursorRuntime<Sessions, Keys> {
+    Armed(CursorContainerManager<Sessions, Keys>),
+    Unarmed,
+}
+
+fn cursor_repo_unset() -> HarnessError {
+    HarnessError::Container(
+        "CURSOR_REPO_URL is unset: @cursor spawn requires a repository URL; refusing to default to a shared repository"
+            .to_owned(),
+    )
+}
+
+impl<Sessions, Keys> ContainerManager for CursorRuntime<Sessions, Keys>
+where
+    CursorContainerManager<Sessions, Keys>: ContainerManager,
+{
+    type Transport = <CursorContainerManager<Sessions, Keys> as ContainerManager>::Transport;
+
+    async fn spawn(&self, command: SpawnContainer) -> agent_harness::domain::error::Result<Self::Transport> {
+        match self {
+            Self::Armed(manager) => manager.spawn(command).await,
+            Self::Unarmed => Err(cursor_repo_unset()),
+        }
+    }
+
+    fn resize_effect(&self, from: SandboxSize, to: SandboxSize) -> SandboxResizeEffect {
+        match self {
+            Self::Armed(manager) => manager.resize_effect(from, to),
+            Self::Unarmed => SandboxResizeEffect::Unsupported,
+        }
+    }
+
+    async fn resize(
+        &self,
+        session: AgentSessionId,
+        size: SandboxSize,
+    ) -> agent_harness::domain::error::Result<()> {
+        match self {
+            Self::Armed(manager) => manager.resize(session, size).await,
+            Self::Unarmed => Err(cursor_repo_unset()),
+        }
+    }
+
+    async fn resume(
+        &self,
+        session: AgentSessionId,
+    ) -> agent_harness::domain::error::Result<Self::Transport> {
+        match self {
+            Self::Armed(manager) => manager.resume(session).await,
+            Self::Unarmed => Err(cursor_repo_unset()),
+        }
+    }
+
+    async fn session_token(
+        &self,
+        session: AgentSessionId,
+    ) -> agent_harness::domain::error::Result<Option<String>> {
+        match self {
+            Self::Armed(manager) => manager.session_token(session).await,
+            Self::Unarmed => Ok(None),
+        }
+    }
+
+    async fn teardown(&self, session: AgentSessionId) -> agent_harness::domain::error::Result<()> {
+        match self {
+            Self::Armed(manager) => manager.teardown(session).await,
+            Self::Unarmed => Ok(()),
+        }
+    }
 }
 
 #[tokio::main]
@@ -270,18 +352,28 @@ async fn run() -> anyhow::Result<()> {
     // owner's key at spawn. Decrypt-only — registering keys belongs to the
     // authentication service, and a harness that could encrypt would be a
     // harness whose IAM role grants more than it uses.
-    let cursor_manager = CursorContainerManager::new(
-        PgCursorApiKeys::new(
-            pool.clone(),
-            KmsCursorApiKeyCipher::new(AwsKmsCiphertexts::decrypting(aws_sdk_kms::Client::new(
-                &aws_config,
-            ))),
-        ),
-        CURSOR_API_BASE_URL.to_owned(),
-        CursorRepoUrl::parse(&config.cursor_repo_url)
-            .context("CURSOR_REPO_URL is not a valid repository url")?,
-        session_repo.clone(),
-    );
+    // Empty CURSOR_REPO_URL is the Daytona-key pattern: warn and boot, fail
+    // at spawn. Construction cannot take an empty URL, and substituting
+    // Conation's repository is refused.
+    let cursor_manager = match config.cursor_repo_for_spawn() {
+        Ok(url) => CursorRuntime::Armed(CursorContainerManager::new(
+            PgCursorApiKeys::new(
+                pool.clone(),
+                KmsCursorApiKeyCipher::new(AwsKmsCiphertexts::decrypting(aws_sdk_kms::Client::new(
+                    &aws_config,
+                ))),
+            ),
+            CURSOR_API_BASE_URL.to_owned(),
+            CursorRepoUrl::parse(url).context("CURSOR_REPO_URL is not a valid repository url")?,
+            session_repo.clone(),
+        )),
+        Err(_) => {
+            tracing::warn!(
+                "CURSOR_REPO_URL is unset: @cursor spawn will fail rather than default to a shared repository"
+            );
+            CursorRuntime::Unarmed
+        }
+    };
     // Every deployment serves its sandbox bot, the configured in-memory bot,
     // and Cursor. Whether a given user can open a Cursor session depends on
     // the key they registered and is answered at spawn.
@@ -349,11 +441,17 @@ async fn run() -> anyhow::Result<()> {
     // here because the gateway puts dialed-in sockets into it and the harness
     // takes sessions out of it.
     let runtimes = RuntimeRegistry::new();
+    let harness_repo_url = config.harness_repo_for_spawn();
+    if harness_repo_url.is_empty() {
+        tracing::warn!(
+            "HARNESS_REPO_URL is unset: managed session spawn will fail rather than default to a shared repository"
+        );
+    }
     let mut defaults = HarnessDefaults::new(SessionDefaults {
         bot_id,
         model: config.harness_model.clone(),
         harness: config.harness_slug.clone(),
-        repo_url: config.harness_repo_url.clone(),
+        repo_url: harness_repo_url.clone(),
     });
     if let Some(bot) = inmem_bot {
         defaults = defaults
@@ -365,7 +463,7 @@ async fn run() -> anyhow::Result<()> {
                     harness: config.inmem_harness_slug.clone(),
                     // Stamped but unused: the in-process agent has no
                     // workspace to clone anything into.
-                    repo_url: config.harness_repo_url.clone(),
+                    repo_url: harness_repo_url,
                 },
             )
             // Sessions nothing names a bot for (the create menu's) run

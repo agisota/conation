@@ -2,7 +2,7 @@ use crate::domain::{
     events::{
         EmailEventOrigin, EmailMacroEvent, LabelRef, MessageSendCancelledMetadata, SendCancelReason,
     },
-    models::{EmailErr, Link, LinkLabel, UpdateThreadLabelsResult, label::system_labels},
+    models::{EmailErr, Link, LinkLabel, UpdateThreadLabelsResult, UserProvider, label::system_labels},
     ports::{EmailMessageEnqueuer, EmailRepo},
 };
 use conation_event_broker::MacroEventBroker;
@@ -156,50 +156,54 @@ where
         self.apply_label_db_changes(link, thread_id, &all_ids, &provider_label_id, add)
             .await?;
 
-        // Enqueue Gmail API calls via the gmail_ops worker (provider messages
-        // only). Enqueue failure means Gmail would never learn about this
-        // change (there is no worker to retry a message that was never
-        // queued), so revert the optimistic DB writes and fail — mirroring
-        // the worker's revert on permanent Gmail errors.
-        let provider_messages: Vec<(Uuid, String)> = messages
-            .iter()
-            .filter_map(|msg| {
-                msg.provider_id
-                    .as_ref()
-                    .filter(|pid| !pid.is_empty())
-                    .map(|pid| (msg.db_id, pid.clone()))
-            })
-            .collect();
+        // Enqueue Gmail API calls via the gmail_ops worker (Gmail provider
+        // messages only). Stalwart archive/star/unread stay on the optimistic
+        // DB write — gmail_ops speaks the Gmail API and must not run for
+        // UserProvider::Stalwart. Enqueue failure means Gmail would never
+        // learn about this change (there is no worker to retry a message
+        // that was never queued), so revert the optimistic DB writes and
+        // fail — mirroring the worker's revert on permanent Gmail errors.
+        if link.provider == UserProvider::Gmail {
+            let provider_messages: Vec<(Uuid, String)> = messages
+                .iter()
+                .filter_map(|msg| {
+                    msg.provider_id
+                        .as_ref()
+                        .filter(|pid| !pid.is_empty())
+                        .map(|pid| (msg.db_id, pid.clone()))
+                })
+                .collect();
 
-        if !provider_messages.is_empty() {
-            let (labels_to_add, labels_to_remove) = if add {
-                (vec![provider_label_id.clone()], vec![])
-            } else {
-                (vec![], vec![provider_label_id.clone()])
-            };
+            if !provider_messages.is_empty() {
+                let (labels_to_add, labels_to_remove) = if add {
+                    (vec![provider_label_id.clone()], vec![])
+                } else {
+                    (vec![], vec![provider_label_id.clone()])
+                };
 
-            if let Err(e) = self
-                .enqueuer
-                .enqueue_gmail_ops_modify_labels_batch(
-                    link.id,
-                    provider_messages,
-                    labels_to_add,
-                    labels_to_remove,
-                )
-                .await
-            {
-                let err = anyhow::Error::from(e);
-                tracing::error!(error=?err, "failed to enqueue gmail ops label sync, reverting database changes");
-                self.revert_label_db_changes(
-                    link,
-                    thread_id,
-                    &all_ids,
-                    &changed_ids,
-                    &provider_label_id,
-                    add,
-                )
-                .await;
-                return Err(EmailErr::EnqueueErr(err));
+                if let Err(e) = self
+                    .enqueuer
+                    .enqueue_gmail_ops_modify_labels_batch(
+                        link.id,
+                        provider_messages,
+                        labels_to_add,
+                        labels_to_remove,
+                    )
+                    .await
+                {
+                    let err = anyhow::Error::from(e);
+                    tracing::error!(error=?err, "failed to enqueue gmail ops label sync, reverting database changes");
+                    self.revert_label_db_changes(
+                        link,
+                        thread_id,
+                        &all_ids,
+                        &changed_ids,
+                        &provider_label_id,
+                        add,
+                    )
+                    .await;
+                    return Err(EmailErr::EnqueueErr(err));
+                }
             }
         }
 

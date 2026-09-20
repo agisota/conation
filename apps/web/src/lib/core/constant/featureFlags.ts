@@ -264,7 +264,7 @@ export const ENABLE_CANVAS_HEIC = resolveFeatureFlag(
 // TODO - comments are not stable in markdown multiplayer, they will need more work.
 export const ENABLE_MARKDOWN_COMMENTS = resolveFeatureFlag(
   'ENABLE_MARKDOWN_COMMENTS',
-  true
+  false
 );
 
 export const ENABLE_REFERENCES_MODAL = resolveFeatureFlag(
@@ -346,7 +346,7 @@ export const ENABLE_EMAIL_SHARING = resolveFeatureFlag(
 
 export const ENABLE_DOCUMENT_MENTION_NOTIFICATIONS = resolveFeatureFlag(
   'ENABLE_DOCUMENT_MENTION_NOTIFICATIONS',
-  DEV_MODE_ENV
+  true
 );
 
 // Auto expand stand-alone mentions to richer previews in channels
@@ -632,28 +632,21 @@ export function ENABLE_CALENDAR_SEARCH_UI(): boolean {
   );
 }
 
-// The "Enable calendar" prompt on phones. Off by default everywhere,
-// including dev: the mobile toast layout drops the body and the close button,
-// so the prompt lands as an undismissable one-line bar over the composer.
-// Settings › Email keeps a per-inbox "Enable calendar" button, so nothing
-// becomes unreachable while this is off. Flip it on in PostHog once the
-// mobile layout is fixed, or locally with
-// VITE_ENABLE_CALENDAR_PROMPT_MOBILE=true.
+// The "Enable calendar" prompt on phones. Default on; override with
+// VITE_ENABLE_CALENDAR_PROMPT_MOBILE. Settings › Email keeps a per-inbox
+// "Enable calendar" button if this is turned off.
 export const ENABLE_CALENDAR_PROMPT_MOBILE_FLAG =
   'enable-calendar-prompt-mobile';
-export const ENABLE_CALENDAR_PROMPT_MOBILE_OVERRIDE = getFeatureFlagOverride(
-  'ENABLE_CALENDAR_PROMPT_MOBILE'
-);
+export const ENABLE_CALENDAR_PROMPT_MOBILE_OVERRIDE =
+  getFeatureFlagOverride('ENABLE_CALENDAR_PROMPT_MOBILE') ?? true;
 
 // The "Enable calendar" prompt on desktop/web, the counterpart to
-// `enable-calendar-prompt-mobile`. Off by default everywhere, including dev,
-// until the PostHog rollout is raised; Settings › Email keeps a per-inbox
-// "Enable calendar" button, so nothing becomes unreachable while this is off.
-// Override locally with VITE_ENABLE_CALENDAR_PROMPT_WEB=true.
+// `enable-calendar-prompt-mobile`. Default on; override with
+// VITE_ENABLE_CALENDAR_PROMPT_WEB. Settings › Email keeps a per-inbox
+// "Enable calendar" button if this is turned off.
 export const ENABLE_CALENDAR_PROMPT_WEB_FLAG = 'enable-calendar-prompt-web';
-export const ENABLE_CALENDAR_PROMPT_WEB_OVERRIDE = getFeatureFlagOverride(
-  'ENABLE_CALENDAR_PROMPT_WEB'
-);
+export const ENABLE_CALENDAR_PROMPT_WEB_OVERRIDE =
+  getFeatureFlagOverride('ENABLE_CALENDAR_PROMPT_WEB') ?? true;
 
 // Sharing a personal tag with the team: the "Share with team" action on
 // personal tags in Settings › Tags, and the prompt that merges into an

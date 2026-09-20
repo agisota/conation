@@ -32,6 +32,8 @@ pub mod remove_user_from_team;
 pub mod toggle_auto_join_domain;
 /// Toggle whether non-admin members may invite users to a team.
 pub mod toggle_non_admin_invites;
+/// Team-default dashboard layout.
+pub mod team_dashboard;
 
 #[cfg(test)]
 mod test;
@@ -115,6 +117,11 @@ where
         .route(
             "/crm",
             patch(patch_team_crm_settings::handler::<T, Eas, Auth>),
+        )
+        .route(
+            "/dashboard",
+            get(team_dashboard::get_handler::<T, Eas, Auth>)
+                .put(team_dashboard::put_handler::<T, Eas, Auth>),
         )
         .route(
             "/auto-join-domain/toggle",

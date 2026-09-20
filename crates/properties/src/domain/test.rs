@@ -2396,7 +2396,7 @@ async fn entity_property_event_required_property_failure_publishes_nothing() {
 
 #[tokio::test]
 async fn test_handle_task_assignee_permissions_grants_permissions() {
-    let repo = MockPropertiesRepo::new();
+    let mut repo = MockPropertiesRepo::new();
     let mut perm_service = MockPermissionService::new();
 
     let task_id = Uuid::from_u128(0x12345678_1234_1234_1234_123456789abc);
@@ -2404,6 +2404,9 @@ async fn test_handle_task_assignee_permissions_grants_permissions() {
         MacroUserIdStr::parse_from_str("macro|user1@test.com").unwrap(),
         MacroUserIdStr::parse_from_str("macro|user2@test.com").unwrap(),
     ];
+
+    repo.expect_get_entity_property_value()
+        .returning(|_, _, _| Box::pin(async { Ok(None) }));
 
     perm_service
         .expect_grant_permissions_to_task()
@@ -2428,10 +2431,13 @@ async fn test_handle_task_assignee_permissions_grants_permissions() {
 
 #[tokio::test]
 async fn test_handle_task_assignee_permissions_empty_assignees() {
-    let repo = MockPropertiesRepo::new();
+    let mut repo = MockPropertiesRepo::new();
     let perm_service = MockPermissionService::new();
 
     let task_id = Uuid::from_u128(0x12345678_1234_1234_1234_123456789abc);
+
+    repo.expect_get_entity_property_value()
+        .returning(|_, _, _| Box::pin(async { Ok(None) }));
 
     let service =
         PropertiesServiceImpl::new(repo, Some(perm_service), None::<MockNotificationService>);
@@ -2445,9 +2451,12 @@ async fn test_handle_task_assignee_permissions_empty_assignees() {
 
 #[tokio::test]
 async fn test_handle_task_assignee_permissions_no_service() {
-    let repo = MockPropertiesRepo::new();
+    let mut repo = MockPropertiesRepo::new();
     let task_id = Uuid::from_u128(0x12345678_1234_1234_1234_123456789abc);
     let assignee_ids = vec![MacroUserIdStr::parse_from_str("macro|user1@test.com").unwrap()];
+
+    repo.expect_get_entity_property_value()
+        .returning(|_, _, _| Box::pin(async { Ok(None) }));
 
     let service = PropertiesServiceImpl::new(
         repo,
@@ -2468,11 +2477,14 @@ async fn test_handle_task_assignee_permissions_no_service() {
 
 #[tokio::test]
 async fn test_handle_task_assignee_permissions_error_propagates() {
-    let repo = MockPropertiesRepo::new();
+    let mut repo = MockPropertiesRepo::new();
     let mut perm_service = MockPermissionService::new();
 
     let task_id = Uuid::from_u128(0x12345678_1234_1234_1234_123456789abc);
     let assignee_ids = vec![MacroUserIdStr::parse_from_str("macro|user1@test.com").unwrap()];
+
+    repo.expect_get_entity_property_value()
+        .returning(|_, _, _| Box::pin(async { Ok(None) }));
 
     perm_service
         .expect_grant_permissions_to_task()
@@ -2487,6 +2499,92 @@ async fn test_handle_task_assignee_permissions_error_propagates() {
         .unwrap_err();
 
     assert_eq!(err.to_string(), "permission error");
+}
+
+#[tokio::test]
+async fn test_handle_task_assignee_permissions_revokes_removed_assignees() {
+    let mut repo = MockPropertiesRepo::new();
+    let mut perm_service = MockPermissionService::new();
+
+    let task_id = Uuid::from_u128(0x12345678_1234_1234_1234_123456789abc);
+    let remaining = MacroUserIdStr::parse_from_str("macro|user1@test.com").unwrap();
+
+    repo.expect_get_entity_property_value()
+        .returning(move |_, _, _| {
+            let refs = vec![
+                models_properties::shared::EntityReference {
+                    entity_type: EntityType::User,
+                    entity_id: "macro|user1@test.com".to_string(),
+                    specific_message_id: None,
+                },
+                models_properties::shared::EntityReference {
+                    entity_type: EntityType::User,
+                    entity_id: "macro|user2@test.com".to_string(),
+                    specific_message_id: None,
+                },
+            ];
+            Box::pin(async { Ok(Some(PropertyValue::EntityRef(refs))) })
+        });
+
+    let remaining_clone = remaining.clone();
+    perm_service
+        .expect_grant_permissions_to_task()
+        .withf(move |user_ids, tid| {
+            user_ids == [remaining_clone.clone()] && tid == task_id.to_string()
+        })
+        .returning(|_, _| Box::pin(async { Ok(()) }));
+
+    perm_service
+        .expect_revoke_permissions_from_task()
+        .withf(move |user_ids, tid| {
+            user_ids.len() == 1
+                && user_ids[0].as_ref() == "macro|user2@test.com"
+                && tid == task_id.to_string()
+        })
+        .returning(|_, _| Box::pin(async { Ok(()) }));
+
+    let service =
+        PropertiesServiceImpl::new(repo, Some(perm_service), None::<MockNotificationService>);
+
+    service
+        .handle_task_assignee_permissions(task_id, &[remaining])
+        .await
+        .unwrap();
+}
+
+#[tokio::test]
+async fn test_handle_task_assignee_permissions_unassign_all_revokes_edit() {
+    let mut repo = MockPropertiesRepo::new();
+    let mut perm_service = MockPermissionService::new();
+
+    let task_id = Uuid::from_u128(0x12345678_1234_1234_1234_123456789abc);
+
+    repo.expect_get_entity_property_value()
+        .returning(move |_, _, _| {
+            let refs = vec![models_properties::shared::EntityReference {
+                entity_type: EntityType::User,
+                entity_id: "macro|user1@test.com".to_string(),
+                specific_message_id: None,
+            }];
+            Box::pin(async { Ok(Some(PropertyValue::EntityRef(refs))) })
+        });
+
+    perm_service
+        .expect_revoke_permissions_from_task()
+        .withf(move |user_ids, tid| {
+            user_ids.len() == 1
+                && user_ids[0].as_ref() == "macro|user1@test.com"
+                && tid == task_id.to_string()
+        })
+        .returning(|_, _| Box::pin(async { Ok(()) }));
+
+    let service =
+        PropertiesServiceImpl::new(repo, Some(perm_service), None::<MockNotificationService>);
+
+    service
+        .handle_task_assignee_permissions(task_id, &[])
+        .await
+        .unwrap();
 }
 
 // ============================================================================
@@ -2737,16 +2835,18 @@ async fn test_handle_task_assignees_property_calls_both_handlers() {
 
 #[tokio::test]
 async fn test_handle_task_assignees_property_clearing_assignees() {
-    let repo = MockPropertiesRepo::new();
+    let mut repo = MockPropertiesRepo::new();
     let perm_service = MockPermissionService::new();
     let notif_service = MockNotificationService::new();
 
     let task_id = Uuid::from_u128(0x12345678_1234_1234_1234_123456789abc);
     let entity_id = task_id.to_string();
 
+    repo.expect_get_entity_property_value()
+        .returning(|_, _, _| Box::pin(async { Ok(None) }));
+
     let service = PropertiesServiceImpl::new(repo, Some(perm_service), Some(notif_service));
 
-    // Should return Ok without calling any handlers
     service
         .handle_task_assignees_property(
             &entity_id,
@@ -3086,6 +3186,8 @@ async fn canonical_document_task_assignee_write_grants_permissions() {
             }))
         })
     });
+    repo.expect_get_entity_property_value()
+        .returning(|_, _, _| Box::pin(async { Ok(None) }));
     repo.expect_upsert_entity_property()
         .withf(move |entity_id, entity_type, property_id, _| {
             entity_id == task_id.to_string()

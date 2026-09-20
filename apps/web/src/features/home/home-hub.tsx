@@ -196,7 +196,7 @@ export function RecommendedSection() {
             <button
               type="button"
               class="group flex w-full items-center gap-3.5 rounded-xl border border-edge-muted bg-active px-4 py-3 text-left transition-colors hover:bg-hover"
-              onClick={() => openSettings('Email')}
+              onClick={() => openSettings('Connected')}
             >
               <div class="min-w-0 flex-1">
                 <div class="truncate text-sm font-medium text-ink">

@@ -80,6 +80,7 @@ const numberOrUndefined = (
   return n == null || Number.isNaN(num) ? undefined : num;
 };
 
+type CanvasLoadError = 'canvas.error.parseFailed' | 'canvas.error.staleLive';
 type BlockDataState = 'loading' | 'error' | 'blockdata' | 'initialized';
 
 export type BlockCanvasProps = {
@@ -100,6 +101,7 @@ export default function BlockCanvas(props: BlockCanvasProps) {
   const [pending] = pendingUpdates;
   const [, setRenderState] = renderStateStore;
   const [dataState, setDataState] = createSignal<BlockDataState>('loading');
+  const [loadError, setLoadError] = createSignal<CanvasLoadError | null>(null);
   const [visible, setVisible] = createSignal(false);
   const [offline, setOffline] = createSignal(
     typeof navigator !== 'undefined' ? !navigator.onLine : false
@@ -211,9 +213,12 @@ export default function BlockCanvas(props: BlockCanvasProps) {
   createEffect(() => {
     const file = blockFileSignal();
     refetch();
+    setLoadError(null);
     setDataState('blockdata');
     if (!file) {
+      setLoadError('canvas.error.parseFailed');
       setDataState('error');
+      toast.failure(t('canvas.error.parseFailed'));
       return;
     }
     parseCanvasFile(file);
@@ -328,10 +333,17 @@ export default function BlockCanvas(props: BlockCanvasProps) {
       }
       seedCanvasLoroPrior(documentId, board as CanvasLoroJson);
       await loadCanvasData(board as Canvas);
+      let token: string | undefined;
       try {
-        const token = await getPermissionToken('canvas', documentId);
-        if (token) {
-          await seedMissingCanvasSnapshot({
+        token = await getPermissionToken('canvas', documentId);
+      } catch (tokenError) {
+        console.error(tokenError);
+      }
+      if (token) {
+        let liveSeed: 'exists' | 'initialized' | 'skipped' | undefined;
+        let remoteSnapshotLen = 0;
+        try {
+          liveSeed = await seedMissingCanvasSnapshot({
             documentId,
             board: board as CanvasLoroJson,
             api: {
@@ -352,21 +364,40 @@ export default function BlockCanvas(props: BlockCanvasProps) {
             documentId,
             token
           );
-          await connectCanvasLiveSync({
+          const connected = await connectCanvasLiveSync({
             documentId,
             source: source as CanvasLiveSource,
             doInitialSync: async () => {
               const result = await doInitialSync();
               if (result.isErr()) return null;
+              remoteSnapshotLen = result.value.snapshot.length;
               return result.value;
             },
             onRemoteBoard: (remote) => {
+              seedCanvasLoroPrior(documentId, remote);
               void loadCanvasData(remote as Canvas);
             },
           });
+          // Empty/missing snapshot is a new board: keep parsed DSS JSON.
+          // staleLive only if a non-empty remote session failed to apply.
+          if (
+            !connected &&
+            (remoteSnapshotLen > 0 || liveSeed === 'exists')
+          ) {
+            setLoadError('canvas.error.staleLive');
+            setDataState('error');
+            toast.failure(t('canvas.error.staleLive'));
+            return file;
+          }
+        } catch (syncError) {
+          console.error(syncError);
+          if (remoteSnapshotLen > 0 || liveSeed === 'exists') {
+            setLoadError('canvas.error.staleLive');
+            setDataState('error');
+            toast.failure(t('canvas.error.staleLive'));
+            return file;
+          }
         }
-      } catch (syncError) {
-        console.error(syncError);
       }
       setDataState('initialized');
       setPendingOffline(!!pending);
@@ -375,6 +406,7 @@ export default function BlockCanvas(props: BlockCanvasProps) {
         setPendingOffline(!!peekOfflineCanvas(documentId));
       }
     } catch (e) {
+      setLoadError('canvas.error.parseFailed');
       setDataState('error');
       toast.failure(t('canvas.error.parseFailed'));
       console.error(e);
@@ -383,7 +415,21 @@ export default function BlockCanvas(props: BlockCanvasProps) {
   }
 
   const CanvasBody = () => (
-    <Show when={dataState() === 'initialized'} fallback={<LoadingView />}>
+    <Show
+      when={dataState() === 'initialized'}
+      fallback={
+        <Show when={dataState() === 'error'} fallback={<LoadingView />}>
+          <div
+            role="alert"
+            class="size-full flex items-center justify-center px-3 text-sm text-alert-ink"
+          >
+            {loadError() === 'canvas.error.staleLive'
+              ? t('canvas.error.staleLive')
+              : t('canvas.error.parseFailed')}
+          </div>
+        </Show>
+      }
+    >
       <CanvasController>
         <Show when={visible()}>
           <CanvasRenderer />

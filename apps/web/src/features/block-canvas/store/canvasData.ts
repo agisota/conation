@@ -31,7 +31,10 @@ import { sharedInstance } from '../util/sharedInstance';
 import { type Vector2, vec2 } from '../util/vector2';
 import {
   canvasDssPutAfterWal,
+  type CanvasLoroJson,
   hasCanvasLoro,
+  mergeCanvasLoroUpdates,
+  peekCanvasLoro,
   recordCanvasLoro,
 } from './canvas-loro';
 import { peekCanvasLiveSnapshot, pushCanvasLiveUpdate } from './canvas-sync';
@@ -41,6 +44,7 @@ import {
   clearOfflineCanvas,
   ensureOfflineCanvasFlush,
   type OfflineCanvasJson,
+  peekOfflineCanvas,
   recordOfflineCanvas,
 } from './offline-canvas';
 
@@ -816,6 +820,45 @@ export const useExportCanvasData = sharedInstance(() => {
   };
 });
 
+function canvasEntityId(item: unknown): string | undefined {
+  if (!item || typeof item !== 'object' || Array.isArray(item)) return;
+  if (!('id' in item)) return;
+  return typeof item.id === 'string' ? item.id : undefined;
+}
+
+function appendUnseenPeerEntities(
+  client: OfflineCanvasJson | Canvas,
+  live: CanvasLoroJson,
+  known: CanvasLoroJson | null
+): CanvasLoroJson {
+  const take = (
+    liveItems: unknown[] | undefined,
+    clientItems: unknown[] | undefined,
+    knownItems: unknown[] | undefined
+  ) => {
+    const have = new Set<string>();
+    for (const item of [...(clientItems ?? []), ...(knownItems ?? [])]) {
+      const id = canvasEntityId(item);
+      if (id) have.add(id);
+    }
+    return (liveItems ?? []).filter((item) => {
+      const id = canvasEntityId(item);
+      return !!id && !have.has(id);
+    });
+  };
+  const nodes = take(live.nodes, client.nodes, known?.nodes);
+  const edges = take(live.edges, client.edges, known?.edges);
+  const groups = take(live.groups, client.groups, known?.groups);
+  if (!nodes.length && !edges.length && !groups.length) {
+    return client;
+  }
+  return {
+    nodes: [...(client.nodes ?? []), ...nodes],
+    edges: [...(client.edges ?? []), ...edges],
+    groups: [...(client.groups ?? []), ...groups],
+  };
+}
+
 // Immediate save function (not debounced)
 async function putCanvasBlob(
   documentId: string,
@@ -823,7 +866,15 @@ async function putCanvasBlob(
 ): Promise<boolean> {
   const live = peekCanvasLiveSnapshot(documentId);
   const hadLocalWal = hasCanvasLoro(documentId);
-  const update = recordCanvasLoro(documentId, json, {
+  const board =
+    live && live.byteLength > 0
+      ? appendUnseenPeerEntities(
+          json,
+          mergeCanvasLoroUpdates([live]),
+          peekCanvasLoro(documentId) ?? peekOfflineCanvas(documentId)
+        )
+      : json;
+  const update = recordCanvasLoro(documentId, board, {
     snapshot: live ?? undefined,
     board: peekOfflineCanvas(documentId) ?? undefined,
   });
@@ -833,7 +884,7 @@ async function putCanvasBlob(
   const put = canvasDssPutAfterWal({
     hadLocalWal,
     liveSnapshotBytes: live?.byteLength ?? 0,
-    clientBoard: json,
+    clientBoard: board,
   });
   if (put.action === 'skip') {
     clearOfflineCanvas(documentId);

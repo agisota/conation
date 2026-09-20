@@ -1,8 +1,12 @@
 import { Col, Row, View } from './core/Layout';
 import { Compose, Render } from './render';
+import { Activity } from './widgets/Activity';
+import { Calendar } from './widgets/Calendar';
 import { ChannelMessage } from './widgets/ChannelMessage';
+import { Kpi } from './widgets/Kpi';
 import { List } from './widgets/List';
 import { Md } from './widgets/Md';
+import { Pins } from './widgets/Pins';
 import { Timeline } from './widgets/Timeline';
 
 /**
@@ -20,4 +24,8 @@ export const Widget = {
   Timeline,
   ChannelMessage,
   List,
+  Calendar,
+  Pins,
+  Kpi,
+  Activity,
 };

@@ -307,7 +307,7 @@ export function runCreateAction(
         createFn: async () => {
           const result = await createCanvasFileFromJsonString({
             json: JSON.stringify({ nodes: [], edges: [] }),
-            title: 'New Canvas',
+            title: t('project.create.defaultNames.canvas'),
             source,
           });
           if ('error' in result) return;

@@ -31,6 +31,7 @@ import EmptyStateNoSearchMatchGraphic from '@design/empty-state-no-search-match.
 import EmptyStateTasksGraphic from '@design/empty-state-tasks.svg';
 import PlusIcon from '@phosphor/plus.svg';
 import { useCurrentTeamQuery, useIsTeamAdmin } from '@queries/team/teams';
+import { UserProvider } from '@service-email/generated/schemas/userProvider';
 import { EmptyStatePanel, FilteredHiddenBanner } from '@ui';
 import { type Component, type JSXElement, Match, Switch } from 'solid-js';
 import { FolderDropZone } from './FolderDropZone';
@@ -132,6 +133,13 @@ export function EmptyState(props: {
   // Signup may already have a Stalwart mailbox. Never treat Gmail as required.
   const mailConnected = () =>
     emailActive() || hasStalwartMailbox(emailLinksQuery.data?.links);
+  // Stalwart-only: seeded local mail, not live internet inbound (JMAP watch
+  // is still unsupported). Gmail alongside Stalwart can still receive live mail.
+  const stalwartLocalEmpty = () => {
+    const links = emailLinksQuery.data?.links;
+    if (!hasStalwartMailbox(links)) return false;
+    return !(links ?? []).some((link) => link.provider === UserProvider.GMAIL);
+  };
   const documentationLabel = t('soup.empty.documentation');
 
   const onCreateMailbox = () => {
@@ -255,8 +263,12 @@ export function EmptyState(props: {
           // should match: Signal is the important stuff, Noise is explicitly
           // the low-priority stuff, and All spans everything.
           const tab = soup.activeTab();
-          const { title, description } =
-            tab === 'noise'
+          const { title, description } = stalwartLocalEmpty()
+            ? {
+                title: t('soup.empty.inbox.zeroTitle'),
+                description: t('email.empty.stalwartLocal'),
+              }
+            : tab === 'noise'
               ? {
                   title: t('soup.empty.inbox.noNoiseTitle'),
                   description: (
@@ -292,7 +304,11 @@ export function EmptyState(props: {
         <EmptyStatePanel
           graphic={EmptyStateInboxTrayGraphic}
           title={t('soup.empty.mail.zeroTitle')}
-          description={t('soup.empty.mail.zeroDescription')}
+          description={
+            stalwartLocalEmpty()
+              ? t('email.empty.stalwartLocal')
+              : t('soup.empty.mail.zeroDescription')
+          }
           documentationUrl={`${DOCS_BASE}/product/email`}
           documentationLabel={documentationLabel}
         />

@@ -408,6 +408,21 @@ impl TeamService for FakeTeamService {
     ) -> Result<Option<TeamMember<'static>>, TryJoinTeamByDomainError> {
         panic!("unexpected try_join_team_by_domain call")
     }
+
+    async fn get_dashboard_layout(
+        &self,
+        _entity_access_receipt: EntityAccessReceipt<MemberTeamRole>,
+    ) -> Result<Option<Value>, TeamError> {
+        panic!("unexpected get_dashboard_layout call")
+    }
+
+    async fn set_dashboard_layout(
+        &self,
+        _entity_access_receipt: EntityAccessReceipt<AdminTeamRole>,
+        _layout: Option<Value>,
+    ) -> Result<Option<Value>, TeamError> {
+        panic!("unexpected set_dashboard_layout call")
+    }
 }
 
 #[derive(Clone, Default)]

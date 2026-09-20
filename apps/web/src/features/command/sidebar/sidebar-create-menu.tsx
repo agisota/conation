@@ -77,7 +77,7 @@ export const SidebarCreateMenu = (props: {
         fallback={
           <Dropdown.Trigger
             as={NavRow}
-            class="center h-8 bg-ink/4 text-[13px]"
+            class="center h-8 bg-ink/4 text-sm"
             fullWidth
             tooltipPlacement="right"
             tooltipDisabled={!props.isSlim()}

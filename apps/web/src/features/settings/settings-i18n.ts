@@ -105,6 +105,10 @@ const NOTIFICATION_EVENT_KEYS: Record<
     description: 'settings.notifications.events.taskAssignments.description',
     label: 'settings.notifications.events.taskAssignments.label',
   },
+  task_due: {
+    description: 'settings.notifications.events.taskDue.description',
+    label: 'settings.notifications.events.taskDue.label',
+  },
 };
 
 const MUTED_ENTITY_KEYS: Record<string, string> = {

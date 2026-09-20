@@ -10,8 +10,11 @@ use axum::extract::Json;
 use axum::extract::State;
 use axum::response::{IntoResponse, Response};
 use conation_authorization::{OptionalMacroAuthorizationExtractor, UserOrInternalService};
+use entity_access::domain::models::AccessError;
+use entity_access::domain::ports::EntityAccessService;
 use model::document::{DocumentPreview, DocumentPreviewV2, WithDocumentId};
 use model::response::{GenericErrorResponse, GenericResponse};
+use model_entity::EntityType;
 use reqwest::StatusCode;
 
 #[tracing::instrument(
@@ -57,17 +60,66 @@ pub async fn get_batch_preview_handler(
                 .into_response()
         })?;
 
-    let result: Vec<DocumentPreview> = document_preview_results
-        .iter()
-        .map(|d| match d {
-            DocumentPreviewV2::Found(preview_data) => DocumentPreview::Access(preview_data.clone()),
+    let skip_access_check = user
+        .authorization
+        .as_ref()
+        .is_some_and(|auth| auth.is_internal());
+    let user_id = user
+        .authorization
+        .as_ref()
+        .and_then(|auth| auth.acting_user())
+        .map(|acting_user| acting_user.macro_user_id.clone());
+
+    let mut result = Vec::with_capacity(document_preview_results.len());
+    for preview in document_preview_results {
+        match preview {
             DocumentPreviewV2::DoesNotExist(preview_data) => {
-                DocumentPreview::DoesNotExist(WithDocumentId {
-                    document_id: preview_data.document_id.clone(),
-                })
+                result.push(DocumentPreview::DoesNotExist(WithDocumentId {
+                    document_id: preview_data.document_id,
+                }));
             }
-        })
-        .collect();
+            DocumentPreviewV2::Found(preview_data) => {
+                if skip_access_check {
+                    result.push(DocumentPreview::Access(preview_data));
+                    continue;
+                }
+
+                let has_access = match ctx
+                    .entity_access_service
+                    .get_access_level(
+                        user_id.as_ref(),
+                        &preview_data.document_id,
+                        EntityType::Document,
+                    )
+                    .await
+                {
+                    Ok(level) => level.is_some(),
+                    Err(
+                        AccessError::Unauthorized
+                        | AccessError::UnauthorizedWithMessage(_)
+                        | AccessError::BadRequest(_)
+                        | AccessError::NotFound(_),
+                    ) => false,
+                    Err(err) => {
+                        tracing::error!(error=?err, "unable to check document preview access");
+                        return Err(GenericResponse::builder()
+                            .message("failed to retrive document previews")
+                            .is_error(true)
+                            .send(StatusCode::INTERNAL_SERVER_ERROR)
+                            .into_response());
+                    }
+                };
+
+                if has_access {
+                    result.push(DocumentPreview::Access(preview_data));
+                } else {
+                    result.push(DocumentPreview::NoAccess(WithDocumentId {
+                        document_id: preview_data.document_id,
+                    }));
+                }
+            }
+        }
+    }
 
     Ok((
         StatusCode::OK,

@@ -285,7 +285,7 @@ const FavoritesGroup = (props: {
       <header>
         <button
           type="button"
-          class="group/section flex h-7 w-full items-center justify-start gap-1 rounded-md px-2 text-left text-[13px] font-medium text-ink-extra-muted/60 transition-colors hover:bg-ink/3 hover:text-ink-muted"
+          class="group/section flex h-7 w-full items-center justify-start gap-1 rounded-md px-2 text-left text-sm font-medium text-ink-extra-muted/60 transition-colors hover:bg-ink/3 hover:text-ink-muted"
           aria-expanded={expanded()}
           onClick={() => setExpanded(!expanded())}
         >

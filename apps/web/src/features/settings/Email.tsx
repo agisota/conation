@@ -16,6 +16,7 @@ import {
 } from '@core/constant/featureFlags';
 import { useEmail, useUserId } from '@core/context/user';
 import {
+  hasStalwartMailbox,
   useAddInboxFlow,
   useEmailLinks,
   useEmailLinksStatus,
@@ -23,6 +24,7 @@ import {
 import GmailIcon from '@icon/mcp-gmail.svg';
 import ArrowsClockwiseIcon from '@phosphor-icons/core/regular/arrows-clockwise.svg?component-solid';
 import CalendarSlashIcon from '@phosphor-icons/core/regular/calendar-slash.svg?component-solid';
+import EnvelopeIcon from '@phosphor-icons/core/regular/envelope.svg?component-solid';
 import PlusIcon from '@phosphor-icons/core/regular/plus.svg?component-solid';
 import SignatureIcon from '@phosphor-icons/core/regular/signature.svg?component-solid';
 import XIcon from '@phosphor-icons/core/regular/x.svg?component-solid';
@@ -53,10 +55,10 @@ import {
 } from './SignatureSection';
 
 /**
- * Gmail integration as a single Connected-accounts card: a header row with the
- * connection state/action, and — once connected — a row per inbox plus add /
- * disconnect controls. All the inbox + backfill logic is unchanged; only the
- * surrounding chrome moved from a standalone panel to a shared card.
+ * Email integration as a single Connected-accounts card: a header row with the
+ * connection state/action, and — once a mailbox is linked — a row per inbox
+ * plus add / disconnect controls. Gmail is optional when a Stalwart mailbox
+ * already exists; copy must not demand it as the only path.
  */
 export function EmailCard() {
   const email = useEmail();
@@ -108,8 +110,18 @@ export function EmailCard() {
       (link) => link.is_primary && link.macro_id === uid
     );
     const others = links.filter((link) => link !== primary);
-    return { primary, others };
+    return { primary, others, links };
   });
+  const stalwartLinked = createMemo(() =>
+    hasStalwartMailbox(inboxes().links)
+  );
+  const gmailLinked = createMemo(() =>
+    inboxes().links.some((link) => link.provider === UserProvider.GMAIL)
+  );
+  // A Conation mailbox is already email. Never treat Gmail as the only path.
+  const mailboxLinked = createMemo(
+    () => emailActive() || stalwartLinked()
+  );
 
   const onConnectEmail = async () => {
     if (isEmailActionPending()) return;
@@ -151,11 +163,25 @@ export function EmailCard() {
     <>
       <SettingsCard>
         <IntegrationRow
-          icon={<GmailIcon />}
-          title={t('settings.email.gmail.title')}
-          description={t('settings.email.gmail.description')}
+          icon={
+            stalwartLinked() && !gmailLinked() ? (
+              <EnvelopeIcon />
+            ) : (
+              <GmailIcon />
+            )
+          }
+          title={
+            stalwartLinked() && !gmailLinked()
+              ? t('shell.navigation.email')
+              : t('settings.email.gmail.title')
+          }
+          description={
+            stalwartLinked() && !gmailLinked()
+              ? t('email.empty.stalwartLocal')
+              : t('settings.email.gmail.description')
+          }
           status={
-            <Show when={emailActive()}>
+            <Show when={mailboxLinked()}>
               <StatusDot
                 state="connected"
                 label={t('settings.email.status.connected')}
@@ -163,7 +189,7 @@ export function EmailCard() {
             </Show>
           }
         >
-          <Show when={!emailActive()}>
+          <Show when={!mailboxLinked()}>
             <ConnectAction
               label={t('settings.email.actions.connect')}
               onClick={onConnectEmail}
@@ -171,7 +197,7 @@ export function EmailCard() {
             />
           </Show>
         </IntegrationRow>
-        <Show when={emailActive()}>
+        <Show when={mailboxLinked()}>
           <Show when={inboxes().primary}>
             {(primary) => (
               <InboxRow

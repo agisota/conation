@@ -13,6 +13,9 @@ use teams::inbound::axum_router::get_team_invites::TeamInvitesResponse as TeamTe
 use teams::inbound::axum_router::get_user_invites::TeamInvitesResponse as UserTeamInvitesResponse;
 use teams::inbound::axum_router::toggle_auto_join_domain::ToggleAutoJoinDomainResponse;
 use teams::inbound::axum_router::toggle_non_admin_invites::ToggleNonAdminInvitesResponse;
+use teams::inbound::axum_router::team_dashboard::{
+    PutTeamDashboardLayoutRequest, TeamDashboardLayoutResponse,
+};
 use teams::inbound::axum_router::{
     create_team::CreateTeamRequest, invite_to_team::InviteToTeamRequest,
 };
@@ -152,6 +155,8 @@ use model::user::{
                 teams::inbound::axum_router::get_user_teams::handler::<crate::api::context::TeamsServiceType, crate::api::context::EntityAccessServiceType, crate::api::context::AuthorizationService>,
                 teams::inbound::axum_router::remove_user_from_team::handler::<crate::api::context::TeamsServiceType, crate::api::context::EntityAccessServiceType, crate::api::context::AuthorizationService>,
                 teams::inbound::axum_router::delete_team_invite::handler::<crate::api::context::TeamsServiceType, crate::api::context::EntityAccessServiceType, crate::api::context::AuthorizationService>,
+                teams::inbound::axum_router::team_dashboard::get_handler::<crate::api::context::TeamsServiceType, crate::api::context::EntityAccessServiceType, crate::api::context::AuthorizationService>,
+                teams::inbound::axum_router::team_dashboard::put_handler::<crate::api::context::TeamsServiceType, crate::api::context::EntityAccessServiceType, crate::api::context::AuthorizationService>,
 
                 /// /referral
                 referral::inbound::axum_router::get_referral_code_handler::<crate::api::context::ReferralServiceType, crate::api::context::RateLimiter, crate::api::context::AuthorizationService>,
@@ -234,6 +239,8 @@ use model::user::{
                         PatchTeamCrmSettingsResponse,
                         ToggleAutoJoinDomainResponse,
                         ToggleNonAdminInvitesResponse,
+                        TeamDashboardLayoutResponse,
+                        PutTeamDashboardLayoutRequest,
                         TeamTeamInvitesResponse,
                         UserTeamInvitesResponse,
 

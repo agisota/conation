@@ -47,7 +47,7 @@ import { ContextMenuContent, MenuItem } from '@core/component/ContextMenu';
 import { inboxIconProps } from '@core/component/inboxIcon';
 import { toast } from '@core/component/Toast/Toast';
 import { UserIcon } from '@core/component/UserIcon';
-import { ENABLE_CALLS, ENABLE_CRM } from '@core/constant/featureFlags';
+import { ENABLE_CALLS, ENABLE_CRM, ENABLE_REMINDERS } from '@core/constant/featureFlags';
 import {
   type SettingsTab,
   useSettingsState,
@@ -79,11 +79,13 @@ import { AnimatedSearchIcon } from '@icon/wide-search';
 import { AnimatedStarIcon } from '@icon/wide-star';
 import { AnimatedTaskIcon } from '@icon/wide-task';
 import { ContextMenu } from '@kobalte/core/context-menu';
+import BellSimpleIcon from '@phosphor/bell-simple.svg';
 import CaretRightIcon from '@phosphor/caret-right.svg';
 import CaretUpIcon from '@phosphor/caret-up.svg';
 import CompassIcon from '@phosphor/compass.svg';
 import DotsThreeIcon from '@phosphor/dots-three.svg';
 import GearIcon from '@phosphor/gear.svg';
+import GridFourIcon from '@phosphor/grid-four.svg';
 import MagnifyingGlassIcon from '@phosphor/magnifying-glass.svg';
 import SignOutIcon from '@phosphor/sign-out.svg';
 import UsersThreeIcon from '@phosphor/users-three.svg';
@@ -137,8 +139,10 @@ type SidebarSectionLinkId =
   | 'channels'
   | 'calls'
   | 'documents'
+  | 'notes'
   | 'canvas'
   | 'tasks'
+  | 'reminders'
   | 'calendar'
   | 'agents'
   | 'companies';
@@ -154,8 +158,10 @@ const WORKSPACE_LINK_IDS = [
   'channels',
   'calls',
   'documents',
+  'notes',
   'canvas',
   'tasks',
+  'reminders',
   'calendar',
   'agents',
   'companies',
@@ -166,8 +172,10 @@ const DEFAULT_SECTION_VISIBILITY: SidebarSectionVisibility = {
   channels: true,
   calls: true,
   documents: true,
+  notes: true,
   canvas: true,
   tasks: true,
+  reminders: true,
   calendar: true,
   agents: true,
   companies: true,
@@ -180,6 +188,7 @@ const DEFAULT_TRY_VISIBILITY: TryItemVisibility = {
 };
 
 const markdownDocumentsQuery = buildDocumentTypeQuery(['doc-markdown']);
+const canvasDocumentsQuery = buildDocumentTypeQuery(['doc-canvas']);
 
 const SIDEBAR_LINKS = [
   {
@@ -235,9 +244,9 @@ const SIDEBAR_LINKS = [
     hotkeyToken: TOKENS.sidebar.goTo.documents,
   },
   {
-    id: 'documents',
+    id: 'notes',
     get label() {
-      return t('shell.navigation.documents');
+      return t('shell.navigation.notes');
     },
     href: LIST_VIEW_PATHS.documents,
     params: {
@@ -250,7 +259,6 @@ const SIDEBAR_LINKS = [
     icon: AnimatedFileMdIcon,
     hotkey: 'd',
     hotkeyToken: TOKENS.sidebar.goTo.markdownDocuments,
-    hiddenFromSidebar: true,
   },
   {
     id: 'tasks',
@@ -326,10 +334,36 @@ function sidebarContent(
   if (viewId === 'calendar') {
     return { type: 'calendar', id: CALENDAR_BLOCK_ID };
   }
-  if (viewId === 'canvas') {
+  if (viewId === 'canvas' || viewId === 'notes') {
     return { type: 'component', id: 'documents', params };
   }
   return { type: 'component', id: viewId, params };
+}
+
+function sidebarContentsMatch(
+  active: SplitContent | undefined,
+  expected: SplitContent
+): boolean {
+  if (!active) return false;
+  if (active.type !== expected.type || active.id !== expected.id) return false;
+  if (
+    expected.type === 'component' &&
+    expected.id === 'documents' &&
+    active.type === 'component'
+  ) {
+    const activeOr = (
+      active.params?.initialClientFilters as
+        | { or?: readonly unknown[] }
+        | undefined
+    )?.or?.[0];
+    const expectedOr = (
+      expected.params?.initialClientFilters as
+        | { or?: readonly unknown[] }
+        | undefined
+    )?.or?.[0];
+    return activeOr === expectedOr;
+  }
+  return true;
 }
 
 /**
@@ -694,10 +728,9 @@ const SidebarDropdownLink = (
     if (!activeContent) {
       return location.pathname.split('/').filter(Boolean).includes(props.id);
     }
-    const expectedContent = sidebarContent(props.id, props.params);
-    return (
-      activeContent.type === expectedContent.type &&
-      activeContent.id === expectedContent.id
+    return sidebarContentsMatch(
+      activeContent,
+      sidebarContent(props.id, props.params)
     );
   };
 
@@ -743,7 +776,7 @@ const SidebarDropdownLink = (
   };
   const openInNewTab = () => {
     analytics.track('sidebar_click', { view: props.id, target: 'new-tab' });
-    openSplitContentInNewTab({ type: 'component', id: props.id });
+    openSplitContentInNewTab(sidebarContent(props.id, props.params));
   };
 
   const ContextMenuTriggerItem = (
@@ -772,7 +805,7 @@ const SidebarDropdownLink = (
     <Dropdown.Item
       as={ContextMenuTriggerItem}
       class={cn(
-        'min-h-8 gap-2 px-2.5 text-[13px]',
+        'min-h-8 gap-2 px-2.5 text-sm',
         isActive() &&
           'bg-ink/6 text-ink hover:bg-ink/6 data-highlighted:bg-ink/6'
       )}
@@ -1043,6 +1076,7 @@ const CANVAS_LINK: SidebarItem = {
   },
   href: LIST_VIEW_PATHS.documents,
   params: {
+    initialFilters: canvasDocumentsQuery ?? {},
     initialClientFilters: {
       and: ['document-or-file'],
       or: ['doc-canvas'],
@@ -1064,7 +1098,7 @@ const COMPANIES_LINK: SidebarItem = {
   hotkeyToken: TOKENS.sidebar.goTo.companies,
 };
 
-const DASHBOARD_LINK: SidebarItem = {
+const HOME_LINK: SidebarItem = {
   id: 'home',
   get label() {
     return t('shell.navigation.home');
@@ -1073,6 +1107,28 @@ const DASHBOARD_LINK: SidebarItem = {
   icon: AnimatedHomeIcon,
   hotkey: 'h',
   hotkeyToken: TOKENS.sidebar.goTo.home,
+};
+
+const DASHBOARD_LINK: SidebarItem = {
+  id: 'dashboard',
+  get label() {
+    return t('shell.navigation.dashboard');
+  },
+  href: LIST_VIEW_PATHS.dashboard,
+  icon: GridFourIcon,
+  hotkey: 'u',
+  hotkeyToken: 'sidebar.goTo.dashboard' as HotkeyToken,
+};
+
+const REMINDERS_LINK: SidebarItem = {
+  id: 'reminders',
+  get label() {
+    return t('shell.navigation.reminders');
+  },
+  href: LIST_VIEW_PATHS.reminders,
+  icon: BellSimpleIcon,
+  hotkey: 'm',
+  hotkeyToken: 'sidebar.goTo.reminders' as HotkeyToken,
 };
 
 const GETTING_STARTED_LINK: SidebarItem = {
@@ -1111,12 +1167,13 @@ const RECENT_LINK: SidebarItem = {
 };
 
 /**
- * Assemble the ordered sidebar link list: the static links plus Home, Getting
- * started, and the flag-gated Activity, Calendar, Calls, and CRM entries in
- * their correct positions.
+ * Assemble the ordered sidebar link list: the static links plus Home,
+ * Dashboard, Getting started, and the flag-gated Activity, Calendar, Calls,
+ * Reminders, and CRM entries in their correct positions.
  * Shared by the rendered sidebar (`AppSidebar.visibleLinks`) and the
  * always-mounted `GoToHotkeys` registrar so their link sets can't drift. Call
- * from a reactive context — it reads `ENABLE_CALLS()` / `ENABLE_CRM()`.
+ * from a reactive context — it reads `ENABLE_CALLS()` / `ENABLE_CRM()` /
+ * `ENABLE_REMINDERS()`.
  * `showGettingStarted` is the account-age gate (`useGettingStartedEnabled`),
  * passed in because this runs outside a component; when false the link is
  * fully absent — row, `g s` hotkey, and command menu entry.
@@ -1130,6 +1187,7 @@ const buildSidebarLinks = (
   showRecent: boolean
 ): SidebarItem[] => {
   let links: SidebarItem[] = [
+    HOME_LINK,
     DASHBOARD_LINK,
     ...(showGettingStarted ? [GETTING_STARTED_LINK] : []),
     ...SIDEBAR_LINKS.filter((link) => showCalendar || link.id !== 'calendar'),
@@ -1165,6 +1223,15 @@ const buildSidebarLinks = (
   if (ENABLE_CALLS()) {
     const idx = links.findIndex((l) => l.id === 'channels');
     links = [...links.slice(0, idx + 1), CALLS_LINK, ...links.slice(idx + 1)];
+  }
+
+  if (ENABLE_REMINDERS()) {
+    const idx = links.findIndex((l) => l.id === 'tasks');
+    links = [
+      ...links.slice(0, idx + 1),
+      REMINDERS_LINK,
+      ...links.slice(idx + 1),
+    ];
   }
 
   if (ENABLE_CRM()) {
@@ -1412,7 +1479,7 @@ export const AppSidebar = (props: AppSidebarProps) => {
   // lives in the collapsible Workspace section. `findLink` drops ids that
   // `buildSidebarLinks` gated out, so flag-gated rows need no filter here.
   const topLinks = createMemo(() =>
-    ['home', 'getting-started', 'inbox', 'recent', 'activity']
+    ['home', 'dashboard', 'getting-started', 'inbox', 'recent', 'activity']
       .filter(
         (id) => id !== 'getting-started' || !gettingStartedVisibility.hidden()
       )
@@ -1542,7 +1609,7 @@ export const AppSidebar = (props: AppSidebarProps) => {
     <div
       {...hotkeyScopeNeutralAttribute}
       class={cn(
-        'group/sidebar flex flex-col gap-0 overflow-hidden bg-surface px-3 pb-3 pt-4 text-[13px]',
+        'group/sidebar flex flex-col gap-0 overflow-hidden bg-surface px-3 pb-3 pt-4 text-sm',
         isExpanded() && 'relative h-full shrink-0 max-w-55 w-55 opacity-100',
         props.sidebarState === 'hidden' &&
           'fixed left-0 top-0 bottom-0 h-full -translate-x-full max-w-0 w-0 opacity-0 pointer-events-none',
@@ -1575,7 +1642,7 @@ export const AppSidebar = (props: AppSidebarProps) => {
           </div>
           <Show when={currentTeamName()}>
             {(teamName) => (
-              <span class="min-w-0 truncate text-[13px] font-medium text-ink">
+              <span class="min-w-0 truncate text-sm font-medium text-ink">
                 {teamName()}
               </span>
             )}
@@ -1858,11 +1925,7 @@ const SidebarLinkRow = (props: SidebarLinkProps) => {
       return paths.includes(props.id);
     }
 
-    const expectedContent = content();
-    return (
-      activeContent.type === expectedContent.type &&
-      activeContent.id === expectedContent.id
-    );
+    return sidebarContentsMatch(activeContent, content());
   };
 
   return (
@@ -1895,9 +1958,10 @@ const SidebarLinkRow = (props: SidebarLinkProps) => {
 
         const currentContent = currentContentHandle?.content();
         const expectedContent = content();
-        const isSameContent =
-          currentContent?.type === expectedContent.type &&
-          currentContent.id === expectedContent.id;
+        const isSameContent = sidebarContentsMatch(
+          currentContent,
+          expectedContent
+        );
 
         if (!isSameContent || e.shiftKey) {
           currentContentHandle = navigateToSidebarView({
@@ -1931,9 +1995,10 @@ const SidebarLinkRow = (props: SidebarLinkProps) => {
         let currentContentHandle = globalSplitManager()?.activeSplit();
         const currentContent = currentContentHandle?.content();
         const expectedContent = content();
-        const isSameContent =
-          currentContent?.type === expectedContent.type &&
-          currentContent.id === expectedContent.id;
+        const isSameContent = sidebarContentsMatch(
+          currentContent,
+          expectedContent
+        );
         if (!isSameContent || e.shiftKey) {
           currentContentHandle = navigateToSidebarView({
             viewId: props.id,

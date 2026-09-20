@@ -86,6 +86,11 @@ export const NOTIFICATION_EVENT_GROUPS: readonly NotificationEventGroup[] = [
         label: 'Assignments',
         description: 'When a task is assigned to you',
       },
+      {
+        type: 'task_due',
+        label: 'Due dates',
+        description: 'When a task assigned to you is due soon or overdue',
+      },
     ],
   },
   {

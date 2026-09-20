@@ -20,6 +20,7 @@ export const LIST_VIEWS = [
   'folders',
   'reminders',
   'search',
+  'dashboard',
 ] as const;
 
 export type ListView = (typeof LIST_VIEWS)[number];
@@ -37,6 +38,7 @@ export const LIST_VIEW_PATHS = {
   folders: '/folders',
   reminders: '/reminders',
   search: '/search',
+  dashboard: '/dashboard',
 } as const satisfies Record<ListView, string>;
 
 export const LIST_VIEW_ID = {
@@ -52,6 +54,7 @@ export const LIST_VIEW_ID = {
   folders: 'folders',
   reminders: 'reminders',
   search: 'search',
+  dashboard: 'dashboard',
 } as const satisfies Record<ListView, string>;
 
 export const isListViewID = (id: string | null | undefined): id is ListView => {
@@ -121,6 +124,7 @@ export const soupItemMatchesListView = (
     )
     .with('companies', () => item.tag === 'crmCompany')
     .with('reminders', () => item.tag === 'reminder')
+    .with('dashboard', () => false)
     .exhaustive();
 
 const propertiesMatchTagFilter = (

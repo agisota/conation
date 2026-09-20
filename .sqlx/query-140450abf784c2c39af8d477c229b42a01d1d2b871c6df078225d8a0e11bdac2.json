@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE team\n            SET dashboard_layout = $2\n            WHERE id = $1\n            RETURNING dashboard_layout\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "dashboard_layout",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Jsonb"
+      ]
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "140450abf784c2c39af8d477c229b42a01d1d2b871c6df078225d8a0e11bdac2"
+}

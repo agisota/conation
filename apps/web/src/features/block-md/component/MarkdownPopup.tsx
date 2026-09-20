@@ -47,7 +47,6 @@ import {
   INLINE_AI_EDITING_OVERRIDE,
 } from '@core/constant/featureFlags';
 import { useUserId } from '@core/context/user';
-import { isMobile } from '@core/mobile/isMobile';
 import { useCanComment, useCanEdit } from '@core/signal/permissions';
 import { createMarkdownFile } from '@core/util/create';
 import { useBlockDocumentName } from '@core/util/currentBlockDocumentName';
@@ -513,7 +512,7 @@ export function MarkdownPopup(props: {
 							}}
 						/>
 					</Show>*/}
-          <Show when={!isMobile() && (canEdit() || canComment())}>
+          <Show when={canEdit() || canComment()}>
             <FormatTools withinPopup />
           </Show>
           <Show when={shouldShowCheckboxToTaskButton()}>

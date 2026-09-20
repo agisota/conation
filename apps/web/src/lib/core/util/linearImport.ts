@@ -16,6 +16,7 @@ const LINEAR_CSV_HEADERS = {
   team: 'Team',
   updated: 'Updated',
   created: 'Created',
+  dueDate: 'Due Date',
 } as const;
 
 type StatusOptionId =
@@ -69,6 +70,24 @@ function parseLinearPriority(
   if (p.includes('no priority') || p.includes('none')) return null;
 
   return null;
+}
+
+function parseLinearDueDate(value: string | undefined): string | null {
+  const raw = normalizeText(value);
+  if (!raw) return null;
+
+  // Linear exports due dates as YYYY-MM-DD (date-only) or an ISO timestamp.
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+  if (dateOnly) {
+    const iso = `${dateOnly[1]}-${dateOnly[2]}-${dateOnly[3]}T00:00:00.000Z`;
+    const ms = Date.parse(iso);
+    if (!Number.isFinite(ms)) return null;
+    return iso;
+  }
+
+  const ms = Date.parse(raw);
+  if (!Number.isFinite(ms)) return null;
+  return new Date(ms).toISOString();
 }
 
 function parseLinearStatusOptionId(args: {
@@ -147,6 +166,17 @@ export function linearCsvRecordToMacroTaskDraft(args: {
       value: {
         type: 'select_option',
         option_id: priorityOptionId,
+      },
+    });
+  }
+
+  const dueDateIso = parseLinearDueDate(record[LINEAR_CSV_HEADERS.dueDate]);
+  if (dueDateIso) {
+    propertyValues.push({
+      propertyId: SYSTEM_PROPERTY_IDS.DUE_DATE,
+      value: {
+        type: 'date',
+        value: dueDateIso,
       },
     });
   }

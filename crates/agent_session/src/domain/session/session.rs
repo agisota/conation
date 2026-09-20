@@ -4,9 +4,8 @@ use std::collections::VecDeque;
 
 use agent_client_protocol::schema::v1::{
     InitializeRequest, InitializeResponse, LoadSessionRequest, LoadSessionResponse, McpServer,
-    NewSessionRequest, NewSessionResponse, PermissionOptionKind, RequestId,
-    RequestPermissionOutcome, RequestPermissionRequest, RequestPermissionResponse, Response,
-    ResumeSessionRequest, ResumeSessionResponse, SelectedPermissionOutcome, SessionId,
+    NewSessionRequest, NewSessionResponse, RequestId, Response, ResumeSessionRequest,
+    ResumeSessionResponse, SessionId,
 };
 use agent_client_protocol::{JsonRpcMessage, RawJsonRpcMessage};
 use agent_runtime_protocol::domain::action::{AgentAction, AgentActionId};
@@ -230,8 +229,9 @@ impl<Token> SessionMachine<Token> {
     }
 
     fn on_frame(&mut self, frame: RawJsonRpcMessage, effects: &mut Vec<Effect<Token>>) {
+        // Live ACP frames are logged in `on_inbound`. Permission requests stay
+        // unanswered here so the client UI can present them.
         if matches!(self.phase, SessionPhase::Live { .. }) {
-            self.respond_to_permission_request(&frame, effects);
             return;
         }
 
@@ -426,57 +426,6 @@ impl<Token> SessionMachine<Token> {
             NewSessionRequest::new(self.workspace.clone()).mcp_servers(self.mcp_servers.clone()),
             SessionOpening::New,
         )
-    }
-
-    /// Permission prompts require a client response. This autonomous agent has
-    /// no approval UI, so approve the broadest offered allow option instead of
-    /// leaving the turn blocked forever.
-    fn respond_to_permission_request(
-        &self,
-        frame: &RawJsonRpcMessage,
-        effects: &mut Vec<Effect<Token>>,
-    ) {
-        let RawJsonRpcMessage::Request(request) = frame else {
-            return;
-        };
-        if !RequestPermissionRequest::matches_method(&request.method) {
-            return;
-        }
-
-        let outcome = request
-            .params
-            .clone()
-            .and_then(|params| {
-                serde_json::from_value::<RequestPermissionRequest>(params.into_value()).ok()
-            })
-            .and_then(|request| {
-                request
-                    .options
-                    .iter()
-                    .find(|option| matches!(option.kind, PermissionOptionKind::AllowAlways))
-                    .or_else(|| {
-                        request
-                            .options
-                            .iter()
-                            .find(|option| matches!(option.kind, PermissionOptionKind::AllowOnce))
-                    })
-                    .map(|option| option.option_id.clone())
-            })
-            .map(|option_id| {
-                RequestPermissionOutcome::Selected(SelectedPermissionOutcome::new(option_id))
-            })
-            .unwrap_or(RequestPermissionOutcome::Cancelled);
-        let response = RequestPermissionResponse::new(outcome);
-        let Ok(result) = serde_json::to_value(response) else {
-            return;
-        };
-        effects.push(Effect::Send {
-            from: None,
-            message: ToRuntimeMessage::Acp(AcpMessage(RawJsonRpcMessage::response(
-                request.id.clone(),
-                Ok(result),
-            ))),
-        });
     }
 
     /// Send everything queued, oldest first. Each action's [`Effect::Complete`]

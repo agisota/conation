@@ -141,6 +141,29 @@ where
         Ok(property)
     }
 
+    async fn current_task_assignee_ids(
+        &self,
+        task_id: Uuid,
+    ) -> Result<HashSet<String>, PropertiesErr> {
+        let current_value = self
+            .repository
+            .get_entity_property_value(
+                &task_id.to_string(),
+                EntityType::Task,
+                SystemPropertyKey::ASSIGNEES_UUID,
+            )
+            .await
+            .map_err(anyhow::Error::from)
+            .map_err(PropertiesErr::Repo)?;
+
+        Ok(match current_value {
+            Some(PropertyValue::EntityRef(refs)) => {
+                refs.iter().map(|r| r.entity_id.clone()).collect()
+            }
+            _ => HashSet::new(),
+        })
+    }
+
     /// Handle task assignees property with permissions.
     pub(crate) async fn handle_task_assignees_property(
         &self,
@@ -148,23 +171,19 @@ where
         value: Option<SetPropertyValue>,
         assigned_by_user_id: Option<&MacroUserIdStr<'_>>,
     ) -> Result<(), PropertiesErr> {
-        let Some(SetPropertyValue::MultiEntityReference { references }) = &value else {
-            if value.is_some() {
+        let assignee_ids = match &value {
+            None => Vec::new(),
+            Some(SetPropertyValue::MultiEntityReference { references }) => references
+                .iter()
+                .map(|r| MacroUserIdStr::parse_from_str(&r.entity_id))
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|e| PropertiesErr::Validation(e.to_string()))?,
+            Some(_) => {
                 return Err(PropertiesErr::Validation(
                     "Assignees requires multiple entity references".to_string(),
                 ));
             }
-            return Ok(());
         };
-
-        let assignee_ids = references
-            .iter()
-            .map(|r| MacroUserIdStr::parse_from_str(&r.entity_id))
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| PropertiesErr::Validation(e.to_string()))?;
-        if assignee_ids.is_empty() {
-            return Ok(());
-        }
 
         let task_id = Uuid::parse_str(entity_id)
             .map_err(|_| PropertiesErr::Validation("Invalid task ID".to_string()))?;
@@ -201,23 +220,7 @@ where
             }
         };
 
-        let current_value = self
-            .repository
-            .get_entity_property_value(
-                &task_id.to_string(),
-                EntityType::Task,
-                SystemPropertyKey::ASSIGNEES_UUID,
-            )
-            .await
-            .map_err(anyhow::Error::from)
-            .map_err(PropertiesErr::Repo)?;
-
-        let current_assignee_ids: HashSet<String> = match current_value {
-            Some(PropertyValue::EntityRef(refs)) => {
-                refs.iter().map(|r| r.entity_id.clone()).collect()
-            }
-            _ => Default::default(),
-        };
+        let current_assignee_ids = self.current_task_assignee_ids(task_id).await?;
 
         let recipient_ids: Vec<MacroUserIdStr<'_>> = assignee_ids
             .iter()
@@ -249,28 +252,66 @@ where
     }
 
     /// Handle permissions when task assignees are updated.
+    ///
+    /// Assign grants Edit. Unassign revokes only the Edit previously granted
+    /// by assign (owner rows and non-Edit access are left untouched).
     pub async fn handle_task_assignee_permissions(
         &self,
         task_id: Uuid,
         assignee_ids: &[MacroUserIdStr<'_>],
     ) -> Result<(), PropertiesErr> {
-        if assignee_ids.is_empty() {
+        let current_assignee_ids = self.current_task_assignee_ids(task_id).await?;
+        let new_ids: HashSet<String> = assignee_ids
+            .iter()
+            .map(|id| id.as_ref().to_string())
+            .collect();
+        let removed_ids: Vec<String> = current_assignee_ids
+            .into_iter()
+            .filter(|id| !new_ids.contains(id))
+            .collect();
+
+        if assignee_ids.is_empty() && removed_ids.is_empty() {
             return Ok(());
         }
 
         let permission_service = self.permission_service()?;
+        let task_id_str = task_id.to_string();
 
-        tracing::debug!(
-            task_id = %task_id,
-            assignee_count = assignee_ids.len(),
-            "granting edit permissions to task assignees"
-        );
+        if !assignee_ids.is_empty() {
+            tracing::debug!(
+                task_id = %task_id,
+                assignee_count = assignee_ids.len(),
+                "granting edit permissions to task assignees"
+            );
 
-        permission_service
-            .grant_permissions_to_task(assignee_ids, &task_id.to_string())
-            .await
-            .map_err(anyhow::Error::from)
-            .map_err(PropertiesErr::Repo)?;
+            permission_service
+                .grant_permissions_to_task(assignee_ids, &task_id_str)
+                .await
+                .map_err(anyhow::Error::from)
+                .map_err(PropertiesErr::Repo)?;
+        }
+
+        if !removed_ids.is_empty() {
+            let removed: Vec<MacroUserIdStr<'_>> = removed_ids
+                .iter()
+                .map(|id| {
+                    MacroUserIdStr::parse_from_str(id)
+                        .map_err(|e| PropertiesErr::Validation(e.to_string()))
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+
+            tracing::debug!(
+                task_id = %task_id,
+                revoked_count = removed.len(),
+                "revoking edit permissions from unassigned task users"
+            );
+
+            permission_service
+                .revoke_permissions_from_task(&removed, &task_id_str)
+                .await
+                .map_err(anyhow::Error::from)
+                .map_err(PropertiesErr::Repo)?;
+        }
 
         Ok(())
     }

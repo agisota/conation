@@ -1,7 +1,8 @@
 use std::sync::Arc;
 
 use crate::{
-    api::annotations::CommentNotifContext, api::context::AuthorizationService,
+    api::annotations::CommentNotifContext,
+    api::context::{AuthorizationService, EntityAccessService},
     service::conn_gateway::update_live_comment_state,
 };
 use axum::{
@@ -10,10 +11,13 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal, UserOrInternalCaller};
 use conation_db_client::annotations::edit_comment::edit_document_comment;
+use conation_db_client::annotations::get::get_comment_thread;
 use conation_user_id::user_id::MacroUserIdStr;
 use connection_gateway_client::ConnectionGatewayClient;
+use entity_access::domain::ports::EntityAccessService as _;
+use entity_access::inbound::axum_extractors::ExtractorError;
 use model::{
     annotations::{
         AnnotationIncrementalUpdate, Mentions,
@@ -21,7 +25,9 @@ use model::{
     },
     response::ErrorResponse,
 };
+use model_entity::EntityType;
 use model_notifications::NotificationDocumentSubType;
+use models_permissions::share_permission::access_level::CommentAccessLevel;
 use notification::domain::service::NotificationIngress;
 use sqlx::PgPool;
 
@@ -47,16 +53,73 @@ pub struct Params {
             (status = 500, body=ErrorResponse),
         )
     )]
+#[axum::debug_handler(state = crate::api::context::ApiContext)]
 pub async fn edit_comment_handler(
     State(db): State<PgPool>,
     State(notification_ingress_service): State<Arc<crate::api::context::NotificationIngressType>>,
     State(conn_gateway_client): State<Arc<ConnectionGatewayClient>>,
+    State(entity_access_service): State<Arc<EntityAccessService>>,
     user: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
     Path(Params { comment_id }): Path<Params>,
     Json(req): Json<EditCommentRequest>,
 ) -> Result<Response, Response> {
     let user_id = user.authorization.user.macro_user_id.to_string();
-    // TODO: check if the user has comment access to the document
+
+    if user.authorization.caller != UserOrInternalCaller::Internal {
+        let thread = get_comment_thread(&db, req.thread_id)
+            .await
+            .map_err(|err| {
+                tracing::error!(error=?err, "failed to look up comment thread");
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse {
+                        message: "Error editing comment".into(),
+                    }),
+                )
+                    .into_response()
+            })?
+            .ok_or_else(|| {
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(ErrorResponse {
+                        message: "Comment not found".into(),
+                    }),
+                )
+                    .into_response()
+            })?;
+
+        if !thread
+            .comments
+            .iter()
+            .any(|comment| comment.comment_id == comment_id)
+        {
+            return Err((
+                StatusCode::NOT_FOUND,
+                Json(ErrorResponse {
+                    message: "Comment not found".into(),
+                }),
+            )
+                .into_response());
+        }
+
+        let organization_id = user
+            .authorization
+            .user
+            .user_context
+            .organization_id
+            .map(i64::from);
+
+        let _comment_access = entity_access_service
+            .generate_entity_access_receipt::<CommentAccessLevel>(
+                &user.authorization.user.macro_user_id,
+                organization_id,
+                &thread.thread.document_id,
+                EntityType::Document,
+            )
+            .await
+            .map_err(|err| ExtractorError::from(err).into_response())?;
+    }
+
     match edit_document_comment(&db, comment_id, &user_id, &req).await {
         Ok(res) => {
             if let Some(Mentions { users, mention_id }) = req.mentions {

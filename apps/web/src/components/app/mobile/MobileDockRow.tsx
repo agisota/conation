@@ -5,6 +5,7 @@ import {
 } from '@app/features/command/mobile/MobileSearchInput';
 import { SearchState } from '@app/features/command/mobile/mobileSearchState';
 import { t } from '@app/lib/i18n';
+import { globalSplitManager } from '@app/signal/splitLayout';
 import { useHandleFileUpload } from '@app/util/handleFileUpload';
 import { ENABLE_ANIMATED_ICONS } from '@core/constant/featureFlags';
 import { useSettingsState } from '@core/constant/SettingsState';
@@ -23,13 +24,19 @@ import UploadIcon from '@phosphor/upload-simple.svg';
 import { cn } from '@ui';
 import { createSignal, For, Show } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
+import { useSplitLayout } from '../split-layout/layout';
 import { MobileDockIsland } from './MobileDockIsland';
 import { MobileBottomEdgeFade } from './MobileEdgeFade';
 import {
   type MobileTouchIconComponent,
   MobileTouchMenu,
 } from './MobileTouchMenu';
-import { useMobileDockViews } from './mobile-dock-views';
+import {
+  isMobileNotesDocumentsContent,
+  MOBILE_MORE_DESTINATIONS,
+  MOBILE_NOTES_DOCUMENTS_CONTENT,
+  useMobileDockViews,
+} from './mobile-dock-views';
 import { pressPulse } from './pressPulse';
 import {
   type MobileDockNavId,
@@ -152,11 +159,25 @@ function MobileDockButton(props: MobileDockButtonProps) {
 }
 
 function MoreViewsMenu(props: {
-  isActive: (id: MobileDockNavId) => boolean;
+  isActive: (id: string) => boolean;
   onNavigate: (id: MobileDockNavId) => void;
 }) {
   const { settingsOpen, toggleSettings } = useSettingsState();
   const dockViews = useMobileDockViews();
+  const { openWithSplit } = useSplitLayout();
+
+  const navigateMore = (id: (typeof MOBILE_MORE_DESTINATIONS)[number]['id']) => {
+    if (id === 'notes') {
+      const fgContent = globalSplitManager()?.activeSplit()?.content();
+      const isOnNavView =
+        fgContent?.type === 'component' || fgContent?.type === 'calendar';
+      openWithSplit(MOBILE_NOTES_DOCUMENTS_CONTENT, {
+        mergeHistory: isOnNavView,
+      });
+      return;
+    }
+    props.onNavigate(id as MobileDockNavId);
+  };
 
   return (
     <MobileTouchMenu>
@@ -175,6 +196,26 @@ function MoreViewsMenu(props: {
         >
           {t('shell.navigation.settings')}
         </MobileTouchMenu.Item>
+        <MobileTouchMenu.Separator />
+        <For each={MOBILE_MORE_DESTINATIONS}>
+          {(dest) => (
+            <MobileTouchMenu.Item
+              id={dest.id}
+              icon={dest.icon}
+              animateIcon={dest.animateIcon}
+              active={
+                dest.id === 'notes'
+                  ? isMobileNotesDocumentsContent(
+                      globalSplitManager()?.activeSplit()?.content()
+                    )
+                  : props.isActive(dest.id)
+              }
+              onSelect={() => navigateMore(dest.id)}
+            >
+              {dest.label}
+            </MobileTouchMenu.Item>
+          )}
+        </For>
         <MobileTouchMenu.Separator />
         {/* Rows render top → bottom ending at the thumb: reverse the shared
             canonical order so Inbox lands nearest it. */}

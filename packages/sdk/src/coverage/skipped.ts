@@ -29,6 +29,13 @@ export const agentHarnessExcluded =
 export const agentHarnessBacklog =
   [] as const satisfies readonly (keyof AgentHarnessSdk)[];
 
+// GET/PUT /team/dashboard (operation_ids get_team_dashboard_layout /
+// put_team_dashboard_layout → getTeamDashboardLayout / putTeamDashboardLayout)
+// are web-app internals: opaque frontend-owned team default layout, same
+// class as patchTeamCrmSettings. Not in generated/auth yet (apps/web
+// service-auth/openapi.json has not been regenerated from authentication
+// swagger). Listing the names here would fail `keyof AuthSdk`. After
+// `just update-generated`, add them alphabetically to authExcluded.
 export const authExcluded = [
   'appleLogin',
   'checkGithubLinkStatus',

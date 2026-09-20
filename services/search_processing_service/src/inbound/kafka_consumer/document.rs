@@ -54,7 +54,7 @@ pub(super) fn describe_document_event(event: &DocumentTopicEvent) -> DocumentEve
             event_type: "document.updated",
         },
         DocumentTopicEvent::Deleted(metadata) => DocumentEventDescription {
-            action: DocumentIndexAction::Ignore,
+            action: DocumentIndexAction::Remove,
             document_id: metadata.document_id.clone(),
             event_type: "document.deleted",
         },

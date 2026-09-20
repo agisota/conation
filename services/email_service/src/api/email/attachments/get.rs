@@ -6,9 +6,11 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use cloudfront_sign::{SignedOptions, get_signed_url};
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use email_provider::StalwartProvider;
 use model::response::ErrorResponse;
 use models_email::email::service::attachment;
 use models_email::service;
+use models_email::service::link::UserProvider;
 use std::time::{SystemTime, UNIX_EPOCH};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -46,8 +48,8 @@ pub async fn handler(
     authorization: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
     Path(attachment_id): Path<Uuid>,
 ) -> Result<Response, Response> {
-    // Resolve which of the caller's inboxes owns this attachment. Each inbox is a
-    // distinct Google account, so the owning link also determines the Gmail token.
+    // Resolve which of the caller's inboxes owns this attachment. The owning
+    // link selects the fetch path: Gmail API vs Stalwart JMAP blob download.
     let links = email_db_client::links::get::fetch_inboxes_for_macro_id(
         &ctx.db,
         &authorization.authorization.user.user_context.user_id,
@@ -145,21 +147,14 @@ pub async fn handler(
                 .into_response()
         })?;
 
-        let attachment_data = ctx
-            .email_api
-            .get_attachment(link.id, &message_provider_id, provider_attachment_id)
-            .await
-            .map_err(|e| {
-                tracing::warn!(error=?e, "error fetching attachment from email provider");
-                (
-                    crate::api::email::provider_error::provider_error_status(&e),
-                    crate::api::email::provider_error::provider_error_headers(&e),
-                    Json(ErrorResponse {
-                        message: "error fetching attachment".into(),
-                    }),
-                )
-                    .into_response()
-            })?;
+        let attachment_data = fetch_attachment_from_provider(
+            &ctx,
+            &link,
+            &message_provider_id,
+            provider_attachment_id,
+            db_attachment.filename.as_deref(),
+        )
+        .await?;
 
         // upload attachment to s3 and get presigned url
         upload_single_attachment(
@@ -194,6 +189,68 @@ pub async fn handler(
     )
         .into_response())
 }
+
+/// Downloads attachment bytes from the inbox provider. Stalwart links use JMAP
+/// blob download; they must not go through the Gmail API client (`email_api`).
+async fn fetch_attachment_from_provider(
+    ctx: &ApiContext,
+    link: &models_email::service::link::Link,
+    message_provider_id: &str,
+    provider_attachment_id: &str,
+    filename: Option<&str>,
+) -> Result<Vec<u8>, Response> {
+    match link.provider {
+        UserProvider::Stalwart => {
+            let provider = StalwartProvider::from_env().map_err(|e| {
+                tracing::warn!(error=?e, "Stalwart provider is not configured");
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorResponse {
+                        message: "error fetching attachment".into(),
+                    }),
+                )
+                    .into_response()
+            })?;
+            // Same empty-token JMAP download as `/email/init` seed; not Gmail.
+            provider
+                .download_blob_up_to(
+                    "",
+                    provider_attachment_id,
+                    filename,
+                    MAX_STALWART_ATTACHMENT_BYTES,
+                )
+                .await
+                .map_err(|e| {
+                    tracing::warn!(error=?e, "error fetching attachment from Stalwart");
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ErrorResponse {
+                            message: "error fetching attachment".into(),
+                        }),
+                    )
+                        .into_response()
+                })
+        }
+        UserProvider::Gmail => ctx
+            .email_api
+            .get_attachment(link.id, message_provider_id, provider_attachment_id)
+            .await
+            .map_err(|e| {
+                tracing::warn!(error=?e, "error fetching attachment from email provider");
+                (
+                    crate::api::email::provider_error::provider_error_status(&e),
+                    crate::api::email::provider_error::provider_error_headers(&e),
+                    Json(ErrorResponse {
+                        message: "error fetching attachment".into(),
+                    }),
+                )
+                    .into_response()
+            }),
+    }
+}
+
+/// Matches the Stalwart seed SFS blob cap in `/email/init`.
+const MAX_STALWART_ATTACHMENT_BYTES: usize = 10_485_760;
 
 /// Uploads the data for a single attachment to S3, updates the attachment's metadata,
 /// and returns a presigned URL for accessing the attachment

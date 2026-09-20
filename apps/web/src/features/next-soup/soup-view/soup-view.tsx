@@ -587,6 +587,31 @@ export const SoupView = (props: SoupViewProps) => {
     return mode === 'board' || mode === 'timeline';
   });
 
+  // Board/timeline skip SoupList, so they never hit its onScrollBottom.
+  // Reuse the same fetchMore gate the list uses.
+  const fetchMoreBoard = debounce(() => {
+    const source = soupView.source;
+    if (
+      source.isFetching() ||
+      source.isFetchingNextPage() ||
+      !source.hasNextPage()
+    )
+      return;
+    source.fetchNextPage();
+  }, 15);
+
+  createEffect(() => {
+    if (!isTaskBoardMode()) return;
+    void soupView.source.data().length;
+    if (
+      soupView.source.isFetching() ||
+      soupView.source.isFetchingNextPage() ||
+      !soupView.source.hasNextPage()
+    )
+      return;
+    fetchMoreBoard();
+  });
+
   // When CRM is unavailable (no team / disabled) the board renders the
   // empty state instead of columns, so board-only chrome tweaks (like
   // hiding the AI bar) shouldn't apply.
@@ -783,7 +808,7 @@ export const SoupView = (props: SoupViewProps) => {
               <CompanyKanban />
             </Match>
             <Match when={isTaskBoardMode()}>
-              <TaskBoard />
+              <TaskBoard onScrollBottom={fetchMoreBoard} />
             </Match>
           </Switch>
         </Suspense>

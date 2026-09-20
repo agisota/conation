@@ -331,7 +331,10 @@ pub(in crate::api::documents) fn get_presigned_url(
 ) -> anyhow::Result<String> {
     let constructed_url = format!("{}/{}", cloudfront_distribution_url, key);
 
-    let signed_url = if !conation_aws_config::s3_uses_localstack() {
+    // Path-style endpoints (LocalStack and custom `S3_ENDPOINT_URL` / MinIO)
+    // have no CloudFront distribution. Skip is endpoint-based, not a
+    // LocalStack hostname match.
+    let signed_url = if !conation_aws_config::s3_uses_path_style_endpoint() {
         get_signed_url(&constructed_url, options)?
     } else {
         constructed_url

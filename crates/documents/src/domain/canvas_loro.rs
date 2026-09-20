@@ -148,7 +148,8 @@ pub fn canvas_sync_seed_ops(
 ///
 /// After a live Loro apply-update, object storage must not last-write the
 /// agent's reconstructed board (that clobbers peer entities the agent never
-/// saw). Boards with no Loro session still persist full JSON so
+/// saw). Last-write is the live snapshot: skip DSS JSON when a session
+/// exists. Boards with no Loro session still persist full JSON so
 /// snapshot-less readers (DSS/S3 load, ReadContent fallback) have a board.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CanvasDssPut {
@@ -158,7 +159,7 @@ pub enum CanvasDssPut {
     Json,
 }
 
-/// Skip DSS put when a live Loro snapshot already exists.
+/// Last-write is the live snapshot: skip DSS JSON when one exists.
 pub fn canvas_dss_put_after_ops(has_live_snapshot: bool) -> CanvasDssPut {
     if has_live_snapshot {
         CanvasDssPut::Skip

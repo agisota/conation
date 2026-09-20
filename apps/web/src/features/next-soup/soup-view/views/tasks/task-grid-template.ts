@@ -40,6 +40,18 @@ export const TASK_GRID_COLUMNS = [
     specificEntityType: EntityType.USER,
     width: 'var(--task-col-assignees, 7rem)',
   },
+  {
+    id: 'due',
+    get label() {
+      return t('soup.group.date');
+    },
+    defId: SYSTEM_PROPERTY_IDS.DUE_DATE,
+    dataType: DataType.DATE,
+    isMultiSelect: false,
+    specificEntityType: null,
+    sortKey: 'due_date',
+    width: 'var(--task-col-due, 7rem)',
+  },
 ] as const;
 
 /** Width for the "Created By" column - only shown on wide containers */

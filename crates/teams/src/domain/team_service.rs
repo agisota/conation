@@ -29,6 +29,8 @@ use model_entity::EntityType;
 use model_notifications::InviteToTeamMetadata;
 #[cfg(feature = "ports")]
 use notification::domain::{models::SendNotificationRequestBuilder, service::NotificationIngress};
+use serde_json::Value;
+
 
 use crate::domain::{
     contacts_enqueuer::{ContactsEnqueuer, NoOpContactsEnqueuer},
@@ -105,6 +107,24 @@ pub struct TeamServiceImpl<
 
 fn channel_error_to_team_error(error: ChannelMutationErr) -> TeamError {
     TeamError::StorageLayerError(error.into())
+}
+
+fn validate_dashboard_layout(layout: &Value) -> Result<(), TeamError> {
+    if !layout.is_object() {
+        return Err(TeamError::BadRequest(
+            "dashboard layout must be a JSON object".into(),
+        ));
+    }
+    const MAX_DASHBOARD_LAYOUT_BYTES: usize = 256 * 1024;
+    let serialized_len = serde_json::to_string(layout)
+        .map(|s| s.len())
+        .unwrap_or(usize::MAX);
+    if serialized_len > MAX_DASHBOARD_LAYOUT_BYTES {
+        return Err(TeamError::BadRequest(
+            "dashboard layout exceeds the maximum size".into(),
+        ));
+    }
+    Ok(())
 }
 
 impl<TR, CR, CS, URPS, NI, CE, TCRMS, TA, CNE, EB> Clone
@@ -2016,5 +2036,33 @@ where
         }));
 
         Ok(Some(team_member))
+    }
+
+    #[tracing::instrument(skip(self), err)]
+    async fn get_dashboard_layout(
+        &self,
+        entity_access_receipt: EntityAccessReceipt<MemberTeamRole>,
+    ) -> Result<Option<Value>, TeamError> {
+        let team_id =
+            conation_uuid::string_to_uuid(&entity_access_receipt.entity().entity_id).unwrap();
+        self.team_repository
+            .get_dashboard_layout(&team_id)
+            .await
+    }
+
+    #[tracing::instrument(skip(self, layout), err)]
+    async fn set_dashboard_layout(
+        &self,
+        entity_access_receipt: EntityAccessReceipt<AdminTeamRole>,
+        layout: Option<Value>,
+    ) -> Result<Option<Value>, TeamError> {
+        if let Some(value) = &layout {
+            validate_dashboard_layout(value)?;
+        }
+        let team_id =
+            conation_uuid::string_to_uuid(&entity_access_receipt.entity().entity_id).unwrap();
+        self.team_repository
+            .set_dashboard_layout(&team_id, layout)
+            .await
     }
 }

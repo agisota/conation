@@ -147,6 +147,9 @@ describe('canvas live WS apply-update', () => {
         boards.push((board.nodes ?? []) as { id?: string }[]);
       },
     });
+    expect((boards[0] ?? []).map((n) => n.id)).toEqual(
+      expect.arrayContaining(['a'])
+    );
     fake.emit({ type: 'update', update: remote });
     const ids = (boards.at(-1) ?? []).map((n) => n.id);
     expect(ids).toEqual(expect.arrayContaining(['a', 'b']));
@@ -158,6 +161,19 @@ describe('canvas live WS apply-update', () => {
       documentId: 'doc-1',
       source: fake.source,
       doInitialSync: async () => null,
+    });
+    expect(ok).toBe(false);
+    expect(hasCanvasLiveSync('doc-1')).toBe(false);
+  });
+
+  it('skips live sync when initial snapshot import fails', async () => {
+    const fake = fakeSource('doc-1');
+    const ok = await connectCanvasLiveSync({
+      documentId: 'doc-1',
+      source: fake.source,
+      doInitialSync: async () => {
+        throw new Error('sync down');
+      },
     });
     expect(ok).toBe(false);
     expect(hasCanvasLiveSync('doc-1')).toBe(false);
@@ -297,6 +313,8 @@ describe('canvas live WS awareness', () => {
       doInitialSync: async () => ({ snapshot }),
       onRemoteBoard: (board) => boards.push(board),
     });
+    const painted = boards.length;
+    expect(painted).toBeGreaterThan(0);
     const remote = createCanvasPresenceStore();
     remote.set('peer-b', {
       userId: 'them',
@@ -306,7 +324,7 @@ describe('canvas live WS awareness', () => {
       y: 9,
     });
     fake.emit({ type: 'awareness', awareness: remote.encode('peer-b') });
-    expect(boards).toHaveLength(0);
+    expect(boards).toHaveLength(painted);
     expect(listCanvasPresence('doc-1')).toEqual([
       {
         peerId: 'peer-b',

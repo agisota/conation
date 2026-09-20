@@ -501,9 +501,10 @@ export type CanvasDssPut =
  * After live Loro / WAL apply-update, DSS must not last-write the client's
  * `{nodes, edges}` blob (that clobbers peer entities the client never saw).
  *
- * Skip the object-storage put when a local WAL or live snapshot is already
- * the source of truth. Boards with no Loro session still persist full JSON so
- * non-collaborative readers (DSS/S3 load, ReadContent fallback) have a board.
+ * Last-write is the live snapshot: skip the object-storage put when a local
+ * WAL or live snapshot is already the source of truth. Boards with no Loro
+ * session still persist full JSON so non-collaborative readers (DSS/S3 load,
+ * ReadContent fallback) have a board.
  */
 export function canvasDssPutAfterWal(input: {
   hadLocalWal: boolean;

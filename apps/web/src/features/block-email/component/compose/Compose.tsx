@@ -44,6 +44,7 @@ import {
   ENABLE_EMAIL_SIGNATURES_OVERRIDE,
   ENABLE_GRAPHQL_SOUP,
 } from '@core/constant/featureFlags';
+import { hasStalwartMailbox } from '@core/email-link';
 import { isMobile } from '@core/mobile/isMobile';
 import { WrapUnlessMobile } from '@core/mobile/WrapUnlessMobile';
 import { useCombinedRecipients } from '@core/signal/useCombinedRecipient';
@@ -179,10 +180,12 @@ export function EmailCompose(props: EmailComposeProps) {
 
   const hasLinkError = createMemo(() => {
     if (emailLinksQuery.isPending) return false;
-    return (
-      emailLinksQuery.isError ||
-      (emailLinksQuery.data && emailLinksQuery.data.links.length === 0)
-    );
+    const links = emailLinksQuery.data?.links;
+    // A linked Conation mailbox is enough to compose. Do not surface
+    // Connect Gmail as the missing-link path (including refetch errors
+    // that still have cached Stalwart links).
+    if (hasStalwartMailbox(links) || (links && links.length > 0)) return false;
+    return emailLinksQuery.isError || (emailLinksQuery.data && links?.length === 0);
   });
 
   const { users: destinationOptions } = useCombinedRecipients();

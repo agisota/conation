@@ -29,7 +29,7 @@
     "/etc/conation-agent/SYSTEM.md"
   ],
   "permission": {
-    "*": "allow",
+    "*": "ask",
     "external_directory": "deny"
   }
 }

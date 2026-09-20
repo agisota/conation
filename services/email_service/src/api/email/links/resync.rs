@@ -8,6 +8,7 @@ use model::response::ErrorResponse;
 use models_email::email::service::backfill::{
     BackfillOperation, BackfillPubsubMessage, InitPayload, JobScopedPayload,
 };
+use models_email::service::link::UserProvider;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -22,6 +23,9 @@ pub struct ResyncResponse {
 }
 
 /// Re-syncs a linked inbox by enqueuing a fresh backfill.
+///
+/// Gmail inboxes enqueue the existing backfill worker. Stalwart inboxes are
+/// seeded over JMAP at init and must not be pointed at gmail backfill/ops.
 ///
 /// Idempotent: if a backfill is already `Init`/`InProgress` for the inbox this is
 /// a no-op and returns that job.
@@ -53,6 +57,15 @@ pub async fn resync_link_handler(
         link_id,
     )
     .await?;
+
+    if link.provider == UserProvider::Stalwart {
+        // Stalwart has no Gmail history cursor; do not enqueue gmail backfill/ops.
+        return Ok(Json(ResyncResponse {
+            backfill_job_id: Uuid::nil(),
+            already_in_progress: false,
+        })
+        .into_response());
+    }
 
     if let Some(active) =
         email_db_client::backfill::job::get::get_active_backfill_job(&ctx.db, link.id)

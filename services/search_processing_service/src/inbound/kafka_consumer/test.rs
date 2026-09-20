@@ -886,7 +886,7 @@ fn document_event_cases() -> Vec<(DocumentTopicEvent, DocumentEventDescription)>
                 project_id: Some(PROJECT_ID.to_string()),
             }),
             DocumentEventDescription {
-                action: DocumentIndexAction::Ignore,
+                action: DocumentIndexAction::Remove,
                 document_id: DOCUMENT_ID.to_string(),
                 event_type: "document.deleted",
             },

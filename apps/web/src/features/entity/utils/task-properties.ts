@@ -16,6 +16,30 @@ const TASK_PRIORITY_OPTIONS = [
   { value: PROPERTY_OPTION_IDS.PRIORITY.LOW, label: 'Low' },
 ] as const;
 
+/** Due-date bucket option ids for /tasks list filter, sort, and group. */
+export const TASK_DUE_OPTION_IDS = {
+  OVERDUE: 'overdue',
+  TODAY: 'today',
+  THIS_WEEK: 'thisWeek',
+  LATER: 'later',
+  NO_DATE: 'noDate',
+} as const;
+
+/** Sort option id for due date in the /tasks list. */
+export const TASK_DUE_SORT_OPTION_ID = 'due_date' as const;
+
+/** Group-by id for due date in the /tasks list. */
+export const TASK_DUE_GROUP_OPTION_ID =
+  `property:${SYSTEM_PROPERTY_IDS.DUE_DATE}` as const;
+
+export const TASK_DUE_FILTER_OPTIONS = [
+  { value: TASK_DUE_OPTION_IDS.OVERDUE, label: 'Overdue' },
+  { value: TASK_DUE_OPTION_IDS.TODAY, label: 'Today' },
+  { value: TASK_DUE_OPTION_IDS.THIS_WEEK, label: 'This week' },
+  { value: TASK_DUE_OPTION_IDS.LATER, label: 'Later' },
+  { value: TASK_DUE_OPTION_IDS.NO_DATE, label: 'No date' },
+] as const;
+
 // Retired from the default stage set, but companies may still carry these
 // values — labels stay resolvable and stage filters still offer them.
 const LEGACY_STAGE_IDS: ReadonlySet<string> = new Set([

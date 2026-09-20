@@ -148,7 +148,7 @@ function withCachedProperties(
  * timeline columns bucket by due date. Cards drag between status columns to
  * update STATUS (SELECT_STRING). Timeline is view-only.
  */
-export function TaskBoard() {
+export function TaskBoard(props: { onScrollBottom?: VoidFunction }) {
   const { source, soup, viewMode } = useSoupView();
   const panel = useSplitPanelOrThrow();
 
@@ -251,6 +251,25 @@ export function TaskBoard() {
       )
     );
     return Math.floor((usable - (fit - 1) * COLUMN_GAP) / fit);
+  });
+
+  const handleColumnScroll = (event: Event & { currentTarget: HTMLElement }) => {
+    const el = event.currentTarget;
+    const threshold = Math.max(300, el.clientHeight);
+    if (el.scrollHeight - el.clientHeight - el.scrollTop <= threshold) {
+      props.onScrollBottom?.();
+    }
+  };
+
+  createEffect(() => {
+    void tasks().length;
+    if (
+      source.isFetching() ||
+      source.isFetchingNextPage() ||
+      !source.hasNextPage()
+    )
+      return;
+    props.onScrollBottom?.();
   });
 
   const moveToStatus = (entityId: string, statusKey: string) => {
@@ -359,7 +378,10 @@ export function TaskBoard() {
                     {column.entities.length}
                   </span>
                 </div>
-                <div class="min-h-0 flex-1 overflow-y-auto scrollbar-hidden flex flex-col gap-2 px-2 pb-2">
+                <div
+                  class="min-h-0 flex-1 overflow-y-auto scrollbar-hidden flex flex-col gap-2 px-2 pb-2"
+                  onScroll={handleColumnScroll}
+                >
                   <For each={column.entities}>
                     {(entity) => (
                       <div class="shrink-0">

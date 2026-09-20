@@ -132,8 +132,10 @@ export function handleDelete() {
   const nodes = useCanvasNodes();
   const edges = useCanvasEdges();
   const history = useCanvasHistory();
+  const canEdit = useCanEdit();
 
   return createCallback(() => {
+    if (!canEdit()) return false;
     if (!selection.active()) return false;
     history.open();
     nodes.batchUpdate(
@@ -336,6 +338,7 @@ export function CanvasController(props: ParentProps) {
       scopeId: scopeId(),
       description: 'Bring to front',
       keyDownHandler: () => {
+        if (!canEdit()) return false;
         if (!selection.active()) return false;
         reorder.reorder(ReorderOperations.BringToFront, true);
         return true;
@@ -352,6 +355,7 @@ export function CanvasController(props: ParentProps) {
       scopeId: scopeId(),
       description: 'Bring forward',
       keyDownHandler: () => {
+        if (!canEdit()) return false;
         if (!selection.active()) return false;
         reorder.reorder(ReorderOperations.Forward, true);
         return true;
@@ -366,6 +370,7 @@ export function CanvasController(props: ParentProps) {
       scopeId: scopeId(),
       description: 'Send to back',
       keyDownHandler: () => {
+        if (!canEdit()) return false;
         if (!selection.active()) return false;
         reorder.reorder(ReorderOperations.SendToBack, true);
         return true;
@@ -378,6 +383,7 @@ export function CanvasController(props: ParentProps) {
       scopeId: scopeId(),
       description: 'Send backward',
       keyDownHandler: () => {
+        if (!canEdit()) return false;
         if (!selection.active()) return false;
         reorder.reorder(ReorderOperations.Backward, true);
         return true;
@@ -416,6 +422,7 @@ export function CanvasController(props: ParentProps) {
       scopeId: scopeId(),
       description: 'Cut selection',
       keyDownHandler: () => {
+        if (!canEdit()) return false;
         if (!selection.active()) return false;
         history.open();
         clipboard.copySelection(true);
@@ -465,6 +472,7 @@ export function CanvasController(props: ParentProps) {
       scopeId: scopeId(),
       description: 'Undo',
       keyDownHandler: () => {
+        if (!canEdit()) return false;
         history.undo();
         return true;
       },
@@ -476,6 +484,7 @@ export function CanvasController(props: ParentProps) {
       scopeId: scopeId(),
       description: 'Redo',
       keyDownHandler: () => {
+        if (!canEdit()) return false;
         history.redo();
         return true;
       },
@@ -521,6 +530,7 @@ export function CanvasController(props: ParentProps) {
       scopeId: scopeId(),
       description: 'Shape tool',
       keyDownHandler: () => {
+        if (!canEdit()) return false;
         toolManager.setSelectedTool(Tools.Shape);
         return true;
       },
@@ -532,6 +542,7 @@ export function CanvasController(props: ParentProps) {
       scopeId: scopeId(),
       description: 'Pencil tool',
       keyDownHandler: () => {
+        if (!canEdit()) return false;
         toolManager.setSelectedTool(Tools.Pencil);
         return true;
       },
@@ -543,6 +554,7 @@ export function CanvasController(props: ParentProps) {
       scopeId: scopeId(),
       description: 'Line tool',
       keyDownHandler: () => {
+        if (!canEdit()) return false;
         if (toolManager.selectedTool() === Tools.Line) {
           setConnectorTypeMenuTrigger((prev) => !prev);
         }
@@ -557,6 +569,7 @@ export function CanvasController(props: ParentProps) {
       scopeId: scopeId(),
       description: 'Text tool',
       keyDownHandler: () => {
+        if (!canEdit()) return false;
         toolManager.setSelectedTool(Tools.Text);
         return true;
       },
@@ -590,6 +603,7 @@ export function CanvasController(props: ParentProps) {
       scopeId: scopeId(),
       description: 'Nudge up',
       keyDownHandler: () => {
+        if (!canEdit()) return false;
         nudge('up', false, true);
         return true;
       },
@@ -601,6 +615,7 @@ export function CanvasController(props: ParentProps) {
       scopeId: scopeId(),
       description: 'Nudge up more',
       keyDownHandler: () => {
+        if (!canEdit()) return false;
         nudge('up', true, true);
         return true;
       },
@@ -612,6 +627,7 @@ export function CanvasController(props: ParentProps) {
       scopeId: scopeId(),
       description: 'Nudge right',
       keyDownHandler: () => {
+        if (!canEdit()) return false;
         nudge('right', false, true);
         return true;
       },
@@ -623,6 +639,7 @@ export function CanvasController(props: ParentProps) {
       scopeId: scopeId(),
       description: 'Nudge right more',
       keyDownHandler: () => {
+        if (!canEdit()) return false;
         if (!selection.active()) return false;
         nudge('right', true, true);
         return true;
@@ -637,6 +654,7 @@ export function CanvasController(props: ParentProps) {
       scopeId: scopeId(),
       description: 'Nudge down',
       keyDownHandler: () => {
+        if (!canEdit()) return false;
         nudge('down', false, true);
         return true;
       },
@@ -648,6 +666,7 @@ export function CanvasController(props: ParentProps) {
       scopeId: scopeId(),
       description: 'Nudge down more',
       keyDownHandler: () => {
+        if (!canEdit()) return false;
         nudge('down', true, true);
         return true;
       },
@@ -659,6 +678,7 @@ export function CanvasController(props: ParentProps) {
       scopeId: scopeId(),
       description: 'Nudge left',
       keyDownHandler: () => {
+        if (!canEdit()) return false;
         nudge('left', false, true);
         return true;
       },
@@ -670,6 +690,7 @@ export function CanvasController(props: ParentProps) {
       scopeId: scopeId(),
       description: 'Nudge left more',
       keyDownHandler: () => {
+        if (!canEdit()) return false;
         if (!selection.active()) return false;
         nudge('left', true, true);
         return true;
@@ -684,6 +705,7 @@ export function CanvasController(props: ParentProps) {
       scopeId: scopeId(),
       description: 'Group selection',
       keyDownHandler: () => {
+        if (!canEdit()) return false;
         history.open();
         createGroup();
         history.close();
@@ -697,6 +719,7 @@ export function CanvasController(props: ParentProps) {
       scopeId: scopeId(),
       description: 'Ungroup selection',
       keyDownHandler: () => {
+        if (!canEdit()) return false;
         history.open();
         deleteGroup();
         history.close();
@@ -771,6 +794,7 @@ export function CanvasController(props: ParentProps) {
   );
 
   const pasteHandler = (e: ClipboardEvent) => {
+    if (!canEdit()) return;
     // The clipboard paste handler manages its own history state.
     e.preventDefault();
     clipboard.handlePaste({

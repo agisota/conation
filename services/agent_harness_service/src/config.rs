@@ -115,14 +115,20 @@ pub struct Config {
     /// Harness slug stamped onto sessions this deployment opens.
     #[conation_config_default(String::from("opencode"))]
     pub harness_slug: String,
-    /// Repository sessions run against, until it becomes per-request data.
-    #[conation_config_default(String::from("https://github.com/agisota/conation"))]
+    /// Repository a session clones when the request itself did not name one.
+    ///
+    /// Deliberately default-empty. A hardcoded repository here would force
+    /// every team onto the same clone (this used to silently be Conation's
+    /// own). Spawn must fail with an explicit error when neither the request
+    /// nor this value names a repository.
+    #[conation_config_default(String::new())]
     pub harness_repo_url: String,
-    /// Repository `@cursor` sessions work on. Temporary hardcoding, same as
-    /// `harness_repo_url` — and one repository for everyone is a real limit
-    /// here, since each session runs on its own owner's Cursor account and
-    /// only works if *their* GitHub App installation can see this repo.
-    #[conation_config_default(String::from("https://github.com/agisota/conation"))]
+    /// Repository `@cursor` sessions work on when the request did not name one.
+    ///
+    /// Same rule as `harness_repo_url`: no shared default. Each session runs
+    /// on its owner's Cursor account and only works if their GitHub App
+    /// installation can see the named repo.
+    #[conation_config_default(String::new())]
     pub cursor_repo_url: String,
     /// Model id stamped onto sessions the in-memory bot opens. Unknown ids
     /// fall back to the agent loop's default model.
@@ -186,5 +192,29 @@ impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
         conation_config::ConfigLoader::load::<Config>()
             .context("failed to load agent harness service config")
+    }
+
+    /// Repository stamped onto managed sessions.
+    ///
+    /// Empty when unset so spawn fails instead of cloning a shared default
+    /// such as Conation's own repository. External sessions that name a
+    /// repository on the request are unaffected.
+    pub fn harness_repo_for_spawn(&self) -> String {
+        self.harness_repo_url.trim().to_owned()
+    }
+
+    /// Repository `@cursor` sessions work on.
+    ///
+    /// Fails with an explicit error when unset: there is no shared default,
+    /// and the Cursor manager requires a URL at construction. Never
+    /// substitutes Conation's own repository.
+    pub fn cursor_repo_for_spawn(&self) -> anyhow::Result<&str> {
+        let url = self.cursor_repo_url.trim();
+        if url.is_empty() {
+            anyhow::bail!(
+                "CURSOR_REPO_URL is unset: @cursor spawn requires a repository URL; refusing to default to a shared repository"
+            );
+        }
+        Ok(url)
     }
 }

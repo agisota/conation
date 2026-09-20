@@ -14,6 +14,8 @@ use crate::domain::model::{
     TeamInvite, TeamInviteDetails, TeamMember, TeamMembers, TeamPlan, TeamRole, TeamWithMembers,
     ToggleAutoJoinDomainError, TryJoinTeamByDomainError,
 };
+use serde_json::Value;
+
 
 /// The TeamRepository defines a set of actions to perform on teams data
 pub trait TeamRepository: Clone + Send + Sync + 'static {
@@ -314,6 +316,19 @@ pub trait TeamRepository: Clone + Send + Sync + 'static {
         after_team_id: Option<uuid::Uuid>,
         limit: u32,
     ) -> impl Future<Output = Result<Vec<uuid::Uuid>, TeamError>> + Send;
+
+    /// The team's default dashboard layout, or `None` when unset.
+    fn get_dashboard_layout(
+        &self,
+        team_id: &uuid::Uuid,
+    ) -> impl Future<Output = Result<Option<Value>, TeamError>> + Send;
+
+    /// Replace the team's default dashboard layout. `None` clears it.
+    fn set_dashboard_layout(
+        &self,
+        team_id: &uuid::Uuid,
+        layout: Option<Value>,
+    ) -> impl Future<Output = Result<Option<Value>, TeamError>> + Send;
 }
 
 /// The TeamMembersService defines read-only team membership queries.
@@ -510,4 +525,19 @@ pub trait TeamService: Clone + Send + Sync + 'static {
         &self,
         user_id: &MacroUserIdStr<'_>,
     ) -> impl Future<Output = Result<Option<TeamMember<'static>>, TryJoinTeamByDomainError>> + Send;
+
+    /// The team's default dashboard layout. Any team member may read;
+    /// `None` means no default has been saved.
+    fn get_dashboard_layout(
+        &self,
+        entity_access_receipt: EntityAccessReceipt<MemberTeamRole>,
+    ) -> impl Future<Output = Result<Option<Value>, TeamError>> + Send;
+
+    /// Replace the team's default dashboard layout. Requires a team
+    /// admin or owner; `None` clears it. The blob is replaced whole.
+    fn set_dashboard_layout(
+        &self,
+        entity_access_receipt: EntityAccessReceipt<AdminTeamRole>,
+        layout: Option<Value>,
+    ) -> impl Future<Output = Result<Option<Value>, TeamError>> + Send;
 }
