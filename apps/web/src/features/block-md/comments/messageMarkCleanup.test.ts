@@ -3,7 +3,7 @@ import {
   commentPlugin,
   REMOVE_ORPHANED_COMMENT_MARKS_COMMAND,
 } from '@core/component/LexicalMarkdown/plugins/comments/commentPlugin';
-import { $createCommentNode, CommentNode } from '@macro-inc/lexical-core';
+import { $createCommentNode, CommentNode } from '@conation/lexical-core';
 import {
   $createParagraphNode,
   $createTextNode,

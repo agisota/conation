@@ -6,7 +6,7 @@ import { useSplitNavigationHandler } from '@core/util/useSplitNavigationHandler'
 import {
   $isAgentSessionMentionNode,
   type AgentSessionMentionDecoratorProps,
-} from '@macro-inc/lexical-core';
+} from '@conation/lexical-core';
 import { useAgentSessionMentionPreview } from '@queries/agent-session/mentions';
 import {
   $getNodeByKey,

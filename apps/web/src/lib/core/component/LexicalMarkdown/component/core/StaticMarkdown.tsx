@@ -38,7 +38,7 @@ import {
   type UserMentionNode,
   type VideoNode,
   type WatermarkNode,
-} from '@macro-inc/lexical-core';
+} from '@conation/lexical-core';
 import { cn } from '@ui';
 import {
   $getRoot,
@@ -73,7 +73,7 @@ import {
   ENABLE_SVG_PREVIEW,
 } from '@core/constant/featureFlags';
 import type { MarkNode } from '@lexical/mark';
-import type { SearchMatchNode } from '@macro-inc/lexical-core/nodes/SearchMatchNode';
+import type { SearchMatchNode } from '@conation/lexical-core/nodes/SearchMatchNode';
 import { theme as baseTheme, createTheme } from '../../theme';
 import { forceSingleLine, setEditorStateFromMarkdown } from '../../utils';
 import { StaticCodeBoxAccessory } from '../accessory/CodeBoxAccessory';

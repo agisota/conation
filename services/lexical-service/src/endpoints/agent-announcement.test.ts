@@ -1,6 +1,6 @@
 import '../polyfills/prism';
 import { describe, expect, it } from 'bun:test';
-import { readReplyTargetData } from '@macro-inc/lexical-core/nodes/ReplyTargetNode';
+import { readReplyTargetData } from '@conation/lexical-core/nodes/ReplyTargetNode';
 import { fromHono } from 'chanfana';
 import { Hono } from 'hono';
 import { AgentAnnouncementEndpoint } from './agent-announcement';

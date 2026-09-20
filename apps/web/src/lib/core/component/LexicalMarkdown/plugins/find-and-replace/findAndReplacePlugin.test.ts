@@ -1,8 +1,8 @@
 import {
   $createDocumentMentionNode,
   $createUserMentionNode,
-} from '@macro-inc/lexical-core';
-import { SupportedNodeTypes } from '@macro-inc/lexical-core/node-list';
+} from '@conation/lexical-core';
+import { SupportedNodeTypes } from '@conation/lexical-core/node-list';
 import {
   $createParagraphNode,
   $createTextNode,

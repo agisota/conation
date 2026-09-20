@@ -11,7 +11,7 @@ import type {
 } from '@core/component/LexicalMarkdown/plugins';
 import type { FloatingStyle } from '@core/component/LexicalMarkdown/plugins/find-and-replace';
 import { createParamsState } from '@core/component/ParamsProvider';
-import type { NodeIdMappings } from '@macro-inc/lexical-core/plugins/nodeIdPlugin';
+import type { NodeIdMappings } from '@conation/lexical-core/plugins/nodeIdPlugin';
 import type { LexicalEditor } from 'lexical';
 import { createSignal } from 'solid-js';
 import { createStore, type Store } from 'solid-js/store';

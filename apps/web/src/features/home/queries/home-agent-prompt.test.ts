@@ -1,4 +1,4 @@
-import { buildMentionMarkdownString } from '@macro-inc/lexical-core/utils/mentions';
+import { buildMentionMarkdownString } from '@conation/lexical-core/utils/mentions';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildHomeAgentPrompt } from './home-agent-prompt';
 

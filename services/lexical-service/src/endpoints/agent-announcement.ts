@@ -1,11 +1,11 @@
-import { CONNECT_APP_TARGETS } from '@macro-inc/lexical-core/nodes/ConnectAppNode';
+import { CONNECT_APP_TARGETS } from '@conation/lexical-core/nodes/ConnectAppNode';
 import {
   MAGIC_CHIP_AUTHORS,
   MAGIC_CHIP_STATUSES,
-} from '@macro-inc/lexical-core/nodes/MagicChipNode';
-import type { ReplyTargetParent } from '@macro-inc/lexical-core/nodes/ReplyTargetNode';
-import { composeAgentSessionAnnouncement } from '@macro-inc/lexical-core/utils/agent-announcement';
-import { composeAgentConnectionPrompt } from '@macro-inc/lexical-core/utils/agent-connection-prompt';
+} from '@conation/lexical-core/nodes/MagicChipNode';
+import type { ReplyTargetParent } from '@conation/lexical-core/nodes/ReplyTargetNode';
+import { composeAgentSessionAnnouncement } from '@conation/lexical-core/utils/agent-announcement';
+import { composeAgentConnectionPrompt } from '@conation/lexical-core/utils/agent-connection-prompt';
 import { OpenAPIRoute } from 'chanfana';
 import type { Context } from 'hono';
 import { z } from 'zod';

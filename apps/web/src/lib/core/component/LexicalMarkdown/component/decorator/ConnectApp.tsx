@@ -3,7 +3,7 @@ import { useSettingsState } from '@core/constant/SettingsState';
 import { useUserId } from '@core/context/user';
 import { PipedreamConnectorIcon } from '@core/pipedream/ConnectorIcon';
 import { requestConnectApp } from '@core/pipedream/pendingConnect';
-import type { ConnectAppDecoratorProps } from '@macro-inc/lexical-core';
+import type { ConnectAppDecoratorProps } from '@conation/lexical-core';
 import ArrowUpRightIcon from '@phosphor/arrow-up-right.svg';
 import { useHarnessConnectionStatus } from '@queries/harnesses/connections';
 import { usePipedreamConnectedSlugs } from '@queries/pipedream-connectors';

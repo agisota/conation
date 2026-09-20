@@ -1,7 +1,7 @@
 import '@app/index.css';
 import { AnalyticsContextProvider } from '@app/lib/analytics/analytics-context';
 import { PosthogProvider } from '@app/lib/analytics/posthog';
-import { buildAgentSessionMentionMarkdown } from '@macro-inc/lexical-core';
+import { buildAgentSessionMentionMarkdown } from '@conation/lexical-core';
 import { agentSessionKeys } from '@queries/agent-session/keys';
 import { QueryClient, QueryClientProvider } from '@tanstack/solid-query';
 import { For, onCleanup } from 'solid-js';

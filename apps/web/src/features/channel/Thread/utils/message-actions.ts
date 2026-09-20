@@ -5,7 +5,7 @@ import {
   isReplyTargetData,
   markdownToPlainText,
   stripLeadingReplyTargetMarkdown,
-} from '@macro-inc/lexical-core';
+} from '@conation/lexical-core';
 import type { MessageData } from '../../Message';
 
 export const DEFAULT_REACTION_EMOJI = '👍';

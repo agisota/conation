@@ -156,7 +156,7 @@ import {
   InlineSearchNode,
   type PeerIdValidator,
   peerIdPlugin,
-} from '@macro-inc/lexical-core';
+} from '@conation/lexical-core';
 import { useDocTags } from '@property/tags';
 import { EntityType } from '@service-properties/generated/schemas/entityType';
 import { onElementConnect } from '@solid-primitives/lifecycle';

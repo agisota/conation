@@ -2,7 +2,7 @@ import {
   commentPlugin,
   DELETE_COMMENT_COMMAND,
 } from '@core/component/LexicalMarkdown/plugins/comments/commentPlugin';
-import { $createCommentNode, CommentNode } from '@macro-inc/lexical-core';
+import { $createCommentNode, CommentNode } from '@conation/lexical-core';
 import {
   $createParagraphNode,
   $createTextNode,

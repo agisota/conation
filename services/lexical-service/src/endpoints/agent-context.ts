@@ -1,4 +1,4 @@
-import { composeAgentContextPrompt } from '@macro-inc/lexical-core/utils/agent-context';
+import { composeAgentContextPrompt } from '@conation/lexical-core/utils/agent-context';
 import { OpenAPIRoute } from 'chanfana';
 import type { Context } from 'hono';
 import { z } from 'zod';

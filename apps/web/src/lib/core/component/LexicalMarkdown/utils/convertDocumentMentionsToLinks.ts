@@ -1,4 +1,4 @@
-import type { DocumentMentionInfo } from '@macro-inc/lexical-core';
+import type { DocumentMentionInfo } from '@conation/lexical-core';
 
 /** Replace Macro document-mention elements with portable HTML links. */
 export function convertDocumentMentionsToLinks(

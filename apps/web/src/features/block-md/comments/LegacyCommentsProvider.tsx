@@ -17,7 +17,7 @@ import {
 } from '@core/component/LexicalMarkdown/plugins/comments/commentPlugin';
 import { useUserId } from '@core/context/user';
 import type { LoroManager } from '@macro-inc/collaboration/collab/manager';
-import type { CommentNode } from '@macro-inc/lexical-core';
+import type { CommentNode } from '@conation/lexical-core';
 import { COMMAND_PRIORITY_LOW, SELECTION_CHANGE_COMMAND } from 'lexical';
 import {
   type Accessor,

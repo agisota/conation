@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { setEditorStateFromHtml } from '@core/component/LexicalMarkdown/utils';
-import { HtmlRenderNode, RegisteredNodesByType } from '@macro-inc/lexical-core';
+import { HtmlRenderNode, RegisteredNodesByType } from '@conation/lexical-core';
 import { createEditor } from 'lexical';
 import { describe, expect, it, vi } from 'vitest';
 import {

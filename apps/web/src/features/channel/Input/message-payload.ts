@@ -1,6 +1,6 @@
 import type { ItemMention } from '@core/component/LexicalMarkdown/plugins';
 import { STATIC_IMAGE, STATIC_VIDEO } from '@core/store/cacheChannelInput';
-import { messageReference } from '@macro-inc/lexical-core/utils/message-references';
+import { messageReference } from '@conation/lexical-core/utils/message-references';
 import type { NewAttachment } from '@service-storage/generated/schemas/newAttachment';
 import type { SimpleMention } from '@service-storage/generated/schemas/simpleMention';
 import type { PostMessage } from '@service-storage/messages';

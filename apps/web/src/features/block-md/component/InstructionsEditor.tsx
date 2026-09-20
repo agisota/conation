@@ -45,7 +45,7 @@ import {
   InlineSearchNode,
   type PeerIdValidator,
   peerIdPlugin,
-} from '@macro-inc/lexical-core';
+} from '@conation/lexical-core';
 import { onElementConnect } from '@solid-primitives/lifecycle';
 import { debounce } from '@solid-primitives/scheduled';
 import type { EditorState } from 'lexical';

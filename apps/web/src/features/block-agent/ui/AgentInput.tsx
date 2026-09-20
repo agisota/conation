@@ -21,7 +21,7 @@ import { isMobile } from '@core/mobile/isMobile';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
 import { useTouchOutsideToDismissKeyboard } from '@core/mobile/useTouchOutsideToDismissKeyboard';
 import { handleFileFolderDrop } from '@core/util/upload';
-import { $insertReferencedPaste } from '@macro-inc/lexical-core';
+import { $insertReferencedPaste } from '@conation/lexical-core';
 import EnterIcon from '@phosphor-icons/core/regular/arrow-bend-down-left.svg?component-solid';
 import { Button, ComposerSurface, SendButton } from '@ui';
 import { createSignal, type JSX, onCleanup, onMount, Show } from 'solid-js';

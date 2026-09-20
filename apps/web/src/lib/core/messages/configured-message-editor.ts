@@ -18,7 +18,7 @@ import { isIOS } from '@solid-primitives/platform';
 import type { Accessor } from 'solid-js';
 
 export type MessageEditorOptions = {
-  type?: import('@macro-inc/lexical-core').EditorType;
+  type?: import('@conation/lexical-core').EditorType;
   groupMentions?: boolean;
   inlineMedia?: boolean;
   floatingFormatMenu?: boolean;

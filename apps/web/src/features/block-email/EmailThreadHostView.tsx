@@ -4,7 +4,7 @@ import { useEmailThreadState } from '@app/features/email-thread/context/email-th
 import { EmailThread } from '@app/features/email-thread/email-thread';
 import { SidePanel } from '@components/app/side-panel';
 import { useSplitLayout } from '@components/app/split-layout/layout';
-import { buildMentionMarkdownString } from '@macro-inc/lexical-core';
+import { buildMentionMarkdownString } from '@conation/lexical-core';
 import type { Accessor, JSX } from 'solid-js';
 import { Show } from 'solid-js';
 import { EmailTaskButton } from './component/EmailTaskButton';

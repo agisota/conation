@@ -2,7 +2,7 @@ import { CollabProvider } from '@core/component/LexicalMarkdown/collaboration/Co
 import type { MarkdownEditorErrors } from '@core/component/LexicalMarkdown/constants';
 import type { PluginManager } from '@core/component/LexicalMarkdown/plugins';
 import type { LoroManager } from '@macro-inc/collaboration/collab/manager';
-import type { NodeIdMappings } from '@macro-inc/lexical-core';
+import type { NodeIdMappings } from '@conation/lexical-core';
 import type { LexicalEditor } from 'lexical';
 import type { Accessor, Setter } from 'solid-js';
 import { useMarkdownDocument } from '../context/markdown-document-context';

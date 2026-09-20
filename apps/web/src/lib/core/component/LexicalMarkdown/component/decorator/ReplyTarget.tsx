@@ -4,7 +4,7 @@ import { StaticMarkdown } from '@core/component/LexicalMarkdown/component/core/S
 import { singleLineMarkdownTheme } from '@core/component/LexicalMarkdown/theme';
 import { getDisplayName, tryMacroId } from '@core/user';
 import { openInNewSplitForMention } from '@core/util/openInNewSplit';
-import type { ReplyTargetDecoratorProps } from '@macro-inc/lexical-core';
+import type { ReplyTargetDecoratorProps } from '@conation/lexical-core';
 import { useBotsQuery } from '@queries/bots/bots';
 import { useChannelBotsQuery } from '@queries/channel/channel-bots';
 import { getBotDisplayName } from '@queries/messages/message-sender';

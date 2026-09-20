@@ -15,7 +15,7 @@ import {
   BrowserWALStore,
   LORO_WAL_DB_NAME,
 } from '@macro-inc/collaboration/collab/wal';
-import { MARKDOWN_LORO_SCHEMA } from '@macro-inc/lexical-core/markdown-loro-schema';
+import { MARKDOWN_LORO_SCHEMA } from '@conation/lexical-core/markdown-loro-schema';
 import type { Span } from '@macro-inc/observability';
 import { Scroll } from '@ui';
 import type { ResultAsync } from 'neverthrow';

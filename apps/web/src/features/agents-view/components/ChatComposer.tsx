@@ -8,7 +8,7 @@ import { createComposerLayout } from '@core/component/LexicalMarkdown/utils/crea
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
 import { useTouchOutsideToDismissKeyboard } from '@core/mobile/useTouchOutsideToDismissKeyboard';
 import { handleFileFolderDrop } from '@core/util/upload';
-import { $insertReferencedPaste } from '@macro-inc/lexical-core';
+import { $insertReferencedPaste } from '@conation/lexical-core';
 import { createResizeObserver } from '@solid-primitives/resize-observer';
 import { Button, ComposerSurface, SendButton } from '@ui';
 import {

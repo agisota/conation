@@ -1,4 +1,4 @@
-import type { MagicChipDecoratorProps } from '@macro-inc/lexical-core';
+import type { MagicChipDecoratorProps } from '@conation/lexical-core';
 import {
   handleAgentSessionUpdated,
   invalidateAgentSessionMetadata,

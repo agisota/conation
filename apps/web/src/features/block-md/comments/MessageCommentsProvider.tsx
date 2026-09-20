@@ -19,7 +19,7 @@ import {
 } from '@core/component/LexicalMarkdown/plugins/comments/commentPlugin';
 import { useUserId } from '@core/context/user';
 import type { LoroManager } from '@macro-inc/collaboration/collab/manager';
-import type { CommentNode } from '@macro-inc/lexical-core';
+import type { CommentNode } from '@conation/lexical-core';
 import { useMessageLink } from '@queries/messages/document-messages';
 import { usePatchThreadMutation } from '@queries/messages/mutations';
 import { onThreadStateUpdated } from '@queries/messages/sync';
