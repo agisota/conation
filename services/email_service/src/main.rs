@@ -74,7 +74,7 @@ async fn main() -> anyhow::Result<()> {
     let db = PgPoolOptions::new()
         .min_connections(min_connections)
         .max_connections(max_connections)
-        .connect(&config.conation_db_url)
+        .connect(config.conation_db_url.as_ref())
         .await
         .context("could not connect to db")?;
 
@@ -177,7 +177,7 @@ async fn main() -> anyhow::Result<()> {
             ),
             config.sent_undo_delay_secs,
         )
-        .with_macro_event_broker(macro_event_broker.clone()),
+        .with_conation_event_broker(macro_event_broker.clone()),
     );
     let entity_access_service = Arc::new(EntityAccessServiceImpl::new(PgAccessRepository::new(
         db.clone(),
@@ -245,7 +245,7 @@ async fn main() -> anyhow::Result<()> {
         entity_access_service,
         email_thread_state,
         gmail_token_state,
-        macro_event_broker: Arc::new(macro_event_broker),
+        conation_event_broker: Arc::new(macro_event_broker),
         calendar_service,
         calendar_mutation_service,
     })

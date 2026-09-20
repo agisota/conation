@@ -277,7 +277,7 @@ pub async fn build_tool_service_context_from_env(
                 connection_gateway_url,
             )),
             sqs: aws_sqs_client,
-            conation_event_broker: conation_event_broker.clone(),
+            macro_event_broker: conation_event_broker.clone(),
         },
     );
     let document_service = documents::domain::service::DocumentServiceImpl {
