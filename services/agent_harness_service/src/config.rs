@@ -7,7 +7,7 @@
 
 use anyhow::Context;
 use database_env_vars::{DatabaseUrl, RedisUri};
-pub use conation_env::Environment;
+pub use macro_env::Environment;
 use macro_uuid::Uuid;
 
 use secretsmanager_client::LocalOrRemoteSecret;
@@ -52,7 +52,7 @@ fn default_pipedream_environment() -> String {
 }
 
 /// The configuration parameters for the agent harness service.
-#[derive(conation_config::MacroConfig)]
+#[derive(macro_config::MacroConfig)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Config {
     /// OAuth encryption key; deployments without a key do not advertise sign-in.
@@ -247,7 +247,7 @@ impl Config {
 
     /// Load the configuration from the environment.
     pub fn from_env() -> anyhow::Result<Self> {
-        conation_config::ConfigLoader::load::<Config>()
+        macro_config::ConfigLoader::load::<Config>()
             .context("failed to load agent harness service config")
     }
 

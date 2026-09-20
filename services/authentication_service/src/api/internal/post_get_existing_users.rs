@@ -79,7 +79,7 @@ pub async fn handler(
         .map_err(|_| GetExistingUsersError::InvalidMacroId)?;
 
     let existing_user_ids =
-        conation_db_client::user::get_all::get_existing_users(&ctx.db, &user_ids).await?;
+        macro_db_client::user::get_all::get_existing_users(&ctx.db, &user_ids).await?;
 
     Ok(Json(GetExistingUsersResponse { existing_user_ids }))
 }

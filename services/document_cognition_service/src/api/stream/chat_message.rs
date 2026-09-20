@@ -26,7 +26,7 @@ use chat::domain::events::{ChatCreatedMetadata, ChatMacroEvent};
 use chat::domain::ports::MessageService;
 use macro_auth::headers::AccessTokenExtractor;
 use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use conation_db_client::dcs::create_chat;
+use macro_db_client::dcs::create_chat;
 use macro_event_broker::MacroEventBroker;
 use macro_user_id::user_id::MacroUserIdStr;
 use futures::StreamExt;

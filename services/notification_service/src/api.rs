@@ -2,7 +2,7 @@ use crate::api::context::{ApiContext, AuthorizationService};
 use ::notification::inbound::http::NotificationRouterState;
 use anyhow::Context;
 use axum::Router;
-use conation_tower_layers::MacroRequestIdAndTracingLayer;
+use macro_tower_layers::MacroRequestIdAndTracingLayer;
 use model::version::{ServiceNameState, VersionedApiServiceName, validate_api_version};
 use std::time::Duration;
 use tower::ServiceBuilder;
@@ -38,7 +38,7 @@ pub async fn setup_and_serve<S: ::notification::domain::service::NotificationRea
                     },
                     validate_api_version,
                 ))
-                .layer(conation_cors::cors_layer())
+                .layer(macro_cors::cors_layer())
                 .layer(CompressionLayer::new().gzip(true)),
         );
     let app = Router::new()
@@ -74,7 +74,7 @@ fn api_router<S: ::notification::domain::service::NotificationReader>(
 ) -> Router<ApiContext> {
     let middleware = {
         ServiceBuilder::new().layer(axum::middleware::from_fn(
-            conation_middleware::connection_drop_prevention_handler,
+            macro_middleware::connection_drop_prevention_handler,
         ))
     };
 

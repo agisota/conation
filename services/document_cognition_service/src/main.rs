@@ -62,7 +62,7 @@ mod service;
 async fn main() -> anyhow::Result<()> {
     MacroEntrypoint::default().init();
 
-    let aws_config = macro_aws_config::get_macro_aws_config().await;
+    let aws_config = macro_aws_config::get_conation_aws_config().await;
 
     let secretsmanager_client = secretsmanager_client::SecretsManager::new(
         aws_sdk_secretsmanager::Client::new(&aws_config),

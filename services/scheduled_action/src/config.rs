@@ -12,7 +12,7 @@
 
 use anyhow::Context;
 use macro_auth::InternalApiKey;
-pub use conation_env::Environment;
+pub use macro_env::Environment;
 use macro_env_var::env_vars;
 use database_env_vars::DatabaseUrl;
 
@@ -36,7 +36,7 @@ env_vars! {
 }
 
 /// The configuration parameters for the agent schedule service.
-#[derive(conation_config::MacroConfig)]
+#[derive(macro_config::MacroConfig)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Config {
     /// The environment we are in.
@@ -64,7 +64,7 @@ pub struct Config {
 
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
-        conation_config::ConfigLoader::load::<Config>()
+        macro_config::ConfigLoader::load::<Config>()
             .context("failed to load agent schedule service config")
     }
 }

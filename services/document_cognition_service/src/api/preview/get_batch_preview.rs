@@ -43,7 +43,7 @@ pub async fn handler(
     let chat_ids: Vec<String> = unique_chat_ids.into_iter().collect();
 
     let chat_preview_results =
-        conation_db_client::chat::preview::batch_get_document_preview_v2(&db, &chat_ids)
+        macro_db_client::chat::preview::batch_get_document_preview_v2(&db, &chat_ids)
             .await
             .map_err(|e| {
                 tracing::error!(error = %e,  "unable to get batch preview");

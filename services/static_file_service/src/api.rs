@@ -11,7 +11,7 @@ use crate::api::context::{AppState, AuthorizationService};
 use anyhow::Context;
 use axum::Router;
 use axum::extract::DefaultBodyLimit;
-use macro_auth::middleware::decode_jwt::JwtValidationArgs;
+use conation_auth::middleware::decode_jwt::JwtValidationArgs;
 use macro_authorization::{InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationState};
 use std::sync::Arc;
 use tower_http::limit::RequestBodyLimitLayer;
@@ -27,9 +27,9 @@ pub async fn setup_and_serve(
     config: Config,
     jwt_validation_args: JwtValidationArgs,
 ) -> anyhow::Result<()> {
-    let cors = macro_cors::cors_layer();
+    let cors = conation_cors::cors_layer();
 
-    let aws_config = macro_aws_config::get_macro_aws_config().await;
+    let aws_config = conation_aws_config::get_conation_aws_config().await;
 
     let metadata_client = DynamodbClient::new(
         &aws_config,
@@ -40,7 +40,7 @@ pub async fn setup_and_serve(
     );
 
     let sqs_client = aws_sdk_sqs::Client::new(&aws_config);
-    let inner_client = macro_aws_config::s3_client().await;
+    let inner_client = conation_aws_config::s3_client().await;
     let storage_client = S3Client::new(
         inner_client,
         config.static_storage_bucket.as_ref().to_owned(),

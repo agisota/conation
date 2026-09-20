@@ -38,7 +38,7 @@ pub async fn create_portal_session(
     }
 
     // Get the stripe customer ID from the database
-    let stripe_customer_id = conation_db_client::user::get::get_stripe_customer_id_by_user_id(
+    let stripe_customer_id = macro_db_client::user::get::get_stripe_customer_id_by_user_id(
         &ctx.db,
         &authorization.authorization.user.macro_user_id,
     )

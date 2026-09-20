@@ -16,7 +16,7 @@ use axum::{
     response::{IntoResponse, Response},
     routing::{delete, get, patch, post},
 };
-use macro_db_client::annotations::CommentError;
+use conation_db_client::annotations::CommentError;
 use macro_user_id::user_id::MacroUserIdStr;
 use model::response::ErrorResponse;
 use model_entity::EntityType;
@@ -40,7 +40,7 @@ pub fn router(state: ApiContext) -> Router<ApiContext> {
             get(get::get_document_comments_handler).layer(ServiceBuilder::new().layer(
                 axum::middleware::from_fn_with_state(
                     state.clone(),
-                    macro_middleware::cloud_storage::document::ensure_document_exists::handler,
+                    conation_middleware::cloud_storage::document::ensure_document_exists::handler,
                 ),
             )),
         )
@@ -50,7 +50,7 @@ pub fn router(state: ApiContext) -> Router<ApiContext> {
                 ServiceBuilder::new().layer(write_switch.clone()).layer(
                     axum::middleware::from_fn_with_state(
                         state.clone(),
-                        macro_middleware::cloud_storage::document::ensure_document_exists::handler,
+                        conation_middleware::cloud_storage::document::ensure_document_exists::handler,
                     ),
                 ),
             ),
@@ -73,7 +73,7 @@ pub fn router(state: ApiContext) -> Router<ApiContext> {
             get(get::get_document_anchors_handler).layer(ServiceBuilder::new().layer(
                 axum::middleware::from_fn_with_state(
                     state.clone(),
-                    macro_middleware::cloud_storage::document::ensure_document_exists::handler,
+                    conation_middleware::cloud_storage::document::ensure_document_exists::handler,
                 ),
             )),
         )
@@ -82,7 +82,7 @@ pub fn router(state: ApiContext) -> Router<ApiContext> {
             post(create_anchor::create_anchor_handler).layer(ServiceBuilder::new().layer(
                 axum::middleware::from_fn_with_state(
                     state.clone(),
-                    macro_middleware::cloud_storage::document::ensure_document_exists::handler,
+                    conation_middleware::cloud_storage::document::ensure_document_exists::handler,
                 ),
             )),
         )

@@ -4,7 +4,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use conation_db_client::user::update_user_name::update_user_name;
+use macro_db_client::user::update_user_name::update_user_name;
 
 use crate::api::context::{ApiContext, AuthorizationService};
 

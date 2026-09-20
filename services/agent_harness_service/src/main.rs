@@ -107,12 +107,12 @@ use macro_authorization::{
     MacroAuthorizationState, PgBotAuthorizationRepo, PgBotAuthorizer, PgHarnessAuthorizationRepo,
     PgHarnessAuthorizer, PgUserApiKeyAuthorizationRepo, PgUserApiKeyAuthorizer,
 };
-use conation_entrypoint::{MacroEntrypoint, shutdown_signal};
+use macro_entrypoint::{MacroEntrypoint, shutdown_signal};
 use macro_event_broker::{
     KafkaConsumerAdapter, KafkaEventPublisher, MacroEvent as _, MacroEventBrokerService,
     MacroEventCollection as _, MacroEventConsumerService,
 };
-use conation_service_urls::{
+use macro_service_urls::{
     AgentHarnessEgressUrl, ConnectionGatewayUrl, LexicalServiceUrl, McpServiceUrl,
     StaticFileServiceUrl,
 };
@@ -269,7 +269,7 @@ async fn main() -> anyhow::Result<()> {
 async fn run() -> anyhow::Result<()> {
     agent_harness::install_tls_provider();
     // AWS first, because the config's secrets resolve through Secrets Manager.
-    let aws_config = conation_aws_config::get_conation_aws_config().await;
+    let aws_config = macro_aws_config::get_conation_aws_config().await;
     let secrets = secretsmanager_client::SecretsManager::new(aws_sdk_secretsmanager::Client::new(
         &aws_config,
     ));
@@ -358,7 +358,7 @@ async fn run() -> anyhow::Result<()> {
     let notifications = Arc::new(notification::domain::service::SqsNotificationIngress {
         queue: notification::outbound::queue::SqsQueue::new(
             aws_sdk_sqs::Client::new(&aws_config),
-            conation_queues::NotificationIngressQueue::new().to_string(),
+            macro_queues::NotificationIngressQueue::new().to_string(),
         ),
     });
     let lifecycle_publisher = Arc::new(BrokerLifecyclePublisher::new(broker.clone()));
@@ -614,7 +614,7 @@ async fn run() -> anyhow::Result<()> {
         cursor_cloud_agents::outbound::static_file_artifacts::StaticFileArtifactStore::new(
             static_file_service_client::StaticFileServiceClient::new(
                 config.internal_api_key.clone(),
-                conation_service_urls::StaticFileServiceUrl::new()?.to_string(),
+                macro_service_urls::StaticFileServiceUrl::new()?.to_string(),
             ),
         ),
     )
@@ -779,7 +779,7 @@ async fn run() -> anyhow::Result<()> {
     let contacts_ingress = Arc::new(contacts::domain::service::SqsContactsIngress {
         queue: contacts::outbound::ingress::SqsContactsQueue::new(
             aws_sdk_sqs::Client::new(&aws_config),
-            conation_queues::ContactsQueue::new().to_string(),
+            macro_queues::ContactsQueue::new().to_string(),
         ),
     });
     // The same message service the storage API composes, so an announcement
@@ -965,7 +965,7 @@ async fn run() -> anyhow::Result<()> {
         changes_extractor,
         PgChangesetRepo::new(pool.clone()),
         S3ChangesetBlobStore::new(
-            conation_aws_config::s3_client().await,
+            macro_aws_config::s3_client().await,
             config.agent_session_changes_bucket.clone(),
         ),
         ConnectionGatewayAgentSessionRealtime::new(

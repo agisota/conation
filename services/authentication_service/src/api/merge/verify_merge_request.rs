@@ -7,7 +7,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use conation_middleware::tracking::ClientIp;
+use macro_middleware::tracking::ClientIp;
 
 use crate::api::context::{ApiContext, AuthorizationService};
 use fusionauth::identity_provider::{IdentityProviderLink, LinkUserRequest};
@@ -44,7 +44,7 @@ pub async fn handler(
     let user_context = &authorization.authorization.user.user_context;
 
     let (account_merge_request_id, to_merge_macro_user_id) =
-        conation_db_client::account_merge_request::get_merge_request_info(
+        macro_db_client::account_merge_request::get_merge_request_info(
             &ctx.db,
             &user_context.fusion_user_id,
             &code,
@@ -85,7 +85,7 @@ pub async fn handler(
 
     // get stripe customer
     let stripe_customer =
-        conation_db_client::macro_user::get_macro_user(&ctx.db, &to_merge_macro_user_id)
+        macro_db_client::macro_user::get_macro_user(&ctx.db, &to_merge_macro_user_id)
             .await
             .map_err(|e| {
                 tracing::error!(error=?e, "unable to get macro user");
@@ -105,7 +105,7 @@ pub async fn handler(
     })?;
 
     // macrodb
-    conation_db_client::account_merge_request::merge_accounts(
+    macro_db_client::account_merge_request::merge_accounts(
         &mut transaction,
         &user_context.fusion_user_id,
         &to_merge_macro_user_id,
@@ -201,7 +201,7 @@ pub async fn handler(
 
     // delete merge request
     // NOTE: this is ok to fail as it will be auto-deleted from cleanup worker
-    let _ = conation_db_client::account_merge_request::delete_account_merge_request(
+    let _ = macro_db_client::account_merge_request::delete_account_merge_request(
         &ctx.db,
         &account_merge_request_id,
     )

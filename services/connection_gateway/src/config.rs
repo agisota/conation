@@ -1,6 +1,6 @@
 use anyhow::Context;
 use macro_auth::InternalApiKey;
-pub use conation_env::Environment;
+pub use macro_env::Environment;
 use macro_env_var::env_vars;
 use secretsmanager_client::LocalOrRemoteSecret;
 
@@ -16,7 +16,7 @@ env_vars! {
 /// populate the Docker container
 ///
 /// See `.env.sample` in cognitive-workspace root for details.
-#[derive(conation_config::MacroConfig)]
+#[derive(macro_config::MacroConfig)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Config {
     /// The port the service is running on
@@ -33,7 +33,7 @@ pub struct Config {
 
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
-        conation_config::ConfigLoader::load::<Config>()
+        macro_config::ConfigLoader::load::<Config>()
             .context("failed to load connection gateway config")
     }
 }

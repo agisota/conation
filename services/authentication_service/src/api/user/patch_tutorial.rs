@@ -78,7 +78,7 @@ pub async fn handler(
             .map_err(|_| PatchTutorialCompleteError::InvalidMacroUserId)?
             .lowercase();
 
-    conation_db_client::user::patch::patch_user_tutorial(&ctx.db, &user_id, req.tutorial_complete)
+    macro_db_client::user::patch::patch_user_tutorial(&ctx.db, &user_id, req.tutorial_complete)
         .await
         .map_err(|e| match e.to_string().as_str() {
             "user not found" => PatchTutorialCompleteError::UserNotFound,

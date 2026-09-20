@@ -49,7 +49,7 @@ async fn main() -> anyhow::Result<()> {
     MacroEntrypoint::default().init();
     let env = Environment::new_or_prod();
 
-    let aws_config = macro_aws_config::get_macro_aws_config().await;
+    let aws_config = macro_aws_config::get_conation_aws_config().await;
 
     let s3_client = s3_client::S3::new(macro_aws_config::s3_client().await);
 

@@ -70,7 +70,7 @@ pub async fn authorize_inbox_access(
         return Ok((link, InboxAccess::Own));
     }
 
-    let delegated = conation_db_client::macro_user_links::edge_exists(
+    let delegated = macro_db_client::macro_user_links::edge_exists(
         &ctx.db,
         caller_macro_id,
         link.macro_id.as_ref(),

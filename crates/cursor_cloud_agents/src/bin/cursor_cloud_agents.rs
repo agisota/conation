@@ -38,7 +38,7 @@ use cursor_cloud_agents::api::{ApiKey, CursorClient, CursorConfig};
 use cursor_cloud_agents::domain::ports::NoRepositoryChooser;
 use cursor_cloud_agents::domain::service::CursorSessionService;
 use cursor_cloud_agents::inbound::acp::{AcpNotifier, serve};
-use macro_env_var::{env_var, maybe_env_var};
+use conation_env_var::{env_var, maybe_env_var};
 use std::process::ExitCode;
 use std::sync::Arc;
 use tracing_subscriber::layer::SubscriberExt as _;

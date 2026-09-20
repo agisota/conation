@@ -19,7 +19,7 @@ use std::path::Path;
 use std::time::Instant;
 
 use anyhow::Context;
-use conation_entrypoint::MacroEntrypoint;
+use macro_entrypoint::MacroEntrypoint;
 use sqlx::postgres::PgPoolOptions;
 
 #[tokio::main]

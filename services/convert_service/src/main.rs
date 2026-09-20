@@ -68,7 +68,7 @@ async fn main() -> anyhow::Result<()> {
 
     smoke_test_lok(&config.lok_path)?;
 
-    let aws_config = macro_aws_config::get_macro_aws_config().await;
+    let aws_config = macro_aws_config::get_conation_aws_config().await;
 
     let db = PgPoolOptions::new()
         .min_connections(1)
@@ -89,7 +89,7 @@ async fn main() -> anyhow::Result<()> {
 
     tracing::trace!("initialized config");
 
-    let queue_aws_config = macro_aws_config::get_macro_aws_config().await;
+    let queue_aws_config = macro_aws_config::get_conation_aws_config().await;
 
     let s3_client = s3_client::S3::new(macro_aws_config::s3_client().await);
     tracing::trace!("initialized s3 client");

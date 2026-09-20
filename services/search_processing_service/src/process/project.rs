@@ -38,7 +38,7 @@ pub async fn upsert_project(
 ) -> anyhow::Result<()> {
     let index_override = message.index_override.as_deref();
 
-    let project = conation_db_client::projects::get_project::get_project_for_search(
+    let project = macro_db_client::projects::get_project::get_project_for_search(
         db,
         message.project_id.as_str(),
     )

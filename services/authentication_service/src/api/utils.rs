@@ -1,7 +1,7 @@
 use crate::api::context::ApiContext;
 use anyhow::Context;
 use macro_auth::constant::{CONATION_ACCESS_TOKEN_COOKIE, CONATION_REFRESH_TOKEN_COOKIE};
-use conation_env::Environment;
+use macro_env::Environment;
 use macro_env_var::maybe_env_vars;
 use cookie::{Cookie, SameSite};
 use email::domain::ports::{FirstInboxProvisionOutcome, FirstInboxProvisioner};
@@ -112,7 +112,7 @@ fn resolve_app_base_url(
 
 pub(crate) fn configured_app_origin() -> anyhow::Result<String> {
     let app_base_url = configured_app_base_url()?;
-    conation_cors::normalize_origin(&app_base_url.origin().ascii_serialization())
+    macro_cors::normalize_origin(&app_base_url.origin().ascii_serialization())
         .map_err(anyhow::Error::msg)
         .context("APP_BASE_URL does not have a valid browser origin")
 }
@@ -154,7 +154,7 @@ pub(crate) fn validate_runtime_web_config() -> anyhow::Result<()> {
     configured_app_origin()?;
     let cookie_domain = AuthCookieDomain::new();
     resolve_cookie_domain(cookie_domain.as_ref().map(AsRef::as_ref))?;
-    conation_cors::configured_allowed_origins()
+    macro_cors::configured_allowed_origins()
         .map_err(anyhow::Error::msg)
         .context("invalid ALLOWED_ORIGINS")?;
     Ok(())
@@ -223,7 +223,7 @@ pub fn create_refresh_token_cookie(token: &str) -> Cookie<'static> {
 /// redirect URL so the app can attribute the session as a signup for
 /// analytics. Best-effort: never fails the login.
 pub async fn append_signed_up_param_if_new_user(
-    conation_cache_client: &conation_cache_client::MacroCache,
+    conation_cache_client: &macro_cache_client::MacroCache,
     email: &str,
     redirect_url: &mut Url,
 ) {

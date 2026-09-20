@@ -1,6 +1,6 @@
 use anyhow::Context;
 use macro_auth::InternalApiKey;
-pub use conation_env::Environment;
+pub use macro_env::Environment;
 use macro_env_var::env_vars;
 use secretsmanager_client::LocalOrRemoteSecret;
 
@@ -19,7 +19,7 @@ env_vars! {
     pub struct ApolloApiKey;
 }
 
-#[derive(conation_config::MacroConfig)]
+#[derive(macro_config::MacroConfig)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Config {
     /// The Conation database connection setting.
@@ -171,6 +171,6 @@ pub struct Config {
 
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
-        conation_config::ConfigLoader::load::<Config>().context("failed to load config")
+        macro_config::ConfigLoader::load::<Config>().context("failed to load config")
     }
 }

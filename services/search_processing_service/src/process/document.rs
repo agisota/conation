@@ -25,7 +25,7 @@ pub async fn process_update_name_message(
     db: &sqlx::Pool<sqlx::Postgres>,
     document_id: &str,
 ) -> anyhow::Result<()> {
-    let document = match conation_db_client::document::get_basic_document(db, document_id).await {
+    let document = match macro_db_client::document::get_basic_document(db, document_id).await {
         Ok(document) => document,
         Err(sqlx::Error::RowNotFound) => {
             tracing::debug!(

@@ -3,7 +3,7 @@ use anyhow::Context;
 use axum::Router;
 use axum::http::HeaderName;
 use macro_auth::constant::CONATION_REFRESH_TOKEN_HEADER;
-use conation_tower_layers::MacroRequestIdAndTracingLayer;
+use macro_tower_layers::MacroRequestIdAndTracingLayer;
 use native_app_service::inbound::RouterState;
 use std::net::SocketAddr;
 use std::time::Duration;
@@ -56,7 +56,7 @@ const GATEWAY_PATH_PREFIX: &str = "/auth";
 
 pub async fn setup_and_serve(state: ApiContext, port: usize) -> anyhow::Result<()> {
     utils::validate_runtime_web_config().context("invalid browser/auth origin configuration")?;
-    let cors = conation_cors::cors_layer_with_headers(vec![HeaderName::from_static(
+    let cors = macro_cors::cors_layer_with_headers(vec![HeaderName::from_static(
         CONATION_REFRESH_TOKEN_HEADER,
     )]);
 
@@ -85,7 +85,7 @@ pub async fn setup_and_serve(state: ApiContext, port: usize) -> anyhow::Result<(
         listener,
         app.into_make_service_with_connect_info::<SocketAddr>(),
     )
-    .with_graceful_shutdown(conation_entrypoint::shutdown_signal())
+    .with_graceful_shutdown(macro_entrypoint::shutdown_signal())
     .await
     .context("error starting service")
 }
@@ -159,7 +159,7 @@ fn api_router(state: ApiContext) -> Router<ApiContext> {
         .nest(
             "/webhooks",
             webhooks::router(state.stripe_enabled.0).layer(axum::middleware::from_fn(
-                conation_middleware::connection_drop_prevention_handler,
+                macro_middleware::connection_drop_prevention_handler,
             )),
         )
 }

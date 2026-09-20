@@ -93,18 +93,18 @@ use initiative::{
     outbound::PgInitiativeRepo,
 };
 use lexical_client::LexicalClient;
-use macro_auth::middleware::decode_jwt::JwtValidationArgs;
+use conation_auth::middleware::decode_jwt::JwtValidationArgs;
 use macro_authorization::{
     InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationServiceImpl,
     MacroAuthorizationState, PgBotAuthorizationRepo, PgBotAuthorizer, PgHarnessAuthorizationRepo,
     PgHarnessAuthorizer, PgUserApiKeyAuthorizationRepo, PgUserApiKeyAuthorizer,
 };
-use macro_entrypoint::MacroEntrypoint;
-use macro_env_var::maybe_env_vars;
-use macro_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
+use conation_entrypoint::MacroEntrypoint;
+use conation_env_var::maybe_env_vars;
+use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
 #[cfg(feature = "delete_document_worker")]
-use macro_service_urls::AiEditingWorkerUrl;
-use macro_service_urls::{
+use conation_service_urls::AiEditingWorkerUrl;
+use conation_service_urls::{
     ConnectionGatewayUrl, LexicalServiceUrl, StaticFileServiceUrl, SyncServiceUrl,
 };
 use macro_sha_count_client::Redis;
@@ -195,7 +195,7 @@ async fn main() -> anyhow::Result<()> {
 async fn run() -> anyhow::Result<()> {
     let env = Environment::new_or_prod();
 
-    let aws_config = macro_aws_config::get_macro_aws_config().await;
+    let aws_config = conation_aws_config::get_conation_aws_config().await;
 
     let secretsmanager_client = secretsmanager_client::SecretsManager::new(
         aws_sdk_secretsmanager::Client::new(&aws_config),
@@ -253,24 +253,24 @@ async fn run() -> anyhow::Result<()> {
     );
     tracing::trace!("initialized dynamodb client");
 
-    let s3_client = macro_aws_config::s3_client().await;
+    let s3_client = conation_aws_config::s3_client().await;
 
     tracing::trace!("initialized s3 client");
 
-    let search_event_queue = macro_queues::SearchEventQueue::new();
-    let document_delete_queue = macro_queues::DocumentDeleteQueue::new();
-    let contacts_queue = macro_queues::ContactsQueue::new();
-    let notification_queue = macro_queues::NotificationIngressQueue::new();
-    let gmail_ops_queue = macro_queues::GmailOpsQueue::new();
-    let reminder_dispatch_queue = macro_queues::ReminderDispatchQueue::new();
-    let calendar_reminder_dispatch_queue = macro_queues::CalendarReminderDispatchQueue::new();
+    let search_event_queue = conation_queues::SearchEventQueue::new();
+    let document_delete_queue = conation_queues::DocumentDeleteQueue::new();
+    let contacts_queue = conation_queues::ContactsQueue::new();
+    let notification_queue = conation_queues::NotificationIngressQueue::new();
+    let gmail_ops_queue = conation_queues::GmailOpsQueue::new();
+    let reminder_dispatch_queue = conation_queues::ReminderDispatchQueue::new();
+    let calendar_reminder_dispatch_queue = conation_queues::CalendarReminderDispatchQueue::new();
     let sqs_client = sqs_client::SQS::new(aws_sdk_sqs::Client::new(&aws_config))
         .search_event_queue(&search_event_queue)
         .document_delete_queue(&document_delete_queue)
         .gmail_ops_queue(&gmail_ops_queue);
     let webhook_event_queue = webhook::outbound::SqsWebhookQueue::new(
         Arc::new(sqs_client.clone()),
-        macro_queues::WebhookEventQueue::new().to_string(),
+        conation_queues::WebhookEventQueue::new().to_string(),
         config.webhook_queue_max_messages,
         config.webhook_queue_wait_time_seconds,
     );
@@ -482,7 +482,7 @@ async fn run() -> anyhow::Result<()> {
             .document_storage_service_presigned_url_browser_cache_expiry_seconds,
     };
     let s3_upload_adapter = S3UploadUrlAdapter::new(
-        macro_aws_config::s3_client().await,
+        conation_aws_config::s3_client().await,
         config.document_storage_bucket.as_ref(),
         config.docx_document_upload_bucket.as_ref(),
     );
@@ -511,7 +511,7 @@ async fn run() -> anyhow::Result<()> {
     let project_service = Arc::new(ProjectServiceImpl::new(
         PgProjectRepo::new(db.clone()),
         S3ProjectUploadAdapter::new(
-            macro_aws_config::s3_client().await,
+            conation_aws_config::s3_client().await,
             config.document_storage_bucket.as_ref(),
             config.docx_document_upload_bucket.as_ref(),
             config.upload_staging_bucket.as_ref(),

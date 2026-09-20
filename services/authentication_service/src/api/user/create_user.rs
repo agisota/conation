@@ -4,7 +4,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use conation_middleware::tracking::ClientIp;
+use macro_middleware::tracking::ClientIp;
 
 use crate::api::{context::ApiContext, signup_policy::signup_forbidden_response};
 
@@ -53,7 +53,7 @@ pub async fn handler(
         })?;
 
     let username_exists =
-        conation_db_client::macro_user::check_username_exists(&ctx.db, &req.username)
+        macro_db_client::macro_user::check_username_exists(&ctx.db, &req.username)
             .await
             .map_err(|e| {
                 tracing::error!(error=?e, "failed to check if username exists");
@@ -72,7 +72,7 @@ pub async fn handler(
             .into_response());
     }
 
-    let email_exists = conation_db_client::macro_user::check_email_exists(&ctx.db, &email)
+    let email_exists = macro_db_client::macro_user::check_email_exists(&ctx.db, &email)
         .await
         .map_err(|e| {
             tracing::error!(error=?e, "failed to check if email exists");

@@ -23,7 +23,7 @@ mod process;
 mod upload;
 
 use anyhow::Context;
-use conation_entrypoint::MacroEntrypoint;
+use macro_entrypoint::MacroEntrypoint;
 use sqlx_core::types::chrono;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

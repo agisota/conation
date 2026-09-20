@@ -59,7 +59,7 @@ async fn main() -> Result<()> {
             .await
             .context("failed to build tool service context")?;
 
-    let aws_config = macro_aws_config::get_macro_aws_config().await;
+    let aws_config = macro_aws_config::get_conation_aws_config().await;
     let notification_ingress = Arc::new(SqsNotificationIngress {
         queue: SqsQueue::new(
             aws_sdk_sqs::Client::new(&aws_config),
@@ -68,7 +68,7 @@ async fn main() -> Result<()> {
     });
 
     let secretsmanager_client = secretsmanager_client::SecretsManager::new(
-        aws_sdk_secretsmanager::Client::new(&macro_aws_config::get_macro_aws_config().await),
+        aws_sdk_secretsmanager::Client::new(&macro_aws_config::get_conation_aws_config().await),
     );
     let conn_gateway_client = Arc::new(ConnectionGatewayClient::new(
         config.internal_api_key.to_string(),

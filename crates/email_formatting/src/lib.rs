@@ -2,7 +2,7 @@ use askama::Template;
 use chrono::{DateTime, Utc};
 use hmac::Hmac;
 use macro_env::Environment;
-use macro_service_urls::NotificationServiceUrl;
+use conation_service_urls::NotificationServiceUrl;
 use macro_user_id::cowlike::CowLike;
 use model_notifications::NotifEvent;
 use notification::domain::models::{

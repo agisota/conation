@@ -6,7 +6,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use conation_middleware::tracking::ClientIp;
+use macro_middleware::tracking::ClientIp;
 use utoipa::ToSchema;
 
 use crate::{
@@ -115,7 +115,7 @@ pub async fn handler(
 
     // get the user's macro_user_id through their email
     let to_merge_macro_user_id =
-        conation_db_client::user::get::get_user_macro_id_by_email(&ctx.db, &req.email)
+        macro_db_client::user::get::get_user_macro_id_by_email(&ctx.db, &req.email)
             .await
             .map_err(|e| {
                 tracing::error!(error=?e, "failed to get user macro id");
@@ -129,7 +129,7 @@ pub async fn handler(
             })?;
 
     // Generate merge request and get code
-    let code = conation_db_client::account_merge_request::create_account_merge_request(
+    let code = macro_db_client::account_merge_request::create_account_merge_request(
         &ctx.db,
         &user_context.fusion_user_id,
         &to_merge_macro_user_id,
@@ -147,7 +147,7 @@ pub async fn handler(
     })?;
 
     let user_profile =
-        conation_db_client::user::get::get_user_profile(&ctx.db, &user_context.user_id)
+        macro_db_client::user::get::get_user_profile(&ctx.db, &user_context.user_id)
             .await
             .map_err(|e| {
                 tracing::error!(error=?e, "failed to get user profile");

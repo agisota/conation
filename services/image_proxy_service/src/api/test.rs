@@ -6,12 +6,12 @@ use axum::http::header::{AUTHORIZATION, COOKIE};
 use axum::http::{Request, StatusCode};
 use http_body_util::BodyExt;
 use jsonwebtoken::{Algorithm, EncodingKey, Header};
-use macro_auth::middleware::decode_jwt::{JwtValidationArgs, MacroAccessToken};
+use conation_auth::middleware::decode_jwt::{JwtValidationArgs, MacroAccessToken};
 use macro_authorization::{
     InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationServiceImpl,
     MacroAuthorizationState,
 };
-use macro_env::Environment;
+use conation_env::Environment;
 use serde_json::{Value, json};
 use tower::ServiceExt;
 

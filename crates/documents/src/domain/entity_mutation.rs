@@ -22,7 +22,7 @@ use crate::domain::ports::sync::DocumentSyncPort;
 use connection::domain::ports::ConnectionService;
 use entity_access_management::domain::ports::EntityAccessManagementService;
 use foreign_entity::domain::ports::ForeignEntityService;
-use macro_event_broker::MacroEventBroker;
+use conation_event_broker::MacroEventBroker;
 
 use super::{
     models::{DocumentError, EditDocumentServiceArgs},

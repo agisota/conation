@@ -25,7 +25,7 @@ mod config;
 mod process;
 
 use anyhow::Context;
-use conation_entrypoint::MacroEntrypoint;
+use macro_entrypoint::MacroEntrypoint;
 use futures::stream::{self, StreamExt};
 use sqlx::postgres::PgPoolOptions;
 

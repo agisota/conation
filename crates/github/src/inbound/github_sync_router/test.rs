@@ -6,7 +6,7 @@ use macro_authorization::{
     InternalIdentityClaims, MacroAuthorizationError, MacroAuthorizationService,
     MacroAuthorizationState,
 };
-use conation_service_urls::AppServiceUrl;
+use macro_service_urls::AppServiceUrl;
 use macro_user_id::{
     lowercased::Lowercase,
     user_id::{MacroUserId, MacroUserIdStr},

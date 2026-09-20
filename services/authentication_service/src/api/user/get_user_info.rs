@@ -27,7 +27,7 @@ pub async fn handler(
     State(ctx): State<ApiContext>,
     authorization: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
 ) -> Result<Response, Response> {
-    let permissions = conation_db_client::user::get_permissions::get_user_permissions(
+    let permissions = macro_db_client::user::get_permissions::get_user_permissions(
         &ctx.db,
         authorization.authorization.user.macro_user_id.as_ref(),
     )

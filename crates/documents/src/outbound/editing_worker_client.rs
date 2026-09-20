@@ -45,7 +45,7 @@ impl EditingWorkerService for ReqwestEditingWorkerClient {
         request: &crate::domain::spreadsheet::SpreadsheetRequest,
     ) -> anyhow::Result<crate::domain::spreadsheet::SpreadsheetResponse> {
         let mut headers = reqwest::header::HeaderMap::new();
-        macro_tower_layers::inject_trace_headers(&mut headers);
+        conation_tower_layers::inject_trace_headers(&mut headers);
         let response = self
             .client
             .post(format!("{}/spreadsheet", self.worker_url))
@@ -127,7 +127,7 @@ impl EditingWorkerService for ReqwestEditingWorkerClient {
         // Propagate the current trace so the worker's spans join this
         // service's trace instead of rooting their own.
         let mut headers = reqwest::header::HeaderMap::new();
-        macro_tower_layers::inject_trace_headers(&mut headers);
+        conation_tower_layers::inject_trace_headers(&mut headers);
 
         let edit_resp = self
             .client
@@ -178,7 +178,7 @@ impl EditingWorkerService for ReqwestEditingWorkerClient {
         };
 
         let mut headers = reqwest::header::HeaderMap::new();
-        macro_tower_layers::inject_trace_headers(&mut headers);
+        conation_tower_layers::inject_trace_headers(&mut headers);
 
         let resp = self
             .client

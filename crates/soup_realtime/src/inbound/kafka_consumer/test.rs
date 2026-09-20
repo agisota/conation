@@ -23,7 +23,7 @@ use email::domain::events::{
     ThreadReadMetadata, ThreadSpamChangedMetadata, ThreadTrashedMetadata, ThreadsReindexReason,
     ThreadsReindexRequestedMetadata,
 };
-use macro_event_broker::{Event, EventBrokerError, MacroEventCollection as _, MessageParts};
+use conation_event_broker::{Event, EventBrokerError, MacroEventCollection as _, MessageParts};
 use macro_user_id::user_id::MacroUserIdStr;
 use messages::domain::models::SimpleMention;
 use projects::domain::events::{ProjectDeletedMetadata, ProjectTopicEvent};

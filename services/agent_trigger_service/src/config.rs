@@ -11,7 +11,7 @@ env_vars! {
 }
 
 /// Configuration required by the agent trigger worker.
-#[derive(conation_config::MacroConfig)]
+#[derive(macro_config::MacroConfig)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Config {
     /// MacroDB connection URL.
@@ -31,7 +31,7 @@ pub struct Config {
 impl Config {
     /// Loads configuration from the process environment.
     pub fn from_env() -> anyhow::Result<Self> {
-        conation_config::ConfigLoader::load::<Self>()
+        macro_config::ConfigLoader::load::<Self>()
             .context("failed to load agent trigger service config")
     }
 }

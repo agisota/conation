@@ -10,7 +10,7 @@ use backend_i18n::{
     render_verification_email,
 };
 use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use conation_middleware::tracking::ClientIp;
+use macro_middleware::tracking::ClientIp;
 use url::Url;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -196,7 +196,7 @@ pub async fn handler(
     }
 
     // Check if the user profile already exists
-    match conation_db_client::user::get::get_user_id_by_email(ctx.db.clone(), &req.email).await {
+    match macro_db_client::user::get::get_user_id_by_email(ctx.db.clone(), &req.email).await {
         Ok(_) => {
             return Err((
                 StatusCode::BAD_REQUEST,
@@ -223,7 +223,7 @@ pub async fn handler(
 
     // Check if that email is already an in progress email link
     let link_id = if let Some((macro_user_id, link_id)) =
-        conation_db_client::in_progress_email_link::check_existing_in_progress_email_link(
+        macro_db_client::in_progress_email_link::check_existing_in_progress_email_link(
             &ctx.db, &req.email,
         )
         .await
@@ -248,7 +248,7 @@ pub async fn handler(
 
         link_id
     } else {
-        conation_db_client::macro_user_email_verification::upsert_macro_user_email_verification(
+        macro_db_client::macro_user_email_verification::upsert_macro_user_email_verification(
             &ctx.db,
             &user_context.fusion_user_id,
             &req.email,
@@ -264,7 +264,7 @@ pub async fn handler(
                 .into_response()
         })?;
 
-        conation_db_client::in_progress_email_link::insert_in_progress_email_link(
+        macro_db_client::in_progress_email_link::insert_in_progress_email_link(
             &ctx.db,
             &user_context.fusion_user_id,
             &req.email,

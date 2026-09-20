@@ -12,7 +12,7 @@ use documents_hex::domain::ports::markdown::MarkdownInitializationPort;
 use documents_hex::domain::ports::mentions::DocumentMentionTrackingPort;
 use initiative::domain::models::{DescriptionDocumentId, InitiativeError, NewDescriptionDocument};
 use initiative::domain::ports::InitiativeDescriptionDocuments;
-use macro_event_broker::MacroEventBroker;
+use conation_event_broker::MacroEventBroker;
 use sqlx::PgPool;
 
 use crate::service::document_event_publisher::publish_document_purged_event;
@@ -97,7 +97,7 @@ where
     #[tracing::instrument(skip(self), err)]
     async fn purge(&self, id: DescriptionDocumentId) -> Result<(), InitiativeError> {
         let document_id = id.to_string();
-        macro_db_client::document::delete_document(&self.db, &document_id)
+        conation_db_client::document::delete_document(&self.db, &document_id)
             .await
             .map_err(|error| internal!(error))?;
         comms_db_client::entity_mentions::delete_entity_mentions_by_source(

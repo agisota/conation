@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use anyhow::Context;
 use aws_lambda_events::sqs::SqsEvent;
-use conation_entrypoint::MacroEntrypoint;
+use macro_entrypoint::MacroEntrypoint;
 use macro_env_var::env_vars;
 use handler::handler;
 use lambda_runtime::{Error, LambdaEvent, run, service_fn, tracing};

@@ -12,9 +12,9 @@ use anthropic::toolset::AnthropicToolContext;
 use anyhow::Context;
 use channels::domain::list_service::ChannelListServiceImpl;
 use channels::outbound::pg_channels_repo::PgChannelsRepo;
-use conation_env::Environment;
+use macro_env::Environment;
 use macro_env_var::{env_var, maybe_env_var};
-use conation_service_urls::{
+use macro_service_urls::{
     AiEditingWorkerUrl, ConnectionGatewayUrl, DocumentStorageServiceUrl, EmailServiceUrl,
     LexicalServiceUrl, SyncServiceUrl,
 };
@@ -117,7 +117,7 @@ pub async fn build_tool_service_context_from_env(
     let ai_editing_worker_url = AiEditingWorkerUrl::new()?.to_string();
     let connection_gateway_url = ConnectionGatewayUrl::new()?.to_string();
 
-    let aws_config = conation_aws_config::get_conation_aws_config().await;
+    let aws_config = macro_aws_config::get_conation_aws_config().await;
     let aws_sqs_client = aws_sdk_sqs::Client::new(&aws_config);
     let enable_email_scheduled_queue = maybe_env
         .enable_email_scheduled_queue
@@ -140,15 +140,15 @@ pub async fn build_tool_service_context_from_env(
 
     let mut sqs_client = sqs_client::SQS::new(aws_sqs_client.clone());
     if enable_email_scheduled_queue {
-        let email_scheduled_queue = conation_queues::EmailScheduledQueue::new();
+        let email_scheduled_queue = macro_queues::EmailScheduledQueue::new();
         sqs_client = sqs_client.email_scheduled_queue(email_scheduled_queue.as_ref());
     }
     if enable_gmail_ops_queue {
-        let gmail_ops_queue = conation_queues::GmailOpsQueue::new();
+        let gmail_ops_queue = macro_queues::GmailOpsQueue::new();
         sqs_client = sqs_client.gmail_ops_queue(gmail_ops_queue.as_ref());
     }
     let notification_queue = if enable_notification_queue {
-        let notification_queue = conation_queues::NotificationIngressQueue::new();
+        let notification_queue = macro_queues::NotificationIngressQueue::new();
         ToolNotificationQueue::Sqs(SqsQueue::new(
             aws_sqs_client.clone(),
             notification_queue.to_string(),
@@ -230,7 +230,7 @@ pub async fn build_tool_service_context_from_env(
         reminders::domain::service::NoOpRemindersService,
     ));
 
-    let s3_client = conation_aws_config::s3_client().await;
+    let s3_client = macro_aws_config::s3_client().await;
     let s3_upload_adapter = S3UploadUrlAdapter::new(
         s3_client,
         env.document_storage_bucket.to_string(),

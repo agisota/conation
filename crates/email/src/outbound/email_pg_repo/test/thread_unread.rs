@@ -2,7 +2,7 @@ use super::*;
 use crate::domain::{models::EmailErr, ports::NoOpEnqueuer, service::EmailServiceImpl};
 use crm::domain::service::NoOpCrmService;
 use frecency::{domain::services::FrecencyQueryServiceImpl, outbound::postgres::FrecencyPgStorage};
-use macro_event_broker::NoopMacroEventBroker;
+use conation_event_broker::NoopMacroEventBroker;
 
 fn service(
     pool: Pool<Postgres>,

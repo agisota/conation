@@ -8,7 +8,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use conation_db_client::dcs::get_chats_for_attachment::{
+use macro_db_client::dcs::get_chats_for_attachment::{
     get_latest_single_attachment_chat, get_multi_attachment_chat,
 };
 use sqlx::PgPool;

@@ -57,7 +57,7 @@ use favorites::{
     inbound::axum_router::FavoritesRouterState,
     outbound::pg_favorites_repo::PgFavoritesRepo,
 };
-use macro_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
+use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
 use user_api_key::{
     domain::service::UserApiKeyServiceImpl, inbound::axum_router::UserApiKeyRouterState,
     outbound::pg_user_api_keys_repo::PgUserApiKeysRepo,
@@ -85,11 +85,11 @@ use initiative::{
     domain::service::InitiativeServiceImpl, inbound::axum_router::InitiativeRouterState,
     outbound::PgInitiativeRepo,
 };
-use macro_auth::middleware::decode_jwt::JwtValidationArgs;
+use conation_auth::middleware::decode_jwt::JwtValidationArgs;
 use macro_authorization::{
     MacroAuthJwtValidator, MacroAuthorizationServiceImpl, MacroAuthorizationState,
 };
-use macro_env_var::env_var;
+use conation_env_var::env_var;
 use macro_sha_count_client::Redis;
 use notification::domain::service::SqsNotificationIngress;
 use notification::outbound::queue::SqsQueue;

@@ -4,7 +4,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use conation_middleware::tracking::ClientIp;
+use macro_middleware::tracking::ClientIp;
 use utoipa::ToSchema;
 
 use crate::{api::context::ApiContext, rate_limit_config::RATE_LIMIT_CONFIG};

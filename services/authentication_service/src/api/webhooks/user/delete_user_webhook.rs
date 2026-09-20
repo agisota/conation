@@ -31,7 +31,7 @@ pub async fn handler(
 
     // if fusionauth_user_id is part of an account_merge_request, return early as we are in
     // the process of merging the accounts
-    if conation_db_client::account_merge_request::check_merge_request_for_to_merge_macro_user_id(
+    if macro_db_client::account_merge_request::check_merge_request_for_to_merge_macro_user_id(
         &ctx.db,
         &fusionauth_user_id,
     )
@@ -48,7 +48,7 @@ pub async fn handler(
         return Ok(StatusCode::OK.into_response());
     }
 
-    let macro_user = conation_db_client::macro_user::get_macro_user(&ctx.db, &fusionauth_user_id)
+    let macro_user = macro_db_client::macro_user::get_macro_user(&ctx.db, &fusionauth_user_id)
         .await
         .map_err(|e| {
             tracing::error!(error=?e, "unable to get macro user");
@@ -56,7 +56,7 @@ pub async fn handler(
         })?;
 
     let user_ids: Vec<String> =
-        conation_db_client::user::get::get_user_profiles_by_fusionauth_user_id(
+        macro_db_client::user::get::get_user_profiles_by_fusionauth_user_id(
             &ctx.db,
             &fusionauth_user_id,
         )
@@ -76,7 +76,7 @@ pub async fn handler(
 #[tracing::instrument(skip(ctx, user_ids))]
 async fn delete_user(
     ctx: ApiContext,
-    macro_user: conation_db_client::macro_user::MacroUser,
+    macro_user: macro_db_client::macro_user::MacroUser,
     fusionauth_user_id: String,
     user_ids: Vec<String>,
 ) -> anyhow::Result<()> {
@@ -157,7 +157,7 @@ async fn delete_user(
         .into_iter()
         .map(|user_id| {
             let db = ctx.db.clone();
-            async move { conation_db_client::user::get::get_user_info_by_email(&db, &user_id).await }
+            async move { macro_db_client::user::get::get_user_info_by_email(&db, &user_id).await }
         })
         .collect::<Vec<_>>();
 
@@ -261,13 +261,13 @@ async fn delete_user(
                     tracing::trace!(user_id, "delete_document_storage_service_items complete");
 
                     tracing::trace!(user_id, "delete_user_conation_db");
-                    if let Err(e) = conation_db_client::user::delete_user::delete_user(&db, &user_id, &macro_user_id).await {
+                    if let Err(e) = macro_db_client::user::delete_user::delete_user(&db, &user_id, &macro_user_id).await {
                         tracing::error!(error=?e, user_id, "delete_user_conation_db unable to delete user");
                     }
                     tracing::trace!(user_id, "delete_user_conation_db complete");
 
                 }
-                let _ = conation_db_client::macro_user::delete_macro_user(&db, &macro_user_id).await.inspect_err(|e| tracing::error!(error=?e, "unable to delete macro user"));
+                let _ = macro_db_client::macro_user::delete_macro_user(&db, &macro_user_id).await.inspect_err(|e| tracing::error!(error=?e, "unable to delete macro user"));
             }
         }.in_current_span());
 

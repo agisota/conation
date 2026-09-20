@@ -60,7 +60,7 @@ pub fn router(state: ApiContext) -> Router<ApiContext> {
 
     let ensure_chat_exists = axum::middleware::from_fn_with_state(
         state.clone(),
-        conation_middleware::cloud_storage::chat::ensure_chat_exists::handler,
+        macro_middleware::cloud_storage::chat::ensure_chat_exists::handler,
     );
     let require_user =
         axum::middleware::from_fn_with_state(state.clone(), require_authenticated_user);

@@ -5,7 +5,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use conation_db_client::chat_history::get_chat_history;
+use macro_db_client::chat_history::get_chat_history;
 use entity_access::inbound::axum_extractors::ChatAccessLevelExtractor;
 use model::chat::ChatHistory;
 use models_permissions::share_permission::access_level::ViewAccessLevel;

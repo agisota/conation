@@ -4,7 +4,7 @@
 //! variable overrides.
 //!
 //! Use [`service_url!`] to define a newtype whose default value is selected
-//! from [`macro_env::Environment`]. The generated type also checks an override
+//! from [`conation_env::Environment`]. The generated type also checks an override
 //! environment variable derived from the type name. For example,
 //! `DocumentStorageServiceUrl` checks `OVERRIDE_DOCUMENT_STORAGE_SERVICE_URL`
 //! before falling back to its `local`, `dev`, or `prod` default.
@@ -216,7 +216,7 @@ impl ServiceUrlVarErr {
 ///
 /// The override environment variable name is derived from the struct name:
 /// `DocumentStorageServiceUrl` checks `OVERRIDE_DOCUMENT_STORAGE_SERVICE_URL`.
-/// If that override is not set, [`macro_env::Environment`] selects one of the
+/// If that override is not set, [`conation_env::Environment`] selects one of the
 /// provided `local`, `dev`, or `prod` defaults.
 ///
 /// # Example
@@ -262,16 +262,16 @@ macro_rules! service_url {
                 #[doc = "Override environment variable checked before falling back to per-environment defaults."]
                 $v const OVERRIDE_ENV_VAR_NAME: &'static str = concat!("OVERRIDE_", stringify!([<$n:snake:upper>]));
 
-                #[doc = "Default URL for [`macro_env::Environment::Local`]."]
+                #[doc = "Default URL for [`conation_env::Environment::Local`]."]
                 $v const LOCAL: &'static str = $local;
 
-                #[doc = "Default URL for [`macro_env::Environment::Develop`]."]
+                #[doc = "Default URL for [`conation_env::Environment::Develop`]."]
                 $v const DEV: &'static str = $dev;
 
-                #[doc = "Default URL for [`macro_env::Environment::Production`]."]
+                #[doc = "Default URL for [`conation_env::Environment::Production`]."]
                 $v const PROD: &'static str = $prod;
 
-                #[doc = "Create a new instance of [`Self`], using the override env var if set and otherwise selecting a default from [`macro_env::Environment::new_or_prod`]."]
+                #[doc = "Create a new instance of [`Self`], using the override env var if set and otherwise selecting a default from [`conation_env::Environment::new_or_prod`]."]
                 #[allow(dead_code)]
                 $v fn new() -> Result<Self, $crate::ServiceUrlVarErr> {
                     if let Some(value) = $crate::read_override_env(Self::OVERRIDE_ENV_VAR_NAME)? {

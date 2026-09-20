@@ -114,7 +114,7 @@ pub async fn handler(
 
     let email = user_id.email_part().lowercase();
 
-    let legacy_user_info = conation_db_client::user::get::get_legacy_user_info(&ctx.db, &user_id)
+    let legacy_user_info = macro_db_client::user::get::get_legacy_user_info(&ctx.db, &user_id)
         .await
         .map_err(GetLegacyUserPermissionsError::InternalError)?;
 

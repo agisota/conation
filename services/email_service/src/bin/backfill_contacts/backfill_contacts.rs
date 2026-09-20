@@ -2,7 +2,7 @@ mod config;
 mod process;
 
 use anyhow::Context;
-use conation_entrypoint::MacroEntrypoint;
+use macro_entrypoint::MacroEntrypoint;
 use sqlx::postgres::PgPoolOptions;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -24,12 +24,12 @@ async fn main() -> anyhow::Result<()> {
         .map(|id| id.trim().to_string())
         .collect();
 
-    let aws_config = conation_aws_config::get_conation_aws_config().await;
+    let aws_config = macro_aws_config::get_conation_aws_config().await;
 
     let contacts_ingress = contacts::domain::service::SqsContactsIngress {
         queue: contacts::outbound::ingress::SqsContactsQueue::new(
             aws_sdk_sqs::Client::new(&aws_config),
-            conation_queues::ContactsQueue::new().to_string(),
+            macro_queues::ContactsQueue::new().to_string(),
         ),
     };
 

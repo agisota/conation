@@ -673,16 +673,16 @@ impl RecordingEventBroker {
     }
 }
 
-impl macro_event_broker::MacroEventBroker for RecordingEventBroker {
-    fn send_event<E: macro_event_broker::MacroEvent + ?Sized>(
+impl conation_event_broker::MacroEventBroker for RecordingEventBroker {
+    fn send_event<E: conation_event_broker::MacroEvent + ?Sized>(
         &self,
         event: &E,
     ) -> Result<
-        tokio::task::JoinHandle<Result<(), macro_event_broker::EventBrokerError>>,
-        macro_event_broker::EventBrokerError,
+        tokio::task::JoinHandle<Result<(), conation_event_broker::EventBrokerError>>,
+        conation_event_broker::EventBrokerError,
     > {
         if self.fail {
-            return Err(macro_event_broker::EventBrokerError::Publish(
+            return Err(conation_event_broker::EventBrokerError::Publish(
                 "test failure".to_string(),
             ));
         }

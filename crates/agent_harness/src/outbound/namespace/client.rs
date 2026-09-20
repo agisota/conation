@@ -317,7 +317,7 @@ impl NamespaceClient {
     {
         let url = format!("{}/{service}/{method}", host.trim_end_matches('/'));
         let mut trace_headers = reqwest::header::HeaderMap::new();
-        conation_tower_layers::inject_trace_headers(&mut trace_headers);
+        macro_tower_layers::inject_trace_headers(&mut trace_headers);
         let response = self
             .http
             .post(url)

@@ -202,7 +202,7 @@ async fn handle_notify_reauth_required(
     ctx: &LinkManagerContext,
     link: &Link,
 ) -> anyhow::Result<()> {
-    let primaries = conation_db_client::macro_user_links::get_primaries_for_link(
+    let primaries = macro_db_client::macro_user_links::get_primaries_for_link(
         &ctx.db,
         link.macro_id.as_ref(),
         link.id,
@@ -409,7 +409,7 @@ async fn handle_delete(
     // ordinary inboxes; best-effort, since the link and its data are already gone.
     match ctx.db.acquire().await {
         Ok(mut conn) => {
-            match conation_db_client::shared_inbox::delete_promoted_mailbox_user(
+            match macro_db_client::shared_inbox::delete_promoted_mailbox_user(
                 &mut conn,
                 link.macro_id.as_ref(),
             )

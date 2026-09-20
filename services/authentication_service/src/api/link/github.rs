@@ -5,7 +5,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use conation_middleware::tracking::ClientIp;
+use macro_middleware::tracking::ClientIp;
 use github::domain::{models::GithubError, ports::GithubLinkService};
 use model::response::{EmptyResponse, ErrorResponse};
 use serde_utils::urlencode::UrlEncoded;
@@ -168,7 +168,7 @@ pub async fn init_github_link_handler(
     // TODO: this should probably be a middleware or extractor
     // Check count of in-progress links
     let count =
-        conation_db_client::in_progress_user_link::count_existing_in_progress_user_links_for_user(
+        macro_db_client::in_progress_user_link::count_existing_in_progress_user_links_for_user(
             &ctx.db,
             &authorization.authorization.user.user_context.fusion_user_id,
         )
@@ -179,7 +179,7 @@ pub async fn init_github_link_handler(
     }
 
     // Create in-progress link
-    let link_id = conation_db_client::in_progress_user_link::create_in_progress_user_link(
+    let link_id = macro_db_client::in_progress_user_link::create_in_progress_user_link(
         &ctx.db,
         &authorization.authorization.user.user_context.fusion_user_id,
     )

@@ -34,7 +34,7 @@ async fn link_user(
     link_id: &uuid::Uuid,
 ) -> Result<(), (StatusCode, String)> {
     let in_progress =
-        conation_db_client::in_progress_user_link::get_in_progress_user_link(&ctx.db, link_id)
+        macro_db_client::in_progress_user_link::get_in_progress_user_link(&ctx.db, link_id)
             .await
             .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     let macro_user_id = in_progress.macro_user_id;
@@ -75,7 +75,7 @@ async fn link_user(
     // account — attaching it to the requester would capture the owner's sign-in. Only
     // mailboxes with no macro user of their own link under the requester.
     let idp_link_owner =
-        match conation_db_client::user::get::get_macro_user_id_by_email(&ctx.db, &user_info_email)
+        match macro_db_client::user::get::get_macro_user_id_by_email(&ctx.db, &user_info_email)
             .await
         {
             Ok(Some(mailbox_owner_fa)) => mailbox_owner_fa.to_string(),
@@ -133,7 +133,7 @@ async fn link_user(
     // atomically to the durable link and schedules any newly unlocked work.
     let granted_scopes =
         resolved_granted_scopes(&token_response.scope, in_progress.requested_google_scopes);
-    conation_db_client::in_progress_user_link::set_linked_google_grant(
+    macro_db_client::in_progress_user_link::set_linked_google_grant(
         &ctx.db,
         link_id,
         &user_info_email,

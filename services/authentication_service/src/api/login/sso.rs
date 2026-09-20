@@ -39,7 +39,7 @@ pub(crate) fn is_allowed_original_url(url: &Url) -> bool {
     let Ok(app_origin) = configured_app_origin() else {
         return false;
     };
-    let Ok(allowed_origins) = conation_cors::configured_allowed_origins() else {
+    let Ok(allowed_origins) = macro_cors::configured_allowed_origins() else {
         return false;
     };
 
@@ -57,7 +57,7 @@ fn is_allowed_original_url_with(url: &Url, app_origin: &str, allowed_origins: &[
         "tauri" => url.host_str() == Some("localhost"),
         "http" | "https" => {
             let origin = url.origin().ascii_serialization();
-            origin == app_origin || conation_cors::is_origin_allowed_with(&origin, allowed_origins)
+            origin == app_origin || macro_cors::is_origin_allowed_with(&origin, allowed_origins)
         }
         _ => false,
     }

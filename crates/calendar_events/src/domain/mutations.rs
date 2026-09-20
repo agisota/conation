@@ -29,7 +29,7 @@ use super::{
     },
 };
 use crate::domain::events::{CalendarEventMetadata, CalendarMacroEvent, CalendarTopicEvent};
-use macro_event_broker::MacroEventBroker;
+use conation_event_broker::MacroEventBroker;
 
 /// Calendar mutation use cases with provider, token, and persistence
 /// details behind ports.

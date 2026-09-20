@@ -2,7 +2,7 @@
 use crate::api::context::ApiContext;
 use crate::model::chats::ChatResponse;
 use anyhow::Context;
-use conation_db_client::dcs::get_chat::{get_chat_db, get_messages, get_web_citations};
+use macro_db_client::dcs::get_chat::{get_chat_db, get_messages, get_web_citations};
 use unfurl_service::GetUnfurlResponse;
 
 #[tracing::instrument(err, skip(ctx))]

@@ -1,9 +1,9 @@
 #![recursion_limit = "256"]
 use anyhow::Context;
-use conation_entrypoint::{MacroEntrypoint, shutdown_signal};
-use conation_env::Environment;
+use macro_entrypoint::{MacroEntrypoint, shutdown_signal};
+use macro_env::Environment;
 use macro_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
-use conation_service_urls::{
+use macro_service_urls::{
     AuthServiceUrl, ConnectionGatewayUrl, DocumentStorageServiceUrl, StaticFileServiceUrl,
 };
 use document_storage_service_client::DocumentStorageServiceClient;
@@ -48,9 +48,9 @@ async fn main() -> anyhow::Result<()> {
     MacroEntrypoint::default().init();
     let env = Environment::new_or_prod();
 
-    let aws_config = conation_aws_config::get_conation_aws_config().await;
+    let aws_config = macro_aws_config::get_conation_aws_config().await;
 
-    let s3_client = s3_client::S3::new(conation_aws_config::s3_client().await);
+    let s3_client = s3_client::S3::new(macro_aws_config::s3_client().await);
 
     let secretsmanager_client = secretsmanager_client::SecretsManager::new(
         aws_sdk_secretsmanager::Client::new(&aws_config),
@@ -91,20 +91,20 @@ async fn main() -> anyhow::Result<()> {
         .await
         .context("could not connect to backfill db")?;
 
-    let gmail_queue_aws_config = conation_aws_config::get_conation_aws_config().await;
+    let gmail_queue_aws_config = macro_aws_config::get_conation_aws_config().await;
 
-    let gmail_inbox_sync_queue = conation_queues::GmailInboxSyncQueue::new();
-    let gmail_inbox_sync_retry_queue = conation_queues::GmailInboxSyncRetryQueue::new();
-    let gmail_ops_queue = conation_queues::GmailOpsQueue::new();
-    let gmail_ops_retry_queue = conation_queues::GmailOpsRetryQueue::new();
-    let backfill_queue = conation_queues::EmailBackfillQueue::new();
-    let crm_cleanup_queue = conation_queues::EmailCrmCleanupQueue::new();
-    let email_scheduled_queue = conation_queues::EmailScheduledQueue::new();
-    let sfs_uploader_queue = conation_queues::SfsUploaderQueue::new();
-    let sfs_delete_queue = conation_queues::SfsDeleteQueue::new();
-    let link_manager_queue = conation_queues::LinkManagerQueue::new();
-    let contacts_queue = conation_queues::ContactsQueue::new();
-    let notification_queue = conation_queues::NotificationIngressQueue::new();
+    let gmail_inbox_sync_queue = macro_queues::GmailInboxSyncQueue::new();
+    let gmail_inbox_sync_retry_queue = macro_queues::GmailInboxSyncRetryQueue::new();
+    let gmail_ops_queue = macro_queues::GmailOpsQueue::new();
+    let gmail_ops_retry_queue = macro_queues::GmailOpsRetryQueue::new();
+    let backfill_queue = macro_queues::EmailBackfillQueue::new();
+    let crm_cleanup_queue = macro_queues::EmailCrmCleanupQueue::new();
+    let email_scheduled_queue = macro_queues::EmailScheduledQueue::new();
+    let sfs_uploader_queue = macro_queues::SfsUploaderQueue::new();
+    let sfs_delete_queue = macro_queues::SfsDeleteQueue::new();
+    let link_manager_queue = macro_queues::LinkManagerQueue::new();
+    let contacts_queue = macro_queues::ContactsQueue::new();
+    let notification_queue = macro_queues::NotificationIngressQueue::new();
 
     let sqs_client = sqs_client::SQS::new(aws_sdk_sqs::Client::new(&gmail_queue_aws_config))
         .gmail_inbox_sync_queue(&gmail_inbox_sync_queue)

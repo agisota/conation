@@ -5,7 +5,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use conation_middleware::tracking::ClientIp;
+use macro_middleware::tracking::ClientIp;
 use fusionauth::error::FusionAuthClientError;
 use model::response::ErrorResponse;
 use serde_utils::urlencode::UrlEncoded;
@@ -104,7 +104,7 @@ pub async fn init_outlook_link_handler(
 
     let fusion_user_id = &authorization.authorization.user.user_context.fusion_user_id;
     let count =
-        conation_db_client::in_progress_user_link::count_existing_in_progress_user_links_for_user(
+        macro_db_client::in_progress_user_link::count_existing_in_progress_user_links_for_user(
             &ctx.db,
             fusion_user_id,
         )
@@ -114,7 +114,7 @@ pub async fn init_outlook_link_handler(
         return Err(InitOutlookLinkError::TooManyInProgressLinks);
     }
 
-    let link_id = conation_db_client::in_progress_user_link::create_in_progress_user_link(
+    let link_id = macro_db_client::in_progress_user_link::create_in_progress_user_link(
         &ctx.db,
         fusion_user_id,
     )
@@ -133,7 +133,7 @@ pub async fn init_outlook_link_handler(
     {
         Ok(authorization_url) => authorization_url,
         Err(error) => {
-            let _ = conation_db_client::in_progress_user_link::delete_in_progress_user_link(
+            let _ = macro_db_client::in_progress_user_link::delete_in_progress_user_link(
                 &ctx.db, &link_id,
             )
             .await

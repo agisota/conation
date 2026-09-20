@@ -84,10 +84,10 @@ pub async fn handler(
             .map_err(|_| PatchUserOnboardingError::InvalidMacroUserId)?
             .lowercase();
 
-    conation_db_client::user::patch::patch_user_onboarding(
+    macro_db_client::user::patch::patch_user_onboarding(
         &ctx.db,
         &user_id,
-        &conation_db_client::user::patch::UserOnboarding {
+        &macro_db_client::user::patch::UserOnboarding {
             first_name: &req.first_name,
             last_name: &req.last_name,
             title: &req.title,

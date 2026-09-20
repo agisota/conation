@@ -52,7 +52,7 @@ where
                 .map_err(IntoResponse::into_response)?;
         let db = PgPool::from_ref(state);
         let permissions = apply_product_access_policy(
-            conation_db_client::user::get_permissions::get_user_permissions(
+            macro_db_client::user::get_permissions::get_user_permissions(
                 &db,
                 &authorization.authorization.user.user_context.user_id,
             )

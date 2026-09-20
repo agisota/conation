@@ -24,7 +24,7 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use anyhow::Context;
-use conation_entrypoint::MacroEntrypoint;
+use macro_entrypoint::MacroEntrypoint;
 use futures::future::join_all;
 use sqlx::PgPool;
 use sqlx::postgres::PgPoolOptions;

@@ -53,7 +53,7 @@ pub async fn handler(
         })?
         .lowercase();
 
-    let quota = conation_db_client::user_quota::get_user_quota(&ctx.db, &user_id)
+    let quota = macro_db_client::user_quota::get_user_quota(&ctx.db, &user_id)
         .await
         .map_err(|e| {
             tracing::error!(error=?e, user_id=?user_context.user_id, "unable to get user quota");

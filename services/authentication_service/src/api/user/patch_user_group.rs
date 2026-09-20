@@ -77,7 +77,7 @@ pub async fn handler(
             .map_err(|_| PatchUserGroupError::InvalidMacroUserId)?
             .lowercase();
 
-    conation_db_client::user::patch::patch_user_group(&ctx.db, &user_id, &req.group)
+    macro_db_client::user::patch::patch_user_group(&ctx.db, &user_id, &req.group)
         .await
         .map_err(|e| match e.to_string().as_str() {
             "user not found" => PatchUserGroupError::UserNotFound,

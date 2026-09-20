@@ -19,7 +19,7 @@ use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use macro_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOnly,
 };
-use conation_service_urls::AppServiceUrl;
+use macro_service_urls::AppServiceUrl;
 use entity_access::{
     domain::{models::MemberTeamRole, ports::EntityAccessService},
     inbound::axum_extractors::OptionalMacroUserTeamExtractorV2,

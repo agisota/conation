@@ -27,7 +27,7 @@ pub async fn handler(
         organization_id,
         email: _,
         macro_user_id,
-    } = conation_db_client::user::get::get_user_info_by_email(&ctx.db, &email)
+    } = macro_db_client::user::get::get_user_info_by_email(&ctx.db, &email)
         .await
         .map_err(|e| {
             tracing::error!(email, "failed to get user info");

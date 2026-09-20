@@ -61,7 +61,7 @@ pub async fn handler(
             })?
             .lowercase();
 
-    conation_db_client::user::patch::patch_user_locale(&ctx.db, &user_id, &req.locale)
+    macro_db_client::user::patch::patch_user_locale(&ctx.db, &user_id, &req.locale)
         .await
         .map_err(|e| {
             tracing::error!(error=?e, "failed to update user locale");

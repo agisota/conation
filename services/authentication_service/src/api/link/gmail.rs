@@ -7,7 +7,7 @@ use axum::{
 };
 use calendar_events::domain::models::google_calendar_scope_parameter;
 use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use conation_middleware::tracking::ClientIp;
+use macro_middleware::tracking::ClientIp;
 use macro_user_id::user_id::MacroUserIdStr;
 use model::response::ErrorResponse;
 use roles_and_permissions::domain::{access_policy::CONATION_ACCESS_POLICY, model::PermissionId};
@@ -152,7 +152,7 @@ pub async fn init_gmail_link_handler(
     .await?;
 
     let count =
-        conation_db_client::in_progress_user_link::count_existing_in_progress_user_links_for_user(
+        macro_db_client::in_progress_user_link::count_existing_in_progress_user_links_for_user(
             &ctx.db,
             &authorization.authorization.user.user_context.fusion_user_id,
         )
@@ -167,7 +167,7 @@ pub async fn init_gmail_link_handler(
         .split_ascii_whitespace()
         .map(ToOwned::to_owned)
         .collect();
-    let link_id = conation_db_client::in_progress_user_link::create_in_progress_google_link(
+    let link_id = macro_db_client::in_progress_user_link::create_in_progress_google_link(
         &ctx.db,
         &authorization.authorization.user.user_context.fusion_user_id,
         &requested_google_scopes,
@@ -329,7 +329,7 @@ pub async fn check_gmail_link_status_handler(
     authorization: MacroAuthorizationExtractor<AuthorizationService, UserOrInternal>,
 ) -> Result<Json<GmailLinkStatusResponse>, GmailLinkStatusError> {
     // Check if the user has an email link in db
-    if conation_db_client::email::check_user_email_link(
+    if macro_db_client::email::check_user_email_link(
         &ctx.db,
         &authorization.authorization.user.macro_user_id,
     )

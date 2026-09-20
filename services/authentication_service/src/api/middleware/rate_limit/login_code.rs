@@ -8,7 +8,7 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Response},
 };
-use conation_middleware::tracking::ClientIp;
+use macro_middleware::tracking::ClientIp;
 use http_body_util::BodyExt;
 
 /// Rate limit for validating passwordless login code

@@ -12,7 +12,7 @@ use base64::engine::general_purpose::STANDARD;
 use bytes::Bytes;
 use calendar_events::domain::models::{CalendarGrantIntent, GoogleScopeSet};
 use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use conation_db_client::in_progress_user_link::InProgressUserLink;
+use macro_db_client::in_progress_user_link::InProgressUserLink;
 use macro_user_id::email::EmailStr;
 use macro_user_id::user_id::MacroUserIdStr;
 use email::domain::events::{EmailMacroEvent, LinkConnectedMetadata};
@@ -263,7 +263,7 @@ async fn cleanup_in_progress_link_on_failure(
     if let Some(link_id) = link_id
         && should_clean_up_in_progress_link(error)
     {
-        conation_db_client::in_progress_user_link::delete_in_progress_user_link(db, &link_id)
+        macro_db_client::in_progress_user_link::delete_in_progress_user_link(db, &link_id)
             .await
             .inspect_err(|del_err| {
                 tracing::warn!(error = ?del_err, ?link_id, "Failed to clean up in_progress_user_link after failed init");
@@ -290,7 +290,7 @@ async fn init_user(
 
     let (link, _email_address) = if let Some(link_id) = link_id {
         let in_progress =
-            conation_db_client::in_progress_user_link::get_in_progress_user_link(&ctx.db, &link_id)
+            macro_db_client::in_progress_user_link::get_in_progress_user_link(&ctx.db, &link_id)
                 .await
                 .context("Failed to fetch in_progress_user_link")?;
         let completed_grant = CompletedGoogleGrant::from_in_progress(&in_progress);
@@ -313,7 +313,7 @@ async fn init_user(
         // Distinguish "no user with this email" (Ok(None)) from a transient DB error
         // (Err) — collapsing the latter to None would silently fall through to the
         // data-source upsert path and create a duplicate email_links row.
-        let existing_owner = match conation_db_client::user::get::get_user_id_by_email(
+        let existing_owner = match macro_db_client::user::get::get_user_id_by_email(
             ctx.db.clone(),
             &linked_email,
         )
@@ -354,7 +354,7 @@ async fn init_user(
                     .await
                     .context("Failed to begin graph delegation transaction")?;
 
-                conation_db_client::macro_user_links::insert_edge(
+                macro_db_client::macro_user_links::insert_edge(
                     &mut *tx,
                     &user_context.user_id,
                     child_macro_id,
@@ -392,7 +392,7 @@ async fn init_user(
             // the child account vanished mid-flight. Abort rather than fall back to the
             // requester's fusion id, which would provision the link under the wrong identity.
             let child_fusion_id =
-                conation_db_client::user::get::get_macro_user_id_by_email(&ctx.db, &linked_email)
+                macro_db_client::user::get::get_macro_user_id_by_email(&ctx.db, &linked_email)
                     .await
                     .context("Failed to look up child's fusion id for self-link bootstrap")?
                     .context("child macro user disappeared before self-link bootstrap")?
@@ -422,7 +422,7 @@ async fn init_user(
                 enable_gmail_sync_for(tx.as_mut(), provisional_link, subscription.cursor.as_str())
                     .await?;
 
-            conation_db_client::macro_user_links::insert_edge(
+            macro_db_client::macro_user_links::insert_edge(
                 &mut *tx,
                 &user_context.user_id,
                 child_macro_id,
@@ -498,7 +498,7 @@ async fn init_user(
                 }
 
                 let organization_id =
-                    conation_db_client::user::get_user_organization::get_user_organization(
+                    macro_db_client::user::get_user_organization::get_user_organization(
                         ctx.db.clone(),
                         existing_link.macro_id.as_ref(),
                     )
@@ -511,7 +511,7 @@ async fn init_user(
                     .await
                     .context("Failed to begin shared-inbox promotion transaction")?;
 
-                let promoted = conation_db_client::shared_inbox::promote_link_to_shared(
+                let promoted = macro_db_client::shared_inbox::promote_link_to_shared(
                     &mut tx,
                     existing_link.id,
                     existing_link.macro_id.as_ref(),
@@ -982,7 +982,7 @@ async fn apply_and_consume_calendar_grant(
         grant.intent,
     )
     .await?;
-    conation_db_client::in_progress_user_link::delete_in_progress_user_link(
+    macro_db_client::in_progress_user_link::delete_in_progress_user_link(
         &ctx.db,
         &in_progress_link_id,
     )

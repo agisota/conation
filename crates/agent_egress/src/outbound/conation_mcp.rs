@@ -15,7 +15,7 @@
 
 use chrono::{DateTime, Duration as ChronoDuration, TimeZone, Utc};
 use lru::LruCache;
-use macro_auth::macro_api_token::{EncodeMacroApiTokenArgs, encode_macro_api_token};
+use conation_auth::macro_api_token::{EncodeMacroApiTokenArgs, encode_macro_api_token};
 use macro_user_id::user_id::MacroUserIdStr;
 use std::num::NonZeroUsize;
 use std::sync::Mutex;
@@ -255,7 +255,7 @@ impl MacroApiTokens for MacroApiTokenSigner {
         // owner with no row is a session created wrong, which is ours to fix,
         // not something the sandbox can retry its way out of.
         let (fusion_root_id, macro_user_id) =
-            macro_db_client::user::get::get_user_macro_user_id_and_id_by_email(
+            conation_db_client::user::get::get_user_macro_user_id_and_id_by_email(
                 &self.pool,
                 owner.email_str(),
             )
@@ -265,7 +265,7 @@ impl MacroApiTokens for MacroApiTokenSigner {
                     "session owner has no user row to mint a token for: {error}"
                 ))
             })?;
-        let organization_id = macro_db_client::user::get_user_organization::get_user_organization(
+        let organization_id = conation_db_client::user::get_user_organization::get_user_organization(
             self.pool.clone(),
             &macro_user_id,
         )

@@ -97,7 +97,7 @@ async fn main() -> anyhow::Result<()> {
     let env = Environment::new_or_prod();
 
     // One SDK config is sufficient for every AWS client in this process.
-    let aws_config = macro_aws_config::get_macro_aws_config().await;
+    let aws_config = macro_aws_config::get_conation_aws_config().await;
     let secretsmanager_client = secretsmanager_client::SecretsManager::new(
         aws_sdk_secretsmanager::Client::new(&aws_config),
     );
@@ -274,7 +274,7 @@ async fn main() -> anyhow::Result<()> {
     let link_manager_queue = macro_queues::LinkManagerQueue::new();
     let email_backfill_queue = macro_queues::EmailBackfillQueue::new();
     let ingress_queue = SqsQueue::new(
-        aws_sdk_sqs::Client::new(&macro_aws_config::get_macro_aws_config().await),
+        aws_sdk_sqs::Client::new(&macro_aws_config::get_conation_aws_config().await),
         notification_queue.to_string(),
     );
     let notification_ingress_service = SqsNotificationIngress {

@@ -24,7 +24,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Instant;
 
 use anyhow::Context;
-use conation_entrypoint::MacroEntrypoint;
+use macro_entrypoint::MacroEntrypoint;
 use futures::stream::{StreamExt as FuturesStreamExt, TryStreamExt};
 use sqlx::PgPool;
 use sqlx::postgres::PgPoolOptions;

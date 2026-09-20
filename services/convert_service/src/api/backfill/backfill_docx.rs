@@ -48,7 +48,7 @@ pub async fn handler(
 ) -> Result<Response, Response> {
     let pagination = Pagination::from_query_params(pagination);
     let (documents, total_count) =
-        conation_db_client::convert::get_docx_files(&ctx.db, pagination.limit, pagination.offset)
+        macro_db_client::convert::get_docx_files(&ctx.db, pagination.limit, pagination.offset)
             .await
             .map_err(|e| {
                 tracing::error!(error=?e, "unable to get documents");

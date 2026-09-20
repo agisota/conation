@@ -43,7 +43,7 @@ async fn connect_to_database(config: &Config) -> anyhow::Result<sqlx::PgPool> {
 
 async fn create_sqs_worker(config: &Config) -> SQSWorker {
     let queue_url = macro_queues::ContactsQueue::new().to_string();
-    let aws_config = macro_aws_config::get_macro_aws_config().await;
+    let aws_config = macro_aws_config::get_conation_aws_config().await;
 
     let sqs_client = aws_sdk_sqs::Client::new(&aws_config);
     sqs_worker::SQSWorker::new(
@@ -72,7 +72,7 @@ async fn main() -> anyhow::Result<()> {
     let sqs_worker = create_sqs_worker(&config).await;
 
     let secretsmanager_client = secretsmanager_client::SecretsManager::new(
-        aws_sdk_secretsmanager::Client::new(&macro_aws_config::get_macro_aws_config().await),
+        aws_sdk_secretsmanager::Client::new(&macro_aws_config::get_conation_aws_config().await),
     );
 
     let notifier = Some(

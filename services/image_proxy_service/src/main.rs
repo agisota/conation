@@ -6,12 +6,12 @@ use std::sync::Arc;
 
 use anyhow::Context;
 use config::Config;
-use macro_auth::middleware::decode_jwt::JwtValidationArgs;
+use conation_auth::middleware::decode_jwt::JwtValidationArgs;
 use macro_authorization::{
     InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationServiceImpl,
     MacroAuthorizationState,
 };
-use macro_entrypoint::MacroEntrypoint;
+use conation_entrypoint::MacroEntrypoint;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -22,7 +22,7 @@ async fn main() -> anyhow::Result<()> {
     tracing::trace!("initialized config");
 
     let secretsmanager_client = secretsmanager_client::SecretsManager::new(
-        aws_sdk_secretsmanager::Client::new(&macro_aws_config::get_macro_aws_config().await),
+        aws_sdk_secretsmanager::Client::new(&conation_aws_config::get_conation_aws_config().await),
     );
 
     let jwt_args =

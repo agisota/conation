@@ -82,7 +82,7 @@ pub async fn handler(
     };
 
     let organization_name =
-        conation_db_client::organization::get::organization::get_organization_name(
+        macro_db_client::organization::get::organization::get_organization_name(
             &ctx.db,
             organization_id,
         )

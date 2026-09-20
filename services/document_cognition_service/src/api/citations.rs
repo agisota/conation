@@ -9,7 +9,7 @@ use axum::{
 use macro_authorization::{
     OptionalMacroAuthorizationExtractor, UserOrInternalService, UserOrInternalServiceAuthorization,
 };
-use conation_db_client::dcs::get_part_by_id::get_part_by_id;
+use macro_db_client::dcs::get_part_by_id::get_part_by_id;
 use model::citations::DocumentTextPart;
 use sqlx::PgPool;
 

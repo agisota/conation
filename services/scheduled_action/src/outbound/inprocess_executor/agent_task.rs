@@ -9,7 +9,7 @@ use anyhow::{Context, Result};
 use chat::domain::models::CreateChatArgs;
 use chat::domain::ports::ChatRepo;
 use chat::outbound::postgres::PgChatRepo;
-use conation_db_client::dcs::create_chat_message::create_chat_message;
+use macro_db_client::dcs::create_chat_message::create_chat_message;
 use futures::StreamExt;
 use memory::domain::MemoryService;
 use memory::domain::service::MemoryServiceImpl;

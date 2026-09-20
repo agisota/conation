@@ -12,7 +12,7 @@ use entity_access::domain::models::{
     BotReceiptScope, EntityAccessAuth, EntityAccessReceipt, EntityType as AccessEntityType,
     RequiredPermission,
 };
-use macro_event_broker::{MacroEventBroker, NoopMacroEventBroker};
+use conation_event_broker::{MacroEventBroker, NoopMacroEventBroker};
 use macro_user_id::cowlike::CowLike;
 use macro_user_id::user_id::MacroUserIdStr;
 use models_properties::DataType;

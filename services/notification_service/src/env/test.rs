@@ -1,5 +1,5 @@
 use super::*;
-use conation_env::Environment;
+use macro_env::Environment;
 
 #[test]
 fn local_environment_selects_mailpit_smtp_mode() {

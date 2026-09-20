@@ -1,4 +1,4 @@
-use conation_db_client::user::organization::{
+use macro_db_client::user::organization::{
     get_organization_roles_for_user, match_user_to_organization,
 };
 use macro_env_var::optional_read_env_var;
@@ -72,7 +72,7 @@ pub async fn create_user(
     tracing::trace!(roles=?roles, "got roles for user");
 
     // Create user in macrodb
-    let user_id = conation_db_client::user::create_user::create_user(
+    let user_id = macro_db_client::user::create_user::create_user(
         db,
         fusionauth_user_id,
         username,
@@ -85,7 +85,7 @@ pub async fn create_user(
     .await?;
 
     if organization_id.is_some() {
-        conation_db_client::organization::delete_organization_invitation(db.clone(), email).await?;
+        macro_db_client::organization::delete_organization_invitation(db.clone(), email).await?;
     }
 
     tracing::trace!("created user in macrodb");
@@ -133,7 +133,7 @@ pub async fn create_user_profile(
     tracing::trace!(roles=?roles, "got roles for user");
 
     // Create user in macrodb
-    conation_db_client::user::create_user::create_user_profile(
+    macro_db_client::user::create_user::create_user_profile(
         db,
         fusionauth_user_id,
         email,
@@ -143,7 +143,7 @@ pub async fn create_user_profile(
     .await?;
 
     if organization_id.is_some() {
-        conation_db_client::organization::delete_organization_invitation(db.clone(), email).await?;
+        macro_db_client::organization::delete_organization_invitation(db.clone(), email).await?;
     }
 
     tracing::trace!("created user in macrodb");

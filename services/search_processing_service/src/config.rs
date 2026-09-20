@@ -1,8 +1,8 @@
 use anyhow::Context;
 use macro_auth::InternalApiKey;
-pub use conation_env::Environment;
+pub use macro_env::Environment;
 use macro_env_var::{env_vars, maybe_env_vars};
-use conation_service_urls::LexicalServiceUrl;
+use macro_service_urls::LexicalServiceUrl;
 
 env_vars! {
     pub struct DatabaseUrl;
@@ -77,7 +77,7 @@ fn parse_u64(name: &str, raw_value: Option<&str>, default: u64) -> anyhow::Resul
 }
 
 /// The configuration parameters for the application.
-#[derive(conation_config::MacroConfig)]
+#[derive(macro_config::MacroConfig)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Config {
     /// The connection URL for the Postgres database this application should use.
@@ -165,7 +165,7 @@ pub struct Config {
 
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
-        conation_config::ConfigLoader::load::<Config>().context("failed to load config")
+        macro_config::ConfigLoader::load::<Config>().context("failed to load config")
     }
 
     pub fn backfill_page_sizes(&self) -> anyhow::Result<BackfillPageSizes> {

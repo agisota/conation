@@ -72,7 +72,7 @@ pub async fn handler(
     };
 
     let user_profile =
-        conation_db_client::user::get::get_user_profile_by_fusionauth_user_id_and_email(
+        macro_db_client::user::get::get_user_profile_by_fusionauth_user_id_and_email(
             &db,
             &user_context.fusion_user_id,
             &email,

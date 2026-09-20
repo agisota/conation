@@ -78,7 +78,7 @@ pub async fn handler(
             .map_err(|_| PatchAiConsentError::InvalidMacroUserId)?
             .lowercase();
 
-    conation_db_client::user::patch::patch_ai_consent(&ctx.db, &user_id, req.ai_data_consent)
+    macro_db_client::user::patch::patch_ai_consent(&ctx.db, &user_id, req.ai_data_consent)
         .await
         .map_err(|e| match e.to_string().as_str() {
             "user not found" => PatchAiConsentError::UserNotFound,

@@ -52,7 +52,7 @@ pub async fn delete_link_handler(
                 .context("failed to enqueue delete notification")?;
         }
         InboxAccess::Delegated => {
-            conation_db_client::macro_user_links::delete_edge(
+            macro_db_client::macro_user_links::delete_edge(
                 &ctx.db,
                 &user_context.user_id,
                 link.macro_id.as_ref(),
@@ -64,7 +64,7 @@ pub async fn delete_link_handler(
             // A promoted shared mailbox has no human owner — it lives only through its
             // delegation edges. When the last delegate leaves, tear the mailbox down so it
             // doesn't linger as an orphaned link + minted user that nobody can reach.
-            let remaining = conation_db_client::macro_user_links::get_primaries_for_child(
+            let remaining = macro_db_client::macro_user_links::get_primaries_for_child(
                 &ctx.db,
                 link.macro_id.as_ref(),
             )
@@ -77,7 +77,7 @@ pub async fn delete_link_handler(
                     .acquire()
                     .await
                     .context("failed to acquire connection")?;
-                let is_promoted = conation_db_client::shared_inbox::is_promoted_shared_mailbox(
+                let is_promoted = macro_db_client::shared_inbox::is_promoted_shared_mailbox(
                     &mut conn,
                     link.macro_id.as_ref(),
                 )

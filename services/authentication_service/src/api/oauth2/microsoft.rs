@@ -130,7 +130,7 @@ impl MicrosoftCallbackDependencies for ApiContext {
     }
 
     async fn pending_link_owner(&self, link_id: &Uuid) -> MicrosoftCallbackResult<String> {
-        conation_db_client::in_progress_user_link::get_in_progress_user_link(&self.db, link_id)
+        macro_db_client::in_progress_user_link::get_in_progress_user_link(&self.db, link_id)
             .await
             .map(|link| link.macro_user_id.to_string())
             .map_err(|error| {
@@ -173,7 +173,7 @@ impl MicrosoftCallbackDependencies for ApiContext {
         email: &str,
         pending_link_owner: &str,
     ) -> MicrosoftCallbackResult<String> {
-        match conation_db_client::user::get::get_macro_user_id_by_email(&self.db, email).await {
+        match macro_db_client::user::get::get_macro_user_id_by_email(&self.db, email).await {
             Ok(Some(mailbox_owner_id)) => Ok(mailbox_owner_id.to_string()),
             Ok(None) => Ok(pending_link_owner.to_owned()),
             Err(error) => Err((
@@ -302,7 +302,7 @@ impl MicrosoftCallbackDependencies for ApiContext {
         link_id: &Uuid,
         email: &str,
     ) -> MicrosoftCallbackResult<()> {
-        conation_db_client::in_progress_user_link::set_linked_email(&self.db, link_id, email)
+        macro_db_client::in_progress_user_link::set_linked_email(&self.db, link_id, email)
             .await
             .map_err(|error| {
                 (
