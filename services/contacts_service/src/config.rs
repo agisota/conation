@@ -13,7 +13,7 @@ maybe_env_vars! {
     pub struct ContactsQueueWaitTimeSeconds;
 }
 
-#[derive(macro_config::MacroConfig)]
+#[derive(conation_config::MacroConfig)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Config {
     /// port number of service
@@ -36,7 +36,7 @@ pub struct Config {
 
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
-        macro_config::ConfigLoader::load::<Config>()
+        conation_config::ConfigLoader::load::<Config>()
             .context("failed to load contacts service config")
     }
 

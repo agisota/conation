@@ -52,7 +52,7 @@ fn default_pipedream_environment() -> String {
 }
 
 /// The configuration parameters for the agent harness service.
-#[derive(macro_config::MacroConfig)]
+#[derive(conation_config::MacroConfig)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Config {
     /// OAuth encryption key; deployments without a key do not advertise sign-in.
@@ -247,7 +247,7 @@ impl Config {
 
     /// Load the configuration from the environment.
     pub fn from_env() -> anyhow::Result<Self> {
-        macro_config::ConfigLoader::load::<Config>()
+        conation_config::ConfigLoader::load::<Config>()
             .context("failed to load agent harness service config")
     }
 

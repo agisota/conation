@@ -28,7 +28,7 @@ env_vars! {
     pub struct AuthenticationServiceSecretKey;
 }
 
-#[derive(macro_config::MacroConfig)]
+#[derive(conation_config::MacroConfig)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Config {
     /// The connection URL for the macrodb instance this application should use.
@@ -85,6 +85,6 @@ pub struct Config {
 
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
-        macro_config::ConfigLoader::load::<Config>().context("failed to load config")
+        conation_config::ConfigLoader::load::<Config>().context("failed to load config")
     }
 }

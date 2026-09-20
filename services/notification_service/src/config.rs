@@ -40,7 +40,7 @@ env_var!(
 /// The configuration parameters for the application.
 ///
 /// These are loaded from `APP_SECRETS_JSON` when present, otherwise from environment variables.
-#[derive(macro_config::MacroConfig)]
+#[derive(conation_config::MacroConfig)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Config {
     /// The connection URL for the Postgres database this application should use.
@@ -92,7 +92,7 @@ pub struct Config {
 
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
-        let config = macro_config::ConfigLoader::load::<Config>()
+        let config = conation_config::ConfigLoader::load::<Config>()
             .context("failed to load notification service config")?;
 
         if !matches!(config.environment, Environment::Local)

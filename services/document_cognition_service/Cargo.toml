@@ -69,7 +69,7 @@ log = { workspace = true }
 macro_auth = { package = "conation_auth", path = "../../crates/conation_auth" }
 macro_aws_config = { package = "conation_aws_config", path = "../../crates/conation_aws_config", features = ["s3"] }
 macro_cors = { package = "conation_cors", path = "../../crates/conation_cors" }
-macro_config = { package = "conation_config", path = "../../crates/conation_config" }
+conation_config = { path = "../../crates/conation_config" }
 share_permission_db_utils = { path = "../../crates/share_permission_db_utils" }
 macro_db_client = { package = "conation_db_client", path = "../../crates/conation_db_client" }
 macro_entrypoint = { path = "../../crates/conation_entrypoint" }

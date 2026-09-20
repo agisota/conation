@@ -16,7 +16,7 @@ env_vars! {
 /// populate the Docker container
 ///
 /// See `.env.sample` in cognitive-workspace root for details.
-#[derive(macro_config::MacroConfig)]
+#[derive(conation_config::MacroConfig)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Config {
     /// The port the service is running on
@@ -33,7 +33,7 @@ pub struct Config {
 
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
-        macro_config::ConfigLoader::load::<Config>()
+        conation_config::ConfigLoader::load::<Config>()
             .context("failed to load connection gateway config")
     }
 }

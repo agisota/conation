@@ -64,7 +64,7 @@ maybe_env_vars!(
 );
 
 /// The configuration parameters for the application.
-#[derive(macro_config::MacroConfig)]
+#[derive(conation_config::MacroConfig)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Config {
     /// The connection URL for the Postgres database this application should use.
@@ -143,7 +143,7 @@ fn default_mcp_public_url(environment: Environment) -> &'static str {
 impl Config {
     #[tracing::instrument(err, skip_all)]
     pub fn from_env() -> anyhow::Result<Self> {
-        macro_config::ConfigLoader::load::<Config>().context("failed to load config")
+        conation_config::ConfigLoader::load::<Config>().context("failed to load config")
     }
 
     #[cfg(test)]

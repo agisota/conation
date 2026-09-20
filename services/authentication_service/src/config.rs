@@ -79,8 +79,8 @@ maybe_env_vars! {
 /// populate the Docker container
 ///
 /// See `.env.sample` in document-storage-service root for details.
-#[derive(macro_config::MacroConfig)]
-// #[macro_config::from_ref_all]
+#[derive(conation_config::MacroConfig)]
+// #[conation_config::from_ref_all]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Config {
     #[allow(dead_code)]
@@ -184,7 +184,7 @@ pub(crate) struct MicrosoftCredentials {
 
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
-        macro_config::ConfigLoader::load::<Config>()
+        conation_config::ConfigLoader::load::<Config>()
             .context("failed to load authentication service config")
     }
 

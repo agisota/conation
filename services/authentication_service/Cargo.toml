@@ -97,7 +97,7 @@ macro_cache_client = { package = "conation_cache_client", path = "../../crates/c
   "verify_email_rate_limit",
 ] }
 macro_cors = { package = "conation_cors", path = "../../crates/conation_cors" }
-macro_config = { package = "conation_config", path = "../../crates/conation_config" }
+conation_config = { path = "../../crates/conation_config" }
 macro_db_client = { package = "conation_db_client", path = "../../crates/conation_db_client", default-features = false, features = [
   "account_merge_request",
   "team",
