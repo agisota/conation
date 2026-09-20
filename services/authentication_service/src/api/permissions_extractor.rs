@@ -6,7 +6,7 @@ use axum::{
     http::{StatusCode, request::Parts},
     response::{IntoResponse, Response},
 };
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationState, UserOrInternal,
 };
 use model::response::ErrorResponse;

@@ -1,6 +1,6 @@
 use crate::api::context::ApiContext;
 use crate::api::context::{AuthorizationService, EntityAccessService};
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use entity_access::inbound::axum_extractors::DocumentAccessExtractor;
 use models_permissions::share_permission::access_level::ViewAccessLevel;
 use rayon::prelude::*;

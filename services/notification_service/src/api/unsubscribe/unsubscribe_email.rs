@@ -4,7 +4,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use macro_user_id::user_id::MacroUserIdStr;
 use model::response::{EmptyResponse, ErrorResponse};
 

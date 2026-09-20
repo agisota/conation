@@ -4,7 +4,7 @@ mod test;
 use async_graphql::Context;
 use axum::extract::FromRef;
 use axum_extra::extract::Cached;
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthorizationService, MacroAuthorizationState, OptionalMacroAuthorizationExtractor,
     UserOrInternalService, UserOrInternalServiceAuthorization,
 };

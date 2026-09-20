@@ -10,7 +10,7 @@ axum = { workspace = true }
 axum-extra = { workspace = true }
 filter_ast = { path = "../filter_ast" }
 item_filters = { path = "../item_filters" }
-conation_authorization = { package = "macro_authorization", path = "../conation_authorization", default-features = false, features = [
+macro_authorization = { path = "../conation_authorization", default-features = false, features = [
   "axum",
 ] }
 conation_user_id = { path = "../conation_user_id" }

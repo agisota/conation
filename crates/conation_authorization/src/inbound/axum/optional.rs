@@ -9,7 +9,7 @@ use crate::MacroAuthorizationService;
 
 use super::{
     AuthorizationPolicy, MacroAuthorizationRejection, MacroAuthorizationState,
-    conation_authorization::authorize_request,
+    macro_authorization::authorize_request,
 };
 
 /// Extracts an optional principal: anonymous requests succeed with `None`;

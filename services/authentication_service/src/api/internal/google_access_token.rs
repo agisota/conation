@@ -4,7 +4,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
+use macro_authorization::{InternalOnly, MacroAuthorizationExtractor};
 use fusionauth::FusionAuthClient;
 use fusionauth::error::FusionAuthClientError;
 use model::authentication::google_token::GoogleAccessToken;

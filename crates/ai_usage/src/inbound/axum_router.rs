@@ -12,7 +12,7 @@ use axum::{
     routing::post,
 };
 use chrono::{DateTime, Utc};
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
 };
 use conation_user_id::user_id::MacroUserIdStr;

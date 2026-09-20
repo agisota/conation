@@ -4,7 +4,7 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::{Json, extract};
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::response::ErrorResponse;
 use sqlx::types::Uuid;
 use std::collections::HashSet;

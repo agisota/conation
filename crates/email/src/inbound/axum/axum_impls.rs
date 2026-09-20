@@ -12,7 +12,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use axum_extra::extract::Cached;
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationRejection, MacroAuthorizationService,
     MacroAuthorizationState, UserOrInternal,
 };

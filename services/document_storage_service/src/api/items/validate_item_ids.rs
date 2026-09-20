@@ -2,7 +2,7 @@ use crate::api::MACRO_INTERNAL_USER_ID;
 use crate::api::context::{ApiContext, AuthorizationService};
 use axum::extract::{Json, State};
 use axum::http::StatusCode;
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::document_storage_service_internal::{ValidateItemIDsRequest, ValidateItemIDsResponse};
 
 /// Validates the user has access to the provided list of item ids

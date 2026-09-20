@@ -13,7 +13,7 @@ use axum::{
     response::IntoResponse,
     routing::{delete, get, post, put},
 };
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
 };
 use model_error_response::ErrorResponse;

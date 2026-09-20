@@ -6,7 +6,7 @@ use axum::{
     body::Body,
     http::{Request, StatusCode, header},
 };
-use conation_authorization::{
+use macro_authorization::{
     InternalIdentityClaims, MacroAuthorizationError, MacroAuthorizationService,
     MacroAuthorizationState,
 };

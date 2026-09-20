@@ -11,7 +11,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal, UserOrInternalCaller};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal, UserOrInternalCaller};
 use conation_db_client::annotations::edit_comment::edit_document_comment;
 use conation_db_client::annotations::get::get_comment_thread;
 use macro_user_id::user_id::MacroUserIdStr;

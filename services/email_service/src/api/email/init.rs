@@ -11,7 +11,7 @@ use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD;
 use bytes::Bytes;
 use calendar_events::domain::models::{CalendarGrantIntent, GoogleScopeSet};
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_db_client::in_progress_user_link::InProgressUserLink;
 use macro_user_id::email::EmailStr;
 use macro_user_id::user_id::MacroUserIdStr;

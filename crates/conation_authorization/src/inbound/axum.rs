@@ -44,7 +44,7 @@ pub use internal::{
 pub const LEGACY_DSS_INTERNAL_API_KEY_HEADER: &str = "x-document-storage-service-auth-key";
 /// Legacy document-storage-service acting-user header, rejected by current extractors.
 pub const LEGACY_DSS_INTERNAL_MACRO_USER_ID_HEADER: &str = "x-document-storage-service-user-id";
-pub use conation_authorization::MacroAuthorizationExtractor;
+pub use macro_authorization::MacroAuthorizationExtractor;
 pub use optional::OptionalMacroAuthorizationExtractor;
 pub use policy::{
     ActingUser, ActingUserAuthorization, AnyPrincipal, AuthorizationPolicy, BotOnly, HarnessOnly,

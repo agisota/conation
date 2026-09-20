@@ -1,7 +1,7 @@
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal, UserOrInternalCaller};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal, UserOrInternalCaller};
 use std::sync::Arc;
 
 use crate::api::context::AuthorizationService;

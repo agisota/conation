@@ -3,7 +3,7 @@ use crate::{
     model::response::instructions::CreateInstructionsDocumentResponse,
 };
 use axum::{Json, extract::State};
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_db_client::instructions::create::{
     CreateInstructionsError, insert_instructions_document,
 };

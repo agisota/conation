@@ -19,7 +19,7 @@ futures = { workspace = true }
 conation_entrypoint = { package = "macro_entrypoint", path = "../conation_entrypoint" }
 conation_env = { path = "../conation_env" }
 conation_env_var = { path = "../conation_env_var" }
-conation_authorization = { package = "macro_authorization", path = "../conation_authorization", default-features = false, features = [
+macro_authorization = { path = "../conation_authorization", default-features = false, features = [
   "axum",
 ] }
 conation_user_id = { path = "../conation_user_id" }

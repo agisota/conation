@@ -5,7 +5,7 @@ use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
 };
-use conation_authorization::MacroAuthorizationService;
+use macro_authorization::MacroAuthorizationService;
 use entity_access::domain::ports::EntityAccessService;
 use entity_access::inbound::axum_extractors::DocumentAccessExtractor;
 use model::document::DocumentBasic;

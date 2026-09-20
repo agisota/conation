@@ -5,7 +5,7 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
 };
-use conation_authorization::{
+use macro_authorization::{
     InternalOnly, MacroAuthorizationExtractor, MacroAuthorizationService,
 };
 use entity_access::domain::ports::EntityAccessService;

@@ -11,7 +11,7 @@ use axum::{
     Json, RequestExt,
     extract::{FromRef, FromRequest, Path, Request},
 };
-use conation_authorization::{
+use macro_authorization::{
     AnyPrincipal, MacroAuthorization, MacroAuthorizationService, MacroAuthorizationState,
     OptionalMacroAuthorizationExtractor,
 };

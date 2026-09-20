@@ -11,7 +11,7 @@ use axum::{
     extract::{FromRef, FromRequest, FromRequestParts, Request},
     http::request::Parts,
 };
-use conation_authorization::{
+use macro_authorization::{
     AnyPrincipal, MacroAuthorization, MacroAuthorizationService, MacroAuthorizationState,
     OptionalMacroAuthorizationExtractor,
 };

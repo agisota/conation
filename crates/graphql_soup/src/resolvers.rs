@@ -3,7 +3,7 @@ use std::{collections::HashSet, future::Future, marker::PhantomData, pin::Pin, s
 use async_graphql::Context;
 use axum::extract::FromRef;
 use axum_extra::extract::Cached;
-use conation_authorization::{MacroAuthorizationService, MacroAuthorizationState};
+use macro_authorization::{MacroAuthorizationService, MacroAuthorizationState};
 use conation_user_id::user_id::MacroUserIdStr;
 use email::{
     domain::ports::EmailService,

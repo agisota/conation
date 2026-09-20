@@ -4,7 +4,7 @@ use axum::{
     Extension, Json,
     extract::{Path, State},
 };
-use conation_authorization::MacroAuthorizationService;
+use macro_authorization::MacroAuthorizationService;
 use entity_access::domain::ports::EntityAccessService;
 use entity_access::inbound::axum_extractors::{
     DocumentAccessExtractor, ProjectBodyAccessLevelExtractorV2,

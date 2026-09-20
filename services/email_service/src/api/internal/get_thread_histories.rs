@@ -5,7 +5,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Json, Response},
 };
-use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
+use macro_authorization::{InternalOnly, MacroAuthorizationExtractor};
 use models_email::service::message::{ThreadHistoryRequest, ThreadHistoryResponse};
 use strum_macros::AsRefStr;
 use thiserror::Error;

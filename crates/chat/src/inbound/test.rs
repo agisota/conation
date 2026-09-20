@@ -2,7 +2,7 @@ use axum::Extension;
 use axum::Router;
 use axum::body::Body;
 use axum::http::{Request, StatusCode, header};
-use conation_authorization::{
+use macro_authorization::{
     InternalIdentityClaims, MacroAuthorizationError, MacroAuthorizationService,
     MacroAuthorizationState,
 };

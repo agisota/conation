@@ -11,7 +11,7 @@ use axum::{
     extract::{FromRef, Path, Query, State},
     routing::{delete, get, patch, put},
 };
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
 };
 use macro_user_id::user_id::MacroUserIdStr;

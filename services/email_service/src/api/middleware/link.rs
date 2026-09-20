@@ -1,6 +1,6 @@
 use axum::{extract::Request, middleware::Next, response::Response};
 use axum_extra::extract::Cached;
-use conation_authorization::{MacroAuthorizationService, MacroAuthorizationState};
+use macro_authorization::{MacroAuthorizationService, MacroAuthorizationState};
 use email::{domain::ports::EmailService, inbound::axum::axum_impls::EmailLinkExtractor};
 
 #[cfg(test)]

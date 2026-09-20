@@ -3,7 +3,7 @@ use axum::{
     http::{Method, Request, StatusCode, header},
 };
 use chrono::{Duration, Utc};
-use conation_authorization::{
+use macro_authorization::{
     INTERNAL_API_KEY_HEADER, INTERNAL_CONATION_USER_ID_HEADER, InternalIdentityClaims,
     MacroAuthorizationError, MacroAuthorizationService, MacroAuthorizationState,
 };

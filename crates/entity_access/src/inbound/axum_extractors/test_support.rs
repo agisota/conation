@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use axum::extract::FromRef;
-use conation_authorization::{
+use macro_authorization::{
     BotActingUserClaims, BotAuthentication, BotScope, InternalIdentityClaims,
     MacroAuthorizationError, MacroAuthorizationService, MacroAuthorizationState,
     MacroUserAuthentication,

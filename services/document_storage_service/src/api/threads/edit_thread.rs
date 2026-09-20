@@ -4,7 +4,7 @@ use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::{Extension, Json, extract};
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_db_client::share_permission::edit::edit_thread_permission;
 use entity_access::domain::models::EntityPermission;
 use entity_access::inbound::axum_extractors::ProjectBodyAccessLevelExtractorV2;

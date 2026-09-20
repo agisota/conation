@@ -11,7 +11,7 @@ axum = { workspace = true }
 chrono = { workspace = true }
 generic_email_domains = { path = "../generic_email_domains" }
 import = { path = "../import" }
-conation_authorization = { package = "macro_authorization", path = "../conation_authorization", default-features = false, features = [
+macro_authorization = { path = "../conation_authorization", default-features = false, features = [
   "axum",
 ] }
 conation_user_id = { path = "../conation_user_id" }

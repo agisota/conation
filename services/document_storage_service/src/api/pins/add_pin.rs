@@ -8,7 +8,7 @@ use axum::{
     response::IntoResponse,
 };
 
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use entity_access::inbound::axum_extractors::PinAccessLevelExtractor;
 use model::response::{
     GenericErrorResponse, GenericResponse, GenericSuccessResponse, SuccessResponse,

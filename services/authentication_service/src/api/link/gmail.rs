@@ -6,7 +6,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use calendar_events::domain::models::google_calendar_scope_parameter;
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_middleware::tracking::ClientIp;
 use macro_user_id::user_id::MacroUserIdStr;
 use model::response::ErrorResponse;

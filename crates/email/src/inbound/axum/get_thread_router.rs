@@ -7,7 +7,7 @@ use axum::{
     response::IntoResponse,
     routing::get,
 };
-use conation_authorization::{MacroAuthorizationService, MacroAuthorizationState};
+use macro_authorization::{MacroAuthorizationService, MacroAuthorizationState};
 use entity_access::domain::models::{EntityPermission, ViewAccessLevel};
 use entity_access::domain::ports::EntityAccessService;
 use entity_access::inbound::axum_extractors::ThreadAccessLevelExtractor;

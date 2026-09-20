@@ -8,7 +8,7 @@ use crate::domain::service::ModelAccessServiceImpl;
 use axum::extract::{FromRef, FromRequestParts};
 use axum::http::request::Parts;
 use axum::response::IntoResponse;
-use conation_authorization::{
+use macro_authorization::{
     ActingUser, MacroAuthorizationExtractor, MacroAuthorizationRejection,
     MacroAuthorizationService, MacroAuthorizationState,
 };

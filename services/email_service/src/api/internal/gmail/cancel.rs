@@ -4,7 +4,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Json, Response},
 };
-use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
+use macro_authorization::{InternalOnly, MacroAuthorizationExtractor};
 use model::response::ErrorResponse;
 use models_email::email::service::backfill::BackfillJobStatus;
 use sqlx::types::Uuid;

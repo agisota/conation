@@ -8,7 +8,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_db_client::annotations::create_anchor::create_unthreaded_anchor;
 use connection_gateway_client::ConnectionGatewayClient;
 use entity_access::inbound::axum_extractors::DocumentAccessExtractor;

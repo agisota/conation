@@ -1,7 +1,7 @@
 //! Handler for soft-deleting projects.
 
 use axum::{Extension, Json, extract::State};
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal,
 };
 use entity_access::{

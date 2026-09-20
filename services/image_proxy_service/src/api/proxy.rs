@@ -7,7 +7,7 @@ use axum::body::Body;
 use axum::extract::{Query, State};
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_middleware::tracking::ClientIp;
 use futures::StreamExt;
 use model::response::ErrorResponse;

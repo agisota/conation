@@ -1,5 +1,5 @@
 use axum::extract::FromRef;
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthorizationServiceImpl, MacroAuthorizationState, NoopMacroAuthJwtValidator,
 };
 use macro_event_broker::{KafkaEventPublisher, MacroEventBrokerService};

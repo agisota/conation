@@ -2,7 +2,7 @@ use super::{EmailLinkErr, MultiEmailLinkExtractor, resolve_target_link};
 use crate::domain::models::{Link, UserProvider};
 use axum::{body::to_bytes, http::StatusCode, response::IntoResponse};
 use chrono::Utc;
-use conation_authorization::MacroAuthorizationRejection;
+use macro_authorization::MacroAuthorizationRejection;
 use macro_user_id::{email::EmailStr, user_id::MacroUserIdStr};
 use std::{borrow::Cow, marker::PhantomData};
 use uuid::Uuid;

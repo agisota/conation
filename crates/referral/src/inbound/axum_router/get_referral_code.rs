@@ -1,7 +1,7 @@
 //! Handler for `GET /code`.
 
 use axum::{Json, extract::State};
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal,
 };
 

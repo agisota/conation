@@ -4,7 +4,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Json},
 };
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::document::list::{DocumentListFilters, ListDocumentsWithAccessResponse};
 use model::response::GenericErrorResponse;
 use models_permissions::share_permission::access_level::AccessLevel;

@@ -20,7 +20,7 @@ use axum::{
     response::IntoResponse,
     routing::{get, patch, post},
 };
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
 };
 use entity_access::{

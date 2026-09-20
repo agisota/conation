@@ -4,7 +4,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
+use macro_authorization::{InternalOnly, MacroAuthorizationExtractor};
 use fusionauth::error::FusionAuthClientError;
 use model::response::{EmptyResponse, ErrorResponse};
 

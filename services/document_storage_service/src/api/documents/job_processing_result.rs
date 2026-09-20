@@ -5,7 +5,7 @@ use axum::{
     http::StatusCode,
     response::IntoResponse,
 };
-use conation_authorization::{OptionalMacroAuthorizationExtractor, UserOrInternalService};
+use macro_authorization::{OptionalMacroAuthorizationExtractor, UserOrInternalService};
 use conation_db_client::document::get_document_process_content_from_job_id;
 use model::response::GenericErrorResponse;
 use model::response::GenericResponse;

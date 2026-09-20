@@ -10,7 +10,7 @@ use axum::{
     response::ErrorResponse,
     routing::get,
 };
-use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
+use macro_authorization::{InternalOnly, MacroAuthorizationExtractor};
 use model_entity::Entity;
 use utoipa::ToSchema;
 

@@ -5,7 +5,7 @@ use axum::Json;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use email::domain::events::{EmailEventOrigin, EmailMacroEvent, LabelRef};
 use email_service::pubsub::publish_email_event;
 use model::response::ErrorResponse;

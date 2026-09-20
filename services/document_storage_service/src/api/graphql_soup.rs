@@ -14,7 +14,7 @@ use axum::{
 use axum_extra::extract::Cached;
 use bots::outbound::pg_bots_repo::PgBotsRepo;
 use complete_graph::GraphqlRequestParts;
-use conation_authorization::{
+use macro_authorization::{
     OptionalMacroAuthorizationExtractor, UserOrInternalService, UserOrInternalServiceAuthorization,
 };
 use macro_user_id::user_id::MacroUserIdStr;

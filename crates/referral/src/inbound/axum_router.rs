@@ -6,7 +6,7 @@
 use crate::domain::models::ReferralError;
 use crate::domain::ports::ReferralService;
 use axum::{Json, Router, extract::FromRef, http::StatusCode, response::IntoResponse};
-use conation_authorization::{MacroAuthorizationService, MacroAuthorizationState};
+use macro_authorization::{MacroAuthorizationService, MacroAuthorizationState};
 pub use get_referral_code::{__path_get_referral_code_handler, get_referral_code_handler};
 use model_error_response::ErrorResponse;
 use rate_limit::inbound::rate_limit_middleware;

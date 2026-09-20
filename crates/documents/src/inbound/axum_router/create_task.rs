@@ -2,7 +2,7 @@
 
 use axum::{Json, extract::State};
 use base64::Engine;
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal,
 };
 use entity_access::domain::models::MemberTeamRole;

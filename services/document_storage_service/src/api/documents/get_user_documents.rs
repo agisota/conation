@@ -8,7 +8,7 @@ use axum::{
     http::StatusCode,
     response::IntoResponse,
 };
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_db_client::document::get_user_documents;
 use model::response::{GenericErrorResponse, GenericResponse};
 use sqlx::PgPool;

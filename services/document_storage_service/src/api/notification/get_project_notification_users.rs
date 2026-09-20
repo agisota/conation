@@ -3,7 +3,7 @@ use axum::Json;
 use axum::extract::State;
 use axum::response::Response;
 use axum::{extract::Path, http::StatusCode, response::IntoResponse};
-use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
+use macro_authorization::{InternalOnly, MacroAuthorizationExtractor};
 use model::response::GenericErrorResponse;
 use sqlx::PgPool;
 

@@ -131,6 +131,12 @@ impl<'a> MacroUserIdStr<'a> {
             .map(|id| id.lowercase())
             .map(MacroUserIdStr)
     }
+
+    /// True when the email is `@conation.dev` or `@macro.com` (plus-aliases included).
+    pub fn is_macro_staff(&self) -> bool {
+        let email = self.email_str();
+        email.ends_with("@conation.dev") || email.ends_with("@macro.com")
+    }
 }
 
 impl<'a> From<MacroUserIdStr<'a>> for MacroUserId<String> {

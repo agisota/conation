@@ -1,5 +1,5 @@
 use axum::extract::{Path, State};
-use conation_authorization::MacroAuthorizationService;
+use macro_authorization::MacroAuthorizationService;
 use conation_user_id::user_id::MacroUserIdStr;
 use entity_access::{
     domain::{models::AdminTeamRole, ports::EntityAccessService},

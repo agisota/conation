@@ -13,7 +13,7 @@ use axum::{
     routing::post,
 };
 use channels::domain::models::ChannelHistoryInfo;
-use conation_authorization::{InternalOnly, MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{InternalOnly, MacroAuthorizationExtractor, UserOrInternal};
 use macro_user_id::user_id::MacroUserId;
 use models_search::MatchType;
 use models_search::channel::{

@@ -1,6 +1,6 @@
 use crate::config::Config;
 use axum::extract::FromRef;
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthJwtValidator, MacroAuthorizationServiceImpl, MacroAuthorizationState,
 };
 use frecency::{

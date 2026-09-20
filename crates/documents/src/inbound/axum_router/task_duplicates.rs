@@ -6,7 +6,7 @@ use axum::{
     Extension, Json,
     extract::{Path, State},
 };
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal,
 };
 use entity_access::domain::models::MemberTeamRole;

@@ -13,7 +13,7 @@ use chat::domain::service::MessageServiceImpl;
 use chat::inbound::attachment::ChatAttachmentService;
 use chat::outbound::postgres::PgChatRepo;
 use macro_auth::InternalApiKey;
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthJwtValidator, MacroAuthorizationServiceImpl, MacroAuthorizationState,
 };
 use connection_gateway::service::connection::ConnectionRepo;

@@ -3,7 +3,7 @@ use axum::Json;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
+use macro_authorization::{InternalOnly, MacroAuthorizationExtractor};
 use conation_db_client::notification::get_basic_cloud_storage_documents_metadata;
 use model::document_storage_service_internal::{
     DocumentMetadata, GetDocumentsMetadataRequest, GetDocumentsMetadataResponse,

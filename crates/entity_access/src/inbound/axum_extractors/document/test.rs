@@ -18,7 +18,7 @@ use axum::{
     http::{Request, StatusCode, header},
     response::IntoResponse,
 };
-use conation_authorization::{
+use macro_authorization::{
     BOT_SCOPE_HEADER, BOT_TOKEN_HEADER, BotActingUserClaims, BotAuthentication, BotScope,
     INTERNAL_API_KEY_HEADER, INTERNAL_CONATION_USER_ID_HEADER, InternalIdentityClaims,
     MacroAuthorizationError, MacroAuthorizationService, MacroAuthorizationState,

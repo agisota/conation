@@ -6,7 +6,7 @@ use axum::response::IntoResponse;
 use axum::routing::get;
 use axum::{RequestPartsExt, Router};
 use axum_extra::extract::Cached;
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
 };
 use conation_user_id::user_id::MacroUserIdStr;
@@ -131,7 +131,7 @@ where
     Auth: MacroAuthorizationService,
     MacroAuthorizationState<Auth>: FromRef<S>,
 {
-    type Rejection = conation_authorization::MacroAuthorizationRejection;
+    type Rejection = macro_authorization::MacroAuthorizationRejection;
 
     async fn from_request_parts(
         parts: &mut axum::http::request::Parts,

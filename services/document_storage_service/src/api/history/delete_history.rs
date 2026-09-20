@@ -1,7 +1,7 @@
 use crate::api::context::{ApiContext, AuthorizationService};
 use axum::extract::State;
 use axum::{extract::Path, http::StatusCode, response::IntoResponse};
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::response::{
     GenericErrorResponse, GenericResponse, GenericSuccessResponse, SuccessResponse,
 };

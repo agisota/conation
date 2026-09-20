@@ -6,7 +6,7 @@ use axum::{
     routing::patch,
 };
 use axum_extra::extract::Cached;
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
 };
 use model_error_response::ErrorResponse;

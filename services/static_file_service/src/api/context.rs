@@ -3,7 +3,7 @@ use crate::service::dynamodb::client::DynamodbClient;
 use crate::service::s3::client::S3Client;
 use aws_sdk_sqs::Client;
 use axum::extract::FromRef;
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthJwtValidator, MacroAuthorizationServiceImpl, MacroAuthorizationState,
 };
 use std::sync::Arc;

@@ -1,6 +1,6 @@
 use agent_session::domain::search::AgentSessionSearchMetadataService;
 use axum::extract::FromRef;
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthJwtValidator, MacroAuthorizationServiceImpl, MacroAuthorizationState,
 };
 use entity_access::domain::service::EntityAccessServiceImpl;

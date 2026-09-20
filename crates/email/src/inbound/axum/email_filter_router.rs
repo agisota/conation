@@ -7,7 +7,7 @@ use axum::{
 };
 use axum_extra::extract::Cached;
 use chrono::{DateTime, Utc};
-use conation_authorization::{MacroAuthorizationService, MacroAuthorizationState};
+use macro_authorization::{MacroAuthorizationService, MacroAuthorizationState};
 use model_error_response::ErrorResponse;
 use thiserror::Error;
 use uuid::Uuid;

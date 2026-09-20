@@ -5,7 +5,7 @@ use axum::{
     response::{IntoResponse, Response},
     routing::post,
 };
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use github::domain::{
     models::{EnrichGithubPullRequestsProxyRequest, EnrichGithubPullRequestsResponse, GithubError},
     ports::GithubLinkService,

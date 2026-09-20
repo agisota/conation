@@ -9,7 +9,7 @@ use backend_i18n::{
     RenderedVerificationEmail, SupportedLocale, VerificationEmail, negotiate_accept_language,
     render_verification_email,
 };
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_middleware::tracking::ClientIp;
 use url::Url;
 use utoipa::ToSchema;

@@ -5,7 +5,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use conation_authorization::MacroAuthorizationRejection;
+use macro_authorization::MacroAuthorizationRejection;
 
 use super::ExtractorError;
 

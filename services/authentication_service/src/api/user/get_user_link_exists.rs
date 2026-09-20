@@ -8,7 +8,7 @@ use utoipa::ToSchema;
 
 use crate::api::context::{ApiContext, AuthorizationService};
 
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::response::ErrorResponse;
 
 #[derive(serde::Deserialize, serde::Serialize, Debug)]

@@ -4,7 +4,7 @@ use axum::{
     http::{Request, StatusCode, header, request::Builder},
     routing::post,
 };
-use conation_authorization::{
+use macro_authorization::{
     BOT_SCOPE_HEADER, BOT_TOKEN_HEADER, BotScope, INTERNAL_API_KEY_HEADER,
     INTERNAL_CONATION_USER_ID_HEADER,
 };

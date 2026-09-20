@@ -4,7 +4,7 @@ use axum::{
     Extension, Json,
     extract::{Path, Query, State},
 };
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal,
 };
 use entity_access::domain::ports::EntityAccessService;

@@ -1,7 +1,7 @@
 use crate::api::context::AuthorizationService;
 use crate::api::documents::initialize_starter_docs::{HOW_TO_GUIDE_ID_SEED, starter_doc_id};
 use axum::Json;
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::response::GenericErrorResponse;
 use utoipa::ToSchema;
 

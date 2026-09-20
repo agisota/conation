@@ -20,7 +20,7 @@ use crate::domain::{
     },
     ports::EntityAccessService,
 };
-use conation_authorization::{
+use macro_authorization::{
     AnyPrincipal, MacroAuthorization, MacroAuthorizationService, MacroAuthorizationState,
     OptionalMacroAuthorizationExtractor,
 };

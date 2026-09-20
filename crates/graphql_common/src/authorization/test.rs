@@ -8,7 +8,7 @@ use axum::{
     extract::FromRef,
     http::{Request as HttpRequest, header},
 };
-use conation_authorization::{
+use macro_authorization::{
     BOT_SCOPE_HEADER, BOT_TOKEN_HEADER, BotActingUserClaims, BotAuthentication, BotScope,
     InternalIdentityClaims, MacroAuthorizationError, MacroAuthorizationService,
     MacroAuthorizationState,

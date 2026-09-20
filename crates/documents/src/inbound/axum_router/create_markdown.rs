@@ -1,7 +1,7 @@
 //! Handler for `POST /documents/create_markdown`.
 
 use axum::{Json, extract::State};
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal,
 };
 use entity_access::domain::ports::EntityAccessService;

@@ -8,7 +8,7 @@ use axum::{
     response::{IntoResponse, Response},
     routing::post,
 };
-use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
+use macro_authorization::{InternalOnly, MacroAuthorizationExtractor};
 use model::{
     convert::ConvertRequest,
     document::FileType,

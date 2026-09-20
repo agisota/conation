@@ -20,7 +20,7 @@ async-openai.workspace = true
 axum.workspace = true
 futures.workspace = true
 http.workspace = true
-conation_authorization = { package = "macro_authorization", path = "../conation_authorization", default-features = false, features = [
+macro_authorization = { path = "../conation_authorization", default-features = false, features = [
   "axum",
 ] }
 conation_env_var = { path = "../conation_env_var", optional = true }

@@ -5,7 +5,7 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use cloudfront_sign::{SignedOptions, get_signed_url};
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use email_provider::StalwartProvider;
 use model::response::ErrorResponse;
 use models_email::email::service::attachment;

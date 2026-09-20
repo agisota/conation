@@ -9,7 +9,7 @@ use axum::{
     http::{Request, StatusCode, header},
     response::IntoResponse,
 };
-use conation_authorization::{
+use macro_authorization::{
     INTERNAL_API_KEY_HEADER, INTERNAL_CONATION_USER_ID_HEADER, InternalIdentityClaims,
     MacroAuthorizationError, MacroAuthorizationRejection, MacroAuthorizationService,
     MacroAuthorizationState,

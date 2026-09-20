@@ -15,7 +15,7 @@ path = "src/openapi.rs"
 [dependencies]
 axum = { workspace = true, features = ["tower-log", "ws"] }
 entity_access = { path = "../entity_access" }
-conation_authorization = { package = "macro_authorization", path = "../conation_authorization" }
+macro_authorization = { path = "../conation_authorization" }
 models_properties = { path = "../models_properties" }
 notification = { path = "../notification" }
 properties = { path = "../properties" }

@@ -3,7 +3,7 @@ use axum::{
     extract::State,
     response::{IntoResponse, Json, Response},
 };
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_event_broker::MacroEventBroker;
 use macro_user_id::cowlike::CowLike;
 use futures::StreamExt;

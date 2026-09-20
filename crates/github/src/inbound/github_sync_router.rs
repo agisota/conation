@@ -16,7 +16,7 @@ use axum::{
     response::Redirect,
 };
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOnly,
 };
 use conation_service_urls::AppServiceUrl;

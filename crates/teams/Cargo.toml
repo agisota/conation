@@ -19,7 +19,7 @@ ai_tools = [
 ]
 axum = [
   "dep:axum",
-  "dep:conation_authorization",
+  "dep:macro_authorization",
   "dep:model-error-response",
   "dep:model_user",
   "dep:utoipa",
@@ -66,7 +66,7 @@ chrono = { workspace = true }
 channels = { path = "../channels", default-features = false, features = ["ports"] }
 contacts = { path = "../contacts", default-features = false, optional = true }
 database_env_vars = { path = "../database_env_vars", optional = true }
-conation_authorization = { package = "macro_authorization", path = "../conation_authorization", optional = true, default-features = false, features = [
+macro_authorization = { path = "../conation_authorization", optional = true, default-features = false, features = [
   "axum",
 ] }
 conation_entrypoint = { package = "macro_entrypoint", path = "../conation_entrypoint", optional = true }

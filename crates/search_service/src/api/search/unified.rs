@@ -11,7 +11,7 @@ use axum::{
     extract::{self, State},
     response::Json,
 };
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::response::ErrorResponse;
 use models_search::unified::{
     UnifiedSearchRequest, UnifiedSearchResponse, UnifiedSearchResponseItem,

@@ -10,7 +10,7 @@ use axum::{
     body::{Body, to_bytes},
     http::{Request, StatusCode, header},
 };
-use conation_authorization::{
+use macro_authorization::{
     InternalIdentityClaims, MacroAuthorizationError, MacroAuthorizationService,
     MacroAuthorizationState,
 };
@@ -105,19 +105,19 @@ impl MacroAuthorizationService for FakeAuthorizationService {
     async fn authorize_bot(
         &self,
         bot_token: &str,
-        bot_scope: conation_authorization::BotScope,
-        acting_user: Option<conation_authorization::BotActingUserClaims>,
-    ) -> Result<conation_authorization::BotAuthentication, Report<MacroAuthorizationError>> {
+        bot_scope: macro_authorization::BotScope,
+        acting_user: Option<macro_authorization::BotActingUserClaims>,
+    ) -> Result<macro_authorization::BotAuthentication, Report<MacroAuthorizationError>> {
         if bot_token != "mbot_feed_test" {
             return Err(Report::new(MacroAuthorizationError::InvalidCredentials));
         }
         let acting_user = acting_user
             .and_then(|claims| claims.user_id)
-            .map(|user_id| conation_authorization::MacroUserAuthentication {
+            .map(|user_id| macro_authorization::MacroUserAuthentication {
                 macro_user_id: MacroUserIdStr::try_from(user_id).unwrap(),
                 user_context: UserContext::default(),
             });
-        Ok(conation_authorization::BotAuthentication {
+        Ok(macro_authorization::BotAuthentication {
             bot_id: bot_id::BotId::TEST_A,
             token_id: uuid::Uuid::new_v4(),
             bot_scope,

@@ -18,7 +18,7 @@ use axum::{
     response::IntoResponse,
     routing::{delete, get, patch, post, put},
 };
-use conation_authorization::{
+use macro_authorization::{
     AnyPrincipal, BotOnly, MacroAuthorization, MacroAuthorizationExtractor,
     MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
 };

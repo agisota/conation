@@ -5,7 +5,7 @@ use axum::{
     middleware::Next,
     response::Response,
 };
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_db_client::user::onboarding_status::get_onboarding_status;
 use sqlx::PgPool;
 

@@ -3,7 +3,7 @@
 
 use axum::{Json, extract::State};
 use chrono::{DateTime, Utc};
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal,
 };
 

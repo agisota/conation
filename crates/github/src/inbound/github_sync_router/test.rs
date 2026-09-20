@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use axum::{Router, http::Request};
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
-use conation_authorization::{
+use macro_authorization::{
     InternalIdentityClaims, MacroAuthorizationError, MacroAuthorizationService,
     MacroAuthorizationState,
 };

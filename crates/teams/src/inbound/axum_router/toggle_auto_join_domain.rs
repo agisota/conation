@@ -1,5 +1,5 @@
 use axum::{Json, extract::State};
-use conation_authorization::MacroAuthorizationService;
+use macro_authorization::MacroAuthorizationService;
 use entity_access::{
     domain::{models::AdminTeamRole, ports::EntityAccessService},
     inbound::axum_extractors::MacroUserTeamExtractorV2,

@@ -2,7 +2,7 @@ use crate::api::context::{ApiContext, AuthorizationService};
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Json, Response};
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use email_api_client::domain::models::{EmailApiError, TokenFreshness};
 use model::response::{EmptyResponse, ErrorResponse};
 use models_email::email::service::pubsub::LinkManagerMessage;

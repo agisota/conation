@@ -5,7 +5,7 @@ use crate::{
 };
 use axum::extract::State;
 use axum::{http::StatusCode, response::IntoResponse};
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::response::{GenericErrorResponse, GenericResponse};
 
 /// Gets the users pinned items

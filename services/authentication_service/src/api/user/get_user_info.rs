@@ -7,7 +7,7 @@ use axum::{
 
 use crate::api::context::{ApiContext, AuthorizationService};
 
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::authentication::user::GetUserInfo;
 use model::response::ErrorResponse;
 

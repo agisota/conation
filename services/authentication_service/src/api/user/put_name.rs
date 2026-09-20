@@ -8,7 +8,7 @@ use conation_db_client::user::update_user_name::update_user_name;
 
 use crate::api::context::{ApiContext, AuthorizationService};
 
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::response::EmptyResponse;
 use model::response::ErrorResponse;
 use model::user::PutUserNameQueryParams;

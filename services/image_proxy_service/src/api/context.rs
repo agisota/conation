@@ -1,5 +1,5 @@
 use axum::extract::FromRef;
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthJwtValidator, MacroAuthorizationServiceImpl, MacroAuthorizationState,
 };
 use conation_env::Environment;

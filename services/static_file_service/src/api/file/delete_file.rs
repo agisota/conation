@@ -6,7 +6,7 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::response::Response;
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal, UserOrInternalCaller};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal, UserOrInternalCaller};
 use std::sync::Arc;
 
 #[derive(serde::Deserialize)]

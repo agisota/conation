@@ -6,7 +6,7 @@ use axum::{
     http::StatusCode,
     response::IntoResponse,
 };
-use conation_authorization::{
+use macro_authorization::{
     InternalOnly, MacroAuthorizationExtractor, MacroAuthorizationService,
 };
 use entity_access::domain::ports::EntityAccessService;

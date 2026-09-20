@@ -10,7 +10,7 @@ use axum::{
     http::{Request, StatusCode},
     response::IntoResponse,
 };
-use conation_authorization::{
+use macro_authorization::{
     InternalIdentityClaims, MacroAuthorizationError, MacroAuthorizationService,
     MacroAuthorizationState,
 };

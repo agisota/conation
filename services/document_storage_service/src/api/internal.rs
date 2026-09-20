@@ -23,7 +23,7 @@ use axum::{
     Router,
     routing::{delete, get, post, put},
 };
-use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
+use macro_authorization::{InternalOnly, MacroAuthorizationExtractor};
 use conation_middleware::cloud_storage::{
     document::ensure_document_exists, thread::ensure_thread_exists,
 };

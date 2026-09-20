@@ -4,7 +4,7 @@ use axum::Json;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use email::domain::events::{EmailEventOrigin, EmailMacroEvent, ThreadArchivedMetadata};
 use email_db_client::threads::update::update_inbox_visible_status;
 use email_service::pubsub::publish_email_event;

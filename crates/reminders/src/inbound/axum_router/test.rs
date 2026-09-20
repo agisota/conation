@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 
 use axum::http::header;
 use chrono::{DateTime, TimeZone, Utc};
-use conation_authorization::{
+use macro_authorization::{
     InternalIdentityClaims, MacroAuthorizationError, MacroAuthorizationService,
 };
 use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId};

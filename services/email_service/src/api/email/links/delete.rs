@@ -4,7 +4,7 @@ use anyhow::Context;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::response::{EmptyResponse, ErrorResponse};
 use models_email::email::service::pubsub::{DeletionReason, LinkManagerMessage};
 use uuid::Uuid;

@@ -1,5 +1,5 @@
 use axum::{Json, extract::State};
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use serde::Deserialize;
 use utoipa::ToSchema;
 

@@ -3,7 +3,7 @@ use crate::model::response::documents::get::GetDocumentUserAccessLevelResponse;
 use axum::Json;
 use axum::extract::State;
 use axum::{extract::Path, http::StatusCode, response::IntoResponse};
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use entity_access::domain::ports::EntityAccessService;
 use model::response::{GenericErrorResponse, GenericResponse};
 use model_entity::EntityType;

@@ -1,6 +1,6 @@
 use crate::api::context::AuthorizationService;
 use axum::{http::StatusCode, response::IntoResponse};
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::response::{GenericErrorResponse, GenericResponse, GenericSuccessResponse};
 
 /// Populates the users items

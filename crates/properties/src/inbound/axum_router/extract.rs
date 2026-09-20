@@ -14,7 +14,7 @@ use axum::{
     http::request::Parts,
     response::{IntoResponse, Response},
 };
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationRejection, MacroAuthorizationService,
     OptionalMacroAuthorizationExtractor, UserOrInternal, UserOrInternalService,
 };

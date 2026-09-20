@@ -51,7 +51,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use conation_authorization::MacroAuthorizationRejection;
+use macro_authorization::MacroAuthorizationRejection;
 use model_error_response::ErrorResponse;
 
 pub use crate::domain::models::RequiredPermission;

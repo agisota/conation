@@ -10,7 +10,7 @@ use axum::{
     extract::{self, State},
     response::Json,
 };
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use macro_user_id::user_id::MacroUserId;
 use crm::domain::auth::CrmTeamReceipt;
 use entity_access::domain::models::MemberTeamRole;

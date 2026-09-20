@@ -18,7 +18,7 @@ use axum::{
     routing::{get, post},
 };
 use axum_extra::extract::Cached;
-use conation_authorization::{
+use macro_authorization::{
     ActingUser, MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState,
 };
 use model_error_response::ErrorResponse;

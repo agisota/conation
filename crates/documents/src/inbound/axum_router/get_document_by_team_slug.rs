@@ -8,7 +8,7 @@ use axum::{
     http::request::Parts,
     response::{IntoResponse, Response},
 };
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal,
 };
 use entity_access::{

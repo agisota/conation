@@ -5,7 +5,7 @@ use axum::http::request::Parts;
 use axum::response::{IntoResponse, Response};
 use axum::routing::{delete, patch, post};
 use axum::{Router, routing::get};
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationState, UserOrInternal,
 };
 use model::response::ErrorResponse;

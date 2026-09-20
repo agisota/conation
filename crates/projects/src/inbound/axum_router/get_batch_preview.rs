@@ -1,7 +1,7 @@
 //! Handler for batch project previews.
 
 use axum::{Json, extract::State};
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthorizationService, OptionalMacroAuthorizationExtractor, UserOrInternalService,
 };
 use entity_access::domain::ports::EntityAccessService;

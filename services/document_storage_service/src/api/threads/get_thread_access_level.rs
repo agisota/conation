@@ -3,7 +3,7 @@ use axum::Json;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use entity_access::domain::ports::EntityAccessService;
 use model::response::GenericResponse;
 use model::thread::response::GetThreadUserAccessLevelResponse;

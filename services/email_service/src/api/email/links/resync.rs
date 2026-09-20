@@ -3,7 +3,7 @@ use crate::api::email::links::access::{InboxActionError, authorize_inbox_access}
 use anyhow::Context;
 use axum::extract::{Path, State};
 use axum::response::{IntoResponse, Json, Response};
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use model::response::ErrorResponse;
 use models_email::email::service::backfill::{
     BackfillOperation, BackfillPubsubMessage, InitPayload, JobScopedPayload,

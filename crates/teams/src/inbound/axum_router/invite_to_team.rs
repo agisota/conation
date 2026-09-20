@@ -1,5 +1,5 @@
 use axum::{Json, extract::State, http::StatusCode};
-use conation_authorization::MacroAuthorizationService;
+use macro_authorization::MacroAuthorizationService;
 use conation_user_id::{email::Email, lowercased::Lowercase};
 use entity_access::{
     domain::{models::MemberTeamRole, ports::EntityAccessService},

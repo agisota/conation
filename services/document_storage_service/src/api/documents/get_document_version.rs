@@ -4,7 +4,7 @@ use axum::{
     http::StatusCode,
     response::IntoResponse,
 };
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_db_client::document::get_document_version;
 use conation_db_client::user_document_view_location::get::get_user_document_view_location;
 use entity_access::domain::models::EntityPermission;

@@ -35,7 +35,7 @@ use axum::{
 };
 use channel_sender::ChannelSender;
 use chrono::{DateTime, Utc};
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
 };
 use macro_user_id::user_id::MacroUserIdStr;

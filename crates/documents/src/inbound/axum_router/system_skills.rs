@@ -1,7 +1,7 @@
 //! Handler for `GET /documents/system_skills`.
 
 use axum::Json;
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal,
 };
 

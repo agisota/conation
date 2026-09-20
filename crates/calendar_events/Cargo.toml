@@ -19,7 +19,7 @@ google = ["dep:reqwest", "dep:urlencoding"]
 mutation-client = ["dep:reqwest"]
 inbound = [
   "dep:axum",
-  "dep:conation_authorization",
+  "dep:macro_authorization",
   "dep:models_pagination",
   "schema",
 ]
@@ -37,7 +37,7 @@ axum = { workspace = true, optional = true }
 chrono = { workspace = true }
 conation_event_broker = { path = "../conation_event_broker", default-features = false }
 email_provider = { path = "../email_provider" }
-conation_authorization = { package = "macro_authorization", path = "../conation_authorization", default-features = false, features = [
+macro_authorization = { path = "../conation_authorization", default-features = false, features = [
   "axum",
 ], optional = true }
 conation_user_id = { path = "../conation_user_id", optional = true }

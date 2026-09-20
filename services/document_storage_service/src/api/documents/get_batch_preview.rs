@@ -9,7 +9,7 @@ use anyhow::Result;
 use axum::extract::Json;
 use axum::extract::State;
 use axum::response::{IntoResponse, Response};
-use conation_authorization::{OptionalMacroAuthorizationExtractor, UserOrInternalService};
+use macro_authorization::{OptionalMacroAuthorizationExtractor, UserOrInternalService};
 use entity_access::domain::models::AccessError;
 use entity_access::domain::ports::EntityAccessService;
 use model::document::{DocumentPreview, DocumentPreviewV2, WithDocumentId};

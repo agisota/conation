@@ -2,7 +2,7 @@ use crate::api::context::ApiContext;
 use crate::api::context::{AuthorizationService, EntityAccessService};
 use axum::extract::State;
 use axum::{extract::Path, http::StatusCode, response::IntoResponse};
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use entity_access::domain::models::EntityPermission;
 use entity_access::inbound::axum_extractors::HistoryAccessExtractor;
 use model::response::{

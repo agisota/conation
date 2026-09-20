@@ -3,7 +3,7 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
 };
-use conation_authorization::MacroAuthorizationService;
+use macro_authorization::MacroAuthorizationService;
 use entity_access::domain::{models::EditAccessLevel, ports::EntityAccessService};
 use model_error_response::ErrorResponse;
 use serde::Deserialize;

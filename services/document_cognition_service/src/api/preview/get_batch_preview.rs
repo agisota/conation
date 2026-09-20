@@ -2,7 +2,7 @@ use crate::api::context::DcsAuthorizationService;
 use anyhow::Result;
 use axum::extract::{Json, State};
 use axum::{extract, http::StatusCode};
-use conation_authorization::{OptionalMacroAuthorizationExtractor, UserOrInternalService};
+use macro_authorization::{OptionalMacroAuthorizationExtractor, UserOrInternalService};
 use model::chat::preview::{ChatPreview, ChatPreviewData, ChatPreviewV2, WithChatId};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;

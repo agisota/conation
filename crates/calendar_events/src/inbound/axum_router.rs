@@ -13,7 +13,7 @@ use axum::{
     routing::{get, post},
 };
 use chrono::{DateTime, NaiveDate, NaiveTime, Utc};
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
 };
 use models_pagination::Base64Str;

@@ -5,7 +5,7 @@ use axum::{
     extract::State,
     routing::{delete, post},
 };
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal,
 };
 use model_error_response::ErrorResponse;

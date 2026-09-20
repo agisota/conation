@@ -3,7 +3,7 @@
 use std::str::FromStr;
 
 use axum::{Json, extract::State};
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, UserOrInternal, UserOrInternalCaller,
 };
 use entity_access::domain::ports::EntityAccessService;

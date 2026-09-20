@@ -9,7 +9,7 @@ use axum::{
     http::StatusCode,
     routing::{delete, get, post, put},
 };
-use conation_authorization::{
+use macro_authorization::{
     ActingUser, MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState,
 };
 use entity_access::domain::models::{EditAccessLevel, OwnerAccessLevel, ViewAccessLevel};

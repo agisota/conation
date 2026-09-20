@@ -13,7 +13,7 @@ use axum::{
     Json,
     extract::{Path, State},
 };
-use conation_authorization::MacroAuthorizationService;
+use macro_authorization::MacroAuthorizationService;
 use entity_access::{
     domain::{
         models::{TeamRole, ViewAccessLevel},

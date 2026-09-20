@@ -7,7 +7,7 @@ use comms_db_client::{
     channels::get_channels::get_org_channels,
     participants::remove_participant::{RemoveParticipantOptions, remove_participant},
 };
-use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
+use macro_authorization::{InternalOnly, MacroAuthorizationExtractor};
 use macro_user_id::user_id::MacroUserIdStr;
 use model::{authentication::webhooks::FusionAuthUserWebhook, user::UserInfoWithMacroUserId};
 use notification::domain::ports::NotificationRepository;

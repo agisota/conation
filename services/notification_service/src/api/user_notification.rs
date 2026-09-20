@@ -3,7 +3,7 @@ use std::{collections::HashSet, sync::LazyLock};
 use ::notification::domain::models::UserNotificationRow;
 use axum::extract::State;
 use chrono::{DateTime, Utc};
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use macro_user_id::user_id::MacroUserIdStr;
 use email_formatting::EmailDigestNotification;
 use itertools::{Either, Itertools};

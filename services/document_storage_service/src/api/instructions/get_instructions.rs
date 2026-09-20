@@ -3,7 +3,7 @@ use crate::{
     model::response::instructions::GetInstructionsDocumentResponse,
 };
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use macro_user_id::cowlike::CowLike;
 use model::response::{GenericErrorResponse, GenericResponse};
 

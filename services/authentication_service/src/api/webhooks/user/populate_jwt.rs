@@ -5,7 +5,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
+use macro_authorization::{InternalOnly, MacroAuthorizationExtractor};
 use model::{
     authentication::webhooks::populate_jwt::{PopulateJwtWebhook, PopulateJwtWebhookResponse},
     user::UserInfoWithMacroUserId,

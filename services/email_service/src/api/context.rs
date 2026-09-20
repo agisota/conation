@@ -18,7 +18,7 @@ use email_service::pubsub::calendar_backfill_adapters::RedisCalendarRequestGate;
 
 use macro_auth::InternalApiKey;
 use macro_auth::middleware::decode_jwt::JwtValidationArgs;
-use conation_authorization::{
+use macro_authorization::{
     MacroAuthJwtValidator, MacroAuthorizationServiceImpl, MacroAuthorizationState,
 };
 use macro_event_broker::{KafkaEventPublisher, MacroEventBrokerService};

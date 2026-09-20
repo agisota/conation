@@ -4,7 +4,7 @@ use axum::{
     extract::{self, State},
     http::StatusCode,
 };
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_db_client::user::get_user_name::get_user_names_with_email;
 use macro_user_id::user_id::MacroUserId;
 use macro_user_id::{cowlike::CowLike, lowercased::Lowercase};

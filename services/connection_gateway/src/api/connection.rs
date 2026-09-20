@@ -18,7 +18,7 @@ use axum::{
     response::IntoResponse,
     routing::get,
 };
-use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
+use macro_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use macro_user_id::user_id::MacroUserIdStr;
 use futures::{
     FutureExt,

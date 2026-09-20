@@ -53,7 +53,7 @@ use axum::{
     middleware::{self, Next},
     response::IntoResponse,
 };
-use conation_authorization::{MacroAuthorizationService, MacroAuthorizationState};
+use macro_authorization::{MacroAuthorizationService, MacroAuthorizationState};
 use entity_access::domain::ports::EntityAccessService;
 use lexical_client::LexicalClient;
 use model_error_response::ErrorResponse;

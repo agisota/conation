@@ -9,7 +9,7 @@ use axum::{
     http::StatusCode,
     routing::post,
 };
-use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
+use macro_authorization::{InternalOnly, MacroAuthorizationExtractor};
 use connection_gateway_models::{
     BatchSendMessageBody, BatchSendUniqueMessagesBody, SendMessageBody, SendMessageResponse,
 };

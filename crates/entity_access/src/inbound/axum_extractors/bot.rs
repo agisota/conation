@@ -3,7 +3,7 @@
 #[cfg(test)]
 mod test;
 
-use conation_authorization::{BotAuthentication, BotScope};
+use macro_authorization::{BotAuthentication, BotScope};
 
 use super::{ExtractorError, RequiredPermission};
 use crate::domain::{
