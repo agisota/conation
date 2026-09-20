@@ -1,7 +1,7 @@
 //! PR open/edit/close event handlers.
 
 use crate::domain::{
-    models::{GithubError, MacroTaskId, ValidatedGithubWebhookEvent},
+    models::{GithubError, ConationTaskId, ValidatedGithubWebhookEvent},
     ports::{GithubSyncClient, GithubSyncRealtime, GithubSyncRepo},
 };
 use documents::domain::ports::DocumentService;
@@ -65,7 +65,7 @@ impl<
 
         // Post comment for newly discovered tasks
         if !new_task_ids.is_empty() {
-            let new_task_id_set: HashSet<&MacroTaskId> = new_task_ids.iter().collect();
+            let new_task_id_set: HashSet<&ConationTaskId> = new_task_ids.iter().collect();
             let new_task_links: Vec<_> = resolved_all
                 .validated_task_ids
                 .iter()
@@ -146,7 +146,7 @@ impl<
 
         // Post comment for newly discovered tasks
         if !new_task_ids.is_empty() {
-            let new_task_id_set: HashSet<&MacroTaskId> = new_task_ids.iter().collect();
+            let new_task_id_set: HashSet<&ConationTaskId> = new_task_ids.iter().collect();
             let new_task_links: Vec<_> = resolved_all
                 .validated_task_ids
                 .iter()
@@ -197,7 +197,7 @@ impl<
         // Gather task IDs from PR title/body/branch
         let searchable_texts = event.extract_searchable_text();
         let combined = searchable_texts.join(" ");
-        let mut task_id_set: HashSet<MacroTaskId> = self
+        let mut task_id_set: HashSet<ConationTaskId> = self
             .extract_task_ids_from_text(event, &combined)
             .await
             .into_iter()

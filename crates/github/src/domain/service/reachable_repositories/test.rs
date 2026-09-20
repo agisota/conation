@@ -1,6 +1,6 @@
 use super::*;
 use crate::domain::models::{
-    AppJwt, GithubAppInstallationSource, GithubKey, MacroTaskId, ResolvedTeamTaskReference,
+    AppJwt, GithubAppInstallationSource, GithubKey, ConationTaskId, ResolvedTeamTaskReference,
     TeamTaskReference,
 };
 use std::collections::HashMap;
@@ -74,14 +74,14 @@ impl GithubSyncRepo for FakeRepo {
         unimplemented!("listing goes from user to installations, not the other way")
     }
 
-    async fn get_task_ids(&self, _github_key: GithubKey) -> Result<Vec<MacroTaskId>, Self::Err> {
+    async fn get_task_ids(&self, _github_key: GithubKey) -> Result<Vec<ConationTaskId>, Self::Err> {
         unimplemented!("listing repositories does not read tasks")
     }
 
     async fn upsert_task_ids(
         &self,
         _github_key: GithubKey,
-        _task_ids: &[MacroTaskId],
+        _task_ids: &[ConationTaskId],
     ) -> Result<(), Self::Err> {
         unimplemented!("listing repositories does not write tasks")
     }
@@ -89,8 +89,8 @@ impl GithubSyncRepo for FakeRepo {
     async fn filter_duplicate_tasks(
         &self,
         _github_key: GithubKey,
-        _task_ids: &[MacroTaskId],
-    ) -> Result<Vec<MacroTaskId>, Self::Err> {
+        _task_ids: &[ConationTaskId],
+    ) -> Result<Vec<ConationTaskId>, Self::Err> {
         unimplemented!("listing repositories does not read tasks")
     }
 

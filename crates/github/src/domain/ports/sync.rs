@@ -7,7 +7,7 @@ use macro_user_id::user_id::MacroUserIdStr;
 use crate::domain::models::{
     AppJwt, EnrichedGithubPullRequest, GithubAppInstallationSource, GithubAuthenticatedUser,
     GithubError, GithubInstallationAccessToken, GithubKey, GithubPullRequestDetails,
-    GithubRepository, GithubSetupAccessToken, GithubUserInstallation, MacroTaskId,
+    GithubRepository, GithubSetupAccessToken, GithubUserInstallation, ConationTaskId,
     ResolvedTeamTaskReference, TeamTaskReference, ValidatedGithubWebhookEvent,
 };
 
@@ -24,13 +24,13 @@ pub trait GithubSyncRepo: Send + Sync + 'static {
     fn get_task_ids(
         &self,
         github_key: GithubKey,
-    ) -> impl Future<Output = Result<Vec<MacroTaskId>, Self::Err>> + Send;
+    ) -> impl Future<Output = Result<Vec<ConationTaskId>, Self::Err>> + Send;
 
     /// Upserts task ids for a given github key
     fn upsert_task_ids(
         &self,
         github_key: GithubKey,
-        task_ids: &[MacroTaskId],
+        task_ids: &[ConationTaskId],
     ) -> impl Future<Output = Result<(), Self::Err>> + Send;
 
     /// Filters out all pre-existing tasks for the github key
@@ -38,8 +38,8 @@ pub trait GithubSyncRepo: Send + Sync + 'static {
     fn filter_duplicate_tasks(
         &self,
         github_key: GithubKey,
-        task_ids: &[MacroTaskId],
-    ) -> impl Future<Output = Result<Vec<MacroTaskId>, Self::Err>> + Send;
+        task_ids: &[ConationTaskId],
+    ) -> impl Future<Output = Result<Vec<ConationTaskId>, Self::Err>> + Send;
 
     /// Resolves team-scoped task references for a GitHub App installation.
     ///
