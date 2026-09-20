@@ -161,13 +161,13 @@ impl<P: PropertiesService> StageDefinitionStore for PropertiesStageDefinitionSto
             .map_err(stage_store_error)?;
         let options = self
             .properties
-            .get_property_options(definition.id, user, Some(access.receipt()))
+            .get_property_options(definition.definition.id, user, Some(access.receipt()))
             .await
             .map_err(stage_store_error)?;
         let mut stages: Vec<TeamStage> = options.iter().filter_map(stage_from_option).collect();
         stages.sort_by_key(|stage| stage.display_order);
         Ok(TeamStageSet {
-            definition_id: definition.id,
+            definition_id: definition.definition.id,
             stages,
         })
     }
