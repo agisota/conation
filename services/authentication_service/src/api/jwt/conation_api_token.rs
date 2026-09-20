@@ -102,7 +102,7 @@ pub async fn handler(
             organization_id, // TOOD: get from user profile
             issuer: conation_api_token_context.issuer.to_string(),
             private_key: conation_api_token_context
-                .conation_api_token_private_key
+                .macro_api_token_private_key
                 .as_ref()
                 .to_string(),
             expiry_seconds: conation_api_token_context.expiry_seconds,
