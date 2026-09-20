@@ -1,0 +1,37 @@
+import { t } from '@app/lib/i18n';
+import type { ApiMessage } from '@service-email/generated/schemas';
+import type { ReplyType } from './replyType';
+
+const LEGACY_NO_SUBJECT = '[No subject]';
+
+/**
+ * A thread subject as it should be shown: accumulated "re:" prefixes stripped,
+ * and a name for the blank case so callers never have to render an empty string.
+ */
+export const displaySubject = (subject: string | null | undefined): string => {
+  // Strip before testing for blank: a subject of just "Re:" is empty once the
+  // prefix is gone, and callers rely on this never returning an empty string.
+  const stripped = subject?.replace(/^(\s*re:\s*)+/i, '').trim();
+  return stripped || t('blockEmail.noSubject');
+};
+
+export const isPlaceholderSubject = (title: string): boolean =>
+  title === LEGACY_NO_SUBJECT || title === t('blockEmail.noSubject');
+
+export const getSubjectText = (
+  replyingTo: ApiMessage | undefined,
+  replyType: ReplyType | undefined
+) => {
+  if (!replyingTo) return '';
+  if (replyType === 'reply-all' || replyType === 'reply') {
+    const subject = replyingTo.subject ?? '';
+    if (subject && /^re:/i.test(subject)) {
+      return subject;
+    }
+    return subject ? `Re: ${subject}` : 'Re:';
+  } else if (replyType === 'forward') {
+    return replyingTo.subject ? `Fwd: ${replyingTo.subject}` : 'Fwd:';
+  } else {
+    return replyingTo.subject ?? '';
+  }
+};

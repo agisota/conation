@@ -2,7 +2,7 @@ import {
   isCanceled,
   isCompleted,
 } from '@app/features/next-soup/filters/predicates';
-import { SoupEntityContextMenu } from '@app/features/next-soup/soup-view/soup-entity-context-menu';
+import { SoupEntityContextMenu } from '@app/features/soup';
 import { useSoupView } from '@app/features/next-soup/soup-view/soup-view-context';
 import {
   openEntityInSplitFromUnifiedList,

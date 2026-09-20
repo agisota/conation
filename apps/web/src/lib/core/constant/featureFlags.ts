@@ -461,6 +461,9 @@ export const enableInlineAiEditing = defineFlag({
   default: onInDev,
 });
 
+export const INLINE_AI_EDITING_FLAG = 'inline-ai-editing';
+export const INLINE_AI_EDITING_OVERRIDE = enableInlineAiEditing;
+
 export const enableMultiInbox = defineFlag({
   key: 'enable-multi-inbox',
   env: 'ENABLE_MULTI_INBOX',

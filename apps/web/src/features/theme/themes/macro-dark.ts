@@ -65,3 +65,5 @@ export const macroDarkTheme = {
       'color-mix(in oklch, var(--color-surface-0) 80%, var(--color-content-0))',
   },
 } satisfies ThemeV3;
+
+export const conationDarkTheme = macroDarkTheme;

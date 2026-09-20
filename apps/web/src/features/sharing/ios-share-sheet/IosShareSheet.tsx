@@ -36,8 +36,8 @@ import {
 import type {
   PendingShareFile,
   UploadPendingShareFileArgs,
-} from '@macro/tauri';
-import { useShareTarget, useTauri } from '@macro/tauri';
+} from '@conation/tauri';
+import { useShareTarget, useTauri } from '@conation/tauri';
 import { invalidateListChannels } from '@queries/channel/channels';
 import {
   useGetOrCreateDirectMessageMutation,

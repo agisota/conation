@@ -17,6 +17,10 @@ function isExpired(token: string) {
 
 let macroApiTokenPromise: Promise<string> | null = null;
 
+export function unsetConationApiTokenPromise() {
+  macroApiTokenPromise = null;
+}
+
 function requestMacroApiToken() {
   const promise = authServiceClient.macroApiToken().then((result) => {
     if (result.isErr()) {
