@@ -5,7 +5,7 @@
 //! lifetime. Prompts chain together via [`StaticPrompt::compose`].
 #![deny(missing_docs)]
 
-pub mod about_macro;
+pub mod about_conation;
 pub mod agent_identity;
 pub mod agent_session;
 pub mod channel_mention;
@@ -32,7 +32,7 @@ pub static BASE_PROMPT: ComposedPrompt = tone::PROMPT
     .compose(&citations::PROMPT)
     .compose(&mentions::PROMPT)
     .compose(&do_not::PROMPT)
-    .compose(&about_macro::PROMPT);
+    .compose(&about_conation::PROMPT);
 
 /// The tool-enabled prompt for hosts whose tools all execute directly in the
 /// agent loop (the channel-mention bot, the MCP server): [`BASE_PROMPT`] with
@@ -84,7 +84,7 @@ pub static SESSION_TOOL_USE_PROMPT: ComposedPrompt = BASE_PROMPT
 /// rules cover.
 static MCP_STATIC_INSTRUCTIONS: ComposedPrompt = citations::PROMPT
     .compose(&do_not::PROMPT)
-    .compose(&about_macro::PROMPT)
+    .compose(&about_conation::PROMPT)
     .compose(&document_content_links::PROMPT);
 
 /// Builds the instructions surfaced to external MCP clients via the server
