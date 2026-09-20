@@ -4,12 +4,12 @@ import '../../../index.css';
 import { useAppSquishHandlers } from '@components/app/useAppSquishHandlers';
 import { registerHotkey, useHotKeyRoot } from '@core/hotkey/hotkeys';
 import { isTouchDevice } from '@core/mobile/isTouchDevice';
-import { createSyncSocket } from '@macro-inc/collaboration/sync-service/socket';
+import { createSyncSocket } from '@conation/collaboration/sync-service/socket';
 import {
   mapToSyncStatus,
   SyncServiceSource,
-} from '@macro-inc/collaboration/sync-service/source';
-import { createWebsocketStateSignal } from '@macro-inc/collaboration/websocket/solid/state-signal';
+} from '@conation/collaboration/sync-service/source';
+import { createWebsocketStateSignal } from '@conation/collaboration/websocket/solid/state-signal';
 import {
   cellPlainText,
   encodeCellMention,

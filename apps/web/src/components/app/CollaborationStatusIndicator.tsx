@@ -1,4 +1,4 @@
-import { SyncSourceStatus } from '@macro-inc/collaboration/collab/source';
+import { SyncSourceStatus } from '@conation/collaboration/collab/source';
 import CloudIcon from '@phosphor/cloud.svg';
 import CloudWarningIcon from '@phosphor/cloud-warning.svg';
 import { Tooltip } from '@ui';

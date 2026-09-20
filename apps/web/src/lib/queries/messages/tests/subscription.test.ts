@@ -29,7 +29,7 @@ vi.mock('@service-connection/websocket', async () => {
     },
   };
 });
-vi.mock('@macro-inc/collaboration/websocket', async () => {
+vi.mock('@conation/collaboration/websocket', async () => {
   const { onCleanup } = await import('solid-js');
   return {
     createReconnectEffect: (_ws: unknown, callback: () => void) => {

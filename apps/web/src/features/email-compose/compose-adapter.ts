@@ -20,7 +20,7 @@ import { useCombinedRecipients } from '@core/signal/useCombinedRecipient';
 import { getDisplayName, tryMacroId } from '@core/user';
 import { interceptMailtoLinks } from '@core/util/interceptMailtoLinks';
 import { handleFileFolderDrop } from '@core/util/upload';
-import { Telemetry } from '@macro-inc/observability';
+import { Telemetry } from '@conation/observability';
 import ArrowCounterClockwise from '@phosphor-icons/core/regular/arrow-counter-clockwise.svg?component-solid';
 import { queryClient } from '@queries/client';
 import {

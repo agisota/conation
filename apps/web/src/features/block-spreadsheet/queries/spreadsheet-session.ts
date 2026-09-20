@@ -1,25 +1,25 @@
-import { createAwareness } from '@macro-inc/collaboration/collab/awareness';
-import type { Chatter } from '@macro-inc/collaboration/collab/chatter';
-import { createSyncEngine } from '@macro-inc/collaboration/collab/engine';
-import { LoroManager } from '@macro-inc/collaboration/collab/manager';
+import { createAwareness } from '@conation/collaboration/collab/awareness';
+import type { Chatter } from '@conation/collaboration/collab/chatter';
+import { createSyncEngine } from '@conation/collaboration/collab/engine';
+import { LoroManager } from '@conation/collaboration/collab/manager';
 import {
   IDBSnapshotStore,
   LORO_SNAPSHOT_DB_NAME,
   loadCachedState,
   type SnapshotStore,
-} from '@macro-inc/collaboration/collab/snapshot-store';
+} from '@conation/collaboration/collab/snapshot-store';
 import {
   type InitialSync,
   type LiveSyncSource,
   SyncSourceStatus,
   type TimeoutError,
-} from '@macro-inc/collaboration/collab/source';
+} from '@conation/collaboration/collab/source';
 import {
   BrowserWALStore,
   LORO_WAL_DB_NAME,
   type WALStore,
   WALSyncer,
-} from '@macro-inc/collaboration/collab/wal';
+} from '@conation/collaboration/collab/wal';
 import type { LoroDoc } from 'loro-crdt';
 import type { ResultAsync } from 'neverthrow';
 import { type Accessor, createSignal, onCleanup } from 'solid-js';

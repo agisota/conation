@@ -1,4 +1,4 @@
-import { createReconnectEffect } from '@macro-inc/collaboration/websocket';
+import { createReconnectEffect } from '@conation/collaboration/websocket';
 import {
   createConnectionWebsocketEffect,
   ws,

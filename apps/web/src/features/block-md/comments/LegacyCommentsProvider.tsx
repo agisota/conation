@@ -16,7 +16,7 @@ import {
   REMOVE_ORPHANED_COMMENT_MARKS_COMMAND,
 } from '@core/component/LexicalMarkdown/plugins/comments/commentPlugin';
 import { useUserId } from '@core/context/user';
-import type { LoroManager } from '@macro-inc/collaboration/collab/manager';
+import type { LoroManager } from '@conation/collaboration/collab/manager';
 import type { CommentNode } from '@conation/lexical-core';
 import { COMMAND_PRIORITY_LOW, SELECTION_CHANGE_COMMAND } from 'lexical';
 import {

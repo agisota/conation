@@ -1,5 +1,5 @@
 import type { IDocumentStorageServiceFile } from '@filesystem/file';
-import type { LiveSyncSource } from '@macro-inc/collaboration/collab/source';
+import type { LiveSyncSource } from '@conation/collaboration/collab/source';
 
 export interface Diff {
   operation: string;

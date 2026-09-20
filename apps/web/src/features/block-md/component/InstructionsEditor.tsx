@@ -37,7 +37,7 @@ import {
 } from '@core/component/LexicalMarkdown/utils';
 import { ENABLE_MARKDOWN_LIVE_COLLABORATION } from '@core/constant/featureFlags';
 import { bufToString } from '@core/util/string';
-import type { LoroManager } from '@macro-inc/collaboration/collab/manager';
+import type { LoroManager } from '@conation/collaboration/collab/manager';
 import {
   AwaitNode,
   CommentNode,

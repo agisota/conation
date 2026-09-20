@@ -108,7 +108,7 @@ keeps their changes and explains the conflict without consuming the history step
 Read-only permissions and initial hydration gate every write and history action.
 
 The session reuses `LoroManager`, `createSyncEngine`, `BrowserWALStore`,
-`WALSyncer`, and `IDBSnapshotStore` from `@macro-inc/collaboration`, as markdown
+`WALSyncer`, and `IDBSnapshotStore` from `@conation/collaboration`, as markdown
 does, including BroadcastChannel synchronization between local tabs. Cached
 snapshots and unsent updates restore local state; remote snapshots
 merge into an already-initialized document. Selection presence is ephemeral

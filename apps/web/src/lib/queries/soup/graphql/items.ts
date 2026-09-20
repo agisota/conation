@@ -15,7 +15,7 @@ import {
   createUrqlInfiniteQuery,
   type UrqlInfiniteData,
 } from '@app/lib/urql-solid';
-import { Telemetry } from '@macro-inc/observability';
+import { Telemetry } from '@conation/observability';
 import { useInstructionsMdIdQuery } from '@queries/storage/instructions-md';
 import {
   type MailItemFieldsFragment,

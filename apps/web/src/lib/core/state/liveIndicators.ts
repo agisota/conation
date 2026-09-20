@@ -1,5 +1,5 @@
 import { ENABLE_LIVE_INDICATORS } from '@core/constant/featureFlags';
-import { createWebsocketEventEffect } from '@macro-inc/collaboration/websocket';
+import { createWebsocketEventEffect } from '@conation/collaboration/websocket';
 import { type FromWebsocketMessage, ws } from '@service-connection/websocket';
 import type { Accessor } from 'solid-js';
 import { createStore, unwrap } from 'solid-js/store';

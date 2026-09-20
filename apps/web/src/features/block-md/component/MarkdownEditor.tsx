@@ -147,7 +147,7 @@ import { trackMention } from '@core/signal/mention';
 import { bufToString } from '@core/util/string';
 import { handleFileFolderDrop } from '@core/util/upload';
 import { type EntityDragEvent, isEntityDragEvent } from '@entity';
-import type { LoroManager } from '@macro-inc/collaboration/collab/manager';
+import type { LoroManager } from '@conation/collaboration/collab/manager';
 import {
   $isInlineSearchNode,
   AwaitNode,

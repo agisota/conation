@@ -4,7 +4,7 @@ import {
   enableGraphqlSoup,
   isFeatureEnabled,
 } from '@core/constant/featureFlags';
-import { WebsocketEvent } from '@macro-inc/collaboration/websocket';
+import { WebsocketEvent } from '@conation/collaboration/websocket';
 import { handleAgentSessionChanges } from '@queries/agent-session/changes-sync';
 import { handleAgentSessionQueue } from '@queries/agent-session/queue-sync';
 import {

@@ -10,7 +10,7 @@ out keystroke by keystroke.
 ## Shared-code boundary
 
 The worker and web app share the Loro collaboration engine, sync-service wire
-transport, and WebSocket runtime through `@macro-inc/collaboration`. Browser
+transport, and WebSocket runtime through `@conation/collaboration`. Browser
 authentication and sync HTTP policy stay in `apps/web`; the package accepts an
 environment-specific URL resolver instead. The worker is part of the root Bun
 workspace, so the collaboration and Lexical packages resolve one dependency

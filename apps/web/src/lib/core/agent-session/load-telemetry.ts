@@ -13,8 +13,8 @@
  * worse than no telemetry.
  */
 
-import type { Span } from '@macro-inc/observability';
-import { Telemetry } from '@macro-inc/observability';
+import type { Span } from '@conation/observability';
+import { Telemetry } from '@conation/observability';
 
 /** How an attempt to open a session ended. */
 export type LoadOutcome =

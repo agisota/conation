@@ -51,7 +51,7 @@ vi.mock('@app/lib/analytics/posthog', () => ({
   useFeatureFlag: () => () => ({ enabled: mocks.graphqlEnabled }),
 }));
 vi.mock('@core/component/Toast/Toast', () => ({ toast: { failure: vi.fn() } }));
-vi.mock('@macro-inc/observability', () => ({ Telemetry: { error: vi.fn() } }));
+vi.mock('@conation/observability', () => ({ Telemetry: { error: vi.fn() } }));
 vi.mock('@service-storage/graphql-soup', () => ({
   getGraphqlSoupClient: () => ({ mutation: mocks.graphqlMutation }),
 }));

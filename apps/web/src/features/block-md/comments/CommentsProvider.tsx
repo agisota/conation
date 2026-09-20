@@ -2,7 +2,7 @@ import {
   enableUnifiedDocumentDiscussions,
   isFeatureEnabled,
 } from '@core/constant/featureFlags';
-import type { LoroManager } from '@macro-inc/collaboration/collab/manager';
+import type { LoroManager } from '@conation/collaboration/collab/manager';
 import type { Accessor, VoidComponent } from 'solid-js';
 import { LegacyCommentsProvider } from './LegacyCommentsProvider';
 import { MessageCommentsProvider } from './MessageCommentsProvider';

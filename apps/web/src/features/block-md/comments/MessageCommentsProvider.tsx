@@ -18,7 +18,7 @@ import {
   MARK_SELECTED_COMMENT_COMMAND,
 } from '@core/component/LexicalMarkdown/plugins/comments/commentPlugin';
 import { useUserId } from '@core/context/user';
-import type { LoroManager } from '@macro-inc/collaboration/collab/manager';
+import type { LoroManager } from '@conation/collaboration/collab/manager';
 import type { CommentNode } from '@conation/lexical-core';
 import { useMessageLink } from '@queries/messages/document-messages';
 import { usePatchThreadMutation } from '@queries/messages/mutations';

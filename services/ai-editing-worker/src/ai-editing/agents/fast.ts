@@ -1,4 +1,4 @@
-import { Telemetry } from '@macro-inc/observability';
+import { Telemetry } from '@conation/observability';
 import { generateText, hasToolCall, type LanguageModel, stepCountIs } from 'ai';
 import type { LexicalSession } from '../ai-toolkit';
 import type { DocumentOp } from '../editor';

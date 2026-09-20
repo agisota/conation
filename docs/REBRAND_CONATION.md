@@ -92,7 +92,7 @@ resource has already been inventoried.
 The private package `@macro-inc/infra-web-app` is different from an external
 dependency: its package scope is locally changeable, but its scripts select the
 external Pulumi organization `macro-inc`. Those two strings must not be migrated
-as one operation. Likewise, old `@macro-inc/collaboration` references in source
+as one operation. Likewise, old `@conation/collaboration` references in source
 documentation must be checked against published consumers; the current
 workspace package itself is `@conation/collaboration`.
 

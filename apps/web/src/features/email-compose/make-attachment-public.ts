@@ -1,6 +1,6 @@
 import { analytics } from '@app/lib/analytics';
 import { toast } from '@core/component/Toast/Toast';
-import { Telemetry } from '@macro-inc/observability';
+import { Telemetry } from '@conation/observability';
 import { ensureEmailAttachmentPublic } from '@queries/email/integration';
 
 export const makeAttachmentPublic = async (attachmentId: string) => {

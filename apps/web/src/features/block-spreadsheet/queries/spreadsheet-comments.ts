@@ -1,4 +1,4 @@
-import { WebsocketConnectionState } from '@macro-inc/collaboration/websocket';
+import { WebsocketConnectionState } from '@conation/collaboration/websocket';
 import {
   state as connectionState,
   createConnectionWebsocketEffect,

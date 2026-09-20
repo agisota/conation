@@ -8,7 +8,7 @@ import {
   type SafeFetchInit,
   safeFetch,
 } from '@core/util/safeFetch';
-import { Telemetry } from '@macro-inc/observability';
+import { Telemetry } from '@conation/observability';
 
 import { makePersisted } from '@solid-primitives/storage';
 import { err, ok } from 'neverthrow';

@@ -1,6 +1,6 @@
 import { isTabFocused } from '@core/signal/tabFocus';
 import type { EntityId } from '@core/types';
-import { createReconnectEffect } from '@macro-inc/collaboration/websocket';
+import { createReconnectEffect } from '@conation/collaboration/websocket';
 import { ok } from 'neverthrow';
 import {
   type Accessor,
