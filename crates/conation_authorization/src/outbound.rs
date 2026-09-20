@@ -18,7 +18,7 @@ pub mod pg_user_api_key_authorization;
 
 /// JWT validator backed by the shared `conation_auth` implementation.
 #[cfg(feature = "outbound")]
-pub use macro_auth::MacroAuthJwtValidator;
+pub use conation_auth::MacroAuthJwtValidator;
 /// JWT validator for services that only support internal authorization.
 #[cfg(feature = "outbound")]
 pub use noop::NoopMacroAuthJwtValidator;

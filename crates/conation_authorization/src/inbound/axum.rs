@@ -4,7 +4,7 @@ mod test;
 mod bot;
 mod harness;
 mod internal;
-mod macro_authorization;
+mod conation_authorization;
 mod optional;
 mod policy;
 mod user;
@@ -26,17 +26,25 @@ use model_user::UserContext;
 use crate::{MacroAuthorization, MacroUserAuthentication};
 
 pub use bot::{
-    BOT_FOR_FUSIONAUTH_USER_ID_HEADER, BOT_FOR_MACRO_USER_ID_HEADER,
-    BOT_FOR_ORGANIZATION_ID_HEADER, BOT_SCOPE_HEADER, BOT_TOKEN_HEADER,
+    BOT_FOR_CONATION_USER_ID_HEADER,
+    BOT_FOR_CONATION_USER_ID_HEADER as BOT_FOR_MACRO_USER_ID_HEADER,
+    BOT_FOR_FUSIONAUTH_USER_ID_HEADER, BOT_FOR_ORGANIZATION_ID_HEADER, BOT_SCOPE_HEADER,
+    BOT_TOKEN_HEADER,
 };
 pub use harness::{HARNESS_FOR_MACRO_USER_ID_HEADER, HARNESS_TOKEN_HEADER};
-#[allow(deprecated)]
 pub use internal::{
-    INTERNAL_API_KEY_HEADER, INTERNAL_FUSIONAUTH_USER_ID_HEADER,
-    INTERNAL_MACRO_ORGANIZATION_ID_HEADER, INTERNAL_MACRO_USER_ID_HEADER,
-    LEGACY_DSS_INTERNAL_API_KEY_HEADER, LEGACY_DSS_INTERNAL_MACRO_USER_ID_HEADER,
+    INTERNAL_API_KEY_HEADER,
+    INTERNAL_CONATION_ORGANIZATION_ID_HEADER,
+    INTERNAL_CONATION_ORGANIZATION_ID_HEADER as INTERNAL_MACRO_ORGANIZATION_ID_HEADER,
+    INTERNAL_CONATION_USER_ID_HEADER,
+    INTERNAL_CONATION_USER_ID_HEADER as INTERNAL_MACRO_USER_ID_HEADER,
+    INTERNAL_FUSIONAUTH_USER_ID_HEADER,
 };
-pub use macro_authorization::MacroAuthorizationExtractor;
+/// Legacy document-storage-service internal API key header, rejected by current extractors.
+pub const LEGACY_DSS_INTERNAL_API_KEY_HEADER: &str = "x-document-storage-service-auth-key";
+/// Legacy document-storage-service acting-user header, rejected by current extractors.
+pub const LEGACY_DSS_INTERNAL_MACRO_USER_ID_HEADER: &str = "x-document-storage-service-user-id";
+pub use conation_authorization::MacroAuthorizationExtractor;
 pub use optional::OptionalMacroAuthorizationExtractor;
 pub use policy::{
     ActingUser, ActingUserAuthorization, AnyPrincipal, AuthorizationPolicy, BotOnly, HarnessOnly,
