@@ -1,4 +1,4 @@
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use opensearch_client::OpensearchClient;
 
 #[tracing::instrument(skip(opensearch_client))]

@@ -16,7 +16,7 @@ use conation_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationRejection, MacroAuthorizationService,
     MacroAuthorizationState, UserOrInternal,
 };
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use std::sync::Arc;
 use std::{marker::PhantomData, str::FromStr};
 use thiserror::Error;

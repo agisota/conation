@@ -4,7 +4,7 @@ use axum::{
     http::StatusCode,
     response::{Html, IntoResponse, Redirect, Response},
 };
-use conation_user_id::{cowlike::CowLike, user_id::MacroUserId};
+use macro_user_id::{cowlike::CowLike, user_id::MacroUserId};
 use github::domain::{models::GithubError, ports::GithubLinkService};
 use model::response::ErrorResponse;
 use tower_cookies::Cookies;

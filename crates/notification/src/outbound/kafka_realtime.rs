@@ -5,9 +5,9 @@ mod test;
 
 use std::collections::HashSet;
 
-use conation_event_broker::MacroEventBroker;
-use conation_user_id::cowlike::CowLike as _;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_event_broker::MacroEventBroker;
+use macro_user_id::cowlike::CowLike as _;
+use macro_user_id::user_id::MacroUserIdStr;
 use rootcause::Report;
 use rootcause::prelude::ResultExt as _;
 use serde::Serialize;

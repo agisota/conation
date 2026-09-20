@@ -10,7 +10,7 @@ use activity::Actor;
 use chrono::{DateTime, Utc};
 use conation_event_broker::{Event, MacroEvent, TopicEvent};
 use conation_event_topics::MacroPropertiesTopic;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use models_properties::service::property_option::PropertyOptionValue;
 use models_properties::service::property_value::PropertyValue;
 use models_properties::{DataType, EntityType, PropertyOwner};

@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod test;
 
-use ::conation_auth::{
+use ::macro_auth::{
     error::MacroAuthError,
     middleware::decode_jwt::{self, JwtToken, JwtValidationArgs},
 };

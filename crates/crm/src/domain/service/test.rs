@@ -5,7 +5,7 @@
 use super::*;
 use crate::domain::model::CrmPermissionRole;
 use crate::outbound::no_op_resolver::NoOpCompanyMetadataResolver;
-use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use entity_access::domain::models::{
     Entity, EntityAccessReceipt, EntityPermission, EntityType, TeamRole,
 };

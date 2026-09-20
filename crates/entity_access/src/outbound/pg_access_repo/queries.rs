@@ -7,7 +7,7 @@ use cached::proc_macro::cached;
 
 use anyhow::Context;
 use bot_id::BotIdStr;
-use conation_user_id::{
+use macro_user_id::{
     cowlike::CowLike,
     lowercased::Lowercase,
     user_id::{MacroUserId, MacroUserIdStr},

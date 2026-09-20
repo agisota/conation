@@ -9,7 +9,7 @@ mod test;
 
 use std::{marker::PhantomData, time::Duration};
 
-use conation_event_broker::{
+use macro_event_broker::{
     EventBrokerError, KafkaConsumerAdapter, MacroEventCollection, MacroEventConsumerService,
 };
 use kafka_util::{InitialOffset, KafkaEventConsumer, Ungrouped};
@@ -29,7 +29,7 @@ type IndependentKafkaConsumer = KafkaConsumerAdapter<Ungrouped, DeclaredMacroEve
 type NotificationEventConsumer =
     MacroEventConsumerService<DeclaredMacroEvent, IndependentKafkaConsumer>;
 
-conation_event_broker::declare_topics!(DeclaredMacroEvent: JsonNotificationMacroEvent);
+macro_event_broker::declare_topics!(DeclaredMacroEvent: JsonNotificationMacroEvent);
 
 /// Independent consumer of all notification topic event variants decoded as `T`.
 ///

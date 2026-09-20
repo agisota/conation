@@ -7,7 +7,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
-use conation_user_id::{cowlike::CowLike, lowercased::Lowercase, user_id::MacroUserId};
+use macro_user_id::{cowlike::CowLike, lowercased::Lowercase, user_id::MacroUserId};
 use model::response::ErrorResponse;
 use utoipa::ToSchema;
 

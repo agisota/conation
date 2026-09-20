@@ -1,6 +1,6 @@
 use super::*;
 use crate::domain::{dm::EnsureDmsSummary, ports::ChannelMutationErr};
-use conation_event_broker::{Event, MacroEvent as _, MacroEventCollection as _, MessageParts};
+use macro_event_broker::{Event, MacroEvent as _, MacroEventCollection as _, MessageParts};
 use std::sync::{Arc, Mutex};
 
 #[derive(Clone, Default)]

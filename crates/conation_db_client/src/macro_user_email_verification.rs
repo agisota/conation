@@ -24,7 +24,7 @@ pub async fn upsert_macro_user_email_verification(
     email: &str,
     is_verified: bool,
 ) -> anyhow::Result<()> {
-    let macro_user_id = conation_uuid::string_to_uuid(macro_user_id)?;
+    let macro_user_id = macro_uuid::string_to_uuid(macro_user_id)?;
 
     sqlx::query!(
         r#"
@@ -60,7 +60,7 @@ mod tests {
         macro_user_id: &str,
         email: &str,
     ) -> anyhow::Result<Option<MacroUserEmailVerification>> {
-        let macro_user_id = conation_uuid::string_to_uuid(macro_user_id)?;
+        let macro_user_id = macro_uuid::string_to_uuid(macro_user_id)?;
 
         let macro_user_email_verification = sqlx::query_as!(
             MacroUserEmailVerification,
@@ -89,7 +89,7 @@ mod tests {
             INSERT INTO "macro_user" ("id", "email", "stripe_customer_id", "username")
             VALUES ($1, $2, $3, $4)
         "#,
-            &conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?,
+            &macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?,
             "test@macro.com",
             "cus_123",
             "u1",
@@ -102,7 +102,7 @@ mod tests {
             INSERT INTO "macro_user" ("id", "email", "stripe_customer_id", "username")
             VALUES ($1, $2, $3, $4)
         "#,
-            &conation_uuid::string_to_uuid("22222222-2222-2222-2222-222222222222")?,
+            &macro_uuid::string_to_uuid("22222222-2222-2222-2222-222222222222")?,
             "test2@macro.com",
             "cus_124",
             "u2",
@@ -110,7 +110,7 @@ mod tests {
         .execute(&pool)
         .await?;
 
-        let macro_user_id = conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
+        let macro_user_id = macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?;
         let email = "test@macro.com".to_string();
         let is_verified = false;
 
@@ -161,7 +161,7 @@ mod tests {
             )
             .await?,
             Some(MacroUserEmailVerification {
-                macro_user_id: conation_uuid::string_to_uuid(
+                macro_user_id: macro_uuid::string_to_uuid(
                     "22222222-2222-2222-2222-222222222222"
                 )?,
                 email: "test@macro.com".to_string(),

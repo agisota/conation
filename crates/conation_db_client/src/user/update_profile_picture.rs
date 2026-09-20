@@ -9,7 +9,7 @@ pub async fn update_profile_picture(
     picture: &str,
     checksum: &str,
 ) -> anyhow::Result<()> {
-    let macro_user_id = conation_uuid::string_to_uuid(macro_user_id)?;
+    let macro_user_id = macro_uuid::string_to_uuid(macro_user_id)?;
 
     sqlx::query!(
         r#"

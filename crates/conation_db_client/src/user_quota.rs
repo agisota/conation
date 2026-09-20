@@ -1,4 +1,4 @@
-use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId};
+use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId};
 use user_quota::{CreateUserQuotaRequest, UserQuota};
 
 #[cfg(test)]

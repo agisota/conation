@@ -1,5 +1,5 @@
 use conation_event_broker::{EventBrokerError, MacroEvent, MacroEventBroker};
-use conation_user_id::cowlike::CowLike;
+use macro_user_id::cowlike::CowLike;
 use entity_access::domain::models::MemberTeamRole;
 use foreign_entity::domain::models::{
     CreateForeignEntity, ForeignEntity, ForeignEntityError, PatchForeignEntity, SourceId,
@@ -20,7 +20,7 @@ fn make_test_metadata() -> DocumentMetadata {
     DocumentMetadata {
         document_id: "doc-1".to_string(),
         document_version_id: 1,
-        owner: conation_user_id::user_id::MacroUserIdStr::parse_from_str("macro|user@user.com")
+        owner: macro_user_id::user_id::MacroUserIdStr::parse_from_str("macro|user@user.com")
             .unwrap()
             .into_owned(),
         document_name: "test_doc".to_string(),
@@ -58,7 +58,7 @@ fn task_document_context(document_id: &str) -> DocumentBasic {
     DocumentBasic {
         document_id: document_id.to_string(),
         document_name: "Test task".to_string(),
-        owner: conation_user_id::user_id::MacroUserIdStr::parse_from_str("macro|owner@user.com")
+        owner: macro_user_id::user_id::MacroUserIdStr::parse_from_str("macro|owner@user.com")
             .unwrap()
             .into_owned(),
         file_type: Some("md".to_string()),
@@ -72,7 +72,7 @@ fn task_document_context(document_id: &str) -> DocumentBasic {
 }
 
 fn authenticated_receipt(document_id: &str) -> EntityAccessReceipt<ViewAccessLevel> {
-    let user_id = conation_user_id::user_id::MacroUserIdStr::parse_from_str("macro|user@user.com")
+    let user_id = macro_user_id::user_id::MacroUserIdStr::parse_from_str("macro|user@user.com")
         .unwrap()
         .into_owned();
 
@@ -88,7 +88,7 @@ fn internal_receipt(document_id: &str) -> EntityAccessReceipt<ViewAccessLevel> {
 }
 
 fn member_team_receipt(team_id: &str, user_id: &str) -> EntityAccessReceipt<MemberTeamRole> {
-    let user_id = conation_user_id::user_id::MacroUserIdStr::parse_from_str(user_id)
+    let user_id = macro_user_id::user_id::MacroUserIdStr::parse_from_str(user_id)
         .unwrap()
         .into_owned();
 
@@ -210,7 +210,7 @@ impl ConnectionService for TestConnectionService {
 
     async fn send_channel_message<'a>(
         &self,
-        _users: &[conation_user_id::user_id::MacroUserIdStr<'a>],
+        _users: &[macro_user_id::user_id::MacroUserIdStr<'a>],
         _message_type: &str,
         _message: serde_json::Value,
     ) -> Result<(), connection::domain::models::ConnectionError> {
@@ -698,7 +698,7 @@ async fn get_document_by_team_slug_rejects_wrong_receipt_entity_type() {
     repo.expect_get_document_id_by_team_task_number().times(0);
     repo.expect_get_basic_document().times(0);
     let receipt = EntityAccessReceipt::<MemberTeamRole>::dangerously_assert_authenticated_user(
-        conation_user_id::user_id::MacroUserIdStr::parse_from_str("macro|user@user.com")
+        macro_user_id::user_id::MacroUserIdStr::parse_from_str("macro|user@user.com")
             .unwrap()
             .into_owned(),
         "00000000-0000-0000-0000-000000000701",
@@ -1515,7 +1515,7 @@ async fn test_get_task_github_pull_requests_skips_malformed_keys_before_lookup()
 }
 
 fn owner_receipt(document_id: &str) -> EntityAccessReceipt<OwnerAccessLevel> {
-    let user_id = conation_user_id::user_id::MacroUserIdStr::parse_from_str("macro|user@user.com")
+    let user_id = macro_user_id::user_id::MacroUserIdStr::parse_from_str("macro|user@user.com")
         .unwrap()
         .into_owned();
 
@@ -1787,7 +1787,7 @@ async fn team_edit_rejects_owner_level_and_enable_without_team_before_writes() {
 }
 
 fn edit_receipt(document_id: &str) -> EntityAccessReceipt<EditAccessLevel> {
-    let user_id = conation_user_id::user_id::MacroUserIdStr::parse_from_str("macro|user@user.com")
+    let user_id = macro_user_id::user_id::MacroUserIdStr::parse_from_str("macro|user@user.com")
         .unwrap()
         .into_owned();
 
@@ -2136,7 +2136,7 @@ async fn copy_document_best_effort_bumps_inherited_project_and_publishes_event()
         .withf(|id| id == "project-1")
         .returning(|_| {
             Box::pin(std::future::ready(Ok(
-                conation_user_id::user_id::MacroUserIdStr::parse_from_str("macro|user@user.com")
+                macro_user_id::user_id::MacroUserIdStr::parse_from_str("macro|user@user.com")
                     .unwrap()
                     .into_owned(),
             )))
@@ -2171,7 +2171,7 @@ async fn copy_document_best_effort_bumps_inherited_project_and_publishes_event()
         .copy_document(
             authenticated_receipt("doc-1"),
             document_context,
-            conation_user_id::user_id::MacroUserIdStr::parse_from_str("macro|user@user.com")
+            macro_user_id::user_id::MacroUserIdStr::parse_from_str("macro|user@user.com")
                 .unwrap()
                 .into_owned(),
             "copied doc".to_string(),
@@ -2289,7 +2289,7 @@ fn create_document_repo_args(file_type: FileType) -> CreateDocumentRepoArgs {
         id: None,
         sha: "sha".to_string(),
         document_name: "doc".to_string(),
-        user_id: conation_user_id::user_id::MacroUserIdStr::parse_from_str("macro|user@user.com")
+        user_id: macro_user_id::user_id::MacroUserIdStr::parse_from_str("macro|user@user.com")
             .unwrap()
             .into_owned(),
         file_type: Some(file_type),
@@ -2331,7 +2331,7 @@ async fn create_document_with_team_default(
 
     crate::domain::ports::DocumentService::create_document(
         &service,
-        conation_user_id::user_id::MacroUserIdStr::parse_from_str("macro|user@user.com")
+        macro_user_id::user_id::MacroUserIdStr::parse_from_str("macro|user@user.com")
             .unwrap()
             .into_owned(),
         create_document_repo_args(file_type),
@@ -2512,7 +2512,7 @@ async fn create_document_publishes_resolved_attribution() {
 
     crate::domain::ports::DocumentService::import_email_attachment(
         &service,
-        conation_user_id::user_id::MacroUserIdStr::parse_from_str("macro|user@user.com")
+        macro_user_id::user_id::MacroUserIdStr::parse_from_str("macro|user@user.com")
             .unwrap()
             .into_owned(),
         args,
@@ -2668,7 +2668,7 @@ async fn create_document_reuse_skips_content_url_and_created_event() {
 
     let response = crate::domain::ports::DocumentService::import_email_attachment(
         &service,
-        conation_user_id::user_id::MacroUserIdStr::parse_from_str("macro|user@user.com")
+        macro_user_id::user_id::MacroUserIdStr::parse_from_str("macro|user@user.com")
             .unwrap()
             .into_owned(),
         args,

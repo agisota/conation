@@ -10,7 +10,7 @@ use axum::{
         header::{HeaderValue, WWW_AUTHENTICATE},
     },
 };
-use conation_auth::middleware::decode_jwt::{JwtToken, JwtValidationArgs, handler};
+use macro_auth::middleware::decode_jwt::{JwtToken, JwtValidationArgs, handler};
 use conation_user_id::user_id::MacroUserIdStr;
 
 /// Validated Macro JWT from the `Authorization: Bearer` header.

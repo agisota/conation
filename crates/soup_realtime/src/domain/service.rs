@@ -6,7 +6,7 @@ mod test;
 use std::{collections::HashSet, num::NonZeroUsize, time::Duration};
 
 use broadcast::{BroadcastManager, GlobalSpawner};
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use futures::{StreamExt as _, stream};
 use model_entity::Entity;
 use rootcause::prelude::{Report, ResultExt as _};

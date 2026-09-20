@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use crate::pubsub::backfill::email_api_error::map_email_api_error;
 use crate::pubsub::context::PubSubContext;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use contacts::domain::ports::ContactsIngress;
 use models_email::email::service::backfill::{JobScopedPayload, SeedSentContactPayload};
 use models_email::email::service::link;

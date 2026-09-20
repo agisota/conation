@@ -20,7 +20,7 @@
 //! minting a token needs a database handle and an HTTP client, and a caller
 //! that only wants a token should not have to construct the rest.
 
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 
 use crate::domain::models::{
     GithubAppInstallationSource, GithubError, GithubInstallationAccessToken, app_jwt,

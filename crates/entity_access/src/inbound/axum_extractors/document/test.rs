@@ -23,7 +23,7 @@ use conation_authorization::{
     INTERNAL_API_KEY_HEADER, INTERNAL_CONATION_USER_ID_HEADER, InternalIdentityClaims,
     MacroAuthorizationError, MacroAuthorizationService, MacroAuthorizationState,
 };
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use model::document::DocumentBasic;
 use model_user::UserContext;
 use rootcause::Report;

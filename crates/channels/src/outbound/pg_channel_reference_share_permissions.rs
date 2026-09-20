@@ -6,7 +6,7 @@ use crate::domain::{
     reference_sharing::grant_level,
 };
 use anyhow::Context;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::{models::EntityType, ports::EntityAccessService};
 use models_permissions::share_permission::{
     access_level::AccessLevel,
@@ -71,7 +71,7 @@ async fn ensure_referenced_item_visible_to_channel(
     item: &ReferencedShareItem,
     level: AccessLevel,
 ) -> anyhow::Result<()> {
-    let entity_id = conation_uuid::string_to_uuid(item.entity_id())?;
+    let entity_id = macro_uuid::string_to_uuid(item.entity_id())?;
 
     if item.entity_type() == ReferencedShareItemType::EmailThread {
         share_permission_db_utils::ensure_thread_share_permission(db, item.entity_id())

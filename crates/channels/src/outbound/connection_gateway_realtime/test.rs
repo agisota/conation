@@ -77,7 +77,7 @@ fn agent_message_payload_includes_triggering_user() {
 
 #[test]
 fn user_message_payload_omits_bot_fields() {
-    let user = conation_user_id::user_id::MacroUserIdStr::try_from_email("alice@example.com")
+    let user = macro_user_id::user_id::MacroUserIdStr::try_from_email("alice@example.com")
         .expect("valid email");
     let message = message(Sender::new_from_user(user.clone()));
     let sender = MessageRealtimeSender::new(&message.sender_id, None, None);

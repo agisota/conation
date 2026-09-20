@@ -15,7 +15,7 @@ use crate::domain::{
     },
     ports::AccessRepository,
 };
-use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
+use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
 use sqlx::PgPool;
 use uuid::Uuid;
 

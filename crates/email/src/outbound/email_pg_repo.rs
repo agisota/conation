@@ -9,7 +9,7 @@ use crate::domain::{
     ports::{EmailRepo, EmailUserRepo, LinkEmailSettings, RecipientsByMessageId},
 };
 use chrono::{DateTime, Utc};
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use sqlx::PgPool;
 use std::collections::HashMap;
 use uuid::Uuid;

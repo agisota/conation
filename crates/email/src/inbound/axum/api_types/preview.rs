@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use doppleganger::{Doppleganger, Mirror};
 use frecency::domain::models::AggregateFrecency;
 use models_pagination::PaginatedOpaqueCursor;

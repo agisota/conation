@@ -1,6 +1,6 @@
 //! Domain models for github link operations (OAuth and account linking).
 
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use serde::Deserialize;
 
 /// Github access token

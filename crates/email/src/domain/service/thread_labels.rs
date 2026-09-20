@@ -24,7 +24,7 @@ where
     #[tracing::instrument(err, skip(self), fields(user_id = %macro_id, %thread_id))]
     pub(crate) async fn mark_thread_seen_impl(
         &self,
-        macro_id: conation_user_id::user_id::MacroUserIdStr<'static>,
+        macro_id: macro_user_id::user_id::MacroUserIdStr<'static>,
         thread_id: Uuid,
     ) -> Result<(), EmailErr> {
         let link = self
@@ -107,7 +107,7 @@ where
     #[tracing::instrument(err, skip(self), fields(user_id = %macro_id, %thread_id, %label_id, add))]
     pub(crate) async fn update_thread_labels_for_user_impl(
         &self,
-        macro_id: conation_user_id::user_id::MacroUserIdStr<'static>,
+        macro_id: macro_user_id::user_id::MacroUserIdStr<'static>,
         thread_id: Uuid,
         label_id: Uuid,
         add: bool,

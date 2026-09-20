@@ -5,7 +5,7 @@ use std::fmt::Write as _;
 use bot_id::BotId;
 use channel_sender::ChannelSender;
 use chrono::{DateTime, Utc};
-use conation_uuid::Uuid;
+use macro_uuid::Uuid;
 
 #[cfg(test)]
 mod test;

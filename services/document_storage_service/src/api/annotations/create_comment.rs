@@ -13,7 +13,7 @@ use axum::{
 };
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_db_client::annotations::create_comment::create_document_comment;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use connection_gateway_client::ConnectionGatewayClient;
 use entity_access::domain::models::{EntityAccessReceipt, ViewAccessLevel};
 use model::{

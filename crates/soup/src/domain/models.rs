@@ -5,7 +5,7 @@ mod test;
 
 use call::domain::models::GetCallRecordsRequest;
 use channels::domain::models::{GetChannelsRequest, GetThreadReplyRowsRequest};
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use crm::domain::auth::CrmTeamReceipt;
 use crm::domain::companies_repo::{CrmCompanyListSort, CrmCompanySoupCursor};
 use email::domain::models::{GetEmailsRequest, PreviewView};

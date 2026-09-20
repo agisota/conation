@@ -2,7 +2,7 @@
 use anyhow::Context;
 use conation_entrypoint::{MacroEntrypoint, shutdown_signal};
 use conation_env::Environment;
-use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
+use macro_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
 use conation_service_urls::{
     AuthServiceUrl, ConnectionGatewayUrl, DocumentStorageServiceUrl, StaticFileServiceUrl,
 };

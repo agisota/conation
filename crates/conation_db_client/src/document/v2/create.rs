@@ -1,7 +1,7 @@
 use crate::history::{upsert_item_last_accessed_timestamp, upsert_user_history_timestamp};
 use crate::share_permission::create::create_document_permission;
-use conation_user_id::cowlike::CowLike;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::cowlike::CowLike;
+use macro_user_id::user_id::MacroUserIdStr;
 use document_sub_type::DocumentSubType;
 use model::document::DocumentMetadata;
 use model::document::FileType;
@@ -211,7 +211,7 @@ pub async fn create_document_txn(
 
     entity_access_db_utils::insert_entity_access_row(
         transaction,
-        &conation_uuid::string_to_uuid(&document_id).unwrap(),
+        &macro_uuid::string_to_uuid(&document_id).unwrap(),
         EntityType::Document,
         user_id.as_ref(),
         entity_access_db_utils::EntityAccessSourceType::User,

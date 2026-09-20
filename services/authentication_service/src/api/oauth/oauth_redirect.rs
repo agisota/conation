@@ -13,7 +13,7 @@ use axum::{
     http::{HeaderValue, StatusCode},
     response::{IntoResponse, Response},
 };
-use conation_auth::middleware::decode_jwt::decode_conation_access_token_allow_expired;
+use macro_auth::middleware::decode_jwt::decode_conation_access_token_allow_expired;
 use maud::{DOCTYPE, Markup, html};
 use model::response::ErrorResponse;
 use referral::domain::{models::ReferralCode, ports::ReferralService};

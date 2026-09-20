@@ -3,7 +3,7 @@ pub async fn upsert_macro_user_id(
     user_id: &str,
     macro_user_id: &str,
 ) -> anyhow::Result<()> {
-    let macro_user_id = conation_uuid::string_to_uuid(macro_user_id)?;
+    let macro_user_id = macro_uuid::string_to_uuid(macro_user_id)?;
 
     sqlx::query!(
         r#"
@@ -35,7 +35,7 @@ pub async fn migrate_macro_user_info(
     fusionauth_user_id: &str,
     user_id: &str,
 ) -> anyhow::Result<()> {
-    let fusionauth_user_id = conation_uuid::string_to_uuid(fusionauth_user_id)?;
+    let fusionauth_user_id = macro_uuid::string_to_uuid(fusionauth_user_id)?;
 
     // Get the current user profile info
     // Upsert to macro_user_info table

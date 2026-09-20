@@ -2,7 +2,7 @@ use axum::extract::FromRef;
 use conation_authorization::{
     MacroAuthorizationServiceImpl, MacroAuthorizationState, NoopMacroAuthJwtValidator,
 };
-use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
+use macro_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
 use std::sync::Arc;
 use tokio_util::task::TaskTracker;
 

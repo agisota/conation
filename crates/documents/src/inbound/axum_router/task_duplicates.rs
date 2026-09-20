@@ -122,7 +122,7 @@ pub async fn task_similarity_search_handler<
     // back to owner-only scope.
     let team_id = optional_team
         .entity_access_receipt
-        .map(|team| conation_uuid::string_to_uuid(&team.entity().entity_id).unwrap());
+        .map(|team| macro_uuid::string_to_uuid(&team.entity().entity_id).unwrap());
     // The composer renders the draft body with lexical-core's
     // `markdownToEmbeddingText`, so we trust it as embedding-format here rather
     // than round-tripping through lexical-service on this latency-sensitive path.

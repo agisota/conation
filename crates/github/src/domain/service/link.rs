@@ -1,7 +1,7 @@
 //! Github Link Service implemenation
 
 use chrono::Utc;
-use conation_user_id::{
+use macro_user_id::{
     lowercased::Lowercase,
     user_id::{MacroUserId, MacroUserIdStr},
 };
@@ -403,7 +403,7 @@ impl<R: GithubRepo, U: GithubOauth, F: Auth, E: ForeignEntityService> GithubLink
 
         // create github link
         let link = GithubLink {
-            id: conation_uuid::generate_uuid_v7(),
+            id: macro_uuid::generate_uuid_v7(),
             macro_id: MacroUserIdStr(user_id.clone()),
             fusionauth_user_id: row_fusionauth_user_id,
             github_username: user_info.login.clone(),

@@ -6,7 +6,7 @@ mod test;
 use std::{borrow::Cow, num::NonZeroUsize, sync::Arc, time::Duration};
 
 use broadcast::{BroadcastManager, GlobalSpawner};
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use rootcause::prelude::{Report, ResultExt as _};
 use tokio_retry::{Retry, strategy::ExponentialBackoff};
 

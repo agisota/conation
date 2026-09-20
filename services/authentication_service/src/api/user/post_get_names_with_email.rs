@@ -6,8 +6,8 @@ use axum::{
 };
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_db_client::user::get_user_name::get_user_names_with_email;
-use conation_user_id::user_id::MacroUserId;
-use conation_user_id::{cowlike::CowLike, lowercased::Lowercase};
+use macro_user_id::user_id::MacroUserId;
+use macro_user_id::{cowlike::CowLike, lowercased::Lowercase};
 
 use model::response::ErrorResponse;
 use model::user::UserNames;

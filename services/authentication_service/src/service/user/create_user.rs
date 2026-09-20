@@ -1,7 +1,7 @@
 use conation_db_client::user::organization::{
     get_organization_roles_for_user, match_user_to_organization,
 };
-use conation_env_var::optional_read_env_var;
+use macro_env_var::optional_read_env_var;
 
 #[cfg(test)]
 mod test;

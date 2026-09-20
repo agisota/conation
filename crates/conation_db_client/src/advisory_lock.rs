@@ -3,7 +3,7 @@ use std::{
     hash::{Hash, Hasher},
 };
 
-use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId};
+use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId};
 use sqlx::{Postgres, Transaction};
 
 #[cfg(test)]

@@ -8,7 +8,7 @@ async fn access_level_for(
     document_id: &str,
     source_id: &str,
 ) -> Option<String> {
-    let entity_id = conation_uuid::string_to_uuid(document_id).unwrap();
+    let entity_id = macro_uuid::string_to_uuid(document_id).unwrap();
     sqlx::query_scalar!(
         r#"
         SELECT access_level::text as "access_level!"
@@ -125,7 +125,7 @@ async fn does_not_share_private_document(pool: Pool<Postgres>) -> anyhow::Result
 #[sqlx::test(fixtures(path = "../../fixtures", scripts("share_on_mention")))]
 async fn does_not_downgrade_existing_access(pool: Pool<Postgres>) -> anyhow::Result<()> {
     let mentioned = MacroUserIdStr::try_from("conation|mentioned@user.com".to_string()).unwrap();
-    let entity_id = conation_uuid::string_to_uuid(PUBLIC_DOC).unwrap();
+    let entity_id = macro_uuid::string_to_uuid(PUBLIC_DOC).unwrap();
 
     // The user already has edit access to the PUBLIC-link document.
     sqlx::query!(
@@ -157,7 +157,7 @@ async fn does_not_downgrade_existing_access(pool: Pool<Postgres>) -> anyhow::Res
 
 #[sqlx::test(fixtures(path = "../../fixtures", scripts("share_on_mention")))]
 async fn empty_recipients_is_a_noop(pool: Pool<Postgres>) -> anyhow::Result<()> {
-    let entity_id = conation_uuid::string_to_uuid(PUBLIC_DOC).unwrap();
+    let entity_id = macro_uuid::string_to_uuid(PUBLIC_DOC).unwrap();
     share_link_shared_document_with_mentioned_users(&pool, PUBLIC_DOC, &[]).await?;
 
     let count = sqlx::query_scalar!(

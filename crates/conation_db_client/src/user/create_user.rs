@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use sqlx::{Pool, Postgres};
 
 /// Creates a new user in the database and attaches provided roles
@@ -16,7 +16,7 @@ pub async fn create_user(
     organization_id: Option<i32>,
     roles: HashSet<String>,
 ) -> anyhow::Result<String> {
-    let id = conation_uuid::string_to_uuid(id)?;
+    let id = macro_uuid::string_to_uuid(id)?;
 
     let mut transaction = db.begin().await?;
 
@@ -95,7 +95,7 @@ pub async fn create_user_profile(
     organization_id: Option<i32>,
     roles: HashSet<String>,
 ) -> anyhow::Result<()> {
-    let macro_user_id = conation_uuid::string_to_uuid(id)?;
+    let macro_user_id = macro_uuid::string_to_uuid(id)?;
     let user_profile_id = MacroUserIdStr::try_from_email(email)?.to_string();
 
     let mut transaction = db.begin().await?;

@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use chrono::Utc;
-use conation_user_id::{
+use macro_user_id::{
     lowercased::Lowercase,
     user_id::{MacroUserId, MacroUserIdStr},
 };

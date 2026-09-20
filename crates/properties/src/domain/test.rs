@@ -13,7 +13,7 @@ use crate::domain::{
 };
 use anyhow::anyhow;
 use conation_event_broker::{EventBrokerError, MacroEvent, MacroEventBroker};
-use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use document_sub_type::DocumentSubType;
 use entity_access::domain::models::{
     AccessLevel, BotId, BotReceiptScope, Entity, EntityAccessAuth, EntityAccessReceipt,

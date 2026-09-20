@@ -127,7 +127,7 @@ pub async fn create_property_option(
     value: PropertyOptionValue,
     color: Option<String>,
 ) -> anyhow::Result<PropertyOption> {
-    let id = conation_uuid::generate_uuid_v7();
+    let id = macro_uuid::generate_uuid_v7();
     let (number_value, string_value) = value.to_db_values();
 
     let row = sqlx::query!(

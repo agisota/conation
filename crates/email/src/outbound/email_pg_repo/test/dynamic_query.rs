@@ -1,7 +1,7 @@
 mod notification_state;
 
 use super::*;
-use conation_user_id::cowlike::CowLike;
+use macro_user_id::cowlike::CowLike;
 
 #[sqlx::test(
     migrator = "MACRO_DB_MIGRATIONS",

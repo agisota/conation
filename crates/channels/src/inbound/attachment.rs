@@ -8,7 +8,7 @@ use attachment::{
     AttachmentContent, AttachmentError, AttachmentPart, AttachmentService, Attachments,
     ResolutionError,
 };
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::{models::MemberParticipantRole, ports::EntityAccessService};
 use futures::future::join_all;
 use model_entity::{Entity, EntityType};

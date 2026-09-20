@@ -4,7 +4,7 @@ use crate::{
 };
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use conation_user_id::cowlike::CowLike;
+use macro_user_id::cowlike::CowLike;
 use model::response::{GenericErrorResponse, GenericResponse};
 
 /// Gets the instructions document for the current user

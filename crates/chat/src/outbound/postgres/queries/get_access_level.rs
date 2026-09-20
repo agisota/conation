@@ -13,7 +13,7 @@ pub(crate) async fn get_access_level(
     user_id: &str,
     chat_id: &str,
 ) -> anyhow::Result<AccessLevel> {
-    let entity_id = conation_uuid::string_to_uuid(chat_id).unwrap();
+    let entity_id = macro_uuid::string_to_uuid(chat_id).unwrap();
     let level = sqlx::query_scalar!(
         r#"
         SELECT access_level::text

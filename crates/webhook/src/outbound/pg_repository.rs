@@ -10,7 +10,7 @@ use crate::domain::{
     },
     ports::{WebhookRepo, WebhookWorkspaceResolver},
 };
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use serde_json::Value;
 use sqlx::PgPool;
 use std::str::FromStr;
@@ -48,7 +48,7 @@ struct WebhookRow {
 
 fn new_webhook_id() -> String {
     // Temporary prefixed UUIDv7 ids. This can be swapped for true ULIDs later.
-    format!("wh_{}", conation_uuid::generate_uuid_v7())
+    format!("wh_{}", macro_uuid::generate_uuid_v7())
 }
 
 fn parse_headers(value: Value) -> WebhookHeaders {

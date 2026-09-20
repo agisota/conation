@@ -5,7 +5,7 @@ mod test;
 
 use std::marker::PhantomData;
 
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

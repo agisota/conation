@@ -2,8 +2,8 @@
 
 use std::sync::Arc;
 
-use conation_user_id::cowlike::CowLike;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::cowlike::CowLike;
+use macro_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::models::{
     AccessError, Entity, EntityAccessAuth, EntityAccessReceipt, EntityPermission,
     EntityType as AccessEntityType,
@@ -208,7 +208,7 @@ impl<Svc: EntityAccessService> PermissionService for PermissionServiceImpl<Svc> 
         entity_access_db_utils::upsert_user_entity_access_bulk(
             &self.db,
             user_ids,
-            &conation_uuid::string_to_uuid(task_id).unwrap(),
+            &macro_uuid::string_to_uuid(task_id).unwrap(),
             model_entity::EntityType::Document,
             AccessLevel::Edit,
         )
@@ -241,7 +241,7 @@ impl<Svc: EntityAccessService> PermissionService for PermissionServiceImpl<Svc> 
               AND granted_from_project_id IS NULL
             "#,
         )
-        .bind(conation_uuid::string_to_uuid(task_id).unwrap())
+        .bind(macro_uuid::string_to_uuid(task_id).unwrap())
         .bind(model_entity::EntityType::Document.as_ref())
         .bind(conation_ids.as_slice())
         .execute(&self.db)
@@ -256,7 +256,7 @@ mod tests {
     use std::sync::Arc;
 
     use conation_db_migrator::MACRO_DB_MIGRATIONS;
-    use conation_user_id::user_id::MacroUserIdStr;
+    use macro_user_id::user_id::MacroUserIdStr;
     use entity_access::domain::ports::NoOpEntityAccessService;
     use entity_access_db_utils::AccessLevel;
     use sqlx::{Pool, Postgres, Row as _};

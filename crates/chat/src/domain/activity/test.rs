@@ -1,9 +1,9 @@
 use ::activity::Action;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use model_entity::EntityType;
 use uuid::Uuid;
 
-use conation_event_broker::Event;
+use macro_event_broker::Event;
 
 use super::*;
 use crate::domain::events::{

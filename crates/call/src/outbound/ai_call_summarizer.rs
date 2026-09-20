@@ -9,7 +9,7 @@ use std::fmt::Write as _;
 use agent::PredefinedModel;
 use uuid::Uuid;
 
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 
 use crate::domain::models::{
     CallRecordTranscriptSegment, CallTranscriptCustomSpeakerResult, EnrichedCallTranscript,

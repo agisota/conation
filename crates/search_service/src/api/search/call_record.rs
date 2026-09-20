@@ -1,5 +1,5 @@
 use channels::outbound::channel_name::batch_resolve_channel_names;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use indexmap::IndexMap;
 use item_filters::CallStatus;
 use models_properties::{EntityReference, EntityType};

@@ -17,7 +17,7 @@ pub enum StripeOperationError {
     /// Stripe billing is disabled for this deployment.
     StripeBillingDisabled,
     #[error("Failed to parse user id")]
-    ParseId(#[from] conation_user_id::error::ParseErr),
+    ParseId(#[from] macro_user_id::error::ParseErr),
     #[error("Internal server error")]
     DbErr(#[from] sqlx::Error),
     #[error("User does not have a stripe id")]

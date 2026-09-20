@@ -2,7 +2,7 @@
 
 use activity::{Actor, Attribution};
 use chrono::{DateTime, Utc};
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use model::document::response::DocumentResponseMetadata;
 use model::document::{DocumentMetadata, FileType};
 use models_permissions::share_permission::LinkShareState;

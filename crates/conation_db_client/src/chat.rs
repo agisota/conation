@@ -1,4 +1,4 @@
-use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use model::chat::ChatBasic;
 use sqlx::{Pool, Postgres};
 use std::collections::HashSet;

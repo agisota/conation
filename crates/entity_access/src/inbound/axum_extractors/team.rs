@@ -28,7 +28,7 @@ use conation_authorization::{
     AnyPrincipal, BotAuthentication, MacroAuthorization, MacroAuthorizationExtractor,
     MacroAuthorizationService, MacroAuthorizationState,
 };
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 
 enum TeamAccessOutcome<T: RequiredPermission> {
     Qualifying(EntityAccessReceipt<T>),

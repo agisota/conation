@@ -1,7 +1,7 @@
 use super::*;
 use crate::domain::models::TouchedPagePosition;
 use conation_db_migrator::MACRO_DB_MIGRATIONS;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use item_filters::ast::EntityFilterAst;
 use sqlx::{Pool, Postgres};
 use uuid::Uuid;

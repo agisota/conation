@@ -1,8 +1,8 @@
 use crate::api::context::ApiContext;
 use anyhow::Context;
-use conation_auth::constant::{CONATION_ACCESS_TOKEN_COOKIE, CONATION_REFRESH_TOKEN_COOKIE};
+use macro_auth::constant::{CONATION_ACCESS_TOKEN_COOKIE, CONATION_REFRESH_TOKEN_COOKIE};
 use conation_env::Environment;
-use conation_env_var::maybe_env_vars;
+use macro_env_var::maybe_env_vars;
 use cookie::{Cookie, SameSite};
 use email::domain::ports::{FirstInboxProvisionOutcome, FirstInboxProvisioner};
 use rand::{Rng, seq::SliceRandom};

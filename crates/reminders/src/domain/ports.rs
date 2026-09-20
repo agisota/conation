@@ -1,7 +1,7 @@
 //! Ports (trait contracts) for the reminders domain.
 
 use chrono::{DateTime, Utc};
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::models::{AnyEntityPermission, EntityAccessReceipt, OwnerAccessLevel};
 use uuid::Uuid;
 

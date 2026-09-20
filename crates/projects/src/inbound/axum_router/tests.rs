@@ -14,7 +14,7 @@ use conation_authorization::{
     InternalIdentityClaims, MacroAuthorizationError, MacroAuthorizationService,
     MacroAuthorizationState,
 };
-use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
+use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
 use entity_access::domain::{
     models::{
         AccessError, AccessLevel, BotAccessScope, BotId, CallChannelInfo, EntityAccessReceipt,

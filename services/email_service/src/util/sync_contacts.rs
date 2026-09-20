@@ -1,8 +1,8 @@
 use crate::outbound::email_api::GmailApi;
 use crate::pubsub::util::publish_email_event;
 use anyhow::{Context, anyhow};
-use conation_event_broker::MacroEventBroker;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_event_broker::MacroEventBroker;
+use macro_user_id::user_id::MacroUserIdStr;
 use email::domain::events::{
     EmailMacroEvent, ThreadsReindexReason, ThreadsReindexRequestedMetadata,
 };

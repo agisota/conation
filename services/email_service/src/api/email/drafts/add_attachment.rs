@@ -103,7 +103,7 @@ pub async fn handler(
 
     let content_type: ContentType = file_type.into();
 
-    let attachment_id = conation_uuid::generate_uuid_v7();
+    let attachment_id = macro_uuid::generate_uuid_v7();
     let s3_key = generate_attachment_s3_key!(draft_id, attachment_id);
     let mime_type = content_type.mime_type().to_string();
 

@@ -109,7 +109,7 @@ impl WebhookValidationClient for ReqwestWebhookValidationClient {
 }
 
 fn new_validation_event_id() -> String {
-    format!("evt_{}", conation_uuid::generate_uuid_v7())
+    format!("evt_{}", macro_uuid::generate_uuid_v7())
 }
 
 fn validation_body(webhook_id: &str, event_id: &str) -> Result<Vec<u8>, serde_json::Error> {

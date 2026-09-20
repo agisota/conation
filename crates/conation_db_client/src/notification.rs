@@ -1,5 +1,5 @@
 use anyhow::Context;
-use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use document_sub_type::DocumentSubType;
 
 use crate::{chat::get_basic_chat, projects::get_project::get_basic_project::get_basic_project};

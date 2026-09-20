@@ -12,7 +12,7 @@ use ::activity::{
     Activity, ActivitySource, Actor, Attribution, CommonAction, EntityType, Ingest, PropertyChange,
     event_time,
 };
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use models_properties::EntityType as PropertyEntityType;
 use uuid::Uuid;
 

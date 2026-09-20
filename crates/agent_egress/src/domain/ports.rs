@@ -13,7 +13,7 @@ use crate::domain::model::{
     McpDestination, McpResolution, ProxyRequest, ProxyResponse, RepoSlug, SessionGrant,
     SessionToken, UpstreamCall,
 };
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 
 /// Turn a sandbox's session token into what it is allowed to spend.
 ///

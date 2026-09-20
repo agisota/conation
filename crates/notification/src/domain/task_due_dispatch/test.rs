@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use chrono::{DateTime, Duration, TimeZone, Utc};
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use rootcause::Report;
 use serde::Serialize;
 use uuid::Uuid;

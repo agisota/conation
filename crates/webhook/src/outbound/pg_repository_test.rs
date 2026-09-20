@@ -4,7 +4,7 @@ use crate::domain::{
     ports::{WebhookRepo, WebhookWorkspaceResolver},
 };
 use conation_db_migrator::MACRO_DB_MIGRATIONS;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use serde_json::json;
 use sqlx::{PgPool, types::Uuid};
 
@@ -45,7 +45,7 @@ fn create_request_with_namespace(namespace: &str) -> CreateWebhookRequest {
 }
 
 async fn insert_user_with_id(pool: &PgPool, user_id: &str, email: &str) -> anyhow::Result<()> {
-    let macro_user_id = conation_uuid::generate_uuid_v7();
+    let macro_user_id = macro_uuid::generate_uuid_v7();
     let stripe_customer_id = format!("stripe_{macro_user_id}");
     sqlx::query!(
         r#"

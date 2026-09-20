@@ -14,7 +14,7 @@ use conation_authorization::{
     INTERNAL_API_KEY_HEADER, INTERNAL_CONATION_USER_ID_HEADER, InternalIdentityClaims,
     MacroAuthorizationError, MacroAuthorizationService, MacroAuthorizationState,
 };
-use conation_user_id::{
+use macro_user_id::{
     lowercased::Lowercase,
     user_id::{MacroUserId, MacroUserIdStr},
 };

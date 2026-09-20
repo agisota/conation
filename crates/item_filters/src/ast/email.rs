@@ -1,4 +1,4 @@
-use conation_user_id::{cowlike::CowLike, email::EmailStr};
+use macro_user_id::{cowlike::CowLike, email::EmailStr};
 use filter_ast::{ExpandFrame, Expr, FoldTree, TryExpandNode};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;

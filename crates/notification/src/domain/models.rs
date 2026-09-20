@@ -19,7 +19,7 @@ pub mod task_due;
 
 use crate::domain::models::{apple::APNSPushNotification, queue_message::EmailContent};
 use chrono::{DateTime, Utc};
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 pub use mobile::{DeviceEndpoint, HashedCollapseKey, NotifCollapseKey};
 use model_entity::Entity;
 use models_pagination::{CreatedAt, CursorVal, Identify, SortOn};

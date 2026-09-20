@@ -16,8 +16,8 @@ use crate::domain::{
 };
 use agent::types::{AssistantMessagePart, ChatMessageContent};
 use ai_toolset::{AsyncToolCollection, RequestContext, tool_object::UserToolResponse};
-use conation_event_broker::{MacroEventBroker, NoopMacroEventBroker};
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_event_broker::{MacroEventBroker, NoopMacroEventBroker};
+use macro_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::models::{
     AccessError, AccessLevel, EditAccessLevel, EntityAccessAuth, EntityAccessReceipt,
     EntityPermission, OwnerAccessLevel, ViewAccessLevel,

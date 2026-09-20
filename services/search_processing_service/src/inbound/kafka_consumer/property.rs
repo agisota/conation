@@ -1,6 +1,6 @@
 //! Maps property lifecycle events to search-index actions and processes them.
 
-use conation_event_broker::MacroEvent as _;
+use macro_event_broker::MacroEvent as _;
 use models_properties::EntityType;
 use opensearch_client::OpensearchClient;
 use properties::domain::events::{PropertyMacroEvent, PropertyTopicEvent};

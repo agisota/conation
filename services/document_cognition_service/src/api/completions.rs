@@ -1,7 +1,7 @@
 use crate::api::context::DcsAuthorizationService;
 use axum::{extract, response::IntoResponse};
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use conation_env_var::maybe_env_vars;
+use macro_env_var::maybe_env_vars;
 
 const OPENAI_CHAT_COMPLETIONS_URL: &str = "https://api.openai.com/v1/chat/completions";
 

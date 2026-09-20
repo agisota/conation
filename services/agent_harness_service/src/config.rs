@@ -8,11 +8,11 @@
 use anyhow::Context;
 use database_env_vars::{DatabaseUrl, RedisUri};
 pub use conation_env::Environment;
-use conation_uuid::Uuid;
+use macro_uuid::Uuid;
 
 use secretsmanager_client::LocalOrRemoteSecret;
 
-conation_env_var::env_vars!(
+macro_env_var::env_vars!(
     /// Comma-separated Kafka bootstrap servers.
     #[derive(Clone)]
     pub struct KafkaBrokers;
@@ -35,7 +35,7 @@ conation_env_var::env_vars!(
     pub struct PipedreamProjectId;
 );
 
-conation_env_var::maybe_env_vars!(
+macro_env_var::maybe_env_vars!(
     /// KMS key for encrypted per-owner Claude OAuth connections.
     pub struct ClaudeOauthKmsKeyId;
     /// Dedicated KMS key for encrypted per-owner Codex OAuth state.

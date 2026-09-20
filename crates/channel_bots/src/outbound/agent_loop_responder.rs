@@ -5,7 +5,7 @@ use std::sync::Arc;
 use agent::{AgentLoop, StreamPart, to_rig_messages};
 use ai_tools::{AiToolSet, ToolServiceContext, ToolSetWithPrompt};
 use async_trait::async_trait;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use futures::StreamExt;
 
 use crate::domain::ports::AgentResponder;

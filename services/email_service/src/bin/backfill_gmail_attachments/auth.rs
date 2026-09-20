@@ -1,6 +1,6 @@
 use crate::config::Config;
 use anyhow::Context;
-use conation_user_id::user_id::CONATION_USER_ID_PREFIX;
+use macro_user_id::user_id::CONATION_USER_ID_PREFIX;
 
 /// Gets a fresh Gmail access token by:
 /// 1. Looking up the user in FusionAuth

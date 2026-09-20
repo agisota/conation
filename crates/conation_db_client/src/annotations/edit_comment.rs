@@ -1,5 +1,5 @@
 use anyhow::{Result, bail};
-use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use document_sub_type::DocumentSubType;
 use model::annotations::{
     Comment,

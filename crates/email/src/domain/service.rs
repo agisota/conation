@@ -212,7 +212,7 @@ where
     async fn get_link_by_auth_id_and_macro_id(
         &self,
         auth_id: &str,
-        macro_id: conation_user_id::user_id::MacroUserIdStr<'_>,
+        macro_id: macro_user_id::user_id::MacroUserIdStr<'_>,
     ) -> Result<Option<crate::domain::models::Link>, EmailErr> {
         self.get_link_by_auth_id_and_macro_id_impl(auth_id, macro_id)
             .await
@@ -220,7 +220,7 @@ where
 
     async fn get_link_by_macro_id(
         &self,
-        macro_id: conation_user_id::user_id::MacroUserIdStr<'_>,
+        macro_id: macro_user_id::user_id::MacroUserIdStr<'_>,
     ) -> Result<Option<crate::domain::models::Link>, EmailErr> {
         self.email_repo
             .link_by_macro_id(macro_id)
@@ -230,7 +230,7 @@ where
 
     async fn get_inboxes_for_macro_id(
         &self,
-        macro_id: conation_user_id::user_id::MacroUserIdStr<'_>,
+        macro_id: macro_user_id::user_id::MacroUserIdStr<'_>,
     ) -> Result<Vec<crate::domain::models::Link>, EmailErr> {
         self.email_repo
             .inboxes_for_macro_id(macro_id)
@@ -240,7 +240,7 @@ where
 
     async fn get_owned_link_for_thread(
         &self,
-        macro_id: conation_user_id::user_id::MacroUserIdStr<'_>,
+        macro_id: macro_user_id::user_id::MacroUserIdStr<'_>,
         thread_id: uuid::Uuid,
     ) -> Result<Option<crate::domain::models::Link>, EmailErr> {
         self.email_repo
@@ -308,7 +308,7 @@ where
 
     async fn mark_thread_seen(
         &self,
-        macro_id: conation_user_id::user_id::MacroUserIdStr<'static>,
+        macro_id: macro_user_id::user_id::MacroUserIdStr<'static>,
         thread_id: Uuid,
     ) -> Result<(), EmailErr> {
         self.mark_thread_seen_impl(macro_id, thread_id).await
@@ -324,7 +324,7 @@ where
 
     async fn update_thread_labels_for_user(
         &self,
-        macro_id: conation_user_id::user_id::MacroUserIdStr<'static>,
+        macro_id: macro_user_id::user_id::MacroUserIdStr<'static>,
         thread_id: Uuid,
         label_id: Uuid,
         add: bool,

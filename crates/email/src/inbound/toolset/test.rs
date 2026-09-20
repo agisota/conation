@@ -3,7 +3,7 @@ use super::*;
 use crate::domain::models::UserProvider;
 use ai_toolset::schema::generate_validated_input_schema;
 use chrono::Utc;
-use conation_user_id::email::EmailStr;
+use macro_user_id::email::EmailStr;
 
 fn make_link(macro_id: &'static str, email: &'static str, is_primary: bool) -> Link {
     Link {

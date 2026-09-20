@@ -1,5 +1,5 @@
-use conation_user_id::user_id::MacroUserIdStr;
-use conation_uuid::Uuid;
+use macro_user_id::user_id::MacroUserIdStr;
+use macro_uuid::Uuid;
 
 use super::*;
 use bot_id::BotId;

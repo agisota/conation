@@ -10,7 +10,7 @@
 //! must not report it as one: it is the ordinary state of anyone who has not
 //! visited settings yet, and it has to reach the channel as that sentence.
 
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use cursor_api_key::cipher::{CursorApiKey, CursorApiKeyCipher};
 use sqlx::PgPool;
 

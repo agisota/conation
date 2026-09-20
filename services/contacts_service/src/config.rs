@@ -1,7 +1,7 @@
 use anyhow::Context;
-use conation_auth::InternalApiKey;
+use macro_auth::InternalApiKey;
 pub use conation_env::Environment;
-use conation_env_var::{env_vars, maybe_env_vars};
+use macro_env_var::{env_vars, maybe_env_vars};
 use database_env_vars::{DatabaseUrl, RedisUri};
 
 env_vars! {

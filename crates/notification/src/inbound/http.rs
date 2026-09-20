@@ -14,7 +14,7 @@ use axum::{
 use conation_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
 };
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use hmac::Hmac;
 use model_error_response::ErrorResponse;
 use models_pagination::{CreatedAt, CursorOptionExt, CursorWithValAndFilter};

@@ -6,7 +6,7 @@ use calendar_events::{
     domain::service::{GoogleCalendarBackfillCoordinator, GoogleCalendarBackfillFailureService},
     outbound::{google::GoogleCalendarClient, pg::PgCalendarRepository},
 };
-use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
+use macro_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
 use connection_gateway_client::client::ConnectionGatewayClient;
 use contacts::domain::service::SqsContactsIngress;
 use contacts::outbound::ingress::SqsContactsQueue;
@@ -86,7 +86,7 @@ pub fn calendar_watch_config() -> Option<GoogleWatchConfig> {
     // A variable set to an empty string must count as unset: a blank token
     // would verify blank-header webhook requests.
     let read = |name| {
-        conation_env_var::maybe_read_env(name)
+        macro_env_var::maybe_read_env(name)
             .map(|value| value.trim().to_owned())
             .filter(|value| !value.is_empty())
     };

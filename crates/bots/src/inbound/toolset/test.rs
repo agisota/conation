@@ -18,7 +18,7 @@ use crate::domain::{
 use ai_toolset::{AsyncTool, RequestContext, ServiceContext};
 use bot_id::BotId;
 use chrono::Utc;
-use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
+use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
 use entity_access::domain::{
     models::{
         AccessError, AccessLevel, BotAccessScope, CallChannelInfo, EntityAccessReceipt,

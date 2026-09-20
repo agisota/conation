@@ -7,7 +7,7 @@ pub async fn create_macro_user(
     stripe_customer_id: &str,
     email: &str,
 ) -> anyhow::Result<()> {
-    let fusionauth_user_id = conation_uuid::string_to_uuid(fusionauth_user_id)?;
+    let fusionauth_user_id = macro_uuid::string_to_uuid(fusionauth_user_id)?;
 
     sqlx::query!(
         r#"
@@ -38,7 +38,7 @@ pub async fn get_macro_user(
     db: &sqlx::Pool<sqlx::Postgres>,
     id: &str,
 ) -> anyhow::Result<MacroUser> {
-    let id = conation_uuid::string_to_uuid(id)?;
+    let id = macro_uuid::string_to_uuid(id)?;
 
     let result = sqlx::query_as!(
         MacroUser,

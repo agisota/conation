@@ -1,6 +1,6 @@
 //! Insert a new chat row.
 
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use sqlx::{Postgres, Transaction};
 
 /// Insert a new chat and return the generated chat ID.

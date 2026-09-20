@@ -2,7 +2,7 @@ use crate::domain::models::{
     EmailBackfillStatus, EmailInboxDetails, Link, UserEmailLinkSettings, UserProvider,
 };
 use chrono::{DateTime, Utc};
-use conation_user_id::{email::EmailStr, user_id::MacroUserIdStr};
+use macro_user_id::{email::EmailStr, user_id::MacroUserIdStr};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -227,7 +227,7 @@ struct DbInboxDetailsRow {
 
 impl DbInboxDetailsRow {
     /// Convert the database projection into domain-owned persisted facts.
-    fn try_into_model(self) -> Result<EmailInboxDetails, conation_user_id::error::ParseErr> {
+    fn try_into_model(self) -> Result<EmailInboxDetails, macro_user_id::error::ParseErr> {
         Ok(EmailInboxDetails {
             id: self.id,
             macro_id: MacroUserIdStr::try_from(self.macro_id)?,

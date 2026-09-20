@@ -35,12 +35,12 @@ use channels::domain::{
     models::{ChannelSender, ChannelType},
 };
 use chrono::Utc;
-use conation_event_broker::{Event, EventBrokerError, MacroEvent as _, MessageParts};
+use macro_event_broker::{Event, EventBrokerError, MacroEvent as _, MessageParts};
 use conation_event_topics::{
     MacroCalendarTopic, MacroCallsTopic, MacroChannelsTopic, MacroChatsTopic, MacroDocumentsTopic,
     MacroEmailTopic, MacroProjectsTopic, MacroPropertiesTopic, Topic as _,
 };
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use documents::domain::events::{
     DocumentContentUploadedMetadata, DocumentCopiedMetadata, DocumentCreatedMetadata,
     DocumentDeletedMetadata, DocumentInteractionMetadata, DocumentPurgedMetadata,

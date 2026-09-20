@@ -5,9 +5,9 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use conation_auth::conation_api_token::EncodeConationApiTokenArgs;
+use macro_auth::conation_api_token::EncodeConationApiTokenArgs;
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use sqlx::PgPool;
 use utoipa::ToSchema;
 
@@ -96,7 +96,7 @@ pub async fn handler(
         };
 
     let conation_api_token =
-        conation_auth::conation_api_token::encode_conation_api_token(EncodeConationApiTokenArgs {
+        macro_auth::conation_api_token::encode_conation_api_token(EncodeConationApiTokenArgs {
             macro_user_id,
             fusionauth_id: user_context.fusion_user_id.clone(),
             organization_id, // TOOD: get from user profile

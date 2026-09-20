@@ -15,7 +15,7 @@ use conation_authorization::{
     AnyPrincipal, MacroAuthorization, MacroAuthorizationService, MacroAuthorizationState,
     OptionalMacroAuthorizationExtractor,
 };
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use serde::de::DeserializeOwned;
 
 use super::{ExtractorError, RequiredPermission, bot::generate_bot_entity_access_receipt};

@@ -39,7 +39,7 @@ async fn test_get_entity_name_and_owner(pool: sqlx::Pool<sqlx::Postgres>) -> any
 
     let result = get_entity_name_and_owner(
         &pool,
-        &conation_uuid::generate_uuid_v7(),
+        &macro_uuid::generate_uuid_v7(),
         &SearchEntityType::Documents,
     )
     .await;

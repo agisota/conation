@@ -2,7 +2,7 @@
 
 use std::{collections::HashMap, str::FromStr};
 
-use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use frecency::domain::{models::AggregateFrecency, ports::AggregateFrecencyStorage};
 use model_entity::EntityType;
 use uuid::Uuid;

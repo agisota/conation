@@ -2,9 +2,9 @@ use ::axum::{
     extract::{FromRef, FromRequestParts, Query},
     http::{header, request::Parts},
 };
-use conation_auth::headers::AccessTokenExtractor;
+use macro_auth::headers::AccessTokenExtractor;
 #[cfg(feature = "local_auth")]
-use conation_env_var::maybe_env_vars;
+use macro_env_var::maybe_env_vars;
 #[cfg(feature = "local_auth")]
 use model_user::UserContext;
 use rootcause::Report;

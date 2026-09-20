@@ -14,7 +14,7 @@ use conation_authorization::{
     InternalIdentityClaims, MacroAuthorizationError, MacroAuthorizationService,
     MacroAuthorizationState,
 };
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use model_user::UserContext;
 use rate_limit::{RateLimitConfig, RateLimitKey, RateLimitService};
 use rootcause::Report;

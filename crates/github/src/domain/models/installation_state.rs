@@ -1,7 +1,7 @@
 //! Signed state carried through a GitHub App installation flow.
 
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use hmac::{Hmac, Mac};
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;

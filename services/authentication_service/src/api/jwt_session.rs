@@ -4,7 +4,7 @@ use axum::{
     extract::{FromRef, FromRequestParts, Query},
     http::request::Parts,
 };
-use conation_auth::{headers::AccessTokenExtractor, middleware::decode_jwt::JwtValidationArgs};
+use macro_auth::{headers::AccessTokenExtractor, middleware::decode_jwt::JwtValidationArgs};
 use conation_authorization::INTERNAL_API_KEY_HEADER;
 use decode_jwt::{DecodedJwt, JwtContext, Params};
 

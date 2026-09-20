@@ -1,5 +1,5 @@
 use conation_db_migrator::MACRO_DB_MIGRATIONS;
-use conation_uuid::Uuid;
+use macro_uuid::Uuid;
 use model_entity::EntityType;
 use model_owner::{Owner, OwnerType};
 use models_permissions::share_permission::access_level::AccessLevel;

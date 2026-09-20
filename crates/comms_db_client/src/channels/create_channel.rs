@@ -15,7 +15,7 @@ pub struct CreateChannelOptions {
 }
 
 pub async fn create_channel(db: &Pool<Postgres>, options: CreateChannelOptions) -> Result<Uuid> {
-    let channel_id = conation_uuid::generate_uuid_v7();
+    let channel_id = macro_uuid::generate_uuid_v7();
     let mut transaction = db.begin().await?;
 
     // create the channel

@@ -8,7 +8,7 @@ use axum::{
 use calendar_events::domain::models::google_calendar_scope_parameter;
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_middleware::tracking::ClientIp;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use model::response::ErrorResponse;
 use roles_and_permissions::domain::{access_policy::CONATION_ACCESS_POLICY, model::PermissionId};
 use serde_utils::urlencode::UrlEncoded;

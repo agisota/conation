@@ -5,7 +5,7 @@ mod test;
 
 use std::future::Future;
 
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::{models::AccessError, ports::EntityAccessService};
 use model_entity::{Entity, EntityType};
 use rootcause::prelude::{Report, ResultExt as _};

@@ -6,8 +6,8 @@ pub async fn merge_accounts(
     macro_user_id: &str,
     to_merge_macro_user_id: &str,
 ) -> anyhow::Result<()> {
-    let macro_user_id = conation_uuid::string_to_uuid(macro_user_id)?;
-    let to_merge_macro_user_id = conation_uuid::string_to_uuid(to_merge_macro_user_id)?;
+    let macro_user_id = macro_uuid::string_to_uuid(macro_user_id)?;
+    let to_merge_macro_user_id = macro_uuid::string_to_uuid(to_merge_macro_user_id)?;
 
     // Update the user profiles to point to the new macro user id
     sqlx::query!(
@@ -67,7 +67,7 @@ mod tests {
             r#"
             SELECT "macro_user_id" as "macro_user_id!" FROM "User" WHERE "macro_user_id" = $1 AND "id" = $2
             "#,
-            conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?,
+            macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?,
             "conation|test2@macro.com",
         )
         .map(|row| row.macro_user_id)

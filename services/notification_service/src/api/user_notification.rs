@@ -4,7 +4,7 @@ use ::notification::domain::models::UserNotificationRow;
 use axum::extract::State;
 use chrono::{DateTime, Utc};
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use email_formatting::EmailDigestNotification;
 use itertools::{Either, Itertools};
 use model_entity::Entity;

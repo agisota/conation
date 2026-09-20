@@ -2,7 +2,7 @@
 
 use agent_trigger::domain::sources::TriggerEventSource;
 use anyhow::Context as _;
-use conation_env_var::env_vars;
+use macro_env_var::env_vars;
 use database_env_vars::DatabaseUrl;
 
 env_vars! {

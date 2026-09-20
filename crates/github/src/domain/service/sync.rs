@@ -22,7 +22,7 @@ use crate::domain::{
     },
     ports::{GithubSyncClient, GithubSyncRealtime, GithubSyncRepo, GithubSyncService},
 };
-use conation_env_var::maybe_env_vars;
+use macro_env_var::maybe_env_vars;
 use documents::domain::{models::DocumentError, ports::DocumentService};
 use entity_access::domain::models::{EditAccessLevel, ViewAccessLevel};
 use foreign_entity::domain::{
@@ -1011,7 +1011,7 @@ impl<
     #[tracing::instrument(skip(self), fields(macro_user_id = %macro_user_id), err)]
     async fn begin_installation_setup(
         &self,
-        macro_user_id: &conation_user_id::user_id::MacroUserIdStr<'_>,
+        macro_user_id: &macro_user_id::user_id::MacroUserIdStr<'_>,
         team_id: Option<uuid::Uuid>,
     ) -> Result<String, GithubError> {
         if let Some(team_id) = team_id {
@@ -1026,7 +1026,7 @@ impl<
         }
 
         let state = InstallationState {
-            macro_user_id: conation_user_id::user_id::MacroUserIdStr::try_from(
+            macro_user_id: macro_user_id::user_id::MacroUserIdStr::try_from(
                 macro_user_id.as_ref().to_string(),
             )
             .map_err(|error| GithubError::Internal(error.into()))?,

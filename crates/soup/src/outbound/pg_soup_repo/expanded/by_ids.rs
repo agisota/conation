@@ -2,7 +2,7 @@ use crate::{
     domain::models::SoupProjectionHydration, map_soup_projection_hydration,
     outbound::pg_soup_repo::type_err,
 };
-use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use document_sub_type::DocumentSubType;
 use model_entity::{Entity, EntityType};
 #[cfg(test)]

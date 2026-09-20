@@ -12,7 +12,7 @@ use channels::outbound::pg_channels_repo::PgChannelsRepo;
 use chat::domain::service::MessageServiceImpl;
 use chat::inbound::attachment::ChatAttachmentService;
 use chat::outbound::postgres::PgChatRepo;
-use conation_auth::InternalApiKey;
+use macro_auth::InternalApiKey;
 use conation_authorization::{
     MacroAuthJwtValidator, MacroAuthorizationServiceImpl, MacroAuthorizationState,
 };
@@ -60,8 +60,8 @@ pub type DcsAttachmentProvider = AttachmentProvider<
 >;
 
 /// Kafka-backed event broker with publish tasks tracked for graceful shutdown.
-pub type DcsEventBroker = conation_event_broker::MacroEventBrokerService<
-    conation_event_broker::KafkaEventPublisher,
+pub type DcsEventBroker = macro_event_broker::MacroEventBrokerService<
+    macro_event_broker::KafkaEventPublisher,
     tokio_util::task::TaskTracker,
 >;
 

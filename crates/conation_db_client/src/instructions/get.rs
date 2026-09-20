@@ -1,4 +1,4 @@
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use tracing::instrument;
 
 /// Gets the instructions document ID for a user
@@ -33,7 +33,7 @@ mod tests {
     use super::*;
     use crate::instructions::create::create_instructions_document;
     #[allow(unused_imports)]
-    use conation_user_id::cowlike::CowLike;
+    use macro_user_id::cowlike::CowLike;
     use sqlx::{Pool, Postgres};
 
     #[sqlx::test(fixtures(path = "../../fixtures", scripts("basic_user_with_documents")))]

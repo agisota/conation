@@ -2,7 +2,7 @@ use crate::api::context::ApiContext;
 use anyhow::Context;
 use axum::Router;
 use axum::http::HeaderName;
-use conation_auth::constant::CONATION_REFRESH_TOKEN_HEADER;
+use macro_auth::constant::CONATION_REFRESH_TOKEN_HEADER;
 use conation_tower_layers::MacroRequestIdAndTracingLayer;
 use native_app_service::inbound::RouterState;
 use std::net::SocketAddr;

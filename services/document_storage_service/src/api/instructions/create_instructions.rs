@@ -66,7 +66,7 @@ pub async fn create_instructions_handler(
 
 async fn insert_instructions_document_with_stale_cleanup(
     ctx: &ApiContext,
-    user_id: conation_user_id::user_id::MacroUserIdStr<'static>,
+    user_id: macro_user_id::user_id::MacroUserIdStr<'static>,
     document_id: &str,
 ) -> Result<(), DocumentError> {
     match insert_instructions_document(&ctx.db, user_id.clone(), document_id).await {

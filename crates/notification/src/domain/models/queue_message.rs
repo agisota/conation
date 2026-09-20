@@ -9,7 +9,7 @@ use crate::domain::models::{
     request::SendNotificationRequest,
 };
 use chrono::{DateTime, Utc};
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use cowlike::CowLike;
 use model_entity::Entity;
 use rate_limit::RateLimitExceeded;

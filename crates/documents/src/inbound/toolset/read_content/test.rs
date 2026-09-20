@@ -17,7 +17,7 @@ use crate::domain::response::{
 use crate::inbound::toolset::DocumentToolContext;
 use crate::inbound::toolset::create_document::EMPTY_CANVAS_JSON;
 use conation_sync_service_jwt::DocumentPermissionToken;
-use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
+use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
 use entity_access::domain::models::{
     AccessError, AccessLevel, BotAccessScope, BotId, CallChannelInfo, EditAccessLevel,
     EntityAccessReceipt, EntityPermission, MemberTeamRole, OwnerAccessLevel, RequiredPermission,

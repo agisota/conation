@@ -50,7 +50,7 @@ pub async fn store_incoming_message(
         model: model.to_string(),
     };
 
-    let user_id: conation_user_id::user_id::MacroUserIdStr<'static> =
+    let user_id: macro_user_id::user_id::MacroUserIdStr<'static> =
         user_id.to_owned().try_into().map_err(anyhow::Error::msg)?;
     ctx.message_service
         .create(&user_id, &incoming_message.chat_id, new_chat_message)

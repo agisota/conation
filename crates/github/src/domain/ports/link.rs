@@ -6,7 +6,7 @@ use crate::domain::models::{
     EnrichedGithubPullRequest, GithubAccessToken, GithubError, GithubExchangeTokenResponse,
     GithubLink, GithubPullRequestDetails, GithubPullRequestRef, GithubUserInfo,
 };
-use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId};
+use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId};
 
 /// Repository for accessing github link data from the database.
 ///

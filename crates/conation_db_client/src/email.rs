@@ -1,4 +1,4 @@
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 
 /// Check if email link exists for user
 #[tracing::instrument(skip(db))]

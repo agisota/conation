@@ -299,7 +299,7 @@ pub async fn update_search_with_raw_document(
     tracing::trace!("got raw file content");
 
     let updated_at_millis = EpochMillis::new(Utc::now().timestamp_millis())?;
-    let uuid = conation_uuid::generate_uuid_v7().to_string();
+    let uuid = macro_uuid::generate_uuid_v7().to_string();
 
     let mut upserts: Vec<UpsertDocumentArgs> = match file_type {
         FileType::Pdf | FileType::Docx => {

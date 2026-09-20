@@ -2,7 +2,7 @@
 
 use conation_event_broker::{Event, MacroEvent, TopicEvent};
 use conation_event_topics::MacroSoupRealtimeTopic;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use model_entity::Entity;
 use serde::{Deserialize, Serialize};
 

@@ -59,7 +59,7 @@ impl std::fmt::Debug for ToolLoader {
 mod test {
     use super::*;
     use crate::RequestContext;
-    use conation_user_id::user_id::MacroUserIdStr;
+    use macro_user_id::user_id::MacroUserIdStr;
     use std::sync::Mutex;
 
     fn tool(name: &str) -> SearchableTool {

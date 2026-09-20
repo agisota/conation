@@ -5,7 +5,7 @@ use axum::{
 };
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_event_broker::MacroEventBroker;
-use conation_user_id::cowlike::CowLike;
+use macro_user_id::cowlike::CowLike;
 use futures::StreamExt;
 use model::{
     document::BasicDocument,

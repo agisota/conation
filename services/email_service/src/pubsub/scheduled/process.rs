@@ -6,8 +6,8 @@ use crate::util::gmail::send::{
 };
 use anyhow::Context;
 use chrono::Utc;
-use conation_user_id::cowlike::CowLike as _;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::cowlike::CowLike as _;
+use macro_user_id::user_id::MacroUserIdStr;
 use email::domain::events::{EmailEventOrigin, EmailMacroEvent, MessageSentMetadata};
 use email_api_client::domain::models::{SendRequest, SentIds};
 use email_db_client::messages::scheduled::get::get_and_start_processing_scheduled_message;

@@ -5,7 +5,7 @@ use crate::domain::models::{
     NotifiedSoupRequest, SimpleSortRequest, SoupErr, SoupProjectionHydration, SoupPropertiesField,
     SoupRequest, TouchedEntity, TouchedSoupRequest, grouping::ItemGroupingInfo,
 };
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::models::{EntityAccessReceipt, MemberTeamRole};
 use models_pagination::{
     Frecency, NotifiedAt, PaginatedCursor, PaginatedOpaqueCursor, SimpleSortMethod, TouchedByMe,

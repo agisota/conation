@@ -8,7 +8,7 @@ use crate::domain::models::{
     MemberParticipantRole, MemberTeamRole, OwnerParticipantRole, ParticipantRole, UserTeamInfo,
     ViewAccessLevel, ViewOnly,
 };
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use models_permissions::share_permission::access_level::OwnerAccessLevel;
 use std::sync::{
     Arc,

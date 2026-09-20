@@ -3,7 +3,7 @@
 use std::collections::HashSet;
 
 use chrono::{DateTime, Utc};
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use documents::domain::ports::DocumentService;
 use foreign_entity::domain::ports::ForeignEntityService;
 use model_entity::EntityType;

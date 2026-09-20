@@ -2,7 +2,7 @@
 
 use std::collections::HashSet;
 
-use conation_event_broker::MacroEventBroker;
+use macro_event_broker::MacroEventBroker;
 use entity_access::domain::models::{
     AccessError, EditAccessLevel, EntityAccessReceipt, OwnerAccessLevel,
 };

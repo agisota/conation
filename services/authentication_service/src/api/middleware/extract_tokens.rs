@@ -5,7 +5,7 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Response},
 };
-use conation_auth::headers::{AccessTokenExtractor, RefreshTokenExtractor};
+use macro_auth::headers::{AccessTokenExtractor, RefreshTokenExtractor};
 
 /// Extracts the access token and refresh token and inserts into TokenContext
 pub(in crate::api) async fn handler(

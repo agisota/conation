@@ -6,7 +6,7 @@ mod tests;
 use std::collections::HashSet;
 
 use chrono::{DateTime, Utc};
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use model_entity::{Entity, EntityType};
 use sqlx::PgPool;
 

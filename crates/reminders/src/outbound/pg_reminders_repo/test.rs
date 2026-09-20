@@ -1,7 +1,7 @@
 use chrono::{Duration, TimeZone};
 use chrono_tz::America::New_York;
 use conation_db_migrator::MACRO_DB_MIGRATIONS;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use model_entity::EntityType;
 use sqlx::PgPool;
 
@@ -64,7 +64,7 @@ fn new_reminder(description: &str, schedule: ReminderSchedule) -> NewReminder {
 }
 
 async fn insert_user(pool: &PgPool, id: &str) {
-    let macro_user_id = conation_uuid::generate_uuid_v7();
+    let macro_user_id = macro_uuid::generate_uuid_v7();
     sqlx::query(
         r#"INSERT INTO macro_user (id, username, email, stripe_customer_id) VALUES ($1, $2, $2, $2)"#,
     )
@@ -761,7 +761,7 @@ async fn a_half_populated_entity_association_is_rejected(pool: PgPool) {
         VALUES ($1, $2, 'dangling', 'document', now(), now())
         "#,
     )
-    .bind(conation_uuid::generate_uuid_v7())
+    .bind(macro_uuid::generate_uuid_v7())
     .bind(USER_A)
     .execute(&pool)
     .await
@@ -783,7 +783,7 @@ async fn both_schedule_modes_at_once_is_rejected(pool: PgPool) {
         VALUES ($1, $2, 'confused', now(), now(), '0 0 9 * * *', 'America/New_York')
         "#,
     )
-    .bind(conation_uuid::generate_uuid_v7())
+    .bind(macro_uuid::generate_uuid_v7())
     .bind(USER_A)
     .execute(&pool)
     .await
@@ -805,7 +805,7 @@ async fn a_cron_without_a_timezone_is_rejected(pool: PgPool) {
         VALUES ($1, $2, 'no zone', now(), '0 0 9 * * *')
         "#,
     )
-    .bind(conation_uuid::generate_uuid_v7())
+    .bind(macro_uuid::generate_uuid_v7())
     .bind(USER_A)
     .execute(&pool)
     .await
@@ -827,7 +827,7 @@ async fn no_schedule_at_all_is_rejected(pool: PgPool) {
         VALUES ($1, $2, 'scheduleless', now())
         "#,
     )
-    .bind(conation_uuid::generate_uuid_v7())
+    .bind(macro_uuid::generate_uuid_v7())
     .bind(USER_A)
     .execute(&pool)
     .await
@@ -853,7 +853,7 @@ async fn occurrences_cascade_when_their_reminder_is_deleted(pool: PgPool) {
         r#"INSERT INTO reminder_occurrence (id, reminder_id, scheduled_for, sent_at)
            VALUES ($1, $2, $3, now())"#,
     )
-    .bind(conation_uuid::generate_uuid_v7())
+    .bind(macro_uuid::generate_uuid_v7())
     .bind(created.id)
     .bind(created.next_run_at)
     .execute(&pool)
@@ -864,7 +864,7 @@ async fn occurrences_cascade_when_their_reminder_is_deleted(pool: PgPool) {
     let duplicate = sqlx::query(
         r#"INSERT INTO reminder_occurrence (id, reminder_id, scheduled_for) VALUES ($1, $2, $3)"#,
     )
-    .bind(conation_uuid::generate_uuid_v7())
+    .bind(macro_uuid::generate_uuid_v7())
     .bind(created.id)
     .bind(created.next_run_at)
     .execute(&pool)
@@ -1167,7 +1167,7 @@ async fn a_blank_description_is_rejected_by_the_database(pool: PgPool) {
         r#"INSERT INTO reminder (id, user_id, description, next_run_at, remind_at)
            VALUES ($1, $2, '   ', now(), now())"#,
     )
-    .bind(conation_uuid::generate_uuid_v7())
+    .bind(macro_uuid::generate_uuid_v7())
     .bind(USER_A)
     .execute(&pool)
     .await
@@ -1187,7 +1187,7 @@ async fn an_over_long_description_is_rejected_by_the_database(pool: PgPool) {
         r#"INSERT INTO reminder (id, user_id, description, next_run_at, remind_at)
            VALUES ($1, $2, repeat('a', 2001), now(), now())"#,
     )
-    .bind(conation_uuid::generate_uuid_v7())
+    .bind(macro_uuid::generate_uuid_v7())
     .bind(USER_A)
     .execute(&pool)
     .await
@@ -1203,7 +1203,7 @@ async fn an_over_long_description_is_rejected_by_the_database(pool: PgPool) {
         r#"INSERT INTO reminder (id, user_id, description, next_run_at, remind_at)
            VALUES ($1, $2, repeat('a', 2000), now(), now())"#,
     )
-    .bind(conation_uuid::generate_uuid_v7())
+    .bind(macro_uuid::generate_uuid_v7())
     .bind(USER_A)
     .execute(&pool)
     .await
@@ -1220,7 +1220,7 @@ async fn a_non_uuid_entity_id_is_rejected_by_the_database(pool: PgPool) {
         r#"INSERT INTO reminder (id, user_id, description, entity_type, entity_id, next_run_at, remind_at)
            VALUES ($1, $2, 'x', 'document', 'not-a-uuid', now(), now())"#,
     )
-    .bind(conation_uuid::generate_uuid_v7())
+    .bind(macro_uuid::generate_uuid_v7())
     .bind(USER_A)
     .execute(&pool)
     .await
@@ -1959,7 +1959,7 @@ async fn insert_reminder_notification(
     reminder_id: Uuid,
     scheduled_for: Option<DateTime<Utc>>,
 ) {
-    let notification_id = conation_uuid::generate_uuid_v7();
+    let notification_id = macro_uuid::generate_uuid_v7();
     let metadata = match scheduled_for {
         Some(at) => serde_json::json!({ "scheduledFor": at.to_rfc3339() }),
         None => serde_json::json!({}),
@@ -2056,7 +2056,7 @@ async fn retracting_survives_an_unreadable_firing_stamp(pool: PgPool) {
         VALUES ($1, 'reminder', $2, 'reminder', 'reminders', '{"scheduledFor": "not a timestamp"}')
         "#,
     )
-    .bind(conation_uuid::generate_uuid_v7())
+    .bind(macro_uuid::generate_uuid_v7())
     .bind(reminder.id.to_string())
     .execute(&pool)
     .await
@@ -2577,7 +2577,7 @@ async fn delete_retracts_the_reminders_notification(pool: PgPool) {
         .expect("insert");
 
     // Stand in for the dispatcher having fired it.
-    let notification_id = conation_uuid::generate_uuid_v7();
+    let notification_id = macro_uuid::generate_uuid_v7();
     sqlx::query(
         r#"
         INSERT INTO notification
@@ -2635,7 +2635,7 @@ async fn delete_leaves_another_users_notification_alone(pool: PgPool) {
         .await
         .expect("insert");
 
-    let notification_id = conation_uuid::generate_uuid_v7();
+    let notification_id = macro_uuid::generate_uuid_v7();
     sqlx::query(
         r#"
         INSERT INTO notification
@@ -2671,7 +2671,7 @@ async fn soup_list_resolves_the_referenced_documents_file_type(pool: PgPool) {
     insert_user(&pool, USER_A).await;
     let repo = PgRemindersRepo::new(pool.clone());
 
-    let doc_id = conation_uuid::generate_uuid_v7().to_string();
+    let doc_id = macro_uuid::generate_uuid_v7().to_string();
     sqlx::query(
         r#"INSERT INTO "Document" (id, name, owner, "fileType") VALUES ($1, $2, $3, 'md')"#,
     )

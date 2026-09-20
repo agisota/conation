@@ -1,14 +1,14 @@
 #[allow(unused_imports)]
 use super::*;
 use crate::user::get_user_name::get_user_names_with_email;
-use conation_user_id::cowlike::CowLike;
-use conation_user_id::user_id::MacroUserId;
+use macro_user_id::cowlike::CowLike;
+use macro_user_id::user_id::MacroUserId;
 use non_empty::NonEmpty;
 use sqlx::{Pool, Postgres};
 
 fn parse_user_ids(
     ids: Vec<&str>,
-) -> anyhow::Result<NonEmpty<Vec<MacroUserId<conation_user_id::lowercased::Lowercase<'static>>>>> {
+) -> anyhow::Result<NonEmpty<Vec<MacroUserId<macro_user_id::lowercased::Lowercase<'static>>>>> {
     NonEmpty::new(
         ids.into_iter()
             .map(|id| MacroUserId::parse_from_str(id).map(|u| u.lowercase().into_owned()))

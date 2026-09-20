@@ -11,7 +11,7 @@ use crate::domain::{
     },
     ports::{GithubSyncClient, GithubSyncRepo, GithubSyncService},
 };
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use document_sub_type::DocumentSubType;
 use documents::domain::models::EditDocumentServiceArgs;
 use documents::domain::{

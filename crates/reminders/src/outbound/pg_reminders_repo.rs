@@ -7,8 +7,8 @@ use std::str::FromStr;
 
 use chrono::{DateTime, Utc};
 use chrono_tz::Tz;
-use conation_user_id::cowlike::CowLike;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::cowlike::CowLike;
+use macro_user_id::user_id::MacroUserIdStr;
 use model_entity::{Entity, EntityType};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -243,7 +243,7 @@ impl RemindersRepo for PgRemindersRepo {
         let (remind_at, cron, timezone) = schedule_columns(&new.schedule);
         // Time-ordered v7 so ids sort by creation, and so the id is known before
         // the insert rather than assigned by the database.
-        let id = conation_uuid::generate_uuid_v7();
+        let id = macro_uuid::generate_uuid_v7();
 
         let row = sqlx::query_as!(
             ReminderRow,
@@ -763,7 +763,7 @@ impl ReminderDispatchRepo for PgRemindersRepo {
         scheduled_for: DateTime<Utc>,
         retry_before: DateTime<Utc>,
     ) -> Result<bool, Self::Err> {
-        let id = conation_uuid::generate_uuid_v7();
+        let id = macro_uuid::generate_uuid_v7();
 
         // One statement covers both a first claim and a retry. The unique index
         // on (reminder_id, scheduled_for) makes the insert the claim; the

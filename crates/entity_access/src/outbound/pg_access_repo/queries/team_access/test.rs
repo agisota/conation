@@ -3,7 +3,7 @@ use super::*;
 use crate::domain::models::TeamRole;
 use anyhow::Result;
 use conation_db_migrator::MACRO_DB_MIGRATIONS;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use sqlx::PgPool;
 use uuid::Uuid;
 

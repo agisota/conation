@@ -7,7 +7,7 @@ use crate::domain::{
     },
     ports::EmailRepo,
 };
-use conation_user_id::cowlike::CowLike;
+use macro_user_id::cowlike::CowLike;
 use frecency::domain::{
     models::{AggregateId, FrecencyByIdsRequest, FrecencyData},
     ports::FrecencyQueryService,
@@ -25,7 +25,7 @@ mod test;
 async fn get_frecency_scores<U: FrecencyQueryService>(
     service: &U,
     include_frecency: bool,
-    user_id: conation_user_id::user_id::MacroUserIdStr<'_>,
+    user_id: macro_user_id::user_id::MacroUserIdStr<'_>,
     ids: &[model_entity::Entity<'_>],
 ) -> Result<HashMap<AggregateId<'static>, FrecencyData>, frecency::domain::models::FrecencyQueryErr>
 {
@@ -150,7 +150,7 @@ where
     pub(crate) async fn get_link_by_auth_id_and_macro_id_impl(
         &self,
         auth_id: &str,
-        macro_id: conation_user_id::user_id::MacroUserIdStr<'_>,
+        macro_id: macro_user_id::user_id::MacroUserIdStr<'_>,
     ) -> Result<Option<crate::domain::models::Link>, EmailErr> {
         Ok(self
             .email_repo

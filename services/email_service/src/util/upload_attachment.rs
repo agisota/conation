@@ -1,8 +1,8 @@
 use crate::outbound::email_api::GmailApi;
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD;
-use conation_user_id::cowlike::ArcCowStr;
-use conation_user_id::user_id::{CONATION_USER_ID_PREFIX, MacroUserId};
+use macro_user_id::cowlike::ArcCowStr;
+use macro_user_id::user_id::{CONATION_USER_ID_PREFIX, MacroUserId};
 use document_storage_service_client::DocumentStorageServiceClient;
 use email_api_client::domain::models::EmailApiError;
 use model::document::response::{CreateDocumentRequest, CreateDocumentResponse};
@@ -106,7 +106,7 @@ async fn upload_media_attachment(
         .map_err(|e| UploadAttachmentError::SfsUploadFailed(e.to_string()))?;
 
     // Store metadata in email_attachments_sfs table
-    let attachment_sfs_id = conation_uuid::generate_uuid_v7();
+    let attachment_sfs_id = macro_uuid::generate_uuid_v7();
     let sfs_id = Uuid::parse_str(&sfs_response.id).map_err(|e| {
         UploadAttachmentError::ParseError(format!("Failed to parse SFS ID as UUID: {}", e))
     })?;

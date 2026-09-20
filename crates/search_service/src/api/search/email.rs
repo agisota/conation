@@ -1,6 +1,6 @@
 use crate::api::context::SearchHandlerState;
 use crate::api::search::simple::SearchError;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use email_db_client::contacts::get::ThreadContactsMap;
 use indexmap::IndexMap;
 use models_email::service::message::{MessageSenderInfo, ThreadHistoryInfo};

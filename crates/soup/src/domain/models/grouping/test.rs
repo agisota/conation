@@ -1,5 +1,5 @@
 use chrono::DateTime;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use item_filters::ast::EntityFilterAst;
 use models_grouping::GroupByField;
 use models_pagination::SimpleSortMethod;

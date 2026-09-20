@@ -6,7 +6,7 @@ use super::types::{
 use ai_toolset::{AsyncTool, RequestContext, ServiceContext, ToolCallError, ToolResult};
 use ai_toolset::{ToolAnnotated, ToolAnnotations};
 use async_trait::async_trait;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use email::domain::ports::EmailService;
 use item_filters::{EmailFilters, EntityFilters};
 use models_properties::service::tag_sets::{TagFilter, TagMatch};

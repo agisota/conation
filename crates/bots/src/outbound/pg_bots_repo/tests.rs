@@ -9,7 +9,7 @@ use crate::domain::{
     service::BotServiceImpl,
 };
 use conation_db_migrator::MACRO_DB_MIGRATIONS;
-use conation_event_broker::{EventBrokerError, MacroEvent, MacroEventBroker, NoopMacroEventBroker};
+use macro_event_broker::{EventBrokerError, MacroEvent, MacroEventBroker, NoopMacroEventBroker};
 use entity_access::domain::models::{
     Entity, EntityAccessReceipt, EntityPermission, EntityType, MemberParticipantRole,
     ParticipantRole,

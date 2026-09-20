@@ -16,12 +16,12 @@ use email_service::calendar_refresh::ConnectionGatewayCalendarRefresh;
 use email_service::calendar_tokens::CalendarTokenProviderAdapter;
 use email_service::pubsub::calendar_backfill_adapters::RedisCalendarRequestGate;
 
-use conation_auth::InternalApiKey;
-use conation_auth::middleware::decode_jwt::JwtValidationArgs;
+use macro_auth::InternalApiKey;
+use macro_auth::middleware::decode_jwt::JwtValidationArgs;
 use conation_authorization::{
     MacroAuthJwtValidator, MacroAuthorizationServiceImpl, MacroAuthorizationState,
 };
-use conation_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
+use macro_event_broker::{KafkaEventPublisher, MacroEventBrokerService};
 use email_service::config::Config;
 use email_service::outbound::email_api::GmailApi;
 use email_service::util::redis::RedisClient;

@@ -13,7 +13,7 @@ use base64::Engine;
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD as BASE64URL_NO_PAD;
 use bytes::Bytes;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use http::header::{self, HeaderMap, HeaderName};
 use http::{HeaderValue, Method};
 use http_body_util::BodyExt;

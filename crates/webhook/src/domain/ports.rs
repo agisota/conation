@@ -8,7 +8,7 @@ use super::models::{
     WebhookWorkerDisposition,
 };
 use chrono::{DateTime, Utc};
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use std::{future::Future, time::Duration};
 
 /// Webhook repository.

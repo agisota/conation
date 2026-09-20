@@ -1,5 +1,5 @@
 use anyhow::Context;
-use conation_env_var::env_vars;
+use macro_env_var::env_vars;
 
 /// Holds all configuration loaded from environment variables.
 pub struct Config {

@@ -2,7 +2,7 @@
 
 use std::future::Future;
 
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use model_entity::Entity;
 use rootcause::Report;
 

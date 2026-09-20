@@ -1,14 +1,14 @@
 #[cfg(test)]
 mod tests;
 
-use conation_user_id::lowercased::Lowercase;
-use conation_user_id::user_id::MacroUserId;
+use macro_user_id::lowercased::Lowercase;
+use macro_user_id::user_id::MacroUserId;
 use model::user::UserName;
 use non_empty::NonEmpty;
 
 #[tracing::instrument(skip(db))]
 pub async fn get_user_name(db: &sqlx::PgPool, macro_user_id: &str) -> anyhow::Result<UserName> {
-    let macro_user_id = conation_uuid::string_to_uuid(macro_user_id)?;
+    let macro_user_id = macro_uuid::string_to_uuid(macro_user_id)?;
     let name: Option<UserName> = sqlx::query!(
         r#"
             SELECT macro_user_id, first_name, last_name FROM macro_user_info WHERE macro_user_id = $1

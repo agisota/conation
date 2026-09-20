@@ -701,7 +701,7 @@ impl ConationTaskId {
     /// Create from a raw short UUID string, validating that all characters
     /// are in the Flickr base58 alphabet.
     pub fn from_short_uuid(s: &str) -> Option<Self> {
-        let converter = conation_uuid::ShortUuidConverter::default();
+        let converter = macro_uuid::ShortUuidConverter::default();
         if converter.is_short_uuid(s) {
             Some(Self {
                 short_uuid: s.to_string(),
@@ -713,7 +713,7 @@ impl ConationTaskId {
 
     /// Create from a full UUID by converting to a short UUID.
     pub fn from_uuid(uuid: &uuid::Uuid) -> Self {
-        let converter = conation_uuid::ShortUuidConverter::default();
+        let converter = macro_uuid::ShortUuidConverter::default();
         Self {
             short_uuid: converter.from_uuid(uuid),
         }
@@ -721,7 +721,7 @@ impl ConationTaskId {
 
     /// Convert back to a full UUID.
     pub fn to_uuid(&self) -> anyhow::Result<uuid::Uuid> {
-        let converter = conation_uuid::ShortUuidConverter::default();
+        let converter = macro_uuid::ShortUuidConverter::default();
         converter.to_uuid(&self.short_uuid)
     }
 

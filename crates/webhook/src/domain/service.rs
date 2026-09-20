@@ -16,8 +16,8 @@ use super::{
     ports::{WebhookError, WebhookRepo, WebhookService, WebhookValidationClient},
 };
 use chrono::Utc;
-use conation_event_broker::MacroEventBroker;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_event_broker::MacroEventBroker;
+use macro_user_id::user_id::MacroUserIdStr;
 use std::net::IpAddr;
 use url::Url;
 

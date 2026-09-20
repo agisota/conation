@@ -1,6 +1,6 @@
 use ::activity::{Action, Actor};
 use chrono::Utc;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use model_entity::EntityType as ActivityEntityType;
 use uuid::Uuid;
 

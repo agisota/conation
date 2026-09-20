@@ -18,7 +18,7 @@ use conation_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationRejection, MacroAuthorizationService,
     OptionalMacroAuthorizationExtractor, UserOrInternal, UserOrInternalService,
 };
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::models::{
     AccessLevel, EditAccessLevel, Entity, EntityAccessAuth, EntityAccessReceipt, EntityPermission,
     EntityType as AccessEntityType, RequiredPermission, ViewAccessLevel,

@@ -107,7 +107,7 @@ impl AttachmentProcessor {
         attachment: &AttachmentUploadMetadata,
         sfs_id_str: &str,
     ) -> anyhow::Result<()> {
-        let attachment_sfs_id = conation_uuid::generate_uuid_v7();
+        let attachment_sfs_id = macro_uuid::generate_uuid_v7();
         let sfs_id = Uuid::parse_str(sfs_id_str).context("Failed to parse SFS ID as UUID")?;
 
         email_db_client::attachments::sfs::insert_attachment_sfs(

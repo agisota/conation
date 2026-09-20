@@ -1,6 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use ::conation_auth::{
+use ::macro_auth::{
     conation_api_token::ConationApiToken,
     error::MacroAuthError,
     middleware::decode_jwt::{JwtToken, JwtValidationArgs, MacroAccessToken},

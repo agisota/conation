@@ -30,7 +30,7 @@ pub async fn update_user_name(
     first_name: Option<String>,
     last_name: Option<String>,
 ) -> anyhow::Result<()> {
-    let macro_user_id = conation_uuid::string_to_uuid(macro_user_id)?;
+    let macro_user_id = macro_uuid::string_to_uuid(macro_user_id)?;
     update(db, &macro_user_id, first_name, last_name).await?;
 
     Ok(())

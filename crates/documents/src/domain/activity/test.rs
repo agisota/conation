@@ -1,6 +1,6 @@
 use ::activity::{Action, activity_id};
 use chrono::{TimeZone as _, Utc};
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use model::document::FileType;
 use model_entity::EntityType;
 use uuid::Uuid;

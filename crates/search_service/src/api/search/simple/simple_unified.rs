@@ -11,7 +11,7 @@ use axum::{
     response::Json,
 };
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
-use conation_user_id::user_id::MacroUserId;
+use macro_user_id::user_id::MacroUserId;
 use crm::domain::auth::CrmTeamReceipt;
 use entity_access::domain::models::MemberTeamRole;
 use model::{response::ErrorResponse, user::UserContext};

@@ -38,7 +38,7 @@ use chrono::{DateTime, Utc};
 use conation_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
 };
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use entity_access::{
     domain::{
         models::{

@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use std::sync::{Arc, Mutex};
 
 use chrono::Utc;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::models::{EntityAccessReceipt, ViewAccessLevel};
 use model_entity::{Entity, EntityType};
 

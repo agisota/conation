@@ -6,7 +6,7 @@ pub mod get_user_organization;
 pub mod get_user_permissions;
 
 mod get_legacy_user_info;
-use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId};
+use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId};
 pub use get_legacy_user_info::{LegacyUserInfo, get_legacy_user_info};
 use model::user::{UserInfo, UserInfoWithMacroUserId};
 
@@ -122,7 +122,7 @@ pub async fn get_user_profile_by_fusionauth_user_id_and_email(
     fusionauth_user_id: &str,
     email: &str,
 ) -> anyhow::Result<Option<(String, Option<i32>)>> {
-    let fusionauth_user_id = conation_uuid::string_to_uuid(fusionauth_user_id)?;
+    let fusionauth_user_id = macro_uuid::string_to_uuid(fusionauth_user_id)?;
     let profile = sqlx::query!(
         r#"
         SELECT id, "organizationId" as "organization_id?"
@@ -145,7 +145,7 @@ pub async fn get_user_profiles_by_fusionauth_user_id(
     db: &sqlx::Pool<sqlx::Postgres>,
     fusionauth_user_id: &str,
 ) -> anyhow::Result<Vec<String>> {
-    let fusionauth_user_id = conation_uuid::string_to_uuid(fusionauth_user_id)?;
+    let fusionauth_user_id = macro_uuid::string_to_uuid(fusionauth_user_id)?;
     let profiles = sqlx::query!(
         r#"
         SELECT id

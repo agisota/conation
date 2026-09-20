@@ -5,7 +5,7 @@ mod test;
 
 use std::collections::HashSet;
 
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use sqlx::PgPool;
 
 use crate::domain::{
@@ -60,7 +60,7 @@ impl GithubSyncRepo for PgGithubSyncRepo {
         let short_ids: Vec<String> = task_ids.iter().map(|t| t.short_uuid.clone()).collect();
         let ids: Vec<uuid::Uuid> = short_ids
             .iter()
-            .map(|_| conation_uuid::generate_uuid_v7())
+            .map(|_| macro_uuid::generate_uuid_v7())
             .collect();
         // Full-UUID document ids used to look up each task's owning team;
         // an unconvertible short UUID simply matches no team_task row.

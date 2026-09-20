@@ -25,7 +25,7 @@ fn domain_parts_serialize_directly_into_the_browser_contract() {
         stop: None,
         pending: false,
     };
-    let session = AgentSessionId::new_from_uuid(conation_uuid::Uuid::from_u128(7));
+    let session = AgentSessionId::new_from_uuid(macro_uuid::Uuid::from_u128(7));
 
     assert_eq!(
         serde_json::to_value(FoldedMessage::new(session, message)).unwrap(),

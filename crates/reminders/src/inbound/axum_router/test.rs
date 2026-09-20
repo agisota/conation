@@ -8,7 +8,7 @@ use chrono::{DateTime, TimeZone, Utc};
 use conation_authorization::{
     InternalIdentityClaims, MacroAuthorizationError, MacroAuthorizationService,
 };
-use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId};
+use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId};
 use entity_access::domain::models::{
     AccessError, AccessLevel, AnyEntityPermission, BotAccessScope, BotId, CallChannelInfo,
     Entity as AccessEntity, EntityPermission, RequiredPermission, TeamRole, UserTeamInfo,

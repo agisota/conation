@@ -1,10 +1,10 @@
 use std::borrow::Cow;
 
 use chrono::Utc;
-use conation_event_broker::{
+use macro_event_broker::{
     EventBrokerError, MacroEventCollection as _, MessageParts, MessageWrapper,
 };
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use model_entity::EntityType;
 use uuid::Uuid;
 

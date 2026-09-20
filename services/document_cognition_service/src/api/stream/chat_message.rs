@@ -24,11 +24,11 @@ use axum::middleware::Next;
 use axum::response::IntoResponse;
 use chat::domain::events::{ChatCreatedMetadata, ChatMacroEvent};
 use chat::domain::ports::MessageService;
-use conation_auth::headers::AccessTokenExtractor;
+use macro_auth::headers::AccessTokenExtractor;
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_db_client::dcs::create_chat;
-use conation_event_broker::MacroEventBroker;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_event_broker::MacroEventBroker;
+use macro_user_id::user_id::MacroUserIdStr;
 use futures::StreamExt;
 use memory::domain::MemoryService;
 use model_entity::{Entity, EntityType};
@@ -548,7 +548,7 @@ fn stream_and_save_message(
 
         let rig_messages = agent::to_rig_messages(&request);
         let usage_ctx = ai_usage::UsageContext::new(ai_usage::AiFeature::Chat, user_id.clone())
-            .with_entity(conation_uuid::string_to_uuid(&chat_id).ok());
+            .with_entity(macro_uuid::string_to_uuid(&chat_id).ok());
         // Carry the feature on the context so tool-spawned subagents attribute to it.
         let mut tool_context = tool_context;
         tool_context.usage_context = usage_ctx.clone();

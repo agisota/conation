@@ -9,7 +9,7 @@ pub async fn create_activity<'e, E>(executor: E, channel_id: &Uuid, user_id: &st
 where
     E: Executor<'e, Database = Postgres>,
 {
-    let id = conation_uuid::generate_uuid_v7();
+    let id = macro_uuid::generate_uuid_v7();
 
     let activity = sqlx::query_as!(
         Activity,

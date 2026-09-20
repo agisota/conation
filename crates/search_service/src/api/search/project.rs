@@ -1,5 +1,5 @@
 use crate::api::search::simple::SearchError;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use indexmap::IndexMap;
 use models_properties::{EntityReference, EntityType};
 use models_search::project::{

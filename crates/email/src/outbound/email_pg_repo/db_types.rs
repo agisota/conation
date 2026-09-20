@@ -4,7 +4,7 @@ use crate::domain::models::{
     MessageRow, RecipientType, SimpleMessageInfo, ThreadRow,
 };
 use chrono::{DateTime, Utc};
-use conation_user_id::{cowlike::CowLike, email::EmailStr, user_id::MacroUserIdStr};
+use macro_user_id::{cowlike::CowLike, email::EmailStr, user_id::MacroUserIdStr};
 use doppleganger::{Doppleganger, Mirror};
 use sqlx::Type;
 use uuid::Uuid;
@@ -473,7 +473,7 @@ impl From<DbSimpleMessageRow> for SimpleMessageInfo {
 }
 
 impl DbLink {
-    pub(crate) fn try_into_model(self) -> Result<Link, conation_user_id::error::ParseErr> {
+    pub(crate) fn try_into_model(self) -> Result<Link, macro_user_id::error::ParseErr> {
         let DbLink {
             id,
             macro_id,

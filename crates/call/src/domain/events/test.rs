@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
-use conation_event_broker::{Event, MacroEvent};
+use macro_event_broker::{Event, MacroEvent};
 use conation_event_topics::{MacroCallsTopic, Topic};
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use serde_json::{Value, json};
 use uuid::Uuid;
 

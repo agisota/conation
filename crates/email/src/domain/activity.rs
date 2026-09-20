@@ -10,7 +10,7 @@ use ::activity::{
     Action, Activity, ActivitySource, Actor, CommonAction, DomainActivity, EntityType, Ingest,
     event_time,
 };
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use uuid::Uuid;
 
 use super::events::{EmailEventOrigin, EmailTopicEvent};

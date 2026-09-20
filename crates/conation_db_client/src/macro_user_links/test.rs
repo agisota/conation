@@ -1,7 +1,7 @@
 use super::*;
 
 async fn insert_user(pool: &Pool<Postgres>, id: &str) -> anyhow::Result<()> {
-    let macro_user_id = conation_uuid::generate_uuid_v7();
+    let macro_user_id = macro_uuid::generate_uuid_v7();
     let stripe_customer_id = format!("cus_{macro_user_id}");
     sqlx::query!(
         r#"
@@ -32,7 +32,7 @@ async fn insert_user(pool: &Pool<Postgres>, id: &str) -> anyhow::Result<()> {
 }
 
 async fn insert_link(pool: &Pool<Postgres>, macro_id: &str, email: &str) -> anyhow::Result<Uuid> {
-    let link_id = conation_uuid::generate_uuid_v7();
+    let link_id = macro_uuid::generate_uuid_v7();
     sqlx::query!(
         r#"
         INSERT INTO email_links (id, macro_id, fusionauth_user_id, email_address, provider)

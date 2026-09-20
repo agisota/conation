@@ -5,7 +5,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 
 use crate::api::context::{ApiContext, AuthorizationService};
 

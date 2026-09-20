@@ -2,10 +2,10 @@ use ::activity::Action;
 use ::activity::Actor;
 use ::activity::EntityType;
 use chrono::Utc;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use uuid::Uuid;
 
-use conation_event_broker::Event;
+use macro_event_broker::Event;
 
 use super::*;
 use crate::domain::broker_events::{

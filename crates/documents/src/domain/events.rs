@@ -11,7 +11,7 @@ use activity::Actor;
 use chrono::{DateTime, Utc};
 use conation_event_broker::{Event, MacroEvent, TopicEvent};
 use conation_event_topics::MacroDocumentsTopic;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use document_sub_type::DocumentSubType;
 use model::document::FileType;
 use serde::{Deserialize, Serialize};

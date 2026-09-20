@@ -22,7 +22,7 @@ use conation_authorization::{
     AnyPrincipal, BotOnly, MacroAuthorization, MacroAuthorizationExtractor,
     MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
 };
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use entity_access::{
     domain::{
         models::{EntityAccessReceipt, MemberParticipantRole},

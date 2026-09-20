@@ -13,7 +13,7 @@ use axum::{
 use conation_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
 };
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use frecency::domain::models::AggregateFrecency;
 use models_pagination::{
     CursorOptionExt, CursorWithValAndFilter, PaginateOn, Paginated, SimpleSortMethod,

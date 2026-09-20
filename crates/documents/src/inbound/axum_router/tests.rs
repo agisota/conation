@@ -10,7 +10,7 @@ use conation_authorization::{
     INTERNAL_API_KEY_HEADER, INTERNAL_CONATION_USER_ID_HEADER, InternalIdentityClaims,
     MacroAuthorizationError, MacroAuthorizationService, MacroAuthorizationState,
 };
-use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
+use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr};
 use embedding::embedding_provider::openai::TextEmbedding3Small;
 use entity_access::domain::{
     models::{

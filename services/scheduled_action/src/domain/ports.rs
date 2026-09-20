@@ -4,8 +4,8 @@ use super::models::{
 };
 use anyhow::Result;
 use chrono::{DateTime, Utc};
-use conation_user_id::user_id::MacroUserIdStr;
-use conation_uuid::Uuid;
+use macro_user_id::user_id::MacroUserIdStr;
+use macro_uuid::Uuid;
 use tokio::sync::mpsc::{Receiver, Sender};
 
 pub trait ScheduledActionRepo: Send + Sync + 'static {

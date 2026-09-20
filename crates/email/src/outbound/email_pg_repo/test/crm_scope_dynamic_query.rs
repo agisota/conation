@@ -21,7 +21,7 @@
 //! UUID — both of which the new ANY-based resolution must cover.
 
 use super::*;
-use conation_user_id::cowlike::CowLike;
+use macro_user_id::cowlike::CowLike;
 
 // === Constants matching the fixture ===
 

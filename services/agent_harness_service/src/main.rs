@@ -101,14 +101,14 @@ use channels::outbound::contacts_dispatcher::ContactsChannelDispatcher;
 use channels::outbound::notification_sender::NotificationChannelSender;
 use channels::outbound::pg_channels_repo::PgChannelsRepo;
 use channels::outbound::pg_side_effect_context::PgChannelSideEffectContext;
-use conation_auth::middleware::decode_jwt::JwtValidationArgs;
+use macro_auth::middleware::decode_jwt::JwtValidationArgs;
 use conation_authorization::{
     InternalAuthConfig, MacroAuthJwtValidator, MacroAuthorizationServiceImpl,
     MacroAuthorizationState, PgBotAuthorizationRepo, PgBotAuthorizer, PgHarnessAuthorizationRepo,
     PgHarnessAuthorizer, PgUserApiKeyAuthorizationRepo, PgUserApiKeyAuthorizer,
 };
 use conation_entrypoint::{MacroEntrypoint, shutdown_signal};
-use conation_event_broker::{
+use macro_event_broker::{
     KafkaConsumerAdapter, KafkaEventPublisher, MacroEvent as _, MacroEventBrokerService,
     MacroEventCollection as _, MacroEventConsumerService,
 };
@@ -156,7 +156,7 @@ impl GroupName for AgentHarnessConsumerGroup {
     const GROUP_NAME: &'static str = "agent-harness-service";
 }
 
-conation_event_broker::declare_topics!(DeclaredMacroEvent: AgentSessionMacroEvent);
+macro_event_broker::declare_topics!(DeclaredMacroEvent: AgentSessionMacroEvent);
 
 type HarnessKafkaAdapter = KafkaConsumerAdapter<AgentHarnessConsumerGroup, DeclaredMacroEvent>;
 type HarnessConsumer = MacroEventConsumerService<DeclaredMacroEvent, HarnessKafkaAdapter>;
@@ -353,7 +353,7 @@ async fn run() -> anyhow::Result<()> {
     let broker = MacroEventBrokerService::new(
         KafkaEventPublisher::new(config.kafka_brokers.as_ref())
             .context("failed to create kafka event publisher")?,
-        conation_event_broker::GlobalSpawner,
+        macro_event_broker::GlobalSpawner,
     );
     let notifications = Arc::new(notification::domain::service::SqsNotificationIngress {
         queue: notification::outbound::queue::SqsQueue::new(

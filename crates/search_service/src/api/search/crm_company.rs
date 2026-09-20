@@ -8,7 +8,7 @@
 
 use std::collections::HashMap;
 
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use crm::domain::auth::CrmTeamReceipt;
 use crm::domain::model::CrmCompanyForSoup;
 use crm::domain::search_repo::CrmCompanySearchCursor;

@@ -5,7 +5,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
-use conation_event_broker::MacroEventBroker as _;
+use macro_event_broker::MacroEventBroker as _;
 use documents::domain::events::{DocumentMacroEvent, DocumentSyncContentUpdatedMetadata};
 use model::document::FileType;
 

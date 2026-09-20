@@ -7,7 +7,7 @@ use conation_authorization::{
     MacroAuthorizationState,
 };
 use conation_service_urls::AppServiceUrl;
-use conation_user_id::{
+use macro_user_id::{
     lowercased::Lowercase,
     user_id::{MacroUserId, MacroUserIdStr},
 };

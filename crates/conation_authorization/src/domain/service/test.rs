@@ -4,7 +4,7 @@ use std::{
 };
 
 use bot_id::BotId;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use model_user::UserContext;
 use rootcause::Report;
 use uuid::Uuid;

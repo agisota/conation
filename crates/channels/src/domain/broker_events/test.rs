@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use conation_event_broker::Event;
+use macro_event_broker::Event;
 use serde_json::json;
 
 use super::*;

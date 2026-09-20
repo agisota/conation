@@ -1,4 +1,4 @@
-use conation_user_id::{email::Email, lowercased::Lowercase, user_id::MacroUserId};
+use macro_user_id::{email::Email, lowercased::Lowercase, user_id::MacroUserId};
 
 pub mod add_user_role;
 
@@ -29,7 +29,7 @@ pub async fn update_macro_user_id(
     user_id: &str,
     macro_user_id: &str,
 ) -> anyhow::Result<()> {
-    let macro_user_id = conation_uuid::string_to_uuid(macro_user_id)?;
+    let macro_user_id = macro_uuid::string_to_uuid(macro_user_id)?;
     sqlx::query!(
         r#"
             UPDATE "User"

@@ -8,7 +8,7 @@ use comms_db_client::{
     participants::remove_participant::{RemoveParticipantOptions, remove_participant},
 };
 use conation_authorization::{InternalOnly, MacroAuthorizationExtractor};
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use model::{authentication::webhooks::FusionAuthUserWebhook, user::UserInfoWithMacroUserId};
 use notification::domain::ports::NotificationRepository;
 use notification::outbound::repository::DbNotificationRepository;

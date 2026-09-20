@@ -28,8 +28,8 @@ pub async fn insert_in_progress_email_link(
     macro_user_id: &str,
     email: &str,
 ) -> anyhow::Result<uuid::Uuid> {
-    let id = conation_uuid::generate_uuid_v7();
-    let macro_user_id = conation_uuid::string_to_uuid(macro_user_id)?;
+    let id = macro_uuid::generate_uuid_v7();
+    let macro_user_id = macro_uuid::string_to_uuid(macro_user_id)?;
 
     sqlx::query!(
         r#"
@@ -59,7 +59,7 @@ pub async fn get_in_progress_email_link(
     db: &sqlx::Pool<sqlx::Postgres>,
     link_id: &str,
 ) -> anyhow::Result<Option<InProgressEmailLink>> {
-    let link_id = conation_uuid::string_to_uuid(link_id)?;
+    let link_id = macro_uuid::string_to_uuid(link_id)?;
     let result = sqlx::query_as!(
         InProgressEmailLink,
         r#"
@@ -84,7 +84,7 @@ pub async fn delete_in_progress_email_link(
     db: &sqlx::Pool<sqlx::Postgres>,
     link_id: &str,
 ) -> anyhow::Result<()> {
-    let link_id = conation_uuid::string_to_uuid(link_id)?;
+    let link_id = macro_uuid::string_to_uuid(link_id)?;
     sqlx::query!(
         r#"
             DELETE FROM

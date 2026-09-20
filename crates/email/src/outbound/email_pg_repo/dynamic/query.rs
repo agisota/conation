@@ -3,7 +3,7 @@ use super::resolve::{ResolvedFilters, can_short_circuit, resolve_filters};
 use crate::domain::models::{PreviewView, PreviewViewStandardLabel};
 use crate::outbound::email_pg_repo::db_types::*;
 use chrono::{DateTime, Utc};
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use entity_access::outbound::get_user_source_ids;
 use filter_ast::Expr;
 use item_filters::SharedEmailFilter;

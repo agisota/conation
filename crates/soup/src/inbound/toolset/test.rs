@@ -406,7 +406,7 @@ fn test_tag_filter_expr_ands_with_existing_propf() {
 #[test]
 fn test_from_soup_item_resolves_tags_via_caller_map() {
     use crate::domain::models::SoupPropertiesField;
-    use conation_user_id::user_id::MacroUserIdStr;
+    use macro_user_id::user_id::MacroUserIdStr;
     use models_properties::service::property_definition::PropertyDefinition;
     use models_properties::service::property_value::PropertyValue;
     use models_properties::service::tag_sets::{AppliedTag, TagScope};

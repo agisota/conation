@@ -17,7 +17,7 @@ use complete_graph::GraphqlRequestParts;
 use conation_authorization::{
     OptionalMacroAuthorizationExtractor, UserOrInternalService, UserOrInternalServiceAuthorization,
 };
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use graphql_soup::soup_item_loader;
 
 const GRAPHQL_PATH: &str = "/soup/graphql";

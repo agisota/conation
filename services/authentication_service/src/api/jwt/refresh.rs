@@ -8,7 +8,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use conation_auth::{error::MacroAuthError, middleware::decode_jwt::JwtValidationArgs};
+use macro_auth::{error::MacroAuthError, middleware::decode_jwt::JwtValidationArgs};
 use fusionauth::{FusionAuthClient, error::FusionAuthClientError};
 use model::response::UserTokensResponse;
 use std::sync::Arc;
@@ -65,7 +65,7 @@ pub async fn handler(
     token_context: Extension<TokenContext>,
     cookies: Cookies,
 ) -> Result<Json<UserTokensResponse>, RefreshError> {
-    match conation_auth::middleware::decode_jwt::validate_conation_access_token(
+    match macro_auth::middleware::decode_jwt::validate_conation_access_token(
         &token_context.access_token,
         &jwt,
     ) {

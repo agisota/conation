@@ -12,7 +12,7 @@ use crate::{
     },
 };
 use conation_db_migrator::MACRO_DB_MIGRATIONS;
-use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use filter_ast::Expr;
 use item_filters::{
     PropertyFilter,

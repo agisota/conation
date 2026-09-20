@@ -3,7 +3,7 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::{Extension, Json};
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use email_service::util::upload_attachment::{
     UploadAttachmentContext, UploadAttachmentError, upload_attachment,
 };

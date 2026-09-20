@@ -2,7 +2,7 @@
 
 use std::collections::HashSet;
 
-use conation_user_id::cowlike::CowLike;
+use macro_user_id::cowlike::CowLike;
 use futures::future::join_all;
 use notification::domain::models::SendNotificationRequestBuilder;
 use notification::domain::service::NotificationIngress;

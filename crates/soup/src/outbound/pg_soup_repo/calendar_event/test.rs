@@ -1,6 +1,6 @@
 use super::*;
 use conation_db_migrator::MACRO_DB_MIGRATIONS;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use models_pagination::Frecency;
 
 #[sqlx::test(migrator = "MACRO_DB_MIGRATIONS")]

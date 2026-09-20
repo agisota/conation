@@ -146,7 +146,7 @@ async fn test_upsert_task_ids_backfills_team_on_existing_rows(pool: Pool<Postgre
     // Simulate a legacy row written before team_id existed.
     sqlx::query!(
         r#"INSERT INTO github_pr_tasks (id, github_key, task_id) VALUES ($1, $2, $3)"#,
-        conation_uuid::generate_uuid_v7(),
+        macro_uuid::generate_uuid_v7(),
         key.as_ref(),
         &team_task.short_uuid
     )

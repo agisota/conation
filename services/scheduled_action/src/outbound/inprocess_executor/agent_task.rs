@@ -59,7 +59,7 @@ pub async fn run_agent_task(
 async fn fetch_user_memory(
     db: &PgPool,
     tool_context: &ToolServiceContext,
-    owner: &conation_user_id::user_id::MacroUserIdStr<'static>,
+    owner: &macro_user_id::user_id::MacroUserIdStr<'static>,
 ) -> Option<String> {
     let tools = tools_for(AiHost::Chat);
     let tools = ToolSetWithPrompt {

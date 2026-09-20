@@ -13,7 +13,7 @@ use anyhow::Context;
 use channels::domain::list_service::ChannelListServiceImpl;
 use channels::outbound::pg_channels_repo::PgChannelsRepo;
 use conation_env::Environment;
-use conation_env_var::{env_var, maybe_env_var};
+use macro_env_var::{env_var, maybe_env_var};
 use conation_service_urls::{
     AiEditingWorkerUrl, ConnectionGatewayUrl, DocumentStorageServiceUrl, EmailServiceUrl,
     LexicalServiceUrl, SyncServiceUrl,
@@ -258,8 +258,8 @@ pub async fn build_tool_service_context_from_env(
         properties_service.clone(),
         entity_access_service.clone(),
     );
-    let conation_event_broker = conation_event_broker::MacroEventBrokerService::new(
-        conation_event_broker::KafkaEventPublisher::new(env.kafka_brokers.as_ref())
+    let conation_event_broker = macro_event_broker::MacroEventBrokerService::new(
+        macro_event_broker::KafkaEventPublisher::new(env.kafka_brokers.as_ref())
             .context("failed to create kafka event publisher")?,
         event_task_tracker,
     );

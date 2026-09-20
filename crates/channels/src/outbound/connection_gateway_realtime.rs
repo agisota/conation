@@ -9,7 +9,7 @@ use crate::domain::{
     side_effects::ChannelRealtimeEffect,
 };
 use channel_sender::ChannelSender;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use connection_gateway_client::ConnectionGatewayClient;
 use model_entity::EntityType as GatewayEntityType;
 use serde::Serialize;

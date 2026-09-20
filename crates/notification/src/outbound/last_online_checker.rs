@@ -1,7 +1,7 @@
 //! Implementation of [LastOnlineChecker] that delegates to [LastOnlineService].
 
 use crate::domain::models::email_notification_digest::ports::LastOnlineChecker;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use last_online_tracker::domain::{ports::LastOnlineRepo, services::LastOnlineService};
 use rootcause::Report;
 use std::time::Duration;

@@ -5,7 +5,7 @@ mod test;
 
 use std::collections::HashSet;
 
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use rootcause::Report;
 use serde::Serialize;
 

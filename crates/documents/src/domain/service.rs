@@ -24,7 +24,7 @@ use activity::{Actor, Attribution};
 use anyhow::anyhow;
 use cloudfront_sign::{SignedOptions, get_signed_url};
 use conation_event_broker::MacroEventBroker;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use connection::domain::models::{InvalidationEvent, InvalidationReason};
 use connection::domain::ports::ConnectionService;
 use document_sub_type::DocumentSubType;
@@ -213,9 +213,9 @@ const GITHUB_PULL_REQUEST_FOREIGN_ENTITY_SOURCE: &str = "github_pull_request";
 const MAX_DOCUMENT_NAME_GRAPHEMES: usize = 200;
 
 fn short_id_for_entity_id(entity_id: &str) -> Result<String, DocumentError> {
-    let uuid = conation_uuid::string_to_uuid(entity_id)
+    let uuid = macro_uuid::string_to_uuid(entity_id)
         .map_err(|e| DocumentError::BadRequest(format!("invalid entity_id: {e}")))?;
-    Ok(conation_uuid::ShortUuidConverter::default().from_uuid(&uuid))
+    Ok(macro_uuid::ShortUuidConverter::default().from_uuid(&uuid))
 }
 
 fn invalid_team_task_slug() -> DocumentError {

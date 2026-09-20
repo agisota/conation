@@ -13,7 +13,7 @@
 //! said, what it ran, and what it wanted permission to do.
 
 use agent_runtime_protocol::domain::action::AgentActionId;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use non_empty::NonEmpty;
 use serde::Serialize;
 use specta::Type;

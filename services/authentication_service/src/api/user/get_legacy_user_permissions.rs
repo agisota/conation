@@ -4,7 +4,7 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use conation_user_id::user_id::MacroUserId;
+use macro_user_id::user_id::MacroUserId;
 use roles_and_permissions::domain::model::PermissionId;
 
 use crate::api::{context::ApiContext, permissions_extractor::DbPermissionsExtractor};

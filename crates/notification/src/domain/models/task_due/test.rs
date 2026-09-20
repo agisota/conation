@@ -1,5 +1,5 @@
 use chrono::{Duration, TimeZone, Utc};
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use model_entity::EntityType;
 
 use super::{TaskDueKind, TaskDueNotification};

@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use models_properties::service::property_definition::PropertyDefinition;
 use models_properties::service::property_definition_with_options::PropertyDefinitionWithOptions;
 use models_properties::service::property_option::{PropertyOption, PropertyOptionValue};
@@ -318,7 +318,7 @@ pub async fn create_property_definition(
     let (team_id, user_id) = owner.into_ids();
     let user_id: Option<&str> = user_id.map(|u| u.as_ref());
 
-    let id = conation_uuid::generate_uuid_v7();
+    let id = macro_uuid::generate_uuid_v7();
 
     let mut tx = pool.begin().await?;
 
@@ -411,7 +411,7 @@ pub(super) async fn create_property_option_tx(
     value: PropertyOptionValue,
     color: Option<String>,
 ) -> anyhow::Result<PropertyOption> {
-    let id = conation_uuid::generate_uuid_v7();
+    let id = macro_uuid::generate_uuid_v7();
     let (number_value, string_value) = value.to_db_values();
 
     let row = sqlx::query!(

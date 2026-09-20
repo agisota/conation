@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use chrono::{DateTime, TimeZone, Utc};
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use notification::domain::models::request::NotificationResult;
 use notification::domain::models::{Notification, SendNotificationRequest};
 use notification::domain::service::SendNotificationError;

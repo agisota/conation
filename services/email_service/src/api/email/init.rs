@@ -13,8 +13,8 @@ use bytes::Bytes;
 use calendar_events::domain::models::{CalendarGrantIntent, GoogleScopeSet};
 use conation_authorization::{MacroAuthorizationExtractor, UserOrInternal};
 use conation_db_client::in_progress_user_link::InProgressUserLink;
-use conation_user_id::email::EmailStr;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::email::EmailStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use email::domain::events::{EmailMacroEvent, LinkConnectedMetadata};
 use email::domain::models::UserProvider;
 use email::domain::ports::EmailRepo;
@@ -63,7 +63,7 @@ pub enum InitError {
     BadRequest(String),
 
     #[error("Invalid input")]
-    Parse(#[from] conation_user_id::error::ParseErr),
+    Parse(#[from] macro_user_id::error::ParseErr),
 
     #[error("Inbox is already connected by another user")]
     SharedInboxConflict {
@@ -641,7 +641,7 @@ async fn init_user(
 
         if provider_kind == EmailProviderKind::Stalwart {
             let mailbox = resolve_stalwart_mailbox(&ctx.db, &email, local_part.as_deref()).await?;
-            let random_password = conation_uuid::generate_uuid_v7().to_string();
+            let random_password = macro_uuid::generate_uuid_v7().to_string();
             let provider = StalwartProvider::from_env().map_err(|error| {
                 anyhow::anyhow!("Failed to load Stalwart provider for mailbox provision: {error}")
             })?;
@@ -1063,7 +1063,7 @@ fn new_gmail_link(
     let email_address = EmailStr::try_from(email_address)?;
     let is_primary = Link::derive_is_primary(&macro_id, &email_address);
     Ok(Link {
-        id: conation_uuid::generate_uuid_v7(),
+        id: macro_uuid::generate_uuid_v7(),
         macro_id,
         fusionauth_user_id: fusion_user_id,
         email_address,
@@ -1115,7 +1115,7 @@ async fn seed_stalwart_threads(
             .filter_map(|message| message.date)
             .max();
         let now = chrono::Utc::now();
-        let thread_db_id = conation_uuid::generate_uuid_v7();
+        let thread_db_id = macro_uuid::generate_uuid_v7();
         let mut service_messages = Vec::with_capacity(thread_messages.len());
         for message in thread_messages {
             let mut seeded = seed_stalwart_message(thread_db_id, link_id, message);
@@ -1152,7 +1152,7 @@ async fn seed_stalwart_threads(
                     if let Err(error) = email_db_client::attachments::sfs::insert_attachment_sfs(
                         db,
                         &AttachmentSfs {
-                            id: conation_uuid::generate_uuid_v7(),
+                            id: macro_uuid::generate_uuid_v7(),
                             attachment_id: Some(attachment_id),
                             sfs_id,
                         },
@@ -1182,7 +1182,7 @@ async fn seed_stalwart_threads(
 }
 
 async fn provision_stalwart_calendar(db: &sqlx::PgPool, link: &Link) -> anyhow::Result<()> {
-    let account_id = conation_uuid::generate_uuid_v7();
+    let account_id = macro_uuid::generate_uuid_v7();
     sqlx::query(
         r#"
         INSERT INTO calendar_accounts (
@@ -1215,7 +1215,7 @@ async fn provision_stalwart_calendar(db: &sqlx::PgPool, link: &Link) -> anyhow::
         ON CONFLICT (account_id, provider_calendar_id) DO NOTHING
         "#,
     )
-    .bind(conation_uuid::generate_uuid_v7())
+    .bind(macro_uuid::generate_uuid_v7())
     .bind(account_id)
     .execute(db)
     .await?;
@@ -1243,7 +1243,7 @@ fn seed_stalwart_message(thread_db_id: Uuid, link_id: Uuid, message: ProviderMes
         })
         .collect();
     Message {
-        db_id: conation_uuid::generate_uuid_v7(),
+        db_id: macro_uuid::generate_uuid_v7(),
         provider_id: Some(message.id),
         thread_db_id,
         provider_thread_id: Some(message.thread_id),
@@ -1286,7 +1286,7 @@ fn seed_stalwart_message(thread_db_id: Uuid, link_id: Uuid, message: ProviderMes
             .attachments
             .into_iter()
             .map(|attachment| Attachment {
-                db_id: conation_uuid::generate_uuid_v7(),
+                db_id: macro_uuid::generate_uuid_v7(),
                 provider_id: Some(attachment.blob_id),
                 filename: attachment.name,
                 mime_type: Some(attachment.mime_type),

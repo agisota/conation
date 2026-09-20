@@ -6,7 +6,7 @@
 //! TEAM link, every mentioned user is granted the selected link-share access
 //! level. Documents without link sharing are left untouched.
 
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use sqlx::{Pool, Postgres};
 
 #[cfg(test)]

@@ -7,7 +7,7 @@ mod test;
 use std::str::FromStr;
 
 use chrono::{DateTime, Utc};
-use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use document_sub_type::DocumentSubType;
 use filter_ast::Expr;
 use item_filters::ast::{

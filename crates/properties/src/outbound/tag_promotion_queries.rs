@@ -281,7 +281,7 @@ async fn remap_entity_values(
 
     let row_ids: Vec<Uuid> = affected
         .iter()
-        .map(|_| conation_uuid::generate_uuid_v7())
+        .map(|_| macro_uuid::generate_uuid_v7())
         .collect();
     let entity_ids: Vec<String> = affected
         .iter()

@@ -7,7 +7,7 @@
 //! `TURNSTILE_SECRET_KEY`, or hCaptcha pair exists in `conation_env_var`
 //! macros or this service's Doppler `Config`. Do not invent a key.
 
-use conation_env_var::env_var;
+use macro_env_var::env_var;
 use hmac::{Hmac, Mac};
 use sha2::{Digest, Sha256};
 use std::sync::OnceLock;

@@ -1,4 +1,4 @@
-use conation_event_broker::MacroEvent as _;
+use macro_event_broker::MacroEvent as _;
 use documents::domain::events::{DocumentSyncContentUpdatedMetadata, DocumentTopicEvent};
 use model::document::FileType;
 

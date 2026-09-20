@@ -2,8 +2,8 @@ use std::sync::{Arc, Mutex};
 
 use chrono::TimeZone;
 use chrono_tz::America::New_York;
-use conation_user_id::cowlike::CowLike;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::cowlike::CowLike;
+use macro_user_id::user_id::MacroUserIdStr;
 use model_entity::EntityType;
 use uuid::Uuid;
 

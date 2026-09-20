@@ -1,6 +1,6 @@
 use crate::pubsub::context::PubSubContext;
 use crate::pubsub::util::cg_refresh_email;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use contacts::domain::models::messages::ContactConnection;
 use contacts::domain::ports::ContactsIngress;
 use email_db_client::backfill::job::update::BackfillCompletion;

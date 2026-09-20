@@ -65,7 +65,7 @@ async fn tag_document(
         ON CONFLICT (entity_id, entity_type, property_definition_id)
         DO UPDATE SET values = $4
         "#,
-        conation_uuid::generate_uuid_v7(),
+        macro_uuid::generate_uuid_v7(),
         entity_id,
         definition_id,
         value,
@@ -359,7 +359,7 @@ async fn promoted_label_reads_back_from_the_team_tag_set(
 
     // user3 is on Team 1 but never had the personal label, so this asserts the
     // whole point of promotion: the label is now theirs to see and use.
-    let user3 = conation_user_id::user_id::MacroUserIdStr::try_from("macro|user3@test.com")?;
+    let user3 = macro_user_id::user_id::MacroUserIdStr::try_from("macro|user3@test.com")?;
     let visible = repo.get_caller_tag_definitions(user3.as_ref()).await?;
     let team_labels = visible
         .iter()

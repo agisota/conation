@@ -5,7 +5,7 @@ use super::property_definition_queries;
 use crate::domain::model::{CreatePropertyDefinitionOutcome, PropertyDefinitionOwner};
 use crate::domain::ports::PropertiesRepo;
 use conation_db_migrator::MACRO_DB_MIGRATIONS;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use models_properties::service::property_definition_with_options::PropertyDefinitionWithOptions;
 use models_properties::service::property_option::{PropertyOption, PropertyOptionValue};
 use models_properties::{DataType, EntityType};

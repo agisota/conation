@@ -1,4 +1,4 @@
-use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -278,7 +278,7 @@ pub struct ChannelParticipant {
     pub channel_id: ChannelId,
     /// Participant user id.
     #[cfg_attr(feature = "schema", schema(value_type = String))]
-    pub user_id: conation_user_id::user_id::MacroUserIdStr<'static>,
+    pub user_id: macro_user_id::user_id::MacroUserIdStr<'static>,
     /// Participant role in the channel.
     pub role: ParticipantRole,
     /// Timestamp when the participant joined the channel.
@@ -426,7 +426,7 @@ impl ChannelParticipant {
     /// Converts a channels-domain participant into a Soup participant.
     pub fn try_new_from_channels(
         participant: channels::domain::models::ChannelParticipant,
-    ) -> Result<Self, conation_user_id::error::ParseErr> {
+    ) -> Result<Self, macro_user_id::error::ParseErr> {
         Ok(Self {
             channel_id: ChannelId(participant.channel_id),
             user_id: MacroUserIdStr::parse_from_str(&participant.user_id)?.into_owned(),

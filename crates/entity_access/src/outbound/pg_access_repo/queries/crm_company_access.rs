@@ -4,7 +4,7 @@
 mod test;
 
 use crate::domain::models::{AccessLevel, CrmEntityAccess, TeamRole};
-use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId};
+use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId};
 use sqlx::PgPool;
 use uuid::Uuid;
 

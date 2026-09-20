@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use chrono::Utc;
-use conation_event_broker::{
+use macro_event_broker::{
     EventBrokerError, EventPublisher, MacroEvent, MacroEventBrokerService, Spawner,
 };
 use conation_event_topics::Topic;

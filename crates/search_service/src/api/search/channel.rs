@@ -14,7 +14,7 @@ use axum::{
 };
 use channels::domain::models::ChannelHistoryInfo;
 use conation_authorization::{InternalOnly, MacroAuthorizationExtractor, UserOrInternal};
-use conation_user_id::user_id::MacroUserId;
+use macro_user_id::user_id::MacroUserId;
 use models_search::MatchType;
 use models_search::channel::{
     ChannelMessageSearchResponseItem, ChannelNameSearchRequest, ChannelNameSearchResponse,

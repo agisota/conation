@@ -5,7 +5,7 @@ mod test;
 
 use std::future::Future;
 
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 
 use crate::domain::{
     dm::{EnsureDms, EnsureDmsSummary, ensure_dms_for_joining_member},

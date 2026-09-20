@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::pin::Pin;
 
 use chrono::Utc;
-use conation_uuid::Uuid;
+use macro_uuid::Uuid;
 use futures::StreamExt;
 use futures::stream::FuturesUnordered;
 use tokio::sync::mpsc::{Receiver, Sender};

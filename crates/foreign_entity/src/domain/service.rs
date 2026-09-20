@@ -112,7 +112,7 @@ where
         create.validate()?;
 
         self.repo
-            .create_foreign_entity(conation_uuid::generate_uuid_v7(), create)
+            .create_foreign_entity(macro_uuid::generate_uuid_v7(), create)
             .await
             .map_err(|error| ForeignEntityError::Internal(error.into()))
     }

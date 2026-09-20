@@ -1,6 +1,6 @@
 //! Recipient filtering models for the notification service.
 
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 
 /// Result of filtering a recipient.
 pub enum FilteredRecipient<'a> {

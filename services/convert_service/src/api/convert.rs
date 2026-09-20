@@ -48,7 +48,7 @@ pub async fn handler(
     _internal_authorization: MacroAuthorizationExtractor<AuthorizationService, InternalOnly>,
     extract::Json(req): extract::Json<ConvertRequest>,
 ) -> Result<Response, Response> {
-    let job_id = conation_uuid::generate_uuid_v7().to_string();
+    let job_id = macro_uuid::generate_uuid_v7().to_string();
 
     tracing::info!(job_id=%job_id, "starting conversion job");
 

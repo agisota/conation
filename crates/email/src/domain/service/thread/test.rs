@@ -1,5 +1,5 @@
 use super::*;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 
 fn receipt(entity_id: &str, entity_type: EntityType) -> EntityAccessReceipt<ViewAccessLevel> {
     EntityAccessReceipt::dangerously_assert_authenticated_user(

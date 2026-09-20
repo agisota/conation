@@ -2,7 +2,7 @@ use crate::domain::{
     models::{EmailErr, LinkLabel, UserEmailLink},
     ports::{EmailUserRepo, EmailUserService},
 };
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 
 use super::EmailServiceImpl;
 

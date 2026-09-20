@@ -99,7 +99,7 @@ pub(super) async fn update_share_permission(
 
         entity_access_db_utils::update_entity_access_channel_share_permissions(
             transaction,
-            &conation_uuid::string_to_uuid(document_id).unwrap(),
+            &macro_uuid::string_to_uuid(document_id).unwrap(),
             EntityType::Document,
             channel_perms,
         )

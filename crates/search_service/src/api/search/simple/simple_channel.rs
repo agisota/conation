@@ -1,5 +1,5 @@
 use crate::api::search::simple::SearchError;
-use conation_user_id::user_id::MacroUserId;
+use macro_user_id::user_id::MacroUserId;
 use item_filters::ChannelFilters;
 use opensearch_client::search::model::{Highlight, SearchHit};
 use std::collections::HashSet;
@@ -16,7 +16,7 @@ pub(in crate::api::search) struct FilterChannelResponse {
 #[tracing::instrument(skip(db), err)]
 pub(in crate::api::search) async fn search_names<'a>(
     db: &sqlx::Pool<sqlx::Postgres>,
-    user_id: &MacroUserId<conation_user_id::lowercased::Lowercase<'a>>,
+    user_id: &MacroUserId<macro_user_id::lowercased::Lowercase<'a>>,
     filter_channel_response: &FilterChannelResponse,
     term: String,
     exact_match: bool,

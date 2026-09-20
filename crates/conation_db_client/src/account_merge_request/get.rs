@@ -8,7 +8,7 @@ pub async fn get_merge_request_info(
     macro_user_id: &str,
     code: &str,
 ) -> anyhow::Result<(String, String)> {
-    let macro_user_id = conation_uuid::string_to_uuid(macro_user_id)?;
+    let macro_user_id = macro_uuid::string_to_uuid(macro_user_id)?;
 
     let merge_request = sqlx::query!(
         r#"
@@ -39,7 +39,7 @@ pub async fn check_merge_request_for_to_merge_macro_user_id(
     db: &sqlx::Pool<sqlx::Postgres>,
     macro_user_id: &str,
 ) -> anyhow::Result<Option<Uuid>> {
-    let macro_user_id = conation_uuid::string_to_uuid(macro_user_id)?;
+    let macro_user_id = macro_uuid::string_to_uuid(macro_user_id)?;
     let merge_request: Option<Uuid> = sqlx::query!(
         r#"
         SELECT
@@ -69,7 +69,7 @@ mod tests {
             INSERT INTO "macro_user" ("id", "email", "stripe_customer_id", "username")
             VALUES ($1, $2, $3, $4)
         "#,
-            &conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?,
+            &macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?,
             "test@macro.com",
             "cus_123",
             "u1",
@@ -82,7 +82,7 @@ mod tests {
             INSERT INTO "macro_user" ("id", "email", "stripe_customer_id", "username")
             VALUES ($1, $2, $3, $4)
         "#,
-            &conation_uuid::string_to_uuid("22222222-2222-2222-2222-222222222222")?,
+            &macro_uuid::string_to_uuid("22222222-2222-2222-2222-222222222222")?,
             "test2@macro.com",
             "cus_124",
             "u2",
@@ -106,9 +106,9 @@ mod tests {
             INSERT INTO "account_merge_request" ("id", "macro_user_id", "to_merge_macro_user_id", "code", "created_at")
             VALUES ($1, $2, $3, $4, NOW())
             "#,
-            &conation_uuid::string_to_uuid("33333333-3333-3333-3333-333333333333")?,
-            &conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?,
-            &conation_uuid::string_to_uuid("22222222-2222-2222-2222-222222222222")?,
+            &macro_uuid::string_to_uuid("33333333-3333-3333-3333-333333333333")?,
+            &macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?,
+            &macro_uuid::string_to_uuid("22222222-2222-2222-2222-222222222222")?,
             "code-one"
         ).execute(&pool).await?;
 
@@ -133,8 +133,8 @@ mod tests {
     pub async fn test_check_merge_request_for_to_merge_macro_user_id(
         pool: Pool<Postgres>,
     ) -> anyhow::Result<()> {
-        let merge_request_id = conation_uuid::generate_uuid_v7();
-        let to_merge_macro_user_id = conation_uuid::generate_uuid_v7();
+        let merge_request_id = macro_uuid::generate_uuid_v7();
+        let to_merge_macro_user_id = macro_uuid::generate_uuid_v7();
 
         sqlx::query!(
             r#"
@@ -142,7 +142,7 @@ mod tests {
             VALUES ($1, $2, $3, $4, NOW())
             "#,
             &merge_request_id,
-            &conation_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?,
+            &macro_uuid::string_to_uuid("11111111-1111-1111-1111-111111111111")?,
             &to_merge_macro_user_id,
             "code-one"
         )
@@ -161,7 +161,7 @@ mod tests {
         // Does not exist
         let merge_request = check_merge_request_for_to_merge_macro_user_id(
             &pool,
-            &conation_uuid::generate_uuid_v7().to_string(),
+            &macro_uuid::generate_uuid_v7().to_string(),
         )
         .await?;
 

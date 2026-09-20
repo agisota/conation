@@ -3,7 +3,7 @@ use crate::pubsub::inbox_sync::email_api_error::handle_operation_error;
 use crate::pubsub::util::{
     cg_refresh_email, complete_transaction_with_processing_error, publish_email_event,
 };
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use email::domain::events::{
     EmailEventOrigin, EmailMacroEvent, LabelRef, ThreadArchivedMetadata,
     ThreadLabelsUpdatedMetadata, ThreadReadMetadata, ThreadSpamChangedMetadata,

@@ -5,7 +5,7 @@
 use std::fmt::Debug;
 use std::future::Future;
 
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::models::{EditAccessLevel, EntityAccessReceipt, ViewAccessLevel};
 use uuid::Uuid;
 

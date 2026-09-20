@@ -10,7 +10,7 @@ use crate::domain::{
     },
     ports::{AccessRepository, EntityAccessService},
 };
-use conation_user_id::{
+use macro_user_id::{
     cowlike::CowLike, lowercased::Lowercase, user_id::MacroUserId, user_id::MacroUserIdStr,
 };
 use futures::{StreamExt, stream};

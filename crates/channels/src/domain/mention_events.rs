@@ -11,7 +11,7 @@
 #[cfg(test)]
 mod test;
 
-use conation_event_broker::{Event, MacroEvent, TopicEvent};
+use macro_event_broker::{Event, MacroEvent, TopicEvent};
 use conation_event_topics::MacroMentionsTopic;
 use serde::{Deserialize, Serialize};
 

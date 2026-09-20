@@ -8,7 +8,7 @@ use crate::domain::ports::CallRepository;
 use crate::outbound::pg_call_repo::PgCallRepo;
 use chrono::{Duration, SubsecRound, Utc};
 use conation_db_migrator::MACRO_DB_MIGRATIONS;
-use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use filter_ast::Expr;
 use item_filters::{
     CallStatus,
@@ -1009,8 +1009,8 @@ async fn get_transcript_voice_id_for_speaker_uses_diarized_speaker_id(
 ) -> anyhow::Result<()> {
     let repo = repo(pool.clone());
     let now = Utc::now();
-    let voice_a = conation_uuid::generate_uuid_v7();
-    let voice_b = conation_uuid::generate_uuid_v7();
+    let voice_a = macro_uuid::generate_uuid_v7();
+    let voice_b = macro_uuid::generate_uuid_v7();
     insert_voice(&pool, voice_a, 0).await?;
     insert_voice(&pool, voice_b, 1).await?;
 
@@ -1069,7 +1069,7 @@ async fn get_transcript_voice_id_for_speaker_falls_back_to_participant_id(
 ) -> anyhow::Result<()> {
     let repo = repo(pool.clone());
     let now = Utc::now();
-    let voice_id = conation_uuid::generate_uuid_v7();
+    let voice_id = macro_uuid::generate_uuid_v7();
     insert_voice(&pool, voice_id, 0).await?;
 
     let segment = TranscriptSegmentRequest {
@@ -1294,8 +1294,8 @@ async fn get_stable_speaker_voices_for_call_record_returns_all_voices_for_consis
 ) -> anyhow::Result<()> {
     let repo = repo(pool.clone());
     let now = Utc::now();
-    let voice_a = conation_uuid::generate_uuid_v7();
-    let voice_b = conation_uuid::generate_uuid_v7();
+    let voice_a = macro_uuid::generate_uuid_v7();
+    let voice_b = macro_uuid::generate_uuid_v7();
     insert_voice(&pool, voice_a, 0).await?;
     insert_voice(&pool, voice_b, 1).await?;
     insert_user_mapping(&pool, USER_A.deref(), MACRO_USER_A).await?;

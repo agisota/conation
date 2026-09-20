@@ -3,8 +3,8 @@
 use std::collections::HashSet;
 
 use conation_event_broker::MacroEventBroker;
-use conation_user_id::cowlike::CowLike;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::cowlike::CowLike;
+use macro_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::models::EntityAccessAuth;
 use models_properties::EntityType;
 use models_properties::api::requests::SetPropertyValue;

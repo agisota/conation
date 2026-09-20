@@ -4,7 +4,7 @@
 mod test;
 
 use crate::domain::models::{TeamRole, UserTeamInfo};
-use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId};
+use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId};
 use sqlx::PgPool;
 
 /// Look up the team a user belongs to and the role they hold.

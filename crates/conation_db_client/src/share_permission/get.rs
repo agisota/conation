@@ -120,7 +120,7 @@ pub async fn get_share_permission_id(
         ) t
         LIMIT 1
         "#,
-                conation_uuid::string_to_uuid(item_id).unwrap(),
+                macro_uuid::string_to_uuid(item_id).unwrap(),
             )
             .fetch_one(db)
             .await?
@@ -303,7 +303,7 @@ pub async fn get_macro_id_from_thread_id(
     pool: &sqlx::Pool<sqlx::Postgres>,
     thread_id: &str,
 ) -> anyhow::Result<Option<String>> {
-    let thread_id = conation_uuid::string_to_uuid(thread_id).context("invalid uuid")?;
+    let thread_id = macro_uuid::string_to_uuid(thread_id).context("invalid uuid")?;
 
     let macro_id = sqlx::query_scalar!(
         r#"

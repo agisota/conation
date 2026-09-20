@@ -9,7 +9,7 @@ use chrono::Utc;
 use conation_authorization::{
     MacroAuthorizationExtractor, MacroAuthorizationService, MacroAuthorizationState, UserOrInternal,
 };
-use conation_uuid::Uuid;
+use macro_uuid::Uuid;
 use model::response::EmptyResponse;
 
 use crate::domain::models::{

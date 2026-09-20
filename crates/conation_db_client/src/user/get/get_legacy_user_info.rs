@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
-use conation_user_id::{lowercased::Lowercase, user_id::MacroUserId};
-use conation_uuid::ShortUuidConverter;
+use macro_user_id::{lowercased::Lowercase, user_id::MacroUserId};
+use macro_uuid::ShortUuidConverter;
 
 #[derive(Debug, serde::Serialize)]
 pub struct LegacyUserInfo {

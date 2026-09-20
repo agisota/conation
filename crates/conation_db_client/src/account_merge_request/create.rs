@@ -10,10 +10,10 @@ pub async fn create_account_merge_request(
     macro_user_id: &str,
     to_merge_macro_user_id: &str,
 ) -> anyhow::Result<String> {
-    let id = conation_uuid::generate_uuid_v7();
-    let macro_user_id = conation_uuid::string_to_uuid(macro_user_id)
+    let id = macro_uuid::generate_uuid_v7();
+    let macro_user_id = macro_uuid::string_to_uuid(macro_user_id)
         .context("failed to convert macro_user_id to uuid")?;
-    let to_merge_macro_user_id = conation_uuid::string_to_uuid(to_merge_macro_user_id)
+    let to_merge_macro_user_id = macro_uuid::string_to_uuid(to_merge_macro_user_id)
         .context("failed to convert to_merge_macro_user_id to uuid")?;
 
     let code = generate_code(6);

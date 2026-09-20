@@ -15,7 +15,7 @@ use agent_session::domain::ports::{AgentSessionLogRepo, NoOpRealtime};
 use agent_session::domain::service::{AgentSessionService, AgentSessionServiceImpl};
 use agent_session::testing::InMemoryAgentSessionRepo;
 use bot_id::BotId;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 
 use super::ContainerManager;
 use crate::domain::model::{AgentKind, SpawnContainer};
@@ -35,7 +35,7 @@ fn params(id: AgentSessionId) -> CreateAgentSessionParams {
         repo_branch: None,
         id,
         owner_id: owner(),
-        bot_id: BotId::new_from_uuid(conation_uuid::generate_uuid_v7()),
+        bot_id: BotId::new_from_uuid(macro_uuid::generate_uuid_v7()),
         thread_id: None,
         originating_message_id: None,
         model: "claude".to_owned(),

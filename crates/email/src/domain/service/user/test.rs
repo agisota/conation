@@ -4,7 +4,7 @@ use std::{
 };
 
 use chrono::Utc;
-use conation_user_id::{email::EmailStr, user_id::MacroUserIdStr};
+use macro_user_id::{email::EmailStr, user_id::MacroUserIdStr};
 use uuid::Uuid;
 
 use crate::domain::{

@@ -5,7 +5,7 @@ use crate::domain::models::{
 use agent::types::ChatMessageContent;
 use ai_toolset::tool_object::UserToolResponse;
 use attachment::FormattedParts;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use entity_access::domain::models::{
     EditAccessLevel, EntityAccessReceipt, OwnerAccessLevel, ViewAccessLevel,
 };

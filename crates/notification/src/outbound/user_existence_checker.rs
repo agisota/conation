@@ -1,7 +1,7 @@
 //! Implementation of [UserExistenceChecker] that queries the database.
 
 use crate::domain::models::email_notification_digest::ports::UserExistenceChecker;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use rootcause::Report;
 use sqlx::PgPool;
 

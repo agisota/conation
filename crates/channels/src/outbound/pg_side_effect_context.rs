@@ -9,7 +9,7 @@ use crate::domain::{
     side_effects::{ChannelDocumentMention, ThreadNotificationContext},
 };
 use anyhow::Context;
-use conation_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
+use macro_user_id::{cowlike::CowLike, user_id::MacroUserIdStr};
 use sqlx::PgPool;
 use std::collections::HashSet;
 use uuid::Uuid;

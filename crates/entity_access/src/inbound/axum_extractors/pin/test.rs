@@ -7,7 +7,7 @@ use axum::{
 use conation_authorization::{
     BOT_SCOPE_HEADER, BOT_TOKEN_HEADER, INTERNAL_API_KEY_HEADER, INTERNAL_CONATION_USER_ID_HEADER,
 };
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use serde::Deserialize;
 use tower::ServiceExt;
 

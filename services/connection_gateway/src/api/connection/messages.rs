@@ -9,7 +9,7 @@ use crate::{
 };
 use anyhow::{Context, Result};
 use axum::extract::ws::{Message, WebSocket};
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use cowlike::CowLike;
 use futures::{StreamExt, stream::SplitStream};
 use std::error::Error;

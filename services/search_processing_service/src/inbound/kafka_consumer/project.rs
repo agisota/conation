@@ -2,7 +2,7 @@
 
 use std::collections::HashSet;
 
-use conation_event_broker::MacroEvent as _;
+use macro_event_broker::MacroEvent as _;
 use opensearch_client::OpensearchClient;
 use projects::domain::events::{ProjectMacroEvent, ProjectTopicEvent};
 use sqlx::PgPool;

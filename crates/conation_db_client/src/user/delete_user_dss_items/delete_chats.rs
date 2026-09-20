@@ -58,7 +58,7 @@ pub async fn delete_user_chats(
         transaction,
         &user_chats
             .iter()
-            .filter_map(|p| conation_uuid::string_to_uuid(p).ok())
+            .filter_map(|p| macro_uuid::string_to_uuid(p).ok())
             .collect::<Vec<uuid::Uuid>>(),
         EntityType::Chat,
     )

@@ -1,5 +1,5 @@
 use crate::api::search::simple::SearchError;
-use conation_user_id::user_id::MacroUserId;
+use macro_user_id::user_id::MacroUserId;
 use item_filters::ChatFilters;
 use model::item::{ShareableItem, ShareableItemType, UserAccessibleItem};
 use opensearch_client::search::model::{Highlight, SearchHit};
@@ -103,7 +103,7 @@ pub(in crate::api::search) async fn filter_chats(
 #[tracing::instrument(skip(db), err)]
 pub(in crate::api::search::simple) async fn search_names<'a>(
     db: &Pool<Postgres>,
-    user_id: &MacroUserId<conation_user_id::lowercased::Lowercase<'a>>,
+    user_id: &MacroUserId<macro_user_id::lowercased::Lowercase<'a>>,
     filter_chat_response: &FilterChatResponse,
     term: String,
     tag_option_ids: &[String],

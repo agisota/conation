@@ -11,7 +11,7 @@ use bot_id::BotId;
 use bots::domain::models::{AgentChannelScope, BotKind, BotOwner};
 use bots::domain::ports::BotRepo;
 use bots::outbound::pg_bots_repo::PgBotsRepo;
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 
 /// [`BotDirectory`] over the bots table.
 #[derive(Clone)]

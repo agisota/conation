@@ -12,7 +12,7 @@ pub async fn count_existing_in_progress_user_links_for_user(
     db: &sqlx::Pool<sqlx::Postgres>,
     macro_user_id: &str,
 ) -> anyhow::Result<i64> {
-    let macro_user_id = conation_uuid::string_to_uuid(macro_user_id)?;
+    let macro_user_id = macro_uuid::string_to_uuid(macro_user_id)?;
     let cutoff = (chrono::Utc::now() - IN_PROGRESS_USER_LINK_MAX_AGE).naive_utc();
     let count = sqlx::query!(
         r#"
@@ -38,8 +38,8 @@ pub async fn create_in_progress_user_link(
     db: &sqlx::Pool<sqlx::Postgres>,
     macro_user_id: &str,
 ) -> anyhow::Result<Uuid> {
-    let macro_user_id = conation_uuid::string_to_uuid(macro_user_id)?;
-    let link_id = conation_uuid::generate_uuid_v7();
+    let macro_user_id = macro_uuid::string_to_uuid(macro_user_id)?;
+    let link_id = macro_uuid::generate_uuid_v7();
 
     sqlx::query!(
         r#"
@@ -61,8 +61,8 @@ pub async fn create_in_progress_google_link(
     macro_user_id: &str,
     requested_google_scopes: &[String],
 ) -> anyhow::Result<Uuid> {
-    let macro_user_id = conation_uuid::string_to_uuid(macro_user_id)?;
-    let link_id = conation_uuid::generate_uuid_v7();
+    let macro_user_id = macro_uuid::string_to_uuid(macro_user_id)?;
+    let link_id = macro_uuid::generate_uuid_v7();
 
     sqlx::query!(
         r#"

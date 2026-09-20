@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use conation_event_broker::{
     EventBrokerError, EventPublisher, GlobalSpawner, MacroEvent, MacroEventBrokerService, Topic,
 };
-use conation_user_id::user_id::MacroUserIdStr;
+use macro_user_id::user_id::MacroUserIdStr;
 use model_entity::{Entity, EntityType};
 
 use super::*;
