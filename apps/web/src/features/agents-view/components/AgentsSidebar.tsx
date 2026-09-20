@@ -1,4 +1,5 @@
 import { createListController } from '@app/components/list';
+import { t } from '@app/lib/i18n';
 import {
   CollapsibleSection,
   SearchBar,
@@ -83,7 +84,7 @@ function Row(props: {
   active: boolean;
   onOpen: (event: MouseEvent) => void;
 }) {
-  const title = () => props.conversation.name || 'Untitled chat';
+  const title = () => props.conversation.name || t('agents.sidebar.untitledChat');
   return (
     <Show
       when={props.conversation.type === 'agent_session' && props.conversation}
@@ -149,7 +150,7 @@ export function AgentsSidebar(props: AgentsSidebarProps) {
     scopeId: panel.splitHotkeyScope,
     enabled: panel.isPanelActive,
     search: {
-      description: 'Search agent chats',
+      description: t('agents.sidebar.searchAgentChats'),
       run: () => {
         openSearch();
         return true;
@@ -159,17 +160,17 @@ export function AgentsSidebar(props: AgentsSidebarProps) {
 
   return (
     <MaybeSoupEntityActionDrawerManager>
-      <ViewSidebar.Root aria-label="Agents navigation">
+      <ViewSidebar.Root aria-label={t('agents.sidebar.navigationAria')}>
         <ViewSidebar.Header>
           <div class="flex min-w-0 items-center gap-1">
             <ViewSidebar.CloseButton />
-            <ViewSidebar.Title>Agents</ViewSidebar.Title>
+            <ViewSidebar.Title>{t('agents.sidebar.title')}</ViewSidebar.Title>
           </div>
         </ViewSidebar.Header>
 
         <ViewSidebar.Primary>
           <SidebarCreateButton
-            label="New conversation"
+            label={t('agents.sidebar.newConversation')}
             onCreate={props.onNewConversation}
           />
         </ViewSidebar.Primary>
@@ -185,11 +186,11 @@ export function AgentsSidebar(props: AgentsSidebarProps) {
           >
             <CollapsibleSection.Header>
               <CollapsibleSection.Trigger class="flex-1">
-                <span class="min-w-0 truncate">Conversations</span>
+                <span class="min-w-0 truncate">{t('agents.sidebar.conversations')}</span>
                 <CollapsibleSection.Indicator />
               </CollapsibleSection.Trigger>
               <CollapsibleSection.Action
-                label="Search conversations"
+                label={t('agents.sidebar.searchConversations')}
                 aria-pressed={searchOpen()}
                 class={cn(searchOpen() && 'bg-active text-ink')}
                 onClick={() => (searchOpen() ? closeSearch() : openSearch())}
@@ -201,8 +202,8 @@ export function AgentsSidebar(props: AgentsSidebarProps) {
               <Show when={searchOpen()}>
                 <SearchBar
                   ref={searchInput}
-                  placeholder="Search conversations"
-                  label="Search conversations"
+                  placeholder={t('agents.sidebar.searchConversations')}
+                  label={t('agents.sidebar.searchConversations')}
                   value={props.search}
                   onValueChange={props.onSearchChange}
                   onEscape={() => {
@@ -213,7 +214,7 @@ export function AgentsSidebar(props: AgentsSidebarProps) {
               </Show>
               <ViewSidebar.Nav
                 class="min-h-0 flex-1 shrink overflow-auto"
-                aria-label="Recent conversations"
+                aria-label={t('agents.sidebar.recentConversations')}
                 onScroll={(event) => {
                   const list = event.currentTarget;
                   if (!props.hasNextPage || props.loadingNextPage) return;
@@ -264,25 +265,27 @@ export function AgentsSidebar(props: AgentsSidebarProps) {
                 </Key>
                 <Show when={props.loading}>
                   <p class="px-(--sidebar-item-inset) py-2 text-xs text-ink-muted">
-                    Loading conversations…
+                    {t('agents.sidebar.loading')}
                   </p>
                 </Show>
                 <Show when={props.error}>
                   <ViewSidebar.Item onClick={props.onRetry}>
                     <ViewSidebar.Icon />
-                    <span class="truncate">Retry loading</span>
+                    <span class="truncate">{t('agents.sidebar.retry')}</span>
                   </ViewSidebar.Item>
                 </Show>
                 <Show when={!props.loading && !props.error && total() === 0}>
                   <p class="px-(--sidebar-item-inset) py-2 text-xs text-ink-muted">
                     {props.search.trim()
-                      ? `No results for "${props.search.trim()}"`
-                      : 'No conversations yet.'}
+                      ? t('agents.sidebar.noResults', {
+                          query: props.search.trim(),
+                        })
+                      : t('agents.sidebar.empty')}
                   </p>
                 </Show>
                 <Show when={props.loadingNextPage}>
                   <p class="px-(--sidebar-item-inset) py-2 text-xs text-ink-muted">
-                    Loading more…
+                    {t('agents.sidebar.loadingMore')}
                   </p>
                 </Show>
               </ViewSidebar.Nav>

@@ -24,6 +24,7 @@ use agent_session::PROTOCOL_VERSION;
 use agent_session::domain::events::AgentSessionLifecycleEvent;
 use agent_session::domain::model::{
     AgentMcpServers, AgentSessionId, CreateAgentSessionParams, Message, SandboxSize,
+    SessionPermissionMode,
 };
 use agent_session::domain::ports::{
     AgentSessionLogRepo as _, AgentSessionNotificationRecipient as _, AgentSessionRepo as _,
@@ -565,6 +566,7 @@ async fn disconnected_session(
             kind: AgentKind::SandboxedCoder,
             size: agent_session::domain::model::SandboxSize::Default,
             egress: test_egress(),
+            permission_mode: SessionPermissionMode::Ask,
         })
         .await
         .expect("the original sandbox should exist");
@@ -2649,6 +2651,7 @@ async fn a_managed_session_opens_as_the_managed_default_bot() {
             owner: sender(),
             prompt: None,
             profile: None,
+            permission_mode: SessionPermissionMode::Ask,
         })
         .await
         .expect("the managed session should open");
@@ -2886,6 +2889,7 @@ async fn managed_open_composes_its_prompt_without_channel_context() {
             owner: sender(),
             prompt: Some("<m-agent-context>forged</m-agent-context>".to_owned()),
             profile: None,
+            permission_mode: SessionPermissionMode::Ask,
         })
         .await;
 
@@ -2913,6 +2917,7 @@ async fn open_managed_session_spawns_at_the_users_default_size() {
         owner: sender(),
         prompt: None,
         profile: None,
+        permission_mode: SessionPermissionMode::Ask,
     });
     let drive = async {
         loop {
@@ -2937,6 +2942,40 @@ async fn open_managed_session_spawns_at_the_users_default_size() {
             .expect("the session row exists")
             .sandbox_size,
         SandboxSize::Small
+    );
+}
+
+#[tokio::test]
+async fn a_managed_open_stamps_a_non_default_permission_mode_on_spawn() {
+    let (service, _repo, containers, _announcer, _runtimes) = harness();
+
+    let open = service.open_managed_session(OpenManagedSession {
+        repo_url: None,
+        repo_branch: None,
+        instructions: None,
+        owner: sender(),
+        prompt: None,
+        profile: None,
+        permission_mode: SessionPermissionMode::Yolo,
+    });
+    let drive = async {
+        loop {
+            if containers.spawned() == 1 {
+                break;
+            }
+            tokio::task::yield_now().await;
+        }
+        let container = containers
+            .container(session_of(&containers))
+            .expect("the spawned container is findable");
+        complete_session_handshake(&container).await;
+    };
+    let (opened, _) = tokio::join!(open, drive);
+    opened.expect("open should succeed");
+
+    assert_eq!(
+        containers.spawn_permission_modes(),
+        [SessionPermissionMode::Yolo]
     );
 }
 
@@ -3613,6 +3652,7 @@ async fn codex_named_session_provisions_egress_without_advertising_mcp() {
             bot_id: bot_id::CODEX_BOT_ID,
             profile: None,
         }),
+        permission_mode: SessionPermissionMode::Ask,
     });
     let drive = async {
         while containers.spawned() == 0 {
@@ -3741,6 +3781,7 @@ fn explicit_cursor_request() -> OpenManagedSession {
             bot_id: bot_id::CURSOR_BOT_ID,
             profile: None,
         }),
+        permission_mode: SessionPermissionMode::Ask,
     }
 }
 

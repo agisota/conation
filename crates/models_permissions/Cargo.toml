@@ -5,7 +5,7 @@ publish = false
 version = "0.1.0"
 
 [dependencies]
-macro_user_id = { path = "../macro_user_id" }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
 model-entity = { path = "../model-entity" }
 model_file_type = { path = "../model_file_type" }
 schemars = { workspace = true }

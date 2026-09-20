@@ -22,7 +22,7 @@ aws-sdk-sqs = { workspace = true, optional = true }
 axum = { workspace = true, optional = true }
 axum-extra = { workspace = true, optional = true }
 reqwest = { workspace = true, optional = true }
-conation_authorization = { path = "../conation_authorization", default-features = false, features = [
+conation_authorization = { package = "macro_authorization", path = "../conation_authorization", default-features = false, features = [
   "axum",
 ], optional = true }
 conation_user_id = { path = "../conation_user_id" }

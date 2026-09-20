@@ -5,7 +5,7 @@ use agent_runtime_protocol::domain::schema::v0::{ToRuntimeMessage, ToServerMessa
 use agent_session::domain::error::Result as SessionResult;
 use agent_session::domain::model::{
     AgentSession, CreateAgentSessionParams, DEFAULT_AGENT_SESSION_NAME, SandboxSize, SessionBot,
-    SessionStatus, ThreadSession,
+    SessionPermissionMode, SessionStatus, ThreadSession,
 };
 use bot_id::BotId;
 use conation_user_id::user_id::MacroUserIdStr;
@@ -256,6 +256,7 @@ fn spawn_for(kind: AgentKind) -> SpawnContainer {
         kind,
         size: SandboxSize::Default,
         egress: test_egress(),
+        permission_mode: SessionPermissionMode::Ask,
     }
 }
 

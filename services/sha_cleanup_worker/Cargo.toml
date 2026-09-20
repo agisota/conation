@@ -13,7 +13,7 @@ anyhow = { workspace = true }
 aws-sdk-s3 = { workspace = true }
 conation_aws_config = { path = "../../crates/conation_aws_config", features = ["s3"] }
 futures = { workspace = true }
-conation_entrypoint = { path = "../../crates/conation_entrypoint" }
+conation_entrypoint = { package = "macro_entrypoint", path = "../../crates/conation_entrypoint" }
 conation_env = { path = "../../crates/conation_env" }
 conation_env_var = { path = "../../crates/conation_env_var" }
 mockall = { workspace = true }

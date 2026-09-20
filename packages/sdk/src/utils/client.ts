@@ -24,9 +24,19 @@ import { User } from '../entities/users/user';
 import { MacroEvents } from '../events/receiver';
 import { type LocalPortmap, resolveLocalPortmap } from '../local-portmap';
 
-const USER_API_KEY_HEADER = 'x-macro-user-api-key';
+const USER_API_KEY_HEADER = 'x-conation-user-api-key';
 const USER_API_KEY_PREFIX = 'mak_';
 const BOT_TOKEN_PREFIX = 'mbot_';
+
+/** Prefer CONATION_* names; MACRO_* remains a fallback alias. */
+function readEnv(...names: string[]): string | undefined {
+  if (typeof process === 'undefined') return undefined;
+  for (const name of names) {
+    const value = process.env[name];
+    if (value) return value;
+  }
+  return undefined;
+}
 
 type CredentialHeader = readonly [name: string, value: string];
 
@@ -34,7 +44,7 @@ function userCredentialHeader(secret: string): CredentialHeader {
   return match(secret)
     .with(P.string.startsWith(BOT_TOKEN_PREFIX), () => {
       throw new Error(
-        "bot token passed as a user credential. Use auth: { type: 'bot', token } or MACRO_BOT_TOKEN.",
+        "bot token passed as a user credential. Use auth: { type: 'bot', token } or CONATION_BOT_TOKEN.",
       );
     })
     .with(
@@ -60,27 +70,27 @@ export async function requestAuthHeaders(
       const tok = await resolveToken(botAuth.token);
       if (!tok.startsWith(BOT_TOKEN_PREFIX)) {
         throw new Error(
-          "user API key passed as a bot token. Use auth: { type: 'user', apiKey } or MACRO_API_KEY.",
+          "user API key passed as a bot token. Use auth: { type: 'user', apiKey } or CONATION_API_KEY.",
         );
       }
       const headers: Array<readonly [string, string]> = [
-        ['x-macro-bot-token', tok],
+        ['x-conation-bot-token', tok],
       ];
       if (!existing?.hasBotScope) {
         headers.push([
-          'x-macro-bot-scope',
+          'x-conation-bot-scope',
           botAuth.scope ?? (requestedAs ? 'user' : 'team'),
         ]);
       }
       if (requestedAs) {
-        headers.push(['x-macro-bot-for-macro-user-id', requestedAs]);
+        headers.push(['x-conation-bot-for-conation-user-id', requestedAs]);
       }
       return headers;
     })
     .with({ type: 'user', apiKey: P.string }, ({ apiKey }) => {
       if (apiKey.startsWith(BOT_TOKEN_PREFIX)) {
         throw new Error(
-          "bot token passed as a user credential. Use auth: { type: 'bot', token } or MACRO_BOT_TOKEN.",
+          "bot token passed as a user credential. Use auth: { type: 'bot', token } or CONATION_BOT_TOKEN.",
         );
       }
       return [[USER_API_KEY_HEADER, apiKey] as const];
@@ -122,8 +132,7 @@ export class MacroClient {
     const hosts = { ...HOSTS[env], ...localPortmap?.hosts, ...opts.hosts };
     this.hosts = hosts;
     this.localPortmap = localPortmap;
-    const envWebUrl =
-      typeof process !== 'undefined' ? process.env.MACRO_WEB_URL : undefined;
+    const envWebUrl = readEnv('CONATION_WEB_URL', 'MACRO_WEB_URL');
     this.webAppUrl =
       opts.webAppUrl ??
       envWebUrl ??
@@ -158,10 +167,10 @@ export class MacroClient {
     this.search = new SearchSdk({ client: this.makeClient(hosts.search) });
     this.storage = new StorageSdk({ client: this.makeClient(hosts.storage) });
 
-    const envWebhookSecret =
-      typeof process !== 'undefined'
-        ? process.env.MACRO_WEBHOOK_SECRET
-        : undefined;
+    const envWebhookSecret = readEnv(
+      'CONATION_WEBHOOK_SECRET',
+      'MACRO_WEBHOOK_SECRET',
+    );
     const webhookSecret = opts.webhookSecret ?? envWebhookSecret;
     this.events = new MacroEvents(this, webhookSecret);
   }
@@ -206,7 +215,7 @@ export class MacroClient {
       const headers = await requestAuthHeaders(
         this.authConfig,
         this.requestedAs,
-        { hasBotScope: request.headers.has('x-macro-bot-scope') },
+        { hasBotScope: request.headers.has('x-conation-bot-scope') },
       );
       for (const [name, value] of headers) {
         request.headers.set(name, value);
@@ -219,12 +228,11 @@ export class MacroClient {
 
 function resolveEnv(opts: MacroOpts): Env {
   if (opts.env) return opts.env;
-  const fromEnv =
-    typeof process !== 'undefined' ? process.env.MACRO_ENV : undefined;
+  const fromEnv = readEnv('CONATION_ENV', 'MACRO_ENV');
   if (!fromEnv) return 'prod';
   if (!(fromEnv in HOSTS)) {
     throw new Error(
-      `invalid MACRO_ENV "${fromEnv}" — expected local, dev, or prod`,
+      `invalid CONATION_ENV "${fromEnv}" — expected local, dev, or prod`,
     );
   }
   return fromEnv as Env;
@@ -233,13 +241,11 @@ function resolveEnv(opts: MacroOpts): Env {
 function resolveAuth(opts: MacroOpts): MacroAuth {
   if (opts.auth) return opts.auth;
   if (opts.token) return { type: 'user', token: opts.token };
-  const envApiKey =
-    typeof process !== 'undefined' ? process.env.MACRO_API_KEY : undefined;
-  const envBotToken =
-    typeof process !== 'undefined' ? process.env.MACRO_BOT_TOKEN : undefined;
+  const envApiKey = readEnv('CONATION_API_KEY', 'MACRO_API_KEY');
+  const envBotToken = readEnv('CONATION_BOT_TOKEN', 'MACRO_BOT_TOKEN');
   if (envApiKey && envBotToken) {
     throw new Error(
-      'both MACRO_API_KEY and MACRO_BOT_TOKEN are set — pass auth to new Macro() to pick one',
+      'both CONATION_API_KEY and CONATION_BOT_TOKEN are set — pass auth to new Macro() to pick one',
     );
   }
   if (envBotToken) return { type: 'bot', token: envBotToken };
@@ -249,7 +255,7 @@ function resolveAuth(opts: MacroOpts): MacroAuth {
       envApiKey ??
       (() => {
         throw new Error(
-          'no Macro credential. Set MACRO_API_KEY (API key or bearer token) or MACRO_BOT_TOKEN, or pass token/auth to new Macro().',
+          'no Conation credential. Set CONATION_API_KEY (API key or bearer token) or CONATION_BOT_TOKEN, or pass token/auth to new Macro().',
         );
       }),
   };

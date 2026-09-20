@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { cleanup, renderHook } from '@solidjs/testing-library';
 import { createSignal } from 'solid-js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -16,9 +17,9 @@ describe('Chat composer tips', () => {
     );
     const first = tip();
     vi.advanceTimersByTime(6000);
-    expect(tip()).toContain('skill');
+    expect(tip()).toBe(t('agents.composer.tips.referenceSkill'));
     vi.advanceTimersByTime(6000);
-    expect(tip()).toContain('@');
+    expect(tip()).toBe(t('agents.composer.tips.mention'));
     vi.advanceTimersByTime(6000);
     expect(tip()).toBe(first);
   });
@@ -26,13 +27,13 @@ describe('Chat composer tips', () => {
   it('cycles through connectors, skills, mentions and agents, then repeats', () => {
     const { result: tip } = renderHook(() => createChatComposerTip(() => true));
     const first = tip();
-    expect(first).toContain('Connections');
+    expect(first).toBe(t('agents.composer.tips.connectApps'));
     vi.advanceTimersByTime(6000);
-    expect(tip()).toContain('skill');
+    expect(tip()).toBe(t('agents.composer.tips.typeSkill'));
     vi.advanceTimersByTime(6000);
-    expect(tip()).toContain('@');
+    expect(tip()).toBe(t('agents.composer.tips.mention'));
     vi.advanceTimersByTime(6000);
-    expect(tip()).toContain('agent');
+    expect(tip()).toBe(t('agents.composer.tips.chooseAgent'));
     vi.advanceTimersByTime(6000);
     expect(tip()).toBe(first);
   });
@@ -46,7 +47,7 @@ describe('Chat composer tips', () => {
     expect(tip()).toBe(first);
     setEmpty(true);
     vi.advanceTimersByTime(6000);
-    expect(tip()).toContain('skill');
+    expect(tip()).toBe(t('agents.composer.tips.typeSkill'));
   });
 
   it('stops its timer when the composer is removed', () => {

@@ -6,20 +6,20 @@ describe('requestAuthHeaders', () => {
   test('token: mak_abc sends the user API key header', async () => {
     expect(
       await requestAuthHeaders({ type: 'user', token: 'mak_abc' }),
-    ).toEqual([['x-macro-user-api-key', 'mak_abc']]);
+    ).toEqual([['x-conation-user-api-key', 'mak_abc']]);
   });
 
   test('auth.apiKey sends a legacy unprefixed key', async () => {
     expect(
       await requestAuthHeaders({ type: 'user', apiKey: 'legacy0123' }),
-    ).toEqual([['x-macro-user-api-key', 'legacy0123']]);
+    ).toEqual([['x-conation-user-api-key', 'legacy0123']]);
   });
 
   test('auth.apiKey rejects an mbot_ token', async () => {
     await expect(
       requestAuthHeaders({ type: 'user', apiKey: 'mbot_x' }),
     ).rejects.toThrow(
-      "bot token passed as a user credential. Use auth: { type: 'bot', token } or MACRO_BOT_TOKEN.",
+      "bot token passed as a user credential. Use auth: { type: 'bot', token } or CONATION_BOT_TOKEN.",
     );
   });
 
@@ -33,7 +33,7 @@ describe('requestAuthHeaders', () => {
     await expect(
       requestAuthHeaders({ type: 'user', token: 'mbot_x' }),
     ).rejects.toThrow(
-      "bot token passed as a user credential. Use auth: { type: 'bot', token } or MACRO_BOT_TOKEN.",
+      "bot token passed as a user credential. Use auth: { type: 'bot', token } or CONATION_BOT_TOKEN.",
     );
   });
 
@@ -41,7 +41,7 @@ describe('requestAuthHeaders', () => {
     await expect(
       requestAuthHeaders({ type: 'bot', token: 'mak_abc' }),
     ).rejects.toThrow(
-      "user API key passed as a bot token. Use auth: { type: 'user', apiKey } or MACRO_API_KEY.",
+      "user API key passed as a bot token. Use auth: { type: 'user', apiKey } or CONATION_API_KEY.",
     );
   });
 
@@ -49,7 +49,7 @@ describe('requestAuthHeaders', () => {
     await expect(
       requestAuthHeaders({ type: 'bot', token: 'legacy0123' }),
     ).rejects.toThrow(
-      "user API key passed as a bot token. Use auth: { type: 'user', apiKey } or MACRO_API_KEY.",
+      "user API key passed as a bot token. Use auth: { type: 'user', apiKey } or CONATION_API_KEY.",
     );
   });
 });

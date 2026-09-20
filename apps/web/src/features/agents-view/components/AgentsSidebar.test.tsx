@@ -1,4 +1,5 @@
 import { HomeListEntity } from '@app/features/inbox-view/components/HomeListEntity';
+import { t } from '@app/lib/i18n';
 import {
   cleanup,
   fireEvent,
@@ -177,7 +178,7 @@ describe('mixed Agents sidebar', () => {
     );
     fireEvent.click(chat);
     expect(open).toHaveBeenLastCalledWith(conversations[1], expect.anything());
-    fireEvent.click(screen.getByRole('button', { name: 'New conversation' }));
+    fireEvent.click(screen.getByRole('button', { name: t('agents.sidebar.newConversation') }));
     expect(create).toHaveBeenCalledOnce();
   });
 

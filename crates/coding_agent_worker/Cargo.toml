@@ -27,10 +27,10 @@ eventsource-stream = { workspace = true }
 futures = { workspace = true }
 harness_id = { path = "../harness_id" }
 harnesses = { path = "../harnesses", default-features = false }
-macro_event_broker = { path = "../macro_event_broker", default-features = false }
-macro_env_var = { path = "../macro_env_var" }
-macro_user_id = { path = "../macro_user_id" }
-macro_uuid = { path = "../macro_uuid" }
+macro_event_broker = { package = "conation_event_broker", path = "../conation_event_broker", default-features = false }
+macro_env_var = { package = "conation_env_var", path = "../conation_env_var" }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
+macro_uuid = { package = "conation_uuid", path = "../conation_uuid" }
 ratatui = { workspace = true }
 reqwest = { workspace = true, features = ["stream"] }
 rootcause = { workspace = true }

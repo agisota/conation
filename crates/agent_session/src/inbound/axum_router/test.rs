@@ -1,5 +1,5 @@
 use super::*;
-use crate::domain::model::SessionStatus;
+use crate::domain::model::{SessionPermissionMode, SessionStatus};
 use axum::body::Body;
 use axum::http::{Request, header};
 use chrono::Utc;
@@ -688,6 +688,41 @@ async fn a_managed_open_carries_its_instructions() {
             .collect::<Vec<_>>(),
         vec![Some(INSTRUCTIONS)]
     );
+}
+
+/// A non-default permission mode on create reaches the managed opener.
+#[tokio::test]
+async fn a_managed_open_carries_its_permission_mode() {
+    let opener = Arc::new(RecordingOpener::default());
+    let request = as_user(
+        OWNER,
+        serde_json::json!({ "prompt": "fix it", "permissionMode": "yolo" }).to_string(),
+    );
+
+    let response = router(opener.clone()).oneshot(request).await.unwrap();
+
+    assert_eq!(response.status(), StatusCode::CREATED);
+    let managed = opener.managed.lock().unwrap();
+    assert_eq!(
+        managed
+            .iter()
+            .map(|open| open.permission_mode)
+            .collect::<Vec<_>>(),
+        vec![SessionPermissionMode::Yolo]
+    );
+}
+
+/// Omitted permission mode stays fail-closed ask.
+#[tokio::test]
+async fn a_managed_open_defaults_permission_mode_to_ask() {
+    let opener = Arc::new(RecordingOpener::default());
+    let request = as_user(OWNER, serde_json::json!({ "prompt": "fix it" }).to_string());
+
+    let response = router(opener.clone()).oneshot(request).await.unwrap();
+
+    assert_eq!(response.status(), StatusCode::CREATED);
+    let managed = opener.managed.lock().unwrap();
+    assert_eq!(managed[0].permission_mode, SessionPermissionMode::Ask);
 }
 
 #[tokio::test]

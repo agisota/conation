@@ -9,7 +9,7 @@ sqlx = ["dep:sqlx"]
 
 [dependencies]
 bot_id = { path = "../bot_id" }
-macro_user_id = { path = "../macro_user_id" }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
 serde = { workspace = true }
 sqlx = { workspace = true, optional = true }
 thiserror = { workspace = true }

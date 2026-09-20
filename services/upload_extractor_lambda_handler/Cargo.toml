@@ -19,7 +19,7 @@ dynamodb_client = { path = "../../crates/dynamodb_client" }
 futures = { workspace = true }
 lambda_runtime = { workspace = true }
 conation_aws_config = { path = "../../crates/conation_aws_config", features = ["s3"] }
-conation_entrypoint = { path = "../../crates/conation_entrypoint" }
+conation_entrypoint = { package = "macro_entrypoint", path = "../../crates/conation_entrypoint" }
 conation_env_var = { path = "../../crates/conation_env_var" }
 model = { path = "../../crates/model" }
 model-entity = { path = "../../crates/model-entity" }

@@ -368,6 +368,7 @@ impl ContainerManager for DaytonaContainerManager {
             session_id,
             size,
             egress,
+            permission_mode,
             ..
         } = command;
         // `ANTHROPIC_API_KEY` is what activates opencode's `anthropic`
@@ -401,6 +402,24 @@ impl ContainerManager for DaytonaContainerManager {
             return Err(HarnessError::Container(
                 "the container manager is shutting down".to_owned(),
             ));
+        }
+
+        if let Err(error) = self
+            .client
+            .exec(
+                id.as_str(),
+                &provision::stamp_opencode_permission_command(permission_mode),
+                EXEC_TIMEOUT,
+            )
+            .await
+        {
+            self.managed.containers.remove(&id);
+            if !self.discard(&id).await {
+                self.managed
+                    .containers
+                    .restore_failed_stop(id, Instant::now(), IDLE_TIMEOUT);
+            }
+            return Err(unavailable(error));
         }
 
         match self.align_size_then_bring_up(&id, size).await {

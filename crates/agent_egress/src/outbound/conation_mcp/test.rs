@@ -84,17 +84,17 @@ async fn answers_macros_own_destination_with_a_minted_token() {
     let credentials = WithMacroMcp::new(&inner, &tokens, macro_url(), false).expect("constructed");
 
     let McpResolution::Connected(call) = credentials
-        .resolve(&owner(), &McpDestination::Macro)
+            .resolve(&owner(), &McpDestination::Conation)
         .await
         .expect("resolved")
     else {
-        panic!("Macro's own server is always connected");
+        panic!("Conation's own server is always connected");
     };
 
     assert_eq!(call.url().as_str(), "https://mcp.macro.com/mcp");
     assert!(
         inner.asked.lock().expect("lock").is_empty(),
-        "Macro's own destination must never consult the owner's rows"
+        "Conation's own destination must never consult the owner's rows"
     );
 }
 
@@ -108,7 +108,7 @@ async fn reuses_a_token_until_it_nears_expiry() {
 
     for _ in 0..3 {
         credentials
-            .resolve(&owner(), &McpDestination::Macro)
+            .resolve(&owner(), &McpDestination::Conation)
             .await
             .expect("resolved");
     }
@@ -125,7 +125,7 @@ async fn a_token_about_to_expire_is_replaced() {
 
     for _ in 0..2 {
         credentials
-            .resolve(&owner(), &McpDestination::Macro)
+            .resolve(&owner(), &McpDestination::Conation)
             .await
             .expect("resolved");
     }
@@ -164,11 +164,11 @@ async fn refuses_a_cleartext_url_unless_local_dev_permits_it() {
     let inner = SpyInner::default();
     let permitted = WithMacroMcp::new(&inner, &tokens, url, true).expect("constructed");
     let McpResolution::Connected(call) = permitted
-        .resolve(&owner(), &McpDestination::Macro)
+        .resolve(&owner(), &McpDestination::Conation)
         .await
         .expect("resolved")
     else {
-        panic!("Macro's own server is always connected");
+        panic!("Conation's own server is always connected");
     };
     assert_eq!(call.url().as_str(), "http://mcp-service:8080/mcp");
 }

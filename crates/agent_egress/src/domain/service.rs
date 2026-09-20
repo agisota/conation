@@ -11,7 +11,9 @@ use crate::domain::model::{
     is_macro_staff, not_connected_tool_result, peek_json_rpc, sanitize_request_headers,
     sanitize_response_headers,
 };
-use crate::domain::ports::{Forwarder, GithubTokens, McpCredentials, SessionAuthority};
+use crate::domain::ports::{
+    Forwarder, GithubTokens, ManagedModelCredentials, McpCredentials, SessionAuthority,
+};
 
 #[cfg(test)]
 mod test;
@@ -29,20 +31,22 @@ pub trait EgressService: Send + Sync {
     ) -> impl Future<Output = Result<ProxyResponse, EgressError>> + Send;
 }
 
-/// The service, over its four ports.
-pub struct EgressServiceImpl<Sessions, Credentials, Tokens, Forward> {
+/// The service, over its five ports.
+pub struct EgressServiceImpl<Sessions, Credentials, Tokens, Models, Forward> {
     sessions: Sessions,
     credentials: Credentials,
     tokens: Tokens,
+    models: Models,
     forward: Forward,
 }
 
-impl<Sessions, Credentials, Tokens, Forward>
-    EgressServiceImpl<Sessions, Credentials, Tokens, Forward>
+impl<Sessions, Credentials, Tokens, Models, Forward>
+    EgressServiceImpl<Sessions, Credentials, Tokens, Models, Forward>
 where
     Sessions: SessionAuthority,
     Credentials: McpCredentials,
     Tokens: GithubTokens,
+    Models: ManagedModelCredentials,
     Forward: Forwarder,
 {
     /// Build the service over its adapters.
@@ -50,23 +54,26 @@ where
         sessions: Sessions,
         credentials: Credentials,
         tokens: Tokens,
+        models: Models,
         forward: Forward,
     ) -> Self {
         Self {
             sessions,
             credentials,
             tokens,
+            models,
             forward,
         }
     }
 }
 
-impl<Sessions, Credentials, Tokens, Forward> EgressService
-    for EgressServiceImpl<Sessions, Credentials, Tokens, Forward>
+impl<Sessions, Credentials, Tokens, Models, Forward> EgressService
+    for EgressServiceImpl<Sessions, Credentials, Tokens, Models, Forward>
 where
     Sessions: SessionAuthority,
     Credentials: McpCredentials,
     Tokens: GithubTokens,
+    Models: ManagedModelCredentials,
     Forward: Forwarder,
 {
     #[tracing::instrument(skip_all, err, fields(
@@ -93,18 +100,18 @@ where
         span.record("owner", tracing::field::display(&grant.owner));
 
         // Staff-only for now, checked here so every target - git, connected
-        // MCP servers, Macro's own - passes one gate. The refusal names
-        // itself ("not Macro staff") so the sandbox can report an actionable
+        // MCP servers, Conation's own - passes one gate. The refusal names
+        // itself ("not staff") so the sandbox can report an actionable
         // reason; the reason is our own static wording, never the request's.
         if !is_macro_staff(&grant.owner) {
-            tracing::warn!(owner = %grant.owner, "refusing egress for a session owned outside macro.com");
+            tracing::warn!(owner = %grant.owner, "refusing egress for a session owned outside staff");
             return Err(EgressError::Unauthenticated(
-                "the session owner is not Macro staff",
+                "the session owner is not staff",
             ));
         }
 
         let call = match &target {
-            EgressTarget::McpServer(destination @ McpDestination::Macro) => {
+            EgressTarget::McpServer(destination @ McpDestination::Conation) => {
                 match self.credentials.resolve(&grant.owner, destination).await? {
                     McpResolution::Connected(call) | McpResolution::Unconnected(call) => call,
                 }
@@ -150,6 +157,7 @@ where
                     })?;
                 base.redirected_to(url)?
             }
+            EgressTarget::OmniRouteChatCompletions => self.models.resolve().await?,
         };
 
         tracing::info!(
@@ -201,12 +209,13 @@ enum Unconnected {
     Forward(ProxyRequest),
 }
 
-impl<Sessions, Credentials, Tokens, Forward>
-    EgressServiceImpl<Sessions, Credentials, Tokens, Forward>
+impl<Sessions, Credentials, Tokens, Models, Forward>
+    EgressServiceImpl<Sessions, Credentials, Tokens, Models, Forward>
 where
     Sessions: SessionAuthority,
     Credentials: McpCredentials,
     Tokens: GithubTokens,
+    Models: ManagedModelCredentials,
     Forward: Forwarder,
 {
     /// An app the owner has not connected: forward everything except

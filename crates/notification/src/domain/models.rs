@@ -27,7 +27,10 @@ pub use notification_state::{NotificationAction, NotificationState};
 pub use rate_limit::{RateLimitConfig, RateLimitExceeded, RateLimitKey, RateLimitResult};
 pub use recipient::{ExclusionReason, FilteredRecipient, RecipientExclusion};
 pub use request::{NotificationResult, SendNotificationRequest, SendNotificationRequestBuilder};
-pub use task_due::{TaskDueKind, TaskDueNotification};
+pub use task_due::{
+    DUE_SOON_WINDOW, DueTaskAssignment, OVERDUE_LOOKBACK, TASK_DUE_SWEEP_PAGE,
+    TaskDueDispatchSummary, TaskDueKind, TaskDueNotification,
+};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::{borrow::Cow, sync::Arc};
 use uuid::Uuid;

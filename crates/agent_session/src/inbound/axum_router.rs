@@ -46,7 +46,7 @@ use utoipa::ToSchema;
 use crate::domain::error::AgentSessionError;
 use crate::domain::model::{
     AgentSession, AgentSessionId, AgentSessionPreview, ExternalSession, Message, SandboxSize,
-    SessionBot, SessionStatus, StoredAgentSessionLog,
+    SessionBot, SessionPermissionMode, SessionStatus, StoredAgentSessionLog,
 };
 use crate::domain::ports::{
     AgentSessionNotificationRecipient, BotDirectory, BotFacts, ControlDisposition, ControlEvent,
@@ -1460,6 +1460,10 @@ pub struct CreateAgentSessionRequest {
     /// in-process one acts on them today; `agent_harness`'s `AgentKind`
     /// records what each of the others will need to.
     pub instructions: Option<String>,
+    /// OpenCode permission mode for a managed sandbox. Omitted, the sandbox
+    /// stays fail-closed: ask every tool, deny leaving the workspace.
+    #[serde(default)]
+    pub permission_mode: SessionPermissionMode,
 }
 
 /// The triggering mention on a create request.
@@ -1778,6 +1782,7 @@ pub async fn create_agent_session_handler<
                 prompt: request.prompt,
                 profile,
                 instructions,
+                permission_mode: request.permission_mode,
             })
             .await?;
         return Ok((

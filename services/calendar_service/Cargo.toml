@@ -34,19 +34,19 @@ email_db_client = { path = "../../crates/email_db_client" }
 email_utils = { path = "../../crates/email_utils" }
 futures = { workspace = true }
 google_token = { path = "../../crates/google_token" }
-macro_auth = { path = "../../crates/macro_auth" }
-macro_authorization = { path = "../../crates/macro_authorization", features = [
+macro_auth = { package = "conation_auth", path = "../../crates/conation_auth" }
+macro_authorization = { path = "../../crates/conation_authorization", features = [
   "postgres",
 ] }
-macro_aws_config = { path = "../../crates/macro_aws_config" }
-macro_config = { path = "../../crates/macro_config" }
-macro_cors = { path = "../../crates/macro_cors" }
-macro_entrypoint = { path = "../../crates/macro_entrypoint" }
-macro_env = { path = "../../crates/macro_env" }
-macro_env_var = { path = "../../crates/macro_env_var" }
-macro_event_broker = { path = "../../crates/macro_event_broker" }
-macro_queues = { path = "../../crates/macro_queues" }
-macro_service_urls = { path = "../../crates/macro_service_urls" }
+macro_aws_config = { package = "conation_aws_config", path = "../../crates/conation_aws_config" }
+macro_config = { package = "conation_config", path = "../../crates/conation_config" }
+macro_cors = { package = "conation_cors", path = "../../crates/conation_cors" }
+macro_entrypoint = { path = "../../crates/conation_entrypoint" }
+macro_env = { package = "conation_env", path = "../../crates/conation_env" }
+macro_env_var = { package = "conation_env_var", path = "../../crates/conation_env_var" }
+macro_event_broker = { package = "conation_event_broker", path = "../../crates/conation_event_broker" }
+macro_queues = { package = "conation_queues", path = "../../crates/conation_queues" }
+macro_service_urls = { package = "conation_service_urls", path = "../../crates/conation_service_urls" }
 models_email = { path = "../../crates/models_email" }
 redis = { workspace = true, features = ["tokio-rustls-comp"] }
 reqwest = { workspace = true }

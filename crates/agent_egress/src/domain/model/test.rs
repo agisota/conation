@@ -1,4 +1,5 @@
 use super::*;
+use conation_user_id::user_id::MacroUserIdStr;
 use http::Method;
 
 fn header_map(pairs: &[(&str, &str)]) -> HeaderMap {
@@ -371,8 +372,12 @@ fn a_repeated_git_service_parameter_does_not_escalate() {
 #[test]
 fn an_mcp_destination_is_read_off_the_proxy_path() {
     assert_eq!(
+        McpDestination::from_path("/mcp-conation"),
+        Some(McpDestination::Conation)
+    );
+    assert_eq!(
         McpDestination::from_path("/mcp-macro"),
-        Some(McpDestination::Macro)
+        Some(McpDestination::Conation)
     );
     assert_eq!(
         McpDestination::from_path("/mcp/google_sheets"),
@@ -386,4 +391,20 @@ fn an_mcp_destination_is_read_off_the_proxy_path() {
     assert_eq!(McpDestination::from_path("/mcp/a/b"), None);
     assert_eq!(McpDestination::from_path("/mcp/"), None);
     assert_eq!(McpDestination::from_path("/git/info/refs"), None);
+}
+
+#[test]
+fn is_macro_staff_admits_conation_and_macro_domains() {
+    let staff_macro =
+        MacroUserIdStr::try_from_email("staff@macro.com").expect("a valid user id");
+    let staff_conation =
+        MacroUserIdStr::try_from_email("dev@conation.dev").expect("a valid user id");
+    let plus_alias =
+        MacroUserIdStr::try_from_email("name+tag@conation.dev").expect("a valid user id");
+    let visitor =
+        MacroUserIdStr::try_from_email("visitor@example.com").expect("a valid user id");
+    assert!(is_macro_staff(&staff_macro));
+    assert!(is_macro_staff(&staff_conation));
+    assert!(is_macro_staff(&plus_alias));
+    assert!(!is_macro_staff(&visitor));
 }

@@ -31,9 +31,9 @@ axum = { workspace = true, optional = true }
 chrono = { workspace = true, features = ["serde"] }
 entity_access = { path = "../entity_access", optional = true, default-features = false, features = ["ports"] }
 entity_access_db_utils = { path = "../entity_access_db_utils", optional = true }
-macro_authorization = { path = "../macro_authorization", optional = true, default-features = false, features = ["axum"] }
-macro_user_id = { path = "../macro_user_id" }
-macro_uuid = { path = "../macro_uuid", optional = true }
+macro_authorization = { path = "../conation_authorization", optional = true, default-features = false, features = ["axum"] }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
+macro_uuid = { package = "conation_uuid", path = "../conation_uuid", optional = true }
 model-entity = { path = "../model-entity", optional = true }
 model-error-response = { path = "../model-error-response", optional = true }
 models_permissions = { path = "../models_permissions" }
@@ -53,7 +53,7 @@ mockall = { workspace = true }
 [dev-dependencies]
 anyhow = { workspace = true }
 http-body-util = { workspace = true }
-macro_db_migrator = { path = "../macro_db_migrator" }
+macro_db_migrator = { package = "conation_db_migrator", path = "../conation_db_migrator" }
 model_user = { path = "../model_user" }
 serde_json = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

@@ -1,3 +1,6 @@
+import { isTaskEntity, type EntityData } from '@entity';
+import { differenceInCalendarDays, startOfDay } from 'date-fns';
+import { createSignal } from 'solid-js';
 import { t } from '@app/lib/i18n';
 import { SYSTEM_PROPERTY_IDS } from '@property/constants';
 import { DataType } from '@service-storage/generated/schemas/dataType';
@@ -94,3 +97,35 @@ export const TASK_GRID_TEMPLATE_AREAS_WIDE_NO_INDICATOR = `"content ${TASK_GRID_
 
 /** @deprecated Use TASK_GRID_TEMPLATE_AREAS_NARROW or TASK_GRID_TEMPLATE_AREAS_WIDE */
 const _TASK_GRID_TEMPLATE_AREAS = TASK_GRID_TEMPLATE_AREAS_NARROW;
+
+export type TaskDueFilter = 'all' | 'overdue' | 'dueSoon' | 'noDate';
+
+/** Client-side due filter for the tasks list/grid. Defaults to all loaded rows. */
+export const [taskDueFilter, setTaskDueFilter] =
+  createSignal<TaskDueFilter>('all');
+
+export function getTaskDueDate(entity: EntityData): Date | undefined {
+  if (!isTaskEntity(entity)) return undefined;
+  const due = entity.properties?.find(
+    (property) => property.definition.id === SYSTEM_PROPERTY_IDS.DUE_DATE
+  );
+  if (!due?.value || due.value.type !== 'Date') return undefined;
+  const raw = due.value.value;
+  if (raw == null) return undefined;
+  const date = new Date(raw as string | number);
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}
+
+/** overdue = before today; due soon = today through 7 calendar days. */
+export function matchesTaskDueFilter(
+  entity: EntityData,
+  filter: TaskDueFilter = taskDueFilter()
+): boolean {
+  if (filter === 'all') return true;
+  const due = getTaskDueDate(entity);
+  if (filter === 'noDate') return due === undefined;
+  if (!due) return false;
+  const days = differenceInCalendarDays(due, startOfDay(new Date()));
+  if (filter === 'overdue') return days < 0;
+  return days >= 0 && days <= 7;
+}

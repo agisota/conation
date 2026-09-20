@@ -60,7 +60,7 @@ uuid = { workspace = true }
 aws-sdk-secretsmanager = { workspace = true, optional = true }
 clap = { workspace = true, optional = true }
 conation_aws_config = { path = "../conation_aws_config", optional = true }
-conation_entrypoint = { path = "../conation_entrypoint", optional = true }
+conation_entrypoint = { package = "macro_entrypoint", path = "../conation_entrypoint", optional = true }
 conation_env = { path = "../conation_env", optional = true }
 secretsmanager_client = { path = "../secretsmanager_client", optional = true }
 tokio = { workspace = true, features = [

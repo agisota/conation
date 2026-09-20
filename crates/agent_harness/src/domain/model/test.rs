@@ -118,3 +118,39 @@ fn a_session_repository_keeps_the_url_it_was_read_from() {
         assert_eq!(SessionRepository::parse(url), None, "accepted {url}");
     }
 }
+
+#[test]
+fn ask_is_fail_closed_and_yolo_is_mapped_explicitly() {
+    assert_eq!(
+        opencode_permission_map(SessionPermissionMode::Ask),
+        serde_json::json!({ "*": "ask", "external_directory": "deny" })
+    );
+    assert_eq!(
+        opencode_permission_map(SessionPermissionMode::Control),
+        serde_json::json!({ "*": "ask", "external_directory": "deny" })
+    );
+    assert_eq!(
+        opencode_permission_map(SessionPermissionMode::Task),
+        serde_json::json!({
+            "*": "ask",
+            "edit": "allow",
+            "external_directory": "deny"
+        })
+    );
+    assert_eq!(
+        opencode_permission_map(SessionPermissionMode::Yolo),
+        serde_json::json!({ "*": "allow", "external_directory": "deny" })
+    );
+    for mode in [
+        SessionPermissionMode::Ask,
+        SessionPermissionMode::Control,
+        SessionPermissionMode::Task,
+        SessionPermissionMode::Yolo,
+    ] {
+        assert_eq!(
+            opencode_permission_map(mode)["external_directory"],
+            "deny",
+            "{mode:?} must not leave the workspace"
+        );
+    }
+}

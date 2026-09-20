@@ -2,6 +2,7 @@ import type { LoroDoc } from 'loro-crdt';
 import { LoroDoc as Loro } from 'loro-crdt';
 import {
   boardFromDoc,
+  importCanvasLoroSnapshot,
   snapshotFromJson,
   type CanvasLoroJson,
 } from './canvas-loro';
@@ -87,8 +88,9 @@ export async function seedMissingCanvasSnapshot(opts: {
  * After the one-shot sync-service snapshot, keep a Loro doc and push/apply
  * incremental updates over the live WS source.
  *
- * The initial snapshot must paint the board (`onRemoteBoard`) so a second
- * client does not keep stale DSS JSON. Parse/import failure returns false
+ * The initial snapshot must land in the local WAL (`peekCanvasLoro`) and
+ * paint the board (`onRemoteBoard`) so a second client does not hydrate
+ * empty/stale DSS JSON and push deletes. Parse/import failure returns false
  * so the UI can show `canvas.error.staleLive` instead of spinning.
  */
 export async function connectCanvasLiveSync(opts: {
@@ -123,6 +125,12 @@ export async function connectCanvasLiveSync(opts: {
     opts.source.cleanup();
     return false;
   }
+  const persisted = importCanvasLoroSnapshot(
+    opts.documentId,
+    initial.snapshot
+  );
+  if (persisted) importInto(doc, persisted);
+
   const presence = createCanvasPresenceStore();
   if (initial.awareness) presence.apply(initial.awareness);
   const publishList = () => {

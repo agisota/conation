@@ -123,7 +123,7 @@ lazy_static = { workspace = true }
 lexical_client = { path = "../../crates/lexical_client" }
 lexical_mention_extractor = { path = "../../crates/lexical_mention_extractor" }
 conation_auth = { path = "../../crates/conation_auth" }
-conation_authorization = { path = "../../crates/conation_authorization", features = [
+conation_authorization = { package = "macro_authorization", path = "../../crates/conation_authorization", features = [
   "postgres",
 ] }
 conation_aws_config = { path = "../../crates/conation_aws_config", features = ["s3"] }
@@ -131,7 +131,7 @@ conation_axum_utils = { path = "../../crates/conation_axum_utils" }
 conation_config = { path = "../../crates/conation_config" }
 conation_cors = { path = "../../crates/conation_cors" }
 conation_db_client = { path = "../../crates/conation_db_client" }
-conation_entrypoint = { path = "../../crates/conation_entrypoint" }
+conation_entrypoint = { package = "macro_entrypoint", path = "../../crates/conation_entrypoint" }
 conation_env = { path = "../../crates/conation_env" }
 conation_env_var = { path = "../../crates/conation_env_var" }
 conation_event_broker = { path = "../../crates/conation_event_broker" }

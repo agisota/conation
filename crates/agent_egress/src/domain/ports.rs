@@ -1,11 +1,12 @@
 //! The capabilities the service needs from the outside.
 //!
-//! Four, and the split is deliberate. [`SessionAuthority`] answers "may this
+//! Five, and the split is deliberate. [`SessionAuthority`] answers "may this
 //! request happen at all", [`McpCredentials`] and [`GithubTokens`] answer
-//! "with whose credential, to where" for the two kinds of upstream, and
-//! [`Forwarder`] does the one thing that is genuinely transport work. Only the
-//! last touches a socket, which is what lets the decisions above it be tested
-//! exhaustively without one.
+//! "with whose credential, to where" for the two kinds of owner-scoped
+//! upstream, [`ManagedModelCredentials`] answers the one deployment-owned
+//! managed-model route, and [`Forwarder`] does the one thing that is
+//! genuinely transport work. Only the last touches a socket, which is what
+//! lets the decisions above it be tested exhaustively without one.
 
 use crate::domain::error::EgressError;
 use crate::domain::model::{

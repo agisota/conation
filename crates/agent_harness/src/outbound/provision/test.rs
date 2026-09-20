@@ -1,15 +1,15 @@
-use super::{ENSURE_READY_SCRIPT, SIDECAR_PORT};
+use super::{
+    ENSURE_READY_SCRIPT, OPENCODE_CONFIG, OPENCODE_CONFIG_PATH, SIDECAR_PORT,
+    stamp_opencode_permission_command,
+};
 use crate::domain::model::{
     EGRESS_URL_VARIABLE, MODEL_PROXY_URL_VARIABLE, MODEL_SESSION_TOKEN_VARIABLE,
     SESSION_TOKEN_VARIABLE,
 };
+use agent_session::domain::model::SessionPermissionMode;
 
 const SANDBOX_DOCKERFILE: &str =
     include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/container/Dockerfile"));
-const OPENCODE_CONFIG: &str = include_str!(concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/container/opencode.json"
-));
 const SIDECAR_PROXY: &str = include_str!(concat!(
     env!("CARGO_MANIFEST_DIR"),
     "/container/sidecar/src/server.rs"
@@ -90,4 +90,24 @@ fn opencode_is_pinned_to_the_rox_provider_and_known_models() {
     for model in ["gemini-2.5-flash", "nemotron-3-ultra", "gpt-5.6-luna"] {
         assert!(config["provider"]["rox"]["models"][model].is_object());
     }
+    assert_eq!(config["permission"]["*"], "ask");
+    assert_eq!(config["permission"]["external_directory"], "deny");
+}
+
+#[test]
+fn stamping_yolo_allows_tools_but_still_denies_leaving_the_workspace() {
+    let command = stamp_opencode_permission_command(SessionPermissionMode::Yolo);
+    assert!(command.starts_with(&format!("cat > {OPENCODE_CONFIG_PATH} <<'EOF'\n")));
+    assert!(command.contains("\"*\": \"allow\""));
+    assert!(command.contains("\"external_directory\": \"deny\""));
+    assert!(!command.contains("AllowAlways"));
+    assert!(!command.contains("agisota/conation"));
+}
+
+#[test]
+fn stamping_ask_keeps_the_baked_fail_closed_map() {
+    let command = stamp_opencode_permission_command(SessionPermissionMode::Ask);
+    assert!(command.contains("\"*\": \"ask\""));
+    assert!(command.contains("\"external_directory\": \"deny\""));
+    assert!(!command.contains("\"*\": \"allow\""));
 }

@@ -1,4 +1,5 @@
 import type { AgentInputProps } from '@app/features/block-agent/ui';
+import { t } from '@app/lib/i18n';
 import { InputProvider } from '@channel/Input/context';
 import { Input } from '@channel/Input/Input';
 import type { InputAttachmentData, InputCommands } from '@channel/Input/types';
@@ -196,7 +197,7 @@ export function ChatComposer(props: {
             <Show when={canAttach()}>
               <Input.DropOverlay
                 class="rounded-[32px]"
-                hint="Drop files here to send them to the agent"
+                hint={t('agents.composer.dropFiles')}
               />
             </Show>
             <div ref={setContent} data-composer-content>
@@ -214,7 +215,7 @@ export function ChatComposer(props: {
                     initialValue={props.draft}
                     placeholder={props.placeholder ?? tip()}
                     refFn={(element) =>
-                      element.setAttribute('aria-label', 'Message the agent')
+                      element.setAttribute('aria-label', t('agents.composer.messageAria'))
                     }
                     autofocus={
                       !isTouchDevice() &&
@@ -226,7 +227,7 @@ export function ChatComposer(props: {
                   data-composer-controls
                   class="flex min-w-0 max-w-[55%] group-data-[composer-compact=false]/composer:max-w-none shrink-0 items-center"
                   role="group"
-                  aria-label="Composer settings"
+                  aria-label={t('agents.composer.settingsAria')}
                 >
                   <div class="ml-auto flex min-w-0 max-w-full items-center gap-2 [&_.menu]:right-0 [&_.menu]:left-auto [&_.menu-anchor]:min-w-0 [&_.pill]:max-w-full">
                     <Show when={props.onAttachFiles}>
@@ -245,7 +246,7 @@ export function ChatComposer(props: {
                       fallback={
                         <SendButton
                           appearance="composer"
-                          aria-label="Send"
+                          aria-label={t('agents.composer.send')}
                           title={props.blockedReason}
                           disabled={
                             !hasContent() ||
@@ -262,7 +263,7 @@ export function ChatComposer(props: {
                           <Button
                             variant="strong"
                             size="icon-composer"
-                            label="Stop"
+                            label={t('agents.composer.stop')}
                             disabled={disabled()}
                             onClick={() => props.session?.onStop?.()}
                           >
@@ -272,8 +273,8 @@ export function ChatComposer(props: {
                       >
                         <SendButton
                           appearance="composer"
-                          aria-label="Send next queued message"
-                          tooltip="Send next queued message"
+                          aria-label={t('agents.composer.sendNext')}
+                          tooltip={t('agents.composer.sendNext')}
                           shortcut="Enter"
                           onClick={sendNext}
                         />
@@ -296,7 +297,7 @@ export function ChatComposer(props: {
               <div
                 class="composer-drawer-content"
                 role="group"
-                aria-label="Repository settings"
+                aria-label={t('agents.composer.repositorySettings')}
               >
                 {props.drawer}
               </div>

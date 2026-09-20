@@ -84,38 +84,38 @@ http-body-util = { workspace = true }
 jsonwebtoken = { workspace = true }
 last_online_tracker = { path = "../../crates/last_online_tracker" }
 loops_client = { path = "../../crates/loops_client" }
-macro_auth = { path = "../../crates/macro_auth" }
-macro_authorization = { path = "../../crates/macro_authorization", features = [
+macro_auth = { package = "conation_auth", path = "../../crates/conation_auth" }
+macro_authorization = { path = "../../crates/conation_authorization", features = [
   "postgres",
 ] }
-macro_aws_config = { path = "../../crates/macro_aws_config" }
-macro_cache_client = { path = "../../crates/macro_cache_client", default-features = false, features = [
+macro_aws_config = { package = "conation_aws_config", path = "../../crates/conation_aws_config" }
+macro_cache_client = { package = "conation_cache_client", path = "../../crates/conation_cache_client", default-features = false, features = [
   "auth",
   "auth_rate_limit",
   "login_code_rate_limit",
   "mobile_welcome_email_rate_limit",
   "verify_email_rate_limit",
 ] }
-macro_cors = { path = "../../crates/macro_cors" }
-macro_config = { path = "../../crates/macro_config" }
-macro_db_client = { path = "../../crates/macro_db_client", default-features = false, features = [
+macro_cors = { package = "conation_cors", path = "../../crates/conation_cors" }
+macro_config = { package = "conation_config", path = "../../crates/conation_config" }
+macro_db_client = { package = "conation_db_client", path = "../../crates/conation_db_client", default-features = false, features = [
   "account_merge_request",
   "team",
 ] }
-macro_entrypoint = { path = "../../crates/macro_entrypoint" }
-macro_env = { path = "../../crates/macro_env" }
-macro_event_broker = { path = "../../crates/macro_event_broker" }
+macro_entrypoint = { path = "../../crates/conation_entrypoint" }
+macro_env = { package = "conation_env", path = "../../crates/conation_env" }
+macro_event_broker = { package = "conation_event_broker", path = "../../crates/conation_event_broker" }
 messages = { path = "../../crates/messages", features = ["broker", "delivery"] }
-macro_env_var = { path = "../../crates/macro_env_var" }
-macro_queues = { path = "../../crates/macro_queues" }
-macro_middleware = { path = "../../crates/macro_middleware", default-features = false, features = [
+macro_env_var = { package = "conation_env_var", path = "../../crates/conation_env_var" }
+macro_queues = { package = "conation_queues", path = "../../crates/conation_queues" }
+macro_middleware = { package = "conation_middleware", path = "../../crates/conation_middleware", default-features = false, features = [
   "tracking",
 ] }
 mention_utils = { path = "../../crates/mention_utils" }
-macro_service_urls = { path = "../../crates/macro_service_urls" }
-macro_tower_layers = { path = "../../crates/macro_tower_layers" }
-macro_user_id = { path = "../../crates/macro_user_id" }
-macro_uuid = { path = "../../crates/macro_uuid" }
+macro_service_urls = { package = "conation_service_urls", path = "../../crates/conation_service_urls" }
+macro_tower_layers = { package = "conation_tower_layers", path = "../../crates/conation_tower_layers" }
+macro_user_id = { package = "conation_user_id", path = "../../crates/conation_user_id" }
+macro_uuid = { package = "conation_uuid", path = "../../crates/conation_uuid" }
 maud = { version = "0.27.0" }
 miniserde = "0.1.45"
 microsoft_oauth_grant_db_utils = { path = "../../crates/microsoft_oauth_grant_db_utils" }

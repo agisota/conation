@@ -30,11 +30,13 @@ use agent_changes::inbound::axum_router::AgentChangesRouterState;
 use agent_changes::outbound::github_pull_request::GithubPullRequestDiff;
 use agent_changes::outbound::postgres::PgChangesetRepo;
 use agent_changes::outbound::s3::S3ChangesetBlobStore;
+use agent_egress::domain::model::BearerToken;
 use agent_egress::domain::service::EgressServiceImpl;
 use agent_egress::outbound::conation_mcp::{MacroApiTokenSigner, WithMacroMcp};
 use agent_egress::outbound::forwarder::ReqwestForwarder;
 use agent_egress::outbound::github_tokens::GithubAppTokens;
 use agent_egress::outbound::mcp_credentials::PipedreamMcpCredentials;
+use agent_egress::outbound::omniroute::OmniRouteCredentials;
 use agent_egress::outbound::session_authority::StoredTokenSessionAuthority;
 use agent_fold::domain::service::FoldedMessageService;
 use agent_harness::domain::error::HarnessError;
@@ -476,7 +478,12 @@ async fn run() -> anyhow::Result<()> {
 
     // The egress proxy: one binary today, its own listener from the start.
     // Shared with the in-memory runtime, which calls it directly rather than
-    // through that listener.
+    // through that listener. Empty OmniRoute tokens fail closed in the adapter.
+    let managed_models = OmniRouteCredentials::new(
+        url::Url::parse(&config.rox_api_base_url).context("ROX_API_BASE_URL is not a url")?,
+        BearerToken::new(config.rox_api_key.clone()),
+    )
+    .context("the OmniRoute upstream is misconfigured")?;
     let egress = Arc::new(EgressServiceImpl::new(
         StoredTokenSessionAuthority::new(PgAgentSessionRepo::new(pool.clone())),
         mcp_credentials,
@@ -488,6 +495,7 @@ async fn run() -> anyhow::Result<()> {
             PgGithubSyncRepo::new(pool.clone()),
             GithubSyncClientImpl::default(),
         )),
+        managed_models,
         ReqwestForwarder::new()?,
     ));
 

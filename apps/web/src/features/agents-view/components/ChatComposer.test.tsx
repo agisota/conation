@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import type { InputAttachmentData } from '@channel/Input/types';
 import { $createQuoteNode, QuoteNode } from '@lexical/rich-text';
 import { fireEvent, render, screen } from '@solidjs/testing-library';
@@ -121,14 +122,14 @@ describe('Chat session input', () => {
       <ChatSessionInput modelControl={<button>Model</button>} onSend={send} />
     ));
     expect(
-      screen.getByRole('group', { name: 'Composer settings' }).textContent
+      screen.getByRole('group', { name: t('agents.composer.settingsAria') }).textContent
     ).toBe('Model');
     type('  Follow up  ');
-    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+    fireEvent.click(screen.getByRole('button', { name: t('agents.composer.send') }));
     expect(send).toHaveBeenCalledWith('Follow up', []);
     expect(editor.clear).toHaveBeenCalledOnce();
     expect(
-      screen.getByRole('button', { name: 'Send' }).hasAttribute('disabled')
+      screen.getByRole('button', { name: t('agents.composer.send') }).hasAttribute('disabled')
     ).toBe(true);
   });
 
@@ -145,10 +146,10 @@ describe('Chat session input', () => {
     const send = vi.fn();
     const stop = vi.fn();
     render(() => <ChatSessionInput busy onSend={send} onStop={stop} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Stop' }));
+    fireEvent.click(screen.getByRole('button', { name: t('agents.composer.stop') }));
     expect(stop).toHaveBeenCalledOnce();
     type('Next request');
-    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+    fireEvent.click(screen.getByRole('button', { name: t('agents.composer.send') }));
     expect(send).toHaveBeenCalledWith('Next request', []);
   });
 
@@ -217,7 +218,7 @@ describe('Chat session input', () => {
     expect(drawer?.hasAttribute('data-open')).toBe(true);
     setMode('chat');
     expect((drawer as HTMLElement).inert).toBe(true);
-    const settings = screen.getByRole('group', { name: 'Composer settings' });
+    const settings = screen.getByRole('group', { name: t('agents.composer.settingsAria') });
     expect(settings.textContent).toBe('Agent');
   });
   it('lets controls inside the composer receive pointer focus', () => {
@@ -295,7 +296,7 @@ describe('attachments in the shared composer', () => {
       />
     ));
     expect(
-      screen.getByRole('button', { name: 'Send' }).hasAttribute('disabled')
+      screen.getByRole('button', { name: t('agents.composer.send') }).hasAttribute('disabled')
     ).toBe(true);
     editor.enter?.(undefined, '');
     expect(send).not.toHaveBeenCalled();

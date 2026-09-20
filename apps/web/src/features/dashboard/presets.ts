@@ -123,12 +123,6 @@ const mentions: Query = {
 
 const emptyQuery: Query = {};
 
-const unpinnedMessage = (): Widget => ({
-  type: 'channelMessage',
-  channelId: '',
-  messageId: '',
-});
-
 const list = (query: Query, limit?: number): Widget => ({
   type: 'list',
   source: { kind: 'query', query },
@@ -168,12 +162,6 @@ const builders: Record<DashboardPresetId, () => View> = {
   channels: () =>
     view('channels', [
       list(watchedUnread),
-      {
-        type: 'container',
-        direction: 'row',
-        gap: 3,
-        children: [unpinnedMessage(), unpinnedMessage()],
-      },
       list(dms),
     ]),
 
@@ -249,7 +237,6 @@ const builders: Record<DashboardPresetId, () => View> = {
     view('activity', [
       { type: 'activity', filter: 'team', limit: 20 },
       list(tasks),
-      unpinnedMessage(),
     ]),
 
   mailMeetings: () =>

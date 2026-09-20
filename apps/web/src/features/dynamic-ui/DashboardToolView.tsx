@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { StaticMarkdownContext } from '@core/component/LexicalMarkdown/component/core/StaticMarkdown';
 import { aiChatTheme } from '@core/component/LexicalMarkdown/theme';
 import { createMemo, Show } from 'solid-js';
@@ -27,7 +28,7 @@ export default function DashboardToolView(props: { view: unknown }) {
       when={view()}
       fallback={
         <div class="text-ink-extra-muted rounded-lg border border-edge-muted p-3 text-xs">
-          Couldn't render dashboard — the view didn't match the schema.
+          {t('dashboard.tool.error')}
         </div>
       }
     >

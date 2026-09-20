@@ -66,10 +66,10 @@ chrono = { workspace = true }
 channels = { path = "../channels", default-features = false, features = ["ports"] }
 contacts = { path = "../contacts", default-features = false, optional = true }
 database_env_vars = { path = "../database_env_vars", optional = true }
-conation_authorization = { path = "../conation_authorization", optional = true, default-features = false, features = [
+conation_authorization = { package = "macro_authorization", path = "../conation_authorization", optional = true, default-features = false, features = [
   "axum",
 ] }
-conation_entrypoint = { path = "../conation_entrypoint", optional = true }
+conation_entrypoint = { package = "macro_entrypoint", path = "../conation_entrypoint", optional = true }
 conation_event_broker = { path = "../conation_event_broker", default-features = false }
 conation_event_topics = { path = "../conation_event_topics" }
 conation_user_id = { path = "../conation_user_id" }

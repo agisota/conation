@@ -10,6 +10,7 @@ pub mod model;
 pub mod ports;
 pub mod pull_request;
 mod sandbox_size;
+mod permission_mode;
 pub mod search;
 pub mod service;
 pub mod session;

@@ -24,9 +24,9 @@ required-features = ["comment-import"]
 [dependencies]
 clap = { workspace = true, optional = true }
 database_env_vars = { path = "../database_env_vars", optional = true }
-macro_entrypoint = { path = "../macro_entrypoint", optional = true }
-macro_env = { path = "../macro_env", optional = true }
-macro_uuid = { path = "../macro_uuid", optional = true }
+macro_entrypoint = { path = "../conation_entrypoint", optional = true }
+macro_env = { package = "conation_env", path = "../conation_env", optional = true }
+macro_uuid = { package = "conation_uuid", path = "../conation_uuid", optional = true }
 rootcause = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
 sqlx = { workspace = true, features = ["migrate"] }

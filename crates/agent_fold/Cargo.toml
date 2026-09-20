@@ -45,8 +45,8 @@ agent_runtime_protocol = { path = "../agent_runtime_protocol", default-features 
 chrono = { workspace = true }
 clap = { workspace = true, optional = true }
 lazy-regex = { workspace = true }
-macro_user_id = { path = "../macro_user_id" }
-macro_uuid = { path = "../macro_uuid" }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
+macro_uuid = { package = "conation_uuid", path = "../conation_uuid" }
 non_empty = { path = "../non_empty" }
 rootcause = { workspace = true }
 serde = { workspace = true }

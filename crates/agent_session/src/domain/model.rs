@@ -10,6 +10,7 @@ use conation_uuid::Uuid;
 // so that this crate can depend on the fold (see `agent_fold::domain::log`).
 // Re-exported here because this is where callers expect session types.
 pub use super::sandbox_size::SandboxSize;
+pub use super::permission_mode::SessionPermissionMode;
 pub use agent_fold::domain::log::{AgentSessionId, AgentSessionLog, Message};
 pub use agent_fold::domain::model::{
     Author, AuthorKind, FoldEvent, MessageId, OwnedFoldEvent, TurnId,

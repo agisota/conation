@@ -17,7 +17,7 @@ documents = { path = "../../crates/documents", default-features = false, feature
 lambda_runtime = { workspace = true }
 lexical_client = { path = "../../crates/lexical_client" }
 conation_aws_config = { path = "../../crates/conation_aws_config", features = ["s3"] }
-conation_entrypoint = { path = "../../crates/conation_entrypoint" }
+conation_entrypoint = { package = "macro_entrypoint", path = "../../crates/conation_entrypoint" }
 conation_env_var = { path = "../../crates/conation_env_var" }
 model = { path = "../../crates/model" }
 s3_key = { path = "../../crates/s3_key" }

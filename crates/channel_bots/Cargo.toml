@@ -18,7 +18,7 @@ entity_access = { path = "../entity_access", default-features = false, features 
 chrono = { workspace = true }
 chrono-tz = { workspace = true }
 futures = { workspace = true }
-macro_user_id = { path = "../macro_user_id" }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
 messages = { path = "../messages", features = ["ports"] }
 prompt = { path = "../prompt" }
 rootcause = { workspace = true }

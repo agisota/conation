@@ -106,11 +106,11 @@ entity_access_management = { path = "../entity_access_management", default-featu
 foreign_entity = { path = "../foreign_entity", default-features = false, features = [
   "ports",
 ], optional = true }
-conation_authorization = { path = "../conation_authorization", optional = true, default-features = false, features = [
+conation_authorization = { package = "macro_authorization", path = "../conation_authorization", optional = true, default-features = false, features = [
   "axum",
 ] }
 conation_aws_config = { path = "../conation_aws_config", features = ["s3"] }
-conation_entrypoint = { path = "../conation_entrypoint", optional = true }
+conation_entrypoint = { package = "macro_entrypoint", path = "../conation_entrypoint", optional = true }
 conation_env_var = { path = "../conation_env_var" }
 conation_event_broker = { path = "../conation_event_broker", default-features = false }
 conation_event_topics = { path = "../conation_event_topics" }

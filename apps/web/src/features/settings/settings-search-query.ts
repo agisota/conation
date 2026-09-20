@@ -7,7 +7,7 @@ import type { SettingsTabItem } from '@core/constant/settingsTabsConfig';
  *   - page entries: one per available settings tab (its sidebar label plus
  *     generous synonyms — "dark mode" finds Appearance, "payment" finds Billing)
  *   - inner entries: sections, rows and integrations that live *inside* a page
- *     and aren't visible from the sidebar (Gmail, Linear, "Delete account", …)
+ *     and aren't visible from the sidebar (Email, Linear, "Delete account", …)
  *
  * The content below is hand-curated and English-only. Keywords should be what a
  * user would plausibly type, not what the UI happens to call the thing — err on
@@ -16,7 +16,7 @@ import type { SettingsTabItem } from '@core/constant/settingsTabsConfig';
 
 /** Something inside a settings page that can be found by search. */
 type SettingsSearchItem = {
-  /** Shown as the result title, e.g. "Gmail" or "Delete account". */
+  /** Shown as the result title, e.g. "Email" or "Delete account". */
   title: string;
   /** The section it lives in, shown in the result's breadcrumb. */
   section?: string;
@@ -390,12 +390,17 @@ const SETTINGS_SEARCH_CONTENT: Partial<
     ],
     items: [
       {
-        title: 'Gmail',
+        title: 'Email',
         section: 'Accounts',
         keywords: [
+          'gmail',
           'google',
           'google account',
           'google workspace',
+          'connect google',
+          'stalwart',
+          'mailbox',
+          'conation mailbox',
           'email',
           'email account',
           'mail',
@@ -406,6 +411,7 @@ const SETTINGS_SEARCH_CONTENT: Partial<
           'calendar sync',
           'google calendar',
           'force sync',
+          'resync',
           'signature',
           'email signature',
           'primary inbox',

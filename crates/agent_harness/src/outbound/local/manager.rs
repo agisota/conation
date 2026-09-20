@@ -199,7 +199,7 @@ impl ContainerManager for LocalContainerManager {
             kind: _,
             size: _,
             egress,
-            ..
+            permission_mode,
         } = command;
 
         if !self
@@ -234,6 +234,20 @@ impl ContainerManager for LocalContainerManager {
         };
         let container = self.docker.run(&spec).await.map_err(unavailable)?;
         tracing::info!(container = %container.name, session = %session_id, "container created");
+
+        let stamp = provision::stamp_opencode_permission_command(permission_mode);
+        let (status, output) = self
+            .docker
+            .exec(&container, &stamp, Duration::from_secs(15))
+            .await
+            .map_err(unavailable)?;
+        if status != 0 {
+            self.discard(&container).await;
+            return Err(HarnessError::Container(format!(
+                "stamping OpenCode permission failed in {} with status {status}: {output}",
+                container.name
+            )));
+        }
 
         match self.bring_up(&container).await {
             Ok(transport) => Ok(agent_session::domain::connection::RuntimeAttachment::solo(

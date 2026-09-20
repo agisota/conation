@@ -36,23 +36,23 @@ hmac = { workspace = true }
 http-body-util = { workspace = true }
 itertools = { workspace = true }
 last_online_tracker = { path = "../../crates/last_online_tracker" }
-macro_auth = { path = "../../crates/macro_auth" }
-macro_authorization = { path = "../../crates/macro_authorization", features = [
+macro_auth = { package = "conation_auth", path = "../../crates/conation_auth" }
+macro_authorization = { path = "../../crates/conation_authorization", features = [
   "postgres",
 ] }
-macro_aws_config = { path = "../../crates/macro_aws_config" }
-macro_config = { path = "../../crates/macro_config" }
+macro_aws_config = { package = "conation_aws_config", path = "../../crates/conation_aws_config" }
+macro_config = { package = "conation_config", path = "../../crates/conation_config" }
 doppler-config = { workspace = true }
-macro_cors = { path = "../../crates/macro_cors" }
-macro_entrypoint = { path = "../../crates/macro_entrypoint" }
-macro_env = { path = "../../crates/macro_env" }
-macro_env_var = { path = "../../crates/macro_env_var" }
-macro_event_broker = { path = "../../crates/macro_event_broker" }
-macro_middleware = { path = "../../crates/macro_middleware", default-features = false }
-macro_queues = { path = "../../crates/macro_queues" }
-macro_tower_layers = { path = "../../crates/macro_tower_layers" }
-macro_user_id = { path = "../../crates/macro_user_id" }
-macro_uuid = { path = "../../crates/macro_uuid" }
+macro_cors = { package = "conation_cors", path = "../../crates/conation_cors" }
+macro_entrypoint = { path = "../../crates/conation_entrypoint" }
+macro_env = { package = "conation_env", path = "../../crates/conation_env" }
+macro_env_var = { package = "conation_env_var", path = "../../crates/conation_env_var" }
+macro_event_broker = { package = "conation_event_broker", path = "../../crates/conation_event_broker" }
+macro_middleware = { package = "conation_middleware", path = "../../crates/conation_middleware", default-features = false }
+macro_queues = { package = "conation_queues", path = "../../crates/conation_queues" }
+macro_tower_layers = { package = "conation_tower_layers", path = "../../crates/conation_tower_layers" }
+macro_user_id = { package = "conation_user_id", path = "../../crates/conation_user_id" }
+macro_uuid = { package = "conation_uuid", path = "../../crates/conation_uuid" }
 mention_utils = { path = "../../crates/mention_utils" }
 model = { path = "../../crates/model" }
 model-entity = { path = "../../crates/model-entity" }
@@ -69,6 +69,7 @@ paste = { workspace = true }
 rate_limit = { path = "../../crates/rate_limit" }
 redis = { workspace = true }
 regex = { workspace = true }
+rootcause = { workspace = true }
 secretsmanager_client = { path = "../../crates/secretsmanager_client" }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -85,8 +86,8 @@ utoipa = { workspace = true, features = ["chrono"] }
 utoipa-swagger-ui = { workspace = true }
 uuid = { workspace = true }
 
-macro_service_urls = { path = "../../crates/macro_service_urls" }
+macro_service_urls = { package = "conation_service_urls", path = "../../crates/conation_service_urls" }
 workspace-hack = { version = "0.1", path = "../../crates/workspace-hack" }
 
 [dev-dependencies]
-macro_auth = { path = "../../crates/macro_auth", features = ["testing"] }
+macro_auth = { package = "conation_auth", path = "../../crates/conation_auth", features = ["testing"] }

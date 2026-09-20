@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import { CURSOR_BOT_ID } from '@core/constant/cursorAgent';
 import { MACRO_AGENT_BOT_ID } from '@core/constant/macroAgent';
 import { MACRO_CODER_BOT_ID } from '@core/constant/macroCoder';
@@ -46,8 +47,8 @@ describe('buildAgentRoster', () => {
 
   it('offers to connect Cursor until it is connected', () => {
     const cursor = buildAgentRoster(EMPTY).find((a) => a.id === CURSOR_BOT_ID);
-    expect(cursor?.unavailableReason).toBe('Connect Cursor to start it');
-    expect(cursor?.connectLabel).toBe('Connect Cursor');
+    expect(cursor?.unavailableReason).toBe(t('agents.roster.connectCursorToStart'));
+    expect(cursor?.connectLabel).toBe(t('agents.roster.connectCursor'));
     expect(cursor?.runtime.connected).toBe(false);
 
     const connected = buildAgentRoster({
@@ -96,8 +97,8 @@ describe('buildAgentRoster', () => {
       label: 'wolf-laptop',
       connected: false,
     });
-    expect(saved[2]?.unavailableReason).toBe('Its runtime is disconnected');
-    expect(saved[3]?.runtime.label).toBe('Disconnected runtime');
+    expect(saved[2]?.unavailableReason).toBe(t('agents.roster.runtimeDisconnected'));
+    expect(saved[3]?.runtime.label).toBe(t('agents.roster.disconnectedRuntime'));
   });
 
   it('cannot start a saved agent on a connected macrod runtime from here', () => {
@@ -107,7 +108,7 @@ describe('buildAgentRoster', () => {
       agents: [persisted({ harness: 'macrod', harness_id: 'h1' })],
     });
     expect(roster.at(-1)?.unavailableReason).toBe(
-      'Runs on its own machine · start it from a channel mention'
+      t('agents.roster.macrodUnavailable')
     );
   });
 });

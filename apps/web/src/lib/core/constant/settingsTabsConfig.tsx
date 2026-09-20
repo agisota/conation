@@ -1,4 +1,5 @@
 import { useFeatureFlag } from '@app/lib/analytics/posthog';
+import { t } from '@app/lib/i18n';
 import BellIcon from '@phosphor/bell-simple.svg';
 import BugIcon from '@phosphor/bug.svg';
 import BuildingsIcon from '@phosphor/buildings.svg';
@@ -51,42 +52,144 @@ export type SettingsTabGroup = {
  */
 export const SETTINGS_TAB_GROUPS: SettingsTabGroup[] = [
   {
-    label: 'General',
+    get label() {
+      return t('settings.tabs.general');
+    },
     items: [
-      { tab: 'Account', label: 'Account', icon: UserIconPhosphor },
-      { tab: 'API Keys', label: 'API Keys', icon: KeyIcon },
-      { tab: 'Notifications', label: 'Notifications', icon: BellIcon },
-      { tab: 'Billing', label: 'Billing', icon: CreditCardIcon },
-      { tab: 'Appearance', label: 'Appearance', icon: SwatchesIcon },
-      { tab: 'Mobile App', label: 'Mobile App', icon: DeviceMobileIcon },
-      { tab: 'Shortcuts', label: 'Shortcuts', icon: KeyboardIcon },
+      {
+        tab: 'Account',
+        get label() {
+          return t('settings.tabs.account');
+        },
+        icon: UserIconPhosphor,
+      },
+      {
+        tab: 'API Keys',
+        get label() {
+          return t('settings.tabs.apiKeys');
+        },
+        icon: KeyIcon,
+      },
+      {
+        tab: 'Notifications',
+        get label() {
+          return t('settings.tabs.notifications');
+        },
+        icon: BellIcon,
+      },
+      {
+        tab: 'Billing',
+        get label() {
+          return t('settings.tabs.billing');
+        },
+        icon: CreditCardIcon,
+      },
+      {
+        tab: 'Appearance',
+        get label() {
+          return t('settings.tabs.appearance');
+        },
+        icon: SwatchesIcon,
+      },
+      {
+        tab: 'Mobile App',
+        get label() {
+          return t('settings.tabs.mobileApp');
+        },
+        icon: DeviceMobileIcon,
+      },
+      {
+        tab: 'Shortcuts',
+        get label() {
+          return t('settings.tabs.shortcuts');
+        },
+        icon: KeyboardIcon,
+      },
     ],
   },
   {
-    label: 'Workspace',
+    get label() {
+      return t('settings.tabs.workspace');
+    },
     items: [
-      { tab: 'Team', label: 'Team', icon: UsersThreeIcon },
-      { tab: 'Tags', label: 'Tags', icon: TagIcon },
-      { tab: 'CRM', label: 'CRM', icon: BuildingsIcon },
+      {
+        tab: 'Team',
+        get label() {
+          return t('settings.tabs.team');
+        },
+        icon: UsersThreeIcon,
+      },
+      {
+        tab: 'Tags',
+        get label() {
+          return t('settings.tabs.tags');
+        },
+        icon: TagIcon,
+      },
+      {
+        tab: 'CRM',
+        get label() {
+          return t('settings.tabs.crm');
+        },
+        icon: BuildingsIcon,
+      },
       {
         tab: 'Connected',
-        label: 'Integrations',
+        get label() {
+          return t('settings.tabs.integrations');
+        },
         icon: CpuIcon,
       },
-      { tab: 'Agent', label: 'MCP server', icon: PlugIcon },
-      { tab: 'Bots', label: 'Bots', icon: BotIcon },
+      {
+        tab: 'Agent',
+        get label() {
+          return t('settings.tabs.mcpServer');
+        },
+        icon: PlugIcon,
+      },
+      {
+        tab: 'Bots',
+        get label() {
+          return t('settings.tabs.bots');
+        },
+        icon: BotIcon,
+      },
     ],
   },
   {
-    label: 'Agents',
+    get label() {
+      return t('settings.tabs.agents');
+    },
     items: [
-      { tab: 'Agents', label: 'Agents', icon: AgentIcon },
-      { tab: 'Harness', label: 'Harness', icon: HardDrivesIcon },
+      {
+        tab: 'Agents',
+        get label() {
+          return t('settings.tabs.agents');
+        },
+        icon: AgentIcon,
+      },
+      {
+        tab: 'Harness',
+        get label() {
+          return t('settings.tabs.harness');
+        },
+        icon: HardDrivesIcon,
+      },
     ],
   },
   {
-    label: 'Admin',
-    items: [{ tab: 'Admin', label: 'Debug', icon: BugIcon }],
+    get label() {
+      return t('settings.tabs.admin');
+    },
+    items: [
+      {
+        tab: 'Admin',
+        get label() {
+          return t('settings.tabs.debug');
+        },
+        icon: BugIcon,
+      },
+    ],
   },
 ];
 

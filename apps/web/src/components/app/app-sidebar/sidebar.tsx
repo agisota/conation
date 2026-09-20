@@ -1129,7 +1129,7 @@ const DASHBOARD_LINK: SidebarItem = {
   href: LIST_VIEW_PATHS.dashboard,
   icon: GridFourIcon,
   hotkey: 'u',
-  hotkeyToken: 'sidebar.goTo.dashboard' as HotkeyToken,
+  hotkeyToken: TOKENS.sidebar.goTo.dashboard,
 };
 
 const REMINDERS_LINK: SidebarItem = {
@@ -1140,7 +1140,7 @@ const REMINDERS_LINK: SidebarItem = {
   href: LIST_VIEW_PATHS.reminders,
   icon: BellSimpleIcon,
   hotkey: 'm',
-  hotkeyToken: 'sidebar.goTo.reminders' as HotkeyToken,
+  hotkeyToken: TOKENS.sidebar.goTo.reminders,
 };
 
 const GETTING_STARTED_LINK: SidebarItem = {

@@ -37,7 +37,7 @@ axum = { workspace = true, optional = true }
 chrono = { workspace = true }
 conation_event_broker = { path = "../conation_event_broker", default-features = false }
 email_provider = { path = "../email_provider" }
-conation_authorization = { path = "../conation_authorization", default-features = false, features = [
+conation_authorization = { package = "macro_authorization", path = "../conation_authorization", default-features = false, features = [
   "axum",
 ], optional = true }
 conation_user_id = { path = "../conation_user_id", optional = true }

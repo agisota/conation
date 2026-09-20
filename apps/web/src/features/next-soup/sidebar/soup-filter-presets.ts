@@ -8,6 +8,7 @@ import {
 } from '@app/features/next-soup/filters/filter-store';
 import {
   enableCalendarUi,
+  enableCrm,
   enableReminders,
   enableSnippets,
   enableSupportedSoupForeignEntities,
@@ -628,9 +629,10 @@ export const VIEW_TAB_PRESETS: Record<ListView, ViewTabConfig> = {
         // Temporary: search has no full-text index over foreign entities yet,
         // so always exclude them (matching no record id) until search supports
         // them. Non-displayable channel-thread rows are NIL-excluded the same
-        // way. CRM companies are not — omitting `crmCompanyId` lets the
-        // search service opt in via `include_crm`. Calendar events are not
-        // excluded — they carry a title index of their own.
+        // way. CRM companies are omitted — so `include_crm` can be true — only
+        // when CRM is enabled; otherwise they are NIL-excluded like other
+        // unsupported types. Calendar events are not excluded — they carry a
+        // title index of their own.
         filters: {
           include: {
             foreignEntityRecordId: [NIL_UUID],
@@ -641,6 +643,7 @@ export const VIEW_TAB_PRESETS: Record<ListView, ViewTabConfig> = {
             ...(isCalendarSearchUiEnabled()
               ? {}
               : { calendarEventId: [NIL_UUID] }),
+            ...(isFeatureEnabled(enableCrm) ? {} : { crmCompanyId: [NIL_UUID] }),
           },
           exclude: getDisabledSnippetSubtypeExclude(),
         },

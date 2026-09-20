@@ -10,7 +10,7 @@ use agent_runtime_protocol::domain::schema::v0::{
 use agent_session::domain::error::Result as SessionResult;
 use agent_session::domain::model::{
     AgentSession, CreateAgentSessionParams, DEFAULT_AGENT_SESSION_NAME, SandboxSize, SessionBot,
-    SessionStatus, ThreadSession,
+    SessionPermissionMode, SessionStatus, ThreadSession,
 };
 use bot_id::BotId;
 use cursor_api_key::cipher::CursorApiKey;
@@ -487,6 +487,7 @@ async fn spawning_and_prompting_records_the_minted_agent() {
             kind: AgentKind::Cursor,
             size: SandboxSize::Default,
             egress: test_egress(),
+            permission_mode: SessionPermissionMode::Ask,
         })
         .await
         .expect("spawn");
@@ -567,6 +568,7 @@ async fn spawn_uses_the_owners_default_model() {
             kind: AgentKind::Cursor,
             size: SandboxSize::Default,
             egress: crate::testing::helpers::egress::test_egress(),
+            permission_mode: SessionPermissionMode::Ask,
         })
         .await
         .expect("spawn");
@@ -637,6 +639,7 @@ async fn session_new_mcp_servers_reach_the_created_agent() {
             kind: AgentKind::Cursor,
             size: SandboxSize::Default,
             egress: test_egress(),
+            permission_mode: SessionPermissionMode::Ask,
         })
         .await
         .expect("spawn");
@@ -792,6 +795,7 @@ async fn an_idle_pipe_is_shut_down() {
             kind: AgentKind::Cursor,
             size: SandboxSize::Default,
             egress: test_egress(),
+            permission_mode: SessionPermissionMode::Ask,
         })
         .await
         .expect("spawn");
@@ -915,6 +919,7 @@ async fn spawning_without_a_registered_key_says_so() {
             kind: AgentKind::Cursor,
             size: SandboxSize::Default,
             egress: test_egress(),
+            permission_mode: SessionPermissionMode::Ask,
         })
         .await
         // `err()` rather than `expect_err`: the success type is a live

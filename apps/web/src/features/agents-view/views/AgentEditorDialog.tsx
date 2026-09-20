@@ -1,4 +1,5 @@
 import { botAssignableChannelOptions } from '@app/features/channel/Bots/botChannelOptions';
+import { t } from '@app/lib/i18n';
 import {
   addMcpServer,
   catalogEntryToMcpServer,
@@ -64,7 +65,8 @@ export function AgentEditorDialog(props: {
       ? isCoderHarness(props.agent.harness)
       : props.initialKind === 'coder'
   );
-  const noun = () => (coder() ? 'coding agent' : 'agent');
+  const noun = () =>
+    coder() ? t('agents.editor.noun.codingAgent') : t('agents.editor.noun.agent');
   const [name, setName] = createSignal(props.agent?.bot.name ?? '');
   const [tag, setTag] = createSignal(props.agent?.bot.handle ?? '');
   const [tagEdited, setTagEdited] = createSignal(props.agent !== undefined);
@@ -129,7 +131,9 @@ export function AgentEditorDialog(props: {
       ...data.models,
       {
         id: selected,
-        name: `${selected} (${saved ? 'saved, ' : ''}unavailable)`,
+        name: saved
+          ? t('agents.editor.modelUnavailableSaved', { id: selected })
+          : t('agents.editor.modelUnavailable', { id: selected }),
         description: undefined,
         group: undefined,
       },
@@ -248,19 +252,23 @@ export function AgentEditorDialog(props: {
 
   const glyphAgent = () => ({
     id: props.agent?.bot.id ?? 'new',
-    name: name() || 'Agent',
+    name: name() || t('agents.editor.noun.agent'),
   });
 
   return (
     <ArtifactDialog
       class="xwide fixed"
-      label={`${isNew() ? 'Create' : 'Edit'} ${noun()}`}
+      label={
+        isNew()
+          ? t('agents.editor.createNoun', { noun: noun() })
+          : t('agents.editor.editNoun', { noun: noun() })
+      }
       onClose={props.onClose}
     >
       <div class="dh">
         <span class="t">
           <AgentIcon agent={glyphAgent()} />
-          {isNew() ? 'Create' : 'Edit'} {noun()}
+          {isNew() ? t('agents.editor.create') : t('agents.editor.edit')} {noun()}
         </span>
         <span class="hr">
           <Segmented
@@ -269,20 +277,20 @@ export function AgentEditorDialog(props: {
             options={[
               {
                 value: 'private',
-                label: 'Private',
+                label: t('agents.editor.private'),
                 icon: 'lock',
                 disabled: !props.canMakePrivate,
               },
               {
                 value: 'team',
-                label: 'Team',
+                label: t('agents.editor.team'),
                 icon: 'team',
                 disabled: !props.canShareWithTeam,
               },
             ]}
             onChange={setShare}
           />
-          <button type="button" class="icon-btn" aria-label="Close" data-close>
+          <button type="button" class="icon-btn" aria-label={t('common.close')} data-close>
             <XIcon class="ph" />
           </button>
         </span>
@@ -295,7 +303,7 @@ export function AgentEditorDialog(props: {
                 <button
                   type="button"
                   class="bigav"
-                  aria-label="Change avatar"
+                  aria-label={t('agents.editor.changeAvatar')}
                   onClick={() => avatarInput?.click()}
                 >
                   <Show
@@ -330,8 +338,8 @@ export function AgentEditorDialog(props: {
               <div style={{ 'min-width': 0, flex: 1 }}>
                 <input
                   class="sinput"
-                  aria-label="Agent name"
-                  placeholder="Agent name"
+                  aria-label={t('agents.editor.name')}
+                  placeholder={t('agents.editor.name')}
                   style={{ 'font-weight': 500 }}
                   value={name()}
                   onInput={(event) =>
@@ -341,8 +349,8 @@ export function AgentEditorDialog(props: {
                 <span class="tagin" style={{ 'margin-top': '6px' }}>
                   <span class="at">@</span>
                   <input
-                    aria-label="@tag"
-                    placeholder="tag"
+                    aria-label={t('agents.editor.tagAria')}
+                    placeholder={t('agents.editor.tag')}
                     value={tag()}
                     onInput={(event) => {
                       setTagEdited(true);
@@ -355,13 +363,13 @@ export function AgentEditorDialog(props: {
 
             <Show when={coder()}>
               <div class="divider" />
-              <p class="grp-h">Runtime</p>
-              <div class="plist" role="radiogroup" aria-label="Runtime">
+              <p class="grp-h">{t('agents.editor.runtime')}</p>
+              <div class="plist" role="radiogroup" aria-label={t('agents.editor.runtime')}>
                 <For
                   each={coderRuntimes()}
                   fallback={
                     <p class="empty">
-                      Connect Cursor or pair a runtime, then come back.
+                      {t('agents.editor.runtimeEmpty')}
                     </p>
                   }
                 >
@@ -392,11 +400,15 @@ export function AgentEditorDialog(props: {
                         <Show
                           when={candidate.kind === 'macrod'}
                           fallback={
-                            candidate.id === 'cursor' ? 'cloud' : 'built in'
+                            candidate.id === 'cursor'
+                              ? t('agents.editor.cloud')
+                              : t('agents.editor.builtIn')
                           }
                         >
                           <span class={candidate.connected ? 'on' : 'off'}>
-                            {candidate.connected ? 'Connected' : 'Disconnected'}
+                            {candidate.connected
+                              ? t('agents.editor.connected')
+                              : t('agents.editor.disconnected')}
                           </span>
                         </Show>
                       </span>
@@ -407,12 +419,12 @@ export function AgentEditorDialog(props: {
             </Show>
 
             <div class="srow">
-              <span class="lab">Default model</span>
+              <span class="lab">{t('agents.editor.defaultModel')}</span>
               <Show
                 when={modelQueryFor(harnessId())}
                 fallback={
                   <span class="sinput sm" style={{ color: 'var(--ink-muted)' }}>
-                    Model discovery unavailable
+                    {t('agents.editor.modelDiscoveryUnavailable')}
                   </span>
                 }
               >
@@ -421,23 +433,23 @@ export function AgentEditorDialog(props: {
                     <Match when={query().isPending}>
                       <select
                         class="sinput sm"
-                        aria-label="Default model"
+                        aria-label={t('agents.editor.defaultModel')}
                         disabled
                       >
-                        <option>Loading models…</option>
+                        <option>{t('agents.editor.loadingModels')}</option>
                       </select>
                     </Match>
                     <Match when={query().isError}>
                       <span
                         style={{ 'font-size': '12px', color: 'var(--red)' }}
                       >
-                        Could not load models.{' '}
+                        {t('agents.editor.loadModelsFailed')}{' '}
                         <button
                           type="button"
                           class="link-btn"
                           onClick={() => void query().refetch()}
                         >
-                          Retry
+                          {t('common.retry')}
                         </button>
                       </span>
                     </Match>
@@ -448,13 +460,13 @@ export function AgentEditorDialog(props: {
                         class="sinput sm"
                         style={{ color: 'var(--ink-muted)' }}
                       >
-                        Chosen by the runtime
+                        {t('agents.editor.chosenByRuntime')}
                       </span>
                     </Match>
                     <Match when={true}>
                       <select
                         class="sinput sm"
-                        aria-label="Default model"
+                        aria-label={t('agents.editor.defaultModel')}
                         value={selectedDefaultModelId()}
                         onChange={(event) =>
                           setDefaultModelId(event.currentTarget.value)
@@ -475,13 +487,13 @@ export function AgentEditorDialog(props: {
             <Show when={pipedreamMcp()}>
               <div class="divider" />
               <div class="grp-row">
-                <p class="grp-h">Connections</p>
+                <p class="grp-h">{t('agents.editor.connections')}</p>
                 <Segmented
                   name="mcp"
                   value={mcp().scope}
                   options={[
-                    { value: 'owner_connections', label: 'All my MCPs' },
-                    { value: 'selected', label: 'Specific MCPs' },
+                    { value: 'owner_connections', label: t('agents.editor.allMcps') },
+                    { value: 'selected', label: t('agents.editor.specificMcps') },
                   ]}
                   onChange={setMcpScope}
                 />
@@ -496,8 +508,7 @@ export function AgentEditorDialog(props: {
                       color: 'var(--ink-disabled)',
                     }}
                   >
-                    The agent can use every app the person running it has
-                    connected.
+                    {t('agents.editor.allMcpsHint')}
                   </p>
                 }
               >
@@ -505,8 +516,8 @@ export function AgentEditorDialog(props: {
                   <div class="csearch">
                     <MagnifyingGlassIcon class="ph" />
                     <input
-                      placeholder="Search all connectors…"
-                      aria-label="Search connectors"
+                      placeholder={t('agents.editor.searchConnectors')}
+                      aria-label={t('agents.editor.searchConnectorsAria')}
                       value={catalog.searchInput()}
                       onInput={(event) =>
                         catalog.onSearchInput(event.currentTarget.value)
@@ -514,14 +525,14 @@ export function AgentEditorDialog(props: {
                     />
                   </div>
                   <Show when={catalog.searchInput().trim().length > 0}>
-                    <div class="results" aria-label="Connector results">
+                    <div class="results" aria-label={t('agents.editor.connectorResults')}>
                       <Show
                         when={
                           !catalog.query.isPending &&
                           catalog.entries().length === 0
                         }
                       >
-                        <div class="empty">No connectors match.</div>
+                        <div class="empty">{t('agents.editor.noConnectors')}</div>
                       </Show>
                       <For each={catalog.entries()}>
                         {(entry) => (
@@ -565,8 +576,7 @@ export function AgentEditorDialog(props: {
                       each={picked()}
                       fallback={
                         <p class="none">
-                          No apps picked yet. Search above to add one — you can
-                          connect your account later.
+                          {t('agents.editor.noAppsPicked')}
                         </p>
                       }
                     >
@@ -585,15 +595,17 @@ export function AgentEditorDialog(props: {
                             <span class="ds truncate">
                               {connections.ready()
                                 ? connections.slugs().has(server.app_slug)
-                                  ? 'Connected'
-                                  : 'Not connected'
+                                  ? t('agents.editor.connected')
+                                  : t('agents.editor.notConnected')
                                 : ''}
                             </span>
                           </span>
                           <button
                             type="button"
                             class="icon-btn"
-                            aria-label={`Remove ${server.server_name}`}
+                            aria-label={t('agents.editor.removeNamed', {
+                              name: server.server_name,
+                            })}
                             onClick={() =>
                               setPicked(
                                 removeMcpServer(picked(), server.app_slug)
@@ -612,22 +624,22 @@ export function AgentEditorDialog(props: {
 
             <div class="divider" />
             <div class="grp-row">
-              <p class="grp-h">Channels</p>
+              <p class="grp-h">{t('agents.editor.channels')}</p>
               <Segmented
                 name="ch"
                 value={channelMode()}
                 options={[
-                  { value: 'all', label: 'All channels' },
-                  { value: 'selected', label: 'Specific' },
+                  { value: 'all', label: t('agents.editor.allChannels') },
+                  { value: 'selected', label: t('agents.editor.specificChannels') },
                 ]}
                 onChange={setChannelMode}
               />
             </div>
             <Show when={channelMode() === 'selected'}>
-              <div class="plist scroll" aria-label="Channels">
+              <div class="plist scroll" aria-label={t('agents.editor.channels')}>
                 <For
                   each={channels()}
-                  fallback={<p class="empty">No channels to pick from.</p>}
+                  fallback={<p class="empty">{t('agents.editor.noChannels')}</p>}
                 >
                   {(channel) => (
                     <button
@@ -652,11 +664,11 @@ export function AgentEditorDialog(props: {
             <div class="divider" />
             <div class="srow">
               <span class="lab">
-                Coding agent
+                {t('agents.editor.codingAgent')}
                 <small>
                   {coderRuntimes().length === 0
-                    ? 'Connect Cursor or pair a runtime to make coding agents'
-                    : 'Writes code: takes a repository, runs on a runtime, and appears under Coding agents'}
+                    ? t('agents.editor.codingAgentEmptyHint')
+                    : t('agents.editor.codingAgentHint')}
                 </small>
               </span>
               <button
@@ -675,7 +687,7 @@ export function AgentEditorDialog(props: {
                 onClick={() => setCoderMode(!coder())}
               >
                 <span class="trk" />
-                <span class="sw-l">{coder() ? 'On' : 'Off'}</span>
+                <span class="sw-l">{coder() ? t('agents.editor.on') : t('agents.editor.off')}</span>
               </button>
             </div>
           </div>
@@ -683,13 +695,13 @@ export function AgentEditorDialog(props: {
           <div class="colR">
             <div class="mdwrap">
               <div class="mdbar">
-                <span class="lbl">Instructions</span>
+                <span class="lbl">{t('agents.editor.instructions')}</span>
               </div>
               <textarea
                 class="always"
-                aria-label="Instructions"
+                aria-label={t('agents.editor.instructions')}
                 spellcheck={false}
-                placeholder="You are…"
+                placeholder={t('agents.editor.instructionsPlaceholder')}
                 value={instructions()}
                 onInput={(event) => setInstructions(event.currentTarget.value)}
               />
@@ -702,13 +714,13 @@ export function AgentEditorDialog(props: {
           {(onDelete) => (
             <button type="button" class="btn danger" onClick={onDelete()}>
               <TrashIcon class="ph" />
-              Delete <span class="noun">{noun()}</span>
+              {t('agents.editor.deleteNoun', { noun: noun() })}
             </button>
           )}
         </Show>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button type="button" class="btn quiet" data-close>
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             type="button"
@@ -722,11 +734,11 @@ export function AgentEditorDialog(props: {
           >
             {props.pending
               ? isNew()
-                ? 'Creating…'
-                : 'Saving…'
+                ? t('agents.editor.creating')
+                : t('agents.editor.saving')
               : isNew()
-                ? `Create ${noun()}`
-                : 'Save changes'}
+                ? t('agents.editor.createNoun', { noun: noun() })
+                : t('agents.editor.saveChanges')}
           </button>
         </div>
       </div>

@@ -8,7 +8,9 @@ use agent_runtime_protocol::domain::action::{AgentAction, AgentActionId};
 use agent_session::PROTOCOL_VERSION;
 use agent_session::domain::connection::RuntimeAttachment;
 use agent_session::domain::error::AgentSessionError;
-use agent_session::domain::model::{AgentSessionId, CreateAgentSessionParams, Message};
+use agent_session::domain::model::{
+    AgentSessionId, CreateAgentSessionParams, Message, SessionPermissionMode,
+};
 use agent_session::domain::ports::{AgentSessionLogRepo, NoOpRealtime};
 use agent_session::domain::service::{AgentSessionService, AgentSessionServiceImpl};
 use agent_session::testing::InMemoryAgentSessionRepo;
@@ -79,6 +81,7 @@ async fn container_session_runs_and_logs_end_to_end() {
             kind: AgentKind::SandboxedCoder,
             size: agent_session::domain::model::SandboxSize::Default,
             egress: test_egress(),
+            permission_mode: SessionPermissionMode::Ask,
         })
         .await
         .unwrap();

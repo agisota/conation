@@ -44,9 +44,9 @@ pub trait MacroApiTokens: Send + Sync {
     ) -> impl Future<Output = Result<String, EgressError>> + Send;
 }
 
-/// Layers Macro's own MCP destination over another resolver.
+/// Layers Conation's own MCP destination over another resolver.
 ///
-/// [`McpDestination::Macro`] is answered here; everything else passes
+/// [`McpDestination::Conation`] is answered here; everything else passes
 /// straight through to `Inner`. The two destinations arrive from different
 /// routes, so there is no name for a connected app to collide with.
 pub struct WithMacroMcp<Inner, Tokens> {
@@ -79,7 +79,7 @@ where
     Inner: McpCredentials,
     Tokens: MacroApiTokens,
 {
-    /// Wrap `inner`, answering [`McpDestination::Macro`] at `url` with tokens
+    /// Wrap `inner`, answering [`McpDestination::Conation`] at `url` with tokens
     /// from `tokens`.
     ///
     /// `local_cleartext` permits an `http` URL, and the caller must gate it on
@@ -151,7 +151,7 @@ where
         owner: &MacroUserIdStr<'static>,
         destination: &McpDestination,
     ) -> Result<McpResolution, EgressError> {
-        if *destination != McpDestination::Macro {
+        if *destination != McpDestination::Conation {
             return self.inner.resolve(owner, destination).await;
         }
 

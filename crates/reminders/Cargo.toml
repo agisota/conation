@@ -47,9 +47,9 @@ chrono = { workspace = true, features = ["serde"] }
 chrono-tz = { workspace = true }
 cron = { workspace = true }
 entity_access = { path = "../entity_access", optional = true, default-features = false, features = ["ports"] }
-macro_authorization = { path = "../macro_authorization", optional = true, default-features = false, features = ["axum"] }
-macro_user_id = { path = "../macro_user_id" }
-macro_uuid = { path = "../macro_uuid", optional = true }
+macro_authorization = { path = "../conation_authorization", optional = true, default-features = false, features = ["axum"] }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
+macro_uuid = { package = "conation_uuid", path = "../conation_uuid", optional = true }
 model-entity = { path = "../model-entity" }
 rootcause = { workspace = true }
 schemars = { workspace = true, optional = true }
@@ -69,7 +69,7 @@ workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
 http-body-util = { workspace = true }
-macro_db_migrator = { path = "../macro_db_migrator" }
+macro_db_migrator = { package = "conation_db_migrator", path = "../conation_db_migrator" }
 model_user = { path = "../model_user" }
 serde_json = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

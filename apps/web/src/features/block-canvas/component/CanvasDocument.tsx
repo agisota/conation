@@ -215,8 +215,6 @@ function CanvasDocumentState(props: CanvasDocumentProps) {
           throw new Error('canvas json missing');
         }
         seedCanvasLoroPrior(documentId, board as CanvasLoroJson);
-        const loaded = await loadCanvasData(board as Canvas, () => !cancelled);
-        if (!loaded || cancelled) return;
 
         let token: string | undefined;
         try {
@@ -288,6 +286,9 @@ function CanvasDocumentState(props: CanvasDocumentProps) {
           }
         }
         if (cancelled) return;
+        const hydrated = peekCanvasLoro(documentId) ?? board;
+        const loaded = await loadCanvasData(hydrated as Canvas, () => !cancelled);
+        if (!loaded || cancelled) return;
         setDataState('initialized');
         if (pendingOffline) {
           await saveCanvasDataImmediate();

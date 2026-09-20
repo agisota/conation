@@ -38,6 +38,7 @@ mod config;
 mod env;
 mod model;
 mod notification;
+mod outbound;
 
 #[tokio::main]
 pub async fn main() -> anyhow::Result<()> {
@@ -339,6 +340,22 @@ pub async fn main() -> anyhow::Result<()> {
         aws_sdk_sqs::Client::new(&aws_config),
         macro_queues::NotificationIngressQueue::new().to_string(),
     );
+    let task_due_worker = {
+        let dispatch = ::notification::domain::task_due_dispatch::TaskDueDispatchService::new(
+            crate::outbound::PgTaskDueSource::new(db.clone()),
+            ::notification::domain::task_due_dispatch::IngressTaskDueNotifier::new(
+                ::notification::domain::service::SqsNotificationIngress {
+                    queue: ingress_queue.clone(),
+                },
+            ),
+        );
+        ::notification::inbound::task_due_worker::TaskDueDispatchWorker::new(dispatch)
+    };
+    tokio::spawn(async move {
+        tracing::info!("starting task due dispatch worker");
+        task_due_worker.run().await
+    });
+
     let ingress_worker =
         ::notification::inbound::ingress_worker::IngressWorker::new(ingress_service, ingress_queue);
 

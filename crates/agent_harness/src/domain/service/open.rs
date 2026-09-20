@@ -287,6 +287,7 @@ where
                 kind: AgentKind::for_session(session.bot_id, &session.harness),
                 size: sandbox_size,
                 egress: egress.sandbox,
+                permission_mode: request.permission_mode,
             })
             .await
         {
@@ -515,6 +516,7 @@ where
                 kind: runtime.kind,
                 size: sandbox_size,
                 egress: egress.sandbox,
+                permission_mode: agent_session::domain::model::SessionPermissionMode::Ask,
             })
             .await
         {

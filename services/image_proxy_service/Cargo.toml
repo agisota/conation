@@ -23,11 +23,11 @@ aws-sdk-secretsmanager = { workspace = true }
 axum = { workspace = true, features = ["macros"] }
 doppler-config = { workspace = true }
 conation_auth = { path = "../../crates/conation_auth" }
-conation_authorization = { path = "../../crates/conation_authorization" }
+conation_authorization = { package = "macro_authorization", path = "../../crates/conation_authorization" }
 conation_aws_config = { path = "../../crates/conation_aws_config" }
 conation_config = { path = "../../crates/conation_config" }
 conation_cors = { path = "../../crates/conation_cors" }
-conation_entrypoint = { path = "../../crates/conation_entrypoint" }
+conation_entrypoint = { package = "macro_entrypoint", path = "../../crates/conation_entrypoint" }
 conation_env = { path = "../../crates/conation_env" }
 conation_middleware = { path = "../../crates/conation_middleware", default-features = false, features = [
   "tracking",

@@ -5,10 +5,12 @@ const mocks = vi.hoisted(() => ({
   calendarUiEnabled: true,
   calendarSearchEnabled: true,
   snippetsEnabled: true,
+  crmEnabled: false,
 }));
 
 vi.mock('@core/constant/featureFlags', () => ({
   enableCalendarUi: { key: 'enable-calendar-ui' },
+  enableCrm: { key: 'enable-crm' },
   enableReminders: { key: 'enable-reminders' },
   enableSnippets: { key: 'enable-snippets' },
   enableSupportedSoupForeignEntities: {
@@ -19,6 +21,8 @@ vi.mock('@core/constant/featureFlags', () => ({
     switch (flag.key) {
       case 'enable-calendar-ui':
         return mocks.calendarUiEnabled;
+      case 'enable-crm':
+        return mocks.crmEnabled;
       case 'enable-reminders':
         return mocks.remindersEnabled;
       case 'enable-snippets':
@@ -36,6 +40,7 @@ afterEach(() => {
   mocks.calendarUiEnabled = true;
   mocks.calendarSearchEnabled = true;
   mocks.snippetsEnabled = true;
+  mocks.crmEnabled = false;
 });
 
 import { SYSTEM_PROPERTY_IDS } from '@property/constants';
@@ -157,6 +162,38 @@ describe('calendar event scoping', () => {
     expect(
       getViewPreset('search', 'all')?.filters.include?.calendarEventId
     ).toEqual([nilId]);
+  });
+});
+
+describe('CRM company scoping', () => {
+  const nilId = '00000000-0000-0000-0000-000000000000';
+
+  it('NIL-excludes CRM from search when the CRM flag is off', () => {
+    expect(
+      getViewPreset('search', 'all')?.filters.include?.crmCompanyId
+    ).toEqual([nilId]);
+  });
+
+  it('omits CRM NIL-exclude from search when the CRM flag is on', () => {
+    // Omitting `crmCompanyId` is what lets create-search-state set include_crm.
+    mocks.crmEnabled = true;
+
+    expect(
+      getViewPreset('search', 'all')?.filters.include?.crmCompanyId
+    ).toBeUndefined();
+  });
+
+  it('keeps inbox excluding CRM even when the CRM flag is on', () => {
+    mocks.crmEnabled = true;
+
+    expect(
+      getViewPreset('inbox', 'all')?.filters.include?.crmCompanyId
+    ).toEqual([nilId]);
+
+    const signal = compileToAst(
+      queryStateFrom(getViewPreset('inbox', 'signal')!.filters)
+    );
+    expect(signal.ccf).toEqual({ l: { id: nilId } });
   });
 });
 

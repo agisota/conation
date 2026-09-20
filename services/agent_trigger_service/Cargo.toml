@@ -19,11 +19,11 @@ database_env_vars = { path = "../../crates/database_env_vars" }
 entity_access = { path = "../../crates/entity_access" }
 kafka_util = { path = "../../crates/kafka_util" }
 lexical_client = { path = "../../crates/lexical_client" }
-macro_config = { path = "../../crates/macro_config" }
-macro_entrypoint = { path = "../../crates/macro_entrypoint" }
-macro_env_var = { path = "../../crates/macro_env_var" }
-macro_event_broker = { path = "../../crates/macro_event_broker", features = ["outbound"] }
-macro_service_urls = { path = "../../crates/macro_service_urls" }
+macro_config = { package = "conation_config", path = "../../crates/conation_config" }
+macro_entrypoint = { path = "../../crates/conation_entrypoint" }
+macro_env_var = { package = "conation_env_var", path = "../../crates/conation_env_var" }
+macro_event_broker = { package = "conation_event_broker", path = "../../crates/conation_event_broker", features = ["outbound"] }
+macro_service_urls = { package = "conation_service_urls", path = "../../crates/conation_service_urls" }
 messages = { path = "../../crates/messages", features = ["broker", "outbound"] }
 rdkafka = { workspace = true }
 serde_json = { workspace = true }

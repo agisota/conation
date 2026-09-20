@@ -19,7 +19,10 @@ use model_notifications::{
     RepliedToDocumentCommentThreadMetadata, TaskAssignedMetadata,
 };
 use notification::{
-    domain::{models::Notification, service::NotificationReader},
+    domain::{
+        models::{Notification, TaskDueNotification},
+        service::NotificationReader,
+    },
     inbound::http::NotificationRouterState,
 };
 use serde::Serialize;
@@ -51,6 +54,7 @@ pub(crate) static BLOCKABLE_NOTIFICATIONS: LazyLock<HashSet<&'static str>> = Laz
         AgentSessionSettledMetadata::TYPE_NAME,
         AgentSessionWaitingForInputMetadata::TYPE_NAME,
         AgentSessionMentionedMetadata::TYPE_NAME,
+        TaskDueNotification::TYPE_NAME,
     ])
 });
 

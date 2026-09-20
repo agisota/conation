@@ -27,8 +27,8 @@ constant_time_eq = { workspace = true }
 harness_id = { path = "../harness_id", features = ["schema", "sqlx"] }
 harness_token = { path = "../harness_token" }
 hex = { workspace = true }
-macro_authorization = { path = "../macro_authorization", optional = true, default-features = false }
-macro_user_id = { path = "../macro_user_id" }
+macro_authorization = { path = "../conation_authorization", optional = true, default-features = false }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
 mockall = { workspace = true, optional = true }
 model-error-response = { path = "../model-error-response", optional = true }
 rand = { workspace = true }
@@ -43,5 +43,5 @@ workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
 harness_id = { path = "../harness_id", features = ["test-utils"] }
-macro_db_migrator = { path = "../macro_db_migrator" }
+macro_db_migrator = { package = "conation_db_migrator", path = "../conation_db_migrator" }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

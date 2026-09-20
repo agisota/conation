@@ -12,6 +12,7 @@ use rootcause::Report;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use uuid::Uuid;
+use chrono::{DateTime, Utc};
 
 use model_entity::Entity;
 use models_pagination::{CreatedAt, Query};
@@ -22,8 +23,9 @@ use crate::domain::models::{NotificationStatusPayload, TaggedContent};
 use crate::domain::models::email_notification_digest::ports::{ClaimResult, DigestBatch};
 use crate::domain::models::request::NotificationListFilters;
 use crate::domain::models::{
-    DeviceEndpoint, DisabledNotificationType, NotificationExtEmail, NotificationIdAndCollapseKey,
-    SendNotificationRequestBuilder, UserNotificationRow, VoipPushTarget,
+    DeviceEndpoint, DisabledNotificationType, DueTaskAssignment, NotificationExtEmail,
+    NotificationIdAndCollapseKey, SendNotificationRequestBuilder, TaskDueDispatchSummary,
+    TaskDueNotification, UserNotificationRow, VoipPushTarget,
     android::FCMMessage,
     apple::{APNSPushNotification, VoipPushPayload},
     mobile::MessageAttributes,
@@ -609,4 +611,35 @@ impl<V: VoipPushSender> VoipPushSender for Option<V> {
             HashSet::new()
         }
     }
+}
+
+/// Persistence the task due-date dispatcher scans.
+pub trait TaskDueSource: Send + Sync + 'static {
+    /// Open, un-notified task assignments whose due instant is in
+    /// `(overdue_after, due_soon_until]`, ordered by due instant, capped at
+    /// `limit`. `now` is the classification instant the adapter uses to label
+    /// overdue vs due-soon when checking existing notifications.
+    fn due_assignments(
+        &self,
+        now: DateTime<Utc>,
+        due_soon_until: DateTime<Utc>,
+        overdue_after: DateTime<Utc>,
+        limit: i64,
+    ) -> impl Future<Output = Result<Vec<DueTaskAssignment>, Report>> + Send;
+}
+
+/// Notification egress for due-soon / overdue task assignments.
+pub trait TaskDueNotifier: Send + Sync + 'static {
+    /// Send the due notification to one assignee.
+    fn notify(
+        &self,
+        notification: TaskDueNotification,
+        assignee_id: MacroUserIdStr<'_>,
+    ) -> impl Future<Output = Result<(), Report>> + Send;
+}
+
+/// Dispatch use case driven by the task due worker.
+pub trait TaskDueDispatch: Send + Sync + 'static {
+    /// Find due assignments and notify each assignee.
+    fn dispatch(&self) -> impl Future<Output = Result<TaskDueDispatchSummary, Report>> + Send;
 }

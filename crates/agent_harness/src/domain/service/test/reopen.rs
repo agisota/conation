@@ -35,6 +35,7 @@ async fn codex_session(
             kind: AgentKind::CodexCloud,
             size: SandboxSize::Default,
             egress: crate::testing::helpers::egress::test_egress(),
+            permission_mode: SessionPermissionMode::Ask,
         })
         .await
         .unwrap();

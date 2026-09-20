@@ -48,14 +48,14 @@ harness_id = { path = "../harness_id" }
 agent = { path = "../agent", optional = true }
 ai_usage = { path = "../ai_usage", optional = true }
 dashmap = { workspace = true }
-macro_uuid = { path = "../macro_uuid" }
+macro_uuid = { package = "conation_uuid", path = "../conation_uuid" }
 messages = { path = "../messages", features = ["ports", "schema"] }
 mockall = { workspace = true, optional = true }
 agent_fold = { path = "../agent_fold" }
 # Only the domain vocabulary; `outbound` would pull rdkafka into every
 # consumer of this crate.
-macro_event_broker = { path = "../macro_event_broker", default-features = false }
-macro_event_topics = { path = "../macro_event_topics" }
+macro_event_broker = { package = "conation_event_broker", path = "../conation_event_broker", default-features = false }
+macro_event_topics = { package = "conation_event_topics", path = "../conation_event_topics" }
 agent_runtime_protocol = { path = "../agent_runtime_protocol" }
 axum = { workspace = true, optional = true }
 bots = { path = "../bots", default-features = false }
@@ -69,8 +69,8 @@ genai_telemetry = { path = "../genai_telemetry" }
 model-entity = { path = "../model-entity", optional = true }
 model_owner = { path = "../model_owner", optional = true }
 clap = { workspace = true, optional = true }
-macro_authorization = { path = "../macro_authorization", default-features = false, optional = true }
-macro_user_id = { path = "../macro_user_id" }
+macro_authorization = { path = "../conation_authorization", default-features = false, optional = true }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
 utoipa = { workspace = true, optional = true }
 rootcause = { workspace = true }
 uuid = { workspace = true }
@@ -101,7 +101,7 @@ model_user = { path = "../model_user" }
 non_empty = { path = "../non_empty" }
 agent_fold = { path = "../agent_fold", features = ["test-utils"] }
 axum = { workspace = true, features = ["ws"] }
-macro_db_migrator = { path = "../macro_db_migrator" }
+macro_db_migrator = { package = "conation_db_migrator", path = "../conation_db_migrator" }
 opentelemetry = { workspace = true, features = ["trace"] }
 opentelemetry_sdk = { workspace = true, features = ["testing", "trace"] }
 tracing-opentelemetry = { workspace = true }

@@ -3,15 +3,16 @@ import type { EventName } from '../src/events/types';
 import { Macro } from '../src/macro';
 
 const actAs = process.argv[2];
-const botToken = process.env.MACRO_BOT_TOKEN;
+const botToken =
+  process.env.CONATION_BOT_TOKEN ?? process.env.MACRO_BOT_TOKEN;
 if (!actAs || !botToken) {
   console.error(
-    'usage: MACRO_BOT_TOKEN=mbot_... bun examples/sse-events.ts <acting-user-id>',
+    'usage: CONATION_BOT_TOKEN=mbot_... bun examples/sse-events.ts <acting-user-id>',
   );
   process.exit(1);
 }
 
-const env = (process.env.MACRO_ENV ?? 'dev') as Env;
+const env = (process.env.CONATION_ENV ?? process.env.MACRO_ENV ?? 'dev') as Env;
 const bot = new Macro({ env, auth: { type: 'bot', token: botToken } });
 const macro = bot.requestedAs(bot.users.byId(actAs));
 

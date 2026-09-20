@@ -78,13 +78,13 @@ entity_access = { path = "../entity_access", default-features = false, features 
 ], optional = true }
 futures = { workspace = true, optional = true }
 kafka_util = { path = "../kafka_util", optional = true }
-macro_authorization = { path = "../macro_authorization", optional = true, default-features = false, features = [
+macro_authorization = { path = "../conation_authorization", optional = true, default-features = false, features = [
   "axum",
 ] }
-macro_event_broker = { path = "../macro_event_broker", default-features = false }
-macro_event_topics = { path = "../macro_event_topics" }
-macro_user_id = { path = "../macro_user_id" }
-macro_uuid = { path = "../macro_uuid", optional = true }
+macro_event_broker = { package = "conation_event_broker", path = "../conation_event_broker", default-features = false }
+macro_event_topics = { package = "conation_event_topics", path = "../conation_event_topics" }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
+macro_uuid = { package = "conation_uuid", path = "../conation_uuid", optional = true }
 model-error-response = { path = "../model-error-response", optional = true }
 model_user = { path = "../model_user", optional = true }
 rate_limit = { path = "../rate_limit", optional = true, default-features = false }
@@ -114,7 +114,7 @@ agent_session = { path = "../agent_session", default-features = false, features 
 ] }
 bot_id = { path = "../bot_id", features = ["test-utils"] }
 channel_sender = { path = "../channel_sender" }
-macro_db_migrator = { path = "../macro_db_migrator" }
+macro_db_migrator = { package = "conation_db_migrator", path = "../conation_db_migrator" }
 messages = { path = "../messages" }
 rate_limit = { path = "../rate_limit", default-features = false, features = [
   "axum",

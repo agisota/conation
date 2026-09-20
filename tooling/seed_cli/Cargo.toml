@@ -23,7 +23,7 @@ lexical_client = { path = "../../crates/lexical_client" }
 conation_aws_config = { path = "../../crates/conation_aws_config", features = ["s3"] }
 conation_db_client = { path = "../../crates/conation_db_client" }
 conation_db_migrator = { path = "../../crates/conation_db_migrator" }
-conation_entrypoint = { path = "../../crates/conation_entrypoint" }
+conation_entrypoint = { package = "macro_entrypoint", path = "../../crates/conation_entrypoint" }
 conation_env = { path = "../../crates/conation_env" }
 conation_env_var = { path = "../../crates/conation_env_var" }
 conation_user_id = { path = "../../crates/conation_user_id" }

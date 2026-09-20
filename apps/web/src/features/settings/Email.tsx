@@ -20,7 +20,6 @@ import {
   useEmailLinks,
   useEmailLinksStatus,
 } from '@core/email-link';
-import GmailIcon from '@icon/mcp-gmail.svg';
 import ArrowsClockwiseIcon from '@phosphor-icons/core/regular/arrows-clockwise.svg?component-solid';
 import CalendarSlashIcon from '@phosphor-icons/core/regular/calendar-slash.svg?component-solid';
 import EnvelopeIcon from '@phosphor-icons/core/regular/envelope.svg?component-solid';
@@ -56,8 +55,8 @@ import {
 /**
  * Email integration as a single Connected-accounts card: a header row with the
  * connection state/action, and — once a mailbox is linked — a row per inbox
- * plus add / disconnect controls. Gmail is optional when a Stalwart mailbox
- * already exists; copy must not demand it as the only path.
+ * plus add / disconnect controls. Copy is provider-neutral; Gmail OAuth stays
+ * available as an optional Google connect action, never as the only path.
  */
 export function EmailCard() {
   const email = useEmail();
@@ -160,22 +159,14 @@ export function EmailCard() {
     <>
       <SettingsCard>
         <IntegrationRow
-          icon={
-            stalwartLinked() && !gmailLinked() ? (
-              <EnvelopeIcon />
-            ) : (
-              <GmailIcon />
-            )
-          }
-          title={
-            stalwartLinked() && !gmailLinked()
-              ? t('shell.navigation.email')
-              : t('settings.email.gmail.title')
-          }
+          icon={<EnvelopeIcon />}
+          title={t('settings.email.title')}
           description={
             stalwartLinked() && !gmailLinked()
-              ? t('email.empty.stalwartLocal')
-              : t('settings.email.gmail.description')
+              ? t('settings.email.description.localMailbox')
+              : gmailLinked()
+                ? t('settings.email.description.google')
+                : t('settings.email.description')
           }
           status={
             <Show when={mailboxLinked()}>
@@ -188,7 +179,7 @@ export function EmailCard() {
         >
           <Show when={!mailboxLinked()}>
             <ConnectAction
-              label={t('settings.email.actions.connect')}
+              label={t('settings.email.actions.connectGoogle')}
               onClick={onConnectEmail}
               disabled={isEmailActionPending()}
             />

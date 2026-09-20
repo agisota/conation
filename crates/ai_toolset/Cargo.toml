@@ -12,7 +12,7 @@ schemars = { workspace = true }
 async-trait = { workspace = true }
 thiserror = { workspace = true }
 anyhow = { workspace = true }
-macro_user_id = { path = "../macro_user_id" }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
 genai_telemetry = { path = "../genai_telemetry" }
 axum = { workspace = true }
 axum-macros = { workspace = true }

@@ -4,7 +4,9 @@ use agent_client_protocol::schema::v1::{HttpHeader, McpServer as AcpMcpServer, M
 use agent_egress::domain::model::{McpServerSlug, RepoSlug};
 use agent_fold::domain::model::TurnSignal;
 use agent_runtime_protocol::domain::action::{AgentAction, AgentActionId, PromptAttachment};
-use agent_session::domain::model::{AgentMcpServers, AgentSessionId, MessageId, SandboxSize};
+use agent_session::domain::model::{
+    AgentMcpServers, AgentSessionId, MessageId, SandboxSize, SessionPermissionMode,
+};
 use agent_session::domain::ports::ControlEvent;
 use agent_session::domain::session::PermissionPolicy;
 
@@ -515,6 +517,34 @@ pub struct SpawnContainer {
     /// which reads the repository off the session's own grant, so no provider
     /// needs to be told what it is.
     pub egress: SandboxEgress,
+    /// OpenCode permission mode stamped into the sandbox config at spawn.
+    ///
+    /// [`SessionPermissionMode::Ask`] is fail-closed. Mention-triggered opens
+    /// omit a wire field and stay on ask. This is not ACP `AllowAlways`.
+    pub permission_mode: SessionPermissionMode,
+}
+
+/// OpenCode `permission` object for a session mode.
+///
+/// Ask is fail-closed. More permissive modes are mapped explicitly.
+/// `external_directory` is always deny. This is not ACP `AllowAlways`.
+#[must_use]
+pub fn opencode_permission_map(mode: SessionPermissionMode) -> serde_json::Value {
+    match mode {
+        SessionPermissionMode::Ask | SessionPermissionMode::Control => serde_json::json!({
+            "*": "ask",
+            "external_directory": "deny"
+        }),
+        SessionPermissionMode::Task => serde_json::json!({
+            "*": "ask",
+            "edit": "allow",
+            "external_directory": "deny"
+        }),
+        SessionPermissionMode::Yolo => serde_json::json!({
+            "*": "allow",
+            "external_directory": "deny"
+        }),
+    }
 }
 
 /// Everything a sandbox needs to make an authenticated outbound call, and

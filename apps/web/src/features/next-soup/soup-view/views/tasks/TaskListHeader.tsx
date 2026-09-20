@@ -5,14 +5,18 @@ import { useListLayout } from '@entity/composed/list-entity/shared';
 import StatusInProgress from '@icon/square-task-in-progress-circle.svg';
 import PriorityHigh from '@icon/wide-priority-high.svg';
 import ArrowDownIcon from '@phosphor/arrow-down.svg';
+import CalendarBlank from '@phosphor/calendar-blank.svg';
 import UsersIcon from '@phosphor/users.svg';
-import { Tooltip } from '@ui';
+import { Dropdown, Tooltip } from '@ui';
 import { cn } from '@ui/utils/classname';
 import { createMemo, For, type JSX, Show } from 'solid-js';
 import {
   TASK_GRID_COLUMNS,
   TASK_GRID_TEMPLATE_AREAS_WIDE,
   TASK_GRID_TEMPLATE_COLUMNS_WIDE,
+  type TaskDueFilter,
+  setTaskDueFilter,
+  taskDueFilter,
 } from './task-grid-template';
 import './list-property-value.css';
 
@@ -25,6 +29,7 @@ const COLUMN_ICONS: Record<string, () => JSX.Element> = {
   status: () => <StatusInProgress class={HEADER_ICON_CLASS} />,
   priority: () => <PriorityHigh class={HEADER_ICON_CLASS} />,
   assignees: () => <UsersIcon class={HEADER_ICON_CLASS} />,
+  due: () => <CalendarBlank class={HEADER_ICON_CLASS} />,
 };
 
 /** Which `TASK_GRID_COLUMNS.id` values map to a sort key (others are read-only). */
@@ -34,7 +39,7 @@ const COLUMN_SORT_KEYS: Partial<Record<string, SystemSortOption>> = {
 };
 
 /**
- * Responsive wrapper that only shows the header when layout is wide.
+ * Sticky task list chrome: due filter always, column header when layout is wide.
  * Must be used inside a ListLayoutProvider.
  */
 export function ResponsiveTaskListHeader(props: { class?: string }) {
@@ -42,9 +47,16 @@ export function ResponsiveTaskListHeader(props: { class?: string }) {
   const isWide = () => layout?.isWide() ?? true;
 
   return (
-    <Show when={isWide()}>
-      <TaskListHeader class={props.class} />
-    </Show>
+    <div class={props.class}>
+      <Show when={!isWide()}>
+        <div class="px-3 py-1">
+          <DueFilterControl />
+        </div>
+      </Show>
+      <Show when={isWide()}>
+        <TaskListHeader />
+      </Show>
+    </div>
   );
 }
 
@@ -87,6 +99,16 @@ function TaskListHeader(props: { class?: string }) {
       </div>
       <For each={TASK_GRID_COLUMNS}>
         {(col) => {
+          if (col.id === 'due') {
+            return (
+              <div
+                style={{ 'grid-area': col.id }}
+                class="flex items-center min-w-0 @min-[841px]/u-list:pl-2"
+              >
+                <DueFilterControl />
+              </div>
+            );
+          }
           const sortKey = COLUMN_SORT_KEYS[col.id];
           return (
             <HeaderCell
@@ -97,8 +119,6 @@ function TaskListHeader(props: { class?: string }) {
               reversed={activeSort()?.reversed ?? false}
               onSort={setSort}
               narrowIcon={COLUMN_ICONS[col.id]}
-              // Match the row pill's px-2 content inset so titles left-align
-              // with the pill icons (wide only — narrow collapses to centered icons).
               class="@min-[841px]/u-list:pl-2"
             />
           );
@@ -199,5 +219,57 @@ function HeaderCell(props: {
         )}
       </Show>
     </div>
+  );
+}
+
+const DUE_FILTER_OPTIONS: {
+  id: TaskDueFilter;
+  labelKey: string;
+}[] = [
+  { id: 'all', labelKey: 'soup.filters.selection.all' },
+  { id: 'overdue', labelKey: 'soup.tasks.timeline.overdue' },
+  { id: 'dueSoon', labelKey: 'soup.tasks.dueFilter.dueSoon' },
+  { id: 'noDate', labelKey: 'soup.tasks.timeline.noDate' },
+];
+
+function DueFilterControl() {
+  const activeLabel = () => {
+    const active =
+      DUE_FILTER_OPTIONS.find((option) => option.id === taskDueFilter()) ??
+      DUE_FILTER_OPTIONS[0];
+    return t(active.labelKey);
+  };
+
+  return (
+    <Dropdown>
+      <Dropdown.Trigger
+        variant="ghost"
+        size="sm"
+        class={cn(
+          'min-w-0 h-full px-0 font-medium text-xs text-ink-extra-muted hover:text-ink',
+          taskDueFilter() !== 'all' && 'text-ink'
+        )}
+        aria-label={t('soup.tasks.dueFilter.label')}
+      >
+        <CalendarBlank class={HEADER_ICON_CLASS} />
+        <span class="truncate @max-[840px]/u-list:hidden">{activeLabel()}</span>
+      </Dropdown.Trigger>
+      <Dropdown.Content class="min-w-40">
+        <Dropdown.Group>
+          <Dropdown.RadioGroup
+            value={taskDueFilter()}
+            onChange={(value) => setTaskDueFilter(value as TaskDueFilter)}
+          >
+            <For each={DUE_FILTER_OPTIONS}>
+              {(option) => (
+                <Dropdown.RadioItem closeOnSelect value={option.id}>
+                  <span class="flex-1">{t(option.labelKey)}</span>
+                </Dropdown.RadioItem>
+              )}
+            </For>
+          </Dropdown.RadioGroup>
+        </Dropdown.Group>
+      </Dropdown.Content>
+    </Dropdown>
   );
 }

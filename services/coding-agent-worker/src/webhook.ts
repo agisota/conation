@@ -11,7 +11,10 @@ type WebhookState = { id: string; secret: string };
  * signing secret. Reuses (and repairs) the registration in the state file;
  * registers fresh when there is none or it was deleted server-side. */
 export async function ensureWebhook(deliveryUrl: string): Promise<string> {
-  const macro = new Macro({}).requestedAs(env.MACRO_USER_ID);
+  const client = new Macro({
+    auth: { type: 'bot', token: env.CONATION_BOT_TOKEN },
+  });
+  const macro = client.requestedAs(client.users.byId(env.CONATION_USER_ID));
 
   const saved = await readState();
   if (saved) {
@@ -24,7 +27,7 @@ export async function ensureWebhook(deliveryUrl: string): Promise<string> {
       return saved.secret;
     } catch (error) {
       // Only a genuine 404 means the webhook was actually deleted
-      // server-side. Any other failure (bad token, wrong MACRO_ENV, network
+      // server-side. Any other failure (bad token, wrong CONATION_ENV, network
       // blip) must not fall through to registering a duplicate — the old
       // registration would keep delivering with a secret we've since
       // forgotten, and every such delivery would 500 on signature

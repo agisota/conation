@@ -29,7 +29,7 @@ graphql_notification = { path = "../graphql_notification" }
 graphql_permission = { path = "../graphql_permission" }
 graphql_properties = { path = "../graphql_properties" }
 graphql_soup = { path = "../graphql_soup" }
-conation_authorization = { path = "../conation_authorization", features = [
+conation_authorization = { package = "macro_authorization", path = "../conation_authorization", features = [
   "axum",
   "outbound",
 ] }

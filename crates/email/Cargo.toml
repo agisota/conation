@@ -65,7 +65,7 @@ google_token = { path = "../google_token", optional = true }
 item_filters = { path = "../item_filters" }
 lol_html = { workspace = true }
 scraper = { workspace = true }
-conation_authorization = { path = "../conation_authorization", default-features = false, features = ["axum"], optional = true }
+conation_authorization = { package = "macro_authorization", path = "../conation_authorization", default-features = false, features = ["axum"], optional = true }
 conation_event_broker = { path = "../conation_event_broker", default-features = false }
 conation_event_topics = { path = "../conation_event_topics" }
 entity_mutation = { path = "../entity_mutation" }

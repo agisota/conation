@@ -1,3 +1,4 @@
+import { t } from '@app/lib/i18n';
 import {
   CURSOR_BOT_HANDLE,
   CURSOR_BOT_ID,
@@ -96,7 +97,7 @@ export function runtimeLabel(
     case 'macrod':
       return (
         runtimes.find((runtime) => runtime.id === harnessId)?.name ??
-        'Disconnected runtime'
+        t('agents.roster.disconnectedRuntime')
       );
     default:
       return harness;
@@ -154,15 +155,15 @@ function persistedAgent(
         : (agent.bot.created_by ?? undefined),
     connectLabel:
       agent.harness === 'cursor' && input.cursorNeedsConnection
-        ? 'Connect Cursor'
+        ? t('agents.roster.connectCursor')
         : undefined,
     unavailableReason:
       agent.harness === 'macrod'
         ? connected
-          ? 'Runs on its own machine · start it from a channel mention'
-          : 'Its runtime is disconnected'
+          ? t('agents.roster.macrodUnavailable')
+          : t('agents.roster.runtimeDisconnected')
         : agent.harness === 'cursor' && !connected
-          ? 'Connect Cursor to start it'
+          ? t('agents.roster.connectCursorToStart')
           : undefined,
     persisted: agent,
   };
@@ -191,15 +192,17 @@ export function buildAgentRoster(input: RosterInput): RosterAgent[] {
       kind: 'coder',
       name: CURSOR_BOT_NAME,
       handle: CURSOR_BOT_HANDLE,
-      description: 'Cursor cloud agents, run with your Cursor account.',
+      description: t('agents.roster.cursorDescription'),
       harness: 'cursor',
       defaultModel: input.cursorDefaultModel,
       share: 'system',
       runtime: { label: 'Cursor', connected: input.cursorConnected },
       unavailableReason: input.cursorConnected
         ? undefined
-        : 'Connect Cursor to start it',
-      connectLabel: input.cursorNeedsConnection ? 'Connect Cursor' : undefined,
+        : t('agents.roster.connectCursorToStart'),
+      connectLabel: input.cursorNeedsConnection
+        ? t('agents.roster.connectCursor')
+        : undefined,
     },
     ...input.agents.map((agent) => persistedAgent(agent, input)),
   ];

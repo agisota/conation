@@ -1,4 +1,5 @@
 import { LIST_VIEW_PATHS } from '@app/constants/list-views';
+import { t } from '@app/lib/i18n';
 import type { SidebarItem } from '@components/app/app-sidebar/sidebar';
 import { TOKENS } from '@core/hotkey/tokens';
 import BuildingsIcon from '@phosphor/buildings.svg';
@@ -6,6 +7,7 @@ import CalendarBlankIcon from '@phosphor/calendar-blank.svg';
 import ChatsCircleIcon from '@phosphor/chats-circle.svg';
 import EnvelopeIcon from '@phosphor/envelope.svg';
 import FolderSimpleIcon from '@phosphor/folder-simple.svg';
+import GridFourIcon from '@phosphor/grid-four.svg';
 import HouseIcon from '@phosphor/house.svg';
 import ListChecksIcon from '@phosphor/list-checks.svg';
 import AgentIcon from '@phosphor/sparkle.svg';
@@ -14,6 +16,7 @@ import CalendarBlankFillIcon from '@phosphor-fill/calendar-blank-fill.svg';
 import ChatsCircleFillIcon from '@phosphor-fill/chats-circle-fill.svg';
 import EnvelopeFillIcon from '@phosphor-fill/envelope-fill.svg';
 import FolderSimpleFillIcon from '@phosphor-fill/folder-simple-fill.svg';
+import GridFourFillIcon from '@phosphor-fill/grid-four-fill.svg';
 import HouseFillIcon from '@phosphor-fill/house-fill.svg';
 import ListChecksFillIcon from '@phosphor-fill/list-checks-fill.svg';
 import AgentFillIcon from '@phosphor-fill/sparkle-fill.svg';
@@ -44,6 +47,27 @@ export type SidebarNextNavItem = SidebarItem & {
  * so the shortcuts work unchanged; these tokens only label the tooltips.
  */
 const SIDEBAR_NEXT_NAV_ITEMS = [
+  {
+    id: 'home',
+    get label() {
+      return t('shell.navigation.home');
+    },
+    href: '/home',
+    icon: HouseIcon,
+    iconActive: HouseFillIcon,
+    hotkeyToken: TOKENS.sidebar.goTo.home,
+  },
+  {
+    id: 'dashboard',
+    get label() {
+      return t('shell.navigation.dashboard');
+    },
+    href: LIST_VIEW_PATHS.dashboard,
+    icon: GridFourIcon,
+    iconActive: GridFourFillIcon,
+    hotkey: 'u',
+    hotkeyToken: TOKENS.sidebar.goTo.dashboard,
+  },
   {
     id: 'inbox',
     label: 'Home',

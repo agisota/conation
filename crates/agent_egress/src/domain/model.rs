@@ -232,6 +232,18 @@ impl SessionGrant {
     }
 }
 
+/// Whether `owner` is Conation or Macro staff.
+///
+/// True when the owner's email or id ends with `@conation.dev` or
+/// `@macro.com`. Plus-aliases such as `name+tag@conation.dev` still match.
+pub fn is_macro_staff(owner: &MacroUserIdStr<'_>) -> bool {
+    staff_domain(owner.email_str())
+}
+
+fn staff_domain(value: &str) -> bool {
+    value.ends_with("@conation.dev") || value.ends_with("@macro.com")
+}
+
 /// `google_sheets` → `Google Sheets`: the fallback name for an app nobody
 /// gave a display name.
 fn readable_slug(slug: &McpServerSlug) -> String {
@@ -653,8 +665,11 @@ pub enum McpDestination {
     Connected(McpServerSlug),
 }
 
-/// The route Macro's own MCP server is served on.
-pub const MACRO_MCP_PATH: &str = "/mcp-macro";
+/// The route Conation's own MCP server is served on.
+pub const MACRO_MCP_PATH: &str = "/mcp-conation";
+
+/// Legacy path some in-process clients still read as Conation's server.
+pub const MACRO_MCP_PATH_ALIAS: &str = "/mcp-macro";
 
 /// The route prefix a connected app's slug follows.
 pub const CONNECTED_MCP_PATH_PREFIX: &str = "/mcp/";
@@ -666,8 +681,8 @@ impl McpDestination {
     /// same egress URLs a sandbox is, so it reads them the same way the
     /// router does rather than being told the answer a second way.
     pub fn from_path(path: &str) -> Option<Self> {
-        if path == MACRO_MCP_PATH {
-            return Some(Self::Macro);
+        if path == MACRO_MCP_PATH || path == MACRO_MCP_PATH_ALIAS {
+            return Some(Self::Conation);
         }
         let slug = path.strip_prefix(CONNECTED_MCP_PATH_PREFIX)?;
         McpServerSlug::parse(slug).map(Self::Connected)

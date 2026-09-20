@@ -60,16 +60,16 @@ futures = { workspace = true, optional = true }
 item_filters = { path = "../item_filters" }
 livekit-api = { workspace = true, optional = true }
 livekit-protocol = { workspace = true, optional = true }
-macro_authorization = { path = "../macro_authorization", optional = true, default-features = false, features = [
+macro_authorization = { path = "../conation_authorization", optional = true, default-features = false, features = [
   "axum",
 ] }
-macro_aws_config = { path = "../macro_aws_config", optional = true, features = [
+macro_aws_config = { package = "conation_aws_config", path = "../conation_aws_config", optional = true, features = [
   "s3",
 ] }
-macro_event_broker = { path = "../macro_event_broker", default-features = false }
-macro_event_topics = { path = "../macro_event_topics" }
-macro_user_id = { path = "../macro_user_id" }
-macro_uuid = { path = "../macro_uuid" }
+macro_event_broker = { package = "conation_event_broker", path = "../conation_event_broker", default-features = false }
+macro_event_topics = { package = "conation_event_topics", path = "../conation_event_topics" }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
+macro_uuid = { package = "conation_uuid", path = "../conation_uuid" }
 model-entity = { path = "../model-entity" }
 model-error-response = { path = "../model-error-response", optional = true }
 models_pagination = { path = "../models_pagination" }
@@ -93,7 +93,7 @@ subtle = { workspace = true }
 
 [dev-dependencies]
 base64 = { workspace = true }
-macro_db_migrator = { path = "../macro_db_migrator" }
+macro_db_migrator = { package = "conation_db_migrator", path = "../conation_db_migrator" }
 mockall = { workspace = true }
 sha2 = { workspace = true }
 sqlx = { workspace = true }

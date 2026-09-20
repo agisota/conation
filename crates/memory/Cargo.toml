@@ -16,10 +16,10 @@ axum = { workspace = true }
 chrono = { workspace = true }
 call = { path = "../call", default-features = false, features = ["ai_tools", "outbound", "ports"] }
 futures = { workspace = true }
-conation_entrypoint = { path = "../conation_entrypoint" }
+conation_entrypoint = { package = "macro_entrypoint", path = "../conation_entrypoint" }
 conation_env = { path = "../conation_env" }
 conation_env_var = { path = "../conation_env_var" }
-conation_authorization = { path = "../conation_authorization", default-features = false, features = [
+conation_authorization = { package = "macro_authorization", path = "../conation_authorization", default-features = false, features = [
   "axum",
 ] }
 conation_user_id = { path = "../conation_user_id" }

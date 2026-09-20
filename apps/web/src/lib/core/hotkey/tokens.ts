@@ -118,6 +118,7 @@ export const TOKENS = {
     goToLeader: 'sidebar.goToLeader',
     goTo: {
       home: 'sidebar.goTo.home',
+      dashboard: 'sidebar.goTo.dashboard',
       gettingStarted: 'sidebar.goTo.gettingStarted',
       inbox: 'sidebar.goTo.inbox',
       recent: 'sidebar.goTo.recent',
@@ -130,6 +131,7 @@ export const TOKENS = {
       canvas: 'sidebar.goTo.canvas',
       markdownDocuments: 'sidebar.goTo.markdownDocuments',
       tasks: 'sidebar.goTo.tasks',
+      reminders: 'sidebar.goTo.reminders',
       channels: 'sidebar.goTo.channels',
       calls: 'sidebar.goTo.calls',
       companies: 'sidebar.goTo.companies',

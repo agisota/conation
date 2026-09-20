@@ -608,7 +608,7 @@ export function isCalendarSearchUiEnabled(): boolean {
 export const enableCalendarPromptMobile = defineFlag({
   key: 'enable-calendar-prompt-mobile',
   env: 'ENABLE_CALENDAR_PROMPT_MOBILE',
-  default: true,
+  default: false,
 });
 
 // The "Enable calendar" prompt on desktop/web, the counterpart to
@@ -619,7 +619,7 @@ export const enableCalendarPromptMobile = defineFlag({
 export const enableCalendarPromptWeb = defineFlag({
   key: 'enable-calendar-prompt-web',
   env: 'ENABLE_CALENDAR_PROMPT_WEB',
-  default: true,
+  default: false,
 });
 
 // Team out of office: the calendar side panel's "Team out of office" section

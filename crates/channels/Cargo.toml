@@ -116,13 +116,13 @@ futures = { workspace = true, optional = true }
 indexmap = { workspace = true, optional = true }
 item_filters = { path = "../item_filters", default-features = false }
 kafka_util = { path = "../kafka_util", optional = true }
-macro_authorization = { path = "../macro_authorization", optional = true, default-features = false, features = [
+macro_authorization = { path = "../conation_authorization", optional = true, default-features = false, features = [
   "axum",
 ] }
-macro_event_broker = { path = "../macro_event_broker", default-features = false }
-macro_event_topics = { path = "../macro_event_topics" }
-macro_user_id = { path = "../macro_user_id" }
-macro_uuid = { path = "../macro_uuid", optional = true }
+macro_event_broker = { package = "conation_event_broker", path = "../conation_event_broker", default-features = false }
+macro_event_topics = { package = "conation_event_topics", path = "../conation_event_topics" }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
+macro_uuid = { package = "conation_uuid", path = "../conation_uuid", optional = true }
 messages = { path = "../messages" }
 model-entity = { path = "../model-entity", optional = true }
 model-error-response = { path = "../model-error-response", optional = true }
@@ -157,10 +157,10 @@ bot_id = { path = "../bot_id", features = ["test-utils"] }
 messages = { path = "../messages", features = ["test-utils"] }
 http-body-util = { workspace = true }
 kafka_util = { path = "../kafka_util" }
-macro_db_migrator = { path = "../macro_db_migrator" }
-macro_env_var = { path = "../macro_env_var" }
+macro_db_migrator = { package = "conation_db_migrator", path = "../conation_db_migrator" }
+macro_env_var = { package = "conation_env_var", path = "../conation_env_var" }
 # Examples need the Kafka adapter (outbound); the library itself only uses ports.
-macro_event_broker = { path = "../macro_event_broker" }
+macro_event_broker = { package = "conation_event_broker", path = "../conation_event_broker" }
 mockall = { workspace = true }
 rdkafka = { workspace = true }
 rootcause = { workspace = true }

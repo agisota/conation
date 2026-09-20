@@ -56,7 +56,7 @@ entity_access = { path = "../entity_access", default-features = false }
 # AI toolset dependencies
 ai_toolset = { path = "../ai_toolset", optional = true }
 async-trait = { workspace = true, optional = true }
-macro_user_id = { path = "../macro_user_id", optional = true }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id", optional = true }
 models_properties = { path = "../models_properties", optional = true }
 properties = { path = "../properties", default-features = false, features = [
   "ports",
@@ -66,8 +66,8 @@ system_properties = { path = "../system_properties" }
 
 # Axum / inbound dependencies
 axum = { workspace = true, optional = true }
-macro_authorization = { path = "../macro_authorization", optional = true, default-features = false, features = ["axum"] }
-macro_uuid = { path = "../macro_uuid", optional = true }
+macro_authorization = { path = "../conation_authorization", optional = true, default-features = false, features = ["axum"] }
+macro_uuid = { package = "conation_uuid", path = "../conation_uuid", optional = true }
 model-error-response = { path = "../model-error-response", optional = true }
 utoipa = { workspace = true, optional = true }
 
@@ -78,8 +78,8 @@ unfurl = { path = "../unfurl", features = ["ports"], optional = true }
 workspace-hack = { version = "0.1", path = "../workspace-hack" }
 
 [dev-dependencies]
-macro_db_migrator = { path = "../macro_db_migrator" }
-macro_user_id = { path = "../macro_user_id" }
+macro_db_migrator = { package = "conation_db_migrator", path = "../conation_db_migrator" }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
 properties = { path = "../properties", default-features = false, features = [
   "outbound",
   "ports",

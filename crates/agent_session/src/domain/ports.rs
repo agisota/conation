@@ -230,6 +230,11 @@ pub struct OpenManagedSession {
     /// Ad-hoc instructions for the default managed persona. Ignored when a
     /// persisted persona profile is selected.
     pub instructions: Option<String>,
+    /// OpenCode permission mode stamped into a managed sandbox at spawn.
+    ///
+    /// [`SessionPermissionMode::Ask`] is fail-closed. More permissive modes
+    /// must be requested explicitly; they are not ACP `AllowAlways`.
+    pub permission_mode: SessionPermissionMode,
 }
 
 /// Opens sessions, however they are served. Implemented by the harness, which

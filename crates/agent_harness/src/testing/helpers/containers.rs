@@ -11,7 +11,7 @@ use agent_runtime_protocol::domain::ports::{
 use agent_runtime_protocol::domain::schema::v0::{
     AcpMessage, SystemEvent, ToRuntimeMessage, ToServerMessage,
 };
-use agent_session::domain::model::{AgentSessionId, SandboxSize};
+use agent_session::domain::model::{AgentSessionId, SandboxSize, SessionPermissionMode};
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender, unbounded_channel};
 
 use crate::domain::error::{HarnessError, Result};
@@ -200,6 +200,7 @@ pub struct MockContainerManager {
     blocker: Arc<Mutex<Option<SessionBlocker>>>,
     spawn_error: Arc<Mutex<Option<String>>>,
     spawn_sizes: Arc<Mutex<Vec<SandboxSize>>>,
+    spawn_permission_modes: Arc<Mutex<Vec<SessionPermissionMode>>>,
     resizes: Arc<Mutex<Vec<(AgentSessionId, SandboxSize)>>>,
     resize_unsupported: Arc<AtomicBool>,
     resumes: Arc<AtomicUsize>,
@@ -269,6 +270,15 @@ impl MockContainerManager {
             .clone()
     }
 
+    /// Permission modes requested at spawn, in order.
+    #[must_use]
+    pub fn spawn_permission_modes(&self) -> Vec<SessionPermissionMode> {
+        self.spawn_permission_modes
+            .lock()
+            .expect("spawn permission modes lock should not be poisoned")
+            .clone()
+    }
+
     /// Resize requests, in order.
     #[must_use]
     pub fn resizes(&self) -> Vec<(AgentSessionId, SandboxSize)> {
@@ -321,6 +331,10 @@ impl ContainerManager for MockContainerManager {
             .lock()
             .expect("spawn sizes lock should not be poisoned")
             .push(command.size);
+        self.spawn_permission_modes
+            .lock()
+            .expect("spawn permission modes lock should not be poisoned")
+            .push(command.permission_mode);
         let container = ContainerMock::default();
         self.lock().insert(command.session_id, container.clone());
         Ok(agent_session::domain::connection::RuntimeAttachment::solo(

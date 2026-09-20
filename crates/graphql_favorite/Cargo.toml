@@ -13,7 +13,7 @@ favorites = { path = "../favorites", default-features = false, features = [
 graphql_common = { path = "../graphql_common" }
 graphql_entity_mutation = { path = "../graphql_entity_mutation" }
 graphql_soup = { path = "../graphql_soup" }
-macro_user_id = { path = "../macro_user_id" }
+macro_user_id = { package = "conation_user_id", path = "../conation_user_id" }
 model-entity = { path = "../model-entity" }
 rootcause = { workspace = true }
 tokio = { workspace = true }
