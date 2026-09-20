@@ -107,7 +107,7 @@ use conation_service_urls::AiEditingWorkerUrl;
 use conation_service_urls::{
     ConnectionGatewayUrl, LexicalServiceUrl, StaticFileServiceUrl, SyncServiceUrl,
 };
-use macro_sha_count_client::Redis;
+use conation_sha_count_client::Redis;
 use notification::domain::service::{
     NotificationReaderService, PlatformArnConfig, SqsNotificationIngress,
     WebSocketNotificationConsumerService,

@@ -31,6 +31,8 @@ use system_properties::{PriorityOption, StatusOption, SystemPropertyKey};
 /// Also the name `get_starter_docs` resolves the guide by, so the two stay in
 /// sync from one definition.
 pub(in crate::api) const HOW_TO_GUIDE_NAME: &str = "Macro how to guide";
+/// Stable seed for the how-to guide document id. Independent of display name.
+pub(in crate::api) const HOW_TO_GUIDE_ID_SEED: &str = "Macro how to guide";
 const HOW_TO_GUIDE_TEMPLATE: &str = include_str!("./template/macro_how_to_guide.md");
 
 /// A starter task the templates can mention. Mention tags embed the target's
