@@ -105,7 +105,7 @@ where
             .await
         {
             Ok(true) => Some(BotInvocation {
-                bot_id: bot_id::CONATION_AI_BOT_ID,
+                bot_id: bot_id::MACRO_AI_BOT_ID,
                 trigger: BotTrigger::Inferred,
             }),
             Ok(false) => None,
@@ -119,7 +119,7 @@ where
 
 fn transcript_message(sender_id: &str, content: &str) -> TranscriptMessage {
     let from_agent = bot_id::BotIdStr::parse_from_str(sender_id)
-        .is_ok_and(|bot| bot.bot_id() == bot_id::CONATION_AI_BOT_ID);
+        .is_ok_and(|bot| bot.bot_id() == bot_id::MACRO_AI_BOT_ID);
     TranscriptMessage {
         from_agent,
         sender: sender_label(sender_id),

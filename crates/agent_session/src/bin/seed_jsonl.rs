@@ -46,7 +46,7 @@ use std::time::{Duration, Instant};
 
 /// The `Conation Coder` system bot, seeded by migration, which owns agent
 /// sessions unless the caller names a different bot.
-const CONATION_CODER_BOT_ID: &str = "00000000-0000-0000-0000-00000000a9e7";
+const MACRO_CODER_BOT_ID: &str = "00000000-0000-0000-0000-00000000a9e7";
 
 /// Seed an agent session into Postgres from a recorded JSONL session.
 #[derive(Parser)]
@@ -67,7 +67,7 @@ struct Args {
     owner: String,
 
     /// Bot the session runs as.
-    #[arg(long, default_value = CONATION_CODER_BOT_ID)]
+    #[arg(long, default_value = MACRO_CODER_BOT_ID)]
     bot_id: Uuid,
 
     /// Model slug recorded on the session.
