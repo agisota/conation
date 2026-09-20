@@ -390,7 +390,7 @@ async fn main() -> anyhow::Result<()> {
             ),
             0,
         )
-        .with_macro_event_broker(macro_event_broker.clone()),
+        .with_conation_event_broker(macro_event_broker.clone()),
     );
     let email_tool_context = email::inbound::toolset::EmailToolContext::new(
         user_email_service.clone(),
@@ -817,7 +817,7 @@ async fn main() -> anyhow::Result<()> {
         mcp_selector,
         import_service,
         onboarding_service,
-        macro_event_broker: macro_event_broker.clone(),
+        conation_event_broker: macro_event_broker.clone(),
     })
     .await
     .context("failed to setup and serve api");

@@ -378,7 +378,7 @@ async fn run() -> anyhow::Result<()> {
         ),
         0,
     )
-    .with_macro_event_broker(macro_event_broker.clone());
+    .with_conation_event_broker(macro_event_broker.clone());
     let readonly_email_service = ReadonlyEmailPreviewAdapter(
         EmailServiceImpl::new(
             EmailPgRepo::new(readonly_db.clone()),
@@ -390,7 +390,7 @@ async fn run() -> anyhow::Result<()> {
             ),
             0,
         )
-        .with_macro_event_broker(macro_event_broker.clone()),
+        .with_conation_event_broker(macro_event_broker.clone()),
     );
     let system_properties_service =
         SystemPropertiesServiceImpl::new(PgSystemPropertiesRepository::new(db.clone()));
@@ -968,7 +968,7 @@ async fn run() -> anyhow::Result<()> {
         NotificationChannelSender::new(notification_ingress_service.clone()),
         ContactsChannelDispatcher::new(contacts_ingress.clone()),
     )
-    .with_macro_event_broker(macro_event_broker.clone());
+    .with_conation_event_broker(macro_event_broker.clone());
 
     let channels_service = Arc::new(
         ChannelServiceImpl::with_dependencies(

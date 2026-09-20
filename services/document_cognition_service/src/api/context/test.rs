@@ -310,7 +310,7 @@ pub async fn test_api_context(pool: sqlx::Pool<sqlx::Postgres>) -> std::sync::Ar
             ),
             0,
         )
-        .with_macro_event_broker(macro_event_broker.clone()),
+        .with_conation_event_broker(macro_event_broker.clone()),
     );
     let email_tool_context = email::inbound::toolset::EmailToolContext::new(
         user_email_service.clone(),

@@ -168,8 +168,6 @@ fn attachment_content(attachment: &PromptAttachment) -> AttachmentContent<'stati
 
 use super::engine::AgentIdentity;
 
-use super::engine::AgentIdentity;
-
 /// One entry of the conversation, in the shape
 /// [`agent::to_rig_messages`] round-trips.
 #[derive(Debug, Clone)]

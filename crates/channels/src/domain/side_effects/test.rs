@@ -1267,7 +1267,7 @@ fn broker_service(
         FakeNotifications::default(),
         FakeContacts::default(),
     )
-    .with_macro_event_broker(broker)
+    .with_conation_event_broker(broker)
 }
 
 fn attachment(channel_id: Uuid, message_id: Uuid) -> MutatedAttachment {
@@ -1549,7 +1549,7 @@ async fn publish_failure_does_not_break_other_side_effects() {
         FakeNotifications::default(),
         FakeContacts::default(),
     )
-    .with_macro_event_broker(broker.clone());
+    .with_conation_event_broker(broker.clone());
     let channel_id = Uuid::new_v4();
     let message_id = Uuid::new_v4();
 
