@@ -1,6 +1,5 @@
 use super::*;
 use agent_fold::domain::service::FoldedMessageService;
-use agent_harness::outbound::daytona::AnthropicApiKey;
 use agent_harness::outbound::local::{LocalContainerManager, LocalSettings};
 use agent_session::domain::model::ReplicaId;
 use agent_session::domain::ports::NoOpRealtime;
@@ -19,7 +18,6 @@ fn unreachable_sandbox() -> HarnessContainers {
         docker_binary: "false".to_owned(),
         image: "unused".to_owned(),
         network: "unused".to_owned(),
-        anthropic_api_key: AnthropicApiKey::new(String::new()),
     }))
 }
 

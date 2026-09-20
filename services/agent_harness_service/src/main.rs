@@ -58,7 +58,8 @@ use agent_harness::outbound::channel_prompt_context::MessagePromptContextAdapter
 use agent_harness::outbound::containers::HarnessContainers;
 use agent_harness::outbound::cursor::{CursorContainerManager, PgCursorApiKeys, PostgresJournal};
 use agent_harness::outbound::daytona::{
-    DaytonaApiKey as DaytonaApiKeySecret, DaytonaContainerManager, DaytonaSettings, Snapshot,
+    AnthropicApiKey, DaytonaApiKey as DaytonaApiKeySecret, DaytonaContainerManager,
+    DaytonaSettings, Snapshot,
 };
 use agent_harness::outbound::egress::EgressProvisioner;
 use agent_harness::outbound::forward::RedisCommandForwarder;
@@ -420,6 +421,7 @@ async fn run() -> anyhow::Result<()> {
                 api_url: config.daytona_api_url.clone(),
                 api_key: DaytonaApiKeySecret::new(config.daytona_api_key.clone()),
                 snapshot: Snapshot::new(config.daytona_snapshot.clone()),
+                anthropic_api_key: AnthropicApiKey::new(String::new()),
             },
             pending_commands.clone(),
         ))

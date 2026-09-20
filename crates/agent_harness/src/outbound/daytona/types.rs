@@ -61,6 +61,22 @@ impl DaytonaApiKey {
     }
 }
 
+/// API key injected into sandboxes as `ANTHROPIC_API_KEY`.
+#[derive(Clone)]
+pub struct AnthropicApiKey(String);
+
+impl AnthropicApiKey {
+    /// Wrap an Anthropic API credential.
+    #[must_use]
+    pub fn new(value: String) -> Self {
+        Self(value)
+    }
+
+    pub(crate) fn expose(&self) -> &str {
+        &self.0
+    }
+}
+
 /// Settings required to create Daytona-backed containers.
 pub struct DaytonaSettings {
     /// Base URL of the Daytona REST API.
@@ -69,4 +85,6 @@ pub struct DaytonaSettings {
     pub api_key: DaytonaApiKey,
     /// Prebuilt snapshot used to create sandboxes.
     pub snapshot: Snapshot,
+    /// API key injected into sandboxes as `ANTHROPIC_API_KEY`.
+    pub anthropic_api_key: AnthropicApiKey,
 }
